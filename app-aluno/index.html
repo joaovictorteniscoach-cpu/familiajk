@@ -774,7 +774,7 @@ function renderPayLock(){
 }
 function isPersonal(){return !!(EU&&String(EU.tipo||'').toLowerCase().indexOf('personal')>=0);}
 function isGrupo(){return !!(EU&&['Grupo','Dupla','Trio','Quarteto'].indexOf(EU.tipo)>=0);}
-function planoValor(cat,n){n=Number(n)||0;if(cat==='Personal')return n*precoPersonal();if(cat==='Dupla'||cat==='Trio'||cat==='Quarteto'){const gp=(PUB&&PUB.grupoPreco)||{dupla:85,trio:80,quarteto:75};return (gp[cat.toLowerCase()]||0)*n;}const tb=planosTabela();return (tb[cat]&&tb[cat][n])||0;}
+function planoValor(cat,n){n=Number(n)||0;if(cat==='Personal')return n*precoPersonal();if(cat==='Dupla'||cat==='Trio'||cat==='Quarteto'){const gp=(PUB&&PUB.grupoPreco)||{dupla:95,trio:80,quarteto:75};return (gp[cat.toLowerCase()]||0)*n;}const tb=planosTabela();return (tb[cat]&&tb[cat][n])||0;}
 function meuEmoji(){return isPersonal()?'🏋️':'🎾';}
 function applyTipoUI(){
   const personal=isPersonal();
@@ -1184,7 +1184,7 @@ function renderAgenda(){
     el.innerHTML=PUB.horas.map(h=>{
       const s=slotState(agDate,h);
       let inner='';
-      if(s.st==='livre'||s.st==='loc')inner=`<button class="sl livre" onclick="escolherSlot('${h}')">Disponível <i>ver opções</i></button>`;
+      if(s.st==='livre'||s.st==='loc')inner=horasAte(dKey(agDate),h)<=0?`<button class="sl bloq" disabled>Encerrado</button>`:`<button class="sl livre" onclick="escolherSlot('${h}')">Disponível <i>ver opções</i></button>`;
       else if(s.st==='meu')inner=`<button class="sl meu">🎾 ${s.label} <i>confirmada</i></button>`;
       else if(s.st==='pend')inner=`<button class="sl pend">${s.label} <i>enviado ao João</i></button>`;
       else if(s.st==='bloq')inner=`<button class="sl bloq">Indisponível</button>`;
@@ -1203,7 +1203,7 @@ function renderAgenda(){
       days.forEach(d=>{
         const s=slotState(d,h);
         const txt=s.st==='livre'?'Livre':s.st==='meu'?'Você '+meuEmoji():s.st==='pend'?'⏳':s.st==='bloq'?'—':s.st==='loc'?'Loc':s.st==='fechado'?'—':'•';
-        const click=s.st==='livre'?`onclick="gotoBook(${d.getFullYear()},${d.getMonth()},${d.getDate()},'${h}')"`:(s.st==='loc'?`onclick="gotoDay(${d.getFullYear()},${d.getMonth()},${d.getDate()})"`:'');
+        const click=(horasAte(dKey(d),h)<=0)?'':(s.st==='livre'?`onclick="gotoBook(${d.getFullYear()},${d.getMonth()},${d.getDate()},'${h}')"`:(s.st==='loc'?`onclick="gotoDay(${d.getFullYear()},${d.getMonth()},${d.getDate()})"`:''));
         html+=`<td><button class="wc ${s.st}" ${click}>${txt}</button></td>`;
       });
       html+='</tr>';
@@ -1381,6 +1381,7 @@ function renderMinhas(){
 function gotoBook(y,m,d,h){agDate=new Date(y,m,d,12);escolherSlot(h);}
 var pickCtx={};
 function escolherSlot(hora){
+  if(horasAte(dKey(agDate),hora)<=0){toast('Esse horário já passou — não é possível agendar nem alterar datas anteriores. 🙏');return;}
   pickCtx={hora,date:new Date(agDate)};
   const modo=slotModo(pickCtx.date,hora);
   document.getElementById('pick-sub').textContent=DIAS_FULL[pickCtx.date.getDay()]+', '+pickCtx.date.getDate()+' de '+MESES[pickCtx.date.getMonth()].toLowerCase()+' · '+hora;
@@ -1399,7 +1400,7 @@ function escolherSlot(hora){
   document.getElementById('ov-pick').classList.add('on');
 }
 function grupoRefHtml(){
-  const gp=(PUB&&PUB.grupoPreco)||{dupla:85,trio:80,quarteto:75};
+  const gp=(PUB&&PUB.grupoPreco)||{dupla:95,trio:80,quarteto:75};
   return '<details class="grp-ref"><summary>👥 Quero em grupo — ver valores</summary>'
     +'<div class="gr-row"><span>👥 Dupla · 2 pessoas</span><b>R$ '+gp.dupla+' <small>cada / aula</small></b></div>'
     +'<div class="gr-row"><span>👥 Trio · 3 pessoas</span><b>R$ '+gp.trio+' <small>cada / aula</small></b></div>'
