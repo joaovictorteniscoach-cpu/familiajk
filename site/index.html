@@ -243,14 +243,14 @@ footer .cr{color:#6B7E8C;font-size:12.5px}
         <span class="kic">Grupo</span>
         <h3>Em grupo</h3>
         <p class="sub">Dupla, trio ou quarteto — quanto mais gente em quadra, menor o valor por pessoa.</p>
-        <div class="tier"><span class="lbl">A partir de <small>por pessoa, por aula</small></span><span class="val">R$ 95</span></div>
+        <div class="tier"><span class="lbl">A partir de <small>por pessoa, por aula</small></span><span class="val" data-grp="from">R$ 95</span></div>
         <details class="grp-det">
           <summary>👥 Quero em grupo — ver valores para 2, 3 ou 4 pessoas</summary>
           <div class="grp-opts">
-            <div class="tier"><span class="lbl">👥 Dupla <small>2 pessoas</small></span><span class="val">R$ 95 <small>cada / aula</small></span></div>
-            <div class="tier"><span class="lbl">👥 Trio <small>3 pessoas</small></span><span class="val">R$ 80 <small>cada / aula</small></span></div>
-            <div class="tier"><span class="lbl">👥 Quarteto <small>4 pessoas</small></span><span class="val">R$ 75 <small>cada / aula</small></span></div>
-            <p class="sub" style="margin:10px 0 0;font-size:12.5px;opacity:.8">Cada pessoa paga o valor por aula × nº de aulas do plano. Ex.: no Flex 8, cada um paga R$ 760 (dupla), R$ 640 (trio) ou R$ 600 (quarteto).</p>
+            <div class="tier"><span class="lbl">👥 Dupla <small>2 pessoas</small></span><span class="val" data-grp="dupla">R$ 95 <small>cada / aula</small></span></div>
+            <div class="tier"><span class="lbl">👥 Trio <small>3 pessoas</small></span><span class="val" data-grp="trio">R$ 80 <small>cada / aula</small></span></div>
+            <div class="tier"><span class="lbl">👥 Quarteto <small>4 pessoas</small></span><span class="val" data-grp="quarteto">R$ 75 <small>cada / aula</small></span></div>
+            <p class="sub" style="margin:10px 0 0;font-size:12.5px;opacity:.8">Cada pessoa paga o valor por aula × nº de aulas do plano. Ex.: no Flex 8, cada um paga <span data-grp="exemplo">R$ 760 (dupla), R$ 640 (trio) ou R$ 600 (quarteto)</span>.</p>
           </div>
         </details>
         <a class="btn btn-line btn-block" href="https://wa.me/5541995415712?text=Ol%C3%A1%20Jo%C3%A3o!%20Tenho%20interesse%20no%20plano%20Flex%20em%20Grupo.%20Pode%20me%20passar%20os%20detalhes%3F%20%F0%9F%8E%BE" target="_blank" rel="noopener">Quero o Grupo</a>
@@ -418,6 +418,49 @@ if(!window.matchMedia||!window.matchMedia('(prefers-reduced-motion: reduce)').ma
   var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.12});
   document.querySelectorAll('.rv').forEach(function(el){io.observe(el);});
 }else{document.querySelectorAll('.rv').forEach(function(el){el.classList.add('in');});}
+</script>
+
+<!-- ===== Preços de grupo ao vivo (lê o mesmo Firebase dos apps) ===== -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+/* Lê os valores de grupo publicados pelo app de gestão (jvtenis/jvtenis-app-aluno).
+   Se o Firebase não responder, ficam os valores fixos do HTML como fallback. */
+(function(){
+  var firebaseConfig={
+    apiKey:"AIzaSyCs7o_bUjbMHrR2iu8BpZ1gVuwRZT25C3A",
+    authDomain:"academia-jv-tenis.firebaseapp.com",
+    databaseURL:"https://academia-jv-tenis-default-rtdb.firebaseio.com",
+    projectId:"academia-jv-tenis",
+    storageBucket:"academia-jv-tenis.firebasestorage.app",
+    messagingSenderId:"78772134875",
+    appId:"1:78772134875:web:4671c0eab6ea2c257abdfe"
+  };
+  function set(sel,html){var el=document.querySelector(sel);if(el)el.innerHTML=html;}
+  function aplicar(gp){
+    if(!gp)return;
+    var d=Number(gp.dupla)||95, t=Number(gp.trio)||80, q=Number(gp.quarteto)||75;
+    set('[data-grp="dupla"]','R$ '+d+' <small>cada / aula</small>');
+    set('[data-grp="trio"]','R$ '+t+' <small>cada / aula</small>');
+    set('[data-grp="quarteto"]','R$ '+q+' <small>cada / aula</small>');
+    set('[data-grp="from"]','R$ '+d);
+    set('[data-grp="exemplo"]','R$ '+(d*8)+' (dupla), R$ '+(t*8)+' (trio) ou R$ '+(q*8)+' (quarteto)');
+  }
+  function go(){
+    try{
+      if(typeof firebase==='undefined')return false;
+      if(!firebase.apps||!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+      firebase.database().ref('jvtenis/jvtenis-app-aluno').get().then(function(snap){
+        if(!snap.exists())return;
+        var v=snap.val();
+        if(typeof v==='string'){try{v=JSON.parse(v);}catch(e){return;}}
+        if(v&&v.grupoPreco)aplicar(v.grupoPreco);
+      }).catch(function(){/* mantém os valores do HTML */});
+      return true;
+    }catch(e){return false;}
+  }
+  var n=0;(function wait(){if(go())return;if(n++>40)return;setTimeout(wait,150);})();
+})();
 </script>
 </body>
 </html>
