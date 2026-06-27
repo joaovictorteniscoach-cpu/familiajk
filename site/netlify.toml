@@ -1,0 +1,4 @@
+# Site estático — sem etapa de build.
+# No Netlify, configure "Base directory" = site para este site.
+[build]
+  publish = "."
