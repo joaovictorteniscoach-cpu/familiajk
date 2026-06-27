@@ -1,0 +1,17 @@
+{
+  "name": "Academia João Victor Tênis",
+  "short_name": "JV Tênis",
+  "description": "Agende suas aulas, veja seus créditos e horários da Academia João Victor Tênis.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0E0C08",
+  "theme_color": "#C9472B",
+  "orientation": "portrait",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "jv-icone-aluno-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "jv-icone-aluno-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "jv-icone-aluno-mask.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
