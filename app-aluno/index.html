@@ -1185,8 +1185,8 @@ function renderAgenda(){
       const s=slotState(agDate,h);
       let inner='';
       if(s.st==='livre'||s.st==='loc')inner=horasAte(dKey(agDate),h)<=0?`<button class="sl bloq" disabled>Encerrado</button>`:`<button class="sl livre" onclick="escolherSlot('${h}')">Disponível <i>ver opções</i></button>`;
-      else if(s.st==='meu')inner=`<button class="sl meu">🎾 ${s.label} <i>confirmada</i></button>`;
-      else if(s.st==='pend')inner=`<button class="sl pend">${s.label} <i>enviado ao João</i></button>`;
+      else if(s.st==='meu'){const podeC=horasAte(dKey(agDate),h)>=LIMITE_CANCEL_H;inner=podeC?`<button class="sl meu" onclick="cancelarAula('${dKey(agDate)}','${h}','pontual')">🎾 ${s.label} <i>confirmada · toque para cancelar</i></button>`:`<button class="sl meu">🎾 ${s.label} <i>confirmada · trava ${LIMITE_CANCEL_H}h</i></button>`;}
+      else if(s.st==='pend')inner=`<button class="sl pend" onclick="cancelarAula('${dKey(agDate)}','${h}','pontual')">${s.label} <i>enviado ao João · toque para cancelar</i></button>`;
       else if(s.st==='bloq')inner=`<button class="sl bloq">Indisponível</button>`;
       else if(s.st==='fechado')inner=`<button class="sl bloq">Fechado</button>`;
       else inner=`<button class="sl ocup">Reservado</button>`;
