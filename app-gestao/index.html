@@ -1,0 +1,3052 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>JV Tênis · Gestão</title>
+<link rel="apple-touch-icon" href="jv-icone-gestao.png">
+<link rel="icon" href="jv-icone-gestao.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="JV Tênis · Gestão">
+<meta name="theme-color" content="#1A2E14">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest-gestao.webmanifest">
+<link rel="apple-touch-startup-image" media="screen and (device-width:430px) and (device-height:932px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)" href="splash-gestao-1290x2796.png">
+<link rel="apple-touch-startup-image" media="screen and (device-width:393px) and (device-height:852px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)" href="splash-gestao-1179x2556.png">
+<link rel="apple-touch-startup-image" media="screen and (device-width:390px) and (device-height:844px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)" href="splash-gestao-1170x2532.png">
+<link rel="apple-touch-startup-image" media="screen and (device-width:414px) and (device-height:896px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)" href="splash-gestao-1242x2688.png">
+<link rel="apple-touch-startup-image" media="screen and (device-width:375px) and (device-height:812px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)" href="splash-gestao-1125x2436.png">
+<link rel="apple-touch-startup-image" media="screen and (device-width:414px) and (device-height:896px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)" href="splash-gestao-828x1792.png">
+<link rel="apple-touch-startup-image" media="screen and (device-width:375px) and (device-height:667px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)" href="splash-gestao-750x1334.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --clay:#C9472B;--clay-light:#E05E3A;--cream:#FAF7F2;--dark:#0E0C08;
+  --gold:#C9A04A;--gold-light:#D4AF58;--green:#1A2E14;--green-2:#24401C;
+  --text:#2A2016;--muted:#6B5E4A;--border:#E2D5C0;
+  --ok:#2E7D32;--warn:#B8860B;--bad:#B3261E;--wapp:#25D366;
+  --c-aula:#3B6FB5;--c-loc:#2E8B45;--c-bloq:#C0392B;--c-pess:#C97A1E;--c-grupo:#6A4FA3;--c-personal:#0E8E8E;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);max-width:520px;margin:0 auto;line-height:1.55;padding-bottom:84px}
+button{font-family:'DM Sans',sans-serif;cursor:pointer}
+input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
+
+.top{background:var(--green);padding:20px 20px 16px;position:relative;overflow:hidden}
+.eye-btn{position:absolute;top:16px;right:16px;z-index:5;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);color:#fff;font-size:18px;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0}
+.eye-btn:active{transform:scale(.94)}
+.eye-btn.off{background:rgba(201,160,74,.28);border-color:rgba(201,160,74,.5)}
+.bell-btn{right:62px}
+.hist-btn{right:108px;font-size:17px}
+.ped-btn{right:154px;font-size:16px}
+.top-actions{display:flex;justify-content:flex-end;gap:8px;margin-bottom:8px}
+.top-actions .eye-btn{position:relative;top:auto;right:auto;width:38px;height:38px;font-size:16px}
+.top-actions .eye-btn svg{width:20px;height:20px;display:block}
+.hist-acts{display:flex;gap:8px;margin-bottom:10px}
+.hist-acts .btn{flex:1}
+.btn.is-off{opacity:.4;pointer-events:none}
+.hist-list{max-height:46vh;overflow:auto;margin:4px 0 2px;border:1px solid var(--border);border-radius:12px}
+.hist-item{display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:9px 12px;border-bottom:1px solid var(--border);font-size:13px}
+.hist-item:last-child{border-bottom:0}
+.hist-item .hi-when{color:var(--muted);font-size:11px;white-space:nowrap}
+.hist-empty{padding:18px;text-align:center;color:var(--muted);font-size:13px;line-height:1.6}
+#tor-export{position:fixed;left:-10000px;top:0;width:430px;background:#fff;padding:22px;color:#2A2016}
+.tex-head{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:2px solid var(--gold);padding-bottom:12px;margin-bottom:16px}
+.tex-head b{font-size:16px;color:var(--green);display:block;font-weight:700}
+.tex-head span{font-size:12px;color:var(--muted)}
+.tex-emb{width:44px;height:44px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:600;font-size:19px;flex-shrink:0}
+.tex-grp{margin-bottom:16px}
+.tex-grp h4{font-size:14px;margin:0 0 7px;color:var(--green);font-weight:700}
+.tex-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tex-tbl th{background:var(--green);color:#fff;font-weight:600;font-size:11px;padding:7px 9px;text-align:center}
+.tex-tbl th:first-child{text-align:left}
+.tex-tbl td{padding:7px 9px;text-align:center;border-bottom:1px solid #ececec}
+.tex-tbl td:first-child{text-align:left;font-weight:600}
+.tex-tbl tr.r1 td{background:#FBF4DF}
+.tex-pts{font-weight:800;color:var(--clay)}
+.tex-foot{margin-top:10px;font-size:11px;color:var(--muted);text-align:center;font-style:italic}
+.bell-badge{position:absolute;top:-4px;right:-4px;background:var(--clay);color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid var(--green)}
+.drag-item{touch-action:pan-y}
+.dragging{opacity:.35}
+.drag-ghost{position:fixed;z-index:999;pointer-events:none;background:var(--green);color:#fff;font-size:12px;font-weight:700;padding:7px 11px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.3);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transform:translate(-50%,-130%)}
+.drop-hot{outline:2px dashed var(--clay);outline-offset:-2px;background:#FBEDE9 !important}
+.link-row{display:flex;flex-direction:column;gap:6px;background:#fff;border:1px solid var(--border);border-radius:11px;padding:11px 13px;margin-bottom:9px}
+.link-name{font-size:14px;font-weight:700}
+.link-name small{font-weight:500;color:var(--muted);font-size:11px}
+.link-sel{width:100%;padding:9px;border:1px solid var(--border);border-radius:9px;font-size:13px;background:#fff}
+.top::before{content:'';position:absolute;width:220px;height:220px;border-radius:50%;top:-90px;right:-60px;background:radial-gradient(circle,rgba(201,71,43,.25),transparent 65%)}
+.top-tag{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--gold-light);font-weight:600}
+.top h1{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:26px;color:var(--cream);line-height:1.05}
+.top h1 em{font-style:italic;color:var(--clay-light)}
+.top-month{display:flex;align-items:center;gap:10px;margin-top:9px;position:relative}
+.month-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:var(--cream);width:30px;height:30px;border-radius:8px;font-size:15px}
+.month-label{font-size:13px;font-weight:600;color:var(--gold-light);letter-spacing:1px;text-transform:uppercase;min-width:140px;text-align:center}
+.save-state{position:absolute;right:0;font-size:10px;letter-spacing:1px;color:rgba(250,247,242,.5)}
+.save-state.ok{color:#8FD694}
+.save-state.err{color:#FF9B8A}
+
+.nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;background:var(--dark);display:grid;grid-template-columns:repeat(7,1fr);padding:8px 4px calc(8px + env(safe-area-inset-bottom));z-index:50;border-top:1px solid rgba(255,255,255,.08)}
+.nav button{background:none;border:none;color:rgba(250,247,242,.45);font-size:9.5px;font-weight:500;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 1px;border-radius:10px;letter-spacing:.1px}
+.nav button .ico{font-size:17px}
+.nav button.on{color:var(--gold-light)}
+
+.page{display:none;padding:18px 16px 30px}
+.page.on{display:block}
+.sec-eyebrow{font-size:9.5px;letter-spacing:3px;text-transform:uppercase;color:var(--clay);font-weight:600}
+.sec-title{font-family:'Cormorant Garamond',serif;font-size:23px;font-weight:400;margin-bottom:14px}
+.sec-title em{font-style:italic;color:var(--clay)}
+
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.kpi{border-radius:14px;padding:15px 14px}
+.kpi.dark{background:var(--green);color:var(--cream)}
+.kpi.clay{background:var(--clay);color:#fff}
+.kpi.light{background:#fff;border:1px solid var(--border)}
+.kpi-l{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;opacity:.7;font-weight:600}
+.kpi-v{font-family:'Cormorant Garamond',serif;font-size:27px;font-weight:600;line-height:1.15}
+.kpi-s{font-size:11px;opacity:.65;margin-top:1px}
+.bar-wrap{background:#fff;border:1px solid var(--border);border-radius:14px;padding:15px;margin-bottom:14px}
+.bar-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;font-weight:500}
+.bar{height:9px;border-radius:6px;background:#EFE7D8;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--clay),var(--gold));border-radius:6px;transition:width .4s}
+.pend-list{display:flex;flex-direction:column;gap:8px}
+.aulas-mes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px}
+.am-card{background:#fff;border:1px solid var(--border);border-radius:13px;padding:13px 8px;text-align:center}
+.am-v{font-size:24px;font-weight:800;color:var(--green);line-height:1}
+.am-card.personal .am-v{color:var(--c-personal)}
+.am-card.tenis .am-v{color:var(--c-aula)}
+.am-l{font-size:10.5px;color:var(--muted);letter-spacing:.5px;margin-top:5px;font-weight:600}
+.comp-head{display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+.comp-head .sec-eyebrow,.comp-head .sec-title{margin:0}
+.comp-list{display:flex;flex-direction:column;gap:8px;margin:12px 0 18px}
+.comp-item{display:flex;align-items:center;gap:11px;background:#fff;border:1px solid var(--border);border-radius:13px;padding:10px 12px}
+.comp-date{flex-shrink:0;width:48px;text-align:center;background:var(--green);color:#fff;border-radius:10px;padding:7px 4px}
+.comp-date .cd-d{font-size:17px;font-weight:800;line-height:1}
+.comp-date .cd-m{font-size:9px;letter-spacing:1px;opacity:.92;margin-top:2px}
+.comp-info{flex:1;min-width:0}
+.comp-info b{font-size:14px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.comp-info span{font-size:12px;color:var(--muted)}
+.comp-x{background:none;border:none;color:#C0392B;font-size:15px;cursor:pointer;padding:6px;flex-shrink:0}
+.pend-item{background:#fff;border:1px solid var(--border);border-left:4px solid var(--bad);border-radius:11px;padding:11px 13px;display:flex;justify-content:space-between;align-items:center;font-size:13px}
+.pend-item.parcial{border-left-color:var(--warn)}
+.pend-item b{font-weight:600}
+.pend-item span{font-size:12px;color:var(--muted)}
+.empty{background:#fff;border:1px dashed var(--border);border-radius:12px;padding:22px;text-align:center;font-size:13px;color:var(--muted)}
+
+/* AGENDA */
+.seg{display:grid;grid-template-columns:repeat(4,1fr);background:#EFE7D8;border-radius:11px;padding:4px;margin-bottom:13px}
+.seg button{border:none;background:none;padding:8px 4px;font-size:12px;font-weight:600;border-radius:8px;color:var(--muted)}
+.seg button.on{background:var(--green);color:var(--cream)}
+.ag-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.ag-nav .month-btn{background:#fff;border:1px solid var(--border);color:var(--text)}
+.ag-nav-label{font-weight:700;font-size:13.5px;text-transform:capitalize;text-align:center;flex:1}
+.ag-nav-label small{display:block;font-weight:500;font-size:11px;color:var(--muted);text-transform:none}
+.legend{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.legend span{font-size:10px;font-weight:600;padding:3px 9px;border-radius:14px;color:#fff;letter-spacing:.3px}
+.slot{display:flex;gap:10px;margin-bottom:7px}
+.slot-h{width:46px;font-size:12px;font-weight:700;color:var(--muted);padding-top:9px;flex-shrink:0;text-align:right}
+.slot-body{flex:1;min-height:38px;border-radius:10px;border:1px dashed var(--border);background:#fff;display:flex;flex-wrap:wrap;gap:5px;padding:5px;align-items:center}
+.slot-body.has{border-style:solid}
+.ev{font-size:11.5px;font-weight:600;color:#fff;padding:5px 9px;border-radius:8px;border:none;display:flex;align-items:center;gap:6px;max-width:100%}
+.ev small{font-weight:400;opacity:.85;font-size:9.5px}
+.ev.t-aula{background:var(--c-aula)}.ev.t-locacao{background:var(--c-loc)}
+.ev.t-bloqueio{background:var(--c-bloq)}.ev.t-pessoal{background:var(--c-pess)}
+.ev.t-grupo{background:var(--c-grupo)}.ev.t-personal{background:var(--c-personal)}
+.ev .pres{background:rgba(255,255,255,.25);border:none;color:#fff;border-radius:6px;width:24px;height:24px;font-size:12px;flex-shrink:0}
+.ev .pres.ok{background:#fff;color:var(--ok);font-weight:800}
+.slot-add{border:none;background:#F4EDE0;color:var(--muted);width:28px;height:28px;border-radius:8px;font-size:15px;font-weight:600}
+.wk-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border);border-radius:13px;background:#fff}
+.wk{border-collapse:collapse;min-width:660px;width:100%}
+.wk th{position:sticky;top:0;background:var(--green);color:var(--cream);font-size:10.5px;padding:7px 4px;font-weight:600;letter-spacing:.3px;z-index:2}
+.wk th small{display:block;font-weight:400;opacity:.7;font-size:9px}
+.wk td{border:1px solid #F0E8D8;padding:0;height:34px;min-width:92px;vertical-align:middle}
+.wk td.hr{position:sticky;left:0;background:#FDFBF7;font-size:10.5px;font-weight:700;color:var(--muted);text-align:center;min-width:48px;width:48px;z-index:1;border-right:2px solid var(--border)}
+.wk-cell{width:100%;height:100%;border:none;background:none;font-size:10px;font-weight:600;color:#fff;padding:2px 4px;line-height:1.2;overflow:hidden;display:block}
+.wk-cell.t-aula{background:var(--c-aula)}.wk-cell.t-locacao{background:var(--c-loc)}
+.wk-cell.t-bloqueio{background:var(--c-bloq)}.wk-cell.t-pessoal{background:var(--c-pess)}
+.wk-cell.t-grupo{background:var(--c-grupo)}.wk-cell.t-personal{background:var(--c-personal)}
+.wk-cell.free{color:#C8B89A;font-weight:400}
+.wk-cell.multi{background:repeating-linear-gradient(45deg,var(--c-aula),var(--c-aula) 8px,#2F5A94 8px,#2F5A94 16px)}
+.cal{background:#fff;border:1px solid var(--border);border-radius:13px;padding:12px}
+.cal-head{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:6px}
+.cal-head span{font-size:10px;font-weight:700;color:var(--muted);text-align:center;text-transform:uppercase}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-day{aspect-ratio:1;border:none;border-radius:9px;background:#FDFBF7;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:12px;font-weight:600;color:var(--text)}
+.cal-day.out{opacity:.25}
+.cal-day.today{outline:2px solid var(--gold)}
+.cal-day .n{line-height:1}
+.cal-day .c{font-size:9px;font-weight:700;color:#fff;background:var(--c-aula);border-radius:8px;padding:1px 6px;line-height:1.3}
+.cal-day.o1{background:#EAF1E6}.cal-day.o2{background:#CFE3C4}.cal-day.o3{background:#A9CD96}.cal-day.o4{background:#7FB565}
+.tri{display:flex;flex-direction:column;gap:12px}
+.tri-month{background:#fff;border:1px solid var(--border);border-radius:13px;padding:11px}
+.tri-month h4{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;margin-bottom:7px;text-transform:capitalize;display:flex;justify-content:space-between;align-items:baseline}
+.tri-month h4 small{font-family:'DM Sans',sans-serif;font-size:11px;color:var(--muted);font-weight:500}
+.tri-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.tri-day{aspect-ratio:1.4;border-radius:5px;background:#F4EDE0;border:none;font-size:9px;font-weight:600;color:var(--muted)}
+.tri-day.o1{background:#DCE9D4;color:#3A5C2E}.tri-day.o2{background:#B7D6A4;color:#2E4A22}
+.tri-day.o3{background:#8FBE74;color:#fff}.tri-day.o4{background:#5E9A41;color:#fff}
+.tri-day.out{opacity:0;pointer-events:none}
+
+/* ALUNOS */
+.toolbar{display:flex;gap:8px;margin-bottom:12px}
+.toolbar input{flex:1;border:1px solid var(--border);border-radius:11px;padding:10px 13px;background:#fff;outline:none}
+.btn{border:none;border-radius:11px;padding:10px 15px;font-weight:600;font-size:13px;letter-spacing:.3px}
+.btn-clay{background:var(--clay);color:#fff;box-shadow:0 3px 12px rgba(201,71,43,.3)}
+.btn-clay:active{transform:scale(.97)}
+.btn-ghost{background:none;border:1px solid var(--border);color:var(--muted)}
+.aluno{background:#fff;border:1px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden}
+.aluno-head{display:flex;justify-content:space-between;align-items:center;padding:13px 14px;cursor:pointer}
+.aluno-name{font-weight:600;font-size:14px}
+.aluno-sub{font-size:11.5px;color:var(--muted)}
+.badge{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:4px 9px;border-radius:20px}
+.badge.pago{background:#E3F2E4;color:var(--ok)}
+.badge.parcial{background:#FFF6DF;color:var(--warn)}
+.badge.pendente{background:#FCE8E6;color:var(--bad)}
+.aluno-body{display:none;border-top:1px solid #F0E8D8;padding:13px 14px;background:#FDFBF7}
+.aluno.open .aluno-body{display:block}
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:11px}
+.chip{font-size:11.5px;background:var(--green);color:var(--cream);padding:5px 11px;border-radius:18px;font-weight:500}
+.chip.gold{background:var(--gold);color:var(--dark)}
+.chip.warn{background:#8a5a00;color:#fff}
+.chip.code{background:#fff;border:1.5px dashed var(--gold);color:var(--text);font-weight:700;letter-spacing:2px}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.act{border:none;border-radius:10px;padding:10px 8px;font-size:12px;font-weight:600}
+.act.a1{background:var(--green);color:var(--cream)}
+.act.a2{background:var(--gold);color:var(--dark)}
+.act.a3{background:#E3F2E4;color:var(--ok)}
+.act.a4{background:#F4EDE0;color:var(--muted)}
+.act:active{transform:scale(.97)}
+.aluno-foot{display:flex;justify-content:space-between;margin-top:10px;flex-wrap:wrap;gap:4px}
+.ha-box{margin:2px 0 10px;background:#fff;border:1px solid var(--border);border-radius:11px;padding:9px 11px}
+.ha-title{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:5px}
+.ha-row{display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0;border-bottom:1px dashed #EEE6D6}
+.ha-row:last-child{border-bottom:0}
+.ha-empty{font-size:12px;color:var(--muted)}
+.linkbtn{background:none;border:none;font-size:12px;font-weight:600;color:var(--clay);padding:4px}
+.linkbtn.del{color:var(--bad)}
+.linkbtn.wa{color:#128C4B}
+
+/* LANÇAMENTOS */
+.quick{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px}
+.quick button{border:none;border-radius:13px;padding:15px 10px;font-weight:600;font-size:12.5px;display:flex;flex-direction:column;gap:3px;align-items:center}
+.quick .q1{background:var(--green);color:var(--cream)}
+.quick .q2{background:var(--green-2);color:var(--cream)}
+.quick .q3{background:var(--gold);color:var(--dark)}
+.quick .q4{background:var(--clay);color:#fff}
+.quick small{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600}
+.mov{background:#fff;border:1px solid var(--border);border-radius:11px;padding:10px 13px;margin-bottom:7px;display:flex;justify-content:space-between;align-items:center;font-size:13px}
+.mov-l b{display:block;font-weight:600}
+.mov-l span{font-size:11px;color:var(--muted)}
+.mov-v{font-weight:700;white-space:nowrap}
+.mov-v.in{color:var(--ok)}
+.mov-x{background:none;border:none;color:#C8B89A;font-size:15px;margin-left:9px}
+
+/* FINANCEIRO */
+.fin-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.fin-card{background:#fff;border:1px solid var(--border);border-radius:13px;padding:13px}
+.fin-card .l{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);font-weight:600}
+.fin-card .v{font-family:'Cormorant Garamond',serif;font-size:23px;font-weight:600}
+.fin-card.hero{grid-column:1/-1;background:var(--green);border:none;color:var(--cream)}
+.fin-card.hero .l{color:var(--gold-light)}
+.fin-card.hero .v{font-size:32px;color:#fff}
+.fin-card.desp{background:#FBEDE9;border-color:#EBC9BE}
+.fin-card.desp .v{color:var(--clay)}
+.fin-card.saldo{background:var(--green-2);border:none;color:var(--cream)}
+.fin-card.saldo .l{color:var(--gold-light)}
+.fin-card.saldo .v{color:#fff}
+.chart{background:#fff;border:1px solid var(--border);border-radius:13px;padding:15px 15px 9px;margin-bottom:14px}
+.chart-row{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+.chart-lab{width:74px;font-size:10.5px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);flex-shrink:0}
+.chart-track{flex:1;background:#F0ECE4;border-radius:7px;height:22px;overflow:hidden}
+.chart-bar{display:block;height:100%;border-radius:7px;min-width:2px;transition:width .4s}
+.chart-bar.meta{background:var(--gold)}
+.chart-bar.rec{background:var(--green)}
+.chart-bar.arec{background:#C99A3A;opacity:.55}
+.chart-bar.desp{background:var(--clay)}
+.chart-bar.neg{background:#B23A2A}
+.chart-val.neg{color:#B23A2A}
+.chart-val{width:78px;text-align:right;font-size:12px;font-weight:700;flex-shrink:0}
+.desp-item{display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid var(--border);border-radius:11px;padding:10px 13px;margin-bottom:8px}
+.desp-item .di-d{font-size:13px;font-weight:600}
+.desp-item .di-c{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.desp-item .di-v{font-size:14px;font-weight:700;color:var(--clay)}
+.desp-item .di-x{background:none;border:none;color:var(--muted);font-size:17px;padding:0 2px 0 10px}
+.field{margin-bottom:11px}
+.field label{display:block;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.field input,.field select,.field textarea{width:100%;border:1px solid var(--border);border-radius:10px;padding:11px 12px;background:#fff;outline:none}
+.field textarea{resize:vertical;min-height:64px}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--gold)}
+.backup-row{display:flex;gap:8px;margin-top:16px}
+.backup-row .btn{flex:1;font-size:12px}
+.hint{font-size:11.5px;color:var(--muted);margin-top:-6px;margin-bottom:11px;line-height:1.5}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(14,12,8,.55);display:none;z-index:100;align-items:flex-end;justify-content:center}
+.overlay.on{display:flex}
+.modal{background:var(--cream);width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom));max-height:88vh;overflow-y:auto}
+.modal h3{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:600;margin-bottom:14px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.modal-acts{display:flex;gap:9px;margin-top:16px}
+.modal-acts .btn{flex:1;padding:13px}
+.toast{position:fixed;bottom:92px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--dark);color:var(--cream);font-size:13px;font-weight:500;padding:11px 18px;border-radius:24px;opacity:0;transition:all .3s;z-index:200;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* ===== TORNEIO ===== */
+.tor-bar{display:flex;gap:8px;align-items:center;margin-bottom:14px}
+.tor-bar select{flex:1;padding:11px 12px;border:1px solid var(--border);border-radius:12px;background:#fff;font-size:14px;color:var(--text);font-weight:700}
+.tor-novo{padding:11px 13px;border-radius:12px;border:1px solid var(--border);background:#fff;color:var(--green);font-weight:700;font-size:13px;white-space:nowrap;cursor:pointer}
+.tor-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}
+.tor-acts button{padding:12px;border-radius:12px;border:none;font-weight:700;font-size:13px;cursor:pointer}
+.tor-acts .b-add{background:var(--green);color:var(--cream)}
+.tor-acts .b-res{background:var(--clay);color:#fff}
+.tor-acts .b-wpp{background:var(--wapp);color:#fff}
+.tor-acts .b-cfg{background:#fff;color:var(--muted);border:1px solid var(--border)}
+.tg-card{background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+.tg-head{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--green);color:var(--cream)}
+.tg-badge{width:34px;height:34px;border-radius:10px;background:var(--gold);color:var(--green);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;font-family:'Cormorant Garamond',serif}
+.tg-title{font-weight:700;font-size:15px}
+.tg-count{font-size:11px;opacity:.72}
+.tg-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tg-tbl th{font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:700;padding:9px 3px;text-align:center;border-bottom:1px solid var(--border)}
+.tg-tbl th:first-child{text-align:left;padding-left:14px}
+.tg-tbl td{padding:7px 3px;text-align:center;border-bottom:1px solid #F1EADD}
+.tg-tbl tr:last-child td{border-bottom:none}
+.tg-tbl td:first-child{text-align:left;padding-left:14px}
+.tg-name{font-weight:600;color:var(--text);cursor:pointer}
+.tg-rank{display:inline-flex;width:21px;height:21px;border-radius:50%;align-items:center;justify-content:center;font-size:11px;font-weight:800;margin-right:8px;background:#EFE7D8;color:var(--muted);vertical-align:middle}
+.tg-rank.r1{background:var(--gold);color:var(--green)}
+.tg-rank.r2{background:#BFB7A8;color:#fff}
+.tg-rank.r3{background:#D9A066;color:#fff}
+.tg-stat{width:44px;padding:6px 2px;text-align:center;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:700;background:var(--cream);color:var(--text)}
+.tg-pts{display:inline-block;min-width:30px;padding:4px 8px;border-radius:8px;background:#EFE7D8;font-weight:800;color:var(--green)}
+.tg-pts.lead{background:var(--green);color:var(--gold-light)}
+.tg-x{background:none;border:none;color:var(--bad);font-size:14px;cursor:pointer;opacity:.55}
+.tg-mv{background:none;border:none;color:var(--gold);font-size:15px;cursor:pointer;opacity:.7;margin-right:2px}
+.tor-log{background:var(--green);color:var(--cream);border-radius:16px;padding:14px 16px;margin-top:8px}
+.tor-log h4{margin:0 0 6px;font-size:13px;color:var(--gold-light)}
+.tor-log .row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-top:1px solid rgba(255,255,255,.08);font-size:12.5px}
+.tor-log .row:first-of-type{border-top:none}
+.tor-log .ap{background:var(--ok);color:#fff;border:none;border-radius:8px;padding:7px 11px;font-weight:700;font-size:12px;cursor:pointer}
+.tor-log .ds{background:none;border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:8px;padding:7px 10px;cursor:pointer;font-size:12px}
+.tor-empty{text-align:center;color:var(--muted);padding:34px 16px;font-size:13.5px;background:#fff;border:1px dashed var(--border);border-radius:16px}
+.tor-radio{display:flex;gap:10px;margin-top:4px}
+.tor-radio label{flex:1;display:flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:13px;cursor:pointer}
+.tg-drag{cursor:grab;color:var(--muted);font-size:16px;line-height:1;padding:4px 7px 4px 0;user-select:none;touch-action:none;display:inline-block;vertical-align:middle}
+.tg-drag:active{cursor:grabbing;color:var(--gold)}
+.tg-row{transition:opacity .15s}
+.tg-row.tg-dragging{opacity:.3}
+tbody.tg-drop{background:rgba(201,160,74,.10);outline:1px dashed var(--gold);outline-offset:-2px}
+.tg-row.tg-before td{box-shadow:inset 0 2px 0 var(--gold)}
+.tg-row.tg-after td{box-shadow:inset 0 -2px 0 var(--gold)}
+.tg-ghost{position:fixed;z-index:9999;pointer-events:none;opacity:.95;background:#fff;border:1.5px solid var(--gold);border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.28);padding:10px 14px;font-weight:700;color:var(--text);font-size:13px}
+</style>
+<!-- ================= FIREBASE ================= -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+/* CONFIGURAÇÃO DO FIREBASE — Academia João Victor Tênis */
+const firebaseConfig = {
+  apiKey: "AIzaSyCs7o_bUjbMHrR2iu8BpZ1gVuwRZT25C3A",
+  authDomain: "academia-jv-tenis.firebaseapp.com",
+  databaseURL: "https://academia-jv-tenis-default-rtdb.firebaseio.com",
+  projectId: "academia-jv-tenis",
+  storageBucket: "academia-jv-tenis.firebasestorage.app",
+  messagingSenderId: "78772134875",
+  appId: "1:78772134875:web:4671c0eab6ea2c257abdfe",
+  measurementId: "G-J856KE6F20"
+};
+function iniciarFirebase(){
+  try{
+    if(typeof firebase==='undefined')return false;
+    if(!firebaseConfig.apiKey || firebaseConfig.apiKey==="COLE_AQUI")return false;
+    if(!firebase.apps||!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+    window.fbDB = firebase.database();
+    return true;
+  }catch(e){console.warn('Firebase ainda não pronto:',e);return false;}
+}
+(function aguardarFirebase(t){
+  if(iniciarFirebase())return;
+  if(t<40)setTimeout(()=>aguardarFirebase(t+1),150);
+})(0);
+</script>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-actions">
+    <button id="bell-btn" class="eye-btn bell-btn" onclick="abrirNotifs()" title="Avisos">🔔<span class="bell-badge" id="bell-badge" style="display:none">0</span></button>
+    <button id="ped-btn" class="eye-btn ped-btn" onclick="abrirPedidos()" title="Pedidos dos alunos">🧾<span class="bell-badge" id="ped-badge" style="display:none">0</span></button>
+    <button id="hist-btn" class="eye-btn hist-btn" onclick="abrirHist()" title="Histórico de mudanças">🕘</button>
+    <button id="eye-btn" class="eye-btn" onclick="toggleHide()" title="Ocultar/mostrar valores"></button>
+  </div>
+  <div class="top-tag">Academia João Victor Tênis</div>
+  <h1>Painel de <em>gestão</em></h1>
+  <div class="top-month">
+    <button class="month-btn" onclick="shiftMonth(-1)">‹</button>
+    <div class="month-label" id="month-label">—</div>
+    <button class="month-btn" onclick="shiftMonth(1)">›</button>
+    <span class="save-state" id="save-state">conectando…</span>
+  </div>
+</header>
+
+<section class="page on" id="pg-dash">
+  <p class="sec-eyebrow">Visão geral</p>
+  <h2 class="sec-title">Resumo do <em>mês</em></h2>
+  <div class="kpis">
+    <div class="kpi dark"><div class="kpi-l">Recebido</div><div class="kpi-v" id="k-recebido">R$ 0</div><div class="kpi-s" id="k-recebido-s"></div></div>
+    <div class="kpi clay"><div class="kpi-l">A receber</div><div class="kpi-v" id="k-pendente">R$ 0</div><div class="kpi-s" id="k-pendente-s"></div></div>
+    <div class="kpi light"><div class="kpi-l">Alunos ativos</div><div class="kpi-v" id="k-alunos">0</div><div class="kpi-s" id="k-alunos-s"></div></div>
+    <div class="kpi light"><div class="kpi-l">Créditos em aberto</div><div class="kpi-v" id="k-creditos">0</div><div class="kpi-s" id="k-repos-s"></div></div>
+  </div>
+  <div class="bar-wrap">
+    <div class="bar-row"><span>Meta de faturamento</span><span id="bar-txt">—</span></div>
+    <div class="bar"><i id="bar-fill" style="width:0%"></i></div>
+  </div>
+  <p class="sec-eyebrow">Atividade</p>
+  <h2 class="sec-title">Aulas <em>hoje</em></h2>
+  <div class="aulas-mes">
+    <div class="am-card"><div class="am-v" id="k-aulas-dia-total">0</div><div class="am-l">Total</div></div>
+    <div class="am-card personal"><div class="am-v" id="k-aulas-dia-personal">0</div><div class="am-l">💪 Personal</div></div>
+    <div class="am-card tenis"><div class="am-v" id="k-aulas-dia-tenis">0</div><div class="am-l">🎾 Tênis</div></div>
+  </div>
+  <h2 class="sec-title" style="margin-top:16px">📲 Agenda de <em>amanhã</em> <small id="confirm-amanha-data" style="font-weight:600;color:var(--muted);font-size:12px"></small></h2>
+  <div id="confirm-amanha"></div>
+
+  <h2 class="sec-title" style="margin-top:16px">Aulas <em>no mês</em></h2>
+  <div class="aulas-mes">
+    <div class="am-card"><div class="am-v" id="k-aulas-total">0</div><div class="am-l">Total</div></div>
+    <div class="am-card personal"><div class="am-v" id="k-aulas-personal">0</div><div class="am-l">💪 Personal</div></div>
+    <div class="am-card tenis"><div class="am-v" id="k-aulas-tenis">0</div><div class="am-l">🎾 Tênis</div></div>
+  </div>
+  <div class="comp-head">
+    <div><p class="sec-eyebrow">Minha agenda</p><h2 class="sec-title">Compromissos <em>pessoais</em></h2></div>
+    <button class="tor-novo" onclick="abrirNovoCompromisso()">＋ Novo</button>
+  </div>
+  <div class="comp-list" id="comp-list"></div>
+  <div id="datas-inicio"></div>
+  <p class="sec-eyebrow">Cobranças</p>
+  <h2 class="sec-title">Pagamentos <em>pendentes</em></h2>
+  <div class="pend-list" id="pend-list"></div>
+</section>
+
+<section class="page" id="pg-agenda">
+  <p class="sec-eyebrow">Quadro de horários</p>
+  <h2 class="sec-title">Minha <em>agenda</em></h2>
+  <div class="seg">
+    <button class="on" onclick="setView('dia',this)">Dia</button>
+    <button onclick="setView('semana',this)">Semana</button>
+    <button onclick="setView('mes',this)">Mês</button>
+    <button onclick="setView('tri',this)">Trimestre</button>
+  </div>
+  <div class="ag-nav">
+    <button class="month-btn" onclick="agShift(-1)">‹</button>
+    <div class="ag-nav-label" id="ag-label">—</div>
+    <button class="month-btn" onclick="agShift(1)">›</button>
+  </div>
+  <div class="legend">
+    <span style="background:var(--c-aula)">Tênis</span>
+    <span style="background:var(--c-grupo)">Grupo</span>
+    <span style="background:var(--c-personal)">Personal</span>
+    <span style="background:var(--c-loc)">Locação</span>
+    <span style="background:var(--c-pess)">Pessoal</span>
+    <span style="background:var(--c-bloq)">Bloqueio</span>
+    <button onclick="syncRequests(false)" style="border:1px solid var(--border);background:#fff;color:var(--text);font-size:10px;font-weight:700;padding:3px 10px;border-radius:14px;letter-spacing:.3px">🔄 Agendamentos de alunos</button>
+    <button onclick="abrirVincular()" style="border:1px solid var(--border);background:#fff;color:var(--text);font-size:10px;font-weight:700;padding:3px 10px;border-radius:14px;letter-spacing:.3px">🔗 Vincular nomes aos alunos</button>
+    <button onclick="abrirHorario()" style="border:none;background:var(--green);color:#fff;font-size:11.5px;font-weight:800;padding:6px 14px;border-radius:14px;letter-spacing:.2px">🗓️ Horários: aula · locação · fechado</button>
+  </div>
+  <div id="ag-view"></div>
+</section>
+
+<section class="page" id="pg-alunos">
+  <p class="sec-eyebrow">Cadastro</p>
+  <h2 class="sec-title">Meus <em>alunos</em></h2>
+  <div class="toolbar">
+    <input id="search" placeholder="Buscar aluno…" oninput="renderAlunos()">
+    <button class="btn btn-clay" onclick="openAlunoModal()">+ Novo</button>
+  </div>
+  <div class="seg" id="alunos-filtro">
+    <button class="on" onclick="setFiltroAluno('todos',this)">Todos</button>
+    <button onclick="setFiltroAluno('tenis',this)">🎾 Tênis</button>
+    <button onclick="setFiltroAluno('personal',this)">💪 Personal</button>
+  </div>
+  <div id="alunos-list"></div>
+</section>
+
+<section class="page" id="pg-lanc">
+  <p class="sec-eyebrow">Caixa rápido</p>
+  <h2 class="sec-title">Lançar <em>receita</em></h2>
+  <div class="quick">
+    <button class="q1" onclick="quickLanc('Avulsa Particular',170)">Avulsa Particular<small>R$ 170</small></button>
+    <button class="q2" onclick="quickLanc('Avulsa Grupo',95)">Avulsa Grupo<small>R$ 95</small></button>
+    <button class="q3" onclick="quickLanc('Locação de Quadra',70)">Locação 1h<small>R$ 70</small></button>
+    <button class="q2" onclick="quickLanc('Personal avulso',(DB.precos&&DB.precos.personal)||130,'personal')">Personal avulso<small>R$ 130</small></button>
+    <button class="q4" onclick="openLancModal()">Outro valor<small>+ lançar</small></button>
+  </div>
+  <p class="sec-eyebrow">Histórico do mês</p>
+  <h2 class="sec-title">Movimentações</h2>
+  <div id="mov-list"></div>
+</section>
+
+<section class="page" id="pg-fin">
+  <p class="sec-eyebrow">Financeiro</p>
+  <h2 class="sec-title">Fechamento do <em>mês</em></h2>
+  <div class="fin-grid">
+    <div class="fin-card hero"><div class="l">Total recebido no mês</div><div class="v" id="f-total">R$ 0</div></div>
+    <div class="fin-card desp"><div class="l">Despesas do mês</div><div class="v" id="f-despesas">R$ 0</div></div>
+    <div class="fin-card saldo"><div class="l">Saldo (recebido − despesas)</div><div class="v" id="f-saldo">R$ 0</div></div>
+    <div class="fin-card"><div class="l">Mensalidades</div><div class="v" id="f-mens">R$ 0</div></div>
+    <div class="fin-card"><div class="l">Avulsas</div><div class="v" id="f-avulsas">R$ 0</div></div>
+    <div class="fin-card"><div class="l">Locações</div><div class="v" id="f-loc">R$ 0</div></div>
+    <div class="fin-card"><div class="l">Outros</div><div class="v" id="f-outros">R$ 0</div></div>
+    <div class="fin-card"><div class="l">🎾 Tênis (receita)</div><div class="v" id="f-tenis">R$ 0</div></div>
+    <div class="fin-card"><div class="l">💪 Personal (receita)</div><div class="v" id="f-personal">R$ 0</div></div>
+    <div class="fin-card"><div class="l">Previsto (mensalidades)</div><div class="v" id="f-previsto">R$ 0</div></div>
+    <div class="fin-card"><div class="l">Inadimplência</div><div class="v" id="f-inad">R$ 0</div></div>
+  </div>
+
+  <p class="sec-eyebrow">Visão do mês</p>
+  <h2 class="sec-title">Comparativo <em>visual</em></h2>
+  <div class="chart" id="fin-chart"></div>
+
+  <p class="sec-eyebrow">Despesas</p>
+  <h2 class="sec-title">Gastos da <em>academia</em></h2>
+  <button class="btn btn-clay" style="width:100%;margin-bottom:12px" onclick="openDespesaModal()">+ Adicionar despesa</button>
+  <div id="desp-list"></div>
+  <div class="field">
+    <label>Meta mensal de faturamento (R$)</label>
+    <input type="number" id="meta-input" onchange="saveMeta(this.value)">
+  </div>
+  <div class="field">
+    <label>📣 Aviso no app do aluno</label>
+    <textarea id="aviso-input" placeholder="Ex.: Com as chuvas em Curitiba, estou acompanhando tudo individualmente…" onchange="saveAviso(this.value)"></textarea>
+  </div>
+  <p class="hint">Esse aviso aparece para todos os alunos no app deles, junto com o saldo de créditos e reposições.</p>
+
+  <div class="field" style="margin-top:14px">
+    <label>📄 Termo / regras de uso (o aluno aceita no 1º acesso)</label>
+    <textarea id="termo-input" placeholder="Ex.: Cancelamentos com até 4h de antecedência. Aulas perdidas sem aviso são descontadas. Em caso de chuva, a aula é remarcada…" onchange="saveTermo(this.value)" style="min-height:90px"></textarea>
+  </div>
+  <p class="hint">Quando você muda o termo, todos os alunos aceitam de novo no próximo acesso. Deixe em branco para não pedir aceite.</p>
+
+  <p class="sec-eyebrow" style="margin-top:18px">Pagamentos</p>
+  <h2 class="sec-title">Formas de <em>cobrança</em></h2>
+  <div class="field">
+    <label>🔑 Chave Pix (aparece para o aluno copiar)</label>
+    <select id="pixtipo-input" onchange="savePag()" style="margin-bottom:8px">
+      <option value="celular">📱 Celular</option>
+      <option value="cpf">CPF</option>
+      <option value="cnpj">CNPJ</option>
+      <option value="email">✉️ E-mail</option>
+      <option value="aleatoria">🎲 Chave aleatória</option>
+    </select>
+    <input id="pix-input" placeholder="Ex.: 41995415712, e-mail, CPF/CNPJ ou chave aleatória" onchange="savePag()">
+    <p class="hint" id="pix-preview" style="margin-top:6px"></p>
+  </div>
+  <div class="field" style="display:flex;gap:8px">
+    <div style="flex:2"><label>👤 Nome do recebedor (Pix)</label><input id="pixnome-input" placeholder="Ex.: JOAO VICTOR" onchange="savePag()"></div>
+    <div style="flex:1"><label>🏙️ Cidade</label><input id="pixcidade-input" placeholder="CURITIBA" onchange="savePag()"></div>
+  </div>
+  <p class="hint">Com a chave + nome + cidade, o app gera o <b>Pix Copia e Cola</b> e o <b>QR Code</b> com o valor já preenchido — o aluno só confirma no banco e avisa que pagou.</p>
+  <div class="field">
+    <label>💳 Link de pagamento por cartão</label>
+    <input id="card-input" placeholder="Cole aqui o link (Mercado Pago, InfinitePay, PagBank…)" onchange="savePag()">
+  </div>
+  <p class="hint">O link de cartão você gera no app do seu banco/maquininha (InfinitePay, Mercado Pago, PagBank, etc.) e cola aqui. O aluno verá os botões Pix, Cartão e Dinheiro no app dele.</p>
+
+  <p class="sec-eyebrow" style="margin-top:18px">Valores avulsos</p>
+  <h2 class="sec-title">Aula avulsa & <em>locação</em></h2>
+  <div class="row2">
+    <div class="field"><label>Aula avulsa · Particular (R$)</label><input type="number" id="pr-avpart" inputmode="decimal" onchange="savePag()"></div>
+    <div class="field"><label>Aula avulsa · Grupo (R$)</label><input type="number" id="pr-avgrupo" inputmode="decimal" onchange="savePag()"></div>
+  </div>
+  <div class="row2">
+    <div class="field"><label>Locação da quadra · 1h (R$)</label><input type="number" id="pr-loc" inputmode="decimal" onchange="savePag()"></div>
+    <div class="field"><label>Treino de personal avulso (R$)</label><input type="number" id="pr-personal" inputmode="decimal" onchange="savePag()"></div>
+  </div>
+  <p class="hint">Esses valores aparecem para o aluno na opção "Comprar / Reservar" do app dele.</p>
+
+  <h2 class="sec-title" style="margin-top:16px">Mensalidade em <em>grupo</em> · R$ por aula</h2>
+  <div class="row2">
+    <div class="field"><label>👥 Dupla · 2 pessoas (R$/aula)</label><input type="number" id="pr-gdupla" inputmode="decimal" onchange="savePag()"></div>
+    <div class="field"><label>👥 Trio · 3 pessoas (R$/aula)</label><input type="number" id="pr-gtrio" inputmode="decimal" onchange="savePag()"></div>
+  </div>
+  <div class="row2">
+    <div class="field"><label>👥 Quarteto · 4 pessoas (R$/aula)</label><input type="number" id="pr-gquarteto" inputmode="decimal" onchange="savePag()"></div>
+    <div class="field"></div>
+  </div>
+  <p class="hint">Mensalidade do grupo = preço por aula × nº de aulas do plano. Ex.: Dupla R$ 85 × Flex 8 = <b>R$ 680</b>. Grupo maior tem preço menor por pessoa, mas rende mais por hora pra você.</p>
+
+  <p class="sec-eyebrow" style="margin-top:18px">Ferramentas</p>
+  <h2 class="sec-title">Grade & <em>planilha</em></h2>
+  <div class="backup-row">
+    <button class="btn btn-ghost" onclick="exportAgendaExcel()">📊 Exportar agenda p/ Excel</button>
+    <button class="btn btn-ghost" onclick="instalarGrade()">🎾 Instalar grade da planilha</button>
+  </div>
+  <p class="hint">"Exportar agenda" baixa um arquivo que abre no Excel/Planilhas com a grade da semana. "Instalar grade" repõe a grade-padrão da sua planilha (pede confirmação e preserva alunos, lançamentos e agendamentos).</p>
+
+  <p class="sec-eyebrow" style="margin-top:18px">Segurança</p>
+  <h2 class="sec-title">Backup dos <em>dados</em></h2>
+  <div class="backup-row">
+    <button class="btn btn-ghost" onclick="exportBackup()">⬇ Exportar backup</button>
+    <button class="btn btn-ghost" onclick="document.getElementById('import-file').click()">⬆ Importar</button>
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="importBackup(this)">
+  </div>
+</section>
+
+<section class="page" id="pg-graf">
+  <p class="sec-eyebrow">Gráficos</p>
+  <h2 class="sec-title">Visão do <em>negócio</em></h2>
+
+  <div class="fin-grid">
+    <div class="fin-card hero"><div class="l">Faturamento no ano <span id="g-ano-lbl"></span></div><div class="v" id="g-ano-fat">R$ 0</div></div>
+    <div class="fin-card"><div class="l">Alunos hoje</div><div class="v" id="g-alunos-hoje">0</div></div>
+    <div class="fin-card"><div class="l">Média mensal no ano</div><div class="v" id="g-media-mes">R$ 0</div></div>
+  </div>
+  <p class="hint">📊 Os gráficos mostram <b>mês a mês</b>. Como você começou agora, aparecem os últimos 6 meses — os anteriores ficam zerados e vão se preenchendo conforme você lança pagamentos e despesas. Em poucos meses isso vira um gráfico completo de evolução.</p>
+
+  <p class="sec-eyebrow">Faturamento mensal</p>
+  <h2 class="sec-title">Receita por <em>mês</em></h2>
+  <div class="chart" id="graf-fat"></div>
+
+  <p class="sec-eyebrow" style="margin-top:18px">Tênis × Personal</p>
+  <h2 class="sec-title">🎾 Faturamento <em>tênis</em> por mês</h2>
+  <div class="chart" id="graf-fat-tenis"></div>
+  <h2 class="sec-title" style="margin-top:14px">💪 Faturamento <em>personal</em> por mês</h2>
+  <div class="chart" id="graf-fat-personal"></div>
+  <p class="hint">Receita separada por modalidade. Mensalidades entram automaticamente pelo tipo do aluno; avulsos de personal pelo botão "Personal avulso" no Caixa.</p>
+
+  <p class="sec-eyebrow">Despesas mensais</p>
+  <h2 class="sec-title">Gastos por <em>mês</em></h2>
+  <div class="chart" id="graf-desp"></div>
+
+  <p class="sec-eyebrow">Lucro mensal</p>
+  <h2 class="sec-title">Saldo por <em>mês</em></h2>
+  <div class="chart" id="graf-lucro"></div>
+  <p class="hint">Lucro = faturamento − despesas de cada mês. Barras verdes indicam meses positivos; vermelhas, meses no negativo.</p>
+
+  <p class="sec-eyebrow">Alunos por mês</p>
+  <h2 class="sec-title">Evolução de <em>alunos</em></h2>
+  <div class="chart" id="graf-alunos"></div>
+  <p class="hint">O número de alunos por mês começa a ser registrado automaticamente a partir de agora. Para meses anteriores, mostramos quantos alunos pagaram mensalidade (quando houver esse registro).</p>
+
+  <p class="sec-eyebrow">Comparativo anual</p>
+  <h2 class="sec-title">Faturamento por <em>ano</em></h2>
+  <div class="chart" id="graf-ano"></div>
+
+  <p class="sec-eyebrow" style="margin-top:18px">Ocupação por horário</p>
+  <h2 class="sec-title">Quais <em>horários</em> mais enchem</h2>
+  <div class="chart" id="graf-ocup"></div>
+  <p class="hint">Quantas vezes cada horário foi usado (aula ou locação) nas últimas 4 semanas. Os horários com barras maiores são os mais procurados — ajuda a decidir onde abrir mais aula e onde deixar para locação.</p>
+</section>
+
+<section class="page" id="pg-torneio">
+  <p class="sec-eyebrow">Competições</p>
+  <h2 class="sec-title">Torneio · <em>Barragem</em></h2>
+  <div class="tor-bar">
+    <select id="tor-sel" onchange="selTorneio(this.value)"></select>
+    <button class="tor-novo" onclick="abrirNovoTorneio()">＋ Novo</button>
+  </div>
+  <div class="tor-acts">
+    <button class="b-add" onclick="abrirAddJogador()">＋ Jogador</button>
+    <button class="b-res" onclick="abrirResultadoTor()">🎾 Registrar resultado</button>
+    <button class="b-wpp" onclick="compartilharTorneio()">📲 Texto</button>
+    <button class="b-wpp" onclick="salvarBarragemImg()">🖼️ Imagem</button>
+    <button class="b-wpp" onclick="baixarBarragemPDF()">📄 PDF</button>
+    <button class="b-cfg" onclick="excluirTorneio()">🗑️ Excluir torneio</button>
+  </div>
+  <div id="tor-grupos"></div>
+  <div id="tor-log-wrap"></div>
+  <div id="tor-export"></div>
+</section>
+
+<!-- MODAL NOVO TORNEIO -->
+<div class="overlay" id="ov-tor-novo" onclick="if(event.target===this)closeModal('ov-tor-novo')">
+  <div class="modal">
+    <h3>Novo torneio</h3>
+    <div class="field"><label>Nome</label><input id="tn-nome" placeholder="Ex.: Barragem 2026, Torneio Anual…"></div>
+    <div class="field"><label>Tipo</label>
+      <select id="tn-tipo"><option value="barragem">Barragem (grupos A–E)</option><option value="anual">Torneio anual</option></select>
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeModal('ov-tor-novo')">Cancelar</button>
+      <button class="btn btn-clay" onclick="criarTorneio()">Criar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ADICIONAR JOGADOR -->
+<div class="overlay" id="ov-tor-jogador" onclick="if(event.target===this)closeModal('ov-tor-jogador')">
+  <div class="modal">
+    <h3>Adicionar jogador</h3>
+    <div class="field"><label>Vincular a um aluno (opcional)</label><select id="tj-aluno" onchange="tjAlunoSel()"></select></div>
+    <div class="field"><label>Nome</label><input id="tj-nome" placeholder="Nome do jogador"></div>
+    <div class="field"><label>Categoria / grupo</label><select id="tj-grupo"></select></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeModal('ov-tor-jogador')">Cancelar</button>
+      <button class="btn btn-clay" onclick="addJogadorTor()">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL REGISTRAR RESULTADO -->
+<div class="overlay" id="ov-tor-result" onclick="if(event.target===this)closeModal('ov-tor-result')">
+  <div class="modal">
+    <h3>Registrar resultado</h3>
+    <div class="field"><label>Grupo</label><select id="tr-grupo" onchange="trPlayers()"></select></div>
+    <div class="row2">
+      <div class="field"><label>Jogador 1</label><select id="tr-p1"></select></div>
+      <div class="field"><label>Jogador 2</label><select id="tr-p2"></select></div>
+    </div>
+    <div class="field"><label>Vencedor</label><select id="tr-venc"></select></div>
+    <div class="field"><label>Tipo</label>
+      <div class="tor-radio">
+        <label><input type="radio" name="tr-tipo" value="normal" checked> Jogo normal</label>
+        <label><input type="radio" name="tr-tipo" value="wo"> W.O.</label>
+      </div>
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeModal('ov-tor-result')">Cancelar</button>
+      <button class="btn btn-clay" onclick="salvarResultadoTor()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MOVER JOGADOR -->
+<div class="overlay" id="ov-tor-move" onclick="if(event.target===this)closeModal('ov-tor-move')">
+  <div class="modal">
+    <h3>Mover jogador</h3>
+    <p class="sub" id="tm-info" style="color:var(--muted);font-size:13px;margin:-4px 0 10px"></p>
+    <div class="field"><label>Mover para o grupo</label><select id="tm-grupo"></select></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeModal('ov-tor-move')">Cancelar</button>
+      <button class="btn btn-clay" onclick="confirmarMoverTor()">Mover</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOVO COMPROMISSO -->
+<div class="overlay" id="ov-comp" onclick="if(event.target===this)closeModal('ov-comp')">
+  <div class="modal">
+    <h3>Novo compromisso</h3>
+    <div class="field"><label>Título</label><input id="cp-titulo" placeholder="Ex.: Dentista, reunião, médico…"></div>
+    <div class="field"><label>Data</label><input id="cp-data" type="date"></div>
+    <div class="field"><label>Hora (opcional)</label><input id="cp-hora" type="time"></div>
+    <div class="field"><label>Observação (opcional)</label><input id="cp-nota" placeholder="Local, detalhe…"></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeModal('ov-comp')">Cancelar</button>
+      <button class="btn btn-clay" onclick="salvarCompromisso()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="ov-horario" onclick="if(event.target===this)closeModal('ov-horario')">
+  <div class="modal" style="max-width:470px">
+    <h3>🗓️ Abrir/fechar horários</h3>
+    <div style="display:flex;gap:6px;margin-bottom:9px">
+      <button id="hmode-sem" onclick="setHMode('semana')" style="flex:1;padding:7px;border-radius:9px;border:1px solid var(--border);font-size:11.5px;font-weight:700">Dia da semana</button>
+      <button id="hmode-dat" onclick="setHMode('data')" style="flex:1;padding:7px;border-radius:9px;border:1px solid var(--border);font-size:11.5px;font-weight:700">📅 Data específica</button>
+    </div>
+    <p class="hint" id="h-hint">Marque cada horário: <b style="color:#2E7D52">Aula</b>, <b style="color:#9A7B2E">Locação</b> (só aluguel) ou <b style="color:#B23A3A">Fechado</b>.</p>
+    <div id="h-semana">
+      <div id="hdia-tabs" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:9px"></div>
+      <button onclick="copiarParaUteis()" style="width:100%;font-size:10.5px;font-weight:700;padding:6px;border-radius:8px;border:1px dashed var(--border);background:#fff;color:var(--muted);margin-bottom:6px">⎘ Copiar este dia para seg–sex</button>
+      <button onclick="restaurarPadrao()" style="width:100%;font-size:10.5px;font-weight:700;padding:6px;border-radius:8px;border:1px dashed var(--border);background:#fff;color:var(--muted);margin-bottom:8px">↺ Restaurar padrão recomendado (todos os dias)</button>
+    </div>
+    <div id="h-data" style="display:none;margin-bottom:8px">
+      <input type="date" id="h-date" onchange="selData()" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:9px;font-size:13px">
+      <div id="h-data-info" style="font-size:11.5px;color:var(--muted);margin:6px 2px"></div>
+      <button onclick="removerData()" style="width:100%;font-size:10.5px;font-weight:700;padding:6px;border-radius:8px;border:1px dashed var(--border);background:#fff;color:var(--muted)">↩︎ Voltar ao padrão da semana nesta data</button>
+      <div id="h-datas-list"></div>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:7px">
+      <button onclick="diaTodo('aula')" style="flex:1;font-size:10.5px;font-weight:700;padding:6px 2px;border-radius:8px;border:1px solid var(--border);background:#fff;color:#2E7D52">Tudo aula</button>
+      <button onclick="diaTodo('loc')" style="flex:1;font-size:10.5px;font-weight:700;padding:6px 2px;border-radius:8px;border:1px solid var(--border);background:#fff;color:#9A7B2E">Tudo locação</button>
+      <button onclick="diaTodo('fechado')" style="flex:1;font-size:10.5px;font-weight:700;padding:6px 2px;border-radius:8px;border:1px solid var(--border);background:#fff;color:#B23A3A">Tudo fechado</button>
+    </div>
+    <div id="hhoras-list" style="max-height:40vh;overflow:auto;display:flex;flex-direction:column;gap:5px"></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeModal('ov-horario')">Cancelar</button>
+      <button class="btn btn-clay" onclick="salvarHorario()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<nav class="nav">
+  <button class="on" onclick="go('dash',this)"><span class="ico">🏠</span>Início</button>
+  <button onclick="go('agenda',this)"><span class="ico">📅</span>Agenda</button>
+  <button onclick="go('alunos',this)"><span class="ico">🎾</span>Alunos</button>
+  <button onclick="go('lanc',this)"><span class="ico">💵</span>Caixa</button>
+  <button onclick="go('fin',this)"><span class="ico">📊</span>Financeiro</button>
+  <button onclick="go('graf',this)"><span class="ico">📈</span>Gráficos</button>
+  <button onclick="go('torneio',this)"><span class="ico">🏆</span>Torneio</button>
+</nav>
+
+<!-- MODAL ALUNO -->
+<div class="overlay" id="ov-aluno" onclick="if(event.target===this)closeModal('ov-aluno')">
+  <div class="modal">
+    <h3 id="aluno-modal-title">Novo aluno</h3>
+    <input type="hidden" id="a-id">
+    <div class="field"><label>Nome</label><input id="a-nome" placeholder="Nome do aluno"></div>
+    <div class="field"><label>WhatsApp (com DDD)</label><input id="a-tel" placeholder="41999999999" inputmode="numeric"></div>
+    <div class="row2">
+      <div class="field"><label>Modalidade</label>
+        <select id="a-tipo" onchange="applyAlunoTipoUI()">
+          <option>Particular</option><option>Dupla</option><option>Trio</option><option>Quarteto</option><option value="Grupo">Grupo (antigo)</option><option>Personal</option>
+        </select>
+      </div>
+      <div class="field"><label id="a-plano-lbl">Plano (aulas/mês)</label>
+        <select id="a-plano" onchange="sugerirMensalidade()">
+          <option value="3">Flex 3</option><option value="4">Flex 4</option>
+          <option value="6">Flex 6</option><option value="8">Flex 8</option><option value="10">Flex 10</option>
+        </select>
+      </div>
+    </div>
+    <div class="field" id="a-valoraula-wrap" style="display:none"><label>💪 Valor por treino — Personal (R$)</label><input type="number" id="a-valoraula" value="130" onchange="sugerirMensalidade()"></div>
+    <div class="row2">
+      <div class="field"><label>Mensalidade (R$)</label><input type="number" id="a-mensalidade"></div>
+      <div class="field"><label>Créditos atuais</label><input type="number" id="a-creditos" value="0"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Reposições</label><input type="number" id="a-repos" value="0"></div>
+      <div class="field"><label>Situação</label>
+        <select id="a-status"><option value="pendente">Pendente</option><option value="parcial">Pagou 50%</option><option value="pago">Pago</option></select>
+      </div>
+    </div>
+    <div class="field"><label>Dia de vencimento da mensalidade (1–28)</label><input type="number" id="a-venc" min="1" max="28" value="10"></div>
+    <div class="field"><label>💳 Link de cartão deste aluno (Nubank)</label><input id="a-cardlink" placeholder="Cole o link de cobrança do Nubank deste aluno"></div>
+    <div class="field"><label>🏋️ Link do treino no MFit (alunos de personal)</label><input id="a-mfit" placeholder="Cole o link do treino do MFit deste aluno"></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeModal('ov-aluno')">Cancelar</button>
+      <button class="btn btn-clay" onclick="saveAluno()">Salvar aluno</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL LANÇAMENTO -->
+<div class="overlay" id="ov-lanc" onclick="if(event.target===this)closeModal('ov-lanc')">
+  <div class="modal">
+    <h3>Novo lançamento</h3>
+    <div class="field"><label>Descrição</label><input id="l-desc" placeholder="Ex.: Locação 2h, aula experimental…"></div>
+    <div class="row2">
+      <div class="field"><label>Valor (R$)</label><input type="number" id="l-valor" inputmode="decimal"></div>
+      <div class="field"><label>Categoria</label>
+        <select id="l-cat"><option value="avulsa">Avulsa</option><option value="locacao">Locação</option><option value="mensalidade">Mensalidade</option><option value="outro">Outro</option></select>
+      </div>
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeModal('ov-lanc')">Cancelar</button>
+      <button class="btn btn-clay" onclick="saveLanc()">Lançar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="ov-desp" onclick="if(event.target===this)closeModal('ov-desp')">
+  <div class="modal">
+    <h3>Nova despesa</h3>
+    <div class="field"><label>Descrição</label><input id="d-desc" placeholder="Ex.: Aluguel da quadra, bolas, luz…"></div>
+    <div class="row2">
+      <div class="field"><label>Valor (R$)</label><input type="number" id="d-valor" inputmode="decimal" placeholder="0,00"></div>
+      <div class="field"><label>Tipo</label>
+        <select id="d-cat">
+          <option>Aluguel</option><option>Materiais (bolas, etc.)</option><option>Energia / Água</option>
+          <option>Manutenção</option><option>Marketing</option><option>Impostos / Taxas</option><option>Outro</option>
+        </select>
+      </div>
+    </div>
+    <p class="hint">Informe o valor positivo — o sistema registra como saída automaticamente.</p>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeModal('ov-desp')">Cancelar</button>
+      <button class="btn btn-clay" onclick="saveDespesa()">Lançar despesa</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="ov-notif" onclick="if(event.target===this)closeModal('ov-notif')">
+  <div class="modal">
+    <h3>🔔 Avisos</h3>
+    <div id="notif-list" style="max-height:62vh;overflow-y:auto"></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="limparNotifs()">Limpar tudo</button>
+      <button class="btn btn-clay" onclick="closeModal('ov-notif')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="ov-ped" onclick="if(event.target===this)closeModal('ov-ped')">
+  <div class="modal">
+    <h3>🧾 Pedidos dos alunos</h3>
+    <p style="font-size:12px;color:var(--muted);margin:-2px 0 12px">Aceite com um toque: mensalidade marca como paga e lança no caixa; plano atualiza o cadastro; compra lança a receita.</p>
+    <div id="ped-list" style="max-height:60vh;overflow-y:auto"></div>
+    <div class="modal-acts">
+      <button class="btn btn-clay" onclick="closeModal('ov-ped')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="ov-link" onclick="if(event.target===this)closeModal('ov-link')">
+  <div class="modal">
+    <h3>🔗 Vincular nomes aos alunos</h3>
+    <div id="link-list" style="max-height:56vh;overflow-y:auto"></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeModal('ov-link')">Fechar</button>
+      <button class="btn btn-clay" onclick="salvarVinculos()">Salvar vínculos</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SLOT AGENDA -->
+<div class="overlay" id="ov-slot" onclick="if(event.target===this)closeModal('ov-slot')">
+  <div class="modal">
+    <h3 id="slot-title">Horário</h3>
+    <div id="slot-evs"></div>
+    <button class="btn btn-ghost" style="width:100%;margin-top:10px;color:var(--c-bloq);border-color:#E5C0BA" onclick="marcarChuvaSlot()">☔ Marcar chuva / cancelar este horário</button>
+    <div style="border-top:1px solid var(--border);margin:14px 0;padding-top:14px">
+      <p style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:9px">Adicionar neste horário</p>
+      <div class="field"><label>Vincular aluno cadastrado (opcional)</label>
+        <select id="s-aluno" onchange="slotPickAluno()"><option value="">— sem vínculo —</option></select>
+      </div>
+      <div class="field"><label>Nome / descrição</label><input id="s-titulo" placeholder="Ex.: Carolina, Locação, Almoço…"></div>
+      <div class="row2">
+        <div class="field"><label>Tipo</label>
+          <select id="s-tipo" onchange="toggleGrupoWrap()">
+            <option value="aula">Tênis (aula)</option><option value="grupo">Tênis (grupo)</option>
+            <option value="personal">Personal</option>
+            <option value="locacao">Locação</option><option value="pessoal">Compromisso pessoal</option>
+            <option value="bloqueio">Bloqueio (almoço/treino)</option>
+          </select>
+        </div>
+        <div class="field"><label>Recorrência</label>
+          <select id="s-rec"><option value="fixo">Toda semana (fixo)</option><option value="pontual">Só nesta data</option></select>
+        </div>
+      </div>
+      <div class="field" id="s-grupo-wrap" style="display:none">
+        <label>👥 Pessoas nesta aula em grupo</label>
+        <select id="s-grupo-n" onchange="atualizaGrupoPreco()">
+          <option value="2">2 pessoas (dupla)</option>
+          <option value="3">3 pessoas (trio)</option>
+          <option value="4">4 pessoas (quarteto)</option>
+        </select>
+        <p class="hint" id="s-grupo-preco" style="margin-top:7px"></p>
+      </div>
+      <div class="modal-acts">
+        <button class="btn btn-ghost" onclick="closeModal('ov-slot')">Fechar</button>
+        <button class="btn btn-clay" onclick="saveSlot()">Adicionar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HISTÓRICO DE MUDANÇAS -->
+<div class="overlay" id="ov-hist" onclick="if(event.target===this)closeModal('ov-hist')">
+  <div class="modal">
+    <h3>🕘 Reverter alterações</h3>
+    <p style="font-size:12px;color:var(--muted);margin:-2px 0 12px">Errou ao arrastar, renomear ou editar? Toque em <b>Desfazer</b> para voltar a última alteração (pode tocar várias vezes para voltar as anteriores). <b>Refazer</b> avança de novo. A lista abaixo mostra o que foi feito.</p>
+    <div class="hist-acts">
+      <button class="btn btn-ghost" id="hist-undo" onclick="undoAct()">↩️ Desfazer</button>
+      <button class="btn btn-ghost" id="hist-redo" onclick="redoAct()">↪️ Refazer</button>
+    </div>
+    <div class="hist-list" id="hist-list"></div>
+    <div class="modal-acts" style="margin-top:12px">
+      <button class="btn btn-ghost" style="color:var(--bad)" onclick="limparHist()">Limpar histórico</button>
+      <button class="btn btn-clay" onclick="closeModal('ov-hist')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= ESTADO & PERSISTÊNCIA ================= */
+const KEY='jvtenis-gestao-v1';
+const PUBKEY='jvtenis-app-aluno';
+const BOOKKEY='jvtenis-agendamentos';
+const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
+const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
+function _hm(s){const p=String(s).split(':');return (+p[0])*60+(+p[1]||0);}
+function creditoSlot(hora){
+  const i=HORAS.indexOf(hora);
+  if(i<0)return 1;
+  let dur=60;
+  if(i<HORAS.length-1)dur=_hm(HORAS[i+1])-_hm(HORAS[i]);
+  else dur=30;
+  return (dur>0&&dur<60)?0.5:1;
+}
+function fmtCred(n){const r=Math.round(n*2)/2;return r%1===0?String(r):String(r).replace('.',',');}
+function soLocacao(date,hora){return slotModo(date,hora)!=='aula';}
+function modoPadrao(date,hora){
+  const dia=date.getDay(), m=_hm(hora), H=h=>_hm(h);
+  let modo;
+  if(dia===0){ modo=(m>=H('07:00')&&m<H('18:00'))?'loc':'fechado'; }
+  else if(dia===6){
+    if(m>=H('07:00')&&m<H('12:00'))modo='aula';
+    else if(m>=H('12:00')&&m<H('18:00'))modo='loc';
+    else modo='fechado';
+  } else {
+    if(m<H('07:00'))modo='fechado';
+    else if(m<H('12:00'))modo='aula';
+    else if(m<H('16:00'))modo='loc';
+    else if(m<H('20:00'))modo='aula';
+    else modo='loc';
+  }
+  if(modo==='aula' && (DB.locacaoOnly||[]).indexOf(hora)>=0) modo='loc';
+  return modo;
+}
+function slotModo(date,hora){
+  const od=DB.horarioData&&DB.horarioData[dKey(date)];
+  if(od&&od[hora])return od[hora];
+  const c=DB.horarioCfg&&DB.horarioCfg[date.getDay()];
+  if(c&&c[hora])return c[hora];
+  return modoPadrao(date,hora);
+}
+const PRECOS={Particular:{3:480,4:640,6:960,8:1260,10:1600},Grupo:{3:285,4:360,6:510,8:640,10:750},Personal:{3:390,4:520,6:780,8:1040,10:1300}};
+function grupoPrecoAula(t){const gp=(typeof DB!=='undefined'&&DB.grupoPreco)||{dupla:95,trio:80,quarteto:75};if(t==='Dupla')return gp.dupla||95;if(t==='Trio')return gp.trio||80;if(t==='Quarteto')return gp.quarteto||75;return 0;}
+function precoMensal(t,p){p=Number(p)||0;if(t==='Dupla'||t==='Trio'||t==='Quarteto')return grupoPrecoAula(t)*p;if(t==='Grupo')return (PRECOS.Grupo[p]||0);return (PRECOS[t]&&PRECOS[t][p])||0;}
+let DB={alunos:[],lancamentos:[],meta:10000,agenda:null,presencas:[],compromissos:[],aviso:'',locacaoOnly:null,horarioCfg:null,horarioData:null};
+let now=new Date();
+let curMonth=now.getMonth(),curYear=now.getFullYear();
+let agDate=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+let agView='dia';
+let saveTimer=null;
+let slotCtx=null;
+
+function seedAgenda(){
+  const F=[];let i=0;
+  const add=(dia,hora,titulo,tipo)=>F.push({id:'f'+(i++),dia,hora,titulo,tipo,alunoId:null});
+  [[1,'MARIO'],[2,'BRUNO'],[3,'MARIO'],[4,'BRUNO'],[5,'MARIO']].forEach(([d,n])=>add(d,'06:00',n,'aula'));
+  [[1,'KARINE'],[2,'GUI'],[3,'KARINE'],[4,'GUI'],[5,'KARINE'],[6,'ALAN E CAMILA']].forEach(([d,n])=>add(d,'07:00',n,'aula'));
+  [[1,'GUI'],[2,'GI'],[4,'GI'],[5,'GUI'],[6,'BRUNO']].forEach(([d,n])=>add(d,'08:00',n,'aula'));
+  add(3,'08:00','TRAJETO','pessoal');
+  [[1,'CLEIDE'],[4,'CLEIDE']].forEach(([d,n])=>add(d,'09:00',n,'aula'));
+  [[2,'TRAJETO'],[5,'TRAJETO']].forEach(([d,n])=>add(d,'09:00',n,'pessoal'));
+  add(3,'09:00','TERAPIA','pessoal');add(6,'09:00','WIM','aula');
+  add(2,'10:00','Filha Thiago','aula');add(3,'10:00','TRAJETO','pessoal');
+  add(4,'10:00','PATRÍCIA','aula');add(5,'10:00','RAFAEL','aula');add(6,'10:00','WIM','aula');
+  add(1,'11:00','RAFAEL','aula');add(3,'11:00','TERAPIA','pessoal');
+  add(4,'11:00','Treino PRETA','pessoal');add(5,'11:00','RICARDO','aula');add(6,'11:00','BRUNO','aula');
+  [1,2,3,6].forEach(d=>add(d,'12:00','ALMOÇO','bloqueio'));
+  [4,5].forEach(d=>add(d,'12:00','TREINO','bloqueio'));
+  [1,2,3,4,5,6].forEach(d=>add(d,'13:00','ALMOÇO','bloqueio'));
+  ['14:00','14:30','15:00','15:30'].forEach(h=>[1,2,3,4,5].forEach(d=>add(d,h,'Locação','locacao')));
+  add(1,'16:00','LEILA','aula');add(3,'16:00','ILAN','aula');add(4,'16:00','ANDRESSA','aula');add(5,'16:00','FELIPPE E PAI','aula');
+  add(1,'17:00','THIAGO','aula');add(2,'17:00','ISA','aula');add(3,'17:00','GABRIEL','aula');add(4,'17:00','ISA','aula');add(5,'17:00','ELTON','aula');
+  add(1,'18:00','SIMONE','aula');add(2,'18:00','GIULIA','aula');add(3,'18:00','ARMANDO','aula');add(4,'18:00','LUCAS EXP','aula');add(5,'18:00','ALAN E CAMILA','aula');
+  ['19:00','19:30'].forEach(h=>{
+    add(1,h,'CAROLINA','aula');add(2,h,'FELIPPE E PAI','aula');add(3,h,'BRUNO Otávio','aula');
+    add(4,h,'Grupo Gustavo','grupo');add(5,h,'NATAÇÃO','pessoal');
+  });
+  ['20:00','20:30'].forEach(h=>add(2,h,'Exp. grupo','grupo'));
+  return {fixos:F,eventos:[],excecoes:[]};
+}
+
+function setSave(s,cls){const e=document.getElementById('save-state');e.textContent=s;e.className='save-state '+(cls||'');}
+
+/* ===== Camada de armazenamento: aparelho + Firebase (nuvem real) ===== */
+let lastCloudError='';
+let cloudPending=false;
+function hasCloud(){return !!(window.fbDB);}
+function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+function lsSet(k,v){try{localStorage.setItem(k,v);return true;}catch(e){return false;}}
+function fbPath(k){return 'jvtenis/'+k.replace(/[.#$\[\]/]/g,'_');}
+async function cloudGet(k){
+  if(!window.fbDB)return null;
+  for(let i=0;i<3;i++){
+    try{
+      const snap=await window.fbDB.ref(fbPath(k)).get();
+      return snap.exists()?snap.val():null;
+    }catch(e){lastCloudError=String(e&&e.message||e);await new Promise(s=>setTimeout(s,350*(i+1)));}
+  }
+  return null;
+}
+async function cloudSet(k,v){
+  if(!window.fbDB)return false;
+  for(let i=0;i<4;i++){
+    try{await window.fbDB.ref(fbPath(k)).set(v);lastCloudError='';return true;}
+    catch(e){lastCloudError=String(e&&e.message||e);await new Promise(s=>setTimeout(s,450*(i+1)));}
+  }
+  return false;
+}
+function tsOf(raw){try{return JSON.parse(raw).savedAt||0;}catch(e){return 0;}}
+function genCode(){return String(Math.floor(1000+Math.random()*9000));}
+function ensureFields(){
+  if(!DB.presencas)DB.presencas=[];
+  if(!DB.compromissos)DB.compromissos=[];
+  if(!DB.locacaoOnly)DB.locacaoOnly=[];
+  if(DB.locacaoOnly.join()==='12:00,13:00,14:00,14:30,15:00,15:30')DB.locacaoOnly=[];
+  if(!DB.horarioCfg){DB.horarioCfg={};for(let d=0;d<7;d++){DB.horarioCfg[d]={};HORAS.forEach(h=>{DB.horarioCfg[d][h]=modoPadrao({getDay:()=>d},h);});}}
+  if(DB.horarioVer!==2){DB.horarioCfg={};for(let d=0;d<7;d++){DB.horarioCfg[d]={};HORAS.forEach(h=>{DB.horarioCfg[d][h]=modoPadrao({getDay:()=>d},h);});}DB.horarioVer=2;}
+  if(!DB.horarioData)DB.horarioData={};
+  if(DB.mesCreditos===undefined){const _d=new Date();DB.mesCreditos=_d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0');}
+  if(DB.aviso===undefined)DB.aviso='';
+  if(DB.termo===undefined)DB.termo='';
+  if(DB.termoVer===undefined)DB.termoVer=0;
+  if(DB.pix===undefined)DB.pix='';
+  if(DB.pixNome===undefined)DB.pixNome='';
+  if(DB.pixCidade===undefined)DB.pixCidade='';
+  if(DB.pixTipo===undefined)DB.pixTipo='celular';
+  if(DB.cardLink===undefined)DB.cardLink='';
+  if(!DB.snapAlunos)DB.snapAlunos={};
+  if(!DB.precos)DB.precos={avulsaPart:170,avulsaGrupo:95,locacao:70};
+  if(!DB.grupoPreco)DB.grupoPreco={dupla:95,trio:80,quarteto:75};
+  ensureTorneios();
+  // registra o nº de alunos cadastrados no mês atual (histórico para os gráficos)
+  const mkAtual=new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');
+  if(DB.snapAlunos[mkAtual]!==DB.alunos.length){DB.snapAlunos[mkAtual]=DB.alunos.length;}
+  let changed=false;
+  if(DB.precos&&DB.precos.personal===undefined){DB.precos.personal=130;changed=true;}
+  DB.alunos.forEach(a=>{
+    if(a.diaVenc==null){a.diaVenc=10;changed=true;}
+    if(!a.codigo){
+      let c;do{c=genCode();}while(DB.alunos.some(x=>x.codigo===c));
+      a.codigo=c;changed=true;
+    }
+  });
+  return changed;
+}
+
+async function load(){
+  setSave('carregando…');
+  const localRaw=lsGet(KEY);
+  let cloudRaw=null;
+  if(hasCloud())cloudRaw=await cloudGet(KEY);
+  // usa a versão mais recente entre aparelho e nuvem
+  let chosen=null;
+  if(cloudRaw&&localRaw)chosen=tsOf(localRaw)>tsOf(cloudRaw)?localRaw:cloudRaw;
+  else chosen=cloudRaw||localRaw;
+  if(chosen){try{DB=JSON.parse(chosen);}catch(e){}}
+  setSave(hasCloud()?'✓ pronto':'⚠ só no aparelho','ok');
+  let dirty=false;
+  if(!DB.agenda){DB.agenda=seedAgenda();dirty=true;}
+  if(ensureFields())dirty=true;
+  if(checarViradaMes())dirty=true;
+  if(dirty||!chosen||(hasCloud()&&!cloudRaw&&localRaw)||(localRaw&&cloudRaw&&tsOf(localRaw)!==tsOf(cloudRaw)))persist();else publish();
+  renderAll();
+  try{HIST.prev=snapDB();}catch(e){}
+  syncRequests(true);
+}
+function persist(){
+  histOnPersist();
+  DB.savedAt=Date.now();
+  const json=JSON.stringify(DB);
+  // 1) salva IMEDIATAMENTE no aparelho (nunca perde nada)
+  const okLocal=lsSet(KEY,json);
+  setSave(okLocal?'✓ salvo no aparelho':'salvando…','ok');
+  // 2) envia para a nuvem com retentativas
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(async()=>{
+    if(!hasCloud()){cloudPending=true;setSave(okLocal?'⚠ salvo só no aparelho ⓘ':'erro ao salvar',okLocal?'ok':'err');return;}
+    setSave('enviando à nuvem…');
+    const ok=await cloudSet(KEY,JSON.stringify(DB));
+    if(ok){cloudPending=false;setSave('✓ salvo na nuvem','ok');}
+    else{cloudPending=true;setSave(okLocal?'⚠ salvo só no aparelho ⓘ':'erro ao salvar',okLocal?'ok':'err');}
+    publish();
+  },500);
+}
+/* Sincronizador de fundo: insiste em subir para a nuvem a cada 30s enquanto houver pendência */
+setInterval(async()=>{
+  if(!cloudPending||!hasCloud())return;
+  const ok=await cloudSet(KEY,JSON.stringify(DB));
+  if(ok){cloudPending=false;setSave('✓ salvo na nuvem','ok');publish();}
+},30000);
+/* Diagnóstico: toque no indicador para entender a situação */
+document.getElementById('save-state').style.pointerEvents='auto';
+document.getElementById('save-state').style.cursor='pointer';
+document.getElementById('save-state').onclick=()=>{
+  let msg;
+  if(!hasCloud()){
+    msg='DIAGNÓSTICO\n\n❌ A nuvem (Firebase) não está conectada.\n\nProvável causa: a configuração do Firebase ainda não foi colada no arquivo, ou está incompleta.\n\n✅ Confira o passo 6 do guia: a config deve estar colada no topo do arquivo, sem "COLE_AQUI".\n\nSeus dados estão seguros no aparelho enquanto isso.';
+  }else if(cloudPending){
+    msg='DIAGNÓSTICO\n\n⚠ O Firebase está conectado mas a última gravação falhou.\nÚltimo erro: '+(lastCloudError||'desconhecido')+'\n\nO app tenta de novo automaticamente a cada 30 segundos. Verifique se as Regras do banco estão como no passo 5 do guia.';
+  }else{
+    msg='DIAGNÓSTICO\n\n✅ Tudo certo! Dados salvos no aparelho E na nuvem (Firebase).\nAcessível de qualquer aparelho.';
+  }
+  alert(msg);
+};
+/* A API da nuvem pode demorar a carregar: re-verifica e sobe pendências */
+[1500,4000,8000].forEach(t=>setTimeout(async()=>{
+  if(hasCloud()&&cloudPending){
+    const ok=await cloudSet(KEY,JSON.stringify(DB));
+    if(ok){cloudPending=false;setSave('✓ salvo na nuvem','ok');publish();}
+  }
+},t));
+/* Publica os dados que o App do Aluno lê (somente leitura, compartilhado) */
+let pubTimer=null;
+function publish(){
+  clearTimeout(pubTimer);
+  pubTimer=setTimeout(doPublish,1200);
+}
+async function doPublish(){
+  if(!hasCloud())return;
+  try{
+    const hoje=new Date();const lim=new Date();lim.setDate(lim.getDate()+60);
+    const codeOf=id=>{const a=DB.alunos.find(x=>x.id===id);return a?a.codigo:null;};
+    const matchAluno=acharAlunoPorTitulo;
+    const codeFor=ev=>{
+      if(ev.alunoId){const c=codeOf(ev.alunoId);if(c)return c;}
+      const a=matchAluno(ev.titulo);
+      return a?a.codigo:null;
+    };
+    const pub={
+      updatedAt:new Date().toISOString(),
+      aviso:DB.aviso||'',
+      termo:DB.termo||'',
+      termoVer:DB.termoVer||0,
+      pix:DB.pix||'',
+      pixNome:DB.pixNome||'',
+      pixCidade:DB.pixCidade||'',
+      pixTipo:DB.pixTipo||'celular',
+      cardLink:DB.cardLink||'',
+      precos:DB.precos||{avulsaPart:170,avulsaGrupo:95,locacao:70,personal:130},
+      planos:PRECOS,
+      grupoPreco:DB.grupoPreco||{dupla:95,trio:80,quarteto:75},
+      torneio:(function(){ensureTorneios();const t=DB.torneios.lista[DB.torneios.atual];return t?{id:t.id,nome:t.nome,tipo:t.tipo,jogadores:t.jogadores}:null;})(),
+      horas:HORAS,
+      locacaoOnly:DB.locacaoOnly||[],
+      horarioCfg:DB.horarioCfg||{},
+      horarioData:DB.horarioData||{},
+      alunos:DB.alunos.map(a=>({codigo:a.codigo,nome:a.nome,tipo:a.tipo,plano:a.plano,creditos:a.creditos,repos:a.repos,status:a.status,mensalidade:a.mensalidade,diaVenc:a.diaVenc||10,cardLink:a.cardLink||'',mfitLink:a.mfitLink||'',valorAula:a.valorAula||130})),
+      historico:(function(){
+        const codeOf={};DB.alunos.forEach(a=>{codeOf[a.id]=a.codigo;});
+        const cut=dKey(new Date(Date.now()-60*864e5));const out={};
+        (DB.presencas||[]).forEach(p=>{const c=codeOf[p.alunoId];if(!c||(p.data&&p.data<cut))return;(out[c]=out[c]||[]).push({data:p.data||'',hora:p.hora||''});});
+        Object.keys(out).forEach(c=>{out[c].sort((a,b)=>String(b.data).localeCompare(String(a.data)));out[c]=out[c].slice(0,30);});
+        return out;
+      })(),
+      grade:{
+        fixos:DB.agenda.fixos.map(f=>({id:f.id,dia:f.dia,hora:f.hora,tipo:f.tipo,cod:codeFor(f)})),
+        eventos:DB.agenda.eventos.filter(e=>e.data>=dKey(hoje)&&e.data<=dKey(lim)).map(e=>({id:e.id,data:e.data,hora:e.hora,tipo:e.tipo,cod:codeFor(e)})),
+        excecoes:DB.agenda.excecoes
+      }
+    };
+    await cloudSet(PUBKEY,JSON.stringify(pub));
+  }catch(e){/* melhor esforço */}
+}
+/* Importa agendamentos feitos pelos alunos no App do Aluno (fila push do Firebase) */
+let syncing=false;
+async function syncRequests(silent){
+  if(syncing)return;syncing=true;
+  if(!hasCloud()){if(!silent)toast('Nuvem (Firebase) não conectada');syncing=false;return;}
+  try{
+    const ref=window.fbDB.ref('jvtenis/fila_agendamentos');
+    const snap=await ref.get();
+    if(!snap.exists()){if(!silent)toast('Nenhum agendamento novo de alunos');syncing=false;return;}
+    const fila=snap.val()||{};
+    const chaves=Object.keys(fila);
+    let n=0,nc=0;
+    chaves.forEach((key,idx)=>{
+      const p=fila[key];
+      const a=DB.alunos.find(x=>x.codigo===p.codigo);
+      if(a){
+        const tipo=(a.tipo==='Personal')?'personal':((['Grupo','Dupla','Trio','Quarteto'].indexOf(a.tipo)>=0)?'grupo':'aula');
+        if(p.acao==='cancelar'){
+          const dia=new Date(p.data+'T12:00:00').getDay();
+          const fx=DB.agenda.fixos.find(f=>f.alunoId===a.id&&f.dia===dia&&f.hora===p.hora);
+          if(fx){
+            if(!DB.agenda.excecoes.some(x=>x.fixoId===fx.id&&x.data===p.data))
+              DB.agenda.excecoes.push({fixoId:fx.id,data:p.data});
+          }else{
+            DB.agenda.eventos=DB.agenda.eventos.filter(e=>!(e.alunoId===a.id&&e.data===p.data&&e.hora===p.hora));
+          }
+          nc++;
+        }else if(p.rec==='fixo'){
+          const dia=new Date(p.data+'T12:00:00').getDay();
+          if(!DB.agenda.fixos.some(f=>f.alunoId===a.id&&f.dia===dia&&f.hora===p.hora))
+            DB.agenda.fixos.push({id:'f'+Date.now()+idx,dia,hora:p.hora,titulo:a.nome,tipo,alunoId:a.id});
+          n++;
+        }else{
+          if(!DB.agenda.eventos.some(e=>e.alunoId===a.id&&e.data===p.data&&e.hora===p.hora))
+            DB.agenda.eventos.push({id:'e'+Date.now()+idx,data:p.data,hora:p.hora,titulo:a.nome,tipo,alunoId:a.id,repo:p.repo?1:0});
+          n++;
+        }
+      }
+      // remove da fila (processado ou de aluno inexistente)
+      ref.child(key).remove().catch(()=>{});
+    });
+    if(n>0||nc>0){
+      persist();renderAgenda();
+      const partes=[];if(n>0)partes.push(n+' reserva'+(n===1?'':'s'));if(nc>0)partes.push(nc+' cancelamento'+(nc===1?'':'s'));
+      toast('📥 '+partes.join(' · ')+' de alunos');
+    }
+    else if(!silent)toast('Nenhuma novidade de alunos');
+  }catch(e){if(!silent)toast('Erro ao sincronizar');}
+  syncing=false;
+}
+setInterval(()=>{syncRequests(true);carregarNotifs();},45000);
+
+/* ================= AVISOS (sininho) ================= */
+let NOTIF=[],notifSeen=Number((typeof localStorage!=='undefined'&&localStorage.getItem('jv-notif-seen'))||0),notifMax=notifSeen,notifPrimeira=true;
+function pedirPermissaoNotif(){if('Notification'in window&&Notification.permission==='default'){try{Notification.requestPermission();}catch(e){}}}
+function notificarNavegador(txt){if('Notification'in window&&Notification.permission==='granted'){try{new Notification('Academia JV Tênis 🎾',{body:txt});}catch(e){}}}
+function textoNotif(n){
+  if(n.acao==='resultado')return '🏆 '+(n.nome||'Aluno')+': '+(n.texto||'enviou um resultado');
+  if(n.texto)return '🛒 '+(n.nome||'Aluno')+': '+n.texto;
+  const tipo=n.tipo==='personal'?'Personal':(n.tipo==='grupo'?'Grupo':(n.tipo==='locacao'?'Locação':'Aula'));
+  const ac=n.acao==='cancelou'?'cancelou ❌':'reservou ✅';
+  const dd=n.data?n.data.split('-').reverse().slice(0,2).join('/'):'';
+  return (n.nome||'Aluno')+' '+ac+' — '+tipo+' · '+dd+' '+(n.hora||'');
+}
+async function carregarNotifs(){
+  if(!hasCloud())return;
+  try{
+    const snap=await window.fbDB.ref('jvtenis/notificacoes').get();
+    const v=snap.exists()?(snap.val()||{}):{};
+    NOTIF=Object.keys(v).map(k=>v[k]).filter(n=>n&&n.ts).sort((a,b)=>b.ts-a.ts).slice(0,60);
+    const max=NOTIF.length?NOTIF[0].ts:0;
+    if(!notifPrimeira&&max>notifMax){
+      const novas=NOTIF.filter(n=>n.ts>notifMax);
+      novas.slice(0,3).forEach(n=>notificarNavegador(textoNotif(n)));
+      if(novas.length)toast('🔔 '+novas.length+' novo(s) aviso(s) de alunos');
+    }
+    notifMax=Math.max(notifMax,max);notifPrimeira=false;
+    updateBell();
+  }catch(e){}
+}
+function updateBell(){
+  const b=document.getElementById('bell-badge');if(!b)return;
+  const unread=NOTIF.filter(n=>n.ts>notifSeen).length;
+  if(unread>0){b.style.display='flex';b.textContent=unread>9?'9+':String(unread);}else b.style.display='none';
+}
+function abrirNotifs(){
+  pedirPermissaoNotif();
+  renderNotifList();
+  notifSeen=Date.now();try{localStorage.setItem('jv-notif-seen',String(notifSeen));}catch(e){}
+  updateBell();
+  document.getElementById('ov-notif').classList.add('on');
+}
+function renderNotifList(){
+  const el=document.getElementById('notif-list');if(!el)return;
+  if(!NOTIF.length){el.innerHTML='<div class="empty">Nenhum aviso ainda. Quando um aluno reservar ou cancelar, aparece aqui.</div>';return;}
+  el.innerHTML=NOTIF.map(n=>{
+    const q=new Date(n.ts);
+    const hm=String(q.getHours()).padStart(2,'0')+':'+String(q.getMinutes()).padStart(2,'0');
+    const cor=n.acao==='cancelou'?'var(--c-bloq)':'var(--c-loc)';
+    return `<div class="mov" style="border-left:4px solid ${cor}"><div class="mov-l"><b>${textoNotif(n)}</b><span>recebido ${String(q.getDate()).padStart(2,'0')}/${String(q.getMonth()+1).padStart(2,'0')} ${hm}</span></div></div>`;
+  }).join('');
+}
+async function limparNotifs(){
+  if(!confirm('Limpar todos os avisos?'))return;
+  if(hasCloud()){try{await window.fbDB.ref('jvtenis/notificacoes').remove();}catch(e){}}
+  NOTIF=[];updateBell();renderNotifList();
+}
+setTimeout(carregarNotifs,2500);
+
+/* ================= FILA DE PEDIDOS (compras, planos, mensalidade) ================= */
+let pedFila=[];
+async function syncPedidos(silent){
+  if(!hasCloud()){renderPedList();return;}
+  try{
+    const snap=await window.fbDB.ref('jvtenis/fila_pedidos').get();
+    const v=snap.exists()?(snap.val()||{}):{};
+    pedFila=Object.entries(v).map(([key,m])=>({key,...m})).sort((a,b)=>(a.ts||0)-(b.ts||0));
+  }catch(e){pedFila=[];}
+  updatePedBadge();
+  const ov=document.getElementById('ov-ped');if(ov&&ov.classList.contains('on'))renderPedList();
+}
+function updatePedBadge(){
+  const b=document.getElementById('ped-badge');if(!b)return;
+  if(pedFila.length){b.style.display='flex';b.textContent=pedFila.length>9?'9+':String(pedFila.length);}else b.style.display='none';
+}
+function pedEsc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function pedDesc(p){
+  const quem=p.nome||'Aluno';
+  if(p.kind==='mensalidade')return quem+' vai pagar a mensalidade ('+fmt(p.valor||0)+') · '+(p.metodo||'');
+  if(p.kind==='plano')return quem+' quer o plano '+(p.cat||'')+' Flex '+(p.plano||'')+' ('+fmt(p.valor||0)+'/mês)';
+  if(p.kind==='compra')return quem+' quer '+(p.item||'item')+(p.valor?(' ('+fmt(p.valor)+')'):'')+' · '+(p.metodo||'');
+  if(p.kind==='termo')return quem+' aceitou o termo de uso ✅';
+  if(p.kind==='renovacao')return quem+' quer MANTER os treinos em '+(p.mes||'próximo mês')+(p.valor?(' · '+fmt(p.valor)):'')+' 🗓️';
+  return quem+' enviou um pedido';
+}
+function abrirPedidos(){renderPedList();document.getElementById('ov-ped').classList.add('on');}
+function renderPedList(){
+  const el=document.getElementById('ped-list');if(!el)return;
+  if(!pedFila.length){el.innerHTML='<div class="empty">Nenhum pedido no momento. Compras, planos e avisos de pagamento dos alunos aparecem aqui.</div>';return;}
+  el.innerHTML=pedFila.map(p=>{
+    const q=new Date(p.ts||Date.now());
+    const hm=String(q.getHours()).padStart(2,'0')+':'+String(q.getMinutes()).padStart(2,'0');
+    const cor=p.kind==='plano'?'var(--gold-light)':'var(--c-loc)';
+    return '<div style="display:flex;align-items:center;gap:8px;border-left:4px solid '+cor+';padding:11px 0 11px 9px;border-bottom:1px solid var(--border)">'+
+      '<div style="flex:1;min-width:0"><div><b>'+pedEsc(pedDesc(p))+'</b></div>'+
+      '<div style="opacity:.65;font-size:11px;margin-top:2px">recebido '+String(q.getDate()).padStart(2,'0')+'/'+String(q.getMonth()+1).padStart(2,'0')+' '+hm+'</div></div>'+
+      '<div style="display:flex;gap:6px"><button class="ap" onclick="aceitarPedido(\''+p.key+'\')">Aceitar</button>'+
+      '<button class="ds" onclick="descartarPedido(\''+p.key+'\')">✕</button></div></div>';
+  }).join('');
+}
+function aceitarPedido(key){
+  const p=pedFila.find(x=>x.key===key);if(!p)return;
+  const a=DB.alunos.find(x=>x.codigo===p.codigo);
+  if(p.kind==='mensalidade'){
+    if(!a){toast('Aluno não encontrado — confira o cadastro');return;}
+    a.status='pago';
+    DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:'Mensalidade · '+a.nome,valor:a.mensalidade,cat:'mensalidade',modal:(a.tipo==='Personal'?'personal':'tenis'),data:new Date().toISOString().slice(0,10)});
+    toast('✓ '+a.nome+' marcado como PAGO e lançado no caixa');
+  }else if(p.kind==='plano'){
+    if(!a){toast('Aluno não encontrado — confira o cadastro');return;}
+    if(['Particular','Dupla','Trio','Quarteto','Grupo','Personal'].indexOf(p.cat)>=0)a.tipo=p.cat;
+    a.plano=Number(p.plano)||a.plano;
+    a.mensalidade=Number(p.valor)||precoMensal(a.tipo,a.plano)||a.mensalidade;
+    toast('✓ Plano de '+a.nome+' atualizado: '+a.tipo+' Flex '+a.plano);
+  }else if(p.kind==='termo'){
+    if(a){a.termoAceitoEm=p.ts||Date.now();toast('✓ '+a.nome+' aceitou o termo');}else{toast('Termo aceito');}
+  }else if(p.kind==='renovacao'){
+    toast((a?a.nome:'Aluno')+' quer manter os treinos — renove o mês quando o pagamento cair.');
+  }else if(p.kind==='compra'){
+    const item=p.item||'';
+    const cat=/loca/i.test(item)?'locacao':(/cr[eé]dito/i.test(item)?'outro':'avulsa');
+    if(Number(p.valor)>0){
+      DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:item+(p.nome?(' · '+p.nome):''),valor:Number(p.valor),cat,data:new Date().toISOString().slice(0,10)});
+      toast('✓ Lançado no caixa: '+item+' ('+fmt(p.valor)+')');
+    }else{
+      toast('Pedido aceito — combine o valor e lance no Caixa');
+    }
+  }
+  if(hasCloud())window.fbDB.ref('jvtenis/fila_pedidos/'+key).remove().catch(()=>{});
+  pedFila=pedFila.filter(x=>x.key!==key);
+  persist();renderAll();updatePedBadge();renderPedList();
+}
+function descartarPedido(key){
+  if(hasCloud())window.fbDB.ref('jvtenis/fila_pedidos/'+key).remove().catch(()=>{});
+  pedFila=pedFila.filter(x=>x.key!==key);updatePedBadge();renderPedList();
+}
+setTimeout(()=>syncPedidos(true),2800);
+setInterval(()=>syncPedidos(true),30000);
+
+/* ================= NAVEGAÇÃO ================= */
+function go(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.getElementById('pg-'+id).classList.add('on');
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  window.scrollTo({top:0});
+  if(id==='agenda')syncRequests(true);
+  if(id==='graf')renderGraf();
+  if(id==='torneio'){renderTorneio();syncTorneio(true);}
+}
+function shiftMonth(d){
+  curMonth+=d;
+  if(curMonth<0){curMonth=11;curYear--;}
+  if(curMonth>11){curMonth=0;curYear++;}
+  renderAll();
+}
+function monthKey(){return curYear+'-'+String(curMonth+1).padStart(2,'0');}
+let hideVals=(typeof localStorage!=='undefined'&&localStorage.getItem('jv-hide')==='1');
+function fmt(v){if(hideVals)return 'R$ ••••';return 'R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:2});}
+function updateEyeBtn(){
+  const b=document.getElementById('eye-btn');if(!b)return;
+  const openSvg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const closedSvg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s4 6 10 6 10-6 10-6"/><line x1="4.5" y1="14.3" x2="3.3" y2="17"/><line x1="9" y1="16.3" x2="8.4" y2="19.2"/><line x1="15" y1="16.3" x2="15.6" y2="19.2"/><line x1="19.5" y1="14.3" x2="20.7" y2="17"/></svg>';
+  b.innerHTML=hideVals?closedSvg:openSvg;
+  b.classList.toggle('off',hideVals);
+}
+function toggleHide(){
+  hideVals=!hideVals;
+  try{localStorage.setItem('jv-hide',hideVals?'1':'0');}catch(e){}
+  updateEyeBtn();renderAll();
+  if(document.getElementById('pg-graf').classList.contains('on'))renderGraf();
+  toast(hideVals?'Valores ocultos':'Valores visíveis');
+}
+function dKey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2200);}
+function closeModal(id){document.getElementById(id).classList.remove('on');}
+
+/* ================= AGENDA ================= */
+function entriesFor(date,hora){
+  const dia=date.getDay(),dk=dKey(date);
+  const A=DB.agenda;
+  const fixos=A.fixos.filter(f=>f.dia===dia&&f.hora===hora&&!A.excecoes.some(x=>x.fixoId===f.id&&x.data===dk))
+    .map(f=>({...f,origem:'fixo'}));
+  const evs=A.eventos.filter(e=>e.data===dk&&e.hora===hora).map(e=>({...e,origem:'pontual'}));
+  const comps=(DB.compromissos||[]).filter(c=>c.data===dk&&(c.hora||'')===hora).map(c=>({id:c.id,titulo:c.titulo,tipo:'pessoal',origem:'compromisso',alunoId:null}));
+  return fixos.concat(evs).concat(comps);
+}
+function contarAulas(dFrom,dTo){
+  let tenis=0,personal=0;
+  const cur=new Date(dFrom.getFullYear(),dFrom.getMonth(),dFrom.getDate());
+  const end=new Date(dTo.getFullYear(),dTo.getMonth(),dTo.getDate());
+  while(cur<=end){
+    HORAS.forEach(h=>{
+      entriesFor(cur,h).forEach(e=>{
+        if(e.origem==='compromisso')return;
+        if(e.tipo==='aula'||e.tipo==='grupo')tenis++;
+        else if(e.tipo==='personal')personal++;
+      });
+    });
+    cur.setDate(cur.getDate()+1);
+  }
+  return {tenis,personal,total:tenis+personal};
+}
+function normNome(s){return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s+/g,' ').trim();}
+function acharAlunoPorTitulo(titulo){
+  const t=normNome(titulo);if(!t)return null;
+  let a=DB.alunos.find(x=>normNome(x.nome)===t);                     // nome completo igual
+  if(a)return a;
+  if(!t.includes(' '))a=DB.alunos.find(x=>normNome(x.nome).split(' ')[0]===t); // primeiro nome (título de uma palavra)
+  return a||null;
+}
+/* Ferramenta: vincular nomes da agenda a alunos cadastrados */
+function gruposNaoVinculados(){
+  const ehAula=t=>t==='aula'||t==='grupo'||t==='personal';
+  const grupos={};
+  const add=ev=>{
+    if(!ehAula(ev.tipo))return;
+    if(ev.alunoId)return;
+    if(acharAlunoPorTitulo(ev.titulo))return;
+    (grupos[ev.titulo]=grupos[ev.titulo]||{titulo:ev.titulo,qtd:0}).qtd++;
+  };
+  DB.agenda.fixos.forEach(add);
+  DB.agenda.eventos.forEach(add);
+  return Object.values(grupos).sort((a,b)=>a.titulo.localeCompare(b.titulo));
+}
+function abrirVincular(){renderVincularList();document.getElementById('ov-link').classList.add('on');}
+function renderVincularList(){
+  const grupos=gruposNaoVinculados();
+  const el=document.getElementById('link-list');
+  if(!grupos.length){el.innerHTML='<div class="empty">✅ Tudo certo! Todos os nomes da agenda já estão vinculados a alunos cadastrados — as aulas aparecem em dourado para eles.</div>';return;}
+  const opts=DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${a.id}">${a.nome}${a.tipo==='Personal'?' (Personal)':''}</option>`).join('');
+  el.innerHTML='<p class="hint" style="margin-bottom:10px">Para cada nome da agenda que ainda não bate com um cadastro, escolha o aluno correto. Ao salvar, o horário fica vinculado e o nome é padronizado — aí aparece em dourado no app do aluno.</p>'+grupos.map(g=>`
+    <div class="link-row">
+      <div class="link-name">${g.titulo} <small>(${g.qtd} horário${g.qtd===1?'':'s'} na grade)</small></div>
+      <select class="link-sel" data-titulo="${encodeURIComponent(g.titulo)}"><option value="">— escolher aluno cadastrado —</option>${opts}</select>
+    </div>`).join('');
+}
+function salvarVinculos(){
+  const sels=document.querySelectorAll('.link-sel');
+  let n=0;
+  sels.forEach(s=>{
+    const id=s.value;if(!id)return;
+    const titulo=decodeURIComponent(s.getAttribute('data-titulo'));
+    const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+    DB.agenda.fixos.forEach(f=>{if(f.titulo===titulo){f.alunoId=a.id;f.titulo=a.nome;}});
+    DB.agenda.eventos.forEach(e=>{if(e.titulo===titulo){e.alunoId=a.id;e.titulo=a.nome;}});
+    n++;
+  });
+  if(!n){toast('Escolha ao menos um aluno para vincular');return;}
+  persist();renderAgenda();renderVincularList();
+  toast('✓ '+n+' nome(s) vinculado(s)! Já aparece dourado para o aluno.');
+}
+function countDay(date){
+  let c=0;HORAS.forEach(h=>{c+=entriesFor(date,h).filter(e=>e.tipo!=='bloqueio'&&e.origem!=='compromisso').length;});return c;
+}
+
+/* ================= ARRASTAR HORÁRIOS (toque + mouse) ================= */
+function findEntryReal(id){
+  let e=DB.agenda.fixos.find(x=>x.id===id);if(e)return{e,origem:'fixo'};
+  e=DB.agenda.eventos.find(x=>x.id===id);if(e)return{e,origem:'pontual'};
+  return null;
+}
+function moverEntrada(eid,destDK,destH){
+  const ref=findEntryReal(eid);if(!ref)return;
+  const src=ref.e,origem=ref.origem;
+  const destDate=new Date(destDK+'T12:00:00');
+  if(destDK===(origem==='fixo'?null:src.data)&&destH===src.hora&&origem!=='fixo'){return;}
+  // guarda posição antiga (para troca)
+  const oldDia=src.dia,oldHora=src.hora,oldData=src.data;
+  logAct('Mover/trocar horário na agenda');
+  // destino já ocupado? (ignora o próprio item)
+  const ocup=entriesFor(destDate,destH).filter(x=>x.id!==eid);
+  // aplica a mudança no item arrastado
+  if(origem==='fixo'){src.dia=destDate.getDay();src.hora=destH;}
+  else{src.data=destDK;src.hora=destH;}
+  // troca: se havia exatamente 1 do MESMO tipo de origem, manda para a posição antiga
+  if(ocup.length===1){
+    const d=findEntryReal(ocup[0].id);
+    if(d&&d.origem===origem){
+      if(origem==='fixo'){d.e.dia=oldDia;d.e.hora=oldHora;}
+      else{d.e.data=oldData;d.e.hora=oldHora;}
+      toast('🔁 Horários trocados');
+    }else{toast('✓ Aula movida');}
+  }else{toast('✓ Aula movida');}
+  persist();renderAgenda();renderDash();
+}
+/* Move todos os atendimentos de um dia para outro (visão Mês) */
+function moverDia(fromDK,toDK){
+  if(!fromDK||!toDK||fromDK===toDK)return;
+  const fromDate=new Date(fromDK+'T12:00:00');
+  const dia=fromDate.getDay();
+  const pont=DB.agenda.eventos.filter(e=>e.data===fromDK);
+  const fix=DB.agenda.fixos.filter(f=>f.dia===dia&&!DB.agenda.excecoes.some(x=>x.fixoId===f.id&&x.data===fromDK));
+  const total=pont.length+fix.length;
+  if(!total){toast('Esse dia não tem atendimentos');return;}
+  const p1=fromDK.split('-'),p2=toDK.split('-');
+  if(!confirm('Mover os '+total+' atendimento(s) de '+p1[2]+'/'+p1[1]+' para '+p2[2]+'/'+p2[1]+'?\n\nOs horários serão mantidos. Aulas fixas movem só nesta data (a grade semanal continua igual).'))return;
+  logAct('Mover atendimentos de um dia');
+  pont.forEach(e=>{e.data=toDK;});
+  fix.forEach(f=>{
+    DB.agenda.excecoes.push({fixoId:f.id,data:fromDK});
+    DB.agenda.eventos.push({id:'e'+Date.now()+Math.random().toString(36).slice(2,6),data:toDK,hora:f.hora,titulo:f.titulo,tipo:f.tipo,alunoId:f.alunoId});
+  });
+  persist();renderAgenda();renderDash();
+  toast('✓ '+total+' atendimento(s) movido(s)');
+}
+(function initDrag(){
+  let cand=null,ghost=null,dragging=false,sx=0,sy=0,hot=null;
+  const TH=10;
+  const view=()=>document.getElementById('ag-view');
+  function dropAt(x,y,sel){
+    const el=document.elementFromPoint(x,y);
+    return el?el.closest(sel):null;
+  }
+  function clearHot(){if(hot){hot.classList.remove('drop-hot');hot=null;}}
+  function onDown(ev){
+    const v=view();if(!v||!v.contains(ev.target))return;
+    if(ev.target.closest('.pres'))return;            // tocar ○ marca presença, não arrasta
+    const item=ev.target.closest('.drag-item');if(!item)return;
+    cand={item,eid:item.getAttribute('data-eid'),dayfrom:item.getAttribute('data-dayfrom')};
+    sx=ev.clientX;sy=ev.clientY;dragging=false;
+  }
+  function onMove(ev){
+    if(!cand)return;
+    const dx=ev.clientX-sx,dy=ev.clientY-sy;
+    if(!dragging){
+      if(Math.abs(dx)+Math.abs(dy)<TH)return;
+      dragging=true;
+      cand.item.classList.add('dragging');
+      ghost=document.createElement('div');ghost.className='drag-ghost';
+      ghost.textContent=cand.dayfrom?('Dia '+cand.dayfrom.split('-')[2]):(cand.item.textContent.replace(/[○✓]/,'').trim()||'aula');
+      document.body.appendChild(ghost);
+      document.body.style.userSelect='none';
+    }
+    ev.preventDefault();
+    ghost.style.left=ev.clientX+'px';ghost.style.top=ev.clientY+'px';
+    const t=dropAt(ev.clientX,ev.clientY,cand.dayfrom?'[data-drop-day]':'[data-drop-d]');
+    if(t!==hot){clearHot();if(t){hot=t;hot.classList.add('drop-hot');}}
+  }
+  function onUp(ev){
+    if(cand&&dragging){
+      const t=dropAt(ev.clientX,ev.clientY,cand.dayfrom?'[data-drop-day]':'[data-drop-d]');
+      if(t){
+        if(cand.dayfrom){moverDia(cand.dayfrom,t.getAttribute('data-drop-day'));}
+        else{moverEntrada(cand.eid,t.getAttribute('data-drop-d'),t.getAttribute('data-drop-h'));}
+      }
+      // impede o clique pós-arraste de abrir o slot
+      const blocker=e=>{e.stopPropagation();e.preventDefault();};
+      document.addEventListener('click',blocker,{capture:true,once:true});
+      setTimeout(()=>document.removeEventListener('click',blocker,{capture:true}),60);
+    }
+    if(ghost){ghost.remove();ghost=null;}
+    if(cand&&cand.item)cand.item.classList.remove('dragging');
+    clearHot();document.body.style.userSelect='';
+    cand=null;dragging=false;
+  }
+  document.addEventListener('pointerdown',onDown,{passive:true});
+  document.addEventListener('pointermove',onMove,{passive:false});
+  document.addEventListener('pointerup',onUp,{passive:true});
+  document.addEventListener('pointercancel',onUp,{passive:true});
+})();
+function setView(v,btn){
+  agView=v;
+  document.querySelectorAll('.seg button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderAgenda();
+}
+function agShift(d){
+  if(agView==='dia')agDate.setDate(agDate.getDate()+d);
+  else if(agView==='semana')agDate.setDate(agDate.getDate()+7*d);
+  else if(agView==='mes')agDate.setMonth(agDate.getMonth()+d);
+  else agDate.setMonth(agDate.getMonth()+3*d);
+  renderAgenda();
+}
+function gotoDay(y,m,d){
+  agDate=new Date(y,m,d);agView='dia';
+  document.querySelectorAll('.seg button').forEach((b,i)=>b.classList.toggle('on',i===0));
+  renderAgenda();window.scrollTo({top:0});
+}
+function presId(e,date){return dKey(date)+'|'+e.hora+'|'+e.alunoId;}
+function isPres(e,date){return DB.presencas.some(p=>p.k===presId(e,date));}
+function togglePresenca(entryId){
+  let entry=null;
+  HORAS.forEach(h=>entriesFor(agDate,h).forEach(e=>{if(e.id===entryId)entry=e;}));
+  if(!entry||!entry.alunoId)return;
+  const a=DB.alunos.find(x=>x.id===entry.alunoId);
+  if(!a){toast('Aluno não encontrado');return;}
+  const k=presId(entry,agDate);
+  const idx=DB.presencas.findIndex(p=>p.k===k);
+  const isRepo=!!entry.repo;
+  const c=creditoSlot(entry.hora);
+  if(idx>=0){
+    DB.presencas.splice(idx,1);
+    if(isRepo){a.repos=(Number(a.repos)||0)+c;logAct('Desmarcar reposição: '+a.nome);toast('Reposição desfeita · '+a.nome+' → '+fmtCred(a.repos)+' reposições');}
+    else{a.creditos+=c;logAct('Desmarcar presença: '+a.nome);toast('Presença desfeita · '+a.nome+' → '+fmtCred(a.creditos)+' créditos');}
+  }else{
+    if(isRepo){
+      if((Number(a.repos)||0) < c-1e-9){toast(a.nome+' não tem reposições suficientes ('+fmtCred(a.repos)+')');return;}
+      a.repos=(Number(a.repos)||0)-c;DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora});
+      logAct('Marcar reposição: '+a.nome);toast('✓ Reposição ('+(c===0.5?'½ aula':'1 aula')+') · '+a.nome+' → '+fmtCred(a.repos)+' reposições');
+    }else{
+      if(a.creditos < c-1e-9){toast(a.nome+' não tem créditos suficientes ('+fmtCred(a.creditos)+')');return;}
+      a.creditos-=c;DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora});
+      logAct('Marcar presença: '+a.nome);toast('✓ Presença ('+(c===0.5?'½ aula':'1 aula')+') · '+a.nome+' → '+fmtCred(a.creditos)+' créditos');
+    }
+  }
+  persist();renderAgenda();renderAlunos();renderDash();
+}
+
+function renderAgenda(){
+  const el=document.getElementById('ag-view');
+  const lbl=document.getElementById('ag-label');
+  if(agView==='dia'){
+    lbl.innerHTML=DIAS[agDate.getDay()]+', '+agDate.getDate()+' de '+MESES[agDate.getMonth()].toLowerCase()+'<small>'+countDay(agDate)+' atendimentos · ○ marca presença · arraste a aula p/ trocar horário</small>';
+    el.innerHTML='<button class="btn btn-ghost" style="width:100%;margin-bottom:10px;color:var(--c-bloq);border-color:#E5C0BA;font-size:12px" onclick="marcarChuvaDia()">☔ Marcar o dia inteiro como chuva</button>'+HORAS.map(h=>{
+      const evs=entriesFor(agDate,h);
+      return `<div class="slot" data-drop-d="${dKey(agDate)}" data-drop-h="${h}"><div class="slot-h">${h}</div>
+        <div class="slot-body ${evs.length?'has':''}">
+          ${evs.map(e=>{
+            const linked=!!e.alunoId;
+            const pres=linked&&isPres(e,agDate);
+            return `<span class="ev t-${e.tipo} drag-item" data-eid="${e.id}" data-origem="${e.origem}">
+              ${linked?`<button class="pres ${pres?'ok':''}" onclick="togglePresenca('${e.id}')">${pres?'✓':'○'}</button>`:''}
+              <span onclick="openSlot('${h}')">${e.titulo}<small> · ${e.tipo==='grupo'?grupoTag(e.pessoas)+' · ':''}${e.repo?'reposição':(e.origem==='fixo'?'fixo':(e.origem==='compromisso'?'pessoal':'pontual'))}</small></span>
+            </span>`;
+          }).join('')}
+          <button class="slot-add" onclick="openSlot('${h}')">+</button>
+        </div></div>`;
+    }).join('');
+  }
+  else if(agView==='semana'){
+    const mon=new Date(agDate);mon.setDate(mon.getDate()-((mon.getDay()+6)%7));
+    const days=[...Array(6)].map((_,i)=>{const d=new Date(mon);d.setDate(d.getDate()+i);return d;});
+    lbl.innerHTML='Semana de '+days[0].getDate()+'/'+(days[0].getMonth()+1)+' a '+days[5].getDate()+'/'+(days[5].getMonth()+1)+'<small>toque p/ editar · arraste p/ mover ou trocar</small>';
+    let html='<div class="wk-scroll"><table class="wk"><tr><th></th>'+days.map(d=>`<th>${DIAS[d.getDay()]}<small>${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}</small></th>`).join('')+'</tr>';
+    HORAS.forEach(h=>{
+      html+=`<tr><td class="hr">${h}</td>`;
+      days.forEach(d=>{
+        const evs=entriesFor(d,h);
+        let cls='free',txt='·',drag='';
+        if(evs.length===1){cls='t-'+evs[0].tipo;txt=evs[0].titulo;drag=`drag-item" data-eid="${evs[0].id}" data-origem="${evs[0].origem}`;}
+        else if(evs.length>1){cls='multi';txt=evs.length+' marcações';}
+        html+=`<td data-drop-d="${dKey(d)}" data-drop-h="${h}"><button class="wk-cell ${cls} ${drag}" onclick="gotoSlot(${d.getFullYear()},${d.getMonth()},${d.getDate()},'${h}')">${txt}</button></td>`;
+      });
+      html+='</tr>';
+    });
+    el.innerHTML=html+'</table></div>';
+  }
+  else if(agView==='mes'){
+    const y=agDate.getFullYear(),m=agDate.getMonth();
+    lbl.innerHTML=MESES[m]+' '+y+'<small>toque no dia para abrir · arraste um dia sobre outro p/ mover os atendimentos</small>';
+    el.innerHTML='<div class="cal"><div class="cal-head">'+['D','S','T','Q','Q','S','S'].map(d=>`<span>${d}</span>`).join('')+'</div><div class="cal-grid">'+monthCells(y,m,true)+'</div></div>';
+  }
+  else{
+    const y=agDate.getFullYear(),m=agDate.getMonth();
+    lbl.innerHTML='Trimestre<small>'+MESES[m]+' – '+MESES[(m+2)%12]+'</small>';
+    let html='<div class="tri">';
+    for(let i=0;i<3;i++){
+      const mm=(m+i)%12,yy=y+Math.floor((m+i)/12);
+      let total=0;const cells=monthCells(yy,mm,false,c=>total+=c);
+      html+=`<div class="tri-month"><h4>${MESES[mm]} ${yy}<small>${total} atendimentos</small></h4><div class="tri-grid">${cells}</div></div>`;
+    }
+    el.innerHTML=html+'</div>';
+  }
+}
+function monthCells(y,m,big,acc){
+  const first=new Date(y,m,1),days=new Date(y,m+1,0).getDate();
+  const today=dKey(new Date());
+  let html='';
+  for(let i=0;i<first.getDay();i++)html+=big?'<div class="cal-day out"></div>':'<button class="tri-day out"></button>';
+  for(let d=1;d<=days;d++){
+    const dt=new Date(y,m,d),c=countDay(dt);
+    if(acc)acc(c);
+    const o=c===0?'':c<=3?'o1':c<=6?'o2':c<=10?'o3':'o4';
+    if(big){
+      const dk=dKey(dt);
+      const dragAttr=c?`drag-item" data-dayfrom="${dk}`:'';
+      html+=`<button class="cal-day ${o} ${dk===today?'today':''} ${dragAttr}" data-drop-day="${dk}" onclick="gotoDay(${y},${m},${d})"><span class="n">${d}</span>${c?`<span class="c">${c}</span>`:''}</button>`;
+    }else{
+      html+=`<button class="tri-day ${o}" onclick="gotoDay(${y},${m},${d})">${d}</button>`;
+    }
+  }
+  return html;
+}
+function gotoSlot(y,m,d,h){agDate=new Date(y,m,d);openSlot(h);}
+/* Marca chuva/cancelado: tira as aulas daquele horário só naquela data (grade fica intacta) */
+function aplicarChuva(date,hora){
+  const dk=dKey(date),dia=date.getDay();
+  // chuva NÃO consome: se já havia presença marcada, devolve o crédito (ou reposição)
+  entriesFor(date,hora).forEach(e=>{
+    if(!e.alunoId)return;
+    const k=presId(e,date);const i=DB.presencas.findIndex(p=>p.k===k);
+    if(i>=0){const a=DB.alunos.find(x=>x.id===e.alunoId);if(a){const c=creditoSlot(hora);if(e.repo)a.repos=(Number(a.repos)||0)+c;else a.creditos=(Number(a.creditos)||0)+c;}DB.presencas.splice(i,1);}
+  });
+  DB.agenda.fixos.filter(f=>f.dia===dia&&f.hora===hora).forEach(f=>{
+    if(!DB.agenda.excecoes.some(x=>x.fixoId===f.id&&x.data===dk))DB.agenda.excecoes.push({fixoId:f.id,data:dk});
+  });
+  DB.agenda.eventos=DB.agenda.eventos.filter(e=>!(e.data===dk&&e.hora===hora&&e.tipo!=='bloqueio'));
+  if(!DB.agenda.eventos.some(e=>e.data===dk&&e.hora===hora&&e.titulo==='☔ Chuva'))
+    DB.agenda.eventos.push({id:'e'+Date.now()+Math.random().toString(36).slice(2,6),data:dk,hora,titulo:'☔ Chuva',tipo:'bloqueio',alunoId:null});
+}
+function marcarChuvaSlot(){
+  if(!slotCtx)return;
+  aplicarChuva(slotCtx.date,slotCtx.hora);
+  logAct('Marcar chuva/cancelar horário');
+  persist();renderAgenda();renderSlotEvs();
+  toast('☔ Horário marcado como chuva/cancelado');
+}
+function marcarChuvaDia(){
+  const p=dKey(agDate).split('-');
+  if(!confirm('Marcar TODOS os atendimentos de '+p[2]+'/'+p[1]+' como chuva/cancelado?\n\nA grade semanal continua intacta — vale só para esta data.'))return;
+  let n=0;
+  HORAS.forEach(h=>{if(entriesFor(agDate,h).some(e=>e.tipo!=='bloqueio')){aplicarChuva(agDate,h);n++;}});
+  logAct('Marcar o dia como chuva ('+n+' horários)');
+  persist();renderAgenda();
+  toast('☔ '+n+' horário(s) marcado(s) como chuva');
+}
+function openSlot(hora){
+  slotCtx={hora,date:new Date(agDate)};
+  document.getElementById('slot-title').textContent=DIAS[slotCtx.date.getDay()]+' '+slotCtx.date.getDate()+'/'+(slotCtx.date.getMonth()+1)+' · '+hora;
+  document.getElementById('s-titulo').value='';
+  const sel=document.getElementById('s-aluno');
+  sel.innerHTML='<option value="">— sem vínculo —</option>'+DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${a.id}">${a.nome} (${fmtCred(a.creditos)} créd.)</option>`).join('');
+  sel.value='';
+  renderSlotEvs();
+  document.getElementById('ov-slot').classList.add('on');
+  toggleGrupoWrap();
+}
+function slotPickAluno(){
+  const id=document.getElementById('s-aluno').value;
+  if(!id)return;
+  const a=DB.alunos.find(x=>x.id===id);
+  document.getElementById('s-titulo').value=a.nome;
+  document.getElementById('s-tipo').value=(a.tipo==='Personal')?'personal':((['Grupo','Dupla','Trio','Quarteto'].indexOf(a.tipo)>=0)?'grupo':'aula');
+  const nmap={Dupla:'2',Trio:'3',Quarteto:'4'};
+  if(nmap[a.tipo])document.getElementById('s-grupo-n').value=nmap[a.tipo];
+  toggleGrupoWrap();
+}
+function toggleGrupoWrap(){
+  const w=document.getElementById('s-grupo-wrap');if(!w)return;
+  const isG=document.getElementById('s-tipo').value==='grupo';
+  w.style.display=isG?'block':'none';
+  if(isG)atualizaGrupoPreco();
+}
+function atualizaGrupoPreco(){
+  const el=document.getElementById('s-grupo-preco');if(!el)return;
+  const nv=Number(document.getElementById('s-grupo-n').value)||2;
+  const size=nv===4?'Quarteto':(nv===3?'Trio':'Dupla');
+  const pa=grupoPrecoAula(size);
+  el.innerHTML='<b>R$ '+pa+'</b> por pessoa/aula · com '+nv+' pessoas = total <b>R$ '+(pa*nv)+'</b> por aula. &nbsp;No Flex 8: R$ '+(pa*8)+' cada · R$ '+(pa*nv*8)+' no total.';
+}
+function grupoLabel(n){n=Number(n)||2;return n===4?'Quarteto (4)':(n===3?'Trio (3)':'Dupla (2)');}
+function grupoTag(n){n=Number(n)||2;return n===4?'quarteto':(n===3?'trio':'dupla');}
+function setPessoas(id,origem,nv){
+  const rec=(origem==='fixo'?DB.agenda.fixos:DB.agenda.eventos).find(x=>x.id===id);
+  if(!rec)return;
+  rec.pessoas=Number(nv)||2;
+  logAct('Grupo: '+rec.titulo+' = '+grupoLabel(rec.pessoas));
+  persist();renderSlotEvs();renderAgenda();toast(grupoLabel(rec.pessoas)+' ✓');
+}
+function renderSlotEvs(){
+  const evs=entriesFor(slotCtx.date,slotCtx.hora);
+  const el=document.getElementById('slot-evs');
+  el.innerHTML=evs.length?evs.map(e=>`
+  <div class="mov"><div class="mov-l"><b>${e.titulo}${e.alunoId?' 🔗':''}</b><span>${e.tipo}${e.tipo==='grupo'?(' · '+grupoLabel(e.pessoas)):''} · ${e.origem==='fixo'?'toda semana':'só nesta data'}</span></div>
+    <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">
+      ${e.tipo==='grupo'?`<select onchange="setPessoas('${e.id}','${e.origem}',this.value)" style="padding:6px 8px;font-size:11px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--text);font-weight:700">
+        <option value="2"${(e.pessoas||2)==2?' selected':''}>👥 Dupla</option>
+        <option value="3"${(e.pessoas||2)==3?' selected':''}>👥 Trio</option>
+        <option value="4"${(e.pessoas||2)==4?' selected':''}>👥 Quarteto</option>
+      </select>`:''}
+      <button class="btn btn-ghost" style="padding:6px 9px;font-size:11px" onclick="editarEntrada('${e.id}','${e.origem}')">✏️ Editar</button>
+      ${e.origem==='fixo'?`<button class="btn btn-ghost" style="padding:6px 9px;font-size:11px" onclick="cancelarDia('${e.id}')">Só hoje ✕</button>
+      <button class="btn btn-ghost" style="padding:6px 9px;font-size:11px;color:var(--bad)" onclick="removerFixo('${e.id}')">Da grade ✕</button>`
+      :`<button class="btn btn-ghost" style="padding:6px 9px;font-size:11px;color:var(--bad)" onclick="removerEvento('${e.id}')">Remover ✕</button>`}
+    </div></div>`).join('')
+  :'<div class="empty" style="padding:14px">Horário livre.</div>';
+}
+function saveSlot(){
+  const t=document.getElementById('s-titulo').value.trim();
+  if(!t){toast('Informe o nome/descrição');return;}
+  const tipo=document.getElementById('s-tipo').value;
+  const alunoId=document.getElementById('s-aluno').value||null;
+  const pessoas=(tipo==='grupo')?(Number((document.getElementById('s-grupo-n')||{}).value)||2):null;
+  if((tipo==='aula'||tipo==='grupo'||tipo==='personal')){
+    const modo=slotModo(slotCtx.date,slotCtx.hora);
+    if(modo!=='aula'){
+      toast(modo==='fechado'?('🔒 '+slotCtx.hora+' está fora do horário de aulas neste dia.'):('🔒 '+slotCtx.hora+' é só locação neste dia — não dá para agendar aula.'));return;
+    }
+  }
+  if(document.getElementById('s-rec').value==='fixo'){
+    DB.agenda.fixos.push({id:'f'+Date.now(),dia:slotCtx.date.getDay(),hora:slotCtx.hora,titulo:t,tipo,alunoId,pessoas});
+    toast(t+' fixado toda '+DIAS[slotCtx.date.getDay()]+' às '+slotCtx.hora);
+  }else{
+    DB.agenda.eventos.push({id:'e'+Date.now(),data:dKey(slotCtx.date),hora:slotCtx.hora,titulo:t,tipo,alunoId,pessoas});
+    toast(t+' marcado em '+slotCtx.date.getDate()+'/'+(slotCtx.date.getMonth()+1));
+  }
+  document.getElementById('s-titulo').value='';
+  document.getElementById('s-aluno').value='';
+  logAct('Adicionar: '+t);
+  persist();renderSlotEvs();renderAgenda();
+}
+function cancelarDia(fixoId){
+  const _f=DB.agenda.fixos.find(x=>x.id===fixoId);
+  DB.agenda.excecoes.push({fixoId,data:dKey(slotCtx.date)});
+  logAct('Cancelar aula (só nesta data): '+(_f?_f.titulo:''));
+  persist();renderSlotEvs();renderAgenda();toast('Cancelado só neste dia');
+}
+function removerFixo(id){
+  const f=DB.agenda.fixos.find(x=>x.id===id);
+  if(confirm('Remover "'+f.titulo+'" da grade fixa de toda '+DIAS[f.dia]+'?')){
+    DB.agenda.fixos=DB.agenda.fixos.filter(x=>x.id!==id);
+    DB.agenda.excecoes=DB.agenda.excecoes.filter(x=>x.fixoId!==id);
+    logAct('Remover da grade: '+f.titulo);
+    persist();renderSlotEvs();renderAgenda();toast('Removido da grade');
+  }
+}
+function removerEvento(id){
+  const _e=DB.agenda.eventos.find(x=>x.id===id);
+  DB.agenda.eventos=DB.agenda.eventos.filter(x=>x.id!==id);
+  logAct('Remover: '+(_e?_e.titulo:''));
+  persist();renderSlotEvs();renderAgenda();toast('Removido');
+}
+function editarEntrada(id,origem){
+  const isFixo=origem==='fixo';
+  const rec=isFixo?DB.agenda.fixos.find(x=>x.id===id):DB.agenda.eventos.find(x=>x.id===id);
+  if(!rec){toast('Não encontrei este horário');return;}
+  const escopo=isFixo?('vale para toda '+DIAS[rec.dia]):'só nesta data';
+  const novo=prompt('Editar o nome deste horário ('+escopo+'):',rec.titulo);
+  if(novo===null)return;
+  const t=novo.trim();
+  if(!t){toast('Nome vazio — nada alterado');return;}
+  const old=rec.titulo;
+  rec.titulo=t;
+  logAct('Renomear: '+old+' → '+t);
+  persist();renderSlotEvs();renderAgenda();toast('Atualizado para "'+t+'"');
+}
+
+/* ================= ALUNOS ================= */
+function openAlunoModal(id){
+  const m=document.getElementById('ov-aluno');
+  document.getElementById('aluno-modal-title').textContent=id?'Editar aluno':'Novo aluno';
+  if(id){
+    const a=DB.alunos.find(x=>x.id===id);
+    ['nome','tel','tipo','plano','mensalidade','creditos','repos','status'].forEach(f=>{
+      document.getElementById('a-'+f).value=a[f];
+    });
+    document.getElementById('a-cardlink').value=a.cardLink||'';
+    document.getElementById('a-mfit').value=a.mfitLink||'';
+    document.getElementById('a-valoraula').value=a.valorAula||130;
+    document.getElementById('a-venc').value=a.diaVenc||10;
+    document.getElementById('a-id').value=id;
+    applyAlunoTipoUI();
+  }else{
+    document.getElementById('a-id').value='';
+    document.getElementById('a-nome').value='';document.getElementById('a-tel').value='';
+    document.getElementById('a-tipo').value='Particular';document.getElementById('a-plano').value='4';
+    document.getElementById('a-creditos').value=4;document.getElementById('a-repos').value=0;
+    document.getElementById('a-status').value='pendente';
+    document.getElementById('a-cardlink').value='';
+    document.getElementById('a-mfit').value='';
+    document.getElementById('a-valoraula').value=130;
+    document.getElementById('a-venc').value=10;
+    applyAlunoTipoUI();
+  }
+  m.classList.add('on');
+}
+function applyAlunoTipoUI(){
+  const t=document.getElementById('a-tipo').value;
+  const isP=(t==='Personal');
+  const w=document.getElementById('a-valoraula-wrap');if(w)w.style.display=isP?'block':'none';
+  const lbl=document.getElementById('a-plano-lbl');if(lbl)lbl.textContent=isP?'Pacote (treinos/mês)':'Plano (aulas/mês)';
+  sugerirMensalidade();
+}
+function sugerirMensalidade(){
+  const t=document.getElementById('a-tipo').value,p=document.getElementById('a-plano').value;
+  const mEl=document.getElementById('a-mensalidade');
+  if(t==='Personal'){
+    const v=Number(document.getElementById('a-valoraula').value)||130;
+    mEl.value=Number(p)*v;
+  } else if(t==='Particular' && Number(p)===10){
+    /* Flex 10 particular varia por aluno — não sobrescreve */
+  } else {
+    const m=precoMensal(t,p); if(m>0) mEl.value=m;
+  }
+  if(!document.getElementById('a-id').value)document.getElementById('a-creditos').value=p;
+}
+function saveAluno(){
+  const id=document.getElementById('a-id').value;
+  const nome=document.getElementById('a-nome').value.trim();
+  if(!nome){toast('Informe o nome do aluno');return;}
+  const data={
+    nome,tel:document.getElementById('a-tel').value.replace(/\D/g,''),
+    tipo:document.getElementById('a-tipo').value,
+    plano:Number(document.getElementById('a-plano').value),
+    mensalidade:Number(document.getElementById('a-mensalidade').value)||0,
+    creditos:Number(document.getElementById('a-creditos').value)||0,
+    repos:Number(document.getElementById('a-repos').value)||0,
+    status:document.getElementById('a-status').value,
+    diaVenc:Math.min(28,Math.max(1,Number(document.getElementById('a-venc').value)||10)),
+    cardLink:document.getElementById('a-cardlink').value.trim(),
+    mfitLink:document.getElementById('a-mfit').value.trim(),
+    valorAula:Number(document.getElementById('a-valoraula').value)||130
+  };
+  if(id){Object.assign(DB.alunos.find(x=>x.id===id),data);toast('Aluno atualizado');}
+  else{
+    let c;do{c=genCode();}while(DB.alunos.some(x=>x.codigo===c));
+    DB.alunos.push({id:'a'+Date.now(),ativo:true,codigo:c,...data});toast('Aluno cadastrado · código '+c);
+  }
+  persist();closeModal('ov-aluno');renderAll();
+}
+function delAluno(id){
+  const a=DB.alunos.find(x=>x.id===id);
+  if(confirm('Excluir '+a.nome+'? Essa ação não pode ser desfeita.')){
+    DB.alunos=DB.alunos.filter(x=>x.id!==id);persist();renderAll();toast('Aluno excluído');
+  }
+}
+function toggleAluno(el){el.classList.toggle('open');}
+function aulaRealizada(id){
+  const a=DB.alunos.find(x=>x.id===id);
+  if(a.creditos<=0){toast(a.nome+' está sem créditos');return;}
+  a.creditos--;
+  if(!DB.presencas)DB.presencas=[];
+  DB.presencas.push({k:'m'+a.id+'-'+Date.now(),alunoId:a.id,data:dKey(new Date()),hora:'—',manual:true});
+  persist();renderAll();toast('Aula registrada · '+a.nome+' → '+fmtCred(a.creditos)+' créditos');
+}
+function addRepos(id){
+  const a=DB.alunos.find(x=>x.id===id);
+  a.repos++;persist();renderAll();toast('Reposição anotada para '+a.nome);
+}
+function usarRepos(id){
+  const a=DB.alunos.find(x=>x.id===id);
+  if(a.repos<=0){toast('Sem reposições pendentes');return;}
+  a.repos=Math.max(0,(Number(a.repos)||0)-1);persist();renderAll();toast('Reposição realizada · restam '+fmtCred(a.repos));
+}
+function marcarPago(id){
+  const a=DB.alunos.find(x=>x.id===id);
+  a.status='pago';
+  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:'Mensalidade · '+a.nome,valor:a.mensalidade,cat:'mensalidade',modal:(a.tipo==='Personal'?'personal':'tenis'),data:new Date().toISOString().slice(0,10)});
+  persist();renderAll();toast('Pagamento de '+a.nome+' lançado: '+fmt(a.mensalidade));
+}
+function checarViradaMes(){
+  const d=new Date();const m=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  if(DB.mesCreditos===undefined){DB.mesCreditos=m;return true;}
+  if(DB.mesCreditos===m)return false;
+  // Virou o mês: o que sobrou de crédito de cada aluno vira reposição; créditos zeram.
+  let n=0;
+  (DB.alunos||[]).forEach(a=>{
+    const sobra=Number(a.creditos)||0;
+    if(sobra>0){a.repos=(Number(a.repos)||0)+sobra;a.creditos=0;n++;}
+    else a.creditos=Number(a.creditos)||0;
+  });
+  DB.mesCreditos=m;
+  logAct('Virada de mês: créditos não usados viraram reposições ('+n+' aluno(s))');
+  if(n>0)setTimeout(()=>toast('🗓️ Virou o mês — créditos não usados viraram reposições para '+n+' aluno(s).'),800);
+  return true;
+}
+function renovarMes(id){
+  const a=DB.alunos.find(x=>x.id===id);
+  if(confirm('Renovar o mês de '+a.nome+'? Soma +'+a.plano+' créditos e marca como pendente.')){
+    a.creditos+=a.plano;a.status='pendente';persist();renderAll();toast('Mês renovado para '+a.nome);
+  }
+}
+function enviarAcesso(id){
+  const a=DB.alunos.find(x=>x.id===id);
+  const msg=encodeURIComponent(`Olá ${a.nome.split(' ')[0]}! 🎾 Agora você pode acompanhar seu saldo de aulas, reposições e horários no app da Academia João Victor Tênis.\n\n🔑 Seu código de acesso: *${a.codigo}*\n\nÉ só abrir o App do Aluno e digitar esse código. Qualquer dúvida me chama!`);
+  window.open(`https://wa.me/55${a.tel}?text=${msg}`,'_blank');
+}
+let filtroAluno='todos';
+function setFiltroAluno(f,btn){
+  filtroAluno=f;
+  document.querySelectorAll('#alunos-filtro button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderAlunos();
+}
+function ultimasAulas(id,lim){
+  return (DB.presencas||[]).filter(p=>p.alunoId===id).sort((a,b)=>String(b.data).localeCompare(String(a.data))).slice(0,lim||8);
+}
+function fmtDataCurta(s){
+  if(!s)return '—';const pr=String(s).split('-').map(Number);const dt=new Date(pr[0],(pr[1]||1)-1,pr[2]||1);
+  const dows=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  return String(pr[2]||0).padStart(2,'0')+'/'+String(pr[1]||0).padStart(2,'0')+' · '+dows[dt.getDay()];
+}
+function histAlunoHTML(id){
+  const arr=ultimasAulas(id,8);
+  if(!arr.length)return '<div class="ha-box"><div class="ha-empty">Nenhuma aula registrada ainda.</div></div>';
+  return '<div class="ha-box"><div class="ha-title">📋 Últimas aulas</div>'+arr.map(p=>'<div class="ha-row"><span>'+fmtDataCurta(p.data)+'</span><span>'+(p.hora&&p.hora!=='—'?p.hora+'h':'')+'</span></div>').join('')+'</div>';
+}
+function renderAlunos(){
+  const list=document.getElementById('alunos-list');
+  const q=(document.getElementById('search').value||'').toLowerCase();
+  const items=DB.alunos.filter(a=>a.nome.toLowerCase().includes(q)).filter(a=>{
+    if(filtroAluno==='personal')return a.tipo==='Personal';
+    if(filtroAluno==='tenis')return a.tipo!=='Personal';
+    return true;
+  }).sort((x,y)=>x.nome.localeCompare(y.nome));
+  if(!items.length){list.innerHTML='<div class="empty">Nenhum aluno '+(q||filtroAluno!=='todos'?'encontrado':'cadastrado ainda — toque em <b>+ Novo</b> para começar')+'.</div>';return;}
+  list.innerHTML=items.map(a=>`
+  <div class="aluno" id="card-${a.id}">
+    <div class="aluno-head" onclick="toggleAluno(document.getElementById('card-${a.id}'))">
+      <div><div class="aluno-name">${a.tipo==='Personal'?'💪 ':'🎾 '}${a.nome}</div><div class="aluno-sub">${a.tipo} · Flex ${a.plano} · ${fmt(a.mensalidade)}/mês</div></div>
+      <span class="badge ${a.status}">${a.status==='parcial'?'50%':a.status}</span>
+    </div>
+    <div class="aluno-body">
+      <div class="chips">
+        <span class="chip">🎾 ${fmtCred(a.creditos)} crédito${a.creditos===1?'':'s'}</span>
+        <span class="chip ${a.repos>0?'warn':'gold'}">🔁 ${fmtCred(a.repos)} reposiç${a.repos===1?'ão':'ões'}</span>
+        <span class="chip code">🔑 ${a.codigo||'—'}</span>
+        ${a.termoAceitoEm?`<span class="chip" style="background:#E6F0E6;color:#2E7D52">📄 termo aceito</span>`:''}
+      </div>
+      ${histAlunoHTML(a.id)}
+      <div class="acts">
+        <button class="act a1" onclick="aulaRealizada('${a.id}')">✓ Aula realizada (−1)</button>
+        <button class="act a2" onclick="addRepos('${a.id}')">+ Reposição</button>
+        <button class="act a3" onclick="marcarPago('${a.id}')">💰 Marcar pago</button>
+        <button class="act a4" onclick="usarRepos('${a.id}')">↺ Usar reposição</button>
+      </div>
+      <div class="aluno-foot">
+        <button class="linkbtn" onclick="openAlunoModal('${a.id}')">Editar</button>
+        <button class="linkbtn" onclick="renovarMes('${a.id}')">Renovar mês</button>
+        ${a.tel?`<button class="linkbtn wa" onclick="enviarAcesso('${a.id}')">Enviar acesso 🔑</button>`:''}
+        <button class="linkbtn del" onclick="delAluno('${a.id}')">Excluir</button>
+      </div>
+    </div>
+  </div>`).join('');
+}
+
+/* ================= LANÇAMENTOS ================= */
+function quickLanc(desc,valor,modal){
+  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc,valor,cat:desc.includes('Locação')?'locacao':'avulsa',modal:modal||'tenis',data:new Date().toISOString().slice(0,10)});
+  persist();renderAll();toast(desc+' · '+fmt(valor)+' lançado');
+}
+function openLancModal(){
+  document.getElementById('l-desc').value='';document.getElementById('l-valor').value='';
+  document.getElementById('ov-lanc').classList.add('on');
+}
+function saveLanc(){
+  const desc=document.getElementById('l-desc').value.trim();
+  const valor=Number(document.getElementById('l-valor').value);
+  if(!desc||!valor){toast('Preencha descrição e valor');return;}
+  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc,valor,cat:document.getElementById('l-cat').value,data:new Date().toISOString().slice(0,10)});
+  persist();closeModal('ov-lanc');renderAll();toast('Lançamento salvo');
+}
+function delLanc(id){
+  DB.lancamentos=DB.lancamentos.filter(l=>l.id!==id);persist();renderAll();
+}
+function renderMovs(){
+  const movs=DB.lancamentos.filter(l=>l.mes===monthKey()).sort((a,b)=>b.id.localeCompare(a.id));
+  const el=document.getElementById('mov-list');
+  if(!movs.length){el.innerHTML='<div class="empty">Nenhum lançamento neste mês.</div>';return;}
+  el.innerHTML=movs.map(l=>`
+  <div class="mov">
+    <div class="mov-l"><b>${l.desc}</b><span>${l.data.split('-').reverse().join('/')}</span></div>
+    <div style="display:flex;align-items:center"><span class="mov-v in">+ ${fmt(l.valor)}</span><button class="mov-x" onclick="delLanc('${l.id}')">✕</button></div>
+  </div>`).join('');
+}
+
+/* ================= DASHBOARD & FINANCEIRO ================= */
+function renderDash(){
+  const movs=DB.lancamentos.filter(l=>l.mes===monthKey());
+  const recebido=movs.filter(l=>l.valor>0).reduce((s,l)=>s+l.valor,0);
+  const pendAlunos=DB.alunos.filter(a=>a.status!=='pago');
+  const pendValor=pendAlunos.reduce((s,a)=>s+(a.status==='parcial'?a.mensalidade*0.5:a.mensalidade),0);
+  const creditos=DB.alunos.reduce((s,a)=>s+a.creditos,0);
+  const repos=DB.alunos.reduce((s,a)=>s+a.repos,0);
+
+  document.getElementById('k-recebido').textContent=fmt(recebido);
+  document.getElementById('k-recebido-s').textContent=movs.length+' lançamento'+(movs.length===1?'':'s');
+  document.getElementById('k-pendente').textContent=fmt(pendValor);
+  document.getElementById('k-pendente-s').textContent=pendAlunos.length+' aluno'+(pendAlunos.length===1?'':'s');
+  document.getElementById('k-alunos').textContent=DB.alunos.length;
+  document.getElementById('k-alunos-s').textContent='cadastrados';
+  document.getElementById('k-creditos').textContent=fmtCred(creditos);
+  document.getElementById('k-repos-s').textContent=fmtCred(repos)+' reposições pendentes';
+
+  const pct=Math.min(100,Math.round(recebido/(DB.meta||1)*100));
+  document.getElementById('bar-fill').style.width=(hideVals?0:pct)+'%';
+  document.getElementById('bar-txt').textContent=hideVals?'R$ ••••':(fmt(recebido)+' / '+fmt(DB.meta)+' ('+pct+'%)');
+
+  const pl=document.getElementById('pend-list');
+  // Aulas AGENDADAS na grade — conta só Tênis (aula+grupo) e Personal; ignora locação, bloqueio, pessoal e compromissos
+  const setTxt=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  const _hoje=new Date();
+  const aulasDia=contarAulas(_hoje,_hoje);
+  const _ini=new Date(curYear,curMonth,1), _fim=new Date(curYear,curMonth+1,0);
+  const aulasMes=contarAulas(_ini,_fim);
+  setTxt('k-aulas-dia-total',aulasDia.total);setTxt('k-aulas-dia-personal',aulasDia.personal);setTxt('k-aulas-dia-tenis',aulasDia.tenis);
+  setTxt('k-aulas-total',aulasMes.total);setTxt('k-aulas-personal',aulasMes.personal);setTxt('k-aulas-tenis',aulasMes.tenis);
+  renderCompromissos();renderDatasInicio();
+  if(!pendAlunos.length){pl.innerHTML='<div class="empty">🎉 Todos os alunos estão em dia!</div>';}
+  else{
+    pl.innerHTML=pendAlunos.sort((a,b)=>b.mensalidade-a.mensalidade).map(a=>`
+    <div class="pend-item ${a.status}">
+      <div><b>${a.nome}</b><br><span>${a.status==='parcial'?'Pagou 50% — falta '+fmt(a.mensalidade*0.5):'Pendente — '+fmt(a.mensalidade)}</span></div>
+      ${a.tel?`<button class="btn btn-ghost" style="padding:7px 11px;font-size:11px" onclick="cobrar('${a.id}')">Cobrar 📲</button>`:''}
+    </div>`).join('');
+  }
+}
+function renderDatasInicio(){
+  const el=document.getElementById('datas-inicio');if(!el)return;
+  const hoje=dKey(new Date());
+  const keys=Object.keys(DB.horarioData||{}).filter(k=>k>=hoje).sort().slice(0,6);
+  if(!keys.length){el.innerHTML='';return;}
+  const MES3=['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+  const itens=keys.map(k=>{
+    const m=DB.horarioData[k]||{};const vals=HORAS.map(h=>m[h]||'aula');
+    const nF=vals.filter(v=>v==='fechado').length,nL=vals.filter(v=>v==='loc').length,nA=vals.filter(v=>v==='aula').length;
+    let resumo,cor;
+    if(nF===HORAS.length){resumo='🔴 Fechado o dia todo';cor='#B23A3A';}
+    else if(nL===HORAS.length){resumo='🟡 Só locação o dia todo';cor='#9A7B2E';}
+    else if(nA===HORAS.length){resumo='🟢 Aula liberada o dia todo';cor='#2E7D52';}
+    else {resumo='Horário personalizado';cor='#9A7B2E';}
+    const pr=k.split('-').map(Number);const d=new Date(pr[0],pr[1]-1,pr[2]);
+    return '<div class="comp-item"><div class="comp-date" style="background:'+cor+'"><div class="cd-d" style="color:#fff">'+String(pr[2]).padStart(2,'0')+'</div><div class="cd-m" style="color:#fff">'+MES3[pr[1]-1]+'</div></div>'
+      +'<div class="comp-info"><b>'+DIASEM_FULL[d.getDay()]+'</b><span>'+resumo+'</span></div>'
+      +'<button class="comp-x" title="Editar" onclick="abrirHorario();setTimeout(function(){abrirDataEspecial(\''+k+'\');},60)">✎</button></div>';
+  }).join('');
+  el.innerHTML='<p class="sec-eyebrow" style="margin-top:2px">📅 Datas especiais</p><div class="comp-list">'+itens+'</div>';
+}
+function renderCompromissos(){
+  const el=document.getElementById('comp-list');if(!el)return;
+  if(!DB.compromissos)DB.compromissos=[];
+  const hoje=dKey(new Date());
+  const arr=DB.compromissos.filter(c=>c.data>=hoje).sort((a,b)=>(a.data+(a.hora||'')).localeCompare(b.data+(b.hora||'')));
+  if(!arr.length){el.innerHTML='<div class="empty">Nenhum compromisso futuro. Toque em <b>＋ Novo</b> para adicionar. 🗓️</div>';return;}
+  const MES3=['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+  el.innerHTML=arr.map(c=>{
+    const pr=String(c.data).split('-').map(Number);
+    return '<div class="comp-item"><div class="comp-date"><div class="cd-d">'+String(pr[2]||0).padStart(2,'0')+'</div><div class="cd-m">'+(MES3[(pr[1]||1)-1]||'')+'</div></div>'
+      +'<div class="comp-info"><b>'+torEsc(c.titulo)+'</b><span>'+(c.hora?c.hora+'h':'Dia todo')+(c.nota?' · '+torEsc(c.nota):'')+'</span></div>'
+      +'<button class="comp-x" title="Remover" onclick="delCompromisso(\''+c.id+'\')">✕</button></div>';
+  }).join('');
+}
+function abrirNovoCompromisso(){
+  document.getElementById('cp-titulo').value='';
+  document.getElementById('cp-data').value=dKey(new Date());
+  document.getElementById('cp-hora').value='';
+  document.getElementById('cp-nota').value='';
+  document.getElementById('ov-comp').classList.add('on');
+}
+function salvarCompromisso(){
+  const titulo=document.getElementById('cp-titulo').value.trim();
+  const data=document.getElementById('cp-data').value;
+  if(!titulo){toast('Digite o título do compromisso');return;}
+  if(!data){toast('Escolha a data');return;}
+  if(!DB.compromissos)DB.compromissos=[];
+  logAct('Adicionar compromisso: '+titulo);
+  DB.compromissos.push({id:'c'+Date.now(),titulo,data,hora:document.getElementById('cp-hora').value||'',nota:document.getElementById('cp-nota').value.trim()});
+  persist();closeModal('ov-comp');renderDash();toast('Compromisso salvo 🗓️');
+}
+var HEDIT=null,HDIA=1,HMODE='semana',HDATA='',HDMAP=null;
+const DIASEM=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const DIASEM_FULL=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+function abrirHorario(){
+  HEDIT={};
+  for(let d=0;d<7;d++){HEDIT[d]={};HORAS.forEach(h=>{const c=DB.horarioCfg&&DB.horarioCfg[d];HEDIT[d][h]=(c&&c[h])||modoPadrao({getDay:()=>d},h);});}
+  HDIA=1;HMODE='semana';HDATA='';HDMAP=null;
+  setHMode('semana');
+  document.getElementById('ov-horario').classList.add('on');
+}
+function setHMode(mode){
+  HMODE=mode;
+  document.getElementById('h-semana').style.display=mode==='semana'?'block':'none';
+  document.getElementById('h-data').style.display=mode==='data'?'block':'none';
+  const bs=document.getElementById('hmode-sem'),bd=document.getElementById('hmode-dat');
+  bs.style.background=mode==='semana'?'var(--clay,#B86B4B)':'#fff';bs.style.color=mode==='semana'?'#fff':'var(--text)';
+  bd.style.background=mode==='data'?'var(--clay,#B86B4B)':'#fff';bd.style.color=mode==='data'?'#fff':'var(--text)';
+  if(mode==='data'){
+    if(!HDATA){const t=new Date();HDATA=dKey(t);document.getElementById('h-date').value=HDATA;}
+    selData();renderDatasEspeciais();
+  } else { renderHorarioTabs();renderHorarioList(); }
+}
+function renderDatasEspeciais(){
+  const box=document.getElementById('h-datas-list');if(!box)return;
+  const keys=Object.keys(DB.horarioData||{}).sort();
+  if(!keys.length){box.innerHTML='<div style="color:var(--muted);font-size:11px;padding:8px 2px;text-align:center">Nenhuma data especial salva ainda.</div>';return;}
+  box.innerHTML='<div style="font-size:11px;font-weight:800;color:var(--muted);margin:10px 2px 5px">📅 DATAS ESPECIAIS SALVAS</div>'+keys.map(k=>{
+    const m=DB.horarioData[k]||{};
+    const vals=HORAS.map(h=>m[h]||'aula');
+    const nA=vals.filter(v=>v==='aula').length,nL=vals.filter(v=>v==='loc').length,nF=vals.filter(v=>v==='fechado').length;
+    let resumo;
+    if(nF===HORAS.length)resumo='🔴 Fechado o dia todo';
+    else if(nL===HORAS.length)resumo='🟡 Só locação o dia todo';
+    else if(nA===HORAS.length)resumo='🟢 Aula o dia todo';
+    else resumo=nA+' aula · '+nL+' loc · '+nF+' fech.';
+    const d=hParse(k);
+    return '<div style="display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:9px;padding:7px 9px;margin-bottom:5px">'
+      +'<button onclick="abrirDataEspecial(\''+k+'\')" style="flex:1;text-align:left;background:none;border:none;cursor:pointer;padding:0"><div style="font-size:12.5px;font-weight:700;color:var(--text)">'+DIASEM[d.getDay()]+' '+String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear()+'</div><div style="font-size:11px;color:var(--muted)">'+resumo+'</div></button>'
+      +'<button onclick="removerDataEspecial(\''+k+'\')" title="Remover" style="flex-shrink:0;width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:#fff;color:#B23A3A;font-weight:700;cursor:pointer">✕</button>'
+      +'</div>';
+  }).join('');
+}
+function abrirDataEspecial(k){HMODE='data';document.getElementById('h-date').value=k;selData();}
+function removerDataEspecial(k){
+  if(!confirm('Remover a data especial de '+k+'? Esse dia volta ao padrão da semana.'))return;
+  if(DB.horarioData)delete DB.horarioData[k];
+  logAct('Remover data especial '+k);persist();
+  if(HDATA===k)selData();
+  renderDatasEspeciais();toast('Data especial removida');
+}
+function hParse(s){const p=String(s).split('-').map(Number);return new Date(p[0],p[1]-1,p[2]);}
+function selData(){
+  HDATA=document.getElementById('h-date').value;
+  const info=document.getElementById('h-data-info');
+  if(!HDATA){HDMAP=null;info.textContent='Escolha uma data acima.';renderHorarioList();return;}
+  const d=hParse(HDATA),dow=d.getDay();
+  const existing=DB.horarioData&&DB.horarioData[HDATA];
+  HDMAP={};HORAS.forEach(h=>{HDMAP[h]=(existing&&existing[h])||(HEDIT[dow]&&HEDIT[dow][h])||modoPadrao({getDay:()=>dow},h);});
+  info.innerHTML=DIASEM_FULL[dow]+', '+d.getDate()+'/'+(d.getMonth()+1)+(existing?' · <b style="color:var(--clay,#B86B4B)">personalizado</b>':' · seguindo o padrão da semana');
+  renderHorarioList();
+}
+function removerData(){
+  if(HDATA&&DB.horarioData&&DB.horarioData[HDATA]){delete DB.horarioData[HDATA];persist();}
+  selData();renderDatasEspeciais();toast('Voltou ao padrão da semana nesta data');
+}
+function activeMap(){return HMODE==='data'?HDMAP:HEDIT[HDIA];}
+function renderHorarioTabs(){
+  document.getElementById('hdia-tabs').innerHTML=DIASEM.map((n,d)=>'<button onclick="selDiaHorario('+d+')" style="flex:1;min-width:36px;padding:6px 3px;border-radius:9px;border:1px solid var(--border);font-size:11px;font-weight:700;background:'+(d===HDIA?'var(--clay,#B86B4B)':'#fff')+';color:'+(d===HDIA?'#fff':'var(--text)')+'">'+n+'</button>').join('');
+}
+function selDiaHorario(d){HDIA=d;renderHorarioTabs();renderHorarioList();}
+function renderHorarioList(){
+  const m=activeMap();
+  if(!m){document.getElementById('hhoras-list').innerHTML='<div style="color:var(--muted);font-size:12px;padding:10px;text-align:center">Escolha uma data acima.</div>';return;}
+  const opt=(h,st,lbl,cor)=>{const on=m[h]===st;return '<button onclick="setEstadoH(\''+h+'\',\''+st+'\')" style="flex:1;padding:6px 2px;border-radius:8px;border:1px solid '+(on?cor:'var(--border)')+';background:'+(on?cor:'#fff')+';color:'+(on?'#fff':'var(--muted)')+';font-size:10.5px;font-weight:700">'+lbl+'</button>';};
+  document.getElementById('hhoras-list').innerHTML=HORAS.map(h=>'<div style="display:flex;align-items:center;gap:6px"><span style="width:42px;font-size:11px;font-weight:700;color:var(--muted);flex-shrink:0">'+h+'</span>'+opt(h,'aula','Aula','#2E7D52')+opt(h,'loc','Locação','#9A7B2E')+opt(h,'fechado','Fechado','#B23A3A')+'</div>').join('');
+}
+function setEstadoH(h,st){const m=activeMap();if(!m)return;m[h]=st;renderHorarioList();}
+function diaTodo(st){const m=activeMap();if(!m)return;HORAS.forEach(h=>m[h]=st);renderHorarioList();}
+function copiarParaUteis(){for(let d=1;d<=5;d++){HEDIT[d]=JSON.parse(JSON.stringify(HEDIT[HDIA]));}renderHorarioTabs();toast('Copiado para seg–sex ✓');}
+function restaurarPadrao(){
+  if(!confirm('Restaurar todos os dias da semana para o padrão recomendado? Suas alterações da semana serão substituídas quando você Salvar.'))return;
+  for(let d=0;d<7;d++){HEDIT[d]={};HORAS.forEach(h=>HEDIT[d][h]=modoPadrao({getDay:()=>d},h));}
+  renderHorarioTabs();renderHorarioList();toast('Padrão restaurado — confirme em Salvar');
+}
+function salvarHorario(){
+  if(HMODE==='data'){
+    if(!HDATA){toast('Escolha uma data');return;}
+    if(!DB.horarioData)DB.horarioData={};
+    DB.horarioData[HDATA]=HDMAP;
+    logAct('Editar funcionamento (data '+HDATA+')');
+    persist();closeModal('ov-horario');renderAgenda();toast('📅 Data salva');
+  } else {
+    DB.horarioCfg=HEDIT;
+    logAct('Editar funcionamento da agenda');
+    persist();closeModal('ov-horario');renderAgenda();toast('🗓️ Funcionamento salvo');
+  }
+}
+function delCompromisso(id){
+  if(!confirm('Remover este compromisso?'))return;
+  logAct('Remover compromisso');
+  DB.compromissos=(DB.compromissos||[]).filter(c=>c.id!==id);
+  persist();renderDash();toast('Compromisso removido');
+}
+function cobrar(id){
+  const a=DB.alunos.find(x=>x.id===id);
+  const falta=a.status==='parcial'?a.mensalidade*0.5:a.mensalidade;
+  const msg=encodeURIComponent(`Olá ${a.nome.split(' ')[0]}! 🎾 Passando para lembrar da mensalidade de ${MESES[curMonth]}: ${fmt(falta)}. Qualquer dúvida é só chamar!`);
+  window.open(`https://wa.me/55${a.tel}?text=${msg}`,'_blank');
+}
+function modalDe(l){
+  if(l.modal)return l.modal;
+  if(l.cat==='mensalidade'){const nm=(l.desc||'').split('· ')[1];const a=nm&&DB.alunos.find(x=>x.nome===nm);if(a&&a.tipo==='Personal')return 'personal';}
+  return 'tenis';
+}
+function renderFin(){
+  const movs=DB.lancamentos.filter(l=>l.mes===monthKey());
+  const recCat=c=>movs.filter(l=>l.cat===c&&l.valor>0).reduce((s,l)=>s+l.valor,0);
+  const receitas=movs.filter(l=>l.valor>0).reduce((s,l)=>s+l.valor,0);
+  const despesas=movs.filter(l=>l.valor<0).reduce((s,l)=>s+Math.abs(l.valor),0);
+  document.getElementById('f-total').textContent=fmt(receitas);
+  document.getElementById('f-despesas').textContent=fmt(despesas);
+  document.getElementById('f-saldo').textContent=fmt(receitas-despesas);
+  document.getElementById('f-mens').textContent=fmt(recCat('mensalidade'));
+  document.getElementById('f-avulsas').textContent=fmt(recCat('avulsa'));
+  document.getElementById('f-loc').textContent=fmt(recCat('locacao'));
+  document.getElementById('f-outros').textContent=fmt(recCat('outro'));
+  const recModal=m=>movs.filter(l=>l.valor>0&&modalDe(l)===m).reduce((s,l)=>s+l.valor,0);
+  if(document.getElementById('f-tenis'))document.getElementById('f-tenis').textContent=fmt(recModal('tenis'));
+  if(document.getElementById('f-personal'))document.getElementById('f-personal').textContent=fmt(recModal('personal'));
+  const previsto=DB.alunos.reduce((s,a)=>s+a.mensalidade,0);
+  document.getElementById('f-previsto').textContent=fmt(previsto);
+  const inad=DB.alunos.filter(a=>a.status!=='pago').reduce((s,a)=>s+(a.status==='parcial'?a.mensalidade*0.5:a.mensalidade),0);
+  document.getElementById('f-inad').textContent=fmt(inad);
+  const mi=document.getElementById('meta-input');
+  if(hideVals){mi.type='text';mi.value='••••';mi.readOnly=true;}
+  else{mi.type='number';mi.value=DB.meta;mi.readOnly=false;}
+  document.getElementById('aviso-input').value=DB.aviso||'';
+  if(document.getElementById('termo-input'))document.getElementById('termo-input').value=DB.termo||'';
+  if(document.getElementById('pix-input'))document.getElementById('pix-input').value=DB.pix||'';
+  if(document.getElementById('pixtipo-input'))document.getElementById('pixtipo-input').value=DB.pixTipo||'celular';
+  {const _pv=document.getElementById('pix-preview');if(_pv)_pv.innerHTML=DB.pix?('✅ Chave usada no Pix: <b>'+DB.pix+'</b>'):'';}
+  if(document.getElementById('pixnome-input'))document.getElementById('pixnome-input').value=DB.pixNome||'';
+  if(document.getElementById('pixcidade-input'))document.getElementById('pixcidade-input').value=DB.pixCidade||'';
+  if(document.getElementById('card-input'))document.getElementById('card-input').value=DB.cardLink||'';
+  const pr=DB.precos||{avulsaPart:170,avulsaGrupo:95,locacao:70,personal:130};
+  if(document.getElementById('pr-avpart'))document.getElementById('pr-avpart').value=pr.avulsaPart;
+  if(document.getElementById('pr-avgrupo'))document.getElementById('pr-avgrupo').value=pr.avulsaGrupo;
+  if(document.getElementById('pr-loc'))document.getElementById('pr-loc').value=pr.locacao;
+  if(document.getElementById('pr-personal'))document.getElementById('pr-personal').value=(pr.personal!=null?pr.personal:130);
+  const gp=DB.grupoPreco||{dupla:95,trio:80,quarteto:75};
+  if(document.getElementById('pr-gdupla'))document.getElementById('pr-gdupla').value=(gp.dupla!=null?gp.dupla:95);
+  if(document.getElementById('pr-gtrio'))document.getElementById('pr-gtrio').value=(gp.trio!=null?gp.trio:80);
+  if(document.getElementById('pr-gquarteto'))document.getElementById('pr-gquarteto').value=(gp.quarteto!=null?gp.quarteto:75);
+  renderChart(receitas,inad,despesas);
+  renderDespesas(movs);
+}
+function renderChart(recebido,aReceber,despesas){
+  const el=document.getElementById('fin-chart');if(!el)return;
+  const meta=DB.meta||0;
+  const max=Math.max(meta,recebido,aReceber,despesas,1);
+  const linhas=[
+    ['Meta','meta',meta],
+    ['Recebido','rec',recebido],
+    ['A receber','arec',aReceber],
+    ['Despesas','desp',despesas]
+  ];
+  el.innerHTML=linhas.map(([lab,cls,val])=>`
+    <div class="chart-row">
+      <span class="chart-lab">${lab}</span>
+      <span class="chart-track"><span class="chart-bar ${cls}" style="width:${Math.round(val/max*100)}%"></span></span>
+      <span class="chart-val">${fmt(val)}</span>
+    </div>`).join('');
+}
+function renderDespesas(movs){
+  const el=document.getElementById('desp-list');if(!el)return;
+  const desp=movs.filter(l=>l.valor<0).sort((a,b)=>b.id.localeCompare(a.id));
+  if(!desp.length){el.innerHTML='<div class="empty">Nenhuma despesa lançada neste mês.</div>';return;}
+  el.innerHTML=desp.map(l=>`
+    <div class="desp-item">
+      <div><div class="di-d">${l.desc}</div><div class="di-c">${l.despCat||'Despesa'}</div></div>
+      <div style="display:flex;align-items:center">
+        <span class="di-v">− ${fmt(Math.abs(l.valor))}</span>
+        <button class="di-x" onclick="delLanc('${l.id}')" title="Excluir">✕</button>
+      </div>
+    </div>`).join('');
+}
+function openDespesaModal(){
+  document.getElementById('d-desc').value='';
+  document.getElementById('d-valor').value='';
+  document.getElementById('d-cat').value='Aluguel';
+  document.getElementById('ov-desp').classList.add('on');
+}
+function saveDespesa(){
+  const desc=document.getElementById('d-desc').value.trim();
+  const valor=Math.abs(Number(document.getElementById('d-valor').value)||0);
+  if(!desc){toast('Descreva a despesa');return;}
+  if(!valor){toast('Informe o valor da despesa');return;}
+  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc,valor:-valor,cat:'despesa',despCat:document.getElementById('d-cat').value,data:new Date().toISOString().slice(0,10)});
+  persist();closeModal('ov-desp');renderAll();toast('Despesa lançada · −'+fmt(valor));
+}
+
+/* ================= GRÁFICOS ================= */
+const MES_CURTO=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+function monthKeyNow(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+function labelMes(mk){const p=mk.split('-');return MES_CURTO[Number(p[1])-1]+'/'+p[0].slice(2);}
+function ultimosMeses(n){const out=[];const d=new Date();for(let i=n-1;i>=0;i--){const x=new Date(d.getFullYear(),d.getMonth()-i,1);out.push(x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0'));}return out;}
+function barChart(el,linhas,fmtVal){
+  if(!el)return;
+  if(!linhas.length){el.innerHTML='<div class="empty">Ainda sem dados para exibir.</div>';return;}
+  const max=Math.max.apply(null,linhas.map(l=>Math.abs(l.value)).concat([1]));
+  el.innerHTML=linhas.map(l=>`
+    <div class="chart-row">
+      <span class="chart-lab">${l.label}</span>
+      <span class="chart-track"><span class="chart-bar ${l.cls||'rec'}" style="width:${Math.round(Math.abs(l.value)/max*100)}%"></span></span>
+      <span class="chart-val ${l.valCls||''}">${fmtVal(l.value)}</span>
+    </div>`).join('');
+}
+function renderGraf(){
+  // Faturamento (receitas positivas) por mês
+  const fatPorMes={};
+  DB.lancamentos.forEach(l=>{if(l.valor>0)fatPorMes[l.mes]=(fatPorMes[l.mes]||0)+l.valor;});
+  const fatTenis={},fatPersonal={};
+  DB.lancamentos.forEach(l=>{if(l.valor>0){if(modalDe(l)==='personal')fatPersonal[l.mes]=(fatPersonal[l.mes]||0)+l.valor;else fatTenis[l.mes]=(fatTenis[l.mes]||0)+l.valor;}});
+  // Despesas (valores negativos) por mês
+  const despPorMes={};
+  DB.lancamentos.forEach(l=>{if(l.valor<0)despPorMes[l.mes]=(despPorMes[l.mes]||0)+Math.abs(l.valor);});
+  // Alunos pagantes por mês (proxy para meses sem snapshot)
+  const pagPorMes={};
+  DB.lancamentos.forEach(l=>{if(l.cat==='mensalidade'&&l.valor>0){(pagPorMes[l.mes]=pagPorMes[l.mes]||new Set()).add(l.desc);}});
+
+  const setMeses=new Set(Object.keys(fatPorMes).concat(Object.keys(despPorMes)).concat(Object.keys(DB.snapAlunos||{})));
+  setMeses.add(monthKeyNow());
+  ultimosMeses(6).forEach(m=>setMeses.add(m));
+  const meses=Array.from(setMeses).sort().slice(-12);
+
+  barChart(document.getElementById('graf-fat'),
+    meses.map(mk=>({label:labelMes(mk),value:fatPorMes[mk]||0,cls:'rec'})),fmt);
+  const _gft=document.getElementById('graf-fat-tenis');
+  if(_gft)barChart(_gft,meses.map(mk=>({label:labelMes(mk),value:fatTenis[mk]||0,cls:'rec'})),fmt);
+  const _gfp=document.getElementById('graf-fat-personal');
+  if(_gfp)barChart(_gfp,meses.map(mk=>({label:labelMes(mk),value:fatPersonal[mk]||0,cls:'meta'})),fmt);
+
+  barChart(document.getElementById('graf-desp'),
+    meses.map(mk=>({label:labelMes(mk),value:despPorMes[mk]||0,cls:'desp'})),fmt);
+
+  barChart(document.getElementById('graf-lucro'),
+    meses.map(mk=>{
+      const lucro=(fatPorMes[mk]||0)-(despPorMes[mk]||0);
+      return {label:labelMes(mk),value:lucro,cls:lucro<0?'neg':'rec',valCls:lucro<0?'neg':''};
+    }),fmt);
+
+  barChart(document.getElementById('graf-alunos'),
+    meses.map(mk=>{
+      const v=(DB.snapAlunos&&DB.snapAlunos[mk]!=null)?DB.snapAlunos[mk]:(pagPorMes[mk]?pagPorMes[mk].size:0);
+      return {label:labelMes(mk),value:v,cls:'meta'};
+    }),v=>String(v));
+
+  // Comparativo anual
+  const fatPorAno={};
+  Object.keys(fatPorMes).forEach(mk=>{const y=mk.slice(0,4);fatPorAno[y]=(fatPorAno[y]||0)+fatPorMes[mk];});
+  const anos=Object.keys(fatPorAno).sort();
+  barChart(document.getElementById('graf-ano'),
+    anos.map(y=>({label:y,value:fatPorAno[y],cls:'rec'})),fmt);
+
+  // Cards resumo (ano atual)
+  const anoAtual=String(new Date().getFullYear());
+  const fatAno=fatPorAno[anoAtual]||0;
+  const mesesComFat=Object.keys(fatPorMes).filter(mk=>mk.slice(0,4)===anoAtual).length||1;
+  document.getElementById('g-ano-lbl').textContent=anoAtual;
+  document.getElementById('g-ano-fat').textContent=fmt(fatAno);
+  document.getElementById('g-alunos-hoje').textContent=DB.alunos.length;
+  document.getElementById('g-media-mes').textContent=fmt(Math.round(fatAno/mesesComFat));
+  renderOcupacao();
+}
+function renderOcupacao(){
+  const el=document.getElementById('graf-ocup');if(!el)return;
+  const DIAS=28,hoje=new Date(),cont={};
+  HORAS.forEach(h=>cont[h]=0);
+  let houve=false;
+  for(let i=0;i<DIAS;i++){
+    const d=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()-i,12);
+    HORAS.forEach(h=>{
+      const evs=entriesFor(d,h).filter(e=>e.origem!=='compromisso'&&['aula','grupo','personal','locacao'].indexOf(e.tipo)>=0);
+      if(evs.length){cont[h]++;houve=true;}
+    });
+  }
+  if(!houve){el.innerHTML='<div class="empty">Ainda sem histórico suficiente. Conforme você usar a agenda, a ocupação por horário aparece aqui.</div>';return;}
+  barChart(el,HORAS.map(h=>({label:h,value:cont[h],cls:'rec'})),n=>n+'x');
+}
+function saveMeta(v){DB.meta=Number(v)||0;persist();renderAll();toast('Meta atualizada');}
+function saveAviso(v){DB.aviso=v.trim();persist();toast('Aviso publicado no app do aluno');}
+function saveTermo(v){v=(v||'').trim();if(DB.termo!==v){DB.termo=v;DB.termoVer=Date.now();}persist();toast(v?'Termo publicado — alunos aceitam no próximo acesso':'Termo removido');}
+function normalizaPix(chave,tipo){
+  chave=String(chave||'').trim();
+  if(tipo==='celular'){const d=chave.replace(/\D/g,'');if(!d)return '';return '+'+(d.length<=11?('55'+d):d);}
+  if(tipo==='cpf'||tipo==='cnpj')return chave.replace(/\D/g,'');
+  if(tipo==='email')return chave.toLowerCase();
+  return chave;
+}
+function savePag(){
+  DB.pixTipo=(document.getElementById('pixtipo-input')||{}).value||'celular';
+  DB.pix=normalizaPix(document.getElementById('pix-input').value,DB.pixTipo);
+  {const pv=document.getElementById('pix-preview');if(pv)pv.innerHTML=DB.pix?('✅ Chave usada no Pix: <b>'+DB.pix+'</b>'):'';}
+  if(document.getElementById('pixnome-input'))DB.pixNome=document.getElementById('pixnome-input').value.trim();
+  if(document.getElementById('pixcidade-input'))DB.pixCidade=document.getElementById('pixcidade-input').value.trim();
+  DB.cardLink=document.getElementById('card-input').value.trim();
+  const num=(id,def)=>{const v=Number(document.getElementById(id).value);return v>0?v:def;};
+  DB.precos={
+    avulsaPart:num('pr-avpart',170),
+    avulsaGrupo:num('pr-avgrupo',95),
+    locacao:num('pr-loc',70),
+    personal:num('pr-personal',130)
+  };
+  DB.grupoPreco={dupla:num('pr-gdupla',85),trio:num('pr-gtrio',80),quarteto:num('pr-gquarteto',75)};
+  persist();toast('Formas de pagamento e valores atualizados');
+}
+/* Reinstala a grade-padrão da planilha, preservando alunos, lançamentos e agendamentos */
+function instalarGrade(){
+  if(!confirm('Isto vai REPOR a grade fixa de horários conforme sua planilha (semana-padrão).\n\n✅ Preserva: alunos, lançamentos, agendamentos de alunos e marcações pontuais.\n♻️ Substitui: apenas a grade fixa semanal (os horários recorrentes).\n\nDeseja continuar?'))return;
+  const nova=seedAgenda();
+  // mantém marcações fixas vinculadas a alunos reais (ex.: agendamentos confirmados)
+  const linkados=(DB.agenda&&DB.agenda.fixos?DB.agenda.fixos.filter(f=>f.alunoId):[]);
+  nova.fixos=nova.fixos.concat(linkados);
+  nova.eventos=(DB.agenda&&DB.agenda.eventos)?DB.agenda.eventos:[];
+  nova.excecoes=(DB.agenda&&DB.agenda.excecoes)?DB.agenda.excecoes:[];
+  DB.agenda=nova;
+  persist();renderAll();toast('✓ Grade da planilha instalada');
+}
+/* Exporta a semana atual da agenda para um arquivo que abre no Excel/Planilhas */
+function exportAgendaExcel(){
+  const base=new Date(agDate);
+  const mon=new Date(base);mon.setDate(mon.getDate()-((mon.getDay()+6)%7));
+  const days=[...Array(6)].map((_,i)=>{const d=new Date(mon);d.setDate(d.getDate()+i);return d;});
+  const sep=';';
+  let csv='HORARIOS'+sep+days.map(d=>DIAS[d.getDay()]+' '+String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')).join(sep)+'\n';
+  HORAS.forEach(h=>{
+    const linha=[h];
+    days.forEach(d=>{
+      const evs=entriesFor(d,h).map(e=>e.titulo);
+      linha.push(evs.join(' / ').replace(/;/g,','));
+    });
+    csv+=linha.join(sep)+'\n';
+  });
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='agenda-jvtenis-'+dKey(days[0])+'.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  toast('Agenda da semana exportada para Excel');
+}
+
+/* ================= BACKUP ================= */
+function exportBackup(){
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='jvtenis-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();toast('Backup exportado');
+}
+function importBackup(input){
+  const f=input.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const d=JSON.parse(r.result);
+      if(!d.alunos||!d.lancamentos)throw new Error();
+      DB=d;if(!DB.agenda)DB.agenda=seedAgenda();ensureFields();
+      persist();renderAll();toast('Backup restaurado');
+    }catch(e){toast('Arquivo inválido');}
+  };
+  r.readAsText(f);input.value='';
+}
+
+/* ================= RENDER ================= */
+/* ================= TORNEIO ================= */
+const GRUPOS_TOR=['A','B','C','D','E'];
+function torEsc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function torJsq(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+function torAttr(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+/* Arraste (toque + mouse) para mover/reordenar jogadores entre os grupos */
+let torDrag=null;
+function torDragDown(e){
+  const row=e.currentTarget.closest('tr.tg-row');if(!row)return;
+  e.preventDefault();
+  const rect=row.getBoundingClientRect();
+  const ghost=document.createElement('div');
+  ghost.className='tg-ghost';ghost.textContent='⠿  '+(row.dataset.name||'');
+  ghost.style.left=rect.left+'px';ghost.style.top=rect.top+'px';
+  document.body.appendChild(ghost);
+  row.classList.add('tg-dragging');
+  torDrag={group:row.dataset.group,name:row.dataset.name,ghost,row,offY:e.clientY-rect.top};
+  document.addEventListener('pointermove',torDragMove);
+  document.addEventListener('pointerup',torDragUp);
+}
+function torClearDropHints(){
+  document.querySelectorAll('tbody.tg-drop').forEach(el=>el.classList.remove('tg-drop'));
+  document.querySelectorAll('.tg-before,.tg-after').forEach(el=>el.classList.remove('tg-before','tg-after'));
+}
+function torDragMove(e){
+  if(!torDrag)return;
+  torDrag.ghost.style.top=(e.clientY-torDrag.offY)+'px';
+  torClearDropHints();
+  torDrag.ghost.style.display='none';
+  const under=document.elementFromPoint(e.clientX,e.clientY);
+  torDrag.ghost.style.display='';
+  if(!under)return;
+  const tb=under.closest('tbody[data-group]');if(tb)tb.classList.add('tg-drop');
+  const over=under.closest('tr.tg-row');
+  if(over&&over!==torDrag.row){const r=over.getBoundingClientRect();over.classList.add((e.clientY-r.top)<r.height/2?'tg-before':'tg-after');}
+}
+function torDragUp(e){
+  if(!torDrag)return;
+  document.removeEventListener('pointermove',torDragMove);
+  document.removeEventListener('pointerup',torDragUp);
+  torDrag.ghost.style.display='none';
+  const under=document.elementFromPoint(e.clientX,e.clientY);
+  torDrag.ghost.remove();torDrag.row.classList.remove('tg-dragging');
+  torClearDropHints();
+  const ctx=torDrag;torDrag=null;
+  if(!under)return;
+  const tb=under.closest('tbody[data-group]');if(!tb)return;
+  const targetGroup=tb.dataset.group;
+  const t=torAtual();
+  const p=t.jogadores.find(x=>x.group===ctx.group&&x.name===ctx.name);if(!p)return;
+  if(targetGroup!==p.group&&t.jogadores.some(x=>x.group===targetGroup&&x.name.toLowerCase()===p.name.toLowerCase())){toast('Já existe esse jogador no grupo '+targetGroup);return;}
+  const groupPlayers=t.jogadores.filter(x=>x.group===targetGroup&&x!==p);
+  const over=under.closest('tr.tg-row');
+  let idx=groupPlayers.length;
+  if(over){const overName=over.dataset.name,overGroup=over.dataset.group;if(overGroup===targetGroup){const r=over.getBoundingClientRect();const before=(e.clientY-r.top)<r.height/2;const j=groupPlayers.findIndex(x=>x.name===overName);if(j!==-1)idx=before?j:j+1;}}
+  const oldGroup=p.group;p.group=targetGroup;
+  groupPlayers.splice(idx,0,p);groupPlayers.forEach((pl,k)=>pl.order=k);
+  persist();renderTorneio();
+  toast(oldGroup!==targetGroup?(p.name+' → Grupo '+targetGroup):'Ordem atualizada ✓');
+}
+function seedBarragem(){
+  const j=[
+    ['A','Rafael',2,0,0],['A','Gustavo',1,1,0],['A','Carolina',0,2,0],
+    ['B','Gabriel',1,0,0],['B','Alexandre',0,1,1],['B','Armando',0,0,0],
+    ['C','Guilherme',1,0,0],['C','Felippe',0,1,0],['C','Junior',0,0,0],
+    ['D','Adriano',3,0,0],['D','Felipe Bittencourt',0,2,0],['D','Paulo',1,1,0],['D','Édson',0,1,0]
+  ];
+  return j.map((x,i)=>({group:x[0],name:x[1],v:x[2],d:x[3],wo:x[4],order:i}));
+}
+function ensureTorneios(){
+  if(!DB.torneios||typeof DB.torneios!=='object')DB.torneios={atual:null,lista:{}};
+  if(!DB.torneios.lista)DB.torneios.lista={};
+  if(Object.keys(DB.torneios.lista).length===0){
+    const id='t'+Date.now();
+    DB.torneios.lista[id]={id,nome:'Barragem '+new Date().getFullYear(),tipo:'barragem',jogadores:seedBarragem(),criadoEm:Date.now()};
+    DB.torneios.atual=id;
+    DB.torneios.seeded=true;
+  } else if(!DB.torneios.seeded){
+    // preenche a Barragem se ela estiver vazia (sem sobrescrever nada que você já tenha digitado)
+    const ids=Object.keys(DB.torneios.lista);
+    if(ids.length===1){
+      const t=DB.torneios.lista[ids[0]];
+      if(t.tipo==='barragem'&&(!t.jogadores||t.jogadores.length===0))t.jogadores=seedBarragem();
+    }
+    DB.torneios.seeded=true;
+  }
+  if(!DB.torneios.atual||!DB.torneios.lista[DB.torneios.atual])DB.torneios.atual=Object.keys(DB.torneios.lista)[0];
+}
+function torAtual(){ensureTorneios();return DB.torneios.lista[DB.torneios.atual];}
+function calcPtsTor(p){return (p.v||0)*3+(p.d||0)*1+(p.wo||0)*1;}
+function rankPlayersTor(jogs){return jogs.slice().sort((a,b)=>calcPtsTor(b)-calcPtsTor(a)||(b.v||0)-(a.v||0)||(a.order??0)-(b.order??0));}
+
+function renderTorneio(){
+  const sel=document.getElementById('tor-sel');if(!sel)return;
+  ensureTorneios();
+  const ids=Object.keys(DB.torneios.lista);
+  sel.innerHTML=ids.map(id=>`<option value="${id}" ${id===DB.torneios.atual?'selected':''}>${torEsc(DB.torneios.lista[id].nome)}</option>`).join('');
+  const t=torAtual();
+  const wrap=document.getElementById('tor-grupos');
+  const grupos=GRUPOS_TOR.filter(g=>t.jogadores.some(p=>p.group===g));
+  wrap.innerHTML=grupos.length?grupos.map(g=>renderGrupoTor(t,g)).join(''):'<div class="tor-empty">Nenhum jogador ainda neste torneio.<br>Toque em <b>＋ Jogador</b> para montar os grupos A–E. 🎾</div>';
+  renderTorLog();
+}
+function renderGrupoTor(t,g){
+  const players=rankPlayersTor(t.jogadores.filter(p=>p.group===g));
+  const maxPts=players.length?calcPtsTor(players[0]):0;
+  const rows=players.map((p,i)=>{
+    const lead=i===0&&maxPts>0, rk=i===0?'r1':i===1?'r2':i===2?'r3':'';
+    const q=torJsq(p.name);
+    return `<tr class="tg-row" data-group="${torAttr(g)}" data-name="${torAttr(p.name)}">
+      <td><span class="tg-drag" title="Arraste para mover/reordenar" onpointerdown="torDragDown(event)">⠿</span><span class="tg-rank ${rk}">${i+1}</span><span class="tg-name" title="Renomear" onclick="renomearJogadorTor('${torJsq(g)}','${q}')">${torEsc(p.name)}${p.cod?' 🔗':''}</span></td>
+      <td><input class="tg-stat" type="number" min="0" value="${p.v||0}" onchange="updateStatTor('${torJsq(g)}','${q}','v',this.value)"></td>
+      <td><input class="tg-stat" type="number" min="0" value="${p.d||0}" onchange="updateStatTor('${torJsq(g)}','${q}','d',this.value)"></td>
+      <td><input class="tg-stat" type="number" min="0" value="${p.wo||0}" onchange="updateStatTor('${torJsq(g)}','${q}','wo',this.value)"></td>
+      <td><span class="tg-pts ${lead?'lead':''}">${calcPtsTor(p)}</span></td>
+      <td style="white-space:nowrap"><button class="tg-mv" title="Mover de grupo" onclick="abrirMoverTor('${torJsq(g)}','${q}')">↔</button><button class="tg-x" title="Remover" onclick="removerJogadorTor('${torJsq(g)}','${q}')">✕</button></td>
+    </tr>`;
+  }).join('');
+  return `<div class="tg-card"><div class="tg-head"><div class="tg-badge">${g}</div><div><div class="tg-title">Grupo ${g}</div><div class="tg-count">${players.length} jogador${players.length!==1?'es':''}</div></div></div>
+    <table class="tg-tbl"><thead><tr><th>Jogador</th><th title="Vitórias">V</th><th title="Derrotas">D</th><th title="W.O.">WO</th><th title="Pontos">Pts</th><th></th></tr></thead><tbody data-group="${torAttr(g)}">${rows}</tbody></table></div>`;
+}
+function selTorneio(id){ensureTorneios();if(DB.torneios.lista[id]){DB.torneios.atual=id;persist();renderTorneio();}}
+function abrirNovoTorneio(){document.getElementById('tn-nome').value='';document.getElementById('tn-tipo').value='barragem';document.getElementById('ov-tor-novo').classList.add('on');}
+function criarTorneio(){
+  const nome=document.getElementById('tn-nome').value.trim();
+  if(!nome){toast('Dê um nome ao torneio');return;}
+  ensureTorneios();
+  const id='t'+Date.now();
+  DB.torneios.lista[id]={id,nome,tipo:document.getElementById('tn-tipo').value,jogadores:[],criadoEm:Date.now()};
+  DB.torneios.atual=id;persist();closeModal('ov-tor-novo');renderTorneio();toast('Torneio criado ✓');
+}
+function excluirTorneio(){
+  ensureTorneios();
+  if(Object.keys(DB.torneios.lista).length<=1){toast('Crie outro torneio antes de excluir este 🙂');return;}
+  const t=torAtual();
+  if(!confirm('Excluir "'+t.nome+'" e todos os seus dados? Isso não pode ser desfeito.'))return;
+  delete DB.torneios.lista[t.id];
+  DB.torneios.atual=Object.keys(DB.torneios.lista)[0];
+  persist();renderTorneio();toast('Torneio excluído');
+}
+function abrirAddJogador(){
+  document.getElementById('tj-grupo').innerHTML=GRUPOS_TOR.map(g=>`<option value="${g}">Grupo ${g}</option>`).join('');
+  const sel=document.getElementById('tj-aluno');
+  if(sel)sel.innerHTML='<option value="">— Avulso (digitar nome) —</option>'+DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${a.id}">${torEsc(a.nome)}</option>`).join('');
+  document.getElementById('tj-nome').value='';
+  document.getElementById('ov-tor-jogador').classList.add('on');
+}
+function tjAlunoSel(){
+  const a=DB.alunos.find(x=>x.id===document.getElementById('tj-aluno').value);
+  if(a)document.getElementById('tj-nome').value=a.nome;
+}
+function addJogadorTor(){
+  const av=DB.alunos.find(x=>x.id===document.getElementById('tj-aluno').value);
+  const nome=(av?av.nome:document.getElementById('tj-nome').value.trim());
+  const g=document.getElementById('tj-grupo').value;
+  if(!nome){toast('Digite o nome ou escolha um aluno');return;}
+  const t=torAtual();
+  if(t.jogadores.some(p=>p.group===g&&p.name.toLowerCase()===nome.toLowerCase())){toast('Esse jogador já está no grupo '+g);return;}
+  const novo={group:g,name:nome,v:0,d:0,wo:0,order:t.jogadores.length};
+  if(av){novo.alunoId=av.id;novo.cod=av.codigo;}
+  t.jogadores.push(novo);
+  persist();closeModal('ov-tor-jogador');renderTorneio();toast(nome+' → Grupo '+g+(av?' · vinculado 🔗':''));
+}
+function removerJogadorTor(g,name){
+  if(!confirm('Remover "'+name+'" do grupo '+g+'?'))return;
+  const t=torAtual();t.jogadores=t.jogadores.filter(p=>!(p.group===g&&p.name===name));
+  persist();renderTorneio();
+}
+function renomearJogadorTor(g,name){
+  const novo=prompt('Renomear jogador:',name);if(novo===null)return;
+  const nv=novo.trim();if(!nv)return;
+  const t=torAtual();const p=t.jogadores.find(x=>x.group===g&&x.name===name);if(!p)return;
+  p.name=nv;persist();renderTorneio();
+}
+function updateStatTor(g,name,field,val){
+  const t=torAtual();const p=t.jogadores.find(x=>x.group===g&&x.name===name);if(!p)return;
+  let v=parseInt(val,10);if(isNaN(v)||v<0)v=0;p[field]=v;persist();renderTorneio();toast('Atualizado',1000);
+}
+let moveTorCtx=null;
+function abrirMoverTor(g,name){
+  moveTorCtx={g,name};
+  document.getElementById('tm-info').textContent=name+' · atualmente no Grupo '+g;
+  document.getElementById('tm-grupo').innerHTML=GRUPOS_TOR.filter(x=>x!==g).map(x=>`<option value="${x}">Grupo ${x}</option>`).join('');
+  document.getElementById('ov-tor-move').classList.add('on');
+}
+function confirmarMoverTor(){
+  if(!moveTorCtx)return;
+  const t=torAtual();const p=t.jogadores.find(x=>x.group===moveTorCtx.g&&x.name===moveTorCtx.name);if(!p)return;
+  p.group=document.getElementById('tm-grupo').value;persist();closeModal('ov-tor-move');renderTorneio();toast('Movido para o Grupo '+p.group);
+}
+function abrirResultadoTor(){
+  const t=torAtual();
+  const grupos=GRUPOS_TOR.filter(g=>t.jogadores.some(p=>p.group===g));
+  if(!grupos.length){toast('Adicione jogadores primeiro 🙂');return;}
+  document.getElementById('tr-grupo').innerHTML='<option value="">Selecionar grupo…</option>'+grupos.map(g=>`<option value="${g}">Grupo ${g}</option>`).join('');
+  document.getElementById('tr-p1').innerHTML='<option value="">—</option>';
+  document.getElementById('tr-p2').innerHTML='<option value="">—</option>';
+  document.getElementById('tr-venc').innerHTML='<option value="">—</option>';
+  const n=document.querySelector('input[name="tr-tipo"][value="normal"]');if(n)n.checked=true;
+  document.getElementById('ov-tor-result').classList.add('on');
+}
+function trPlayers(){
+  const t=torAtual();const g=document.getElementById('tr-grupo').value;
+  const nomes=t.jogadores.filter(p=>p.group===g).map(p=>p.name);
+  const opts='<option value="">—</option>'+nomes.map(n=>`<option value="${torEsc(n)}">${torEsc(n)}</option>`).join('');
+  document.getElementById('tr-p1').innerHTML=opts;document.getElementById('tr-p2').innerHTML=opts;document.getElementById('tr-venc').innerHTML=opts;
+}
+function aplicarResultadoTor(t,g,p1,p2,venc,tipo){
+  const perd=venc===p1?p2:p1;
+  const pw=t.jogadores.find(p=>p.group===g&&p.name===venc);
+  const pl=t.jogadores.find(p=>p.group===g&&p.name===perd);
+  if(!pw||!pl)return false;
+  if(tipo==='wo'){pw.wo=(pw.wo||0)+1;}else{pw.v=(pw.v||0)+1;pl.d=(pl.d||0)+1;}
+  return true;
+}
+function salvarResultadoTor(){
+  const t=torAtual();
+  const g=document.getElementById('tr-grupo').value,p1=document.getElementById('tr-p1').value,p2=document.getElementById('tr-p2').value,venc=document.getElementById('tr-venc').value;
+  const tipo=document.querySelector('input[name="tr-tipo"]:checked').value;
+  if(!g||!p1||!p2||!venc){toast('Preencha todos os campos');return;}
+  if(p1===p2){toast('Escolha jogadores diferentes');return;}
+  if(venc!==p1&&venc!==p2){toast('O vencedor deve ser um dos dois');return;}
+  if(!aplicarResultadoTor(t,g,p1,p2,venc,tipo)){toast('Jogador não encontrado');return;}
+  persist();closeModal('ov-tor-result');renderTorneio();toast('✓ '+venc+' venceu!');
+}
+function compartilharTorneio(){
+  const t=torAtual();
+  let txt='🏆 *'+t.nome.toUpperCase()+' — Academia João Victor Tênis*\n\n';
+  const grupos=GRUPOS_TOR.filter(g=>t.jogadores.some(p=>p.group===g));
+  if(!grupos.length){toast('Sem jogadores para compartilhar');return;}
+  grupos.forEach(g=>{
+    txt+='*── GRUPO '+g+' ──*\n';
+    rankPlayersTor(t.jogadores.filter(p=>p.group===g)).forEach((p,i)=>{
+      const m=i===0?'🥇':i===1?'🥈':i===2?'🥉':'▫️';
+      txt+=m+' '+p.name+' — '+calcPtsTor(p)+' pts ('+(p.v||0)+'V/'+(p.d||0)+'D'+((p.wo||0)?('/'+p.wo+'WO'):'')+')\n';
+    });
+    txt+='\n';
+  });
+  txt+='_Acompanhe sua evolução em quadra!_ 🎾';
+  window.open('https://api.whatsapp.com/send?text='+encodeURIComponent(txt),'_blank');
+}
+function carregarLib(src){
+  return new Promise(function(resolve,reject){
+    var ex=document.querySelector('script[data-lib="'+src+'"]');
+    if(ex&&ex.getAttribute('data-ok')==='1')return resolve();
+    var s=document.createElement('script');s.src=src;s.async=true;s.setAttribute('data-lib',src);
+    s.onload=function(){s.setAttribute('data-ok','1');resolve();};
+    s.onerror=function(){reject(new Error('falha ao carregar'));};
+    document.head.appendChild(s);
+  });
+}
+async function garantirExportLibs(){
+  if(typeof html2canvas==='undefined')await carregarLib('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+  if(!window.jspdf)await carregarLib('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+}
+function montarTorExport(t){
+  const grupos=GRUPOS_TOR.filter(g=>t.jogadores.some(p=>p.group===g));
+  let html='<div class="tex-head"><div><b>Academia João Victor Tênis</b><span>'+torEsc(t.nome)+' · '+new Date().toLocaleDateString('pt-BR')+'</span></div><div class="tex-emb">JV</div></div>';
+  grupos.forEach(g=>{
+    const players=rankPlayersTor(t.jogadores.filter(p=>p.group===g));
+    const rows=players.map((p,i)=>'<tr class="'+(i===0?'r1':'')+'"><td>'+(i+1)+'. '+torEsc(p.name)+'</td><td>'+(p.v||0)+'</td><td>'+(p.d||0)+'</td><td>'+(p.wo||0)+'</td><td class="tex-pts">'+calcPtsTor(p)+'</td></tr>').join('');
+    html+='<div class="tex-grp"><h4>Grupo '+g+'</h4><table class="tex-tbl"><thead><tr><th>Jogador</th><th>V</th><th>D</th><th>WO</th><th>Pts</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  });
+  html+='<div class="tex-foot">Disciplina no treino. Evolução no jogo. 🎾</div>';
+  document.getElementById('tor-export').innerHTML=html;
+}
+function barragemCanvas(){
+  const t=torAtual();
+  const grupos=GRUPOS_TOR.filter(g=>t.jogadores.some(p=>p.group===g));
+  if(!grupos.length){toast('Sem jogadores para compartilhar');return Promise.reject('vazio');}
+  montarTorExport(t);
+  return html2canvas(document.getElementById('tor-export'),{backgroundColor:'#ffffff',scale:2});
+}
+async function salvarBarragemImg(){
+  toast('Preparando imagem…');
+  try{await garantirExportLibs();}catch(e){toast('Sem internet para gerar a imagem agora');return;}
+  if(typeof html2canvas==='undefined'){toast('Recurso indisponível agora');return;}
+  try{
+    const canvas=await barragemCanvas();
+    canvas.toBlob(async(blob)=>{
+      if(!blob){toast('Não consegui gerar a imagem');return;}
+      const file=new File([blob],'barragem-jvtenis.png',{type:'image/png'});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        try{await navigator.share({files:[file],title:'Barragem · JV Tênis',text:'Classificação da Barragem 🎾'});return;}catch(e){}
+      }
+      const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='barragem-jvtenis.png';
+      document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+      toast('🖼️ Imagem salva!');
+    },'image/png');
+  }catch(e){if(e!=='vazio')toast('Erro ao gerar imagem');}
+}
+async function baixarBarragemPDF(){
+  toast('Preparando PDF…');
+  try{await garantirExportLibs();}catch(e){toast('Sem internet para gerar o PDF agora');return;}
+  if(typeof html2canvas==='undefined'||!window.jspdf){toast('Recurso indisponível agora');return;}
+  try{
+    const canvas=await barragemCanvas();
+    const img=canvas.toDataURL('image/png');
+    const {jsPDF}=window.jspdf;const pdf=new jsPDF('p','mm','a4');
+    const margin=10,pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
+    let iw=pw-margin*2,ih=canvas.height*iw/canvas.width;
+    if(ih>ph-margin*2){ih=ph-margin*2;iw=canvas.width*ih/canvas.height;}
+    pdf.addImage(img,'PNG',(pw-iw)/2,margin,iw,ih);
+    pdf.save('barragem-jvtenis.pdf');
+    toast('📄 PDF salvo!');
+  }catch(e){if(e!=='vazio')toast('Erro ao gerar PDF');}
+}
+/* Resultados enviados pelos alunos (fila no Firebase) */
+let torFila=[];
+async function syncTorneio(silent){
+  if(!hasCloud()){renderTorLog();return;}
+  try{
+    const snap=await window.fbDB.ref('jvtenis/fila_torneio').get();
+    const val=snap.exists()?snap.val():{};
+    torFila=Object.entries(val||{}).map(([key,m])=>({key,...m})).sort((a,b)=>(a.ts||0)-(b.ts||0));
+  }catch(e){torFila=[];}
+  renderTorLog();
+}
+function renderTorLog(){
+  const wrap=document.getElementById('tor-log-wrap');if(!wrap)return;
+  if(!torFila.length){wrap.innerHTML='';return;}
+  wrap.innerHTML='<div class="tor-log"><h4>📥 Resultados enviados pelos alunos ('+torFila.length+')</h4>'+
+    torFila.map(m=>{
+      const adv=m.vencedor===m.p1?m.p2:m.p1;
+      const desc=m.tipo==='wo'?(torEsc(m.vencedor)+' venceu por W.O.'):(torEsc(m.vencedor)+' venceu '+torEsc(adv));
+      return '<div class="row"><div style="flex:1;min-width:0"><div><b style="color:var(--gold-light)">'+desc+'</b></div><div style="opacity:.72;font-size:11px;margin-top:2px">Grupo '+torEsc(m.group||'?')+(m.score?(' · '+torEsc(m.score)):'')+' · por '+torEsc(m.nome||'aluno')+'</div></div><div style="display:flex;gap:6px"><button class="ap" onclick="aplicarFilaTor(\''+m.key+'\')">Aplicar</button><button class="ds" onclick="descartarFilaTor(\''+m.key+'\')">✕</button></div></div>';
+    }).join('')+'</div>';
+}
+function aplicarFilaTor(key){
+  const m=torFila.find(x=>x.key===key);if(!m)return;
+  const t=torAtual();const g=m.group||'A';
+  [m.p1,m.p2].forEach(n=>{if(n&&!t.jogadores.some(p=>p.group===g&&p.name===n))t.jogadores.push({group:g,name:n,v:0,d:0,wo:0,order:t.jogadores.length});});
+  aplicarResultadoTor(t,g,m.p1,m.p2,m.vencedor,m.tipo||'normal');
+  persist();
+  if(hasCloud())window.fbDB.ref('jvtenis/fila_torneio/'+key).remove().catch(()=>{});
+  torFila=torFila.filter(x=>x.key!==key);renderTorneio();toast('Resultado aplicado ✓');
+}
+function descartarFilaTor(key){
+  if(hasCloud())window.fbDB.ref('jvtenis/fila_torneio/'+key).remove().catch(()=>{});
+  torFila=torFila.filter(x=>x.key!==key);renderTorLog();
+}
+/* Verifica resultados de alunos a cada 45s quando a aba está aberta */
+setInterval(()=>{const pg=document.getElementById('pg-torneio');if(pg&&pg.classList.contains('on'))syncTorneio(true);},45000);
+
+function aulasAmanha(){
+  const am=new Date();am.setDate(am.getDate()+1);
+  const out=[];
+  HORAS.forEach(h=>{entriesFor(am,h).forEach(e=>{
+    if(e.titulo==='☔ Chuva')return;
+    const a=e.alunoId?DB.alunos.find(x=>x.id===e.alunoId):null;
+    out.push({a:a,titulo:e.titulo,hora:h,tipo:e.tipo});
+  });});
+  return {date:am,list:out};
+}
+function renderConfirmAmanha(){
+  const box=document.getElementById('confirm-amanha');if(!box)return;
+  const r=aulasAmanha();
+  const dl=document.getElementById('confirm-amanha-data');
+  if(dl)dl.textContent=DIAS[r.date.getDay()]+' '+r.date.getDate()+'/'+(r.date.getMonth()+1);
+  if(!r.list.length){box.innerHTML='<div class="empty" style="padding:12px">Nada agendado para amanhã.</div>';return;}
+  const LBL={aula:'Aula',grupo:'Grupo',personal:'Personal',locacao:'Locação',pessoal:'Compromisso',bloqueio:'Bloqueio'};
+  box.innerHTML=r.list.map(function(it){
+    var lbl=LBL[it.tipo]||it.tipo;
+    var nome=it.a?it.a.nome:(it.titulo||lbl);
+    var cliente=['aula','grupo','personal','locacao'].indexOf(it.tipo)>=0;
+    var right='';
+    if(it.a&&it.a.tel)right='<button class="btn btn-clay" style="padding:7px 12px;font-size:12px" onclick="confirmarAulaWa(\''+it.a.id+'\',\''+it.hora+'\')">📲 Confirmar</button>';
+    else if(cliente)right='<span style="font-size:11px;color:var(--muted)">'+(it.a?'sem telefone':'sem vínculo')+'</span>';
+    return '<div class="mov"><div class="mov-l"><b>'+nome+'</b><span>'+it.hora+' · '+lbl+'</span></div>'+right+'</div>';
+  }).join('');
+}
+function confirmarAulaWa(id,hora){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  if(!a.tel){toast('Sem telefone cadastrado para '+a.nome);return;}
+  const am=new Date();am.setDate(am.getDate()+1);
+  const msg=encodeURIComponent('Olá '+a.nome.split(' ')[0]+'! 🎾 Passando para confirmar seu horário amanhã ('+am.getDate()+'/'+(am.getMonth()+1)+') às '+hora+'. Posso confirmar? Qualquer coisa me avisa. 😊');
+  window.open('https://wa.me/55'+a.tel+'?text='+msg,'_blank');
+}
+function renderAll(){
+  document.getElementById('month-label').textContent=MESES[curMonth]+' '+curYear;
+  const safe=(fn,nome)=>{try{fn();}catch(e){console.warn('Render '+nome+' falhou:',e);}};
+  safe(updateEyeBtn,'olho');safe(renderAlunos,'alunos');safe(renderMovs,'caixa');safe(renderDash,'inicio');safe(renderFin,'financeiro');safe(renderAgenda,'agenda');safe(renderTorneio,'torneio');safe(renderConfirmAmanha,'confirmamanha');
+}
+// espera o Firebase ficar pronto (até ~6s) antes de carregar; nunca trava
+(function esperarESubir(t){
+  if(window.fbDB||t>=40){load();return;}
+  setTimeout(()=>esperarESubir(t+1),150);
+})(0);
+</script>
+<script>
+/* ============ HISTÓRICO DE MUDANÇAS (desfazer · refazer · registro) ============ */
+var HIST={undo:[],redo:[],prev:null,pending:null,suppress:false,LOG:[],CAP:40,LOGCAP:250,LOGKEY:'jvtenis_hist_log'};
+function snapDB(){try{return JSON.stringify(DB);}catch(e){return null;}}
+function logAct(label){if(window.HIST)HIST.pending=label;}
+function histOnPersist(){
+  if(typeof HIST==='undefined'||!HIST)return;
+  if(HIST.suppress){HIST.prev=snapDB();return;}
+  if(HIST.prev===null){HIST.prev=snapDB();HIST.pending=null;return;}
+  if(HIST.pending===null){HIST.prev=snapDB();return;}
+  var after=snapDB();
+  HIST.undo.push({label:HIST.pending,ts:Date.now(),before:HIST.prev,after:after});
+  if(HIST.undo.length>HIST.CAP)HIST.undo.shift();
+  HIST.redo=[];
+  histLogAppend(HIST.pending);
+  HIST.prev=after;HIST.pending=null;
+  renderHist();
+}
+function histLogAppend(label){
+  HIST.LOG.push({label:label,ts:Date.now()});
+  if(HIST.LOG.length>HIST.LOGCAP)HIST.LOG.shift();
+  try{localStorage.setItem(HIST.LOGKEY,JSON.stringify(HIST.LOG));}catch(e){}
+}
+function histLogLoad(){
+  try{var r=localStorage.getItem(HIST.LOGKEY);if(r)HIST.LOG=JSON.parse(r)||[];}catch(e){HIST.LOG=[];}
+}
+function undoAct(){
+  if(!HIST.undo.length){toast('Nada para desfazer');return;}
+  var it=HIST.undo.pop();HIST.redo.push(it);
+  HIST.suppress=true;try{DB=JSON.parse(it.before);}catch(e){}persist();HIST.suppress=false;
+  renderAll();histLogAppend('↩️ Desfez: '+it.label);renderHist();
+  toast('↩️ Desfeito: '+it.label);
+}
+function redoAct(){
+  if(!HIST.redo.length){toast('Nada para refazer');return;}
+  var it=HIST.redo.pop();HIST.undo.push(it);
+  HIST.suppress=true;try{DB=JSON.parse(it.after);}catch(e){}persist();HIST.suppress=false;
+  renderAll();histLogAppend('↪️ Refez: '+it.label);renderHist();
+  toast('↪️ Refeito: '+it.label);
+}
+function histEsc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function histWhen(ts){try{return new Date(ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}catch(e){return '';}}
+function renderHist(){
+  var u=document.getElementById('hist-undo'),r=document.getElementById('hist-redo');
+  if(u)u.classList.toggle('is-off',!HIST.undo.length);
+  if(r)r.classList.toggle('is-off',!HIST.redo.length);
+  var el=document.getElementById('hist-list');if(!el)return;
+  if(!HIST.LOG.length){el.innerHTML='<div class="hist-empty">Nenhuma mudança registrada ainda.<br>As ações que você fizer aparecem aqui.</div>';return;}
+  el.innerHTML=HIST.LOG.slice().reverse().map(function(e){
+    return '<div class="hist-item"><span>'+histEsc(e.label)+'</span><span class="hi-when">'+histWhen(e.ts)+'</span></div>';
+  }).join('');
+}
+function abrirHist(){renderHist();document.getElementById('ov-hist').classList.add('on');}
+function limparHist(){
+  if(!confirm('Limpar o histórico de mudanças?\n\nIsso apaga a lista e o desfazer/refazer — seus dados atuais continuam intactos.'))return;
+  HIST.undo=[];HIST.redo=[];HIST.LOG=[];
+  try{localStorage.removeItem(HIST.LOGKEY);}catch(e){}
+  renderHist();toast('Histórico limpo');
+}
+histLogLoad();
+// PWA: registra o service worker (permite instalar o painel e abrir offline)
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-gestao.js').catch(function(){});});}
+</script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+# Site estático (PWA) — sem etapa de build.
+# No Netlify, configure "Base directory" = app-aluno para este site.
+[build]
+  publish = "."
+
+# Service worker e manifest não devem ser cacheados de forma agressiva.
+[[headers]]
+  for = "/sw-aluno.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+[[headers]]
+  for = "/manifest-aluno.webmanifest"
+  [headers.values]
+    Content-Type = "application/manifest+json"
