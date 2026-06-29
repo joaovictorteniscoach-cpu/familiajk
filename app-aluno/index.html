@@ -774,7 +774,7 @@ function renderPayLock(){
 }
 function isPersonal(){return !!(EU&&String(EU.tipo||'').toLowerCase().indexOf('personal')>=0);}
 function isGrupo(){return !!(EU&&['Grupo','Dupla','Trio','Quarteto'].indexOf(EU.tipo)>=0);}
-function planoValor(cat,n){n=Number(n)||0;if(cat==='Personal')return n*precoPersonal();if(cat==='Dupla'||cat==='Trio'||cat==='Quarteto'){const gp=(PUB&&PUB.grupoPreco)||{dupla:95,trio:80,quarteto:75};return (gp[cat.toLowerCase()]||0)*n;}const tb=planosTabela();return (tb[cat]&&tb[cat][n])||0;}
+function planoValor(cat,n){n=Number(n)||0;if(cat==='Personal')return n*precoPersonal();if(cat==='Dupla'||cat==='Trio'||cat==='Quarteto'){const gp=(PUB&&PUB.grupoPreco)||{dupla:95,trio:90,quarteto:85};return (gp[cat.toLowerCase()]||0)*n;}const tb=planosTabela();return (tb[cat]&&tb[cat][n])||0;}
 function meuEmoji(){return isPersonal()?'🏋️':'🎾';}
 function applyTipoUI(){
   const personal=isPersonal();
@@ -1400,7 +1400,7 @@ function escolherSlot(hora){
   document.getElementById('ov-pick').classList.add('on');
 }
 function grupoRefHtml(){
-  const gp=(PUB&&PUB.grupoPreco)||{dupla:95,trio:80,quarteto:75};
+  const gp=(PUB&&PUB.grupoPreco)||{dupla:95,trio:90,quarteto:85};
   return '<details class="grp-ref"><summary>👥 Quero em grupo — ver valores</summary>'
     +'<div class="gr-row"><span>👥 Dupla · 2 pessoas</span><b>R$ '+gp.dupla+' <small>cada / aula</small></b></div>'
     +'<div class="gr-row"><span>👥 Trio · 3 pessoas</span><b>R$ '+gp.trio+' <small>cada / aula</small></b></div>'

@@ -1001,7 +1001,7 @@ function slotModo(date,hora){
   return modoPadrao(date,hora);
 }
 const PRECOS={Particular:{3:480,4:640,6:960,8:1260,10:1600},Grupo:{3:285,4:360,6:510,8:640,10:750},Personal:{3:390,4:520,6:780,8:1040,10:1300}};
-function grupoPrecoAula(t){const gp=(typeof DB!=='undefined'&&DB.grupoPreco)||{dupla:95,trio:80,quarteto:75};if(t==='Dupla')return gp.dupla||95;if(t==='Trio')return gp.trio||80;if(t==='Quarteto')return gp.quarteto||75;return 0;}
+function grupoPrecoAula(t){const gp=(typeof DB!=='undefined'&&DB.grupoPreco)||{dupla:95,trio:90,quarteto:85};if(t==='Dupla')return gp.dupla||95;if(t==='Trio')return gp.trio||90;if(t==='Quarteto')return gp.quarteto||85;return 0;}
 function precoMensal(t,p){p=Number(p)||0;if(t==='Dupla'||t==='Trio'||t==='Quarteto')return grupoPrecoAula(t)*p;if(t==='Grupo')return (PRECOS.Grupo[p]||0);return (PRECOS[t]&&PRECOS[t][p])||0;}
 let DB={alunos:[],lancamentos:[],meta:10000,agenda:null,presencas:[],compromissos:[],aviso:'',locacaoOnly:null,horarioCfg:null,horarioData:null};
 let now=new Date();
@@ -1088,7 +1088,7 @@ function ensureFields(){
   if(DB.cardLink===undefined)DB.cardLink='';
   if(!DB.snapAlunos)DB.snapAlunos={};
   if(!DB.precos)DB.precos={avulsaPart:170,avulsaGrupo:95,locacao:70};
-  if(!DB.grupoPreco)DB.grupoPreco={dupla:95,trio:80,quarteto:75};
+  if(!DB.grupoPreco)DB.grupoPreco={dupla:95,trio:90,quarteto:85};
   ensureTorneios();
   // registra o nº de alunos cadastrados no mês atual (histórico para os gráficos)
   const mkAtual=new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');
@@ -1199,7 +1199,7 @@ async function doPublish(){
       cardLink:DB.cardLink||'',
       precos:DB.precos||{avulsaPart:170,avulsaGrupo:95,locacao:70,personal:130},
       planos:PRECOS,
-      grupoPreco:DB.grupoPreco||{dupla:95,trio:80,quarteto:75},
+      grupoPreco:DB.grupoPreco||{dupla:95,trio:90,quarteto:85},
       torneio:(function(){ensureTorneios();const t=DB.torneios.lista[DB.torneios.atual];return t?{id:t.id,nome:t.nome,tipo:t.tipo,jogadores:t.jogadores}:null;})(),
       horas:HORAS,
       locacaoOnly:DB.locacaoOnly||[],
@@ -2371,10 +2371,10 @@ function renderFin(){
   if(document.getElementById('pr-avgrupo'))document.getElementById('pr-avgrupo').value=pr.avulsaGrupo;
   if(document.getElementById('pr-loc'))document.getElementById('pr-loc').value=pr.locacao;
   if(document.getElementById('pr-personal'))document.getElementById('pr-personal').value=(pr.personal!=null?pr.personal:130);
-  const gp=DB.grupoPreco||{dupla:95,trio:80,quarteto:75};
+  const gp=DB.grupoPreco||{dupla:95,trio:90,quarteto:85};
   if(document.getElementById('pr-gdupla'))document.getElementById('pr-gdupla').value=(gp.dupla!=null?gp.dupla:95);
-  if(document.getElementById('pr-gtrio'))document.getElementById('pr-gtrio').value=(gp.trio!=null?gp.trio:80);
-  if(document.getElementById('pr-gquarteto'))document.getElementById('pr-gquarteto').value=(gp.quarteto!=null?gp.quarteto:75);
+  if(document.getElementById('pr-gtrio'))document.getElementById('pr-gtrio').value=(gp.trio!=null?gp.trio:90);
+  if(document.getElementById('pr-gquarteto'))document.getElementById('pr-gquarteto').value=(gp.quarteto!=null?gp.quarteto:85);
   renderChart(receitas,inad,despesas);
   renderDespesas(movs);
 }

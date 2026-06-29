@@ -248,9 +248,9 @@ footer .cr{color:#6B7E8C;font-size:12.5px}
           <summary>👥 Quero em grupo — ver valores para 2, 3 ou 4 pessoas</summary>
           <div class="grp-opts">
             <div class="tier"><span class="lbl">👥 Dupla <small>2 pessoas</small></span><span class="val" data-grp="dupla">R$ 95 <small>cada / aula</small></span></div>
-            <div class="tier"><span class="lbl">👥 Trio <small>3 pessoas</small></span><span class="val" data-grp="trio">R$ 80 <small>cada / aula</small></span></div>
-            <div class="tier"><span class="lbl">👥 Quarteto <small>4 pessoas</small></span><span class="val" data-grp="quarteto">R$ 75 <small>cada / aula</small></span></div>
-            <p class="sub" style="margin:10px 0 0;font-size:12.5px;opacity:.8">Cada pessoa paga o valor por aula × nº de aulas do plano. Ex.: no Flex 8, cada um paga <span data-grp="exemplo">R$ 760 (dupla), R$ 640 (trio) ou R$ 600 (quarteto)</span>.</p>
+            <div class="tier"><span class="lbl">👥 Trio <small>3 pessoas</small></span><span class="val" data-grp="trio">R$ 90 <small>cada / aula</small></span></div>
+            <div class="tier"><span class="lbl">👥 Quarteto <small>4 pessoas</small></span><span class="val" data-grp="quarteto">R$ 85 <small>cada / aula</small></span></div>
+            <p class="sub" style="margin:10px 0 0;font-size:12.5px;opacity:.8">Cada pessoa paga o valor por aula × nº de aulas do plano. Ex.: no Flex 8, cada um paga <span data-grp="exemplo">R$ 760 (dupla), R$ 720 (trio) ou R$ 680 (quarteto)</span>.</p>
           </div>
         </details>
         <a class="btn btn-line btn-block" href="https://wa.me/5541995415712?text=Ol%C3%A1%20Jo%C3%A3o!%20Tenho%20interesse%20no%20plano%20Flex%20em%20Grupo.%20Pode%20me%20passar%20os%20detalhes%3F%20%F0%9F%8E%BE" target="_blank" rel="noopener">Quero o Grupo</a>
@@ -439,7 +439,7 @@ if(!window.matchMedia||!window.matchMedia('(prefers-reduced-motion: reduce)').ma
   function set(sel,html){var el=document.querySelector(sel);if(el)el.innerHTML=html;}
   function aplicar(gp){
     if(!gp)return;
-    var d=Number(gp.dupla)||95, t=Number(gp.trio)||80, q=Number(gp.quarteto)||75;
+    var d=Number(gp.dupla)||95, t=Number(gp.trio)||90, q=Number(gp.quarteto)||85;
     set('[data-grp="dupla"]','R$ '+d+' <small>cada / aula</small>');
     set('[data-grp="trio"]','R$ '+t+' <small>cada / aula</small>');
     set('[data-grp="quarteto"]','R$ '+q+' <small>cada / aula</small>');
