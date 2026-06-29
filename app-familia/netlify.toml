@@ -1,0 +1,14 @@
+# Site estático (PWA) — sem etapa de build.
+# No Netlify, configure "Base directory" = app-familia para este site.
+[build]
+  publish = "."
+
+# Service worker e manifest não devem ser cacheados de forma agressiva.
+[[headers]]
+  for = "/sw-familia.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+[[headers]]
+  for = "/manifest-familia.webmanifest"
+  [headers.values]
+    Content-Type = "application/manifest+json"
