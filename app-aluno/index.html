@@ -438,6 +438,19 @@ function iniciarFirebase(){
   </div>
 </div>
 
+<!-- POPUP CRÉDITOS (aula computada) -->
+<div class="overlay" id="ov-cred" onclick="if(event.target===this)this.classList.remove('on')">
+  <div class="modal" style="text-align:center">
+    <div style="font-size:42px;line-height:1">🎾</div>
+    <h3 id="cred-pop-title" style="margin:6px 0 2px">Aula computada!</h3>
+    <p class="sub" id="cred-pop-sub" style="margin:0 0 8px">—</p>
+    <div id="cred-pop-saldo" style="font-size:36px;font-weight:800;color:var(--green);line-height:1.1">—</div>
+    <p id="cred-pop-lbl" style="font-size:12.5px;color:var(--muted);margin:2px 0 4px"></p>
+    <p id="cred-pop-extra" style="font-size:12.5px;margin:0 6px 6px"></p>
+    <button class="btn btn-clay" style="width:100%;margin-top:8px" onclick="document.getElementById('ov-cred').classList.remove('on')">Ok, entendi 👍</button>
+  </div>
+</div>
+
 <!-- MODAL PIX COPIA E COLA -->
 <div class="overlay" id="ov-pix" onclick="if(event.target===this)this.classList.remove('on')">
   <div class="modal">
@@ -676,8 +689,28 @@ async function refresh(silent){
     return !confirmadoNaGrade(p);
   });
   saveMeu();
-  if(EU){render();if(!silent)toast('Atualizado ✓');}
+  if(EU){
+    render();if(!silent)toast('Atualizado ✓');
+    try{
+      const ck='jvt-prevcred-'+MEU.codigo, prevRaw=lsGet(ck), atual=Number(EU.creditos)||0;
+      if(prevRaw!==null&&prevRaw!==undefined&&prevRaw!==''){
+        const prev=Number(prevRaw);
+        if(!isNaN(prev)&&atual<prev)popupCreditos(Math.round((prev-atual)*10)/10,atual);
+      }
+      lsSet(ck,String(atual));
+    }catch(e){}
+  }
   return true;
+}
+function popupCreditos(usados,saldo){
+  const ov=document.getElementById('ov-cred');if(!ov)return;
+  const neg=saldo<0;
+  document.getElementById('cred-pop-title').textContent=neg?'Aula computada (extra)':'Aula computada!';
+  document.getElementById('cred-pop-sub').textContent=usados>0?('Você usou '+fmtCred(usados)+' '+(usados===1?'crédito':'créditos')+'.'):'Seu saldo foi atualizado.';
+  const sEl=document.getElementById('cred-pop-saldo');sEl.textContent=fmtCred(saldo);sEl.style.color=neg?'#C0392B':'var(--green)';
+  document.getElementById('cred-pop-lbl').textContent=neg?'aula(s) devendo':('crédito'+(saldo===1?'':'s')+' restante'+(saldo===1?'':'s'));
+  document.getElementById('cred-pop-extra').textContent=neg?'Fale com o João para acertar. 🙏':(saldo<=1?'Está acabando — quando quiser, renove seu pacote. 🎾':'');
+  ov.classList.add('on');
 }
 function confirmadoNaGrade(p){
   if(!PUB)return false;
