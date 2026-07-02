@@ -454,6 +454,7 @@ function iniciarFirebase(){
     <button onclick="syncRequests(false)" style="border:1px solid var(--border);background:#fff;color:var(--text);font-size:10px;font-weight:700;padding:3px 10px;border-radius:14px;letter-spacing:.3px">🔄 Agendamentos de alunos</button>
     <button onclick="abrirVincular()" style="border:1px solid var(--border);background:#fff;color:var(--text);font-size:10px;font-weight:700;padding:3px 10px;border-radius:14px;letter-spacing:.3px">🔗 Vincular nomes aos alunos</button>
     <button onclick="abrirHorario()" style="border:none;background:var(--green);color:#fff;font-size:11.5px;font-weight:800;padding:6px 14px;border-radius:14px;letter-spacing:.2px">🗓️ Horários: aula · locação · fechado</button>
+    <button onclick="enviarHorariosLivres()" style="border:none;background:var(--gold);color:var(--green);font-size:11.5px;font-weight:800;padding:6px 14px;border-radius:14px;letter-spacing:.2px">📤 Enviar livres da semana (WhatsApp)</button>
   </div>
   <div id="ag-view"></div>
 </section>
@@ -1456,6 +1457,37 @@ function entriesFor(date,hora){
   const evs=A.eventos.filter(e=>e.data===dk&&e.hora===hora).map(e=>({...e,origem:'pontual'}));
   const comps=(DB.compromissos||[]).filter(c=>c.data===dk&&(c.hora||'')===hora).map(c=>({id:c.id,titulo:c.titulo,tipo:'pessoal',origem:'compromisso',alunoId:null}));
   return fixos.concat(evs).concat(comps);
+}
+/* ===== Horários livres da semana → WhatsApp do grupo de alunos ===== */
+function semanaSegSab(base){
+  const mon=new Date(base);mon.setHours(12,0,0,0);
+  mon.setDate(mon.getDate()-((mon.getDay()+6)%7));   // volta até segunda
+  const dias=[];for(let i=0;i<6;i++){const d=new Date(mon);d.setDate(d.getDate()+i);dias.push(d);}   // seg..sáb
+  return dias;
+}
+function horariosLivresSemana(base){
+  const dias=semanaSegSab(base),out=[];
+  dias.forEach(d=>{
+    const livres=HORAS.filter(h=>slotModo(d,h)==='aula'&&entriesFor(d,h).length===0);
+    if(livres.length)out.push({d,livres});
+  });
+  return {dias,out};
+}
+function msgHorariosLivres(base){
+  const NOMES=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const dd=x=>String(x.getDate()).padStart(2,'0')+'/'+String(x.getMonth()+1).padStart(2,'0');
+  const {dias,out}=horariosLivresSemana(base);
+  let msg='🎾 *JV Tênis — Horários livres da semana*\n📅 '+dd(dias[0])+' a '+dd(dias[5])+'\n';
+  if(!out.length){msg+='\nEssa semana está sem horários livres para aula. 🙏';}
+  else out.forEach(o=>{msg+='\n*'+NOMES[o.d.getDay()]+' '+dd(o.d)+'*\n'+o.livres.map(h=>'• '+h).join('\n')+'\n';});
+  msg+='\nÉ só responder aqui com o *dia e horário* que preferir que eu já reservo. 🎾';
+  return msg;
+}
+async function enviarHorariosLivres(){
+  const msg=msgHorariosLivres(agDate||new Date());
+  try{await navigator.clipboard.writeText(msg);toast('📋 Mensagem copiada! Abrindo WhatsApp — escolha o grupo dos alunos.');}
+  catch(e){toast('Abrindo WhatsApp — escolha o grupo dos alunos.');}
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
 }
 function contarAulas(dFrom,dTo){
   let tenis=0,personal=0;
