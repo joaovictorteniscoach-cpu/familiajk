@@ -747,7 +747,7 @@ function render(){
   document.getElementById('hello').textContent='Fala, '+EU.nome.split(' ')[0]+'!';
   document.getElementById('v-cred').textContent=fmtCred(EU.creditos);
   document.getElementById('v-repos').textContent=fmtCred(EU.repos);
-  document.getElementById('v-plano').textContent=isPersonal()?(EU.tipo+' · '+EU.plano+' treinos/mês'):(EU.tipo+' · Flex '+EU.plano);
+  document.getElementById('v-plano').textContent=(Number(EU.plano)||0)<=0?(EU.tipo+' · sem pacote'):(isPersonal()?(EU.tipo+' · '+EU.plano+' treinos/mês'):(EU.tipo+' · Flex '+EU.plano));
   document.getElementById('v-mens').textContent=fmt(EU.mensalidade);
   const st=document.getElementById('v-status');
   st.textContent=EU.status==='parcial'?'Pagou 50%':EU.status;
@@ -978,10 +978,14 @@ function crc16(str){
 }
 function normalizaPix(chave,tipo){
   chave=String(chave||'').trim();
-  if(tipo==='celular'){const d=chave.replace(/\D/g,'');if(!d)return '';return '+'+(d.length<=11?('55'+d):d);}
-  if(tipo==='cpf'||tipo==='cnpj')return chave.replace(/\D/g,'');
-  if(tipo==='email')return chave.toLowerCase();
-  return chave;
+  if(!chave)return '';
+  if(chave.indexOf('@')>=0)return chave.toLowerCase();          // e-mail (auto)
+  if(/[a-zA-Z]/.test(chave))return chave.replace(/\s+/g,'');    // chave aleatória (tem letras) — usa como está
+  const d=chave.replace(/\D/g,'');
+  if(tipo==='cpf'||tipo==='cnpj')return d;
+  if(tipo==='celular')return d?('+'+(d.length<=11?('55'+d):d)):'';
+  if(d.length>=10&&d.length<=13)return '+'+(d.length<=11?('55'+d):d); // só dígitos: assume telefone
+  return d;
 }
 function pixBRCode(chave,valor,nome,cidade){
   const f=(id,v)=>{v=String(v);return id+String(v.length).padStart(2,'0')+v;};
@@ -1423,7 +1427,7 @@ function abrirBook(hora,repo){
   if(repo){
     if(!(EU&&EU.repos>0)){toast('Você não tem reposições disponíveis. Fale com o João 🙏');return;}
   } else if(EU.creditos<=0){
-    toast('Você está sem créditos — fale com o João para renovar! 🎾');return;
+    toast('Sem créditos — a aula ficará como extra (a combinar com o João). 🎾');   // permite agendar mesmo assim
   }
   bookCtx={hora,date:new Date(agDate),repo:!!repo};
   document.getElementById('book-title').textContent=repo?'Marcar reposição 🔁':'Agendar horário 🎾';
