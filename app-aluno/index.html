@@ -302,6 +302,7 @@ function iniciarFirebase(){
       <b style="font-size:14px">🔔 Você tem aula hoje!</b>
       <p id="lembrete-txt" style="margin:4px 0 9px;font-size:13px;opacity:.9"></p>
       <button onclick="lembreteCalendario()" style="background:#fff;color:#1A2E14;border:none;border-radius:9px;padding:8px 12px;font-weight:700;font-size:12.5px;cursor:pointer">＋ Adicionar à agenda do celular</button>
+      <button id="lembrete-confirmar" onclick="confirmarPresencaAluno()" style="background:#CBD24A;color:#1A2E14;border:none;border-radius:9px;padding:8px 12px;font-weight:800;font-size:12.5px;cursor:pointer;margin-left:6px">✅ Confirmar presença</button>
     </div>
     <div id="renova-box" style="display:none;background:#3A2A12;color:#fff;border-radius:14px;padding:14px 15px;margin-bottom:12px">
       <b style="font-size:14px">🗓️ Fim do mês chegando</b>
@@ -653,12 +654,12 @@ function meuKey(){return MEU.codigo?MYKEY+'-'+MEU.codigo:MYKEY;}
 async function carregarMeuNuvem(){
   if(!hasCloud()||!MEU.codigo)return;
   const raw=await cloudGet(meuKey());
-  if(raw){try{const c=JSON.parse(raw);MEU.pedidos=c.pedidos||MEU.pedidos||[];MEU.cancelados=c.cancelados||MEU.cancelados||[];if(c.termoAceitoVer!==undefined)MEU.termoAceitoVer=c.termoAceitoVer;if(c.termoAceitoEm!==undefined)MEU.termoAceitoEm=c.termoAceitoEm;if(c.renovouMes!==undefined)MEU.renovouMes=c.renovouMes;if(c.feriadoOk!==undefined)MEU.feriadoOk=c.feriadoOk;}catch(e){}}
+  if(raw){try{const c=JSON.parse(raw);MEU.pedidos=c.pedidos||MEU.pedidos||[];MEU.cancelados=c.cancelados||MEU.cancelados||[];MEU.confirmadas=c.confirmadas||MEU.confirmadas||[];if(c.termoAceitoVer!==undefined)MEU.termoAceitoVer=c.termoAceitoVer;if(c.termoAceitoEm!==undefined)MEU.termoAceitoEm=c.termoAceitoEm;if(c.renovouMes!==undefined)MEU.renovouMes=c.renovouMes;if(c.feriadoOk!==undefined)MEU.feriadoOk=c.feriadoOk;}catch(e){}}
 }
 async function saveMeu(){
   const json=JSON.stringify(MEU);
   lsSet(MYKEY,json); // salva já no aparelho (lembra o login)
-  if(hasCloud()&&MEU.codigo)cloudSet(meuKey(),JSON.stringify({pedidos:MEU.pedidos,cancelados:MEU.cancelados,termoAceitoVer:MEU.termoAceitoVer,termoAceitoEm:MEU.termoAceitoEm,renovouMes:MEU.renovouMes,feriadoOk:MEU.feriadoOk})); // pedidos por aluno na nuvem
+  if(hasCloud()&&MEU.codigo)cloudSet(meuKey(),JSON.stringify({pedidos:MEU.pedidos,cancelados:MEU.cancelados,confirmadas:MEU.confirmadas,termoAceitoVer:MEU.termoAceitoVer,termoAceitoEm:MEU.termoAceitoEm,renovouMes:MEU.renovouMes,feriadoOk:MEU.feriadoOk})); // pedidos por aluno na nuvem
 }
 async function refresh(silent){
   let raw=null;
@@ -747,7 +748,7 @@ function render(){
   document.getElementById('hello').textContent='Fala, '+EU.nome.split(' ')[0]+'!';
   document.getElementById('v-cred').textContent=fmtCred(EU.creditos);
   document.getElementById('v-repos').textContent=fmtCred(EU.repos);
-  document.getElementById('v-plano').textContent=isPersonal()?(EU.tipo+' · '+EU.plano+' treinos/mês'):(EU.tipo+' · Flex '+EU.plano);
+  document.getElementById('v-plano').textContent=(Number(EU.plano)||0)<=0?(EU.tipo+' · sem pacote'):(isPersonal()?(EU.tipo+' · '+EU.plano+' treinos/mês'):(EU.tipo+' · Flex '+EU.plano));
   document.getElementById('v-mens').textContent=fmt(EU.mensalidade);
   const st=document.getElementById('v-status');
   st.textContent=EU.status==='parcial'?'Pagou 50%':EU.status;
@@ -774,7 +775,7 @@ function renderPayLock(){
 }
 function isPersonal(){return !!(EU&&String(EU.tipo||'').toLowerCase().indexOf('personal')>=0);}
 function isGrupo(){return !!(EU&&['Grupo','Dupla','Trio','Quarteto'].indexOf(EU.tipo)>=0);}
-function planoValor(cat,n){n=Number(n)||0;if(cat==='Personal')return n*precoPersonal();if(cat==='Dupla'||cat==='Trio'||cat==='Quarteto'){const gp=(PUB&&PUB.grupoPreco)||{dupla:95,trio:80,quarteto:75};return (gp[cat.toLowerCase()]||0)*n;}const tb=planosTabela();return (tb[cat]&&tb[cat][n])||0;}
+function planoValor(cat,n){n=Number(n)||0;if(cat==='Personal')return n*precoPersonal();if(cat==='Dupla'||cat==='Trio'||cat==='Quarteto'){const gp=(PUB&&PUB.grupoPreco)||{dupla:95,trio:90,quarteto:85};return (gp[cat.toLowerCase()]||0)*n;}const tb=planosTabela();return (tb[cat]&&tb[cat][n])||0;}
 function meuEmoji(){return isPersonal()?'🏋️':'🎾';}
 function applyTipoUI(){
   const personal=isPersonal();
@@ -978,10 +979,14 @@ function crc16(str){
 }
 function normalizaPix(chave,tipo){
   chave=String(chave||'').trim();
-  if(tipo==='celular'){const d=chave.replace(/\D/g,'');if(!d)return '';return '+'+(d.length<=11?('55'+d):d);}
-  if(tipo==='cpf'||tipo==='cnpj')return chave.replace(/\D/g,'');
-  if(tipo==='email')return chave.toLowerCase();
-  return chave;
+  if(!chave)return '';
+  if(chave.indexOf('@')>=0)return chave.toLowerCase();          // e-mail (auto)
+  if(/[a-zA-Z]/.test(chave))return chave.replace(/\s+/g,'');    // chave aleatória (tem letras) — usa como está
+  const d=chave.replace(/\D/g,'');
+  if(tipo==='cpf'||tipo==='cnpj')return d;
+  if(tipo==='celular')return d?('+'+(d.length<=11?('55'+d):d)):'';
+  if(d.length>=10&&d.length<=13)return '+'+(d.length<=11?('55'+d):d); // só dígitos: assume telefone
+  return d;
 }
 function pixBRCode(chave,valor,nome,cidade){
   const f=(id,v)=>{v=String(v);return id+String(v.length).padStart(2,'0')+v;};
@@ -1270,11 +1275,28 @@ function checarAulaHoje(){
   const box=document.getElementById('lembrete-box');
   if(prox){
     _lembreteHora=prox;
-    if(box){document.getElementById('lembrete-txt').textContent='Sua aula é hoje às '+prox+'. Toque abaixo para colocar um alarme na agenda do seu celular.';box.style.display='block';}
+    if(box){
+      document.getElementById('lembrete-txt').textContent='Sua aula é hoje às '+prox+'. Confirme sua presença — e, se quiser, coloque um alarme na agenda.';
+      box.style.display='block';
+      const cb=document.getElementById('lembrete-confirmar');
+      if(cb){const ja=(MEU.confirmadas||[]).some(c=>c.data===dk&&c.hora===prox);
+        cb.textContent=ja?'✓ Presença confirmada':'✅ Confirmar presença';
+        cb.disabled=ja;cb.style.opacity=ja?'.7':'1';}
+    }
     if(!_lembreteFeito){_lembreteFeito=true;notificarLocal('🎾 Você tem aula hoje às '+prox,'Academia João Victor Tênis');}
   }else if(box){box.style.display='none';}
 }
 function lembreteCalendario(){if(_lembreteHora)addToCalendar(dKey(new Date()),_lembreteHora);}
+async function confirmarPresencaAluno(){
+  if(!_lembreteHora)return;
+  const dk=dKey(new Date());
+  MEU.confirmadas=MEU.confirmadas||[];
+  if(!MEU.confirmadas.some(c=>c.data===dk&&c.hora===_lembreteHora)){MEU.confirmadas.push({data:dk,hora:_lembreteHora,ts:Date.now()});await saveMeu();}
+  if(hasCloud()){try{await window.fbDB.ref('jvtenis/fila_confirmacoes').push({codigo:MEU.codigo,nome:EU?EU.nome:'',data:dk,hora:_lembreteHora,ts:Date.now()});}catch(e){}}
+  notificarJoao('confirmou',dk,_lembreteHora);
+  toast('✅ Presença confirmada! O João foi avisado.');
+  checarAulaHoje();
+}
 
 /* ===== Renovação (5 dias antes de virar o mês) ===== */
 function proxMesKey(){const d=new Date();const x=new Date(d.getFullYear(),d.getMonth()+1,1);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0');}
@@ -1400,7 +1422,7 @@ function escolherSlot(hora){
   document.getElementById('ov-pick').classList.add('on');
 }
 function grupoRefHtml(){
-  const gp=(PUB&&PUB.grupoPreco)||{dupla:95,trio:80,quarteto:75};
+  const gp=(PUB&&PUB.grupoPreco)||{dupla:95,trio:90,quarteto:85};
   return '<details class="grp-ref"><summary>👥 Quero em grupo — ver valores</summary>'
     +'<div class="gr-row"><span>👥 Dupla · 2 pessoas</span><b>R$ '+gp.dupla+' <small>cada / aula</small></b></div>'
     +'<div class="gr-row"><span>👥 Trio · 3 pessoas</span><b>R$ '+gp.trio+' <small>cada / aula</small></b></div>'
@@ -1423,7 +1445,7 @@ function abrirBook(hora,repo){
   if(repo){
     if(!(EU&&EU.repos>0)){toast('Você não tem reposições disponíveis. Fale com o João 🙏');return;}
   } else if(EU.creditos<=0){
-    toast('Você está sem créditos — fale com o João para renovar! 🎾');return;
+    toast('Sem créditos — a aula ficará como extra (a combinar com o João). 🎾');   // permite agendar mesmo assim
   }
   bookCtx={hora,date:new Date(agDate),repo:!!repo};
   document.getElementById('book-title').textContent=repo?'Marcar reposição 🔁':'Agendar horário 🎾';
