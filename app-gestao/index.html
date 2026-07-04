@@ -1100,6 +1100,13 @@ function ensureFields(){
     const antigo=(g&&((g.dupla===85&&g.trio===80&&g.quarteto===75)||(g.dupla===95&&g.trio===90&&g.quarteto===85)));
     if(antigo){DB.grupoPreco={dupla:90,trio:85,quarteto:80};changed=true;}
   }
+  // migração ÚNICA do valor por aula nos perfis (roda 1 vez; depois o João edita individualmente):
+  // Particular R$160 · Personal R$130 · Dupla R$90 · Trio R$85 · Quarteto R$80 · Grupo antigo não mexe.
+  if(!DB.migValorAula0704){
+    const tab={Particular:160,Personal:130,Dupla:90,Trio:85,Quarteto:80};
+    DB.alunos.forEach(a=>{const v=tab[a.tipo];if(v&&a.valorAula!==v){a.valorAula=v;changed=true;}});
+    DB.migValorAula0704=true;changed=true;
+  }
   DB.alunos.forEach(a=>{
     if(a.diaVenc==null){a.diaVenc=10;changed=true;}
     if(!a.codigo){
@@ -1210,7 +1217,7 @@ async function doPublish(){
       locacaoOnly:DB.locacaoOnly||[],
       horarioCfg:DB.horarioCfg||{},
       horarioData:DB.horarioData||{},
-      alunos:DB.alunos.map(a=>({codigo:a.codigo,nome:a.nome,tipo:a.tipo,plano:a.plano,creditos:a.creditos,repos:a.repos,status:a.status,mensalidade:a.mensalidade,diaVenc:a.diaVenc||10,cardLink:a.cardLink||'',mfitLink:a.mfitLink||'',valorAula:a.valorAula||130})),
+      alunos:DB.alunos.map(a=>({codigo:a.codigo,nome:a.nome,tipo:a.tipo,plano:a.plano,creditos:a.creditos,repos:a.repos,status:a.status,mensalidade:a.mensalidade,diaVenc:a.diaVenc||10,cardLink:a.cardLink||'',mfitLink:a.mfitLink||'',valorAula:a.valorAula||(a.tipo==='Personal'?130:160)})),
       historico:(function(){
         const codeOf={};DB.alunos.forEach(a=>{codeOf[a.id]=a.codigo;});
         const cut=dKey(new Date(Date.now()-60*864e5));const out={};
@@ -1957,7 +1964,7 @@ function openAlunoModal(id){
     });
     document.getElementById('a-cardlink').value=a.cardLink||'';
     document.getElementById('a-mfit').value=a.mfitLink||'';
-    document.getElementById('a-valoraula').value=a.valorAula||130;
+    document.getElementById('a-valoraula').value=a.valorAula||(a.tipo==='Personal'?130:160);
     document.getElementById('a-venc').value=a.diaVenc||10;
     document.getElementById('a-id').value=id;
     applyAlunoTipoUI();
@@ -2012,7 +2019,7 @@ function saveAluno(){
     diaVenc:Math.min(28,Math.max(1,Number(document.getElementById('a-venc').value)||10)),
     cardLink:document.getElementById('a-cardlink').value.trim(),
     mfitLink:document.getElementById('a-mfit').value.trim(),
-    valorAula:Number(document.getElementById('a-valoraula').value)||130
+    valorAula:Number(document.getElementById('a-valoraula').value)||(document.getElementById('a-tipo').value==='Personal'?130:160)
   };
   if(id){Object.assign(DB.alunos.find(x=>x.id===id),data);toast('Aluno atualizado');}
   else{
