@@ -798,7 +798,7 @@ function render(){
   applyTipoUI();renderPayLock();
 }
 function diaVencEU(){return (EU&&EU.diaVenc)?EU.diaVenc:10;}
-const DIA_BLOQUEIO_PAG=8;   // pagamento pendente bloqueia agendamentos a partir do dia 8 do mês
+const DIA_BLOQUEIO_PAG=10;   // pagamento pendente bloqueia agendamentos a partir do dia 10 do mês
 function bloqueadoPorPagamento(){return !!(EU&&EU.status!=='pago'&&(new Date().getDate()>=DIA_BLOQUEIO_PAG));}
 function renderPayLock(){
   const el=document.getElementById('pay-lock');if(!el)return;
