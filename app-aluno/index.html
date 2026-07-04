@@ -798,12 +798,13 @@ function render(){
   applyTipoUI();renderPayLock();
 }
 function diaVencEU(){return (EU&&EU.diaVenc)?EU.diaVenc:10;}
-function bloqueadoPorPagamento(){return !!(EU&&EU.status!=='pago'&&(new Date().getDate()>diaVencEU()));}
+const DIA_BLOQUEIO_PAG=8;   // pagamento pendente bloqueia agendamentos a partir do dia 8 do mês
+function bloqueadoPorPagamento(){return !!(EU&&EU.status!=='pago'&&(new Date().getDate()>=DIA_BLOQUEIO_PAG));}
 function renderPayLock(){
   const el=document.getElementById('pay-lock');if(!el)return;
   if(bloqueadoPorPagamento()){
     el.style.display='block';
-    el.innerHTML='🔒 Sua mensalidade venceu (vencimento dia '+diaVencEU()+'). Para voltar a agendar ou usar reposições, regularize o pagamento. Qualquer dúvida, fale com o João.';
+    el.innerHTML='🔒 Pagamento pendente — a partir do dia '+DIA_BLOQUEIO_PAG+' os agendamentos ficam bloqueados até regularizar. Qualquer dúvida, fale com o João.';
   }else{el.style.display='none';}
 }
 function isPersonal(){return !!(EU&&String(EU.tipo||'').toLowerCase().indexOf('personal')>=0);}
@@ -1474,7 +1475,7 @@ function pedirLocacaoHora(hora){
   toast('Pedido de locação enviado ao João! 🎾');
 }
 function abrirBook(hora,repo){
-  if(bloqueadoPorPagamento()){toast('🔒 Mensalidade vencida (dia '+diaVencEU()+'). Regularize para agendar — ou peça ao João. 🙏');return;}
+  if(bloqueadoPorPagamento()){toast('🔒 Pagamento pendente (bloqueio a partir do dia '+DIA_BLOQUEIO_PAG+'). Regularize para agendar — ou fale com o João. 🙏');return;}
   if(repo){
     if(!(EU&&EU.repos>0)){toast('Você não tem reposições disponíveis. Fale com o João 🙏');return;}
   } else if(EU.creditos<=0){
