@@ -2089,6 +2089,21 @@ function enviarAcesso(id){
   const msg=encodeURIComponent(`Olá ${a.nome.split(' ')[0]}! 🎾 Agora você pode acompanhar seu saldo de aulas, reposições e horários no app da Academia João Victor Tênis.\n\n🔑 Seu código de acesso: *${a.codigo}*\n\nÉ só abrir o App do Aluno e digitar esse código. Qualquer dúvida me chama!`);
   window.open(`https://wa.me/55${a.tel}?text=${msg}`,'_blank');
 }
+function enviarRenovacaoWa(id){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  if(!a.tel){toast('Sem telefone cadastrado para '+a.nome);return;}
+  const nome=a.nome.split(' ')[0];
+  const plano=Number(a.plano)||0;
+  const isP=(a.tipo==='Personal');
+  const planoTxt=plano>0?(isP?(plano+' treinos/mês'):('Flex '+plano+' — '+plano+' aulas/mês')):'sem pacote ativo';
+  const msg=encodeURIComponent(
+    'Olá '+nome+'! 🎾 Passando para combinar a *renovação da sua mensalidade* na JV Tênis.\n\n'
+    +'📋 Plano atual: *'+planoTxt+'*'
+    +(a.mensalidade?('\n💰 Mensalidade: *'+fmt(a.mensalidade)+'*'):'')
+    +'\n\nVocê prefere *renovar do mesmo jeito* ou *mudar o número de aulas* do próximo mês? '
+    +'Me responde aqui que eu já deixo tudo certo. 😊');
+  window.open('https://wa.me/55'+a.tel+'?text='+msg,'_blank');
+}
 let filtroAluno='todos';
 function setFiltroAluno(f,btn){
   filtroAluno=f;
@@ -2143,6 +2158,7 @@ function renderAlunos(){
         <button class="linkbtn" onclick="openAlunoModal('${a.id}')">Editar</button>
         <button class="linkbtn" onclick="renovarMes('${a.id}')">Renovar mês</button>
         ${a.tel?`<button class="linkbtn wa" onclick="enviarAcesso('${a.id}')">Enviar acesso 🔑</button>`:''}
+        ${a.tel?`<button class="linkbtn wa" onclick="enviarRenovacaoWa('${a.id}')">Renovação 📲</button>`:''}
         <button class="linkbtn del" onclick="delAluno('${a.id}')">Excluir</button>
       </div>
     </div>
