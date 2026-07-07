@@ -663,6 +663,36 @@ function iniciarFirebase(){
 </section>
 
 <!-- MODAL NOVO TORNEIO -->
+<div class="overlay" id="ov-pacote" style="z-index:130" onclick="if(event.target===this)closeModal('ov-pacote')">
+  <div class="modal">
+    <h3 id="pacote-title">Novo pacote</h3>
+    <p class="sub" style="margin:-2px 0 12px;font-size:13px;color:var(--muted)">Crie modalidades além das padrão — ex.: Kids, Planilha Personal. A mensalidade é <b>valor por aula × nº de aulas</b>.</p>
+    <div class="field"><label>Nome do pacote</label><input id="pk-nome" placeholder="Ex.: Kids, Planilha Personal…" autocomplete="off"></div>
+    <div class="row2">
+      <div class="field"><label>Valor por aula (R$)</label><input id="pk-valor" type="number" inputmode="decimal" placeholder="Ex.: 120"></div>
+      <div class="field"><label>Categoria</label>
+        <select id="pk-cat"><option value="tenis">🎾 Tênis</option><option value="personal">💪 Personal / planilha</option></select>
+      </div>
+    </div>
+    <p class="hint" id="pk-msg" style="display:none;color:var(--clay);font-size:12.5px;margin-top:2px"></p>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeModal('ov-pacote')">Cancelar</button>
+      <button class="btn btn-clay" onclick="salvarPacote()">Criar pacote</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="ov-pacotes-lista" onclick="if(event.target===this)closeModal('ov-pacotes-lista')">
+  <div class="modal">
+    <h3>Pacotes personalizados</h3>
+    <div id="pacotes-lista" style="margin:8px 0 4px"></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeModal('ov-pacotes-lista')">Fechar</button>
+      <button class="btn btn-clay" onclick="closeModal('ov-pacotes-lista');novoPacote()">+ Novo pacote</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="ov-tor-novo" onclick="if(event.target===this)closeModal('ov-tor-novo')">
   <div class="modal">
     <h3>Novo torneio</h3>
@@ -2009,28 +2039,46 @@ function preencherTiposAluno(sel){
   if(sel)el.value=sel;
 }
 function novoPacote(){
-  const nome=(prompt('Nome do novo pacote (ex.: Kids, Planilha Personal):')||'').trim();
-  if(!nome)return;
-  if(['Particular','Personal','Dupla','Trio','Quarteto','Grupo'].indexOf(nome)>=0||ehTipoCustom(nome)){toast('Já existe um pacote com esse nome.');return;}
-  const valor=Number((prompt('Valor por AULA (R$) para "'+nome+'":\n(a mensalidade = valor × nº de aulas)')||'').replace(',','.'))||0;
-  const cat=confirm('Esse pacote conta como PERSONAL/planilha?\n\nOK = Personal   ·   Cancelar = Tênis')?'personal':'tenis';
+  document.getElementById('pk-nome').value='';
+  document.getElementById('pk-valor').value='';
+  document.getElementById('pk-cat').value='tenis';
+  const msg=document.getElementById('pk-msg');if(msg)msg.style.display='none';
+  document.getElementById('ov-pacote').classList.add('on');
+  setTimeout(()=>{const el=document.getElementById('pk-nome');if(el)el.focus();},60);
+}
+function salvarPacote(){
+  const nome=(document.getElementById('pk-nome').value||'').trim();
+  const msg=document.getElementById('pk-msg');
+  const erro=(t)=>{if(msg){msg.textContent=t;msg.style.display='block';}};
+  if(!nome){erro('Dê um nome ao pacote.');return;}
+  if(['Particular','Personal','Dupla','Trio','Quarteto','Grupo'].indexOf(nome)>=0||ehTipoCustom(nome)){erro('Já existe um pacote com esse nome.');return;}
+  const valor=Number(String(document.getElementById('pk-valor').value||'').replace(',','.'))||0;
+  const cat=document.getElementById('pk-cat').value==='personal'?'personal':'tenis';
   DB.tiposCustom=DB.tiposCustom||[];
   DB.tiposCustom.push({nome:nome,valorAula:valor,cat:cat});
   persist();
-  preencherTiposAluno(nome);
-  applyAlunoTipoUI();
+  closeModal('ov-pacote');
+  const ovA=document.getElementById('ov-aluno');
+  if(ovA&&ovA.classList.contains('on')){preencherTiposAluno(nome);applyAlunoTipoUI();}   // seleciona no cadastro aberto
   toast('✓ Pacote "'+nome+'" criado ('+cat+' · '+fmt(valor)+'/aula)');
 }
-function gerenciarPacotes(){
+function gerenciarPacotes(){renderPacotesLista();document.getElementById('ov-pacotes-lista').classList.add('on');}
+function renderPacotesLista(){
+  const box=document.getElementById('pacotes-lista');if(!box)return;
   const cs=tiposCustom();
-  if(!cs.length){toast('Nenhum pacote personalizado ainda. Use "+ Pacote" no cadastro do aluno.');return;}
-  const lista=cs.map((c,i)=>(i+1)+') '+c.nome+' — '+fmt(c.valorAula)+'/aula ('+c.cat+')').join('\n');
-  const n=Number(prompt('Pacotes personalizados:\n\n'+lista+'\n\nDigite o NÚMERO para EXCLUIR (ou cancele):')||'');
-  if(!n||n<1||n>cs.length)return;
-  const alvo=cs[n-1].nome;
-  const usados=DB.alunos.filter(a=>a.tipo===alvo).length;
-  if(usados>0){toast('Não dá para excluir: '+usados+' aluno(s) usam "'+alvo+'". Mude o tipo deles primeiro.');return;}
-  DB.tiposCustom=cs.filter(c=>c.nome!==alvo);persist();toast('Pacote "'+alvo+'" excluído.');
+  if(!cs.length){box.innerHTML='<div class="empty" style="padding:10px">Nenhum pacote personalizado ainda. Toque em <b>+ Novo pacote</b>.</div>';return;}
+  box.innerHTML=cs.map(function(c){
+    const usados=DB.alunos.filter(a=>a.tipo===c.nome).length;
+    const ico=c.cat==='personal'?'💪':'🎾';
+    return '<div class="mov"><div class="mov-l"><b>'+ico+' '+c.nome+'</b><span>'+fmt(c.valorAula)+' / aula · '+(usados?usados+' aluno(s)':'sem alunos')+'</span></div>'
+      +'<button class="btn btn-ghost" style="padding:6px 10px;font-size:12px" onclick="excluirPacote(\''+c.nome.replace(/'/g,"\\'")+'\')">Excluir</button></div>';
+  }).join('');
+}
+function excluirPacote(nome){
+  const usados=DB.alunos.filter(a=>a.tipo===nome).length;
+  if(usados>0){toast('Não dá para excluir: '+usados+' aluno(s) usam "'+nome+'". Mude o tipo deles primeiro.');return;}
+  if(!confirm('Excluir o pacote "'+nome+'"?'))return;
+  DB.tiposCustom=tiposCustom().filter(c=>c.nome!==nome);persist();renderPacotesLista();toast('Pacote "'+nome+'" excluído.');
 }
 function applyAlunoTipoUI(){
   const t=document.getElementById('a-tipo').value;
