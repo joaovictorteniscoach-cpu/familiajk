@@ -464,6 +464,7 @@ function iniciarFirebase(){
   <h2 class="sec-title">Meus <em>alunos</em></h2>
   <div class="toolbar">
     <input id="search" placeholder="Buscar aluno…" oninput="renderAlunos()">
+    <button class="btn btn-ghost" onclick="gerenciarPacotes()" title="Ver/excluir pacotes personalizados">⚙️ Pacotes</button>
     <button class="btn btn-clay" onclick="openAlunoModal()">+ Novo</button>
   </div>
   <div class="seg" id="alunos-filtro">
@@ -791,10 +792,13 @@ function iniciarFirebase(){
     <div class="field"><label>Nome</label><input id="a-nome" placeholder="Nome do aluno"></div>
     <div class="field"><label>WhatsApp (com DDD)</label><input id="a-tel" placeholder="41999999999" inputmode="numeric"></div>
     <div class="row2">
-      <div class="field"><label>Modalidade</label>
-        <select id="a-tipo" onchange="applyAlunoTipoUI()">
-          <option>Particular</option><option>Dupla</option><option>Trio</option><option>Quarteto</option><option value="Grupo">Grupo (antigo)</option><option>Personal</option>
-        </select>
+      <div class="field"><label>Modalidade / pacote</label>
+        <div style="display:flex;gap:6px;align-items:stretch">
+          <select id="a-tipo" onchange="applyAlunoTipoUI()" style="flex:1">
+            <option>Particular</option><option>Dupla</option><option>Trio</option><option>Quarteto</option><option value="Grupo">Grupo (antigo)</option><option>Personal</option>
+          </select>
+          <button type="button" onclick="novoPacote()" title="Criar novo pacote (ex.: Kids, Planilha Personal)" style="flex-shrink:0;border:1px solid var(--border);background:var(--gold);color:var(--green);font-weight:800;border-radius:11px;padding:0 12px;font-size:13px;cursor:pointer">+ Pacote</button>
+        </div>
       </div>
       <div class="field"><label id="a-plano-lbl">Plano (aulas/mês) — 0 = sem pacote</label>
         <input type="number" id="a-plano" min="0" step="1" value="4" inputmode="numeric" placeholder="Nº de aulas (ex.: 3, 5, 8, 10...)" onchange="sugerirMensalidade()">
@@ -1250,7 +1254,7 @@ async function syncRequests(silent){
       const p=fila[key];
       const a=DB.alunos.find(x=>x.codigo===p.codigo);
       if(a){
-        const tipo=(a.tipo==='Personal')?'personal':((['Grupo','Dupla','Trio','Quarteto'].indexOf(a.tipo)>=0)?'grupo':'aula');
+        const tipo=catAgendaDe(a.tipo);
         if(p.acao==='cancelar'){
           const dia=new Date(p.data+'T12:00:00').getDay();
           const fx=DB.agenda.fixos.find(f=>f.alunoId===a.id&&f.dia===dia&&f.hora===p.hora);
@@ -1391,7 +1395,7 @@ function aceitarPedido(key){
   if(p.kind==='mensalidade'){
     if(!a){toast('Aluno não encontrado — confira o cadastro');return;}
     a.status='pago';
-    DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:'Mensalidade · '+a.nome,valor:a.mensalidade,cat:'mensalidade',modal:(a.tipo==='Personal'?'personal':'tenis'),data:new Date().toISOString().slice(0,10)});
+    DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:'Mensalidade · '+a.nome,valor:a.mensalidade,cat:'mensalidade',modal:(ehPersonalTipo(a.tipo)?'personal':'tenis'),data:new Date().toISOString().slice(0,10)});
     toast('✓ '+a.nome+' marcado como PAGO e lançado no caixa');
   }else if(p.kind==='plano'){
     if(!a){toast('Aluno não encontrado — confira o cadastro');return;}
@@ -1957,6 +1961,7 @@ function editarEntrada(id,origem){
 function openAlunoModal(id){
   const m=document.getElementById('ov-aluno');
   document.getElementById('aluno-modal-title').textContent=id?'Editar aluno':'Novo aluno';
+  preencherTiposAluno();   // inclui os pacotes personalizados no seletor
   if(id){
     const a=DB.alunos.find(x=>x.id===id);
     ['nome','tel','tipo','plano','mensalidade','creditos','repos','status'].forEach(f=>{
@@ -1982,13 +1987,59 @@ function openAlunoModal(id){
   }
   m.classList.add('on');
 }
+/* ===== Pacotes personalizados (ex.: Kids, Planilha Personal) ===== */
+function tiposCustom(){return DB.tiposCustom||[];}
+function tipoCustomObj(t){return tiposCustom().find(x=>x.nome===t)||null;}
+function ehTipoCustom(t){return !!tipoCustomObj(t);}
+function ehGrupoTipo(t){return ['Grupo','Dupla','Trio','Quarteto'].indexOf(t)>=0;}
+function ehPersonalTipo(t){                       // conta como Personal p/ filtros e financeiro
+  if(t==='Personal')return true;
+  const c=tipoCustomObj(t);return !!(c&&c.cat==='personal');
+}
+function catAgendaDe(t){                           // cor/categoria na agenda: personal|grupo|aula
+  if(ehPersonalTipo(t))return 'personal';
+  if(ehGrupoTipo(t))return 'grupo';
+  return 'aula';
+}
+function preencherTiposAluno(sel){
+  const el=document.getElementById('a-tipo');if(!el)return;
+  let html='<option>Particular</option><option>Dupla</option><option>Trio</option><option>Quarteto</option><option value="Grupo">Grupo (antigo)</option><option>Personal</option>';
+  tiposCustom().forEach(c=>{html+='<option value="'+c.nome+'">'+c.nome+'</option>';});
+  el.innerHTML=html;
+  if(sel)el.value=sel;
+}
+function novoPacote(){
+  const nome=(prompt('Nome do novo pacote (ex.: Kids, Planilha Personal):')||'').trim();
+  if(!nome)return;
+  if(['Particular','Personal','Dupla','Trio','Quarteto','Grupo'].indexOf(nome)>=0||ehTipoCustom(nome)){toast('Já existe um pacote com esse nome.');return;}
+  const valor=Number((prompt('Valor por AULA (R$) para "'+nome+'":\n(a mensalidade = valor × nº de aulas)')||'').replace(',','.'))||0;
+  const cat=confirm('Esse pacote conta como PERSONAL/planilha?\n\nOK = Personal   ·   Cancelar = Tênis')?'personal':'tenis';
+  DB.tiposCustom=DB.tiposCustom||[];
+  DB.tiposCustom.push({nome:nome,valorAula:valor,cat:cat});
+  persist();
+  preencherTiposAluno(nome);
+  applyAlunoTipoUI();
+  toast('✓ Pacote "'+nome+'" criado ('+cat+' · '+fmt(valor)+'/aula)');
+}
+function gerenciarPacotes(){
+  const cs=tiposCustom();
+  if(!cs.length){toast('Nenhum pacote personalizado ainda. Use "+ Pacote" no cadastro do aluno.');return;}
+  const lista=cs.map((c,i)=>(i+1)+') '+c.nome+' — '+fmt(c.valorAula)+'/aula ('+c.cat+')').join('\n');
+  const n=Number(prompt('Pacotes personalizados:\n\n'+lista+'\n\nDigite o NÚMERO para EXCLUIR (ou cancele):')||'');
+  if(!n||n<1||n>cs.length)return;
+  const alvo=cs[n-1].nome;
+  const usados=DB.alunos.filter(a=>a.tipo===alvo).length;
+  if(usados>0){toast('Não dá para excluir: '+usados+' aluno(s) usam "'+alvo+'". Mude o tipo deles primeiro.');return;}
+  DB.tiposCustom=cs.filter(c=>c.nome!==alvo);persist();toast('Pacote "'+alvo+'" excluído.');
+}
 function applyAlunoTipoUI(){
   const t=document.getElementById('a-tipo').value;
   const isP=(t==='Personal');
-  const mostraVA=(t==='Personal'||t==='Particular');
+  const custom=tipoCustomObj(t);
+  const mostraVA=(t==='Personal'||t==='Particular'||!!custom);
   const w=document.getElementById('a-valoraula-wrap');if(w)w.style.display=mostraVA?'block':'none';
   const vaLbl=document.querySelector('#a-valoraula-wrap label');if(vaLbl)vaLbl.textContent=isP?'💪 Valor por treino — Personal (R$)':'🎾 Valor por aula (R$)';
-  if(!document.getElementById('a-id').value){const va=document.getElementById('a-valoraula');if(va&&mostraVA)va.value=(isP?130:160);}
+  if(!document.getElementById('a-id').value){const va=document.getElementById('a-valoraula');if(va&&mostraVA)va.value=(isP?130:(custom?(custom.valorAula||160):160));}
   const lbl=document.getElementById('a-plano-lbl');if(lbl)lbl.textContent=(isP?'Pacote (treinos/mês)':'Plano (aulas/mês)')+' — 0 = sem pacote';
   sugerirMensalidade();
 }
@@ -1996,7 +2047,7 @@ function sugerirMensalidade(){
   const t=document.getElementById('a-tipo').value,p=Number(document.getElementById('a-plano').value)||0;
   const mEl=document.getElementById('a-mensalidade');
   if(p<=0){ mEl.value=0; }                                   // 0 = sem pacote
-  else if(t==='Personal'||t==='Particular'){
+  else if(t==='Personal'||t==='Particular'||ehTipoCustom(t)){
     const v=Number(document.getElementById('a-valoraula').value)||(t==='Personal'?130:160);
     mEl.value=p*v;                                            // valor por aula × nº de aulas
   } else {
@@ -2058,7 +2109,7 @@ function usarRepos(id){
 function marcarPago(id){
   const a=DB.alunos.find(x=>x.id===id);
   a.status='pago';
-  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:'Mensalidade · '+a.nome,valor:a.mensalidade,cat:'mensalidade',modal:(a.tipo==='Personal'?'personal':'tenis'),data:new Date().toISOString().slice(0,10)});
+  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:'Mensalidade · '+a.nome,valor:a.mensalidade,cat:'mensalidade',modal:(ehPersonalTipo(a.tipo)?'personal':'tenis'),data:new Date().toISOString().slice(0,10)});
   persist();renderAll();toast('Pagamento de '+a.nome+' lançado: '+fmt(a.mensalidade));
 }
 function checarViradaMes(){
@@ -2094,8 +2145,8 @@ function enviarRenovacaoWa(id){
   if(!a.tel){toast('Sem telefone cadastrado para '+a.nome);return;}
   const nome=a.nome.split(' ')[0];
   const plano=Number(a.plano)||0;
-  const isP=(a.tipo==='Personal');
-  const planoTxt=plano>0?(isP?(plano+' treinos/mês'):('Flex '+plano+' — '+plano+' aulas/mês')):'sem pacote ativo';
+  const isP=ehPersonalTipo(a.tipo);
+  const planoTxt=plano>0?(isP?(a.tipo+' · '+plano+' treinos/mês'):(a.tipo+' · Flex '+plano+' — '+plano+' aulas/mês')):'sem pacote ativo';
   const msg=encodeURIComponent(
     'Olá '+nome+'! 🎾 Passando para combinar a *renovação da sua mensalidade* na JV Tênis.\n\n'
     +'📋 Plano atual: *'+planoTxt+'*'
@@ -2128,15 +2179,15 @@ function renderAlunos(){
   const list=document.getElementById('alunos-list');
   const q=(document.getElementById('search').value||'').toLowerCase();
   const items=DB.alunos.filter(a=>a.nome.toLowerCase().includes(q)).filter(a=>{
-    if(filtroAluno==='personal')return a.tipo==='Personal';
-    if(filtroAluno==='tenis')return a.tipo!=='Personal';
+    if(filtroAluno==='personal')return ehPersonalTipo(a.tipo);
+    if(filtroAluno==='tenis')return !ehPersonalTipo(a.tipo);
     return true;
   }).sort((x,y)=>x.nome.localeCompare(y.nome));
   if(!items.length){list.innerHTML='<div class="empty">Nenhum aluno '+(q||filtroAluno!=='todos'?'encontrado':'cadastrado ainda — toque em <b>+ Novo</b> para começar')+'.</div>';return;}
   list.innerHTML=items.map(a=>`
   <div class="aluno" id="card-${a.id}">
     <div class="aluno-head" onclick="toggleAluno(document.getElementById('card-${a.id}'))">
-      <div><div class="aluno-name">${a.tipo==='Personal'?'💪 ':'🎾 '}${a.nome}</div><div class="aluno-sub">${a.tipo} · ${a.plano>0?('Flex '+a.plano):'sem pacote'} · ${fmt(a.mensalidade)}/mês</div></div>
+      <div><div class="aluno-name">${ehPersonalTipo(a.tipo)?'💪 ':'🎾 '}${a.nome}</div><div class="aluno-sub">${a.tipo} · ${a.plano>0?('Flex '+a.plano):'sem pacote'} · ${fmt(a.mensalidade)}/mês</div></div>
       <span class="badge ${a.status}">${a.status==='parcial'?'50%':a.status}</span>
     </div>
     <div class="aluno-body">
@@ -2399,7 +2450,7 @@ function cobrar(id){
 }
 function modalDe(l){
   if(l.modal)return l.modal;
-  if(l.cat==='mensalidade'){const nm=(l.desc||'').split('· ')[1];const a=nm&&DB.alunos.find(x=>x.nome===nm);if(a&&a.tipo==='Personal')return 'personal';}
+  if(l.cat==='mensalidade'){const nm=(l.desc||'').split('· ')[1];const a=nm&&DB.alunos.find(x=>x.nome===nm);if(a&&ehPersonalTipo(a.tipo))return 'personal';}
   return 'tenis';
 }
 function renderFin(){
