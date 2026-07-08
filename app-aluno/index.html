@@ -76,6 +76,13 @@ input,select{font-family:'DM Sans',sans-serif;font-size:14px}
 .login-btn:active{transform:scale(.97)}
 .login-err{margin-top:14px;font-size:12.5px;color:#FFB3A6;min-height:18px;position:relative}
 .login-hint{margin-top:26px;font-size:11.5px;color:rgba(250,247,242,.45);position:relative;line-height:1.7}
+.welcome-orb{position:relative;width:190px;height:190px;display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.welcome-orb .ring{position:absolute;border-radius:50%;border:1.5px solid rgba(201,160,74,.45)}
+.welcome-orb .ring.r1{width:190px;height:190px;box-shadow:0 0 34px rgba(201,160,74,.18)}
+.welcome-orb .ring.r2{width:156px;height:156px;border-color:rgba(201,160,74,.9);border-width:2px}
+.orb-logo{width:118px;height:118px;border-radius:50%;object-fit:cover;box-shadow:0 10px 34px rgba(0,0,0,.55);border:1.5px solid rgba(201,160,74,.4);background:#0E0C08}
+.login-slogan{margin-top:22px;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14.5px;color:rgba(201,160,74,.75);position:relative}
+.login-priv{margin-top:10px;font-size:11px;color:rgba(250,247,242,.4);text-decoration:underline;position:relative}
 
 /* APP */
 #app{display:none}
@@ -269,16 +276,21 @@ function iniciarFirebase(){
 
 <!-- LOGIN -->
 <section class="login" id="login">
-  <div class="brand-emblem">JV</div>
-  <p class="login-tag">Academia João Victor Tênis</p>
-  <h1>App do<br><em>Aluno</em></h1>
-  <p class="login-sub">Treino · Agenda · Evolução</p>
+  <div class="welcome-orb">
+    <span class="ring r1"></span><span class="ring r2"></span>
+    <img src="jv-icone-aluno.png" alt="JV Tênis" class="orb-logo">
+  </div>
+  <p class="login-tag">Academia João Victor Tênis · Curitiba</p>
+  <h1>JV <em>Tênis</em></h1>
+  <p class="login-sub">Seja bem-vindo 🎾</p>
   <p>Digite o código que o João Victor te enviou</p>
   <input class="code-input" id="code-in" maxlength="4" inputmode="numeric" placeholder="••••">
   <label class="keep-lab"><input type="checkbox" id="keep-in" checked> Manter-me conectado</label>
-  <button class="login-btn" onclick="entrar()">Entrar</button>
+  <button class="login-btn" onclick="entrar()">Entrar 🎾</button>
   <div class="login-err" id="login-err"></div>
   <p class="login-hint">Não tem código? <b onclick="abrirWhatsApp('5541995415712','Olá João! Quero começar a usar o app da academia. 🎾')" style="color:#C9E265;text-decoration:underline;cursor:pointer">Fale com o João</b></p>
+  <p class="login-slogan">Da base ao topo 🎾</p>
+  <a href="privacidade.html" class="login-priv">Política de Privacidade</a>
 </section>
 
 <!-- APP -->
@@ -1017,10 +1029,11 @@ function normalizaPix(chave,tipo){
   if(chave.indexOf('@')>=0)return chave.toLowerCase();          // e-mail (auto)
   if(/[a-zA-Z]/.test(chave))return chave.replace(/\s+/g,'');    // chave aleatória (tem letras) — usa como está
   const d=chave.replace(/\D/g,'');
-  if(tipo==='cpf'||tipo==='cnpj')return d;
-  if(tipo==='celular')return d?('+'+(d.length<=11?('55'+d):d)):'';
-  if(d.length>=10&&d.length<=13)return '+'+(d.length<=11?('55'+d):d); // só dígitos: assume telefone
-  return d;
+  if(tipo==='cpf'||tipo==='cnpj')return d;                       // CPF/CNPJ: só dígitos
+  if(d.length===14)return d;                                     // CNPJ (14 dígitos) — nunca leva "+"
+  if(d.length===11&&tipo==='cpf')return d;                       // CPF explícito
+  if(d.length>=10&&d.length<=13)return '+'+(d.length<=11?('55'+d):d); // telefone
+  return d;                                                      // fallback: só dígitos
 }
 function pixBRCode(chave,valor,nome,cidade){
   const f=(id,v)=>{v=String(v);return id+String(v.length).padStart(2,'0')+v;};

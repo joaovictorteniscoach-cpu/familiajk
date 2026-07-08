@@ -2685,10 +2685,11 @@ function normalizaPix(chave,tipo){
   if(chave.indexOf('@')>=0)return chave.toLowerCase();          // e-mail (auto)
   if(/[a-zA-Z]/.test(chave))return chave.replace(/\s+/g,'');    // chave aleatória (tem letras) — usa como está
   const d=chave.replace(/\D/g,'');
-  if(tipo==='cpf'||tipo==='cnpj')return d;
-  if(tipo==='celular')return d?('+'+(d.length<=11?('55'+d):d)):'';
-  if(d.length>=10&&d.length<=13)return '+'+(d.length<=11?('55'+d):d); // só dígitos: assume telefone
-  return d;
+  if(tipo==='cpf'||tipo==='cnpj')return d;                       // CPF/CNPJ: só dígitos
+  if(d.length===14)return d;                                     // CNPJ (14 dígitos) — nunca leva "+"
+  if(d.length===11&&tipo==='cpf')return d;                       // CPF explícito
+  if(d.length>=10&&d.length<=13)return '+'+(d.length<=11?('55'+d):d); // telefone
+  return d;                                                      // fallback: só dígitos
 }
 function savePag(){
   DB.pixTipo=(document.getElementById('pixtipo-input')||{}).value||'celular';
