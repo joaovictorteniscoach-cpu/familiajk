@@ -373,6 +373,19 @@ function iniciarFirebase(){
 </head>
 <body>
 
+<section id="splash-gestao" style="position:fixed;inset:0;z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;background:linear-gradient(175deg,#16260F 0%,#1A2E14 45%,#0F1D0B 100%)">
+  <div style="position:relative;width:190px;height:190px;display:flex;align-items:center;justify-content:center;margin-bottom:18px">
+    <span style="position:absolute;width:190px;height:190px;border-radius:50%;border:1.5px solid rgba(201,160,74,.45);box-shadow:0 0 34px rgba(201,160,74,.18)"></span>
+    <span style="position:absolute;width:156px;height:156px;border-radius:50%;border:2px solid rgba(201,160,74,.9)"></span>
+    <img src="jv-icone-gestao.png" alt="JV Tênis Gestão" style="width:118px;height:118px;border-radius:50%;object-fit:cover;box-shadow:0 10px 34px rgba(0,0,0,.55);border:1.5px solid rgba(201,160,74,.4);background:#0E0C08">
+  </div>
+  <p style="font-size:10px;letter-spacing:3.5px;text-transform:uppercase;color:#D4AF58;font-weight:700;margin-bottom:12px">Academia João Victor Tênis · Curitiba</p>
+  <h1 style="font-family:'Cormorant Garamond',serif;font-weight:300;font-size:42px;color:#FAF7F2;line-height:1.05;margin-bottom:4px">JV Tênis · <em style="color:#CBD24A">Gestão</em></h1>
+  <p style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:16px;color:#D4AF58;margin-bottom:30px">Bem-vindo, João 🎾</p>
+  <button onclick="document.getElementById('splash-gestao').style.display='none'" style="width:210px;padding:15px;border:none;border-radius:14px;background:#C9472B;color:#fff;font-weight:800;font-size:14.5px;letter-spacing:.5px;box-shadow:0 5px 20px rgba(201,71,43,.4);cursor:pointer">Entrar 🎾</button>
+  <p style="margin-top:26px;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;color:rgba(201,160,74,.7)">Da base ao topo 🎾</p>
+</section>
+
 <header class="top">
   <div class="top-actions">
     <button id="bell-btn" class="eye-btn bell-btn" onclick="abrirNotifs()" title="Avisos">🔔<span class="bell-badge" id="bell-badge" style="display:none">0</span></button>
@@ -960,6 +973,11 @@ function iniciarFirebase(){
           <option value="4">4 pessoas (quarteto)</option>
         </select>
         <p class="hint" id="s-grupo-preco" style="margin-top:7px"></p>
+      </div>
+      <div class="field" id="s-repo-wrap">
+        <label style="display:flex;align-items:center;gap:9px;cursor:pointer;font-weight:600">
+          <input type="checkbox" id="s-repo" style="width:19px;height:19px;accent-color:#C9A227"> 🔁 Reposição — usar a <b>reposição</b> do aluno (não o crédito)
+        </label>
       </div>
       <div class="modal-acts">
         <button class="btn btn-ghost" onclick="closeModal('ov-slot')">Fechar</button>
@@ -1889,9 +1907,12 @@ function slotPickAluno(){
 }
 function toggleGrupoWrap(){
   const w=document.getElementById('s-grupo-wrap');if(!w)return;
-  const isG=document.getElementById('s-tipo').value==='grupo';
+  const t=document.getElementById('s-tipo').value;
+  const isG=t==='grupo';
   w.style.display=isG?'block':'none';
   if(isG)atualizaGrupoPreco();
+  const rw=document.getElementById('s-repo-wrap');
+  if(rw)rw.style.display=(t==='aula'||t==='grupo'||t==='personal')?'block':'none';   // reposição só para aulas
 }
 function atualizaGrupoPreco(){
   const el=document.getElementById('s-grupo-preco');if(!el)return;
@@ -1939,15 +1960,18 @@ function saveSlot(){
       toast(modo==='fechado'?('🔒 '+slotCtx.hora+' está fora do horário de aulas neste dia.'):('🔒 '+slotCtx.hora+' é só locação neste dia — não dá para agendar aula.'));return;
     }
   }
+  const repoChk=document.getElementById('s-repo');
+  const repo=(repoChk&&repoChk.checked&&(tipo==='aula'||tipo==='grupo'||tipo==='personal'))?1:0;
   if(document.getElementById('s-rec').value==='fixo'){
-    DB.agenda.fixos.push({id:'f'+Date.now(),dia:slotCtx.date.getDay(),hora:slotCtx.hora,titulo:t,tipo,alunoId,pessoas});
-    toast(t+' fixado toda '+DIAS[slotCtx.date.getDay()]+' às '+slotCtx.hora);
+    DB.agenda.fixos.push({id:'f'+Date.now(),dia:slotCtx.date.getDay(),hora:slotCtx.hora,titulo:t,tipo,alunoId,pessoas,repo});
+    toast(t+' fixado toda '+DIAS[slotCtx.date.getDay()]+' às '+slotCtx.hora+(repo?' · 🔁 reposição':''));
   }else{
-    DB.agenda.eventos.push({id:'e'+Date.now(),data:dKey(slotCtx.date),hora:slotCtx.hora,titulo:t,tipo,alunoId,pessoas});
-    toast(t+' marcado em '+slotCtx.date.getDate()+'/'+(slotCtx.date.getMonth()+1));
+    DB.agenda.eventos.push({id:'e'+Date.now(),data:dKey(slotCtx.date),hora:slotCtx.hora,titulo:t,tipo,alunoId,pessoas,repo});
+    toast(t+' marcado em '+slotCtx.date.getDate()+'/'+(slotCtx.date.getMonth()+1)+(repo?' · 🔁 reposição':''));
   }
   document.getElementById('s-titulo').value='';
   document.getElementById('s-aluno').value='';
+  if(repoChk)repoChk.checked=false;
   logAct('Adicionar: '+t);
   persist();renderSlotEvs();renderAgenda();
 }
