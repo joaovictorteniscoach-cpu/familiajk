@@ -11,6 +11,7 @@ publicados no Netlify). Todos são **estáticos / PWA** e funcionam por
 | `app-gestao/`  | JV Tênis · Gestão    | App de **gestão** (agenda, alunos, caixa e financeiro). PWA + Firebase Realtime Database. |
 | `app-aluno/`   | JV Tênis · Aluno     | App do **aluno**. PWA + Firebase Realtime Database.            |
 | `site/`        | Academia JV Tênis    | **Site** institucional com informações para alunos novos. Imagens embutidas (base64). |
+| `metodologia/` | Da Base ao Topo      | **Fonte em Markdown** da metodologia de treinos (não publicada). Gera `site/metodologia.html` (página pública) e `site/apostila.html` (apostila p/ professores, sem link no menu). |
 
 ## Última versão dos arquivos
 - `app-gestao/index.html` — editado em 26/06/2026
