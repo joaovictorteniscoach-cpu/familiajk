@@ -12,6 +12,11 @@ e `app-gestao/`).
 | `folder.html` | Fonte do **folder comercial** para enviar a clientes (3 páginas A4, visual dark navy + dourado) |
 | `export/` | Arquivos prontos para envio: `Metodologia-JV-Tenis.pdf` (3 páginas) e as versões em imagem PNG de alta resolução (páginas separadas e completa) |
 
+> O PDF do folder também é **publicado no site**: existe uma cópia em
+> `site/Metodologia-JV-Tenis.pdf` (URL pública `/Metodologia-JV-Tenis.pdf`,
+> com botões de download na página `/metodologia.html`). Ao regenerar o folder,
+> copie o novo PDF de `export/` para `site/` de novo.
+
 ## Onde o conteúdo aparece publicado
 
 | Página | Público | O que é |
