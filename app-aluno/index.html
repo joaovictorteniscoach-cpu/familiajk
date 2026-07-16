@@ -338,6 +338,7 @@ function iniciarFirebase(){
     <div class="cards2">
       <div class="scard"><div class="ico">📅</div><div class="l">Créditos</div><div class="v" id="v-cred">0</div></div>
       <div class="scard"><div class="ico">🔄</div><div class="l">Reposições</div><div class="v" id="v-repos">0</div></div>
+      <div class="scard" id="scard-loc" style="display:none;grid-column:1/-1"><div class="ico">🔑</div><div class="l">Locação (horas)</div><div class="v" id="v-loc">0</div></div>
     </div>
     <div class="status-line">
       <span><b id="v-plano">—</b> · mensalidade <b id="v-mens">—</b></span>
@@ -793,6 +794,8 @@ function render(){
   document.getElementById('hello').textContent='Fala, '+EU.nome.split(' ')[0]+'!';
   document.getElementById('v-cred').textContent=fmtCred(EU.creditos);
   document.getElementById('v-repos').textContent=fmtCred(EU.repos);
+  const lc=Number(EU.locCred)||0,sl=document.getElementById('scard-loc');
+  if(sl){sl.style.display=lc!==0?'block':'none';const vl=document.getElementById('v-loc');if(vl){vl.textContent=fmtCred(lc);vl.style.color=lc<0?'#C0392B':'var(--green)';}}
   document.getElementById('v-plano').textContent=(Number(EU.plano)||0)<=0?(EU.tipo+' · sem pacote'):(isPersonal()?(EU.tipo+' · '+EU.plano+' treinos/mês'):(EU.tipo+' · Flex '+EU.plano));
   document.getElementById('v-mens').textContent=fmt(EU.mensalidade);
   const st=document.getElementById('v-status');

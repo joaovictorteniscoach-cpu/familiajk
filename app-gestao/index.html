@@ -435,6 +435,11 @@ function iniciarFirebase(){
   </div>
   <div class="comp-list" id="comp-list"></div>
   <div id="datas-inicio"></div>
+  <div id="cadastros-wrap" style="display:none">
+    <p class="sec-eyebrow">Novos alunos</p>
+    <h2 class="sec-title">🆕 Pedidos de <em>cadastro</em> (site)</h2>
+    <div id="cadastros-box"></div>
+  </div>
   <p class="sec-eyebrow">Confirmações</p>
   <h2 class="sec-title">📲 Agenda de <em>amanhã</em> <small id="confirm-amanha-data" style="font-weight:600;color:var(--muted);font-size:12px"></small></h2>
   <div id="confirm-amanha"></div>
@@ -853,6 +858,10 @@ function iniciarFirebase(){
       <div class="field"><label>Créditos atuais</label><input type="number" id="a-creditos" value="0"></div>
     </div>
     <div class="row2">
+      <div class="field"><label>🔑 Locação (horas)</label><input type="number" id="a-loccred" value="0" step="0.5"></div>
+      <div class="field"></div>
+    </div>
+    <div class="row2">
       <div class="field"><label>Reposições</label><input type="number" id="a-repos" value="0"></div>
       <div class="field"><label>Situação</label>
         <select id="a-status"><option value="pendente">Pendente</option><option value="parcial">Pagou 50%</option><option value="pago">Pago</option></select>
@@ -1161,6 +1170,7 @@ function ensureFields(){
   }
   DB.alunos.forEach(a=>{
     if(a.diaVenc==null){a.diaVenc=10;changed=true;}
+    if(a.locCred===undefined){a.locCred=0;changed=true;}
     if(!a.codigo){
       let c;do{c=genCode();}while(DB.alunos.some(x=>x.codigo===c));
       a.codigo=c;changed=true;
@@ -1269,7 +1279,7 @@ async function doPublish(){
       locacaoOnly:DB.locacaoOnly||[],
       horarioCfg:DB.horarioCfg||{},
       horarioData:DB.horarioData||{},
-      alunos:DB.alunos.map(a=>({codigo:a.codigo,nome:a.nome,tipo:a.tipo,plano:a.plano,creditos:a.creditos,repos:a.repos,status:a.status,mensalidade:a.mensalidade,diaVenc:a.diaVenc||10,cardLink:a.cardLink||'',mfitLink:a.mfitLink||'',valorAula:a.valorAula||(a.tipo==='Personal'?130:160)})),
+      alunos:DB.alunos.map(a=>({codigo:a.codigo,nome:a.nome,tipo:a.tipo,plano:a.plano,creditos:a.creditos,repos:a.repos,status:a.status,mensalidade:a.mensalidade,diaVenc:a.diaVenc||10,cardLink:a.cardLink||'',mfitLink:a.mfitLink||'',valorAula:a.valorAula||(a.tipo==='Personal'?130:160),locCred:Number(a.locCred)||0})),
       historico:(function(){
         const codeOf={};DB.alunos.forEach(a=>{codeOf[a.id]=a.codigo;});
         const cut=dKey(new Date(Date.now()-60*864e5));const out={};
@@ -1336,8 +1346,8 @@ async function syncRequests(silent){
   }catch(e){if(!silent)toast('Erro ao sincronizar');}
   syncing=false;
 }
-setInterval(()=>{syncRequests(true);carregarNotifs();carregarConfirmacoes();},45000);
-setTimeout(()=>carregarConfirmacoes(),3500);   // primeira carga das confirmações dos alunos
+setInterval(()=>{syncRequests(true);carregarNotifs();carregarConfirmacoes();carregarCadastros();},45000);
+setTimeout(()=>{carregarConfirmacoes();carregarCadastros();},3500);   // primeira carga: confirmações + cadastros do site
 
 /* ================= AVISOS (sininho) ================= */
 let NOTIF=[],notifSeen=Number((typeof localStorage!=='undefined'&&localStorage.getItem('jv-notif-seen'))||0),notifMax=notifSeen,notifPrimeira=true;
@@ -1758,13 +1768,18 @@ function togglePresenca(entryId){
   const k=presId(entry,agDate);
   const idx=DB.presencas.findIndex(p=>p.k===k);
   const isRepo=!!entry.repo;
+  const isLoc=(entry.tipo==='locacao');   // locação usa saldo próprio de horas, nunca crédito de aula
   const c=creditoSlot(entry.hora);
   if(idx>=0){
     DB.presencas.splice(idx,1);
-    if(isRepo){a.repos=(Number(a.repos)||0)+c;logAct('Desmarcar reposição: '+a.nome);toast('Reposição desfeita · '+a.nome+' → '+fmtCred(a.repos)+' reposições');}
+    if(isLoc){a.locCred=(Number(a.locCred)||0)+c;logAct('Desmarcar locação: '+a.nome);toast('Locação desfeita · '+a.nome+' → '+fmtCred(a.locCred)+'h de locação');}
+    else if(isRepo){a.repos=(Number(a.repos)||0)+c;logAct('Desmarcar reposição: '+a.nome);toast('Reposição desfeita · '+a.nome+' → '+fmtCred(a.repos)+' reposições');}
     else{a.creditos+=c;logAct('Desmarcar presença: '+a.nome);toast('Presença desfeita · '+a.nome+' → '+fmtCred(a.creditos)+' créditos');}
   }else{
-    if(isRepo){
+    if(isLoc){
+      a.locCred=(Number(a.locCred)||0)-c;DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora});
+      logAct('Marcar locação: '+a.nome);toast('🔑 Locação ('+c+'h) · '+a.nome+' → '+fmtCred(a.locCred)+'h'+(a.locCred<0?' (devendo)':' restantes'));
+    }else if(isRepo){
       if((Number(a.repos)||0) < c-1e-9){toast(a.nome+' não tem reposições suficientes ('+fmtCred(a.repos)+')');return;}
       a.repos=(Number(a.repos)||0)-c;DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora});
       logAct('Marcar reposição: '+a.nome);toast('✓ Reposição ('+(c===0.5?'½ aula':'1 aula')+') · '+a.nome+' → '+fmtCred(a.repos)+' reposições');
@@ -1859,7 +1874,7 @@ function aplicarChuva(date,hora){
   entriesFor(date,hora).forEach(e=>{
     if(!e.alunoId)return;
     const k=presId(e,date);const i=DB.presencas.findIndex(p=>p.k===k);
-    if(i>=0){const a=DB.alunos.find(x=>x.id===e.alunoId);if(a){const c=creditoSlot(hora);if(e.repo)a.repos=(Number(a.repos)||0)+c;else a.creditos=(Number(a.creditos)||0)+c;}DB.presencas.splice(i,1);}
+    if(i>=0){const a=DB.alunos.find(x=>x.id===e.alunoId);if(a){const c=creditoSlot(hora);if(e.tipo==='locacao')a.locCred=(Number(a.locCred)||0)+c;else if(e.repo)a.repos=(Number(a.repos)||0)+c;else a.creditos=(Number(a.creditos)||0)+c;}DB.presencas.splice(i,1);}
   });
   DB.agenda.fixos.filter(f=>f.dia===dia&&f.hora===hora).forEach(f=>{
     if(!DB.agenda.excecoes.some(x=>x.fixoId===f.id&&x.data===dk))DB.agenda.excecoes.push({fixoId:f.id,data:dk});
@@ -2024,6 +2039,7 @@ function openAlunoModal(id){
     document.getElementById('a-cardlink').value=a.cardLink||'';
     document.getElementById('a-mfit').value=a.mfitLink||'';
     document.getElementById('a-valoraula').value=a.valorAula||(a.tipo==='Personal'?130:160);
+    document.getElementById('a-loccred').value=Number(a.locCred)||0;
     document.getElementById('a-venc').value=a.diaVenc||10;
     document.getElementById('a-id').value=id;
     applyAlunoTipoUI();
@@ -2036,6 +2052,7 @@ function openAlunoModal(id){
     document.getElementById('a-cardlink').value='';
     document.getElementById('a-mfit').value='';
     document.getElementById('a-valoraula').value=130;
+    document.getElementById('a-loccred').value=0;
     document.getElementById('a-venc').value=10;
     applyAlunoTipoUI();
   }
@@ -2138,6 +2155,7 @@ function saveAluno(){
     mensalidade:Number(document.getElementById('a-mensalidade').value)||0,
     creditos:Number(document.getElementById('a-creditos').value)||0,
     repos:Number(document.getElementById('a-repos').value)||0,
+    locCred:Number(document.getElementById('a-loccred').value)||0,
     status:document.getElementById('a-status').value,
     diaVenc:Math.min(28,Math.max(1,Number(document.getElementById('a-venc').value)||10)),
     cardLink:document.getElementById('a-cardlink').value.trim(),
@@ -2177,6 +2195,18 @@ function usarRepos(id){
   const a=DB.alunos.find(x=>x.id===id);
   if(a.repos<=0){toast('Sem reposições pendentes');return;}
   a.repos=Math.max(0,(Number(a.repos)||0)-1);persist();renderAll();toast('Reposição realizada · restam '+fmtCred(a.repos));
+}
+function addLocacao(id){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  a.locCred=(Number(a.locCred)||0)+1;
+  logAct('Locação +1h: '+a.nome);persist();renderAll();
+  toast('🔑 +1h de locação · '+a.nome+' → '+fmtCred(a.locCred)+'h');
+}
+function usarLocacao(id){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  a.locCred=(Number(a.locCred)||0)-1;
+  logAct('Locação feita: '+a.nome);persist();renderAll();
+  toast('🔑 Locação registrada · '+a.nome+' → '+fmtCred(a.locCred)+'h'+(a.locCred<0?' (devendo)':''));
 }
 function marcarPago(id){
   const a=DB.alunos.find(x=>x.id===id);
@@ -2267,6 +2297,7 @@ function renderAlunos(){
         <span class="chip" style="${a.creditos<0?'background:#F6D7D2;color:#8E2C1E;font-weight:800':''}">🎾 ${fmtCred(a.creditos)} ${a.creditos<0?'aula(s) devendo':('crédito'+(a.creditos===1?'':'s'))}</span>
         ${a.creditos<0?`<span class="chip" style="background:#F6D7D2;color:#8E2C1E;font-weight:800">💸 ${fmt(devidoExtra(a))} a cobrar</span>`:''}
         <span class="chip ${a.repos>0?'warn':'gold'}">🔁 ${fmtCred(a.repos)} reposiç${a.repos===1?'ão':'ões'}</span>
+        <span class="chip" style="${(Number(a.locCred)||0)<0?'background:#F6D7D2;color:#8E2C1E;font-weight:800':''}">🔑 ${fmtCred(Number(a.locCred)||0)}h locação${(Number(a.locCred)||0)<0?' (devendo)':''}</span>
         <span class="chip code">🔑 ${a.codigo||'—'}</span>
         ${a.termoAceitoEm?`<span class="chip" style="background:#E6F0E6;color:#2E7D52">📄 termo aceito</span>`:''}
       </div>
@@ -2276,6 +2307,8 @@ function renderAlunos(){
         <button class="act a2" onclick="addRepos('${a.id}')">+ Reposição</button>
         <button class="act a3" onclick="marcarPago('${a.id}')">💰 Marcar pago</button>
         <button class="act a4" onclick="usarRepos('${a.id}')">↺ Usar reposição</button>
+        <button class="act a2" onclick="addLocacao('${a.id}')">🔑 +1h locação</button>
+        <button class="act a1" onclick="usarLocacao('${a.id}')">🔑 Locação feita (−1h)</button>
       </div>
       <div class="aluno-foot">
         <button class="linkbtn" onclick="openAlunoModal('${a.id}')">Editar</button>
@@ -3153,6 +3186,44 @@ async function carregarConfirmacoes(){
     Object.keys(v).forEach(k=>{const c=v[k];if(c&&c.codigo&&c.data&&c.hora)m[c.codigo+'|'+c.data+'|'+c.hora]=true;});
     CONF_ALUNOS=m;const b=document.getElementById('confirm-amanha');if(b)renderConfirmAmanha();
   }catch(e){}
+}
+let CADASTROS={};
+async function carregarCadastros(){
+  if(!hasCloud())return;
+  try{
+    const snap=await window.fbDB.ref('jvtenis/fila_cadastros').get();
+    CADASTROS=snap.exists()?(snap.val()||{}):{};
+    renderCadastros();
+  }catch(e){}
+}
+function renderCadastros(){
+  const wrap=document.getElementById('cadastros-wrap'),box=document.getElementById('cadastros-box');
+  if(!wrap||!box)return;
+  const keys=Object.keys(CADASTROS);
+  wrap.style.display=keys.length?'block':'none';
+  box.innerHTML=keys.map(k=>{
+    const c=CADASTROS[k]||{};
+    return '<div class="mov"><div class="mov-l"><b>'+(c.nome||'—')+'</b><span>📱 '+(c.tel||'—')+' · '+(c.interesse||'')+'</span></div>'
+      +'<div style="display:flex;gap:6px">'
+      +'<button class="btn btn-clay" style="padding:6px 10px;font-size:11.5px" onclick="aprovarCadastro(\''+k+'\')">✓ Criar aluno</button>'
+      +'<button class="btn btn-ghost" style="padding:6px 10px;font-size:11.5px" onclick="descartarCadastro(\''+k+'\')">✕</button>'
+      +'</div></div>';
+  }).join('');
+}
+function aprovarCadastro(key){
+  const c=CADASTROS[key];if(!c)return;
+  let cod;do{cod=genCode();}while(DB.alunos.some(x=>x.codigo===cod));
+  DB.alunos.push({id:'a'+Date.now(),nome:c.nome||'Novo aluno',tel:(c.tel||'').replace(/\D/g,''),tipo:'Particular',plano:0,mensalidade:0,creditos:0,repos:0,locCred:0,status:'pendente',diaVenc:10,codigo:cod,valorAula:160,cardLink:'',mfitLink:''});
+  if(hasCloud())window.fbDB.ref('jvtenis/fila_cadastros/'+key).remove().catch(()=>{});
+  delete CADASTROS[key];
+  logAct('Cadastro aprovado (site): '+(c.nome||''));
+  persist();renderAll();renderCadastros();
+  toast('✓ Aluno criado (sem pacote). Ajuste o plano e envie o acesso 🔑');
+}
+function descartarCadastro(key){
+  if(!confirm('Descartar este pedido de cadastro?'))return;
+  if(hasCloud())window.fbDB.ref('jvtenis/fila_cadastros/'+key).remove().catch(()=>{});
+  delete CADASTROS[key];renderCadastros();toast('Pedido descartado.');
 }
 function confirmarInterno(id,hora){
   const r=aulasAmanha();const dk=dKey(r.date);
