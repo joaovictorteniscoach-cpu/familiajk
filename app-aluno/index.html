@@ -1124,6 +1124,10 @@ function openComprar(){
       itemBtn('credito','➕ Pacote de créditos','a combinar')+
       itemBtn('locacao','🏟️ Locação da quadra (1h)',fmt(precoLocacao()));
   }
+  const vPla=(PUB.precos&&Number(PUB.precos.planilha))||0;
+  const vKid=(PUB.precos&&Number(PUB.precos.kids))||0;
+  if(vPla>0)itens+=itemBtn('planilha','📋 Treino de planilha avulso',fmt(vPla));
+  if(vKid>0)itens+=itemBtn('kids','🧒 Treino kids avulso',fmt(vKid));
   document.getElementById('comprar-itens').innerHTML=itens;
   document.getElementById('comprar-pay').style.display='none';
   document.getElementById('comprar-pay').innerHTML='';
@@ -1136,7 +1140,7 @@ function selComprar(id){
   const av=isGrupo()?precoAvulsaGrupo():precoAvulsaPart();
   const vt=precoPersonal();
   if(id.indexOf('pkg')===0){const n=Number(id.slice(3));compraSel={nome:'Pacote '+n+' treinos',valor:n*vt};}
-  else{const mapa={avulsa:{nome:'Aula avulsa',valor:av},credito:{nome:'Pacote de créditos',valor:null},locacao:{nome:'Locação da quadra (1h)',valor:precoLocacao()},personal:{nome:'Treino avulso',valor:vt}};compraSel=mapa[id];}
+  else{const mapa={avulsa:{nome:'Aula avulsa',valor:av},credito:{nome:'Pacote de créditos',valor:null},locacao:{nome:'Locação da quadra (1h)',valor:precoLocacao()},personal:{nome:'Treino avulso',valor:vt},planilha:{nome:'Treino de planilha avulso',valor:(PUB.precos&&Number(PUB.precos.planilha))||0},kids:{nome:'Treino kids avulso',valor:(PUB.precos&&Number(PUB.precos.kids))||0}};compraSel=mapa[id];}
   document.querySelectorAll('.comprar-item').forEach(b=>b.classList.remove('sel'));
   const cur=document.getElementById('ci-'+id);if(cur)cur.classList.add('sel');
   const vtxt=compraSel.valor?(' — '+fmt(compraSel.valor)):'';

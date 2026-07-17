@@ -584,6 +584,10 @@ function iniciarFirebase(){
     <div class="field"><label>Locação da quadra · 1h (R$)</label><input type="number" id="pr-loc" inputmode="decimal" onchange="savePag()"></div>
     <div class="field"><label>Treino de personal avulso (R$)</label><input type="number" id="pr-personal" inputmode="decimal" onchange="savePag()"></div>
   </div>
+  <div class="row2">
+    <div class="field"><label>📋 Treino de planilha avulso (R$)</label><input type="number" id="pr-planilha" inputmode="decimal" onchange="savePag()"></div>
+    <div class="field"><label>🧒 Treino kids avulso (R$)</label><input type="number" id="pr-kids" inputmode="decimal" onchange="savePag()"></div>
+  </div>
   <p class="hint">Esses valores aparecem para o aluno na opção "Comprar / Reservar" do app dele.</p>
 
   <h2 class="sec-title" style="margin-top:16px">Mensalidade em <em>grupo</em> · R$ por aula</h2>
@@ -1147,6 +1151,8 @@ function ensureFields(){
   if(DB.cardLink===undefined)DB.cardLink='';
   if(!DB.snapAlunos)DB.snapAlunos={};
   if(!DB.precos)DB.precos={avulsaPart:170,avulsaGrupo:95,locacao:70};
+  if(DB.precos.planilha===undefined)DB.precos.planilha=0;   // 0 = ainda não definido
+  if(DB.precos.kids===undefined)DB.precos.kids=0;
   if(!DB.grupoPreco)DB.grupoPreco={dupla:90,trio:85,quarteto:80};
   ensureTorneios();
   // registra o nº de alunos cadastrados no mês atual (histórico para os gráficos)
@@ -2593,6 +2599,8 @@ function renderFin(){
   if(document.getElementById('pr-avgrupo'))document.getElementById('pr-avgrupo').value=pr.avulsaGrupo;
   if(document.getElementById('pr-loc'))document.getElementById('pr-loc').value=pr.locacao;
   if(document.getElementById('pr-personal'))document.getElementById('pr-personal').value=(pr.personal!=null?pr.personal:130);
+  if(document.getElementById('pr-planilha'))document.getElementById('pr-planilha').value=(pr.planilha!=null&&pr.planilha!==0?pr.planilha:'');
+  if(document.getElementById('pr-kids'))document.getElementById('pr-kids').value=(pr.kids!=null&&pr.kids!==0?pr.kids:'');
   const gp=DB.grupoPreco||{dupla:90,trio:85,quarteto:80};
   if(document.getElementById('pr-gdupla'))document.getElementById('pr-gdupla').value=(gp.dupla!=null?gp.dupla:90);
   if(document.getElementById('pr-gtrio'))document.getElementById('pr-gtrio').value=(gp.trio!=null?gp.trio:85);
@@ -2760,7 +2768,9 @@ function savePag(){
     avulsaPart:num('pr-avpart',170),
     avulsaGrupo:num('pr-avgrupo',95),
     locacao:num('pr-loc',70),
-    personal:num('pr-personal',130)
+    personal:num('pr-personal',130),
+    planilha:num('pr-planilha',0),
+    kids:num('pr-kids',0)
   };
   DB.grupoPreco={dupla:num('pr-gdupla',85),trio:num('pr-gtrio',80),quarteto:num('pr-gquarteto',75)};
   persist();toast('Formas de pagamento e valores atualizados');
