@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Metodologia Da Base ao Topo — Academia JV Tênis | Santa Felicidade, Curitiba</title>
+<meta name="description" content="A metodologia oficial da Academia JV Tênis: o tênis aprendido de baixo pra cima — primeiro os pés, a base e a movimentação, depois a batida. Da iniciação à competição.">
+<meta name="theme-color" content="#102438">
+<meta property="og:title" content="Metodologia Da Base ao Topo — Academia JV Tênis">
+<meta property="og:description" content="O tênis se aprende de baixo pra cima: pés, base, movimentação e posicionamento antes da batida. Conheça o método.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#102438; --navy-2:#15304A; --navy-3:#1C3F5E; --deep:#0B1B2B;
+  --gold:#D8B45C; --gold-2:#C49A3F; --gold-soft:#E7CE93;
+  --cream:#F4EFE6; --paper:#FBF8F2; --ink:#21303D;
+  --muted:rgba(244,239,230,.64); --line:rgba(216,180,92,.20);
+  --wapp:#25D366; --clay:#E0784A;
+  --r:16px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;background:var(--navy)}
+body{font-family:'Inter',sans-serif;background:var(--navy);color:var(--cream);font-size:16.5px;line-height:1.62;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+h1,h2,h3{font-family:'Inter',sans-serif;line-height:1.06;letter-spacing:-.02em;font-weight:800}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+.wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+.eyebrow{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);border:1px solid var(--line);border-radius:999px;padding:7px 16px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;font-weight:700;font-size:15.5px;padding:15px 26px;border-radius:13px;border:2px solid transparent;cursor:pointer;transition:transform .14s,background .2s,color .2s,border-color .2s}
+.btn:active{transform:scale(.98)}
+.btn-gold{background:linear-gradient(135deg,var(--gold-soft),var(--gold-2));color:#23303b}
+.btn-gold:hover{filter:brightness(1.04)}
+.btn-line{background:transparent;color:var(--cream);border-color:rgba(244,239,230,.3)}
+.btn-line:hover{border-color:var(--gold);color:var(--gold-soft)}
+.btn-wapp{background:var(--wapp);color:#fff}
+.btn-wapp:hover{filter:brightness(1.05)}
+.btn-navy{background:var(--deep);color:#fff}
+
+header.bar{position:sticky;top:0;z-index:60;background:var(--paper);border-bottom:1px solid #ECE3D2}
+.bar-in{display:flex;align-items:center;justify-content:space-between;height:64px}
+.brand{display:flex;align-items:center;gap:11px}
+.brand .mono{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,var(--navy-2),var(--deep));color:var(--gold-soft);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:17px;letter-spacing:.02em;box-shadow:0 3px 10px rgba(0,0,0,.18);flex-shrink:0}
+.brand .nm{font-weight:800;font-size:18px;color:var(--ink);line-height:1.05;letter-spacing:-.01em}
+.brand .nm small{display:block;font-weight:600;font-size:9.5px;letter-spacing:.16em;color:#8A7E6B;text-transform:uppercase;margin-top:3px}
+.links{display:flex;align-items:center;gap:22px}
+.links a.lnk{font-size:14.5px;font-weight:600;color:#5C5446}
+.links a.lnk:hover{color:var(--gold-2)}
+.links a.lnk.on{color:var(--gold-2)}
+.bar .btn{padding:9px 20px;font-size:14px}
+.menu-tgl{display:none;background:none;border:1px solid #E0D5C2;color:var(--ink);width:42px;height:42px;border-radius:10px;font-size:18px;cursor:pointer}
+
+.hero{position:relative;min-height:520px;display:flex;align-items:center;padding:72px 0;overflow:hidden;background:linear-gradient(150deg,var(--deep) 0%,var(--navy) 55%,var(--navy-3) 130%)}
+.hero::after{content:"";position:absolute;right:-160px;top:-160px;width:520px;height:520px;border-radius:50%;border:1.5px solid var(--line);opacity:.8}
+.hero::before{content:"";position:absolute;right:-60px;top:-60px;width:520px;height:520px;border-radius:50%;border:1.5px solid var(--line);opacity:.5}
+.hero-in{position:relative;z-index:2;max-width:660px}
+.hero h1{font-size:clamp(42px,8.5vw,72px);font-weight:900;margin:18px 0 18px;color:#fff}
+.hero h1 .gold{color:var(--gold-soft);display:block}
+.hero p.lead{font-size:clamp(16.5px,2.2vw,19px);color:#E7E0D4;max-width:560px;margin-bottom:28px}
+.hero .cta-row{display:flex;gap:13px;flex-wrap:wrap}
+
+section.sec{padding:74px 0;background:var(--navy)}
+.alt{background:var(--navy-2)}
+.sec-head{max-width:640px;margin-bottom:38px}
+.sec-head.center{margin-left:auto;margin-right:auto;text-align:center}
+.sec-head .eyebrow{margin-bottom:14px}
+.sec-head h2{font-size:clamp(28px,5.4vw,44px);font-weight:800;margin-bottom:13px;color:#fff}
+.sec-head p{color:var(--muted);font-size:16.5px}
+
+.mani p{max-width:720px;color:var(--cream);font-size:17px;margin-bottom:18px}
+.mani p b{color:var(--gold-soft)}
+blockquote.mq{max-width:720px;margin:30px 0 6px;padding:22px 26px;border-left:4px solid var(--gold);background:var(--navy-2);border-radius:0 var(--r) var(--r) 0;font-size:clamp(18px,2.6vw,22px);font-weight:700;color:#fff;line-height:1.45;letter-spacing:-.01em}
+blockquote.mq footer{font-size:14px;font-weight:600;color:var(--gold-soft);margin-top:12px}
+
+.pyr{list-style:none;max-width:680px;margin:0 auto 44px;counter-reset:cam 7}
+.pyr li{counter-increment:cam -1;margin:0 auto 8px}
+.pyr a{display:block;margin:0 auto;text-align:center;padding:12px 18px;border-radius:12px;border:1px solid var(--line);font-weight:800;font-size:clamp(13.5px,2.4vw,16px);line-height:1.25;color:#fff;transition:transform .14s,box-shadow .2s;position:relative}
+.pyr a::before{content:counter(cam);position:absolute;left:14px;font-size:12px;font-weight:800;color:rgba(255,255,255,.55)}
+.pyr a small{display:block;font-weight:600;font-size:clamp(10.5px,1.8vw,12.5px);letter-spacing:.02em;color:rgba(255,255,255,.66);margin-top:2px}
+.pyr a:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(0,0,0,.3)}
+.pyr .p6 a{width:min(46%,300px);background:linear-gradient(135deg,var(--gold-soft),var(--gold-2));color:#23303b;border-color:transparent}
+.pyr .p6 a::before{color:rgba(35,48,59,.6)}
+.pyr .p6 a small{color:rgba(35,48,59,.72)}
+.pyr .p5 a{width:min(57%,380px);background:linear-gradient(135deg,#6E5B33,#8A7440)}
+.pyr .p4 a{width:min(68%,460px);background:linear-gradient(135deg,#3E4A55,#57534A)}
+.pyr .p3 a{width:min(79%,540px);background:var(--navy-3)}
+.pyr .p2 a{width:min(90%,620px);background:var(--navy-2)}
+.pyr .p1 a{width:100%;background:linear-gradient(135deg,var(--navy-2),var(--deep));border-color:var(--gold)}
+.pyr-hint{text-align:center;font-size:13.5px;color:var(--muted);margin:-30px 0 44px}
+
+.steps{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.step{display:flex;gap:16px;background:var(--navy);border:1px solid var(--line);border-radius:var(--r);padding:22px;scroll-margin-top:84px}
+.alt .step{background:var(--navy-2)}
+.sec:not(.alt) .step{background:var(--navy-2)}
+.step .n{font-weight:900;font-size:30px;color:var(--gold);line-height:1;flex-shrink:0}
+.step h3{font-size:17.5px;font-weight:700;margin-bottom:4px;color:#fff}
+.step h3 small{display:block;font-size:11.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-soft);margin-bottom:3px}
+.step p{font-size:14.5px;color:var(--muted)}
+
+.lvls{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;align-items:stretch}
+.lvl{background:var(--navy-2);border:1px solid var(--line);border-radius:20px;padding:28px 26px;position:relative;display:flex;flex-direction:column}
+.lvl.feat{border-color:var(--gold);box-shadow:0 18px 44px rgba(0,0,0,.28)}
+.lvl .bdg{position:absolute;top:-14px;left:24px;width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--gold-soft),var(--gold-2));color:#23303b;font-weight:900;font-size:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,.3)}
+.lvl .kic{font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin-top:6px}
+.lvl h3{font-size:25px;font-weight:800;margin:4px 0 8px;color:#fff}
+.lvl .prf{font-size:14.5px;color:var(--cream);margin-bottom:14px}
+.lvl ul{list-style:none;margin-bottom:16px;flex:1}
+.lvl li{position:relative;padding:6px 0 6px 24px;font-size:14px;color:var(--muted)}
+.lvl li::before{content:"";position:absolute;left:2px;top:13px;width:7px;height:7px;border-radius:50%;background:var(--gold)}
+.lvl .adv{border-top:1px solid rgba(244,239,230,.1);padding-top:13px;font-size:13.5px;color:var(--muted)}
+.lvl .adv b{color:var(--gold-soft);display:block;font-size:12px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px}
+.note{font-size:14.5px;color:var(--muted);text-align:center;margin-top:26px;max-width:720px;margin-left:auto;margin-right:auto}
+.note b{color:var(--gold-soft)}
+
+.phil{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.phil .p{text-align:center}
+.phil .p .ic{width:58px;height:58px;border-radius:15px;background:var(--navy);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:25px;margin:0 auto 13px}
+.phil .p h3{font-size:18px;font-weight:700;margin-bottom:4px;color:#fff}
+.phil .p p{font-size:13.5px;color:var(--muted)}
+
+.coach{display:grid;grid-template-columns:1.2fr .8fr;gap:26px;align-items:center;background:var(--navy-2);border:1px solid var(--line);border-radius:20px;padding:34px}
+.coach h3{font-size:24px;font-weight:800;color:#fff;margin-bottom:10px}
+.coach p{color:var(--muted);font-size:15px;margin-bottom:12px}
+.coach p b{color:var(--gold-soft)}
+.coach a.ig{color:var(--gold-soft);font-weight:600}
+.gscore{display:flex;align-items:center;gap:14px;background:var(--navy);border:1px solid var(--line);border-radius:16px;padding:15px 22px;justify-content:center}
+.glogo{font-weight:800;font-size:20px}
+.glogo b:nth-child(1){color:#4285F4}.glogo b:nth-child(2){color:#EA4335}.glogo b:nth-child(3){color:#FBBC05}.glogo b:nth-child(4){color:#4285F4}.glogo b:nth-child(5){color:#34A853}.glogo b:nth-child(6){color:#EA4335}
+.gscore .stars{color:var(--gold);font-size:17px;letter-spacing:2px}
+.gscore .sub{font-size:13px;color:var(--muted)}
+.gnum{font-weight:900;font-size:40px;color:var(--gold-soft);line-height:1}
+
+.final{text-align:center;padding:84px 0;background:var(--deep)}
+.final h2{font-size:clamp(34px,7vw,60px);font-weight:900;margin-bottom:14px;color:#fff}
+.final h2 em{color:var(--gold-soft);font-style:normal}
+.final p{color:var(--muted);font-size:17px;max-width:520px;margin:0 auto 28px}
+.final .cta-row{display:flex;gap:13px;justify-content:center;flex-wrap:wrap}
+
+footer{background:#081521;color:#9FB1BF;padding:42px 0 36px;text-align:center}
+footer .mono{width:48px;height:48px;border-radius:12px;margin:0 auto 14px;background:linear-gradient(135deg,var(--navy-2),var(--deep));color:var(--gold-soft);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:19px}
+footer .fnm{font-weight:800;font-size:22px;color:#fff}
+footer .tag{color:var(--gold-soft);font-size:14px;margin:4px 0 18px}
+footer .fl{display:flex;gap:22px;justify-content:center;flex-wrap:wrap;margin-bottom:16px}
+footer .fl a{font-size:14px;font-weight:600;color:#9FB1BF}
+footer .fl a:hover{color:#fff}
+footer .cr{color:#6B7E8C;font-size:12.5px}
+
+.fab{position:fixed;right:18px;bottom:18px;z-index:80;background:var(--wapp);color:#fff;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:0 10px 28px rgba(37,211,102,.45);transition:transform .14s}
+.fab:hover{transform:scale(1.07)}
+
+.rv{opacity:0;transform:translateY(20px);transition:opacity .6s,transform .6s}
+.rv.in{opacity:1;transform:none}
+
+@media(max-width:860px){
+  .links .lnk{display:none}
+  .menu-tgl{display:flex;align-items:center;justify-content:center}
+  .links.open{position:absolute;top:64px;left:0;right:0;flex-direction:column;align-items:stretch;background:var(--paper);border-bottom:1px solid #ECE3D2;padding:16px 22px;gap:14px}
+  .links.open .lnk{display:block}
+  .steps,.coach{grid-template-columns:1fr}
+  .phil{grid-template-columns:1fr 1fr}
+  .pyr a::before{display:none}
+  .pyr .p6 a{width:62%}
+  .pyr .p5 a{width:70%}
+  .pyr .p4 a{width:78%}
+  .pyr .p3 a{width:85%}
+  .pyr .p2 a{width:93%}
+}
+@media(max-width:520px){section.sec{padding:56px 0}.hero .cta-row .btn{flex:1}}
+@media(prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}*{scroll-behavior:auto}}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px;border-radius:6px}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap bar-in">
+    <a href="index.html" class="brand" aria-label="JV Tênis">
+      <span class="mono">JV</span>
+      <span class="nm">Academia JV Tênis<small>Santa Felicidade · Curitiba</small></span>
+    </a>
+    <nav class="links" id="nav">
+      <a class="lnk" href="index.html#planos">Planos</a>
+      <a class="lnk" href="index.html#flex">Sistema Flex</a>
+      <a class="lnk on" href="metodologia.html">Metodologia</a>
+      <a class="lnk" href="index.html#avaliacoes">Avaliações</a>
+      <a class="lnk" href="index.html#onde">Onde fica</a>
+      <a class="btn btn-navy" href="https://appalunos.netlify.app/" target="_blank" rel="noopener">Entrar</a>
+    </nav>
+    <button class="menu-tgl" id="mtgl" aria-label="Menu">☰</button>
+  </div>
+</header>
+
+<section class="hero" id="topo">
+  <div class="wrap hero-in">
+    <span class="eyebrow">Metodologia oficial · JV Tênis</span>
+    <h1>Da base ao topo.<span class="gold">Do chão para o golpe.</span></h1>
+    <p class="lead">Aqui o tênis se aprende de baixo pra cima: primeiro os <b>pés</b>, a <b>base</b> e a <b>movimentação</b>, e só então a batida. É assim que se constrói um jogo que não desmonta na hora da pressão.</p>
+    <div class="cta-row">
+      <a class="btn btn-gold" href="#trilha">Conhecer os níveis →</a>
+      <a class="btn btn-wapp" href="https://wa.me/5541995415712?text=Ol%C3%A1%2C%20Jo%C3%A3o!%20Vi%20a%20p%C3%A1gina%20da%20metodologia%20Da%20Base%20ao%20Topo%20e%20quero%20treinar%20assim.%20%F0%9F%8E%BE" target="_blank" rel="noopener">Quero treinar assim</a>
+      <a class="btn btn-line" href="Metodologia-JV-Tenis.pdf" download>📄 Baixar o folder (PDF)</a>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="manifesto">
+  <div class="wrap mani">
+    <div class="sec-head rv">
+      <span class="eyebrow">O manifesto</span>
+      <h2>Por que de baixo pra cima?</h2>
+    </div>
+    <p class="rv">Muita gente aprende tênis na ordem trocada: primeira aula, raquete na mão e cesta de bolas. Funciona enquanto a bola vem mansa e no lugar certo. Quando o tênis vira <b>jogo</b> de verdade, aquela técnica bonita da cesta some: a pessoa chega atrasada na bola, bate desequilibrada, erra e acha que não tem talento.</p>
+    <p class="rv">Na maioria das vezes não é talento que falta, é base. O golpe é a parte que todo mundo vê, mas ele vem no fim de uma sequência que começa bem antes: <b>ler a bola, decidir para onde ir, chegar equilibrado e firmar os pés</b>. Só depois vem a batida. Quando a bola sai errada, quase sempre o problema começou lá atrás, nos pés.</p>
+    <p class="rv">Por isso a gente ensina na ordem que o corpo usa de verdade, de baixo pra cima. E o nome tem os dois sentidos: do <b>chão até o golpe</b>, e do <b>primeiro dia até a competição</b>.</p>
+    <blockquote class="mq rv">
+      "O tênis se aprende de baixo pra cima. Na base e nos pés, na movimentação e no posicionamento — antes da batida e dos fundamentos."
+      <footer>— João Victor, fundador da Academia JV Tênis</footer>
+    </blockquote>
+  </div>
+</section>
+
+<section class="sec alt" id="piramide">
+  <div class="wrap">
+    <div class="sec-head center rv">
+      <span class="eyebrow">O método</span>
+      <h2>A Pirâmide: seis camadas, de baixo pra cima</h2>
+      <p>Cada camada só recebe conteúdo novo quando a de baixo sustenta. E toda aula, de qualquer nível, revisita a base.</p>
+    </div>
+    <ol class="pyr rv" reversed aria-label="As seis camadas da metodologia, do topo à base">
+      <li class="p6"><a href="#c6">O Topo<small>competição &amp; mentalidade</small></a></li>
+      <li class="p5"><a href="#c5">O Jogo<small>tática &amp; construção de ponto</small></a></li>
+      <li class="p4"><a href="#c4">A Batida<small>fundamentos técnicos</small></a></li>
+      <li class="p3"><a href="#c3">Leitura de Quadra<small>posicionamento</small></a></li>
+      <li class="p2"><a href="#c2">Deslocamento<small>movimentação</small></a></li>
+      <li class="p1"><a href="#c1">Pés no Saibro<small>base &amp; equilíbrio</small></a></li>
+    </ol>
+    <p class="pyr-hint">Toque numa camada para ver o que ela ensina 👇</p>
+    <div class="steps">
+      <div class="step rv" id="c1">
+        <div class="n">1</div>
+        <div><h3><small>Base &amp; equilíbrio</small>Pés no Saibro</h3>
+        <p>Tudo começa no chão: posição de espera, split-step, apoios e equilíbrio. O saibro é nosso professor assistente — quem aprende a se apoiar nele, se apoia em qualquer piso. Sem base estável, nenhum golpe se sustenta.</p></div>
+      </div>
+      <div class="step rv" id="c2">
+        <div class="n">2</div>
+        <div><h3><small>Movimentação</small>Deslocamento</h3>
+        <p>Chegar bem na bola antes de pensar em bater nela. Primeiro passo explosivo, deslocamento lateral, ajustes finos e a regra de ouro desde a primeira aula: <b>bateu, voltou</b>.</p></div>
+      </div>
+      <div class="step rv" id="c3">
+        <div class="n">3</div>
+        <div><h3><small>Posicionamento</small>Leitura de Quadra</h3>
+        <p>Onde estar e por quê. As zonas da quadra, a espera no meio das opções do adversário, a leitura antecipada do corpo do outro lado. A inteligência espacial do tênis.</p></div>
+      </div>
+      <div class="step rv" id="c4">
+        <div class="n">4</div>
+        <div><h3><small>Fundamentos técnicos</small>A Batida</h3>
+        <p>Só agora a raquete vira protagonista — e por isso aprende rápido. Forehand, backhand, saque e voleio construídos do chão para a mão, sobre uma base que já funciona.</p></div>
+      </div>
+      <div class="step rv" id="c5">
+        <div class="n">5</div>
+        <div><h3><small>Tática &amp; construção de ponto</small>O Jogo</h3>
+        <p>Golpes não ganham jogos; pontos ganham jogos. Toda bola passa a ter intenção — defender, neutralizar, construir, definir — e as intenções se encadeiam em padrões.</p></div>
+      </div>
+      <div class="step rv" id="c6">
+        <div class="n">6</div>
+        <div><h3><small>Competição &amp; mentalidade</small>O Topo</h3>
+        <p>Competir é habilidade treinável: rotinas, gestão emocional e o torneio interno Barragem como laboratório. No limite da maturidade, o aluno do topo aprende também a ensinar.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="trilha">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="eyebrow">A trilha</span>
+      <h2>Cinco níveis, do primeiro dia à competição</h2>
+      <p>Cada nível tem objetivos claros e critérios de avanço observáveis — você sabe onde está e o que falta para subir. Nada de "faz tempo que treino": aqui evolução se mede.</p>
+    </div>
+    <div class="lvls">
+      <div class="lvl rv">
+        <div class="bdg">1</div>
+        <div class="kic">Grupo E da Barragem</div>
+        <h3>Base</h3>
+        <p class="prf">Primeiro contato com o tênis. Você aprende a estar em quadra antes de aprender a bater — e se diverte desde o primeiro dia, com bola adaptada e jogo do seu tamanho.</p>
+        <ul>
+          <li>Posição de espera e split-step viram hábito</li>
+          <li>Deslocar e chegar na bola em equilíbrio</li>
+          <li>Primeiros golpes com a base montada</li>
+        </ul>
+        <div class="adv"><b>Você avança quando</b>sustenta 5 trocas e seus pés reagem sozinhos, sem lembrete.</div>
+      </div>
+      <div class="lvl rv">
+        <div class="bdg">2</div>
+        <div class="kic">Grupo D da Barragem</div>
+        <h3>Impulso</h3>
+        <p class="prf">A movimentação já tem intenção — e os fundamentos entram sobre uma base que funciona. Chegam as primeiras trocas de verdade na quadra inteira.</p>
+        <ul>
+          <li>Forehand e backhand com forma estável</li>
+          <li>Saque completo, com ritmo antes de força</li>
+          <li>Rally cooperativo de 10 bolas</li>
+        </ul>
+        <div class="adv"><b>Você avança quando</b>sustenta 10 bolas cruzadas dos dois lados e joga um tiebreak inteiro sem esquecer o "bateu, voltou".</div>
+      </div>
+      <div class="lvl rv feat">
+        <div class="bdg">3</div>
+        <div class="kic">Grupo C da Barragem</div>
+        <h3>Construção</h3>
+        <p class="prf">Você virou tenista: sustenta rally, se posiciona e descobre que ponto se constrói. É a estreia na Barragem — com meta de atitude, não de resultado.</p>
+        <ul>
+          <li>15+ bolas de troca com direção intencional</li>
+          <li>Topspin de padrão, slice de recurso, 2º saque com efeito</li>
+          <li>Toda bola com intenção: defender, construir, definir</li>
+        </ul>
+        <div class="adv"><b>Você avança quando</b>explica a intenção das próprias bolas e completa um ciclo da Barragem com rotina entre pontos.</div>
+      </div>
+      <div class="lvl rv">
+        <div class="bdg">4</div>
+        <div class="kic">Grupo B da Barragem</div>
+        <h3>Ascensão</h3>
+        <p class="prf">Jogador tático. Padrões de jogada próprios, leitura de adversário e o placar como fator de decisão. O treino vira resultado de jogo.</p>
+        <ul>
+          <li>2–3 padrões de construção de ponto seus</li>
+          <li>Saque como arma de abertura do ponto</li>
+          <li>Ajuste de plano no meio do set</li>
+        </ul>
+        <div class="adv"><b>Você avança quando</b>vence na Barragem executando o próprio plano — e o professor reconhece o plano só de assistir.</div>
+      </div>
+      <div class="lvl rv">
+        <div class="bdg">5</div>
+        <div class="kic">Grupo A da Barragem</div>
+        <h3>Topo</h3>
+        <p class="prf">Alto rendimento amador: refinamento personalizado, autonomia de treino e identidade competitiva. E quem chega ao topo é convidado a ajudar quem está na base — ensinar consolida.</p>
+        <ul>
+          <li>Ciclos de treino sob medida, a partir dos seus jogos</li>
+          <li>Física integrada com o trabalho de Personal</li>
+          <li>Mentoria de alunos iniciantes</li>
+        </ul>
+        <div class="adv"><b>No topo</b>o trabalho não acaba — ele se personaliza por completo.</div>
+      </div>
+    </div>
+    <p class="note">A trilha vale para <b>todos os formatos</b> — Particular, Dupla, Trio, Quarteto e Kids. O nível é seu, não da turma: no Kids, a mesma metodologia é ensinada na linguagem certa da idade, e tudo vira jogo.</p>
+  </div>
+</section>
+
+<section class="sec alt" id="aula">
+  <div class="wrap">
+    <div class="sec-head center rv">
+      <span class="eyebrow">Na prática</span>
+      <h2>Como isso aparece na sua aula</h2>
+    </div>
+    <div class="phil">
+      <div class="p rv">
+        <div class="ic">🦶</div>
+        <h3>Toda aula começa no chão</h3>
+        <p>A ativação de base abre cada aula, em todos os níveis: pés, split-step e deslocamento já são conteúdo, não "aquecimento por aquecer".</p>
+      </div>
+      <div class="p rv">
+        <div class="ic">🎯</div>
+        <h3>Um tema por aula</h3>
+        <p>Cada aula tem uma camada-alvo e um tema claro, com uma correção por vez — sempre a mais baixa da cadeia primeiro.</p>
+      </div>
+      <div class="p rv">
+        <div class="ic">🎾</div>
+        <h3>Termina em jogo</h3>
+        <p>Todo conteúdo é aplicado em situação de jogo antes de a aula acabar. Técnica que não vira jogo é coreografia.</p>
+      </div>
+      <div class="p rv">
+        <div class="ic">📈</div>
+        <h3>Evolução que se mede</h3>
+        <p>Você sempre sabe seu nível na trilha, os critérios que faltam e o tema do ciclo atual. Transparência é motor de motivação.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="professor">
+  <div class="wrap">
+    <div class="coach rv">
+      <div>
+        <span class="eyebrow">Quem ensina</span>
+        <h3 style="margin-top:14px">João Victor</h3>
+        <p>Fundador da Academia JV Tênis, em Santa Felicidade (Curitiba), João desenvolveu a metodologia <b>Da Base ao Topo</b> em quadra de saibro, aula após aula — do Kids ao competidor do grupo A. A marca do trabalho, segundo os próprios alunos: didática clara, correção técnica honesta e respeito ao nível de cada um.</p>
+        <p>A metodologia também forma <b>outros professores</b>, com certificação presencial na academia. Interessado? Chama no WhatsApp.</p>
+        <p><a class="ig" href="https://instagram.com/joaovictortenis" target="_blank" rel="noopener">@joaovictortenis</a></p>
+      </div>
+      <div class="gscore">
+        <span class="gnum">5,0</span>
+        <span>
+          <span class="glogo"><b>G</b><b>o</b><b>o</b><b>g</b><b>l</b><b>e</b></span><br>
+          <span class="stars">★★★★★</span><br>
+          <span class="sub">Avaliação dos alunos no Google</span>
+        </span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="final">
+  <div class="wrap rv">
+    <h2>Comece pela base.<br><em>A gente te leva ao topo.</em></h2>
+    <p>Aula experimental na quadra de saibro da JV Tênis — e você já sai sabendo seu nível na trilha.</p>
+    <div class="cta-row">
+      <a class="btn btn-gold" href="https://wa.me/5541995415712?text=Ol%C3%A1%2C%20Jo%C3%A3o!%20Quero%20come%C3%A7ar%20a%20treinar%20com%20a%20metodologia%20Da%20Base%20ao%20Topo.%20%F0%9F%8E%BE" target="_blank" rel="noopener">Chamar no WhatsApp</a>
+      <a class="btn btn-line" href="index.html#planos">Ver planos</a>
+      <a class="btn btn-line" href="Metodologia-JV-Tenis.pdf" download>📄 Baixar o folder</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="mono">JV</div>
+    <div class="fnm">Academia JV Tênis</div>
+    <div class="tag">Da base ao topo 🎾</div>
+    <div class="fl">
+      <a href="index.html#planos">Planos</a>
+      <a href="index.html#flex">Sistema Flex</a>
+      <a href="metodologia.html">Metodologia</a>
+      <a href="https://appalunos.netlify.app/" target="_blank" rel="noopener">App do aluno</a>
+      <a href="https://instagram.com/joaovictortenis" target="_blank" rel="noopener">Instagram</a>
+    </div>
+    <p class="cr">© 2026 Academia JV Tênis — Rua João Azolin, 795, Santa Felicidade, Curitiba/PR</p>
+  </div>
+</footer>
+
+<a class="fab" href="https://wa.me/5541995415712?text=Ol%C3%A1%2C%20Jo%C3%A3o!%20Vim%20pela%20p%C3%A1gina%20da%20metodologia.%20%F0%9F%8E%BE" target="_blank" rel="noopener" aria-label="Falar no WhatsApp">💬</a>
+
+<script>
+var mt=document.getElementById('mtgl'),nv=document.getElementById('nav');
+if(mt)mt.addEventListener('click',function(){nv.classList.toggle('open');});
+nv.querySelectorAll('a').forEach(function(a){a.addEventListener('click',function(){nv.classList.remove('open');});});
+if(!window.matchMedia||!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.12});
+  document.querySelectorAll('.rv').forEach(function(el){io.observe(el);});
+}else{document.querySelectorAll('.rv').forEach(function(el){el.classList.add('in');});}
+</script>
+</body>
+</html>
