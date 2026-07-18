@@ -100,6 +100,18 @@ p.secsub{font-size:10pt;color:var(--muted);margin-bottom:6mm;max-width:160mm}
 .g5{display:flex;align-items:center;justify-content:center;gap:3mm;margin-top:2.5mm;font-size:8pt;color:var(--muted)}
 .g5 .n{font-weight:900;font-size:13pt;color:var(--gold-soft)}
 .g5 .s{color:var(--gold);letter-spacing:1px}
+
+/* ---------- página 3 · calendário ---------- */
+.cal2{display:grid;grid-template-columns:1fr 1fr;gap:5mm;margin:4mm 0}
+.cal2-col{background:var(--navy-2);border:1px solid var(--line);border-radius:12px;padding:5mm 5mm}
+.cal2-cyc{font-size:9pt;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);text-align:center;padding-bottom:3.5mm;margin-bottom:2mm;border-bottom:1px solid var(--line)}
+.mt{display:flex;align-items:center;gap:3.5mm;padding:3.9mm 0;border-bottom:1px solid rgba(244,239,230,.07)}
+.mt:last-child{border-bottom:0}
+.mt .mo{flex-shrink:0;width:11mm;height:9mm;border-radius:7px;background:var(--deep);border:1px solid var(--line);color:var(--gold-soft);font-weight:800;font-size:8.5pt;display:flex;align-items:center;justify-content:center}
+.mt .tx b{display:block;font-size:10pt;font-weight:700;color:#fff;line-height:1.15}
+.mt .tx small{display:block;font-size:7.2pt;color:var(--muted);margin-top:.4mm}
+.cal2-note{margin-top:auto;background:var(--deep);border:1px solid var(--line);border-radius:12px;padding:5mm 6mm;font-size:9.5pt;line-height:1.5;color:var(--muted);text-align:center}
+.cal2-note b{color:var(--gold-soft)}
 </style>
 </head>
 <body>
@@ -138,7 +150,7 @@ p.secsub{font-size:10pt;color:var(--muted);margin-bottom:6mm;max-width:160mm}
         <div class="mono">JV</div>
         <div class="nm">Metodologia Da Base ao Topo<small>Academia JV Tênis</small></div>
       </div>
-      <div class="pgn">O método · 1/2</div>
+      <div class="pgn">O método · 1/3</div>
     </div>
     <h2 class="sec">A Pirâmide: seis camadas,<br>de baixo pra cima</h2>
     <p class="secsub">Cada camada só recebe conteúdo novo quando a de baixo sustenta. E toda aula, de qualquer nível, revisita a base.</p>
@@ -166,7 +178,7 @@ p.secsub{font-size:10pt;color:var(--muted);margin-bottom:6mm;max-width:160mm}
   </div>
 </div>
 
-<!-- ============ PÁGINA 3 · A TRILHA ============ -->
+<!-- ============ PÁGINA 3 · O CALENDÁRIO ============ -->
 <div class="pg">
   <div class="pad">
     <div class="ph">
@@ -174,7 +186,43 @@ p.secsub{font-size:10pt;color:var(--muted);margin-bottom:6mm;max-width:160mm}
         <div class="mono">JV</div>
         <div class="nm">Metodologia Da Base ao Topo<small>Academia JV Tênis</small></div>
       </div>
-      <div class="pgn">Os níveis · 2/2</div>
+      <div class="pgn">O ano · 2/3</div>
+    </div>
+    <h2 class="sec">Cada mês tem um foco</h2>
+    <p class="secsub">Seis temas que rodam duas vezes por ano. Toda aula começa na base — o tema é o que ganha o miolo do treino no mês. Assim você atravessa a pirâmide inteira a cada semestre.</p>
+    <div class="cal2">
+      <div class="cal2-col">
+        <div class="cal2-cyc">1º ciclo · Jan a Jun</div>
+        <div class="mt"><span class="mo">JAN</span><span class="tx"><b>Footwork e transferência</b><small>Camada 1 · Pés no Saibro</small></span></div>
+        <div class="mt"><span class="mo">FEV</span><span class="tx"><b>Preparação e movimentação</b><small>Camada 2 · Deslocamento</small></span></div>
+        <div class="mt"><span class="mo">MAR</span><span class="tx"><b>Forehand e variações</b><small>Camada 4 · A Batida</small></span></div>
+        <div class="mt"><span class="mo">ABR</span><span class="tx"><b>Backhand e variações</b><small>Camada 4 · A Batida</small></span></div>
+        <div class="mt"><span class="mo">MAI</span><span class="tx"><b>Approach e rede</b><small>Camada 5 · O Jogo</small></span></div>
+        <div class="mt"><span class="mo">JUN</span><span class="tx"><b>Saque e devolução</b><small>Início do ponto</small></span></div>
+      </div>
+      <div class="cal2-col">
+        <div class="cal2-cyc">2º ciclo · Jul a Dez</div>
+        <div class="mt"><span class="mo">JUL</span><span class="tx"><b>Footwork e transferência</b><small>Camada 1 · Pés no Saibro</small></span></div>
+        <div class="mt"><span class="mo">AGO</span><span class="tx"><b>Preparação e movimentação</b><small>Camada 2 · Deslocamento</small></span></div>
+        <div class="mt"><span class="mo">SET</span><span class="tx"><b>Forehand e variações</b><small>Camada 4 · A Batida</small></span></div>
+        <div class="mt"><span class="mo">OUT</span><span class="tx"><b>Backhand e variações</b><small>Camada 4 · A Batida</small></span></div>
+        <div class="mt"><span class="mo">NOV</span><span class="tx"><b>Approach e rede</b><small>Camada 5 · O Jogo</small></span></div>
+        <div class="mt"><span class="mo">DEZ</span><span class="tx"><b>Saque e devolução</b><small>Início do ponto</small></span></div>
+      </div>
+    </div>
+    <div class="cal2-note">Do <b>Base ao Topo</b>, todo aluno treina o tema do mês — cada um na sua intensidade. No mês do saque, o iniciante aprende o movimento; o avançado afia o saque como arma de abertura de ponto.</div>
+  </div>
+</div>
+
+<!-- ============ PÁGINA 4 · A TRILHA ============ -->
+<div class="pg">
+  <div class="pad">
+    <div class="ph">
+      <div class="l">
+        <div class="mono">JV</div>
+        <div class="nm">Metodologia Da Base ao Topo<small>Academia JV Tênis</small></div>
+      </div>
+      <div class="pgn">Os níveis · 3/3</div>
     </div>
     <h2 class="sec">A Trilha: cinco níveis, do<br>primeiro dia à competição</h2>
     <p class="secsub">Critérios de avanço claros e observáveis — você sabe onde está e o que falta para subir. Vale para todos os formatos: Particular, Dupla, Trio, Quarteto e Kids.</p>

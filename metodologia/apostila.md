@@ -38,7 +38,7 @@ A apostila foi escrita para ser lida em ordem na primeira vez, e consultada por 
 | 2. Origem e filosofia | Por que ensinamos de baixo pra cima |
 | 3. A Pirâmide | **O que** se ensina — as 6 camadas do jogo |
 | 4. A Trilha | **Para quem** — os 5 níveis de aluno e o que cada um trabalha |
-| 5. Estrutura de aula | **Como** — a anatomia da aula JV e planos modelo |
+| 5. Estrutura de aula | **Como** — a anatomia da aula, os planos modelo e o calendário anual de temas |
 | 6. Banco de exercícios | Os drills, organizados por camada e nível |
 | 7. Avaliação | Como medir, nivelar e promover o aluno |
 | 8. Formação de professores | O perfil e a conduta do professor Da Base ao Topo |
@@ -314,7 +314,7 @@ A Pirâmide é o mapa do **conteúdo** da metodologia. São seis camadas, empilh
 
 - **Rotinas:** rotina entre pontos (respirar, decidir, executar), rotina de saque e devolução, rotina pré-jogo. Rotina é a âncora da mente sob pressão.
 - **Gestão emocional:** lidar com erro, com vantagem ("agora não posso perder") e com desvantagem; a bola seguinte como única bola que existe.
-- **Competição interna — a Barragem:** o torneio interno da academia, com grupos de nível de **E a A**, é o laboratório natural desta camada. Todo aluno da Trilha a partir do nível Construção é incentivado a competir na Barragem.
+- **Competição interna — a Barragem:** o torneio interno da academia, com grupos de nível (hoje **A a D**, com o **E** entrando como porta de entrada), é o laboratório natural desta camada. Todo aluno da Trilha a partir do nível Construção é incentivado a competir na Barragem.
 - **Preparação física orientada ao tênis:** em parceria com o trabalho de Personal da academia — força de pernas e core, mobilidade, prevenção de lesão.
 - **Autonomia de treino:** o aluno avançado aprende a montar o próprio aquecimento, a identificar o que precisa treinar e a pedir isso ao professor.
 - **Mentoria:** no topo da Trilha, o aluno é convidado a ajudar em ações com a Base (kids, iniciantes) — ensinar consolida, e forma os futuros professores da metodologia.
@@ -351,7 +351,21 @@ Se a Pirâmide é o mapa do **conteúdo**, a Trilha é o mapa do **aluno**: cinc
 | 4 | **Ascensão** | B | Joga taticamente e compete com regularidade |
 | 5 | **Topo** | A | Refinamento, autonomia e mentalidade competitiva |
 
-**Como ler as fichas:** cada nível traz perfil, objetivos, o conteúdo por camada da Pirâmide, duração típica e os critérios de avanço. Os critérios são **observáveis e mensuráveis** — o aluno avança quando os cumpre, não quando "faz tempo que treina". A duração típica é referência, não regra: cada aluno tem seu tempo, e o professor tem a ficha de avaliação (capítulo 7) para decidir com critério, não com achismo.
+**Sobre a Barragem hoje:** a academia trabalha atualmente com os grupos **A–D**. O grupo **E** entra como porta de entrada assim que houver alunos nesse estágio — é exatamente o nível **Base**. Ou seja, a régua cresce junto com a academia.
+
+**A régua de troca de bola.** O jeito mais honesto e simples de medir evolução no tênis é olhar quantas bolas o aluno sustenta e com que controle. É a nossa referência principal de nível:
+
+| Nível | Referência de troca de bola |
+|---|---|
+| **Base** | sustenta ~5 trocas cooperativas, com bola adaptada e quadra reduzida |
+| **Impulso** | ~10 bolas na quadra inteira, trajetória segura sobre a rede |
+| **Construção** | 15+ bolas com direção intencional (mira, não só devolver) |
+| **Ascensão** | mantém a troca em ritmo de jogo e ainda constrói o ponto |
+| **Topo** | controla a troca — muda ritmo, altura e efeito — sob pressão |
+
+Os números são referência de partida; o professor calibra pela ficha de avaliação (capítulo 7). O que não muda é o princípio: **avança quem cumpre o critério, não quem "faz tempo que treina".**
+
+**Como ler as fichas:** cada nível traz perfil, objetivos, o conteúdo por camada da Pirâmide, duração típica e os critérios de avanço. A duração típica é referência, não regra — cada aluno tem seu tempo.
 
 ## 4.1 Nível 1 — Base (grupo E)
 
@@ -547,6 +561,24 @@ Bola de cesta serve para **adquirir** um movimento: repetição limpa, sem caos.
 - **Kids (turma):** tudo do 4.6, com rodízio rápido de atividades e pontuação de equipe.
 - **Personal (física):** integra a camada 6 — força, mobilidade e prevenção conversando com a fase da Trilha do aluno.
 
+## 5.5 O calendário anual — o tema do mês
+
+A metodologia tem um calendário. Cada mês tem **um tema**, e a academia inteira gira em torno dele: é o "foco do mês". São **seis temas que rodam duas vezes por ano** — um ciclo no primeiro semestre, outro no segundo. Assim, ao longo do ano, o aluno passa por toda a Pirâmide; e como são dois ciclos, ele revisita cada tema com mais profundidade na segunda volta.
+
+| Mês (1º ciclo · 2º ciclo) | Tema do mês | Camada da Pirâmide |
+|---|---|---|
+| **Janeiro · Julho** | Footwork e transferência | 1 · Pés no Saibro |
+| **Fevereiro · Agosto** | Preparação e movimentação | 2 · Deslocamento |
+| **Março · Setembro** | Forehand e variações | 4 · A Batida |
+| **Abril · Outubro** | Backhand e variações | 4 · A Batida |
+| **Maio · Novembro** | Approach e rede | 5 · O Jogo (rede) |
+| **Junho · Dezembro** | Saque e devolução | 4–5 · início do ponto |
+
+**Como o tema do mês entra na aula.** O tema não substitui a ativação de base — ele é o **"tema do dia"** (bloco 2 da anatomia da aula, seção 5.1). Toda aula continua começando no chão, com pés e split-step; o que muda é o assunto que ganha o miolo da aula naquele mês. Em maio, por exemplo, a ativação é a de sempre, mas o tema e o jogo do dia giram em torno de subir à rede e finalizar.
+
+**O mesmo tema, do Base ao Topo.** Todos os alunos trabalham o tema do mês — cada um na sua intensidade. No mês de saque: o **Base** aprende o movimento e o lançamento de bola; o **Construção** trabalha o segundo saque com efeito; o **Topo** treina o saque como arma de abertura de ponto. Um só tema, cinco profundidades. É o princípio da espiral (seção 2.3) aplicado ao calendário: todo mundo sobe a mesma escada, cada um no seu degrau.
+
+**Por que começar pelo footwork (janeiro/julho).** Não é acaso que cada ciclo abre com Footwork e transferência. É a metodologia dizendo, na prática, o que ela prega na teoria: todo semestre a casa é reconstruída a partir do chão. Depois vem a movimentação, depois os golpes, depois a rede e o saque — de baixo pra cima, duas vezes por ano.
 
 ---
 
