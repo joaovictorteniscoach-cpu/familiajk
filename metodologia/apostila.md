@@ -50,9 +50,9 @@ A apostila foi escrita para ser lida em ordem na primeira vez, e consultada por 
 
 ## 2.1 O problema do ensino tradicional
 
-A maioria das pessoas aprende tênis pela ordem errada. A primeira aula tradicional começa com a raquete na mão e uma cesta de bolas: "segura assim, gira o corpo, bate". O aluno acerta algumas bolas paradas, sente prazer imediato — e leva para casa um problema que vai carregar por anos.
+Muita gente aprende tênis na ordem trocada. A primeira aula tradicional começa com a raquete na mão e uma cesta de bolas: "segura assim, gira o corpo, bate". O aluno acerta algumas bolas paradas, sente prazer imediato e vai embora feliz. Só que leva junto um problema que vai carregar por anos.
 
-O que acontece depois é previsível. Quando a bola deixa de vir confortável, mansa e no lugar certo — ou seja, quando o tênis vira **jogo** — a técnica ensaiada desmonta. O aluno chega atrasado na bola, bate desequilibrado, erra, e conclui que "não tem talento". Não é falta de talento. É uma casa construída pelo telhado.
+O que acontece depois é sempre parecido. Quando a bola deixa de vir mansa e no lugar certo, ou seja, quando o tênis vira **jogo** de verdade, aquela técnica ensaiada na cesta desmonta. O aluno chega atrasado na bola, bate desequilibrado, erra e conclui que "não tem talento". Na maioria das vezes não é talento que falta: é base. É a casa começada pelo telhado.
 
 O golpe é a parte **visível** do tênis. Mas ele é o resultado final de uma cadeia que começa muito antes de a raquete tocar a bola:
 
