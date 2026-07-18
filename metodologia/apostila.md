@@ -100,20 +100,13 @@ A metodologia técnica se apoia nos quatro pilares que regem toda a academia —
 | **Equilíbrio** | Exigência com acolhimento. Flexibilidade com regras justas — em quadra e fora dela. |
 | **Aprendizado** | Processo dinâmico e divertido. O aluno sai de toda aula sabendo o que evoluiu. |
 
-## 2.5 Uma referência de fora: o método Mouratoglou
+## 2.5 Uma metodologia própria — e em boa companhia
 
-Nenhuma metodologia nasce no vácuo. A nossa tem espinha própria, mas olha para fora para se afinar — e uma das referências que mais conversa com a gente é o trabalho de **Patrick Mouratoglou** (fundador da Mouratoglou Academy, técnico de Serena Williams e de outros nomes do circuito).
+Este método não foi copiado de ninguém. Ele nasceu na quadra de saibro da JV Tênis, aula após aula, testando com aluno de verdade o que funciona e o que não funciona. A ordem "de baixo pra cima", a régua de troca de bola, o calendário de seis temas em dois ciclos, a Trilha da Base ao Topo ligada à Barragem — nada disso está num manual pronto. Nasceu aqui, do trabalho, e é autoral.
 
-O que Mouratoglou defende, em resumo:
+Quando a gente constrói algo honesto a partir da experiência, costuma descobrir uma coisa boa: quem está no topo do mundo, muitas vezes, chegou a conclusões parecidas por caminhos próprios. **Patrick Mouratoglou** — um dos maiores nomes do coaching mundial — defende que cada jogador é diferente e que o treino tem de se adaptar à pessoa, e que o técnico precisa entender a emoção do atleta, dentro e fora da quadra. A gente concorda com isso. Mas não aprendeu com ele: aprendeu na própria quadra, corrigindo um aluno de cada vez.
 
-- **O jogador no centro.** Nos anos 90, quando o padrão era treinar todo mundo igual, ele fez o contrário: cada jogador é diferente, então o treino se adapta à pessoa, não a pessoa ao treino.
-- **Entrar no universo do aluno.** O técnico precisa entender como aquele jogador pensa e sente — dentro e fora da quadra. Cada um tem seu "idioma", e o trabalho é aprender a falar esse idioma.
-- **Desenvolvimento holístico.** Técnico, físico, tático, mental e emocional andam juntos — não dá para separar o golpe da cabeça de quem bate.
-- **Busca incansável por excelência.** Sempre mirar mais alto, empurrar o limite, com foco em resultado real, na quadra e fora dela.
-
-**Onde a gente já ressoa com isso.** O "aluno no centro" é o nosso Princípio 4. O "entrar no universo do aluno" é o que separa um professor que corrige a mão de um professor que entende por que aquele aluno trava. O "holístico" é a nossa camada 6 (mentalidade) e a parceria com o Personal. E "o jogo desde cedo" — competir para aprender — é o nosso Princípio 3 e a Barragem.
-
-**Onde a gente mantém a própria essência.** Mouratoglou trabalha, na ponta, com quem vai virar profissional, e por isso foge de fórmula. A JV Tênis forma **da base**, no saibro, um público que vai do Kids ao competidor amador — e para esse público a **estrutura** (pirâmide, trilha, calendário) não engessa: ela dá chão. A diferença é de propósito, não de discordância. A gente usa a estrutura para levar muita gente do zero ao jogo com segurança, e usa a individualização para que cada um chegue lá do seu jeito. **Estrutura para todos, caminho para cada um** — é assim que "Da Base ao Topo" pega o melhor das duas escolas sem deixar de ser o que é.
+Citar uma referência dessas não é se apoiar nela — é ter a tranquilidade de saber que estamos no caminho certo. O que sustenta a JV Tênis é a experiência do professor com o público daqui: do Kids ao competidor amador, no saibro, formando **da base**. A estrutura (pirâmide, trilha, calendário) é o que nos permite levar muita gente do zero ao jogo com segurança; a individualização é o que faz cada aluno chegar lá do seu jeito. **O método é nosso. As boas companhias só confirmam que ele está de pé.**
 
 ---
 
@@ -970,10 +963,9 @@ Observações: _______________________________________________________
 
 ## Anexo E — Referências
 
-A Metodologia Da Base ao Topo é **autoral de João Victor**, construída em quadra de saibro, aula após aula. Ela dialoga com referências consagradas do ensino do tênis para se afinar — sem deixar de ser o que é.
+A Metodologia Da Base ao Topo é **autoral de João Victor**, construída na quadra de saibro da JV Tênis, aula após aula. A espinha do método — a ordem "de baixo pra cima", a régua de troca de bola, o calendário de temas e a Trilha ligada à Barragem — nasceu aqui, da experiência direta com o público da academia, do Kids ao competidor amador. Não foi adaptada de nenhum manual.
 
-- **Método Mouratoglou** — Patrick Mouratoglou (Mouratoglou Academy). Referência principal para os princípios de **individualização** (o aluno no centro), **leitura emocional** (entrar no universo do aluno) e **desenvolvimento holístico**. Ver: mouratoglou.com/en/academy/methodology; entrevista em costanavarino.com/stories/people/patrick-mouratoglou; olympics.com (entrevistas sobre mentalidade de campeão). Livro: *Champion Mindset*, Patrick Mouratoglou.
-- **Prática de quadra da JV Tênis** — a espinha do método (a ordem "de baixo pra cima", a régua de troca de bola, o calendário de temas e a Barragem) nasce da experiência direta do professor com o público da academia, do Kids ao competidor amador.
+**Leitura recomendada (convergência, não fonte).** Para quem quer se aprofundar, vale conhecer o trabalho de **Patrick Mouratoglou** (Mouratoglou Academy) — que, por caminho próprio, também valoriza a individualização e a dimensão emocional do jogador. É uma boa companhia de ideias, não a origem das nossas. Ver: mouratoglou.com/en/academy/methodology; costanavarino.com/stories/people/patrick-mouratoglou; olympics.com. Livro: *Champion Mindset*, Patrick Mouratoglou.
 
 ---
 
