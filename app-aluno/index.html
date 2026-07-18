@@ -338,6 +338,7 @@ function iniciarFirebase(){
     <div class="cards2">
       <div class="scard"><div class="ico">📅</div><div class="l">Créditos</div><div class="v" id="v-cred">0</div></div>
       <div class="scard"><div class="ico">🔄</div><div class="l">Reposições</div><div class="v" id="v-repos">0</div></div>
+      <div class="scard" id="scard-loc" style="display:none;grid-column:1/-1"><div class="ico">🔑</div><div class="l">Locação (horas)</div><div class="v" id="v-loc">0</div></div>
     </div>
     <div class="status-line">
       <span><b id="v-plano">—</b> · mensalidade <b id="v-mens">—</b></span>
@@ -793,6 +794,8 @@ function render(){
   document.getElementById('hello').textContent='Fala, '+EU.nome.split(' ')[0]+'!';
   document.getElementById('v-cred').textContent=fmtCred(EU.creditos);
   document.getElementById('v-repos').textContent=fmtCred(EU.repos);
+  const lc=Number(EU.locCred)||0,sl=document.getElementById('scard-loc');
+  if(sl){sl.style.display=lc!==0?'block':'none';const vl=document.getElementById('v-loc');if(vl){vl.textContent=fmtCred(lc);vl.style.color=lc<0?'#C0392B':'var(--green)';}}
   document.getElementById('v-plano').textContent=(Number(EU.plano)||0)<=0?(EU.tipo+' · sem pacote'):(isPersonal()?(EU.tipo+' · '+EU.plano+' treinos/mês'):(EU.tipo+' · Flex '+EU.plano));
   document.getElementById('v-mens').textContent=fmt(EU.mensalidade);
   const st=document.getElementById('v-status');
@@ -1121,6 +1124,10 @@ function openComprar(){
       itemBtn('credito','➕ Pacote de créditos','a combinar')+
       itemBtn('locacao','🏟️ Locação da quadra (1h)',fmt(precoLocacao()));
   }
+  const vPla=(PUB.precos&&Number(PUB.precos.planilha))||0;
+  const vKid=(PUB.precos&&Number(PUB.precos.kids))||0;
+  if(vPla>0)itens+=itemBtn('planilha','📋 Treino de planilha avulso',fmt(vPla));
+  if(vKid>0)itens+=itemBtn('kids','🧒 Treino kids avulso',fmt(vKid));
   document.getElementById('comprar-itens').innerHTML=itens;
   document.getElementById('comprar-pay').style.display='none';
   document.getElementById('comprar-pay').innerHTML='';
@@ -1133,7 +1140,7 @@ function selComprar(id){
   const av=isGrupo()?precoAvulsaGrupo():precoAvulsaPart();
   const vt=precoPersonal();
   if(id.indexOf('pkg')===0){const n=Number(id.slice(3));compraSel={nome:'Pacote '+n+' treinos',valor:n*vt};}
-  else{const mapa={avulsa:{nome:'Aula avulsa',valor:av},credito:{nome:'Pacote de créditos',valor:null},locacao:{nome:'Locação da quadra (1h)',valor:precoLocacao()},personal:{nome:'Treino avulso',valor:vt}};compraSel=mapa[id];}
+  else{const mapa={avulsa:{nome:'Aula avulsa',valor:av},credito:{nome:'Pacote de créditos',valor:null},locacao:{nome:'Locação da quadra (1h)',valor:precoLocacao()},personal:{nome:'Treino avulso',valor:vt},planilha:{nome:'Treino de planilha avulso',valor:(PUB.precos&&Number(PUB.precos.planilha))||0},kids:{nome:'Treino kids avulso',valor:(PUB.precos&&Number(PUB.precos.kids))||0}};compraSel=mapa[id];}
   document.querySelectorAll('.comprar-item').forEach(b=>b.classList.remove('sel'));
   const cur=document.getElementById('ci-'+id);if(cur)cur.classList.add('sel');
   const vtxt=compraSel.valor?(' — '+fmt(compraSel.valor)):'';

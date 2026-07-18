@@ -199,6 +199,7 @@ footer .cr{color:#6B7E8C;font-size:12.5px}
       <a class="lnk" href="#avaliacoes">Avaliações</a>
       <a class="lnk" href="#onde">Onde fica</a>
       <a class="lnk" href="metodologia.html">Metodologia</a>
+      <a class="lnk" href="#" onclick="abrirCadastro();return false" style="font-weight:800">Criar conta</a>
       <a class="btn btn-navy" href="https://appalunos.netlify.app/" target="_blank" rel="noopener">Entrar</a>
     </nav>
     <button class="menu-tgl" id="mtgl" aria-label="Menu">☰</button>
@@ -359,6 +360,7 @@ footer .cr{color:#6B7E8C;font-size:12.5px}
     </div>
     <div class="appcta">
       <a class="btn btn-gold" href="https://appalunos.netlify.app/" target="_blank" rel="noopener">Já sou aluno → entrar</a>
+      <a class="btn btn-line" href="#" onclick="abrirCadastro();return false">Quero criar minha conta</a>
       <a class="btn btn-wapp" href="https://wa.me/5541995415712?text=Ol%C3%A1%20Jo%C3%A3o!%20Quero%20come%C3%A7ar%20a%20treinar%20na%20JV%20T%C3%AAnis.%20%F0%9F%8E%BE" target="_blank" rel="noopener">💬 Quero começar (sou novo)</a>
       <span class="hint">Já é aluno? Entre com o código de acesso que o João te enviou.</span>
     </div>
@@ -420,6 +422,48 @@ if(!window.matchMedia||!window.matchMedia('(prefers-reduced-motion: reduce)').ma
   var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.12});
   document.querySelectorAll('.rv').forEach(function(el){io.observe(el);});
 }else{document.querySelectorAll('.rv').forEach(function(el){el.classList.add('in');});}
+</script>
+
+<!-- ===== Criar conta (pedido de cadastro → gestão) ===== -->
+<div id="ov-cadastro" style="display:none;position:fixed;inset:0;background:rgba(10,18,8,.72);z-index:200;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:#FAF7F2;color:#241f16;border-radius:18px;padding:24px 22px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.4)">
+    <h3 style="font-size:22px;margin:0 0 4px">Criar minha conta 🎾</h3>
+    <p style="font-size:13.5px;color:#6a6458;margin:0 0 14px">Preencha e o João cria seu acesso ao App do Aluno — você recebe o código pelo WhatsApp.</p>
+    <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Seu nome</label>
+    <input id="cad-nome" style="width:100%;padding:12px;border:1px solid #d8d0bd;border-radius:11px;margin-bottom:10px;font-size:15px" placeholder="Nome completo">
+    <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">WhatsApp (com DDD)</label>
+    <input id="cad-tel" inputmode="numeric" style="width:100%;padding:12px;border:1px solid #d8d0bd;border-radius:11px;margin-bottom:10px;font-size:15px" placeholder="41999999999">
+    <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Tenho interesse em</label>
+    <select id="cad-int" style="width:100%;padding:12px;border:1px solid #d8d0bd;border-radius:11px;margin-bottom:6px;font-size:15px;background:#fff">
+      <option>Aulas particulares</option><option>Aulas em grupo</option><option>Personal / planilha</option><option>Kids</option><option>Locação de quadra</option>
+    </select>
+    <p id="cad-msg" style="display:none;font-size:12.5px;color:#C9472B;margin:4px 0 0"></p>
+    <div style="display:flex;gap:9px;margin-top:14px">
+      <button onclick="document.getElementById('ov-cadastro').style.display='none'" style="flex:1;padding:13px;border:1px solid #d8d0bd;background:none;border-radius:12px;font-size:14px;cursor:pointer">Cancelar</button>
+      <button onclick="enviarCadastro()" style="flex:1;padding:13px;border:none;background:#1A2E14;color:#fff;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer">Criar conta ✓</button>
+    </div>
+  </div>
+</div>
+<script>
+function abrirCadastro(){document.getElementById('ov-cadastro').style.display='flex';}
+function enviarCadastro(){
+  var nome=(document.getElementById('cad-nome').value||'').trim();
+  var tel=(document.getElementById('cad-tel').value||'').replace(/\D/g,'');
+  var interesse=document.getElementById('cad-int').value;
+  var msg=document.getElementById('cad-msg');
+  if(!nome||tel.length<10){msg.textContent='Preencha seu nome e um WhatsApp válido com DDD.';msg.style.display='block';return;}
+  var enviado=false;
+  try{
+    if(typeof firebase!=='undefined'&&firebase.apps&&firebase.apps.length){
+      firebase.database().ref('jvtenis/fila_cadastros').push({nome:nome,tel:tel,interesse:interesse,ts:Date.now()});
+      enviado=true;
+    }
+  }catch(e){}
+  document.getElementById('ov-cadastro').style.display='none';
+  var wa='https://wa.me/5541995415712?text='+encodeURIComponent('Olá João! Acabei de pedir minha conta pelo site. 🎾\nNome: '+nome+'\nWhatsApp: '+tel+'\nInteresse: '+interesse);
+  alert(enviado?'✅ Pedido enviado! O João vai criar seu acesso e te mandar o código pelo WhatsApp.':'Abrindo o WhatsApp para enviar seu pedido ao João. 🎾');
+  if(!enviado)window.open(wa,'_blank');
+}
 </script>
 
 <!-- ===== Preços de grupo ao vivo (lê o mesmo Firebase dos apps) ===== -->
