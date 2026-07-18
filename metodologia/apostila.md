@@ -35,7 +35,7 @@ A apostila foi escrita para ser lida em ordem na primeira vez, e consultada por 
 
 | Capítulo | O que responde |
 |---|---|
-| 2. Origem e filosofia | Por que ensinamos de baixo pra cima — e nossas referências |
+| 2. Origem e filosofia | Por que ensinamos de baixo pra cima |
 | 3. A Pirâmide | **O que** se ensina — as 6 camadas do jogo |
 | 4. A Trilha | **Para quem** — os 5 níveis de aluno e o que cada um trabalha |
 | 5. Estrutura de aula | **Como** — a anatomia da aula, os planos modelo e o calendário anual de temas |
@@ -87,7 +87,7 @@ As camadas não são fases que se "concluem". Toda aula, de qualquer nível, rev
 Ensinar de baixo pra cima não significa adiar a diversão. Significa adaptar o jogo ao que o aluno já sustenta: bola adaptada, quadra reduzida, regras simplificadas. O aluno da primeira aula já joga — um jogo do tamanho da base dele.
 
 **Princípio 4 — O aluno no centro.**
-A pirâmide, a trilha e o calendário são o **esqueleto** — o que construir e em que ordem, igual para todo mundo. Mas *como* cada aluno sobe esse esqueleto é individual. A técnica serve o aluno, não o contrário: dois alunos aprendem o forehand no mesmo mês e saem com forehands diferentes, cada um sobre o próprio corpo e o próprio jeito de jogar. O professor não impõe um modelo de TV — ele entra no "idioma" de cada aluno (como pensa, como sente, o que o motiva) e ajusta a mesma estrutura àquela pessoa. Estrutura firme por baixo, liberdade por cima.
+A pirâmide, a trilha e o calendário dizem *o que* ensinar e em que ordem — igual para todos. Mas *como* cada aluno percorre isso é individual: a técnica serve o aluno, não o contrário. O professor não impõe um modelo de TV; olha para a pessoa à sua frente — o corpo, o ritmo, a cabeça, o que a motiva — e encaixa a mesma estrutura nela. Estrutura firme por baixo, liberdade por cima. (A seção 2.5 desenvolve esse equilíbrio.)
 
 ## 2.4 Os quatro pilares da Academia JV Tênis
 
@@ -100,13 +100,13 @@ A metodologia técnica se apoia nos quatro pilares que regem toda a academia —
 | **Equilíbrio** | Exigência com acolhimento. Flexibilidade com regras justas — em quadra e fora dela. |
 | **Aprendizado** | Processo dinâmico e divertido. O aluno sai de toda aula sabendo o que evoluiu. |
 
-## 2.5 Uma metodologia própria — e em boa companhia
+## 2.5 A estrutura é de todos, o caminho é de cada um
 
-Este método não foi copiado de ninguém. Ele nasceu na quadra de saibro da JV Tênis, aula após aula, testando com aluno de verdade o que funciona e o que não funciona. A ordem "de baixo pra cima", a régua de troca de bola, o calendário de seis temas em dois ciclos, a Trilha da Base ao Topo ligada à Barragem — nada disso está num manual pronto. Nasceu aqui, do trabalho, e é autoral.
+Pode parecer contradição ter, ao mesmo tempo, uma estrutura firme — pirâmide, trilha, calendário — e a promessa de respeitar cada aluno. Não é. A estrutura responde *o que* ensinar e *em que ordem*, e isso vale para todo mundo, porque a física do tênis é a mesma para todos: ninguém bate bem desequilibrado, ninguém sustenta o jogo sem base. Já *como* cada aluno percorre essa estrutura é único.
 
-Quando a gente constrói algo honesto a partir da experiência, costuma descobrir uma coisa boa: quem está no topo do mundo, muitas vezes, chegou a conclusões parecidas por caminhos próprios. **Patrick Mouratoglou** — um dos maiores nomes do coaching mundial — defende que cada jogador é diferente e que o treino tem de se adaptar à pessoa, e que o técnico precisa entender a emoção do atleta, dentro e fora da quadra. A gente concorda com isso. Mas não aprendeu com ele: aprendeu na própria quadra, corrigindo um aluno de cada vez.
+Dois alunos entram no mês de forehand e saem com forehands diferentes — cada um sobre o próprio corpo, o próprio tempo, o próprio jeito de jogar. O professor não força um molde: olha para a pessoa à sua frente — o físico, o ritmo, a cabeça, o que a motiva — e encaixa a mesma estrutura naquela pessoa. É o que evita os dois erros clássicos do ensino: o professor que trata todo mundo igual e o professor que não tem método nenhum.
 
-Citar uma referência dessas não é se apoiar nela — é ter a tranquilidade de saber que estamos no caminho certo. O que sustenta a JV Tênis é a experiência do professor com o público daqui: do Kids ao competidor amador, no saibro, formando **da base**. A estrutura (pirâmide, trilha, calendário) é o que nos permite levar muita gente do zero ao jogo com segurança; a individualização é o que faz cada aluno chegar lá do seu jeito. **O método é nosso. As boas companhias só confirmam que ele está de pé.**
+Esse é o coração da metodologia e o que a torna nossa: ela nasceu na quadra de saibro da JV Tênis, aula após aula, testando com aluno de verdade o que funciona. A base é firme para todos; o caminho é sob medida para cada um. **Estrutura para todos, caminho para cada um.**
 
 ---
 
@@ -841,7 +841,7 @@ Este capítulo é o começo da ponte entre "dar aula comigo" e "formar quem dá 
 - **Uma correção por vez.** A mais baixa da cadeia primeiro. Aluno com três instruções na cabeça não executa nenhuma.
 - **Faz o aluno jogar.** Toda aula termina em jogo; cesta é ponte, não morada.
 - **Trata o iniciante como o avançado.** Mesma seriedade, mesmo planejamento, mesma pontualidade. A Base é o alicerce do negócio e da metodologia.
-- **Conhece o idioma de cada aluno.** A estrutura é a mesma para todos, mas cada aluno tem um jeito de pensar, de sentir e de jogar. O bom professor entra no universo do aluno — o que o motiva, o que o trava, como ele aprende — e adapta a mesma pirâmide àquela pessoa. É o Princípio 4 em ação, e é o que separa corrigir a mão de entender a pessoa.
+- **Conhece cada aluno.** A estrutura é a mesma para todos, mas cada aluno aprende de um jeito. O bom professor presta atenção na pessoa — o que a motiva, o que a trava, como ela assimila — e encaixa a mesma pirâmide nela. É o Princípio 4 em ação: separa corrigir a mão de entender quem está batendo.
 - **Vive os quatro pilares.** Pontualidade, Profissionalismo, Equilíbrio, Aprendizado — em quadra, no WhatsApp, no vestiário.
 
 ## 8.2 Conduta em quadra
@@ -961,11 +961,9 @@ Observações: _______________________________________________________
 - **Trilha:** a progressão de níveis da metodologia (Base, Impulso, Construção, Ascensão, Topo).
 - **Pirâmide:** as seis camadas de conteúdo (Pés no Saibro, Deslocamento, Leitura de Quadra, A Batida, O Jogo, O Topo).
 
-## Anexo E — Referências
+## Anexo E — Sobre a autoria
 
-A Metodologia Da Base ao Topo é **autoral de João Victor**, construída na quadra de saibro da JV Tênis, aula após aula. A espinha do método — a ordem "de baixo pra cima", a régua de troca de bola, o calendário de temas e a Trilha ligada à Barragem — nasceu aqui, da experiência direta com o público da academia, do Kids ao competidor amador. Não foi adaptada de nenhum manual.
-
-**Leitura recomendada (convergência, não fonte).** Para quem quer se aprofundar, vale conhecer o trabalho de **Patrick Mouratoglou** (Mouratoglou Academy) — que, por caminho próprio, também valoriza a individualização e a dimensão emocional do jogador. É uma boa companhia de ideias, não a origem das nossas. Ver: mouratoglou.com/en/academy/methodology; costanavarino.com/stories/people/patrick-mouratoglou; olympics.com. Livro: *Champion Mindset*, Patrick Mouratoglou.
+A Metodologia Da Base ao Topo é **autoral de João Victor**, construída na quadra de saibro da JV Tênis, aula após aula. Tudo o que estrutura o método — a ordem "de baixo pra cima", a régua de troca de bola, o calendário de temas e a Trilha ligada à Barragem — nasceu da experiência direta com os alunos da academia, do Kids ao competidor amador. É conhecimento próprio, testado em quadra, não adaptado de manual nem de método de terceiros.
 
 ---
 
