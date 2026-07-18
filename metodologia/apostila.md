@@ -5,7 +5,7 @@
 **Autor:** João Victor · Academia JV Tênis
 **Local:** Rua João Azolin, 795 — Santa Felicidade, Curitiba/PR
 **Contato:** WhatsApp (41) 99541-5712 · Instagram @joaovictortenis
-**Versão:** 1.0 — 2026
+**Versão:** 1.1 — 2026
 
 > "O tênis se aprende de baixo pra cima. Na base e nos pés, na movimentação e no posicionamento — antes da batida e dos fundamentos."
 > — João Victor
@@ -35,7 +35,7 @@ A apostila foi escrita para ser lida em ordem na primeira vez, e consultada por 
 
 | Capítulo | O que responde |
 |---|---|
-| 2. Origem e filosofia | Por que ensinamos de baixo pra cima |
+| 2. Origem e filosofia | Por que ensinamos de baixo pra cima — e nossas referências |
 | 3. A Pirâmide | **O que** se ensina — as 6 camadas do jogo |
 | 4. A Trilha | **Para quem** — os 5 níveis de aluno e o que cada um trabalha |
 | 5. Estrutura de aula | **Como** — a anatomia da aula, os planos modelo e o calendário anual de temas |
@@ -75,7 +75,7 @@ O nome do método tem duplo sentido, e os dois são intencionais:
 - **Da base ao topo do corpo:** o aprendizado sobe do pé para a mão. O último elo da cadeia é a raquete.
 - **Da base ao topo do jogo:** o método acompanha o aluno do primeiríssimo contato com o tênis até a competição — com a mesma lógica em todos os níveis.
 
-## 2.3 Os três princípios do método
+## 2.3 Os princípios do método
 
 **Princípio 1 — A camada de baixo sustenta a de cima.**
 Nenhum conteúdo novo entra enquanto a camada que o sustenta não estiver funcional. Não se ensina construção de ponto a quem não se posiciona; não se refina o golpe de quem chega desequilibrado na bola. O professor Da Base ao Topo diagnostica **para baixo**: diante de um erro, a primeira pergunta é sempre "onde estavam os pés?".
@@ -85,6 +85,9 @@ As camadas não são fases que se "concluem". Toda aula, de qualquer nível, rev
 
 **Princípio 3 — O jogo aparece desde a primeira aula.**
 Ensinar de baixo pra cima não significa adiar a diversão. Significa adaptar o jogo ao que o aluno já sustenta: bola adaptada, quadra reduzida, regras simplificadas. O aluno da primeira aula já joga — um jogo do tamanho da base dele.
+
+**Princípio 4 — O aluno no centro.**
+A pirâmide, a trilha e o calendário são o **esqueleto** — o que construir e em que ordem, igual para todo mundo. Mas *como* cada aluno sobe esse esqueleto é individual. A técnica serve o aluno, não o contrário: dois alunos aprendem o forehand no mesmo mês e saem com forehands diferentes, cada um sobre o próprio corpo e o próprio jeito de jogar. O professor não impõe um modelo de TV — ele entra no "idioma" de cada aluno (como pensa, como sente, o que o motiva) e ajusta a mesma estrutura àquela pessoa. Estrutura firme por baixo, liberdade por cima.
 
 ## 2.4 Os quatro pilares da Academia JV Tênis
 
@@ -96,6 +99,21 @@ A metodologia técnica se apoia nos quatro pilares que regem toda a academia —
 | **Profissionalismo** | Aula planejada, comunicação clara, feedback técnico honesto. Nada de improviso disfarçado. |
 | **Equilíbrio** | Exigência com acolhimento. Flexibilidade com regras justas — em quadra e fora dela. |
 | **Aprendizado** | Processo dinâmico e divertido. O aluno sai de toda aula sabendo o que evoluiu. |
+
+## 2.5 Uma referência de fora: o método Mouratoglou
+
+Nenhuma metodologia nasce no vácuo. A nossa tem espinha própria, mas olha para fora para se afinar — e uma das referências que mais conversa com a gente é o trabalho de **Patrick Mouratoglou** (fundador da Mouratoglou Academy, técnico de Serena Williams e de outros nomes do circuito).
+
+O que Mouratoglou defende, em resumo:
+
+- **O jogador no centro.** Nos anos 90, quando o padrão era treinar todo mundo igual, ele fez o contrário: cada jogador é diferente, então o treino se adapta à pessoa, não a pessoa ao treino.
+- **Entrar no universo do aluno.** O técnico precisa entender como aquele jogador pensa e sente — dentro e fora da quadra. Cada um tem seu "idioma", e o trabalho é aprender a falar esse idioma.
+- **Desenvolvimento holístico.** Técnico, físico, tático, mental e emocional andam juntos — não dá para separar o golpe da cabeça de quem bate.
+- **Busca incansável por excelência.** Sempre mirar mais alto, empurrar o limite, com foco em resultado real, na quadra e fora dela.
+
+**Onde a gente já ressoa com isso.** O "aluno no centro" é o nosso Princípio 4. O "entrar no universo do aluno" é o que separa um professor que corrige a mão de um professor que entende por que aquele aluno trava. O "holístico" é a nossa camada 6 (mentalidade) e a parceria com o Personal. E "o jogo desde cedo" — competir para aprender — é o nosso Princípio 3 e a Barragem.
+
+**Onde a gente mantém a própria essência.** Mouratoglou trabalha, na ponta, com quem vai virar profissional, e por isso foge de fórmula. A JV Tênis forma **da base**, no saibro, um público que vai do Kids ao competidor amador — e para esse público a **estrutura** (pirâmide, trilha, calendário) não engessa: ela dá chão. A diferença é de propósito, não de discordância. A gente usa a estrutura para levar muita gente do zero ao jogo com segurança, e usa a individualização para que cada um chegue lá do seu jeito. **Estrutura para todos, caminho para cada um** — é assim que "Da Base ao Topo" pega o melhor das duas escolas sem deixar de ser o que é.
 
 ---
 
@@ -115,6 +133,8 @@ A Pirâmide é o mapa do **conteúdo** da metodologia. São seis camadas, empilh
 ## 3.1 Camada 1 — Pés no Saibro (base e equilíbrio)
 
 **A tese da camada:** nenhum golpe se sustenta sobre uma base instável. Antes de qualquer raquete, o aluno precisa aprender a *estar* em quadra: como se apoiar, como se preparar, como se equilibrar.
+
+**No calendário do ano:** é o tema de **Janeiro e Julho** (Footwork e transferência). Cada ciclo abre por aqui — todo semestre a casa é reconstruída a partir do chão.
 
 ### Conteúdos
 
@@ -153,6 +173,8 @@ A Pirâmide é o mapa do **conteúdo** da metodologia. São seis camadas, empilh
 ## 3.2 Camada 2 — Deslocamento (movimentação)
 
 **A tese da camada:** o objetivo é **chegar bem na bola antes de pensar em bater nela**. Um jogador que chega cedo e equilibrado tem tempo para fazer tudo certo; um que chega atrasado não tem técnica que o salve.
+
+**No calendário do ano:** é o tema de **Fevereiro e Agosto** (Preparação e movimentação), logo depois do mês de base — primeiro os pés firmes, depois os pés rápidos.
 
 ### Conteúdos
 
@@ -193,6 +215,8 @@ A Pirâmide é o mapa do **conteúdo** da metodologia. São seis camadas, empilh
 
 **A tese da camada:** movimentar-se bem não basta; é preciso saber **para onde** ir e **onde estar**. Posicionamento é a inteligência espacial do tênis: a relação permanente entre você, a bola, o adversário e a geometria da quadra.
 
+**No calendário do ano:** não tem um mês só para ela — é trabalhada o ano inteiro, dentro de cada tema. Ganha destaque nos meses de **Approach e rede (Maio/Novembro)**, quando posicionar-se bem decide o ponto.
+
 ### Conteúdos
 
 - **Zonas da quadra:** fundo (troca), meio (transição/definição), rede (voleio). O que se faz e o que **não** se faz em cada uma.
@@ -230,6 +254,8 @@ A Pirâmide é o mapa do **conteúdo** da metodologia. São seis camadas, empilh
 ## 3.4 Camada 4 — A Batida (fundamentos técnicos)
 
 **A tese da camada:** só agora a raquete vira protagonista — e por isso ela aprende rápido. Sobre uma base estável, com chegada no tempo e no lugar certos, o golpe é ensinado **do chão para a mão**: apoios → quadril → tronco → braço → raquete. A técnica deixa de ser um gesto decorado e passa a ser a consequência natural de um corpo bem posicionado.
+
+**No calendário do ano:** é a camada com mais meses dedicados — **Forehand (Março/Setembro)**, **Backhand (Abril/Outubro)** e **Saque e devolução (Junho/Dezembro)**. Os golpes só entram em bloco depois que os meses de base e movimentação já rodaram.
 
 ### Conteúdos
 
@@ -271,6 +297,8 @@ A Pirâmide é o mapa do **conteúdo** da metodologia. São seis camadas, empilh
 
 **A tese da camada:** golpes não ganham jogos; **pontos** ganham jogos. Esta camada transforma um aluno que rebate em um jogador que constrói: toda bola tem uma intenção, e as intenções se encadeiam em padrões.
 
+**No calendário do ano:** aparece forte em **Approach e rede (Maio/Novembro)** e em **Saque e devolução (Junho/Dezembro)** — os meses em que o aluno aprende a abrir e a definir o ponto, não só a trocar bola.
+
 ### Conteúdos
 
 - **As cinco situações de jogo:** sacando, devolvendo, ambos no fundo, eu subindo à rede, ele na rede. Todo ponto de tênis acontece numa delas.
@@ -309,6 +337,8 @@ A Pirâmide é o mapa do **conteúdo** da metodologia. São seis camadas, empilh
 ## 3.6 Camada 6 — O Topo (competição e mentalidade)
 
 **A tese da camada:** competir é uma habilidade própria, treinável como qualquer golpe. O topo da pirâmide prepara o aluno para jogar **de verdade** — com placar, nervosismo, sol, vento e adversário que não colabora — e, no limite da maturidade, para transmitir o que aprendeu.
+
+**No calendário do ano:** não é um mês, é o **ano inteiro** — cada tema termina aplicado em jogo, e a competição ganha corpo nos ciclos da Barragem, quando o aluno leva para o placar o que treinou no mês.
 
 ### Conteúdos
 
@@ -818,6 +848,7 @@ Este capítulo é o começo da ponte entre "dar aula comigo" e "formar quem dá 
 - **Uma correção por vez.** A mais baixa da cadeia primeiro. Aluno com três instruções na cabeça não executa nenhuma.
 - **Faz o aluno jogar.** Toda aula termina em jogo; cesta é ponte, não morada.
 - **Trata o iniciante como o avançado.** Mesma seriedade, mesmo planejamento, mesma pontualidade. A Base é o alicerce do negócio e da metodologia.
+- **Conhece o idioma de cada aluno.** A estrutura é a mesma para todos, mas cada aluno tem um jeito de pensar, de sentir e de jogar. O bom professor entra no universo do aluno — o que o motiva, o que o trava, como ele aprende — e adapta a mesma pirâmide àquela pessoa. É o Princípio 4 em ação, e é o que separa corrigir a mão de entender a pessoa.
 - **Vive os quatro pilares.** Pontualidade, Profissionalismo, Equilíbrio, Aprendizado — em quadra, no WhatsApp, no vestiário.
 
 ## 8.2 Conduta em quadra
@@ -933,9 +964,16 @@ Observações: _______________________________________________________
 - **Terra de ninguém:** faixa entre o fundo e a rede onde não se deve esperar bola.
 - **Bola adaptada:** bolas mais lentas usadas na iniciação e no Kids.
 - **Cinco situações de jogo:** sacando, devolvendo, ambos no fundo, subindo à rede, adversário na rede.
-- **Barragem:** torneio interno da Academia JV Tênis, com grupos de nível de E a A.
+- **Barragem:** torneio interno da Academia JV Tênis, com grupos de nível (hoje A a D, com o E como porta de entrada).
 - **Trilha:** a progressão de níveis da metodologia (Base, Impulso, Construção, Ascensão, Topo).
 - **Pirâmide:** as seis camadas de conteúdo (Pés no Saibro, Deslocamento, Leitura de Quadra, A Batida, O Jogo, O Topo).
+
+## Anexo E — Referências
+
+A Metodologia Da Base ao Topo é **autoral de João Victor**, construída em quadra de saibro, aula após aula. Ela dialoga com referências consagradas do ensino do tênis para se afinar — sem deixar de ser o que é.
+
+- **Método Mouratoglou** — Patrick Mouratoglou (Mouratoglou Academy). Referência principal para os princípios de **individualização** (o aluno no centro), **leitura emocional** (entrar no universo do aluno) e **desenvolvimento holístico**. Ver: mouratoglou.com/en/academy/methodology; entrevista em costanavarino.com/stories/people/patrick-mouratoglou; olympics.com (entrevistas sobre mentalidade de campeão). Livro: *Champion Mindset*, Patrick Mouratoglou.
+- **Prática de quadra da JV Tênis** — a espinha do método (a ordem "de baixo pra cima", a régua de troca de bola, o calendário de temas e a Barragem) nasce da experiência direta do professor com o público da academia, do Kids ao competidor amador.
 
 ---
 
