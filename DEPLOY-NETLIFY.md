@@ -1,37 +1,73 @@
-# Como conectar este repositório ao Netlify (deploy automático)
+# Deploy automático: conectar o Netlify ao GitHub
 
-Este repositório tem **3 sites** (cada um numa pasta). No Netlify, cada pasta
-vira **um site separado** apontando para o mesmo repositório, mudando apenas a
-**Base directory**. Como são estáticos, **não há build** — é só publicar a pasta.
+Este repositório **já está no GitHub** (`joaovictorteniscoach-cpu/familiajk`) e a
+branch de produção é a **`main`**. A ideia deste guia é ligar cada site do Netlify
+ao repositório para que **qualquer mudança publicada na `main` republique sozinha**
+— sem precisar arrastar arquivo nunca mais.
 
-| Site no Netlify | Base directory | Conteúdo            |
-|-----------------|----------------|---------------------|
-| Gestão          | `app-gestao`   | App de gestão (PWA) |
-| Aluno           | `app-aluno`    | App do aluno (PWA)  |
-| Site            | `site`         | Site institucional  |
+## Como tudo se conecta
 
-## Passo a passo (repetir para cada um dos 3 sites)
+```
+Você edita (aqui comigo ou direto no GitHub)
+        ↓
+Mudança entra na branch main (via commit / Pull Request)
+        ↓
+Netlify percebe o push e republica sozinho
+        ↓
+Site no ar atualizado  ✅
+```
 
-1. Entre em https://app.netlify.com e clique em **Add new site → Import an existing project**.
-2. Escolha **GitHub** e autorize o acesso (na primeira vez). Selecione o
-   repositório **`joaovictorteniscoach-cpu/familiajk`**.
-3. Em **Branch to deploy**, escolha a branch que você quer publicar
-   (ex.: `main`, depois de fazer o merge — veja a observação no fim).
-4. Em **Base directory**, digite a pasta do site (ex.: `app-gestao`).
-5. **Build command**: deixe **em branco**. **Publish directory**: `.` (ponto)
-   — o `netlify.toml` dentro de cada pasta já define isso.
-6. Clique em **Deploy**. Pronto — o Netlify publica e fica observando o repo.
+Enquanto um site **não** estiver conectado ao GitHub, ele continua na última
+versão enviada por drag & drop — por isso o passo abaixo é o que falta.
 
-> Dica: para um site que já existe hoje (publicado por drag & drop), você pode
-> conectá-lo ao Git em **Site configuration → Build & deploy → Link repository**,
-> usando a mesma Base directory da tabela acima — assim mantém a URL atual.
+## Os sites (uma pasta = um site no Netlify)
+
+Cada pasta é um site separado no Netlify, apontando para o **mesmo** repositório,
+mudando só a **Base directory**. São estáticos: **não há build**.
+
+| Pasta (Base directory) | Site no Netlify        | Conteúdo                         |
+|------------------------|------------------------|----------------------------------|
+| `site`                 | informacoesjvtenis     | Site institucional + Metodologia |
+| `app-aluno`            | app do aluno           | App do aluno (PWA)               |
+| `app-gestao`           | app de gestão          | App de gestão (PWA)              |
+| `app-familia`          | app da família (JK)    | App pessoal da família (PWA)     |
+
+## Passo a passo — conectar um site que já existe (mantém a URL)
+
+Use este fluxo para o **informacoesjvtenis** (e repita para os outros, trocando só
+a Base directory).
+
+1. Entre em https://app.netlify.com e abra o site **informacoesjvtenis**.
+2. Vá em **Site configuration → Build & deploy → Continuous deployment**.
+3. Em **Repository**, clique em **Link repository** (ou "Link to a Git provider").
+4. Escolha **GitHub** e autorize o acesso (só na primeira vez).
+5. Selecione o repositório **`joaovictorteniscoach-cpu/familiajk`**.
+6. Configure:
+   - **Branch to deploy:** `main`
+   - **Base directory:** `site`
+   - **Build command:** deixe **em branco**
+   - **Publish directory:** `.` (só um ponto)
+7. Salve. Na primeira vez o Netlify já publica a versão da `main`.
+
+> A URL `informacoesjvtenis.netlify.app` continua a mesma — muda só a forma de
+> publicar (agora automática).
+
+## Criar um site novo do zero (se algum ainda não existir no Netlify)
+
+1. Em https://app.netlify.com, clique em **Add new site → Import an existing project**.
+2. Escolha **GitHub** → repositório **`joaovictorteniscoach-cpu/familiajk`**.
+3. Preencha igual ao passo 6 acima (Branch `main`, a Base directory da pasta,
+   Build command vazio, Publish `.`).
+4. **Deploy**.
 
 ## A partir daí
-Toda vez que houver **push** no GitHub na branch escolhida, o Netlify
-**republica sozinho** — sem precisar arrastar nada. 🎉
 
-## Observação sobre a branch
-Hoje os arquivos estão na branch `claude/recover-student-app-academy-site-8maqxw`.
-O ideal é fazer o **merge dessa branch para `main`** (posso abrir um Pull Request
-se você quiser) e conectar o Netlify à `main`. Assim a branch de produção fica
-limpa e estável.
+Todo **push na `main`** faz o Netlify **republicar sozinho** — seja uma mudança
+feita por aqui (que vira commit + Pull Request + merge na `main`) ou uma edição
+feita direto no GitHub. 🎉
+
+## Publicação manual (enquanto um site não estiver conectado)
+
+Continua valendo: em **Deploys**, arraste a **pasta** do site (ou o `.zip` dela).
+O `index.html` precisa estar na **raiz** do que é arrastado — cada pasta deste
+repositório já está nesse formato.
