@@ -451,6 +451,23 @@ function iniciarFirebase(){
   </div>
 </div>
 
+<!-- MODAL LOCAÇÃO: DURAÇÃO LIVRE -->
+<div class="overlay" id="ov-locdur" onclick="if(event.target===this)this.classList.remove('on')">
+  <div class="modal">
+    <h3>Reservar a quadra 🔑</h3>
+    <p class="sub" id="locdur-sub">—</p>
+    <div id="locdur-opts" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0 8px"></div>
+    <div class="field" style="margin-top:4px"><label>Ou digite os minutos (mín. 30, de 15 em 15)</label>
+      <input type="number" id="locdur-min" min="30" step="15" placeholder="Ex.: 75 = 1h15" oninput="locdurAtualiza(0)">
+    </div>
+    <p id="locdur-preco" style="text-align:center;font-weight:800;font-size:16px;margin:6px 0 2px">—</p>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="document.getElementById('ov-locdur').classList.remove('on')">Cancelar</button>
+      <button class="btn btn-clay" onclick="confirmarLocacao()">Reservar 🔑</button>
+    </div>
+  </div>
+</div>
+
 <!-- POPUP CRÉDITOS (aula computada) -->
 <div class="overlay" id="ov-cred" onclick="if(event.target===this)this.classList.remove('on')">
   <div class="modal" style="text-align:center">
@@ -1486,13 +1503,37 @@ function grupoRefHtml(){
 }
 function pickAula(repo){document.getElementById('ov-pick').classList.remove('on');abrirBook(pickCtx.hora,repo);}
 function pickLoc(){document.getElementById('ov-pick').classList.remove('on');pedirLocacaoHora(pickCtx.hora);}
+let locCtx=null;
 function pedirLocacaoHora(hora){
-  const d=agDate;
-  const quando=DIAS_FULL[d.getDay()]+', '+d.getDate()+'/'+(d.getMonth()+1)+' às '+hora;
-  const v=precoLocacao();
-  const msg='Olá João! Quero *alugar a quadra* em '+quando+' ('+fmt(v)+'/h). Pode confirmar pra mim? 🎾';
+  locCtx={hora,date:new Date(agDate),min:60};
+  document.getElementById('locdur-sub').textContent=DIAS_FULL[locCtx.date.getDay()]+', '+locCtx.date.getDate()+'/'+(locCtx.date.getMonth()+1)+' · começa às '+hora+' · '+fmt(precoLocacao())+'/h';
+  const opts=[60,75,90,105,120];
+  document.getElementById('locdur-opts').innerHTML=opts.map(m=>
+    '<button id="ld-'+m+'" onclick="locdurAtualiza('+m+')" style="padding:11px 4px;border:1.5px solid var(--border);border-radius:11px;background:#fff;font-weight:700;font-size:13px;cursor:pointer">'+locdurLabel(m)+'</button>').join('');
+  document.getElementById('locdur-min').value='';
+  locdurAtualiza(60);
+  document.getElementById('ov-locdur').classList.add('on');
+}
+function locdurLabel(m){const h=Math.floor(m/60),r=m%60;return r?(h+'h'+String(r).padStart(2,'0')):(h+'h');}
+function locdurAtualiza(m){
+  if(m>0){locCtx.min=m;document.getElementById('locdur-min').value='';}
+  else{const v=Math.round((Number(document.getElementById('locdur-min').value)||0)/15)*15;if(v>=30)locCtx.min=v;}
+  [60,75,90,105,120].forEach(x=>{const b=document.getElementById('ld-'+x);if(b){const on=(locCtx.min===x&&m>0)||(locCtx.min===x&&!document.getElementById('locdur-min').value);b.style.borderColor=on?'var(--clay)':'var(--border)';b.style.background=on?'#FBEDE9':'#fff';}});
+  const valor=Math.round(precoLocacao()*locCtx.min/60);
+  document.getElementById('locdur-preco').textContent=locdurLabel(locCtx.min)+' · '+fmt(valor);
+}
+function confirmarLocacao(){
+  if(!locCtx)return;
+  const livre=Math.round((Number(document.getElementById('locdur-min').value)||0)/15)*15;
+  if(livre>=30)locCtx.min=livre;
+  const d=locCtx.date,dur=locdurLabel(locCtx.min);
+  const valor=Math.round(precoLocacao()*locCtx.min/60);
+  const quando=DIAS_FULL[d.getDay()]+', '+d.getDate()+'/'+(d.getMonth()+1)+' às '+locCtx.hora;
+  document.getElementById('ov-locdur').classList.remove('on');
+  notificarJoao('pediu locação '+dur,dKey(d),locCtx.hora);
+  const msg='Olá João! Quero *alugar a quadra* em '+quando+' por *'+dur+'* (~'+fmt(valor)+'). Pode confirmar pra mim? 🎾';
   setTimeout(()=>abrirWhatsApp('5541995415712',msg),300);
-  toast('Pedido de locação enviado ao João! 🎾');
+  toast('Pedido de locação ('+dur+') enviado ao João! 🎾');
 }
 function abrirBook(hora,repo){
   if(bloqueadoPorPagamento()){toast('🔒 Pagamento pendente (bloqueio a partir do dia '+DIA_BLOQUEIO_PAG+'). Regularize para agendar — ou fale com o João. 🙏');return;}
