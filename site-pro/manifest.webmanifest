@@ -1,0 +1,14 @@
+{
+  "name": "JV Tênis — Professores",
+  "short_name": "JV PRO",
+  "description": "Formação e sistema de gestão da JV Tênis para professores e academias.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#102438",
+  "theme_color": "#102438",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
