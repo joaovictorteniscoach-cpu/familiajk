@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Formação Da Base ao Topo · Curso e Certificação para Professores de Tênis</title>
+<meta name="description" content="Formação de professores de tênis na metodologia Da Base ao Topo: curso e certificação, do primeiro contato à competição.">
+<meta name="theme-color" content="#102438">
+<meta property="og:title" content="Formação Da Base ao Topo · Curso e Certificação para Professores de Tênis"><meta property="og:description" content="Formação de professores de tênis na metodologia Da Base ao Topo: curso e certificação, do primeiro contato à competição."><meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#102438; --navy-2:#15304A; --navy-3:#1C3F5E; --deep:#0B1B2B;
+  --gold:#D8B45C; --gold-2:#C49A3F; --gold-soft:#E7CE93;
+  --cream:#F4EFE6; --paper:#FBF8F2; --ink:#21303D;
+  --muted:rgba(244,239,230,.64); --line:rgba(216,180,92,.20);
+  --wapp:#25D366; --r:16px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;background:var(--navy)}
+body{font-family:'Inter',sans-serif;background:var(--navy);color:var(--cream);font-size:16.5px;line-height:1.62;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+h1,h2,h3{font-family:'Inter',sans-serif;line-height:1.07;letter-spacing:-.02em;font-weight:800}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+.eyebrow{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);border:1px solid var(--line);border-radius:999px;padding:7px 16px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;font-weight:700;font-size:15.5px;padding:15px 26px;border-radius:13px;border:2px solid transparent;cursor:pointer;transition:transform .14s,filter .2s,border-color .2s,color .2s}
+.btn:active{transform:scale(.98)}
+.btn-gold{background:linear-gradient(135deg,var(--gold-soft),var(--gold-2));color:#23303b}
+.btn-gold:hover{filter:brightness(1.04)}
+.btn-line{background:transparent;color:var(--cream);border-color:rgba(244,239,230,.3)}
+.btn-line:hover{border-color:var(--gold);color:var(--gold-soft)}
+.btn-wapp{background:var(--wapp);color:#fff}
+.btn-wapp:hover{filter:brightness(1.05)}
+.btn-navy{background:var(--deep);color:#fff}
+
+header.bar{position:sticky;top:0;z-index:60;background:var(--paper);border-bottom:1px solid #ECE3D2}
+.bar-in{display:flex;align-items:center;justify-content:space-between;height:64px}
+.brand{display:flex;align-items:center;gap:11px}
+.brand .mono{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,var(--navy-2),var(--deep));color:var(--gold-soft);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:17px;box-shadow:0 3px 10px rgba(0,0,0,.18);flex-shrink:0}
+.brand .nm{font-weight:800;font-size:18px;color:var(--ink);line-height:1.05}
+.brand .nm small{display:block;font-weight:600;font-size:9.5px;letter-spacing:.16em;color:#8A7E6B;text-transform:uppercase;margin-top:3px}
+.bar .btn{padding:9px 20px;font-size:14px}
+
+.hero{position:relative;min-height:500px;display:flex;align-items:center;padding:70px 0;overflow:hidden;background:linear-gradient(150deg,var(--deep) 0%,var(--navy) 55%,var(--navy-3) 130%)}
+.hero::after{content:"";position:absolute;right:-160px;top:-160px;width:520px;height:520px;border-radius:50%;border:1.5px solid var(--line);opacity:.8}
+.hero::before{content:"";position:absolute;right:-60px;top:-60px;width:520px;height:520px;border-radius:50%;border:1.5px solid var(--line);opacity:.5}
+.hero-in{position:relative;z-index:2;max-width:680px}
+.hero h1{font-size:clamp(38px,7.5vw,64px);font-weight:900;margin:18px 0 18px;color:#fff}
+.hero h1 .gold{color:var(--gold-soft);display:block}
+.hero p.lead{font-size:clamp(16.5px,2.2vw,19px);color:#E7E0D4;max-width:580px;margin-bottom:28px}
+.hero .cta-row{display:flex;gap:13px;flex-wrap:wrap}
+
+section.sec{padding:70px 0;background:var(--navy)}
+.alt{background:var(--navy-2)}
+.sec-head{max-width:660px;margin-bottom:36px}
+.sec-head.center{margin-left:auto;margin-right:auto;text-align:center}
+.sec-head .eyebrow{margin-bottom:14px}
+.sec-head h2{font-size:clamp(27px,5vw,42px);font-weight:800;margin-bottom:13px;color:#fff}
+.sec-head p{color:var(--muted);font-size:16.5px}
+
+.feats{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.feat{background:var(--navy);border:1px solid var(--line);border-radius:var(--r);padding:24px}
+.alt .feat{background:var(--navy-2)}
+.feat .ic{font-size:26px;margin-bottom:12px}
+.feat h3{font-size:18px;font-weight:700;margin-bottom:5px;color:#fff}
+.feat p{font-size:14px;color:var(--muted)}
+
+.two{display:grid;grid-template-columns:1fr 1fr;gap:34px;align-items:center}
+.two .tx h2{font-size:clamp(24px,4vw,34px);color:#fff;margin-bottom:14px}
+.two .tx p{color:var(--muted);font-size:16px;margin-bottom:12px}
+.two .tx p b{color:var(--gold-soft)}
+.pain{list-style:none;display:flex;flex-direction:column;gap:12px}
+.pain li{background:var(--navy-2);border:1px solid var(--line);border-radius:13px;padding:16px 18px;font-size:15px;color:var(--cream);position:relative;padding-left:44px}
+.pain li::before{content:"✕";position:absolute;left:16px;top:15px;color:#E0784A;font-weight:800}
+.alt .pain li{background:var(--navy)}
+
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.step{background:var(--navy);border:1px solid var(--line);border-radius:var(--r);padding:24px}
+.alt .step{background:var(--navy-2)}
+.step .n{font-weight:900;font-size:30px;color:var(--gold);line-height:1;margin-bottom:8px}
+.step h3{font-size:17px;font-weight:700;margin-bottom:5px;color:#fff}
+.step p{font-size:14px;color:var(--muted)}
+
+.mods{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.mod{display:flex;gap:16px;background:var(--navy);border:1px solid var(--line);border-radius:var(--r);padding:20px 22px}
+.alt .mod{background:var(--navy-2)}
+.mod .n{font-weight:900;font-size:22px;color:var(--gold);line-height:1;flex-shrink:0}
+.mod h3{font-size:16.5px;font-weight:700;margin-bottom:3px;color:#fff}
+.mod p{font-size:13.5px;color:var(--muted)}
+
+.gscore{display:flex;align-items:center;gap:14px;background:var(--navy-2);border:1px solid var(--line);border-radius:16px;padding:15px 22px;justify-content:center;max-width:440px;margin:0 auto}
+.alt .gscore{background:var(--navy)}
+.gnum{font-weight:900;font-size:40px;color:var(--gold-soft);line-height:1}
+.glogo{font-weight:800;font-size:20px}
+.glogo b:nth-child(1){color:#4285F4}.glogo b:nth-child(2){color:#EA4335}.glogo b:nth-child(3){color:#FBBC05}.glogo b:nth-child(4){color:#4285F4}.glogo b:nth-child(5){color:#34A853}.glogo b:nth-child(6){color:#EA4335}
+.gscore .stars{color:var(--gold);font-size:17px;letter-spacing:2px}
+.gscore .sub{font-size:13px;color:var(--muted)}
+
+.faq{max-width:760px;margin:0 auto}
+.faq details{border:1px solid var(--line);border-radius:13px;background:var(--navy-2);margin-bottom:12px;padding:0 20px}
+.alt .faq details{background:var(--navy)}
+.faq summary{cursor:pointer;list-style:none;font-weight:700;font-size:16px;color:#fff;padding:17px 0}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";float:right;color:var(--gold);font-weight:800;font-size:20px}
+.faq details[open] summary::after{content:"–"}
+.faq p{font-size:14.5px;color:var(--muted);padding:0 0 17px}
+
+.final{text-align:center;padding:84px 0;background:var(--deep)}
+.final h2{font-size:clamp(32px,6.5vw,56px);font-weight:900;margin-bottom:14px;color:#fff}
+.final h2 em{color:var(--gold-soft);font-style:normal}
+.final p{color:var(--muted);font-size:17px;max-width:540px;margin:0 auto 28px}
+.final .cta-row{display:flex;gap:13px;justify-content:center;flex-wrap:wrap}
+
+footer{background:#081521;color:#9FB1BF;padding:42px 0 36px;text-align:center}
+footer .mono{width:48px;height:48px;border-radius:12px;margin:0 auto 14px;background:linear-gradient(135deg,var(--navy-2),var(--deep));color:var(--gold-soft);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:19px}
+footer .fnm{font-weight:800;font-size:22px;color:#fff}
+footer .tag{color:var(--gold-soft);font-size:14px;margin:4px 0 18px}
+footer .fl{display:flex;gap:22px;justify-content:center;flex-wrap:wrap;margin-bottom:16px}
+footer .fl a{font-size:14px;font-weight:600;color:#9FB1BF}
+footer .fl a:hover{color:#fff}
+footer .cr{color:#6B7E8C;font-size:12.5px}
+
+.fab{position:fixed;right:18px;bottom:18px;z-index:80;background:var(--wapp);color:#fff;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 10px 28px rgba(37,211,102,.45);transition:transform .14s}
+.fab:hover{transform:scale(1.07)}
+
+.rv{opacity:0;transform:translateY(20px);transition:opacity .6s,transform .6s}
+.rv.in{opacity:1;transform:none}
+
+@media(max-width:860px){
+  .feats,.steps{grid-template-columns:1fr 1fr}
+  .two,.mods{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+  section.sec{padding:54px 0}
+  .feats,.steps{grid-template-columns:1fr}
+  .hero .cta-row .btn{flex:1}
+}
+@media(prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}*{scroll-behavior:auto}}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px;border-radius:6px}
+</style>
+</head><body>
+<header class="bar"><div class="wrap bar-in">
+  <a href="index.html" class="brand" aria-label="JV Tênis"><span class="mono">JV</span>
+    <span class="nm">Academia JV Tênis<small>Santa Felicidade · Curitiba</small></span></a>
+  <a class="btn btn-navy" href="https://wa.me/5541995415712?text=Ol%C3%A1%2C%20Jo%C3%A3o!%20Quero%20receber%20o%20programa%20da%20forma%C3%A7%C3%A3o%20Da%20Base%20ao%20Topo.%20%F0%9F%8E%BE" target="_blank" rel="noopener">Quero o programa</a>
+</div></header>
+<section class="hero"><div class="wrap hero-in">
+  <span class="eyebrow">Formação de professores · certificação</span>
+  <h1>Ensine tênis de baixo pra cima.<span class="gold">Forme-se na metodologia Da Base ao Topo.</span></h1>
+  <p class="lead">O método que leva o aluno do primeiro contato à competição — começando pelos pés, pela base e pela movimentação, antes da batida. Agora como curso e certificação para professores que querem dar aula com método e cobrar por isso.</p>
+  <div class="cta-row">
+    <a class="btn btn-gold" href="https://wa.me/5541995415712?text=Ol%C3%A1%2C%20Jo%C3%A3o!%20Quero%20me%20inscrever%20na%20forma%C3%A7%C3%A3o%20Da%20Base%20ao%20Topo.%20%F0%9F%8E%BE" target="_blank" rel="noopener">Quero me inscrever</a>
+    <a class="btn btn-line" href="#programa">Ver o programa</a>
+  </div>
+</div></section>
+
+<section class="sec"><div class="wrap">
+  <div class="sec-head center rv"><span class="eyebrow">Para quem é</span><h2>Se você dá aula (ou quer dar), é pra você</h2></div>
+  <div class="feats">
+    <div class="feat rv"><div class="ic">🎾</div><h3>Professores de tênis</h3><p>Que querem trocar o "cada aula é uma aula" por um método com começo, meio e fim.</p></div>
+    <div class="feat rv"><div class="ic">🌱</div><h3>Início de carreira</h3><p>Quem está começando e quer uma estrutura sólida para dar aula com segurança desde já.</p></div>
+    <div class="feat rv"><div class="ic">📈</div><h3>Quem quer crescer</h3><p>Professor que quer se diferenciar, reter mais aluno e cobrar mais caro pelo que entrega.</p></div>
+  </div>
+</div></section>
+
+<section class="sec alt" id="programa"><div class="wrap">
+  <div class="sec-head center rv"><span class="eyebrow">O programa</span><h2>Seis módulos, do chão ao jogo</h2>
+    <p>Uma metodologia completa, autoral, testada em quadra de saibro — pronta para você aplicar com seus alunos.</p></div>
+  <div class="mods">
+    <div class="mod rv"><div class="n">1</div><div><h3>A filosofia</h3><p>Por que ensinar de baixo pra cima muda tudo no aprendizado do aluno.</p></div></div>
+    <div class="mod rv"><div class="n">2</div><div><h3>A Pirâmide</h3><p>As seis camadas do jogo: dos pés e da base à tática e à competição.</p></div></div>
+    <div class="mod rv"><div class="n">3</div><div><h3>A Trilha e a avaliação</h3><p>Os cinco níveis do aluno e como medir evolução pela troca de bola.</p></div></div>
+    <div class="mod rv"><div class="n">4</div><div><h3>A aula e o calendário</h3><p>A anatomia da aula e os temas de cada mês, o ano inteiro organizado.</p></div></div>
+    <div class="mod rv"><div class="n">5</div><div><h3>O banco de exercícios</h3><p>Os drills prontos, por camada e por nível, para levar direto pra quadra.</p></div></div>
+    <div class="mod rv"><div class="n">6</div><div><h3>Formar-se professor</h3><p>Conduta em quadra, comunicação e o caminho da certificação.</p></div></div>
+  </div>
+</div></section>
+
+<section class="sec"><div class="wrap">
+  <div class="two">
+    <div class="tx rv">
+      <span class="eyebrow" style="margin-bottom:12px">A certificação</span>
+      <h2>Saia com o selo Da Base ao Topo</h2>
+      <p>A formação termina numa <b>certificação</b> com a chancela da JV Tênis: você é avaliado na prática e recebe o direito de aplicar e divulgar a metodologia.</p>
+      <p>Professor certificado entra numa rede de acompanhamento contínuo, com reciclagem e material oficial.</p>
+    </div>
+    <ul class="pain rv" style="list-style:none">
+      <li style="padding-left:44px">Estudo do método e observação de aulas</li>
+      <li style="padding-left:44px">Prática assistida e co-condução de aula</li>
+      <li style="padding-left:44px">Avaliação final e entrega do certificado</li>
+    </ul>
+  </div>
+</div></section>
+
+<section class="sec alt"><div class="wrap">
+  <div class="sec-head center rv"><span class="eyebrow">Por que essa formação</span><h2>Método de quadra, não de teoria</h2></div>
+  <div class="feats">
+    <div class="feat rv"><div class="ic">✍️</div><h3>100% autoral</h3><p>Construído aula após aula, no saibro — não é apostila copiada de manual.</p></div>
+    <div class="feat rv"><div class="ic">🧒</div><h3>Do Kids ao competidor</h3><p>A mesma lógica serve da primeira aula da criança ao jogo do adulto na Barragem.</p></div>
+    <div class="feat rv"><div class="ic">🛠️</div><h3>Pronto pra aplicar</h3><p>Você sai com plano de aula, exercícios e critérios de avaliação na mão.</p></div>
+  </div>
+  <div style="margin-top:34px" class="rv">
+    <div class="gscore"><span class="gnum">5,0</span><span><span class="glogo"><b>G</b><b>o</b><b>o</b><b>g</b><b>l</b><b>e</b></span><br><span class="stars">★★★★★</span><br><span class="sub">a nota dos alunos da JV Tênis no Google</span></span></div>
+  </div>
+</div></section>
+
+<section class="sec"><div class="wrap">
+  <div class="sec-head center rv"><span class="eyebrow">Turmas</span><h2>Turmas pequenas, condição de fundador</h2>
+    <p>As primeiras turmas são reduzidas, com acompanhamento de perto e condição especial para quem entra agora. As vagas são limitadas por turma.</p></div>
+  <div class="faq rv">
+    <details><summary>Como é o formato do curso?</summary><p>Presencial na quadra e/ou online com encontros ao vivo, dependendo da turma. Me chama no WhatsApp que eu te explico a próxima turma e o formato.</p></details>
+    <details><summary>Preciso já ter alunos para fazer?</summary><p>Não. A formação serve tanto para quem já dá aula quanto para quem está começando na carreira.</p></details>
+    <details><summary>Recebo material?</summary><p>Sim. A apostila completa da metodologia é entregue aos inscritos — ela não fica disponível publicamente.</p></details>
+    <details><summary>Vale para beach tennis também?</summary><p>A base do método (pés, movimentação, leitura de quadra, construção de ponto) se adapta bem. Fale comigo sobre o seu caso.</p></details>
+  </div>
+</div></section>
+
+<section class="final"><div class="wrap rv">
+  <h2>Dê aula com método.<br><em>Forme-se comigo.</em></h2>
+  <p>Me chama no WhatsApp que eu te mando o programa completo e a próxima turma.</p>
+  <div class="cta-row">
+    <a class="btn btn-gold" href="https://wa.me/5541995415712?text=Ol%C3%A1%2C%20Jo%C3%A3o!%20Quero%20me%20inscrever%20na%20forma%C3%A7%C3%A3o%20Da%20Base%20ao%20Topo.%20%F0%9F%8E%BE" target="_blank" rel="noopener">Quero me inscrever</a>
+    <a class="btn btn-line" href="metodologia.html">Conhecer a metodologia</a>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <div class="mono">JV</div>
+  <div class="fnm">Academia JV Tênis</div>
+  <div class="tag">Da base ao topo 🎾</div>
+  <div class="fl">
+    <a href="index.html">Site da academia</a>
+    <a href="metodologia.html">Metodologia</a>
+    <a href="sistema.html">Sistema de gestão</a>
+    <a href="https://instagram.com/joaovictortenis" target="_blank" rel="noopener">Instagram</a>
+  </div>
+  <p class="cr">© 2026 JV Tênis — João Victor · Santa Felicidade, Curitiba/PR</p>
+</div></footer>
+<a class="fab" href="https://wa.me/5541995415712?text=Ol%C3%A1%2C%20Jo%C3%A3o!%20Quero%20me%20inscrever%20na%20forma%C3%A7%C3%A3o%20Da%20Base%20ao%20Topo.%20%F0%9F%8E%BE" target="_blank" rel="noopener" aria-label="Falar no WhatsApp">💬</a>
+<script>
+if(!window.matchMedia||!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.12});
+  document.querySelectorAll('.rv').forEach(function(el){io.observe(el);});
+}else{document.querySelectorAll('.rv').forEach(function(el){el.classList.add('in');});}
+</script>
+</body></html>
