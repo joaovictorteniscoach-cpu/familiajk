@@ -25,12 +25,17 @@ versão enviada por drag & drop — por isso o passo abaixo é o que falta.
 Cada pasta é um site separado no Netlify, apontando para o **mesmo** repositório,
 mudando só a **Base directory**. São estáticos: **não há build**.
 
-| Pasta (Base directory) | Site no Netlify        | Conteúdo                         |
-|------------------------|------------------------|----------------------------------|
-| `site`                 | informacoesjvtenis     | Site institucional + Metodologia |
-| `app-aluno`            | app do aluno           | App do aluno (PWA)               |
-| `app-gestao`           | app de gestão          | App de gestão (PWA)              |
-| `app-familia`          | app da família (JK)    | App pessoal da família (PWA)     |
+| Pasta (Base directory) | Site no Netlify        | Público / Conteúdo                         |
+|------------------------|------------------------|--------------------------------------------|
+| `site`                 | informacoesjvtenis     | 🎾 Alunos — institucional + metodologia    |
+| `site-pro`             | cursoecapacitacao      | 👔 Professores — venda do curso e do app   |
+| `app-aluno`            | appalunos              | App do aluno (PWA)                          |
+| `app-gestao`           | app de gestão          | App de gestão (PWA)                         |
+| `app-familia`          | familiajk              | App pessoal da família (PWA)                |
+
+> ⚠️ **Atenção ao Base directory:** ele tem que ser o **nome da pasta** (ex.: `site`,
+> `site-pro`), NÃO o nome do site no Netlify. Se ficar errado (ex.: `cursoecapacitacao`),
+> o deploy não acha o `index.html` e mostra "Page not found".
 
 ## Passo a passo — conectar um site que já existe (mantém a URL)
 

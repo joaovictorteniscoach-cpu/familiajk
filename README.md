@@ -1,18 +1,31 @@
 # JV Tênis — Academia João Victor Tênis
 
-Repositório com os três projetos da academia (backup versionado dos arquivos
+Repositório com os projetos da academia (backup versionado dos arquivos
 publicados no Netlify). Todos são **estáticos / PWA** e funcionam por
-**drag & drop** no Netlify (basta arrastar a pasta ou o `.zip` correspondente).
+**drag & drop** ou **deploy automático via GitHub** no Netlify.
 
 ## Projetos
 
-| Pasta          | Título               | O que é                                                        |
-|----------------|----------------------|----------------------------------------------------------------|
-| `app-gestao/`  | JV Tênis · Gestão    | App de **gestão** (agenda, alunos, caixa e financeiro). PWA + Firebase Realtime Database. |
-| `app-aluno/`   | JV Tênis · Aluno     | App do **aluno**. PWA + Firebase Realtime Database.            |
-| `app-familia/` | Família JK           | App **pessoal** da família (contas da casa, cartões, recebidos e investimentos) com metas, sonhos, projeção e mini-DRE da empresa. PWA + Firebase opcional. |
-| `site/`        | Academia JV Tênis    | **Site** institucional com informações para alunos novos. Imagens embutidas (base64). |
-| `metodologia/` | Da Base ao Topo      | **Fonte em Markdown** da metodologia de treinos (não publicada). Gera `site/metodologia.html` (página pública) e `site/apostila.html` (apostila p/ professores, sem link no menu). |
+Cada pasta **publicável** vira um site separado no Netlify (mudando só a *Base
+directory*). As pastas de **fonte** não são publicadas — guardam o material que
+gera o conteúdo.
+
+### Sites publicáveis
+
+| Pasta          | Público      | O que é                                                        |
+|----------------|--------------|----------------------------------------------------------------|
+| `site/`        | 🎾 Alunos    | **Site institucional** dos alunos: planos, Sistema Flex, avaliações, a **metodologia explicada para alunos** e o folder em PDF. |
+| `site-pro/`    | 👔 Professores | **Site de vendas**: home + página do **curso** (formação Da Base ao Topo) + página do **sistema/app**. |
+| `app-aluno/`   | Alunos       | App do **aluno** (agendamento, pagamentos). PWA + Firebase.    |
+| `app-gestao/`  | Professor    | App de **gestão** (agenda, alunos, caixa e financeiro). PWA + Firebase. |
+| `app-familia/` | Pessoal      | App **da família JK** (contas da casa, cartões, investimentos). PWA + Firebase opcional. |
+
+### Fontes (NÃO publicadas)
+
+| Pasta          | O que é                                                        |
+|----------------|----------------------------------------------------------------|
+| `metodologia/` | **Fonte** da metodologia (`apostila.md`) + `folder.html` (folder comercial) + `export/`. A **apostila é produto pago** e fica fora do ar — o PDF é entregue sob demanda. Gera a página pública `site/metodologia.html`. |
+| `negocio/`     | **Guia de vendas** (`guia-de-vendas.md`): como vender o app para academias e a metodologia como curso. Uso interno. |
 
 ## Última versão dos arquivos
 - `app-gestao/index.html` — editado em 26/06/2026
