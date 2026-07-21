@@ -22,7 +22,11 @@ e `app-gestao/`).
 | Página | Público | O que é |
 |---|---|---|
 | `site/metodologia.html` | Alunos, pais, público geral | Página institucional da metodologia (linkada no menu do site) |
-| `site/apostila.html` | Professores em formação | Apostila completa, **sem link no site** (URL para compartilhar por WhatsApp), com botão "Baixar em PDF" |
+
+> ⚠️ **A apostila NÃO fica no site.** É o material completo (produto pago / curso) e
+> fica fora do ar de propósito. A fonte é `apostila.md`; o PDF é gerado sob demanda
+> e entregue só a quem tem direito (aluno do curso, professor certificado). Não
+> recolocar `apostila.html` em `site/`.
 
 ## Como editar o conteúdo
 
