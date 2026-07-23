@@ -354,6 +354,25 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .tor-bar{display:flex;gap:8px;align-items:center;margin-bottom:14px}
 .tor-bar select{flex:1;padding:11px 12px;border:1px solid var(--border);border-radius:12px;background:#fff;font-size:14px;color:var(--text);font-weight:700}
 .tor-novo{padding:11px 13px;border-radius:12px;border:1px solid var(--border);background:#fff;color:var(--green);font-weight:700;font-size:13px;white-space:nowrap;cursor:pointer}
+/* etapa do torneio */
+.te-bar{background:linear-gradient(140deg,#16260F,#24401C);color:#fff;border-radius:16px;padding:14px 15px;margin-bottom:12px;box-shadow:0 6px 16px rgba(26,46,20,.22)}
+.te-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.te-eyebrow{font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);font-weight:800}
+.te-etapa{font-size:21px;font-weight:900;margin-top:2px;cursor:pointer}
+.te-badge{font-size:11px;font-weight:800;padding:5px 11px;border-radius:14px;white-space:nowrap}
+.te-badge.on{background:rgba(255,255,255,.16);color:#fff}
+.te-badge.fim{background:var(--gold);color:#241c07}
+.te-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.te-acts button{padding:11px;border-radius:11px;border:none;font-weight:800;font-size:13px;cursor:pointer}
+.te-acts .te-fim{background:var(--gold);color:#241c07}
+.te-acts .te-nova{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.25)}
+.te-hist{background:#fff;border:1px solid var(--border);border-radius:14px;padding:11px 13px;margin-bottom:16px}
+.te-hist-t{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);font-weight:800;margin-bottom:7px}
+.te-hrow{padding:8px 0;border-top:1px solid var(--border)}
+.te-hrow:first-of-type{border-top:none}
+.te-hrow b{color:var(--green)}
+.te-hrow>span{font-size:12px;color:var(--muted);margin-left:6px}
+.te-camp{font-size:12.5px;color:var(--text);margin-top:4px;line-height:1.5}
 .tor-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}
 .tor-acts button{padding:12px;border-radius:12px;border:none;font-weight:700;font-size:13px;cursor:pointer}
 .tor-acts .b-add{background:var(--green);color:var(--cream)}
@@ -748,6 +767,7 @@ function iniciarFirebase(){
     <select id="tor-sel" onchange="selTorneio(this.value)"></select>
     <button class="tor-novo" onclick="abrirNovoTorneio()">＋ Novo</button>
   </div>
+  <div id="tor-etapa"></div>
   <div class="tor-acts">
     <button class="b-add" onclick="abrirAddJogador()">＋ Jogador</button>
     <button class="b-res" onclick="abrirResultadoTor()">🎾 Registrar resultado</button>
@@ -1467,7 +1487,7 @@ async function doPublish(){
       precos:DB.precos||{avulsaPart:170,avulsaGrupo:95,locacao:70,personal:130},
       planos:PRECOS,
       grupoPreco:DB.grupoPreco||{dupla:90,trio:85,quarteto:80},
-      torneio:(function(){ensureTorneios();const t=DB.torneios.lista[DB.torneios.atual];return t?{id:t.id,nome:t.nome,tipo:t.tipo,jogadores:t.jogadores}:null;})(),
+      torneio:(function(){ensureTorneios();const t=DB.torneios.lista[DB.torneios.atual];return t?{id:t.id,nome:t.nome,tipo:t.tipo,jogadores:t.jogadores,etapa:t.etapa||1,encerrada:!!t.encerrada}:null;})(),
       horas:HORAS,
       locacaoOnly:DB.locacaoOnly||[],
       horarioCfg:DB.horarioCfg||{},
@@ -3476,8 +3496,59 @@ function ensureTorneios(){
     DB.torneios.seeded=true;
   }
   if(!DB.torneios.atual||!DB.torneios.lista[DB.torneios.atual])DB.torneios.atual=Object.keys(DB.torneios.lista)[0];
+  // etapas: cada torneio tem uma etapa atual, status e histórico
+  Object.keys(DB.torneios.lista).forEach(id=>{
+    const t=DB.torneios.lista[id];
+    if(t.etapa==null)t.etapa=1;
+    if(t.encerrada==null)t.encerrada=false;
+    if(!Array.isArray(t.etapasFin))t.etapasFin=[];
+  });
 }
 function torAtual(){ensureTorneios();return DB.torneios.lista[DB.torneios.atual];}
+function etapaLabel(t){return 'Etapa '+((t&&t.etapa)||1);}
+function campeoesDe(t){
+  // vencedores por grupo (1º e 2º) segundo a classificação atual
+  const grupos=GRUPOS_TOR.filter(g=>t.jogadores.some(p=>p.group===g));
+  return grupos.map(g=>{
+    const ps=rankPlayersTor(t.jogadores.filter(p=>p.group===g));
+    return {grupo:g,campeao:ps[0]?ps[0].name:'—',vice:ps[1]?ps[1].name:'—'};
+  });
+}
+function encerrarEtapa(){
+  const t=torAtual();
+  if(!t.jogadores||!t.jogadores.length){toast('Adicione jogadores antes de encerrar');return;}
+  if(t.encerrada){toast('Esta etapa já está encerrada');return;}
+  if(!confirm('Encerrar a '+etapaLabel(t)+' de "'+t.nome+'"?\nOs campeões e vices serão definidos pela classificação atual e a premiação aparecerá para os alunos.'))return;
+  const campeoes=campeoesDe(t);
+  t.etapasFin=t.etapasFin||[];
+  // remove registro anterior desta mesma etapa (reencerrar) e regrava
+  t.etapasFin=t.etapasFin.filter(e=>e.etapa!==t.etapa);
+  t.etapasFin.push({etapa:t.etapa,data:new Date().toISOString().slice(0,10),campeoes});
+  t.encerrada=true;
+  persist();renderTorneio();
+  toast('🏁 '+etapaLabel(t)+' encerrada — campeões definidos!');
+}
+function novaEtapa(){
+  const t=torAtual();
+  if(!t.encerrada){
+    if(!confirm('A '+etapaLabel(t)+' ainda não foi encerrada. Iniciar a próxima etapa mesmo assim?\n(Os placares V/D/WO serão zerados para a nova etapa; os jogadores e grupos continuam.)'))return;
+  }else{
+    if(!confirm('Iniciar a próxima etapa? Os placares V/D/WO serão zerados; os jogadores e grupos continuam.'))return;
+  }
+  t.etapa=(Number(t.etapa)||1)+1;
+  t.encerrada=false;
+  (t.jogadores||[]).forEach(p=>{p.v=0;p.d=0;p.wo=0;});
+  persist();renderTorneio();
+  toast('🎾 '+etapaLabel(t)+' iniciada!');
+}
+function editarEtapaNum(){
+  const t=torAtual();
+  const v=prompt('Número da etapa atual:',String(t.etapa||1));
+  if(v==null)return;
+  const n=parseInt(v,10);
+  if(isNaN(n)||n<1){toast('Número inválido');return;}
+  t.etapa=n;persist();renderTorneio();toast('Etapa definida: '+etapaLabel(t));
+}
 function calcPtsTor(p){return (p.v||0)*3+(p.d||0)*1+(p.wo||0)*1;}
 function rankPlayersTor(jogs){return jogs.slice().sort((a,b)=>calcPtsTor(b)-calcPtsTor(a)||(b.v||0)-(a.v||0)||(a.order??0)-(b.order??0));}
 
@@ -3487,10 +3558,27 @@ function renderTorneio(){
   const ids=Object.keys(DB.torneios.lista);
   sel.innerHTML=ids.map(id=>`<option value="${id}" ${id===DB.torneios.atual?'selected':''}>${torEsc(DB.torneios.lista[id].nome)}</option>`).join('');
   const t=torAtual();
+  renderTorEtapa(t);
   const wrap=document.getElementById('tor-grupos');
   const grupos=GRUPOS_TOR.filter(g=>t.jogadores.some(p=>p.group===g));
   wrap.innerHTML=grupos.length?grupos.map(g=>renderGrupoTor(t,g)).join(''):'<div class="tor-empty">Nenhum jogador ainda neste torneio.<br>Toque em <b>＋ Jogador</b> para montar os grupos A–E. 🎾</div>';
   renderTorLog();
+}
+function renderTorEtapa(t){
+  const el=document.getElementById('tor-etapa');if(!el)return;
+  const status=t.encerrada?'<span class="te-badge fim">encerrada ✓</span>':'<span class="te-badge on">em andamento</span>';
+  let hist='';
+  const fins=(t.etapasFin||[]).slice().sort((a,b)=>b.etapa-a.etapa);
+  if(fins.length){
+    hist='<div class="te-hist"><div class="te-hist-t">Etapas encerradas</div>'+fins.map(e=>{
+      const linhas=(e.campeoes||[]).map(c=>'Grupo '+c.grupo+': 🏆 '+torEsc(c.campeao)+' · 🥈 '+torEsc(c.vice)).join('<br>');
+      return '<div class="te-hrow"><b>Etapa '+e.etapa+'</b> <span>'+((e.data||'').split('-').reverse().join('/'))+'</span><div class="te-camp">'+linhas+'</div></div>';
+    }).join('')+'</div>';
+  }
+  el.innerHTML='<div class="te-bar">'+
+    '<div class="te-top"><div><span class="te-eyebrow">'+torEsc(t.nome)+'</span><div class="te-etapa" onclick="editarEtapaNum()" title="Tocar para editar o número">'+etapaLabel(t)+' ✎</div></div>'+status+'</div>'+
+    '<div class="te-acts"><button class="te-fim" onclick="encerrarEtapa()">🏁 Encerrar etapa</button><button class="te-nova" onclick="novaEtapa()">➕ Nova etapa</button></div>'+
+    '</div>'+hist;
 }
 function renderGrupoTor(t,g){
   const players=rankPlayersTor(t.jogadores.filter(p=>p.group===g));
