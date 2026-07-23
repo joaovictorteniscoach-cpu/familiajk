@@ -127,6 +127,15 @@ A Pirâmide é o mapa do **conteúdo** da metodologia. São seis camadas, empilh
 
 Numa partida longa de tênis, a bola fica em contato com a raquete por uma fração de segundo a cada batida. Some todos os contatos da partida inteira e o tempo real de bola na raquete fica em torno de poucos segundos — o resto, que é praticamente o jogo todo, é deslocamento, posicionamento, espera e decisão.
 
+<div style="margin:18px 0 6px">
+  <div style="display:flex;justify-content:space-between;font-size:13px;color:#cfd8de;margin-bottom:5px"><b style="color:#fff">Contato da bola com a raquete</b><span>≈ poucos segundos, na partida inteira</span></div>
+  <div style="background:#0B1B2B;border:1px solid rgba(216,180,92,.35);border-radius:8px;height:16px;overflow:hidden"><div style="width:2.5%;min-width:8px;height:100%;background:linear-gradient(90deg,#E7CE93,#C49A3F);border-radius:7px"></div></div>
+</div>
+<div style="margin:0 0 16px">
+  <div style="display:flex;justify-content:space-between;font-size:13px;color:#cfd8de;margin-bottom:5px"><b style="color:#fff">Deslocamento, posicionamento e decisão</b><span>o resto da partida</span></div>
+  <div style="background:#0B1B2B;border:1px solid rgba(216,180,92,.35);border-radius:8px;height:16px;overflow:hidden"><div style="width:100%;height:100%;background:linear-gradient(90deg,#15304A,#1C3F5E);border-radius:7px"></div></div>
+</div>
+
 Isso não é uma curiosidade solta. É o motivo desta apostila começar pelos pés, e não pela raquete. Quem treina deslocamento, leitura de quadra e tomada de decisão está treinando o que ocupa quase toda a partida. A batida importa — é o topo da pirâmide, não a base — mas só funciona bem se antes dela vier o pé no lugar certo, o corpo equilibrado, o olho lendo a jogada.
 
 **A batida decide o golpe. O deslocamento decide o ponto.**
