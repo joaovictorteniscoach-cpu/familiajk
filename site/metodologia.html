@@ -90,6 +90,15 @@ blockquote.mq footer{background:none;padding:0;text-align:left;font-size:14px;fo
 .pyr .p1 a{width:100%;background:linear-gradient(135deg,var(--navy-2),var(--deep));border-color:var(--gold)}
 .pyr-hint{text-align:center;font-size:13.5px;color:var(--muted);margin:-30px 0 44px}
 
+.sci{max-width:640px;margin:0 auto 36px}
+.sci-bar{margin-bottom:16px}
+.sci-bar .lbl{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:13.5px;color:var(--muted);margin-bottom:6px}
+.sci-bar .lbl b{color:#fff;font-size:14.5px}
+.sci-bar .track{background:var(--deep);border:1px solid var(--line);border-radius:8px;height:16px;overflow:hidden}
+.sci-bar .fill{height:100%;border-radius:7px}
+.sci-bar.contact .fill{width:2.5%;min-width:8px;background:linear-gradient(90deg,var(--gold-soft),var(--gold-2))}
+.sci-bar.resto .fill{width:100%;background:linear-gradient(90deg,var(--navy-2),var(--navy-3))}
+
 .steps{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
 .step{display:flex;gap:16px;background:var(--navy);border:1px solid var(--line);border-radius:var(--r);padding:22px;scroll-margin-top:84px}
 .alt .step{background:var(--navy-2)}
@@ -176,7 +185,7 @@ footer .cr{color:#6B7E8C;font-size:12.5px}
   .pyr .p3 a{width:85%}
   .pyr .p2 a{width:93%}
 }
-@media(max-width:520px){section.sec{padding:56px 0}.hero .cta-row .btn{flex:1}}
+@media(max-width:520px){section.sec{padding:56px 0}.hero .cta-row .btn{flex:1}.sci-bar .lbl{flex-direction:column;gap:2px}}
 @media(prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}*{scroll-behavior:auto}}
 :focus-visible{outline:3px solid var(--gold);outline-offset:2px;border-radius:6px}
 </style>
@@ -276,6 +285,16 @@ footer .cr{color:#6B7E8C;font-size:12.5px}
         <div class="n">6</div>
         <div><h3><small>Competição &amp; mentalidade</small>O Topo</h3>
         <p>Competir é habilidade treinável: rotinas, gestão emocional e o torneio interno Barragem como laboratório. No limite da maturidade, o aluno do topo aprende também a ensinar.</p></div>
+      </div>
+    </div>
+    <div class="sci rv">
+      <div class="sci-bar contact">
+        <div class="lbl"><b>Contato da bola com a raquete</b><span>≈ poucos segundos, na partida inteira</span></div>
+        <div class="track"><div class="fill"></div></div>
+      </div>
+      <div class="sci-bar resto">
+        <div class="lbl"><b>Deslocamento, posicionamento e decisão</b><span>o resto da partida</span></div>
+        <div class="track"><div class="fill"></div></div>
       </div>
     </div>
     <blockquote class="mq rv" style="margin-left:auto;margin-right:auto">
