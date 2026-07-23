@@ -68,6 +68,22 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .tex-tbl tr.r1 td{background:#FBF4DF}
 .tex-pts{font-weight:800;color:var(--clay)}
 .tex-foot{margin-top:10px;font-size:11px;color:var(--muted);text-align:center;font-style:italic}
+/* devolutiva da avaliação (export) */
+#aval-export{position:fixed;left:-10000px;top:0;width:430px;background:#fff;padding:24px;color:#2A2016}
+.aex-nivel{text-align:center;margin:14px 0 8px}
+.aex-badge{display:inline-block;background:#5B3FA6;color:#fff;font-weight:800;font-size:15px;padding:8px 20px;border-radius:22px}
+.aex-trilha{display:flex;gap:5px;margin:10px 0 16px}
+.aex-step{flex:1;text-align:center;font-size:10px;font-weight:700;color:#8a8478;padding:8px 2px;border-radius:8px;background:#F1ECE0;line-height:1.2}
+.aex-step.done{background:#EDE7FB;color:#5B3FA6}
+.aex-step.cur{background:#5B3FA6;color:#fff}
+.aex-prio{background:#F4F7EC;border:1px solid #dfe6c9;border-radius:11px;padding:11px 13px;margin:0 0 16px;font-size:13px}
+.aex-prio b{color:var(--green)}
+.aex-sec{font-size:12px;font-weight:800;color:var(--green);margin:14px 0 9px}
+.aex-row{margin-bottom:10px}
+.aex-row .top{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px}
+.aex-row .top .st{font-weight:700;color:#5B3FA6}
+.aex-bar{height:9px;border-radius:6px;background:#EBE5DA;overflow:hidden}
+.aex-bar>i{display:block;height:100%;border-radius:6px;background:#5B3FA6}
 .bell-badge{position:absolute;top:-4px;right:-4px;background:var(--clay);color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid var(--green)}
 .drag-item{touch-action:pan-y}
 .dragging{opacity:.35}
@@ -699,6 +715,7 @@ function iniciarFirebase(){
   <div id="tor-grupos"></div>
   <div id="tor-log-wrap"></div>
   <div id="tor-export"></div>
+  <div id="aval-export"></div>
 </section>
 
 <!-- MODAL NOVO TORNEIO -->
@@ -976,6 +993,20 @@ function iniciarFirebase(){
     <div class="modal-acts">
       <button class="btn btn-ghost" onclick="closeModal('ov-registro')">Fechar</button>
       <button class="btn btn-clay" onclick="saveRegistro()">Salvar registro</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ENVIAR DEVOLUTIVA (avaliação → pais) -->
+<div class="overlay" id="ov-avalexp" style="z-index:136" onclick="if(event.target===this)closeModal('ov-avalexp')">
+  <div class="modal">
+    <h3>Enviar avaliação 📤</h3>
+    <p class="sub" id="avalexp-sub" style="font-size:12.5px;color:var(--muted);margin:-2px 0 12px">—</p>
+    <div class="modal-acts" style="flex-direction:column;gap:8px;align-items:stretch">
+      <button class="btn btn-clay" onclick="exportarAvalImg()">📸 Imagem (compartilhar no WhatsApp)</button>
+      <button class="btn btn-ghost" onclick="exportarAvalPDF()">📄 Baixar PDF</button>
+      <button class="btn btn-ghost" id="avalexp-wa" onclick="enviarDevolutivaWa()">📲 Enviar resumo em texto (WhatsApp)</button>
+      <button class="btn btn-ghost" onclick="closeModal('ov-avalexp')">Fechar</button>
     </div>
   </div>
 </div>
@@ -2437,6 +2468,100 @@ function delRegistro(id,idx){
   toast('Registro excluído');
 }
 
+/* ===== Devolutiva da avaliação (imagem / PDF / WhatsApp p/ os pais) ===== */
+let avalExpId='';
+function ultimaAval(a){return (a&&a.avaliacoes&&a.avaliacoes.length)?a.avaliacoes[a.avaliacoes.length-1]:null;}
+function openAvalExport(id){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  const av=ultimaAval(a);
+  if(!av){toast('Faça a avaliação deste aluno primeiro');return;}
+  avalExpId=id;
+  document.getElementById('avalexp-sub').textContent=a.nome+' · Nível '+(av.nivel||'—')+' · '+((av.data||'').split('-').reverse().join('/'));
+  const wa=document.getElementById('avalexp-wa');if(wa)wa.style.display=a.tel?'':'none';
+  document.getElementById('ov-avalexp').classList.add('on');
+}
+function montarAvalExport(a){
+  const av=ultimaAval(a);if(!av)return;
+  const ci=Math.max(0,TRILHA_NIVEIS.indexOf(av.nivel));
+  const nome1=a.nome;
+  let html='<div class="tex-head"><div><b>Academia João Victor Tênis</b><span>Avaliação · '+((av.data||'').split('-').reverse().join('/'))+'</span></div><div class="tex-emb">JV</div></div>';
+  html+='<div style="font-size:15px;font-weight:800;color:#2A2016;margin:-4px 0 2px">'+escAval(nome1)+'</div>';
+  html+='<div style="font-size:11px;color:#8a8478;margin-bottom:2px">Metodologia Da Base ao Topo'+(av.formato?' · '+escAval(av.formato):'')+'</div>';
+  html+='<div class="aex-nivel"><span class="aex-badge">Nível: '+(av.nivel||'—')+'</span></div>';
+  html+='<div class="aex-trilha">'+TRILHA_NIVEIS.map((n,i)=>'<div class="aex-step '+(i<ci?'done':'')+' '+(i===ci?'cur':'')+'">'+n+'</div>').join('')+'</div>';
+  if(av.objetivo)html+='<div class="aex-prio" style="background:#FBF6EC;border-color:#eadfc6">🎯 Objetivo: <b>'+escAval(av.objetivo)+'</b></div>';
+  if(av.prioridade)html+='<div class="aex-prio">Prioridade do ciclo: <b>'+escAval(av.prioridade)+'</b></div>';
+  ['mov','tec'].forEach(g=>{
+    html+='<div class="aex-sec">'+(g==='mov'?'🏃 Observação em movimento':'🎾 Com raquete')+'</div>';
+    AVAL_ESCALA[g].itens.forEach(it=>{
+      const v=Number(av[g]&&av[g][it.k])||0,pct=Math.round(v/3*100),rot=v>0?it.n[v-1]:'—';
+      html+='<div class="aex-row"><div class="top"><span>'+it.lbl+'</span><span class="st">'+rot+'</span></div><div class="aex-bar"><i style="width:'+pct+'%"></i></div></div>';
+    });
+  });
+  if(av.obs)html+='<div class="aex-prio" style="margin-top:14px;background:#F7F4EE;border-color:#e7e0d2">📝 '+escAval(av.obs)+'</div>';
+  html+='<div class="tex-foot">Disciplina no treino. Evolução no jogo. 🎾 · Prof. João Victor</div>';
+  document.getElementById('aval-export').innerHTML=html;
+}
+function escAval(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function avalExportCanvas(){
+  const a=DB.alunos.find(x=>x.id===avalExpId);if(!a)return Promise.reject('semaluno');
+  montarAvalExport(a);
+  return html2canvas(document.getElementById('aval-export'),{backgroundColor:'#ffffff',scale:2});
+}
+async function exportarAvalImg(){
+  toast('Preparando imagem…');
+  try{await garantirExportLibs();}catch(e){toast('Sem internet para gerar a imagem agora');return;}
+  if(typeof html2canvas==='undefined'){toast('Recurso indisponível agora');return;}
+  const a=DB.alunos.find(x=>x.id===avalExpId);
+  try{
+    const canvas=await avalExportCanvas();
+    canvas.toBlob(async(blob)=>{
+      if(!blob){toast('Não consegui gerar a imagem');return;}
+      const nome=(a?a.nome.split(' ')[0]:'aluno').toLowerCase();
+      const file=new File([blob],'avaliacao-'+nome+'.png',{type:'image/png'});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        try{await navigator.share({files:[file],title:'Avaliação · JV Tênis',text:'Avaliação de '+(a?a.nome:'')+' 🎾'});return;}catch(e){}
+      }
+      const url=URL.createObjectURL(blob);const el=document.createElement('a');el.href=url;el.download='avaliacao-'+nome+'.png';
+      document.body.appendChild(el);el.click();document.body.removeChild(el);URL.revokeObjectURL(url);
+      toast('🖼️ Imagem salva!');
+    },'image/png');
+  }catch(e){toast('Erro ao gerar imagem');}
+}
+async function exportarAvalPDF(){
+  toast('Preparando PDF…');
+  try{await garantirExportLibs();}catch(e){toast('Sem internet para gerar o PDF agora');return;}
+  if(typeof html2canvas==='undefined'||!window.jspdf){toast('Recurso indisponível agora');return;}
+  const a=DB.alunos.find(x=>x.id===avalExpId);
+  try{
+    const canvas=await avalExportCanvas();
+    const img=canvas.toDataURL('image/png');
+    const {jsPDF}=window.jspdf;const pdf=new jsPDF('p','mm','a4');
+    const margin=10,pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
+    let iw=pw-margin*2,ih=canvas.height*iw/canvas.width;
+    if(ih>ph-margin*2){ih=ph-margin*2;iw=canvas.width*ih/canvas.height;}
+    pdf.addImage(img,'PNG',(pw-iw)/2,margin,iw,ih);
+    pdf.save('avaliacao-'+(a?a.nome.split(' ')[0].toLowerCase():'aluno')+'.pdf');
+    toast('📄 PDF salvo!');
+  }catch(e){toast('Erro ao gerar PDF');}
+}
+function enviarDevolutivaWa(){
+  const a=DB.alunos.find(x=>x.id===avalExpId);if(!a)return;
+  if(!a.tel){toast('Sem telefone cadastrado para '+a.nome);return;}
+  const av=ultimaAval(a);if(!av)return;
+  const nome=a.nome.split(' ')[0];
+  let linhas=['Olá! Segue a devolutiva da avaliação de *'+a.nome+'* na metodologia _Da Base ao Topo_ (JV Tênis):','','🎾 *Nível na Trilha:* '+(av.nivel||'—')];
+  if(av.prioridade)linhas.push('🎯 *Prioridade do ciclo:* '+av.prioridade);
+  linhas.push('');
+  ['mov','tec'].forEach(g=>{
+    AVAL_ESCALA[g].itens.forEach(it=>{const v=Number(av[g]&&av[g][it.k])||0;if(v>0)linhas.push('• '+it.lbl+': '+it.n[v-1]);});
+  });
+  linhas.push('','Qualquer dúvida, estou à disposição! 👊');
+  const msg=encodeURIComponent(linhas.join('\n'));
+  window.open('https://wa.me/55'+a.tel+'?text='+msg,'_blank');
+  closeModal('ov-avalexp');
+}
+
 function delAluno(id){
   const a=DB.alunos.find(x=>x.id===id);
   if(confirm('Excluir '+a.nome+'? Essa ação não pode ser desfeita.')){
@@ -2583,6 +2708,7 @@ function renderAlunos(){
       <div class="aluno-foot">
         <button class="linkbtn" onclick="openAlunoModal('${a.id}')">Editar</button>
         <button class="linkbtn" onclick="openRegistroModal('${a.id}')">Registro 📝</button>
+        ${(a.avaliacoes&&a.avaliacoes.length)?`<button class="linkbtn" onclick="openAvalExport('${a.id}')">Devolutiva 📤</button>`:''}
         <button class="linkbtn" onclick="renovarMes('${a.id}')">Renovar mês</button>
         ${a.tel?`<button class="linkbtn wa" onclick="enviarAcesso('${a.id}')">Enviar acesso 🔑</button>`:''}
         ${a.tel?`<button class="linkbtn wa" onclick="enviarRenovacaoWa('${a.id}')">Renovação 📲</button>`:''}
