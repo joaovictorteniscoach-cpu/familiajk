@@ -217,7 +217,24 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .act.a2{background:var(--gold);color:var(--dark)}
 .act.a3{background:#E3F2E4;color:var(--ok)}
 .act.a4{background:#F4EDE0;color:var(--muted)}
+.act.aval{grid-column:1/-1;background:#EDE7FB;color:#5B3FA6}
 .act:active{transform:scale(.97)}
+/* ===== Avaliação (card Da Base ao Topo) ===== */
+.aval-blk{margin:14px 0 4px}
+.aval-blk h4{font-size:12.5px;font-weight:800;color:var(--green);letter-spacing:.3px;margin:0 0 8px;display:flex;align-items:center;gap:7px}
+.aval-item{margin-bottom:11px}
+.aval-item>label{display:block;font-size:12.5px;font-weight:700;color:var(--dark);margin-bottom:5px}
+.seg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.seg3 button{border:1.5px solid var(--border);background:#fff;color:var(--muted);border-radius:9px;padding:8px 4px;font-size:11px;font-weight:600;line-height:1.25;cursor:pointer}
+.seg3 button.on{border-color:#5B3FA6;background:#EDE7FB;color:#4A3191;font-weight:800}
+.seg3 button:active{transform:scale(.97)}
+.trilha-pills{display:flex;flex-wrap:wrap;gap:6px}
+.trilha-pills button{border:1.5px solid var(--border);background:#fff;color:var(--muted);border-radius:20px;padding:8px 13px;font-size:12px;font-weight:700;cursor:pointer}
+.trilha-pills button.on{border-color:var(--green);background:var(--green);color:var(--cream)}
+.aval-hist{margin-top:6px}
+.aval-hist .hrow{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#F7F4EE;border:1px solid var(--border);border-radius:9px;padding:8px 11px;margin-bottom:6px;font-size:12.5px}
+.aval-hist .hrow b{color:var(--green)}
+.aval-hist .hrow .del{background:none;border:none;color:#B23A2E;font-weight:700;cursor:pointer;font-size:12px}
 .aluno-foot{display:flex;justify-content:space-between;margin-top:10px;flex-wrap:wrap;gap:4px}
 .ha-box{margin:2px 0 10px;background:#fff;border:1px solid var(--border);border-radius:11px;padding:9px 11px}
 .ha-title{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:5px}
@@ -881,6 +898,48 @@ function iniciarFirebase(){
   </div>
 </div>
 
+<!-- MODAL AVALIAÇÃO (Da Base ao Topo · Anexo A) -->
+<div class="overlay" id="ov-aval" style="z-index:135" onclick="if(event.target===this)closeModal('ov-aval')">
+  <div class="modal">
+    <input type="hidden" id="av-id">
+    <h3 id="aval-title">Avaliação</h3>
+    <p class="sub" style="font-size:12px;color:var(--muted);margin:-4px 0 10px">Metodologia <b>Da Base ao Topo</b> · Ficha de avaliação</p>
+
+    <div class="row2">
+      <div class="field"><label>Data</label><input type="date" id="av-data"></div>
+      <div class="field"><label>Nível da Trilha</label>
+        <div class="trilha-pills" id="av-nivel">
+          <button type="button" data-v="Base" onclick="setAvalNivel('Base')">Base</button>
+          <button type="button" data-v="Impulso" onclick="setAvalNivel('Impulso')">Impulso</button>
+          <button type="button" data-v="Construção" onclick="setAvalNivel('Construção')">Construção</button>
+          <button type="button" data-v="Ascensão" onclick="setAvalNivel('Ascensão')">Ascensão</button>
+          <button type="button" data-v="Topo" onclick="setAvalNivel('Topo')">Topo</button>
+        </div>
+      </div>
+    </div>
+    <div class="field"><label>Objetivo declarado do aluno</label><input id="av-objetivo" placeholder="Ex.: voltar a jogar, competir na Barragem, condicionamento…"></div>
+
+    <div class="aval-blk" id="av-blk-mov"><h4>🏃 Observação em movimento <span style="font-weight:600;color:var(--muted)">(sem raquete)</span></h4></div>
+    <div class="aval-blk" id="av-blk-tec"><h4>🎾 Com raquete <span style="font-weight:600;color:var(--muted)">(bola facilitada)</span></h4></div>
+
+    <div class="field"><label>Formato sugerido</label>
+      <select id="av-formato"><option>Particular</option><option>Dupla</option><option>Trio</option><option>Quarteto</option><option>Kids</option></select>
+    </div>
+    <div class="field"><label>Prioridade do ciclo (o que treinar primeiro)</label><input id="av-prioridade" placeholder="Ex.: split-step espontâneo + base aberta no forehand"></div>
+    <div class="field"><label>Observação livre</label><textarea id="av-obs" rows="2" placeholder="Anotações do professor…" style="width:100%;resize:vertical"></textarea></div>
+
+    <div id="av-hist-wrap" style="display:none">
+      <div class="ha-title" style="margin-top:14px">Avaliações anteriores</div>
+      <div class="aval-hist" id="av-hist"></div>
+    </div>
+
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeModal('ov-aval')">Fechar</button>
+      <button class="btn btn-clay" onclick="saveAvaliacao()">Salvar avaliação</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL LANÇAMENTO -->
 <div class="overlay" id="ov-lanc" onclick="if(event.target===this)closeModal('ov-lanc')">
   <div class="modal">
@@ -1177,6 +1236,7 @@ function ensureFields(){
   DB.alunos.forEach(a=>{
     if(a.diaVenc==null){a.diaVenc=10;changed=true;}
     if(a.locCred===undefined){a.locCred=0;changed=true;}
+    if(!Array.isArray(a.avaliacoes)){a.avaliacoes=[];changed=true;}
     if(!a.codigo){
       let c;do{c=genCode();}while(DB.alunos.some(x=>x.codigo===c));
       a.codigo=c;changed=true;
@@ -1285,7 +1345,7 @@ async function doPublish(){
       locacaoOnly:DB.locacaoOnly||[],
       horarioCfg:DB.horarioCfg||{},
       horarioData:DB.horarioData||{},
-      alunos:DB.alunos.map(a=>({codigo:a.codigo,nome:a.nome,tipo:a.tipo,plano:a.plano,creditos:a.creditos,repos:a.repos,status:a.status,mensalidade:a.mensalidade,diaVenc:a.diaVenc||10,cardLink:a.cardLink||'',mfitLink:a.mfitLink||'',valorAula:a.valorAula||(a.tipo==='Personal'?130:160),locCred:Number(a.locCred)||0})),
+      alunos:DB.alunos.map(a=>({codigo:a.codigo,nome:a.nome,tipo:a.tipo,plano:a.plano,creditos:a.creditos,repos:a.repos,status:a.status,mensalidade:a.mensalidade,diaVenc:a.diaVenc||10,cardLink:a.cardLink||'',mfitLink:a.mfitLink||'',valorAula:a.valorAula||(a.tipo==='Personal'?130:160),locCred:Number(a.locCred)||0,avaliacoes:(a.avaliacoes||[]).slice(-12)})),
       historico:(function(){
         const codeOf={};DB.alunos.forEach(a=>{codeOf[a.id]=a.codigo;});
         const cut=dKey(new Date(Date.now()-60*864e5));const out={};
@@ -2175,6 +2235,109 @@ function saveAluno(){
   }
   persist();closeModal('ov-aluno');renderAll();
 }
+
+/* ===== Avaliação de desenvolvimento (Da Base ao Topo · Anexo A) ===== */
+const AVAL_ESCALA={
+  mov:{
+    titulo:'Observação em movimento (sem raquete)',
+    itens:[
+      {k:'espera', lbl:'Posição de espera',      n:['não tem','com lembrete','espontânea']},
+      {k:'split',  lbl:'Split-step',             n:['não tem','com lembrete','espontâneo']},
+      {k:'desloc', lbl:'Deslocamento lateral',   n:['inseguro','funcional','fluido']},
+      {k:'percep', lbl:'Percepção de bola (pega)',n:['difícil','irregular','consistente']},
+      {k:'equil',  lbl:'Equilíbrio na chegada',  n:['instável','razoável','estável']}
+    ]
+  },
+  tec:{
+    titulo:'Com raquete (bola facilitada)',
+    itens:[
+      {k:'forehand',lbl:'Forehand', n:['iniciando','forma reconhecível','consistente']},
+      {k:'backhand',lbl:'Backhand', n:['iniciando','forma reconhecível','consistente']},
+      {k:'saque',   lbl:'Saque',    n:['iniciando','gesto simplificado','gesto completo']},
+      {k:'troca',   lbl:'Troca',    n:['não sustenta','5 bolas','10+ bolas']}
+    ]
+  }
+};
+const TRILHA_NIVEIS=['Base','Impulso','Construção','Ascensão','Topo'];
+let avalDraft=null;
+function avalItemHTML(grupo,it){
+  const val=avalDraft[grupo][it.k]||0;
+  const btns=it.n.map((txt,i)=>`<button type="button" class="${val===i+1?'on':''}" onclick="setAval('${grupo}','${it.k}',${i+1})">${txt}</button>`).join('');
+  return `<div class="aval-item"><label>${it.lbl}</label><div class="seg3" data-seg="${grupo}-${it.k}">${btns}</div></div>`;
+}
+function renderAvalBlocos(){
+  ['mov','tec'].forEach(g=>{
+    const box=document.getElementById(g==='mov'?'av-blk-mov':'av-blk-tec');
+    // mantém o <h4>, recria só os itens
+    const h4=box.querySelector('h4');
+    box.innerHTML='';box.appendChild(h4);
+    AVAL_ESCALA[g].itens.forEach(it=>box.insertAdjacentHTML('beforeend',avalItemHTML(g,it)));
+  });
+}
+function setAval(grupo,key,val){
+  avalDraft[grupo][key]=val;
+  const seg=document.querySelector('[data-seg="'+grupo+'-'+key+'"]');
+  if(seg)[...seg.children].forEach((b,i)=>b.classList.toggle('on',i+1===val));
+}
+function setAvalNivel(n){
+  avalDraft.nivel=n;
+  document.querySelectorAll('#av-nivel button').forEach(b=>b.classList.toggle('on',b.dataset.v===n));
+}
+function openAvalModal(id){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  if(!Array.isArray(a.avaliacoes))a.avaliacoes=[];
+  const ult=a.avaliacoes[a.avaliacoes.length-1]||null;
+  // prefill: clona a última avaliação p/ facilitar a reavaliação (mantém o progresso visível)
+  avalDraft={mov:Object.assign({},ult&&ult.mov),tec:Object.assign({},ult&&ult.tec),nivel:(ult&&ult.nivel)||''};
+  document.getElementById('av-id').value=id;
+  document.getElementById('aval-title').textContent='Avaliação · '+a.nome;
+  document.getElementById('av-data').value=new Date().toISOString().slice(0,10);
+  document.getElementById('av-objetivo').value=(ult&&ult.objetivo)||'';
+  document.getElementById('av-formato').value=(ult&&ult.formato)||a.tipo||'Particular';
+  document.getElementById('av-prioridade').value='';
+  document.getElementById('av-obs').value='';
+  setAvalNivel(avalDraft.nivel);
+  renderAvalBlocos();
+  renderAvalHist(a);
+  document.getElementById('ov-aval').classList.add('on');
+}
+function renderAvalHist(a){
+  const wrap=document.getElementById('av-hist-wrap'),el=document.getElementById('av-hist');
+  const av=a.avaliacoes||[];
+  if(!av.length){wrap.style.display='none';el.innerHTML='';return;}
+  wrap.style.display='block';
+  el.innerHTML=av.slice().reverse().map((v,ri)=>{
+    const idx=av.length-1-ri;
+    return `<div class="hrow"><span>${(v.data||'').split('-').reverse().join('/')} · <b>${v.nivel||'—'}</b>${v.prioridade?' · '+v.prioridade:''}</span><button class="del" onclick="delAvaliacao('${a.id}',${idx})">excluir</button></div>`;
+  }).join('');
+}
+function saveAvaliacao(){
+  const id=document.getElementById('av-id').value;
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  if(!avalDraft.nivel){toast('Selecione o nível da Trilha');return;}
+  const rec={
+    data:document.getElementById('av-data').value||new Date().toISOString().slice(0,10),
+    nivel:avalDraft.nivel,
+    formato:document.getElementById('av-formato').value,
+    objetivo:document.getElementById('av-objetivo').value.trim(),
+    prioridade:document.getElementById('av-prioridade').value.trim(),
+    obs:document.getElementById('av-obs').value.trim(),
+    mov:{},tec:{}
+  };
+  AVAL_ESCALA.mov.itens.forEach(it=>rec.mov[it.k]=avalDraft.mov[it.k]||0);
+  AVAL_ESCALA.tec.itens.forEach(it=>rec.tec[it.k]=avalDraft.tec[it.k]||0);
+  if(!Array.isArray(a.avaliacoes))a.avaliacoes=[];
+  a.avaliacoes.push(rec);
+  persist();renderAll();closeModal('ov-aval');
+  toast('📈 Avaliação salva · '+a.nome+' → '+rec.nivel);
+}
+function delAvaliacao(id,idx){
+  const a=DB.alunos.find(x=>x.id===id);if(!a||!a.avaliacoes)return;
+  if(!confirm('Excluir esta avaliação?'))return;
+  a.avaliacoes.splice(idx,1);persist();renderAll();renderAvalHist(a);
+  toast('Avaliação excluída');
+}
+
 function delAluno(id){
   const a=DB.alunos.find(x=>x.id===id);
   if(confirm('Excluir '+a.nome+'? Essa ação não pode ser desfeita.')){
@@ -2305,6 +2468,7 @@ function renderAlunos(){
         <span class="chip ${a.repos>0?'warn':'gold'}">🔁 ${fmtCred(a.repos)} reposiç${a.repos===1?'ão':'ões'}</span>
         <span class="chip" style="${(Number(a.locCred)||0)<0?'background:#F6D7D2;color:#8E2C1E;font-weight:800':''}">🔑 ${fmtCred(Number(a.locCred)||0)}h locação${(Number(a.locCred)||0)<0?' (devendo)':''}</span>
         <span class="chip code">🔑 ${a.codigo||'—'}</span>
+        ${(a.avaliacoes&&a.avaliacoes.length)?`<span class="chip" style="background:#EDE7FB;color:#5B3FA6;font-weight:800">📈 ${a.avaliacoes[a.avaliacoes.length-1].nivel||'—'}</span>`:''}
         ${a.termoAceitoEm?`<span class="chip" style="background:#E6F0E6;color:#2E7D52">📄 termo aceito</span>`:''}
       </div>
       ${histAlunoHTML(a.id)}
@@ -2315,6 +2479,7 @@ function renderAlunos(){
         <button class="act a4" onclick="usarRepos('${a.id}')">↺ Usar reposição</button>
         <button class="act a2" onclick="addLocacao('${a.id}')">🔑 +1h locação</button>
         <button class="act a1" onclick="usarLocacao('${a.id}')">🔑 Locação feita (−1h)</button>
+        <button class="act aval" onclick="openAvalModal('${a.id}')">📈 Avaliar</button>
       </div>
       <div class="aluno-foot">
         <button class="linkbtn" onclick="openAlunoModal('${a.id}')">Editar</button>
