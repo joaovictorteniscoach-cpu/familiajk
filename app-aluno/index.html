@@ -218,15 +218,26 @@ input,select{font-family:'DM Sans',sans-serif;font-size:14px}
 .evo-prio{background:#F4F7EC;border:1px solid #dfe6c9;border-radius:14px;padding:13px 15px;margin:6px 0 16px}
 .evo-prio .lbl{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:#5a7a35;font-weight:800;margin-bottom:3px}
 .evo-prio b{color:var(--green);font-size:15px}
-.evo-sec{font-size:12.5px;font-weight:800;color:var(--green);letter-spacing:.3px;margin:18px 0 10px;display:flex;align-items:center;gap:6px;text-transform:uppercase}
-.evo-row{margin-bottom:14px}
-.evo-row .top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;gap:8px}
-.evo-row .nm{font-size:13.5px;font-weight:800;color:var(--text)}
-.evo-row .st{font-size:12px;font-weight:800;color:#5B3FA6;white-space:nowrap}
-.evo-row .st b{font-variant-numeric:tabular-nums}
-.evo-row .st .up{color:#2E7D52}
-.evo-bar{position:relative;height:16px;border-radius:9px;background:#EBE5DA;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.08)}
-.evo-bar>i{display:block;height:100%;width:0;border-radius:9px;background:linear-gradient(90deg,#7C5CD0,#5B3FA6);transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.evo-panel{background:#fff;border:1px solid var(--border);border-radius:16px;padding:6px 15px 14px;margin-bottom:14px;box-shadow:0 4px 14px rgba(42,32,22,.05)}
+.evo-sec{font-size:12.5px;font-weight:800;color:var(--green);letter-spacing:.3px;margin:14px 0 12px;display:flex;align-items:center;gap:6px;text-transform:uppercase}
+.evo-row{margin-bottom:15px}
+.evo-row:last-child{margin-bottom:2px}
+.evo-row .top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;gap:8px}
+.evo-row .nm{font-size:14px;font-weight:800;color:#1c140c}
+.evo-row .st{font-size:12.5px;font-weight:700;color:#3a3128;white-space:nowrap}
+.evo-row .st b{font-variant-numeric:tabular-nums;color:#4A3191;font-weight:900}
+.evo-row .st .up{color:#1E7A46;font-weight:900}
+.evo-bar{position:relative;height:18px;border-radius:10px;background:#E7E0D2;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.1)}
+.evo-bar>i{display:block;height:100%;width:0;border-radius:10px;background:linear-gradient(90deg,#8A63E0,#5B3FA6);transition:width 1s cubic-bezier(.2,.8,.2,1)}
+/* comemoração de subida de nível */
+.evo-confete{position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden}
+.evo-confete i{position:absolute;top:-14px;width:9px;height:14px;border-radius:2px;opacity:.95;animation:confeteCai linear forwards}
+@keyframes confeteCai{0%{transform:translateY(-10px) rotate(0)}100%{transform:translateY(105vh) rotate(720deg)}}
+.evo-levelup{position:fixed;left:50%;top:34%;transform:translate(-50%,-50%) scale(.7);z-index:10000;background:linear-gradient(135deg,#2b1c56,#5B3FA6);color:#fff;border:2px solid #CBD24A;border-radius:20px;padding:20px 26px;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.4);opacity:0;transition:opacity .3s,transform .35s cubic-bezier(.2,1.4,.4,1);max-width:82%}
+.evo-levelup.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.evo-levelup .em{font-size:40px;line-height:1}
+.evo-levelup .t1{font-size:13px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#CBD24A;margin-top:6px}
+.evo-levelup .t2{font-size:22px;font-weight:900;margin-top:2px}
 .evo-hist .hr{display:flex;justify-content:space-between;font-size:12.5px;padding:9px 12px;background:#F7F4EE;border:1px solid var(--border);border-radius:10px;margin-bottom:6px}
 .evo-hist .hr b{color:#5B3FA6}
 .evo-empty{text-align:center;padding:22px 10px;color:var(--muted);font-size:13.5px;line-height:1.6}
@@ -996,10 +1007,11 @@ function evolucaoHTML(){
   html+=`<div style="text-align:center;margin:2px 0 10px"><span class="evo-badge">Nível: ${cur.nivel||'—'}</span>${subiu}</div>`;
   html+=`<div class="evo-trilha">${trilha}</div>`;
   if(cur.prioridade){html+=`<div class="evo-prio"><div class="lbl">Prioridade do ciclo</div><b>${escHtml(cur.prioridade)}</b></div>`;}
-  if(cur.objetivo){html+=`<p style="font-size:12.5px;color:var(--muted);margin:-6px 0 12px">🎯 Meu objetivo: <b style="color:var(--text)">${escHtml(cur.objetivo)}</b></p>`;}
+  if(cur.objetivo){html+=`<p style="font-size:13px;color:#3a3128;margin:-6px 0 12px;font-weight:600">🎯 Meu objetivo: <b style="color:var(--text);font-weight:800">${escHtml(cur.objetivo)}</b></p>`;}
   ['mov','tec'].forEach(g=>{
-    html+=`<div class="evo-sec">${g==='mov'?'🏃':'🎾'} ${AVAL_ESCALA[g].titulo}</div>`;
+    html+=`<div class="evo-panel"><div class="evo-sec">${g==='mov'?'🏃':'🎾'} ${AVAL_ESCALA[g].titulo}</div>`;
     AVAL_ESCALA[g].itens.forEach(it=>{html+=evoRowHTML(g,it,cur,prev);});
+    html+='</div>';
   });
   if(av.length>1){
     html+='<div class="evo-sec">🗓️ Histórico</div><div class="evo-hist">';
@@ -1019,8 +1031,45 @@ function animarEvo(box){
     bars.forEach(b=>{b.style.width=(Number(b.dataset.w)||0)+'%';});
   }));
 }
-function renderEvolucao(){const b=document.getElementById('evo-body');if(b){b.innerHTML=evolucaoHTML();animarEvo(b);}}
-function renderEvolucaoPage(){const b=document.getElementById('evo-page-body');if(b){b.innerHTML=evolucaoHTML();animarEvo(b);}}
+/* ===== Comemoração de subida de nível na Trilha ===== */
+function confeteBurst(){
+  const cores=['#CBD24A','#5B3FA6','#EAF06A','#8A63E0','#2E7D52','#F0C808','#fff'];
+  const box=document.createElement('div');box.className='evo-confete';
+  for(let i=0;i<70;i++){
+    const p=document.createElement('i');
+    p.style.left=Math.random()*100+'vw';
+    p.style.background=cores[i%cores.length];
+    p.style.animationDuration=(1.8+Math.random()*1.6)+'s';
+    p.style.animationDelay=(Math.random()*0.5)+'s';
+    p.style.transform='rotate('+(Math.random()*360)+'deg)';
+    if(Math.random()<.5)p.style.borderRadius='50%';
+    box.appendChild(p);
+  }
+  document.body.appendChild(box);
+  setTimeout(()=>box.remove(),4200);
+}
+function celebraNivel(nome){
+  confeteBurst();
+  const el=document.createElement('div');el.className='evo-levelup';
+  el.innerHTML='<div class="em">🎉🎾</div><div class="t1">Você subiu de nível!</div><div class="t2">'+escHtml(nome)+'</div>';
+  document.body.appendChild(el);
+  requestAnimationFrame(()=>el.classList.add('on'));
+  try{if(navigator.vibrate)navigator.vibrate([40,60,40]);}catch(e){}
+  setTimeout(()=>{el.classList.remove('on');setTimeout(()=>el.remove(),400);},3200);
+}
+function checarLevelUp(){
+  const av=(EU&&Array.isArray(EU.avaliacoes))?EU.avaliacoes:[];
+  if(av.length<2)return;
+  const cur=av[av.length-1], prev=av[av.length-2];
+  const ci=TRILHA_NIVEIS.indexOf(cur.nivel), pi=TRILHA_NIVEIS.indexOf(prev.nivel);
+  if(ci<=pi)return;                                   // não subiu
+  const chave='jvt-evo-lvl-'+(MEU.codigo||'')+'-'+(cur.data||'');
+  if(lsGet(chave))return;                             // já comemorou essa avaliação
+  lsSet(chave,'1');
+  setTimeout(()=>celebraNivel('Nível '+(cur.nivel||'')),500);
+}
+function renderEvolucao(){const b=document.getElementById('evo-body');if(b){b.innerHTML=evolucaoHTML();animarEvo(b);checarLevelUp();}}
+function renderEvolucaoPage(){const b=document.getElementById('evo-page-body');if(b){b.innerHTML=evolucaoHTML();animarEvo(b);checarLevelUp();}}
 function evoRegistrosHTML(rg,solo){
   if(!rg||!rg.length)return '';
   let h=(solo?'<p class="sub" style="margin-bottom:10px">Seus registros de aula. A avaliação completa da Trilha aparece aqui quando o João preencher. 🎾</p>':'')+'<div class="evo-sec">📝 Registros de aula</div><div class="evo-hist">';
