@@ -198,45 +198,46 @@ input,select{font-family:'DM Sans',sans-serif;font-size:14px}
 .modal{background:var(--cream);width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:20px 18px 30px;max-height:85vh;overflow-y:auto}
 .modal h3{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;margin-bottom:4px}
 .modal .sub{font-size:13px;color:var(--muted);margin-bottom:16px}
-/* ===== Minha evolução (Da Base ao Topo) ===== */
-.evo-font{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
-/* Barra de XP (evolução geral) */
-.evo-xp{background:linear-gradient(135deg,#2b1c56,#5B3FA6);border-radius:20px;padding:18px 18px 16px;color:#fff;margin:4px 0 18px;box-shadow:0 10px 26px rgba(91,63,166,.32);position:relative;overflow:hidden}
-.evo-xp .xp-eye{font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:800;color:#CBD24A}
-.evo-xp .xp-num{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:52px;font-weight:900;line-height:1;letter-spacing:-1px;margin:2px 0 2px}
-.evo-xp .xp-num small{font-size:24px;font-weight:800;opacity:.85}
-.evo-xp .xp-cap{font-size:12px;opacity:.85;font-weight:600;margin-bottom:12px}
-.evo-xp .xp-track{height:20px;border-radius:12px;background:rgba(255,255,255,.16);overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.25)}
-.evo-xp .xp-track>i{display:block;height:100%;width:0;border-radius:12px;background:linear-gradient(90deg,#CBD24A,#EAF06A);box-shadow:0 0 12px rgba(203,210,74,.6);transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
-.evo-xp .xp-delta{display:inline-flex;align-items:center;gap:5px;margin-top:11px;font-size:12.5px;font-weight:800;background:rgba(203,210,74,.18);color:#EAF06A;padding:5px 12px;border-radius:16px}
-.evo-xp .xp-delta.flat{background:rgba(255,255,255,.14);color:#fff}
+/* ===== Minha evolução (Da Base ao Topo) — paleta materiais preciosos ===== */
+.evo-font{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;--lc:#C9A04A;--lcd:#93701C}
+/* Card da % — cor FIXA (verde academia + dourado) */
+.evo-xp{background:linear-gradient(140deg,#16260F,#24401C);border-radius:18px;padding:19px 19px 17px;color:#fff;margin:4px 0 18px;box-shadow:0 9px 22px rgba(26,46,20,.28);position:relative;overflow:hidden}
+.evo-xp::after{content:"";position:absolute;right:-30px;top:-30px;width:130px;height:130px;border-radius:50%;background:radial-gradient(circle,rgba(201,160,74,.22),transparent 70%)}
+.evo-xp .xp-eye{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;font-weight:800;color:var(--gold)}
+.evo-xp .xp-num{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:50px;font-weight:900;line-height:1;letter-spacing:-1px;margin:2px 0 2px}
+.evo-xp .xp-num small{font-size:23px;font-weight:800;color:var(--gold)}
+.evo-xp .xp-cap{font-size:12px;opacity:.8;font-weight:600;margin-bottom:12px}
+.evo-xp .xp-track{height:18px;border-radius:11px;background:rgba(255,255,255,.14);overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.3)}
+.evo-xp .xp-track>i{display:block;height:100%;width:0;border-radius:11px;background:linear-gradient(90deg,#C9A04A,#E4C878);transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+.evo-xp .xp-delta{display:inline-flex;align-items:center;gap:5px;margin-top:11px;font-size:12.5px;font-weight:800;background:rgba(201,160,74,.2);color:#EBD59A;padding:5px 12px;border-radius:16px}
+.evo-xp .xp-delta.flat{background:rgba(255,255,255,.12);color:#fff}
 .evo-trilha{display:flex;gap:5px;margin:2px 0 16px}
-.evo-step{flex:1;text-align:center;font-size:10px;font-weight:800;color:var(--muted);padding:9px 2px 8px;border-radius:10px;background:#F1ECE0;border:1.5px solid transparent;line-height:1.2}
-.evo-step.done{background:#EDE7FB;color:#5B3FA6}
-.evo-step.cur{background:#5B3FA6;color:#fff;border-color:#4A3191;box-shadow:0 3px 10px rgba(91,63,166,.3);transform:scale(1.06)}
-.evo-badge{display:inline-block;background:#5B3FA6;color:#fff;font-weight:800;font-size:14px;padding:7px 16px;border-radius:20px}
-.evo-prio{background:#F4F7EC;border:1px solid #dfe6c9;border-radius:14px;padding:13px 15px;margin:6px 0 16px}
-.evo-prio .lbl{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:#5a7a35;font-weight:800;margin-bottom:3px}
+.evo-step{flex:1;text-align:center;font-size:10px;font-weight:800;color:#fff;padding:9px 2px 8px;border-radius:10px;line-height:1.2;text-shadow:0 1px 1px rgba(0,0,0,.28)}
+.evo-step.future{background:#EDE7DC;color:#A99C86;text-shadow:none}
+.evo-step.cur{box-shadow:0 3px 9px rgba(42,32,22,.22);transform:scale(1.05);outline:2px solid rgba(255,255,255,.7);outline-offset:-4px}
+.evo-badge{display:inline-block;background:var(--lcd);color:#fff;font-weight:800;font-size:14px;padding:7px 16px;border-radius:20px}
+.evo-prio{background:#F4F1E8;border:1px solid var(--border);border-radius:14px;padding:13px 15px;margin:6px 0 16px}
+.evo-prio .lbl{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);font-weight:800;margin-bottom:3px}
 .evo-prio b{color:var(--green);font-size:15px}
-.evo-panel{background:#fff;border:1px solid var(--border);border-radius:16px;padding:6px 15px 14px;margin-bottom:14px;box-shadow:0 4px 14px rgba(42,32,22,.05)}
+.evo-panel{background:#fff;border:1px solid var(--border);border-radius:16px;padding:6px 15px 14px;margin-bottom:14px;box-shadow:0 3px 12px rgba(42,32,22,.05)}
 .evo-sec{font-size:12.5px;font-weight:800;color:var(--green);letter-spacing:.3px;margin:14px 0 12px;display:flex;align-items:center;gap:6px;text-transform:uppercase}
 .evo-row{margin-bottom:15px}
 .evo-row:last-child{margin-bottom:2px}
 .evo-row .top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;gap:8px}
 .evo-row .nm{font-size:14px;font-weight:800;color:#1c140c}
 .evo-row .st{font-size:12.5px;font-weight:700;color:#3a3128;white-space:nowrap}
-.evo-row .st b{font-variant-numeric:tabular-nums;color:#4A3191;font-weight:900}
-.evo-row .st .up{color:#1E7A46;font-weight:900}
-.evo-bar{position:relative;height:18px;border-radius:10px;background:#E7E0D2;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.1)}
-.evo-bar>i{display:block;height:100%;width:0;border-radius:10px;background:linear-gradient(90deg,#8A63E0,#5B3FA6);transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.evo-row .st b{font-variant-numeric:tabular-nums;color:var(--lcd);font-weight:900}
+.evo-row .st .up{color:#3F7A4E;font-weight:900}
+.evo-bar{position:relative;height:18px;border-radius:10px;background:#EBE4D6;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.08)}
+.evo-bar>i{display:block;height:100%;width:0;border-radius:10px;background:linear-gradient(90deg,var(--lc),var(--lcd));transition:width 1s cubic-bezier(.2,.8,.2,1)}
 /* comemoração de subida de nível */
 .evo-confete{position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden}
 .evo-confete i{position:absolute;top:-14px;width:9px;height:14px;border-radius:2px;opacity:.95;animation:confeteCai linear forwards}
 @keyframes confeteCai{0%{transform:translateY(-10px) rotate(0)}100%{transform:translateY(105vh) rotate(720deg)}}
-.evo-levelup{position:fixed;left:50%;top:34%;transform:translate(-50%,-50%) scale(.7);z-index:10000;background:linear-gradient(135deg,#2b1c56,#5B3FA6);color:#fff;border:2px solid #CBD24A;border-radius:20px;padding:20px 26px;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.4);opacity:0;transition:opacity .3s,transform .35s cubic-bezier(.2,1.4,.4,1);max-width:82%}
+.evo-levelup{position:fixed;left:50%;top:34%;transform:translate(-50%,-50%) scale(.7);z-index:10000;color:#fff;border:2px solid var(--gold);border-radius:20px;padding:20px 26px;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.4);opacity:0;transition:opacity .3s,transform .35s cubic-bezier(.2,1.4,.4,1);max-width:82%}
 .evo-levelup.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
 .evo-levelup .em{font-size:40px;line-height:1}
-.evo-levelup .t1{font-size:13px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#CBD24A;margin-top:6px}
+.evo-levelup .t1{font-size:13px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-top:6px}
 .evo-levelup .t2{font-size:22px;font-weight:900;margin-top:2px}
 .evo-hist .hr{display:flex;justify-content:space-between;font-size:12.5px;padding:9px 12px;background:#F7F4EE;border:1px solid var(--border);border-radius:10px;margin-bottom:6px}
 .evo-hist .hr b{color:#5B3FA6}
@@ -961,6 +962,15 @@ const AVAL_ESCALA={
   ]}
 };
 const TRILHA_NIVEIS=['Base','Impulso','Construção','Ascensão','Topo'];
+/* materiais preciosos por nível: Bronze→Prata→Ouro→Rubi→Carbono */
+const LEVEL_MET={
+  'Base':     {m:'#A06A34',d:'#7C4F24'},   // bronze
+  'Impulso':  {m:'#9AA2AA',d:'#6E767E'},   // prata
+  'Construção':{m:'#C9A04A',d:'#93701C'},  // ouro
+  'Ascensão': {m:'#A81D38',d:'#7C1428'},   // rubi
+  'Topo':     {m:'#33333A',d:'#1B1B20'}    // carbono
+};
+function metalDe(nivel){return LEVEL_MET[nivel]||LEVEL_MET['Construção'];}
 function pctAval(av){
   if(!av)return 0;
   let s=0,n=0;
@@ -994,7 +1004,13 @@ function evolucaoHTML(){
     const pi=TRILHA_NIVEIS.indexOf(prev.nivel);
     if(ci>pi)subiu=' <span style="color:#2E7D52;font-weight:800">↑ subiu de nível!</span>';
   }
-  const trilha=TRILHA_NIVEIS.map((n,i)=>`<div class="evo-step ${i<ci?'done':''} ${i===ci?'cur':''}">${n}</div>`).join('');
+  const trilha=TRILHA_NIVEIS.map((n,i)=>{
+    const feito=i<=ci;
+    const bg=feito?('background:'+metalDe(n).m):'';
+    const cls='evo-step '+(feito?'':'future')+(i===ci?' cur':'');
+    return `<div class="${cls}" style="${bg}">${n}</div>`;
+  }).join('');
+  const met=metalDe(cur.nivel);
   // Barra de XP — evolução geral
   const pctG=pctAval(cur), pctP=prev?pctAval(prev):null;
   let deltaHTML;
@@ -1002,7 +1018,7 @@ function evolucaoHTML(){
   else if(pctG>pctP){deltaHTML='<div class="xp-delta">▲ +'+(pctG-pctP)+'% desde a última avaliação</div>';}
   else if(pctG<pctP){deltaHTML='<div class="xp-delta flat">▼ '+(pctG-pctP)+'% — foco no próximo ciclo 💪</div>';}
   else{deltaHTML='<div class="xp-delta flat">➖ manteve — hora de subir mais 💪</div>';}
-  let html='<div class="evo-font">';
+  let html='<div class="evo-font" style="--lc:'+met.m+';--lcd:'+met.d+'">';
   html+=`<div class="evo-xp"><div class="xp-eye">Evolução geral</div><div class="xp-num">${pctG}<small>%</small></div><div class="xp-cap">domínio dos fundamentos · Da Base ao Topo</div><div class="xp-track"><i data-w="${pctG}"></i></div>${deltaHTML}</div>`;
   html+=`<div style="text-align:center;margin:2px 0 10px"><span class="evo-badge">Nível: ${cur.nivel||'—'}</span>${subiu}</div>`;
   html+=`<div class="evo-trilha">${trilha}</div>`;
@@ -1032,8 +1048,8 @@ function animarEvo(box){
   }));
 }
 /* ===== Comemoração de subida de nível na Trilha ===== */
-function confeteBurst(){
-  const cores=['#CBD24A','#5B3FA6','#EAF06A','#8A63E0','#2E7D52','#F0C808','#fff'];
+function confeteBurst(extra){
+  const cores=['#C9A04A','#1A2E14','#E4C878','#3F7A4E','#FAF7F2','#8C6239',extra||'#C9A04A'];
   const box=document.createElement('div');box.className='evo-confete';
   for(let i=0;i<70;i++){
     const p=document.createElement('i');
@@ -1048,9 +1064,11 @@ function confeteBurst(){
   document.body.appendChild(box);
   setTimeout(()=>box.remove(),4200);
 }
-function celebraNivel(nome){
-  confeteBurst();
+function celebraNivel(nome,met){
+  met=met||metalDe('Construção');
+  confeteBurst(met.m);
   const el=document.createElement('div');el.className='evo-levelup';
+  el.style.background='linear-gradient(135deg,'+met.d+','+met.m+')';
   el.innerHTML='<div class="em">🎉🎾</div><div class="t1">Você subiu de nível!</div><div class="t2">'+escHtml(nome)+'</div>';
   document.body.appendChild(el);
   requestAnimationFrame(()=>el.classList.add('on'));
@@ -1066,7 +1084,7 @@ function checarLevelUp(){
   const chave='jvt-evo-lvl-'+(MEU.codigo||'')+'-'+(cur.data||'');
   if(lsGet(chave))return;                             // já comemorou essa avaliação
   lsSet(chave,'1');
-  setTimeout(()=>celebraNivel('Nível '+(cur.nivel||'')),500);
+  setTimeout(()=>celebraNivel('Nível '+(cur.nivel||''),metalDe(cur.nivel)),500);
 }
 function renderEvolucao(){const b=document.getElementById('evo-body');if(b){b.innerHTML=evolucaoHTML();animarEvo(b);checarLevelUp();}}
 function renderEvolucaoPage(){const b=document.getElementById('evo-page-body');if(b){b.innerHTML=evolucaoHTML();animarEvo(b);checarLevelUp();}}
