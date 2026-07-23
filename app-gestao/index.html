@@ -104,7 +104,7 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .save-state.ok{color:#8FD694}
 .save-state.err{color:#FF9B8A}
 
-.nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;background:var(--dark);display:grid;grid-template-columns:repeat(7,1fr);padding:8px 4px calc(8px + env(safe-area-inset-bottom));z-index:50;border-top:1px solid rgba(255,255,255,.08)}
+.nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;background:var(--dark);display:grid;grid-template-columns:repeat(8,1fr);padding:8px 2px calc(8px + env(safe-area-inset-bottom));z-index:50;border-top:1px solid rgba(255,255,255,.08)}
 .nav button{background:none;border:none;color:rgba(250,247,242,.45);font-size:9.5px;font-weight:500;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 1px;border-radius:10px;letter-spacing:.1px}
 .nav button .ico{font-size:17px}
 .nav button.on{color:var(--gold-light)}
@@ -251,6 +251,27 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .aval-hist .hrow{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#F7F4EE;border:1px solid var(--border);border-radius:9px;padding:8px 11px;margin-bottom:6px;font-size:12.5px}
 .aval-hist .hrow b{color:var(--green)}
 .aval-hist .hrow .del{background:none;border:none;color:#B23A2E;font-weight:700;cursor:pointer;font-size:12px}
+/* aba Avaliações — visão geral */
+.aval-resumo{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:2px 0 14px}
+.aval-resumo .rc{background:#fff;border:1px solid var(--border);border-radius:13px;padding:11px 8px;text-align:center}
+.aval-resumo .rc b{display:block;font-size:22px;font-weight:800;line-height:1.1;color:var(--green)}
+.aval-resumo .rc.pend b{color:#B23A2E}
+.aval-resumo .rc span{font-size:10.5px;color:var(--muted);font-weight:600}
+.avcard{background:#fff;border:1px solid var(--border);border-radius:14px;padding:13px 14px;margin-bottom:10px}
+.avcard .avtop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.avcard .avnome{font-size:15px;font-weight:800;color:var(--dark)}
+.avcard .avsub{font-size:11.5px;color:var(--muted);margin-top:2px}
+.avnivel{flex-shrink:0;font-size:11px;font-weight:800;padding:5px 11px;border-radius:16px;background:#EDE7FB;color:#5B3FA6}
+.avnivel.none{background:#F3EFE6;color:#9a9182}
+.avmini{display:flex;gap:4px;margin:10px 0 2px}
+.avmini .seg{flex:1;height:7px;border-radius:4px;background:#EBE5DA;overflow:hidden}
+.avmini .seg>i{display:block;height:100%;background:#5B3FA6}
+.avacts{display:flex;gap:6px;flex-wrap:wrap;margin-top:11px}
+.avacts button{border:none;border-radius:9px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer}
+.avacts .b1{background:#EDE7FB;color:#5B3FA6}
+.avacts .b2{background:#F4EDE0;color:var(--muted)}
+.avacts .b3{background:#E3F2E4;color:var(--ok)}
+.avdue{display:inline-block;font-size:10.5px;font-weight:700;color:#B23A2E;background:#F9E4E0;border-radius:12px;padding:2px 9px;margin-top:8px}
 .aluno-foot{display:flex;justify-content:space-between;margin-top:10px;flex-wrap:wrap;gap:4px}
 .ha-box{margin:2px 0 10px;background:#fff;border:1px solid var(--border);border-radius:11px;padding:9px 11px}
 .ha-title{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:5px}
@@ -524,6 +545,21 @@ function iniciarFirebase(){
     <button onclick="setFiltroAluno('personal',this)">💪 Personal</button>
   </div>
   <div id="alunos-list"></div>
+</section>
+
+<section class="page" id="pg-aval">
+  <p class="sec-eyebrow">Da Base ao Topo</p>
+  <h2 class="sec-title">Avaliações &amp; <em>evolução</em></h2>
+  <div id="aval-resumo" class="aval-resumo"></div>
+  <div class="toolbar">
+    <input id="aval-search" placeholder="Buscar aluno…" oninput="renderAvaliacoes()">
+  </div>
+  <div class="seg" id="aval-filtro">
+    <button class="on" onclick="setFiltroAval('todos',this)">Todos</button>
+    <button onclick="setFiltroAval('pendentes',this)">A avaliar</button>
+    <button onclick="setFiltroAval('avaliados',this)">Avaliados</button>
+  </div>
+  <div id="aval-list"></div>
 </section>
 
 <section class="page" id="pg-lanc">
@@ -864,6 +900,7 @@ function iniciarFirebase(){
   <button class="on" onclick="go('dash',this)"><span class="ico">🏠</span>Início</button>
   <button onclick="go('agenda',this)"><span class="ico">📅</span>Agenda</button>
   <button onclick="go('alunos',this)"><span class="ico">🎾</span>Alunos</button>
+  <button onclick="go('aval',this)"><span class="ico">📋</span>Avaliações</button>
   <button onclick="go('lanc',this)"><span class="ico">💵</span>Caixa</button>
   <button onclick="go('fin',this)"><span class="ico">📊</span>Financeiro</button>
   <button onclick="go('graf',this)"><span class="ico">📈</span>Gráficos</button>
@@ -1633,6 +1670,7 @@ function go(id,btn){
   window.scrollTo({top:0});
   if(id==='agenda')syncRequests(true);
   if(id==='graf')renderGraf();
+  if(id==='aval')renderAvaliacoes();
   if(id==='torneio'){renderTorneio();syncTorneio(true);}
 }
 function shiftMonth(d){
@@ -2560,6 +2598,81 @@ function enviarDevolutivaWa(){
   const msg=encodeURIComponent(linhas.join('\n'));
   window.open('https://wa.me/55'+a.tel+'?text='+msg,'_blank');
   closeModal('ov-avalexp');
+}
+
+/* ===== Aba Avaliações — visão geral de todos os alunos ===== */
+let filtroAval='todos';
+function setFiltroAval(f,btn){
+  filtroAval=f;
+  document.querySelectorAll('#aval-filtro button').forEach(b=>b.classList.remove('on'));
+  if(btn)btn.classList.add('on');
+  renderAvaliacoes();
+}
+function diasDesde(dstr){
+  if(!dstr)return Infinity;
+  const p=String(dstr).split('-').map(Number);
+  const d=new Date(p[0],(p[1]||1)-1,p[2]||1);
+  return Math.floor((Date.now()-d.getTime())/86400000);
+}
+function tempoDesde(dias){
+  if(dias===Infinity)return 'nunca avaliado';
+  if(dias<=0)return 'hoje';
+  if(dias===1)return 'ontem';
+  if(dias<7)return 'há '+dias+' dias';
+  const sem=Math.floor(dias/7);
+  return 'há '+sem+(sem===1?' semana':' semanas');
+}
+function avMiniHTML(av){
+  if(!av)return '';
+  let segs='';
+  ['mov','tec'].forEach(g=>{AVAL_ESCALA[g].itens.forEach(it=>{
+    const v=Number(av[g]&&av[g][it.k])||0,pct=Math.round(v/3*100);
+    segs+='<div class="seg"><i style="width:'+pct+'%"></i></div>';
+  });});
+  return '<div class="avmini">'+segs+'</div>';
+}
+function renderAvaliacoes(){
+  const list=document.getElementById('aval-list');if(!list)return;
+  const q=(document.getElementById('aval-search').value||'').toLowerCase();
+  const todos=DB.alunos.slice().sort((x,y)=>x.nome.localeCompare(y.nome));
+  // resumo
+  let nAval=0,nPend=0;
+  todos.forEach(a=>{
+    const tem=a.avaliacoes&&a.avaliacoes.length;
+    const dias=tem?diasDesde(a.avaliacoes[a.avaliacoes.length-1].data):Infinity;
+    if(tem)nAval++;
+    if(!tem||dias>42)nPend++;
+  });
+  const res=document.getElementById('aval-resumo');
+  if(res)res.innerHTML='<div class="rc"><b>'+todos.length+'</b><span>alunos</span></div>'+
+    '<div class="rc"><b>'+nAval+'</b><span>avaliados</span></div>'+
+    '<div class="rc pend"><b>'+nPend+'</b><span>a avaliar</span></div>';
+  // lista
+  const items=todos.filter(a=>a.nome.toLowerCase().includes(q)).filter(a=>{
+    const tem=a.avaliacoes&&a.avaliacoes.length;
+    const dias=tem?diasDesde(a.avaliacoes[a.avaliacoes.length-1].data):Infinity;
+    if(filtroAval==='avaliados')return tem;
+    if(filtroAval==='pendentes')return !tem||dias>42;
+    return true;
+  });
+  if(!items.length){list.innerHTML='<div class="empty">Nenhum aluno '+(q||filtroAval!=='todos'?'nesse filtro':'cadastrado')+'.</div>';return;}
+  list.innerHTML=items.map(a=>{
+    const av=(a.avaliacoes&&a.avaliacoes.length)?a.avaliacoes[a.avaliacoes.length-1]:null;
+    const dias=av?diasDesde(av.data):Infinity;
+    const due=(!av||dias>42);
+    const nivel=av?('<span class="avnivel">'+(av.nivel||'—')+'</span>'):'<span class="avnivel none">Sem avaliação</span>';
+    const sub=av?('Última: '+tempoDesde(dias)+(av.prioridade?' · 🎯 '+escAval(av.prioridade):'')):(a.tipo+' · '+(a.plano>0?('Flex '+a.plano):'sem pacote'));
+    return '<div class="avcard">'+
+      '<div class="avtop"><div><div class="avnome">'+(ehPersonalTipo(a.tipo)?'💪 ':'🎾 ')+escAval(a.nome)+'</div><div class="avsub">'+sub+'</div></div>'+nivel+'</div>'+
+      avMiniHTML(av)+
+      (due?'<div class="avdue">⏰ '+(av?'reavaliar (6+ semanas)':'avaliar este aluno')+'</div>':'')+
+      '<div class="avacts">'+
+        '<button class="b1" onclick="openAvalModal(\''+a.id+'\')">📈 Avaliar</button>'+
+        '<button class="b2" onclick="openRegistroModal(\''+a.id+'\')">📝 Registro</button>'+
+        (av?'<button class="b3" onclick="openAvalExport(\''+a.id+'\')">📤 Devolutiva</button>':'')+
+      '</div>'+
+    '</div>';
+  }).join('');
 }
 
 function delAluno(id){
@@ -3668,7 +3781,7 @@ function confirmarAulaWa(id,hora){
 function renderAll(){
   document.getElementById('month-label').textContent=MESES[curMonth]+' '+curYear;
   const safe=(fn,nome)=>{try{fn();}catch(e){console.warn('Render '+nome+' falhou:',e);}};
-  safe(updateEyeBtn,'olho');safe(renderAlunos,'alunos');safe(renderMovs,'caixa');safe(renderDash,'inicio');safe(renderFin,'financeiro');safe(renderAgenda,'agenda');safe(renderTorneio,'torneio');safe(renderConfirmAmanha,'confirmamanha');
+  safe(updateEyeBtn,'olho');safe(renderAlunos,'alunos');safe(renderMovs,'caixa');safe(renderDash,'inicio');safe(renderFin,'financeiro');safe(renderAgenda,'agenda');safe(renderTorneio,'torneio');safe(renderConfirmAmanha,'confirmamanha');safe(renderAvaliacoes,'avaliacoes');
 }
 // espera o Firebase ficar pronto (até ~6s) antes de carregar; nunca trava
 (function esperarESubir(t){
