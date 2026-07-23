@@ -127,21 +127,37 @@ A Pirâmide é o mapa do **conteúdo** da metodologia. São seis camadas, empilh
 
 Numa partida longa de tênis, a bola fica em contato com a raquete por uma fração de segundo a cada batida. Some todos os contatos da partida inteira e o tempo real de bola na raquete fica em torno de poucos segundos — o resto, que é praticamente o jogo todo, é deslocamento, posicionamento, espera e decisão.
 
-<div style="display:flex;align-items:center;gap:28px;flex-wrap:wrap;justify-content:center;margin:18px 0 16px">
-  <div style="position:relative;width:150px;height:150px;border-radius:50%;flex-shrink:0;background:conic-gradient(#E7CE93 0deg 9deg, #15304A 9deg 360deg);box-shadow:0 0 0 1px rgba(216,180,92,.35)">
-    <div style="position:absolute;inset:20px;border-radius:50%;background:#102438"></div>
-    <div style="position:absolute;inset:20px;display:flex;align-items:center;justify-content:center;text-align:center;flex-direction:column">
-      <b style="font-size:26px;line-height:1">🎾</b>
-      <small style="font-size:9px;color:#cfd8de;margin-top:4px;max-width:80px;line-height:1.3;display:block">quase toda a partida é sem bola na raquete</small>
-    </div>
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:18px 0 10px">
+  <div style="background:#15304A;border:1px solid rgba(216,180,92,.3);border-radius:10px;padding:10px 5px;text-align:center"><div style="font-size:16px;margin-bottom:4px">🏃</div><div style="font-size:8px;font-weight:800;letter-spacing:.01em;color:#E7CE93;text-transform:uppercase;line-height:1.3;margin-bottom:4px">Deslocamento ativo</div><div style="font-size:13px;font-weight:900;color:#fff;line-height:1.15">45–60 min</div><div style="font-size:9.5px;font-weight:700;color:#D8B45C;margin-top:3px">15–20%</div></div>
+  <div style="background:#15304A;border:1px solid rgba(216,180,92,.3);border-radius:10px;padding:10px 5px;text-align:center"><div style="font-size:16px;margin-bottom:4px">⏱️</div><div style="font-size:8px;font-weight:800;letter-spacing:.01em;color:#E7CE93;text-transform:uppercase;line-height:1.3;margin-bottom:4px">Tempo entre pontos</div><div style="font-size:13px;font-weight:900;color:#fff;line-height:1.15">3h50–4h10</div><div style="font-size:9.5px;font-weight:700;color:#D8B45C;margin-top:3px">78–85%</div></div>
+  <div style="background:#15304A;border:1px solid rgba(216,180,92,.3);border-radius:10px;padding:10px 5px;text-align:center"><div style="font-size:16px;margin-bottom:4px">🧠</div><div style="font-size:8px;font-weight:800;letter-spacing:.01em;color:#E7CE93;text-transform:uppercase;line-height:1.3;margin-bottom:4px">Reação e decisão</div><div style="font-size:13px;font-weight:900;color:#fff;line-height:1.15">4–6 min</div><div style="font-size:9.5px;font-weight:700;color:#D8B45C;margin-top:3px">1–2%</div></div>
+  <div style="background:#15304A;border:1px solid rgba(216,180,92,.3);border-radius:10px;padding:10px 5px;text-align:center"><div style="font-size:16px;margin-bottom:4px">🤚</div><div style="font-size:8px;font-weight:800;letter-spacing:.01em;color:#E7CE93;text-transform:uppercase;line-height:1.3;margin-bottom:4px">Troca de empunhadura</div><div style="font-size:13px;font-weight:900;color:#fff;line-height:1.15">30–60 seg</div><div style="font-size:9.5px;font-weight:700;color:#D8B45C;margin-top:3px">0,1–0,2%</div></div>
+  <div style="background:#0B1B2B;border:1px solid #D8B45C;border-radius:10px;padding:10px 5px;text-align:center"><div style="font-size:16px;margin-bottom:4px">🎾</div><div style="font-size:8px;font-weight:800;letter-spacing:.01em;color:#E7CE93;text-transform:uppercase;line-height:1.3;margin-bottom:4px">Contato com a bola</div><div style="font-size:13px;font-weight:900;color:#fff;line-height:1.15">≈3 seg</div><div style="font-size:9.5px;font-weight:700;color:#D8B45C;margin-top:3px">0,02%</div></div>
+</div>
+<div style="margin:0 0 16px">
+  <div style="display:flex;height:14px;border-radius:6px;overflow:hidden;border:1px solid rgba(216,180,92,.3)">
+    <div style="flex:81;background:linear-gradient(90deg,#E7CE93,#C49A3F)"></div>
+    <div style="flex:17;background:#1C3F5E"></div>
+    <div style="flex:1.5;background:#15304A"></div>
+    <div style="flex:0 0 3px;background:#0B1B2B"></div>
+    <div style="flex:0 0 3px;background:#fff"></div>
   </div>
-  <div style="display:flex;flex-direction:column;gap:12px;min-width:220px">
-    <div style="display:flex;align-items:flex-start;gap:8px"><span style="flex-shrink:0;width:11px;height:11px;border-radius:50%;margin-top:4px;background:linear-gradient(135deg,#E7CE93,#C49A3F)"></span><div><b style="display:block;color:#fff;font-size:13.5px">Contato da bola com a raquete</b><span style="font-size:12px;color:#9fb1bf">≈ poucos segundos, na partida inteira</span></div></div>
-    <div style="display:flex;align-items:flex-start;gap:8px"><span style="flex-shrink:0;width:11px;height:11px;border-radius:50%;margin-top:4px;background:#15304A;border:1px solid rgba(216,180,92,.35)"></span><div><b style="display:block;color:#fff;font-size:13.5px">Deslocamento, posicionamento e decisão</b><span style="font-size:12px;color:#9fb1bf">o resto da partida</span></div></div>
-  </div>
+  <div style="display:flex;justify-content:space-between;font-size:11px;color:#9fb1bf;margin-top:5px"><span><b style="color:#fff">4h59min57s</b> tempo total fora do contato</span><span><b style="color:#fff">≈3 segundos</b> contato total</span></div>
 </div>
 
+*Valores aproximados, para ilustrar a proporção — não são medição de uma partida específica.*
+
 Isso não é uma curiosidade solta. É o motivo desta apostila começar pelos pés, e não pela raquete. Quem treina deslocamento, leitura de quadra e tomada de decisão está treinando o que ocupa quase toda a partida. A batida importa — é o topo da pirâmide, não a base — mas só funciona bem se antes dela vier o pé no lugar certo, o corpo equilibrado, o olho lendo a jogada.
+
+O mesmo padrão aparece em como os pontos terminam. Num exemplo de partida com 331 pontos:
+
+| Como termina o ponto | Pontos | % |
+|---|---|---|
+| Ralis curtos (1 a 4 batidas) | 175 | 53% |
+| Ralis médios (5 a 8 batidas) | 113 | 34% |
+| Ralis longos (9+ batidas) | 43 | 13% |
+
+A maioria dos pontos termina em poucos golpes. Vence quem se posiciona bem e começa o ponto em vantagem — não necessariamente quem bate mais forte.
 
 **A batida decide o golpe. O deslocamento decide o ponto.**
 
