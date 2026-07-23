@@ -114,13 +114,19 @@ p.secsub{font-size:10pt;color:var(--muted);margin-bottom:6mm;max-width:160mm}
 .cal2-note b{color:var(--gold-soft)}
 
 /* ---------- página 5 · a ciência ---------- */
-.sci-bar{margin-bottom:5mm}
-.sci-bar .lbl{display:flex;justify-content:space-between;align-items:baseline;font-size:9pt;color:var(--muted);margin-bottom:1.8mm}
-.sci-bar .lbl b{color:#fff;font-size:10pt}
-.sci-bar .track{background:var(--deep);border:1px solid var(--line);border-radius:8px;height:9mm;overflow:hidden}
-.sci-bar .fill{height:100%;border-radius:7px}
-.sci-bar.contact .fill{width:2.5%;min-width:4mm;background:linear-gradient(90deg,var(--gold-soft),var(--gold-2))}
-.sci-bar.resto .fill{width:100%;background:linear-gradient(90deg,var(--navy-2),var(--navy-3))}
+.sci{display:flex;align-items:center;gap:12mm;margin:5mm 0}
+.pie{position:relative;width:42mm;height:42mm;border-radius:50%;flex-shrink:0;background:conic-gradient(var(--gold-soft) 0deg 9deg,var(--navy-2) 9deg 360deg);box-shadow:0 0 0 1px var(--line)}
+.pie::after{content:"";position:absolute;inset:6mm;border-radius:50%;background:var(--navy)}
+.pie .pie-lbl{position:absolute;inset:6mm;z-index:1;display:flex;align-items:center;justify-content:center;text-align:center;flex-direction:column}
+.pie .pie-lbl b{font-size:16pt;line-height:1}
+.pie .pie-lbl small{font-size:6.3pt;color:var(--muted);margin-top:1mm;line-height:1.25}
+.sci-legend{display:flex;flex-direction:column;gap:4mm;flex:1}
+.sci-legend .it{display:flex;align-items:flex-start;gap:3mm}
+.sci-legend .dot{flex-shrink:0;width:3mm;height:3mm;border-radius:50%;margin-top:1.2mm}
+.sci-legend .dot.g{background:linear-gradient(135deg,var(--gold-soft),var(--gold-2))}
+.sci-legend .dot.n{background:var(--navy-2);border:1px solid var(--line)}
+.sci-legend b{display:block;color:#fff;font-size:10pt}
+.sci-legend span{font-size:8.4pt;color:var(--muted)}
 .chain{display:grid;grid-template-columns:repeat(3,1fr);gap:3mm;margin:5mm 0}
 .cnode{background:var(--navy-2);border:1px solid var(--line);border-radius:10px;padding:3.5mm 3mm;text-align:center}
 .cnode .ic{font-size:15pt;margin-bottom:1.4mm}
@@ -274,13 +280,12 @@ p.secsub{font-size:10pt;color:var(--muted);margin-bottom:6mm;max-width:160mm}
     <h2 class="sec">A ciência por trás<br>da metodologia</h2>
     <p class="secsub">Por que ensinamos primeiro os pés, e não a batida. Numa partida longa de tênis, o tempo em que a bola realmente toca a raquete é mínimo perto do tempo total de jogo.</p>
 
-    <div class="sci-bar contact">
-      <div class="lbl"><b>Contato da bola com a raquete</b><span>≈ poucos segundos, na partida inteira</span></div>
-      <div class="track"><div class="fill"></div></div>
-    </div>
-    <div class="sci-bar resto">
-      <div class="lbl"><b>Deslocamento, posicionamento e decisão</b><span>o resto da partida</span></div>
-      <div class="track"><div class="fill"></div></div>
+    <div class="sci">
+      <div class="pie"><div class="pie-lbl"><b>🎾</b><small>quase toda a partida é sem bola na raquete</small></div></div>
+      <div class="sci-legend">
+        <div class="it"><span class="dot g"></span><div><b>Contato da bola com a raquete</b><span>≈ poucos segundos, na partida inteira</span></div></div>
+        <div class="it"><span class="dot n"></span><div><b>Deslocamento, posicionamento e decisão</b><span>o resto da partida</span></div></div>
+      </div>
     </div>
 
     <p class="secsub" style="margin-top:2mm">É por isso que a Academia JV Tênis treina, nessa ordem:</p>
