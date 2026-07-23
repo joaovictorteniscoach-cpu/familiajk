@@ -127,13 +127,18 @@ A Pirâmide é o mapa do **conteúdo** da metodologia. São seis camadas, empilh
 
 Numa partida longa de tênis, a bola fica em contato com a raquete por uma fração de segundo a cada batida. Some todos os contatos da partida inteira e o tempo real de bola na raquete fica em torno de poucos segundos — o resto, que é praticamente o jogo todo, é deslocamento, posicionamento, espera e decisão.
 
-<div style="margin:18px 0 6px">
-  <div style="display:flex;justify-content:space-between;font-size:13px;color:#cfd8de;margin-bottom:5px"><b style="color:#fff">Contato da bola com a raquete</b><span>≈ poucos segundos, na partida inteira</span></div>
-  <div style="background:#0B1B2B;border:1px solid rgba(216,180,92,.35);border-radius:8px;height:16px;overflow:hidden"><div style="width:2.5%;min-width:8px;height:100%;background:linear-gradient(90deg,#E7CE93,#C49A3F);border-radius:7px"></div></div>
-</div>
-<div style="margin:0 0 16px">
-  <div style="display:flex;justify-content:space-between;font-size:13px;color:#cfd8de;margin-bottom:5px"><b style="color:#fff">Deslocamento, posicionamento e decisão</b><span>o resto da partida</span></div>
-  <div style="background:#0B1B2B;border:1px solid rgba(216,180,92,.35);border-radius:8px;height:16px;overflow:hidden"><div style="width:100%;height:100%;background:linear-gradient(90deg,#15304A,#1C3F5E);border-radius:7px"></div></div>
+<div style="display:flex;align-items:center;gap:28px;flex-wrap:wrap;justify-content:center;margin:18px 0 16px">
+  <div style="position:relative;width:150px;height:150px;border-radius:50%;flex-shrink:0;background:conic-gradient(#E7CE93 0deg 9deg, #15304A 9deg 360deg);box-shadow:0 0 0 1px rgba(216,180,92,.35)">
+    <div style="position:absolute;inset:20px;border-radius:50%;background:#102438"></div>
+    <div style="position:absolute;inset:20px;display:flex;align-items:center;justify-content:center;text-align:center;flex-direction:column">
+      <b style="font-size:26px;line-height:1">🎾</b>
+      <small style="font-size:9px;color:#cfd8de;margin-top:4px;max-width:80px;line-height:1.3;display:block">quase toda a partida é sem bola na raquete</small>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:12px;min-width:220px">
+    <div style="display:flex;align-items:flex-start;gap:8px"><span style="flex-shrink:0;width:11px;height:11px;border-radius:50%;margin-top:4px;background:linear-gradient(135deg,#E7CE93,#C49A3F)"></span><div><b style="display:block;color:#fff;font-size:13.5px">Contato da bola com a raquete</b><span style="font-size:12px;color:#9fb1bf">≈ poucos segundos, na partida inteira</span></div></div>
+    <div style="display:flex;align-items:flex-start;gap:8px"><span style="flex-shrink:0;width:11px;height:11px;border-radius:50%;margin-top:4px;background:#15304A;border:1px solid rgba(216,180,92,.35)"></span><div><b style="display:block;color:#fff;font-size:13.5px">Deslocamento, posicionamento e decisão</b><span style="font-size:12px;color:#9fb1bf">o resto da partida</span></div></div>
+  </div>
 </div>
 
 Isso não é uma curiosidade solta. É o motivo desta apostila começar pelos pés, e não pela raquete. Quem treina deslocamento, leitura de quadra e tomada de decisão está treinando o que ocupa quase toda a partida. A batida importa — é o topo da pirâmide, não a base — mas só funciona bem se antes dela vier o pé no lugar certo, o corpo equilibrado, o olho lendo a jogada.
