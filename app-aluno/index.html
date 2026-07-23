@@ -946,10 +946,12 @@ function evoRowHTML(grupo,it,cur,prev){
 function renderEvolucao(){
   const body=document.getElementById('evo-body');
   const av=(EU&&Array.isArray(EU.avaliacoes))?EU.avaliacoes:[];
-  if(!av.length){
+  const rg=(EU&&Array.isArray(EU.registros))?EU.registros:[];
+  if(!av.length&&!rg.length){
     body.innerHTML='<div class="evo-empty">📈<br>Sua primeira avaliação aparece aqui assim que o João preencher.<br><br>Ela mostra seu nível na <b>Trilha</b>, o que você já evoluiu e a prioridade do próximo ciclo. 🎾</div>';
     return;
   }
+  if(!av.length){body.innerHTML=evoRegistrosHTML(rg,true);return;}
   const cur=av[av.length-1], prev=av.length>1?av[av.length-2]:null;
   const ci=Math.max(0,TRILHA_NIVEIS.indexOf(cur.nivel));
   let subiu='';
@@ -971,8 +973,21 @@ function renderEvolucao(){
     html+=av.slice().reverse().map(v=>`<div class="hr"><span>${(v.data||'').split('-').reverse().join('/')}</span><b>${v.nivel||'—'}</b></div>`).join('');
     html+='</div>';
   }
+  html+=evoRegistrosHTML(rg,false);
   html+=`<p style="font-size:11px;color:var(--muted);text-align:center;margin-top:12px">Última avaliação: ${(cur.data||'').split('-').reverse().join('/')} · pelo Prof. João</p>`;
   body.innerHTML=html;
+}
+function evoRegistrosHTML(rg,solo){
+  if(!rg||!rg.length)return '';
+  let h=(solo?'<p class="sub" style="margin-bottom:10px">Seus registros de aula. A avaliação completa da Trilha aparece aqui quando o João preencher. 🎾</p>':'')+'<div class="evo-sec">📝 Registros de aula</div><div class="evo-hist">';
+  h+=rg.slice().reverse().slice(0,6).map(v=>{
+    const ev=v.evoluiu==='sim'?'<b style="color:#2E7D52">✅ evoluiu</b>':(v.evoluiu==='nao'?'<b style="color:#8a6d3b">➖ seguimos</b>':'');
+    const cam=v.camada?' · '+escHtml(v.camada):'';
+    const prox=v.proximo?'<div style="font-size:11.5px;color:var(--muted);margin-top:3px">Próximo foco: <b style="color:var(--text)">'+escHtml(v.proximo)+'</b></div>':'';
+    return `<div class="hr" style="display:block"><div style="display:flex;justify-content:space-between"><span>${(v.data||'').split('-').reverse().join('/')}${cam}</span>${ev}</div>${prox}</div>`;
+  }).join('');
+  h+='</div>';
+  return h;
 }
 function escHtml(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function openEvolucao(){renderEvolucao();document.getElementById('ov-evolucao').classList.add('on');}
