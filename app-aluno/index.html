@@ -258,6 +258,8 @@ input,select{font-family:'DM Sans',sans-serif;font-size:14px}
 .evo-hist .hr{display:flex;justify-content:space-between;font-size:12.5px;padding:9px 12px;background:#F7F4EE;border:1px solid var(--border);border-radius:10px;margin-bottom:6px}
 .evo-hist .hr b{color:#5B3FA6}
 .evo-empty{text-align:center;padding:22px 10px;color:var(--muted);font-size:13.5px;line-height:1.6}
+.evo-pend{background:#FBF3DE;border:1px solid #EBD9A6;color:#6B5522;border-radius:14px;padding:13px 15px;margin:4px 0 14px;font-size:13px;line-height:1.55;text-align:center}
+.evo-pend b{color:#5A4210}
 .field{margin-bottom:11px}
 .field label{display:block;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
 .field select{width:100%;border:1px solid var(--border);border-radius:10px;padding:11px 12px;background:#fff;outline:none}
@@ -1009,49 +1011,52 @@ function evoRowHTML(grupo,it,cur,prev){
 function evolucaoHTML(){
   const av=(EU&&Array.isArray(EU.avaliacoes))?EU.avaliacoes:[];
   const rg=(EU&&Array.isArray(EU.registros))?EU.registros:[];
-  if(!av.length&&!rg.length){
-    return '<div class="evo-empty">📈<br>Sua primeira avaliação aparece aqui assim que o João preencher.<br><br>Ela mostra seu nível na <b>Trilha</b>, o que você já evoluiu e a prioridade do próximo ciclo. 🎾</div>';
-  }
-  if(!av.length){return evoRegistrosHTML(rg,true);}
-  const cur=av[av.length-1], prev=av.length>1?av[av.length-2]:null;
-  const ci=Math.max(0,TRILHA_NIVEIS.indexOf(cur.nivel));
+  const pendente=!av.length;
+  const cur=pendente?{nivel:'',mov:{},tec:{},prioridade:'',objetivo:''}:av[av.length-1];
+  const prev=(!pendente&&av.length>1)?av[av.length-2]:null;
+  const ci=pendente?-1:Math.max(0,TRILHA_NIVEIS.indexOf(cur.nivel));
   let subiu='';
-  if(prev&&prev.nivel&&prev.nivel!==cur.nivel){
+  if(!pendente&&prev&&prev.nivel&&prev.nivel!==cur.nivel){
     const pi=TRILHA_NIVEIS.indexOf(prev.nivel);
     if(ci>pi)subiu=' <span style="color:#2E7D52;font-weight:800">↑ subiu de nível!</span>';
   }
   const trilha=TRILHA_NIVEIS.map((n,i)=>{
-    const feito=i<=ci;
+    const feito=!pendente&&i<=ci;
     const bg=feito?('background:'+metalDe(n).m):'';
     const cls='evo-step '+(feito?'':'future')+(i===ci?' cur':'');
     return `<div class="${cls}" style="${bg}">${n}</div>`;
   }).join('');
-  const met=metalDe(cur.nivel);
+  const met=pendente?{m:'#A79E8C',d:'#6B5E4A'}:metalDe(cur.nivel);
   // Barra de XP — evolução geral
-  const pctG=pctAval(cur), pctP=prev?pctAval(prev):null;
+  const pctG=pctAval(cur), pctP=(!pendente&&prev)?pctAval(prev):null;
   let deltaHTML;
-  if(pctP===null){deltaHTML='<div class="xp-delta flat">🎾 Sua 1ª avaliação — bora evoluir!</div>';}
+  if(pendente){deltaHTML='<div class="xp-delta flat">⏳ Avaliação ainda pendente</div>';}
+  else if(pctP===null){deltaHTML='<div class="xp-delta flat">🎾 Sua 1ª avaliação — bora evoluir!</div>';}
   else if(pctG>pctP){deltaHTML='<div class="xp-delta">▲ +'+(pctG-pctP)+'% desde a última avaliação</div>';}
   else if(pctG<pctP){deltaHTML='<div class="xp-delta flat">▼ '+(pctG-pctP)+'% — foco no próximo ciclo 💪</div>';}
   else{deltaHTML='<div class="xp-delta flat">➖ manteve — hora de subir mais 💪</div>';}
   let html='<div class="evo-font" style="--lc:'+met.m+';--lcd:'+met.d+'">';
+  if(pendente){html+='<div class="evo-pend">⏳ <b>Sua avaliação ainda não foi preenchida.</b><br>Assim que o João te avaliar, tudo aqui embaixo ganha os seus números. Este é um exemplo do que você vai acompanhar. 🎾</div>';}
   html+=`<div class="evo-xp"><div class="xp-eye">Evolução geral</div><div class="xp-num">${pctG}<small>%</small></div><div class="xp-cap">domínio dos fundamentos · Da Base ao Topo</div><div class="xp-track"><i data-w="${pctG}"></i></div>${deltaHTML}</div>`;
-  html+=`<div style="text-align:center;margin:2px 0 10px"><span class="evo-badge">Nível: ${cur.nivel||'—'}</span>${subiu}</div>`;
+  html+=`<div style="text-align:center;margin:2px 0 10px"><span class="evo-badge"${pendente?' style="background:#8A8272"':''}>Nível: ${pendente?'a avaliar':(cur.nivel||'—')}</span>${subiu}</div>`;
   html+=`<div class="evo-trilha">${trilha}</div>`;
-  if(cur.prioridade){html+=`<div class="evo-prio"><div class="lbl">Prioridade do ciclo</div><b>${escHtml(cur.prioridade)}</b></div>`;}
-  if(cur.objetivo){html+=`<p style="font-size:13px;color:#3a3128;margin:-6px 0 12px;font-weight:600">🎯 Meu objetivo: <b style="color:var(--text);font-weight:800">${escHtml(cur.objetivo)}</b></p>`;}
+  if(pendente){html+=`<div class="evo-prio" style="background:#F4F1E8"><div class="lbl">Prioridade do ciclo</div><b style="color:#8A8272">a definir na avaliação</b></div>`;}
+  else{
+    if(cur.prioridade){html+=`<div class="evo-prio"><div class="lbl">Prioridade do ciclo</div><b>${escHtml(cur.prioridade)}</b></div>`;}
+    if(cur.objetivo){html+=`<p style="font-size:13px;color:#3a3128;margin:-6px 0 12px;font-weight:600">🎯 Meu objetivo: <b style="color:var(--text);font-weight:800">${escHtml(cur.objetivo)}</b></p>`;}
+  }
   ['mov','tec'].forEach(g=>{
     html+=`<div class="evo-panel"><div class="evo-sec">${g==='mov'?'🏃':'🎾'} ${AVAL_ESCALA[g].titulo}</div>`;
     AVAL_ESCALA[g].itens.forEach(it=>{html+=evoRowHTML(g,it,cur,prev);});
     html+='</div>';
   });
-  if(av.length>1){
+  if(!pendente&&av.length>1){
     html+='<div class="evo-sec">🗓️ Histórico</div><div class="evo-hist">';
     html+=av.slice().reverse().map(v=>`<div class="hr"><span>${(v.data||'').split('-').reverse().join('/')}</span><b>${v.nivel||'—'}</b></div>`).join('');
     html+='</div>';
   }
   html+=evoRegistrosHTML(rg,false);
-  html+=`<p style="font-size:11px;color:var(--muted);text-align:center;margin-top:12px">Última avaliação: ${(cur.data||'').split('-').reverse().join('/')} · pelo Prof. João</p>`;
+  html+=pendente?'':`<p style="font-size:11px;color:var(--muted);text-align:center;margin-top:12px">Última avaliação: ${(cur.data||'').split('-').reverse().join('/')} · pelo Prof. João</p>`;
   html+='</div>';   // fecha .evo-font
   return html;
 }
