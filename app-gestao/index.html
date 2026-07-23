@@ -271,6 +271,7 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .avacts .b1{background:#EDE7FB;color:#5B3FA6}
 .avacts .b2{background:#F4EDE0;color:var(--muted)}
 .avacts .b3{background:#E3F2E4;color:var(--ok)}
+.avacts .b4{background:#F6E7E4;color:#B23A2E}
 .avdue{display:inline-block;font-size:10.5px;font-weight:700;color:#B23A2E;background:#F9E4E0;border-radius:12px;padding:2px 9px;margin-top:8px}
 .aluno-foot{display:flex;justify-content:space-between;margin-top:10px;flex-wrap:wrap;gap:4px}
 .ha-box{margin:2px 0 10px;background:#fff;border:1px solid var(--border);border-radius:11px;padding:9px 11px}
@@ -558,6 +559,7 @@ function iniciarFirebase(){
     <button class="on" onclick="setFiltroAval('todos',this)">Todos</button>
     <button onclick="setFiltroAval('pendentes',this)">A avaliar</button>
     <button onclick="setFiltroAval('avaliados',this)">Avaliados</button>
+    <button onclick="setFiltroAval('fora',this)">Fora 🚫</button>
   </div>
   <div id="aval-list"></div>
 </section>
@@ -2631,24 +2633,41 @@ function avMiniHTML(av){
   });});
   return '<div class="avmini">'+segs+'</div>';
 }
+function setAvalOff(id,val){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  a.avalOff=!!val;persist();renderAvaliacoes();
+  toast(val?('🚫 '+a.nome.split(' ')[0]+' fora das avaliações'):('✅ '+a.nome.split(' ')[0]+' incluído nas avaliações'));
+}
 function renderAvaliacoes(){
   const list=document.getElementById('aval-list');if(!list)return;
   const q=(document.getElementById('aval-search').value||'').toLowerCase();
   const todos=DB.alunos.slice().sort((x,y)=>x.nome.localeCompare(y.nome));
-  // resumo
+  const alunos=todos.filter(a=>!a.avalOff);         // só quem participa das avaliações
+  // resumo (conta só alunos de aula)
   let nAval=0,nPend=0;
-  todos.forEach(a=>{
+  alunos.forEach(a=>{
     const tem=a.avaliacoes&&a.avaliacoes.length;
     const dias=tem?diasDesde(a.avaliacoes[a.avaliacoes.length-1].data):Infinity;
     if(tem)nAval++;
     if(!tem||dias>42)nPend++;
   });
   const res=document.getElementById('aval-resumo');
-  if(res)res.innerHTML='<div class="rc"><b>'+todos.length+'</b><span>alunos</span></div>'+
+  if(res)res.innerHTML='<div class="rc"><b>'+alunos.length+'</b><span>alunos</span></div>'+
     '<div class="rc"><b>'+nAval+'</b><span>avaliados</span></div>'+
     '<div class="rc pend"><b>'+nPend+'</b><span>a avaliar</span></div>';
-  // lista
-  const items=todos.filter(a=>a.nome.toLowerCase().includes(q)).filter(a=>{
+  // aba "Fora" — quem foi tirado das avaliações (locação/torneio)
+  if(filtroAval==='fora'){
+    const fora=todos.filter(a=>a.avalOff&&a.nome.toLowerCase().includes(q));
+    if(!fora.length){list.innerHTML='<div class="empty">Ninguém fora das avaliações. Use o 🚫 num aluno para tirá-lo daqui (ex.: quem só loca quadra ou joga o torneio).</div>';return;}
+    list.innerHTML=fora.map(a=>
+      '<div class="avcard"><div class="avtop"><div><div class="avnome">'+escAval(a.nome)+'</div><div class="avsub">'+a.tipo+' · fora das avaliações</div></div>'+
+      '<span class="avnivel none">🚫 fora</span></div>'+
+      '<div class="avacts"><button class="b3" onclick="setAvalOff(\''+a.id+'\',false)">✅ Incluir nas avaliações</button></div></div>'
+    ).join('');
+    return;
+  }
+  // lista normal
+  const items=alunos.filter(a=>a.nome.toLowerCase().includes(q)).filter(a=>{
     const tem=a.avaliacoes&&a.avaliacoes.length;
     const dias=tem?diasDesde(a.avaliacoes[a.avaliacoes.length-1].data):Infinity;
     if(filtroAval==='avaliados')return tem;
@@ -2670,6 +2689,7 @@ function renderAvaliacoes(){
         '<button class="b1" onclick="openAvalModal(\''+a.id+'\')">📈 Avaliar</button>'+
         '<button class="b2" onclick="openRegistroModal(\''+a.id+'\')">📝 Registro</button>'+
         (av?'<button class="b3" onclick="openAvalExport(\''+a.id+'\')">📤 Devolutiva</button>':'')+
+        '<button class="b4" onclick="setAvalOff(\''+a.id+'\',true)">🚫 Tirar</button>'+
       '</div>'+
     '</div>';
   }).join('');
