@@ -9,8 +9,8 @@ e `app-gestao/`).
 | Arquivo | O que é |
 |---|---|
 | `apostila.md` | Texto completo da apostila de formação de professores (fonte única do conteúdo) |
-| `folder.html` | Fonte do **folder comercial** para enviar a clientes (3 páginas A4, visual dark navy + dourado) |
-| `export/` | Arquivos prontos para envio: `Metodologia-JV-Tenis.pdf` (3 páginas) e as versões em imagem PNG de alta resolução (páginas separadas e completa) |
+| `folder.html` | Fonte do **folder comercial** para enviar a clientes (5 páginas A4, visual dark navy + dourado) |
+| `export/` | Arquivos prontos para envio: `Metodologia-JV-Tenis.pdf` (5 páginas) e as versões em imagem PNG de alta resolução (páginas separadas e completa) |
 
 > O PDF do folder também é **publicado no site**: existe uma cópia em
 > `site/Metodologia-JV-Tenis.pdf` (URL pública `/Metodologia-JV-Tenis.pdf`,

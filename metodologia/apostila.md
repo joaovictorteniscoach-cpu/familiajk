@@ -5,7 +5,7 @@
 **Autor:** João Victor · Academia JV Tênis
 **Local:** Rua João Azolin, 795 — Santa Felicidade, Curitiba/PR
 **Contato:** WhatsApp (41) 99541-5712 · Instagram @joaovictortenis
-**Versão:** 1.1 — 2026
+**Versão:** 1.2 — 2026
 
 > "O tênis se aprende de baixo pra cima. Na base e nos pés, na movimentação e no posicionamento — antes da batida e dos fundamentos."
 > — João Victor
@@ -122,6 +122,14 @@ A Pirâmide é o mapa do **conteúdo** da metodologia. São seis camadas, empilh
                 ▲▲▲▲▲  2. DESLOCAMENTO — movimentação
                ▲▲▲▲▲▲  1. PÉS NO SAIBRO — base e equilíbrio
 ```
+
+### Por que começamos pelos pés?
+
+Numa partida longa de tênis, a bola fica em contato com a raquete por uma fração de segundo a cada batida. Some todos os contatos da partida inteira e o tempo real de bola na raquete fica em torno de poucos segundos — o resto, que é praticamente o jogo todo, é deslocamento, posicionamento, espera e decisão.
+
+Isso não é uma curiosidade solta. É o motivo desta apostila começar pelos pés, e não pela raquete. Quem treina deslocamento, leitura de quadra e tomada de decisão está treinando o que ocupa quase toda a partida. A batida importa — é o topo da pirâmide, não a base — mas só funciona bem se antes dela vier o pé no lugar certo, o corpo equilibrado, o olho lendo a jogada.
+
+**A batida decide o golpe. O deslocamento decide o ponto.**
 
 ## 3.1 Camada 1 — Pés no Saibro (base e equilíbrio)
 
