@@ -239,6 +239,22 @@ input,select{font-family:'DM Sans',sans-serif;font-size:14px}
 .evo-levelup .em{font-size:40px;line-height:1}
 .evo-levelup .t1{font-size:13px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-top:6px}
 .evo-levelup .t2{font-size:22px;font-weight:900;margin-top:2px}
+/* ===== Premiação do Torneio (campeão / vice) ===== */
+.tp-ov{position:fixed;inset:0;z-index:10001;background:rgba(14,12,8,.62);display:flex;align-items:center;justify-content:center;padding:22px;opacity:0;transition:opacity .3s}
+.tp-ov.on{opacity:1}
+.tp-card{position:relative;width:100%;max-width:344px;border-radius:26px;padding:30px 24px 22px;text-align:center;color:#fff;box-shadow:0 26px 64px rgba(0,0,0,.55);transform:scale(.82) translateY(8px);transition:transform .45s cubic-bezier(.2,1.5,.35,1);overflow:hidden}
+.tp-ov.on .tp-card{transform:scale(1) translateY(0)}
+.tp-card.champ{background:linear-gradient(160deg,#7E5A11,#C9A04A 52%,#EAD08A)}
+.tp-card.vice{background:linear-gradient(160deg,#565E65,#98A0A8 52%,#CDD3D8)}
+.tp-card::before{content:"";position:absolute;top:-40%;left:50%;width:200%;height:120%;transform:translateX(-50%);background:radial-gradient(circle at top,rgba(255,255,255,.32),transparent 55%);pointer-events:none}
+.tp-emb{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.22);border:1.5px solid rgba(255,255,255,.55);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;margin:0 auto 6px;letter-spacing:.5px;position:relative}
+.tp-trophy{font-size:66px;line-height:1;position:relative;filter:drop-shadow(0 5px 9px rgba(0,0,0,.3))}
+.tp-parabens{font-size:11.5px;letter-spacing:3px;text-transform:uppercase;font-weight:800;margin-top:8px;opacity:.92;position:relative}
+.tp-title{font-size:33px;font-weight:900;line-height:1.05;margin:3px 0 3px;text-shadow:0 2px 7px rgba(0,0,0,.28);position:relative}
+.tp-cat{font-size:14px;font-weight:700;opacity:.95;position:relative}
+.tp-name{margin-top:13px;font-size:15px;font-weight:800;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.35);border-radius:14px;padding:8px 15px;display:inline-block;position:relative}
+.tp-foot{margin-top:12px;font-size:11px;opacity:.85;position:relative}
+.tp-close{margin-top:16px;width:100%;background:rgba(255,255,255,.96);color:#2A2016;border:none;border-radius:14px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;position:relative}
 .evo-hist .hr{display:flex;justify-content:space-between;font-size:12.5px;padding:9px 12px;background:#F7F4EE;border:1px solid var(--border);border-radius:10px;margin-bottom:6px}
 .evo-hist .hr b{color:#5B3FA6}
 .evo-empty{text-align:center;padding:22px 10px;color:var(--muted);font-size:13.5px;line-height:1.6}
@@ -1203,6 +1219,52 @@ function renderTorneioAluno(){
     }).join('');
     return '<div class="atg-card"><div class="atg-head"><div class="atg-badge">'+g+'</div><div class="atg-title">Grupo '+g+'</div></div><table class="atg-tbl"><thead><tr><th class="l">Jogador</th><th>V</th><th>D</th><th>WO</th><th>Pts</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
   }).join('');
+  checarPremiacaoTor(t,grupos,meu);
+}
+/* ===== Premiação: campeão / vice-campeão do grupo ===== */
+function ehMesmoJogador(p,meu){
+  return (EU&&EU.codigo&&p.cod&&p.cod===EU.codigo)||(meu&&(p.name||'').toLowerCase()===meu);
+}
+function checarPremiacaoTor(t,grupos,meu){
+  if(!t||!t.id)return;
+  const cod=(MEU&&MEU.codigo)||(EU&&EU.codigo)||'';
+  if(!cod&&!meu)return;
+  for(const g of grupos){
+    const players=rankTorAl(t.jogadores.filter(p=>p.group===g));
+    const idx=players.findIndex(p=>ehMesmoJogador(p,meu));
+    if(idx<0)continue;                         // não está neste grupo
+    if(idx>1)return;                            // fora do pódio (1º/2º)
+    const p=players[idx];
+    const jogos=(Number(p.v)||0)+(Number(p.d)||0)+(Number(p.wo)||0);
+    if(jogos<1)return;                          // ainda não jogou — não premia
+    const tipo=idx===0?'campeao':'vice';
+    const chave='jvt-tor-premio-'+cod+'-'+t.id+'-'+g+'-'+tipo;
+    if(lsGet(chave))return;                     // já comemorou
+    lsSet(chave,'1');
+    setTimeout(()=>celebraTorneioPremio(tipo,g,t.nome||'Torneio',(EU&&EU.nome)||p.name||''),650);
+    return;
+  }
+}
+function celebraTorneioPremio(tipo,grupo,torNome,nome){
+  const champ=(tipo==='campeao');
+  confeteBurst(champ?'#C9A04A':'#AEB6BD');
+  const ov=document.createElement('div');ov.className='tp-ov';
+  const card=document.createElement('div');card.className='tp-card '+(champ?'champ':'vice');
+  card.innerHTML='<div class="tp-emb">JV</div>'+
+    '<div class="tp-trophy">'+(champ?'🏆':'🥈')+'</div>'+
+    '<div class="tp-parabens">Parabéns!</div>'+
+    '<div class="tp-title">'+(champ?'CAMPEÃO':'VICE-CAMPEÃO')+'</div>'+
+    '<div class="tp-cat">Grupo '+torEscAl(grupo)+' · '+torEscAl(torNome)+'</div>'+
+    (nome?'<div class="tp-name">🎾 '+torEscAl(nome)+'</div>':'')+
+    '<div class="tp-foot">Academia João Victor Tênis</div>'+
+    '<button class="tp-close">Comemorar 🎉</button>';
+  ov.appendChild(card);
+  document.body.appendChild(ov);
+  const fecha=()=>{ov.classList.remove('on');setTimeout(()=>ov.remove(),350);};
+  card.querySelector('.tp-close').addEventListener('click',fecha);
+  ov.addEventListener('click',e=>{if(e.target===ov)fecha();});
+  requestAnimationFrame(()=>ov.classList.add('on'));
+  try{if(navigator.vibrate)navigator.vibrate([50,60,50,60,90]);}catch(e){}
 }
 function abrirRegResultado(){
   const t=PUB&&PUB.torneio;
