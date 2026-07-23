@@ -965,20 +965,33 @@ function goAluno(id,btn){
 
 /* ===== Minha evolução (Da Base ao Topo · Anexo A) ===== */
 const AVAL_ESCALA={
-  mov:{titulo:'Observação em movimento',itens:[
-    {k:'espera', lbl:'Posição de espera',       n:['não tem','com lembrete','espontânea']},
-    {k:'split',  lbl:'Split-step',              n:['não tem','com lembrete','espontâneo']},
-    {k:'desloc', lbl:'Deslocamento lateral',    n:['inseguro','funcional','fluido']},
-    {k:'percep', lbl:'Percepção de bola',       n:['difícil','irregular','consistente']},
-    {k:'equil',  lbl:'Equilíbrio na chegada',   n:['instável','razoável','estável']}
+  mov:{titulo:'Movimento & base',itens:[
+    {k:'espera',  lbl:'Posição de espera', n:['não tem','com lembrete','espontânea']},
+    {k:'prep',    lbl:'Preparação',        n:['atrasada','às vezes pronta','antecipada']},
+    {k:'desloc',  lbl:'Deslocamento',      n:['inseguro','funcional','fluido']},
+    {k:'percep',  lbl:'Percepção de bola', n:['difícil','irregular','consistente']},
+    {k:'final',   lbl:'Finalização',       n:['incompleta','razoável','completa']},
+    {k:'equil',   lbl:'Equilíbrio',        n:['instável','razoável','estável']},
+    {k:'recupera',lbl:'Recuperação',       n:['não volta','volta lenta','volta pronta']}
   ]},
-  tec:{titulo:'Com raquete',itens:[
-    {k:'forehand',lbl:'Forehand', n:['iniciando','forma reconhecível','consistente']},
-    {k:'backhand',lbl:'Backhand', n:['iniciando','forma reconhecível','consistente']},
-    {k:'saque',   lbl:'Saque',    n:['iniciando','gesto simplificado','gesto completo']},
-    {k:'troca',   lbl:'Troca',    n:['não sustenta','5 bolas','10+ bolas']}
+  tec:{titulo:'Fundamentos com raquete',itens:[
+    {k:'forehand', lbl:'Forehand',  n:['iniciando','forma reconhecível','consistente']},
+    {k:'backhand', lbl:'Backhand',  n:['iniciando','forma reconhecível','consistente']},
+    {k:'voleio',   lbl:'Voleio',    n:['evita','bloqueio simples','define o ponto']},
+    {k:'smash',    lbl:'Smash',     n:['evita','defensivo','ofensivo']},
+    {k:'saque',    lbl:'Saque',     n:['iniciando','gesto simplificado','gesto completo']},
+    {k:'devolucao',lbl:'Devolução', n:['insegura','coloca na quadra','com intenção']}
+  ]},
+  jogo:{titulo:'Jogo & cabeça',itens:[
+    {k:'troca',   lbl:'Consistência (troca)', n:['até 5 trocas','até 10 trocas','15+ trocas','20+ trocas']},
+    {k:'direcao', lbl:'Direção',      n:['sem controle','às vezes no alvo','dirige a bola']},
+    {k:'efeito',  lbl:'Efeito',       n:['sem efeito','topspin básico','varia (top/slice)']},
+    {k:'profund', lbl:'Profundidade', n:['curta','média','profunda']},
+    {k:'leitura', lbl:'Leitura',      n:['reage tarde','às vezes antecipa','antecipa e decide']},
+    {k:'pressao', lbl:'Sob pressão',  n:['some na pressão','oscila','mantém']}
   ]}
 };
+const AVAL_ICO={mov:'🏃',tec:'🎾',jogo:'🧠'};
 const TRILHA_NIVEIS=['Base','Impulso','Construção','Ascensão','Topo'];
 /* materiais preciosos por nível: Bronze→Prata→Ouro→Rubi→Carbono */
 const LEVEL_MET={
@@ -992,12 +1005,12 @@ function metalDe(nivel){return LEVEL_MET[nivel]||LEVEL_MET['Construção'];}
 function pctAval(av){
   if(!av)return 0;
   let s=0,n=0;
-  ['mov','tec'].forEach(g=>{AVAL_ESCALA[g].itens.forEach(it=>{s+=Number(av[g]&&av[g][it.k])||0;n++;});});
-  return n?Math.round(s/(n*3)*100):0;
+  Object.keys(AVAL_ESCALA).forEach(g=>{AVAL_ESCALA[g].itens.forEach(it=>{s+=(Number(av[g]&&av[g][it.k])||0)/it.n.length;n++;});});
+  return n?Math.round(s/n*100):0;
 }
 function evoRowHTML(grupo,it,cur,prev){
   const v=Number(cur&&cur[grupo]&&cur[grupo][it.k])||0;
-  const pct=Math.round((v/3)*100);
+  const pct=Math.round((v/it.n.length)*100);
   const rot=v>0?it.n[v-1]:'—';
   let delta='';
   if(prev){
@@ -1045,8 +1058,8 @@ function evolucaoHTML(){
     if(cur.prioridade){html+=`<div class="evo-prio"><div class="lbl">Prioridade do ciclo</div><b>${escHtml(cur.prioridade)}</b></div>`;}
     if(cur.objetivo){html+=`<p style="font-size:13px;color:#3a3128;margin:-6px 0 12px;font-weight:600">🎯 Meu objetivo: <b style="color:var(--text);font-weight:800">${escHtml(cur.objetivo)}</b></p>`;}
   }
-  ['mov','tec'].forEach(g=>{
-    html+=`<div class="evo-panel"><div class="evo-sec">${g==='mov'?'🏃':'🎾'} ${AVAL_ESCALA[g].titulo}</div>`;
+  Object.keys(AVAL_ESCALA).forEach(g=>{
+    html+=`<div class="evo-panel"><div class="evo-sec">${AVAL_ICO[g]||'•'} ${AVAL_ESCALA[g].titulo}</div>`;
     AVAL_ESCALA[g].itens.forEach(it=>{html+=evoRowHTML(g,it,cur,prev);});
     html+='</div>';
   });

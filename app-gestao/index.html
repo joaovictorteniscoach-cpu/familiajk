@@ -1011,8 +1011,7 @@ function iniciarFirebase(){
     </div>
     <div class="field"><label>Objetivo declarado do aluno</label><input id="av-objetivo" placeholder="Ex.: voltar a jogar, competir na Barragem, condicionamento…"></div>
 
-    <div class="aval-blk" id="av-blk-mov"><h4>🏃 Observação em movimento <span style="font-weight:600;color:var(--muted)">(sem raquete)</span></h4></div>
-    <div class="aval-blk" id="av-blk-tec"><h4>🎾 Com raquete <span style="font-weight:600;color:var(--muted)">(bola facilitada)</span></h4></div>
+    <div id="av-blocos"></div>
 
     <div class="field"><label>Formato sugerido</label>
       <select id="av-formato"><option>Particular</option><option>Dupla</option><option>Trio</option><option>Quarteto</option><option>Kids</option></select>
@@ -2402,40 +2401,48 @@ function saveAluno(){
 
 /* ===== Avaliação de desenvolvimento (Da Base ao Topo · Anexo A) ===== */
 const AVAL_ESCALA={
-  mov:{
-    titulo:'Observação em movimento (sem raquete)',
-    itens:[
-      {k:'espera', lbl:'Posição de espera',      n:['não tem','com lembrete','espontânea']},
-      {k:'split',  lbl:'Split-step',             n:['não tem','com lembrete','espontâneo']},
-      {k:'desloc', lbl:'Deslocamento lateral',   n:['inseguro','funcional','fluido']},
-      {k:'percep', lbl:'Percepção de bola (pega)',n:['difícil','irregular','consistente']},
-      {k:'equil',  lbl:'Equilíbrio na chegada',  n:['instável','razoável','estável']}
-    ]
-  },
-  tec:{
-    titulo:'Com raquete (bola facilitada)',
-    itens:[
-      {k:'forehand',lbl:'Forehand', n:['iniciando','forma reconhecível','consistente']},
-      {k:'backhand',lbl:'Backhand', n:['iniciando','forma reconhecível','consistente']},
-      {k:'saque',   lbl:'Saque',    n:['iniciando','gesto simplificado','gesto completo']},
-      {k:'troca',   lbl:'Troca',    n:['não sustenta','5 bolas','10+ bolas']}
-    ]
-  }
+  mov:{titulo:'Movimento & base',itens:[
+    {k:'espera',  lbl:'Posição de espera', n:['não tem','com lembrete','espontânea']},
+    {k:'prep',    lbl:'Preparação',        n:['atrasada','às vezes pronta','antecipada']},
+    {k:'desloc',  lbl:'Deslocamento',      n:['inseguro','funcional','fluido']},
+    {k:'percep',  lbl:'Percepção de bola', n:['difícil','irregular','consistente']},
+    {k:'final',   lbl:'Finalização',       n:['incompleta','razoável','completa']},
+    {k:'equil',   lbl:'Equilíbrio',        n:['instável','razoável','estável']},
+    {k:'recupera',lbl:'Recuperação',       n:['não volta','volta lenta','volta pronta']}
+  ]},
+  tec:{titulo:'Fundamentos com raquete',itens:[
+    {k:'forehand', lbl:'Forehand',  n:['iniciando','forma reconhecível','consistente']},
+    {k:'backhand', lbl:'Backhand',  n:['iniciando','forma reconhecível','consistente']},
+    {k:'voleio',   lbl:'Voleio',    n:['evita','bloqueio simples','define o ponto']},
+    {k:'smash',    lbl:'Smash',     n:['evita','defensivo','ofensivo']},
+    {k:'saque',    lbl:'Saque',     n:['iniciando','gesto simplificado','gesto completo']},
+    {k:'devolucao',lbl:'Devolução', n:['insegura','coloca na quadra','com intenção']}
+  ]},
+  jogo:{titulo:'Jogo & cabeça',itens:[
+    {k:'troca',   lbl:'Consistência (troca)', n:['até 5 trocas','até 10 trocas','15+ trocas','20+ trocas']},
+    {k:'direcao', lbl:'Direção',      n:['sem controle','às vezes no alvo','dirige a bola']},
+    {k:'efeito',  lbl:'Efeito',       n:['sem efeito','topspin básico','varia (top/slice)']},
+    {k:'profund', lbl:'Profundidade', n:['curta','média','profunda']},
+    {k:'leitura', lbl:'Leitura',      n:['reage tarde','às vezes antecipa','antecipa e decide']},
+    {k:'pressao', lbl:'Sob pressão',  n:['some na pressão','oscila','mantém']}
+  ]}
 };
+const AVAL_ICO={mov:'🏃',tec:'🎾',jogo:'🧠'};
 const TRILHA_NIVEIS=['Base','Impulso','Construção','Ascensão','Topo'];
 let avalDraft=null;
 function avalItemHTML(grupo,it){
-  const val=avalDraft[grupo][it.k]||0;
+  const val=(avalDraft[grupo]&&avalDraft[grupo][it.k])||0;
   const btns=it.n.map((txt,i)=>`<button type="button" class="${val===i+1?'on':''}" onclick="setAval('${grupo}','${it.k}',${i+1})">${txt}</button>`).join('');
-  return `<div class="aval-item"><label>${it.lbl}</label><div class="seg3" data-seg="${grupo}-${it.k}">${btns}</div></div>`;
+  return `<div class="aval-item"><label>${it.lbl}</label><div class="seg3" style="grid-template-columns:repeat(${it.n.length},1fr)" data-seg="${grupo}-${it.k}">${btns}</div></div>`;
 }
 function renderAvalBlocos(){
-  ['mov','tec'].forEach(g=>{
-    const box=document.getElementById(g==='mov'?'av-blk-mov':'av-blk-tec');
-    // mantém o <h4>, recria só os itens
-    const h4=box.querySelector('h4');
-    box.innerHTML='';box.appendChild(h4);
-    AVAL_ESCALA[g].itens.forEach(it=>box.insertAdjacentHTML('beforeend',avalItemHTML(g,it)));
+  const wrap=document.getElementById('av-blocos');if(!wrap)return;
+  wrap.innerHTML='';
+  Object.keys(AVAL_ESCALA).forEach(g=>{
+    let h='<div class="aval-blk"><h4>'+(AVAL_ICO[g]||'•')+' '+AVAL_ESCALA[g].titulo+'</h4>';
+    AVAL_ESCALA[g].itens.forEach(it=>{h+=avalItemHTML(g,it);});
+    h+='</div>';
+    wrap.insertAdjacentHTML('beforeend',h);
   });
 }
 function setAval(grupo,key,val){
@@ -2452,7 +2459,8 @@ function openAvalModal(id){
   if(!Array.isArray(a.avaliacoes))a.avaliacoes=[];
   const ult=a.avaliacoes[a.avaliacoes.length-1]||null;
   // prefill: clona a última avaliação p/ facilitar a reavaliação (mantém o progresso visível)
-  avalDraft={mov:Object.assign({},ult&&ult.mov),tec:Object.assign({},ult&&ult.tec),nivel:(ult&&ult.nivel)||''};
+  avalDraft={nivel:(ult&&ult.nivel)||''};
+  Object.keys(AVAL_ESCALA).forEach(g=>{avalDraft[g]=Object.assign({},ult&&ult[g]);});
   document.getElementById('av-id').value=id;
   document.getElementById('aval-title').textContent='Avaliação · '+a.nome;
   document.getElementById('av-data').value=new Date().toISOString().slice(0,10);
@@ -2485,11 +2493,9 @@ function saveAvaliacao(){
     formato:document.getElementById('av-formato').value,
     objetivo:document.getElementById('av-objetivo').value.trim(),
     prioridade:document.getElementById('av-prioridade').value.trim(),
-    obs:document.getElementById('av-obs').value.trim(),
-    mov:{},tec:{}
+    obs:document.getElementById('av-obs').value.trim()
   };
-  AVAL_ESCALA.mov.itens.forEach(it=>rec.mov[it.k]=avalDraft.mov[it.k]||0);
-  AVAL_ESCALA.tec.itens.forEach(it=>rec.tec[it.k]=avalDraft.tec[it.k]||0);
+  Object.keys(AVAL_ESCALA).forEach(g=>{rec[g]={};AVAL_ESCALA[g].itens.forEach(it=>{rec[g][it.k]=(avalDraft[g]&&avalDraft[g][it.k])||0;});});
   if(!Array.isArray(a.avaliacoes))a.avaliacoes=[];
   a.avaliacoes.push(rec);
   persist();renderAll();closeModal('ov-aval');
@@ -2583,10 +2589,10 @@ function montarAvalExport(a){
   html+='<div class="aex-trilha">'+TRILHA_NIVEIS.map((n,i)=>'<div class="aex-step '+(i<ci?'done':'')+' '+(i===ci?'cur':'')+'">'+n+'</div>').join('')+'</div>';
   if(av.objetivo)html+='<div class="aex-prio" style="background:#FBF6EC;border-color:#eadfc6">🎯 Objetivo: <b>'+escAval(av.objetivo)+'</b></div>';
   if(av.prioridade)html+='<div class="aex-prio">Prioridade do ciclo: <b>'+escAval(av.prioridade)+'</b></div>';
-  ['mov','tec'].forEach(g=>{
-    html+='<div class="aex-sec">'+(g==='mov'?'🏃 Observação em movimento':'🎾 Com raquete')+'</div>';
+  Object.keys(AVAL_ESCALA).forEach(g=>{
+    html+='<div class="aex-sec">'+(AVAL_ICO[g]||'•')+' '+AVAL_ESCALA[g].titulo+'</div>';
     AVAL_ESCALA[g].itens.forEach(it=>{
-      const v=Number(av[g]&&av[g][it.k])||0,pct=Math.round(v/3*100),rot=v>0?it.n[v-1]:'—';
+      const v=Number(av[g]&&av[g][it.k])||0,pct=Math.round(v/it.n.length*100),rot=v>0?it.n[v-1]:'—';
       html+='<div class="aex-row"><div class="top"><span>'+it.lbl+'</span><span class="st">'+rot+'</span></div><div class="aex-bar"><i style="width:'+pct+'%"></i></div></div>';
     });
   });
@@ -2679,8 +2685,8 @@ function tempoDesde(dias){
 function avMiniHTML(av){
   if(!av)return '';
   let segs='';
-  ['mov','tec'].forEach(g=>{AVAL_ESCALA[g].itens.forEach(it=>{
-    const v=Number(av[g]&&av[g][it.k])||0,pct=Math.round(v/3*100);
+  Object.keys(AVAL_ESCALA).forEach(g=>{AVAL_ESCALA[g].itens.forEach(it=>{
+    const v=Number(av[g]&&av[g][it.k])||0,pct=Math.round(v/it.n.length*100);
     segs+='<div class="seg"><i style="width:'+pct+'%"></i></div>';
   });});
   return '<div class="avmini">'+segs+'</div>';
