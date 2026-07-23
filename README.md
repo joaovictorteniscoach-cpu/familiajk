@@ -15,7 +15,7 @@ gera o conteúdo.
 | Pasta          | Público      | O que é                                                        |
 |----------------|--------------|----------------------------------------------------------------|
 | `site/`        | 🎾 Alunos    | **Site institucional** dos alunos: planos, Sistema Flex, avaliações, a **metodologia explicada para alunos** e o folder em PDF. |
-| `site-pro/`    | 👔 Professores | **Site de vendas**: home + página do **curso** (formação Da Base ao Topo) + página do **sistema/app**. |
+| `site-pro/`    | 👔 Professores | **Site de vendas**: home + página do **curso** (formação Da Base ao Topo) + página do **sistema/app** + `demo/` (cópia navegável do app de gestão, sem Firebase, dados fictícios — gerada por `site-pro/tools/build_demo.py`, rodar de novo sempre que `app-gestao/index.html` ganhar uma aba/funcionalidade nova). |
 | `app-aluno/`   | Alunos       | App do **aluno** (agendamento, pagamentos). PWA + Firebase.    |
 | `app-gestao/`  | Professor    | App de **gestão** (agenda, alunos, caixa e financeiro). PWA + Firebase. |
 | `app-familia/` | Pessoal      | App **da família JK** (contas da casa, cartões, investimentos). PWA + Firebase opcional. |
