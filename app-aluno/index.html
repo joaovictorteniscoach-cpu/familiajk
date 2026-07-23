@@ -198,6 +198,26 @@ input,select{font-family:'DM Sans',sans-serif;font-size:14px}
 .modal{background:var(--cream);width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:20px 18px 30px;max-height:85vh;overflow-y:auto}
 .modal h3{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;margin-bottom:4px}
 .modal .sub{font-size:13px;color:var(--muted);margin-bottom:16px}
+/* ===== Minha evolução (Da Base ao Topo) ===== */
+.evo-trilha{display:flex;gap:5px;margin:2px 0 14px}
+.evo-step{flex:1;text-align:center;font-size:10px;font-weight:700;color:var(--muted);padding:8px 2px 7px;border-radius:9px;background:#F1ECE0;border:1.5px solid transparent;line-height:1.2}
+.evo-step.done{background:#EDE7FB;color:#5B3FA6}
+.evo-step.cur{background:#5B3FA6;color:#fff;border-color:#4A3191;box-shadow:0 3px 10px rgba(91,63,166,.3)}
+.evo-badge{display:inline-block;background:#5B3FA6;color:#fff;font-weight:800;font-size:13px;padding:6px 14px;border-radius:20px}
+.evo-prio{background:#F4F7EC;border:1px solid #dfe6c9;border-radius:12px;padding:12px 14px;margin:6px 0 14px}
+.evo-prio .lbl{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:#5a7a35;font-weight:800;margin-bottom:3px}
+.evo-prio b{color:var(--green)}
+.evo-sec{font-size:12px;font-weight:800;color:var(--green);letter-spacing:.3px;margin:14px 0 8px;display:flex;align-items:center;gap:6px}
+.evo-row{margin-bottom:11px}
+.evo-row .top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+.evo-row .nm{font-size:12.5px;font-weight:700;color:var(--text)}
+.evo-row .st{font-size:11.5px;font-weight:700;color:#5B3FA6}
+.evo-row .st .up{color:#2E7D52}
+.evo-bar{height:9px;border-radius:6px;background:#EBE5DA;overflow:hidden}
+.evo-bar>i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,#7C5CD0,#5B3FA6)}
+.evo-hist .hr{display:flex;justify-content:space-between;font-size:12.5px;padding:8px 11px;background:#F7F4EE;border:1px solid var(--border);border-radius:9px;margin-bottom:6px}
+.evo-hist .hr b{color:#5B3FA6}
+.evo-empty{text-align:center;padding:22px 10px;color:var(--muted);font-size:13.5px;line-height:1.6}
 .field{margin-bottom:11px}
 .field label{display:block;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
 .field select{width:100%;border:1px solid var(--border);border-radius:10px;padding:11px 12px;background:#fff;outline:none}
@@ -369,6 +389,12 @@ function iniciarFirebase(){
       <button class="buy-btn" id="buy-btn-main" onclick="openComprar()">💳 Comprar créditos · aula avulsa · locar quadra</button>
     </div>
 
+    <div class="buy-box" id="evo-box">
+      <p class="sec-eyebrow">Metodologia Da Base ao Topo</p>
+      <h2 class="sec-title">Minha <em>evolução</em></h2>
+      <button class="buy-btn" style="background:#5B3FA6;color:#fff;box-shadow:0 4px 16px rgba(91,63,166,.28)" onclick="openEvolucao()">📈 Ver minha avaliação e evolução</button>
+    </div>
+
     <div class="foot">
       <button class="wapp-btn" onclick="falarComProfessor()">💬 Falar com o João</button>
       <p class="foot-tag">JV Tênis Academy</p>
@@ -464,6 +490,18 @@ function iniciarFirebase(){
     <div class="modal-acts">
       <button class="btn btn-ghost" onclick="document.getElementById('ov-locdur').classList.remove('on')">Cancelar</button>
       <button class="btn btn-clay" onclick="confirmarLocacao()">Reservar 🔑</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MINHA EVOLUÇÃO (Da Base ao Topo) -->
+<div class="overlay" id="ov-evolucao" onclick="if(event.target===this)this.classList.remove('on')">
+  <div class="modal" style="max-height:88vh;overflow:auto">
+    <h3>Minha evolução 📈</h3>
+    <p class="sub">Metodologia <b>Da Base ao Topo</b> · Academia JV Tênis</p>
+    <div id="evo-body"></div>
+    <div class="modal-acts" style="margin-top:10px">
+      <button class="btn btn-clay" style="width:100%" onclick="document.getElementById('ov-evolucao').classList.remove('on')">Fechar</button>
     </div>
   </div>
 </div>
@@ -874,6 +912,71 @@ function goAluno(id,btn){
   if(btn)btn.classList.add('on');
   window.scrollTo({top:0});
 }
+
+/* ===== Minha evolução (Da Base ao Topo · Anexo A) ===== */
+const AVAL_ESCALA={
+  mov:{titulo:'Observação em movimento',itens:[
+    {k:'espera', lbl:'Posição de espera',       n:['não tem','com lembrete','espontânea']},
+    {k:'split',  lbl:'Split-step',              n:['não tem','com lembrete','espontâneo']},
+    {k:'desloc', lbl:'Deslocamento lateral',    n:['inseguro','funcional','fluido']},
+    {k:'percep', lbl:'Percepção de bola',       n:['difícil','irregular','consistente']},
+    {k:'equil',  lbl:'Equilíbrio na chegada',   n:['instável','razoável','estável']}
+  ]},
+  tec:{titulo:'Com raquete',itens:[
+    {k:'forehand',lbl:'Forehand', n:['iniciando','forma reconhecível','consistente']},
+    {k:'backhand',lbl:'Backhand', n:['iniciando','forma reconhecível','consistente']},
+    {k:'saque',   lbl:'Saque',    n:['iniciando','gesto simplificado','gesto completo']},
+    {k:'troca',   lbl:'Troca',    n:['não sustenta','5 bolas','10+ bolas']}
+  ]}
+};
+const TRILHA_NIVEIS=['Base','Impulso','Construção','Ascensão','Topo'];
+function evoRowHTML(grupo,it,cur,prev){
+  const v=Number(cur&&cur[grupo]&&cur[grupo][it.k])||0;
+  const pct=Math.round((v/3)*100);
+  const rot=v>0?it.n[v-1]:'—';
+  let delta='';
+  if(prev){
+    const pv=Number(prev[grupo]&&prev[grupo][it.k])||0;
+    if(v>pv)delta=' <span class="up">↑</span>';
+    else if(v<pv&&pv>0)delta=' ↓';
+    else if(v>0)delta=' =';
+  }
+  return `<div class="evo-row"><div class="top"><span class="nm">${it.lbl}</span><span class="st">${rot}${delta}</span></div><div class="evo-bar"><i style="width:${pct}%"></i></div></div>`;
+}
+function renderEvolucao(){
+  const body=document.getElementById('evo-body');
+  const av=(EU&&Array.isArray(EU.avaliacoes))?EU.avaliacoes:[];
+  if(!av.length){
+    body.innerHTML='<div class="evo-empty">📈<br>Sua primeira avaliação aparece aqui assim que o João preencher.<br><br>Ela mostra seu nível na <b>Trilha</b>, o que você já evoluiu e a prioridade do próximo ciclo. 🎾</div>';
+    return;
+  }
+  const cur=av[av.length-1], prev=av.length>1?av[av.length-2]:null;
+  const ci=Math.max(0,TRILHA_NIVEIS.indexOf(cur.nivel));
+  let subiu='';
+  if(prev&&prev.nivel&&prev.nivel!==cur.nivel){
+    const pi=TRILHA_NIVEIS.indexOf(prev.nivel);
+    if(ci>pi)subiu=' <span style="color:#2E7D52;font-weight:800">↑ subiu de nível!</span>';
+  }
+  const trilha=TRILHA_NIVEIS.map((n,i)=>`<div class="evo-step ${i<ci?'done':''} ${i===ci?'cur':''}">${n}</div>`).join('');
+  let html=`<div style="text-align:center;margin:2px 0 10px"><span class="evo-badge">Nível: ${cur.nivel||'—'}</span>${subiu}</div>`;
+  html+=`<div class="evo-trilha">${trilha}</div>`;
+  if(cur.prioridade){html+=`<div class="evo-prio"><div class="lbl">Prioridade do ciclo</div><b>${escHtml(cur.prioridade)}</b></div>`;}
+  if(cur.objetivo){html+=`<p style="font-size:12.5px;color:var(--muted);margin:-6px 0 12px">🎯 Meu objetivo: <b style="color:var(--text)">${escHtml(cur.objetivo)}</b></p>`;}
+  ['mov','tec'].forEach(g=>{
+    html+=`<div class="evo-sec">${g==='mov'?'🏃':'🎾'} ${AVAL_ESCALA[g].titulo}</div>`;
+    AVAL_ESCALA[g].itens.forEach(it=>{html+=evoRowHTML(g,it,cur,prev);});
+  });
+  if(av.length>1){
+    html+='<div class="evo-sec">🗓️ Histórico</div><div class="evo-hist">';
+    html+=av.slice().reverse().map(v=>`<div class="hr"><span>${(v.data||'').split('-').reverse().join('/')}</span><b>${v.nivel||'—'}</b></div>`).join('');
+    html+='</div>';
+  }
+  html+=`<p style="font-size:11px;color:var(--muted);text-align:center;margin-top:12px">Última avaliação: ${(cur.data||'').split('-').reverse().join('/')} · pelo Prof. João</p>`;
+  body.innerHTML=html;
+}
+function escHtml(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function openEvolucao(){renderEvolucao();document.getElementById('ov-evolucao').classList.add('on');}
+
 function abrirMFit(){
   const link=(EU&&EU.mfitLink&&EU.mfitLink.trim())||'';
   const url=link||'https://mfitpersonal.com.br/';
