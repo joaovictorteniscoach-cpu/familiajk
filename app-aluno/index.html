@@ -50,7 +50,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
 .hr-ico{width:22px;height:22px;border-radius:50%;background:#E8F0D8;color:#3C6B1E;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
 .hr-d{flex:1;font-weight:600;color:var(--text)}
 .hr-h{color:var(--muted);font-size:12.5px}
-.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;background:linear-gradient(135deg,var(--green),var(--green-2));display:grid;grid-template-columns:repeat(4,1fr);z-index:40;box-shadow:0 -4px 20px rgba(0,0,0,.18);padding-bottom:env(safe-area-inset-bottom,0)}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;background:linear-gradient(135deg,var(--green),var(--green-2));display:grid;grid-template-columns:repeat(5,1fr);z-index:40;box-shadow:0 -4px 20px rgba(0,0,0,.18);padding-bottom:env(safe-area-inset-bottom,0)}
 .nav button{position:relative;background:none;border:none;color:rgba(250,247,242,.6);padding:9px 4px 9px;font-size:10.5px;font-weight:700;letter-spacing:.3px;display:flex;flex-direction:column;align-items:center;gap:3px}
 .nav button .ico{font-size:19px;line-height:1}
 .nav button.on{color:#fff}
@@ -392,7 +392,7 @@ function iniciarFirebase(){
     <div class="buy-box" id="evo-box">
       <p class="sec-eyebrow">Metodologia Da Base ao Topo</p>
       <h2 class="sec-title">Minha <em>evolução</em></h2>
-      <button class="buy-btn" style="background:#5B3FA6;color:#fff;box-shadow:0 4px 16px rgba(91,63,166,.28)" onclick="openEvolucao()">📈 Ver minha avaliação e evolução</button>
+      <button class="buy-btn" style="background:#5B3FA6;color:#fff;box-shadow:0 4px 16px rgba(91,63,166,.28)" onclick="irEvolucao()">📈 Ver minha avaliação e evolução</button>
     </div>
 
     <div class="foot">
@@ -455,12 +455,19 @@ function iniciarFirebase(){
     </div>
     <div class="empty" id="tor-empty" style="display:none">Nenhum torneio ativo no momento.<br>Quando o João abrir a Barragem, ela aparece aqui. 🏆</div>
     </section>
+
+    <section class="page" id="apg-evolucao">
+    <p class="sec-eyebrow">Metodologia Da Base ao Topo</p>
+    <h2 class="sec-title">Minha <em>evolução</em></h2>
+    <div id="evo-page-body"></div>
+    </section>
   </div>
 
   <nav class="nav">
     <button class="on" onclick="goAluno('inicio',this)"><span class="ico">🏠</span>Início</button>
     <button onclick="goAluno('agenda',this)"><span class="ico">📅</span>Agenda</button>
     <button onclick="goAluno('aulas',this)"><span class="ico" id="nav-aulas-ico">🎾</span>Aulas</button>
+    <button id="nav-evolucao" onclick="goAluno('evolucao',this)"><span class="ico">📈</span>Evolução</button>
     <button id="nav-torneio" onclick="goAluno('torneio',this)"><span class="ico">🏆</span>Torneio</button>
   </nav>
 </div>
@@ -886,7 +893,7 @@ function applyTipoUI(){
   const nav=document.querySelector('.nav');
   const tBtn=document.getElementById('nav-torneio');
   if(tBtn)tBtn.style.display=personal?'none':'';
-  if(nav)nav.style.gridTemplateColumns='repeat('+(personal?3:4)+',1fr)';
+  if(nav)nav.style.gridTemplateColumns='repeat('+(personal?4:5)+',1fr)';
   const aIco=document.getElementById('nav-aulas-ico');
   if(aIco)aIco.textContent=meuEmoji();
   const buyBtn=document.getElementById('buy-btn-main');
@@ -910,6 +917,7 @@ function goAluno(id,btn){
   const el=document.getElementById('apg-'+id);if(el)el.classList.add('on');
   document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('on'));
   if(btn)btn.classList.add('on');
+  if(id==='evolucao')renderEvolucaoPage();
   window.scrollTo({top:0});
 }
 
@@ -943,15 +951,13 @@ function evoRowHTML(grupo,it,cur,prev){
   }
   return `<div class="evo-row"><div class="top"><span class="nm">${it.lbl}</span><span class="st">${rot}${delta}</span></div><div class="evo-bar"><i style="width:${pct}%"></i></div></div>`;
 }
-function renderEvolucao(){
-  const body=document.getElementById('evo-body');
+function evolucaoHTML(){
   const av=(EU&&Array.isArray(EU.avaliacoes))?EU.avaliacoes:[];
   const rg=(EU&&Array.isArray(EU.registros))?EU.registros:[];
   if(!av.length&&!rg.length){
-    body.innerHTML='<div class="evo-empty">📈<br>Sua primeira avaliação aparece aqui assim que o João preencher.<br><br>Ela mostra seu nível na <b>Trilha</b>, o que você já evoluiu e a prioridade do próximo ciclo. 🎾</div>';
-    return;
+    return '<div class="evo-empty">📈<br>Sua primeira avaliação aparece aqui assim que o João preencher.<br><br>Ela mostra seu nível na <b>Trilha</b>, o que você já evoluiu e a prioridade do próximo ciclo. 🎾</div>';
   }
-  if(!av.length){body.innerHTML=evoRegistrosHTML(rg,true);return;}
+  if(!av.length){return evoRegistrosHTML(rg,true);}
   const cur=av[av.length-1], prev=av.length>1?av[av.length-2]:null;
   const ci=Math.max(0,TRILHA_NIVEIS.indexOf(cur.nivel));
   let subiu='';
@@ -975,8 +981,10 @@ function renderEvolucao(){
   }
   html+=evoRegistrosHTML(rg,false);
   html+=`<p style="font-size:11px;color:var(--muted);text-align:center;margin-top:12px">Última avaliação: ${(cur.data||'').split('-').reverse().join('/')} · pelo Prof. João</p>`;
-  body.innerHTML=html;
+  return html;
 }
+function renderEvolucao(){const b=document.getElementById('evo-body');if(b)b.innerHTML=evolucaoHTML();}
+function renderEvolucaoPage(){const b=document.getElementById('evo-page-body');if(b)b.innerHTML=evolucaoHTML();}
 function evoRegistrosHTML(rg,solo){
   if(!rg||!rg.length)return '';
   let h=(solo?'<p class="sub" style="margin-bottom:10px">Seus registros de aula. A avaliação completa da Trilha aparece aqui quando o João preencher. 🎾</p>':'')+'<div class="evo-sec">📝 Registros de aula</div><div class="evo-hist">';
@@ -991,6 +999,7 @@ function evoRegistrosHTML(rg,solo){
 }
 function escHtml(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function openEvolucao(){renderEvolucao();document.getElementById('ov-evolucao').classList.add('on');}
+function irEvolucao(){const b=document.getElementById('nav-evolucao');goAluno('evolucao',b);}
 
 function abrirMFit(){
   const link=(EU&&EU.mfitLink&&EU.mfitLink.trim())||'';
