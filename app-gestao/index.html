@@ -155,6 +155,9 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .seg{display:grid;grid-template-columns:repeat(4,1fr);background:#EFE7D8;border-radius:11px;padding:4px;margin-bottom:13px}
 .seg button{border:none;background:none;padding:8px 4px;font-size:12px;font-weight:600;border-radius:8px;color:var(--muted)}
 .seg button.on{background:var(--green);color:var(--cream)}
+.seg.seg-scroll{display:flex;gap:2px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.seg.seg-scroll::-webkit-scrollbar{display:none}
+.seg.seg-scroll button{flex:0 0 auto;white-space:nowrap;padding:8px 12px}
 .ag-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .ag-nav .month-btn{background:#fff;border:1px solid var(--border);color:var(--text)}
 .ag-nav-label{font-weight:700;font-size:13.5px;text-transform:capitalize;text-align:center;flex:1}
@@ -540,10 +543,13 @@ function iniciarFirebase(){
     <button class="btn btn-ghost" onclick="gerenciarPacotes()" title="Ver/excluir pacotes personalizados">⚙️ Pacotes</button>
     <button class="btn btn-clay" onclick="openAlunoModal()">+ Novo</button>
   </div>
-  <div class="seg" id="alunos-filtro">
+  <div class="seg seg-scroll" id="alunos-filtro">
     <button class="on" onclick="setFiltroAluno('todos',this)">Todos</button>
     <button onclick="setFiltroAluno('tenis',this)">🎾 Tênis</button>
     <button onclick="setFiltroAluno('personal',this)">💪 Personal</button>
+    <button onclick="setFiltroAluno('planilha',this)">📋 Planilha</button>
+    <button onclick="setFiltroAluno('locacao',this)">🔑 Locação</button>
+    <button onclick="setFiltroAluno('torneio',this)">🏆 Torneio</button>
   </div>
   <div id="alunos-list"></div>
 </section>
@@ -916,6 +922,16 @@ function iniciarFirebase(){
     <input type="hidden" id="a-id">
     <div class="field"><label>Nome</label><input id="a-nome" placeholder="Nome do aluno"></div>
     <div class="field"><label>WhatsApp (com DDD)</label><input id="a-tel" placeholder="41999999999" inputmode="numeric"></div>
+    <div class="field"><label>Perfil / categoria (divide a lista de Alunos)</label>
+      <select id="a-perfil">
+        <option value="">Automático (pelo tipo)</option>
+        <option value="tenis">🎾 Tênis</option>
+        <option value="personal">💪 Personal</option>
+        <option value="planilha">📋 Planilha</option>
+        <option value="locacao">🔑 Locação (só loca quadra)</option>
+        <option value="torneio">🏆 Torneio (só torneio)</option>
+      </select>
+    </div>
     <div class="row2">
       <div class="field"><label>Modalidade / pacote</label>
         <div style="display:flex;gap:6px;align-items:stretch">
@@ -2219,6 +2235,7 @@ function openAlunoModal(id){
     document.getElementById('a-valoraula').value=a.valorAula||(a.tipo==='Personal'?130:160);
     document.getElementById('a-loccred').value=Number(a.locCred)||0;
     document.getElementById('a-venc').value=a.diaVenc||10;
+    document.getElementById('a-perfil').value=a.perfil||'';
     document.getElementById('a-id').value=id;
     applyAlunoTipoUI();
   }else{
@@ -2232,6 +2249,7 @@ function openAlunoModal(id){
     document.getElementById('a-valoraula').value=130;
     document.getElementById('a-loccred').value=0;
     document.getElementById('a-venc').value=10;
+    document.getElementById('a-perfil').value='';
     applyAlunoTipoUI();
   }
   m.classList.add('on');
@@ -2244,6 +2262,19 @@ function ehGrupoTipo(t){return ['Grupo','Dupla','Trio','Quarteto'].indexOf(t)>=0
 function ehPersonalTipo(t){                       // conta como Personal p/ filtros e financeiro
   if(t==='Personal')return true;
   const c=tipoCustomObj(t);return !!(c&&c.cat==='personal');
+}
+/* perfil/categoria da pessoa na lista de alunos (tenis|personal|planilha|locacao|torneio) */
+const PERFIL_LABELS={tenis:'🎾 Tênis',personal:'💪 Personal',planilha:'📋 Planilha',locacao:'🔑 Locação',torneio:'🏆 Torneio'};
+function ehPlanilhaTipo(t){
+  if(/planilha/i.test(String(t||'')))return true;
+  const c=tipoCustomObj(t);return !!(c&&/planilha/i.test(String(c.nome||'')));
+}
+function perfilDe(a){
+  if(a&&a.perfil&&PERFIL_LABELS[a.perfil])return a.perfil;   // marcado manualmente
+  const t=a?a.tipo:'';
+  if(ehPlanilhaTipo(t))return 'planilha';
+  if(ehPersonalTipo(t))return 'personal';
+  return 'tenis';
 }
 function catAgendaDe(t){                           // cor/categoria na agenda: personal|grupo|aula
   if(ehPersonalTipo(t))return 'personal';
@@ -2338,6 +2369,7 @@ function saveAluno(){
     diaVenc:Math.min(28,Math.max(1,Number(document.getElementById('a-venc').value)||10)),
     cardLink:document.getElementById('a-cardlink').value.trim(),
     mfitLink:document.getElementById('a-mfit').value.trim(),
+    perfil:document.getElementById('a-perfil').value,
     valorAula:Number(document.getElementById('a-valoraula').value)||(document.getElementById('a-tipo').value==='Personal'?130:160)
   };
   if(id){Object.assign(DB.alunos.find(x=>x.id===id),data);toast('Aluno atualizado');}
@@ -2807,9 +2839,8 @@ function renderAlunos(){
   const list=document.getElementById('alunos-list');
   const q=(document.getElementById('search').value||'').toLowerCase();
   const items=DB.alunos.filter(a=>a.nome.toLowerCase().includes(q)).filter(a=>{
-    if(filtroAluno==='personal')return ehPersonalTipo(a.tipo);
-    if(filtroAluno==='tenis')return !ehPersonalTipo(a.tipo);
-    return true;
+    if(filtroAluno==='todos')return true;
+    return perfilDe(a)===filtroAluno;
   }).sort((x,y)=>x.nome.localeCompare(y.nome));
   if(!items.length){list.innerHTML='<div class="empty">Nenhum aluno '+(q||filtroAluno!=='todos'?'encontrado':'cadastrado ainda — toque em <b>+ Novo</b> para começar')+'.</div>';return;}
   list.innerHTML=items.map(a=>`
@@ -2825,6 +2856,7 @@ function renderAlunos(){
         <span class="chip ${a.repos>0?'warn':'gold'}">🔁 ${fmtCred(a.repos)} reposiç${a.repos===1?'ão':'ões'}</span>
         <span class="chip" style="${(Number(a.locCred)||0)<0?'background:#F6D7D2;color:#8E2C1E;font-weight:800':''}">🔑 ${fmtCred(Number(a.locCred)||0)}h locação${(Number(a.locCred)||0)<0?' (devendo)':''}</span>
         <span class="chip code">🔑 ${a.codigo||'—'}</span>
+        <span class="chip" style="background:#EFE7D8;color:#5b5142;font-weight:700">${PERFIL_LABELS[perfilDe(a)]||''}</span>
         ${(a.avaliacoes&&a.avaliacoes.length)?`<span class="chip" style="background:#EDE7FB;color:#5B3FA6;font-weight:800">📈 ${a.avaliacoes[a.avaliacoes.length-1].nivel||'—'}</span>`:''}
         ${a.termoAceitoEm?`<span class="chip" style="background:#E6F0E6;color:#2E7D52">📄 termo aceito</span>`:''}
       </div>
