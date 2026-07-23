@@ -1205,9 +1205,10 @@ function renderTorneioAluno(){
   const emp=document.getElementById('tor-empty');
   if(!t||!t.jogadores||!t.jogadores.length){box.style.display='none';if(emp)emp.style.display='block';return;}
   box.style.display='block';if(emp)emp.style.display='none';
-  document.getElementById('tor-nome').textContent=t.nome||'Torneio';
+  const etapaTxt=t.etapa?(' · Etapa '+t.etapa):'';
+  document.getElementById('tor-nome').textContent=(t.nome||'Torneio')+etapaTxt;
   const subEl=document.getElementById('tor-cap-sub');
-  if(subEl)subEl.textContent=(t.nome||'Barragem')+' · '+new Date().toLocaleDateString('pt-BR');
+  if(subEl)subEl.textContent=(t.nome||'Barragem')+etapaTxt+(t.encerrada?' · encerrada':'');
   const meu=EU?(EU.nome||'').toLowerCase():'';
   const grupos=GRUPOS_TOR_AL.filter(g=>t.jogadores.some(p=>p.group===g));
   document.getElementById('tor-stand').innerHTML=grupos.map(g=>{
@@ -1227,21 +1228,24 @@ function ehMesmoJogador(p,meu){
 }
 function checarPremiacaoTor(t,grupos,meu){
   if(!t||!t.id)return;
+  if(!t.encerrada)return;                       // só premia quando o João encerra a etapa
   const cod=(MEU&&MEU.codigo)||(EU&&EU.codigo)||'';
   if(!cod&&!meu)return;
+  const etapa=t.etapa||1;
   for(const g of grupos){
     const players=rankTorAl(t.jogadores.filter(p=>p.group===g));
     const idx=players.findIndex(p=>ehMesmoJogador(p,meu));
-    if(idx<0)continue;                         // não está neste grupo
+    if(idx<0)continue;                          // não está neste grupo
     if(idx>1)return;                            // fora do pódio (1º/2º)
     const p=players[idx];
     const jogos=(Number(p.v)||0)+(Number(p.d)||0)+(Number(p.wo)||0);
     if(jogos<1)return;                          // ainda não jogou — não premia
     const tipo=idx===0?'campeao':'vice';
-    const chave='jvt-tor-premio-'+cod+'-'+t.id+'-'+g+'-'+tipo;
-    if(lsGet(chave))return;                     // já comemorou
+    const catTxt=(t.nome||'Torneio')+' · Etapa '+etapa;
+    const chave='jvt-tor-premio-'+cod+'-'+t.id+'-e'+etapa+'-'+g+'-'+tipo;
+    if(lsGet(chave))return;                     // já comemorou esta etapa
     lsSet(chave,'1');
-    setTimeout(()=>celebraTorneioPremio(tipo,g,t.nome||'Torneio',(EU&&EU.nome)||p.name||''),650);
+    setTimeout(()=>celebraTorneioPremio(tipo,g,catTxt,(EU&&EU.nome)||p.name||''),650);
     return;
   }
 }
