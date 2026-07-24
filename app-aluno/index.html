@@ -229,7 +229,7 @@ input,select{font-family:'DM Sans',sans-serif;font-size:14px}
 .evo-sec{font-size:12.5px;font-weight:800;color:var(--green);letter-spacing:.3px;margin:14px 0 12px;display:flex;align-items:center;gap:6px;text-transform:uppercase}
 .evo-row{margin-bottom:15px}
 .evo-row:last-child{margin-bottom:2px}
-.evo-row .top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;gap:8px}
+.evo-row .evo-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;gap:8px}
 .evo-row .nm{font-size:14px;font-weight:800;color:#1c140c}
 .evo-row .st{font-size:12.5px;font-weight:700;color:#3a3128;white-space:nowrap}
 .evo-row .st b{font-variant-numeric:tabular-nums;color:var(--lcd);font-weight:900}
@@ -1036,7 +1036,7 @@ function evoRowHTML(grupo,it,cur,prev){
     else if(v<pv&&pv>0)delta=' ↓';
     else if(v>0)delta=' =';
   }
-  return `<div class="evo-row"><div class="top"><span class="nm">${it.lbl}</span><span class="st">${rot} · <b>${pct}%</b>${delta}</span></div><div class="evo-bar"><i data-w="${pct}"></i></div></div>`;
+  return `<div class="evo-row"><div class="evo-top"><span class="nm">${it.lbl}</span><span class="st">${rot} · <b>${pct}%</b>${delta}</span></div><div class="evo-bar"><i data-w="${pct}"></i></div></div>`;
 }
 function evolucaoHTML(){
   const av=(EU&&Array.isArray(EU.avaliacoes))?EU.avaliacoes:[];
