@@ -232,7 +232,8 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .chip.warn{background:#8a5a00;color:#fff}
 .chip.code{background:#fff;border:1.5px dashed var(--gold);color:var(--text);font-weight:700;letter-spacing:2px}
 .acts{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.act{border:none;border-radius:10px;padding:10px 8px;font-size:12px;font-weight:600}
+.act{border:none;border-radius:10px;padding:10px 8px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-align:center}
+.act svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
 .act.a1{background:var(--green);color:var(--cream)}
 .act.a2{background:var(--gold);color:var(--dark)}
 .act.a3{background:#E3F2E4;color:var(--ok)}
@@ -2761,7 +2762,7 @@ function renderAvaliacoes(){
       avMiniHTML(av)+
       (due?'<div class="avdue">⏰ '+(av?'reavaliar (6+ semanas)':'avaliar este aluno')+'</div>':'')+
       '<div class="avacts">'+
-        '<button class="b1" onclick="openAvalModal(\''+a.id+'\')">📈 Avaliar</button>'+
+        '<button class="b1" onclick="openAvalModal(\''+a.id+'\')">${BI.chart}Avaliar</button>'+
         '<button class="b2" onclick="openRegistroModal(\''+a.id+'\')">📝 Registro</button>'+
         (av?'<button class="b3" onclick="openAvalExport(\''+a.id+'\')">📤 Devolutiva</button>':'')+
         '<button class="b4" onclick="setAvalOff(\''+a.id+'\',true)">🚫 Tirar</button>'+
@@ -2878,6 +2879,15 @@ function histAlunoHTML(id){
   if(!arr.length)return '<div class="ha-box"><div class="ha-empty">Nenhuma aula registrada ainda.</div></div>';
   return '<div class="ha-box"><div class="ha-title">📋 Últimas aulas</div>'+arr.map(p=>'<div class="ha-row"><span>'+fmtDataCurta(p.data)+'</span><span>'+(p.hora&&p.hora!=='—'?p.hora+'h':'')+'</span></div>').join('')+'</div>';
 }
+const BI={
+check:'<svg viewBox="0 0 24 24"><polyline points="4 12 10 18 20 6"/></svg>',
+plus:'<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+money:'<svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>',
+undo:'<svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.6M20 6v5h-5"/></svg>',
+keyplus:'<svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="4"/><path d="M11 11l7 7M15 15l2-2 2 2-2 2z"/></svg>',
+key:'<svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="4"/><path d="M11 11l7 7M14 20h6"/></svg>',
+chart:'<svg viewBox="0 0 24 24"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg>'
+};
 function renderAlunos(){
   const list=document.getElementById('alunos-list');
   const q=(document.getElementById('search').value||'').toLowerCase();
@@ -2905,13 +2915,13 @@ function renderAlunos(){
       </div>
       ${histAlunoHTML(a.id)}
       <div class="acts">
-        <button class="act a1" onclick="aulaRealizada('${a.id}')">✓ Aula realizada (−1)</button>
-        <button class="act a2" onclick="addRepos('${a.id}')">+ Reposição</button>
-        <button class="act a3" onclick="marcarPago('${a.id}')">💰 Marcar pago</button>
-        <button class="act a4" onclick="usarRepos('${a.id}')">↺ Usar reposição</button>
-        <button class="act a2" onclick="addLocacao('${a.id}')">🔑 +1h locação</button>
-        <button class="act a1" onclick="usarLocacao('${a.id}')">🔑 Locação feita (−1h)</button>
-        <button class="act aval" onclick="openAvalModal('${a.id}')">📈 Avaliar</button>
+        <button class="act a1" onclick="aulaRealizada('${a.id}')">${BI.check}Aula realizada (−1)</button>
+        <button class="act a2" onclick="addRepos('${a.id}')">${BI.plus}Reposição</button>
+        <button class="act a3" onclick="marcarPago('${a.id}')">${BI.money}Marcar pago</button>
+        <button class="act a4" onclick="usarRepos('${a.id}')">${BI.undo}Usar reposição</button>
+        <button class="act a2" onclick="addLocacao('${a.id}')">${BI.keyplus}+1h locação</button>
+        <button class="act a1" onclick="usarLocacao('${a.id}')">${BI.key}Locação feita (−1h)</button>
+        <button class="act aval" onclick="openAvalModal('${a.id}')">${BI.chart}Avaliar</button>
       </div>
       <div class="aluno-foot">
         <button class="linkbtn" onclick="openAlunoModal('${a.id}')">Editar</button>
