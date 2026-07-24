@@ -71,19 +71,19 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 /* devolutiva da avaliação (export) */
 #aval-export{position:fixed;left:-10000px;top:0;width:430px;background:#fff;padding:24px;color:#2A2016}
 .aex-nivel{text-align:center;margin:14px 0 8px}
-.aex-badge{display:inline-block;background:#5B3FA6;color:#fff;font-weight:800;font-size:15px;padding:8px 20px;border-radius:22px}
+.aex-badge{display:inline-block;background:var(--lcd,#93701C);color:#fff;font-weight:800;font-size:15px;padding:8px 20px;border-radius:22px}
 .aex-trilha{display:flex;gap:5px;margin:10px 0 16px}
 .aex-step{flex:1;text-align:center;font-size:10px;font-weight:700;color:#8a8478;padding:8px 2px;border-radius:8px;background:#F1ECE0;line-height:1.2}
-.aex-step.done{background:#EDE7FB;color:#5B3FA6}
-.aex-step.cur{background:#5B3FA6;color:#fff}
+.aex-step.done,.aex-step.cur{color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.28)}
+.aex-step.cur{outline:2px solid rgba(0,0,0,.18);outline-offset:-3px}
 .aex-prio{background:#F4F7EC;border:1px solid #dfe6c9;border-radius:11px;padding:11px 13px;margin:0 0 16px;font-size:13px}
 .aex-prio b{color:var(--green)}
 .aex-sec{font-size:12px;font-weight:800;color:var(--green);margin:14px 0 9px}
 .aex-row{margin-bottom:10px}
 .aex-row .aex-top{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px}
-.aex-row .top .st{font-weight:700;color:#5B3FA6}
+.aex-row .aex-top .st{font-weight:700;color:var(--lcd,#93701C)}
 .aex-bar{height:9px;border-radius:6px;background:#EBE5DA;overflow:hidden}
-.aex-bar>i{display:block;height:100%;border-radius:6px;background:#5B3FA6}
+.aex-bar>i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--lc,#C9A04A),var(--lcd,#93701C))}
 .bell-badge{position:absolute;top:-4px;right:-4px;background:var(--clay);color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid var(--green)}
 .drag-item{touch-action:pan-y}
 .dragging{opacity:.35}
@@ -238,7 +238,7 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .act.a2{background:var(--gold);color:var(--dark)}
 .act.a3{background:#E3F2E4;color:var(--ok)}
 .act.a4{background:#F4EDE0;color:var(--muted)}
-.act.aval{grid-column:1/-1;background:#EDE7FB;color:#5B3FA6}
+.act.aval{grid-column:1/-1;background:#F5ECD6;color:#7C5E1A}
 .act:active{transform:scale(.97)}
 /* ===== Avaliação (card Da Base ao Topo) ===== */
 .aval-blk{margin:14px 0 4px}
@@ -247,7 +247,7 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .aval-item>label{display:block;font-size:12.5px;font-weight:700;color:var(--dark);margin-bottom:5px}
 .seg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
 .seg3 button{border:1.5px solid var(--border);background:#fff;color:var(--muted);border-radius:9px;padding:8px 4px;font-size:11px;font-weight:600;line-height:1.25;cursor:pointer}
-.seg3 button.on{border-color:#5B3FA6;background:#EDE7FB;color:#4A3191;font-weight:800}
+.seg3 button.on{border-color:#C9A04A;background:#F5ECD6;color:#7C5E1A;font-weight:800}
 .seg3 button:active{transform:scale(.97)}
 .trilha-pills{display:flex;flex-wrap:wrap;gap:6px}
 .trilha-pills button{border:1.5px solid var(--border);background:#fff;color:var(--muted);border-radius:20px;padding:8px 13px;font-size:12px;font-weight:700;cursor:pointer}
@@ -266,14 +266,15 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .avcard .avtop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
 .avcard .avnome{font-size:15px;font-weight:800;color:var(--dark)}
 .avcard .avsub{font-size:11.5px;color:var(--muted);margin-top:2px}
-.avnivel{flex-shrink:0;font-size:11px;font-weight:800;padding:5px 11px;border-radius:16px;background:#EDE7FB;color:#5B3FA6}
+.avnivel{flex-shrink:0;font-size:11px;font-weight:800;padding:5px 11px;border-radius:16px;background:#F5ECD6;color:#7C5E1A}
 .avnivel.none{background:#F3EFE6;color:#9a9182}
 .avmini{display:flex;gap:4px;margin:10px 0 2px}
-.avmini .seg{flex:1;height:7px;border-radius:4px;background:#EBE5DA;overflow:hidden}
-.avmini .seg>i{display:block;height:100%;background:#5B3FA6}
+.avmini .avseg{flex:1;height:7px;border-radius:4px;background:#EBE5DA;overflow:hidden}
+.avmini .avseg>i{display:block;height:100%;background:#C9A04A}
 .avacts{display:flex;gap:6px;flex-wrap:wrap;margin-top:11px}
-.avacts button{border:none;border-radius:9px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer}
-.avacts .b1{background:#EDE7FB;color:#5B3FA6}
+.avacts button{border:none;border-radius:9px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.avacts button svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+.avacts .b1{background:#F5ECD6;color:#7C5E1A}
 .avacts .b2{background:#F4EDE0;color:var(--muted)}
 .avacts .b3{background:#E3F2E4;color:var(--ok)}
 .avacts .b4{background:#F6E7E4;color:#B23A2E}
@@ -2435,6 +2436,15 @@ const AVAL_ESCALA={
 };
 const AVAL_ICO={mov:'🏃',tec:'🎾',jogo:'🧠'};
 const TRILHA_NIVEIS=['Base','Impulso','Construção','Ascensão','Topo'];
+// Cada nivel da Trilha veste um material precioso (igual ao app do aluno)
+const LEVEL_MET={
+  'Base':     {m:'#A06A34',d:'#7C4F24'},   // bronze
+  'Impulso':  {m:'#9AA2AA',d:'#6E767E'},   // prata
+  'Construção':{m:'#C9A04A',d:'#93701C'},  // ouro
+  'Ascensão': {m:'#A81D38',d:'#7C1428'},   // rubi
+  'Topo':     {m:'#33333A',d:'#1B1B20'}    // carbono
+};
+function metalDe(nivel){return LEVEL_MET[nivel]||LEVEL_MET['Construção'];}
 let avalDraft=null;
 function avalItemHTML(grupo,it){
   const val=(avalDraft[grupo]&&avalDraft[grupo][it.k])||0;
@@ -2587,12 +2597,16 @@ function openAvalExport(id){
 function montarAvalExport(a){
   const av=ultimaAval(a);if(!av)return;
   const ci=Math.max(0,TRILHA_NIVEIS.indexOf(av.nivel));
+  const met=metalDe(av.nivel);
   const nome1=a.nome;
-  let html='<div class="tex-head"><div><b>Academia João Victor Tênis</b><span>Avaliação · '+((av.data||'').split('-').reverse().join('/'))+'</span></div><div class="tex-emb">JV</div></div>';
+  let html='<div class="aex-wrap" style="--lc:'+met.m+';--lcd:'+met.d+'"><div class="tex-head"><div><b>Academia João Victor Tênis</b><span>Avaliação · '+((av.data||'').split('-').reverse().join('/'))+'</span></div><div class="tex-emb">JV</div></div>';
   html+='<div style="font-size:15px;font-weight:800;color:#2A2016;margin:-4px 0 2px">'+escAval(nome1)+'</div>';
   html+='<div style="font-size:11px;color:#8a8478;margin-bottom:2px">Metodologia Da Base ao Topo'+(av.formato?' · '+escAval(av.formato):'')+'</div>';
   html+='<div class="aex-nivel"><span class="aex-badge">Nível: '+(av.nivel||'—')+'</span></div>';
-  html+='<div class="aex-trilha">'+TRILHA_NIVEIS.map((n,i)=>'<div class="aex-step '+(i<ci?'done':'')+' '+(i===ci?'cur':'')+'">'+n+'</div>').join('')+'</div>';
+  html+='<div class="aex-trilha">'+TRILHA_NIVEIS.map((n,i)=>{
+    const feito=i<=ci;
+    return '<div class="aex-step '+(i<ci?'done':'')+' '+(i===ci?'cur':'')+'"'+(feito?' style="background:'+metalDe(n).m+'"':'')+'>'+n+'</div>';
+  }).join('')+'</div>';
   if(av.objetivo)html+='<div class="aex-prio" style="background:#FBF6EC;border-color:#eadfc6">🎯 Objetivo: <b>'+escAval(av.objetivo)+'</b></div>';
   if(av.prioridade)html+='<div class="aex-prio">Prioridade do ciclo: <b>'+escAval(av.prioridade)+'</b></div>';
   Object.keys(AVAL_ESCALA).forEach(g=>{
@@ -2603,7 +2617,7 @@ function montarAvalExport(a){
     });
   });
   if(av.obs)html+='<div class="aex-prio" style="margin-top:14px;background:#F7F4EE;border-color:#e7e0d2">📝 '+escAval(av.obs)+'</div>';
-  html+='<div class="tex-foot">Disciplina no treino. Evolução no jogo. 🎾 · Prof. João Victor</div>';
+  html+='<div class="tex-foot">Disciplina no treino. Evolução no jogo. 🎾 · Prof. João Victor</div></div>';
   document.getElementById('aval-export').innerHTML=html;
 }
 function escAval(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
@@ -2693,7 +2707,7 @@ function avMiniHTML(av){
   let segs='';
   Object.keys(AVAL_ESCALA).forEach(g=>{AVAL_ESCALA[g].itens.forEach(it=>{
     const v=Number(av[g]&&av[g][it.k])||0,pct=Math.round(v/it.n.length*100);
-    segs+='<div class="seg"><i style="width:'+pct+'%"></i></div>';
+    segs+='<div class="avseg"><i style="width:'+pct+'%"></i></div>';
   });});
   return '<div class="avmini">'+segs+'</div>';
 }
@@ -2743,14 +2757,14 @@ function renderAvaliacoes(){
     const av=(a.avaliacoes&&a.avaliacoes.length)?a.avaliacoes[a.avaliacoes.length-1]:null;
     const dias=av?diasDesde(av.data):Infinity;
     const due=(!av||dias>42);
-    const nivel=av?('<span class="avnivel">'+(av.nivel||'—')+'</span>'):'<span class="avnivel none">Sem avaliação</span>';
+    const nivel=av?('<span class="avnivel" style="background:'+metalDe(av.nivel).m+';color:#fff">'+(av.nivel||'—')+'</span>'):'<span class="avnivel none">Sem avaliação</span>';
     const sub=av?('Última: '+tempoDesde(dias)+(av.prioridade?' · 🎯 '+escAval(av.prioridade):'')):(a.tipo+' · '+(a.plano>0?('Flex '+a.plano):'sem pacote'));
     return '<div class="avcard">'+
       '<div class="avtop"><div><div class="avnome">'+(ehPersonalTipo(a.tipo)?'💪 ':'🎾 ')+escAval(a.nome)+'</div><div class="avsub">'+sub+'</div></div>'+nivel+'</div>'+
       avMiniHTML(av)+
       (due?'<div class="avdue">⏰ '+(av?'reavaliar (6+ semanas)':'avaliar este aluno')+'</div>':'')+
       '<div class="avacts">'+
-        '<button class="b1" onclick="openAvalModal(\''+a.id+'\')">${BI.chart}Avaliar</button>'+
+        '<button class="b1" onclick="openAvalModal(\''+a.id+'\')">'+BI.chart+'Avaliar</button>'+
         '<button class="b2" onclick="openRegistroModal(\''+a.id+'\')">📝 Registro</button>'+
         (av?'<button class="b3" onclick="openAvalExport(\''+a.id+'\')">📤 Devolutiva</button>':'')+
         '<button class="b4" onclick="setAvalOff(\''+a.id+'\',true)">🚫 Tirar</button>'+
@@ -2898,7 +2912,7 @@ function renderAlunos(){
         <span class="chip" style="${(Number(a.locCred)||0)<0?'background:#F6D7D2;color:#8E2C1E;font-weight:800':''}">🔑 ${fmtCred(Number(a.locCred)||0)}h locação${(Number(a.locCred)||0)<0?' (devendo)':''}</span>
         <span class="chip code">🔑 ${a.codigo||'—'}</span>
         <span class="chip" style="background:#EFE7D8;color:#5b5142;font-weight:700">${PERFIL_LABELS[perfilDe(a)]||''}</span>
-        ${(a.avaliacoes&&a.avaliacoes.length)?`<span class="chip" style="background:#EDE7FB;color:#5B3FA6;font-weight:800">📈 ${a.avaliacoes[a.avaliacoes.length-1].nivel||'—'}</span>`:''}
+        ${(a.avaliacoes&&a.avaliacoes.length)?`<span class="chip" style="background:${metalDe(a.avaliacoes[a.avaliacoes.length-1].nivel).m};color:#fff;font-weight:800">📈 ${a.avaliacoes[a.avaliacoes.length-1].nivel||'—'}</span>`:''}
         ${a.termoAceitoEm?`<span class="chip" style="background:#E6F0E6;color:#2E7D52">📄 termo aceito</span>`:''}
       </div>
       ${histAlunoHTML(a.id)}
