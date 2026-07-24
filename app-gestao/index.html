@@ -80,7 +80,7 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .aex-prio b{color:var(--green)}
 .aex-sec{font-size:12px;font-weight:800;color:var(--green);margin:14px 0 9px}
 .aex-row{margin-bottom:10px}
-.aex-row .top{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px}
+.aex-row .aex-top{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px}
 .aex-row .top .st{font-weight:700;color:#5B3FA6}
 .aex-bar{height:9px;border-radius:6px;background:#EBE5DA;overflow:hidden}
 .aex-bar>i{display:block;height:100%;border-radius:6px;background:#5B3FA6}
@@ -2599,7 +2599,7 @@ function montarAvalExport(a){
     html+='<div class="aex-sec">'+(AVAL_ICO[g]||'•')+' '+AVAL_ESCALA[g].titulo+'</div>';
     AVAL_ESCALA[g].itens.forEach(it=>{
       const v=Number(av[g]&&av[g][it.k])||0,pct=Math.round(v/it.n.length*100),rot=v>0?it.n[v-1]:'—';
-      html+='<div class="aex-row"><div class="top"><span>'+it.lbl+'</span><span class="st">'+rot+'</span></div><div class="aex-bar"><i style="width:'+pct+'%"></i></div></div>';
+      html+='<div class="aex-row"><div class="aex-top"><span>'+it.lbl+'</span><span class="st">'+rot+'</span></div><div class="aex-bar"><i style="width:'+pct+'%"></i></div></div>';
     });
   });
   if(av.obs)html+='<div class="aex-prio" style="margin-top:14px;background:#F7F4EE;border-color:#e7e0d2">📝 '+escAval(av.obs)+'</div>';
