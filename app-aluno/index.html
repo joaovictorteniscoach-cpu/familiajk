@@ -274,6 +274,10 @@ input,select{font-family:'DM Sans',sans-serif;font-size:14px}
 .evo-mes-val{flex:0 0 76px;text-align:right;font-size:12px;font-weight:900;color:var(--text);font-variant-numeric:tabular-nums}
 .evo-mes-reg{display:block;font-size:9.5px;font-weight:700;font-style:normal;color:var(--muted)}
 .evo-mes-cap{font-size:11.5px;font-weight:800;color:#3F7A4E;text-align:center;margin:-6px 0 14px}
+.aviso-btn{width:100%;border:1.5px solid var(--gold);background:#fff;color:#7C5E1A;font-size:14px;font-weight:800;padding:13px 12px;border-radius:14px}
+.aviso-btn[data-st="granted"]{border-color:#2E7D52;color:#2E7D52}
+.aviso-btn[data-st="denied"],.aviso-btn[data-st="nao-suportado"]{border-color:var(--border);color:var(--muted)}
+.aviso-cap{font-size:11px;color:var(--muted);margin-top:7px;line-height:1.5}
 .evo-empty{text-align:center;padding:22px 10px;color:var(--muted);font-size:13.5px;line-height:1.6}
 .evo-pend{background:#FBF3DE;border:1px solid #EBD9A6;color:#6B5522;border-radius:14px;padding:13px 15px;margin:4px 0 14px;font-size:13px;line-height:1.55;text-align:center}
 .evo-pend b{color:#5A4210}
@@ -452,6 +456,11 @@ function iniciarFirebase(){
       <p class="sec-eyebrow">Metodologia Da Base ao Topo</p>
       <h2 class="sec-title">Minha <em>evolução</em></h2>
       <button class="buy-btn" id="btn-evolucao" style="background:linear-gradient(135deg,#C9A04A,#93701C);color:#fff;box-shadow:0 4px 16px rgba(147,112,28,.28)" onclick="irEvolucao()"><svg class="lni" viewBox="0 0 24 24"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg> Ver minha avaliação e evolução</button>
+    </div>
+
+    <div class="buy-box" style="text-align:center">
+      <button id="btn-avisos" class="aviso-btn" onclick="ativarAvisos('jv-icone-aluno.png')">🔔 Ativar avisos</button>
+      <p class="aviso-cap">Receba o lembrete da sua aula no celular. Funciona com o app aberto; no iPhone, adicione à Tela de Início.</p>
     </div>
 
     <div class="foot">
@@ -933,7 +942,7 @@ function render(){
   checarTermo();
   checarRenovacao();
   checarFeriados();
-  applyTipoUI();renderPayLock();corEvoBtn();
+  applyTipoUI();renderPayLock();corEvoBtn();pintarAvisos();
 }
 // Botão da evolução vestido com o metal do nível atual do aluno
 function corEvoBtn(){
@@ -1727,12 +1736,58 @@ function addToCalendar(dk,hora){
   document.body.appendChild(a);a.click();document.body.removeChild(a);
   toast('🔔 Abrindo sua agenda — confirme para receber o lembrete com alarme.');
 }
-function notificarLocal(titulo,corpo){
-  try{if('Notification'in window&&Notification.permission==='granted'){new Notification(titulo,{body:corpo||'',icon:'jv-icone-aluno.png'});}}catch(e){}
+/* ===== AVISOS (notificações do sistema) =====
+   iPhone não suporta "new Notification": em PWA instalada só funciona
+   registration.showNotification(). Por isso mostramos pelo service worker
+   sempre que ele existir, e só caímos no construtor no desktop. */
+function avisosEstado(){
+  if(!('Notification' in window)){
+    const ios=/iPad|iPhone|iPod/.test(navigator.userAgent);
+    const naTela=window.navigator.standalone===true||window.matchMedia('(display-mode: standalone)').matches;
+    return (ios&&!naTela)?'instalar':'nao-suportado';
+  }
+  return Notification.permission;   // 'granted' | 'denied' | 'default'
 }
-function pedirPermissaoNotif(){
-  try{if('Notification'in window&&Notification.permission==='default'){Notification.requestPermission().catch(()=>{});}}catch(e){}
+function mostrarAviso(titulo,corpo,icone){
+  if(!('Notification' in window)||Notification.permission!=='granted')return Promise.resolve(false);
+  const opts={body:corpo||'',icon:icone||'',badge:icone||'',tag:'jvtenis'};
+  if('serviceWorker' in navigator&&navigator.serviceWorker.ready){
+    return navigator.serviceWorker.ready
+      .then(reg=>reg.showNotification(titulo,opts).then(()=>true))
+      .catch(()=>{try{new Notification(titulo,opts);return true;}catch(e){return false;}});
+  }
+  try{new Notification(titulo,opts);return Promise.resolve(true);}catch(e){return Promise.resolve(false);}
 }
+async function ativarAvisos(iconeTeste){
+  const st=avisosEstado();
+  if(st==='instalar'){toast('📲 Adicione o app à Tela de Início para receber avisos');pintarAvisos();return;}
+  if(st==='nao-suportado'){toast('Este navegador não envia avisos');pintarAvisos();return;}
+  if(st==='denied'){toast('🔕 Avisos bloqueados — libere nos ajustes do navegador');pintarAvisos();return;}
+  if(st==='granted'){
+    const ok=await mostrarAviso('Avisos ligados 🎾','Academia João Victor Tênis',iconeTeste);
+    toast(ok?'🔔 Aviso de teste enviado!':'Não consegui enviar o aviso de teste');
+    pintarAvisos();return;
+  }
+  try{
+    const r=await Notification.requestPermission();
+    if(r==='granted'){
+      const ok=await mostrarAviso('Avisos ligados 🎾','Academia João Victor Tênis',iconeTeste);
+      toast(ok?'🔔 Pronto! Aviso de teste enviado.':'Permissão dada, mas o aviso não apareceu');
+    }else toast('Sem problema — dá para ligar depois neste botão');
+  }catch(e){toast('Não consegui pedir a permissão');}
+  pintarAvisos();
+}
+function pintarAvisos(){
+  const b=document.getElementById('btn-avisos');if(!b)return;
+  const st=avisosEstado();
+  const txt={granted:'🔔 Avisos ligados · testar',denied:'🔕 Avisos bloqueados',
+             instalar:'📲 Instale na Tela de Início',
+             'nao-suportado':'🔕 Sem avisos neste navegador'}[st]||'🔔 Ativar avisos';
+  b.textContent=txt;
+  b.dataset.st=st;
+}
+function notificarLocal(titulo,corpo){mostrarAviso(titulo,corpo,'jv-icone-aluno.png');}
+function pedirPermissaoNotif(){pintarAvisos();}
 let _lembreteFeito=false,_lembreteHora=null;
 function checarAulaHoje(){
   if(!EU||!PUB||!PUB.grade)return;
