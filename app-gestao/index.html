@@ -71,6 +71,18 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 /* devolutiva da avaliação (export) */
 #aval-export{position:fixed;left:-10000px;top:0;width:430px;background:#fff;padding:24px;color:#2A2016}
 .aex-nivel{text-align:center;margin:14px 0 8px}
+/* Panorama mês a mês */
+.evo-sec{font-size:12px;font-weight:800;color:var(--green);margin:14px 0 9px}
+.evo-mes{background:#fff;border:1px solid var(--border);border-radius:14px;padding:12px 14px 10px;margin-bottom:14px}
+.evo-mes-row{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.evo-mes-row:last-child{margin-bottom:2px}
+.evo-mes-row.carry{opacity:.55}
+.evo-mes-lab{flex:0 0 44px;font-size:11px;font-weight:800;color:var(--muted);text-transform:capitalize}
+.evo-mes-track{flex:1;height:13px;border-radius:8px;background:#EFE9DD;overflow:hidden}
+.evo-mes-bar{display:block;height:100%;border-radius:8px;transition:width .9s cubic-bezier(.2,.8,.2,1)}
+.evo-mes-val{flex:0 0 76px;text-align:right;font-size:12px;font-weight:900;color:var(--text);font-variant-numeric:tabular-nums}
+.evo-mes-reg{display:block;font-size:9.5px;font-weight:700;font-style:normal;color:var(--muted)}
+.evo-mes-cap{font-size:11.5px;font-weight:800;color:#3F7A4E;text-align:center;margin:-6px 0 14px}
 .aex-badge{display:inline-block;background:var(--lcd,#93701C);color:#fff;font-weight:800;font-size:15px;padding:8px 20px;border-radius:22px}
 .aex-trilha{display:flex;gap:5px;margin:10px 0 16px}
 .aex-step{flex:1;text-align:center;font-size:10px;font-weight:700;color:#8a8478;padding:8px 2px;border-radius:8px;background:#F1ECE0;line-height:1.2}
@@ -1026,6 +1038,8 @@ function iniciarFirebase(){
     <div class="field"><label>Prioridade do ciclo (o que treinar primeiro)</label><input id="av-prioridade" placeholder="Ex.: split-step espontâneo + base aberta no forehand"></div>
     <div class="field"><label>Observação livre</label><textarea id="av-obs" rows="2" placeholder="Anotações do professor…" style="width:100%;resize:vertical"></textarea></div>
 
+    <div id="av-mes-wrap"></div>
+
     <div id="av-hist-wrap" style="display:none">
       <div class="ha-title" style="margin-top:14px">Avaliações anteriores</div>
       <div class="aval-hist" id="av-hist"></div>
@@ -1498,7 +1512,7 @@ async function doPublish(){
       locacaoOnly:DB.locacaoOnly||[],
       horarioCfg:DB.horarioCfg||{},
       horarioData:DB.horarioData||{},
-      alunos:DB.alunos.map(a=>({codigo:a.codigo,nome:a.nome,tipo:a.tipo,plano:a.plano,creditos:a.creditos,repos:a.repos,status:a.status,mensalidade:a.mensalidade,diaVenc:a.diaVenc||10,cardLink:a.cardLink||'',mfitLink:a.mfitLink||'',valorAula:a.valorAula||(a.tipo==='Personal'?130:160),locCred:Number(a.locCred)||0,avaliacoes:(a.avaliacoes||[]).slice(-12),registros:(a.registros||[]).slice(-8)})),
+      alunos:DB.alunos.map(a=>({codigo:a.codigo,nome:a.nome,tipo:a.tipo,plano:a.plano,creditos:a.creditos,repos:a.repos,status:a.status,mensalidade:a.mensalidade,diaVenc:a.diaVenc||10,cardLink:a.cardLink||'',mfitLink:a.mfitLink||'',valorAula:a.valorAula||(a.tipo==='Personal'?130:160),locCred:Number(a.locCred)||0,avaliacoes:(a.avaliacoes||[]).slice(-12),evoMes:serieMensal(a.avaliacoes,a.registros,24),registros:(a.registros||[]).slice(-8)})),
       historico:(function(){
         const codeOf={};DB.alunos.forEach(a=>{codeOf[a.id]=a.codigo;});
         const cut=dKey(new Date(Date.now()-60*864e5));const out={};
@@ -2492,6 +2506,8 @@ function openAvalModal(id){
 function renderAvalHist(a){
   const wrap=document.getElementById('av-hist-wrap'),el=document.getElementById('av-hist');
   const av=a.avaliacoes||[];
+  const mw=document.getElementById('av-mes-wrap');
+  if(mw)mw.innerHTML=evoMesChartHTML(serieMensal(av,a.registros,6),'Evolução mês a mês');
   if(!av.length){wrap.style.display='none';el.innerHTML='';return;}
   wrap.style.display='block';
   el.innerHTML=av.slice().reverse().map((v,ri)=>{
@@ -2584,6 +2600,57 @@ function delRegistro(id,idx){
 
 /* ===== Devolutiva da avaliação (imagem / PDF / WhatsApp p/ os pais) ===== */
 let avalExpId='';
+function pctAval(av){
+  if(!av)return 0;
+  let s=0,n=0;
+  Object.keys(AVAL_ESCALA).forEach(g=>{AVAL_ESCALA[g].itens.forEach(it=>{s+=(Number(av[g]&&av[g][it.k])||0)/it.n.length;n++;});});
+  return n?Math.round(s/n*100):0;
+}
+// ===== Panorama de evolução MÊS A MÊS =====
+// Uma linha por mês: vale a ÚLTIMA avaliação daquele mês. Mês sem avaliação
+// herda o valor do anterior (barra mais clara), para a linha não quebrar.
+const MES_EVO=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+function mesLabelEvo(mk){const p=String(mk).split('-');return MES_EVO[Number(p[1])-1]+'/'+p[0].slice(2);}
+function mesesAte(n){
+  const out=[],d=new Date();
+  for(let i=n-1;i>=0;i--){const x=new Date(d.getFullYear(),d.getMonth()-i,1);
+    out.push(x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0'));}
+  return out;
+}
+function serieMensal(av,rg,n){
+  const lista=(av||[]).slice().sort((a,b)=>String(a.data||'').localeCompare(String(b.data||'')));
+  const porMes={};lista.forEach(v=>{porMes[String(v.data||'').slice(0,7)]=v;});
+  const regs={};(rg||[]).forEach(v=>{const m=String(v.data||'').slice(0,7);regs[m]=(regs[m]||0)+1;});
+  let ult=null;const out=[];
+  mesesAte(n||6).forEach(m=>{
+    const v=porMes[m];
+    if(v)ult={p:pctAval(v),n:v.nivel||''};
+    out.push({m:m,p:ult?ult.p:0,n:ult?ult.n:'',r:regs[m]||0,novo:!!v});
+  });
+  return out;
+}
+function evoMesChartHTML(serie,titulo){
+  if(!serie||!serie.length)return '';
+  if(!serie.some(x=>x.novo))return '';   // nenhuma avaliação no período
+  const linhas=serie.map(x=>{
+    const met=x.n?metalDe(x.n):{m:'#D8CFC0',d:'#B9AE9B'};
+    const vazio=!x.n;
+    const reg=x.r?('<i class="evo-mes-reg">'+x.r+' aula'+(x.r>1?'s':'')+'</i>'):'';
+    return '<div class="evo-mes-row'+(x.novo?'':' carry')+'">'
+      +'<span class="evo-mes-lab">'+mesLabelEvo(x.m)+'</span>'
+      +'<span class="evo-mes-track"><span class="evo-mes-bar" style="width:'+(vazio?0:x.p)+'%;background:linear-gradient(90deg,'+met.m+','+met.d+')"></span></span>'
+      +'<span class="evo-mes-val">'+(vazio?'—':x.p+'%')+reg+'</span>'
+      +'</div>';
+  }).join('');
+  const comAval=serie.filter(x=>x.novo);
+  const prim=comAval[0],ult=comAval[comAval.length-1];
+  let resumo='';
+  if(prim&&ult&&comAval.length>1){
+    const d=ult.p-prim.p;
+    resumo='<p class="evo-mes-cap">'+(d>0?'▲ +'+d+'% de '+mesLabelEvo(prim.m)+' até '+mesLabelEvo(ult.m):(d<0?'▼ '+d+'% no período':'➖ estável no período'))+'</p>';
+  }
+  return '<div class="evo-sec">📅 '+(titulo||'Mês a mês')+'</div><div class="evo-mes">'+linhas+'</div>'+resumo;
+}
 function ultimaAval(a){return (a&&a.avaliacoes&&a.avaliacoes.length)?a.avaliacoes[a.avaliacoes.length-1]:null;}
 function openAvalExport(id){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
@@ -2616,6 +2683,8 @@ function montarAvalExport(a){
       html+='<div class="aex-row"><div class="aex-top"><span>'+it.lbl+'</span><span class="st">'+rot+'</span></div><div class="aex-bar"><i style="width:'+pct+'%"></i></div></div>';
     });
   });
+  const _mes=evoMesChartHTML(serieMensal(a.avaliacoes,a.registros,6),'Evolução mês a mês');
+  if(_mes)html+='<div style="margin-top:14px">'+_mes+'</div>';
   if(av.obs)html+='<div class="aex-prio" style="margin-top:14px;background:#F7F4EE;border-color:#e7e0d2">📝 '+escAval(av.obs)+'</div>';
   html+='<div class="tex-foot">Disciplina no treino. Evolução no jogo. 🎾 · Prof. João Victor</div></div>';
   document.getElementById('aval-export').innerHTML=html;

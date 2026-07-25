@@ -263,6 +263,17 @@ input,select{font-family:'DM Sans',sans-serif;font-size:14px}
 .tp-close{margin-top:16px;width:100%;background:rgba(255,255,255,.96);color:#2A2016;border:none;border-radius:14px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;position:relative}
 .evo-hist .hr{display:flex;justify-content:space-between;font-size:12.5px;padding:9px 12px;background:#F7F4EE;border:1px solid var(--border);border-radius:10px;margin-bottom:6px}
 .evo-hist .hr b{color:var(--lcd)}
+/* Panorama mês a mês */
+.evo-mes{background:#fff;border:1px solid var(--border);border-radius:14px;padding:12px 14px 10px;margin-bottom:14px}
+.evo-mes-row{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.evo-mes-row:last-child{margin-bottom:2px}
+.evo-mes-row.carry{opacity:.55}
+.evo-mes-lab{flex:0 0 44px;font-size:11px;font-weight:800;color:var(--muted);text-transform:capitalize}
+.evo-mes-track{flex:1;height:13px;border-radius:8px;background:#EFE9DD;overflow:hidden}
+.evo-mes-bar{display:block;height:100%;border-radius:8px;transition:width .9s cubic-bezier(.2,.8,.2,1)}
+.evo-mes-val{flex:0 0 76px;text-align:right;font-size:12px;font-weight:900;color:var(--text);font-variant-numeric:tabular-nums}
+.evo-mes-reg{display:block;font-size:9.5px;font-weight:700;font-style:normal;color:var(--muted)}
+.evo-mes-cap{font-size:11.5px;font-weight:800;color:#3F7A4E;text-align:center;margin:-6px 0 14px}
 .evo-empty{text-align:center;padding:22px 10px;color:var(--muted);font-size:13.5px;line-height:1.6}
 .evo-pend{background:#FBF3DE;border:1px solid #EBD9A6;color:#6B5522;border-radius:14px;padding:13px 15px;margin:4px 0 14px;font-size:13px;line-height:1.55;text-align:center}
 .evo-pend b{color:#5A4210}
@@ -1026,15 +1037,59 @@ const EVO_PAL_HTML='<div class="evo-pal">'
  +'<div class="p" style="background:linear-gradient(135deg,#B9C0C7,#828B93);color:#2a2a2a;text-shadow:none">Prata</div>'
  +'<div class="p" style="background:#C9A04A">Ouro</div>'
  +'<div class="p" style="background:#A81D38">Rubi</div>'
- +'<div class="p" style="background:linear-gradient(135deg,#8FD0E6,#4E93B0);color:#123;text-shadow:none">Diamante</div>'
  +'<div class="p" style="background:#2C2C33">Carbono</div>'
- +'</div><p class="evo-pal-cap">Base→Topo: Bronze · Prata · Ouro · Rubi · Diamante (Carbono = opção)</p>';
+ +'</div><p class="evo-pal-cap">Base = Bronze · Impulso = Prata · Construção = Ouro · Ascensão = Rubi · Topo = Carbono</p>';
 function metalDe(nivel){return LEVEL_MET[nivel]||LEVEL_MET['Construção'];}
 function pctAval(av){
   if(!av)return 0;
   let s=0,n=0;
   Object.keys(AVAL_ESCALA).forEach(g=>{AVAL_ESCALA[g].itens.forEach(it=>{s+=(Number(av[g]&&av[g][it.k])||0)/it.n.length;n++;});});
   return n?Math.round(s/n*100):0;
+}
+// ===== Panorama de evolução MÊS A MÊS =====
+// Uma linha por mês: vale a ÚLTIMA avaliação daquele mês. Mês sem avaliação
+// herda o valor do anterior (barra mais clara), para a linha não quebrar.
+const MES_EVO=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+function mesLabelEvo(mk){const p=String(mk).split('-');return MES_EVO[Number(p[1])-1]+'/'+p[0].slice(2);}
+function mesesAte(n){
+  const out=[],d=new Date();
+  for(let i=n-1;i>=0;i--){const x=new Date(d.getFullYear(),d.getMonth()-i,1);
+    out.push(x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0'));}
+  return out;
+}
+function serieMensal(av,rg,n){
+  const lista=(av||[]).slice().sort((a,b)=>String(a.data||'').localeCompare(String(b.data||'')));
+  const porMes={};lista.forEach(v=>{porMes[String(v.data||'').slice(0,7)]=v;});
+  const regs={};(rg||[]).forEach(v=>{const m=String(v.data||'').slice(0,7);regs[m]=(regs[m]||0)+1;});
+  let ult=null;const out=[];
+  mesesAte(n||6).forEach(m=>{
+    const v=porMes[m];
+    if(v)ult={p:pctAval(v),n:v.nivel||''};
+    out.push({m:m,p:ult?ult.p:0,n:ult?ult.n:'',r:regs[m]||0,novo:!!v});
+  });
+  return out;
+}
+function evoMesChartHTML(serie,titulo){
+  if(!serie||!serie.length)return '';
+  if(!serie.some(x=>x.novo))return '';   // nenhuma avaliação no período
+  const linhas=serie.map(x=>{
+    const met=x.n?metalDe(x.n):{m:'#D8CFC0',d:'#B9AE9B'};
+    const vazio=!x.n;
+    const reg=x.r?('<i class="evo-mes-reg">'+x.r+' aula'+(x.r>1?'s':'')+'</i>'):'';
+    return '<div class="evo-mes-row'+(x.novo?'':' carry')+'">'
+      +'<span class="evo-mes-lab">'+mesLabelEvo(x.m)+'</span>'
+      +'<span class="evo-mes-track"><span class="evo-mes-bar" style="width:'+(vazio?0:x.p)+'%;background:linear-gradient(90deg,'+met.m+','+met.d+')"></span></span>'
+      +'<span class="evo-mes-val">'+(vazio?'—':x.p+'%')+reg+'</span>'
+      +'</div>';
+  }).join('');
+  const comAval=serie.filter(x=>x.novo);
+  const prim=comAval[0],ult=comAval[comAval.length-1];
+  let resumo='';
+  if(prim&&ult&&comAval.length>1){
+    const d=ult.p-prim.p;
+    resumo='<p class="evo-mes-cap">'+(d>0?'▲ +'+d+'% de '+mesLabelEvo(prim.m)+' até '+mesLabelEvo(ult.m):(d<0?'▼ '+d+'% no período':'➖ estável no período'))+'</p>';
+  }
+  return '<div class="evo-sec">📅 '+(titulo||'Mês a mês')+'</div><div class="evo-mes">'+linhas+'</div>'+resumo;
 }
 function evoRowHTML(grupo,it,cur,prev){
   const v=Number(cur&&cur[grupo]&&cur[grupo][it.k])||0;
@@ -1080,6 +1135,10 @@ function evolucaoHTML(){
   html+=EVO_PAL_HTML;
   if(pendente){html+='<div class="evo-pend">⏳ <b>Sua avaliação ainda não foi preenchida.</b><br>Assim que o João te avaliar, tudo aqui embaixo ganha os seus números. Este é um exemplo do que você vai acompanhar. 🎾</div>';}
   html+=`<div class="evo-xp"><div class="xp-eye">Evolução geral</div><div class="xp-num">${pctG}<small>%</small></div><div class="xp-cap">domínio dos fundamentos · Da Base ao Topo</div><div class="xp-track"><i data-w="${pctG}"></i></div>${deltaHTML}</div>`;
+  if(!pendente){
+    const serie=(EU&&Array.isArray(EU.evoMes)&&EU.evoMes.length)?EU.evoMes:serieMensal(av,rg,6);
+    html+=evoMesChartHTML(serie,'Mês a mês');
+  }
   html+=`<div style="text-align:center;margin:2px 0 10px"><span class="evo-badge"${pendente?' style="background:#8A8272"':''}>Nível: ${pendente?'a avaliar':(cur.nivel||'—')}</span>${subiu}</div>`;
   html+=`<div class="evo-trilha">${trilha}</div>`;
   if(pendente){html+=`<div class="evo-prio" style="background:#F4F1E8"><div class="lbl">Prioridade do ciclo</div><b style="color:#8A8272">a definir na avaliação</b></div>`;}
