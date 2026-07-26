@@ -2683,7 +2683,10 @@ function serieMensal(av,rg,n){
     if(v)ult={p:pctAval(v),n:v.nivel||''};
     out.push({m:m,p:ult?ult.p:0,n:ult?ult.n:'',r:regs[m]||0,novo:!!v});
   });
-  return out;
+  // Corta os meses anteriores a primeira avaliacao: o grafico comeca quando
+  // a avaliacao comecou e vai crescendo mes a mes.
+  const ini=out.findIndex(x=>x.novo);
+  return ini<0?[]:out.slice(ini);
 }
 function evoMesChartHTML(serie,titulo){
   if(!serie||!serie.length)return '';
