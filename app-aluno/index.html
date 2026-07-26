@@ -203,6 +203,9 @@ input,select{font-family:'DM Sans',sans-serif;font-size:14px}
 /* ===== Minha evolução (Da Base ao Topo) — paleta materiais preciosos ===== */
 .evo-font{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;--lc:#C9A04A;--lcd:#93701C;--lc2:#E4C878}
 /* Faixa dos materiais (Bronze → Carbono) */
+.evo-tab{display:none}
+.evo-tab.on{display:block}
+.evo-seg{margin-top:2px}
 .evo-pal{display:flex;gap:5px;margin:2px 0 4px}
 .evo-pal .p{flex:1;text-align:center;color:#fff;font-size:9.5px;font-weight:800;padding:9px 1px;border-radius:9px;box-shadow:0 2px 6px rgba(0,0,0,.14);text-shadow:0 1px 1px rgba(0,0,0,.3)}
 .evo-pal-cap{font-size:10.5px;color:var(--muted);text-align:center;margin:0 0 14px;font-weight:600}
@@ -1076,7 +1079,10 @@ function serieMensal(av,rg,n){
     if(v)ult={p:pctAval(v),n:v.nivel||''};
     out.push({m:m,p:ult?ult.p:0,n:ult?ult.n:'',r:regs[m]||0,novo:!!v});
   });
-  return out;
+  // Corta os meses anteriores a primeira avaliacao: o grafico comeca quando
+  // a avaliacao comecou e vai crescendo mes a mes.
+  const ini=out.findIndex(x=>x.novo);
+  return ini<0?[]:out.slice(ini);
 }
 function evoMesChartHTML(serie,titulo){
   if(!serie||!serie.length)return '';
@@ -1142,6 +1148,12 @@ function evolucaoHTML(){
   else{deltaHTML='<div class="xp-delta flat">➖ manteve — hora de subir mais 💪</div>';}
   let html='<div class="evo-font" style="--lc:'+met.m+';--lcd:'+met.d+';--lc2:'+(met.l||met.m)+'">';
   html+=EVO_PAL_HTML;
+  html+='<div class="seg evo-seg">'
+   +'<button class="on" onclick="setEvoTab(\'resumo\',this)">Resumo</button>'
+   +'<button onclick="setEvoTab(\'fund\',this)">Fundamentos</button>'
+   +'<button onclick="setEvoTab(\'hist\',this)">Histórico</button>'
+   +'</div>';
+  html+='<div class="evo-tab on" data-tab="resumo">';
   if(pendente){html+='<div class="evo-pend">⏳ <b>Sua avaliação ainda não foi preenchida.</b><br>Assim que o João te avaliar, tudo aqui embaixo ganha os seus números. Este é um exemplo do que você vai acompanhar. 🎾</div>';}
   html+=`<div class="evo-xp"><div class="xp-eye">Evolução geral</div><div class="xp-num">${pctG}<small>%</small></div><div class="xp-cap">domínio dos fundamentos · Da Base ao Topo</div><div class="xp-track"><i data-w="${pctG}"></i></div>${deltaHTML}</div>`;
   if(!pendente){
@@ -1155,11 +1167,15 @@ function evolucaoHTML(){
     if(cur.prioridade){html+=`<div class="evo-prio"><div class="lbl">Prioridade do ciclo</div><b>${escHtml(cur.prioridade)}</b></div>`;}
     if(cur.objetivo){html+=`<p style="font-size:13px;color:#3a3128;margin:-6px 0 12px;font-weight:600">🎯 Meu objetivo: <b style="color:var(--text);font-weight:800">${escHtml(cur.objetivo)}</b></p>`;}
   }
+  html+='</div>';                                     // fecha aba Resumo
+  html+='<div class="evo-tab" data-tab="fund">';       // abre aba Fundamentos
   Object.keys(AVAL_ESCALA).forEach(g=>{
     html+=`<div class="evo-panel"><div class="evo-sec">${AVAL_ICO[g]||'•'} ${AVAL_ESCALA[g].titulo}</div>`;
     AVAL_ESCALA[g].itens.forEach(it=>{html+=evoRowHTML(g,it,cur,prev);});
     html+='</div>';
   });
+  html+='</div>';                                     // fecha aba Fundamentos
+  html+='<div class="evo-tab" data-tab="hist">';       // abre aba Histórico
   if(!pendente&&av.length>1){
     html+='<div class="evo-sec">🗓️ Histórico</div><div class="evo-hist">';
     html+=av.slice().reverse().map(v=>`<div class="hr"><span>${(v.data||'').split('-').reverse().join('/')}</span><b style="color:${metalDe(v.nivel).d}">${v.nivel||'—'}</b></div>`).join('');
@@ -1167,8 +1183,28 @@ function evolucaoHTML(){
   }
   html+=evoRegistrosHTML(rg,false);
   html+=pendente?'':`<p style="font-size:11px;color:var(--muted);text-align:center;margin-top:12px">Última avaliação: ${(cur.data||'').split('-').reverse().join('/')} · pelo Prof. João</p>`;
+  if(!pendente&&av.length<=1&&!rg.length)html+='<p class="evo-empty">Seu histórico aparece aqui a partir da 2ª avaliação. 🎾</p>';
+  html+='</div>';   // fecha aba Histórico
   html+='</div>';   // fecha .evo-font
   return html;
+}
+// Abas da Evolução: cada uma vive num .evo-tab; só a ativa fica visível.
+function setEvoTab(k,btn){
+  const box=btn.closest('.evo-font');if(!box)return;
+  box.querySelectorAll('.evo-seg button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  let alvo=null;
+  box.querySelectorAll('.evo-tab').forEach(t=>{
+    const on=t.dataset.tab===k;
+    t.classList.toggle('on',on);
+    if(on)alvo=t;
+  });
+  if(alvo){                          // zera e re-anima as barras que apareceram
+    alvo.querySelectorAll('[data-w]').forEach(b=>{b.style.width='0';});
+    animarEvo(alvo);
+  }
+  const sc=box.closest('.page,.modal')||window;
+  if(sc===window)window.scrollTo({top:0});else sc.scrollTop=0;
 }
 function animarEvo(box){
   if(!box)return;
