@@ -204,6 +204,11 @@ input,select{font-family:'DM Sans',sans-serif;font-size:14px}
 .evo-font{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;--lc:#C9A04A;--lcd:#93701C;--lc2:#E4C878}
 /* Faixa dos materiais (Bronze → Carbono) */
 .pick-opt.tor{border-color:#C9A04A;background:#FBF4E4}
+#ov-autoaval .modal{padding-top:0}
+.modal-head{position:sticky;top:0;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--cream);padding:18px 0 9px;box-shadow:0 6px 10px -8px rgba(42,32,22,.25)}
+.modal-head h3{margin:0}
+.modal-x{flex:0 0 auto;width:34px;height:34px;border:none;border-radius:50%;background:#EFE7D8;color:var(--muted);font-size:15px;font-weight:800;line-height:1}
+.modal-x:active{opacity:.6}
 .auto-cta{width:100%;border:none;border-radius:14px;padding:13px;font-size:14px;font-weight:800;color:#fff;background:linear-gradient(135deg,#2E7D52,#1F5B3B);box-shadow:0 4px 14px rgba(31,91,59,.25)}
 .auto-cap{font-size:11px;color:var(--muted);text-align:center;margin:7px 0 14px;line-height:1.5}
 .auto-feito{font-size:11.5px;font-weight:800;color:#7C5E1A;background:#F5ECD6;border-radius:9px;padding:7px 10px;text-align:center;margin-bottom:10px}
@@ -590,7 +595,10 @@ function iniciarFirebase(){
 <!-- MODAL MINHA EVOLUÇÃO (Da Base ao Topo) -->
 <div class="overlay" id="ov-autoaval" style="z-index:140" onclick="if(event.target===this)closeModal('ov-autoaval')">
   <div class="modal">
-    <h3>📝 Minha autoavaliação</h3>
+    <div class="modal-head">
+      <h3>📝 Minha autoavaliação</h3>
+      <button class="modal-x" onclick="closeModal('ov-autoaval')" aria-label="Fechar">✕</button>
+    </div>
     <p class="sub">De 1 (ainda não faço) a 5 (já domino). Sem pressa e sem certo ou errado — é como <b>você</b> se enxerga hoje. 🎾</p>
     <p class="auto-feito" id="auto-feito">0 de 0 respondidas</p>
     <div id="auto-blocos"></div>
@@ -2095,6 +2103,7 @@ function grupoRefHtml(){
     +'<p class="grp-ref-note">Quanto mais gente na aula, menor o valor por pessoa. Para treinar em grupo, combine com o João pelo WhatsApp. 🎾</p>'
     +'</details>';
 }
+function closeModal(id){const el=document.getElementById(id);if(el)el.classList.remove('on');}
 function normNomeTor(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim();}
 // O torneio guarda os jogadores por NOME (p.name), não por código.
 function souJogadorTorneio(){
