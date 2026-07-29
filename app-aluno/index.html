@@ -2123,11 +2123,14 @@ function torneioAtivo(){
   const T=(PUB&&PUB.torneio)||null;
   return !!(T&&Array.isArray(T.jogadores)&&T.jogadores.length&&!T.encerrada);
 }
+// A opção aparece SEMPRE. Já sumiu duas vezes por causa de filtro (código x
+// nome, torneio encerrado), e sumir calado é pior do que sobrar: o João recebe
+// o pedido e decide. O subtítulo é que muda conforme o que dá para detectar.
 function pickTorneioHtml(){
-  if(!torneioAtivo())return '';
-  const meu=souJogadorTorneio();
-  return '<button class="pick-opt tor" onclick="pickTorneio()">🏆 Marcar jogo do torneio<small>'
-    +(meu?'sem custo — a inscrição já foi paga':'sem custo — combine o jogo com o João')+'</small></button>';
+  const sub=souJogadorTorneio()?'sem custo — a inscrição já foi paga'
+           :(torneioAtivo()?'sem custo — combine o jogo com o João'
+                           :'sem custo — jogo do torneio, a combinar com o João');
+  return '<button class="pick-opt tor" onclick="pickTorneio()">🏆 Reservar para o torneio<small>'+sub+'</small></button>';
 }
 function pickTorneio(){document.getElementById('ov-pick').classList.remove('on');abrirBook(pickCtx.hora,false,true);}
 function pickAula(repo){document.getElementById('ov-pick').classList.remove('on');abrirBook(pickCtx.hora,repo);}
