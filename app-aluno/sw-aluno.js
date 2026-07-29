@@ -1,7 +1,7 @@
 /* Service Worker — Academia João Victor Tênis (app do aluno)
    Estratégia: network-first (sempre tenta a versão nova online),
    com cache de reserva para abrir offline. NÃO intercepta o Firebase. */
-const CACHE = 'jvtenis-aluno-v1';
+const CACHE = 'jvtenis-aluno-v3';
 const SHELL = ['./', './manifest-aluno.webmanifest', './jv-icone-aluno.png'];
 
 self.addEventListener('install', e => {
@@ -36,5 +36,17 @@ self.addEventListener('fetch', e => {
         return resp;
       })
       .catch(() => caches.match(req).then(m => m || caches.match('./')))
+  );
+});
+
+/* Avisos: clicar na notificação foca (ou abre) o app.
+   O bloco de push fica pronto para quando houver servidor de envio. */
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(ls => {
+      for (const c of ls) { if ('focus' in c) return c.focus(); }
+      if (self.clients.openWindow) return self.clients.openWindow('./');
+    })
   );
 });
