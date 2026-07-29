@@ -27,7 +27,7 @@
   --gold:#C9A04A;--gold-light:#D4AF58;--green:#1A2E14;--green-2:#24401C;
   --text:#2A2016;--muted:#6B5E4A;--border:#E2D5C0;
   --ok:#2E7D32;--warn:#B8860B;--bad:#B3261E;--wapp:#25D366;
-  --c-aula:#3B6FB5;--c-loc:#2E8B45;--c-bloq:#C0392B;--c-pess:#C97A1E;--c-grupo:#6A4FA3;--c-personal:#0E8E8E;
+  --c-aula:#3B6FB5;--c-loc:#2E8B45;--c-tor:#B8912B;--c-bloq:#C0392B;--c-pess:#C97A1E;--c-grupo:#6A4FA3;--c-personal:#0E8E8E;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{scroll-behavior:smooth}
@@ -187,7 +187,7 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .slot-body.has{border-style:solid}
 .ev{font-size:11.5px;font-weight:600;color:#fff;padding:5px 9px;border-radius:8px;border:none;display:flex;align-items:center;gap:6px;max-width:100%}
 .ev small{font-weight:400;opacity:.85;font-size:9.5px}
-.ev.t-aula{background:var(--c-aula)}.ev.t-locacao{background:var(--c-loc)}
+.ev.t-aula{background:var(--c-aula)}.ev.t-locacao{background:var(--c-loc)}.ev.t-torneio{background:var(--c-tor)}
 .ev.t-bloqueio{background:var(--c-bloq)}.ev.t-pessoal{background:var(--c-pess)}
 .ev.t-grupo{background:var(--c-grupo)}.ev.t-personal{background:var(--c-personal)}
 .ev .pres{background:rgba(255,255,255,.25);border:none;color:#fff;border-radius:6px;width:24px;height:24px;font-size:12px;flex-shrink:0}
@@ -200,7 +200,7 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .wk td{border:1px solid #F0E8D8;padding:0;height:34px;min-width:92px;vertical-align:middle}
 .wk td.hr{position:sticky;left:0;background:#FDFBF7;font-size:10.5px;font-weight:700;color:var(--muted);text-align:center;min-width:48px;width:48px;z-index:1;border-right:2px solid var(--border)}
 .wk-cell{width:100%;height:100%;border:none;background:none;font-size:10px;font-weight:600;color:#fff;padding:2px 4px;line-height:1.2;overflow:hidden;display:block}
-.wk-cell.t-aula{background:var(--c-aula)}.wk-cell.t-locacao{background:var(--c-loc)}
+.wk-cell.t-aula{background:var(--c-aula)}.wk-cell.t-locacao{background:var(--c-loc)}.wk-cell.t-torneio{background:var(--c-tor)}
 .wk-cell.t-bloqueio{background:var(--c-bloq)}.wk-cell.t-pessoal{background:var(--c-pess)}
 .wk-cell.t-grupo{background:var(--c-grupo)}.wk-cell.t-personal{background:var(--c-personal)}
 .wk-cell.free{color:#C8B89A;font-weight:400}
@@ -262,6 +262,12 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .aval-item{margin-bottom:11px}
 .aval-item>label{display:block;font-size:12.5px;font-weight:700;color:var(--dark);margin-bottom:5px}
 .seg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.seg5{grid-template-columns:repeat(5,1fr)}
+.seg5 button{font-size:14px;font-weight:800;padding:9px 4px}
+.aval-rot{font-size:11.5px;font-weight:700;color:var(--muted);margin-top:5px;min-height:16px}
+.aval-rot.on{color:#7C5E1A}
+.hrow-ed{cursor:pointer;flex:1}
+.hrow-ed:active{opacity:.6}
 .seg3 button{border:1.5px solid var(--border);background:#fff;color:var(--muted);border-radius:9px;padding:8px 4px;font-size:11px;font-weight:600;line-height:1.25;cursor:pointer}
 .seg3 button.on{border-color:#C9A04A;background:#F5ECD6;color:#7C5E1A;font-weight:800}
 .seg3 button:active{transform:scale(.97)}
@@ -294,6 +300,10 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .avacts .b2{background:#F4EDE0;color:var(--muted)}
 .avacts .b3{background:#E3F2E4;color:var(--ok)}
 .avacts .b4{background:#F6E7E4;color:#B23A2E}
+.avauto{margin-top:9px;background:#EAF4EC;border:1px solid #cfe6d5;border-radius:10px;padding:9px 11px;font-size:12px;color:#215B39;font-weight:600}
+.avauto-acts{display:flex;gap:6px;margin-top:7px}
+.avauto-acts button{border:none;border-radius:8px;padding:7px 11px;font-size:11.5px;font-weight:800;background:#2E7D52;color:#fff;cursor:pointer}
+.avauto-acts button.d{background:#F1ECE0;color:var(--muted)}
 .avdue{display:inline-block;font-size:10.5px;font-weight:700;color:#B23A2E;background:#F9E4E0;border-radius:12px;padding:2px 9px;margin-top:8px}
 .aluno-foot{display:flex;justify-content:space-between;margin-top:10px;flex-wrap:wrap;gap:4px}
 .ha-box{margin:2px 0 10px;background:#fff;border:1px solid var(--border);border-radius:11px;padding:9px 11px}
@@ -563,6 +573,7 @@ function iniciarFirebase(){
     <span style="background:var(--c-grupo)">Grupo</span>
     <span style="background:var(--c-personal)">Personal</span>
     <span style="background:var(--c-loc)">Locação</span>
+    <span style="background:var(--c-tor)">🏆 Torneio</span>
     <span style="background:var(--c-pess)">Pessoal</span>
     <span style="background:var(--c-bloq)">Bloqueio</span>
     <button onclick="syncRequests(false)" style="border:1px solid var(--border);background:#fff;color:var(--text);font-size:10px;font-weight:700;padding:3px 10px;border-radius:14px;letter-spacing:.3px">🔄 Agendamentos de alunos</button>
@@ -1042,6 +1053,8 @@ function iniciarFirebase(){
     <div class="field"><label>Prioridade do ciclo (o que treinar primeiro)</label><input id="av-prioridade" placeholder="Ex.: split-step espontâneo + base aberta no forehand"></div>
     <div class="field"><label>Observação livre</label><textarea id="av-obs" rows="2" placeholder="Anotações do professor…" style="width:100%;resize:vertical"></textarea></div>
 
+    <p id="av-editaviso" style="display:none;font-size:12px;font-weight:700;color:#7C5E1A;background:#F5ECD6;border-radius:10px;padding:9px 11px;margin:4px 0 10px"></p>
+
     <div id="av-mes-wrap"></div>
 
     <div id="av-hist-wrap" style="display:none">
@@ -1051,7 +1064,7 @@ function iniciarFirebase(){
 
     <div class="modal-acts">
       <button class="btn btn-ghost" onclick="closeModal('ov-aval')">Fechar</button>
-      <button class="btn btn-clay" onclick="saveAvaliacao()">Salvar avaliação</button>
+      <button class="btn btn-clay" id="av-save" onclick="saveAvaliacao()">Salvar avaliação</button>
     </div>
   </div>
 </div>
@@ -1082,6 +1095,20 @@ function iniciarFirebase(){
         <button type="button" data-v="nao" onclick="setRegSeg('base','nao')">⚠️ Erro veio de baixo</button>
       </div>
     </div>
+    <div class="row2">
+      <div class="field"><label>Intensidade da aula</label>
+        <select id="rg-intens"><option value="">—</option><option value="leve">🟢 Leve</option><option value="media">🟡 Média</option><option value="forte">🔴 Forte</option></select>
+      </div>
+      <div class="field"><label>Como o aluno chegou</label>
+        <select id="rg-humor"><option value="">—</option><option value="animado">😄 Animado</option><option value="normal">🙂 Normal</option><option value="cansado">😮‍💨 Cansado</option><option value="frustrado">😕 Frustrado</option></select>
+      </div>
+    </div>
+    <div class="field"><label>O que treinamos hoje</label>
+      <textarea id="rg-conteudo" rows="2" placeholder="Ex.: forehand cruzado, saque com alvo, jogo condicionado 2x1…" style="width:100%;resize:vertical"></textarea></div>
+    <div class="field"><label>Ponto alto da aula</label>
+      <input id="rg-destaque" placeholder="Ex.: sustentou 12 bolas na troca pela 1ª vez"></div>
+    <div class="field"><label>Treino em casa (opcional)</label>
+      <input id="rg-casa" placeholder="Ex.: 10 min de sombra do forehand, 3x na semana"></div>
     <div class="field"><label>Tema da próxima aula (por causa do que vi hoje)</label><input id="rg-proximo" placeholder="Ex.: split-step sob pressão + base no backhand"></div>
 
     <div id="rg-hist-wrap" style="display:none">
@@ -1201,7 +1228,9 @@ function iniciarFirebase(){
           <select id="s-tipo" onchange="toggleGrupoWrap()">
             <option value="aula">Tênis (aula)</option><option value="grupo">Tênis (grupo)</option>
             <option value="personal">Personal</option>
-            <option value="locacao">Locação</option><option value="pessoal">Compromisso pessoal</option>
+            <option value="locacao">Locação</option>
+            <option value="torneio">🏆 Torneio (jogo)</option>
+            <option value="pessoal">Compromisso pessoal</option>
             <option value="bloqueio">Bloqueio (almoço/treino)</option>
           </select>
         </div>
@@ -1551,7 +1580,7 @@ async function syncRequests(silent){
       const p=fila[key];
       const a=DB.alunos.find(x=>x.codigo===p.codigo);
       if(a){
-        const tipo=catAgendaDe(a.tipo);
+        const tipo=p.tor?'torneio':catAgendaDe(a.tipo);   // jogo do torneio: já pago, não usa crédito
         if(p.acao==='cancelar'){
           const dia=new Date(p.data+'T12:00:00').getDay();
           const fx=DB.agenda.fixos.find(f=>f.alunoId===a.id&&f.dia===dia&&f.hora===p.hora);
@@ -1585,7 +1614,42 @@ async function syncRequests(silent){
   }catch(e){if(!silent)toast('Erro ao sincronizar');}
   syncing=false;
 }
-setInterval(()=>{syncRequests(true);carregarNotifs();carregarConfirmacoes();carregarCadastros();},45000);
+setInterval(()=>{syncRequests(true);carregarNotifs();carregarConfirmacoes();carregarCadastros();carregarAutoAval();},45000);
+setTimeout(carregarAutoAval,4000);
+
+/* ===== Autoavaliações enviadas pelos alunos ===== */
+let AUTOAVAL=[];
+async function carregarAutoAval(){
+  if(!hasCloud())return;
+  try{
+    const snap=await window.fbDB.ref('jvtenis/fila_autoaval').get();
+    const v=snap.exists()?(snap.val()||{}):{};
+    AUTOAVAL=Object.keys(v).map(k=>Object.assign({_k:k},v[k])).filter(x=>x&&x.codigo).sort((a,b)=>(b.ts||0)-(a.ts||0));
+  }catch(e){}
+  renderAvaliacoes();
+}
+function autoAvalDe(a){return AUTOAVAL.filter(x=>String(x.codigo||'').toUpperCase()===String(a.codigo||'').toUpperCase());}
+// Abre a avaliação já preenchida com o que o aluno respondeu — o João revisa e salva.
+function usarAutoAval(id,chave){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  const env=AUTOAVAL.find(x=>x._k===chave);if(!env){toast('Autoavaliação não encontrada');return;}
+  openAvalModal(id);
+  Object.keys(AVAL_ESCALA).forEach(g=>{
+    AVAL_ESCALA[g].itens.forEach(it=>{
+      const v=Number(env[g]&&env[g][it.k])||0;
+      if(v>0)setAval(g,it.k,v);
+    });
+  });
+  if(env.obs){const o=document.getElementById('av-obs');if(o)o.value='(aluno) '+env.obs;}
+  const ai=document.getElementById('av-editaviso');
+  if(ai){ai.style.display='block';ai.textContent='📝 Preenchido com a autoavaliação de '+(env.nome||a.nome)+' ('+((env.data||'').split('-').reverse().join('/'))+'). Ajuste o que discordar e salve — só então entra no histórico.';}
+  toast('Respostas do aluno carregadas — revise e salve');
+}
+async function descartarAutoAval(chave){
+  if(!confirm('Descartar esta autoavaliação?'))return;
+  try{await window.fbDB.ref('jvtenis/fila_autoaval/'+chave).remove();}catch(e){}
+  AUTOAVAL=AUTOAVAL.filter(x=>x._k!==chave);renderAvaliacoes();toast('Autoavaliação descartada');
+}
 setTimeout(()=>{carregarConfirmacoes();carregarCadastros();},3500);   // primeira carga: confirmações + cadastros do site
 
 /* ================= AVISOS (sininho) ================= */
@@ -1645,7 +1709,7 @@ function notificarNavegador(txt){mostrarAviso('Academia JV Tênis 🎾',txt,'jv-
 function textoNotif(n){
   if(n.acao==='resultado')return '🏆 '+(n.nome||'Aluno')+': '+(n.texto||'enviou um resultado');
   if(n.texto)return '🛒 '+(n.nome||'Aluno')+': '+n.texto;
-  const tipo=n.tipo==='personal'?'Personal':(n.tipo==='grupo'?'Grupo':(n.tipo==='locacao'?'Locação':'Aula'));
+  const tipo=n.tipo==='personal'?'Personal':(n.tipo==='grupo'?'Grupo':(n.tipo==='locacao'?'Locação':(n.tipo==='torneio'?'🏆 Torneio':'Aula')));
   const ac=n.acao==='cancelou'?'cancelou ❌':'reservou ✅';
   const dd=n.data?n.data.split('-').reverse().slice(0,2).join('/'):'';
   return (n.nome||'Aluno')+' '+ac+' — '+tipo+' · '+dd+' '+(n.hora||'');
@@ -2059,14 +2123,19 @@ function togglePresenca(entryId){
   const idx=DB.presencas.findIndex(p=>p.k===k);
   const isRepo=!!entry.repo;
   const isLoc=(entry.tipo==='locacao');   // locação usa saldo próprio de horas, nunca crédito de aula
+  const isTor=(entry.tipo==='torneio');   // jogo do torneio: inscrição já paga, não mexe em saldo nenhum
   const c=creditoSlot(entry.hora);
   if(idx>=0){
     DB.presencas.splice(idx,1);
-    if(isLoc){a.locCred=(Number(a.locCred)||0)+c;logAct('Desmarcar locação: '+a.nome);toast('Locação desfeita · '+a.nome+' → '+fmtCred(a.locCred)+'h de locação');}
+    if(isTor){logAct('Desmarcar jogo do torneio: '+a.nome);toast('Jogo do torneio desmarcado · '+a.nome);}
+    else if(isLoc){a.locCred=(Number(a.locCred)||0)+c;logAct('Desmarcar locação: '+a.nome);toast('Locação desfeita · '+a.nome+' → '+fmtCred(a.locCred)+'h de locação');}
     else if(isRepo){a.repos=(Number(a.repos)||0)+c;logAct('Desmarcar reposição: '+a.nome);toast('Reposição desfeita · '+a.nome+' → '+fmtCred(a.repos)+' reposições');}
     else{a.creditos+=c;logAct('Desmarcar presença: '+a.nome);toast('Presença desfeita · '+a.nome+' → '+fmtCred(a.creditos)+' créditos');}
   }else{
-    if(isLoc){
+    if(isTor){
+      DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora});
+      logAct('Marcar jogo do torneio: '+a.nome);toast('🏆 Jogo do torneio · '+a.nome+' — sem desconto de crédito');
+    }else if(isLoc){
       a.locCred=(Number(a.locCred)||0)-c;DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora});
       logAct('Marcar locação: '+a.nome);toast('🔑 Locação ('+c+'h) · '+a.nome+' → '+fmtCred(a.locCred)+'h'+(a.locCred<0?' (devendo)':' restantes'));
     }else if(isRepo){
@@ -2164,7 +2233,7 @@ function aplicarChuva(date,hora){
   entriesFor(date,hora).forEach(e=>{
     if(!e.alunoId)return;
     const k=presId(e,date);const i=DB.presencas.findIndex(p=>p.k===k);
-    if(i>=0){const a=DB.alunos.find(x=>x.id===e.alunoId);if(a){const c=creditoSlot(hora);if(e.tipo==='locacao')a.locCred=(Number(a.locCred)||0)+c;else if(e.repo)a.repos=(Number(a.repos)||0)+c;else a.creditos=(Number(a.creditos)||0)+c;}DB.presencas.splice(i,1);}
+    if(i>=0){const a=DB.alunos.find(x=>x.id===e.alunoId);if(a){const c=creditoSlot(hora);if(e.tipo==='torneio'){/* torneio não debita, nada a devolver */}else if(e.tipo==='locacao')a.locCred=(Number(a.locCred)||0)+c;else if(e.repo)a.repos=(Number(a.repos)||0)+c;else a.creditos=(Number(a.creditos)||0)+c;}DB.presencas.splice(i,1);}
   });
   DB.agenda.fixos.filter(f=>f.dia===dia&&f.hora===hora).forEach(f=>{
     if(!DB.agenda.excecoes.some(x=>x.fixoId===f.id&&x.data===dk))DB.agenda.excecoes.push({fixoId:f.id,data:dk});
@@ -2479,31 +2548,34 @@ function saveAluno(){
 /* ===== Avaliação de desenvolvimento (Da Base ao Topo · Anexo A) ===== */
 const AVAL_ESCALA={
   mov:{titulo:'Movimento & base',itens:[
-    {k:'espera',  lbl:'Posição de espera', n:['não tem','com lembrete','espontânea']},
-    {k:'prep',    lbl:'Preparação',        n:['atrasada','às vezes pronta','antecipada']},
-    {k:'desloc',  lbl:'Deslocamento',      n:['inseguro','funcional','fluido']},
-    {k:'percep',  lbl:'Percepção de bola', n:['difícil','irregular','consistente']},
-    {k:'final',   lbl:'Finalização',       n:['incompleta','razoável','completa']},
-    {k:'equil',   lbl:'Equilíbrio',        n:['instável','razoável','estável']},
-    {k:'recupera',lbl:'Recuperação',       n:['não volta','volta lenta','volta pronta']}
+    {k:'espera',  lbl:'Posição de espera', n:['não tem','raramente','com lembrete','quase sempre','espontânea'],            n3:['não tem','com lembrete','espontânea']},
+    {k:'prep',    lbl:'Preparação',        n:['atrasada','melhorando','às vezes pronta','quase sempre pronta','antecipada'],n3:['atrasada','às vezes pronta','antecipada']},
+    {k:'desloc',  lbl:'Deslocamento',      n:['inseguro','melhorando','funcional','consistente','fluido'],                  n3:['inseguro','funcional','fluido']},
+    {k:'percep',  lbl:'Percepção de bola', n:['difícil','melhorando','irregular','quase sempre pega','consistente'],        n3:['difícil','irregular','consistente']},
+    {k:'final',   lbl:'Finalização',       n:['incompleta','melhorando','razoável','quase completa','completa'],            n3:['incompleta','razoável','completa']},
+    {k:'equil',   lbl:'Equilíbrio',        n:['instável','melhorando','razoável','quase estável','estável'],                n3:['instável','razoável','estável']},
+    {k:'recupera',lbl:'Recuperação',       n:['não volta','volta tarde','volta lenta','volta ok','volta pronta'],           n3:['não volta','volta lenta','volta pronta']}
   ]},
   tec:{titulo:'Fundamentos com raquete',itens:[
-    {k:'forehand', lbl:'Forehand',  n:['iniciando','forma reconhecível','consistente']},
-    {k:'backhand', lbl:'Backhand',  n:['iniciando','forma reconhecível','consistente']},
-    {k:'voleio',   lbl:'Voleio',    n:['evita','bloqueio simples','define o ponto']},
-    {k:'smash',    lbl:'Smash',     n:['evita','defensivo','ofensivo']},
-    {k:'saque',    lbl:'Saque',     n:['iniciando','gesto simplificado','gesto completo']},
-    {k:'devolucao',lbl:'Devolução', n:['insegura','coloca na quadra','com intenção']}
+    {k:'forehand', lbl:'Forehand',  n:['iniciando','em construção','forma reconhecível','quase consistente','consistente'], n3:['iniciando','forma reconhecível','consistente']},
+    {k:'backhand', lbl:'Backhand',  n:['iniciando','em construção','forma reconhecível','quase consistente','consistente'], n3:['iniciando','forma reconhecível','consistente']},
+    {k:'voleio',   lbl:'Voleio',    n:['evita','tenta','bloqueio simples','coloca no canto','define o ponto'],              n3:['evita','bloqueio simples','define o ponto']},
+    {k:'smash',    lbl:'Smash',     n:['evita','tenta','defensivo','controlado','ofensivo'],                                n3:['evita','defensivo','ofensivo']},
+    {k:'saque',    lbl:'Saque',     n:['iniciando','em construção','gesto simplificado','quase completo','gesto completo'], n3:['iniciando','gesto simplificado','gesto completo']},
+    {k:'devolucao',lbl:'Devolução', n:['insegura','melhorando','coloca na quadra','coloca com direção','com intenção'],     n3:['insegura','coloca na quadra','com intenção']}
   ]},
   jogo:{titulo:'Jogo & cabeça',itens:[
-    {k:'troca',   lbl:'Consistência (troca)', n:['até 5 trocas','até 10 trocas','15+ trocas','20+ trocas']},
-    {k:'direcao', lbl:'Direção',      n:['sem controle','às vezes no alvo','dirige a bola']},
-    {k:'efeito',  lbl:'Efeito',       n:['sem efeito','topspin básico','varia (top/slice)']},
-    {k:'profund', lbl:'Profundidade', n:['curta','média','profunda']},
-    {k:'leitura', lbl:'Leitura',      n:['reage tarde','às vezes antecipa','antecipa e decide']},
-    {k:'pressao', lbl:'Sob pressão',  n:['some na pressão','oscila','mantém']}
+    {k:'troca',   lbl:'Consistência (troca)', n:['até 5 trocas','até 10 trocas','até 15 trocas','20+ trocas','30+ trocas'], n3:['até 5 trocas','até 10 trocas','15+ trocas','20+ trocas']},
+    {k:'direcao', lbl:'Direção',      n:['sem controle','melhorando','às vezes no alvo','quase sempre no alvo','dirige a bola'], n3:['sem controle','às vezes no alvo','dirige a bola']},
+    {k:'efeito',  lbl:'Efeito',       n:['sem efeito','tentando','topspin básico','topspin consistente','varia (top/slice)'],    n3:['sem efeito','topspin básico','varia (top/slice)']},
+    {k:'profund', lbl:'Profundidade', n:['curta','curta/média','média','média/profunda','profunda'],                        n3:['curta','média','profunda']},
+    {k:'leitura', lbl:'Leitura',      n:['reage tarde','melhorando','às vezes antecipa','quase sempre antecipa','antecipa e decide'], n3:['reage tarde','às vezes antecipa','antecipa e decide']},
+    {k:'pressao', lbl:'Sob pressão',  n:['some na pressão','oscila muito','oscila','quase mantém','mantém'],                n3:['some na pressão','oscila','mantém']}
   ]}
 };
+// Escala usada por CADA avaliacao: as antigas (sem "esc") ficam nos rotulos de 3
+// opcoes em que foram preenchidas; as novas usam 5. Assim o historico nao muda.
+function opcoesDe(it,av){return (Number(av&&av.esc)||3)===5?it.n:(it.n3||it.n);}
 const AVAL_ICO={mov:'🏃',tec:'🎾',jogo:'🧠'};
 const TRILHA_NIVEIS=['Base','Impulso','Construção','Ascensão','Topo'];
 // Cada nivel da Trilha veste um material precioso (igual ao app do aluno)
@@ -2518,8 +2590,11 @@ function metalDe(nivel){return LEVEL_MET[nivel]||LEVEL_MET['Construção'];}
 let avalDraft=null;
 function avalItemHTML(grupo,it){
   const val=(avalDraft[grupo]&&avalDraft[grupo][it.k])||0;
-  const btns=it.n.map((txt,i)=>`<button type="button" class="${val===i+1?'on':''}" onclick="setAval('${grupo}','${it.k}',${i+1})">${txt}</button>`).join('');
-  return `<div class="aval-item"><label>${it.lbl}</label><div class="seg3" style="grid-template-columns:repeat(${it.n.length},1fr)" data-seg="${grupo}-${it.k}">${btns}</div></div>`;
+  const btns=it.n.map((txt,i)=>`<button type="button" class="${val===i+1?'on':''}" title="${txt}" onclick="setAval('${grupo}','${it.k}',${i+1})">${i+1}</button>`).join('');
+  const rot=val>0?it.n[val-1]:'toque em 1 (menos) a 5 (mais)';
+  return `<div class="aval-item"><label>${it.lbl}</label>`
+    +`<div class="seg3 seg5" data-seg="${grupo}-${it.k}">${btns}</div>`
+    +`<div class="aval-rot${val>0?' on':''}" data-rot="${grupo}-${it.k}">${rot}</div></div>`;
 }
 function renderAvalBlocos(){
   const wrap=document.getElementById('av-blocos');if(!wrap)return;
@@ -2535,25 +2610,35 @@ function setAval(grupo,key,val){
   avalDraft[grupo][key]=val;
   const seg=document.querySelector('[data-seg="'+grupo+'-'+key+'"]');
   if(seg)[...seg.children].forEach((b,i)=>b.classList.toggle('on',i+1===val));
+  const rot=document.querySelector('[data-rot="'+grupo+'-'+key+'"]');
+  const it=(AVAL_ESCALA[grupo].itens||[]).find(x=>x.k===key);
+  if(rot&&it){rot.textContent=val>0?it.n[val-1]:'toque em 1 (menos) a 5 (mais)';rot.classList.toggle('on',val>0);}
 }
 function setAvalNivel(n){
   avalDraft.nivel=n;
   document.querySelectorAll('#av-nivel button').forEach(b=>b.classList.toggle('on',b.dataset.v===n));
 }
-function openAvalModal(id){
+let avalEditIdx=-1;   // -1 = nova avaliação; >=0 = editando a avaliação daquele índice
+function openAvalModal(id,idx){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
   if(!Array.isArray(a.avaliacoes))a.avaliacoes=[];
-  const ult=a.avaliacoes[a.avaliacoes.length-1]||null;
-  // prefill: clona a última avaliação p/ facilitar a reavaliação (mantém o progresso visível)
-  avalDraft={nivel:(ult&&ult.nivel)||''};
-  Object.keys(AVAL_ESCALA).forEach(g=>{avalDraft[g]=Object.assign({},ult&&ult[g]);});
+  avalEditIdx=(typeof idx==='number'&&a.avaliacoes[idx])?idx:-1;
+  const edit=avalEditIdx>=0?a.avaliacoes[avalEditIdx]:null;
+  // editando: carrega a própria avaliação. Nova: clona a última, para facilitar a reavaliação.
+  const base=edit||a.avaliacoes[a.avaliacoes.length-1]||null;
+  avalDraft={nivel:(base&&base.nivel)||''};
+  Object.keys(AVAL_ESCALA).forEach(g=>{avalDraft[g]=Object.assign({},base&&base[g]);});
   document.getElementById('av-id').value=id;
-  document.getElementById('aval-title').textContent='Avaliação · '+a.nome;
-  document.getElementById('av-data').value=new Date().toISOString().slice(0,10);
-  document.getElementById('av-objetivo').value=(ult&&ult.objetivo)||'';
-  document.getElementById('av-formato').value=(ult&&ult.formato)||a.tipo||'Particular';
-  document.getElementById('av-prioridade').value='';
-  document.getElementById('av-obs').value='';
+  document.getElementById('aval-title').textContent=(edit?'Editar avaliação · ':'Avaliação · ')+a.nome;
+  document.getElementById('av-data').value=(edit&&edit.data)||new Date().toISOString().slice(0,10);
+  document.getElementById('av-objetivo').value=(base&&base.objetivo)||'';
+  document.getElementById('av-formato').value=(base&&base.formato)||a.tipo||'Particular';
+  document.getElementById('av-prioridade').value=(edit&&edit.prioridade)||'';
+  document.getElementById('av-obs').value=(edit&&edit.obs)||'';
+  const bs=document.getElementById('av-save');if(bs)bs.textContent=edit?'Salvar alterações':'Salvar avaliação';
+  const ai=document.getElementById('av-editaviso');
+  if(ai){ai.style.display=edit?'block':'none';
+    if(edit)ai.textContent='✏️ Editando a avaliação de '+((edit.data||'').split('-').reverse().join('/'))+' — ao salvar, ela é atualizada no lugar.';}
   setAvalNivel(avalDraft.nivel);
   renderAvalBlocos();
   renderAvalHist(a);
@@ -2568,7 +2653,7 @@ function renderAvalHist(a){
   wrap.style.display='block';
   el.innerHTML=av.slice().reverse().map((v,ri)=>{
     const idx=av.length-1-ri;
-    return `<div class="hrow"><span>${(v.data||'').split('-').reverse().join('/')} · <b>${v.nivel||'—'}</b>${v.prioridade?' · '+v.prioridade:''}</span><button class="del" onclick="delAvaliacao('${a.id}',${idx})">excluir</button></div>`;
+    return `<div class="hrow"><span class="hrow-ed" onclick="openAvalModal('${a.id}',${idx})" title="Tocar para editar">✏️ ${(v.data||'').split('-').reverse().join('/')} · <b>${v.nivel||'—'}</b>${v.prioridade?' · '+v.prioridade:''}</span><button class="del" onclick="delAvaliacao('${a.id}',${idx})">excluir</button></div>`;
   }).join('');
 }
 function saveAvaliacao(){
@@ -2576,6 +2661,7 @@ function saveAvaliacao(){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
   if(!avalDraft.nivel){toast('Selecione o nível da Trilha');return;}
   const rec={
+    esc:5,
     data:document.getElementById('av-data').value||new Date().toISOString().slice(0,10),
     nivel:avalDraft.nivel,
     formato:document.getElementById('av-formato').value,
@@ -2585,9 +2671,13 @@ function saveAvaliacao(){
   };
   Object.keys(AVAL_ESCALA).forEach(g=>{rec[g]={};AVAL_ESCALA[g].itens.forEach(it=>{rec[g][it.k]=(avalDraft[g]&&avalDraft[g][it.k])||0;});});
   if(!Array.isArray(a.avaliacoes))a.avaliacoes=[];
-  a.avaliacoes.push(rec);
+  const editando=avalEditIdx>=0&&a.avaliacoes[avalEditIdx];
+  if(editando){rec.esc=Number(a.avaliacoes[avalEditIdx].esc)||5;a.avaliacoes[avalEditIdx]=rec;}
+  else a.avaliacoes.push(rec);
+  a.avaliacoes.sort((x,y)=>String(x.data||'').localeCompare(String(y.data||'')));
+  avalEditIdx=-1;
   persist();renderAll();closeModal('ov-aval');
-  toast('📈 Avaliação salva · '+a.nome+' → '+rec.nivel);
+  toast(editando?('✏️ Avaliação atualizada · '+a.nome):('📈 Avaliação salva · '+a.nome+' → '+rec.nivel));
 }
 function delAvaliacao(id,idx){
   const a=DB.alunos.find(x=>x.id===id);if(!a||!a.avaliacoes)return;
@@ -2616,7 +2706,7 @@ function openRegistroModal(id){
   sel.innerHTML='<option value="">—</option>'+CAMADAS.map(c=>'<option>'+c+'</option>').join('');
   // sugere a camada = tema da próxima aula do último registro (continuidade)
   sel.value=(ult&&ult.proximoCamada)||'';
-  document.getElementById('rg-proximo').value='';
+  ['rg-proximo','rg-conteudo','rg-destaque','rg-casa','rg-intens','rg-humor'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
   setRegSeg('evoluiu','');setRegSeg('base','');
   renderRegHist(a);
   document.getElementById('ov-registro').classList.add('on');
@@ -2635,12 +2725,15 @@ function renderRegHist(a){
 function saveRegistro(){
   const id=document.getElementById('rg-id').value;
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  const gv=i=>{const el=document.getElementById(i);return el?String(el.value||'').trim():'';};
   const rec={
     data:document.getElementById('rg-data').value||new Date().toISOString().slice(0,10),
     camada:document.getElementById('rg-camada').value,
     evoluiu:regDraft.evoluiu,
     base:regDraft.base,
-    proximo:document.getElementById('rg-proximo').value.trim()
+    intens:gv('rg-intens'),humor:gv('rg-humor'),
+    conteudo:gv('rg-conteudo'),destaque:gv('rg-destaque'),casa:gv('rg-casa'),
+    proximo:gv('rg-proximo')
   };
   if(!Array.isArray(a.registros))a.registros=[];
   a.registros.push(rec);
@@ -2659,7 +2752,7 @@ let avalExpId='';
 function pctAval(av){
   if(!av)return 0;
   let s=0,n=0;
-  Object.keys(AVAL_ESCALA).forEach(g=>{AVAL_ESCALA[g].itens.forEach(it=>{s+=(Number(av[g]&&av[g][it.k])||0)/it.n.length;n++;});});
+  Object.keys(AVAL_ESCALA).forEach(g=>{AVAL_ESCALA[g].itens.forEach(it=>{s+=(Number(av[g]&&av[g][it.k])||0)/opcoesDe(it,av).length;n++;});});
   return n?Math.round(s/n*100):0;
 }
 // ===== Panorama de evolução MÊS A MÊS =====
@@ -2738,7 +2831,7 @@ function montarAvalExport(a){
   Object.keys(AVAL_ESCALA).forEach(g=>{
     html+='<div class="aex-sec">'+(AVAL_ICO[g]||'•')+' '+AVAL_ESCALA[g].titulo+'</div>';
     AVAL_ESCALA[g].itens.forEach(it=>{
-      const v=Number(av[g]&&av[g][it.k])||0,pct=Math.round(v/it.n.length*100),rot=v>0?it.n[v-1]:'—';
+      const op=opcoesDe(it,av),v=Number(av[g]&&av[g][it.k])||0,pct=Math.round(v/op.length*100),rot=v>0?op[v-1]:'—';
       html+='<div class="aex-row"><div class="aex-top"><span>'+it.lbl+'</span><span class="st">'+rot+'</span></div><div class="aex-bar"><i style="width:'+pct+'%"></i></div></div>';
     });
   });
@@ -2800,7 +2893,7 @@ function enviarDevolutivaWa(){
   if(av.prioridade)linhas.push('🎯 *Prioridade do ciclo:* '+av.prioridade);
   linhas.push('');
   ['mov','tec'].forEach(g=>{
-    AVAL_ESCALA[g].itens.forEach(it=>{const v=Number(av[g]&&av[g][it.k])||0;if(v>0)linhas.push('• '+it.lbl+': '+it.n[v-1]);});
+    AVAL_ESCALA[g].itens.forEach(it=>{const op=opcoesDe(it,av),v=Number(av[g]&&av[g][it.k])||0;if(v>0)linhas.push('• '+it.lbl+': '+op[v-1]);});
   });
   linhas.push('','Qualquer dúvida, estou à disposição! 👊');
   const msg=encodeURIComponent(linhas.join('\n'));
@@ -2834,7 +2927,7 @@ function avMiniHTML(av){
   if(!av)return '';
   let segs='';
   Object.keys(AVAL_ESCALA).forEach(g=>{AVAL_ESCALA[g].itens.forEach(it=>{
-    const v=Number(av[g]&&av[g][it.k])||0,pct=Math.round(v/it.n.length*100);
+    const v=Number(av[g]&&av[g][it.k])||0,pct=Math.round(v/opcoesDe(it,av).length*100);
     segs+='<div class="avseg"><i style="width:'+pct+'%"></i></div>';
   });});
   return '<div class="avmini">'+segs+'</div>';
@@ -2891,6 +2984,9 @@ function renderAvaliacoes(){
       '<div class="avtop"><div><div class="avnome">'+(ehPersonalTipo(a.tipo)?'💪 ':'🎾 ')+escAval(a.nome)+'</div><div class="avsub">'+sub+'</div></div>'+nivel+'</div>'+
       avMiniHTML(av)+
       (due?'<div class="avdue">⏰ '+(av?'reavaliar (6+ semanas)':'avaliar este aluno')+'</div>':'')+
+      autoAvalDe(a).map(x=>'<div class="avauto">📝 <b>'+escAval(x.nome||a.nome).split(' ')[0]+'</b> se autoavaliou em '+((x.data||'').split('-').reverse().join('/'))+
+        '<div class="avauto-acts"><button onclick="usarAutoAval(\''+a.id+'\',\''+x._k+'\')">Abrir e revisar</button>'+
+        '<button class="d" onclick="descartarAutoAval(\''+x._k+'\')">Descartar</button></div></div>').join('')+
       '<div class="avacts">'+
         '<button class="b1" onclick="openAvalModal(\''+a.id+'\')">'+BI.chart+'Avaliar</button>'+
         '<button class="b2" onclick="openRegistroModal(\''+a.id+'\')">📝 Registro</button>'+
@@ -3473,7 +3569,7 @@ function renderOcupacao(){
   for(let i=0;i<DIAS;i++){
     const d=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()-i,12);
     HORAS.forEach(h=>{
-      const evs=entriesFor(d,h).filter(e=>e.origem!=='compromisso'&&['aula','grupo','personal','locacao'].indexOf(e.tipo)>=0);
+      const evs=entriesFor(d,h).filter(e=>e.origem!=='compromisso'&&['aula','grupo','personal','locacao','torneio'].indexOf(e.tipo)>=0);
       if(evs.length){cont[h]++;houve=true;}
     });
   }
@@ -4060,7 +4156,7 @@ function renderConfirmAmanha(){
   box.innerHTML=r.list.map(function(it){
     var lbl=LBL[it.tipo]||it.tipo;
     var nome=it.a?it.a.nome:(it.titulo||lbl);
-    var cliente=['aula','grupo','personal','locacao'].indexOf(it.tipo)>=0;
+    var cliente=['aula','grupo','personal','locacao','torneio'].indexOf(it.tipo)>=0;
     var right='';
     if(it.a){
       var jaJoao=!!CF[it.a.id+'|'+dk+'|'+it.hora];
