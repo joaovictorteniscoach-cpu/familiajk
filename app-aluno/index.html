@@ -2095,15 +2095,30 @@ function grupoRefHtml(){
     +'<p class="grp-ref-note">Quanto mais gente na aula, menor o valor por pessoa. Para treinar em grupo, combine com o João pelo WhatsApp. 🎾</p>'
     +'</details>';
 }
-function noTorneio(){
-  const T=(PUB&&PUB.torneio)||null;if(!T)return false;
-  const meu=String((MEU&&MEU.codigo)||'').toUpperCase();
-  const js=[].concat(T.jogadores||[],T.grupos?[].concat.apply([],(T.grupos||[]).map(g=>g.jogadores||[])):[]);
-  return js.some(j=>String((j&&(j.codigo||j))||'').toUpperCase()===meu);
+function normNomeTor(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim();}
+// O torneio guarda os jogadores por NOME (p.name), não por código.
+function souJogadorTorneio(){
+  const T=(PUB&&PUB.torneio)||null;
+  if(!T||!Array.isArray(T.jogadores))return false;
+  const meu=normNomeTor(EU&&EU.nome);if(!meu)return false;
+  const ch=n=>{const ps=n.split(' ').filter(Boolean);return ps.length>1?(ps[0]+' '+ps[ps.length-1]):n;};
+  const meuCh=ch(meu);
+  return T.jogadores.some(p=>{
+    const n=normNomeTor(p&&(p.name||p.nome||p));
+    return !!n&&(n===meu||ch(n)===meuCh);
+  });
+}
+// Existe torneio rolando? Se sim, a opção aparece — não depende de eu acertar o
+// nome do aluno na lista, que era o que fazia o botão sumir sem avisar.
+function torneioAtivo(){
+  const T=(PUB&&PUB.torneio)||null;
+  return !!(T&&Array.isArray(T.jogadores)&&T.jogadores.length&&!T.encerrada);
 }
 function pickTorneioHtml(){
-  if(!noTorneio())return '';
-  return '<button class="pick-opt tor" onclick="pickTorneio()">🏆 Marcar jogo do torneio<small>sem custo — a inscrição já foi paga</small></button>';
+  if(!torneioAtivo())return '';
+  const meu=souJogadorTorneio();
+  return '<button class="pick-opt tor" onclick="pickTorneio()">🏆 Marcar jogo do torneio<small>'
+    +(meu?'sem custo — a inscrição já foi paga':'sem custo — combine o jogo com o João')+'</small></button>';
 }
 function pickTorneio(){document.getElementById('ov-pick').classList.remove('on');abrirBook(pickCtx.hora,false,true);}
 function pickAula(repo){document.getElementById('ov-pick').classList.remove('on');abrirBook(pickCtx.hora,repo);}
