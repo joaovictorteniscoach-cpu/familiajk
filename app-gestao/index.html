@@ -1557,7 +1557,13 @@ async function doPublish(){
       })(),
       grade:{
         fixos:DB.agenda.fixos.map(f=>({id:f.id,dia:f.dia,hora:f.hora,tipo:f.tipo,cod:codeFor(f)})),
-        eventos:DB.agenda.eventos.filter(e=>e.data>=dKey(hoje)&&e.data<=dKey(lim)).map(e=>({id:e.id,data:e.data,hora:e.hora,tipo:e.tipo,cod:codeFor(e)})),
+        eventos:DB.agenda.eventos.filter(e=>e.data>=dKey(hoje)&&e.data<=dKey(lim)).map(e=>{
+          const ev={id:e.id,data:e.data,hora:e.hora,tipo:e.tipo,cod:codeFor(e)};
+          // chuva marcada antes desta versão só tem o título; por isso o fallback
+          const mot=e.motivo||(/chuva/i.test(e.titulo||'')?'chuva':'');
+          if(mot)ev.motivo=mot;
+          return ev;
+        }),
         excecoes:DB.agenda.excecoes
       }
     };
@@ -2240,7 +2246,7 @@ function aplicarChuva(date,hora){
   });
   DB.agenda.eventos=DB.agenda.eventos.filter(e=>!(e.data===dk&&e.hora===hora&&e.tipo!=='bloqueio'));
   if(!DB.agenda.eventos.some(e=>e.data===dk&&e.hora===hora&&e.titulo==='☔ Chuva'))
-    DB.agenda.eventos.push({id:'e'+Date.now()+Math.random().toString(36).slice(2,6),data:dk,hora,titulo:'☔ Chuva',tipo:'bloqueio',alunoId:null});
+    DB.agenda.eventos.push({id:'e'+Date.now()+Math.random().toString(36).slice(2,6),data:dk,hora,titulo:'☔ Chuva',tipo:'bloqueio',motivo:'chuva',alunoId:null});
 }
 function marcarChuvaSlot(){
   if(!slotCtx)return;
