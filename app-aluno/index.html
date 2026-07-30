@@ -155,6 +155,8 @@ input,select{font-family:'DM Sans',sans-serif;font-size:14px}
 .sl.pend i{font-style:normal;font-size:10.5px}
 .sl.ocup{background:#F1EADD;color:var(--ocup);border:1px solid #E5DAC6}
 .sl.bloq{background:#F1EADD;color:#B0A38C;border:1px solid #E5DAC6}
+.sl.chuva{background:#E8F0F6;color:#3A5A72;border:1px solid #C6DAE8;font-weight:700}
+.sl.chuva i{font-style:normal;font-size:10.5px;font-weight:600;background:#D5E6F1;padding:3px 9px;border-radius:12px;white-space:nowrap}
 .sl-rent{flex:0 0 auto;border-radius:11px;padding:10px 14px;font-size:13px;font-weight:800;border:1.5px solid #E4CF92;background:#FBF3DC;color:#9A7B2E;cursor:pointer}
 .sl-rent:active{background:#F3E6BF}
 .wk-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border);border-radius:13px;background:#fff}
@@ -169,6 +171,7 @@ input,select{font-family:'DM Sans',sans-serif;font-size:14px}
 .wc.pend{background:#FFF6DF;color:#7A5E10}
 .wc.ocup{background:#EBE3D4;color:#A89878}
 .wc.bloq{background:#E5DAC6;color:#B0A38C}
+.wc.chuva{background:#D5E6F1;color:#3A5A72}
 .cal{background:#fff;border:1px solid var(--border);border-radius:13px;padding:12px}
 .cal-head{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:6px}
 .cal-head span{font-size:10px;font-weight:700;color:var(--muted);text-align:center;text-transform:uppercase}
@@ -946,7 +949,12 @@ function slotState(date,hora){
     if(p.rec==='fixo')return new Date(p.data+'T12:00:00').getDay()===dia&&dk>=p.data;
     return p.data===dk;
   }))return {st:'pend',label:'Aguardando ⏳'};
-  if(all.some(e=>e.tipo==='bloqueio'))return {st:'bloq',label:'—'};
+  const bloq=all.filter(e=>e.tipo==='bloqueio');
+  if(bloq.length){
+    // horário cancelado por chuva: o aluno merece saber o motivo
+    if(bloq.some(e=>e.motivo==='chuva'))return {st:'chuva',label:'Cancelado por chuva'};
+    return {st:'bloq',label:'—'};
+  }
   if(all.length)return {st:'ocup',label:'Reservado'};
   const modo=slotModo(date,hora);
   if(modo==='fechado')return {st:'fechado',label:'Fechado'};
@@ -1817,6 +1825,7 @@ function renderAgenda(){
       if(s.st==='livre'||s.st==='loc')inner=horasAte(dKey(agDate),h)<=0?`<button class="sl bloq" disabled>Encerrado</button>`:`<button class="sl livre" onclick="escolherSlot('${h}')">Disponível <i>ver opções</i></button>`;
       else if(s.st==='meu'){const podeC=horasAte(dKey(agDate),h)>=LIMITE_CANCEL_H;inner=podeC?`<button class="sl meu" onclick="cancelarAula('${dKey(agDate)}','${h}','pontual')">🎾 ${s.label} <i>confirmada · toque para cancelar</i></button>`:`<button class="sl meu">🎾 ${s.label} <i>confirmada · trava ${LIMITE_CANCEL_H}h</i></button>`;}
       else if(s.st==='pend')inner=`<button class="sl pend" onclick="cancelarAula('${dKey(agDate)}','${h}','pontual')">${s.label} <i>enviado ao João · toque para cancelar</i></button>`;
+      else if(s.st==='chuva')inner=`<button class="sl chuva">☔ Cancelado por chuva <i>sem desconto de crédito</i></button>`;
       else if(s.st==='bloq')inner=`<button class="sl bloq">Indisponível</button>`;
       else if(s.st==='fechado')inner=`<button class="sl bloq">Fechado</button>`;
       else inner=`<button class="sl ocup">Reservado</button>`;
@@ -1832,9 +1841,9 @@ function renderAgenda(){
       html+=`<tr><td class="hr">${h}</td>`;
       days.forEach(d=>{
         const s=slotState(d,h);
-        const txt=s.st==='livre'?'Livre':s.st==='meu'?'Você '+meuEmoji():s.st==='pend'?'⏳':s.st==='bloq'?'—':s.st==='loc'?'Loc':s.st==='fechado'?'—':'•';
+        const txt=s.st==='livre'?'Livre':s.st==='meu'?'Você '+meuEmoji():s.st==='pend'?'⏳':s.st==='chuva'?'☔':s.st==='bloq'?'—':s.st==='loc'?'Loc':s.st==='fechado'?'—':'•';
         const click=(horasAte(dKey(d),h)<=0)?'':(s.st==='livre'?`onclick="gotoBook(${d.getFullYear()},${d.getMonth()},${d.getDate()},'${h}')"`:(s.st==='loc'?`onclick="gotoDay(${d.getFullYear()},${d.getMonth()},${d.getDate()})"`:''));
-        html+=`<td><button class="wc ${s.st}" ${click}>${txt}</button></td>`;
+        html+=`<td><button class="wc ${s.st}" title="${s.label||''}" ${click}>${txt}</button></td>`;
       });
       html+='</tr>';
     });
