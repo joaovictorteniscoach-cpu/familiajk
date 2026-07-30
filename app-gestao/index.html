@@ -1410,6 +1410,7 @@ function ensureFields(){
   if(DB.pixTipo===undefined)DB.pixTipo='celular';
   if(DB.cardLink===undefined)DB.cardLink='';
   if(!DB.snapAlunos)DB.snapAlunos={};
+  if(!Array.isArray(DB.chuvas))DB.chuvas=[];   // horários cancelados por chuva, p/ avisar os alunos
   if(!DB.precos)DB.precos={avulsaPart:170,avulsaGrupo:95,locacao:70};
   if(DB.precos.planilha===undefined)DB.precos.planilha=0;   // 0 = ainda não definido
   if(DB.precos.kids===undefined)DB.precos.kids=0;
@@ -1544,6 +1545,7 @@ async function doPublish(){
       grupoPreco:DB.grupoPreco||{dupla:90,trio:85,quarteto:80},
       torneio:(function(){ensureTorneios();const t=DB.torneios.lista[DB.torneios.atual];return t?{id:t.id,nome:t.nome,tipo:t.tipo,jogadores:t.jogadores,etapa:t.etapa||1,encerrada:!!t.encerrada}:null;})(),
       horas:HORAS,
+      chuvas:(DB.chuvas||[]).slice(-60),
       locacaoOnly:DB.locacaoOnly||[],
       horarioCfg:DB.horarioCfg||{},
       horarioData:DB.horarioData||{},
@@ -2235,6 +2237,13 @@ function gotoSlot(y,m,d,h){agDate=new Date(y,m,d);openSlot(h);}
 /* Marca chuva/cancelado: tira as aulas daquele horário só naquela data (grade fica intacta) */
 function aplicarChuva(date,hora){
   const dk=dKey(date),dia=date.getDay();
+  // quem perdeu aula aqui — precisa ser lido ANTES de remover os eventos
+  const atingidos=[];
+  entriesFor(date,hora).forEach(e=>{
+    if(e.tipo==='bloqueio'||!e.alunoId)return;
+    const a=DB.alunos.find(x=>x.id===e.alunoId);
+    if(a&&a.codigo&&atingidos.indexOf(a.codigo)<0)atingidos.push(a.codigo);
+  });
   // chuva NÃO consome: se já havia presença marcada, devolve o crédito (ou reposição)
   entriesFor(date,hora).forEach(e=>{
     if(!e.alunoId)return;
@@ -2247,6 +2256,11 @@ function aplicarChuva(date,hora){
   DB.agenda.eventos=DB.agenda.eventos.filter(e=>!(e.data===dk&&e.hora===hora&&e.tipo!=='bloqueio'));
   if(!DB.agenda.eventos.some(e=>e.data===dk&&e.hora===hora&&e.titulo==='☔ Chuva'))
     DB.agenda.eventos.push({id:'e'+Date.now()+Math.random().toString(36).slice(2,6),data:dk,hora,titulo:'☔ Chuva',tipo:'bloqueio',motivo:'chuva',alunoId:null});
+  if(!Array.isArray(DB.chuvas))DB.chuvas=[];
+  const ja=DB.chuvas.find(c=>c.data===dk&&c.hora===hora);
+  if(ja){atingidos.forEach(c=>{if(ja.cods.indexOf(c)<0)ja.cods.push(c);});ja.ts=Date.now();}
+  else if(atingidos.length)DB.chuvas.push({data:dk,hora,cods:atingidos,ts:Date.now()});
+  DB.chuvas=DB.chuvas.filter(c=>c.data>=dKey(new Date(Date.now()-14*864e5))).slice(-120);
 }
 function marcarChuvaSlot(){
   if(!slotCtx)return;

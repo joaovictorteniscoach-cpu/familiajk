@@ -417,6 +417,11 @@ function iniciarFirebase(){
       <b>⚡ Situação atual</b>
       <p id="aviso-txt"></p>
     </div>
+    <div id="chuva-box" style="display:none;background:#E8F0F6;border:1px solid #C6DAE8;border-radius:14px;padding:13px 15px;margin-bottom:12px;color:#2C4759">
+      <b style="font-size:14px">☔ Aula cancelada por chuva</b>
+      <p id="chuva-txt" style="margin:4px 0 9px;font-size:13px;line-height:1.5"></p>
+      <button onclick="marcarChuvaVista()" style="background:#3A5A72;color:#fff;border:none;border-radius:9px;padding:8px 14px;font-weight:800;font-size:12.5px;cursor:pointer">Entendi</button>
+    </div>
     <div id="lembrete-box" style="display:none;background:#1A2E14;color:#fff;border-radius:14px;padding:13px 15px;margin-bottom:12px">
       <b style="font-size:14px">🔔 Você tem aula hoje!</b>
       <p id="lembrete-txt" style="margin:4px 0 9px;font-size:13px;opacity:.9"></p>
@@ -986,6 +991,7 @@ function render(){
   renderPagamento();
   renderAgenda();renderMinhas();renderHistAluno();renderTorneioAluno();
   checarAulaHoje();
+  checarChuva();
   checarTermo();
   checarRenovacao();
   checarFeriados();
@@ -1940,6 +1946,42 @@ function pintarAvisos(){
 }
 function notificarLocal(titulo,corpo){mostrarAviso(titulo,corpo,'jv-icone-aluno.png');}
 function pedirPermissaoNotif(){pintarAvisos();}
+/* ===== Aviso de chuva =====
+   A gestao publica {data,hora,cods} de cada horario cancelado. Aqui mostramos
+   so o que atinge ESTE aluno e que ele ainda nao marcou como visto. */
+let _chuvaAvisada=false;
+function minhasChuvas(){
+  const cs=(PUB&&Array.isArray(PUB.chuvas))?PUB.chuvas:[];
+  const meu=String((MEU&&MEU.codigo)||'').toUpperCase();
+  if(!meu)return [];
+  const visto=Number(MEU.chuvaVista)||0;
+  return cs.filter(c=>c&&Array.isArray(c.cods)
+      &&c.cods.some(x=>String(x||'').toUpperCase()===meu)
+      &&Number(c.ts||0)>visto)
+    .sort((a,b)=>String(a.data+a.hora).localeCompare(String(b.data+b.hora)));
+}
+function checarChuva(){
+  const box=document.getElementById('chuva-box');if(!box)return;
+  const cs=minhasChuvas();
+  if(!cs.length){box.style.display='none';return;}
+  const txt=cs.map(c=>fmtData(c.data)+' às '+c.hora).join(' · ');
+  const plural=cs.length>1;
+  document.getElementById('chuva-txt').textContent=
+    (plural?'Estes horários foram cancelados por chuva: ':'Sua aula de ')+txt+
+    (plural?'. Os créditos voltaram para o seu saldo — é só reagendar quando quiser.'
+           :' foi cancelada por chuva. Seu crédito voltou para o saldo — é só reagendar quando quiser.');
+  box.style.display='block';
+  if(!_chuvaAvisada){
+    _chuvaAvisada=true;
+    mostrarAviso('☔ Aula cancelada por chuva',txt+' · seu crédito foi devolvido','jv-icone-aluno.png');
+  }
+}
+async function marcarChuvaVista(){
+  const cs=minhasChuvas();
+  MEU.chuvaVista=cs.reduce((m,c)=>Math.max(m,Number(c.ts)||0),Number(MEU.chuvaVista)||0);
+  await saveMeu();
+  document.getElementById('chuva-box').style.display='none';
+}
 let _lembreteFeito=false,_lembreteHora=null;
 function checarAulaHoje(){
   if(!EU||!PUB||!PUB.grade)return;
