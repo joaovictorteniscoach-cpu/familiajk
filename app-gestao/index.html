@@ -1000,13 +1000,22 @@ function iniciarFirebase(){
       </div>
     </div>
     <div class="field" id="a-valoraula-wrap" style="display:none"><label>💪 Valor por treino — Personal (R$)</label><input type="number" id="a-valoraula" value="130" onchange="sugerirMensalidade()"></div>
+    <div class="row2" id="a-grupo-wrap">
+      <div class="field"><label>👥 Aulas em grupo / mês</label>
+        <input type="number" id="a-planogrupo" min="0" step="1" value="0" inputmode="numeric" onchange="sugerirMensalidade()"></div>
+      <div class="field"><label>Formato do grupo</label>
+        <select id="a-grupotipo" onchange="sugerirMensalidade()">
+          <option value="">—</option><option>Dupla</option><option>Trio</option><option>Quarteto</option>
+        </select></div>
+    </div>
+    <p id="a-conta" style="font-size:11.5px;color:var(--muted);margin:-6px 0 10px;font-weight:600"></p>
     <div class="row2">
       <div class="field"><label>Mensalidade (R$)</label><input type="number" id="a-mensalidade"></div>
       <div class="field"><label>Créditos atuais</label><input type="number" id="a-creditos" value="0"></div>
     </div>
     <div class="row2">
       <div class="field"><label>🔑 Locação (horas)</label><input type="number" id="a-loccred" value="0" step="0.5"></div>
-      <div class="field"></div>
+      <div class="field"><label>👥 Créditos de grupo</label><input type="number" id="a-credgrupo" value="0" step="0.5"></div>
     </div>
     <div class="row2">
       <div class="field"><label>Reposições</label><input type="number" id="a-repos" value="0"></div>
@@ -1438,6 +1447,9 @@ function ensureFields(){
   DB.alunos.forEach(a=>{
     if(a.diaVenc==null){a.diaVenc=10;changed=true;}
     if(a.locCred===undefined){a.locCred=0;changed=true;}
+    if(a.credGrupo===undefined){a.credGrupo=0;changed=true;}      // saldo de aulas em GRUPO
+    if(a.planoGrupo===undefined){a.planoGrupo=0;changed=true;}    // 0 = sem parte em grupo
+    if(a.grupoTipo===undefined){a.grupoTipo='';changed=true;}     // Dupla | Trio | Quarteto
     if(!Array.isArray(a.avaliacoes)){a.avaliacoes=[];changed=true;}
     if(!Array.isArray(a.registros)){a.registros=[];changed=true;}
     if(!a.codigo){
@@ -1549,7 +1561,7 @@ async function doPublish(){
       locacaoOnly:DB.locacaoOnly||[],
       horarioCfg:DB.horarioCfg||{},
       horarioData:DB.horarioData||{},
-      alunos:DB.alunos.map(a=>({codigo:a.codigo,nome:a.nome,tipo:a.tipo,plano:a.plano,creditos:a.creditos,repos:a.repos,status:a.status,mensalidade:a.mensalidade,diaVenc:a.diaVenc||10,cardLink:a.cardLink||'',mfitLink:a.mfitLink||'',valorAula:a.valorAula||(a.tipo==='Personal'?130:160),locCred:Number(a.locCred)||0,avaliacoes:(a.avaliacoes||[]).slice(-12),evoMes:serieMensal(a.avaliacoes,a.registros,24),registros:(a.registros||[]).slice(-8)})),
+      alunos:DB.alunos.map(a=>({codigo:a.codigo,nome:a.nome,tipo:a.tipo,plano:a.plano,creditos:a.creditos,repos:a.repos,status:a.status,mensalidade:a.mensalidade,diaVenc:a.diaVenc||10,cardLink:a.cardLink||'',mfitLink:a.mfitLink||'',valorAula:a.valorAula||(a.tipo==='Personal'?130:160),locCred:Number(a.locCred)||0,credGrupo:Number(a.credGrupo)||0,planoGrupo:Number(a.planoGrupo)||0,grupoTipo:a.grupoTipo||'',avaliacoes:(a.avaliacoes||[]).slice(-12),evoMes:serieMensal(a.avaliacoes,a.registros,24),registros:(a.registros||[]).slice(-8)})),
       historico:(function(){
         const codeOf={};DB.alunos.forEach(a=>{codeOf[a.id]=a.codigo;});
         const cut=dKey(new Date(Date.now()-60*864e5));const out={};
@@ -1787,7 +1799,7 @@ function pedEsc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;
 function pedDesc(p){
   const quem=p.nome||'Aluno';
   if(p.kind==='mensalidade')return quem+' vai pagar a mensalidade ('+fmt(p.valor||0)+') · '+(p.metodo||'');
-  if(p.kind==='plano')return quem+' quer o plano '+(p.cat||'')+' Flex '+(p.plano||'')+' ('+fmt(p.valor||0)+'/mês)';
+  if(p.kind==='plano')return quem+' quer o plano '+(p.cat==='Misto'?(p.desc||'montado'):((p.cat||'')+' Flex '+(p.plano||'')))+' ('+fmt(p.valor||0)+'/mês)';
   if(p.kind==='compra')return quem+' quer '+(p.item||'item')+(p.valor?(' ('+fmt(p.valor)+')'):'')+' · '+(p.metodo||'');
   if(p.kind==='termo')return quem+' aceitou o termo de uso ✅';
   if(p.kind==='renovacao')return quem+' quer MANTER os treinos em '+(p.mes||'próximo mês')+(p.valor?(' · '+fmt(p.valor)):'')+' 🗓️';
@@ -1819,9 +1831,19 @@ function aceitarPedido(key){
   }else if(p.kind==='plano'){
     if(!a){toast('Aluno não encontrado — confira o cadastro');return;}
     if(['Particular','Dupla','Trio','Quarteto','Grupo','Personal'].indexOf(p.cat)>=0)a.tipo=p.cat;
-    a.plano=Number(p.plano)||a.plano;
-    a.mensalidade=Number(p.valor)||precoMensal(a.tipo,a.plano)||a.mensalidade;
-    toast('✓ Plano de '+a.nome+' atualizado: '+a.tipo+' Flex '+a.plano);
+    if(p.cat==='Misto'){   // plano montado pelo aluno: parte particular + parte em grupo
+      a.tipo='Particular';
+      a.plano=Number(p.plano)||0;
+      a.planoGrupo=Number(p.planoGrupo)||0;
+      a.grupoTipo=p.grupoTipo||a.grupoTipo||'Dupla';
+      a.creditos=a.plano;a.credGrupo=a.planoGrupo;
+      a.mensalidade=Number(p.valor)||a.mensalidade;
+      toast('✓ Plano de '+a.nome+': '+a.plano+' particular + '+a.planoGrupo+' em grupo ('+a.grupoTipo+')');
+    }else{
+      a.plano=Number(p.plano)||a.plano;
+      a.mensalidade=Number(p.valor)||precoMensal(a.tipo,a.plano)||a.mensalidade;
+      toast('✓ Plano de '+a.nome+' atualizado: '+a.tipo+' Flex '+a.plano);
+    }
   }else if(p.kind==='termo'){
     if(a){a.termoAceitoEm=p.ts||Date.now();toast('✓ '+a.nome+' aceitou o termo');}else{toast('Termo aceito');}
   }else if(p.kind==='renovacao'){
@@ -2132,10 +2154,12 @@ function togglePresenca(entryId){
   const isRepo=!!entry.repo;
   const isLoc=(entry.tipo==='locacao');   // locação usa saldo próprio de horas, nunca crédito de aula
   const isTor=(entry.tipo==='torneio');   // jogo do torneio: inscrição já paga, não mexe em saldo nenhum
+  const isGrp=(entry.tipo==='grupo');     // aula em grupo tem saldo próprio (custa menos que a particular)
   const c=creditoSlot(entry.hora);
   if(idx>=0){
     DB.presencas.splice(idx,1);
     if(isTor){logAct('Desmarcar jogo do torneio: '+a.nome);toast('Jogo do torneio desmarcado · '+a.nome);}
+    else if(isGrp&&!isRepo){a.credGrupo=(Number(a.credGrupo)||0)+c;logAct('Desmarcar aula em grupo: '+a.nome);toast('Aula em grupo desfeita · '+a.nome+' → '+fmtCred(a.credGrupo)+' de grupo');}
     else if(isLoc){a.locCred=(Number(a.locCred)||0)+c;logAct('Desmarcar locação: '+a.nome);toast('Locação desfeita · '+a.nome+' → '+fmtCred(a.locCred)+'h de locação');}
     else if(isRepo){a.repos=(Number(a.repos)||0)+c;logAct('Desmarcar reposição: '+a.nome);toast('Reposição desfeita · '+a.nome+' → '+fmtCred(a.repos)+' reposições');}
     else{a.creditos+=c;logAct('Desmarcar presença: '+a.nome);toast('Presença desfeita · '+a.nome+' → '+fmtCred(a.creditos)+' créditos');}
@@ -2146,6 +2170,9 @@ function togglePresenca(entryId){
     }else if(isLoc){
       a.locCred=(Number(a.locCred)||0)-c;DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora});
       logAct('Marcar locação: '+a.nome);toast('🔑 Locação ('+c+'h) · '+a.nome+' → '+fmtCred(a.locCred)+'h'+(a.locCred<0?' (devendo)':' restantes'));
+    }else if(isGrp&&!isRepo){
+      a.credGrupo=(Number(a.credGrupo)||0)-c;DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora});
+      logAct('Marcar aula em grupo: '+a.nome);toast('👥 Aula em grupo · '+a.nome+' → '+fmtCred(a.credGrupo)+' de grupo');
     }else if(isRepo){
       if((Number(a.repos)||0) < c-1e-9){toast(a.nome+' não tem reposições suficientes ('+fmtCred(a.repos)+')');return;}
       a.repos=(Number(a.repos)||0)-c;DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora});
@@ -2248,7 +2275,7 @@ function aplicarChuva(date,hora){
   entriesFor(date,hora).forEach(e=>{
     if(!e.alunoId)return;
     const k=presId(e,date);const i=DB.presencas.findIndex(p=>p.k===k);
-    if(i>=0){const a=DB.alunos.find(x=>x.id===e.alunoId);if(a){const c=creditoSlot(hora);if(e.tipo==='torneio'){/* torneio não debita, nada a devolver */}else if(e.tipo==='locacao')a.locCred=(Number(a.locCred)||0)+c;else if(e.repo)a.repos=(Number(a.repos)||0)+c;else a.creditos=(Number(a.creditos)||0)+c;}DB.presencas.splice(i,1);}
+    if(i>=0){const a=DB.alunos.find(x=>x.id===e.alunoId);if(a){const c=creditoSlot(hora);if(e.tipo==='torneio'){/* torneio não debita, nada a devolver */}else if(e.tipo==='locacao')a.locCred=(Number(a.locCred)||0)+c;else if(e.tipo==='grupo'&&!e.repo)a.credGrupo=(Number(a.credGrupo)||0)+c;else if(e.repo)a.repos=(Number(a.repos)||0)+c;else a.creditos=(Number(a.creditos)||0)+c;}DB.presencas.splice(i,1);}
   });
   DB.agenda.fixos.filter(f=>f.dia===dia&&f.hora===hora).forEach(f=>{
     if(!DB.agenda.excecoes.some(x=>x.fixoId===f.id&&x.data===dk))DB.agenda.excecoes.push({fixoId:f.id,data:dk});
@@ -2419,6 +2446,9 @@ function openAlunoModal(id){
     document.getElementById('a-mfit').value=a.mfitLink||'';
     document.getElementById('a-valoraula').value=a.valorAula||(a.tipo==='Personal'?130:160);
     document.getElementById('a-loccred').value=Number(a.locCred)||0;
+    document.getElementById('a-credgrupo').value=Number(a.credGrupo)||0;
+    document.getElementById('a-planogrupo').value=Number(a.planoGrupo)||0;
+    document.getElementById('a-grupotipo').value=a.grupoTipo||'';
     document.getElementById('a-venc').value=a.diaVenc||10;
     document.getElementById('a-perfil').value=a.perfil||'';
     document.getElementById('a-id').value=id;
@@ -2529,14 +2559,28 @@ function applyAlunoTipoUI(){
 function sugerirMensalidade(){
   const t=document.getElementById('a-tipo').value,p=Number(document.getElementById('a-plano').value)||0;
   const mEl=document.getElementById('a-mensalidade');
-  if(p<=0){ mEl.value=0; }                                   // 0 = sem pacote
-  else if(t==='Personal'||t==='Particular'||ehTipoCustom(t)){
-    const v=Number(document.getElementById('a-valoraula').value)||(t==='Personal'?130:160);
-    mEl.value=p*v;                                            // valor por aula × nº de aulas
-  } else {
-    const m=precoMensal(t,p); if(m>0) mEl.value=m;            // grupo (Dupla/Trio/Quarteto) e Grupo antigo
+  const pg=Number((document.getElementById('a-planogrupo')||{}).value)||0;
+  const gt=(document.getElementById('a-grupotipo')||{}).value||'';
+  let base=0,detalhe=[];
+  if(p>0){
+    if(t==='Personal'||t==='Particular'||ehTipoCustom(t)){
+      const v=Number(document.getElementById('a-valoraula').value)||(t==='Personal'?130:160);
+      base=p*v; detalhe.push(p+' × '+fmt(v));
+    }else{
+      base=precoMensal(t,p); if(base>0)detalhe.push(p+' aula(s) de '+t);
+    }
   }
-  if(!document.getElementById('a-id').value)document.getElementById('a-creditos').value=p;
+  // parte em grupo do plano misto (preço por pessoa/aula)
+  let extra=0;
+  if(pg>0&&gt){const vg=grupoPrecoAula(gt);extra=pg*vg;detalhe.push(pg+' × '+fmt(vg)+' ('+gt+')');}
+  if(base+extra>0)mEl.value=base+extra;
+  else if(p<=0&&pg<=0)mEl.value=0;
+  const cEl=document.getElementById('a-conta');
+  if(cEl)cEl.textContent=detalhe.length?('= '+detalhe.join('  +  ')+'  =  '+fmt(base+extra)):'';
+  if(!document.getElementById('a-id').value){
+    document.getElementById('a-creditos').value=p;
+    const cg=document.getElementById('a-credgrupo');if(cg)cg.value=pg;
+  }
 }
 function saveAluno(){
   const id=document.getElementById('a-id').value;
@@ -2550,6 +2594,9 @@ function saveAluno(){
     creditos:Number(document.getElementById('a-creditos').value)||0,
     repos:Number(document.getElementById('a-repos').value)||0,
     locCred:Number(document.getElementById('a-loccred').value)||0,
+    credGrupo:Number(document.getElementById('a-credgrupo').value)||0,
+    planoGrupo:Number(document.getElementById('a-planogrupo').value)||0,
+    grupoTipo:document.getElementById('a-grupotipo').value||'',
     status:document.getElementById('a-status').value,
     diaVenc:Math.min(28,Math.max(1,Number(document.getElementById('a-venc').value)||10)),
     cardLink:document.getElementById('a-cardlink').value.trim(),
@@ -3026,14 +3073,37 @@ function delAluno(id){
 function toggleAluno(el){el.classList.toggle('open');}
 function valorAulaDe(a){const p=Number(a.plano)||0,m=Number(a.mensalidade)||0;if(p>0&&m>0)return Math.round(m/p);return Number(a.valorAula)||0;}
 function devidoExtra(a){const neg=Math.max(0,Math.ceil(-(Number(a.creditos)||0)));return neg*valorAulaDe(a);}
-function aulaRealizada(id){
+function aulaRealizada(id,modo){
   const a=DB.alunos.find(x=>x.id===id);
-  a.creditos--;                       // permite ficar negativo: aula além do pacote
   if(!DB.presencas)DB.presencas=[];
-  DB.presencas.push({k:'m'+a.id+'-'+Date.now(),alunoId:a.id,data:dKey(new Date()),hora:'—',manual:true});
+  DB.presencas.push({k:'m'+a.id+'-'+Date.now(),alunoId:a.id,data:dKey(new Date()),hora:'—',manual:true,modo:modo||'aula'});
+  if(modo==='grupo'){            // sai do saldo de grupo, nunca do de particular
+    a.credGrupo=(Number(a.credGrupo)||0)-1;
+    persist();renderAll();
+    toast('👥 Aula em grupo · '+a.nome+' → '+fmtCred(a.credGrupo)+(a.credGrupo<0?' (devendo)':' de grupo'));
+    return;
+  }
+  a.creditos--;                       // permite ficar negativo: aula além do pacote
   persist();renderAll();
   if(a.creditos<0)toast('Aula registrada · '+a.nome+' → '+fmtCred(a.creditos)+' aulas · aula extra a cobrar: '+fmt(valorAulaDe(a)));
   else toast('Aula registrada · '+a.nome+' → '+fmtCred(a.creditos)+' créditos');
+}
+/* Locação paga: pergunta as horas, lança no caixa e credita o saldo — o mesmo
+   papel que "Marcar pago" cumpre para a mensalidade. */
+function locacaoPaga(id){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  const vh=Number((DB.precos&&DB.precos.locacao)||0);
+  if(vh<=0){toast('Defina o valor da locação em Financeiro → Valores avulsos');return;}
+  const txt=prompt('Quantas horas de locação '+a.nome.split(' ')[0]+' está pagando?\n\nValor: '+fmt(vh)+'/h','1');
+  if(txt===null)return;
+  const h=Number(String(txt).replace(',','.'));
+  if(!(h>0)){toast('Informe um número de horas maior que zero');return;}
+  const total=Math.round(vh*h);
+  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:'Locação · '+a.nome+' ('+fmtCred(h)+'h)',valor:total,cat:'locacao',modal:'tenis',data:new Date().toISOString().slice(0,10)});
+  a.locCred=(Number(a.locCred)||0)+h;
+  logAct('Locação paga: '+a.nome+' ('+h+'h)');
+  persist();renderAll();
+  toast('🔑 Locação paga · '+fmt(total)+' lançado · '+a.nome+' → '+fmtCred(a.locCred)+'h');
 }
 function addRepos(id){
   const a=DB.alunos.find(x=>x.id===id);
@@ -3070,8 +3140,10 @@ function checarViradaMes(){
   let n=0;
   (DB.alunos||[]).forEach(a=>{
     const sobra=Number(a.creditos)||0;
-    if(sobra>0){a.repos=(Number(a.repos)||0)+sobra;a.creditos=0;n++;}
-    else a.creditos=Number(a.creditos)||0;
+    const sobraG=Number(a.credGrupo)||0;
+    if(sobra>0||sobraG>0){a.repos=(Number(a.repos)||0)+Math.max(0,sobra)+Math.max(0,sobraG);n++;}
+    a.creditos=sobra>0?0:sobra;
+    a.credGrupo=sobraG>0?0:sobraG;
   });
   (DB.alunos||[]).forEach(a=>{a.status='pendente';});   // novo mês: todos "não pago" até renovar
   DB.mesCreditos=m;
@@ -3152,6 +3224,7 @@ function renderAlunos(){
       <div class="chips">
         <span class="chip" style="${a.creditos<0?'background:#F6D7D2;color:#8E2C1E;font-weight:800':''}">🎾 ${fmtCred(a.creditos)} ${a.creditos<0?'aula(s) devendo':('crédito'+(a.creditos===1?'':'s'))}</span>
         ${a.creditos<0?`<span class="chip" style="background:#F6D7D2;color:#8E2C1E;font-weight:800">💸 ${fmt(devidoExtra(a))} a cobrar</span>`:''}
+        ${(Number(a.planoGrupo)||0)>0||(Number(a.credGrupo)||0)!==0?`<span class="chip" style="${(Number(a.credGrupo)||0)<0?'background:#F6D7D2;color:#8E2C1E;font-weight:800':'background:#EDE7FB00;background:#E7F0E8;color:#2E7D52;font-weight:700'}">👥 ${fmtCred(Number(a.credGrupo)||0)} grupo</span>`:''}
         <span class="chip ${a.repos>0?'warn':'gold'}">🔁 ${fmtCred(a.repos)} reposiç${a.repos===1?'ão':'ões'}</span>
         <span class="chip" style="${(Number(a.locCred)||0)<0?'background:#F6D7D2;color:#8E2C1E;font-weight:800':''}">🔑 ${fmtCred(Number(a.locCred)||0)}h locação${(Number(a.locCred)||0)<0?' (devendo)':''}</span>
         <span class="chip code">🔑 ${a.codigo||'—'}</span>
@@ -3162,11 +3235,13 @@ function renderAlunos(){
       ${histAlunoHTML(a.id)}
       <div class="acts">
         <button class="act a1" onclick="aulaRealizada('${a.id}')">${BI.check}Aula realizada (−1)</button>
+        ${(Number(a.planoGrupo)||0)>0?`<button class="act a1" onclick="aulaRealizada('${a.id}','grupo')">${BI.check}Aula em grupo (−1)</button>`:''}
         <button class="act a2" onclick="addRepos('${a.id}')">${BI.plus}Reposição</button>
         <button class="act a3" onclick="marcarPago('${a.id}')">${BI.money}Marcar pago</button>
         <button class="act a4" onclick="usarRepos('${a.id}')">${BI.undo}Usar reposição</button>
         <button class="act a2" onclick="addLocacao('${a.id}')">${BI.keyplus}+1h locação</button>
         <button class="act a1" onclick="usarLocacao('${a.id}')">${BI.key}Locação feita (−1h)</button>
+        <button class="act a3" onclick="locacaoPaga('${a.id}')">${BI.money}Locação paga</button>
         <button class="act aval" onclick="openAvalModal('${a.id}')">${BI.chart}Avaliar</button>
       </div>
       <div class="aluno-foot">
