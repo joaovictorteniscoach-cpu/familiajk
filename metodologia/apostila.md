@@ -707,6 +707,13 @@ Organizado por camada da Pirâmide. Cada drill traz objetivo, montagem, execuç�
 - *Variações:* Impulso = avisado ("curta!") · Construção = sem aviso · Ascensão+ = pós-curta o aluno deve permanecer dentro (transição para a rede).
 - *Erro a observar:* recuo de costas para a rede.
 
+**D25. Sai e recompõe**
+- *Objetivo:* preparar e posicionar o corpo para a batida ao sair lateralmente, gerando um padrão técnico consistente e ganhando velocidade e precisão na movimentação — o foco é o deslocamento e a preparação, não o golpe em si.
+- *Montagem:* uma fileira de cones pequenos marca a linha de base neutra; professor perto da rede/meio de quadra com bolas na mão; aluno em posição de espera atrás da linha de cones.
+- *Execução:* professor arremessa a bola de mão para fora da linha dos cones, alternando forehand e backhand; o aluno faz split-step, desloca lateralmente até a bola já se preparando (giro de tronco, base de apoio, raquete atrás), bate e volta imediatamente para trás da linha de cones, já em posição de espera para o próximo lançamento.
+- *Variações:* Base = sempre para o mesmo lado, arremesso curto · Impulso = alternando forehand/backhand · Construção = arremessos mais largos, forçando deslize maior · Ascensão+ = 2 bolas seguidas para o mesmo lado antes de trocar.
+- *Erro a observar:* recuperar devagar, sem urgência, ou virar de costas para a rede antes de terminar o golpe.
+
 ## 6.3 Camada 3 — Leitura de Quadra
 
 **D9. Quadra mapeada**
