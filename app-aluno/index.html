@@ -212,6 +212,17 @@ input,select{font-family:'DM Sans',sans-serif;font-size:14px}
 .modal-head h3{margin:0}
 .modal-x{flex:0 0 auto;width:34px;height:34px;border:none;border-radius:50%;background:#EFE7D8;color:var(--muted);font-size:15px;font-weight:800;line-height:1}
 .modal-x:active{opacity:.6}
+.montar{background:#FBF7EF;border:1.5px dashed var(--gold);border-radius:14px;padding:14px;margin-top:14px}
+.montar>b{font-size:14px;color:var(--green)}
+.montar>p{font-size:11.5px;color:var(--muted);margin:3px 0 11px;line-height:1.5}
+.mt-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px;font-size:13px;font-weight:700}
+.mt-row select{border:1.5px solid var(--border);border-radius:9px;padding:7px 10px;font-size:13px;font-weight:700;background:#fff}
+.mt-n{display:flex;align-items:center;gap:8px}
+.mt-n button{width:32px;height:32px;border:1.5px solid var(--gold);background:#fff;color:#7C5E1A;border-radius:9px;font-size:17px;font-weight:800;line-height:1}
+.mt-n i{font-style:normal;min-width:26px;text-align:center;font-size:16px;font-weight:900}
+.mt-total{display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid var(--border);margin-top:11px;padding-top:11px}
+.mt-total span{font-size:11.5px;color:var(--muted);font-weight:700}
+.mt-total b{font-size:19px;color:var(--green)}
 .auto-cta{width:100%;border:none;border-radius:14px;padding:13px;font-size:14px;font-weight:800;color:#fff;background:linear-gradient(135deg,#2E7D52,#1F5B3B);box-shadow:0 4px 14px rgba(31,91,59,.25)}
 .auto-cap{font-size:11px;color:var(--muted);text-align:center;margin:7px 0 14px;line-height:1.5}
 .auto-feito{font-size:11.5px;font-weight:800;color:#7C5E1A;background:#F5ECD6;border-radius:9px;padding:7px 10px;text-align:center;margin-bottom:10px}
@@ -450,6 +461,7 @@ function iniciarFirebase(){
     <div class="cards2">
       <div class="scard"><div class="ico">📅</div><div class="l">Créditos</div><div class="v" id="v-cred">0</div></div>
       <div class="scard"><div class="ico">🔄</div><div class="l">Reposições</div><div class="v" id="v-repos">0</div></div>
+      <div class="scard" id="scard-grupo" style="display:none;grid-column:1/-1"><div class="ico">👥</div><div class="l">Aulas em grupo</div><div class="v" id="v-grupo">0</div></div>
       <div class="scard" id="scard-loc" style="display:none;grid-column:1/-1"><div class="ico">🔑</div><div class="l">Locação (horas)</div><div class="v" id="v-loc">0</div></div>
     </div>
     <div class="status-line">
@@ -707,6 +719,26 @@ function iniciarFirebase(){
     <h3>Planos &amp; preços 📋</h3>
     <p class="sub">Valores mensais. Toque em um plano para pedir ao João — ele confirma a troca ou a renovação.</p>
     <div id="planos-list"></div>
+
+    <div class="montar">
+      <b>🧩 Montar o meu plano</b>
+      <p>Combine particulares e aulas em grupo. O valor se ajusta sozinho.</p>
+      <div class="mt-row">
+        <span>🎾 Particulares / mês</span>
+        <div class="mt-n"><button onclick="montarSet('part',-1)">−</button><i id="mt-part">4</i><button onclick="montarSet('part',1)">+</button></div>
+      </div>
+      <div class="mt-row">
+        <span>👥 Em grupo / mês</span>
+        <div class="mt-n"><button onclick="montarSet('grp',-1)">−</button><i id="mt-grp">4</i><button onclick="montarSet('grp',1)">+</button></div>
+      </div>
+      <div class="mt-row" id="mt-fmt-row">
+        <span>Formato do grupo</span>
+        <select id="mt-fmt" onchange="montarCalc()"><option>Dupla</option><option>Trio</option><option>Quarteto</option></select>
+      </div>
+      <div class="mt-total"><span id="mt-conta">—</span><b id="mt-valor">R$ 0</b></div>
+      <button class="btn btn-clay" style="width:100%;margin-top:10px" onclick="pedirPlanoMisto()">Pedir este plano ao João</button>
+    </div>
+
     <div class="modal-acts">
       <button class="btn btn-ghost" onclick="document.getElementById('ov-planos').classList.remove('on')">Fechar</button>
     </div>
@@ -978,6 +1010,10 @@ function render(){
   document.getElementById('hello').textContent='Fala, '+EU.nome.split(' ')[0]+'!';
   document.getElementById('v-cred').textContent=fmtCred(EU.creditos);
   document.getElementById('v-repos').textContent=fmtCred(EU.repos);
+  const pg=Number(EU.planoGrupo)||0,cg=Number(EU.credGrupo)||0,sg=document.getElementById('scard-grupo');
+  if(sg){sg.style.display=(pg>0||cg!==0)?'block':'none';
+    const vg=document.getElementById('v-grupo');
+    if(vg){vg.textContent=fmtCred(cg);vg.style.color=cg<0?'#C0392B':'var(--green)';}}
   const lc=Number(EU.locCred)||0,sl=document.getElementById('scard-loc');
   if(sl){sl.style.display=lc!==0?'block':'none';const vl=document.getElementById('v-loc');if(vl){vl.textContent=fmtCred(lc);vl.style.color=lc<0?'#C0392B':'var(--green)';}}
   document.getElementById('v-plano').textContent=(Number(EU.plano)||0)<=0?(EU.tipo+' · sem pacote'):(isPersonal()?(EU.tipo+' · '+EU.plano+' treinos/mês'):(EU.tipo+' · Flex '+EU.plano));
@@ -1772,6 +1808,7 @@ function planosTabela(){
   return (PUB&&PUB.planos)||{Particular:{3:480,4:640,6:960,8:1260,10:1600},Grupo:{3:285,4:360,6:510,8:640,10:750},Personal:{3:390,4:520,6:780,8:1040,10:1300}};
 }
 function abrirPlanos(){
+  setTimeout(()=>{try{montarSet('part',0);}catch(e){}},60);
   const tb=planosTabela();
   const cats=isPersonal()?['Personal']:['Particular','Dupla','Trio','Quarteto'];
   const meuPlano=EU?Number(EU.plano):0;
@@ -1792,6 +1829,44 @@ function abrirPlanos(){
   });
   document.getElementById('planos-list').innerHTML=html||'<div class="empty">Planos indisponíveis no momento.</div>';
   document.getElementById('ov-planos').classList.add('on');
+}
+let montar={part:4,grp:4};
+function precoGrupoAula(fmtG){
+  const gp=(PUB&&PUB.grupoPreco)||{dupla:90,trio:85,quarteto:80};
+  return fmtG==='Trio'?(gp.trio||85):fmtG==='Quarteto'?(gp.quarteto||80):(gp.dupla||90);
+}
+function precoParticularAula(){
+  const v=Number(EU&&EU.valorAula)||0; if(v>0)return v;     // valor por aula do próprio aluno
+  const t=planosTabela().Particular||{}; const base=Number(t[4])||640; return Math.round(base/4);
+}
+function montarSet(k,d){
+  montar[k]=Math.max(0,Math.min(30,(montar[k]||0)+d));
+  document.getElementById('mt-part').textContent=montar.part;
+  document.getElementById('mt-grp').textContent=montar.grp;
+  montarCalc();
+}
+function montarCalc(){
+  const fmtG=document.getElementById('mt-fmt').value;
+  const vp=precoParticularAula(),vg=precoGrupoAula(fmtG);
+  const total=montar.part*vp+montar.grp*vg;
+  const partes=[];
+  if(montar.part>0)partes.push(montar.part+' × '+fmt(vp));
+  if(montar.grp>0)partes.push(montar.grp+' × '+fmt(vg));
+  document.getElementById('mt-conta').textContent=partes.length?partes.join('  +  '):'escolha as aulas';
+  document.getElementById('mt-valor').textContent=fmt(total);
+  document.getElementById('mt-fmt-row').style.display=montar.grp>0?'':'none';
+  return {total,vp,vg,fmtG};
+}
+function pedirPlanoMisto(){
+  if(montar.part<=0&&montar.grp<=0){toast('Escolha pelo menos uma aula 🙏');return;}
+  const c=montarCalc();
+  const desc=(montar.part>0?montar.part+' particular'+(montar.part>1?'es':''):'')
+    +(montar.part>0&&montar.grp>0?' + ':'')
+    +(montar.grp>0?montar.grp+' em grupo ('+c.fmtG+')':'');
+  enviarPedido({kind:'plano',cat:'Misto',plano:montar.part,planoGrupo:montar.grp,grupoTipo:c.fmtG,valor:c.total,desc});
+  document.getElementById('ov-planos').classList.remove('on');
+  setTimeout(()=>abrirWhatsApp('5541995415712','Olá João! Quero montar meu plano assim: *'+desc+'* — '+fmt(c.total)+'/mês. Pode confirmar? 🎾'),500);
+  toast('Pedido enviado ao João! 🎾');
 }
 function pedirPlano(cat,n,valor){
   enviarPedido({kind:'plano',cat,plano:n,valor});
