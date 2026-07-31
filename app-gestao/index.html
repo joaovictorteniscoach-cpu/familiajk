@@ -3071,8 +3071,28 @@ function delAluno(id){
   }
 }
 function toggleAluno(el){el.classList.toggle('open');}
-function valorAulaDe(a){const p=Number(a.plano)||0,m=Number(a.mensalidade)||0;if(p>0&&m>0)return Math.round(m/p);return Number(a.valorAula)||0;}
-function devidoExtra(a){const neg=Math.max(0,Math.ceil(-(Number(a.creditos)||0)));return neg*valorAulaDe(a);}
+/* Valor da aula EM GRUPO: preço por pessoa/aula do formato do aluno. */
+function valorAulaGrupoDe(a){
+  const gt=a.grupoTipo||'Dupla';
+  return Math.round(grupoPrecoAula(gt))||0;
+}
+/* Valor da aula PARTICULAR. No plano misto a mensalidade cobre as duas partes,
+   então a parte do grupo sai da conta antes de dividir — senão a aula extra
+   sairia inflada (ex.: 1020/4 = 255 em vez de 160). */
+function valorAulaDe(a){
+  const p=Number(a.plano)||0,m=Number(a.mensalidade)||0;
+  const pg=Number(a.planoGrupo)||0;
+  if(p>0&&m>0){
+    const parteGrupo=pg>0?pg*valorAulaGrupoDe(a):0;
+    const so=m-parteGrupo;
+    if(so>0)return Math.round(so/p);
+  }
+  return Number(a.valorAula)||0;
+}
+/* Cobrança das aulas além do pacote — cada modalidade pelo seu próprio preço. */
+function devidoExtraPart(a){const neg=Math.max(0,Math.ceil(-(Number(a.creditos)||0)));return neg*valorAulaDe(a);}
+function devidoExtraGrupo(a){const neg=Math.max(0,Math.ceil(-(Number(a.credGrupo)||0)));return neg*valorAulaGrupoDe(a);}
+function devidoExtra(a){return devidoExtraPart(a)+devidoExtraGrupo(a);}
 function aulaRealizada(id,modo){
   const a=DB.alunos.find(x=>x.id===id);
   if(!DB.presencas)DB.presencas=[];
@@ -3080,7 +3100,8 @@ function aulaRealizada(id,modo){
   if(modo==='grupo'){            // sai do saldo de grupo, nunca do de particular
     a.credGrupo=(Number(a.credGrupo)||0)-1;
     persist();renderAll();
-    toast('👥 Aula em grupo · '+a.nome+' → '+fmtCred(a.credGrupo)+(a.credGrupo<0?' (devendo)':' de grupo'));
+    if(a.credGrupo<0)toast('👥 Aula em grupo · '+a.nome+' → '+fmtCred(a.credGrupo)+' · extra de grupo a cobrar: '+fmt(valorAulaGrupoDe(a)));
+    else toast('👥 Aula em grupo · '+a.nome+' → '+fmtCred(a.credGrupo)+' de grupo');
     return;
   }
   a.creditos--;                       // permite ficar negativo: aula além do pacote
@@ -3153,8 +3174,13 @@ function checarViradaMes(){
 }
 function renovarMes(id){
   const a=DB.alunos.find(x=>x.id===id);
-  if(confirm('Renovar o mês de '+a.nome+'? Soma +'+a.plano+' créditos e marca como pendente.')){
-    a.creditos+=a.plano;a.status='pendente';persist();renderAll();toast('Mês renovado para '+a.nome);
+  const pg=Number(a.planoGrupo)||0;
+  const resumo='+'+(Number(a.plano)||0)+' crédito(s)'+(pg>0?(' e +'+pg+' de grupo'):'');
+  if(confirm('Renovar o mês de '+a.nome+'? Soma '+resumo+' e marca como pendente.')){
+    a.creditos+=Number(a.plano)||0;
+    if(pg>0)a.credGrupo=(Number(a.credGrupo)||0)+pg;   // plano misto renova as duas partes
+    a.status='pendente';persist();renderAll();
+    toast('Mês renovado para '+a.nome+' · '+resumo);
   }
 }
 function enviarAcesso(id){
@@ -3223,7 +3249,8 @@ function renderAlunos(){
     <div class="aluno-body">
       <div class="chips">
         <span class="chip" style="${a.creditos<0?'background:#F6D7D2;color:#8E2C1E;font-weight:800':''}">🎾 ${fmtCred(a.creditos)} ${a.creditos<0?'aula(s) devendo':('crédito'+(a.creditos===1?'':'s'))}</span>
-        ${a.creditos<0?`<span class="chip" style="background:#F6D7D2;color:#8E2C1E;font-weight:800">💸 ${fmt(devidoExtra(a))} a cobrar</span>`:''}
+        ${a.creditos<0?`<span class="chip" style="background:#F6D7D2;color:#8E2C1E;font-weight:800">💸 ${fmt(devidoExtraPart(a))} extra particular</span>`:''}
+        ${(Number(a.credGrupo)||0)<0?`<span class="chip" style="background:#F6D7D2;color:#8E2C1E;font-weight:800">💸 ${fmt(devidoExtraGrupo(a))} extra grupo</span>`:''}
         ${(Number(a.planoGrupo)||0)>0||(Number(a.credGrupo)||0)!==0?`<span class="chip" style="${(Number(a.credGrupo)||0)<0?'background:#F6D7D2;color:#8E2C1E;font-weight:800':'background:#EDE7FB00;background:#E7F0E8;color:#2E7D52;font-weight:700'}">👥 ${fmtCred(Number(a.credGrupo)||0)} grupo</span>`:''}
         <span class="chip ${a.repos>0?'warn':'gold'}">🔁 ${fmtCred(a.repos)} reposiç${a.repos===1?'ão':'ões'}</span>
         <span class="chip" style="${(Number(a.locCred)||0)<0?'background:#F6D7D2;color:#8E2C1E;font-weight:800':''}">🔑 ${fmtCred(Number(a.locCred)||0)}h locação${(Number(a.locCred)||0)<0?' (devendo)':''}</span>
