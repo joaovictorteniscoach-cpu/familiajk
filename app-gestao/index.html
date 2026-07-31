@@ -1570,7 +1570,7 @@ async function doPublish(){
         return out;
       })(),
       grade:{
-        fixos:DB.agenda.fixos.map(f=>({id:f.id,dia:f.dia,hora:f.hora,tipo:f.tipo,cod:codeFor(f)})),
+        fixos:DB.agenda.fixos.map(f=>({id:f.id,dia:f.dia,hora:f.hora,tipo:f.tipo,cod:codeFor(f),desde:f.desde||'',ate:f.ate||''})),
         eventos:DB.agenda.eventos.filter(e=>e.data>=dKey(hoje)&&e.data<=dKey(lim)).map(e=>{
           const ev={id:e.id,data:e.data,hora:e.hora,tipo:e.tipo,cod:codeFor(e)};
           // chuva marcada antes desta versão só tem o título; por isso o fallback
@@ -1603,7 +1603,7 @@ async function syncRequests(silent){
         const tipo=p.tor?'torneio':catAgendaDe(a.tipo);   // jogo do torneio: já pago, não usa crédito
         if(p.acao==='cancelar'){
           const dia=new Date(p.data+'T12:00:00').getDay();
-          const fx=DB.agenda.fixos.find(f=>f.alunoId===a.id&&f.dia===dia&&f.hora===p.hora);
+          const fx=DB.agenda.fixos.find(f=>f.alunoId===a.id&&f.dia===dia&&f.hora===p.hora&&fixoValeEm(f,p.data));
           if(fx){
             if(!DB.agenda.excecoes.some(x=>x.fixoId===fx.id&&x.data===p.data))
               DB.agenda.excecoes.push({fixoId:fx.id,data:p.data});
@@ -1613,8 +1613,8 @@ async function syncRequests(silent){
           nc++;
         }else if(p.rec==='fixo'){
           const dia=new Date(p.data+'T12:00:00').getDay();
-          if(!DB.agenda.fixos.some(f=>f.alunoId===a.id&&f.dia===dia&&f.hora===p.hora))
-            DB.agenda.fixos.push({id:'f'+Date.now()+idx,dia,hora:p.hora,titulo:a.nome,tipo,alunoId:a.id});
+          if(!DB.agenda.fixos.some(f=>f.alunoId===a.id&&f.dia===dia&&f.hora===p.hora&&fixoValeEm(f,p.data)))
+            DB.agenda.fixos.push({id:'f'+Date.now()+idx,dia,hora:p.hora,titulo:a.nome,tipo,alunoId:a.id,desde:p.data});
           n++;
         }else{
           if(!DB.agenda.eventos.some(e=>e.alunoId===a.id&&e.data===p.data&&e.hora===p.hora))
@@ -1909,10 +1909,18 @@ function toast(t){const e=document.getElementById('toast');e.textContent=t;e.cla
 function closeModal(id){document.getElementById(id).classList.remove('on');}
 
 /* ================= AGENDA ================= */
+/* Um horário fixo vale só dentro da sua janela: desde (inclusive) até (inclusive).
+   Sem janela = vale sempre, que é como os fixos antigos se comportavam. Isso é o
+   que impede uma mudança de hoje de reescrever a agenda de meses atrás. */
+function fixoValeEm(f,dk){
+  if(f.desde&&dk<f.desde)return false;
+  if(f.ate&&dk>f.ate)return false;
+  return true;
+}
 function entriesFor(date,hora){
   const dia=date.getDay(),dk=dKey(date);
   const A=DB.agenda;
-  const fixos=A.fixos.filter(f=>f.dia===dia&&f.hora===hora&&!A.excecoes.some(x=>x.fixoId===f.id&&x.data===dk))
+  const fixos=A.fixos.filter(f=>f.dia===dia&&f.hora===hora&&fixoValeEm(f,dk)&&!A.excecoes.some(x=>x.fixoId===f.id&&x.data===dk))
     .map(f=>({...f,origem:'fixo'}));
   const evs=A.eventos.filter(e=>e.data===dk&&e.hora===hora).map(e=>({...e,origem:'pontual'}));
   const comps=(DB.compromissos||[]).filter(c=>c.data===dk&&(c.hora||'')===hora).map(c=>({id:c.id,titulo:c.titulo,tipo:'pessoal',origem:'compromisso',alunoId:null}));
@@ -2054,7 +2062,7 @@ function moverDia(fromDK,toDK){
   const fromDate=new Date(fromDK+'T12:00:00');
   const dia=fromDate.getDay();
   const pont=DB.agenda.eventos.filter(e=>e.data===fromDK);
-  const fix=DB.agenda.fixos.filter(f=>f.dia===dia&&!DB.agenda.excecoes.some(x=>x.fixoId===f.id&&x.data===fromDK));
+  const fix=DB.agenda.fixos.filter(f=>f.dia===dia&&fixoValeEm(f,fromDK)&&!DB.agenda.excecoes.some(x=>x.fixoId===f.id&&x.data===fromDK));
   const total=pont.length+fix.length;
   if(!total){toast('Esse dia não tem atendimentos');return;}
   const p1=fromDK.split('-'),p2=toDK.split('-');
@@ -2277,7 +2285,7 @@ function aplicarChuva(date,hora){
     const k=presId(e,date);const i=DB.presencas.findIndex(p=>p.k===k);
     if(i>=0){const a=DB.alunos.find(x=>x.id===e.alunoId);if(a){const c=creditoSlot(hora);if(e.tipo==='torneio'){/* torneio não debita, nada a devolver */}else if(e.tipo==='locacao')a.locCred=(Number(a.locCred)||0)+c;else if(e.tipo==='grupo'&&!e.repo)a.credGrupo=(Number(a.credGrupo)||0)+c;else if(e.repo)a.repos=(Number(a.repos)||0)+c;else a.creditos=(Number(a.creditos)||0)+c;}DB.presencas.splice(i,1);}
   });
-  DB.agenda.fixos.filter(f=>f.dia===dia&&f.hora===hora).forEach(f=>{
+  DB.agenda.fixos.filter(f=>f.dia===dia&&f.hora===hora&&fixoValeEm(f,dk)).forEach(f=>{
     if(!DB.agenda.excecoes.some(x=>x.fixoId===f.id&&x.data===dk))DB.agenda.excecoes.push({fixoId:f.id,data:dk});
   });
   DB.agenda.eventos=DB.agenda.eventos.filter(e=>!(e.data===dk&&e.hora===hora&&e.tipo!=='bloqueio'));
@@ -2384,8 +2392,9 @@ function saveSlot(){
   const repoChk=document.getElementById('s-repo');
   const repo=(repoChk&&repoChk.checked&&(tipo==='aula'||tipo==='grupo'||tipo==='personal'))?1:0;
   if(document.getElementById('s-rec').value==='fixo'){
-    DB.agenda.fixos.push({id:'f'+Date.now(),dia:slotCtx.date.getDay(),hora:slotCtx.hora,titulo:t,tipo,alunoId,pessoas,repo});
-    toast(t+' fixado toda '+DIAS[slotCtx.date.getDay()]+' às '+slotCtx.hora+(repo?' · 🔁 reposição':''));
+    const desde=dKey(slotCtx.date);
+    DB.agenda.fixos.push({id:'f'+Date.now(),dia:slotCtx.date.getDay(),hora:slotCtx.hora,titulo:t,tipo,alunoId,pessoas,repo,desde});
+    toast(t+' fixado toda '+DIAS[slotCtx.date.getDay()]+' às '+slotCtx.hora+' a partir de '+desde.split('-').reverse().slice(0,2).join('/')+(repo?' · 🔁 reposição':''));
   }else{
     DB.agenda.eventos.push({id:'e'+Date.now(),data:dKey(slotCtx.date),hora:slotCtx.hora,titulo:t,tipo,alunoId,pessoas,repo});
     toast(t+' marcado em '+slotCtx.date.getDate()+'/'+(slotCtx.date.getMonth()+1)+(repo?' · 🔁 reposição':''));
@@ -2403,13 +2412,29 @@ function cancelarDia(fixoId){
   persist();renderSlotEvs();renderAgenda();toast('Cancelado só neste dia');
 }
 function removerFixo(id){
-  const f=DB.agenda.fixos.find(x=>x.id===id);
-  if(confirm('Remover "'+f.titulo+'" da grade fixa de toda '+DIAS[f.dia]+'?')){
+  const f=DB.agenda.fixos.find(x=>x.id===id);if(!f)return;
+  const base=slotCtx&&slotCtx.date?new Date(slotCtx.date):new Date(agDate);
+  const dkBase=dKey(base);
+  const ontem=new Date(base.getFullYear(),base.getMonth(),base.getDate()-1);
+  const dkOntem=dKey(ontem);
+  const br=d=>d.split('-').reverse().slice(0,2).join('/');
+  // se o fixo ainda não tinha começado, não há passado a preservar: apaga mesmo
+  const nuncaValeu=f.desde&&f.desde>=dkBase;
+  const msg=nuncaValeu
+    ? 'Remover "'+f.titulo+'" da grade fixa de toda '+DIAS[f.dia]+'?'
+    : 'Tirar "'+f.titulo+'" da grade fixa de toda '+DIAS[f.dia]+' a partir de '+br(dkBase)+'?\n\nOs dias anteriores continuam como estão, para a agenda antiga não mudar.';
+  if(!confirm(msg))return;
+  if(nuncaValeu){
     DB.agenda.fixos=DB.agenda.fixos.filter(x=>x.id!==id);
     DB.agenda.excecoes=DB.agenda.excecoes.filter(x=>x.fixoId!==id);
     logAct('Remover da grade: '+f.titulo);
     persist();renderSlotEvs();renderAgenda();toast('Removido da grade');
+    return;
   }
+  f.ate=dkOntem;                       // encerra a validade na véspera
+  logAct('Encerrar na grade: '+f.titulo+' (até '+dkOntem+')');
+  persist();renderSlotEvs();renderAgenda();
+  toast('Fora da grade a partir de '+br(dkBase)+' · o histórico anterior foi mantido');
 }
 function removerEvento(id){
   const _e=DB.agenda.eventos.find(x=>x.id===id);

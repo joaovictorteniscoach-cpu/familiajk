@@ -940,7 +940,7 @@ function confirmadoNaGrade(p){
   if(!PUB)return false;
   if(p.rec==='fixo'){
     const dia=new Date(p.data+'T12:00:00').getDay();
-    return PUB.grade.fixos.some(f=>f.cod===MEU.codigo&&f.dia===dia&&f.hora===p.hora);
+    return PUB.grade.fixos.some(f=>f.cod===MEU.codigo&&f.dia===dia&&f.hora===p.hora&&fixoValeEm(f,p.data));
   }
   return PUB.grade.eventos.some(e=>e.cod===MEU.codigo&&e.data===p.data&&e.hora===p.hora);
 }
@@ -971,11 +971,18 @@ async function sair(){
 }
 
 /* ================= GRADE (ocupação) ================= */
+/* Mesma regra da gestão: o horário fixo só vale dentro da janela desde/até.
+   Sem janela = vale sempre (fixos antigos). */
+function fixoValeEm(f,dk){
+  if(f.desde&&dk<f.desde)return false;
+  if(f.ate&&dk>f.ate)return false;
+  return true;
+}
 function slotState(date,hora){
   // retorna {st:'livre'|'meu'|'pend'|'ocup'|'bloq', label}
   const dia=date.getDay(),dk=dKey(date);
   const G=PUB.grade;
-  const fixos=G.fixos.filter(f=>f.dia===dia&&f.hora===hora&&!G.excecoes.some(x=>x.fixoId===f.id&&x.data===dk));
+  const fixos=G.fixos.filter(f=>f.dia===dia&&f.hora===hora&&fixoValeEm(f,dk)&&!G.excecoes.some(x=>x.fixoId===f.id&&x.data===dk));
   const evs=G.eventos.filter(e=>e.data===dk&&e.hora===hora);
   const all=fixos.concat(evs);
   const meu=all.some(e=>e.cod===MEU.codigo);
@@ -2062,7 +2069,7 @@ function checarAulaHoje(){
   if(!EU||!PUB||!PUB.grade)return;
   const G=PUB.grade,exc=G.excecoes||[],hoje=new Date(),dk=dKey(hoje);
   let prox=null;
-  (G.fixos||[]).filter(f=>f.cod===MEU.codigo&&f.dia===hoje.getDay()).forEach(f=>{
+  (G.fixos||[]).filter(f=>f.cod===MEU.codigo&&f.dia===hoje.getDay()&&fixoValeEm(f,dk)).forEach(f=>{
     if(exc.some(x=>x.fixoId===f.id&&x.data===dk))return;
     const h=horasAte(dk,f.hora);if(h>=-0.3&&h<=14&&(!prox||f.hora<prox))prox=f.hora;
   });
@@ -2128,7 +2135,7 @@ function renovarDepois(){_renovaAdiado=true;document.getElementById('renova-box'
 /* ===== Feriado que afeta a aula do aluno ===== */
 function pascoa(ano){var a=ano%19,b=Math.floor(ano/100),c=ano%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),mes=Math.floor((h+l-7*m+114)/31),dia=((h+l-7*m+114)%31)+1;return new Date(ano,mes-1,dia);}
 function feriados(ano){var f={};[[1,1,'Ano Novo'],[4,21,'Tiradentes'],[5,1,'Dia do Trabalho'],[9,7,'Independência'],[10,12,'N. Sra. Aparecida'],[11,2,'Finados'],[11,15,'Proclamação da República'],[11,20,'Consciência Negra'],[12,25,'Natal']].forEach(function(x){f[ano+'-'+String(x[0]).padStart(2,'0')+'-'+String(x[1]).padStart(2,'0')]=x[2];});var p=pascoa(ano);function add(off,nome){var x=new Date(p.getFullYear(),p.getMonth(),p.getDate()+off);f[dKey(x)]=nome;}add(-47,'Carnaval');add(-2,'Sexta-feira Santa');add(60,'Corpus Christi');return f;}
-function minhasHorasNoDia(d){var out=[];if(!PUB||!PUB.grade)return out;var G=PUB.grade,exc=G.excecoes||[],dk=dKey(d);(G.fixos||[]).filter(function(f){return f.cod===MEU.codigo&&f.dia===d.getDay();}).forEach(function(f){if(!exc.some(function(x){return x.fixoId===f.id&&x.data===dk;}))out.push({hora:f.hora,rec:'fixo'});});(G.eventos||[]).filter(function(e){return e.cod===MEU.codigo&&e.data===dk;}).forEach(function(e){if(!out.some(function(o){return o.hora===e.hora;}))out.push({hora:e.hora,rec:'pontual'});});return out;}
+function minhasHorasNoDia(d){var out=[];if(!PUB||!PUB.grade)return out;var G=PUB.grade,exc=G.excecoes||[],dk=dKey(d);(G.fixos||[]).filter(function(f){return f.cod===MEU.codigo&&f.dia===d.getDay()&&fixoValeEm(f,dk);}).forEach(function(f){if(!exc.some(function(x){return x.fixoId===f.id&&x.data===dk;}))out.push({hora:f.hora,rec:'fixo'});});(G.eventos||[]).filter(function(e){return e.cod===MEU.codigo&&e.data===dk;}).forEach(function(e){if(!out.some(function(o){return o.hora===e.hora;}))out.push({hora:e.hora,rec:'pontual'});});return out;}
 function checarFeriados(){
   var box=document.getElementById('feriado-box');if(!box||!EU||!PUB)return;
   var hoje=new Date();var fmap={};Object.assign(fmap,feriados(hoje.getFullYear()),feriados(hoje.getFullYear()+1));
@@ -2174,6 +2181,7 @@ function renderMinhas(){
       const d=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()+i,12);
       if(d.getDay()!==f.dia)continue;
       const dk=dKey(d);
+      if(!fixoValeEm(f,dk))continue;                                        // fora da janela do fixo
       if(horasAte(dk,f.hora)<-1)continue;                                   // já passou
       if(foiCancelado(dk,f.hora))continue;                                  // o aluno cancelou esse dia
       if(exc.some(x=>x.fixoId===f.id&&x.data===dk))continue;                // João cancelou/chuva nesse dia
