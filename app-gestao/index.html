@@ -317,6 +317,12 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .avacts .b2{background:#F4EDE0;color:var(--muted)}
 .avacts .b3{background:#E3F2E4;color:var(--ok)}
 .avacts .b4{background:#F6E7E4;color:#B23A2E}
+.prof-row{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;border:1px solid var(--border);border-radius:11px;padding:10px 13px;margin-bottom:7px}
+.prof-row b{font-size:13.5px}
+.prof-row small{display:block;font-size:11px;color:var(--muted);font-weight:600}
+.prof-acts{display:flex;gap:6px;flex-shrink:0}
+.prof-acts button{border:none;border-radius:8px;padding:6px 10px;font-size:11.5px;font-weight:800;background:#F5ECD6;color:#7C5E1A;cursor:pointer}
+.prof-acts button.d{background:#F6E7E4;color:#B23A2E}
 .avauto{margin-top:9px;background:#EAF4EC;border:1px solid #cfe6d5;border-radius:10px;padding:9px 11px;font-size:12px;color:#215B39;font-weight:600}
 .avauto-acts{display:flex;gap:6px;margin-top:7px}
 .avauto-acts button{border:none;border-radius:8px;padding:7px 11px;font-size:11.5px;font-weight:800;background:#2E7D52;color:#fff;cursor:pointer}
@@ -585,6 +591,7 @@ function iniciarFirebase(){
     <div class="ag-nav-label" id="ag-label">—</div>
     <button class="month-btn" onclick="agShift(1)">›</button>
   </div>
+  <div class="seg seg-scroll" id="prof-filtro" style="display:none"></div>
   <button class="btn btn-ghost" style="width:100%;margin-bottom:10px;font-size:12.5px" onclick="enviarSemanaImg()">📷 Imagem da semana p/ mandar ao aluno</button>
   <div class="legend">
     <span style="background:var(--c-aula)">Tênis</span>
@@ -603,6 +610,13 @@ function iniciarFirebase(){
 </section>
 
 <section class="page" id="pg-alunos">
+  <div id="profs-wrap" style="display:none">
+    <p class="sec-eyebrow">Equipe</p>
+    <h2 class="sec-title">👨‍🏫 <em>Professores</em></h2>
+    <div id="profs-lista"></div>
+    <button class="btn btn-ghost" style="width:100%;margin:8px 0 18px;font-size:12.5px" onclick="addProf()">＋ Cadastrar professor</button>
+  </div>
+
   <p class="sec-eyebrow">Cadastro</p>
   <h2 class="sec-title">Meus <em>alunos</em></h2>
   <div class="toolbar">
@@ -1033,6 +1047,8 @@ function iniciarFirebase(){
       <div class="field"><label>Créditos atuais</label><input type="number" id="a-creditos" value="0"></div>
     </div>
     <div class="row2">
+      <div class="field" id="a-prof-wrap" style="display:none"><label>👨‍🏫 Professor</label>
+        <select id="a-prof"><option value="">—</option></select></div>
       <div class="field"><label>🔑 Locação (horas)</label><input type="number" id="a-loccred" value="0" step="0.5"></div>
       <div class="field"><label>👥 Créditos de grupo</label><input type="number" id="a-credgrupo" value="0" step="0.5"></div>
     </div>
@@ -1351,6 +1367,78 @@ function slotModo(date,hora){
   if(c&&c[hora])return c[hora];
   return modoPadrao(date,hora);
 }
+/* ===== Multi-professor — recurso da versão Pro =====
+   Academia grande tem vários professores. Fica DESLIGADO no app do João (um
+   professor só) e é ligado no build da versão Pro, para não haver dois códigos
+   diferentes para manter. */
+const PRO_MULTI=false;
+let filtroProf='todos';
+function profs(){return (DB.profs&&DB.profs.length)?DB.profs:[];}
+function profNome(id){const p=profs().find(x=>x.id===id);return p?p.nome:'';}
+function profDoAluno(a){return (a&&a.profId)||'';}
+/* Um item da agenda pertence ao professor do aluno. Bloqueio, compromisso e
+   horário sem aluno aparecem para todo mundo. */
+function itemVisivelProf(e){
+  if(!PRO_MULTI||filtroProf==='todos')return true;
+  if(!e.alunoId)return true;
+  const a=DB.alunos.find(x=>x.id===e.alunoId);
+  if(!a)return true;
+  return profDoAluno(a)===filtroProf;
+}
+function setFiltroProf(id,btn){
+  filtroProf=id;
+  document.querySelectorAll('#prof-filtro button').forEach(b=>b.classList.remove('on'));
+  if(btn)btn.classList.add('on');
+  renderAgenda();renderAlunos();
+}
+function renderProfFiltro(){
+  const box=document.getElementById('prof-filtro');if(!box)return;
+  if(!PRO_MULTI||!profs().length){box.style.display='none';return;}
+  box.style.display='';
+  box.innerHTML='<button class="'+(filtroProf==='todos'?'on':'')+'" onclick="setFiltroProf(\'todos\',this)">Todos</button>'
+    +profs().map(p=>'<button class="'+(filtroProf===p.id?'on':'')+'" onclick="setFiltroProf(\''+p.id+'\',this)">'+escAval(p.nome)+'</button>').join('');
+}
+function renderProfs(){
+  const wrap=document.getElementById('profs-wrap');if(!wrap)return;
+  if(!PRO_MULTI){wrap.style.display='none';return;}
+  wrap.style.display='';
+  const lista=profs();
+  document.getElementById('profs-lista').innerHTML=lista.length
+    ? lista.map(p=>{
+        const n=DB.alunos.filter(a=>profDoAluno(a)===p.id).length;
+        return '<div class="prof-row"><span><b>'+escAval(p.nome)+'</b><small>'+n+' aluno(s)</small></span>'
+          +'<span class="prof-acts"><button onclick="renomearProf(\''+p.id+'\')">renomear</button>'
+          +'<button class="d" onclick="removerProf(\''+p.id+'\')">remover</button></span></div>';
+      }).join('')
+    : '<div class="empty">Nenhum professor cadastrado ainda.</div>';
+}
+function addProf(){
+  const n=prompt('Nome do professor:','');
+  if(n===null)return;
+  const nome=n.trim();if(!nome){toast('Informe um nome');return;}
+  if(!Array.isArray(DB.profs))DB.profs=[];
+  DB.profs.push({id:'pr'+Date.now(),nome});
+  logAct('Cadastrar professor: '+nome);
+  persist();renderProfs();renderProfFiltro();renderAlunos();
+  toast('✓ '+nome+' cadastrado');
+}
+function renomearProf(id){
+  const p=profs().find(x=>x.id===id);if(!p)return;
+  const n=prompt('Novo nome:',p.nome);if(n===null)return;
+  const nome=n.trim();if(!nome)return;
+  p.nome=nome;persist();renderProfs();renderProfFiltro();renderAlunos();toast('Atualizado');
+}
+function removerProf(id){
+  const p=profs().find(x=>x.id===id);if(!p)return;
+  const n=DB.alunos.filter(a=>profDoAluno(a)===id).length;
+  if(!confirm('Remover '+p.nome+'?'+(n?('\n\n'+n+' aluno(s) ficam sem professor — é só designar outro depois.'):'')))return;
+  DB.profs=profs().filter(x=>x.id!==id);
+  DB.alunos.forEach(a=>{if(profDoAluno(a)===id)a.profId='';});
+  if(filtroProf===id)filtroProf='todos';
+  logAct('Remover professor: '+p.nome);
+  persist();renderProfs();renderProfFiltro();renderAgenda();renderAlunos();
+  toast('Professor removido');
+}
 const PRECOS={Particular:{3:480,4:640,6:960,8:1260,10:1600},Grupo:{3:285,4:360,6:510,8:640,10:750},Personal:{3:390,4:520,6:780,8:1040,10:1300}};
 function grupoPrecoAula(t){const gp=(typeof DB!=='undefined'&&DB.grupoPreco)||{dupla:90,trio:85,quarteto:80};if(t==='Dupla')return gp.dupla||90;if(t==='Trio')return gp.trio||85;if(t==='Quarteto')return gp.quarteto||80;return 0;}
 function precoMensal(t,p){p=Number(p)||0;if(t==='Dupla'||t==='Trio'||t==='Quarteto')return grupoPrecoAula(t)*p;if(t==='Grupo')return (PRECOS.Grupo[p]||0);return (PRECOS[t]&&PRECOS[t][p])||0;}
@@ -1438,6 +1526,7 @@ function ensureFields(){
   if(DB.pixTipo===undefined)DB.pixTipo='celular';
   if(DB.cardLink===undefined)DB.cardLink='';
   if(!DB.snapAlunos)DB.snapAlunos={};
+  if(!Array.isArray(DB.profs))DB.profs=[];     // versão Pro: professores da academia
   if(!Array.isArray(DB.chuvas))DB.chuvas=[];   // horários cancelados por chuva, p/ avisar os alunos
   if(!DB.precos)DB.precos={avulsaPart:170,avulsaGrupo:95,locacao:70};
   if(DB.precos.planilha===undefined)DB.precos.planilha=0;   // 0 = ainda não definido
@@ -2213,12 +2302,13 @@ function togglePresenca(entryId){
 }
 
 function renderAgenda(){
+  renderProfFiltro();
   const el=document.getElementById('ag-view');
   const lbl=document.getElementById('ag-label');
   if(agView==='dia'){
     lbl.innerHTML=DIAS[agDate.getDay()]+', '+agDate.getDate()+' de '+MESES[agDate.getMonth()].toLowerCase()+'<small>'+countDay(agDate)+' atendimentos · ○ marca presença · arraste a aula p/ trocar horário</small>';
     el.innerHTML='<button class="btn btn-ghost" style="width:100%;margin-bottom:10px;color:var(--c-bloq);border-color:#E5C0BA;font-size:12px" onclick="marcarChuvaDia()">☔ Marcar o dia inteiro como chuva</button>'+HORAS.map(h=>{
-      const evs=entriesFor(agDate,h);
+      const evs=entriesFor(agDate,h).filter(itemVisivelProf);
       return `<div class="slot" data-drop-d="${dKey(agDate)}" data-drop-h="${h}"><div class="slot-h">${h}</div>
         <div class="slot-body ${evs.length?'has':''}">
           ${evs.map(e=>{
@@ -2241,7 +2331,7 @@ function renderAgenda(){
     HORAS.forEach(h=>{
       html+=`<tr><td class="hr">${h}</td>`;
       days.forEach(d=>{
-        const evs=entriesFor(d,h);
+        const evs=entriesFor(d,h).filter(itemVisivelProf);
         let cls='free',txt='·',drag='';
         if(evs.length===1){cls='t-'+evs[0].tipo;txt=evs[0].titulo;drag=`drag-item" data-eid="${evs[0].id}" data-origem="${evs[0].origem}`;}
         else if(evs.length>1){cls='multi';txt=evs.length+' marcações';}
@@ -2490,6 +2580,9 @@ function openAlunoModal(id){
     document.getElementById('a-mfit').value=a.mfitLink||'';
     document.getElementById('a-valoraula').value=a.valorAula||(a.tipo==='Personal'?130:160);
     document.getElementById('a-loccred').value=Number(a.locCred)||0;
+    const pw=document.getElementById('a-prof-wrap'),ps=document.getElementById('a-prof');
+    if(pw)pw.style.display=PRO_MULTI?'':'none';
+    if(ps){ps.innerHTML='<option value="">—</option>'+profs().map(x=>'<option value="'+x.id+'">'+escAval(x.nome)+'</option>').join('');ps.value=a.profId||'';}
     document.getElementById('a-credgrupo').value=Number(a.credGrupo)||0;
     document.getElementById('a-planogrupo').value=Number(a.planoGrupo)||0;
     document.getElementById('a-grupotipo').value=a.grupoTipo||'';
@@ -2638,6 +2731,7 @@ function saveAluno(){
     creditos:Number(document.getElementById('a-creditos').value)||0,
     repos:Number(document.getElementById('a-repos').value)||0,
     locCred:Number(document.getElementById('a-loccred').value)||0,
+    profId:(document.getElementById('a-prof')||{}).value||'',
     credGrupo:Number(document.getElementById('a-credgrupo').value)||0,
     planoGrupo:Number(document.getElementById('a-planogrupo').value)||0,
     grupoTipo:document.getElementById('a-grupotipo').value||'',
@@ -3277,6 +3371,7 @@ key:'<svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="4"/><path d="M11 11l7 7M1
 chart:'<svg viewBox="0 0 24 24"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg>'
 };
 function renderAlunos(){
+  renderProfs();
   const list=document.getElementById('alunos-list');
   const q=(document.getElementById('search').value||'').toLowerCase();
   const items=DB.alunos.filter(a=>a.nome.toLowerCase().includes(q)).filter(a=>{
@@ -3298,6 +3393,7 @@ function renderAlunos(){
         ${(Number(a.planoGrupo)||0)>0||(Number(a.credGrupo)||0)!==0?`<span class="chip" style="${(Number(a.credGrupo)||0)<0?'background:#F6D7D2;color:#8E2C1E;font-weight:800':'background:#EDE7FB00;background:#E7F0E8;color:#2E7D52;font-weight:700'}">👥 ${fmtCred(Number(a.credGrupo)||0)} grupo</span>`:''}
         <span class="chip ${a.repos>0?'warn':'gold'}">🔁 ${fmtCred(a.repos)} reposiç${a.repos===1?'ão':'ões'}</span>
         <span class="chip" style="${(Number(a.locCred)||0)<0?'background:#F6D7D2;color:#8E2C1E;font-weight:800':''}">🔑 ${fmtCred(Number(a.locCred)||0)}h locação${(Number(a.locCred)||0)<0?' (devendo)':''}</span>
+        ${PRO_MULTI&&profDoAluno(a)?`<span class="chip" style="background:#E7F0E8;color:#2E7D52;font-weight:700">👨‍🏫 ${escAval(profNome(profDoAluno(a)))}</span>`:''}
         <span class="chip code">🔑 ${a.codigo||'—'}</span>
         <span class="chip" style="background:#EFE7D8;color:#5b5142;font-weight:700">${PERFIL_LABELS[perfilDe(a)]||''}</span>
         ${(a.avaliacoes&&a.avaliacoes.length)?`<span class="chip" style="background:${metalDe(a.avaliacoes[a.avaliacoes.length-1].nivel).m};color:#fff;font-weight:800">📈 ${a.avaliacoes[a.avaliacoes.length-1].nivel||'—'}</span>`:''}

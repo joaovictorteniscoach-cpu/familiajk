@@ -102,7 +102,14 @@ demo_seed_fn = '''function DEMO_SEED(){
     L('l8','Locação de quadra',70,'locacao','tenis'),
     L('l9','Compra de bolas',-320,'despesa','tenis')
   ];
-  return {alunos:alunos,lancamentos:lancamentos,meta:12000,agenda:seedAgenda(),presencas:[],compromissos:[],aviso:'Bem-vindo à demonstração do sistema! Explore à vontade — os dados são fictícios.'};
+  var profs=[{id:'pr1',nome:'Prof. João'},{id:'pr2',nome:'Profa. Marina'},{id:'pr3',nome:'Prof. Rafael'}];
+  alunos.forEach(function(a,i){a.profId=profs[i%3].id;});
+  /* liga os horários da grade aos alunos fictícios: sem isso o filtro por
+     professor não teria o que filtrar na demonstração */
+  var ag=seedAgenda();
+  var aulas=ag.fixos.filter(function(f){return f.tipo==='aula'||f.tipo==='grupo'||f.tipo==='personal';});
+  aulas.forEach(function(f,i){var a=alunos[i%alunos.length];f.alunoId=a.id;f.titulo=a.nome.split(' ')[0];});
+  return {profs:profs,alunos:alunos,lancamentos:lancamentos,meta:12000,agenda:ag,presencas:[],compromissos:[],aviso:'Bem-vindo à demonstração do sistema! Explore à vontade — os dados são fictícios.'};
 }
 '''
 assert "async function load(){" in h
@@ -112,6 +119,12 @@ assert alvo in h
 h = h.replace(alvo, alvo + " else if(window.__DEMO){DB=DEMO_SEED();}", 1)
 
 # ---------- 5) Branding genérico / demonstração ----------
+# ---------- Recursos exclusivos da versão Pro ----------
+# Multi-professor: o app do João tem um professor só, mas a versão vendida para
+# academias precisa disso. Mesmo código, só o interruptor muda.
+assert "const PRO_MULTI=false;" in h, "flag PRO_MULTI sumiu do app-gestao"
+h = h.replace("const PRO_MULTI=false;", "const PRO_MULTI=true;   /* versão Pro */")
+
 h = h.replace("Academia João Victor Tênis · Curitiba", "Sistema de Gestão · Demonstração")
 h = h.replace("Bem-vindo, João 🎾", "Dados fictícios — explore à vontade 🎾")
 h = h.replace('<div class="top-tag">Academia João Victor Tênis</div>', '<div class="top-tag">Academia Demonstração</div>')
