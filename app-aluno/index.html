@@ -1052,13 +1052,28 @@ function hexA(hex,a){const h=String(hex).replace('#','');
   const r=parseInt(h.substr(0,2),16),g=parseInt(h.substr(2,2),16),b=parseInt(h.substr(4,2),16);
   return 'rgba('+r+','+g+','+b+','+a+')';}
 function diaVencEU(){return (EU&&EU.diaVenc)?EU.diaVenc:10;}
-const DIA_BLOQUEIO_PAG=10;   // pagamento pendente bloqueia agendamentos a partir do dia 10 do mês
-function bloqueadoPorPagamento(){return !!(EU&&EU.status!=='pago'&&(new Date().getDate()>=DIA_BLOQUEIO_PAG));}
+/* Agendar exige estar em dia: mensalidade paga E sem saldo negativo.
+   Antes só travava a partir do dia 10 e o saldo negativo passava com um aviso. */
+function bloqueadoPorPagamento(){return !!(EU&&EU.status!=='pago');}
+function bloqueadoPorSaldo(){
+  if(!EU)return false;
+  return (Number(EU.creditos)||0)<0||(Number(EU.credGrupo)||0)<0;
+}
+function bloqueadoParaAgendar(){return bloqueadoPorPagamento()||bloqueadoPorSaldo();}
+function motivoBloqueio(){
+  if(bloqueadoPorPagamento()&&bloqueadoPorSaldo())return 'mensalidade em aberto e aulas a acertar';
+  if(bloqueadoPorPagamento())return 'mensalidade do mês em aberto';
+  const c=Number(EU.creditos)||0,g=Number(EU.credGrupo)||0;
+  const p=[];
+  if(c<0)p.push(fmtCred(-c)+' aula(s) além do pacote');
+  if(g<0)p.push(fmtCred(-g)+' em grupo além do pacote');
+  return p.join(' e ');
+}
 function renderPayLock(){
   const el=document.getElementById('pay-lock');if(!el)return;
-  if(bloqueadoPorPagamento()){
+  if(bloqueadoParaAgendar()){
     el.style.display='block';
-    el.innerHTML='🔒 Pagamento pendente — a partir do dia '+DIA_BLOQUEIO_PAG+' os agendamentos ficam bloqueados até regularizar. Qualquer dúvida, fale com o João.';
+    el.innerHTML='🔒 <b>Agendamento bloqueado</b> — '+motivoBloqueio()+'. Regularize para voltar a marcar aulas. Locação e jogo do torneio seguem liberados. Qualquer dúvida, fale com o João.';
   }else{el.style.display='none';}
 }
 function isPersonal(){return !!(EU&&String(EU.tipo||'').toLowerCase().indexOf('personal')>=0);}
@@ -2213,16 +2228,25 @@ function escolherSlot(hora){
   const modo=slotModo(pickCtx.date,hora);
   document.getElementById('pick-sub').textContent=DIAS_FULL[pickCtx.date.getDay()]+', '+pickCtx.date.getDate()+' de '+MESES[pickCtx.date.getMonth()].toLowerCase()+' · '+hora;
   let b='';
-  if(modo==='aula'){
+  const trava=bloqueadoParaAgendar();
+  if(trava){
+    b+='<div class="pick-note" style="background:#FBEAE7;border-color:#E8C4BC;color:#8E2C1E">🔒 <b>Agendamento bloqueado</b><br>'+motivoBloqueio()
+      +'. Regularize com o João para voltar a marcar aulas.</div>';
+  }
+  if(modo==='aula'&&!trava){
     b+='<button class="pick-opt aula" onclick="pickAula(false)">🎾 Agendar aula<small>usa 1 crédito do seu plano</small></button>';
     b+=grupoRefHtml();
     if(EU&&EU.repos>0)b+='<button class="pick-opt repo" onclick="pickAula(true)">🔁 Marcar reposição<small>usa 1 reposição · você tem '+fmtCred(EU.repos)+'</small></button>';
     b+='<button class="pick-opt loc" onclick="pickLoc()">🔑 Alugar a quadra<small>locação · '+fmt(precoLocacao())+'/h</small></button>';
     b+=pickTorneioHtml();
+  }else if(modo==='aula'&&trava){
+    // locação e torneio continuam liberados: são pagos à parte
+    b+='<button class="pick-opt loc" onclick="pickLoc()">🔑 Alugar a quadra<small>locação · '+fmt(precoLocacao())+'/h</small></button>';
+    b+=pickTorneioHtml();
   }else{
     b+='<div class="pick-note">Neste horário a quadra fica para <b>locação</b> (sem aula).</div>';
     b+='<button class="pick-opt loc" onclick="pickLoc()">🔑 Alugar a quadra<small>locação · '+fmt(precoLocacao())+'/h</small></button>';
-    if(EU&&EU.repos>0)b+='<button class="pick-opt repo" onclick="pickAula(true)">🔁 Pedir reposição aqui<small>combinar com o João</small></button>';
+    if(EU&&EU.repos>0&&!trava)b+='<button class="pick-opt repo" onclick="pickAula(true)">🔁 Pedir reposição aqui<small>combinar com o João</small></button>';
     b+=pickTorneioHtml();
   }
   document.getElementById('pick-opts').innerHTML=b;
@@ -2302,12 +2326,12 @@ function confirmarLocacao(){
   toast('Pedido de locação ('+dur+') enviado ao João! 🎾');
 }
 function abrirBook(hora,repo,torneio){
-  if(!torneio&&bloqueadoPorPagamento()){toast('🔒 Pagamento pendente (bloqueio a partir do dia '+DIA_BLOQUEIO_PAG+'). Regularize para agendar — ou fale com o João. 🙏');return;}
+  if(!torneio&&bloqueadoParaAgendar()){toast('🔒 Agendamento bloqueado — '+motivoBloqueio()+'. Fale com o João para regularizar. 🙏');return;}
   if(torneio){/* jogo do torneio: inscrição já paga, não usa crédito nem reposição */}
   else if(repo){
     if(!(EU&&EU.repos>0)){toast('Você não tem reposições disponíveis. Fale com o João 🙏');return;}
-  } else if(EU.creditos<=0){
-    toast('Sem créditos — a aula ficará como extra (a combinar com o João). 🎾');   // permite agendar mesmo assim
+  } else if(EU.creditos===0){
+    toast('Seus créditos acabaram — esta aula entra como extra, a combinar com o João. 🎾');
   }
   bookCtx={hora,date:new Date(agDate),repo:!!repo,torneio:!!torneio};
   document.getElementById('book-title').textContent=torneio?'Marcar jogo do torneio 🏆':(repo?'Marcar reposição 🔁':'Agendar horário 🎾');
@@ -2319,7 +2343,7 @@ function abrirBook(hora,repo,torneio){
 }
 async function confirmarAgendamento(){
   if(!hasCloud()){toast('Para agendar é preciso estar online 🙏');return;}
-  if(bloqueadoPorPagamento()){document.getElementById('ov-book').classList.remove('on');toast('🔒 Mensalidade vencida — não é possível agendar.');return;}
+  if(!bookCtx.torneio&&bloqueadoParaAgendar()){document.getElementById('ov-book').classList.remove('on');toast('🔒 Agendamento bloqueado — '+motivoBloqueio()+'.');return;}
   const tor=bookCtx.torneio?1:0;
   const rec=(bookCtx.repo||tor)?'pontual':document.getElementById('b-rec').value;
   const repo=bookCtx.repo?1:0;
