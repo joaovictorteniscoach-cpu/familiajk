@@ -207,6 +207,9 @@ input,select{font-family:'DM Sans',sans-serif;font-size:14px}
 .evo-font{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;--lc:#C9A04A;--lcd:#93701C;--lc2:#E4C878}
 /* Faixa dos materiais (Bronze → Carbono) */
 .pick-opt.tor{border-color:#C9A04A;background:#FBF4E4}
+.pick-opt.pay{border-color:#2E7D52;background:#EDF7EE}
+.lock-pay{display:block;width:100%;margin-top:10px;border:none;border-radius:10px;padding:11px;background:#2E7D52;color:#fff;font-size:13.5px;font-weight:800}
+.lock-wait{margin-top:9px;font-size:12.5px;font-weight:700;opacity:.9}
 #ov-autoaval .modal{padding-top:0}
 .modal-head{position:sticky;top:0;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--cream);padding:18px 0 9px;box-shadow:0 6px 10px -8px rgba(42,32,22,.25)}
 .modal-head h3{margin:0}
@@ -891,12 +894,12 @@ function meuKey(){return MEU.codigo?MYKEY+'-'+MEU.codigo:MYKEY;}
 async function carregarMeuNuvem(){
   if(!hasCloud()||!MEU.codigo)return;
   const raw=await cloudGet(meuKey());
-  if(raw){try{const c=JSON.parse(raw);MEU.pedidos=c.pedidos||MEU.pedidos||[];MEU.cancelados=c.cancelados||MEU.cancelados||[];MEU.confirmadas=c.confirmadas||MEU.confirmadas||[];if(c.termoAceitoVer!==undefined)MEU.termoAceitoVer=c.termoAceitoVer;if(c.termoAceitoEm!==undefined)MEU.termoAceitoEm=c.termoAceitoEm;if(c.renovouMes!==undefined)MEU.renovouMes=c.renovouMes;if(c.feriadoOk!==undefined)MEU.feriadoOk=c.feriadoOk;}catch(e){}}
+  if(raw){try{const c=JSON.parse(raw);MEU.pedidos=c.pedidos||MEU.pedidos||[];MEU.cancelados=c.cancelados||MEU.cancelados||[];MEU.confirmadas=c.confirmadas||MEU.confirmadas||[];if(c.termoAceitoVer!==undefined)MEU.termoAceitoVer=c.termoAceitoVer;if(c.termoAceitoEm!==undefined)MEU.termoAceitoEm=c.termoAceitoEm;if(c.renovouMes!==undefined)MEU.renovouMes=c.renovouMes;if(c.feriadoOk!==undefined)MEU.feriadoOk=c.feriadoOk;if(c.pagoAviso!==undefined)MEU.pagoAviso=c.pagoAviso;}catch(e){}}
 }
 async function saveMeu(){
   const json=JSON.stringify(MEU);
   lsSet(MYKEY,json); // salva já no aparelho (lembra o login)
-  if(hasCloud()&&MEU.codigo)cloudSet(meuKey(),JSON.stringify({pedidos:MEU.pedidos,cancelados:MEU.cancelados,confirmadas:MEU.confirmadas,termoAceitoVer:MEU.termoAceitoVer,termoAceitoEm:MEU.termoAceitoEm,renovouMes:MEU.renovouMes,feriadoOk:MEU.feriadoOk})); // pedidos por aluno na nuvem
+  if(hasCloud()&&MEU.codigo)cloudSet(meuKey(),JSON.stringify({pedidos:MEU.pedidos,cancelados:MEU.cancelados,confirmadas:MEU.confirmadas,termoAceitoVer:MEU.termoAceitoVer,termoAceitoEm:MEU.termoAceitoEm,renovouMes:MEU.renovouMes,feriadoOk:MEU.feriadoOk,pagoAviso:MEU.pagoAviso})); // pedidos por aluno na nuvem
 }
 async function refresh(silent){
   let raw=null;
@@ -1073,8 +1076,35 @@ function renderPayLock(){
   const el=document.getElementById('pay-lock');if(!el)return;
   if(bloqueadoParaAgendar()){
     el.style.display='block';
-    el.innerHTML='🔒 <b>Agendamento bloqueado</b> — '+motivoBloqueio()+'. Regularize para voltar a marcar aulas. Locação e jogo do torneio seguem liberados. Qualquer dúvida, fale com o João.';
+    const esperando=pagamentoEmAnalise();
+    let h='🔒 <b>Agendamento bloqueado</b> — '+motivoBloqueio()+'. Locação e jogo do torneio seguem liberados.';
+    if(esperando){
+      h+='<div class="lock-wait">⏳ Pagamento avisado ao João em '+esperando+'. Assim que ele confirmar, libera sozinho.</div>';
+    }else if(bloqueadoPorPagamento()){
+      h+='<button class="lock-pay" onclick="irPagar()">💳 Pagar agora pelo app</button>';
+    }else{
+      h+='<div class="lock-wait">Fale com o João para acertar as aulas extras.</div>';
+    }
+    el.innerHTML=h;
   }else{el.style.display='none';}
+}
+/* O aluno já avisou que pagou? Enquanto o João não confirma, mostramos que está
+   em análise em vez de repetir o botão de pagar. */
+function pagamentoEmAnalise(){
+  const p=MEU.pagoAviso;
+  if(!p||!p.ts)return '';
+  if(Date.now()-(p.ts||0)>3*864e5)return '';   // depois de 3 dias volta a oferecer pagar
+  const d=new Date(p.ts);
+  return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')
+    +' às '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+}
+function irPagar(){
+  goAluno('inicio',document.querySelector('.nav button'));
+  setTimeout(()=>{
+    const box=document.getElementById('pay-box');
+    if(box)box.scrollIntoView({behavior:'smooth',block:'center'});
+    toast('Escolha como quer pagar 👇');
+  },220);
 }
 function isPersonal(){return !!(EU&&String(EU.tipo||'').toLowerCase().indexOf('personal')>=0);}
 function isGrupo(){return !!(EU&&['Grupo','Dupla','Trio','Quarteto'].indexOf(EU.tipo)>=0);}
@@ -1823,7 +1853,15 @@ function notificarPedido(texto){
 async function enviarPedido(p){
   if(!hasCloud())return;
   const rec=Object.assign({codigo:MEU.codigo,nome:EU?EU.nome:'',ts:Date.now()},p);
-  for(let i=0;i<3;i++){try{await window.fbDB.ref('jvtenis/fila_pedidos').push(rec);return;}catch(e){await new Promise(s=>setTimeout(s,400*(i+1)));}}
+  for(let i=0;i<3;i++){
+    try{
+      await window.fbDB.ref('jvtenis/fila_pedidos').push(rec);
+      // aviso de mensalidade fica guardado no aparelho: e o que sustenta o
+      // "em analise" ate o Joao marcar pago la na Gestao
+      if(p&&p.kind==='mensalidade'){MEU.pagoAviso={ts:rec.ts,valor:Number(p.valor)||0};await saveMeu();try{renderPayLock();}catch(e){}}
+      return;
+    }catch(e){await new Promise(s=>setTimeout(s,400*(i+1)));}
+  }
 }
 /* ===== Planos (ver preços / pedir plano a qualquer momento) ===== */
 function planosTabela(){
@@ -2230,8 +2268,11 @@ function escolherSlot(hora){
   let b='';
   const trava=bloqueadoParaAgendar();
   if(trava){
-    b+='<div class="pick-note" style="background:#FBEAE7;border-color:#E8C4BC;color:#8E2C1E">🔒 <b>Agendamento bloqueado</b><br>'+motivoBloqueio()
-      +'. Regularize com o João para voltar a marcar aulas.</div>';
+    b+='<div class="pick-note" style="background:#FBEAE7;border-color:#E8C4BC;color:#8E2C1E">🔒 <b>Agendamento bloqueado</b><br>'+motivoBloqueio()+'.</div>';
+    if(bloqueadoPorPagamento()&&!pagamentoEmAnalise())
+      b+='<button class="pick-opt pay" onclick="document.getElementById(\'ov-pick\').classList.remove(\'on\');irPagar()">💳 Pagar minha mensalidade<small>Pix, cartão ou dinheiro — libera assim que o João confirmar</small></button>';
+    else if(pagamentoEmAnalise())
+      b+='<div class="pick-note">⏳ Pagamento avisado ao João. Assim que ele confirmar, seus agendamentos liberam.</div>';
   }
   if(modo==='aula'&&!trava){
     b+='<button class="pick-opt aula" onclick="pickAula(false)">🎾 Agendar aula<small>usa 1 crédito do seu plano</small></button>';
@@ -2363,6 +2404,29 @@ async function confirmarAgendamento(){
   toast(tor?'🏆 Jogo do torneio enviado ao João!':(repo?'✓ Reposição enviada ao João!':'✓ Agendamento enviado ao João! Aparece como confirmado em breve.'));
   setTimeout(()=>abrirWhatsApp('5541995415712','Olá João! Acabei de '+(tor?'marcar um *jogo do torneio*':(repo?'pedir uma *reposição*':'*reservar* uma aula'))+' para '+fmtData(pedido.data)+' às '+pedido.hora+'. 🎾'),700);
 }
+
+/* ===== O bloqueio precisa cair sozinho =====
+   Antes o app só relia os dados ao abrir ou no botão Atualizar: o aluno pagava,
+   o João confirmava e ele continuava vendo "bloqueado" até reabrir. Agora
+   reconsulta de tempos em tempos e ao voltar para o app, e avisa quando libera. */
+let _bloqAntes=null;
+async function checarLiberacao(){
+  if(!EU||!hasCloud())return;
+  const antes=bloqueadoParaAgendar();
+  const ok=await refresh(true);
+  if(!ok)return;
+  render();
+  const agora=bloqueadoParaAgendar();
+  if(antes&&!agora){
+    // o aviso ja cumpriu o papel: limpa para o mes que vem comecar do zero
+    if(MEU.pagoAviso){MEU.pagoAviso=null;saveMeu();}
+    toast('✅ Pagamento confirmado — você já pode agendar!');
+    mostrarAviso('✅ Pagamento confirmado','Seus agendamentos foram liberados 🎾','jv-icone-aluno.png');
+  }
+  _bloqAntes=agora;
+}
+setInterval(()=>{if(!document.hidden)checarLiberacao();},60000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js').catch(function(){});});}
