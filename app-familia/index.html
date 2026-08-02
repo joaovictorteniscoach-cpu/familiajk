@@ -47,6 +47,10 @@ body.mode-invest{--accent:var(--teal); --accent-soft:var(--teal-soft); --accent-
 .ms.on{border-color:transparent;font-weight:600}
 #ms-contas.on{background:linear-gradient(150deg,var(--gold),#b8861f);color:#1a1304}
 #ms-invest.on{background:linear-gradient(150deg,var(--teal),#2f8f7c);color:#04231d}
+.empswitch{padding:0 0 4px;margin:14px 0 2px}
+.empswitch .ms{font-size:13.5px;padding:8px 16px}
+#emp-jv.on{background:linear-gradient(150deg,var(--gold),#b8861f);color:#1a1304}
+#emp-ks.on{background:linear-gradient(150deg,#d99ba6,#b8737f);color:#2a1015}
 .tabs{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:10px 12px 4px;max-width:1120px;margin:0 auto}
 .tab{flex:0 0 auto;background:var(--surface2);border:1px solid var(--line);color:var(--muted);font-family:inherit;font-size:12.5px;font-weight:500;padding:7px 12px;border-radius:20px;cursor:pointer;white-space:nowrap;transition:.15s}
 .tab:hover{color:var(--text);border-color:var(--accent)}
@@ -271,8 +275,12 @@ select.imp-sel{background:var(--surface2);border:1px solid var(--accent);color:v
 </section>
 
 <section data-tab="c-empresa">
+  <div class="modeswitch empswitch">
+    <button class="ms on" id="emp-jv" onclick="setEmp('jv')"><span class="ic">🎾</span>Empresa JV</button>
+    <button class="ms" id="emp-ks" onclick="setEmp('ks')"><span class="ic">💅</span>Studio Kassiana</button>
+  </div>
   <div class="card">
-    <h2>Empresa — resultado do mês</h2><div class="sub">Receita menos despesa = lucro do negócio. Mantenha separado das contas pessoais.</div>
+    <h2 id="emp-h-res">Empresa JV — resultado do mês</h2><div class="sub">Receita menos despesa = lucro do negócio. Cada empresa é independente e fica fora do orçamento da família.</div>
     <div class="kpis">
       <div class="kpi"><div class="k">Receita</div><div class="v up" id="emp-rec">—</div></div>
       <div class="kpi"><div class="k">Despesa</div><div class="v down" id="emp-desp">—</div></div>
@@ -282,17 +290,17 @@ select.imp-sel{background:var(--surface2);border:1px solid var(--accent);color:v
     <p class="note">“Margem” é o lucro dividido pela receita — quanto sobra de cada R$ 1 que entra no negócio.</p>
   </div>
   <div class="card">
-    <h2>Receitas da empresa</h2><div class="sub">Entradas do negócio — mensalidades, aulas avulsas, etc.</div>
+    <h2 id="emp-h-rec">Receitas · Empresa JV</h2><div class="sub">Entradas do negócio — mensalidades, aulas avulsas, etc.</div>
     <div class="scroll"><table class="tbl" id="tbl-emp-rec"></table></div>
     <button class="addbtn" onclick="addEmpRec()">+ nova receita</button>
   </div>
   <div class="card">
-    <h2>Despesas da empresa</h2><div class="sub">Custos do negócio, separados das contas pessoais.</div>
+    <h2 id="emp-h-desp">Despesas · Empresa JV</h2><div class="sub">Custos do negócio, separados das contas pessoais.</div>
     <div class="scroll"><table class="tbl" id="tbl-empresa"></table></div>
-    <button class="addbtn" onclick="addPess('empresa')">+ nova despesa</button>
+    <button class="addbtn" onclick="addPess(empCur().bills,'tbl-empresa')">+ nova despesa</button>
   </div>
   <div class="card">
-    <h2>Fechamento mensal da empresa</h2><div class="sub">Feche o mês e acompanhe a evolução do lucro do negócio.</div>
+    <h2 id="emp-h-fech">Fechamento mensal · Empresa JV</h2><div class="sub">Feche o mês e acompanhe a evolução do lucro do negócio.</div>
     <div class="chartbox"><canvas id="empChart"></canvas></div>
     <div class="scroll" style="margin-top:16px"><table class="tbl" id="tbl-emp-resumo"></table></div>
     <button class="addbtn" onclick="snapEmpMonth()">📸 fechar o mês atual</button>
@@ -613,7 +621,7 @@ select.imp-sel{background:var(--surface2);border:1px solid var(--accent);color:v
 
 <script>
 const KEY="familiajk_v1";
-const TABS_CONTAS=[["c-painel","Painel"],["c-casa","Casa"],["c-joao","João"],["c-esposa","Kassiana"],["c-empresa","Empresa"],["c-cartao","Cartões"],["c-recebidos","Recebidos"],["c-resumo","Resumo"],["c-conselhos","Conselhos"]];
+const TABS_CONTAS=[["c-painel","Painel"],["c-casa","Casa"],["c-joao","João"],["c-esposa","Kassiana"],["c-empresa","Empresas"],["c-cartao","Cartões"],["c-recebidos","Recebidos"],["c-resumo","Resumo"],["c-conselhos","Conselhos"]];
 const TABS_INVEST=[["i-painel","Painel"],["i-carteira","Carteira"],["i-aportes","Aportes"],["i-mensal","Mensal"],["i-anual","Anual"],["i-projecao","Projeção"],["i-analise","Análise"],["i-ganhos","Ganhos"],["i-plano","Plano"],["i-metas","Metas"]];
 const TABS_SHARED=[["nuvem","Nuvem"],["guia","Guia"]];
 const CLASSES=["Renda Fixa / Caixa","Ações (EUA)","Ouro","Prata","Cripto","Setoriais","Outros"];
@@ -658,7 +666,12 @@ const DEFAULT={
    empresaReceitas:[
     ["3500.00","05","Mensalidades de alunos"],["800.00","15","Aulas avulsas / day use"]
    ].map(x=>({valor:+x[0],data:x[1],desc:x[2]})),
-   empresaResumo:[]
+   empresaResumo:[],
+   /* Studio Kassiana — segundo negócio, começa vazio */
+   empresaKS:[],
+   empresaReceitasKS:[],
+   empresaResumoKS:[],
+   empSel:"jv"
  },
  invest:{
    cambio:5.08,
@@ -747,14 +760,17 @@ function migrateContas(o){
   if(!o.renda)o.renda=structuredClone(d.renda);
   if(!Array.isArray(o.empresaReceitas))o.empresaReceitas=structuredClone(d.empresaReceitas);
   if(!Array.isArray(o.empresaResumo))o.empresaResumo=[];
+  /* Studio Kassiana — segundo negócio (os dados antigos ficam todos na Empresa JV) */
+  ['empresaKS','empresaReceitasKS','empresaResumoKS'].forEach(k=>{if(!Array.isArray(o[k]))o[k]=[]});
+  if(!o.empSel)o.empSel='jv';
   /* pago por mês */
   if(typeof o.pagos!=='object'||o.pagos===null)o.pagos={};
   if(!o.mesSel)o.mesSel=curMonthKey();
-  ['casa','joao','esposa','empresa','cartoes'].forEach(k=>o[k].forEach(b=>{if(!b.id)b.id=uid();}));
+  ['casa','joao','esposa','empresa','empresaKS','cartoes'].forEach(k=>o[k].forEach(b=>{if(!b.id)b.id=uid();}));
   /* uma única vez: migra o "pago" antigo (por conta) para o mês atual */
   if(!o._pagoMigrado){
     const mk=curMonthKey();o.pagos[mk]=o.pagos[mk]||{};
-    ['casa','joao','esposa','empresa','cartoes'].forEach(k=>o[k].forEach(b=>{if(b.pago)o.pagos[mk][b.id]=true;}));
+    ['casa','joao','esposa','empresa','empresaKS','cartoes'].forEach(k=>o[k].forEach(b=>{if(b.pago)o.pagos[mk][b.id]=true;}));
     o._pagoMigrado=true;
   }
   return o;
@@ -890,7 +906,7 @@ function renderPess(k,tid){
   h+=`<tr class="sumrow"><td>Subtotal</td><td></td><td id="${k}-tot"></td><td id="${k}-pago"></td><td></td></tr>`;
   document.getElementById(tid).innerHTML=h;set(k+'-tot',brl(pessTotal(k)));set(k+'-pago',pagoPess(k)?('pago '+brl(pagoPess(k))):'');save();tuneInputs();
 }
-function addPess(k){D.contas[k].push({id:uid(),nome:"Nova conta",valor:0,venc:"",pago:false});renderPess(k,'tbl-'+k);refreshCon()}
+function addPess(k,tid){D.contas[k].push({id:uid(),nome:"Nova conta",valor:0,venc:"",pago:false});renderPess(k,tid||'tbl-'+k);refreshCon()}
 
 function renderCartao(){
   let h='<tr><th>Cartão</th><th class="center">Melhor dia</th><th>Limite (R$)</th><th>Fatura (R$)</th><th>Uso</th><th class="center">Pago</th><th></th></tr>';
@@ -937,7 +953,8 @@ function allBills(){
   D.contas.casa.forEach(b=>arr.push({grupo:'Casa',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
   D.contas.joao.forEach(b=>arr.push({grupo:'João',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
   D.contas.esposa.forEach(b=>arr.push({grupo:'Kassiana',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
-  D.contas.empresa.forEach(b=>arr.push({grupo:'Empresa',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
+  D.contas.empresa.forEach(b=>arr.push({grupo:'Empresa JV',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
+  D.contas.empresaKS.forEach(b=>arr.push({grupo:'Studio Kassiana',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
   return arr;
 }
 function renderDue(){
@@ -969,7 +986,7 @@ function drawConPainel(){
   set('ch-total',brl(tot));set('ch-pago',brl(pago));set('ch-cartao',brl(cartFalta));
   document.getElementById('ch-bar').style.width=(tot?Math.min(100,pago/tot*100):0)+'%';
   set('ch-preta',brl(casaPretaTotal()));set('ch-preto',brl(casaPretoTotal()));
-  const gl=['Casa','João','Kassiana','Empresa'],gv=[casaTotal(),pessTotal('joao'),pessTotal('esposa'),pessTotal('empresa')];
+  const gl=['Casa','João','Kassiana','Empresa JV','Studio Kassiana'],gv=[casaTotal(),pessTotal('joao'),pessTotal('esposa'),pessTotal('empresa'),pessTotal('empresaKS')];
   destroy('grupo');charts.grupo=new Chart(document.getElementById('grupoChart'),{type:'doughnut',
     data:{labels:gl,datasets:[{data:gv,backgroundColor:PAL,borderColor:COL.ink,borderWidth:3}]},
     options:{cutout:'60%',plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:8}},tooltip:{callbacks:{label:c=>c.label+': '+brl(c.raw)}}}}});
@@ -1001,7 +1018,7 @@ function drawResumo(){
 }
 function monthLabel(d){const m=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];return m[d.getMonth()]+'/'+String(d.getFullYear()).slice(2);}
 function fmtMonth(d){const s=d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});return s.charAt(0).toUpperCase()+s.slice(1);}
-function renderContasMonth(){renderCasa();renderPess('joao','tbl-joao');renderPess('esposa','tbl-esposa');renderPess('empresa','tbl-empresa');renderCartao();renderReceb();drawConPainel();}
+function renderContasMonth(){renderCasa();renderPess('joao','tbl-joao');renderPess('esposa','tbl-esposa');renderPess(empCur().bills,'tbl-empresa');renderCartao();renderReceb();drawConPainel();}
 function setMonth(key){D.contas.mesSel=key;save();updateMonthBar();renderContasMonth();}
 function stepMonth(delta){const d=selMonthDate();d.setMonth(d.getMonth()+delta);setMonth(keyOf(d));}
 function goToday(){setMonth(curMonthKey());}
@@ -1016,9 +1033,17 @@ function snapConMonth(){
 }
 function addResumo(){D.contas.resumo.push({mes:"",contas:null,pago:null,recebido:null});drawResumo()}
 
-/* ===================== EMPRESA (mini-DRE) ===================== */
-function empReceitaTotal(){return D.contas.empresaReceitas.reduce((s,r)=>s+(+r.valor||0),0)}
-function empDespesaTotal(){return pessTotal('empresa')}
+/* ===================== EMPRESAS (mini-DRE) ===================== */
+/* Dois negócios independentes. A Empresa JV usa as chaves originais,
+   então os dados que já existiam continuam exatamente onde estavam. */
+const EMPS={
+  jv:{nome:'Empresa JV',      bills:'empresa',   rec:'empresaReceitas',   res:'empresaResumo'},
+  ks:{nome:'Studio Kassiana', bills:'empresaKS', rec:'empresaReceitasKS', res:'empresaResumoKS'}
+};
+function empCur(){return EMPS[D.contas.empSel]||EMPS.jv;}
+function setEmp(k){D.contas.empSel=(EMPS[k]?k:'jv');save();drawEmpresa();}
+function empReceitaTotal(){return D.contas[empCur().rec].reduce((s,r)=>s+(+r.valor||0),0)}
+function empDespesaTotal(){return pessTotal(empCur().bills)}
 function empLucro(){return empReceitaTotal()-empDespesaTotal()}
 function refreshEmpKPI(){
   const rec=empReceitaTotal(),desp=empDespesaTotal(),lucro=rec-desp,marg=rec?lucro/rec:0;
@@ -1027,46 +1052,58 @@ function refreshEmpKPI(){
   const em=document.getElementById('emp-margem');if(em){em.textContent=rec?pct(marg):'—';em.className='v '+(marg>=0.2?'up':(marg>=0?'goldc':'down'));}
 }
 function renderEmpRec(){
+  const rk=empCur().rec;
   let h='<tr><th>Dia</th><th>Descrição</th><th>Valor (R$)</th><th></th></tr>';
-  D.contas.empresaReceitas.forEach((r,i)=>{h+=`<tr>
-    <td><input class="cell sm" style="text-align:center" value="${esc(r.data)}" oninput="D.contas.empresaReceitas[${i}].data=this.value;save()"></td>
-    <td><input class="cell txt" value="${esc(r.desc)}" oninput="D.contas.empresaReceitas[${i}].desc=this.value;save()"></td>
-    <td><input class="cell" type="number" step="0.01" value="${r.valor}" oninput="D.contas.empresaReceitas[${i}].valor=+this.value;refreshEmp()"></td>
-    <td><button class="iconbtn" onclick="D.contas.empresaReceitas.splice(${i},1);renderEmpRec();refreshEmp()">×</button></td></tr>`;});
+  D.contas[rk].forEach((r,i)=>{h+=`<tr>
+    <td><input class="cell sm" style="text-align:center" value="${esc(r.data)}" oninput="D.contas.${rk}[${i}].data=this.value;save()"></td>
+    <td><input class="cell txt" value="${esc(r.desc)}" oninput="D.contas.${rk}[${i}].desc=this.value;save()"></td>
+    <td><input class="cell" type="number" step="0.01" value="${r.valor}" oninput="D.contas.${rk}[${i}].valor=+this.value;refreshEmp()"></td>
+    <td><button class="iconbtn" onclick="D.contas.${rk}.splice(${i},1);renderEmpRec();refreshEmp()">×</button></td></tr>`;});
   h+=`<tr class="sumrow"><td>Total receita</td><td></td><td id="emp-rec-tot"></td><td></td></tr>`;
   document.getElementById('tbl-emp-rec').innerHTML=h;set('emp-rec-tot',brl(empReceitaTotal()));save();tuneInputs();
 }
-function addEmpRec(){D.contas.empresaReceitas.push({valor:0,data:"",desc:""});renderEmpRec();refreshEmp()}
+function addEmpRec(){D.contas[empCur().rec].push({valor:0,data:"",desc:""});renderEmpRec();refreshEmp()}
 function refreshEmp(){refreshEmpKPI();save();}
 function renderEmpResumo(){
+  const sk=empCur().res;
   let h='<tr><th>Mês</th><th>Receita (R$)</th><th>Despesa (R$)</th><th>Lucro</th><th>Margem</th><th></th></tr>';
-  D.contas.empresaResumo.forEach((m,i)=>{const lucro=(+m.receita||0)-(+m.despesa||0),marg=m.receita?lucro/m.receita:0;h+=`<tr>
-    <td><input class="cell txt" style="min-width:78px" value="${esc(m.mes)}" oninput="D.contas.empresaResumo[${i}].mes=this.value;drawEmp()"></td>
-    <td><input class="cell" type="number" step="0.01" value="${m.receita??''}" oninput="D.contas.empresaResumo[${i}].receita=this.value===''?null:+this.value;drawEmp()"></td>
-    <td><input class="cell" type="number" step="0.01" value="${m.despesa??''}" oninput="D.contas.empresaResumo[${i}].despesa=this.value===''?null:+this.value;drawEmp()"></td>
+  D.contas[sk].forEach((m,i)=>{const lucro=(+m.receita||0)-(+m.despesa||0),marg=m.receita?lucro/m.receita:0;h+=`<tr>
+    <td><input class="cell txt" style="min-width:78px" value="${esc(m.mes)}" oninput="D.contas.${sk}[${i}].mes=this.value;drawEmp()"></td>
+    <td><input class="cell" type="number" step="0.01" value="${m.receita??''}" oninput="D.contas.${sk}[${i}].receita=this.value===''?null:+this.value;drawEmp()"></td>
+    <td><input class="cell" type="number" step="0.01" value="${m.despesa??''}" oninput="D.contas.${sk}[${i}].despesa=this.value===''?null:+this.value;drawEmp()"></td>
     <td class="${lucro>=0?'up':'down'}">${brl(lucro)}</td>
     <td class="${marg>=0?'up':'down'}">${m.receita?pct(marg):'—'}</td>
-    <td><button class="iconbtn" onclick="D.contas.empresaResumo.splice(${i},1);renderEmpResumo();drawEmp()">×</button></td></tr>`;});
+    <td><button class="iconbtn" onclick="D.contas.${sk}.splice(${i},1);renderEmpResumo();drawEmp()">×</button></td></tr>`;});
   document.getElementById('tbl-emp-resumo').innerHTML=h;save();tuneInputs();
 }
 function drawEmp(){
   renderEmpResumo();
+  const rows=D.contas[empCur().res];
   destroy('emp');charts.emp=new Chart(document.getElementById('empChart'),{type:'bar',
-    data:{labels:D.contas.empresaResumo.map(m=>m.mes),datasets:[
-      {label:'Receita',data:D.contas.empresaResumo.map(m=>m.receita),backgroundColor:'rgba(79,191,168,.6)',borderRadius:5},
-      {label:'Despesa',data:D.contas.empresaResumo.map(m=>m.despesa),backgroundColor:'rgba(232,117,95,.55)',borderRadius:5},
-      {label:'Lucro',data:D.contas.empresaResumo.map(m=>(+m.receita||0)-(+m.despesa||0)),type:'line',borderColor:COL.gold,borderWidth:2.5,tension:.3,pointRadius:3,pointBackgroundColor:COL.gold}]},
+    data:{labels:rows.map(m=>m.mes),datasets:[
+      {label:'Receita',data:rows.map(m=>m.receita),backgroundColor:'rgba(79,191,168,.6)',borderRadius:5},
+      {label:'Despesa',data:rows.map(m=>m.despesa),backgroundColor:'rgba(232,117,95,.55)',borderRadius:5},
+      {label:'Lucro',data:rows.map(m=>(+m.receita||0)-(+m.despesa||0)),type:'line',borderColor:COL.gold,borderWidth:2.5,tension:.3,pointRadius:3,pointBackgroundColor:COL.gold}]},
     options:{plugins:{legend:{position:'bottom',labels:{boxWidth:12}}},scales:{y:moneyAxis,x:{grid:{display:false}}}}});
 }
 function snapEmpMonth(){
-  const lbl=monthLabel(new Date()),row={mes:lbl,receita:empReceitaTotal(),despesa:empDespesaTotal()};
-  const ex=D.contas.empresaResumo.find(m=>m.mes===lbl);
-  if(ex){Object.assign(ex,row);}else{D.contas.empresaResumo.push(row);}
+  const emp=empCur(),lbl=monthLabel(selMonthDate()),row={mes:lbl,receita:empReceitaTotal(),despesa:empDespesaTotal()};
+  const ex=D.contas[emp.res].find(m=>m.mes===lbl);
+  if(ex){Object.assign(ex,row);}else{D.contas[emp.res].push(row);}
   drawEmp();save();
-  alert('Mês '+lbl+' fechado.\nReceita: '+brl(row.receita)+'\nDespesa: '+brl(row.despesa)+'\nLucro: '+brl(row.receita-row.despesa));
+  alert(emp.nome+' — mês '+lbl+' fechado.\nReceita: '+brl(row.receita)+'\nDespesa: '+brl(row.despesa)+'\nLucro: '+brl(row.receita-row.despesa));
 }
-function addEmpResumo(){D.contas.empresaResumo.push({mes:"",receita:null,despesa:null});drawEmp()}
-function drawEmpresa(){renderEmpRec();refreshEmpKPI();drawEmp();}
+function addEmpResumo(){D.contas[empCur().res].push({mes:"",receita:null,despesa:null});drawEmp()}
+function drawEmpresa(){
+  const emp=empCur();
+  document.getElementById('emp-jv').classList.toggle('on',D.contas.empSel!=='ks');
+  document.getElementById('emp-ks').classList.toggle('on',D.contas.empSel==='ks');
+  set('emp-h-res',emp.nome+' — resultado do mês');
+  set('emp-h-rec','Receitas · '+emp.nome);
+  set('emp-h-desp','Despesas · '+emp.nome);
+  set('emp-h-fech','Fechamento mensal · '+emp.nome);
+  renderEmpRec();renderPess(emp.bills,'tbl-empresa');refreshEmpKPI();drawEmp();
+}
 
 /* ===================== CONSELHOS (contador + consultor + analista) ===================== */
 function renderConselhos(){
@@ -1113,7 +1150,11 @@ function renderConselhos(){
     if(apl>0)tips.push([g>=0?'good':'warn2','🌎','Resultado global',(g>=0?'Os ETFs lá fora acumulam ganho de ':'Os ETFs lá fora estão negativos em ')+usd(Math.abs(g))+' ('+pct(g/apl)+'). Em investimento de longo prazo oscilação é normal — o que constrói patrimônio é o aporte constante, não acertar o momento.']);
     tips.push(['info','🔁','Aporte constante vence o tempo','Vocês aportam todo mês — esse é o maior trunfo. Mantenha o valor automático e aumente um pouco a cada reajuste de renda; os juros compostos fazem o resto (veja a aba Projeção).']);
   }
-  if(pessTotal('empresa')>0)tips.push(['info','🏢','Empresa separada','As contas da empresa ('+brl(pessTotal('empresa'))+'/mês) ficam fora do orçamento familiar de propósito. Mantenha contas pessoais e da empresa em carteiras separadas — facilita o imposto e dá clareza do lucro real.']);
+  const empJV=pessTotal('empresa'),empKS=pessTotal('empresaKS');
+  if(empJV+empKS>0){
+    const det=[];if(empJV>0)det.push('Empresa JV '+brl(empJV));if(empKS>0)det.push('Studio Kassiana '+brl(empKS));
+    tips.push(['info','🏢','Empresas separadas','As contas das empresas ('+det.join(' · ')+' por mês) ficam fora do orçamento familiar de propósito. Mantenha a carteira de cada negócio separada da pessoal — facilita o imposto e dá clareza do lucro real de cada um.']);
+  }
   const cp=casaPretaTotal(),ct=casaPretoTotal();
   if(cp+ct>0){const dif=Math.abs(cp-ct);if(dif>(cp+ct)*0.15)tips.push(['warn2','🤝','Divisão da casa desigual',esc(D.nomes.preta)+' '+brl(cp)+' × '+esc(D.nomes.preto)+' '+brl(ct)+'. Se a ideia é dividir igual, use “dividir tudo no meio” na aba Casa.']);}
   document.getElementById('adviceList').innerHTML=tips.map(t=>`<div class="advice ${t[0]}"><h4><span class="ic">${t[1]}</span>${t[2]}</h4><p>${t[3]}</p></div>`).join('');
@@ -1721,7 +1762,7 @@ function initFields(){
 }
 function renderAll(){
   renderNac();renderGlob();renderAportes();renderMensal();renderAnual();refreshCarteira();drawInvPainel();onProj();renderGoals();renderAlloc();renderGanhos();onPlano();
-  renderCasa();renderPess('joao','tbl-joao');renderPess('esposa','tbl-esposa');renderPess('empresa','tbl-empresa');renderEmpRec();refreshEmpKPI();renderEmpResumo();renderCartao();renderReceb();renderResumo();drawConPainel();renderConselhos();
+  renderCasa();renderPess('joao','tbl-joao');renderPess('esposa','tbl-esposa');renderPess(empCur().bills,'tbl-empresa');renderEmpRec();refreshEmpKPI();renderEmpResumo();renderCartao();renderReceb();renderResumo();drawConPainel();renderConselhos();
   tuneInputs();
 }
 document.addEventListener('focusin',e=>{const t=e.target;if(t&&t.tagName==='INPUT'&&t.type!=='checkbox'){setTimeout(()=>{try{t.select()}catch(_){}},0);}});
