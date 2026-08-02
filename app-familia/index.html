@@ -50,6 +50,9 @@ body.mode-invest{--accent:var(--teal); --accent-soft:var(--teal-soft); --accent-
 .tab{flex:0 0 auto;background:var(--surface2);border:1px solid var(--line);color:var(--muted);font-family:inherit;font-size:12.5px;font-weight:500;padding:7px 12px;border-radius:20px;cursor:pointer;white-space:nowrap;transition:.15s}
 .tab:hover{color:var(--text);border-color:var(--accent)}
 .tab.active{background:linear-gradient(150deg,var(--accent),var(--accent-d));color:#1a1304;border-color:transparent;font-weight:600}
+.monthbar{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin:16px 0 2px}
+.monthbar .mb-nav{font-size:18px;line-height:1;padding:4px 14px;border-radius:10px}
+.monthlabel{font-family:'Fraunces',serif;font-size:20px;font-weight:600;color:var(--text);min-width:190px;text-align:center;text-transform:capitalize}
 section[data-tab]{display:none;animation:fade .35s ease}
 section[data-tab].on{display:block}
 @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -198,9 +201,15 @@ select.cell option{background:var(--surface)}
 
 <!-- ===================== CONTAS ===================== -->
 <section data-tab="c-painel">
+  <div class="monthbar">
+    <button class="iconbtn mb-nav" onclick="stepMonth(-1)" aria-label="Mês anterior">‹</button>
+    <div class="monthlabel" id="monthLabel">—</div>
+    <button class="iconbtn mb-nav" onclick="stepMonth(1)" aria-label="Próximo mês">›</button>
+    <button class="iconbtn primary" id="monthToday" onclick="goToday()" style="display:none">Hoje</button>
+  </div>
   <div class="grid three">
     <div class="card hero">
-      <div class="eyebrow">Falta pagar este mês</div>
+      <div class="eyebrow" id="ch-eyebrow">Falta pagar este mês</div>
       <div class="bignum" id="ch-apagar">—</div>
       <div class="rule"></div>
       <div class="split">
@@ -665,6 +674,15 @@ const DEFAULT={
 };
 let D;
 
+/* ---------- ids + mês selecionado (pago por mês) ---------- */
+function uid(){return 'b'+Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-4);}
+function keyOf(dt){return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0');}
+function curMonthKey(){return keyOf(new Date());}
+function selMonthDate(){const k=(D&&D.contas&&D.contas.mesSel)||curMonthKey();const p=k.split('-');return new Date(+p[0],(+p[1]||1)-1,1);}
+function pagoMap(key){key=key||D.contas.mesSel;D.contas.pagos=D.contas.pagos||{};D.contas.pagos[key]=D.contas.pagos[key]||{};return D.contas.pagos[key];}
+function pagoGet(id,key){if(!id)return false;const m=(D.contas.pagos||{})[key||D.contas.mesSel];return!!(m&&m[id]);}
+function pagoSet(id,val,key){if(!id)return;const m=pagoMap(key);if(val)m[id]=true;else delete m[id];save();}
+
 /* ---------- migração ---------- */
 function migrateInvest(o){
   o=o||{};const d=DEFAULT.invest;
@@ -694,6 +712,16 @@ function migrateContas(o){
   if(!o.renda)o.renda=structuredClone(d.renda);
   if(!Array.isArray(o.empresaReceitas))o.empresaReceitas=structuredClone(d.empresaReceitas);
   if(!Array.isArray(o.empresaResumo))o.empresaResumo=[];
+  /* pago por mês */
+  if(typeof o.pagos!=='object'||o.pagos===null)o.pagos={};
+  if(!o.mesSel)o.mesSel=curMonthKey();
+  ['casa','joao','esposa','empresa','cartoes'].forEach(k=>o[k].forEach(b=>{if(!b.id)b.id=uid();}));
+  /* uma única vez: migra o "pago" antigo (por conta) para o mês atual */
+  if(!o._pagoMigrado){
+    const mk=curMonthKey();o.pagos[mk]=o.pagos[mk]||{};
+    ['casa','joao','esposa','empresa','cartoes'].forEach(k=>o[k].forEach(b=>{if(b.pago)o.pagos[mk][b.id]=true;}));
+    o._pagoMigrado=true;
+  }
   return o;
 }
 function migrate(o){
@@ -763,14 +791,14 @@ function casaPretaTotal(){return D.contas.casa.reduce((s,b)=>s+(+b.preta||0),0)}
 function casaPretoTotal(){return D.contas.casa.reduce((s,b)=>s+(+b.preto||0),0)}
 function pessTotal(k){return D.contas[k].reduce((s,b)=>s+(+b.valor||0),0)}
 function cartaoTotal(){return D.contas.cartoes.reduce((s,c)=>s+(+c.valor||0),0)}
-function cartaoFalta(){return D.contas.cartoes.filter(c=>!c.pago).reduce((s,c)=>s+(+c.valor||0),0)}
+function cartaoFalta(){return D.contas.cartoes.filter(c=>!pagoGet(c.id)).reduce((s,c)=>s+(+c.valor||0),0)}
 function cartaoLimite(){return D.contas.cartoes.reduce((s,c)=>s+(+c.limite||0),0)}
-function dataNoMesAtual(str){const m=(str||'').toString().match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/);if(!m)return true;const hoje=new Date(),mes=+m[2];if(mes!==hoje.getMonth()+1)return false;if(m[3]){let ano=+m[3];if(ano<100)ano+=2000;if(ano!==hoje.getFullYear())return false;}return true;}
+function dataNoMes(str){const m=(str||'').toString().match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/);if(!m)return true;const ref=selMonthDate(),mes=+m[2];if(mes!==ref.getMonth()+1)return false;if(m[3]){let ano=+m[3];if(ano<100)ano+=2000;if(ano!==ref.getFullYear())return false;}return true;}
 function recebidoTotal(){return D.contas.recebidos.reduce((s,r)=>s+(+r.valor||0),0)}
-function recebidoMes(){return D.contas.recebidos.filter(r=>dataNoMesAtual(r.data)).reduce((s,r)=>s+(+r.valor||0),0)}
+function recebidoMes(){return D.contas.recebidos.filter(r=>dataNoMes(r.data)).reduce((s,r)=>s+(+r.valor||0),0)}
 function contasMes(){return casaTotal()+pessTotal('joao')+pessTotal('esposa')}
-function pagoCasa(){return D.contas.casa.filter(b=>b.pago).reduce((s,b)=>s+(+b.valor||0),0)}
-function pagoPess(k){return D.contas[k].filter(b=>b.pago).reduce((s,b)=>s+(+b.valor||0),0)}
+function pagoCasa(){return D.contas.casa.filter(b=>pagoGet(b.id)).reduce((s,b)=>s+(+b.valor||0),0)}
+function pagoPess(k){return D.contas[k].filter(b=>pagoGet(b.id)).reduce((s,b)=>s+(+b.valor||0),0)}
 function pagoMes(){return pagoCasa()+pagoPess('joao')+pagoPess('esposa')}
 
 /* ---------- modo + tabs ---------- */
@@ -807,13 +835,13 @@ function renderCasa(){
     <td><input class="cell" type="number" step="0.01" value="${b.preta}" oninput="D.contas.casa[${i}].preta=+this.value;refreshCasa()"></td>
     <td><input class="cell" type="number" step="0.01" value="${b.preto}" oninput="D.contas.casa[${i}].preto=+this.value;refreshCasa()"></td>
     <td><input class="cell" type="number" step="0.01" value="${b.valor}" oninput="D.contas.casa[${i}].valor=+this.value;refreshCon()"></td>
-    <td class="center"><input type="checkbox" class="chk" ${b.pago?'checked':''} onchange="D.contas.casa[${i}].pago=this.checked;refreshCon()"></td>
+    <td class="center"><input type="checkbox" class="chk" ${pagoGet(b.id)?'checked':''} onchange="pagoSet(D.contas.casa[${i}].id,this.checked);refreshCon()"></td>
     <td><button class="iconbtn" onclick="D.contas.casa.splice(${i},1);renderCasa();refreshCon()">×</button></td></tr>`;});
   h+=`<tr class="sumrow"><td>Subtotal casa</td><td></td><td id="casa-preta"></td><td id="casa-preto"></td><td id="casa-tot"></td><td></td><td></td></tr>`;
   document.getElementById('tbl-casa').innerHTML=h;refreshCasa();tuneInputs();
 }
 function refreshCasa(){set('casa-preta',brl(casaPretaTotal()));set('casa-preto',brl(casaPretoTotal()));set('casa-tot',brl(casaTotal()));save();}
-function addCasa(){D.contas.casa.push({nome:"Nova conta",valor:0,venc:"",preta:0,preto:0,pago:false});renderCasa();refreshCon()}
+function addCasa(){D.contas.casa.push({id:uid(),nome:"Nova conta",valor:0,venc:"",preta:0,preto:0,pago:false});renderCasa();refreshCon()}
 function splitMeio(){D.contas.casa.forEach(b=>{const m=Math.round((+b.valor||0)/2*100)/100;b.preta=m;b.preto=(+b.valor||0)-m;});renderCasa();refreshCon();}
 
 function renderPess(k,tid){
@@ -822,12 +850,12 @@ function renderPess(k,tid){
     <td class="name"><input class="cell txt" value="${esc(b.nome)}" oninput="D.contas.${k}[${i}].nome=this.value;save()"></td>
     <td class="center"><input class="cell sm" style="text-align:center" value="${esc(b.venc)}" oninput="D.contas.${k}[${i}].venc=this.value;refreshCon()"></td>
     <td><input class="cell" type="number" step="0.01" value="${b.valor}" oninput="D.contas.${k}[${i}].valor=+this.value;refreshCon()"></td>
-    <td class="center"><input type="checkbox" class="chk" ${b.pago?'checked':''} onchange="D.contas.${k}[${i}].pago=this.checked;refreshCon()"></td>
+    <td class="center"><input type="checkbox" class="chk" ${pagoGet(b.id)?'checked':''} onchange="pagoSet(D.contas.${k}[${i}].id,this.checked);refreshCon()"></td>
     <td><button class="iconbtn" onclick="D.contas.${k}.splice(${i},1);renderPess('${k}','${tid}');refreshCon()">×</button></td></tr>`;});
   h+=`<tr class="sumrow"><td>Subtotal</td><td></td><td id="${k}-tot"></td><td id="${k}-pago"></td><td></td></tr>`;
   document.getElementById(tid).innerHTML=h;set(k+'-tot',brl(pessTotal(k)));set(k+'-pago',pagoPess(k)?('pago '+brl(pagoPess(k))):'');save();tuneInputs();
 }
-function addPess(k){D.contas[k].push({nome:"Nova conta",valor:0,venc:"",pago:false});renderPess(k,'tbl-'+k);refreshCon()}
+function addPess(k){D.contas[k].push({id:uid(),nome:"Nova conta",valor:0,venc:"",pago:false});renderPess(k,'tbl-'+k);refreshCon()}
 
 function renderCartao(){
   let h='<tr><th>Cartão</th><th class="center">Melhor dia</th><th>Limite (R$)</th><th>Fatura (R$)</th><th>Uso</th><th class="center">Pago</th><th></th></tr>';
@@ -837,7 +865,7 @@ function renderCartao(){
     <td><input class="cell" type="number" step="0.01" value="${c.limite}" oninput="D.contas.cartoes[${i}].limite=+this.value;refreshCartao()"></td>
     <td><input class="cell" type="number" step="0.01" value="${c.valor}" oninput="D.contas.cartoes[${i}].valor=+this.value;refreshCartao()"></td>
     <td class="${uso>0.7?'down':(uso>0.3?'goldc':'up')}">${pct(uso)}</td>
-    <td class="center"><input type="checkbox" class="chk" ${c.pago?'checked':''} onchange="D.contas.cartoes[${i}].pago=this.checked;save()"></td>
+    <td class="center"><input type="checkbox" class="chk" ${pagoGet(c.id)?'checked':''} onchange="pagoSet(D.contas.cartoes[${i}].id,this.checked);refreshCartao()"></td>
     <td><button class="iconbtn" onclick="D.contas.cartoes.splice(${i},1);renderCartao()">×</button></td></tr>`;});
   document.getElementById('tbl-cartao').innerHTML=h;refreshCartao();tuneInputs();
 }
@@ -847,7 +875,7 @@ function refreshCartao(){
   const eu=document.getElementById('ct-uso');if(eu){eu.textContent=pct(uso);eu.className='v '+(uso>0.7?'down':(uso>0.3?'goldc':'up'))}
   set('ct-livre',brl(Math.max(0,lim-fat)));save();
 }
-function addCartao(){D.contas.cartoes.push({nome:"Novo cartão",valor:0,melhorDia:"",limite:0,pago:false});renderCartao()}
+function addCartao(){D.contas.cartoes.push({id:uid(),nome:"Novo cartão",valor:0,melhorDia:"",limite:0,pago:false});renderCartao()}
 
 function renderReceb(){
   let h='<tr><th>Data</th><th>Descrição</th><th>Valor (R$)</th><th></th></tr>';
@@ -871,15 +899,15 @@ function parseDay(val){const m=(val||'').toString().match(/\d{1,2}/);if(!m)retur
 function dueInfo(day){if(day==null)return null;const today=new Date().getDate();let diff=day-today;if(diff< -3)diff+=30;return diff;}
 function allBills(){
   const arr=[];
-  D.contas.casa.forEach(b=>arr.push({grupo:'Casa',nome:b.nome,valor:b.valor,venc:b.venc,pago:b.pago}));
-  D.contas.joao.forEach(b=>arr.push({grupo:'João',nome:b.nome,valor:b.valor,venc:b.venc,pago:b.pago}));
-  D.contas.esposa.forEach(b=>arr.push({grupo:'Kassiana',nome:b.nome,valor:b.valor,venc:b.venc,pago:b.pago}));
-  D.contas.empresa.forEach(b=>arr.push({grupo:'Empresa',nome:b.nome,valor:b.valor,venc:b.venc,pago:b.pago}));
+  D.contas.casa.forEach(b=>arr.push({grupo:'Casa',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
+  D.contas.joao.forEach(b=>arr.push({grupo:'João',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
+  D.contas.esposa.forEach(b=>arr.push({grupo:'Kassiana',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
+  D.contas.empresa.forEach(b=>arr.push({grupo:'Empresa',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
   return arr;
 }
 function renderDue(){
   const box=document.getElementById('dueList');if(!box)return;
-  let bills=allBills().filter(b=>!b.pago&&(+b.valor||0)>0).map(b=>({...b,d:dueInfo(parseDay(b.venc))}));
+  let bills=allBills().filter(b=>!pagoGet(b.id)&&(+b.valor||0)>0).map(b=>({...b,d:dueInfo(parseDay(b.venc))}));
   bills.sort((a,b)=>{const x=a.d==null?999:a.d,y=b.d==null?999:b.d;return x-y;});
   if(!bills.length){box.innerHTML='<p class="note">🎉 Tudo pago por aqui! Nenhuma conta em aberto.</p>';return;}
   let h='';
@@ -897,6 +925,9 @@ function renderDue(){
   box.innerHTML=h;
 }
 function drawConPainel(){
+  updateMonthBar();
+  const atual=D.contas.mesSel===curMonthKey();
+  set('ch-eyebrow',atual?'Falta pagar este mês':('Falta pagar em '+fmtMonth(selMonthDate())));
   const cartFalta=cartaoFalta(),cartPago=cartaoTotal()-cartFalta;
   const tot=contasMes()+cartaoTotal(),pago=pagoMes()+cartPago,falta=Math.max(0,tot-pago);
   const e=document.getElementById('ch-apagar');e.textContent=brl(falta);e.className='bignum'+(falta<=0?' ok':'');
@@ -934,8 +965,14 @@ function drawResumo(){
     options:{plugins:{legend:{position:'bottom',labels:{boxWidth:12}}},scales:{y:moneyAxis,x:{grid:{display:false}}}}});
 }
 function monthLabel(d){const m=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];return m[d.getMonth()]+'/'+String(d.getFullYear()).slice(2);}
+function fmtMonth(d){const s=d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});return s.charAt(0).toUpperCase()+s.slice(1);}
+function renderContasMonth(){renderCasa();renderPess('joao','tbl-joao');renderPess('esposa','tbl-esposa');renderPess('empresa','tbl-empresa');renderCartao();renderReceb();drawConPainel();}
+function setMonth(key){D.contas.mesSel=key;save();updateMonthBar();renderContasMonth();}
+function stepMonth(delta){const d=selMonthDate();d.setMonth(d.getMonth()+delta);setMonth(keyOf(d));}
+function goToday(){setMonth(curMonthKey());}
+function updateMonthBar(){set('monthLabel',fmtMonth(selMonthDate()));const t=document.getElementById('monthToday');if(t)t.style.display=(D.contas.mesSel===curMonthKey())?'none':'';}
 function snapConMonth(){
-  const lbl=monthLabel(new Date());
+  const lbl=monthLabel(selMonthDate());
   const row={mes:lbl,contas:contasMes(),pago:pagoMes(),recebido:recebidoMes()};
   const ex=D.contas.resumo.find(m=>m.mes===lbl);
   if(ex){Object.assign(ex,row);}else{D.contas.resumo.push(row);}
@@ -1006,9 +1043,9 @@ function renderConselhos(){
   const es=document.getElementById('cn-sobra');es.textContent=renda?brl(sobra):'informe a renda';es.className='v '+(renda?(sobra>=0?'up':'down'):'mut');
   const ec=document.getElementById('cn-comp');ec.textContent=renda?pct(comp):'—';ec.className='v '+(comp>0.7?'down':(comp>0.5?'goldc':'up'));
   const tips=[];
-  const late=allBills().filter(b=>!b.pago&&(+b.valor||0)>0&&parseDay(b.venc)!=null&&dueInfo(parseDay(b.venc))<0);
+  const late=allBills().filter(b=>!pagoGet(b.id)&&(+b.valor||0)>0&&parseDay(b.venc)!=null&&dueInfo(parseDay(b.venc))<0);
   if(late.length){const t=late.reduce((s,b)=>s+(+b.valor||0),0);tips.push(['bad','⏰','Contas vencidas','Há '+late.length+' conta(s) já vencida(s) somando '+brl(t)+': '+late.map(b=>b.nome).slice(0,4).join(', ')+'. Quite primeiro o que gera multa e juros (cartão e financiamentos).']);}
-  const soon=allBills().filter(b=>!b.pago&&(+b.valor||0)>0&&parseDay(b.venc)!=null&&dueInfo(parseDay(b.venc))>=0&&dueInfo(parseDay(b.venc))<=5);
+  const soon=allBills().filter(b=>!pagoGet(b.id)&&(+b.valor||0)>0&&parseDay(b.venc)!=null&&dueInfo(parseDay(b.venc))>=0&&dueInfo(parseDay(b.venc))<=5);
   if(soon.length){tips.push(['warn2','📅','Vence nos próximos dias','Separe '+brl(soon.reduce((s,b)=>s+(+b.valor||0),0))+' para: '+soon.map(b=>b.nome).join(', ')+'.']);}
   if(renda){
     if(comp>0.7)tips.push(['bad','📉','Orçamento apertado','As contas consomem '+pct(comp)+' da renda do casal. Acima de 70% sobra pouca margem — revise os maiores gastos (aluguel, mercado, cartão) e corte assinaturas pouco usadas.']);
@@ -1513,8 +1550,8 @@ function notificarNavegador(txt){if('Notification'in window&&Notification.permis
 function lembreteVencimentos(){
   const hojeStr=new Date().toDateString();
   if(localStorage.getItem('jk_lembrete_dia')===hojeStr)return; // no máximo 1 lembrete por dia
-  const bills=allBills().filter(b=>!b.pago&&(+b.valor||0)>0).map(b=>({...b,d:dueInfo(parseDay(b.venc))})).filter(b=>b.d!=null&&b.d<=3);
-  if(D.contas.cartoes.some(c=>!c.pago&&(+c.valor||0)>0&&parseDay(c.melhorDia)!=null&&dueInfo(parseDay(c.melhorDia))<=3)){
+  const bills=allBills().filter(b=>!pagoGet(b.id,curMonthKey())&&(+b.valor||0)>0).map(b=>({...b,d:dueInfo(parseDay(b.venc))})).filter(b=>b.d!=null&&b.d<=3);
+  if(D.contas.cartoes.some(c=>!pagoGet(c.id,curMonthKey())&&(+c.valor||0)>0&&parseDay(c.melhorDia)!=null&&dueInfo(parseDay(c.melhorDia))<=3)){
     bills.push({nome:'Fatura do cartão',valor:cartaoFalta(),d:0});}
   if(!bills.length)return;
   localStorage.setItem('jk_lembrete_dia',hojeStr);
@@ -1525,7 +1562,7 @@ function lembreteVencimentos(){
 }
 function registrarSW(){if('serviceWorker'in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw-familia.js').catch(()=>{});});}}
 
-load();initFields();renderAll();setMode(D.mode||'contas');checkBackup();
+load();D.contas.mesSel=curMonthKey();initFields();renderAll();setMode(D.mode||'contas');checkBackup();
 if(D.cloud&&D.cloud.on&&D.cloud.url){setCloudStatus('conectado');cloudStart();cloudPull(true);}
 registrarSW();pedirPermissaoNotif();setTimeout(lembreteVencimentos,1500);
 </script>
