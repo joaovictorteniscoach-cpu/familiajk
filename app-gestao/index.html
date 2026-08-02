@@ -680,6 +680,7 @@ function iniciarFirebase(){
     <div class="fin-card"><div class="l">🎾 Tênis (receita)</div><div class="v" id="f-tenis">R$ 0</div></div>
     <div class="fin-card"><div class="l">💪 Personal (receita)</div><div class="v" id="f-personal">R$ 0</div></div>
     <div class="fin-card"><div class="l">Previsto (mensalidades)</div><div class="v" id="f-previsto">R$ 0</div></div>
+    <div class="fin-card"><div class="l">📅 Previsto pela agenda</div><div class="v" id="f-prev-agenda">R$ 0</div></div>
     <div class="fin-card"><div class="l">Inadimplência</div><div class="v" id="f-inad">R$ 0</div></div>
   </div>
 
@@ -1042,6 +1043,7 @@ function iniciarFirebase(){
         </select></div>
     </div>
     <p id="a-conta" style="font-size:11.5px;color:var(--muted);margin:-6px 0 10px;font-weight:600"></p>
+    <p id="a-agenda" style="font-size:11.5px;color:#7A5B10;margin:-4px 0 10px;font-weight:700"></p>
     <div class="row2">
       <div class="field"><label>Mensalidade (R$)</label><input type="number" id="a-mensalidade"></div>
       <div class="field"><label>Créditos atuais</label><input type="number" id="a-creditos" value="0"></div>
@@ -2081,6 +2083,64 @@ function contarAulas(dFrom,dTo){
   }
   return {tenis,personal,total:tenis+personal};
 }
+/* ===== Mensalidade pelo que está marcado na agenda =====
+   O plano contratado e a agenda do mês nem sempre batem: um mês tem 5 terças,
+   entra uma aula avulsa, some uma semana. Aqui a conta sai do que realmente
+   está na agenda.
+
+   Varre o mês INTEIRO (dias passados e futuros), não só até hoje: como quase
+   todo aluno tem grade fixa, o número já fica fechado no dia 1º em vez de subir
+   ao longo do mês. Passa por entriesFor(), que já aplica a janela desde/até do
+   fixo, as exceções de dia cancelado e a chuva (que apaga o evento) — nada
+   disso precisa ser tratado de novo aqui.
+
+   Não conta: reposição (já paga no mês em que virou crédito), locação, jogo do
+   torneio, bloqueio e compromisso pessoal. */
+function contarAulasAluno(a,ano,mes){
+  let part=0,grupo=0;
+  if(!a)return {part,grupo};
+  const cur=new Date(ano,mes,1), fim=new Date(ano,mes+1,0).getDate();
+  for(let d=1;d<=fim;d++){
+    cur.setFullYear(ano,mes,d);
+    HORAS.forEach(h=>{
+      entriesFor(cur,h).forEach(e=>{
+        if(e.origem==='compromisso')return;
+        if(e.alunoId!==a.id)return;
+        if(e.repo)return;
+        if(e.tipo==='aula'||e.tipo==='personal')part++;
+        else if(e.tipo==='grupo')grupo++;
+      });
+    });
+  }
+  return {part,grupo};
+}
+/* Preço da aula avulsa do aluno. NÃO usar valorAulaDe(): aquela deriva o valor
+   a partir da mensalidade, e aqui é a mensalidade que está sendo calculada — a
+   conta ficaria circular. O valor unitário vem do cadastro. */
+function precoAulaCadastro(a){
+  const v=Number(a&&a.valorAula)||0;
+  if(v>0)return v;
+  return ehPersonalTipo(a&&a.tipo)?130:160;
+}
+/* Mesmas regras de preço que sugerirMensalidade() já usa — só muda de onde vem
+   o número de aulas. */
+function mensalidadeDaAgenda(a,ano,mes){
+  const c=contarAulasAluno(a,ano,mes);
+  const t=(a&&a.tipo)||'';
+  const det=[];
+  let valor=0;
+  if(t==='Dupla'||t==='Trio'||t==='Quarteto'||t==='Grupo'){
+    // aluno só de grupo: todas as aulas dele são tipo 'grupo'
+    if(c.grupo>0){valor=precoMensal(t,c.grupo);det.push(c.grupo+' aula(s) de '+t);}
+  }else{
+    if(c.part>0){const v=precoAulaCadastro(a);valor+=c.part*v;det.push(c.part+' × '+fmtRs(v));}
+    if(c.grupo>0){const vg=grupoPrecoAula(a.grupoTipo||'Dupla');valor+=c.grupo*vg;det.push(c.grupo+' × '+fmtRs(vg)+' ('+(a.grupoTipo||'Dupla')+')');}
+  }
+  return {valor:Math.round(valor),part:c.part,grupo:c.grupo,total:c.part+c.grupo,detalhe:det.join('  +  ')};
+}
+/* fmt() esconde o valor quando o modo privacidade está ligado, o que não serve
+   para um confirm() onde ele precisa decidir olhando o número. */
+function fmtRs(v){return 'R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:2});}
 function normNome(s){return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s+/g,' ').trim();}
 function acharAlunoPorTitulo(titulo){
   const t=normNome(titulo);if(!t)return null;
@@ -2718,6 +2778,42 @@ function sugerirMensalidade(){
     document.getElementById('a-creditos').value=p;
     const cg=document.getElementById('a-credgrupo');if(cg)cg.value=pg;
   }
+  pintarAgendaModal();
+}
+/* O que a agenda deste mês diz, ao lado do que está sendo digitado. O link
+   "usar" preenche os campos de plano e deixa sugerirMensalidade() fazer a
+   conta, em vez de escrever o valor por fora — um caminho só para o preço. */
+function pintarAgendaModal(){
+  const el=document.getElementById('a-agenda');if(!el)return;
+  const id=document.getElementById('a-id').value;
+  const a=id?DB.alunos.find(x=>x.id===id):null;
+  if(!a){el.textContent='';return;}
+  const g=agendaDoMes(a);
+  if(g.total<=0){el.innerHTML='📅 Sem aula na agenda deste mês.';return;}
+  const parts=[];
+  if(g.part>0)parts.push(g.part+' aula(s)');
+  if(g.grupo>0)parts.push(g.grupo+' em grupo');
+  el.innerHTML='📅 Na agenda deste mês: <b>'+parts.join(' + ')+'</b> = <b>'+fmt(g.valor)+'</b> '
+    +'<a href="javascript:void(0)" onclick="usarAgendaNoModal()" style="color:var(--green);text-decoration:underline">usar</a>';
+}
+function usarAgendaNoModal(){
+  const id=document.getElementById('a-id').value;
+  const a=id?DB.alunos.find(x=>x.id===id):null;if(!a)return;
+  const g=agendaDoMes(a);
+  if(g.total<=0){toast('Sem aula na agenda deste mês');return;}
+  if(a.tipo==='Dupla'||a.tipo==='Trio'||a.tipo==='Quarteto'||a.tipo==='Grupo'){
+    document.getElementById('a-plano').value=g.grupo;
+  }else{
+    document.getElementById('a-plano').value=g.part;
+    const pg=document.getElementById('a-planogrupo');
+    if(pg&&(g.grupo>0||Number(pg.value)>0)){
+      pg.value=g.grupo;
+      const gt=document.getElementById('a-grupotipo');
+      if(gt&&g.grupo>0&&!gt.value)gt.value=a.grupoTipo||'Dupla';
+    }
+  }
+  sugerirMensalidade();
+  toast('📅 Plano ajustado pela agenda do mês');
 }
 function saveAluno(){
   const id=document.getElementById('a-id').value;
@@ -3247,6 +3343,27 @@ function aulaRealizada(id,modo){
   if(a.creditos<0)toast('Aula registrada · '+a.nome+' → '+fmtCred(a.creditos)+' aulas · aula extra a cobrar: '+fmt(valorAulaDe(a)));
   else toast('Aula registrada · '+a.nome+' → '+fmtCred(a.creditos)+' créditos');
 }
+/* A conta do mês corrente, que é a que aparece no card e no cadastro. */
+function agendaDoMes(a){const d=new Date();return mensalidadeDaAgenda(a,d.getFullYear(),d.getMonth());}
+/* Aplica a conta da agenda como mensalidade. Só acontece por toque dele: a
+   mensalidade é o valor que o aluno vê e paga pelo app, e desde o bloqueio por
+   pagamento ela decide se o aluno consegue agendar. Nada muda sozinho. */
+function cobrarPelaAgenda(id){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  const g=agendaDoMes(a);
+  if(g.total<=0){toast('📅 '+a.nome.split(' ')[0]+' não tem aula na agenda deste mês — mensalidade mantida.');return;}
+  const atual=Number(a.mensalidade)||0;
+  if(!confirm('Cobrar '+a.nome+' pelas aulas da agenda deste mês?\n\n'
+    +g.detalhe+'\n= '+fmtRs(g.valor)+'\n\nMensalidade de hoje: '+fmtRs(atual)
+    +'\nPlano do cadastro: '+(Number(a.plano)||0)+' aula(s)'+((Number(a.planoGrupo)||0)>0?(' + '+a.planoGrupo+' em grupo'):'')))return;
+  a.mensalidade=g.valor;
+  // o plano acompanha, senão "Renovar mês" devolveria o número antigo de créditos
+  if(a.tipo==='Dupla'||a.tipo==='Trio'||a.tipo==='Quarteto'||a.tipo==='Grupo'){a.plano=g.grupo;}
+  else{a.plano=g.part;if((Number(a.planoGrupo)||0)>0||g.grupo>0)a.planoGrupo=g.grupo;}
+  logAct('Mensalidade pela agenda: '+a.nome+' → '+fmtRs(g.valor));
+  persist();renderAll();
+  toast('📅 '+a.nome.split(' ')[0]+' · '+g.detalhe+' = '+fmt(g.valor));
+}
 /* Locação paga: pergunta as horas, lança no caixa e credita o saldo — o mesmo
    papel que "Marcar pago" cumpre para a mensalidade. */
 function locacaoPaga(id){
@@ -3379,7 +3496,7 @@ function renderAlunos(){
     return perfilDe(a)===filtroAluno;
   }).sort((x,y)=>x.nome.localeCompare(y.nome));
   if(!items.length){list.innerHTML='<div class="empty">Nenhum aluno '+(q||filtroAluno!=='todos'?'encontrado':'cadastrado ainda — toque em <b>+ Novo</b> para começar')+'.</div>';return;}
-  list.innerHTML=items.map(a=>`
+  list.innerHTML=items.map(a=>{const ag=agendaDoMes(a);const difere=ag.total>0&&ag.valor!==(Number(a.mensalidade)||0);return `
   <div class="aluno" id="card-${a.id}">
     <div class="aluno-head" onclick="toggleAluno(document.getElementById('card-${a.id}'))">
       <div><div class="aluno-name">${ehPersonalTipo(a.tipo)?'💪 ':'🎾 '}${a.nome}</div><div class="aluno-sub">${a.tipo} · ${a.plano>0?('Flex '+a.plano):'sem pacote'} · ${fmt(a.mensalidade)}/mês</div></div>
@@ -3398,6 +3515,7 @@ function renderAlunos(){
         <span class="chip" style="background:#EFE7D8;color:#5b5142;font-weight:700">${PERFIL_LABELS[perfilDe(a)]||''}</span>
         ${(a.avaliacoes&&a.avaliacoes.length)?`<span class="chip" style="background:${metalDe(a.avaliacoes[a.avaliacoes.length-1].nivel).m};color:#fff;font-weight:800">📈 ${a.avaliacoes[a.avaliacoes.length-1].nivel||'—'}</span>`:''}
         ${a.termoAceitoEm?`<span class="chip" style="background:#E6F0E6;color:#2E7D52">📄 termo aceito</span>`:''}
+        ${ag.total>0?`<span class="chip" style="${difere?'background:#FBEFD2;color:#7A5B10;font-weight:800':'background:#E7F0E8;color:#2E7D52;font-weight:700'}">📅 ${ag.part>0&&ag.grupo>0?(ag.part+' aula(s) + '+ag.grupo+' em grupo'):(ag.total+' aula(s)')} na agenda${difere?(' · '+fmt(ag.valor)+' (cadastro: '+fmt(a.mensalidade)+')'):''}</span>`:''}
       </div>
       ${histAlunoHTML(a.id)}
       <div class="acts">
@@ -3405,6 +3523,7 @@ function renderAlunos(){
         ${(Number(a.planoGrupo)||0)>0?`<button class="act a1" onclick="aulaRealizada('${a.id}','grupo')">${BI.check}Aula em grupo (−1)</button>`:''}
         <button class="act a2" onclick="addRepos('${a.id}')">${BI.plus}Reposição</button>
         <button class="act a3" onclick="marcarPago('${a.id}')">${BI.money}Marcar pago</button>
+        ${ag.total>0?`<button class="act ${difere?'a2':'a4'}" onclick="cobrarPelaAgenda('${a.id}')">📅 Cobrar pela agenda (${fmt(ag.valor)})</button>`:''}
         <button class="act a4" onclick="usarRepos('${a.id}')">${BI.undo}Usar reposição</button>
         <button class="act a2" onclick="addLocacao('${a.id}')">${BI.keyplus}+1h locação</button>
         <button class="act a1" onclick="usarLocacao('${a.id}')">${BI.key}Locação feita (−1h)</button>
@@ -3421,7 +3540,7 @@ function renderAlunos(){
         <button class="linkbtn del" onclick="delAluno('${a.id}')">Excluir</button>
       </div>
     </div>
-  </div>`).join('');
+  </div>`;}).join('');
 }
 
 /* ================= LANÇAMENTOS ================= */
@@ -3678,6 +3797,11 @@ function renderFin(){
   if(document.getElementById('f-personal'))document.getElementById('f-personal').textContent=fmt(recModal('personal'));
   const previsto=DB.alunos.reduce((s,a)=>s+a.mensalidade,0);
   document.getElementById('f-previsto').textContent=fmt(previsto);
+  // o mesmo previsto, mas contando o que está de fato marcado na agenda do mês
+  // que ele está olhando — lado a lado mostra se o mês fugiu do contratado
+  const prevAg=DB.alunos.reduce((s,a)=>s+mensalidadeDaAgenda(a,curYear,curMonth).valor,0);
+  const elPA=document.getElementById('f-prev-agenda');
+  if(elPA)elPA.textContent=fmt(prevAg);
   const inad=DB.alunos.filter(a=>a.status!=='pago').reduce((s,a)=>s+(a.status==='parcial'?a.mensalidade*0.5:a.mensalidade),0);
   document.getElementById('f-inad').textContent=fmt(inad);
   const mi=document.getElementById('meta-input');
