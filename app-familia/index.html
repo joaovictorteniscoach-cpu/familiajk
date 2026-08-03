@@ -47,6 +47,10 @@ body.mode-invest{--accent:var(--teal); --accent-soft:var(--teal-soft); --accent-
 .ms.on{border-color:transparent;font-weight:600}
 #ms-contas.on{background:linear-gradient(150deg,var(--gold),#b8861f);color:#1a1304}
 #ms-invest.on{background:linear-gradient(150deg,var(--teal),#2f8f7c);color:#04231d}
+.empswitch{padding:0 0 4px;margin:0 0 16px;justify-content:flex-start}
+.empswitch .ms{font-size:13.5px;padding:8px 16px}
+#emp-jv.on{background:linear-gradient(150deg,var(--gold),#b8861f);color:#1a1304}
+#emp-ks.on{background:linear-gradient(150deg,#d99ba6,#b8737f);color:#2a1015}
 .tabs{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:10px 12px 4px;max-width:1120px;margin:0 auto}
 .tab{flex:0 0 auto;background:var(--surface2);border:1px solid var(--line);color:var(--muted);font-family:inherit;font-size:12.5px;font-weight:500;padding:7px 12px;border-radius:20px;cursor:pointer;white-space:nowrap;transition:.15s}
 .tab:hover{color:var(--text);border-color:var(--accent)}
@@ -312,9 +316,13 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
 
 <section data-tab="c-empresa">
   <div class="card">
-    <h2>Contas da empresa</h2><div class="sub">Despesas do negócio, separadas das pessoais.</div>
+    <div class="modeswitch empswitch">
+      <button class="ms on" id="emp-jv" onclick="setEmp('jv')"><span class="ic">🎾</span>Empresa JV</button>
+      <button class="ms" id="emp-ks" onclick="setEmp('ks')"><span class="ic">💅</span>Studio Kassiana</button>
+    </div>
+    <h2 id="emp-h">Contas · Empresa JV</h2><div class="sub">Despesas do negócio, separadas das pessoais. Cada empresa é independente.</div>
     <div class="scroll"><table class="tbl" id="tbl-empresa"></table></div>
-    <button class="addbtn" onclick="addPess('empresa')">+ nova conta</button>
+    <button class="addbtn" onclick="addPess(empCur().bills,'tbl-empresa')">+ nova conta</button>
   </div>
 </section>
 
@@ -711,7 +719,7 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
 
 <script>
 const KEY="familiajk_v1";
-const TABS_CONTAS=[["c-painel","Painel"],["c-casa","Casa"],["c-joao","João"],["c-esposa","Kassiana"],["c-empresa","Empresa"],["c-cartao","Cartões"],["c-recebidos","Recebidos"],["c-resumo","Resumo"],["c-anual","Anual"],["c-categorias","Categorias"],["c-conselhos","Conselhos"]];
+const TABS_CONTAS=[["c-painel","Painel"],["c-casa","Casa"],["c-joao","João"],["c-esposa","Kassiana"],["c-empresa","Empresas"],["c-cartao","Cartões"],["c-recebidos","Recebidos"],["c-resumo","Resumo"],["c-anual","Anual"],["c-categorias","Categorias"],["c-conselhos","Conselhos"]];
 const MESES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
 const TABS_INVEST=[["i-painel","Painel"],["i-carteira","Carteira"],["i-aportes","Aportes"],["i-mensal","Mensal"],["i-anual","Anual"],["i-projecao","Projeção"],["i-analise","Análise"],["i-ganhos","Ganhos"],["i-plano","Plano"],["i-metas","Metas"]];
 const TABS_SHARED=[["nuvem","Nuvem"],["guia","Guia"]];
@@ -775,6 +783,9 @@ const DEFAULT={
    anual:{},
    transacoes:[],
    catMemory:{},
+   /* Studio Kassiana — segundo negócio, começa vazio */
+   empresaKS:[],
+   empSel:"jv",
    /* mês selecionado no painel + "pago" guardado por mês */
    mesSel:"",
    pagos:{}
@@ -868,13 +879,16 @@ function migrateContas(o){
   if(!o.anualAno)o.anualAno=new Date().getFullYear();
   if(!Array.isArray(o.transacoes))o.transacoes=[];
   if(!o.catMemory||typeof o.catMemory!=='object'||Array.isArray(o.catMemory))o.catMemory={};
+  /* Studio Kassiana — segundo negócio (os dados antigos ficam todos na Empresa JV) */
+  if(!Array.isArray(o.empresaKS))o.empresaKS=[];
+  if(!o.empSel)o.empSel='jv';
   /* pago por mês: cada conta ganha um id estável e o "pago" passa a ser por mês */
   if(typeof o.pagos!=='object'||o.pagos===null||Array.isArray(o.pagos))o.pagos={};
   if(!o.mesSel)o.mesSel=curMonthKey();
-  ['casa','joao','esposa','empresa','cartoes'].forEach(k=>o[k].forEach(b=>{if(!b.id)b.id=uid();}));
+  ['casa','joao','esposa','empresa','empresaKS','cartoes'].forEach(k=>o[k].forEach(b=>{if(!b.id)b.id=uid();}));
   if(!o._pagoMigrado){
     const mk=curMonthKey();o.pagos[mk]=o.pagos[mk]||{};
-    ['casa','joao','esposa','empresa','cartoes'].forEach(k=>o[k].forEach(b=>{if(b.pago)o.pagos[mk][b.id]=true;}));
+    ['casa','joao','esposa','empresa','empresaKS','cartoes'].forEach(k=>o[k].forEach(b=>{if(b.pago)o.pagos[mk][b.id]=true;}));
     o._pagoMigrado=true;
   }
   return o;
@@ -970,7 +984,7 @@ function buildTabs(m){
 }
 const DRAW={'i-painel':()=>drawInvPainel(),'i-mensal':()=>drawMensal(),'i-anual':()=>drawAnual(),'i-projecao':()=>onProj(),
   'i-analise':()=>{drawAnalise();renderAlloc();},'i-ganhos':()=>renderGanhos(),'i-plano':()=>onPlano(),'i-metas':()=>renderGoals(),
-  'c-painel':()=>drawConPainel(),'c-casa':()=>renderCasa(),'c-joao':()=>renderPess('joao','tbl-joao'),'c-esposa':()=>renderPess('esposa','tbl-esposa'),'c-empresa':()=>renderPess('empresa','tbl-empresa'),'c-recebidos':()=>renderReceb(),'c-resumo':()=>drawResumo(),'c-anual':()=>renderControle(),'c-categorias':()=>renderCategorias(),'c-conselhos':()=>renderConselhos(),'c-cartao':()=>refreshCartao()};
+  'c-painel':()=>drawConPainel(),'c-casa':()=>renderCasa(),'c-joao':()=>renderPess('joao','tbl-joao'),'c-esposa':()=>renderPess('esposa','tbl-esposa'),'c-empresa':()=>drawEmpresa(),'c-recebidos':()=>renderReceb(),'c-resumo':()=>drawResumo(),'c-anual':()=>renderControle(),'c-categorias':()=>renderCategorias(),'c-conselhos':()=>renderConselhos(),'c-cartao':()=>refreshCartao()};
 function switchTab(id,btn){
   document.querySelectorAll('section[data-tab]').forEach(s=>s.classList.toggle('on',s.dataset.tab===id));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));if(btn)btn.classList.add('active');
@@ -1053,7 +1067,8 @@ function allBills(){
   D.contas.casa.forEach(b=>arr.push({grupo:'Casa',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
   D.contas.joao.forEach(b=>arr.push({grupo:'João',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
   D.contas.esposa.forEach(b=>arr.push({grupo:'Kassiana',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
-  D.contas.empresa.forEach(b=>arr.push({grupo:'Empresa',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
+  D.contas.empresa.forEach(b=>arr.push({grupo:'Empresa JV',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
+  D.contas.empresaKS.forEach(b=>arr.push({grupo:'Studio Kassiana',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
   return arr;
 }
 function renderDue(){
@@ -1075,8 +1090,21 @@ function renderDue(){
   });
   box.innerHTML=h;
 }
+/* ---------- duas empresas: JV e Studio Kassiana ---------- */
+/* A Empresa JV usa a chave original, então os dados que já existiam ficam onde estavam. */
+const EMPS={jv:{nome:'Empresa JV',bills:'empresa'},ks:{nome:'Studio Kassiana',bills:'empresaKS'}};
+function empCur(){return EMPS[D.contas.empSel]||EMPS.jv;}
+function setEmp(k){D.contas.empSel=(EMPS[k]?k:'jv');save();drawEmpresa();}
+function drawEmpresa(){
+  const emp=empCur();
+  const bj=document.getElementById('emp-jv'),bk=document.getElementById('emp-ks');
+  if(bj)bj.classList.toggle('on',D.contas.empSel!=='ks');
+  if(bk)bk.classList.toggle('on',D.contas.empSel==='ks');
+  set('emp-h','Contas · '+emp.nome);
+  renderPess(emp.bills,'tbl-empresa');
+}
 function fmtMonth(d){return d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});}
-function renderContasMonth(){renderCasa();renderPess('joao','tbl-joao');renderPess('esposa','tbl-esposa');renderPess('empresa','tbl-empresa');renderCartao();drawConPainel();}
+function renderContasMonth(){renderCasa();renderPess('joao','tbl-joao');renderPess('esposa','tbl-esposa');drawEmpresa();renderCartao();drawConPainel();}
 function setMonth(k){D.contas.mesSel=k;save();renderContasMonth();}
 function stepMonth(d){const x=selMonthDate();x.setMonth(x.getMonth()+d);setMonth(keyOf(x));}
 function goToday(){setMonth(curMonthKey());}
@@ -1090,7 +1118,7 @@ function drawConPainel(){
   set('ch-total',brl(tot));set('ch-pago',brl(pago));
   document.getElementById('ch-bar').style.width=(tot?Math.min(100,pago/tot*100):0)+'%';
   set('ch-preta',brl(casaPretaTotal()));set('ch-preto',brl(casaPretoTotal()));
-  const gl=['Casa','João','Kassiana','Empresa'],gv=[casaTotal(),pessTotal('joao'),pessTotal('esposa'),pessTotal('empresa')];
+  const gl=['Casa','João','Kassiana','Empresa JV','Studio Kassiana'],gv=[casaTotal(),pessTotal('joao'),pessTotal('esposa'),pessTotal('empresa'),pessTotal('empresaKS')];
   destroy('grupo');charts.grupo=new Chart(document.getElementById('grupoChart'),{type:'doughnut',
     data:{labels:gl,datasets:[{data:gv,backgroundColor:PAL,borderColor:COL.ink,borderWidth:3}]},
     options:{cutout:'60%',plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:8}},tooltip:{callbacks:{label:c=>c.label+': '+brl(c.raw)}}}}});
@@ -1263,7 +1291,11 @@ function renderConselhos(){
     if(apl>0)tips.push([g>=0?'good':'warn2','🌎','Resultado global',(g>=0?'Os ETFs lá fora acumulam ganho de ':'Os ETFs lá fora estão negativos em ')+usd(Math.abs(g))+' ('+pct(g/apl)+'). Em investimento de longo prazo oscilação é normal — o que constrói patrimônio é o aporte constante, não acertar o momento.']);
     tips.push(['info','🔁','Aporte constante vence o tempo','Vocês aportam todo mês — esse é o maior trunfo. Mantenha o valor automático e aumente um pouco a cada reajuste de renda; os juros compostos fazem o resto (veja a aba Projeção).']);
   }
-  if(pessTotal('empresa')>0)tips.push(['info','🏢','Empresa separada','As contas da empresa ('+brl(pessTotal('empresa'))+'/mês) ficam fora do orçamento familiar de propósito. Mantenha contas pessoais e da empresa em carteiras separadas — facilita o imposto e dá clareza do lucro real.']);
+  const empJV=pessTotal('empresa'),empKS=pessTotal('empresaKS');
+  if(empJV+empKS>0){
+    const det=[];if(empJV>0)det.push('Empresa JV '+brl(empJV));if(empKS>0)det.push('Studio Kassiana '+brl(empKS));
+    tips.push(['info','🏢','Empresas separadas','As contas das empresas ('+det.join(' · ')+' por mês) ficam fora do orçamento familiar de propósito. Mantenha a carteira de cada negócio separada da pessoal — facilita o imposto e dá clareza do lucro real de cada um.']);
+  }
   try{const ay=D.contas.anual[String(D.contas.anualAno||new Date().getFullYear())];
     if(Array.isArray(ay)){const fl=ay.map(m=>+m.previsto||0).filter(x=>x>0);
       if(fl.length>=3){const avg=fl.reduce((s,x)=>s+x,0)/fl.length,ult=fl[fl.length-1];
@@ -1714,7 +1746,7 @@ function exApplyReceb(){
 function exApplyPago(){
   if(!extratoTxns.length)return;
   const debs=extratoTxns.filter(x=>x.amount<0).map(x=>norm(x.desc));let n=0;
-  ['casa','joao','esposa','empresa'].forEach(k=>{
+  ['casa','joao','esposa','empresa','empresaKS'].forEach(k=>{
     D.contas[k].forEach(b=>{if(pagoGet(b.id))return;const bn=norm(b.nome);if(bn.length<3)return;
       if(debs.some(dn=>dn&&(dn.includes(bn)||bn.includes(dn.split(' ')[0])))){pagoSet(b.id,true);n++;}});
   });
@@ -2011,7 +2043,7 @@ function initFields(){
 function safeRun(fn){try{fn();}catch(e){console.warn('Família JK — falha ao desenhar:',e);}}
 function renderAll(){
   [renderNac,renderGlob,renderAportes,renderMensal,renderAnual,refreshCarteira,drawInvPainel,onProj,renderGoals,renderAlloc,renderGanhos,onPlano,
-   renderCasa,()=>renderPess('joao','tbl-joao'),()=>renderPess('esposa','tbl-esposa'),()=>renderPess('empresa','tbl-empresa'),
+   renderCasa,()=>renderPess('joao','tbl-joao'),()=>renderPess('esposa','tbl-esposa'),drawEmpresa,
    renderCartao,renderReceb,renderResumo,renderControle,renderCategorias,drawConPainel,renderConselhos].forEach(safeRun);
   tuneInputs();
 }
