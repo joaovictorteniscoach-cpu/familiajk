@@ -16,6 +16,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
   --ink:#0a171c; --surface:#10262e; --surface2:#16323b; --line:#26454f;
@@ -172,6 +173,12 @@ select.cell option{background:var(--surface)}
 .modal p{font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.6}
 .modal textarea{width:100%;height:84px;background:var(--surface2);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:10px;font-family:'IBM Plex Mono',monospace;font-size:11px;resize:none}
 .modal .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.imp-opts{display:flex;gap:22px;flex-wrap:wrap;margin-bottom:12px}
+.imp-grp{display:flex;flex-direction:column;gap:5px}
+.imp-grp .imp-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.imp-grp label{font-size:13px;color:var(--text);display:flex;align-items:center;gap:6px;cursor:pointer}
+select.imp-sel{background:var(--surface2);border:1px solid var(--accent);color:var(--accent-soft);border-radius:7px;padding:4px 6px;font-family:inherit;font-size:11px;font-weight:600;width:100%}
+#tbl-imp td,#tbl-imp th{white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis}
 .wa{background:#25d366;color:#062b13;border:none;border-radius:9px;padding:10px 14px;font-family:inherit;font-weight:600;font-size:13px;cursor:pointer}
 /* ---- polimento visual ---- */
 .topbar{border-bottom:1px solid rgba(38,69,79,.5);backdrop-filter:blur(4px)}
@@ -439,6 +446,10 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
   <div class="card">
     <h2>Carteira</h2><div class="sub">Edite os campos. Tudo recalcula e salva sozinho.</div>
     <div class="field" style="max-width:200px;margin-bottom:18px"><label>Câmbio USD → BRL</label><input id="in-cambio" type="number" step="0.01" oninput="onCambio(this.value)"></div>
+    <div style="margin-bottom:18px">
+      <button class="iconbtn primary" onclick="importXP()">📥 Importar planilha da XP</button>
+      <p class="note" style="margin-top:8px">Baixe a posição da XP em <b>.xlsx</b> ou <b>.csv</b> e traga pra cá sem digitar. Você confere as colunas antes de aplicar. O arquivo é lido só neste aparelho.</p>
+    </div>
     <h2 style="font-size:14px">Nacional XP <span class="tag">(R$)</span></h2>
     <div class="scroll"><table class="tbl" id="tbl-nac"></table></div>
     <button class="addbtn" onclick="addNac()">+ adicionar ativo nacional</button>
@@ -658,6 +669,28 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
       <button class="iconbtn" onclick="closeExtrato()">Fechar</button>
     </div>
     <p class="note">O extrato fica só neste aparelho. “Salvar por categoria” manda tudo para a aba <b>Categorias</b>.</p>
+  </div>
+</div>
+
+<div class="overlay" id="impModal">
+  <div class="modal" style="max-width:760px">
+    <h3>Importar planilha da XP</h3>
+    <p id="imp-info">—</p>
+    <div class="imp-opts">
+      <div class="imp-grp"><span class="imp-lbl">Destino</span>
+        <label><input type="radio" name="imp-target" value="nac" checked onchange="renderImpPreview()"> Nacional XP (R$)</label>
+        <label><input type="radio" name="imp-target" value="glob" onchange="renderImpPreview()"> Global XP (US$)</label>
+      </div>
+      <div class="imp-grp"><span class="imp-lbl">Modo</span>
+        <label><input type="radio" name="imp-mode" value="add" checked> Adicionar aos atuais</label>
+        <label><input type="radio" name="imp-mode" value="replace"> Substituir a lista</label>
+      </div>
+    </div>
+    <div class="scroll" style="max-height:42vh;border:1px solid var(--line);border-radius:10px"><table class="tbl" id="tbl-imp"></table></div>
+    <div class="row">
+      <button class="iconbtn primary" onclick="applyImport()">Importar</button>
+      <button class="iconbtn" onclick="closeImport()">Cancelar</button>
+    </div>
   </div>
 </div>
 
@@ -1620,7 +1653,8 @@ function parseBRNum(s){
   const paren=/\(.*\)/.test(s);
   s=s.replace(/[^\d.,-]/g,'');
   if(!s||!/\d/.test(s))return null;
-  if(s.indexOf(',')>-1&&s.indexOf('.')>-1)s=s.replace(/\./g,'').replace(',','.');
+  /* com os dois separadores, o ÚLTIMO é o decimal: 1.234,56 (BR) e 1,234.56 (US) */
+  if(s.indexOf(',')>-1&&s.indexOf('.')>-1)s=(s.lastIndexOf(',')>s.lastIndexOf('.'))?s.replace(/\./g,'').replace(',','.'):s.replace(/,/g,'');
   else if(s.indexOf(',')>-1)s=s.replace(',','.');
   let n=parseFloat(s);if(isNaN(n))return null;
   return paren?-Math.abs(n):n;
@@ -1825,6 +1859,139 @@ function snoozeBanner(){sessionStorage.setItem('jk_snooze','1');document.getElem
 /* ---------- boot ---------- */
 function tuneInputs(){document.querySelectorAll('input[type=number]').forEach(i=>{if(!i.getAttribute('inputmode'))i.setAttribute('inputmode','decimal');});}
 function refreshInv(){refreshCarteira();drawInvPainel();save();}
+
+/* ============ Importar planilha da XP (.xlsx / .csv) ============ */
+let impRows=[],impHeaderIdx=0,impMap={};
+const IMP_FIELDS={
+  nac:[['','Ignorar'],['nome','Nome do ativo'],['classe','Classe'],['valor','Valor (R$)'],['aplicado','Aplicado (R$)']],
+  glob:[['','Ignorar'],['ticker','Ticker'],['nome','Nome'],['classe','Classe'],['qtd','Quantidade'],['preco','Preço atual (US$)'],['aplicado','Aplicado (US$)']]
+};
+const IMP_KEYS={
+  nome:['produto','ativo','nome','papel','descricao','fundo','especificacao','instrumento'],
+  ticker:['ticker','codigo','simbolo','papel'],
+  classe:['classe','categoria','tipo','segmento'],
+  valor:['valor bruto','valor liquido','valor atual','posicao','saldo','financeiro','valor','bruto','total'],
+  aplicado:['valor aplicado','aplicado','investido','custo','aporte'],
+  qtd:['quantidade','qtde','qtd','cotas','saldo'],
+  preco:['preco atual','preco','cotacao','valor unitario','ultimo','pu']
+};
+function guessClasse(txt){
+  const t=norm(txt);
+  const regras=[
+    ['Cripto',['cripto','crypto','bitcoin','btc','ethereum','eth','hashdex','solana']],
+    ['Ouro',['ouro','gold','gld']],
+    ['Prata',['prata','silver','slv']],
+    ['Ações (EUA)',['acoes','acao','stock','equity','nasdaq','s&p','sp500','sp 500','voo','qqq','ivv','spy','estados unidos','eua','exterior','dolar','trend nasdaq']],
+    ['Setoriais',['setorial','lithium','litio','uranium','uranio','rare earth','terras raras','remx','nlr','lit','reit','imobiliario','fii']],
+    ['Renda Fixa / Caixa',['renda fixa','tesouro','cdb','lci','lca','liquidez','selic','cdi','fundo di','pos fixado','prefixado','caixa','reserva','debenture']]
+  ];
+  for(const r of regras){if(r[1].some(k=>t.includes(norm(k))))return r[0];}
+  return 'Outros';
+}
+/* leitor de linhas cruas — separado do parseCSV(), que serve aos extratos bancários */
+function parseSheetRows(text){
+  text=text.replace(/^﻿/,'');
+  const nl=text.indexOf('\n'),first=text.slice(0,nl>-1?nl:text.length);
+  const delim=(first.split(';').length>first.split(',').length)?';':',';
+  const rows=[];let row=[],cur='',q=false;
+  for(let i=0;i<text.length;i++){const c=text[i];
+    if(q){if(c==='"'){if(text[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=c;}
+    else{if(c==='"')q=true;else if(c===delim){row.push(cur);cur='';}else if(c==='\n'){row.push(cur);rows.push(row);row=[];cur='';}else if(c!=='\r')cur+=c;}}
+  if(cur!==''||row.length){row.push(cur);rows.push(row);}
+  return rows;
+}
+function normRows(rows){
+  let w=0;rows.forEach(r=>{if(r.length>w)w=r.length});
+  return rows.map(r=>{const a=[];for(let i=0;i<w;i++)a.push(r[i]==null?'':r[i]);return a;})
+             .filter(r=>r.some(c=>String(c).trim()!==''));
+}
+function detectHeader(rows){
+  let best=0,bs=-1,lim=Math.min(rows.length,20);
+  for(let i=0;i<lim;i++){let sc=0;rows[i].forEach(c=>{const t=norm(c);if(!t)return;
+    for(const f in IMP_KEYS){if(IMP_KEYS[f].some(k=>t.includes(norm(k)))){sc++;break;}}});
+    if(sc>bs){bs=sc;best=i;}}
+  return best;
+}
+function autoMap(header,target){
+  const allow=IMP_FIELDS[target].map(o=>o[0]).filter(Boolean),map={};
+  header.forEach((c,idx)=>{const t=norm(c);let bf='',bl=0;
+    allow.forEach(f=>{IMP_KEYS[f].forEach(k=>{const nk=norm(k);if(t.includes(nk)&&nk.length>bl){bf=f;bl=nk.length;}})});
+    map[idx]=bf;});
+  const seen={};Object.keys(map).forEach(i=>{const f=map[i];if(!f)return;if(seen[f])map[i]='';else seen[f]=true;});
+  return map;
+}
+function importXP(){
+  const inp=document.createElement('input');inp.type='file';inp.accept='.xlsx,.xls,.csv';
+  inp.onchange=e=>{const f=e.target.files[0];if(!f)return;
+    const ext=(f.name.split('.').pop()||'').toLowerCase(),r=new FileReader();
+    r.onerror=()=>alert('Não consegui ler o arquivo.');
+    if(ext==='csv'){
+      r.onload=()=>{try{openImport(normRows(parseSheetRows(String(r.result))))}catch(x){alert('Não consegui ler o CSV.')}};
+      r.readAsText(f);
+    }else{
+      if(!window.XLSX){alert('A leitura de .xlsx ainda não carregou. Confira a internet e tente de novo, ou exporte o arquivo como .csv.');return;}
+      r.onload=()=>{try{
+        const wb=XLSX.read(new Uint8Array(r.result),{type:'array'});
+        let best=[],bn=-1;
+        wb.SheetNames.forEach(n=>{const rs=XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:false,defval:''});if(rs.length>bn){bn=rs.length;best=rs;}});
+        openImport(normRows(best));
+      }catch(x){alert('Não consegui ler a planilha.')}};
+      r.readAsArrayBuffer(f);
+    }};
+  inp.click();
+}
+function impTarget(){const el=document.querySelector('input[name="imp-target"]:checked');return el?el.value:'nac';}
+function openImport(rows){
+  if(!rows||rows.length<2){alert('A planilha parece vazia ou sem linhas de dados.');return;}
+  impRows=rows;impHeaderIdx=detectHeader(rows);
+  renderImpPreview();document.getElementById('impModal').classList.add('on');
+}
+function closeImport(){document.getElementById('impModal').classList.remove('on');}
+function renderImpPreview(){
+  const target=impTarget(),header=impRows[impHeaderIdx]||[],opts=IMP_FIELDS[target];
+  impMap=autoMap(header,target);
+  let h='<tr>';
+  header.forEach((c,idx)=>{
+    h+='<th><select class="imp-sel" onchange="impMap['+idx+']=this.value">';
+    opts.forEach(o=>{h+='<option value="'+o[0]+'"'+(impMap[idx]===o[0]?' selected':'')+'>'+o[1]+'</option>';});
+    h+='</select><div class="note" style="margin-top:4px;font-weight:400">'+esc(String(c||'—'))+'</div></th>';});
+  h+='</tr>';
+  impRows.slice(impHeaderIdx+1,impHeaderIdx+7).forEach(r=>{
+    h+='<tr>';header.forEach((c,idx)=>{h+='<td>'+esc(String(r[idx]==null?'':r[idx]))+'</td>';});h+='</tr>';});
+  document.getElementById('tbl-imp').innerHTML=h;
+  set('imp-info','Encontrei '+Math.max(0,impRows.length-impHeaderIdx-1)+' linha(s) de dados. Confira as colunas (ajuste se precisar) e toque em Importar.');
+}
+function applyImport(){
+  const target=impTarget();
+  const mode=(document.querySelector('input[name="imp-mode"]:checked')||{}).value||'add';
+  const colOf=f=>{const k=Object.keys(impMap).find(i=>impMap[i]===f);return k==null?-1:+k;};
+  const iNome=colOf('nome'),iTk=colOf('ticker'),iCl=colOf('classe'),
+        iVal=colOf('valor'),iApl=colOf('aplicado'),iQtd=colOf('qtd'),iPre=colOf('preco');
+  const cell=(r,i)=>i<0?'':(r[i]==null?'':r[i]);
+  const num=v=>{const n=parseBRNum(v);return n==null?0:n;};
+  const itens=[];
+  impRows.slice(impHeaderIdx+1).forEach(r=>{
+    const nome=String(cell(r,iNome)).trim(),tk=String(cell(r,iTk)).trim(),rot=(nome||tk).trim();
+    if(!rot)return;
+    if(/^(total|subtotal|saldo|patrimonio|posicao total|consolidado|resumo)/.test(norm(rot)))return;
+    const cv=String(cell(r,iCl));
+    const classe=CLASSES.find(c=>norm(c)===norm(cv))||guessClasse(cv||rot);
+    if(target==='nac'){
+      const valor=num(cell(r,iVal));
+      if(!valor&&iVal>=0)return;
+      itens.push({nome:rot,classe,valor,apl:iApl>=0?num(cell(r,iApl)):null});
+    }else{
+      itens.push({tk:(tk||rot).toUpperCase(),nome:nome||tk||rot,classe,
+        qtd:num(cell(r,iQtd)),pm:0,pa:num(cell(r,iPre)),apl:iApl>=0?num(cell(r,iApl)):0});
+    }
+  });
+  if(!itens.length){alert('Não encontrei ativos válidos. Confira se a coluna do nome está marcada como "Nome do ativo".');return;}
+  if(!confirm(itens.length+' ativo(s) serão '+(mode==='replace'?'colocados no lugar da lista atual':'adicionados')+' na carteira '+(target==='nac'?'Nacional':'Global')+'. Continuar?'))return;
+  if(target==='nac'){if(mode==='replace')D.invest.nacional=[];D.invest.nacional.push(...itens);renderNac();}
+  else{if(mode==='replace')D.invest.global=[];D.invest.global.push(...itens);renderGlob();}
+  refreshInv();closeImport();
+  alert(itens.length+' ativo(s) importado(s) com sucesso.');
+}
 function refreshCon(){renderDue();drawConPainel();save();}
 function initFields(){
   document.getElementById('in-cambio').value=D.invest.cambio;
