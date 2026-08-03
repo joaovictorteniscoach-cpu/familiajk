@@ -155,6 +155,23 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .bar{height:9px;border-radius:6px;background:#EFE7D8;overflow:hidden}
 .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--clay),var(--gold));border-radius:6px;transition:width .4s}
 .pend-list{display:flex;flex-direction:column;gap:8px}
+/* etiqueta de prazo na lista de pendentes — nome proprio para nao colidir */
+.venc-tag{display:inline-block;margin-top:4px;font-size:10.5px;font-weight:800;letter-spacing:.3px;padding:2px 8px;border-radius:20px;background:#EFE7D8;color:#7a6f5e}
+.venc-tag.late{background:#F6D7D2;color:#8E2C1E}
+.venc-tag.soon{background:#FBEFD2;color:#7A5B10}
+.venc-tag.mut{background:#EFE7D8;color:#7a6f5e}
+/* conselhos automaticos do dashboard */
+.cons{border:1px solid var(--border);border-left-width:4px;border-radius:12px;padding:11px 13px;background:#fff;margin-bottom:8px}
+.cons h4{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:800;color:var(--green);margin:0 0 3px}
+.cons p{font-size:12px;line-height:1.55;color:#5b5142;margin:0}
+.cons.bad{border-left-color:#C9472B;background:#FDF6F4}
+.cons.warn{border-left-color:#C99A2B;background:#FEFAF0}
+.cons.good{border-left-color:#2E7D52;background:#F5FAF6}
+.cons.info{border-left-color:#8a7f6c}
+/* faixa de lembrete de backup */
+.bk-banner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:#FBEFD2;border:1px solid #E8D5A0;border-radius:13px;padding:12px 14px;margin-bottom:14px}
+.bk-banner .bk-msg{font-size:12.5px;font-weight:700;color:#7A5B10;flex:1;min-width:180px}
+.bk-banner .bk-acts{display:flex;gap:7px}
 .aulas-mes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px}
 .am-card{background:#fff;border:1px solid var(--border);border-radius:13px;padding:13px 8px;text-align:center}
 .am-v{font-size:24px;font-weight:800;color:var(--green);line-height:1}
@@ -523,6 +540,13 @@ window.__DEMO = true;
 </header>
 
 <section class="page on" id="pg-dash">
+  <div class="bk-banner" id="bk-banner" style="display:none">
+    <span class="bk-msg"></span>
+    <div class="bk-acts">
+      <button class="btn btn-clay" style="padding:8px 12px;font-size:12px" onclick="exportBackup()">Fazer backup agora</button>
+      <button class="btn btn-ghost" style="padding:8px 12px;font-size:12px" onclick="adiarBackup()">depois</button>
+    </div>
+  </div>
   <p class="sec-eyebrow">Visão geral</p>
   <h2 class="sec-title">Resumo do <em>mês</em></h2>
   <div class="kpis">
@@ -565,6 +589,10 @@ window.__DEMO = true;
   <p class="sec-eyebrow" style="margin-top:16px">Cobranças</p>
   <h2 class="sec-title">Pagamentos <em>pendentes</em></h2>
   <div class="pend-list" id="pend-list"></div>
+
+  <p class="sec-eyebrow" style="margin-top:20px">Leitura automática</p>
+  <h2 class="sec-title">O que merece sua <em>atenção</em></h2>
+  <div id="conselhos-box"></div>
 </section>
 
 <section class="page" id="pg-agenda">
@@ -3593,6 +3621,32 @@ function renderMovs(){
 }
 
 /* ================= DASHBOARD & FINANCEIRO ================= */
+/* ===== Vencimento com prazo =====
+   O dia de vencimento de cada aluno já era guardado, editado e publicado — e
+   nada lia esse campo. A lista de pendentes ordenava por valor: quem devia mais
+   vinha primeiro, estivesse atrasado ou faltando duas semanas para vencer.
+
+   diasAteVencer resolve a virada do mês: se o dia já passou há mais de 3, ele
+   pertence ao mês que vem (dia 28 com hoje dia 2 = "vence em 26d", não "venceu
+   há 4d"). A folga de 3 dias é o que mantém o vencido recente ainda como
+   vencido, em vez de virar "falta um mês". */
+function diasAteVencer(dia){
+  const d=Number(dia);
+  if(!(d>=1&&d<=31))return null;
+  const hoje=new Date().getDate();
+  let dif=d-hoje;
+  if(dif<-3)dif+=30;
+  return dif;
+}
+function vencDe(a){return diasAteVencer((a&&a.diaVenc)||10);}
+/* Etiqueta e cor de urgência, no mesmo padrão que o resto do app usa. */
+function rotuloVenc(dias){
+  if(dias===null)return {txt:'sem dia',cls:'mut'};
+  if(dias<0)return {txt:'venceu há '+(-dias)+'d',cls:'late'};
+  if(dias===0)return {txt:'vence hoje',cls:'late'};
+  if(dias<=5)return {txt:'vence em '+dias+'d',cls:'soon'};
+  return {txt:'vence em '+dias+'d',cls:'mut'};
+}
 function renderDash(){
   const movs=DB.lancamentos.filter(l=>l.mes===monthKey());
   const recebido=movs.filter(l=>l.valor>0).reduce((s,l)=>s+l.valor,0);
@@ -3626,12 +3680,107 @@ function renderDash(){
   renderCompromissos();renderDatasInicio();
   if(!pendAlunos.length){pl.innerHTML='<div class="empty">🎉 Todos os alunos estão em dia!</div>';}
   else{
-    pl.innerHTML=pendAlunos.sort((a,b)=>b.mensalidade-a.mensalidade).map(a=>`
+    // por urgência, não por valor: quem já venceu vem antes de quem deve mais
+    const ord=pendAlunos.map(a=>({a,d:vencDe(a)}))
+      .sort((x,y)=>{
+        const dx=x.d===null?999:x.d, dy=y.d===null?999:y.d;
+        if(dx!==dy)return dx-dy;
+        return y.a.mensalidade-x.a.mensalidade;   // empate no prazo: maior valor primeiro
+      });
+    pl.innerHTML=ord.map(({a,d})=>{
+      const r=rotuloVenc(d);
+      return `
     <div class="pend-item ${a.status}">
-      <div><b>${a.nome}</b><br><span>${a.status==='parcial'?'Pagou 50% — falta '+fmt(a.mensalidade*0.5):'Pendente — '+fmt(a.mensalidade)}</span></div>
+      <div><b>${a.nome}</b><br><span>${a.status==='parcial'?'Pagou 50% — falta '+fmt(a.mensalidade*0.5):'Pendente — '+fmt(a.mensalidade)}</span>
+        <span class="venc-tag ${r.cls}">${r.txt}${d!==null?(' · dia '+((a.diaVenc)||10)):''}</span></div>
       ${a.tel?`<button class="btn btn-ghost" style="padding:7px 11px;font-size:11px" onclick="cobrar('${a.id}')">Cobrar 📲</button>`:''}
-    </div>`).join('');
+    </div>`;}).join('');
   }
+  renderConselhos();
+}
+/* ===== O que merece sua atenção =====
+   O app sempre teve os números; faltava alguém ler os números por ele. Cada
+   conselho sai de dado que já existe, sempre com o número dentro — conselho sem
+   número não entra. Quando não há o que dizer, o painel diz isso, em vez de
+   inventar recomendação genérica. */
+function renderConselhos(){
+  const box=document.getElementById('conselhos-box');if(!box)return;
+  const t=[];   // [nivel, icone, titulo, texto]
+  const nomes=arr=>arr.slice(0,4).map(a=>a.nome.split(' ')[0]).join(', ')+(arr.length>4?' e mais '+(arr.length-4):'');
+  const alunos=DB.alunos||[];
+
+  // 1. mensalidades vencidas / vencendo
+  const pend=alunos.filter(a=>a.status!=='pago'&&(Number(a.mensalidade)||0)>0);
+  const venc=pend.filter(a=>{const d=vencDe(a);return d!==null&&d<0;});
+  if(venc.length){
+    const tot=venc.reduce((s,a)=>s+(a.status==='parcial'?a.mensalidade*0.5:a.mensalidade),0);
+    t.push(['bad','⏰','Mensalidade vencida',venc.length+' aluno(s) com mensalidade vencida somando '+fmt(tot)+': '+nomes(venc)+'. O botão "Cobrar 📲" na lista acima já abre o WhatsApp com a mensagem pronta.']);
+  }
+  const perto=pend.filter(a=>{const d=vencDe(a);return d!==null&&d>=0&&d<=5;});
+  if(perto.length)t.push(['warn','📅','Vence nos próximos dias',perto.length+' mensalidade(s) vencem em até 5 dias, somando '+fmt(perto.reduce((s,a)=>s+a.mensalidade,0))+': '+nomes(perto)+'.']);
+
+  // 2. saldo negativo — aula além do pacote, cada modalidade pelo seu preço
+  const neg=alunos.filter(a=>(Number(a.creditos)||0)<0||(Number(a.credGrupo)||0)<0);
+  if(neg.length){
+    const tot=neg.reduce((s,a)=>s+devidoExtraPart(a)+devidoExtraGrupo(a),0);
+    t.push(['bad','💸','Aulas além do pacote',neg.length+' aluno(s) com saldo negativo — '+fmt(tot)+' de aula extra a cobrar: '+nomes(neg)+'.']);
+  }
+
+  // 3. agenda diferente do plano contratado
+  const dif=alunos.map(a=>({a,g:agendaDoMes(a)})).filter(x=>x.g.total>0&&x.g.valor!==(Number(x.a.mensalidade)||0));
+  if(dif.length){
+    const delta=dif.reduce((s,x)=>s+(x.g.valor-(Number(x.a.mensalidade)||0)),0);
+    t.push([delta>0?'warn':'info','📅','Agenda diferente do plano',dif.length+' aluno(s) com a agenda deste mês fora do plano cadastrado — '+(delta>0?'R$ '+Math.abs(delta).toLocaleString('pt-BR')+' a mais':'R$ '+Math.abs(delta).toLocaleString('pt-BR')+' a menos')+' no total: '+nomes(dif.map(x=>x.a))+'. O botão "Cobrar pela agenda" no card de cada um acerta o valor.']);
+  }
+
+  // 4. faturamento contra o mês anterior
+  const mesesUlt=ultimosMeses(2), mAnt=mesesUlt[0], mAtu=mesesUlt[1];
+  const fatDe=mk=>(DB.lancamentos||[]).filter(l=>l.mes===mk&&l.valor>0).reduce((s,l)=>s+l.valor,0);
+  const fa=fatDe(mAnt), fh=fatDe(mAtu);
+  if(fa>0){
+    const p=Math.round((fh-fa)/fa*100);
+    if(p<=-10)t.push(['warn','📉','Faturamento abaixo do mês passado','Este mês soma '+fmt(fh)+' contra '+fmt(fa)+' em '+labelMes(mAnt)+' — '+Math.abs(p)+'% a menos. Se o mês ainda não fechou, é normal; se já fechou, vale olhar quem parou de renovar.']);
+    else if(p>=10)t.push(['good','📈','Faturamento acima do mês passado','Este mês soma '+fmt(fh)+' contra '+fmt(fa)+' em '+labelMes(mAnt)+' — '+p+'% a mais.']);
+  }
+
+  // 5. meta do mês
+  const meta=Number(DB.meta)||0;
+  if(meta>0){
+    const hoje=new Date(), fimMes=new Date(hoje.getFullYear(),hoje.getMonth()+1,0).getDate();
+    const faltamDias=fimMes-hoje.getDate();
+    const falta=meta-fh;
+    if(falta<=0)t.push(['good','🎯','Meta batida','Você já passou a meta de '+fmt(meta)+' — recebeu '+fmt(fh)+' este mês.']);
+    else t.push([faltamDias<=7?'warn':'info','🎯','Meta do mês','Faltam '+fmt(falta)+' para a meta de '+fmt(meta)+', com '+faltamDias+' dia(s) restantes no mês.']);
+  }
+
+  // 6. horários livres na semana
+  try{
+    const {out}=horariosLivresSemana(new Date());
+    const livres=out.reduce((s,o)=>s+o.livres.length,0);
+    if(livres>0)t.push(['info','🕐','Horários livres esta semana','Sua semana tem '+livres+' horário(s) de aula em aberto. O botão de enviar os horários livres no grupo dos alunos está na Agenda.']);
+  }catch(e){}
+
+  // 7. quem está sem avaliação há muito tempo
+  const semAval=alunos.filter(a=>{
+    if(perfilDe(a)==='locacao'||perfilDe(a)==='torneio')return false;
+    const av=a.avaliacoes||[];
+    if(!av.length)return true;
+    const ult=av[av.length-1].data;
+    if(!ult)return true;
+    return (Date.now()-new Date(ult+'T12:00:00').getTime())>90*864e5;
+  });
+  if(semAval.length)t.push(['info','📈','Avaliação atrasada',semAval.length+' aluno(s) sem avaliação há mais de 3 meses: '+nomes(semAval)+'. A devolutiva é o que mostra a evolução para eles.']);
+
+  // 8. reposições acumuladas
+  const rep=alunos.filter(a=>(Number(a.repos)||0)>=3);
+  if(rep.length)t.push(['warn','🔁','Reposições acumuladas',rep.length+' aluno(s) com 3 ou mais reposições guardadas: '+nomes(rep)+'. Quanto mais acumula, mais difícil encaixar todas depois.']);
+
+  // 9. locação devendo
+  const loc=alunos.filter(a=>(Number(a.locCred)||0)<0);
+  if(loc.length)t.push(['warn','🔑','Locação a acertar',loc.length+' aluno(s) com saldo de locação negativo: '+nomes(loc)+'. Use "Locação paga" no card para lançar e zerar.']);
+
+  if(!t.length){box.innerHTML='<div class="cons good"><h4><span>✅</span>Tudo em ordem</h4><p>Nenhuma pendência de cobrança, saldo ou avaliação para hoje.</p></div>';return;}
+  box.innerHTML=t.map(x=>`<div class="cons ${x[0]}"><h4><span>${x[1]}</span>${escAval(x[2])}</h4><p>${escAval(x[3])}</p></div>`).join('');
 }
 function renderDatasInicio(){
   const el=document.getElementById('datas-inicio');if(!el)return;
@@ -4056,8 +4205,27 @@ function exportBackup(){
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
   a.download='jvtenis-backup-'+new Date().toISOString().slice(0,10)+'.json';
-  a.click();toast('Backup exportado');
+  a.click();
+  DB.ultimoBackup=Date.now();persist();checarBackup();
+  toast('Backup exportado');
 }
+/* ===== Lembrete de backup =====
+   O backup existia mas nunca se lembrava dele. Como os dados vivem no
+   navegador, é a diferença entre ter e não ter cópia no dia em que o aparelho
+   der problema. Cobra depois de 30 dias; "depois" cala até fechar o app. */
+function checarBackup(){
+  const b=document.getElementById('bk-banner');if(!b)return;
+  if(sessionStorage.getItem('jv-bk-adiar')){b.style.display='none';return;}
+  const ult=DB.ultimoBackup;
+  const dias=ult?(Date.now()-ult)/864e5:999;
+  if(dias>=30){
+    b.querySelector('.bk-msg').textContent=ult
+      ? ('⚠️ Já faz '+Math.floor(dias)+' dias desde o último backup — vale guardar uma cópia.')
+      : '⚠️ Você ainda não guardou nenhum backup dos seus dados.';
+    b.style.display='flex';
+  }else b.style.display='none';
+}
+function adiarBackup(){sessionStorage.setItem('jv-bk-adiar','1');const b=document.getElementById('bk-banner');if(b)b.style.display='none';}
 function importBackup(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
@@ -4644,7 +4812,7 @@ function confirmarAulaWa(id,hora){
 function renderAll(){
   document.getElementById('month-label').textContent=MESES[curMonth]+' '+curYear;
   const safe=(fn,nome)=>{try{fn();}catch(e){console.warn('Render '+nome+' falhou:',e);}};
-  safe(updateEyeBtn,'olho');safe(renderAlunos,'alunos');safe(renderMovs,'caixa');safe(renderDash,'inicio');safe(renderFin,'financeiro');safe(renderAgenda,'agenda');safe(renderTorneio,'torneio');safe(renderConfirmAmanha,'confirmamanha');safe(renderAvaliacoes,'avaliacoes');
+  safe(updateEyeBtn,'olho');safe(renderAlunos,'alunos');safe(renderMovs,'caixa');safe(renderDash,'inicio');safe(renderFin,'financeiro');safe(renderAgenda,'agenda');safe(renderTorneio,'torneio');safe(renderConfirmAmanha,'confirmamanha');safe(renderAvaliacoes,'avaliacoes');safe(checarBackup,'backup');
 }
 // espera o Firebase ficar pronto (até ~6s) antes de carregar; nunca trava
 (function esperarESubir(t){

@@ -1055,6 +1055,25 @@ function hexA(hex,a){const h=String(hex).replace('#','');
   const r=parseInt(h.substr(0,2),16),g=parseInt(h.substr(2,2),16),b=parseInt(h.substr(4,2),16);
   return 'rgba('+r+','+g+','+b+','+a+')';}
 function diaVencEU(){return (EU&&EU.diaVenc)?EU.diaVenc:10;}
+/* Dias até o vencimento da mensalidade. Se o dia já passou há mais de 3, ele
+   pertence ao mês que vem — senão dia 28 visto no dia 2 apareceria como
+   "venceu há 4 dias" em vez de "faltam 26". */
+function diasAteVencer(){
+  const d=Number(diaVencEU());
+  if(!(d>=1&&d<=31))return null;
+  let dif=d-new Date().getDate();
+  if(dif<-3)dif+=30;
+  return dif;
+}
+/* Frase curta do prazo, usada no cartão de pagamento e no aviso de bloqueio. */
+function textoVencimento(){
+  const dias=diasAteVencer();
+  if(dias===null)return '';
+  if(dias<0)return 'venceu há '+(-dias)+' dia'+(dias===-1?'':'s');
+  if(dias===0)return 'vence hoje';
+  if(dias===1)return 'vence amanhã';
+  return 'faltam '+dias+' dias';
+}
 /* Agendar exige estar em dia: mensalidade paga E sem saldo negativo.
    Antes só travava a partir do dia 10 e o saldo negativo passava com um aviso. */
 function bloqueadoPorPagamento(){return !!(EU&&EU.status!=='pago');}
@@ -1064,8 +1083,11 @@ function bloqueadoPorSaldo(){
 }
 function bloqueadoParaAgendar(){return bloqueadoPorPagamento()||bloqueadoPorSaldo();}
 function motivoBloqueio(){
-  if(bloqueadoPorPagamento()&&bloqueadoPorSaldo())return 'mensalidade em aberto e aulas a acertar';
-  if(bloqueadoPorPagamento())return 'mensalidade do mês em aberto';
+  // com o prazo junto, ele sabe se está atrasado ou se ainda dá tempo
+  const prazo=textoVencimento();
+  const emAberto='mensalidade do mês em aberto'+(prazo?(' ('+prazo+')'):'');
+  if(bloqueadoPorPagamento()&&bloqueadoPorSaldo())return emAberto+' e aulas a acertar';
+  if(bloqueadoPorPagamento())return emAberto;
   const c=Number(EU.creditos)||0,g=Number(EU.credGrupo)||0;
   const p=[];
   if(c<0)p.push(fmtCred(-c)+' aula(s) além do pacote');
@@ -1681,7 +1703,9 @@ function renderPagamento(){
     if(eyeEl)eyeEl.textContent='Você está em dia ✓';
     if(titEl)titEl.innerHTML='Adiantar / <em>renovar</em> mensalidade';
   }else{
-    if(eyeEl)eyeEl.textContent='Pagamento';
+    // o dia de vencimento já vinha publicado e nunca era mostrado ao aluno
+    const prazo=textoVencimento();
+    if(eyeEl)eyeEl.textContent='Pagamento · vence dia '+diaVencEU()+(prazo?(' · '+prazo):'');
     if(titEl)titEl.innerHTML='Pagar minha <em>mensalidade</em>';
   }
   let btns='';
