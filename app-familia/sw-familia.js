@@ -2,8 +2,8 @@
    Estratégia: network-first (sempre tenta a versão nova online),
    com cache de reserva para abrir offline. NÃO intercepta o Firebase
    nem as APIs de cotação ao vivo (câmbio e preços dos ativos). */
-const CACHE = 'jk-familia-v1';
-const SHELL = ['./', './manifest-familia.webmanifest', './jk-icone-familia-192.png'];
+const CACHE = 'jk-familia-v2';
+const SHELL = ['./', './manifest-familia.webmanifest', './icone-jk-gestao-192.png'];
 
 self.addEventListener('install', e => {
   self.skipWaiting();
