@@ -776,25 +776,25 @@ Organizado por camada da Pirâmide. Cada drill traz objetivo, montagem, execuç�
 
 ## 6.5 Camada 5 — O Jogo
 
-**D17. Ponto com regra**
-- *Objetivo:* treinar um padrão isolando-o por regra.
-- *Montagem:* pontos normais com UMA regra dirigida (ex.: só vale cruzado até alguém abrir a quadra; ponto só começa com bola profunda; definição só na paralela).
-- *Execução:* jogos de 7/11 pontos; a regra é o professor invisível.
-- *Variações:* a regra escala com o nível — Construção usa regras de padrão, Ascensão regras de percentual (ex.: "3 erros não forçados = game perdido").
-- *Erro a observar:* cumprir a regra sem entender por quê (perguntar sempre).
+**D17. Corredor cruzado**
+- *Objetivo:* treinar um padrão tático por restrição física da quadra, não só por regra combinada.
+- *Montagem:* fita ou linha de giz marcando um corredor diagonal (cruzado) na quadra do adversário; cones nos limites laterais do corredor.
+- *Execução:* o rali começa com a bola obrigatoriamente dentro do corredor; só depois que alguém "abre a quadra" de dentro do corredor o ponto libera para a quadra toda.
+- *Variações:* Construção = corredor largo · Ascensão = corredor estreito · Topo = corredor muda de lado a cada troca de saque.
+- *Erro a observar:* tentar definir o ponto antes de abrir oficialmente o corredor.
 
-**D18. Nomeia a bola**
-- *Objetivo:* intenção consciente por bola.
-- *Montagem:* troca viva.
-- *Execução:* o aluno fala em voz alta a intenção de cada bola que bate: "defesa", "neutra", "constrói", "define". O professor congela quando a fala e a bola não combinam.
-- *Variações:* Construção = em troca cooperativa · Ascensão = em pontos valendo · Topo = nomeando também as bolas do ADVERSÁRIO.
-- *Erro a observar:* tudo virar "define" quando o placar aperta.
+**D18. Zonas de intenção**
+- *Objetivo:* intenção consciente por bola, comprovada fisicamente — não só falada.
+- *Montagem:* quadra do adversário dividida em 3 faixas com fita/giz: fundo ("constrói"), meio ("neutra"), curta/ângulo ("define").
+- *Execução:* o professor pede uma intenção antes de cada bola; o aluno precisa bater a bola dentro da faixa correspondente — o ponto só conta se a bola cair na zona certa.
+- *Variações:* Construção = 3 zonas grandes · Ascensão = zonas menores + troca viva · Topo = o aluno escolhe a própria intenção e o professor avalia se a bola bateu a zona.
+- *Erro a observar:* mirar a zona errada sob pressão (default para "neutra" sempre).
 
-**D19. Set com tema**
-- *Objetivo:* sustentar um plano tático por um set inteiro.
-- *Montagem:* set normal; cada jogador recebe (em segredo ou não) um tema ("vencer com profundidade", "variar altura", "atacar o backhand").
-- *Execução:* joga-se o set; ao final, avalia-se o TEMA antes do placar.
-- *Variações:* Ascensão = tema dado pelo professor · Topo = tema escolhido pelo aluno a partir de scouting do adversário.
+**D19. Pro-set com contador**
+- *Objetivo:* sustentar um plano tático por um set inteiro, com registro físico do cumprimento — não só memória subjetiva ao final.
+- *Montagem:* contador de mão ou cartão de marcação; tema definido antes ("atacar o backhand", "variar altura"); pro-set de 8 games.
+- *Execução:* a cada ponto em que o aluno executa o tema com sucesso (ganhando o ponto ou não), marca uma vez no contador; ao final, compara marcas x games ganhos.
+- *Variações:* Ascensão = tema dado pelo professor · Topo = tema escolhido a partir de scouting do adversário, contador feito pelo próprio aluno entre pontos.
 - *Erro a observar:* abandonar o tema no primeiro momento de pressão.
 
 **D20. Cinco situações**
@@ -806,11 +806,11 @@ Organizado por camada da Pirâmide. Cada drill traz objetivo, montagem, execuç�
 
 ## 6.6 Camada 6 — O Topo
 
-**D21. Rotina cronometrada**
-- *Objetivo:* instalar a rotina entre pontos.
-- *Montagem:* pontos valendo; a rotina do aluno definida em 3 passos (ex.: costas para a rede + respiração → decisão da jogada → posição).
-- *Execução:* o professor observa APENAS a rotina, não o tênis. Rotina pulada = ponto perdido, mesmo que ganho em quadra.
-- *Variações:* Construção = rotina simples pós-erro · Ascensão/Topo = rotina completa + rotina de saque.
+**D21. Trilha da rotina**
+- *Objetivo:* instalar a rotina entre pontos, com marcação física dos passos — não só observação verbal.
+- *Montagem:* 3 marcas pequenas no chão atrás da linha de fundo (cada uma = um passo da rotina: ex. 1ª = respiração/costas pra rede, 2ª = decisão da jogada, 3ª = posição de saque/devolução); cronômetro visível.
+- *Execução:* pontos valendo; entre cada ponto, o aluno pisa nas 3 marcas em ordem, dentro de um tempo-limite (ex.: 20 segundos). Pular uma marca ou estourar o tempo = ponto perdido, mesmo que ganho em quadra.
+- *Variações:* Construção = rotina de 2 passos, sem cronômetro · Ascensão = 3 passos + tempo · Topo = rotina completa + rotina de saque, tempo reduzido.
 - *Erro a observar:* rotina que desaparece exatamente quando mais precisa (após dupla falta, por exemplo).
 
 **D22. Placar de pressão**
@@ -820,17 +820,17 @@ Organizado por camada da Pirâmide. Cada drill traz objetivo, montagem, execuç�
 - *Variações:* Ascensão = placares padrão · Topo = com "história" (ex.: "você perdeu os dois últimos pontos bobos").
 - *Erro a observar:* mesma escolha de risco em qualquer placar.
 
-**D23. Jogo de identidade**
-- *Objetivo:* competir sendo quem se é.
-- *Montagem:* antes de um set valendo, o aluno escreve em uma linha seu jogo ("sou consistente e abro a quadra com paciência").
-- *Execução:* joga o set; na análise, a única pergunta é: "você jogou como quem você disse que é?"
+**D23. Cartão de identidade em quadra**
+- *Objetivo:* competir sendo quem se é, com comportamentos observáveis e contáveis — não só uma frase escrita.
+- *Montagem:* cartão com a identidade do aluno traduzida em 3 comportamentos observáveis (ex. identidade "consistente e paciente" → joga 3+ bolas de segurança antes de arriscar; não acelera depois de erro; mantém troca cruzada em bola neutra).
+- *Execução:* joga-se um set; professor ou colega observa e marca no cartão cada vez que um dos comportamentos aparece. Ao final, conta-se quantas vezes cada um apareceu x quantas vezes foi abandonado.
 - *Variações:* exclusivo Ascensão/Topo.
 - *Erro a observar:* identidade de treino abandonada por ansiedade de resultado.
 
-**D24. Aula invertida** *(ponte para o capítulo 8)*
-- *Objetivo:* consolidar pelo ensino; revelar vocação de professor.
-- *Montagem:* aluno do Topo conduz 15 minutos de ativação de base de um aluno iniciante, sob supervisão.
-- *Execução:* o mentor usa o vocabulário da metodologia; o professor avalia clareza, paciência e olho (viu o peso no calcanhar?).
+**D24. Checklist do mentor** *(ponte para o capítulo 8)*
+- *Objetivo:* consolidar pelo ensino e revelar vocação de professor, com uma tarefa observável concreta — não "dar aula" livremente.
+- *Montagem:* cartão com 5 itens tirados dos "erros a observar" das Camadas 1-2 (ex.: peso nos calcanhares, salto atrasado, base errada, tronco caindo, recuperação lenta); aluno do Topo recebe o cartão antes de conduzir 15 minutos de ativação de base de um iniciante, sob supervisão.
+- *Execução:* o mentor conduz a ativação e marca no cartão cada vez que observa e corrige um dos 5 itens no iniciante; ao final, o professor revisa o cartão junto com o mentor.
 - *Variações:* progressão natural: ativação → drill D5 completo → bloco de tema simples.
 - *Erro a observar:* corrigir a mão do iniciante em vez do pé (se fizer isso, releia esta apostila 🙂).
 
