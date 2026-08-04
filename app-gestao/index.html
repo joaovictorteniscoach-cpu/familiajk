@@ -274,15 +274,33 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .badge.pago{background:#E3F2E4;color:var(--ok)}
 .badge.parcial{background:#FFF6DF;color:var(--warn)}
 .badge.pendente{background:#FCE8E6;color:var(--bad)}
-.aluno-body{display:none;border-top:1px solid #F0E8D8;padding:13px 14px;background:#FDFBF7}
-.aluno.open .aluno-body{display:block}
+/* abre e fecha animando a altura: grid 0fr->1fr nao precisa de altura fixa.
+   a borda e o padding ficam no miolo, senao aparece um risco com o card fechado */
+.aluno-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .26s ease}
+.aluno.open .aluno-body{grid-template-rows:1fr}
+.ab-in{overflow:hidden;min-height:0}
+.aluno.open .ab-in{border-top:1px solid #F0E8D8;padding:13px 14px;background:#FDFBF7}
 .chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:11px}
 .chip{font-size:11.5px;background:var(--green);color:var(--cream);padding:5px 11px;border-radius:18px;font-weight:500}
 .chip.gold{background:var(--gold);color:var(--dark)}
 .chip.warn{background:#8a5a00;color:#fff}
 .chip.code{background:#fff;border:1.5px dashed var(--gold);color:var(--text);font-weight:700;letter-spacing:2px}
 .acts{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.act{border:none;border-radius:10px;padding:10px 8px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-align:center}
+.act{border:none;border-radius:10px;padding:10px 8px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-align:center;transition:transform .1s ease}
+/* o toque precisa se mover: antes so o numero trocava e parecia que nao pegou */
+.act:active{transform:scale(.96)}
+.linkbtn:active{transform:scale(.94)}
+/* acao do dia a dia, em destaque e largura total */
+.act.principal{grid-column:1/-1;padding:13px 8px;font-size:13.5px;font-weight:800}
+/* camada escondida atras de "Mais acoes" */
+.acts-mais{display:none;margin-top:7px}
+.aluno.mais .acts-mais{display:block}
+.acts-mais .acts{margin-bottom:0}
+.act.maisbtn{grid-column:1/-1;background:none;border:1px dashed var(--border);color:var(--muted);font-weight:700}
+.aluno.mais .act.maisbtn{background:#F4EDE0;border-style:solid}
+/* pulso no chip de credito quando o saldo muda */
+@keyframes chippulse{0%{transform:scale(1)}35%{transform:scale(1.16)}100%{transform:scale(1)}}
+.chip.pulsa{animation:chippulse .45s ease}
 .act svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
 .act.a1{background:var(--green);color:var(--cream)}
 .act.a2{background:var(--gold);color:var(--dark)}
@@ -2043,7 +2061,24 @@ function toggleHide(){
   toast(hideVals?'Valores ocultos':'Valores visíveis');
 }
 function dKey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
-function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2200);}
+let _toastTimer=null;
+function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('show');
+  clearTimeout(_toastTimer);_toastTimer=setTimeout(()=>e.classList.remove('show'),2200);}
+/* Aviso com "desfazer". O toast comum usa textContent e nao comporta botao;
+   este usa innerHTML e fica mais tempo no ar, porque exige uma decisao. */
+let _desfazerFn=null;
+function toastDesfazer(txt,fn){
+  const e=document.getElementById('toast');if(!e)return toast(txt);
+  _desfazerFn=fn;
+  e.innerHTML=escAval(txt)+' <button onclick="rodarDesfazer()" style="margin-left:10px;background:rgba(255,255,255,.22);border:none;color:inherit;font:inherit;font-weight:800;padding:4px 11px;border-radius:8px;cursor:pointer">desfazer</button>';
+  e.classList.add('show');
+  clearTimeout(_toastTimer);_toastTimer=setTimeout(()=>{e.classList.remove('show');_desfazerFn=null;},6000);
+}
+function rodarDesfazer(){
+  const f=_desfazerFn;_desfazerFn=null;
+  const e=document.getElementById('toast');if(e)e.classList.remove('show');
+  if(f)f();
+}
 function closeModal(id){document.getElementById(id).classList.remove('on');}
 
 /* ================= AGENDA ================= */
@@ -3333,6 +3368,14 @@ function delAluno(id){
   }
 }
 function toggleAluno(el){el.classList.toggle('open');}
+/* "Mais ações" por cartão — mesma ideia do toggleAluno: uma classe no pai e o
+   CSS faz o resto, sem variável global para dois cartões abertos brigarem. */
+function toggleMais(id){
+  const c=document.getElementById('card-'+id);if(!c)return;
+  c.classList.toggle('mais');
+  const b=c.querySelector('.act.maisbtn');
+  if(b)b.textContent=c.classList.contains('mais')?'⋯ Menos ações':'⋯ Mais ações';
+}
 /* Valor da aula EM GRUPO: preço por pessoa/aula do formato do aluno. */
 function valorAulaGrupoDe(a){
   const gt=a.grupoTipo||'Dupla';
@@ -3358,18 +3401,51 @@ function devidoExtra(a){return devidoExtraPart(a)+devidoExtraGrupo(a);}
 function aulaRealizada(id,modo){
   const a=DB.alunos.find(x=>x.id===id);
   if(!DB.presencas)DB.presencas=[];
-  DB.presencas.push({k:'m'+a.id+'-'+Date.now(),alunoId:a.id,data:dKey(new Date()),hora:'—',manual:true,modo:modo||'aula'});
+  const k='m'+a.id+'-'+Date.now();
+  DB.presencas.push({k,alunoId:a.id,data:dKey(new Date()),hora:'—',manual:true,modo:modo||'aula'});
   if(modo==='grupo'){            // sai do saldo de grupo, nunca do de particular
     a.credGrupo=(Number(a.credGrupo)||0)-1;
-    persist();renderAll();
-    if(a.credGrupo<0)toast('👥 Aula em grupo · '+a.nome+' → '+fmtCred(a.credGrupo)+' · extra de grupo a cobrar: '+fmt(valorAulaGrupoDe(a)));
-    else toast('👥 Aula em grupo · '+a.nome+' → '+fmtCred(a.credGrupo)+' de grupo');
+    persist();renderAll();pulsarCredito(a.id);
+    const extra=a.credGrupo<0?(' · extra de grupo a cobrar: '+fmt(valorAulaGrupoDe(a))):'';
+    toastDesfazer('👥 Aula em grupo · '+a.nome+' → '+fmtCred(a.credGrupo)+' de grupo'+extra,()=>desfazerAula(id,k,'grupo'));
     return;
   }
   a.creditos--;                       // permite ficar negativo: aula além do pacote
-  persist();renderAll();
-  if(a.creditos<0)toast('Aula registrada · '+a.nome+' → '+fmtCred(a.creditos)+' aulas · aula extra a cobrar: '+fmt(valorAulaDe(a)));
-  else toast('Aula registrada · '+a.nome+' → '+fmtCred(a.creditos)+' créditos');
+  persist();renderAll();pulsarCredito(a.id);
+  const extra=a.creditos<0?(' · aula extra a cobrar: '+fmt(valorAulaDe(a))):'';
+  toastDesfazer('Aula registrada · '+a.nome+' → '+fmtCred(a.creditos)+(a.creditos<0?' aulas':' créditos')+extra,()=>desfazerAula(id,k,modo));
+}
+/* Desfaz a aula que acabou de ser lançada: tira a presença exata pela chave e
+   devolve o crédito ao saldo de origem. Antes, errar o aluno significava abrir
+   o cadastro e corrigir o número na mão. */
+function desfazerAula(id,k,modo){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  const i=(DB.presencas||[]).findIndex(p=>p.k===k);
+  if(i<0){toast('Esse lançamento já não está mais aqui');return;}
+  DB.presencas.splice(i,1);
+  if(modo==='grupo')a.credGrupo=(Number(a.credGrupo)||0)+1;
+  else a.creditos=(Number(a.creditos)||0)+1;
+  persist();renderAll();pulsarCredito(a.id);
+  toast('↩️ Desfeito · '+a.nome+' → '+fmtCred(modo==='grupo'?a.credGrupo:a.creditos)+(modo==='grupo'?' de grupo':' créditos'));
+}
+/* O número mudou: dá um pulso no chip para o toque ter resposta visível. */
+function pulsarCredito(id){
+  const card=document.getElementById('card-'+id);if(!card)return;
+  const chip=card.querySelector('.chip');if(!chip)return;
+  chip.classList.remove('pulsa');void chip.offsetWidth;   // reinicia a animação
+  chip.classList.add('pulsa');
+}
+/* Quem realmente usa locação: tem saldo, está marcado como perfil de locação,
+   ou tem horário de locação na agenda. Para o resto, os três botões de locação
+   eram peso morto no cartão. */
+function usaLocacao(a){
+  if(!a)return false;
+  if(perfilDe(a)==='locacao')return true;
+  if((Number(a.locCred)||0)!==0)return true;
+  const A=DB.agenda||{};
+  const temEv=(A.eventos||[]).some(e=>e.alunoId===a.id&&e.tipo==='locacao');
+  const temFx=(A.fixos||[]).some(f=>f.alunoId===a.id&&f.tipo==='locacao');
+  return temEv||temFx;
 }
 /* A conta do mês corrente, que é a que aparece no card e no cadastro. */
 function agendaDoMes(a){const d=new Date();return mensalidadeDaAgenda(a,d.getFullYear(),d.getMonth());}
@@ -3524,51 +3600,89 @@ function renderAlunos(){
     return perfilDe(a)===filtroAluno;
   }).sort((x,y)=>x.nome.localeCompare(y.nome));
   if(!items.length){list.innerHTML='<div class="empty">Nenhum aluno '+(q||filtroAluno!=='todos'?'encontrado':'cadastrado ainda — toque em <b>+ Novo</b> para começar')+'.</div>';return;}
-  list.innerHTML=items.map(a=>{const ag=agendaDoMes(a);const difere=ag.total>0&&ag.valor!==(Number(a.mensalidade)||0);return `
+  // guarda quais cartões estão abertos: toda ação chama renderAll e reconstrói a
+  // lista, e sem isso o cartão se fechava embaixo do dedo a cada toque
+  const abertos=new Set(),comMais=new Set();
+  list.querySelectorAll('.aluno').forEach(el=>{
+    const id=el.id.replace('card-','');
+    if(el.classList.contains('open'))abertos.add(id);
+    if(el.classList.contains('mais'))comMais.add(id);
+  });
+  list.innerHTML=items.map(a=>{
+    const ag=agendaDoMes(a);
+    const difere=ag.total>0&&ag.valor!==(Number(a.mensalidade)||0);
+    // o cartão passa a mostrar só o que se aplica a este aluno hoje
+    const loc=usaLocacao(a);
+    const temRepos=(Number(a.repos)||0)>0;
+    const devendo=a.status!=='pago';
+    const temGrupo=(Number(a.planoGrupo)||0)>0;
+    return `
   <div class="aluno" id="card-${a.id}">
     <div class="aluno-head" onclick="toggleAluno(document.getElementById('card-${a.id}'))">
       <div><div class="aluno-name">${ehPersonalTipo(a.tipo)?'💪 ':'🎾 '}${a.nome}</div><div class="aluno-sub">${a.tipo} · ${a.plano>0?('Flex '+a.plano):'sem pacote'} · ${fmt(a.mensalidade)}/mês</div></div>
       <span class="badge ${a.status}">${a.status==='parcial'?'50%':a.status}</span>
     </div>
-    <div class="aluno-body">
+    <div class="aluno-body"><div class="ab-in">
       <div class="chips">
         <span class="chip" style="${a.creditos<0?'background:#F6D7D2;color:#8E2C1E;font-weight:800':''}">🎾 ${fmtCred(a.creditos)} ${a.creditos<0?'aula(s) devendo':('crédito'+(a.creditos===1?'':'s'))}</span>
         ${a.creditos<0?`<span class="chip" style="background:#F6D7D2;color:#8E2C1E;font-weight:800">💸 ${fmt(devidoExtraPart(a))} extra particular</span>`:''}
         ${(Number(a.credGrupo)||0)<0?`<span class="chip" style="background:#F6D7D2;color:#8E2C1E;font-weight:800">💸 ${fmt(devidoExtraGrupo(a))} extra grupo</span>`:''}
         ${(Number(a.planoGrupo)||0)>0||(Number(a.credGrupo)||0)!==0?`<span class="chip" style="${(Number(a.credGrupo)||0)<0?'background:#F6D7D2;color:#8E2C1E;font-weight:800':'background:#EDE7FB00;background:#E7F0E8;color:#2E7D52;font-weight:700'}">👥 ${fmtCred(Number(a.credGrupo)||0)} grupo</span>`:''}
-        <span class="chip ${a.repos>0?'warn':'gold'}">🔁 ${fmtCred(a.repos)} reposiç${a.repos===1?'ão':'ões'}</span>
-        <span class="chip" style="${(Number(a.locCred)||0)<0?'background:#F6D7D2;color:#8E2C1E;font-weight:800':''}">🔑 ${fmtCred(Number(a.locCred)||0)}h locação${(Number(a.locCred)||0)<0?' (devendo)':''}</span>
+        ${temRepos?`<span class="chip warn">🔁 ${fmtCred(a.repos)} reposiç${a.repos===1?'ão':'ões'}</span>`:''}
+        ${loc?`<span class="chip" style="${(Number(a.locCred)||0)<0?'background:#F6D7D2;color:#8E2C1E;font-weight:800':''}">🔑 ${fmtCred(Number(a.locCred)||0)}h locação${(Number(a.locCred)||0)<0?' (devendo)':''}</span>`:''}
         ${PRO_MULTI&&profDoAluno(a)?`<span class="chip" style="background:#E7F0E8;color:#2E7D52;font-weight:700">👨‍🏫 ${escAval(profNome(profDoAluno(a)))}</span>`:''}
-        <span class="chip code">🔑 ${a.codigo||'—'}</span>
-        <span class="chip" style="background:#EFE7D8;color:#5b5142;font-weight:700">${PERFIL_LABELS[perfilDe(a)]||''}</span>
+        ${filtroAluno==='todos'?`<span class="chip" style="background:#EFE7D8;color:#5b5142;font-weight:700">${PERFIL_LABELS[perfilDe(a)]||''}</span>`:''}
         ${(a.avaliacoes&&a.avaliacoes.length)?`<span class="chip" style="background:${metalDe(a.avaliacoes[a.avaliacoes.length-1].nivel).m};color:#fff;font-weight:800">📈 ${a.avaliacoes[a.avaliacoes.length-1].nivel||'—'}</span>`:''}
         ${a.termoAceitoEm?`<span class="chip" style="background:#E6F0E6;color:#2E7D52">📄 termo aceito</span>`:''}
         ${ag.total>0?`<span class="chip" style="${difere?'background:#FBEFD2;color:#7A5B10;font-weight:800':'background:#E7F0E8;color:#2E7D52;font-weight:700'}">📅 ${ag.part>0&&ag.grupo>0?(ag.part+' aula(s) + '+ag.grupo+' em grupo'):(ag.total+' aula(s)')} na agenda${difere?(' · '+fmt(ag.valor)+' (cadastro: '+fmt(a.mensalidade)+')'):''}</span>`:''}
       </div>
       ${histAlunoHTML(a.id)}
       <div class="acts">
-        <button class="act a1" onclick="aulaRealizada('${a.id}')">${BI.check}Aula realizada (−1)</button>
-        ${(Number(a.planoGrupo)||0)>0?`<button class="act a1" onclick="aulaRealizada('${a.id}','grupo')">${BI.check}Aula em grupo (−1)</button>`:''}
-        <button class="act a2" onclick="addRepos('${a.id}')">${BI.plus}Reposição</button>
-        <button class="act a3" onclick="marcarPago('${a.id}')">${BI.money}Marcar pago</button>
-        ${ag.total>0?`<button class="act ${difere?'a2':'a4'}" onclick="cobrarPelaAgenda('${a.id}')">📅 Cobrar pela agenda (${fmt(ag.valor)})</button>`:''}
-        <button class="act a4" onclick="usarRepos('${a.id}')">${BI.undo}Usar reposição</button>
-        <button class="act a2" onclick="addLocacao('${a.id}')">${BI.keyplus}+1h locação</button>
-        <button class="act a1" onclick="usarLocacao('${a.id}')">${BI.key}Locação feita (−1h)</button>
-        <button class="act a3" onclick="locacaoPaga('${a.id}')">${BI.money}Locação paga</button>
-        <button class="act aval" onclick="openAvalModal('${a.id}')">${BI.chart}Avaliar</button>
+        <button class="act a1 principal" onclick="aulaRealizada('${a.id}')">${BI.check}Aula realizada (−1)</button>
+        ${temGrupo?`<button class="act a1" onclick="aulaRealizada('${a.id}','grupo')">${BI.check}Aula em grupo (−1)</button>`:''}
+        ${devendo?`<button class="act a3" onclick="marcarPago('${a.id}')">${BI.money}Marcar pago</button>`:''}
+        ${difere?`<button class="act a2" onclick="cobrarPelaAgenda('${a.id}')">📅 Cobrar pela agenda (${fmt(ag.valor)})</button>`:''}
+        ${temRepos?`<button class="act a4" onclick="usarRepos('${a.id}')">${BI.undo}Usar reposição</button>`:''}
+        <button class="act maisbtn" onclick="toggleMais('${a.id}')">⋯ Mais ações</button>
       </div>
-      <div class="aluno-foot">
-        <button class="linkbtn" onclick="openAlunoModal('${a.id}')">Editar</button>
-        <button class="linkbtn" onclick="openRegistroModal('${a.id}')">Registro 📝</button>
-        ${(a.avaliacoes&&a.avaliacoes.length)?`<button class="linkbtn" onclick="openAvalExport('${a.id}')">Devolutiva 📤</button>`:''}
-        <button class="linkbtn" onclick="renovarMes('${a.id}')">Renovar mês</button>
-        ${a.tel?`<button class="linkbtn wa" onclick="enviarAcesso('${a.id}')">Enviar acesso 🔑</button>`:''}
-        ${a.tel?`<button class="linkbtn wa" onclick="enviarRenovacaoWa('${a.id}')">Renovação 📲</button>`:''}
-        <button class="linkbtn del" onclick="delAluno('${a.id}')">Excluir</button>
+      <div class="acts-mais">
+        <div class="acts">
+          <button class="act a2" onclick="addRepos('${a.id}')">${BI.plus}Reposição</button>
+          <button class="act aval" style="grid-column:auto" onclick="openAvalModal('${a.id}')">${BI.chart}Avaliar</button>
+          ${!difere&&ag.total>0?`<button class="act a4" onclick="cobrarPelaAgenda('${a.id}')">📅 Cobrar pela agenda (${fmt(ag.valor)})</button>`:''}
+          ${!temRepos?`<button class="act a4" onclick="usarRepos('${a.id}')">${BI.undo}Usar reposição</button>`:''}
+          ${loc?`<button class="act a2" onclick="addLocacao('${a.id}')">${BI.keyplus}+1h locação</button>`:''}
+          ${loc?`<button class="act a1" onclick="usarLocacao('${a.id}')">${BI.key}Locação feita (−1h)</button>`:''}
+          ${loc?`<button class="act a3" onclick="locacaoPaga('${a.id}')">${BI.money}Locação paga</button>`:''}
+          ${!loc?`<button class="act a4" onclick="addLocacao('${a.id}')">${BI.keyplus}Começar locação</button>`:''}
+        </div>
+        <div class="aluno-foot">
+          <button class="linkbtn" onclick="openAlunoModal('${a.id}')">Editar</button>
+          <button class="linkbtn" onclick="openRegistroModal('${a.id}')">Registro 📝</button>
+          ${(a.avaliacoes&&a.avaliacoes.length)?`<button class="linkbtn" onclick="openAvalExport('${a.id}')">Devolutiva 📤</button>`:''}
+          <button class="linkbtn" onclick="renovarMes('${a.id}')">Renovar mês</button>
+          ${a.tel?`<button class="linkbtn wa" onclick="enviarAcesso('${a.id}')">Acesso 🔑 ${a.codigo||'—'}</button>`:''}
+          ${a.tel?`<button class="linkbtn wa" onclick="enviarRenovacaoWa('${a.id}')">Renovação 📲</button>`:''}
+          ${!a.tel?`<span class="linkbtn" style="color:var(--muted)">🔑 ${a.codigo||'—'}</span>`:''}
+          <button class="linkbtn del" onclick="delAluno('${a.id}')">Excluir</button>
+        </div>
       </div>
-    </div>
+    </div></div>
   </div>`;}).join('');
+  // devolve o estado de cada cartão. sem transição no primeiro instante, senão
+  // a lista inteira "sanfona" a cada re-render
+  abertos.forEach(id=>{
+    const el=document.getElementById('card-'+id);if(!el)return;
+    const body=el.querySelector('.aluno-body');
+    if(body)body.style.transition='none';
+    el.classList.add('open');
+    if(body)requestAnimationFrame(()=>{body.style.transition='';});
+  });
+  comMais.forEach(id=>{
+    const el=document.getElementById('card-'+id);if(!el)return;
+    el.classList.add('mais');
+    const b=el.querySelector('.act.maisbtn');if(b)b.textContent='⋯ Menos ações';
+  });
 }
 
 /* ================= LANÇAMENTOS ================= */
