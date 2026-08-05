@@ -478,6 +478,8 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .tg-stat{width:44px;padding:6px 2px;text-align:center;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:700;background:var(--cream);color:var(--text)}
 .tg-pts{display:inline-block;min-width:30px;padding:4px 8px;border-radius:8px;background:#EFE7D8;font-weight:800;color:var(--green)}
 .tg-pts.lead{background:var(--green);color:var(--gold-light)}
+/* abre a conta: quanto veio desta etapa e quanto vem acumulado */
+.tg-acum{display:block;font-size:9.5px;color:var(--muted);font-weight:700;margin-top:2px}
 .tg-x{background:none;border:none;color:var(--bad);font-size:14px;cursor:pointer;opacity:.55}
 .tg-mv{background:none;border:none;color:var(--gold);font-size:15px;cursor:pointer;opacity:.7;margin-right:2px}
 .tor-log{background:var(--green);color:var(--cream);border-radius:16px;padding:14px 16px;margin-top:8px}
@@ -811,6 +813,11 @@ window.__DEMO = true;
     <button class="btn btn-ghost" onclick="document.getElementById('import-file').click()">⬆ Importar</button>
     <input type="file" id="import-file" accept=".json" style="display:none" onchange="importBackup(this)">
   </div>
+
+  <h2 class="sec-title" style="margin-top:18px">Voltar a uma <em>versão anterior</em></h2>
+  <p class="hint">O app guarda sozinho as últimas versões dos seus dados — no aparelho e na nuvem. Se algo sumir ou mudar sem explicação, volte para a versão de antes. A versão atual é guardada antes de restaurar, então dá para desfazer a volta.</p>
+  <div class="backup-row"><button class="btn btn-ghost" onclick="listarVersoes()">🕘 Ver versões salvas</button></div>
+  <div id="versoes-box"></div>
 </section>
 
 <section class="page" id="pg-graf">
@@ -1537,6 +1544,28 @@ async function cloudSet(k,v){
   return false;
 }
 function tsOf(raw){try{return JSON.parse(raw).savedAt||0;}catch(e){return 0;}}
+/* Retrato de uma cópia do banco, para comparar duas antes de adotar uma. */
+function resumoBanco(raw){
+  try{
+    const d=(typeof raw==='string')?JSON.parse(raw):raw;
+    if(!d||typeof d!=='object')return null;
+    const lan=Array.isArray(d.lancamentos)?d.lancamentos:[];
+    return {
+      alunos:(d.alunos||[]).length,
+      lancamentos:lan.length,
+      caixa:lan.filter(l=>l&&l.valor>0).reduce((s,l)=>s+(Number(l.valor)||0),0),
+      presencas:(d.presencas||[]).length,
+      eventos:((d.agenda&&d.agenda.eventos)||[]).length,
+      savedAt:d.savedAt||0
+    };
+  }catch(e){return null;}
+}
+function descreveResumo(r){
+  if(!r)return '(ilegível)';
+  const q=r.savedAt?new Date(r.savedAt).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'sem data';
+  return q+'\n'+r.alunos+' alunos · '+r.lancamentos+' lançamentos · R$ '
+    +Number(r.caixa).toLocaleString('pt-BR')+'\n'+r.presencas+' presenças · '+r.eventos+' eventos';
+}
 function genCode(){return String(Math.floor(1000+Math.random()*9000));}
 function ensureFields(){
   if(!DB.presencas)DB.presencas=[];
@@ -1641,19 +1670,95 @@ async function load(){
   let cloudRaw=null;
   if(hasCloud())cloudRaw=await cloudGet(KEY);
   // usa a versão mais recente entre aparelho e nuvem
-  let chosen=null;
-  if(cloudRaw&&localRaw)chosen=tsOf(localRaw)>tsOf(cloudRaw)?localRaw:cloudRaw;
+  let chosen=null,rejeitada=null;
+  if(cloudRaw&&localRaw){
+    const localMaisNovo=tsOf(localRaw)>tsOf(cloudRaw);
+    chosen=localMaisNovo?localRaw:cloudRaw;
+    rejeitada=localMaisNovo?cloudRaw:localRaw;
+  }
   else chosen=cloudRaw||localRaw;
+  /* A cópia mais recente pode ser a MENOR: foi assim que sumiram lançamentos.
+     Quando a escolhida tem menos dado que a descartada, ele decide — e até
+     decidir o app NÃO grava nada, porque era o persist() automático logo abaixo
+     que carimbava a data de agora na cópia atrasada e apagava a boa. */
+  let travado=false;
+  if(chosen&&rejeitada){
+    const a=resumoBanco(chosen), b=resumoBanco(rejeitada);
+    if(a&&b&&(a.lancamentos<b.lancamentos||a.alunos<b.alunos)){
+      const qualEscolhida=(chosen===cloudRaw)?'nuvem':'aparelho';
+      const qualOutra=(chosen===cloudRaw)?'aparelho':'nuvem';
+      const msg='⚠️ ATENÇÃO — as duas cópias estão diferentes\n\n'
+        +'A mais recente ('+qualEscolhida+') tem MENOS dados que a outra:\n\n'
+        +qualEscolhida.toUpperCase()+' (mais recente)\n'+descreveResumo(a)+'\n\n'
+        +qualOutra.toUpperCase()+'\n'+descreveResumo(b)+'\n\n'
+        +'OK = usar a maior ('+qualOutra+'), que provavelmente é a certa.\n'
+        +'Cancelar = usar a mais recente ('+qualEscolhida+').';
+      if(confirm(msg)){chosen=rejeitada;}
+      travado=true;   // seja qual for a escolha, não grava sozinho neste boot
+    }
+  }
   if(chosen){try{DB=JSON.parse(chosen);}catch(e){}} else if(window.__DEMO){DB=DEMO_SEED();}
   setSave(hasCloud()?'✓ pronto':'⚠ só no aparelho','ok');
   let dirty=false;
   if(!DB.agenda){DB.agenda=seedAgenda();dirty=true;}
   if(ensureFields())dirty=true;
   if(checarViradaMes())dirty=true;
-  if(dirty||!chosen||(hasCloud()&&!cloudRaw&&localRaw)||(localRaw&&cloudRaw&&tsOf(localRaw)!==tsOf(cloudRaw)))persist();else publish();
+  if(travado){setSave('⚠ confira os dados antes de salvar','err');}
+  else if(dirty||!chosen||(hasCloud()&&!cloudRaw&&localRaw)||(localRaw&&cloudRaw&&tsOf(localRaw)!==tsOf(cloudRaw)))persist();else publish();
   renderAll();
   try{HIST.prev=snapDB();}catch(e){}
   syncRequests(true);
+}
+/* ===== Rede de segurança: versões, em vez de uma cópia só =====
+   Antes existia UMA cópia no aparelho e UMA na nuvem, as duas sobrescritas a
+   cada ação. Bastava o app abrir com uma cópia atrasada para o dado bom sumir
+   sem deixar de onde voltar. Agora fica um rodízio de 5 versões recentes mais a
+   primeira de cada dia dos últimos 7 — é a versão do dia que salva quando o
+   estrago só é percebido no dia seguinte. */
+const SNAP_N=5, SNAP_DIAS=7;
+function snapKey(i){return KEY+'__s'+i;}
+function diaKey(d){return KEY+'__dia-'+d;}
+function hojeStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+/* Roda as versões e guarda a do dia. Se o localStorage encher, joga fora a mais
+   antiga — o backup nunca pode atrapalhar o save principal. */
+function guardarVersoes(json){
+  try{
+    for(let i=SNAP_N-1;i>0;i--){
+      const ant=lsGet(snapKey(i-1));
+      if(ant!==null&&!lsSet(snapKey(i),ant))limparVersaoAntiga();
+    }
+    if(!lsSet(snapKey(0),json))limparVersaoAntiga();
+    const hj=diaKey(hojeStr());
+    if(lsGet(hj)===null){                 // só a PRIMEIRA gravação do dia
+      if(!lsSet(hj,json))limparVersaoAntiga();
+      podarDias();
+    }
+  }catch(e){}
+}
+function podarDias(){
+  try{
+    const pref=KEY+'__dia-', dias=[];
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(k&&k.indexOf(pref)===0)dias.push(k);
+    }
+    dias.sort();
+    while(dias.length>SNAP_DIAS){try{localStorage.removeItem(dias.shift());}catch(e){}}
+  }catch(e){}
+}
+function limparVersaoAntiga(){
+  try{
+    const pref=KEY+'__dia-', dias=[];
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(k&&k.indexOf(pref)===0)dias.push(k);
+    }
+    dias.sort();
+    if(dias.length){localStorage.removeItem(dias[0]);return;}
+    for(let i=SNAP_N-1;i>=0;i--){
+      if(lsGet(snapKey(i))!==null){localStorage.removeItem(snapKey(i));return;}
+    }
+  }catch(e){}
 }
 function persist(){
   histOnPersist();
@@ -1661,6 +1766,7 @@ function persist(){
   const json=JSON.stringify(DB);
   // 1) salva IMEDIATAMENTE no aparelho (nunca perde nada)
   const okLocal=lsSet(KEY,json);
+  guardarVersoes(json);                 // 1b) e guarda de onde voltar
   setSave(okLocal?'✓ salvo no aparelho':'salvando…','ok');
   // 2) envia para a nuvem com retentativas
   clearTimeout(saveTimer);
@@ -1668,11 +1774,42 @@ function persist(){
     if(!hasCloud()){cloudPending=true;setSave(okLocal?'⚠ salvo só no aparelho ⓘ':'erro ao salvar',okLocal?'ok':'err');return;}
     setSave('enviando à nuvem…');
     const ok=await cloudSet(KEY,JSON.stringify(DB));
-    if(ok){cloudPending=false;setSave('✓ salvo na nuvem','ok');}
+    if(ok){cloudPending=false;setSave('✓ salvo na nuvem','ok');backupNuvem();}
     else{cloudPending=true;setSave(okLocal?'⚠ salvo só no aparelho ⓘ':'erro ao salvar',okLocal?'ok':'err');}
     publish();
   },500);
 }
+/* Uma cópia por hora na nuvem, no máximo 30. Mesmo que o aparelho se perca
+   inteiro, existe de onde voltar. */
+let _ultBkpNuvem=0;
+async function backupNuvem(){
+  if(!hasCloud())return;
+  const agora=Date.now();
+  if(agora-_ultBkpNuvem<3600e3)return;
+  _ultBkpNuvem=agora;
+  const d=new Date();
+  const carimbo=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'-'+String(d.getHours()).padStart(2,'0');
+  try{
+    await window.fbDB.ref('jvtenis/backups/'+carimbo).set(JSON.stringify(DB));
+    const snap=await window.fbDB.ref('jvtenis/backups').get();
+    if(snap.exists()){
+      const ks=Object.keys(snap.val()||{}).sort();
+      while(ks.length>30){await window.fbDB.ref('jvtenis/backups/'+ks.shift()).remove();}
+    }
+  }catch(e){}
+}
+/* Sair do app não pode custar a última alteração: no iPhone, minimizar congela
+   o setTimeout de 500ms e a gravação na nuvem nunca acontecia. */
+async function gravarAgora(){
+  if(!hasCloud()||!DB)return;
+  clearTimeout(saveTimer);
+  try{
+    const ok=await cloudSet(KEY,JSON.stringify(DB));
+    if(ok){cloudPending=false;}else{cloudPending=true;}
+  }catch(e){cloudPending=true;}
+}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)gravarAgora();});
+window.addEventListener('pagehide',()=>{gravarAgora();});
 /* Sincronizador de fundo: insiste em subir para a nuvem a cada 30s enquanto houver pendência */
 setInterval(async()=>{
   if(!cloudPending||!hasCloud())return;
@@ -4323,6 +4460,68 @@ function exportBackup(){
   DB.ultimoBackup=Date.now();persist();checarBackup();
   toast('Backup exportado');
 }
+/* ===== Voltar a uma versão anterior =====
+   Junta o que está guardado no aparelho e na nuvem, mostra o retrato de cada
+   versão (alunos, lançamentos, caixa) e deixa ele escolher. Antes de restaurar,
+   a versão atual vira mais um snapshot — dá para desfazer a volta. */
+async function listarVersoes(){
+  const box=document.getElementById('versoes-box');if(!box)return;
+  box.innerHTML='<div class="empty">Procurando versões…</div>';
+  const itens=[];
+  for(let i=0;i<SNAP_N;i++){
+    const raw=lsGet(snapKey(i));
+    if(raw)itens.push({origem:'aparelho',rot:i===0?'mais recente':(i+1)+'ª anterior',raw,r:resumoBanco(raw)});
+  }
+  try{
+    const pref=KEY+'__dia-',ks=[];
+    for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf(pref)===0)ks.push(k);}
+    ks.sort().reverse().forEach(k=>{
+      const raw=lsGet(k);
+      if(raw)itens.push({origem:'aparelho',rot:'início do dia '+k.replace(pref,'').split('-').reverse().slice(0,2).join('/'),raw,r:resumoBanco(raw)});
+    });
+  }catch(e){}
+  if(hasCloud()){
+    try{
+      const snap=await window.fbDB.ref('jvtenis/backups').get();
+      if(snap.exists()){
+        const v=snap.val()||{};
+        Object.keys(v).sort().reverse().slice(0,12).forEach(k=>{
+          const raw=v[k];
+          const p=k.split('-');
+          itens.push({origem:'nuvem',rot:p[2]+'/'+p[1]+' às '+p[3]+'h',raw,r:resumoBanco(raw)});
+        });
+      }
+    }catch(e){}
+  }
+  if(!itens.length){box.innerHTML='<div class="empty">Nenhuma versão guardada ainda. A partir de agora o app começa a guardar sozinho.</div>';return;}
+  const atual=resumoBanco(JSON.stringify(DB));
+  box.innerHTML='<div class="cons info" style="margin-bottom:8px"><h4><span>📌</span>Como está agora</h4><p>'
+    +escAval(descreveResumo(atual)).replace(/\n/g,'<br>')+'</p></div>'
+    +itens.map((it,i)=>{
+      const menor=atual&&it.r&&(it.r.lancamentos>atual.lancamentos||it.r.alunos>atual.alunos);
+      return '<div class="cons '+(menor?'warn':'info')+'">'
+        +'<h4><span>'+(it.origem==='nuvem'?'☁️':'📱')+'</span>'+escAval(it.rot)+' · '+it.origem+'</h4>'
+        +'<p>'+escAval(descreveResumo(it.r)).replace(/\n/g,'<br>')
+        +(menor?'<br><b>Tem mais dados que o atual.</b>':'')
+        +'<br><button class="btn btn-ghost" style="margin-top:8px;padding:7px 12px;font-size:12px" onclick="restaurarVersao('+i+')">Restaurar esta versão</button></p></div>';
+    }).join('');
+  window._versoes=itens;
+}
+function restaurarVersao(i){
+  const it=(window._versoes||[])[i];if(!it)return;
+  const atual=resumoBanco(JSON.stringify(DB));
+  if(!confirm('Restaurar a versão de '+it.rot+' ('+it.origem+')?\n\n'
+    +'FICARÁ ASSIM:\n'+descreveResumo(it.r)+'\n\n'
+    +'SUBSTITUINDO:\n'+descreveResumo(atual)+'\n\n'
+    +'A versão atual é guardada antes, então dá para voltar atrás.'))return;
+  guardarVersoes(JSON.stringify(DB));   // guarda o atual ANTES de sobrescrever
+  try{DB=JSON.parse(it.raw);}catch(e){toast('Versão ilegível');return;}
+  ensureFields();
+  logAct('Restaurou versão de '+it.rot+' ('+it.origem+')');
+  persist();renderAll();
+  toast('✓ Versão de '+it.rot+' restaurada');
+  listarVersoes();
+}
 /* ===== Lembrete de backup =====
    O backup existia mas nunca se lembrava dele. Como os dados vivem no
    navegador, é a diferença entre ter e não ter cópia no dia em que o aparelho
@@ -4476,16 +4675,33 @@ function encerrarEtapa(){
 }
 function novaEtapa(){
   const t=torAtual();
-  if(!t.encerrada){
-    if(!confirm('A '+etapaLabel(t)+' ainda não foi encerrada. Iniciar a próxima etapa mesmo assim?\n(Os placares V/D/WO serão zerados para a nova etapa; os jogadores e grupos continuam.)'))return;
-  }else{
-    if(!confirm('Iniciar a próxima etapa? Os placares V/D/WO serão zerados; os jogadores e grupos continuam.'))return;
-  }
+  const mov=movimentosEtapa(t);
+  // ele confirma sabendo quem sobe e quem desce, em vez de descobrir depois
+  let resumo='';
+  if(mov.sobem.length)resumo+='\n⬆️ SOBEM (pontos zerados)\n'+mov.sobem.map(m=>'· '+m.p.name+': '+m.de+' → '+m.para).join('\n')+'\n';
+  if(mov.descem.length)resumo+='\n⬇️ DESCEM (pontos zerados)\n'+mov.descem.map(m=>'· '+m.p.name+': '+m.de+' → '+m.para).join('\n')+'\n';
+  if(mov.ficam.length)resumo+='\n➡️ PERMANECEM (mantêm os pontos)\n'
+    +mov.ficam.map(p=>'· '+p.name+' ('+p.group+'): '+calcPtsTor(p)+' pts').join('\n')+'\n';
+  const aviso=(t.encerrada?'Iniciar a próxima etapa?':'A '+etapaLabel(t)+' ainda não foi encerrada. Iniciar a próxima mesmo assim?')
+    +'\n'+resumo+'\nOs placares V/D/WO zeram para todos.';
+  if(!confirm(aviso))return;
+  // 1) primeiro grava o acumulado e move de categoria...
+  mov.ficam.forEach(p=>{p.ptsAcum=calcPtsTor(p);});
+  mov.sobem.forEach(m=>{m.p.group=m.para;m.p.ptsAcum=0;});
+  mov.descem.forEach(m=>{m.p.group=m.para;m.p.ptsAcum=0;});
+  // 2) ...e só então zera os placares da etapa
   t.etapa=(Number(t.etapa)||1)+1;
   t.encerrada=false;
   (t.jogadores||[]).forEach(p=>{p.v=0;p.d=0;p.wo=0;});
+  t.etapasFin=t.etapasFin||[];
+  const reg=t.etapasFin.find(e=>e.etapa===(t.etapa-1));
+  const movRec={sobem:mov.sobem.map(m=>({nome:m.p.name,de:m.de,para:m.para})),
+                descem:mov.descem.map(m=>({nome:m.p.name,de:m.de,para:m.para}))};
+  if(reg)reg.movimentos=movRec;
+  else t.etapasFin.push({etapa:t.etapa-1,data:new Date().toISOString().slice(0,10),campeoes:[],movimentos:movRec});
+  logAct('Nova etapa do torneio: '+etapaLabel(t));
   persist();renderTorneio();
-  toast('🎾 '+etapaLabel(t)+' iniciada!');
+  toast('🎾 '+etapaLabel(t)+' iniciada · '+mov.sobem.length+' subiram, '+mov.descem.length+' desceram');
 }
 function editarEtapaNum(){
   const t=torAtual();
@@ -4495,8 +4711,41 @@ function editarEtapaNum(){
   if(isNaN(n)||n<1){toast('Número inválido');return;}
   t.etapa=n;persist();renderTorneio();toast('Etapa definida: '+etapaLabel(t));
 }
-function calcPtsTor(p){return (p.v||0)*3+(p.d||0)*1+(p.wo||0)*1;}
+/* ===== Pontos acumulativos =====
+   Antes os pontos zeravam para todo mundo a cada etapa e não existia pontuação
+   de ano. Agora quem PERMANECE na categoria mantém o que somou; só quem sobe ou
+   desce começa do zero. No fim do ano a premiação sai do total de cada
+   categoria. Quem nunca teve etapa anterior tem ptsAcum=0 e se comporta
+   exatamente como antes — nada a migrar. */
+const TOR_GRUPOS=['A','B','C','D'];      // A é a categoria mais forte
+function ptsEtapa(p){return (p.v||0)*3+(p.d||0)*1+(p.wo||0)*1;}
+function calcPtsTor(p){return (Number(p.ptsAcum)||0)+ptsEtapa(p);}
 function rankPlayersTor(jogs){return jogs.slice().sort((a,b)=>calcPtsTor(b)-calcPtsTor(a)||(b.v||0)-(a.v||0)||(a.order??0)-(b.order??0));}
+/* Sobe = letra anterior (B→A). Desce = letra seguinte (B→C). Nas pontas não há
+   para onde ir: quem está lá permanece — e, por permanecer, mantém os pontos. */
+function grupoAcima(g){const i=TOR_GRUPOS.indexOf(g);return (i>0)?TOR_GRUPOS[i-1]:null;}
+function grupoAbaixo(g){const i=TOR_GRUPOS.indexOf(g);return (i>=0&&i<TOR_GRUPOS.length-1)?TOR_GRUPOS[i+1]:null;}
+/* Quem sobe, quem desce e quem fica — calculado ANTES de zerar os placares. */
+function movimentosEtapa(t){
+  const porGrupo={};
+  (t.jogadores||[]).forEach(p=>{(porGrupo[p.group]=porGrupo[p.group]||[]).push(p);});
+  const sobem=[],descem=[],ficam=[];
+  Object.keys(porGrupo).forEach(g=>{
+    const ord=rankPlayersTor(porGrupo[g]);
+    if(!ord.length)return;
+    // categoria com um jogador só não tem barragem: sem ninguém para enfrentar,
+    // ele permanece e segue acumulando, em vez de subir de graça toda etapa
+    if(ord.length<2){ficam.push(ord[0]);return;}
+    const primeiro=ord[0], ultimo=ord[ord.length-1];
+    const acima=grupoAcima(g), abaixo=grupoAbaixo(g);
+    ord.forEach(p=>{
+      if(p===primeiro&&acima)sobem.push({p,de:g,para:acima});
+      else if(p===ultimo&&abaixo&&ord.length>1)descem.push({p,de:g,para:abaixo});
+      else ficam.push(p);
+    });
+  });
+  return {sobem,descem,ficam};
+}
 
 function renderTorneio(){
   const sel=document.getElementById('tor-sel');if(!sel)return;
@@ -4537,7 +4786,7 @@ function renderGrupoTor(t,g){
       <td><input class="tg-stat" type="number" min="0" value="${p.v||0}" onchange="updateStatTor('${torJsq(g)}','${q}','v',this.value)"></td>
       <td><input class="tg-stat" type="number" min="0" value="${p.d||0}" onchange="updateStatTor('${torJsq(g)}','${q}','d',this.value)"></td>
       <td><input class="tg-stat" type="number" min="0" value="${p.wo||0}" onchange="updateStatTor('${torJsq(g)}','${q}','wo',this.value)"></td>
-      <td><span class="tg-pts ${lead?'lead':''}">${calcPtsTor(p)}</span></td>
+      <td><span class="tg-pts ${lead?'lead':''}" title="${(Number(p.ptsAcum)||0)>0?(ptsEtapa(p)+' nesta etapa + '+(Number(p.ptsAcum)||0)+' acumulados'):'pontos desta etapa'}">${calcPtsTor(p)}</span>${(Number(p.ptsAcum)||0)>0?`<small class="tg-acum">${ptsEtapa(p)}+${Number(p.ptsAcum)||0}</small>`:''}</td>
       <td style="white-space:nowrap"><button class="tg-mv" title="Mover de grupo" onclick="abrirMoverTor('${torJsq(g)}','${q}')">↔</button><button class="tg-x" title="Remover" onclick="removerJogadorTor('${torJsq(g)}','${q}')">✕</button></td>
     </tr>`;
   }).join('');
