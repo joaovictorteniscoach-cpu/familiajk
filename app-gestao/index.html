@@ -485,6 +485,8 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .tg-stat{width:44px;padding:6px 2px;text-align:center;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:700;background:var(--cream);color:var(--text)}
 .tg-pts{display:inline-block;min-width:30px;padding:4px 8px;border-radius:8px;background:#EFE7D8;font-weight:800;color:var(--green)}
 .tg-pts.lead{background:var(--green);color:var(--gold-light)}
+/* abre a conta: quanto veio desta etapa e quanto vem acumulado */
+.tg-acum{display:block;font-size:9.5px;color:var(--muted);font-weight:700;margin-top:2px}
 .tg-x{background:none;border:none;color:var(--bad);font-size:14px;cursor:pointer;opacity:.55}
 .tg-mv{background:none;border:none;color:var(--gold);font-size:15px;cursor:pointer;opacity:.7;margin-right:2px}
 .tor-log{background:var(--green);color:var(--cream);border-radius:16px;padding:14px 16px;margin-top:8px}
@@ -4654,16 +4656,33 @@ function encerrarEtapa(){
 }
 function novaEtapa(){
   const t=torAtual();
-  if(!t.encerrada){
-    if(!confirm('A '+etapaLabel(t)+' ainda não foi encerrada. Iniciar a próxima etapa mesmo assim?\n(Os placares V/D/WO serão zerados para a nova etapa; os jogadores e grupos continuam.)'))return;
-  }else{
-    if(!confirm('Iniciar a próxima etapa? Os placares V/D/WO serão zerados; os jogadores e grupos continuam.'))return;
-  }
+  const mov=movimentosEtapa(t);
+  // ele confirma sabendo quem sobe e quem desce, em vez de descobrir depois
+  let resumo='';
+  if(mov.sobem.length)resumo+='\n⬆️ SOBEM (pontos zerados)\n'+mov.sobem.map(m=>'· '+m.p.name+': '+m.de+' → '+m.para).join('\n')+'\n';
+  if(mov.descem.length)resumo+='\n⬇️ DESCEM (pontos zerados)\n'+mov.descem.map(m=>'· '+m.p.name+': '+m.de+' → '+m.para).join('\n')+'\n';
+  if(mov.ficam.length)resumo+='\n➡️ PERMANECEM (mantêm os pontos)\n'
+    +mov.ficam.map(p=>'· '+p.name+' ('+p.group+'): '+calcPtsTor(p)+' pts').join('\n')+'\n';
+  const aviso=(t.encerrada?'Iniciar a próxima etapa?':'A '+etapaLabel(t)+' ainda não foi encerrada. Iniciar a próxima mesmo assim?')
+    +'\n'+resumo+'\nOs placares V/D/WO zeram para todos.';
+  if(!confirm(aviso))return;
+  // 1) primeiro grava o acumulado e move de categoria...
+  mov.ficam.forEach(p=>{p.ptsAcum=calcPtsTor(p);});
+  mov.sobem.forEach(m=>{m.p.group=m.para;m.p.ptsAcum=0;});
+  mov.descem.forEach(m=>{m.p.group=m.para;m.p.ptsAcum=0;});
+  // 2) ...e só então zera os placares da etapa
   t.etapa=(Number(t.etapa)||1)+1;
   t.encerrada=false;
   (t.jogadores||[]).forEach(p=>{p.v=0;p.d=0;p.wo=0;});
+  t.etapasFin=t.etapasFin||[];
+  const reg=t.etapasFin.find(e=>e.etapa===(t.etapa-1));
+  const movRec={sobem:mov.sobem.map(m=>({nome:m.p.name,de:m.de,para:m.para})),
+                descem:mov.descem.map(m=>({nome:m.p.name,de:m.de,para:m.para}))};
+  if(reg)reg.movimentos=movRec;
+  else t.etapasFin.push({etapa:t.etapa-1,data:new Date().toISOString().slice(0,10),campeoes:[],movimentos:movRec});
+  logAct('Nova etapa do torneio: '+etapaLabel(t));
   persist();renderTorneio();
-  toast('🎾 '+etapaLabel(t)+' iniciada!');
+  toast('🎾 '+etapaLabel(t)+' iniciada · '+mov.sobem.length+' subiram, '+mov.descem.length+' desceram');
 }
 function editarEtapaNum(){
   const t=torAtual();
@@ -4673,8 +4692,41 @@ function editarEtapaNum(){
   if(isNaN(n)||n<1){toast('Número inválido');return;}
   t.etapa=n;persist();renderTorneio();toast('Etapa definida: '+etapaLabel(t));
 }
-function calcPtsTor(p){return (p.v||0)*3+(p.d||0)*1+(p.wo||0)*1;}
+/* ===== Pontos acumulativos =====
+   Antes os pontos zeravam para todo mundo a cada etapa e não existia pontuação
+   de ano. Agora quem PERMANECE na categoria mantém o que somou; só quem sobe ou
+   desce começa do zero. No fim do ano a premiação sai do total de cada
+   categoria. Quem nunca teve etapa anterior tem ptsAcum=0 e se comporta
+   exatamente como antes — nada a migrar. */
+const TOR_GRUPOS=['A','B','C','D'];      // A é a categoria mais forte
+function ptsEtapa(p){return (p.v||0)*3+(p.d||0)*1+(p.wo||0)*1;}
+function calcPtsTor(p){return (Number(p.ptsAcum)||0)+ptsEtapa(p);}
 function rankPlayersTor(jogs){return jogs.slice().sort((a,b)=>calcPtsTor(b)-calcPtsTor(a)||(b.v||0)-(a.v||0)||(a.order??0)-(b.order??0));}
+/* Sobe = letra anterior (B→A). Desce = letra seguinte (B→C). Nas pontas não há
+   para onde ir: quem está lá permanece — e, por permanecer, mantém os pontos. */
+function grupoAcima(g){const i=TOR_GRUPOS.indexOf(g);return (i>0)?TOR_GRUPOS[i-1]:null;}
+function grupoAbaixo(g){const i=TOR_GRUPOS.indexOf(g);return (i>=0&&i<TOR_GRUPOS.length-1)?TOR_GRUPOS[i+1]:null;}
+/* Quem sobe, quem desce e quem fica — calculado ANTES de zerar os placares. */
+function movimentosEtapa(t){
+  const porGrupo={};
+  (t.jogadores||[]).forEach(p=>{(porGrupo[p.group]=porGrupo[p.group]||[]).push(p);});
+  const sobem=[],descem=[],ficam=[];
+  Object.keys(porGrupo).forEach(g=>{
+    const ord=rankPlayersTor(porGrupo[g]);
+    if(!ord.length)return;
+    // categoria com um jogador só não tem barragem: sem ninguém para enfrentar,
+    // ele permanece e segue acumulando, em vez de subir de graça toda etapa
+    if(ord.length<2){ficam.push(ord[0]);return;}
+    const primeiro=ord[0], ultimo=ord[ord.length-1];
+    const acima=grupoAcima(g), abaixo=grupoAbaixo(g);
+    ord.forEach(p=>{
+      if(p===primeiro&&acima)sobem.push({p,de:g,para:acima});
+      else if(p===ultimo&&abaixo&&ord.length>1)descem.push({p,de:g,para:abaixo});
+      else ficam.push(p);
+    });
+  });
+  return {sobem,descem,ficam};
+}
 
 function renderTorneio(){
   const sel=document.getElementById('tor-sel');if(!sel)return;
@@ -4715,7 +4767,7 @@ function renderGrupoTor(t,g){
       <td><input class="tg-stat" type="number" min="0" value="${p.v||0}" onchange="updateStatTor('${torJsq(g)}','${q}','v',this.value)"></td>
       <td><input class="tg-stat" type="number" min="0" value="${p.d||0}" onchange="updateStatTor('${torJsq(g)}','${q}','d',this.value)"></td>
       <td><input class="tg-stat" type="number" min="0" value="${p.wo||0}" onchange="updateStatTor('${torJsq(g)}','${q}','wo',this.value)"></td>
-      <td><span class="tg-pts ${lead?'lead':''}">${calcPtsTor(p)}</span></td>
+      <td><span class="tg-pts ${lead?'lead':''}" title="${(Number(p.ptsAcum)||0)>0?(ptsEtapa(p)+' nesta etapa + '+(Number(p.ptsAcum)||0)+' acumulados'):'pontos desta etapa'}">${calcPtsTor(p)}</span>${(Number(p.ptsAcum)||0)>0?`<small class="tg-acum">${ptsEtapa(p)}+${Number(p.ptsAcum)||0}</small>`:''}</td>
       <td style="white-space:nowrap"><button class="tg-mv" title="Mover de grupo" onclick="abrirMoverTor('${torJsq(g)}','${q}')">↔</button><button class="tg-x" title="Remover" onclick="removerJogadorTor('${torJsq(g)}','${q}')">✕</button></td>
     </tr>`;
   }).join('');

@@ -1567,7 +1567,9 @@ async function baixarTorneioPDF(){
 /* ================= TORNEIO (ALUNO) ================= */
 const GRUPOS_TOR_AL=['A','B','C','D','E'];
 function torEscAl(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,'&#39;');}
-function calcPtsTorAl(p){return (p.v||0)*3+(p.d||0)*1+(p.wo||0)*1;}
+/* Os pontos acumulam entre etapas: quem permanece na categoria mantém o que
+   somou. Sem o ptsAcum aqui, o aluno veria número diferente do professor. */
+function calcPtsTorAl(p){return (Number(p.ptsAcum)||0)+((p.v||0)*3+(p.d||0)*1+(p.wo||0)*1);}
 function rankTorAl(j){return j.slice().sort((a,b)=>calcPtsTorAl(b)-calcPtsTorAl(a)||(b.v||0)-(a.v||0));}
 function fmtDataAl(s){
   if(!s)return '—';const pr=String(s).split('-').map(Number);const dt=new Date(pr[0],(pr[1]||1)-1,pr[2]||1);
