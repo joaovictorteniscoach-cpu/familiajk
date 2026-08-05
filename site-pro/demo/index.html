@@ -811,6 +811,11 @@ window.__DEMO = true;
     <button class="btn btn-ghost" onclick="document.getElementById('import-file').click()">⬆ Importar</button>
     <input type="file" id="import-file" accept=".json" style="display:none" onchange="importBackup(this)">
   </div>
+
+  <h2 class="sec-title" style="margin-top:18px">Voltar a uma <em>versão anterior</em></h2>
+  <p class="hint">O app guarda sozinho as últimas versões dos seus dados — no aparelho e na nuvem. Se algo sumir ou mudar sem explicação, volte para a versão de antes. A versão atual é guardada antes de restaurar, então dá para desfazer a volta.</p>
+  <div class="backup-row"><button class="btn btn-ghost" onclick="listarVersoes()">🕘 Ver versões salvas</button></div>
+  <div id="versoes-box"></div>
 </section>
 
 <section class="page" id="pg-graf">
@@ -1537,6 +1542,28 @@ async function cloudSet(k,v){
   return false;
 }
 function tsOf(raw){try{return JSON.parse(raw).savedAt||0;}catch(e){return 0;}}
+/* Retrato de uma cópia do banco, para comparar duas antes de adotar uma. */
+function resumoBanco(raw){
+  try{
+    const d=(typeof raw==='string')?JSON.parse(raw):raw;
+    if(!d||typeof d!=='object')return null;
+    const lan=Array.isArray(d.lancamentos)?d.lancamentos:[];
+    return {
+      alunos:(d.alunos||[]).length,
+      lancamentos:lan.length,
+      caixa:lan.filter(l=>l&&l.valor>0).reduce((s,l)=>s+(Number(l.valor)||0),0),
+      presencas:(d.presencas||[]).length,
+      eventos:((d.agenda&&d.agenda.eventos)||[]).length,
+      savedAt:d.savedAt||0
+    };
+  }catch(e){return null;}
+}
+function descreveResumo(r){
+  if(!r)return '(ilegível)';
+  const q=r.savedAt?new Date(r.savedAt).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'sem data';
+  return q+'\n'+r.alunos+' alunos · '+r.lancamentos+' lançamentos · R$ '
+    +Number(r.caixa).toLocaleString('pt-BR')+'\n'+r.presencas+' presenças · '+r.eventos+' eventos';
+}
 function genCode(){return String(Math.floor(1000+Math.random()*9000));}
 function ensureFields(){
   if(!DB.presencas)DB.presencas=[];
@@ -1641,19 +1668,95 @@ async function load(){
   let cloudRaw=null;
   if(hasCloud())cloudRaw=await cloudGet(KEY);
   // usa a versão mais recente entre aparelho e nuvem
-  let chosen=null;
-  if(cloudRaw&&localRaw)chosen=tsOf(localRaw)>tsOf(cloudRaw)?localRaw:cloudRaw;
+  let chosen=null,rejeitada=null;
+  if(cloudRaw&&localRaw){
+    const localMaisNovo=tsOf(localRaw)>tsOf(cloudRaw);
+    chosen=localMaisNovo?localRaw:cloudRaw;
+    rejeitada=localMaisNovo?cloudRaw:localRaw;
+  }
   else chosen=cloudRaw||localRaw;
+  /* A cópia mais recente pode ser a MENOR: foi assim que sumiram lançamentos.
+     Quando a escolhida tem menos dado que a descartada, ele decide — e até
+     decidir o app NÃO grava nada, porque era o persist() automático logo abaixo
+     que carimbava a data de agora na cópia atrasada e apagava a boa. */
+  let travado=false;
+  if(chosen&&rejeitada){
+    const a=resumoBanco(chosen), b=resumoBanco(rejeitada);
+    if(a&&b&&(a.lancamentos<b.lancamentos||a.alunos<b.alunos)){
+      const qualEscolhida=(chosen===cloudRaw)?'nuvem':'aparelho';
+      const qualOutra=(chosen===cloudRaw)?'aparelho':'nuvem';
+      const msg='⚠️ ATENÇÃO — as duas cópias estão diferentes\n\n'
+        +'A mais recente ('+qualEscolhida+') tem MENOS dados que a outra:\n\n'
+        +qualEscolhida.toUpperCase()+' (mais recente)\n'+descreveResumo(a)+'\n\n'
+        +qualOutra.toUpperCase()+'\n'+descreveResumo(b)+'\n\n'
+        +'OK = usar a maior ('+qualOutra+'), que provavelmente é a certa.\n'
+        +'Cancelar = usar a mais recente ('+qualEscolhida+').';
+      if(confirm(msg)){chosen=rejeitada;}
+      travado=true;   // seja qual for a escolha, não grava sozinho neste boot
+    }
+  }
   if(chosen){try{DB=JSON.parse(chosen);}catch(e){}} else if(window.__DEMO){DB=DEMO_SEED();}
   setSave(hasCloud()?'✓ pronto':'⚠ só no aparelho','ok');
   let dirty=false;
   if(!DB.agenda){DB.agenda=seedAgenda();dirty=true;}
   if(ensureFields())dirty=true;
   if(checarViradaMes())dirty=true;
-  if(dirty||!chosen||(hasCloud()&&!cloudRaw&&localRaw)||(localRaw&&cloudRaw&&tsOf(localRaw)!==tsOf(cloudRaw)))persist();else publish();
+  if(travado){setSave('⚠ confira os dados antes de salvar','err');}
+  else if(dirty||!chosen||(hasCloud()&&!cloudRaw&&localRaw)||(localRaw&&cloudRaw&&tsOf(localRaw)!==tsOf(cloudRaw)))persist();else publish();
   renderAll();
   try{HIST.prev=snapDB();}catch(e){}
   syncRequests(true);
+}
+/* ===== Rede de segurança: versões, em vez de uma cópia só =====
+   Antes existia UMA cópia no aparelho e UMA na nuvem, as duas sobrescritas a
+   cada ação. Bastava o app abrir com uma cópia atrasada para o dado bom sumir
+   sem deixar de onde voltar. Agora fica um rodízio de 5 versões recentes mais a
+   primeira de cada dia dos últimos 7 — é a versão do dia que salva quando o
+   estrago só é percebido no dia seguinte. */
+const SNAP_N=5, SNAP_DIAS=7;
+function snapKey(i){return KEY+'__s'+i;}
+function diaKey(d){return KEY+'__dia-'+d;}
+function hojeStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+/* Roda as versões e guarda a do dia. Se o localStorage encher, joga fora a mais
+   antiga — o backup nunca pode atrapalhar o save principal. */
+function guardarVersoes(json){
+  try{
+    for(let i=SNAP_N-1;i>0;i--){
+      const ant=lsGet(snapKey(i-1));
+      if(ant!==null&&!lsSet(snapKey(i),ant))limparVersaoAntiga();
+    }
+    if(!lsSet(snapKey(0),json))limparVersaoAntiga();
+    const hj=diaKey(hojeStr());
+    if(lsGet(hj)===null){                 // só a PRIMEIRA gravação do dia
+      if(!lsSet(hj,json))limparVersaoAntiga();
+      podarDias();
+    }
+  }catch(e){}
+}
+function podarDias(){
+  try{
+    const pref=KEY+'__dia-', dias=[];
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(k&&k.indexOf(pref)===0)dias.push(k);
+    }
+    dias.sort();
+    while(dias.length>SNAP_DIAS){try{localStorage.removeItem(dias.shift());}catch(e){}}
+  }catch(e){}
+}
+function limparVersaoAntiga(){
+  try{
+    const pref=KEY+'__dia-', dias=[];
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(k&&k.indexOf(pref)===0)dias.push(k);
+    }
+    dias.sort();
+    if(dias.length){localStorage.removeItem(dias[0]);return;}
+    for(let i=SNAP_N-1;i>=0;i--){
+      if(lsGet(snapKey(i))!==null){localStorage.removeItem(snapKey(i));return;}
+    }
+  }catch(e){}
 }
 function persist(){
   histOnPersist();
@@ -1661,6 +1764,7 @@ function persist(){
   const json=JSON.stringify(DB);
   // 1) salva IMEDIATAMENTE no aparelho (nunca perde nada)
   const okLocal=lsSet(KEY,json);
+  guardarVersoes(json);                 // 1b) e guarda de onde voltar
   setSave(okLocal?'✓ salvo no aparelho':'salvando…','ok');
   // 2) envia para a nuvem com retentativas
   clearTimeout(saveTimer);
@@ -1668,11 +1772,42 @@ function persist(){
     if(!hasCloud()){cloudPending=true;setSave(okLocal?'⚠ salvo só no aparelho ⓘ':'erro ao salvar',okLocal?'ok':'err');return;}
     setSave('enviando à nuvem…');
     const ok=await cloudSet(KEY,JSON.stringify(DB));
-    if(ok){cloudPending=false;setSave('✓ salvo na nuvem','ok');}
+    if(ok){cloudPending=false;setSave('✓ salvo na nuvem','ok');backupNuvem();}
     else{cloudPending=true;setSave(okLocal?'⚠ salvo só no aparelho ⓘ':'erro ao salvar',okLocal?'ok':'err');}
     publish();
   },500);
 }
+/* Uma cópia por hora na nuvem, no máximo 30. Mesmo que o aparelho se perca
+   inteiro, existe de onde voltar. */
+let _ultBkpNuvem=0;
+async function backupNuvem(){
+  if(!hasCloud())return;
+  const agora=Date.now();
+  if(agora-_ultBkpNuvem<3600e3)return;
+  _ultBkpNuvem=agora;
+  const d=new Date();
+  const carimbo=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'-'+String(d.getHours()).padStart(2,'0');
+  try{
+    await window.fbDB.ref('jvtenis/backups/'+carimbo).set(JSON.stringify(DB));
+    const snap=await window.fbDB.ref('jvtenis/backups').get();
+    if(snap.exists()){
+      const ks=Object.keys(snap.val()||{}).sort();
+      while(ks.length>30){await window.fbDB.ref('jvtenis/backups/'+ks.shift()).remove();}
+    }
+  }catch(e){}
+}
+/* Sair do app não pode custar a última alteração: no iPhone, minimizar congela
+   o setTimeout de 500ms e a gravação na nuvem nunca acontecia. */
+async function gravarAgora(){
+  if(!hasCloud()||!DB)return;
+  clearTimeout(saveTimer);
+  try{
+    const ok=await cloudSet(KEY,JSON.stringify(DB));
+    if(ok){cloudPending=false;}else{cloudPending=true;}
+  }catch(e){cloudPending=true;}
+}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)gravarAgora();});
+window.addEventListener('pagehide',()=>{gravarAgora();});
 /* Sincronizador de fundo: insiste em subir para a nuvem a cada 30s enquanto houver pendência */
 setInterval(async()=>{
   if(!cloudPending||!hasCloud())return;
@@ -4322,6 +4457,68 @@ function exportBackup(){
   a.click();
   DB.ultimoBackup=Date.now();persist();checarBackup();
   toast('Backup exportado');
+}
+/* ===== Voltar a uma versão anterior =====
+   Junta o que está guardado no aparelho e na nuvem, mostra o retrato de cada
+   versão (alunos, lançamentos, caixa) e deixa ele escolher. Antes de restaurar,
+   a versão atual vira mais um snapshot — dá para desfazer a volta. */
+async function listarVersoes(){
+  const box=document.getElementById('versoes-box');if(!box)return;
+  box.innerHTML='<div class="empty">Procurando versões…</div>';
+  const itens=[];
+  for(let i=0;i<SNAP_N;i++){
+    const raw=lsGet(snapKey(i));
+    if(raw)itens.push({origem:'aparelho',rot:i===0?'mais recente':(i+1)+'ª anterior',raw,r:resumoBanco(raw)});
+  }
+  try{
+    const pref=KEY+'__dia-',ks=[];
+    for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf(pref)===0)ks.push(k);}
+    ks.sort().reverse().forEach(k=>{
+      const raw=lsGet(k);
+      if(raw)itens.push({origem:'aparelho',rot:'início do dia '+k.replace(pref,'').split('-').reverse().slice(0,2).join('/'),raw,r:resumoBanco(raw)});
+    });
+  }catch(e){}
+  if(hasCloud()){
+    try{
+      const snap=await window.fbDB.ref('jvtenis/backups').get();
+      if(snap.exists()){
+        const v=snap.val()||{};
+        Object.keys(v).sort().reverse().slice(0,12).forEach(k=>{
+          const raw=v[k];
+          const p=k.split('-');
+          itens.push({origem:'nuvem',rot:p[2]+'/'+p[1]+' às '+p[3]+'h',raw,r:resumoBanco(raw)});
+        });
+      }
+    }catch(e){}
+  }
+  if(!itens.length){box.innerHTML='<div class="empty">Nenhuma versão guardada ainda. A partir de agora o app começa a guardar sozinho.</div>';return;}
+  const atual=resumoBanco(JSON.stringify(DB));
+  box.innerHTML='<div class="cons info" style="margin-bottom:8px"><h4><span>📌</span>Como está agora</h4><p>'
+    +escAval(descreveResumo(atual)).replace(/\n/g,'<br>')+'</p></div>'
+    +itens.map((it,i)=>{
+      const menor=atual&&it.r&&(it.r.lancamentos>atual.lancamentos||it.r.alunos>atual.alunos);
+      return '<div class="cons '+(menor?'warn':'info')+'">'
+        +'<h4><span>'+(it.origem==='nuvem'?'☁️':'📱')+'</span>'+escAval(it.rot)+' · '+it.origem+'</h4>'
+        +'<p>'+escAval(descreveResumo(it.r)).replace(/\n/g,'<br>')
+        +(menor?'<br><b>Tem mais dados que o atual.</b>':'')
+        +'<br><button class="btn btn-ghost" style="margin-top:8px;padding:7px 12px;font-size:12px" onclick="restaurarVersao('+i+')">Restaurar esta versão</button></p></div>';
+    }).join('');
+  window._versoes=itens;
+}
+function restaurarVersao(i){
+  const it=(window._versoes||[])[i];if(!it)return;
+  const atual=resumoBanco(JSON.stringify(DB));
+  if(!confirm('Restaurar a versão de '+it.rot+' ('+it.origem+')?\n\n'
+    +'FICARÁ ASSIM:\n'+descreveResumo(it.r)+'\n\n'
+    +'SUBSTITUINDO:\n'+descreveResumo(atual)+'\n\n'
+    +'A versão atual é guardada antes, então dá para voltar atrás.'))return;
+  guardarVersoes(JSON.stringify(DB));   // guarda o atual ANTES de sobrescrever
+  try{DB=JSON.parse(it.raw);}catch(e){toast('Versão ilegível');return;}
+  ensureFields();
+  logAct('Restaurou versão de '+it.rot+' ('+it.origem+')');
+  persist();renderAll();
+  toast('✓ Versão de '+it.rot+' restaurada');
+  listarVersoes();
 }
 /* ===== Lembrete de backup =====
    O backup existia mas nunca se lembrava dele. Como os dados vivem no
