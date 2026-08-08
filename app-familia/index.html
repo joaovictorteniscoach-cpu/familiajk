@@ -150,6 +150,15 @@ select.cell option{background:var(--surface)}
 .due.late{border-color:rgba(232,117,95,.5)}
 .due.soon{border-color:rgba(212,162,58,.45)}
 .chk{width:20px;height:20px;accent-color:var(--up);cursor:pointer}
+/* botão de pago: fica na 1ª coluna, sempre visível sem arrastar a tabela */
+.paybtn{display:flex;align-items:center;justify-content:center;width:42px;height:38px;border-radius:10px;
+  border:1.5px solid var(--line);background:var(--surface2);color:var(--muted);
+  font-size:17px;line-height:1;cursor:pointer;padding:0;transition:.15s;-webkit-tap-highlight-color:transparent}
+.paybtn:active{transform:scale(.92)}
+.paybtn.on{background:var(--up);border-color:var(--up);color:#06251a;font-weight:700}
+.tbl td.paycell{padding-left:0;padding-right:4px;width:46px}
+.tbl th.paycell{padding-left:0;padding-right:4px}
+tr.rowpaid td.name input.cell{color:var(--muted);text-decoration:line-through;text-decoration-color:rgba(144,168,173,.6)}
 .advice{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:10px;background:var(--surface2);border-left:4px solid var(--muted)}
 .advice.good{border-left-color:var(--up)}
 .advice.warn2{border-left-color:var(--gold)}
@@ -465,6 +474,9 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
     <h2 style="font-size:14px;margin-top:24px">Global XP <span class="tag">(ETFs em US$ → R$)</span></h2>
     <div class="scroll"><table class="tbl" id="tbl-glob"></table></div>
     <button class="addbtn" onclick="addGlob()">+ adicionar ETF global</button>
+    <h2 style="font-size:14px;margin-top:24px">Binance <span class="tag">(cripto, em R$)</span></h2>
+    <div class="scroll"><table class="tbl" id="tbl-binance"></table></div>
+    <button class="addbtn" onclick="addBin()">+ adicionar cripto</button>
   </div>
 </section>
 
@@ -809,6 +821,8 @@ const DEFAULT={
     ["LIT","Global X Lithium & Battery Tech ETF","Setoriais",3.49767,71.88,82.12,251.43]
    ].map(x=>({tk:x[0],nome:x[1],classe:x[2],qtd:x[3],pm:x[4],pa:x[5],apl:x[6]})),
    caixaGlobalUSD:411.82,
+   /* Binance — cripto, valores em R$ */
+   binance:[],
    aportes:[
     ["05/01/2026","jan/26","Nacional XP","João","XP Liquidez",1000],
     ["05/02/2026","fev/26","Global XP","Esposa","VOO",500],
@@ -847,6 +861,8 @@ function selMonthKey(){return (D&&D.contas&&D.contas.mesSel)||curMonthKey();}
 function selMonthDate(){const p=selMonthKey().split('-');return new Date(+p[0],(+p[1]||1)-1,1);}
 function pagoGet(id,key){if(!id)return false;const m=((D.contas.pagos)||{})[key||selMonthKey()];return!!(m&&m[id]);}
 function pagoSet(id,val,key){if(!id)return;const k=key||selMonthKey();D.contas.pagos=D.contas.pagos||{};const m=D.contas.pagos[k]=D.contas.pagos[k]||{};if(val)m[id]=true;else delete m[id];save();}
+/* alterna o pago pelo botão da 1ª coluna e redesenha as contas do mês */
+function togglePago(id){pagoSet(id,!pagoGet(id));renderContasMonth();}
 
 /* ---------- migração ---------- */
 function migrateInvest(o){
@@ -855,6 +871,7 @@ function migrateInvest(o){
   if(!Array.isArray(o.nacional))o.nacional=structuredClone(d.nacional);
   if(!Array.isArray(o.global))o.global=structuredClone(d.global);
   if(o.caixaGlobalUSD===undefined)o.caixaGlobalUSD=d.caixaGlobalUSD;
+  if(!Array.isArray(o.binance))o.binance=[];
   if(!Array.isArray(o.aportes))o.aportes=structuredClone(d.aportes);
   if(!Array.isArray(o.mensal))o.mensal=structuredClone(d.mensal);
   if(!Array.isArray(o.anual))o.anual=structuredClone(d.anual);
@@ -941,11 +958,13 @@ function set(id,t){const e=document.getElementById(id);if(e)e.textContent=t}
 
 /* ---------- somas INVEST ---------- */
 function totNac(){return D.invest.nacional.reduce((s,a)=>s+(+a.valor||0),0)}
+function totBin(){return (D.invest.binance||[]).reduce((s,a)=>s+(+a.valor||0),0)}
 function globUSD(){return D.invest.global.reduce((s,g)=>s+(g.qtd*g.pa||0),0)+(+D.invest.caixaGlobalUSD||0)}
 function globBRL(){return globUSD()*(+D.invest.cambio||0)}
-function invTotal(){return totNac()+globBRL()}
+function invTotal(){return totNac()+globBRL()+totBin()}
 function classeVal(cl){
   let s=D.invest.nacional.filter(a=>a.classe===cl).reduce((t,a)=>t+(+a.valor||0),0);
+  s+=(D.invest.binance||[]).filter(a=>a.classe===cl).reduce((t,a)=>t+(+a.valor||0),0);
   s+=D.invest.global.filter(g=>g.classe===cl).reduce((t,g)=>t+(g.qtd*g.pa||0),0)*(+D.invest.cambio||0);
   if(cl==="Renda Fixa / Caixa") s+=(+D.invest.caixaGlobalUSD||0)*(+D.invest.cambio||0);
   return s;
@@ -994,16 +1013,16 @@ function switchTab(id,btn){
 /* ===================== CONTAS — render ===================== */
 function renderCasa(){
   const np=D.nomes;
-  let h=`<tr><th>Conta</th><th class="center">Venc.</th><th>${esc(np.preta)} (R$)</th><th>${esc(np.preto)} (R$)</th><th>Valor (R$)</th><th class="center">Pago</th><th></th></tr>`;
-  D.contas.casa.forEach((b,i)=>{h+=`<tr>
+  let h=`<tr><th class="paycell">Pago</th><th>Conta</th><th class="center">Venc.</th><th>${esc(np.preta)} (R$)</th><th>${esc(np.preto)} (R$)</th><th>Valor (R$)</th><th></th></tr>`;
+  D.contas.casa.forEach((b,i)=>{const pg=pagoGet(b.id);h+=`<tr class="${pg?'rowpaid':''}">
+    <td class="paycell"><button class="paybtn${pg?' on':''}" aria-pressed="${pg}" title="${pg?'Pago — tocar para desmarcar':'Marcar como pago'}" onclick="togglePago(D.contas.casa[${i}].id)">${pg?'✓':''}</button></td>
     <td class="name"><input class="cell txt" value="${esc(b.nome)}" oninput="D.contas.casa[${i}].nome=this.value;save()"></td>
     <td class="center"><input class="cell sm" style="text-align:center" value="${esc(b.venc)}" oninput="D.contas.casa[${i}].venc=this.value;refreshCon()"></td>
     <td><input class="cell" type="number" step="0.01" value="${b.preta}" oninput="D.contas.casa[${i}].preta=+this.value;refreshCasa()"></td>
     <td><input class="cell" type="number" step="0.01" value="${b.preto}" oninput="D.contas.casa[${i}].preto=+this.value;refreshCasa()"></td>
     <td><input class="cell" type="number" step="0.01" value="${b.valor}" oninput="D.contas.casa[${i}].valor=+this.value;refreshCon()"></td>
-    <td class="center"><input type="checkbox" class="chk" ${pagoGet(b.id)?'checked':''} onchange="pagoSet(D.contas.casa[${i}].id,this.checked);refreshCon()"></td>
     <td><button class="iconbtn" onclick="D.contas.casa.splice(${i},1);renderCasa();refreshCon()">×</button></td></tr>`;});
-  h+=`<tr class="sumrow"><td>Subtotal casa</td><td></td><td id="casa-preta"></td><td id="casa-preto"></td><td id="casa-tot"></td><td></td><td></td></tr>`;
+  h+=`<tr class="sumrow"><td class="paycell"></td><td>Subtotal casa</td><td></td><td id="casa-preta"></td><td id="casa-preto"></td><td id="casa-tot"></td><td></td></tr>`;
   document.getElementById('tbl-casa').innerHTML=h;refreshCasa();tuneInputs();
 }
 function refreshCasa(){set('casa-preta',brl(casaPretaTotal()));set('casa-preto',brl(casaPretoTotal()));set('casa-tot',brl(casaTotal()));save();}
@@ -1011,27 +1030,27 @@ function addCasa(){D.contas.casa.push({id:uid(),nome:"Nova conta",valor:0,venc:"
 function splitMeio(){D.contas.casa.forEach(b=>{const m=Math.round((+b.valor||0)/2*100)/100;b.preta=m;b.preto=(+b.valor||0)-m;});renderCasa();refreshCon();}
 
 function renderPess(k,tid){
-  let h='<tr><th>Conta</th><th class="center">Venc.</th><th>Valor (R$)</th><th class="center">Pago</th><th></th></tr>';
-  D.contas[k].forEach((b,i)=>{h+=`<tr>
+  let h='<tr><th class="paycell">Pago</th><th>Conta</th><th class="center">Venc.</th><th>Valor (R$)</th><th></th></tr>';
+  D.contas[k].forEach((b,i)=>{const pg=pagoGet(b.id);h+=`<tr class="${pg?'rowpaid':''}">
+    <td class="paycell"><button class="paybtn${pg?' on':''}" aria-pressed="${pg}" title="${pg?'Pago — tocar para desmarcar':'Marcar como pago'}" onclick="togglePago(D.contas.${k}[${i}].id)">${pg?'✓':''}</button></td>
     <td class="name"><input class="cell txt" value="${esc(b.nome)}" oninput="D.contas.${k}[${i}].nome=this.value;save()"></td>
     <td class="center"><input class="cell sm" style="text-align:center" value="${esc(b.venc)}" oninput="D.contas.${k}[${i}].venc=this.value;refreshCon()"></td>
     <td><input class="cell" type="number" step="0.01" value="${b.valor}" oninput="D.contas.${k}[${i}].valor=+this.value;refreshCon()"></td>
-    <td class="center"><input type="checkbox" class="chk" ${pagoGet(b.id)?'checked':''} onchange="pagoSet(D.contas.${k}[${i}].id,this.checked);refreshCon()"></td>
     <td><button class="iconbtn" onclick="D.contas.${k}.splice(${i},1);renderPess('${k}','${tid}');refreshCon()">×</button></td></tr>`;});
-  h+=`<tr class="sumrow"><td>Subtotal</td><td></td><td id="${k}-tot"></td><td id="${k}-pago"></td><td></td></tr>`;
+  h+=`<tr class="sumrow"><td class="paycell"></td><td>Subtotal <span id="${k}-pago" class="tag"></span></td><td></td><td id="${k}-tot"></td><td></td></tr>`;
   document.getElementById(tid).innerHTML=h;set(k+'-tot',brl(pessTotal(k)));set(k+'-pago',pagoPess(k)?('pago '+brl(pagoPess(k))):'');save();tuneInputs();
 }
 function addPess(k,tid){D.contas[k].push({id:uid(),nome:"Nova conta",valor:0,venc:"",pago:false});renderPess(k,tid||'tbl-'+k);refreshCon()}
 
 function renderCartao(){
-  let h='<tr><th>Cartão</th><th class="center">Melhor dia</th><th>Limite (R$)</th><th>Fatura (R$)</th><th>Uso</th><th class="center">Pago</th><th></th></tr>';
-  D.contas.cartoes.forEach((c,i)=>{const uso=c.limite?(+c.valor||0)/c.limite:0;h+=`<tr>
+  let h='<tr><th class="paycell">Pago</th><th>Cartão</th><th class="center">Melhor dia</th><th>Limite (R$)</th><th>Fatura (R$)</th><th>Uso</th><th></th></tr>';
+  D.contas.cartoes.forEach((c,i)=>{const uso=c.limite?(+c.valor||0)/c.limite:0,pg=pagoGet(c.id);h+=`<tr class="${pg?'rowpaid':''}">
+    <td class="paycell"><button class="paybtn${pg?' on':''}" aria-pressed="${pg}" title="${pg?'Pago — tocar para desmarcar':'Marcar como pago'}" onclick="togglePago(D.contas.cartoes[${i}].id)">${pg?'✓':''}</button></td>
     <td class="name"><input class="cell txt" value="${esc(c.nome)}" oninput="D.contas.cartoes[${i}].nome=this.value;save()"></td>
     <td class="center"><input class="cell sm" style="text-align:center" value="${esc(c.melhorDia)}" oninput="D.contas.cartoes[${i}].melhorDia=this.value;save()"></td>
     <td><input class="cell" type="number" step="0.01" value="${c.limite}" oninput="D.contas.cartoes[${i}].limite=+this.value;refreshCartao()"></td>
     <td><input class="cell" type="number" step="0.01" value="${c.valor}" oninput="D.contas.cartoes[${i}].valor=+this.value;refreshCartao()"></td>
     <td class="${uso>0.7?'down':(uso>0.3?'goldc':'up')}">${pct(uso)}</td>
-    <td class="center"><input type="checkbox" class="chk" ${pagoGet(c.id)?'checked':''} onchange="pagoSet(D.contas.cartoes[${i}].id,this.checked);refreshCartao()"></td>
     <td><button class="iconbtn" onclick="D.contas.cartoes.splice(${i},1);renderCartao()">×</button></td></tr>`;});
   document.getElementById('tbl-cartao').innerHTML=h;refreshCartao();tuneInputs();
 }
@@ -1351,8 +1370,22 @@ function refreshCarteira(){
     const er=document.getElementById('g-r-'+i);if(er){er.textContent=pct(r);er.className=r>=0?'up':'down'}});
   set('g-caixa-brl',brl((D.invest.caixaGlobalUSD||0)*D.invest.cambio));su+=(+D.invest.caixaGlobalUSD||0);
   set('g-sum-u',usd(su));set('g-sum-b',brl(su*D.invest.cambio));set('g-sum-p',pct(su*D.invest.cambio/tg));
+  (D.invest.binance||[]).forEach((a,i)=>set('bin-p-'+i,pct((a.valor||0)/tg)));
+  set('bin-sum',brl(totBin()));set('bin-sump',pct(totBin()/tg));
 }
 function onCambio(val){D.invest.cambio=+val||0;refreshInv()}
+function renderBin(){
+  let h='<tr><th>Ativo</th><th>Classe</th><th>Valor (R$)</th><th>% cart.</th><th></th></tr>';
+  (D.invest.binance||[]).forEach((a,i)=>{h+=`<tr>
+    <td class="name"><input class="cell txt" value="${esc(a.nome)}" oninput="D.invest.binance[${i}].nome=this.value;save()"></td>
+    <td><select class="cell txt" onchange="D.invest.binance[${i}].classe=this.value;refreshInv()">${CLASSES.map(c=>`<option ${c===a.classe?'selected':''}>${c}</option>`).join('')}</select></td>
+    <td><input class="cell" type="number" step="0.01" value="${a.valor}" oninput="D.invest.binance[${i}].valor=+this.value;refreshInv()"></td>
+    <td id="bin-p-${i}" class="mut"></td>
+    <td><button class="iconbtn" onclick="D.invest.binance.splice(${i},1);renderBin();refreshInv()">×</button></td></tr>`;});
+  h+=`<tr class="sumrow"><td>Subtotal Binance</td><td></td><td id="bin-sum"></td><td id="bin-sump"></td><td></td></tr>`;
+  document.getElementById('tbl-binance').innerHTML=h;tuneInputs();
+}
+function addBin(){D.invest.binance=D.invest.binance||[];D.invest.binance.push({nome:"Nova cripto",classe:"Cripto",valor:0,apl:null});renderBin();refreshInv()}
 function addNac(){D.invest.nacional.push({nome:"Novo ativo",classe:"Renda Fixa / Caixa",valor:0,apl:null});renderNac();refreshInv()}
 function addGlob(){D.invest.global.push({tk:"NEW",nome:"Novo ETF",classe:"Setoriais",qtd:0,pm:0,pa:0,apl:0});renderGlob();refreshInv()}
 
@@ -2042,7 +2075,7 @@ function initFields(){
 }
 function safeRun(fn){try{fn();}catch(e){console.warn('Família JK — falha ao desenhar:',e);}}
 function renderAll(){
-  [renderNac,renderGlob,renderAportes,renderMensal,renderAnual,refreshCarteira,drawInvPainel,onProj,renderGoals,renderAlloc,renderGanhos,onPlano,
+  [renderNac,renderGlob,renderBin,renderAportes,renderMensal,renderAnual,refreshCarteira,drawInvPainel,onProj,renderGoals,renderAlloc,renderGanhos,onPlano,
    renderCasa,()=>renderPess('joao','tbl-joao'),()=>renderPess('esposa','tbl-esposa'),drawEmpresa,
    renderCartao,renderReceb,renderResumo,renderControle,renderCategorias,drawConPainel,renderConselhos].forEach(safeRun);
   tuneInputs();
