@@ -4,7 +4,7 @@
 
 **Autor:** João Victor · Academia JV Tênis
 **Uso interno** — material estratégico, não publicar.
-**Versão:** 1.0 — 2026
+**Versão:** 1.1 — 2026
 
 ---
 
@@ -61,8 +61,8 @@ Sugestões de valores — **ajuste ao seu mercado**. O importante é ter **recor
 
 ## 1.4 O passo a passo da venda
 
-**Passo 1 — Prepare a demonstração.**
-Monte um ambiente de demo com dados fictícios (alunos, agenda cheia, caixa). Nunca mostre dados reais dos seus alunos. Tenha o app do aluno aberto no celular para mostrar dos dois lados.
+**Passo 1 — Use a demonstração já pronta.**
+Não precisa montar nada: já existe uma demo publicada, desconectada dos seus dados reais, com alunos e agenda fictícios (`cursoecapacitacao.netlify.app/demo/`, ou o botão "▶ Testar a demonstração" em `sistema.html`). Nunca mostre dados reais dos seus alunos. Tenha o app do aluno aberto no celular para mostrar dos dois lados.
 
 **Passo 2 — Faça a lista de prospecção.**
 20 nomes para começar: professores e academias que você conhece ou segue. Anote nome, contato e "dor" provável (ex.: "vive reclamando de calote").
@@ -188,6 +188,8 @@ Assim você deixa de vender por hora de quadra e passa a ter **três fontes de r
 > Quer o programa completo? Me chama que te mando.
 
 ## Anexo 4 — Roteiro de demo do app (15 min)
+
+Antes da call, vale mandar o link da demo (`cursoecapacitacao.netlify.app/demo/`) para o lead já chegar mexendo por conta própria.
 
 1. (2 min) A dor: como ele controla hoje.
 2. (3 min) Agenda + cadastro de aluno.
