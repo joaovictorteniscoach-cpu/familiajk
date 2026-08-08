@@ -427,6 +427,10 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .modal h3{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:600;margin-bottom:14px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 .modal-acts{display:flex;gap:9px;margin-top:16px}
+/* tabela do extrato — nome proprio, sem herdar de .tbl de outro lugar */
+.tbl-ext{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+.tbl-ext th{text-align:left;font-size:10px;letter-spacing:.5px;color:var(--muted);text-transform:uppercase;padding:5px 6px;border-bottom:1px solid var(--border)}
+.tbl-ext td{padding:7px 6px;border-bottom:1px solid #F2ECE0;vertical-align:top}
 .modal-acts .btn{flex:1;padding:13px}
 .toast{position:fixed;bottom:92px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--dark);color:var(--cream);font-size:13px;font-weight:500;padding:11px 18px;border-radius:24px;opacity:0;transition:all .3s;z-index:200;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -814,6 +818,11 @@ window.__DEMO = true;
     <input type="file" id="import-file" accept=".json" style="display:none" onchange="importBackup(this)">
   </div>
 
+  <h2 class="sec-title" style="margin-top:18px">Conferir <em>números</em></h2>
+  <p class="hint">Confere créditos, reposições, locação e mensalidades de todos os alunos contra o extrato e contra a agenda. Só mostra o que não fecha — e nada é corrigido sem você mandar.</p>
+  <div class="backup-row"><button class="btn btn-ghost" onclick="conferirNumeros()">🔎 Conferir agora</button></div>
+  <div id="conf-box"></div>
+
   <h2 class="sec-title" style="margin-top:18px">Voltar a uma <em>versão anterior</em></h2>
   <p class="hint">O app guarda sozinho as últimas versões dos seus dados — no aparelho e na nuvem. Se algo sumir ou mudar sem explicação, volte para a versão de antes. A versão atual é guardada antes de restaurar, então dá para desfazer a volta.</p>
   <div class="backup-row"><button class="btn btn-ghost" onclick="listarVersoes()">🕘 Ver versões salvas</button></div>
@@ -1159,6 +1168,15 @@ window.__DEMO = true;
 </div>
 
 <!-- MODAL REGISTRO DE AULA (avaliação contínua · 7.2) -->
+<div class="overlay" id="ov-extrato" style="z-index:136" onclick="if(event.target===this)closeModal('ov-extrato')">
+  <div class="modal">
+    <h3>Extrato de <span id="ext-nome"></span></h3>
+    <p class="hint">Cada linha mostra o que mudou o saldo e quanto ficou depois.</p>
+    <div class="chips" id="ext-saldos"></div>
+    <div id="ext-corpo" style="max-height:52vh;overflow:auto"></div>
+    <div class="modal-acts"><button class="btn btn-ghost" onclick="closeModal('ov-extrato')">Fechar</button></div>
+  </div>
+</div>
 <div class="overlay" id="ov-registro" style="z-index:135" onclick="if(event.target===this)closeModal('ov-registro')">
   <div class="modal">
     <input type="hidden" id="rg-id">
@@ -1567,7 +1585,62 @@ function descreveResumo(r){
     +Number(r.caixa).toLocaleString('pt-BR')+'\n'+r.presencas+' presenças · '+r.eventos+' eventos';
 }
 function genCode(){return String(Math.floor(1000+Math.random()*9000));}
+/* ===== Extrato dos saldos =====
+   creditos, credGrupo, repos e locCred eram contadores soltos, alterados em 25
+   lugares do código, e nenhum deles registrava POR QUÊ. Quando o número estava
+   errado não havia como saber de onde veio — nem como perceber que estava.
+
+   Agora todo mundo passa por aqui: mover() aplica o delta E grava a linha do
+   extrato. O caixa (DB.lancamentos) sempre funcionou assim; os saldos de aula
+   não tinham nada disso. */
+const CAMPO_LABEL={creditos:'créditos',credGrupo:'grupo',repos:'reposições',locCred:'locação'};
+function mover(a,campo,delta,motivo,ref){
+  if(!a||!campo)return 0;
+  delta=Number(delta)||0;
+  const de=Number(a[campo])||0, para=de+delta;
+  a[campo]=para;
+  if(delta===0)return para;
+  if(!DB.movs)DB.movs=[];
+  DB.movs.push({ts:Date.now(),alunoId:a.id,campo,delta,de,para,motivo:motivo||'—',ref:ref||''});
+  podarMovs(a.id);
+  return para;
+}
+/* Guarda as últimas 500 por aluno: o extrato tem que caber no aparelho. */
+function podarMovs(alunoId){
+  const todas=DB.movs||[];
+  const doAluno=todas.filter(m=>m.alunoId===alunoId);
+  if(doAluno.length<=500)return;
+  const cortar=doAluno.length-500, manter=new Set(doAluno.slice(cortar).map(m=>m.ts+'|'+m.campo+'|'+m.delta));
+  let n=0;
+  DB.movs=todas.filter(m=>{
+    if(m.alunoId!==alunoId)return true;
+    if(n++<cortar)return false;
+    return true;
+  });
+}
+function movsDe(alunoId,campo){
+  return (DB.movs||[]).filter(m=>m.alunoId===alunoId&&(!campo||m.campo===campo));
+}
+/* O saldo que o extrato diz que deveria ser. */
+function saldoPeloExtrato(a,campo){
+  return movsDe(a.id,campo).reduce((s,m)=>s+(Number(m.delta)||0),0);
+}
+/* Levar um saldo a um valor exato deixando extrato e saldo iguais no fim.
+   Não dá para fazer isso com mover(): ele soma o delta ao saldo E ao extrato,
+   então a própria correção reabriria a diferença que veio consertar. Aqui o
+   delta é calculado contra o EXTRATO e o saldo é escrito direto. */
+function corrigirSaldo(a,campo,alvo,motivo){
+  if(!a||!campo)return;
+  alvo=Number(alvo)||0;
+  const soma=saldoPeloExtrato(a,campo), de=Number(a[campo])||0;
+  if(!DB.movs)DB.movs=[];
+  DB.movs.push({ts:Date.now(),alunoId:a.id,campo,delta:alvo-soma,de,para:alvo,
+                motivo:motivo||'Correção',ref:'ajuste'});
+  a[campo]=alvo;
+  podarMovs(a.id);
+}
 function ensureFields(){
+  if(!DB.movs)DB.movs=[];
   if(!DB.presencas)DB.presencas=[];
   if(!DB.compromissos)DB.compromissos=[];
   if(!DB.locacaoOnly)DB.locacaoOnly=[];
@@ -1619,6 +1692,18 @@ function ensureFields(){
     if(a.grupoTipo===undefined){a.grupoTipo='';changed=true;}     // Dupla | Trio | Quarteto
     if(!Array.isArray(a.avaliacoes)){a.avaliacoes=[];changed=true;}
     if(!Array.isArray(a.registros)){a.registros=[];changed=true;}
+    // abre o extrato com o saldo de hoje. Não dá para reconstruir o passado —
+    // as renovações nunca foram registradas — e histórico inventado seria pior
+    // que histórico que começa agora e é confiável.
+    if(!a.extratoAberto){
+      ['creditos','credGrupo','repos','locCred'].forEach(c=>{
+        const v=Number(a[c])||0;
+        if(!v)return;                 // saldo zero não precisa de linha: 0 já bate com 0
+        if(!DB.movs)DB.movs=[];
+        DB.movs.push({ts:Date.now(),alunoId:a.id,campo:c,delta:v,de:0,para:v,motivo:'Saldo inicial',ref:'abertura'});
+      });
+      a.extratoAberto=true;changed=true;
+    }
     if(!a.codigo){
       let c;do{c=genCode();}while(DB.alunos.some(x=>x.codigo===c));
       a.codigo=c;changed=true;
@@ -2148,7 +2233,8 @@ function aceitarPedido(key){
       a.plano=Number(p.plano)||0;
       a.planoGrupo=Number(p.planoGrupo)||0;
       a.grupoTipo=p.grupoTipo||a.grupoTipo||'Dupla';
-      a.creditos=a.plano;a.credGrupo=a.planoGrupo;
+      mover(a,'creditos',a.plano-(Number(a.creditos)||0),'Plano misto aprovado');
+      mover(a,'credGrupo',a.planoGrupo-(Number(a.credGrupo)||0),'Plano misto aprovado');
       a.mensalidade=Number(p.valor)||a.mensalidade;
       toast('✓ Plano de '+a.nome+': '+a.plano+' particular + '+a.planoGrupo+' em grupo ('+a.grupoTipo+')');
     }else{
@@ -2554,26 +2640,26 @@ function togglePresenca(entryId){
   if(idx>=0){
     DB.presencas.splice(idx,1);
     if(isTor){logAct('Desmarcar jogo do torneio: '+a.nome);toast('Jogo do torneio desmarcado · '+a.nome);}
-    else if(isGrp&&!isRepo){a.credGrupo=(Number(a.credGrupo)||0)+c;logAct('Desmarcar aula em grupo: '+a.nome);toast('Aula em grupo desfeita · '+a.nome+' → '+fmtCred(a.credGrupo)+' de grupo');}
-    else if(isLoc){a.locCred=(Number(a.locCred)||0)+c;logAct('Desmarcar locação: '+a.nome);toast('Locação desfeita · '+a.nome+' → '+fmtCred(a.locCred)+'h de locação');}
-    else if(isRepo){a.repos=(Number(a.repos)||0)+c;logAct('Desmarcar reposição: '+a.nome);toast('Reposição desfeita · '+a.nome+' → '+fmtCred(a.repos)+' reposições');}
-    else{a.creditos+=c;logAct('Desmarcar presença: '+a.nome);toast('Presença desfeita · '+a.nome+' → '+fmtCred(a.creditos)+' créditos');}
+    else if(isGrp&&!isRepo){mover(a,'credGrupo',c,'Aula em grupo desmarcada',k);logAct('Desmarcar aula em grupo: '+a.nome);toast('Aula em grupo desfeita · '+a.nome+' → '+fmtCred(a.credGrupo)+' de grupo');}
+    else if(isLoc){mover(a,'locCred',c,'Locação desmarcada',k);logAct('Desmarcar locação: '+a.nome);toast('Locação desfeita · '+a.nome+' → '+fmtCred(a.locCred)+'h de locação');}
+    else if(isRepo){mover(a,'repos',c,'Reposição desmarcada',k);logAct('Desmarcar reposição: '+a.nome);toast('Reposição desfeita · '+a.nome+' → '+fmtCred(a.repos)+' reposições');}
+    else{mover(a,'creditos',c,'Presença desmarcada',k);logAct('Desmarcar presença: '+a.nome);toast('Presença desfeita · '+a.nome+' → '+fmtCred(a.creditos)+' créditos');}
   }else{
     if(isTor){
       DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora});
       logAct('Marcar jogo do torneio: '+a.nome);toast('🏆 Jogo do torneio · '+a.nome+' — sem desconto de crédito');
     }else if(isLoc){
-      a.locCred=(Number(a.locCred)||0)-c;DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora});
+      mover(a,'locCred',-c,'Locação na agenda',k);DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora});
       logAct('Marcar locação: '+a.nome);toast('🔑 Locação ('+c+'h) · '+a.nome+' → '+fmtCred(a.locCred)+'h'+(a.locCred<0?' (devendo)':' restantes'));
     }else if(isGrp&&!isRepo){
-      a.credGrupo=(Number(a.credGrupo)||0)-c;DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora});
+      mover(a,'credGrupo',-c,'Aula em grupo na agenda',k);DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora});
       logAct('Marcar aula em grupo: '+a.nome);toast('👥 Aula em grupo · '+a.nome+' → '+fmtCred(a.credGrupo)+' de grupo');
     }else if(isRepo){
       if((Number(a.repos)||0) < c-1e-9){toast(a.nome+' não tem reposições suficientes ('+fmtCred(a.repos)+')');return;}
-      a.repos=(Number(a.repos)||0)-c;DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora});
+      mover(a,'repos',-c,'Reposição na agenda',k);DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora});
       logAct('Marcar reposição: '+a.nome);toast('✓ Reposição ('+(c===0.5?'½ aula':'1 aula')+') · '+a.nome+' → '+fmtCred(a.repos)+' reposições');
     }else{
-      a.creditos-=c;DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora});   // permite ficar negativo (aula extra a cobrar)
+      mover(a,'creditos',-c,'Presença na agenda',k);DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora});   // permite ficar negativo
       logAct('Marcar presença: '+a.nome);toast('✓ Presença ('+(c===0.5?'½ aula':'1 aula')+') · '+a.nome+' → '+fmtCred(a.creditos)+' créditos');
     }
   }
@@ -2671,7 +2757,7 @@ function aplicarChuva(date,hora){
   entriesFor(date,hora).forEach(e=>{
     if(!e.alunoId)return;
     const k=presId(e,date);const i=DB.presencas.findIndex(p=>p.k===k);
-    if(i>=0){const a=DB.alunos.find(x=>x.id===e.alunoId);if(a){const c=creditoSlot(hora);if(e.tipo==='torneio'){/* torneio não debita, nada a devolver */}else if(e.tipo==='locacao')a.locCred=(Number(a.locCred)||0)+c;else if(e.tipo==='grupo'&&!e.repo)a.credGrupo=(Number(a.credGrupo)||0)+c;else if(e.repo)a.repos=(Number(a.repos)||0)+c;else a.creditos=(Number(a.creditos)||0)+c;}DB.presencas.splice(i,1);}
+    if(i>=0){const a=DB.alunos.find(x=>x.id===e.alunoId);if(a){const c=creditoSlot(hora);if(e.tipo==='torneio'){/* torneio não debita, nada a devolver */}else if(e.tipo==='locacao')mover(a,'locCred',c,'Chuva — devolvido');else if(e.tipo==='grupo'&&!e.repo)mover(a,'credGrupo',c,'Chuva — devolvido');else if(e.repo)mover(a,'repos',c,'Chuva — devolvido');else mover(a,'creditos',c,'Chuva — devolvido');}DB.presencas.splice(i,1);}
   });
   DB.agenda.fixos.filter(f=>f.dia===dia&&f.hora===hora&&fixoValeEm(f,dk)).forEach(f=>{
     if(!DB.agenda.excecoes.some(x=>x.fixoId===f.id&&x.data===dk))DB.agenda.excecoes.push({fixoId:f.id,data:dk});
@@ -3057,7 +3143,29 @@ function saveAluno(){
     perfil:document.getElementById('a-perfil').value,
     valorAula:Number(document.getElementById('a-valoraula').value)||(document.getElementById('a-tipo').value==='Personal'?130:160)
   };
-  if(id){Object.assign(DB.alunos.find(x=>x.id===id),data);toast('Aluno atualizado');}
+  // travas antes de gravar: número absurdo passava direto
+  if(data.plano<0||data.planoGrupo<0){toast('Plano não pode ser negativo');return;}
+  if(data.plano>0&&data.mensalidade<=0&&!confirm('Plano de '+data.plano+' aula(s) com mensalidade zerada.\n\nSalvar mesmo assim?'))return;
+  if(id){
+    const a=DB.alunos.find(x=>x.id===id);
+    // os quatro saldos passam pelo extrato, com motivo "Correção manual" — antes
+    // a alteração no cadastro sumia sem deixar rastro nenhum
+    const saldos=['creditos','credGrupo','repos','locCred'];
+    for(const c of saldos){
+      const de=Number(a[c])||0, para=Number(data[c])||0, dif=para-de;
+      if(!dif)continue;
+      if(Math.abs(dif)>10&&!confirm('Mudança grande em '+CAMPO_LABEL[c]+' de '+a.nome+':\n\n'
+        +fmtCred(de)+'  →  '+fmtCred(para)+'   ('+(dif>0?'+':'')+fmtCred(dif)+')\n\nConfirma?'))return;
+    }
+    const novo=Object.assign({},data);
+    saldos.forEach(c=>delete novo[c]);      // esses vão pelo mover(), não por cima
+    Object.assign(a,novo);
+    saldos.forEach(c=>{
+      const dif=(Number(data[c])||0)-(Number(a[c])||0);
+      if(dif)mover(a,c,dif,'Correção manual no cadastro');
+    });
+    toast('Aluno atualizado');
+  }
   else{
     let c;do{c=genCode();}while(DB.alunos.some(x=>x.codigo===c));
     DB.alunos.push({id:'a'+Date.now(),ativo:true,codigo:c,...data});toast('Aluno cadastrado · código '+c);
@@ -3560,13 +3668,13 @@ function aulaRealizada(id,modo){
   const k='m'+a.id+'-'+Date.now();
   DB.presencas.push({k,alunoId:a.id,data:dKey(new Date()),hora:'—',manual:true,modo:modo||'aula'});
   if(modo==='grupo'){            // sai do saldo de grupo, nunca do de particular
-    a.credGrupo=(Number(a.credGrupo)||0)-1;
+    mover(a,'credGrupo',-1,'Aula em grupo realizada',k);
     persist();renderAll();pulsarCredito(a.id);
     const extra=a.credGrupo<0?(' · extra de grupo a cobrar: '+fmt(valorAulaGrupoDe(a))):'';
     toastDesfazer('👥 Aula em grupo · '+a.nome+' → '+fmtCred(a.credGrupo)+' de grupo'+extra,()=>desfazerAula(id,k,'grupo'));
     return;
   }
-  a.creditos--;                       // permite ficar negativo: aula além do pacote
+  mover(a,'creditos',-1,'Aula realizada',k);   // permite ficar negativo: aula além do pacote
   persist();renderAll();pulsarCredito(a.id);
   const extra=a.creditos<0?(' · aula extra a cobrar: '+fmt(valorAulaDe(a))):'';
   toastDesfazer('Aula registrada · '+a.nome+' → '+fmtCred(a.creditos)+(a.creditos<0?' aulas':' créditos')+extra,()=>desfazerAula(id,k,modo));
@@ -3579,8 +3687,7 @@ function desfazerAula(id,k,modo){
   const i=(DB.presencas||[]).findIndex(p=>p.k===k);
   if(i<0){toast('Esse lançamento já não está mais aqui');return;}
   DB.presencas.splice(i,1);
-  if(modo==='grupo')a.credGrupo=(Number(a.credGrupo)||0)+1;
-  else a.creditos=(Number(a.creditos)||0)+1;
+  mover(a,modo==='grupo'?'credGrupo':'creditos',1,'Aula desfeita',k);
   persist();renderAll();pulsarCredito(a.id);
   toast('↩️ Desfeito · '+a.nome+' → '+fmtCred(modo==='grupo'?a.credGrupo:a.creditos)+(modo==='grupo'?' de grupo':' créditos'));
 }
@@ -3636,29 +3743,29 @@ function locacaoPaga(id){
   if(!(h>0)){toast('Informe um número de horas maior que zero');return;}
   const total=Math.round(vh*h);
   DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:'Locação · '+a.nome+' ('+fmtCred(h)+'h)',valor:total,cat:'locacao',modal:'tenis',data:new Date().toISOString().slice(0,10)});
-  a.locCred=(Number(a.locCred)||0)+h;
+  mover(a,'locCred',h,'Locação paga ('+fmtCred(h)+'h)');
   logAct('Locação paga: '+a.nome+' ('+h+'h)');
   persist();renderAll();
   toast('🔑 Locação paga · '+fmt(total)+' lançado · '+a.nome+' → '+fmtCred(a.locCred)+'h');
 }
 function addRepos(id){
   const a=DB.alunos.find(x=>x.id===id);
-  a.repos++;persist();renderAll();toast('Reposição anotada para '+a.nome);
+  mover(a,'repos',1,'Reposição anotada');persist();renderAll();toast('Reposição anotada para '+a.nome);
 }
 function usarRepos(id){
   const a=DB.alunos.find(x=>x.id===id);
   if(a.repos<=0){toast('Sem reposições pendentes');return;}
-  a.repos=Math.max(0,(Number(a.repos)||0)-1);persist();renderAll();toast('Reposição realizada · restam '+fmtCred(a.repos));
+  mover(a,'repos',-Math.min(1,Number(a.repos)||0),'Reposição realizada');persist();renderAll();toast('Reposição realizada · restam '+fmtCred(a.repos));
 }
 function addLocacao(id){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
-  a.locCred=(Number(a.locCred)||0)+1;
+  mover(a,'locCred',1,'+1h de locação');
   logAct('Locação +1h: '+a.nome);persist();renderAll();
   toast('🔑 +1h de locação · '+a.nome+' → '+fmtCred(a.locCred)+'h');
 }
 function usarLocacao(id){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
-  a.locCred=(Number(a.locCred)||0)-1;
+  mover(a,'locCred',-1,'Locação realizada');
   logAct('Locação feita: '+a.nome);persist();renderAll();
   toast('🔑 Locação registrada · '+a.nome+' → '+fmtCred(a.locCred)+'h'+(a.locCred<0?' (devendo)':''));
 }
@@ -3677,9 +3784,9 @@ function checarViradaMes(){
   (DB.alunos||[]).forEach(a=>{
     const sobra=Number(a.creditos)||0;
     const sobraG=Number(a.credGrupo)||0;
-    if(sobra>0||sobraG>0){a.repos=(Number(a.repos)||0)+Math.max(0,sobra)+Math.max(0,sobraG);n++;}
-    a.creditos=sobra>0?0:sobra;
-    a.credGrupo=sobraG>0?0:sobraG;
+    if(sobra>0||sobraG>0){mover(a,'repos',Math.max(0,sobra)+Math.max(0,sobraG),'Sobra do mês virou reposição');n++;}
+    if(sobra>0)mover(a,'creditos',-sobra,'Virada de mês — sobra convertida');
+    if(sobraG>0)mover(a,'credGrupo',-sobraG,'Virada de mês — sobra convertida');
   });
   (DB.alunos||[]).forEach(a=>{a.status='pendente';});   // novo mês: todos "não pago" até renovar
   DB.mesCreditos=m;
@@ -3692,8 +3799,8 @@ function renovarMes(id){
   const pg=Number(a.planoGrupo)||0;
   const resumo='+'+(Number(a.plano)||0)+' crédito(s)'+(pg>0?(' e +'+pg+' de grupo'):'');
   if(confirm('Renovar o mês de '+a.nome+'? Soma '+resumo+' e marca como pendente.')){
-    a.creditos+=Number(a.plano)||0;
-    if(pg>0)a.credGrupo=(Number(a.credGrupo)||0)+pg;   // plano misto renova as duas partes
+    mover(a,'creditos',Number(a.plano)||0,'Renovação do mês');
+    if(pg>0)mover(a,'credGrupo',pg,'Renovação do mês (grupo)');   // plano misto renova as duas partes
     a.status='pendente';persist();renderAll();
     toast('Mês renovado para '+a.nome+' · '+resumo);
   }
@@ -3815,6 +3922,7 @@ function renderAlunos(){
         <div class="aluno-foot">
           <button class="linkbtn" onclick="openAlunoModal('${a.id}')">Editar</button>
           <button class="linkbtn" onclick="openRegistroModal('${a.id}')">Registro 📝</button>
+          <button class="linkbtn" onclick="abrirExtrato('${a.id}')">Extrato 📋</button>
           ${(a.avaliacoes&&a.avaliacoes.length)?`<button class="linkbtn" onclick="openAvalExport('${a.id}')">Devolutiva 📤</button>`:''}
           <button class="linkbtn" onclick="renovarMes('${a.id}')">Renovar mês</button>
           ${a.tel?`<button class="linkbtn wa" onclick="enviarAcesso('${a.id}')">Acesso 🔑 ${a.codigo||'—'}</button>`:''}
@@ -4459,6 +4567,81 @@ function exportBackup(){
   a.click();
   DB.ultimoBackup=Date.now();persist();checarBackup();
   toast('Backup exportado');
+}
+/* ===== Extrato de um aluno =====
+   A resposta para "por que esse aluno está com 3 e não com 5". */
+function abrirExtrato(id){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  const ms=movsDe(id).slice().sort((x,y)=>y.ts-x.ts).slice(0,60);
+  const dt=ts=>{const d=new Date(ts);return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');};
+  const linhas=ms.map(m=>
+    '<tr><td style="white-space:nowrap;color:var(--muted)">'+dt(m.ts)+'</td>'
+    +'<td>'+escAval(m.motivo)+'<small style="display:block;color:var(--muted)">'+CAMPO_LABEL[m.campo]+'</small></td>'
+    +'<td style="text-align:right;font-weight:800;color:'+(m.delta<0?'#8E2C1E':'#2E7D52')+'">'+(m.delta>0?'+':'')+fmtCred(m.delta)+'</td>'
+    +'<td style="text-align:right;font-weight:700">'+fmtCred(m.para)+'</td></tr>').join('');
+  const saldos=['creditos','credGrupo','repos','locCred'].map(c=>{
+    const bate=(Number(a[c])||0)===saldoPeloExtrato(a,c);
+    return '<span class="chip" style="'+(bate?'':'background:#F6D7D2;color:#8E2C1E;font-weight:800')+'">'
+      +CAMPO_LABEL[c]+': '+fmtCred(Number(a[c])||0)+(bate?' ✓':' ⚠ extrato diz '+fmtCred(saldoPeloExtrato(a,c)))+'</span>';
+  }).join('');
+  document.getElementById('ext-nome').textContent=a.nome;
+  document.getElementById('ext-saldos').innerHTML=saldos;
+  document.getElementById('ext-corpo').innerHTML=ms.length
+    ? '<table class="tbl-ext"><tr><th>Dia</th><th>O que foi</th><th style="text-align:right">Mudou</th><th style="text-align:right">Ficou</th></tr>'+linhas+'</table>'
+    : '<div class="empty">Sem movimentações ainda.</div>';
+  document.getElementById('ov-extrato').classList.add('on');
+}
+/* ===== Conferir números =====
+   Seis checagens. Cada divergência mostra os dois números e um botão que grava
+   a correção COMO MOVIMENTO, preservando a trilha. Nunca corrige sozinho. */
+function conferirNumeros(){
+  const box=document.getElementById('conf-box');if(!box)return;
+  const achados=[];
+  (DB.alunos||[]).forEach(a=>{
+    ['creditos','credGrupo','repos','locCred'].forEach(c=>{
+      const atual=Number(a[c])||0, esperado=saldoPeloExtrato(a,c);
+      if(atual!==esperado)achados.push({tipo:'saldo',a,campo:c,atual,esperado,
+        txt:CAMPO_LABEL[c]+' de '+a.nome+': o saldo diz '+fmtCred(atual)+', o extrato diz '+fmtCred(esperado)+'.'});
+    });
+    // presença sem débito e débito sem presença
+    const pres=(DB.presencas||[]).filter(p=>p.alunoId===a.id);
+    const refs=new Set(movsDe(a.id).map(m=>m.ref).filter(Boolean));
+    const semDeb=pres.filter(p=>p.k&&!refs.has(p.k));
+    if(semDeb.length)achados.push({tipo:'aviso',a,
+      txt:a.nome+': '+semDeb.length+' presença(s) sem débito no extrato. Normal para aulas anteriores ao extrato começar.'});
+    // mensalidade contra o plano
+    const p=Number(a.plano)||0, pg=Number(a.planoGrupo)||0;
+    if(p>0||pg>0){
+      const esp=p*(Number(a.valorAula)||160)+(pg>0?pg*grupoPrecoAula(a.grupoTipo||'Dupla'):0);
+      const m=Number(a.mensalidade)||0;
+      if(esp>0&&Math.abs(esp-m)>1)achados.push({tipo:'aviso',a,
+        txt:'Mensalidade de '+a.nome+': cadastrada '+fmt(m)+', mas o plano dá '+fmt(esp)+'.'});
+    }
+    // mensalidade contra a agenda do mês
+    const g=agendaDoMes(a);
+    if(g.total>0&&g.valor!==(Number(a.mensalidade)||0))achados.push({tipo:'aviso',a,
+      txt:'Agenda de '+a.nome+': '+g.total+' aula(s) dão '+fmt(g.valor)+', a mensalidade é '+fmt(Number(a.mensalidade)||0)+'.'});
+  });
+  // "a receber" do painel contra a soma aluno a aluno
+  const soma=(DB.alunos||[]).filter(a=>a.status!=='pago')
+    .reduce((s,a)=>s+(a.status==='parcial'?a.mensalidade*0.5:a.mensalidade),0);
+  const cab='<div class="cons info"><h4><span>💰</span>A receber</h4><p>Somando aluno por aluno: <b>'+fmt(soma)+'</b>. É o mesmo número que o painel mostra.</p></div>';
+  if(!achados.length){box.innerHTML=cab+'<div class="cons good"><h4><span>✅</span>Tudo confere</h4><p>Nenhuma divergência entre saldos, extrato, planos e agenda.</p></div>';return;}
+  window._conf=achados;
+  box.innerHTML=cab+achados.map((x,i)=>
+    '<div class="cons '+(x.tipo==='saldo'?'bad':'warn')+'"><h4><span>'+(x.tipo==='saldo'?'⚠️':'📋')+'</span>'+escAval(x.a.nome)+'</h4>'
+    +'<p>'+escAval(x.txt)
+    +(x.tipo==='saldo'?'<br><button class="btn btn-ghost" style="margin-top:8px;padding:7px 12px;font-size:12px" onclick="acertarConf('+i+')">Acertar pelo extrato</button>':'')
+    +'</p></div>').join('');
+}
+function acertarConf(i){
+  const x=(window._conf||[])[i];if(!x||x.tipo!=='saldo')return;
+  if(!confirm('Acertar '+CAMPO_LABEL[x.campo]+' de '+x.a.nome+'?\n\n'
+    +fmtCred(x.atual)+'  →  '+fmtCred(x.esperado)+'\n\nA correção fica registrada no extrato.'))return;
+  corrigirSaldo(x.a,x.campo,x.esperado,'Correção pela conferência');
+  logAct('Conferência acertou '+CAMPO_LABEL[x.campo]+' de '+x.a.nome);
+  persist();renderAll();conferirNumeros();
+  toast('✓ '+x.a.nome+' · '+CAMPO_LABEL[x.campo]+' = '+fmtCred(x.esperado));
 }
 /* ===== Voltar a uma versão anterior =====
    Junta o que está guardado no aparelho e na nuvem, mostra o retrato de cada
