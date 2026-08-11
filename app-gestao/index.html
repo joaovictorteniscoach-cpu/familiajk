@@ -1580,6 +1580,40 @@ async function cloudSet(k,v){
   return false;
 }
 function tsOf(raw){try{return JSON.parse(raw).savedAt||0;}catch(e){return 0;}}
+/* Remonta o banco a partir das partes. Devolve null se o formato novo ainda não
+   existe ou veio incompleto — nesse caso quem chama usa o blob de reserva, em
+   vez de abrir o app com dado faltando. */
+async function lerPartes(){
+  if(!hasCloud())return null;
+  try{
+    const pega=async cam=>{const s=await v2ref(cam).get();return s.exists()?s.val():null;};
+    const alunosNo=await pega('alunos');
+    if(!alunosNo)return null;                     // sem v2: usa o blob antigo
+    const d={alunos:[],movs:[],presencas:[],lancamentos:[]};
+    const marcaAl={};
+    Object.keys(alunosNo).forEach(k=>{
+      try{const a=JSON.parse(alunosNo[k]);d.alunos.push(a);marcaAl[a.id]=alunosNo[k];}catch(e){}
+    });
+    if(!d.alunos.length)return null;
+    const marcaLin={movs:{},presencas:{},lancamentos:{}};
+    for(const nome of ['movs','presencas','lancamentos']){
+      const no=await pega(nome);
+      if(!no)continue;
+      Object.keys(no).forEach(k=>{
+        try{d[nome].push(JSON.parse(no[k]));marcaLin[nome][k]=1;}catch(e){}
+      });
+    }
+    // as listas voltam na ordem do tempo, não na ordem das chaves do Firebase
+    d.movs.sort((a,b)=>(a.ts||0)-(b.ts||0));
+    const ag=await pega('agenda'), cf=await pega('config');
+    if(ag){try{d.agenda=JSON.parse(ag);}catch(e){}}
+    if(cf){try{Object.assign(d,JSON.parse(cf));}catch(e){}}
+    if(!d.agenda)return null;                     // incompleto: melhor o blob
+    // marca tudo como já enviado, senão o primeiro persist reenviaria o banco todo
+    _enviado={alunos:marcaAl,agenda:ag||'',config:cf||'',linhas:marcaLin};
+    return d;
+  }catch(e){lastCloudError=String(e&&e.message||e);return null;}
+}
 /* Retrato de uma cópia do banco, para comparar duas antes de adotar uma. */
 function resumoBanco(raw){
   try{
@@ -1738,6 +1772,22 @@ async function load(){
   const localRaw=lsGet(KEY);
   let cloudRaw=null;
   if(hasCloud())cloudRaw=await cloudGet(KEY);
+  // formato novo (partes) tem preferência; o blob antigo fica de reserva
+  let partes=null;
+  if(hasCloud()){
+    try{
+      const d=await lerPartes();
+      if(d){
+        const rBlob=cloudRaw?resumoBanco(cloudRaw):null, rPar=resumoBanco(JSON.stringify(d));
+        // só confia nas partes se elas não vierem MENORES que a reserva
+        if(!rBlob||!rPar||(rPar.alunos>=rBlob.alunos&&rPar.lancamentos>=rBlob.lancamentos)){
+          d.savedAt=Math.max(d.savedAt||0,tsOf(cloudRaw||'{}'));
+          partes=JSON.stringify(d);
+        }
+      }
+    }catch(e){}
+  }
+  if(partes)cloudRaw=partes;
   // usa a versão mais recente entre aparelho e nuvem
   let chosen=null,rejeitada=null;
   if(cloudRaw&&localRaw){
@@ -1899,6 +1949,101 @@ async function migrarVersoesParaIdb(){
     return bytes;
   }catch(e){return 0;}
 }
+/* ===== Gravar só a parte que mudou =====
+   Antes cada toque subia o banco INTEIRO — com um ano de uso, ~830 KB por ação.
+   Era a razão da lentidão no celular, do setTimeout de 500ms e do "tudo ou
+   nada" quando a rede caía no meio.
+
+   Agora o banco vai separado por natureza do dado:
+   · alunos mudam um de cada vez  → um nó por aluno
+   · extrato, presenças e lançamentos só crescem → sobem só as linhas novas
+   · agenda e configuração mudam pouco → vão inteiras
+   A mesma ação passa a subir ~1,8 KB.
+
+   O truque que torna isso seguro: NENHUM ponto de chamada muda. persist()
+   guarda o que subiu da última vez e compara — comparar string em memória é
+   barato perto de subir 830 KB. */
+const V2='v2';
+function v2ref(cam){return window.fbDB.ref('jvtenis/'+V2+'/'+cam);}
+let _enviado={alunos:{},agenda:'',config:'',linhas:{movs:{},presencas:{},lancamentos:{}}};
+/* Tudo que não é aluno, agenda nem as listas que só crescem. */
+function configDe(d){
+  const fora={alunos:1,agenda:1,movs:1,presencas:1,lancamentos:1};
+  const o={};Object.keys(d||{}).forEach(k=>{if(!fora[k])o[k]=d[k];});
+  return o;
+}
+const CHAVE_LINHA={movs:m=>m.ts+'_'+m.alunoId+'_'+m.campo+'_'+m.delta,
+                   presencas:p=>p.k||(p.alunoId+'_'+p.data+'_'+p.hora),
+                   lancamentos:l=>l.id};
+function chaveFb(s){return String(s).replace(/[.#$\[\]/]/g,'_');}
+/* Sobe só o que difere. Devolve o que foi enviado, para o teste medir. */
+/* Manda em lotes: na primeira conversão são milhares de linhas, e uma gravação
+   por linha levaria minutos e poderia morrer no meio. O update() do Firebase
+   escreve vários caminhos de uma vez. */
+async function enviarLote(cam,mapa){
+  const chaves=Object.keys(mapa);
+  if(!chaves.length)return;
+  const N=300;
+  for(let i=0;i<chaves.length;i+=N){
+    const parte={};
+    chaves.slice(i,i+N).forEach(k=>{parte[k]=mapa[k];});
+    await v2ref(cam).update(parte);
+  }
+}
+async function subirPartes(){
+  if(!hasCloud())return null;
+  const env={alunos:0,linhas:0,agenda:0,config:0,bytes:0,lotes:0};
+  const conta=t=>{env.bytes+=t.length;};
+  try{
+    // 1) alunos: um nó por aluno, só os que mudaram
+    const loteAl={},novosAl={};
+    for(const a of (DB.alunos||[])){
+      const t=JSON.stringify(a);
+      if(_enviado.alunos[a.id]===t)continue;
+      loteAl[chaveFb(a.id)]=t;novosAl[a.id]=t;env.alunos++;conta(t);
+    }
+    if(env.alunos){await enviarLote('alunos',loteAl);Object.assign(_enviado.alunos,novosAl);env.lotes++;}
+    // aluno excluído sai da nuvem também
+    const vivos=new Set((DB.alunos||[]).map(a=>a.id));
+    const remover={};
+    for(const id of Object.keys(_enviado.alunos)){
+      if(!vivos.has(id)){remover[chaveFb(id)]=null;delete _enviado.alunos[id];}
+    }
+    if(Object.keys(remover).length)await enviarLote('alunos',remover);
+    // 2) listas que só crescem: só as linhas ainda não enviadas
+    for(const nome of ['movs','presencas','lancamentos']){
+      const ja=_enviado.linhas[nome], lote={}, novas=[];
+      for(const linha of (DB[nome]||[])){
+        const ch=chaveFb(CHAVE_LINHA[nome](linha));
+        if(ja[ch])continue;
+        const t=JSON.stringify(linha);
+        lote[ch]=t;novas.push(ch);env.linhas++;conta(t);
+      }
+      if(novas.length){
+        await enviarLote(nome,lote);
+        novas.forEach(ch=>{ja[ch]=1;});
+        env.lotes++;
+      }
+    }
+    // 3) agenda e configuração: inteiras, mas só quando mudam
+    const ag=JSON.stringify(DB.agenda||{});
+    if(_enviado.agenda!==ag){await v2ref('agenda').set(ag);_enviado.agenda=ag;env.agenda=1;conta(ag);}
+    const cf=JSON.stringify(configDe(DB));
+    if(_enviado.config!==cf){await v2ref('config').set(cf);_enviado.config=cf;env.config=1;conta(cf);}
+    await v2ref('carimbos/savedAt').set(DB.savedAt||Date.now());
+    return env;
+  }catch(e){lastCloudError=String(e&&e.message||e);return null;}
+}
+/* O blob antigo continua existindo como rede — só que com folga, a cada ~2min,
+   em vez de a cada ação. Assim o caminho quente fica leve E sempre há uma cópia
+   completa recente no formato que já funcionava. */
+let _ultBlob=0;
+async function subirBlobDeReserva(forcar){
+  if(!hasCloud())return;
+  if(!forcar&&Date.now()-_ultBlob<120e3)return;
+  _ultBlob=Date.now();
+  await cloudSet(KEY,JSON.stringify(DB));
+}
 function persist(){
   histOnPersist();
   DB.savedAt=Date.now();
@@ -1912,8 +2057,11 @@ function persist(){
   saveTimer=setTimeout(async()=>{
     if(!hasCloud()){cloudPending=true;setSave(okLocal?'⚠ salvo só no aparelho ⓘ':'erro ao salvar',okLocal?'ok':'err');return;}
     setSave('enviando à nuvem…');
-    const ok=await cloudSet(KEY,JSON.stringify(DB));
-    if(ok){cloudPending=false;setSave('✓ salvo na nuvem','ok');backupNuvem();}
+    const env=await subirPartes();
+    if(env){
+      cloudPending=false;setSave('✓ salvo na nuvem','ok');
+      subirBlobDeReserva();backupNuvem();
+    }
     else{cloudPending=true;setSave(okLocal?'⚠ salvo só no aparelho ⓘ':'erro ao salvar',okLocal?'ok':'err');}
     publish();
   },500);
@@ -1943,8 +2091,9 @@ async function gravarAgora(){
   if(!hasCloud()||!DB)return;
   clearTimeout(saveTimer);
   try{
-    const ok=await cloudSet(KEY,JSON.stringify(DB));
-    if(ok){cloudPending=false;}else{cloudPending=true;}
+    const env=await subirPartes();          // as partes primeiro: é o dado vivo
+    const ok=await cloudSet(KEY,JSON.stringify(DB));   // e a reserva completa
+    cloudPending=!(env&&ok);
   }catch(e){cloudPending=true;}
 }
 document.addEventListener('visibilitychange',()=>{if(document.hidden)gravarAgora();});
