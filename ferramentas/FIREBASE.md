@@ -70,6 +70,22 @@ de grupo e, para pegá-los, lia a **publicação inteira** — que tem nome, có
 e saldo de todos os alunos. Agora ele lê um nó de três números, e a publicação
 pode ficar fechada.
 
+## Conferir as regras antes de publicar
+
+```sh
+python3 ferramentas/checar-regras.py                       # etapa 2 (padrão)
+python3 ferramentas/checar-regras.py ferramentas/firebase-regras-etapa1.json
+```
+
+Simula as regras contra **as 79 operações que os apps realmente fazem** — as que
+têm de funcionar e as que têm de continuar bloqueadas. Regra errada não dá erro
+na tela: o app só para de gravar e diz "salvo só no aparelho", ou o pedido do
+aluno nunca chega. Daí o script.
+
+Rodando contra as regras antigas (`.read`/`.write` na raiz), ele acusa 25
+falhas, entre elas "baixar tudo" e "apagar tudo" — é assim que se sabe que ele
+está mesmo conferindo, e não só dizendo que está tudo bem.
+
 ## Se algo parar de funcionar depois de trocar
 
 O sintoma é sempre o mesmo: o app abre, mostra os dados do aparelho e avisa

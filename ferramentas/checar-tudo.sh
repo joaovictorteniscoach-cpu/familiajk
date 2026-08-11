@@ -22,9 +22,13 @@ echo "### 4. Colisao de nome de classe no CSS (conferir a olho)"
 python3 ferramentas/checar-css.py app-aluno/index.html app-gestao/index.html
 
 echo
+echo "### 5. Regras do banco contra o que os apps fazem"
+python3 ferramentas/checar-regras.py || falhou=1
+
+echo
 if [ "$falhou" -eq 0 ]; then
-  echo "Sintaxe OK. Leia os avisos dos itens 2 a 4 antes de publicar."
+  echo "Sintaxe e regras OK. Leia os avisos dos itens 2 a 4 antes de publicar."
 else
-  echo "ERRO DE SINTAXE — nao publique antes de corrigir."
+  echo "ERRO — nao publique antes de corrigir."
   exit 1
 fi

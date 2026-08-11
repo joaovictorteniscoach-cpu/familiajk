@@ -3,69 +3,69 @@
     "jvtenis": {
       "precos_publicos": {
         ".read": true,
-        ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'"
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'"
       },
 
       "jvtenis-app-aluno": {
         ".read":  "auth != null",
-        ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'"
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'"
       },
 
       "jvtenis-gestao-v1": {
-        ".read":  "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
-        ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'"
+        ".read":  "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'"
       },
       "jvtenis-agendamentos": {
-        ".read":  "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
-        ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'"
+        ".read":  "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'"
       },
       "v2": {
-        ".read":  "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
-        ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'"
+        ".read":  "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'"
       },
       "arquivo": {
-        ".read":  "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
-        ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'"
+        ".read":  "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'"
       },
       "backups": {
-        ".read":  "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
-        ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'"
+        ".read":  "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'"
       },
 
       "notificacoes": {
-        ".read":  "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
-        ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
+        ".read":  "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
         "$item": { ".write": "auth != null && !data.exists() && newData.exists()" }
       },
       "fila_pedidos": {
-        ".read":  "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
-        ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
+        ".read":  "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
         "$item": { ".write": "auth != null && !data.exists() && newData.exists()" }
       },
       "fila_agendamentos": {
-        ".read":  "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
-        ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
+        ".read":  "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
         "$item": { ".write": "auth != null && !data.exists() && newData.exists()" }
       },
       "fila_autoaval": {
-        ".read":  "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
-        ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
+        ".read":  "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
         "$item": { ".write": "auth != null && !data.exists() && newData.exists()" }
       },
       "fila_confirmacoes": {
-        ".read":  "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
-        ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
+        ".read":  "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
         "$item": { ".write": "auth != null && !data.exists() && newData.exists()" }
       },
       "fila_torneio": {
-        ".read":  "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
-        ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
+        ".read":  "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
         "$item": { ".write": "auth != null && !data.exists() && newData.exists()" }
       },
 
       "fila_cadastros": {
-        ".read":  "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
-        ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
+        ".read":  "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
         "$item": { ".write": "!data.exists() && newData.exists()" }
       },
 
