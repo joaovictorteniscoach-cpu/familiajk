@@ -39,3 +39,30 @@ isso só aparece quando alguém usa. Daí os scripts.
 ## Requisitos
 
 `node` e `python3`. Nada mais: sem instalar dependência.
+
+## As bibliotecas ficam dentro do app
+
+Firebase, html2canvas, jsPDF e o gerador de QR **não vêm mais de servidores de
+fora** — estão em `app-gestao/lib/`, `app-aluno/lib/` e `site/lib/`. Isso faz o
+app funcionar completo offline e o protege de o CDN sair do ar. O endereço de
+fora continua no código como **reserva**, para o caso de um deploy sair sem a
+pasta `lib/`.
+
+A troca consciente: elas **não se atualizam sozinhas**. Para atualizar:
+
+```sh
+npm pack firebase@10.12.2 html2canvas@1.4.1 jspdf@2.5.1 qrcode-generator@1.4.4
+# extrair e copiar por cima:
+#   package/firebase-app-compat.js        → lib/
+#   package/firebase-database-compat.js   → lib/
+#   package/dist/html2canvas.min.js       → lib/
+#   package/dist/jspdf.umd.min.js         → lib/
+#   package/qrcode.js                     → app-aluno/lib/qrcode.min.js
+```
+
+Mudando a versão, ajuste também o endereço de reserva no HTML e a expressão em
+`site-pro/tools/build_demo.py`, que usa `lib/firebase-app-compat.js` como âncora
+para tirar o Firebase da demo.
+
+O único externo que sobra são as **fontes do Google**, e elas são só aparência:
+sem elas o texto cai numa fonte do sistema e nada deixa de funcionar.
