@@ -721,6 +721,7 @@ function iniciarFirebase(){
 <section class="page" id="pg-fin">
   <p class="sec-eyebrow">Financeiro</p>
   <h2 class="sec-title">Fechamento do <em>mês</em></h2>
+  <div id="arq-aviso"></div>
   <div class="fin-grid">
     <div class="fin-card hero"><div class="l">Total recebido no mês</div><div class="v" id="f-total">R$ 0</div></div>
     <div class="fin-card desp"><div class="l">Despesas do mês</div><div class="v" id="f-despesas">R$ 0</div></div>
@@ -827,6 +828,11 @@ function iniciarFirebase(){
     <button class="btn btn-ghost" onclick="document.getElementById('import-file').click()">⬆ Importar</button>
     <input type="file" id="import-file" accept=".json" style="display:none" onchange="importBackup(this)">
   </div>
+
+  <h2 class="sec-title" style="margin-top:18px">Arquivar dados <em>antigos</em></h2>
+  <p class="hint">Extrato, presenças e lançamentos com mais de 14 meses saem do app do dia a dia e vão para o arquivo na nuvem — o app fica mais leve e rápido. Nada é perdido: ao abrir um mês antigo, ele oferece carregar de volta. Alunos e agenda não são arquivados.</p>
+  <div class="backup-row"><button class="btn btn-ghost" onclick="mostrarPreviaArquivo()">📦 Ver o que dá para arquivar</button></div>
+  <div id="arq-box"></div>
 
   <h2 class="sec-title" style="margin-top:18px">Conferir <em>números</em></h2>
   <p class="hint">Confere créditos, reposições, locação e mensalidades de todos os alunos contra o extrato e contra a agenda. Só mostra o que não fecha — e nada é corrigido sem você mandar.</p>
@@ -1693,6 +1699,7 @@ function corrigirSaldo(a,campo,alvo,motivo){
 }
 function ensureFields(){
   if(!DB.movs)DB.movs=[];
+  if(!Array.isArray(DB.anosArquivados))DB.anosArquivados=[];
   if(!DB.presencas)DB.presencas=[];
   if(!DB.compromissos)DB.compromissos=[];
   if(!DB.locacaoOnly)DB.locacaoOnly=[];
@@ -2033,6 +2040,150 @@ async function subirPartes(){
     await v2ref('carimbos/savedAt').set(DB.savedAt||Date.now());
     return env;
   }catch(e){lastCloudError=String(e&&e.message||e);return null;}
+}
+/* ===== Arquivo por ano =====
+   Extrato, presenças e lançamentos nunca eram apagados: ~680 KB por ano, tudo
+   carregado e mantido em memória a cada abertura para mostrar dados que quase
+   nunca são abertos. O que tem mais de 14 meses sai do banco de trabalho e vai
+   para jvtenis/arquivo/<ano>, lido só quando ele abre um mês antigo.
+
+   14 meses porque os gráficos mostram 12 — a janela cobre o que a tela usa.
+
+   Alunos, agenda e configuração NÃO são arquivados: são o presente. */
+const MESES_JANELA=14;
+const DATA_DA_LINHA={
+  movs:m=>m&&m.ts?new Date(m.ts):null,
+  presencas:p=>p&&p.data?new Date(p.data+'T12:00:00'):null,
+  lancamentos:l=>l&&(l.data||l.mes)?new Date((l.data||(l.mes+'-15'))+'T12:00:00'):null
+};
+function limiteArquivo(){
+  const d=new Date();d.setMonth(d.getMonth()-MESES_JANELA);d.setHours(0,0,0,0);return d;
+}
+/* O que sairia, sem mexer em nada — é o que o botão mostra antes de confirmar. */
+function previaArquivo(){
+  const lim=limiteArquivo();
+  const r={linhas:0,bytes:0,porAno:{},maisAntiga:null,partes:{}};
+  for(const nome of ['movs','presencas','lancamentos']){
+    const antigas=(DB[nome]||[]).filter(x=>{const d=DATA_DA_LINHA[nome](x);return d&&d<lim;});
+    r.partes[nome]=antigas.length;r.linhas+=antigas.length;
+    antigas.forEach(x=>{
+      const d=DATA_DA_LINHA[nome](x), ano=d.getFullYear();
+      r.porAno[ano]=(r.porAno[ano]||0)+1;
+      r.bytes+=JSON.stringify(x).length;
+      if(!r.maisAntiga||d<r.maisAntiga)r.maisAntiga=d;
+    });
+  }
+  return r;
+}
+/* Grava o arquivo ANTES de remover. Se a gravação falhar, nada sai do banco —
+   nunca o contrário. */
+async function arquivarAntigos(){
+  const p=previaArquivo();
+  if(!p.linhas){toast('Nada com mais de '+MESES_JANELA+' meses para arquivar');return;}
+  if(!hasCloud()){toast('Sem nuvem agora — o arquivo precisa dela para ser guardado');return;}
+  const anos=Object.keys(p.porAno).sort();
+  if(!confirm('Arquivar o que tem mais de '+MESES_JANELA+' meses?\n\n'
+    +p.linhas+' linha(s) · '+Math.round(p.bytes/1024)+' KB\n'
+    +'· extrato: '+p.partes.movs+'\n· presenças: '+p.partes.presencas+'\n· lançamentos: '+p.partes.lancamentos+'\n'
+    +'Anos: '+anos.join(', ')+'\n\n'
+    +'Sai do app do dia a dia e vai para o arquivo na nuvem. Continua acessível:\n'
+    +'ao abrir um mês antigo, o app oferece carregar de volta.'))return;
+  const lim=limiteArquivo();
+  const porAno={};
+  for(const nome of ['movs','presencas','lancamentos']){
+    for(const x of (DB[nome]||[])){
+      const d=DATA_DA_LINHA[nome](x);if(!d||d>=lim)continue;
+      const ano=d.getFullYear();
+      porAno[ano]=porAno[ano]||{movs:{},presencas:{},lancamentos:{}};
+      porAno[ano][nome][chaveFb(CHAVE_LINHA[nome](x))]=JSON.stringify(x);
+    }
+  }
+  try{
+    // 1) grava tudo no arquivo
+    for(const ano of Object.keys(porAno)){
+      for(const nome of ['movs','presencas','lancamentos']){
+        const mapa=porAno[ano][nome];
+        const chaves=Object.keys(mapa);
+        for(let i=0;i<chaves.length;i+=300){
+          const parte={};chaves.slice(i,i+300).forEach(k=>{parte[k]=mapa[k];});
+          await window.fbDB.ref('jvtenis/arquivo/'+ano+'/'+nome).update(parte);
+        }
+      }
+    }
+  }catch(e){
+    toast('⚠️ Falha ao gravar o arquivo — nada foi removido');return;
+  }
+  // 2) antes de tirar do banco, TRANSPORTA o saldo: sem isso o extrato visível
+  //    passaria a somar menos que o saldo e a conferência acusaria todo aluno
+  //    como divergente. É o mesmo que a contabilidade faz ao fechar um período.
+  const transporte={};
+  (DB.movs||[]).forEach(m=>{
+    const d=DATA_DA_LINHA.movs(m);if(!d||d>=lim)return;
+    const k=m.alunoId+'|'+m.campo;
+    transporte[k]=(transporte[k]||0)+(Number(m.delta)||0);
+  });
+  // 3) só agora tira do banco de trabalho
+  for(const nome of ['movs','presencas','lancamentos']){
+    DB[nome]=(DB[nome]||[]).filter(x=>{const d=DATA_DA_LINHA[nome](x);return !(d&&d<lim);});
+  }
+  Object.keys(transporte).forEach(k=>{
+    const soma=transporte[k];if(!soma)return;
+    const [alunoId,campo]=k.split('|');
+    DB.movs.push({ts:lim.getTime(),alunoId,campo,delta:soma,de:0,para:soma,
+                  motivo:'Saldo transportado do arquivo',ref:'transporte'});
+  });
+  recalcularTransporte();
+  (DB.movs||[]).sort((a,b)=>(a.ts||0)-(b.ts||0));
+  DB.anosArquivados=Array.from(new Set((DB.anosArquivados||[]).concat(Object.keys(porAno)))).sort();
+  logAct('Arquivou '+p.linhas+' linha(s) anteriores a '+MESES_JANELA+' meses');
+  persist();renderAll();
+  toast('📦 '+p.linhas+' linha(s) arquivadas · o app do dia a dia ficou mais leve');
+}
+/* A linha de transporte representa TUDO que não está visível. Recalculá-la a
+   partir do saldo guardado deixa ela sempre certa — inclusive depois de carregar
+   um ano do arquivo de volta, quando parte do que ela cobria voltou a aparecer.
+   Sem isso, carregar um ano contaria as mesmas linhas duas vezes. */
+function recalcularTransporte(){
+  const eTransporte=m=>m&&m.ref==='transporte';
+  (DB.alunos||[]).forEach(a=>{
+    ['creditos','credGrupo','repos','locCred'].forEach(campo=>{
+      const linhas=(DB.movs||[]).filter(m=>m.alunoId===a.id&&m.campo===campo);
+      const visivel=linhas.filter(m=>!eTransporte(m)).reduce((s,m)=>s+(Number(m.delta)||0),0);
+      const falta=(Number(a[campo])||0)-visivel;
+      const tr=linhas.find(eTransporte);
+      if(!falta){ if(tr)DB.movs=DB.movs.filter(m=>m!==tr); return; }
+      if(tr){tr.delta=falta;tr.para=falta;}
+      else DB.movs.push({ts:limiteArquivo().getTime(),alunoId:a.id,campo,delta:falta,de:0,para:falta,
+                         motivo:'Saldo transportado do arquivo',ref:'transporte'});
+    });
+  });
+}
+/* Traz um ano do arquivo de volta para a memória, sem duplicar o que já existe. */
+let _anosCarregados={};
+async function carregarAnoArquivado(ano){
+  if(!hasCloud()){toast('Sem nuvem agora');return false;}
+  if(_anosCarregados[ano])return true;
+  try{
+    let n=0;
+    for(const nome of ['movs','presencas','lancamentos']){
+      const s=await window.fbDB.ref('jvtenis/arquivo/'+ano+'/'+nome).get();
+      if(!s.exists())continue;
+      const v=s.val()||{};
+      const ja=new Set((DB[nome]||[]).map(x=>chaveFb(CHAVE_LINHA[nome](x))));
+      Object.keys(v).forEach(k=>{
+        if(ja.has(k))return;
+        try{DB[nome].push(JSON.parse(v[k]));n++;}catch(e){}
+      });
+      // marca como já enviado: são linhas que vieram do arquivo, não são novas
+      Object.keys(v).forEach(k=>{_enviado.linhas[nome][k]=1;});
+    }
+    recalcularTransporte();     // o que voltou não pode ser contado duas vezes
+    (DB.movs||[]).sort((a,b)=>(a.ts||0)-(b.ts||0));
+    _anosCarregados[ano]=true;
+    renderAll();
+    toast('📂 '+ano+' carregado · '+n+' linha(s)');
+    return true;
+  }catch(e){toast('Não consegui carregar '+ano);return false;}
 }
 /* O blob antigo continua existindo como rede — só que com folga, a cada ~2min,
    em vez de a cada ação. Assim o caminho quente fica leve E sempre há uma cópia
@@ -4525,6 +4676,18 @@ function renderFin(){
   const recModal=m=>movs.filter(l=>l.valor>0&&modalDe(l)===m).reduce((s,l)=>s+l.valor,0);
   if(document.getElementById('f-tenis'))document.getElementById('f-tenis').textContent=fmt(recModal('tenis'));
   if(document.getElementById('f-personal'))document.getElementById('f-personal').textContent=fmt(recModal('personal'));
+  // mês fora da janela e com ano no arquivo: avisa em vez de mostrar vazio
+  const anoVisto=String(curYear);
+  const foraDaJanela=new Date(curYear,curMonth,15)<limiteArquivo();
+  const noArquivo=(DB.anosArquivados||[]).indexOf(anoVisto)>=0;
+  const av=document.getElementById('arq-aviso');
+  if(av){
+    if(foraDaJanela&&noArquivo&&!_anosCarregados[anoVisto]){
+      av.innerHTML='<div class="cons info"><h4><span>📂</span>Este mês está no arquivo</h4>'
+        +'<p>Os lançamentos de '+anoVisto+' foram arquivados para o app ficar leve. '
+        +'<button class="btn btn-ghost" style="margin-top:8px;padding:7px 12px;font-size:12px" onclick="carregarAnoArquivado(\''+anoVisto+'\')">Carregar '+anoVisto+'</button></p></div>';
+    }else av.innerHTML='';
+  }
   const previsto=DB.alunos.reduce((s,a)=>s+a.mensalidade,0);
   document.getElementById('f-previsto').textContent=fmt(previsto);
   // o mesmo previsto, mas contando o que está de fato marcado na agenda do mês
@@ -4770,6 +4933,25 @@ function exportBackup(){
   a.click();
   DB.ultimoBackup=Date.now();persist();checarBackup();
   toast('Backup exportado');
+}
+/* Mostra o retrato do que sairia, antes de qualquer coisa acontecer. */
+function mostrarPreviaArquivo(){
+  const box=document.getElementById('arq-box');if(!box)return;
+  const p=previaArquivo();
+  const anos=Object.keys(p.porAno).sort();
+  if(!p.linhas){
+    box.innerHTML='<div class="cons good"><h4><span>✅</span>Nada a arquivar</h4><p>Não há nada com mais de '
+      +MESES_JANELA+' meses. O app já está no tamanho enxuto.</p></div>';
+    return;
+  }
+  const br=d=>d?String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear():'—';
+  box.innerHTML='<div class="cons warn"><h4><span>📦</span>'+p.linhas+' linha(s) · '+Math.round(p.bytes/1024)+' KB</h4>'
+    +'<p>Mais antiga: '+br(p.maisAntiga)+' · anos: '+anos.join(', ')+'<br>'
+    +'extrato '+p.partes.movs+' · presenças '+p.partes.presencas+' · lançamentos '+p.partes.lancamentos
+    +'<br><button class="btn btn-ghost" style="margin-top:8px;padding:7px 12px;font-size:12px" onclick="arquivarAntigos()">Arquivar agora</button></p></div>'
+    +((DB.anosArquivados||[]).length?('<div class="cons info"><h4><span>📂</span>Já no arquivo</h4><p>'
+      +DB.anosArquivados.map(a=>'<button class="btn btn-ghost" style="padding:6px 11px;font-size:12px;margin:3px 4px 0 0" onclick="carregarAnoArquivado(\''+a+'\')">Carregar '+a+'</button>').join('')
+      +'</p></div>'):'');
 }
 /* ===== Extrato de um aluno =====
    A resposta para "por que esse aluno está com 3 e não com 5". */
