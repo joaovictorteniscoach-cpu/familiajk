@@ -1,28 +1,71 @@
-# Deploy automático: Netlify (principal) e GitHub Pages (reserva)
+# Onde os apps ficam publicados
 
-## ⚠️ Se o Netlify parar, use o endereço reserva
+**Principal: GitHub Pages.** Gratuito, sem cota que acabe.
 
-Já aconteceu de os **créditos do Netlify acabarem** e nada ser publicado. Por
-isso os mesmos apps também são publicados no **GitHub Pages**, que é gratuito e
-não tem cota que acabe:
+| | Endereço |
+|---|---|
+| Gestão | `https://joaovictorteniscoach-cpu.github.io/familiajk/app-gestao/` |
+| Aluno | `https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/` |
+| Site | `https://joaovictorteniscoach-cpu.github.io/familiajk/site/` |
 
-| | Principal (Netlify) | Reserva (GitHub Pages) |
-|---|---|---|
-| Gestão | o endereço que você já usa | `https://joaovictorteniscoach-cpu.github.io/familiajk/app-gestao/` |
-| Aluno | idem | `.../familiajk/app-aluno/` |
-| Site | idem | `.../familiajk/site/` |
+**Reserva: Netlify.** Continua publicando, mas o plano gratuito tem cota — e ela
+já estourou duas vezes: uma parou de publicar, outra pausou o site ("This site
+was paused as it reached its usage limits"). Por isso deixou de ser o principal.
 
 **Os dados são os mesmos nos dois.** O Firebase é o mesmo banco — não são duas
-academias, são duas portas para a mesma. Ao abrir o endereço reserva pela
-primeira vez, ele baixa tudo da nuvem (cada endereço tem sua própria memória
-local, então começa vazio e se enche sozinho).
+academias, são duas portas para a mesma casa. Ao abrir um endereço pela primeira
+vez ele baixa tudo da nuvem (cada endereço tem sua própria memória local, então
+começa vazio e se enche sozinho).
 
-**Ligar uma vez:** no GitHub, `Settings → Pages → Source: GitHub Actions`. Feito
-isso, todo push na `main` publica nos dois lugares. O workflow está em
-`.github/workflows/pages.yml` e confere a sintaxe dos apps antes de publicar —
-se algum script estiver quebrado, ele não publica.
+## Se um dos dois cair
+
+Abra o outro. É só isso — mesma conta, mesmos dados, mesmo login. Vale instalar
+os **dois** na tela de início, para não depender de lembrar o endereço na hora
+do aperto.
+
+## O link do App do Aluno se ajusta sozinho
+
+Os botões "Entrar" do site apontam para o Pages. Quando o site é servido do mesmo
+lugar que o app, um trecho no fim de `site/index.html` troca para o caminho
+irmão (`../app-aluno/`). Assim o link continua certo se o endereço mudar de novo
+— inclusive se um dia apontar um domínio próprio — sem editar o HTML.
+
+## Por que o site público é leve
+
+Ele foi de **1.180 KB para 220 KB** na primeira tela (−81%). O que mudou:
+
+- as imagens saíram de dentro do HTML (eram 953 KB em base64, mas só **4 fotos
+  distintas** — a mesma foto aparecia 2× e o logo 4×). Agora são arquivos em
+  `site/img/`, em WebP, que o navegador guarda em cache entre visitas;
+- as de baixo da página só carregam se a pessoa rolar (`loading="lazy"`);
+- os preços de grupo vinham de **193 KB de biblioteca do Firebase** para ler três
+  números. Agora é um `fetch` de ~100 bytes no endereço REST.
+
+Isso importa além da velocidade: menos dados servidos é menos chance de estourar
+cota de novo, em qualquer hospedagem.
+
+**Não volte a colar imagem dentro do HTML.** É o que inflou o site: dentro do
+HTML a imagem não entra no cache do navegador nem carrega sob demanda, e a mesma
+foto repetida conta de novo a cada cópia.
+
+## Publicar
+
+Todo push na `main` publica nos dois lugares. O workflow do Pages está em
+`.github/workflows/pages.yml` e **confere a sintaxe dos três apps antes de
+publicar** — se algum script estiver quebrado, ele não publica.
+
+O Pages foi ligado uma vez em `Settings → Pages → Source: GitHub Actions`.
+
+## Aliviar o Netlify
+
+São seis projetos publicando a cada push. Como o Pages passou a ser o principal,
+dá para **pausar no painel do Netlify** os que não forem mais necessários
+(`Site configuration → General → Danger zone → Stop builds`). Pausar não apaga
+nada: o endereço continua servindo a última versão publicada, só para de
+reconstruir.
 
 ---
+
 
 # Deploy automático: conectar o Netlify ao GitHub
 

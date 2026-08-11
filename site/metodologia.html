@@ -225,7 +225,7 @@ footer .cr{color:#6B7E8C;font-size:12.5px}
       <a class="lnk on" href="metodologia.html">Metodologia</a>
       <a class="lnk" href="index.html#avaliacoes">Avaliações</a>
       <a class="lnk" href="index.html#onde">Onde fica</a>
-      <a class="btn btn-navy" href="https://appalunos.netlify.app/" target="_blank" rel="noopener">Entrar</a>
+      <a data-app-aluno class="btn btn-navy" href="https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/" target="_blank" rel="noopener">Entrar</a>
     </nav>
     <button class="menu-tgl" id="mtgl" aria-label="Menu">☰</button>
   </div>
@@ -520,7 +520,7 @@ footer .cr{color:#6B7E8C;font-size:12.5px}
       <a href="index.html#planos">Planos</a>
       <a href="index.html#flex">Sistema Flex</a>
       <a href="metodologia.html">Metodologia</a>
-      <a href="https://appalunos.netlify.app/" target="_blank" rel="noopener">App do aluno</a>
+      <a data-app-aluno href="https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/" target="_blank" rel="noopener">App do aluno</a>
       <a href="https://instagram.com/joaovictortenis" target="_blank" rel="noopener">Instagram</a>
     </div>
     <p class="cr">© 2026 Academia JV Tênis — Rua João Azolin, 795, Santa Felicidade, Curitiba/PR</p>
@@ -537,6 +537,21 @@ if(!window.matchMedia||!window.matchMedia('(prefers-reduced-motion: reduce)').ma
   var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.12});
   document.querySelectorAll('.rv').forEach(function(el){io.observe(el);});
 }else{document.querySelectorAll('.rv').forEach(function(el){el.classList.add('in');});}
+</script>
+<script>
+/* Endereço do App do Aluno.
+   O padrão é o GitHub Pages, que é o endereço oficial. Quando o site está sendo
+   servido do MESMO lugar que o app (Pages, ou um domínio próprio apontando para
+   o repositório), troca para o caminho irmão — assim o link continua certo se o
+   endereço mudar de novo, sem precisar editar o HTML. */
+(function(){
+  var i=location.pathname.indexOf('/site/');
+  if(i<0)return;                                   // servido na raiz: mantém o absoluto
+  var irmao=location.pathname.slice(0,i)+'/app-aluno/';
+  var n=0;
+  [].forEach.call(document.querySelectorAll('a[data-app-aluno]'),function(a){a.href=irmao;n++;});
+  if(window.console&&!n)console.warn('nenhum link do app do aluno encontrado');
+})();
 </script>
 </body>
 </html>
