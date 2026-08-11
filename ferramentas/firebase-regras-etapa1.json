@@ -1,0 +1,25 @@
+{
+  "rules": {
+    "jvtenis": {
+      "jvtenis-gestao-v1":    { ".read": true, ".write": true },
+      "jvtenis-app-aluno":    { ".read": true, ".write": true },
+      "jvtenis-agendamentos": { ".read": true, ".write": true },
+      "precos_publicos":      { ".read": true, ".write": true },
+      "v2":                   { ".read": true, ".write": true },
+      "arquivo":              { ".read": true, ".write": true },
+      "backups":              { ".read": true, ".write": true },
+      "notificacoes":         { ".read": true, ".write": true },
+      "fila_pedidos":         { ".read": true, ".write": true },
+      "fila_agendamentos":    { ".read": true, ".write": true },
+      "fila_autoaval":        { ".read": true, ".write": true },
+      "fila_confirmacoes":    { ".read": true, ".write": true },
+      "fila_torneio":         { ".read": true, ".write": true },
+      "fila_cadastros":       { ".read": true, ".write": true },
+
+      "$aluno": {
+        ".read":  "$aluno.beginsWith('jvt-aluno-meu')",
+        ".write": "$aluno.beginsWith('jvt-aluno-meu')"
+      }
+    }
+  }
+}

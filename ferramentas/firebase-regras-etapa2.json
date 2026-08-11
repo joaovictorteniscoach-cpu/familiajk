@@ -1,0 +1,78 @@
+{
+  "rules": {
+    "jvtenis": {
+      "precos_publicos": {
+        ".read": true,
+        ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'"
+      },
+
+      "jvtenis-app-aluno": {
+        ".read":  "auth != null",
+        ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'"
+      },
+
+      "jvtenis-gestao-v1": {
+        ".read":  "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
+        ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'"
+      },
+      "jvtenis-agendamentos": {
+        ".read":  "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
+        ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'"
+      },
+      "v2": {
+        ".read":  "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
+        ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'"
+      },
+      "arquivo": {
+        ".read":  "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
+        ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'"
+      },
+      "backups": {
+        ".read":  "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
+        ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'"
+      },
+
+      "notificacoes": {
+        ".read":  "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
+        ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
+        "$item": { ".write": "auth != null && !data.exists() && newData.exists()" }
+      },
+      "fila_pedidos": {
+        ".read":  "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
+        ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
+        "$item": { ".write": "auth != null && !data.exists() && newData.exists()" }
+      },
+      "fila_agendamentos": {
+        ".read":  "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
+        ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
+        "$item": { ".write": "auth != null && !data.exists() && newData.exists()" }
+      },
+      "fila_autoaval": {
+        ".read":  "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
+        ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
+        "$item": { ".write": "auth != null && !data.exists() && newData.exists()" }
+      },
+      "fila_confirmacoes": {
+        ".read":  "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
+        ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
+        "$item": { ".write": "auth != null && !data.exists() && newData.exists()" }
+      },
+      "fila_torneio": {
+        ".read":  "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
+        ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
+        "$item": { ".write": "auth != null && !data.exists() && newData.exists()" }
+      },
+
+      "fila_cadastros": {
+        ".read":  "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
+        ".write": "auth != null && auth.uid === 'COLE_AQUI_O_UID_DO_JOAO'",
+        "$item": { ".write": "!data.exists() && newData.exists()" }
+      },
+
+      "$aluno": {
+        ".read":  "auth != null && $aluno.beginsWith('jvt-aluno-meu')",
+        ".write": "auth != null && $aluno.beginsWith('jvt-aluno-meu')"
+      }
+    }
+  }
+}

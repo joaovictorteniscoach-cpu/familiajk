@@ -54,6 +54,7 @@ A troca consciente: elas **não se atualizam sozinhas**. Para atualizar:
 npm pack firebase@10.12.2 html2canvas@1.4.1 jspdf@2.5.1 qrcode-generator@1.4.4
 # extrair e copiar por cima:
 #   package/firebase-app-compat.js        → lib/
+#   package/firebase-auth-compat.js       → lib/  (app-gestao e app-aluno)
 #   package/firebase-database-compat.js   → lib/
 #   package/dist/html2canvas.min.js       → lib/
 #   package/dist/jspdf.umd.min.js         → lib/
@@ -66,3 +67,30 @@ para tirar o Firebase da demo.
 
 O único externo que sobra são as **fontes do Google**, e elas são só aparência:
 sem elas o texto cai numa fonte do sistema e nada deixa de funcionar.
+
+## Quem pode ler e gravar no banco
+
+Está em [`FIREBASE.md`](FIREBASE.md), com as regras prontas para colar em
+`firebase-regras-etapa1.json` (a cerca, já em uso) e
+`firebase-regras-etapa2.json` (a tranca, depois que o login estiver testado).
+
+## A trava que impede gravar antes de carregar
+
+`CARREGADO` (em `app-gestao/index.html`) só vira `true` no fim do `load()`, e
+`persist()`, `gravarAgora()`, `doPublish()` e o sincronizador de fundo se
+recusam a rodar antes disso.
+
+Vale saber por quê, porque é a falha mais cara que já apareceu aqui: quando o
+servidor do Firebase está inalcançável — wi-fi que pede login na tela, rede
+oscilando, pane do Google — o `ref().get()` **não devolve erro**. Ele fica
+tentando reconectar e a promessa nunca termina. O `load()` parava no `await`,
+o `DB` continuava vazio, e o `visibilitychange` de minimizar o app disparava
+uma gravação **desse vazio** por cima do banco bom, no aparelho e na nuvem. A
+tela, nesse meio-tempo, dizia "✓ salvo no aparelho".
+
+Duas defesas, porque uma só não bastava:
+
+- **prazo** (`comPrazo`, 6s): a leitura da nuvem sempre termina, e no pior caso
+  o app abre com o dado do aparelho;
+- **trava** (`CARREGADO`): mesmo que apareça outro travamento no futuro, o pior
+  que acontece é o app não salvar — nunca apagar.
