@@ -812,7 +812,11 @@ window.__DEMO = true;
   <p class="hint">"Exportar agenda" baixa um arquivo que abre no Excel/Planilhas com a grade da semana. "Instalar grade" repõe a grade-padrão da sua planilha (pede confirmação e preserva alunos, lançamentos e agendamentos).</p>
 
   <p class="sec-eyebrow" style="margin-top:18px">Segurança</p>
-  <h2 class="sec-title">Backup dos <em>dados</em></h2>
+  <h2 class="sec-title">Sua <em>conta</em></h2>
+  <p class="hint">Entrando com a sua conta, este aparelho passa a ser reconhecido pelo banco de dados. Hoje isso é opcional e não muda nada no uso — é o preparo para fechar o banco, de modo que só você possa alterar ou apagar os dados. O aparelho continua conectado depois de fechar o app.</p>
+  <div id="conta-box"></div>
+
+  <h2 class="sec-title" style="margin-top:18px">Backup dos <em>dados</em></h2>
   <div class="backup-row">
     <button class="btn btn-ghost" onclick="exportBackup()">⬇ Exportar backup</button>
     <button class="btn btn-ghost" onclick="document.getElementById('import-file').click()">⬆ Importar</button>
@@ -1549,11 +1553,29 @@ function hasCloud(){return !!(window.fbDB);}
 function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
 function lsSet(k,v){try{localStorage.setItem(k,v);return true;}catch(e){return false;}}
 function fbPath(k){return 'jvtenis/'+k.replace(/[.#$\[\]/]/g,'_');}
+/* Prazo para qualquer conversa com a nuvem.
+   O Firebase, quando o servidor está inalcançável (wi-fi de hotel que pede
+   login, rede do celular oscilando, pane do Google), NÃO devolve erro: ele
+   fica tentando reconectar para sempre e a promessa nunca termina. Sem prazo,
+   o `await` do load() nunca voltava — o app ficava em "carregando…" com o DB
+   vazio, e daí saía gravando esse vazio por cima do dado bom. */
+const PRAZO_NUVEM=6000;
+let _nuvemMuda=false;                       // a nuvem já estourou o prazo neste boot
+function comPrazo(promessa,ms,padrao){
+  return Promise.race([
+    Promise.resolve(promessa).catch(e=>{throw e;}),
+    new Promise(r=>setTimeout(()=>{_nuvemMuda=true;r(padrao);},ms||PRAZO_NUVEM))
+  ]);
+}
 async function cloudGet(k){
   if(!window.fbDB)return null;
+  try{await esperarAuth();}catch(e){}
   for(let i=0;i<3;i++){
     try{
-      const snap=await window.fbDB.ref(fbPath(k)).get();
+      const MARCA={_prazo:1};
+      const snap=await comPrazo(window.fbDB.ref(fbPath(k)).get(),PRAZO_NUVEM,MARCA);
+      // estourou o prazo: insistir não adianta, a rede é que não está lá
+      if(snap===MARCA){lastCloudError='sem resposta da nuvem';return null;}
       return snap.exists()?snap.val():null;
     }catch(e){lastCloudError=String(e&&e.message||e);await new Promise(s=>setTimeout(s,350*(i+1)));}
   }
@@ -1561,6 +1583,7 @@ async function cloudGet(k){
 }
 async function cloudSet(k,v){
   if(!window.fbDB)return false;
+  try{await esperarAuth();}catch(e){}
   for(let i=0;i<4;i++){
     try{await window.fbDB.ref(fbPath(k)).set(v);lastCloudError='';return true;}
     catch(e){lastCloudError=String(e&&e.message||e);await new Promise(s=>setTimeout(s,450*(i+1)));}
@@ -1573,8 +1596,14 @@ function tsOf(raw){try{return JSON.parse(raw).savedAt||0;}catch(e){return 0;}}
    vez de abrir o app com dado faltando. */
 async function lerPartes(){
   if(!hasCloud())return null;
+  if(_nuvemMuda)return null;                // a nuvem já não respondeu neste boot
   try{
-    const pega=async cam=>{const s=await v2ref(cam).get();return s.exists()?s.val():null;};
+    const pega=async cam=>{
+      const MARCA={_prazo:1};
+      const s=await comPrazo(v2ref(cam).get(),PRAZO_NUVEM,MARCA);
+      if(s===MARCA)throw new Error('sem resposta da nuvem');
+      return s.exists()?s.val():null;
+    };
     const alunosNo=await pega('alunos');
     if(!alunosNo)return null;                     // sem v2: usa o blob antigo
     const d={alunos:[],movs:[],presencas:[],lancamentos:[]};
@@ -1792,6 +1821,8 @@ function DEMO_SEED(){
 }
 async function load(){
   setSave('carregando…');
+  // se houver sessão salva, ela precisa estar de pé ANTES da primeira leitura
+  try{await esperarAuth();}catch(e){}
   // tira as versões antigas do localStorage antes de qualquer coisa: é o que
   // devolve espaço ao banco principal
   try{await migrarVersoesParaIdb();}catch(e){}
@@ -1848,6 +1879,7 @@ async function load(){
   if(!DB.agenda){DB.agenda=seedAgenda();dirty=true;}
   if(ensureFields())dirty=true;
   if(checarViradaMes())dirty=true;
+  CARREGADO=true;                           // a partir daqui pode gravar
   if(travado){setSave('⚠ confira os dados antes de salvar','err');}
   else if(dirty||!chosen||(hasCloud()&&!cloudRaw&&localRaw)||(localRaw&&cloudRaw&&tsOf(localRaw)!==tsOf(cloudRaw)))persist();else publish();
   renderAll();
@@ -2214,7 +2246,13 @@ async function subirBlobDeReserva(forcar){
   _ultBlob=Date.now();
   await cloudSet(KEY,JSON.stringify(DB));
 }
+/* Enquanto o load() não terminou, o DB em memória está VAZIO. Gravar nesse
+   estado troca o banco bom por um banco vazio — no aparelho e na nuvem. Esta
+   trava é a última linha de defesa: qualquer travamento futuro no carregamento
+   vira, no pior caso, um app que não salva; nunca um app que apaga. */
+let CARREGADO=false;
 function persist(){
+  if(!CARREGADO){console.warn('persist() ignorado: o app ainda não terminou de carregar');return;}
   histOnPersist();
   DB.savedAt=Date.now();
   const json=JSON.stringify(DB);
@@ -2258,7 +2296,7 @@ async function backupNuvem(){
 /* Sair do app não pode custar a última alteração: no iPhone, minimizar congela
    o setTimeout de 500ms e a gravação na nuvem nunca acontecia. */
 async function gravarAgora(){
-  if(!hasCloud()||!DB)return;
+  if(!CARREGADO||!hasCloud()||!DB)return;   // nunca gravar o que ainda não carregou
   clearTimeout(saveTimer);
   try{
     const env=await subirPartes();          // as partes primeiro: é o dado vivo
@@ -2270,7 +2308,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)gravarAgora
 window.addEventListener('pagehide',()=>{gravarAgora();});
 /* Sincronizador de fundo: insiste em subir para a nuvem a cada 30s enquanto houver pendência */
 setInterval(async()=>{
-  if(!cloudPending||!hasCloud())return;
+  if(!CARREGADO||!cloudPending||!hasCloud())return;
   const ok=await cloudSet(KEY,JSON.stringify(DB));
   if(ok){cloudPending=false;setSave('✓ salvo na nuvem','ok');publish();}
 },30000);
@@ -2302,6 +2340,7 @@ function publish(){
   pubTimer=setTimeout(doPublish,1200);
 }
 async function doPublish(){
+  if(!CARREGADO)return;                     // publicar vazio apagaria a tela dos alunos
   if(!hasCloud())return;
   try{
     const hoje=new Date();const lim=new Date();lim.setDate(lim.getDate()+60);
@@ -2352,6 +2391,11 @@ async function doPublish(){
       }
     };
     await cloudSet(PUBKEY,JSON.stringify(pub));
+    // Nó público mínimo: só os três preços de grupo, que é tudo o que o site
+    // do jvtenis.com.br precisa. Sem ele, o site teria que ler a publicação
+    // inteira — e aí os dados dos alunos precisariam ficar abertos a todos.
+    try{await window.fbDB.ref('jvtenis/precos_publicos')
+      .set(DB.grupoPreco||{dupla:90,trio:85,quarteto:80});}catch(e){}
   }catch(e){/* melhor esforço */}
 }
 /* Importa agendamentos feitos pelos alunos no App do Aluno (fila push do Firebase) */
@@ -4995,6 +5039,61 @@ function abrirExtrato(id){
     : '<div class="empty">Sem movimentações ainda.</div>';
   document.getElementById('ov-extrato').classList.add('on');
 }
+/* ===== Conta: entrar e sair =====
+   Falhar aqui não pode custar nada: o app inteiro segue funcionando deslogado
+   enquanto as regras do banco estiverem abertas. */
+function contaEsc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function renderConta(){
+  var el=document.getElementById('conta-box');if(!el)return;
+  if(typeof firebase==='undefined'||!firebase.auth){
+    el.innerHTML='<p class="hint">⚪ Login indisponível neste aparelho — o app segue funcionando normalmente.</p>';
+    return;
+  }
+  var u=window.AUTH_USER;
+  if(u){
+    el.innerHTML='<p class="hint" style="color:var(--ok,#2E7D32);font-weight:700">✅ Conectado como '+contaEsc(u.email||'conta sem e-mail')+'</p>'
+      +'<div class="backup-row"><button class="btn btn-ghost" onclick="sairConta()">Sair desta conta</button></div>';
+    return;
+  }
+  var est='width:100%;padding:11px 12px;margin-bottom:8px;border:1px solid var(--border);border-radius:10px;font-size:14px;background:#fff;color:var(--text)';
+  el.innerHTML='<input id="conta-email" type="email" inputmode="email" autocomplete="username" placeholder="seu e-mail" style="'+est+'">'
+    +'<input id="conta-senha" type="password" autocomplete="current-password" placeholder="sua senha" style="'+est+'">'
+    +'<div class="backup-row"><button class="btn btn-ghost" id="conta-btn" onclick="entrarConta()">🔑 Entrar</button></div>'
+    +'<p class="hint" id="conta-msg"></p>';
+}
+function contaMsg(txt,erro){
+  var m=document.getElementById('conta-msg');if(!m)return;
+  m.textContent=txt;m.style.color=erro?'var(--bad,#C0392B)':'var(--muted)';m.style.fontWeight=erro?'700':'';
+}
+async function entrarConta(){
+  var e=document.getElementById('conta-email'), s=document.getElementById('conta-senha');
+  var b=document.getElementById('conta-btn');
+  if(!e||!s)return;
+  var email=(e.value||'').trim(), senha=s.value||'';
+  if(!email||!senha){contaMsg('Preencha e-mail e senha.',true);return;}
+  if(b){b.disabled=true;b.textContent='Entrando…';}
+  contaMsg('');
+  try{
+    await firebase.auth().signInWithEmailAndPassword(email,senha);
+    toast('✅ Conectado');
+    renderConta();
+  }catch(err){
+    var c=String(err&&err.code||'');
+    var txt=c.indexOf('wrong-password')>=0||c.indexOf('invalid-credential')>=0 ? 'E-mail ou senha não conferem.'
+          : c.indexOf('user-not-found')>=0 ? 'Não existe conta com esse e-mail. Ela precisa ser criada no painel do Firebase.'
+          : c.indexOf('operation-not-allowed')>=0 ? 'O login por e-mail ainda não foi ativado no painel do Firebase.'
+          : c.indexOf('too-many-requests')>=0 ? 'Muitas tentativas seguidas. Espere alguns minutos.'
+          : c.indexOf('network')>=0 ? 'Sem conexão agora. Tente de novo.'
+          : String(err&&err.message||err);
+    contaMsg(txt,true);
+    if(b){b.disabled=false;b.textContent='🔑 Entrar';}
+  }
+}
+function sairConta(){
+  if(!confirm('Sair da conta neste aparelho?\n\nSeus dados continuam aqui e na nuvem — nada é apagado.'))return;
+  try{firebase.auth().signOut().then(function(){toast('Você saiu');renderConta();});}catch(e){}
+}
+
 /* ===== Conferir números =====
    Seis checagens. Cada divergência mostra os dois números e um botão que grava
    a correção COMO MOVIMENTO, preservando a trilha. Nunca corrige sozinho. */
@@ -5772,7 +5871,7 @@ function confirmarAulaWa(id,hora){
 function renderAll(){
   document.getElementById('month-label').textContent=MESES[curMonth]+' '+curYear;
   const safe=(fn,nome)=>{try{fn();}catch(e){console.warn('Render '+nome+' falhou:',e);}};
-  safe(updateEyeBtn,'olho');safe(renderAlunos,'alunos');safe(renderMovs,'caixa');safe(renderDash,'inicio');safe(renderFin,'financeiro');safe(renderAgenda,'agenda');safe(renderTorneio,'torneio');safe(renderConfirmAmanha,'confirmamanha');safe(renderAvaliacoes,'avaliacoes');safe(checarBackup,'backup');
+  safe(updateEyeBtn,'olho');safe(renderAlunos,'alunos');safe(renderMovs,'caixa');safe(renderDash,'inicio');safe(renderFin,'financeiro');safe(renderAgenda,'agenda');safe(renderTorneio,'torneio');safe(renderConfirmAmanha,'confirmamanha');safe(renderAvaliacoes,'avaliacoes');safe(checarBackup,'backup');safe(renderConta,'conta');
 }
 // espera o Firebase ficar pronto (até ~6s) antes de carregar; nunca trava
 (function esperarESubir(t){

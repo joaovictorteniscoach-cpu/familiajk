@@ -497,11 +497,17 @@ function enviarCadastro(){
     try{
       if(typeof firebase==='undefined')return false;
       if(!firebase.apps||!firebase.apps.length)firebase.initializeApp(firebaseConfig);
-      firebase.database().ref('jvtenis/jvtenis-app-aluno').get().then(function(snap){
-        if(!snap.exists())return;
-        var v=snap.val();
-        if(typeof v==='string'){try{v=JSON.parse(v);}catch(e){return;}}
-        if(v&&v.grupoPreco)aplicar(v.grupoPreco);
+      // Nó público mínimo: só os preços de grupo. O site não precisa (e não
+      // deve) enxergar a publicação inteira, que tem nome e dado de aluno.
+      firebase.database().ref('jvtenis/precos_publicos').get().then(function(snap){
+        if(snap.exists()&&snap.val()){aplicar(snap.val());return;}
+        // reserva: publicação antiga, para o caso de o nó novo ainda não existir
+        return firebase.database().ref('jvtenis/jvtenis-app-aluno').get().then(function(s2){
+          if(!s2.exists())return;
+          var v=s2.val();
+          if(typeof v==='string'){try{v=JSON.parse(v);}catch(e){return;}}
+          if(v&&v.grupoPreco)aplicar(v.grupoPreco);
+        });
       }).catch(function(){/* mantém os valores do HTML */});
       return true;
     }catch(e){return false;}

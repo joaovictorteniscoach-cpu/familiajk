@@ -366,6 +366,7 @@ input,select{font-family:'DM Sans',sans-serif;font-size:14px}
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
 <script src="lib/firebase-database-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js\'><\/script>')"></script>
+<script src="lib/firebase-auth-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js\'><\/script>')"></script>
 <script>
 /* CONFIGURAÇÃO DO FIREBASE — Academia João Victor Tênis (igual à do painel) */
 const firebaseConfig = {
@@ -384,9 +385,47 @@ function iniciarFirebase(){
     if(!firebaseConfig.apiKey || firebaseConfig.apiKey==="COLE_AQUI")return false;
     if(!firebase.apps||!firebase.apps.length)firebase.initializeApp(firebaseConfig);
     window.fbDB = firebase.database();
+    iniciarAuth();
     return true;
   }catch(e){console.warn('Firebase ainda não pronto:',e);return false;}
 }
+
+/* ===== Identificação silenciosa do aparelho =======================
+   O aluno NÃO vê nada disso e não ganha senha nenhuma: o app entra sozinho
+   como visitante anônimo. Serve para que o banco possa, na etapa seguinte,
+   recusar quem não veio pelo app. Se falhar, o app segue funcionando igual —
+   as regras continuam abertas hoje. */
+window.AUTH_USER=null;
+var _authFeito=false, _authEspera=[];
+function _authResolveu(){
+  if(_authFeito)return;
+  _authFeito=true;
+  var fs=_authEspera.splice(0);
+  for(var i=0;i<fs.length;i++){try{fs[i]();}catch(e){}}
+}
+function iniciarAuth(){
+  if(window._authIniciado)return;
+  window._authIniciado=true;
+  try{
+    if(!firebase.auth){_authResolveu();return;}
+    firebase.auth().onAuthStateChanged(function(u){
+      window.AUTH_USER=u||null;
+      if(!u){try{firebase.auth().signInAnonymously().catch(function(){_authResolveu();});}catch(e){_authResolveu();}}
+      else _authResolveu();
+    },function(){_authResolveu();});
+  }catch(e){_authResolveu();}
+  // offline não tem o que esperar; e mesmo online a espera tem prazo curto,
+  // porque atrasar a abertura do app é pior que abrir sem identificação
+  try{if(navigator.onLine===false)_authResolveu();}catch(e){}
+  setTimeout(_authResolveu,5000);
+}
+/* Espera a identificação antes de falar com o banco — senão o primeiro pedido
+   do aluno sairia sem identidade e seria recusado quando as regras fecharem. */
+function esperarAuth(){
+  if(_authFeito||!window._authIniciado)return Promise.resolve();
+  return new Promise(function(r){_authEspera.push(r);setTimeout(r,5000);});
+}
+
 (function aguardarFirebase(t){
   if(iniciarFirebase())return;
   if(t<40)setTimeout(()=>aguardarFirebase(t+1),150);
@@ -793,16 +832,38 @@ function hasCloud(){return !!(window.fbDB);}
 function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
 function lsSet(k,v){try{localStorage.setItem(k,v);return true;}catch(e){return false;}}
 function fbPath(k){return 'jvtenis/'+k.replace(/[.#$\[\]/]/g,'_');}
+/* Prazo para a nuvem: sem servidor alcançável, o Firebase não devolve erro —
+   fica tentando reconectar e a promessa nunca termina. Sem isto, o app do
+   aluno ficava parado na abertura em vez de mostrar o que já tem guardado. */
+const PRAZO_NUVEM=6000;
+function comPrazo(promessa,ms,padrao){
+  return Promise.race([Promise.resolve(promessa),
+                       new Promise(r=>setTimeout(()=>r(padrao),ms||PRAZO_NUVEM))]);
+}
 async function cloudGet(k){
   if(!window.fbDB)return null;
+  try{await esperarAuth();}catch(e){}
   for(let i=0;i<3;i++){
-    try{const snap=await window.fbDB.ref(fbPath(k)).get();return snap.exists()?snap.val():null;}
+    try{const MARCA={_prazo:1};
+        const snap=await comPrazo(window.fbDB.ref(fbPath(k)).get(),PRAZO_NUVEM,MARCA);
+        if(snap===MARCA)return null;        // rede muda: insistir não adianta
+        return snap.exists()?snap.val():null;}
     catch(e){await new Promise(s=>setTimeout(s,350*(i+1)));}
   }
   return null;
 }
+/* Todo envio do aluno para as filas passa por aqui: espera a identificação do
+   aparelho e só então grava. Propaga o erro de propósito — quem chama usa o
+   try/catch para saber se realmente enviou, e um "enviado" falso seria pior
+   que a falha. */
+async function filaPush(cam,obj){
+  if(!window.fbDB)throw new Error('sem nuvem');
+  try{await esperarAuth();}catch(e){}
+  return window.fbDB.ref(cam).push(obj);
+}
 async function cloudSet(k,v){
   if(!window.fbDB)return false;
+  try{await esperarAuth();}catch(e){}
   for(let i=0;i<4;i++){
     try{await window.fbDB.ref(fbPath(k)).set(v);return true;}
     catch(e){await new Promise(s=>setTimeout(s,450*(i+1)));}
@@ -856,7 +917,7 @@ function notificarJoao(acao,dk,hora){
   if(!hasCloud())return;
   const tipo=EU?(isPersonal()?'personal':(isGrupo()?'grupo':'aula')):'aula';
   const n={acao,nome:EU?EU.nome:'',codigo:MEU.codigo,data:dk,hora,tipo,ts:Date.now()};
-  try{window.fbDB.ref('jvtenis/notificacoes').push(n);}catch(e){}
+  try{filaPush('jvtenis/notificacoes',n).catch(function(){});}catch(e){}
 }
 async function cancelarAula(dk,hora,rec){
   if(horasAte(dk,hora)<LIMITE_CANCEL_H){
@@ -869,7 +930,7 @@ async function cancelarAula(dk,hora,rec){
   await saveMeu();
   if(hasCloud()){
     const item={acao:'cancelar',codigo:MEU.codigo,nome:EU.nome,data:dk,hora,rec:rec||'pontual',ts:Date.now()};
-    try{await window.fbDB.ref('jvtenis/fila_agendamentos').push(item);}catch(e){}
+    try{await filaPush('jvtenis/fila_agendamentos',item);}catch(e){}
     notificarJoao('cancelou',dk,hora);
   }
   renderAgenda();renderMinhas();
@@ -1333,7 +1394,7 @@ async function enviarAutoAval(){
   Object.keys(AVAL_ESCALA).forEach(g=>{env[g]={};AVAL_ESCALA[g].itens.forEach(it=>{env[g][it.k]=(autoDraft[g]&&autoDraft[g][it.k])||0;});});
   let ok=false;
   for(let i=0;i<4&&!ok;i++){
-    try{await window.fbDB.ref('jvtenis/fila_autoaval').push(env);ok=true;}
+    try{await filaPush('jvtenis/fila_autoaval',env);ok=true;}
     catch(e){await new Promise(s=>setTimeout(s,450*(i+1)));}
   }
   if(!ok){toast('Erro ao enviar — tente de novo em instantes.');return;}
@@ -1686,9 +1747,9 @@ async function enviarResultadoAluno(){
   const adv=venc===p1?p2:p1;
   const item={torneioId:(PUB.torneio&&PUB.torneio.id)||'',group:g,p1,p2,vencedor:venc,tipo,score,nome:EU?EU.nome:'',codigo:MEU.codigo,ts:Date.now()};
   if(hasCloud()){
-    try{await window.fbDB.ref('jvtenis/fila_torneio').push(item);}catch(e){}
+    try{await filaPush('jvtenis/fila_torneio',item);}catch(e){}
     const resumo=(tipo==='wo'?(venc+' venceu por W.O.'):(venc+' venceu '+adv))+(score?(' '+score):'')+' · Grupo '+g;
-    try{window.fbDB.ref('jvtenis/notificacoes').push({acao:'resultado',nome:EU?EU.nome:'',texto:resumo,ts:Date.now()});}catch(e){}
+    try{filaPush('jvtenis/notificacoes',{acao:'resultado',nome:EU?EU.nome:'',texto:resumo,ts:Date.now()}).catch(function(){});}catch(e){}
   }
   document.getElementById('ov-tor-result').classList.remove('on');
   toast('Resultado enviado ao João ✓');
@@ -1880,14 +1941,14 @@ function pagarCompra(metodo){
 }
 function notificarPedido(texto){
   if(!hasCloud())return;
-  try{window.fbDB.ref('jvtenis/notificacoes').push({acao:'pedido',texto,nome:EU?EU.nome:'',codigo:MEU.codigo,ts:Date.now()});}catch(e){}
+  try{filaPush('jvtenis/notificacoes',{acao:'pedido',texto,nome:EU?EU.nome:'',codigo:MEU.codigo,ts:Date.now()}).catch(function(){});}catch(e){}
 }
 async function enviarPedido(p){
   if(!hasCloud())return;
   const rec=Object.assign({codigo:MEU.codigo,nome:EU?EU.nome:'',ts:Date.now()},p);
   for(let i=0;i<3;i++){
     try{
-      await window.fbDB.ref('jvtenis/fila_pedidos').push(rec);
+      await filaPush('jvtenis/fila_pedidos',rec);
       // aviso de mensalidade fica guardado no aparelho: e o que sustenta o
       // "em analise" ate o Joao marcar pago la na Gestao
       if(p&&p.kind==='mensalidade'){MEU.pagoAviso={ts:rec.ts,valor:Number(p.valor)||0};await saveMeu();try{renderPayLock();}catch(e){}}
@@ -2181,7 +2242,7 @@ async function confirmarPresencaAluno(){
   const dk=dKey(new Date());
   MEU.confirmadas=MEU.confirmadas||[];
   if(!MEU.confirmadas.some(c=>c.data===dk&&c.hora===_lembreteHora)){MEU.confirmadas.push({data:dk,hora:_lembreteHora,ts:Date.now()});await saveMeu();}
-  if(hasCloud()){try{await window.fbDB.ref('jvtenis/fila_confirmacoes').push({codigo:MEU.codigo,nome:EU?EU.nome:'',data:dk,hora:_lembreteHora,ts:Date.now()});}catch(e){}}
+  if(hasCloud()){try{await filaPush('jvtenis/fila_confirmacoes',{codigo:MEU.codigo,nome:EU?EU.nome:'',data:dk,hora:_lembreteHora,ts:Date.now()});}catch(e){}}
   notificarJoao('confirmou',dk,_lembreteHora);
   toast('✅ Presença confirmada! O João foi avisado.');
   checarAulaHoje();
@@ -2424,7 +2485,7 @@ async function confirmarAgendamento(){
   // push() cria uma entrada única na fila — nunca sobrescreve outro aluno
   let ok=false;
   for(let i=0;i<4&&!ok;i++){
-    try{await window.fbDB.ref('jvtenis/fila_agendamentos').push(pedido);ok=true;}
+    try{await filaPush('jvtenis/fila_agendamentos',pedido);ok=true;}
     catch(e){await new Promise(s=>setTimeout(s,450*(i+1)));}
   }
   if(!ok){toast('Erro ao enviar — tente novamente em instantes.');return;}
