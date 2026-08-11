@@ -1751,6 +1751,9 @@ function DEMO_SEED(){
 }
 async function load(){
   setSave('carregando…');
+  // tira as versões antigas do localStorage antes de qualquer coisa: é o que
+  // devolve espaço ao banco principal
+  try{await migrarVersoesParaIdb();}catch(e){}
   const localRaw=lsGet(KEY);
   let cloudRaw=null;
   if(hasCloud())cloudRaw=await cloudGet(KEY);
@@ -1800,35 +1803,81 @@ async function load(){
    sem deixar de onde voltar. Agora fica um rodízio de 5 versões recentes mais a
    primeira de cada dia dos últimos 7 — é a versão do dia que salva quando o
    estrago só é percebido no dia seguinte. */
-const SNAP_N=5, SNAP_DIAS=7;
+/* O localStorage tem ~5 MB para TUDO. Com um ano de uso o banco chega perto de
+   1 MB, e 13 cópias dele não cabem — o app ia descartando as mais antigas em
+   silêncio. As versões mudaram para o IndexedDB, que tem gigabytes.
+
+   A divisão é por temperatura: o banco principal continua no localStorage
+   porque é o caminho quente e precisa ser síncrono; as versões são volumosas e
+   ninguém precisa delas de imediato. */
+const SNAP_N=20, SNAP_DIAS=60;
 function snapKey(i){return KEY+'__s'+i;}
 function diaKey(d){return KEY+'__dia-'+d;}
 function hojeStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
-/* Roda as versões e guarda a do dia. Se o localStorage encher, joga fora a mais
-   antiga — o backup nunca pode atrapalhar o save principal. */
+/* ---- envelope mínimo de IndexedDB (sem biblioteca) ---- */
+const IDB_NOME='jvtenis', IDB_STORE='versoes';
+let _idb=null, _idbRuim=false;
+function idbAbrir(){
+  if(_idbRuim)return Promise.reject();
+  if(_idb)return Promise.resolve(_idb);
+  return new Promise((ok,err)=>{
+    try{
+      if(!window.indexedDB){_idbRuim=true;return err();}
+      const rq=indexedDB.open(IDB_NOME,1);
+      rq.onupgradeneeded=()=>{const d=rq.result;if(!d.objectStoreNames.contains(IDB_STORE))d.createObjectStore(IDB_STORE);};
+      rq.onsuccess=()=>{_idb=rq.result;ok(_idb);};
+      rq.onerror=()=>{_idbRuim=true;err();};
+    }catch(e){_idbRuim=true;err();}
+  });
+}
+function idbOp(modo,fn){
+  return idbAbrir().then(d=>new Promise((ok,err)=>{
+    const tx=d.transaction(IDB_STORE,modo), st=tx.objectStore(IDB_STORE);
+    const rq=fn(st);
+    tx.oncomplete=()=>ok(rq&&rq.result);
+    tx.onerror=()=>err();tx.onabort=()=>err();
+  }));
+}
+function idbSet(k,v){return idbOp('readwrite',st=>st.put(v,k));}
+function idbGet(k){return idbOp('readonly',st=>st.get(k));}
+function idbDel(k){return idbOp('readwrite',st=>st.delete(k));}
+function idbKeys(){return idbOp('readonly',st=>st.getAllKeys());}
+/* Roda as versões e guarda a primeira do dia. É "dispara e esquece": backup
+   nunca pode segurar nem derrubar o save principal. Se o IndexedDB não existir
+   ou falhar, cai no localStorage de antes, sem erro na tela. */
 function guardarVersoes(json){
+  idbAbrir().then(async()=>{
+    try{
+      for(let i=SNAP_N-1;i>0;i--){
+        const ant=await idbGet(snapKey(i-1));
+        if(ant!=null)await idbSet(snapKey(i),ant);
+      }
+      await idbSet(snapKey(0),json);
+      const hj=diaKey(hojeStr());
+      if((await idbGet(hj))==null){          // só a PRIMEIRA gravação do dia
+        await idbSet(hj,json);
+        await podarDias();
+      }
+    }catch(e){}
+  }).catch(()=>{guardarVersoesLS(json);});
+}
+/* Reserva: o comportamento antigo, para navegador sem IndexedDB. */
+function guardarVersoesLS(json){
   try{
-    for(let i=SNAP_N-1;i>0;i--){
+    for(let i=4;i>0;i--){
       const ant=lsGet(snapKey(i-1));
       if(ant!==null&&!lsSet(snapKey(i),ant))limparVersaoAntiga();
     }
     if(!lsSet(snapKey(0),json))limparVersaoAntiga();
     const hj=diaKey(hojeStr());
-    if(lsGet(hj)===null){                 // só a PRIMEIRA gravação do dia
-      if(!lsSet(hj,json))limparVersaoAntiga();
-      podarDias();
-    }
+    if(lsGet(hj)===null){if(!lsSet(hj,json))limparVersaoAntiga();}
   }catch(e){}
 }
-function podarDias(){
+async function podarDias(){
   try{
-    const pref=KEY+'__dia-', dias=[];
-    for(let i=0;i<localStorage.length;i++){
-      const k=localStorage.key(i);
-      if(k&&k.indexOf(pref)===0)dias.push(k);
-    }
-    dias.sort();
-    while(dias.length>SNAP_DIAS){try{localStorage.removeItem(dias.shift());}catch(e){}}
+    const pref=KEY+'__dia-';
+    const ks=(await idbKeys()||[]).filter(k=>String(k).indexOf(pref)===0).sort();
+    while(ks.length>SNAP_DIAS){await idbDel(ks.shift());}
   }catch(e){}
 }
 function limparVersaoAntiga(){
@@ -1844,6 +1893,30 @@ function limparVersaoAntiga(){
       if(lsGet(snapKey(i))!==null){localStorage.removeItem(snapKey(i));return;}
     }
   }catch(e){}
+}
+/* Migração: leva para o IndexedDB o que já estava no localStorage e APAGA de lá.
+   É isso que devolve os megabytes de folga ao banco principal, que era
+   justamente quem estava sob pressão. */
+async function migrarVersoesParaIdb(){
+  try{
+    await idbAbrir();
+    const pref=KEY+'__', achadas=[];
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(k&&k.indexOf(pref)===0&&k!==KEY)achadas.push(k);
+    }
+    if(!achadas.length)return 0;
+    let bytes=0;
+    for(const k of achadas){
+      const v=lsGet(k);
+      if(v!=null){
+        if((await idbGet(k))==null)await idbSet(k,v);
+        bytes+=v.length;
+      }
+      try{localStorage.removeItem(k);}catch(e){}
+    }
+    return bytes;
+  }catch(e){return 0;}
 }
 function persist(){
   histOnPersist();
@@ -4651,17 +4724,21 @@ async function listarVersoes(){
   const box=document.getElementById('versoes-box');if(!box)return;
   box.innerHTML='<div class="empty">Procurando versões…</div>';
   const itens=[];
+  // versões vêm do IndexedDB; o localStorage só é lido como reserva
+  const leia=async k=>{try{const v=await idbGet(k);if(v!=null)return v;}catch(e){}return lsGet(k);};
   for(let i=0;i<SNAP_N;i++){
-    const raw=lsGet(snapKey(i));
+    const raw=await leia(snapKey(i));
     if(raw)itens.push({origem:'aparelho',rot:i===0?'mais recente':(i+1)+'ª anterior',raw,r:resumoBanco(raw)});
   }
   try{
-    const pref=KEY+'__dia-',ks=[];
-    for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf(pref)===0)ks.push(k);}
-    ks.sort().reverse().forEach(k=>{
-      const raw=lsGet(k);
+    const pref=KEY+'__dia-';
+    let ks=[];
+    try{ks=(await idbKeys()||[]).map(String).filter(k=>k.indexOf(pref)===0);}catch(e){}
+    if(!ks.length){for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf(pref)===0)ks.push(k);}}
+    for(const k of ks.sort().reverse()){
+      const raw=await leia(k);
       if(raw)itens.push({origem:'aparelho',rot:'início do dia '+k.replace(pref,'').split('-').reverse().slice(0,2).join('/'),raw,r:resumoBanco(raw)});
-    });
+    }
   }catch(e){}
   if(hasCloud()){
     try{
