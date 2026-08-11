@@ -1,0 +1,59 @@
+# Segundo endereço dos apps, no GitHub Pages.
+#
+# Por que existe: quando os créditos do Netlify acabaram, nada era publicado e
+# o app ficou sem atualizar. O Pages é gratuito e não tem cota que acabe, então
+# serve de porta reserva para a MESMA academia — o Firebase é o mesmo, os dados
+# são os mesmos. Não é uma cópia paralela; é outro caminho para a mesma casa.
+#
+# LIGAR UMA VEZ: Settings → Pages → Source: "GitHub Actions".
+# Depois disso os endereços passam a ser:
+#   https://<usuario>.github.io/familiajk/app-gestao/
+#   https://<usuario>.github.io/familiajk/app-aluno/
+#   https://<usuario>.github.io/familiajk/site/
+#
+# Funciona sem tocar no código porque todos os caminhos dos apps são relativos
+# (start_url "./", scope "./", sw-*.js, manifest-*.webmanifest).
+name: Publicar no GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:        # permite publicar na mão pela aba Actions
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Uma publicação por vez; se chegar push novo no meio, deixa a atual terminar.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Conferir a sintaxe antes de publicar
+        # a mesma checagem que roda no desenvolvimento: se um script estiver
+        # quebrado, é melhor não publicar do que publicar um app que não abre
+        run: |
+          node ferramentas/checar-sintaxe.js app-gestao/index.html
+          node ferramentas/checar-sintaxe.js app-aluno/index.html
+          node ferramentas/checar-sintaxe.js site/index.html
+
+      - uses: actions/configure-pages@v5
+
+      - name: Empacotar o repositório
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Publicar
+        id: deploy
+        uses: actions/deploy-pages@v4

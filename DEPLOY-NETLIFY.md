@@ -1,3 +1,29 @@
+# Deploy automático: Netlify (principal) e GitHub Pages (reserva)
+
+## ⚠️ Se o Netlify parar, use o endereço reserva
+
+Já aconteceu de os **créditos do Netlify acabarem** e nada ser publicado. Por
+isso os mesmos apps também são publicados no **GitHub Pages**, que é gratuito e
+não tem cota que acabe:
+
+| | Principal (Netlify) | Reserva (GitHub Pages) |
+|---|---|---|
+| Gestão | o endereço que você já usa | `https://joaovictorteniscoach-cpu.github.io/familiajk/app-gestao/` |
+| Aluno | idem | `.../familiajk/app-aluno/` |
+| Site | idem | `.../familiajk/site/` |
+
+**Os dados são os mesmos nos dois.** O Firebase é o mesmo banco — não são duas
+academias, são duas portas para a mesma. Ao abrir o endereço reserva pela
+primeira vez, ele baixa tudo da nuvem (cada endereço tem sua própria memória
+local, então começa vazio e se enche sozinho).
+
+**Ligar uma vez:** no GitHub, `Settings → Pages → Source: GitHub Actions`. Feito
+isso, todo push na `main` publica nos dois lugares. O workflow está em
+`.github/workflows/pages.yml` e confere a sintaxe dos apps antes de publicar —
+se algum script estiver quebrado, ele não publica.
+
+---
+
 # Deploy automático: conectar o Netlify ao GitHub
 
 Este repositório **já está no GitHub** (`joaovictorteniscoach-cpu/familiajk`) e a
