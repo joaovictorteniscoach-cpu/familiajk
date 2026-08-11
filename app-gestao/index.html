@@ -512,8 +512,8 @@ tbody.tg-drop{background:rgba(201,160,74,.10);outline:1px dashed var(--gold);out
 .tg-ghost{position:fixed;z-index:9999;pointer-events:none;opacity:.95;background:#fff;border:1.5px solid var(--gold);border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.28);padding:10px 14px;font-weight:700;color:var(--text);font-size:13px}
 </style>
 <!-- ================= FIREBASE ================= -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
+<script src="lib/firebase-database-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js\'><\/script>')"></script>
 <script>
 /* CONFIGURAÇÃO DO FIREBASE — Academia João Victor Tênis */
 const firebaseConfig = {
@@ -5485,6 +5485,12 @@ function compartilharTorneio(){
   txt+='_Acompanhe sua evolução em quadra!_ 🎾';
   window.open('https://api.whatsapp.com/send?text='+encodeURIComponent(txt),'_blank');
 }
+/* Local primeiro: resolve o CDN sair do ar e faz funcionar offline.
+   O CDN fica de reserva para o caso de o arquivo local faltar num deploy
+   incompleto — as duas juntas cobrem mais que qualquer uma sozinha. */
+async function libLocalOuCdn(local,cdn){
+  try{await carregarLib(local);}catch(e){await carregarLib(cdn);}
+}
 function carregarLib(src){
   return new Promise(function(resolve,reject){
     var ex=document.querySelector('script[data-lib="'+src+'"]');
@@ -5496,8 +5502,8 @@ function carregarLib(src){
   });
 }
 async function garantirExportLibs(){
-  if(typeof html2canvas==='undefined')await carregarLib('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
-  if(!window.jspdf)await carregarLib('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+  if(typeof html2canvas==='undefined')await libLocalOuCdn('lib/html2canvas.min.js','https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+  if(!window.jspdf)await libLocalOuCdn('lib/jspdf.umd.min.js','https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
 }
 /* Imagem da semana para mandar ao aluno: mostra o que está livre e o que está
    ocupado, SEM o nome de ninguém — a agenda é informação dos outros alunos. */

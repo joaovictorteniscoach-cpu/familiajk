@@ -468,8 +468,8 @@ function enviarCadastro(){
 </script>
 
 <!-- ===== Preços de grupo ao vivo (lê o mesmo Firebase dos apps) ===== -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
+<script src="lib/firebase-database-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js\'><\/script>')"></script>
 <script>
 /* Lê os valores de grupo publicados pelo app de gestão (jvtenis/jvtenis-app-aluno).
    Se o Firebase não responder, ficam os valores fixos do HTML como fallback. */

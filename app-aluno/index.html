@@ -364,8 +364,8 @@ input,select{font-family:'DM Sans',sans-serif;font-size:14px}
 .pick-note{font-size:12.5px;color:var(--muted);background:#F6F3EC;border-radius:10px;padding:9px 12px;margin-bottom:10px;line-height:1.45}
 </style>
 <!-- ================= FIREBASE ================= -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
+<script src="lib/firebase-database-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js\'><\/script>')"></script>
 <script>
 /* CONFIGURAÇÃO DO FIREBASE — Academia João Victor Tênis (igual à do painel) */
 const firebaseConfig = {
@@ -1509,6 +1509,12 @@ function abrirMFit(){
   document.body.appendChild(a);a.click();document.body.removeChild(a);
   if(!link)toast('Abrindo o MFit — peça seu link de treino ao João 🏋️');
 }
+/* Local primeiro: resolve o CDN sair do ar e faz funcionar offline.
+   O CDN fica de reserva para o caso de o arquivo local faltar num deploy
+   incompleto — as duas juntas cobrem mais que qualquer uma sozinha. */
+async function libLocalOuCdn(local,cdn){
+  try{await carregarLib(local);}catch(e){await carregarLib(cdn);}
+}
 function carregarLib(src){
   return new Promise(function(resolve,reject){
     var ex=document.querySelector('script[data-lib="'+src+'"]');
@@ -1520,8 +1526,8 @@ function carregarLib(src){
   });
 }
 async function garantirExportLibs(){
-  if(typeof html2canvas==='undefined')await carregarLib('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
-  if(!window.jspdf)await carregarLib('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+  if(typeof html2canvas==='undefined')await libLocalOuCdn('lib/html2canvas.min.js','https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+  if(!window.jspdf)await libLocalOuCdn('lib/jspdf.umd.min.js','https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
 }
 function torCanvas(){
   return html2canvas(document.getElementById('tor-capture'),{backgroundColor:'#ffffff',scale:2});
@@ -1752,7 +1758,7 @@ function pixBRCode(chave,valor,nome,cidade){
 }
 let pixCtx=null;
 async function garantirQRLib(){
-  if(typeof qrcode==='undefined')await carregarLib('https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js');
+  if(typeof qrcode==='undefined')await libLocalOuCdn('lib/qrcode.min.js','https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js');
 }
 function abrirPix(valor,desc,pedido){
   if(!(PUB&&PUB.pix&&PUB.pix.trim())){toast('Pix ainda não configurado — fale com o João 🙏');return;}

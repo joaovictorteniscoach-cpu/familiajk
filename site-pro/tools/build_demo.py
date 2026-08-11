@@ -40,7 +40,10 @@ window.__DEMO = true;
   else{window.addEventListener('load',function(){setTimeout(install,0);});}
 })();
 </script>'''
-pat_fb = re.compile(r'<script src="https://www\.gstatic\.com/firebasejs/10\.12\.2/firebase-app-compat\.js"></script>.*?\}\)\(0\);\s*</script>', re.S)
+# O bloco do Firebase agora comeca no arquivo LOCAL (lib/), nao mais na URL do
+# gstatic — as bibliotecas foram trazidas para dentro do app. O gstatic ainda
+# aparece dentro da tag, como reserva, e por isso nao serve mais de ancora.
+pat_fb = re.compile(r'<script src="lib/firebase-app-compat\.js".*?\}\)\(0\);\s*</script>', re.S)
 assert pat_fb.search(h), "bloco firebase nao encontrado"
 h = pat_fb.sub(demo_fb, h, count=1)
 
@@ -148,7 +151,7 @@ if not os.path.exists(os.path.join(DSTDIR, "netlify.toml")):
 print("demo gerada:", os.path.getsize(os.path.join(DSTDIR,"index.html")), "bytes")
 # checagens de seguranca
 final=open(os.path.join(DSTDIR,"index.html"),encoding="utf-8").read()
-print("Firebase CDN presente?", "gstatic.com/firebasejs" in final, "(deve ser False)")
+print("Firebase presente?", ("gstatic.com/firebasejs" in final) or ("lib/firebase" in final), "(deve ser False)")
 print("databaseURL real presente?", "academia-jv-tenis-default-rtdb" in final, "(deve ser False)")
 print("apiKey real presente?", "AIzaSyCs7o" in final, "(deve ser False)")
 print("nomes reais (MARIO/KARINE) presentes?", ("MARIO" in final or "KARINE" in final), "(deve ser False)")
