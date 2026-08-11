@@ -43,7 +43,7 @@ isso só aparece quando alguém usa. Daí os scripts.
 ## As bibliotecas ficam dentro do app
 
 Firebase, html2canvas, jsPDF e o gerador de QR **não vêm mais de servidores de
-fora** — estão em `app-gestao/lib/`, `app-aluno/lib/` e `site/lib/`. Isso faz o
+fora** — estão em `app-gestao/lib/` e `app-aluno/lib/`. Isso faz o
 app funcionar completo offline e o protege de o CDN sair do ar. O endereço de
 fora continua no código como **reserva**, para o caso de um deploy sair sem a
 pasta `lib/`.
@@ -64,6 +64,17 @@ npm pack firebase@10.12.2 html2canvas@1.4.1 jspdf@2.5.1 qrcode-generator@1.4.4
 Mudando a versão, ajuste também o endereço de reserva no HTML e a expressão em
 `site-pro/tools/build_demo.py`, que usa `lib/firebase-app-compat.js` como âncora
 para tirar o Firebase da demo.
+
+### O site público não carrega biblioteca nenhuma
+
+`site/` tinha 193 KB de SDK do Firebase para ler **três números** (os preços de
+grupo). Num site público isso é caro: cada visita paga. Agora é um `fetch` no
+endereço REST do Realtime Database — o mesmo dado, ~100 bytes, sem biblioteca.
+Por isso não existe `site/lib/`.
+
+Só funciona porque `jvtenis/precos_publicos` é leitura pública nas duas versões
+das regras. Se um dia esse nó for fechado, o site volta aos valores fixos do
+HTML — não quebra, só para de atualizar sozinho.
 
 O único externo que sobra são as **fontes do Google**, e elas são só aparência:
 sem elas o texto cai numa fonte do sistema e nada deixa de funcionar.

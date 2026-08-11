@@ -84,7 +84,7 @@ Cada app vira um site no Netlify (como os seus já são). Duas opções:
 manually** → arraste a pasta `app-gestao` do cliente. Repita para `app-aluno`.
 
 **B) Pelo GitHub:** se preferir deploy automático, suba as pastas do cliente num
-repositório e conecte (ver `DEPLOY-NETLIFY.md`).
+repositório e conecte (ver `PUBLICAR.md`).
 
 Dê nomes claros aos sites, ex.: `gestao-fulano` e `alunos-fulano`. As URLs ficam
 `gestao-fulano.netlify.app` e `alunos-fulano.netlify.app`.

@@ -41,4 +41,4 @@ e `app-gestao/`).
    folder comercial, edite `folder.html` e regenere `export/` (Playwright
    print-to-pdf + screenshots por página).
 4. Publique como sempre: push no repositório ou drag & drop da pasta `site/` no
-   Netlify (ver `DEPLOY-NETLIFY.md` na raiz).
+   Netlify (ver `PUBLICAR.md` na raiz).
