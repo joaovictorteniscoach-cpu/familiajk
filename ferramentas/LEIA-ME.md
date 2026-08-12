@@ -100,6 +100,30 @@ A conta da nuvem é estimativa (o Firebase não informa tamanho ao app). Há um
 botão separado para medir de verdade, que avisa antes que **isso consome cota de
 download** — o padrão não faz nenhuma leitura.
 
+### Um número que ainda não fecha
+
+No aparelho do João, `navigator.storage.estimate()` relata **137 MB em uso**,
+mas o que dá para contabilizar soma ~6,5 MB:
+
+- localStorage: 161 KB;
+- versões no IndexedDB: 3,38 MB;
+- cache do service worker: no Pages os três apps são o **mesmo endereço**
+  (`joaovictorteniscoach-cpu.github.io`), e a cota é por endereço — então o
+  cache da Gestão, do App do Aluno e do site conta junto. Uns 3 MB de HTML,
+  `lib/` e telas de abertura.
+
+Sobram ~130 MB sem explicação. A hipótese mais provável é o próprio navegador:
+Safari e Chrome arredondam e acolchoam esse número de propósito, para ele não
+servir de impressão digital do aparelho. Mas é hipótese, não medição — está
+registrado aqui como pergunta aberta, não como fato.
+
+Como fechar, se um dia incomodar: medir o cache pela Cache API
+(`caches.open(CACHE)` → `keys()` → somar o tamanho das respostas) e mostrar essa
+linha no painel. Aí ou o número passa a fechar, ou a diferença que sobrar aponta
+para outra coisa.
+
+**Não é problema**: o limite desse aparelho é 39 GB, e 137 MB são 0,35% dele.
+
 ## Quem pode ler e gravar no banco
 
 Está em [`FIREBASE.md`](FIREBASE.md), com as regras prontas para colar em
