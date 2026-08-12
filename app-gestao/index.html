@@ -586,6 +586,14 @@ function esperarAuth(){
 </head>
 <body>
 
+<!-- Aviso de endereço desatualizado. Nasce escondido; só aparece se a nuvem
+     disser que existe uma versão mais nova que a deste endereço. -->
+<div id="barra-versao" style="display:none;position:sticky;top:0;z-index:280;background:#8A2C18;color:#fff;padding:10px 14px;font-size:13px;line-height:1.35;box-shadow:0 2px 10px rgba(0,0,0,.35)">
+  <b>⚠️ Este endereço está desatualizado.</b>
+  <span id="bv-texto"></span>
+  <a id="bv-link" href="#" style="color:#FFD9A0;font-weight:800;text-decoration:underline;word-break:break-all"></a>
+</div>
+
 <section id="splash-gestao" style="position:fixed;inset:0;z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;background:linear-gradient(175deg,#16260F 0%,#1A2E14 45%,#0F1D0B 100%)">
   <div style="position:relative;width:190px;height:190px;display:flex;align-items:center;justify-content:center;margin-bottom:18px">
     <span style="position:absolute;width:190px;height:190px;border-radius:50%;border:1.5px solid rgba(201,160,74,.45);box-shadow:0 0 34px rgba(201,160,74,.18)"></span>
@@ -866,6 +874,7 @@ function esperarAuth(){
 
   <p class="sec-eyebrow" style="margin-top:18px">Segurança</p>
   <h2 class="sec-title">Sua <em>conta</em></h2>
+  <p class="hint" id="versao-linha" style="font-weight:700"></p>
   <p class="hint">Entrando com a sua conta, este aparelho passa a ser reconhecido pelo banco de dados. Hoje isso é opcional e não muda nada no uso — é o preparo para fechar o banco, de modo que só você possa alterar ou apagar os dados. O aparelho continua conectado depois de fechar o app.</p>
   <div id="conta-box"></div>
 
@@ -1454,6 +1463,13 @@ function esperarAuth(){
 const KEY='jvtenis-gestao-v1';
 const PUBKEY='jvtenis-app-aluno';
 const BOOKKEY='jvtenis-agendamentos';
+/* Carimbo desta cópia. O app existe em dois endereços (GitHub Pages e Netlify)
+   que são publicados em momentos diferentes — o Netlify, hoje, na mão. Sem
+   carimbo não há como saber que se está usando uma cópia velha, e uma cópia
+   velha grava no MESMO banco que a nova.
+   Formato AAAA-MM-DD-N, que compara direto como texto.
+   Ao mexer no app, suba este número: ferramentas/checar-versao.py cobra. */
+const VERSAO='2026-08-12-1';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -1904,6 +1920,7 @@ async function load(){
   if(ensureFields())dirty=true;
   if(checarViradaMes())dirty=true;
   CARREGADO=true;                           // a partir daqui pode gravar
+  conferirVersao();                         // este endereço está atualizado?
   if(travado){setSave('⚠ confira os dados antes de salvar','err');}
   else if(dirty||!chosen||(hasCloud()&&!cloudRaw&&localRaw)||(localRaw&&cloudRaw&&tsOf(localRaw)!==tsOf(cloudRaw)))persist();else publish();
   renderAll();
@@ -5063,11 +5080,53 @@ function abrirExtrato(id){
     : '<div class="empty">Sem movimentações ainda.</div>';
   document.getElementById('ov-extrato').classList.add('on');
 }
+/* ===== Este endereço está atualizado? =====
+   O app vive em dois endereços publicados em momentos diferentes, e os dois
+   gravam no MESMO banco. Uma cópia velha pode carregar um defeito já corrigido
+   — foi assim que a perda de dados aconteceu — e o estrago aparece nos dois
+   endereços. A nuvem guarda o carimbo da cópia mais nova que já abriu; quem
+   abrir mais velho fica sabendo, com o endereço certo escrito na tela.
+
+   AVISA, NÃO BLOQUEIA. Impedir a cópia velha de gravar protegeria mais, mas
+   criaria justamente o que não pode acontecer: abrir o app e não conseguir
+   salvar. */
+const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-gestao/';
+function dataBonita(v){
+  const m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m?(m[3]+'/'+m[2]):String(v||'?');
+}
+async function conferirVersao(){
+  if(!hasCloud())return;
+  try{
+    const MARCA={_prazo:1};
+    const snap=await comPrazo(window.fbDB.ref('jvtenis/versao_app').get(),PRAZO_NUVEM,MARCA);
+    if(snap===MARCA)return;                 // nuvem muda: não é motivo de alarme
+    const naNuvem=snap.exists()?String(snap.val()||''):'';
+    if(!naNuvem||VERSAO>naNuvem){
+      // esta é a mais nova que já abriu: registra para as outras se compararem
+      try{await window.fbDB.ref('jvtenis/versao_app').set(VERSAO);}catch(e){}
+      return;
+    }
+    if(VERSAO<naNuvem)mostrarBarraVersao(naNuvem);
+  }catch(e){/* nunca atrapalhar a abertura por causa de um aviso */}
+}
+function mostrarBarraVersao(naNuvem){
+  const bar=document.getElementById('barra-versao');
+  if(!bar)return;
+  const t=document.getElementById('bv-texto'), l=document.getElementById('bv-link');
+  if(t)t.textContent=' Esta cópia é de '+dataBonita(VERSAO)+' e já existe a de '
+                    +dataBonita(naNuvem)+'. Seus dados estão salvos — mas abra o endereço atual: ';
+  if(l){l.textContent=ENDERECO_ATUAL;l.href=ENDERECO_ATUAL;}
+  bar.style.display='block';
+}
+
 /* ===== Conta: entrar e sair =====
    Falhar aqui não pode custar nada: o app inteiro segue funcionando deslogado
    enquanto as regras do banco estiverem abertas. */
 function contaEsc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function renderConta(){
+  var lv=document.getElementById('versao-linha');
+  if(lv)lv.textContent='Versão deste endereço: '+dataBonita(VERSAO)+'  ('+VERSAO+')';
   var el=document.getElementById('conta-box');if(!el)return;
   if(typeof firebase==='undefined'||!firebase.auth){
     el.innerHTML='<p class="hint">⚪ Login indisponível neste aparelho — o app segue funcionando normalmente.</p>';
