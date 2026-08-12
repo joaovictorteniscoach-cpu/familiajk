@@ -1481,7 +1481,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-08-12-3';
+const VERSAO='2026-08-12-4';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -5199,7 +5199,7 @@ function sairConta(){
    Este teste faz, de dentro do app do João, o que cada um faz de verdade —
    inclusive o aluno. Para entrar como aluno sem derrubar a sessão do João, usa
    uma SEGUNDA instância do Firebase, com autenticação própria, apagada no fim. */
-const TESTE_PASSOS=7;
+const TESTE_PASSOS=8;
 function _tl(ok,titulo,detalhe,acao){
   const cor=ok===true?'#2E7D32':ok===false?'#C0392B':'#8A7E6B';
   const ic=ok===true?'✅':ok===false?'❌':'⏳';
@@ -5285,6 +5285,7 @@ async function testarConexao(){
     r.pop();
     r.push(_tl(false,'Aluno lê a publicação','não dá para testar sem a identificação'));
     r.push(_tl(false,'Fila fechada para o aluno','não dá para testar sem a identificação'));
+    r.push(_tl(false,'Pedidos pendentes do aluno','não dá para testar sem a identificação'));
     pinta();
     try{if(app2)await app2.delete();}catch(e){}
     return resumoTeste(r,feito.filter(Boolean).length);
@@ -5316,6 +5317,23 @@ async function testarConexao(){
       'você ainda está com as regras da etapa 1 (abertas). Cole a etapa 2 para fechar');
     else passo(true,'Fila fechada para o aluno','o aluno não lê o pedido dos outros — a tranca está fechada');
   }
+  // 8) o caminho pessoal do aluno — onde ficam os pedidos pendentes dele.
+  //    Fica num bloco de regra à parte ($aluno), então quebra sozinho sem
+  //    nenhum dos outros passos acusar, e quem sofre é o aluno, não o João.
+  {
+    const cam='jvtenis/jvt-aluno-meu-teste';
+    const a=await tenta(()=>db2.ref(cam).set(JSON.stringify({teste:true,ts:Date.now()})));
+    let leu=false;
+    if(a.ok){
+      const b=await tenta(()=>db2.ref(cam).get());
+      leu=!!b.ok;
+    }
+    try{await window.fbDB.ref(cam).remove();}catch(e){}   // limpa como João
+    if(a.ok&&leu)passo(true,'Pedidos pendentes do aluno','ele guarda e relê o que deixou pela metade');
+    else passo(false,'Pedidos pendentes do aluno',a.ok?'gravou mas não conseguiu reler':(a.prazo?'sem resposta':a.erro),
+      'no bloco "$aluno" das regras, ".read" e ".write" precisam aceitar quem está identificado');
+  }
+
   try{await app2.delete();}catch(e){}
   r.pop();pinta();
   return resumoTeste(r,feito.filter(Boolean).length);

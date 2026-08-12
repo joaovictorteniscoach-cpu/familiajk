@@ -99,6 +99,9 @@ def main():
         casos.append(('Gestão (João logado)', 'apaga item de '+f,  COACH, J+f+'/-Nabc', 'write', True, True))
     casos.append(('Gestão (João logado)', 'limpa notificacoes inteira', COACH, J+'notificacoes', 'write', True, True))
 
+    # o Joao precisa poder limpar o no de teste do autoteste
+    casos.append(('Gestão (João logado)', 'apaga o nó pessoal de um aluno', COACH, J+'jvt-aluno-meu-teste', 'write', True, True))
+
     # ---- o carimbo de versao: Gestao grava, todo mundo identificado le
     casos.append(('Gestão (João logado)', 'grava o carimbo de versão', COACH, J+'versao_app', 'write', True, True))
     casos.append(('Gestão (João logado)', 'lê o carimbo de versão',    COACH, J+'versao_app', 'read',  True, True))
