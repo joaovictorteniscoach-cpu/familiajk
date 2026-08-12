@@ -24,6 +24,26 @@ do dado bom nessa situação — mas não force.
 
 ---
 
+## 1b · Netlify congelado — importante
+
+Com o deploy automático desligado, o Netlify **parou na versão que tinha**. A
+correção da perda de dados entrou hoje às 15:40, bem no meio do período em que a
+cota estourou — é provável que o Netlify não a tenha recebido.
+
+Como os dois endereços gravam no **mesmo banco**, abrir a Gestão pelo endereço
+antigo numa rede ruim ainda pode apagar tudo, e o estrago aparece nos dois.
+
+- [ ] **Até resolver, usar só o endereço do Pages**
+- [ ] Um deploy manual em cada projeto: *Deploys → Trigger deploy → Deploy site*
+      (só `app-gestao` e `app-aluno` — o resto pode esperar)
+- [ ] Depois disso, pode deixar o automático desligado
+
+Os apps agora avisam sozinhos: se você abrir um endereço desatualizado, aparece
+uma **barra vermelha no topo** com o endereço certo. A versão de cada endereço
+também aparece em *Financeiro → Segurança*.
+
+---
+
 ## 2 · Fechar a raiz do banco — hoje, 2 minutos
 
 - [ ] Console do Firebase → *Realtime Database* → **Regras**

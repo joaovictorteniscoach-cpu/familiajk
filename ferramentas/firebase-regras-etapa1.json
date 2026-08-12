@@ -5,6 +5,7 @@
       "jvtenis-app-aluno":    { ".read": true, ".write": true },
       "jvtenis-agendamentos": { ".read": true, ".write": true },
       "precos_publicos":      { ".read": true, ".write": true },
+      "versao_app":           { ".read": true, ".write": true },
       "v2":                   { ".read": true, ".write": true },
       "arquivo":              { ".read": true, ".write": true },
       "backups":              { ".read": true, ".write": true },

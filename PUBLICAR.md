@@ -48,6 +48,35 @@ cota de novo, em qualquer hospedagem.
 HTML a imagem não entra no cache do navegador nem carrega sob demanda, e a mesma
 foto repetida conta de novo a cada cópia.
 
+## Versões diferentes convivendo
+
+Com dois endereços publicados em momentos diferentes — e o Netlify na mão —
+é normal um estar mais velho que o outro. Os dois gravam no **mesmo banco**, e
+uma cópia velha pode carregar um defeito já corrigido.
+
+Por isso cada app tem uma constante `VERSAO` e a compara com `jvtenis/versao_app`
+na nuvem, que guarda o carimbo da cópia mais nova que já abriu:
+
+- cópia mais nova → grava o carimbo dela;
+- cópia mais velha → **barra vermelha no topo** com o endereço atual escrito.
+
+**Avisa, não bloqueia**: impedir a cópia velha de gravar criaria justamente o que
+não pode acontecer — abrir o app e não conseguir salvar.
+
+Ao mexer nos apps, **suba a `VERSAO`**. `ferramentas/checar-versao.py` cobra
+(compara com a data do último commit no arquivo) e roda dentro do
+`checar-tudo.sh`. Carimbo esquecido faz o aviso mentir, o que é pior que não ter
+aviso.
+
+## Publicar em lote, não a cada passo
+
+A cota do Netlify já estourou por excesso de publicação: cada envio ao `main`
+dispara build nos **seis** projetos do repositório. Num dia de trabalho pesado
+foram ~36 builds.
+
+Regra: juntar o trabalho e fazer **um merge no fim**, em vez de publicar a cada
+etapa concluída.
+
 ## Publicar
 
 Todo push na `main` publica nos dois lugares. O workflow do Pages está em

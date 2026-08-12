@@ -6,6 +6,11 @@
         ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'"
       },
 
+      "versao_app": {
+        ".read":  "auth != null",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'"
+      },
+
       "jvtenis-app-aluno": {
         ".read":  "auth != null",
         ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'"

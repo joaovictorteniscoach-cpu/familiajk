@@ -26,8 +26,12 @@ echo "### 5. Regras do banco contra o que os apps fazem"
 python3 ferramentas/checar-regras.py || falhou=1
 
 echo
+echo "### 6. Carimbo de versao dos apps"
+python3 ferramentas/checar-versao.py || falhou=1
+
+echo
 if [ "$falhou" -eq 0 ]; then
-  echo "Sintaxe e regras OK. Leia os avisos dos itens 2 a 4 antes de publicar."
+  echo "Sintaxe, regras e versao OK. Leia os avisos dos itens 2 a 4 antes de publicar."
 else
   echo "ERRO — nao publique antes de corrigir."
   exit 1

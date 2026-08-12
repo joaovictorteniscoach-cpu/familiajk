@@ -99,12 +99,17 @@ def main():
         casos.append(('Gestão (João logado)', 'apaga item de '+f,  COACH, J+f+'/-Nabc', 'write', True, True))
     casos.append(('Gestão (João logado)', 'limpa notificacoes inteira', COACH, J+'notificacoes', 'write', True, True))
 
+    # ---- o carimbo de versao: Gestao grava, todo mundo identificado le
+    casos.append(('Gestão (João logado)', 'grava o carimbo de versão', COACH, J+'versao_app', 'write', True, True))
+    casos.append(('Gestão (João logado)', 'lê o carimbo de versão',    COACH, J+'versao_app', 'read',  True, True))
+
     # ---- Aluno: o que app-aluno/index.html faz
     casos.append(('App do aluno (anônimo)', 'lê a publicação', ALUNO, J+'jvtenis-app-aluno', 'read', True, True))
     casos.append(('App do aluno (anônimo)', 'lê os próprios pedidos',  ALUNO, J+'jvt-aluno-meu-1111', 'read', True, True))
     casos.append(('App do aluno (anônimo)', 'grava os próprios pedidos',ALUNO, J+'jvt-aluno-meu-1111', 'write', True, True))
     for f in FILAS:
         casos.append(('App do aluno (anônimo)', 'manda pedido novo em '+f, ALUNO, J+f+'/-Nnovo', 'write', True, False))
+    casos.append(('App do aluno (anônimo)', 'lê o carimbo de versão', ALUNO, J+'versao_app', 'read', True, True))
     # ...e o que ele NÃO pode
     for f in FILAS:
         casos.append(('Aluno NÃO pode', 'ler a fila '+f,            ALUNO, J+f, 'read',  False, True))
@@ -113,6 +118,7 @@ def main():
     casos.append(('Aluno NÃO pode', 'gravar na publicação',    ALUNO, J+'jvtenis-app-aluno', 'write', False, True))
     casos.append(('Aluno NÃO pode', 'gravar em v2',            ALUNO, J+'v2/alunos', 'write', False, True))
     casos.append(('Aluno NÃO pode', 'ler os backups',          ALUNO, J+'backups', 'read',  False, True))
+    casos.append(('Aluno NÃO pode', 'mexer no carimbo de versão',ALUNO, J+'versao_app', 'write', False, True))
 
     # ---- Site público, sem login nenhum
     casos.append(('Site público (sem login)', 'lê os preços',        NINGUEM, J+'precos_publicos', 'read', True, True))
@@ -128,6 +134,7 @@ def main():
     casos.append(('Estranho NÃO pode', 'apagar tudo',             NINGUEM, 'jvtenis', 'write', False, True))
     casos.append(('Estranho NÃO pode', 'usar o banco de depósito',NINGUEM, 'lixo/arquivo', 'write', False, True))
     casos.append(('Estranho NÃO pode', 'ler pedido de um aluno',  NINGUEM, J+'jvt-aluno-meu-1111', 'read', False, True))
+    casos.append(('Estranho NÃO pode', 'mexer no carimbo',       NINGUEM, J+'versao_app', 'write', False, True))
 
     falhas, grupo_atual = 0, None
     for grupo, desc, ator, cam, tipo, esperado, existe in casos:

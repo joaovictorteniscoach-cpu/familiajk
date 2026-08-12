@@ -434,6 +434,13 @@ function esperarAuth(){
 </head>
 <body>
 
+<!-- Aviso de endereço desatualizado. Escondido até a nuvem dizer que existe
+     uma versão mais nova que a deste endereço. -->
+<div id="barra-versao" style="display:none;position:sticky;top:0;z-index:280;background:#8A2C18;color:#fff;padding:9px 13px;font-size:12.5px;line-height:1.35">
+  ⚠️ Este endereço está desatualizado.
+  <a id="bv-link" href="#" style="color:#FFD9A0;font-weight:800;text-decoration:underline;word-break:break-all"></a>
+</div>
+
 <!-- LOGIN -->
 <section class="login" id="login">
   <div class="welcome-orb">
@@ -817,6 +824,11 @@ function esperarAuth(){
 const PUBKEY='jvtenis-app-aluno';      // publicado pelo painel do João (compartilhado)
 const BOOKKEY='jvtenis-agendamentos';  // fila de agendamentos dos alunos (compartilhado)
 const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, salvo na nuvem)
+/* Carimbo desta cópia — o app existe em dois endereços publicados em momentos
+   diferentes. Aqui o aluno só LÊ o carimbo da nuvem: quem grava é a Gestão.
+   Ao mexer no app, suba este número (ferramentas/checar-versao.py cobra). */
+const VERSAO='2026-08-12-1';
+const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const DIAS_FULL=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
@@ -940,6 +952,7 @@ async function cancelarAula(dk,hora,rec){
 
 /* ================= INÍCIO ================= */
 async function init(){
+  conferirVersao();                      // sem await: aviso nunca atrasa a abertura
   // o aparelho lembra o código de quem já entrou (se "manter conectado" estiver ligado)
   const keep=lsGet('jvt-keep')!=='0';
   let local=lsGet(MYKEY);
@@ -950,6 +963,22 @@ async function init(){
     if(ok&&EU){show();return;}
   }
   document.getElementById('login').style.display='flex';
+}
+/* Este endereço está atualizado? O aluno pode ter o ícone antigo no celular
+   depois de o endereço mudar; sem aviso ele usaria uma cópia velha sem saber.
+   Só lê — nunca grava, nunca bloqueia, e nunca atrasa a abertura. */
+async function conferirVersao(){
+  if(!hasCloud())return;
+  try{
+    const MARCA={_prazo:1};
+    const snap=await comPrazo(window.fbDB.ref('jvtenis/versao_app').get(),PRAZO_NUVEM,MARCA);
+    if(snap===MARCA||!snap.exists())return;
+    const naNuvem=String(snap.val()||'');
+    if(!naNuvem||VERSAO>=naNuvem)return;
+    const bar=document.getElementById('barra-versao'), l=document.getElementById('bv-link');
+    if(l){l.textContent='Toque aqui para abrir o atual';l.href=ENDERECO_ATUAL;}
+    if(bar)bar.style.display='block';
+  }catch(e){/* aviso nunca pode atrapalhar */}
 }
 function meuKey(){return MEU.codigo?MYKEY+'-'+MEU.codigo:MYKEY;}
 async function carregarMeuNuvem(){
