@@ -86,13 +86,38 @@ Rodando contra as regras antigas (`.read`/`.write` na raiz), ele acusa 25
 falhas, entre elas "baixar tudo" e "apagar tudo" — é assim que se sabe que ele
 está mesmo conferindo, e não só dizendo que está tudo bem.
 
+## Depois de trocar: rodar o autoteste
+
+*Financeiro → Segurança → **🔌 Testar conexão***. Sete passos, na ordem em que
+as coisas realmente acontecem:
+
+1. o João está logado;
+2. a Gestão lê o banco;
+3. a Gestão grava (e apaga a marca de teste);
+4. o site público lê os preços **sem login**;
+5. o aluno se identifica (a entrada anônima está ligada);
+6. o aluno lê a publicação e **consegue mandar um pedido**;
+7. o aluno **não** consegue ler a fila dos outros.
+
+Os passos 5–7 são o motivo de existir: testam o lado do aluno **de dentro do app
+do João**, que é o que não dava para conferir sem pegar o celular de alguém. E o
+passo 7 é o que distingue a cerca da tranca — com a etapa 1 no ar, ele reprova,
+porque a fila está aberta.
+
+Cada falha vem com o que fazer, não só com o que falhou.
+
+Detalhe de implementação que importa: o teste do aluno usa uma **segunda
+instância** do Firebase (`initializeApp(config,'teste')`), com autenticação
+própria, apagada no fim. A sessão do João não é tocada — está nos testes.
+
 ## Se algo parar de funcionar depois de trocar
 
 O sintoma é sempre o mesmo: o app abre, mostra os dados do aparelho e avisa
 `⚠ salvo só no aparelho`. **Nenhum dado se perde** — o app trabalha local e
 sobe quando voltar. Para voltar atrás, cole o `etapa1.json` e publique.
 
-Vale conferir, nessa ordem:
+Vale conferir, nessa ordem — mas antes rode o **🔌 Testar conexão**, que
+responde os três de uma vez:
 
 1. *Financeiro → Segurança → Sua conta* mostra **✅ Conectado**?
 2. O UID nas regras é o mesmo que aparece em *Authentication → Users*?
