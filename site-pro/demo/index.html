@@ -837,6 +837,11 @@ window.__DEMO = true;
   <div class="backup-row"><button class="btn btn-ghost" onclick="mostrarPreviaArquivo()">📦 Ver o que dá para arquivar</button></div>
   <div id="arq-box"></div>
 
+  <h2 class="sec-title" style="margin-top:18px">Espaço <em>usado</em></h2>
+  <p class="hint">Quanto os seus dados já ocupam e quanto tempo ainda cabem. O limite mais apertado é o do <b>aparelho</b>, não o da nuvem — ao contrário do que parece. O crescimento é medido pelas versões guardadas, não chutado.</p>
+  <div class="backup-row"><button class="btn btn-ghost" onclick="medirEspaco()">📊 Ver espaço usado</button></div>
+  <div id="espaco-box"></div>
+
   <h2 class="sec-title" style="margin-top:18px">Conferir <em>números</em></h2>
   <p class="hint">Confere créditos, reposições, locação e mensalidades de todos os alunos contra o extrato e contra a agenda. Só mostra o que não fecha — e nada é corrigido sem você mandar.</p>
   <div class="backup-row"><button class="btn btn-ghost" onclick="conferirNumeros()">🔎 Conferir agora</button></div>
@@ -1415,8 +1420,10 @@ const BOOKKEY='jvtenis-agendamentos';
    carimbo não há como saber que se está usando uma cópia velha, e uma cópia
    velha grava no MESMO banco que a nova.
    Formato AAAA-MM-DD-N, que compara direto como texto.
-   Ao mexer no app, suba este número: ferramentas/checar-versao.py cobra. */
-const VERSAO='2026-08-12-1';
+   É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
+   mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
+   Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
+const VERSAO='2026-08-12-2';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -5151,6 +5158,186 @@ async function entrarConta(){
 function sairConta(){
   if(!confirm('Sair da conta neste aparelho?\n\nSeus dados continuam aqui e na nuvem — nada é apagado.'))return;
   try{firebase.auth().signOut().then(function(){toast('Você saiu');renderConta();});}catch(e){}
+}
+
+/* ===== Quanto espaço os dados ocupam =====
+   O João acabou de perder o site por bater num limite de hospedagem sem aviso
+   nenhum. A mesma pergunta vale para os dados, e até aqui não havia como
+   responder sem chutar.
+
+   O limite que aperta primeiro é o do APARELHO (~5 MB de localStorage), não o
+   da nuvem (1 GB) — o contrário do que a intuição diz.
+
+   E a projeção é MEDIDA, não estimada: o app já guarda a primeira versão de
+   cada dia dos últimos 60 dias no IndexedDB. Isso é uma série histórica do
+   tamanho do banco; comparar a mais antiga com a de hoje dá o crescimento real. */
+const LIMITE_APARELHO=5*1024*1024;          // ~5 MB, o teto usual do localStorage
+const LIMITE_NUVEM=1024*1024*1024;          // 1 GB do plano gratuito do Firebase
+const MAX_BACKUPS=30;                       // quantas cópias por hora ficam na nuvem
+
+function kb(n){
+  n=Number(n)||0;
+  if(n<1024)return n+' B';
+  if(n<1024*1024)return (n/1024).toFixed(n<10240?1:0)+' KB';
+  return (n/1024/1024).toFixed(2)+' MB';
+}
+function barra(usado,total,cor){
+  const pc=Math.min(100,Math.max(0.6,usado*100/total));
+  return '<div style="height:9px;border-radius:6px;background:rgba(0,0,0,.10);overflow:hidden;margin:5px 0 3px">'
+        +'<div style="height:100%;width:'+pc.toFixed(1)+'%;background:'+cor+'"></div></div>';
+}
+function corDe(fr){return fr>0.85?'#C0392B':fr>0.6?'#D98324':'#4E7C3F';}
+
+/* Tamanho de cada chave do localStorage, separado pelo que é o quê. */
+function medirAparelho(){
+  const r={total:0,banco:0,historico:0,versoes:0,resto:0,chaves:0};
+  try{
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i), v=localStorage.getItem(k)||'';
+      const t=(k.length+v.length);
+      r.total+=t;r.chaves++;
+      if(k===KEY)r.banco+=t;
+      else if(k.indexOf(KEY+'__')===0)r.versoes+=t;   // reserva de quem não tem IndexedDB
+      else if(k===HIST.LOGKEY)r.historico+=t;
+      else r.resto+=t;
+    }
+  }catch(e){}
+  return r;
+}
+
+/* As versões no IndexedDB: quanto ocupam e, principalmente, o histórico de
+   tamanhos que permite medir o crescimento. */
+async function medirVersoes(){
+  const r={bytes:0,itens:0,serie:[]};
+  try{
+    const ks=await idbKeys();
+    for(const k of (ks||[])){
+      const v=await idbGet(k);
+      if(typeof v!=='string')continue;
+      r.bytes+=v.length;r.itens++;
+      const m=String(k).match(/__dia-(\d{4}-\d{2}-\d{2})$/);
+      if(m)r.serie.push({dia:m[1],bytes:v.length});
+    }
+    r.serie.sort((a,b)=>a.dia.localeCompare(b.dia));
+  }catch(e){r.indisponivel=true;}
+  return r;
+}
+
+/* Crescimento medido: primeira versão diária guardada × hoje. */
+function projetarCrescimento(serie,hoje){
+  // basta UMA versão antiga: o segundo ponto da reta é o tamanho de hoje
+  if(!serie||!serie.length)return {podeProjetar:false,motivo:'ainda não há versão de nenhum dia anterior guardada'};
+  const a=serie[0], b={dia:hojeStr(),bytes:hoje};
+  const dias=Math.round((new Date(b.dia)-new Date(a.dia))/86400000);
+  if(dias<7)return {podeProjetar:false,motivo:'só '+dias+' dia(s) de histórico — preciso de 7 para uma conta honesta',dias:dias};
+  const cresceu=hoje-a.bytes;
+  const porDia=cresceu/dias;
+  const o={podeProjetar:true,dias:dias,de:a.bytes,para:hoje,porDia:porDia,desde:a.dia};
+  if(porDia<=0){o.encolheu=true;return o;}
+  const falta=LIMITE_APARELHO-hoje;
+  o.diasAteEncher=falta/porDia;
+  o.anosAteEncher=o.diasAteEncher/365;
+  return o;
+}
+
+async function medirEspaco(){
+  const el=document.getElementById('espaco-box');if(!el)return;
+  el.innerHTML='<p class="hint">medindo…</p>';
+  const ap=medirAparelho();
+  const vs=await medirVersoes();
+  const bancoAgora=(()=>{try{return JSON.stringify(DB).length;}catch(e){return ap.banco;}})();
+
+  // o navegador sabe o número de verdade; usamos quando ele conta
+  let real=null;
+  try{ if(navigator.storage&&navigator.storage.estimate)real=await navigator.storage.estimate(); }catch(e){}
+
+  const proj=projetarCrescimento(vs.serie,ap.banco||bancoAgora);
+  const prev=(()=>{try{return previaArquivo();}catch(e){return null;}})();
+  const nuvemBanco=bancoAgora, nuvemPartes=Math.round(bancoAgora*1.15), nuvemBkp=bancoAgora*MAX_BACKUPS;
+  const nuvemTotal=nuvemBanco+nuvemPartes+nuvemBkp;
+
+  const frAp=ap.total/LIMITE_APARELHO, frNu=nuvemTotal/LIMITE_NUVEM;
+  let h='';
+
+  h+='<div style="border:1px solid var(--border);border-radius:12px;padding:12px;margin-top:8px">'
+    +'<b>No aparelho</b> — o limite que aperta primeiro'
+    +barra(ap.total,LIMITE_APARELHO,corDe(frAp))
+    +'<p class="hint" style="margin:0"><b>'+kb(ap.total)+'</b> de ~5 MB · sobra '+(100-frAp*100).toFixed(1)+'%</p>'
+    +'<p class="hint" style="margin:6px 0 0">banco: '+kb(ap.banco)+' · histórico de mudanças: '+kb(ap.historico)
+    +(ap.versoes?' · versões antigas aqui: '+kb(ap.versoes):'')+' · resto: '+kb(ap.resto)+'</p>';
+  if(vs.indisponivel)h+='<p class="hint" style="margin:6px 0 0">Versões: o IndexedDB não respondeu neste aparelho (o app funciona igual).</p>';
+  else h+='<p class="hint" style="margin:6px 0 0">Versões guardadas à parte (IndexedDB, tem gigabytes): '+kb(vs.bytes)+' em '+vs.itens+' cópia(s)</p>';
+  if(real&&real.quota)h+='<p class="hint" style="margin:6px 0 0">O navegador reserva '+kb(real.quota)+' no total para este endereço e diz que '+kb(real.usage||0)+' estão em uso.</p>';
+  h+='</div>';
+
+  h+='<div style="border:1px solid var(--border);border-radius:12px;padding:12px;margin-top:8px">'
+    +'<b>Crescimento</b> — medido, não estimado';
+  if(!proj.podeProjetar){
+    h+='<p class="hint" style="margin:4px 0 0">Ainda não dá para projetar: '+proj.motivo+'.'
+      +' O app guarda uma versão por dia; volte aqui em uma semana.</p>';
+  }else if(proj.encolheu){
+    h+='<p class="hint" style="margin:4px 0 0">Nos últimos '+proj.dias+' dias o banco <b>não cresceu</b> ('
+      +kb(proj.de)+' → '+kb(proj.para)+'). Provavelmente por causa do arquivamento.</p>';
+  }else{
+    const anos=proj.anosAteEncher;
+    const prazo = anos>50 ? 'mais de 50 anos' : anos>=2 ? ('~'+Math.round(anos)+' anos')
+                : anos>=1 ? '~1 ano' : ('~'+Math.round(proj.diasAteEncher/30)+' meses');
+    h+='<p class="hint" style="margin:4px 0 0">Em '+proj.dias+' dias (desde '+proj.desde.split('-').reverse().slice(0,2).join('/')+'): '
+      +kb(proj.de)+' → '+kb(proj.para)+', ou <b>'+kb(proj.porDia)+' por dia</b>.</p>'
+      +'<p class="hint" style="margin:4px 0 0">Nesse ritmo, o limite do aparelho chega em <b>'+prazo+'</b>.'
+      +(anos<2?' Vale arquivar dados antigos.':'')+'</p>';
+  }
+  h+='</div>';
+
+  h+='<div style="border:1px solid var(--border);border-radius:12px;padding:12px;margin-top:8px">'
+    +'<b>Na nuvem</b> — estimativa'
+    +barra(nuvemTotal,LIMITE_NUVEM,corDe(frNu))
+    +'<p class="hint" style="margin:0"><b>'+kb(nuvemTotal)+'</b> de 1 GB do plano gratuito · '+(frNu*100).toFixed(2)+'% usado</p>'
+    +'<p class="hint" style="margin:6px 0 0">banco: '+kb(nuvemBanco)+' · partes: ~'+kb(nuvemPartes)
+    +' · <b>backups: ~'+kb(nuvemBkp)+'</b> (até '+MAX_BACKUPS+' cópias por hora — é o maior peso, e o menos óbvio)</p>'
+    +'<p class="hint" style="margin:6px 0 0">É conta de casa: o Firebase não informa o tamanho ao app. '
+    +'Medir de verdade <b>consome cota de download</b>.</p>'
+    +'<div class="backup-row" style="margin-top:6px"><button class="btn btn-ghost" onclick="medirNuvemDeVerdade()">Medir de verdade</button></div>'
+    +'<div id="nuvem-real"></div></div>';
+
+  h+='<div style="border:1px solid var(--border);border-radius:12px;padding:12px;margin-top:8px">'
+    +'<b>O que está crescendo</b>'
+    +'<p class="hint" style="margin:4px 0 0">'
+    +(DB.alunos||[]).length+' alunos · '+(DB.movs||[]).length+' linhas de extrato · '
+    +(DB.presencas||[]).length+' presenças · '+(DB.lancamentos||[]).length+' lançamentos</p>';
+  if(prev&&prev.linhas)h+='<p class="hint" style="margin:6px 0 0">Dá para arquivar <b>'+prev.linhas+' linha(s)</b> ('
+    +kb(prev.bytes)+') com mais de '+MESES_JANELA+' meses — use o botão "Ver o que dá para arquivar" acima.</p>';
+  else h+='<p class="hint" style="margin:6px 0 0">Nada com mais de '+MESES_JANELA+' meses para arquivar.</p>';
+  h+='</div>';
+
+  el.innerHTML=h;
+}
+
+/* Só quando pedido: baixa os nós e mede o tamanho real. Custa download. */
+async function medirNuvemDeVerdade(){
+  const el=document.getElementById('nuvem-real');if(!el)return;
+  if(!hasCloud()){el.innerHTML='<p class="hint">Sem nuvem agora.</p>';return;}
+  if(!confirm('Medir de verdade baixa o conteúdo do banco, das partes e dos backups para pesar.\n\n'
+             +'Isso consome cota de download do plano gratuito. Continuar?'))return;
+  el.innerHTML='<p class="hint">baixando para medir…</p>';
+  const alvos=[['banco','jvtenis/'+KEY],['partes','jvtenis/'+V2],
+               ['backups','jvtenis/backups'],['arquivo','jvtenis/arquivo']];
+  const r={};let total=0;
+  for(const [rot,cam] of alvos){
+    try{
+      const MARCA={_prazo:1};
+      const snap=await comPrazo(window.fbDB.ref(cam).get(),20000,MARCA);
+      if(snap===MARCA){r[rot]=null;continue;}
+      const v=snap.exists()?snap.val():null;
+      const n=v==null?0:(typeof v==='string'?v.length:JSON.stringify(v).length);
+      r[rot]=n;total+=n;
+    }catch(e){r[rot]=null;}
+  }
+  const fr=total/LIMITE_NUVEM;
+  el.innerHTML='<p class="hint" style="margin-top:8px"><b>Medido agora: '+kb(total)+'</b> de 1 GB · '
+    +(fr*100).toFixed(2)+'%</p>'
+    +'<p class="hint" style="margin:4px 0 0">'
+    +alvos.map(([rot])=>rot+': '+(r[rot]==null?'não respondeu':kb(r[rot]))).join(' · ')+'</p>';
 }
 
 /* ===== Conferir números =====

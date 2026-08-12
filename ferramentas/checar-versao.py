@@ -63,7 +63,7 @@ def main():
         else:
             print('  ✅ %-24s %s' % (rel, versao))
 
-    # os dois têm de andar juntos: endereços diferentes comparam o mesmo carimbo
+    # os dois têm de andar IGUAIS: comparam com o mesmo carimbo na nuvem
     vs = []
     for rel in APPS:
         caminho = os.path.join(RAIZ, rel)
@@ -72,11 +72,11 @@ def main():
                           open(caminho, encoding='utf-8', errors='replace').read(), re.M)
             if m: vs.append((rel, m.group(1)))
     if len(vs) == 2 and vs[0][1] != vs[1][1]:
-        print('  ⚠️  carimbos diferentes entre os apps: %s vs %s' % (vs[0][1], vs[1][1]))
-        print('     (não é erro — mas o do aluno compara com o carimbo que a Gestão grava,')
-        print('      então o da Gestão nunca pode ficar atrás do dele)')
-        if vs[0][1] < vs[1][1]:
-            print('  ❌ a Gestão está atrás do App do Aluno'); falhas += 1
+        print('  ❌ carimbos diferentes: %s = %s, %s = %s'
+              % (vs[0][0], vs[0][1], vs[1][0], vs[1][1]))
+        print('     Os dois comparam com o MESMO carimbo na nuvem. Diferentes, o que')
+        print('     estiver atrás mostra "desatualizado" sem estar. Deixe os dois iguais.')
+        falhas += 1
 
     print('\n%d app(s) · %d falha(s)' % (len(APPS), falhas))
     return 1 if falhas else 0
