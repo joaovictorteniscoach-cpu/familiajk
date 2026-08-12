@@ -825,6 +825,11 @@ window.__DEMO = true;
   <p class="hint">Entrando com a sua conta, este aparelho passa a ser reconhecido pelo banco de dados. Hoje isso é opcional e não muda nada no uso — é o preparo para fechar o banco, de modo que só você possa alterar ou apagar os dados. O aparelho continua conectado depois de fechar o app.</p>
   <div id="conta-box"></div>
 
+  <h2 class="sec-title" style="margin-top:18px">Testar <em>conexão</em></h2>
+  <p class="hint">Roda o que os apps realmente fazem e diz o que funciona: você gravando, o site lendo os preços, e — o mais importante — <b>o lado do aluno</b>, que você não consegue conferir de outro jeito sem pegar o celular de alguém. Vale rodar depois de mexer nas regras do Firebase.</p>
+  <div class="backup-row"><button class="btn btn-ghost" onclick="testarConexao()">🔌 Testar conexão</button></div>
+  <div id="teste-box"></div>
+
   <h2 class="sec-title" style="margin-top:18px">Backup dos <em>dados</em></h2>
   <div class="backup-row">
     <button class="btn btn-ghost" onclick="exportBackup()">⬇ Exportar backup</button>
@@ -1423,7 +1428,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-08-12-2';
+const VERSAO='2026-08-12-3';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -5158,6 +5163,148 @@ async function entrarConta(){
 function sairConta(){
   if(!confirm('Sair da conta neste aparelho?\n\nSeus dados continuam aqui e na nuvem — nada é apagado.'))return;
   try{firebase.auth().signOut().then(function(){toast('Você saiu');renderConta();});}catch(e){}
+}
+
+/* ===== Autoteste de conexão =====
+   Depois de mexer nas regras do banco, a pergunta "funcionou?" não tinha
+   resposta: a tela parece boa mesmo quando a nuvem não responde, porque os apps
+   guardam cópia local. E o modo de falha que mais importa é o do ALUNO — se a
+   entrada anônima estiver desligada, ele para de ler e de mandar pedidos, e
+   isso só aparece quando alguém reclama, dias depois.
+
+   Este teste faz, de dentro do app do João, o que cada um faz de verdade —
+   inclusive o aluno. Para entrar como aluno sem derrubar a sessão do João, usa
+   uma SEGUNDA instância do Firebase, com autenticação própria, apagada no fim. */
+const TESTE_PASSOS=7;
+function _tl(ok,titulo,detalhe,acao){
+  const cor=ok===true?'#2E7D32':ok===false?'#C0392B':'#8A7E6B';
+  const ic=ok===true?'✅':ok===false?'❌':'⏳';
+  return '<div style="padding:7px 0;border-top:1px solid var(--border)">'
+    +'<b style="color:'+cor+'">'+ic+' '+titulo+'</b>'
+    +(detalhe?'<br><span class="hint">'+detalhe+'</span>':'')
+    +(acao?'<br><span class="hint" style="color:#C0392B;font-weight:700">→ '+acao+'</span>':'')
+    +'</div>';
+}
+async function testarConexao(){
+  const el=document.getElementById('teste-box');if(!el)return;
+  const r=[];
+  const pinta=()=>{el.innerHTML='<div style="border:1px solid var(--border);border-radius:12px;padding:4px 12px 10px;margin-top:8px">'
+    +r.join('')+'</div>';};
+  r.push(_tl(null,'testando…','são 7 passos, alguns falam com a nuvem'));pinta();
+  const feito=[];
+  const passo=(ok,t,d,a)=>{r[r.length-1]=_tl(ok,t,d,a);feito.push(ok===true);r.push(_tl(null,'testando…',''));pinta();};
+
+  // 1) o João está logado?
+  if(typeof firebase==='undefined'||!firebase.auth)
+    passo(false,'Login','a biblioteca de login não carregou','recarregue o app');
+  else if(!window.AUTH_USER)
+    passo(false,'Login','você não está conectado','entre em "Sua conta", logo acima');
+  else passo(true,'Login','conectado como '+(window.AUTH_USER.email||'conta anônima'));
+
+  if(!hasCloud()){
+    r[r.length-1]=_tl(false,'Nuvem','o Firebase não conectou neste aparelho','confira a internet e recarregue');
+    pinta();return;
+  }
+  const MARCA={_prazo:1};
+  const tenta=async fn=>{try{const v=await comPrazo(fn(),12000,MARCA);
+    return v===MARCA?{prazo:true}:{ok:true,v:v};}catch(e){return {erro:String(e&&e.message||e)};}};
+
+  // 2) ler o banco
+  {
+    const x=await tenta(()=>window.fbDB.ref('jvtenis/'+KEY).get());
+    if(x.ok)passo(true,'Ler seus dados','o banco respondeu');
+    else if(x.prazo)passo(false,'Ler seus dados','a nuvem não respondeu em 12s','tente de novo com internet melhor');
+    else passo(false,'Ler seus dados',x.erro,'confira as regras: jvtenis-gestao-v1 precisa de leitura para o seu UID');
+  }
+  // 3) gravar e apagar
+  {
+    const cam='jvtenis/'+V2+'/teste';
+    const x=await tenta(()=>window.fbDB.ref(cam).set({quando:Date.now()}));
+    if(x.ok){
+      try{await window.fbDB.ref(cam).remove();}catch(e){}
+      passo(true,'Gravar seus dados','gravou e apagou a marca de teste');
+    }
+    else if(x.prazo)passo(false,'Gravar seus dados','a nuvem não respondeu em 12s','tente de novo');
+    else passo(false,'Gravar seus dados',x.erro,'confira se o UID nas regras é o mesmo de Authentication → Users');
+  }
+  // 4) o site público, sem login nenhum
+  {
+    try{
+      // o endereço sai da configuração, nunca escrito na mão: assim ele não
+      // vaza para a demo do JV Pro, que tem a configuração arrancada
+      const base=(typeof firebaseConfig!=='undefined'&&firebaseConfig.databaseURL)||'';
+      if(!base)throw new Error('sem endereço de banco configurado');
+      const u=base.replace(/\/$/,'')+'/jvtenis/precos_publicos.json';
+      const resp=await comPrazo(fetch(u).then(x=>x.ok?x.json():Promise.reject(new Error('HTTP '+x.status))),12000,MARCA);
+      if(resp===MARCA)passo(false,'Site público','sem resposta em 12s','tente de novo');
+      else if(resp&&resp.dupla)passo(true,'Site público','lê os preços de grupo sem login (dupla: R$ '+resp.dupla+')');
+      else passo(false,'Site público','o nó dos preços está vazio','abra o app e mexa em algo: publicar grava os preços');
+    }catch(e){
+      passo(false,'Site público',String(e&&e.message||e),'em precos_publicos, ".read" precisa ser true');
+    }
+  }
+
+  // 5, 6 e 7 — o lado do ALUNO, numa instância separada
+  let app2=null, db2=null;
+  try{
+    app2=firebase.apps.filter(a=>a.name==='teste')[0]||firebase.initializeApp(firebaseConfig,'teste');
+    const cred=await comPrazo(app2.auth().signInAnonymously(),12000,MARCA);
+    if(cred===MARCA)throw new Error('sem resposta');
+    db2=app2.database();
+    passo(true,'Aluno se identifica','a entrada anônima está ligada');
+  }catch(e){
+    const c=String(e&&e.code||e&&e.message||e);
+    const desligado=c.indexOf('operation-not-allowed')>=0||c.indexOf('admin-restricted')>=0;
+    passo(false,'Aluno se identifica',c,
+      desligado?'ative "Anônimo" em Authentication → Sign-in method — sem isso o aluno não recebe nem manda nada'
+               :'tente de novo com internet melhor');
+    r.pop();
+    r.push(_tl(false,'Aluno lê a publicação','não dá para testar sem a identificação'));
+    r.push(_tl(false,'Fila fechada para o aluno','não dá para testar sem a identificação'));
+    pinta();
+    try{if(app2)await app2.delete();}catch(e){}
+    return resumoTeste(r,feito.filter(Boolean).length);
+  }
+  // 6) o aluno lê a publicação e consegue mandar um pedido
+  {
+    const a=await tenta(()=>db2.ref('jvtenis/'+PUBKEY).get());
+    if(!a.ok){
+      passo(false,'Aluno lê a publicação',a.prazo?'sem resposta':a.erro,
+        'em jvtenis-app-aluno, ".read" precisa aceitar quem está identificado (auth != null)');
+    }else{
+      const ref=db2.ref('jvtenis/fila_pedidos').push();
+      const b=await tenta(()=>ref.set({teste:true,texto:'teste de conexão',ts:Date.now()}));
+      if(b.ok){
+        try{await window.fbDB.ref('jvtenis/fila_pedidos/'+ref.key).remove();}catch(e){}
+        passo(true,'Aluno lê e manda pedido','a publicação chega nele e o pedido chega em você');
+      }else{
+        passo(false,'Aluno manda pedido',b.prazo?'sem resposta':b.erro,
+          'em fila_pedidos, o item novo precisa de ".write": "auth != null && !data.exists() && newData.exists()"');
+      }
+    }
+  }
+  // 7) e NÃO pode ler a fila dos outros
+  {
+    let leu=false;
+    try{const s=await comPrazo(db2.ref('jvtenis/fila_pedidos').get(),12000,MARCA);
+        if(s!==MARCA)leu=true;}catch(e){}
+    if(leu)passo(false,'Fila fechada para o aluno','o aluno CONSEGUIU ler a fila de pedidos',
+      'você ainda está com as regras da etapa 1 (abertas). Cole a etapa 2 para fechar');
+    else passo(true,'Fila fechada para o aluno','o aluno não lê o pedido dos outros — a tranca está fechada');
+  }
+  try{await app2.delete();}catch(e){}
+  r.pop();pinta();
+  return resumoTeste(r,feito.filter(Boolean).length);
+}
+function resumoTeste(r,verdes){
+  const el=document.getElementById('teste-box');if(!el)return;
+  const tudo=verdes>=TESTE_PASSOS;
+  el.innerHTML='<div style="border:1px solid var(--border);border-radius:12px;padding:4px 12px 10px;margin-top:8px">'
+    +r.filter(x=>x.indexOf('testando…')<0).join('')
+    +'<p class="hint" style="margin-top:9px;font-weight:800;color:'+(tudo?'#2E7D32':'#C0392B')+'">'
+    +(tudo?'✅ Tudo funcionando — você, o site e o aluno.'
+          :verdes+' de '+TESTE_PASSOS+' passaram. Veja os itens em vermelho acima.')
+    +'</p></div>';
 }
 
 /* ===== Quanto espaço os dados ocupam =====
