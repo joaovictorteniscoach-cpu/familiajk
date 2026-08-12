@@ -79,6 +79,27 @@ HTML — não quebra, só para de atualizar sozinho.
 O único externo que sobra são as **fontes do Google**, e elas são só aparência:
 sem elas o texto cai numa fonte do sistema e nada deixa de funcionar.
 
+## Onde cada coisa é guardada, e quanto cabe
+
+| Onde | O quê | Limite |
+|---|---|---|
+| `localStorage` | o banco principal e o registro de mudanças | **~5 MB** |
+| IndexedDB (`jvtenis`/`versoes`) | as 20 versões recentes + 1 por dia, 60 dias | gigabytes |
+| Firebase | banco, partes `v2`, 30 backups por hora, arquivo por ano | 1 GB no plano gratuito |
+
+O limite que aperta primeiro é o do **aparelho**, não o da nuvem — o contrário
+do que a intuição diz. E o maior peso na nuvem são os **backups**, que são até
+30 cópias inteiras do banco.
+
+*Financeiro → Segurança → 📊 Ver espaço usado* mostra isso na tela. A projeção
+de quando o limite chega é **medida**, não estimada: o app compara a versão
+diária mais antiga guardada com o tamanho de hoje. Com menos de 7 dias de
+histórico ele diz que não dá para projetar, em vez de inventar um número.
+
+A conta da nuvem é estimativa (o Firebase não informa tamanho ao app). Há um
+botão separado para medir de verdade, que avisa antes que **isso consome cota de
+download** — o padrão não faz nenhuma leitura.
+
 ## Quem pode ler e gravar no banco
 
 Está em [`FIREBASE.md`](FIREBASE.md), com as regras prontas para colar em
