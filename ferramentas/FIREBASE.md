@@ -88,7 +88,7 @@ está mesmo conferindo, e não só dizendo que está tudo bem.
 
 ## Depois de trocar: rodar o autoteste
 
-*Financeiro → Segurança → **🔌 Testar conexão***. Sete passos, na ordem em que
+*Financeiro → Segurança → **🔌 Testar conexão***. Oito passos, na ordem em que
 as coisas realmente acontecem:
 
 1. o João está logado;
@@ -97,9 +97,14 @@ as coisas realmente acontecem:
 4. o site público lê os preços **sem login**;
 5. o aluno se identifica (a entrada anônima está ligada);
 6. o aluno lê a publicação e **consegue mandar um pedido**;
-7. o aluno **não** consegue ler a fila dos outros.
+7. o aluno **não** consegue ler a fila dos outros;
+8. o aluno guarda e relê os **próprios pedidos pendentes** (`jvt-aluno-meu-…`).
 
-Os passos 5–7 são o motivo de existir: testam o lado do aluno **de dentro do app
+O passo 8 existe porque esse caminho fica num bloco de regra à parte (`$aluno`):
+quebra sozinho sem nenhum dos outros acusar, e quem sofre é o aluno — os pedidos
+pendentes dele somem e ele pede de novo, sem o João ver nada.
+
+Os passos 5–8 são o motivo de existir: testam o lado do aluno **de dentro do app
 do João**, que é o que não dava para conferir sem pegar o celular de alguém. E o
 passo 7 é o que distingue a cerca da tranca — com a etapa 1 no ar, ele reprova,
 porque a fila está aberta.
