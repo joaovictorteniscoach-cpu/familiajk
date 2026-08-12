@@ -94,11 +94,20 @@ O Pages foi ligado uma vez em `Settings → Pages → Source: GitHub Actions`.
 
 ## Se precisar aliviar o Netlify de novo
 
-São seis projetos publicando a cada push. Como o Pages passou a ser o principal,
-dá para **pausar no painel do Netlify** os que não forem mais necessários
-(`Site configuration → General → Danger zone → Stop builds`). Pausar não apaga
-nada: o endereço continua servindo a última versão publicada, só para de
-reconstruir.
+Antes de mexer, lembre que o filtro `ignore` já faz o trabalho: um envio
+constrói só o projeto cuja pasta mudou. A conta real é bem menor que "seis
+builds por push".
+
+Se ainda assim precisar, dá para **parar os builds** de um projeto em
+`Site configuration → Build & deploy → Continuous deployment → Stop builds`
+(em algumas contas aparece em `General → Danger zone`). Parar não apaga nada: o
+endereço continua servindo a última versão publicada, só deixa de reconstruir —
+e o app passa a mostrar a barra vermelha de versão desatualizada, que é o aviso
+de que aquele endereço ficou para trás.
+
+Para voltar, o mesmo lugar mostra **Resume builds**. Se esse botão não aparece,
+é porque os builds nunca foram parados — nesse caso o `Trigger deploy` funciona
+normalmente, e não há nada a religar.
 
 ---
 
