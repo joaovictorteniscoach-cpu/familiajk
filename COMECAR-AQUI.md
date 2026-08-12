@@ -10,7 +10,7 @@ Estado do sistema e o que fazer no dia a dia. O detalhe de cada assunto está em
 |---|---|
 | **Endereço oficial** | `https://joaovictorteniscoach-cpu.github.io/familiajk/app-gestao/` |
 | App do aluno | `.../familiajk/app-aluno/` · Site: `.../familiajk/site/` |
-| Reserva | Netlify, atualizado na mão quando aparecer a barra vermelha |
+| Reserva | Netlify, publica sozinho no mesmo envio que o Pages |
 | Banco | regras da **etapa 2** no ar — só o João grava, aluno só acrescenta |
 | Login | conta criada, e-mail/senha e entrada anônima ligados |
 | Autoteste | **8 de 8** |
@@ -23,8 +23,10 @@ diz o que fazer. Se travar alguma coisa, cole de volta
 `ferramentas/firebase-regras-etapa1.json` e nada se perde no meio-tempo.
 
 ### Apareceu barra vermelha no topo
-O endereço que você abriu está atrás do outro. Use o que a barra indica. Para
-atualizar o Netlify: *Deploys → Trigger deploy → Deploy site*.
+Os dois endereços publicam sozinhos, então isso deixou de ser rotina e virou
+**sinal de que algo não publicou**. Use o endereço que a barra indica — ele está
+certo — e, quando puder, veja no painel do Netlify se o último deploy falhou.
+Para forçar: *Deploys → Trigger deploy → Deploy site*.
 
 ### O app abriu vazio
 **Não mexa em nada.** Vazio quer dizer que ele não conseguiu ler o Firebase.

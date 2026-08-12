@@ -8,9 +8,10 @@
 | Aluno | `https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/` |
 | Site | `https://joaovictorteniscoach-cpu.github.io/familiajk/site/` |
 
-**Reserva: Netlify.** Continua publicando, mas o plano gratuito tem cota — e ela
-já estourou duas vezes: uma parou de publicar, outra pausou o site ("This site
-was paused as it reached its usage limits"). Por isso deixou de ser o principal.
+**Reserva: Netlify.** Publica sozinho no mesmo envio, então os dois endereços
+andam juntos sem ninguém fazer nada. Deixou de ser o principal porque o plano
+gratuito tem cota e ela já estourou duas vezes — mas ver abaixo por que hoje
+isso é bem menos provável.
 
 **Os dados são os mesmos nos dois.** O Firebase é o mesmo banco — não são duas
 academias, são duas portas para a mesma casa. Ao abrir um endereço pela primeira
@@ -50,8 +51,7 @@ foto repetida conta de novo a cada cópia.
 
 ## Versões diferentes convivendo
 
-Com dois endereços publicados em momentos diferentes — e o Netlify na mão —
-é normal um estar mais velho que o outro. Os dois gravam no **mesmo banco**, e
+Os dois publicam no mesmo envio, mas um pode falhar ou atrasar sozinho. Os dois gravam no **mesmo banco**, e
 uma cópia velha pode carregar um defeito já corrigido.
 
 Por isso cada app tem uma constante `VERSAO` e a compara com `jvtenis/versao_app`
@@ -70,12 +70,19 @@ aviso.
 
 ## Publicar em lote, não a cada passo
 
-A cota do Netlify já estourou por excesso de publicação: cada envio ao `main`
-dispara build nos **seis** projetos do repositório. Num dia de trabalho pesado
-foram ~36 builds.
+A cota do Netlify estourou uma vez por excesso de publicação: seis merges num
+dia só. Ficou a regra: **juntar o trabalho e fazer um merge no fim**, em vez de
+publicar a cada etapa concluída.
 
-Regra: juntar o trabalho e fazer **um merge no fim**, em vez de publicar a cada
-etapa concluída.
+Mas a conta é menos assustadora do que pareceu no susto. Cada `netlify.toml` tem
+uma regra `ignore` que compara a pasta do projeto entre o último build e o
+commit atual — quem não mudou **não constrói**. Dá para ver isso no painel: o
+commit `81a456a`, que só mexeu em `ferramentas/`, aparece como *Canceled* nos
+seis. Na prática um envio constrói um ou dois projetos, não seis.
+
+Foram as duas coisas juntas — publicação em excesso **e** a impressão de que
+todo envio custava seis builds — que levaram a desligar o automático. Com uma
+publicação por sessão e o filtro funcionando, o automático é seguro.
 
 ## Publicar
 
@@ -85,7 +92,7 @@ publicar** — se algum script estiver quebrado, ele não publica.
 
 O Pages foi ligado uma vez em `Settings → Pages → Source: GitHub Actions`.
 
-## Aliviar o Netlify
+## Se precisar aliviar o Netlify de novo
 
 São seis projetos publicando a cada push. Como o Pages passou a ser o principal,
 dá para **pausar no painel do Netlify** os que não forem mais necessários
