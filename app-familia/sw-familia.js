@@ -2,7 +2,7 @@
    Estratégia: network-first (sempre tenta a versão nova online),
    com cache de reserva para abrir offline. NÃO intercepta o Firebase
    nem as APIs de cotação ao vivo (câmbio e preços dos ativos). */
-const CACHE = 'jk-familia-v2';
+const CACHE = 'jk-familia-v3';
 const SHELL = ['./', './manifest-familia.webmanifest', './icone-jk-gestao-192.png'];
 
 self.addEventListener('install', e => {
@@ -28,7 +28,11 @@ self.addEventListener('fetch', e => {
   const h = u.hostname;
   if (h.includes('firebaseio') || h.includes('firebase') || h.includes('googleapis') ||
       h.includes('gstatic') || h.includes('google') || h.includes('whatsapp') || h.includes('wa.me') ||
-      h.includes('awesomeapi') || h.includes('brapi')) {
+      h.includes('awesomeapi') || h.includes('brapi') ||
+      // Bibliotecas pesadas carregadas sob demanda (leitor de imagem, planilha, gráficos).
+      // Interceptar o worker, o WASM e o arquivo de idioma quebra a leitura por foto.
+      h.includes('jsdelivr') || h.includes('unpkg') || h.includes('cdnjs') ||
+      h.includes('tessdata') || h.includes('projectnaptha')) {
     return;
   }
   e.respondWith(
