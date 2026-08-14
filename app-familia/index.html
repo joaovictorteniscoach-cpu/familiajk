@@ -155,6 +155,8 @@ select.cell option{background:var(--surface)}
   border:1.5px solid var(--line);background:var(--surface2);color:var(--muted);
   font-size:17px;line-height:1;cursor:pointer;padding:0;transition:.15s;-webkit-tap-highlight-color:transparent}
 .paybtn:active{transform:scale(.92)}
+.splitbtn{margin-right:4px;font-weight:700}
+.splitbtn:hover{border-color:var(--accent);color:var(--accent-soft)}
 .paybtn.on{background:var(--up);border-color:var(--up);color:#06251a;font-weight:700}
 .tbl td.paycell{padding-left:0;padding-right:4px;width:46px}
 .tbl th.paycell{padding-left:0;padding-right:4px}
@@ -1021,13 +1023,18 @@ function renderCasa(){
     <td><input class="cell" type="number" step="0.01" value="${b.preta}" oninput="D.contas.casa[${i}].preta=+this.value;refreshCasa()"></td>
     <td><input class="cell" type="number" step="0.01" value="${b.preto}" oninput="D.contas.casa[${i}].preto=+this.value;refreshCasa()"></td>
     <td><input class="cell" type="number" step="0.01" value="${b.valor}" oninput="D.contas.casa[${i}].valor=+this.value;refreshCon()"></td>
-    <td><button class="iconbtn" onclick="D.contas.casa.splice(${i},1);renderCasa();refreshCon()">×</button></td></tr>`;});
+    <td style="white-space:nowrap"><button class="iconbtn splitbtn" title="Dividir só esta conta no meio (50/50)" onclick="splitUm(${i})">½</button><button class="iconbtn" onclick="D.contas.casa.splice(${i},1);renderCasa();refreshCon()">×</button></td></tr>`;});
   h+=`<tr class="sumrow"><td class="paycell"></td><td>Subtotal casa</td><td></td><td id="casa-preta"></td><td id="casa-preto"></td><td id="casa-tot"></td><td></td></tr>`;
   document.getElementById('tbl-casa').innerHTML=h;refreshCasa();tuneInputs();
 }
 function refreshCasa(){set('casa-preta',brl(casaPretaTotal()));set('casa-preto',brl(casaPretoTotal()));set('casa-tot',brl(casaTotal()));save();}
 function addCasa(){D.contas.casa.push({id:uid(),nome:"Nova conta",valor:0,venc:"",preta:0,preto:0,pago:false});renderCasa();refreshCon()}
-function splitMeio(){D.contas.casa.forEach(b=>{const m=Math.round((+b.valor||0)/2*100)/100;b.preta=m;b.preto=(+b.valor||0)-m;});renderCasa();refreshCon();}
+/* divide 50/50 uma conta só; a sobra de centavo vai para "preto", como no splitMeio */
+function splitUm(i){const b=D.contas.casa[i];if(!b)return;
+  const v=+b.valor||0,m=Math.round(v/2*100)/100;
+  b.preta=m;b.preto=Math.round((v-m)*100)/100;
+  renderCasa();refreshCon();}
+function splitMeio(){D.contas.casa.forEach(b=>{const v=+b.valor||0,m=Math.round(v/2*100)/100;b.preta=m;b.preto=Math.round((v-m)*100)/100;});renderCasa();refreshCon();}
 
 function renderPess(k,tid){
   let h='<tr><th class="paycell">Pago</th><th>Conta</th><th class="center">Venc.</th><th>Valor (R$)</th><th></th></tr>';
@@ -1712,7 +1719,27 @@ function resetData(){if(confirm('Voltar aos dados de exemplo? Os dados atuais de
 
 /* ---------- importar extrato (OFX / CSV) — 100% local ---------- */
 let extratoTxns=[];
-function pickExtrato(){const i=document.createElement('input');i.type='file';i.accept='.ofx,.qfx,.csv,.txt';i.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>loadExtrato(r.result,f.name);r.readAsText(f,'utf-8');};i.click();}
+function pickExtrato(){
+  const i=document.createElement('input');i.type='file';
+  /* tipos MIME além das extensões: no iOS o app Arquivos desabilita .ofx,
+     que não tem tipo registrado no sistema, e o arquivo fica impossível de escolher */
+  i.accept='.ofx,.qfx,.csv,.txt,text/plain,text/csv,text/comma-separated-values,application/x-ofx,application/vnd.intu.qfx,application/octet-stream';
+  i.onchange=e=>{const f=e.target.files[0];if(!f)return;
+    const r=new FileReader();
+    r.onload=()=>{
+      let t=r.result;
+      /* OFX de banco brasileiro costuma vir em ISO-8859-1: se aparecer o caractere
+         de substituição, relê com windows-1252 para não perder os acentos */
+      if(typeof t==='string'&&t.indexOf('�')>-1){
+        const r2=new FileReader();
+        r2.onload=()=>loadExtrato(r2.result,f.name);
+        try{r2.readAsText(f,'windows-1252');return;}catch(_){}
+      }
+      loadExtrato(t,f.name);
+    };
+    r.readAsText(f,'utf-8');};
+  i.click();
+}
 function parseBRNum(s){
   if(s==null)return null;s=(''+s).trim();if(!s)return null;
   const paren=/\(.*\)/.test(s);
@@ -1863,12 +1890,26 @@ function pickFotoExtrato(){const i=document.createElement('input');i.type='file'
 let tessLoad=null;
 function ensureTesseract(){if(window.Tesseract)return Promise.resolve();if(tessLoad)return tessLoad;tessLoad=new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';s.onload=res;s.onerror=()=>rej(new Error('cdn'));document.head.appendChild(s);});return tessLoad;}
 async function runOCR(file){
+  const ALT='\n\nAlternativas: use “colar texto”, exporte o OFX do banco, ou mande a foto no chat para transcrever.';
+  let etapa='baixar';
   try{
-    ocrToast('Carregando leitor de imagem…');await ensureTesseract();
+    ocrToast('Baixando o leitor de imagem…');
+    await ensureTesseract();
+    etapa='ler';
     ocrToast('Lendo a imagem…');
     const {data}=await Tesseract.recognize(file,'por',{logger:m=>{if(m.status==='recognizing text')ocrToast('Lendo imagem… '+Math.round((m.progress||0)*100)+'%');}});
-    ocrToast(false);showExtratoPreview(parseTextExtrato((data&&data.text)||''));
-  }catch(e){ocrToast(false);alert('Não consegui carregar o leitor de imagem (ele baixa da internet na primeira vez).\n\nAlternativas: use “colar texto”, exporte OFX do banco, ou me envie a foto no chat — eu transcrevo com precisão e te devolvo pronto para importar.');}
+    ocrToast(false);
+    const txt=(data&&data.text)||'';
+    if(!txt.trim()){alert('O leitor funcionou, mas não achou texto nessa imagem.\n\nTente uma foto mais próxima, bem iluminada e sem reflexo — ou use “colar texto”.');return;}
+    const t=parseTextExtrato(txt);
+    if(!t.length){alert('Li o texto da imagem, mas não reconheci nenhum lançamento (preciso de data e valor na mesma linha).\n\nDica: fotografe só a lista de transações.'+ALT);return;}
+    showExtratoPreview(t);
+  }catch(e){
+    ocrToast(false);
+    const det=(e&&e.message)?('\n\nDetalhe: '+e.message):'';
+    if(etapa==='baixar')alert('Não consegui BAIXAR o leitor de imagem. Ele vem da internet na primeira vez — confira a conexão e tente de novo.'+det+ALT);
+    else alert('O leitor carregou, mas falhou ao LER a imagem. Tente uma foto menor ou mais nítida.'+det+ALT);
+  }
 }
 function catMonths(){const s=new Set(D.contas.transacoes.map(t=>t.mes).filter(m=>m&&m!=='—'));return ['Todos',...[...s]];}
 function onCatMes(v){catFiltroMes=v;renderCategorias();}
