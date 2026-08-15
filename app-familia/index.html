@@ -414,7 +414,7 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
       <div class="kpi"><div class="k">Custo dos seguros</div><div class="v" id="pr-premio">—</div></div>
     </div>
     <div class="progressbar"><i id="pr-bar" style="width:0%"></i></div>
-    <div class="field" style="max-width:220px;margin-top:16px"><label>Meses de sustento desejados</label><input id="pr-meses" type="number" step="1" min="1" oninput="onProtMeses(this.value)"></div>
+    <div class="field" style="max-width:220px;margin-top:16px"><label>Meses de sustento desejados</label><input id="pr-meses" type="number" step="1" min="1" oninput="onProtMeses(this.value)" onchange="fixProtMeses()"></div>
     <p class="note" id="pr-frase"></p>
     <p class="note">Conta usada: gasto mensal da casa × meses de sustento + tudo o que a família deve. A ideia é que ninguém precise vender a casa nem herdar dívida.</p>
   </div>
@@ -435,7 +435,7 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
       <div class="kpi"><div class="k">Gasto do mês</div><div class="v" id="rv-gasto">—</div></div>
     </div>
     <div class="progressbar"><i id="rv-bar" style="width:0%"></i></div>
-    <div class="field" style="max-width:220px;margin-top:16px"><label>Meses de reserva desejados</label><input id="rv-meses-in" type="number" step="1" min="1" oninput="onReservaMeses(this.value)"></div>
+    <div class="field" style="max-width:220px;margin-top:16px"><label>Meses de reserva desejados</label><input id="rv-meses-in" type="number" step="1" min="1" oninput="onReservaMeses(this.value)" onchange="fixReservaMeses()"></div>
     <p class="note" id="rv-frase"></p>
     <p class="note">Conta como reserva o que está em <b>Renda Fixa / Caixa</b> na Carteira — é o dinheiro que dá para sacar rápido sem perder valor.</p>
   </div>
@@ -1346,31 +1346,33 @@ function renderBens(){
   (D.patrimonio.bens||[]).forEach((b,i)=>{h+=`<tr>
     <td><input class="cell txt" style="min-width:130px" value="${esc(b.nome)}" oninput="D.patrimonio.bens[${i}].nome=this.value;save()"></td>
     <td><select class="cell txt" style="min-width:100px" onchange="D.patrimonio.bens[${i}].tipo=this.value;drawPatrimonio()">${TIPOS_BEM.map(t=>'<option'+(t===b.tipo?' selected':'')+'>'+t+'</option>').join('')}</select></td>
-    <td><input class="cell" type="number" step="0.01" value="${b.valor??''}" oninput="D.patrimonio.bens[${i}].valor=this.value===''?0:+this.value;drawPatrimonio()"></td>
+    <td><input class="cell" type="number" step="0.01" value="${b.valor??''}" oninput="D.patrimonio.bens[${i}].valor=this.value===''?0:+this.value;refreshPatrimonio()"></td>
     <td><button class="iconbtn" onclick="D.patrimonio.bens.splice(${i},1);drawPatrimonio()">×</button></td></tr>`;});
   if(!(D.patrimonio.bens||[]).length)h+='<tr><td class="mut" colspan="4">Nenhum bem cadastrado. Toque em “+ bem” para somar a casa, o carro ou o terreno ao patrimônio.</td></tr>';
-  else h+=`<tr class="sumrow"><td>Total</td><td></td><td>${brl(bensTotal())}</td><td></td></tr>`;
+  else h+=`<tr class="sumrow"><td>Total</td><td></td><td id="bens-tot">${brl(bensTotal())}</td><td></td></tr>`;
   document.getElementById('tbl-bens').innerHTML=h;
+}
+/* texto calculado que fica sob o nome da dívida */
+function subDivida(d){
+  const n=quitacaoMeses(d.saldo,d.parcela,d.taxa),j=jurosRestantes(d);
+  if(n==null)return '<span class="down">a parcela não cobre nem os juros — nunca quita</span>';
+  if(n===0)return '<span class="up">quitada</span>';
+  return 'quita em '+n+(n===1?' mês':' meses')+(j?' · '+brl(j)+' de juros':'');
 }
 function renderDividas(){
   /* quita-em e juros vão embaixo do nome, não em colunas próprias: no celular
      a tabela precisa caber sem arrastar de lado */
   let h='<tr><th>Dívida</th><th>Saldo devedor (R$)</th><th>Parcela (R$)</th><th>Juros (% a.m.)</th><th></th></tr>';
   (D.patrimonio.dividas||[]).forEach((d,i)=>{
-    const n=quitacaoMeses(d.saldo,d.parcela,d.taxa),j=jurosRestantes(d);
-    let sub;
-    if(n==null)sub='<span class="down">a parcela não cobre nem os juros — nunca quita</span>';
-    else if(n===0)sub='<span class="up">quitada</span>';
-    else sub='quita em '+n+(n===1?' mês':' meses')+(j?' · '+brl(j)+' de juros' :'');
     h+=`<tr>
     <td><input class="cell txt" style="min-width:130px" value="${esc(d.nome)}" oninput="D.patrimonio.dividas[${i}].nome=this.value;save()">
-        <div class="mut" style="font-size:10.5px;margin-top:3px;white-space:normal;max-width:150px;line-height:1.35">${sub}</div></td>
-    <td><input class="cell" type="number" step="0.01" value="${d.saldo??''}" oninput="D.patrimonio.dividas[${i}].saldo=this.value===''?0:+this.value;drawPatrimonio()"></td>
-    <td><input class="cell" type="number" step="0.01" value="${d.parcela??''}" oninput="D.patrimonio.dividas[${i}].parcela=this.value===''?0:+this.value;drawPatrimonio()"></td>
-    <td><input class="cell" type="number" step="0.01" value="${d.taxa??''}" oninput="D.patrimonio.dividas[${i}].taxa=this.value===''?0:+this.value;drawPatrimonio()"></td>
+        <div class="mut" id="divsub-${i}" style="font-size:10.5px;margin-top:3px;white-space:normal;max-width:150px;line-height:1.35">${subDivida(d)}</div></td>
+    <td><input class="cell" type="number" step="0.01" value="${d.saldo??''}" oninput="D.patrimonio.dividas[${i}].saldo=this.value===''?0:+this.value;refreshPatrimonio()"></td>
+    <td><input class="cell" type="number" step="0.01" value="${d.parcela??''}" oninput="D.patrimonio.dividas[${i}].parcela=this.value===''?0:+this.value;refreshPatrimonio()"></td>
+    <td><input class="cell" type="number" step="0.01" value="${d.taxa??''}" oninput="D.patrimonio.dividas[${i}].taxa=this.value===''?0:+this.value;refreshPatrimonio()"></td>
     <td><button class="iconbtn" onclick="D.patrimonio.dividas.splice(${i},1);drawPatrimonio()">×</button></td></tr>`;});
   if(!(D.patrimonio.dividas||[]).length)h+='<tr><td class="mut" colspan="5">Nenhuma dívida cadastrada. 🎉</td></tr>';
-  else h+=`<tr class="sumrow"><td>Total</td><td class="down">${brl(dividasTotal())}</td><td>${brl(parcelasTotal())}</td><td></td><td></td></tr>`;
+  else h+=`<tr class="sumrow"><td>Total</td><td class="down" id="div-tot">${brl(dividasTotal())}</td><td id="div-parc">${brl(parcelasTotal())}</td><td></td><td></td></tr>`;
   document.getElementById('tbl-dividas').innerHTML=h;
 }
 function renderPatHist(){
@@ -1382,7 +1384,10 @@ function renderPatHist(){
   if(!(D.patrimonio.hist||[]).length)h+='<tr><td class="mut" colspan="6">Nenhum mês fechado ainda.</td></tr>';
   document.getElementById('tbl-pat-hist').innerHTML=h;
 }
-function drawPatrimonio(){
+/* Só os números — pode ser chamada a cada tecla, não mexe na estrutura da
+   tabela. Reconstruir o innerHTML aqui destruiria o campo em uso e o dígito
+   seguinte se perderia. */
+function refreshPatrimonio(){
   const inv=invTotal(),bens=bensTotal(),div=dividasTotal(),cart=cartaoTotal(),liq=patLiquido();
   const el=document.getElementById('pat-liq');
   if(el){el.textContent=brl(liq);el.className='bignum'+(liq>=0?' ok':'');}
@@ -1397,7 +1402,16 @@ function drawPatrimonio(){
     else if(liq<0)f.textContent='Hoje a família deve '+brl(-liq)+' a mais do que tem. Não é o fim do mundo — é o ponto de partida. Cada parcela paga move este número para cima.';
     else f.textContent='De tudo o que a família tem, '+pct(at?pa/at:0)+' ainda é do banco. O que sobra — '+brl(liq)+' — é de vocês.';
   }
+  /* células calculadas dentro das tabelas, por id */
+  set('bens-tot',brl(bens));set('div-tot',brl(div));set('div-parc',brl(parcelasTotal()));
+  (D.patrimonio.dividas||[]).forEach((d,i)=>{
+    const e=document.getElementById('divsub-'+i);if(e)e.innerHTML=subDivida(d);
+  });
+  save();
+}
+function drawPatrimonio(){
   renderBens();renderDividas();renderPatHist();
+  refreshPatrimonio();
   destroy('pat');
   const hist=D.patrimonio.hist||[];
   /* sem mês fechado o gráfico fica vazio — esconde a caixa em vez de deixar o buraco */
@@ -1424,21 +1438,22 @@ function renderApolices(){
   (D.protecao.apolices||[]).forEach((a,i)=>{h+=`<tr>
     <td><select class="cell txt" style="min-width:112px" onchange="D.protecao.apolices[${i}].tipo=this.value;drawProtecao()">${TIPOS_APOLICE.map(t=>'<option'+(t===a.tipo?' selected':'')+'>'+t+'</option>').join('')}</select></td>
     <td><input class="cell txt" style="min-width:120px" value="${esc(a.seguradora)}" oninput="D.protecao.apolices[${i}].seguradora=this.value;save()"></td>
-    <td><input class="cell" type="number" step="0.01" value="${a.premio??''}" oninput="D.protecao.apolices[${i}].premio=this.value===''?0:+this.value;drawProtecao()"></td>
-    <td><input class="cell" type="number" step="0.01" value="${a.cobertura??''}" oninput="D.protecao.apolices[${i}].cobertura=this.value===''?0:+this.value;drawProtecao()"></td>
+    <td><input class="cell" type="number" step="0.01" value="${a.premio??''}" oninput="D.protecao.apolices[${i}].premio=this.value===''?0:+this.value;refreshProtecao()"></td>
+    <td><input class="cell" type="number" step="0.01" value="${a.cobertura??''}" oninput="D.protecao.apolices[${i}].cobertura=this.value===''?0:+this.value;refreshProtecao()"></td>
     <td><input class="cell txt" style="min-width:120px" value="${esc(a.beneficiarios)}" oninput="D.protecao.apolices[${i}].beneficiarios=this.value;save()"></td>
     <td><button class="iconbtn" onclick="D.protecao.apolices.splice(${i},1);drawProtecao()">×</button></td></tr>`;});
   if(!(D.protecao.apolices||[]).length)h+='<tr><td class="mut" colspan="6">Nenhuma apólice cadastrada.</td></tr>';
-  else h+=`<tr class="sumrow"><td>Total</td><td></td><td>${brl(premioTotal())}</td><td></td><td></td><td></td></tr>`;
+  else h+=`<tr class="sumrow"><td>Total</td><td></td><td id="apo-premio">${brl(premioTotal())}</td><td></td><td></td><td></td></tr>`;
   document.getElementById('tbl-apolices').innerHTML=h;
 }
-function drawProtecao(){
+/* só os números — segura para chamar a cada tecla (ver refreshPatrimonio) */
+function refreshProtecao(){
   const nec=coberturaNecessaria(),tem=coberturaDe('Vida'),falta=coberturaFalta();
   set('pr-nec',brl(nec));set('pr-tem',brl(tem));set('pr-premio',brl(premioTotal()));
   const ef=document.getElementById('pr-falta');
   if(ef){ef.textContent=falta>0?brl(falta):'nada 🎉';ef.className='v '+(falta>0?'down':'up');}
   const pb=document.getElementById('pr-bar');if(pb)pb.style.width=(nec?Math.min(100,tem/nec*100):0)+'%';
-  const mi=document.getElementById('pr-meses');if(mi&&mi.value!==String(D.protecao.mesesSustento))mi.value=D.protecao.mesesSustento;
+  set('apo-premio',brl(premioTotal()));
   const f=document.getElementById('pr-frase');
   if(f){
     const g=contasMes(),m=+D.protecao.mesesSustento||0;
@@ -1446,40 +1461,60 @@ function drawProtecao(){
     else if(falta<=0)f.textContent='A cobertura contratada já sustenta a família pelos '+m+' meses e ainda quita o que se deve. Nada a fazer aqui.';
     else f.textContent='Faltam '+brl(falta)+' de cobertura. Com o seguro de hoje a família se sustentaria por cerca de '+Math.floor(Math.max(0,tem-passivoTotal())/g)+' meses, não '+m+'.';
   }
-  renderApolices();
   /* reserva de emergência */
   const rt=reservaAtual(),ra=reservaAlvo(),rm=reservaMeses();
   set('rv-tem',brl(rt));set('rv-alvo',brl(ra));set('rv-gasto',brl(contasMes()));
   const em=document.getElementById('rv-meses');
   if(em){em.textContent=rm==null?'—':(rm>=1?rm.toFixed(1).replace('.',',')+(rm===1?' mês':' meses'):Math.round(rm*30)+' dias');em.className='v '+(rm!=null&&rm>=(+D.protecao.mesesReserva||6)?'up':'down');}
   const rb=document.getElementById('rv-bar');if(rb)rb.style.width=(ra?Math.min(100,rt/ra*100):0)+'%';
-  const ri=document.getElementById('rv-meses-in');if(ri&&ri.value!==String(D.protecao.mesesReserva))ri.value=D.protecao.mesesReserva;
   const rf=document.getElementById('rv-frase');
   if(rf){
     if(contasMes()<=0)rf.textContent='Cadastre as contas da casa para o app calcular a reserva.';
     else if(rt>=ra)rf.textContent='Reserva completa. O que passar disso rende mais em investimento de prazo maior.';
     else rf.textContent='Faltam '+brl(ra-rt)+' para fechar a reserva. Guardando a sobra do mês, ela se completa antes do que parece.';
   }
-  save();tuneInputs();
+  save();
+}
+function drawProtecao(){
+  renderApolices();
+  /* os campos de meses só são escritos ao (re)montar a tela — nunca a cada
+     tecla, senão brigam com quem está digitando */
+  const mi=document.getElementById('pr-meses');if(mi)mi.value=D.protecao.mesesSustento;
+  const ri=document.getElementById('rv-meses-in');if(ri)ri.value=D.protecao.mesesReserva;
+  refreshProtecao();tuneInputs();
 }
 function addApolice(){D.protecao.apolices.push({id:uid(),tipo:"Vida",seguradora:"",premio:0,cobertura:0,beneficiarios:""});drawProtecao();}
-function onProtMeses(v){D.protecao.mesesSustento=Math.max(1,+v||1);drawProtecao();}
-function onReservaMeses(v){D.protecao.mesesReserva=Math.max(1,+v||1);drawProtecao();}
+/* enquanto digita, guarda o que foi digitado (0 inclusive, para dar pra apagar
+   e redigitar); o mínimo de 1 é aplicado só ao sair do campo */
+function onProtMeses(v){D.protecao.mesesSustento=Math.max(0,+v||0);refreshProtecao();}
+function onReservaMeses(v){D.protecao.mesesReserva=Math.max(0,+v||0);refreshProtecao();}
+function fixProtMeses(){D.protecao.mesesSustento=Math.max(1,+D.protecao.mesesSustento||1);drawProtecao();}
+function fixReservaMeses(){D.protecao.mesesReserva=Math.max(1,+D.protecao.mesesReserva||1);drawProtecao();}
 
 /* resumo */
 function renderResumo(){
   let h='<tr><th>Mês</th><th>Contas (R$)</th><th>Pago (R$)</th><th>Recebido (R$)</th><th>Saldo</th><th></th></tr>';
   D.contas.resumo.forEach((m,i)=>{const saldo=(+m.recebido||0)-(+m.contas||0);h+=`<tr>
-    <td><input class="cell txt" style="min-width:78px" value="${esc(m.mes)}" oninput="D.contas.resumo[${i}].mes=this.value;drawResumo()"></td>
-    <td><input class="cell" type="number" step="0.01" value="${m.contas??''}" oninput="D.contas.resumo[${i}].contas=this.value===''?null:+this.value;drawResumo()"></td>
-    <td><input class="cell" type="number" step="0.01" value="${m.pago??''}" oninput="D.contas.resumo[${i}].pago=this.value===''?null:+this.value;drawResumo()"></td>
-    <td><input class="cell" type="number" step="0.01" value="${m.recebido??''}" oninput="D.contas.resumo[${i}].recebido=this.value===''?null:+this.value;drawResumo()"></td>
-    <td class="${saldo>=0?'up':'down'}">${brl(saldo)}</td>
-    <td><button class="iconbtn" onclick="D.contas.resumo.splice(${i},1);renderResumo();drawResumo()">×</button></td></tr>`;});
+    <td><input class="cell txt" style="min-width:78px" value="${esc(m.mes)}" oninput="D.contas.resumo[${i}].mes=this.value;refreshResumo()"></td>
+    <td><input class="cell" type="number" step="0.01" value="${m.contas??''}" oninput="D.contas.resumo[${i}].contas=this.value===''?null:+this.value;refreshResumo()"></td>
+    <td><input class="cell" type="number" step="0.01" value="${m.pago??''}" oninput="D.contas.resumo[${i}].pago=this.value===''?null:+this.value;refreshResumo()"></td>
+    <td><input class="cell" type="number" step="0.01" value="${m.recebido??''}" oninput="D.contas.resumo[${i}].recebido=this.value===''?null:+this.value;refreshResumo()"></td>
+    <td id="res-saldo-${i}" class="${saldo>=0?'up':'down'}">${brl(saldo)}</td>
+    <td><button class="iconbtn" onclick="D.contas.resumo.splice(${i},1);drawResumo()">×</button></td></tr>`;});
   document.getElementById('tbl-resumo').innerHTML=h;save();tuneInputs();
 }
+/* só o saldo de cada linha e o gráfico — segura para chamar a cada tecla */
+function refreshResumo(){
+  D.contas.resumo.forEach((m,i)=>{
+    const saldo=(+m.recebido||0)-(+m.contas||0),e=document.getElementById('res-saldo-'+i);
+    if(e){e.textContent=brl(saldo);e.className=saldo>=0?'up':'down';}
+  });
+  drawResumoChart();save();
+}
 function drawResumo(){
-  renderResumo();
+  renderResumo();drawResumoChart();
+}
+function drawResumoChart(){
   destroy('resumo');charts.resumo=new Chart(document.getElementById('resumoChart'),{type:'bar',
     data:{labels:D.contas.resumo.map(m=>m.mes),datasets:[
       {label:'Contas',data:D.contas.resumo.map(m=>m.contas),backgroundColor:'rgba(212,162,58,.6)',borderRadius:5},
@@ -1889,27 +1924,48 @@ function renderGoals(){
       <div class="top"><input value="${esc(g.nome)}" oninput="D.invest.goals[${i}].nome=this.value;save()" style="flex:1;min-width:160px">
         <button class="iconbtn" onclick="D.invest.goals.splice(${i},1);renderGoals()">remover</button></div>
       <div class="meta-inputs">
-        <div class="f"><label>Meta (R$)</label><input type="number" value="${g.alvo}" oninput="D.invest.goals[${i}].alvo=+this.value;renderGoals()"></div>
-        <div class="f"><label>Até o ano</label><input type="number" value="${g.ano}" oninput="D.invest.goals[${i}].ano=+this.value;save()"></div>
-        <div class="f"><label>Valor atual (vazio = patrimônio)</label><input type="number" value="${g.atual??''}" oninput="D.invest.goals[${i}].atual=this.value===''?null:+this.value;renderGoals()"></div>
+        <div class="f"><label>Meta (R$)</label><input type="number" value="${g.alvo}" oninput="D.invest.goals[${i}].alvo=+this.value;refreshGoals()"></div>
+        <div class="f"><label>Até o ano</label><input type="number" value="${g.ano}" oninput="D.invest.goals[${i}].ano=+this.value;refreshGoals()"></div>
+        <div class="f"><label>Valor atual (vazio = patrimônio)</label><input type="number" value="${g.atual??''}" oninput="D.invest.goals[${i}].atual=this.value===''?null:+this.value;refreshGoals()"></div>
       </div>
       <div class="barstack">
-        <i style="width:${wj}%;background:var(--gold)"></i>
-        <i style="width:${we}%;background:var(--teal)"></i>
-        <i style="width:${wc}%;background:var(--muted)"></i>
+        <i id="goal-bj-${i}" style="width:${wj}%;background:var(--gold)"></i>
+        <i id="goal-be-${i}" style="width:${we}%;background:var(--teal)"></i>
+        <i id="goal-bc-${i}" style="width:${wc}%;background:var(--muted)"></i>
       </div>
       <div class="seg-leg">
-        <span><b style="background:var(--gold)"></b>João ${brl(atual*sj)}</span>
-        <span><b style="background:var(--teal)"></b>Esposa ${brl(atual*se)}</span>
-        <span><b style="background:var(--muted)"></b>Conjunto ${brl(atual*sc)}</span>
+        <span><b style="background:var(--gold)"></b>João <span id="goal-sj-${i}">${brl(atual*sj)}</span></span>
+        <span><b style="background:var(--teal)"></b>Esposa <span id="goal-se-${i}">${brl(atual*se)}</span></span>
+        <span><b style="background:var(--muted)"></b>Conjunto <span id="goal-sc-${i}">${brl(atual*sc)}</span></span>
       </div>
       <div class="stat">
-        <span><b style="color:var(--accent-soft)">${(prog*100).toFixed(1)}%</b> · ${brl(atual)} de ${brl(g.alvo)}</span>
-        <span>Faltam ${brl(falta)}</span>
-        <span class="eta">${falta<=0?'🎉 meta atingida':(eta?('No ritmo atual: ~'+eta+(g.ano?(eta<=g.ano?' ✓ antes de '+g.ano:' (após '+g.ano+')'):'')):'aumente o aporte para chegar lá')}</span>
+        <span><b style="color:var(--accent-soft)" id="goal-pct-${i}">${(prog*100).toFixed(1)}%</b> · <span id="goal-val-${i}">${brl(atual)} de ${brl(g.alvo)}</span></span>
+        <span id="goal-falta-${i}">Faltam ${brl(falta)}</span>
+        <span class="eta" id="goal-eta-${i}">${falta<=0?'🎉 meta atingida':(eta?('No ritmo atual: ~'+eta+(g.ano?(eta<=g.ano?' ✓ antes de '+g.ano:' (após '+g.ano+')'):'')):'aumente o aporte para chegar lá')}</span>
       </div></div>`;
   });
   box.innerHTML=h||'<p class="note">Nenhuma meta ainda. Clique em "+ nova meta".</p>';tuneInputs();
+}
+/* só os números de cada meta — segura para chamar a cada tecla */
+function refreshGoals(){
+  const pj=pessoaSum("João"),pe=pessoaSum("Esposa"),pc=pessoaSum("Conjunto"),pt=pj+pe+pc;
+  const sj=pt?pj/pt:1,se=pt?pe/pt:0,sc=pt?pc/pt:0;
+  D.invest.goals.forEach((g,i)=>{
+    const atual=g.atual!=null?g.atual:invTotal();
+    const prog=g.alvo>0?Math.min(1,atual/g.alvo):0;
+    const falta=Math.max(0,g.alvo-atual),eta=goalETA(g.alvo);
+    const w=(x)=>{const e=document.getElementById(x);return e;};
+    const bj=w('goal-bj-'+i),be=w('goal-be-'+i),bc=w('goal-bc-'+i);
+    if(bj)bj.style.width=(prog*sj*100).toFixed(2)+'%';
+    if(be)be.style.width=(prog*se*100).toFixed(2)+'%';
+    if(bc)bc.style.width=(prog*sc*100).toFixed(2)+'%';
+    set('goal-sj-'+i,brl(atual*sj));set('goal-se-'+i,brl(atual*se));set('goal-sc-'+i,brl(atual*sc));
+    set('goal-pct-'+i,(prog*100).toFixed(1)+'%');
+    set('goal-val-'+i,brl(atual)+' de '+brl(g.alvo));
+    set('goal-falta-'+i,'Faltam '+brl(falta));
+    set('goal-eta-'+i,falta<=0?'🎉 meta atingida':(eta?('No ritmo atual: ~'+eta+(g.ano?(eta<=g.ano?' ✓ antes de '+g.ano:' (após '+g.ano+')'):'')):'aumente o aporte para chegar lá'));
+  });
+  save();
 }
 function addGoal(){D.invest.goals.push({nome:"Nova meta",alvo:10000,ano:(new Date().getFullYear()+2),atual:null});renderGoals()}
 
@@ -1960,17 +2016,33 @@ function onPlano(){
 function renderAlloc(){
   const tg=invTotal();let h='<tr><th>Classe</th><th>Alvo %</th><th>Atual %</th><th>Atual (R$)</th><th>Ação sugerida</th></tr>';
   let sumT=0;CLASSES.forEach(c=>sumT+=(+D.invest.allocTarget[c]||0));
-  CLASSES.forEach(c=>{
+  CLASSES.forEach((c,i)=>{
     const aR=classeVal(c),aP=tg?aR/tg:0,alvoP=(+D.invest.allocTarget[c]||0)/100,mover=(alvoP-aP)*tg;
     const ok=Math.abs(mover)<tg*0.01;
     const acao=ok?'equilibrado':(mover>0?'aportar '+brl(mover):'reduzir '+brl(-mover));
     h+=`<tr><td class="name">${c}</td>
-      <td><input class="cell sm" style="min-width:56px" type="number" step="1" value="${D.invest.allocTarget[c]||0}" oninput="D.invest.allocTarget['${c}']=+this.value;renderAlloc();save()"></td>
-      <td>${pct(aP)}</td><td>${brl(aR)}</td>
-      <td class="${ok?'mut':(mover>0?'up':'down')}">${acao}</td></tr>`;
+      <td><input class="cell sm" style="min-width:56px" type="number" step="1" value="${D.invest.allocTarget[c]||0}" oninput="D.invest.allocTarget['${c}']=+this.value;refreshAlloc()"></td>
+      <td id="alloc-p-${i}">${pct(aP)}</td><td id="alloc-v-${i}">${brl(aR)}</td>
+      <td id="alloc-a-${i}" class="${ok?'mut':(mover>0?'up':'down')}">${acao}</td></tr>`;
   });
-  h+=`<tr class="sumrow"><td>Total do alvo</td><td>${sumT.toFixed(0)}%</td><td colspan="3">${sumT===100?'✓ soma 100%':'⚠ ajuste os alvos para somar 100%'}</td></tr>`;
+  h+=`<tr class="sumrow"><td>Total do alvo</td><td id="alloc-sum">${sumT.toFixed(0)}%</td><td colspan="3" id="alloc-aviso">${sumT===100?'✓ soma 100%':'⚠ ajuste os alvos para somar 100%'}</td></tr>`;
   document.getElementById('tbl-alloc').innerHTML=h;tuneInputs();
+}
+/* só as colunas calculadas — segura para chamar a cada tecla */
+function refreshAlloc(){
+  const tg=invTotal();let sumT=0;
+  CLASSES.forEach(c=>sumT+=(+D.invest.allocTarget[c]||0));
+  CLASSES.forEach((c,i)=>{
+    const aR=classeVal(c),aP=tg?aR/tg:0,alvoP=(+D.invest.allocTarget[c]||0)/100,mover=(alvoP-aP)*tg;
+    const ok=Math.abs(mover)<tg*0.01;
+    set('alloc-p-'+i,pct(aP));set('alloc-v-'+i,brl(aR));
+    const e=document.getElementById('alloc-a-'+i);
+    if(e){e.textContent=ok?'equilibrado':(mover>0?'aportar '+brl(mover):'reduzir '+brl(-mover));
+      e.className=ok?'mut':(mover>0?'up':'down');}
+  });
+  set('alloc-sum',sumT.toFixed(0)+'%');
+  set('alloc-aviso',sumT===100?'✓ soma 100%':'⚠ ajuste os alvos para somar 100%');
+  save();
 }
 function norm(s){return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();}
 function fillAplFromAportes(){
@@ -2328,6 +2400,17 @@ function renderCategorias(){
    (teto × gasto); em "Todos" o teto não faz sentido — é mensal — então some. */
 function orcOf(c){return +((D.contas.orcamento||{})[c])||0;}
 function orcTotal(){return Object.keys(D.contas.orcamento||{}).reduce((s,c)=>s+orcOf(c),0);}
+/* o que a tabela está mostrando agora, para o refresh mexer nas células certas */
+let orcLista=[],orcMap={},orcGasto=0;
+/* célula "Situação" de uma categoria: barra + percentual do teto */
+function sitOrc(c,g){
+  const teto=orcOf(c),r=teto>0?g/teto:null;
+  if(r==null)return '<span class="mut" style="font-size:11px">sem teto</span>';
+  const w=Math.min(100,r*100),cor=r>1?'var(--down)':(r>.8?'var(--gold)':'var(--up)');
+  return '<div class="minibar"><i style="width:'+w+'%;background:'+cor+'"></i></div>'
+    +'<span class="'+(r>1?'down':'mut')+'" style="font-size:10.5px;white-space:normal;display:block;line-height:1.3">'
+    +pct(r)+(r>1?'<br>passou '+brl(g-teto):'')+'</span>';
+}
 function renderCatResumo(cats,map,cnt,gasto,tx){
   const mesUnico=catFiltroMes!=='Todos';
   const box=document.getElementById('cat-orc-box'),nota=document.getElementById('cat-orc-nota');
@@ -2352,26 +2435,21 @@ function renderCatResumo(cats,map,cnt,gasto,tx){
   /* 4 colunas só: no celular a tabela precisa caber sem arrastar de lado.
      O nº de lançamentos fica na visão "Todos" — aqui o que importa é o teto. */
   h='<tr><th>Categoria</th><th>Teto (R$)</th><th>Gasto</th><th>Situação</th></tr>';
-  lista.forEach(c=>{
-    const teto=orcOf(c),g=map[c]||0,r=teto>0?g/teto:null;
-    let sit='<span class="mut" style="font-size:11px">sem teto</span>';
-    if(r!=null){
-      const w=Math.min(100,r*100),cor=r>1?'var(--down)':(r>.8?'var(--gold)':'var(--up)');
-      sit='<div class="minibar"><i style="width:'+w+'%;background:'+cor+'"></i></div>'
-        +'<span class="'+(r>1?'down':'mut')+'" style="font-size:10.5px;white-space:normal;display:block;line-height:1.3">'
-        +pct(r)+(r>1?'<br>passou '+brl(g-teto):'')+'</span>';
-    }
+  lista.forEach((c,i)=>{
+    const teto=orcOf(c),g=map[c]||0,estourou=teto>0&&g>teto;
     h+='<tr><td class="name">'+esc(c)+'</td>'
-      +'<td><input class="cell" type="number" step="0.01" style="min-width:82px" value="'+(teto>0?teto:'')+'" oninput="setOrcamento(\''+esc(c)+'\',this.value)"></td>'
-      +'<td class="'+(r!=null&&r>1?'down':'mut')+'">'+brl(g)+'</td>'
-      +'<td style="width:96px">'+sit+'</td></tr>';
+      +'<td><input class="cell" type="number" step="0.01" style="min-width:82px" value="'+(teto>0?teto:'')+'" oninput="setOrcamento(\''+esc(c)+'\',this.value,'+i+')"></td>'
+      +'<td class="'+(estourou?'down':'mut')+'">'+brl(g)+'</td>'
+      +'<td id="orcsit-'+i+'" style="width:96px">'+sitOrc(c,g)+'</td></tr>';
   });
   if(lista.length){
     const tt=orcTotal(),sobra=tt-gasto;
-    h+='<tr class="sumrow"><td>Total</td><td>'+(tt>0?brl(tt):'—')+'</td><td class="down">'+brl(gasto)+'</td>'
-      +'<td class="'+(tt>0?(sobra>=0?'up':'down'):'mut')+'" style="font-size:11px;white-space:normal">'
+    h+='<tr class="sumrow"><td>Total</td><td id="orctot-teto">'+(tt>0?brl(tt):'—')+'</td><td class="down">'+brl(gasto)+'</td>'
+      +'<td id="orctot-sit" class="'+(tt>0?(sobra>=0?'up':'down'):'mut')+'" style="font-size:11px;white-space:normal">'
       +(tt>0?(sobra>=0?'sobra '+brl(sobra):'passou '+brl(-sobra)):'—')+'</td></tr>';
   }else h+='<tr><td class="mut" colspan="4">Sem gastos neste mês.</td></tr>';
+  /* guarda o que a tabela está mostrando, para o refresh saber onde mexer */
+  orcLista=lista;orcMap=map;orcGasto=gasto;
   document.getElementById('tbl-cat-resumo').innerHTML=h;
   if(nota){
     const estourou=lista.filter(c=>orcOf(c)>0&&(map[c]||0)>orcOf(c));
@@ -2379,11 +2457,31 @@ function renderCatResumo(cats,map,cnt,gasto,tx){
       :(estourou.length?'Passou do teto em: '+estourou.join(', ')+'.':'Nenhuma categoria passou do teto neste mês. 👏');
   }
 }
-function setOrcamento(cat,val){
+/* Chamada a cada tecla no campo do teto. Não remonta a tabela — só atualiza a
+   célula "Situação" daquela linha e o rodapé. Remontar aqui destruiria o campo
+   em uso e o dígito seguinte se perderia. */
+function setOrcamento(cat,val,i){
   D.contas.orcamento=D.contas.orcamento||{};
   const n=+val;
   if(!val||!isFinite(n)||n<=0)delete D.contas.orcamento[cat];else D.contas.orcamento[cat]=n;
-  save();renderCategorias();
+  save();
+  if(i==null){renderCategorias();return;}
+  const e=document.getElementById('orcsit-'+i);
+  if(e)e.innerHTML=sitOrc(cat,orcMap[cat]||0);
+  refreshOrcTotal();
+}
+function refreshOrcTotal(){
+  const tt=orcTotal(),sobra=tt-orcGasto;
+  set('orctot-teto',tt>0?brl(tt):'—');
+  const e=document.getElementById('orctot-sit');
+  if(e){e.textContent=tt>0?(sobra>=0?'sobra '+brl(sobra):'passou '+brl(-sobra)):'—';
+    e.className=tt>0?(sobra>=0?'up':'down'):'mut';}
+  const nota=document.getElementById('cat-orc-nota');
+  if(nota){
+    const estourou=orcLista.filter(c=>orcOf(c)>0&&(orcMap[c]||0)>orcOf(c));
+    nota.textContent=!tt?'Nenhum teto definido ainda. Digite um valor na coluna “Teto” para o app avisar quando o gasto passar dele.'
+      :(estourou.length?'Passou do teto em: '+estourou.join(', ')+'.':'Nenhuma categoria passou do teto neste mês. 👏');
+  }
 }
 function addOrcamento(){
   const sel=document.getElementById('cat-orc-sel');if(!sel||!sel.value)return;
