@@ -286,7 +286,8 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
     <h2>Automático — importar extrato</h2>
     <div class="sub">Traga o extrato do banco ou a fatura (arquivo <b>.OFX</b> ou <b>.CSV</b>) e o app soma os gastos e as entradas, marca contas como pagas quando o nome bate e lança tudo no mês.</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="iconbtn primary" onclick="pickExtrato()">📄 arquivo OFX/CSV</button>
+      <button class="iconbtn primary" onclick="openFalar()">🎤 falar um lançamento</button>
+      <button class="iconbtn" onclick="pickExtrato()">📄 arquivo OFX/CSV</button>
       <button class="iconbtn" onclick="openPasteExtrato()">📋 colar texto</button>
       <button class="iconbtn" onclick="pickFotoExtrato()">📷 foto do extrato</button>
     </div>
@@ -751,6 +752,37 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
 </main>
 
 <div id="ocrToast" style="display:none;position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--line);color:var(--text);padding:10px 16px;border-radius:22px;font-size:13px;z-index:60;box-shadow:0 8px 24px -8px rgba(0,0,0,.6)"></div>
+
+<div class="overlay" id="falarModal">
+  <div class="modal" style="max-width:520px">
+    <h3>Lançar falando</h3>
+    <p id="fl-dica">Fale como você falaria com alguém: <i>“gastei duzentos reais de gasolina”</i> ou <i>“entrou cento e cinquenta da minha aula”</i>. O app entende o valor, se é entrada ou saída, e já escolhe a categoria.</p>
+    <textarea id="fl-texto" style="height:80px" placeholder="Toque aqui e use o 🎤 do teclado — ou escreva" oninput="onFalarTexto()"></textarea>
+    <div class="row" style="margin-top:8px">
+      <button class="iconbtn primary" id="fl-mic" onclick="falarOuvir()" style="display:none">🎤 gravar</button>
+      <button class="iconbtn" onclick="onFalarTexto(1)">entender</button>
+      <button class="iconbtn" onclick="closeFalar()">Cancelar</button>
+    </div>
+    <div id="fl-previa" style="display:none;margin-top:14px">
+      <div class="rule"></div>
+      <div class="inpgrid" style="margin-top:10px">
+        <div class="field"><label>É entrada ou saída?</label>
+          <select id="fl-tipo" class="cell txt" onchange="fl.tipo=this.value;falarPreview()">
+            <option value="saida">saída (gasto)</option><option value="entrada">entrada (recebi)</option>
+          </select></div>
+        <div class="field"><label>Valor (R$)</label><input id="fl-valor" type="number" step="0.01" oninput="fl.valor=+this.value;falarResumo()"></div>
+        <div class="field"><label>Descrição</label><input id="fl-desc" class="txt" oninput="fl.desc=this.value"></div>
+        <div class="field"><label>Categoria</label><select id="fl-cat" class="cell txt" onchange="fl.cat=this.value"></select></div>
+        <div class="field"><label>Data</label><input id="fl-data" class="txt" placeholder="dd/mm/aaaa" oninput="fl.date=this.value"></div>
+      </div>
+      <p class="note" id="fl-resumo"></p>
+      <div class="row">
+        <button class="iconbtn primary" onclick="falarLancar()">✓ lançar</button>
+      </div>
+    </div>
+    <p class="note" id="fl-nota"></p>
+  </div>
+</div>
 
 <div class="overlay" id="pasteModal">
   <div class="modal" style="max-width:520px">
@@ -2101,6 +2133,203 @@ function exportJSON(){D.lastBackup=Date.now();save();const b=new Blob([JSON.stri
 function importJSON(){const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=e=>{const f=e.target.files[0];const r=new FileReader();r.onload=()=>{try{D=migrate(JSON.parse(r.result));save();initFields();renderAll();setMode(D.mode||'contas')}catch(x){alert('Arquivo inválido.')}};r.readAsText(f)};i.click();}
 function resetData(){if(confirm('Voltar aos dados de exemplo? Os dados atuais deste aparelho serão substituídos.')){D=migrate(structuredClone(DEFAULT));save();initFields();renderAll();setMode(D.mode||'contas')}}
 
+/* ================= LANÇAR FALANDO (ou escrevendo) — 100% local =================
+   O coração aqui é o interpretador de texto, não a captura de voz: no iPhone a
+   API de voz do navegador não funciona com o app aberto pelo ícone da tela de
+   início, mas o microfone do teclado do iOS funciona em todo lugar e escreve no
+   campo. Então a voz é só uma das formas de preencher o texto. */
+
+/* números por extenso em português */
+const NUM_PT={zero:0,um:1,uma:1,dois:2,duas:2,tres:3,quatro:4,cinco:5,seis:6,sete:7,oito:8,nove:9,
+  dez:10,onze:11,doze:12,treze:13,catorze:14,quatorze:14,quinze:15,dezesseis:16,dezasseis:16,
+  dezessete:17,dezassete:17,dezoito:18,dezenove:19,dezanove:19,
+  vinte:20,trinta:30,quarenta:40,cinquenta:50,cincoenta:50,sessenta:60,setenta:70,oitenta:80,noventa:90,
+  cem:100,cento:100,duzentos:200,duzentas:200,trezentos:300,trezentas:300,quatrocentos:400,quatrocentas:400,
+  quinhentos:500,quinhentas:500,seiscentos:600,seiscentas:600,setecentos:700,setecentas:700,
+  oitocentos:800,oitocentas:800,novecentos:900,novecentas:900};
+function escalaNum(n){return n>=100?3:(n>=20?2:1);} /* 3=centena 2=dezena 1=unidade */
+
+/* Converte "cento e cinquenta" → 150, "mil e quinhentos" → 1500.
+   Também entende o jeito brasileiro de falar preço, "trinta e sete e noventa"
+   = 37,90: quando uma dezena aparece DEPOIS de uma unidade, ela já são os
+   centavos — a ordem centena→dezena→unidade foi quebrada. */
+function numeroPorExtenso(tokens){
+  let total=0,grupo=0,achou=false,centavos=null,ultimaEscala=9;
+  for(let i=0;i<tokens.length;i++){
+    const w=tokens[i];
+    if(w==='e')continue;
+    if(w==='mil'){grupo=(grupo||1)*1000;total+=grupo;grupo=0;achou=true;ultimaEscala=9;continue;}
+    if(w==='milhao'||w==='milhoes'){grupo=(grupo||1)*1000000;total+=grupo;grupo=0;achou=true;ultimaEscala=9;continue;}
+    if(w==='centavo'||w==='centavos'){
+      if(centavos==null&&achou){centavos=total+grupo;total=0;grupo=0;} /* "cinquenta centavos" */
+      continue;
+    }
+    if(!(w in NUM_PT))break;
+    const v=NUM_PT[w],esc=escalaNum(v);
+    if(achou&&esc>=ultimaEscala&&centavos==null&&(total+grupo)>0){
+      /* quebrou a ordem: o que vem agora são os centavos */
+      centavos=numeroPorExtenso(tokens.slice(i));
+      break;
+    }
+    grupo+=v;achou=true;ultimaEscala=esc;
+  }
+  if(!achou)return null;
+  let n=total+grupo;
+  if(centavos!=null&&centavos>0){
+    if(n===0)n=centavos/100;                       /* "cinquenta centavos" */
+    else n=n+(centavos<10?centavos/10:centavos/100); /* "e noventa" = ,90 · "e cinco" = ,50 */
+  }
+  return n;
+}
+
+/* acha o valor na frase: primeiro em dígitos, depois por extenso */
+function valorDeTexto(t){
+  const m=t.match(/(?:r\$\s*)?(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:[.,]\d{1,2})?)/);
+  if(m){
+    let n=parseBRNum(m[1]);
+    if(n!=null&&n>0){
+      /* "200 e 50" dito como preço */
+      const resto=t.slice(m.index+m[0].length).match(/^\s*e\s+(\d{1,2})\b/);
+      if(resto&&Number.isInteger(n))n=n+(+resto[1]<10?+resto[1]/10:+resto[1]/100);
+      return n;
+    }
+  }
+  const toks=t.split(/[\s,;.]+/).filter(Boolean);
+  for(let i=0;i<toks.length;i++){
+    if(toks[i] in NUM_PT||toks[i]==='mil'){
+      const n=numeroPorExtenso(toks.slice(i));
+      if(n!=null&&n>0)return n;
+    }
+  }
+  return null;
+}
+
+const VERBOS_ENTRADA=['entrou','entrei','recebi','recebemos','ganhei','ganhamos','caiu','cai','me pagaram','pagaram','vendi','entrada','recebido'];
+const VERBOS_SAIDA=['gastei','gastamos','paguei','pagamos','comprei','compramos','saiu','torrei','despesa','gasto'];
+/* palavras que não ajudam a descrever o lançamento */
+const LIXO_DESC=new Set(['e','de','do','da','dos','das','no','na','nos','nas','em','com','pra','para','por',
+  'o','a','os','as','um','uma','uns','umas','meu','minha','meus','minhas','eu','hoje','agora','ontem',
+  'reais','real','rs','r$','pila','conto','contos','centavo','centavos','mil','milhao','milhoes','foi','que']);
+
+/* Frase → lançamento. Devolve null quando não achou valor — melhor não lançar
+   do que lançar zero. */
+function parseLancamentoFalado(txt){
+  const frase=(txt||'').trim();if(!frase)return null;
+  const t=norm(frase);
+  let tipo=null;
+  if(VERBOS_ENTRADA.some(v=>new RegExp('\\b'+v+'\\b').test(t)))tipo='entrada';
+  if(!tipo&&VERBOS_SAIDA.some(v=>new RegExp('\\b'+v+'\\b').test(t)))tipo='saida';
+  const assumido=!tipo;
+  if(!tipo)tipo='saida';
+  const valor=valorDeTexto(t);
+  if(valor==null||!(valor>0))return null;
+  /* descrição: tira verbo, número e palavras de ligação; o resto fica, porque
+     é nele que o categorize() procura a palavra-chave */
+  const desc=t.split(/[\s,;]+/)
+    .filter(w=>w&&!LIXO_DESC.has(w)&&!(w in NUM_PT)&&!/^\d/.test(w)
+      &&!VERBOS_ENTRADA.includes(w)&&!VERBOS_SAIDA.includes(w))
+    .join(' ').replace(/\s+/g,' ').trim();
+  const amount=tipo==='entrada'?valor:-valor;
+  return {tipo,valor,desc:desc||(tipo==='entrada'?'entrada':'gasto'),
+    cat:categorize(desc,amount),amount,assumido,frase};
+}
+
+/* ---------- tela de lançar falando ---------- */
+let fl=null,flRec=null;
+function hojeBR(){const d=new Date();return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();}
+function temVoz(){return typeof window!=='undefined'&&!!(window.SpeechRecognition||window.webkitSpeechRecognition);}
+/* No iPhone a API de voz existe mas não funciona com o app aberto pelo ícone da
+   tela de início — a permissão de microfone não é dada nesse modo. Aí o botão
+   de gravar mentiria; melhor não mostrar e apontar o microfone do teclado. */
+function vozUsavel(){
+  if(!temVoz())return false;
+  const standalone=(window.navigator&&window.navigator.standalone)||
+    (window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches);
+  const iOS=/iPad|iPhone|iPod/.test((navigator&&navigator.userAgent)||'');
+  return !(iOS&&standalone);
+}
+function openFalar(){
+  fl=null;
+  const t=document.getElementById('fl-texto');if(t)t.value='';
+  const pv=document.getElementById('fl-previa');if(pv)pv.style.display='none';
+  const mic=document.getElementById('fl-mic');if(mic)mic.style.display=vozUsavel()?'':'none';
+  set('fl-nota',vozUsavel()?'Nada sai do aparelho: a frase é interpretada aqui mesmo.'
+    :'Neste aparelho o microfone do app não funciona (limitação do iPhone com o app instalado na tela de início). Toque no campo e use o 🎤 do próprio teclado — funciona igual.');
+  document.getElementById('falarModal').classList.add('on');
+  setTimeout(()=>{try{t.focus()}catch(_){}},60);
+}
+function closeFalar(){
+  try{if(flRec)flRec.stop()}catch(_){}
+  flRec=null;document.getElementById('falarModal').classList.remove('on');
+}
+function falarOuvir(){
+  if(!vozUsavel())return;
+  const R=window.SpeechRecognition||window.webkitSpeechRecognition;
+  try{
+    flRec=new R();flRec.lang='pt-BR';flRec.interimResults=false;flRec.maxAlternatives=1;
+    set('fl-nota','Ouvindo… pode falar.');
+    flRec.onresult=e=>{
+      const txt=(e.results&&e.results[0]&&e.results[0][0]&&e.results[0][0].transcript)||'';
+      const c=document.getElementById('fl-texto');if(c)c.value=txt;
+      set('fl-nota','');onFalarTexto(1);
+    };
+    flRec.onerror=()=>set('fl-nota','Não consegui ouvir. Toque no campo e use o 🎤 do teclado.');
+    flRec.onend=()=>{flRec=null;};
+    flRec.start();
+  }catch(_){set('fl-nota','Não consegui abrir o microfone. Use o 🎤 do teclado.');}
+}
+/* interpreta enquanto digita (sem incomodar) e ao tocar em "entender" */
+function onFalarTexto(forcar){
+  const txt=(document.getElementById('fl-texto')||{}).value||'';
+  const r=parseLancamentoFalado(txt);
+  const pv=document.getElementById('fl-previa');
+  if(!r){
+    if(pv)pv.style.display='none';fl=null;
+    if(forcar)set('fl-nota',txt.trim()?'Não achei um valor nessa frase. Diga quanto foi — por exemplo “gastei 40 reais de uber”.':'Escreva ou fale a frase primeiro.');
+    return;
+  }
+  fl={tipo:r.tipo,valor:r.valor,desc:r.desc,cat:r.cat,date:hojeBR(),assumido:r.assumido,frase:r.frase};
+  set('fl-nota','');
+  falarPreview();
+}
+function falarPreview(){
+  if(!fl)return;
+  const pv=document.getElementById('fl-previa');if(pv)pv.style.display='';
+  const st=document.getElementById('fl-tipo');if(st)st.value=fl.tipo;
+  const sv=document.getElementById('fl-valor');if(sv&&+sv.value!==fl.valor)sv.value=fl.valor;
+  const sd=document.getElementById('fl-desc');if(sd&&sd.value!==fl.desc)sd.value=fl.desc;
+  const dt=document.getElementById('fl-data');if(dt&&dt.value!==fl.date)dt.value=fl.date;
+  /* categoria segue o tipo: entrada é sempre "Entradas" */
+  if(fl.tipo==='entrada')fl.cat='Entradas';
+  const sc=document.getElementById('fl-cat');
+  if(sc){sc.innerHTML=CATEGORIAS.map(c=>'<option'+(c===fl.cat?' selected':'')+'>'+c+'</option>').join('');}
+  falarResumo();
+}
+function falarResumo(){
+  if(!fl)return;
+  const sinal=fl.tipo==='entrada'?'+':'−';
+  set('fl-resumo',sinal+' '+brl(fl.valor)+' · '+fl.cat+' · '+fl.date
+    +(fl.assumido?' — não ouvi um verbo como “gastei” ou “recebi”, então assumi saída. Corrija acima se for entrada.':''));
+}
+function falarLancar(){
+  if(!fl||!(fl.valor>0)){alert('Falta o valor do lançamento.');return;}
+  const amount=fl.tipo==='entrada'?Math.abs(fl.valor):-Math.abs(fl.valor);
+  const desc=(fl.desc||'').slice(0,60)||(fl.tipo==='entrada'?'entrada':'gasto');
+  const x={date:fl.date,desc,amount};
+  const key=txKey(x);
+  if(D.contas.transacoes.some(t=>t._k===key)){
+    alert('Esse lançamento já está salvo — nada foi duplicado.');closeFalar();return;
+  }
+  D.contas.transacoes.push({_k:key,date:fl.date,mes:mesFromDate(fl.date),desc,amount,cat:fl.cat||categorize(desc,amount)});
+  /* entrada também vai para a aba Recebidos — são vistas diferentes do mesmo
+     fato: nenhum número do app soma as duas listas */
+  if(fl.tipo==='entrada')D.contas.recebidos.push({_k:key,valor:Math.abs(fl.valor),data:fl.date.slice(0,5),desc});
+  save();closeFalar();
+  safeRun(renderCategorias);safeRun(renderReceb);safeRun(drawConPainel);
+  alert((fl.tipo==='entrada'?'Entrada':'Gasto')+' de '+brl(Math.abs(fl.valor))+' lançado em '+fl.cat+'.'
+    +(fl.tipo==='entrada'?'\nAparece nas abas Recebidos e Categorias.':'\nAparece na aba Categorias.'));
+}
+
 /* ---------- importar extrato (OFX / CSV) — 100% local ---------- */
 let extratoTxns=[];
 function pickExtrato(){
@@ -2226,11 +2455,23 @@ function exApplyPago(){
     ?('Marquei '+quitadas.length+' conta(s) como paga(s):\n\n• '+quitadas.join('\n• ')+'\n\nConfira nas abas — dá para desmarcar no botão da 1ª coluna.')
     :'Não achei no extrato nenhum nome que casasse com suas contas.\n\nAgora a comparação ignora prefixos do banco ("pagamento", "pix", "compra"), então não marca conta errada por engano.');
 }
+/* Uma palavra-chave escrita com espaço no fim ("gas ", "net ", "gol ") pede
+   palavra inteira — foi assim que a lista foi montada, para "gas" não pegar
+   "gasolina" nem "net" pegar "netflix". Só que norm() faz trim() e apagava esse
+   espaço, então o cuidado nunca valia: Netflix e gasolina caíam em Moradia.
+   Aqui o espaço final vira exigência de borda de palavra, de verdade. */
+function catMatch(d,k){
+  const inteira=/\s$/.test(k);
+  const kk=norm(k);
+  if(!kk)return false;
+  if(!inteira)return d.includes(kk);
+  return new RegExp('(^|[^a-z0-9])'+kk.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'([^a-z0-9]|$)').test(d);
+}
 function categorize(desc,amount){
   const d=norm(desc);
   for(const key in D.contas.catMemory){if(key&&key.length>=3&&d.includes(key))return D.contas.catMemory[key];}
   if(amount>0)return "Entradas";
-  for(const pair of CAT_KW){if(pair[0]==="Entradas")continue;if(pair[1].some(k=>d.includes(norm(k))))return pair[0];}
+  for(const pair of CAT_KW){if(pair[0]==="Entradas")continue;if(pair[1].some(k=>catMatch(d,k)))return pair[0];}
   return "Outros";
 }
 function isIncomeDesc(desc){return /(recebid|salario|deposito|rendimento|estorno|reembolso|provento|pagamento receb|credito receb)/.test(norm(desc));}
