@@ -681,7 +681,9 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
   <div class="modal" style="max-width:560px">
     <h3>Extrato importado</h3>
     <p id="ex-sum">—</p>
-    <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin:2px 0 8px;cursor:pointer"><input type="checkbox" id="ex-fatura" onchange="exToggleFatura()" style="width:auto"> É fatura de cartão — tratar tudo como gasto</label>
+    <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin:2px 0 4px;cursor:pointer"><input type="checkbox" id="ex-fatura" onchange="exToggleFatura()" style="width:auto"> É fatura de cartão — tratar tudo como gasto</label>
+    <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin:0 0 4px;cursor:pointer"><input type="checkbox" id="ex-cartao" checked onchange="exToggleFatura()" style="width:auto"> Não contar pagamento de fatura do cartão <span class="tag">as compras já estão em Cartões</span></label>
+    <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin:0 0 8px;cursor:pointer"><input type="checkbox" id="ex-invest" checked onchange="exToggleFatura()" style="width:auto"> Não contar investimento / transferência minha <span class="tag">não é gasto</span></label>
     <div class="scroll" style="max-height:220px;border:1px solid var(--line);border-radius:10px"><table class="tbl" id="tbl-extrato"></table></div>
     <div class="row" style="flex-direction:column;gap:8px;align-items:stretch">
       <button class="iconbtn primary" onclick="exSaveTx()">🏷️ Salvar já separado por categoria</button>
@@ -1789,29 +1791,58 @@ function loadExtrato(text,name){
 function closeExtrato(){document.getElementById('extratoModal').classList.remove('on');}
 function exApplyAnual(){
   if(!extratoTxns.length)return;
-  const now=new Date();D.contas.anualAno=now.getFullYear();
-  const arr=ctrlYearArr(now.getFullYear()),m=arr[now.getMonth()];
-  const saidas=extratoTxns.filter(x=>x.amount<0).reduce((s,x)=>s-x.amount,0);
-  const entradas=extratoTxns.filter(x=>x.amount>0).reduce((s,x)=>s+x.amount,0);
+  /* usa o mês selecionado no Painel e só o que deve ser contado */
+  const ref=selMonthDate();D.contas.anualAno=ref.getFullYear();
+  const arr=ctrlYearArr(ref.getFullYear()),m=arr[ref.getMonth()],cont=txContaveis();
+  const saidas=cont.filter(x=>x.amount<0).reduce((s,x)=>s-x.amount,0);
+  const entradas=cont.filter(x=>x.amount>0).reduce((s,x)=>s+x.amount,0);
+  const fora=extratoTxns.length-cont.length;
   m.pago=Math.round(saidas*100)/100;m.recebido=Math.round(entradas*100)/100;
   if(m.previsto==null)m.previsto=contasMes();
   renderControle();save();closeExtrato();
-  alert('Mês atual atualizado no Controle Anual:\nPago '+brl(m.pago)+' · Recebido '+brl(m.recebido)+'.');
+  alert(MESES[ref.getMonth()]+'/'+String(ref.getFullYear()).slice(2)+' atualizado no Controle Anual:\nPago '+brl(m.pago)+' · Recebido '+brl(m.recebido)
+    +(fora?('\n\n'+fora+' lançamento(s) ficaram de fora (fatura de cartão e investimento), para não contar duas vezes.'):''));
 }
 function exApplyReceb(){
-  if(!extratoTxns.length)return;let n=0;
-  extratoTxns.filter(x=>x.amount>0).forEach(x=>{D.contas.recebidos.push({valor:Math.round(x.amount*100)/100,data:x.date||'',desc:(x.desc||'Extrato').slice(0,42)});n++;});
-  renderReceb();save();closeExtrato();alert('Adicionei '+n+' entrada(s) em Recebidos.');
+  if(!extratoTxns.length)return;let n=0,rep=0;
+  txContaveis().filter(x=>x.amount>0).forEach(x=>{
+    const k=txKey(x);
+    /* já importado antes? não duplica. Recebidos antigos (sem _k) são comparados por valor+data */
+    const existe=D.contas.recebidos.some(r=>r._k?r._k===k
+      :(Math.abs((+r.valor||0)-x.amount)<0.005&&(r.data||'')===(x.date||'')));
+    if(existe){rep++;return;}
+    D.contas.recebidos.push({_k:k,valor:Math.round(x.amount*100)/100,data:x.date||'',desc:(x.desc||'Extrato').slice(0,42)});n++;
+  });
+  renderReceb();save();closeExtrato();
+  alert(n?('Adicionei '+n+' entrada(s) em Recebidos.'+(rep?'\n'+rep+' já estavam lançadas e foram puladas.':''))
+        :('Nada a adicionar — '+(rep?'as '+rep+' entradas já estavam lançadas.':'não há entradas neste extrato.')));
+}
+/* prefixos que o banco põe na frente e não dizem nada sobre QUEM recebeu */
+const DESC_RUIDO=/\b(pagamento|pagto|pgto|pag|compra|debito|deb|credito|cred|pix|ted|doc|transferencia|transf|boleto|tarifa|saque|cartao|envio|enviado|recebido|liquidacao|cobranca|mensalidade|parcela|em|de|do|da|no|na|para|com)\b/g;
+function limpaDesc(d){return norm(d).replace(DESC_RUIDO,' ').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();}
+/* casa o nome da conta com a descrição do extrato, sem depender da 1ª palavra */
+function casaNome(nomeConta,descLimpa){
+  const bn=limpaDesc(nomeConta);
+  if(bn.length>=4&&descLimpa.includes(bn))return true;          /* nome inteiro aparece */
+  const fortes=bn.split(' ').filter(w=>w.length>=5);            /* palavra distintiva em comum */
+  return fortes.some(w=>descLimpa.includes(w));
 }
 function exApplyPago(){
   if(!extratoTxns.length)return;
-  const debs=extratoTxns.filter(x=>x.amount<0).map(x=>norm(x.desc));let n=0;
+  /* só débitos que contam: pagamento de fatura e aplicação não quitam conta */
+  const debs=txContaveis().filter(x=>x.amount<0).map(x=>limpaDesc(x.desc)).filter(Boolean);
+  const quitadas=[];
   ['casa','joao','esposa','empresa','empresaKS'].forEach(k=>{
-    D.contas[k].forEach(b=>{if(pagoGet(b.id))return;const bn=norm(b.nome);if(bn.length<3)return;
-      if(debs.some(dn=>dn&&(dn.includes(bn)||bn.includes(dn.split(' ')[0])))){pagoSet(b.id,true);n++;}});
+    D.contas[k].forEach(b=>{
+      if(pagoGet(b.id))return;
+      if(limpaDesc(b.nome).length<4)return;
+      if(debs.some(dn=>casaNome(b.nome,dn))){pagoSet(b.id,true);quitadas.push(b.nome);}
+    });
   });
   renderAll();save();closeExtrato();
-  alert(n?('Marquei '+n+' conta(s) como paga(s) pelo nome que veio no extrato. Confira nas abas.'):'Não achei nomes do extrato que casassem com suas contas — você pode marcar manualmente, ou usar “Lançar no mês atual”.');
+  alert(quitadas.length
+    ?('Marquei '+quitadas.length+' conta(s) como paga(s):\n\n• '+quitadas.join('\n• ')+'\n\nConfira nas abas — dá para desmarcar no botão da 1ª coluna.')
+    :'Não achei no extrato nenhum nome que casasse com suas contas.\n\nAgora a comparação ignora prefixos do banco ("pagamento", "pix", "compra"), então não marca conta errada por engano.');
 }
 function categorize(desc,amount){
   const d=norm(desc);
@@ -1821,6 +1852,35 @@ function categorize(desc,amount){
   return "Outros";
 }
 function isIncomeDesc(desc){return /(recebid|salario|deposito|rendimento|estorno|reembolso|provento|pagamento receb|credito receb)/.test(norm(desc));}
+
+/* ---------- classificação dos lançamentos do extrato ----------
+   Dois tipos NÃO entram nas somas, para não contar duas vezes:
+   - cartao: pagamento da fatura (as compras já estão na aba Cartões)
+   - invest: aplicação/resgate e transferência para você mesmo (não é gasto) */
+const TX_CARTAO=['pagamento de fatura','pagamento fatura','pagto fatura','pgto fatura','pag fatura',
+  'fatura cartao','fatura do cartao','cartao de credito','pagamento cartao','pagto cartao','pgto cartao',
+  'pagamento de cartao','fatura c/c','deb fatura','debito fatura'];
+const TX_INVEST=['aplicacao','aplic automatica','aplic ','resgate','investimento','invest ',
+  'cdb','rdb','lci','lca','tesouro','poupanca','previdencia','fundo de invest',
+  'mesma titularidade','mesmo titular','entre contas proprias','transf entre contas',
+  'xp investimentos','xp inv','corretora'];
+function tipoTx(desc,amount){
+  if(amount>0)return 'normal';               /* entradas nunca são fatura/aplicação */
+  const d=norm(desc);
+  if(TX_CARTAO.some(k=>d.includes(norm(k))))return 'cartao';
+  if(TX_INVEST.some(k=>d.includes(norm(k))))return 'invest';
+  return 'normal';
+}
+const TX_ROTULO={cartao:'fatura do cartão',invest:'investimento / você mesmo'};
+/* respeita as caixas de seleção do modal */
+function txIgnorado(x){
+  if(x.tipo==='cartao')return !((document.getElementById('ex-cartao')||{}).checked===false);
+  if(x.tipo==='invest')return !((document.getElementById('ex-invest')||{}).checked===false);
+  return false;
+}
+function txContaveis(){return extratoTxns.filter(x=>!txIgnorado(x));}
+/* impressão digital de um lançamento — usada para nunca importar o mesmo duas vezes */
+function txKey(x){return (x.date||'')+'|'+(+x.amount||0).toFixed(2)+'|'+norm(x.desc).slice(0,22);}
 function mesFromDate(dstr){
   const m=(dstr||'').match(/(\d{2})[\/\-.](\d{2})(?:[\/\-.](\d{2,4}))?/);if(!m)return '—';
   const mm=+m[2],yy=m[3]?(m[3].length===2?('20'+m[3]):m[3]):(''+new Date().getFullYear());
@@ -1836,24 +1896,37 @@ function showExtratoPreview(t){
 }
 function applyExtrato(){
   const fat=(document.getElementById('ex-fatura')||{}).checked;
-  extratoTxns=extratoOrig.map(x=>{let amt=x.amount;if(fat&&amt>0&&!isIncomeDesc(x.desc))amt=-Math.abs(amt);return {date:x.date,desc:x.desc,amount:amt,cat:categorize(x.desc,amt)};});
+  /* remove lançamentos repetidos DENTRO do próprio arquivo (extrato exportado com sobreposição de período) */
+  const vistos={};
+  extratoTxns=extratoOrig.map(x=>{
+    let amt=x.amount;if(fat&&amt>0&&!isIncomeDesc(x.desc))amt=-Math.abs(amt);
+    return {date:x.date,desc:x.desc,amount:amt,cat:categorize(x.desc,amt),tipo:tipoTx(x.desc,amt)};
+  }).filter(x=>{const k=txKey(x);if(vistos[k])return false;vistos[k]=1;return true;});
   renderExtratoPreview();
 }
 function exToggleFatura(){applyExtrato();}
 function renderExtratoPreview(){
-  const t=extratoTxns;
-  const saidas=t.filter(x=>x.amount<0).reduce((s,x)=>s-x.amount,0);
-  const entradas=t.filter(x=>x.amount>0).reduce((s,x)=>s+x.amount,0);
-  document.getElementById('ex-sum').innerHTML=t.length+' transações · <b class="down">saídas '+brl(saidas)+'</b> · <b class="up">entradas '+brl(entradas)+'</b>';
+  const t=extratoTxns,cont=txContaveis();
+  const saidas=cont.filter(x=>x.amount<0).reduce((s,x)=>s-x.amount,0);
+  const entradas=cont.filter(x=>x.amount>0).reduce((s,x)=>s+x.amount,0);
+  const fora=t.length-cont.length;
+  const foraVal=t.filter(txIgnorado).reduce((s,x)=>s+Math.abs(+x.amount||0),0);
+  document.getElementById('ex-sum').innerHTML=cont.length+' transações contadas · <b class="down">saídas '+brl(saidas)+'</b> · <b class="up">entradas '+brl(entradas)+'</b>'
+    +(fora?('<br><span class="mut" style="font-size:11px">'+fora+' fora da conta ('+brl(foraVal)+') — fatura de cartão e investimento, para não contar duas vezes</span>'):'');
   let h='<tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th></tr>';
-  t.slice(0,300).forEach(x=>{h+='<tr><td class="name" style="font-size:11px">'+esc(x.date||'—')+'</td><td class="name" style="font-size:11px">'+esc((x.desc||'').slice(0,30))+'</td><td class="name mut" style="font-size:11px">'+esc(x.cat)+'</td><td class="'+(x.amount<0?'down':'up')+'">'+brl(x.amount)+'</td></tr>';});
+  t.slice(0,300).forEach(x=>{
+    const ig=txIgnorado(x);
+    h+='<tr'+(ig?' style="opacity:.45"':'')+'><td class="name" style="font-size:11px">'+esc(x.date||'—')+'</td>'
+      +'<td class="name" style="font-size:11px">'+esc((x.desc||'').slice(0,30))+(ig?'<div class="tag">fora: '+TX_ROTULO[x.tipo]+'</div>':'')+'</td>'
+      +'<td class="name mut" style="font-size:11px">'+esc(x.cat)+'</td>'
+      +'<td class="'+(ig?'mut':(x.amount<0?'down':'up'))+'">'+brl(x.amount)+'</td></tr>';});
   if(t.length>300)h+='<tr><td class="mut" colspan="4">… +'+(t.length-300)+' transações</td></tr>';
   document.getElementById('tbl-extrato').innerHTML=h;
 }
 function exSaveTx(){
   if(!extratoTxns.length)return;let n=0;
   extratoTxns.forEach(x=>{
-    const key=(x.date||'')+'|'+(x.amount||0).toFixed(2)+'|'+norm(x.desc).slice(0,22);
+    const key=txKey(x);
     if(D.contas.transacoes.some(t=>t._k===key))return;
     D.contas.transacoes.push({_k:key,date:x.date||'',mes:mesFromDate(x.date),desc:(x.desc||'').slice(0,60),amount:x.amount,cat:x.cat||categorize(x.desc,x.amount)});n++;
   });
