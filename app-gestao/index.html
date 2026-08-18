@@ -1142,7 +1142,7 @@ function esperarAuth(){
 </div>
 
 <nav class="nav">
-  <button class="on" onclick="go('dash',this)"><span class="ico" data-ic="home"></span>Início</button>
+  <button class="on" onclick="go('dash',this)"><span class="ico" data-ic="home"></span><span class="nav-badge" id="nb-inicio"></span>Início</button>
   <button onclick="go('agenda',this)"><span class="ico" data-ic="cal"></span><span class="nav-badge" id="nb-agenda"></span>Agenda</button>
   <button onclick="go('alunos',this)"><span class="ico" data-ic="ball"></span>Alunos</button>
   <button onclick="go('aval',this)"><span class="ico" data-ic="clip"></span>Avaliações</button>
@@ -1513,7 +1513,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-08-18-2';
+const VERSAO='2026-08-18-3';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -2782,6 +2782,8 @@ async function syncPedidos(silent){
 function updatePedBadge(){
   const b=document.getElementById('ped-badge');if(!b)return;
   if(pedFila.length){b.style.display='flex';b.textContent=pedFila.length>9?'9+':String(pedFila.length);}else b.style.display='none';
+  const nb=document.getElementById('nb-inicio');
+  if(nb){if(pedFila.length){nb.textContent=pedFila.length>9?'9+':String(pedFila.length);nb.classList.add('on');}else nb.classList.remove('on');}
 }
 function pedEsc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function pedDesc(p){
