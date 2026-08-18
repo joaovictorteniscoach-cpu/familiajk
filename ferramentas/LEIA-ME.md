@@ -30,6 +30,7 @@ isso só aparece quando alguém usa. Daí os scripts.
   descartar — os scripts marcam alguns falsos positivos conhecidos:
   - `async()` é a palavra-chave em `async(x)=>{}`, não uma chamada;
   - `qrcode()` é a biblioteca externa do QR do Pix, carregada sob demanda;
+  - `AbortController()` no `site/` é do próprio navegador, usada com `new`;
   - ids montados por concatenação (`'apg-'+id`) aparecem cortados no prefixo.
 - **CSS**: aqui o normal é sobrar alguns avisos legítimos. Quando a regra
   aninhada é o **mesmo elemento** em outro estado (`.aluno.open .aluno-body`),
