@@ -151,6 +151,21 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 
 .kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
 .kpi{border-radius:14px;padding:15px 14px}
+/* Só o cartão que leva a algum lugar ganha cara de botão — os outros três
+   continuam sendo só número, para não prometer toque onde não há destino. */
+.kpi.tocavel{cursor:pointer;transition:transform .12s}
+.kpi.tocavel:active{transform:scale(.975)}
+.kpi-seta{opacity:.75;font-weight:900;margin-left:2px}
+.kpi:not(.tocavel) .kpi-seta{display:none}
+.avcard-ver{cursor:pointer}
+.avcard-ver:active{transform:scale(.995)}
+.mov-vai{cursor:pointer;position:relative}
+.mov-vai:active{transform:scale(.99)}
+.mov-seta{align-self:center;font-size:20px;font-weight:900;color:var(--muted);padding-left:6px}
+/* Realce de quem acabou de ser procurado: chama o olho e some sozinho. */
+@keyframes piscaAchei{0%,100%{box-shadow:0 0 0 0 rgba(201,71,43,0)}
+  25%,75%{box-shadow:0 0 0 4px rgba(201,71,43,.45)}}
+.slot-piscando,.achei{animation:piscaAchei 1.3s ease-in-out 2;border-radius:12px}
 .kpi.dark{background:var(--green);color:var(--cream)}
 .kpi.clay{background:var(--clay);color:#fff}
 .kpi.light{background:#fff;border:1px solid var(--border)}
@@ -636,7 +651,7 @@ function esperarAuth(){
   <h2 class="sec-title">Resumo do <em>mês</em></h2>
   <div class="kpis">
     <div class="kpi dark"><div class="kpi-l">Recebido</div><div class="kpi-v" id="k-recebido">R$ 0</div><div class="kpi-s" id="k-recebido-s"></div></div>
-    <div class="kpi clay"><div class="kpi-l">A receber</div><div class="kpi-v" id="k-pendente">R$ 0</div><div class="kpi-s" id="k-pendente-s"></div></div>
+    <div class="kpi clay" id="kpi-pendente" onclick="verPendentes()"><div class="kpi-l">A receber <span class="kpi-seta">›</span></div><div class="kpi-v" id="k-pendente">R$ 0</div><div class="kpi-s" id="k-pendente-s"></div></div>
     <div class="kpi light"><div class="kpi-l">Alunos ativos</div><div class="kpi-v" id="k-alunos">0</div><div class="kpi-s" id="k-alunos-s"></div></div>
     <div class="kpi light"><div class="kpi-l">Créditos em aberto</div><div class="kpi-v" id="k-creditos">0</div><div class="kpi-s" id="k-repos-s"></div></div>
   </div>
@@ -1313,6 +1328,21 @@ function esperarAuth(){
 </div>
 
 <!-- MODAL ENVIAR DEVOLUTIVA (avaliação → pais) -->
+<!-- Ver a avaliação na tela. Até aqui só existia "enviar": dava para criar a
+     avaliação e mandar por WhatsApp, mas não para simplesmente olhar. -->
+<div class="overlay" id="ov-avalver" style="z-index:135" onclick="if(event.target===this)closeModal('ov-avalver')">
+  <div class="modal" style="max-width:560px">
+    <h3>Avaliação 👁</h3>
+    <p class="sub" id="avalver-sub" style="font-size:12.5px;color:var(--muted);margin:-2px 0 8px">—</p>
+    <div id="avalver-datas" class="seg seg-scroll" style="margin-bottom:8px;display:none"></div>
+    <div id="avalver-corpo" style="max-height:60vh;overflow-y:auto;-webkit-overflow-scrolling:touch"></div>
+    <div class="modal-acts" style="margin-top:10px">
+      <button class="btn btn-ghost" onclick="closeModal('ov-avalver')">Fechar</button>
+      <button class="btn btn-clay" id="avalver-enviar">📤 Enviar</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="ov-avalexp" style="z-index:136" onclick="if(event.target===this)closeModal('ov-avalexp')">
   <div class="modal">
     <h3>Enviar avaliação 📤</h3>
@@ -1481,7 +1511,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-08-12-4';
+const VERSAO='2026-08-18-1';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -2632,12 +2662,64 @@ function abrirNotifs(){
 function renderNotifList(){
   const el=document.getElementById('notif-list');if(!el)return;
   if(!NOTIF.length){el.innerHTML='<div class="empty">Nenhum aviso ainda. Quando um aluno reservar ou cancelar, aparece aqui.</div>';return;}
-  el.innerHTML=NOTIF.map(n=>{
+  el.innerHTML=NOTIF.map((n,i)=>{
     const q=new Date(n.ts);
     const hm=String(q.getHours()).padStart(2,'0')+':'+String(q.getMinutes()).padStart(2,'0');
     const cor=n.acao==='cancelou'?'var(--c-bloq)':'var(--c-loc)';
-    return `<div class="mov" style="border-left:4px solid ${cor}"><div class="mov-l"><b>${textoNotif(n)}</b><span>recebido ${String(q.getDate()).padStart(2,'0')}/${String(q.getMonth()+1).padStart(2,'0')} ${hm}</span></div></div>`;
+    const vai=destinoNotif(n);
+    return `<div class="mov${vai?' mov-vai':''}" style="border-left:4px solid ${cor}"${vai?` onclick="irDoAviso(${i})"`:''}>`
+      +`<div class="mov-l"><b>${textoNotif(n)}</b><span>recebido ${String(q.getDate()).padStart(2,'0')}/${String(q.getMonth()+1).padStart(2,'0')} ${hm}</span></div>`
+      +(vai?'<span class="mov-seta">›</span>':'')+'</div>';
   }).join('');
+}
+/* O número "a receber" existe; a lista de quem deve também, logo abaixo na
+   mesma tela. Faltava só o caminho entre os dois. */
+function verPendentes(){
+  const alvo=document.getElementById('pend-list');
+  if(!alvo)return;
+  alvo.scrollIntoView({behavior:'smooth',block:'center'});
+  alvo.classList.add('achei');
+  setTimeout(()=>alvo.classList.remove('achei'),2700);
+}
+/* Para onde cada aviso leva. Devolve null quando não há destino — aí a linha
+   não finge ser botão. */
+function destinoNotif(n){
+  if(!n)return null;
+  if(n.acao==='resultado')return 'torneio';
+  if(n.texto)return 'pedidos';                 // compra, plano, mensalidade
+  if(n.data&&n.hora)return 'agenda';
+  return null;
+}
+/* Leva o João até a mudança que o aluno fez, em vez de ele caçar na mão. */
+function irDoAviso(i){
+  const n=NOTIF[i];if(!n)return;
+  const d=destinoNotif(n);if(!d)return;
+  closeModal('ov-notif');
+  if(d==='torneio'){irParaAba('torneio');return;}
+  if(d==='pedidos'){abrirPedidos();return;}
+  // agenda: dia certo, visão de dia, rolar até o horário e piscar o slot
+  const p=String(n.data).split('-');
+  agDate=new Date(Number(p[0]),Number(p[1])-1,Number(p[2]));
+  irParaAba('agenda');
+  // o próprio botão "Dia" já ajusta agView, as classes e redesenha
+  const bDia=document.querySelector('#pg-agenda .seg button');
+  if(bDia)bDia.click(); else {agView='dia';renderAgenda();}
+  setTimeout(()=>{
+    const slot=document.querySelector('.slot[data-drop-h="'+n.hora+'"]');
+    if(!slot){toast('Não achei o horário '+n.hora+' nesse dia');return;}
+    slot.scrollIntoView({behavior:'smooth',block:'center'});
+    slot.classList.add('slot-piscando');
+    setTimeout(()=>slot.classList.remove('slot-piscando'),2600);
+    const corpo=slot.querySelector('.slot-body');
+    if(corpo&&!corpo.classList.contains('has'))
+      toast('Esse horário está livre — a mudança já foi aplicada');
+  },220);
+}
+/* Troca de aba sem depender do botão clicado: acha o da barra pelo onclick. */
+function irParaAba(id){
+  const b=[...document.querySelectorAll('.nav button')]
+    .find(x=>(x.getAttribute('onclick')||'').indexOf("go('"+id+"'")===0);
+  if(b)b.click(); else go(id,document.querySelector('.nav button'));
 }
 async function limparNotifs(){
   if(!confirm('Limpar todos os avisos?'))return;
@@ -3902,6 +3984,32 @@ function evoMesChartHTML(serie,titulo){
   return '<div class="evo-sec">📅 '+(titulo||'Mês a mês')+'</div><div class="evo-mes">'+linhas+'</div>'+resumo;
 }
 function ultimaAval(a){return (a&&a.avaliacoes&&a.avaliacoes.length)?a.avaliacoes[a.avaliacoes.length-1]:null;}
+/* Mostra a avaliação já feita. Reusa montarAvalExport(), que já desenha o
+   relatório inteiro — só que até agora ele era montado num elemento escondido,
+   apenas para virar imagem. */
+let avalVerId=null, avalVerIdx=-1;
+function openAvalVer(id,idx){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  const lista=(a.avaliacoes||[]);
+  if(!lista.length){toast('Este aluno ainda não tem avaliação');return;}
+  avalVerId=id;
+  avalVerIdx=(idx===undefined||idx===null||idx<0||idx>=lista.length)?lista.length-1:idx;
+  const av=lista[avalVerIdx];
+  document.getElementById('avalver-sub').textContent=
+    a.nome+' · Nível '+(av.nivel||'—')+' · '+((av.data||'').split('-').reverse().join('/'));
+  // histórico: só aparece quando há mais de uma, para não poluir o comum
+  const segs=document.getElementById('avalver-datas');
+  if(lista.length>1){
+    segs.style.display='';
+    segs.innerHTML=lista.map((x,i)=>'<button class="'+(i===avalVerIdx?'on':'')+'" onclick="openAvalVer(\''+id+'\','+i+')">'
+      +((x.data||'').split('-').reverse().slice(0,2).join('/'))+'</button>').join('');
+  }else segs.style.display='none';
+  document.getElementById('avalver-corpo').innerHTML=htmlAvalDe(a,av);
+  document.getElementById('avalver-enviar').onclick=function(){
+    closeModal('ov-avalver');openAvalExport(id);
+  };
+  document.getElementById('ov-avalver').classList.add('on');
+}
 function openAvalExport(id){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
   const av=ultimaAval(a);
@@ -3911,8 +4019,11 @@ function openAvalExport(id){
   const wa=document.getElementById('avalexp-wa');if(wa)wa.style.display=a.tel?'':'none';
   document.getElementById('ov-avalexp').classList.add('on');
 }
-function montarAvalExport(a){
-  const av=ultimaAval(a);if(!av)return;
+/* Monta o relatório de UMA avaliação. Estava embutido no montarAvalExport, que
+   só sabia a última e escrevia direto num elemento escondido — por isso não dava
+   para simplesmente olhar uma avaliação na tela, nem rever as anteriores. */
+function htmlAvalDe(a,av){
+  if(!a||!av)return '';
   const ci=Math.max(0,TRILHA_NIVEIS.indexOf(av.nivel));
   const met=metalDe(av.nivel);
   const nome1=a.nome;
@@ -3937,7 +4048,11 @@ function montarAvalExport(a){
   if(_mes)html+='<div style="margin-top:14px">'+_mes+'</div>';
   if(av.obs)html+='<div class="aex-prio" style="margin-top:14px;background:#F7F4EE;border-color:#e7e0d2">📝 '+escAval(av.obs)+'</div>';
   html+='<div class="tex-foot">Disciplina no treino. Evolução no jogo. 🎾 · Prof. João Victor</div></div>';
-  document.getElementById('aval-export').innerHTML=html;
+  return html;
+}
+function montarAvalExport(a){
+  const av=ultimaAval(a);if(!av)return;
+  document.getElementById('aval-export').innerHTML=htmlAvalDe(a,av);
 }
 function escAval(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function avalExportCanvas(){
@@ -4078,7 +4193,7 @@ function renderAvaliacoes(){
     const due=(!av||dias>42);
     const nivel=av?('<span class="avnivel" style="background:'+metalDe(av.nivel).m+';color:#fff">'+(av.nivel||'—')+'</span>'):'<span class="avnivel none">Sem avaliação</span>';
     const sub=av?('Última: '+tempoDesde(dias)+(av.prioridade?' · 🎯 '+escAval(av.prioridade):'')):(a.tipo+' · '+(a.plano>0?('Flex '+a.plano):'sem pacote'));
-    return '<div class="avcard">'+
+    return '<div class="avcard'+(av?' avcard-ver':'')+'"'+(av?' onclick="if(!event.target.closest(\'button\'))openAvalVer(\''+a.id+'\')"':'')+'>'+
       '<div class="avtop"><div><div class="avnome">'+(ehPersonalTipo(a.tipo)?'💪 ':'🎾 ')+escAval(a.nome)+'</div><div class="avsub">'+sub+'</div></div>'+nivel+'</div>'+
       avMiniHTML(av)+
       (due?'<div class="avdue">⏰ '+(av?'reavaliar (6+ semanas)':'avaliar este aluno')+'</div>':'')+
@@ -4088,7 +4203,8 @@ function renderAvaliacoes(){
       '<div class="avacts">'+
         '<button class="b1" onclick="openAvalModal(\''+a.id+'\')">'+BI.chart+'Avaliar</button>'+
         '<button class="b2" onclick="openRegistroModal(\''+a.id+'\')">📝 Registro</button>'+
-        (av?'<button class="b3" onclick="openAvalExport(\''+a.id+'\')">📤 Devolutiva</button>':'')+
+        (av?'<button class="b3" onclick="openAvalVer(\''+a.id+'\')">👁 Ver avaliação</button>':'')+
+        (av?'<button class="b3" onclick="openAvalExport(\''+a.id+'\')">📤 Enviar</button>':'')+
         '<button class="b4" onclick="setAvalOff(\''+a.id+'\',true)">🚫 Tirar</button>'+
       '</div>'+
     '</div>';
@@ -4488,6 +4604,9 @@ function renderDash(){
   document.getElementById('k-recebido-s').textContent=movs.length+' lançamento'+(movs.length===1?'':'s');
   document.getElementById('k-pendente').textContent=fmt(pendValor);
   document.getElementById('k-pendente-s').textContent=pendAlunos.length+' aluno'+(pendAlunos.length===1?'':'s');
+  // só vira botão quando há alguém para mostrar: prometer toque sem destino é pior que não ter
+  const kp=document.getElementById('kpi-pendente');
+  if(kp)kp.classList.toggle('tocavel',pendAlunos.length>0);
   document.getElementById('k-alunos').textContent=DB.alunos.length;
   document.getElementById('k-alunos-s').textContent='cadastrados';
   document.getElementById('k-creditos').textContent=fmtCred(creditos);
