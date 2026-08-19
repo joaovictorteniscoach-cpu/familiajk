@@ -555,7 +555,8 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
     <div class="field" style="max-width:200px;margin-bottom:18px"><label>Câmbio USD → BRL</label><input id="in-cambio" type="number" step="0.01" oninput="onCambio(this.value)"></div>
     <div style="margin-bottom:18px">
       <button class="iconbtn primary" onclick="importXP()">📥 Importar planilha da XP</button>
-      <p class="note" style="margin-top:8px">Baixe a posição da XP em <b>.xlsx</b> ou <b>.csv</b> e traga pra cá sem digitar. Você confere as colunas antes de aplicar. O arquivo é lido só neste aparelho.</p>
+      <button class="iconbtn" onclick="pickFotoInvest()">📷 atualizar por foto</button>
+      <p class="note" style="margin-top:8px">Baixe a posição da XP em <b>.xlsx</b> ou <b>.csv</b> e traga pra cá sem digitar — você confere as colunas antes de aplicar. Ou tire uma <b>foto</b> da tela da corretora: o app lê os valores e atualiza os ativos que já existem aqui. Tudo lido só neste aparelho.</p>
     </div>
     <h2 style="font-size:14px">Nacional XP <span class="tag">(R$)</span></h2>
     <div class="scroll"><table class="tbl" id="tbl-nac"></table></div>
@@ -812,6 +813,20 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
       <button class="iconbtn" onclick="closeExtrato()">Fechar</button>
     </div>
     <p class="note">O extrato fica só neste aparelho. “Salvar por categoria” manda tudo para a aba <b>Categorias</b>.</p>
+  </div>
+</div>
+
+<div class="overlay" id="invFotoModal">
+  <div class="modal" style="max-width:600px">
+    <h3>Atualizar carteira pela foto</h3>
+    <p>Li estes ativos na imagem. Confira para onde vai cada um — o app tentou casar com o que já existe na sua carteira. Só aplica quando você confirmar.</p>
+    <div class="scroll" style="max-height:46vh"><table class="tbl" id="tbl-inv-foto"></table></div>
+    <p class="note" id="inv-foto-nota"></p>
+    <p class="note">A carteira <b>Global</b> não entra aqui: ela é em dólar, com quantidade e preço por ativo, e continua vindo da planilha da XP, que traz esses campos certos.</p>
+    <div class="row">
+      <button class="iconbtn primary" onclick="invFotoAplicar()">✓ atualizar carteira</button>
+      <button class="iconbtn" onclick="closeInvestFoto()">Cancelar</button>
+    </div>
   </div>
 </div>
 
@@ -2337,20 +2352,26 @@ function pickExtrato(){
   /* tipos MIME além das extensões: no iOS o app Arquivos desabilita .ofx,
      que não tem tipo registrado no sistema, e o arquivo fica impossível de escolher */
   i.accept='.ofx,.qfx,.csv,.txt,text/plain,text/csv,text/comma-separated-values,application/x-ofx,application/vnd.intu.qfx,application/octet-stream';
-  i.onchange=e=>{const f=e.target.files[0];if(!f)return;
+  i.onchange=e=>{const f=e.target.files[0];i.remove();if(!f)return;
     const r=new FileReader();
+    r.onerror=()=>alert('Não consegui ler o arquivo "'+f.name+'". Se ele veio de um app de banco, tente exportar de novo ou salvar no Arquivos antes de escolher.');
     r.onload=()=>{
       let t=r.result;
       /* OFX de banco brasileiro costuma vir em ISO-8859-1: se aparecer o caractere
          de substituição, relê com windows-1252 para não perder os acentos */
       if(typeof t==='string'&&t.indexOf('�')>-1){
         const r2=new FileReader();
+        r2.onerror=()=>loadExtrato(t,f.name);
         r2.onload=()=>loadExtrato(r2.result,f.name);
         try{r2.readAsText(f,'windows-1252');return;}catch(_){}
       }
       loadExtrato(t,f.name);
     };
     r.readAsText(f,'utf-8');};
+  /* o input precisa estar na página: no Safari do iPhone um input solto,
+     fora do documento, às vezes ignora o .click() e nada acontece */
+  i.style.position='fixed';i.style.left='-9999px';
+  document.body.appendChild(i);
   i.click();
 }
 function parseBRNum(s){
@@ -2376,16 +2397,50 @@ function parseOFX(text){
   });
   return txns;
 }
+/* Divide uma linha de CSV respeitando aspas: "MERCADO, LTDA" é UM campo, não
+   dois. O split direto no separador quebrava esses extratos inteiros. */
+function splitCSVLine(line,delim){
+  const out=[];let cur='',aspas=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(c==='"'){
+      if(aspas&&line[i+1]==='"'){cur+='"';i++;}   /* "" é uma aspa literal */
+      else aspas=!aspas;
+      continue;
+    }
+    if(c===delim&&!aspas){out.push(cur);cur='';continue;}
+    cur+=c;
+  }
+  out.push(cur);
+  return out.map(x=>x.trim());
+}
+/* separador do arquivo: ; , ou tabulação — o que mais aparecer fora das aspas */
+function detectDelim(linha){
+  const fora=linha.replace(/"[^"]*"/g,'');
+  const c={';':(fora.match(/;/g)||[]).length,',':(fora.match(/,/g)||[]).length,'\t':(fora.match(/\t/g)||[]).length};
+  let melhor=';';
+  if(c['\t']>c[';']&&c['\t']>=c[','])melhor='\t';
+  else if(c[',']>c[';'])melhor=',';
+  return melhor;
+}
 function parseCSV(text){
   const lines=text.split(/\r?\n/).filter(l=>l.trim());if(!lines.length)return [];
-  const delim=((lines[0].match(/;/g)||[]).length>=(lines[0].match(/,/g)||[]).length)?';':',';
-  const first=lines[0].split(delim).map(s=>s.trim().toLowerCase());
+  const delim=detectDelim(lines[0]);
+  const first=splitCSVLine(lines[0],delim).map(s=>s.toLowerCase());
   const hasHeader=first.some(c=>/data|valor|hist|descri|amount|date|memo|lanc|lanç|t[ií]tulo|title|estabelec|value/.test(c));
   let start=0,di=-1,vi=-1,xi=-1;
-  if(hasHeader){start=1;first.forEach((c,k)=>{if(/data|date/.test(c)&&di<0)di=k;if(/valor|amount|vlr|value/.test(c)&&vi<0)vi=k;if(/hist|descri|memo|lanc|lanç|t[ií]tulo|title|estabelec/.test(c)&&xi<0)xi=k;});}
+  if(hasHeader){
+    start=1;
+    /* a ordem importa: data e valor primeiro, e a descrição só entre as colunas
+       que sobraram. Senão "Data Lançamento" casa com "lanç" e a coluna de data
+       vira a descrição, escondendo a "Histórico" logo ao lado. */
+    first.forEach((c,k)=>{if(/data|date/.test(c)&&di<0)di=k;});
+    first.forEach((c,k)=>{if(k!==di&&/valor|amount|vlr|value/.test(c)&&vi<0)vi=k;});
+    first.forEach((c,k)=>{if(k!==di&&k!==vi&&/descri|hist|memo|t[ií]tulo|title|estabelec|lanc|lanç/.test(c)&&xi<0)xi=k;});
+  }
   const txns=[];
   for(let i=start;i<lines.length;i++){
-    const parts=lines[i].split(delim);if(parts.length<2)continue;
+    const parts=splitCSVLine(lines[i],delim);if(parts.length<2)continue;
     let vidx=vi;
     if(vidx<0){for(let k=parts.length-1;k>=0;k--){if(parseBRNum(parts[k])!=null&&/\d/.test(parts[k])){vidx=k;break;}}}
     const amt=parseBRNum(parts[vidx]);if(amt==null)continue;
@@ -2582,7 +2637,15 @@ function openPasteExtrato(){document.getElementById('pasteText').value='';docume
 function closePaste(){document.getElementById('pasteModal').classList.remove('on');}
 function readPasteExtrato(){const t=parseTextExtrato(document.getElementById('pasteText').value);closePaste();showExtratoPreview(t);}
 function ocrToast(msg){const e=document.getElementById('ocrToast');if(!e)return;if(msg===false){e.style.display='none';return;}e.textContent=msg;e.style.display='block';}
-function pickFotoExtrato(){const i=document.createElement('input');i.type='file';i.accept='image/*';i.onchange=e=>{const f=e.target.files[0];if(f)runOCR(f);};i.click();}
+/* Um seletor de arquivo que funciona no iPhone: o input precisa estar na
+   página, senão o Safari às vezes ignora o .click() e nada acontece. */
+function pickFile(accept,cb){
+  const i=document.createElement('input');i.type='file';i.accept=accept;
+  i.onchange=e=>{const f=e.target.files[0];i.remove();if(f)cb(f);};
+  i.style.position='fixed';i.style.left='-9999px';
+  document.body.appendChild(i);i.click();
+}
+function pickFotoExtrato(){pickFile('image/*',f=>runOCR(f));}
 let tessLoad=null;
 function ensureTesseract(){if(window.Tesseract)return Promise.resolve();if(tessLoad)return tessLoad;tessLoad=new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';s.onload=res;s.onerror=()=>rej(new Error('cdn'));document.head.appendChild(s);});return tessLoad;}
 async function runOCR(file){
@@ -2607,6 +2670,153 @@ async function runOCR(file){
     else alert('O leitor carregou, mas falhou ao LER a imagem. Tente uma foto menor ou mais nítida.'+det+ALT);
   }
 }
+/* ============ Atualizar investimentos por FOTO ============
+   O usuário fotografa a tela do app da corretora e o OCR lê "nome do ativo +
+   valor". O app casa com o que já existe na Carteira e atualiza o valor — a
+   ideia é atualizar, não recadastrar. Só Nacional e Binance, que guardam valor
+   em reais; a carteira Global é em dólar, com quantidade e preço, e continua
+   vindo da planilha da XP (importar planilha), que traz esses campos certos. */
+const INV_IGNORAR=/^(total|saldo|patrim[oô]nio|posi[cç][aã]o|carteira|investimentos?|resumo|rentabilidade|valor bruto|valor l[ií]quido|subtotal)\b/;
+function parseTextInvest(text){
+  const out=[];
+  (text||'').split(/\r?\n/).forEach(raw=>{
+    const line=raw.replace(/\s+/g,' ').trim();if(line.length<3)return;
+    const nums=line.match(/\d{1,3}(?:\.\d{3})*,\d{2}|\d+,\d{2}/g);if(!nums)return;
+    const valStr=nums[nums.length-1];
+    const valor=parseBRNum(valStr);
+    if(valor==null||!(valor>0))return;
+    let nome=line.slice(0,line.lastIndexOf(valStr))
+      .replace(/r\$/ig,'').replace(/[|;]+/g,' ')
+      .replace(/[-+]?\d+(?:[.,]\d+)?%/g,' ')       /* tira percentuais de rentabilidade */
+      .replace(/\s{2,}/g,' ').trim();
+    nome=nome.replace(/[.,;:\-–—]+$/,'').trim();
+    if(nome.length<3)return;
+    if(INV_IGNORAR.test(norm(nome)))return;          /* linha de total, não é ativo */
+    out.push({nome:nome.slice(0,48),valor});
+  });
+  return out;
+}
+/* onde cada linha lida pode cair */
+function invAlvos(){
+  const a=[['ignorar','— não usar esta linha —']];
+  (D.invest.nacional||[]).forEach((x,i)=>a.push(['nac:'+i,'Nacional · '+x.nome]));
+  (D.invest.binance||[]).forEach((x,i)=>a.push(['bin:'+i,'Binance · '+x.nome]));
+  a.push(['novo-nac','+ novo ativo em Nacional']);
+  a.push(['novo-bin','+ novo ativo na Binance']);
+  return a;
+}
+/* Palavras que aparecem em quase todo nome de fundo e não distinguem nada —
+   casar por elas é o mesmo erro de casar conta pela palavra "PAGAMENTO". */
+const ATIVO_GENERICO=new Set(['fundo','fundos','fic','fim','firf','fif','rf','ref','di','cp','rl',
+  'multi','multimercado','invest','investimento','investimentos','renda','fixa','acoes','etf',
+  'classe','cotas','credito','privado','longo','prazo','curto','simples','plus','master','xp',
+  'itau','bb','trend','global','nacional','brasil','br','fia','fidc','lp','cnpj','total','valor']);
+function palavrasAtivo(nome){
+  return limpaDesc(nome).split(' ').filter(w=>w.length>=3&&!ATIVO_GENERICO.has(w)&&!/^\d+$/.test(w));
+}
+/* casa o nome lido na foto com um ativo da carteira. Pontua pelas palavras
+   distintivas em comum; sem nenhuma, é ativo novo — melhor acrescentar do que
+   sobrescrever o valor do ativo errado. */
+function casarAtivo(nome){
+  const alvo=limpaDesc(nome);
+  if(!alvo)return 'ignorar';
+  const palAlvo=palavrasAtivo(nome);
+  let melhor=null,melhorPonto=0;
+  const avaliar=(x,chave)=>{
+    const pal=palavrasAtivo(x.nome);
+    if(!pal.length||!palAlvo.length)return;
+    const comuns=pal.filter(w=>palAlvo.includes(w)).length;
+    if(!comuns)return;
+    /* proporção do nome cadastrado que foi reconhecida, com desempate pelo nº de palavras */
+    const ponto=comuns/pal.length+comuns/1000;
+    if(ponto>melhorPonto){melhorPonto=ponto;melhor=chave;}
+  };
+  (D.invest.nacional||[]).forEach((x,i)=>avaliar(x,'nac:'+i));
+  (D.invest.binance||[]).forEach((x,i)=>avaliar(x,'bin:'+i));
+  return melhor||'novo-nac';
+}
+function valorAtualDe(alvo){
+  const m=/^(nac|bin):(\d+)$/.exec(alvo||'');if(!m)return null;
+  const arr=m[1]==='nac'?D.invest.nacional:D.invest.binance;
+  const x=arr&&arr[+m[2]];return x?(+x.valor||0):null;
+}
+let invFoto=[];
+function pickFotoInvest(){pickFile('image/*',f=>runOCRInvest(f));}
+async function runOCRInvest(file){
+  const ALT='\n\nAlternativa: use “importar planilha” (o arquivo da XP é sempre mais fiel que a foto).';
+  let etapa='baixar';
+  try{
+    ocrToast('Baixando o leitor de imagem…');
+    await ensureTesseract();
+    etapa='ler';
+    ocrToast('Lendo a imagem…');
+    const {data}=await Tesseract.recognize(file,'por',{logger:m=>{if(m.status==='recognizing text')ocrToast('Lendo imagem… '+Math.round((m.progress||0)*100)+'%');}});
+    ocrToast(false);
+    const txt=(data&&data.text)||'';
+    if(!txt.trim()){alert('O leitor funcionou, mas não achou texto nessa imagem.\n\nTente uma foto mais próxima e sem reflexo.'+ALT);return;}
+    const lista=parseTextInvest(txt);
+    if(!lista.length){alert('Li o texto da imagem, mas não reconheci nenhum ativo (preciso do nome e do valor em reais na mesma linha).\n\nDica: fotografe só a lista de ativos, sem o gráfico.'+ALT);return;}
+    showInvestFoto(lista);
+  }catch(e){
+    ocrToast(false);
+    const det=(e&&e.message)?('\n\nDetalhe: '+e.message):'';
+    if(etapa==='baixar')alert('Não consegui BAIXAR o leitor de imagem. Ele vem da internet na primeira vez — confira a conexão e tente de novo.'+det+ALT);
+    else alert('O leitor carregou, mas falhou ao LER a imagem. Tente uma foto menor ou mais nítida.'+det+ALT);
+  }
+}
+function showInvestFoto(lista){
+  invFoto=lista.map(x=>{const alvo=casarAtivo(x.nome);return {nome:x.nome,valor:x.valor,alvo,antigo:valorAtualDe(alvo)};});
+  renderInvestFoto();
+  document.getElementById('invFotoModal').classList.add('on');
+}
+function closeInvestFoto(){document.getElementById('invFotoModal').classList.remove('on');}
+function invFotoSet(i,campo,v){
+  const r=invFoto[i];if(!r)return;
+  if(campo==='alvo'){r.alvo=v;r.antigo=valorAtualDe(v);}
+  else r.valor=+v||0;
+  renderInvestFoto();
+}
+function renderInvestFoto(){
+  const alvos=invAlvos();
+  /* duas colunas só: nome e destino empilhados de um lado, valor do outro.
+     Em quatro colunas o "novo valor" — que é o ponto — saía da tela do celular. */
+  let h='<tr><th>Ativo e destino</th><th>Novo valor (R$)</th></tr>';
+  invFoto.forEach((r,i)=>{
+    const muda=r.antigo!=null&&Math.abs(r.antigo-r.valor)>0.005;
+    h+='<tr'+(r.alvo==='ignorar'?' style="opacity:.45"':'')+'>'
+      +'<td class="name" style="white-space:normal;max-width:190px">'
+        +'<div style="font-size:12px;line-height:1.3">'+esc(r.nome)+'</div>'
+        +'<select class="cell txt" style="width:100%;max-width:190px;font-size:11px;margin-top:4px" onchange="invFotoSet('+i+',\'alvo\',this.value)">'
+        +alvos.map(a=>'<option value="'+a[0]+'"'+(a[0]===r.alvo?' selected':'')+'>'+esc(a[1])+'</option>').join('')+'</select></td>'
+      +'<td style="white-space:normal"><input class="cell" type="number" step="0.01" style="min-width:104px" value="'+r.valor+'" oninput="invFotoSet('+i+',\'valor\',this.value)">'
+        +'<div class="mut" style="font-size:10px;margin-top:3px">'+(r.antigo!=null?('hoje '+brl(r.antigo)):'ativo novo')+'</div>'
+        +(muda?'<div class="'+(r.valor>r.antigo?'up':'down')+'" style="font-size:10px">'+(r.valor>r.antigo?'▲ ':'▼ ')+brl(Math.abs(r.valor-r.antigo))+'</div>':'')
+        +'</td></tr>';
+  });
+  const usadas=invFoto.filter(r=>r.alvo!=='ignorar');
+  h+='<tr class="sumrow"><td>'+usadas.length+' de '+invFoto.length+' linha(s)</td><td>'+brl(usadas.reduce((s,r)=>s+(+r.valor||0),0))+'</td></tr>';
+  document.getElementById('tbl-inv-foto').innerHTML=h;
+  set('inv-foto-nota',usadas.length?('Confira cada linha. As marcadas como “não usar” ficam de fora.')
+    :'Nenhuma linha selecionada — escolha o destino de pelo menos uma.');
+  if(typeof tuneInputs==='function')tuneInputs();
+}
+function invFotoAplicar(){
+  let atualizados=0,novos=0;
+  invFoto.forEach(r=>{
+    if(r.alvo==='ignorar'||!(r.valor>0))return;
+    if(r.alvo==='novo-nac'){D.invest.nacional.push({nome:r.nome,classe:guessClasse(r.nome),valor:r.valor,apl:null});novos++;return;}
+    if(r.alvo==='novo-bin'){D.invest.binance.push({nome:r.nome,classe:'Cripto',valor:r.valor,apl:null});novos++;return;}
+    const m=/^(nac|bin):(\d+)$/.exec(r.alvo);if(!m)return;
+    const arr=m[1]==='nac'?D.invest.nacional:D.invest.binance;
+    const x=arr&&arr[+m[2]];if(!x)return;
+    x.valor=r.valor;atualizados++;
+  });
+  if(!atualizados&&!novos){alert('Nada foi aplicado — todas as linhas estavam como “não usar”.');return;}
+  save();closeInvestFoto();
+  ['renderNac','renderBin','refreshCarteira','drawInvPainel','renderGanhos'].forEach(f=>{if(typeof window[f]==='function')safeRun(window[f]);});
+  alert('Carteira atualizada.\n'+atualizados+' ativo(s) com valor novo'+(novos?(' e '+novos+' ativo(s) acrescentado(s)'):'')+'.\nTotal investido agora: '+brl(invTotal()));
+}
+
 function catMonths(){const s=new Set(D.contas.transacoes.map(t=>t.mes).filter(m=>m&&m!=='—'));return ['Todos',...[...s]];}
 function onCatMes(v){catFiltroMes=v;renderCategorias();}
 function renderCategorias(){
