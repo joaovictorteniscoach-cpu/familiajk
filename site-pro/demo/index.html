@@ -1386,7 +1386,7 @@ window.__DEMO = true;
     <div id="slot-evs"></div>
     <button class="btn btn-ghost" style="width:100%;margin-top:10px;color:var(--c-bloq);border-color:#E5C0BA" onclick="marcarChuvaSlot()">☔ Marcar chuva / cancelar este horário</button>
     <div style="border-top:1px solid var(--border);margin:14px 0;padding-top:14px">
-      <p style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:9px">Adicionar neste horário</p>
+      <p id="s-form-title" style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:9px">Adicionar neste horário</p>
       <div class="field"><label>Vincular aluno cadastrado (opcional)</label>
         <select id="s-aluno" onchange="slotPickAluno()"><option value="">— sem vínculo —</option></select>
       </div>
@@ -1421,8 +1421,8 @@ window.__DEMO = true;
         </label>
       </div>
       <div class="modal-acts">
-        <button class="btn btn-ghost" onclick="closeModal('ov-slot')">Fechar</button>
-        <button class="btn btn-clay" onclick="saveSlot()">Adicionar</button>
+        <button class="btn btn-ghost" onclick="closeSlot()">Fechar</button>
+        <button class="btn btn-clay" id="s-save-btn" onclick="saveSlot()">Adicionar</button>
       </div>
     </div>
   </div>
@@ -1460,7 +1460,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-08-18-3';
+const VERSAO='2026-08-21-1';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -3365,8 +3365,22 @@ function openSlot(hora){
   sel.value='';
   renderSlotEvs();
   document.getElementById('ov-slot').classList.add('on');
+  resetSlotForm();
+}
+/* Volta o formulário ao modo "adicionar" — some com qualquer edição em curso. */
+function resetSlotForm(){
+  if(slotCtx)slotCtx.editing=null;
+  const ft=document.getElementById('s-form-title');if(ft)ft.textContent='Adicionar neste horário';
+  const sb=document.getElementById('s-save-btn');if(sb)sb.textContent='Adicionar';
+  const sr=document.getElementById('s-rec');if(sr){sr.disabled=false;sr.value='fixo';}
+  const ti=document.getElementById('s-titulo');if(ti)ti.value='';
+  const al=document.getElementById('s-aluno');if(al)al.value='';
+  const tp=document.getElementById('s-tipo');if(tp)tp.value='aula';
+  const gn=document.getElementById('s-grupo-n');if(gn)gn.value='2';
+  const rp=document.getElementById('s-repo');if(rp)rp.checked=false;
   toggleGrupoWrap();
 }
+function closeSlot(){resetSlotForm();closeModal('ov-slot');}
 function slotPickAluno(){
   const id=document.getElementById('s-aluno').value;
   if(!id)return;
@@ -3426,6 +3440,19 @@ function saveSlot(){
   const tipo=document.getElementById('s-tipo').value;
   const alunoId=document.getElementById('s-aluno').value||null;
   const pessoas=(tipo==='grupo')?(Number((document.getElementById('s-grupo-n')||{}).value)||2):null;
+  if(slotCtx.editing){
+    const {id,origem}=slotCtx.editing;
+    const rec=(origem==='fixo'?DB.agenda.fixos:DB.agenda.eventos).find(x=>x.id===id);
+    if(!rec){toast('Marcação não encontrada');resetSlotForm();renderSlotEvs();return;}
+    const repoChk=document.getElementById('s-repo');
+    const repo=(repoChk&&repoChk.checked&&(tipo==='aula'||tipo==='grupo'||tipo==='personal'))?1:0;
+    rec.titulo=t;rec.tipo=tipo;rec.alunoId=alunoId;rec.repo=repo;
+    if(tipo==='grupo')rec.pessoas=pessoas;else delete rec.pessoas;
+    logAct('Editar marcação: '+t);
+    resetSlotForm();
+    persist();renderSlotEvs();renderAgenda();toast('Marcação atualizada ✓');
+    return;
+  }
   if((tipo==='aula'||tipo==='grupo'||tipo==='personal')){
     const modo=slotModo(slotCtx.date,slotCtx.hora);
     if(modo!=='aula'){
@@ -3486,18 +3513,20 @@ function removerEvento(id){
   persist();renderSlotEvs();renderAgenda();toast('Removido');
 }
 function editarEntrada(id,origem){
-  const isFixo=origem==='fixo';
-  const rec=isFixo?DB.agenda.fixos.find(x=>x.id===id):DB.agenda.eventos.find(x=>x.id===id);
+  if(origem==='compromisso'){toast('Compromisso pessoal — altere pela agenda pessoal');return;}
+  const rec=(origem==='fixo'?DB.agenda.fixos:DB.agenda.eventos).find(x=>x.id===id);
   if(!rec){toast('Não encontrei este horário');return;}
-  const escopo=isFixo?('vale para toda '+DIAS[rec.dia]):'só nesta data';
-  const novo=prompt('Editar o nome deste horário ('+escopo+'):',rec.titulo);
-  if(novo===null)return;
-  const t=novo.trim();
-  if(!t){toast('Nome vazio — nada alterado');return;}
-  const old=rec.titulo;
-  rec.titulo=t;
-  logAct('Renomear: '+old+' → '+t);
-  persist();renderSlotEvs();renderAgenda();toast('Atualizado para "'+t+'"');
+  slotCtx.editing={id,origem};
+  document.getElementById('s-aluno').value=rec.alunoId||'';   // atribuição direta não dispara slotPickAluno, então não sobrescreve os detalhes
+  document.getElementById('s-titulo').value=rec.titulo||'';
+  document.getElementById('s-tipo').value=rec.tipo||'aula';
+  document.getElementById('s-grupo-n').value=String(rec.pessoas||2);
+  const rp=document.getElementById('s-repo');if(rp)rp.checked=!!rec.repo;
+  const sr=document.getElementById('s-rec');if(sr){sr.value=(origem==='fixo'?'fixo':'pontual');sr.disabled=true;} // recorrência não muda aqui: para isso use os botões da grade
+  document.getElementById('s-form-title').textContent='✏️ Editar '+(origem==='fixo'?'(toda '+DIAS[rec.dia]+')':'(só nesta data)');
+  document.getElementById('s-save-btn').textContent='Salvar alterações';
+  toggleGrupoWrap();
+  const ti=document.getElementById('s-titulo');ti.focus();ti.scrollIntoView({block:'center',behavior:'smooth'});
 }
 
 /* ================= ALUNOS ================= */
