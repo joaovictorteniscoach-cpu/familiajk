@@ -171,6 +171,9 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .bar-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;font-weight:500}
 .bar{height:9px;border-radius:6px;background:#EFE7D8;overflow:hidden}
 .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--clay),var(--gold));border-radius:6px;transition:width .4s}
+.bar i.batida{background:linear-gradient(90deg,var(--gold),#2E7D32)}
+.foco-repos{background:#FBF1D8;border:1px solid #E7D6A8;color:#7C5E1A;font-size:12.5px;font-weight:600;border-radius:10px;padding:9px 12px;margin-bottom:10px}
+.foco-repos a{color:var(--clay);font-weight:800;text-decoration:underline;cursor:pointer;margin-left:4px}
 .pend-list{display:flex;flex-direction:column;gap:8px}
 /* etiqueta de prazo na lista de pendentes — nome proprio para nao colidir */
 .venc-tag{display:inline-block;margin-top:4px;font-size:10.5px;font-weight:800;letter-spacing:.3px;padding:2px 8px;border-radius:20px;background:#EFE7D8;color:#7a6f5e}
@@ -602,7 +605,7 @@ window.__DEMO = true;
     <div class="kpi dark"><div class="kpi-l">Recebido</div><div class="kpi-v" id="k-recebido">R$ 0</div><div class="kpi-s" id="k-recebido-s"></div></div>
     <div class="kpi clay" id="kpi-pendente" onclick="verPendentes()"><div class="kpi-l">A receber <span class="kpi-seta">›</span></div><div class="kpi-v" id="k-pendente">R$ 0</div><div class="kpi-s" id="k-pendente-s"></div></div>
     <div class="kpi light"><div class="kpi-l">Alunos ativos</div><div class="kpi-v" id="k-alunos">0</div><div class="kpi-s" id="k-alunos-s"></div></div>
-    <div class="kpi light"><div class="kpi-l">Créditos em aberto</div><div class="kpi-v" id="k-creditos">0</div><div class="kpi-s" id="k-repos-s"></div></div>
+    <div class="kpi light" id="kpi-cred" onclick="verReposicoes()"><div class="kpi-l">Créditos em aberto <span class="kpi-seta">›</span></div><div class="kpi-v" id="k-creditos">0</div><div class="kpi-s" id="k-repos-s"></div></div>
   </div>
   <div class="bar-wrap">
     <div class="bar-row"><span>Meta de faturamento</span><span id="bar-txt">—</span></div>
@@ -687,7 +690,7 @@ window.__DEMO = true;
   <p class="sec-eyebrow">Cadastro</p>
   <h2 class="sec-title">Meus <em>alunos</em></h2>
   <div class="toolbar">
-    <input id="search" placeholder="Buscar aluno…" oninput="renderAlunos()">
+    <input id="search" placeholder="Buscar aluno…" oninput="focoRepos=false;renderAlunos()">
     <button class="btn btn-ghost" onclick="gerenciarPacotes()" title="Ver/excluir pacotes personalizados">⚙️ Pacotes</button>
     <button class="btn btn-clay" onclick="openAlunoModal()">+ Novo</button>
   </div>
@@ -1460,7 +1463,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-08-21-1';
+const VERSAO='2026-08-25-1';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -2661,6 +2664,16 @@ function verPendentes(){
   alvo.classList.add('achei');
   setTimeout(()=>alvo.classList.remove('achei'),2700);
 }
+/* Cartão "Créditos em aberto" leva à tela Alunos, focada em quem tem reposição
+   pendente — que é onde as reposições de cada aluno são vistas e dadas baixa. */
+function verReposicoes(){
+  focoRepos=DB.alunos.some(a=>(Number(a.repos)||0)>0);   // só filtra se houver reposição; senão mostra todos (ainda útil p/ créditos)
+  irParaAba('alunos');
+  renderAlunos();
+  const list=document.getElementById('alunos-list');
+  if(list)list.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function limparFocoRepos(){focoRepos=false;renderAlunos();}
 /* ===== Badges da barra: quantas novidades por aba desde a última visita =====
    Reaproveita a classificação de destinoNotif: agenda = reservas e
    cancelamentos, torneio = resultados. O carimbo do que já foi visto fica no
@@ -4458,8 +4471,10 @@ function enviarRenovacaoWa(id){
   window.open('https://wa.me/55'+a.tel+'?text='+msg,'_blank');
 }
 let filtroAluno='todos';
+let focoRepos=false;
 function setFiltroAluno(f,btn){
   filtroAluno=f;
+  focoRepos=false;   // escolher um perfil sai do foco de reposição
   document.querySelectorAll('#alunos-filtro button').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
   renderAlunos();
@@ -4493,8 +4508,9 @@ function renderAlunos(){
   const items=DB.alunos.filter(a=>a.nome.toLowerCase().includes(q)).filter(a=>{
     if(filtroAluno==='todos')return true;
     return perfilDe(a)===filtroAluno;
-  }).sort((x,y)=>x.nome.localeCompare(y.nome));
-  if(!items.length){list.innerHTML='<div class="empty">Nenhum aluno '+(q||filtroAluno!=='todos'?'encontrado':'cadastrado ainda — toque em <b>+ Novo</b> para começar')+'.</div>';return;}
+  }).filter(a=>!focoRepos||(Number(a.repos)||0)>0).sort((x,y)=>x.nome.localeCompare(y.nome));
+  const avisoRepos=focoRepos?'<div class="foco-repos">🔁 Mostrando só quem tem <b>reposição pendente</b> · <a onclick="limparFocoRepos()">ver todos</a></div>':'';
+  if(!items.length){list.innerHTML=avisoRepos+'<div class="empty">Nenhum aluno '+(q||filtroAluno!=='todos'||focoRepos?'encontrado':'cadastrado ainda — toque em <b>+ Novo</b> para começar')+'.</div>';return;}
   // guarda quais cartões estão abertos: toda ação chama renderAll e reconstrói a
   // lista, e sem isso o cartão se fechava embaixo do dedo a cada toque
   const abertos=new Set(),comMais=new Set();
@@ -4503,7 +4519,7 @@ function renderAlunos(){
     if(el.classList.contains('open'))abertos.add(id);
     if(el.classList.contains('mais'))comMais.add(id);
   });
-  list.innerHTML=items.map(a=>{
+  list.innerHTML=avisoRepos+items.map(a=>{
     const ag=agendaDoMes(a);
     const difere=ag.total>0&&ag.valor!==(Number(a.mensalidade)||0);
     // o cartão passa a mostrar só o que se aplica a este aluno hoje
@@ -4657,10 +4673,15 @@ function renderDash(){
   document.getElementById('k-alunos-s').textContent='cadastrados';
   document.getElementById('k-creditos').textContent=fmtCred(creditos);
   document.getElementById('k-repos-s').textContent=fmtCred(repos)+' reposições pendentes';
+  const kc=document.getElementById('kpi-cred');
+  if(kc)kc.classList.toggle('tocavel',(creditos>0||repos>0));   // vira botão só quando há algo para ver
 
-  const pct=Math.min(100,Math.round(recebido/(DB.meta||1)*100));
-  document.getElementById('bar-fill').style.width=(hideVals?0:pct)+'%';
-  document.getElementById('bar-txt').textContent=hideVals?'R$ ••••':(fmt(recebido)+' / '+fmt(DB.meta)+' ('+pct+'%)');
+  const pctReal=Math.round(recebido/(DB.meta||1)*100);   // % de verdade, sem teto — mostra 127%, 200%, o que for
+  const pctBar=Math.min(100,pctReal);                     // largura da barra tem limite físico: não passa da caixa
+  const barFill=document.getElementById('bar-fill');
+  barFill.style.width=(hideVals?0:pctBar)+'%';
+  barFill.classList.toggle('batida',pctReal>=100);        // meta atingida/superada: destaque
+  document.getElementById('bar-txt').textContent=hideVals?'R$ ••••':(fmt(recebido)+' / '+fmt(DB.meta)+' ('+pctReal+'%)');
 
   const pl=document.getElementById('pend-list');
   // Aulas AGENDADAS na grade — conta só Tênis (aula+grupo) e Personal; ignora locação, bloqueio, pessoal e compromissos
