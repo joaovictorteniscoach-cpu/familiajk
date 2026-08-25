@@ -831,7 +831,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-08-25-1';
+const VERSAO='2026-08-25-2';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -1764,7 +1764,7 @@ function renderTorneioAluno(){
       const me=(EU&&EU.codigo&&p.cod&&p.cod===EU.codigo)||(meu&&(p.name||'').toLowerCase()===meu);
       return '<tr class="'+(me?'me':'')+'"><td class="l"><span class="atg-rank '+rk+'">'+(i+1)+'</span>'+torEscAl(p.name)+(me?' 👈':'')+'</td><td>'+(p.v||0)+'</td><td>'+(p.d||0)+'</td><td>'+(p.wo||0)+'</td><td class="atg-pts">'+calcPtsTorAl(p)+'</td></tr>';
     }).join('');
-    return '<div class="atg-card"><div class="atg-head"><div class="atg-badge">'+g+'</div><div class="atg-title">Grupo '+g+'</div></div><table class="atg-tbl"><thead><tr><th class="l">Jogador</th><th>V</th><th>D</th><th>WO</th><th>Pts</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+    return '<div class="atg-card"><div class="atg-head"><div class="atg-badge">'+g+'</div><div class="atg-title">'+torEscAl((t.nomesGrupos&&t.nomesGrupos[g]&&(''+t.nomesGrupos[g]).trim())||('Grupo '+g))+'</div></div><table class="atg-tbl"><thead><tr><th class="l">Jogador</th><th>V</th><th>D</th><th>WO</th><th>Pts</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
   }).join('');
   checarPremiacaoTor(t,grupos,meu);
 }
