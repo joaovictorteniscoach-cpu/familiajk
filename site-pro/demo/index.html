@@ -1463,7 +1463,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-08-25-1';
+const VERSAO='2026-08-25-2';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -2428,7 +2428,7 @@ async function doPublish(){
       precos:DB.precos||{avulsaPart:170,avulsaGrupo:95,locacao:70,personal:130},
       planos:PRECOS,
       grupoPreco:DB.grupoPreco||{dupla:90,trio:85,quarteto:80},
-      torneio:(function(){ensureTorneios();const t=DB.torneios.lista[DB.torneios.atual];return t?{id:t.id,nome:t.nome,tipo:t.tipo,jogadores:t.jogadores,etapa:t.etapa||1,encerrada:!!t.encerrada}:null;})(),
+      torneio:(function(){ensureTorneios();const t=DB.torneios.lista[DB.torneios.atual];return t?{id:t.id,nome:t.nome,tipo:t.tipo,jogadores:t.jogadores,etapa:t.etapa||1,encerrada:!!t.encerrada,nomesGrupos:t.nomesGrupos||{}}:null;})(),
       horas:HORAS,
       chuvas:(DB.chuvas||[]).slice(-60),
       locacaoOnly:DB.locacaoOnly||[],
@@ -5958,7 +5958,22 @@ function ensureTorneios(){
     if(t.etapa==null)t.etapa=1;
     if(t.encerrada==null)t.encerrada=false;
     if(!Array.isArray(t.etapasFin))t.etapasFin=[];
+    if(!t.nomesGrupos||typeof t.nomesGrupos!=='object')t.nomesGrupos={};   // nome próprio de cada grupo (categoria); vazio = "Grupo X"
   });
+}
+/* Nome que o João deu ao grupo; sem nome, cai no padrão "Grupo A". A letra
+   (A–E) continua sendo a identidade interna e a posição na escada — só o rótulo
+   visível muda. */
+function nomeGrupo(t,g){const n=t&&t.nomesGrupos&&t.nomesGrupos[g];return (n&&String(n).trim())?String(n).trim():('Grupo '+g);}
+function renomearGrupoTor(g){
+  const t=torAtual();
+  const atual=(t.nomesGrupos&&t.nomesGrupos[g])||'';
+  const novo=prompt('Nome da categoria do Grupo '+g+' (deixe vazio para voltar a "Grupo '+g+'"):',atual);
+  if(novo===null)return;
+  const v=novo.trim();
+  if(v)t.nomesGrupos[g]=v; else delete t.nomesGrupos[g];
+  logAct('Categoria do Grupo '+g+': '+(v||'(padrão)'));
+  persist();renderTorneio();toast(v?('Grupo '+g+' agora é "'+v+'"'):('Grupo '+g+' voltou ao padrão'));
 }
 function torAtual(){ensureTorneios();return DB.torneios.lista[DB.torneios.atual];}
 function etapaLabel(t){return 'Etapa '+((t&&t.etapa)||1);}
@@ -6077,7 +6092,7 @@ function renderTorEtapa(t){
   const fins=(t.etapasFin||[]).slice().sort((a,b)=>b.etapa-a.etapa);
   if(fins.length){
     hist='<div class="te-hist"><div class="te-hist-t">Etapas encerradas</div>'+fins.map(e=>{
-      const linhas=(e.campeoes||[]).map(c=>'Grupo '+c.grupo+': 🏆 '+torEsc(c.campeao)+' · 🥈 '+torEsc(c.vice)).join('<br>');
+      const linhas=(e.campeoes||[]).map(c=>torEsc(nomeGrupo(t,c.grupo))+': 🏆 '+torEsc(c.campeao)+' · 🥈 '+torEsc(c.vice)).join('<br>');
       return '<div class="te-hrow"><b>Etapa '+e.etapa+'</b> <span>'+((e.data||'').split('-').reverse().join('/'))+'</span><div class="te-camp">'+linhas+'</div></div>';
     }).join('')+'</div>';
   }
@@ -6101,7 +6116,7 @@ function renderGrupoTor(t,g){
       <td style="white-space:nowrap"><button class="tg-mv" title="Mover de grupo" onclick="abrirMoverTor('${torJsq(g)}','${q}')">↔</button><button class="tg-x" title="Remover" onclick="removerJogadorTor('${torJsq(g)}','${q}')">✕</button></td>
     </tr>`;
   }).join('');
-  return `<div class="tg-card"><div class="tg-head"><div class="tg-badge">${g}</div><div><div class="tg-title">Grupo ${g}</div><div class="tg-count">${players.length} jogador${players.length!==1?'es':''}</div></div></div>
+  return `<div class="tg-card"><div class="tg-head"><div class="tg-badge">${g}</div><div><div class="tg-title" title="Tocar para dar um nome à categoria" onclick="renomearGrupoTor('${torJsq(g)}')">${torEsc(nomeGrupo(t,g))} ✎</div><div class="tg-count">${players.length} jogador${players.length!==1?'es':''}</div></div></div>
     <table class="tg-tbl"><thead><tr><th>Jogador</th><th title="Vitórias">V</th><th title="Derrotas">D</th><th title="W.O.">WO</th><th title="Pontos">Pts</th><th></th></tr></thead><tbody data-group="${torAttr(g)}">${rows}</tbody></table></div>`;
 }
 function selTorneio(id){ensureTorneios();if(DB.torneios.lista[id]){DB.torneios.atual=id;persist();renderTorneio();}}
@@ -6124,7 +6139,7 @@ function excluirTorneio(){
   persist();renderTorneio();toast('Torneio excluído');
 }
 function abrirAddJogador(){
-  document.getElementById('tj-grupo').innerHTML=GRUPOS_TOR.map(g=>`<option value="${g}">Grupo ${g}</option>`).join('');
+  document.getElementById('tj-grupo').innerHTML=GRUPOS_TOR.map(g=>`<option value="${g}">${torEsc(nomeGrupo(torAtual(),g))}</option>`).join('');
   const sel=document.getElementById('tj-aluno');
   if(sel)sel.innerHTML='<option value="">— Avulso (digitar nome) —</option>'+DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${a.id}">${torEsc(a.nome)}</option>`).join('');
   document.getElementById('tj-nome').value='';
@@ -6164,8 +6179,8 @@ function updateStatTor(g,name,field,val){
 let moveTorCtx=null;
 function abrirMoverTor(g,name){
   moveTorCtx={g,name};
-  document.getElementById('tm-info').textContent=name+' · atualmente no Grupo '+g;
-  document.getElementById('tm-grupo').innerHTML=GRUPOS_TOR.filter(x=>x!==g).map(x=>`<option value="${x}">Grupo ${x}</option>`).join('');
+  document.getElementById('tm-info').textContent=name+' · atualmente em '+nomeGrupo(torAtual(),g);
+  document.getElementById('tm-grupo').innerHTML=GRUPOS_TOR.filter(x=>x!==g).map(x=>`<option value="${x}">${torEsc(nomeGrupo(torAtual(),x))}</option>`).join('');
   document.getElementById('ov-tor-move').classList.add('on');
 }
 function confirmarMoverTor(){
@@ -6177,7 +6192,7 @@ function abrirResultadoTor(){
   const t=torAtual();
   const grupos=GRUPOS_TOR.filter(g=>t.jogadores.some(p=>p.group===g));
   if(!grupos.length){toast('Adicione jogadores primeiro 🙂');return;}
-  document.getElementById('tr-grupo').innerHTML='<option value="">Selecionar grupo…</option>'+grupos.map(g=>`<option value="${g}">Grupo ${g}</option>`).join('');
+  document.getElementById('tr-grupo').innerHTML='<option value="">Selecionar grupo…</option>'+grupos.map(g=>`<option value="${g}">${torEsc(nomeGrupo(t,g))}</option>`).join('');
   document.getElementById('tr-p1').innerHTML='<option value="">—</option>';
   document.getElementById('tr-p2').innerHTML='<option value="">—</option>';
   document.getElementById('tr-venc').innerHTML='<option value="">—</option>';
