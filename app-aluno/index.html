@@ -831,7 +831,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-08-25-2';
+const VERSAO='2026-08-26-1';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -1756,7 +1756,7 @@ function renderTorneioAluno(){
   const subEl=document.getElementById('tor-cap-sub');
   if(subEl)subEl.textContent=(t.nome||'Barragem')+etapaTxt+(t.encerrada?' · encerrada':'');
   const meu=EU?(EU.nome||'').toLowerCase():'';
-  const grupos=GRUPOS_TOR_AL.filter(g=>t.jogadores.some(p=>p.group===g));
+  const grupos=Array.from(new Set(t.jogadores.map(p=>p.group))).filter(Boolean).sort();
   document.getElementById('tor-stand').innerHTML=grupos.map(g=>{
     const players=rankTorAl(t.jogadores.filter(p=>p.group===g));
     const rows=players.map((p,i)=>{
@@ -1819,7 +1819,7 @@ function celebraTorneioPremio(tipo,grupo,torNome,nome){
 function abrirRegResultado(){
   const t=PUB&&PUB.torneio;
   if(!t||!t.jogadores||!t.jogadores.length){toast('Torneio ainda não disponível');return;}
-  const grupos=GRUPOS_TOR_AL.filter(g=>t.jogadores.some(p=>p.group===g));
+  const grupos=Array.from(new Set(t.jogadores.map(p=>p.group))).filter(Boolean).sort();
   document.getElementById('atr-grupo').innerHTML='<option value="">Selecionar grupo…</option>'+grupos.map(g=>'<option value="'+g+'">Grupo '+g+'</option>').join('');
   ['atr-p1','atr-p2','atr-venc'].forEach(id=>document.getElementById(id).innerHTML='<option value="">—</option>');
   document.getElementById('atr-score').value='';
