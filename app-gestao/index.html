@@ -987,6 +987,7 @@ function esperarAuth(){
   <div id="tor-etapa"></div>
   <div class="tor-acts">
     <button class="b-add" onclick="abrirAddJogador()">＋ Jogador</button>
+    <button class="b-add" onclick="adicionarCategoria()">＋ Categoria</button>
     <button class="b-res" onclick="abrirResultadoTor()">🎾 Registrar resultado</button>
     <button class="b-wpp" onclick="compartilharTorneio()">📲 Texto</button>
     <button class="b-wpp" onclick="salvarBarragemImg()">🖼️ Imagem</button>
@@ -1516,7 +1517,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-08-25-2';
+const VERSAO='2026-08-26-1';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -5983,7 +5984,35 @@ function ensureTorneios(){
     if(t.encerrada==null)t.encerrada=false;
     if(!Array.isArray(t.etapasFin))t.etapasFin=[];
     if(!t.nomesGrupos||typeof t.nomesGrupos!=='object')t.nomesGrupos={};   // nome próprio de cada grupo (categoria); vazio = "Grupo X"
+    if(!Array.isArray(t.grupos)||!t.grupos.length){
+      // deriva das categorias que já têm jogador (para não surpreender torneios antigos);
+      // torneio vazio começa com A–E, como sempre foi
+      const pres=Array.from(new Set((t.jogadores||[]).map(p=>p.group))).filter(Boolean).sort();
+      t.grupos=pres.length?pres:['A','B','C','D','E'];
+    }
   });
+}
+/* A escada de categorias deste torneio, em ordem (A é a mais forte). Substitui as
+   listas fixas antigas — agora dá para ter quantas categorias você quiser. */
+function gruposDe(t){return (t&&Array.isArray(t.grupos)&&t.grupos.length)?t.grupos:['A','B','C','D','E'];}
+const ALFA_TOR='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+function adicionarCategoria(){
+  const t=torAtual();
+  const prox=ALFA_TOR.find(l=>t.grupos.indexOf(l)<0);
+  if(!prox){toast('Chegou ao limite de categorias (Z) 🙂');return;}
+  t.grupos.push(prox);t.grupos.sort();
+  logAct('Nova categoria no torneio: Grupo '+prox);
+  persist();renderTorneio();toast('Categoria "Grupo '+prox+'" criada — dê um nome tocando no título, ou adicione jogadores.');
+}
+function removerCategoria(g){
+  const t=torAtual();
+  if(t.jogadores.some(p=>p.group===g)){toast('Tire os jogadores desta categoria antes de removê-la');return;}
+  if(t.grupos.length<=1){toast('O torneio precisa de ao menos uma categoria');return;}
+  if(!confirm('Remover a categoria "'+nomeGrupo(t,g)+'" (vazia)?'))return;
+  t.grupos=t.grupos.filter(x=>x!==g);
+  if(t.nomesGrupos)delete t.nomesGrupos[g];
+  logAct('Categoria removida do torneio: Grupo '+g);
+  persist();renderTorneio();toast('Categoria removida');
 }
 /* Nome que o João deu ao grupo; sem nome, cai no padrão "Grupo A". A letra
    (A–E) continua sendo a identidade interna e a posição na escada — só o rótulo
@@ -6003,7 +6032,7 @@ function torAtual(){ensureTorneios();return DB.torneios.lista[DB.torneios.atual]
 function etapaLabel(t){return 'Etapa '+((t&&t.etapa)||1);}
 function campeoesDe(t){
   // vencedores por grupo (1º e 2º) segundo a classificação atual
-  const grupos=GRUPOS_TOR.filter(g=>t.jogadores.some(p=>p.group===g));
+  const grupos=gruposDe(t).filter(g=>t.jogadores.some(p=>p.group===g));
   return grupos.map(g=>{
     const ps=rankPlayersTor(t.jogadores.filter(p=>p.group===g));
     return {grupo:g,campeao:ps[0]?ps[0].name:'—',vice:ps[1]?ps[1].name:'—'};
@@ -6067,14 +6096,13 @@ function editarEtapaNum(){
    desce começa do zero. No fim do ano a premiação sai do total de cada
    categoria. Quem nunca teve etapa anterior tem ptsAcum=0 e se comporta
    exatamente como antes — nada a migrar. */
-const TOR_GRUPOS=['A','B','C','D'];      // A é a categoria mais forte
 function ptsEtapa(p){return (p.v||0)*3+(p.d||0)*1+(p.wo||0)*1;}
 function calcPtsTor(p){return (Number(p.ptsAcum)||0)+ptsEtapa(p);}
 function rankPlayersTor(jogs){return jogs.slice().sort((a,b)=>calcPtsTor(b)-calcPtsTor(a)||(b.v||0)-(a.v||0)||(a.order??0)-(b.order??0));}
 /* Sobe = letra anterior (B→A). Desce = letra seguinte (B→C). Nas pontas não há
    para onde ir: quem está lá permanece — e, por permanecer, mantém os pontos. */
-function grupoAcima(g){const i=TOR_GRUPOS.indexOf(g);return (i>0)?TOR_GRUPOS[i-1]:null;}
-function grupoAbaixo(g){const i=TOR_GRUPOS.indexOf(g);return (i>=0&&i<TOR_GRUPOS.length-1)?TOR_GRUPOS[i+1]:null;}
+function grupoAcima(t,g){const L=gruposDe(t);const i=L.indexOf(g);return (i>0)?L[i-1]:null;}
+function grupoAbaixo(t,g){const L=gruposDe(t);const i=L.indexOf(g);return (i>=0&&i<L.length-1)?L[i+1]:null;}
 /* Quem sobe, quem desce e quem fica — calculado ANTES de zerar os placares. */
 function movimentosEtapa(t){
   const porGrupo={};
@@ -6087,7 +6115,7 @@ function movimentosEtapa(t){
     // ele permanece e segue acumulando, em vez de subir de graça toda etapa
     if(ord.length<2){ficam.push(ord[0]);return;}
     const primeiro=ord[0], ultimo=ord[ord.length-1];
-    const acima=grupoAcima(g), abaixo=grupoAbaixo(g);
+    const acima=grupoAcima(t,g), abaixo=grupoAbaixo(t,g);
     ord.forEach(p=>{
       if(p===primeiro&&acima)sobem.push({p,de:g,para:acima});
       else if(p===ultimo&&abaixo&&ord.length>1)descem.push({p,de:g,para:abaixo});
@@ -6105,8 +6133,9 @@ function renderTorneio(){
   const t=torAtual();
   renderTorEtapa(t);
   const wrap=document.getElementById('tor-grupos');
-  const grupos=GRUPOS_TOR.filter(g=>t.jogadores.some(p=>p.group===g));
-  wrap.innerHTML=grupos.length?grupos.map(g=>renderGrupoTor(t,g)).join(''):'<div class="tor-empty">Nenhum jogador ainda neste torneio.<br>Toque em <b>＋ Jogador</b> para montar os grupos A–E. 🎾</div>';
+  const temJogador=(t.jogadores||[]).length>0;
+  // com jogadores, mostra TODAS as categorias definidas (uma nova, ainda vazia, aparece)
+  wrap.innerHTML=temJogador?gruposDe(t).map(g=>renderGrupoTor(t,g)).join(''):'<div class="tor-empty">Nenhum jogador ainda neste torneio.<br>Toque em <b>＋ Jogador</b> para montar as categorias. 🎾</div>';
   renderTorLog();
 }
 function renderTorEtapa(t){
@@ -6140,7 +6169,10 @@ function renderGrupoTor(t,g){
       <td style="white-space:nowrap"><button class="tg-mv" title="Mover de grupo" onclick="abrirMoverTor('${torJsq(g)}','${q}')">↔</button><button class="tg-x" title="Remover" onclick="removerJogadorTor('${torJsq(g)}','${q}')">✕</button></td>
     </tr>`;
   }).join('');
-  return `<div class="tg-card"><div class="tg-head"><div class="tg-badge">${g}</div><div><div class="tg-title" title="Tocar para dar um nome à categoria" onclick="renomearGrupoTor('${torJsq(g)}')">${torEsc(nomeGrupo(t,g))} ✎</div><div class="tg-count">${players.length} jogador${players.length!==1?'es':''}</div></div></div>
+  const head=`<div class="tg-head"><div class="tg-badge">${g}</div><div style="flex:1"><div class="tg-title" title="Tocar para dar um nome à categoria" onclick="renomearGrupoTor('${torJsq(g)}')">${torEsc(nomeGrupo(t,g))} ✎</div><div class="tg-count">${players.length} jogador${players.length!==1?'es':''}</div></div>${players.length===0?`<button class="tg-x" title="Remover categoria vazia" onclick="removerCategoria('${torJsq(g)}')">🗑️</button>`:''}</div>`;
+  if(players.length===0)
+    return `<div class="tg-card">${head}<div class="tg-count" style="padding:6px 2px 2px">Categoria vazia — use <b>＋ Jogador</b> para adicionar aqui.</div></div>`;
+  return `<div class="tg-card">${head}
     <table class="tg-tbl"><thead><tr><th>Jogador</th><th title="Vitórias">V</th><th title="Derrotas">D</th><th title="W.O.">WO</th><th title="Pontos">Pts</th><th></th></tr></thead><tbody data-group="${torAttr(g)}">${rows}</tbody></table></div>`;
 }
 function selTorneio(id){ensureTorneios();if(DB.torneios.lista[id]){DB.torneios.atual=id;persist();renderTorneio();}}
@@ -6163,7 +6195,7 @@ function excluirTorneio(){
   persist();renderTorneio();toast('Torneio excluído');
 }
 function abrirAddJogador(){
-  document.getElementById('tj-grupo').innerHTML=GRUPOS_TOR.map(g=>`<option value="${g}">${torEsc(nomeGrupo(torAtual(),g))}</option>`).join('');
+  document.getElementById('tj-grupo').innerHTML=gruposDe(torAtual()).map(g=>`<option value="${g}">${torEsc(nomeGrupo(torAtual(),g))}</option>`).join('');
   const sel=document.getElementById('tj-aluno');
   if(sel)sel.innerHTML='<option value="">— Avulso (digitar nome) —</option>'+DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${a.id}">${torEsc(a.nome)}</option>`).join('');
   document.getElementById('tj-nome').value='';
@@ -6204,7 +6236,7 @@ let moveTorCtx=null;
 function abrirMoverTor(g,name){
   moveTorCtx={g,name};
   document.getElementById('tm-info').textContent=name+' · atualmente em '+nomeGrupo(torAtual(),g);
-  document.getElementById('tm-grupo').innerHTML=GRUPOS_TOR.filter(x=>x!==g).map(x=>`<option value="${x}">${torEsc(nomeGrupo(torAtual(),x))}</option>`).join('');
+  document.getElementById('tm-grupo').innerHTML=gruposDe(torAtual()).filter(x=>x!==g).map(x=>`<option value="${x}">${torEsc(nomeGrupo(torAtual(),x))}</option>`).join('');
   document.getElementById('ov-tor-move').classList.add('on');
 }
 function confirmarMoverTor(){
@@ -6214,7 +6246,7 @@ function confirmarMoverTor(){
 }
 function abrirResultadoTor(){
   const t=torAtual();
-  const grupos=GRUPOS_TOR.filter(g=>t.jogadores.some(p=>p.group===g));
+  const grupos=gruposDe(t).filter(g=>t.jogadores.some(p=>p.group===g));
   if(!grupos.length){toast('Adicione jogadores primeiro 🙂');return;}
   document.getElementById('tr-grupo').innerHTML='<option value="">Selecionar grupo…</option>'+grupos.map(g=>`<option value="${g}">${torEsc(nomeGrupo(t,g))}</option>`).join('');
   document.getElementById('tr-p1').innerHTML='<option value="">—</option>';
@@ -6250,7 +6282,7 @@ function salvarResultadoTor(){
 function compartilharTorneio(){
   const t=torAtual();
   let txt='🏆 *'+t.nome.toUpperCase()+' — Academia João Victor Tênis*\n\n';
-  const grupos=GRUPOS_TOR.filter(g=>t.jogadores.some(p=>p.group===g));
+  const grupos=gruposDe(t).filter(g=>t.jogadores.some(p=>p.group===g));
   if(!grupos.length){toast('Sem jogadores para compartilhar');return;}
   grupos.forEach(g=>{
     txt+='*── GRUPO '+g+' ──*\n';
@@ -6343,7 +6375,7 @@ async function enviarSemanaImg(){
   }catch(e){toast('Erro ao gerar a imagem');}
 }
 function montarTorExport(t){
-  const grupos=GRUPOS_TOR.filter(g=>t.jogadores.some(p=>p.group===g));
+  const grupos=gruposDe(t).filter(g=>t.jogadores.some(p=>p.group===g));
   let html='<div class="tex-head"><div><b>Academia João Victor Tênis</b><span>'+torEsc(t.nome)+' · '+new Date().toLocaleDateString('pt-BR')+'</span></div><div class="tex-emb">JV</div></div>';
   grupos.forEach(g=>{
     const players=rankPlayersTor(t.jogadores.filter(p=>p.group===g));
@@ -6355,7 +6387,7 @@ function montarTorExport(t){
 }
 function barragemCanvas(){
   const t=torAtual();
-  const grupos=GRUPOS_TOR.filter(g=>t.jogadores.some(p=>p.group===g));
+  const grupos=gruposDe(t).filter(g=>t.jogadores.some(p=>p.group===g));
   if(!grupos.length){toast('Sem jogadores para compartilhar');return Promise.reject('vazio');}
   montarTorExport(t);
   return html2canvas(document.getElementById('tor-export'),{backgroundColor:'#ffffff',scale:2});
