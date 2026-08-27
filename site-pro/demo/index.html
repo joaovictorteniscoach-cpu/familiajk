@@ -1471,7 +1471,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-08-27-3';
+const VERSAO='2026-08-27-4';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -4373,10 +4373,26 @@ function saldoCredTotal(a){return (Number(a&&a.creditos)||0)+(Number(a&&a.credGr
 function difSilenciada(a){return !!(a&&a.difOk&&a.difOk.mes===monthKey()&&saldoCredTotal(a)>0);}
 function manterValorAnotado(id){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  a.difUndo={mes:monthKey(),mensalidade:Number(a.mensalidade)||0,plano:Number(a.plano)||0,planoGrupo:Number(a.planoGrupo)||0,difOk:a.difOk||null};   // guarda para desfazer
   a.difOk={mes:monthKey()};
   logAct('Manter valor anotado (silenciar diferença da agenda): '+a.nome);
   persist();renderAll();
   toast('✓ Valor anotado mantido para '+a.nome.split(' ')[0]+' — aviso some até virar o mês ou zerar os créditos.');
+}
+/* Desfaz a última decisão (cobrar pela agenda ou manter) daquele aluno neste mês
+   — para quando o toque foi sem querer. Restaura mensalidade, plano e o estado
+   do aviso exatamente como estavam antes. */
+function desfazerDecisaoDif(id){
+  const a=DB.alunos.find(x=>x.id===id);if(!a||!a.difUndo)return;
+  const u=a.difUndo;
+  if(u.mensalidade!==undefined)a.mensalidade=u.mensalidade;
+  if(u.plano!==undefined)a.plano=u.plano;
+  if(u.planoGrupo!==undefined)a.planoGrupo=u.planoGrupo;
+  if(u.difOk)a.difOk=u.difOk;else delete a.difOk;
+  delete a.difUndo;
+  logAct('Desfazer decisão da diferença: '+a.nome);
+  persist();renderAll();
+  toast('↩︎ Desfeito · '+a.nome.split(' ')[0]+' voltou ao estado anterior. Escolha a ação correta.');
 }
 /* Aplica a conta da agenda como mensalidade. Só acontece por toque dele: a
    mensalidade é o valor que o aluno vê e paga pelo app, e desde o bloqueio por
@@ -4389,6 +4405,7 @@ function cobrarPelaAgenda(id){
   if(!confirm('Cobrar '+a.nome+' pelas aulas da agenda deste mês?\n\n'
     +g.detalhe+'\n= '+fmtRs(g.valor)+'\n\nMensalidade de hoje: '+fmtRs(atual)
     +'\nPlano do cadastro: '+(Number(a.plano)||0)+' aula(s)'+((Number(a.planoGrupo)||0)>0?(' + '+a.planoGrupo+' em grupo'):'')))return;
+  a.difUndo={mes:monthKey(),mensalidade:atual,plano:Number(a.plano)||0,planoGrupo:Number(a.planoGrupo)||0,difOk:a.difOk||null};   // guarda para desfazer
   a.mensalidade=g.valor;
   delete a.difOk;   // valores agora iguais: nada a silenciar
   // o plano acompanha, senão "Renovar mês" devolveria o número antigo de créditos
@@ -4468,7 +4485,7 @@ function renovarMes(id){
   if(confirm('Renovar o mês de '+a.nome+'? Soma '+resumo+' e marca como pendente.')){
     mover(a,'creditos',Number(a.plano)||0,'Renovação do mês');
     if(pg>0)mover(a,'credGrupo',pg,'Renovação do mês (grupo)');   // plano misto renova as duas partes
-    a.status='pendente';delete a.difOk;persist();renderAll();   // novo ciclo: reavalia a diferença do zero
+    a.status='pendente';delete a.difOk;delete a.difUndo;persist();renderAll();   // novo ciclo: reavalia a diferença do zero
     toast('Mês renovado para '+a.nome+' · '+resumo);
   }
 }
@@ -4576,6 +4593,7 @@ function renderAlunos(){
         ${devendo?`<button class="act a3" onclick="marcarPago('${a.id}')">${BI.money}Marcar pago</button>`:''}
         ${difere?`<button class="act a2" onclick="cobrarPelaAgenda('${a.id}')">📅 Cobrar pela agenda (${fmt(ag.valor)})</button>`:''}
         ${difere?`<button class="act a4" onclick="manterValorAnotado('${a.id}')">✓ Manter ${fmt(a.mensalidade)}</button>`:''}
+        ${(a.difUndo&&a.difUndo.mes===monthKey())?`<button class="act a1" onclick="desfazerDecisaoDif('${a.id}')">↩︎ Desfazer cobrança</button>`:''}
         ${temRepos?`<button class="act a4" onclick="usarRepos('${a.id}')">${BI.undo}Usar reposição</button>`:''}
         <button class="act maisbtn" onclick="toggleMais('${a.id}')">⋯ Mais ações</button>
       </div>
