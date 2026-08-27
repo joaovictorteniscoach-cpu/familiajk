@@ -1524,7 +1524,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-08-27-2';
+const VERSAO='2026-08-27-4';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -4390,6 +4390,34 @@ function usaLocacao(a){
 }
 /* A conta do mês corrente, que é a que aparece no card e no cadastro. */
 function agendaDoMes(a){const d=new Date();return mensalidadeDaAgenda(a,d.getFullYear(),d.getMonth());}
+function saldoCredTotal(a){return (Number(a&&a.creditos)||0)+(Number(a&&a.credGrupo)||0);}
+/* Diferença entre o valor da agenda e o valor anotado: depois que o João decide
+   (trocar ou manter), o aviso fica silenciado. Volta a aparecer só na virada do
+   mês ou quando os créditos do aluno zeram. */
+function difSilenciada(a){return !!(a&&a.difOk&&a.difOk.mes===monthKey()&&saldoCredTotal(a)>0);}
+function manterValorAnotado(id){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  a.difUndo={mes:monthKey(),mensalidade:Number(a.mensalidade)||0,plano:Number(a.plano)||0,planoGrupo:Number(a.planoGrupo)||0,difOk:a.difOk||null};   // guarda para desfazer
+  a.difOk={mes:monthKey()};
+  logAct('Manter valor anotado (silenciar diferença da agenda): '+a.nome);
+  persist();renderAll();
+  toast('✓ Valor anotado mantido para '+a.nome.split(' ')[0]+' — aviso some até virar o mês ou zerar os créditos.');
+}
+/* Desfaz a última decisão (cobrar pela agenda ou manter) daquele aluno neste mês
+   — para quando o toque foi sem querer. Restaura mensalidade, plano e o estado
+   do aviso exatamente como estavam antes. */
+function desfazerDecisaoDif(id){
+  const a=DB.alunos.find(x=>x.id===id);if(!a||!a.difUndo)return;
+  const u=a.difUndo;
+  if(u.mensalidade!==undefined)a.mensalidade=u.mensalidade;
+  if(u.plano!==undefined)a.plano=u.plano;
+  if(u.planoGrupo!==undefined)a.planoGrupo=u.planoGrupo;
+  if(u.difOk)a.difOk=u.difOk;else delete a.difOk;
+  delete a.difUndo;
+  logAct('Desfazer decisão da diferença: '+a.nome);
+  persist();renderAll();
+  toast('↩︎ Desfeito · '+a.nome.split(' ')[0]+' voltou ao estado anterior. Escolha a ação correta.');
+}
 /* Aplica a conta da agenda como mensalidade. Só acontece por toque dele: a
    mensalidade é o valor que o aluno vê e paga pelo app, e desde o bloqueio por
    pagamento ela decide se o aluno consegue agendar. Nada muda sozinho. */
@@ -4401,7 +4429,9 @@ function cobrarPelaAgenda(id){
   if(!confirm('Cobrar '+a.nome+' pelas aulas da agenda deste mês?\n\n'
     +g.detalhe+'\n= '+fmtRs(g.valor)+'\n\nMensalidade de hoje: '+fmtRs(atual)
     +'\nPlano do cadastro: '+(Number(a.plano)||0)+' aula(s)'+((Number(a.planoGrupo)||0)>0?(' + '+a.planoGrupo+' em grupo'):'')))return;
+  a.difUndo={mes:monthKey(),mensalidade:atual,plano:Number(a.plano)||0,planoGrupo:Number(a.planoGrupo)||0,difOk:a.difOk||null};   // guarda para desfazer
   a.mensalidade=g.valor;
+  delete a.difOk;   // valores agora iguais: nada a silenciar
   // o plano acompanha, senão "Renovar mês" devolveria o número antigo de créditos
   if(a.tipo==='Dupla'||a.tipo==='Trio'||a.tipo==='Quarteto'||a.tipo==='Grupo'){a.plano=g.grupo;}
   else{a.plano=g.part;if((Number(a.planoGrupo)||0)>0||g.grupo>0)a.planoGrupo=g.grupo;}
@@ -4479,7 +4509,7 @@ function renovarMes(id){
   if(confirm('Renovar o mês de '+a.nome+'? Soma '+resumo+' e marca como pendente.')){
     mover(a,'creditos',Number(a.plano)||0,'Renovação do mês');
     if(pg>0)mover(a,'credGrupo',pg,'Renovação do mês (grupo)');   // plano misto renova as duas partes
-    a.status='pendente';persist();renderAll();
+    a.status='pendente';delete a.difOk;delete a.difUndo;persist();renderAll();   // novo ciclo: reavalia a diferença do zero
     toast('Mês renovado para '+a.nome+' · '+resumo);
   }
 }
@@ -4554,7 +4584,7 @@ function renderAlunos(){
   });
   list.innerHTML=avisoRepos+items.map(a=>{
     const ag=agendaDoMes(a);
-    const difere=ag.total>0&&ag.valor!==(Number(a.mensalidade)||0);
+    const difere=ag.total>0&&ag.valor!==(Number(a.mensalidade)||0)&&!difSilenciada(a);
     // o cartão passa a mostrar só o que se aplica a este aluno hoje
     const loc=usaLocacao(a);
     const temRepos=(Number(a.repos)||0)>0;
@@ -4586,6 +4616,8 @@ function renderAlunos(){
         ${temGrupo?`<button class="act a1" onclick="aulaRealizada('${a.id}','grupo')">${BI.check}Aula em grupo (−1)</button>`:''}
         ${devendo?`<button class="act a3" onclick="marcarPago('${a.id}')">${BI.money}Marcar pago</button>`:''}
         ${difere?`<button class="act a2" onclick="cobrarPelaAgenda('${a.id}')">📅 Cobrar pela agenda (${fmt(ag.valor)})</button>`:''}
+        ${difere?`<button class="act a4" onclick="manterValorAnotado('${a.id}')">✓ Manter ${fmt(a.mensalidade)}</button>`:''}
+        ${(a.difUndo&&a.difUndo.mes===monthKey())?`<button class="act a1" onclick="desfazerDecisaoDif('${a.id}')">↩︎ Desfazer cobrança</button>`:''}
         ${temRepos?`<button class="act a4" onclick="usarRepos('${a.id}')">${BI.undo}Usar reposição</button>`:''}
         <button class="act maisbtn" onclick="toggleMais('${a.id}')">⋯ Mais ações</button>
       </div>
@@ -4788,7 +4820,7 @@ function renderConselhos(){
   }
 
   // 3. agenda diferente do plano contratado
-  const dif=alunos.map(a=>({a,g:agendaDoMes(a)})).filter(x=>x.g.total>0&&x.g.valor!==(Number(x.a.mensalidade)||0));
+  const dif=alunos.map(a=>({a,g:agendaDoMes(a)})).filter(x=>x.g.total>0&&x.g.valor!==(Number(x.a.mensalidade)||0)&&!difSilenciada(x.a));
   if(dif.length){
     const delta=dif.reduce((s,x)=>s+(x.g.valor-(Number(x.a.mensalidade)||0)),0);
     t.push([delta>0?'warn':'info','📅','Agenda diferente do plano',dif.length+' aluno(s) com a agenda deste mês fora do plano cadastrado — '+(delta>0?'R$ '+Math.abs(delta).toLocaleString('pt-BR')+' a mais':'R$ '+Math.abs(delta).toLocaleString('pt-BR')+' a menos')+' no total: '+nomes(dif.map(x=>x.a))+'. O botão "Cobrar pela agenda" no card de cada um acerta o valor.']);
