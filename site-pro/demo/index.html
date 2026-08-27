@@ -171,6 +171,7 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .bar-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;font-weight:500}
 .bar{height:9px;border-radius:6px;background:#EFE7D8;overflow:hidden}
 .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--clay),var(--gold));border-radius:6px;transition:width .4s}
+.bar i.loc{background:linear-gradient(90deg,#2E8B45,#8CC26A)}
 .bar i.batida{background:linear-gradient(90deg,var(--gold),#2E7D32)}
 .foco-repos{background:#FBF1D8;border:1px solid #E7D6A8;color:#7C5E1A;font-size:12.5px;font-weight:600;border-radius:10px;padding:9px 12px;margin-bottom:10px}
 .foco-repos a{color:var(--clay);font-weight:800;text-decoration:underline;cursor:pointer;margin-left:4px}
@@ -634,6 +635,10 @@ window.__DEMO = true;
   <div class="bar-wrap" style="margin-top:14px">
     <div class="bar-row"><span>Taxa de ocupação <small id="ocup-sub" style="font-weight:400;color:var(--muted)"></small></span><span id="ocup-txt">—</span></div>
     <div class="bar"><i id="ocup-fill" style="width:0%"></i></div>
+  </div>
+  <div class="bar-wrap" style="margin-top:10px">
+    <div class="bar-row"><span>Locações <small id="loc-sub" style="font-weight:400;color:var(--muted)"></small></span><span id="loc-txt">—</span></div>
+    <div class="bar"><i id="loc-fill" class="loc" style="width:0%"></i></div>
   </div>
   <div class="comp-head">
     <div><p class="sec-eyebrow">Minha agenda</p><h2 class="sec-title">Compromissos <em>pessoais</em></h2></div>
@@ -1475,7 +1480,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-08-27-5';
+const VERSAO='2026-08-27-6';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -2983,22 +2988,33 @@ function contarAulas(dFrom,dTo){
   }
   return {tenis,personal,total:tenis+personal};
 }
-/* Taxa de ocupação: dos horários que são de AULA na grade (não locação, não
-   fechado), quantos têm aula marcada. Mede o quanto da sua capacidade de ensino
-   está preenchida — o slot conta uma vez, tendo 1 aluno ou uma dupla. */
+/* Ocupação e locações numa passada só.
+   - Ocupação: dos horários ABERTOS A AULA (modo aula, sem bloqueio e sem locação
+     em cima), quantos têm aula marcada. Horário bloqueado (almoço/treino) e
+     horário alugado NÃO entram no denominador — não estão abertos a uma aula.
+   - Locações: horas de locação usadas no mês (onde quer que estejam) e o quanto
+     da grade de locação isso representa. */
 function ocupacao(dFrom,dTo){
-  let disp=0,ocup=0;
+  let disp=0,ocup=0,locDisp=0,locUsados=0;
   const cur=new Date(dFrom.getFullYear(),dFrom.getMonth(),dFrom.getDate());
   const end=new Date(dTo.getFullYear(),dTo.getMonth(),dTo.getDate());
   while(cur<=end){
     HORAS.forEach(h=>{
-      if(slotModo(cur,h)!=='aula')return;
+      const modo=slotModo(cur,h);
+      const evs=entriesFor(cur,h);
+      const temBloqueio=evs.some(e=>e.tipo==='bloqueio');
+      const temLoc=evs.some(e=>e.tipo==='locacao');
+      if(temLoc)locUsados++;
+      if(modo==='loc')locDisp++;
+      if(modo!=='aula')return;
+      if(temBloqueio||temLoc)return;   // fora do denominador de aula
       disp++;
-      if(entriesFor(cur,h).some(e=>e.origem!=='compromisso'&&(e.tipo==='aula'||e.tipo==='grupo'||e.tipo==='personal')))ocup++;
+      if(evs.some(e=>e.origem!=='compromisso'&&(e.tipo==='aula'||e.tipo==='grupo'||e.tipo==='personal')))ocup++;
     });
     cur.setDate(cur.getDate()+1);
   }
-  return {disp,ocup,pct:disp?Math.round(ocup/disp*100):0};
+  return {disp,ocup,pct:disp?Math.round(ocup/disp*100):0,
+    locDisp,locUsados,locPct:locDisp?Math.min(100,Math.round(locUsados/locDisp*100)):(locUsados>0?100:0)};
 }
 /* ===== Mensalidade pelo que está marcado na agenda =====
    O plano contratado e a agenda do mês nem sempre batem: um mês tem 5 terças,
@@ -4771,6 +4787,9 @@ function renderDash(){
   const ofill=document.getElementById('ocup-fill'); if(ofill)ofill.style.width=ocMes.pct+'%';
   setTxt('ocup-txt',ocMes.pct+'% no mês');
   setTxt('ocup-sub','· hoje '+ocHoje.pct+'% · '+ocMes.ocup+'/'+ocMes.disp+' horários de aula');
+  const lfill=document.getElementById('loc-fill'); if(lfill)lfill.style.width=ocMes.locPct+'%';
+  setTxt('loc-txt',ocMes.locUsados+'h no mês');
+  setTxt('loc-sub',ocMes.locDisp?('· '+ocMes.locPct+'% da grade de locação'):'');
   renderCompromissos();renderDatasInicio();
   if(!pendAlunos.length){pl.innerHTML='<div class="empty">🎉 Todos os alunos estão em dia!</div>';}
   else{
