@@ -684,6 +684,10 @@ function esperarAuth(){
     <div class="am-card personal"><div class="am-v" id="k-aulas-personal">0</div><div class="am-l">💪 Personal</div></div>
     <div class="am-card tenis"><div class="am-v" id="k-aulas-tenis">0</div><div class="am-l">🎾 Tênis</div></div>
   </div>
+  <div class="bar-wrap" style="margin-top:14px">
+    <div class="bar-row"><span>Taxa de ocupação <small id="ocup-sub" style="font-weight:400;color:var(--muted)"></small></span><span id="ocup-txt">—</span></div>
+    <div class="bar"><i id="ocup-fill" style="width:0%"></i></div>
+  </div>
   <div class="comp-head">
     <div><p class="sec-eyebrow">Minha agenda</p><h2 class="sec-title">Compromissos <em>pessoais</em></h2></div>
     <button class="tor-novo" onclick="abrirNovoCompromisso()">＋ Novo</button>
@@ -1524,7 +1528,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-08-27-4';
+const VERSAO='2026-08-27-5';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -3002,6 +3006,23 @@ function contarAulas(dFrom,dTo){
     cur.setDate(cur.getDate()+1);
   }
   return {tenis,personal,total:tenis+personal};
+}
+/* Taxa de ocupação: dos horários que são de AULA na grade (não locação, não
+   fechado), quantos têm aula marcada. Mede o quanto da sua capacidade de ensino
+   está preenchida — o slot conta uma vez, tendo 1 aluno ou uma dupla. */
+function ocupacao(dFrom,dTo){
+  let disp=0,ocup=0;
+  const cur=new Date(dFrom.getFullYear(),dFrom.getMonth(),dFrom.getDate());
+  const end=new Date(dTo.getFullYear(),dTo.getMonth(),dTo.getDate());
+  while(cur<=end){
+    HORAS.forEach(h=>{
+      if(slotModo(cur,h)!=='aula')return;
+      disp++;
+      if(entriesFor(cur,h).some(e=>e.origem!=='compromisso'&&(e.tipo==='aula'||e.tipo==='grupo'||e.tipo==='personal')))ocup++;
+    });
+    cur.setDate(cur.getDate()+1);
+  }
+  return {disp,ocup,pct:disp?Math.round(ocup/disp*100):0};
 }
 /* ===== Mensalidade pelo que está marcado na agenda =====
    O plano contratado e a agenda do mês nem sempre batem: um mês tem 5 terças,
@@ -4770,6 +4791,10 @@ function renderDash(){
   const aulasMes=contarAulas(_ini,_fim);
   setTxt('k-aulas-dia-total',aulasDia.total);setTxt('k-aulas-dia-personal',aulasDia.personal);setTxt('k-aulas-dia-tenis',aulasDia.tenis);
   setTxt('k-aulas-total',aulasMes.total);setTxt('k-aulas-personal',aulasMes.personal);setTxt('k-aulas-tenis',aulasMes.tenis);
+  const ocMes=ocupacao(_ini,_fim), ocHoje=ocupacao(_hoje,_hoje);
+  const ofill=document.getElementById('ocup-fill'); if(ofill)ofill.style.width=ocMes.pct+'%';
+  setTxt('ocup-txt',ocMes.pct+'% no mês');
+  setTxt('ocup-sub','· hoje '+ocHoje.pct+'% · '+ocMes.ocup+'/'+ocMes.disp+' horários de aula');
   renderCompromissos();renderDatasInicio();
   if(!pendAlunos.length){pl.innerHTML='<div class="empty">🎉 Todos os alunos estão em dia!</div>';}
   else{
