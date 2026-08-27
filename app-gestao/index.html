@@ -428,6 +428,8 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .chart-row-clic:hover{background:rgba(0,0,0,.035)}
 .aulas-clic{cursor:pointer;transition:transform .12s}
 .aulas-clic:active{transform:scale(.99)}
+.fin-clic{cursor:pointer;transition:transform .12s}
+.fin-clic:active{transform:scale(.98)}
 .chart-lab{width:74px;font-size:10.5px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);flex-shrink:0}
 .chart-track{flex:1;background:#F0ECE4;border-radius:7px;height:22px;overflow:hidden}
 .chart-bar{display:block;height:100%;border-radius:7px;min-width:2px;transition:width .4s}
@@ -802,10 +804,10 @@ function esperarAuth(){
     <div class="fin-card hero"><div class="l">Total recebido no mês</div><div class="v" id="f-total">R$ 0</div></div>
     <div class="fin-card desp"><div class="l">Despesas do mês</div><div class="v" id="f-despesas">R$ 0</div></div>
     <div class="fin-card saldo"><div class="l">Saldo (recebido − despesas)</div><div class="v" id="f-saldo">R$ 0</div></div>
-    <div class="fin-card"><div class="l">Mensalidades</div><div class="v" id="f-mens">R$ 0</div></div>
-    <div class="fin-card"><div class="l">Avulsas</div><div class="v" id="f-avulsas">R$ 0</div></div>
-    <div class="fin-card"><div class="l">Locações</div><div class="v" id="f-loc">R$ 0</div></div>
-    <div class="fin-card"><div class="l">Outros</div><div class="v" id="f-outros">R$ 0</div></div>
+    <div class="fin-card fin-clic" onclick="verLancCategoria('mensalidade')"><div class="l">Mensalidades ›</div><div class="v" id="f-mens">R$ 0</div></div>
+    <div class="fin-card fin-clic" onclick="verLancCategoria('avulsa')"><div class="l">Avulsas ›</div><div class="v" id="f-avulsas">R$ 0</div></div>
+    <div class="fin-card fin-clic" onclick="verLancCategoria('locacao')"><div class="l">Locações ›</div><div class="v" id="f-loc">R$ 0</div></div>
+    <div class="fin-card fin-clic" onclick="verLancCategoria('outro')"><div class="l">Outros ›</div><div class="v" id="f-outros">R$ 0</div></div>
     <div class="fin-card"><div class="l">🎾 Tênis (receita)</div><div class="v" id="f-tenis">R$ 0</div></div>
     <div class="fin-card"><div class="l">💪 Personal (receita)</div><div class="v" id="f-personal">R$ 0</div></div>
     <div class="fin-card"><div class="l">Previsto (mensalidades)</div><div class="v" id="f-previsto">R$ 0</div></div>
@@ -1522,7 +1524,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-08-27-1';
+const VERSAO='2026-08-27-2';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -2887,6 +2889,7 @@ function go(id,btn){
   btn.classList.add('on');
   window.scrollTo({top:0});
   if(id==='agenda'){syncRequests(true);marcarVisto('agenda');}
+  if(id==='lanc'){filtroLancCat=null;renderMovs();}   // abrir a Caixa pela barra mostra tudo
   if(id==='graf')renderGraf();
   if(id==='aval')renderAvaliacoes();
   if(id==='torneio'){renderTorneio();syncTorneio(true);marcarVisto('torneio');}
@@ -4646,15 +4649,28 @@ function saveLanc(){
 function delLanc(id){
   DB.lancamentos=DB.lancamentos.filter(l=>l.id!==id);persist();renderAll();
 }
+let filtroLancCat=null;   // null = todas as categorias; senão 'mensalidade'|'avulsa'|'locacao'|'outro'
+const LANC_CAT_LBL={mensalidade:'Mensalidades',avulsa:'Avulsas',locacao:'Locações',outro:'Outros'};
+function limparFiltroLanc(){filtroLancCat=null;renderMovs();}
 function renderMovs(){
-  const movs=DB.lancamentos.filter(l=>l.mes===monthKey()).sort((a,b)=>b.id.localeCompare(a.id));
+  let movs=DB.lancamentos.filter(l=>l.mes===monthKey());
+  if(filtroLancCat)movs=movs.filter(l=>l.cat===filtroLancCat&&l.valor>0);
+  movs=movs.sort((a,b)=>b.id.localeCompare(a.id));
   const el=document.getElementById('mov-list');
-  if(!movs.length){el.innerHTML='<div class="empty">Nenhum lançamento neste mês.</div>';return;}
-  el.innerHTML=movs.map(l=>`
+  const chip=filtroLancCat?`<div class="foco-repos">Mostrando só <b>${LANC_CAT_LBL[filtroLancCat]||filtroLancCat}</b> deste mês · <a onclick="limparFiltroLanc()">ver todos</a></div>`:'';
+  if(!movs.length){el.innerHTML=chip+'<div class="empty">Nenhum lançamento'+(filtroLancCat?' desta categoria':'')+' neste mês.</div>';return;}
+  el.innerHTML=chip+movs.map(l=>`
   <div class="mov">
     <div class="mov-l"><b>${l.desc}</b><span>${l.data.split('-').reverse().join('/')}</span></div>
     <div style="display:flex;align-items:center"><span class="mov-v in">+ ${fmt(l.valor)}</span><button class="mov-x" onclick="delLanc('${l.id}')">✕</button></div>
   </div>`).join('');
+}
+/* Cartão de categoria do Financeiro leva à Caixa filtrada naquela categoria. */
+function verLancCategoria(cat){
+  irParaAba('lanc');
+  filtroLancCat=cat;
+  renderMovs();
+  const el=document.getElementById('mov-list');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 /* ================= DASHBOARD & FINANCEIRO ================= */
