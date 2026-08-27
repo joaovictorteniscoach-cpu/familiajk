@@ -416,6 +416,11 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .fin-card.saldo .v{color:#fff}
 .chart{background:#fff;border:1px solid var(--border);border-radius:13px;padding:15px 15px 9px;margin-bottom:14px}
 .chart-row{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+.chart-row-clic{cursor:pointer;border-radius:10px;padding:4px 6px;margin:0 -6px 7px;transition:background .12s,transform .12s}
+.chart-row-clic:active{transform:scale(.99)}
+.chart-row-clic:hover{background:rgba(0,0,0,.035)}
+.aulas-clic{cursor:pointer;transition:transform .12s}
+.aulas-clic:active{transform:scale(.99)}
 .chart-lab{width:74px;font-size:10.5px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);flex-shrink:0}
 .chart-track{flex:1;background:#F0ECE4;border-radius:7px;height:22px;overflow:hidden}
 .chart-bar{display:block;height:100%;border-radius:7px;min-width:2px;transition:width .4s}
@@ -602,9 +607,9 @@ window.__DEMO = true;
   <p class="sec-eyebrow">Visão geral</p>
   <h2 class="sec-title">Resumo do <em>mês</em></h2>
   <div class="kpis">
-    <div class="kpi dark"><div class="kpi-l">Recebido</div><div class="kpi-v" id="k-recebido">R$ 0</div><div class="kpi-s" id="k-recebido-s"></div></div>
+    <div class="kpi dark tocavel" id="kpi-recebido" onclick="verCaixaMes()"><div class="kpi-l">Recebido <span class="kpi-seta">›</span></div><div class="kpi-v" id="k-recebido">R$ 0</div><div class="kpi-s" id="k-recebido-s"></div></div>
     <div class="kpi clay" id="kpi-pendente" onclick="verPendentes()"><div class="kpi-l">A receber <span class="kpi-seta">›</span></div><div class="kpi-v" id="k-pendente">R$ 0</div><div class="kpi-s" id="k-pendente-s"></div></div>
-    <div class="kpi light"><div class="kpi-l">Alunos ativos</div><div class="kpi-v" id="k-alunos">0</div><div class="kpi-s" id="k-alunos-s"></div></div>
+    <div class="kpi light tocavel" id="kpi-alunos" onclick="verAlunosAtivos()"><div class="kpi-l">Alunos ativos <span class="kpi-seta">›</span></div><div class="kpi-v" id="k-alunos">0</div><div class="kpi-s" id="k-alunos-s"></div></div>
     <div class="kpi light" id="kpi-cred" onclick="verReposicoes()"><div class="kpi-l">Créditos em aberto <span class="kpi-seta">›</span></div><div class="kpi-v" id="k-creditos">0</div><div class="kpi-s" id="k-repos-s"></div></div>
   </div>
   <div class="bar-wrap">
@@ -613,13 +618,13 @@ window.__DEMO = true;
   </div>
   <p class="sec-eyebrow">Atividade</p>
   <h2 class="sec-title">Aulas <em>hoje</em></h2>
-  <div class="aulas-mes">
+  <div class="aulas-mes aulas-clic" onclick="verAgendaHoje()" title="Ver a agenda de hoje">
     <div class="am-card"><div class="am-v" id="k-aulas-dia-total">0</div><div class="am-l">Total</div></div>
     <div class="am-card personal"><div class="am-v" id="k-aulas-dia-personal">0</div><div class="am-l">💪 Personal</div></div>
     <div class="am-card tenis"><div class="am-v" id="k-aulas-dia-tenis">0</div><div class="am-l">🎾 Tênis</div></div>
   </div>
   <h2 class="sec-title" style="margin-top:16px">Aulas <em>no mês</em></h2>
-  <div class="aulas-mes">
+  <div class="aulas-mes aulas-clic" onclick="verAgendaMes()" title="Ver a agenda do mês">
     <div class="am-card"><div class="am-v" id="k-aulas-total">0</div><div class="am-l">Total</div></div>
     <div class="am-card personal"><div class="am-v" id="k-aulas-personal">0</div><div class="am-l">💪 Personal</div></div>
     <div class="am-card tenis"><div class="am-v" id="k-aulas-tenis">0</div><div class="am-l">🎾 Tênis</div></div>
@@ -1464,7 +1469,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-08-26-1';
+const VERSAO='2026-08-27-1';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -5080,12 +5085,33 @@ function barChart(el,linhas,fmtVal){
   if(!linhas.length){el.innerHTML='<div class="empty">Ainda sem dados para exibir.</div>';return;}
   const max=Math.max.apply(null,linhas.map(l=>Math.abs(l.value)).concat([1]));
   el.innerHTML=linhas.map(l=>`
-    <div class="chart-row">
-      <span class="chart-lab">${l.label}</span>
+    <div class="chart-row${l.mk?' chart-row-clic':''}"${l.mk?` onclick="irParaMes('${l.mk}','${l.destino||'fin'}')" title="Ver ${l.label} em detalhe"`:''}>
+      <span class="chart-lab">${l.label}${l.mk?' ›':''}</span>
       <span class="chart-track"><span class="chart-bar ${l.cls||'rec'}" style="width:${Math.round(Math.abs(l.value)/max*100)}%"></span></span>
       <span class="chart-val ${l.valCls||''}">${fmtVal(l.value)}</span>
     </div>`).join('');
 }
+/* Clicar numa barra de mês leva o painel para aquele mês e abre a aba de detalhe. */
+function irParaMes(mk,destino){
+  if(!mk)return;
+  const p=String(mk).split('-');const y=Number(p[0]),m=Number(p[1])-1;
+  if(!y||m<0||m>11)return;
+  curYear=y;curMonth=m;
+  renderAll();
+  irParaAba(destino||'fin');
+}
+/* Atalhos do Início: cada número leva ao lugar onde ele é detalhado. */
+function verCaixaMes(){irParaAba('lanc');}
+function verAlunosAtivos(){irParaAba('alunos');}
+function irParaAgenda(view,date){
+  if(date)agDate=new Date(date);
+  irParaAba('agenda');
+  const idx={dia:0,semana:1,mes:2,tri:3}[view]||0;
+  const btns=document.querySelectorAll('#pg-agenda .seg button');
+  if(btns[idx])btns[idx].click(); else {agView=view;renderAgenda();}
+}
+function verAgendaHoje(){irParaAgenda('dia',new Date());}
+function verAgendaMes(){irParaAgenda('mes',new Date(curYear,curMonth,1));}
 function renderGraf(){
   // Faturamento (receitas positivas) por mês
   const fatPorMes={};
@@ -5105,25 +5131,25 @@ function renderGraf(){
   const meses=Array.from(setMeses).sort().slice(-12);
 
   barChart(document.getElementById('graf-fat'),
-    meses.map(mk=>({label:labelMes(mk),value:fatPorMes[mk]||0,cls:'rec'})),fmt);
+    meses.map(mk=>({label:labelMes(mk),value:fatPorMes[mk]||0,cls:'rec',mk})),fmt);
   const _gft=document.getElementById('graf-fat-tenis');
-  if(_gft)barChart(_gft,meses.map(mk=>({label:labelMes(mk),value:fatTenis[mk]||0,cls:'rec'})),fmt);
+  if(_gft)barChart(_gft,meses.map(mk=>({label:labelMes(mk),value:fatTenis[mk]||0,cls:'rec',mk})),fmt);
   const _gfp=document.getElementById('graf-fat-personal');
-  if(_gfp)barChart(_gfp,meses.map(mk=>({label:labelMes(mk),value:fatPersonal[mk]||0,cls:'meta'})),fmt);
+  if(_gfp)barChart(_gfp,meses.map(mk=>({label:labelMes(mk),value:fatPersonal[mk]||0,cls:'meta',mk})),fmt);
 
   barChart(document.getElementById('graf-desp'),
-    meses.map(mk=>({label:labelMes(mk),value:despPorMes[mk]||0,cls:'desp'})),fmt);
+    meses.map(mk=>({label:labelMes(mk),value:despPorMes[mk]||0,cls:'desp',mk})),fmt);
 
   barChart(document.getElementById('graf-lucro'),
     meses.map(mk=>{
       const lucro=(fatPorMes[mk]||0)-(despPorMes[mk]||0);
-      return {label:labelMes(mk),value:lucro,cls:lucro<0?'neg':'rec',valCls:lucro<0?'neg':''};
+      return {label:labelMes(mk),value:lucro,cls:lucro<0?'neg':'rec',valCls:lucro<0?'neg':'',mk};
     }),fmt);
 
   barChart(document.getElementById('graf-alunos'),
     meses.map(mk=>{
       const v=(DB.snapAlunos&&DB.snapAlunos[mk]!=null)?DB.snapAlunos[mk]:(pagPorMes[mk]?pagPorMes[mk].size:0);
-      return {label:labelMes(mk),value:v,cls:'meta'};
+      return {label:labelMes(mk),value:v,cls:'meta',mk,destino:'dash'};
     }),v=>String(v));
 
   // Comparativo anual
