@@ -249,12 +249,17 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .ev .pres.ok{background:#fff;color:var(--ok);font-weight:800}
 .slot-add{border:none;background:#F4EDE0;color:var(--muted);width:28px;height:28px;border-radius:8px;font-size:15px;font-weight:600}
 .wk-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border);border-radius:13px;background:#fff}
-.wk{border-collapse:collapse;min-width:660px;width:100%}
-.wk th{position:sticky;top:0;background:var(--green);color:var(--cream);font-size:10.5px;padding:7px 4px;font-weight:600;letter-spacing:.3px;z-index:2}
-.wk th small{display:block;font-weight:400;opacity:.7;font-size:9px}
-.wk td{border:1px solid #F0E8D8;padding:0;height:34px;min-width:92px;vertical-align:middle}
-.wk td.hr{position:sticky;left:0;background:#FDFBF7;font-size:10.5px;font-weight:700;color:var(--muted);text-align:center;min-width:48px;width:48px;z-index:1;border-right:2px solid var(--border)}
-.wk-cell{width:100%;height:100%;border:none;background:none;font-size:10px;font-weight:600;color:#fff;padding:2px 4px;line-height:1.2;overflow:hidden;display:block}
+.wk{border-collapse:collapse;min-width:var(--wk-min,660px);width:100%}
+.wk th{position:sticky;top:0;background:var(--green);color:var(--cream);font-size:var(--wk-thfs,10.5px);padding:7px 4px;font-weight:600;letter-spacing:.3px;z-index:2}
+.wk th small{display:block;font-weight:400;opacity:.7;font-size:calc(var(--wk-thfs,10.5px) - 1.5px)}
+.wk td{border:1px solid #F0E8D8;padding:0;height:var(--wk-h,34px);min-width:var(--wk-col,92px);vertical-align:middle}
+.wk td.hr{position:sticky;left:0;background:#FDFBF7;font-size:var(--wk-thfs,10.5px);font-weight:700;color:var(--muted);text-align:center;min-width:48px;width:48px;z-index:1;border-right:2px solid var(--border)}
+.wk-cell{width:100%;height:100%;border:none;background:none;font-size:var(--wk-fs,10px);font-weight:600;color:#fff;padding:2px 4px;line-height:1.2;overflow:hidden;display:block}
+.wk-zoom{display:flex;align-items:center;gap:8px;margin-bottom:9px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.wk-zoom .wz{width:34px;height:32px;border:1px solid var(--border);background:#fff;color:var(--text);border-radius:9px;font-size:17px;font-weight:800;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.wk-zoom .wz:active{transform:scale(.94)}
+.wk-zoom .wz-lbl{min-width:44px;text-align:center;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
+.wk-zoom .wz-fit{width:auto;padding:0 12px;font-size:12.5px;font-weight:700;gap:5px}
 .wk-cell.t-aula{background:var(--c-aula)}.wk-cell.t-locacao{background:var(--c-loc)}.wk-cell.t-torneio{background:var(--c-tor)}
 .wk-cell.t-bloqueio{background:var(--c-bloq)}.wk-cell.t-pessoal{background:var(--c-pess)}
 .wk-cell.t-grupo{background:var(--c-grupo)}.wk-cell.t-personal{background:var(--c-personal)}
@@ -1533,7 +1538,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-08-27-6';
+const VERSAO='2026-08-27-7';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -3274,6 +3279,35 @@ function gotoDay(y,m,d){
   document.querySelectorAll('.seg button').forEach((b,i)=>b.classList.toggle('on',i===0));
   renderAgenda();window.scrollTo({top:0});
 }
+/* ===== Zoom da semana =====
+   Muda a densidade (largura da coluna, altura e fonte) sem transform, para o
+   arrastar continuar batendo o toque com a célula. A tabela e os horários são os
+   mesmos — só cabem mais ou menos por tela. */
+let wkZoom=(function(){const v=parseFloat((typeof localStorage!=='undefined'&&localStorage.getItem('jv-wkzoom'))||'');return (v>=0.45&&v<=1.8)?v:1;})();
+const WK_COL=92;
+function wkVars(z){
+  const col=Math.round(WK_COL*z);
+  const h=Math.max(22,Math.round(34*z));
+  const fs=Math.max(7.5,+(10*z).toFixed(1));
+  const thfs=Math.max(8,+(10.5*z).toFixed(1));
+  const min=48+6*col;
+  return `--wk-col:${col}px;--wk-h:${h}px;--wk-fs:${fs}px;--wk-thfs:${thfs}px;--wk-min:${min}px`;
+}
+function aplicarWkVars(){
+  const t=document.querySelector('.wk'); if(t)t.setAttribute('style',wkVars(wkZoom));
+  const l=document.getElementById('wk-zoom-lbl'); if(l)l.textContent=Math.round(wkZoom*100)+'%';
+  try{localStorage.setItem('jv-wkzoom',String(wkZoom));}catch(e){}
+}
+function wkZoomStep(dir){
+  wkZoom=Math.min(1.8,Math.max(0.45,+(wkZoom+dir*0.1).toFixed(2)));
+  aplicarWkVars();
+}
+function wkZoomFit(){
+  const sc=document.querySelector('.wk-scroll'); if(!sc)return;
+  const disp=Math.max(240,sc.clientWidth-6);   // desconta a borda/padding
+  wkZoom=Math.min(1.8,Math.max(0.45,+(((disp-48)/6)/WK_COL).toFixed(2)));
+  aplicarWkVars();
+}
 function presId(e,date){return dKey(date)+'|'+e.hora+'|'+e.alunoId;}
 function isPres(e,date){return DB.presencas.some(p=>p.k===presId(e,date));}
 function togglePresenca(entryId){
@@ -3344,7 +3378,8 @@ function renderAgenda(){
     const mon=new Date(agDate);mon.setDate(mon.getDate()-((mon.getDay()+6)%7));
     const days=[...Array(6)].map((_,i)=>{const d=new Date(mon);d.setDate(d.getDate()+i);return d;});
     lbl.innerHTML='Semana de '+days[0].getDate()+'/'+(days[0].getMonth()+1)+' a '+days[5].getDate()+'/'+(days[5].getMonth()+1)+'<small>toque p/ editar · arraste p/ mover ou trocar</small>';
-    let html='<div class="wk-scroll"><table class="wk"><tr><th></th>'+days.map(d=>`<th>${DIAS[d.getDay()]}<small>${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}</small></th>`).join('')+'</tr>';
+    let html='<div class="wk-zoom"><button class="wz" onclick="wkZoomStep(-1)" title="Diminuir">−</button><span class="wz-lbl" id="wk-zoom-lbl">'+Math.round(wkZoom*100)+'%</span><button class="wz" onclick="wkZoomStep(1)" title="Aumentar">+</button><button class="wz wz-fit" onclick="wkZoomFit()">↔ Semana toda</button></div>';
+    html+='<div class="wk-scroll"><table class="wk" style="'+wkVars(wkZoom)+'"><tr><th></th>'+days.map(d=>`<th>${DIAS[d.getDay()]}<small>${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}</small></th>`).join('')+'</tr>';
     HORAS.forEach(h=>{
       html+=`<tr><td class="hr">${h}</td>`;
       days.forEach(d=>{
