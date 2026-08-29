@@ -407,6 +407,10 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .quick .q3{background:var(--gold);color:var(--dark)}
 .quick .q4{background:var(--clay);color:#fff}
 .quick small{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600}
+.quick .qb-custom{position:relative}
+.quick .qb-x{position:absolute;top:5px;right:7px;width:19px;height:19px;border-radius:50%;background:rgba(0,0,0,.28);color:#fff;font-size:11px;line-height:19px;text-align:center;font-weight:800}
+.quick .qb-novo{background:transparent;border:1.5px dashed var(--border);color:var(--muted)}
+.quick .qb-novo small{color:var(--muted)}
 .mov{background:#fff;border:1px solid var(--border);border-radius:11px;padding:10px 13px;margin-bottom:7px;display:flex;justify-content:space-between;align-items:center;font-size:13px}
 .mov-l b{display:block;font-weight:600}
 .mov-l span{font-size:11px;color:var(--muted)}
@@ -436,6 +440,17 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .aulas-clic:active{transform:scale(.99)}
 .fin-clic{cursor:pointer;transition:transform .12s}
 .fin-clic:active{transform:scale(.98)}
+.reg-item{border-bottom:1px solid var(--border)}
+.reg-item:last-child{border-bottom:none}
+.reg-head{cursor:pointer}
+.reg-cur{display:inline-block;transition:transform .15s;color:var(--muted);margin-right:4px;font-size:11px}
+.reg-item.open .reg-cur{transform:rotate(90deg)}
+.reg-det{display:none;padding:2px 2px 12px}
+.reg-item.open .reg-det{display:block}
+.rgd-row{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;padding:6px 0;font-size:12.5px;border-top:1px dashed var(--border)}
+.rgd-row:first-child{border-top:none}
+.rgd-l{color:var(--muted);flex-shrink:0}
+.rgd-v{font-weight:600;text-align:right;color:var(--text)}
 .chart-lab{width:74px;font-size:10.5px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);flex-shrink:0}
 .chart-track{flex:1;background:#F0ECE4;border-radius:7px;height:22px;overflow:hidden}
 .chart-bar{display:block;height:100%;border-radius:7px;min-width:2px;transition:width .4s}
@@ -798,13 +813,7 @@ function esperarAuth(){
 <section class="page" id="pg-lanc">
   <p class="sec-eyebrow">Caixa rápido</p>
   <h2 class="sec-title">Lançar <em>receita</em></h2>
-  <div class="quick">
-    <button class="q1" onclick="quickLanc('Avulsa Particular',170)">Avulsa Particular<small>R$ 170</small></button>
-    <button class="q2" onclick="quickLanc('Avulsa Grupo',95)">Avulsa Grupo<small>R$ 95</small></button>
-    <button class="q3" onclick="quickLanc('Locação de Quadra',70)">Locação 1h<small>R$ 70</small></button>
-    <button class="q2" onclick="quickLanc('Personal avulso',(DB.precos&&DB.precos.personal)||130,'personal')">Personal avulso<small>R$ 130</small></button>
-    <button class="q4" onclick="openLancModal()">Outro valor<small>+ lançar</small></button>
-  </div>
+  <div class="quick" id="quick-lanc"></div>
   <p class="sec-eyebrow">Histórico do mês</p>
   <h2 class="sec-title">Movimentações</h2>
   <div id="mov-list"></div>
@@ -1387,6 +1396,9 @@ function esperarAuth(){
 <div class="overlay" id="ov-lanc" onclick="if(event.target===this)closeModal('ov-lanc')">
   <div class="modal">
     <h3>Novo lançamento</h3>
+    <div class="field"><label>Vincular aluno / locatário (opcional)</label>
+      <select id="l-aluno"><option value="">— ninguém —</option></select>
+    </div>
     <div class="field"><label>Descrição</label><input id="l-desc" placeholder="Ex.: Locação 2h, aula experimental…"></div>
     <div class="row2">
       <div class="field"><label>Valor (R$)</label><input type="number" id="l-valor" inputmode="decimal"></div>
@@ -1397,6 +1409,27 @@ function esperarAuth(){
     <div class="modal-acts">
       <button class="btn btn-ghost" onclick="closeModal('ov-lanc')">Cancelar</button>
       <button class="btn btn-clay" onclick="saveLanc()">Lançar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="ov-botao" onclick="if(event.target===this)closeModal('ov-botao')">
+  <div class="modal">
+    <h3>Novo botão de lançamento</h3>
+    <p class="hint" style="margin-bottom:10px">Cria um atalho fixo na Caixa, com valor e categoria prontos.</p>
+    <div class="field"><label>Nome do botão</label><input id="bt-nome" placeholder="Ex.: Aula experimental, Torneio, Mensalidade Dupla…"></div>
+    <div class="row2">
+      <div class="field"><label>Valor (R$)</label><input type="number" id="bt-valor" inputmode="decimal"></div>
+      <div class="field"><label>Categoria</label>
+        <select id="bt-cat"><option value="avulsa">Avulsa</option><option value="locacao">Locação</option><option value="mensalidade">Mensalidade</option><option value="outro">Outro</option></select>
+      </div>
+    </div>
+    <div class="field"><label>Conta como</label>
+      <select id="bt-tipo"><option value="tenis">🎾 Tênis</option><option value="personal">💪 Personal</option></select>
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeModal('ov-botao')">Cancelar</button>
+      <button class="btn btn-clay" onclick="salvarBotaoLanc()">Criar botão</button>
     </div>
   </div>
 </div>
@@ -1538,7 +1571,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-08-27-7';
+const VERSAO='2026-08-29-2';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -4055,6 +4088,24 @@ function openRegistroModal(id){
   renderRegHist(a);
   document.getElementById('ov-registro').classList.add('on');
 }
+/* Detalhe completo de um registro — o que foi digitado naquele dia. */
+function htmlRegDetalhe(v){
+  const INT={leve:'🟢 Leve',media:'🟡 Média',forte:'🔴 Forte'};
+  const HUM={animado:'😄 Animado',normal:'🙂 Normal',cansado:'😮‍💨 Cansado',frustrado:'😕 Frustrado'};
+  const linha=(lbl,val)=>val?`<div class="rgd-row"><span class="rgd-l">${lbl}</span><span class="rgd-v">${escAval(val)}</span></div>`:'';
+  let h='';
+  h+=linha('Camada-alvo',v.camada);
+  h+=linha('Evoluiu na camada',v.evoluiu==='sim'?'✅ Sim':(v.evoluiu==='nao'?'➖ Ainda não':''));
+  h+=linha('Base',v.base==='sim'?'✅ Firme':(v.base==='nao'?'⚠️ Erro veio de baixo':''));
+  h+=linha('Intensidade',INT[v.intens]||'');
+  h+=linha('Como chegou',HUM[v.humor]||'');
+  h+=linha('O que treinamos',v.conteudo);
+  h+=linha('Ponto alto',v.destaque);
+  h+=linha('Treino em casa',v.casa);
+  h+=linha('Tema da próxima',v.proximo);
+  return h||'<div class="rgd-row"><span class="rgd-v" style="color:var(--muted);font-weight:400">Sem detalhes preenchidos neste registro.</span></div>';
+}
+function toggleRegDet(head){if(head&&head.parentElement)head.parentElement.classList.toggle('open');}
 function renderRegHist(a){
   const wrap=document.getElementById('rg-hist-wrap'),el=document.getElementById('rg-hist');
   const rg=a.registros||[];
@@ -4063,7 +4114,10 @@ function renderRegHist(a){
   el.innerHTML=rg.slice().reverse().map((v,ri)=>{
     const idx=rg.length-1-ri;
     const ev=v.evoluiu==='sim'?'✅ evoluiu':(v.evoluiu==='nao'?'➖ manteve':'');
-    return `<div class="hrow"><span>${(v.data||'').split('-').reverse().join('/')}${v.camada?' · '+v.camada:''} · <b>${ev}</b>${v.proximo?' → '+v.proximo:''}</span><button class="del" onclick="delRegistro('${a.id}',${idx})">excluir</button></div>`;
+    return `<div class="reg-item">
+      <div class="hrow reg-head" onclick="toggleRegDet(this)"><span><span class="reg-cur">▸</span>${(v.data||'').split('-').reverse().join('/')}${v.camada?' · '+v.camada:''} · <b>${ev}</b>${v.proximo?' → '+v.proximo:''}</span><button class="del" onclick="event.stopPropagation();delRegistro('${a.id}',${idx})">excluir</button></div>
+      <div class="reg-det">${htmlRegDetalhe(v)}</div>
+    </div>`;
   }).join('');
 }
 function saveRegistro(){
@@ -4739,16 +4793,69 @@ function quickLanc(desc,valor,modal){
   DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc,valor,cat:desc.includes('Locação')?'locacao':'avulsa',modal:modal||'tenis',data:new Date().toISOString().slice(0,10)});
   persist();renderAll();toast(desc+' · '+fmt(valor)+' lançado');
 }
+/* Botão rápido com categoria explícita (usado pelos botões que o João cria). */
+function quickLancFull(desc,valor,cat,modal){
+  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc,valor:Number(valor)||0,cat:cat||'avulsa',modal:modal||'tenis',data:new Date().toISOString().slice(0,10)});
+  persist();renderAll();toast(desc+' · '+fmt(Number(valor)||0)+' lançado');
+}
+function quickLancCustom(i){const b=(DB.botoesLanc||[])[i];if(!b)return;quickLancFull(b.label,b.valor,b.cat,b.modal);}
+/* Desenha os botões da Caixa: os 4 fixos, depois os que o João criou, e por fim
+   "Outro valor" e "＋ Novo botão". */
+function renderQuickLanc(){
+  const el=document.getElementById('quick-lanc');if(!el)return;
+  const personal=(DB.precos&&DB.precos.personal)||130;
+  let h='';
+  h+=`<button class="q1" onclick="quickLanc('Avulsa Particular',170)">Avulsa Particular<small>R$ 170</small></button>`;
+  h+=`<button class="q2" onclick="quickLanc('Avulsa Grupo',95)">Avulsa Grupo<small>R$ 95</small></button>`;
+  h+=`<button class="q3" onclick="quickLanc('Locação de Quadra',70)">Locação 1h<small>R$ 70</small></button>`;
+  h+=`<button class="q2" onclick="quickLanc('Personal avulso',${personal},'personal')">Personal avulso<small>R$ ${personal}</small></button>`;
+  (DB.botoesLanc||[]).forEach((b,i)=>{
+    const cls=['q1','q2','q3'][i%3];
+    h+=`<button class="${cls} qb-custom" onclick="quickLancCustom(${i})">${escAval(b.label)}<small>R$ ${Number(b.valor)||0}</small><span class="qb-x" title="Remover botão" onclick="event.stopPropagation();delBotaoLanc(${i})">✕</span></button>`;
+  });
+  h+=`<button class="q4" onclick="openLancModal()">Outro valor<small>+ lançar</small></button>`;
+  h+=`<button class="qb-novo" onclick="openBotaoModal()">＋ Novo botão<small>criar atalho</small></button>`;
+  el.innerHTML=h;
+}
+function openBotaoModal(){
+  document.getElementById('bt-nome').value='';
+  document.getElementById('bt-valor').value='';
+  document.getElementById('bt-cat').value='avulsa';
+  document.getElementById('bt-tipo').value='tenis';
+  document.getElementById('ov-botao').classList.add('on');
+}
+function salvarBotaoLanc(){
+  const label=document.getElementById('bt-nome').value.trim();
+  const valor=Number(document.getElementById('bt-valor').value);
+  if(!label||!valor){toast('Dê um nome e um valor ao botão');return;}
+  if(!Array.isArray(DB.botoesLanc))DB.botoesLanc=[];
+  DB.botoesLanc.push({label,valor,cat:document.getElementById('bt-cat').value,modal:document.getElementById('bt-tipo').value});
+  logAct('Novo botão de lançamento: '+label);
+  persist();closeModal('ov-botao');renderQuickLanc();toast('Botão "'+label+'" criado ✓');
+}
+function delBotaoLanc(i){
+  if(!Array.isArray(DB.botoesLanc)||!DB.botoesLanc[i])return;
+  if(!confirm('Remover o botão "'+DB.botoesLanc[i].label+'"?'))return;
+  DB.botoesLanc.splice(i,1);persist();renderQuickLanc();toast('Botão removido');
+}
 function openLancModal(){
   document.getElementById('l-desc').value='';document.getElementById('l-valor').value='';
+  const sel=document.getElementById('l-aluno');
+  if(sel){sel.innerHTML='<option value="">— ninguém —</option>'+DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${a.id}">${a.nome}</option>`).join('');sel.value='';}
+  document.getElementById('l-cat').value='avulsa';
   document.getElementById('ov-lanc').classList.add('on');
 }
 function saveLanc(){
-  const desc=document.getElementById('l-desc').value.trim();
+  const desc0=document.getElementById('l-desc').value.trim();
   const valor=Number(document.getElementById('l-valor').value);
-  if(!desc||!valor){toast('Preencha descrição e valor');return;}
-  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc,valor,cat:document.getElementById('l-cat').value,data:new Date().toISOString().slice(0,10)});
-  persist();closeModal('ov-lanc');renderAll();toast('Lançamento salvo');
+  const alunoId=document.getElementById('l-aluno')?document.getElementById('l-aluno').value:'';
+  const a=alunoId?DB.alunos.find(x=>x.id===alunoId):null;
+  const desc=desc0||(a?a.nome:'');
+  if(!valor||!desc){toast('Informe o valor e a descrição (ou vincule um aluno)');return;}
+  const rec={id:'l'+Date.now(),mes:monthKey(),desc,valor,cat:document.getElementById('l-cat').value,data:new Date().toISOString().slice(0,10)};
+  if(a){rec.alunoId=a.id;if(ehPersonalTipo(a.tipo))rec.modal='personal';}
+  DB.lancamentos.push(rec);
+  persist();closeModal('ov-lanc');renderAll();toast('Lançamento salvo'+(a?(' · '+a.nome.split(' ')[0]):''));
 }
 function delLanc(id){
   DB.lancamentos=DB.lancamentos.filter(l=>l.id!==id);persist();renderAll();
@@ -4763,11 +4870,14 @@ function renderMovs(){
   const el=document.getElementById('mov-list');
   const chip=filtroLancCat?`<div class="foco-repos">Mostrando só <b>${LANC_CAT_LBL[filtroLancCat]||filtroLancCat}</b> deste mês · <a onclick="limparFiltroLanc()">ver todos</a></div>`:'';
   if(!movs.length){el.innerHTML=chip+'<div class="empty">Nenhum lançamento'+(filtroLancCat?' desta categoria':'')+' neste mês.</div>';return;}
-  el.innerHTML=chip+movs.map(l=>`
+  el.innerHTML=chip+movs.map(l=>{
+    const av=l.alunoId?DB.alunos.find(x=>x.id===l.alunoId):null;
+    const vinc=(av&&!(l.desc||'').includes(av.nome))?` <span style="color:var(--muted);font-weight:600">🔗 ${av.nome.split(' ')[0]}</span>`:(av?' 🔗':'');
+    return `
   <div class="mov">
-    <div class="mov-l"><b>${l.desc}</b><span>${l.data.split('-').reverse().join('/')}</span></div>
+    <div class="mov-l"><b>${l.desc}</b>${vinc}<span>${l.data.split('-').reverse().join('/')}</span></div>
     <div style="display:flex;align-items:center"><span class="mov-v in">+ ${fmt(l.valor)}</span><button class="mov-x" onclick="delLanc('${l.id}')">✕</button></div>
-  </div>`).join('');
+  </div>`;}).join('');
 }
 /* Cartão de categoria do Financeiro leva à Caixa filtrada naquela categoria. */
 function verLancCategoria(cat){
@@ -6716,7 +6826,7 @@ function confirmarAulaWa(id,hora){
 function renderAll(){
   document.getElementById('month-label').textContent=MESES[curMonth]+' '+curYear;
   const safe=(fn,nome)=>{try{fn();}catch(e){console.warn('Render '+nome+' falhou:',e);}};
-  safe(updateEyeBtn,'olho');safe(renderAlunos,'alunos');safe(renderMovs,'caixa');safe(renderDash,'inicio');safe(renderFin,'financeiro');safe(renderAgenda,'agenda');safe(renderTorneio,'torneio');safe(renderConfirmAmanha,'confirmamanha');safe(renderAvaliacoes,'avaliacoes');safe(checarBackup,'backup');safe(renderConta,'conta');
+  safe(updateEyeBtn,'olho');safe(renderAlunos,'alunos');safe(renderQuickLanc,'botoescaixa');safe(renderMovs,'caixa');safe(renderDash,'inicio');safe(renderFin,'financeiro');safe(renderAgenda,'agenda');safe(renderTorneio,'torneio');safe(renderConfirmAmanha,'confirmamanha');safe(renderAvaliacoes,'avaliacoes');safe(checarBackup,'backup');safe(renderConta,'conta');
 }
 // espera o Firebase ficar pronto (até ~6s) antes de carregar; nunca trava
 (function esperarESubir(t){
