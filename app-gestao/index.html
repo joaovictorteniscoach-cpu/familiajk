@@ -436,6 +436,17 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .aulas-clic:active{transform:scale(.99)}
 .fin-clic{cursor:pointer;transition:transform .12s}
 .fin-clic:active{transform:scale(.98)}
+.reg-item{border-bottom:1px solid var(--border)}
+.reg-item:last-child{border-bottom:none}
+.reg-head{cursor:pointer}
+.reg-cur{display:inline-block;transition:transform .15s;color:var(--muted);margin-right:4px;font-size:11px}
+.reg-item.open .reg-cur{transform:rotate(90deg)}
+.reg-det{display:none;padding:2px 2px 12px}
+.reg-item.open .reg-det{display:block}
+.rgd-row{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;padding:6px 0;font-size:12.5px;border-top:1px dashed var(--border)}
+.rgd-row:first-child{border-top:none}
+.rgd-l{color:var(--muted);flex-shrink:0}
+.rgd-v{font-weight:600;text-align:right;color:var(--text)}
 .chart-lab{width:74px;font-size:10.5px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);flex-shrink:0}
 .chart-track{flex:1;background:#F0ECE4;border-radius:7px;height:22px;overflow:hidden}
 .chart-bar{display:block;height:100%;border-radius:7px;min-width:2px;transition:width .4s}
@@ -1538,7 +1549,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-08-27-7';
+const VERSAO='2026-08-29-1';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -4055,6 +4066,24 @@ function openRegistroModal(id){
   renderRegHist(a);
   document.getElementById('ov-registro').classList.add('on');
 }
+/* Detalhe completo de um registro — o que foi digitado naquele dia. */
+function htmlRegDetalhe(v){
+  const INT={leve:'🟢 Leve',media:'🟡 Média',forte:'🔴 Forte'};
+  const HUM={animado:'😄 Animado',normal:'🙂 Normal',cansado:'😮‍💨 Cansado',frustrado:'😕 Frustrado'};
+  const linha=(lbl,val)=>val?`<div class="rgd-row"><span class="rgd-l">${lbl}</span><span class="rgd-v">${escAval(val)}</span></div>`:'';
+  let h='';
+  h+=linha('Camada-alvo',v.camada);
+  h+=linha('Evoluiu na camada',v.evoluiu==='sim'?'✅ Sim':(v.evoluiu==='nao'?'➖ Ainda não':''));
+  h+=linha('Base',v.base==='sim'?'✅ Firme':(v.base==='nao'?'⚠️ Erro veio de baixo':''));
+  h+=linha('Intensidade',INT[v.intens]||'');
+  h+=linha('Como chegou',HUM[v.humor]||'');
+  h+=linha('O que treinamos',v.conteudo);
+  h+=linha('Ponto alto',v.destaque);
+  h+=linha('Treino em casa',v.casa);
+  h+=linha('Tema da próxima',v.proximo);
+  return h||'<div class="rgd-row"><span class="rgd-v" style="color:var(--muted);font-weight:400">Sem detalhes preenchidos neste registro.</span></div>';
+}
+function toggleRegDet(head){if(head&&head.parentElement)head.parentElement.classList.toggle('open');}
 function renderRegHist(a){
   const wrap=document.getElementById('rg-hist-wrap'),el=document.getElementById('rg-hist');
   const rg=a.registros||[];
@@ -4063,7 +4092,10 @@ function renderRegHist(a){
   el.innerHTML=rg.slice().reverse().map((v,ri)=>{
     const idx=rg.length-1-ri;
     const ev=v.evoluiu==='sim'?'✅ evoluiu':(v.evoluiu==='nao'?'➖ manteve':'');
-    return `<div class="hrow"><span>${(v.data||'').split('-').reverse().join('/')}${v.camada?' · '+v.camada:''} · <b>${ev}</b>${v.proximo?' → '+v.proximo:''}</span><button class="del" onclick="delRegistro('${a.id}',${idx})">excluir</button></div>`;
+    return `<div class="reg-item">
+      <div class="hrow reg-head" onclick="toggleRegDet(this)"><span><span class="reg-cur">▸</span>${(v.data||'').split('-').reverse().join('/')}${v.camada?' · '+v.camada:''} · <b>${ev}</b>${v.proximo?' → '+v.proximo:''}</span><button class="del" onclick="event.stopPropagation();delRegistro('${a.id}',${idx})">excluir</button></div>
+      <div class="reg-det">${htmlRegDetalhe(v)}</div>
+    </div>`;
   }).join('');
 }
 function saveRegistro(){
