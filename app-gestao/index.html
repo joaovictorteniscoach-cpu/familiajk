@@ -1310,6 +1310,20 @@ function esperarAuth(){
     <div class="modal-acts"><button class="btn btn-ghost" onclick="closeModal('ov-extrato')">Fechar</button></div>
   </div>
 </div>
+<div class="overlay" id="ov-histaulas" style="z-index:137" onclick="if(event.target===this)closeModal('ov-histaulas')">
+  <div class="modal" style="max-width:540px">
+    <h3>📅 Histórico de aulas</h3>
+    <div class="field" style="margin-bottom:10px"><label>Período</label>
+      <select id="ha-mes" onchange="renderHistAulas()"></select>
+    </div>
+    <div id="ha-export" style="max-height:54vh;overflow:auto"></div>
+    <div class="modal-acts" style="flex-wrap:wrap;gap:8px">
+      <button class="btn btn-ghost" onclick="closeModal('ov-histaulas')">Fechar</button>
+      <button class="btn btn-ghost" onclick="exportarHistImg()">📷 Imagem</button>
+      <button class="btn btn-clay" onclick="exportarHistPDF()">📄 PDF</button>
+    </div>
+  </div>
+</div>
 <div class="overlay" id="ov-registro" style="z-index:135" onclick="if(event.target===this)closeModal('ov-registro')">
   <div class="modal">
     <input type="hidden" id="rg-id">
@@ -1571,7 +1585,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-08-29-2';
+const VERSAO='2026-08-29-3';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -3365,20 +3379,20 @@ function togglePresenca(entryId){
     else{mover(a,'creditos',c,'Presença desmarcada',k);logAct('Desmarcar presença: '+a.nome);toast('Presença desfeita · '+a.nome+' → '+fmtCred(a.creditos)+' créditos');}
   }else{
     if(isTor){
-      DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora});
+      DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo:'torneio',custo:0});
       logAct('Marcar jogo do torneio: '+a.nome);toast('🏆 Jogo do torneio · '+a.nome+' — sem desconto de crédito');
     }else if(isLoc){
-      mover(a,'locCred',-c,'Locação na agenda',k);DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora});
+      mover(a,'locCred',-c,'Locação na agenda',k);DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo:'locacao',custo:c});
       logAct('Marcar locação: '+a.nome);toast('🔑 Locação ('+c+'h) · '+a.nome+' → '+fmtCred(a.locCred)+'h'+(a.locCred<0?' (devendo)':' restantes'));
     }else if(isGrp&&!isRepo){
-      mover(a,'credGrupo',-c,'Aula em grupo na agenda',k);DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora});
+      mover(a,'credGrupo',-c,'Aula em grupo na agenda',k);DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo:'grupo',custo:c});
       logAct('Marcar aula em grupo: '+a.nome);toast('👥 Aula em grupo · '+a.nome+' → '+fmtCred(a.credGrupo)+' de grupo');
     }else if(isRepo){
       if((Number(a.repos)||0) < c-1e-9){toast(a.nome+' não tem reposições suficientes ('+fmtCred(a.repos)+')');return;}
-      mover(a,'repos',-c,'Reposição na agenda',k);DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora});
+      mover(a,'repos',-c,'Reposição na agenda',k);DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo:'reposicao',custo:c});
       logAct('Marcar reposição: '+a.nome);toast('✓ Reposição ('+(c===0.5?'½ aula':'1 aula')+') · '+a.nome+' → '+fmtCred(a.repos)+' reposições');
     }else{
-      mover(a,'creditos',-c,'Presença na agenda',k);DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora});   // permite ficar negativo
+      mover(a,'creditos',-c,'Presença na agenda',k);DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo:'aula',custo:c});   // permite ficar negativo
       logAct('Marcar presença: '+a.nome);toast('✓ Presença ('+(c===0.5?'½ aula':'1 aula')+') · '+a.nome+' → '+fmtCred(a.creditos)+' créditos');
     }
   }
@@ -4470,7 +4484,7 @@ function aulaRealizada(id,modo){
   const a=DB.alunos.find(x=>x.id===id);
   if(!DB.presencas)DB.presencas=[];
   const k='m'+a.id+'-'+Date.now();
-  DB.presencas.push({k,alunoId:a.id,data:dKey(new Date()),hora:'—',manual:true,modo:modo||'aula'});
+  DB.presencas.push({k,alunoId:a.id,data:dKey(new Date()),hora:'—',manual:true,modo:modo||'aula',tipo:modo||'aula'});
   if(modo==='grupo'){            // sai do saldo de grupo, nunca do de particular
     mover(a,'credGrupo',-1,'Aula em grupo realizada',k);
     persist();renderAll();pulsarCredito(a.id);
@@ -4762,6 +4776,7 @@ function renderAlunos(){
           <button class="linkbtn" onclick="openAlunoModal('${a.id}')">Editar</button>
           <button class="linkbtn" onclick="openRegistroModal('${a.id}')">Registro 📝</button>
           <button class="linkbtn" onclick="abrirExtrato('${a.id}')">Extrato 📋</button>
+          <button class="linkbtn" onclick="openHistAulas('${a.id}')">Aulas 📅</button>
           ${(a.avaliacoes&&a.avaliacoes.length)?`<button class="linkbtn" onclick="openAvalExport('${a.id}')">Devolutiva 📤</button>`:''}
           <button class="linkbtn" onclick="renovarMes('${a.id}')">Renovar mês</button>
           ${a.tel?`<button class="linkbtn wa" onclick="enviarAcesso('${a.id}')">Acesso 🔑 ${a.codigo||'—'}</button>`:''}
@@ -5565,6 +5580,105 @@ function abrirExtrato(id){
     ? '<table class="tbl-ext"><tr><th>Dia</th><th>O que foi</th><th style="text-align:right">Mudou</th><th style="text-align:right">Ficou</th></tr>'+linhas+'</table>'
     : '<div class="empty">Sem movimentações ainda.</div>';
   document.getElementById('ov-extrato').classList.add('on');
+}
+/* ===== Histórico de aulas (comprovante exportável) =====
+   Lista as aulas do aluno com data e hora, separando normais de reposições e
+   grupo, e mostra o saldo do pacote — para não se perder no número de aulas. */
+let haId=null;
+const HA_TIPO={aula:{l:'Aula',c:'#3B6FB5'},reposicao:{l:'Reposição',c:'#C9A227'},grupo:{l:'Grupo',c:'#6A4FA3'},locacao:{l:'Locação',c:'#2E8B45'},torneio:{l:'Torneio',c:'#B8912B'}};
+function openHistAulas(id){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  haId=id;
+  const ps=(DB.presencas||[]).filter(p=>p.alunoId===id);
+  const meses=Array.from(new Set(ps.map(p=>String(p.data||'').slice(0,7)).filter(Boolean))).sort().reverse();
+  const sel=document.getElementById('ha-mes');
+  sel.innerHTML='<option value="tudo">Histórico completo</option>'+meses.map(mk=>{const p=mk.split('-');return '<option value="'+mk+'">'+MESES[Number(p[1])-1]+' '+p[0]+'</option>';}).join('');
+  sel.value=meses[0]||'tudo';
+  renderHistAulas();
+  document.getElementById('ov-histaulas').classList.add('on');
+}
+function renderHistAulas(){
+  const a=DB.alunos.find(x=>x.id===haId);if(!a)return;
+  const filtro=document.getElementById('ha-mes').value;
+  let ps=(DB.presencas||[]).filter(p=>p.alunoId===a.id);
+  if(filtro&&filtro!=='tudo')ps=ps.filter(p=>String(p.data||'').startsWith(filtro));
+  ps=ps.slice().sort((x,y)=>String(y.data).localeCompare(String(x.data))||String(y.hora||'').localeCompare(String(x.hora||'')));
+  const cont={aula:0,reposicao:0,grupo:0,locacao:0,torneio:0};
+  ps.forEach(p=>{const t=p.tipo||p.modo||'aula';cont[t]=(cont[t]||0)+1;});
+  const dow=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const linhas=ps.map(p=>{
+    const t=p.tipo||p.modo||'aula';const T=HA_TIPO[t]||HA_TIPO.aula;
+    const pr=String(p.data||'').split('-');const dt=new Date(pr[0],(pr[1]||1)-1,pr[2]||1);
+    const dataBr=String(pr[2]||'').padStart(2,'0')+'/'+String(pr[1]||'').padStart(2,'0')+'/'+(pr[0]||'');
+    return '<tr><td style="border-top:1px solid #eee5d3;padding:6px;white-space:nowrap">'+dataBr+'<small style="display:block;color:#8a8478">'+dow[dt.getDay()]+'</small></td>'
+      +'<td style="border-top:1px solid #eee5d3;padding:6px;white-space:nowrap;font-weight:700">'+((p.hora&&p.hora!=='—')?p.hora:'—')+'</td>'
+      +'<td style="border-top:1px solid #eee5d3;padding:6px"><span style="display:inline-block;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:800;color:#fff;background:'+T.c+'">'+T.l+'</span></td></tr>';
+  }).join('');
+  const plano=Number(a.plano)||0,planoG=Number(a.planoGrupo)||0;
+  const periodoTxt=(filtro==='tudo')?'Histórico completo':(function(){const p=filtro.split('-');return MESES[Number(p[1])-1]+' '+p[0];})();
+  const chip=(lbl,val,cor)=>'<span style="display:inline-block;margin:0 6px 6px 0;padding:5px 10px;border-radius:9px;background:#fff;border:1px solid #eadfc6;font-size:12px;font-weight:700">'+lbl+': <b style="color:'+cor+'">'+fmtCred(val)+'</b></span>';
+  let h='<div style="font-family:\'DM Sans\',sans-serif;background:#FBF8F2;padding:16px;border-radius:12px;color:#2A2016">';
+  h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #C9A227;padding-bottom:8px;margin-bottom:10px"><div><div style="font-weight:800;font-size:15px">Academia João Victor Tênis</div><div style="font-size:11px;color:#8a8478">Comprovante de aulas · '+periodoTxt+'</div></div><div style="width:40px;height:40px;border-radius:50%;background:#1F3D2B;color:#EFE7D0;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0">JV</div></div>';
+  h+='<div style="font-size:15px;font-weight:800">'+escAval(a.nome)+'</div>';
+  h+='<div style="font-size:11px;color:#8a8478;margin-bottom:8px">'+escAval(a.tipo||'')+(plano?' · pacote de '+plano+' aula(s)/mês'+(planoG?' + '+planoG+' em grupo':''):'')+'</div>';
+  h+='<div style="margin-bottom:8px">'+chip('Créditos hoje',Number(a.creditos)||0,'#2E7D52')+chip('Reposições',Number(a.repos)||0,'#C9A227')+((planoG||Number(a.credGrupo))?chip('Grupo',Number(a.credGrupo)||0,'#6A4FA3'):'')+'</div>';
+  h+='<div style="background:#F1F6EE;border:1px solid #d8e6d2;border-radius:9px;padding:8px 11px;font-size:12.5px;margin-bottom:10px">No período: <b>'+(cont.aula||0)+'</b> aula(s) normal(is)'+(cont.reposicao?' · <b>'+cont.reposicao+'</b> reposição(ões)':'')+(cont.grupo?' · <b>'+cont.grupo+'</b> em grupo':'')+(cont.locacao?' · <b>'+cont.locacao+'</b> locação':'')+'.</div>';
+  h+=ps.length?('<table style="width:100%;border-collapse:collapse;font-size:12.5px"><tr style="text-align:left;color:#8a8478;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em"><th style="padding:4px 6px">Data</th><th style="padding:4px 6px">Hora</th><th style="padding:4px 6px">Tipo</th></tr>'+linhas+'</table>'):'<div style="color:#8a8478;padding:10px 0">Nenhuma aula registrada neste período.</div>';
+  h+='<div style="margin-top:10px;font-size:10.5px;color:#8a8478">Emitido em '+new Date().toLocaleDateString('pt-BR')+' · Prof. João Victor 🎾</div>';
+  h+='</div>';
+  document.getElementById('ha-export').innerHTML=h;
+}
+async function _histCanvas(){
+  const el=document.getElementById('ha-export');
+  const oMax=el.style.maxHeight,oOv=el.style.overflow;
+  el.style.maxHeight='none';el.style.overflow='visible';
+  try{return await html2canvas(el,{backgroundColor:'#FBF8F2',scale:2});}
+  finally{el.style.maxHeight=oMax;el.style.overflow=oOv;}
+}
+async function exportarHistImg(){
+  toast('Preparando imagem…');
+  try{await garantirExportLibs();}catch(e){toast('Sem internet para gerar a imagem agora');return;}
+  if(typeof html2canvas==='undefined'){toast('Recurso indisponível agora');return;}
+  const a=DB.alunos.find(x=>x.id===haId);
+  try{
+    const canvas=await _histCanvas();
+    canvas.toBlob(async(blob)=>{
+      if(!blob){toast('Não consegui gerar a imagem');return;}
+      const nome=(a?a.nome.split(' ')[0]:'aluno').toLowerCase();
+      const file=new File([blob],'aulas-'+nome+'.png',{type:'image/png'});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:'Aulas · JV Tênis'});return;}catch(e){}}
+      const url=URL.createObjectURL(blob);const l=document.createElement('a');l.href=url;l.download='aulas-'+nome+'.png';document.body.appendChild(l);l.click();document.body.removeChild(l);URL.revokeObjectURL(url);
+      toast('🖼️ Imagem salva!');
+    },'image/png');
+  }catch(e){toast('Erro ao gerar imagem');}
+}
+async function exportarHistPDF(){
+  toast('Preparando PDF…');
+  try{await garantirExportLibs();}catch(e){toast('Sem internet para gerar o PDF agora');return;}
+  if(typeof html2canvas==='undefined'||!window.jspdf){toast('Recurso indisponível agora');return;}
+  const a=DB.alunos.find(x=>x.id===haId);
+  try{
+    const canvas=await _histCanvas();
+    const img=canvas.toDataURL('image/png');
+    const {jsPDF}=window.jspdf;const pdf=new jsPDF('p','mm','a4');
+    const margin=10,pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
+    const iw=pw-margin*2,fullH=canvas.height*iw/canvas.width,pageH=ph-margin*2;
+    if(fullH<=pageH){pdf.addImage(img,'PNG',margin,margin,iw,fullH);}
+    else{                       // fatia em várias páginas para a lista não encolher
+      const sliceCanvasH=Math.floor(pageH*canvas.width/iw);
+      const c2=document.createElement('canvas');c2.width=canvas.width;const ctx=c2.getContext('2d');
+      let sy=0,first=true;
+      while(sy<canvas.height){
+        const hh=Math.min(sliceCanvasH,canvas.height-sy);
+        c2.height=hh;ctx.clearRect(0,0,c2.width,hh);ctx.drawImage(canvas,0,sy,canvas.width,hh,0,0,canvas.width,hh);
+        if(!first)pdf.addPage();
+        pdf.addImage(c2.toDataURL('image/png'),'PNG',margin,margin,iw,hh*iw/canvas.width);
+        sy+=hh;first=false;
+      }
+    }
+    pdf.save('aulas-'+(a?a.nome.split(' ')[0].toLowerCase():'aluno')+'.pdf');
+    toast('📄 PDF salvo!');
+  }catch(e){toast('Erro ao gerar PDF');}
 }
 /* ===== Este endereço está atualizado? =====
    O app vive em dois endereços publicados em momentos diferentes, e os dois
