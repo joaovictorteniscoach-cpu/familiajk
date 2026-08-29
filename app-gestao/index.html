@@ -1585,7 +1585,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-08-29-3';
+const VERSAO='2026-08-29-4';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -4581,6 +4581,33 @@ function cobrarPelaAgenda(id){
 }
 /* Locação paga: pergunta as horas, lança no caixa e credita o saldo — o mesmo
    papel que "Marcar pago" cumpre para a mensalidade. */
+/* ===== Segurança contra duplicação =====
+   Três coisas duplicavam sem o app perceber: o toque duplo no celular (dois
+   toques em 1s viram dois lançamentos iguais), marcar pago duas vezes no mesmo
+   mês, e renovar o mês duas vezes — que dobra os créditos do aluno. Nenhuma
+   delas dava erro na tela; o número só ficava errado.
+
+   Aqui são duas camadas: TRAVA (impede na hora) e CONFERÊNCIA (acha o que já
+   passou). Nenhuma delas apaga nada sozinha — no máximo pedem confirmação. */
+const _ultAcao={};
+function acaoRepetida(chave,ms){
+  const agora=Date.now(), ant=_ultAcao[chave]||0;
+  if(agora-ant<(ms||2500))return true;
+  _ultAcao[chave]=agora;
+  return false;
+}
+function mesReal(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+function mesDoTs(ts){const d=new Date(ts);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+/* Mensalidades já lançadas para este aluno no mês aberto no painel. */
+function mensalidadesDoMes(a){
+  const alvo='Mensalidade · '+a.nome;
+  return (DB.lancamentos||[]).filter(l=>l.mes===monthKey()&&l.cat==='mensalidade'&&l.valor>0&&(l.alunoId===a.id||l.desc===alvo));
+}
+/* Renovações de crédito já feitas para este aluno no mês corrente. */
+function renovacoesDoMes(a){
+  const m=mesReal();
+  return movsDe(a.id,'creditos').filter(x=>String(x.motivo||'').indexOf('Renovação do mês')===0&&mesDoTs(x.ts)===m);
+}
 function locacaoPaga(id){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
   const vh=Number((DB.precos&&DB.precos.locacao)||0);
@@ -4597,30 +4624,42 @@ function locacaoPaga(id){
   toast('🔑 Locação paga · '+fmt(total)+' lançado · '+a.nome+' → '+fmtCred(a.locCred)+'h');
 }
 function addRepos(id){
-  const a=DB.alunos.find(x=>x.id===id);
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  if(acaoRepetida('repos+'+id)){toast('Reposição já anotada agora há pouco');return;}
   mover(a,'repos',1,'Reposição anotada');persist();renderAll();toast('Reposição anotada para '+a.nome);
 }
 function usarRepos(id){
-  const a=DB.alunos.find(x=>x.id===id);
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
   if(a.repos<=0){toast('Sem reposições pendentes');return;}
+  if(acaoRepetida('repos-'+id)){toast('Reposição já registrada agora há pouco');return;}
   mover(a,'repos',-Math.min(1,Number(a.repos)||0),'Reposição realizada');persist();renderAll();toast('Reposição realizada · restam '+fmtCred(a.repos));
 }
 function addLocacao(id){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  if(acaoRepetida('loc+'+id)){toast('Já somei essa hora agora há pouco');return;}
   mover(a,'locCred',1,'+1h de locação');
   logAct('Locação +1h: '+a.nome);persist();renderAll();
   toast('🔑 +1h de locação · '+a.nome+' → '+fmtCred(a.locCred)+'h');
 }
 function usarLocacao(id){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  if(acaoRepetida('loc-'+id)){toast('Locação já registrada agora há pouco');return;}
   mover(a,'locCred',-1,'Locação realizada');
   logAct('Locação feita: '+a.nome);persist();renderAll();
   toast('🔑 Locação registrada · '+a.nome+' → '+fmtCred(a.locCred)+'h'+(a.locCred<0?' (devendo)':''));
 }
 function marcarPago(id){
-  const a=DB.alunos.find(x=>x.id===id);
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  if(acaoRepetida('pago-'+id)){toast('Já registrei esse pagamento agora há pouco');return;}
+  const jaTem=mensalidadesDoMes(a);
+  if(jaTem.length){
+    const soma=jaTem.reduce((t,l)=>t+(Number(l.valor)||0),0);
+    if(!confirm('⚠️ '+a.nome+' já tem '+jaTem.length+' mensalidade lançada neste mês ('+fmt(soma)+').\n\nLançar OUTRA de '+fmt(a.mensalidade)+'?\n\nSe foi engano, toque em Cancelar — o aluno continua marcado como pago.')){
+      a.status='pago';persist();renderAll();toast(a.nome+' marcado como pago (sem lançar de novo)');return;
+    }
+  }
   a.status='pago';
-  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:'Mensalidade · '+a.nome,valor:a.mensalidade,cat:'mensalidade',modal:(ehPersonalTipo(a.tipo)?'personal':'tenis'),data:new Date().toISOString().slice(0,10)});
+  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:'Mensalidade · '+a.nome,valor:a.mensalidade,cat:'mensalidade',alunoId:a.id,modal:(ehPersonalTipo(a.tipo)?'personal':'tenis'),data:new Date().toISOString().slice(0,10)});
   persist();renderAll();toast('Pagamento de '+a.nome+' lançado: '+fmt(a.mensalidade));
 }
 function checarViradaMes(){
@@ -4646,7 +4685,10 @@ function renovarMes(id){
   const a=DB.alunos.find(x=>x.id===id);
   const pg=Number(a.planoGrupo)||0;
   const resumo='+'+(Number(a.plano)||0)+' crédito(s)'+(pg>0?(' e +'+pg+' de grupo'):'');
-  if(confirm('Renovar o mês de '+a.nome+'? Soma '+resumo+' e marca como pendente.')){
+  if(acaoRepetida('renov-'+id)){toast('Já renovei agora há pouco — confira os créditos antes de repetir');return;}
+  const jaRenov=renovacoesDoMes(a);
+  const aviso=jaRenov.length?('⚠️ '+a.nome+' JÁ foi renovado '+jaRenov.length+'x neste mês (somou '+fmtCred(jaRenov.reduce((t,x)=>t+(Number(x.delta)||0),0))+' crédito(s)).\n\nRenovar de novo DOBRA os créditos. Tem certeza?\n\n'):'';
+  if(confirm(aviso+'Renovar o mês de '+a.nome+'? Soma '+resumo+' e marca como pendente.')){
     mover(a,'creditos',Number(a.plano)||0,'Renovação do mês');
     if(pg>0)mover(a,'credGrupo',pg,'Renovação do mês (grupo)');   // plano misto renova as duas partes
     a.status='pendente';delete a.difOk;delete a.difUndo;persist();renderAll();   // novo ciclo: reavalia a diferença do zero
@@ -4805,11 +4847,13 @@ function renderAlunos(){
 
 /* ================= LANÇAMENTOS ================= */
 function quickLanc(desc,valor,modal){
+  if(acaoRepetida('q-'+desc+'-'+valor)){toast('Esse lançamento acabou de ser feito');return;}
   DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc,valor,cat:desc.includes('Locação')?'locacao':'avulsa',modal:modal||'tenis',data:new Date().toISOString().slice(0,10)});
   persist();renderAll();toast(desc+' · '+fmt(valor)+' lançado');
 }
 /* Botão rápido com categoria explícita (usado pelos botões que o João cria). */
 function quickLancFull(desc,valor,cat,modal){
+  if(acaoRepetida('q-'+desc+'-'+valor)){toast('Esse lançamento acabou de ser feito');return;}
   DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc,valor:Number(valor)||0,cat:cat||'avulsa',modal:modal||'tenis',data:new Date().toISOString().slice(0,10)});
   persist();renderAll();toast(desc+' · '+fmt(Number(valor)||0)+' lançado');
 }
@@ -6147,15 +6191,42 @@ function conferirNumeros(){
     const g=agendaDoMes(a);
     if(g.total>0&&g.valor!==(Number(a.mensalidade)||0))achados.push({tipo:'aviso',a,
       txt:'Agenda de '+a.nome+': '+g.total+' aula(s) dão '+fmt(g.valor)+', a mensalidade é '+fmt(Number(a.mensalidade)||0)+'.'});
+    // DUPLICIDADE 1: mais de uma mensalidade lançada no mesmo mês
+    const mens=mensalidadesDoMes(a);
+    if(mens.length>1)achados.push({tipo:'dup',a,
+      txt:'COBRANÇA DUPLICADA: '+a.nome+' tem '+mens.length+' mensalidades lançadas neste mês ('+mens.map(l=>fmt(l.valor)).join(' + ')+'). Se foi engano, apague a repetida na Caixa.'});
+    // DUPLICIDADE 2: renovação de créditos repetida no mês
+    const rn=renovacoesDoMes(a);
+    if(rn.length>1)achados.push({tipo:'dup',a,
+      txt:'CRÉDITOS DUPLICADOS: '+a.nome+' foi renovado '+rn.length+'x neste mês, somando '+fmtCred(rn.reduce((t,x)=>t+(Number(x.delta)||0),0))+' crédito(s). O plano dele é de '+(Number(a.plano)||0)+'.'});
+    // DUPLICIDADE 3: duas presenças no mesmo dia e hora
+    const vistos={},dupPres=[];
+    (DB.presencas||[]).filter(p=>p.alunoId===a.id).forEach(p=>{
+      const ch=String(p.data||'')+'|'+String(p.hora||'');
+      if(p.hora&&p.hora!=='—'){ if(vistos[ch])dupPres.push(ch); else vistos[ch]=1; }
+    });
+    if(dupPres.length)achados.push({tipo:'dup',a,
+      txt:'AULA DUPLICADA: '+a.nome+' tem duas presenças no mesmo horário ('+dupPres.slice(0,3).map(x=>x.split('|')[0].split('-').reverse().join('/')+' '+x.split('|')[1]).join(', ')+'). Cada uma descontou um crédito.'});
+  });
+  // DUPLICIDADE 4: lançamentos idênticos no mesmo dia (possível toque duplo)
+  const porChave={};
+  (DB.lancamentos||[]).filter(l=>l.mes===monthKey()&&l.valor>0).forEach(l=>{
+    const ch=String(l.desc||'')+'|'+l.valor+'|'+String(l.data||'');
+    (porChave[ch]=porChave[ch]||[]).push(l);
+  });
+  Object.keys(porChave).forEach(ch=>{
+    const g2=porChave[ch];
+    if(g2.length>1)achados.push({tipo:'dup',a:{nome:g2[0].desc||'Caixa'},
+      txt:'LANÇAMENTO REPETIDO: '+g2.length+'x "'+(g2[0].desc||'')+'" de '+fmt(g2[0].valor)+' no mesmo dia ('+String(g2[0].data||'').split('-').reverse().join('/')+'). Confira na Caixa se não foi toque duplo.'});
   });
   // "a receber" do painel contra a soma aluno a aluno
   const soma=(DB.alunos||[]).filter(a=>a.status!=='pago')
     .reduce((s,a)=>s+(a.status==='parcial'?a.mensalidade*0.5:a.mensalidade),0);
   const cab='<div class="cons info"><h4><span>💰</span>A receber</h4><p>Somando aluno por aluno: <b>'+fmt(soma)+'</b>. É o mesmo número que o painel mostra.</p></div>';
-  if(!achados.length){box.innerHTML=cab+'<div class="cons good"><h4><span>✅</span>Tudo confere</h4><p>Nenhuma divergência entre saldos, extrato, planos e agenda.</p></div>';return;}
+  if(!achados.length){box.innerHTML=cab+'<div class="cons good"><h4><span>✅</span>Tudo confere</h4><p>Nenhuma divergência entre saldos, extrato, planos e agenda — e nenhuma cobrança, crédito ou aula duplicada.</p></div>';return;}
   window._conf=achados;
   box.innerHTML=cab+achados.map((x,i)=>
-    '<div class="cons '+(x.tipo==='saldo'?'bad':'warn')+'"><h4><span>'+(x.tipo==='saldo'?'⚠️':'📋')+'</span>'+escAval(x.a.nome)+'</h4>'
+    '<div class="cons '+((x.tipo==='saldo'||x.tipo==='dup')?'bad':'warn')+'"><h4><span>'+(x.tipo==='saldo'?'⚠️':(x.tipo==='dup'?'🔁':'📋'))+'</span>'+escAval(x.a.nome)+'</h4>'
     +'<p>'+escAval(x.txt)
     +(x.tipo==='saldo'?'<br><button class="btn btn-ghost" style="margin-top:8px;padding:7px 12px;font-size:12px" onclick="acertarConf('+i+')">Acertar pelo extrato</button>':'')
     +'</p></div>').join('');
