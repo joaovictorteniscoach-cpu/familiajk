@@ -429,6 +429,10 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .chart-row-clic{cursor:pointer;border-radius:10px;padding:4px 6px;margin:0 -6px 7px;transition:background .12s,transform .12s}
 .chart-row-clic:active{transform:scale(.99)}
 .chart-row-clic:hover{background:rgba(0,0,0,.035)}
+.chuva-emblema{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#2F5A94,#3B6FB5);color:#fff;border-radius:16px;padding:15px 17px;margin-bottom:12px;box-shadow:0 3px 14px rgba(47,90,148,.28)}
+.chuva-emblema .ce-selo{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.45);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
+.chuva-emblema .ce-pct{font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:700;line-height:1}
+.chuva-emblema .ce-l{font-size:12px;opacity:.9;margin-top:2px}
 .aulas-clic{cursor:pointer;transition:transform .12s}
 .aulas-clic:active{transform:scale(.99)}
 .fin-clic{cursor:pointer;transition:transform .12s}
@@ -946,10 +950,17 @@ window.__DEMO = true;
 
   <p class="sec-eyebrow">Chuva</p>
   <h2 class="sec-title">Aulas perdidas por <em>chuva</em></h2>
+  <div class="chuva-emblema">
+    <div class="ce-selo">☔</div>
+    <div class="ce-txt">
+      <div class="ce-pct" id="g-chuva-pct">0%</div>
+      <div class="ce-l">dos dias de quadra tiveram chuva em <span id="g-chuva-ano"></span></div>
+    </div>
+  </div>
   <div class="fin-grid">
-    <div class="fin-card desp"><div class="l">Dias de quadra com chuva <span id="g-chuva-ano"></span></div><div class="v" id="g-chuva-pct">0%</div></div>
-    <div class="fin-card"><div class="l">Horários perdidos</div><div class="v" id="g-chuva-hor">0</div></div>
+    <div class="fin-card desp"><div class="l">☔ Aulas perdidas</div><div class="v" id="g-chuva-hor">0</div></div>
     <div class="fin-card"><div class="l">Dias com chuva</div><div class="v" id="g-chuva-dias">0</div></div>
+    <div class="fin-card"><div class="l">Marcados sem aula</div><div class="v" id="g-chuva-vazio">0</div></div>
   </div>
   <div class="chart" id="graf-chuva"></div>
   <p class="hint" id="g-chuva-hint"></p>
@@ -1542,7 +1553,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-08-31-1';
+const VERSAO='2026-08-31-2';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -3473,6 +3484,12 @@ function aplicarChuva(date,hora){
     const a=DB.alunos.find(x=>x.id===e.alunoId);
     if(a&&a.codigo&&atingidos.indexOf(a.codigo)<0)atingidos.push(a.codigo);
   });
+  /* Quantas marcações de QUADRA a chuva derrubou aqui (tênis, grupo, locação).
+     Precisa ser contado ANTES de remover — depois não há como saber, porque o
+     DB.chuvas, que guardava isso, só vive 14 dias. Sem esse número o gráfico
+     contava horário vazio marcado como chuva junto com aula perdida de verdade. */
+  let nq=0;
+  entriesFor(date,hora).forEach(e=>{if(e.tipo==='aula'||e.tipo==='grupo'||e.tipo==='locacao')nq++;});
   // chuva NÃO consome: se já havia presença marcada, devolve o crédito (ou reposição)
   entriesFor(date,hora).forEach(e=>{
     if(!e.alunoId)return;
@@ -3483,8 +3500,9 @@ function aplicarChuva(date,hora){
     if(!DB.agenda.excecoes.some(x=>x.fixoId===f.id&&x.data===dk))DB.agenda.excecoes.push({fixoId:f.id,data:dk});
   });
   DB.agenda.eventos=DB.agenda.eventos.filter(e=>!(e.data===dk&&e.hora===hora&&e.tipo!=='bloqueio'));
-  if(!DB.agenda.eventos.some(e=>e.data===dk&&e.hora===hora&&e.titulo==='☔ Chuva'))
-    DB.agenda.eventos.push({id:'e'+Date.now()+Math.random().toString(36).slice(2,6),data:dk,hora,titulo:'☔ Chuva',tipo:'bloqueio',motivo:'chuva',alunoId:null});
+  const jaEv=DB.agenda.eventos.find(e=>e.data===dk&&e.hora===hora&&e.titulo==='☔ Chuva');
+  if(jaEv){jaEv.nq=Math.max(Number(jaEv.nq)||0,nq);}   // remarcar não pode zerar o que já se sabia
+  else DB.agenda.eventos.push({id:'e'+Date.now()+Math.random().toString(36).slice(2,6),data:dk,hora,titulo:'☔ Chuva',tipo:'bloqueio',motivo:'chuva',alunoId:null,nq});
   if(!Array.isArray(DB.chuvas))DB.chuvas=[];
   const ja=DB.chuvas.find(c=>c.data===dk&&c.hora===hora);
   if(ja){atingidos.forEach(c=>{if(ja.cods.indexOf(c)<0)ja.cods.push(c);});ja.ts=Date.now();}
@@ -5439,23 +5457,41 @@ function chuvaAno(ano){
   const eventos=(DB.agenda&&DB.agenda.eventos)||[];
   const hoje=new Date();hoje.setHours(0,0,0,0);
   const ultimoMes=(ano===hoje.getFullYear())?hoje.getMonth():11;
+  /* Por data, separa os horários de chuva em três: os que sabemos que tinham
+     aula (nq>0), os que sabemos que estavam vazios (nq===0) e os antigos, de
+     antes deste registro existir (sem o campo). Vazio confirmado não conta como
+     aula perdida; o antigo continua contando, senão o histórico dele sumiria. */
   const porData={};
-  eventos.forEach(e=>{if(ehEventoChuva(e)&&String(e.data||'').slice(0,4)===String(ano)){const d=String(e.data);porData[d]=(porData[d]||0)+1;}});
-  const meses=[];let totChuva=0,totDiasChuva=0,totDiasQuadra=0;
+  eventos.forEach(e=>{
+    if(!ehEventoChuva(e))return;
+    const d=String(e.data||'');
+    if(d.slice(0,4)!==String(ano))return;
+    const r=porData[d]||(porData[d]={comAula:0,vazio:0,semReg:0});
+    if(e.nq===undefined||e.nq===null)r.semReg++;
+    else if(Number(e.nq)>0)r.comAula++;
+    else r.vazio++;
+  });
+  const meses=[];
+  let totComAula=0,totVazio=0,totSemReg=0,totDiasChuva=0,totDiasQuadra=0;
   for(let m=0;m<=ultimoMes;m++){
     const fim=new Date(ano,m+1,0).getDate();
-    let horas=0,diasChuva=0,diasQuadra=0;
+    let comAula=0,vazio=0,semReg=0,diasChuva=0,diasQuadra=0;
     for(let d=1;d<=fim;d++){
       const dt=new Date(ano,m,d);
       if(dt>hoje)break;                                   // dia que ainda não chegou não entra na conta
-      const n=porData[dKey(dt)]||0;
-      if(n>0||diaDeQuadra(dt))diasQuadra++;
-      if(n){horas+=n;diasChuva++;}
+      const r=porData[dKey(dt)];
+      if(r||diaDeQuadra(dt))diasQuadra++;
+      if(r){comAula+=r.comAula;vazio+=r.vazio;semReg+=r.semReg;diasChuva++;}
     }
-    meses.push({m,n:horas,diasChuva,diasQuadra,pct:diasQuadra?Math.round(diasChuva/diasQuadra*100):0});
-    totChuva+=horas;totDiasChuva+=diasChuva;totDiasQuadra+=diasQuadra;
+    const perdidas=comAula+semReg;                        // o que vale como aula perdida
+    meses.push({m,n:perdidas,comAula,vazio,semReg,diasChuva,diasQuadra,
+      pct:diasQuadra?Math.round(diasChuva/diasQuadra*100):0});
+    totComAula+=comAula;totVazio+=vazio;totSemReg+=semReg;
+    totDiasChuva+=diasChuva;totDiasQuadra+=diasQuadra;
   }
-  return {meses,totChuva,dias:totDiasChuva,diasQuadra:totDiasQuadra,
+  return {meses,comAula:totComAula,vazio:totVazio,semReg:totSemReg,
+    perdidas:totComAula+totSemReg,totChuva:totComAula+totVazio+totSemReg,
+    dias:totDiasChuva,diasQuadra:totDiasQuadra,
     pct:totDiasQuadra?Math.round(totDiasChuva/totDiasQuadra*100):0,ultimoMes};
 }
 function renderGraf(){
@@ -5503,15 +5539,19 @@ function renderGraf(){
   const setC=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
   setC('g-chuva-ano',curYear);
   setC('g-chuva-pct',ch.pct+'%');
-  setC('g-chuva-hor',ch.totChuva);
+  setC('g-chuva-hor',ch.perdidas);
   setC('g-chuva-dias',ch.dias);
+  setC('g-chuva-vazio',ch.vazio);
   barChart(document.getElementById('graf-chuva'),
     ch.meses.map(x=>({label:MES_CURTO[x.m]+'/'+String(curYear).slice(2),value:x.n,cls:'desp',
       mk:curYear+'-'+String(x.m+1).padStart(2,'0'),destino:'agenda'})),v=>String(v)+'h');
   const pior=ch.meses.slice().sort((a,b)=>b.n-a.n)[0];
   const hintC=document.getElementById('g-chuva-hint');
   if(hintC)hintC.innerHTML=ch.totChuva
-    ? '☔ Em '+curYear+', <b>'+ch.totChuva+' horário(s)</b> caíram por chuva, em <b>'+ch.dias+'</b> de <b>'+ch.diasQuadra+'</b> dias com tênis na quadra — <b>'+ch.pct+'%</b> dos seus dias de quadra. Mês mais chuvoso: <b>'+MESES[pior.m]+'</b> ('+pior.n+'h em '+pior.diasChuva+' dia(s), '+pior.pct+'% do mês). Toque numa barra para ver a agenda daquele mês.<br><small>Só entram <b>aulas de tênis, grupo e locação</b> — personal e almoço não são afetados pela chuva. E o número é de <b>horários</b>, não de alunos: quantos alunos havia em cada horário não fica guardado.</small>'
+    ? '☔ Em '+curYear+', <b>'+ch.perdidas+' horário(s) com aula</b> caíram por chuva, em <b>'+ch.dias+'</b> de <b>'+ch.diasQuadra+'</b> dias com tênis na quadra — <b>'+ch.pct+'%</b> dos seus dias de quadra. Mês mais chuvoso: <b>'+MESES[pior.m]+'</b> ('+pior.n+'h em '+pior.diasChuva+' dia(s)). Toque numa barra para ver a agenda daquele mês.'
+      +'<br><small>'+(ch.vazio?('<b>'+ch.vazio+'</b> horário(s) foram marcados como chuva mas estavam <b>vazios</b> — esses não entram na conta. '):'')
+      +(ch.semReg?('<b>'+ch.semReg+'</b> são de antes desta versão, quando o app ainda não guardava se o horário tinha aula; eles continuam contando, para não apagar seu histórico. '):'')
+      +'Só entram <b>tênis, grupo e locação</b> — personal e almoço não são afetados. E o número é de <b>horários</b>, não de alunos.</small>'
     : '☔ Nenhum horário marcado como chuva em '+curYear+' ainda. Cada vez que você usa <b>"Marcar chuva / cancelar este horário"</b> na Agenda, ele entra nesta conta.';
 
   // Comparativo anual
