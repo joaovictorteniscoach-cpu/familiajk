@@ -944,6 +944,16 @@ window.__DEMO = true;
   <div class="chart" id="graf-alunos"></div>
   <p class="hint">O número de alunos por mês começa a ser registrado automaticamente a partir de agora. Para meses anteriores, mostramos quantos alunos pagaram mensalidade (quando houver esse registro).</p>
 
+  <p class="sec-eyebrow">Chuva</p>
+  <h2 class="sec-title">Aulas perdidas por <em>chuva</em></h2>
+  <div class="fin-grid">
+    <div class="fin-card desp"><div class="l">Dias de aula com chuva <span id="g-chuva-ano"></span></div><div class="v" id="g-chuva-pct">0%</div></div>
+    <div class="fin-card"><div class="l">Horários perdidos</div><div class="v" id="g-chuva-hor">0</div></div>
+    <div class="fin-card"><div class="l">Dias com chuva</div><div class="v" id="g-chuva-dias">0</div></div>
+  </div>
+  <div class="chart" id="graf-chuva"></div>
+  <p class="hint" id="g-chuva-hint"></p>
+
   <p class="sec-eyebrow">Comparativo anual</p>
   <h2 class="sec-title">Faturamento por <em>ano</em></h2>
   <div class="chart" id="graf-ano"></div>
@@ -1532,7 +1542,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-08-29-4';
+const VERSAO='2026-08-31-1';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -5394,6 +5404,7 @@ function irParaMes(mk,destino){
   if(!y||m<0||m>11)return;
   curYear=y;curMonth=m;
   renderAll();
+  if(destino==='agenda'){irParaAgenda('mes',new Date(y,m,1));return;}
   irParaAba(destino||'fin');
 }
 /* Atalhos do Início: cada número leva ao lugar onde ele é detalhado. */
@@ -5408,6 +5419,38 @@ function irParaAgenda(view,date){
 }
 function verAgendaHoje(){irParaAgenda('dia',new Date());}
 function verAgendaMes(){irParaAgenda('mes',new Date(curYear,curMonth,1));}
+/* ===== Chuva: quanto do ano foi perdido =====
+   O registro que dura é o evento de bloqueio com motivo 'chuva' na agenda
+   (DB.chuvas guarda só 14 dias, para avisar os alunos, e não serve de histórico).
+   Conta HORÁRIOS perdidos — quantos alunos havia em cada um não fica gravado
+   depois de 14 dias, então não dá para dizer "aulas de fulano" sem inventar.
+   A porcentagem é por DIA: quantos dos dias em que você dá aula tiveram chuva.
+   Dividir pelos horários abertos do ano diluía tudo para 0%. Dias que ainda não
+   chegaram não entram na conta. */
+function ehEventoChuva(e){return !!(e&&e.tipo==='bloqueio'&&(e.motivo==='chuva'||/chuva/i.test(e.titulo||'')));}
+function chuvaAno(ano){
+  const eventos=(DB.agenda&&DB.agenda.eventos)||[];
+  const hoje=new Date();hoje.setHours(0,0,0,0);
+  const ultimoMes=(ano===hoje.getFullYear())?hoje.getMonth():11;
+  const porData={};
+  eventos.forEach(e=>{if(ehEventoChuva(e)&&String(e.data||'').slice(0,4)===String(ano)){const d=String(e.data);porData[d]=(porData[d]||0)+1;}});
+  const meses=[];let totChuva=0,totDiasChuva=0,totDiasAula=0;
+  for(let m=0;m<=ultimoMes;m++){
+    const fim=new Date(ano,m+1,0).getDate();
+    let horas=0,diasChuva=0,diasAula=0;
+    for(let d=1;d<=fim;d++){
+      const dt=new Date(ano,m,d);
+      if(dt>hoje)break;                                   // dia que ainda não chegou não entra na conta
+      if(HORAS.some(h=>slotModo(dt,h)==='aula'))diasAula++;
+      const n=porData[dKey(dt)]||0;
+      if(n){horas+=n;diasChuva++;}
+    }
+    meses.push({m,n:horas,diasChuva,diasAula,pct:diasAula?Math.round(diasChuva/diasAula*100):0});
+    totChuva+=horas;totDiasChuva+=diasChuva;totDiasAula+=diasAula;
+  }
+  return {meses,totChuva,dias:totDiasChuva,diasAula:totDiasAula,
+    pct:totDiasAula?Math.round(totDiasChuva/totDiasAula*100):0,ultimoMes};
+}
 function renderGraf(){
   // Faturamento (receitas positivas) por mês
   const fatPorMes={};
@@ -5447,6 +5490,22 @@ function renderGraf(){
       const v=(DB.snapAlunos&&DB.snapAlunos[mk]!=null)?DB.snapAlunos[mk]:(pagPorMes[mk]?pagPorMes[mk].size:0);
       return {label:labelMes(mk),value:v,cls:'meta',mk,destino:'dash'};
     }),v=>String(v));
+
+  // Chuva no ano
+  const ch=chuvaAno(curYear);
+  const setC=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  setC('g-chuva-ano',curYear);
+  setC('g-chuva-pct',ch.pct+'%');
+  setC('g-chuva-hor',ch.totChuva);
+  setC('g-chuva-dias',ch.dias);
+  barChart(document.getElementById('graf-chuva'),
+    ch.meses.map(x=>({label:MES_CURTO[x.m]+'/'+String(curYear).slice(2),value:x.n,cls:'desp',
+      mk:curYear+'-'+String(x.m+1).padStart(2,'0'),destino:'agenda'})),v=>String(v)+'h');
+  const pior=ch.meses.slice().sort((a,b)=>b.n-a.n)[0];
+  const hintC=document.getElementById('g-chuva-hint');
+  if(hintC)hintC.innerHTML=ch.totChuva
+    ? '☔ Em '+curYear+', <b>'+ch.totChuva+' horário(s)</b> de aula caíram por chuva, em <b>'+ch.dias+'</b> de <b>'+ch.diasAula+'</b> dias de aula — <b>'+ch.pct+'%</b> dos seus dias. Mês mais chuvoso: <b>'+MESES[pior.m]+'</b> ('+pior.n+'h em '+pior.diasChuva+' dia(s), '+pior.pct+'% do mês). Toque numa barra para ver a agenda daquele mês.<br><small>Conta os horários que você marcou como chuva na Agenda. Quantos alunos havia em cada um não fica guardado, por isso o número é de <b>horários</b>, não de alunos.</small>'
+    : '☔ Nenhum horário marcado como chuva em '+curYear+' ainda. Cada vez que você usa <b>"Marcar chuva / cancelar este horário"</b> na Agenda, ele entra nesta conta.';
 
   // Comparativo anual
   const fatPorAno={};
