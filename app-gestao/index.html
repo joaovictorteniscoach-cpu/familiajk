@@ -1000,7 +1000,7 @@ function esperarAuth(){
   <p class="sec-eyebrow">Chuva</p>
   <h2 class="sec-title">Aulas perdidas por <em>chuva</em></h2>
   <div class="fin-grid">
-    <div class="fin-card desp"><div class="l">Dias de aula com chuva <span id="g-chuva-ano"></span></div><div class="v" id="g-chuva-pct">0%</div></div>
+    <div class="fin-card desp"><div class="l">Dias de quadra com chuva <span id="g-chuva-ano"></span></div><div class="v" id="g-chuva-pct">0%</div></div>
     <div class="fin-card"><div class="l">Horários perdidos</div><div class="v" id="g-chuva-hor">0</div></div>
     <div class="fin-card"><div class="l">Dias com chuva</div><div class="v" id="g-chuva-dias">0</div></div>
   </div>
@@ -5448,32 +5448,39 @@ function verAgendaMes(){irParaAgenda('mes',new Date(curYear,curMonth,1));}
    (DB.chuvas guarda só 14 dias, para avisar os alunos, e não serve de histórico).
    Conta HORÁRIOS perdidos — quantos alunos havia em cada um não fica gravado
    depois de 14 dias, então não dá para dizer "aulas de fulano" sem inventar.
-   A porcentagem é por DIA: quantos dos dias em que você dá aula tiveram chuva.
-   Dividir pelos horários abertos do ano diluía tudo para 0%. Dias que ainda não
-   chegaram não entram na conta. */
+   A porcentagem é por DIA de quadra: quantos dos dias com tênis (aula, grupo ou
+   locação) tiveram chuva. Personal e almoço não entram — a chuva não os atinge.
+   Dias que ainda não chegaram também não entram. */
 function ehEventoChuva(e){return !!(e&&e.tipo==='bloqueio'&&(e.motivo==='chuva'||/chuva/i.test(e.titulo||'')));}
+/* Dia exposto à chuva = dia em que havia TÊNIS na quadra: aula, aula em grupo ou
+   locação. Personal e almoço ficam de fora — não são afetados pela chuva.
+   O dia de chuva conta sempre: ao marcar chuva o app apaga as aulas daquele
+   horário, então sem essa regra o próprio dia chuvoso sumiria do denominador. */
+function diaDeQuadra(dt){
+  return HORAS.some(h=>entriesFor(dt,h).some(e=>e.tipo==='aula'||e.tipo==='grupo'||e.tipo==='locacao'));
+}
 function chuvaAno(ano){
   const eventos=(DB.agenda&&DB.agenda.eventos)||[];
   const hoje=new Date();hoje.setHours(0,0,0,0);
   const ultimoMes=(ano===hoje.getFullYear())?hoje.getMonth():11;
   const porData={};
   eventos.forEach(e=>{if(ehEventoChuva(e)&&String(e.data||'').slice(0,4)===String(ano)){const d=String(e.data);porData[d]=(porData[d]||0)+1;}});
-  const meses=[];let totChuva=0,totDiasChuva=0,totDiasAula=0;
+  const meses=[];let totChuva=0,totDiasChuva=0,totDiasQuadra=0;
   for(let m=0;m<=ultimoMes;m++){
     const fim=new Date(ano,m+1,0).getDate();
-    let horas=0,diasChuva=0,diasAula=0;
+    let horas=0,diasChuva=0,diasQuadra=0;
     for(let d=1;d<=fim;d++){
       const dt=new Date(ano,m,d);
       if(dt>hoje)break;                                   // dia que ainda não chegou não entra na conta
-      if(HORAS.some(h=>slotModo(dt,h)==='aula'))diasAula++;
       const n=porData[dKey(dt)]||0;
+      if(n>0||diaDeQuadra(dt))diasQuadra++;
       if(n){horas+=n;diasChuva++;}
     }
-    meses.push({m,n:horas,diasChuva,diasAula,pct:diasAula?Math.round(diasChuva/diasAula*100):0});
-    totChuva+=horas;totDiasChuva+=diasChuva;totDiasAula+=diasAula;
+    meses.push({m,n:horas,diasChuva,diasQuadra,pct:diasQuadra?Math.round(diasChuva/diasQuadra*100):0});
+    totChuva+=horas;totDiasChuva+=diasChuva;totDiasQuadra+=diasQuadra;
   }
-  return {meses,totChuva,dias:totDiasChuva,diasAula:totDiasAula,
-    pct:totDiasAula?Math.round(totDiasChuva/totDiasAula*100):0,ultimoMes};
+  return {meses,totChuva,dias:totDiasChuva,diasQuadra:totDiasQuadra,
+    pct:totDiasQuadra?Math.round(totDiasChuva/totDiasQuadra*100):0,ultimoMes};
 }
 function renderGraf(){
   // Faturamento (receitas positivas) por mês
@@ -5528,7 +5535,7 @@ function renderGraf(){
   const pior=ch.meses.slice().sort((a,b)=>b.n-a.n)[0];
   const hintC=document.getElementById('g-chuva-hint');
   if(hintC)hintC.innerHTML=ch.totChuva
-    ? '☔ Em '+curYear+', <b>'+ch.totChuva+' horário(s)</b> de aula caíram por chuva, em <b>'+ch.dias+'</b> de <b>'+ch.diasAula+'</b> dias de aula — <b>'+ch.pct+'%</b> dos seus dias. Mês mais chuvoso: <b>'+MESES[pior.m]+'</b> ('+pior.n+'h em '+pior.diasChuva+' dia(s), '+pior.pct+'% do mês). Toque numa barra para ver a agenda daquele mês.<br><small>Conta os horários que você marcou como chuva na Agenda. Quantos alunos havia em cada um não fica guardado, por isso o número é de <b>horários</b>, não de alunos.</small>'
+    ? '☔ Em '+curYear+', <b>'+ch.totChuva+' horário(s)</b> caíram por chuva, em <b>'+ch.dias+'</b> de <b>'+ch.diasQuadra+'</b> dias com tênis na quadra — <b>'+ch.pct+'%</b> dos seus dias de quadra. Mês mais chuvoso: <b>'+MESES[pior.m]+'</b> ('+pior.n+'h em '+pior.diasChuva+' dia(s), '+pior.pct+'% do mês). Toque numa barra para ver a agenda daquele mês.<br><small>Só entram <b>aulas de tênis, grupo e locação</b> — personal e almoço não são afetados pela chuva. E o número é de <b>horários</b>, não de alunos: quantos alunos havia em cada horário não fica guardado.</small>'
     : '☔ Nenhum horário marcado como chuva em '+curYear+' ainda. Cada vez que você usa <b>"Marcar chuva / cancelar este horário"</b> na Agenda, ele entra nesta conta.';
 
   // Comparativo anual
