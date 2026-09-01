@@ -1597,7 +1597,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-01-8';
+const VERSAO='2026-09-01-9';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -3042,7 +3042,7 @@ function aceitarPedido(key){
     if(!a){toast('Aluno não encontrado — confira o cadastro');return;}
     a.status='pago';
     const c=cobrancaDoMes(a);
-    DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:c.desc,valor:c.valor,cat:'mensalidade',alunoId:a.id,modal:(ehPersonalTipo(a.tipo)?'personal':'tenis'),data:new Date().toISOString().slice(0,10)});
+    DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:c.desc,valor:c.valor,cat:'mensalidade',alunoId:a.id,modal:(ehPersonalTipo(a.tipo)?'personal':'tenis'),data:new Date().toISOString().slice(0,10),descontoRepos:c.detalhe});
     if(c.desconto>0)delete a.descontoMes;
     toast('✓ '+a.nome+' marcado como PAGO · '+fmt(c.valor)+(c.desconto>0?(' (−'+fmt(c.desconto)+')'):''));
   }else if(p.kind==='plano'){
@@ -3330,7 +3330,7 @@ function renderVincularList(){
   const grupos=gruposNaoVinculados();
   const el=document.getElementById('link-list');
   if(!grupos.length){el.innerHTML='<div class="empty">✅ Tudo certo! Todos os nomes da agenda já estão vinculados a alunos cadastrados — as aulas aparecem em dourado para eles.</div>';return;}
-  const opts=DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${a.id}">${a.nome}${a.tipo==='Personal'?' (Personal)':''}</option>`).join('');
+  const opts=DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${a.id}">${escAval(a.nome)}${a.tipo==='Personal'?' (Personal)':''}</option>`).join('');
   el.innerHTML='<p class="hint" style="margin-bottom:10px">Para cada nome da agenda que ainda não bate com um cadastro, escolha o aluno correto. Ao salvar, o horário fica vinculado e o nome é padronizado — aí aparece em dourado no app do aluno.</p>'+grupos.map(g=>`
     <div class="link-row">
       <div class="link-name">${g.titulo} <small>(${g.qtd} horário${g.qtd===1?'':'s'} na grade)</small></div>
@@ -3686,7 +3686,7 @@ function openSlot(hora){
   document.getElementById('slot-title').textContent=DIAS[slotCtx.date.getDay()]+' '+slotCtx.date.getDate()+'/'+(slotCtx.date.getMonth()+1)+' · '+hora;
   document.getElementById('s-titulo').value='';
   const sel=document.getElementById('s-aluno');
-  sel.innerHTML='<option value="">— sem vínculo —</option>'+DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${a.id}">${a.nome} (${fmtCred(a.creditos)} créd.)</option>`).join('');
+  sel.innerHTML='<option value="">— sem vínculo —</option>'+DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${a.id}">${escAval(a.nome)} (${fmtCred(a.creditos)} créd.)</option>`).join('');
   sel.value='';
   renderSlotEvs();
   document.getElementById('ov-slot').classList.add('on');
@@ -4832,9 +4832,13 @@ function abaterRepos(id,qtd){
   if(qtd<=0)return;
   if(acaoRepetida('abater-'+id)){toast('Já abati agora há pouco — confira antes de repetir');return;}
   const valor=Math.round(qtd*valorReposicaoDe(a));
+  const saldoAntes=Number(a.repos)||0;
   mover(a,'repos',-qtd,'Desconto na mensalidade');
   const ja=(a.descontoMes&&a.descontoMes.mes===monthKey())?a.descontoMes:null;
-  a.descontoMes={mes:monthKey(),qtd:(ja?ja.qtd:0)+qtd,valor:(ja?ja.valor:0)+valor};
+  /* Guarda o rastro da escolha: quanto havia antes, quanto saiu e quando. É o que
+     permite conferir depois sem depender do texto da descrição. */
+  a.descontoMes={mes:monthKey(),qtd:(ja?ja.qtd:0)+qtd,valor:(ja?ja.valor:0)+valor,
+                 saldoAntes:(ja?ja.saldoAntes:saldoAntes),ts:Date.now()};
   logAct('Desconto por reposição: '+a.nome+' −'+fmtCred(qtd)+' ('+fmt(valor)+')');
   persist();renderAll();
   toast(a.status==='pago'
@@ -4845,10 +4849,11 @@ function abaterRepos(id,qtd){
 function cobrancaDoMes(a){
   const d=(a.descontoMes&&a.descontoMes.mes===monthKey())?a.descontoMes:null;
   const cheia=Number(a.mensalidade)||0;
-  if(!d||!(d.valor>0))return {valor:cheia,desc:'Mensalidade · '+a.nome,desconto:0};
+  if(!d||!(d.valor>0))return {valor:cheia,desc:'Mensalidade · '+a.nome,desconto:0,detalhe:null};
   return {valor:Math.max(0,cheia-d.valor),
           desc:'Mensalidade · '+a.nome+' (−'+fmtCred(d.qtd)+' reposições)',
-          desconto:d.valor};
+          desconto:d.valor,
+          detalhe:{qtd:d.qtd,valor:d.valor,cheia,saldoAntes:d.saldoAntes,mes:d.mes,ts:d.ts||Date.now()}};
 }
 function marcarPago(id){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
@@ -4862,7 +4867,7 @@ function marcarPago(id){
   }
   a.status='pago';
   const c=cobrancaDoMes(a);
-  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:c.desc,valor:c.valor,cat:'mensalidade',alunoId:a.id,modal:(ehPersonalTipo(a.tipo)?'personal':'tenis'),data:new Date().toISOString().slice(0,10)});
+  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:c.desc,valor:c.valor,cat:'mensalidade',alunoId:a.id,modal:(ehPersonalTipo(a.tipo)?'personal':'tenis'),data:new Date().toISOString().slice(0,10),descontoRepos:c.detalhe});
   if(c.desconto>0)delete a.descontoMes;                 // desconto gasto: não vale duas vezes
   persist();renderAll();
   toast('Pagamento de '+a.nome+' lançado: '+fmt(c.valor)+(c.desconto>0?(' (−'+fmt(c.desconto)+' de reposições)'):''));
@@ -4989,7 +4994,7 @@ function renderAlunos(){
     return `
   <div class="aluno" id="card-${a.id}">
     <div class="aluno-head" onclick="toggleAluno(document.getElementById('card-${a.id}'))">
-      <div><div class="aluno-name">${ehPersonalTipo(a.tipo)?'💪 ':'🎾 '}${a.nome}</div><div class="aluno-sub">${a.tipo} · ${a.plano>0?('Flex '+a.plano):'sem pacote'} · ${fmt(a.mensalidade)}/mês</div></div>
+      <div><div class="aluno-name">${ehPersonalTipo(a.tipo)?'💪 ':'🎾 '}${escAval(a.nome)}</div><div class="aluno-sub">${a.tipo} · ${a.plano>0?('Flex '+a.plano):'sem pacote'} · ${fmt(a.mensalidade)}/mês</div></div>
       <span class="badge ${a.status}">${a.status==='parcial'?'50%':a.status}</span>
     </div>
     <div class="aluno-body"><div class="ab-in">
@@ -5017,7 +5022,7 @@ function renderAlunos(){
         ${difere?`<button class="act a4" onclick="manterValorAnotado('${a.id}')">✓ Manter ${fmt(a.mensalidade)}</button>`:''}
         ${(a.difUndo&&a.difUndo.mes===monthKey())?`<button class="act a1" onclick="desfazerDecisaoDif('${a.id}')">↩︎ Desfazer cobrança</button>`:''}
         ${temRepos?`<button class="act a4" onclick="usarRepos('${a.id}')">${BI.undo}Usar reposição</button>`:''}
-        ${podeAbater>0?`<button class="act a3" onclick="abaterRepos('${a.id}',${podeAbater})">${BI.money}Abater ${fmtCred(podeAbater)} na mensalidade (${fmt(Math.round(podeAbater*valorReposicaoDe(a)))})</button>`:''}
+        ${podeAbater>0?`<button class="act a3" onclick="abaterRepos('${a.id}',${podeAbater})">${BI.money}Abater ${fmtCred(podeAbater)} (${fmt(Math.round(podeAbater*valorReposicaoDe(a)))})</button>`:''}
         <button class="act maisbtn" onclick="toggleMais('${a.id}')">⋯ Mais ações</button>
       </div>
       <div class="acts-mais">
@@ -5117,7 +5122,7 @@ function delBotaoLanc(i){
 function openLancModal(){
   document.getElementById('l-desc').value='';document.getElementById('l-valor').value='';
   const sel=document.getElementById('l-aluno');
-  if(sel){sel.innerHTML='<option value="">— ninguém —</option>'+DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${a.id}">${a.nome}</option>`).join('');sel.value='';}
+  if(sel){sel.innerHTML='<option value="">— ninguém —</option>'+DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${a.id}">${escAval(a.nome)}</option>`).join('');sel.value='';}
   document.getElementById('l-cat').value='avulsa';
   document.getElementById('ov-lanc').classList.add('on');
 }
@@ -5249,7 +5254,7 @@ function renderDash(){
       const r=rotuloVenc(d);
       return `
     <div class="pend-item ${a.status}">
-      <div><b>${a.nome}</b><br><span>${a.status==='parcial'?'Pagou 50% — falta '+fmt(a.mensalidade*0.5):'Pendente — '+fmt(a.mensalidade)}</span>
+      <div><b>${escAval(a.nome)}</b><br><span>${a.status==='parcial'?'Pagou 50% — falta '+fmt(a.mensalidade*0.5):'Pendente — '+fmt(a.mensalidade)}</span>
         <span class="venc-tag ${r.cls}">${r.txt}${d!==null?(' · dia '+((a.diaVenc)||10)):''}</span></div>
       ${a.tel?`<button class="btn btn-ghost" style="padding:7px 11px;font-size:11px" onclick="cobrar('${a.id}')">Cobrar 📲</button>`:''}
     </div>`;}).join('');
