@@ -167,6 +167,20 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 
 .page{display:none;padding:18px 16px 30px}
 .page.on{display:block}
+/* Seções que podem ficar minimizadas no Início, para a tela caber sem rolar
+   tanto — e para o painel abrir discreto quando está na frente do aluno. */
+.dobra{margin-bottom:14px}
+.dobra-cab{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:none;padding:0 0 10px;color:var(--text)}
+.dobra-cab .dc-tit{flex:1;min-width:0}
+.dobra-cab .dc-eyebrow{display:block;font-size:9.5px;letter-spacing:3px;text-transform:uppercase;color:var(--clay);font-weight:600}
+.dobra-cab .dc-nome{display:block;font-family:'Cormorant Garamond',serif;font-size:23px;font-weight:400;line-height:1.2}
+.dobra-cab .dc-nome em{font-style:italic;color:var(--clay)}
+.dobra-cab .dc-n{flex-shrink:0;min-width:24px;height:24px;border-radius:12px;background:var(--clay);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 7px}
+.dobra-cab .dc-n.zero{background:#E3EAE4;color:#2E7D52}
+.dobra-cab .dc-seta{flex-shrink:0;font-size:19px;color:var(--muted);transition:transform .18s ease}
+.dobra.on .dc-seta{transform:rotate(90deg)}
+.dobra-corpo{display:none}
+.dobra.on .dobra-corpo{display:block}
 .sec-eyebrow{font-size:9.5px;letter-spacing:3px;text-transform:uppercase;color:var(--clay);font-weight:600}
 .sec-title{font-family:'Cormorant Garamond',serif;font-size:23px;font-weight:400;margin-bottom:14px}
 .sec-title em{font-style:italic;color:var(--clay)}
@@ -762,13 +776,21 @@ window.__DEMO = true;
   <p class="sec-eyebrow">Confirmações</p>
   <h2 class="sec-title">📲 Agenda de <em>amanhã</em> <small id="confirm-amanha-data" style="font-weight:600;color:var(--muted);font-size:12px"></small></h2>
   <div id="confirm-amanha"></div>
-  <p class="sec-eyebrow" style="margin-top:16px">Cobranças</p>
-  <h2 class="sec-title">Pagamentos <em>pendentes</em></h2>
-  <div class="pend-list" id="pend-list"></div>
+  <div class="dobra" id="dob-pend" style="margin-top:16px">
+    <button class="dobra-cab" onclick="dobrar('dob-pend')">
+      <span class="dc-tit"><span class="dc-eyebrow">Cobranças</span><span class="dc-nome">Pagamentos <em>pendentes</em></span></span>
+      <span class="dc-n" id="dob-pend-n">0</span><span class="dc-seta">›</span>
+    </button>
+    <div class="dobra-corpo"><div class="pend-list" id="pend-list"></div></div>
+  </div>
 
-  <p class="sec-eyebrow" style="margin-top:20px">Leitura automática</p>
-  <h2 class="sec-title">O que merece sua <em>atenção</em></h2>
-  <div id="conselhos-box"></div>
+  <div class="dobra" id="dob-consel">
+    <button class="dobra-cab" onclick="dobrar('dob-consel')">
+      <span class="dc-tit"><span class="dc-eyebrow">Leitura automática</span><span class="dc-nome">O que merece sua <em>atenção</em></span></span>
+      <span class="dc-n" id="dob-consel-n">0</span><span class="dc-seta">›</span>
+    </button>
+    <div class="dobra-corpo"><div id="conselhos-box"></div></div>
+  </div>
 </section>
 
 <section class="page" id="pg-agenda">
@@ -1653,7 +1675,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-01-14';
+const VERSAO='2026-09-01-16';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -2708,7 +2730,7 @@ async function doPublish(){
       locacaoOnly:DB.locacaoOnly||[],
       horarioCfg:DB.horarioCfg||{},
       horarioData:DB.horarioData||{},
-      alunos:DB.alunos.map(a=>({codigo:a.codigo,nome:a.nome,tipo:a.tipo,plano:a.plano,creditos:a.creditos,repos:a.repos,reposValidas:reposValidas(a),reposVencendo:reposVencendo(a),tetoDesc:tetoDescontoRepos(a),descUsadoMes:descontoUsadoNoMes(a),valorRepos:Math.round(valorReposicaoDe(a)),descontoMes:(a.descontoMes&&a.descontoMes.mes===monthKey())?a.descontoMes:null,status:a.status,mensalidade:a.mensalidade,diaVenc:a.diaVenc||10,cardLink:a.cardLink||'',mfitLink:a.mfitLink||'',valorAula:a.valorAula||(a.tipo==='Personal'?130:160),locCred:Number(a.locCred)||0,credGrupo:Number(a.credGrupo)||0,planoGrupo:Number(a.planoGrupo)||0,grupoTipo:a.grupoTipo||'',avaliacoes:(a.avaliacoes||[]).slice(-12),evoMes:serieMensal(a.avaliacoes,a.registros,24),registros:(a.registros||[]).slice(-8)})),
+      alunos:DB.alunos.map(a=>({codigo:a.codigo,nome:a.nome,tipo:a.tipo,plano:a.plano,creditos:a.creditos,repos:a.repos,reposValidas:reposValidas(a),reposVencendo:reposVencendo(a),tetoDesc:tetoDescontoRepos(a),descUsadoMes:descontoUsadoNoMes(a),valorRepos:Math.round(valorReposicaoDe(a)),descontoMes:(a.descontoMes&&a.descontoMes.mes===monthKey())?a.descontoMes:null,status:a.status,ultimoPago:a.ultimoPago||'',mensalidade:a.mensalidade,diaVenc:a.diaVenc||10,cardLink:a.cardLink||'',mfitLink:a.mfitLink||'',valorAula:a.valorAula||(a.tipo==='Personal'?130:160),locCred:Number(a.locCred)||0,credGrupo:Number(a.credGrupo)||0,planoGrupo:Number(a.planoGrupo)||0,grupoTipo:a.grupoTipo||'',avaliacoes:(a.avaliacoes||[]).slice(-12),evoMes:serieMensal(a.avaliacoes,a.registros,24),registros:(a.registros||[]).slice(-8)})),
       historico:(function(){
         const codeOf={};DB.alunos.forEach(a=>{codeOf[a.id]=a.codigo;});
         const cut=dKey(new Date(Date.now()-60*864e5));const out={};
@@ -2931,7 +2953,21 @@ function renderNotifList(){
 }
 /* O número "a receber" existe; a lista de quem deve também, logo abaixo na
    mesma tela. Faltava só o caminho entre os dois. */
+/* Abre/fecha uma seção do Início. Começam sempre fechadas: o estado não é
+   guardado, então cada abertura do app parte do painel enxuto. */
+function dobrar(id,forcar){
+  const d=document.getElementById(id);if(!d)return;
+  if(forcar===true)d.classList.add('on');
+  else if(forcar===false)d.classList.remove('on');
+  else d.classList.toggle('on');
+}
+function marcarDobra(id,n,bom){
+  const e=document.getElementById(id);if(!e)return;
+  e.textContent=n;
+  e.classList.toggle('zero',!!bom);
+}
 function verPendentes(){
+  dobrar('dob-pend',true);            // sem isto o alerta rolaria até uma seção fechada
   const alvo=document.getElementById('pend-list');
   if(!alvo)return;
   alvo.scrollIntoView({behavior:'smooth',block:'center'});
@@ -3096,7 +3132,7 @@ function aceitarPedido(key){
   const a=DB.alunos.find(x=>x.codigo===p.codigo);
   if(p.kind==='mensalidade'){
     if(!a){toast('Aluno não encontrado — confira o cadastro');return;}
-    a.status='pago';
+    a.status='pago';a.ultimoPago=monthKey();
     const c=cobrancaDoMes(a);
     DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:c.desc,valor:c.valor,cat:'mensalidade',alunoId:a.id,modal:(ehPersonalTipo(a.tipo)?'personal':'tenis'),data:new Date().toISOString().slice(0,10),descontoRepos:c.detalhe});
     if(c.desconto>0)delete a.descontoMes;
@@ -3171,7 +3207,10 @@ function shiftMonth(d){
   renderAll();
 }
 function monthKey(){return curYear+'-'+String(curMonth+1).padStart(2,'0');}
-let hideVals=(typeof localStorage!=='undefined'&&localStorage.getItem('jv-hide')==='1');
+/* Começa SEMPRE oculto: o painel costuma ser aberto na frente do aluno. O olho
+   revela durante a sessão, mas na próxima abertura volta a esconder — por isso
+   a escolha não é guardada no aparelho. */
+let hideVals=true;
 function fmt(v){if(hideVals)return 'R$ ••••';return 'R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:2});}
 function updateEyeBtn(){
   const b=document.getElementById('eye-btn');if(!b)return;
@@ -3182,7 +3221,6 @@ function updateEyeBtn(){
 }
 function toggleHide(){
   hideVals=!hideVals;
-  try{localStorage.setItem('jv-hide',hideVals?'1':'0');}catch(e){}
   updateEyeBtn();renderAll();
   if(document.getElementById('pg-graf').classList.contains('on'))renderGraf();
   toast(hideVals?'Valores ocultos':'Valores visíveis');
@@ -4918,10 +4956,13 @@ function marcarPago(id){
   if(jaTem.length){
     const soma=jaTem.reduce((t,l)=>t+(Number(l.valor)||0),0);
     if(!confirm('⚠️ '+a.nome+' já tem '+jaTem.length+' mensalidade lançada neste mês ('+fmt(soma)+').\n\nLançar OUTRA de '+fmt(a.mensalidade)+'?\n\nSe foi engano, toque em Cancelar — o aluno continua marcado como pago.')){
-      a.status='pago';persist();renderAll();toast(a.nome+' marcado como pago (sem lançar de novo)');return;
+      a.status='pago';a.ultimoPago=monthKey();persist();renderAll();toast(a.nome+' marcado como pago (sem lançar de novo)');return;
     }
   }
-  a.status='pago';
+  /* Carimbo do mês quitado: é o que sustenta a janela livre até o vencimento no
+     app do aluno — a folga vale para quem pagou o mês anterior. Sobrevive à
+     virada do mês, que só devolve o status para "pendente". */
+  a.status='pago';a.ultimoPago=monthKey();
   const c=cobrancaDoMes(a);
   DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:c.desc,valor:c.valor,cat:'mensalidade',alunoId:a.id,modal:(ehPersonalTipo(a.tipo)?'personal':'tenis'),data:new Date().toISOString().slice(0,10),descontoRepos:c.detalhe});
   if(c.desconto>0)delete a.descontoMes;                 // desconto gasto: não vale duas vezes
@@ -5449,6 +5490,7 @@ function renderDash(){
   setTxt('loc-txt',ocMes.locUsados+'h no mês');
   setTxt('loc-sub',ocMes.locDisp?('· '+ocMes.locPct+'% da grade de locação'):'');
   renderCompromissos();renderDatasInicio();
+  marcarDobra('dob-pend-n',pendAlunos.length,pendAlunos.length===0);
   if(!pendAlunos.length){pl.innerHTML='<div class="empty">🎉 Todos os alunos estão em dia!</div>';}
   else{
     // por urgência, não por valor: quem já venceu vem antes de quem deve mais
@@ -5550,6 +5592,7 @@ function renderConselhos(){
   const loc=alunos.filter(a=>(Number(a.locCred)||0)<0);
   if(loc.length)t.push(['warn','🔑','Locação a acertar',loc.length+' aluno(s) com saldo de locação negativo: '+nomes(loc)+'. Use "Locação paga" no card para lançar e zerar.']);
 
+  marcarDobra('dob-consel-n',t.length,t.length===0);
   if(!t.length){box.innerHTML='<div class="cons good"><h4><span>✅</span>Tudo em ordem</h4><p>Nenhuma pendência de cobrança, saldo ou avaliação para hoje.</p></div>';return;}
   box.innerHTML=t.map(x=>`<div class="cons ${x[0]}"><h4><span>${x[1]}</span>${escAval(x[2])}</h4><p>${escAval(x[3])}</p></div>`).join('');
 }

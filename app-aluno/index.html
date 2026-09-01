@@ -36,6 +36,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
 .page{display:none}
 .page.on{display:block}
 .lock-note{background:#FBEDE9;border:1px solid #E6C3B7;color:#8a2d18;border-radius:12px;padding:12px 14px;font-size:13px;font-weight:600;margin:4px 0 12px;line-height:1.5}
+/* Mesma caixa, tom calmo: dentro do prazo é lembrete, não bloqueio. */
+.lock-note.aviso{background:#FBF1D8;border-color:#E7D6A8;color:#7C5E1A}
 #tor-capture{background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px}
 .tor-cap-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)}
 .tor-cap-head b{display:block;font-size:13px;font-weight:700;color:var(--green)}
@@ -837,7 +839,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-09-01-14';
+const VERSAO='2026-09-01-16';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -1232,14 +1234,40 @@ function textoVencimento(){
   if(dias===1)return 'vence amanhã';
   return 'faltam '+dias+' dias';
 }
-/* Agendar exige estar em dia: mensalidade paga E sem saldo negativo.
-   Antes só travava a partir do dia 10 e o saldo negativo passava com um aviso. */
 function bloqueadoPorPagamento(){return !!(EU&&EU.status!=='pago');}
 function bloqueadoPorSaldo(){
   if(!EU)return false;
   return (Number(EU.creditos)||0)<0||(Number(EU.credGrupo)||0)<0;
 }
-function bloqueadoParaAgendar(){return bloqueadoPorPagamento()||bloqueadoPorSaldo();}
+/* CUIDADO: diasAteVencer() NÃO serve para decidir prazo. Ela tem um dif+=30 para
+   escrever "vence em breve" no fim do mês, então no dia 20 com vencimento no 10
+   ela devolve +20. Usá-la aqui liberaria todo mundo do dia 14 em diante. A
+   comparação tem que ser do dia do mês, direta. */
+function dentroDoPrazo(hoje){
+  return (hoje||new Date()).getDate()<=Number(diaVencEU());
+}
+function mesAnterior(){
+  const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-1);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+}
+/* Sem carimbo nenhum = em dia. Na estreia desta regra ninguém tem histórico de
+   pagamento ainda; sem esta saída, todos os alunos travariam de uma vez. */
+function quitouMesPassado(){
+  const u=EU&&EU.ultimoPago;
+  return !u||String(u)>=mesAnterior();
+}
+/* Até o dia do vencimento a agenda fica livre — é quando o aluno monta o mês e
+   o valor é gerado pelas aulas marcadas. Passado o dia, vale a trava de sempre:
+   mensalidade em aberto ou saldo de aulas negativo. A folga é de quem quitou o
+   mês anterior. */
+function bloqueadoParaAgendar(){
+  if(dentroDoPrazo()&&quitouMesPassado())return false;
+  return bloqueadoPorPagamento()||bloqueadoPorSaldo();
+}
+/* Dentro da janela, com a mensalidade em aberto: lembrete, não bloqueio. */
+function soLembrete(){
+  return dentroDoPrazo()&&quitouMesPassado()&&(bloqueadoPorPagamento()||bloqueadoPorSaldo());
+}
 function motivoBloqueio(){
   // com o prazo junto, ele sabe se está atrasado ou se ainda dá tempo
   const prazo=textoVencimento();
@@ -1254,6 +1282,17 @@ function motivoBloqueio(){
 }
 function renderPayLock(){
   const el=document.getElementById('pay-lock');if(!el)return;
+  el.classList.remove('aviso');
+  if(soLembrete()){
+    el.classList.add('aviso');
+    el.style.display='block';
+    const esperando=pagamentoEmAnalise();
+    let h='🗓️ <b>Mensalidade vence dia '+diaVencEU()+'</b> — agende suas aulas normalmente até lá.';
+    if(esperando)h+='<div class="lock-wait">⏳ Pagamento avisado ao João em '+esperando+'.</div>';
+    else if(bloqueadoPorPagamento())h+='<button class="lock-pay" onclick="irPagar()">💳 Pagar agora pelo app</button>';
+    el.innerHTML=h;
+    return;
+  }
   if(bloqueadoParaAgendar()){
     el.style.display='block';
     const esperando=pagamentoEmAnalise();
