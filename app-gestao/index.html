@@ -31,7 +31,7 @@
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{scroll-behavior:smooth}
-body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);max-width:520px;margin:0 auto;line-height:1.55;padding-bottom:89px}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);max-width:520px;margin:0 auto;line-height:1.55;padding-bottom:89px;overscroll-behavior-y:none}
 button{font-family:'DM Sans',sans-serif;cursor:pointer}
 input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 
@@ -148,6 +148,11 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .save-state.err{color:#FF9B8A}
 
 .nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;background:var(--dark);display:grid;grid-template-columns:repeat(7,1fr);padding:8px 2px calc(8px + env(safe-area-inset-bottom));z-index:50;border-top:1px solid rgba(255,255,255,.08)}
+/* Preenchimento abaixo da barra: no iPhone, quando o iOS desloca a barra fixa
+   (rubber band, mudança de viewport), aparecia uma faixa creme entre ela e o fim
+   da tela. Isto pinta esse pedaço com a própria cor da barra. É absoluto de
+   propósito — como filho de um grid, em fluxo normal viraria mais uma coluna. */
+.nav::after{content:'';position:absolute;left:0;right:0;top:100%;height:140px;background:var(--dark);pointer-events:none}
 .nav button{position:relative;background:none;border:none;color:rgba(250,247,242,.72);font-size:10px;font-weight:500;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 1px 8px;border-radius:10px;letter-spacing:.1px}
 .nav-badge{position:absolute;top:1px;right:calc(50% - 20px);background:var(--clay);color:#fff;font-size:9.5px;font-weight:800;min-width:16px;height:16px;border-radius:9px;display:none;align-items:center;justify-content:center;padding:0 4px;box-shadow:0 1px 4px rgba(0,0,0,.4)}
 .nav-badge.on{display:flex}
@@ -1701,7 +1706,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-01-12';
+const VERSAO='2026-09-01-13';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
