@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>JV Tênis · Aluno</title>
 <link rel="apple-touch-icon" href="jv-icone-aluno.png">
 <link rel="icon" href="jv-icone-aluno.png">
@@ -89,7 +89,7 @@ input,select{font-family:'DM Sans',sans-serif;font-size:14px}
 
 /* APP */
 #app{display:none}
-.top{background:linear-gradient(135deg,rgba(26,46,20,.88),rgba(36,64,28,.93)),var(--court) center/cover no-repeat;padding:26px 20px 24px;position:relative;overflow:hidden}
+.top{background:linear-gradient(135deg,rgba(26,46,20,.88),rgba(36,64,28,.93)),var(--court) center/cover no-repeat;padding:calc(18px + env(safe-area-inset-top,0px)) 20px 24px;position:relative;overflow:hidden}
 .top::before{content:'';position:absolute;width:200px;height:200px;border-radius:50%;top:-70px;right:-50px;background:radial-gradient(circle,rgba(201,160,74,.22),transparent 65%)}
 .top-tag{font-size:9.5px;letter-spacing:3px;text-transform:uppercase;color:#C9E265;font-weight:700;display:flex;align-items:center;gap:6px}
 .top h1{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:30px;color:#fff;margin:4px 0 2px}
@@ -831,7 +831,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-08-31-2';
+const VERSAO='2026-09-01-4';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
