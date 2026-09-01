@@ -383,6 +383,9 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .aval-resumo .rc{background:#fff;border:1px solid var(--border);border-radius:13px;padding:11px 8px;text-align:center}
 .aval-resumo .rc b{display:block;font-size:22px;font-weight:800;line-height:1.1;color:var(--green)}
 .aval-resumo .rc.pend b{color:#B23A2E}
+#alunos-resumo .rc{cursor:pointer;transition:border-color .12s,background .12s}
+#alunos-resumo .rc:active{transform:scale(.99)}
+#alunos-resumo .rc.on{border-color:var(--gold);background:rgba(212,175,88,.12)}
 .aval-resumo .rc span{font-size:10.5px;color:var(--muted);font-weight:600}
 .avcard{background:#fff;border:1px solid var(--border);border-radius:14px;padding:13px 14px;margin-bottom:10px}
 .avcard .avtop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
@@ -820,6 +823,7 @@ function esperarAuth(){
 
   <p class="sec-eyebrow">Cadastro</p>
   <h2 class="sec-title">Meus <em>alunos</em></h2>
+  <div class="aval-resumo" id="alunos-resumo"></div>
   <div class="toolbar">
     <input id="search" placeholder="Buscar aluno…" oninput="focoRepos=false;renderAlunos()">
     <button class="btn btn-ghost" onclick="gerenciarPacotes()" title="Ver/excluir pacotes personalizados">⚙️ Pacotes</button>
@@ -1650,7 +1654,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-01-10';
+const VERSAO='2026-09-01-11';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -4958,12 +4962,50 @@ function enviarRenovacaoWa(id){
 }
 let filtroAluno='todos';
 let focoRepos=false;
+/* Ativo = tem pacote contratado. a.arquivado, quando existe, manda na regra:
+   é como o João corrige quem parou mas ficou com plano no cadastro, ou quem
+   está sem pacote no momento mas continua na academia. */
+function ehAtivoAluno(a){
+  if(!a)return false;
+  if(a.arquivado===true)return false;
+  if(a.arquivado===false)return true;
+  return (Number(a.plano)||0)>0||(Number(a.planoGrupo)||0)>0||(Number(a.mensalidade)||0)>0;
+}
+function contagemAlunos(){
+  const t=(DB.alunos||[]).length;
+  const at=(DB.alunos||[]).filter(ehAtivoAluno).length;
+  return {total:t,ativos:at,inativos:t-at};
+}
+function setFiltroAtivo(f){
+  filtroAtivo=(filtroAtivo===f)?'todos':f;   // tocar de novo volta para todos
+  focoRepos=false;renderAlunos();
+}
+let filtroAtivo='todos';
+function arquivarAluno(id){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  const ativo=ehAtivoAluno(a);
+  if(ativo){
+    if(!confirm('Marcar '+a.nome+' como INATIVO?\n\nEle continua no cadastro e com todo o histórico — só sai da conta de alunos ativos.'))return;
+    a.arquivado=true;logAct('Aluno marcado como inativo: '+a.nome);
+  }else{
+    a.arquivado=false;logAct('Aluno reativado: '+a.nome);
+  }
+  persist();renderAll();
+  toast(a.nome+(ativo?' agora conta como inativo':' voltou para os ativos'));
+}
 function setFiltroAluno(f,btn){
   filtroAluno=f;
   focoRepos=false;   // escolher um perfil sai do foco de reposição
   document.querySelectorAll('#alunos-filtro button').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
   renderAlunos();
+}
+/* Total · ativos · inativos, tocáveis para filtrar a lista. */
+function renderResumoAlunos(){
+  const box=document.getElementById('alunos-resumo');if(!box)return;
+  const c=contagemAlunos();
+  const cel=(f,n,rot,cls)=>'<div class="rc'+(cls||'')+(filtroAtivo===f?' on':'')+'" onclick="setFiltroAtivo(\''+f+'\')"><b>'+n+'</b><span>'+rot+'</span></div>';
+  box.innerHTML=cel('todos',c.total,'no cadastro')+cel('ativos',c.ativos,'ativos')+cel('inativos',c.inativos,'inativos',' pend');
 }
 function ultimasAulas(id,lim){
   return (DB.presencas||[]).filter(p=>p.alunoId===id).sort((a,b)=>String(b.data).localeCompare(String(a.data))).slice(0,lim||8);
@@ -4994,9 +5036,11 @@ function renderAlunos(){
   const items=DB.alunos.filter(a=>a.nome.toLowerCase().includes(q)).filter(a=>{
     if(filtroAluno==='todos')return true;
     return perfilDe(a)===filtroAluno;
-  }).filter(a=>!focoRepos||(Number(a.repos)||0)>0).sort((x,y)=>x.nome.localeCompare(y.nome));
+  }).filter(a=>filtroAtivo==='todos'||(filtroAtivo==='ativos')===ehAtivoAluno(a))
+    .filter(a=>!focoRepos||(Number(a.repos)||0)>0).sort((x,y)=>x.nome.localeCompare(y.nome));
+  renderResumoAlunos();
   const avisoRepos=focoRepos?'<div class="foco-repos">🔁 Mostrando só quem tem <b>reposição pendente</b> · <a onclick="limparFocoRepos()">ver todos</a></div>':'';
-  if(!items.length){list.innerHTML=avisoRepos+'<div class="empty">Nenhum aluno '+(q||filtroAluno!=='todos'||focoRepos?'encontrado':'cadastrado ainda — toque em <b>+ Novo</b> para começar')+'.</div>';return;}
+  if(!items.length){list.innerHTML=avisoRepos+'<div class="empty">Nenhum aluno '+(q||filtroAluno!=='todos'||filtroAtivo!=='todos'||focoRepos?'encontrado':'cadastrado ainda — toque em <b>+ Novo</b> para começar')+'.</div>';return;}
   // guarda quais cartões estão abertos: toda ação chama renderAll e reconstrói a
   // lista, e sem isso o cartão se fechava embaixo do dedo a cada toque
   const abertos=new Set(),comMais=new Set();
@@ -5033,6 +5077,7 @@ function renderAlunos(){
         ${filtroAluno==='todos'?`<span class="chip" style="background:#EFE7D8;color:#5b5142;font-weight:700">${PERFIL_LABELS[perfilDe(a)]||''}</span>`:''}
         ${(a.avaliacoes&&a.avaliacoes.length)?`<span class="chip" style="background:${metalDe(a.avaliacoes[a.avaliacoes.length-1].nivel).m};color:#fff;font-weight:800">📈 ${a.avaliacoes[a.avaliacoes.length-1].nivel||'—'}</span>`:''}
         ${a.termoAceitoEm?`<span class="chip" style="background:#E6F0E6;color:#2E7D52">📄 termo aceito</span>`:''}
+        ${!ehAtivoAluno(a)?`<span class="chip" style="background:#EDE9E1;color:#6B5E4A;font-weight:700">📦 inativo</span>`:''}
         ${vencendo>0?`<span class="chip" style="background:#FBEFD2;color:#7A5B10;font-weight:800">⏳ ${fmtCred(vencendo)} reposição(ões) vencem no fim do mês</span>`:''}
         ${(a.descontoMes&&a.descontoMes.mes===monthKey())?`<span class="chip" style="background:#E7F0E8;color:#2E7D52;font-weight:800">💰 ${fmt(a.descontoMes.valor)} de desconto na cobrança</span>`:''}
         ${ag.total>0?`<span class="chip" style="${difere?'background:#FBEFD2;color:#7A5B10;font-weight:800':'background:#E7F0E8;color:#2E7D52;font-weight:700'}">📅 ${ag.part>0&&ag.grupo>0?(ag.part+' aula(s) + '+ag.grupo+' em grupo'):(ag.total+' aula(s)')} na agenda${difere?(' · '+fmt(ag.valor)+' (cadastro: '+fmt(a.mensalidade)+')'):''}</span>`:''}
@@ -5052,6 +5097,7 @@ function renderAlunos(){
       <div class="acts-mais">
         <div class="acts">
           <button class="act a2" onclick="addRepos('${a.id}')">${BI.plus}Reposição</button>
+          <button class="act a4" onclick="arquivarAluno('${a.id}')">${ehAtivoAluno(a)?'📦 Marcar inativo':'✅ Reativar aluno'}</button>
           <button class="act aval" style="grid-column:auto" onclick="openAvalModal('${a.id}')">${BI.chart}Avaliar</button>
           ${!difere&&ag.total>0?`<button class="act a4" onclick="cobrarPelaAgenda('${a.id}')">📅 Cobrar pela agenda (${fmt(ag.valor)})</button>`:''}
           ${!temRepos?`<button class="act a4" onclick="usarRepos('${a.id}')">${BI.undo}Usar reposição</button>`:''}
@@ -5234,8 +5280,10 @@ function renderDash(){
   // só vira botão quando há alguém para mostrar: prometer toque sem destino é pior que não ter
   const kp=document.getElementById('kpi-pendente');
   if(kp)kp.classList.toggle('tocavel',pendAlunos.length>0);
-  document.getElementById('k-alunos').textContent=DB.alunos.length;
-  document.getElementById('k-alunos-s').textContent='cadastrados';
+  const cAl=contagemAlunos();
+  document.getElementById('k-alunos').textContent=cAl.ativos;
+  document.getElementById('k-alunos-s').textContent=cAl.inativos>0
+    ? ('de '+cAl.total+' no cadastro · '+cAl.inativos+' inativo(s)') : 'no cadastro';
   document.getElementById('k-creditos').textContent=fmtCred(creditos);
   document.getElementById('k-repos-s').textContent=fmtCred(repos)+' reposições pendentes';
   const kc=document.getElementById('kpi-cred');
@@ -6063,6 +6111,20 @@ function dataBonita(v){
   const m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})/);
   return m?(m[3]+'/'+m[2]):String(v||'?');
 }
+/* Comparar carimbo como TEXTO mente a partir do décimo lançamento do dia:
+   '2026-09-01-10' < '2026-09-01-9' é verdadeiro para o JavaScript, porque ele
+   compara caractere a caractere e '1' vem antes de '9'. Por isso a data e a
+   sequência viram números antes da comparação. */
+function versaoPartes(v){
+  const m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})(?:-(\d+))?$/);
+  return m?[Number(m[1]),Number(m[2]),Number(m[3]),Number(m[4]||0)]:null;
+}
+function versaoCmp(a,b){
+  const x=versaoPartes(a),y=versaoPartes(b);
+  if(!x||!y)return String(a||'')<String(b||'')?-1:(String(a||'')>String(b||'')?1:0);
+  for(let i=0;i<4;i++){if(x[i]!==y[i])return x[i]<y[i]?-1:1;}
+  return 0;
+}
 async function conferirVersao(){
   if(!hasCloud())return;
   try{
@@ -6070,20 +6132,22 @@ async function conferirVersao(){
     const snap=await comPrazo(window.fbDB.ref('jvtenis/versao_app').get(),PRAZO_NUVEM,MARCA);
     if(snap===MARCA)return;                 // nuvem muda: não é motivo de alarme
     const naNuvem=snap.exists()?String(snap.val()||''):'';
-    if(!naNuvem||VERSAO>naNuvem){
+    if(!naNuvem||versaoCmp(VERSAO,naNuvem)>0){
       // esta é a mais nova que já abriu: registra para as outras se compararem
       try{await window.fbDB.ref('jvtenis/versao_app').set(VERSAO);}catch(e){}
       return;
     }
-    if(VERSAO<naNuvem)mostrarBarraVersao(naNuvem);
+    if(versaoCmp(VERSAO,naNuvem)<0)mostrarBarraVersao(naNuvem);
   }catch(e){/* nunca atrapalhar a abertura por causa de um aviso */}
 }
 function mostrarBarraVersao(naNuvem){
   const bar=document.getElementById('barra-versao');
   if(!bar)return;
   const t=document.getElementById('bv-texto'), l=document.getElementById('bv-link');
-  if(t)t.textContent=' Esta cópia é de '+dataBonita(VERSAO)+' e já existe a de '
-                    +dataBonita(naNuvem)+'. Seus dados estão salvos — mas abra o endereço atual: ';
+  const mesmaData=dataBonita(VERSAO)===dataBonita(naNuvem);
+  const eu=mesmaData?VERSAO:dataBonita(VERSAO), la=mesmaData?naNuvem:dataBonita(naNuvem);
+  if(t)t.textContent=' Esta cópia é a '+eu+' e já existe a '+la
+                    +'. Seus dados estão salvos — mas abra o endereço atual: ';
   if(l){l.textContent=ENDERECO_ATUAL;l.href=ENDERECO_ATUAL;}
   bar.style.display='block';
 }
