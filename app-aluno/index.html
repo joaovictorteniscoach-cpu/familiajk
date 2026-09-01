@@ -515,6 +515,7 @@ function esperarAuth(){
       <div class="scard" id="scard-grupo" style="display:none;grid-column:1/-1"><div class="ico">👥</div><div class="l">Aulas em grupo</div><div class="v" id="v-grupo">0</div></div>
       <div class="scard" id="scard-loc" style="display:none;grid-column:1/-1"><div class="ico">🔑</div><div class="l">Locação (horas)</div><div class="v" id="v-loc">0</div></div>
     </div>
+    <div id="repos-box" style="display:none"></div>
     <div class="status-line">
       <span><b id="v-plano">—</b> · mensalidade <b id="v-mens">—</b></span>
       <span class="badge" id="v-status">—</span>
@@ -831,7 +832,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-09-01-7';
+const VERSAO='2026-09-01-10';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -1109,11 +1110,68 @@ function minhasNoDia(date){
   let n=0;PUB.horas.forEach(h=>{const s=slotState(date,h).st;if(s==='meu'||s==='pend')n++;});return n;
 }
 
+/* ===== Reposições: abater na mensalidade e aviso de vencimento =====
+   Os números vêm prontos da publicação (o app do aluno não tem o extrato). */
+function reposCabe(){
+  const teto=Number(EU&&EU.tetoDesc)||0, usado=Number(EU&&EU.descUsadoMes)||0;
+  const validas=Number(EU&&EU.reposValidas)||0;
+  return Math.max(0,Math.min(validas,teto-usado));
+}
+function renderReposBox(){
+  const box=document.getElementById('repos-box');if(!box||!EU)return;
+  const cabe=reposCabe(), venc=Number(EU.reposVencendo)||0;
+  const saldo=Number(EU.reposValidas)||Number(EU.repos)||0;
+  const jaTem=EU.descontoMes&&Number(EU.descontoMes.valor)>0;
+  if(!saldo&&!jaTem){box.style.display='none';box.innerHTML='';return;}
+  const valor=Math.round(cabe*(Number(EU.valorRepos)||0));
+  let h='<div style="background:#fff;border:1px solid var(--border);border-radius:13px;padding:13px;margin-bottom:12px">';
+  if(jaTem)h+='<div style="color:var(--green);font-weight:700;font-size:13px;margin-bottom:9px">💰 '+fmt(EU.descontoMes.valor)+' de desconto já combinado para esta mensalidade.</div>';
+  if(venc>0)h+='<div style="color:#7A5B10;font-weight:700;font-size:12.5px;margin-bottom:9px">⏳ '+fmtCred(venc)+' reposição(ões) vencem no fim do mês — elas valem 4 meses.</div>';
+  if(saldo>0){
+    /* O caminho principal é voltar para a quadra: marcar a aula. O desconto só
+       aparece depois, para quem disser que não consegue encaixar horário. */
+    h+='<div style="font-size:13px;font-weight:700;margin-bottom:3px">🔁 Você tem '+fmtCred(saldo)+' reposição(ões)</div>'+
+       '<div style="font-size:12.5px;color:var(--muted);margin-bottom:9px">Escolha um horário livre na agenda e marque sua aula.</div>'+
+       '<button class="btn btn-clay" style="width:100%" onclick="irMarcarReposicao()">🎾 Marcar aula de reposição</button>';
+    if(cabe>0){
+      h+='<div id="repos-alt" style="margin-top:10px">'+
+         '<button onclick="mostrarDescontoRepos()" style="width:100%;background:none;border:none;color:var(--muted);font-size:12px;text-decoration:underline;padding:6px;cursor:pointer">Não consigo encaixar nenhum horário</button>'+
+         '</div>'+
+         '<div id="repos-desc" style="display:none;margin-top:9px;border-top:1px solid var(--border);padding-top:11px">'+
+         '<div style="font-size:12.5px;color:var(--muted);margin-bottom:8px">Se não der para marcar, dá para abater na mensalidade — até 25% do seu plano por mês.</div>'+
+         '<button class="btn btn-ghost" style="width:100%" onclick="pedirDescontoRepos()">💰 Abater '+fmtCred(cabe)+' na mensalidade ('+fmt(valor)+')</button>'+
+         '</div>';
+    }
+  }
+  box.innerHTML=h+'</div>';
+  box.style.display='block';
+}
+function irMarcarReposicao(){
+  const b=[...document.querySelectorAll('.nav button')].find(x=>(x.getAttribute('onclick')||'').indexOf("goAluno('agenda'")===0);
+  goAluno('agenda',b);
+  toast('Toque num horário livre e escolha "Marcar reposição" 🔁');
+}
+function mostrarDescontoRepos(){
+  const alt=document.getElementById('repos-alt'), d=document.getElementById('repos-desc');
+  if(alt)alt.style.display='none';
+  if(d)d.style.display='block';
+}
+function pedirDescontoRepos(){
+  const cabe=reposCabe();
+  if(cabe<=0){toast('Sem reposição disponível para abater neste mês');return;}
+  const valor=Math.round(cabe*(Number(EU.valorRepos)||0));
+  if(!confirm('Pedir para abater '+fmtCred(cabe)+' reposição(ões) na sua mensalidade?\n\nDesconto: '+fmt(valor)+'\n\nO João confirma no app dele. Se usar no desconto, elas não valem mais para marcar aula.'))return;
+  enviarPedido({kind:'descontoRepos',qtd:cabe,valor});
+  notificarPedido((EU.nome||'Aluno')+' quer abater '+fmtCred(cabe)+' reposição(ões) na mensalidade ('+fmt(valor)+')');
+  toast('Pedido enviado ao João! 💰');
+}
+
 /* ================= RENDER ================= */
 function render(){
   document.getElementById('hello').textContent='Fala, '+EU.nome.split(' ')[0]+'!';
   document.getElementById('v-cred').textContent=fmtCred(EU.creditos);
   document.getElementById('v-repos').textContent=fmtCred(EU.repos);
+  renderReposBox();
   const pg=Number(EU.planoGrupo)||0,cg=Number(EU.credGrupo)||0,sg=document.getElementById('scard-grupo');
   if(sg){sg.style.display=(pg>0||cg!==0)?'block':'none';
     const vg=document.getElementById('v-grupo');
