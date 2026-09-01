@@ -1675,7 +1675,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-01-15';
+const VERSAO='2026-09-01-16';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -2730,7 +2730,7 @@ async function doPublish(){
       locacaoOnly:DB.locacaoOnly||[],
       horarioCfg:DB.horarioCfg||{},
       horarioData:DB.horarioData||{},
-      alunos:DB.alunos.map(a=>({codigo:a.codigo,nome:a.nome,tipo:a.tipo,plano:a.plano,creditos:a.creditos,repos:a.repos,reposValidas:reposValidas(a),reposVencendo:reposVencendo(a),tetoDesc:tetoDescontoRepos(a),descUsadoMes:descontoUsadoNoMes(a),valorRepos:Math.round(valorReposicaoDe(a)),descontoMes:(a.descontoMes&&a.descontoMes.mes===monthKey())?a.descontoMes:null,status:a.status,mensalidade:a.mensalidade,diaVenc:a.diaVenc||10,cardLink:a.cardLink||'',mfitLink:a.mfitLink||'',valorAula:a.valorAula||(a.tipo==='Personal'?130:160),locCred:Number(a.locCred)||0,credGrupo:Number(a.credGrupo)||0,planoGrupo:Number(a.planoGrupo)||0,grupoTipo:a.grupoTipo||'',avaliacoes:(a.avaliacoes||[]).slice(-12),evoMes:serieMensal(a.avaliacoes,a.registros,24),registros:(a.registros||[]).slice(-8)})),
+      alunos:DB.alunos.map(a=>({codigo:a.codigo,nome:a.nome,tipo:a.tipo,plano:a.plano,creditos:a.creditos,repos:a.repos,reposValidas:reposValidas(a),reposVencendo:reposVencendo(a),tetoDesc:tetoDescontoRepos(a),descUsadoMes:descontoUsadoNoMes(a),valorRepos:Math.round(valorReposicaoDe(a)),descontoMes:(a.descontoMes&&a.descontoMes.mes===monthKey())?a.descontoMes:null,status:a.status,ultimoPago:a.ultimoPago||'',mensalidade:a.mensalidade,diaVenc:a.diaVenc||10,cardLink:a.cardLink||'',mfitLink:a.mfitLink||'',valorAula:a.valorAula||(a.tipo==='Personal'?130:160),locCred:Number(a.locCred)||0,credGrupo:Number(a.credGrupo)||0,planoGrupo:Number(a.planoGrupo)||0,grupoTipo:a.grupoTipo||'',avaliacoes:(a.avaliacoes||[]).slice(-12),evoMes:serieMensal(a.avaliacoes,a.registros,24),registros:(a.registros||[]).slice(-8)})),
       historico:(function(){
         const codeOf={};DB.alunos.forEach(a=>{codeOf[a.id]=a.codigo;});
         const cut=dKey(new Date(Date.now()-60*864e5));const out={};
@@ -3132,7 +3132,7 @@ function aceitarPedido(key){
   const a=DB.alunos.find(x=>x.codigo===p.codigo);
   if(p.kind==='mensalidade'){
     if(!a){toast('Aluno não encontrado — confira o cadastro');return;}
-    a.status='pago';
+    a.status='pago';a.ultimoPago=monthKey();
     const c=cobrancaDoMes(a);
     DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:c.desc,valor:c.valor,cat:'mensalidade',alunoId:a.id,modal:(ehPersonalTipo(a.tipo)?'personal':'tenis'),data:new Date().toISOString().slice(0,10),descontoRepos:c.detalhe});
     if(c.desconto>0)delete a.descontoMes;
@@ -4956,10 +4956,13 @@ function marcarPago(id){
   if(jaTem.length){
     const soma=jaTem.reduce((t,l)=>t+(Number(l.valor)||0),0);
     if(!confirm('⚠️ '+a.nome+' já tem '+jaTem.length+' mensalidade lançada neste mês ('+fmt(soma)+').\n\nLançar OUTRA de '+fmt(a.mensalidade)+'?\n\nSe foi engano, toque em Cancelar — o aluno continua marcado como pago.')){
-      a.status='pago';persist();renderAll();toast(a.nome+' marcado como pago (sem lançar de novo)');return;
+      a.status='pago';a.ultimoPago=monthKey();persist();renderAll();toast(a.nome+' marcado como pago (sem lançar de novo)');return;
     }
   }
-  a.status='pago';
+  /* Carimbo do mês quitado: é o que sustenta a janela livre até o vencimento no
+     app do aluno — a folga vale para quem pagou o mês anterior. Sobrevive à
+     virada do mês, que só devolve o status para "pendente". */
+  a.status='pago';a.ultimoPago=monthKey();
   const c=cobrancaDoMes(a);
   DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:c.desc,valor:c.valor,cat:'mensalidade',alunoId:a.id,modal:(ehPersonalTipo(a.tipo)?'personal':'tenis'),data:new Date().toISOString().slice(0,10),descontoRepos:c.detalhe});
   if(c.desconto>0)delete a.descontoMes;                 // desconto gasto: não vale duas vezes
