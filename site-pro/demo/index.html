@@ -440,8 +440,20 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .chart-row-clic{cursor:pointer;border-radius:10px;padding:4px 6px;margin:0 -6px 7px;transition:background .12s,transform .12s}
 .chart-row-clic:active{transform:scale(.99)}
 .chart-row-clic:hover{background:rgba(0,0,0,.035)}
-/* seletor interno da aba Financas (Fechamento | Graficos) */
-.seg.seg2{grid-template-columns:1fr 1fr;margin-bottom:15px}
+/* mini-menu do botao "Mais": um cartaozinho que sobe do proprio botao.
+   O fundo invisivel fica ABAIXO da barra, para as outras abas seguirem clicaveis. */
+.mais-fundo{position:fixed;inset:0;z-index:45;display:none}
+.mais-fundo.on{display:block}
+.mais-pop{position:fixed;right:8px;bottom:84px;width:220px;background:var(--cream);border:1px solid var(--border);border-radius:14px;box-shadow:0 12px 34px rgba(0,0,0,.3);padding:6px;z-index:55;display:none}
+.mais-pop.on{display:block;animation:maisSobe .15s ease-out}
+@keyframes maisSobe{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:none}}
+.mais-pop:after{content:'';position:absolute;right:24px;bottom:-7px;width:12px;height:12px;background:var(--cream);border-right:1px solid var(--border);border-bottom:1px solid var(--border);transform:rotate(45deg)}
+.mais-pop button{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:none;border-radius:10px;padding:11px 10px;color:var(--text);font-size:14px;font-weight:700}
+.mais-pop button+button{margin-top:2px}
+.mais-pop button:active{background:rgba(212,175,88,.18)}
+.mais-pop .ico{width:24px;height:24px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.mais-pop .ico svg{width:22px;height:22px;display:block}
+.nav button.aberto{color:#E7C574;font-weight:700;background:rgba(212,175,88,.14)}
 .chuva-emblema{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#2F5A94,#3B6FB5);color:#fff;border-radius:16px;padding:15px 17px;margin-bottom:12px;box-shadow:0 3px 14px rgba(47,90,148,.28)}
 .chuva-emblema .ce-selo{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.45);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
 .chuva-emblema .ce-pct{font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:700;line-height:1}
@@ -785,12 +797,8 @@ window.__DEMO = true;
 </section>
 
 <section class="page" id="pg-fin">
-  <p class="sec-eyebrow">Finanças</p>
+  <p class="sec-eyebrow">Financeiro</p>
   <h2 class="sec-title">Fechamento do <em>mês</em></h2>
-  <div class="seg seg2 seg-fin">
-    <button data-fin="fin" class="on" onclick="irParaAba('fin')">Fechamento</button>
-    <button data-fin="graf" onclick="irParaAba('graf')">Gráficos</button>
-  </div>
   <div id="arq-aviso"></div>
   <div class="fin-grid">
     <div class="fin-card hero"><div class="l">Total recebido no mês</div><div class="v" id="f-total">R$ 0</div></div>
@@ -931,12 +939,8 @@ window.__DEMO = true;
 </section>
 
 <section class="page" id="pg-graf">
-  <p class="sec-eyebrow">Finanças</p>
+  <p class="sec-eyebrow">Gráficos</p>
   <h2 class="sec-title">Visão do <em>negócio</em></h2>
-  <div class="seg seg2 seg-fin">
-    <button data-fin="fin" class="on" onclick="irParaAba('fin')">Fechamento</button>
-    <button data-fin="graf" onclick="irParaAba('graf')">Gráficos</button>
-  </div>
 
   <div class="fin-grid">
     <div class="fin-card hero"><div class="l">Faturamento no ano <span id="g-ano-lbl"></span></div><div class="v" id="g-ano-fat">R$ 0</div></div>
@@ -1165,6 +1169,12 @@ window.__DEMO = true;
   </div>
 </div>
 
+<div class="mais-fundo" id="mais-fundo" onclick="fecharMais()"></div>
+<div class="mais-pop" id="mais-pop">
+  <button onclick="irDoMais('fin')"><span class="ico" data-ic="bars"></span>Financeiro</button>
+  <button onclick="irDoMais('graf')"><span class="ico" data-ic="line"></span>Gráficos</button>
+</div>
+
 <nav class="nav">
   <button class="on" onclick="go('dash',this)"><span class="ico" data-ic="home"></span><span class="nav-badge" id="nb-inicio"></span>Início</button>
   <button onclick="go('agenda',this)"><span class="ico" data-ic="cal"></span><span class="nav-badge" id="nb-agenda"></span>Agenda</button>
@@ -1172,11 +1182,11 @@ window.__DEMO = true;
   <button onclick="go('aval',this)"><span class="ico" data-ic="clip"></span>Avaliações</button>
   <button onclick="go('lanc',this)"><span class="ico" data-ic="cash"></span>Caixa</button>
   <button onclick="go('torneio',this)"><span class="ico" data-ic="trophy"></span><span class="nav-badge" id="nb-torneio"></span>Torneio</button>
-  <button onclick="go('fin',this)"><span class="ico" data-ic="bars"></span>Finanças</button>
+  <button id="nav-mais" onclick="abrirMais()"><span class="ico" data-ic="dots"></span>Mais</button>
 </nav>
 <script>/* Icones da barra de baixo: traco unico em SVG, herdando a cor do botao
    (creme quando apagado, dourado na aba aberta). */
-var NAVIC={home:"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 10.6 12 3.4l9 7.2\"/><path d=\"M5.3 9.4V20.2h13.4V9.4\"/><path d=\"M9.7 20.2v-5.5h4.6v5.5\"/></svg>",cal:"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3.3\" y=\"5\" width=\"17.4\" height=\"15.8\" rx=\"2.6\"/><path d=\"M3.3 9.9h17.4\"/><path d=\"M8.2 3.2v3.4M15.8 3.2v3.4\"/><path d=\"M7.6 14h2M11 14h2M14.4 14h2M7.6 17.2h2M11 17.2h2\"/></svg>",ball:"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"8.7\"/><path d=\"M6.4 4.6C9.6 7.2 9.6 16.8 6.4 19.4\"/><path d=\"M17.6 4.6C14.4 7.2 14.4 16.8 17.6 19.4\"/></svg>",clip:"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"4.6\" y=\"4.6\" width=\"14.8\" height=\"16.6\" rx=\"2.4\"/><rect x=\"8.9\" y=\"2.3\" width=\"6.2\" height=\"4.2\" rx=\"1.4\"/><path d=\"M8.7 11.6h6.6M8.7 15.6h4.2\"/></svg>",cash:"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"2.6\" y=\"5.9\" width=\"18.8\" height=\"12.2\" rx=\"2.4\"/><circle cx=\"12\" cy=\"12\" r=\"2.9\"/><path d=\"M6.2 9.5v5M17.8 9.5v5\"/></svg>",trophy:"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M7.6 3.5h8.8v5.1a4.4 4.4 0 0 1-8.8 0z\"/><path d=\"M7.6 5.2H4.9c0 2.5 1.2 3.9 3 4.1\"/><path d=\"M16.4 5.2h2.7c0 2.5-1.2 3.9-3 4.1\"/><path d=\"M12 13v3.2\"/><path d=\"M9.9 20.5v-1.4c0-1.3.9-2.3 2.1-2.3s2.1 1 2.1 2.3v1.4\"/><path d=\"M8.3 20.5h7.4\"/></svg>",bars:"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3.6 20.4h16.8\"/><path d=\"M7.3 17.2v-5.4M12 17.2v-9.6M16.7 17.2v-7.2\"/></svg>"};
+var NAVIC={home:"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 10.6 12 3.4l9 7.2\"/><path d=\"M5.3 9.4V20.2h13.4V9.4\"/><path d=\"M9.7 20.2v-5.5h4.6v5.5\"/></svg>",cal:"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3.3\" y=\"5\" width=\"17.4\" height=\"15.8\" rx=\"2.6\"/><path d=\"M3.3 9.9h17.4\"/><path d=\"M8.2 3.2v3.4M15.8 3.2v3.4\"/><path d=\"M7.6 14h2M11 14h2M14.4 14h2M7.6 17.2h2M11 17.2h2\"/></svg>",ball:"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"8.7\"/><path d=\"M6.4 4.6C9.6 7.2 9.6 16.8 6.4 19.4\"/><path d=\"M17.6 4.6C14.4 7.2 14.4 16.8 17.6 19.4\"/></svg>",clip:"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"4.6\" y=\"4.6\" width=\"14.8\" height=\"16.6\" rx=\"2.4\"/><rect x=\"8.9\" y=\"2.3\" width=\"6.2\" height=\"4.2\" rx=\"1.4\"/><path d=\"M8.7 11.6h6.6M8.7 15.6h4.2\"/></svg>",cash:"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"2.6\" y=\"5.9\" width=\"18.8\" height=\"12.2\" rx=\"2.4\"/><circle cx=\"12\" cy=\"12\" r=\"2.9\"/><path d=\"M6.2 9.5v5M17.8 9.5v5\"/></svg>",trophy:"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M7.6 3.5h8.8v5.1a4.4 4.4 0 0 1-8.8 0z\"/><path d=\"M7.6 5.2H4.9c0 2.5 1.2 3.9 3 4.1\"/><path d=\"M16.4 5.2h2.7c0 2.5-1.2 3.9-3 4.1\"/><path d=\"M12 13v3.2\"/><path d=\"M9.9 20.5v-1.4c0-1.3.9-2.3 2.1-2.3s2.1 1 2.1 2.3v1.4\"/><path d=\"M8.3 20.5h7.4\"/></svg>",bars:"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3.6 20.4h16.8\"/><path d=\"M7.3 17.2v-5.4M12 17.2v-9.6M16.7 17.2v-7.2\"/></svg>",line:"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3.6 20.4h16.8\"/><path d=\"M6.4 15.6l3.8-4.4 3.2 2.6 4.6-6\"/><path d=\"M14.6 7.8h3.4v3.4\"/></svg>",dots:"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"5.6\" cy=\"12\" r=\"1.5\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"12\" cy=\"12\" r=\"1.5\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"18.4\" cy=\"12\" r=\"1.5\" fill=\"currentColor\" stroke=\"none\"/></svg>"};
 function pintarIcones(){var m=document.querySelectorAll(".ico[data-ic]");for(var i=0;i<m.length;i++){if(!m[i].innerHTML)m[i].innerHTML=NAVIC[m[i].getAttribute("data-ic")]||"";}}pintarIcones();/* pinta de novo quando o resto do HTML carregar, para nao depender da ordem dos blocos */document.addEventListener("DOMContentLoaded",pintarIcones);</script>
 
 <!-- MODAL ALUNO -->
@@ -1577,7 +1587,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-01-5';
+const VERSAO='2026-09-01-6';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -2858,16 +2868,27 @@ function irDoAviso(i){
   },220);
 }
 /* Troca de aba sem depender do botão clicado: acha o da barra pelo onclick.
-   Gráficos não tem botão próprio (mora dentro de Finanças), então quem fica
-   aceso é o de Finanças — em vez do Início, que acenderia por engano. */
-function botaoDaAba(id){
-  const alvo=(id==='graf')?'fin':id;   // Gráficos mora dentro da aba Finanças
-  return [...document.querySelectorAll('.nav button')]
-    .find(x=>(x.getAttribute('onclick')||'').indexOf("go('"+alvo+"'")===0);
-}
+   Financeiro e Gráficos moram no "Mais" e não têm botão próprio, então quem
+   fica aceso é o "Mais" — em vez do Início, que acenderia por engano. */
 function irParaAba(id){
-  go(id, botaoDaAba(id)||document.querySelector('.nav button'));
+  const b=[...document.querySelectorAll('.nav button')]
+    .find(x=>(x.getAttribute('onclick')||'').indexOf("go('"+id+"'")===0);
+  go(id, b||document.getElementById('nav-mais')||document.querySelector('.nav button'));
 }
+function abrirMais(){
+  const p=document.getElementById('mais-pop'),f=document.getElementById('mais-fundo'),n=document.querySelector('.nav');
+  if(p.classList.contains('on')){fecharMais();return;}   // tocar de novo fecha
+  p.style.bottom=(n.offsetHeight+8)+'px';                // encosta na barra, seja qual for a altura
+  p.classList.add('on');f.classList.add('on');
+  document.getElementById('nav-mais').classList.add('aberto');
+}
+function fecharMais(){
+  document.getElementById('mais-pop').classList.remove('on');
+  document.getElementById('mais-fundo').classList.remove('on');
+  const b=document.getElementById('nav-mais');if(b)b.classList.remove('aberto');
+}
+function irDoMais(id){fecharMais();irParaAba(id);window.scrollTo({top:0});}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')fecharMais();});
 
 async function limparNotifs(){
   if(!confirm('Limpar todos os avisos?'))return;
@@ -2970,11 +2991,8 @@ setTimeout(()=>syncPedidos(true),2800);
 setInterval(()=>syncPedidos(true),30000);
 
 /* ================= NAVEGAÇÃO ================= */
-/* Fechamento e Gráficos dividem a aba Finanças: acende o lado certo do seletor. */
-function marcarSegFin(id){
-  document.querySelectorAll('.seg-fin button').forEach(b=>b.classList.toggle('on',b.getAttribute('data-fin')===id));
-}
 function go(id,btn){
+  if(typeof fecharMais==='function')fecharMais();
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.getElementById('pg-'+id).classList.add('on');
   document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('on'));
@@ -2982,7 +3000,6 @@ function go(id,btn){
   window.scrollTo({top:0});
   if(id==='agenda'){syncRequests(true);marcarVisto('agenda');}
   if(id==='lanc'){filtroLancCat=null;renderMovs();}   // abrir a Caixa pela barra mostra tudo
-  if(id==='fin'||id==='graf')marcarSegFin(id);
   if(id==='graf')renderGraf();
   if(id==='aval')renderAvaliacoes();
   if(id==='torneio'){renderTorneio();syncTorneio(true);marcarVisto('torneio');}
