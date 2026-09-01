@@ -31,7 +31,7 @@
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{scroll-behavior:smooth}
-body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);max-width:520px;margin:0 auto;line-height:1.55;padding-bottom:89px}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);max-width:520px;margin:0 auto;line-height:1.55;padding-bottom:89px;overscroll-behavior-y:none}
 button{font-family:'DM Sans',sans-serif;cursor:pointer}
 input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 
@@ -148,6 +148,11 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .save-state.err{color:#FF9B8A}
 
 .nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;background:var(--dark);display:grid;grid-template-columns:repeat(7,1fr);padding:8px 2px calc(8px + env(safe-area-inset-bottom));z-index:50;border-top:1px solid rgba(255,255,255,.08)}
+/* Preenchimento abaixo da barra: no iPhone, quando o iOS desloca a barra fixa
+   (rubber band, mudança de viewport), aparecia uma faixa creme entre ela e o fim
+   da tela. Isto pinta esse pedaço com a própria cor da barra. É absoluto de
+   propósito — como filho de um grid, em fluxo normal viraria mais uma coluna. */
+.nav::after{content:'';position:absolute;left:0;right:0;top:100%;height:140px;background:var(--dark);pointer-events:none}
 .nav button{position:relative;background:none;border:none;color:rgba(250,247,242,.72);font-size:10px;font-weight:500;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 1px 8px;border-radius:10px;letter-spacing:.1px}
 .nav-badge{position:absolute;top:1px;right:calc(50% - 20px);background:var(--clay);color:#fff;font-size:9.5px;font-weight:800;min-width:16px;height:16px;border-radius:9px;display:none;align-items:center;justify-content:center;padding:0 4px;box-shadow:0 1px 4px rgba(0,0,0,.4)}
 .nav-badge.on{display:flex}
@@ -202,6 +207,29 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--clay),var(--gold));border-radius:6px;transition:width .4s}
 .bar i.loc{background:linear-gradient(90deg,#2E8B45,#8CC26A)}
 .bar i.batida{background:linear-gradient(90deg,var(--gold),#2E7D32)}
+/* Início — "O que pede ação" e "Resolver em segundos" */
+.acao-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.acao-item{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:#FBF6EA;border:1px solid #E7D6A8;border-radius:13px;padding:12px 13px;color:var(--text)}
+.acao-item:active{transform:scale(.995)}
+.acao-item .ai-ico{width:30px;height:30px;flex-shrink:0;border-radius:50%;background:#F0E3C2;display:flex;align-items:center;justify-content:center;font-size:15px}
+.acao-item .ai-txt{flex:1;min-width:0}
+.acao-item b{display:block;font-size:13.5px;font-weight:800;line-height:1.25}
+.acao-item small{display:block;font-size:11.5px;color:var(--muted);margin-top:2px}
+.acao-item .ai-n{flex-shrink:0;min-width:24px;height:24px;border-radius:12px;background:var(--clay);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 7px}
+.acao-item.ouro{background:#FBF1D8;border-color:#E7D6A8}
+.acao-item.ouro .ai-n{background:var(--gold);color:var(--green)}
+.rapidas{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.rapidas button{background:#fff;border:1px solid var(--border);border-radius:13px;padding:13px 8px;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--text)}
+.rapidas button:active{transform:scale(.99);background:#FBF6EA}
+.rapidas button i{font-style:normal;font-size:19px;line-height:1}
+.rapidas button span{font-size:12px;font-weight:700;text-align:center}
+/* folha das aulas de hoje */
+.ah-linha{display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);padding:11px 0}
+.ah-linha .ah-h{font-size:12.5px;font-weight:800;color:var(--muted);width:52px;flex-shrink:0}
+.ah-linha .ah-n{flex:1;min-width:0;font-size:13.5px;font-weight:700}
+.ah-linha .ah-n small{display:block;font-size:11px;font-weight:600;color:var(--muted)}
+.ah-linha button{border:none;background:var(--green);color:#fff;font-size:11.5px;font-weight:800;padding:8px 12px;border-radius:11px;flex-shrink:0}
+.ah-linha button[disabled]{background:#E7EDE7;color:#6B8A73}
 .foco-repos{background:#FBF1D8;border:1px solid #E7D6A8;color:#7C5E1A;font-size:12.5px;font-weight:600;border-radius:10px;padding:9px 12px;margin-bottom:10px}
 .foco-repos a{color:var(--clay);font-weight:800;text-decoration:underline;cursor:pointer;margin-left:4px}
 .pend-list{display:flex;flex-direction:column;gap:8px}
@@ -737,6 +765,21 @@ function esperarAuth(){
     <div class="bar-row"><span>Meta de faturamento</span><span id="bar-txt">—</span></div>
     <div class="bar"><i id="bar-fill" style="width:0%"></i></div>
   </div>
+  <div id="acao-wrap" style="display:none">
+    <p class="sec-eyebrow">Atenção hoje</p>
+    <h2 class="sec-title">O que pede <em>ação</em></h2>
+    <div class="acao-list" id="acao-list"></div>
+  </div>
+
+  <p class="sec-eyebrow">Ações rápidas</p>
+  <h2 class="sec-title">Resolver em <em>segundos</em></h2>
+  <div class="rapidas">
+    <button onclick="openLancModal()"><i>＋</i><span>Novo lançamento</span></button>
+    <button onclick="verAgendaHoje()"><i>📅</i><span>Agenda de hoje</span></button>
+    <button onclick="buscarAluno()"><i>🔍</i><span>Buscar aluno</span></button>
+    <button onclick="abrirAulasDeHoje()"><i>✓</i><span>Aula realizada</span></button>
+  </div>
+
   <p class="sec-eyebrow">Atividade</p>
   <h2 class="sec-title">Aulas <em>hoje</em></h2>
   <div class="aulas-mes aulas-clic" onclick="verAgendaHoje()" title="Ver a agenda de hoje">
@@ -1474,6 +1517,15 @@ function pintarIcones(){var m=document.querySelectorAll(".ico[data-ic]");for(var
   </div>
 </div>
 
+<div class="overlay" id="ov-hoje" onclick="if(event.target===this)closeModal('ov-hoje')">
+  <div class="modal">
+    <h3>Aulas de hoje ✓</h3>
+    <p class="sub">Toque em <b>Realizada</b> para descontar a aula do saldo do aluno.</p>
+    <div id="hoje-lista"></div>
+    <div class="modal-acts"><button class="btn btn-ghost" onclick="closeModal('ov-hoje')">Fechar</button></div>
+  </div>
+</div>
+
 <!-- MODAL LANÇAMENTO -->
 <div class="overlay" id="ov-lanc" onclick="if(event.target===this)closeModal('ov-lanc')">
   <div class="modal">
@@ -1654,7 +1706,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-01-11';
+const VERSAO='2026-09-01-14';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -4962,6 +5014,7 @@ function enviarRenovacaoWa(id){
 }
 let filtroAluno='todos';
 let focoRepos=false;
+let focoDif=false;
 /* Ativo = tem pacote contratado. a.arquivado, quando existe, manda na regra:
    é como o João corrige quem parou mas ficou com plano no cadastro, ou quem
    está sem pacote no momento mas continua na academia. */
@@ -4978,7 +5031,7 @@ function contagemAlunos(){
 }
 function setFiltroAtivo(f){
   filtroAtivo=(filtroAtivo===f)?'todos':f;   // tocar de novo volta para todos
-  focoRepos=false;renderAlunos();
+  focoRepos=false;focoDif=false;renderAlunos();
 }
 let filtroAtivo='todos';
 function arquivarAluno(id){
@@ -4995,7 +5048,7 @@ function arquivarAluno(id){
 }
 function setFiltroAluno(f,btn){
   filtroAluno=f;
-  focoRepos=false;   // escolher um perfil sai do foco de reposição
+  focoRepos=false;focoDif=false;   // escolher um perfil sai de qualquer foco
   document.querySelectorAll('#alunos-filtro button').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
   renderAlunos();
@@ -5006,6 +5059,109 @@ function renderResumoAlunos(){
   const c=contagemAlunos();
   const cel=(f,n,rot,cls)=>'<div class="rc'+(cls||'')+(filtroAtivo===f?' on':'')+'" onclick="setFiltroAtivo(\''+f+'\')"><b>'+n+'</b><span>'+rot+'</span></div>';
   box.innerHTML=cel('todos',c.total,'no cadastro')+cel('ativos',c.ativos,'ativos')+cel('inativos',c.inativos,'inativos',' pend');
+}
+/* ===== Início: "O que pede ação" =====
+   Só reúne o que o app já sabe: pendentes e reposições vêm de renderDash (que
+   já contou), e a diferença da agenda é o mesmo teste que o cartão do aluno usa
+   para oferecer "Cobrar pela agenda". Alerta com zero não entra na tela, e sem
+   nenhum alerta a seção inteira some. */
+function alunosComDiferenca(){
+  return (DB.alunos||[]).filter(a=>{
+    const ag=agendaDoMes(a);
+    return ag.total>0&&ag.valor!==(Number(a.mensalidade)||0)&&!difSilenciada(a);
+  });
+}
+function renderAcoes(pendAlunos,pendValor){
+  const wrap=document.getElementById('acao-wrap'), box=document.getElementById('acao-list');
+  if(!wrap||!box)return;
+  const itens=[];
+
+  if(pendAlunos.length){
+    const urgentes=pendAlunos.filter(a=>{const d=vencDe(a);return d!==null&&d<=0;}).length;
+    itens.push({ico:'💵',cls:'',n:pendAlunos.length,
+      t:pendAlunos.length+' mensalidade'+(pendAlunos.length===1?'':'s')+' pendente'+(pendAlunos.length===1?'':'s'),
+      s:fmt(pendValor)+(urgentes?(' · '+urgentes+' vencida(s) ou vencendo hoje'):' · abrir a lista de cobrança'),
+      fn:'verPendentes()'});
+  }
+
+  const comRepos=(DB.alunos||[]).filter(a=>(Number(a.repos)||0)>0);
+  if(comRepos.length){
+    const total=comRepos.reduce((t,a)=>t+(Number(a.repos)||0),0);
+    const vencendo=comRepos.filter(a=>reposVencendo(a)>0).length;
+    itens.push({ico:'🔁',cls:' ouro',n:comRepos.length,
+      t:fmtCred(total)+' reposição(ões) a organizar',
+      s:vencendo?(vencendo+' aluno(s) com reposição vencendo neste mês'):(comRepos.length+' aluno(s) com reposição em aberto'),
+      fn:'verReposicoes()'});
+  }
+
+  const dif=alunosComDiferenca();
+  if(dif.length){
+    itens.push({ico:'📅',cls:' ouro',n:dif.length,
+      t:dif.length+' valor(es) a confirmar',
+      s:'a agenda do mês não bate com o plano cadastrado',
+      fn:'verDiferencas()'});
+  }
+
+  if(!itens.length){wrap.style.display='none';box.innerHTML='';return;}
+  box.innerHTML=itens.map(i=>
+    '<button class="acao-item'+i.cls+'" onclick="'+i.fn+'">'+
+    '<span class="ai-ico">'+i.ico+'</span>'+
+    '<span class="ai-txt"><b>'+i.t+'</b><small>'+i.s+'</small></span>'+
+    '<span class="ai-n">'+i.n+'</span></button>').join('');
+  wrap.style.display='block';
+}
+/* Leva à lista de alunos mostrando só quem tem a agenda diferente do plano. */
+function verDiferencas(){
+  focoDif=alunosComDiferenca().length>0;
+  focoRepos=false;
+  irParaAba('alunos');renderAlunos();
+  const list=document.getElementById('alunos-list');
+  if(list)list.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function limparFocoDif(){focoDif=false;renderAlunos();}
+/* ===== Atalhos ===== */
+function buscarAluno(){
+  irParaAba('alunos');
+  const c=document.getElementById('search');
+  if(c){c.value='';focoRepos=false;focoDif=false;renderAlunos();setTimeout(()=>{c.focus();c.scrollIntoView({block:'center'});},120);}
+}
+/* Aulas de hoje numa folha: sem isto, "Aula realizada" cairia no mesmo lugar do
+   "Buscar aluno". Quem já tem presença hoje aparece desligado — o caminho curto
+   não pode virar caminho de débito dobrado. */
+function aulasDeHoje(){
+  const hoje=new Date(), dk=dKey(hoje), out=[];
+  HORAS.forEach(h=>{
+    entriesFor(hoje,h).forEach(e=>{
+      if(!e.alunoId)return;
+      const a=DB.alunos.find(x=>x.id===e.alunoId);
+      if(!a)return;
+      const modo=(e.tipo==='grupo')?'grupo':'aula';
+      const feita=(DB.presencas||[]).some(p=>p.alunoId===a.id&&p.data===dk);
+      out.push({hora:h,aluno:a,modo,feita,tipo:e.tipo||'aula'});
+    });
+  });
+  return out;
+}
+function abrirAulasDeHoje(){
+  renderAulasDeHoje();
+  document.getElementById('ov-hoje').classList.add('on');
+}
+function renderAulasDeHoje(){
+  const box=document.getElementById('hoje-lista');if(!box)return;
+  const arr=aulasDeHoje();
+  if(!arr.length){box.innerHTML='<div class="empty">Nenhuma aula com aluno na agenda de hoje. Use <b>Buscar aluno</b> para registrar uma aula avulsa.</div>';return;}
+  box.innerHTML=arr.map((x,i)=>
+    '<div class="ah-linha"><span class="ah-h">'+x.hora+'</span>'+
+    '<span class="ah-n">'+escAval(x.aluno.nome)+'<small>'+(x.modo==='grupo'?'👥 em grupo':'🎾 particular')+'</small></span>'+
+    (x.feita?'<button disabled>✓ já registrada</button>'
+            :'<button onclick="marcarDaFolha('+i+')">✓ Realizada</button>')+
+    '</div>').join('');
+}
+function marcarDaFolha(i){
+  const arr=aulasDeHoje(), x=arr[i];
+  if(!x||x.feita)return;
+  aulaRealizada(x.aluno.id,x.modo);
+  renderAulasDeHoje();
 }
 function ultimasAulas(id,lim){
   return (DB.presencas||[]).filter(p=>p.alunoId===id).sort((a,b)=>String(b.data).localeCompare(String(a.data))).slice(0,lim||8);
@@ -5037,10 +5193,13 @@ function renderAlunos(){
     if(filtroAluno==='todos')return true;
     return perfilDe(a)===filtroAluno;
   }).filter(a=>filtroAtivo==='todos'||(filtroAtivo==='ativos')===ehAtivoAluno(a))
-    .filter(a=>!focoRepos||(Number(a.repos)||0)>0).sort((x,y)=>x.nome.localeCompare(y.nome));
+    .filter(a=>!focoRepos||(Number(a.repos)||0)>0)
+    .filter(a=>{if(!focoDif)return true;const ag=agendaDoMes(a);return ag.total>0&&ag.valor!==(Number(a.mensalidade)||0)&&!difSilenciada(a);})
+    .sort((x,y)=>x.nome.localeCompare(y.nome));
   renderResumoAlunos();
-  const avisoRepos=focoRepos?'<div class="foco-repos">🔁 Mostrando só quem tem <b>reposição pendente</b> · <a onclick="limparFocoRepos()">ver todos</a></div>':'';
-  if(!items.length){list.innerHTML=avisoRepos+'<div class="empty">Nenhum aluno '+(q||filtroAluno!=='todos'||filtroAtivo!=='todos'||focoRepos?'encontrado':'cadastrado ainda — toque em <b>+ Novo</b> para começar')+'.</div>';return;}
+  const avisoRepos=focoRepos?'<div class="foco-repos">🔁 Mostrando só quem tem <b>reposição pendente</b> · <a onclick="limparFocoRepos()">ver todos</a></div>':
+    (focoDif?'<div class="foco-repos">📅 Mostrando só quem tem a <b>agenda diferente do plano</b> · <a onclick="limparFocoDif()">ver todos</a></div>':'');
+  if(!items.length){list.innerHTML=avisoRepos+'<div class="empty">Nenhum aluno '+(q||filtroAluno!=='todos'||filtroAtivo!=='todos'||focoRepos||focoDif?'encontrado':'cadastrado ainda — toque em <b>+ Novo</b> para começar')+'.</div>';return;}
   // guarda quais cartões estão abertos: toda ação chama renderAll e reconstrói a
   // lista, e sem isso o cartão se fechava embaixo do dedo a cada toque
   const abertos=new Set(),comMais=new Set();
@@ -5296,6 +5455,7 @@ function renderDash(){
   barFill.classList.toggle('batida',pctReal>=100);        // meta atingida/superada: destaque
   document.getElementById('bar-txt').textContent=hideVals?'R$ ••••':(fmt(recebido)+' / '+fmt(DB.meta)+' ('+pctReal+'%)');
 
+  renderAcoes(pendAlunos,pendValor);
   const pl=document.getElementById('pend-list');
   // Aulas AGENDADAS na grade — conta só Tênis (aula+grupo) e Personal; ignora locação, bloqueio, pessoal e compromissos
   const setTxt=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};

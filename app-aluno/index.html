@@ -31,7 +31,7 @@
   --livre:#2E8B45;--ocup:#9A8B72;--meu:#C9A04A;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);max-width:520px;margin:0 auto;line-height:1.55;padding-bottom:84px}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);max-width:520px;margin:0 auto;line-height:1.55;padding-bottom:84px;overscroll-behavior-y:none}
 /* ===== ABAS (navegação do aluno) ===== */
 .page{display:none}
 .page.on{display:block}
@@ -50,7 +50,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
 .hr-ico{width:22px;height:22px;border-radius:50%;background:#E8F0D8;color:#3C6B1E;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
 .hr-d{flex:1;font-weight:600;color:var(--text)}
 .hr-h{color:var(--muted);font-size:12.5px}
-.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;background:linear-gradient(135deg,var(--green),var(--green-2));display:grid;grid-template-columns:repeat(5,1fr);z-index:40;box-shadow:0 -4px 20px rgba(0,0,0,.18);padding-bottom:env(safe-area-inset-bottom,0)}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;background:linear-gradient(180deg,var(--green),var(--green-2));display:grid;grid-template-columns:repeat(5,1fr);z-index:40;box-shadow:0 -4px 20px rgba(0,0,0,.18);padding-bottom:env(safe-area-inset-bottom,0)}
+/* Mesma faixa creme que aparecia no iPhone abaixo da barra. O degradê da barra
+   é vertical justamente para a borda de baixo ser --green-2 em toda a largura:
+   assim este preenchimento chapado encaixa sem emenda. Absoluto para não virar
+   coluna do grid. */
+.nav::after{content:'';position:absolute;left:0;right:0;top:100%;height:140px;background:var(--green-2);pointer-events:none}
 .nav button{position:relative;background:none;border:none;color:rgba(250,247,242,.6);padding:9px 4px 9px;font-size:10.5px;font-weight:700;letter-spacing:.3px;display:flex;flex-direction:column;align-items:center;gap:3px}
 .nav button .ico{font-size:19px;line-height:1;display:flex;align-items:center;justify-content:center;height:27px}
 .nav button .ico img{width:27px;height:27px;object-fit:contain;display:block}
@@ -832,7 +837,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-09-01-11';
+const VERSAO='2026-09-01-14';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
