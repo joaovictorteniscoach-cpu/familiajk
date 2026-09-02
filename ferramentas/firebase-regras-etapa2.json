@@ -40,43 +40,66 @@
       "notificacoes": {
         ".read":  "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
         ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
-        "$item": { ".write": "auth != null && !data.exists() && newData.exists()" }
+        "$item": {
+          ".write": "auth != null && !data.exists() && newData.exists()",
+          ".validate": "newData.hasChild('ts') && newData.child('ts').isNumber() && (!newData.hasChild('nome') || newData.child('nome').val().length <= 120) && (!newData.hasChild('texto') || newData.child('texto').val().length <= 500) && (!newData.hasChild('desc') || newData.child('desc').val().length <= 300)"
+        }
       },
       "fila_pedidos": {
         ".read":  "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
         ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
-        "$item": { ".write": "auth != null && !data.exists() && newData.exists()" }
+        "$item": {
+          ".write": "auth != null && !data.exists() && newData.exists()",
+          ".validate": "newData.hasChild('ts') && newData.child('ts').isNumber() && (!newData.hasChild('nome') || newData.child('nome').val().length <= 120) && (!newData.hasChild('texto') || newData.child('texto').val().length <= 500) && (!newData.hasChild('desc') || newData.child('desc').val().length <= 300)"
+        }
       },
       "fila_agendamentos": {
         ".read":  "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
         ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
-        "$item": { ".write": "auth != null && !data.exists() && newData.exists()" }
+        "$item": {
+          ".write": "auth != null && !data.exists() && newData.exists()",
+          ".validate": "newData.hasChild('ts') && newData.child('ts').isNumber() && (!newData.hasChild('nome') || newData.child('nome').val().length <= 120) && (!newData.hasChild('texto') || newData.child('texto').val().length <= 500) && (!newData.hasChild('desc') || newData.child('desc').val().length <= 300)"
+        }
       },
       "fila_autoaval": {
         ".read":  "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
         ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
-        "$item": { ".write": "auth != null && !data.exists() && newData.exists()" }
+        "$item": {
+          ".write": "auth != null && !data.exists() && newData.exists()",
+          ".validate": "newData.hasChild('ts') && newData.child('ts').isNumber() && (!newData.hasChild('nome') || newData.child('nome').val().length <= 120) && (!newData.hasChild('texto') || newData.child('texto').val().length <= 500) && (!newData.hasChild('desc') || newData.child('desc').val().length <= 300)"
+        }
       },
       "fila_confirmacoes": {
         ".read":  "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
         ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
-        "$item": { ".write": "auth != null && !data.exists() && newData.exists()" }
+        "$item": {
+          ".write": "auth != null && !data.exists() && newData.exists()",
+          ".validate": "newData.hasChild('ts') && newData.child('ts').isNumber() && (!newData.hasChild('nome') || newData.child('nome').val().length <= 120) && (!newData.hasChild('texto') || newData.child('texto').val().length <= 500) && (!newData.hasChild('desc') || newData.child('desc').val().length <= 300)"
+        }
       },
       "fila_torneio": {
         ".read":  "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
         ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
-        "$item": { ".write": "auth != null && !data.exists() && newData.exists()" }
+        "$item": {
+          ".write": "auth != null && !data.exists() && newData.exists()",
+          ".validate": "newData.hasChild('ts') && newData.child('ts').isNumber() && (!newData.hasChild('nome') || newData.child('nome').val().length <= 120) && (!newData.hasChild('texto') || newData.child('texto').val().length <= 500) && (!newData.hasChild('desc') || newData.child('desc').val().length <= 300)"
+        }
       },
 
       "fila_cadastros": {
         ".read":  "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
         ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
-        "$item": { ".write": "!data.exists() && newData.exists()" }
+        "$item": {
+          ".write": "auth != null && !data.exists() && newData.exists()",
+          ".validate": "newData.hasChild('ts') && newData.child('ts').isNumber() && (!newData.hasChild('nome') || newData.child('nome').val().length <= 120)"
+        }
       },
 
-      "$aluno": {
-        ".read":  "auth != null && $aluno.beginsWith('jvt-aluno-meu')",
-        ".write": "auth != null && $aluno.beginsWith('jvt-aluno-meu')"
+      "aluno-estado": {
+        "$uid": {
+          ".read":  "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid"
+        }
       }
     }
   }

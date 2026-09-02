@@ -23,6 +23,7 @@ JOAO = 'XEulBs95uZV1JhfUuz6SmjUaeVv1'
 # --- os três atores, do jeito que o Firebase os enxerga -----------------------
 COACH    = {'uid': JOAO}          # João logado por e-mail e senha
 ALUNO    = {'uid': 'anon-abc123'} # app do aluno, entrada anônima
+ALUNO2   = {'uid': 'anon-xyz789'} # OUTRO aluno, para provar que um não alcança o outro
 NINGUEM  = None                   # site público, ou qualquer estranho
 
 
@@ -47,7 +48,13 @@ def avaliar(expr, auth, curingas, data_existe, new_existe):
         return repr(val is not None and val.startswith(m.group(2)))
     e = re.sub(r"\$(\w+)\.beginsWith\('([^']*)'\)", bw, e)
     e = e.replace('===', '==').replace('&&', ' and ').replace('||', ' or ')
-    e = re.sub(r'\$\w+', "''", e)
+    # $curinga solto vira o valor capturado no caminho. Antes virava string vazia
+    # sempre, o que fazia auth.uid === $uid nunca ser verdadeiro — uma regra
+    # correta apareceria como bloqueio.
+    def _cur(m):
+        v = curingas.get(m.group(1))
+        return repr(v) if v is not None else "''"
+    e = re.sub(r'\$(\w+)', _cur, e)
     try:
         return bool(eval(e, {'__builtins__': {}}, {}))
     except Exception:
@@ -100,7 +107,7 @@ def main():
     casos.append(('Gestão (João logado)', 'limpa notificacoes inteira', COACH, J+'notificacoes', 'write', True, True))
 
     # o Joao precisa poder limpar o no de teste do autoteste
-    casos.append(('Gestão (João logado)', 'apaga o nó pessoal de um aluno', COACH, J+'jvt-aluno-meu-teste', 'write', True, True))
+    casos.append(('Gestão (João logado)', 'apaga o nó pessoal de um aluno', COACH, J+'aluno-estado/anon-abc123', 'write', False, True))
 
     # ---- o carimbo de versao: Gestao grava, todo mundo identificado le
     casos.append(('Gestão (João logado)', 'grava o carimbo de versão', COACH, J+'versao_app', 'write', True, True))
@@ -108,8 +115,8 @@ def main():
 
     # ---- Aluno: o que app-aluno/index.html faz
     casos.append(('App do aluno (anônimo)', 'lê a publicação', ALUNO, J+'jvtenis-app-aluno', 'read', True, True))
-    casos.append(('App do aluno (anônimo)', 'lê os próprios pedidos',  ALUNO, J+'jvt-aluno-meu-1111', 'read', True, True))
-    casos.append(('App do aluno (anônimo)', 'grava os próprios pedidos',ALUNO, J+'jvt-aluno-meu-1111', 'write', True, True))
+    casos.append(('App do aluno (anônimo)', 'lê os próprios pedidos',  ALUNO, J+'aluno-estado/anon-abc123', 'read', True, True))
+    casos.append(('App do aluno (anônimo)', 'grava os próprios pedidos',ALUNO, J+'aluno-estado/anon-abc123', 'write', True, True))
     for f in FILAS:
         casos.append(('App do aluno (anônimo)', 'manda pedido novo em '+f, ALUNO, J+f+'/-Nnovo', 'write', True, False))
     casos.append(('App do aluno (anônimo)', 'lê o carimbo de versão', ALUNO, J+'versao_app', 'read', True, True))
@@ -117,15 +124,23 @@ def main():
     for f in FILAS:
         casos.append(('Aluno NÃO pode', 'ler a fila '+f,            ALUNO, J+f, 'read',  False, True))
         casos.append(('Aluno NÃO pode', 'apagar item de '+f,        ALUNO, J+f+'/-Nabc', 'write', False, True))
+    casos.append(('Aluno NÃO pode', 'ler o espaço de OUTRO aluno',   ALUNO, J+'aluno-estado/anon-xyz789', 'read',  False, True))
+    casos.append(('Aluno NÃO pode', 'gravar no espaço de OUTRO aluno',ALUNO, J+'aluno-estado/anon-xyz789', 'write', False, True))
+    casos.append(('Aluno NÃO pode', 'listar todos os espaços pessoais',ALUNO, J+'aluno-estado', 'read', False, True))
+    casos.append(('Aluno NÃO pode', 'usar a chave antiga por código', ALUNO, J+'jvt-aluno-meu-1111', 'write', False, True))
+    casos.append(('Aluno NÃO pode', 'mandar cadastro pela fila do site',ALUNO, J+'fila_cadastros/-Nx', 'write', True, False))
     casos.append(('Aluno NÃO pode', 'ler o banco da gestão',   ALUNO, J+'jvtenis-gestao-v1', 'read',  False, True))
     casos.append(('Aluno NÃO pode', 'gravar na publicação',    ALUNO, J+'jvtenis-app-aluno', 'write', False, True))
     casos.append(('Aluno NÃO pode', 'gravar em v2',            ALUNO, J+'v2/alunos', 'write', False, True))
     casos.append(('Aluno NÃO pode', 'ler os backups',          ALUNO, J+'backups', 'read',  False, True))
     casos.append(('Aluno NÃO pode', 'mexer no carimbo de versão',ALUNO, J+'versao_app', 'write', False, True))
 
+    casos.append(('Outro aluno NÃO pode', 'ler o espaço do primeiro',  ALUNO2, J+'aluno-estado/anon-abc123', 'read',  False, True))
+    casos.append(('Outro aluno NÃO pode', 'gravar no espaço do primeiro',ALUNO2, J+'aluno-estado/anon-abc123','write', False, True))
+
     # ---- Site público, sem login nenhum
     casos.append(('Site público (sem login)', 'lê os preços',        NINGUEM, J+'precos_publicos', 'read', True, True))
-    casos.append(('Site público (sem login)', 'manda contato novo',  NINGUEM, J+'fila_cadastros/-Nnovo', 'write', True, False))
+    casos.append(('Site público (sem login)', 'NÃO grava sem se identificar', NINGUEM, J+'fila_cadastros/-Nnovo', 'write', False, False))
 
     # ---- Estranho
     casos.append(('Estranho NÃO pode', 'baixar tudo (/jvtenis)',  NINGUEM, 'jvtenis', 'read', False, True))
@@ -136,7 +151,9 @@ def main():
     casos.append(('Estranho NÃO pode', 'apagar os backups',       NINGUEM, J+'backups', 'write', False, True))
     casos.append(('Estranho NÃO pode', 'apagar tudo',             NINGUEM, 'jvtenis', 'write', False, True))
     casos.append(('Estranho NÃO pode', 'usar o banco de depósito',NINGUEM, 'lixo/arquivo', 'write', False, True))
-    casos.append(('Estranho NÃO pode', 'ler pedido de um aluno',  NINGUEM, J+'jvt-aluno-meu-1111', 'read', False, True))
+    casos.append(('Estranho NÃO pode', 'ler pedido de um aluno',  NINGUEM, J+'aluno-estado/anon-abc123', 'read', False, True))
+    casos.append(('Estranho NÃO pode', 'gravar pedido de um aluno',NINGUEM, J+'aluno-estado/anon-abc123', 'write', False, True))
+    casos.append(('Estranho NÃO pode', 'usar a chave antiga por código', NINGUEM, J+'jvt-aluno-meu-1111', 'read', False, True))
     casos.append(('Estranho NÃO pode', 'mexer no carimbo',       NINGUEM, J+'versao_app', 'write', False, True))
 
     falhas, grupo_atual = 0, None
