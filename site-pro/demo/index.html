@@ -1675,7 +1675,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-02-1';
+const VERSAO='2026-09-02-3';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -2458,7 +2458,13 @@ async function subirPartes(){
          engano — nesse caso quem manda é a lápide de _removidos. */
       const vivas=new Set((DB[nome]||[]).map(x=>chaveFb(CHAVE_LINHA[nome](x))));
       const mortas={};
-      for(const ch of Object.keys(ja))if(!vivas.has(ch))mortas[ch]=null;
+      /* A diferença contra _enviado vale para lançamentos e presenças, que só
+         somem quando alguém apaga. NÃO vale para o extrato: podarMovs corta as
+         linhas velhas sozinho ao passar de 500 por aluno, e apagar isso da nuvem
+         truncaria o extrato de vez — o saldo pelo extrato passaria a divergir do
+         saldo real. No extrato só sai o que foi marcado de propósito, como no
+         arquivamento por ano, que compensa o corte com a linha de transporte. */
+      if(nome!=='movs')for(const ch of Object.keys(ja))if(!vivas.has(ch))mortas[ch]=null;
       for(const ch of Object.keys(_removidos[nome]))if(!vivas.has(ch))mortas[ch]=null;
       const nMortas=Object.keys(mortas).length;
       if(nMortas){
@@ -3402,8 +3408,12 @@ function contarAulasAluno(a,ano,mes){
         if(e.origem==='compromisso')return;
         if(e.alunoId!==a.id)return;
         if(e.repo)return;
-        if(e.tipo==='aula'||e.tipo==='personal')part++;
-        else if(e.tipo==='grupo')grupo++;
+        /* O quadrado de 30 min vale meia aula, igual ao crédito: creditoSlot(h)
+           dá 0,5 nos horários de meia hora (14:30, 15:30, 19:30, 20:30 e os que
+           vêm logo antes deles). Contar 1 aqui inflava o valor do mês. */
+        const q=creditoSlot(h);
+        if(e.tipo==='aula'||e.tipo==='personal')part+=q;
+        else if(e.tipo==='grupo')grupo+=q;
       });
     });
   }
@@ -3426,10 +3436,12 @@ function mensalidadeDaAgenda(a,ano,mes){
   let valor=0;
   if(t==='Dupla'||t==='Trio'||t==='Quarteto'||t==='Grupo'){
     // aluno só de grupo: todas as aulas dele são tipo 'grupo'
-    if(c.grupo>0){valor=precoMensal(t,c.grupo);det.push(c.grupo+' aula(s) de '+t);}
+    /* 'Grupo' tem tabela por número de aulas, que só aceita inteiro; as outras
+       modalidades são preço por aula e aceitam a metade sem problema. */
+    if(c.grupo>0){valor=precoMensal(t,t==='Grupo'?Math.round(c.grupo):c.grupo);det.push(fmtCred(c.grupo)+' aula(s) de '+t);}
   }else{
-    if(c.part>0){const v=precoAulaCadastro(a);valor+=c.part*v;det.push(c.part+' × '+fmtRs(v));}
-    if(c.grupo>0){const vg=grupoPrecoAula(a.grupoTipo||'Dupla');valor+=c.grupo*vg;det.push(c.grupo+' × '+fmtRs(vg)+' ('+(a.grupoTipo||'Dupla')+')');}
+    if(c.part>0){const v=precoAulaCadastro(a);valor+=c.part*v;det.push(fmtCred(c.part)+' × '+fmtRs(v));}
+    if(c.grupo>0){const vg=grupoPrecoAula(a.grupoTipo||'Dupla');valor+=c.grupo*vg;det.push(fmtCred(c.grupo)+' × '+fmtRs(vg)+' ('+(a.grupoTipo||'Dupla')+')');}
   }
   return {valor:Math.round(valor),part:c.part,grupo:c.grupo,total:c.part+c.grupo,detalhe:det.join('  +  ')};
 }
@@ -3657,6 +3669,7 @@ function togglePresenca(entryId){
   const isGrp=(entry.tipo==='grupo');     // aula em grupo tem saldo próprio (custa menos que a particular)
   const c=creditoSlot(entry.hora);
   if(idx>=0){
+    marcarRemovida('presencas',DB.presencas[idx]);   // sem isto ela voltava da nuvem
     DB.presencas.splice(idx,1);
     if(isTor){logAct('Desmarcar jogo do torneio: '+a.nome);toast('Jogo do torneio desmarcado · '+a.nome);}
     else if(isGrp&&!isRepo){mover(a,'credGrupo',c,'Aula em grupo desmarcada',k);logAct('Desmarcar aula em grupo: '+a.nome);toast('Aula em grupo desfeita · '+a.nome+' → '+fmtCred(a.credGrupo)+' de grupo');}
@@ -3783,7 +3796,7 @@ function aplicarChuva(date,hora){
   entriesFor(date,hora).forEach(e=>{
     if(!e.alunoId)return;
     const k=presId(e,date);const i=DB.presencas.findIndex(p=>p.k===k);
-    if(i>=0){const a=DB.alunos.find(x=>x.id===e.alunoId);if(a){const c=creditoSlot(hora);if(e.tipo==='torneio'){/* torneio não debita, nada a devolver */}else if(e.tipo==='locacao')mover(a,'locCred',c,'Chuva — devolvido');else if(e.tipo==='grupo'&&!e.repo)mover(a,'credGrupo',c,'Chuva — devolvido');else if(e.repo)mover(a,'repos',c,'Chuva — devolvido');else mover(a,'creditos',c,'Chuva — devolvido');}DB.presencas.splice(i,1);}
+    if(i>=0){const a=DB.alunos.find(x=>x.id===e.alunoId);if(a){const c=creditoSlot(hora);if(e.tipo==='torneio'){/* torneio não debita, nada a devolver */}else if(e.tipo==='locacao')mover(a,'locCred',c,'Chuva — devolvido');else if(e.tipo==='grupo'&&!e.repo)mover(a,'credGrupo',c,'Chuva — devolvido');else if(e.repo)mover(a,'repos',c,'Chuva — devolvido');else mover(a,'creditos',c,'Chuva — devolvido');}marcarRemovida('presencas',DB.presencas[i]);DB.presencas.splice(i,1);}
   });
   DB.agenda.fixos.filter(f=>f.dia===dia&&f.hora===hora&&fixoValeEm(f,dk)).forEach(f=>{
     if(!DB.agenda.excecoes.some(x=>x.fixoId===f.id&&x.data===dk))DB.agenda.excecoes.push({fixoId:f.id,data:dk});
@@ -4776,19 +4789,22 @@ function valorAulaDe(a){
 function devidoExtraPart(a){const neg=Math.max(0,Math.ceil(-(Number(a.creditos)||0)));return neg*valorAulaDe(a);}
 function devidoExtraGrupo(a){const neg=Math.max(0,Math.ceil(-(Number(a.credGrupo)||0)));return neg*valorAulaGrupoDe(a);}
 function devidoExtra(a){return devidoExtraPart(a)+devidoExtraGrupo(a);}
-function aulaRealizada(id,modo){
+/* custo: quanto a aula desconta. Sai de creditoSlot() quando o horário é
+   conhecido — meia hora custa 0,5. Sem horário (botão do cartão) vale 1. */
+function aulaRealizada(id,modo,custo,hora){
   const a=DB.alunos.find(x=>x.id===id);
   if(!DB.presencas)DB.presencas=[];
+  const c=Number(custo)>0?Number(custo):1;
   const k='m'+a.id+'-'+Date.now();
-  DB.presencas.push({k,alunoId:a.id,data:dKey(new Date()),hora:'—',manual:true,modo:modo||'aula',tipo:modo||'aula'});
+  DB.presencas.push({k,alunoId:a.id,data:dKey(new Date()),hora:hora||'—',manual:true,modo:modo||'aula',tipo:modo||'aula',custo:c});
   if(modo==='grupo'){            // sai do saldo de grupo, nunca do de particular
-    mover(a,'credGrupo',-1,'Aula em grupo realizada',k);
+    mover(a,'credGrupo',-c,'Aula em grupo realizada',k);
     persist();renderAll();pulsarCredito(a.id);
     const extra=a.credGrupo<0?(' · extra de grupo a cobrar: '+fmt(valorAulaGrupoDe(a))):'';
     toastDesfazer('👥 Aula em grupo · '+a.nome+' → '+fmtCred(a.credGrupo)+' de grupo'+extra,()=>desfazerAula(id,k,'grupo'));
     return;
   }
-  mover(a,'creditos',-1,'Aula realizada',k);   // permite ficar negativo: aula além do pacote
+  mover(a,'creditos',-c,'Aula realizada',k);   // permite ficar negativo: aula além do pacote
   persist();renderAll();pulsarCredito(a.id);
   const extra=a.creditos<0?(' · aula extra a cobrar: '+fmt(valorAulaDe(a))):'';
   toastDesfazer('Aula registrada · '+a.nome+' → '+fmtCred(a.creditos)+(a.creditos<0?' aulas':' créditos')+extra,()=>desfazerAula(id,k,modo));
@@ -4800,8 +4816,13 @@ function desfazerAula(id,k,modo){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
   const i=(DB.presencas||[]).findIndex(p=>p.k===k);
   if(i<0){toast('Esse lançamento já não está mais aqui');return;}
+  marcarRemovida('presencas',DB.presencas[i]);      // sem isto ela voltava da nuvem
   DB.presencas.splice(i,1);
-  mover(a,modo==='grupo'?'credGrupo':'creditos',1,'Aula desfeita',k);
+  /* Devolve o MESMO que saiu, lendo do extrato: com meia aula, devolver 1 fixo
+     criaria crédito do nada. */
+  const campo=modo==='grupo'?'credGrupo':'creditos';
+  const tirado=movsDe(id,campo).filter(m=>m.ref===k).reduce((t,m)=>t+(Number(m.delta)||0),0);
+  mover(a,campo,tirado?-tirado:1,'Aula desfeita',k);
   persist();renderAll();pulsarCredito(a.id);
   toast('↩️ Desfeito · '+a.nome+' → '+fmtCred(modo==='grupo'?a.credGrupo:a.creditos)+(modo==='grupo'?' de grupo':' créditos'));
 }
@@ -5216,7 +5237,7 @@ function renderAulasDeHoje(){
 function marcarDaFolha(i){
   const arr=aulasDeHoje(), x=arr[i];
   if(!x||x.feita)return;
-  aulaRealizada(x.aluno.id,x.modo);
+  aulaRealizada(x.aluno.id,x.modo,creditoSlot(x.hora),x.hora);
   renderAulasDeHoje();
 }
 function ultimasAulas(id,lim){
@@ -6784,6 +6805,16 @@ function conferirNumeros(){
     // presença sem débito e débito sem presença
     const pres=(DB.presencas||[]).filter(p=>p.alunoId===a.id);
     const refs=new Set(movsDe(a.id).map(m=>m.ref).filter(Boolean));
+    /* Presença fantasma: o extrato já devolveu o crédito daquela aula (você
+       desfez ou desmarcou), mas a linha voltou. É a assinatura do defeito que
+       deixava a remoção só no aparelho — a soma do extrato para aquela aula dá
+       zero e mesmo assim a presença está lá. Marcada de novo depois somaria −1,
+       então só o zero exato é fantasma. */
+    const porRef={};
+    movsDe(a.id).forEach(m=>{if(m.ref)porRef[m.ref]=(porRef[m.ref]||0)+(Number(m.delta)||0);});
+    const fantasmas=pres.filter(p=>p.k&&porRef[p.k]!==undefined&&porRef[p.k]===0);
+    if(fantasmas.length)achados.push({tipo:'fantasma',a,chaves:fantasmas.map(p=>p.k),
+      txt:a.nome+': '+fantasmas.length+' aula(s) que você desfez voltaram para a lista. O crédito já foi devolvido, então a aula está sobrando — apagar não mexe em saldo.'});
     const semDeb=pres.filter(p=>p.k&&!refs.has(p.k));
     if(semDeb.length)achados.push({tipo:'aviso',a,
       txt:a.nome+': '+semDeb.length+' presença(s) sem débito no extrato. Normal para aulas anteriores ao extrato começar.'});
@@ -6843,10 +6874,24 @@ function conferirNumeros(){
   if(!achados.length){box.innerHTML=cab+'<div class="cons good"><h4><span>✅</span>Tudo confere</h4><p>Nenhuma divergência entre saldos, extrato, planos e agenda — e nenhuma cobrança, crédito ou aula duplicada.</p></div>';return;}
   window._conf=achados;
   box.innerHTML=cab+achados.map((x,i)=>
-    '<div class="cons '+((x.tipo==='saldo'||x.tipo==='dup')?'bad':'warn')+'"><h4><span>'+(x.tipo==='saldo'?'⚠️':(x.tipo==='dup'?'🔁':'📋'))+'</span>'+escAval(x.a.nome)+'</h4>'
+    '<div class="cons '+((x.tipo==='saldo'||x.tipo==='dup'||x.tipo==='fantasma')?'bad':'warn')+'"><h4><span>'+(x.tipo==='saldo'?'⚠️':(x.tipo==='dup'?'🔁':(x.tipo==='fantasma'?'👻':'📋')))+'</span>'+escAval(x.a.nome)+'</h4>'
     +'<p>'+escAval(x.txt)
     +(x.tipo==='saldo'?'<br><button class="btn btn-ghost" style="margin-top:8px;padding:7px 12px;font-size:12px" onclick="acertarConf('+i+')">Acertar pelo extrato</button>':'')
+    +(x.tipo==='fantasma'?'<br><button class="btn btn-ghost" style="margin-top:8px;padding:7px 12px;font-size:12px" onclick="limparFantasmas('+i+')">Apagar as aulas que sobraram</button>':'')
     +'</p></div>').join('');
+}
+/* Tira as presenças que sobraram. Não mexe em saldo de propósito: o crédito
+   dessas aulas já voltou quando você desfez — mexer de novo devolveria duas
+   vezes. Elas saem do aparelho E da nuvem, pela lápide. */
+function limparFantasmas(i){
+  const x=(window._conf||[])[i];if(!x||x.tipo!=='fantasma')return;
+  if(!confirm('Apagar '+x.chaves.length+' aula(s) que sobraram de '+x.a.nome+'?\n\nO crédito delas já tinha sido devolvido, então o saldo NÃO muda.'))return;
+  const set=new Set(x.chaves);
+  (DB.presencas||[]).forEach(p=>{if(set.has(p.k))marcarRemovida('presencas',p);});
+  DB.presencas=(DB.presencas||[]).filter(p=>!set.has(p.k));
+  logAct('Conferência apagou '+x.chaves.length+' presença(s) repetida(s) de '+x.a.nome);
+  persist();renderAll();conferirNumeros();
+  toast('✓ '+x.chaves.length+' aula(s) que sobravam foram apagadas · saldo intacto');
 }
 function acertarConf(i){
   const x=(window._conf||[])[i];if(!x||x.tipo!=='saldo')return;
