@@ -1728,7 +1728,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-02-3';
+const VERSAO='2026-09-02-4';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -6603,20 +6603,28 @@ async function testarConexao(){
     else passo(true,'Fila fechada para o aluno','o aluno não lê o pedido dos outros — a tranca está fechada');
   }
   // 8) o caminho pessoal do aluno — onde ficam os pedidos pendentes dele.
-  //    Fica num bloco de regra à parte ($aluno), então quebra sozinho sem
-  //    nenhum dos outros passos acusar, e quem sofre é o aluno, não o João.
+  //    Fica num bloco de regra à parte (aluno-estado/$uid), então quebra sozinho
+  //    sem nenhum dos outros passos acusar, e quem sofre é o aluno, não o João.
   {
-    const cam='jvtenis/jvt-aluno-meu-teste';
-    const a=await tenta(()=>db2.ref(cam).set(JSON.stringify({teste:true,ts:Date.now()})));
+    const uid2=(app2.auth().currentUser&&app2.auth().currentUser.uid)||'';
+    const cam='jvtenis/aluno-estado/'+uid2;
+    const a=uid2?await tenta(()=>db2.ref(cam).set(JSON.stringify({teste:true,ts:Date.now()}))):{ok:false,erro:'sem identificação'};
     let leu=false;
     if(a.ok){
       const b=await tenta(()=>db2.ref(cam).get());
       leu=!!b.ok;
     }
-    try{await window.fbDB.ref(cam).remove();}catch(e){}   // limpa como João
+    try{await db2.ref(cam).remove();}catch(e){}   // o próprio aluno limpa: o João não alcança esse nó
     if(a.ok&&leu)passo(true,'Pedidos pendentes do aluno','ele guarda e relê o que deixou pela metade');
     else passo(false,'Pedidos pendentes do aluno',a.ok?'gravou mas não conseguiu reler':(a.prazo?'sem resposta':a.erro),
-      'no bloco "$aluno" das regras, ".read" e ".write" precisam aceitar quem está identificado');
+      'em "aluno-estado/$uid", ".read" e ".write" precisam aceitar auth.uid === $uid');
+  }
+  // 8b) e o espaço do colega tem que estar fechado para ele
+  {
+    const cam='jvtenis/aluno-estado/uid-de-outro-aluno';
+    const a=await tenta(()=>db2.ref(cam).get());
+    passo(!a.ok,'Espaço pessoal de cada um','o aluno não alcança o espaço de outro aluno',
+      'em "aluno-estado/$uid" o ".read" precisa exigir auth.uid === $uid');
   }
 
   try{await app2.delete();}catch(e){}

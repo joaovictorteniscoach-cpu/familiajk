@@ -839,7 +839,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-09-02-3';
+const VERSAO='2026-09-02-4';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -855,7 +855,12 @@ let bookCtx=null;
 function hasCloud(){return !!(window.fbDB);}
 function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
 function lsSet(k,v){try{localStorage.setItem(k,v);return true;}catch(e){return false;}}
-function fbPath(k){return 'jvtenis/'+k.replace(/[.#$\[\]/]/g,'_');}
+function fbPath(k){
+  /* Caminho já completo (com barras) passa direto: é o caso do estado pessoal,
+     que agora mora em jvtenis/aluno-estado/<uid> e precisa das barras. */
+  if(String(k).indexOf('jvtenis/')===0)return String(k);
+  return 'jvtenis/'+k.replace(/[.#$\[\]/]/g,'_');
+}
 /* Prazo para a nuvem: sem servidor alcançável, o Firebase não devolve erro —
    fica tentando reconectar e a promessa nunca termina. Sem isto, o app do
    aluno ficava parado na abertura em vez de mostrar o que já tem guardado. */
@@ -883,7 +888,10 @@ async function cloudGet(k){
 async function filaPush(cam,obj){
   if(!window.fbDB)throw new Error('sem nuvem');
   try{await esperarAuth();}catch(e){}
-  return window.fbDB.ref(cam).push(obj);
+  /* ts sempre presente (as regras exigem, para barrar lixo) e uid junto, para o
+     painel saber de qual aparelho veio o pedido. */
+  const item=Object.assign({ts:Date.now()},obj||{},{uid:authUid()});
+  return window.fbDB.ref(cam).push(item);
 }
 async function cloudSet(k,v){
   if(!window.fbDB)return false;
@@ -992,16 +1000,34 @@ async function conferirVersao(){
     if(bar)bar.style.display='block';
   }catch(e){/* aviso nunca pode atrapalhar */}
 }
-function meuKey(){return MEU.codigo?MYKEY+'-'+MEU.codigo:MYKEY;}
+function authUid(){
+  return (window.AUTH_USER&&window.AUTH_USER.uid)||
+    (window.firebase&&firebase.auth&&firebase.auth().currentUser&&firebase.auth().currentUser.uid)||'';
+}
+/* O estado pessoal (pedidos, cancelamentos, aceite do termo) morava numa chave
+   derivada do código de 4 dígitos, e a regra liberava qualquer chave com esse
+   prefixo. Na prática, quem adivinhasse 4 dígitos lia E ESCREVIA no espaço de
+   outro aluno. Agora a chave é o uid do próprio aparelho, e a regra só permite
+   auth.uid === $uid. */
+function meuKey(){const uid=authUid();return uid?('jvtenis/aluno-estado/'+uid):'';}
+function meuKeyAntiga(){return MEU.codigo?(MYKEY+'-'+MEU.codigo):'';}
 async function carregarMeuNuvem(){
   if(!hasCloud()||!MEU.codigo)return;
-  const raw=await cloudGet(meuKey());
+  let raw=meuKey()?await cloudGet(meuKey()):null;
+  /* Uma vez só: quem já usava o app tem o estado na chave velha (pelo código).
+     Traz para a chave nova e regrava. Depois que as regras novas entrarem, a
+     leitura antiga passa a falhar em silêncio e fica valendo o que está no
+     aparelho — que é a cópia principal de qualquer jeito. */
+  if(!raw&&meuKeyAntiga()){
+    try{const velho=await cloudGet(meuKeyAntiga());
+        if(velho){raw=velho;setTimeout(()=>{try{saveMeu();}catch(e){}},400);}}catch(e){}
+  }
   if(raw){try{const c=JSON.parse(raw);MEU.pedidos=c.pedidos||MEU.pedidos||[];MEU.cancelados=c.cancelados||MEU.cancelados||[];MEU.confirmadas=c.confirmadas||MEU.confirmadas||[];if(c.termoAceitoVer!==undefined)MEU.termoAceitoVer=c.termoAceitoVer;if(c.termoAceitoEm!==undefined)MEU.termoAceitoEm=c.termoAceitoEm;if(c.renovouMes!==undefined)MEU.renovouMes=c.renovouMes;if(c.feriadoOk!==undefined)MEU.feriadoOk=c.feriadoOk;if(c.pagoAviso!==undefined)MEU.pagoAviso=c.pagoAviso;}catch(e){}}
 }
 async function saveMeu(){
   const json=JSON.stringify(MEU);
   lsSet(MYKEY,json); // salva já no aparelho (lembra o login)
-  if(hasCloud()&&MEU.codigo)cloudSet(meuKey(),JSON.stringify({pedidos:MEU.pedidos,cancelados:MEU.cancelados,confirmadas:MEU.confirmadas,termoAceitoVer:MEU.termoAceitoVer,termoAceitoEm:MEU.termoAceitoEm,renovouMes:MEU.renovouMes,feriadoOk:MEU.feriadoOk,pagoAviso:MEU.pagoAviso})); // pedidos por aluno na nuvem
+  if(hasCloud()&&meuKey())cloudSet(meuKey(),JSON.stringify({pedidos:MEU.pedidos,cancelados:MEU.cancelados,confirmadas:MEU.confirmadas,termoAceitoVer:MEU.termoAceitoVer,termoAceitoEm:MEU.termoAceitoEm,renovouMes:MEU.renovouMes,feriadoOk:MEU.feriadoOk,pagoAviso:MEU.pagoAviso})); // pedidos por aluno na nuvem
 }
 async function refresh(silent){
   let raw=null;
