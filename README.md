@@ -28,10 +28,13 @@ gera o conteúdo.
 | `negocio/`     | **Guia de vendas** (`guia-de-vendas.md`): como vender o app para academias e a metodologia como curso. Uso interno. |
 
 ## Última versão dos arquivos
-- `app-gestao/index.html` — editado em 26/06/2026
-- `app-aluno/index.html` — editado em 26/06/2026
-- `app-familia/index.html` — editado em 29/06/2026
-- `site/index.html` — editado em 24/06/2026
+- `app-gestao/index.html` — editado em 03/09/2026
+- `app-aluno/index.html` — editado em 03/09/2026
+- `app-familia/index.html` — editado em 03/09/2026
+- `site/index.html` — editado em 14/08/2026
+
+> A data que vale é sempre a do Git (`git log -1 --date=short -- <arquivo>`);
+> esta lista é só um atalho e pode atrasar.
 
 ## Como publicar (Netlify, drag & drop)
 1. Acesse o painel do Netlify e abra o site correspondente (cada projeto é um

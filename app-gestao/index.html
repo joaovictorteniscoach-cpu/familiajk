@@ -1768,7 +1768,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-03-1';
+const VERSAO='2026-09-03-3';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -1782,7 +1782,6 @@ function creditoSlot(hora){
   return (dur>0&&dur<60)?0.5:1;
 }
 function fmtCred(n){const r=Math.round(n*2)/2;return r%1===0?String(r):String(r).replace('.',',');}
-function soLocacao(date,hora){return slotModo(date,hora)!=='aula';}
 function modoPadrao(date,hora){
   const dia=date.getDay(), m=_hm(hora), H=h=>_hm(h);
   let modo;
@@ -1837,7 +1836,7 @@ function renderProfFiltro(){
   if(!PRO_MULTI||!profs().length){box.style.display='none';return;}
   box.style.display='';
   box.innerHTML='<button class="'+(filtroProf==='todos'?'on':'')+'" onclick="setFiltroProf(\'todos\',this)">Todos</button>'
-    +profs().map(p=>'<button class="'+(filtroProf===p.id?'on':'')+'" onclick="setFiltroProf(\''+p.id+'\',this)">'+escAval(p.nome)+'</button>').join('');
+    +profs().map(p=>'<button class="'+(filtroProf===p.id?'on':'')+'" onclick="setFiltroProf(\''+p.id+'\',this)">'+esc(p.nome)+'</button>').join('');
 }
 function renderProfs(){
   const wrap=document.getElementById('profs-wrap');if(!wrap)return;
@@ -1847,7 +1846,7 @@ function renderProfs(){
   document.getElementById('profs-lista').innerHTML=lista.length
     ? lista.map(p=>{
         const n=DB.alunos.filter(a=>profDoAluno(a)===p.id).length;
-        return '<div class="prof-row"><span><b>'+escAval(p.nome)+'</b><small>'+n+' aluno(s)</small></span>'
+        return '<div class="prof-row"><span><b>'+esc(p.nome)+'</b><small>'+n+' aluno(s)</small></span>'
           +'<span class="prof-acts"><button onclick="renomearProf(\''+p.id+'\')">renomear</button>'
           +'<button class="d" onclick="removerProf(\''+p.id+'\')">remover</button></span></div>';
       }).join('')
@@ -2069,6 +2068,62 @@ function movsDe(alunoId,campo){
 /* O saldo que o extrato diz que deveria ser. */
 function saldoPeloExtrato(a,campo){
   return movsDe(a.id,campo).reduce((s,m)=>s+(Number(m.delta)||0),0);
+}
+/* De que saldo sai cada tipo de marcação. Torneio não sai de saldo nenhum. */
+const CAMPO_DA_PRESENCA={aula:'creditos',grupo:'credGrupo',reposicao:'repos',locacao:'locCred',torneio:null};
+const ROTULO_DEVOLVE={creditos:'Presença desmarcada',credGrupo:'Aula em grupo desmarcada',repos:'Reposição desmarcada',locCred:'Locação desmarcada'};
+/* O que esta marcação REALMENTE tirou de cada saldo, lido do extrato pela
+   chave. Recalcular pelo horário e pelo tipo de agora devolve errado quando a
+   grade mudou (meia aula virou inteira) ou quando o slot deixou de ser grupo
+   entre marcar e desmarcar — foi assim que aula de grupo voltou como crédito.
+   Já devolvido soma zero e não devolve de novo. Sem extrato (aula antiga, já
+   podada), vale o tipo e o custo gravados na própria presença. */
+/* Pares de marcar/desmarcar que não fecham. Devolvido em outro saldo (aula de
+   grupo voltando como crédito) ou maior que o débito: o extrato continua
+   batendo com o saldo, então a conferência de saldo não enxerga — o erro está
+   dentro do próprio par. Função separada para poder ser testada sozinha. */
+function devolucoesTortas(a,pres){
+  const porRefCampo={},houveDevolucao={};
+  movsDe(a.id).forEach(m=>{
+    if(!m.ref)return;
+    const d=Number(m.delta)||0;
+    (porRefCampo[m.ref]=porRefCampo[m.ref]||{});
+    porRefCampo[m.ref][m.campo]=(porRefCampo[m.ref][m.campo]||0)+d;
+    if(d>0)houveDevolucao[m.ref]=true;
+  });
+  const aindaNaAgenda=new Set((pres||[]).map(p=>p.k));
+  const torto=[];
+  Object.keys(porRefCampo).forEach(ref=>{
+    const campos=porRefCampo[ref];
+    Object.keys(campos).forEach(cp=>{
+      const resto=Math.round(campos[cp]*100)/100;
+      if(!resto)return;
+      /* Sobrou saldo a mais: devolveram mais do que saiu. Não existe caminho
+         legítimo para isso — é crédito criado do nada. */
+      if(resto>0)torto.push({ref,campo:cp,resto});
+      /* Faltou devolver. Só conta quando a aula já saiu da agenda E houve
+         devolução noutro saldo — senão seria aula consumida de verdade, ou
+         chuva antiga, cuja devolução era lançada sem chave. */
+      else if(!aindaNaAgenda.has(ref)&&houveDevolucao[ref])torto.push({ref,campo:cp,resto});
+    });
+  });
+  return torto;
+}
+function estornoPorRef(a,k,reg){
+  const saiu={};
+  (DB.movs||[]).forEach(m=>{
+    if(m.alunoId!==a.id||!k||m.ref!==k)return;
+    saiu[m.campo]=(saiu[m.campo]||0)+(Number(m.delta)||0);
+  });
+  const dev={};let achou=false;
+  Object.keys(saiu).forEach(c=>{if(saiu[c]<0){dev[c]=-saiu[c];achou=true;}});
+  if(achou)return dev;
+  if(reg&&!Object.keys(saiu).length){
+    const campo=CAMPO_DA_PRESENCA[reg.tipo||reg.modo||'aula'];
+    const custo=Number(reg.custo);
+    if(campo&&custo>0)return {[campo]:custo};
+  }
+  return {};
 }
 /* Levar um saldo a um valor exato deixando extrato e saldo iguais no fim.
    Não dá para fazer isso com mover(): ele soma o delta ao saldo E ao extrato,
@@ -3345,7 +3400,7 @@ let _desfazerFn=null;
 function toastDesfazer(txt,fn){
   const e=document.getElementById('toast');if(!e)return toast(txt);
   _desfazerFn=fn;
-  e.innerHTML=escAval(txt)+' <button onclick="rodarDesfazer()" style="margin-left:10px;background:rgba(255,255,255,.22);border:none;color:inherit;font:inherit;font-weight:800;padding:4px 11px;border-radius:8px;cursor:pointer">desfazer</button>';
+  e.innerHTML=esc(txt)+' <button onclick="rodarDesfazer()" style="margin-left:10px;background:rgba(255,255,255,.22);border:none;color:inherit;font:inherit;font-weight:800;padding:4px 11px;border-radius:8px;cursor:pointer">desfazer</button>';
   e.classList.add('show');
   clearTimeout(_toastTimer);_toastTimer=setTimeout(()=>{e.classList.remove('show');_desfazerFn=null;},6000);
 }
@@ -3540,7 +3595,7 @@ function renderVincularList(){
   const grupos=gruposNaoVinculados();
   const el=document.getElementById('link-list');
   if(!grupos.length){el.innerHTML='<div class="empty">✅ Tudo certo! Todos os nomes da agenda já estão vinculados a alunos cadastrados — as aulas aparecem em dourado para eles.</div>';return;}
-  const opts=DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${a.id}">${escAval(a.nome)}${a.tipo==='Personal'?' (Personal)':''}</option>`).join('');
+  const opts=DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${a.id}">${esc(a.nome)}${a.tipo==='Personal'?' (Personal)':''}</option>`).join('');
   el.innerHTML='<p class="hint" style="margin-bottom:10px">Para cada nome da agenda que ainda não bate com um cadastro, escolha o aluno correto. Ao salvar, o horário fica vinculado e o nome é padronizado — aí aparece em dourado no app do aluno.</p>'+grupos.map(g=>`
     <div class="link-row">
       <div class="link-name">${g.titulo} <small>(${g.qtd} horário${g.qtd===1?'':'s'} na grade)</small></div>
@@ -3734,13 +3789,20 @@ function togglePresenca(entryId){
   const isGrp=(entry.tipo==='grupo');     // aula em grupo tem saldo próprio (custa menos que a particular)
   const c=creditoSlot(entry.hora);
   if(idx>=0){
-    marcarRemovida('presencas',DB.presencas[idx]);   // sem isto ela voltava da nuvem
+    const reg=DB.presencas[idx];
+    marcarRemovida('presencas',reg);   // sem isto ela voltava da nuvem
     DB.presencas.splice(idx,1);
-    if(isTor){logAct('Desmarcar jogo do torneio: '+a.nome);toast('Jogo do torneio desmarcado · '+a.nome);}
-    else if(isGrp&&!isRepo){mover(a,'credGrupo',c,'Aula em grupo desmarcada',k);logAct('Desmarcar aula em grupo: '+a.nome);toast('Aula em grupo desfeita · '+a.nome+' → '+fmtCred(a.credGrupo)+' de grupo');}
-    else if(isLoc){mover(a,'locCred',c,'Locação desmarcada',k);logAct('Desmarcar locação: '+a.nome);toast('Locação desfeita · '+a.nome+' → '+fmtCred(a.locCred)+'h de locação');}
-    else if(isRepo){mover(a,'repos',c,'Reposição desmarcada',k);logAct('Desmarcar reposição: '+a.nome);toast('Reposição desfeita · '+a.nome+' → '+fmtCred(a.repos)+' reposições');}
-    else{mover(a,'creditos',c,'Presença desmarcada',k);logAct('Desmarcar presença: '+a.nome);toast('Presença desfeita · '+a.nome+' → '+fmtCred(a.creditos)+' créditos');}
+    /* Devolve exatamente o que saiu, saldo por saldo — ver estornoPorRef().
+       O tipo que vale é o GRAVADO na presença, não o do slot agora: o slot pode
+       ter virado grupo (ou meia hora) depois que a presença foi marcada. */
+    const dev=estornoPorRef(a,k,reg);
+    Object.keys(dev).forEach(cp=>mover(a,cp,dev[cp],ROTULO_DEVOLVE[cp]||'Presença desmarcada',k));
+    const tipoReal=reg.tipo||reg.modo||(isTor?'torneio':isLoc?'locacao':(isRepo?'reposicao':(isGrp?'grupo':'aula')));
+    if(tipoReal==='torneio'){logAct('Desmarcar jogo do torneio: '+a.nome);toast('Jogo do torneio desmarcado · '+a.nome);}
+    else if(tipoReal==='grupo'){logAct('Desmarcar aula em grupo: '+a.nome);toast('Aula em grupo desfeita · '+a.nome+' → '+fmtCred(a.credGrupo)+' de grupo');}
+    else if(tipoReal==='locacao'){logAct('Desmarcar locação: '+a.nome);toast('Locação desfeita · '+a.nome+' → '+fmtCred(a.locCred)+'h de locação');}
+    else if(tipoReal==='reposicao'){logAct('Desmarcar reposição: '+a.nome);toast('Reposição desfeita · '+a.nome+' → '+fmtCred(a.repos)+' reposições');}
+    else{logAct('Desmarcar presença: '+a.nome);toast('Presença desfeita · '+a.nome+' → '+fmtCred(a.creditos)+' créditos');}
   }else{
     if(isTor){
       DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo:'torneio',custo:0});
@@ -3861,7 +3923,7 @@ function aplicarChuva(date,hora){
   entriesFor(date,hora).forEach(e=>{
     if(!e.alunoId)return;
     const k=presId(e,date);const i=DB.presencas.findIndex(p=>p.k===k);
-    if(i>=0){const a=DB.alunos.find(x=>x.id===e.alunoId);if(a){const c=creditoSlot(hora);if(e.tipo==='torneio'){/* torneio não debita, nada a devolver */}else if(e.tipo==='locacao')mover(a,'locCred',c,'Chuva — devolvido');else if(e.tipo==='grupo'&&!e.repo)mover(a,'credGrupo',c,'Chuva — devolvido');else if(e.repo)mover(a,'repos',c,'Chuva — devolvido');else mover(a,'creditos',c,'Chuva — devolvido');}marcarRemovida('presencas',DB.presencas[i]);DB.presencas.splice(i,1);}
+    if(i>=0){const reg=DB.presencas[i];const a=DB.alunos.find(x=>x.id===e.alunoId);if(a){/* devolve o que saiu de verdade, e com a chave, para o par fechar em zero no extrato */const dev=estornoPorRef(a,k,reg);Object.keys(dev).forEach(cp=>mover(a,cp,dev[cp],'Chuva — devolvido',k));}marcarRemovida('presencas',reg);DB.presencas.splice(i,1);}
   });
   DB.agenda.fixos.filter(f=>f.dia===dia&&f.hora===hora&&fixoValeEm(f,dk)).forEach(f=>{
     if(!DB.agenda.excecoes.some(x=>x.fixoId===f.id&&x.data===dk))DB.agenda.excecoes.push({fixoId:f.id,data:dk});
@@ -3897,7 +3959,7 @@ function openSlot(hora){
   document.getElementById('slot-title').textContent=DIAS[slotCtx.date.getDay()]+' '+slotCtx.date.getDate()+'/'+(slotCtx.date.getMonth()+1)+' · '+hora;
   document.getElementById('s-titulo').value='';
   const sel=document.getElementById('s-aluno');
-  sel.innerHTML='<option value="">— sem vínculo —</option>'+DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${a.id}">${escAval(a.nome)} (${fmtCred(a.creditos)} créd.)</option>`).join('');
+  sel.innerHTML='<option value="">— sem vínculo —</option>'+DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${a.id}">${esc(a.nome)} (${fmtCred(a.creditos)} créd.)</option>`).join('');
   sel.value='';
   renderSlotEvs();
   document.getElementById('ov-slot').classList.add('on');
@@ -4081,7 +4143,7 @@ function openAlunoModal(id){
     document.getElementById('a-loccred').value=Number(a.locCred)||0;
     const pw=document.getElementById('a-prof-wrap'),ps=document.getElementById('a-prof');
     if(pw)pw.style.display=PRO_MULTI?'':'none';
-    if(ps){ps.innerHTML='<option value="">—</option>'+profs().map(x=>'<option value="'+x.id+'">'+escAval(x.nome)+'</option>').join('');ps.value=a.profId||'';}
+    if(ps){ps.innerHTML='<option value="">—</option>'+profs().map(x=>'<option value="'+x.id+'">'+esc(x.nome)+'</option>').join('');ps.value=a.profId||'';}
     document.getElementById('a-credgrupo').value=Number(a.credGrupo)||0;
     document.getElementById('a-planogrupo').value=Number(a.planoGrupo)||0;
     document.getElementById('a-grupotipo').value=a.grupoTipo||'';
@@ -4477,7 +4539,7 @@ function openRegistroModal(id){
 function htmlRegDetalhe(v){
   const INT={leve:'🟢 Leve',media:'🟡 Média',forte:'🔴 Forte'};
   const HUM={animado:'😄 Animado',normal:'🙂 Normal',cansado:'😮‍💨 Cansado',frustrado:'😕 Frustrado'};
-  const linha=(lbl,val)=>val?`<div class="rgd-row"><span class="rgd-l">${lbl}</span><span class="rgd-v">${escAval(val)}</span></div>`:'';
+  const linha=(lbl,val)=>val?`<div class="rgd-row"><span class="rgd-l">${lbl}</span><span class="rgd-v">${esc(val)}</span></div>`:'';
   let h='';
   h+=linha('Camada-alvo',v.camada);
   h+=linha('Evoluiu na camada',v.evoluiu==='sim'?'✅ Sim':(v.evoluiu==='nao'?'➖ Ainda não':''));
@@ -4631,15 +4693,15 @@ function htmlAvalDe(a,av){
   const met=metalDe(av.nivel);
   const nome1=a.nome;
   let html='<div class="aex-wrap" style="--lc:'+met.m+';--lcd:'+met.d+'"><div class="tex-head"><div><b>Academia João Victor Tênis</b><span>Avaliação · '+((av.data||'').split('-').reverse().join('/'))+'</span></div><div class="tex-emb">JV</div></div>';
-  html+='<div style="font-size:15px;font-weight:800;color:#2A2016;margin:-4px 0 2px">'+escAval(nome1)+'</div>';
-  html+='<div style="font-size:11px;color:#8a8478;margin-bottom:2px">Metodologia Da Base ao Topo'+(av.formato?' · '+escAval(av.formato):'')+'</div>';
+  html+='<div style="font-size:15px;font-weight:800;color:#2A2016;margin:-4px 0 2px">'+esc(nome1)+'</div>';
+  html+='<div style="font-size:11px;color:#8a8478;margin-bottom:2px">Metodologia Da Base ao Topo'+(av.formato?' · '+esc(av.formato):'')+'</div>';
   html+='<div class="aex-nivel"><span class="aex-badge">Nível: '+(av.nivel||'—')+'</span></div>';
   html+='<div class="aex-trilha">'+TRILHA_NIVEIS.map((n,i)=>{
     const feito=i<=ci;
     return '<div class="aex-step '+(i<ci?'done':'')+' '+(i===ci?'cur':'')+'"'+(feito?' style="background:'+metalDe(n).m+'"':'')+'>'+n+'</div>';
   }).join('')+'</div>';
-  if(av.objetivo)html+='<div class="aex-prio" style="background:#FBF6EC;border-color:#eadfc6">🎯 Objetivo: <b>'+escAval(av.objetivo)+'</b></div>';
-  if(av.prioridade)html+='<div class="aex-prio">Prioridade do ciclo: <b>'+escAval(av.prioridade)+'</b></div>';
+  if(av.objetivo)html+='<div class="aex-prio" style="background:#FBF6EC;border-color:#eadfc6">🎯 Objetivo: <b>'+esc(av.objetivo)+'</b></div>';
+  if(av.prioridade)html+='<div class="aex-prio">Prioridade do ciclo: <b>'+esc(av.prioridade)+'</b></div>';
   Object.keys(AVAL_ESCALA).forEach(g=>{
     html+='<div class="aex-sec">'+(AVAL_ICO[g]||'•')+' '+AVAL_ESCALA[g].titulo+'</div>';
     AVAL_ESCALA[g].itens.forEach(it=>{
@@ -4649,7 +4711,7 @@ function htmlAvalDe(a,av){
   });
   const _mes=evoMesChartHTML(serieMensal(a.avaliacoes,a.registros,6),'Evolução mês a mês');
   if(_mes)html+='<div style="margin-top:14px">'+_mes+'</div>';
-  if(av.obs)html+='<div class="aex-prio" style="margin-top:14px;background:#F7F4EE;border-color:#e7e0d2">📝 '+escAval(av.obs)+'</div>';
+  if(av.obs)html+='<div class="aex-prio" style="margin-top:14px;background:#F7F4EE;border-color:#e7e0d2">📝 '+esc(av.obs)+'</div>';
   html+='<div class="tex-foot">Disciplina no treino. Evolução no jogo. 🎾 · Prof. João Victor</div></div>';
   return html;
 }
@@ -4657,7 +4719,7 @@ function montarAvalExport(a){
   const av=ultimaAval(a);if(!av)return;
   document.getElementById('aval-export').innerHTML=htmlAvalDe(a,av);
 }
-function escAval(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function avalExportCanvas(){
   const a=DB.alunos.find(x=>x.id===avalExpId);if(!a)return Promise.reject('semaluno');
   montarAvalExport(a);
@@ -4778,7 +4840,7 @@ function renderAvaliacoes(){
     const fora=todos.filter(a=>a.avalOff&&a.nome.toLowerCase().includes(q));
     if(!fora.length){list.innerHTML='<div class="empty">Ninguém fora das avaliações. Use o 🚫 num aluno para tirá-lo daqui (ex.: quem só loca quadra ou joga o torneio).</div>';return;}
     list.innerHTML=fora.map(a=>
-      '<div class="avcard"><div class="avtop"><div><div class="avnome">'+escAval(a.nome)+'</div><div class="avsub">'+a.tipo+' · fora das avaliações</div></div>'+
+      '<div class="avcard"><div class="avtop"><div><div class="avnome">'+esc(a.nome)+'</div><div class="avsub">'+a.tipo+' · fora das avaliações</div></div>'+
       '<span class="avnivel none">🚫 fora</span></div>'+
       '<div class="avacts"><button class="b3" onclick="setAvalOff(\''+a.id+'\',false)">✅ Incluir nas avaliações</button></div></div>'
     ).join('');
@@ -4798,12 +4860,12 @@ function renderAvaliacoes(){
     const dias=av?diasDesde(av.data):Infinity;
     const due=(!av||dias>42);
     const nivel=av?('<span class="avnivel" style="background:'+metalDe(av.nivel).m+';color:#fff">'+(av.nivel||'—')+'</span>'):'<span class="avnivel none">Sem avaliação</span>';
-    const sub=av?('Última: '+tempoDesde(dias)+(av.prioridade?' · 🎯 '+escAval(av.prioridade):'')):(a.tipo+' · '+(a.plano>0?('Flex '+a.plano):'sem pacote'));
+    const sub=av?('Última: '+tempoDesde(dias)+(av.prioridade?' · 🎯 '+esc(av.prioridade):'')):(a.tipo+' · '+(a.plano>0?('Flex '+a.plano):'sem pacote'));
     return '<div class="avcard'+(av?' avcard-ver':'')+'"'+(av?' onclick="if(!event.target.closest(\'button\'))openAvalVer(\''+a.id+'\')"':'')+'>'+
-      '<div class="avtop"><div><div class="avnome">'+(ehPersonalTipo(a.tipo)?'💪 ':'🎾 ')+escAval(a.nome)+'</div><div class="avsub">'+sub+'</div></div>'+nivel+'</div>'+
+      '<div class="avtop"><div><div class="avnome">'+(ehPersonalTipo(a.tipo)?'💪 ':'🎾 ')+esc(a.nome)+'</div><div class="avsub">'+sub+'</div></div>'+nivel+'</div>'+
       avMiniHTML(av)+
       (due?'<div class="avdue">⏰ '+(av?'reavaliar (6+ semanas)':'avaliar este aluno')+'</div>':'')+
-      autoAvalDe(a).map(x=>'<div class="avauto">📝 <b>'+escAval(x.nome||a.nome).split(' ')[0]+'</b> se autoavaliou em '+((x.data||'').split('-').reverse().join('/'))+
+      autoAvalDe(a).map(x=>'<div class="avauto">📝 <b>'+esc(x.nome||a.nome).split(' ')[0]+'</b> se autoavaliou em '+((x.data||'').split('-').reverse().join('/'))+
         '<div class="avauto-acts"><button onclick="usarAutoAval(\''+a.id+'\',\''+x._k+'\')">Abrir e revisar</button>'+
         '<button class="d" onclick="descartarAutoAval(\''+x._k+'\')">Descartar</button></div></div>').join('')+
       '<div class="avacts">'+
@@ -4853,7 +4915,6 @@ function valorAulaDe(a){
 /* Cobrança das aulas além do pacote — cada modalidade pelo seu próprio preço. */
 function devidoExtraPart(a){const neg=Math.max(0,Math.ceil(-(Number(a.creditos)||0)));return neg*valorAulaDe(a);}
 function devidoExtraGrupo(a){const neg=Math.max(0,Math.ceil(-(Number(a.credGrupo)||0)));return neg*valorAulaGrupoDe(a);}
-function devidoExtra(a){return devidoExtraPart(a)+devidoExtraGrupo(a);}
 /* custo: quanto a aula desconta. Sai de creditoSlot() quando o horário é
    conhecido — meia hora custa 0,5. Sem horário (botão do cartão) vale 1. */
 function aulaRealizada(id,modo,custo,hora){
@@ -4881,13 +4942,14 @@ function desfazerAula(id,k,modo){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
   const i=(DB.presencas||[]).findIndex(p=>p.k===k);
   if(i<0){toast('Esse lançamento já não está mais aqui');return;}
-  marcarRemovida('presencas',DB.presencas[i]);      // sem isto ela voltava da nuvem
+  const reg=DB.presencas[i];                        // guardar ANTES de tirar da lista
+  marcarRemovida('presencas',reg);                  // sem isto ela voltava da nuvem
   DB.presencas.splice(i,1);
   /* Devolve o MESMO que saiu, lendo do extrato: com meia aula, devolver 1 fixo
-     criaria crédito do nada. */
-  const campo=modo==='grupo'?'credGrupo':'creditos';
-  const tirado=movsDe(id,campo).filter(m=>m.ref===k).reduce((t,m)=>t+(Number(m.delta)||0),0);
-  mover(a,campo,tirado?-tirado:1,'Aula desfeita',k);
+     criaria crédito do nada. Olha TODOS os saldos, não só o do modo: se a aula
+     saiu do saldo de grupo, é para lá que ela volta. */
+  const dev=estornoPorRef(a,k,reg);
+  Object.keys(dev).forEach(cp=>mover(a,cp,dev[cp],'Aula desfeita',k));
   persist();renderAll();pulsarCredito(a.id);
   toast('↩️ Desfeito · '+a.nome+' → '+fmtCred(modo==='grupo'?a.credGrupo:a.creditos)+(modo==='grupo'?' de grupo':' créditos'));
 }
@@ -5222,7 +5284,7 @@ function abrirFechamento(){
   if(sa&&!sa.options.length){
     sa.innerHTML='<option value="">— escolha o aluno —</option>'+
       DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome))
-        .map(a=>'<option value="'+a.id+'">'+escAval(a.nome)+'</option>').join('');
+        .map(a=>'<option value="'+a.id+'">'+esc(a.nome)+'</option>').join('');
   }
   if(sm&&!sm.options.length){
     sm.innerHTML=fcMesesDisponiveis().map(m=>'<option value="'+m+'">'+fcRotuloMes(m)+'</option>').join('');
@@ -5258,7 +5320,7 @@ function renderFechamento(){
   box.innerHTML=
    '<div class="fx-card">'
    +'<div class="fx-topo"><img src="jv-icone-gestao.png" alt=""><div><b>ACADEMIA JOÃO VICTOR TÊNIS</b><span>Fechamento mensal</span></div></div>'
-   +'<div class="fx-nome">'+escAval(a.nome)+'</div>'
+   +'<div class="fx-nome">'+esc(a.nome)+'</div>'
    +'<div class="fx-mes">'+fcRotuloMes(mk)+'</div>'
    +'<div class="fx-sec">Aulas realizadas</div>'+linhas
    +'<div class="fx-sec">Saldo</div>'
@@ -5270,11 +5332,11 @@ function renderFechamento(){
    +'<div class="fx-linha"><span>Mensalidade</span><span></span><span>'+fmtRs(D.cheia)+'</span></div>'
    +(D.desconto>0?'<div class="fx-linha" style="color:#2E7D52"><span>Desconto ('+fmtCred(D.qtdDesc)+' reposições)</span><span></span><span>−'+fmtRs(D.desconto)+'</span></div>':'')
    +'<div class="fx-total"><span>Total</span><b>'+fmtRs(D.total)+'</b></div>'
-   +(obs?'<div class="fx-obs">'+escAval(obs)+'</div>':'')
+   +(obs?'<div class="fx-obs">'+esc(obs)+'</div>':'')
    +'<div class="fx-sec">Pagamento</div>'
    +'<div class="fx-linha"><span>Vencimento</span><span></span><span>dia '+venc+'</span></div>'
-   +(pix?'<div class="fx-linha"><span>Pix</span><span></span><span>'+escAval(pix)+'</span></div>':'')
-   +(DB.pixNome?'<div class="fx-linha"><span>Em nome de</span><span></span><span>'+escAval(DB.pixNome)+'</span></div>':'')
+   +(pix?'<div class="fx-linha"><span>Pix</span><span></span><span>'+esc(pix)+'</span></div>':'')
+   +(DB.pixNome?'<div class="fx-linha"><span>Em nome de</span><span></span><span>'+esc(DB.pixNome)+'</span></div>':'')
    +'</div>';
 }
 function fcTexto(a,mk,D){
@@ -5352,7 +5414,7 @@ function renderFilaFech(){
   box.innerHTML=lista.map(a=>{
     const ok=!!env[a.id];
     return '<div class="fq-linha'+(ok?' ok':'')+'">'
-      +'<button class="fq-nome" onclick="escolherFech(\''+a.id+'\')">'+(ok?'✓':'○')+' '+escAval(a.nome)+'</button>'
+      +'<button class="fq-nome" onclick="escolherFech(\''+a.id+'\')">'+(ok?'✓':'○')+' '+esc(a.nome)+'</button>'
       +(ok?'<button class="fq-x" onclick="desmarcarFech(\''+a.id+'\',\''+mk+'\')">desfazer</button>':'')
       +'</div>';
   }).join('');
@@ -5456,7 +5518,7 @@ function renderAulasDeHoje(){
   if(!arr.length){box.innerHTML='<div class="empty">Nenhuma aula com aluno na agenda de hoje. Use <b>Buscar aluno</b> para registrar uma aula avulsa.</div>';return;}
   box.innerHTML=arr.map((x,i)=>
     '<div class="ah-linha"><span class="ah-h">'+x.hora+'</span>'+
-    '<span class="ah-n">'+escAval(x.aluno.nome)+'<small>'+(x.modo==='grupo'?'👥 em grupo':'🎾 particular')+'</small></span>'+
+    '<span class="ah-n">'+esc(x.aluno.nome)+'<small>'+(x.modo==='grupo'?'👥 em grupo':'🎾 particular')+'</small></span>'+
     (x.feita?'<button disabled>✓ já registrada</button>'
             :'<button onclick="marcarDaFolha('+i+')">✓ Realizada</button>')+
     '</div>').join('');
@@ -5525,7 +5587,7 @@ function renderAlunos(){
     return `
   <div class="aluno" id="card-${a.id}">
     <div class="aluno-head" onclick="toggleAluno(document.getElementById('card-${a.id}'))">
-      <div><div class="aluno-name">${ehPersonalTipo(a.tipo)?'💪 ':'🎾 '}${escAval(a.nome)}</div><div class="aluno-sub">${a.tipo} · ${a.plano>0?('Flex '+a.plano):'sem pacote'} · ${fmt(a.mensalidade)}/mês</div></div>
+      <div><div class="aluno-name">${ehPersonalTipo(a.tipo)?'💪 ':'🎾 '}${esc(a.nome)}</div><div class="aluno-sub">${a.tipo} · ${a.plano>0?('Flex '+a.plano):'sem pacote'} · ${fmt(a.mensalidade)}/mês</div></div>
       <span class="badge ${a.status}">${a.status==='parcial'?'50%':a.status}</span>
     </div>
     <div class="aluno-body"><div class="ab-in">
@@ -5536,7 +5598,7 @@ function renderAlunos(){
         ${(Number(a.planoGrupo)||0)>0||(Number(a.credGrupo)||0)!==0?`<span class="chip" style="${(Number(a.credGrupo)||0)<0?'background:#F6D7D2;color:#8E2C1E;font-weight:800':'background:#EDE7FB00;background:#E7F0E8;color:#2E7D52;font-weight:700'}">👥 ${fmtCred(Number(a.credGrupo)||0)} grupo</span>`:''}
         ${temRepos?`<span class="chip warn">🔁 ${fmtCred(a.repos)} reposiç${a.repos===1?'ão':'ões'}</span>`:''}
         ${loc?`<span class="chip" style="${(Number(a.locCred)||0)<0?'background:#F6D7D2;color:#8E2C1E;font-weight:800':''}">🔑 ${fmtCred(Number(a.locCred)||0)}h locação${(Number(a.locCred)||0)<0?' (devendo)':''}</span>`:''}
-        ${PRO_MULTI&&profDoAluno(a)?`<span class="chip" style="background:#E7F0E8;color:#2E7D52;font-weight:700">👨‍🏫 ${escAval(profNome(profDoAluno(a)))}</span>`:''}
+        ${PRO_MULTI&&profDoAluno(a)?`<span class="chip" style="background:#E7F0E8;color:#2E7D52;font-weight:700">👨‍🏫 ${esc(profNome(profDoAluno(a)))}</span>`:''}
         ${filtroAluno==='todos'?`<span class="chip" style="background:#EFE7D8;color:#5b5142;font-weight:700">${PERFIL_LABELS[perfilDe(a)]||''}</span>`:''}
         ${(a.avaliacoes&&a.avaliacoes.length)?`<span class="chip" style="background:${metalDe(a.avaliacoes[a.avaliacoes.length-1].nivel).m};color:#fff;font-weight:800">📈 ${a.avaliacoes[a.avaliacoes.length-1].nivel||'—'}</span>`:''}
         ${a.termoAceitoEm?`<span class="chip" style="background:#E6F0E6;color:#2E7D52">📄 termo aceito</span>`:''}
@@ -5625,7 +5687,7 @@ function renderQuickLanc(){
   h+=`<button class="q2" onclick="quickLanc('Personal avulso',${personal},'personal')">Personal avulso<small>R$ ${personal}</small></button>`;
   (DB.botoesLanc||[]).forEach((b,i)=>{
     const cls=['q1','q2','q3'][i%3];
-    h+=`<button class="${cls} qb-custom" onclick="quickLancCustom(${i})">${escAval(b.label)}<small>R$ ${Number(b.valor)||0}</small><span class="qb-x" title="Remover botão" onclick="event.stopPropagation();delBotaoLanc(${i})">✕</span></button>`;
+    h+=`<button class="${cls} qb-custom" onclick="quickLancCustom(${i})">${esc(b.label)}<small>R$ ${Number(b.valor)||0}</small><span class="qb-x" title="Remover botão" onclick="event.stopPropagation();delBotaoLanc(${i})">✕</span></button>`;
   });
   h+=`<button class="q4" onclick="openLancModal()">Outro valor<small>+ lançar</small></button>`;
   h+=`<button class="qb-novo" onclick="openBotaoModal()">＋ Novo botão<small>criar atalho</small></button>`;
@@ -5655,7 +5717,7 @@ function delBotaoLanc(i){
 function openLancModal(){
   document.getElementById('l-desc').value='';document.getElementById('l-valor').value='';
   const sel=document.getElementById('l-aluno');
-  if(sel){sel.innerHTML='<option value="">— ninguém —</option>'+DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${a.id}">${escAval(a.nome)}</option>`).join('');sel.value='';}
+  if(sel){sel.innerHTML='<option value="">— ninguém —</option>'+DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${a.id}">${esc(a.nome)}</option>`).join('');sel.value='';}
   document.getElementById('l-cat').value='avulsa';
   document.getElementById('ov-lanc').classList.add('on');
 }
@@ -5793,7 +5855,7 @@ function renderDash(){
       const r=rotuloVenc(d);
       return `
     <div class="pend-item ${a.status}">
-      <div><b>${escAval(a.nome)}</b><br><span>${a.status==='parcial'?'Pagou 50% — falta '+fmt(a.mensalidade*0.5):'Pendente — '+fmt(a.mensalidade)}</span>
+      <div><b>${esc(a.nome)}</b><br><span>${a.status==='parcial'?'Pagou 50% — falta '+fmt(a.mensalidade*0.5):'Pendente — '+fmt(a.mensalidade)}</span>
         <span class="venc-tag ${r.cls}">${r.txt}${d!==null?(' · dia '+((a.diaVenc)||10)):''}</span></div>
       ${a.tel?`<button class="btn btn-ghost" style="padding:7px 11px;font-size:11px" onclick="cobrar('${a.id}')">Cobrar 📲</button>`:''}
     </div>`;}).join('');
@@ -5883,7 +5945,7 @@ function renderConselhos(){
 
   marcarDobra('dob-consel-n',t.length,t.length===0);
   if(!t.length){box.innerHTML='<div class="cons good"><h4><span>✅</span>Tudo em ordem</h4><p>Nenhuma pendência de cobrança, saldo ou avaliação para hoje.</p></div>';return;}
-  box.innerHTML=t.map(x=>`<div class="cons ${x[0]}"><h4><span>${x[1]}</span>${escAval(x[2])}</h4><p>${escAval(x[3])}</p></div>`).join('');
+  box.innerHTML=t.map(x=>`<div class="cons ${x[0]}"><h4><span>${x[1]}</span>${esc(x[2])}</h4><p>${esc(x[3])}</p></div>`).join('');
 }
 function renderDatasInicio(){
   const el=document.getElementById('datas-inicio');if(!el)return;
@@ -5916,7 +5978,7 @@ function renderCompromissos(){
   el.innerHTML=arr.map(c=>{
     const pr=String(c.data).split('-').map(Number);
     return '<div class="comp-item"><div class="comp-date"><div class="cd-d">'+String(pr[2]||0).padStart(2,'0')+'</div><div class="cd-m">'+(MES3[(pr[1]||1)-1]||'')+'</div></div>'
-      +'<div class="comp-info"><b>'+torEsc(c.titulo)+'</b><span>'+(c.hora?c.hora+'h':'Dia todo')+(c.nota?' · '+torEsc(c.nota):'')+'</span></div>'
+      +'<div class="comp-info"><b>'+esc(c.titulo)+'</b><span>'+(c.hora?c.hora+'h':'Dia todo')+(c.nota?' · '+esc(c.nota):'')+'</span></div>'
       +'<button class="comp-x" title="Remover" onclick="delCompromisso(\''+c.id+'\')">✕</button></div>';
   }).join('');
 }
@@ -6450,7 +6512,7 @@ function abrirExtrato(id){
   const dt=ts=>{const d=new Date(ts);return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');};
   const linhas=ms.map(m=>
     '<tr><td style="white-space:nowrap;color:var(--muted)">'+dt(m.ts)+'</td>'
-    +'<td>'+escAval(m.motivo)+'<small style="display:block;color:var(--muted)">'+CAMPO_LABEL[m.campo]+'</small></td>'
+    +'<td>'+esc(m.motivo)+'<small style="display:block;color:var(--muted)">'+CAMPO_LABEL[m.campo]+'</small></td>'
     +'<td style="text-align:right;font-weight:800;color:'+(m.delta<0?'#8E2C1E':'#2E7D52')+'">'+(m.delta>0?'+':'')+fmtCred(m.delta)+'</td>'
     +'<td style="text-align:right;font-weight:700">'+fmtCred(m.para)+'</td></tr>').join('');
   const saldos=['creditos','credGrupo','repos','locCred'].map(c=>{
@@ -6503,8 +6565,8 @@ function renderHistAulas(){
   const chip=(lbl,val,cor)=>'<span style="display:inline-block;margin:0 6px 6px 0;padding:5px 10px;border-radius:9px;background:#fff;border:1px solid #eadfc6;font-size:12px;font-weight:700">'+lbl+': <b style="color:'+cor+'">'+fmtCred(val)+'</b></span>';
   let h='<div style="font-family:\'DM Sans\',sans-serif;background:#FBF8F2;padding:16px;border-radius:12px;color:#2A2016">';
   h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #C9A227;padding-bottom:8px;margin-bottom:10px"><div><div style="font-weight:800;font-size:15px">Academia João Victor Tênis</div><div style="font-size:11px;color:#8a8478">Comprovante de aulas · '+periodoTxt+'</div></div><div style="width:40px;height:40px;border-radius:50%;background:#1F3D2B;color:#EFE7D0;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0">JV</div></div>';
-  h+='<div style="font-size:15px;font-weight:800">'+escAval(a.nome)+'</div>';
-  h+='<div style="font-size:11px;color:#8a8478;margin-bottom:8px">'+escAval(a.tipo||'')+(plano?' · pacote de '+plano+' aula(s)/mês'+(planoG?' + '+planoG+' em grupo':''):'')+'</div>';
+  h+='<div style="font-size:15px;font-weight:800">'+esc(a.nome)+'</div>';
+  h+='<div style="font-size:11px;color:#8a8478;margin-bottom:8px">'+esc(a.tipo||'')+(plano?' · pacote de '+plano+' aula(s)/mês'+(planoG?' + '+planoG+' em grupo':''):'')+'</div>';
   h+='<div style="margin-bottom:8px">'+chip('Créditos hoje',Number(a.creditos)||0,'#2E7D52')+chip('Reposições',Number(a.repos)||0,'#C9A227')+((planoG||Number(a.credGrupo))?chip('Grupo',Number(a.credGrupo)||0,'#6A4FA3'):'')+'</div>';
   h+='<div style="background:#F1F6EE;border:1px solid #d8e6d2;border-radius:9px;padding:8px 11px;font-size:12.5px;margin-bottom:10px">No período: <b>'+(cont.aula||0)+'</b> aula(s) normal(is)'+(cont.reposicao?' · <b>'+cont.reposicao+'</b> reposição(ões)':'')+(cont.grupo?' · <b>'+cont.grupo+'</b> em grupo':'')+(cont.locacao?' · <b>'+cont.locacao+'</b> locação':'')+'.</div>';
   h+=ps.length?('<table style="width:100%;border-collapse:collapse;font-size:12.5px"><tr style="text-align:left;color:#8a8478;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em"><th style="padding:4px 6px">Data</th><th style="padding:4px 6px">Hora</th><th style="padding:4px 6px">Tipo</th></tr>'+linhas+'</table>'):'<div style="color:#8a8478;padding:10px 0">Nenhuma aula registrada neste período.</div>';
@@ -6623,7 +6685,6 @@ function mostrarBarraVersao(naNuvem){
 /* ===== Conta: entrar e sair =====
    Falhar aqui não pode custar nada: o app inteiro segue funcionando deslogado
    enquanto as regras do banco estiverem abertas. */
-function contaEsc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function renderConta(){
   var lv=document.getElementById('versao-linha');
   if(lv)lv.textContent='Versão deste endereço: '+dataBonita(VERSAO)+'  ('+VERSAO+')';
@@ -6634,7 +6695,7 @@ function renderConta(){
   }
   var u=window.AUTH_USER;
   if(u){
-    el.innerHTML='<p class="hint" style="color:var(--ok,#2E7D32);font-weight:700">✅ Conectado como '+contaEsc(u.email||'conta sem e-mail')+'</p>'
+    el.innerHTML='<p class="hint" style="color:var(--ok,#2E7D32);font-weight:700">✅ Conectado como '+esc(u.email||'conta sem e-mail')+'</p>'
       +'<div class="backup-row"><button class="btn btn-ghost" onclick="sairConta()">Sair desta conta</button></div>';
     return;
   }
@@ -6694,7 +6755,7 @@ function _tl(ok,titulo,detalhe,acao){
   return '<div style="padding:7px 0;border-top:1px solid var(--border)">'
     +'<b style="color:'+cor+'">'+ic+' '+titulo+'</b>'
     +(detalhe?'<br><span class="hint">'+detalhe+'</span>':'')
-    +(acao?'<br><span class="hint" style="color:#C0392B;font-weight:700">→ '+acao+'</span>':'')
+    +(acao&&ok!==true?'<br><span class="hint" style="color:#C0392B;font-weight:700">→ '+acao+'</span>':'')
     +'</div>';
 }
 async function testarConexao(){
@@ -7053,6 +7114,13 @@ function conferirNumeros(){
     const semDeb=pres.filter(p=>p.k&&!refs.has(p.k));
     if(semDeb.length)achados.push({tipo:'aviso',a,
       txt:a.nome+': '+semDeb.length+' presença(s) sem débito no extrato. Normal para aulas anteriores ao extrato começar.'});
+    const torto=devolucoesTortas(a,pres);
+    if(torto.length){
+      const resumo={};torto.forEach(t=>{resumo[t.campo]=(resumo[t.campo]||0)+t.resto;});
+      const partes=Object.keys(resumo).filter(cp=>resumo[cp]).map(cp=>CAMPO_LABEL[cp]+' '+(resumo[cp]>0?'+':'')+fmtCred(resumo[cp]));
+      achados.push({tipo:'estorno',a,itens:torto,
+        txt:a.nome+': '+torto.length+' devolução(ões) que não fecham com o que saiu ('+partes.join(', ')+'). A aula mudou de tipo ou de duração entre marcar e desmarcar, e o crédito voltou no saldo errado. Acertar deixa cada par em zero.'});
+    }
     // desconto por reposição: teto do mês, desconto esquecido e vencida ainda no saldo
     const usadoDesc=descontoUsadoNoMes(a), tetoDesc=tetoDescontoRepos(a);
     if(usadoDesc>tetoDesc)achados.push({tipo:'dup',a,
@@ -7108,11 +7176,18 @@ function conferirNumeros(){
   const cab='<div class="cons info"><h4><span>💰</span>A receber</h4><p>Somando aluno por aluno: <b>'+fmt(soma)+'</b>. É o mesmo número que o painel mostra.</p></div>';
   if(!achados.length){box.innerHTML=cab+'<div class="cons good"><h4><span>✅</span>Tudo confere</h4><p>Nenhuma divergência entre saldos, extrato, planos e agenda — e nenhuma cobrança, crédito ou aula duplicada.</p></div>';return;}
   window._conf=achados;
-  box.innerHTML=cab+achados.map((x,i)=>
-    '<div class="cons '+((x.tipo==='saldo'||x.tipo==='dup'||x.tipo==='fantasma')?'bad':'warn')+'"><h4><span>'+(x.tipo==='saldo'?'⚠️':(x.tipo==='dup'?'🔁':(x.tipo==='fantasma'?'👻':'📋')))+'</span>'+escAval(x.a.nome)+'</h4>'
-    +'<p>'+escAval(x.txt)
+  /* Com muitos alunos, acertar um por um não é opção: um botão só resolve a
+     fila inteira das devoluções tortas. */
+  const nEst=achados.filter(x=>x.tipo==='estorno').length;
+  const barra=nEst>1?('<div class="cons bad"><h4><span>↩️</span>'+nEst+' alunos com devolução torta</h4>'
+    +'<p>Mesmo defeito em todos: a aula mudou de tipo ou de duração entre marcar e desmarcar, e o crédito voltou no saldo errado.'
+    +'<br><button class="btn btn-ghost" style="margin-top:8px;padding:7px 12px;font-size:12px" onclick="acertarTodosEstornos()">Acertar os '+nEst+' de uma vez</button></p></div>'):'';
+  box.innerHTML=cab+barra+achados.map((x,i)=>
+    '<div class="cons '+((x.tipo==='saldo'||x.tipo==='dup'||x.tipo==='fantasma'||x.tipo==='estorno')?'bad':'warn')+'"><h4><span>'+(x.tipo==='saldo'?'⚠️':(x.tipo==='dup'?'🔁':(x.tipo==='fantasma'?'👻':(x.tipo==='estorno'?'↩️':'📋'))))+'</span>'+esc(x.a.nome)+'</h4>'
+    +'<p>'+esc(x.txt)
     +(x.tipo==='saldo'?'<br><button class="btn btn-ghost" style="margin-top:8px;padding:7px 12px;font-size:12px" onclick="acertarConf('+i+')">Acertar pelo extrato</button>':'')
     +(x.tipo==='fantasma'?'<br><button class="btn btn-ghost" style="margin-top:8px;padding:7px 12px;font-size:12px" onclick="limparFantasmas('+i+')">Apagar as aulas que sobraram</button>':'')
+    +(x.tipo==='estorno'?'<br><button class="btn btn-ghost" style="margin-top:8px;padding:7px 12px;font-size:12px" onclick="acertarEstorno('+i+')">Acertar as devoluções</button>':'')
     +'</p></div>').join('');
 }
 /* Tira as presenças que sobraram. Não mexe em saldo de propósito: o crédito
@@ -7127,6 +7202,47 @@ function limparFantasmas(i){
   logAct('Conferência apagou '+x.chaves.length+' presença(s) repetida(s) de '+x.a.nome);
   persist();renderAll();conferirNumeros();
   toast('✓ '+x.chaves.length+' aula(s) que sobravam foram apagadas · saldo intacto');
+}
+/* Zera cada par que ficou torto, saldo por saldo, lançando o contrário do que
+   sobrou COM a mesma chave — assim o par fecha e a conferência não reclama de
+   novo. O saldo do aluno anda junto porque quem lança é o mover(). */
+function acertarEstorno(i){
+  const x=(window._conf||[])[i];if(!x||x.tipo!=='estorno')return;
+  const resumo={};x.itens.forEach(t=>{resumo[t.campo]=(resumo[t.campo]||0)+t.resto;});
+  const linhas=Object.keys(resumo).filter(cp=>resumo[cp]).map(cp=>{
+    const de=Number(x.a[cp])||0;
+    return '· '+CAMPO_LABEL[cp]+': '+fmtCred(de)+'  →  '+fmtCred(de-resumo[cp]);
+  });
+  if(!linhas.length){toast('Nada a acertar aqui');return;}
+  if(!confirm('Acertar '+x.itens.length+' devolução(ões) de '+x.a.nome+'?\n\n'
+    +linhas.join('\n')+'\n\nCada correção fica registrada no extrato.'))return;
+  x.itens.forEach(t=>mover(x.a,t.campo,-t.resto,'Conferência: devolução acertada',t.ref));
+  logAct('Conferência acertou '+x.itens.length+' devolução(ões) de '+x.a.nome);
+  persist();renderAll();conferirNumeros();
+  toast('✓ '+x.a.nome+' · devoluções acertadas');
+}
+/* Acerta de uma vez a fila inteira. Mesma conta do acertarEstorno(), aluno por
+   aluno, num confirm só — com a lista de quem vai mudar e para quanto. */
+function acertarTodosEstornos(){
+  const fila=(window._conf||[]).filter(x=>x.tipo==='estorno');
+  if(!fila.length){toast('Nada a acertar');return;}
+  const linhas=[];let nItens=0;
+  fila.forEach(x=>{
+    const resumo={};x.itens.forEach(t=>{resumo[t.campo]=(resumo[t.campo]||0)+t.resto;});
+    nItens+=x.itens.length;
+    const partes=Object.keys(resumo).filter(cp=>resumo[cp]).map(cp=>{
+      const de=Number(x.a[cp])||0;
+      return CAMPO_LABEL[cp]+' '+fmtCred(de)+'→'+fmtCred(de-resumo[cp]);
+    });
+    if(partes.length)linhas.push('· '+x.a.nome+': '+partes.join(', '));
+  });
+  if(!linhas.length){toast('Nada a acertar');return;}
+  if(!confirm('Acertar '+nItens+' devolução(ões) em '+linhas.length+' aluno(s)?\n\n'
+    +linhas.join('\n')+'\n\nCada correção fica registrada no extrato do aluno.'))return;
+  fila.forEach(x=>x.itens.forEach(t=>mover(x.a,t.campo,-t.resto,'Conferência: devolução acertada',t.ref)));
+  logAct('Conferência acertou '+nItens+' devolução(ões) em '+linhas.length+' aluno(s)');
+  persist();renderAll();conferirNumeros();
+  toast('✓ '+nItens+' devolução(ões) acertadas em '+linhas.length+' aluno(s)');
 }
 function acertarConf(i){
   const x=(window._conf||[])[i];if(!x||x.tipo!=='saldo')return;
@@ -7177,12 +7293,12 @@ async function listarVersoes(){
   if(!itens.length){box.innerHTML='<div class="empty">Nenhuma versão guardada ainda. A partir de agora o app começa a guardar sozinho.</div>';return;}
   const atual=resumoBanco(JSON.stringify(DB));
   box.innerHTML='<div class="cons info" style="margin-bottom:8px"><h4><span>📌</span>Como está agora</h4><p>'
-    +escAval(descreveResumo(atual)).replace(/\n/g,'<br>')+'</p></div>'
+    +esc(descreveResumo(atual)).replace(/\n/g,'<br>')+'</p></div>'
     +itens.map((it,i)=>{
       const menor=atual&&it.r&&(it.r.lancamentos>atual.lancamentos||it.r.alunos>atual.alunos);
       return '<div class="cons '+(menor?'warn':'info')+'">'
-        +'<h4><span>'+(it.origem==='nuvem'?'☁️':'📱')+'</span>'+escAval(it.rot)+' · '+it.origem+'</h4>'
-        +'<p>'+escAval(descreveResumo(it.r)).replace(/\n/g,'<br>')
+        +'<h4><span>'+(it.origem==='nuvem'?'☁️':'📱')+'</span>'+esc(it.rot)+' · '+it.origem+'</h4>'
+        +'<p>'+esc(descreveResumo(it.r)).replace(/\n/g,'<br>')
         +(menor?'<br><b>Tem mais dados que o atual.</b>':'')
         +'<br><button class="btn btn-ghost" style="margin-top:8px;padding:7px 12px;font-size:12px" onclick="restaurarVersao('+i+')">Restaurar esta versão</button></p></div>';
     }).join('');
@@ -7237,8 +7353,10 @@ function importBackup(input){
 /* ================= RENDER ================= */
 /* ================= TORNEIO ================= */
 const GRUPOS_TOR=['A','B','C','D','E'];
-function torEsc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function torJsq(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+/* texto que vira argumento de string JS dentro de um atributo (onclick/onchange):
+   a barra invertida sobrevive ao parser de HTML, a entidade &#39; nao — ela vira aspa de novo.
+   Escapar so a aspa simples nao basta: a aspa DUPLA fecharia o proprio atributo. */
+function escJs(s){return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function torAttr(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 /* Arraste (toque + mouse) para mover/reordenar jogadores entre os grupos */
 let torDrag=null;
@@ -7474,7 +7592,7 @@ function renderTorneio(){
   const sel=document.getElementById('tor-sel');if(!sel)return;
   ensureTorneios();
   const ids=Object.keys(DB.torneios.lista);
-  sel.innerHTML=ids.map(id=>`<option value="${id}" ${id===DB.torneios.atual?'selected':''}>${torEsc(DB.torneios.lista[id].nome)}</option>`).join('');
+  sel.innerHTML=ids.map(id=>`<option value="${id}" ${id===DB.torneios.atual?'selected':''}>${esc(DB.torneios.lista[id].nome)}</option>`).join('');
   const t=torAtual();
   renderTorEtapa(t);
   const wrap=document.getElementById('tor-grupos');
@@ -7490,12 +7608,12 @@ function renderTorEtapa(t){
   const fins=(t.etapasFin||[]).slice().sort((a,b)=>b.etapa-a.etapa);
   if(fins.length){
     hist='<div class="te-hist"><div class="te-hist-t">Etapas encerradas</div>'+fins.map(e=>{
-      const linhas=(e.campeoes||[]).map(c=>torEsc(nomeGrupo(t,c.grupo))+': 🏆 '+torEsc(c.campeao)+' · 🥈 '+torEsc(c.vice)).join('<br>');
+      const linhas=(e.campeoes||[]).map(c=>esc(nomeGrupo(t,c.grupo))+': 🏆 '+esc(c.campeao)+' · 🥈 '+esc(c.vice)).join('<br>');
       return '<div class="te-hrow"><b>Etapa '+e.etapa+'</b> <span>'+((e.data||'').split('-').reverse().join('/'))+'</span><div class="te-camp">'+linhas+'</div></div>';
     }).join('')+'</div>';
   }
   el.innerHTML='<div class="te-bar">'+
-    '<div class="te-top"><div><span class="te-eyebrow">'+torEsc(t.nome)+'</span><div class="te-etapa" onclick="editarEtapaNum()" title="Tocar para editar o número">'+etapaLabel(t)+' ✎</div></div>'+status+'</div>'+
+    '<div class="te-top"><div><span class="te-eyebrow">'+esc(t.nome)+'</span><div class="te-etapa" onclick="editarEtapaNum()" title="Tocar para editar o número">'+etapaLabel(t)+' ✎</div></div>'+status+'</div>'+
     '<div class="te-acts"><button class="te-fim" onclick="encerrarEtapa()">🏁 Encerrar etapa</button><button class="te-nova" onclick="novaEtapa()">➕ Nova etapa</button></div>'+
     '</div>'+hist;
 }
@@ -7504,17 +7622,17 @@ function renderGrupoTor(t,g){
   const maxPts=players.length?calcPtsTor(players[0]):0;
   const rows=players.map((p,i)=>{
     const lead=i===0&&maxPts>0, rk=i===0?'r1':i===1?'r2':i===2?'r3':'';
-    const q=torJsq(p.name);
+    const q=escJs(p.name);
     return `<tr class="tg-row" data-group="${torAttr(g)}" data-name="${torAttr(p.name)}">
-      <td><span class="tg-drag" title="Arraste para mover/reordenar" onpointerdown="torDragDown(event)">⠿</span><span class="tg-rank ${rk}">${i+1}</span><span class="tg-name" title="Renomear" onclick="renomearJogadorTor('${torJsq(g)}','${q}')">${torEsc(p.name)}${p.cod?' 🔗':''}</span></td>
-      <td><input class="tg-stat" type="number" min="0" value="${p.v||0}" onchange="updateStatTor('${torJsq(g)}','${q}','v',this.value)"></td>
-      <td><input class="tg-stat" type="number" min="0" value="${p.d||0}" onchange="updateStatTor('${torJsq(g)}','${q}','d',this.value)"></td>
-      <td><input class="tg-stat" type="number" min="0" value="${p.wo||0}" onchange="updateStatTor('${torJsq(g)}','${q}','wo',this.value)"></td>
+      <td><span class="tg-drag" title="Arraste para mover/reordenar" onpointerdown="torDragDown(event)">⠿</span><span class="tg-rank ${rk}">${i+1}</span><span class="tg-name" title="Renomear" onclick="renomearJogadorTor('${escJs(g)}','${q}')">${esc(p.name)}${p.cod?' 🔗':''}</span></td>
+      <td><input class="tg-stat" type="number" min="0" value="${p.v||0}" onchange="updateStatTor('${escJs(g)}','${q}','v',this.value)"></td>
+      <td><input class="tg-stat" type="number" min="0" value="${p.d||0}" onchange="updateStatTor('${escJs(g)}','${q}','d',this.value)"></td>
+      <td><input class="tg-stat" type="number" min="0" value="${p.wo||0}" onchange="updateStatTor('${escJs(g)}','${q}','wo',this.value)"></td>
       <td><span class="tg-pts ${lead?'lead':''}" title="${(Number(p.ptsAcum)||0)>0?(ptsEtapa(p)+' nesta etapa + '+(Number(p.ptsAcum)||0)+' acumulados'):'pontos desta etapa'}">${calcPtsTor(p)}</span>${(Number(p.ptsAcum)||0)>0?`<small class="tg-acum">${ptsEtapa(p)}+${Number(p.ptsAcum)||0}</small>`:''}</td>
-      <td style="white-space:nowrap"><button class="tg-mv" title="Mover de grupo" onclick="abrirMoverTor('${torJsq(g)}','${q}')">↔</button><button class="tg-x" title="Remover" onclick="removerJogadorTor('${torJsq(g)}','${q}')">✕</button></td>
+      <td style="white-space:nowrap"><button class="tg-mv" title="Mover de grupo" onclick="abrirMoverTor('${escJs(g)}','${q}')">↔</button><button class="tg-x" title="Remover" onclick="removerJogadorTor('${escJs(g)}','${q}')">✕</button></td>
     </tr>`;
   }).join('');
-  const head=`<div class="tg-head"><div class="tg-badge">${g}</div><div style="flex:1"><div class="tg-title" title="Tocar para dar um nome à categoria" onclick="renomearGrupoTor('${torJsq(g)}')">${torEsc(nomeGrupo(t,g))} ✎</div><div class="tg-count">${players.length} jogador${players.length!==1?'es':''}</div></div>${players.length===0?`<button class="tg-x" title="Remover categoria vazia" onclick="removerCategoria('${torJsq(g)}')">🗑️</button>`:''}</div>`;
+  const head=`<div class="tg-head"><div class="tg-badge">${esc(g)}</div><div style="flex:1"><div class="tg-title" title="Tocar para dar um nome à categoria" onclick="renomearGrupoTor('${escJs(g)}')">${esc(nomeGrupo(t,g))} ✎</div><div class="tg-count">${players.length} jogador${players.length!==1?'es':''}</div></div>${players.length===0?`<button class="tg-x" title="Remover categoria vazia" onclick="removerCategoria('${escJs(g)}')">🗑️</button>`:''}</div>`;
   if(players.length===0)
     return `<div class="tg-card">${head}<div class="tg-count" style="padding:6px 2px 2px">Categoria vazia — use <b>＋ Jogador</b> para adicionar aqui.</div></div>`;
   return `<div class="tg-card">${head}
@@ -7540,9 +7658,9 @@ function excluirTorneio(){
   persist();renderTorneio();toast('Torneio excluído');
 }
 function abrirAddJogador(){
-  document.getElementById('tj-grupo').innerHTML=gruposDe(torAtual()).map(g=>`<option value="${g}">${torEsc(nomeGrupo(torAtual(),g))}</option>`).join('');
+  document.getElementById('tj-grupo').innerHTML=gruposDe(torAtual()).map(g=>`<option value="${esc(g)}">${esc(nomeGrupo(torAtual(),g))}</option>`).join('');
   const sel=document.getElementById('tj-aluno');
-  if(sel)sel.innerHTML='<option value="">— Avulso (digitar nome) —</option>'+DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${a.id}">${torEsc(a.nome)}</option>`).join('');
+  if(sel)sel.innerHTML='<option value="">— Avulso (digitar nome) —</option>'+DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${a.id}">${esc(a.nome)}</option>`).join('');
   document.getElementById('tj-nome').value='';
   document.getElementById('ov-tor-jogador').classList.add('on');
 }
@@ -7581,7 +7699,7 @@ let moveTorCtx=null;
 function abrirMoverTor(g,name){
   moveTorCtx={g,name};
   document.getElementById('tm-info').textContent=name+' · atualmente em '+nomeGrupo(torAtual(),g);
-  document.getElementById('tm-grupo').innerHTML=gruposDe(torAtual()).filter(x=>x!==g).map(x=>`<option value="${x}">${torEsc(nomeGrupo(torAtual(),x))}</option>`).join('');
+  document.getElementById('tm-grupo').innerHTML=gruposDe(torAtual()).filter(x=>x!==g).map(x=>`<option value="${x}">${esc(nomeGrupo(torAtual(),x))}</option>`).join('');
   document.getElementById('ov-tor-move').classList.add('on');
 }
 function confirmarMoverTor(){
@@ -7593,7 +7711,7 @@ function abrirResultadoTor(){
   const t=torAtual();
   const grupos=gruposDe(t).filter(g=>t.jogadores.some(p=>p.group===g));
   if(!grupos.length){toast('Adicione jogadores primeiro 🙂');return;}
-  document.getElementById('tr-grupo').innerHTML='<option value="">Selecionar grupo…</option>'+grupos.map(g=>`<option value="${g}">${torEsc(nomeGrupo(t,g))}</option>`).join('');
+  document.getElementById('tr-grupo').innerHTML='<option value="">Selecionar grupo…</option>'+grupos.map(g=>`<option value="${esc(g)}">${esc(nomeGrupo(t,g))}</option>`).join('');
   document.getElementById('tr-p1').innerHTML='<option value="">—</option>';
   document.getElementById('tr-p2').innerHTML='<option value="">—</option>';
   document.getElementById('tr-venc').innerHTML='<option value="">—</option>';
@@ -7603,7 +7721,7 @@ function abrirResultadoTor(){
 function trPlayers(){
   const t=torAtual();const g=document.getElementById('tr-grupo').value;
   const nomes=t.jogadores.filter(p=>p.group===g).map(p=>p.name);
-  const opts='<option value="">—</option>'+nomes.map(n=>`<option value="${torEsc(n)}">${torEsc(n)}</option>`).join('');
+  const opts='<option value="">—</option>'+nomes.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
   document.getElementById('tr-p1').innerHTML=opts;document.getElementById('tr-p2').innerHTML=opts;document.getElementById('tr-venc').innerHTML=opts;
 }
 function aplicarResultadoTor(t,g,p1,p2,venc,tipo){
@@ -7721,10 +7839,10 @@ async function enviarSemanaImg(){
 }
 function montarTorExport(t){
   const grupos=gruposDe(t).filter(g=>t.jogadores.some(p=>p.group===g));
-  let html='<div class="tex-head"><div><b>Academia João Victor Tênis</b><span>'+torEsc(t.nome)+' · '+new Date().toLocaleDateString('pt-BR')+'</span></div><div class="tex-emb">JV</div></div>';
+  let html='<div class="tex-head"><div><b>Academia João Victor Tênis</b><span>'+esc(t.nome)+' · '+new Date().toLocaleDateString('pt-BR')+'</span></div><div class="tex-emb">JV</div></div>';
   grupos.forEach(g=>{
     const players=rankPlayersTor(t.jogadores.filter(p=>p.group===g));
-    const rows=players.map((p,i)=>'<tr class="'+(i===0?'r1':'')+'"><td>'+(i+1)+'. '+torEsc(p.name)+'</td><td>'+(p.v||0)+'</td><td>'+(p.d||0)+'</td><td>'+(p.wo||0)+'</td><td class="tex-pts">'+calcPtsTor(p)+'</td></tr>').join('');
+    const rows=players.map((p,i)=>'<tr class="'+(i===0?'r1':'')+'"><td>'+(i+1)+'. '+esc(p.name)+'</td><td>'+(p.v||0)+'</td><td>'+(p.d||0)+'</td><td>'+(p.wo||0)+'</td><td class="tex-pts">'+calcPtsTor(p)+'</td></tr>').join('');
     html+='<div class="tex-grp"><h4>Grupo '+g+'</h4><table class="tex-tbl"><thead><tr><th>Jogador</th><th>V</th><th>D</th><th>WO</th><th>Pts</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
   });
   html+='<div class="tex-foot">Disciplina no treino. Evolução no jogo. 🎾</div>';
@@ -7788,8 +7906,8 @@ function renderTorLog(){
   wrap.innerHTML='<div class="tor-log"><h4>📥 Resultados enviados pelos alunos ('+torFila.length+')</h4>'+
     torFila.map(m=>{
       const adv=m.vencedor===m.p1?m.p2:m.p1;
-      const desc=m.tipo==='wo'?(torEsc(m.vencedor)+' venceu por W.O.'):(torEsc(m.vencedor)+' venceu '+torEsc(adv));
-      return '<div class="row"><div style="flex:1;min-width:0"><div><b style="color:var(--gold-light)">'+desc+'</b></div><div style="opacity:.72;font-size:11px;margin-top:2px">Grupo '+torEsc(m.group||'?')+(m.score?(' · '+torEsc(m.score)):'')+' · por '+torEsc(m.nome||'aluno')+'</div></div><div style="display:flex;gap:6px"><button class="ap" onclick="aplicarFilaTor(\''+m.key+'\')">Aplicar</button><button class="ds" onclick="descartarFilaTor(\''+m.key+'\')">✕</button></div></div>';
+      const desc=m.tipo==='wo'?(esc(m.vencedor)+' venceu por W.O.'):(esc(m.vencedor)+' venceu '+esc(adv));
+      return '<div class="row"><div style="flex:1;min-width:0"><div><b style="color:var(--gold-light)">'+desc+'</b></div><div style="opacity:.72;font-size:11px;margin-top:2px">Grupo '+esc(m.group||'?')+(m.score?(' · '+esc(m.score)):'')+' · por '+esc(m.nome||'aluno')+'</div></div><div style="display:flex;gap:6px"><button class="ap" onclick="aplicarFilaTor(\''+m.key+'\')">Aplicar</button><button class="ds" onclick="descartarFilaTor(\''+m.key+'\')">✕</button></div></div>';
     }).join('')+'</div>';
 }
 function aplicarFilaTor(key){

@@ -1146,7 +1146,10 @@ const brl=v=>'R$ '+(+v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maxim
 const usd=v=>'US$ '+(+v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const pct=v=>((+v||0)*100).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%';
 const brlk=v=>Math.abs(v)>=1e6?'R$ '+(v/1e6).toFixed(1)+'M':'R$ '+(v/1000).toFixed(1)+'k';
-const esc=s=>(s||'').toString().replace(/"/g,'&quot;');
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* para texto que vira argumento de string JS dentro de um atributo (onclick/oninput):
+   a barra invertida sobrevive ao parser de HTML, a entidade &#39; nao — ela vira aspa de novo. */
+const escJs=s=>String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const v=id=>document.getElementById(id).value;
 function set(id,t){const e=document.getElementById(id);if(e)e.textContent=t}
 
@@ -2889,7 +2892,7 @@ function renderCatResumo(cats,map,cnt,gasto,tx){
   lista.forEach((c,i)=>{
     const teto=orcOf(c),g=map[c]||0,estourou=teto>0&&g>teto;
     h+='<tr><td class="name">'+esc(c)+'</td>'
-      +'<td><input class="cell" type="number" step="0.01" style="min-width:82px" value="'+(teto>0?teto:'')+'" oninput="setOrcamento(\''+esc(c)+'\',this.value,'+i+')"></td>'
+      +'<td><input class="cell" type="number" step="0.01" style="min-width:82px" value="'+(teto>0?teto:'')+'" oninput="setOrcamento(\''+escJs(c)+'\',this.value,'+i+')"></td>'
       +'<td class="'+(estourou?'down':'mut')+'">'+brl(g)+'</td>'
       +'<td id="orcsit-'+i+'" style="width:96px">'+sitOrc(c,g)+'</td></tr>';
   });
