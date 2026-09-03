@@ -809,6 +809,8 @@ function esperarAuth(){
     <div class="bar-row"><span>Meta de faturamento</span><span id="bar-txt">—</span></div>
     <div class="bar"><i id="bar-fill" style="width:0%"></i></div>
   </div>
+  <div id="virada-aviso"></div>
+
   <div id="acao-wrap" style="display:none">
     <p class="sec-eyebrow">Atenção hoje</p>
     <h2 class="sec-title">O que pede <em>ação</em></h2>
@@ -1772,7 +1774,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-03-8';
+const VERSAO='2026-09-03-9';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -2384,7 +2386,7 @@ async function load(){
   let dirty=false;
   if(!DB.agenda){DB.agenda=seedAgenda();dirty=true;}
   if(ensureFields())dirty=true;
-  if(checarViradaMes())dirty=true;
+  if(checarViradaMes())dirty=true;   // só detecta e avisa — a conversão espera você confirmar
   CARREGADO=true;                           // a partir daqui pode gravar
   conferirVersao();                         // este endereço está atualizado?
   if(travado){setSave('⚠ confira os dados antes de salvar','err');}
@@ -5230,31 +5232,64 @@ function marcarPago(id){
   persist();renderAll();
   toast('Pagamento de '+a.nome+' lançado: '+fmt(c.valor)+(c.desconto>0?(' (−'+fmt(c.desconto)+' de reposições)'):''));
 }
+/* A virada de mês NÃO acontece mais sozinha.
+   Antes, abrir o app no dia 1 convertia a sobra de todo mundo em reposição e
+   vencia reposições de 4 meses, tudo de uma vez, sem perguntar. O saldo mudava
+   sem o professor saber, e depois não havia como saber se aquele número era
+   dele ou do app. Agora ela só DETECTA e deixa o aviso; quem aplica é você, em
+   viradaPendente() → aplicarViradaMes(), depois de ver aluno por aluno o que
+   vai mudar. */
 function checarViradaMes(){
-  const d=new Date();const m=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
-  if(DB.mesCreditos===undefined){DB.mesCreditos=m;return true;}
-  if(DB.mesCreditos===m)return false;
-  // Virou o mês: primeiro morre o que passou da validade, depois a sobra vira reposição.
-  let venc=0,vencN=0;
+  const m=mesReal();
+  if(DB.mesCreditos===undefined){DB.mesCreditos=m;return true;}   // primeira abertura: nada a converter
+  return false;
+}
+/* O que a virada faria, se você mandasse. Não muda nada — só calcula. */
+function viradaPendente(){
+  const m=mesReal();
+  if(!DB.mesCreditos||DB.mesCreditos===m)return null;
+  const itens=[];
   (DB.alunos||[]).forEach(a=>{
-    const v=purgarReposVencidas(a);
-    if(v>0){venc+=v;vencN++;}
+    const sobra=Math.max(0,Number(a.creditos)||0), sobraG=Math.max(0,Number(a.credGrupo)||0);
+    const venc=reposVencidas(a);
+    if(sobra||sobraG||venc)itens.push({a,sobra,sobraG,venc});
   });
-  if(venc>0)logAct('Reposições vencidas: '+fmtCred(venc)+' de '+vencN+' aluno(s) passaram de 4 meses');
-  let n=0;
+  return {de:DB.mesCreditos,para:m,itens};
+}
+function aplicarViradaMes(){
+  const V=viradaPendente();
+  if(!V){toast('Não há virada pendente');return;}
+  const linhas=V.itens.map(x=>'· '+x.a.nome+': '
+    +[x.sobra?fmtCred(x.sobra)+' crédito(s)':'',x.sobraG?fmtCred(x.sobraG)+' de grupo':'']
+      .filter(Boolean).join(' + ')
+    +((x.sobra||x.sobraG)?' → reposição':'')
+    +(x.venc?((x.sobra||x.sobraG?' · ':'')+'vencem '+fmtCred(x.venc)+' reposição(ões)'):''));
+  if(!confirm('Virar de '+V.de+' para '+V.para+'?\n\n'
+    +(linhas.length?linhas.join('\n'):'Nenhum aluno tem sobra a converter.')
+    +'\n\nTodos ficam marcados como "não pago" até você renovar.\n\nIsto fica registrado no extrato de cada aluno.'))return;
+  let venc=0,vencN=0,n=0;
+  (DB.alunos||[]).forEach(a=>{const v=purgarReposVencidas(a);if(v>0){venc+=v;vencN++;}});
   (DB.alunos||[]).forEach(a=>{
-    const sobra=Number(a.creditos)||0;
-    const sobraG=Number(a.credGrupo)||0;
+    const sobra=Number(a.creditos)||0, sobraG=Number(a.credGrupo)||0;
     if(sobra>0||sobraG>0){mover(a,'repos',Math.max(0,sobra)+Math.max(0,sobraG),'Sobra do mês virou reposição');n++;}
     if(sobra>0)mover(a,'creditos',-sobra,'Virada de mês — sobra convertida');
     if(sobraG>0)mover(a,'credGrupo',-sobraG,'Virada de mês — sobra convertida');
   });
-  (DB.alunos||[]).forEach(a=>{a.status='pendente';});   // novo mês: todos "não pago" até renovar
-  DB.mesCreditos=m;
-  logAct('Virada de mês: créditos não usados viraram reposições ('+n+' aluno(s)) · todos marcados como "não pago"');
-  if(n>0)setTimeout(()=>toast('🗓️ Virou o mês — créditos não usados viraram reposições para '+n+' aluno(s).'),800);
-  if(venc>0)setTimeout(()=>toast('⏳ '+fmtCred(venc)+' reposição(ões) venceram (4 meses) em '+vencN+' aluno(s).'),1800);
-  return true;
+  (DB.alunos||[]).forEach(a=>{a.status='pendente';});
+  DB.mesCreditos=V.para;
+  if(venc>0)logAct('Reposições vencidas: '+fmtCred(venc)+' de '+vencN+' aluno(s) passaram de 4 meses');
+  logAct('Virada de mês aplicada por você: '+V.de+' → '+V.para+' ('+n+' aluno(s) com sobra)');
+  persist();renderAll();
+  toast('🗓️ Virada aplicada · '+n+' aluno(s) tiveram sobra convertida'+(venc>0?(' · '+fmtCred(venc)+' vencida(s)'):''));
+}
+/* Deixa o mês para trás sem converter nada. Para quando você já acertou na mão
+   ou não quer que a sobra daquele mês vire reposição. */
+function pularViradaMes(){
+  const V=viradaPendente();if(!V)return;
+  if(!confirm('Marcar '+V.de+' como encerrado SEM converter nada?\n\nOs saldos ficam como estão. Nenhuma sobra vira reposição.'))return;
+  DB.mesCreditos=V.para;
+  logAct('Virada de mês dispensada por você: '+V.de+' → '+V.para+' (nada convertido)');
+  persist();renderAll();toast('Mês encerrado sem converter nada');
 }
 function renovarMes(id){
   const a=DB.alunos.find(x=>x.id===id);
@@ -5421,8 +5456,6 @@ function fcAvisadosDoMes(a,mk){
    cadastro AO LADO do que o extrato realmente renovou: quando os dois não
    batem, ou faltou renovar, ou renovou duas vezes. Era essa conta que não
    dava para fazer em lugar nenhum. */
-function mesDoTs(ts){const d=new Date(Number(ts)||0);
-  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
 function fcConciliacao(a,mk){
   const doMes=movsDe(a.id).filter(m=>mesDoTs(m.ts)===mk);
   const somaSe=(f,campos)=>doMes.filter(m=>f(String(m.motivo||''))&&campos.indexOf(m.campo)>=0)
@@ -5434,20 +5467,31 @@ function fcConciliacao(a,mk){
   const reposUsadas =-somaSe(s=>s==='Reposição na agenda',['repos']);
   const planoCad    =Number(a.plano)||0, planoGrp=Number(a.planoGrupo)||0;
 
-  /* Agenda do mês, separada entre o que já passou e o que ainda vem. Para mês
-     fechado tudo cai em "realizadas". */
+  /* O que já passou e o que ainda vem são contas diferentes, e misturar as
+     duas era o que fazia a diferença dar um número negativo sem sentido: aula
+     de daqui a duas semanas entrava como se já tivesse sido dada.
+     No passado ainda há duas situações que não são a mesma: a aula marcada e
+     CONFIRMADA no ✓, e a aula que passou sem você dizer nada. A segunda não é
+     erro — é decisão pendente sua. */
   const hoje=dKey(new Date());
   const aulas=fcAulasDoMes(a,mk);
   const soma=l=>l.reduce((t,x)=>t+(Number(x.custo)||0),0);
-  const realizadas=soma(aulas.filter(x=>x.data<=hoje));
-  const aRealizar =soma(aulas.filter(x=>x.data> hoje));
+  const passadas=aulas.filter(x=>x.data<=hoje);
+  const confirmadas =soma(passadas.filter(x=>x.marcada));
+  const semConfirmar=soma(passadas.filter(x=>!x.marcada));
+  const aRealizar   =soma(aulas.filter(x=>x.data>hoje));
+  const faltas=fcFaltasDoMes(a,mk), avisados=fcAvisadosDoMes(a,mk);
 
   const contratado=renovado+renovadoGrp+reposEntrou;
-  const naAgenda  =realizadas+aRealizar;
+  /* Consumido = o que você confirmou mais as faltas, que também consomem.
+     Aula futura e aula sem confirmação NÃO entram: a diferença é só do que já
+     dá para conferir. */
+  const consumido=confirmadas+faltas;
   return {planoCad,planoGrp,renovado,renovadoGrp,reposEntrou,reposUsadas,
-          realizadas,aRealizar,contratado,naAgenda,
-          sobra:contratado-naAgenda,
-          faltas:fcFaltasDoMes(a,mk),avisados:fcAvisadosDoMes(a,mk),
+          confirmadas,semConfirmar,aRealizar,consumido,contratado,
+          naAgenda:confirmadas+semConfirmar+aRealizar,
+          sobra:contratado-consumido,
+          faltas,avisados,
           divergeRenovacao:(renovado+renovadoGrp)!==(planoCad+planoGrp)};
 }
 function fcDados(a,mk){
@@ -5519,23 +5563,26 @@ function renderConfMes(){
        C.divergeRenovacao?'não bate com a renovação':'confere')
    +(C.reposEntrou?ln('Reposições que entraram',sinal(C.reposEntrou),'#2E7D52','sobra do mês anterior'):'')
    +'<div class="fx-total"><span>Disponível no mês</span><b>'+fmtCred(C.contratado)+'</b></div>'
-   +'<div class="fx-sec">Saiu</div>'
-   +ln('Já realizadas',fmtCred(C.realizadas),null,'até hoje')
-   +ln('Ainda a realizar',fmtCred(C.aRealizar),null,'até o fim do mês')
+   +'<div class="fx-sec">Já aconteceu</div>'
+   +ln('Marcou e fez',fmtCred(C.confirmadas),null,'confirmado no ✓')
+   +(C.faltas?ln('Marcou e faltou',String(C.faltas),'#8A7B63','consumiu a aula'):'')
+   +(C.avisados?ln('Cancelou avisando',String(C.avisados),'#2E7D52','não consumiu'):'')
    +(C.reposUsadas?ln('Reposições usadas',fmtCred(C.reposUsadas),'#2E7D52',''):'')
-   +(C.faltas?ln('Faltas',String(C.faltas),'#8A7B63','consumiram a aula'):'')
-   +(C.avisados?ln('Cancelou avisando',String(C.avisados),'#2E7D52','crédito preservado'):'')
-   +'<div class="fx-total"><span>Na agenda do mês</span><b>'+fmtCred(C.naAgenda)+'</b></div>'
-   +'<div class="fx-sec">Diferença</div>'
-   +ln(C.sobra>0?'Sobrando (sem aula marcada)':(C.sobra<0?'Faltando (aula além do plano)':'Fecha certo'),
-       fmtCred(Math.abs(C.sobra)),C.sobra<0?'#C0392B':(C.sobra>0?'#7A5B10':'#2E7D52'),
-       fmtCred(C.contratado)+' − '+fmtCred(C.naAgenda))
+   +'<div class="fx-total"><span>Consumido até hoje</span><b>'+fmtCred(C.consumido)+'</b></div>'
+   +(C.semConfirmar?('<div class="fx-sec">Falta você dizer</div>'
+      +ln('Marcou e não confirmou',fmtCred(C.semConfirmar),'#7A5B10','aula já passou, sem ✓ nem ✗')):'')
+   +'<div class="fx-sec">Ainda vem</div>'
+   +ln('A realizar neste mês',fmtCred(C.aRealizar),'#8A7B63','fora da conta abaixo')
+   +'<div class="fx-sec">Diferença — só do que já passou</div>'
+   +ln(C.sobra>0?'Ainda tem a usar':(C.sobra<0?'Passou do disponível':'Fecha certo'),
+       fmtCred(Math.abs(C.sobra)),C.sobra<0?'#C0392B':(C.sobra>0?'#2E7D52':'#2E7D52'),
+       fmtCred(C.contratado)+' − '+fmtCred(C.consumido))
    +'<div class="fx-sec">Saldo hoje</div>'
    +ln('Créditos',fmtCred(Number(a.creditos)||0))
    +(Number(a.credGrupo)?ln('Grupo',fmtCred(Number(a.credGrupo)||0)):'')
    +(Number(a.repos)?ln('Reposições',fmtCred(reposValidas(a))):'')
    +'</div>'
-   +'<p class="hint">"Disponível" é o que o extrato renovou neste mês mais a sobra que virou reposição. "Na agenda" é o que está marcado do dia 1 ao último, já sem falta nem cancelamento avisado.</p>';
+   +'<p class="hint">A diferença olha só o que já passou: disponível menos o que você confirmou e as faltas. Aula futura e aula que passou sem ✓ ficam de fora de propósito — elas ainda dependem de você marcar.</p>';
 }
 function fcTexto(a,mk,D){
   return 'Olá '+a.nome.split(' ')[0]+'! 🎾 Segue o fechamento de '+fcRotuloMes(mk).toLowerCase()+': '
@@ -5993,7 +6040,27 @@ function rotuloVenc(dias){
   if(dias<=5)return {txt:'vence em '+dias+'d',cls:'soon'};
   return {txt:'vence em '+dias+'d',cls:'mut'};
 }
+/* O aviso da virada pendente. Fica no Início porque é decisão que muda o
+   saldo de todo mundo: tem que estar na cara, não escondido num menu. */
+function renderViradaAviso(){
+  const box=document.getElementById('virada-aviso');if(!box)return;
+  const V=viradaPendente();
+  if(!V){box.innerHTML='';return;}
+  const comSobra=V.itens.filter(x=>x.sobra||x.sobraG).length;
+  const comVenc=V.itens.filter(x=>x.venc).length;
+  const detalhe=[comSobra?(comSobra+' aluno(s) com sobra a converter em reposição'):'',
+                 comVenc?(comVenc+' com reposição passando de 4 meses'):'']
+                .filter(Boolean).join(' · ')||'nenhum aluno tem sobra';
+  box.innerHTML='<div class="cons bad" style="margin-bottom:14px"><h4><span>🗓️</span>O mês virou — '
+    +esc(V.de)+' → '+esc(V.para)+'</h4>'
+    +'<p>Nada foi alterado ainda. '+esc(detalhe)+'.'
+    +'<br><span class="hint">Converter transforma o crédito que sobrou em reposição e marca todos como "não pago". Enquanto você não decidir, os saldos ficam como estão.</span>'
+    +'<br><button class="btn btn-clay" style="margin-top:9px;padding:7px 12px;font-size:12px" onclick="aplicarViradaMes()">Ver e converter</button>'
+    +' <button class="btn btn-ghost" style="margin-top:9px;padding:7px 12px;font-size:12px" onclick="pularViradaMes()">Encerrar sem converter</button>'
+    +'</p></div>';
+}
 function renderDash(){
+  renderViradaAviso();
   const movs=DB.lancamentos.filter(l=>l.mes===monthKey());
   const recebido=movs.filter(l=>l.valor>0).reduce((s,l)=>s+l.valor,0);
   const pendAlunos=DB.alunos.filter(a=>a.status!=='pago');
