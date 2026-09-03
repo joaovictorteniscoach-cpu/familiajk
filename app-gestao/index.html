@@ -1769,7 +1769,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-03-5';
+const VERSAO='2026-09-03-6';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -2071,6 +2071,11 @@ function saldoPeloExtrato(a,campo){
   return movsDe(a.id,campo).reduce((s,m)=>s+(Number(m.delta)||0),0);
 }
 /* De que saldo sai cada tipo de marcação. Torneio não sai de saldo nenhum. */
+/* A falta mora junto das presenças, com tipo "falta" e custo zero: assim ela
+   viaja para a nuvem e volta pela mesma engrenagem, sem coleção nova. Mas ela
+   NÃO é presença — quem conta aula tem que filtrar. Fica aqui em cima porque
+   estornoPorRef(), logo abaixo, precisa dela. */
+const ehFalta=p=>!!p&&p.tipo==='falta';
 const CAMPO_DA_PRESENCA={aula:'creditos',grupo:'credGrupo',reposicao:'repos',locacao:'locCred',torneio:null,falta:null};
 const ROTULO_DEVOLVE={creditos:'Presença desmarcada',credGrupo:'Aula em grupo desmarcada',repos:'Reposição desmarcada',locCred:'Locação desmarcada'};
 /* O que esta marcação REALMENTE tirou de cada saldo, lido do extrato pela
@@ -2128,8 +2133,12 @@ function estornoPorRef(a,k,reg){
   Object.keys(saiu).forEach(c=>{if(saiu[c]<0){dev[c]=-saiu[c];achou=true;}});
   if(achou)return dev;
   if(reg&&!Object.keys(saiu).length){
-    const campo=CAMPO_DA_PRESENCA[reg.tipo||reg.modo||'aula'];
-    const custo=Number(reg.custo);
+    /* Numa falta o tipo e o custo de verdade ficam em origTipo/origCusto: o
+       registro em si vale zero, porque a falta não debita nada por conta
+       própria — ela apenas deixa de pé o débito da presença. */
+    const ehF=ehFalta(reg);
+    const campo=CAMPO_DA_PRESENCA[(ehF?reg.origTipo:(reg.tipo||reg.modo))||'aula'];
+    const custo=Number(ehF?reg.origCusto:reg.custo);
     if(campo&&custo>0)return {[campo]:custo};
   }
   return {};
@@ -3783,10 +3792,6 @@ function wkZoomFit(){
   aplicarWkVars();
 }
 function presId(e,date){return dKey(date)+'|'+e.hora+'|'+e.alunoId;}
-/* A falta mora junto das presenças, com tipo "falta" e custo zero: assim ela
-   viaja para a nuvem e volta pela mesma engrenagem, sem coleção nova. Mas ela
-   NÃO é presença — quem conta aula tem que filtrar. */
-const ehFalta=p=>!!p&&p.tipo==='falta';
 function presencasDe(id){return (DB.presencas||[]).filter(p=>p.alunoId===id&&!ehFalta(p));}
 function isPres(e,date){const k=presId(e,date);return (DB.presencas||[]).some(p=>p.k===k&&!ehFalta(p));}
 function isFalta(e,date){const k=presId(e,date);return (DB.presencas||[]).some(p=>p.k===k&&ehFalta(p));}
@@ -3797,15 +3802,20 @@ function togglePresenca(entryId){
   const a=DB.alunos.find(x=>x.id===entry.alunoId);
   if(!a){toast('Aluno não encontrado');return;}
   const k=presId(entry,agDate);
-  /* Ciclo: nada → presença → falta → nada. A falta é só marcador de
-     fechamento: não tira nem devolve saldo. Quem estava em presença já teve o
-     crédito devolvido pelo caminho de desmarcar, logo abaixo. */
+  /* Ciclo: nada → presença → falta → nada.
+     Faltar CONSOME a aula: quem não avisou perde o crédito, igual a ter vindo.
+     Por isso a passagem de presença para falta não devolve nada — e é aqui, ao
+     tirar a falta, que o saldo volta. Sem isso o crédito ficaria preso. */
   const iFalta=(DB.presencas||[]).findIndex(p=>p.k===k&&ehFalta(p));
   if(iFalta>=0){
     const reg=DB.presencas[iFalta];
     marcarRemovida('presencas',reg);
     DB.presencas.splice(iFalta,1);
-    logAct('Tirar falta: '+a.nome);toast('Falta desmarcada · '+a.nome);
+    const dev=estornoPorRef(a,k,reg);
+    Object.keys(dev).forEach(cp=>mover(a,cp,dev[cp],'Falta desmarcada',k));
+    const volta=Object.keys(dev).map(cp=>fmtCred(dev[cp])+' de '+CAMPO_LABEL[cp]).join(', ');
+    logAct('Tirar falta: '+a.nome);
+    toast('Falta desmarcada · '+a.nome+(volta?(' → devolvido '+volta):''));
     persist();renderAgenda();renderAlunos();renderDash();return;
   }
   const idx=DB.presencas.findIndex(p=>p.k===k&&!ehFalta(p));
@@ -3821,19 +3831,24 @@ function togglePresenca(entryId){
     /* Devolve exatamente o que saiu, saldo por saldo — ver estornoPorRef().
        O tipo que vale é o GRAVADO na presença, não o do slot agora: o slot pode
        ter virado grupo (ou meia hora) depois que a presença foi marcada. */
-    const dev=estornoPorRef(a,k,reg);
-    Object.keys(dev).forEach(cp=>mover(a,cp,dev[cp],ROTULO_DEVOLVE[cp]||'Presença desmarcada',k));
     const tipoReal=reg.tipo||reg.modo||(isTor?'torneio':isLoc?'locacao':(isRepo?'reposicao':(isGrp?'grupo':'aula')));
-    if(tipoReal==='torneio'){logAct('Desmarcar jogo do torneio: '+a.nome);toast('Jogo do torneio desmarcado · '+a.nome);}
-    else if(tipoReal==='grupo'){logAct('Desmarcar aula em grupo: '+a.nome);toast('Aula em grupo desfeita · '+a.nome+' → '+fmtCred(a.credGrupo)+' de grupo');}
-    else if(tipoReal==='locacao'){logAct('Desmarcar locação: '+a.nome);toast('Locação desfeita · '+a.nome+' → '+fmtCred(a.locCred)+'h de locação');}
-    else if(tipoReal==='reposicao'){logAct('Desmarcar reposição: '+a.nome);toast('Reposição desfeita · '+a.nome+' → '+fmtCred(a.repos)+' reposições');}
-    else{logAct('Desmarcar presença: '+a.nome);toast('Presença desfeita · '+a.nome+' → '+fmtCred(a.creditos)+' créditos');}
-    /* Segundo toque: vira falta, valendo para aula, grupo e reposição. O saldo
-       já voltou acima; a falta só tira esta aula da conta do fechamento. Um
-       terceiro toque limpa. Torneio e locação não são aula, ficam de fora. */
-    if(tipoReal==='aula'||tipoReal==='grupo'||tipoReal==='reposicao')
-      DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo:'falta',custo:0});
+    const viraFalta=(tipoReal==='aula'||tipoReal==='grupo'||tipoReal==='reposicao');
+    if(viraFalta){
+      /* Segundo toque: falta. NÃO devolve — o aluno perde a aula. O débito
+         segue de pé no extrato, sob a mesma chave, e é ele que volta se você
+         tirar a falta depois. Guardo o tipo e o custo originais para o estorno
+         funcionar mesmo se o extrato daquela aula já tiver sido podado. */
+      DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo:'falta',custo:0,
+                         origTipo:tipoReal,origCusto:Number(reg.custo)||0});
+      logAct('Marcar falta: '+a.nome);
+      toast('✗ Falta · '+a.nome+' — a aula foi consumida, o saldo não volta');
+    }else{
+      /* Torneio e locação não viram falta: seguem devolvendo como sempre. */
+      const dev=estornoPorRef(a,k,reg);
+      Object.keys(dev).forEach(cp=>mover(a,cp,dev[cp],ROTULO_DEVOLVE[cp]||'Presença desmarcada',k));
+      if(tipoReal==='torneio'){logAct('Desmarcar jogo do torneio: '+a.nome);toast('Jogo do torneio desmarcado · '+a.nome);}
+      else{logAct('Desmarcar locação: '+a.nome);toast('Locação desfeita · '+a.nome+' → '+fmtCred(a.locCred)+'h de locação');}
+    }
   }else{
     if(isTor){
       DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo:'torneio',custo:0});
@@ -5328,7 +5343,8 @@ function abrirFechamento(){
    marcadas. Contar só o que foi tiquetado dava um número menor que a realidade:
    aula que aconteceu e ficou sem tique sumia do fechamento. O padrão passa a
    ser "a aula da agenda aconteceu"; a exceção é a falta, que você marca no ✗ e
-   é descontada aqui. Chuva e horário cancelado já não voltam de entriesFor(),
+   sai desta lista — mas consome o crédito, porque quem não avisou perde a
+   aula. Chuva e horário cancelado já não voltam de entriesFor(),
    então saem sozinhos.
    O custo vem do que foi realmente debitado quando houve presença; sem
    presença, vale a duração do horário. */
@@ -5398,7 +5414,7 @@ function renderFechamento(){
    +'<div class="fx-sec">Aulas realizadas</div>'+linhas
    +'<div class="fx-sec">Saldo</div>'
    +'<div class="fx-linha"><span>Aulas no mês</span><span></span><span>'+fmtCred(D.feitas)+'</span></div>'
-   +(D.faltas>0?'<div class="fx-linha" style="color:#8A7B63"><span>Faltas (fora da conta)</span><span></span><span>'+D.faltas+'</span></div>':'')
+   +(D.faltas>0?'<div class="fx-linha" style="color:#8A7B63"><span>Faltas (aula consumida)</span><span></span><span>'+D.faltas+'</span></div>':'')
    +'<div class="fx-linha"><span>Créditos hoje</span><span></span><span>'+fmtCred(Number(a.creditos)||0)+'</span></div>'
    +'<div class="fx-linha"><span>Reposições guardadas</span><span></span><span>'+fmtCred(reposValidas(a))+'</span></div>'
    +(reposVencendo(a)>0?'<div class="fx-linha" style="color:#7A5B10"><span>vencem no fim do mês</span><span></span><span>'+fmtCred(reposVencendo(a))+'</span></div>':'')
