@@ -38,14 +38,30 @@ jobs:
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # histórico completo: o checar-versao.py pergunta ao git quando cada
+          # app mudou pela última vez. Com o checkout raso ele não acha commit
+          # nenhum, devolve 0000-00-00 e passa sempre — portão que não barra
+          # nada é pior que portão nenhum, porque dá falsa segurança.
+          fetch-depth: 0
 
       - name: Conferir a sintaxe antes de publicar
-        # a mesma checagem que roda no desenvolvimento: se um script estiver
-        # quebrado, é melhor não publicar do que publicar um app que não abre
+        # se um script estiver quebrado, é melhor não publicar do que publicar
+        # um app que não abre
         run: |
           node ferramentas/checar-sintaxe.js app-gestao/index.html
           node ferramentas/checar-sintaxe.js app-aluno/index.html
           node ferramentas/checar-sintaxe.js site/index.html
+
+      - name: Conferir as regras do banco
+        # 94 casos de quem pode ler e gravar o quê. Rodava só na máquina de
+        # quem desenvolve; uma regra afrouxada passava direto para o ar.
+        run: python3 ferramentas/checar-regras.py
+
+      - name: Conferir o carimbo de versão
+        # app publicado com carimbo velho faz o aparelho achar que já está
+        # atualizado e ficar na versão antiga
+        run: python3 ferramentas/checar-versao.py
 
       - uses: actions/configure-pages@v5
 
