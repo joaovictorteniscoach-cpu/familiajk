@@ -3515,9 +3515,12 @@ function contarAulasAluno(a,ano,mes){
         /* O quadrado de 30 min vale meia aula, igual ao crédito: creditoSlot(h)
            dá 0,5 nos horários de meia hora (14:30, 15:30, 19:30, 20:30 e os que
            vêm logo antes deles). Contar 1 aqui inflava o valor do mês. */
-        const q=creditoSlot(h);
-        if(e.tipo==='aula'||e.tipo==='personal')part+=q;
-        else if(e.tipo==='grupo')grupo+=q;
+        /* Cada aula agendada conta 1. Pesar pelo creditoSlot(h) parecia certo,
+           mas ele deduz a duração pelo intervalo até o próximo horário da grade:
+           com 14:30/15:30/19:30/20:30 na lista, tratava 14:00, 15:00, 19:00 e
+           20:00 como meia hora e derrubava o valor do mês pela metade. */
+        if(e.tipo==='aula'||e.tipo==='personal')part++;
+        else if(e.tipo==='grupo')grupo++;
       });
     });
   }
@@ -5510,7 +5513,10 @@ function renderAulasDeHoje(){
 function marcarDaFolha(i){
   const arr=aulasDeHoje(), x=arr[i];
   if(!x||x.feita)return;
-  aulaRealizada(x.aluno.id,x.modo,creditoSlot(x.hora),x.hora);
+  /* NAO passar creditoSlot aqui: ele deduz a duracao pelo intervalo ate o
+     proximo horario da grade, e como existem 14:30/15:30/19:30/20:30 ele trata
+     14:00, 15:00, 19:00 e 20:00 como meia hora. Aula de 1h descontava 0,5. */
+  aulaRealizada(x.aluno.id,x.modo,1,x.hora);
   renderAulasDeHoje();
 }
 function ultimasAulas(id,lim){
