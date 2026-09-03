@@ -332,6 +332,7 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .ev.t-grupo{background:var(--c-grupo)}.ev.t-personal{background:var(--c-personal)}
 .ev .pres{background:rgba(255,255,255,.25);border:none;color:#fff;border-radius:6px;width:24px;height:24px;font-size:12px;flex-shrink:0}
 .ev .pres.ok{background:#fff;color:var(--ok);font-weight:800}
+.ev .pres.falt{background:#fff;color:var(--c-bloq,#C0392B);font-weight:800}
 .slot-add{border:none;background:#F4EDE0;color:var(--muted);width:28px;height:28px;border-radius:8px;font-size:15px;font-weight:600}
 .wk-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border);border-radius:13px;background:#fff}
 .wk{border-collapse:collapse;min-width:var(--wk-min,660px);width:100%}
@@ -1715,7 +1716,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-03-4';
+const VERSAO='2026-09-03-5';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -2009,7 +2010,7 @@ function saldoPeloExtrato(a,campo){
   return movsDe(a.id,campo).reduce((s,m)=>s+(Number(m.delta)||0),0);
 }
 /* De que saldo sai cada tipo de marcação. Torneio não sai de saldo nenhum. */
-const CAMPO_DA_PRESENCA={aula:'creditos',grupo:'credGrupo',reposicao:'repos',locacao:'locCred',torneio:null};
+const CAMPO_DA_PRESENCA={aula:'creditos',grupo:'credGrupo',reposicao:'repos',locacao:'locCred',torneio:null,falta:null};
 const ROTULO_DEVOLVE={creditos:'Presença desmarcada',credGrupo:'Aula em grupo desmarcada',repos:'Reposição desmarcada',locCred:'Locação desmarcada'};
 /* O que esta marcação REALMENTE tirou de cada saldo, lido do extrato pela
    chave. Recalcular pelo horário e pelo tipo de agora devolve errado quando a
@@ -3758,7 +3759,13 @@ function wkZoomFit(){
   aplicarWkVars();
 }
 function presId(e,date){return dKey(date)+'|'+e.hora+'|'+e.alunoId;}
-function isPres(e,date){return DB.presencas.some(p=>p.k===presId(e,date));}
+/* A falta mora junto das presenças, com tipo "falta" e custo zero: assim ela
+   viaja para a nuvem e volta pela mesma engrenagem, sem coleção nova. Mas ela
+   NÃO é presença — quem conta aula tem que filtrar. */
+const ehFalta=p=>!!p&&p.tipo==='falta';
+function presencasDe(id){return (DB.presencas||[]).filter(p=>p.alunoId===id&&!ehFalta(p));}
+function isPres(e,date){const k=presId(e,date);return (DB.presencas||[]).some(p=>p.k===k&&!ehFalta(p));}
+function isFalta(e,date){const k=presId(e,date);return (DB.presencas||[]).some(p=>p.k===k&&ehFalta(p));}
 function togglePresenca(entryId){
   let entry=null;
   HORAS.forEach(h=>entriesFor(agDate,h).forEach(e=>{if(e.id===entryId)entry=e;}));
@@ -3766,7 +3773,18 @@ function togglePresenca(entryId){
   const a=DB.alunos.find(x=>x.id===entry.alunoId);
   if(!a){toast('Aluno não encontrado');return;}
   const k=presId(entry,agDate);
-  const idx=DB.presencas.findIndex(p=>p.k===k);
+  /* Ciclo: nada → presença → falta → nada. A falta é só marcador de
+     fechamento: não tira nem devolve saldo. Quem estava em presença já teve o
+     crédito devolvido pelo caminho de desmarcar, logo abaixo. */
+  const iFalta=(DB.presencas||[]).findIndex(p=>p.k===k&&ehFalta(p));
+  if(iFalta>=0){
+    const reg=DB.presencas[iFalta];
+    marcarRemovida('presencas',reg);
+    DB.presencas.splice(iFalta,1);
+    logAct('Tirar falta: '+a.nome);toast('Falta desmarcada · '+a.nome);
+    persist();renderAgenda();renderAlunos();renderDash();return;
+  }
+  const idx=DB.presencas.findIndex(p=>p.k===k&&!ehFalta(p));
   const isRepo=!!entry.repo;
   const isLoc=(entry.tipo==='locacao');   // locação usa saldo próprio de horas, nunca crédito de aula
   const isTor=(entry.tipo==='torneio');   // jogo do torneio: inscrição já paga, não mexe em saldo nenhum
@@ -3787,6 +3805,11 @@ function togglePresenca(entryId){
     else if(tipoReal==='locacao'){logAct('Desmarcar locação: '+a.nome);toast('Locação desfeita · '+a.nome+' → '+fmtCred(a.locCred)+'h de locação');}
     else if(tipoReal==='reposicao'){logAct('Desmarcar reposição: '+a.nome);toast('Reposição desfeita · '+a.nome+' → '+fmtCred(a.repos)+' reposições');}
     else{logAct('Desmarcar presença: '+a.nome);toast('Presença desfeita · '+a.nome+' → '+fmtCred(a.creditos)+' créditos');}
+    /* Segundo toque: vira falta, valendo para aula, grupo e reposição. O saldo
+       já voltou acima; a falta só tira esta aula da conta do fechamento. Um
+       terceiro toque limpa. Torneio e locação não são aula, ficam de fora. */
+    if(tipoReal==='aula'||tipoReal==='grupo'||tipoReal==='reposicao')
+      DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo:'falta',custo:0});
   }else{
     if(isTor){
       DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo:'torneio',custo:0});
@@ -3814,7 +3837,7 @@ function renderAgenda(){
   const el=document.getElementById('ag-view');
   const lbl=document.getElementById('ag-label');
   if(agView==='dia'){
-    lbl.innerHTML=DIAS[agDate.getDay()]+', '+agDate.getDate()+' de '+MESES[agDate.getMonth()].toLowerCase()+'<small>'+countDay(agDate)+' atendimentos · ○ marca presença · arraste a aula p/ trocar horário</small>';
+    lbl.innerHTML=DIAS[agDate.getDay()]+', '+agDate.getDate()+' de '+MESES[agDate.getMonth()].toLowerCase()+'<small>'+countDay(agDate)+' atendimentos · ○→✓ presença→✗ falta · arraste a aula p/ trocar horário</small>';
     el.innerHTML='<button class="btn btn-ghost" style="width:100%;margin-bottom:10px;color:var(--c-bloq);border-color:#E5C0BA;font-size:12px" onclick="marcarChuvaDia()">☔ Marcar o dia inteiro como chuva</button>'+HORAS.map(h=>{
       const evs=entriesFor(agDate,h).filter(itemVisivelProf);
       return `<div class="slot" data-drop-d="${dKey(agDate)}" data-drop-h="${h}"><div class="slot-h">${h}</div>
@@ -3822,8 +3845,9 @@ function renderAgenda(){
           ${evs.map(e=>{
             const linked=!!e.alunoId;
             const pres=linked&&isPres(e,agDate);
+            const falt=linked&&isFalta(e,agDate);
             return `<span class="ev t-${e.tipo} drag-item" data-eid="${e.id}" data-origem="${e.origem}">
-              ${linked?`<button class="pres ${pres?'ok':''}" onclick="togglePresenca('${e.id}')">${pres?'✓':'○'}</button>`:''}
+              ${linked?`<button class="pres ${pres?'ok':''} ${falt?'falt':''}" onclick="togglePresenca('${e.id}')">${pres?'✓':(falt?'✗':'○')}</button>`:''}
               <span onclick="openSlot('${h}')">${e.titulo}<small> · ${e.tipo==='grupo'?grupoTag(e.pessoas)+' · ':''}${e.repo?'reposição':(e.origem==='fixo'?'fixo':(e.origem==='compromisso'?'pessoal':'pontual'))}</small></span>
             </span>`;
           }).join('')}
@@ -5276,16 +5300,57 @@ function abrirFechamento(){
   renderFechamento();renderFilaFech();
 }
 /* Aulas daquele aluno no mês, com data e hora, direto das presenças. */
+/* As aulas do mês saem da AGENDA — do dia 1 ao último —, não das presenças
+   marcadas. Contar só o que foi tiquetado dava um número menor que a realidade:
+   aula que aconteceu e ficou sem tique sumia do fechamento. O padrão passa a
+   ser "a aula da agenda aconteceu"; a exceção é a falta, que você marca no ✗ e
+   é descontada aqui. Chuva e horário cancelado já não voltam de entriesFor(),
+   então saem sozinhos.
+   O custo vem do que foi realmente debitado quando houve presença; sem
+   presença, vale a duração do horário. */
 function fcAulasDoMes(a,mk){
-  return (DB.presencas||[]).filter(p=>p.alunoId===a.id&&String(p.data||'').indexOf(mk)===0)
-    .sort((x,y)=>String(x.data).localeCompare(String(y.data)));
+  const [ano,mes]=String(mk).split('-').map(Number);
+  if(!ano||!mes)return [];
+  const ultimo=new Date(ano,mes,0).getDate();
+  const porChave={};
+  (DB.presencas||[]).forEach(p=>{if(p.alunoId===a.id&&p.k)porChave[p.k]=p;});
+  const out=[];
+  for(let d=1;d<=ultimo;d++){
+    const data=new Date(ano,mes-1,d,12,0,0,0);
+    HORAS.forEach(hora=>{
+      entriesFor(data,hora).forEach(e=>{
+        if(e.alunoId!==a.id)return;
+        if(e.tipo==='locacao'||e.tipo==='torneio'||e.tipo==='bloqueio')return;   // não é aula
+        const k=presId(e,data), reg=porChave[k];
+        if(ehFalta(reg))return;                       // faltou: não entra na conta
+        const tipo=e.repo?'reposicao':(e.tipo==='grupo'?'grupo':'aula');
+        out.push({k,data:dKey(data),hora,tipo,repo:!!e.repo,
+                  custo:reg?(Number(reg.custo)||0):creditoSlot(hora),
+                  marcada:!!reg});
+      });
+    });
+  }
+  /* Aula avulsa lançada pelo cartão ("Aula realizada") não tem horário na
+     agenda, então entra pela presença mesmo. */
+  (DB.presencas||[]).forEach(p=>{
+    if(p.alunoId!==a.id||ehFalta(p)||!p.manual)return;
+    if(String(p.data||'').indexOf(mk)!==0)return;
+    out.push({k:p.k,data:p.data,hora:p.hora,tipo:p.tipo||'aula',repo:false,
+              custo:Number(p.custo)||1,marcada:true});
+  });
+  return out.sort((x,y)=>String(x.data).localeCompare(String(y.data))||String(x.hora).localeCompare(String(y.hora)));
+}
+/* Quantas faltas o aluno teve no mês — vai no rodapé do fechamento. */
+function fcFaltasDoMes(a,mk){
+  return (DB.presencas||[]).filter(p=>p.alunoId===a.id&&ehFalta(p)&&String(p.data||'').indexOf(mk)===0).length;
 }
 function fcDados(a,mk){
   const aulas=fcAulasDoMes(a,mk);
   const feitas=aulas.reduce((t,p)=>t+(Number(p.custo)||1),0);
+  const faltas=fcFaltasDoMes(a,mk);
   const d=(a.descontoMes&&a.descontoMes.mes===mk)?a.descontoMes:null;
   const cheia=Number(a.mensalidade)||0;
-  return {aulas,feitas,cheia,desconto:d?Number(d.valor)||0:0,qtdDesc:d?d.qtd:0,
+  return {aulas,feitas,faltas,cheia,desconto:d?Number(d.valor)||0:0,qtdDesc:d?d.qtd:0,
           total:Math.max(0,cheia-(d?Number(d.valor)||0:0))};
 }
 function renderFechamento(){
@@ -5309,6 +5374,7 @@ function renderFechamento(){
    +'<div class="fx-sec">Aulas realizadas</div>'+linhas
    +'<div class="fx-sec">Saldo</div>'
    +'<div class="fx-linha"><span>Aulas no mês</span><span></span><span>'+fmtCred(D.feitas)+'</span></div>'
+   +(D.faltas>0?'<div class="fx-linha" style="color:#8A7B63"><span>Faltas (fora da conta)</span><span></span><span>'+D.faltas+'</span></div>':'')
    +'<div class="fx-linha"><span>Créditos hoje</span><span></span><span>'+fmtCred(Number(a.creditos)||0)+'</span></div>'
    +'<div class="fx-linha"><span>Reposições guardadas</span><span></span><span>'+fmtCred(reposValidas(a))+'</span></div>'
    +(reposVencendo(a)>0?'<div class="fx-linha" style="color:#7A5B10"><span>vencem no fim do mês</span><span></span><span>'+fmtCred(reposVencendo(a))+'</span></div>':'')
@@ -5486,7 +5552,7 @@ function aulasDeHoje(){
       const a=DB.alunos.find(x=>x.id===e.alunoId);
       if(!a)return;
       const modo=(e.tipo==='grupo')?'grupo':'aula';
-      const feita=(DB.presencas||[]).some(p=>p.alunoId===a.id&&p.data===dk);
+      const feita=(DB.presencas||[]).some(p=>p.alunoId===a.id&&p.data===dk&&!ehFalta(p));
       out.push({hora:h,aluno:a,modo,feita,tipo:e.tipo||'aula'});
     });
   });
@@ -5514,7 +5580,7 @@ function marcarDaFolha(i){
   renderAulasDeHoje();
 }
 function ultimasAulas(id,lim){
-  return (DB.presencas||[]).filter(p=>p.alunoId===id).sort((a,b)=>String(b.data).localeCompare(String(a.data))).slice(0,lim||8);
+  return presencasDe(id).sort((a,b)=>String(b.data).localeCompare(String(a.data))).slice(0,lim||8);
 }
 function fmtDataCurta(s){
   if(!s)return '—';const pr=String(s).split('-').map(Number);const dt=new Date(pr[0],(pr[1]||1)-1,pr[2]||1);
@@ -6519,7 +6585,7 @@ const HA_TIPO={aula:{l:'Aula',c:'#3B6FB5'},reposicao:{l:'Reposição',c:'#C9A227
 function openHistAulas(id){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
   haId=id;
-  const ps=(DB.presencas||[]).filter(p=>p.alunoId===id);
+  const ps=presencasDe(id);
   const meses=Array.from(new Set(ps.map(p=>String(p.data||'').slice(0,7)).filter(Boolean))).sort().reverse();
   const sel=document.getElementById('ha-mes');
   sel.innerHTML='<option value="tudo">Histórico completo</option>'+meses.map(mk=>{const p=mk.split('-');return '<option value="'+mk+'">'+MESES[Number(p[1])-1]+' '+p[0]+'</option>';}).join('');
@@ -6530,7 +6596,7 @@ function openHistAulas(id){
 function renderHistAulas(){
   const a=DB.alunos.find(x=>x.id===haId);if(!a)return;
   const filtro=document.getElementById('ha-mes').value;
-  let ps=(DB.presencas||[]).filter(p=>p.alunoId===a.id);
+  let ps=presencasDe(a.id);
   if(filtro&&filtro!=='tudo')ps=ps.filter(p=>String(p.data||'').startsWith(filtro));
   ps=ps.slice().sort((x,y)=>String(y.data).localeCompare(String(x.data))||String(y.hora||'').localeCompare(String(x.hora||'')));
   const cont={aula:0,reposicao:0,grupo:0,locacao:0,torneio:0};
@@ -7083,7 +7149,7 @@ function conferirNumeros(){
         txt:CAMPO_LABEL[c]+' de '+a.nome+': o saldo diz '+fmtCred(atual)+', o extrato diz '+fmtCred(esperado)+'.'});
     });
     // presença sem débito e débito sem presença
-    const pres=(DB.presencas||[]).filter(p=>p.alunoId===a.id);
+    const pres=presencasDe(a.id);
     const refs=new Set(movsDe(a.id).map(m=>m.ref).filter(Boolean));
     /* Presença fantasma: o extrato já devolveu o crédito daquela aula (você
        desfez ou desmarcou), mas a linha voltou. É a assinatura do defeito que
@@ -7136,7 +7202,7 @@ function conferirNumeros(){
       txt:'CRÉDITOS DUPLICADOS: '+a.nome+' foi renovado '+rn.length+'x neste mês, somando '+fmtCred(rn.reduce((t,x)=>t+(Number(x.delta)||0),0))+' crédito(s). O plano dele é de '+(Number(a.plano)||0)+'.'});
     // DUPLICIDADE 3: duas presenças no mesmo dia e hora
     const vistos={},dupPres=[];
-    (DB.presencas||[]).filter(p=>p.alunoId===a.id).forEach(p=>{
+    presencasDe(a.id).forEach(p=>{
       const ch=String(p.data||'')+'|'+String(p.hora||'');
       if(p.hora&&p.hora!=='—'){ if(vistos[ch])dupPres.push(ch); else vistos[ch]=1; }
     });
