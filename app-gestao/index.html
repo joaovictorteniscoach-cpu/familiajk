@@ -1108,6 +1108,8 @@ function esperarAuth(){
 
   <div id="fech-export"></div>
 
+  <div id="fech-conf"></div>
+
   <p class="sec-eyebrow" style="margin-top:20px">Quem falta</p>
   <h2 class="sec-title">Fila do <em>mês</em> <small id="fc-contador" style="font-weight:600;color:var(--muted);font-size:12px"></small></h2>
   <div id="fc-fila"></div>
@@ -1770,7 +1772,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-03-7';
+const VERSAO='2026-09-03-8';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -5410,6 +5412,41 @@ function fcFaltasDoMes(a,mk){
 function fcAvisadosDoMes(a,mk){
   return (DB.presencas||[]).filter(p=>p.alunoId===a.id&&ehAvisou(p)&&String(p.data||'').indexOf(mk)===0).length;
 }
+/* Conciliação do mês: de onde vieram as aulas e para onde foram.
+   Tudo sai do extrato, que marca cada evento com nome próprio — "Renovação do
+   mês", "Sobra do mês virou reposição" — e da agenda. Mostra o plano do
+   cadastro AO LADO do que o extrato realmente renovou: quando os dois não
+   batem, ou faltou renovar, ou renovou duas vezes. Era essa conta que não
+   dava para fazer em lugar nenhum. */
+function mesDoTs(ts){const d=new Date(Number(ts)||0);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+function fcConciliacao(a,mk){
+  const doMes=movsDe(a.id).filter(m=>mesDoTs(m.ts)===mk);
+  const somaSe=(f,campos)=>doMes.filter(m=>f(String(m.motivo||''))&&campos.indexOf(m.campo)>=0)
+                                .reduce((t,m)=>t+(Number(m.delta)||0),0);
+  const renovou=/^Renovação do mês/;
+  const renovado    =somaSe(s=>renovou.test(s),['creditos']);
+  const renovadoGrp =somaSe(s=>renovou.test(s),['credGrupo']);
+  const reposEntrou =somaSe(s=>s==='Sobra do mês virou reposição',['repos']);
+  const reposUsadas =-somaSe(s=>s==='Reposição na agenda',['repos']);
+  const planoCad    =Number(a.plano)||0, planoGrp=Number(a.planoGrupo)||0;
+
+  /* Agenda do mês, separada entre o que já passou e o que ainda vem. Para mês
+     fechado tudo cai em "realizadas". */
+  const hoje=dKey(new Date());
+  const aulas=fcAulasDoMes(a,mk);
+  const soma=l=>l.reduce((t,x)=>t+(Number(x.custo)||0),0);
+  const realizadas=soma(aulas.filter(x=>x.data<=hoje));
+  const aRealizar =soma(aulas.filter(x=>x.data> hoje));
+
+  const contratado=renovado+renovadoGrp+reposEntrou;
+  const naAgenda  =realizadas+aRealizar;
+  return {planoCad,planoGrp,renovado,renovadoGrp,reposEntrou,reposUsadas,
+          realizadas,aRealizar,contratado,naAgenda,
+          sobra:contratado-naAgenda,
+          faltas:fcFaltasDoMes(a,mk),avisados:fcAvisadosDoMes(a,mk),
+          divergeRenovacao:(renovado+renovadoGrp)!==(planoCad+planoGrp)};
+}
 function fcDados(a,mk){
   const aulas=fcAulasDoMes(a,mk);
   const feitas=aulas.reduce((t,p)=>t+(Number(p.custo)||1),0);
@@ -5423,7 +5460,7 @@ function renderFechamento(){
   const box=document.getElementById('fech-export');if(!box)return;
   const a=DB.alunos.find(x=>x.id===(document.getElementById('fc-aluno')||{}).value);
   const mk=(document.getElementById('fc-mes')||{}).value||monthKey();
-  if(!a){box.innerHTML='<div class="empty">Escolha o aluno para ver a prévia do fechamento.</div>';return;}
+  if(!a){box.innerHTML='<div class="empty">Escolha o aluno para ver a prévia do fechamento.</div>';renderConfMes();return;}
   const D=fcDados(a,mk);
   const obs=(document.getElementById('fc-obs')||{}).value||'';
   const linhas=D.aulas.length
@@ -5455,6 +5492,47 @@ function renderFechamento(){
    +(pix?'<div class="fx-linha"><span>Pix</span><span></span><span>'+esc(pix)+'</span></div>':'')
    +(DB.pixNome?'<div class="fx-linha"><span>Em nome de</span><span></span><span>'+esc(DB.pixNome)+'</span></div>':'')
    +'</div>';
+  renderConfMes();
+}
+/* O painel de conciliação. Fica FORA do .fx-card que vira imagem: o cartão é
+   o que o aluno recebe, e esta conta é sua, para conferir. */
+function renderConfMes(){
+  const box=document.getElementById('fech-conf');if(!box)return;
+  const a=DB.alunos.find(x=>x.id===(document.getElementById('fc-aluno')||{}).value);
+  const mk=(document.getElementById('fc-mes')||{}).value||monthKey();
+  if(!a){box.innerHTML='';return;}
+  const C=fcConciliacao(a,mk);
+  const ln=(rot,val,cor,obs)=>'<div class="fx-linha"'+(cor?' style="color:'+cor+'"':'')+'>'
+    +'<span>'+rot+'</span><span style="flex:1;text-align:right;font-size:11px;color:#8A7B63">'+(obs||'')+'</span>'
+    +'<span style="min-width:46px;text-align:right"><b>'+val+'</b></span></div>';
+  const sinal=v=>(v>0?'+':'')+fmtCred(v);
+  box.innerHTML='<p class="sec-eyebrow" style="margin-top:20px">Conferência do mês — só para você</p>'
+   +'<div class="fx-card" style="box-shadow:none">'
+   +'<div class="fx-sec">Entrou</div>'
+   +ln('Renovação do mês',sinal(C.renovado+C.renovadoGrp),null,
+       C.renovadoGrp>0?(fmtCred(C.renovado)+' + '+fmtCred(C.renovadoGrp)+' grupo'):'')
+   +ln('Plano no cadastro',fmtCred(C.planoCad+C.planoGrp),
+       C.divergeRenovacao?'#C0392B':'#8A7B63',
+       C.divergeRenovacao?'não bate com a renovação':'confere')
+   +(C.reposEntrou?ln('Reposições que entraram',sinal(C.reposEntrou),'#2E7D52','sobra do mês anterior'):'')
+   +'<div class="fx-total"><span>Disponível no mês</span><b>'+fmtCred(C.contratado)+'</b></div>'
+   +'<div class="fx-sec">Saiu</div>'
+   +ln('Já realizadas',fmtCred(C.realizadas),null,'até hoje')
+   +ln('Ainda a realizar',fmtCred(C.aRealizar),null,'até o fim do mês')
+   +(C.reposUsadas?ln('Reposições usadas',fmtCred(C.reposUsadas),'#2E7D52',''):'')
+   +(C.faltas?ln('Faltas',String(C.faltas),'#8A7B63','consumiram a aula'):'')
+   +(C.avisados?ln('Cancelou avisando',String(C.avisados),'#2E7D52','crédito preservado'):'')
+   +'<div class="fx-total"><span>Na agenda do mês</span><b>'+fmtCred(C.naAgenda)+'</b></div>'
+   +'<div class="fx-sec">Diferença</div>'
+   +ln(C.sobra>0?'Sobrando (sem aula marcada)':(C.sobra<0?'Faltando (aula além do plano)':'Fecha certo'),
+       fmtCred(Math.abs(C.sobra)),C.sobra<0?'#C0392B':(C.sobra>0?'#7A5B10':'#2E7D52'),
+       fmtCred(C.contratado)+' − '+fmtCred(C.naAgenda))
+   +'<div class="fx-sec">Saldo hoje</div>'
+   +ln('Créditos',fmtCred(Number(a.creditos)||0))
+   +(Number(a.credGrupo)?ln('Grupo',fmtCred(Number(a.credGrupo)||0)):'')
+   +(Number(a.repos)?ln('Reposições',fmtCred(reposValidas(a))):'')
+   +'</div>'
+   +'<p class="hint">"Disponível" é o que o extrato renovou neste mês mais a sobra que virou reposição. "Na agenda" é o que está marcado do dia 1 ao último, já sem falta nem cancelamento avisado.</p>';
 }
 function fcTexto(a,mk,D){
   return 'Olá '+a.nome.split(' ')[0]+'! 🎾 Segue o fechamento de '+fcRotuloMes(mk).toLowerCase()+': '
