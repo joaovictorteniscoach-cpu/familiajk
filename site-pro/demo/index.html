@@ -1715,7 +1715,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-03-3';
+const VERSAO='2026-09-03-4';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -2017,34 +2017,42 @@ const ROTULO_DEVOLVE={creditos:'Presença desmarcada',credGrupo:'Aula em grupo d
    entre marcar e desmarcar — foi assim que aula de grupo voltou como crédito.
    Já devolvido soma zero e não devolve de novo. Sem extrato (aula antiga, já
    podada), vale o tipo e o custo gravados na própria presença. */
-/* Pares de marcar/desmarcar que não fecham. Devolvido em outro saldo (aula de
-   grupo voltando como crédito) ou maior que o débito: o extrato continua
-   batendo com o saldo, então a conferência de saldo não enxerga — o erro está
-   dentro do próprio par. Função separada para poder ser testada sozinha. */
+/* Pares de marcar/desmarcar que não fecham. Só acusa o que dá para PROVAR
+   olhando os dois lados do mesmo par:
+
+   A) devolveu num saldo e tirou de outro — aula de grupo voltando como
+      crédito. Há resto positivo num saldo e negativo em outro;
+   B) devolveu mais do que tirou no MESMO saldo — meia aula voltando inteira.
+
+   O que NÃO é erro, e por isso não entra: devolução sem nenhum débito no
+   extrato. Aula marcada antes de o extrato existir não tem débito nenhum
+   gravado (o "Saldo inicial" já nasceu descontado), e aula muito antiga pode
+   ter tido o débito podado — a conferência guarda 500 lançamentos por aluno.
+   Nos dois casos a devolução foi legítima e o débito é que não está à vista.
+   Tratar isso como crédito do nada cobrava do aluno uma aula que ele já tinha
+   pago. Também não entra débito sem devolução: é aula consumida, ou chuva
+   antiga, cuja devolução era lançada sem chave. */
 function devolucoesTortas(a,pres){
-  const porRefCampo={},houveDevolucao={};
+  const porRef={};
   movsDe(a.id).forEach(m=>{
     if(!m.ref)return;
-    const d=Number(m.delta)||0;
-    (porRefCampo[m.ref]=porRefCampo[m.ref]||{});
-    porRefCampo[m.ref][m.campo]=(porRefCampo[m.ref][m.campo]||0)+d;
-    if(d>0)houveDevolucao[m.ref]=true;
+    const d=Number(m.delta)||0; if(!d)return;
+    const r=(porRef[m.ref]=porRef[m.ref]||{soma:{},debitou:{}});
+    r.soma[m.campo]=(r.soma[m.campo]||0)+d;
+    if(d<0)r.debitou[m.campo]=true;
   });
-  const aindaNaAgenda=new Set((pres||[]).map(p=>p.k));
   const torto=[];
-  Object.keys(porRefCampo).forEach(ref=>{
-    const campos=porRefCampo[ref];
-    Object.keys(campos).forEach(cp=>{
-      const resto=Math.round(campos[cp]*100)/100;
-      if(!resto)return;
-      /* Sobrou saldo a mais: devolveram mais do que saiu. Não existe caminho
-         legítimo para isso — é crédito criado do nada. */
-      if(resto>0)torto.push({ref,campo:cp,resto});
-      /* Faltou devolver. Só conta quando a aula já saiu da agenda E houve
-         devolução noutro saldo — senão seria aula consumida de verdade, ou
-         chuva antiga, cuja devolução era lançada sem chave. */
-      else if(!aindaNaAgenda.has(ref)&&houveDevolucao[ref])torto.push({ref,campo:cp,resto});
-    });
+  Object.keys(porRef).forEach(ref=>{
+    const {soma,debitou}=porRef[ref];
+    const resto={};
+    Object.keys(soma).forEach(cp=>{const v=Math.round(soma[cp]*100)/100;if(v)resto[cp]=v;});
+    const pos=Object.keys(resto).filter(cp=>resto[cp]>0);
+    const neg=Object.keys(resto).filter(cp=>resto[cp]<0);
+    if(!pos.length)return;                       // sem sobra, nada a acusar
+    const cruzado=neg.length>0;                  // (A) saiu de um saldo, voltou noutro
+    const demais=pos.filter(cp=>debitou[cp]);    // (B) voltou mais do que saiu, no mesmo saldo
+    if(cruzado)      Object.keys(resto).forEach(cp=>torto.push({ref,campo:cp,resto:resto[cp]}));
+    else if(demais.length) demais.forEach(cp=>torto.push({ref,campo:cp,resto:resto[cp]}));
   });
   return torto;
 }
