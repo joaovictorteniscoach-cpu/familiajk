@@ -112,6 +112,21 @@ input,select{font-family:'DM Sans',sans-serif;font-size:14px}
 .scard .ico{font-size:22px}
 .scard .l{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:700;margin:5px 0 2px}
 .scard .v{font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:600;color:var(--green);line-height:1}
+/* O saldo ficava acima de TODAS as abas, então crédito e reposição
+   apareciam na agenda, no torneio e na evolução. Só faz sentido em duas: no
+   Início, onde é a informação principal, e em Aulas, pequeno, como contexto. */
+body[data-aba="agenda"] #bloco-saldo,
+body[data-aba="torneio"] #bloco-saldo,
+body[data-aba="evolucao"] #bloco-saldo{display:none}
+body[data-aba="aulas"] #bloco-saldo .scard{padding:9px 10px}
+body[data-aba="aulas"] #bloco-saldo .scard .ico{display:none}
+body[data-aba="aulas"] #bloco-saldo .scard .l{font-size:9.5px}
+body[data-aba="aulas"] #bloco-saldo .scard .v{font-size:20px;line-height:1.1}
+body[data-aba="aulas"] #bloco-saldo #scard-grupo,
+body[data-aba="aulas"] #bloco-saldo #scard-loc{grid-column:auto}
+/* mensalidade e status não são assunto da aba de aulas */
+body[data-aba="aulas"] #bloco-saldo .status-line,
+body[data-aba="aulas"] #bloco-saldo #repos-box{display:none}
 .status-line{background:#fff;border:1px solid var(--border);border-radius:13px;padding:13px 15px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:13px}
 .pay-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:6px}
 .pay-btn{border:none;border-radius:13px;padding:15px 8px;font-weight:700;font-size:12.5px;display:flex;flex-direction:column;align-items:center;gap:5px;color:#fff}
@@ -176,6 +191,10 @@ input,select{font-family:'DM Sans',sans-serif;font-size:14px}
 .wk td.hr{position:sticky;left:0;background:#FDFBF7;font-size:10.5px;font-weight:700;color:var(--muted);text-align:center;min-width:48px;width:48px;z-index:1;border-right:2px solid var(--border)}
 .wc{width:100%;height:100%;border:none;font-size:10px;font-weight:700;padding:2px 3px;display:block}
 .wc.livre{background:#EDF7EE;color:var(--ok)}
+/* Horário livre que JÁ PASSOU. Antes vinha com o mesmo verde de um horário
+   que dá para reservar, e o toque não fazia nada — parecia que a semana não
+   era clicável. Verde agora quer dizer só uma coisa: dá para tocar. */
+.wc.passou{background:#F1EDE3;color:#B3A991;font-weight:600}
 .wc.meu{background:var(--gold);color:var(--dark)}
 .wc.pend{background:#FFF6DF;color:#7A5E10}
 .wc.ocup{background:#EBE3D4;color:#A89878}
@@ -441,7 +460,7 @@ function esperarAuth(){
 })(0);
 </script>
 </head>
-<body>
+<body data-aba="inicio">
 
 <!-- Aviso de endereço desatualizado. Escondido até a nuvem dizer que existe
      uma versão mais nova que a deste endereço. -->
@@ -516,6 +535,7 @@ function esperarAuth(){
       </div>
     </div>
 
+    <div id="bloco-saldo">
     <div class="cards2">
       <div class="scard"><div class="ico">📅</div><div class="l">Créditos</div><div class="v" id="v-cred">0</div></div>
       <div class="scard"><div class="ico">🔄</div><div class="l">Reposições</div><div class="v" id="v-repos">0</div></div>
@@ -523,10 +543,10 @@ function esperarAuth(){
       <div class="scard" id="scard-loc" style="display:none;grid-column:1/-1"><div class="ico">🔑</div><div class="l">Locação (horas)</div><div class="v" id="v-loc">0</div></div>
     </div>
     <div id="repos-box" style="display:none"></div>
-    <div id="pedir-box" style="display:none"></div>
     <div class="status-line">
       <span><b id="v-plano">—</b> · mensalidade <b id="v-mens">—</b></span>
       <span class="badge" id="v-status">—</span>
+    </div>
     </div>
 
     <section class="page on" id="apg-inicio">
@@ -599,7 +619,9 @@ function esperarAuth(){
       <p class="sec-eyebrow">Meus horários</p>
       <h2 class="sec-title">Próximas <em>aulas</em> do mês</h2>
       <div id="mine-list"></div>
+      <button class="btn btn-clay" style="width:100%;margin-top:12px" onclick="irAgendar()">🎾 Agendar mais uma aula</button>
     </div>
+    <div id="pedir-box" style="display:none;margin-top:14px"></div>
     <div class="minhas" style="margin-top:14px">
       <p class="sec-eyebrow">Histórico</p>
       <h2 class="sec-title">Aulas <em>realizadas</em></h2>
@@ -840,7 +862,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-09-04-6';
+const VERSAO='2026-09-04-7';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -1175,14 +1197,14 @@ function meuQuadro(){
   if(rp)p.push(fmtCred(rp)+' reposição(ões)');
   return p.join(', ');
 }
-function pedirMaisAulas(){
-  const nome=(EU&&EU.nome)?EU.nome.split(' ')[0]:'';
-  abrirWhatsApp('5541995415712',
-    'Olá João! '+(nome?'Aqui é '+nome+'. ':'')
-    +'Queria marcar mais aulas além do meu plano. 🎾\n\n'
-    +'Hoje estou com: '+meuQuadro()+'.\n\n'
-    +'Dá para encaixar mais algum horário?');
-  toast('Abrindo o WhatsApp… 💬');
+/* Marcar aula é coisa que se resolve no calendário, não na conversa. Leva
+   direto para a agenda, onde o horário livre é um toque. O WhatsApp fica para
+   o que realmente precisa de conversa — valor, plano, encaixe fora da grade. */
+function irAgendar(){
+  const b=[...document.querySelectorAll('.nav button')]
+    .find(x=>(x.getAttribute('onclick')||'').indexOf("goAluno('agenda'")===0);
+  goAluno('agenda',b);
+  toast('Toque num horário verde para reservar 🎾');
 }
 function pedirDesconto(){
   const nome=(EU&&EU.nome)?EU.nome.split(' ')[0]:'';
@@ -1196,11 +1218,10 @@ function pedirDesconto(){
 }
 function renderPedirBox(){
   const box=document.getElementById('pedir-box');if(!box||!EU)return;
-  box.innerHTML='<div style="background:#fff;border:1px solid var(--border);border-radius:13px;padding:13px;margin-bottom:12px">'
-    +'<div style="font-size:13px;font-weight:700;margin-bottom:3px">Precisa de alguma coisa?</div>'
-    +'<div style="font-size:12.5px;color:var(--muted);margin-bottom:10px">Fale direto com o João pelo WhatsApp. Nada é alterado no seu saldo por aqui.</div>'
-    +'<button class="btn btn-clay" style="width:100%;margin-bottom:8px" onclick="pedirMaisAulas()">🎾 Quero marcar mais aulas</button>'
-    +'<button class="btn btn-ghost" style="width:100%" onclick="pedirDesconto()">💬 Falar sobre o valor</button>'
+  box.innerHTML='<div style="background:#fff;border:1px solid var(--border);border-radius:13px;padding:13px">'
+    +'<div style="font-size:13px;font-weight:700;margin-bottom:3px">Precisa falar com o João?</div>'
+    +'<div style="font-size:12.5px;color:var(--muted);margin-bottom:10px">Para horário fora da grade, mudar o plano ou o valor. Nada é alterado no seu saldo por aqui.</div>'
+    +'<button class="btn btn-ghost" style="width:100%" onclick="pedirDesconto()">💬 Falar com o João</button>'
     +'</div>';
   box.style.display='block';
 }
@@ -1451,6 +1472,7 @@ function _albMarcar(tab){
   _albSalvar(v);atualizarBadgesAluno();
 }
 function goAluno(id,btn){
+  document.body.dataset.aba=id;      // o CSS usa isto para o saldo aparecer só onde deve
   document.querySelectorAll('#app .page').forEach(p=>p.classList.remove('on'));
   const el=document.getElementById('apg-'+id);if(el)el.classList.add('on');
   document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('on'));
@@ -2310,9 +2332,13 @@ function renderAgenda(){
       html+=`<tr><td class="hr">${h}</td>`;
       days.forEach(d=>{
         const s=slotState(d,h);
-        const txt=s.st==='livre'?'Livre':s.st==='meu'?'Você '+meuEmoji():s.st==='pend'?'⏳':s.st==='chuva'?'☔':s.st==='bloq'?'—':s.st==='loc'?'Loc':s.st==='fechado'?'—':'•';
-        const click=(horasAte(dKey(d),h)<=0)?'':(s.st==='livre'?`onclick="gotoBook(${d.getFullYear()},${d.getMonth()},${d.getDate()},'${h}')"`:(s.st==='loc'?`onclick="gotoDay(${d.getFullYear()},${d.getMonth()},${d.getDate()})"`:''));
-        html+=`<td><button class="wc ${s.st}" title="${s.label||''}" ${click}>${txt}</button></td>`;
+        /* Livre que já passou não é livre para quem olha: pintar de verde e não
+           responder ao toque fazia a semana inteira parecer travada. */
+        const passou=horasAte(dKey(d),h)<=0;
+        const cls=(s.st==='livre'&&passou)?'passou':s.st;
+        const txt=s.st==='livre'?(passou?'—':'Livre'):s.st==='meu'?'Você '+meuEmoji():s.st==='pend'?'⏳':s.st==='chuva'?'☔':s.st==='bloq'?'—':s.st==='loc'?'Loc':s.st==='fechado'?'—':'•';
+        const click=passou?`onclick="toast('Esse horário já passou 🙏')"`:(s.st==='livre'?`onclick="gotoBook(${d.getFullYear()},${d.getMonth()},${d.getDate()},'${h}')"`:(s.st==='loc'?`onclick="gotoDay(${d.getFullYear()},${d.getMonth()},${d.getDate()})"`:''));
+        html+=`<td><button class="wc ${cls}" title="${s.label||''}" ${click}>${txt}</button></td>`;
       });
       html+='</tr>';
     });
