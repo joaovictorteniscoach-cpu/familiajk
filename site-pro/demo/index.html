@@ -1721,7 +1721,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-03-9';
+const VERSAO='2026-09-04-1';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -2161,24 +2161,6 @@ function reposPorIdade(a,mesRef){
 function reposValidas(a){return reposPorIdade(a).validas;}
 function reposVencidas(a){return reposPorIdade(a).vencidas;}
 function reposVencendo(a){return reposPorIdade(a).vencendo;}
-/* Teto do mês: 25% do plano arredondado para cima; plano abaixo de 4 aulas não
-   tem desconto (4→1, 5→2, 6→2, 8→2, 10→3). */
-function tetoDescontoRepos(a){
-  const total=(Number(a.plano)||0)+(Number(a.planoGrupo)||0);
-  if(total<4)return 0;
-  return Math.ceil(total*0.25);
-}
-function descontoUsadoNoMes(a){
-  const m=mesReal();
-  return movsDe(a.id,'repos')
-    .filter(x=>String(x.motivo||'').indexOf('Desconto na mensalidade')===0&&mesDoTs(x.ts)===m)
-    .reduce((t,x)=>t+Math.abs(Number(x.delta)||0),0);
-}
-/* Reposição vira dinheiro pelo preço da aula do próprio aluno. */
-function valorReposicaoDe(a){
-  const p=Number(a.plano)||0,pg=Number(a.planoGrupo)||0;
-  return (p===0&&pg>0)?valorAulaGrupoDe(a):valorAulaDe(a);
-}
 /* Tira do saldo o que passou dos 4 meses. A virada do mês faz isso uma vez por
    mês, mas quem consome reposição chama antes também: sem isso o FIFO gastaria
    justamente a mais velha — a vencida — em vez de deixá-la morrer. */
@@ -2186,11 +2168,6 @@ function purgarReposVencidas(a){
   const v=reposVencidas(a);
   if(v>0)mover(a,'repos',-v,'Reposição vencida (4 meses)');
   return v;
-}
-/* Quantas cabem AGORA: limitadas pelo saldo válido e pelo que falta do teto. */
-function descontoDisponivel(a){
-  if(!a)return 0;
-  return Math.max(0,Math.min(reposValidas(a),tetoDescontoRepos(a)-descontoUsadoNoMes(a)));
 }
 function ensureFields(){
   if(!DB.movs)DB.movs=[];
@@ -2886,7 +2863,7 @@ async function doPublish(){
       locacaoOnly:DB.locacaoOnly||[],
       horarioCfg:DB.horarioCfg||{},
       horarioData:DB.horarioData||{},
-      alunos:DB.alunos.map(a=>({codigo:a.codigo,nome:a.nome,tipo:a.tipo,plano:a.plano,creditos:a.creditos,repos:a.repos,reposValidas:reposValidas(a),reposVencendo:reposVencendo(a),tetoDesc:tetoDescontoRepos(a),descUsadoMes:descontoUsadoNoMes(a),valorRepos:Math.round(valorReposicaoDe(a)),descontoMes:(a.descontoMes&&a.descontoMes.mes===monthKey())?a.descontoMes:null,status:a.status,ultimoPago:a.ultimoPago||'',mensalidade:a.mensalidade,diaVenc:a.diaVenc||10,cardLink:a.cardLink||'',mfitLink:a.mfitLink||'',valorAula:a.valorAula||(a.tipo==='Personal'?130:160),locCred:Number(a.locCred)||0,credGrupo:Number(a.credGrupo)||0,planoGrupo:Number(a.planoGrupo)||0,grupoTipo:a.grupoTipo||'',avaliacoes:(a.avaliacoes||[]).slice(-12),evoMes:serieMensal(a.avaliacoes,a.registros,24),registros:(a.registros||[]).slice(-8)})),
+      alunos:DB.alunos.map(a=>({codigo:a.codigo,nome:a.nome,tipo:a.tipo,plano:a.plano,creditos:a.creditos,repos:a.repos,reposValidas:reposValidas(a),reposVencendo:reposVencendo(a),descontoMes:(a.descontoMes&&a.descontoMes.mes===monthKey())?a.descontoMes:null,status:a.status,ultimoPago:a.ultimoPago||'',mensalidade:a.mensalidade,diaVenc:a.diaVenc||10,cardLink:a.cardLink||'',mfitLink:a.mfitLink||'',valorAula:a.valorAula||(a.tipo==='Personal'?130:160),locCred:Number(a.locCred)||0,credGrupo:Number(a.credGrupo)||0,planoGrupo:Number(a.planoGrupo)||0,grupoTipo:a.grupoTipo||'',avaliacoes:(a.avaliacoes||[]).slice(-12),evoMes:serieMensal(a.avaliacoes,a.registros,24),registros:(a.registros||[]).slice(-8)})),
       historico:(function(){
         const codeOf={};DB.alunos.forEach(a=>{codeOf[a.id]=a.codigo;});
         const cut=dKey(new Date(Date.now()-60*864e5));const out={};
@@ -3305,8 +3282,7 @@ function aceitarPedido(key){
     a.status='pago';a.ultimoPago=monthKey();
     const c=cobrancaDoMes(a);
     DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:c.desc,valor:c.valor,cat:'mensalidade',alunoId:a.id,modal:(ehPersonalTipo(a.tipo)?'personal':'tenis'),data:new Date().toISOString().slice(0,10),descontoRepos:c.detalhe});
-    if(c.desconto>0)delete a.descontoMes;
-    toast('✓ '+a.nome+' marcado como PAGO · '+fmt(c.valor)+(c.desconto>0?(' (−'+fmt(c.desconto)+')'):''));
+    toast('✓ '+a.nome+' marcado como PAGO · '+fmt(c.valor));
   }else if(p.kind==='plano'){
     if(!a){toast('Aluno não encontrado — confira o cadastro');return;}
     if(['Particular','Dupla','Trio','Quarteto','Grupo','Personal'].indexOf(p.cat)>=0)a.tipo=p.cat;
@@ -3329,12 +3305,10 @@ function aceitarPedido(key){
   }else if(p.kind==='renovacao'){
     toast((a?a.nome:'Aluno')+' quer manter os treinos — renove o mês quando o pagamento cair.');
   }else if(p.kind==='descontoRepos'){
-    /* O pedido pode ter ficado dias na fila: o teto e o saldo são recontados agora,
-       não vale o número que o aluno viu na hora de pedir. */
-    if(!a){toast('Aluno não encontrado — confira o cadastro');return;}
-    const cabe=descontoDisponivel(a);
-    if(cabe<=0){toast('Não cabe mais desconto para '+a.nome+' neste mês — pedido descartado');}
-    else abaterRepos(a.id,Math.min(Number(p.qtd)||cabe,cabe));
+    /* Pedido antigo, de quando o app abatia reposição na mensalidade sozinho.
+       Isso saiu: reposição agora é conversa entre você e o aluno. O pedido é
+       recusado sem mexer em saldo nenhum. */
+    toast('Abatimento de reposição saiu do app — combine direto com '+(a?a.nome:'o aluno'));
   }else if(p.kind==='compra'){
     const item=p.item||'';
     const cat=/loca/i.test(item)?'locacao':(/cr[eé]dito/i.test(item)?'outro':'avulsa');
@@ -5146,47 +5120,11 @@ function usarLocacao(id){
   logAct('Locação feita: '+a.nome);persist();renderAll();
   toast('🔑 Locação registrada · '+a.nome+' → '+fmtCred(a.locCred)+'h'+(a.locCred<0?' (devendo)':''));
 }
-/* Troca reposições por desconto na próxima mensalidade. O desconto fica guardado
-   em a.descontoMes e só vira dinheiro quando a mensalidade for lançada — assim o
-   caixa continua sendo lançado num lugar só. */
-function abaterRepos(id,qtd){
-  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
-  const morreu=purgarReposVencidas(a);
-  if(morreu>0)toast('⏳ '+fmtCred(morreu)+' reposição(ões) de '+a.nome+' passaram de 4 meses e saíram do saldo');
-  const podeAte=descontoDisponivel(a);
-  const teto=tetoDescontoRepos(a);
-  if(teto<=0){toast('Plano de '+a.nome+' tem menos de 4 aulas — sem desconto por reposição');return;}
-  if(podeAte<=0){
-    const usado=descontoUsadoNoMes(a);
-    toast(usado>=teto?('Teto do mês já usado ('+fmtCred(usado)+' de '+teto+')'):'Sem reposição válida para abater');
-    return;
-  }
-  qtd=Math.min(Number(qtd)||podeAte,podeAte);
-  if(qtd<=0)return;
-  if(acaoRepetida('abater-'+id)){toast('Já abati agora há pouco — confira antes de repetir');return;}
-  const valor=Math.round(qtd*valorReposicaoDe(a));
-  const saldoAntes=Number(a.repos)||0;
-  mover(a,'repos',-qtd,'Desconto na mensalidade');
-  const ja=(a.descontoMes&&a.descontoMes.mes===monthKey())?a.descontoMes:null;
-  /* Guarda o rastro da escolha: quanto havia antes, quanto saiu e quando. É o que
-     permite conferir depois sem depender do texto da descrição. */
-  a.descontoMes={mes:monthKey(),qtd:(ja?ja.qtd:0)+qtd,valor:(ja?ja.valor:0)+valor,
-                 saldoAntes:(ja?ja.saldoAntes:saldoAntes),ts:Date.now()};
-  logAct('Desconto por reposição: '+a.nome+' −'+fmtCred(qtd)+' ('+fmt(valor)+')');
-  persist();renderAll();
-  toast(a.status==='pago'
-    ? ('💰 '+fmt(valor)+' de desconto guardado para a próxima cobrança de '+a.nome+' (o mês já está pago)')
-    : ('💰 '+fmtCred(qtd)+' reposição(ões) viram '+fmt(valor)+' de desconto na mensalidade de '+a.nome));
-}
-/* Mensalidade já com o desconto do mês, se houver. Devolve o valor e a etiqueta. */
+/* A mensalidade é a mensalidade. O abatimento automático de reposição saiu:
+   quem decide o que fazer com a reposição de cada aluno é o professor, na
+   conversa com ele. O app não mexe mais em valor por conta própria. */
 function cobrancaDoMes(a){
-  const d=(a.descontoMes&&a.descontoMes.mes===monthKey())?a.descontoMes:null;
-  const cheia=Number(a.mensalidade)||0;
-  if(!d||!(d.valor>0))return {valor:cheia,desc:'Mensalidade · '+a.nome,desconto:0,detalhe:null};
-  return {valor:Math.max(0,cheia-d.valor),
-          desc:'Mensalidade · '+a.nome+' (−'+fmtCred(d.qtd)+' reposições)',
-          desconto:d.valor,
-          detalhe:{qtd:d.qtd,valor:d.valor,cheia,saldoAntes:d.saldoAntes,mes:d.mes,ts:d.ts||Date.now()}};
+  return {valor:Number(a.mensalidade)||0,desc:'Mensalidade · '+a.nome};
 }
 function marcarPago(id){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
@@ -5204,9 +5142,8 @@ function marcarPago(id){
   a.status='pago';a.ultimoPago=monthKey();
   const c=cobrancaDoMes(a);
   DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:c.desc,valor:c.valor,cat:'mensalidade',alunoId:a.id,modal:(ehPersonalTipo(a.tipo)?'personal':'tenis'),data:new Date().toISOString().slice(0,10),descontoRepos:c.detalhe});
-  if(c.desconto>0)delete a.descontoMes;                 // desconto gasto: não vale duas vezes
   persist();renderAll();
-  toast('Pagamento de '+a.nome+' lançado: '+fmt(c.valor)+(c.desconto>0?(' (−'+fmt(c.desconto)+' de reposições)'):''));
+  toast('Pagamento de '+a.nome+' lançado: '+fmt(c.valor));
 }
 /* A virada de mês NÃO acontece mais sozinha.
    Antes, abrir o app no dia 1 convertia a sobra de todo mundo em reposição e
@@ -5474,10 +5411,8 @@ function fcDados(a,mk){
   const aulas=fcAulasDoMes(a,mk);
   const feitas=aulas.reduce((t,p)=>t+(Number(p.custo)||1),0);
   const faltas=fcFaltasDoMes(a,mk), avisados=fcAvisadosDoMes(a,mk);
-  const d=(a.descontoMes&&a.descontoMes.mes===mk)?a.descontoMes:null;
   const cheia=Number(a.mensalidade)||0;
-  return {aulas,feitas,faltas,avisados,cheia,desconto:d?Number(d.valor)||0:0,qtdDesc:d?d.qtd:0,
-          total:Math.max(0,cheia-(d?Number(d.valor)||0:0))};
+  return {aulas,feitas,faltas,avisados,cheia,total:cheia};
 }
 function renderFechamento(){
   const box=document.getElementById('fech-export');if(!box)return;
@@ -5507,7 +5442,6 @@ function renderFechamento(){
    +(reposVencendo(a)>0?'<div class="fx-linha" style="color:#7A5B10"><span>vencem no fim do mês</span><span></span><span>'+fmtCred(reposVencendo(a))+'</span></div>':'')
    +'<div class="fx-sec">Valores</div>'
    +'<div class="fx-linha"><span>Mensalidade</span><span></span><span>'+fmtRs(D.cheia)+'</span></div>'
-   +(D.desconto>0?'<div class="fx-linha" style="color:#2E7D52"><span>Desconto ('+fmtCred(D.qtdDesc)+' reposições)</span><span></span><span>−'+fmtRs(D.desconto)+'</span></div>':'')
    +'<div class="fx-total"><span>Total</span><b>'+fmtRs(D.total)+'</b></div>'
    +(obs?'<div class="fx-obs">'+esc(obs)+'</div>':'')
    +'<div class="fx-sec">Pagamento</div>'
@@ -5804,7 +5738,6 @@ function renderAlunos(){
     // o cartão passa a mostrar só o que se aplica a este aluno hoje
     const loc=usaLocacao(a);
     const temRepos=(Number(a.repos)||0)>0;
-    const podeAbater=descontoDisponivel(a);          // 25% do plano, menos o que já foi abatido no mês
     const vencendo=reposVencendo(a);                 // vencem na próxima virada de mês
     const devendo=a.status!=='pago';
     const temGrupo=(Number(a.planoGrupo)||0)>0;
@@ -5828,7 +5761,6 @@ function renderAlunos(){
         ${a.termoAceitoEm?`<span class="chip" style="background:#E6F0E6;color:#2E7D52">📄 termo aceito</span>`:''}
         ${!ehAtivoAluno(a)?`<span class="chip" style="background:#EDE9E1;color:#6B5E4A;font-weight:700">📦 inativo</span>`:''}
         ${vencendo>0?`<span class="chip" style="background:#FBEFD2;color:#7A5B10;font-weight:800">⏳ ${fmtCred(vencendo)} reposição(ões) vencem no fim do mês</span>`:''}
-        ${(a.descontoMes&&a.descontoMes.mes===monthKey())?`<span class="chip" style="background:#E7F0E8;color:#2E7D52;font-weight:800">💰 ${fmt(a.descontoMes.valor)} de desconto na cobrança</span>`:''}
         ${ag.total>0?`<span class="chip" style="${difere?'background:#FBEFD2;color:#7A5B10;font-weight:800':'background:#E7F0E8;color:#2E7D52;font-weight:700'}">📅 ${ag.part>0&&ag.grupo>0?(ag.part+' aula(s) + '+ag.grupo+' em grupo'):(ag.total+' aula(s)')} na agenda${difere?(' · '+fmt(ag.valor)+' (cadastro: '+fmt(a.mensalidade)+')'):''}</span>`:''}
       </div>
       ${histAlunoHTML(a.id)}
@@ -5840,7 +5772,6 @@ function renderAlunos(){
         ${difere?`<button class="act a4" onclick="manterValorAnotado('${a.id}')">✓ Manter ${fmt(a.mensalidade)}</button>`:''}
         ${(a.difUndo&&a.difUndo.mes===monthKey())?`<button class="act a1" onclick="desfazerDecisaoDif('${a.id}')">↩︎ Desfazer cobrança</button>`:''}
         ${temRepos?`<button class="act a4" onclick="usarRepos('${a.id}')">${BI.undo}Usar reposição</button>`:''}
-        ${podeAbater>0?`<button class="act a3" onclick="abaterRepos('${a.id}',${podeAbater})">${BI.money}Abater ${fmtCred(podeAbater)} (${fmt(Math.round(podeAbater*valorReposicaoDe(a)))})</button>`:''}
         <button class="act maisbtn" onclick="toggleMais('${a.id}')">⋯ Mais ações</button>
       </div>
       <div class="acts-mais">
@@ -7366,11 +7297,12 @@ function conferirNumeros(){
         txt:a.nome+': '+torto.length+' devolução(ões) que não fecham com o que saiu ('+partes.join(', ')+'). A aula mudou de tipo ou de duração entre marcar e desmarcar, e o crédito voltou no saldo errado. Acertar deixa cada par em zero.'});
     }
     // desconto por reposição: teto do mês, desconto esquecido e vencida ainda no saldo
-    const usadoDesc=descontoUsadoNoMes(a), tetoDesc=tetoDescontoRepos(a);
-    if(usadoDesc>tetoDesc)achados.push({tipo:'dup',a,
-      txt:a.nome+': abateu '+fmtCred(usadoDesc)+' reposição(ões) neste mês, mas o teto do plano é '+tetoDesc+'.'});
-    if(a.descontoMes&&a.descontoMes.mes&&a.descontoMes.mes!==monthKey())achados.push({tipo:'dup',a,
-      txt:a.nome+': tem '+fmt(a.descontoMes.valor||0)+' de desconto guardado de '+a.descontoMes.mes+' que nunca virou cobrança.'});
+    /* Sobra do tempo em que o app abatia reposição sozinho. As reposições já
+       saíram do saldo, mas o desconto nunca virou dinheiro. Fica como aviso
+       para você resolver na conversa — o app não mexe nisso. */
+    if(a.descontoMes&&Number(a.descontoMes.valor)>0)achados.push({tipo:'aviso',a,
+      txt:a.nome+': ficou '+fmt(a.descontoMes.valor||0)+' de desconto guardado de '+(a.descontoMes.mes||'antes')+', do tempo em que o app abatia reposição sozinho. '
+         +fmtCred(a.descontoMes.qtd||0)+' reposição(ões) já saíram do saldo dele. Resolva direto com o aluno.'});
     const venc=reposVencidas(a);
     if(venc>0)achados.push({tipo:'aviso',a,
       txt:a.nome+': '+fmtCred(venc)+' reposição(ões) já passaram de 4 meses e ainda contam no saldo — abra o app uma vez no mês novo para a virada rodar.'});
