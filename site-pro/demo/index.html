@@ -1721,7 +1721,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-04-1';
+const VERSAO='2026-09-04-2';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -2863,7 +2863,7 @@ async function doPublish(){
       locacaoOnly:DB.locacaoOnly||[],
       horarioCfg:DB.horarioCfg||{},
       horarioData:DB.horarioData||{},
-      alunos:DB.alunos.map(a=>({codigo:a.codigo,nome:a.nome,tipo:a.tipo,plano:a.plano,creditos:a.creditos,repos:a.repos,reposValidas:reposValidas(a),reposVencendo:reposVencendo(a),descontoMes:(a.descontoMes&&a.descontoMes.mes===monthKey())?a.descontoMes:null,status:a.status,ultimoPago:a.ultimoPago||'',mensalidade:a.mensalidade,diaVenc:a.diaVenc||10,cardLink:a.cardLink||'',mfitLink:a.mfitLink||'',valorAula:a.valorAula||(a.tipo==='Personal'?130:160),locCred:Number(a.locCred)||0,credGrupo:Number(a.credGrupo)||0,planoGrupo:Number(a.planoGrupo)||0,grupoTipo:a.grupoTipo||'',avaliacoes:(a.avaliacoes||[]).slice(-12),evoMes:serieMensal(a.avaliacoes,a.registros,24),registros:(a.registros||[]).slice(-8)})),
+      alunos:DB.alunos.map(a=>({codigo:a.codigo,nome:a.nome,tipo:a.tipo,plano:a.plano,creditos:a.creditos,repos:a.repos,reposValidas:reposValidas(a),reposVencendo:reposVencendo(a),status:a.status,ultimoPago:a.ultimoPago||'',mensalidade:a.mensalidade,diaVenc:a.diaVenc||10,cardLink:a.cardLink||'',mfitLink:a.mfitLink||'',valorAula:a.valorAula||(a.tipo==='Personal'?130:160),locCred:Number(a.locCred)||0,credGrupo:Number(a.credGrupo)||0,planoGrupo:Number(a.planoGrupo)||0,grupoTipo:a.grupoTipo||'',avaliacoes:(a.avaliacoes||[]).slice(-12),evoMes:serieMensal(a.avaliacoes,a.registros,24),registros:(a.registros||[]).slice(-8)})),
       historico:(function(){
         const codeOf={};DB.alunos.forEach(a=>{codeOf[a.id]=a.codigo;});
         const cut=dKey(new Date(Date.now()-60*864e5));const out={};

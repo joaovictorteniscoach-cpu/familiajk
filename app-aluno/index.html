@@ -523,6 +523,7 @@ function esperarAuth(){
       <div class="scard" id="scard-loc" style="display:none;grid-column:1/-1"><div class="ico">🔑</div><div class="l">Locação (horas)</div><div class="v" id="v-loc">0</div></div>
     </div>
     <div id="repos-box" style="display:none"></div>
+    <div id="pedir-box" style="display:none"></div>
     <div class="status-line">
       <span><b id="v-plano">—</b> · mensalidade <b id="v-mens">—</b></span>
       <span class="badge" id="v-status">—</span>
@@ -839,7 +840,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-09-04-1';
+const VERSAO='2026-09-04-2';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -1159,6 +1160,50 @@ function renderReposBox(){
   box.innerHTML=h+'</div>';
   box.style.display='block';
 }
+/* Pedir mais aula ou falar de valor. Vai por WhatsApp, não por fila: isto é
+   conversa, não pedido para o app processar. O texto já sai com o quadro do
+   aluno para o João não precisar perguntar o básico. */
+function meuQuadro(){
+  const p=[];
+  const cr=Number(EU.creditos)||0, gr=Number(EU.credGrupo)||0, rp=Number(EU.reposValidas)||Number(EU.repos)||0;
+  /* O número de aulas do plano mora em plano OU planoGrupo, conforme a
+     modalidade. Somar os dois cobre o plano misto. */
+  const aulasPlano=(Number(EU.plano)||0)+(Number(EU.planoGrupo)||0);
+  if(EU.tipo||aulasPlano>0)p.push('plano '+(EU.tipo||'')+(aulasPlano>0?(' de '+aulasPlano+' aula(s)/mês'):''));
+  p.push(fmtCred(cr)+' crédito(s)');
+  if(gr)p.push(fmtCred(gr)+' de grupo');
+  if(rp)p.push(fmtCred(rp)+' reposição(ões)');
+  return p.join(', ');
+}
+function pedirMaisAulas(){
+  const nome=(EU&&EU.nome)?EU.nome.split(' ')[0]:'';
+  abrirWhatsApp('5541995415712',
+    'Olá João! '+(nome?'Aqui é '+nome+'. ':'')
+    +'Queria marcar mais aulas além do meu plano. 🎾\n\n'
+    +'Hoje estou com: '+meuQuadro()+'.\n\n'
+    +'Dá para encaixar mais algum horário?');
+  toast('Abrindo o WhatsApp… 💬');
+}
+function pedirDesconto(){
+  const nome=(EU&&EU.nome)?EU.nome.split(' ')[0]:'';
+  const mens=Number(EU&&EU.mensalidade)||0;
+  abrirWhatsApp('5541995415712',
+    'Olá João! '+(nome?'Aqui é '+nome+'. ':'')
+    +'Queria conversar sobre o valor da minha mensalidade'+(mens?(' ('+fmt(mens)+')'):'')+'. 💬\n\n'
+    +'Hoje estou com: '+meuQuadro()+'.\n\n'
+    +'Podemos ver isso juntos?');
+  toast('Abrindo o WhatsApp… 💬');
+}
+function renderPedirBox(){
+  const box=document.getElementById('pedir-box');if(!box||!EU)return;
+  box.innerHTML='<div style="background:#fff;border:1px solid var(--border);border-radius:13px;padding:13px;margin-bottom:12px">'
+    +'<div style="font-size:13px;font-weight:700;margin-bottom:3px">Precisa de alguma coisa?</div>'
+    +'<div style="font-size:12.5px;color:var(--muted);margin-bottom:10px">Fale direto com o João pelo WhatsApp. Nada é alterado no seu saldo por aqui.</div>'
+    +'<button class="btn btn-clay" style="width:100%;margin-bottom:8px" onclick="pedirMaisAulas()">🎾 Quero marcar mais aulas</button>'
+    +'<button class="btn btn-ghost" style="width:100%" onclick="pedirDesconto()">💬 Falar sobre o valor</button>'
+    +'</div>';
+  box.style.display='block';
+}
 function irMarcarReposicao(){
   const b=[...document.querySelectorAll('.nav button')].find(x=>(x.getAttribute('onclick')||'').indexOf("goAluno('agenda'")===0);
   goAluno('agenda',b);
@@ -1171,6 +1216,7 @@ function render(){
   document.getElementById('v-cred').textContent=fmtCred(EU.creditos);
   document.getElementById('v-repos').textContent=fmtCred(EU.repos);
   renderReposBox();
+  renderPedirBox();
   const pg=Number(EU.planoGrupo)||0,cg=Number(EU.credGrupo)||0,sg=document.getElementById('scard-grupo');
   if(sg){sg.style.display=(pg>0||cg!==0)?'block':'none';
     const vg=document.getElementById('v-grupo');
