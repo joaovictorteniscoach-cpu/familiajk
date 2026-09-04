@@ -1721,7 +1721,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-04-2';
+const VERSAO='2026-09-04-3';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -3440,17 +3440,22 @@ async function enviarHorariosLivres(){
   catch(e){toast('Abrindo WhatsApp — escolha o grupo dos alunos.');}
   window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
 }
+/* Aulas DADAS, não alunos atendidos. A dupla das 16h é UMA aula: o professor
+   esteve na quadra uma vez, com duas pessoas nela. Contando cada aluno, um dia
+   de 6 aulas de tênis aparecia como 11 — o número crescia com o tamanho da
+   turma, não com o trabalho.
+   Por isso a conta é por horário: o horário entra uma vez, tenha um aluno ou
+   quatro. Para "quantas pessoas passaram por aqui" existe o countDay(), que é
+   o número do rótulo da agenda e continua contando um por um. */
 function contarAulas(dFrom,dTo){
   let tenis=0,personal=0;
   const cur=new Date(dFrom.getFullYear(),dFrom.getMonth(),dFrom.getDate());
   const end=new Date(dTo.getFullYear(),dTo.getMonth(),dTo.getDate());
   while(cur<=end){
     HORAS.forEach(h=>{
-      entriesFor(cur,h).forEach(e=>{
-        if(e.origem==='compromisso')return;
-        if(e.tipo==='aula'||e.tipo==='grupo')tenis++;
-        else if(e.tipo==='personal')personal++;
-      });
+      const evs=entriesFor(cur,h).filter(e=>e.origem!=='compromisso');
+      if(evs.some(e=>e.tipo==='aula'||e.tipo==='grupo'))tenis++;
+      if(evs.some(e=>e.tipo==='personal'))personal++;
     });
     cur.setDate(cur.getDate()+1);
   }
