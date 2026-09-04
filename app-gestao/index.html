@@ -1774,7 +1774,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-04-3';
+const VERSAO='2026-09-04-4';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -2055,17 +2055,32 @@ function mover(a,campo,delta,motivo,ref){
   podarMovs(a.id);
   return para;
 }
-/* Guarda as últimas 500 por aluno: o extrato tem que caber no aparelho. */
+/* O extrato tem que caber no aparelho, então as linhas mais antigas saem. Mas
+   sair NÃO pode mudar o total: o que é podado vira uma linha de resumo, campo
+   a campo. Sem isso o extrato encolhia por baixo — as linhas mais velhas são
+   as renovações, quase todas positivas — e a conferência passava a dizer que
+   o saldo "não batia", oferecendo acertar o aluno para um número menor, às
+   vezes negativo. O saldo estava certo; era o extrato que estava incompleto.
+
+   Poda com folga: só corta acima do TETO e desce até MANTER, senão cada
+   lançamento novo dispararia uma poda de uma linha só, sem parar. */
+const MOVS_TETO=600, MOVS_MANTER=500;
 function podarMovs(alunoId){
   const todas=DB.movs||[];
   const doAluno=todas.filter(m=>m.alunoId===alunoId);
-  if(doAluno.length<=500)return;
-  const cortar=doAluno.length-500, manter=new Set(doAluno.slice(cortar).map(m=>m.ts+'|'+m.campo+'|'+m.delta));
-  let n=0;
-  DB.movs=todas.filter(m=>{
-    if(m.alunoId!==alunoId)return true;
-    if(n++<cortar)return false;
-    return true;
+  if(doAluno.length<=MOVS_TETO)return;
+  const fora=doAluno.slice(0,doAluno.length-MOVS_MANTER);
+  const soma={};
+  fora.forEach(m=>{soma[m.campo]=(soma[m.campo]||0)+(Number(m.delta)||0);});
+  const saiu=new Set(fora);
+  DB.movs=todas.filter(m=>!saiu.has(m));
+  const ts=(fora[fora.length-1]||{}).ts||Date.now();
+  Object.keys(soma).forEach(campo=>{
+    if(!soma[campo])return;
+    const ja=DB.movs.find(m=>m.alunoId===alunoId&&m.campo===campo&&m.ref==='resumo');
+    if(ja){ja.delta=(Number(ja.delta)||0)+soma[campo];ja.para=ja.delta;}
+    else DB.movs.push({ts,alunoId,campo,delta:soma[campo],de:0,para:soma[campo],
+                       motivo:'Saldo anterior (linhas antigas resumidas)',ref:'resumo'});
   });
 }
 function movsDe(alunoId,campo){
@@ -7294,7 +7309,10 @@ function conferirNumeros(){
     ['creditos','credGrupo','repos','locCred'].forEach(c=>{
       const atual=Number(a[c])||0, esperado=saldoPeloExtrato(a,c);
       if(atual!==esperado)achados.push({tipo:'saldo',a,campo:c,atual,esperado,
-        txt:CAMPO_LABEL[c]+' de '+a.nome+': o saldo diz '+fmtCred(atual)+', o extrato diz '+fmtCred(esperado)+'.'});
+        txt:CAMPO_LABEL[c]+' de '+a.nome+': o saldo diz '+fmtCred(atual)+', o extrato diz '+fmtCred(esperado)+'. '
+           +(esperado<atual
+             ? 'O extrato está MENOR, o que normalmente quer dizer que ele está incompleto — linhas antigas saíram e o começo da história do aluno não aparece mais. Nesse caso o saldo é que está certo: use "Fechar o extrato pelo saldo".'
+             : 'O extrato está MAIOR que o saldo. Confira o extrato antes de escolher: pode ser lançamento que não chegou ao saldo.')});
     });
     // presença sem débito e débito sem presença
     const pres=presencasDe(a.id);
@@ -7384,7 +7402,8 @@ function conferirNumeros(){
   box.innerHTML=cab+barra+achados.map((x,i)=>
     '<div class="cons '+((x.tipo==='saldo'||x.tipo==='dup'||x.tipo==='fantasma'||x.tipo==='estorno')?'bad':'warn')+'"><h4><span>'+(x.tipo==='saldo'?'⚠️':(x.tipo==='dup'?'🔁':(x.tipo==='fantasma'?'👻':(x.tipo==='estorno'?'↩️':'📋'))))+'</span>'+esc(x.a.nome)+'</h4>'
     +'<p>'+esc(x.txt)
-    +(x.tipo==='saldo'?'<br><button class="btn btn-ghost" style="margin-top:8px;padding:7px 12px;font-size:12px" onclick="acertarConf('+i+')">Acertar pelo extrato</button>':'')
+    +(x.tipo==='saldo'?'<br><button class="btn btn-clay" style="margin-top:8px;padding:7px 12px;font-size:12px" onclick="fecharExtratoPeloSaldo('+i+')">Fechar o extrato pelo saldo</button>'
+      +' <button class="btn btn-ghost" style="margin-top:8px;padding:7px 12px;font-size:12px" onclick="acertarConf('+i+')">Mudar o saldo do aluno</button>':'')
     +(x.tipo==='fantasma'?'<br><button class="btn btn-ghost" style="margin-top:8px;padding:7px 12px;font-size:12px" onclick="limparFantasmas('+i+')">Apagar as aulas que sobraram</button>':'')
     +(x.tipo==='estorno'?'<br><button class="btn btn-ghost" style="margin-top:8px;padding:7px 12px;font-size:12px" onclick="acertarEstorno('+i+')">Acertar as devoluções</button>':'')
     +'</p></div>').join('');
@@ -7443,10 +7462,34 @@ function acertarTodosEstornos(){
   persist();renderAll();conferirNumeros();
   toast('✓ '+nItens+' devolução(ões) acertadas em '+linhas.length+' aluno(s)');
 }
+/* O caminho seguro, e o certo na maioria das vezes: o SALDO fica como está e
+   o extrato ganha uma linha explicando o que falta nele. Nenhum aluno tem
+   crédito alterado. Serve para quando o extrato encolheu por baixo — linhas
+   antigas podadas — e passou a discordar de um saldo que estava certo. */
+function fecharExtratoPeloSaldo(i){
+  const x=(window._conf||[])[i];if(!x||x.tipo!=='saldo')return;
+  const falta=x.atual-x.esperado;
+  if(!falta){toast('Já fecha');return;}
+  if(!confirm('Fechar o extrato de '+CAMPO_LABEL[x.campo]+' de '+x.a.nome+'?\n\n'
+    +'O saldo dele CONTINUA '+fmtCred(x.atual)+' — nada muda para o aluno.\n'
+    +'O extrato ganha uma linha de '+(falta>0?'+':'')+fmtCred(falta)+' explicando o que não está mais à vista.'))return;
+  if(!DB.movs)DB.movs=[];
+  DB.movs.push({ts:Date.now(),alunoId:x.a.id,campo:x.campo,delta:falta,de:x.esperado,para:x.atual,
+                motivo:'Saldo anterior (linhas antigas resumidas)',ref:'resumo'});
+  logAct('Conferência fechou o extrato de '+CAMPO_LABEL[x.campo]+' de '+x.a.nome+' (saldo intacto)');
+  persist();renderAll();conferirNumeros();
+  toast('✓ Extrato de '+x.a.nome+' fecha · saldo intacto em '+fmtCred(x.atual));
+}
 function acertarConf(i){
   const x=(window._conf||[])[i];if(!x||x.tipo!=='saldo')return;
-  if(!confirm('Acertar '+CAMPO_LABEL[x.campo]+' de '+x.a.nome+'?\n\n'
-    +fmtCred(x.atual)+'  →  '+fmtCred(x.esperado)+'\n\nA correção fica registrada no extrato.'))return;
+  const dif=x.esperado-x.atual;
+  if(!confirm('⚠️ MUDAR O SALDO de '+x.a.nome+'?\n\n'
+    +CAMPO_LABEL[x.campo]+': '+fmtCred(x.atual)+'  →  '+fmtCred(x.esperado)+'   ('+(dif>0?'+':'')+fmtCred(dif)+')\n\n'
+    +(x.esperado<x.atual
+      ? 'Isto TIRA '+fmtCred(-dif)+' do aluno'+(x.esperado<0?' e deixa o saldo NEGATIVO':'')+'.\n\n'
+        +'Só faça isso se você tem certeza de que o extrato está completo. Se linhas antigas já saíram dele, o número certo é o saldo, e o botão a usar é "Fechar o extrato pelo saldo".\n\n'
+      : '')
+    +'A correção fica registrada no extrato.'))return;
   corrigirSaldo(x.a,x.campo,x.esperado,'Correção pela conferência');
   logAct('Conferência acertou '+CAMPO_LABEL[x.campo]+' de '+x.a.nome);
   persist();renderAll();conferirNumeros();
