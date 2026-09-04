@@ -326,7 +326,25 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .ag-nav .month-btn{background:#fff;border:1px solid var(--border);color:var(--text)}
 .ag-nav-label{font-weight:700;font-size:13.5px;text-transform:capitalize;text-align:center;flex:1}
 .ag-nav-label small{display:block;font-weight:500;font-size:11px;color:var(--muted);text-transform:none}
-.legend{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+/* A legenda desceu para DEPOIS da grade: é referência, consultada de vez em
+   quando, e ocupava quatro linhas acima do que importa. */
+.legend{display:flex;gap:5px;flex-wrap:wrap;margin:14px 0 4px;opacity:.85}
+/* As ferramentas da agenda ficam recolhidas atrás de um toque. Antes eram
+   cinco botões empilhados entre a navegação e a grade, empurrando o horário
+   para fora da tela — que é justamente o que se abre a aba para ver. */
+.ag-ferr{margin-bottom:12px;border:1px solid var(--border);border-radius:12px;background:#fff}
+.ag-ferr>summary{list-style:none;cursor:pointer;padding:9px 13px;font-size:12.5px;
+  font-weight:700;color:var(--muted);display:flex;align-items:center;gap:7px}
+.ag-ferr>summary::-webkit-details-marker{display:none}
+.ag-ferr>summary::after{content:'▾';margin-left:auto;font-size:11px;transition:transform .15s}
+.ag-ferr[open]>summary::after{transform:rotate(180deg)}
+.ag-ferr[open]>summary{border-bottom:1px solid var(--border)}
+.ag-ferr .ferr-corpo{display:flex;flex-direction:column;gap:7px;padding:11px 13px 13px}
+.ag-ferr .ferr-corpo button{width:100%;border-radius:11px;font-size:12.5px;font-weight:700;
+  padding:9px 12px;border:1px solid var(--border);background:#fff;color:var(--text);cursor:pointer}
+.ag-ferr .ferr-corpo button.destaque{border:none;background:var(--green);color:#fff}
+.ag-ferr .ferr-corpo button.ouro{border:none;background:var(--gold);color:var(--green)}
+@media (prefers-reduced-motion:reduce){.ag-ferr>summary::after{transition:none}}
 .legend span{font-size:10px;font-weight:600;padding:3px 9px;border-radius:14px;color:#fff;letter-spacing:.3px}
 .slot{display:flex;gap:10px;margin-bottom:7px}
 .slot-h{width:46px;font-size:12px;font-weight:700;color:var(--muted);padding-top:9px;flex-shrink:0;text-align:right}
@@ -893,7 +911,17 @@ function esperarAuth(){
     <button class="month-btn" onclick="agShift(1)">›</button>
   </div>
   <div class="seg seg-scroll" id="prof-filtro" style="display:none"></div>
-  <button class="btn btn-ghost" style="width:100%;margin-bottom:10px;font-size:12.5px" onclick="enviarSemanaImg()">📷 Imagem da semana p/ mandar ao aluno</button>
+  <details class="ag-ferr">
+    <summary>⚙︎ Ferramentas da agenda</summary>
+    <div class="ferr-corpo">
+      <button class="destaque" onclick="abrirHorario()">🗓️ Horários: aula · locação · fechado</button>
+      <button class="ouro" onclick="enviarHorariosLivres()">📤 Enviar livres da semana (WhatsApp)</button>
+      <button onclick="enviarSemanaImg()">📷 Imagem da semana p/ mandar ao aluno</button>
+      <button onclick="syncRequests(false)">🔄 Agendamentos de alunos</button>
+      <button onclick="abrirVincular()">🔗 Vincular nomes aos alunos</button>
+    </div>
+  </details>
+  <div id="ag-view"></div>
   <div class="legend">
     <span style="background:var(--c-aula)">Tênis</span>
     <span style="background:var(--c-grupo)">Grupo</span>
@@ -902,12 +930,7 @@ function esperarAuth(){
     <span style="background:var(--c-tor)">🏆 Torneio</span>
     <span style="background:var(--c-pess)">Pessoal</span>
     <span style="background:var(--c-bloq)">Bloqueio</span>
-    <button onclick="syncRequests(false)" style="border:1px solid var(--border);background:#fff;color:var(--text);font-size:10px;font-weight:700;padding:3px 10px;border-radius:14px;letter-spacing:.3px">🔄 Agendamentos de alunos</button>
-    <button onclick="abrirVincular()" style="border:1px solid var(--border);background:#fff;color:var(--text);font-size:10px;font-weight:700;padding:3px 10px;border-radius:14px;letter-spacing:.3px">🔗 Vincular nomes aos alunos</button>
-    <button onclick="abrirHorario()" style="border:none;background:var(--green);color:#fff;font-size:11.5px;font-weight:800;padding:6px 14px;border-radius:14px;letter-spacing:.2px">🗓️ Horários: aula · locação · fechado</button>
-    <button onclick="enviarHorariosLivres()" style="border:none;background:var(--gold);color:var(--green);font-size:11.5px;font-weight:800;padding:6px 14px;border-radius:14px;letter-spacing:.2px">📤 Enviar livres da semana (WhatsApp)</button>
   </div>
-  <div id="ag-view"></div>
 </section>
 
 <section class="page" id="pg-alunos">
@@ -1774,7 +1797,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-04-5';
+const VERSAO='2026-09-04-6';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
