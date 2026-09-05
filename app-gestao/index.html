@@ -1797,7 +1797,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-05-1';
+const VERSAO='2026-09-05-2';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -5510,15 +5510,27 @@ function renderFechamento(){
    +bloco('Aulas realizadas',jaForam,'Nenhuma aula realizada neste mês.')
    +(aVir.length?bloco('Aulas que ainda vêm',aVir,''):'')
    +'<div class="fx-sec">Saldo</div>'
-   +'<div class="fx-linha"><span>Aulas no mês</span><span></span><span>'+fmtCred(D.feitas)+'</span></div>'
-   +(D.faltas>0?'<div class="fx-linha" style="color:#8A7B63"><span>Faltas (aula consumida)</span><span></span><span>'+D.faltas+'</span></div>':'')
-   +(D.avisados>0?'<div class="fx-linha" style="color:#2E7D52"><span>Cancelou avisando (crédito preservado)</span><span></span><span>'+D.avisados+'</span></div>':'')
-   +'<div class="fx-linha"><span>Créditos hoje</span><span></span><span>'+fmtCred(Number(a.creditos)||0)+'</span></div>'
-   +(Number(a.credGrupo)?'<div class="fx-linha"><span>Créditos de grupo</span><span></span><span>'+fmtCred(Number(a.credGrupo)||0)+'</span></div>':'')
-   +'<div class="fx-linha"><span>Reposições guardadas</span><span></span><span>'+fmtCred(reposValidas(a))+'</span></div>'
-   +'<div class="fx-linha" style="font-weight:800;border-top:1px solid var(--border);padding-top:7px;margin-top:2px"><span>Total de aulas a usar</span><span></span><span>'
-     +fmtCred((Number(a.creditos)||0)+(Number(a.credGrupo)||0)+reposValidas(a))+'</span></div>'
-   +(reposVencendo(a)>0?'<div class="fx-linha" style="color:#7A5B10"><span>vencem no fim do mês</span><span></span><span>'+fmtCred(reposVencendo(a))+'</span></div>':'')
+   +(function(){
+      /* A conta que o professor faz de cabeça, e que o aluno entende: o plano
+         dá tantas aulas no mês, tantas já foram, tantas faltam. O saldo bruto
+         de crédito e grupo é contabilidade interna — no cartão do aluno ele só
+         confundia, porque as duas cestas separadas não dizem nada para quem só
+         quer saber quantas aulas ainda tem. */
+      const doPlano=(Number(a.plano)||0)+(Number(a.planoGrupo)||0);
+      const feitas=jaForam.reduce((t,x)=>t+(Number(x.custo)||0),0);
+      const faltam=Math.max(0,doPlano-feitas);
+      const rep=reposValidas(a);
+      const L=(rot,val,estilo)=>'<div class="fx-linha"'+(estilo||'')+'><span>'+rot+'</span><span></span><span>'+val+'</span></div>';
+      return (doPlano?L('Aulas do plano no mês',fmtCred(doPlano)):'')
+        +L('Já realizadas',fmtCred(feitas))
+        +(doPlano?L('Ainda a realizar',fmtCred(faltam)):'')
+        +(D.faltas>0?L('Faltas (aula consumida)',D.faltas,' style="color:#8A7B63"'):'')
+        +(D.avisados>0?L('Cancelou avisando (crédito preservado)',D.avisados,' style="color:#2E7D52"'):'')
+        +L('Reposições guardadas',fmtCred(rep))
+        +(reposVencendo(a)>0?L('vencem no fim do mês',fmtCred(reposVencendo(a)),' style="color:#7A5B10"'):'')
+        +L('Total de aulas a usar',fmtCred(faltam+rep),
+           ' style="font-weight:800;border-top:1px solid var(--border);padding-top:7px;margin-top:2px"');
+    })()
    +'<div class="fx-sec">Valores</div>'
    +'<div class="fx-linha"><span>Mensalidade</span><span></span><span>'+fmtRs(D.cheia)+'</span></div>'
    +'<div class="fx-total"><span>Total</span><b>'+fmtRs(D.total)+'</b></div>'
@@ -5566,6 +5578,24 @@ function renderConfMes(){
    +ln(C.sobra>0?'Ainda tem a usar':(C.sobra<0?'Passou do disponível':'Fecha certo'),
        fmtCred(Math.abs(C.sobra)),C.sobra<0?'#C0392B':(C.sobra>0?'#2E7D52':'#2E7D52'),
        fmtCred(C.contratado)+' − '+fmtCred(C.consumido))
+   +(function(){
+      /* O cartão do aluno conta pelo plano: 4 no mês, 2 feitas, faltam 2. O
+         saldo guardado é outra conta, e quando as duas discordam é porque algo
+         entrou ou saiu fora do ritmo do mês — renovação que não foi lançada,
+         correção manual, aula que não debitou. A diferença fica AQUI, no seu
+         painel, e não no cartão que vai para o aluno. */
+      const plano=(Number(a.plano)||0)+(Number(a.planoGrupo)||0);
+      const feitas=C.confirmadas+C.semConfirmar;
+      const peloPlano=Math.max(0,plano-feitas);
+      const saldoReal=(Number(a.creditos)||0)+(Number(a.credGrupo)||0);
+      if(!plano||peloPlano===saldoReal)return '';
+      const d=saldoReal-peloPlano;
+      return '<div class="fx-sec">Cartão × saldo</div>'
+        +ln('O cartão diz que faltam',fmtCred(peloPlano),null,'plano '+fmtCred(plano)+' − '+fmtCred(feitas)+' feitas')
+        +ln('O saldo guardado tem',fmtCred(saldoReal),null,'créditos + grupo')
+        +ln(d>0?'Sobrando no saldo':'Faltando no saldo',fmtCred(Math.abs(d)),
+            d>0?'#7A5B10':'#C0392B','veja o extrato dele para achar a origem');
+    })()
    +'<div class="fx-sec">Saldo hoje</div>'
    +ln('Créditos',fmtCred(Number(a.creditos)||0))
    +(Number(a.credGrupo)?ln('Grupo',fmtCred(Number(a.credGrupo)||0)):'')
