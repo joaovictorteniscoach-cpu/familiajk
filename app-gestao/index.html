@@ -360,6 +360,10 @@ body[data-modo="prof"] .so-dono{display:none!important}
 .ev.t-aula{background:var(--c-aula)}.ev.t-locacao{background:var(--c-loc)}.ev.t-torneio{background:var(--c-tor)}
 .ev.t-bloqueio{background:var(--c-bloq)}.ev.t-pessoal{background:var(--c-pess)}
 .ev.t-grupo{background:var(--c-grupo)}.ev.t-personal{background:var(--c-personal)}
+/* Horário de outro professor. Cor fora da paleta das SUAS aulas de propósito:
+   à distância de um olhar tem de dar para ver que aquela hora não é sua. */
+.ev.t-outro{background:repeating-linear-gradient(135deg,#4C5B6E,#4C5B6E 7px,#3E4A5A 7px,#3E4A5A 14px);opacity:.95}
+.ev.t-outro small{opacity:.9}
 .ev .pres{background:rgba(255,255,255,.25);border:none;color:#fff;border-radius:6px;width:24px;height:24px;font-size:12px;flex-shrink:0}
 .ev .pres.ok{background:#fff;color:var(--ok);font-weight:800}
 .ev .pres.falt{background:#fff;color:var(--c-bloq,#C0392B);font-weight:800}
@@ -380,6 +384,7 @@ body[data-modo="prof"] .so-dono{display:none!important}
 .wk-cell.t-aula{background:var(--c-aula)}.wk-cell.t-locacao{background:var(--c-loc)}.wk-cell.t-torneio{background:var(--c-tor)}
 .wk-cell.t-bloqueio{background:var(--c-bloq)}.wk-cell.t-pessoal{background:var(--c-pess)}
 .wk-cell.t-grupo{background:var(--c-grupo)}.wk-cell.t-personal{background:var(--c-personal)}
+.wk-cell.t-outro{background:repeating-linear-gradient(135deg,#4C5B6E,#4C5B6E 6px,#3E4A5A 6px,#3E4A5A 12px)}
 .wk-cell.free{color:var(--muted);font-weight:600;font-size:9.5px;letter-spacing:.2px}
 .wk-cell.multi{background:repeating-linear-gradient(45deg,var(--c-aula),var(--c-aula) 8px,#2F5A94 8px,#2F5A94 16px)}
 .cal{background:#fff;border:1px solid var(--border);border-radius:13px;padding:12px}
@@ -1924,7 +1929,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-05-5';
+const VERSAO='2026-09-05-6';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -2609,6 +2614,8 @@ async function load(){
   renderAll();
   try{HIST.prev=snapDB();}catch(e){}
   syncRequests(true);
+  lerMapaQuadra();                 // o que os outros já ocupam na quadra
+  publicarMapaQuadra();            // e o que eu ocupo
 }
 /* ===== Rede de segurança: versões, em vez de uma cópia só =====
    Antes existia UMA cópia no aparelho e UMA na nuvem, as duas sobrescritas a
@@ -3030,6 +3037,7 @@ function persist(){
     }
     else{cloudPending=true;setSave(okLocal?'⚠ salvo só no aparelho ⓘ':'erro ao salvar',okLocal?'ok':'err');}
     publish();
+    publicarMapaQuadra();          // a quadra é uma só: avisa quem mais usa ela
   },500);
 }
 /* Uma cópia por hora na nuvem, no máximo 30. Mesmo que o aparelho se perca
@@ -3091,6 +3099,98 @@ document.getElementById('save-state').onclick=()=>{
     if(ok){cloudPending=false;setSave('✓ salvo na nuvem','ok');publish();}
   }
 },t));
+/* ===== Mapa da quadra: a quadra é UMA, os bancos são dois =====
+   O professor precisa ver o que já está ocupado, e o João precisa ver as aulas
+   do professor na agenda dele. Como cada um tem banco próprio (e é assim que o
+   faturamento fica separado), nenhum dos dois enxerga a agenda do outro.
+
+   A ponte é este mapa: cada um escreve, num nó só seu, quais horários ocupa —
+   e todos os que estão logados leem o de todos. Uma regra por dono: você só
+   escreve no seu.
+
+   O que vai no mapa: o dia, a hora, o tipo e o NOME DO DONO. Nada do aluno.
+   Isso importa — o mapa é lido por qualquer um que esteja logado, inclusive
+   pelos alunos e por outro professor. Nome de professor não é segredo; nome de
+   aluno é dele e do professor dele. O João, que pode ler o espaço inteiro do
+   professor, tem o detalhe por lá quando quiser.
+
+   Um horário só cabe uma vez: quadra ocupada é quadra ocupada, tanto faz de
+   quem. Por isso quem tenta marcar em cima de horário de outro é barrado. */
+const MAPA_DIAS=42;                 // seis semanas à frente: cobre o mês e a virada
+let MAPA_OUTROS={};                 // 'AAAA-MM-DD|HH:MM' -> {nome,tipo,uid}
+let _mapaEnviado='', _mapaLido='';
+function ocupaQuadra(e){
+  /* Tudo que está na agenda ocupa: no fim das contas é uma quadra só, e supor
+     que ela está livre porque o outro marcou "pessoal" é como se dobra
+     horário. Quem sabe se abre exceção é quem combina, não o app. */
+  return !!e && e.tipo!=='vago';
+}
+function meuMapaQuadra(){
+  const dias={}, hoje=new Date();
+  for(let i=0;i<MAPA_DIAS;i++){
+    const d=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()+i,12,0,0,0);
+    const dk=dKey(d);
+    HORAS.forEach(h=>{
+      const evs=entriesFor(d,h).filter(ocupaQuadra);
+      if(!evs.length)return;
+      (dias[dk]=dias[dk]||{})[h]=String(evs[0].tipo||'aula');
+    });
+  }
+  return {nome:meuNomeNaQuadra(),ts:Date.now(),dias};
+}
+function meuNomeNaQuadra(){
+  if(ehDono())return 'João Victor';
+  return (DB&&DB.profNome)?String(DB.profNome):'Professor';
+}
+function meuUidNaQuadra(){return ehDono()?UID_DONO:PROF_UID;}
+/* Só sobe quando muda. Sem isso, cada gravação do app reenviaria seis semanas
+   de agenda — e a agenda muda muito menos do que o banco. */
+let mapaTimer=null;
+function publicarMapaQuadra(){
+  clearTimeout(mapaTimer);
+  mapaTimer=setTimeout(async()=>{
+    if(!CARREGADO||!hasCloud())return;
+    const uid=meuUidNaQuadra();if(!uid)return;
+    let m;try{m=meuMapaQuadra();}catch(e){return;}
+    const assinatura=JSON.stringify(m.dias);
+    if(assinatura===_mapaEnviado)return;
+    try{
+      await window.fbDB.ref('jvtenis/mapa_quadra/'+uid).set(m);
+      _mapaEnviado=assinatura;
+    }catch(e){}
+  },2500);
+}
+async function lerMapaQuadra(){
+  if(!hasCloud())return;
+  const meu=meuUidNaQuadra();
+  try{
+    const snap=await window.fbDB.ref('jvtenis/mapa_quadra').get();
+    const v=snap.exists()?(snap.val()||{}):{};
+    const out={};
+    Object.keys(v).forEach(uid=>{
+      if(uid===meu)return;                       // o meu eu já vejo na minha agenda
+      const bloco=v[uid]||{}, dias=bloco.dias||{};
+      Object.keys(dias).forEach(dk=>{
+        Object.keys(dias[dk]||{}).forEach(h=>{
+          out[dk+'|'+h]={nome:String(bloco.nome||'Outro professor'),tipo:String(dias[dk][h]||'aula'),uid};
+        });
+      });
+    });
+    /* Repintar a agenda a cada 45 segundos sem nada ter mudado tira o aluno do
+       lugar em que ele estava olhando. Só redesenha quando o mapa mudou mesmo. */
+    const assinatura=JSON.stringify(out);
+    if(assinatura===_mapaLido)return;
+    _mapaLido=assinatura;
+    MAPA_OUTROS=out;
+    try{renderAgenda();}catch(e){}
+  }catch(e){}
+}
+const ROTULO_TIPO_OUTRO={aula:'aula',grupo:'aula em grupo',personal:'personal',locacao:'locação',
+                         torneio:'torneio',bloqueio:'quadra bloqueada',pessoal:'compromisso'};
+function rotuloTipoOutro(t){return ROTULO_TIPO_OUTRO[t]||'ocupado';}
+function ocupadoPorOutro(date,hora){
+  return MAPA_OUTROS[dKey(date)+'|'+hora]||null;
+}
 /* Publica os dados que o App do Aluno lê (somente leitura, compartilhado) */
 let pubTimer=null;
 function publish(){
@@ -3155,6 +3255,15 @@ async function doPublish(){
         excecoes:DB.agenda.excecoes
       }
     };
+    /* O aluno escolhe horário olhando a grade publicada. Sem isto ele pediria
+       um horário que já é de outro professor — e descobriria na porta da
+       quadra. Vai só a hora ocupada, sem nome de ninguém: para o aluno é
+       "Reservado", que é tudo o que ele precisa saber. */
+    Object.keys(MAPA_OUTROS).forEach(ch=>{
+      const [data,hora]=ch.split('|');
+      if(data<dKey(hoje)||data>dKey(lim))return;
+      pub.grade.eventos.push({id:'q'+data+hora,data,hora,tipo:'ocupado'});
+    });
     await cloudSet(PUBKEY,JSON.stringify(pub));
     // Nó público mínimo: só os três preços de grupo, que é tudo o que o site
     // do jvtenis.com.br precisa. Sem ele, o site teria que ler a publicação
@@ -3213,7 +3322,7 @@ async function syncRequests(silent){
   }catch(e){if(!silent)toast('Erro ao sincronizar');}
   syncing=false;
 }
-setInterval(()=>{syncRequests(true);carregarNotifs();carregarConfirmacoes();carregarCadastros();carregarAutoAval();},45000);
+setInterval(()=>{syncRequests(true);carregarNotifs();carregarConfirmacoes();carregarCadastros();carregarAutoAval();lerMapaQuadra();},45000);
 setTimeout(carregarAutoAval,4000);
 
 /* ===== Autoavaliações enviadas pelos alunos ===== */
@@ -4183,8 +4292,9 @@ function renderAgenda(){
     lbl.innerHTML=DIAS[agDate.getDay()]+', '+agDate.getDate()+' de '+MESES[agDate.getMonth()].toLowerCase()+'<small>'+countDay(agDate)+' atendimentos · ○→✓ veio→✗ faltou→🔁 avisou · arraste p/ trocar horário</small>';
     el.innerHTML='<button class="btn btn-ghost" style="width:100%;margin-bottom:10px;color:var(--c-bloq);border-color:#E5C0BA;font-size:12px" onclick="marcarChuvaDia()">☔ Marcar o dia inteiro como chuva</button>'+HORAS.map(h=>{
       const evs=entriesFor(agDate,h).filter(itemVisivelProf);
+      const outro=ocupadoPorOutro(agDate,h);
       return `<div class="slot" data-drop-d="${dKey(agDate)}" data-drop-h="${h}"><div class="slot-h">${h}</div>
-        <div class="slot-body ${evs.length?'has':''}">
+        <div class="slot-body ${(evs.length||outro)?'has':''}">
           ${evs.map(e=>{
             const linked=!!e.alunoId;
             const pres=linked&&isPres(e,agDate);
@@ -4195,6 +4305,11 @@ function renderAgenda(){
               <span onclick="openSlot('${h}')">${e.titulo}<small> · ${e.tipo==='grupo'?grupoTag(e.pessoas)+' · ':''}${e.repo?'reposição':(e.origem==='fixo'?'fixo':(e.origem==='compromisso'?'pessoal':'pontual'))}</small></span>
             </span>`;
           }).join('')}
+          ${(function(){
+            const o=ocupadoPorOutro(agDate,h);
+            if(!o)return '';
+            return `<span class="ev t-outro" title="Horário de outro professor — a quadra está ocupada">👨‍🏫 ${esc(o.nome)}<small> · ${esc(rotuloTipoOutro(o.tipo))}</small></span>`;
+          })()}
           <button class="slot-add" onclick="openSlot('${h}')">+</button>
         </div></div>`;
     }).join('');
@@ -4209,9 +4324,13 @@ function renderAgenda(){
       html+=`<tr><td class="hr">${h}</td>`;
       days.forEach(d=>{
         const evs=entriesFor(d,h).filter(itemVisivelProf);
+        const outro=ocupadoPorOutro(d,h);
         let cls='free',txt='livre',drag='';
         if(evs.length===1){cls='t-'+evs[0].tipo;txt=evs[0].titulo;drag=`drag-item" data-eid="${evs[0].id}" data-origem="${evs[0].origem}`;}
         else if(evs.length>1){cls='multi';txt=evs.length+' marcações';}
+        // horário de outro professor só aparece onde eu não tenho nada: quadra
+        // ocupada por dois é problema para resolver, não para esconder
+        else if(outro){cls='t-outro';txt='👨‍🏫 '+outro.nome;}
         html+=`<td data-drop-d="${dKey(d)}" data-drop-h="${h}"><button class="wk-cell ${cls} ${drag}" onclick="gotoSlot(${d.getFullYear()},${d.getMonth()},${d.getDate()},'${h}')">${txt}</button></td>`;
       });
       html+='</tr>';
@@ -4408,6 +4527,13 @@ function saveSlot(){
     if(modo!=='aula'){
       toast(modo==='fechado'?('🔒 '+slotCtx.hora+' está fora do horário de aulas neste dia.'):('🔒 '+slotCtx.hora+' é só locação neste dia — não dá para agendar aula.'));return;
     }
+  }
+  /* Quadra ocupada é quadra ocupada, tanto faz de quem. Marcar por cima daria
+     duas aulas no mesmo lugar e ninguém descobriria antes da hora. */
+  const jaEh=ocupadoPorOutro(slotCtx.date,slotCtx.hora);
+  if(jaEh){
+    toast('🚫 '+slotCtx.hora+' é de '+jaEh.nome+' ('+rotuloTipoOutro(jaEh.tipo)+'). Combine a troca antes de marcar.');
+    return;
   }
   const repoChk=document.getElementById('s-repo');
   const repo=(repoChk&&repoChk.checked&&(tipo==='aula'||tipo==='grupo'||tipo==='personal'))?1:0;

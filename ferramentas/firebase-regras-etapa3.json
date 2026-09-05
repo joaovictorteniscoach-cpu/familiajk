@@ -34,13 +34,16 @@
       },
       "mapa_quadra": {
         ".read": "auth != null",
-        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'"
+        "$uid": {
+          ".write": "auth != null && (auth.uid === $uid || auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1') && (root.child('jvtenis/professores/' + $uid).exists() || $uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1')",
+          ".validate": "newData.hasChild('ts') && newData.child('ts').isNumber() && (!newData.hasChild('nome') || newData.child('nome').val().length <= 60)"
+        }
       },
       "fila_quadra": {
         ".read": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
         ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
         "$item": {
-          ".write": "auth != null && !data.exists() && newData.exists()",
+          ".write": "auth != null && !data.exists() && newData.exists() && root.child('jvtenis/professores/' + auth.uid).exists()",
           ".validate": "newData.hasChild('ts') && newData.child('ts').isNumber() && (!newData.hasChild('nome') || newData.child('nome').val().length <= 120) && (!newData.hasChild('texto') || newData.child('texto').val().length <= 500) && (!newData.hasChild('desc') || newData.child('desc').val().length <= 300)"
         }
       },
