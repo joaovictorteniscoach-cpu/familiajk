@@ -1797,7 +1797,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-04-7';
+const VERSAO='2026-09-05-1';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -5488,10 +5488,18 @@ function renderFechamento(){
   if(!a){box.innerHTML='<div class="empty">Escolha o aluno para ver a prévia do fechamento.</div>';renderConfMes();return;}
   const D=fcDados(a,mk);
   const obs=(document.getElementById('fc-obs')||{}).value||'';
-  const linhas=D.aulas.length
-    ? D.aulas.map(p=>'<div class="fx-linha"><span>'+fmtDataCurta(p.data)+'</span><span>'+
-        ((p.hora&&p.hora!=='—')?p.hora:'—')+'</span><span>'+(p.tipo==='reposicao'||p.repo?'reposição':(p.tipo==='grupo'?'grupo':'aula'))+'</span></div>').join('')
-    : '<div class="fx-linha" style="justify-content:center;color:#8A7B63">Nenhuma aula registrada neste mês.</div>';
+  /* Realizada e "ainda vem" nao sao a mesma coisa. A lista era uma so, sob o
+     titulo "Aulas realizadas", e mostrava tambem as aulas do fim do mes que
+     ainda nao aconteceram — o aluno lia como se ja tivessem sido dadas. */
+  const _hoje=dKey(new Date());
+  const jaForam=D.aulas.filter(p=>String(p.data)<=_hoje);
+  const aVir   =D.aulas.filter(p=>String(p.data)> _hoje);
+  const linhaAula=p=>'<div class="fx-linha"><span>'+fmtDataCurta(p.data)+'</span><span>'+
+    ((p.hora&&p.hora!=='—')?p.hora:'—')+'</span><span>'+
+    (p.tipo==='reposicao'||p.repo?'reposição':(p.tipo==='grupo'?'grupo':'aula'))+'</span></div>';
+  const bloco=(titulo,lista,vazio)=>'<div class="fx-sec">'+titulo+'</div>'+(lista.length
+    ? lista.map(linhaAula).join('')
+    : '<div class="fx-linha" style="justify-content:center;color:#8A7B63">'+vazio+'</div>');
   const venc=Number(a.diaVenc)||10;
   const pix=(DB.pix||'').trim();
   box.innerHTML=
@@ -5499,13 +5507,17 @@ function renderFechamento(){
    +'<div class="fx-topo"><img src="jv-icone-gestao.png" alt=""><div><b>ACADEMIA JOÃO VICTOR TÊNIS</b><span>Fechamento mensal</span></div></div>'
    +'<div class="fx-nome">'+esc(a.nome)+'</div>'
    +'<div class="fx-mes">'+fcRotuloMes(mk)+'</div>'
-   +'<div class="fx-sec">Aulas realizadas</div>'+linhas
+   +bloco('Aulas realizadas',jaForam,'Nenhuma aula realizada neste mês.')
+   +(aVir.length?bloco('Aulas que ainda vêm',aVir,''):'')
    +'<div class="fx-sec">Saldo</div>'
    +'<div class="fx-linha"><span>Aulas no mês</span><span></span><span>'+fmtCred(D.feitas)+'</span></div>'
    +(D.faltas>0?'<div class="fx-linha" style="color:#8A7B63"><span>Faltas (aula consumida)</span><span></span><span>'+D.faltas+'</span></div>':'')
    +(D.avisados>0?'<div class="fx-linha" style="color:#2E7D52"><span>Cancelou avisando (crédito preservado)</span><span></span><span>'+D.avisados+'</span></div>':'')
    +'<div class="fx-linha"><span>Créditos hoje</span><span></span><span>'+fmtCred(Number(a.creditos)||0)+'</span></div>'
+   +(Number(a.credGrupo)?'<div class="fx-linha"><span>Créditos de grupo</span><span></span><span>'+fmtCred(Number(a.credGrupo)||0)+'</span></div>':'')
    +'<div class="fx-linha"><span>Reposições guardadas</span><span></span><span>'+fmtCred(reposValidas(a))+'</span></div>'
+   +'<div class="fx-linha" style="font-weight:800;border-top:1px solid var(--border);padding-top:7px;margin-top:2px"><span>Total de aulas a usar</span><span></span><span>'
+     +fmtCred((Number(a.creditos)||0)+(Number(a.credGrupo)||0)+reposValidas(a))+'</span></div>'
    +(reposVencendo(a)>0?'<div class="fx-linha" style="color:#7A5B10"><span>vencem no fim do mês</span><span></span><span>'+fmtCred(reposVencendo(a))+'</span></div>':'')
    +'<div class="fx-sec">Valores</div>'
    +'<div class="fx-linha"><span>Mensalidade</span><span></span><span>'+fmtRs(D.cheia)+'</span></div>'
