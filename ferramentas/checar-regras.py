@@ -25,6 +25,8 @@ COACH    = {'uid': JOAO}          # João logado por e-mail e senha
 ALUNO    = {'uid': 'anon-abc123'} # app do aluno, entrada anônima
 ALUNO2   = {'uid': 'anon-xyz789'} # OUTRO aluno, para provar que um não alcança o outro
 NINGUEM  = None                   # site público, ou qualquer estranho
+PROF     = {'uid': 'prof-uid-111'}# professor que dá aula na quadra, logado por e-mail
+PROF2    = {'uid': 'prof-uid-222'}# OUTRO professor, para provar que um não alcança o outro
 
 
 def avaliar(expr, auth, curingas, data_existe, new_existe):
@@ -85,7 +87,7 @@ def permite(regras, caminho, tipo, auth, data_existe=False, new_existe=True):
 
 def main():
     arq = sys.argv[1] if len(sys.argv) > 1 else \
-        os.path.join(os.path.dirname(__file__), 'firebase-regras-etapa2.json')
+        os.path.join(os.path.dirname(__file__), 'firebase-regras-etapa3.json')
     regras = json.load(open(arq, encoding='utf-8'))['rules']
     print('conferindo:', os.path.basename(arq), '\n')
 
@@ -142,8 +144,60 @@ def main():
     casos.append(('Site público (sem login)', 'lê os preços',        NINGUEM, J+'precos_publicos', 'read', True, True))
     casos.append(('Site público (sem login)', 'NÃO grava sem se identificar', NINGUEM, J+'fila_cadastros/-Nnovo', 'write', False, False))
 
+    # ---- Professor: o espaço dele é dele, e só dele
+    # Isto é o que de fato separa a academia do professor. A tela do app pode
+    # esconder botões; só a regra impede que o app dele leia o faturamento.
+    for cam in ['banco','v2/alunos','v2/movs','v2/presencas','v2/lancamentos',
+                'v2/agenda','v2/config','arquivo/2026/movs','backups/2026-09-05-10']:
+        casos.append(('Professor no espaço dele', 'grava '+cam, PROF, J+'prof/prof-uid-111/'+cam, 'write', True, True))
+        casos.append(('Professor no espaço dele', 'lê '+cam,     PROF, J+'prof/prof-uid-111/'+cam, 'read',  True, True))
+    casos.append(('Professor no espaço dele', 'lê o próprio cadastro', PROF, J+'professores/prof-uid-111', 'read', True, True))
+    casos.append(('Professor no espaço dele', 'lê o mapa da quadra',   PROF, J+'mapa_quadra', 'read', True, True))
+    casos.append(('Professor no espaço dele', 'pede um horário novo',  PROF, J+'fila_quadra/-Nnovo', 'write', True, False))
+    casos.append(('Professor no espaço dele', 'lê o carimbo de versão',PROF, J+'versao_app', 'read', True, True))
+    casos.append(('Professor no espaço dele', 'lê os preços públicos', PROF, J+'precos_publicos', 'read', True, True))
+
+    # ---- e o que ele NÃO pode: é aqui que mora a promessa "a gestão é só minha"
+    casos.append(('Professor NÃO pode', 'ler o banco da academia',  PROF, J+'jvtenis-gestao-v1', 'read',  False, True))
+    casos.append(('Professor NÃO pode', 'gravar no banco da academia',PROF, J+'jvtenis-gestao-v1','write', False, True))
+    for cam in ['v2/alunos','v2/lancamentos','v2/movs','v2/config']:
+        casos.append(('Professor NÃO pode', 'ler '+cam+' da academia', PROF, J+cam, 'read', False, True))
+        casos.append(('Professor NÃO pode', 'gravar '+cam+' da academia', PROF, J+cam, 'write', False, True))
+    casos.append(('Professor NÃO pode', 'ler os backups da academia',PROF, J+'backups', 'read',  False, True))
+    casos.append(('Professor NÃO pode', 'ler o arquivo da academia', PROF, J+'arquivo', 'read',  False, True))
+    casos.append(('Professor NÃO pode', 'gravar na publicação',      PROF, J+'jvtenis-app-aluno', 'write', False, True))
+    casos.append(('Professor NÃO pode', 'ler as filas dos alunos',   PROF, J+'fila_pedidos', 'read', False, True))
+    casos.append(('Professor NÃO pode', 'ler as notificações',       PROF, J+'notificacoes', 'read', False, True))
+    casos.append(('Professor NÃO pode', 'ler os telefones do site',  PROF, J+'fila_cadastros', 'read', False, True))
+    casos.append(('Professor NÃO pode', 'ler pedido de um aluno',    PROF, J+'aluno-estado/anon-abc123', 'read', False, True))
+    casos.append(('Professor NÃO pode', 'escrever o mapa da quadra', PROF, J+'mapa_quadra', 'write', False, True))
+    casos.append(('Professor NÃO pode', 'ler a fila da quadra',      PROF, J+'fila_quadra', 'read', False, True))
+    casos.append(('Professor NÃO pode', 'apagar pedido da fila da quadra', PROF, J+'fila_quadra/-Nabc', 'write', False, True))
+    casos.append(('Professor NÃO pode', 'listar os professores',     PROF, J+'professores', 'read', False, True))
+    casos.append(('Professor NÃO pode', 'se cadastrar sozinho',      PROF, J+'professores/prof-uid-111', 'write', False, True))
+    casos.append(('Professor NÃO pode', 'baixar tudo (/jvtenis)',    PROF, 'jvtenis', 'read', False, True))
+    casos.append(('Professor NÃO pode', 'listar todos os espaços de professor', PROF, J+'prof', 'read', False, True))
+
+    casos.append(('Um professor NÃO alcança o outro', 'ler o banco do outro',   PROF2, J+'prof/prof-uid-111/banco', 'read',  False, True))
+    casos.append(('Um professor NÃO alcança o outro', 'gravar no banco do outro',PROF2, J+'prof/prof-uid-111/banco','write', False, True))
+    casos.append(('Um professor NÃO alcança o outro', 'ler o cadastro do outro', PROF2, J+'professores/prof-uid-111','read', False, True))
+
+    # ---- o João continua dono de tudo, inclusive do espaço do professor
+    casos.append(('Gestão (João logado)', 'lê o espaço de um professor',  COACH, J+'prof/prof-uid-111/banco', 'read',  True, True))
+    casos.append(('Gestão (João logado)', 'lista os espaços de professor',COACH, J+'prof', 'read', True, True))
+    casos.append(('Gestão (João logado)', 'cadastra um professor',        COACH, J+'professores/prof-uid-111', 'write', True, True))
+    casos.append(('Gestão (João logado)', 'publica o mapa da quadra',     COACH, J+'mapa_quadra', 'write', True, True))
+    casos.append(('Gestão (João logado)', 'lê a fila da quadra',          COACH, J+'fila_quadra', 'read', True, True))
+    casos.append(('Gestão (João logado)', 'apaga pedido da fila da quadra',COACH, J+'fila_quadra/-Nabc', 'write', True, True))
+
+    # ---- aluno e estranho perto do que é do professor
+    casos.append(('Aluno NÃO pode', 'ler o banco de um professor', ALUNO, J+'prof/prof-uid-111/banco', 'read', False, True))
+    casos.append(('Aluno NÃO pode', 'gravar na fila da quadra',    ALUNO, J+'fila_quadra/-Nx', 'write', True, False))
+
     # ---- Estranho
     casos.append(('Estranho NÃO pode', 'baixar tudo (/jvtenis)',  NINGUEM, 'jvtenis', 'read', False, True))
+    casos.append(('Estranho NÃO pode', 'ler o banco de um professor', NINGUEM, J+'prof/prof-uid-111/banco', 'read', False, True))
+    casos.append(('Estranho NÃO pode', 'ler o mapa da quadra',    NINGUEM, J+'mapa_quadra', 'read', False, True))
     casos.append(('Estranho NÃO pode', 'baixar a raiz (/)',       NINGUEM, '', 'read', False, True))
     casos.append(('Estranho NÃO pode', 'ler a publicação',        NINGUEM, J+'jvtenis-app-aluno', 'read', False, True))
     casos.append(('Estranho NÃO pode', 'ler o banco da gestão',   NINGUEM, J+'jvtenis-gestao-v1', 'read', False, True))
