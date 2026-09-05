@@ -1519,6 +1519,7 @@ function pintarIcones(){var m=document.querySelectorAll(".ico[data-ic]");for(var
       <select id="ha-mes" onchange="renderHistAulas()"></select>
     </div>
     <div id="ha-export" style="max-height:54vh;overflow:auto"></div>
+    <div id="ha-dups"></div>
     <div class="modal-acts" style="flex-wrap:wrap;gap:8px">
       <button class="btn btn-ghost" onclick="closeModal('ov-histaulas')">Fechar</button>
       <button class="btn btn-ghost" onclick="exportarHistImg()">📷 Imagem</button>
@@ -1797,7 +1798,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-05-3';
+const VERSAO='2026-09-05-4';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -2929,7 +2930,13 @@ async function doPublish(){
       historico:(function(){
         const codeOf={};DB.alunos.forEach(a=>{codeOf[a.id]=a.codigo;});
         const cut=dKey(new Date(Date.now()-60*864e5));const out={};
-        (DB.presencas||[]).forEach(p=>{const c=codeOf[p.alunoId];if(!c||(p.data&&p.data<cut))return;(out[c]=out[c]||[]).push({data:p.data||'',hora:p.hora||''});});
+        /* Só aula realizada de verdade: falta e aviso prévio não são aula, e a
+           duplicada do cartão é a mesma aula outra vez. Sem este filtro o aluno
+           via no app dele um ✓ para o dia que ele avisou que não vinha. */
+        const todas=DB.presencas||[];
+        todas.forEach(p=>{const c=codeOf[p.alunoId];if(!c||(p.data&&p.data<cut))return;
+          if(ehMarca(p)||ehDupManual(p,todas))return;
+          (out[c]=out[c]||[]).push({data:p.data||'',hora:p.hora||''});});
         Object.keys(out).forEach(c=>{out[c].sort((a,b)=>String(b.data).localeCompare(String(a.data)));out[c]=out[c].slice(0,30);});
         return out;
       })(),
@@ -3824,7 +3831,23 @@ function wkZoomFit(){
   aplicarWkVars();
 }
 function presId(e,date){return dKey(date)+'|'+e.hora+'|'+e.alunoId;}
-function presencasDe(id){return (DB.presencas||[]).filter(p=>p.alunoId===id&&!ehMarca(p));}
+/* Aula duplicada: o lançamento manual do cartão ("Aula realizada") caiu num
+   dia em que a aula daquele aluno JÁ estava marcada na agenda. É a mesma aula
+   contada duas vezes — descontou dois créditos e aparecia duas vezes no
+   histórico e no cartão. A da agenda tem dia E hora; a manual só tem o dia,
+   então é a manual que sai da conta.
+   Aula avulsa de verdade no mesmo dia existe (ele deu uma aula a mais fora da
+   agenda). Para essa, o app pergunta na hora de lançar e grava extra:true —
+   com essa marca ela volta a contar normalmente. */
+function ehDupManual(p,todas){
+  if(!p||!p.manual||p.extra)return false;
+  return (todas||DB.presencas||[]).some(q=>q!==p&&q.alunoId===p.alunoId&&q.data===p.data&&!q.manual&&!ehMarca(q));
+}
+function dupsManuaisDe(id){const t=DB.presencas||[];return t.filter(p=>p.alunoId===id&&!ehMarca(p)&&ehDupManual(p,t));}
+function presencasDe(id,comDup){
+  const t=DB.presencas||[];
+  return t.filter(p=>p.alunoId===id&&!ehMarca(p)&&(comDup||!ehDupManual(p,t)));
+}
 function isPres(e,date){const k=presId(e,date);return (DB.presencas||[]).some(p=>p.k===k&&!ehMarca(p));}
 function isFalta(e,date){const k=presId(e,date);return (DB.presencas||[]).some(p=>p.k===k&&ehFalta(p));}
 function isAvisou(e,date){const k=presId(e,date);return (DB.presencas||[]).some(p=>p.k===k&&ehAvisou(p));}
@@ -3895,6 +3918,28 @@ function togglePresenca(entryId){
       else{logAct('Desmarcar locação: '+a.nome);toast('Locação desfeita · '+a.nome+' → '+fmtCred(a.locCred)+'h de locação');}
     }
   }else{
+    /* Só debita se a aula desse dia ainda não estiver registrada. Se ele já
+       tinha apertado "Aula realizada" no cartão, marcar o ✓ aqui seria o
+       segundo desconto pela mesma aula. Em vez de descontar de novo, troca: a
+       linha solta do cartão sai e o crédito dela volta, e fica valendo a da
+       agenda, que tem dia e hora certos. */
+    if(!isTor&&!isLoc){
+      const dupsM=(DB.presencas||[]).filter(p=>p.alunoId===a.id&&p.data===dKey(agDate)&&p.manual&&!p.extra&&!ehMarca(p)
+                                              &&(p.tipo||p.modo||'aula')!=='locacao'&&(p.tipo||p.modo)!=='torneio');
+      if(dupsM.length){
+        if(!confirm(a.nome+' já tem esta aula lançada pelo cartão em '+fmtDataCurta(dKey(agDate))+'.\n\n'
+          +'OK = marcar aqui no horário certo e apagar a do cartão (o crédito dela volta)\n'
+          +'Cancelar = deixar como está'))return;
+        dupsM.forEach(reg=>{
+          const j=DB.presencas.indexOf(reg);if(j<0)return;
+          marcarRemovida('presencas',reg);
+          DB.presencas.splice(j,1);
+          const dv=estornoPorRef(a,reg.k,reg);
+          Object.keys(dv).forEach(cp=>mover(a,cp,dv[cp],'Aula repetida removida',reg.k));
+        });
+        logAct('Trocar aula do cartão pela da agenda: '+a.nome);
+      }
+    }
     if(isTor){
       DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo:'torneio',custo:0});
       logAct('Marcar jogo do torneio: '+a.nome);toast('🏆 Jogo do torneio · '+a.nome+' — sem desconto de crédito');
@@ -5014,8 +5059,27 @@ function aulaRealizada(id,modo,custo,hora){
   const a=DB.alunos.find(x=>x.id===id);
   if(!DB.presencas)DB.presencas=[];
   const c=Number(custo)>0?Number(custo):1;
+  const hoje=dKey(new Date());
+  /* Só debita se a aula daquele dia ainda não foi registrada. Antes, marcar o ✓
+     na agenda e depois apertar "Aula realizada" no cartão tirava dois créditos
+     pela MESMA aula, sem avisar nada. Agora ele decide: ou é a mesma aula (e
+     não lança), ou é uma aula a mais de verdade — e essa fica marcada como
+     extra, para nunca ser confundida com repetição. */
+  const jaHoje=(DB.presencas||[]).filter(p=>p.alunoId===a.id&&p.data===hoje&&!ehAvisou(p)
+                                            &&(p.tipo||p.modo||'aula')!=='locacao'&&(p.tipo||p.modo)!=='torneio');
+  let ehExtra=false;
+  if(jaHoje.length){
+    const quais=jaHoje.map(p=>((p.hora&&p.hora!=='—')?p.hora:'lançada no cartão')+(ehFalta(p)?' (falta)':'')).join(', ');
+    if(!confirm(a.nome+' já tem aula registrada hoje ('+quais+').\n\n'
+      +'Lançar de novo desconta OUTRO crédito.\n\n'
+      +'OK = foi mesmo uma aula A MAIS hoje\n'
+      +'Cancelar = é a mesma aula, não lançar'))return;
+    ehExtra=true;
+  }
   const k='m'+a.id+'-'+Date.now();
-  DB.presencas.push({k,alunoId:a.id,data:dKey(new Date()),hora:hora||'—',manual:true,modo:modo||'aula',tipo:modo||'aula',custo:c});
+  const reg={k,alunoId:a.id,data:hoje,hora:hora||'—',manual:true,modo:modo||'aula',tipo:modo||'aula',custo:c};
+  if(ehExtra)reg.extra=true;
+  DB.presencas.push(reg);
   if(modo==='grupo'){            // sai do saldo de grupo, nunca do de particular
     mover(a,'credGrupo',-c,'Aula em grupo realizada',k);
     persist();renderAll();pulsarCredito(a.id);
@@ -5427,7 +5491,7 @@ function fcAulasDoMes(a,mk){
   (DB.presencas||[]).forEach(p=>{
     if(p.alunoId!==a.id||ehMarca(p)||!p.manual)return;
     if(String(p.data||'').indexOf(mk)!==0)return;
-    if(diasComAula.has(p.data))return;
+    if(diasComAula.has(p.data)||ehDupManual(p))return;
     out.push({k:p.k,data:p.data,hora:p.hora,tipo:p.tipo||'aula',repo:false,
               custo:Number(p.custo)||1,marcada:true});
   });
@@ -6868,6 +6932,48 @@ function renderHistAulas(){
   h+='<div style="margin-top:10px;font-size:10.5px;color:#8a8478">Emitido em '+new Date().toLocaleDateString('pt-BR')+' · Prof. João Victor 🎾</div>';
   h+='</div>';
   document.getElementById('ha-export').innerHTML=h;
+  renderHistDups();
+}
+/* Aulas repetidas que ficaram guardadas de antes. Elas não entram mais na lista
+   nem no comprovante, mas o crédito delas já foi descontado duas vezes — e isso
+   só o professor pode desfazer. Fica aqui embaixo, fora do comprovante, com o
+   dia e a hora da aula que ficou valendo, e só sai daqui se ele mandar. */
+function renderHistDups(){
+  const box=document.getElementById('ha-dups');if(!box)return;
+  const a=DB.alunos.find(x=>x.id===haId);
+  const dups=a?dupsManuaisDe(a.id):[];
+  if(!dups.length){box.innerHTML='';return;}
+  const todas=DB.presencas||[];
+  box.innerHTML='<div style="margin-top:10px;border:1px solid #E5C0BA;background:#FCF3F1;border-radius:11px;padding:10px 12px">'
+    +'<div style="font-weight:800;font-size:13px;margin-bottom:4px">🔁 '+dups.length+' aula repetida'+(dups.length>1?'s':'')+' fora da lista</div>'
+    +'<p class="hint" style="margin:0 0 8px">Lançamento do cartão no mesmo dia de uma aula que já estava marcada na agenda. Já não conta no histórico, no cartão nem no fechamento — mas o crédito saiu duas vezes. Se você já acertou o número na mão no cadastro, use <b>só apagar</b>.</p>'
+    +dups.map(p=>{
+      const ag=todas.filter(q=>q.alunoId===p.alunoId&&q.data===p.data&&!q.manual&&!ehMarca(q)).map(q=>q.hora).join(' e ');
+      const dev=estornoPorRef(a,p.k,p);
+      const txtDev=Object.keys(dev).map(cp=>fmtCred(dev[cp])+' de '+CAMPO_LABEL[cp]).join(', ');
+      return '<div style="padding:7px 0;border-top:1px solid #f0dcd7">'
+        +'<div style="font-size:12.5px;margin-bottom:5px"><b>'+fmtDataCurta(p.data)+'</b> — vale a da agenda ('+esc(ag||'sem hora')+') · descontou '+esc(txtDev||'nada')+'</div>'
+        +'<div style="display:flex;gap:6px;flex-wrap:wrap">'
+        +(txtDev?('<button class="btn btn-clay" style="padding:5px 10px;font-size:12px" onclick="apagarDupAula(\''+p.k+'\',1)">apagar e devolver '+esc(txtDev)+'</button>'):'')
+        +'<button class="btn btn-ghost" style="padding:5px 10px;font-size:12px" onclick="apagarDupAula(\''+p.k+'\',0)">só apagar (não mexe no saldo)</button>'
+        +'</div></div>';
+    }).join('')+'</div>';
+}
+function apagarDupAula(k,devolver){
+  const a=DB.alunos.find(x=>x.id===haId);if(!a)return;
+  const i=(DB.presencas||[]).findIndex(p=>p.k===k);
+  if(i<0){renderHistDups();return;}
+  const reg=DB.presencas[i];
+  const dev=devolver?estornoPorRef(a,k,reg):{};
+  const volta=Object.keys(dev).map(cp=>fmtCred(dev[cp])+' de '+CAMPO_LABEL[cp]).join(', ');
+  if(!confirm('Apagar a aula repetida de '+fmtDataCurta(reg.data)+' de '+a.nome+'?\n\n'
+    +(volta?('Devolve '+volta+'.'):'O saldo NÃO muda — só a linha repetida sai.')))return;
+  marcarRemovida('presencas',reg);
+  DB.presencas.splice(i,1);
+  Object.keys(dev).forEach(cp=>mover(a,cp,dev[cp],'Aula repetida removida',k));
+  logAct('Apagar aula repetida: '+a.nome);
+  persist();renderAll();renderHistAulas();
+  toast('🧹 Aula repetida apagada · '+a.nome+(volta?(' → devolvido '+volta):' · saldo intacto'));
 }
 async function _histCanvas(){
   const el=document.getElementById('ha-export');
@@ -7491,6 +7597,16 @@ function conferirNumeros(){
     });
     if(dupPres.length)achados.push({tipo:'dup',a,
       txt:'AULA DUPLICADA: '+a.nome+' tem duas presenças no mesmo horário ('+dupPres.slice(0,3).map(x=>x.split('|')[0].split('-').reverse().join('/')+' '+x.split('|')[1]).join(', ')+'). Cada uma descontou um crédito.'});
+    /* Repetida de outro jeito: a mesma aula lançada pelo cartão E marcada na
+       agenda. Não bate data+hora (a do cartão não tem hora), então a checagem
+       de cima nunca via. Ela já saiu do histórico e do fechamento sozinha; o
+       que sobra é o crédito descontado duas vezes, e isso é ele quem resolve —
+       em Aulas do aluno, no fim da lista. */
+    const dm=dupsManuaisDe(a.id);
+    if(dm.length)achados.push({tipo:'dup',a,
+      txt:'AULA REPETIDA: '+a.nome+' tem '+dm.length+' aula(s) lançada(s) pelo cartão no mesmo dia de uma aula que já estava marcada na agenda ('
+         +dm.slice(0,3).map(p=>String(p.data||'').split('-').reverse().join('/')).join(', ')+'). '
+         +'Já não contam no histórico nem no fechamento, mas o crédito saiu duas vezes. Abra 📅 Aulas no cartão dele para apagar e devolver.'});
   });
   // DUPLICIDADE 4: lançamentos idênticos no mesmo dia (possível toque duplo)
   const porChave={};
