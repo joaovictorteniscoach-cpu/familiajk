@@ -1797,7 +1797,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-05-2';
+const VERSAO='2026-09-05-3';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -5393,7 +5393,7 @@ function fcAulasDoMes(a,mk){
   const ultimo=new Date(ano,mes,0).getDate();
   const porChave={};
   (DB.presencas||[]).forEach(p=>{if(p.alunoId===a.id&&p.k)porChave[p.k]=p;});
-  const out=[];
+  const out=[], jaEntrou=new Set(), diasComAula=new Set();
   for(let d=1;d<=ultimo;d++){
     const data=new Date(ano,mes-1,d,12,0,0,0);
     HORAS.forEach(hora=>{
@@ -5402,7 +5402,13 @@ function fcAulasDoMes(a,mk){
         if(e.tipo==='locacao'||e.tipo==='torneio'||e.tipo==='bloqueio')return;   // não é aula
         const k=presId(e,data), reg=porChave[k];
         if(ehMarca(reg))return;                       // faltou ou avisou: fora da conta
+        /* Um horário conta uma vez. Dois alunos no mesmo slot são duas linhas
+           na agenda, mas para ESTE aluno é uma aula só. */
+        const chaveSlot=dKey(data)+'|'+hora;
+        if(jaEntrou.has(chaveSlot))return;
+        jaEntrou.add(chaveSlot);
         const tipo=e.repo?'reposicao':(e.tipo==='grupo'?'grupo':'aula');
+        diasComAula.add(dKey(data));
         out.push({k,data:dKey(data),hora,tipo,repo:!!e.repo,
                   custo:reg?(Number(reg.custo)||0):creditoSlot(hora),
                   marcada:!!reg});
@@ -5410,10 +5416,15 @@ function fcAulasDoMes(a,mk){
     });
   }
   /* Aula avulsa lançada pelo cartão ("Aula realizada") não tem horário na
-     agenda, então entra pela presença mesmo. */
+     agenda, então entra pela presença mesmo — MAS só se aquele dia ainda não
+     tiver aula. Marcar o ✓ na agenda e apertar "Aula realizada" no cartão
+     registra a mesma aula duas vezes, e ela aparecia como duas linhas no
+     fechamento. Sem horário não dá para saber se é outra aula; num dia que já
+     tem aula, o mais provável, de longe, é ser a mesma. */
   (DB.presencas||[]).forEach(p=>{
     if(p.alunoId!==a.id||ehMarca(p)||!p.manual)return;
     if(String(p.data||'').indexOf(mk)!==0)return;
+    if(diasComAula.has(p.data))return;
     out.push({k:p.k,data:p.data,hora:p.hora,tipo:p.tipo||'aula',repo:false,
               custo:Number(p.custo)||1,marcada:true});
   });
