@@ -28,12 +28,40 @@ NINGUEM  = None                   # site público, ou qualquer estranho
 PROF     = {'uid': 'prof-uid-111'}# professor que dá aula na quadra, logado por e-mail
 PROF2    = {'uid': 'prof-uid-222'}# OUTRO professor, para provar que um não alcança o outro
 
+# O que já EXISTE no banco quando a regra é avaliada. Só precisa cobrir os nós
+# que as regras consultam com root.child(...).exists() — hoje, quem foi
+# cadastrado como professor pelo João.
+EXISTE = {
+    'jvtenis/professores/prof-uid-111',
+    'jvtenis/professores/prof-uid-222',
+}
+
 
 def avaliar(expr, auth, curingas, data_existe, new_existe):
     """Avalia o subconjunto de expressão usado nas nossas regras."""
     if expr is True:  return True
     if expr is False: return False
     e = str(expr)
+    # root.child(...).exists() — o caminho é montado por pedaços ('texto',
+    # $curinga, auth.uid). Tem de ser resolvido ANTES das outras trocas, senão
+    # auth.uid já virou 'texto' e o padrão não casa mais.
+    def rootc(m):
+        cam = ''
+        for pedaco in m.group(1).split('+'):
+            pedaco = pedaco.strip()
+            if pedaco.startswith("'") and pedaco.endswith("'"):
+                cam += pedaco[1:-1]
+            elif pedaco == 'auth.uid':
+                if not auth: return 'False'
+                cam += auth['uid']
+            elif pedaco.startswith('$'):
+                v = curingas.get(pedaco[1:])
+                if v is None: return 'False'
+                cam += v
+            else:
+                raise SystemExit('root.child com pedaço que não sei resolver: %r' % pedaco)
+        return repr(cam in EXISTE)
+    e = re.sub(r"root\.child\(([^()]*)\)\.exists\(\)", rootc, e)
     # auth
     e = re.sub(r'\bauth\s*!=\s*null\b', 'True' if auth else 'False', e)
     e = re.sub(r'\bauth\s*==\s*null\b', 'False' if auth else 'True', e)
@@ -152,7 +180,8 @@ def main():
         casos.append(('Professor no espaço dele', 'grava '+cam, PROF, J+'prof/prof-uid-111/'+cam, 'write', True, True))
         casos.append(('Professor no espaço dele', 'lê '+cam,     PROF, J+'prof/prof-uid-111/'+cam, 'read',  True, True))
     casos.append(('Professor no espaço dele', 'lê o próprio cadastro', PROF, J+'professores/prof-uid-111', 'read', True, True))
-    casos.append(('Professor no espaço dele', 'lê o mapa da quadra',   PROF, J+'mapa_quadra', 'read', True, True))
+    casos.append(('Professor no espaço dele', 'lê o mapa da quadra inteiro', PROF, J+'mapa_quadra', 'read', True, True))
+    casos.append(('Professor no espaço dele', 'publica o próprio mapa',       PROF, J+'mapa_quadra/prof-uid-111', 'write', True, True))
     casos.append(('Professor no espaço dele', 'pede um horário novo',  PROF, J+'fila_quadra/-Nnovo', 'write', True, False))
     casos.append(('Professor no espaço dele', 'lê o carimbo de versão',PROF, J+'versao_app', 'read', True, True))
     casos.append(('Professor no espaço dele', 'lê os preços públicos', PROF, J+'precos_publicos', 'read', True, True))
@@ -170,7 +199,8 @@ def main():
     casos.append(('Professor NÃO pode', 'ler as notificações',       PROF, J+'notificacoes', 'read', False, True))
     casos.append(('Professor NÃO pode', 'ler os telefones do site',  PROF, J+'fila_cadastros', 'read', False, True))
     casos.append(('Professor NÃO pode', 'ler pedido de um aluno',    PROF, J+'aluno-estado/anon-abc123', 'read', False, True))
-    casos.append(('Professor NÃO pode', 'escrever o mapa da quadra', PROF, J+'mapa_quadra', 'write', False, True))
+    casos.append(('Professor NÃO pode', 'escrever o mapa inteiro da quadra', PROF, J+'mapa_quadra', 'write', False, True))
+    casos.append(('Professor NÃO pode', 'escrever o mapa de OUTRO professor', PROF, J+'mapa_quadra/prof-uid-222', 'write', False, True))
     casos.append(('Professor NÃO pode', 'ler a fila da quadra',      PROF, J+'fila_quadra', 'read', False, True))
     casos.append(('Professor NÃO pode', 'apagar pedido da fila da quadra', PROF, J+'fila_quadra/-Nabc', 'write', False, True))
     casos.append(('Professor NÃO pode', 'listar os professores',     PROF, J+'professores', 'read', False, True))
@@ -186,13 +216,15 @@ def main():
     casos.append(('Gestão (João logado)', 'lê o espaço de um professor',  COACH, J+'prof/prof-uid-111/banco', 'read',  True, True))
     casos.append(('Gestão (João logado)', 'lista os espaços de professor',COACH, J+'prof', 'read', True, True))
     casos.append(('Gestão (João logado)', 'cadastra um professor',        COACH, J+'professores/prof-uid-111', 'write', True, True))
-    casos.append(('Gestão (João logado)', 'publica o mapa da quadra',     COACH, J+'mapa_quadra', 'write', True, True))
+    casos.append(('Gestão (João logado)', 'publica o próprio mapa da quadra', COACH, J+'mapa_quadra/'+JOAO, 'write', True, True))
+    casos.append(('Gestão (João logado)', 'corrige o mapa de um professor',   COACH, J+'mapa_quadra/prof-uid-111', 'write', True, True))
     casos.append(('Gestão (João logado)', 'lê a fila da quadra',          COACH, J+'fila_quadra', 'read', True, True))
     casos.append(('Gestão (João logado)', 'apaga pedido da fila da quadra',COACH, J+'fila_quadra/-Nabc', 'write', True, True))
 
     # ---- aluno e estranho perto do que é do professor
     casos.append(('Aluno NÃO pode', 'ler o banco de um professor', ALUNO, J+'prof/prof-uid-111/banco', 'read', False, True))
-    casos.append(('Aluno NÃO pode', 'gravar na fila da quadra',    ALUNO, J+'fila_quadra/-Nx', 'write', True, False))
+    casos.append(('Aluno NÃO pode', 'gravar na fila da quadra',    ALUNO, J+'fila_quadra/-Nx', 'write', False, False))
+    casos.append(('Aluno NÃO pode', 'sujar o mapa da quadra',      ALUNO, J+'mapa_quadra/anon-abc123', 'write', False, True))
 
     # ---- Estranho
     casos.append(('Estranho NÃO pode', 'baixar tudo (/jvtenis)',  NINGUEM, 'jvtenis', 'read', False, True))
