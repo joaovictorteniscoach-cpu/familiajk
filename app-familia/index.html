@@ -127,6 +127,34 @@ select.cell option{background:var(--surface)}
 .goal .meta-inputs{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px}
 .goal .meta-inputs .f label{font-size:10.5px;color:var(--muted);display:block;margin-bottom:3px}
 .goal .meta-inputs .f input{width:130px;background:rgba(79,191,168,.07);border:1px solid var(--line);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;padding:7px 8px;border-radius:7px}
+/* ===== Modo "caber na tela": cada linha vira um cartão empilhado, com o
+   rótulo da coluna ao lado do valor. Assim nenhuma aba precisa ser arrastada
+   de lado — e a letra fica maior, porque sobra largura. ===== */
+body.fit .scroll{overflow-x:visible}
+body.fit .tbl{font-size:14px}
+body.fit .tbl tr:first-child{display:none}          /* o cabeçalho vira rótulo de cada célula */
+body.fit .tbl tr{display:block;box-sizing:border-box;width:100%;
+  border:1px solid var(--line);border-radius:11px;
+  background:var(--surface2);padding:6px 10px;margin-bottom:8px}
+body.fit .tbl{table-layout:fixed;width:100%}
+body.fit .tbl td{box-sizing:border-box}
+body.fit .tbl td{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  width:auto;text-align:right;white-space:normal;border:none;padding:5px 0;max-width:none}
+body.fit .tbl td+td{border-top:1px solid rgba(38,69,79,.45)}
+body.fit .tbl td::before{content:attr(data-lab);flex:0 0 auto;text-align:left;
+  font-family:'Inter',sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:.4px;
+  color:var(--muted);font-weight:600}
+body.fit .tbl td[data-lab=""]::before,body.fit .tbl td.semlab::before{content:none}
+/* nada dentro da célula pode impor largura mínima: várias tabelas trazem
+   min-width/max-width em linha, feitos para o modo de colunas */
+body.fit .tbl td *{min-width:0 !important;max-width:100% !important}
+body.fit .tbl td>input,body.fit .tbl td>select{max-width:62% !important;width:auto;flex:0 1 auto}
+body.fit .tbl td>.minibar{flex:1 1 auto;max-width:45% !important}
+body.fit .tbl tr.sumrow{background:transparent;border-color:var(--accent);border-width:1px}
+body.fit .tbl tr.rowpaid{opacity:.62}
+body.fit .tbl td.paycell{width:auto;padding-left:0}
+/* linha vazia (só botão de remover) não precisa de moldura própria */
+body.fit .tbl td:only-child{justify-content:flex-end}
 .minibar{height:7px;background:var(--ink);border:1px solid var(--line);border-radius:5px;overflow:hidden;margin-bottom:4px;min-width:80px}
 .minibar>i{display:block;height:100%;border-radius:5px;transition:width .4s ease}
 .barstack{height:16px;background:var(--ink);border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex}
@@ -238,6 +266,7 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
     <button class="iconbtn" onclick="exportJSON()">Backup</button>
     <button class="iconbtn" onclick="importJSON()">Importar</button>
     <button class="iconbtn" onclick="resetData()">Exemplo</button>
+    <button class="iconbtn" id="btn-fit" onclick="toggleFit()">—</button>
   </div>
 </header>
 
@@ -1040,6 +1069,8 @@ const DEFAULT={
    allocTarget:{"Renda Fixa / Caixa":40,"Ações (EUA)":30,"Ouro":10,"Prata":5,"Cripto":5,"Setoriais":10,"Outros":0},
    plano:{joao:700,esposa:300}
  },
+ /* tabelas empilhadas para caber na tela do celular (padrão ligado) */
+ fit:true,
  cloud:{url:"",on:false},
  lastBackup:null
 };
@@ -1150,6 +1181,7 @@ function migrate(o){
   if(!out.cloud)out.cloud={url:"",on:false};
   if(out.lastBackup===undefined)out.lastBackup=null;
   if(!out.mode)out.mode="contas";
+  if(out.fit===undefined)out.fit=true;
   return out;
 }
 function load(){
@@ -1282,6 +1314,7 @@ function switchTab(id,btn){
   document.querySelectorAll('section[data-tab]').forEach(s=>s.classList.toggle('on',s.dataset.tab===id));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));if(btn)btn.classList.add('active');
   if(DRAW[id]){const prev=suppressPush;suppressPush=true;try{DRAW[id]();}catch(e){console.warn('Família JK — falha na aba',id,e);}suppressPush=prev;}
+  rotularTabelas();
 }
 
 /* ===================== CONTAS — render ===================== */
@@ -3155,7 +3188,31 @@ function checkBackup(){
 function snoozeBanner(){sessionStorage.setItem('jk_snooze','1');document.getElementById('backupBanner').style.display='none';}
 
 /* ---------- boot ---------- */
-function tuneInputs(){document.querySelectorAll('input[type=number]').forEach(i=>{if(!i.getAttribute('inputmode'))i.setAttribute('inputmode','decimal');});}
+/* Copia o texto do cabeçalho para cada célula da coluna (data-lab). É isso que
+   permite empilhar a tabela sem tocar em nenhuma das 26 funções de desenho. */
+function rotularTabelas(){
+  document.querySelectorAll('table.tbl').forEach(t=>{
+    const cab=t.rows&&t.rows[0];if(!cab)return;
+    const rot=[...cab.cells].map(c=>(c.textContent||'').trim());
+    for(let i=1;i<t.rows.length;i++){
+      const cs=t.rows[i].cells;
+      for(let j=0;j<cs.length;j++){
+        const lab=rot[j]||'';
+        if(cs[j].getAttribute('data-lab')!==lab)cs[j].setAttribute('data-lab',lab);
+      }
+    }
+  });
+}
+function aplicarFit(){
+  const on=D&&D.fit!==false;
+  document.body.classList.toggle('fit',on);
+  const b=document.getElementById('btn-fit');
+  if(b){b.textContent=on?'↔ tabela larga':'📱 caber na tela';
+    b.title=on?'Ver as tabelas em colunas, arrastando de lado':'Empilhar as tabelas para caber na tela';}
+  rotularTabelas();
+}
+function toggleFit(){D.fit=!(D.fit!==false);saveLocal();aplicarFit();}
+function tuneInputs(){rotularTabelas();document.querySelectorAll('input[type=number]').forEach(i=>{if(!i.getAttribute('inputmode'))i.setAttribute('inputmode','decimal');});}
 function refreshInv(){refreshCarteira();drawInvPainel();save();}
 
 /* ============ Importar planilha da XP (.xlsx / .csv) ============ */
@@ -3316,7 +3373,7 @@ function renderAll(){
 }
 document.addEventListener('focusin',e=>{const t=e.target;if(t&&t.tagName==='INPUT'&&t.type!=='checkbox'){setTimeout(()=>{try{t.select()}catch(_){}},0);}});
 
-load();D.contas.mesSel=curMonthKey();initFields();renderAll();setMode(D.mode||'contas');checkBackup();
+load();D.contas.mesSel=curMonthKey();initFields();renderAll();setMode(D.mode||'contas');aplicarFit();checkBackup();
 if(D.cloud&&D.cloud.on&&D.cloud.url){setCloudStatus('conectado');cloudStart();cloudPull(true);}
 /* PWA: instalar na tela de início e abrir offline (rede primeiro, cache de reserva) */
 if('serviceWorker'in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-familia.js').catch(function(){});});}
