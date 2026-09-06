@@ -1988,7 +1988,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-06-6';
+const VERSAO='2026-09-06-7';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -3272,7 +3272,13 @@ function persist(){
       cloudPending=false;setSave('✓ salvo na nuvem','ok');
       subirBlobDeReserva();backupNuvem();
     }
-    else{cloudPending=true;setSave(okLocal?'⚠ salvo só no aparelho ⓘ':'erro ao salvar',okLocal?'ok':'err');}
+    else{
+      cloudPending=true;
+      /* "salvo só no aparelho" é verdade, mas não diz nada. Ficar dias assim
+         sem saber por quê foi o que aconteceu no celular emprestado. Recusa do
+         servidor é um problema de regra, não de sinal, e não passa sozinha. */
+      setSave(okLocal?(recusaDoServidor()?'⚠ a nuvem RECUSOU ⓘ':'⚠ salvo só no aparelho ⓘ'):'erro ao salvar',okLocal?'ok':'err');
+    }
     publish();
     publicarMapaQuadra();          // a quadra é uma só: avisa quem mais usa ela
   },500);
@@ -3316,12 +3322,27 @@ setInterval(async()=>{
   if(ok){cloudPending=false;setSave('✓ salvo na nuvem','ok');publish();}
 },30000);
 /* Diagnóstico: toque no indicador para entender a situação */
+/* O Firebase devolve "permission_denied" quando a regra barra. É diferente de
+   estar sem sinal: não adianta esperar, e ninguém adivinha isso olhando para
+   "salvo só no aparelho". */
+function recusaDoServidor(){
+  return /permission|denied|PERMISSION/i.test(String(lastCloudError||''));
+}
 document.getElementById('save-state').style.pointerEvents='auto';
 document.getElementById('save-state').style.cursor='pointer';
 document.getElementById('save-state').onclick=()=>{
   let msg;
   if(!hasCloud()){
     msg='DIAGNÓSTICO\n\n❌ A nuvem (Firebase) não está conectada.\n\nProvável causa: a configuração do Firebase ainda não foi colada no arquivo, ou está incompleta.\n\n✅ Confira o passo 6 do guia: a config deve estar colada no topo do arquivo, sem "COLE_AQUI".\n\nSeus dados estão seguros no aparelho enquanto isso.';
+  }else if(cloudPending&&recusaDoServidor()){
+    msg='DIAGNÓSTICO\n\n🚫 A nuvem RECUSOU a gravação.\n\n'
+      +'Isto não é falta de sinal — é a regra do banco de dados dizendo que esta conta não pode gravar aqui. '
+      +'Esperar não resolve, e o app vai seguir salvando só neste aparelho.\n\n'
+      +(ehDono()
+        ? 'Você está no app da academia. Confira se está conectado com a sua conta em Financeiro → Sua conta.'
+        : 'Você está no app do professor. Peça ao João para colar a versão nova das Regras no Firebase (o arquivo firebase-regras-etapa3.json) e para conferir se a sua conta está cadastrada em Professores.')
+      +'\n\nEspaço: '+(ehDono()?'academia':'professor '+PROF_UID)
+      +'\nÚltimo erro: '+(lastCloudError||'desconhecido');
   }else if(cloudPending){
     msg='DIAGNÓSTICO\n\n⚠ O Firebase está conectado mas a última gravação falhou.\nÚltimo erro: '+(lastCloudError||'desconhecido')+'\n\nO app tenta de novo automaticamente a cada 30 segundos. Verifique se as Regras do banco estão como no passo 5 do guia.';
   }else{
