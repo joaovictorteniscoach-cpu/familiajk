@@ -1988,7 +1988,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-06-9';
+const VERSAO='2026-09-06-10';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -2154,7 +2154,7 @@ async function cadastrarProfessor(){
     await window.fbDB.ref('jvtenis/professores/'+uid).set({nome,desde:Date.now()});
     n.value='';u.value='';
     toast('👨‍🏫 '+nome+' cadastrado — ele já pode entrar com a conta dele');
-    carregarProfsPag();
+    carregarProfsLista();
   }catch(e){
     toast('Não deu: '+String(e&&e.message||e));
   }
@@ -2168,7 +2168,23 @@ async function cadastrarProfessor(){
    guardada aqui, que divergiria em silêncio. Por isso a leitura é um botão, e
    não algo que acontece a cada abertura: são leituras de verdade, e a cota do
    plano gratuito é finita. */
-let PROFS_DADOS=null;      // {uid:{nome,desde,alunos,horas,dias,savedAt,erro}}
+let PROFS_CAD=null;        // {uid:{nome,desde}} — quem está cadastrado
+let PROFS_DADOS=null;      // {uid:{alunos,horas,dias,savedAt,erro}} — os números do mês
+/* Duas leituras, não uma. Quem está cadastrado é barato de ler e é a
+   identidade da tela: sem isso ela abre em branco e parece que o professor
+   sumiu — foi exatamente o que aconteceu. Os números de cada um custam uma
+   leitura do banco inteiro por professor, e esses sim ficam no botão. */
+async function carregarProfsLista(){
+  if(!ehDono()||!hasCloud())return;
+  try{
+    const snap=await window.fbDB.ref('jvtenis/professores').get();
+    const v=snap.exists()?(snap.val()||{}):{};
+    const out={};
+    Object.keys(v).forEach(uid=>{out[uid]={nome:String((v[uid]||{}).nome||'—'),desde:Number((v[uid]||{}).desde)||0};});
+    PROFS_CAD=out;
+    renderProfsPag();
+  }catch(e){}
+}
 function prepararAluguel(){
   if(!ehDono())return;
   const mi=document.getElementById('aq-mes');
@@ -2177,7 +2193,8 @@ function prepararAluguel(){
   const vi=document.getElementById('aq-valor');
   if(vi&&!vi.value&&DB.aluguelHora)vi.value=DB.aluguelHora;
   renderProfsLibs();
-  if(!PROFS_DADOS)renderProfsPag();
+  renderProfsPag();
+  carregarProfsLista();     // quem está cadastrado aparece sozinho, sempre
 }
 function salvarValorHora(){
   const v=Number((document.getElementById('aq-valor')||{}).value)||0;
@@ -2217,9 +2234,10 @@ async function carregarProfsPag(){
   try{
     const snap=await window.fbDB.ref('jvtenis/professores').get();
     const cad=snap.exists()?(snap.val()||{}):{};
-    const dados={};
+    const lista={},dados={};
     for(const uid of Object.keys(cad)){
-      const linha={nome:String((cad[uid]||{}).nome||'—'),desde:Number((cad[uid]||{}).desde)||0};
+      lista[uid]={nome:String((cad[uid]||{}).nome||'—'),desde:Number((cad[uid]||{}).desde)||0};
+      const linha={};
       try{
         const b=await window.fbDB.ref('jvtenis/prof/'+uid+'/banco').get();
         if(!b.exists()){linha.erro='ainda não abriu o app';}
@@ -2233,7 +2251,7 @@ async function carregarProfsPag(){
       }catch(e){linha.erro=String(e&&e.message||e);}
       dados[uid]=linha;
     }
-    PROFS_DADOS=dados;
+    PROFS_CAD=lista;PROFS_DADOS=dados;
     renderProfsPag();
   }catch(e){
     box.innerHTML='<p class="hint">Não consegui ler: '+esc(String(e&&e.message||e))+'</p>';
@@ -2249,15 +2267,25 @@ function quandoFoi(ts){
 }
 function renderProfsPag(){
   const box=document.getElementById('profs-pag');if(!box)return;
-  if(!PROFS_DADOS){box.innerHTML='<p class="hint">Toque em <b>🔄 Atualizar</b> para ver quantos alunos e quantas horas de quadra cada um teve no mês.</p>';return;}
-  const uids=Object.keys(PROFS_DADOS);
+  if(!PROFS_CAD){box.innerHTML='<p class="hint">procurando os professores cadastrados…</p>';return;}
+  const uids=Object.keys(PROFS_CAD);
   if(!uids.length){box.innerHTML='<div class="cons info"><h4><span>👨‍🏫</span>Nenhum professor ainda</h4><p>Cadastre abaixo. Enquanto não houver nenhum, nada muda no seu app.</p></div>';return;}
   const valor=Number((document.getElementById('aq-valor')||{}).value)||0;
   const p=mesEscolhidoProf().split('-');
   const mesTxt=(MESES[Number(p[1])-1]||'')+' '+p[0];
   let totalH=0,totalA=0;
+  const semNumeros=!PROFS_DADOS;
   const cartoes=uids.map(uid=>{
-    const l=PROFS_DADOS[uid];
+    const l=Object.assign({},PROFS_CAD[uid],PROFS_DADOS?PROFS_DADOS[uid]:null);
+    /* Cadastrado, números ainda não lidos. Dizer "0 alunos" aqui seria mentir
+       por omissão — o número não é zero, é desconhecido. */
+    if(semNumeros){
+      return '<div class="cons info"><h4><span>👨‍🏫</span>'+esc(l.nome)+'</h4>'
+        +'<p class="hint" style="margin:2px 0 6px">cadastrado'+(l.desde?(' em '+new Date(l.desde).toLocaleDateString('pt-BR')):'')
+        +' · toque em <b>🔄 Atualizar</b> para ver alunos e horas</p>'
+        +'<div class="backup-row"><button class="btn btn-ghost" onclick="renomearProfessor(\''+uid+'\')">renomear</button>'
+        +'<button class="btn btn-ghost" onclick="removerProfessor(\''+uid+'\')">remover</button></div></div>';
+    }
     if(l.erro){
       return '<div class="cons warn"><h4><span>👨‍🏫</span>'+esc(l.nome)+'</h4>'
         +'<p>'+esc(l.erro)+'. A conta existe — falta ele entrar pela primeira vez.</p>'
@@ -2281,8 +2309,10 @@ function renderProfsPag(){
       +'<p><b>'+totalA+'</b> aluno(s) · <b>'+fmtCred(totalH)+'</b> hora(s) de quadra'
       +(valor>0?(' · <b style="color:#2E7D52">'+fmt(totalH*valor)+'</b> a cobrar'):'')+'</p></div>'
     : '';
-  box.innerHTML='<p class="hint" style="margin:0 0 8px">Números de <b>'+mesTxt+'</b>, lidos agora do banco de cada um. Nada foi alterado.</p>'
-    +cartoes+resumo;
+  box.innerHTML=(semNumeros
+      ? '<p class="hint" style="margin:0 0 8px">'+uids.length+' professor(es) cadastrado(s).</p>'
+      : '<p class="hint" style="margin:0 0 8px">Números de <b>'+mesTxt+'</b>, lidos agora do banco de cada um. Nada foi alterado.</p>')
+    +cartoes+(semNumeros?'':resumo);
 }
 /* Quantas horas por semana estão liberadas hoje, direto da SUA grade. É local:
    não custa leitura nenhuma e responde "eu liberei o quê mesmo?". */
@@ -2314,7 +2344,7 @@ async function renomearProfessor(uid){
   const n=nome.trim();if(!n){toast('Nome vazio');return;}
   try{
     await window.fbDB.ref('jvtenis/professores/'+uid+'/nome').set(n);
-    if(PROFS_DADOS&&PROFS_DADOS[uid])PROFS_DADOS[uid].nome=n;
+    if(PROFS_CAD&&PROFS_CAD[uid])PROFS_CAD[uid].nome=n;
     renderProfsPag();toast('Nome atualizado');
   }catch(e){toast('Não deu: '+String(e&&e.message||e));}
 }
@@ -2323,7 +2353,7 @@ async function removerProfessor(uid){
   if(!confirm('Remover este professor?\n\nEle perde o acesso ao app. O banco dele NÃO é apagado — se voltar, os dados continuam lá.'))return;
   try{
     await window.fbDB.ref('jvtenis/professores/'+uid).remove();
-    toast('Professor removido');carregarProfsPag();
+    toast('Professor removido');PROFS_DADOS=null;carregarProfsLista();
   }catch(e){toast('Não deu: '+String(e&&e.message||e));}
 }
 const PRECOS={Particular:{3:480,4:640,6:960,8:1260,10:1600},Grupo:{3:285,4:360,6:510,8:640,10:750},Personal:{3:390,4:520,6:780,8:1040,10:1300}};
