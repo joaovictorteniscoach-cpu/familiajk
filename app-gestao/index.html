@@ -1933,7 +1933,7 @@ function pintarIcones(){var m=document.querySelectorAll(".ico[data-ic]");for(var
         <label style="display:flex;align-items:center;gap:9px;cursor:pointer;font-weight:600">
           <input type="checkbox" id="s-fora" style="width:19px;height:19px;accent-color:#2E5E8C"> 📍 Fora da quadra — atendimento em outro lugar
         </label>
-        <p class="hint" style="margin:5px 0 0">O horário segue ocupado <b>para você</b>, mas a quadra fica livre: o professor pode usar.</p>
+        <p class="hint" id="s-fora-hint" style="margin:5px 0 0">O horário segue ocupado <b>para você</b>, mas a quadra fica livre: o professor pode usar.</p>
       </div>
       <div class="modal-acts">
         <button class="btn btn-ghost" onclick="closeSlot()">Fechar</button>
@@ -1988,7 +1988,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-06-10';
+const VERSAO='2026-09-06-11';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -2043,12 +2043,20 @@ function slotModo(date,hora){
    É o que o personal domiciliar exige: das 6h às 10h a hora é "Aula" (você está
    ocupado) E "Professor" (a quadra está livre, você não está nela). Uma opção
    exclusiva não sabe dizer as duas coisas. */
-function slotProfLiberado(date,hora){
+function slotProfLiberado(date,hora,evs){
   if(!ehDono())return false;
   const od=DB.horarioProfData&&DB.horarioProfData[dKey(date)];
   if(od&&od[hora]!==undefined)return !!od[hora];
   const c=DB.horarioProf&&DB.horarioProf[date.getDay()];
-  return !!(c&&c[hora]);
+  if(c&&c[hora])return true;
+  /* Hora em que ele está comprometido, mas fora daqui: a quadra está vazia e
+     ele não está nela. Liberar sozinho é o que ele pediu — marcar o 👨‍🏫 em
+     cada personal seria dizer duas vezes a mesma coisa, e um esquecimento
+     deixaria a quadra parada à toa.
+     Só vale quando há compromisso: hora VAZIA continua sendo dele, para
+     vender, alugar ou marcar depois — ninguém abre a agenda de alguém. */
+  const lista=evs||entriesFor(date,hora);
+  return lista.length>0&&lista.every(foraDaQuadra);
 }
 /* ===== Multi-professor — recurso da versão Pro =====
    Academia grande tem vários professores. Fica DESLIGADO no app do João (um
@@ -3411,6 +3419,21 @@ function foraDaQuadraMarcado(){
   const el=document.getElementById('s-fora');
   return !!(el&&el.checked&&ehDono());
 }
+/* Personal do João é atendimento em outro lugar — é a regra, não a exceção.
+   Marcar a caixinha em cada aula era trabalho repetido para dizer sempre a
+   mesma coisa, e bastava esquecer uma para a quadra ficar travada à toa.
+
+   Três estados num campo só, e é de propósito:
+     fora === 1  → ele disse que é fora
+     fora === 0  → ele disse que é NA quadra (personal na quadra existe)
+     ausente     → vale o padrão do tipo
+   Assim a regra alcança também o que já estava marcado, sem eu sair alterando
+   a agenda dele por conta própria. */
+function foraDaQuadra(e){
+  if(!e)return false;
+  if(e.fora!==undefined&&e.fora!==null)return !!e.fora;
+  return e.tipo==='personal';
+}
 function ocupaQuadra(e){
   /* Estar ocupado não é o mesmo que estar na quadra. Personal domiciliar toma a
      hora do professor e não toma a quadra — e antes disso o app tratava tudo
@@ -3419,7 +3442,7 @@ function ocupaQuadra(e){
      Fora isso, o padrão continua sendo ocupar: supor quadra livre porque
      alguém marcou "pessoal" é como se dobra horário. */
   if(!e)return false;
-  if(e.fora)return false;
+  if(foraDaQuadra(e))return false;
   return e.tipo!=='vago';
 }
 function meuMapaQuadra(){
@@ -3428,12 +3451,13 @@ function meuMapaQuadra(){
     const d=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()+i,12,0,0,0);
     const dk=dKey(d);
     HORAS.forEach(h=>{
-      const evs=entriesFor(d,h).filter(ocupaQuadra);
+      const todos=entriesFor(d,h);
+      const evs=todos.filter(ocupaQuadra);
       if(evs.length)(dias[dk]=dias[dk]||{})[h]=String(evs[0].tipo||'aula');
       /* Só a academia libera hora. Vai junto do mapa porque é a mesma leitura:
          o professor precisa das duas coisas na mesma hora — o que já está
          ocupado e o que ele pode usar. */
-      if(ehDono()&&slotProfLiberado(d,h))(liberados[dk]=liberados[dk]||[]).push(h);
+      if(ehDono()&&slotProfLiberado(d,h,todos))(liberados[dk]=liberados[dk]||[]).push(h);
     });
   }
   const m={nome:meuNomeNaQuadra(),ts:Date.now(),dias};
@@ -4731,18 +4755,22 @@ function renderAgenda(){
             const avis=linked&&isAvisou(e,agDate);
             return `<span class="ev t-${e.tipo} drag-item" data-eid="${e.id}" data-origem="${e.origem}">
               ${linked?`<button class="pres ${pres?'ok':''} ${falt?'falt':''} ${avis?'avis':''}" onclick="togglePresenca('${e.id}')">${pres?'✓':(falt?'✗':(avis?'🔁':'○'))}</button>`:''}
-              <span onclick="openSlot('${h}')">${e.titulo}<small> · ${e.tipo==='grupo'?grupoTag(e.pessoas)+' · ':''}${e.repo?'reposição':(e.origem==='fixo'?'fixo':(e.origem==='compromisso'?'pessoal':'pontual'))}${e.fora?' · 📍 fora da quadra':''}</small></span>
+              <span onclick="openSlot('${h}')">${e.titulo}<small> · ${e.tipo==='grupo'?grupoTag(e.pessoas)+' · ':''}${e.repo?'reposição':(e.origem==='fixo'?'fixo':(e.origem==='compromisso'?'pessoal':'pontual'))}${foraDaQuadra(e)?' · 📍 fora da quadra':''}</small></span>
             </span>`;
           }).join('')}
           ${(function(){
             const o=ocupadoPorOutro(agDate,h);
             if(o)return `<span class="ev t-outro" title="Horário de outro professor — a quadra está ocupada">👨‍🏫 ${esc(o.nome)}<small> · ${esc(rotuloTipoOutro(o.tipo))}</small></span>`;
-            if(evs.length)return '';
+            /* Compromisso seu fora da quadra: a hora é sua, a quadra não.
+               Dizer isso na tela evita a dúvida "por que ele marcou aqui?". */
+            if(evs.length)return (ehDono()&&slotProfLiberado(agDate,h,evs))
+              ? '<span class="ev t-liberado">👨‍🏫 quadra livre para o professor</span>' : '';
             const md=slotModo(agDate,h);
             // hora vazia que não é sua: dizer por quê, em vez de deixar o "+"
             // prometer o que vai ser recusado no salvar
             if(!ehDono()&&md==='fechado')return '<span class="ev t-nliberado">não liberado</span>';
             if(ehDono()&&slotProfLiberado(agDate,h))return '<span class="ev t-liberado">👨‍🏫 quadra liberada ao professor</span>';
+            return '';
             return '';
           })()}
           <button class="slot-add" onclick="openSlot('${h}')">+</button>
@@ -4888,6 +4916,7 @@ function resetSlotForm(){
   const gn=document.getElementById('s-grupo-n');if(gn)gn.value='2';
   const rp=document.getElementById('s-repo');if(rp)rp.checked=false;
   const fo=document.getElementById('s-fora');if(fo)fo.checked=false;
+  try{sincronizarFora((document.getElementById('s-tipo')||{}).value);}catch(e){}
   toggleGrupoWrap();
 }
 function closeSlot(){resetSlotForm();closeModal('ov-slot');}
@@ -4909,6 +4938,18 @@ function toggleGrupoWrap(){
   if(isG)atualizaGrupoPreco();
   const rw=document.getElementById('s-repo-wrap');
   if(rw)rw.style.display=(t==='aula'||t==='grupo'||t==='personal')?'block':'none';   // reposição só para aulas
+  sincronizarFora(t);
+}
+/* Ao escolher Personal, a caixinha já vem marcada — é o caso comum. Continua
+   desmarcável, para o personal que acontece na quadra. */
+function sincronizarFora(t){
+  const fo=document.getElementById('s-fora');if(!fo)return;
+  const hint=document.getElementById('s-fora-hint');
+  const editando=!!(slotCtx&&slotCtx.editing);
+  if(!editando)fo.checked=(t==='personal');
+  if(hint)hint.textContent=(t==='personal')
+    ? 'Personal já vem marcado: seus atendimentos são em outro lugar, então a quadra fica livre para o professor. Desmarque se este for na quadra.'
+    : 'O horário segue ocupado para você, mas a quadra fica livre: o professor pode usar.';
 }
 function atualizaGrupoPreco(){
   const el=document.getElementById('s-grupo-preco');if(!el)return;
@@ -4957,7 +4998,7 @@ function saveSlot(){
     const repoChk=document.getElementById('s-repo');
     const repo=(repoChk&&repoChk.checked&&(tipo==='aula'||tipo==='grupo'||tipo==='personal'))?1:0;
     rec.titulo=t;rec.tipo=tipo;rec.alunoId=alunoId;rec.repo=repo;
-    if(foraDaQuadraMarcado())rec.fora=1;else delete rec.fora;
+    rec.fora=foraDaQuadraMarcado()?1:0;
     if(tipo==='grupo')rec.pessoas=pessoas;else delete rec.pessoas;
     logAct('Editar marcação: '+t);
     resetSlotForm();
@@ -4992,12 +5033,12 @@ function saveSlot(){
   if(document.getElementById('s-rec').value==='fixo'){
     const desde=dKey(slotCtx.date);
     const novoF={id:'f'+Date.now(),dia:slotCtx.date.getDay(),hora:slotCtx.hora,titulo:t,tipo,alunoId,pessoas,repo,desde};
-    if(foraDaQuadraMarcado())novoF.fora=1;
+    novoF.fora=foraDaQuadraMarcado()?1:0;
     DB.agenda.fixos.push(novoF);
     toast(t+' fixado toda '+DIAS[slotCtx.date.getDay()]+' às '+slotCtx.hora+' a partir de '+desde.split('-').reverse().slice(0,2).join('/')+(repo?' · 🔁 reposição':''));
   }else{
     const novoE={id:'e'+Date.now(),data:dKey(slotCtx.date),hora:slotCtx.hora,titulo:t,tipo,alunoId,pessoas,repo};
-    if(foraDaQuadraMarcado())novoE.fora=1;
+    novoE.fora=foraDaQuadraMarcado()?1:0;
     DB.agenda.eventos.push(novoE);
     toast(t+' marcado em '+slotCtx.date.getDate()+'/'+(slotCtx.date.getMonth()+1)+(repo?' · 🔁 reposição':''));
   }
@@ -5054,7 +5095,7 @@ function editarEntrada(id,origem){
   document.getElementById('s-tipo').value=rec.tipo||'aula';
   document.getElementById('s-grupo-n').value=String(rec.pessoas||2);
   const rp=document.getElementById('s-repo');if(rp)rp.checked=!!rec.repo;
-  const fo=document.getElementById('s-fora');if(fo)fo.checked=!!rec.fora;
+  const fo=document.getElementById('s-fora');if(fo)fo.checked=foraDaQuadra(rec);
   const sr=document.getElementById('s-rec');if(sr){sr.value=(origem==='fixo'?'fixo':'pontual');sr.disabled=true;} // recorrência não muda aqui: para isso use os botões da grade
   document.getElementById('s-form-title').textContent='✏️ Editar '+(origem==='fixo'?'(toda '+DIAS[rec.dia]+')':'(só nesta data)');
   document.getElementById('s-save-btn').textContent='Salvar alterações';
