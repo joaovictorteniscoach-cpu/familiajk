@@ -1220,28 +1220,6 @@ function esperarAuth(){
   <p class="hint">Entrando com a sua conta, este aparelho passa a ser reconhecido pelo banco de dados. Hoje isso é opcional e não muda nada no uso — é o preparo para fechar o banco, de modo que só você possa alterar ou apagar os dados. O aparelho continua conectado depois de fechar o app.</p>
   <div id="conta-box"></div>
 
-  <div class="so-dono">
-    <h2 class="sec-title" style="margin-top:18px">Professores da <em>quadra</em></h2>
-    <p class="hint">Quem dá aula aqui e usa o app com a conta dele. Cada professor tem o próprio banco: os alunos, os créditos e o financeiro dele. <b>Ele não enxerga nada seu</b> — quem impede é a regra do servidor, não a tela. Você continua enxergando o espaço dele.</p>
-    <p class="hint">Para incluir: crie a conta dele em <b>Firebase → Authentication → Add user</b> (e-mail e senha), copie o <b>UID</b> que aparece na lista e cole aqui.</p>
-    <div class="row2">
-      <div class="field"><label>Nome do professor</label><input id="np-nome" placeholder="ex.: Rafael Palma"></div>
-      <div class="field"><label>UID da conta dele</label><input id="np-uid" placeholder="cole o UID do Firebase" autocapitalize="off" spellcheck="false"></div>
-    </div>
-    <div class="backup-row"><button class="btn btn-clay" onclick="cadastrarProfessor()">👨‍🏫 Cadastrar professor</button>
-      <button class="btn btn-ghost" onclick="listarProfessores()">🔄 Ver cadastrados</button></div>
-    <div id="profs-nuvem"></div>
-
-    <h2 class="sec-title" style="margin-top:16px">Aluguel da <em>quadra</em></h2>
-    <p class="hint">Conta as horas que cada professor usou, lendo a agenda dele. Meia hora seguida conta 0,5 — igual à sua contagem de aulas.</p>
-    <div class="row2">
-      <div class="field"><label>Mês</label><input type="month" id="aq-mes"></div>
-      <div class="field"><label>Valor da hora (R$)</label><input type="number" id="aq-valor" inputmode="decimal" onchange="salvarValorHora()" placeholder="ex.: 40"></div>
-    </div>
-    <div class="backup-row"><button class="btn btn-clay" onclick="contarHorasQuadra()">⏱️ Contar horas do mês</button></div>
-    <div id="aq-box"></div>
-  </div>
-
   <h2 class="sec-title" style="margin-top:18px">Ferramentas &amp; <em>segurança</em></h2>
   <p class="hint">Tudo num lugar só. Toque para usar — o resultado aparece logo abaixo.</p>
   <div class="ferr-grid">
@@ -1260,6 +1238,36 @@ function esperarAuth(){
   <div id="espaco-box"></div>
   <div id="conf-box"></div>
   <div id="versoes-box"></div>
+</section>
+
+<!-- Professores da quadra. Só existe no app da academia: é a tela em que o João
+     decide quem dá aula aqui, em que horas, e quanto isso rendeu de quadra. -->
+<section class="page so-dono" id="pg-profs">
+  <p class="sec-eyebrow">Quem dá aula aqui</p>
+  <h2 class="sec-title">Professores da <em>quadra</em></h2>
+  <p class="hint">Cada professor tem o próprio app, com os alunos, os créditos e o financeiro dele. <b>Ele não enxerga nada seu</b> — quem impede é a regra do servidor, não a tela. Você continua enxergando o espaço dele.</p>
+
+  <div class="row2" style="margin-top:10px">
+    <div class="field"><label>Mês</label><input type="month" id="aq-mes" onchange="carregarProfsPag()"></div>
+    <div class="field"><label>Valor da hora de quadra (R$)</label><input type="number" id="aq-valor" inputmode="decimal" onchange="salvarValorHora();renderProfsPag()" placeholder="ex.: 40"></div>
+  </div>
+  <div class="backup-row"><button class="btn btn-clay" onclick="carregarProfsPag()">🔄 Atualizar</button></div>
+  <div id="profs-pag"></div>
+
+  <p class="sec-eyebrow" style="margin-top:20px">Incluir</p>
+  <h2 class="sec-title">Novo <em>professor</em></h2>
+  <p class="hint">Crie a conta dele em <b>Firebase → Authentication → Add user</b> (e-mail e senha), copie o <b>UID</b> que aparece na lista e cole aqui.</p>
+  <div class="row2">
+    <div class="field"><label>Nome do professor</label><input id="np-nome" placeholder="ex.: Rafael Palma"></div>
+    <div class="field"><label>UID da conta dele</label><input id="np-uid" placeholder="cole o UID do Firebase" autocapitalize="off" spellcheck="false"></div>
+  </div>
+  <div class="backup-row"><button class="btn btn-clay" onclick="cadastrarProfessor()">👨‍🏫 Cadastrar professor</button></div>
+
+  <p class="sec-eyebrow" style="margin-top:20px">Horários</p>
+  <h2 class="sec-title">O que está <em>liberado</em></h2>
+  <p class="hint">Hora marcada como <b>Professor</b> na grade sai da sua agenda e passa a ser a que eles podem usar.</p>
+  <div id="profs-libs"></div>
+  <div class="backup-row"><button class="btn btn-ghost" onclick="irParaAba('agenda');setTimeout(abrirHorario,120)">🗓️ Abrir os horários</button></div>
 </section>
 
 <section class="page" id="pg-fech">
@@ -1525,6 +1533,7 @@ function esperarAuth(){
   <button onclick="irDoMais('fin')"><span class="ico" data-ic="bars"></span>Financeiro</button>
   <button onclick="irDoMais('graf')"><span class="ico" data-ic="line"></span>Gráficos</button>
   <button onclick="irDoMais('fech')"><span class="ico" style="font-size:19px">🧾</span>Fechamento</button>
+  <button class="so-dono" onclick="irDoMais('profs')"><span class="ico" style="font-size:19px">👨‍🏫</span>Professores</button>
 </div>
 
 <nav class="nav">
@@ -1946,7 +1955,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-06-1';
+const VERSAO='2026-09-06-2';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -2098,13 +2107,21 @@ async function cadastrarProfessor(){
     await window.fbDB.ref('jvtenis/professores/'+uid).set({nome,desde:Date.now()});
     n.value='';u.value='';
     toast('👨‍🏫 '+nome+' cadastrado — ele já pode entrar com a conta dele');
-    listarProfessores();
+    carregarProfsPag();
   }catch(e){
     toast('Não deu: '+String(e&&e.message||e));
   }
 }
-/* Deixa a caixinha do mês no mês passado, que é o que se cobra, e traz de
-   volta o valor da hora que ele já tinha digitado. */
+/* ===== Tela dos professores =====
+   Uma tela só, no lugar de dois pedaços perdidos no Financeiro. A pergunta que
+   ela responde é sempre a mesma: quem dá aula aqui, em que horas, e quanto isso
+   rendeu de quadra.
+
+   Os números vêm do banco de cada professor, lido na hora — não de uma cópia
+   guardada aqui, que divergiria em silêncio. Por isso a leitura é um botão, e
+   não algo que acontece a cada abertura: são leituras de verdade, e a cota do
+   plano gratuito é finita. */
+let PROFS_DADOS=null;      // {uid:{nome,desde,alunos,horas,dias,savedAt,erro}}
 function prepararAluguel(){
   if(!ehDono())return;
   const mi=document.getElementById('aq-mes');
@@ -2112,40 +2129,17 @@ function prepararAluguel(){
     mi.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
   const vi=document.getElementById('aq-valor');
   if(vi&&!vi.value&&DB.aluguelHora)vi.value=DB.aluguelHora;
+  renderProfsLibs();
+  if(!PROFS_DADOS)renderProfsPag();
 }
-async function listarProfessores(){
-  if(!ehDono())return;
-  const box=document.getElementById('profs-nuvem');if(!box)return;
-  if(!hasCloud()){box.innerHTML='<p class="hint">Sem conexão agora.</p>';return;}
-  box.innerHTML='<p class="hint">procurando…</p>';
-  try{
-    const snap=await window.fbDB.ref('jvtenis/professores').get();
-    const v=snap.exists()?(snap.val()||{}):{};
-    const ks=Object.keys(v);
-    if(!ks.length){box.innerHTML='<p class="hint">Nenhum professor cadastrado ainda.</p>';return;}
-    box.innerHTML='<div class="cons info"><h4><span>👨‍🏫</span>'+ks.length+' professor(es)</h4>'
-      +ks.map(uid=>'<p style="margin:4px 0"><b>'+esc(String(v[uid].nome||'—'))+'</b>'
-        +'<br><small style="color:#8a8478;word-break:break-all">'+esc(uid)+'</small>'
-        +' <button class="btn btn-ghost" style="padding:3px 9px;font-size:11px" onclick="removerProfessor(\''+uid+'\')">remover</button></p>').join('')
-      +'</div>';
-  }catch(e){box.innerHTML='<p class="hint">Não consegui ler: '+esc(String(e&&e.message||e))+'</p>';}
-}
-/* ===== Aluguel da quadra =====
-   No fim do mês a pergunta é uma só: quantas horas cada professor usou. A
-   resposta não está no mapa — o mapa olha para a frente, seis semanas, e o que
-   se cobra é o mês que passou.
-
-   Está no banco dele, que o João pode ler. Então a contagem vai buscar lá, na
-   hora, e conta a agenda dele exatamente como o app conta a sua: horário a
-   horário, meia hora valendo 0,5. Nada fica guardado no meio do caminho para
-   divergir depois. */
 function salvarValorHora(){
   const v=Number((document.getElementById('aq-valor')||{}).value)||0;
   DB.aluguelHora=v;persist();
 }
+function mesEscolhidoProf(){return (document.getElementById('aq-mes')||{}).value||mesReal();}
 /* Conta as horas de UMA agenda (a do professor) no mês pedido, sem tocar na
-   sua. Repete o mesmo passo do entriesFor, mas sobre a agenda recebida — a de
-   verdade fica onde está. */
+   sua. Repete o passo do entriesFor sobre a agenda recebida — a de verdade
+   fica onde está. */
 function horasDaAgendaNoMes(agenda,compromissos,mk){
   const [ano,mes]=String(mk).split('-').map(Number);
   if(!ano||!mes)return {horas:0,porDia:{}};
@@ -2167,53 +2161,122 @@ function horasDaAgendaNoMes(agenda,compromissos,mk){
   }
   return {horas,porDia};
 }
-async function contarHorasQuadra(){
+async function carregarProfsPag(){
   if(!ehDono())return;
-  const box=document.getElementById('aq-box');if(!box)return;
-  const mk=(document.getElementById('aq-mes')||{}).value||mesReal();
-  if(!hasCloud()){box.innerHTML='<p class="hint">Sem conexão agora — a contagem lê o banco de cada professor na nuvem.</p>';return;}
-  box.innerHTML='<p class="hint">lendo a agenda de cada professor…</p>';
-  const valor=Number((document.getElementById('aq-valor')||{}).value)||0;
+  const box=document.getElementById('profs-pag');if(!box)return;
+  if(!hasCloud()){box.innerHTML='<p class="hint">Sem conexão agora — esta tela lê o banco de cada professor na nuvem.</p>';return;}
+  box.innerHTML='<p class="hint">lendo…</p>';
+  const mk=mesEscolhidoProf();
   try{
     const snap=await window.fbDB.ref('jvtenis/professores').get();
-    const profsN=snap.exists()?(snap.val()||{}):{};
-    const uids=Object.keys(profsN);
-    if(!uids.length){box.innerHTML='<p class="hint">Nenhum professor cadastrado.</p>';return;}
-    const linhas=[];let totalH=0;
-    for(const uid of uids){
-      const nome=String((profsN[uid]||{}).nome||'—');
-      let agenda=null,comps=null,erro='';
+    const cad=snap.exists()?(snap.val()||{}):{};
+    const dados={};
+    for(const uid of Object.keys(cad)){
+      const linha={nome:String((cad[uid]||{}).nome||'—'),desde:Number((cad[uid]||{}).desde)||0};
       try{
         const b=await window.fbDB.ref('jvtenis/prof/'+uid+'/banco').get();
-        if(b.exists()){
-          const dados=JSON.parse(b.val()||'{}');
-          agenda=dados.agenda;comps=dados.compromissos;
-        }else erro='ainda não usou o app';
-      }catch(e){erro=String(e&&e.message||e);}
-      if(erro){linhas.push({nome,erro});continue;}
-      const r=horasDaAgendaNoMes(agenda,comps,mk);
-      totalH+=r.horas;
-      linhas.push({nome,horas:r.horas,dias:Object.keys(r.porDia).length});
+        if(!b.exists()){linha.erro='ainda não abriu o app';}
+        else{
+          const d=JSON.parse(b.val()||'{}');
+          const r=horasDaAgendaNoMes(d.agenda,d.compromissos,mk);
+          linha.alunos=(d.alunos||[]).length;
+          linha.horas=r.horas;linha.dias=Object.keys(r.porDia).length;
+          linha.savedAt=Number(d.savedAt)||0;
+        }
+      }catch(e){linha.erro=String(e&&e.message||e);}
+      dados[uid]=linha;
     }
-    const p=mk.split('-');
-    box.innerHTML='<div class="cons info"><h4><span>⏱️</span>'+(MESES[Number(p[1])-1]||'')+' '+p[0]+'</h4>'
-      +linhas.map(l=>l.erro
-        ? '<p style="margin:5px 0"><b>'+esc(l.nome)+'</b> — <span style="color:#8a8478">'+esc(l.erro)+'</span></p>'
-        : '<p style="margin:5px 0"><b>'+esc(l.nome)+'</b>: <b>'+fmtCred(l.horas)+'</b> hora(s) em '+l.dias+' dia(s)'
-          +(valor>0?(' · <b style="color:#2E7D52">'+fmt(l.horas*valor)+'</b>'):'')+'</p>').join('')
-      +(linhas.length>1?('<p style="margin:8px 0 0;border-top:1px solid #eadfc6;padding-top:7px"><b>Total: '+fmtCred(totalH)+' hora(s)'
-        +(valor>0?(' · '+fmt(totalH*valor)):'')+'</b></p>'):'')
-      +'<p class="hint" style="margin:8px 0 0">Contado direto da agenda de cada um, agora. Nada foi alterado — nem no seu banco, nem no dele.</p></div>';
+    PROFS_DADOS=dados;
+    renderProfsPag();
   }catch(e){
     box.innerHTML='<p class="hint">Não consegui ler: '+esc(String(e&&e.message||e))+'</p>';
   }
+}
+function quandoFoi(ts){
+  if(!ts)return 'nunca';
+  const dias=Math.floor((Date.now()-ts)/864e5);
+  if(dias<=0)return 'hoje';
+  if(dias===1)return 'ontem';
+  if(dias<30)return 'há '+dias+' dias';
+  return new Date(ts).toLocaleDateString('pt-BR');
+}
+function renderProfsPag(){
+  const box=document.getElementById('profs-pag');if(!box)return;
+  if(!PROFS_DADOS){box.innerHTML='<p class="hint">Toque em <b>🔄 Atualizar</b> para ver quantos alunos e quantas horas de quadra cada um teve no mês.</p>';return;}
+  const uids=Object.keys(PROFS_DADOS);
+  if(!uids.length){box.innerHTML='<div class="cons info"><h4><span>👨‍🏫</span>Nenhum professor ainda</h4><p>Cadastre abaixo. Enquanto não houver nenhum, nada muda no seu app.</p></div>';return;}
+  const valor=Number((document.getElementById('aq-valor')||{}).value)||0;
+  const p=mesEscolhidoProf().split('-');
+  const mesTxt=(MESES[Number(p[1])-1]||'')+' '+p[0];
+  let totalH=0,totalA=0;
+  const cartoes=uids.map(uid=>{
+    const l=PROFS_DADOS[uid];
+    if(l.erro){
+      return '<div class="cons warn"><h4><span>👨‍🏫</span>'+esc(l.nome)+'</h4>'
+        +'<p>'+esc(l.erro)+'. A conta existe — falta ele entrar pela primeira vez.</p>'
+        +'<div class="backup-row"><button class="btn btn-ghost" onclick="renomearProfessor(\''+uid+'\')">renomear</button>'
+        +'<button class="btn btn-ghost" onclick="removerProfessor(\''+uid+'\')">remover</button></div></div>';
+    }
+    totalH+=l.horas;totalA+=l.alunos;
+    const chip=(t,v,c)=>'<span style="display:inline-block;margin:0 6px 6px 0;padding:5px 10px;border-radius:9px;background:#fff;border:1px solid #eadfc6;font-size:12px;font-weight:700">'+t+': <b style="color:'+c+'">'+v+'</b></span>';
+    return '<div class="cons info"><h4><span>👨‍🏫</span>'+esc(l.nome)+'</h4>'
+      +'<div style="margin:2px 0 4px">'
+      +chip('Alunos',l.alunos,'#3B6FB5')
+      +chip('Horas de quadra',fmtCred(l.horas)+' em '+l.dias+' dia(s)','#2E5E8C')
+      +(valor>0?chip('A cobrar',fmt(l.horas*valor),'#2E7D52'):'')
+      +chip('Último uso',quandoFoi(l.savedAt),'#8a8478')
+      +'</div>'
+      +'<div class="backup-row"><button class="btn btn-ghost" onclick="renomearProfessor(\''+uid+'\')">renomear</button>'
+      +'<button class="btn btn-ghost" onclick="removerProfessor(\''+uid+'\')">remover</button></div></div>';
+  }).join('');
+  const resumo=uids.length>1
+    ? '<div class="cons good"><h4><span>Σ</span>'+uids.length+' professores · '+mesTxt+'</h4>'
+      +'<p><b>'+totalA+'</b> aluno(s) · <b>'+fmtCred(totalH)+'</b> hora(s) de quadra'
+      +(valor>0?(' · <b style="color:#2E7D52">'+fmt(totalH*valor)+'</b> a cobrar'):'')+'</p></div>'
+    : '';
+  box.innerHTML='<p class="hint" style="margin:0 0 8px">Números de <b>'+mesTxt+'</b>, lidos agora do banco de cada um. Nada foi alterado.</p>'
+    +cartoes+resumo;
+}
+/* Quantas horas por semana estão liberadas hoje, direto da SUA grade. É local:
+   não custa leitura nenhuma e responde "eu liberei o quê mesmo?". */
+function horasLiberadasSemana(cfg){
+  const c=cfg||(typeof DB!=='undefined'&&DB?DB.horarioCfg:null)||{};
+  const porDia=[];let total=0;
+  for(let d=0;d<7;d++){
+    const hs=HORAS.filter(h=>((c[d]||{})[h])==='prof');
+    if(hs.length){total+=hs.reduce((t,h)=>t+creditoSlot(h),0);porDia.push({d,hs});}
+  }
+  return {total,porDia};
+}
+function renderProfsLibs(){
+  const box=document.getElementById('profs-libs');if(!box)return;
+  const {total,porDia}=horasLiberadasSemana();
+  if(!porDia.length){
+    box.innerHTML='<div class="cons warn"><h4><span>🗓️</span>Nenhuma hora liberada</h4><p>Enquanto não houver hora marcada como <b>Professor</b> na grade, o professor abre o app e não consegue marcar nada.</p></div>';
+    return;
+  }
+  box.innerHTML='<div class="cons info"><h4><span>🗓️</span>'+fmtCred(total)+' hora(s) por semana</h4>'
+    +porDia.map(x=>'<p style="margin:4px 0"><b>'+DIASEM_FULL[x.d]+'</b>: '+x.hs.join(' · ')+'</p>').join('')
+    +'<p class="hint" style="margin:8px 0 0">Datas especiais podem mudar dias soltos — isto é o padrão da semana.</p></div>';
+}
+async function renomearProfessor(uid){
+  if(!ehDono())return;
+  const atual=(PROFS_DADOS&&PROFS_DADOS[uid])?PROFS_DADOS[uid].nome:'';
+  const nome=prompt('Nome do professor:',atual);
+  if(nome===null)return;
+  const n=nome.trim();if(!n){toast('Nome vazio');return;}
+  try{
+    await window.fbDB.ref('jvtenis/professores/'+uid+'/nome').set(n);
+    if(PROFS_DADOS&&PROFS_DADOS[uid])PROFS_DADOS[uid].nome=n;
+    renderProfsPag();toast('Nome atualizado');
+  }catch(e){toast('Não deu: '+String(e&&e.message||e));}
 }
 async function removerProfessor(uid){
   if(!ehDono())return;
   if(!confirm('Remover este professor?\n\nEle perde o acesso ao app. O banco dele NÃO é apagado — se voltar, os dados continuam lá.'))return;
   try{
     await window.fbDB.ref('jvtenis/professores/'+uid).remove();
-    toast('Professor removido');listarProfessores();
+    toast('Professor removido');carregarProfsPag();
   }catch(e){toast('Não deu: '+String(e&&e.message||e));}
 }
 const PRECOS={Particular:{3:480,4:640,6:960,8:1260,10:1600},Grupo:{3:285,4:360,6:510,8:640,10:750},Personal:{3:390,4:520,6:780,8:1040,10:1300}};
@@ -3869,6 +3932,7 @@ function go(id,btn){
   if(id==='agenda'){syncRequests(true);marcarVisto('agenda');}
   if(id==='lanc'){filtroLancCat=null;renderMovs();}   // abrir a Caixa pela barra mostra tudo
   if(id==='fech')abrirFechamento();
+  if(id==='profs')prepararAluguel();
   if(id==='graf')renderGraf();
   if(id==='aval')renderAvaliacoes();
   if(id==='torneio'){renderTorneio();syncTorneio(true);marcarVisto('torneio');}
