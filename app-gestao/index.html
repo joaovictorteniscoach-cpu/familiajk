@@ -629,6 +629,10 @@ body[data-modo="prof"] .so-dono{display:none!important}
    ele — ou logo depois de uma fila de botões — esse empurrão o joga por cima do
    que está acima. Aqui a caixa manda, não a herança. */
 #profs-pag,#profs-libs{margin-top:14px}
+/* Duas colunas não cabem aqui: o campo de mês do iPhone escreve "agosto de
+   2026" por extenso e o rótulo do valor quebra em duas linhas — um passava por
+   cima do outro. Empilhado cabe sempre. */
+#pg-profs .row2{grid-template-columns:1fr}
 #profs-pag>.hint:first-child,#profs-libs>.hint:first-child{margin-top:0}
 
 /* MODAL */
@@ -874,6 +878,7 @@ function iniciarAuth(){
       _authResolveu();
       try{renderConta();}catch(e){}
       try{pintarModo();}catch(e){}
+      try{checarPortaEntrada();}catch(e){}
       // o navegador pode estar voltando de um login por redirecionamento
       if(!window._voltaGoogle){try{conferirVoltaGoogle();window._voltaGoogle=1;}catch(e){}}
     },function(err){
@@ -1939,6 +1944,20 @@ function pintarIcones(){var m=document.querySelectorAll(".ico[data-ic]");for(var
 </div>
 
 <!-- HISTÓRICO DE MUDANÇAS -->
+<!-- Porta de entrada. O app nasceu de dono unico e abria direto: fazia sentido
+     quando so existia um aparelho e um dono. Agora existem professores, e um
+     link aberto no celular de outra pessoa mostrava a casca do painel da
+     academia — vazia, porque a regra do servidor barra a leitura, mas com cara
+     de app de gestao e sem pedir nada. Quem entra sem se identificar para aqui.
+     Sem onclick de fechar: nao ha como dispensar sem entrar. -->
+<div class="overlay" id="ov-entrar" style="z-index:400;align-items:center">
+  <div class="modal" style="max-width:420px;border-radius:20px;margin:0 14px">
+    <h3 style="margin-bottom:4px">🎾 Academia João Victor Tênis</h3>
+    <p class="hint" style="margin-top:6px">Entre com a sua conta para abrir o app. Cada conta abre os seus próprios dados.</p>
+    <div id="entrar-box"></div>
+  </div>
+</div>
+
 <div class="overlay" id="ov-hist" onclick="if(event.target===this)closeModal('ov-hist')">
   <div class="modal">
     <h3>🕘 Reverter alterações</h3>
@@ -1969,7 +1988,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-06-4';
+const VERSAO='2026-09-06-5';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -2825,6 +2844,7 @@ async function load(){
   CARREGADO=true;                           // a partir daqui pode gravar
   try{pintarModo();}catch(e){}              // diz de quem é o app que abriu
   if(!ehDono()){buscarNomeProf();conferirAcessoProf();}   // e com que nome — ou se nem devia estar aqui
+  checarPortaEntrada();                     // e, se ninguém se identificou, para aqui
   conferirVersao();                         // este endereço está atualizado?
   if(travado){setSave('⚠ confira os dados antes de salvar','err');}
   else if(dirty||!chosen||(hasCloud()&&!cloudRaw&&localRaw)||(localRaw&&cloudRaw&&tsOf(localRaw)!==tsOf(cloudRaw)))persist();else publish();
@@ -3836,6 +3856,76 @@ function fecharMais(){
   const b=document.getElementById('nav-mais');if(b)b.classList.remove('aberto');
 }
 function irDoMais(id){fecharMais();irParaAba(id);window.scrollTo({top:0});}
+/* ===== Porta de entrada =====
+   Quando abrir direto era razoável: um dono, um aparelho, banco aberto. Hoje há
+   professores e a regra do servidor decide quem lê o quê — e um link aberto no
+   celular de outra pessoa mostrava a casca do painel da academia, vazia e
+   gravando só no aparelho, sem pedir nada e sem explicar por quê.
+
+   A trava é estreita de propósito: só barra quem não se identificou E não tem
+   dados deste espaço no aparelho. O app continua abrindo offline no celular de
+   quem já usa — que é o caso que não pode quebrar. */
+function precisaEntrar(){
+  if(window.AUTH_USER)return false;                              // já identificado
+  if(typeof firebase==='undefined'||!firebase.auth)return false; // sem login disponível: não trava ninguém
+  if(lsGet(KEY))return false;                                    // este aparelho já tem os dados daqui
+  return true;
+}
+function checarPortaEntrada(){
+  const ov=document.getElementById('ov-entrar');if(!ov)return;
+  if(!precisaEntrar()){ov.classList.remove('on');return;}
+  renderEntrar();
+  ov.classList.add('on');
+}
+function renderEntrar(){
+  const el=document.getElementById('entrar-box');if(!el)return;
+  const est='width:100%;padding:11px 12px;margin-bottom:8px;border:1px solid var(--border);border-radius:10px;font-size:14px;background:#fff;color:var(--text)';
+  el.innerHTML='<input id="ent-email" type="email" inputmode="email" autocomplete="username" placeholder="seu e-mail" style="'+est+'">'
+    +'<input id="ent-senha" type="password" autocomplete="current-password" placeholder="sua senha" style="'+est+'">'
+    +'<div class="backup-row"><button class="btn btn-clay" id="ent-btn" onclick="entrarPelaPorta()">🔑 Entrar</button></div>'
+    +'<div class="backup-row" style="margin-top:8px"><button class="btn btn-ghost" id="ent-g-btn" onclick="entrarPelaPortaGoogle()">Entrar com o Google</button></div>'
+    +'<p class="hint" id="ent-msg" style="margin-top:10px"></p>';
+}
+function entrarMsg(txt,erro){
+  const m=document.getElementById('ent-msg');if(!m)return;
+  m.textContent=txt;m.style.color=erro?'var(--bad,#C0392B)':'var(--muted)';m.style.fontWeight=erro?'700':'';
+}
+/* Depois de entrar, recarrega. O load() já rodou com o banco vazio deste
+   aparelho; seguir daqui deixaria a tela vazia até alguém fechar o app. */
+async function entrarPelaPorta(){
+  const e=document.getElementById('ent-email'), s=document.getElementById('ent-senha');
+  const b=document.getElementById('ent-btn');
+  if(!e||!s)return;
+  const email=(e.value||'').trim(), senha=s.value||'';
+  if(!email||!senha){entrarMsg('Preencha e-mail e senha.',true);return;}
+  if(b){b.disabled=true;b.textContent='Entrando…';}
+  entrarMsg('');
+  try{
+    await firebase.auth().signInWithEmailAndPassword(email,senha);
+    location.reload();
+  }catch(err){
+    const c=String(err&&err.code||'');
+    entrarMsg(c.indexOf('wrong-password')>=0||c.indexOf('invalid-credential')>=0 ? 'E-mail ou senha não conferem.'
+      : c.indexOf('user-not-found')>=0 ? 'Não existe conta com esse e-mail.'
+      : c.indexOf('too-many-requests')>=0 ? 'Muitas tentativas seguidas. Espere alguns minutos.'
+      : c.indexOf('network')>=0 ? 'Sem conexão agora. Tente de novo.'
+      : String(err&&err.message||err), true);
+    if(b){b.disabled=false;b.textContent='🔑 Entrar';}
+  }
+}
+async function entrarPelaPortaGoogle(){
+  const b=document.getElementById('ent-g-btn');
+  if(b){b.disabled=true;b.textContent='Abrindo…';}
+  entrarMsg('');
+  try{
+    const r=await comGoogle(function(p){return firebase.auth().signInWithPopup(p);});
+    if(r&&r.redirecionar){await firebase.auth().signInWithRedirect(provedorGoogle());return;}
+    location.reload();
+  }catch(err){
+    entrarMsg(erroGoogleTexto(err),true);
+    if(b){b.disabled=false;b.textContent='Entrar com o Google';}
+  }
+}
 /* Entrou com uma conta que ninguém conhece?
    O app decide o banco pelo uid, então uma conta nova — Google recém-criado,
    e-mail errado — cai no modo professor e abre um espaço vazio. Quem passa por
