@@ -1988,7 +1988,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-06-11';
+const VERSAO='2026-09-06-12';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -3294,6 +3294,7 @@ function persist(){
      local e a raiz na nuvem só existem depois que o espaço foi escolhido. */
   if(!window._espacoAberto){console.warn('persist() ignorado: o espaço ainda não foi decidido');return;}
   histOnPersist();
+  esquecerCachePersonal();   // trocar o tipo de um aluno tem de valer na hora
   DB.savedAt=Date.now();
   const json=JSON.stringify(DB);
   // 1) salva IMEDIATAMENTE no aparelho (nunca perde nada)
@@ -3429,10 +3430,31 @@ function foraDaQuadraMarcado(){
      ausente     → vale o padrão do tipo
    Assim a regra alcança também o que já estava marcado, sem eu sair alterando
    a agenda dele por conta própria. */
+/* Quem manda é o CADASTRO do aluno, não a marca em cada linha da agenda.
+   Cada dia da semana é um horário fixo separado: o Mario das segundas e o das
+   sextas são dois registros. Marcar "fora da quadra" num deles não alcançava o
+   outro, e marcar nos três de cada aluno de personal, um por um, é trabalho
+   que se refaz a cada horário novo — e que basta esquecer uma vez para a
+   quadra ficar parada à toa.
+   Aluno cadastrado como Personal é atendido em outro lugar; tênis e torneio
+   são na quadra. A linha da agenda continua podendo dizer o contrário, para o
+   personal que acontece aqui. */
+let _persCache=null,_persFonte=null;
+function ehAlunoPersonal(id){
+  if(!id||typeof DB==='undefined'||!DB||!DB.alunos)return false;
+  if(_persFonte!==DB.alunos||!_persCache){
+    _persFonte=DB.alunos;
+    _persCache={};
+    DB.alunos.forEach(a=>{if(a&&a.tipo==='Personal')_persCache[a.id]=1;});
+  }
+  return !!_persCache[id];
+}
+function esquecerCachePersonal(){_persFonte=null;_persCache=null;}
 function foraDaQuadra(e){
   if(!e)return false;
-  if(e.fora!==undefined&&e.fora!==null)return !!e.fora;
-  return e.tipo==='personal';
+  if(e.fora!==undefined&&e.fora!==null)return !!e.fora;   // ele disse, vale o que ele disse
+  if(e.tipo==='personal')return true;
+  return ehAlunoPersonal(e.alunoId);
 }
 function ocupaQuadra(e){
   /* Estar ocupado não é o mesmo que estar na quadra. Personal domiciliar toma a
@@ -4946,9 +4968,14 @@ function sincronizarFora(t){
   const fo=document.getElementById('s-fora');if(!fo)return;
   const hint=document.getElementById('s-fora-hint');
   const editando=!!(slotCtx&&slotCtx.editing);
-  if(!editando)fo.checked=(t==='personal');
-  if(hint)hint.textContent=(t==='personal')
-    ? 'Personal já vem marcado: seus atendimentos são em outro lugar, então a quadra fica livre para o professor. Desmarque se este for na quadra.'
+  const alunoId=(document.getElementById('s-aluno')||{}).value||'';
+  const porCadastro=ehAlunoPersonal(alunoId);
+  const ehPersonal=(t==='personal')||porCadastro;
+  if(!editando)fo.checked=ehPersonal;
+  if(hint)hint.textContent=ehPersonal
+    ? (porCadastro
+        ? 'Este aluno está cadastrado como Personal, então o atendimento é em outro lugar e a quadra fica livre para o professor. Desmarque se este for na quadra.'
+        : 'Personal já vem marcado: seus atendimentos são em outro lugar, então a quadra fica livre para o professor. Desmarque se este for na quadra.')
     : 'O horário segue ocupado para você, mas a quadra fica livre: o professor pode usar.';
 }
 function atualizaGrupoPreco(){
