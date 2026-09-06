@@ -549,6 +549,7 @@ body[data-modo="prof"] .so-dono{display:none!important}
 .mov-l span{font-size:11px;color:var(--muted)}
 .mov-v{font-weight:700;white-space:nowrap}
 .mov-v.in{color:var(--ok)}
+.mov-v.out{color:var(--bad,#C0392B)}
 .mov-x{background:none;border:none;color:#C8B89A;font-size:15px;margin-left:9px}
 
 /* FINANCEIRO */
@@ -1832,6 +1833,38 @@ function pintarIcones(){var m=document.querySelectorAll(".ico[data-ic]");for(var
   </div>
 </div>
 
+<!-- Editar um lançamento sem precisar apagar e lançar de novo. Antes, corrigir
+     um valor digitado errado custava apagar (perdendo a data e o vínculo com o
+     aluno) e refazer tudo — e quem faz isso com pressa erra de novo. -->
+<div class="overlay" id="ov-lanc-edit" onclick="if(event.target===this)closeModal('ov-lanc-edit')">
+  <div class="modal" style="max-width:460px">
+    <h3>Editar lançamento</h3>
+    <p class="hint" id="le-sub" style="margin-top:2px"></p>
+    <div class="field"><label>Descrição</label><input id="le-desc" placeholder="ex.: Mensalidade · Fulano"></div>
+    <div class="row2">
+      <div class="field"><label id="le-valor-lbl">Valor (R$)</label><input id="le-valor" type="number" inputmode="decimal" step="0.01"></div>
+      <div class="field"><label>Data</label><input id="le-data" type="date"></div>
+    </div>
+    <div class="field"><label>Categoria</label>
+      <select id="le-cat" onchange="leTrocouCat()">
+        <option value="mensalidade">Mensalidade</option>
+        <option value="avulsa">Aula avulsa</option>
+        <option value="locacao">Locação</option>
+        <option value="outro">Outro recebimento</option>
+        <option value="despesa">Despesa (saída)</option>
+      </select>
+    </div>
+    <div class="field" id="le-despcat-wrap" style="display:none"><label>Tipo da despesa</label>
+      <input id="le-despcat" placeholder="ex.: Aluguel, Impostos, Manutenção"></div>
+    <p class="hint" id="le-aviso" style="margin-top:2px"></p>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeModal('ov-lanc-edit')">Cancelar</button>
+      <button class="btn btn-ghost" style="color:#B23A3A" onclick="removerLancEdit()">Remover</button>
+      <button class="btn btn-clay" onclick="salvarLancEdit()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="ov-desp" onclick="if(event.target===this)closeModal('ov-desp')">
   <div class="modal">
     <h3>Nova despesa</h3>
@@ -1988,7 +2021,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-06-12';
+const VERSAO='2026-09-06-13';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -6986,6 +7019,72 @@ function delLanc(id){
   if(morta)marcarRemovida('lancamentos',morta);   // para sair da nuvem também
   DB.lancamentos=DB.lancamentos.filter(l=>l.id!==id);persist();renderAll();
 }
+/* ===== Editar um lançamento =====
+   Corrigir um valor digitado errado custava apagar e lançar de novo — e apagar
+   levava junto a data e o vínculo com o aluno, que ninguém lembra de refazer.
+   Agora a linha da Caixa abre para edição.
+
+   O mês vem da data, e não de um campo próprio: mudar a data para outro mês
+   tem de mudar o mês junto, senão o lançamento fica escondido — some da Caixa
+   de agosto e não aparece na de setembro. */
+let lancEditId=null;
+function abrirLancEdit(id){
+  const l=(DB.lancamentos||[]).find(x=>x.id===id);
+  if(!l){toast('Lançamento não encontrado');return;}
+  lancEditId=id;
+  const av=l.alunoId?DB.alunos.find(x=>x.id===l.alunoId):null;
+  document.getElementById('le-sub').textContent=av?('Vinculado a '+av.nome):'Sem vínculo com aluno';
+  document.getElementById('le-desc').value=l.desc||'';
+  document.getElementById('le-valor').value=Math.abs(Number(l.valor)||0);
+  document.getElementById('le-data').value=l.data||'';
+  document.getElementById('le-cat').value=l.cat||'outro';
+  document.getElementById('le-despcat').value=l.despCat||'';
+  leTrocouCat();
+  document.getElementById('ov-lanc-edit').classList.add('on');
+}
+function leTrocouCat(){
+  const c=(document.getElementById('le-cat')||{}).value;
+  const w=document.getElementById('le-despcat-wrap');if(w)w.style.display=(c==='despesa')?'':'none';
+  const lb=document.getElementById('le-valor-lbl');
+  if(lb)lb.textContent=(c==='despesa')?'Valor da despesa (R$)':'Valor recebido (R$)';
+  const av=document.getElementById('le-aviso');
+  if(av)av.textContent=(c==='despesa')
+    ? 'Despesa sai do saldo do mês. Digite o valor positivo — o app guarda como saída.'
+    : '';
+}
+function salvarLancEdit(){
+  const l=(DB.lancamentos||[]).find(x=>x.id===lancEditId);
+  if(!l){toast('Lançamento não encontrado');closeModal('ov-lanc-edit');return;}
+  const desc=(document.getElementById('le-desc').value||'').trim();
+  const bruto=Number(document.getElementById('le-valor').value);
+  const data=document.getElementById('le-data').value||'';
+  const cat=document.getElementById('le-cat').value||'outro';
+  if(!desc){toast('Informe a descrição');return;}
+  if(!isFinite(bruto)||bruto<=0){toast('Informe um valor maior que zero');return;}
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(data)){toast('Escolha uma data válida');return;}
+  const antes=l.mes;
+  l.desc=desc;
+  l.valor=(cat==='despesa')?-Math.abs(bruto):Math.abs(bruto);
+  l.data=data;
+  l.mes=data.slice(0,7);          // o mês segue a data, sempre
+  l.cat=cat;
+  if(cat==='despesa'){l.despCat=(document.getElementById('le-despcat').value||'').trim()||'Outros';}
+  else delete l.despCat;
+  logAct('Editar lançamento: '+desc);
+  persist();renderAll();closeModal('ov-lanc-edit');
+  toast(antes!==l.mes
+    ? ('✓ Salvo — mudou para '+(MESES[Number(l.mes.slice(5,7))-1]||'')+', abra aquele mês para ver')
+    : '✓ Lançamento atualizado');
+}
+function removerLancEdit(){
+  const l=(DB.lancamentos||[]).find(x=>x.id===lancEditId);
+  if(!l){closeModal('ov-lanc-edit');return;}
+  if(!confirm('Remover "'+l.desc+'" de '+fmt(Math.abs(Number(l.valor)||0))+'?\n\nIsso sai da Caixa e do Financeiro do mês.'))return;
+  logAct('Remover lançamento: '+l.desc);
+  delLanc(lancEditId);
+  closeModal('ov-lanc-edit');
+  toast('Lançamento removido');
+}
 let filtroLancCat=null;   // null = todas as categorias; senão 'mensalidade'|'avulsa'|'locacao'|'outro'
 const LANC_CAT_LBL={mensalidade:'Mensalidades',avulsa:'Avulsas',locacao:'Locações',outro:'Outros'};
 function limparFiltroLanc(){filtroLancCat=null;renderMovs();}
@@ -6999,10 +7098,14 @@ function renderMovs(){
   el.innerHTML=chip+movs.map(l=>{
     const av=l.alunoId?DB.alunos.find(x=>x.id===l.alunoId):null;
     const vinc=(av&&!(l.desc||'').includes(av.nome))?` <span style="color:var(--muted);font-weight:600">🔗 ${av.nome.split(' ')[0]}</span>`:(av?' 🔗':'');
+    /* Despesa é guardada com valor negativo. Mostrar tudo com "+" fazia o
+       aluguel da quadra aparecer como "+ R$ -2.500" — entrada, com o sinal
+       escondido no número. */
+    const saida=Number(l.valor)<0;
     return `
-  <div class="mov">
-    <div class="mov-l"><b>${l.desc}</b>${vinc}<span>${l.data.split('-').reverse().join('/')}</span></div>
-    <div style="display:flex;align-items:center"><span class="mov-v in">+ ${fmt(l.valor)}</span><button class="mov-x" onclick="delLanc('${l.id}')">✕</button></div>
+  <div class="mov" onclick="abrirLancEdit('${l.id}')" style="cursor:pointer">
+    <div class="mov-l"><b>${esc(l.desc)}</b>${vinc}<span>${l.data.split('-').reverse().join('/')} · toque para editar</span></div>
+    <div style="display:flex;align-items:center"><span class="mov-v ${saida?'out':'in'}">${saida?'−':'+'} ${fmt(Math.abs(Number(l.valor)||0))}</span><button class="mov-x" onclick="event.stopPropagation();delLanc('${l.id}')">✕</button></div>
   </div>`;}).join('');
 }
 /* Cartão de categoria do Financeiro leva à Caixa filtrada naquela categoria. */
