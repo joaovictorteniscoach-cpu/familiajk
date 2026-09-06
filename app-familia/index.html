@@ -496,6 +496,8 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
       <div class="kpi"><div class="k">Entradas</div><div class="v up" id="cat-entrada">—</div></div>
       <div class="kpi"><div class="k">Saldo</div><div class="v" id="cat-saldo">—</div></div>
       <div class="kpi"><div class="k">Lançamentos</div><div class="v" id="cat-n">—</div></div>
+      <div class="kpi"><div class="k" id="cat-k-preto">João</div><div class="v down" id="cat-preto">—</div></div>
+      <div class="kpi"><div class="k" id="cat-k-preta">Kassiana</div><div class="v down" id="cat-preta">—</div></div>
     </div>
     <div class="chartbox" style="margin-top:16px"><canvas id="catChart"></canvas></div>
     <div class="scroll" style="margin-top:10px"><table class="tbl" id="tbl-cat-resumo"></table></div>
@@ -805,6 +807,11 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
     <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin:2px 0 4px;cursor:pointer"><input type="checkbox" id="ex-fatura" onchange="exToggleFatura()" style="width:auto"> É fatura de cartão — tratar tudo como gasto</label>
     <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin:0 0 4px;cursor:pointer"><input type="checkbox" id="ex-cartao" checked onchange="exToggleFatura()" style="width:auto"> Não contar pagamento de fatura do cartão <span class="tag">as compras já estão em Cartões</span></label>
     <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin:0 0 8px;cursor:pointer"><input type="checkbox" id="ex-invest" checked onchange="exToggleFatura()" style="width:auto"> Não contar investimento / transferência minha <span class="tag">não é gasto</span></label>
+    <div class="field" style="margin:2px 0 10px">
+      <label>De quem é este extrato?</label>
+      <select id="ex-pessoa" class="cell txt" onchange="exSetPessoa(this.value)"></select>
+      <div class="hint" id="ex-pessoa-hint"></div>
+    </div>
     <div class="scroll" style="max-height:220px;border:1px solid var(--line);border-radius:10px"><table class="tbl" id="tbl-extrato"></table></div>
     <div class="row" style="flex-direction:column;gap:8px;align-items:stretch">
       <button class="iconbtn primary" onclick="exSaveTx()">🏷️ Salvar já separado por categoria</button>
@@ -879,6 +886,27 @@ const TABS_INVEST=[["i-painel","Painel"],["i-carteira","Carteira"],["i-aportes",
 const TABS_SHARED=[["nuvem","Nuvem"],["guia","Guia"]];
 const CLASSES=["Renda Fixa / Caixa","Ações (EUA)","Ouro","Prata","Cripto","Setoriais","Outros"];
 const PESSOAS=["João","Esposa","Conjunto"];
+/* dono de um gasto importado — mesmos apelidos das contas da casa */
+const PES_VALIDO=['preto','preta','ambos'];
+function pesNome(p){
+  if(p==='preto')return (D.nomes&&D.nomes.preto)||'João';
+  if(p==='preta')return (D.nomes&&D.nomes.preta)||'Kassiana';
+  return 'os dois (50/50)';
+}
+/* quanto deste lançamento é de quem: "ambos" divide ao meio */
+function valorDe(t,quem){
+  const v=Math.abs(+t.amount||0);
+  if(t.pes===quem)return v;
+  if(t.pes==='ambos')return v/2;
+  return 0;
+}
+function gastoPessoa(txs,quem){return (txs||[]).filter(t=>t.amount<0).reduce((s,t)=>s+valorDe(t,quem),0);}
+/* aprende de quem é, pelo nome — igual ao aprendizado da categoria */
+function pesDe(desc,padrao){
+  const d=norm(desc);
+  for(const k in (D.contas.pesMemory||{})){if(k&&k.length>=3&&d.includes(k))return D.contas.pesMemory[k];}
+  return PES_VALIDO.includes(padrao)?padrao:(D.contas.exPessoa||'ambos');
+}
 const CATEGORIAS=["Moradia","Mercado","Alimentação","Transporte","Saúde","Educação","Assinaturas","Lazer","Compras","Serviços","Tarifas/Impostos","Pets","Entradas","Outros"];
 const CATPAL=["#d4a23a","#4fbfa8","#e6c277","#8fb6c9","#c98f8f","#7f9c8b","#b39ddb","#86e2d0","#f0a868","#9aa0ad","#c07b7b","#8bbf9f","#5fd08a","#6b7b82"];
 const CAT_KW=[
@@ -1060,6 +1088,13 @@ function migrateContas(o){
   if(!o.anualAno)o.anualAno=new Date().getFullYear();
   if(!Array.isArray(o.transacoes))o.transacoes=[];
   if(!o.catMemory||typeof o.catMemory!=='object'||Array.isArray(o.catMemory))o.catMemory={};
+  /* de quem é cada gasto importado: 'preto' (João), 'preta' (Kassiana) ou
+     'ambos' (divide 50/50, como as contas da casa) */
+  if(!o.pesMemory||typeof o.pesMemory!=='object'||Array.isArray(o.pesMemory))o.pesMemory={};
+  Object.keys(o.pesMemory).forEach(k=>{if(!PES_VALIDO.includes(o.pesMemory[k]))delete o.pesMemory[k];});
+  if(!PES_VALIDO.includes(o.exPessoa))o.exPessoa='ambos';
+  /* transação antiga não tinha dono: entra como dividida, que é o neutro */
+  (o.transacoes||[]).forEach(t=>{if(!PES_VALIDO.includes(t.pes))t.pes='ambos';});
   /* Studio Kassiana — segundo negócio (os dados antigos ficam todos na Empresa JV) */
   if(!Array.isArray(o.empresaKS))o.empresaKS=[];
   if(!o.empSel)o.empSel='jv';
@@ -2339,7 +2374,8 @@ function falarLancar(){
   if(D.contas.transacoes.some(t=>t._k===key)){
     alert('Esse lançamento já está salvo — nada foi duplicado.');closeFalar();return;
   }
-  D.contas.transacoes.push({_k:key,date:fl.date,mes:mesFromDate(fl.date),desc,amount,cat:fl.cat||categorize(desc,amount)});
+  D.contas.transacoes.push({_k:key,date:fl.date,mes:mesFromDate(fl.date),desc,amount,
+    cat:fl.cat||categorize(desc,amount),pes:fl.pes||pesDe(desc,D.contas.exPessoa)});
   /* entrada também vai para a aba Recebidos — são vistas diferentes do mesmo
      fato: nenhum número do app soma as duas listas */
   if(fl.tipo==='entrada')D.contas.recebidos.push({_k:key,valor:Math.abs(fl.valor),data:fl.date.slice(0,5),desc});
@@ -2631,8 +2667,22 @@ function showExtratoPreview(t){
   if(!t||!t.length){alert('Não identifiquei transações. Dicas: exporte OFX (mais confiável), confira o texto colado, ou tire uma foto mais nítida. Você também pode me enviar a imagem no chat que eu transcrevo com precisão.');return;}
   extratoOrig=t.map(x=>({date:x.date,desc:x.desc,amount:x.amount}));
   const cb=document.getElementById('ex-fatura');if(cb)cb.checked=false;
+  exFillPessoa();
   applyExtrato();
   document.getElementById('extratoModal').classList.add('on');
+}
+function exSetPessoa(v){
+  if(!PES_VALIDO.includes(v))v='ambos';
+  D.contas.exPessoa=v;save();applyExtrato();
+}
+function exFillPessoa(){
+  const sel=document.getElementById('ex-pessoa');if(!sel)return;
+  const atual=D.contas.exPessoa||'ambos';
+  sel.innerHTML=PES_VALIDO.map(p=>'<option value="'+p+'"'+(p===atual?' selected':'')+'>'+esc(pesNome(p))+'</option>').join('');
+  const h=document.getElementById('ex-pessoa-hint');
+  if(h)h.textContent=atual==='ambos'
+    ?'Cada gasto conta metade para cada um, como as contas da casa.'
+    :('Tudo deste arquivo entra como gasto de '+pesNome(atual)+'. Dá para mudar linha a linha depois, na aba Categorias.');
 }
 function applyExtrato(){
   const fat=(document.getElementById('ex-fatura')||{}).checked;
@@ -2640,7 +2690,8 @@ function applyExtrato(){
   const vistos={};
   extratoTxns=extratoOrig.map(x=>{
     let amt=x.amount;if(fat&&amt>0&&!isIncomeDesc(x.desc))amt=-Math.abs(amt);
-    const y={date:x.date,desc:x.desc,amount:amt,cat:categorize(x.desc,amt),tipo:tipoTx(x.desc,amt)};
+    const y={date:x.date,desc:x.desc,amount:amt,cat:categorize(x.desc,amt),tipo:tipoTx(x.desc,amt),
+             pes:pesDe(x.desc,D.contas.exPessoa)};
     y.jaTem=y.tipo!=='saldo'&&jaImportado(y);
     if(y.jaTem)y.tipo='jalancado';
     return y;
@@ -2681,7 +2732,8 @@ function exSaveTx(){
   txContaveis().forEach(x=>{
     const key=txKey(x);
     if(D.contas.transacoes.some(t=>t._k===key))return;
-    D.contas.transacoes.push({_k:key,date:x.date||'',mes:mesFromDate(x.date),desc:(x.desc||'').slice(0,60),amount:x.amount,cat:x.cat||categorize(x.desc,x.amount)});n++;
+    D.contas.transacoes.push({_k:key,date:x.date||'',mes:mesFromDate(x.date),desc:(x.desc||'').slice(0,60),
+      amount:x.amount,cat:x.cat||categorize(x.desc,x.amount),pes:x.pes||'ambos'});n++;
   });
   save();closeExtrato();safeRun(renderCategorias);
   alert(n?('Salvei '+n+' transação(ões) já separadas por categoria. Veja na aba Categorias (modo Contas).'):'Essas transações já estavam salvas — nada duplicado.');
@@ -2923,6 +2975,9 @@ function renderCategorias(){
   set('cat-gasto',brl(gasto));set('cat-entrada',brl(entrada));
   const es=document.getElementById('cat-saldo');if(es){es.textContent=brl(entrada-gasto);es.className='v '+((entrada-gasto)>=0?'up':'down');}
   set('cat-n',tx.length+'');
+  /* quanto do gasto é de cada um — "os dois" conta metade para cada */
+  set('cat-k-preto',pesNome('preto'));set('cat-k-preta',pesNome('preta'));
+  set('cat-preto',brl(gastoPessoa(tx,'preto')));set('cat-preta',brl(gastoPessoa(tx,'preta')));
   const map={},cnt={};tx.filter(t=>t.amount<0).forEach(t=>{const c=t.cat||'Outros';map[c]=(map[c]||0)+(-t.amount);cnt[c]=(cnt[c]||0)+1;});
   const cats=Object.keys(map).sort((a,b)=>map[b]-map[a]);
   destroy('cat');
@@ -2930,13 +2985,22 @@ function renderCategorias(){
     data:{labels:cats,datasets:[{data:cats.map(c=>map[c]),backgroundColor:cats.map(c=>{const i=CATEGORIAS.indexOf(c);return CATPAL[i>=0?i:13];}),borderColor:COL.ink,borderWidth:3}]},
     options:{cutout:'58%',plugins:{legend:{position:'bottom',labels:{color:COL.mut,boxWidth:10,padding:8,font:{size:11}}},tooltip:{callbacks:{label:c=>c.label+': '+brl(c.raw)+' ('+pct(gasto?c.raw/gasto:0)+')'}}}}});}
   renderCatResumo(cats,map,cnt,gasto,tx);
-  let r='<tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th></th></tr>';
+  let r='<tr><th>Data e descrição</th><th>Categoria e dono</th><th>Valor</th><th></th></tr>';
   const idxs=all.map((t,i)=>i).filter(i=>catFiltroMes==='Todos'||all[i].mes===catFiltroMes).sort((a,b)=>(all[b].date||'').localeCompare(all[a].date||'')).slice(0,400);
-  idxs.forEach(i=>{const t=all[i];r+='<tr><td class="name" style="font-size:11px">'+esc(t.date||'—')+'</td><td class="name" style="font-size:12px">'+esc((t.desc||'').slice(0,32))+'</td>'
-    +'<td><select class="cell txt" style="min-width:118px;font-size:11px" onchange="setTxCat('+i+',this.value)">'+CATEGORIAS.map(c=>'<option'+(c===t.cat?' selected':'')+'>'+c+'</option>').join('')+'</select></td>'
+  /* data+descrição de um lado, categoria+dono do outro: quatro colunas em pé
+     não cabem na tela do celular */
+  idxs.forEach(i=>{const t=all[i];
+    r+='<tr><td class="name" style="white-space:normal;max-width:150px">'
+      +'<div class="mut" style="font-size:10.5px">'+esc(t.date||'—')+'</div>'
+      +'<div style="font-size:12px;line-height:1.3">'+esc((t.desc||'').slice(0,40))+'</div></td>'
+    +'<td style="white-space:normal">'
+      +'<select class="cell txt" style="width:100%;max-width:140px;font-size:11px" onchange="setTxCat('+i+',this.value)">'
+        +CATEGORIAS.map(c=>'<option'+(c===t.cat?' selected':'')+'>'+c+'</option>').join('')+'</select>'
+      +'<select class="cell txt" style="width:100%;max-width:140px;font-size:11px;margin-top:4px" onchange="setTxPes('+i+',this.value)">'
+        +PES_VALIDO.map(pp=>'<option value="'+pp+'"'+(pp===(t.pes||'ambos')?' selected':'')+'>'+esc(pesNome(pp))+'</option>').join('')+'</select></td>'
     +'<td class="'+(t.amount<0?'down':'up')+'">'+brl(t.amount)+'</td>'
     +'<td><button class="iconbtn" style="padding:2px 8px" onclick="delTx('+i+')">×</button></td></tr>';});
-  if(!all.length)r+='<tr><td class="mut" colspan="5">Nenhuma transação importada ainda. Use o card “Automático — importar extrato” no Painel, ou o botão “importar extrato” acima.</td></tr>';
+  if(!all.length)r+='<tr><td class="mut" colspan="4">Nenhuma transação importada ainda. Use o card “Automático — importar extrato” no Painel, ou o botão “importar extrato” acima.</td></tr>';
   document.getElementById('tbl-cat-lanc').innerHTML=r;
   if(typeof tuneInputs==='function')tuneInputs();
 }
@@ -3055,6 +3119,26 @@ function setTxCat(i,cat){
   const el=document.getElementById('cat-aprendeu');
   if(el)el.textContent=w
     ?('Aprendi: “'+w+'” → '+cat+'.'+(juntos?(' Ajustei mais '+juntos+' lançamento(s) com esse nome.'):' As próximas importações já vêm assim.'))
+    :'';
+}
+/* Trocar o dono de um lançamento vale para todos os parecidos, e o app aprende
+   para as próximas importações — mesma regra da categoria. */
+function setTxPes(i,pes){
+  const t=D.contas.transacoes[i];if(!t||!PES_VALIDO.includes(pes))return;
+  t.pes=pes;
+  const w=norm(t.desc).split(/\s+/).filter(x=>x.length>=4&&!/\d/.test(x)).sort((a,b)=>b.length-a.length)[0];
+  let juntos=0;
+  if(w){
+    D.contas.pesMemory[w]=pes;
+    (D.contas.transacoes||[]).forEach((o,k)=>{
+      if(k===i||o.pes===pes)return;
+      if(norm(o.desc).includes(w)){o.pes=pes;juntos++;}
+    });
+  }
+  save();renderCategorias();
+  const el=document.getElementById('cat-aprendeu');
+  if(el)el.textContent=w
+    ?('Aprendi: “'+w+'” é de '+pesNome(pes)+'.'+(juntos?(' Ajustei mais '+juntos+' lançamento(s).'):' As próximas importações já vêm assim.'))
     :'';
 }
 function delTx(i){D.contas.transacoes.splice(i,1);save();renderCategorias();}
