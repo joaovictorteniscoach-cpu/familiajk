@@ -1297,7 +1297,7 @@ function esperarAuth(){
     <button class="btn btn-ghost" onclick="baixarFechamento()">🖼️ Baixar imagem</button>
     <button class="btn btn-clay" onclick="enviarFechamento()">📲 Enviar no WhatsApp</button>
   </div>
-  <p class="hint">O iPhone anexa a imagem direto na conversa. Se ele não deixar, a imagem é salva e o WhatsApp abre com o texto pronto.</p>
+  <p class="hint" id="fc-envio-hint">Abre a conversa do aluno já com o texto pronto. A imagem é salva na galeria — anexe com 📎 se quiser mandar junto.</p>
 
   <div id="fech-export"></div>
 
@@ -1988,7 +1988,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-06-8';
+const VERSAO='2026-09-06-9';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -5680,7 +5680,7 @@ function enviarDevolutivaWa(){
   });
   linhas.push('','Qualquer dúvida, estou à disposição! 👊');
   const msg=encodeURIComponent(linhas.join('\n'));
-  window.open('https://wa.me/55'+a.tel+'?text='+msg,'_blank');
+  window.open('https://wa.me/'+foneWhats(a.tel)+'?text='+msg,'_blank');
   closeModal('ov-avalexp');
 }
 
@@ -6119,7 +6119,7 @@ function renovarMes(id){
 function enviarAcesso(id){
   const a=DB.alunos.find(x=>x.id===id);
   const msg=encodeURIComponent(`Olá ${a.nome.split(' ')[0]}! 🎾 Agora você pode acompanhar seu saldo de aulas, reposições e horários no app da Academia João Victor Tênis.\n\n🔑 Seu código de acesso: *${a.codigo}*\n\nÉ só abrir o App do Aluno e digitar esse código. Qualquer dúvida me chama!`);
-  window.open(`https://wa.me/55${a.tel}?text=${msg}`,'_blank');
+  window.open(`https://wa.me/${foneWhats(a.tel)}?text=${msg}`,'_blank');
 }
 function enviarRenovacaoWa(id){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
@@ -6134,7 +6134,7 @@ function enviarRenovacaoWa(id){
     +(a.mensalidade?('\n💰 Mensalidade: *'+fmt(a.mensalidade)+'*'):'')
     +'\n\nVocê prefere *renovar do mesmo jeito* ou *mudar o número de aulas* do próximo mês? '
     +'Me responde aqui que eu já deixo tudo certo. 😊');
-  window.open('https://wa.me/55'+a.tel+'?text='+msg,'_blank');
+  window.open('https://wa.me/'+foneWhats(a.tel)+'?text='+msg,'_blank');
 }
 let filtroAluno='todos';
 let focoRepos=false;
@@ -6328,6 +6328,22 @@ function renderFechamento(){
   const a=DB.alunos.find(x=>x.id===(document.getElementById('fc-aluno')||{}).value);
   const mk=(document.getElementById('fc-mes')||{}).value||monthKey();
   if(!a){box.innerHTML='<div class="empty">Escolha o aluno para ver a prévia do fechamento.</div>';renderConfMes();return;}
+  /* Para QUEM vai, escrito antes de tocar em enviar. Fechamento é o financeiro
+     do aluno: descobrir o destino só depois que o WhatsApp abriu é tarde. */
+  (function(){
+    const h=document.getElementById('fc-envio-hint');if(!h)return;
+    const f=foneWhats(a.tel);
+    if(f){
+      const d=f.slice(2), bonito='('+d.slice(0,2)+') '+d.slice(2,-4)+'-'+d.slice(-4);
+      h.innerHTML='📲 Vai direto para <b>'+esc(a.nome)+'</b> · '+esc(bonito)
+        +'<br>A imagem é salva na galeria — anexe com 📎 se quiser mandar junto.';
+      h.style.color='';
+    }else{
+      h.innerHTML='⚠️ <b>'+esc(a.nome)+'</b> está sem WhatsApp no cadastro — vai abrir a lista de contatos para você escolher. '
+        +'Cadastre o número no aluno para ir direto.';
+      h.style.color='var(--bad,#C0392B)';
+    }
+  })();
   const D=fcDados(a,mk);
   const obs=(document.getElementById('fc-obs')||{}).value||'';
   /* Realizada e "ainda vem" nao sao a mesma coisa. A lista era uma so, sob o
@@ -6473,27 +6489,55 @@ async function baixarFechamento(){
     toast('🖼️ Imagem salva!');
   }catch(e){toast('Sem internet para gerar a imagem agora');}
 }
+/* O número do jeito que o WhatsApp espera: só dígitos, com o país na frente.
+   Quem copia o contato do próprio WhatsApp cola "5541..." — e aí o "55" fixo
+   que havia em cada lugar virava "555541...", que abre uma conversa vazia com
+   um número que não existe. */
+function foneWhats(tel){
+  const d=String(tel||'').replace(/\D/g,'');
+  if(!d)return '';
+  if(d.length>11&&d.indexOf('55')===0)return d;   // já veio com o país
+  return '55'+d;
+}
 async function enviarFechamento(){
   const a=DB.alunos.find(x=>x.id===(document.getElementById('fc-aluno')||{}).value);
   if(!a){toast('Escolha o aluno primeiro');return;}
   const mk=(document.getElementById('fc-mes')||{}).value||monthKey();
   const D=fcDados(a,mk), txt=fcTexto(a,mk,D);
+  /* Com telefone no cadastro, vai DIRETO para a conversa daquele aluno.
+     O compartilhamento nativo leva imagem e texto juntos, mas obriga a escolher
+     o contato na lista toda vez — e escolher o contato errado no fechamento
+     manda o financeiro de um aluno para outro. Errar de contato custa mais que
+     anexar a imagem à mão.
+     A imagem é salva na galeria antes de abrir a conversa, então continua a um
+     toque de distância: 📎 → Fotos → a última. */
   toast('Preparando envio…');
   let blob=null;
   try{blob=await _fechBlob();}catch(e){}
-  const file=blob?new File([blob],'fechamento-'+a.nome.split(' ')[0].toLowerCase()+'.png',{type:'image/png'}):null;
-  /* Caminho bom: o compartilhamento nativo leva imagem E texto juntos. */
-  if(file&&navigator.canShare&&navigator.canShare({files:[file]})){
-    try{await navigator.share({files:[file],text:txt});marcarFechEnviado(a.id,mk);return;}catch(e){}
+  const nomeArq='fechamento-'+a.nome.split(' ')[0].toLowerCase()+'.png';
+  if(foneWhats(a.tel)){
+    if(blob){
+      const url=URL.createObjectURL(blob),l=document.createElement('a');
+      l.href=url;l.download=nomeArq;
+      document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
+    }
+    window.open('https://wa.me/'+foneWhats(a.tel)+'?text='+encodeURIComponent(txt),'_blank');
+    marcarFechEnviado(a.id,mk);
+    return;
   }
-  /* Reserva: salva a imagem e abre a conversa com o texto pronto para anexar. */
+  /* Sem telefone não há para onde direcionar: cai no compartilhamento, que ao
+     menos leva imagem e texto juntos para onde ele escolher. */
+  const file=blob?new File([blob],nomeArq,{type:'image/png'}):null;
+  if(file&&navigator.canShare&&navigator.canShare({files:[file]})){
+    try{await navigator.share({files:[file],text:txt});marcarFechEnviado(a.id,mk);
+      toast('Sem WhatsApp no cadastro de '+a.nome+' — da próxima vez vai direto');return;}catch(e){}
+  }
   if(blob){
     const url=URL.createObjectURL(blob),l=document.createElement('a');
-    l.href=url;l.download='fechamento-'+a.nome.split(' ')[0].toLowerCase()+'.png';
+    l.href=url;l.download=nomeArq;
     document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
   }
-  if(a.tel)window.open('https://wa.me/55'+a.tel+'?text='+encodeURIComponent(txt),'_blank');
-  else toast('Sem telefone cadastrado para '+a.nome);
+  toast('Sem WhatsApp cadastrado para '+a.nome+' — cadastre no aluno para ir direto');
   marcarFechEnviado(a.id,mk);
 }
 /* Fila: quem já recebeu o fechamento de cada mês. */
@@ -7265,7 +7309,7 @@ function cobrar(id){
   const a=DB.alunos.find(x=>x.id===id);
   const falta=a.status==='parcial'?a.mensalidade*0.5:a.mensalidade;
   const msg=encodeURIComponent(`Olá ${a.nome.split(' ')[0]}! 🎾 Passando para lembrar da mensalidade de ${MESES[curMonth]}: ${fmt(falta)}. Qualquer dúvida é só chamar!`);
-  window.open(`https://wa.me/55${a.tel}?text=${msg}`,'_blank');
+  window.open(`https://wa.me/${foneWhats(a.tel)}?text=${msg}`,'_blank');
 }
 function modalDe(l){
   if(l.modal)return l.modal;
@@ -9335,7 +9379,7 @@ function confirmarAulaWa(id,hora){
   if(!a.tel){toast('Sem telefone cadastrado para '+a.nome);return;}
   const am=new Date();am.setDate(am.getDate()+1);
   const msg=encodeURIComponent('Olá '+a.nome.split(' ')[0]+'! 🎾 Passando para confirmar seu horário amanhã ('+am.getDate()+'/'+(am.getMonth()+1)+') às '+hora+'. Posso confirmar? Qualquer coisa me avisa. 😊');
-  window.open('https://wa.me/55'+a.tel+'?text='+msg,'_blank');
+  window.open('https://wa.me/'+foneWhats(a.tel)+'?text='+msg,'_blank');
 }
 /* Encolhe o cabeçalho depois de uns 40px de rolagem. Histerese (40 para
    encolher, 20 para voltar) evita o cabeçalho piscar quando a rolagem para
