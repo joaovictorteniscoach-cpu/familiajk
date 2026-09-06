@@ -506,7 +506,8 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
     </div>
     <p class="note" id="cat-orc-nota"></p>
     <h2 style="font-size:14px;margin-top:24px">Lançamentos</h2>
-    <div class="sub">Toque na categoria para trocar — o app memoriza para as próximas importações.</div>
+    <div class="sub">Toque na categoria para trocar. O app memoriza <b>e corrige de uma vez todos os lançamentos com o mesmo nome</b> — é assim que a peneira final fica rápida.</div>
+    <p class="note" id="cat-aprendeu" style="color:var(--teal)"></p>
     <div class="scroll"><table class="tbl" id="tbl-cat-lanc"></table></div>
     <p class="note">As transações ficam só neste aparelho. Importe pelo Painel ou pelo botão acima: arquivo <b>OFX/CSV</b>, <b>colar texto</b> ou <b>foto</b>.</p>
   </div>
@@ -881,18 +882,18 @@ const PESSOAS=["João","Esposa","Conjunto"];
 const CATEGORIAS=["Moradia","Mercado","Alimentação","Transporte","Saúde","Educação","Assinaturas","Lazer","Compras","Serviços","Tarifas/Impostos","Pets","Entradas","Outros"];
 const CATPAL=["#d4a23a","#4fbfa8","#e6c277","#8fb6c9","#c98f8f","#7f9c8b","#b39ddb","#86e2d0","#f0a868","#9aa0ad","#c07b7b","#8bbf9f","#5fd08a","#6b7b82"];
 const CAT_KW=[
- ["Moradia",["aluguel","condominio","imobiliaria","energia","cemig","enel","cpfl","light","copel","celesc","sabesp","copasa","sanepar","agua","gas ","iptu","internet","fibra","vivo","claro","net "]],
- ["Mercado",["mercado","supermerc","atacad","assai","carrefour","pao de acucar","angeloni","zaffari","hortifruti","sacolao","havan","atacadao","tenda","dia "]],
- ["Alimentação",["ifood","rappi","restaurante","lanchonete","pizzaria","burger","mcdonald","bk ","subway","padaria","cafe","boteco","habib","outback","spoleto","food","doceria","sorveteria"]],
- ["Transporte",["uber","99app","99 ","cabify","posto","gasolina","combustivel","ipiranga","shell","petrobras","estacion","pedagio","sem parar","conectcar","veloe","onibus","metro","mecanic","oficina","seguro auto","ipva","detran","licenciamento","autopista"]],
- ["Saúde",["farmacia","drogaria","droga ","pague menos","raia","drogasil","panvel","hospital","clinica","laboratorio","medic","dentista","psicolog","plano de saude","unimed","amil","hapvida","academia","smartfit","gympass","wellhub"]],
- ["Educação",["escola","faculdade","universidade","curso","udemy","alura","colegio","material escolar","livraria","kindle","descomplica"]],
- ["Assinaturas",["netflix","spotify","disney","hbo","max ","prime video","amazon prime","paramount","globoplay","youtube premium","apple.com","apple ","icloud","google ","microsoft","office","adobe","chatgpt","openai","canva","melimax","dropbox"]],
- ["Lazer",["cinema","steam","playstation","xbox","nintendo","viagem","hotel","airbnb","booking","decolar","latam","gol ","azul ","ingresso","show ","evento","parque","clube"]],
- ["Compras",["amazon","mercado livre","mercadolivre","magazine","magalu","americanas","shopee","aliexpress","shein","renner","riachuelo","c&a","zara","centauro","nike","adidas","shopping","loja","marisa","leroy","kabum","casas bahia"]],
- ["Serviços",["cartorio","correios","lavanderia","barbearia","salao","cabeleireiro","manicure","contador","advogado","chaveiro"]],
- ["Tarifas/Impostos",["tarifa","juros","iof","anuidade","imposto","darf","das ","inss","fgts","multa","taxa ","tributo"]],
- ["Pets",["pet ","petshop","pet shop","veterinar","cobasi","petz","racao"]],
+ ["Moradia",["aluguel","condominio","imobiliaria","energia","cemig","enel","cpfl","light","copel","celesc","sabesp","copasa","sanepar","agua","gas ","iptu","internet","fibra","vivo","claro","net ","tim ","oi ","nextel","sky","hughesnet","starlink","sindico","gas natural","ultragaz","liquigas","copagaz"]],
+ ["Mercado",["mercado","supermerc","atacad","assai","carrefour","pao de acucar","angeloni","zaffari","hortifruti","sacolao","havan","atacadao","tenda","dia ","big ","fort ","comper","sonda","tenda atacado","sam s club","makro","acougue","quitanda","emporio","armazem","mercearia"]],
+ ["Alimentação",["ifood","rappi","restaurante","lanchonete","pizzaria","burger","mcdonald","bk ","subway","padaria","cafe","boteco","habib","outback","spoleto","food","doceria","sorveteria","mc donald","giraffas","madero","coco bambu","confeitaria","cafeteria","starbucks","churrascaria","espetinho","lanche","bar ","aiqfome"]],
+ ["Transporte",["uber","99app","99 ","cabify","posto","gasolina","combustivel","ipiranga","shell","petrobras","estacion","pedagio","sem parar","conectcar","veloe","onibus","metro","mecanic","oficina","seguro auto","ipva","detran","licenciamento","autopista","99pop","99 pop","indriver","blablacar","zul digital","zona azul","cet ","borracharia","autopecas","auto pecas","lava rapido","lavajato","ecovias","arteris","pneu"]],
+ ["Saúde",["farmacia","drogaria","droga ","pague menos","raia","drogasil","panvel","hospital","clinica","laboratorio","medic","dentista","psicolog","plano de saude","unimed","amil","hapvida","academia","smartfit","gympass","wellhub","odonto","sulamerica","sul america","bradesco saude","notredame","intermedica","exame","fisioterapia","psiquiatra","terapia","oftalmo","dermato","ortopedi","vacina","otica"]],
+ ["Educação",["escola","faculdade","universidade","curso","udemy","alura","colegio","material escolar","livraria","kindle","descomplica","coursera","duolingo","kumon","wizard","ccaa","fisk","cultura inglesa"]],
+ ["Assinaturas",["netflix","spotify","disney","hbo","max ","prime video","amazon prime","paramount","globoplay","youtube premium","apple.com","apple ","icloud","google ","microsoft","office","adobe","chatgpt","openai","canva","melimax","dropbox","deezer","tidal","office 365","microsoft 365"]],
+ ["Lazer",["cinema","steam","playstation","xbox","nintendo","viagem","hotel","airbnb","booking","decolar","latam","gol ","azul ","ingresso","show ","evento","parque","clube","cinemark","cinepolis","uci ","sympla","eventim","123 milhas","hoteis","pousada","azul linhas","gol linhas","netshoes ingresso"]],
+ ["Compras",["amazon","mercado livre","mercadolivre","magazine","magalu","americanas","shopee","aliexpress","shein","renner","riachuelo","c&a","zara","centauro","nike","adidas","shopping","loja","marisa","leroy","kabum","casas bahia","decathlon","netshoes","dafiti","cea","pernambucanas","telha norte","ponto frio","pichau","temu"]],
+ ["Serviços",["cartorio","correios","lavanderia","barbearia","salao","cabeleireiro","manicure","contador","advogado","chaveiro","picpay","mercado pago","pagseguro","pagbank","stone","cielo","rede ","getnet","sumup","infinitepay","electron","tin-","cartao de credito maquin","estetica","encanador","eletricista","diarista","faxina"]],
+ ["Tarifas/Impostos",["tarifa","juros","iof","anuidade","imposto","darf","das ","inss","fgts","multa","taxa ","tributo","crefisa","emprestimo","financiamento","consignado","credito pessoal","seguro auto","seguro de vida","porto seguro","itau seguros","tokio marine","mapfre","allianz","ted ","doc ","pacote de servicos","cesta de servicos"]],
+ ["Pets",["pet ","petshop","pet shop","veterinar","cobasi","petz","racao","petlove","veterinari","banho e tosa"]],
  ["Entradas",["salario","recebido","pix recebid","deposito","rendimento","estorno","reembolso","provento","transferencia recebid","ted recebid","credito receb","pagamento receb"]]
 ];
 
@@ -2454,6 +2455,13 @@ function parseCSV(text){
   return txns;
 }
 function loadExtrato(text,name){
+  const bin=pareceBinario(text);
+  if(bin){
+    alert('Esse arquivo não é um extrato em texto — parece '+bin+'.\n\n'
+      +'O app lê OFX, CSV, QFX e TXT. No app do banco procure "exportar" ou "baixar extrato" e escolha OFX (o mais fiel) ou CSV.\n\n'
+      +'Se você só tem o PDF, tire uma foto ou print da lista e use "foto do extrato".');
+    return;
+  }
   const isOFX=/\.(ofx|qfx)$/i.test(name)||/<OFX>|<STMTTRN>/i.test(text);
   showExtratoPreview(isOFX?parseOFX(text):parseCSV(text));
 }
@@ -2525,10 +2533,21 @@ function catMatch(d,k){
   if(!inteira)return d.includes(kk);
   return new RegExp('(^|[^a-z0-9])'+kk.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'([^a-z0-9]|$)').test(d);
 }
+/* Marcas cujo nome contém uma palavra genérica de outra categoria. Sem isto,
+   "Mercado Livre" e "Mercado Pago" caem em Mercado (supermercado) só por conter
+   "mercado". Decididas antes da lista geral. */
+const CAT_MARCA=[
+  [/mercado ?livre|mercadolivre|meli\b|mercado ?envios/,"Compras"],
+  [/mercado ?pago|mercadopago|mp \*/,"Serviços"],
+  [/casa ?do ?constru|constru ?mega|telha ?norte|leroy/,"Compras"],
+  [/farmacia ?pague ?menos|pague ?menos/,"Saúde"],
+  [/posto ?ipiranga|ipiranga ?abastec/,"Transporte"]
+];
 function categorize(desc,amount){
   const d=norm(desc);
   for(const key in D.contas.catMemory){if(key&&key.length>=3&&d.includes(key))return D.contas.catMemory[key];}
   if(amount>0)return "Entradas";
+  for(const [re,cat] of CAT_MARCA){if(re.test(d))return cat;}
   for(const pair of CAT_KW){if(pair[0]==="Entradas")continue;if(pair[1].some(k=>catMatch(d,k)))return pair[0];}
   return "Outros";
 }
@@ -2546,18 +2565,58 @@ const TX_INVEST=['aplicacao','aplic automatica','aplic ','resgate','investimento
   'mesma titularidade','mesmo titular','entre contas proprias','transf entre contas',
   'xp investimentos','xp inv','corretora'];
 function tipoTx(desc,amount){
+  if(ehLinhaSaldo(desc))return 'saldo';      /* saldo do dia não é movimentação */
   if(amount>0)return 'normal';               /* entradas nunca são fatura/aplicação */
   const d=norm(desc);
   if(TX_CARTAO.some(k=>d.includes(norm(k))))return 'cartao';
   if(TX_INVEST.some(k=>d.includes(norm(k))))return 'invest';
   return 'normal';
 }
-const TX_ROTULO={cartao:'fatura do cartão',invest:'investimento / você mesmo'};
+const TX_ROTULO={cartao:'fatura do cartão',invest:'investimento / você mesmo',
+  saldo:'linha de saldo, não é lançamento',jalancado:'já lançado antes'};
+
+/* Linhas que o banco imprime no extrato mas NÃO são movimentação: saldo do dia,
+   saldo anterior, totais. Elas repetem todo dia com o valor do saldo, então
+   entravam como se fossem gasto e inflavam tudo. */
+const TX_SALDO=/^(saldo|s\.?\s?anterior|total\b|subtotal|limite|extrato|resumo|posi[cç][aã]o|movimenta[cç][aã]o do dia|lan[cç]amentos? do dia)/;
+function ehLinhaSaldo(desc){
+  const d=norm(desc);
+  if(!d)return true;
+  if(TX_SALDO.test(d))return true;
+  if(/\bsaldo\b/.test(d)&&/(disponivel|anterior|do dia|atual|final|bloqueado|conta)/.test(d))return true;
+  return false;
+}
+
+/* Um arquivo binário (PDF, XLSX, imagem) lido como texto vira lixo que o leitor
+   interpreta como valores gigantes. Antes de tentar ler, checa se é texto. */
+function pareceBinario(t){
+  if(typeof t!=='string'||!t)return true;
+  const cab=t.slice(0,8);
+  if(cab.startsWith('%PDF'))return 'PDF';
+  if(cab.startsWith('PK\u0003\u0004'))return 'planilha ou .zip';
+  if(cab.startsWith('\u00d0\u00cf\u0011\u00e0'))return 'Excel antigo (.xls)';
+  if(/^\u00ff\u00d8\u00ff|^\u0089PNG/.test(cab))return 'imagem';
+  const amostra=t.slice(0,4000);
+  let ruins=0;
+  for(let i=0;i<amostra.length;i++){
+    const c=amostra.charCodeAt(i);
+    if(c===9||c===10||c===13)continue;
+    if(c<32||c===0xFFFD||(c>=0x80&&c<=0x9f))ruins++;
+  }
+  return (amostra.length&&ruins/amostra.length>0.06)?'arquivo binário':false;
+}
 /* respeita as caixas de seleção do modal */
 function txIgnorado(x){
+  if(x.tipo==='saldo')return true;           /* nunca conta: não é lançamento */
+  if(x.jaTem)return true;                    /* já está salvo, não conta de novo */
   if(x.tipo==='cartao')return !((document.getElementById('ex-cartao')||{}).checked===false);
   if(x.tipo==='invest')return !((document.getElementById('ex-invest')||{}).checked===false);
   return false;
+}
+/* esta linha já foi importada numa vez anterior? */
+function jaImportado(x){
+  const k=txKey(x);
+  return (D.contas.transacoes||[]).some(t=>t._k===k);
 }
 function txContaveis(){return extratoTxns.filter(x=>!txIgnorado(x));}
 /* impressão digital de um lançamento — usada para nunca importar o mesmo duas vezes */
@@ -2581,7 +2640,10 @@ function applyExtrato(){
   const vistos={};
   extratoTxns=extratoOrig.map(x=>{
     let amt=x.amount;if(fat&&amt>0&&!isIncomeDesc(x.desc))amt=-Math.abs(amt);
-    return {date:x.date,desc:x.desc,amount:amt,cat:categorize(x.desc,amt),tipo:tipoTx(x.desc,amt)};
+    const y={date:x.date,desc:x.desc,amount:amt,cat:categorize(x.desc,amt),tipo:tipoTx(x.desc,amt)};
+    y.jaTem=y.tipo!=='saldo'&&jaImportado(y);
+    if(y.jaTem)y.tipo='jalancado';
+    return y;
   }).filter(x=>{const k=txKey(x);if(vistos[k])return false;vistos[k]=1;return true;});
   renderExtratoPreview();
 }
@@ -2590,12 +2652,20 @@ function renderExtratoPreview(){
   const t=extratoTxns,cont=txContaveis();
   const saidas=cont.filter(x=>x.amount<0).reduce((s,x)=>s-x.amount,0);
   const entradas=cont.filter(x=>x.amount>0).reduce((s,x)=>s+x.amount,0);
-  const fora=t.length-cont.length;
-  const foraVal=t.filter(txIgnorado).reduce((s,x)=>s+Math.abs(+x.amount||0),0);
-  document.getElementById('ex-sum').innerHTML=cont.length+' transações contadas · <b class="down">saídas '+brl(saidas)+'</b> · <b class="up">entradas '+brl(entradas)+'</b>'
-    +(fora?('<br><span class="mut" style="font-size:11px">'+fora+' fora da conta ('+brl(foraVal)+') — fatura de cartão e investimento, para não contar duas vezes</span>'):'');
+  const jaTem=t.filter(x=>x.jaTem).length;
+  const saldos=t.filter(x=>x.tipo==='saldo').length;
+  const outrosFora=t.filter(x=>txIgnorado(x)&&!x.jaTem&&x.tipo!=='saldo');
+  const foraVal=outrosFora.reduce((s,x)=>s+Math.abs(+x.amount||0),0);
+  let notas=[];
+  if(jaTem)notas.push('<b>'+jaTem+' já estavam lançados</b> e não entram de novo');
+  if(saldos)notas.push(saldos+' linha(s) de saldo do banco (não são movimentação)');
+  if(outrosFora.length)notas.push(outrosFora.length+' fora da conta ('+brl(foraVal)+') — fatura de cartão e investimento');
+  document.getElementById('ex-sum').innerHTML=cont.length+' transações novas · <b class="down">saídas '+brl(saidas)+'</b> · <b class="up">entradas '+brl(entradas)+'</b>'
+    +(notas.length?('<br><span class="mut" style="font-size:11px">'+notas.join(' · ')+'</span>'):'');
   let h='<tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th></tr>';
-  t.slice(0,300).forEach(x=>{
+  /* as novas primeiro: é nelas que você precisa olhar */
+  const ordem=t.slice().sort((a,b)=>(txIgnorado(a)?1:0)-(txIgnorado(b)?1:0));
+  ordem.slice(0,300).forEach(x=>{
     const ig=txIgnorado(x);
     h+='<tr'+(ig?' style="opacity:.45"':'')+'><td class="name" style="font-size:11px">'+esc(x.date||'—')+'</td>'
       +'<td class="name" style="font-size:11px">'+esc((x.desc||'').slice(0,30))+(ig?'<div class="tag">fora: '+TX_ROTULO[x.tipo]+'</div>':'')+'</td>'
@@ -2606,7 +2676,9 @@ function renderExtratoPreview(){
 }
 function exSaveTx(){
   if(!extratoTxns.length)return;let n=0;
-  extratoTxns.forEach(x=>{
+  /* só o que conta: fora ficam saldo do dia, já lançados e o que as caixas
+     de seleção pedem para deixar de fora */
+  txContaveis().forEach(x=>{
     const key=txKey(x);
     if(D.contas.transacoes.some(t=>t._k===key))return;
     D.contas.transacoes.push({_k:key,date:x.date||'',mes:mesFromDate(x.date),desc:(x.desc||'').slice(0,60),amount:x.amount,cat:x.cat||categorize(x.desc,x.amount)});n++;
@@ -2679,7 +2751,25 @@ async function runOCR(file){
    ideia é atualizar, não recadastrar. Só Nacional e Binance, que guardam valor
    em reais; a carteira Global é em dólar, com quantidade e preço, e continua
    vindo da planilha da XP (importar planilha), que traz esses campos certos. */
-const INV_IGNORAR=/^(total|saldo|patrim[oô]nio|posi[cç][aã]o|carteira|investimentos?|resumo|rentabilidade|valor bruto|valor l[ií]quido|subtotal)\b/;
+/* Linhas da tela da corretora que NÃO são ativo: totais, nomes de conta e
+   textos de rodapé. Sem isto, fotografar a tela "Meu Patrimônio" cadastrava
+   "Nacional XP" e "Open Finance" como se fossem fundos. */
+const INV_IGNORAR=/^(total|saldo|(meu )?patrim\w*|posi[cç][aã]o|carteira|investimentos?|resumo|rentabilidade|valor bruto|valor l[ií]quido|subtotal|aplicado|bruto|liquido|dolar|d[oó]lar|cambio|c[aâ]mbio|conta|disponivel|dispon[ií]vel|filtrar|no ano|no mes|no m[eê]s)\b/;
+/* nomes de conta/agregador — são somas, não ativos */
+const INV_CONTA=/\b(nacional xp|global xp|open finance|xp investimentos|conta corrente|renda variavel|renda vari[aá]vel|tesouro direto|previdencia|previd[eê]ncia)\b/;
+function ehLinhaResumoInvest(nome){
+  const n=norm(nome);
+  if(!n||n.length<3)return true;
+  if(INV_IGNORAR.test(n))return true;
+  if(INV_CONTA.test(n))return true;
+  /* "79% Nacional XP" e "< 1% Open Finance": linha que começa com percentual
+     é fatia da carteira, não ativo */
+  if(/^[<>]?\s*\d{1,3}\s*%/.test(n))return true;
+  if(/^[<>]\s/.test(n))return true;
+  /* sobrou só pontuação ou número */
+  if(!/[a-z]{3}/.test(n))return true;
+  return false;
+}
 function parseTextInvest(text){
   const out=[];
   (text||'').split(/\r?\n/).forEach(raw=>{
@@ -2694,7 +2784,7 @@ function parseTextInvest(text){
       .replace(/\s{2,}/g,' ').trim();
     nome=nome.replace(/[.,;:\-–—]+$/,'').trim();
     if(nome.length<3)return;
-    if(INV_IGNORAR.test(norm(nome)))return;          /* linha de total, não é ativo */
+    if(ehLinhaResumoInvest(nome))return;              /* total, nome de conta ou rodapé */
     out.push({nome:nome.slice(0,48),valor});
   });
   return out;
@@ -2758,7 +2848,7 @@ async function runOCRInvest(file){
     const txt=(data&&data.text)||'';
     if(!txt.trim()){alert('O leitor funcionou, mas não achou texto nessa imagem.\n\nTente uma foto mais próxima e sem reflexo.'+ALT);return;}
     const lista=parseTextInvest(txt);
-    if(!lista.length){alert('Li o texto da imagem, mas não reconheci nenhum ativo (preciso do nome e do valor em reais na mesma linha).\n\nDica: fotografe só a lista de ativos, sem o gráfico.'+ALT);return;}
+    if(!lista.length){alert('Li o texto da imagem, mas não reconheci nenhum ativo.\n\nSe você fotografou a tela de resumo (“Meu Patrimônio”, com Nacional XP / Global XP), ela mostra o total de cada conta, não os ativos — o app ignora essas linhas de propósito, para não cadastrar conta como se fosse fundo.\n\nEntre na conta e fotografe a LISTA DE ATIVOS, com o nome e o valor de cada um.'+ALT);return;}
     showInvestFoto(lista);
   }catch(e){
     ocrToast(false);
@@ -2941,10 +3031,32 @@ function addOrcamento(){
   const sel=document.getElementById('cat-orc-sel');if(!sel||!sel.value)return;
   setOrcamento(sel.value,0.01);
 }
-function setTxCat(i,cat){const t=D.contas.transacoes[i];if(!t)return;t.cat=cat;
-  const w=norm(t.desc).split(/\s+/).filter(x=>x.length>=4&&!/^\d+$/.test(x)).sort((a,b)=>b.length-a.length)[0];
-  if(w)D.contas.catMemory[w]=cat;
-  save();renderCategorias();}
+/* Corrigir uma linha corrige TODAS as parecidas de uma vez. É o que torna a
+   peneira final rápida: você arruma "IFOOD" uma vez e todos os iFood do
+   histórico vão junto — e as próximas importações já nascem certas. */
+function setTxCat(i,cat){
+  const t=D.contas.transacoes[i];if(!t)return;
+  t.cat=cat;
+  /* aprende pela palavra distintiva, nunca por código de transação: nomes como
+     "ELECTRON FESTVAL TIN-001073" traziam o TIN-001073, que muda a cada compra
+     e não serviria para reconhecer as próximas */
+  const w=norm(t.desc).split(/\s+/)
+    .filter(x=>x.length>=4&&!/\d/.test(x))
+    .sort((a,b)=>b.length-a.length)[0];
+  let juntos=0;
+  if(w){
+    D.contas.catMemory[w]=cat;
+    (D.contas.transacoes||[]).forEach((o,k)=>{
+      if(k===i||o.cat===cat)return;
+      if(norm(o.desc).includes(w)){o.cat=cat;juntos++;}
+    });
+  }
+  save();renderCategorias();
+  const el=document.getElementById('cat-aprendeu');
+  if(el)el.textContent=w
+    ?('Aprendi: “'+w+'” → '+cat+'.'+(juntos?(' Ajustei mais '+juntos+' lançamento(s) com esse nome.'):' As próximas importações já vêm assim.'))
+    :'';
+}
 function delTx(i){D.contas.transacoes.splice(i,1);save();renderCategorias();}
 function clearTx(){if(confirm('Apagar todas as transações importadas? (não mexe nas suas contas fixas, só na aba Categorias)')){D.contas.transacoes=[];save();renderCategorias();}}
 
