@@ -1988,7 +1988,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-06-7';
+const VERSAO='2026-09-06-8';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -3921,6 +3921,7 @@ function renderEntrar(){
 }
 function entrarMsg(txt,erro){
   const m=document.getElementById('ent-msg');if(!m)return;
+  m.style.whiteSpace='pre-line';
   m.textContent=txt;m.style.color=erro?'var(--bad,#C0392B)':'var(--muted)';m.style.fontWeight=erro?'700':'';
 }
 /* Depois de entrar, recarrega. O load() já rodou com o banco vazio deste
@@ -7944,7 +7945,13 @@ async function comGoogle(fn){
 function erroGoogleTexto(err){
   var c=String(err&&err.code||'');
   if(c.indexOf('operation-not-allowed')>=0)return 'O login pelo Google ainda não foi ativado no painel do Firebase (Authentication → Sign-in method → Google).';
-  if(c.indexOf('unauthorized-domain')>=0)return 'Este endereço não está na lista de domínios autorizados do Firebase (Authentication → Settings → Authorized domains).';
+  if(c.indexOf('unauthorized-domain')>=0){
+    /* Dizer "adicione o domínio" e deixar a pessoa descobrir qual é só adia o
+       problema — o endereço está aqui, é só ler. */
+    var dom='';try{dom=location.hostname||'';}catch(e){}
+    return 'Falta autorizar este endereço no Firebase.\n\nVá em Authentication → Settings → Authorized domains → Add domain e adicione:\n\n'
+      +(dom||'(o endereço deste app)')+'\n\nDepois tente de novo.';
+  }
   if(c.indexOf('account-exists-with-different-credential')>=0)return 'Já existe uma conta com esse e-mail. Entre com e-mail e senha e use "Ligar conta Google".';
   if(c.indexOf('credential-already-in-use')>=0)return 'Essa conta Google já está ligada a outro login.';
   if(c.indexOf('network')>=0)return 'Sem conexão agora. Tente de novo.';
@@ -8014,6 +8021,9 @@ function conferirVoltaGoogle(){
 }
 function contaMsg(txt,erro){
   var m=document.getElementById('conta-msg');if(!m)return;
+  // as mensagens de erro têm passo a passo em várias linhas; sem isto o texto
+  // vira um parágrafo só e o endereço a copiar se perde no meio
+  m.style.whiteSpace='pre-line';
   m.textContent=txt;m.style.color=erro?'var(--bad,#C0392B)':'var(--muted)';m.style.fontWeight=erro?'700':'';
 }
 async function entrarConta(){
@@ -8055,7 +8065,7 @@ function sairConta(){
    Este teste faz, de dentro do app do João, o que cada um faz de verdade —
    inclusive o aluno. Para entrar como aluno sem derrubar a sessão do João, usa
    uma SEGUNDA instância do Firebase, com autenticação própria, apagada no fim. */
-const TESTE_PASSOS=8;
+const TESTE_PASSOS=9;
 function _tl(ok,titulo,detalhe,acao){
   const cor=ok===true?'#2E7D32':ok===false?'#C0392B':'#8A7E6B';
   const ic=ok===true?'✅':ok===false?'❌':'⏳';
@@ -8197,6 +8207,22 @@ async function testarConexao(){
     passo(!a.ok,'Espaço pessoal de cada um','o aluno não alcança o espaço de outro aluno',
       'em "aluno-estado/$uid" o ".read" precisa exigir auth.uid === $uid');
   }
+  /* 9) As regras dos professores estão no ar?
+     Sem elas o app do professor é recusado em TODAS as gravações e fica preso
+     em "salvo só no aparelho" — sintoma que não diz a causa. Este passo
+     responde a pergunta daqui, antes de alguém descobrir do lado de lá.
+     Não dá para testar entrando como ele (a senha é dele), mas alcançar o nó
+     prof/ prova que as regras novas foram publicadas. */
+  {
+    const cam='jvtenis/prof/_teste-do-joao';
+    const g=await tenta(()=>window.fbDB.ref(cam).set(String(Date.now())));
+    if(g.ok)try{await window.fbDB.ref(cam).remove();}catch(e){}
+    const l=await tenta(()=>window.fbDB.ref('jvtenis/professores').get());
+    passo(g.ok&&l.ok,'Espaço dos professores',
+      g.ok&&l.ok?'as regras dos professores estão publicadas':'o nó dos professores não respondeu',
+      'cole ferramentas/firebase-regras-etapa3.json em Realtime Database → Regras. '
+      +'Sem isso o app do professor não grava na nuvem.');
+  }
 
   try{await app2.delete();}catch(e){}
   r.pop();pinta();
@@ -8208,7 +8234,7 @@ function resumoTeste(r,verdes){
   el.innerHTML='<div style="border:1px solid var(--border);border-radius:12px;padding:4px 12px 10px;margin-top:8px">'
     +r.filter(x=>x.indexOf('testando…')<0).join('')
     +'<p class="hint" style="margin-top:9px;font-weight:800;color:'+(tudo?'#2E7D32':'#C0392B')+'">'
-    +(tudo?'✅ Tudo funcionando — você, o site e o aluno.'
+    +(tudo?'✅ Tudo funcionando — você, o site, o aluno e o professor.'
           :verdes+' de '+TESTE_PASSOS+' passaram. Veja os itens em vermelho acima.')
     +'</p></div>';
 }
