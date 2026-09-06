@@ -184,6 +184,13 @@ def main():
     casos.append(('Professor no espaço dele', 'publica o próprio mapa',       PROF, J+'mapa_quadra/prof-uid-111', 'write', True, True))
     casos.append(('Professor no espaço dele', 'pede um horário novo',  PROF, J+'fila_quadra/-Nnovo', 'write', True, False))
     casos.append(('Professor no espaço dele', 'lê o carimbo de versão',PROF, J+'versao_app', 'read', True, True))
+    # O caminho exato que o persist() percorre. Se QUALQUER um destes falhar, o
+    # app do professor fica preso em "salvo só no aparelho" — que é como o
+    # bloqueio aparece na tela, sem dizer o motivo.
+    for cam in ['v2/carimbos/savedAt','v2/alunos/a1','v2/movs/m1','v2/presencas/p1',
+                'v2/lancamentos/l1','v2/agenda','v2/config','banco','backups/2026-09-06-14']:
+        casos.append(('Professor grava (caminho do persist)', cam, PROF, J+'prof/prof-uid-111/'+cam, 'write', True, True))
+    casos.append(('Professor grava (caminho do persist)', 'mapa_quadra (o mapa da quadra)', PROF, J+'mapa_quadra/prof-uid-111', 'write', True, True))
     casos.append(('Professor no espaço dele', 'lê os preços públicos', PROF, J+'precos_publicos', 'read', True, True))
 
     # ---- e o que ele NÃO pode: é aqui que mora a promessa "a gestão é só minha"
