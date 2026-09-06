@@ -874,6 +874,8 @@ function iniciarAuth(){
       _authResolveu();
       try{renderConta();}catch(e){}
       try{pintarModo();}catch(e){}
+      // o navegador pode estar voltando de um login por redirecionamento
+      if(!window._voltaGoogle){try{conferirVoltaGoogle();window._voltaGoogle=1;}catch(e){}}
     },function(err){
       window.AUTH_ERRO=String(err&&err.message||err);_authResolveu();
     });
@@ -1967,7 +1969,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-06-3';
+const VERSAO='2026-09-06-4';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -2822,7 +2824,7 @@ async function load(){
   if(checarViradaMes())dirty=true;   // só detecta e avisa — a conversão espera você confirmar
   CARREGADO=true;                           // a partir daqui pode gravar
   try{pintarModo();}catch(e){}              // diz de quem é o app que abriu
-  if(!ehDono())buscarNomeProf();            // e com que nome
+  if(!ehDono()){buscarNomeProf();conferirAcessoProf();}   // e com que nome — ou se nem devia estar aqui
   conferirVersao();                         // este endereço está atualizado?
   if(travado){setSave('⚠ confira os dados antes de salvar','err');}
   else if(dirty||!chosen||(hasCloud()&&!cloudRaw&&localRaw)||(localRaw&&cloudRaw&&tsOf(localRaw)!==tsOf(cloudRaw)))persist();else publish();
@@ -3834,6 +3836,32 @@ function fecharMais(){
   const b=document.getElementById('nav-mais');if(b)b.classList.remove('aberto');
 }
 function irDoMais(id){fecharMais();irParaAba(id);window.scrollTo({top:0});}
+/* Entrou com uma conta que ninguém conhece?
+   O app decide o banco pelo uid, então uma conta nova — Google recém-criado,
+   e-mail errado — cai no modo professor e abre um espaço vazio. Quem passa por
+   isso sem aviso conclui que os dados sumiram.
+
+   A conferência é aqui, e não logo depois do login, porque entrar com um uid
+   diferente RECARREGA a página (é o que impede gravar o dado de um no banco do
+   outro). Depois do recarregamento não existe mais "logo depois do login" —
+   existe só o boot. Então é no boot que se pergunta. */
+async function conferirAcessoProf(){
+  if(ehDono()||!PROF_UID||!hasCloud())return;
+  let existe=null;
+  try{
+    const snap=await window.fbDB.ref('jvtenis/professores/'+PROF_UID).get();
+    existe=snap.exists();
+  }catch(e){return;}              // não deu para conferir: não acusa ninguém
+  if(existe)return;
+  const f=document.getElementById('fita-prof');
+  if(f){
+    f.style.display='';
+    f.style.background='#8A2C18';
+    f.innerHTML='⚠️ Esta conta não tem acesso aqui. Nada foi perdido — os dados estão na conta certa. '
+      +'<button onclick="sairConta()" style="margin-left:8px;padding:3px 10px;border-radius:7px;border:1px solid rgba(255,255,255,.5);background:transparent;color:#fff;font-weight:700">sair</button>';
+  }
+  toast('⚠️ Conta sem acesso — entre com a conta certa');
+}
 /* Diz na tela de quem é o app que está aberto. Sem isso, o professor e o João
    veriam telas idênticas com bancos diferentes — e no dia em que os dois
    usassem o mesmo aparelho, ninguém saberia onde estava gravando. */
@@ -7744,15 +7772,122 @@ function renderConta(){
   }
   var u=window.AUTH_USER;
   if(u){
-    el.innerHTML='<p class="hint" style="color:var(--ok,#2E7D32);font-weight:700">✅ Conectado como '+esc(u.email||'conta sem e-mail')+'</p>'
-      +'<div class="backup-row"><button class="btn btn-ghost" onclick="sairConta()">Sair desta conta</button></div>';
+    var temGoogle=(u.providerData||[]).some(function(p){return p&&p.providerId==='google.com';});
+    el.innerHTML='<p class="hint" style="color:var(--ok,#2E7D32);font-weight:700">✅ Conectado como '+esc(u.email||'conta sem e-mail')
+        +(temGoogle?' · Google ligado':'')+'</p>'
+      +(temGoogle?'':'<p class="hint">Ligar o Google deixa você entrar sem digitar senha, <b>na mesma conta</b> — os dados continuam os mesmos.</p>')
+      +'<div class="backup-row">'
+      +(temGoogle?'':'<button class="btn btn-ghost" id="conta-link-btn" onclick="ligarGoogle()">🔗 Ligar conta Google</button>')
+      +'<button class="btn btn-ghost" onclick="sairConta()">Sair desta conta</button></div>'
+      +'<p class="hint" id="conta-msg"></p>';
     return;
   }
   var est='width:100%;padding:11px 12px;margin-bottom:8px;border:1px solid var(--border);border-radius:10px;font-size:14px;background:#fff;color:var(--text)';
   el.innerHTML='<input id="conta-email" type="email" inputmode="email" autocomplete="username" placeholder="seu e-mail" style="'+est+'">'
     +'<input id="conta-senha" type="password" autocomplete="current-password" placeholder="sua senha" style="'+est+'">'
-    +'<div class="backup-row"><button class="btn btn-ghost" id="conta-btn" onclick="entrarConta()">🔑 Entrar</button></div>'
+    +'<div class="backup-row"><button class="btn btn-ghost" id="conta-btn" onclick="entrarConta()">🔑 Entrar</button>'
+    +'<button class="btn btn-ghost" id="conta-g-btn" onclick="entrarComGoogle()">Entrar com o Google</button></div>'
     +'<p class="hint" id="conta-msg"></p>';
+}
+/* ===== Entrar com o Google =====
+   A armadilha aqui não é o botão, é a IDENTIDADE. O app decide de quem é o
+   banco pelo uid: o do João abre a academia, o de um professor cadastrado abre
+   o espaço dele. Uma conta Google nova tem uid NOVO — então entrar pelo Google
+   sem mais nada abriria um banco vazio, como se fosse outra pessoa, e daria a
+   impressão de que os dados sumiram.
+
+   Por isso o caminho certo é LIGAR, não trocar: estando logado por e-mail e
+   senha, o Google é vinculado à mesma conta e o uid continua o mesmo. Da
+   próxima vez, entrar pelo Google cai no mesmo lugar de sempre.
+
+   E quem entrar por uma conta Google que ninguém ligou é avisado e desconectado
+   em vez de cair num banco vazio sem entender por quê. */
+function provedorGoogle(){
+  var p=new firebase.auth.GoogleAuthProvider();
+  p.setCustomParameters({prompt:'select_account'});
+  return p;
+}
+/* Popup é melhor quando funciona: não recarrega a página nem perde o estado.
+   No app instalado na tela de início, porém, ele costuma ser engolido sem erro
+   visível — daí o redirecionamento como reserva. */
+async function comGoogle(fn){
+  try{return await fn(provedorGoogle());}
+  catch(err){
+    var c=String(err&&err.code||'');
+    if(c.indexOf('popup')>=0||c.indexOf('cancelled')>=0||c.indexOf('operation-not-supported')>=0)return {redirecionar:true,err:err};
+    throw err;
+  }
+}
+function erroGoogleTexto(err){
+  var c=String(err&&err.code||'');
+  if(c.indexOf('operation-not-allowed')>=0)return 'O login pelo Google ainda não foi ativado no painel do Firebase (Authentication → Sign-in method → Google).';
+  if(c.indexOf('unauthorized-domain')>=0)return 'Este endereço não está na lista de domínios autorizados do Firebase (Authentication → Settings → Authorized domains).';
+  if(c.indexOf('account-exists-with-different-credential')>=0)return 'Já existe uma conta com esse e-mail. Entre com e-mail e senha e use "Ligar conta Google".';
+  if(c.indexOf('credential-already-in-use')>=0)return 'Essa conta Google já está ligada a outro login.';
+  if(c.indexOf('network')>=0)return 'Sem conexão agora. Tente de novo.';
+  return String(err&&err.message||err);
+}
+async function ligarGoogle(){
+  var b=document.getElementById('conta-link-btn');
+  var u=firebase.auth().currentUser;
+  if(!u){contaMsg('Entre com e-mail e senha primeiro.',true);return;}
+  if(b){b.disabled=true;b.textContent='Ligando…';}
+  contaMsg('');
+  try{
+    var r=await comGoogle(function(p){return u.linkWithPopup(p);});
+    if(r&&r.redirecionar){
+      try{lsSet('jvt-google-ligar','1');}catch(e){}
+      await u.linkWithRedirect(provedorGoogle());return;
+    }
+    toast('🔗 Google ligado — a conta é a mesma');
+    renderConta();
+  }catch(err){
+    contaMsg(erroGoogleTexto(err),true);
+    if(b){b.disabled=false;b.textContent='🔗 Ligar conta Google';}
+  }
+}
+async function entrarComGoogle(){
+  var b=document.getElementById('conta-g-btn');
+  if(b){b.disabled=true;b.textContent='Abrindo…';}
+  contaMsg('');
+  try{
+    var r=await comGoogle(function(p){return firebase.auth().signInWithPopup(p);});
+    if(r&&r.redirecionar){await firebase.auth().signInWithRedirect(provedorGoogle());return;}
+    await conferirContaGoogle();
+  }catch(err){
+    contaMsg(erroGoogleTexto(err),true);
+    if(b){b.disabled=false;b.textContent='Entrar com o Google';}
+  }
+}
+/* O uid que entrou é conhecido? Sem isso, uma conta Google qualquer abriria um
+   banco vazio e pareceria perda de dados. */
+async function conferirContaGoogle(){
+  var u=firebase.auth().currentUser;
+  if(!u)return;
+  if(u.uid===UID_DONO){toast('✅ Conectado');renderConta();return;}
+  if(!hasCloud()){renderConta();return;}
+  try{
+    var snap=await window.fbDB.ref('jvtenis/professores/'+u.uid).get();
+    if(snap.exists()){toast('✅ Conectado');renderConta();return;}
+  }catch(e){renderConta();return;}   // não deu para conferir: não expulsa ninguém
+  contaMsg('Esta conta Google ('+(u.email||'')+') ainda não está ligada a nenhum acesso daqui. '
+    +'Entre com e-mail e senha e use "🔗 Ligar conta Google" — assim o Google passa a valer para a MESMA conta.',true);
+  renderConta();
+}
+/* Volta do redirecionamento: o navegador saiu do app e voltou, então o
+   resultado chega aqui e não no clique. */
+function conferirVoltaGoogle(){
+  if(typeof firebase==='undefined'||!firebase.auth)return;
+  var pediuLigar=false;
+  try{pediuLigar=lsGet('jvt-google-ligar')==='1';localStorage.removeItem('jvt-google-ligar');}catch(e){}
+  firebase.auth().getRedirectResult().then(function(res){
+    if(!res||!res.user)return;
+    if(pediuLigar){toast('🔗 Google ligado — a conta é a mesma');renderConta();return;}
+    conferirContaGoogle();
+  }).catch(function(err){
+    var c=String(err&&err.code||'');
+    if(c&&c!=='auth/no-auth-event')contaMsg(erroGoogleTexto(err),true);
+  });
 }
 function contaMsg(txt,erro){
   var m=document.getElementById('conta-msg');if(!m)return;
