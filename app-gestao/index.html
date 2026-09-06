@@ -625,6 +625,11 @@ body[data-modo="prof"] .so-dono{display:none!important}
 .backup-row{display:flex;gap:8px;margin-top:16px}
 .backup-row .btn{flex:1;font-size:12px}
 .hint{font-size:11.5px;color:var(--muted);margin-top:-6px;margin-bottom:11px;line-height:1.5}
+/* O .hint sobe 6px para colar embaixo de um título. Numa caixa que começa com
+   ele — ou logo depois de uma fila de botões — esse empurrão o joga por cima do
+   que está acima. Aqui a caixa manda, não a herança. */
+#profs-pag,#profs-libs{margin-top:14px}
+#profs-pag>.hint:first-child,#profs-libs>.hint:first-child{margin-top:0}
 
 /* MODAL */
 .overlay{position:fixed;inset:0;background:rgba(14,12,8,.55);display:none;z-index:100;align-items:flex-end;justify-content:center}
@@ -1249,7 +1254,7 @@ function esperarAuth(){
 
   <div class="row2" style="margin-top:10px">
     <div class="field"><label>Mês</label><input type="month" id="aq-mes" onchange="carregarProfsPag()"></div>
-    <div class="field"><label>Valor da hora de quadra (R$)</label><input type="number" id="aq-valor" inputmode="decimal" onchange="salvarValorHora();renderProfsPag()" placeholder="ex.: 40"></div>
+    <div class="field"><label>Hora de quadra (R$)</label><input type="number" id="aq-valor" inputmode="decimal" onchange="salvarValorHora();renderProfsPag()" placeholder="ex.: 40"></div>
   </div>
   <div class="backup-row"><button class="btn btn-clay" onclick="carregarProfsPag()">🔄 Atualizar</button></div>
   <div id="profs-pag"></div>
@@ -1502,7 +1507,7 @@ function esperarAuth(){
       <button id="hmode-sem" onclick="setHMode('semana')" style="flex:1;padding:7px;border-radius:9px;border:1px solid var(--border);font-size:11.5px;font-weight:700">Dia da semana</button>
       <button id="hmode-dat" onclick="setHMode('data')" style="flex:1;padding:7px;border-radius:9px;border:1px solid var(--border);font-size:11.5px;font-weight:700">📅 Data específica</button>
     </div>
-    <p class="hint" id="h-hint">Marque cada horário: <b style="color:#2E7D52">Aula</b>, <b style="color:#9A7B2E">Locação</b> (só aluguel) ou <b style="color:#B23A3A">Fechado</b>.</p>
+    <p class="hint" id="h-hint">Marque cada horário: <b style="color:#2E7D52">Aula</b>, <b style="color:#9A7B2E">Locação</b> (só aluguel) ou <b style="color:#B23A3A">Fechado</b>. O <b style="color:#2E5E8C">👨‍🏫</b> ao lado libera a <b>quadra</b> para o professor — marcável junto com qualquer um dos três, para quando você está ocupado fora daqui.</p>
     <div id="h-semana">
       <div id="hdia-tabs" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:9px"></div>
       <button onclick="copiarParaUteis()" style="width:100%;font-size:10.5px;font-weight:700;padding:6px;border-radius:8px;border:1px dashed var(--border);background:#fff;color:var(--muted);margin-bottom:6px">⎘ Copiar este dia para seg–sex</button>
@@ -1517,7 +1522,8 @@ function esperarAuth(){
     <div style="display:flex;gap:6px;margin-bottom:7px">
       <button onclick="diaTodo('aula')" style="flex:1;font-size:10.5px;font-weight:700;padding:6px 2px;border-radius:8px;border:1px solid var(--border);background:#fff;color:#2E7D52">Tudo aula</button>
       <button onclick="diaTodo('loc')" style="flex:1;font-size:10.5px;font-weight:700;padding:6px 2px;border-radius:8px;border:1px solid var(--border);background:#fff;color:#9A7B2E">Tudo locação</button>
-      <button class="so-dono" onclick="diaTodo('prof')" style="flex:1;font-size:10.5px;font-weight:700;padding:6px 2px;border-radius:8px;border:1px solid var(--border);background:#fff;color:#2E5E8C">Tudo professor</button>
+      <button class="so-dono" onclick="todosProf(true)" style="flex:1;font-size:10.5px;font-weight:700;padding:6px 2px;border-radius:8px;border:1px solid var(--border);background:#fff;color:#2E5E8C">👨‍🏫 Tudo</button>
+      <button class="so-dono" onclick="todosProf(false)" style="flex:1;font-size:10.5px;font-weight:700;padding:6px 2px;border-radius:8px;border:1px solid var(--border);background:#fff;color:#8a8478">👨‍🏫 Nada</button>
       <button onclick="diaTodo('fechado')" style="flex:1;font-size:10.5px;font-weight:700;padding:6px 2px;border-radius:8px;border:1px solid var(--border);background:#fff;color:#B23A3A">Tudo fechado</button>
     </div>
     <div id="hhoras-list" style="max-height:40vh;overflow:auto;display:flex;flex-direction:column;gap:5px"></div>
@@ -1916,6 +1922,12 @@ function pintarIcones(){var m=document.querySelectorAll(".ico[data-ic]");for(var
           <input type="checkbox" id="s-repo" style="width:19px;height:19px;accent-color:#C9A227"> 🔁 Reposição — usar a <b>reposição</b> do aluno (não o crédito)
         </label>
       </div>
+      <div class="field so-dono" id="s-fora-wrap">
+        <label style="display:flex;align-items:center;gap:9px;cursor:pointer;font-weight:600">
+          <input type="checkbox" id="s-fora" style="width:19px;height:19px;accent-color:#2E5E8C"> 📍 Fora da quadra — atendimento em outro lugar
+        </label>
+        <p class="hint" style="margin:5px 0 0">O horário segue ocupado <b>para você</b>, mas a quadra fica livre: o professor pode usar.</p>
+      </div>
       <div class="modal-acts">
         <button class="btn btn-ghost" onclick="closeSlot()">Fechar</button>
         <button class="btn btn-clay" id="s-save-btn" onclick="saveSlot()">Adicionar</button>
@@ -1955,7 +1967,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-06-2';
+const VERSAO='2026-09-06-3';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -2002,6 +2014,20 @@ function slotModo(date,hora){
   const c=DB.horarioCfg&&DB.horarioCfg[date.getDay()];
   if(c&&c[hora])return c[hora];
   return modoPadrao(date,hora);
+}
+/* Liberar a quadra para o professor NÃO é um jeito de usar a sua hora — é
+   permissão para outra pessoa usar a quadra. São eixos diferentes, e por isso
+   deixou de ser a quarta opção exclusiva e virou um alternador que combina com
+   qualquer uma das três.
+   É o que o personal domiciliar exige: das 6h às 10h a hora é "Aula" (você está
+   ocupado) E "Professor" (a quadra está livre, você não está nela). Uma opção
+   exclusiva não sabe dizer as duas coisas. */
+function slotProfLiberado(date,hora){
+  if(!ehDono())return false;
+  const od=DB.horarioProfData&&DB.horarioProfData[dKey(date)];
+  if(od&&od[hora]!==undefined)return !!od[hora];
+  const c=DB.horarioProf&&DB.horarioProf[date.getDay()];
+  return !!(c&&c[hora]);
 }
 /* ===== Multi-professor — recurso da versão Pro =====
    Academia grande tem vários professores. Fica DESLIGADO no app do João (um
@@ -2240,10 +2266,10 @@ function renderProfsPag(){
 /* Quantas horas por semana estão liberadas hoje, direto da SUA grade. É local:
    não custa leitura nenhuma e responde "eu liberei o quê mesmo?". */
 function horasLiberadasSemana(cfg){
-  const c=cfg||(typeof DB!=='undefined'&&DB?DB.horarioCfg:null)||{};
+  const c=cfg||(typeof DB!=='undefined'&&DB?DB.horarioProf:null)||{};
   const porDia=[];let total=0;
   for(let d=0;d<7;d++){
-    const hs=HORAS.filter(h=>((c[d]||{})[h])==='prof');
+    const hs=HORAS.filter(h=>!!((c[d]||{})[h]));
     if(hs.length){total+=hs.reduce((t,h)=>t+creditoSlot(h),0);porDia.push({d,hs});}
   }
   return {total,porDia};
@@ -2655,6 +2681,18 @@ function ensureFields(){
   if(!DB.horarioCfg){DB.horarioCfg={};for(let d=0;d<7;d++){DB.horarioCfg[d]={};HORAS.forEach(h=>{DB.horarioCfg[d][h]=modoPadrao({getDay:()=>d},h);});}}
   if(DB.horarioVer!==2){DB.horarioCfg={};for(let d=0;d<7;d++){DB.horarioCfg[d]={};HORAS.forEach(h=>{DB.horarioCfg[d][h]=modoPadrao({getDay:()=>d},h);});}DB.horarioVer=2;}
   if(!DB.horarioData)DB.horarioData={};
+  /* 'prof' era a quarta opção exclusiva e queria dizer "esta hora não é minha,
+     é do professor". Virou alternador: a hora passa a ser fechada para mim E
+     liberada para ele — que é exatamente o que ela significava. */
+  if(!DB.horarioProf)DB.horarioProf={};
+  if(!DB.horarioProfData)DB.horarioProfData={};
+  [[DB.horarioCfg,DB.horarioProf],[DB.horarioData,DB.horarioProfData]].forEach(([de,para])=>{
+    Object.keys(de||{}).forEach(k=>{
+      Object.keys(de[k]||{}).forEach(h=>{
+        if(de[k][h]==='prof'){(para[k]=para[k]||{})[h]=1;de[k][h]='fechado';}
+      });
+    });
+  });
   if(DB.mesCreditos===undefined){const _d=new Date();DB.mesCreditos=_d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0');}
   if(DB.aviso===undefined)DB.aviso='';
   if(DB.termo===undefined)DB.termo='';
@@ -3296,11 +3334,20 @@ document.getElementById('save-state').onclick=()=>{
 const MAPA_DIAS=42;                 // seis semanas à frente: cobre o mês e a virada
 let MAPA_OUTROS={};                 // 'AAAA-MM-DD|HH:MM' -> {nome,tipo,uid}
 let _mapaEnviado='', _mapaLido='';
+function foraDaQuadraMarcado(){
+  const el=document.getElementById('s-fora');
+  return !!(el&&el.checked&&ehDono());
+}
 function ocupaQuadra(e){
-  /* Tudo que está na agenda ocupa: no fim das contas é uma quadra só, e supor
-     que ela está livre porque o outro marcou "pessoal" é como se dobra
-     horário. Quem sabe se abre exceção é quem combina, não o app. */
-  return !!e && e.tipo!=='vago';
+  /* Estar ocupado não é o mesmo que estar na quadra. Personal domiciliar toma a
+     hora do professor e não toma a quadra — e antes disso o app tratava tudo
+     igual, então uma manhã inteira de atendimento em casa deixava a quadra
+     parada para todo mundo.
+     Fora isso, o padrão continua sendo ocupar: supor quadra livre porque
+     alguém marcou "pessoal" é como se dobra horário. */
+  if(!e)return false;
+  if(e.fora)return false;
+  return e.tipo!=='vago';
 }
 function meuMapaQuadra(){
   const dias={}, liberados={}, hoje=new Date();
@@ -3313,7 +3360,7 @@ function meuMapaQuadra(){
       /* Só a academia libera hora. Vai junto do mapa porque é a mesma leitura:
          o professor precisa das duas coisas na mesma hora — o que já está
          ocupado e o que ele pode usar. */
-      if(ehDono()&&slotModo(d,h)==='prof')(liberados[dk]=liberados[dk]||[]).push(h);
+      if(ehDono()&&slotProfLiberado(d,h))(liberados[dk]=liberados[dk]||[]).push(h);
     });
   }
   const m={nome:meuNomeNaQuadra(),ts:Date.now(),dias};
@@ -4502,7 +4549,7 @@ function renderAgenda(){
             const avis=linked&&isAvisou(e,agDate);
             return `<span class="ev t-${e.tipo} drag-item" data-eid="${e.id}" data-origem="${e.origem}">
               ${linked?`<button class="pres ${pres?'ok':''} ${falt?'falt':''} ${avis?'avis':''}" onclick="togglePresenca('${e.id}')">${pres?'✓':(falt?'✗':(avis?'🔁':'○'))}</button>`:''}
-              <span onclick="openSlot('${h}')">${e.titulo}<small> · ${e.tipo==='grupo'?grupoTag(e.pessoas)+' · ':''}${e.repo?'reposição':(e.origem==='fixo'?'fixo':(e.origem==='compromisso'?'pessoal':'pontual'))}</small></span>
+              <span onclick="openSlot('${h}')">${e.titulo}<small> · ${e.tipo==='grupo'?grupoTag(e.pessoas)+' · ':''}${e.repo?'reposição':(e.origem==='fixo'?'fixo':(e.origem==='compromisso'?'pessoal':'pontual'))}${e.fora?' · 📍 fora da quadra':''}</small></span>
             </span>`;
           }).join('')}
           ${(function(){
@@ -4513,7 +4560,7 @@ function renderAgenda(){
             // hora vazia que não é sua: dizer por quê, em vez de deixar o "+"
             // prometer o que vai ser recusado no salvar
             if(!ehDono()&&md==='fechado')return '<span class="ev t-nliberado">não liberado</span>';
-            if(ehDono()&&md==='prof')return '<span class="ev t-liberado">👨‍🏫 liberado para o professor</span>';
+            if(ehDono()&&slotProfLiberado(agDate,h))return '<span class="ev t-liberado">👨‍🏫 quadra liberada ao professor</span>';
             return '';
           })()}
           <button class="slot-add" onclick="openSlot('${h}')">+</button>
@@ -4540,7 +4587,7 @@ function renderAgenda(){
         else{
           const md=slotModo(d,h);
           if(!ehDono()&&md==='fechado'){cls='t-nliberado';txt='—';}
-          else if(ehDono()&&md==='prof'){cls='t-liberado';txt='👨‍🏫 prof';}
+          else if(ehDono()&&slotProfLiberado(d,h)){cls='t-liberado';txt='👨‍🏫 prof';}
         }
         html+=`<td data-drop-d="${dKey(d)}" data-drop-h="${h}"><button class="wk-cell ${cls} ${drag}" onclick="gotoSlot(${d.getFullYear()},${d.getMonth()},${d.getDate()},'${h}')">${txt}</button></td>`;
       });
@@ -4658,6 +4705,7 @@ function resetSlotForm(){
   const tp=document.getElementById('s-tipo');if(tp)tp.value='aula';
   const gn=document.getElementById('s-grupo-n');if(gn)gn.value='2';
   const rp=document.getElementById('s-repo');if(rp)rp.checked=false;
+  const fo=document.getElementById('s-fora');if(fo)fo.checked=false;
   toggleGrupoWrap();
 }
 function closeSlot(){resetSlotForm();closeModal('ov-slot');}
@@ -4727,6 +4775,7 @@ function saveSlot(){
     const repoChk=document.getElementById('s-repo');
     const repo=(repoChk&&repoChk.checked&&(tipo==='aula'||tipo==='grupo'||tipo==='personal'))?1:0;
     rec.titulo=t;rec.tipo=tipo;rec.alunoId=alunoId;rec.repo=repo;
+    if(foraDaQuadraMarcado())rec.fora=1;else delete rec.fora;
     if(tipo==='grupo')rec.pessoas=pessoas;else delete rec.pessoas;
     logAct('Editar marcação: '+t);
     resetSlotForm();
@@ -4737,7 +4786,6 @@ function saveSlot(){
     const modo=slotModo(slotCtx.date,slotCtx.hora);
     if(modo!=='aula'){
       toast(modo==='fechado'?('🔒 '+slotCtx.hora+' está fora do horário de aulas neste dia.')
-           :modo==='prof'?('👨‍🏫 '+slotCtx.hora+' está liberado para o professor. Para usar, mude em 🗓️ Horários.')
            :('🔒 '+slotCtx.hora+' é só locação neste dia — não dá para agendar aula.'));return;
     }
   }
@@ -4761,10 +4809,14 @@ function saveSlot(){
   const repo=(repoChk&&repoChk.checked&&(tipo==='aula'||tipo==='grupo'||tipo==='personal'))?1:0;
   if(document.getElementById('s-rec').value==='fixo'){
     const desde=dKey(slotCtx.date);
-    DB.agenda.fixos.push({id:'f'+Date.now(),dia:slotCtx.date.getDay(),hora:slotCtx.hora,titulo:t,tipo,alunoId,pessoas,repo,desde});
+    const novoF={id:'f'+Date.now(),dia:slotCtx.date.getDay(),hora:slotCtx.hora,titulo:t,tipo,alunoId,pessoas,repo,desde};
+    if(foraDaQuadraMarcado())novoF.fora=1;
+    DB.agenda.fixos.push(novoF);
     toast(t+' fixado toda '+DIAS[slotCtx.date.getDay()]+' às '+slotCtx.hora+' a partir de '+desde.split('-').reverse().slice(0,2).join('/')+(repo?' · 🔁 reposição':''));
   }else{
-    DB.agenda.eventos.push({id:'e'+Date.now(),data:dKey(slotCtx.date),hora:slotCtx.hora,titulo:t,tipo,alunoId,pessoas,repo});
+    const novoE={id:'e'+Date.now(),data:dKey(slotCtx.date),hora:slotCtx.hora,titulo:t,tipo,alunoId,pessoas,repo};
+    if(foraDaQuadraMarcado())novoE.fora=1;
+    DB.agenda.eventos.push(novoE);
     toast(t+' marcado em '+slotCtx.date.getDate()+'/'+(slotCtx.date.getMonth()+1)+(repo?' · 🔁 reposição':''));
   }
   document.getElementById('s-titulo').value='';
@@ -4820,6 +4872,7 @@ function editarEntrada(id,origem){
   document.getElementById('s-tipo').value=rec.tipo||'aula';
   document.getElementById('s-grupo-n').value=String(rec.pessoas||2);
   const rp=document.getElementById('s-repo');if(rp)rp.checked=!!rec.repo;
+  const fo=document.getElementById('s-fora');if(fo)fo.checked=!!rec.fora;
   const sr=document.getElementById('s-rec');if(sr){sr.value=(origem==='fixo'?'fixo':'pontual');sr.disabled=true;} // recorrência não muda aqui: para isso use os botões da grade
   document.getElementById('s-form-title').textContent='✏️ Editar '+(origem==='fixo'?'(toda '+DIAS[rec.dia]+')':'(só nesta data)');
   document.getElementById('s-save-btn').textContent='Salvar alterações';
@@ -6920,13 +6973,19 @@ function salvarCompromisso(){
   DB.compromissos.push({id:'c'+Date.now(),titulo,data,hora:document.getElementById('cp-hora').value||'',nota:document.getElementById('cp-nota').value.trim()});
   persist();closeModal('ov-comp');renderDash();toast('Compromisso salvo 🗓️');
 }
-var HEDIT=null,HDIA=1,HMODE='semana',HDATA='',HDMAP=null;
+var HEDIT=null,HPROF=null,HDIA=1,HMODE='semana',HDATA='',HDMAP=null,HDPROF=null;
 const DIASEM=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const DIASEM_FULL=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
 function abrirHorario(){
-  HEDIT={};
-  for(let d=0;d<7;d++){HEDIT[d]={};HORAS.forEach(h=>{const c=DB.horarioCfg&&DB.horarioCfg[d];HEDIT[d][h]=(c&&c[h])||modoPadrao({getDay:()=>d},h);});}
-  HDIA=1;HMODE='semana';HDATA='';HDMAP=null;
+  HEDIT={};HPROF={};
+  for(let d=0;d<7;d++){
+    HEDIT[d]={};HPROF[d]={};
+    HORAS.forEach(h=>{
+      const c=DB.horarioCfg&&DB.horarioCfg[d];HEDIT[d][h]=(c&&c[h])||modoPadrao({getDay:()=>d},h);
+      const pc=DB.horarioProf&&DB.horarioProf[d];HPROF[d][h]=!!(pc&&pc[h]);
+    });
+  }
+  HDIA=1;HMODE='semana';HDATA='';HDMAP=null;HDPROF=null;
   setHMode('semana');
   document.getElementById('ov-horario').classList.add('on');
 }
@@ -6950,13 +7009,15 @@ function renderDatasEspeciais(){
     const m=DB.horarioData[k]||{};
     const vals=HORAS.map(h=>m[h]||'aula');
     const nA=vals.filter(v=>v==='aula').length,nL=vals.filter(v=>v==='loc').length,
-          nF=vals.filter(v=>v==='fechado').length,nP=vals.filter(v=>v==='prof').length;
+          nF=vals.filter(v=>v==='fechado').length;
+    const pd=(DB.horarioProfData||{})[k]||{};
+    const nP=HORAS.filter(x=>pd[x]).length;
     let resumo;
     if(nF===HORAS.length)resumo='🔴 Fechado o dia todo';
     else if(nL===HORAS.length)resumo='🟡 Só locação o dia todo';
     else if(nA===HORAS.length)resumo='🟢 Aula o dia todo';
-    else if(nP===HORAS.length)resumo='🔵 Do professor o dia todo';
-    else resumo=nA+' aula · '+nL+' loc · '+(nP?nP+' prof · ':'')+nF+' fech.';
+    else resumo=nA+' aula · '+nL+' loc · '+nF+' fech.';
+    if(nP)resumo+=' · 👨‍🏫 '+nP;
     const d=hParse(k);
     return '<div style="display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:9px;padding:7px 9px;margin-bottom:5px">'
       +'<button onclick="abrirDataEspecial(\''+k+'\')" style="flex:1;text-align:left;background:none;border:none;cursor:pointer;padding:0"><div style="font-size:12.5px;font-weight:700;color:var(--text)">'+DIASEM[d.getDay()]+' '+String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear()+'</div><div style="font-size:11px;color:var(--muted)">'+resumo+'</div></button>'
@@ -6980,6 +7041,8 @@ function selData(){
   const d=hParse(HDATA),dow=d.getDay();
   const existing=DB.horarioData&&DB.horarioData[HDATA];
   HDMAP={};HORAS.forEach(h=>{HDMAP[h]=(existing&&existing[h])||(HEDIT[dow]&&HEDIT[dow][h])||modoPadrao({getDay:()=>dow},h);});
+  const exP=DB.horarioProfData&&DB.horarioProfData[HDATA];
+  HDPROF={};HORAS.forEach(h=>{HDPROF[h]=exP?!!exP[h]:!!(HPROF[dow]&&HPROF[dow][h]);});
   info.innerHTML=DIASEM_FULL[dow]+', '+d.getDate()+'/'+(d.getMonth()+1)+(existing?' · <b style="color:var(--clay,#B86B4B)">personalizado</b>':' · seguindo o padrão da semana');
   renderHorarioList();
 }
@@ -6996,18 +7059,31 @@ function renderHorarioList(){
   const m=activeMap();
   if(!m){document.getElementById('hhoras-list').innerHTML='<div style="color:var(--muted);font-size:12px;padding:10px;text-align:center">Escolha uma data acima.</div>';return;}
   const opt=(h,st,lbl,cor)=>{const on=m[h]===st;return '<button onclick="setEstadoH(\''+h+'\',\''+st+'\')" style="flex:1;padding:6px 2px;border-radius:8px;border:1px solid '+(on?cor:'var(--border)')+';background:'+(on?cor:'#fff')+';color:'+(on?'#fff':'var(--muted)')+';font-size:10.5px;font-weight:700">'+lbl+'</button>';};
-  /* "Professor" é uma quarta opção, ao lado das três: aquela hora sai da sua
-     grade e passa a ser a que o professor pode usar. Só faz sentido no app da
-     academia — o professor não libera hora para ninguém. */
-  const btnProf=h=>ehDono()?opt(h,'prof','Professor','#2E5E8C'):'';
-  document.getElementById('hhoras-list').innerHTML=HORAS.map(h=>'<div style="display:flex;align-items:center;gap:6px"><span style="width:42px;font-size:11px;font-weight:700;color:var(--muted);flex-shrink:0">'+h+'</span>'+opt(h,'aula','Aula','#2E7D52')+opt(h,'loc','Locação','#9A7B2E')+btnProf(h)+opt(h,'fechado','Fechado','#B23A3A')+'</div>').join('');
+  /* O que a hora É para você continua sendo uma escolha só. Liberar a quadra
+     para o professor é OUTRA pergunta, e por isso é um alternador ao lado —
+     marcável junto com qualquer uma das três. */
+  const P=activeProf();
+  const btnProf=h=>{
+    if(!ehDono()||!P)return '';
+    const on=!!P[h];
+    return '<button onclick="toggleProfH(\''+h+'\')" title="A quadra fica livre para o professor nesta hora"'
+      +' style="width:46px;flex-shrink:0;padding:6px 2px;border-radius:8px;border:1px solid '+(on?'#2E5E8C':'var(--border)')
+      +';background:'+(on?'#2E5E8C':'#fff')+';color:'+(on?'#fff':'#B9B2A6')+';font-size:13px;font-weight:700">👨‍🏫</button>';
+  };
+  document.getElementById('hhoras-list').innerHTML=HORAS.map(h=>'<div style="display:flex;align-items:center;gap:6px"><span style="width:42px;font-size:11px;font-weight:700;color:var(--muted);flex-shrink:0">'+h+'</span>'+opt(h,'aula','Aula','#2E7D52')+opt(h,'loc','Locação','#9A7B2E')+opt(h,'fechado','Fechado','#B23A3A')+btnProf(h)+'</div>').join('');
 }
+function activeProf(){return HMODE==='data'?HDPROF:(HPROF&&HPROF[HDIA]);}
 function setEstadoH(h,st){const m=activeMap();if(!m)return;m[h]=st;renderHorarioList();}
+/* Alternador, não quarta opção: liga e desliga sem mexer no que a hora é para
+   você. É assim que "dou personal fora daqui das 6 às 10" cabe na tela — a hora
+   continua Aula e a quadra fica liberada. */
+function toggleProfH(h){const p=activeProf();if(!p)return;p[h]=!p[h];renderHorarioList();}
+function todosProf(v){const p=activeProf();if(!p)return;HORAS.forEach(h=>p[h]=v);renderHorarioList();}
 function diaTodo(st){const m=activeMap();if(!m)return;HORAS.forEach(h=>m[h]=st);renderHorarioList();}
-function copiarParaUteis(){for(let d=1;d<=5;d++){HEDIT[d]=JSON.parse(JSON.stringify(HEDIT[HDIA]));}renderHorarioTabs();toast('Copiado para seg–sex ✓');}
+function copiarParaUteis(){for(let d=1;d<=5;d++){HEDIT[d]=JSON.parse(JSON.stringify(HEDIT[HDIA]));HPROF[d]=JSON.parse(JSON.stringify(HPROF[HDIA]));}renderHorarioTabs();renderHorarioList();toast('Copiado para seg–sex ✓');}
 function restaurarPadrao(){
   if(!confirm('Restaurar todos os dias da semana para o padrão recomendado? Suas alterações da semana serão substituídas quando você Salvar.'))return;
-  for(let d=0;d<7;d++){HEDIT[d]={};HORAS.forEach(h=>HEDIT[d][h]=modoPadrao({getDay:()=>d},h));}
+  for(let d=0;d<7;d++){HEDIT[d]={};HPROF[d]={};HORAS.forEach(h=>{HEDIT[d][h]=modoPadrao({getDay:()=>d},h);HPROF[d][h]=false;});}
   renderHorarioTabs();renderHorarioList();toast('Padrão restaurado — confirme em Salvar');
 }
 function salvarHorario(){
@@ -7015,13 +7091,17 @@ function salvarHorario(){
     if(!HDATA){toast('Escolha uma data');return;}
     if(!DB.horarioData)DB.horarioData={};
     DB.horarioData[HDATA]=HDMAP;
+    if(!DB.horarioProfData)DB.horarioProfData={};
+    DB.horarioProfData[HDATA]=HDPROF||{};
     logAct('Editar funcionamento (data '+HDATA+')');
     persist();closeModal('ov-horario');renderAgenda();toast('📅 Data salva');
   } else {
     DB.horarioCfg=HEDIT;
+    DB.horarioProf=HPROF;
     logAct('Editar funcionamento da agenda');
     persist();closeModal('ov-horario');renderAgenda();toast('🗓️ Funcionamento salvo');
   }
+  publicarMapaQuadra();   // liberar hora só vale quando o professor souber
 }
 function delCompromisso(id){
   if(!confirm('Remover este compromisso?'))return;
@@ -8741,7 +8821,8 @@ function montarSemanaExport(days){
     const linha=days.map(d=>{
       const modo=slotModo(d,h);
       // hora do professor não é hora livre da academia: não se oferece ao aluno
-      if(modo==='fechado'||modo==='prof')return {cls:'sx-off',txt:'—'};
+      // hora liberada ao professor não é hora livre da academia
+      if(modo==='fechado'||slotProfLiberado(d,h))return {cls:'sx-off',txt:'—'};
       const evs=entriesFor(d,h).filter(e=>e.tipo!=='pessoal');
       if(evs.length)return {cls:'sx-ocup',txt:'ocupado'};
       const [hh,mm]=h.split(':');
