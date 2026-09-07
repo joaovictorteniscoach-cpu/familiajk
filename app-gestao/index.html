@@ -2021,7 +2021,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-06-13';
+const VERSAO='2026-09-07-1';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -9185,7 +9185,7 @@ function renderGrupoTor(t,g){
       <td><input class="tg-stat" type="number" min="0" value="${p.v||0}" onchange="updateStatTor('${escJs(g)}','${q}','v',this.value)"></td>
       <td><input class="tg-stat" type="number" min="0" value="${p.d||0}" onchange="updateStatTor('${escJs(g)}','${q}','d',this.value)"></td>
       <td><input class="tg-stat" type="number" min="0" value="${p.wo||0}" onchange="updateStatTor('${escJs(g)}','${q}','wo',this.value)"></td>
-      <td><span class="tg-pts ${lead?'lead':''}" title="${(Number(p.ptsAcum)||0)>0?(ptsEtapa(p)+' nesta etapa + '+(Number(p.ptsAcum)||0)+' acumulados'):'pontos desta etapa'}">${calcPtsTor(p)}</span>${(Number(p.ptsAcum)||0)>0?`<small class="tg-acum">${ptsEtapa(p)}+${Number(p.ptsAcum)||0}</small>`:''}</td>
+      <td><span class="tg-pts ${lead?'lead':''}" style="cursor:pointer" title="Toque para ajustar — ${(Number(p.ptsAcum)||0)>0?(ptsEtapa(p)+' nesta etapa + '+(Number(p.ptsAcum)||0)+' de fora'):'pontos desta etapa'}" onclick="ajustarPontosTor('${escJs(g)}','${q}')">${calcPtsTor(p)}</span>${(Number(p.ptsAcum)||0)>0?`<small class="tg-acum">${ptsEtapa(p)}+${Number(p.ptsAcum)||0}</small>`:''}</td>
       <td style="white-space:nowrap"><button class="tg-mv" title="Mover de grupo" onclick="abrirMoverTor('${escJs(g)}','${q}')">↔</button><button class="tg-x" title="Remover" onclick="removerJogadorTor('${escJs(g)}','${q}')">✕</button></td>
     </tr>`;
   }).join('');
@@ -9247,6 +9247,37 @@ function renomearJogadorTor(g,name){
   const nv=novo.trim();if(!nv)return;
   const t=torAtual();const p=t.jogadores.find(x=>x.group===g&&x.name===name);if(!p)return;
   p.name=nv;persist();renderTorneio();
+}
+/* ===== Ajustar os pontos de um jogador =====
+   V, D e WO já eram editáveis; o total, não — ele é calculado. Mas torneio
+   real tem correção: jogo lançado errado, resultado que chegou depois, ponto
+   combinado fora da tabela. Sem um lugar para isso, a saída era mexer no V/D,
+   que inventa uma vitória que não houve e some no meio dos placares.
+
+   O ajuste entra no ptsAcum, que é o mesmo campo que carrega o ponto das
+   etapas anteriores — e a tabela já mostra "3+7" embaixo do total, então quem
+   olha vê que parte veio dos jogos desta etapa e que parte veio de fora. */
+function ajustarPontosTor(g,name){
+  const t=torAtual();const p=t.jogadores.find(x=>x.group===g&&x.name===name);if(!p)return;
+  const daEtapa=ptsEtapa(p), acum=Number(p.ptsAcum)||0, total=daEtapa+acum;
+  const resp=prompt(name+'\n\nPontos totais: '+total
+    +'\n· '+daEtapa+' dos jogos desta etapa ('+(p.v||0)+'V '+(p.d||0)+'D '+(p.wo||0)+'WO)'
+    +'\n· '+acum+' de fora da etapa\n\nDigite o TOTAL que ele deve ficar:',String(total));
+  if(resp===null)return;
+  /* Campo apagado e OK não é "zero": Number('') dá 0, e isso zeraria os pontos
+     de quem só queria desistir do ajuste. */
+  const txt=String(resp).trim();
+  if(!txt)return;
+  const novo=Number(txt.replace(',','.'));
+  if(!isFinite(novo)||novo<0){toast('Digite um número de 0 para cima');return;}
+  if(novo<daEtapa){
+    toast('Os jogos desta etapa já valem '+daEtapa+'. Para ficar abaixo disso, corrija V/D/WO.');
+    return;
+  }
+  p.ptsAcum=novo-daEtapa;
+  logAct('Ajustar pontos no torneio: '+name+' '+total+' → '+novo);
+  persist();renderTorneio();
+  toast('Pontos de '+name+': '+total+' → '+novo);
 }
 function updateStatTor(g,name,field,val){
   const t=torAtual();const p=t.jogadores.find(x=>x.group===g&&x.name===name);if(!p)return;
