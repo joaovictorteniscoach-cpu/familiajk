@@ -2021,7 +2021,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-07-1';
+const VERSAO='2026-09-09-1';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -6273,6 +6273,13 @@ let focoDif=false;
 /* Ativo = tem pacote contratado. a.arquivado, quando existe, manda na regra:
    é como o João corrige quem parou mas ficou com plano no cadastro, ou quem
    está sem pacote no momento mas continua na academia. */
+/* Quem entra no fechamento. Fora os inativos e quem só joga torneio: torneio
+   se paga por inscrição, não por mensalidade, então o fechamento dessa gente
+   seria uma folha com zero aula e zero valor — e o nome na fila fazia parecer
+   que faltava mandar o de alguém. */
+function ehDoFechamento(a){
+  return ehAtivoAluno(a)&&perfilDe(a)!=='torneio';
+}
 function ehAtivoAluno(a){
   if(!a)return false;
   if(a.arquivado===true)return false;
@@ -6332,10 +6339,16 @@ function fcRotuloMes(mk){
 }
 function abrirFechamento(){
   const sa=document.getElementById('fc-aluno'), sm=document.getElementById('fc-mes');
-  if(sa&&!sa.options.length){
+  if(sa){
+    /* Refeito a cada abertura, e não só na primeira: arquivar um aluno ou
+       marcá-lo como torneio tem de tirá-lo daqui na hora, sem fechar o app.
+       A escolha atual é preservada, para não perder de vista quem estava
+       aberto na tela. */
+    const antes=sa.value;
     sa.innerHTML='<option value="">— escolha o aluno —</option>'+
-      DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome))
+      DB.alunos.filter(ehDoFechamento).slice().sort((a,b)=>a.nome.localeCompare(b.nome))
         .map(a=>'<option value="'+a.id+'">'+esc(a.nome)+'</option>').join('');
+    if(antes&&sa.querySelector('option[value="'+antes+'"]'))sa.value=antes;
   }
   if(sm&&!sm.options.length){
     sm.innerHTML=fcMesesDisponiveis().map(m=>'<option value="'+m+'">'+fcRotuloMes(m)+'</option>').join('');
@@ -6447,6 +6460,23 @@ function fcConciliacao(a,mk){
           faltas,avisados,
           divergeRenovacao:(renovado+renovadoGrp)!==(planoCad+planoGrp)};
 }
+/* A aula de hoje só é "realizada" depois de a HORA chegar.
+   A conta era por data: às 8 da manhã o fechamento já dava a aula das 18h como
+   feita, e o aluno recebia cobrando uma aula que ainda ia acontecer. Quem
+   marcou o tique manda — aí aconteceu, tanto faz a hora. */
+function aulaJaAconteceu(p,agora){
+  if(!p)return false;
+  if(p.marcada)return true;
+  const d=String(p.data||'');if(!d)return false;
+  const hoje=dKey(agora||new Date());
+  if(d<hoje)return true;
+  if(d>hoje)return false;
+  const n=agora||new Date();
+  /* Sem hora (lançamento avulso do cartão) só vira "realizada" no fim do dia —
+     antes disso não há como saber se já foi. */
+  const h=(p.hora&&p.hora!=='—')?p.hora:'23:59';
+  return _hm(h)<=(n.getHours()*60+n.getMinutes());
+}
 function fcDados(a,mk){
   const aulas=fcAulasDoMes(a,mk);
   const feitas=aulas.reduce((t,p)=>t+(Number(p.custo)||1),0);
@@ -6480,9 +6510,9 @@ function renderFechamento(){
   /* Realizada e "ainda vem" nao sao a mesma coisa. A lista era uma so, sob o
      titulo "Aulas realizadas", e mostrava tambem as aulas do fim do mes que
      ainda nao aconteceram — o aluno lia como se ja tivessem sido dadas. */
-  const _hoje=dKey(new Date());
-  const jaForam=D.aulas.filter(p=>String(p.data)<=_hoje);
-  const aVir   =D.aulas.filter(p=>String(p.data)> _hoje);
+  const _agora=new Date();
+  const jaForam=D.aulas.filter(p=>aulaJaAconteceu(p,_agora));
+  const aVir   =D.aulas.filter(p=>!aulaJaAconteceu(p,_agora));
   const linhaAula=p=>'<div class="fx-linha"><span>'+fmtDataCurta(p.data)+'</span><span>'+
     ((p.hora&&p.hora!=='—')?p.hora:'—')+'</span><span>'+
     (p.tipo==='reposicao'||p.repo?'reposição':(p.tipo==='grupo'?'grupo':'aula'))+'</span></div>';
@@ -6687,7 +6717,7 @@ function renderFilaFech(){
   const box=document.getElementById('fc-fila');if(!box)return;
   const mk=(document.getElementById('fc-mes')||{}).value||monthKey();
   const env=(DB.fechEnviado&&DB.fechEnviado[mk])||{};
-  const lista=DB.alunos.filter(ehAtivoAluno).slice().sort((a,b)=>a.nome.localeCompare(b.nome));
+  const lista=DB.alunos.filter(ehDoFechamento).slice().sort((a,b)=>a.nome.localeCompare(b.nome));
   const n=lista.filter(a=>env[a.id]).length;
   const c=document.getElementById('fc-contador');
   if(c)c.textContent='· '+n+' de '+lista.length+' enviados';
