@@ -30,6 +30,17 @@ def regras(css):
 for arq in sys.argv[1:]:
     src = open(arq, encoding='utf-8').read()
     css = '\n'.join(re.findall(r'<style>(.*?)</style>', src, re.S))
+    # o visual pode morar em arquivo separado (<link rel="stylesheet">);
+    # sem seguir o link, o portao passaria a olhar para o vazio e aprovar tudo
+    import os
+    for href in re.findall(r'<link[^>]*rel="stylesheet"[^>]*href="([^"]+)"', src):
+        if href.startswith('http') or href.startswith('//'):
+            continue
+        cam = os.path.join(os.path.dirname(arq), href)
+        if os.path.exists(cam):
+            css += '\n' + open(cam, encoding='utf-8').read()
+        else:
+            print(f'  AVISO: {arq} aponta para {href}, que nao existe')
     geral, aninhada = {}, {}
     for sel, corpo in regras(css):
         for um in sel.split(','):

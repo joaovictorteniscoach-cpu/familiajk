@@ -1,8 +1,11 @@
 /* Service Worker — Academia João Victor Tênis (app do gestao)
    Estratégia: network-first (sempre tenta a versão nova online),
    com cache de reserva para abrir offline. NÃO intercepta o Firebase. */
-const CACHE = 'jvtenis-gestao-v3';
-const SHELL = ['./', './manifest-gestao.webmanifest', './jv-icone-gestao.png'];
+const CACHE = 'jvtenis-gestao-v4';
+// o visual e os icones agora moram em arquivo proprio: entram na reserva
+// para o app abrir offline sem ficar sem estilo e sem icone
+const SHELL = ['./', './manifest-gestao.webmanifest', './jv-icone-gestao.png',
+               './lib/estilo.css', './lib/icones.js'];
 
 self.addEventListener('install', e => {
   self.skipWaiting();
