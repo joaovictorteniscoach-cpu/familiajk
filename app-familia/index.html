@@ -543,6 +543,7 @@ table.tbl.semlinhas{display:none}
       <button class="iconbtn" onclick="ctrlYearStep(1)">ano ›</button>
       <button class="iconbtn primary" onclick="ctrlPullCurrent()">📥 puxar mês atual das contas</button>
       <button class="iconbtn" onclick="ctrlSpreadForward()">🔁 repetir previsto p/ meses seguintes</button>
+      <button class="iconbtn" onclick="pickGestao()" title="Ler o backup do app Gestão e preencher o Recebido de cada mês">📥 faturamento do app Gestão</button>
     </div>
     <div class="kpis" style="margin-top:14px">
       <div class="kpi"><div class="k">Previsto no ano</div><div class="v" id="ca-prev">—</div></div>
@@ -937,6 +938,24 @@ table.tbl.semlinhas{display:none}
     <div class="row">
       <button class="iconbtn primary" onclick="applyImport()">Importar</button>
       <button class="iconbtn" onclick="closeImport()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="gestaoModal">
+  <div class="modal">
+    <h3>Faturamento vindo do app Gestão</h3>
+    <p id="gs-sub">—</p>
+    <div class="yearnav" style="margin-bottom:10px">
+      <span style="font-size:12.5px;color:var(--muted)">Lançar em “Recebido”:</span>
+      <button class="iconbtn" id="gs-b-bruto" onclick="gsUsar('bruto')">faturamento</button>
+      <button class="iconbtn" id="gs-b-sobra" onclick="gsUsar('sobra')">sobra (− despesas)</button>
+    </div>
+    <div class="scroll"><table class="tbl" id="tbl-gestao"></table></div>
+    <p class="note" id="gs-nota"></p>
+    <div class="row">
+      <button class="iconbtn primary" id="gs-ok" onclick="gsAplicar()">Atualizar os meses</button>
+      <button class="iconbtn" onclick="closeGestao()">Cancelar</button>
     </div>
   </div>
 </div>
@@ -1741,6 +1760,133 @@ function ctrlPullCurrent(){
   m.previsto=contasMes();m.pago=pagoMes();m.recebido=recebidoMes();
   renderControle();save();
   alert('Mês '+MESES[ref.getMonth()]+'/'+String(ref.getFullYear()).slice(2)+' preenchido com suas contas:\nPrevisto '+brl(m.previsto)+' · Pago '+brl(m.pago)+' · Recebido '+brl(m.recebido));
+}
+/* ================= FATURAMENTO VINDO DO APP GESTÃO =================
+   O app da academia é o dono do número: é lá que cada aula, mensalidade e
+   despesa é lançada. Aqui a gente só lê o backup dele (Ajustes → backup, o
+   arquivo jvtenis-backup-AAAA-MM-DD.json) e usa isso para acertar o Recebido
+   de cada mês do Controle anual.
+
+   A conta é copiada do Gestão de propósito, para os dois apps nunca darem
+   números diferentes para o mesmo mês:
+     faturamento = soma dos lançamentos POSITIVOS do mês
+     despesa     = soma dos lançamentos NEGATIVOS do mês (em módulo)
+   e os meses de antes do Caixa (histMes, vindos da planilha antiga) só valem
+   onde o Caixa não tem nada — havendo lançamento no mês, quem manda é ele.
+
+   Nada do Gestão é gravado neste app: só o número de cada mês. E só a coluna
+   Recebido é tocada — Previsto e Pago continuam sendo as contas da casa. */
+function faturamentoGestao(bk){
+  const fat={},desp={},fonte={};
+  const lanc=(bk&&Array.isArray(bk.lancamentos))?bk.lancamentos:[];
+  lanc.forEach(l=>{
+    const mk=l&&l.mes;
+    if(!/^\d{4}-\d{2}$/.test(String(mk||'')))return;
+    const v=+l.valor||0;
+    if(v>0)fat[mk]=(fat[mk]||0)+v;
+    else if(v<0)desp[mk]=(desp[mk]||0)+Math.abs(v);
+    else return;                                  /* zero não cria mês */
+    fonte[mk]='caixa';
+  });
+  const H=(bk&&bk.histMes&&typeof bk.histMes==='object'&&!Array.isArray(bk.histMes))?bk.histMes:{};
+  Object.keys(H).forEach(mk=>{
+    if(fonte[mk])return;                          /* o Caixa manda */
+    if(!/^\d{4}-\d{2}$/.test(mk))return;
+    const h=H[mk]||{};
+    fat[mk]=+h.bruto||0;desp[mk]=+h.desp||0;fonte[mk]='planilha';
+  });
+  const out={};
+  Object.keys(fonte).forEach(mk=>{
+    out[mk]={bruto:fat[mk]||0,desp:desp[mk]||0,fonte:fonte[mk]};
+  });
+  return out;
+}
+/* o que muda em cada mês do ano escolhido, sem gravar nada ainda */
+function planoGestao(mapa,ano,modo){
+  const arr=ctrlYearArr(ano),linhas=[];
+  for(let i=0;i<12;i++){
+    const mk=ano+'-'+String(i+1).padStart(2,'0'),g=mapa[mk];
+    if(!g)continue;
+    const novo=(modo==='sobra')?(g.bruto-g.desp):g.bruto;
+    const atual=arr[i].recebido;
+    let estado='igual';
+    if(atual==null)estado='novo';
+    else if(Math.abs((+atual||0)-novo)>0.005)estado='corrige';
+    linhas.push({i,mk,bruto:g.bruto,desp:g.desp,fonte:g.fonte,novo,atual,estado});
+  }
+  return linhas;
+}
+let gsMapa=null,gsModo='bruto';
+function pickGestao(){
+  pickFile('.json,application/json',f=>{
+    const r=new FileReader();
+    r.onload=()=>{
+      let bk=null;
+      try{bk=JSON.parse(r.result);}catch(e){alert('Não consegui ler esse arquivo — ele precisa ser o backup em .json do app Gestão.');return;}
+      abrirGestao(bk);
+    };
+    r.onerror=()=>alert('Não consegui abrir o arquivo.');
+    r.readAsText(f);
+  });
+}
+function abrirGestao(bk){
+  const temLanc=bk&&Array.isArray(bk.lancamentos),temHist=bk&&bk.histMes&&typeof bk.histMes==='object';
+  if(!temLanc&&!temHist){
+    alert('Esse arquivo não parece um backup do app Gestão.\n\nNo app Gestão: Ajustes → Fazer backup. O arquivo começa com "jvtenis-backup".');
+    return;
+  }
+  gsMapa=faturamentoGestao(bk);
+  if(!Object.keys(gsMapa).length){
+    alert('O backup abriu, mas não há nenhum mês com faturamento dentro dele.');
+    return;
+  }
+  document.getElementById('gestaoModal').classList.add('on');
+  renderGestao();
+}
+function closeGestao(){document.getElementById('gestaoModal').classList.remove('on');}
+function gsUsar(m){gsModo=(m==='sobra')?'sobra':'bruto';renderGestao();}
+function renderGestao(){
+  if(!gsMapa)return;
+  const ano=+D.contas.anualAno||new Date().getFullYear();
+  const linhas=planoGestao(gsMapa,ano,gsModo);
+  /* ids escritos por inteiro: montar o id com + esconde do checador de ids */
+  const bB=document.getElementById('gs-b-bruto'),bS=document.getElementById('gs-b-sobra');
+  if(bB)bB.classList.toggle('primary',gsModo==='bruto');
+  if(bS)bS.classList.toggle('primary',gsModo==='sobra');
+  const fora=Object.keys(gsMapa).filter(mk=>mk.slice(0,4)!==String(ano)).length;
+  set('gs-sub','Meses de '+ano+' encontrados no backup: '+linhas.length
+    +(fora?(' · outros '+fora+' mês(es) são de outro ano — troque o ano no Controle anual para trazer esses.'):''));
+  let h='<tr><th>Mês</th><th>Faturamento</th><th>Despesa</th><th>Sobra</th><th>Recebido hoje</th><th>Fica</th></tr>';
+  linhas.forEach(l=>{
+    const cor=l.estado==='corrige'?'goldc':(l.estado==='novo'?'up':'mut');
+    const txt=l.estado==='corrige'?'corrige':(l.estado==='novo'?'preenche':'igual');
+    h+='<tr><td class="name">'+MESES[l.i]+'/'+String(ano).slice(2)
+      +(l.fonte==='planilha'?' <span class="mut" title="mês de antes do Caixa, vindo da planilha">*</span>':'')+'</td>'
+      +'<td>'+brl(l.bruto)+'</td><td>'+brl(l.desp)+'</td><td>'+brl(l.bruto-l.desp)+'</td>'
+      +'<td class="mut">'+(l.atual==null?'—':brl(l.atual))+'</td>'
+      +'<td class="'+cor+'">'+brl(l.novo)+' · '+txt+'</td></tr>';
+  });
+  document.getElementById('tbl-gestao').innerHTML=h;
+  marcarVazias();                 /* sem isto a tabela fica com o aviso de vazia de antes */
+  const muda=linhas.filter(l=>l.estado!=='igual').length;
+  const temPlan=linhas.some(l=>l.fonte==='planilha');
+  const nota=document.getElementById('gs-nota');
+  if(nota)nota.innerHTML=(muda?('Vou mexer em '+muda+' mês(es); os iguais ficam como estão. '):'Nada a mudar — os meses já batem. ')
+    +'Só a coluna <b>Recebido</b> muda; Previsto e Pago continuam sendo as contas da casa.'
+    +(temPlan?' O <b>*</b> marca mês de antes do Caixa, que vem da planilha antiga guardada no Gestão.':'');
+  const ok=document.getElementById('gs-ok');
+  if(ok){ok.disabled=!muda;ok.style.opacity=muda?'':'.5';}
+  rotularTabelas();
+}
+function gsAplicar(){
+  if(!gsMapa)return;
+  const ano=+D.contas.anualAno||new Date().getFullYear();
+  const linhas=planoGestao(gsMapa,ano,gsModo),arr=ctrlYearArr(ano);
+  let n=0;
+  linhas.forEach(l=>{if(l.estado!=='igual'){arr[l.i].recebido=l.novo;n++;}});
+  closeGestao();renderControle();save();
+  alert(n?('Pronto: '+n+' mês(es) de '+ano+' atualizados com o '
+    +(gsModo==='sobra'?'que sobrou':'faturamento')+' do app Gestão.'):'Os meses já estavam certos — não mudei nada.');
 }
 function ctrlSpreadForward(){
   const now=new Date(),ano=+D.contas.anualAno||now.getFullYear(),arr=ctrlYearArr(ano);
