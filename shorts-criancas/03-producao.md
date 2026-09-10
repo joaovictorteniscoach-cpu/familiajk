@@ -103,3 +103,36 @@ por episódio, contra 62,35 do animado.
 Serve para dobrar o número de vídeos com o mesmo orçamento. O animado continua
 melhor para os três primeiros episódios, que são os que definem a cara do
 canal.
+
+---
+
+## O que o plano gratuito realmente permite (medido em 09-10/09/2026)
+
+Descoberto na prática ao produzir o EP01. Isto muda o planejamento:
+
+| Recurso | Plano gratuito |
+|---|---|
+| Modelo de imagem do pipeline (2K, com referência) | **bloqueado** — "requer plano basic ou superior" |
+| Modelos de imagem econômicos com referência | **bloqueados** |
+| `z_image` (texto puro, sem referência) | **liberado**, 0,15 crédito |
+| Geração em lote | **bloqueada** |
+| Gerações simultâneas | **1 por vez** (a segunda volta com limite de taxa) |
+| Narração, música, montagem e legendas | **liberadas** |
+
+**Consequência prática:** no plano gratuito dá para fazer o vídeo inteiro em
+modo "história em quadros", mas **sem imagem de referência** — ou seja, sem
+travar a aparência do personagem entre os quadros. O que resolve isso é o
+primeiro plano pago, não mais créditos.
+
+### Custo real do EP01, do começo ao fim
+
+| Item | Créditos |
+|---|---|
+| 30 quadros | 4,50 |
+| Narração | 0,15 |
+| Trilha de 34 s | 1,88 |
+| Capa | 0,15 |
+| Testes e uma imagem refeita | ~1,45 |
+| **Total** | **~8,13** |
+
+Montagem, legendas, transcrição e conferência não custam créditos.
