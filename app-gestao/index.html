@@ -1322,7 +1322,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-09-2';
+const VERSAO='2026-09-10-1';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -6012,6 +6012,20 @@ function marcarFechEnviado(id,mk){
 }
 function desmarcarFech(id,mk){
   if(DB.fechEnviado&&DB.fechEnviado[mk])delete DB.fechEnviado[mk][id];
+  logAct('Fechamento desmarcado: '+((DB.alunos.find(x=>x.id===id)||{}).nome||id)+' · '+mk);
+  persist();renderFilaFech();
+}
+/* Marcar na mão quem já recebeu. O ✓ automático só aparece quando o envio sai
+   pelo app; quando o fechamento vai por fora (WhatsApp do computador, papel,
+   entregue em quadra) a fila ficava mentindo. Agora a bolinha é um botão:
+   toca para marcar, toca de novo para desmarcar. */
+function alternarFechEnviado(id,mk){
+  const env=(DB.fechEnviado&&DB.fechEnviado[mk])||{};
+  if(env[id]){desmarcarFech(id,mk);return;}
+  if(!DB.fechEnviado)DB.fechEnviado={};
+  if(!DB.fechEnviado[mk])DB.fechEnviado[mk]={};
+  DB.fechEnviado[mk][id]=Date.now();
+  logAct('Fechamento marcado como enviado (na mão): '+((DB.alunos.find(x=>x.id===id)||{}).nome||id)+' · '+mk);
   persist();renderFilaFech();
 }
 function renderFilaFech(){
@@ -6023,11 +6037,15 @@ function renderFilaFech(){
   const c=document.getElementById('fc-contador');
   if(c)c.textContent='· '+n+' de '+lista.length+' enviados';
   if(!lista.length){box.innerHTML='<div class="empty">Nenhum aluno ativo.</div>';return;}
+  const d2=n=>String(n).padStart(2,'0');
   box.innerHTML=lista.map(a=>{
-    const ok=!!env[a.id];
+    const q=env[a.id],ok=!!q;
+    const dia=ok?new Date(q):null;
+    const dica=ok?('enviado em '+d2(dia.getDate())+'/'+d2(dia.getMonth()+1)+' — toque para desmarcar')
+                 :'toque para marcar como enviado';
     return '<div class="fq-linha'+(ok?' ok':'')+'">'
-      +'<button class="fq-nome" onclick="escolherFech(\''+a.id+'\')">'+(ok?'✓':'○')+' '+esc(a.nome)+'</button>'
-      +(ok?'<button class="fq-x" onclick="desmarcarFech(\''+a.id+'\',\''+mk+'\')">desfazer</button>':'')
+      +'<button class="fq-mark" title="'+dica+'" aria-label="'+dica+'" onclick="alternarFechEnviado(\''+a.id+'\',\''+mk+'\')">'+(ok?'✓':'○')+'</button>'
+      +'<button class="fq-nome" onclick="escolherFech(\''+a.id+'\')">'+esc(a.nome)+'</button>'
       +'</div>';
   }).join('');
 }
