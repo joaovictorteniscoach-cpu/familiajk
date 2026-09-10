@@ -640,6 +640,15 @@ function esperarAuth(){
   <p class="sec-eyebrow">Faturamento mensal</p>
   <h2 class="sec-title">Receita por <em>mês</em></h2>
   <div class="chart" id="graf-fat"></div>
+  <p class="hint" id="g-hist-hint" style="margin-top:6px"></p>
+
+  <p class="sec-eyebrow" style="margin-top:18px">Antes do app</p>
+  <h2 class="sec-title">Meses da <em>planilha</em></h2>
+  <div id="hist-lista"></div>
+  <div class="backup-row" style="margin-top:8px">
+    <button class="btn btn-ghost" onclick="abrirHistMes()">➕ Lançar um mês antigo</button>
+  </div>
+  <p class="hint">O que você faturou antes de começar a usar o app não está no Caixa, e sem isso o gráfico do ano conta menos do que a academia fez de verdade. Aqui você guarda o total de cada mês antigo, tirado da sua planilha, e ele entra nos gráficos marcado com <b>*</b>. <b>Não vira lançamento no Caixa, não entra em fechamento e não mexe em saldo de aluno nenhum.</b> Mês que já tem Caixa ignora este valor — ali quem manda é sempre o Caixa.</p>
 
   <p class="sec-eyebrow" style="margin-top:18px">Tênis × Personal</p>
   <h2 class="sec-title">🎾 Faturamento <em>tênis</em> por mês</h2>
@@ -1152,6 +1161,27 @@ function esperarAuth(){
 <!-- Editar um lançamento sem precisar apagar e lançar de novo. Antes, corrigir
      um valor digitado errado custava apagar (perdendo a data e o vínculo com o
      aluno) e refazer tudo — e quem faz isso com pressa erra de novo. -->
+<div class="overlay" id="ov-hist-mes" onclick="if(event.target===this)closeModal('ov-hist-mes')">
+  <div class="modal" style="max-width:460px">
+    <h3>Mês antigo (planilha)</h3>
+    <p class="hint" style="margin-top:2px">O total daquele mês, de antes de você usar o app. Serve só para o gráfico não ficar mentindo para menos — não cria lançamento nenhum no Caixa.</p>
+    <div class="row2">
+      <div class="field"><label>Mês</label><input id="hm-mes" type="month" onchange="histMesConta()"></div>
+      <div class="field"><label>Faturamento (R$)</label><input id="hm-bruto" type="number" inputmode="decimal" step="0.01" oninput="histMesConta()"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Despesas do mês (R$)</label><input id="hm-desp" type="number" inputmode="decimal" step="0.01" placeholder="0" oninput="histMesConta()"></div>
+      <div class="field"><label>Sendo personal (R$)</label><input id="hm-pers" type="number" inputmode="decimal" step="0.01" placeholder="opcional"></div>
+    </div>
+    <p class="hint" style="margin-top:-4px">O campo "sendo personal" é opcional e só serve para separar os gráficos de tênis e personal. Em branco, aquele mês não entra em nenhum dos dois — o app não chuta a divisão.</p>
+    <p class="hint" id="hm-conta" style="margin-top:2px"></p>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeModal('ov-hist-mes')">Cancelar</button>
+      <button class="btn btn-clay" onclick="salvarHistMes()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="ov-lanc-edit" onclick="if(event.target===this)closeModal('ov-lanc-edit')">
   <div class="modal" style="max-width:460px">
     <h3>Editar lançamento</h3>

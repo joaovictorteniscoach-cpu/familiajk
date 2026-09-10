@@ -15,7 +15,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-10-5';
+const VERSAO='2026-09-10-6';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -759,6 +759,8 @@ function purgarReposVencidas(a){
 }
 function ensureFields(){
   if(!DB.movs)DB.movs=[];
+  if(!DB.histMes)DB.histMes={};   // faturamento dos meses de antes do app
+
   if(!Array.isArray(DB.anosArquivados))DB.anosArquivados=[];
   if(!DB.presencas)DB.presencas=[];
   if(!DB.compromissos)DB.compromissos=[];
@@ -5796,6 +5798,103 @@ function chuvaAno(ano){
     dias:totDiasChuva,diasQuadra:totDiasQuadra,
     pct:totDiasQuadra?Math.round(totDiasChuva/totDiasQuadra*100):0,ultimoMes};
 }
+/* ===== Meses de antes do app (vindos da planilha) =====
+   O Caixa só tem o que passou por ele. O que veio antes existiu, e sem isso o
+   gráfico do ano conta menos do que a academia faturou de verdade.
+
+   Fica em DB.histMes, SEPARADO dos lançamentos de propósito: não vira linha de
+   caixa, não entra em fechamento, não entra em "a receber" e não mexe em saldo
+   de aluno nenhum. Alimenta só os gráficos — e só no mês em que o Caixa não tem
+   nada. Havendo lançamento naquele mês, quem manda é sempre o Caixa. */
+function histMes(){if(!DB.histMes)DB.histMes={};return DB.histMes;}
+/* Lido dos prints da planilha (linhas TOTAL QUADRAS e LIVRE de cada aba).
+   Mora aqui só como sugestão de preenchimento: nada entra no banco sem você
+   confirmar vendo os números na tela. */
+const HIST_PLANILHA={
+  '2026-01':{bruto:15287,desp:2100},
+  '2026-02':{bruto:18575,desp:2100},
+  '2026-03':{bruto:20350,desp:2100},
+  '2026-04':{bruto:23660,desp:2500},
+  '2026-05':{bruto:22120,desp:2500}
+};
+function mesesComCaixa(){
+  const s=new Set();(DB.lancamentos||[]).forEach(l=>{if(l.mes)s.add(l.mes);});return s;
+}
+function labelMesLongo(mk){const p=String(mk).split('-');return (MESES[Number(p[1])-1]||mk)+' de '+p[0];}
+function renderHistLista(){
+  const box=document.getElementById('hist-lista');if(!box)return;
+  const H=histMes(),mks=Object.keys(H).sort(),caixa=mesesComCaixa();
+  if(!mks.length){
+    box.innerHTML='<div class="empty">Nenhum mês antigo guardado ainda.</div>'
+      +'<div class="backup-row" style="margin-top:8px"><button class="btn btn-ghost" onclick="sugerirHistPlanilha()">📥 Carregar jan–mai/2026 da planilha</button></div>';
+    return;
+  }
+  box.innerHTML=mks.map(mk=>{
+    const h=H[mk]||{},b=Number(h.bruto)||0,d=Number(h.desp)||0;
+    const ignorado=caixa.has(mk);
+    return '<div class="fq-linha'+(ignorado?'':' ok')+'" style="gap:10px">'
+      +'<button class="fq-nome" onclick="abrirHistMes(\''+mk+'\')" style="flex:1">'
+        +labelMesLongo(mk)+'<br><small style="font-weight:600;color:var(--muted)">'
+        +fmt(b)+(d?(' − '+fmt(d)+' = '+fmt(b-d)):'')
+        +(ignorado?' · ignorado, este mês já tem Caixa':'')+'</small></button>'
+      +'<button class="fq-mark" title="remover" onclick="removerHistMes(\''+mk+'\')" style="color:#B23A3A">✕</button>'
+      +'</div>';
+  }).join('');
+}
+function sugerirHistPlanilha(){
+  const H=histMes(),novos=Object.keys(HIST_PLANILHA).filter(mk=>H[mk]===undefined);
+  if(!novos.length){toast('Esses meses já estão guardados');return;}
+  const linhas=novos.map(mk=>{const h=HIST_PLANILHA[mk];
+    return '· '+labelMesLongo(mk)+': '+fmt(h.bruto)+' − '+fmt(h.desp)+' = '+fmt(h.bruto-h.desp);});
+  if(!confirm('Guardar estes meses como histórico dos gráficos?\n\n'+linhas.join('\n')
+    +'\n\nNão cria lançamento nenhum no Caixa e não mexe em saldo de aluno. Dá para editar ou remover depois, um a um.'))return;
+  novos.forEach(mk=>{H[mk]={bruto:HIST_PLANILHA[mk].bruto,desp:HIST_PLANILHA[mk].desp,fonte:'planilha'};});
+  logAct('Meses antigos guardados dos gráficos: '+novos.join(', '));
+  persist();renderAll();toast('📥 '+novos.length+' mês(es) guardado(s)');
+}
+function abrirHistMes(mk){
+  const H=histMes(),h=(mk&&H[mk])||{};
+  const el=id=>document.getElementById(id);
+  if(el('hm-mes'))el('hm-mes').value=mk||'';
+  if(el('hm-bruto'))el('hm-bruto').value=(h.bruto!==undefined)?h.bruto:'';
+  if(el('hm-pers'))el('hm-pers').value=(h.personal!==undefined&&h.personal!=='')?h.personal:'';
+  if(el('hm-desp'))el('hm-desp').value=(h.desp!==undefined)?h.desp:'';
+  histMesConta();
+  document.getElementById('ov-hist-mes').classList.add('on');
+}
+function histMesConta(){
+  const n=id=>{const e=document.getElementById(id);return e?(Number(e.value)||0):0;};
+  const el=document.getElementById('hm-conta');if(!el)return;
+  const b=n('hm-bruto'),d=n('hm-desp');
+  const mk=(document.getElementById('hm-mes')||{}).value||'';
+  const jaTem=mk&&mesesComCaixa().has(mk);
+  el.innerHTML=(b||d)?('Sobra no mês: <b>'+fmt(b-d)+'</b>'):'';
+  if(jaTem)el.innerHTML+=(el.innerHTML?'<br>':'')+'⚠️ '+labelMesLongo(mk)+' já tem lançamento no Caixa. O valor fica guardado, mas o gráfico continua usando o Caixa.';
+}
+function salvarHistMes(){
+  const v=id=>{const e=document.getElementById(id);return e?String(e.value||'').trim():'';};
+  const mk=v('hm-mes');
+  if(!/^\d{4}-\d{2}$/.test(mk)){toast('Escolha o mês');return;}
+  const bruto=Number(v('hm-bruto'))||0;
+  if(bruto<=0){toast('Informe o faturamento do mês');return;}
+  const desp=Number(v('hm-desp'))||0;
+  const pers=v('hm-pers');
+  const H=histMes();
+  const reg={bruto,desp,fonte:'planilha'};
+  if(pers!==''&&Number(pers)>0)reg.personal=Number(pers);
+  const antes=H[mk];
+  H[mk]=reg;
+  logAct((antes?'Mês antigo corrigido: ':'Mês antigo guardado: ')+mk+' · '+fmt(bruto));
+  persist();renderAll();closeModal('ov-hist-mes');
+  toast((antes?'Corrigido · ':'Guardado · ')+labelMesLongo(mk));
+}
+function removerHistMes(mk){
+  const H=histMes();if(!H[mk])return;
+  if(!confirm('Tirar '+labelMesLongo(mk)+' do histórico dos gráficos?\n\nNada mais é afetado.'))return;
+  delete H[mk];
+  logAct('Mês antigo removido dos gráficos: '+mk);
+  persist();renderAll();toast('Removido · '+labelMesLongo(mk));
+}
 function renderGraf(){
   // Faturamento (receitas positivas) por mês
   const fatPorMes={};
@@ -5809,25 +5908,41 @@ function renderGraf(){
   const pagPorMes={};
   DB.lancamentos.forEach(l=>{if(l.cat==='mensalidade'&&l.valor>0){(pagPorMes[l.mes]=pagPorMes[l.mes]||new Set()).add(l.desc);}});
 
+  /* Antes de montar as barras, os meses de antes do app entram — e SÓ onde o
+     Caixa não tem nada. Um mês com lançamento ignora o valor da planilha. */
+  const comCaixa=new Set(Object.keys(fatPorMes).concat(Object.keys(despPorMes)));
+  const H=histMes(),ehHist={};
+  Object.keys(H).forEach(mk=>{
+    if(comCaixa.has(mk))return;
+    const h=H[mk]||{},b=Number(h.bruto)||0;
+    fatPorMes[mk]=b;despPorMes[mk]=Number(h.desp)||0;ehHist[mk]=1;
+    /* a separação tênis × personal só existe se você tiver informado quanto
+       daquele mês foi personal; sem isso o app não chuta */
+    if(h.personal!==undefined&&h.personal!==''){
+      fatPersonal[mk]=Number(h.personal)||0;fatTenis[mk]=b-(Number(h.personal)||0);
+    }
+  });
+  const lab=mk=>labelMes(mk)+(ehHist[mk]?'*':'');
+
   const setMeses=new Set(Object.keys(fatPorMes).concat(Object.keys(despPorMes)).concat(Object.keys(DB.snapAlunos||{})));
   setMeses.add(monthKeyNow());
   ultimosMeses(6).forEach(m=>setMeses.add(m));
   const meses=Array.from(setMeses).sort().slice(-12);
 
   barChart(document.getElementById('graf-fat'),
-    meses.map(mk=>({label:labelMes(mk),value:fatPorMes[mk]||0,cls:'rec',mk})),fmt);
+    meses.map(mk=>({label:lab(mk),value:fatPorMes[mk]||0,cls:'rec',mk})),fmt);
   const _gft=document.getElementById('graf-fat-tenis');
-  if(_gft)barChart(_gft,meses.map(mk=>({label:labelMes(mk),value:fatTenis[mk]||0,cls:'rec',mk})),fmt);
+  if(_gft)barChart(_gft,meses.map(mk=>({label:lab(mk),value:fatTenis[mk]||0,cls:'rec',mk})),fmt);
   const _gfp=document.getElementById('graf-fat-personal');
-  if(_gfp)barChart(_gfp,meses.map(mk=>({label:labelMes(mk),value:fatPersonal[mk]||0,cls:'meta',mk})),fmt);
+  if(_gfp)barChart(_gfp,meses.map(mk=>({label:lab(mk),value:fatPersonal[mk]||0,cls:'meta',mk})),fmt);
 
   barChart(document.getElementById('graf-desp'),
-    meses.map(mk=>({label:labelMes(mk),value:despPorMes[mk]||0,cls:'desp',mk})),fmt);
+    meses.map(mk=>({label:lab(mk),value:despPorMes[mk]||0,cls:'desp',mk})),fmt);
 
   barChart(document.getElementById('graf-lucro'),
     meses.map(mk=>{
       const lucro=(fatPorMes[mk]||0)-(despPorMes[mk]||0);
-      return {label:labelMes(mk),value:lucro,cls:lucro<0?'neg':'rec',valCls:lucro<0?'neg':'',mk};
+      return {label:lab(mk),value:lucro,cls:lucro<0?'neg':'rec',valCls:lucro<0?'neg':'',mk};
     }),fmt);
 
   barChart(document.getElementById('graf-alunos'),
@@ -5871,6 +5986,12 @@ function renderGraf(){
   document.getElementById('g-ano-fat').textContent=fmt(fatAno);
   document.getElementById('g-alunos-hoje').textContent=DB.alunos.length;
   document.getElementById('g-media-mes').textContent=fmt(Math.round(fatAno/mesesComFat));
+  renderHistLista();
+  const nHist=Object.keys(ehHist).length;
+  const dicaH=document.getElementById('g-hist-hint');
+  if(dicaH)dicaH.innerHTML=nHist
+    ? '* '+nHist+' mês(es) marcados com asterisco vêm da sua planilha antiga, não do Caixa do app.'
+    : '';
   renderOcupacao();
 }
 function renderOcupacao(){
