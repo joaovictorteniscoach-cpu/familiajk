@@ -1,0 +1,7706 @@
+/* O app da gestao inteiro. Morava dentro do index.html; saiu para ca porque
+   7.700 linhas num arquivo com o HTML junto travavam qualquer edicao — e
+   porque assim o aparelho baixa o codigo uma vez e so rebaixa quando ele
+   muda de verdade. A ORDEM importa: este arquivo e carregado no mesmo
+   ponto onde o bloco estava, depois do HTML das telas e antes do bloco do
+   historico. */
+/* ================= ESTADO & PERSISTÊNCIA ================= */
+const PUBKEY='jvtenis-app-aluno';
+const BOOKKEY='jvtenis-agendamentos';
+/* Carimbo desta cópia. O app existe em dois endereços (GitHub Pages e Netlify)
+   que são publicados em momentos diferentes — o Netlify, hoje, na mão. Sem
+   carimbo não há como saber que se está usando uma cópia velha, e uma cópia
+   velha grava no MESMO banco que a nova.
+   Formato AAAA-MM-DD-N, que compara direto como texto.
+   É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
+   mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
+   Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
+const VERSAO='2026-09-10-4';
+const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
+const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
+function _hm(s){const p=String(s).split(':');return (+p[0])*60+(+p[1]||0);}
+function creditoSlot(hora){
+  const i=HORAS.indexOf(hora);
+  if(i<0)return 1;
+  let dur=60;
+  if(i<HORAS.length-1)dur=_hm(HORAS[i+1])-_hm(HORAS[i]);
+  else dur=30;
+  return (dur>0&&dur<60)?0.5:1;
+}
+function fmtCred(n){const r=Math.round(n*2)/2;return r%1===0?String(r):String(r).replace('.',',');}
+function modoPadrao(date,hora){
+  const dia=date.getDay(), m=_hm(hora), H=h=>_hm(h);
+  let modo;
+  if(dia===0){ modo=(m>=H('07:00')&&m<H('18:00'))?'loc':'fechado'; }
+  else if(dia===6){
+    if(m>=H('07:00')&&m<H('12:00'))modo='aula';
+    else if(m>=H('12:00')&&m<H('18:00'))modo='loc';
+    else modo='fechado';
+  } else {
+    if(m<H('07:00'))modo='fechado';
+    else if(m<H('12:00'))modo='aula';
+    else if(m<H('16:00'))modo='loc';
+    else if(m<H('20:00'))modo='aula';
+    else modo='loc';
+  }
+  if(modo==='aula' && (DB.locacaoOnly||[]).indexOf(hora)>=0) modo='loc';
+  return modo;
+}
+function slotModo(date,hora){
+  /* Para o professor quem manda é a lista que a academia liberou: hora fora
+     dela é hora fechada, e aí todo caminho que já consulta slotModo concorda
+     sozinho — sem espalhar uma regra nova por dez lugares.
+     Enquanto ele nunca leu a lista, vale a configuração normal: melhor abrir
+     demais uma vez do que deixar o professor sem conseguir trabalhar. */
+  if(typeof ehDono==='function'&&!ehDono()&&DB&&DB.profLiberados){
+    const doDia=DB.profLiberados[dKey(date)];
+    return (doDia&&doDia.indexOf(hora)>=0)?'aula':'fechado';
+  }
+  const od=DB.horarioData&&DB.horarioData[dKey(date)];
+  if(od&&od[hora])return od[hora];
+  const c=DB.horarioCfg&&DB.horarioCfg[date.getDay()];
+  if(c&&c[hora])return c[hora];
+  return modoPadrao(date,hora);
+}
+/* Liberar a quadra para o professor NÃO é um jeito de usar a sua hora — é
+   permissão para outra pessoa usar a quadra. São eixos diferentes, e por isso
+   deixou de ser a quarta opção exclusiva e virou um alternador que combina com
+   qualquer uma das três.
+   É o que o personal domiciliar exige: das 6h às 10h a hora é "Aula" (você está
+   ocupado) E "Professor" (a quadra está livre, você não está nela). Uma opção
+   exclusiva não sabe dizer as duas coisas. */
+function slotProfLiberado(date,hora,evs){
+  if(!ehDono())return false;
+  const od=DB.horarioProfData&&DB.horarioProfData[dKey(date)];
+  if(od&&od[hora]!==undefined)return !!od[hora];
+  const c=DB.horarioProf&&DB.horarioProf[date.getDay()];
+  if(c&&c[hora])return true;
+  /* Hora em que ele está comprometido, mas fora daqui: a quadra está vazia e
+     ele não está nela. Liberar sozinho é o que ele pediu — marcar o 👨‍🏫 em
+     cada personal seria dizer duas vezes a mesma coisa, e um esquecimento
+     deixaria a quadra parada à toa.
+     Só vale quando há compromisso: hora VAZIA continua sendo dele, para
+     vender, alugar ou marcar depois — ninguém abre a agenda de alguém. */
+  const lista=evs||entriesFor(date,hora);
+  return lista.length>0&&lista.every(foraDaQuadra);
+}
+/* ===== Multi-professor — recurso da versão Pro =====
+   Academia grande tem vários professores. Fica DESLIGADO no app do João (um
+   professor só) e é ligado no build da versão Pro, para não haver dois códigos
+   diferentes para manter. */
+const PRO_MULTI=false;
+let filtroProf='todos';
+function profs(){return (DB.profs&&DB.profs.length)?DB.profs:[];}
+function profNome(id){const p=profs().find(x=>x.id===id);return p?p.nome:'';}
+function profDoAluno(a){return (a&&a.profId)||'';}
+/* Um item da agenda pertence ao professor do aluno. Bloqueio, compromisso e
+   horário sem aluno aparecem para todo mundo. */
+function itemVisivelProf(e){
+  if(!PRO_MULTI||filtroProf==='todos')return true;
+  if(!e.alunoId)return true;
+  const a=DB.alunos.find(x=>x.id===e.alunoId);
+  if(!a)return true;
+  return profDoAluno(a)===filtroProf;
+}
+function setFiltroProf(id,btn){
+  filtroProf=id;
+  document.querySelectorAll('#prof-filtro button').forEach(b=>b.classList.remove('on'));
+  if(btn)btn.classList.add('on');
+  renderAgenda();renderAlunos();
+}
+function renderProfFiltro(){
+  const box=document.getElementById('prof-filtro');if(!box)return;
+  if(!PRO_MULTI||!profs().length){box.style.display='none';return;}
+  box.style.display='';
+  box.innerHTML='<button class="'+(filtroProf==='todos'?'on':'')+'" onclick="setFiltroProf(\'todos\',this)">Todos</button>'
+    +profs().map(p=>'<button class="'+(filtroProf===p.id?'on':'')+'" onclick="setFiltroProf(\''+p.id+'\',this)">'+esc(p.nome)+'</button>').join('');
+}
+function renderProfs(){
+  const wrap=document.getElementById('profs-wrap');if(!wrap)return;
+  if(!PRO_MULTI){wrap.style.display='none';return;}
+  wrap.style.display='';
+  const lista=profs();
+  document.getElementById('profs-lista').innerHTML=lista.length
+    ? lista.map(p=>{
+        const n=DB.alunos.filter(a=>profDoAluno(a)===p.id).length;
+        return '<div class="prof-row"><span><b>'+esc(p.nome)+'</b><small>'+n+' aluno(s)</small></span>'
+          +'<span class="prof-acts"><button onclick="renomearProf(\''+p.id+'\')">renomear</button>'
+          +'<button class="d" onclick="removerProf(\''+p.id+'\')">remover</button></span></div>';
+      }).join('')
+    : '<div class="empty">Nenhum professor cadastrado ainda.</div>';
+}
+function addProf(){
+  const n=prompt('Nome do professor:','');
+  if(n===null)return;
+  const nome=n.trim();if(!nome){toast('Informe um nome');return;}
+  if(!Array.isArray(DB.profs))DB.profs=[];
+  DB.profs.push({id:'pr'+Date.now(),nome});
+  logAct('Cadastrar professor: '+nome);
+  persist();renderProfs();renderProfFiltro();renderAlunos();
+  toast('✓ '+nome+' cadastrado');
+}
+function renomearProf(id){
+  const p=profs().find(x=>x.id===id);if(!p)return;
+  const n=prompt('Novo nome:',p.nome);if(n===null)return;
+  const nome=n.trim();if(!nome)return;
+  p.nome=nome;persist();renderProfs();renderProfFiltro();renderAlunos();toast('Atualizado');
+}
+function removerProf(id){
+  const p=profs().find(x=>x.id===id);if(!p)return;
+  const n=DB.alunos.filter(a=>profDoAluno(a)===id).length;
+  if(!confirm('Remover '+p.nome+'?'+(n?('\n\n'+n+' aluno(s) ficam sem professor — é só designar outro depois.'):'')))return;
+  DB.profs=profs().filter(x=>x.id!==id);
+  DB.alunos.forEach(a=>{if(profDoAluno(a)===id)a.profId='';});
+  if(filtroProf===id)filtroProf='todos';
+  logAct('Remover professor: '+p.nome);
+  persist();renderProfs();renderProfFiltro();renderAgenda();renderAlunos();
+  toast('Professor removido');
+}
+/* ===== Professores da quadra (contas separadas) =====
+   Não confundir com DB.profs, que é só um rótulo para filtrar a SUA agenda.
+   Aqui é outra coisa: uma conta de verdade, com banco próprio em prof/<uid>.
+   O cadastro mora na nuvem, não no seu banco, porque é a regra do Firebase que
+   o consulta — e porque o app do professor precisa ler o nome dele sem
+   enxergar mais nada seu. */
+/* O nome do professor mora no cadastro que o João fez, não no banco dele — se
+   morasse no banco dele, ele poderia se renomear. Falhar aqui não é problema:
+   a fita só fica sem o nome. */
+async function buscarNomeProf(){
+  if(ehDono()||!hasCloud()||!PROF_UID)return;
+  try{
+    const snap=await window.fbDB.ref('jvtenis/professores/'+PROF_UID).get();
+    const v=snap.exists()?snap.val():null;
+    if(v&&v.nome){DB.profNome=String(v.nome);pintarModo();}
+  }catch(e){}
+}
+async function cadastrarProfessor(){
+  if(!ehDono())return;
+  const n=document.getElementById('np-nome'), u=document.getElementById('np-uid');
+  const nome=(n.value||'').trim(), uid=(u.value||'').trim();
+  if(!nome||!uid){toast('Preencha o nome e o UID');return;}
+  if(uid===UID_DONO){toast('Esse é o seu próprio UID');return;}
+  if(!/^[A-Za-z0-9]{20,40}$/.test(uid)){toast('UID estranho — copie da lista do Firebase Authentication');return;}
+  if(!hasCloud()){toast('Sem conexão agora — o cadastro precisa ir para a nuvem');return;}
+  if(!confirm('Cadastrar '+nome+' como professor da quadra?\n\n'
+    +'Ele passa a ter um banco próprio, vazio, no espaço dele.\n'
+    +'Não vê seus alunos, sua agenda nem seu caixa.'))return;
+  try{
+    await window.fbDB.ref('jvtenis/professores/'+uid).set({nome,desde:Date.now()});
+    n.value='';u.value='';
+    toast('👨‍🏫 '+nome+' cadastrado — ele já pode entrar com a conta dele');
+    carregarProfsLista();
+  }catch(e){
+    toast('Não deu: '+String(e&&e.message||e));
+  }
+}
+/* ===== Tela dos professores =====
+   Uma tela só, no lugar de dois pedaços perdidos no Financeiro. A pergunta que
+   ela responde é sempre a mesma: quem dá aula aqui, em que horas, e quanto isso
+   rendeu de quadra.
+
+   Os números vêm do banco de cada professor, lido na hora — não de uma cópia
+   guardada aqui, que divergiria em silêncio. Por isso a leitura é um botão, e
+   não algo que acontece a cada abertura: são leituras de verdade, e a cota do
+   plano gratuito é finita. */
+let PROFS_CAD=null;        // {uid:{nome,desde}} — quem está cadastrado
+let PROFS_DADOS=null;      // {uid:{alunos,horas,dias,savedAt,erro}} — os números do mês
+/* Duas leituras, não uma. Quem está cadastrado é barato de ler e é a
+   identidade da tela: sem isso ela abre em branco e parece que o professor
+   sumiu — foi exatamente o que aconteceu. Os números de cada um custam uma
+   leitura do banco inteiro por professor, e esses sim ficam no botão. */
+async function carregarProfsLista(){
+  if(!ehDono()||!hasCloud())return;
+  try{
+    const snap=await window.fbDB.ref('jvtenis/professores').get();
+    const v=snap.exists()?(snap.val()||{}):{};
+    const out={};
+    Object.keys(v).forEach(uid=>{out[uid]={nome:String((v[uid]||{}).nome||'—'),desde:Number((v[uid]||{}).desde)||0};});
+    PROFS_CAD=out;
+    renderProfsPag();
+  }catch(e){}
+}
+function prepararAluguel(){
+  if(!ehDono())return;
+  const mi=document.getElementById('aq-mes');
+  if(mi&&!mi.value){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-1);
+    mi.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+  const vi=document.getElementById('aq-valor');
+  if(vi&&!vi.value&&DB.aluguelHora)vi.value=DB.aluguelHora;
+  renderProfsLibs();
+  renderProfsPag();
+  carregarProfsLista();     // quem está cadastrado aparece sozinho, sempre
+}
+function salvarValorHora(){
+  const v=Number((document.getElementById('aq-valor')||{}).value)||0;
+  DB.aluguelHora=v;persist();
+}
+function mesEscolhidoProf(){return (document.getElementById('aq-mes')||{}).value||mesReal();}
+/* Conta as horas de UMA agenda (a do professor) no mês pedido, sem tocar na
+   sua. Repete o passo do entriesFor sobre a agenda recebida — a de verdade
+   fica onde está. */
+function horasDaAgendaNoMes(agenda,compromissos,mk){
+  const [ano,mes]=String(mk).split('-').map(Number);
+  if(!ano||!mes)return {horas:0,porDia:{}};
+  const ultimo=new Date(ano,mes,0).getDate();
+  const A=agenda||{fixos:[],eventos:[],excecoes:[]};
+  const fixos=A.fixos||[], eventos=A.eventos||[], excecoes=A.excecoes||[];
+  let horas=0;const porDia={};
+  for(let dia=1;dia<=ultimo;dia++){
+    const d=new Date(ano,mes-1,dia,12,0,0,0), dk=dKey(d), dow=d.getDay();
+    HORAS.forEach(h=>{
+      const temFixo=fixos.some(f=>f.dia===dow&&f.hora===h&&fixoValeEm(f,dk)
+                     &&!excecoes.some(x=>x.fixoId===f.id&&x.data===dk));
+      const temEv=eventos.some(e=>e.data===dk&&e.hora===h);
+      const temComp=(compromissos||[]).some(c=>c.data===dk&&(c.hora||'')===h);
+      if(!temFixo&&!temEv&&!temComp)return;
+      const q=creditoSlot(h);
+      horas+=q;porDia[dk]=(porDia[dk]||0)+q;
+    });
+  }
+  return {horas,porDia};
+}
+async function carregarProfsPag(){
+  if(!ehDono())return;
+  const box=document.getElementById('profs-pag');if(!box)return;
+  if(!hasCloud()){box.innerHTML='<p class="hint">Sem conexão agora — esta tela lê o banco de cada professor na nuvem.</p>';return;}
+  box.innerHTML='<p class="hint">lendo…</p>';
+  const mk=mesEscolhidoProf();
+  try{
+    const snap=await window.fbDB.ref('jvtenis/professores').get();
+    const cad=snap.exists()?(snap.val()||{}):{};
+    const lista={},dados={};
+    for(const uid of Object.keys(cad)){
+      lista[uid]={nome:String((cad[uid]||{}).nome||'—'),desde:Number((cad[uid]||{}).desde)||0};
+      const linha={};
+      try{
+        const b=await window.fbDB.ref('jvtenis/prof/'+uid+'/banco').get();
+        if(!b.exists()){linha.erro='ainda não abriu o app';}
+        else{
+          const d=JSON.parse(b.val()||'{}');
+          const r=horasDaAgendaNoMes(d.agenda,d.compromissos,mk);
+          linha.alunos=(d.alunos||[]).length;
+          linha.horas=r.horas;linha.dias=Object.keys(r.porDia).length;
+          linha.savedAt=Number(d.savedAt)||0;
+        }
+      }catch(e){linha.erro=String(e&&e.message||e);}
+      dados[uid]=linha;
+    }
+    PROFS_CAD=lista;PROFS_DADOS=dados;
+    renderProfsPag();
+  }catch(e){
+    box.innerHTML='<p class="hint">Não consegui ler: '+esc(String(e&&e.message||e))+'</p>';
+  }
+}
+function quandoFoi(ts){
+  if(!ts)return 'nunca';
+  const dias=Math.floor((Date.now()-ts)/864e5);
+  if(dias<=0)return 'hoje';
+  if(dias===1)return 'ontem';
+  if(dias<30)return 'há '+dias+' dias';
+  return new Date(ts).toLocaleDateString('pt-BR');
+}
+function renderProfsPag(){
+  const box=document.getElementById('profs-pag');if(!box)return;
+  if(!PROFS_CAD){box.innerHTML='<p class="hint">procurando os professores cadastrados…</p>';return;}
+  const uids=Object.keys(PROFS_CAD);
+  if(!uids.length){box.innerHTML='<div class="cons info"><h4><span>👨‍🏫</span>Nenhum professor ainda</h4><p>Cadastre abaixo. Enquanto não houver nenhum, nada muda no seu app.</p></div>';return;}
+  const valor=Number((document.getElementById('aq-valor')||{}).value)||0;
+  const p=mesEscolhidoProf().split('-');
+  const mesTxt=(MESES[Number(p[1])-1]||'')+' '+p[0];
+  let totalH=0,totalA=0;
+  const semNumeros=!PROFS_DADOS;
+  const cartoes=uids.map(uid=>{
+    const l=Object.assign({},PROFS_CAD[uid],PROFS_DADOS?PROFS_DADOS[uid]:null);
+    /* Cadastrado, números ainda não lidos. Dizer "0 alunos" aqui seria mentir
+       por omissão — o número não é zero, é desconhecido. */
+    if(semNumeros){
+      return '<div class="cons info"><h4><span>👨‍🏫</span>'+esc(l.nome)+'</h4>'
+        +'<p class="hint" style="margin:2px 0 6px">cadastrado'+(l.desde?(' em '+new Date(l.desde).toLocaleDateString('pt-BR')):'')
+        +' · toque em <b>🔄 Atualizar</b> para ver alunos e horas</p>'
+        +'<div class="backup-row"><button class="btn btn-ghost" onclick="renomearProfessor(\''+uid+'\')">renomear</button>'
+        +'<button class="btn btn-ghost" onclick="removerProfessor(\''+uid+'\')">remover</button></div></div>';
+    }
+    if(l.erro){
+      return '<div class="cons warn"><h4><span>👨‍🏫</span>'+esc(l.nome)+'</h4>'
+        +'<p>'+esc(l.erro)+'. A conta existe — falta ele entrar pela primeira vez.</p>'
+        +'<div class="backup-row"><button class="btn btn-ghost" onclick="renomearProfessor(\''+uid+'\')">renomear</button>'
+        +'<button class="btn btn-ghost" onclick="removerProfessor(\''+uid+'\')">remover</button></div></div>';
+    }
+    totalH+=l.horas;totalA+=l.alunos;
+    const chip=(t,v,c)=>'<span style="display:inline-block;margin:0 6px 6px 0;padding:5px 10px;border-radius:9px;background:#fff;border:1px solid #eadfc6;font-size:12px;font-weight:700">'+t+': <b style="color:'+c+'">'+v+'</b></span>';
+    return '<div class="cons info"><h4><span>👨‍🏫</span>'+esc(l.nome)+'</h4>'
+      +'<div style="margin:2px 0 4px">'
+      +chip('Alunos',l.alunos,'#3B6FB5')
+      +chip('Horas de quadra',fmtCred(l.horas)+' em '+l.dias+' dia(s)','#2E5E8C')
+      +(valor>0?chip('A cobrar',fmt(l.horas*valor),'#2E7D52'):'')
+      +chip('Último uso',quandoFoi(l.savedAt),'#8a8478')
+      +'</div>'
+      +'<div class="backup-row"><button class="btn btn-ghost" onclick="renomearProfessor(\''+uid+'\')">renomear</button>'
+      +'<button class="btn btn-ghost" onclick="removerProfessor(\''+uid+'\')">remover</button></div></div>';
+  }).join('');
+  const resumo=uids.length>1
+    ? '<div class="cons good"><h4><span>Σ</span>'+uids.length+' professores · '+mesTxt+'</h4>'
+      +'<p><b>'+totalA+'</b> aluno(s) · <b>'+fmtCred(totalH)+'</b> hora(s) de quadra'
+      +(valor>0?(' · <b style="color:#2E7D52">'+fmt(totalH*valor)+'</b> a cobrar'):'')+'</p></div>'
+    : '';
+  box.innerHTML=(semNumeros
+      ? '<p class="hint" style="margin:0 0 8px">'+uids.length+' professor(es) cadastrado(s).</p>'
+      : '<p class="hint" style="margin:0 0 8px">Números de <b>'+mesTxt+'</b>, lidos agora do banco de cada um. Nada foi alterado.</p>')
+    +cartoes+(semNumeros?'':resumo);
+}
+/* Quantas horas por semana estão liberadas hoje, direto da SUA grade. É local:
+   não custa leitura nenhuma e responde "eu liberei o quê mesmo?". */
+function horasLiberadasSemana(cfg){
+  const c=cfg||(typeof DB!=='undefined'&&DB?DB.horarioProf:null)||{};
+  const porDia=[];let total=0;
+  for(let d=0;d<7;d++){
+    const hs=HORAS.filter(h=>!!((c[d]||{})[h]));
+    if(hs.length){total+=hs.reduce((t,h)=>t+creditoSlot(h),0);porDia.push({d,hs});}
+  }
+  return {total,porDia};
+}
+function renderProfsLibs(){
+  const box=document.getElementById('profs-libs');if(!box)return;
+  const {total,porDia}=horasLiberadasSemana();
+  if(!porDia.length){
+    box.innerHTML='<div class="cons warn"><h4><span>🗓️</span>Nenhuma hora liberada</h4><p>Enquanto não houver hora marcada como <b>Professor</b> na grade, o professor abre o app e não consegue marcar nada.</p></div>';
+    return;
+  }
+  box.innerHTML='<div class="cons info"><h4><span>🗓️</span>'+fmtCred(total)+' hora(s) por semana</h4>'
+    +porDia.map(x=>'<p style="margin:4px 0"><b>'+DIASEM_FULL[x.d]+'</b>: '+x.hs.join(' · ')+'</p>').join('')
+    +'<p class="hint" style="margin:8px 0 0">Datas especiais podem mudar dias soltos — isto é o padrão da semana.</p></div>';
+}
+async function renomearProfessor(uid){
+  if(!ehDono())return;
+  const atual=(PROFS_DADOS&&PROFS_DADOS[uid])?PROFS_DADOS[uid].nome:'';
+  const nome=prompt('Nome do professor:',atual);
+  if(nome===null)return;
+  const n=nome.trim();if(!n){toast('Nome vazio');return;}
+  try{
+    await window.fbDB.ref('jvtenis/professores/'+uid+'/nome').set(n);
+    if(PROFS_CAD&&PROFS_CAD[uid])PROFS_CAD[uid].nome=n;
+    renderProfsPag();toast('Nome atualizado');
+  }catch(e){toast('Não deu: '+String(e&&e.message||e));}
+}
+async function removerProfessor(uid){
+  if(!ehDono())return;
+  if(!confirm('Remover este professor?\n\nEle perde o acesso ao app. O banco dele NÃO é apagado — se voltar, os dados continuam lá.'))return;
+  try{
+    await window.fbDB.ref('jvtenis/professores/'+uid).remove();
+    toast('Professor removido');PROFS_DADOS=null;carregarProfsLista();
+  }catch(e){toast('Não deu: '+String(e&&e.message||e));}
+}
+const PRECOS={Particular:{3:480,4:640,6:960,8:1260,10:1600},Grupo:{3:285,4:360,6:510,8:640,10:750},Personal:{3:390,4:520,6:780,8:1040,10:1300}};
+function grupoPrecoAula(t){const gp=(typeof DB!=='undefined'&&DB.grupoPreco)||{dupla:90,trio:85,quarteto:80};if(t==='Dupla')return gp.dupla||90;if(t==='Trio')return gp.trio||85;if(t==='Quarteto')return gp.quarteto||80;return 0;}
+function precoMensal(t,p){p=Number(p)||0;if(t==='Dupla'||t==='Trio'||t==='Quarteto')return grupoPrecoAula(t)*p;if(t==='Grupo')return (PRECOS.Grupo[p]||0);return (PRECOS[t]&&PRECOS[t][p])||0;}
+let DB={alunos:[],lancamentos:[],meta:10000,agenda:null,presencas:[],compromissos:[],aviso:'',locacaoOnly:null,horarioCfg:null,horarioData:null};
+let now=new Date();
+let curMonth=now.getMonth(),curYear=now.getFullYear();
+let agDate=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+let agView='dia';
+let saveTimer=null;
+let slotCtx=null;
+
+function seedAgenda(){
+  const F=[];let i=0;
+  const add=(dia,hora,titulo,tipo)=>F.push({id:'f'+(i++),dia,hora,titulo,tipo,alunoId:null});
+  [[1,'MARIO'],[2,'BRUNO'],[3,'MARIO'],[4,'BRUNO'],[5,'MARIO']].forEach(([d,n])=>add(d,'06:00',n,'aula'));
+  [[1,'KARINE'],[2,'GUI'],[3,'KARINE'],[4,'GUI'],[5,'KARINE'],[6,'ALAN E CAMILA']].forEach(([d,n])=>add(d,'07:00',n,'aula'));
+  [[1,'GUI'],[2,'GI'],[4,'GI'],[5,'GUI'],[6,'BRUNO']].forEach(([d,n])=>add(d,'08:00',n,'aula'));
+  add(3,'08:00','TRAJETO','pessoal');
+  [[1,'CLEIDE'],[4,'CLEIDE']].forEach(([d,n])=>add(d,'09:00',n,'aula'));
+  [[2,'TRAJETO'],[5,'TRAJETO']].forEach(([d,n])=>add(d,'09:00',n,'pessoal'));
+  add(3,'09:00','TERAPIA','pessoal');add(6,'09:00','WIM','aula');
+  add(2,'10:00','Filha Thiago','aula');add(3,'10:00','TRAJETO','pessoal');
+  add(4,'10:00','PATRÍCIA','aula');add(5,'10:00','RAFAEL','aula');add(6,'10:00','WIM','aula');
+  add(1,'11:00','RAFAEL','aula');add(3,'11:00','TERAPIA','pessoal');
+  add(4,'11:00','Treino PRETA','pessoal');add(5,'11:00','RICARDO','aula');add(6,'11:00','BRUNO','aula');
+  [1,2,3,6].forEach(d=>add(d,'12:00','ALMOÇO','bloqueio'));
+  [4,5].forEach(d=>add(d,'12:00','TREINO','bloqueio'));
+  [1,2,3,4,5,6].forEach(d=>add(d,'13:00','ALMOÇO','bloqueio'));
+  ['14:00','14:30','15:00','15:30'].forEach(h=>[1,2,3,4,5].forEach(d=>add(d,h,'Locação','locacao')));
+  add(1,'16:00','LEILA','aula');add(3,'16:00','ILAN','aula');add(4,'16:00','ANDRESSA','aula');add(5,'16:00','FELIPPE E PAI','aula');
+  add(1,'17:00','THIAGO','aula');add(2,'17:00','ISA','aula');add(3,'17:00','GABRIEL','aula');add(4,'17:00','ISA','aula');add(5,'17:00','ELTON','aula');
+  add(1,'18:00','SIMONE','aula');add(2,'18:00','GIULIA','aula');add(3,'18:00','ARMANDO','aula');add(4,'18:00','LUCAS EXP','aula');add(5,'18:00','ALAN E CAMILA','aula');
+  ['19:00','19:30'].forEach(h=>{
+    add(1,h,'CAROLINA','aula');add(2,h,'FELIPPE E PAI','aula');add(3,h,'BRUNO Otávio','aula');
+    add(4,h,'Grupo Gustavo','grupo');add(5,h,'NATAÇÃO','pessoal');
+  });
+  ['20:00','20:30'].forEach(h=>add(2,h,'Exp. grupo','grupo'));
+  return {fixos:F,eventos:[],excecoes:[]};
+}
+
+function setSave(s,cls){const e=document.getElementById('save-state');e.textContent=s;e.className='save-state '+(cls||'');}
+
+/* ===== Camada de armazenamento: aparelho + Firebase (nuvem real) ===== */
+let lastCloudError='';
+let cloudPending=false;
+function hasCloud(){return !!(window.fbDB);}
+function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+function lsSet(k,v){try{localStorage.setItem(k,v);return true;}catch(e){return false;}}
+/* O banco do dono continua exatamente onde sempre esteve — mexer nisso seria
+   mudar de lugar dado que já está em uso. O do professor vai para dentro do
+   espaço dele. O resto (publicação, agendamentos) é global e não muda. */
+function fbPath(k){
+  if(k===KEY)return ehDono()?('jvtenis/'+KEY_DONO):(RAIZ+'/banco');
+  return 'jvtenis/'+k.replace(/[.#$\[\]/]/g,'_');
+}
+/* Prazo para qualquer conversa com a nuvem.
+   O Firebase, quando o servidor está inalcançável (wi-fi de hotel que pede
+   login, rede do celular oscilando, pane do Google), NÃO devolve erro: ele
+   fica tentando reconectar para sempre e a promessa nunca termina. Sem prazo,
+   o `await` do load() nunca voltava — o app ficava em "carregando…" com o DB
+   vazio, e daí saía gravando esse vazio por cima do dado bom. */
+const PRAZO_NUVEM=6000;
+let _nuvemMuda=false;                       // a nuvem já estourou o prazo neste boot
+function comPrazo(promessa,ms,padrao){
+  return Promise.race([
+    Promise.resolve(promessa).catch(e=>{throw e;}),
+    new Promise(r=>setTimeout(()=>{_nuvemMuda=true;r(padrao);},ms||PRAZO_NUVEM))
+  ]);
+}
+async function cloudGet(k){
+  if(!window.fbDB)return null;
+  try{await esperarAuth();}catch(e){}
+  for(let i=0;i<3;i++){
+    try{
+      const MARCA={_prazo:1};
+      const snap=await comPrazo(window.fbDB.ref(fbPath(k)).get(),PRAZO_NUVEM,MARCA);
+      // estourou o prazo: insistir não adianta, a rede é que não está lá
+      if(snap===MARCA){lastCloudError='sem resposta da nuvem';return null;}
+      return snap.exists()?snap.val():null;
+    }catch(e){lastCloudError=String(e&&e.message||e);await new Promise(s=>setTimeout(s,350*(i+1)));}
+  }
+  return null;
+}
+async function cloudSet(k,v){
+  if(!window.fbDB)return false;
+  try{await esperarAuth();}catch(e){}
+  for(let i=0;i<4;i++){
+    try{await window.fbDB.ref(fbPath(k)).set(v);lastCloudError='';return true;}
+    catch(e){lastCloudError=String(e&&e.message||e);await new Promise(s=>setTimeout(s,450*(i+1)));}
+  }
+  return false;
+}
+function tsOf(raw){try{return JSON.parse(raw).savedAt||0;}catch(e){return 0;}}
+/* Remonta o banco a partir das partes. Devolve null se o formato novo ainda não
+   existe ou veio incompleto — nesse caso quem chama usa o blob de reserva, em
+   vez de abrir o app com dado faltando. */
+async function lerPartes(){
+  if(!hasCloud())return null;
+  if(_nuvemMuda)return null;                // a nuvem já não respondeu neste boot
+  try{
+    const pega=async cam=>{
+      const MARCA={_prazo:1};
+      const s=await comPrazo(v2ref(cam).get(),PRAZO_NUVEM,MARCA);
+      if(s===MARCA)throw new Error('sem resposta da nuvem');
+      return s.exists()?s.val():null;
+    };
+    const alunosNo=await pega('alunos');
+    if(!alunosNo)return null;                     // sem v2: usa o blob antigo
+    const d={alunos:[],movs:[],presencas:[],lancamentos:[]};
+    const marcaAl={};
+    Object.keys(alunosNo).forEach(k=>{
+      try{const a=JSON.parse(alunosNo[k]);d.alunos.push(a);marcaAl[a.id]=alunosNo[k];}catch(e){}
+    });
+    if(!d.alunos.length)return null;
+    const marcaLin={movs:{},presencas:{},lancamentos:{}};
+    for(const nome of ['movs','presencas','lancamentos']){
+      const no=await pega(nome);
+      if(!no)continue;
+      Object.keys(no).forEach(k=>{
+        try{d[nome].push(JSON.parse(no[k]));marcaLin[nome][k]=1;}catch(e){}
+      });
+    }
+    // as listas voltam na ordem do tempo, não na ordem das chaves do Firebase
+    d.movs.sort((a,b)=>(a.ts||0)-(b.ts||0));
+    const ag=await pega('agenda'), cf=await pega('config');
+    if(ag){try{d.agenda=JSON.parse(ag);}catch(e){}}
+    if(cf){try{Object.assign(d,JSON.parse(cf));}catch(e){}}
+    if(!d.agenda)return null;                     // incompleto: melhor o blob
+    // marca tudo como já enviado, senão o primeiro persist reenviaria o banco todo
+    _enviado={alunos:marcaAl,agenda:ag||'',config:cf||'',linhas:marcaLin};
+    return d;
+  }catch(e){lastCloudError=String(e&&e.message||e);return null;}
+}
+/* Retrato de uma cópia do banco, para comparar duas antes de adotar uma. */
+function resumoBanco(raw){
+  try{
+    const d=(typeof raw==='string')?JSON.parse(raw):raw;
+    if(!d||typeof d!=='object')return null;
+    const lan=Array.isArray(d.lancamentos)?d.lancamentos:[];
+    return {
+      alunos:(d.alunos||[]).length,
+      lancamentos:lan.length,
+      caixa:lan.filter(l=>l&&l.valor>0).reduce((s,l)=>s+(Number(l.valor)||0),0),
+      presencas:(d.presencas||[]).length,
+      eventos:((d.agenda&&d.agenda.eventos)||[]).length,
+      savedAt:d.savedAt||0
+    };
+  }catch(e){return null;}
+}
+function descreveResumo(r){
+  if(!r)return '(ilegível)';
+  const q=r.savedAt?new Date(r.savedAt).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'sem data';
+  return q+'\n'+r.alunos+' alunos · '+r.lancamentos+' lançamentos · R$ '
+    +Number(r.caixa).toLocaleString('pt-BR')+'\n'+r.presencas+' presenças · '+r.eventos+' eventos';
+}
+function genCode(){return String(Math.floor(1000+Math.random()*9000));}
+/* ===== Extrato dos saldos =====
+   creditos, credGrupo, repos e locCred eram contadores soltos, alterados em 25
+   lugares do código, e nenhum deles registrava POR QUÊ. Quando o número estava
+   errado não havia como saber de onde veio — nem como perceber que estava.
+
+   Agora todo mundo passa por aqui: mover() aplica o delta E grava a linha do
+   extrato. O caixa (DB.lancamentos) sempre funcionou assim; os saldos de aula
+   não tinham nada disso. */
+const CAMPO_LABEL={creditos:'créditos',credGrupo:'grupo',repos:'reposições',locCred:'locação'};
+function mover(a,campo,delta,motivo,ref){
+  if(!a||!campo)return 0;
+  delta=Number(delta)||0;
+  const de=Number(a[campo])||0, para=de+delta;
+  a[campo]=para;
+  if(delta===0)return para;
+  if(!DB.movs)DB.movs=[];
+  DB.movs.push({ts:Date.now(),alunoId:a.id,campo,delta,de,para,motivo:motivo||'—',ref:ref||''});
+  podarMovs(a.id);
+  return para;
+}
+/* O extrato tem que caber no aparelho, então as linhas mais antigas saem. Mas
+   sair NÃO pode mudar o total: o que é podado vira uma linha de resumo, campo
+   a campo. Sem isso o extrato encolhia por baixo — as linhas mais velhas são
+   as renovações, quase todas positivas — e a conferência passava a dizer que
+   o saldo "não batia", oferecendo acertar o aluno para um número menor, às
+   vezes negativo. O saldo estava certo; era o extrato que estava incompleto.
+
+   Poda com folga: só corta acima do TETO e desce até MANTER, senão cada
+   lançamento novo dispararia uma poda de uma linha só, sem parar. */
+const MOVS_TETO=600, MOVS_MANTER=500;
+function podarMovs(alunoId){
+  const todas=DB.movs||[];
+  const doAluno=todas.filter(m=>m.alunoId===alunoId);
+  if(doAluno.length<=MOVS_TETO)return;
+  const fora=doAluno.slice(0,doAluno.length-MOVS_MANTER);
+  const soma={};
+  fora.forEach(m=>{soma[m.campo]=(soma[m.campo]||0)+(Number(m.delta)||0);});
+  const saiu=new Set(fora);
+  DB.movs=todas.filter(m=>!saiu.has(m));
+  const ts=(fora[fora.length-1]||{}).ts||Date.now();
+  Object.keys(soma).forEach(campo=>{
+    if(!soma[campo])return;
+    const ja=DB.movs.find(m=>m.alunoId===alunoId&&m.campo===campo&&m.ref==='resumo');
+    if(ja){ja.delta=(Number(ja.delta)||0)+soma[campo];ja.para=ja.delta;}
+    else DB.movs.push({ts,alunoId,campo,delta:soma[campo],de:0,para:soma[campo],
+                       motivo:'Saldo anterior (linhas antigas resumidas)',ref:'resumo'});
+  });
+}
+function movsDe(alunoId,campo){
+  return (DB.movs||[]).filter(m=>m.alunoId===alunoId&&(!campo||m.campo===campo));
+}
+/* O saldo que o extrato diz que deveria ser. */
+function saldoPeloExtrato(a,campo){
+  return movsDe(a.id,campo).reduce((s,m)=>s+(Number(m.delta)||0),0);
+}
+/* De que saldo sai cada tipo de marcação. Torneio não sai de saldo nenhum. */
+/* A falta mora junto das presenças, com tipo "falta" e custo zero: assim ela
+   viaja para a nuvem e volta pela mesma engrenagem, sem coleção nova. Mas ela
+   NÃO é presença — quem conta aula tem que filtrar. Fica aqui em cima porque
+   estornoPorRef(), logo abaixo, precisa dela. */
+const ehFalta=p=>!!p&&p.tipo==='falta';
+/* Cancelou avisando: preserva o crédito E sai do fechamento. Não gera
+   reposição — o crédito simplesmente não foi gasto. Diferente da falta, aqui
+   o estorno já aconteceu na hora de marcar, então este registro NÃO guarda
+   origCusto: se guardasse, tirar a marca devolveria uma segunda vez. */
+const ehAvisou=p=>!!p&&p.tipo==='avisou';
+/* Falta e aviso são marcas, não presença: quem conta aula tem que filtrar. */
+const ehMarca=p=>ehFalta(p)||ehAvisou(p);
+const CAMPO_DA_PRESENCA={aula:'creditos',grupo:'credGrupo',reposicao:'repos',locacao:'locCred',torneio:null,falta:null,avisou:null};
+const ROTULO_DEVOLVE={creditos:'Presença desmarcada',credGrupo:'Aula em grupo desmarcada',repos:'Reposição desmarcada',locCred:'Locação desmarcada'};
+/* O que esta marcação REALMENTE tirou de cada saldo, lido do extrato pela
+   chave. Recalcular pelo horário e pelo tipo de agora devolve errado quando a
+   grade mudou (meia aula virou inteira) ou quando o slot deixou de ser grupo
+   entre marcar e desmarcar — foi assim que aula de grupo voltou como crédito.
+   Já devolvido soma zero e não devolve de novo. Sem extrato (aula antiga, já
+   podada), vale o tipo e o custo gravados na própria presença. */
+/* Pares de marcar/desmarcar que não fecham. Só acusa o que dá para PROVAR
+   olhando os dois lados do mesmo par:
+
+   A) devolveu num saldo e tirou de outro — aula de grupo voltando como
+      crédito. Há resto positivo num saldo e negativo em outro;
+   B) devolveu mais do que tirou no MESMO saldo — meia aula voltando inteira.
+
+   O que NÃO é erro, e por isso não entra: devolução sem nenhum débito no
+   extrato. Aula marcada antes de o extrato existir não tem débito nenhum
+   gravado (o "Saldo inicial" já nasceu descontado), e aula muito antiga pode
+   ter tido o débito podado — a conferência guarda 500 lançamentos por aluno.
+   Nos dois casos a devolução foi legítima e o débito é que não está à vista.
+   Tratar isso como crédito do nada cobrava do aluno uma aula que ele já tinha
+   pago. Também não entra débito sem devolução: é aula consumida, ou chuva
+   antiga, cuja devolução era lançada sem chave. */
+function devolucoesTortas(a,pres){
+  const porRef={};
+  movsDe(a.id).forEach(m=>{
+    if(!m.ref)return;
+    const d=Number(m.delta)||0; if(!d)return;
+    const r=(porRef[m.ref]=porRef[m.ref]||{soma:{},debitou:{}});
+    r.soma[m.campo]=(r.soma[m.campo]||0)+d;
+    if(d<0)r.debitou[m.campo]=true;
+  });
+  const torto=[];
+  Object.keys(porRef).forEach(ref=>{
+    const {soma,debitou}=porRef[ref];
+    const resto={};
+    Object.keys(soma).forEach(cp=>{const v=Math.round(soma[cp]*100)/100;if(v)resto[cp]=v;});
+    const pos=Object.keys(resto).filter(cp=>resto[cp]>0);
+    const neg=Object.keys(resto).filter(cp=>resto[cp]<0);
+    if(!pos.length)return;                       // sem sobra, nada a acusar
+    const cruzado=neg.length>0;                  // (A) saiu de um saldo, voltou noutro
+    const demais=pos.filter(cp=>debitou[cp]);    // (B) voltou mais do que saiu, no mesmo saldo
+    if(cruzado)      Object.keys(resto).forEach(cp=>torto.push({ref,campo:cp,resto:resto[cp]}));
+    else if(demais.length) demais.forEach(cp=>torto.push({ref,campo:cp,resto:resto[cp]}));
+  });
+  return torto;
+}
+function estornoPorRef(a,k,reg){
+  const saiu={};
+  (DB.movs||[]).forEach(m=>{
+    if(m.alunoId!==a.id||!k||m.ref!==k)return;
+    saiu[m.campo]=(saiu[m.campo]||0)+(Number(m.delta)||0);
+  });
+  const dev={};let achou=false;
+  Object.keys(saiu).forEach(c=>{if(saiu[c]<0){dev[c]=-saiu[c];achou=true;}});
+  if(achou)return dev;
+  if(reg&&!Object.keys(saiu).length){
+    /* Numa falta o tipo e o custo de verdade ficam em origTipo/origCusto: o
+       registro em si vale zero, porque a falta não debita nada por conta
+       própria — ela apenas deixa de pé o débito da presença. */
+    const ehF=ehFalta(reg);
+    const campo=CAMPO_DA_PRESENCA[(ehF?reg.origTipo:(reg.tipo||reg.modo))||'aula'];
+    const custo=Number(ehF?reg.origCusto:reg.custo);
+    if(campo&&custo>0)return {[campo]:custo};
+  }
+  return {};
+}
+/* Levar um saldo a um valor exato deixando extrato e saldo iguais no fim.
+   Não dá para fazer isso com mover(): ele soma o delta ao saldo E ao extrato,
+   então a própria correção reabriria a diferença que veio consertar. Aqui o
+   delta é calculado contra o EXTRATO e o saldo é escrito direto. */
+function corrigirSaldo(a,campo,alvo,motivo){
+  if(!a||!campo)return;
+  alvo=Number(alvo)||0;
+  const soma=saldoPeloExtrato(a,campo), de=Number(a[campo])||0;
+  if(!DB.movs)DB.movs=[];
+  DB.movs.push({ts:Date.now(),alunoId:a.id,campo,delta:alvo-soma,de,para:alvo,
+                motivo:motivo||'Correção',ref:'ajuste'});
+  a[campo]=alvo;
+  podarMovs(a.id);
+}
+/* ===== REPOSIÇÕES: idade, validade e teto de desconto =====
+   A reposição vale 4 meses. Não existe campo de data nela — mas todo movimento
+   passa por mover(), que carimba o ts no extrato. Então a idade sai do extrato:
+   os deltas positivos são os lotes, os negativos consomem sempre o lote mais
+   velho primeiro (FIFO), e o que sobra é o saldo com data de nascimento. */
+const REPOS_VALIDADE=4;   // meses
+function mesesEntre(m1,m2){
+  if(!m1||!m2)return 0;
+  const a=String(m1).split('-'),b=String(m2).split('-');
+  return (Number(b[0])-Number(a[0]))*12+(Number(b[1])-Number(a[1]));
+}
+function lotesRepos(a){
+  if(!a)return [];
+  const movs=movsDe(a.id,'repos').slice().sort((x,y)=>(x.ts||0)-(y.ts||0));
+  const lotes=[];
+  movs.forEach(m=>{
+    const d=Number(m.delta)||0;
+    if(d>0){lotes.push({mes:mesDoTs(m.ts),qtd:d});return;}
+    let falta=-d;
+    for(let i=0;i<lotes.length&&falta>0;i++){    // gasta o mais velho primeiro
+      const t=Math.min(lotes[i].qtd,falta);
+      lotes[i].qtd-=t;falta-=t;
+    }
+  });
+  const vivos=lotes.filter(l=>l.qtd>0);
+  /* Saldo que o extrato não explica (aluno de antes do extrato existir): entra
+     como lote SEM data e nunca vence — apagar saldo que ninguém datou seria pior
+     do que deixá-lo valendo. */
+  let dif=(Number(a.repos)||0)-vivos.reduce((t,l)=>t+l.qtd,0);
+  if(dif>0)vivos.unshift({mes:null,qtd:dif});
+  else if(dif<0){                                // extrato acima do saldo: apara do mais novo
+    let sobra=-dif;
+    for(let i=vivos.length-1;i>=0&&sobra>0;i--){
+      const t=Math.min(vivos[i].qtd,sobra);
+      vivos[i].qtd-=t;sobra-=t;
+    }
+  }
+  return vivos.filter(l=>l.qtd>0);
+}
+function reposPorIdade(a,mesRef){
+  const ref=mesRef||mesReal();
+  let validas=0,vencidas=0,vencendo=0;
+  lotesRepos(a).forEach(l=>{
+    if(!l.mes){validas+=l.qtd;return;}
+    const idade=mesesEntre(l.mes,ref);
+    if(idade>=REPOS_VALIDADE)vencidas+=l.qtd;
+    else{validas+=l.qtd;if(idade===REPOS_VALIDADE-1)vencendo+=l.qtd;}
+  });
+  return {validas,vencidas,vencendo};
+}
+function reposValidas(a){return reposPorIdade(a).validas;}
+function reposVencidas(a){return reposPorIdade(a).vencidas;}
+function reposVencendo(a){return reposPorIdade(a).vencendo;}
+/* Tira do saldo o que passou dos 4 meses. A virada do mês faz isso uma vez por
+   mês, mas quem consome reposição chama antes também: sem isso o FIFO gastaria
+   justamente a mais velha — a vencida — em vez de deixá-la morrer. */
+function purgarReposVencidas(a){
+  const v=reposVencidas(a);
+  if(v>0)mover(a,'repos',-v,'Reposição vencida (4 meses)');
+  return v;
+}
+function ensureFields(){
+  if(!DB.movs)DB.movs=[];
+  if(!Array.isArray(DB.anosArquivados))DB.anosArquivados=[];
+  if(!DB.presencas)DB.presencas=[];
+  if(!DB.compromissos)DB.compromissos=[];
+  if(!DB.locacaoOnly)DB.locacaoOnly=[];
+  if(DB.locacaoOnly.join()==='12:00,13:00,14:00,14:30,15:00,15:30')DB.locacaoOnly=[];
+  if(!DB.horarioCfg){DB.horarioCfg={};for(let d=0;d<7;d++){DB.horarioCfg[d]={};HORAS.forEach(h=>{DB.horarioCfg[d][h]=modoPadrao({getDay:()=>d},h);});}}
+  if(DB.horarioVer!==2){DB.horarioCfg={};for(let d=0;d<7;d++){DB.horarioCfg[d]={};HORAS.forEach(h=>{DB.horarioCfg[d][h]=modoPadrao({getDay:()=>d},h);});}DB.horarioVer=2;}
+  if(!DB.horarioData)DB.horarioData={};
+  /* 'prof' era a quarta opção exclusiva e queria dizer "esta hora não é minha,
+     é do professor". Virou alternador: a hora passa a ser fechada para mim E
+     liberada para ele — que é exatamente o que ela significava. */
+  if(!DB.horarioProf)DB.horarioProf={};
+  if(!DB.horarioProfData)DB.horarioProfData={};
+  [[DB.horarioCfg,DB.horarioProf],[DB.horarioData,DB.horarioProfData]].forEach(([de,para])=>{
+    Object.keys(de||{}).forEach(k=>{
+      Object.keys(de[k]||{}).forEach(h=>{
+        if(de[k][h]==='prof'){(para[k]=para[k]||{})[h]=1;de[k][h]='fechado';}
+      });
+    });
+  });
+  if(DB.mesCreditos===undefined){const _d=new Date();DB.mesCreditos=_d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0');}
+  if(DB.aviso===undefined)DB.aviso='';
+  if(DB.termo===undefined)DB.termo='';
+  if(DB.termoVer===undefined)DB.termoVer=0;
+  if(DB.pix===undefined)DB.pix='';
+  if(DB.pixNome===undefined)DB.pixNome='';
+  if(DB.pixCidade===undefined)DB.pixCidade='';
+  if(DB.pixTipo===undefined)DB.pixTipo='celular';
+  if(DB.cardLink===undefined)DB.cardLink='';
+  if(!DB.snapAlunos)DB.snapAlunos={};
+  if(!Array.isArray(DB.profs))DB.profs=[];     // versão Pro: professores da academia
+  if(!Array.isArray(DB.chuvas))DB.chuvas=[];   // horários cancelados por chuva, p/ avisar os alunos
+  if(!DB.precos)DB.precos={avulsaPart:170,avulsaGrupo:95,locacao:70};
+  if(DB.precos.planilha===undefined)DB.precos.planilha=0;   // 0 = ainda não definido
+  if(DB.precos.kids===undefined)DB.precos.kids=0;
+  if(!DB.grupoPreco)DB.grupoPreco={dupla:90,trio:85,quarteto:80};
+  ensureTorneios();
+  // registra o nº de alunos cadastrados no mês atual (histórico para os gráficos)
+  const mkAtual=new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');
+  if(DB.snapAlunos[mkAtual]!==DB.alunos.length){DB.snapAlunos[mkAtual]=DB.alunos.length;}
+  let changed=false;
+  if(DB.precos&&DB.precos.personal===undefined){DB.precos.personal=130;changed=true;}
+  // migração de preços de grupo: valores antigos padrão → tabela atual (90/85/80).
+  // Só mexe se os valores forem exatamente os padrões antigos (não toca em valor personalizado).
+  {
+    const g=DB.grupoPreco;
+    const antigo=(g&&((g.dupla===85&&g.trio===80&&g.quarteto===75)||(g.dupla===95&&g.trio===90&&g.quarteto===85)));
+    if(antigo){DB.grupoPreco={dupla:90,trio:85,quarteto:80};changed=true;}
+  }
+  // migração ÚNICA do valor por aula nos perfis (roda 1 vez; depois o João edita individualmente):
+  // Particular R$160 · Personal R$130 · Dupla R$90 · Trio R$85 · Quarteto R$80 · Grupo antigo não mexe.
+  if(!DB.migValorAula0704){
+    const tab={Particular:160,Personal:130,Dupla:90,Trio:85,Quarteto:80};
+    DB.alunos.forEach(a=>{const v=tab[a.tipo];if(v&&a.valorAula!==v){a.valorAula=v;changed=true;}});
+    DB.migValorAula0704=true;changed=true;
+  }
+  DB.alunos.forEach(a=>{
+    if(a.diaVenc==null){a.diaVenc=10;changed=true;}
+    if(a.locCred===undefined){a.locCred=0;changed=true;}
+    if(a.credGrupo===undefined){a.credGrupo=0;changed=true;}      // saldo de aulas em GRUPO
+    if(a.planoGrupo===undefined){a.planoGrupo=0;changed=true;}    // 0 = sem parte em grupo
+    if(a.grupoTipo===undefined){a.grupoTipo='';changed=true;}     // Dupla | Trio | Quarteto
+    if(!Array.isArray(a.avaliacoes)){a.avaliacoes=[];changed=true;}
+    if(!Array.isArray(a.registros)){a.registros=[];changed=true;}
+    // abre o extrato com o saldo de hoje. Não dá para reconstruir o passado —
+    // as renovações nunca foram registradas — e histórico inventado seria pior
+    // que histórico que começa agora e é confiável.
+    if(!a.extratoAberto){
+      ['creditos','credGrupo','repos','locCred'].forEach(c=>{
+        const v=Number(a[c])||0;
+        if(!v)return;                 // saldo zero não precisa de linha: 0 já bate com 0
+        if(!DB.movs)DB.movs=[];
+        DB.movs.push({ts:Date.now(),alunoId:a.id,campo:c,delta:v,de:0,para:v,motivo:'Saldo inicial',ref:'abertura'});
+      });
+      a.extratoAberto=true;changed=true;
+    }
+    if(!a.codigo){
+      let c;do{c=genCode();}while(DB.alunos.some(x=>x.codigo===c));
+      a.codigo=c;changed=true;
+    }
+  });
+  return changed;
+}
+
+async function load(){
+  setSave('carregando…');
+  // se houver sessão salva, ela precisa estar de pé ANTES da primeira leitura
+  try{await esperarAuth();}catch(e){}
+  // tira as versões antigas do localStorage antes de qualquer coisa: é o que
+  // devolve espaço ao banco principal
+  try{await migrarVersoesParaIdb();}catch(e){}
+  const localRaw=lsGet(KEY);
+  let cloudRaw=null;
+  if(hasCloud())cloudRaw=await cloudGet(KEY);
+  // formato novo (partes) tem preferência; o blob antigo fica de reserva
+  let partes=null;
+  if(hasCloud()){
+    try{
+      const d=await lerPartes();
+      if(d){
+        const rBlob=cloudRaw?resumoBanco(cloudRaw):null, rPar=resumoBanco(JSON.stringify(d));
+        // só confia nas partes se elas não vierem MENORES que a reserva
+        if(!rBlob||!rPar||(rPar.alunos>=rBlob.alunos&&rPar.lancamentos>=rBlob.lancamentos)){
+          d.savedAt=Math.max(d.savedAt||0,tsOf(cloudRaw||'{}'));
+          partes=JSON.stringify(d);
+        }
+      }
+    }catch(e){}
+  }
+  if(partes)cloudRaw=partes;
+  // usa a versão mais recente entre aparelho e nuvem
+  let chosen=null,rejeitada=null;
+  if(cloudRaw&&localRaw){
+    const localMaisNovo=tsOf(localRaw)>tsOf(cloudRaw);
+    chosen=localMaisNovo?localRaw:cloudRaw;
+    rejeitada=localMaisNovo?cloudRaw:localRaw;
+  }
+  else chosen=cloudRaw||localRaw;
+  /* A cópia mais recente pode ser a MENOR: foi assim que sumiram lançamentos.
+     Quando a escolhida tem menos dado que a descartada, ele decide — e até
+     decidir o app NÃO grava nada, porque era o persist() automático logo abaixo
+     que carimbava a data de agora na cópia atrasada e apagava a boa. */
+  let travado=false;
+  if(chosen&&rejeitada){
+    const a=resumoBanco(chosen), b=resumoBanco(rejeitada);
+    if(a&&b&&(a.lancamentos<b.lancamentos||a.alunos<b.alunos)){
+      const qualEscolhida=(chosen===cloudRaw)?'nuvem':'aparelho';
+      const qualOutra=(chosen===cloudRaw)?'aparelho':'nuvem';
+      const msg='⚠️ ATENÇÃO — as duas cópias estão diferentes\n\n'
+        +'A mais recente ('+qualEscolhida+') tem MENOS dados que a outra:\n\n'
+        +qualEscolhida.toUpperCase()+' (mais recente)\n'+descreveResumo(a)+'\n\n'
+        +qualOutra.toUpperCase()+'\n'+descreveResumo(b)+'\n\n'
+        +'OK = usar a maior ('+qualOutra+'), que provavelmente é a certa.\n'
+        +'Cancelar = usar a mais recente ('+qualEscolhida+').';
+      if(confirm(msg)){chosen=rejeitada;}
+      travado=true;   // seja qual for a escolha, não grava sozinho neste boot
+    }
+  }
+  if(chosen){try{DB=JSON.parse(chosen);}catch(e){}}
+  setSave(hasCloud()?'✓ pronto':'⚠ só no aparelho','ok');
+  let dirty=false;
+  /* A grade-semente é a do João, com os nomes dos alunos dele. Um professor
+     que abre o app pela primeira vez tem de começar com a agenda em branco —
+     senão veria a semana da academia como se fosse dele. */
+  if(!DB.agenda){DB.agenda=ehDono()?seedAgenda():{fixos:[],eventos:[],excecoes:[]};dirty=true;}
+  if(ensureFields())dirty=true;
+  if(checarViradaMes())dirty=true;   // só detecta e avisa — a conversão espera você confirmar
+  CARREGADO=true;                           // a partir daqui pode gravar
+  try{pintarModo();}catch(e){}              // diz de quem é o app que abriu
+  if(!ehDono()){buscarNomeProf();conferirAcessoProf();}   // e com que nome — ou se nem devia estar aqui
+  checarPortaEntrada();                     // e, se ninguém se identificou, para aqui
+  conferirVersao();                         // este endereço está atualizado?
+  if(travado){setSave('⚠ confira os dados antes de salvar','err');}
+  else if(dirty||!chosen||(hasCloud()&&!cloudRaw&&localRaw)||(localRaw&&cloudRaw&&tsOf(localRaw)!==tsOf(cloudRaw)))persist();else publish();
+  renderAll();
+  try{HIST.prev=snapDB();}catch(e){}
+  syncRequests(true);
+  lerMapaQuadra();                 // o que os outros já ocupam na quadra
+  publicarMapaQuadra();            // e o que eu ocupo
+}
+/* ===== Rede de segurança: versões, em vez de uma cópia só =====
+   Antes existia UMA cópia no aparelho e UMA na nuvem, as duas sobrescritas a
+   cada ação. Bastava o app abrir com uma cópia atrasada para o dado bom sumir
+   sem deixar de onde voltar. Agora fica um rodízio de 5 versões recentes mais a
+   primeira de cada dia dos últimos 7 — é a versão do dia que salva quando o
+   estrago só é percebido no dia seguinte. */
+/* O localStorage tem ~5 MB para TUDO. Com um ano de uso o banco chega perto de
+   1 MB, e 13 cópias dele não cabem — o app ia descartando as mais antigas em
+   silêncio. As versões mudaram para o IndexedDB, que tem gigabytes.
+
+   A divisão é por temperatura: o banco principal continua no localStorage
+   porque é o caminho quente e precisa ser síncrono; as versões são volumosas e
+   ninguém precisa delas de imediato. */
+const SNAP_N=20, SNAP_DIAS=60;
+function snapKey(i){return KEY+'__s'+i;}
+function diaKey(d){return KEY+'__dia-'+d;}
+function hojeStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+/* ---- envelope mínimo de IndexedDB (sem biblioteca) ---- */
+const IDB_NOME='jvtenis', IDB_STORE='versoes';
+let _idb=null, _idbRuim=false;
+function idbAbrir(){
+  if(_idbRuim)return Promise.reject();
+  if(_idb)return Promise.resolve(_idb);
+  return new Promise((ok,err)=>{
+    try{
+      if(!window.indexedDB){_idbRuim=true;return err();}
+      const rq=indexedDB.open(IDB_NOME,1);
+      rq.onupgradeneeded=()=>{const d=rq.result;if(!d.objectStoreNames.contains(IDB_STORE))d.createObjectStore(IDB_STORE);};
+      rq.onsuccess=()=>{_idb=rq.result;ok(_idb);};
+      rq.onerror=()=>{_idbRuim=true;err();};
+    }catch(e){_idbRuim=true;err();}
+  });
+}
+function idbOp(modo,fn){
+  return idbAbrir().then(d=>new Promise((ok,err)=>{
+    const tx=d.transaction(IDB_STORE,modo), st=tx.objectStore(IDB_STORE);
+    const rq=fn(st);
+    tx.oncomplete=()=>ok(rq&&rq.result);
+    tx.onerror=()=>err();tx.onabort=()=>err();
+  }));
+}
+function idbSet(k,v){return idbOp('readwrite',st=>st.put(v,k));}
+function idbGet(k){return idbOp('readonly',st=>st.get(k));}
+function idbDel(k){return idbOp('readwrite',st=>st.delete(k));}
+function idbKeys(){return idbOp('readonly',st=>st.getAllKeys());}
+/* Roda as versões e guarda a primeira do dia. É "dispara e esquece": backup
+   nunca pode segurar nem derrubar o save principal. Se o IndexedDB não existir
+   ou falhar, cai no localStorage de antes, sem erro na tela. */
+function guardarVersoes(json){
+  idbAbrir().then(async()=>{
+    try{
+      for(let i=SNAP_N-1;i>0;i--){
+        const ant=await idbGet(snapKey(i-1));
+        if(ant!=null)await idbSet(snapKey(i),ant);
+      }
+      await idbSet(snapKey(0),json);
+      const hj=diaKey(hojeStr());
+      if((await idbGet(hj))==null){          // só a PRIMEIRA gravação do dia
+        await idbSet(hj,json);
+        await podarDias();
+      }
+    }catch(e){}
+  }).catch(()=>{guardarVersoesLS(json);});
+}
+/* Reserva: o comportamento antigo, para navegador sem IndexedDB. */
+function guardarVersoesLS(json){
+  try{
+    for(let i=4;i>0;i--){
+      const ant=lsGet(snapKey(i-1));
+      if(ant!==null&&!lsSet(snapKey(i),ant))limparVersaoAntiga();
+    }
+    if(!lsSet(snapKey(0),json))limparVersaoAntiga();
+    const hj=diaKey(hojeStr());
+    if(lsGet(hj)===null){if(!lsSet(hj,json))limparVersaoAntiga();}
+  }catch(e){}
+}
+async function podarDias(){
+  try{
+    const pref=KEY+'__dia-';
+    const ks=(await idbKeys()||[]).filter(k=>String(k).indexOf(pref)===0).sort();
+    while(ks.length>SNAP_DIAS){await idbDel(ks.shift());}
+  }catch(e){}
+}
+function limparVersaoAntiga(){
+  try{
+    const pref=KEY+'__dia-', dias=[];
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(k&&k.indexOf(pref)===0)dias.push(k);
+    }
+    dias.sort();
+    if(dias.length){localStorage.removeItem(dias[0]);return;}
+    for(let i=SNAP_N-1;i>=0;i--){
+      if(lsGet(snapKey(i))!==null){localStorage.removeItem(snapKey(i));return;}
+    }
+  }catch(e){}
+}
+/* Migração: leva para o IndexedDB o que já estava no localStorage e APAGA de lá.
+   É isso que devolve os megabytes de folga ao banco principal, que era
+   justamente quem estava sob pressão. */
+async function migrarVersoesParaIdb(){
+  try{
+    await idbAbrir();
+    const pref=KEY+'__', achadas=[];
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(k&&k.indexOf(pref)===0&&k!==KEY)achadas.push(k);
+    }
+    if(!achadas.length)return 0;
+    let bytes=0;
+    for(const k of achadas){
+      const v=lsGet(k);
+      if(v!=null){
+        if((await idbGet(k))==null)await idbSet(k,v);
+        bytes+=v.length;
+      }
+      try{localStorage.removeItem(k);}catch(e){}
+    }
+    return bytes;
+  }catch(e){return 0;}
+}
+/* ===== Gravar só a parte que mudou =====
+   Antes cada toque subia o banco INTEIRO — com um ano de uso, ~830 KB por ação.
+   Era a razão da lentidão no celular, do setTimeout de 500ms e do "tudo ou
+   nada" quando a rede caía no meio.
+
+   Agora o banco vai separado por natureza do dado:
+   · alunos mudam um de cada vez  → um nó por aluno
+   · extrato, presenças e lançamentos só crescem → sobem só as linhas novas
+   · agenda e configuração mudam pouco → vão inteiras
+   A mesma ação passa a subir ~1,8 KB.
+
+   O truque que torna isso seguro: NENHUM ponto de chamada muda. persist()
+   guarda o que subiu da última vez e compara — comparar string em memória é
+   barato perto de subir 830 KB. */
+const V2='v2';
+function v2ref(cam){return window.fbDB.ref(RAIZ+'/'+V2+'/'+cam);}
+let _enviado={alunos:{},agenda:'',config:'',linhas:{movs:{},presencas:{},lancamentos:{}}};
+/* Linhas apagadas que ainda precisam SAIR da nuvem. O passe de remoção abaixo
+   se apoia em _enviado, que só é preenchido quando o app abre pelas partes da
+   nuvem; quando ele abre pelo blob de reserva, esta lista é o que impede o
+   apagado de voltar na próxima abertura. */
+let _removidos={movs:{},presencas:{},lancamentos:{}};
+function marcarRemovida(nome,linha){
+  try{_removidos[nome][chaveFb(CHAVE_LINHA[nome](linha))]=1;}catch(e){}
+}
+/* Tudo que não é aluno, agenda nem as listas que só crescem. */
+function configDe(d){
+  const fora={alunos:1,agenda:1,movs:1,presencas:1,lancamentos:1};
+  const o={};Object.keys(d||{}).forEach(k=>{if(!fora[k])o[k]=d[k];});
+  return o;
+}
+const CHAVE_LINHA={movs:m=>m.ts+'_'+m.alunoId+'_'+m.campo+'_'+m.delta,
+                   presencas:p=>p.k||(p.alunoId+'_'+p.data+'_'+p.hora),
+                   lancamentos:l=>l.id};
+function chaveFb(s){return String(s).replace(/[.#$\[\]/]/g,'_');}
+/* Sobe só o que difere. Devolve o que foi enviado, para o teste medir. */
+/* Manda em lotes: na primeira conversão são milhares de linhas, e uma gravação
+   por linha levaria minutos e poderia morrer no meio. O update() do Firebase
+   escreve vários caminhos de uma vez. */
+async function enviarLote(cam,mapa){
+  const chaves=Object.keys(mapa);
+  if(!chaves.length)return;
+  const N=300;
+  for(let i=0;i<chaves.length;i+=N){
+    const parte={};
+    chaves.slice(i,i+N).forEach(k=>{parte[k]=mapa[k];});
+    await v2ref(cam).update(parte);
+  }
+}
+async function subirPartes(){
+  if(!hasCloud())return null;
+  const env={alunos:0,linhas:0,agenda:0,config:0,bytes:0,lotes:0};
+  const conta=t=>{env.bytes+=t.length;};
+  try{
+    // 1) alunos: um nó por aluno, só os que mudaram
+    const loteAl={},novosAl={};
+    for(const a of (DB.alunos||[])){
+      const t=JSON.stringify(a);
+      if(_enviado.alunos[a.id]===t)continue;
+      loteAl[chaveFb(a.id)]=t;novosAl[a.id]=t;env.alunos++;conta(t);
+    }
+    if(env.alunos){await enviarLote('alunos',loteAl);Object.assign(_enviado.alunos,novosAl);env.lotes++;}
+    // aluno excluído sai da nuvem também
+    const vivos=new Set((DB.alunos||[]).map(a=>a.id));
+    const remover={};
+    for(const id of Object.keys(_enviado.alunos)){
+      if(!vivos.has(id)){remover[chaveFb(id)]=null;delete _enviado.alunos[id];}
+    }
+    if(Object.keys(remover).length)await enviarLote('alunos',remover);
+    // 2) listas que só crescem: só as linhas ainda não enviadas
+    for(const nome of ['movs','presencas','lancamentos']){
+      const ja=_enviado.linhas[nome], lote={}, novas=[];
+      for(const linha of (DB[nome]||[])){
+        const ch=chaveFb(CHAVE_LINHA[nome](linha));
+        if(ja[ch])continue;
+        const t=JSON.stringify(linha);
+        lote[ch]=t;novas.push(ch);env.linhas++;conta(t);
+      }
+      if(novas.length){
+        await enviarLote(nome,lote);
+        novas.forEach(ch=>{ja[ch]=1;});
+        env.lotes++;
+      }
+      /* E o que FOI apagado tem que sair da nuvem. Sem este passe, estas listas
+         só cresciam: apagar um lançamento sumia com ele no aparelho, mas o nó
+         continuava lá e a linha voltava na abertura seguinte. Vale também para
+         o arquivamento por ano, que tirava do app e deixava na nuvem.
+         Se o app abriu pelo blob, _enviado está vazio e nada é removido por
+         engano — nesse caso quem manda é a lápide de _removidos. */
+      const vivas=new Set((DB[nome]||[]).map(x=>chaveFb(CHAVE_LINHA[nome](x))));
+      const mortas={};
+      /* A diferença contra _enviado vale para lançamentos e presenças, que só
+         somem quando alguém apaga. NÃO vale para o extrato: podarMovs corta as
+         linhas velhas sozinho ao passar de 500 por aluno, e apagar isso da nuvem
+         truncaria o extrato de vez — o saldo pelo extrato passaria a divergir do
+         saldo real. No extrato só sai o que foi marcado de propósito, como no
+         arquivamento por ano, que compensa o corte com a linha de transporte. */
+      if(nome!=='movs')for(const ch of Object.keys(ja))if(!vivas.has(ch))mortas[ch]=null;
+      for(const ch of Object.keys(_removidos[nome]))if(!vivas.has(ch))mortas[ch]=null;
+      const nMortas=Object.keys(mortas).length;
+      if(nMortas){
+        await enviarLote(nome,mortas);
+        Object.keys(mortas).forEach(ch=>{delete ja[ch];delete _removidos[nome][ch];});
+        env.lotes++;
+      }
+    }
+    // 3) agenda e configuração: inteiras, mas só quando mudam
+    const ag=JSON.stringify(DB.agenda||{});
+    if(_enviado.agenda!==ag){await v2ref('agenda').set(ag);_enviado.agenda=ag;env.agenda=1;conta(ag);}
+    const cf=JSON.stringify(configDe(DB));
+    if(_enviado.config!==cf){await v2ref('config').set(cf);_enviado.config=cf;env.config=1;conta(cf);}
+    await v2ref('carimbos/savedAt').set(DB.savedAt||Date.now());
+    return env;
+  }catch(e){lastCloudError=String(e&&e.message||e);return null;}
+}
+/* ===== Arquivo por ano =====
+   Extrato, presenças e lançamentos nunca eram apagados: ~680 KB por ano, tudo
+   carregado e mantido em memória a cada abertura para mostrar dados que quase
+   nunca são abertos. O que tem mais de 14 meses sai do banco de trabalho e vai
+   para jvtenis/arquivo/<ano>, lido só quando ele abre um mês antigo.
+
+   14 meses porque os gráficos mostram 12 — a janela cobre o que a tela usa.
+
+   Alunos, agenda e configuração NÃO são arquivados: são o presente. */
+const MESES_JANELA=14;
+const DATA_DA_LINHA={
+  movs:m=>m&&m.ts?new Date(m.ts):null,
+  presencas:p=>p&&p.data?new Date(p.data+'T12:00:00'):null,
+  lancamentos:l=>l&&(l.data||l.mes)?new Date((l.data||(l.mes+'-15'))+'T12:00:00'):null
+};
+function limiteArquivo(){
+  const d=new Date();d.setMonth(d.getMonth()-MESES_JANELA);d.setHours(0,0,0,0);return d;
+}
+/* O que sairia, sem mexer em nada — é o que o botão mostra antes de confirmar. */
+function previaArquivo(){
+  const lim=limiteArquivo();
+  const r={linhas:0,bytes:0,porAno:{},maisAntiga:null,partes:{}};
+  for(const nome of ['movs','presencas','lancamentos']){
+    const antigas=(DB[nome]||[]).filter(x=>{const d=DATA_DA_LINHA[nome](x);return d&&d<lim;});
+    r.partes[nome]=antigas.length;r.linhas+=antigas.length;
+    antigas.forEach(x=>{
+      const d=DATA_DA_LINHA[nome](x), ano=d.getFullYear();
+      r.porAno[ano]=(r.porAno[ano]||0)+1;
+      r.bytes+=JSON.stringify(x).length;
+      if(!r.maisAntiga||d<r.maisAntiga)r.maisAntiga=d;
+    });
+  }
+  return r;
+}
+/* Grava o arquivo ANTES de remover. Se a gravação falhar, nada sai do banco —
+   nunca o contrário. */
+async function arquivarAntigos(){
+  const p=previaArquivo();
+  if(!p.linhas){toast('Nada com mais de '+MESES_JANELA+' meses para arquivar');return;}
+  if(!hasCloud()){toast('Sem nuvem agora — o arquivo precisa dela para ser guardado');return;}
+  const anos=Object.keys(p.porAno).sort();
+  if(!confirm('Arquivar o que tem mais de '+MESES_JANELA+' meses?\n\n'
+    +p.linhas+' linha(s) · '+Math.round(p.bytes/1024)+' KB\n'
+    +'· extrato: '+p.partes.movs+'\n· presenças: '+p.partes.presencas+'\n· lançamentos: '+p.partes.lancamentos+'\n'
+    +'Anos: '+anos.join(', ')+'\n\n'
+    +'Sai do app do dia a dia e vai para o arquivo na nuvem. Continua acessível:\n'
+    +'ao abrir um mês antigo, o app oferece carregar de volta.'))return;
+  const lim=limiteArquivo();
+  const porAno={};
+  for(const nome of ['movs','presencas','lancamentos']){
+    for(const x of (DB[nome]||[])){
+      const d=DATA_DA_LINHA[nome](x);if(!d||d>=lim)continue;
+      const ano=d.getFullYear();
+      porAno[ano]=porAno[ano]||{movs:{},presencas:{},lancamentos:{}};
+      porAno[ano][nome][chaveFb(CHAVE_LINHA[nome](x))]=JSON.stringify(x);
+    }
+  }
+  try{
+    // 1) grava tudo no arquivo
+    for(const ano of Object.keys(porAno)){
+      for(const nome of ['movs','presencas','lancamentos']){
+        const mapa=porAno[ano][nome];
+        const chaves=Object.keys(mapa);
+        for(let i=0;i<chaves.length;i+=300){
+          const parte={};chaves.slice(i,i+300).forEach(k=>{parte[k]=mapa[k];});
+          await window.fbDB.ref(RAIZ+'/arquivo/'+ano+'/'+nome).update(parte);
+        }
+      }
+    }
+  }catch(e){
+    toast('⚠️ Falha ao gravar o arquivo — nada foi removido');return;
+  }
+  // 2) antes de tirar do banco, TRANSPORTA o saldo: sem isso o extrato visível
+  //    passaria a somar menos que o saldo e a conferência acusaria todo aluno
+  //    como divergente. É o mesmo que a contabilidade faz ao fechar um período.
+  const transporte={};
+  (DB.movs||[]).forEach(m=>{
+    const d=DATA_DA_LINHA.movs(m);if(!d||d>=lim)return;
+    const k=m.alunoId+'|'+m.campo;
+    transporte[k]=(transporte[k]||0)+(Number(m.delta)||0);
+  });
+  // 3) só agora tira do banco de trabalho
+  for(const nome of ['movs','presencas','lancamentos']){
+    (DB[nome]||[]).forEach(x=>{const d=DATA_DA_LINHA[nome](x);if(d&&d<lim)marcarRemovida(nome,x);});
+    DB[nome]=(DB[nome]||[]).filter(x=>{const d=DATA_DA_LINHA[nome](x);return !(d&&d<lim);});
+  }
+  Object.keys(transporte).forEach(k=>{
+    const soma=transporte[k];if(!soma)return;
+    const [alunoId,campo]=k.split('|');
+    DB.movs.push({ts:lim.getTime(),alunoId,campo,delta:soma,de:0,para:soma,
+                  motivo:'Saldo transportado do arquivo',ref:'transporte'});
+  });
+  recalcularTransporte();
+  (DB.movs||[]).sort((a,b)=>(a.ts||0)-(b.ts||0));
+  DB.anosArquivados=Array.from(new Set((DB.anosArquivados||[]).concat(Object.keys(porAno)))).sort();
+  logAct('Arquivou '+p.linhas+' linha(s) anteriores a '+MESES_JANELA+' meses');
+  persist();renderAll();
+  toast('📦 '+p.linhas+' linha(s) arquivadas · o app do dia a dia ficou mais leve');
+}
+/* A linha de transporte representa TUDO que não está visível. Recalculá-la a
+   partir do saldo guardado deixa ela sempre certa — inclusive depois de carregar
+   um ano do arquivo de volta, quando parte do que ela cobria voltou a aparecer.
+   Sem isso, carregar um ano contaria as mesmas linhas duas vezes. */
+function recalcularTransporte(){
+  const eTransporte=m=>m&&m.ref==='transporte';
+  (DB.alunos||[]).forEach(a=>{
+    ['creditos','credGrupo','repos','locCred'].forEach(campo=>{
+      const linhas=(DB.movs||[]).filter(m=>m.alunoId===a.id&&m.campo===campo);
+      const visivel=linhas.filter(m=>!eTransporte(m)).reduce((s,m)=>s+(Number(m.delta)||0),0);
+      const falta=(Number(a[campo])||0)-visivel;
+      const tr=linhas.find(eTransporte);
+      if(!falta){ if(tr)DB.movs=DB.movs.filter(m=>m!==tr); return; }
+      if(tr){tr.delta=falta;tr.para=falta;}
+      else DB.movs.push({ts:limiteArquivo().getTime(),alunoId:a.id,campo,delta:falta,de:0,para:falta,
+                         motivo:'Saldo transportado do arquivo',ref:'transporte'});
+    });
+  });
+}
+/* Traz um ano do arquivo de volta para a memória, sem duplicar o que já existe. */
+let _anosCarregados={};
+async function carregarAnoArquivado(ano){
+  if(!hasCloud()){toast('Sem nuvem agora');return false;}
+  if(_anosCarregados[ano])return true;
+  try{
+    let n=0;
+    for(const nome of ['movs','presencas','lancamentos']){
+      const s=await window.fbDB.ref(RAIZ+'/arquivo/'+ano+'/'+nome).get();
+      if(!s.exists())continue;
+      const v=s.val()||{};
+      const ja=new Set((DB[nome]||[]).map(x=>chaveFb(CHAVE_LINHA[nome](x))));
+      Object.keys(v).forEach(k=>{
+        if(ja.has(k))return;
+        try{DB[nome].push(JSON.parse(v[k]));n++;}catch(e){}
+      });
+      // marca como já enviado: são linhas que vieram do arquivo, não são novas
+      Object.keys(v).forEach(k=>{_enviado.linhas[nome][k]=1;});
+    }
+    recalcularTransporte();     // o que voltou não pode ser contado duas vezes
+    (DB.movs||[]).sort((a,b)=>(a.ts||0)-(b.ts||0));
+    _anosCarregados[ano]=true;
+    renderAll();
+    toast('📂 '+ano+' carregado · '+n+' linha(s)');
+    return true;
+  }catch(e){toast('Não consegui carregar '+ano);return false;}
+}
+/* O blob antigo continua existindo como rede — só que com folga, a cada ~2min,
+   em vez de a cada ação. Assim o caminho quente fica leve E sempre há uma cópia
+   completa recente no formato que já funcionava. */
+let _ultBlob=0;
+async function subirBlobDeReserva(forcar){
+  if(!hasCloud())return;
+  if(!forcar&&Date.now()-_ultBlob<120e3)return;
+  _ultBlob=Date.now();
+  await cloudSet(KEY,JSON.stringify(DB));
+}
+/* Enquanto o load() não terminou, o DB em memória está VAZIO. Gravar nesse
+   estado troca o banco bom por um banco vazio — no aparelho e na nuvem. Esta
+   trava é a última linha de defesa: qualquer travamento futuro no carregamento
+   vira, no pior caso, um app que não salva; nunca um app que apaga. */
+let CARREGADO=false;
+function persist(){
+  if(!CARREGADO){console.warn('persist() ignorado: o app ainda não terminou de carregar');return;}
+  /* Gravar sem saber de quem é o app é como gravar no banco errado: a chave
+     local e a raiz na nuvem só existem depois que o espaço foi escolhido. */
+  if(!window._espacoAberto){console.warn('persist() ignorado: o espaço ainda não foi decidido');return;}
+  histOnPersist();
+  esquecerCachePersonal();   // trocar o tipo de um aluno tem de valer na hora
+  DB.savedAt=Date.now();
+  const json=JSON.stringify(DB);
+  // 1) salva IMEDIATAMENTE no aparelho (nunca perde nada)
+  const okLocal=lsSet(KEY,json);
+  guardarVersoes(json);                 // 1b) e guarda de onde voltar
+  setSave(okLocal?'✓ salvo no aparelho':'salvando…','ok');
+  // 2) envia para a nuvem com retentativas
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(async()=>{
+    if(!hasCloud()){cloudPending=true;setSave(okLocal?'⚠ salvo só no aparelho ⓘ':'erro ao salvar',okLocal?'ok':'err');return;}
+    setSave('enviando à nuvem…');
+    const env=await subirPartes();
+    if(env){
+      cloudPending=false;setSave('✓ salvo na nuvem','ok');
+      subirBlobDeReserva();backupNuvem();
+    }
+    else{
+      cloudPending=true;
+      /* "salvo só no aparelho" é verdade, mas não diz nada. Ficar dias assim
+         sem saber por quê foi o que aconteceu no celular emprestado. Recusa do
+         servidor é um problema de regra, não de sinal, e não passa sozinha. */
+      setSave(okLocal?(recusaDoServidor()?'⚠ a nuvem RECUSOU ⓘ':'⚠ salvo só no aparelho ⓘ'):'erro ao salvar',okLocal?'ok':'err');
+    }
+    publish();
+    publicarMapaQuadra();          // a quadra é uma só: avisa quem mais usa ela
+  },500);
+}
+/* Uma cópia por hora na nuvem, no máximo 30. Mesmo que o aparelho se perca
+   inteiro, existe de onde voltar. */
+let _ultBkpNuvem=0;
+async function backupNuvem(){
+  if(!hasCloud())return;
+  const agora=Date.now();
+  if(agora-_ultBkpNuvem<3600e3)return;
+  _ultBkpNuvem=agora;
+  const d=new Date();
+  const carimbo=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'-'+String(d.getHours()).padStart(2,'0');
+  try{
+    await window.fbDB.ref(RAIZ+'/backups/'+carimbo).set(JSON.stringify(DB));
+    const snap=await window.fbDB.ref(RAIZ+'/backups').get();
+    if(snap.exists()){
+      const ks=Object.keys(snap.val()||{}).sort();
+      while(ks.length>30){await window.fbDB.ref(RAIZ+'/backups/'+ks.shift()).remove();}
+    }
+  }catch(e){}
+}
+/* Sair do app não pode custar a última alteração: no iPhone, minimizar congela
+   o setTimeout de 500ms e a gravação na nuvem nunca acontecia. */
+async function gravarAgora(){
+  if(!CARREGADO||!hasCloud()||!DB)return;   // nunca gravar o que ainda não carregou
+  clearTimeout(saveTimer);
+  try{
+    const env=await subirPartes();          // as partes primeiro: é o dado vivo
+    const ok=await cloudSet(KEY,JSON.stringify(DB));   // e a reserva completa
+    cloudPending=!(env&&ok);
+  }catch(e){cloudPending=true;}
+}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)gravarAgora();});
+window.addEventListener('pagehide',()=>{gravarAgora();});
+/* Sincronizador de fundo: insiste em subir para a nuvem a cada 30s enquanto houver pendência */
+setInterval(async()=>{
+  if(!CARREGADO||!cloudPending||!hasCloud())return;
+  const ok=await cloudSet(KEY,JSON.stringify(DB));
+  if(ok){cloudPending=false;setSave('✓ salvo na nuvem','ok');publish();}
+},30000);
+/* Diagnóstico: toque no indicador para entender a situação */
+/* O Firebase devolve "permission_denied" quando a regra barra. É diferente de
+   estar sem sinal: não adianta esperar, e ninguém adivinha isso olhando para
+   "salvo só no aparelho". */
+function recusaDoServidor(){
+  return /permission|denied|PERMISSION/i.test(String(lastCloudError||''));
+}
+document.getElementById('save-state').style.pointerEvents='auto';
+document.getElementById('save-state').style.cursor='pointer';
+document.getElementById('save-state').onclick=()=>{
+  let msg;
+  if(!hasCloud()){
+    msg='DIAGNÓSTICO\n\n❌ A nuvem (Firebase) não está conectada.\n\nProvável causa: a configuração do Firebase ainda não foi colada no arquivo, ou está incompleta.\n\n✅ Confira o passo 6 do guia: a config deve estar colada no topo do arquivo, sem "COLE_AQUI".\n\nSeus dados estão seguros no aparelho enquanto isso.';
+  }else if(cloudPending&&recusaDoServidor()){
+    msg='DIAGNÓSTICO\n\n🚫 A nuvem RECUSOU a gravação.\n\n'
+      +'Isto não é falta de sinal — é a regra do banco de dados dizendo que esta conta não pode gravar aqui. '
+      +'Esperar não resolve, e o app vai seguir salvando só neste aparelho.\n\n'
+      +(ehDono()
+        ? 'Você está no app da academia. Confira se está conectado com a sua conta em Financeiro → Sua conta.'
+        : 'Você está no app do professor. Peça ao João para colar a versão nova das Regras no Firebase (o arquivo firebase-regras-etapa3.json) e para conferir se a sua conta está cadastrada em Professores.')
+      +'\n\nEspaço: '+(ehDono()?'academia':'professor '+PROF_UID)
+      +'\nÚltimo erro: '+(lastCloudError||'desconhecido');
+  }else if(cloudPending){
+    msg='DIAGNÓSTICO\n\n⚠ O Firebase está conectado mas a última gravação falhou.\nÚltimo erro: '+(lastCloudError||'desconhecido')+'\n\nO app tenta de novo automaticamente a cada 30 segundos. Verifique se as Regras do banco estão como no passo 5 do guia.';
+  }else{
+    msg='DIAGNÓSTICO\n\n✅ Tudo certo! Dados salvos no aparelho E na nuvem (Firebase).\nAcessível de qualquer aparelho.';
+  }
+  alert(msg);
+};
+/* A API da nuvem pode demorar a carregar: re-verifica e sobe pendências */
+[1500,4000,8000].forEach(t=>setTimeout(async()=>{
+  if(hasCloud()&&cloudPending){
+    const ok=await cloudSet(KEY,JSON.stringify(DB));
+    if(ok){cloudPending=false;setSave('✓ salvo na nuvem','ok');publish();}
+  }
+},t));
+/* ===== Mapa da quadra: a quadra é UMA, os bancos são dois =====
+   O professor precisa ver o que já está ocupado, e o João precisa ver as aulas
+   do professor na agenda dele. Como cada um tem banco próprio (e é assim que o
+   faturamento fica separado), nenhum dos dois enxerga a agenda do outro.
+
+   A ponte é este mapa: cada um escreve, num nó só seu, quais horários ocupa —
+   e todos os que estão logados leem o de todos. Uma regra por dono: você só
+   escreve no seu.
+
+   O que vai no mapa: o dia, a hora, o tipo e o NOME DO DONO. Nada do aluno.
+   Isso importa — o mapa é lido por qualquer um que esteja logado, inclusive
+   pelos alunos e por outro professor. Nome de professor não é segredo; nome de
+   aluno é dele e do professor dele. O João, que pode ler o espaço inteiro do
+   professor, tem o detalhe por lá quando quiser.
+
+   Um horário só cabe uma vez: quadra ocupada é quadra ocupada, tanto faz de
+   quem. Por isso quem tenta marcar em cima de horário de outro é barrado. */
+const MAPA_DIAS=42;                 // seis semanas à frente: cobre o mês e a virada
+let MAPA_OUTROS={};                 // 'AAAA-MM-DD|HH:MM' -> {nome,tipo,uid}
+let _mapaEnviado='', _mapaLido='';
+function foraDaQuadraMarcado(){
+  const el=document.getElementById('s-fora');
+  return !!(el&&el.checked&&ehDono());
+}
+/* Personal do João é atendimento em outro lugar — é a regra, não a exceção.
+   Marcar a caixinha em cada aula era trabalho repetido para dizer sempre a
+   mesma coisa, e bastava esquecer uma para a quadra ficar travada à toa.
+
+   Três estados num campo só, e é de propósito:
+     fora === 1  → ele disse que é fora
+     fora === 0  → ele disse que é NA quadra (personal na quadra existe)
+     ausente     → vale o padrão do tipo
+   Assim a regra alcança também o que já estava marcado, sem eu sair alterando
+   a agenda dele por conta própria. */
+/* Quem manda é o CADASTRO do aluno, não a marca em cada linha da agenda.
+   Cada dia da semana é um horário fixo separado: o Mario das segundas e o das
+   sextas são dois registros. Marcar "fora da quadra" num deles não alcançava o
+   outro, e marcar nos três de cada aluno de personal, um por um, é trabalho
+   que se refaz a cada horário novo — e que basta esquecer uma vez para a
+   quadra ficar parada à toa.
+   Aluno cadastrado como Personal é atendido em outro lugar; tênis e torneio
+   são na quadra. A linha da agenda continua podendo dizer o contrário, para o
+   personal que acontece aqui. */
+let _persCache=null,_persFonte=null;
+function ehAlunoPersonal(id){
+  if(!id||typeof DB==='undefined'||!DB||!DB.alunos)return false;
+  if(_persFonte!==DB.alunos||!_persCache){
+    _persFonte=DB.alunos;
+    _persCache={};
+    DB.alunos.forEach(a=>{if(a&&a.tipo==='Personal')_persCache[a.id]=1;});
+  }
+  return !!_persCache[id];
+}
+function esquecerCachePersonal(){_persFonte=null;_persCache=null;}
+function foraDaQuadra(e){
+  if(!e)return false;
+  if(e.fora!==undefined&&e.fora!==null)return !!e.fora;   // ele disse, vale o que ele disse
+  if(e.tipo==='personal')return true;
+  return ehAlunoPersonal(e.alunoId);
+}
+function ocupaQuadra(e){
+  /* Estar ocupado não é o mesmo que estar na quadra. Personal domiciliar toma a
+     hora do professor e não toma a quadra — e antes disso o app tratava tudo
+     igual, então uma manhã inteira de atendimento em casa deixava a quadra
+     parada para todo mundo.
+     Fora isso, o padrão continua sendo ocupar: supor quadra livre porque
+     alguém marcou "pessoal" é como se dobra horário. */
+  if(!e)return false;
+  if(foraDaQuadra(e))return false;
+  return e.tipo!=='vago';
+}
+function meuMapaQuadra(){
+  const dias={}, liberados={}, hoje=new Date();
+  for(let i=0;i<MAPA_DIAS;i++){
+    const d=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()+i,12,0,0,0);
+    const dk=dKey(d);
+    HORAS.forEach(h=>{
+      const todos=entriesFor(d,h);
+      const evs=todos.filter(ocupaQuadra);
+      if(evs.length)(dias[dk]=dias[dk]||{})[h]=String(evs[0].tipo||'aula');
+      /* Só a academia libera hora. Vai junto do mapa porque é a mesma leitura:
+         o professor precisa das duas coisas na mesma hora — o que já está
+         ocupado e o que ele pode usar. */
+      if(ehDono()&&slotProfLiberado(d,h,todos))(liberados[dk]=liberados[dk]||[]).push(h);
+    });
+  }
+  const m={nome:meuNomeNaQuadra(),ts:Date.now(),dias};
+  if(ehDono())m.liberados=liberados;
+  return m;
+}
+function meuNomeNaQuadra(){
+  if(ehDono())return 'João Victor';
+  return (DB&&DB.profNome)?String(DB.profNome):'Professor';
+}
+function meuUidNaQuadra(){return ehDono()?UID_DONO:PROF_UID;}
+/* Só sobe quando muda. Sem isso, cada gravação do app reenviaria seis semanas
+   de agenda — e a agenda muda muito menos do que o banco. */
+let mapaTimer=null;
+function publicarMapaQuadra(){
+  clearTimeout(mapaTimer);
+  mapaTimer=setTimeout(async()=>{
+    if(!CARREGADO||!hasCloud())return;
+    const uid=meuUidNaQuadra();if(!uid)return;
+    let m;try{m=meuMapaQuadra();}catch(e){return;}
+    const assinatura=JSON.stringify(m.dias);
+    if(assinatura===_mapaEnviado)return;
+    try{
+      await window.fbDB.ref('jvtenis/mapa_quadra/'+uid).set(m);
+      _mapaEnviado=assinatura;
+    }catch(e){}
+  },2500);
+}
+async function lerMapaQuadra(){
+  if(!hasCloud())return;
+  const meu=meuUidNaQuadra();
+  try{
+    const snap=await window.fbDB.ref('jvtenis/mapa_quadra').get();
+    const v=snap.exists()?(snap.val()||{}):{};
+    const out={};
+    Object.keys(v).forEach(uid=>{
+      if(uid===meu)return;                       // o meu eu já vejo na minha agenda
+      const bloco=v[uid]||{}, dias=bloco.dias||{};
+      Object.keys(dias).forEach(dk=>{
+        Object.keys(dias[dk]||{}).forEach(h=>{
+          out[dk+'|'+h]={nome:String(bloco.nome||'Outro professor'),tipo:String(dias[dk][h]||'aula'),uid};
+        });
+      });
+      /* Guarda no banco DELE as horas que a academia liberou. Guardado, e não
+         só lido, para valer também quando ele abrir sem internet. */
+      if(uid===UID_DONO&&bloco.liberados&&!ehDono()){
+        DB.profLiberados=bloco.liberados;DB.profLiberadosTs=Date.now();
+      }
+    });
+    /* Repintar a agenda a cada 45 segundos sem nada ter mudado tira o aluno do
+       lugar em que ele estava olhando. Só redesenha quando o mapa mudou mesmo. */
+    const assinatura=JSON.stringify(out);
+    if(assinatura===_mapaLido)return;
+    _mapaLido=assinatura;
+    MAPA_OUTROS=out;
+    try{renderAgenda();}catch(e){}
+  }catch(e){}
+}
+const ROTULO_TIPO_OUTRO={aula:'aula',grupo:'aula em grupo',personal:'personal',locacao:'locação',
+                         torneio:'torneio',bloqueio:'quadra bloqueada',pessoal:'compromisso'};
+function rotuloTipoOutro(t){return ROTULO_TIPO_OUTRO[t]||'ocupado';}
+/* As horas que a academia liberou para o professor. Vem do mapa e fica guardada
+   no banco dele, para valer offline.
+   Quando ele nunca conseguiu ler (app novo, primeira abertura sem internet), o
+   app avisa mas deixa marcar: travar tudo faria um professor sem sinal ficar
+   sem conseguir trabalhar, e o mapa da quadra já impede que ele pegue hora de
+   alguém. Depois da primeira leitura, vale o que o João liberou. */
+function horaLiberadaProf(date,hora){
+  const lib=(typeof DB!=='undefined'&&DB)?DB.profLiberados:null;
+  if(!lib)return 'sem-lista';
+  const doDia=lib[dKey(date)];
+  return (doDia&&doDia.indexOf(hora)>=0)?'sim':'nao';
+}
+function ocupadoPorOutro(date,hora){
+  return MAPA_OUTROS[dKey(date)+'|'+hora]||null;
+}
+/* Publica os dados que o App do Aluno lê (somente leitura, compartilhado) */
+let pubTimer=null;
+function publish(){
+  clearTimeout(pubTimer);
+  pubTimer=setTimeout(doPublish,1200);
+}
+async function doPublish(){
+  if(!CARREGADO)return;                     // publicar vazio apagaria a tela dos alunos
+  if(!ehDono())return;                      // o App do Aluno é da academia, não do professor
+  if(!hasCloud())return;
+  try{
+    const hoje=new Date();const lim=new Date();lim.setDate(lim.getDate()+60);
+    const codeOf=id=>{const a=DB.alunos.find(x=>x.id===id);return a?a.codigo:null;};
+    const matchAluno=acharAlunoPorTitulo;
+    const codeFor=ev=>{
+      if(ev.alunoId){const c=codeOf(ev.alunoId);if(c)return c;}
+      const a=matchAluno(ev.titulo);
+      return a?a.codigo:null;
+    };
+    const pub={
+      updatedAt:new Date().toISOString(),
+      aviso:DB.aviso||'',
+      termo:DB.termo||'',
+      termoVer:DB.termoVer||0,
+      pix:DB.pix||'',
+      pixNome:DB.pixNome||'',
+      pixCidade:DB.pixCidade||'',
+      pixTipo:DB.pixTipo||'celular',
+      cardLink:DB.cardLink||'',
+      precos:DB.precos||{avulsaPart:170,avulsaGrupo:95,locacao:70,personal:130},
+      planos:PRECOS,
+      grupoPreco:DB.grupoPreco||{dupla:90,trio:85,quarteto:80},
+      torneio:(function(){ensureTorneios();const t=DB.torneios.lista[DB.torneios.atual];return t?{id:t.id,nome:t.nome,tipo:t.tipo,jogadores:t.jogadores,etapa:t.etapa||1,encerrada:!!t.encerrada,nomesGrupos:t.nomesGrupos||{}}:null;})(),
+      horas:HORAS,
+      chuvas:(DB.chuvas||[]).slice(-60),
+      locacaoOnly:DB.locacaoOnly||[],
+      horarioCfg:DB.horarioCfg||{},
+      horarioData:DB.horarioData||{},
+      alunos:DB.alunos.map(a=>({codigo:a.codigo,nome:a.nome,tipo:a.tipo,plano:a.plano,creditos:a.creditos,repos:a.repos,reposValidas:reposValidas(a),reposVencendo:reposVencendo(a),status:a.status,ultimoPago:a.ultimoPago||'',mensalidade:a.mensalidade,diaVenc:a.diaVenc||10,cardLink:a.cardLink||'',mfitLink:a.mfitLink||'',valorAula:a.valorAula||(a.tipo==='Personal'?130:160),locCred:Number(a.locCred)||0,credGrupo:Number(a.credGrupo)||0,planoGrupo:Number(a.planoGrupo)||0,grupoTipo:a.grupoTipo||'',avaliacoes:(a.avaliacoes||[]).slice(-12),evoMes:serieMensal(a.avaliacoes,a.registros,24),registros:(a.registros||[]).slice(-8)})),
+      historico:(function(){
+        const codeOf={};DB.alunos.forEach(a=>{codeOf[a.id]=a.codigo;});
+        const cut=dKey(new Date(Date.now()-60*864e5));const out={};
+        /* Só aula realizada de verdade: falta e aviso prévio não são aula, e a
+           duplicada do cartão é a mesma aula outra vez. Sem este filtro o aluno
+           via no app dele um ✓ para o dia que ele avisou que não vinha. */
+        const todas=DB.presencas||[];
+        todas.forEach(p=>{const c=codeOf[p.alunoId];if(!c||(p.data&&p.data<cut))return;
+          if(ehMarca(p)||ehDupManual(p,todas))return;
+          (out[c]=out[c]||[]).push({data:p.data||'',hora:p.hora||''});});
+        Object.keys(out).forEach(c=>{out[c].sort((a,b)=>String(b.data).localeCompare(String(a.data)));out[c]=out[c].slice(0,30);});
+        return out;
+      })(),
+      grade:{
+        fixos:DB.agenda.fixos.map(f=>({id:f.id,dia:f.dia,hora:f.hora,tipo:f.tipo,cod:codeFor(f),desde:f.desde||'',ate:f.ate||''})),
+        eventos:DB.agenda.eventos.filter(e=>e.data>=dKey(hoje)&&e.data<=dKey(lim)).map(e=>{
+          const ev={id:e.id,data:e.data,hora:e.hora,tipo:e.tipo,cod:codeFor(e)};
+          // chuva marcada antes desta versão só tem o título; por isso o fallback
+          const mot=e.motivo||(/chuva/i.test(e.titulo||'')?'chuva':'');
+          if(mot)ev.motivo=mot;
+          return ev;
+        }),
+        excecoes:DB.agenda.excecoes
+      }
+    };
+    /* O aluno escolhe horário olhando a grade publicada. Sem isto ele pediria
+       um horário que já é de outro professor — e descobriria na porta da
+       quadra. Vai só a hora ocupada, sem nome de ninguém: para o aluno é
+       "Reservado", que é tudo o que ele precisa saber. */
+    Object.keys(MAPA_OUTROS).forEach(ch=>{
+      const [data,hora]=ch.split('|');
+      if(data<dKey(hoje)||data>dKey(lim))return;
+      pub.grade.eventos.push({id:'q'+data+hora,data,hora,tipo:'ocupado'});
+    });
+    await cloudSet(PUBKEY,JSON.stringify(pub));
+    // Nó público mínimo: só os três preços de grupo, que é tudo o que o site
+    // do jvtenis.com.br precisa. Sem ele, o site teria que ler a publicação
+    // inteira — e aí os dados dos alunos precisariam ficar abertos a todos.
+    try{await window.fbDB.ref('jvtenis/precos_publicos')
+      .set(DB.grupoPreco||{dupla:90,trio:85,quarteto:80});}catch(e){}
+  }catch(e){/* melhor esforço */}
+}
+/* Importa agendamentos feitos pelos alunos no App do Aluno (fila push do Firebase) */
+let syncing=false;
+async function syncRequests(silent){
+  if(syncing)return;syncing=true;
+  if(!hasCloud()){if(!silent)toast('Nuvem (Firebase) não conectada');syncing=false;return;}
+  try{
+    const ref=window.fbDB.ref('jvtenis/fila_agendamentos');
+    const snap=await ref.get();
+    if(!snap.exists()){if(!silent)toast('Nenhum agendamento novo de alunos');syncing=false;return;}
+    const fila=snap.val()||{};
+    const chaves=Object.keys(fila);
+    let n=0,nc=0;
+    chaves.forEach((key,idx)=>{
+      const p=fila[key];
+      const a=DB.alunos.find(x=>x.codigo===p.codigo);
+      if(a){
+        const tipo=p.tor?'torneio':catAgendaDe(a.tipo);   // jogo do torneio: já pago, não usa crédito
+        if(p.acao==='cancelar'){
+          const dia=new Date(p.data+'T12:00:00').getDay();
+          const fx=DB.agenda.fixos.find(f=>f.alunoId===a.id&&f.dia===dia&&f.hora===p.hora&&fixoValeEm(f,p.data));
+          if(fx){
+            if(!DB.agenda.excecoes.some(x=>x.fixoId===fx.id&&x.data===p.data))
+              DB.agenda.excecoes.push({fixoId:fx.id,data:p.data});
+          }else{
+            DB.agenda.eventos=DB.agenda.eventos.filter(e=>!(e.alunoId===a.id&&e.data===p.data&&e.hora===p.hora));
+          }
+          nc++;
+        }else if(p.rec==='fixo'){
+          const dia=new Date(p.data+'T12:00:00').getDay();
+          if(!DB.agenda.fixos.some(f=>f.alunoId===a.id&&f.dia===dia&&f.hora===p.hora&&fixoValeEm(f,p.data)))
+            DB.agenda.fixos.push({id:'f'+Date.now()+idx,dia,hora:p.hora,titulo:a.nome,tipo,alunoId:a.id,desde:p.data});
+          n++;
+        }else{
+          if(!DB.agenda.eventos.some(e=>e.alunoId===a.id&&e.data===p.data&&e.hora===p.hora))
+            DB.agenda.eventos.push({id:'e'+Date.now()+idx,data:p.data,hora:p.hora,titulo:a.nome,tipo,alunoId:a.id,repo:p.repo?1:0});
+          n++;
+        }
+      }
+      // remove da fila (processado ou de aluno inexistente)
+      ref.child(key).remove().catch(()=>{});
+    });
+    if(n>0||nc>0){
+      persist();renderAgenda();
+      const partes=[];if(n>0)partes.push(n+' reserva'+(n===1?'':'s'));if(nc>0)partes.push(nc+' cancelamento'+(nc===1?'':'s'));
+      toast('📥 '+partes.join(' · ')+' de alunos');
+    }
+    else if(!silent)toast('Nenhuma novidade de alunos');
+  }catch(e){if(!silent)toast('Erro ao sincronizar');}
+  syncing=false;
+}
+setInterval(()=>{syncRequests(true);carregarNotifs();carregarConfirmacoes();carregarCadastros();carregarAutoAval();lerMapaQuadra();},45000);
+setTimeout(carregarAutoAval,4000);
+
+/* ===== Autoavaliações enviadas pelos alunos ===== */
+let AUTOAVAL=[];
+async function carregarAutoAval(){
+  if(!hasCloud())return;
+  try{
+    const snap=await window.fbDB.ref('jvtenis/fila_autoaval').get();
+    const v=snap.exists()?(snap.val()||{}):{};
+    AUTOAVAL=Object.keys(v).map(k=>Object.assign({_k:k},v[k])).filter(x=>x&&x.codigo).sort((a,b)=>(b.ts||0)-(a.ts||0));
+  }catch(e){}
+  renderAvaliacoes();
+}
+function autoAvalDe(a){return AUTOAVAL.filter(x=>String(x.codigo||'').toUpperCase()===String(a.codigo||'').toUpperCase());}
+// Abre a avaliação já preenchida com o que o aluno respondeu — o João revisa e salva.
+function usarAutoAval(id,chave){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  const env=AUTOAVAL.find(x=>x._k===chave);if(!env){toast('Autoavaliação não encontrada');return;}
+  openAvalModal(id);
+  Object.keys(AVAL_ESCALA).forEach(g=>{
+    AVAL_ESCALA[g].itens.forEach(it=>{
+      const v=Number(env[g]&&env[g][it.k])||0;
+      if(v>0)setAval(g,it.k,v);
+    });
+  });
+  if(env.obs){const o=document.getElementById('av-obs');if(o)o.value='(aluno) '+env.obs;}
+  const ai=document.getElementById('av-editaviso');
+  if(ai){ai.style.display='block';ai.textContent='📝 Preenchido com a autoavaliação de '+(env.nome||a.nome)+' ('+((env.data||'').split('-').reverse().join('/'))+'). Ajuste o que discordar e salve — só então entra no histórico.';}
+  toast('Respostas do aluno carregadas — revise e salve');
+}
+async function descartarAutoAval(chave){
+  if(!confirm('Descartar esta autoavaliação?'))return;
+  try{await window.fbDB.ref('jvtenis/fila_autoaval/'+chave).remove();}catch(e){}
+  AUTOAVAL=AUTOAVAL.filter(x=>x._k!==chave);renderAvaliacoes();toast('Autoavaliação descartada');
+}
+setTimeout(()=>{carregarConfirmacoes();carregarCadastros();},3500);   // primeira carga: confirmações + cadastros do site
+
+/* ================= AVISOS (sininho) ================= */
+let NOTIF=[],notifSeen=Number((typeof localStorage!=='undefined'&&localStorage.getItem('jv-notif-seen'))||0),notifMax=notifSeen,notifPrimeira=true;
+/* ===== AVISOS (notificações do sistema) =====
+   iPhone não suporta "new Notification": em PWA instalada só funciona
+   registration.showNotification(). Por isso mostramos pelo service worker
+   sempre que ele existir, e só caímos no construtor no desktop. */
+function avisosEstado(){
+  if(!('Notification' in window)){
+    const ios=/iPad|iPhone|iPod/.test(navigator.userAgent);
+    const naTela=window.navigator.standalone===true||window.matchMedia('(display-mode: standalone)').matches;
+    return (ios&&!naTela)?'instalar':'nao-suportado';
+  }
+  return Notification.permission;   // 'granted' | 'denied' | 'default'
+}
+function mostrarAviso(titulo,corpo,icone){
+  if(!('Notification' in window)||Notification.permission!=='granted')return Promise.resolve(false);
+  const opts={body:corpo||'',icon:icone||'',badge:icone||'',tag:'jvtenis'};
+  if('serviceWorker' in navigator&&navigator.serviceWorker.ready){
+    return navigator.serviceWorker.ready
+      .then(reg=>reg.showNotification(titulo,opts).then(()=>true))
+      .catch(()=>{try{new Notification(titulo,opts);return true;}catch(e){return false;}});
+  }
+  try{new Notification(titulo,opts);return Promise.resolve(true);}catch(e){return Promise.resolve(false);}
+}
+async function ativarAvisos(iconeTeste){
+  const st=avisosEstado();
+  if(st==='instalar'){toast('📲 Adicione o app à Tela de Início para receber avisos');pintarAvisos();return;}
+  if(st==='nao-suportado'){toast('Este navegador não envia avisos');pintarAvisos();return;}
+  if(st==='denied'){toast('🔕 Avisos bloqueados — libere nos ajustes do navegador');pintarAvisos();return;}
+  if(st==='granted'){
+    const ok=await mostrarAviso('Avisos ligados 🎾','Academia João Victor Tênis',iconeTeste);
+    toast(ok?'🔔 Aviso de teste enviado!':'Não consegui enviar o aviso de teste');
+    pintarAvisos();return;
+  }
+  try{
+    const r=await Notification.requestPermission();
+    if(r==='granted'){
+      const ok=await mostrarAviso('Avisos ligados 🎾','Academia João Victor Tênis',iconeTeste);
+      toast(ok?'🔔 Pronto! Aviso de teste enviado.':'Permissão dada, mas o aviso não apareceu');
+    }else toast('Sem problema — dá para ligar depois neste botão');
+  }catch(e){toast('Não consegui pedir a permissão');}
+  pintarAvisos();
+}
+function pintarAvisos(){
+  const b=document.getElementById('btn-avisos');if(!b)return;
+  const st=avisosEstado();
+  const txt={granted:'🔔 Avisos ligados · testar',denied:'🔕 Avisos bloqueados',
+             instalar:'📲 Instale na Tela de Início',
+             'nao-suportado':'🔕 Sem avisos neste navegador'}[st]||'🔔 Ativar avisos';
+  b.textContent=txt;
+  b.dataset.st=st;
+}
+function pedirPermissaoNotif(){pintarAvisos();}
+function notificarNavegador(txt){mostrarAviso('Academia JV Tênis 🎾',txt,'jv-icone-gestao.png');}
+function textoNotif(n){
+  if(n.acao==='resultado')return '🏆 '+(n.nome||'Aluno')+': '+(n.texto||'enviou um resultado');
+  if(n.texto)return '🛒 '+(n.nome||'Aluno')+': '+n.texto;
+  const tipo=n.tipo==='personal'?'Personal':(n.tipo==='grupo'?'Grupo':(n.tipo==='locacao'?'Locação':(n.tipo==='torneio'?'🏆 Torneio':'Aula')));
+  const ac=n.acao==='cancelou'?'cancelou ❌':'reservou ✅';
+  const dd=n.data?n.data.split('-').reverse().slice(0,2).join('/'):'';
+  return (n.nome||'Aluno')+' '+ac+' — '+tipo+' · '+dd+' '+(n.hora||'');
+}
+async function carregarNotifs(){
+  if(!hasCloud())return;
+  try{
+    const snap=await window.fbDB.ref('jvtenis/notificacoes').get();
+    const v=snap.exists()?(snap.val()||{}):{};
+    NOTIF=Object.keys(v).map(k=>v[k]).filter(n=>n&&n.ts).sort((a,b)=>b.ts-a.ts).slice(0,60);
+    const max=NOTIF.length?NOTIF[0].ts:0;
+    if(!notifPrimeira&&max>notifMax){
+      const novas=NOTIF.filter(n=>n.ts>notifMax);
+      novas.slice(0,3).forEach(n=>notificarNavegador(textoNotif(n)));
+      if(novas.length)toast('🔔 '+novas.length+' novo(s) aviso(s) de alunos');
+    }
+    notifMax=Math.max(notifMax,max);notifPrimeira=false;
+    updateBell();
+  }catch(e){}
+}
+function updateBell(){
+  const b=document.getElementById('bell-badge');if(!b)return;
+  const unread=NOTIF.filter(n=>n.ts>notifSeen).length;
+  if(unread>0){b.style.display='flex';b.textContent=unread>9?'9+':String(unread);}else b.style.display='none';
+  atualizarBadges();
+}
+function abrirNotifs(){
+  pedirPermissaoNotif();
+  renderNotifList();
+  notifSeen=Date.now();try{localStorage.setItem('jv-notif-seen',String(notifSeen));}catch(e){}
+  updateBell();
+  document.getElementById('ov-notif').classList.add('on');
+}
+function renderNotifList(){
+  atualizarBadges();
+  const el=document.getElementById('notif-list');if(!el)return;
+  if(!NOTIF.length){el.innerHTML='<div class="empty">Nenhum aviso ainda. Quando um aluno reservar ou cancelar, aparece aqui.</div>';return;}
+  el.innerHTML=NOTIF.map((n,i)=>{
+    const q=new Date(n.ts);
+    const hm=String(q.getHours()).padStart(2,'0')+':'+String(q.getMinutes()).padStart(2,'0');
+    const cor=n.acao==='cancelou'?'var(--c-bloq)':'var(--c-loc)';
+    const vai=destinoNotif(n);
+    return `<div class="mov${vai?' mov-vai':''}" style="border-left:4px solid ${cor}"${vai?` onclick="irDoAviso(${i})"`:''}>`
+      +`<div class="mov-l"><b>${textoNotif(n)}</b><span>recebido ${String(q.getDate()).padStart(2,'0')}/${String(q.getMonth()+1).padStart(2,'0')} ${hm}</span></div>`
+      +(vai?'<span class="mov-seta">›</span>':'')+'</div>';
+  }).join('');
+}
+/* O número "a receber" existe; a lista de quem deve também, logo abaixo na
+   mesma tela. Faltava só o caminho entre os dois. */
+/* Abre/fecha uma seção do Início. Começam sempre fechadas: o estado não é
+   guardado, então cada abertura do app parte do painel enxuto. */
+function dobrar(id,forcar){
+  const d=document.getElementById(id);if(!d)return;
+  if(forcar===true)d.classList.add('on');
+  else if(forcar===false)d.classList.remove('on');
+  else d.classList.toggle('on');
+}
+function marcarDobra(id,n,bom){
+  const e=document.getElementById(id);if(!e)return;
+  e.textContent=n;
+  e.classList.toggle('zero',!!bom);
+}
+function verPendentes(){
+  dobrar('dob-pend',true);            // sem isto o alerta rolaria até uma seção fechada
+  const alvo=document.getElementById('pend-list');
+  if(!alvo)return;
+  alvo.scrollIntoView({behavior:'smooth',block:'center'});
+  alvo.classList.add('achei');
+  setTimeout(()=>alvo.classList.remove('achei'),2700);
+}
+/* Cartão "Créditos em aberto" leva à tela Alunos, focada em quem tem reposição
+   pendente — que é onde as reposições de cada aluno são vistas e dadas baixa. */
+function verReposicoes(){
+  focoRepos=DB.alunos.some(a=>(Number(a.repos)||0)>0);   // só filtra se houver reposição; senão mostra todos (ainda útil p/ créditos)
+  irParaAba('alunos');
+  renderAlunos();
+  const list=document.getElementById('alunos-list');
+  if(list)list.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function limparFocoRepos(){focoRepos=false;renderAlunos();}
+/* ===== Badges da barra: quantas novidades por aba desde a última visita =====
+   Reaproveita a classificação de destinoNotif: agenda = reservas e
+   cancelamentos, torneio = resultados. O carimbo do que já foi visto fica no
+   aparelho; na primeira vez começa "agora", para não mostrar um número enorme
+   de avisos antigos logo depois de instalar. */
+let VISTO=(function(){
+  try{const v=JSON.parse(localStorage.getItem('jv-visto')||'null');if(v)return v;}catch(e){}
+  const agora=Date.now();return {agenda:agora,torneio:agora,_novo:1};
+})();
+function salvarVisto(){try{localStorage.setItem('jv-visto',JSON.stringify(VISTO));}catch(e){}}
+if(VISTO._novo){delete VISTO._novo;salvarVisto();}
+function contarNovidades(){
+  const c={agenda:0,torneio:0};
+  (typeof NOTIF!=='undefined'?NOTIF:[]).forEach(n=>{
+    const d=destinoNotif(n); if(d!=='agenda'&&d!=='torneio')return;
+    if((n.ts||0)>(VISTO[d]||0))c[d]++;
+  });
+  return c;
+}
+function pintarBadge(id,n){
+  const el=document.getElementById(id);if(!el)return;
+  if(n>0){el.textContent=n>9?'9+':String(n);el.classList.add('on');}
+  else el.classList.remove('on');
+}
+function atualizarBadges(){
+  const c=contarNovidades();
+  pintarBadge('nb-agenda',c.agenda);
+  pintarBadge('nb-torneio',c.torneio);
+}
+/* Abrir a aba zera o contador dela — o que estava lá passou a ser visto. */
+function marcarVisto(tab){
+  if(tab!=='agenda'&&tab!=='torneio')return;
+  VISTO[tab]=Date.now();salvarVisto();atualizarBadges();
+}
+
+/* Para onde cada aviso leva. Devolve null quando não há destino — aí a linha
+   não finge ser botão. */
+function destinoNotif(n){
+  if(!n)return null;
+  if(n.acao==='resultado')return 'torneio';
+  if(n.texto)return 'pedidos';                 // compra, plano, mensalidade
+  if(n.data&&n.hora)return 'agenda';
+  return null;
+}
+/* Leva o João até a mudança que o aluno fez, em vez de ele caçar na mão. */
+function irDoAviso(i){
+  const n=NOTIF[i];if(!n)return;
+  const d=destinoNotif(n);if(!d)return;
+  closeModal('ov-notif');
+  if(d==='torneio'){irParaAba('torneio');return;}
+  if(d==='pedidos'){abrirPedidos();return;}
+  // agenda: dia certo, visão de dia, rolar até o horário e piscar o slot
+  const p=String(n.data).split('-');
+  agDate=new Date(Number(p[0]),Number(p[1])-1,Number(p[2]));
+  irParaAba('agenda');
+  // o próprio botão "Dia" já ajusta agView, as classes e redesenha
+  const bDia=document.querySelector('#pg-agenda .seg button');
+  if(bDia)bDia.click(); else {agView='dia';renderAgenda();}
+  setTimeout(()=>{
+    const slot=document.querySelector('.slot[data-drop-h="'+n.hora+'"]');
+    if(!slot){toast('Não achei o horário '+n.hora+' nesse dia');return;}
+    slot.scrollIntoView({behavior:'smooth',block:'center'});
+    slot.classList.add('slot-piscando');
+    setTimeout(()=>slot.classList.remove('slot-piscando'),2600);
+    const corpo=slot.querySelector('.slot-body');
+    if(corpo&&!corpo.classList.contains('has'))
+      toast('Esse horário está livre — a mudança já foi aplicada');
+  },220);
+}
+/* Troca de aba sem depender do botão clicado: acha o da barra pelo onclick.
+   Financeiro e Gráficos moram no "Mais" e não têm botão próprio, então quem
+   fica aceso é o "Mais" — em vez do Início, que acenderia por engano. */
+function irParaAba(id){
+  const b=[...document.querySelectorAll('.nav button')]
+    .find(x=>(x.getAttribute('onclick')||'').indexOf("go('"+id+"'")===0);
+  go(id, b||document.getElementById('nav-mais')||document.querySelector('.nav button'));
+}
+function abrirMais(){
+  const p=document.getElementById('mais-pop'),f=document.getElementById('mais-fundo'),n=document.querySelector('.nav');
+  if(p.classList.contains('on')){fecharMais();return;}   // tocar de novo fecha
+  p.style.bottom=(n.offsetHeight+8)+'px';                // encosta na barra, seja qual for a altura
+  p.classList.add('on');f.classList.add('on');
+  document.getElementById('nav-mais').classList.add('aberto');
+}
+function fecharMais(){
+  document.getElementById('mais-pop').classList.remove('on');
+  document.getElementById('mais-fundo').classList.remove('on');
+  const b=document.getElementById('nav-mais');if(b)b.classList.remove('aberto');
+}
+function irDoMais(id){fecharMais();irParaAba(id);window.scrollTo({top:0});}
+/* ===== Porta de entrada =====
+   Quando abrir direto era razoável: um dono, um aparelho, banco aberto. Hoje há
+   professores e a regra do servidor decide quem lê o quê — e um link aberto no
+   celular de outra pessoa mostrava a casca do painel da academia, vazia e
+   gravando só no aparelho, sem pedir nada e sem explicar por quê.
+
+   A trava é estreita de propósito: só barra quem não se identificou E não tem
+   dados deste espaço no aparelho. O app continua abrindo offline no celular de
+   quem já usa — que é o caso que não pode quebrar. */
+/* "Tem dados aqui" precisa querer dizer dados DE VERDADE.
+   Perguntar só se existe algo gravado não serve: o próprio app grava um banco
+   novo e vazio na primeira abertura (agenda-semente, campos padrão). Na segunda
+   vez o aparelho "já tinha dados" e a porta se abria sozinha — foi assim que o
+   celular emprestado voltou a entrar sem pedir nada. */
+function bancoTemConteudo(raw){
+  try{
+    const d=JSON.parse(raw||'null');
+    if(!d)return false;
+    return (d.alunos||[]).length>0||(d.lancamentos||[]).length>0||(d.presencas||[]).length>0;
+  }catch(e){return false;}
+}
+function precisaEntrar(){
+  if(window.AUTH_USER)return false;                              // já identificado
+  if(typeof firebase==='undefined'||!firebase.auth)return false; // sem login disponível: não trava ninguém
+  if(bancoTemConteudo(lsGet(KEY)))return false;                  // este aparelho já tem os dados daqui
+  return true;
+}
+function checarPortaEntrada(){
+  const ov=document.getElementById('ov-entrar');if(!ov)return;
+  if(!precisaEntrar()){ov.classList.remove('on');return;}
+  renderEntrar();
+  ov.classList.add('on');
+}
+function renderEntrar(){
+  const el=document.getElementById('entrar-box');if(!el)return;
+  const est='width:100%;padding:11px 12px;margin-bottom:8px;border:1px solid var(--border);border-radius:10px;font-size:14px;background:#fff;color:var(--text)';
+  el.innerHTML='<input id="ent-email" type="email" inputmode="email" autocomplete="username" placeholder="seu e-mail" style="'+est+'">'
+    +'<input id="ent-senha" type="password" autocomplete="current-password" placeholder="sua senha" style="'+est+'">'
+    +'<div class="backup-row"><button class="btn btn-clay" id="ent-btn" onclick="entrarPelaPorta()">🔑 Entrar</button></div>'
+    +'<div class="backup-row" style="margin-top:8px"><button class="btn btn-ghost" id="ent-g-btn" onclick="entrarPelaPortaGoogle()">Entrar com o Google</button></div>'
+    +'<p class="hint" id="ent-msg" style="margin-top:10px"></p>';
+}
+function entrarMsg(txt,erro){
+  const m=document.getElementById('ent-msg');if(!m)return;
+  m.style.whiteSpace='pre-line';
+  m.textContent=txt;m.style.color=erro?'var(--bad,#C0392B)':'var(--muted)';m.style.fontWeight=erro?'700':'';
+}
+/* Depois de entrar, recarrega. O load() já rodou com o banco vazio deste
+   aparelho; seguir daqui deixaria a tela vazia até alguém fechar o app. */
+async function entrarPelaPorta(){
+  const e=document.getElementById('ent-email'), s=document.getElementById('ent-senha');
+  const b=document.getElementById('ent-btn');
+  if(!e||!s)return;
+  const email=(e.value||'').trim(), senha=s.value||'';
+  if(!email||!senha){entrarMsg('Preencha e-mail e senha.',true);return;}
+  if(b){b.disabled=true;b.textContent='Entrando…';}
+  entrarMsg('');
+  try{
+    await firebase.auth().signInWithEmailAndPassword(email,senha);
+    location.reload();
+  }catch(err){
+    const c=String(err&&err.code||'');
+    entrarMsg(c.indexOf('wrong-password')>=0||c.indexOf('invalid-credential')>=0 ? 'E-mail ou senha não conferem.'
+      : c.indexOf('user-not-found')>=0 ? 'Não existe conta com esse e-mail.'
+      : c.indexOf('too-many-requests')>=0 ? 'Muitas tentativas seguidas. Espere alguns minutos.'
+      : c.indexOf('network')>=0 ? 'Sem conexão agora. Tente de novo.'
+      : String(err&&err.message||err), true);
+    if(b){b.disabled=false;b.textContent='🔑 Entrar';}
+  }
+}
+async function entrarPelaPortaGoogle(){
+  const b=document.getElementById('ent-g-btn');
+  if(b){b.disabled=true;b.textContent='Abrindo…';}
+  entrarMsg('');
+  try{
+    const r=await comGoogle(function(p){return firebase.auth().signInWithPopup(p);});
+    if(r&&r.redirecionar){await firebase.auth().signInWithRedirect(provedorGoogle());return;}
+    location.reload();
+  }catch(err){
+    entrarMsg(erroGoogleTexto(err),true);
+    if(b){b.disabled=false;b.textContent='Entrar com o Google';}
+  }
+}
+/* Entrou com uma conta que ninguém conhece?
+   O app decide o banco pelo uid, então uma conta nova — Google recém-criado,
+   e-mail errado — cai no modo professor e abre um espaço vazio. Quem passa por
+   isso sem aviso conclui que os dados sumiram.
+
+   A conferência é aqui, e não logo depois do login, porque entrar com um uid
+   diferente RECARREGA a página (é o que impede gravar o dado de um no banco do
+   outro). Depois do recarregamento não existe mais "logo depois do login" —
+   existe só o boot. Então é no boot que se pergunta. */
+async function conferirAcessoProf(){
+  if(ehDono()||!PROF_UID||!hasCloud())return;
+  let existe=null;
+  try{
+    const snap=await window.fbDB.ref('jvtenis/professores/'+PROF_UID).get();
+    existe=snap.exists();
+  }catch(e){return;}              // não deu para conferir: não acusa ninguém
+  if(existe)return;
+  const f=document.getElementById('fita-prof');
+  if(f){
+    f.style.display='';
+    f.style.background='#8A2C18';
+    f.innerHTML='⚠️ Esta conta não tem acesso aqui. Nada foi perdido — os dados estão na conta certa. '
+      +'<button onclick="sairConta()" style="margin-left:8px;padding:3px 10px;border-radius:7px;border:1px solid rgba(255,255,255,.5);background:transparent;color:#fff;font-weight:700">sair</button>';
+  }
+  toast('⚠️ Conta sem acesso — entre com a conta certa');
+}
+/* Diz na tela de quem é o app que está aberto. Sem isso, o professor e o João
+   veriam telas idênticas com bancos diferentes — e no dia em que os dois
+   usassem o mesmo aparelho, ninguém saberia onde estava gravando. */
+function pintarModo(){
+  try{document.body.dataset.modo=MODO;}catch(e){}
+  const f=document.getElementById('fita-prof');if(!f)return;
+  if(ehDono()){f.style.display='none';return;}
+  const nome=(typeof DB!=='undefined'&&DB&&DB.profNome)?String(DB.profNome):'';
+  f.style.display='';
+  f.textContent='👨‍🏫 App do professor'+(nome?(' · '+nome):'')+' — estes são os seus alunos e os seus números.';
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')fecharMais();});
+
+async function limparNotifs(){
+  if(!confirm('Limpar todos os avisos?'))return;
+  if(hasCloud()){try{await window.fbDB.ref('jvtenis/notificacoes').remove();}catch(e){}}
+  NOTIF=[];updateBell();renderNotifList();
+}
+setTimeout(carregarNotifs,2500);
+
+/* ================= FILA DE PEDIDOS (compras, planos, mensalidade) ================= */
+let pedFila=[];
+async function syncPedidos(silent){
+  if(!hasCloud()){renderPedList();return;}
+  try{
+    const snap=await window.fbDB.ref('jvtenis/fila_pedidos').get();
+    const v=snap.exists()?(snap.val()||{}):{};
+    pedFila=Object.entries(v).map(([key,m])=>({key,...m})).sort((a,b)=>(a.ts||0)-(b.ts||0));
+  }catch(e){pedFila=[];}
+  updatePedBadge();
+  const ov=document.getElementById('ov-ped');if(ov&&ov.classList.contains('on'))renderPedList();
+}
+function updatePedBadge(){
+  const b=document.getElementById('ped-badge');if(!b)return;
+  if(pedFila.length){b.style.display='flex';b.textContent=pedFila.length>9?'9+':String(pedFila.length);}else b.style.display='none';
+  const nb=document.getElementById('nb-inicio');
+  if(nb){if(pedFila.length){nb.textContent=pedFila.length>9?'9+':String(pedFila.length);nb.classList.add('on');}else nb.classList.remove('on');}
+}
+function pedEsc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function pedDesc(p){
+  const quem=p.nome||'Aluno';
+  if(p.kind==='mensalidade')return quem+' vai pagar a mensalidade ('+fmt(p.valor||0)+') · '+(p.metodo||'');
+  if(p.kind==='plano')return quem+' quer o plano '+(p.cat==='Misto'?(p.desc||'montado'):((p.cat||'')+' Flex '+(p.plano||'')))+' ('+fmt(p.valor||0)+'/mês)';
+  if(p.kind==='compra')return quem+' quer '+(p.item||'item')+(p.valor?(' ('+fmt(p.valor)+')'):'')+' · '+(p.metodo||'');
+  if(p.kind==='termo')return quem+' aceitou o termo de uso ✅';
+  if(p.kind==='renovacao')return quem+' quer MANTER os treinos em '+(p.mes||'próximo mês')+(p.valor?(' · '+fmt(p.valor)):'')+' 🗓️';
+  if(p.kind==='descontoRepos')return quem+' quer abater '+fmtCred(p.qtd||0)+' reposição(ões) na mensalidade'+(p.valor?(' ('+fmt(p.valor)+')'):'')+' 💰';
+  return quem+' enviou um pedido';
+}
+function abrirPedidos(){renderPedList();document.getElementById('ov-ped').classList.add('on');}
+function renderPedList(){
+  const el=document.getElementById('ped-list');if(!el)return;
+  if(!pedFila.length){el.innerHTML='<div class="empty">Nenhum pedido no momento. Compras, planos e avisos de pagamento dos alunos aparecem aqui.</div>';return;}
+  el.innerHTML=pedFila.map(p=>{
+    const q=new Date(p.ts||Date.now());
+    const hm=String(q.getHours()).padStart(2,'0')+':'+String(q.getMinutes()).padStart(2,'0');
+    const cor=p.kind==='plano'?'var(--gold-light)':'var(--c-loc)';
+    return '<div style="display:flex;align-items:center;gap:8px;border-left:4px solid '+cor+';padding:11px 0 11px 9px;border-bottom:1px solid var(--border)">'+
+      '<div style="flex:1;min-width:0"><div><b>'+pedEsc(pedDesc(p))+'</b></div>'+
+      '<div style="opacity:.65;font-size:11px;margin-top:2px">recebido '+String(q.getDate()).padStart(2,'0')+'/'+String(q.getMonth()+1).padStart(2,'0')+' '+hm+'</div></div>'+
+      '<div style="display:flex;gap:6px"><button class="ap" onclick="aceitarPedido(\''+p.key+'\')">Aceitar</button>'+
+      '<button class="ds" onclick="descartarPedido(\''+p.key+'\')">✕</button></div></div>';
+  }).join('');
+}
+function aceitarPedido(key){
+  const p=pedFila.find(x=>x.key===key);if(!p)return;
+  const a=DB.alunos.find(x=>x.codigo===p.codigo);
+  if(p.kind==='mensalidade'){
+    if(!a){toast('Aluno não encontrado — confira o cadastro');return;}
+    /* Mesma proteção que marcarPago já tinha: o aviso do aluno pode chegar
+       depois de o João já ter marcado pago na mão, e aí eram duas cobranças. */
+    const jaLancada=mensalidadesDoMes(a);
+    if(jaLancada.length){
+      const soma=jaLancada.reduce((t,l)=>t+(Number(l.valor)||0),0);
+      if(!confirm('⚠️ '+a.nome+' já tem '+jaLancada.length+' mensalidade lançada neste mês ('+fmt(soma)+').\n\nLançar OUTRA?\n\nSe foi só o aviso de pagamento chegando depois, toque em Cancelar — ele fica marcado como pago sem lançar de novo.')){
+        a.status='pago';a.ultimoPago=monthKey();
+        if(hasCloud())window.fbDB.ref('jvtenis/fila_pedidos/'+key).remove().catch(()=>{});
+        pedFila=pedFila.filter(x=>x.key!==key);
+        persist();renderAll();updatePedBadge();renderPedList();
+        toast('✓ '+a.nome+' marcado como PAGO (sem lançar de novo)');
+        return;
+      }
+    }
+    a.status='pago';a.ultimoPago=monthKey();
+    const c=cobrancaDoMes(a);
+    DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:c.desc,valor:c.valor,cat:'mensalidade',alunoId:a.id,modal:(ehPersonalTipo(a.tipo)?'personal':'tenis'),data:new Date().toISOString().slice(0,10),descontoRepos:c.detalhe});
+    toast('✓ '+a.nome+' marcado como PAGO · '+fmt(c.valor));
+  }else if(p.kind==='plano'){
+    if(!a){toast('Aluno não encontrado — confira o cadastro');return;}
+    if(['Particular','Dupla','Trio','Quarteto','Grupo','Personal'].indexOf(p.cat)>=0)a.tipo=p.cat;
+    if(p.cat==='Misto'){   // plano montado pelo aluno: parte particular + parte em grupo
+      a.tipo='Particular';
+      a.plano=Number(p.plano)||0;
+      a.planoGrupo=Number(p.planoGrupo)||0;
+      a.grupoTipo=p.grupoTipo||a.grupoTipo||'Dupla';
+      mover(a,'creditos',a.plano-(Number(a.creditos)||0),'Plano misto aprovado');
+      mover(a,'credGrupo',a.planoGrupo-(Number(a.credGrupo)||0),'Plano misto aprovado');
+      a.mensalidade=Number(p.valor)||a.mensalidade;
+      toast('✓ Plano de '+a.nome+': '+a.plano+' particular + '+a.planoGrupo+' em grupo ('+a.grupoTipo+')');
+    }else{
+      a.plano=Number(p.plano)||a.plano;
+      a.mensalidade=Number(p.valor)||precoMensal(a.tipo,a.plano)||a.mensalidade;
+      toast('✓ Plano de '+a.nome+' atualizado: '+a.tipo+' Flex '+a.plano);
+    }
+  }else if(p.kind==='termo'){
+    if(a){a.termoAceitoEm=p.ts||Date.now();toast('✓ '+a.nome+' aceitou o termo');}else{toast('Termo aceito');}
+  }else if(p.kind==='renovacao'){
+    toast((a?a.nome:'Aluno')+' quer manter os treinos — renove o mês quando o pagamento cair.');
+  }else if(p.kind==='descontoRepos'){
+    /* Pedido antigo, de quando o app abatia reposição na mensalidade sozinho.
+       Isso saiu: reposição agora é conversa entre você e o aluno. O pedido é
+       recusado sem mexer em saldo nenhum. */
+    toast('Abatimento de reposição saiu do app — combine direto com '+(a?a.nome:'o aluno'));
+  }else if(p.kind==='compra'){
+    const item=p.item||'';
+    const cat=/loca/i.test(item)?'locacao':(/cr[eé]dito/i.test(item)?'outro':'avulsa');
+    if(Number(p.valor)>0){
+      DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:item+(p.nome?(' · '+p.nome):''),valor:Number(p.valor),cat,data:new Date().toISOString().slice(0,10)});
+      toast('✓ Lançado no caixa: '+item+' ('+fmt(p.valor)+')');
+    }else{
+      toast('Pedido aceito — combine o valor e lance no Caixa');
+    }
+  }
+  if(hasCloud())window.fbDB.ref('jvtenis/fila_pedidos/'+key).remove().catch(()=>{});
+  pedFila=pedFila.filter(x=>x.key!==key);
+  persist();renderAll();updatePedBadge();renderPedList();
+}
+function descartarPedido(key){
+  if(hasCloud())window.fbDB.ref('jvtenis/fila_pedidos/'+key).remove().catch(()=>{});
+  pedFila=pedFila.filter(x=>x.key!==key);updatePedBadge();renderPedList();
+}
+setTimeout(()=>syncPedidos(true),2800);
+setInterval(()=>syncPedidos(true),30000);
+
+/* ================= NAVEGAÇÃO ================= */
+function go(id,btn){
+  if(typeof fecharMais==='function')fecharMais();
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.getElementById('pg-'+id).classList.add('on');
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  window.scrollTo({top:0});
+  if(id==='agenda'){syncRequests(true);marcarVisto('agenda');}
+  if(id==='lanc'){filtroLancCat=null;renderMovs();}   // abrir a Caixa pela barra mostra tudo
+  if(id==='fech')abrirFechamento();
+  if(id==='profs')prepararAluguel();
+  if(id==='graf')renderGraf();
+  if(id==='aval')renderAvaliacoes();
+  if(id==='torneio'){renderTorneio();syncTorneio(true);marcarVisto('torneio');}
+}
+function shiftMonth(d){
+  curMonth+=d;
+  if(curMonth<0){curMonth=11;curYear--;}
+  if(curMonth>11){curMonth=0;curYear++;}
+  renderAll();
+}
+function monthKey(){return curYear+'-'+String(curMonth+1).padStart(2,'0');}
+/* Começa SEMPRE oculto: o painel costuma ser aberto na frente do aluno. O olho
+   revela durante a sessão, mas na próxima abertura volta a esconder — por isso
+   a escolha não é guardada no aparelho. */
+let hideVals=true;
+function fmt(v){if(hideVals)return 'R$ ••••';return 'R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:2});}
+function updateEyeBtn(){
+  const b=document.getElementById('eye-btn');if(!b)return;
+  const openSvg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const closedSvg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s4 6 10 6 10-6 10-6"/><line x1="4.5" y1="14.3" x2="3.3" y2="17"/><line x1="9" y1="16.3" x2="8.4" y2="19.2"/><line x1="15" y1="16.3" x2="15.6" y2="19.2"/><line x1="19.5" y1="14.3" x2="20.7" y2="17"/></svg>';
+  b.innerHTML=hideVals?closedSvg:openSvg;
+  b.classList.toggle('off',hideVals);
+}
+function toggleHide(){
+  hideVals=!hideVals;
+  updateEyeBtn();renderAll();
+  if(document.getElementById('pg-graf').classList.contains('on'))renderGraf();
+  toast(hideVals?'Valores ocultos':'Valores visíveis');
+}
+function dKey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+let _toastTimer=null;
+function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('show');
+  clearTimeout(_toastTimer);_toastTimer=setTimeout(()=>e.classList.remove('show'),2200);}
+/* Aviso com "desfazer". O toast comum usa textContent e nao comporta botao;
+   este usa innerHTML e fica mais tempo no ar, porque exige uma decisao. */
+let _desfazerFn=null;
+function toastDesfazer(txt,fn){
+  const e=document.getElementById('toast');if(!e)return toast(txt);
+  _desfazerFn=fn;
+  e.innerHTML=esc(txt)+' <button onclick="rodarDesfazer()" style="margin-left:10px;background:rgba(255,255,255,.22);border:none;color:inherit;font:inherit;font-weight:800;padding:4px 11px;border-radius:8px;cursor:pointer">desfazer</button>';
+  e.classList.add('show');
+  clearTimeout(_toastTimer);_toastTimer=setTimeout(()=>{e.classList.remove('show');_desfazerFn=null;},6000);
+}
+function rodarDesfazer(){
+  const f=_desfazerFn;_desfazerFn=null;
+  const e=document.getElementById('toast');if(e)e.classList.remove('show');
+  if(f)f();
+}
+function closeModal(id){document.getElementById(id).classList.remove('on');}
+
+/* ================= AGENDA ================= */
+/* Um horário fixo vale só dentro da sua janela: desde (inclusive) até (inclusive).
+   Sem janela = vale sempre, que é como os fixos antigos se comportavam. Isso é o
+   que impede uma mudança de hoje de reescrever a agenda de meses atrás. */
+function fixoValeEm(f,dk){
+  if(f.desde&&dk<f.desde)return false;
+  if(f.ate&&dk>f.ate)return false;
+  return true;
+}
+function entriesFor(date,hora){
+  const dia=date.getDay(),dk=dKey(date);
+  const A=DB.agenda;
+  const fixos=A.fixos.filter(f=>f.dia===dia&&f.hora===hora&&fixoValeEm(f,dk)&&!A.excecoes.some(x=>x.fixoId===f.id&&x.data===dk))
+    .map(f=>({...f,origem:'fixo'}));
+  const evs=A.eventos.filter(e=>e.data===dk&&e.hora===hora).map(e=>({...e,origem:'pontual'}));
+  const comps=(DB.compromissos||[]).filter(c=>c.data===dk&&(c.hora||'')===hora).map(c=>({id:c.id,titulo:c.titulo,tipo:'pessoal',origem:'compromisso',alunoId:null}));
+  return fixos.concat(evs).concat(comps);
+}
+/* ===== Horários livres da semana → WhatsApp do grupo de alunos ===== */
+function semanaSegSab(base){
+  const mon=new Date(base);mon.setHours(12,0,0,0);
+  mon.setDate(mon.getDate()-((mon.getDay()+6)%7));   // volta até segunda
+  const dias=[];for(let i=0;i<6;i++){const d=new Date(mon);d.setDate(d.getDate()+i);dias.push(d);}   // seg..sáb
+  return dias;
+}
+function horariosLivresSemana(base){
+  const dias=semanaSegSab(base),out=[];
+  dias.forEach(d=>{
+    const livres=HORAS.filter(h=>slotModo(d,h)==='aula'&&entriesFor(d,h).length===0);
+    if(livres.length)out.push({d,livres});
+  });
+  return {dias,out};
+}
+function msgHorariosLivres(base){
+  const NOMES=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const dd=x=>String(x.getDate()).padStart(2,'0')+'/'+String(x.getMonth()+1).padStart(2,'0');
+  const {dias,out}=horariosLivresSemana(base);
+  let msg='🎾 *JV Tênis — Horários livres da semana*\n📅 '+dd(dias[0])+' a '+dd(dias[5])+'\n';
+  if(!out.length){msg+='\nEssa semana está sem horários livres para aula. 🙏';}
+  else out.forEach(o=>{msg+='\n*'+NOMES[o.d.getDay()]+' '+dd(o.d)+'*\n'+o.livres.map(h=>'• '+h).join('\n')+'\n';});
+  msg+='\nÉ só responder aqui com o *dia e horário* que preferir que eu já reservo. 🎾';
+  return msg;
+}
+async function enviarHorariosLivres(){
+  const msg=msgHorariosLivres(agDate||new Date());
+  try{await navigator.clipboard.writeText(msg);toast('📋 Mensagem copiada! Abrindo WhatsApp — escolha o grupo dos alunos.');}
+  catch(e){toast('Abrindo WhatsApp — escolha o grupo dos alunos.');}
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+/* Aulas DADAS, não alunos atendidos. A dupla das 16h é UMA aula: o professor
+   esteve na quadra uma vez, com duas pessoas nela. Contando cada aluno, um dia
+   de 6 aulas de tênis aparecia como 11 — o número crescia com o tamanho da
+   turma, não com o trabalho.
+   Por isso a conta é por horário: o horário entra uma vez, tenha um aluno ou
+   quatro. Para "quantas pessoas passaram por aqui" existe o countDay(), que é
+   o número do rótulo da agenda e continua contando um por um. */
+function contarAulas(dFrom,dTo){
+  let tenis=0,personal=0;
+  const cur=new Date(dFrom.getFullYear(),dFrom.getMonth(),dFrom.getDate());
+  const end=new Date(dTo.getFullYear(),dTo.getMonth(),dTo.getDate());
+  while(cur<=end){
+    HORAS.forEach(h=>{
+      const evs=entriesFor(cur,h).filter(e=>e.origem!=='compromisso');
+      if(evs.some(e=>e.tipo==='aula'||e.tipo==='grupo'))tenis++;
+      if(evs.some(e=>e.tipo==='personal'))personal++;
+    });
+    cur.setDate(cur.getDate()+1);
+  }
+  return {tenis,personal,total:tenis+personal};
+}
+/* Ocupação e locações numa passada só.
+   - Ocupação: dos horários ABERTOS A AULA (modo aula, sem bloqueio e sem locação
+     em cima), quantos têm aula marcada. Horário bloqueado (almoço/treino) e
+     horário alugado NÃO entram no denominador — não estão abertos a uma aula.
+   - Locações: horas de locação usadas no mês (onde quer que estejam) e o quanto
+     da grade de locação isso representa. */
+function ocupacao(dFrom,dTo){
+  let disp=0,ocup=0,locDisp=0,locUsados=0;
+  const cur=new Date(dFrom.getFullYear(),dFrom.getMonth(),dFrom.getDate());
+  const end=new Date(dTo.getFullYear(),dTo.getMonth(),dTo.getDate());
+  while(cur<=end){
+    HORAS.forEach(h=>{
+      const modo=slotModo(cur,h);
+      const evs=entriesFor(cur,h);
+      const temBloqueio=evs.some(e=>e.tipo==='bloqueio');
+      const temLoc=evs.some(e=>e.tipo==='locacao');
+      if(temLoc)locUsados++;
+      if(modo==='loc')locDisp++;
+      if(modo!=='aula')return;
+      if(temBloqueio||temLoc)return;   // fora do denominador de aula
+      disp++;
+      if(evs.some(e=>e.origem!=='compromisso'&&(e.tipo==='aula'||e.tipo==='grupo'||e.tipo==='personal')))ocup++;
+    });
+    cur.setDate(cur.getDate()+1);
+  }
+  return {disp,ocup,pct:disp?Math.round(ocup/disp*100):0,
+    locDisp,locUsados,locPct:locDisp?Math.min(100,Math.round(locUsados/locDisp*100)):(locUsados>0?100:0)};
+}
+/* ===== Mensalidade pelo que está marcado na agenda =====
+   O plano contratado e a agenda do mês nem sempre batem: um mês tem 5 terças,
+   entra uma aula avulsa, some uma semana. Aqui a conta sai do que realmente
+   está na agenda.
+
+   Varre o mês INTEIRO (dias passados e futuros), não só até hoje: como quase
+   todo aluno tem grade fixa, o número já fica fechado no dia 1º em vez de subir
+   ao longo do mês. Passa por entriesFor(), que já aplica a janela desde/até do
+   fixo, as exceções de dia cancelado e a chuva (que apaga o evento) — nada
+   disso precisa ser tratado de novo aqui.
+
+   Não conta: reposição (já paga no mês em que virou crédito), locação, jogo do
+   torneio, bloqueio e compromisso pessoal. */
+function contarAulasAluno(a,ano,mes){
+  let part=0,grupo=0;
+  if(!a)return {part,grupo};
+  const cur=new Date(ano,mes,1), fim=new Date(ano,mes+1,0).getDate();
+  for(let d=1;d<=fim;d++){
+    cur.setFullYear(ano,mes,d);
+    HORAS.forEach(h=>{
+      entriesFor(cur,h).forEach(e=>{
+        if(e.origem==='compromisso')return;
+        if(e.alunoId!==a.id)return;
+        if(e.repo)return;
+        /* O quadrado de 30 min vale meia aula, igual ao crédito: creditoSlot(h)
+           dá 0,5 nos horários de meia hora (14:30, 15:30, 19:30, 20:30 e os que
+           vêm logo antes deles). Contar 1 aqui inflava o valor do mês. */
+        /* Cada aula agendada conta 1. Pesar pelo creditoSlot(h) parecia certo,
+           mas ele deduz a duração pelo intervalo até o próximo horário da grade:
+           com 14:30/15:30/19:30/20:30 na lista, tratava 14:00, 15:00, 19:00 e
+           20:00 como meia hora e derrubava o valor do mês pela metade. */
+        if(e.tipo==='aula'||e.tipo==='personal')part++;
+        else if(e.tipo==='grupo')grupo++;
+      });
+    });
+  }
+  return {part,grupo};
+}
+/* Preço da aula avulsa do aluno. NÃO usar valorAulaDe(): aquela deriva o valor
+   a partir da mensalidade, e aqui é a mensalidade que está sendo calculada — a
+   conta ficaria circular. O valor unitário vem do cadastro. */
+function precoAulaCadastro(a){
+  const v=Number(a&&a.valorAula)||0;
+  if(v>0)return v;
+  return ehPersonalTipo(a&&a.tipo)?130:160;
+}
+/* Mesmas regras de preço que sugerirMensalidade() já usa — só muda de onde vem
+   o número de aulas. */
+function mensalidadeDaAgenda(a,ano,mes){
+  const c=contarAulasAluno(a,ano,mes);
+  const t=(a&&a.tipo)||'';
+  const det=[];
+  let valor=0;
+  if(t==='Dupla'||t==='Trio'||t==='Quarteto'||t==='Grupo'){
+    // aluno só de grupo: todas as aulas dele são tipo 'grupo'
+    /* 'Grupo' tem tabela por número de aulas, que só aceita inteiro; as outras
+       modalidades são preço por aula e aceitam a metade sem problema. */
+    if(c.grupo>0){valor=precoMensal(t,t==='Grupo'?Math.round(c.grupo):c.grupo);det.push(fmtCred(c.grupo)+' aula(s) de '+t);}
+  }else{
+    if(c.part>0){const v=precoAulaCadastro(a);valor+=c.part*v;det.push(fmtCred(c.part)+' × '+fmtRs(v));}
+    if(c.grupo>0){const vg=grupoPrecoAula(a.grupoTipo||'Dupla');valor+=c.grupo*vg;det.push(fmtCred(c.grupo)+' × '+fmtRs(vg)+' ('+(a.grupoTipo||'Dupla')+')');}
+  }
+  return {valor:Math.round(valor),part:c.part,grupo:c.grupo,total:c.part+c.grupo,detalhe:det.join('  +  ')};
+}
+/* fmt() esconde o valor quando o modo privacidade está ligado, o que não serve
+   para um confirm() onde ele precisa decidir olhando o número. */
+function fmtRs(v){return 'R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:2});}
+function normNome(s){return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s+/g,' ').trim();}
+function acharAlunoPorTitulo(titulo){
+  const t=normNome(titulo);if(!t)return null;
+  let a=DB.alunos.find(x=>normNome(x.nome)===t);                     // nome completo igual
+  if(a)return a;
+  if(!t.includes(' '))a=DB.alunos.find(x=>normNome(x.nome).split(' ')[0]===t); // primeiro nome (título de uma palavra)
+  return a||null;
+}
+/* Ferramenta: vincular nomes da agenda a alunos cadastrados */
+function gruposNaoVinculados(){
+  const ehAula=t=>t==='aula'||t==='grupo'||t==='personal';
+  const grupos={};
+  const add=ev=>{
+    if(!ehAula(ev.tipo))return;
+    if(ev.alunoId)return;
+    if(acharAlunoPorTitulo(ev.titulo))return;
+    (grupos[ev.titulo]=grupos[ev.titulo]||{titulo:ev.titulo,qtd:0}).qtd++;
+  };
+  DB.agenda.fixos.forEach(add);
+  DB.agenda.eventos.forEach(add);
+  return Object.values(grupos).sort((a,b)=>a.titulo.localeCompare(b.titulo));
+}
+function abrirVincular(){renderVincularList();document.getElementById('ov-link').classList.add('on');}
+function renderVincularList(){
+  const grupos=gruposNaoVinculados();
+  const el=document.getElementById('link-list');
+  if(!grupos.length){el.innerHTML='<div class="empty">✅ Tudo certo! Todos os nomes da agenda já estão vinculados a alunos cadastrados — as aulas aparecem em dourado para eles.</div>';return;}
+  const opts=DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${a.id}">${esc(a.nome)}${a.tipo==='Personal'?' (Personal)':''}</option>`).join('');
+  el.innerHTML='<p class="hint" style="margin-bottom:10px">Para cada nome da agenda que ainda não bate com um cadastro, escolha o aluno correto. Ao salvar, o horário fica vinculado e o nome é padronizado — aí aparece em dourado no app do aluno.</p>'+grupos.map(g=>`
+    <div class="link-row">
+      <div class="link-name">${g.titulo} <small>(${g.qtd} horário${g.qtd===1?'':'s'} na grade)</small></div>
+      <select class="link-sel" data-titulo="${encodeURIComponent(g.titulo)}"><option value="">— escolher aluno cadastrado —</option>${opts}</select>
+    </div>`).join('');
+}
+function salvarVinculos(){
+  const sels=document.querySelectorAll('.link-sel');
+  let n=0;
+  sels.forEach(s=>{
+    const id=s.value;if(!id)return;
+    const titulo=decodeURIComponent(s.getAttribute('data-titulo'));
+    const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+    DB.agenda.fixos.forEach(f=>{if(f.titulo===titulo){f.alunoId=a.id;f.titulo=a.nome;}});
+    DB.agenda.eventos.forEach(e=>{if(e.titulo===titulo){e.alunoId=a.id;e.titulo=a.nome;}});
+    n++;
+  });
+  if(!n){toast('Escolha ao menos um aluno para vincular');return;}
+  persist();renderAgenda();renderVincularList();
+  toast('✓ '+n+' nome(s) vinculado(s)! Já aparece dourado para o aluno.');
+}
+function countDay(date){
+  let c=0;HORAS.forEach(h=>{c+=entriesFor(date,h).filter(e=>e.tipo!=='bloqueio'&&e.origem!=='compromisso').length;});return c;
+}
+
+/* ================= ARRASTAR HORÁRIOS (toque + mouse) ================= */
+function findEntryReal(id){
+  let e=DB.agenda.fixos.find(x=>x.id===id);if(e)return{e,origem:'fixo'};
+  e=DB.agenda.eventos.find(x=>x.id===id);if(e)return{e,origem:'pontual'};
+  return null;
+}
+function moverEntrada(eid,destDK,destH){
+  const ref=findEntryReal(eid);if(!ref)return;
+  const src=ref.e,origem=ref.origem;
+  const destDate=new Date(destDK+'T12:00:00');
+  if(destDK===(origem==='fixo'?null:src.data)&&destH===src.hora&&origem!=='fixo'){return;}
+  // guarda posição antiga (para troca)
+  const oldDia=src.dia,oldHora=src.hora,oldData=src.data;
+  logAct('Mover/trocar horário na agenda');
+  // destino já ocupado? (ignora o próprio item)
+  const ocup=entriesFor(destDate,destH).filter(x=>x.id!==eid);
+  // aplica a mudança no item arrastado
+  if(origem==='fixo'){src.dia=destDate.getDay();src.hora=destH;}
+  else{src.data=destDK;src.hora=destH;}
+  // troca: se havia exatamente 1 do MESMO tipo de origem, manda para a posição antiga
+  if(ocup.length===1){
+    const d=findEntryReal(ocup[0].id);
+    if(d&&d.origem===origem){
+      if(origem==='fixo'){d.e.dia=oldDia;d.e.hora=oldHora;}
+      else{d.e.data=oldData;d.e.hora=oldHora;}
+      toast('🔁 Horários trocados');
+    }else{toast('✓ Aula movida');}
+  }else{toast('✓ Aula movida');}
+  persist();renderAgenda();renderDash();
+}
+/* Move todos os atendimentos de um dia para outro (visão Mês) */
+function moverDia(fromDK,toDK){
+  if(!fromDK||!toDK||fromDK===toDK)return;
+  const fromDate=new Date(fromDK+'T12:00:00');
+  const dia=fromDate.getDay();
+  const pont=DB.agenda.eventos.filter(e=>e.data===fromDK);
+  const fix=DB.agenda.fixos.filter(f=>f.dia===dia&&fixoValeEm(f,fromDK)&&!DB.agenda.excecoes.some(x=>x.fixoId===f.id&&x.data===fromDK));
+  const total=pont.length+fix.length;
+  if(!total){toast('Esse dia não tem atendimentos');return;}
+  const p1=fromDK.split('-'),p2=toDK.split('-');
+  if(!confirm('Mover os '+total+' atendimento(s) de '+p1[2]+'/'+p1[1]+' para '+p2[2]+'/'+p2[1]+'?\n\nOs horários serão mantidos. Aulas fixas movem só nesta data (a grade semanal continua igual).'))return;
+  logAct('Mover atendimentos de um dia');
+  pont.forEach(e=>{e.data=toDK;});
+  fix.forEach(f=>{
+    DB.agenda.excecoes.push({fixoId:f.id,data:fromDK});
+    DB.agenda.eventos.push({id:'e'+Date.now()+Math.random().toString(36).slice(2,6),data:toDK,hora:f.hora,titulo:f.titulo,tipo:f.tipo,alunoId:f.alunoId});
+  });
+  persist();renderAgenda();renderDash();
+  toast('✓ '+total+' atendimento(s) movido(s)');
+}
+(function initDrag(){
+  let cand=null,ghost=null,dragging=false,sx=0,sy=0,hot=null;
+  const TH=10;
+  const view=()=>document.getElementById('ag-view');
+  function dropAt(x,y,sel){
+    const el=document.elementFromPoint(x,y);
+    return el?el.closest(sel):null;
+  }
+  function clearHot(){if(hot){hot.classList.remove('drop-hot');hot=null;}}
+  function onDown(ev){
+    const v=view();if(!v||!v.contains(ev.target))return;
+    if(ev.target.closest('.pres'))return;            // tocar ○ marca presença, não arrasta
+    const item=ev.target.closest('.drag-item');if(!item)return;
+    cand={item,eid:item.getAttribute('data-eid'),dayfrom:item.getAttribute('data-dayfrom')};
+    sx=ev.clientX;sy=ev.clientY;dragging=false;
+  }
+  function onMove(ev){
+    if(!cand)return;
+    const dx=ev.clientX-sx,dy=ev.clientY-sy;
+    if(!dragging){
+      if(Math.abs(dx)+Math.abs(dy)<TH)return;
+      dragging=true;
+      cand.item.classList.add('dragging');
+      ghost=document.createElement('div');ghost.className='drag-ghost';
+      ghost.textContent=cand.dayfrom?('Dia '+cand.dayfrom.split('-')[2]):(cand.item.textContent.replace(/[○✓]/,'').trim()||'aula');
+      document.body.appendChild(ghost);
+      document.body.style.userSelect='none';
+    }
+    ev.preventDefault();
+    ghost.style.left=ev.clientX+'px';ghost.style.top=ev.clientY+'px';
+    const t=dropAt(ev.clientX,ev.clientY,cand.dayfrom?'[data-drop-day]':'[data-drop-d]');
+    if(t!==hot){clearHot();if(t){hot=t;hot.classList.add('drop-hot');}}
+  }
+  function onUp(ev){
+    if(cand&&dragging){
+      const t=dropAt(ev.clientX,ev.clientY,cand.dayfrom?'[data-drop-day]':'[data-drop-d]');
+      if(t){
+        if(cand.dayfrom){moverDia(cand.dayfrom,t.getAttribute('data-drop-day'));}
+        else{moverEntrada(cand.eid,t.getAttribute('data-drop-d'),t.getAttribute('data-drop-h'));}
+      }
+      // impede o clique pós-arraste de abrir o slot
+      const blocker=e=>{e.stopPropagation();e.preventDefault();};
+      document.addEventListener('click',blocker,{capture:true,once:true});
+      setTimeout(()=>document.removeEventListener('click',blocker,{capture:true}),60);
+    }
+    if(ghost){ghost.remove();ghost=null;}
+    if(cand&&cand.item)cand.item.classList.remove('dragging');
+    clearHot();document.body.style.userSelect='';
+    cand=null;dragging=false;
+  }
+  document.addEventListener('pointerdown',onDown,{passive:true});
+  document.addEventListener('pointermove',onMove,{passive:false});
+  document.addEventListener('pointerup',onUp,{passive:true});
+  document.addEventListener('pointercancel',onUp,{passive:true});
+})();
+function setView(v,btn){
+  agView=v;
+  document.querySelectorAll('.seg button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderAgenda();
+}
+function agShift(d){
+  if(agView==='dia')agDate.setDate(agDate.getDate()+d);
+  else if(agView==='semana')agDate.setDate(agDate.getDate()+7*d);
+  else if(agView==='mes')agDate.setMonth(agDate.getMonth()+d);
+  else agDate.setMonth(agDate.getMonth()+3*d);
+  renderAgenda();
+}
+function gotoDay(y,m,d){
+  agDate=new Date(y,m,d);agView='dia';
+  document.querySelectorAll('.seg button').forEach((b,i)=>b.classList.toggle('on',i===0));
+  renderAgenda();window.scrollTo({top:0});
+}
+/* ===== Zoom da semana =====
+   Muda a densidade (largura da coluna, altura e fonte) sem transform, para o
+   arrastar continuar batendo o toque com a célula. A tabela e os horários são os
+   mesmos — só cabem mais ou menos por tela. */
+let wkZoom=(function(){const v=parseFloat((typeof localStorage!=='undefined'&&localStorage.getItem('jv-wkzoom'))||'');return (v>=0.45&&v<=1.8)?v:1;})();
+const WK_COL=92;
+function wkVars(z){
+  const col=Math.round(WK_COL*z);
+  const h=Math.max(22,Math.round(34*z));
+  const fs=Math.max(7.5,+(10*z).toFixed(1));
+  const thfs=Math.max(8,+(10.5*z).toFixed(1));
+  const min=48+6*col;
+  return `--wk-col:${col}px;--wk-h:${h}px;--wk-fs:${fs}px;--wk-thfs:${thfs}px;--wk-min:${min}px`;
+}
+function aplicarWkVars(){
+  const t=document.querySelector('.wk'); if(t)t.setAttribute('style',wkVars(wkZoom));
+  const l=document.getElementById('wk-zoom-lbl'); if(l)l.textContent=Math.round(wkZoom*100)+'%';
+  try{localStorage.setItem('jv-wkzoom',String(wkZoom));}catch(e){}
+}
+function wkZoomStep(dir){
+  wkZoom=Math.min(1.8,Math.max(0.45,+(wkZoom+dir*0.1).toFixed(2)));
+  aplicarWkVars();
+}
+function wkZoomFit(){
+  const sc=document.querySelector('.wk-scroll'); if(!sc)return;
+  const disp=Math.max(240,sc.clientWidth-6);   // desconta a borda/padding
+  wkZoom=Math.min(1.8,Math.max(0.45,+(((disp-48)/6)/WK_COL).toFixed(2)));
+  aplicarWkVars();
+}
+function presId(e,date){return dKey(date)+'|'+e.hora+'|'+e.alunoId;}
+/* Aula duplicada: o lançamento manual do cartão ("Aula realizada") caiu num
+   dia em que a aula daquele aluno JÁ estava marcada na agenda. É a mesma aula
+   contada duas vezes — descontou dois créditos e aparecia duas vezes no
+   histórico e no cartão. A da agenda tem dia E hora; a manual só tem o dia,
+   então é a manual que sai da conta.
+   Aula avulsa de verdade no mesmo dia existe (ele deu uma aula a mais fora da
+   agenda). Para essa, o app pergunta na hora de lançar e grava extra:true —
+   com essa marca ela volta a contar normalmente. */
+function ehDupManual(p,todas){
+  if(!p||!p.manual||p.extra)return false;
+  return (todas||DB.presencas||[]).some(q=>q!==p&&q.alunoId===p.alunoId&&q.data===p.data&&!q.manual&&!ehMarca(q));
+}
+function dupsManuaisDe(id){const t=DB.presencas||[];return t.filter(p=>p.alunoId===id&&!ehMarca(p)&&ehDupManual(p,t));}
+function presencasDe(id,comDup){
+  const t=DB.presencas||[];
+  return t.filter(p=>p.alunoId===id&&!ehMarca(p)&&(comDup||!ehDupManual(p,t)));
+}
+function isPres(e,date){const k=presId(e,date);return (DB.presencas||[]).some(p=>p.k===k&&!ehMarca(p));}
+function isFalta(e,date){const k=presId(e,date);return (DB.presencas||[]).some(p=>p.k===k&&ehFalta(p));}
+function isAvisou(e,date){const k=presId(e,date);return (DB.presencas||[]).some(p=>p.k===k&&ehAvisou(p));}
+function togglePresenca(entryId){
+  let entry=null;
+  HORAS.forEach(h=>entriesFor(agDate,h).forEach(e=>{if(e.id===entryId)entry=e;}));
+  if(!entry||!entry.alunoId)return;
+  const a=DB.alunos.find(x=>x.id===entry.alunoId);
+  if(!a){toast('Aluno não encontrado');return;}
+  const k=presId(entry,agDate);
+  /* Ciclo: nada → presença → falta → avisou → nada.
+     Faltar CONSOME a aula: quem não avisou perde o crédito, igual a ter vindo.
+     Avisar não consome: o crédito volta e a aula sai do fechamento, mas não
+     vira reposição — o crédito apenas não foi gasto.
+     Quem devolve é sempre o estornoPorRef(), que soma zero quando já devolveu:
+     por isso dá para chamá-lo em toda passagem sem risco de devolver duas
+     vezes. */
+  const iAvisou=(DB.presencas||[]).findIndex(p=>p.k===k&&ehAvisou(p));
+  if(iAvisou>=0){                                  // avisou → nada
+    const reg=DB.presencas[iAvisou];
+    marcarRemovida('presencas',reg);
+    DB.presencas.splice(iAvisou,1);
+    logAct('Tirar aviso: '+a.nome);toast('Aviso desmarcado · '+a.nome);
+    persist();renderAgenda();renderAlunos();renderDash();return;
+  }
+  const iFalta=(DB.presencas||[]).findIndex(p=>p.k===k&&ehFalta(p));
+  if(iFalta>=0){                                   // falta → avisou (devolve)
+    const reg=DB.presencas[iFalta];
+    marcarRemovida('presencas',reg);
+    DB.presencas.splice(iFalta,1);
+    const dev=estornoPorRef(a,k,reg);
+    Object.keys(dev).forEach(cp=>mover(a,cp,dev[cp],'Cancelou avisando',k));
+    DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo:'avisou',custo:0});
+    const volta=Object.keys(dev).map(cp=>fmtCred(dev[cp])+' de '+CAMPO_LABEL[cp]).join(', ');
+    logAct('Marcar aviso prévio: '+a.nome);
+    toast('🔁 Avisou · '+a.nome+(volta?(' → devolvido '+volta):' — crédito preservado'));
+    persist();renderAgenda();renderAlunos();renderDash();return;
+  }
+  const idx=DB.presencas.findIndex(p=>p.k===k&&!ehFalta(p));
+  const isRepo=!!entry.repo;
+  const isLoc=(entry.tipo==='locacao');   // locação usa saldo próprio de horas, nunca crédito de aula
+  const isTor=(entry.tipo==='torneio');   // jogo do torneio: inscrição já paga, não mexe em saldo nenhum
+  const isGrp=(entry.tipo==='grupo');     // aula em grupo tem saldo próprio (custa menos que a particular)
+  const c=creditoSlot(entry.hora);
+  if(idx>=0){
+    const reg=DB.presencas[idx];
+    marcarRemovida('presencas',reg);   // sem isto ela voltava da nuvem
+    DB.presencas.splice(idx,1);
+    /* Devolve exatamente o que saiu, saldo por saldo — ver estornoPorRef().
+       O tipo que vale é o GRAVADO na presença, não o do slot agora: o slot pode
+       ter virado grupo (ou meia hora) depois que a presença foi marcada. */
+    const tipoReal=reg.tipo||reg.modo||(isTor?'torneio':isLoc?'locacao':(isRepo?'reposicao':(isGrp?'grupo':'aula')));
+    const viraFalta=(tipoReal==='aula'||tipoReal==='grupo'||tipoReal==='reposicao');
+    if(viraFalta){
+      /* Segundo toque: falta. NÃO devolve — o aluno perde a aula. O débito
+         segue de pé no extrato, sob a mesma chave, e é ele que volta se você
+         tirar a falta depois. Guardo o tipo e o custo originais para o estorno
+         funcionar mesmo se o extrato daquela aula já tiver sido podado. */
+      DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo:'falta',custo:0,
+                         origTipo:tipoReal,origCusto:Number(reg.custo)||0});
+      logAct('Marcar falta: '+a.nome);
+      toast('✗ Falta · '+a.nome+' — a aula foi consumida, o saldo não volta');
+    }else{
+      /* Torneio e locação não viram falta: seguem devolvendo como sempre. */
+      const dev=estornoPorRef(a,k,reg);
+      Object.keys(dev).forEach(cp=>mover(a,cp,dev[cp],ROTULO_DEVOLVE[cp]||'Presença desmarcada',k));
+      if(tipoReal==='torneio'){logAct('Desmarcar jogo do torneio: '+a.nome);toast('Jogo do torneio desmarcado · '+a.nome);}
+      else{logAct('Desmarcar locação: '+a.nome);toast('Locação desfeita · '+a.nome+' → '+fmtCred(a.locCred)+'h de locação');}
+    }
+  }else{
+    /* Só debita se a aula desse dia ainda não estiver registrada. Se ele já
+       tinha apertado "Aula realizada" no cartão, marcar o ✓ aqui seria o
+       segundo desconto pela mesma aula. Em vez de descontar de novo, troca: a
+       linha solta do cartão sai e o crédito dela volta, e fica valendo a da
+       agenda, que tem dia e hora certos. */
+    if(!isTor&&!isLoc){
+      const dupsM=(DB.presencas||[]).filter(p=>p.alunoId===a.id&&p.data===dKey(agDate)&&p.manual&&!p.extra&&!ehMarca(p)
+                                              &&(p.tipo||p.modo||'aula')!=='locacao'&&(p.tipo||p.modo)!=='torneio');
+      if(dupsM.length){
+        if(!confirm(a.nome+' já tem esta aula lançada pelo cartão em '+fmtDataCurta(dKey(agDate))+'.\n\n'
+          +'OK = marcar aqui no horário certo e apagar a do cartão (o crédito dela volta)\n'
+          +'Cancelar = deixar como está'))return;
+        dupsM.forEach(reg=>{
+          const j=DB.presencas.indexOf(reg);if(j<0)return;
+          marcarRemovida('presencas',reg);
+          DB.presencas.splice(j,1);
+          const dv=estornoPorRef(a,reg.k,reg);
+          Object.keys(dv).forEach(cp=>mover(a,cp,dv[cp],'Aula repetida removida',reg.k));
+        });
+        logAct('Trocar aula do cartão pela da agenda: '+a.nome);
+      }
+    }
+    if(isTor){
+      DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo:'torneio',custo:0});
+      logAct('Marcar jogo do torneio: '+a.nome);toast('🏆 Jogo do torneio · '+a.nome+' — sem desconto de crédito');
+    }else if(isLoc){
+      mover(a,'locCred',-c,'Locação na agenda',k);DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo:'locacao',custo:c});
+      logAct('Marcar locação: '+a.nome);toast('🔑 Locação ('+c+'h) · '+a.nome+' → '+fmtCred(a.locCred)+'h'+(a.locCred<0?' (devendo)':' restantes'));
+    }else if(isGrp&&!isRepo){
+      mover(a,'credGrupo',-c,'Aula em grupo na agenda',k);DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo:'grupo',custo:c});
+      logAct('Marcar aula em grupo: '+a.nome);toast('👥 Aula em grupo · '+a.nome+' → '+fmtCred(a.credGrupo)+' de grupo');
+    }else if(isRepo){
+      if((Number(a.repos)||0) < c-1e-9){toast(a.nome+' não tem reposições suficientes ('+fmtCred(a.repos)+')');return;}
+      mover(a,'repos',-c,'Reposição na agenda',k);DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo:'reposicao',custo:c});
+      logAct('Marcar reposição: '+a.nome);toast('✓ Reposição ('+(c===0.5?'½ aula':'1 aula')+') · '+a.nome+' → '+fmtCred(a.repos)+' reposições');
+    }else{
+      mover(a,'creditos',-c,'Presença na agenda',k);DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo:'aula',custo:c});   // permite ficar negativo
+      logAct('Marcar presença: '+a.nome);toast('✓ Presença ('+(c===0.5?'½ aula':'1 aula')+') · '+a.nome+' → '+fmtCred(a.creditos)+' créditos');
+    }
+  }
+  persist();renderAgenda();renderAlunos();renderDash();
+}
+
+function renderAgenda(){
+  renderProfFiltro();
+  const el=document.getElementById('ag-view');
+  const lbl=document.getElementById('ag-label');
+  if(agView==='dia'){
+    lbl.innerHTML=DIAS[agDate.getDay()]+', '+agDate.getDate()+' de '+MESES[agDate.getMonth()].toLowerCase()+'<small>'+countDay(agDate)+' atendimentos · ○→✓ veio→✗ faltou→🔁 avisou · arraste p/ trocar horário</small>';
+    el.innerHTML='<button class="btn btn-ghost" style="width:100%;margin-bottom:10px;color:var(--c-bloq);border-color:#E5C0BA;font-size:12px" onclick="marcarChuvaDia()">☔ Marcar o dia inteiro como chuva</button>'+HORAS.map(h=>{
+      const evs=entriesFor(agDate,h).filter(itemVisivelProf);
+      const outro=ocupadoPorOutro(agDate,h);
+      return `<div class="slot" data-drop-d="${dKey(agDate)}" data-drop-h="${h}"><div class="slot-h">${h}</div>
+        <div class="slot-body ${(evs.length||outro)?'has':''}">
+          ${evs.map(e=>{
+            const linked=!!e.alunoId;
+            const pres=linked&&isPres(e,agDate);
+            const falt=linked&&isFalta(e,agDate);
+            const avis=linked&&isAvisou(e,agDate);
+            return `<span class="ev t-${e.tipo} drag-item" data-eid="${e.id}" data-origem="${e.origem}">
+              ${linked?`<button class="pres ${pres?'ok':''} ${falt?'falt':''} ${avis?'avis':''}" onclick="togglePresenca('${e.id}')">${pres?'✓':(falt?'✗':(avis?'🔁':'○'))}</button>`:''}
+              <span onclick="openSlot('${h}')">${e.titulo}<small> · ${e.tipo==='grupo'?grupoTag(e.pessoas)+' · ':''}${e.repo?'reposição':(e.origem==='fixo'?'fixo':(e.origem==='compromisso'?'pessoal':'pontual'))}${foraDaQuadra(e)?' · 📍 fora da quadra':''}</small></span>
+            </span>`;
+          }).join('')}
+          ${(function(){
+            const o=ocupadoPorOutro(agDate,h);
+            if(o)return `<span class="ev t-outro" title="Horário de outro professor — a quadra está ocupada">👨‍🏫 ${esc(o.nome)}<small> · ${esc(rotuloTipoOutro(o.tipo))}</small></span>`;
+            /* Compromisso seu fora da quadra: a hora é sua, a quadra não.
+               Dizer isso na tela evita a dúvida "por que ele marcou aqui?". */
+            if(evs.length)return (ehDono()&&slotProfLiberado(agDate,h,evs))
+              ? '<span class="ev t-liberado">👨‍🏫 quadra livre para o professor</span>' : '';
+            const md=slotModo(agDate,h);
+            // hora vazia que não é sua: dizer por quê, em vez de deixar o "+"
+            // prometer o que vai ser recusado no salvar
+            if(!ehDono()&&md==='fechado')return '<span class="ev t-nliberado">não liberado</span>';
+            if(ehDono()&&slotProfLiberado(agDate,h))return '<span class="ev t-liberado">👨‍🏫 quadra liberada ao professor</span>';
+            return '';
+            return '';
+          })()}
+          <button class="slot-add" onclick="openSlot('${h}')">+</button>
+        </div></div>`;
+    }).join('');
+  }
+  else if(agView==='semana'){
+    const mon=new Date(agDate);mon.setDate(mon.getDate()-((mon.getDay()+6)%7));
+    const days=[...Array(6)].map((_,i)=>{const d=new Date(mon);d.setDate(d.getDate()+i);return d;});
+    lbl.innerHTML='Semana de '+days[0].getDate()+'/'+(days[0].getMonth()+1)+' a '+days[5].getDate()+'/'+(days[5].getMonth()+1)+'<small>toque p/ editar · arraste p/ mover ou trocar</small>';
+    let html='<div class="wk-zoom"><button class="wz" onclick="wkZoomStep(-1)" title="Diminuir">−</button><span class="wz-lbl" id="wk-zoom-lbl">'+Math.round(wkZoom*100)+'%</span><button class="wz" onclick="wkZoomStep(1)" title="Aumentar">+</button><button class="wz wz-fit" onclick="wkZoomFit()">↔ Semana toda</button></div>';
+    html+='<div class="wk-scroll"><table class="wk" style="'+wkVars(wkZoom)+'"><tr><th></th>'+days.map(d=>`<th>${DIAS[d.getDay()]}<small>${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}</small></th>`).join('')+'</tr>';
+    HORAS.forEach(h=>{
+      html+=`<tr><td class="hr">${h}</td>`;
+      days.forEach(d=>{
+        const evs=entriesFor(d,h).filter(itemVisivelProf);
+        const outro=ocupadoPorOutro(d,h);
+        let cls='free',txt='livre',drag='';
+        if(evs.length===1){cls='t-'+evs[0].tipo;txt=evs[0].titulo;drag=`drag-item" data-eid="${evs[0].id}" data-origem="${evs[0].origem}`;}
+        else if(evs.length>1){cls='multi';txt=evs.length+' marcações';}
+        // horário de outro professor só aparece onde eu não tenho nada: quadra
+        // ocupada por dois é problema para resolver, não para esconder
+        else if(outro){cls='t-outro';txt='👨‍🏫 '+outro.nome;}
+        else{
+          const md=slotModo(d,h);
+          if(!ehDono()&&md==='fechado'){cls='t-nliberado';txt='—';}
+          else if(ehDono()&&slotProfLiberado(d,h)){cls='t-liberado';txt='👨‍🏫 prof';}
+        }
+        html+=`<td data-drop-d="${dKey(d)}" data-drop-h="${h}"><button class="wk-cell ${cls} ${drag}" onclick="gotoSlot(${d.getFullYear()},${d.getMonth()},${d.getDate()},'${h}')">${txt}</button></td>`;
+      });
+      html+='</tr>';
+    });
+    el.innerHTML=html+'</table></div>';
+  }
+  else if(agView==='mes'){
+    const y=agDate.getFullYear(),m=agDate.getMonth();
+    lbl.innerHTML=MESES[m]+' '+y+'<small>toque no dia para abrir · arraste um dia sobre outro p/ mover os atendimentos</small>';
+    el.innerHTML='<div class="cal"><div class="cal-head">'+['D','S','T','Q','Q','S','S'].map(d=>`<span>${d}</span>`).join('')+'</div><div class="cal-grid">'+monthCells(y,m,true)+'</div></div>';
+  }
+  else{
+    const y=agDate.getFullYear(),m=agDate.getMonth();
+    lbl.innerHTML='Trimestre<small>'+MESES[m]+' – '+MESES[(m+2)%12]+'</small>';
+    let html='<div class="tri">';
+    for(let i=0;i<3;i++){
+      const mm=(m+i)%12,yy=y+Math.floor((m+i)/12);
+      let total=0;const cells=monthCells(yy,mm,false,c=>total+=c);
+      html+=`<div class="tri-month"><h4>${MESES[mm]} ${yy}<small>${total} atendimentos</small></h4><div class="tri-grid">${cells}</div></div>`;
+    }
+    el.innerHTML=html+'</div>';
+  }
+}
+function monthCells(y,m,big,acc){
+  const first=new Date(y,m,1),days=new Date(y,m+1,0).getDate();
+  const today=dKey(new Date());
+  let html='';
+  for(let i=0;i<first.getDay();i++)html+=big?'<div class="cal-day out"></div>':'<button class="tri-day out"></button>';
+  for(let d=1;d<=days;d++){
+    const dt=new Date(y,m,d),c=countDay(dt);
+    if(acc)acc(c);
+    const o=c===0?'':c<=3?'o1':c<=6?'o2':c<=10?'o3':'o4';
+    if(big){
+      const dk=dKey(dt);
+      const dragAttr=c?`drag-item" data-dayfrom="${dk}`:'';
+      html+=`<button class="cal-day ${o} ${dk===today?'today':''} ${dragAttr}" data-drop-day="${dk}" onclick="gotoDay(${y},${m},${d})"><span class="n">${d}</span>${c?`<span class="c">${c}</span>`:''}</button>`;
+    }else{
+      html+=`<button class="tri-day ${o}" onclick="gotoDay(${y},${m},${d})">${d}</button>`;
+    }
+  }
+  return html;
+}
+function gotoSlot(y,m,d,h){agDate=new Date(y,m,d);openSlot(h);}
+/* Marca chuva/cancelado: tira as aulas daquele horário só naquela data (grade fica intacta) */
+function aplicarChuva(date,hora){
+  const dk=dKey(date),dia=date.getDay();
+  // quem perdeu aula aqui — precisa ser lido ANTES de remover os eventos
+  const atingidos=[];
+  entriesFor(date,hora).forEach(e=>{
+    if(e.tipo==='bloqueio'||!e.alunoId)return;
+    const a=DB.alunos.find(x=>x.id===e.alunoId);
+    if(a&&a.codigo&&atingidos.indexOf(a.codigo)<0)atingidos.push(a.codigo);
+  });
+  /* Quantas marcações de QUADRA a chuva derrubou aqui (tênis, grupo, locação).
+     Precisa ser contado ANTES de remover — depois não há como saber, porque o
+     DB.chuvas, que guardava isso, só vive 14 dias. Sem esse número o gráfico
+     contava horário vazio marcado como chuva junto com aula perdida de verdade. */
+  let nq=0;
+  entriesFor(date,hora).forEach(e=>{if(e.tipo==='aula'||e.tipo==='grupo'||e.tipo==='locacao')nq++;});
+  // chuva NÃO consome: se já havia presença marcada, devolve o crédito (ou reposição)
+  entriesFor(date,hora).forEach(e=>{
+    if(!e.alunoId)return;
+    const k=presId(e,date);const i=DB.presencas.findIndex(p=>p.k===k);
+    if(i>=0){const reg=DB.presencas[i];const a=DB.alunos.find(x=>x.id===e.alunoId);if(a){/* devolve o que saiu de verdade, e com a chave, para o par fechar em zero no extrato */const dev=estornoPorRef(a,k,reg);Object.keys(dev).forEach(cp=>mover(a,cp,dev[cp],'Chuva — devolvido',k));}marcarRemovida('presencas',reg);DB.presencas.splice(i,1);}
+  });
+  DB.agenda.fixos.filter(f=>f.dia===dia&&f.hora===hora&&fixoValeEm(f,dk)).forEach(f=>{
+    if(!DB.agenda.excecoes.some(x=>x.fixoId===f.id&&x.data===dk))DB.agenda.excecoes.push({fixoId:f.id,data:dk});
+  });
+  DB.agenda.eventos=DB.agenda.eventos.filter(e=>!(e.data===dk&&e.hora===hora&&e.tipo!=='bloqueio'));
+  const jaEv=DB.agenda.eventos.find(e=>e.data===dk&&e.hora===hora&&e.titulo==='☔ Chuva');
+  if(jaEv){jaEv.nq=Math.max(Number(jaEv.nq)||0,nq);}   // remarcar não pode zerar o que já se sabia
+  else DB.agenda.eventos.push({id:'e'+Date.now()+Math.random().toString(36).slice(2,6),data:dk,hora,titulo:'☔ Chuva',tipo:'bloqueio',motivo:'chuva',alunoId:null,nq});
+  if(!Array.isArray(DB.chuvas))DB.chuvas=[];
+  const ja=DB.chuvas.find(c=>c.data===dk&&c.hora===hora);
+  if(ja){atingidos.forEach(c=>{if(ja.cods.indexOf(c)<0)ja.cods.push(c);});ja.ts=Date.now();}
+  else if(atingidos.length)DB.chuvas.push({data:dk,hora,cods:atingidos,ts:Date.now()});
+  DB.chuvas=DB.chuvas.filter(c=>c.data>=dKey(new Date(Date.now()-14*864e5))).slice(-120);
+}
+function marcarChuvaSlot(){
+  if(!slotCtx)return;
+  aplicarChuva(slotCtx.date,slotCtx.hora);
+  logAct('Marcar chuva/cancelar horário');
+  persist();renderAgenda();renderSlotEvs();
+  toast('☔ Horário marcado como chuva/cancelado');
+}
+function marcarChuvaDia(){
+  const p=dKey(agDate).split('-');
+  if(!confirm('Marcar TODOS os atendimentos de '+p[2]+'/'+p[1]+' como chuva/cancelado?\n\nA grade semanal continua intacta — vale só para esta data.'))return;
+  let n=0;
+  HORAS.forEach(h=>{if(entriesFor(agDate,h).some(e=>e.tipo!=='bloqueio')){aplicarChuva(agDate,h);n++;}});
+  logAct('Marcar o dia como chuva ('+n+' horários)');
+  persist();renderAgenda();
+  toast('☔ '+n+' horário(s) marcado(s) como chuva');
+}
+function openSlot(hora){
+  slotCtx={hora,date:new Date(agDate)};
+  document.getElementById('slot-title').textContent=DIAS[slotCtx.date.getDay()]+' '+slotCtx.date.getDate()+'/'+(slotCtx.date.getMonth()+1)+' · '+hora;
+  document.getElementById('s-titulo').value='';
+  const sel=document.getElementById('s-aluno');
+  sel.innerHTML='<option value="">— sem vínculo —</option>'+DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${a.id}">${esc(a.nome)} (${fmtCred(a.creditos)} créd.)</option>`).join('');
+  sel.value='';
+  renderSlotEvs();
+  document.getElementById('ov-slot').classList.add('on');
+  resetSlotForm();
+}
+/* Volta o formulário ao modo "adicionar" — some com qualquer edição em curso. */
+function resetSlotForm(){
+  if(slotCtx)slotCtx.editing=null;
+  const ft=document.getElementById('s-form-title');if(ft)ft.textContent='Adicionar neste horário';
+  const sb=document.getElementById('s-save-btn');if(sb)sb.textContent='Adicionar';
+  const sr=document.getElementById('s-rec');if(sr){sr.disabled=false;sr.value='fixo';}
+  const ti=document.getElementById('s-titulo');if(ti)ti.value='';
+  const al=document.getElementById('s-aluno');if(al)al.value='';
+  const tp=document.getElementById('s-tipo');if(tp)tp.value='aula';
+  const gn=document.getElementById('s-grupo-n');if(gn)gn.value='2';
+  const rp=document.getElementById('s-repo');if(rp)rp.checked=false;
+  const fo=document.getElementById('s-fora');if(fo)fo.checked=false;
+  try{sincronizarFora((document.getElementById('s-tipo')||{}).value);}catch(e){}
+  toggleGrupoWrap();
+}
+function closeSlot(){resetSlotForm();closeModal('ov-slot');}
+function slotPickAluno(){
+  const id=document.getElementById('s-aluno').value;
+  if(!id)return;
+  const a=DB.alunos.find(x=>x.id===id);
+  document.getElementById('s-titulo').value=a.nome;
+  document.getElementById('s-tipo').value=(a.tipo==='Personal')?'personal':((['Grupo','Dupla','Trio','Quarteto'].indexOf(a.tipo)>=0)?'grupo':'aula');
+  const nmap={Dupla:'2',Trio:'3',Quarteto:'4'};
+  if(nmap[a.tipo])document.getElementById('s-grupo-n').value=nmap[a.tipo];
+  toggleGrupoWrap();
+}
+function toggleGrupoWrap(){
+  const w=document.getElementById('s-grupo-wrap');if(!w)return;
+  const t=document.getElementById('s-tipo').value;
+  const isG=t==='grupo';
+  w.style.display=isG?'block':'none';
+  if(isG)atualizaGrupoPreco();
+  const rw=document.getElementById('s-repo-wrap');
+  if(rw)rw.style.display=(t==='aula'||t==='grupo'||t==='personal')?'block':'none';   // reposição só para aulas
+  sincronizarFora(t);
+}
+/* Ao escolher Personal, a caixinha já vem marcada — é o caso comum. Continua
+   desmarcável, para o personal que acontece na quadra. */
+function sincronizarFora(t){
+  const fo=document.getElementById('s-fora');if(!fo)return;
+  const hint=document.getElementById('s-fora-hint');
+  const editando=!!(slotCtx&&slotCtx.editing);
+  const alunoId=(document.getElementById('s-aluno')||{}).value||'';
+  const porCadastro=ehAlunoPersonal(alunoId);
+  const ehPersonal=(t==='personal')||porCadastro;
+  if(!editando)fo.checked=ehPersonal;
+  if(hint)hint.textContent=ehPersonal
+    ? (porCadastro
+        ? 'Este aluno está cadastrado como Personal, então o atendimento é em outro lugar e a quadra fica livre para o professor. Desmarque se este for na quadra.'
+        : 'Personal já vem marcado: seus atendimentos são em outro lugar, então a quadra fica livre para o professor. Desmarque se este for na quadra.')
+    : 'O horário segue ocupado para você, mas a quadra fica livre: o professor pode usar.';
+}
+function atualizaGrupoPreco(){
+  const el=document.getElementById('s-grupo-preco');if(!el)return;
+  const nv=Number(document.getElementById('s-grupo-n').value)||2;
+  const size=nv===4?'Quarteto':(nv===3?'Trio':'Dupla');
+  const pa=grupoPrecoAula(size);
+  el.innerHTML='<b>R$ '+pa+'</b> por pessoa/aula · com '+nv+' pessoas = total <b>R$ '+(pa*nv)+'</b> por aula. &nbsp;No Flex 8: R$ '+(pa*8)+' cada · R$ '+(pa*nv*8)+' no total.';
+}
+function grupoLabel(n){n=Number(n)||2;return n===4?'Quarteto (4)':(n===3?'Trio (3)':'Dupla (2)');}
+function grupoTag(n){n=Number(n)||2;return n===4?'quarteto':(n===3?'trio':'dupla');}
+function setPessoas(id,origem,nv){
+  const rec=(origem==='fixo'?DB.agenda.fixos:DB.agenda.eventos).find(x=>x.id===id);
+  if(!rec)return;
+  rec.pessoas=Number(nv)||2;
+  logAct('Grupo: '+rec.titulo+' = '+grupoLabel(rec.pessoas));
+  persist();renderSlotEvs();renderAgenda();toast(grupoLabel(rec.pessoas)+' ✓');
+}
+function renderSlotEvs(){
+  const evs=entriesFor(slotCtx.date,slotCtx.hora);
+  const el=document.getElementById('slot-evs');
+  el.innerHTML=evs.length?evs.map(e=>`
+  <div class="mov"><div class="mov-l"><b>${e.titulo}${e.alunoId?' 🔗':''}</b><span>${e.tipo}${e.tipo==='grupo'?(' · '+grupoLabel(e.pessoas)):''} · ${e.origem==='fixo'?'toda semana':'só nesta data'}</span></div>
+    <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">
+      ${e.tipo==='grupo'?`<select onchange="setPessoas('${e.id}','${e.origem}',this.value)" style="padding:6px 8px;font-size:11px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--text);font-weight:700">
+        <option value="2"${(e.pessoas||2)==2?' selected':''}>👥 Dupla</option>
+        <option value="3"${(e.pessoas||2)==3?' selected':''}>👥 Trio</option>
+        <option value="4"${(e.pessoas||2)==4?' selected':''}>👥 Quarteto</option>
+      </select>`:''}
+      <button class="btn btn-ghost" style="padding:6px 9px;font-size:11px" onclick="editarEntrada('${e.id}','${e.origem}')">✏️ Editar</button>
+      ${e.origem==='fixo'?`<button class="btn btn-ghost" style="padding:6px 9px;font-size:11px" onclick="cancelarDia('${e.id}')">Só hoje ✕</button>
+      <button class="btn btn-ghost" style="padding:6px 9px;font-size:11px;color:var(--bad)" onclick="removerFixo('${e.id}')">Da grade ✕</button>`
+      :`<button class="btn btn-ghost" style="padding:6px 9px;font-size:11px;color:var(--bad)" onclick="removerEvento('${e.id}')">Remover ✕</button>`}
+    </div></div>`).join('')
+  :'<div class="empty" style="padding:14px">Horário livre.</div>';
+}
+function saveSlot(){
+  const t=document.getElementById('s-titulo').value.trim();
+  if(!t){toast('Informe o nome/descrição');return;}
+  const tipo=document.getElementById('s-tipo').value;
+  const alunoId=document.getElementById('s-aluno').value||null;
+  const pessoas=(tipo==='grupo')?(Number((document.getElementById('s-grupo-n')||{}).value)||2):null;
+  if(slotCtx.editing){
+    const {id,origem}=slotCtx.editing;
+    const rec=(origem==='fixo'?DB.agenda.fixos:DB.agenda.eventos).find(x=>x.id===id);
+    if(!rec){toast('Marcação não encontrada');resetSlotForm();renderSlotEvs();return;}
+    const repoChk=document.getElementById('s-repo');
+    const repo=(repoChk&&repoChk.checked&&(tipo==='aula'||tipo==='grupo'||tipo==='personal'))?1:0;
+    rec.titulo=t;rec.tipo=tipo;rec.alunoId=alunoId;rec.repo=repo;
+    rec.fora=foraDaQuadraMarcado()?1:0;
+    if(tipo==='grupo')rec.pessoas=pessoas;else delete rec.pessoas;
+    logAct('Editar marcação: '+t);
+    resetSlotForm();
+    persist();renderSlotEvs();renderAgenda();toast('Marcação atualizada ✓');
+    return;
+  }
+  if((tipo==='aula'||tipo==='grupo'||tipo==='personal')){
+    const modo=slotModo(slotCtx.date,slotCtx.hora);
+    if(modo!=='aula'){
+      toast(modo==='fechado'?('🔒 '+slotCtx.hora+' está fora do horário de aulas neste dia.')
+           :('🔒 '+slotCtx.hora+' é só locação neste dia — não dá para agendar aula.'));return;
+    }
+  }
+  /* Quadra ocupada é quadra ocupada, tanto faz de quem. Marcar por cima daria
+     duas aulas no mesmo lugar e ninguém descobriria antes da hora. */
+  const jaEh=ocupadoPorOutro(slotCtx.date,slotCtx.hora);
+  if(jaEh){
+    toast('🚫 '+slotCtx.hora+' é de '+jaEh.nome+' ('+rotuloTipoOutro(jaEh.tipo)+'). Combine a troca antes de marcar.');
+    return;
+  }
+  /* O professor usa a quadra nas horas que a academia liberou para ele. */
+  if(!ehDono()){
+    const lib=horaLiberadaProf(slotCtx.date,slotCtx.hora);
+    if(lib==='nao'){
+      toast('🔒 '+slotCtx.hora+' não está liberado para você neste dia. Fale com o João para liberar.');
+      return;
+    }
+    if(lib==='sem-lista')toast('⚠️ Ainda não recebi seus horários liberados. Abra o app com internet uma vez.');
+  }
+  const repoChk=document.getElementById('s-repo');
+  const repo=(repoChk&&repoChk.checked&&(tipo==='aula'||tipo==='grupo'||tipo==='personal'))?1:0;
+  if(document.getElementById('s-rec').value==='fixo'){
+    const desde=dKey(slotCtx.date);
+    const novoF={id:'f'+Date.now(),dia:slotCtx.date.getDay(),hora:slotCtx.hora,titulo:t,tipo,alunoId,pessoas,repo,desde};
+    novoF.fora=foraDaQuadraMarcado()?1:0;
+    DB.agenda.fixos.push(novoF);
+    toast(t+' fixado toda '+DIAS[slotCtx.date.getDay()]+' às '+slotCtx.hora+' a partir de '+desde.split('-').reverse().slice(0,2).join('/')+(repo?' · 🔁 reposição':''));
+  }else{
+    const novoE={id:'e'+Date.now(),data:dKey(slotCtx.date),hora:slotCtx.hora,titulo:t,tipo,alunoId,pessoas,repo};
+    novoE.fora=foraDaQuadraMarcado()?1:0;
+    DB.agenda.eventos.push(novoE);
+    toast(t+' marcado em '+slotCtx.date.getDate()+'/'+(slotCtx.date.getMonth()+1)+(repo?' · 🔁 reposição':''));
+  }
+  document.getElementById('s-titulo').value='';
+  document.getElementById('s-aluno').value='';
+  if(repoChk)repoChk.checked=false;
+  logAct('Adicionar: '+t);
+  persist();renderSlotEvs();renderAgenda();
+}
+function cancelarDia(fixoId){
+  const _f=DB.agenda.fixos.find(x=>x.id===fixoId);
+  DB.agenda.excecoes.push({fixoId,data:dKey(slotCtx.date)});
+  logAct('Cancelar aula (só nesta data): '+(_f?_f.titulo:''));
+  persist();renderSlotEvs();renderAgenda();toast('Cancelado só neste dia');
+}
+function removerFixo(id){
+  const f=DB.agenda.fixos.find(x=>x.id===id);if(!f)return;
+  const base=slotCtx&&slotCtx.date?new Date(slotCtx.date):new Date(agDate);
+  const dkBase=dKey(base);
+  const ontem=new Date(base.getFullYear(),base.getMonth(),base.getDate()-1);
+  const dkOntem=dKey(ontem);
+  const br=d=>d.split('-').reverse().slice(0,2).join('/');
+  // se o fixo ainda não tinha começado, não há passado a preservar: apaga mesmo
+  const nuncaValeu=f.desde&&f.desde>=dkBase;
+  const msg=nuncaValeu
+    ? 'Remover "'+f.titulo+'" da grade fixa de toda '+DIAS[f.dia]+'?'
+    : 'Tirar "'+f.titulo+'" da grade fixa de toda '+DIAS[f.dia]+' a partir de '+br(dkBase)+'?\n\nOs dias anteriores continuam como estão, para a agenda antiga não mudar.';
+  if(!confirm(msg))return;
+  if(nuncaValeu){
+    DB.agenda.fixos=DB.agenda.fixos.filter(x=>x.id!==id);
+    DB.agenda.excecoes=DB.agenda.excecoes.filter(x=>x.fixoId!==id);
+    logAct('Remover da grade: '+f.titulo);
+    persist();renderSlotEvs();renderAgenda();toast('Removido da grade');
+    return;
+  }
+  f.ate=dkOntem;                       // encerra a validade na véspera
+  logAct('Encerrar na grade: '+f.titulo+' (até '+dkOntem+')');
+  persist();renderSlotEvs();renderAgenda();
+  toast('Fora da grade a partir de '+br(dkBase)+' · o histórico anterior foi mantido');
+}
+function removerEvento(id){
+  const _e=DB.agenda.eventos.find(x=>x.id===id);
+  DB.agenda.eventos=DB.agenda.eventos.filter(x=>x.id!==id);
+  logAct('Remover: '+(_e?_e.titulo:''));
+  persist();renderSlotEvs();renderAgenda();toast('Removido');
+}
+function editarEntrada(id,origem){
+  if(origem==='compromisso'){toast('Compromisso pessoal — altere pela agenda pessoal');return;}
+  const rec=(origem==='fixo'?DB.agenda.fixos:DB.agenda.eventos).find(x=>x.id===id);
+  if(!rec){toast('Não encontrei este horário');return;}
+  slotCtx.editing={id,origem};
+  document.getElementById('s-aluno').value=rec.alunoId||'';   // atribuição direta não dispara slotPickAluno, então não sobrescreve os detalhes
+  document.getElementById('s-titulo').value=rec.titulo||'';
+  document.getElementById('s-tipo').value=rec.tipo||'aula';
+  document.getElementById('s-grupo-n').value=String(rec.pessoas||2);
+  const rp=document.getElementById('s-repo');if(rp)rp.checked=!!rec.repo;
+  const fo=document.getElementById('s-fora');if(fo)fo.checked=foraDaQuadra(rec);
+  const sr=document.getElementById('s-rec');if(sr){sr.value=(origem==='fixo'?'fixo':'pontual');sr.disabled=true;} // recorrência não muda aqui: para isso use os botões da grade
+  document.getElementById('s-form-title').textContent='✏️ Editar '+(origem==='fixo'?'(toda '+DIAS[rec.dia]+')':'(só nesta data)');
+  document.getElementById('s-save-btn').textContent='Salvar alterações';
+  toggleGrupoWrap();
+  const ti=document.getElementById('s-titulo');ti.focus();ti.scrollIntoView({block:'center',behavior:'smooth'});
+}
+
+/* ================= ALUNOS ================= */
+function openAlunoModal(id){
+  const m=document.getElementById('ov-aluno');
+  document.getElementById('aluno-modal-title').textContent=id?'Editar aluno':'Novo aluno';
+  preencherTiposAluno();   // inclui os pacotes personalizados no seletor
+  if(id){
+    const a=DB.alunos.find(x=>x.id===id);
+    ['nome','tel','tipo','plano','mensalidade','creditos','repos','status'].forEach(f=>{
+      document.getElementById('a-'+f).value=a[f];
+    });
+    document.getElementById('a-cardlink').value=a.cardLink||'';
+    document.getElementById('a-mfit').value=a.mfitLink||'';
+    document.getElementById('a-valoraula').value=a.valorAula||(a.tipo==='Personal'?130:160);
+    document.getElementById('a-loccred').value=Number(a.locCred)||0;
+    const pw=document.getElementById('a-prof-wrap'),ps=document.getElementById('a-prof');
+    if(pw)pw.style.display=PRO_MULTI?'':'none';
+    if(ps){ps.innerHTML='<option value="">—</option>'+profs().map(x=>'<option value="'+x.id+'">'+esc(x.nome)+'</option>').join('');ps.value=a.profId||'';}
+    document.getElementById('a-credgrupo').value=Number(a.credGrupo)||0;
+    document.getElementById('a-planogrupo').value=Number(a.planoGrupo)||0;
+    document.getElementById('a-grupotipo').value=a.grupoTipo||'';
+    document.getElementById('a-venc').value=a.diaVenc||10;
+    document.getElementById('a-perfil').value=a.perfil||'';
+    document.getElementById('a-id').value=id;
+    applyAlunoTipoUI();
+  }else{
+    document.getElementById('a-id').value='';
+    document.getElementById('a-nome').value='';document.getElementById('a-tel').value='';
+    document.getElementById('a-tipo').value='Particular';document.getElementById('a-plano').value='4';
+    document.getElementById('a-creditos').value=4;document.getElementById('a-repos').value=0;
+    document.getElementById('a-status').value='pendente';
+    document.getElementById('a-cardlink').value='';
+    document.getElementById('a-mfit').value='';
+    document.getElementById('a-valoraula').value=130;
+    document.getElementById('a-loccred').value=0;
+    document.getElementById('a-venc').value=10;
+    document.getElementById('a-perfil').value='';
+    applyAlunoTipoUI();
+  }
+  m.classList.add('on');
+}
+/* ===== Pacotes personalizados (ex.: Kids, Planilha Personal) ===== */
+function tiposCustom(){return DB.tiposCustom||[];}
+function tipoCustomObj(t){return tiposCustom().find(x=>x.nome===t)||null;}
+function ehTipoCustom(t){return !!tipoCustomObj(t);}
+function ehGrupoTipo(t){return ['Grupo','Dupla','Trio','Quarteto'].indexOf(t)>=0;}
+function ehPersonalTipo(t){                       // conta como Personal p/ filtros e financeiro
+  if(t==='Personal')return true;
+  const c=tipoCustomObj(t);return !!(c&&c.cat==='personal');
+}
+/* perfil/categoria da pessoa na lista de alunos (tenis|personal|planilha|locacao|torneio) */
+const PERFIL_LABELS={tenis:'🎾 Tênis',personal:'💪 Personal',planilha:'📋 Planilha',locacao:'🔑 Locação',torneio:'🏆 Torneio'};
+function ehPlanilhaTipo(t){
+  if(/planilha/i.test(String(t||'')))return true;
+  const c=tipoCustomObj(t);return !!(c&&/planilha/i.test(String(c.nome||'')));
+}
+function perfilDe(a){
+  if(a&&a.perfil&&PERFIL_LABELS[a.perfil])return a.perfil;   // marcado manualmente
+  const t=a?a.tipo:'';
+  if(ehPlanilhaTipo(t))return 'planilha';
+  if(ehPersonalTipo(t))return 'personal';
+  return 'tenis';
+}
+function catAgendaDe(t){                           // cor/categoria na agenda: personal|grupo|aula
+  if(ehPersonalTipo(t))return 'personal';
+  if(ehGrupoTipo(t))return 'grupo';
+  return 'aula';
+}
+function preencherTiposAluno(sel){
+  const el=document.getElementById('a-tipo');if(!el)return;
+  let html='<option>Particular</option><option>Dupla</option><option>Trio</option><option>Quarteto</option><option value="Grupo">Grupo (antigo)</option><option>Personal</option>';
+  tiposCustom().forEach(c=>{html+='<option value="'+c.nome+'">'+c.nome+'</option>';});
+  el.innerHTML=html;
+  if(sel)el.value=sel;
+}
+function novoPacote(){
+  document.getElementById('pk-nome').value='';
+  document.getElementById('pk-valor').value='';
+  document.getElementById('pk-cat').value='tenis';
+  const msg=document.getElementById('pk-msg');if(msg)msg.style.display='none';
+  document.getElementById('ov-pacote').classList.add('on');
+  setTimeout(()=>{const el=document.getElementById('pk-nome');if(el)el.focus();},60);
+}
+function salvarPacote(){
+  const nome=(document.getElementById('pk-nome').value||'').trim();
+  const msg=document.getElementById('pk-msg');
+  const erro=(t)=>{if(msg){msg.textContent=t;msg.style.display='block';}};
+  if(!nome){erro('Dê um nome ao pacote.');return;}
+  if(['Particular','Personal','Dupla','Trio','Quarteto','Grupo'].indexOf(nome)>=0||ehTipoCustom(nome)){erro('Já existe um pacote com esse nome.');return;}
+  const valor=Number(String(document.getElementById('pk-valor').value||'').replace(',','.'))||0;
+  const cat=document.getElementById('pk-cat').value==='personal'?'personal':'tenis';
+  DB.tiposCustom=DB.tiposCustom||[];
+  DB.tiposCustom.push({nome:nome,valorAula:valor,cat:cat});
+  persist();
+  closeModal('ov-pacote');
+  const ovA=document.getElementById('ov-aluno');
+  if(ovA&&ovA.classList.contains('on')){preencherTiposAluno(nome);applyAlunoTipoUI();}   // seleciona no cadastro aberto
+  toast('✓ Pacote "'+nome+'" criado ('+cat+' · '+fmt(valor)+'/aula)');
+}
+function gerenciarPacotes(){renderPacotesLista();document.getElementById('ov-pacotes-lista').classList.add('on');}
+function renderPacotesLista(){
+  const box=document.getElementById('pacotes-lista');if(!box)return;
+  const cs=tiposCustom();
+  if(!cs.length){box.innerHTML='<div class="empty" style="padding:10px">Nenhum pacote personalizado ainda. Toque em <b>+ Novo pacote</b>.</div>';return;}
+  box.innerHTML=cs.map(function(c){
+    const usados=DB.alunos.filter(a=>a.tipo===c.nome).length;
+    const ico=c.cat==='personal'?'💪':'🎾';
+    return '<div class="mov"><div class="mov-l"><b>'+ico+' '+c.nome+'</b><span>'+fmt(c.valorAula)+' / aula · '+(usados?usados+' aluno(s)':'sem alunos')+'</span></div>'
+      +'<button class="btn btn-ghost" style="padding:6px 10px;font-size:12px" onclick="excluirPacote(\''+c.nome.replace(/'/g,"\\'")+'\')">Excluir</button></div>';
+  }).join('');
+}
+function excluirPacote(nome){
+  const usados=DB.alunos.filter(a=>a.tipo===nome).length;
+  if(usados>0){toast('Não dá para excluir: '+usados+' aluno(s) usam "'+nome+'". Mude o tipo deles primeiro.');return;}
+  if(!confirm('Excluir o pacote "'+nome+'"?'))return;
+  DB.tiposCustom=tiposCustom().filter(c=>c.nome!==nome);persist();renderPacotesLista();toast('Pacote "'+nome+'" excluído.');
+}
+function applyAlunoTipoUI(){
+  const t=document.getElementById('a-tipo').value;
+  const isP=(t==='Personal');
+  const custom=tipoCustomObj(t);
+  const mostraVA=(t==='Personal'||t==='Particular'||!!custom);
+  const w=document.getElementById('a-valoraula-wrap');if(w)w.style.display=mostraVA?'block':'none';
+  const vaLbl=document.querySelector('#a-valoraula-wrap label');if(vaLbl)vaLbl.textContent=isP?'💪 Valor por treino — Personal (R$)':'🎾 Valor por aula (R$)';
+  if(!document.getElementById('a-id').value){const va=document.getElementById('a-valoraula');if(va&&mostraVA)va.value=(isP?130:(custom?(custom.valorAula||160):160));}
+  const lbl=document.getElementById('a-plano-lbl');if(lbl)lbl.textContent=(isP?'Pacote (treinos/mês)':'Plano (aulas/mês)')+' — 0 = sem pacote';
+  sugerirMensalidade();
+}
+function sugerirMensalidade(){
+  const t=document.getElementById('a-tipo').value,p=Number(document.getElementById('a-plano').value)||0;
+  const mEl=document.getElementById('a-mensalidade');
+  const pg=Number((document.getElementById('a-planogrupo')||{}).value)||0;
+  const gt=(document.getElementById('a-grupotipo')||{}).value||'';
+  let base=0,detalhe=[];
+  if(p>0){
+    if(t==='Personal'||t==='Particular'||ehTipoCustom(t)){
+      const v=Number(document.getElementById('a-valoraula').value)||(t==='Personal'?130:160);
+      base=p*v; detalhe.push(p+' × '+fmt(v));
+    }else{
+      base=precoMensal(t,p); if(base>0)detalhe.push(p+' aula(s) de '+t);
+    }
+  }
+  // parte em grupo do plano misto (preço por pessoa/aula)
+  let extra=0;
+  if(pg>0&&gt){const vg=grupoPrecoAula(gt);extra=pg*vg;detalhe.push(pg+' × '+fmt(vg)+' ('+gt+')');}
+  if(base+extra>0)mEl.value=base+extra;
+  else if(p<=0&&pg<=0)mEl.value=0;
+  const cEl=document.getElementById('a-conta');
+  if(cEl)cEl.textContent=detalhe.length?('= '+detalhe.join('  +  ')+'  =  '+fmt(base+extra)):'';
+  if(!document.getElementById('a-id').value){
+    document.getElementById('a-creditos').value=p;
+    const cg=document.getElementById('a-credgrupo');if(cg)cg.value=pg;
+  }
+  pintarAgendaModal();
+}
+/* O que a agenda deste mês diz, ao lado do que está sendo digitado. O link
+   "usar" preenche os campos de plano e deixa sugerirMensalidade() fazer a
+   conta, em vez de escrever o valor por fora — um caminho só para o preço. */
+function pintarAgendaModal(){
+  const el=document.getElementById('a-agenda');if(!el)return;
+  const id=document.getElementById('a-id').value;
+  const a=id?DB.alunos.find(x=>x.id===id):null;
+  if(!a){el.textContent='';return;}
+  const g=agendaDoMes(a);
+  if(g.total<=0){el.innerHTML='📅 Sem aula na agenda deste mês.';return;}
+  const parts=[];
+  if(g.part>0)parts.push(g.part+' aula(s)');
+  if(g.grupo>0)parts.push(g.grupo+' em grupo');
+  el.innerHTML='📅 Na agenda deste mês: <b>'+parts.join(' + ')+'</b> = <b>'+fmt(g.valor)+'</b> '
+    +'<a href="javascript:void(0)" onclick="usarAgendaNoModal()" style="color:var(--green);text-decoration:underline">usar</a>';
+}
+function usarAgendaNoModal(){
+  const id=document.getElementById('a-id').value;
+  const a=id?DB.alunos.find(x=>x.id===id):null;if(!a)return;
+  const g=agendaDoMes(a);
+  if(g.total<=0){toast('Sem aula na agenda deste mês');return;}
+  if(a.tipo==='Dupla'||a.tipo==='Trio'||a.tipo==='Quarteto'||a.tipo==='Grupo'){
+    document.getElementById('a-plano').value=g.grupo;
+  }else{
+    document.getElementById('a-plano').value=g.part;
+    const pg=document.getElementById('a-planogrupo');
+    if(pg&&(g.grupo>0||Number(pg.value)>0)){
+      pg.value=g.grupo;
+      const gt=document.getElementById('a-grupotipo');
+      if(gt&&g.grupo>0&&!gt.value)gt.value=a.grupoTipo||'Dupla';
+    }
+  }
+  sugerirMensalidade();
+  toast('📅 Plano ajustado pela agenda do mês');
+}
+function saveAluno(){
+  const id=document.getElementById('a-id').value;
+  const nome=document.getElementById('a-nome').value.trim();
+  if(!nome){toast('Informe o nome do aluno');return;}
+  const data={
+    nome,tel:document.getElementById('a-tel').value.replace(/\D/g,''),
+    tipo:document.getElementById('a-tipo').value,
+    plano:Number(document.getElementById('a-plano').value),
+    mensalidade:Number(document.getElementById('a-mensalidade').value)||0,
+    creditos:Number(document.getElementById('a-creditos').value)||0,
+    repos:Number(document.getElementById('a-repos').value)||0,
+    locCred:Number(document.getElementById('a-loccred').value)||0,
+    profId:(document.getElementById('a-prof')||{}).value||'',
+    credGrupo:Number(document.getElementById('a-credgrupo').value)||0,
+    planoGrupo:Number(document.getElementById('a-planogrupo').value)||0,
+    grupoTipo:document.getElementById('a-grupotipo').value||'',
+    status:document.getElementById('a-status').value,
+    diaVenc:Math.min(28,Math.max(1,Number(document.getElementById('a-venc').value)||10)),
+    cardLink:document.getElementById('a-cardlink').value.trim(),
+    mfitLink:document.getElementById('a-mfit').value.trim(),
+    perfil:document.getElementById('a-perfil').value,
+    valorAula:Number(document.getElementById('a-valoraula').value)||(document.getElementById('a-tipo').value==='Personal'?130:160)
+  };
+  // travas antes de gravar: número absurdo passava direto
+  if(data.plano<0||data.planoGrupo<0){toast('Plano não pode ser negativo');return;}
+  if(data.plano>0&&data.mensalidade<=0&&!confirm('Plano de '+data.plano+' aula(s) com mensalidade zerada.\n\nSalvar mesmo assim?'))return;
+  if(id){
+    const a=DB.alunos.find(x=>x.id===id);
+    // os quatro saldos passam pelo extrato, com motivo "Correção manual" — antes
+    // a alteração no cadastro sumia sem deixar rastro nenhum
+    const saldos=['creditos','credGrupo','repos','locCred'];
+    for(const c of saldos){
+      const de=Number(a[c])||0, para=Number(data[c])||0, dif=para-de;
+      if(!dif)continue;
+      if(Math.abs(dif)>10&&!confirm('Mudança grande em '+CAMPO_LABEL[c]+' de '+a.nome+':\n\n'
+        +fmtCred(de)+'  →  '+fmtCred(para)+'   ('+(dif>0?'+':'')+fmtCred(dif)+')\n\nConfirma?'))return;
+    }
+    const novo=Object.assign({},data);
+    saldos.forEach(c=>delete novo[c]);      // esses vão pelo mover(), não por cima
+    Object.assign(a,novo);
+    saldos.forEach(c=>{
+      const dif=(Number(data[c])||0)-(Number(a[c])||0);
+      if(dif)mover(a,c,dif,'Correção manual no cadastro');
+    });
+    toast('Aluno atualizado');
+  }
+  else{
+    let c;do{c=genCode();}while(DB.alunos.some(x=>x.codigo===c));
+    DB.alunos.push({id:'a'+Date.now(),ativo:true,codigo:c,...data});toast('Aluno cadastrado · código '+c);
+  }
+  persist();closeModal('ov-aluno');renderAll();
+}
+
+/* ===== Avaliação de desenvolvimento (Da Base ao Topo · Anexo A) ===== */
+const AVAL_ESCALA={
+  mov:{titulo:'Movimento & base',itens:[
+    {k:'espera',  lbl:'Posição de espera', n:['não tem','raramente','com lembrete','quase sempre','espontânea'],            n3:['não tem','com lembrete','espontânea']},
+    {k:'prep',    lbl:'Preparação',        n:['atrasada','melhorando','às vezes pronta','quase sempre pronta','antecipada'],n3:['atrasada','às vezes pronta','antecipada']},
+    {k:'desloc',  lbl:'Deslocamento',      n:['inseguro','melhorando','funcional','consistente','fluido'],                  n3:['inseguro','funcional','fluido']},
+    {k:'percep',  lbl:'Percepção de bola', n:['difícil','melhorando','irregular','quase sempre pega','consistente'],        n3:['difícil','irregular','consistente']},
+    {k:'final',   lbl:'Finalização',       n:['incompleta','melhorando','razoável','quase completa','completa'],            n3:['incompleta','razoável','completa']},
+    {k:'equil',   lbl:'Equilíbrio',        n:['instável','melhorando','razoável','quase estável','estável'],                n3:['instável','razoável','estável']},
+    {k:'recupera',lbl:'Recuperação',       n:['não volta','volta tarde','volta lenta','volta ok','volta pronta'],           n3:['não volta','volta lenta','volta pronta']}
+  ]},
+  tec:{titulo:'Fundamentos com raquete',itens:[
+    {k:'forehand', lbl:'Forehand',  n:['iniciando','em construção','forma reconhecível','quase consistente','consistente'], n3:['iniciando','forma reconhecível','consistente']},
+    {k:'backhand', lbl:'Backhand',  n:['iniciando','em construção','forma reconhecível','quase consistente','consistente'], n3:['iniciando','forma reconhecível','consistente']},
+    {k:'voleio',   lbl:'Voleio',    n:['evita','tenta','bloqueio simples','coloca no canto','define o ponto'],              n3:['evita','bloqueio simples','define o ponto']},
+    {k:'smash',    lbl:'Smash',     n:['evita','tenta','defensivo','controlado','ofensivo'],                                n3:['evita','defensivo','ofensivo']},
+    {k:'saque',    lbl:'Saque',     n:['iniciando','em construção','gesto simplificado','quase completo','gesto completo'], n3:['iniciando','gesto simplificado','gesto completo']},
+    {k:'devolucao',lbl:'Devolução', n:['insegura','melhorando','coloca na quadra','coloca com direção','com intenção'],     n3:['insegura','coloca na quadra','com intenção']}
+  ]},
+  jogo:{titulo:'Jogo & cabeça',itens:[
+    {k:'troca',   lbl:'Consistência (troca)', n:['até 5 trocas','até 10 trocas','até 15 trocas','20+ trocas','30+ trocas'], n3:['até 5 trocas','até 10 trocas','15+ trocas','20+ trocas']},
+    {k:'direcao', lbl:'Direção',      n:['sem controle','melhorando','às vezes no alvo','quase sempre no alvo','dirige a bola'], n3:['sem controle','às vezes no alvo','dirige a bola']},
+    {k:'efeito',  lbl:'Efeito',       n:['sem efeito','tentando','topspin básico','topspin consistente','varia (top/slice)'],    n3:['sem efeito','topspin básico','varia (top/slice)']},
+    {k:'profund', lbl:'Profundidade', n:['curta','curta/média','média','média/profunda','profunda'],                        n3:['curta','média','profunda']},
+    {k:'leitura', lbl:'Leitura',      n:['reage tarde','melhorando','às vezes antecipa','quase sempre antecipa','antecipa e decide'], n3:['reage tarde','às vezes antecipa','antecipa e decide']},
+    {k:'pressao', lbl:'Sob pressão',  n:['some na pressão','oscila muito','oscila','quase mantém','mantém'],                n3:['some na pressão','oscila','mantém']}
+  ]}
+};
+// Escala usada por CADA avaliacao: as antigas (sem "esc") ficam nos rotulos de 3
+// opcoes em que foram preenchidas; as novas usam 5. Assim o historico nao muda.
+function opcoesDe(it,av){return (Number(av&&av.esc)||3)===5?it.n:(it.n3||it.n);}
+const AVAL_ICO={mov:'🏃',tec:'🎾',jogo:'🧠'};
+const TRILHA_NIVEIS=['Base','Impulso','Construção','Ascensão','Topo'];
+// Cada nivel da Trilha veste um material precioso (igual ao app do aluno)
+const LEVEL_MET={
+  'Base':     {m:'#A06A34',d:'#7C4F24'},   // bronze
+  'Impulso':  {m:'#9AA2AA',d:'#6E767E'},   // prata
+  'Construção':{m:'#C9A04A',d:'#93701C'},  // ouro
+  'Ascensão': {m:'#A81D38',d:'#7C1428'},   // rubi
+  'Topo':     {m:'#33333A',d:'#1B1B20'}    // carbono
+};
+function metalDe(nivel){return LEVEL_MET[nivel]||LEVEL_MET['Construção'];}
+let avalDraft=null;
+function avalItemHTML(grupo,it){
+  const val=(avalDraft[grupo]&&avalDraft[grupo][it.k])||0;
+  const btns=it.n.map((txt,i)=>`<button type="button" class="${val===i+1?'on':''}" title="${txt}" onclick="setAval('${grupo}','${it.k}',${i+1})">${i+1}</button>`).join('');
+  const rot=val>0?it.n[val-1]:'toque em 1 (menos) a 5 (mais)';
+  return `<div class="aval-item"><label>${it.lbl}</label>`
+    +`<div class="seg3 seg5" data-seg="${grupo}-${it.k}">${btns}</div>`
+    +`<div class="aval-rot${val>0?' on':''}" data-rot="${grupo}-${it.k}">${rot}</div></div>`;
+}
+function renderAvalBlocos(){
+  const wrap=document.getElementById('av-blocos');if(!wrap)return;
+  wrap.innerHTML='';
+  Object.keys(AVAL_ESCALA).forEach(g=>{
+    let h='<div class="aval-blk"><h4>'+(AVAL_ICO[g]||'•')+' '+AVAL_ESCALA[g].titulo+'</h4>';
+    AVAL_ESCALA[g].itens.forEach(it=>{h+=avalItemHTML(g,it);});
+    h+='</div>';
+    wrap.insertAdjacentHTML('beforeend',h);
+  });
+}
+function setAval(grupo,key,val){
+  avalDraft[grupo][key]=val;
+  const seg=document.querySelector('[data-seg="'+grupo+'-'+key+'"]');
+  if(seg)[...seg.children].forEach((b,i)=>b.classList.toggle('on',i+1===val));
+  const rot=document.querySelector('[data-rot="'+grupo+'-'+key+'"]');
+  const it=(AVAL_ESCALA[grupo].itens||[]).find(x=>x.k===key);
+  if(rot&&it){rot.textContent=val>0?it.n[val-1]:'toque em 1 (menos) a 5 (mais)';rot.classList.toggle('on',val>0);}
+}
+function setAvalNivel(n){
+  avalDraft.nivel=n;
+  document.querySelectorAll('#av-nivel button').forEach(b=>b.classList.toggle('on',b.dataset.v===n));
+}
+let avalEditIdx=-1;   // -1 = nova avaliação; >=0 = editando a avaliação daquele índice
+function openAvalModal(id,idx){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  if(!Array.isArray(a.avaliacoes))a.avaliacoes=[];
+  avalEditIdx=(typeof idx==='number'&&a.avaliacoes[idx])?idx:-1;
+  const edit=avalEditIdx>=0?a.avaliacoes[avalEditIdx]:null;
+  // editando: carrega a própria avaliação. Nova: clona a última, para facilitar a reavaliação.
+  const base=edit||a.avaliacoes[a.avaliacoes.length-1]||null;
+  avalDraft={nivel:(base&&base.nivel)||''};
+  Object.keys(AVAL_ESCALA).forEach(g=>{avalDraft[g]=Object.assign({},base&&base[g]);});
+  document.getElementById('av-id').value=id;
+  document.getElementById('aval-title').textContent=(edit?'Editar avaliação · ':'Avaliação · ')+a.nome;
+  document.getElementById('av-data').value=(edit&&edit.data)||new Date().toISOString().slice(0,10);
+  document.getElementById('av-objetivo').value=(base&&base.objetivo)||'';
+  document.getElementById('av-formato').value=(base&&base.formato)||a.tipo||'Particular';
+  document.getElementById('av-prioridade').value=(edit&&edit.prioridade)||'';
+  document.getElementById('av-obs').value=(edit&&edit.obs)||'';
+  const bs=document.getElementById('av-save');if(bs)bs.textContent=edit?'Salvar alterações':'Salvar avaliação';
+  const ai=document.getElementById('av-editaviso');
+  if(ai){ai.style.display=edit?'block':'none';
+    if(edit)ai.textContent='✏️ Editando a avaliação de '+((edit.data||'').split('-').reverse().join('/'))+' — ao salvar, ela é atualizada no lugar.';}
+  setAvalNivel(avalDraft.nivel);
+  renderAvalBlocos();
+  renderAvalHist(a);
+  document.getElementById('ov-aval').classList.add('on');
+}
+function renderAvalHist(a){
+  const wrap=document.getElementById('av-hist-wrap'),el=document.getElementById('av-hist');
+  const av=a.avaliacoes||[];
+  const mw=document.getElementById('av-mes-wrap');
+  if(mw)mw.innerHTML=evoMesChartHTML(serieMensal(av,a.registros,6),'Evolução mês a mês');
+  if(!av.length){wrap.style.display='none';el.innerHTML='';return;}
+  wrap.style.display='block';
+  el.innerHTML=av.slice().reverse().map((v,ri)=>{
+    const idx=av.length-1-ri;
+    return `<div class="hrow"><span class="hrow-ed" onclick="openAvalModal('${a.id}',${idx})" title="Tocar para editar">✏️ ${(v.data||'').split('-').reverse().join('/')} · <b>${v.nivel||'—'}</b>${v.prioridade?' · '+v.prioridade:''}</span><button class="del" onclick="delAvaliacao('${a.id}',${idx})">excluir</button></div>`;
+  }).join('');
+}
+function saveAvaliacao(){
+  const id=document.getElementById('av-id').value;
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  if(!avalDraft.nivel){toast('Selecione o nível da Trilha');return;}
+  const rec={
+    esc:5,
+    data:document.getElementById('av-data').value||new Date().toISOString().slice(0,10),
+    nivel:avalDraft.nivel,
+    formato:document.getElementById('av-formato').value,
+    objetivo:document.getElementById('av-objetivo').value.trim(),
+    prioridade:document.getElementById('av-prioridade').value.trim(),
+    obs:document.getElementById('av-obs').value.trim()
+  };
+  Object.keys(AVAL_ESCALA).forEach(g=>{rec[g]={};AVAL_ESCALA[g].itens.forEach(it=>{rec[g][it.k]=(avalDraft[g]&&avalDraft[g][it.k])||0;});});
+  if(!Array.isArray(a.avaliacoes))a.avaliacoes=[];
+  const editando=avalEditIdx>=0&&a.avaliacoes[avalEditIdx];
+  if(editando){rec.esc=Number(a.avaliacoes[avalEditIdx].esc)||5;a.avaliacoes[avalEditIdx]=rec;}
+  else a.avaliacoes.push(rec);
+  a.avaliacoes.sort((x,y)=>String(x.data||'').localeCompare(String(y.data||'')));
+  avalEditIdx=-1;
+  persist();renderAll();closeModal('ov-aval');
+  toast(editando?('✏️ Avaliação atualizada · '+a.nome):('📈 Avaliação salva · '+a.nome+' → '+rec.nivel));
+}
+function delAvaliacao(id,idx){
+  const a=DB.alunos.find(x=>x.id===id);if(!a||!a.avaliacoes)return;
+  if(!confirm('Excluir esta avaliação?'))return;
+  a.avaliacoes.splice(idx,1);persist();renderAll();renderAvalHist(a);
+  toast('Avaliação excluída');
+}
+
+/* ===== Registro de aula (avaliação contínua · 7.2) ===== */
+const CAMADAS=['1 · Pés no Saibro','2 · Deslocamento','3 · Leitura de Quadra','4 · A Batida','5 · O Jogo','6 · O Topo'];
+let regDraft=null;
+function setRegSeg(campo,val){
+  regDraft[campo]=val;
+  const seg=document.getElementById('rg-'+campo);
+  if(seg)[...seg.children].forEach(b=>b.classList.toggle('on',b.dataset.v===val));
+}
+function openRegistroModal(id){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  if(!Array.isArray(a.registros))a.registros=[];
+  regDraft={evoluiu:'',base:''};
+  const ult=a.registros[a.registros.length-1]||null;
+  document.getElementById('rg-id').value=id;
+  document.getElementById('rg-title').textContent='Registro · '+a.nome;
+  document.getElementById('rg-data').value=new Date().toISOString().slice(0,10);
+  const sel=document.getElementById('rg-camada');
+  sel.innerHTML='<option value="">—</option>'+CAMADAS.map(c=>'<option>'+c+'</option>').join('');
+  // sugere a camada = tema da próxima aula do último registro (continuidade)
+  sel.value=(ult&&ult.proximoCamada)||'';
+  ['rg-proximo','rg-conteudo','rg-destaque','rg-casa','rg-intens','rg-humor'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
+  setRegSeg('evoluiu','');setRegSeg('base','');
+  renderRegHist(a);
+  document.getElementById('ov-registro').classList.add('on');
+}
+/* Detalhe completo de um registro — o que foi digitado naquele dia. */
+function htmlRegDetalhe(v){
+  const INT={leve:'🟢 Leve',media:'🟡 Média',forte:'🔴 Forte'};
+  const HUM={animado:'😄 Animado',normal:'🙂 Normal',cansado:'😮‍💨 Cansado',frustrado:'😕 Frustrado'};
+  const linha=(lbl,val)=>val?`<div class="rgd-row"><span class="rgd-l">${lbl}</span><span class="rgd-v">${esc(val)}</span></div>`:'';
+  let h='';
+  h+=linha('Camada-alvo',v.camada);
+  h+=linha('Evoluiu na camada',v.evoluiu==='sim'?'✅ Sim':(v.evoluiu==='nao'?'➖ Ainda não':''));
+  h+=linha('Base',v.base==='sim'?'✅ Firme':(v.base==='nao'?'⚠️ Erro veio de baixo':''));
+  h+=linha('Intensidade',INT[v.intens]||'');
+  h+=linha('Como chegou',HUM[v.humor]||'');
+  h+=linha('O que treinamos',v.conteudo);
+  h+=linha('Ponto alto',v.destaque);
+  h+=linha('Treino em casa',v.casa);
+  h+=linha('Tema da próxima',v.proximo);
+  return h||'<div class="rgd-row"><span class="rgd-v" style="color:var(--muted);font-weight:400">Sem detalhes preenchidos neste registro.</span></div>';
+}
+function toggleRegDet(head){if(head&&head.parentElement)head.parentElement.classList.toggle('open');}
+function renderRegHist(a){
+  const wrap=document.getElementById('rg-hist-wrap'),el=document.getElementById('rg-hist');
+  const rg=a.registros||[];
+  if(!rg.length){wrap.style.display='none';el.innerHTML='';return;}
+  wrap.style.display='block';
+  el.innerHTML=rg.slice().reverse().map((v,ri)=>{
+    const idx=rg.length-1-ri;
+    const ev=v.evoluiu==='sim'?'✅ evoluiu':(v.evoluiu==='nao'?'➖ manteve':'');
+    return `<div class="reg-item">
+      <div class="hrow reg-head" onclick="toggleRegDet(this)"><span><span class="reg-cur">▸</span>${(v.data||'').split('-').reverse().join('/')}${v.camada?' · '+v.camada:''} · <b>${ev}</b>${v.proximo?' → '+v.proximo:''}</span><button class="del" onclick="event.stopPropagation();delRegistro('${a.id}',${idx})">excluir</button></div>
+      <div class="reg-det">${htmlRegDetalhe(v)}</div>
+    </div>`;
+  }).join('');
+}
+function saveRegistro(){
+  const id=document.getElementById('rg-id').value;
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  const gv=i=>{const el=document.getElementById(i);return el?String(el.value||'').trim():'';};
+  const rec={
+    data:document.getElementById('rg-data').value||new Date().toISOString().slice(0,10),
+    camada:document.getElementById('rg-camada').value,
+    evoluiu:regDraft.evoluiu,
+    base:regDraft.base,
+    intens:gv('rg-intens'),humor:gv('rg-humor'),
+    conteudo:gv('rg-conteudo'),destaque:gv('rg-destaque'),casa:gv('rg-casa'),
+    proximo:gv('rg-proximo')
+  };
+  if(!Array.isArray(a.registros))a.registros=[];
+  a.registros.push(rec);
+  persist();renderAll();closeModal('ov-registro');
+  toast('📝 Registro salvo · '+a.nome);
+}
+function delRegistro(id,idx){
+  const a=DB.alunos.find(x=>x.id===id);if(!a||!a.registros)return;
+  if(!confirm('Excluir este registro?'))return;
+  a.registros.splice(idx,1);persist();renderAll();renderRegHist(a);
+  toast('Registro excluído');
+}
+
+/* ===== Devolutiva da avaliação (imagem / PDF / WhatsApp p/ os pais) ===== */
+let avalExpId='';
+function pctAval(av){
+  if(!av)return 0;
+  let s=0,n=0;
+  Object.keys(AVAL_ESCALA).forEach(g=>{AVAL_ESCALA[g].itens.forEach(it=>{s+=(Number(av[g]&&av[g][it.k])||0)/opcoesDe(it,av).length;n++;});});
+  return n?Math.round(s/n*100):0;
+}
+// ===== Panorama de evolução MÊS A MÊS =====
+// Uma linha por mês: vale a ÚLTIMA avaliação daquele mês. Mês sem avaliação
+// herda o valor do anterior (barra mais clara), para a linha não quebrar.
+const MES_EVO=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+function mesLabelEvo(mk){const p=String(mk).split('-');return MES_EVO[Number(p[1])-1]+'/'+p[0].slice(2);}
+function mesesAte(n){
+  const out=[],d=new Date();
+  for(let i=n-1;i>=0;i--){const x=new Date(d.getFullYear(),d.getMonth()-i,1);
+    out.push(x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0'));}
+  return out;
+}
+function serieMensal(av,rg,n){
+  const lista=(av||[]).slice().sort((a,b)=>String(a.data||'').localeCompare(String(b.data||'')));
+  const porMes={};lista.forEach(v=>{porMes[String(v.data||'').slice(0,7)]=v;});
+  const regs={};(rg||[]).forEach(v=>{const m=String(v.data||'').slice(0,7);regs[m]=(regs[m]||0)+1;});
+  let ult=null;const out=[];
+  mesesAte(n||6).forEach(m=>{
+    const v=porMes[m];
+    if(v)ult={p:pctAval(v),n:v.nivel||''};
+    out.push({m:m,p:ult?ult.p:0,n:ult?ult.n:'',r:regs[m]||0,novo:!!v});
+  });
+  // Corta os meses anteriores a primeira avaliacao: o grafico comeca quando
+  // a avaliacao comecou e vai crescendo mes a mes.
+  const ini=out.findIndex(x=>x.novo);
+  return ini<0?[]:out.slice(ini);
+}
+function evoMesChartHTML(serie,titulo){
+  if(!serie||!serie.length)return '';
+  if(!serie.some(x=>x.novo))return '';   // nenhuma avaliação no período
+  const linhas=serie.map(x=>{
+    const met=x.n?metalDe(x.n):{m:'#D8CFC0',d:'#B9AE9B'};
+    const vazio=!x.n;
+    const reg=x.r?('<i class="evo-mes-reg">'+x.r+' aula'+(x.r>1?'s':'')+'</i>'):'';
+    return '<div class="evo-mes-row'+(x.novo?'':' carry')+'">'
+      +'<span class="evo-mes-lab">'+mesLabelEvo(x.m)+'</span>'
+      +'<span class="evo-mes-track"><span class="evo-mes-bar" style="width:'+(vazio?0:x.p)+'%;background:linear-gradient(90deg,'+met.m+','+met.d+')"></span></span>'
+      +'<span class="evo-mes-val">'+(vazio?'—':x.p+'%')+reg+'</span>'
+      +'</div>';
+  }).join('');
+  const comAval=serie.filter(x=>x.novo);
+  const prim=comAval[0],ult=comAval[comAval.length-1];
+  let resumo='';
+  if(prim&&ult&&comAval.length>1){
+    const d=ult.p-prim.p;
+    resumo='<p class="evo-mes-cap">'+(d>0?'▲ +'+d+'% de '+mesLabelEvo(prim.m)+' até '+mesLabelEvo(ult.m):(d<0?'▼ '+d+'% no período':'➖ estável no período'))+'</p>';
+  }
+  return '<div class="evo-sec">📅 '+(titulo||'Mês a mês')+'</div><div class="evo-mes">'+linhas+'</div>'+resumo;
+}
+function ultimaAval(a){return (a&&a.avaliacoes&&a.avaliacoes.length)?a.avaliacoes[a.avaliacoes.length-1]:null;}
+/* Mostra a avaliação já feita. Reusa montarAvalExport(), que já desenha o
+   relatório inteiro — só que até agora ele era montado num elemento escondido,
+   apenas para virar imagem. */
+let avalVerId=null, avalVerIdx=-1;
+function openAvalVer(id,idx){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  const lista=(a.avaliacoes||[]);
+  if(!lista.length){toast('Este aluno ainda não tem avaliação');return;}
+  avalVerId=id;
+  avalVerIdx=(idx===undefined||idx===null||idx<0||idx>=lista.length)?lista.length-1:idx;
+  const av=lista[avalVerIdx];
+  document.getElementById('avalver-sub').textContent=
+    a.nome+' · Nível '+(av.nivel||'—')+' · '+((av.data||'').split('-').reverse().join('/'));
+  // histórico: só aparece quando há mais de uma, para não poluir o comum
+  const segs=document.getElementById('avalver-datas');
+  if(lista.length>1){
+    segs.style.display='';
+    segs.innerHTML=lista.map((x,i)=>'<button class="'+(i===avalVerIdx?'on':'')+'" onclick="openAvalVer(\''+id+'\','+i+')">'
+      +((x.data||'').split('-').reverse().slice(0,2).join('/'))+'</button>').join('');
+  }else segs.style.display='none';
+  document.getElementById('avalver-corpo').innerHTML=htmlAvalDe(a,av);
+  document.getElementById('avalver-enviar').onclick=function(){
+    closeModal('ov-avalver');openAvalExport(id);
+  };
+  document.getElementById('ov-avalver').classList.add('on');
+}
+function openAvalExport(id){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  const av=ultimaAval(a);
+  if(!av){toast('Faça a avaliação deste aluno primeiro');return;}
+  avalExpId=id;
+  document.getElementById('avalexp-sub').textContent=a.nome+' · Nível '+(av.nivel||'—')+' · '+((av.data||'').split('-').reverse().join('/'));
+  const wa=document.getElementById('avalexp-wa');if(wa)wa.style.display=a.tel?'':'none';
+  document.getElementById('ov-avalexp').classList.add('on');
+}
+/* Monta o relatório de UMA avaliação. Estava embutido no montarAvalExport, que
+   só sabia a última e escrevia direto num elemento escondido — por isso não dava
+   para simplesmente olhar uma avaliação na tela, nem rever as anteriores. */
+function htmlAvalDe(a,av){
+  if(!a||!av)return '';
+  const ci=Math.max(0,TRILHA_NIVEIS.indexOf(av.nivel));
+  const met=metalDe(av.nivel);
+  const nome1=a.nome;
+  let html='<div class="aex-wrap" style="--lc:'+met.m+';--lcd:'+met.d+'"><div class="tex-head"><div><b>Academia João Victor Tênis</b><span>Avaliação · '+((av.data||'').split('-').reverse().join('/'))+'</span></div><div class="tex-emb">JV</div></div>';
+  html+='<div style="font-size:15px;font-weight:800;color:#2A2016;margin:-4px 0 2px">'+esc(nome1)+'</div>';
+  html+='<div style="font-size:11px;color:#8a8478;margin-bottom:2px">Metodologia Da Base ao Topo'+(av.formato?' · '+esc(av.formato):'')+'</div>';
+  html+='<div class="aex-nivel"><span class="aex-badge">Nível: '+(av.nivel||'—')+'</span></div>';
+  html+='<div class="aex-trilha">'+TRILHA_NIVEIS.map((n,i)=>{
+    const feito=i<=ci;
+    return '<div class="aex-step '+(i<ci?'done':'')+' '+(i===ci?'cur':'')+'"'+(feito?' style="background:'+metalDe(n).m+'"':'')+'>'+n+'</div>';
+  }).join('')+'</div>';
+  if(av.objetivo)html+='<div class="aex-prio" style="background:#FBF6EC;border-color:#eadfc6">🎯 Objetivo: <b>'+esc(av.objetivo)+'</b></div>';
+  if(av.prioridade)html+='<div class="aex-prio">Prioridade do ciclo: <b>'+esc(av.prioridade)+'</b></div>';
+  Object.keys(AVAL_ESCALA).forEach(g=>{
+    html+='<div class="aex-sec">'+(AVAL_ICO[g]||'•')+' '+AVAL_ESCALA[g].titulo+'</div>';
+    AVAL_ESCALA[g].itens.forEach(it=>{
+      const op=opcoesDe(it,av),v=Number(av[g]&&av[g][it.k])||0,pct=Math.round(v/op.length*100),rot=v>0?op[v-1]:'—';
+      html+='<div class="aex-row"><div class="aex-top"><span>'+it.lbl+'</span><span class="st">'+rot+'</span></div><div class="aex-bar"><i style="width:'+pct+'%"></i></div></div>';
+    });
+  });
+  const _mes=evoMesChartHTML(serieMensal(a.avaliacoes,a.registros,6),'Evolução mês a mês');
+  if(_mes)html+='<div style="margin-top:14px">'+_mes+'</div>';
+  if(av.obs)html+='<div class="aex-prio" style="margin-top:14px;background:#F7F4EE;border-color:#e7e0d2">📝 '+esc(av.obs)+'</div>';
+  html+='<div class="tex-foot">Disciplina no treino. Evolução no jogo. 🎾 · Prof. João Victor</div></div>';
+  return html;
+}
+function montarAvalExport(a){
+  const av=ultimaAval(a);if(!av)return;
+  document.getElementById('aval-export').innerHTML=htmlAvalDe(a,av);
+}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function avalExportCanvas(){
+  const a=DB.alunos.find(x=>x.id===avalExpId);if(!a)return Promise.reject('semaluno');
+  montarAvalExport(a);
+  return html2canvas(document.getElementById('aval-export'),{backgroundColor:'#ffffff',scale:2});
+}
+async function exportarAvalImg(){
+  toast('Preparando imagem…');
+  try{await garantirExportLibs();}catch(e){toast('Sem internet para gerar a imagem agora');return;}
+  if(typeof html2canvas==='undefined'){toast('Recurso indisponível agora');return;}
+  const a=DB.alunos.find(x=>x.id===avalExpId);
+  try{
+    const canvas=await avalExportCanvas();
+    canvas.toBlob(async(blob)=>{
+      if(!blob){toast('Não consegui gerar a imagem');return;}
+      const nome=(a?a.nome.split(' ')[0]:'aluno').toLowerCase();
+      const file=new File([blob],'avaliacao-'+nome+'.png',{type:'image/png'});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        try{await navigator.share({files:[file],title:'Avaliação · JV Tênis',text:'Avaliação de '+(a?a.nome:'')+' 🎾'});return;}catch(e){}
+      }
+      const url=URL.createObjectURL(blob);const el=document.createElement('a');el.href=url;el.download='avaliacao-'+nome+'.png';
+      document.body.appendChild(el);el.click();document.body.removeChild(el);URL.revokeObjectURL(url);
+      toast('🖼️ Imagem salva!');
+    },'image/png');
+  }catch(e){toast('Erro ao gerar imagem');}
+}
+async function exportarAvalPDF(){
+  toast('Preparando PDF…');
+  try{await garantirExportLibs();}catch(e){toast('Sem internet para gerar o PDF agora');return;}
+  if(typeof html2canvas==='undefined'||!window.jspdf){toast('Recurso indisponível agora');return;}
+  const a=DB.alunos.find(x=>x.id===avalExpId);
+  try{
+    const canvas=await avalExportCanvas();
+    const img=canvas.toDataURL('image/png');
+    const {jsPDF}=window.jspdf;const pdf=new jsPDF('p','mm','a4');
+    const margin=10,pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
+    let iw=pw-margin*2,ih=canvas.height*iw/canvas.width;
+    if(ih>ph-margin*2){ih=ph-margin*2;iw=canvas.width*ih/canvas.height;}
+    pdf.addImage(img,'PNG',(pw-iw)/2,margin,iw,ih);
+    pdf.save('avaliacao-'+(a?a.nome.split(' ')[0].toLowerCase():'aluno')+'.pdf');
+    toast('📄 PDF salvo!');
+  }catch(e){toast('Erro ao gerar PDF');}
+}
+function enviarDevolutivaWa(){
+  const a=DB.alunos.find(x=>x.id===avalExpId);if(!a)return;
+  if(!a.tel){toast('Sem telefone cadastrado para '+a.nome);return;}
+  const av=ultimaAval(a);if(!av)return;
+  const nome=a.nome.split(' ')[0];
+  let linhas=['Olá! Segue a devolutiva da avaliação de *'+a.nome+'* na metodologia _Da Base ao Topo_ (JV Tênis):','','🎾 *Nível na Trilha:* '+(av.nivel||'—')];
+  if(av.prioridade)linhas.push('🎯 *Prioridade do ciclo:* '+av.prioridade);
+  linhas.push('');
+  ['mov','tec'].forEach(g=>{
+    AVAL_ESCALA[g].itens.forEach(it=>{const op=opcoesDe(it,av),v=Number(av[g]&&av[g][it.k])||0;if(v>0)linhas.push('• '+it.lbl+': '+op[v-1]);});
+  });
+  linhas.push('','Qualquer dúvida, estou à disposição! 👊');
+  const msg=encodeURIComponent(linhas.join('\n'));
+  window.open('https://wa.me/'+foneWhats(a.tel)+'?text='+msg,'_blank');
+  closeModal('ov-avalexp');
+}
+
+/* ===== Aba Avaliações — visão geral de todos os alunos ===== */
+let filtroAval='todos';
+function setFiltroAval(f,btn){
+  filtroAval=f;
+  document.querySelectorAll('#aval-filtro button').forEach(b=>b.classList.remove('on'));
+  if(btn)btn.classList.add('on');
+  renderAvaliacoes();
+}
+function diasDesde(dstr){
+  if(!dstr)return Infinity;
+  const p=String(dstr).split('-').map(Number);
+  const d=new Date(p[0],(p[1]||1)-1,p[2]||1);
+  return Math.floor((Date.now()-d.getTime())/86400000);
+}
+function tempoDesde(dias){
+  if(dias===Infinity)return 'nunca avaliado';
+  if(dias<=0)return 'hoje';
+  if(dias===1)return 'ontem';
+  if(dias<7)return 'há '+dias+' dias';
+  const sem=Math.floor(dias/7);
+  return 'há '+sem+(sem===1?' semana':' semanas');
+}
+/* Uma barra só: a média de toda a avaliação. Antes era uma barrinha por item —
+   dezenas delas, ilegíveis e sem dizer o essencial, que é "quanto ele já andou". */
+function avMiniHTML(av){
+  if(!av)return '';
+  let soma=0,total=0;
+  Object.keys(AVAL_ESCALA).forEach(g=>{AVAL_ESCALA[g].itens.forEach(it=>{
+    soma+=Number(av[g]&&av[g][it.k])||0;
+    total+=opcoesDe(it,av).length;
+  });});
+  const pct=total?Math.round(soma/total*100):0;
+  return '<div class="avmini"><div class="avbar"><i style="width:'+pct+'%"></i></div><span class="avpct">'+pct+'%</span></div>';
+}
+function setAvalOff(id,val){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  a.avalOff=!!val;persist();renderAvaliacoes();
+  toast(val?('🚫 '+a.nome.split(' ')[0]+' fora das avaliações'):('✅ '+a.nome.split(' ')[0]+' incluído nas avaliações'));
+}
+function renderAvaliacoes(){
+  const list=document.getElementById('aval-list');if(!list)return;
+  const q=(document.getElementById('aval-search').value||'').toLowerCase();
+  const todos=DB.alunos.slice().sort((x,y)=>x.nome.localeCompare(y.nome));
+  const alunos=todos.filter(a=>!a.avalOff);         // só quem participa das avaliações
+  // resumo (conta só alunos de aula)
+  let nAval=0,nPend=0;
+  alunos.forEach(a=>{
+    const tem=a.avaliacoes&&a.avaliacoes.length;
+    const dias=tem?diasDesde(a.avaliacoes[a.avaliacoes.length-1].data):Infinity;
+    if(tem)nAval++;
+    if(!tem||dias>42)nPend++;
+  });
+  const res=document.getElementById('aval-resumo');
+  if(res)res.innerHTML='<div class="rc"><b>'+alunos.length+'</b><span>alunos</span></div>'+
+    '<div class="rc"><b>'+nAval+'</b><span>avaliados</span></div>'+
+    '<div class="rc pend"><b>'+nPend+'</b><span>a avaliar</span></div>';
+  // aba "Fora" — quem foi tirado das avaliações (locação/torneio)
+  if(filtroAval==='fora'){
+    const fora=todos.filter(a=>a.avalOff&&a.nome.toLowerCase().includes(q));
+    if(!fora.length){list.innerHTML='<div class="empty">Ninguém fora das avaliações. Use o 🚫 num aluno para tirá-lo daqui (ex.: quem só loca quadra ou joga o torneio).</div>';return;}
+    list.innerHTML=fora.map(a=>
+      '<div class="avcard"><div class="avtop"><div><div class="avnome">'+esc(a.nome)+'</div><div class="avsub">'+a.tipo+' · fora das avaliações</div></div>'+
+      '<span class="avnivel none">🚫 fora</span></div>'+
+      '<div class="avacts"><button class="b3" onclick="setAvalOff(\''+a.id+'\',false)">✅ Incluir nas avaliações</button></div></div>'
+    ).join('');
+    return;
+  }
+  // lista normal
+  const items=alunos.filter(a=>a.nome.toLowerCase().includes(q)).filter(a=>{
+    const tem=a.avaliacoes&&a.avaliacoes.length;
+    const dias=tem?diasDesde(a.avaliacoes[a.avaliacoes.length-1].data):Infinity;
+    if(filtroAval==='avaliados')return tem;
+    if(filtroAval==='pendentes')return !tem||dias>42;
+    return true;
+  });
+  if(!items.length){list.innerHTML='<div class="empty">Nenhum aluno '+(q||filtroAval!=='todos'?'nesse filtro':'cadastrado')+'.</div>';return;}
+  list.innerHTML=items.map(a=>{
+    const av=(a.avaliacoes&&a.avaliacoes.length)?a.avaliacoes[a.avaliacoes.length-1]:null;
+    const dias=av?diasDesde(av.data):Infinity;
+    const due=(!av||dias>42);
+    const nivel=av?('<span class="avnivel" style="background:'+metalDe(av.nivel).m+';color:#fff">'+(av.nivel||'—')+'</span>'):'<span class="avnivel none">Sem avaliação</span>';
+    const sub=av?('Última: '+tempoDesde(dias)+(av.prioridade?' · 🎯 '+esc(av.prioridade):'')):(a.tipo+' · '+(a.plano>0?('Flex '+a.plano):'sem pacote'));
+    return '<div class="avcard'+(av?' avcard-ver':'')+'"'+(av?' onclick="if(!event.target.closest(\'button\'))openAvalVer(\''+a.id+'\')"':'')+'>'+
+      '<div class="avtop"><div><div class="avnome">'+(ehPersonalTipo(a.tipo)?'💪 ':'🎾 ')+esc(a.nome)+'</div><div class="avsub">'+sub+'</div></div>'+nivel+'</div>'+
+      avMiniHTML(av)+
+      (due?'<div class="avdue">⏰ '+(av?'reavaliar (6+ semanas)':'avaliar este aluno')+'</div>':'')+
+      autoAvalDe(a).map(x=>'<div class="avauto">📝 <b>'+esc(x.nome||a.nome).split(' ')[0]+'</b> se autoavaliou em '+((x.data||'').split('-').reverse().join('/'))+
+        '<div class="avauto-acts"><button onclick="usarAutoAval(\''+a.id+'\',\''+x._k+'\')">Abrir e revisar</button>'+
+        '<button class="d" onclick="descartarAutoAval(\''+x._k+'\')">Descartar</button></div></div>').join('')+
+      '<div class="avacts">'+
+        '<button class="b1" onclick="openAvalModal(\''+a.id+'\')">'+BI.chart+'Avaliar</button>'+
+        '<button class="b2" onclick="openRegistroModal(\''+a.id+'\')">📝 Registro</button>'+
+        (av?'<button class="b3" onclick="openAvalVer(\''+a.id+'\')">👁 Ver avaliação</button>':'')+
+        (av?'<button class="b3" onclick="openAvalExport(\''+a.id+'\')">📤 Enviar</button>':'')+
+        '<button class="b4" onclick="setAvalOff(\''+a.id+'\',true)">🚫 Tirar</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function delAluno(id){
+  const a=DB.alunos.find(x=>x.id===id);
+  if(confirm('Excluir '+a.nome+'? Essa ação não pode ser desfeita.')){
+    DB.alunos=DB.alunos.filter(x=>x.id!==id);persist();renderAll();toast('Aluno excluído');
+  }
+}
+function toggleAluno(el){el.classList.toggle('open');}
+/* "Mais ações" por cartão — mesma ideia do toggleAluno: uma classe no pai e o
+   CSS faz o resto, sem variável global para dois cartões abertos brigarem. */
+function toggleMais(id){
+  const c=document.getElementById('card-'+id);if(!c)return;
+  c.classList.toggle('mais');
+  const b=c.querySelector('.act.maisbtn');
+  if(b)b.textContent=c.classList.contains('mais')?'⋯ Menos ações':'⋯ Mais ações';
+}
+/* Valor da aula EM GRUPO: preço por pessoa/aula do formato do aluno. */
+function valorAulaGrupoDe(a){
+  const gt=a.grupoTipo||'Dupla';
+  return Math.round(grupoPrecoAula(gt))||0;
+}
+/* Valor da aula PARTICULAR. No plano misto a mensalidade cobre as duas partes,
+   então a parte do grupo sai da conta antes de dividir — senão a aula extra
+   sairia inflada (ex.: 1020/4 = 255 em vez de 160). */
+function valorAulaDe(a){
+  const p=Number(a.plano)||0,m=Number(a.mensalidade)||0;
+  const pg=Number(a.planoGrupo)||0;
+  if(p>0&&m>0){
+    const parteGrupo=pg>0?pg*valorAulaGrupoDe(a):0;
+    const so=m-parteGrupo;
+    if(so>0)return Math.round(so/p);
+  }
+  return Number(a.valorAula)||0;
+}
+/* Cobrança das aulas além do pacote — cada modalidade pelo seu próprio preço. */
+function devidoExtraPart(a){const neg=Math.max(0,Math.ceil(-(Number(a.creditos)||0)));return neg*valorAulaDe(a);}
+function devidoExtraGrupo(a){const neg=Math.max(0,Math.ceil(-(Number(a.credGrupo)||0)));return neg*valorAulaGrupoDe(a);}
+/* custo: quanto a aula desconta. Sai de creditoSlot() quando o horário é
+   conhecido — meia hora custa 0,5. Sem horário (botão do cartão) vale 1. */
+function aulaRealizada(id,modo,custo,hora){
+  const a=DB.alunos.find(x=>x.id===id);
+  if(!DB.presencas)DB.presencas=[];
+  const c=Number(custo)>0?Number(custo):1;
+  const hoje=dKey(new Date());
+  /* Só debita se a aula daquele dia ainda não foi registrada. Antes, marcar o ✓
+     na agenda e depois apertar "Aula realizada" no cartão tirava dois créditos
+     pela MESMA aula, sem avisar nada. Agora ele decide: ou é a mesma aula (e
+     não lança), ou é uma aula a mais de verdade — e essa fica marcada como
+     extra, para nunca ser confundida com repetição. */
+  const jaHoje=(DB.presencas||[]).filter(p=>p.alunoId===a.id&&p.data===hoje&&!ehAvisou(p)
+                                            &&(p.tipo||p.modo||'aula')!=='locacao'&&(p.tipo||p.modo)!=='torneio');
+  let ehExtra=false;
+  if(jaHoje.length){
+    const quais=jaHoje.map(p=>((p.hora&&p.hora!=='—')?p.hora:'lançada no cartão')+(ehFalta(p)?' (falta)':'')).join(', ');
+    if(!confirm(a.nome+' já tem aula registrada hoje ('+quais+').\n\n'
+      +'Lançar de novo desconta OUTRO crédito.\n\n'
+      +'OK = foi mesmo uma aula A MAIS hoje\n'
+      +'Cancelar = é a mesma aula, não lançar'))return;
+    ehExtra=true;
+  }
+  const k='m'+a.id+'-'+Date.now();
+  const reg={k,alunoId:a.id,data:hoje,hora:hora||'—',manual:true,modo:modo||'aula',tipo:modo||'aula',custo:c};
+  if(ehExtra)reg.extra=true;
+  DB.presencas.push(reg);
+  if(modo==='grupo'){            // sai do saldo de grupo, nunca do de particular
+    mover(a,'credGrupo',-c,'Aula em grupo realizada',k);
+    persist();renderAll();pulsarCredito(a.id);
+    const extra=a.credGrupo<0?(' · extra de grupo a cobrar: '+fmt(valorAulaGrupoDe(a))):'';
+    toastDesfazer('👥 Aula em grupo · '+a.nome+' → '+fmtCred(a.credGrupo)+' de grupo'+extra,()=>desfazerAula(id,k,'grupo'));
+    return;
+  }
+  mover(a,'creditos',-c,'Aula realizada',k);   // permite ficar negativo: aula além do pacote
+  persist();renderAll();pulsarCredito(a.id);
+  const extra=a.creditos<0?(' · aula extra a cobrar: '+fmt(valorAulaDe(a))):'';
+  toastDesfazer('Aula registrada · '+a.nome+' → '+fmtCred(a.creditos)+(a.creditos<0?' aulas':' créditos')+extra,()=>desfazerAula(id,k,modo));
+}
+/* Desfaz a aula que acabou de ser lançada: tira a presença exata pela chave e
+   devolve o crédito ao saldo de origem. Antes, errar o aluno significava abrir
+   o cadastro e corrigir o número na mão. */
+function desfazerAula(id,k,modo){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  const i=(DB.presencas||[]).findIndex(p=>p.k===k);
+  if(i<0){toast('Esse lançamento já não está mais aqui');return;}
+  const reg=DB.presencas[i];                        // guardar ANTES de tirar da lista
+  marcarRemovida('presencas',reg);                  // sem isto ela voltava da nuvem
+  DB.presencas.splice(i,1);
+  /* Devolve o MESMO que saiu, lendo do extrato: com meia aula, devolver 1 fixo
+     criaria crédito do nada. Olha TODOS os saldos, não só o do modo: se a aula
+     saiu do saldo de grupo, é para lá que ela volta. */
+  const dev=estornoPorRef(a,k,reg);
+  Object.keys(dev).forEach(cp=>mover(a,cp,dev[cp],'Aula desfeita',k));
+  persist();renderAll();pulsarCredito(a.id);
+  toast('↩️ Desfeito · '+a.nome+' → '+fmtCred(modo==='grupo'?a.credGrupo:a.creditos)+(modo==='grupo'?' de grupo':' créditos'));
+}
+/* O número mudou: dá um pulso no chip para o toque ter resposta visível. */
+function pulsarCredito(id){
+  const card=document.getElementById('card-'+id);if(!card)return;
+  const chip=card.querySelector('.chip');if(!chip)return;
+  chip.classList.remove('pulsa');void chip.offsetWidth;   // reinicia a animação
+  chip.classList.add('pulsa');
+}
+/* Quem realmente usa locação: tem saldo, está marcado como perfil de locação,
+   ou tem horário de locação na agenda. Para o resto, os três botões de locação
+   eram peso morto no cartão. */
+function usaLocacao(a){
+  if(!a)return false;
+  if(perfilDe(a)==='locacao')return true;
+  if((Number(a.locCred)||0)!==0)return true;
+  const A=DB.agenda||{};
+  const temEv=(A.eventos||[]).some(e=>e.alunoId===a.id&&e.tipo==='locacao');
+  const temFx=(A.fixos||[]).some(f=>f.alunoId===a.id&&f.tipo==='locacao');
+  return temEv||temFx;
+}
+/* A conta do mês corrente, que é a que aparece no card e no cadastro. */
+function agendaDoMes(a){const d=new Date();return mensalidadeDaAgenda(a,d.getFullYear(),d.getMonth());}
+function saldoCredTotal(a){return (Number(a&&a.creditos)||0)+(Number(a&&a.credGrupo)||0);}
+/* Diferença entre o valor da agenda e o valor anotado: depois que o João decide
+   (trocar ou manter), o aviso fica silenciado. Volta a aparecer só na virada do
+   mês ou quando os créditos do aluno zeram. */
+function difSilenciada(a){return !!(a&&a.difOk&&a.difOk.mes===monthKey()&&saldoCredTotal(a)>0);}
+function manterValorAnotado(id){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  a.difUndo={mes:monthKey(),mensalidade:Number(a.mensalidade)||0,plano:Number(a.plano)||0,planoGrupo:Number(a.planoGrupo)||0,difOk:a.difOk||null};   // guarda para desfazer
+  a.difOk={mes:monthKey()};
+  logAct('Manter valor anotado (silenciar diferença da agenda): '+a.nome);
+  persist();renderAll();
+  toast('✓ Valor anotado mantido para '+a.nome.split(' ')[0]+' — aviso some até virar o mês ou zerar os créditos.');
+}
+/* Desfaz a última decisão (cobrar pela agenda ou manter) daquele aluno neste mês
+   — para quando o toque foi sem querer. Restaura mensalidade, plano e o estado
+   do aviso exatamente como estavam antes. */
+function desfazerDecisaoDif(id){
+  const a=DB.alunos.find(x=>x.id===id);if(!a||!a.difUndo)return;
+  const u=a.difUndo;
+  if(u.mensalidade!==undefined)a.mensalidade=u.mensalidade;
+  if(u.plano!==undefined)a.plano=u.plano;
+  if(u.planoGrupo!==undefined)a.planoGrupo=u.planoGrupo;
+  if(u.difOk)a.difOk=u.difOk;else delete a.difOk;
+  delete a.difUndo;
+  logAct('Desfazer decisão da diferença: '+a.nome);
+  persist();renderAll();
+  toast('↩︎ Desfeito · '+a.nome.split(' ')[0]+' voltou ao estado anterior. Escolha a ação correta.');
+}
+/* Aplica a conta da agenda como mensalidade. Só acontece por toque dele: a
+   mensalidade é o valor que o aluno vê e paga pelo app, e desde o bloqueio por
+   pagamento ela decide se o aluno consegue agendar. Nada muda sozinho. */
+function cobrarPelaAgenda(id){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  const g=agendaDoMes(a);
+  if(g.total<=0){toast('📅 '+a.nome.split(' ')[0]+' não tem aula na agenda deste mês — mensalidade mantida.');return;}
+  const atual=Number(a.mensalidade)||0;
+  if(!confirm('Cobrar '+a.nome+' pelas aulas da agenda deste mês?\n\n'
+    +g.detalhe+'\n= '+fmtRs(g.valor)+'\n\nMensalidade de hoje: '+fmtRs(atual)
+    +'\nPlano do cadastro: '+(Number(a.plano)||0)+' aula(s)'+((Number(a.planoGrupo)||0)>0?(' + '+a.planoGrupo+' em grupo'):'')))return;
+  a.difUndo={mes:monthKey(),mensalidade:atual,plano:Number(a.plano)||0,planoGrupo:Number(a.planoGrupo)||0,difOk:a.difOk||null};   // guarda para desfazer
+  a.mensalidade=g.valor;
+  delete a.difOk;   // valores agora iguais: nada a silenciar
+  // o plano acompanha, senão "Renovar mês" devolveria o número antigo de créditos
+  if(a.tipo==='Dupla'||a.tipo==='Trio'||a.tipo==='Quarteto'||a.tipo==='Grupo'){a.plano=g.grupo;}
+  else{a.plano=g.part;if((Number(a.planoGrupo)||0)>0||g.grupo>0)a.planoGrupo=g.grupo;}
+  logAct('Mensalidade pela agenda: '+a.nome+' → '+fmtRs(g.valor));
+  persist();renderAll();
+  toast('📅 '+a.nome.split(' ')[0]+' · '+g.detalhe+' = '+fmt(g.valor));
+}
+/* Locação paga: pergunta as horas, lança no caixa e credita o saldo — o mesmo
+   papel que "Marcar pago" cumpre para a mensalidade. */
+/* ===== Segurança contra duplicação =====
+   Três coisas duplicavam sem o app perceber: o toque duplo no celular (dois
+   toques em 1s viram dois lançamentos iguais), marcar pago duas vezes no mesmo
+   mês, e renovar o mês duas vezes — que dobra os créditos do aluno. Nenhuma
+   delas dava erro na tela; o número só ficava errado.
+
+   Aqui são duas camadas: TRAVA (impede na hora) e CONFERÊNCIA (acha o que já
+   passou). Nenhuma delas apaga nada sozinha — no máximo pedem confirmação. */
+const _ultAcao={};
+function acaoRepetida(chave,ms){
+  const agora=Date.now(), ant=_ultAcao[chave]||0;
+  if(agora-ant<(ms||2500))return true;
+  _ultAcao[chave]=agora;
+  return false;
+}
+function mesReal(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+function mesDoTs(ts){const d=new Date(ts);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+/* Mensalidades já lançadas para este aluno no mês aberto no painel. */
+function mensalidadesDoMes(a){
+  const alvo='Mensalidade · '+a.nome;
+  return (DB.lancamentos||[]).filter(l=>l.mes===monthKey()&&l.cat==='mensalidade'&&l.valor>0&&(l.alunoId===a.id||l.desc===alvo));
+}
+/* Renovações de crédito já feitas para este aluno no mês corrente. */
+function renovacoesDoMes(a){
+  const m=mesReal();
+  return movsDe(a.id,'creditos').filter(x=>String(x.motivo||'').indexOf('Renovação do mês')===0&&mesDoTs(x.ts)===m);
+}
+function locacaoPaga(id){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  const vh=Number((DB.precos&&DB.precos.locacao)||0);
+  if(vh<=0){toast('Defina o valor da locação em Financeiro → Valores avulsos');return;}
+  const txt=prompt('Quantas horas de locação '+a.nome.split(' ')[0]+' está pagando?\n\nValor: '+fmt(vh)+'/h','1');
+  if(txt===null)return;
+  const h=Number(String(txt).replace(',','.'));
+  if(!(h>0)){toast('Informe um número de horas maior que zero');return;}
+  const total=Math.round(vh*h);
+  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:'Locação · '+a.nome+' ('+fmtCred(h)+'h)',valor:total,cat:'locacao',modal:'tenis',data:new Date().toISOString().slice(0,10)});
+  mover(a,'locCred',h,'Locação paga ('+fmtCred(h)+'h)');
+  logAct('Locação paga: '+a.nome+' ('+h+'h)');
+  persist();renderAll();
+  toast('🔑 Locação paga · '+fmt(total)+' lançado · '+a.nome+' → '+fmtCred(a.locCred)+'h');
+}
+function addRepos(id){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  if(acaoRepetida('repos+'+id)){toast('Reposição já anotada agora há pouco');return;}
+  mover(a,'repos',1,'Reposição anotada');persist();renderAll();toast('Reposição anotada para '+a.nome);
+}
+function usarRepos(id){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  const morreu=purgarReposVencidas(a);
+  if(morreu>0)toast('⏳ '+fmtCred(morreu)+' reposição(ões) passaram de 4 meses e saíram do saldo');
+  if(a.repos<=0){toast('Sem reposições pendentes');return;}
+  if(acaoRepetida('repos-'+id)){toast('Reposição já registrada agora há pouco');return;}
+  mover(a,'repos',-Math.min(1,Number(a.repos)||0),'Reposição realizada');persist();renderAll();toast('Reposição realizada · restam '+fmtCred(a.repos));
+}
+function addLocacao(id){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  if(acaoRepetida('loc+'+id)){toast('Já somei essa hora agora há pouco');return;}
+  mover(a,'locCred',1,'+1h de locação');
+  logAct('Locação +1h: '+a.nome);persist();renderAll();
+  toast('🔑 +1h de locação · '+a.nome+' → '+fmtCred(a.locCred)+'h');
+}
+function usarLocacao(id){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  if(acaoRepetida('loc-'+id)){toast('Locação já registrada agora há pouco');return;}
+  mover(a,'locCred',-1,'Locação realizada');
+  logAct('Locação feita: '+a.nome);persist();renderAll();
+  toast('🔑 Locação registrada · '+a.nome+' → '+fmtCred(a.locCred)+'h'+(a.locCred<0?' (devendo)':''));
+}
+/* A mensalidade é a mensalidade. O abatimento automático de reposição saiu:
+   quem decide o que fazer com a reposição de cada aluno é o professor, na
+   conversa com ele. O app não mexe mais em valor por conta própria. */
+function cobrancaDoMes(a){
+  return {valor:Number(a.mensalidade)||0,desc:'Mensalidade · '+a.nome};
+}
+function marcarPago(id){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  if(acaoRepetida('pago-'+id)){toast('Já registrei esse pagamento agora há pouco');return;}
+  const jaTem=mensalidadesDoMes(a);
+  if(jaTem.length){
+    const soma=jaTem.reduce((t,l)=>t+(Number(l.valor)||0),0);
+    if(!confirm('⚠️ '+a.nome+' já tem '+jaTem.length+' mensalidade lançada neste mês ('+fmt(soma)+').\n\nLançar OUTRA de '+fmt(a.mensalidade)+'?\n\nSe foi engano, toque em Cancelar — o aluno continua marcado como pago.')){
+      a.status='pago';a.ultimoPago=monthKey();persist();renderAll();toast(a.nome+' marcado como pago (sem lançar de novo)');return;
+    }
+  }
+  /* Carimbo do mês quitado: é o que sustenta a janela livre até o vencimento no
+     app do aluno — a folga vale para quem pagou o mês anterior. Sobrevive à
+     virada do mês, que só devolve o status para "pendente". */
+  a.status='pago';a.ultimoPago=monthKey();
+  const c=cobrancaDoMes(a);
+  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:c.desc,valor:c.valor,cat:'mensalidade',alunoId:a.id,modal:(ehPersonalTipo(a.tipo)?'personal':'tenis'),data:new Date().toISOString().slice(0,10),descontoRepos:c.detalhe});
+  persist();renderAll();
+  toast('Pagamento de '+a.nome+' lançado: '+fmt(c.valor));
+}
+/* A virada de mês NÃO acontece mais sozinha.
+   Antes, abrir o app no dia 1 convertia a sobra de todo mundo em reposição e
+   vencia reposições de 4 meses, tudo de uma vez, sem perguntar. O saldo mudava
+   sem o professor saber, e depois não havia como saber se aquele número era
+   dele ou do app. Agora ela só DETECTA e deixa o aviso; quem aplica é você, em
+   viradaPendente() → aplicarViradaMes(), depois de ver aluno por aluno o que
+   vai mudar. */
+function checarViradaMes(){
+  const m=mesReal();
+  if(DB.mesCreditos===undefined){DB.mesCreditos=m;return true;}   // primeira abertura: nada a converter
+  return false;
+}
+/* O que a virada faria, se você mandasse. Não muda nada — só calcula.
+   Aluno inativo fica de fora: ele não está fazendo aula, então virar o mês
+   dele só criava número — crédito que ninguém vai usar e uma mensalidade
+   "não paga" que ninguém vai cobrar. O saldo dele congela como está, e se
+   um dia voltar, você renova na mão. */
+function viradaPendente(){
+  const m=mesReal();
+  if(!DB.mesCreditos||DB.mesCreditos===m)return null;
+  const itens=[];let forinha=0;
+  (DB.alunos||[]).forEach(a=>{
+    if(!ehAtivoAluno(a)){forinha++;return;}
+    const sobra=Math.max(0,Number(a.creditos)||0), sobraG=Math.max(0,Number(a.credGrupo)||0);
+    const venc=reposVencidas(a);
+    if(sobra||sobraG||venc)itens.push({a,sobra,sobraG,venc});
+  });
+  return {de:DB.mesCreditos,para:m,itens,forinha};
+}
+function aplicarViradaMes(){
+  const V=viradaPendente();
+  if(!V){toast('Não há virada pendente');return;}
+  const linhas=V.itens.map(x=>'· '+x.a.nome+': '
+    +[x.sobra?fmtCred(x.sobra)+' crédito(s)':'',x.sobraG?fmtCred(x.sobraG)+' de grupo':'']
+      .filter(Boolean).join(' + ')
+    +((x.sobra||x.sobraG)?' → reposição':'')
+    +(x.venc?((x.sobra||x.sobraG?' · ':'')+'vencem '+fmtCred(x.venc)+' reposição(ões)'):''));
+  if(!confirm('Virar de '+V.de+' para '+V.para+'?\n\n'
+    +(linhas.length?linhas.join('\n'):'Nenhum aluno tem sobra a converter.')
+    +'\n\nOs ATIVOS ficam marcados como "não pago" até você renovar.'
+    +(V.forinha?('\n'+V.forinha+' aluno(s) inativo(s) ficam de fora: saldo e situação não mudam.'):'')
+    +'\n\nIsto fica registrado no extrato de cada aluno.'))return;
+  let venc=0,vencN=0,n=0;
+  const ativos=(DB.alunos||[]).filter(ehAtivoAluno);
+  ativos.forEach(a=>{const v=purgarReposVencidas(a);if(v>0){venc+=v;vencN++;}});
+  ativos.forEach(a=>{
+    const sobra=Number(a.creditos)||0, sobraG=Number(a.credGrupo)||0;
+    if(sobra>0||sobraG>0){mover(a,'repos',Math.max(0,sobra)+Math.max(0,sobraG),'Sobra do mês virou reposição');n++;}
+    if(sobra>0)mover(a,'creditos',-sobra,'Virada de mês — sobra convertida');
+    if(sobraG>0)mover(a,'credGrupo',-sobraG,'Virada de mês — sobra convertida');
+  });
+  ativos.forEach(a=>{a.status='pendente';});
+  DB.mesCreditos=V.para;
+  if(venc>0)logAct('Reposições vencidas: '+fmtCred(venc)+' de '+vencN+' aluno(s) passaram de 4 meses');
+  logAct('Virada de mês aplicada por você: '+V.de+' → '+V.para+' ('+n+' aluno(s) com sobra'
+    +(V.forinha?('; '+V.forinha+' inativo(s) fora'):'')+')');
+  persist();renderAll();
+  toast('🗓️ Virada aplicada · '+n+' aluno(s) tiveram sobra convertida'+(venc>0?(' · '+fmtCred(venc)+' vencida(s)'):''));
+}
+/* Deixa o mês para trás sem converter nada. Para quando você já acertou na mão
+   ou não quer que a sobra daquele mês vire reposição. */
+function pularViradaMes(){
+  const V=viradaPendente();if(!V)return;
+  if(!confirm('Marcar '+V.de+' como encerrado SEM converter nada?\n\nOs saldos ficam como estão. Nenhuma sobra vira reposição.'))return;
+  DB.mesCreditos=V.para;
+  logAct('Virada de mês dispensada por você: '+V.de+' → '+V.para+' (nada convertido)');
+  persist();renderAll();toast('Mês encerrado sem converter nada');
+}
+function renovarMes(id){
+  const a=DB.alunos.find(x=>x.id===id);
+  const pg=Number(a.planoGrupo)||0;
+  const resumo='+'+(Number(a.plano)||0)+' crédito(s)'+(pg>0?(' e +'+pg+' de grupo'):'');
+  if(acaoRepetida('renov-'+id)){toast('Já renovei agora há pouco — confira os créditos antes de repetir');return;}
+  const jaRenov=renovacoesDoMes(a);
+  let aviso=jaRenov.length?('⚠️ '+a.nome+' JÁ foi renovado '+jaRenov.length+'x neste mês (somou '+fmtCred(jaRenov.reduce((t,x)=>t+(Number(x.delta)||0),0))+' crédito(s)).\n\nRenovar de novo DOBRA os créditos. Tem certeza?\n\n'):'';
+  /* Renovar quem parou de treinar cria aula que ninguém vai fazer e mensalidade
+     que ninguém vai cobrar. O botão continua funcionando — quem volta a treinar
+     é renovado por aqui — mas não em silêncio. */
+  if(!ehAtivoAluno(a))aviso+='⚠️ '+a.nome+' está como INATIVO (sem plano e sem mensalidade no cadastro).\n\nRenovar vai somar crédito e marcar como "não pago". Se ele voltou a treinar, acerte o plano no cadastro primeiro.\n\n';
+  if(confirm(aviso+'Renovar o mês de '+a.nome+'? Soma '+resumo+' e marca como pendente.')){
+    mover(a,'creditos',Number(a.plano)||0,'Renovação do mês');
+    if(pg>0)mover(a,'credGrupo',pg,'Renovação do mês (grupo)');   // plano misto renova as duas partes
+    a.status='pendente';delete a.difOk;delete a.difUndo;persist();renderAll();   // novo ciclo: reavalia a diferença do zero
+    toast('Mês renovado para '+a.nome+' · '+resumo);
+  }
+}
+function enviarAcesso(id){
+  const a=DB.alunos.find(x=>x.id===id);
+  const msg=encodeURIComponent(`Olá ${a.nome.split(' ')[0]}! 🎾 Agora você pode acompanhar seu saldo de aulas, reposições e horários no app da Academia João Victor Tênis.\n\n🔑 Seu código de acesso: *${a.codigo}*\n\nÉ só abrir o App do Aluno e digitar esse código. Qualquer dúvida me chama!`);
+  window.open(`https://wa.me/${foneWhats(a.tel)}?text=${msg}`,'_blank');
+}
+function enviarRenovacaoWa(id){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  if(!a.tel){toast('Sem telefone cadastrado para '+a.nome);return;}
+  const nome=a.nome.split(' ')[0];
+  const plano=Number(a.plano)||0;
+  const isP=ehPersonalTipo(a.tipo);
+  const planoTxt=plano>0?(isP?(a.tipo+' · '+plano+' treinos/mês'):(a.tipo+' · Flex '+plano+' — '+plano+' aulas/mês')):'sem pacote ativo';
+  const msg=encodeURIComponent(
+    'Olá '+nome+'! 🎾 Passando para combinar a *renovação da sua mensalidade* na JV Tênis.\n\n'
+    +'📋 Plano atual: *'+planoTxt+'*'
+    +(a.mensalidade?('\n💰 Mensalidade: *'+fmt(a.mensalidade)+'*'):'')
+    +'\n\nVocê prefere *renovar do mesmo jeito* ou *mudar o número de aulas* do próximo mês? '
+    +'Me responde aqui que eu já deixo tudo certo. 😊');
+  window.open('https://wa.me/'+foneWhats(a.tel)+'?text='+msg,'_blank');
+}
+let filtroAluno='todos';
+let focoRepos=false;
+let focoDif=false;
+/* Ativo = tem pacote contratado. a.arquivado, quando existe, manda na regra:
+   é como o João corrige quem parou mas ficou com plano no cadastro, ou quem
+   está sem pacote no momento mas continua na academia. */
+/* Quem entra no fechamento. Fora os inativos e quem só joga torneio: torneio
+   se paga por inscrição, não por mensalidade, então o fechamento dessa gente
+   seria uma folha com zero aula e zero valor — e o nome na fila fazia parecer
+   que faltava mandar o de alguém. */
+function ehDoFechamento(a){
+  return ehAtivoAluno(a)&&perfilDe(a)!=='torneio';
+}
+function ehAtivoAluno(a){
+  if(!a)return false;
+  if(a.arquivado===true)return false;
+  if(a.arquivado===false)return true;
+  return (Number(a.plano)||0)>0||(Number(a.planoGrupo)||0)>0||(Number(a.mensalidade)||0)>0;
+}
+function contagemAlunos(){
+  const t=(DB.alunos||[]).length;
+  const at=(DB.alunos||[]).filter(ehAtivoAluno).length;
+  return {total:t,ativos:at,inativos:t-at};
+}
+function setFiltroAtivo(f){
+  filtroAtivo=(filtroAtivo===f)?'todos':f;   // tocar de novo volta para todos
+  focoRepos=false;focoDif=false;renderAlunos();
+}
+let filtroAtivo='todos';
+function arquivarAluno(id){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  const ativo=ehAtivoAluno(a);
+  if(ativo){
+    if(!confirm('Marcar '+a.nome+' como INATIVO?\n\nEle continua no cadastro e com todo o histórico — só sai da conta de alunos ativos.'))return;
+    a.arquivado=true;logAct('Aluno marcado como inativo: '+a.nome);
+  }else{
+    a.arquivado=false;logAct('Aluno reativado: '+a.nome);
+  }
+  persist();renderAll();
+  toast(a.nome+(ativo?' agora conta como inativo':' voltou para os ativos'));
+}
+function setFiltroAluno(f,btn){
+  filtroAluno=f;
+  focoRepos=false;focoDif=false;   // escolher um perfil sai de qualquer foco
+  document.querySelectorAll('#alunos-filtro button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderAlunos();
+}
+/* Total · ativos · inativos, tocáveis para filtrar a lista. */
+function renderResumoAlunos(){
+  const box=document.getElementById('alunos-resumo');if(!box)return;
+  const c=contagemAlunos();
+  const cel=(f,n,rot,cls)=>'<div class="rc'+(cls||'')+(filtroAtivo===f?' on':'')+'" onclick="setFiltroAtivo(\''+f+'\')"><b>'+n+'</b><span>'+rot+'</span></div>';
+  box.innerHTML=cel('todos',c.total,'no cadastro')+cel('ativos',c.ativos,'ativos')+cel('inativos',c.inativos,'inativos',' pend');
+}
+/* ===== Fechamento mensal: a imagem que vai para o aluno =====
+   Reaproveita o mesmo caminho da imagem do histórico: html2canvas + o
+   compartilhamento nativo, que no iPhone anexa o arquivo direto na conversa. */
+function fcMesesDisponiveis(){
+  const hoje=new Date(), out=[];
+  for(let i=0;i<12;i++){
+    const d=new Date(hoje.getFullYear(),hoje.getMonth()-i,1);
+    out.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));
+  }
+  return out;
+}
+function fcRotuloMes(mk){
+  const p=String(mk).split('-');
+  return MESES[Number(p[1])-1]+' '+p[0];
+}
+function abrirFechamento(){
+  const sa=document.getElementById('fc-aluno'), sm=document.getElementById('fc-mes');
+  if(sa){
+    /* Refeito a cada abertura, e não só na primeira: arquivar um aluno ou
+       marcá-lo como torneio tem de tirá-lo daqui na hora, sem fechar o app.
+       A escolha atual é preservada, para não perder de vista quem estava
+       aberto na tela. */
+    const antes=sa.value;
+    sa.innerHTML='<option value="">— escolha o aluno —</option>'+
+      DB.alunos.filter(ehDoFechamento).slice().sort((a,b)=>a.nome.localeCompare(b.nome))
+        .map(a=>'<option value="'+a.id+'">'+esc(a.nome)+'</option>').join('');
+    if(antes&&sa.querySelector('option[value="'+antes+'"]'))sa.value=antes;
+  }
+  if(sm&&!sm.options.length){
+    sm.innerHTML=fcMesesDisponiveis().map(m=>'<option value="'+m+'">'+fcRotuloMes(m)+'</option>').join('');
+  }
+  renderFechamento();renderFilaFech();
+}
+/* Aulas daquele aluno no mês, com data e hora, direto das presenças. */
+/* As aulas do mês saem da AGENDA — do dia 1 ao último —, não das presenças
+   marcadas. Contar só o que foi tiquetado dava um número menor que a realidade:
+   aula que aconteceu e ficou sem tique sumia do fechamento. O padrão passa a
+   ser "a aula da agenda aconteceu"; a exceção é a falta, que você marca no ✗ e
+   sai desta lista — mas consome o crédito, porque quem não avisou perde a
+   aula. Chuva e horário cancelado já não voltam de entriesFor(),
+   então saem sozinhos.
+   O custo vem do que foi realmente debitado quando houve presença; sem
+   presença, vale a duração do horário. */
+function fcAulasDoMes(a,mk){
+  const [ano,mes]=String(mk).split('-').map(Number);
+  if(!ano||!mes)return [];
+  const ultimo=new Date(ano,mes,0).getDate();
+  const porChave={};
+  (DB.presencas||[]).forEach(p=>{if(p.alunoId===a.id&&p.k)porChave[p.k]=p;});
+  const out=[], jaEntrou=new Set(), diasComAula=new Set();
+  for(let d=1;d<=ultimo;d++){
+    const data=new Date(ano,mes-1,d,12,0,0,0);
+    HORAS.forEach(hora=>{
+      entriesFor(data,hora).forEach(e=>{
+        if(e.alunoId!==a.id)return;
+        if(e.tipo==='locacao'||e.tipo==='torneio'||e.tipo==='bloqueio')return;   // não é aula
+        const k=presId(e,data), reg=porChave[k];
+        if(ehMarca(reg))return;                       // faltou ou avisou: fora da conta
+        /* Um horário conta uma vez. Dois alunos no mesmo slot são duas linhas
+           na agenda, mas para ESTE aluno é uma aula só. */
+        const chaveSlot=dKey(data)+'|'+hora;
+        if(jaEntrou.has(chaveSlot))return;
+        jaEntrou.add(chaveSlot);
+        const tipo=e.repo?'reposicao':(e.tipo==='grupo'?'grupo':'aula');
+        diasComAula.add(dKey(data));
+        out.push({k,data:dKey(data),hora,tipo,repo:!!e.repo,
+                  custo:reg?(Number(reg.custo)||0):creditoSlot(hora),
+                  marcada:!!reg});
+      });
+    });
+  }
+  /* Aula avulsa lançada pelo cartão ("Aula realizada") não tem horário na
+     agenda, então entra pela presença mesmo — MAS só se aquele dia ainda não
+     tiver aula. Marcar o ✓ na agenda e apertar "Aula realizada" no cartão
+     registra a mesma aula duas vezes, e ela aparecia como duas linhas no
+     fechamento. Sem horário não dá para saber se é outra aula; num dia que já
+     tem aula, o mais provável, de longe, é ser a mesma. */
+  (DB.presencas||[]).forEach(p=>{
+    if(p.alunoId!==a.id||ehMarca(p)||!p.manual)return;
+    if(String(p.data||'').indexOf(mk)!==0)return;
+    if(diasComAula.has(p.data)||ehDupManual(p))return;
+    out.push({k:p.k,data:p.data,hora:p.hora,tipo:p.tipo||'aula',repo:false,
+              custo:Number(p.custo)||1,marcada:true});
+  });
+  return out.sort((x,y)=>String(x.data).localeCompare(String(y.data))||String(x.hora).localeCompare(String(y.hora)));
+}
+/* Faltas e cancelamentos avisados do mês — vão no rodapé do fechamento, cada
+   um na sua linha: um consumiu a aula, o outro não. */
+function fcFaltasDoMes(a,mk){
+  return (DB.presencas||[]).filter(p=>p.alunoId===a.id&&ehFalta(p)&&String(p.data||'').indexOf(mk)===0).length;
+}
+function fcAvisadosDoMes(a,mk){
+  return (DB.presencas||[]).filter(p=>p.alunoId===a.id&&ehAvisou(p)&&String(p.data||'').indexOf(mk)===0).length;
+}
+/* Conciliação do mês: de onde vieram as aulas e para onde foram.
+   Tudo sai do extrato, que marca cada evento com nome próprio — "Renovação do
+   mês", "Sobra do mês virou reposição" — e da agenda. Mostra o plano do
+   cadastro AO LADO do que o extrato realmente renovou: quando os dois não
+   batem, ou faltou renovar, ou renovou duas vezes. Era essa conta que não
+   dava para fazer em lugar nenhum. */
+function fcConciliacao(a,mk){
+  const doMes=movsDe(a.id).filter(m=>mesDoTs(m.ts)===mk);
+  const somaSe=(f,campos)=>doMes.filter(m=>f(String(m.motivo||''))&&campos.indexOf(m.campo)>=0)
+                                .reduce((t,m)=>t+(Number(m.delta)||0),0);
+  const renovou=/^Renovação do mês/;
+  const renovado    =somaSe(s=>renovou.test(s),['creditos']);
+  const renovadoGrp =somaSe(s=>renovou.test(s),['credGrupo']);
+  const reposEntrou =somaSe(s=>s==='Sobra do mês virou reposição',['repos']);
+  const reposUsadas =-somaSe(s=>s==='Reposição na agenda',['repos']);
+  const planoCad    =Number(a.plano)||0, planoGrp=Number(a.planoGrupo)||0;
+
+  /* O que já passou e o que ainda vem são contas diferentes, e misturar as
+     duas era o que fazia a diferença dar um número negativo sem sentido: aula
+     de daqui a duas semanas entrava como se já tivesse sido dada.
+     No passado ainda há duas situações que não são a mesma: a aula marcada e
+     CONFIRMADA no ✓, e a aula que passou sem você dizer nada. A segunda não é
+     erro — é decisão pendente sua. */
+  const hoje=dKey(new Date());
+  const aulas=fcAulasDoMes(a,mk);
+  const soma=l=>l.reduce((t,x)=>t+(Number(x.custo)||0),0);
+  const passadas=aulas.filter(x=>x.data<=hoje);
+  const confirmadas =soma(passadas.filter(x=>x.marcada));
+  const semConfirmar=soma(passadas.filter(x=>!x.marcada));
+  const aRealizar   =soma(aulas.filter(x=>x.data>hoje));
+  const faltas=fcFaltasDoMes(a,mk), avisados=fcAvisadosDoMes(a,mk);
+
+  const contratado=renovado+renovadoGrp+reposEntrou;
+  /* Consumido = o que você confirmou mais as faltas, que também consomem.
+     Aula futura e aula sem confirmação NÃO entram: a diferença é só do que já
+     dá para conferir. */
+  const consumido=confirmadas+faltas;
+  return {planoCad,planoGrp,renovado,renovadoGrp,reposEntrou,reposUsadas,
+          confirmadas,semConfirmar,aRealizar,consumido,contratado,
+          naAgenda:confirmadas+semConfirmar+aRealizar,
+          sobra:contratado-consumido,
+          faltas,avisados,
+          divergeRenovacao:(renovado+renovadoGrp)!==(planoCad+planoGrp)};
+}
+/* A aula de hoje só é "realizada" depois de a HORA chegar.
+   A conta era por data: às 8 da manhã o fechamento já dava a aula das 18h como
+   feita, e o aluno recebia cobrando uma aula que ainda ia acontecer. Quem
+   marcou o tique manda — aí aconteceu, tanto faz a hora. */
+function aulaJaAconteceu(p,agora){
+  if(!p)return false;
+  if(p.marcada)return true;
+  const d=String(p.data||'');if(!d)return false;
+  const hoje=dKey(agora||new Date());
+  if(d<hoje)return true;
+  if(d>hoje)return false;
+  const n=agora||new Date();
+  /* Sem hora (lançamento avulso do cartão) só vira "realizada" no fim do dia —
+     antes disso não há como saber se já foi. */
+  const h=(p.hora&&p.hora!=='—')?p.hora:'23:59';
+  return _hm(h)<=(n.getHours()*60+n.getMinutes());
+}
+function fcDados(a,mk){
+  const aulas=fcAulasDoMes(a,mk);
+  const feitas=aulas.reduce((t,p)=>t+(Number(p.custo)||1),0);
+  const faltas=fcFaltasDoMes(a,mk), avisados=fcAvisadosDoMes(a,mk);
+  const cheia=Number(a.mensalidade)||0;
+  return {aulas,feitas,faltas,avisados,cheia,total:cheia};
+}
+function renderFechamento(){
+  const box=document.getElementById('fech-export');if(!box)return;
+  const a=DB.alunos.find(x=>x.id===(document.getElementById('fc-aluno')||{}).value);
+  const mk=(document.getElementById('fc-mes')||{}).value||monthKey();
+  if(!a){box.innerHTML='<div class="empty">Escolha o aluno para ver a prévia do fechamento.</div>';renderConfMes();return;}
+  /* Para QUEM vai, escrito antes de tocar em enviar. Fechamento é o financeiro
+     do aluno: descobrir o destino só depois que o WhatsApp abriu é tarde. */
+  (function(){
+    const h=document.getElementById('fc-envio-hint');if(!h)return;
+    const f=foneWhats(a.tel);
+    if(f){
+      const d=f.slice(2), bonito='('+d.slice(0,2)+') '+d.slice(2,-4)+'-'+d.slice(-4);
+      h.innerHTML='📲 Vai direto para <b>'+esc(a.nome)+'</b> · '+esc(bonito)
+        +'<br>A imagem é salva na galeria — anexe com 📎 se quiser mandar junto.';
+      h.style.color='';
+    }else{
+      h.innerHTML='⚠️ <b>'+esc(a.nome)+'</b> está sem WhatsApp no cadastro — vai abrir a lista de contatos para você escolher. '
+        +'Cadastre o número no aluno para ir direto.';
+      h.style.color='var(--bad,#C0392B)';
+    }
+  })();
+  const D=fcDados(a,mk);
+  const obs=(document.getElementById('fc-obs')||{}).value||'';
+  /* Realizada e "ainda vem" nao sao a mesma coisa. A lista era uma so, sob o
+     titulo "Aulas realizadas", e mostrava tambem as aulas do fim do mes que
+     ainda nao aconteceram — o aluno lia como se ja tivessem sido dadas. */
+  const _agora=new Date();
+  const jaForam=D.aulas.filter(p=>aulaJaAconteceu(p,_agora));
+  const aVir   =D.aulas.filter(p=>!aulaJaAconteceu(p,_agora));
+  const linhaAula=p=>'<div class="fx-linha"><span>'+fmtDataCurta(p.data)+'</span><span>'+
+    ((p.hora&&p.hora!=='—')?p.hora:'—')+'</span><span>'+
+    (p.tipo==='reposicao'||p.repo?'reposição':(p.tipo==='grupo'?'grupo':'aula'))+'</span></div>';
+  const bloco=(titulo,lista,vazio)=>'<div class="fx-sec">'+titulo+'</div>'+(lista.length
+    ? lista.map(linhaAula).join('')
+    : '<div class="fx-linha" style="justify-content:center;color:#8A7B63">'+vazio+'</div>');
+  const venc=Number(a.diaVenc)||10;
+  const pix=(DB.pix||'').trim();
+  box.innerHTML=
+   '<div class="fx-card">'
+   +'<div class="fx-topo"><img src="jv-icone-gestao.png" alt=""><div><b>ACADEMIA JOÃO VICTOR TÊNIS</b><span>Fechamento mensal</span></div></div>'
+   +'<div class="fx-nome">'+esc(a.nome)+'</div>'
+   +'<div class="fx-mes">'+fcRotuloMes(mk)+'</div>'
+   +bloco('Aulas realizadas',jaForam,'Nenhuma aula realizada neste mês.')
+   +(aVir.length?bloco('Aulas que ainda vêm',aVir,''):'')
+   +'<div class="fx-sec">Saldo</div>'
+   +(function(){
+      /* A conta que o professor faz de cabeça, e que o aluno entende: o plano
+         dá tantas aulas no mês, tantas já foram, tantas faltam. O saldo bruto
+         de crédito e grupo é contabilidade interna — no cartão do aluno ele só
+         confundia, porque as duas cestas separadas não dizem nada para quem só
+         quer saber quantas aulas ainda tem. */
+      const doPlano=(Number(a.plano)||0)+(Number(a.planoGrupo)||0);
+      const feitas=jaForam.reduce((t,x)=>t+(Number(x.custo)||0),0);
+      const faltam=Math.max(0,doPlano-feitas);
+      const rep=reposValidas(a);
+      const L=(rot,val,estilo)=>'<div class="fx-linha"'+(estilo||'')+'><span>'+rot+'</span><span></span><span>'+val+'</span></div>';
+      return (doPlano?L('Aulas do plano no mês',fmtCred(doPlano)):'')
+        +L('Já realizadas',fmtCred(feitas))
+        +(doPlano?L('Ainda a realizar',fmtCred(faltam)):'')
+        +(D.faltas>0?L('Faltas (aula consumida)',D.faltas,' style="color:#8A7B63"'):'')
+        +(D.avisados>0?L('Cancelou avisando (crédito preservado)',D.avisados,' style="color:#2E7D52"'):'')
+        +L('Reposições guardadas',fmtCred(rep))
+        +(reposVencendo(a)>0?L('vencem no fim do mês',fmtCred(reposVencendo(a)),' style="color:#7A5B10"'):'')
+        +L('Total de aulas a usar',fmtCred(faltam+rep),
+           ' style="font-weight:800;border-top:1px solid var(--border);padding-top:7px;margin-top:2px"');
+    })()
+   +'<div class="fx-sec">Valores</div>'
+   +'<div class="fx-linha"><span>Mensalidade</span><span></span><span>'+fmtRs(D.cheia)+'</span></div>'
+   +'<div class="fx-total"><span>Total</span><b>'+fmtRs(D.total)+'</b></div>'
+   +(obs?'<div class="fx-obs">'+esc(obs)+'</div>':'')
+   +'<div class="fx-sec">Pagamento</div>'
+   +'<div class="fx-linha"><span>Vencimento</span><span></span><span>dia '+venc+'</span></div>'
+   +(pix?'<div class="fx-linha"><span>Pix</span><span></span><span>'+esc(pix)+'</span></div>':'')
+   +(DB.pixNome?'<div class="fx-linha"><span>Em nome de</span><span></span><span>'+esc(DB.pixNome)+'</span></div>':'')
+   +'</div>';
+  renderConfMes();
+}
+/* O painel de conciliação. Fica FORA do .fx-card que vira imagem: o cartão é
+   o que o aluno recebe, e esta conta é sua, para conferir. */
+function renderConfMes(){
+  const box=document.getElementById('fech-conf');if(!box)return;
+  const a=DB.alunos.find(x=>x.id===(document.getElementById('fc-aluno')||{}).value);
+  const mk=(document.getElementById('fc-mes')||{}).value||monthKey();
+  if(!a){box.innerHTML='';return;}
+  const C=fcConciliacao(a,mk);
+  const ln=(rot,val,cor,obs)=>'<div class="fx-linha"'+(cor?' style="color:'+cor+'"':'')+'>'
+    +'<span>'+rot+'</span><span style="flex:1;text-align:right;font-size:11px;color:#8A7B63">'+(obs||'')+'</span>'
+    +'<span style="min-width:46px;text-align:right"><b>'+val+'</b></span></div>';
+  const sinal=v=>(v>0?'+':'')+fmtCred(v);
+  box.innerHTML='<p class="sec-eyebrow" style="margin-top:20px">Conferência do mês — só para você</p>'
+   +'<div class="fx-card" style="box-shadow:none">'
+   +'<div class="fx-sec">Entrou</div>'
+   +ln('Renovação do mês',sinal(C.renovado+C.renovadoGrp),null,
+       C.renovadoGrp>0?(fmtCred(C.renovado)+' + '+fmtCred(C.renovadoGrp)+' grupo'):'')
+   +ln('Plano no cadastro',fmtCred(C.planoCad+C.planoGrp),
+       C.divergeRenovacao?'#C0392B':'#8A7B63',
+       C.divergeRenovacao?'não bate com a renovação':'confere')
+   +(C.reposEntrou?ln('Reposições que entraram',sinal(C.reposEntrou),'#2E7D52','sobra do mês anterior'):'')
+   +'<div class="fx-total"><span>Disponível no mês</span><b>'+fmtCred(C.contratado)+'</b></div>'
+   +'<div class="fx-sec">Já aconteceu</div>'
+   +ln('Marcou e fez',fmtCred(C.confirmadas),null,'confirmado no ✓')
+   +(C.faltas?ln('Marcou e faltou',String(C.faltas),'#8A7B63','consumiu a aula'):'')
+   +(C.avisados?ln('Cancelou avisando',String(C.avisados),'#2E7D52','não consumiu'):'')
+   +(C.reposUsadas?ln('Reposições usadas',fmtCred(C.reposUsadas),'#2E7D52',''):'')
+   +'<div class="fx-total"><span>Consumido até hoje</span><b>'+fmtCred(C.consumido)+'</b></div>'
+   +(C.semConfirmar?('<div class="fx-sec">Falta você dizer</div>'
+      +ln('Marcou e não confirmou',fmtCred(C.semConfirmar),'#7A5B10','aula já passou, sem ✓ nem ✗')):'')
+   +'<div class="fx-sec">Ainda vem</div>'
+   +ln('A realizar neste mês',fmtCred(C.aRealizar),'#8A7B63','fora da conta abaixo')
+   +'<div class="fx-sec">Diferença — só do que já passou</div>'
+   +ln(C.sobra>0?'Ainda tem a usar':(C.sobra<0?'Passou do disponível':'Fecha certo'),
+       fmtCred(Math.abs(C.sobra)),C.sobra<0?'#C0392B':(C.sobra>0?'#2E7D52':'#2E7D52'),
+       fmtCred(C.contratado)+' − '+fmtCred(C.consumido))
+   +(function(){
+      /* O cartão do aluno conta pelo plano: 4 no mês, 2 feitas, faltam 2. O
+         saldo guardado é outra conta, e quando as duas discordam é porque algo
+         entrou ou saiu fora do ritmo do mês — renovação que não foi lançada,
+         correção manual, aula que não debitou. A diferença fica AQUI, no seu
+         painel, e não no cartão que vai para o aluno. */
+      const plano=(Number(a.plano)||0)+(Number(a.planoGrupo)||0);
+      const feitas=C.confirmadas+C.semConfirmar;
+      const peloPlano=Math.max(0,plano-feitas);
+      const saldoReal=(Number(a.creditos)||0)+(Number(a.credGrupo)||0);
+      if(!plano||peloPlano===saldoReal)return '';
+      const d=saldoReal-peloPlano;
+      return '<div class="fx-sec">Cartão × saldo</div>'
+        +ln('O cartão diz que faltam',fmtCred(peloPlano),null,'plano '+fmtCred(plano)+' − '+fmtCred(feitas)+' feitas')
+        +ln('O saldo guardado tem',fmtCred(saldoReal),null,'créditos + grupo')
+        +ln(d>0?'Sobrando no saldo':'Faltando no saldo',fmtCred(Math.abs(d)),
+            d>0?'#7A5B10':'#C0392B','veja o extrato dele para achar a origem');
+    })()
+   +'<div class="fx-sec">Saldo hoje</div>'
+   +ln('Créditos',fmtCred(Number(a.creditos)||0))
+   +(Number(a.credGrupo)?ln('Grupo',fmtCred(Number(a.credGrupo)||0)):'')
+   +(Number(a.repos)?ln('Reposições',fmtCred(reposValidas(a))):'')
+   +'</div>'
+   +'<p class="hint">A diferença olha só o que já passou: disponível menos o que você confirmou e as faltas. Aula futura e aula que passou sem ✓ ficam de fora de propósito — elas ainda dependem de você marcar.</p>';
+}
+function fcTexto(a,mk,D){
+  return 'Olá '+a.nome.split(' ')[0]+'! 🎾 Segue o fechamento de '+fcRotuloMes(mk).toLowerCase()+': '
+    +fmtCred(D.feitas)+' aula(s), total '+fmtRs(D.total)+'. A imagem vai em anexo. Qualquer dúvida me chama!';
+}
+async function _fechCanvas(){
+  const el=document.querySelector('#fech-export .fx-card');
+  if(!el)throw new Error('sem prévia');
+  return await html2canvas(el,{backgroundColor:'#FBF8F2',scale:2});
+}
+async function _fechBlob(){
+  await garantirExportLibs();
+  if(typeof html2canvas==='undefined')throw new Error('sem biblioteca');
+  const canvas=await _fechCanvas();
+  return await new Promise(r=>canvas.toBlob(r,'image/png'));
+}
+async function baixarFechamento(){
+  const a=DB.alunos.find(x=>x.id===(document.getElementById('fc-aluno')||{}).value);
+  if(!a){toast('Escolha o aluno primeiro');return;}
+  toast('Preparando imagem…');
+  try{
+    const blob=await _fechBlob();
+    if(!blob){toast('Não consegui gerar a imagem');return;}
+    const url=URL.createObjectURL(blob),l=document.createElement('a');
+    l.href=url;l.download='fechamento-'+a.nome.split(' ')[0].toLowerCase()+'.png';
+    document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
+    toast('🖼️ Imagem salva!');
+  }catch(e){toast('Sem internet para gerar a imagem agora');}
+}
+/* O número do jeito que o WhatsApp espera: só dígitos, com o país na frente.
+   Quem copia o contato do próprio WhatsApp cola "5541..." — e aí o "55" fixo
+   que havia em cada lugar virava "555541...", que abre uma conversa vazia com
+   um número que não existe. */
+function foneWhats(tel){
+  const d=String(tel||'').replace(/\D/g,'');
+  if(!d)return '';
+  if(d.length>11&&d.indexOf('55')===0)return d;   // já veio com o país
+  return '55'+d;
+}
+async function enviarFechamento(){
+  const a=DB.alunos.find(x=>x.id===(document.getElementById('fc-aluno')||{}).value);
+  if(!a){toast('Escolha o aluno primeiro');return;}
+  const mk=(document.getElementById('fc-mes')||{}).value||monthKey();
+  const D=fcDados(a,mk), txt=fcTexto(a,mk,D);
+  /* Com telefone no cadastro, vai DIRETO para a conversa daquele aluno.
+     O compartilhamento nativo leva imagem e texto juntos, mas obriga a escolher
+     o contato na lista toda vez — e escolher o contato errado no fechamento
+     manda o financeiro de um aluno para outro. Errar de contato custa mais que
+     anexar a imagem à mão.
+     A imagem é salva na galeria antes de abrir a conversa, então continua a um
+     toque de distância: 📎 → Fotos → a última. */
+  toast('Preparando envio…');
+  let blob=null;
+  try{blob=await _fechBlob();}catch(e){}
+  const nomeArq='fechamento-'+a.nome.split(' ')[0].toLowerCase()+'.png';
+  if(foneWhats(a.tel)){
+    if(blob){
+      const url=URL.createObjectURL(blob),l=document.createElement('a');
+      l.href=url;l.download=nomeArq;
+      document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
+    }
+    window.open('https://wa.me/'+foneWhats(a.tel)+'?text='+encodeURIComponent(txt),'_blank');
+    marcarFechEnviado(a.id,mk);
+    return;
+  }
+  /* Sem telefone não há para onde direcionar: cai no compartilhamento, que ao
+     menos leva imagem e texto juntos para onde ele escolher. */
+  const file=blob?new File([blob],nomeArq,{type:'image/png'}):null;
+  if(file&&navigator.canShare&&navigator.canShare({files:[file]})){
+    try{await navigator.share({files:[file],text:txt});marcarFechEnviado(a.id,mk);
+      toast('Sem WhatsApp no cadastro de '+a.nome+' — da próxima vez vai direto');return;}catch(e){}
+  }
+  if(blob){
+    const url=URL.createObjectURL(blob),l=document.createElement('a');
+    l.href=url;l.download=nomeArq;
+    document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
+  }
+  toast('Sem WhatsApp cadastrado para '+a.nome+' — cadastre no aluno para ir direto');
+  marcarFechEnviado(a.id,mk);
+}
+/* Fila: quem já recebeu o fechamento de cada mês. */
+function marcarFechEnviado(id,mk){
+  if(!DB.fechEnviado)DB.fechEnviado={};
+  if(!DB.fechEnviado[mk])DB.fechEnviado[mk]={};
+  DB.fechEnviado[mk][id]=Date.now();
+  logAct('Fechamento enviado: '+((DB.alunos.find(x=>x.id===id)||{}).nome||id)+' · '+mk);
+  persist();renderFilaFech();
+}
+function desmarcarFech(id,mk){
+  if(DB.fechEnviado&&DB.fechEnviado[mk])delete DB.fechEnviado[mk][id];
+  logAct('Fechamento desmarcado: '+((DB.alunos.find(x=>x.id===id)||{}).nome||id)+' · '+mk);
+  persist();renderFilaFech();
+}
+/* Marcar na mão quem já recebeu. O ✓ automático só aparece quando o envio sai
+   pelo app; quando o fechamento vai por fora (WhatsApp do computador, papel,
+   entregue em quadra) a fila ficava mentindo. Agora a bolinha é um botão:
+   toca para marcar, toca de novo para desmarcar. */
+function alternarFechEnviado(id,mk){
+  const env=(DB.fechEnviado&&DB.fechEnviado[mk])||{};
+  if(env[id]){desmarcarFech(id,mk);return;}
+  if(!DB.fechEnviado)DB.fechEnviado={};
+  if(!DB.fechEnviado[mk])DB.fechEnviado[mk]={};
+  DB.fechEnviado[mk][id]=Date.now();
+  logAct('Fechamento marcado como enviado (na mão): '+((DB.alunos.find(x=>x.id===id)||{}).nome||id)+' · '+mk);
+  persist();renderFilaFech();
+}
+/* Quem ja pagou nao precisa aparecer na fila: se pagou, o fechamento ja foi.
+   "Pago" e o estado do mes corrente — a virada devolve todo mundo para
+   pendente. Num mes passado quem manda e o carimbo do ultimo mes quitado; sem
+   carimbo nao da para afirmar nada, e o aluno continua na lista. */
+function fechJaPago(a,mk){
+  if(!a)return false;
+  if(mk===monthKey())return a.status==='pago';
+  return a.ultimoPago===mk;
+}
+function renderFilaFech(){
+  const box=document.getElementById('fc-fila');if(!box)return;
+  const mk=(document.getElementById('fc-mes')||{}).value||monthKey();
+  const env=(DB.fechEnviado&&DB.fechEnviado[mk])||{};
+  const todos=DB.alunos.filter(ehDoFechamento).slice().sort((a,b)=>a.nome.localeCompare(b.nome));
+  const lista=todos.filter(a=>!fechJaPago(a,mk));
+  const pagos=todos.length-lista.length;
+  const n=lista.filter(a=>env[a.id]).length;
+  const c=document.getElementById('fc-contador');
+  /* o numero de quem saiu fica a vista: lista que encolhe sem dizer por que
+     e lista em que voce nao confia */
+  if(c)c.textContent='· '+n+' de '+lista.length+' enviados'+(pagos?(' · '+pagos+' já pago(s) fora da lista'):'');
+  if(!lista.length){box.innerHTML='<div class="empty">'+(todos.length?'Todos já pagaram — nada a enviar.':'Nenhum aluno ativo.')+'</div>';return;}
+  const d2=n=>String(n).padStart(2,'0');
+  box.innerHTML=lista.map(a=>{
+    const q=env[a.id],ok=!!q;
+    const dia=ok?new Date(q):null;
+    const dica=ok?('enviado em '+d2(dia.getDate())+'/'+d2(dia.getMonth()+1)+' — toque para desmarcar')
+                 :'toque para marcar como enviado';
+    return '<div class="fq-linha'+(ok?' ok':'')+'">'
+      +'<button class="fq-mark" title="'+dica+'" aria-label="'+dica+'" onclick="alternarFechEnviado(\''+a.id+'\',\''+mk+'\')">'+(ok?'✓':'○')+'</button>'
+      +'<button class="fq-nome" onclick="escolherFech(\''+a.id+'\')">'+esc(a.nome)+'</button>'
+      +'</div>';
+  }).join('');
+}
+function escolherFech(id){
+  const sa=document.getElementById('fc-aluno');
+  if(sa){sa.value=id;renderFechamento();}
+  const box=document.getElementById('fech-export');
+  if(box)box.scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+/* ===== Início: "O que pede ação" =====
+   Só reúne o que o app já sabe: pendentes e reposições vêm de renderDash (que
+   já contou), e a diferença da agenda é o mesmo teste que o cartão do aluno usa
+   para oferecer "Cobrar pela agenda". Alerta com zero não entra na tela, e sem
+   nenhum alerta a seção inteira some. */
+function alunosComDiferenca(){
+  return (DB.alunos||[]).filter(a=>{
+    const ag=agendaDoMes(a);
+    return ag.total>0&&ag.valor!==(Number(a.mensalidade)||0)&&!difSilenciada(a);
+  });
+}
+function renderAcoes(pendAlunos,pendValor){
+  const wrap=document.getElementById('acao-wrap'), box=document.getElementById('acao-list');
+  if(!wrap||!box)return;
+  const itens=[];
+
+  if(pendAlunos.length){
+    const urgentes=pendAlunos.filter(a=>{const d=vencDe(a);return d!==null&&d<=0;}).length;
+    itens.push({ico:'💵',cls:'',n:pendAlunos.length,
+      t:pendAlunos.length+' mensalidade'+(pendAlunos.length===1?'':'s')+' pendente'+(pendAlunos.length===1?'':'s'),
+      s:fmt(pendValor)+(urgentes?(' · '+urgentes+' vencida(s) ou vencendo hoje'):' · abrir a lista de cobrança'),
+      fn:'verPendentes()'});
+  }
+
+  const comRepos=(DB.alunos||[]).filter(a=>(Number(a.repos)||0)>0);
+  if(comRepos.length){
+    const total=comRepos.reduce((t,a)=>t+(Number(a.repos)||0),0);
+    const vencendo=comRepos.filter(a=>reposVencendo(a)>0).length;
+    itens.push({ico:'🔁',cls:' ouro',n:comRepos.length,
+      t:fmtCred(total)+' reposição(ões) a organizar',
+      s:vencendo?(vencendo+' aluno(s) com reposição vencendo neste mês'):(comRepos.length+' aluno(s) com reposição em aberto'),
+      fn:'verReposicoes()'});
+  }
+
+  const dif=alunosComDiferenca();
+  if(dif.length){
+    itens.push({ico:'📅',cls:' ouro',n:dif.length,
+      t:dif.length+' valor(es) a confirmar',
+      s:'a agenda do mês não bate com o plano cadastrado',
+      fn:'verDiferencas()'});
+  }
+
+  if(!itens.length){wrap.style.display='none';box.innerHTML='';return;}
+  box.innerHTML=itens.map(i=>
+    '<button class="acao-item'+i.cls+'" onclick="'+i.fn+'">'+
+    '<span class="ai-ico">'+i.ico+'</span>'+
+    '<span class="ai-txt"><b>'+i.t+'</b><small>'+i.s+'</small></span>'+
+    '<span class="ai-n">'+i.n+'</span></button>').join('');
+  wrap.style.display='block';
+}
+/* Leva à lista de alunos mostrando só quem tem a agenda diferente do plano. */
+function verDiferencas(){
+  focoDif=alunosComDiferenca().length>0;
+  focoRepos=false;
+  irParaAba('alunos');renderAlunos();
+  const list=document.getElementById('alunos-list');
+  if(list)list.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function limparFocoDif(){focoDif=false;renderAlunos();}
+/* ===== Atalhos ===== */
+function buscarAluno(){
+  irParaAba('alunos');
+  const c=document.getElementById('search');
+  if(c){c.value='';focoRepos=false;focoDif=false;renderAlunos();setTimeout(()=>{c.focus();c.scrollIntoView({block:'center'});},120);}
+}
+/* Aulas de hoje numa folha: sem isto, "Aula realizada" cairia no mesmo lugar do
+   "Buscar aluno". Quem já tem presença hoje aparece desligado — o caminho curto
+   não pode virar caminho de débito dobrado. */
+function aulasDeHoje(){
+  const hoje=new Date(), dk=dKey(hoje), out=[];
+  HORAS.forEach(h=>{
+    entriesFor(hoje,h).forEach(e=>{
+      if(!e.alunoId)return;
+      const a=DB.alunos.find(x=>x.id===e.alunoId);
+      if(!a)return;
+      const modo=(e.tipo==='grupo')?'grupo':'aula';
+      const feita=(DB.presencas||[]).some(p=>p.alunoId===a.id&&p.data===dk&&!ehFalta(p));
+      out.push({hora:h,aluno:a,modo,feita,tipo:e.tipo||'aula'});
+    });
+  });
+  return out;
+}
+function abrirAulasDeHoje(){
+  renderAulasDeHoje();
+  document.getElementById('ov-hoje').classList.add('on');
+}
+function renderAulasDeHoje(){
+  const box=document.getElementById('hoje-lista');if(!box)return;
+  const arr=aulasDeHoje();
+  if(!arr.length){box.innerHTML='<div class="empty">Nenhuma aula com aluno na agenda de hoje. Use <b>Buscar aluno</b> para registrar uma aula avulsa.</div>';return;}
+  box.innerHTML=arr.map((x,i)=>
+    '<div class="ah-linha"><span class="ah-h">'+x.hora+'</span>'+
+    '<span class="ah-n">'+esc(x.aluno.nome)+'<small>'+(x.modo==='grupo'?'👥 em grupo':'🎾 particular')+'</small></span>'+
+    (x.feita?'<button disabled>✓ já registrada</button>'
+            :'<button onclick="marcarDaFolha('+i+')">✓ Realizada</button>')+
+    '</div>').join('');
+}
+function marcarDaFolha(i){
+  const arr=aulasDeHoje(), x=arr[i];
+  if(!x||x.feita)return;
+  /* NAO passar creditoSlot aqui: ele deduz a duracao pelo intervalo ate o
+     proximo horario da grade, e como existem 14:30/15:30/19:30/20:30 ele trata
+     14:00, 15:00, 19:00 e 20:00 como meia hora. Aula de 1h descontava 0,5. */
+  aulaRealizada(x.aluno.id,x.modo,1,x.hora);
+  renderAulasDeHoje();
+}
+function ultimasAulas(id,lim){
+  return presencasDe(id).sort((a,b)=>String(b.data).localeCompare(String(a.data))).slice(0,lim||8);
+}
+function fmtDataCurta(s){
+  if(!s)return '—';const pr=String(s).split('-').map(Number);const dt=new Date(pr[0],(pr[1]||1)-1,pr[2]||1);
+  const dows=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  return String(pr[2]||0).padStart(2,'0')+'/'+String(pr[1]||0).padStart(2,'0')+' · '+dows[dt.getDay()];
+}
+function histAlunoHTML(id){
+  const arr=ultimasAulas(id,8);
+  if(!arr.length)return '<div class="ha-box"><div class="ha-empty">Nenhuma aula registrada ainda.</div></div>';
+  return '<div class="ha-box"><div class="ha-title">📋 Últimas aulas</div>'+arr.map(p=>'<div class="ha-row"><span>'+fmtDataCurta(p.data)+'</span><span>'+(p.hora&&p.hora!=='—'?p.hora+'h':'')+'</span></div>').join('')+'</div>';
+}
+const BI={
+check:'<svg viewBox="0 0 24 24"><polyline points="4 12 10 18 20 6"/></svg>',
+plus:'<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+money:'<svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>',
+undo:'<svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.6M20 6v5h-5"/></svg>',
+keyplus:'<svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="4"/><path d="M11 11l7 7M15 15l2-2 2 2-2 2z"/></svg>',
+key:'<svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="4"/><path d="M11 11l7 7M14 20h6"/></svg>',
+chart:'<svg viewBox="0 0 24 24"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg>'
+};
+function renderAlunos(){
+  renderProfs();
+  const list=document.getElementById('alunos-list');
+  const q=(document.getElementById('search').value||'').toLowerCase();
+  const items=DB.alunos.filter(a=>a.nome.toLowerCase().includes(q)).filter(a=>{
+    if(filtroAluno==='todos')return true;
+    return perfilDe(a)===filtroAluno;
+  }).filter(a=>filtroAtivo==='todos'||(filtroAtivo==='ativos')===ehAtivoAluno(a))
+    .filter(a=>!focoRepos||(Number(a.repos)||0)>0)
+    .filter(a=>{if(!focoDif)return true;const ag=agendaDoMes(a);return ag.total>0&&ag.valor!==(Number(a.mensalidade)||0)&&!difSilenciada(a);})
+    .sort((x,y)=>x.nome.localeCompare(y.nome));
+  renderResumoAlunos();
+  const avisoRepos=focoRepos?'<div class="foco-repos">🔁 Mostrando só quem tem <b>reposição pendente</b> · <a onclick="limparFocoRepos()">ver todos</a></div>':
+    (focoDif?'<div class="foco-repos">📅 Mostrando só quem tem a <b>agenda diferente do plano</b> · <a onclick="limparFocoDif()">ver todos</a></div>':'');
+  if(!items.length){list.innerHTML=avisoRepos+'<div class="empty">Nenhum aluno '+(q||filtroAluno!=='todos'||filtroAtivo!=='todos'||focoRepos||focoDif?'encontrado':'cadastrado ainda — toque em <b>+ Novo</b> para começar')+'.</div>';return;}
+  // guarda quais cartões estão abertos: toda ação chama renderAll e reconstrói a
+  // lista, e sem isso o cartão se fechava embaixo do dedo a cada toque
+  const abertos=new Set(),comMais=new Set();
+  list.querySelectorAll('.aluno').forEach(el=>{
+    const id=el.id.replace('card-','');
+    if(el.classList.contains('open'))abertos.add(id);
+    if(el.classList.contains('mais'))comMais.add(id);
+  });
+  list.innerHTML=avisoRepos+items.map(a=>{
+    const ag=agendaDoMes(a);
+    const difere=ag.total>0&&ag.valor!==(Number(a.mensalidade)||0)&&!difSilenciada(a);
+    // o cartão passa a mostrar só o que se aplica a este aluno hoje
+    const loc=usaLocacao(a);
+    const temRepos=(Number(a.repos)||0)>0;
+    const vencendo=reposVencendo(a);                 // vencem na próxima virada de mês
+    const devendo=a.status!=='pago';
+    const temGrupo=(Number(a.planoGrupo)||0)>0;
+    return `
+  <div class="aluno" id="card-${a.id}">
+    <div class="aluno-head" onclick="toggleAluno(document.getElementById('card-${a.id}'))">
+      <div><div class="aluno-name">${ehPersonalTipo(a.tipo)?'💪 ':'🎾 '}${esc(a.nome)}</div><div class="aluno-sub">${a.tipo} · ${a.plano>0?('Flex '+a.plano):'sem pacote'} · ${fmt(a.mensalidade)}/mês</div></div>
+      <span class="badge ${a.status}">${a.status==='parcial'?'50%':a.status}</span>
+    </div>
+    <div class="aluno-body"><div class="ab-in">
+      <div class="chips">
+        <span class="chip" style="${a.creditos<0?'background:#F6D7D2;color:#8E2C1E;font-weight:800':''}">🎾 ${fmtCred(a.creditos)} ${a.creditos<0?'aula(s) devendo':('crédito'+(a.creditos===1?'':'s'))}</span>
+        ${a.creditos<0?`<span class="chip" style="background:#F6D7D2;color:#8E2C1E;font-weight:800">💸 ${fmt(devidoExtraPart(a))} extra particular</span>`:''}
+        ${(Number(a.credGrupo)||0)<0?`<span class="chip" style="background:#F6D7D2;color:#8E2C1E;font-weight:800">💸 ${fmt(devidoExtraGrupo(a))} extra grupo</span>`:''}
+        ${(Number(a.planoGrupo)||0)>0||(Number(a.credGrupo)||0)!==0?`<span class="chip" style="${(Number(a.credGrupo)||0)<0?'background:#F6D7D2;color:#8E2C1E;font-weight:800':'background:#EDE7FB00;background:#E7F0E8;color:#2E7D52;font-weight:700'}">👥 ${fmtCred(Number(a.credGrupo)||0)} grupo</span>`:''}
+        ${temRepos?`<span class="chip warn">🔁 ${fmtCred(a.repos)} reposiç${a.repos===1?'ão':'ões'}</span>`:''}
+        ${loc?`<span class="chip" style="${(Number(a.locCred)||0)<0?'background:#F6D7D2;color:#8E2C1E;font-weight:800':''}">🔑 ${fmtCred(Number(a.locCred)||0)}h locação${(Number(a.locCred)||0)<0?' (devendo)':''}</span>`:''}
+        ${PRO_MULTI&&profDoAluno(a)?`<span class="chip" style="background:#E7F0E8;color:#2E7D52;font-weight:700">👨‍🏫 ${esc(profNome(profDoAluno(a)))}</span>`:''}
+        ${filtroAluno==='todos'?`<span class="chip" style="background:#EFE7D8;color:#5b5142;font-weight:700">${PERFIL_LABELS[perfilDe(a)]||''}</span>`:''}
+        ${(a.avaliacoes&&a.avaliacoes.length)?`<span class="chip" style="background:${metalDe(a.avaliacoes[a.avaliacoes.length-1].nivel).m};color:#fff;font-weight:800">📈 ${a.avaliacoes[a.avaliacoes.length-1].nivel||'—'}</span>`:''}
+        ${a.termoAceitoEm?`<span class="chip" style="background:#E6F0E6;color:#2E7D52">📄 termo aceito</span>`:''}
+        ${!ehAtivoAluno(a)?`<span class="chip" style="background:#EDE9E1;color:#6B5E4A;font-weight:700">📦 inativo</span>`:''}
+        ${vencendo>0?`<span class="chip" style="background:#FBEFD2;color:#7A5B10;font-weight:800">⏳ ${fmtCred(vencendo)} reposição(ões) vencem no fim do mês</span>`:''}
+        ${ag.total>0?`<span class="chip" style="${difere?'background:#FBEFD2;color:#7A5B10;font-weight:800':'background:#E7F0E8;color:#2E7D52;font-weight:700'}">📅 ${ag.part>0&&ag.grupo>0?(ag.part+' aula(s) + '+ag.grupo+' em grupo'):(ag.total+' aula(s)')} na agenda${difere?(' · '+fmt(ag.valor)+' (cadastro: '+fmt(a.mensalidade)+')'):''}</span>`:''}
+      </div>
+      ${histAlunoHTML(a.id)}
+      <div class="acts">
+        <button class="act a1 principal" onclick="aulaRealizada('${a.id}')">${BI.check}Aula realizada (−1)</button>
+        ${temGrupo?`<button class="act a1" onclick="aulaRealizada('${a.id}','grupo')">${BI.check}Aula em grupo (−1)</button>`:''}
+        ${devendo?`<button class="act a3" onclick="marcarPago('${a.id}')">${BI.money}Marcar pago</button>`:''}
+        ${difere?`<button class="act a2" onclick="cobrarPelaAgenda('${a.id}')">📅 Cobrar pela agenda (${fmt(ag.valor)})</button>`:''}
+        ${difere?`<button class="act a4" onclick="manterValorAnotado('${a.id}')">✓ Manter ${fmt(a.mensalidade)}</button>`:''}
+        ${(a.difUndo&&a.difUndo.mes===monthKey())?`<button class="act a1" onclick="desfazerDecisaoDif('${a.id}')">↩︎ Desfazer cobrança</button>`:''}
+        ${temRepos?`<button class="act a4" onclick="usarRepos('${a.id}')">${BI.undo}Usar reposição</button>`:''}
+        <button class="act maisbtn" onclick="toggleMais('${a.id}')">⋯ Mais ações</button>
+      </div>
+      <div class="acts-mais">
+        <div class="acts">
+          <button class="act a2" onclick="addRepos('${a.id}')">${BI.plus}Reposição</button>
+          <button class="act a4" onclick="arquivarAluno('${a.id}')">${ehAtivoAluno(a)?'📦 Marcar inativo':'✅ Reativar aluno'}</button>
+          <button class="act aval" style="grid-column:auto" onclick="openAvalModal('${a.id}')">${BI.chart}Avaliar</button>
+          ${!difere&&ag.total>0?`<button class="act a4" onclick="cobrarPelaAgenda('${a.id}')">📅 Cobrar pela agenda (${fmt(ag.valor)})</button>`:''}
+          ${!temRepos?`<button class="act a4" onclick="usarRepos('${a.id}')">${BI.undo}Usar reposição</button>`:''}
+          ${loc?`<button class="act a2" onclick="addLocacao('${a.id}')">${BI.keyplus}+1h locação</button>`:''}
+          ${loc?`<button class="act a1" onclick="usarLocacao('${a.id}')">${BI.key}Locação feita (−1h)</button>`:''}
+          ${loc?`<button class="act a3" onclick="locacaoPaga('${a.id}')">${BI.money}Locação paga</button>`:''}
+          ${!loc?`<button class="act a4" onclick="addLocacao('${a.id}')">${BI.keyplus}Começar locação</button>`:''}
+        </div>
+        <div class="aluno-foot">
+          <button class="linkbtn" onclick="openAlunoModal('${a.id}')">Editar</button>
+          <button class="linkbtn" onclick="openRegistroModal('${a.id}')">Registro 📝</button>
+          <button class="linkbtn" onclick="abrirExtrato('${a.id}')">Extrato 📋</button>
+          <button class="linkbtn" onclick="openHistAulas('${a.id}')">Aulas 📅</button>
+          ${(a.avaliacoes&&a.avaliacoes.length)?`<button class="linkbtn" onclick="openAvalExport('${a.id}')">Devolutiva 📤</button>`:''}
+          <button class="linkbtn" onclick="renovarMes('${a.id}')">Renovar mês</button>
+          ${a.tel?`<button class="linkbtn wa" onclick="enviarAcesso('${a.id}')">Acesso 🔑 ${a.codigo||'—'}</button>`:''}
+          ${a.tel?`<button class="linkbtn wa" onclick="enviarRenovacaoWa('${a.id}')">Renovação 📲</button>`:''}
+          ${!a.tel?`<span class="linkbtn" style="color:var(--muted)">🔑 ${a.codigo||'—'}</span>`:''}
+          <button class="linkbtn del" onclick="delAluno('${a.id}')">Excluir</button>
+        </div>
+      </div>
+    </div></div>
+  </div>`;}).join('');
+  // devolve o estado de cada cartão. sem transição no primeiro instante, senão
+  // a lista inteira "sanfona" a cada re-render
+  abertos.forEach(id=>{
+    const el=document.getElementById('card-'+id);if(!el)return;
+    const body=el.querySelector('.aluno-body');
+    if(body)body.style.transition='none';
+    el.classList.add('open');
+    if(body)requestAnimationFrame(()=>{body.style.transition='';});
+  });
+  comMais.forEach(id=>{
+    const el=document.getElementById('card-'+id);if(!el)return;
+    el.classList.add('mais');
+    const b=el.querySelector('.act.maisbtn');if(b)b.textContent='⋯ Menos ações';
+  });
+}
+
+/* ================= LANÇAMENTOS ================= */
+function quickLanc(desc,valor,modal){
+  if(acaoRepetida('q-'+desc+'-'+valor)){toast('Esse lançamento acabou de ser feito');return;}
+  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc,valor,cat:desc.includes('Locação')?'locacao':'avulsa',modal:modal||'tenis',data:new Date().toISOString().slice(0,10)});
+  persist();renderAll();toast(desc+' · '+fmt(valor)+' lançado');
+}
+/* Botão rápido com categoria explícita (usado pelos botões que o João cria). */
+function quickLancFull(desc,valor,cat,modal){
+  if(acaoRepetida('q-'+desc+'-'+valor)){toast('Esse lançamento acabou de ser feito');return;}
+  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc,valor:Number(valor)||0,cat:cat||'avulsa',modal:modal||'tenis',data:new Date().toISOString().slice(0,10)});
+  persist();renderAll();toast(desc+' · '+fmt(Number(valor)||0)+' lançado');
+}
+function quickLancCustom(i){const b=(DB.botoesLanc||[])[i];if(!b)return;quickLancFull(b.label,b.valor,b.cat,b.modal);}
+/* Desenha os botões da Caixa: os 4 fixos, depois os que o João criou, e por fim
+   "Outro valor" e "＋ Novo botão". */
+function renderQuickLanc(){
+  const el=document.getElementById('quick-lanc');if(!el)return;
+  const personal=(DB.precos&&DB.precos.personal)||130;
+  let h='';
+  h+=`<button class="q1" onclick="quickLanc('Avulsa Particular',170)">Avulsa Particular<small>R$ 170</small></button>`;
+  h+=`<button class="q2" onclick="quickLanc('Avulsa Grupo',95)">Avulsa Grupo<small>R$ 95</small></button>`;
+  h+=`<button class="q3" onclick="quickLanc('Locação de Quadra',70)">Locação 1h<small>R$ 70</small></button>`;
+  h+=`<button class="q2" onclick="quickLanc('Personal avulso',${personal},'personal')">Personal avulso<small>R$ ${personal}</small></button>`;
+  (DB.botoesLanc||[]).forEach((b,i)=>{
+    const cls=['q1','q2','q3'][i%3];
+    h+=`<button class="${cls} qb-custom" onclick="quickLancCustom(${i})">${esc(b.label)}<small>R$ ${Number(b.valor)||0}</small><span class="qb-x" title="Remover botão" onclick="event.stopPropagation();delBotaoLanc(${i})">✕</span></button>`;
+  });
+  h+=`<button class="q4" onclick="openLancModal()">Outro valor<small>+ lançar</small></button>`;
+  h+=`<button class="qb-novo" onclick="openBotaoModal()">＋ Novo botão<small>criar atalho</small></button>`;
+  el.innerHTML=h;
+}
+function openBotaoModal(){
+  document.getElementById('bt-nome').value='';
+  document.getElementById('bt-valor').value='';
+  document.getElementById('bt-cat').value='avulsa';
+  document.getElementById('bt-tipo').value='tenis';
+  document.getElementById('ov-botao').classList.add('on');
+}
+function salvarBotaoLanc(){
+  const label=document.getElementById('bt-nome').value.trim();
+  const valor=Number(document.getElementById('bt-valor').value);
+  if(!label||!valor){toast('Dê um nome e um valor ao botão');return;}
+  if(!Array.isArray(DB.botoesLanc))DB.botoesLanc=[];
+  DB.botoesLanc.push({label,valor,cat:document.getElementById('bt-cat').value,modal:document.getElementById('bt-tipo').value});
+  logAct('Novo botão de lançamento: '+label);
+  persist();closeModal('ov-botao');renderQuickLanc();toast('Botão "'+label+'" criado ✓');
+}
+function delBotaoLanc(i){
+  if(!Array.isArray(DB.botoesLanc)||!DB.botoesLanc[i])return;
+  if(!confirm('Remover o botão "'+DB.botoesLanc[i].label+'"?'))return;
+  DB.botoesLanc.splice(i,1);persist();renderQuickLanc();toast('Botão removido');
+}
+function openLancModal(){
+  document.getElementById('l-desc').value='';document.getElementById('l-valor').value='';
+  const sel=document.getElementById('l-aluno');
+  if(sel){sel.innerHTML='<option value="">— ninguém —</option>'+DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${a.id}">${esc(a.nome)}</option>`).join('');sel.value='';}
+  document.getElementById('l-cat').value='avulsa';
+  document.getElementById('ov-lanc').classList.add('on');
+}
+function saveLanc(){
+  const desc0=document.getElementById('l-desc').value.trim();
+  const valor=Number(document.getElementById('l-valor').value);
+  const alunoId=document.getElementById('l-aluno')?document.getElementById('l-aluno').value:'';
+  const a=alunoId?DB.alunos.find(x=>x.id===alunoId):null;
+  const desc=desc0||(a?a.nome:'');
+  if(!valor||!desc){toast('Informe o valor e a descrição (ou vincule um aluno)');return;}
+  const rec={id:'l'+Date.now(),mes:monthKey(),desc,valor,cat:document.getElementById('l-cat').value,data:new Date().toISOString().slice(0,10)};
+  if(a){rec.alunoId=a.id;if(ehPersonalTipo(a.tipo))rec.modal='personal';}
+  DB.lancamentos.push(rec);
+  persist();closeModal('ov-lanc');renderAll();toast('Lançamento salvo'+(a?(' · '+a.nome.split(' ')[0]):''));
+}
+function delLanc(id){
+  const morta=(DB.lancamentos||[]).find(l=>l.id===id);
+  if(morta)marcarRemovida('lancamentos',morta);   // para sair da nuvem também
+  DB.lancamentos=DB.lancamentos.filter(l=>l.id!==id);persist();renderAll();
+}
+/* ===== Editar um lançamento =====
+   Corrigir um valor digitado errado custava apagar e lançar de novo — e apagar
+   levava junto a data e o vínculo com o aluno, que ninguém lembra de refazer.
+   Agora a linha da Caixa abre para edição.
+
+   O mês vem da data, e não de um campo próprio: mudar a data para outro mês
+   tem de mudar o mês junto, senão o lançamento fica escondido — some da Caixa
+   de agosto e não aparece na de setembro. */
+let lancEditId=null;
+function abrirLancEdit(id){
+  const l=(DB.lancamentos||[]).find(x=>x.id===id);
+  if(!l){toast('Lançamento não encontrado');return;}
+  lancEditId=id;
+  const av=l.alunoId?DB.alunos.find(x=>x.id===l.alunoId):null;
+  document.getElementById('le-sub').textContent=av?('Vinculado a '+av.nome):'Sem vínculo com aluno';
+  document.getElementById('le-desc').value=l.desc||'';
+  document.getElementById('le-valor').value=Math.abs(Number(l.valor)||0);
+  document.getElementById('le-data').value=l.data||'';
+  document.getElementById('le-cat').value=l.cat||'outro';
+  document.getElementById('le-despcat').value=l.despCat||'';
+  leTrocouCat();
+  document.getElementById('ov-lanc-edit').classList.add('on');
+}
+function leTrocouCat(){
+  const c=(document.getElementById('le-cat')||{}).value;
+  const w=document.getElementById('le-despcat-wrap');if(w)w.style.display=(c==='despesa')?'':'none';
+  const lb=document.getElementById('le-valor-lbl');
+  if(lb)lb.textContent=(c==='despesa')?'Valor da despesa (R$)':'Valor recebido (R$)';
+  const av=document.getElementById('le-aviso');
+  if(av)av.textContent=(c==='despesa')
+    ? 'Despesa sai do saldo do mês. Digite o valor positivo — o app guarda como saída.'
+    : '';
+}
+function salvarLancEdit(){
+  const l=(DB.lancamentos||[]).find(x=>x.id===lancEditId);
+  if(!l){toast('Lançamento não encontrado');closeModal('ov-lanc-edit');return;}
+  const desc=(document.getElementById('le-desc').value||'').trim();
+  const bruto=Number(document.getElementById('le-valor').value);
+  const data=document.getElementById('le-data').value||'';
+  const cat=document.getElementById('le-cat').value||'outro';
+  if(!desc){toast('Informe a descrição');return;}
+  if(!isFinite(bruto)||bruto<=0){toast('Informe um valor maior que zero');return;}
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(data)){toast('Escolha uma data válida');return;}
+  const antes=l.mes;
+  l.desc=desc;
+  l.valor=(cat==='despesa')?-Math.abs(bruto):Math.abs(bruto);
+  l.data=data;
+  l.mes=data.slice(0,7);          // o mês segue a data, sempre
+  l.cat=cat;
+  if(cat==='despesa'){l.despCat=(document.getElementById('le-despcat').value||'').trim()||'Outros';}
+  else delete l.despCat;
+  logAct('Editar lançamento: '+desc);
+  persist();renderAll();closeModal('ov-lanc-edit');
+  toast(antes!==l.mes
+    ? ('✓ Salvo — mudou para '+(MESES[Number(l.mes.slice(5,7))-1]||'')+', abra aquele mês para ver')
+    : '✓ Lançamento atualizado');
+}
+function removerLancEdit(){
+  const l=(DB.lancamentos||[]).find(x=>x.id===lancEditId);
+  if(!l){closeModal('ov-lanc-edit');return;}
+  if(!confirm('Remover "'+l.desc+'" de '+fmt(Math.abs(Number(l.valor)||0))+'?\n\nIsso sai da Caixa e do Financeiro do mês.'))return;
+  logAct('Remover lançamento: '+l.desc);
+  delLanc(lancEditId);
+  closeModal('ov-lanc-edit');
+  toast('Lançamento removido');
+}
+let filtroLancCat=null;   // null = todas as categorias; senão 'mensalidade'|'avulsa'|'locacao'|'outro'
+const LANC_CAT_LBL={mensalidade:'Mensalidades',avulsa:'Avulsas',locacao:'Locações',outro:'Outros'};
+function limparFiltroLanc(){filtroLancCat=null;renderMovs();}
+function renderMovs(){
+  let movs=DB.lancamentos.filter(l=>l.mes===monthKey());
+  if(filtroLancCat)movs=movs.filter(l=>l.cat===filtroLancCat&&l.valor>0);
+  movs=movs.sort((a,b)=>b.id.localeCompare(a.id));
+  const el=document.getElementById('mov-list');
+  const chip=filtroLancCat?`<div class="foco-repos">Mostrando só <b>${LANC_CAT_LBL[filtroLancCat]||filtroLancCat}</b> deste mês · <a onclick="limparFiltroLanc()">ver todos</a></div>`:'';
+  if(!movs.length){el.innerHTML=chip+'<div class="empty">Nenhum lançamento'+(filtroLancCat?' desta categoria':'')+' neste mês.</div>';return;}
+  el.innerHTML=chip+movs.map(l=>{
+    const av=l.alunoId?DB.alunos.find(x=>x.id===l.alunoId):null;
+    const vinc=(av&&!(l.desc||'').includes(av.nome))?` <span style="color:var(--muted);font-weight:600">🔗 ${av.nome.split(' ')[0]}</span>`:(av?' 🔗':'');
+    /* Despesa é guardada com valor negativo. Mostrar tudo com "+" fazia o
+       aluguel da quadra aparecer como "+ R$ -2.500" — entrada, com o sinal
+       escondido no número. */
+    const saida=Number(l.valor)<0;
+    return `
+  <div class="mov" onclick="abrirLancEdit('${l.id}')" style="cursor:pointer">
+    <div class="mov-l"><b>${esc(l.desc)}</b>${vinc}<span>${l.data.split('-').reverse().join('/')} · toque para editar</span></div>
+    <div style="display:flex;align-items:center"><span class="mov-v ${saida?'out':'in'}">${saida?'−':'+'} ${fmt(Math.abs(Number(l.valor)||0))}</span><button class="mov-x" onclick="event.stopPropagation();delLanc('${l.id}')">✕</button></div>
+  </div>`;}).join('');
+}
+/* Cartão de categoria do Financeiro leva à Caixa filtrada naquela categoria. */
+function verLancCategoria(cat){
+  irParaAba('lanc');
+  filtroLancCat=cat;
+  renderMovs();
+  const el=document.getElementById('mov-list');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+/* ================= DASHBOARD & FINANCEIRO ================= */
+/* ===== Vencimento com prazo =====
+   O dia de vencimento de cada aluno já era guardado, editado e publicado — e
+   nada lia esse campo. A lista de pendentes ordenava por valor: quem devia mais
+   vinha primeiro, estivesse atrasado ou faltando duas semanas para vencer.
+
+   diasAteVencer resolve a virada do mês: se o dia já passou há mais de 3, ele
+   pertence ao mês que vem (dia 28 com hoje dia 2 = "vence em 26d", não "venceu
+   há 4d"). A folga de 3 dias é o que mantém o vencido recente ainda como
+   vencido, em vez de virar "falta um mês". */
+function diasAteVencer(dia){
+  const d=Number(dia);
+  if(!(d>=1&&d<=31))return null;
+  const hoje=new Date().getDate();
+  let dif=d-hoje;
+  if(dif<-3)dif+=30;
+  return dif;
+}
+function vencDe(a){return diasAteVencer((a&&a.diaVenc)||10);}
+/* Etiqueta e cor de urgência, no mesmo padrão que o resto do app usa. */
+function rotuloVenc(dias){
+  if(dias===null)return {txt:'sem dia',cls:'mut'};
+  if(dias<0)return {txt:'venceu há '+(-dias)+'d',cls:'late'};
+  if(dias===0)return {txt:'vence hoje',cls:'late'};
+  if(dias<=5)return {txt:'vence em '+dias+'d',cls:'soon'};
+  return {txt:'vence em '+dias+'d',cls:'mut'};
+}
+/* O aviso da virada pendente. Fica no Início porque é decisão que muda o
+   saldo de todo mundo: tem que estar na cara, não escondido num menu. */
+function renderViradaAviso(){
+  const box=document.getElementById('virada-aviso');if(!box)return;
+  const V=viradaPendente();
+  if(!V){box.innerHTML='';return;}
+  const comSobra=V.itens.filter(x=>x.sobra||x.sobraG).length;
+  const comVenc=V.itens.filter(x=>x.venc).length;
+  const detalhe=[comSobra?(comSobra+' aluno(s) com sobra a converter em reposição'):'',
+                 comVenc?(comVenc+' com reposição passando de 4 meses'):'']
+                .filter(Boolean).join(' · ')||'nenhum aluno tem sobra';
+  box.innerHTML='<div class="cons bad" style="margin-bottom:14px"><h4><span>🗓️</span>O mês virou — '
+    +esc(V.de)+' → '+esc(V.para)+'</h4>'
+    +'<p>Nada foi alterado ainda. '+esc(detalhe)+'.'
+    +'<br><span class="hint">Converter transforma o crédito que sobrou em reposição e marca todos como "não pago". Enquanto você não decidir, os saldos ficam como estão.</span>'
+    +'<br><button class="btn btn-clay" style="margin-top:9px;padding:7px 12px;font-size:12px" onclick="aplicarViradaMes()">Ver e converter</button>'
+    +' <button class="btn btn-ghost" style="margin-top:9px;padding:7px 12px;font-size:12px" onclick="pularViradaMes()">Encerrar sem converter</button>'
+    +'</p></div>';
+}
+function renderDash(){
+  renderViradaAviso();
+  const movs=DB.lancamentos.filter(l=>l.mes===monthKey());
+  const recebido=movs.filter(l=>l.valor>0).reduce((s,l)=>s+l.valor,0);
+  const pendAlunos=DB.alunos.filter(a=>a.status!=='pago');
+  const pendValor=pendAlunos.reduce((s,a)=>s+(a.status==='parcial'?a.mensalidade*0.5:a.mensalidade),0);
+  const creditos=DB.alunos.reduce((s,a)=>s+a.creditos,0);
+  const repos=DB.alunos.reduce((s,a)=>s+a.repos,0);
+
+  document.getElementById('k-recebido').textContent=fmt(recebido);
+  document.getElementById('k-recebido-s').textContent=movs.length+' lançamento'+(movs.length===1?'':'s');
+  document.getElementById('k-pendente').textContent=fmt(pendValor);
+  document.getElementById('k-pendente-s').textContent=pendAlunos.length+' aluno'+(pendAlunos.length===1?'':'s');
+  // só vira botão quando há alguém para mostrar: prometer toque sem destino é pior que não ter
+  const kp=document.getElementById('kpi-pendente');
+  if(kp)kp.classList.toggle('tocavel',pendAlunos.length>0);
+  const cAl=contagemAlunos();
+  document.getElementById('k-alunos').textContent=cAl.ativos;
+  document.getElementById('k-alunos-s').textContent=cAl.inativos>0
+    ? ('de '+cAl.total+' no cadastro · '+cAl.inativos+' inativo(s)') : 'no cadastro';
+  document.getElementById('k-creditos').textContent=fmtCred(creditos);
+  document.getElementById('k-repos-s').textContent=fmtCred(repos)+' reposições pendentes';
+  const kc=document.getElementById('kpi-cred');
+  if(kc)kc.classList.toggle('tocavel',(creditos>0||repos>0));   // vira botão só quando há algo para ver
+
+  const pctReal=Math.round(recebido/(DB.meta||1)*100);   // % de verdade, sem teto — mostra 127%, 200%, o que for
+  const pctBar=Math.min(100,pctReal);                     // largura da barra tem limite físico: não passa da caixa
+  const barFill=document.getElementById('bar-fill');
+  barFill.style.width=(hideVals?0:pctBar)+'%';
+  barFill.classList.toggle('batida',pctReal>=100);        // meta atingida/superada: destaque
+  document.getElementById('bar-txt').textContent=hideVals?'R$ ••••':(fmt(recebido)+' / '+fmt(DB.meta)+' ('+pctReal+'%)');
+
+  renderAcoes(pendAlunos,pendValor);
+  const pl=document.getElementById('pend-list');
+  // Aulas AGENDADAS na grade — conta só Tênis (aula+grupo) e Personal; ignora locação, bloqueio, pessoal e compromissos
+  const setTxt=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  const _hoje=new Date();
+  const aulasDia=contarAulas(_hoje,_hoje);
+  const _ini=new Date(curYear,curMonth,1), _fim=new Date(curYear,curMonth+1,0);
+  const aulasMes=contarAulas(_ini,_fim);
+  setTxt('k-aulas-dia-total',aulasDia.total);setTxt('k-aulas-dia-personal',aulasDia.personal);setTxt('k-aulas-dia-tenis',aulasDia.tenis);
+  setTxt('k-aulas-total',aulasMes.total);setTxt('k-aulas-personal',aulasMes.personal);setTxt('k-aulas-tenis',aulasMes.tenis);
+  const ocMes=ocupacao(_ini,_fim), ocHoje=ocupacao(_hoje,_hoje);
+  const ofill=document.getElementById('ocup-fill'); if(ofill)ofill.style.width=ocMes.pct+'%';
+  setTxt('ocup-txt',ocMes.pct+'% no mês');
+  setTxt('ocup-sub','· hoje '+ocHoje.pct+'% · '+ocMes.ocup+'/'+ocMes.disp+' horários de aula');
+  const lfill=document.getElementById('loc-fill'); if(lfill)lfill.style.width=ocMes.locPct+'%';
+  setTxt('loc-txt',ocMes.locUsados+'h no mês');
+  setTxt('loc-sub',ocMes.locDisp?('· '+ocMes.locPct+'% da grade de locação'):'');
+  renderCompromissos();renderDatasInicio();
+  marcarDobra('dob-pend-n',pendAlunos.length,pendAlunos.length===0);
+  if(!pendAlunos.length){pl.innerHTML='<div class="empty">🎉 Todos os alunos estão em dia!</div>';}
+  else{
+    // por urgência, não por valor: quem já venceu vem antes de quem deve mais
+    const ord=pendAlunos.map(a=>({a,d:vencDe(a)}))
+      .sort((x,y)=>{
+        const dx=x.d===null?999:x.d, dy=y.d===null?999:y.d;
+        if(dx!==dy)return dx-dy;
+        return y.a.mensalidade-x.a.mensalidade;   // empate no prazo: maior valor primeiro
+      });
+    pl.innerHTML=ord.map(({a,d})=>{
+      const r=rotuloVenc(d);
+      return `
+    <div class="pend-item ${a.status}">
+      <div><b>${esc(a.nome)}</b><br><span>${a.status==='parcial'?'Pagou 50% — falta '+fmt(a.mensalidade*0.5):'Pendente — '+fmt(a.mensalidade)}</span>
+        <span class="venc-tag ${r.cls}">${r.txt}${d!==null?(' · dia '+((a.diaVenc)||10)):''}</span></div>
+      ${a.tel?`<button class="btn btn-ghost" style="padding:7px 11px;font-size:11px" onclick="cobrar('${a.id}')">Cobrar 📲</button>`:''}
+    </div>`;}).join('');
+  }
+  renderConselhos();
+}
+/* ===== O que merece sua atenção =====
+   O app sempre teve os números; faltava alguém ler os números por ele. Cada
+   conselho sai de dado que já existe, sempre com o número dentro — conselho sem
+   número não entra. Quando não há o que dizer, o painel diz isso, em vez de
+   inventar recomendação genérica. */
+function renderConselhos(){
+  const box=document.getElementById('conselhos-box');if(!box)return;
+  const t=[];   // [nivel, icone, titulo, texto]
+  const nomes=arr=>arr.slice(0,4).map(a=>a.nome.split(' ')[0]).join(', ')+(arr.length>4?' e mais '+(arr.length-4):'');
+  const alunos=DB.alunos||[];
+
+  // 1. mensalidades vencidas / vencendo
+  const pend=alunos.filter(a=>a.status!=='pago'&&(Number(a.mensalidade)||0)>0);
+  const venc=pend.filter(a=>{const d=vencDe(a);return d!==null&&d<0;});
+  if(venc.length){
+    const tot=venc.reduce((s,a)=>s+(a.status==='parcial'?a.mensalidade*0.5:a.mensalidade),0);
+    t.push(['bad','⏰','Mensalidade vencida',venc.length+' aluno(s) com mensalidade vencida somando '+fmt(tot)+': '+nomes(venc)+'. O botão "Cobrar 📲" na lista acima já abre o WhatsApp com a mensagem pronta.']);
+  }
+  const perto=pend.filter(a=>{const d=vencDe(a);return d!==null&&d>=0&&d<=5;});
+  if(perto.length)t.push(['warn','📅','Vence nos próximos dias',perto.length+' mensalidade(s) vencem em até 5 dias, somando '+fmt(perto.reduce((s,a)=>s+a.mensalidade,0))+': '+nomes(perto)+'.']);
+
+  // 2. saldo negativo — aula além do pacote, cada modalidade pelo seu preço
+  const neg=alunos.filter(a=>(Number(a.creditos)||0)<0||(Number(a.credGrupo)||0)<0);
+  if(neg.length){
+    const tot=neg.reduce((s,a)=>s+devidoExtraPart(a)+devidoExtraGrupo(a),0);
+    t.push(['bad','💸','Aulas além do pacote',neg.length+' aluno(s) com saldo negativo — '+fmt(tot)+' de aula extra a cobrar: '+nomes(neg)+'.']);
+  }
+
+  // 3. agenda diferente do plano contratado
+  const dif=alunos.map(a=>({a,g:agendaDoMes(a)})).filter(x=>x.g.total>0&&x.g.valor!==(Number(x.a.mensalidade)||0)&&!difSilenciada(x.a));
+  if(dif.length){
+    const delta=dif.reduce((s,x)=>s+(x.g.valor-(Number(x.a.mensalidade)||0)),0);
+    t.push([delta>0?'warn':'info','📅','Agenda diferente do plano',dif.length+' aluno(s) com a agenda deste mês fora do plano cadastrado — '+(delta>0?'R$ '+Math.abs(delta).toLocaleString('pt-BR')+' a mais':'R$ '+Math.abs(delta).toLocaleString('pt-BR')+' a menos')+' no total: '+nomes(dif.map(x=>x.a))+'. O botão "Cobrar pela agenda" no card de cada um acerta o valor.']);
+  }
+
+  // 4. faturamento contra o mês anterior
+  const mesesUlt=ultimosMeses(2), mAnt=mesesUlt[0], mAtu=mesesUlt[1];
+  const fatDe=mk=>(DB.lancamentos||[]).filter(l=>l.mes===mk&&l.valor>0).reduce((s,l)=>s+l.valor,0);
+  const fa=fatDe(mAnt), fh=fatDe(mAtu);
+  if(fa>0){
+    const p=Math.round((fh-fa)/fa*100);
+    if(p<=-10)t.push(['warn','📉','Faturamento abaixo do mês passado','Este mês soma '+fmt(fh)+' contra '+fmt(fa)+' em '+labelMes(mAnt)+' — '+Math.abs(p)+'% a menos. Se o mês ainda não fechou, é normal; se já fechou, vale olhar quem parou de renovar.']);
+    else if(p>=10)t.push(['good','📈','Faturamento acima do mês passado','Este mês soma '+fmt(fh)+' contra '+fmt(fa)+' em '+labelMes(mAnt)+' — '+p+'% a mais.']);
+  }
+
+  // 5. meta do mês
+  const meta=Number(DB.meta)||0;
+  if(meta>0){
+    const hoje=new Date(), fimMes=new Date(hoje.getFullYear(),hoje.getMonth()+1,0).getDate();
+    const faltamDias=fimMes-hoje.getDate();
+    const falta=meta-fh;
+    if(falta<=0)t.push(['good','🎯','Meta batida','Você já passou a meta de '+fmt(meta)+' — recebeu '+fmt(fh)+' este mês.']);
+    else t.push([faltamDias<=7?'warn':'info','🎯','Meta do mês','Faltam '+fmt(falta)+' para a meta de '+fmt(meta)+', com '+faltamDias+' dia(s) restantes no mês.']);
+  }
+
+  // 6. horários livres na semana
+  try{
+    const {out}=horariosLivresSemana(new Date());
+    const livres=out.reduce((s,o)=>s+o.livres.length,0);
+    if(livres>0)t.push(['info','🕐','Horários livres esta semana','Sua semana tem '+livres+' horário(s) de aula em aberto. O botão de enviar os horários livres no grupo dos alunos está na Agenda.']);
+  }catch(e){}
+
+  // 7. quem está sem avaliação há muito tempo
+  const semAval=alunos.filter(a=>{
+    if(perfilDe(a)==='locacao'||perfilDe(a)==='torneio')return false;
+    const av=a.avaliacoes||[];
+    if(!av.length)return true;
+    const ult=av[av.length-1].data;
+    if(!ult)return true;
+    return (Date.now()-new Date(ult+'T12:00:00').getTime())>90*864e5;
+  });
+  if(semAval.length)t.push(['info','📈','Avaliação atrasada',semAval.length+' aluno(s) sem avaliação há mais de 3 meses: '+nomes(semAval)+'. A devolutiva é o que mostra a evolução para eles.']);
+
+  // 8. reposições acumuladas
+  const rep=alunos.filter(a=>(Number(a.repos)||0)>=3);
+  if(rep.length)t.push(['warn','🔁','Reposições acumuladas',rep.length+' aluno(s) com 3 ou mais reposições guardadas: '+nomes(rep)+'. Quanto mais acumula, mais difícil encaixar todas depois.']);
+
+  // 9. locação devendo
+  const loc=alunos.filter(a=>(Number(a.locCred)||0)<0);
+  if(loc.length)t.push(['warn','🔑','Locação a acertar',loc.length+' aluno(s) com saldo de locação negativo: '+nomes(loc)+'. Use "Locação paga" no card para lançar e zerar.']);
+
+  marcarDobra('dob-consel-n',t.length,t.length===0);
+  if(!t.length){box.innerHTML='<div class="cons good"><h4><span>✅</span>Tudo em ordem</h4><p>Nenhuma pendência de cobrança, saldo ou avaliação para hoje.</p></div>';return;}
+  box.innerHTML=t.map(x=>`<div class="cons ${x[0]}"><h4><span>${x[1]}</span>${esc(x[2])}</h4><p>${esc(x[3])}</p></div>`).join('');
+}
+function renderDatasInicio(){
+  const el=document.getElementById('datas-inicio');if(!el)return;
+  const hoje=dKey(new Date());
+  const keys=Object.keys(DB.horarioData||{}).filter(k=>k>=hoje).sort().slice(0,6);
+  if(!keys.length){el.innerHTML='';return;}
+  const MES3=['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+  const itens=keys.map(k=>{
+    const m=DB.horarioData[k]||{};const vals=HORAS.map(h=>m[h]||'aula');
+    const nF=vals.filter(v=>v==='fechado').length,nL=vals.filter(v=>v==='loc').length,nA=vals.filter(v=>v==='aula').length;
+    let resumo,cor;
+    if(nF===HORAS.length){resumo='🔴 Fechado o dia todo';cor='#B23A3A';}
+    else if(nL===HORAS.length){resumo='🟡 Só locação o dia todo';cor='#9A7B2E';}
+    else if(nA===HORAS.length){resumo='🟢 Aula liberada o dia todo';cor='#2E7D52';}
+    else {resumo='Horário personalizado';cor='#9A7B2E';}
+    const pr=k.split('-').map(Number);const d=new Date(pr[0],pr[1]-1,pr[2]);
+    return '<div class="comp-item"><div class="comp-date" style="background:'+cor+'"><div class="cd-d" style="color:#fff">'+String(pr[2]).padStart(2,'0')+'</div><div class="cd-m" style="color:#fff">'+MES3[pr[1]-1]+'</div></div>'
+      +'<div class="comp-info"><b>'+DIASEM_FULL[d.getDay()]+'</b><span>'+resumo+'</span></div>'
+      +'<button class="comp-x" title="Editar" onclick="abrirHorario();setTimeout(function(){abrirDataEspecial(\''+k+'\');},60)">✎</button></div>';
+  }).join('');
+  el.innerHTML='<p class="sec-eyebrow" style="margin-top:2px">📅 Datas especiais</p><div class="comp-list">'+itens+'</div>';
+}
+function renderCompromissos(){
+  const el=document.getElementById('comp-list');if(!el)return;
+  if(!DB.compromissos)DB.compromissos=[];
+  const hoje=dKey(new Date());
+  const arr=DB.compromissos.filter(c=>c.data>=hoje).sort((a,b)=>(a.data+(a.hora||'')).localeCompare(b.data+(b.hora||'')));
+  if(!arr.length){el.innerHTML='<div class="empty">Nenhum compromisso futuro. Toque em <b>＋ Novo</b> para adicionar. 🗓️</div>';return;}
+  const MES3=['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+  el.innerHTML=arr.map(c=>{
+    const pr=String(c.data).split('-').map(Number);
+    return '<div class="comp-item"><div class="comp-date"><div class="cd-d">'+String(pr[2]||0).padStart(2,'0')+'</div><div class="cd-m">'+(MES3[(pr[1]||1)-1]||'')+'</div></div>'
+      +'<div class="comp-info"><b>'+esc(c.titulo)+'</b><span>'+(c.hora?c.hora+'h':'Dia todo')+(c.nota?' · '+esc(c.nota):'')+'</span></div>'
+      +'<button class="comp-x" title="Remover" onclick="delCompromisso(\''+c.id+'\')">✕</button></div>';
+  }).join('');
+}
+function abrirNovoCompromisso(){
+  document.getElementById('cp-titulo').value='';
+  document.getElementById('cp-data').value=dKey(new Date());
+  document.getElementById('cp-hora').value='';
+  document.getElementById('cp-nota').value='';
+  document.getElementById('ov-comp').classList.add('on');
+}
+function salvarCompromisso(){
+  const titulo=document.getElementById('cp-titulo').value.trim();
+  const data=document.getElementById('cp-data').value;
+  if(!titulo){toast('Digite o título do compromisso');return;}
+  if(!data){toast('Escolha a data');return;}
+  if(!DB.compromissos)DB.compromissos=[];
+  logAct('Adicionar compromisso: '+titulo);
+  DB.compromissos.push({id:'c'+Date.now(),titulo,data,hora:document.getElementById('cp-hora').value||'',nota:document.getElementById('cp-nota').value.trim()});
+  persist();closeModal('ov-comp');renderDash();toast('Compromisso salvo 🗓️');
+}
+var HEDIT=null,HPROF=null,HDIA=1,HMODE='semana',HDATA='',HDMAP=null,HDPROF=null;
+const DIASEM=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const DIASEM_FULL=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+function abrirHorario(){
+  HEDIT={};HPROF={};
+  for(let d=0;d<7;d++){
+    HEDIT[d]={};HPROF[d]={};
+    HORAS.forEach(h=>{
+      const c=DB.horarioCfg&&DB.horarioCfg[d];HEDIT[d][h]=(c&&c[h])||modoPadrao({getDay:()=>d},h);
+      const pc=DB.horarioProf&&DB.horarioProf[d];HPROF[d][h]=!!(pc&&pc[h]);
+    });
+  }
+  HDIA=1;HMODE='semana';HDATA='';HDMAP=null;HDPROF=null;
+  setHMode('semana');
+  document.getElementById('ov-horario').classList.add('on');
+}
+function setHMode(mode){
+  HMODE=mode;
+  document.getElementById('h-semana').style.display=mode==='semana'?'block':'none';
+  document.getElementById('h-data').style.display=mode==='data'?'block':'none';
+  const bs=document.getElementById('hmode-sem'),bd=document.getElementById('hmode-dat');
+  bs.style.background=mode==='semana'?'var(--clay,#B86B4B)':'#fff';bs.style.color=mode==='semana'?'#fff':'var(--text)';
+  bd.style.background=mode==='data'?'var(--clay,#B86B4B)':'#fff';bd.style.color=mode==='data'?'#fff':'var(--text)';
+  if(mode==='data'){
+    if(!HDATA){const t=new Date();HDATA=dKey(t);document.getElementById('h-date').value=HDATA;}
+    selData();renderDatasEspeciais();
+  } else { renderHorarioTabs();renderHorarioList(); }
+}
+function renderDatasEspeciais(){
+  const box=document.getElementById('h-datas-list');if(!box)return;
+  const keys=Object.keys(DB.horarioData||{}).sort();
+  if(!keys.length){box.innerHTML='<div style="color:var(--muted);font-size:11px;padding:8px 2px;text-align:center">Nenhuma data especial salva ainda.</div>';return;}
+  box.innerHTML='<div style="font-size:11px;font-weight:800;color:var(--muted);margin:10px 2px 5px">📅 DATAS ESPECIAIS SALVAS</div>'+keys.map(k=>{
+    const m=DB.horarioData[k]||{};
+    const vals=HORAS.map(h=>m[h]||'aula');
+    const nA=vals.filter(v=>v==='aula').length,nL=vals.filter(v=>v==='loc').length,
+          nF=vals.filter(v=>v==='fechado').length;
+    const pd=(DB.horarioProfData||{})[k]||{};
+    const nP=HORAS.filter(x=>pd[x]).length;
+    let resumo;
+    if(nF===HORAS.length)resumo='🔴 Fechado o dia todo';
+    else if(nL===HORAS.length)resumo='🟡 Só locação o dia todo';
+    else if(nA===HORAS.length)resumo='🟢 Aula o dia todo';
+    else resumo=nA+' aula · '+nL+' loc · '+nF+' fech.';
+    if(nP)resumo+=' · 👨‍🏫 '+nP;
+    const d=hParse(k);
+    return '<div style="display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:9px;padding:7px 9px;margin-bottom:5px">'
+      +'<button onclick="abrirDataEspecial(\''+k+'\')" style="flex:1;text-align:left;background:none;border:none;cursor:pointer;padding:0"><div style="font-size:12.5px;font-weight:700;color:var(--text)">'+DIASEM[d.getDay()]+' '+String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear()+'</div><div style="font-size:11px;color:var(--muted)">'+resumo+'</div></button>'
+      +'<button onclick="removerDataEspecial(\''+k+'\')" title="Remover" style="flex-shrink:0;width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:#fff;color:#B23A3A;font-weight:700;cursor:pointer">✕</button>'
+      +'</div>';
+  }).join('');
+}
+function abrirDataEspecial(k){HMODE='data';document.getElementById('h-date').value=k;selData();}
+function removerDataEspecial(k){
+  if(!confirm('Remover a data especial de '+k+'? Esse dia volta ao padrão da semana.'))return;
+  if(DB.horarioData)delete DB.horarioData[k];
+  logAct('Remover data especial '+k);persist();
+  if(HDATA===k)selData();
+  renderDatasEspeciais();toast('Data especial removida');
+}
+function hParse(s){const p=String(s).split('-').map(Number);return new Date(p[0],p[1]-1,p[2]);}
+function selData(){
+  HDATA=document.getElementById('h-date').value;
+  const info=document.getElementById('h-data-info');
+  if(!HDATA){HDMAP=null;info.textContent='Escolha uma data acima.';renderHorarioList();return;}
+  const d=hParse(HDATA),dow=d.getDay();
+  const existing=DB.horarioData&&DB.horarioData[HDATA];
+  HDMAP={};HORAS.forEach(h=>{HDMAP[h]=(existing&&existing[h])||(HEDIT[dow]&&HEDIT[dow][h])||modoPadrao({getDay:()=>dow},h);});
+  const exP=DB.horarioProfData&&DB.horarioProfData[HDATA];
+  HDPROF={};HORAS.forEach(h=>{HDPROF[h]=exP?!!exP[h]:!!(HPROF[dow]&&HPROF[dow][h]);});
+  info.innerHTML=DIASEM_FULL[dow]+', '+d.getDate()+'/'+(d.getMonth()+1)+(existing?' · <b style="color:var(--clay,#B86B4B)">personalizado</b>':' · seguindo o padrão da semana');
+  renderHorarioList();
+}
+function removerData(){
+  if(HDATA&&DB.horarioData&&DB.horarioData[HDATA]){delete DB.horarioData[HDATA];persist();}
+  selData();renderDatasEspeciais();toast('Voltou ao padrão da semana nesta data');
+}
+function activeMap(){return HMODE==='data'?HDMAP:HEDIT[HDIA];}
+function renderHorarioTabs(){
+  document.getElementById('hdia-tabs').innerHTML=DIASEM.map((n,d)=>'<button onclick="selDiaHorario('+d+')" style="flex:1;min-width:36px;padding:6px 3px;border-radius:9px;border:1px solid var(--border);font-size:11px;font-weight:700;background:'+(d===HDIA?'var(--clay,#B86B4B)':'#fff')+';color:'+(d===HDIA?'#fff':'var(--text)')+'">'+n+'</button>').join('');
+}
+function selDiaHorario(d){HDIA=d;renderHorarioTabs();renderHorarioList();}
+function renderHorarioList(){
+  const m=activeMap();
+  if(!m){document.getElementById('hhoras-list').innerHTML='<div style="color:var(--muted);font-size:12px;padding:10px;text-align:center">Escolha uma data acima.</div>';return;}
+  const opt=(h,st,lbl,cor)=>{const on=m[h]===st;return '<button onclick="setEstadoH(\''+h+'\',\''+st+'\')" style="flex:1;padding:6px 2px;border-radius:8px;border:1px solid '+(on?cor:'var(--border)')+';background:'+(on?cor:'#fff')+';color:'+(on?'#fff':'var(--muted)')+';font-size:10.5px;font-weight:700">'+lbl+'</button>';};
+  /* O que a hora É para você continua sendo uma escolha só. Liberar a quadra
+     para o professor é OUTRA pergunta, e por isso é um alternador ao lado —
+     marcável junto com qualquer uma das três. */
+  const P=activeProf();
+  const btnProf=h=>{
+    if(!ehDono()||!P)return '';
+    const on=!!P[h];
+    return '<button onclick="toggleProfH(\''+h+'\')" title="A quadra fica livre para o professor nesta hora"'
+      +' style="width:46px;flex-shrink:0;padding:6px 2px;border-radius:8px;border:1px solid '+(on?'#2E5E8C':'var(--border)')
+      +';background:'+(on?'#2E5E8C':'#fff')+';color:'+(on?'#fff':'#B9B2A6')+';font-size:13px;font-weight:700">👨‍🏫</button>';
+  };
+  document.getElementById('hhoras-list').innerHTML=HORAS.map(h=>'<div style="display:flex;align-items:center;gap:6px"><span style="width:42px;font-size:11px;font-weight:700;color:var(--muted);flex-shrink:0">'+h+'</span>'+opt(h,'aula','Aula','#2E7D52')+opt(h,'loc','Locação','#9A7B2E')+opt(h,'fechado','Fechado','#B23A3A')+btnProf(h)+'</div>').join('');
+}
+function activeProf(){return HMODE==='data'?HDPROF:(HPROF&&HPROF[HDIA]);}
+function setEstadoH(h,st){const m=activeMap();if(!m)return;m[h]=st;renderHorarioList();}
+/* Alternador, não quarta opção: liga e desliga sem mexer no que a hora é para
+   você. É assim que "dou personal fora daqui das 6 às 10" cabe na tela — a hora
+   continua Aula e a quadra fica liberada. */
+function toggleProfH(h){const p=activeProf();if(!p)return;p[h]=!p[h];renderHorarioList();}
+function todosProf(v){const p=activeProf();if(!p)return;HORAS.forEach(h=>p[h]=v);renderHorarioList();}
+function diaTodo(st){const m=activeMap();if(!m)return;HORAS.forEach(h=>m[h]=st);renderHorarioList();}
+function copiarParaUteis(){for(let d=1;d<=5;d++){HEDIT[d]=JSON.parse(JSON.stringify(HEDIT[HDIA]));HPROF[d]=JSON.parse(JSON.stringify(HPROF[HDIA]));}renderHorarioTabs();renderHorarioList();toast('Copiado para seg–sex ✓');}
+function restaurarPadrao(){
+  if(!confirm('Restaurar todos os dias da semana para o padrão recomendado? Suas alterações da semana serão substituídas quando você Salvar.'))return;
+  for(let d=0;d<7;d++){HEDIT[d]={};HPROF[d]={};HORAS.forEach(h=>{HEDIT[d][h]=modoPadrao({getDay:()=>d},h);HPROF[d][h]=false;});}
+  renderHorarioTabs();renderHorarioList();toast('Padrão restaurado — confirme em Salvar');
+}
+function salvarHorario(){
+  if(HMODE==='data'){
+    if(!HDATA){toast('Escolha uma data');return;}
+    if(!DB.horarioData)DB.horarioData={};
+    DB.horarioData[HDATA]=HDMAP;
+    if(!DB.horarioProfData)DB.horarioProfData={};
+    DB.horarioProfData[HDATA]=HDPROF||{};
+    logAct('Editar funcionamento (data '+HDATA+')');
+    persist();closeModal('ov-horario');renderAgenda();toast('📅 Data salva');
+  } else {
+    DB.horarioCfg=HEDIT;
+    DB.horarioProf=HPROF;
+    logAct('Editar funcionamento da agenda');
+    persist();closeModal('ov-horario');renderAgenda();toast('🗓️ Funcionamento salvo');
+  }
+  publicarMapaQuadra();   // liberar hora só vale quando o professor souber
+}
+function delCompromisso(id){
+  if(!confirm('Remover este compromisso?'))return;
+  logAct('Remover compromisso');
+  DB.compromissos=(DB.compromissos||[]).filter(c=>c.id!==id);
+  persist();renderDash();toast('Compromisso removido');
+}
+function cobrar(id){
+  const a=DB.alunos.find(x=>x.id===id);
+  const falta=a.status==='parcial'?a.mensalidade*0.5:a.mensalidade;
+  const msg=encodeURIComponent(`Olá ${a.nome.split(' ')[0]}! 🎾 Passando para lembrar da mensalidade de ${MESES[curMonth]}: ${fmt(falta)}. Qualquer dúvida é só chamar!`);
+  window.open(`https://wa.me/${foneWhats(a.tel)}?text=${msg}`,'_blank');
+}
+function modalDe(l){
+  if(l.modal)return l.modal;
+  if(l.cat==='mensalidade'){const nm=(l.desc||'').split('· ')[1];const a=nm&&DB.alunos.find(x=>x.nome===nm);if(a&&ehPersonalTipo(a.tipo))return 'personal';}
+  return 'tenis';
+}
+function renderFin(){
+  const movs=DB.lancamentos.filter(l=>l.mes===monthKey());
+  const recCat=c=>movs.filter(l=>l.cat===c&&l.valor>0).reduce((s,l)=>s+l.valor,0);
+  const receitas=movs.filter(l=>l.valor>0).reduce((s,l)=>s+l.valor,0);
+  const despesas=movs.filter(l=>l.valor<0).reduce((s,l)=>s+Math.abs(l.valor),0);
+  document.getElementById('f-total').textContent=fmt(receitas);
+  document.getElementById('f-despesas').textContent=fmt(despesas);
+  document.getElementById('f-saldo').textContent=fmt(receitas-despesas);
+  document.getElementById('f-mens').textContent=fmt(recCat('mensalidade'));
+  document.getElementById('f-avulsas').textContent=fmt(recCat('avulsa'));
+  document.getElementById('f-loc').textContent=fmt(recCat('locacao'));
+  document.getElementById('f-outros').textContent=fmt(recCat('outro'));
+  const recModal=m=>movs.filter(l=>l.valor>0&&modalDe(l)===m).reduce((s,l)=>s+l.valor,0);
+  if(document.getElementById('f-tenis'))document.getElementById('f-tenis').textContent=fmt(recModal('tenis'));
+  if(document.getElementById('f-personal'))document.getElementById('f-personal').textContent=fmt(recModal('personal'));
+  // mês fora da janela e com ano no arquivo: avisa em vez de mostrar vazio
+  const anoVisto=String(curYear);
+  const foraDaJanela=new Date(curYear,curMonth,15)<limiteArquivo();
+  const noArquivo=(DB.anosArquivados||[]).indexOf(anoVisto)>=0;
+  const av=document.getElementById('arq-aviso');
+  if(av){
+    if(foraDaJanela&&noArquivo&&!_anosCarregados[anoVisto]){
+      av.innerHTML='<div class="cons info"><h4><span>📂</span>Este mês está no arquivo</h4>'
+        +'<p>Os lançamentos de '+anoVisto+' foram arquivados para o app ficar leve. '
+        +'<button class="btn btn-ghost" style="margin-top:8px;padding:7px 12px;font-size:12px" onclick="carregarAnoArquivado(\''+anoVisto+'\')">Carregar '+anoVisto+'</button></p></div>';
+    }else av.innerHTML='';
+  }
+  const previsto=DB.alunos.reduce((s,a)=>s+a.mensalidade,0);
+  document.getElementById('f-previsto').textContent=fmt(previsto);
+  // o mesmo previsto, mas contando o que está de fato marcado na agenda do mês
+  // que ele está olhando — lado a lado mostra se o mês fugiu do contratado
+  const prevAg=DB.alunos.reduce((s,a)=>s+mensalidadeDaAgenda(a,curYear,curMonth).valor,0);
+  const elPA=document.getElementById('f-prev-agenda');
+  if(elPA)elPA.textContent=fmt(prevAg);
+  const inad=DB.alunos.filter(a=>a.status!=='pago').reduce((s,a)=>s+(a.status==='parcial'?a.mensalidade*0.5:a.mensalidade),0);
+  document.getElementById('f-inad').textContent=fmt(inad);
+  const mi=document.getElementById('meta-input');
+  if(hideVals){mi.type='text';mi.value='••••';mi.readOnly=true;}
+  else{mi.type='number';mi.value=DB.meta;mi.readOnly=false;}
+  document.getElementById('aviso-input').value=DB.aviso||'';
+  if(document.getElementById('termo-input'))document.getElementById('termo-input').value=DB.termo||'';
+  if(document.getElementById('pix-input'))document.getElementById('pix-input').value=DB.pix||'';
+  if(document.getElementById('pixtipo-input'))document.getElementById('pixtipo-input').value=DB.pixTipo||'celular';
+  {const _pv=document.getElementById('pix-preview');if(_pv)_pv.innerHTML=DB.pix?('✅ Chave usada no Pix: <b>'+DB.pix+'</b>'):'';}
+  if(document.getElementById('pixnome-input'))document.getElementById('pixnome-input').value=DB.pixNome||'';
+  if(document.getElementById('pixcidade-input'))document.getElementById('pixcidade-input').value=DB.pixCidade||'';
+  if(document.getElementById('card-input'))document.getElementById('card-input').value=DB.cardLink||'';
+  const pr=DB.precos||{avulsaPart:170,avulsaGrupo:95,locacao:70,personal:130};
+  if(document.getElementById('pr-avpart'))document.getElementById('pr-avpart').value=pr.avulsaPart;
+  if(document.getElementById('pr-avgrupo'))document.getElementById('pr-avgrupo').value=pr.avulsaGrupo;
+  if(document.getElementById('pr-loc'))document.getElementById('pr-loc').value=pr.locacao;
+  if(document.getElementById('pr-personal'))document.getElementById('pr-personal').value=(pr.personal!=null?pr.personal:130);
+  if(document.getElementById('pr-planilha'))document.getElementById('pr-planilha').value=(pr.planilha!=null&&pr.planilha!==0?pr.planilha:'');
+  if(document.getElementById('pr-kids'))document.getElementById('pr-kids').value=(pr.kids!=null&&pr.kids!==0?pr.kids:'');
+  const gp=DB.grupoPreco||{dupla:90,trio:85,quarteto:80};
+  if(document.getElementById('pr-gdupla'))document.getElementById('pr-gdupla').value=(gp.dupla!=null?gp.dupla:90);
+  if(document.getElementById('pr-gtrio'))document.getElementById('pr-gtrio').value=(gp.trio!=null?gp.trio:85);
+  if(document.getElementById('pr-gquarteto'))document.getElementById('pr-gquarteto').value=(gp.quarteto!=null?gp.quarteto:80);
+  renderChart(receitas,inad,despesas);
+  renderDespesas(movs);
+}
+function renderChart(recebido,aReceber,despesas){
+  const el=document.getElementById('fin-chart');if(!el)return;
+  const meta=DB.meta||0;
+  const max=Math.max(meta,recebido,aReceber,despesas,1);
+  const linhas=[
+    ['Meta','meta',meta],
+    ['Recebido','rec',recebido],
+    ['A receber','arec',aReceber],
+    ['Despesas','desp',despesas]
+  ];
+  el.innerHTML=linhas.map(([lab,cls,val])=>`
+    <div class="chart-row">
+      <span class="chart-lab">${lab}</span>
+      <span class="chart-track"><span class="chart-bar ${cls}" style="width:${Math.round(val/max*100)}%"></span></span>
+      <span class="chart-val">${fmt(val)}</span>
+    </div>`).join('');
+}
+function renderDespesas(movs){
+  const el=document.getElementById('desp-list');if(!el)return;
+  const desp=movs.filter(l=>l.valor<0).sort((a,b)=>b.id.localeCompare(a.id));
+  if(!desp.length){el.innerHTML='<div class="empty">Nenhuma despesa lançada neste mês.</div>';return;}
+  el.innerHTML=desp.map(l=>`
+    <div class="desp-item">
+      <div><div class="di-d">${l.desc}</div><div class="di-c">${l.despCat||'Despesa'}</div></div>
+      <div style="display:flex;align-items:center">
+        <span class="di-v">− ${fmt(Math.abs(l.valor))}</span>
+        <button class="di-x" onclick="delLanc('${l.id}')" title="Excluir">✕</button>
+      </div>
+    </div>`).join('');
+}
+function openDespesaModal(){
+  document.getElementById('d-desc').value='';
+  document.getElementById('d-valor').value='';
+  document.getElementById('d-cat').value='Aluguel';
+  document.getElementById('ov-desp').classList.add('on');
+}
+function saveDespesa(){
+  const desc=document.getElementById('d-desc').value.trim();
+  const valor=Math.abs(Number(document.getElementById('d-valor').value)||0);
+  if(!desc){toast('Descreva a despesa');return;}
+  if(!valor){toast('Informe o valor da despesa');return;}
+  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc,valor:-valor,cat:'despesa',despCat:document.getElementById('d-cat').value,data:new Date().toISOString().slice(0,10)});
+  persist();closeModal('ov-desp');renderAll();toast('Despesa lançada · −'+fmt(valor));
+}
+
+/* ================= GRÁFICOS ================= */
+const MES_CURTO=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+function monthKeyNow(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+function labelMes(mk){const p=mk.split('-');return MES_CURTO[Number(p[1])-1]+'/'+p[0].slice(2);}
+function ultimosMeses(n){const out=[];const d=new Date();for(let i=n-1;i>=0;i--){const x=new Date(d.getFullYear(),d.getMonth()-i,1);out.push(x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0'));}return out;}
+function barChart(el,linhas,fmtVal){
+  if(!el)return;
+  if(!linhas.length){el.innerHTML='<div class="empty">Ainda sem dados para exibir.</div>';return;}
+  const max=Math.max.apply(null,linhas.map(l=>Math.abs(l.value)).concat([1]));
+  el.innerHTML=linhas.map(l=>`
+    <div class="chart-row${l.mk?' chart-row-clic':''}"${l.mk?` onclick="irParaMes('${l.mk}','${l.destino||'fin'}')" title="Ver ${l.label} em detalhe"`:''}>
+      <span class="chart-lab">${l.label}${l.mk?' ›':''}</span>
+      <span class="chart-track"><span class="chart-bar ${l.cls||'rec'}" style="width:${Math.round(Math.abs(l.value)/max*100)}%"></span></span>
+      <span class="chart-val ${l.valCls||''}">${fmtVal(l.value)}</span>
+    </div>`).join('');
+}
+/* Clicar numa barra de mês leva o painel para aquele mês e abre a aba de detalhe. */
+function irParaMes(mk,destino){
+  if(!mk)return;
+  const p=String(mk).split('-');const y=Number(p[0]),m=Number(p[1])-1;
+  if(!y||m<0||m>11)return;
+  curYear=y;curMonth=m;
+  renderAll();
+  if(destino==='agenda'){irParaAgenda('mes',new Date(y,m,1));return;}
+  irParaAba(destino||'fin');
+}
+/* Atalhos do Início: cada número leva ao lugar onde ele é detalhado. */
+function verCaixaMes(){irParaAba('lanc');}
+function verAlunosAtivos(){irParaAba('alunos');}
+function irParaAgenda(view,date){
+  if(date)agDate=new Date(date);
+  irParaAba('agenda');
+  const idx={dia:0,semana:1,mes:2,tri:3}[view]||0;
+  const btns=document.querySelectorAll('#pg-agenda .seg button');
+  if(btns[idx])btns[idx].click(); else {agView=view;renderAgenda();}
+}
+function verAgendaHoje(){irParaAgenda('dia',new Date());}
+function verAgendaMes(){irParaAgenda('mes',new Date(curYear,curMonth,1));}
+/* ===== Chuva: quanto do ano foi perdido =====
+   O registro que dura é o evento de bloqueio com motivo 'chuva' na agenda
+   (DB.chuvas guarda só 14 dias, para avisar os alunos, e não serve de histórico).
+   Conta HORÁRIOS perdidos — quantos alunos havia em cada um não fica gravado
+   depois de 14 dias, então não dá para dizer "aulas de fulano" sem inventar.
+   A porcentagem é por DIA de quadra: quantos dos dias com tênis (aula, grupo ou
+   locação) tiveram chuva. Personal e almoço não entram — a chuva não os atinge.
+   Dias que ainda não chegaram também não entram. */
+function ehEventoChuva(e){return !!(e&&e.tipo==='bloqueio'&&(e.motivo==='chuva'||/chuva/i.test(e.titulo||'')));}
+/* Dia exposto à chuva = dia em que havia TÊNIS na quadra: aula, aula em grupo ou
+   locação. Personal e almoço ficam de fora — não são afetados pela chuva.
+   O dia de chuva conta sempre: ao marcar chuva o app apaga as aulas daquele
+   horário, então sem essa regra o próprio dia chuvoso sumiria do denominador. */
+function diaDeQuadra(dt){
+  return HORAS.some(h=>entriesFor(dt,h).some(e=>e.tipo==='aula'||e.tipo==='grupo'||e.tipo==='locacao'));
+}
+function chuvaAno(ano){
+  const eventos=(DB.agenda&&DB.agenda.eventos)||[];
+  const hoje=new Date();hoje.setHours(0,0,0,0);
+  const ultimoMes=(ano===hoje.getFullYear())?hoje.getMonth():11;
+  /* Por data, separa os horários de chuva em três: os que sabemos que tinham
+     aula (nq>0), os que sabemos que estavam vazios (nq===0) e os antigos, de
+     antes deste registro existir (sem o campo). Vazio confirmado não conta como
+     aula perdida; o antigo continua contando, senão o histórico dele sumiria. */
+  const porData={};
+  eventos.forEach(e=>{
+    if(!ehEventoChuva(e))return;
+    const d=String(e.data||'');
+    if(d.slice(0,4)!==String(ano))return;
+    const r=porData[d]||(porData[d]={comAula:0,vazio:0,semReg:0});
+    if(e.nq===undefined||e.nq===null)r.semReg++;
+    else if(Number(e.nq)>0)r.comAula++;
+    else r.vazio++;
+  });
+  const meses=[];
+  let totComAula=0,totVazio=0,totSemReg=0,totDiasChuva=0,totDiasQuadra=0;
+  for(let m=0;m<=ultimoMes;m++){
+    const fim=new Date(ano,m+1,0).getDate();
+    let comAula=0,vazio=0,semReg=0,diasChuva=0,diasQuadra=0;
+    for(let d=1;d<=fim;d++){
+      const dt=new Date(ano,m,d);
+      if(dt>hoje)break;                                   // dia que ainda não chegou não entra na conta
+      const r=porData[dKey(dt)];
+      if(r||diaDeQuadra(dt))diasQuadra++;
+      if(r){comAula+=r.comAula;vazio+=r.vazio;semReg+=r.semReg;diasChuva++;}
+    }
+    const perdidas=comAula+semReg;                        // o que vale como aula perdida
+    meses.push({m,n:perdidas,comAula,vazio,semReg,diasChuva,diasQuadra,
+      pct:diasQuadra?Math.round(diasChuva/diasQuadra*100):0});
+    totComAula+=comAula;totVazio+=vazio;totSemReg+=semReg;
+    totDiasChuva+=diasChuva;totDiasQuadra+=diasQuadra;
+  }
+  return {meses,comAula:totComAula,vazio:totVazio,semReg:totSemReg,
+    perdidas:totComAula+totSemReg,totChuva:totComAula+totVazio+totSemReg,
+    dias:totDiasChuva,diasQuadra:totDiasQuadra,
+    pct:totDiasQuadra?Math.round(totDiasChuva/totDiasQuadra*100):0,ultimoMes};
+}
+function renderGraf(){
+  // Faturamento (receitas positivas) por mês
+  const fatPorMes={};
+  DB.lancamentos.forEach(l=>{if(l.valor>0)fatPorMes[l.mes]=(fatPorMes[l.mes]||0)+l.valor;});
+  const fatTenis={},fatPersonal={};
+  DB.lancamentos.forEach(l=>{if(l.valor>0){if(modalDe(l)==='personal')fatPersonal[l.mes]=(fatPersonal[l.mes]||0)+l.valor;else fatTenis[l.mes]=(fatTenis[l.mes]||0)+l.valor;}});
+  // Despesas (valores negativos) por mês
+  const despPorMes={};
+  DB.lancamentos.forEach(l=>{if(l.valor<0)despPorMes[l.mes]=(despPorMes[l.mes]||0)+Math.abs(l.valor);});
+  // Alunos pagantes por mês (proxy para meses sem snapshot)
+  const pagPorMes={};
+  DB.lancamentos.forEach(l=>{if(l.cat==='mensalidade'&&l.valor>0){(pagPorMes[l.mes]=pagPorMes[l.mes]||new Set()).add(l.desc);}});
+
+  const setMeses=new Set(Object.keys(fatPorMes).concat(Object.keys(despPorMes)).concat(Object.keys(DB.snapAlunos||{})));
+  setMeses.add(monthKeyNow());
+  ultimosMeses(6).forEach(m=>setMeses.add(m));
+  const meses=Array.from(setMeses).sort().slice(-12);
+
+  barChart(document.getElementById('graf-fat'),
+    meses.map(mk=>({label:labelMes(mk),value:fatPorMes[mk]||0,cls:'rec',mk})),fmt);
+  const _gft=document.getElementById('graf-fat-tenis');
+  if(_gft)barChart(_gft,meses.map(mk=>({label:labelMes(mk),value:fatTenis[mk]||0,cls:'rec',mk})),fmt);
+  const _gfp=document.getElementById('graf-fat-personal');
+  if(_gfp)barChart(_gfp,meses.map(mk=>({label:labelMes(mk),value:fatPersonal[mk]||0,cls:'meta',mk})),fmt);
+
+  barChart(document.getElementById('graf-desp'),
+    meses.map(mk=>({label:labelMes(mk),value:despPorMes[mk]||0,cls:'desp',mk})),fmt);
+
+  barChart(document.getElementById('graf-lucro'),
+    meses.map(mk=>{
+      const lucro=(fatPorMes[mk]||0)-(despPorMes[mk]||0);
+      return {label:labelMes(mk),value:lucro,cls:lucro<0?'neg':'rec',valCls:lucro<0?'neg':'',mk};
+    }),fmt);
+
+  barChart(document.getElementById('graf-alunos'),
+    meses.map(mk=>{
+      const v=(DB.snapAlunos&&DB.snapAlunos[mk]!=null)?DB.snapAlunos[mk]:(pagPorMes[mk]?pagPorMes[mk].size:0);
+      return {label:labelMes(mk),value:v,cls:'meta',mk,destino:'dash'};
+    }),v=>String(v));
+
+  // Chuva no ano
+  const ch=chuvaAno(curYear);
+  const setC=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  setC('g-chuva-ano',curYear);
+  setC('g-chuva-pct',ch.pct+'%');
+  setC('g-chuva-hor',ch.perdidas);
+  setC('g-chuva-dias',ch.dias);
+  setC('g-chuva-vazio',ch.vazio);
+  barChart(document.getElementById('graf-chuva'),
+    ch.meses.map(x=>({label:MES_CURTO[x.m]+'/'+String(curYear).slice(2),value:x.n,cls:'desp',
+      mk:curYear+'-'+String(x.m+1).padStart(2,'0'),destino:'agenda'})),v=>String(v)+'h');
+  const pior=ch.meses.slice().sort((a,b)=>b.n-a.n)[0];
+  const hintC=document.getElementById('g-chuva-hint');
+  if(hintC)hintC.innerHTML=ch.totChuva
+    ? '☔ Em '+curYear+', <b>'+ch.perdidas+' horário(s) com aula</b> caíram por chuva, em <b>'+ch.dias+'</b> de <b>'+ch.diasQuadra+'</b> dias com tênis na quadra — <b>'+ch.pct+'%</b> dos seus dias de quadra. Mês mais chuvoso: <b>'+MESES[pior.m]+'</b> ('+pior.n+'h em '+pior.diasChuva+' dia(s)). Toque numa barra para ver a agenda daquele mês.'
+      +'<br><small>'+(ch.vazio?('<b>'+ch.vazio+'</b> horário(s) foram marcados como chuva mas estavam <b>vazios</b> — esses não entram na conta. '):'')
+      +(ch.semReg?('<b>'+ch.semReg+'</b> são de antes desta versão, quando o app ainda não guardava se o horário tinha aula; eles continuam contando, para não apagar seu histórico. '):'')
+      +'Só entram <b>tênis, grupo e locação</b> — personal e almoço não são afetados. E o número é de <b>horários</b>, não de alunos.</small>'
+    : '☔ Nenhum horário marcado como chuva em '+curYear+' ainda. Cada vez que você usa <b>"Marcar chuva / cancelar este horário"</b> na Agenda, ele entra nesta conta.';
+
+  // Comparativo anual
+  const fatPorAno={};
+  Object.keys(fatPorMes).forEach(mk=>{const y=mk.slice(0,4);fatPorAno[y]=(fatPorAno[y]||0)+fatPorMes[mk];});
+  const anos=Object.keys(fatPorAno).sort();
+  barChart(document.getElementById('graf-ano'),
+    anos.map(y=>({label:y,value:fatPorAno[y],cls:'rec'})),fmt);
+
+  // Cards resumo (ano atual)
+  const anoAtual=String(new Date().getFullYear());
+  const fatAno=fatPorAno[anoAtual]||0;
+  const mesesComFat=Object.keys(fatPorMes).filter(mk=>mk.slice(0,4)===anoAtual).length||1;
+  document.getElementById('g-ano-lbl').textContent=anoAtual;
+  document.getElementById('g-ano-fat').textContent=fmt(fatAno);
+  document.getElementById('g-alunos-hoje').textContent=DB.alunos.length;
+  document.getElementById('g-media-mes').textContent=fmt(Math.round(fatAno/mesesComFat));
+  renderOcupacao();
+}
+function renderOcupacao(){
+  const el=document.getElementById('graf-ocup');if(!el)return;
+  const DIAS=28,hoje=new Date(),cont={};
+  HORAS.forEach(h=>cont[h]=0);
+  let houve=false;
+  for(let i=0;i<DIAS;i++){
+    const d=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()-i,12);
+    HORAS.forEach(h=>{
+      const evs=entriesFor(d,h).filter(e=>e.origem!=='compromisso'&&['aula','grupo','personal','locacao','torneio'].indexOf(e.tipo)>=0);
+      if(evs.length){cont[h]++;houve=true;}
+    });
+  }
+  if(!houve){el.innerHTML='<div class="empty">Ainda sem histórico suficiente. Conforme você usar a agenda, a ocupação por horário aparece aqui.</div>';return;}
+  barChart(el,HORAS.map(h=>({label:h,value:cont[h],cls:'rec'})),n=>n+'x');
+}
+function saveMeta(v){DB.meta=Number(v)||0;persist();renderAll();toast('Meta atualizada');}
+function saveAviso(v){DB.aviso=v.trim();persist();toast('Aviso publicado no app do aluno');}
+function saveTermo(v){v=(v||'').trim();if(DB.termo!==v){DB.termo=v;DB.termoVer=Date.now();}persist();toast(v?'Termo publicado — alunos aceitam no próximo acesso':'Termo removido');}
+function normalizaPix(chave,tipo){
+  chave=String(chave||'').trim();
+  if(!chave)return '';
+  if(chave.indexOf('@')>=0)return chave.toLowerCase();          // e-mail (auto)
+  if(/[a-zA-Z]/.test(chave))return chave.replace(/\s+/g,'');    // chave aleatória (tem letras) — usa como está
+  const d=chave.replace(/\D/g,'');
+  if(tipo==='cpf'||tipo==='cnpj')return d;                       // CPF/CNPJ: só dígitos
+  if(d.length===14)return d;                                     // CNPJ (14 dígitos) — nunca leva "+"
+  if(d.length===11&&tipo==='cpf')return d;                       // CPF explícito
+  if(d.length>=10&&d.length<=13)return '+'+(d.length<=11?('55'+d):d); // telefone
+  return d;                                                      // fallback: só dígitos
+}
+function savePag(){
+  DB.pixTipo=(document.getElementById('pixtipo-input')||{}).value||'celular';
+  DB.pix=normalizaPix(document.getElementById('pix-input').value,DB.pixTipo);
+  {const pv=document.getElementById('pix-preview');if(pv)pv.innerHTML=DB.pix?('✅ Chave usada no Pix: <b>'+DB.pix+'</b>'):'';}
+  if(document.getElementById('pixnome-input'))DB.pixNome=document.getElementById('pixnome-input').value.trim();
+  if(document.getElementById('pixcidade-input'))DB.pixCidade=document.getElementById('pixcidade-input').value.trim();
+  DB.cardLink=document.getElementById('card-input').value.trim();
+  const num=(id,def)=>{const v=Number(document.getElementById(id).value);return v>0?v:def;};
+  DB.precos={
+    avulsaPart:num('pr-avpart',170),
+    avulsaGrupo:num('pr-avgrupo',95),
+    locacao:num('pr-loc',70),
+    personal:num('pr-personal',130),
+    planilha:num('pr-planilha',0),
+    kids:num('pr-kids',0)
+  };
+  DB.grupoPreco={dupla:num('pr-gdupla',85),trio:num('pr-gtrio',80),quarteto:num('pr-gquarteto',75)};
+  persist();toast('Formas de pagamento e valores atualizados');
+}
+/* Reinstala a grade-padrão da planilha, preservando alunos, lançamentos e agendamentos */
+function instalarGrade(){
+  if(!confirm('Isto vai REPOR a grade fixa de horários conforme sua planilha (semana-padrão).\n\n✅ Preserva: alunos, lançamentos, agendamentos de alunos e marcações pontuais.\n♻️ Substitui: apenas a grade fixa semanal (os horários recorrentes).\n\nDeseja continuar?'))return;
+  const nova=seedAgenda();
+  // mantém marcações fixas vinculadas a alunos reais (ex.: agendamentos confirmados)
+  const linkados=(DB.agenda&&DB.agenda.fixos?DB.agenda.fixos.filter(f=>f.alunoId):[]);
+  nova.fixos=nova.fixos.concat(linkados);
+  nova.eventos=(DB.agenda&&DB.agenda.eventos)?DB.agenda.eventos:[];
+  nova.excecoes=(DB.agenda&&DB.agenda.excecoes)?DB.agenda.excecoes:[];
+  DB.agenda=nova;
+  persist();renderAll();toast('✓ Grade da planilha instalada');
+}
+/* Exporta a semana atual da agenda para um arquivo que abre no Excel/Planilhas */
+function exportAgendaExcel(){
+  const base=new Date(agDate);
+  const mon=new Date(base);mon.setDate(mon.getDate()-((mon.getDay()+6)%7));
+  const days=[...Array(6)].map((_,i)=>{const d=new Date(mon);d.setDate(d.getDate()+i);return d;});
+  const sep=';';
+  let csv='HORARIOS'+sep+days.map(d=>DIAS[d.getDay()]+' '+String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')).join(sep)+'\n';
+  HORAS.forEach(h=>{
+    const linha=[h];
+    days.forEach(d=>{
+      const evs=entriesFor(d,h).map(e=>e.titulo);
+      linha.push(evs.join(' / ').replace(/;/g,','));
+    });
+    csv+=linha.join(sep)+'\n';
+  });
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='agenda-jvtenis-'+dKey(days[0])+'.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  toast('Agenda da semana exportada para Excel');
+}
+
+/* ================= BACKUP ================= */
+function exportBackup(){
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='jvtenis-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  DB.ultimoBackup=Date.now();persist();checarBackup();
+  toast('Backup exportado');
+}
+/* Mostra o retrato do que sairia, antes de qualquer coisa acontecer. */
+function mostrarPreviaArquivo(){
+  const box=document.getElementById('arq-box');if(!box)return;
+  const p=previaArquivo();
+  const anos=Object.keys(p.porAno).sort();
+  if(!p.linhas){
+    box.innerHTML='<div class="cons good"><h4><span>✅</span>Nada a arquivar</h4><p>Não há nada com mais de '
+      +MESES_JANELA+' meses. O app já está no tamanho enxuto.</p></div>';
+    return;
+  }
+  const br=d=>d?String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear():'—';
+  box.innerHTML='<div class="cons warn"><h4><span>📦</span>'+p.linhas+' linha(s) · '+Math.round(p.bytes/1024)+' KB</h4>'
+    +'<p>Mais antiga: '+br(p.maisAntiga)+' · anos: '+anos.join(', ')+'<br>'
+    +'extrato '+p.partes.movs+' · presenças '+p.partes.presencas+' · lançamentos '+p.partes.lancamentos
+    +'<br><button class="btn btn-ghost" style="margin-top:8px;padding:7px 12px;font-size:12px" onclick="arquivarAntigos()">Arquivar agora</button></p></div>'
+    +((DB.anosArquivados||[]).length?('<div class="cons info"><h4><span>📂</span>Já no arquivo</h4><p>'
+      +DB.anosArquivados.map(a=>'<button class="btn btn-ghost" style="padding:6px 11px;font-size:12px;margin:3px 4px 0 0" onclick="carregarAnoArquivado(\''+a+'\')">Carregar '+a+'</button>').join('')
+      +'</p></div>'):'');
+}
+/* ===== Extrato de um aluno =====
+   A resposta para "por que esse aluno está com 3 e não com 5". */
+function abrirExtrato(id){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  const ms=movsDe(id).slice().sort((x,y)=>y.ts-x.ts).slice(0,60);
+  const dt=ts=>{const d=new Date(ts);return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');};
+  const linhas=ms.map(m=>
+    '<tr><td style="white-space:nowrap;color:var(--muted)">'+dt(m.ts)+'</td>'
+    +'<td>'+esc(m.motivo)+'<small style="display:block;color:var(--muted)">'+CAMPO_LABEL[m.campo]+'</small></td>'
+    +'<td style="text-align:right;font-weight:800;color:'+(m.delta<0?'#8E2C1E':'#2E7D52')+'">'+(m.delta>0?'+':'')+fmtCred(m.delta)+'</td>'
+    +'<td style="text-align:right;font-weight:700">'+fmtCred(m.para)+'</td></tr>').join('');
+  const saldos=['creditos','credGrupo','repos','locCred'].map(c=>{
+    const bate=(Number(a[c])||0)===saldoPeloExtrato(a,c);
+    return '<span class="chip" style="'+(bate?'':'background:#F6D7D2;color:#8E2C1E;font-weight:800')+'">'
+      +CAMPO_LABEL[c]+': '+fmtCred(Number(a[c])||0)+(bate?' ✓':' ⚠ extrato diz '+fmtCred(saldoPeloExtrato(a,c)))+'</span>';
+  }).join('');
+  document.getElementById('ext-nome').textContent=a.nome;
+  document.getElementById('ext-saldos').innerHTML=saldos;
+  document.getElementById('ext-corpo').innerHTML=ms.length
+    ? '<table class="tbl-ext"><tr><th>Dia</th><th>O que foi</th><th style="text-align:right">Mudou</th><th style="text-align:right">Ficou</th></tr>'+linhas+'</table>'
+    : '<div class="empty">Sem movimentações ainda.</div>';
+  document.getElementById('ov-extrato').classList.add('on');
+}
+/* ===== Histórico de aulas (comprovante exportável) =====
+   Lista as aulas do aluno com data e hora, separando normais de reposições e
+   grupo, e mostra o saldo do pacote — para não se perder no número de aulas. */
+let haId=null;
+const HA_TIPO={aula:{l:'Aula',c:'#3B6FB5'},reposicao:{l:'Reposição',c:'#C9A227'},grupo:{l:'Grupo',c:'#6A4FA3'},locacao:{l:'Locação',c:'#2E8B45'},torneio:{l:'Torneio',c:'#B8912B'}};
+function openHistAulas(id){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  haId=id;
+  const ps=presencasDe(id);
+  const meses=Array.from(new Set(ps.map(p=>String(p.data||'').slice(0,7)).filter(Boolean))).sort().reverse();
+  const sel=document.getElementById('ha-mes');
+  sel.innerHTML='<option value="tudo">Histórico completo</option>'+meses.map(mk=>{const p=mk.split('-');return '<option value="'+mk+'">'+MESES[Number(p[1])-1]+' '+p[0]+'</option>';}).join('');
+  sel.value=meses[0]||'tudo';
+  renderHistAulas();
+  document.getElementById('ov-histaulas').classList.add('on');
+}
+function renderHistAulas(){
+  const a=DB.alunos.find(x=>x.id===haId);if(!a)return;
+  const filtro=document.getElementById('ha-mes').value;
+  let ps=presencasDe(a.id);
+  if(filtro&&filtro!=='tudo')ps=ps.filter(p=>String(p.data||'').startsWith(filtro));
+  ps=ps.slice().sort((x,y)=>String(y.data).localeCompare(String(x.data))||String(y.hora||'').localeCompare(String(x.hora||'')));
+  const cont={aula:0,reposicao:0,grupo:0,locacao:0,torneio:0};
+  ps.forEach(p=>{const t=p.tipo||p.modo||'aula';cont[t]=(cont[t]||0)+1;});
+  const dow=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const linhas=ps.map(p=>{
+    const t=p.tipo||p.modo||'aula';const T=HA_TIPO[t]||HA_TIPO.aula;
+    const pr=String(p.data||'').split('-');const dt=new Date(pr[0],(pr[1]||1)-1,pr[2]||1);
+    const dataBr=String(pr[2]||'').padStart(2,'0')+'/'+String(pr[1]||'').padStart(2,'0')+'/'+(pr[0]||'');
+    return '<tr><td style="border-top:1px solid #eee5d3;padding:6px;white-space:nowrap">'+dataBr+'<small style="display:block;color:#8a8478">'+dow[dt.getDay()]+'</small></td>'
+      +'<td style="border-top:1px solid #eee5d3;padding:6px;white-space:nowrap;font-weight:700">'+((p.hora&&p.hora!=='—')?p.hora:'—')+'</td>'
+      +'<td style="border-top:1px solid #eee5d3;padding:6px"><span style="display:inline-block;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:800;color:#fff;background:'+T.c+'">'+T.l+'</span></td></tr>';
+  }).join('');
+  const plano=Number(a.plano)||0,planoG=Number(a.planoGrupo)||0;
+  const periodoTxt=(filtro==='tudo')?'Histórico completo':(function(){const p=filtro.split('-');return MESES[Number(p[1])-1]+' '+p[0];})();
+  const chip=(lbl,val,cor)=>'<span style="display:inline-block;margin:0 6px 6px 0;padding:5px 10px;border-radius:9px;background:#fff;border:1px solid #eadfc6;font-size:12px;font-weight:700">'+lbl+': <b style="color:'+cor+'">'+fmtCred(val)+'</b></span>';
+  let h='<div style="font-family:\'DM Sans\',sans-serif;background:#FBF8F2;padding:16px;border-radius:12px;color:#2A2016">';
+  h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #C9A227;padding-bottom:8px;margin-bottom:10px"><div><div style="font-weight:800;font-size:15px">Academia João Victor Tênis</div><div style="font-size:11px;color:#8a8478">Comprovante de aulas · '+periodoTxt+'</div></div><div style="width:40px;height:40px;border-radius:50%;background:#1F3D2B;color:#EFE7D0;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0">JV</div></div>';
+  h+='<div style="font-size:15px;font-weight:800">'+esc(a.nome)+'</div>';
+  h+='<div style="font-size:11px;color:#8a8478;margin-bottom:8px">'+esc(a.tipo||'')+(plano?' · pacote de '+plano+' aula(s)/mês'+(planoG?' + '+planoG+' em grupo':''):'')+'</div>';
+  h+='<div style="margin-bottom:8px">'+chip('Créditos hoje',Number(a.creditos)||0,'#2E7D52')+chip('Reposições',Number(a.repos)||0,'#C9A227')+((planoG||Number(a.credGrupo))?chip('Grupo',Number(a.credGrupo)||0,'#6A4FA3'):'')+'</div>';
+  h+='<div style="background:#F1F6EE;border:1px solid #d8e6d2;border-radius:9px;padding:8px 11px;font-size:12.5px;margin-bottom:10px">No período: <b>'+(cont.aula||0)+'</b> aula(s) normal(is)'+(cont.reposicao?' · <b>'+cont.reposicao+'</b> reposição(ões)':'')+(cont.grupo?' · <b>'+cont.grupo+'</b> em grupo':'')+(cont.locacao?' · <b>'+cont.locacao+'</b> locação':'')+'.</div>';
+  h+=ps.length?('<table style="width:100%;border-collapse:collapse;font-size:12.5px"><tr style="text-align:left;color:#8a8478;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em"><th style="padding:4px 6px">Data</th><th style="padding:4px 6px">Hora</th><th style="padding:4px 6px">Tipo</th></tr>'+linhas+'</table>'):'<div style="color:#8a8478;padding:10px 0">Nenhuma aula registrada neste período.</div>';
+  h+='<div style="margin-top:10px;font-size:10.5px;color:#8a8478">Emitido em '+new Date().toLocaleDateString('pt-BR')+' · Prof. João Victor 🎾</div>';
+  h+='</div>';
+  document.getElementById('ha-export').innerHTML=h;
+  renderHistDups();
+}
+/* Aulas repetidas que ficaram guardadas de antes. Elas não entram mais na lista
+   nem no comprovante, mas o crédito delas já foi descontado duas vezes — e isso
+   só o professor pode desfazer. Fica aqui embaixo, fora do comprovante, com o
+   dia e a hora da aula que ficou valendo, e só sai daqui se ele mandar. */
+function renderHistDups(){
+  const box=document.getElementById('ha-dups');if(!box)return;
+  const a=DB.alunos.find(x=>x.id===haId);
+  const dups=a?dupsManuaisDe(a.id):[];
+  if(!dups.length){box.innerHTML='';return;}
+  const todas=DB.presencas||[];
+  box.innerHTML='<div style="margin-top:10px;border:1px solid #E5C0BA;background:#FCF3F1;border-radius:11px;padding:10px 12px">'
+    +'<div style="font-weight:800;font-size:13px;margin-bottom:4px">🔁 '+dups.length+' aula repetida'+(dups.length>1?'s':'')+' fora da lista</div>'
+    +'<p class="hint" style="margin:0 0 8px">Lançamento do cartão no mesmo dia de uma aula que já estava marcada na agenda. Já não conta no histórico, no cartão nem no fechamento — mas o crédito saiu duas vezes. Se você já acertou o número na mão no cadastro, use <b>só apagar</b>.</p>'
+    +dups.map(p=>{
+      const ag=todas.filter(q=>q.alunoId===p.alunoId&&q.data===p.data&&!q.manual&&!ehMarca(q)).map(q=>q.hora).join(' e ');
+      const dev=estornoPorRef(a,p.k,p);
+      const txtDev=Object.keys(dev).map(cp=>fmtCred(dev[cp])+' de '+CAMPO_LABEL[cp]).join(', ');
+      return '<div style="padding:7px 0;border-top:1px solid #f0dcd7">'
+        +'<div style="font-size:12.5px;margin-bottom:5px"><b>'+fmtDataCurta(p.data)+'</b> — vale a da agenda ('+esc(ag||'sem hora')+') · descontou '+esc(txtDev||'nada')+'</div>'
+        +'<div style="display:flex;gap:6px;flex-wrap:wrap">'
+        +(txtDev?('<button class="btn btn-clay" style="padding:5px 10px;font-size:12px" onclick="apagarDupAula(\''+p.k+'\',1)">apagar e devolver '+esc(txtDev)+'</button>'):'')
+        +'<button class="btn btn-ghost" style="padding:5px 10px;font-size:12px" onclick="apagarDupAula(\''+p.k+'\',0)">só apagar (não mexe no saldo)</button>'
+        +'</div></div>';
+    }).join('')+'</div>';
+}
+function apagarDupAula(k,devolver){
+  const a=DB.alunos.find(x=>x.id===haId);if(!a)return;
+  const i=(DB.presencas||[]).findIndex(p=>p.k===k);
+  if(i<0){renderHistDups();return;}
+  const reg=DB.presencas[i];
+  const dev=devolver?estornoPorRef(a,k,reg):{};
+  const volta=Object.keys(dev).map(cp=>fmtCred(dev[cp])+' de '+CAMPO_LABEL[cp]).join(', ');
+  if(!confirm('Apagar a aula repetida de '+fmtDataCurta(reg.data)+' de '+a.nome+'?\n\n'
+    +(volta?('Devolve '+volta+'.'):'O saldo NÃO muda — só a linha repetida sai.')))return;
+  marcarRemovida('presencas',reg);
+  DB.presencas.splice(i,1);
+  Object.keys(dev).forEach(cp=>mover(a,cp,dev[cp],'Aula repetida removida',k));
+  logAct('Apagar aula repetida: '+a.nome);
+  persist();renderAll();renderHistAulas();
+  toast('🧹 Aula repetida apagada · '+a.nome+(volta?(' → devolvido '+volta):' · saldo intacto'));
+}
+async function _histCanvas(){
+  const el=document.getElementById('ha-export');
+  const oMax=el.style.maxHeight,oOv=el.style.overflow;
+  el.style.maxHeight='none';el.style.overflow='visible';
+  try{return await html2canvas(el,{backgroundColor:'#FBF8F2',scale:2});}
+  finally{el.style.maxHeight=oMax;el.style.overflow=oOv;}
+}
+async function exportarHistImg(){
+  toast('Preparando imagem…');
+  try{await garantirExportLibs();}catch(e){toast('Sem internet para gerar a imagem agora');return;}
+  if(typeof html2canvas==='undefined'){toast('Recurso indisponível agora');return;}
+  const a=DB.alunos.find(x=>x.id===haId);
+  try{
+    const canvas=await _histCanvas();
+    canvas.toBlob(async(blob)=>{
+      if(!blob){toast('Não consegui gerar a imagem');return;}
+      const nome=(a?a.nome.split(' ')[0]:'aluno').toLowerCase();
+      const file=new File([blob],'aulas-'+nome+'.png',{type:'image/png'});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:'Aulas · JV Tênis'});return;}catch(e){}}
+      const url=URL.createObjectURL(blob);const l=document.createElement('a');l.href=url;l.download='aulas-'+nome+'.png';document.body.appendChild(l);l.click();document.body.removeChild(l);URL.revokeObjectURL(url);
+      toast('🖼️ Imagem salva!');
+    },'image/png');
+  }catch(e){toast('Erro ao gerar imagem');}
+}
+async function exportarHistPDF(){
+  toast('Preparando PDF…');
+  try{await garantirExportLibs();}catch(e){toast('Sem internet para gerar o PDF agora');return;}
+  if(typeof html2canvas==='undefined'||!window.jspdf){toast('Recurso indisponível agora');return;}
+  const a=DB.alunos.find(x=>x.id===haId);
+  try{
+    const canvas=await _histCanvas();
+    const img=canvas.toDataURL('image/png');
+    const {jsPDF}=window.jspdf;const pdf=new jsPDF('p','mm','a4');
+    const margin=10,pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
+    const iw=pw-margin*2,fullH=canvas.height*iw/canvas.width,pageH=ph-margin*2;
+    if(fullH<=pageH){pdf.addImage(img,'PNG',margin,margin,iw,fullH);}
+    else{                       // fatia em várias páginas para a lista não encolher
+      const sliceCanvasH=Math.floor(pageH*canvas.width/iw);
+      const c2=document.createElement('canvas');c2.width=canvas.width;const ctx=c2.getContext('2d');
+      let sy=0,first=true;
+      while(sy<canvas.height){
+        const hh=Math.min(sliceCanvasH,canvas.height-sy);
+        c2.height=hh;ctx.clearRect(0,0,c2.width,hh);ctx.drawImage(canvas,0,sy,canvas.width,hh,0,0,canvas.width,hh);
+        if(!first)pdf.addPage();
+        pdf.addImage(c2.toDataURL('image/png'),'PNG',margin,margin,iw,hh*iw/canvas.width);
+        sy+=hh;first=false;
+      }
+    }
+    pdf.save('aulas-'+(a?a.nome.split(' ')[0].toLowerCase():'aluno')+'.pdf');
+    toast('📄 PDF salvo!');
+  }catch(e){toast('Erro ao gerar PDF');}
+}
+/* ===== Este endereço está atualizado? =====
+   O app vive em dois endereços publicados em momentos diferentes, e os dois
+   gravam no MESMO banco. Uma cópia velha pode carregar um defeito já corrigido
+   — foi assim que a perda de dados aconteceu — e o estrago aparece nos dois
+   endereços. A nuvem guarda o carimbo da cópia mais nova que já abriu; quem
+   abrir mais velho fica sabendo, com o endereço certo escrito na tela.
+
+   AVISA, NÃO BLOQUEIA. Impedir a cópia velha de gravar protegeria mais, mas
+   criaria justamente o que não pode acontecer: abrir o app e não conseguir
+   salvar. */
+const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-gestao/';
+function dataBonita(v){
+  const m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m?(m[3]+'/'+m[2]):String(v||'?');
+}
+/* Comparar carimbo como TEXTO mente a partir do décimo lançamento do dia:
+   '2026-09-01-10' < '2026-09-01-9' é verdadeiro para o JavaScript, porque ele
+   compara caractere a caractere e '1' vem antes de '9'. Por isso a data e a
+   sequência viram números antes da comparação. */
+function versaoPartes(v){
+  const m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})(?:-(\d+))?$/);
+  return m?[Number(m[1]),Number(m[2]),Number(m[3]),Number(m[4]||0)]:null;
+}
+function versaoCmp(a,b){
+  const x=versaoPartes(a),y=versaoPartes(b);
+  if(!x||!y)return String(a||'')<String(b||'')?-1:(String(a||'')>String(b||'')?1:0);
+  for(let i=0;i<4;i++){if(x[i]!==y[i])return x[i]<y[i]?-1:1;}
+  return 0;
+}
+async function conferirVersao(){
+  if(!hasCloud())return;
+  try{
+    const MARCA={_prazo:1};
+    const snap=await comPrazo(window.fbDB.ref('jvtenis/versao_app').get(),PRAZO_NUVEM,MARCA);
+    if(snap===MARCA)return;                 // nuvem muda: não é motivo de alarme
+    const naNuvem=snap.exists()?String(snap.val()||''):'';
+    if(!naNuvem||versaoCmp(VERSAO,naNuvem)>0){
+      // esta é a mais nova que já abriu: registra para as outras se compararem
+      try{await window.fbDB.ref('jvtenis/versao_app').set(VERSAO);}catch(e){}
+      return;
+    }
+    if(versaoCmp(VERSAO,naNuvem)<0)mostrarBarraVersao(naNuvem);
+  }catch(e){/* nunca atrapalhar a abertura por causa de um aviso */}
+}
+function mostrarBarraVersao(naNuvem){
+  const bar=document.getElementById('barra-versao');
+  if(!bar)return;
+  const t=document.getElementById('bv-texto'), l=document.getElementById('bv-link');
+  const mesmaData=dataBonita(VERSAO)===dataBonita(naNuvem);
+  const eu=mesmaData?VERSAO:dataBonita(VERSAO), la=mesmaData?naNuvem:dataBonita(naNuvem);
+  if(t)t.textContent=' Esta cópia é a '+eu+' e já existe a '+la
+                    +'. Seus dados estão salvos — mas abra o endereço atual: ';
+  if(l){l.textContent=ENDERECO_ATUAL;l.href=ENDERECO_ATUAL;}
+  bar.style.display='block';
+}
+
+/* ===== Conta: entrar e sair =====
+   Falhar aqui não pode custar nada: o app inteiro segue funcionando deslogado
+   enquanto as regras do banco estiverem abertas. */
+function renderConta(){
+  var lv=document.getElementById('versao-linha');
+  if(lv)lv.textContent='Versão deste endereço: '+dataBonita(VERSAO)+'  ('+VERSAO+')';
+  var el=document.getElementById('conta-box');if(!el)return;
+  if(typeof firebase==='undefined'||!firebase.auth){
+    el.innerHTML='<p class="hint">⚪ Login indisponível neste aparelho — o app segue funcionando normalmente.</p>';
+    return;
+  }
+  var u=window.AUTH_USER;
+  if(u){
+    var temGoogle=(u.providerData||[]).some(function(p){return p&&p.providerId==='google.com';});
+    el.innerHTML='<p class="hint" style="color:var(--ok,#2E7D32);font-weight:700">✅ Conectado como '+esc(u.email||'conta sem e-mail')
+        +(temGoogle?' · Google ligado':'')+'</p>'
+      +(temGoogle?'':'<p class="hint">Ligar o Google deixa você entrar sem digitar senha, <b>na mesma conta</b> — os dados continuam os mesmos.</p>')
+      +'<div class="backup-row">'
+      +(temGoogle?'':'<button class="btn btn-ghost" id="conta-link-btn" onclick="ligarGoogle()">🔗 Ligar conta Google</button>')
+      +'<button class="btn btn-ghost" onclick="sairConta()">Sair desta conta</button></div>'
+      +'<p class="hint" id="conta-msg"></p>';
+    return;
+  }
+  var est='width:100%;padding:11px 12px;margin-bottom:8px;border:1px solid var(--border);border-radius:10px;font-size:14px;background:#fff;color:var(--text)';
+  el.innerHTML='<input id="conta-email" type="email" inputmode="email" autocomplete="username" placeholder="seu e-mail" style="'+est+'">'
+    +'<input id="conta-senha" type="password" autocomplete="current-password" placeholder="sua senha" style="'+est+'">'
+    +'<div class="backup-row"><button class="btn btn-ghost" id="conta-btn" onclick="entrarConta()">🔑 Entrar</button>'
+    +'<button class="btn btn-ghost" id="conta-g-btn" onclick="entrarComGoogle()">Entrar com o Google</button></div>'
+    +'<p class="hint" id="conta-msg"></p>';
+}
+/* ===== Entrar com o Google =====
+   A armadilha aqui não é o botão, é a IDENTIDADE. O app decide de quem é o
+   banco pelo uid: o do João abre a academia, o de um professor cadastrado abre
+   o espaço dele. Uma conta Google nova tem uid NOVO — então entrar pelo Google
+   sem mais nada abriria um banco vazio, como se fosse outra pessoa, e daria a
+   impressão de que os dados sumiram.
+
+   Por isso o caminho certo é LIGAR, não trocar: estando logado por e-mail e
+   senha, o Google é vinculado à mesma conta e o uid continua o mesmo. Da
+   próxima vez, entrar pelo Google cai no mesmo lugar de sempre.
+
+   E quem entrar por uma conta Google que ninguém ligou é avisado e desconectado
+   em vez de cair num banco vazio sem entender por quê. */
+function provedorGoogle(){
+  var p=new firebase.auth.GoogleAuthProvider();
+  p.setCustomParameters({prompt:'select_account'});
+  return p;
+}
+/* Popup é melhor quando funciona: não recarrega a página nem perde o estado.
+   No app instalado na tela de início, porém, ele costuma ser engolido sem erro
+   visível — daí o redirecionamento como reserva. */
+async function comGoogle(fn){
+  try{return await fn(provedorGoogle());}
+  catch(err){
+    var c=String(err&&err.code||'');
+    if(c.indexOf('popup')>=0||c.indexOf('cancelled')>=0||c.indexOf('operation-not-supported')>=0)return {redirecionar:true,err:err};
+    throw err;
+  }
+}
+function erroGoogleTexto(err){
+  var c=String(err&&err.code||'');
+  if(c.indexOf('operation-not-allowed')>=0)return 'O login pelo Google ainda não foi ativado no painel do Firebase (Authentication → Sign-in method → Google).';
+  if(c.indexOf('unauthorized-domain')>=0){
+    /* Dizer "adicione o domínio" e deixar a pessoa descobrir qual é só adia o
+       problema — o endereço está aqui, é só ler. */
+    var dom='';try{dom=location.hostname||'';}catch(e){}
+    return 'Falta autorizar este endereço no Firebase.\n\nVá em Authentication → Settings → Authorized domains → Add domain e adicione:\n\n'
+      +(dom||'(o endereço deste app)')+'\n\nDepois tente de novo.';
+  }
+  if(c.indexOf('account-exists-with-different-credential')>=0)return 'Já existe uma conta com esse e-mail. Entre com e-mail e senha e use "Ligar conta Google".';
+  if(c.indexOf('credential-already-in-use')>=0)return 'Essa conta Google já está ligada a outro login.';
+  if(c.indexOf('network')>=0)return 'Sem conexão agora. Tente de novo.';
+  return String(err&&err.message||err);
+}
+async function ligarGoogle(){
+  var b=document.getElementById('conta-link-btn');
+  var u=firebase.auth().currentUser;
+  if(!u){contaMsg('Entre com e-mail e senha primeiro.',true);return;}
+  if(b){b.disabled=true;b.textContent='Ligando…';}
+  contaMsg('');
+  try{
+    var r=await comGoogle(function(p){return u.linkWithPopup(p);});
+    if(r&&r.redirecionar){
+      try{lsSet('jvt-google-ligar','1');}catch(e){}
+      await u.linkWithRedirect(provedorGoogle());return;
+    }
+    toast('🔗 Google ligado — a conta é a mesma');
+    renderConta();
+  }catch(err){
+    contaMsg(erroGoogleTexto(err),true);
+    if(b){b.disabled=false;b.textContent='🔗 Ligar conta Google';}
+  }
+}
+async function entrarComGoogle(){
+  var b=document.getElementById('conta-g-btn');
+  if(b){b.disabled=true;b.textContent='Abrindo…';}
+  contaMsg('');
+  try{
+    var r=await comGoogle(function(p){return firebase.auth().signInWithPopup(p);});
+    if(r&&r.redirecionar){await firebase.auth().signInWithRedirect(provedorGoogle());return;}
+    await conferirContaGoogle();
+  }catch(err){
+    contaMsg(erroGoogleTexto(err),true);
+    if(b){b.disabled=false;b.textContent='Entrar com o Google';}
+  }
+}
+/* O uid que entrou é conhecido? Sem isso, uma conta Google qualquer abriria um
+   banco vazio e pareceria perda de dados. */
+async function conferirContaGoogle(){
+  var u=firebase.auth().currentUser;
+  if(!u)return;
+  if(u.uid===UID_DONO){toast('✅ Conectado');renderConta();return;}
+  if(!hasCloud()){renderConta();return;}
+  try{
+    var snap=await window.fbDB.ref('jvtenis/professores/'+u.uid).get();
+    if(snap.exists()){toast('✅ Conectado');renderConta();return;}
+  }catch(e){renderConta();return;}   // não deu para conferir: não expulsa ninguém
+  contaMsg('Esta conta Google ('+(u.email||'')+') ainda não está ligada a nenhum acesso daqui. '
+    +'Entre com e-mail e senha e use "🔗 Ligar conta Google" — assim o Google passa a valer para a MESMA conta.',true);
+  renderConta();
+}
+/* Volta do redirecionamento: o navegador saiu do app e voltou, então o
+   resultado chega aqui e não no clique. */
+function conferirVoltaGoogle(){
+  if(typeof firebase==='undefined'||!firebase.auth)return;
+  var pediuLigar=false;
+  try{pediuLigar=lsGet('jvt-google-ligar')==='1';localStorage.removeItem('jvt-google-ligar');}catch(e){}
+  firebase.auth().getRedirectResult().then(function(res){
+    if(!res||!res.user)return;
+    if(pediuLigar){toast('🔗 Google ligado — a conta é a mesma');renderConta();return;}
+    conferirContaGoogle();
+  }).catch(function(err){
+    var c=String(err&&err.code||'');
+    if(c&&c!=='auth/no-auth-event')contaMsg(erroGoogleTexto(err),true);
+  });
+}
+function contaMsg(txt,erro){
+  var m=document.getElementById('conta-msg');if(!m)return;
+  // as mensagens de erro têm passo a passo em várias linhas; sem isto o texto
+  // vira um parágrafo só e o endereço a copiar se perde no meio
+  m.style.whiteSpace='pre-line';
+  m.textContent=txt;m.style.color=erro?'var(--bad,#C0392B)':'var(--muted)';m.style.fontWeight=erro?'700':'';
+}
+async function entrarConta(){
+  var e=document.getElementById('conta-email'), s=document.getElementById('conta-senha');
+  var b=document.getElementById('conta-btn');
+  if(!e||!s)return;
+  var email=(e.value||'').trim(), senha=s.value||'';
+  if(!email||!senha){contaMsg('Preencha e-mail e senha.',true);return;}
+  if(b){b.disabled=true;b.textContent='Entrando…';}
+  contaMsg('');
+  try{
+    await firebase.auth().signInWithEmailAndPassword(email,senha);
+    toast('✅ Conectado');
+    renderConta();
+  }catch(err){
+    var c=String(err&&err.code||'');
+    var txt=c.indexOf('wrong-password')>=0||c.indexOf('invalid-credential')>=0 ? 'E-mail ou senha não conferem.'
+          : c.indexOf('user-not-found')>=0 ? 'Não existe conta com esse e-mail. Ela precisa ser criada no painel do Firebase.'
+          : c.indexOf('operation-not-allowed')>=0 ? 'O login por e-mail ainda não foi ativado no painel do Firebase.'
+          : c.indexOf('too-many-requests')>=0 ? 'Muitas tentativas seguidas. Espere alguns minutos.'
+          : c.indexOf('network')>=0 ? 'Sem conexão agora. Tente de novo.'
+          : String(err&&err.message||err);
+    contaMsg(txt,true);
+    if(b){b.disabled=false;b.textContent='🔑 Entrar';}
+  }
+}
+function sairConta(){
+  if(!confirm('Sair da conta neste aparelho?\n\nSeus dados continuam aqui e na nuvem — nada é apagado.'))return;
+  try{firebase.auth().signOut().then(function(){toast('Você saiu');renderConta();});}catch(e){}
+}
+
+/* ===== Autoteste de conexão =====
+   Depois de mexer nas regras do banco, a pergunta "funcionou?" não tinha
+   resposta: a tela parece boa mesmo quando a nuvem não responde, porque os apps
+   guardam cópia local. E o modo de falha que mais importa é o do ALUNO — se a
+   entrada anônima estiver desligada, ele para de ler e de mandar pedidos, e
+   isso só aparece quando alguém reclama, dias depois.
+
+   Este teste faz, de dentro do app do João, o que cada um faz de verdade —
+   inclusive o aluno. Para entrar como aluno sem derrubar a sessão do João, usa
+   uma SEGUNDA instância do Firebase, com autenticação própria, apagada no fim. */
+const TESTE_PASSOS=9;
+function _tl(ok,titulo,detalhe,acao){
+  const cor=ok===true?'#2E7D32':ok===false?'#C0392B':'#8A7E6B';
+  const ic=ok===true?'✅':ok===false?'❌':'⏳';
+  return '<div style="padding:7px 0;border-top:1px solid var(--border)">'
+    +'<b style="color:'+cor+'">'+ic+' '+titulo+'</b>'
+    +(detalhe?'<br><span class="hint">'+detalhe+'</span>':'')
+    +(acao&&ok!==true?'<br><span class="hint" style="color:#C0392B;font-weight:700">→ '+acao+'</span>':'')
+    +'</div>';
+}
+async function testarConexao(){
+  const el=document.getElementById('teste-box');if(!el)return;
+  const r=[];
+  const pinta=()=>{el.innerHTML='<div style="border:1px solid var(--border);border-radius:12px;padding:4px 12px 10px;margin-top:8px">'
+    +r.join('')+'</div>';};
+  r.push(_tl(null,'testando…','são 7 passos, alguns falam com a nuvem'));pinta();
+  const feito=[];
+  const passo=(ok,t,d,a)=>{r[r.length-1]=_tl(ok,t,d,a);feito.push(ok===true);r.push(_tl(null,'testando…',''));pinta();};
+
+  // 1) o João está logado?
+  if(typeof firebase==='undefined'||!firebase.auth)
+    passo(false,'Login','a biblioteca de login não carregou','recarregue o app');
+  else if(!window.AUTH_USER)
+    passo(false,'Login','você não está conectado','entre em "Sua conta", logo acima');
+  else passo(true,'Login','conectado como '+(window.AUTH_USER.email||'conta anônima'));
+
+  if(!hasCloud()){
+    r[r.length-1]=_tl(false,'Nuvem','o Firebase não conectou neste aparelho','confira a internet e recarregue');
+    pinta();return;
+  }
+  const MARCA={_prazo:1};
+  const tenta=async fn=>{try{const v=await comPrazo(fn(),12000,MARCA);
+    return v===MARCA?{prazo:true}:{ok:true,v:v};}catch(e){return {erro:String(e&&e.message||e)};}};
+
+  // 2) ler o banco
+  {
+    const x=await tenta(()=>window.fbDB.ref(fbPath(KEY)).get());
+    if(x.ok)passo(true,'Ler seus dados','o banco respondeu');
+    else if(x.prazo)passo(false,'Ler seus dados','a nuvem não respondeu em 12s','tente de novo com internet melhor');
+    else passo(false,'Ler seus dados',x.erro,'confira as regras: '+fbPath(KEY)+' precisa de leitura para o seu UID');
+  }
+  // 3) gravar e apagar
+  {
+    const cam=RAIZ+'/'+V2+'/teste';
+    const x=await tenta(()=>window.fbDB.ref(cam).set({quando:Date.now()}));
+    if(x.ok){
+      try{await window.fbDB.ref(cam).remove();}catch(e){}
+      passo(true,'Gravar seus dados','gravou e apagou a marca de teste');
+    }
+    else if(x.prazo)passo(false,'Gravar seus dados','a nuvem não respondeu em 12s','tente de novo');
+    else passo(false,'Gravar seus dados',x.erro,'confira se o UID nas regras é o mesmo de Authentication → Users');
+  }
+  // 4) o site público, sem login nenhum
+  {
+    try{
+      // o endereço sai da configuração, nunca escrito na mão: assim ele não
+      // vaza para a demo do JV Pro, que tem a configuração arrancada
+      const base=(typeof firebaseConfig!=='undefined'&&firebaseConfig.databaseURL)||'';
+      if(!base)throw new Error('sem endereço de banco configurado');
+      const u=base.replace(/\/$/,'')+'/jvtenis/precos_publicos.json';
+      const resp=await comPrazo(fetch(u).then(x=>x.ok?x.json():Promise.reject(new Error('HTTP '+x.status))),12000,MARCA);
+      if(resp===MARCA)passo(false,'Site público','sem resposta em 12s','tente de novo');
+      else if(resp&&resp.dupla)passo(true,'Site público','lê os preços de grupo sem login (dupla: R$ '+resp.dupla+')');
+      else passo(false,'Site público','o nó dos preços está vazio','abra o app e mexa em algo: publicar grava os preços');
+    }catch(e){
+      passo(false,'Site público',String(e&&e.message||e),'em precos_publicos, ".read" precisa ser true');
+    }
+  }
+
+  // 5, 6 e 7 — o lado do ALUNO, numa instância separada
+  let app2=null, db2=null;
+  try{
+    app2=firebase.apps.filter(a=>a.name==='teste')[0]||firebase.initializeApp(firebaseConfig,'teste');
+    const cred=await comPrazo(app2.auth().signInAnonymously(),12000,MARCA);
+    if(cred===MARCA)throw new Error('sem resposta');
+    db2=app2.database();
+    passo(true,'Aluno se identifica','a entrada anônima está ligada');
+  }catch(e){
+    const c=String(e&&e.code||e&&e.message||e);
+    const desligado=c.indexOf('operation-not-allowed')>=0||c.indexOf('admin-restricted')>=0;
+    passo(false,'Aluno se identifica',c,
+      desligado?'ative "Anônimo" em Authentication → Sign-in method — sem isso o aluno não recebe nem manda nada'
+               :'tente de novo com internet melhor');
+    r.pop();
+    r.push(_tl(false,'Aluno lê a publicação','não dá para testar sem a identificação'));
+    r.push(_tl(false,'Fila fechada para o aluno','não dá para testar sem a identificação'));
+    r.push(_tl(false,'Pedidos pendentes do aluno','não dá para testar sem a identificação'));
+    pinta();
+    try{if(app2)await app2.delete();}catch(e){}
+    return resumoTeste(r,feito.filter(Boolean).length);
+  }
+  // 6) o aluno lê a publicação e consegue mandar um pedido
+  {
+    const a=await tenta(()=>db2.ref('jvtenis/'+PUBKEY).get());
+    if(!a.ok){
+      passo(false,'Aluno lê a publicação',a.prazo?'sem resposta':a.erro,
+        'em jvtenis-app-aluno, ".read" precisa aceitar quem está identificado (auth != null)');
+    }else{
+      const ref=db2.ref('jvtenis/fila_pedidos').push();
+      const b=await tenta(()=>ref.set({teste:true,texto:'teste de conexão',ts:Date.now()}));
+      if(b.ok){
+        try{await window.fbDB.ref('jvtenis/fila_pedidos/'+ref.key).remove();}catch(e){}
+        passo(true,'Aluno lê e manda pedido','a publicação chega nele e o pedido chega em você');
+      }else{
+        passo(false,'Aluno manda pedido',b.prazo?'sem resposta':b.erro,
+          'em fila_pedidos, o item novo precisa de ".write": "auth != null && !data.exists() && newData.exists()"');
+      }
+    }
+  }
+  // 7) e NÃO pode ler a fila dos outros
+  {
+    let leu=false;
+    try{const s=await comPrazo(db2.ref('jvtenis/fila_pedidos').get(),12000,MARCA);
+        if(s!==MARCA)leu=true;}catch(e){}
+    if(leu)passo(false,'Fila fechada para o aluno','o aluno CONSEGUIU ler a fila de pedidos',
+      'você ainda está com as regras da etapa 1 (abertas). Cole a etapa 2 para fechar');
+    else passo(true,'Fila fechada para o aluno','o aluno não lê o pedido dos outros — a tranca está fechada');
+  }
+  // 8) o caminho pessoal do aluno — onde ficam os pedidos pendentes dele.
+  //    Fica num bloco de regra à parte (aluno-estado/$uid), então quebra sozinho
+  //    sem nenhum dos outros passos acusar, e quem sofre é o aluno, não o João.
+  {
+    const uid2=(app2.auth().currentUser&&app2.auth().currentUser.uid)||'';
+    const cam='jvtenis/aluno-estado/'+uid2;
+    const a=uid2?await tenta(()=>db2.ref(cam).set(JSON.stringify({teste:true,ts:Date.now()}))):{ok:false,erro:'sem identificação'};
+    let leu=false;
+    if(a.ok){
+      const b=await tenta(()=>db2.ref(cam).get());
+      leu=!!b.ok;
+    }
+    try{await db2.ref(cam).remove();}catch(e){}   // o próprio aluno limpa: o João não alcança esse nó
+    if(a.ok&&leu)passo(true,'Pedidos pendentes do aluno','ele guarda e relê o que deixou pela metade');
+    else passo(false,'Pedidos pendentes do aluno',a.ok?'gravou mas não conseguiu reler':(a.prazo?'sem resposta':a.erro),
+      'em "aluno-estado/$uid", ".read" e ".write" precisam aceitar auth.uid === $uid');
+  }
+  // 8b) e o espaço do colega tem que estar fechado para ele
+  {
+    const cam='jvtenis/aluno-estado/uid-de-outro-aluno';
+    const a=await tenta(()=>db2.ref(cam).get());
+    passo(!a.ok,'Espaço pessoal de cada um','o aluno não alcança o espaço de outro aluno',
+      'em "aluno-estado/$uid" o ".read" precisa exigir auth.uid === $uid');
+  }
+  /* 9) As regras dos professores estão no ar?
+     Sem elas o app do professor é recusado em TODAS as gravações e fica preso
+     em "salvo só no aparelho" — sintoma que não diz a causa. Este passo
+     responde a pergunta daqui, antes de alguém descobrir do lado de lá.
+     Não dá para testar entrando como ele (a senha é dele), mas alcançar o nó
+     prof/ prova que as regras novas foram publicadas. */
+  {
+    const cam='jvtenis/prof/_teste-do-joao';
+    const g=await tenta(()=>window.fbDB.ref(cam).set(String(Date.now())));
+    if(g.ok)try{await window.fbDB.ref(cam).remove();}catch(e){}
+    const l=await tenta(()=>window.fbDB.ref('jvtenis/professores').get());
+    passo(g.ok&&l.ok,'Espaço dos professores',
+      g.ok&&l.ok?'as regras dos professores estão publicadas':'o nó dos professores não respondeu',
+      'cole ferramentas/firebase-regras-etapa3.json em Realtime Database → Regras. '
+      +'Sem isso o app do professor não grava na nuvem.');
+  }
+
+  try{await app2.delete();}catch(e){}
+  r.pop();pinta();
+  return resumoTeste(r,feito.filter(Boolean).length);
+}
+function resumoTeste(r,verdes){
+  const el=document.getElementById('teste-box');if(!el)return;
+  const tudo=verdes>=TESTE_PASSOS;
+  el.innerHTML='<div style="border:1px solid var(--border);border-radius:12px;padding:4px 12px 10px;margin-top:8px">'
+    +r.filter(x=>x.indexOf('testando…')<0).join('')
+    +'<p class="hint" style="margin-top:9px;font-weight:800;color:'+(tudo?'#2E7D32':'#C0392B')+'">'
+    +(tudo?'✅ Tudo funcionando — você, o site, o aluno e o professor.'
+          :verdes+' de '+TESTE_PASSOS+' passaram. Veja os itens em vermelho acima.')
+    +'</p></div>';
+}
+
+/* ===== Quanto espaço os dados ocupam =====
+   O João acabou de perder o site por bater num limite de hospedagem sem aviso
+   nenhum. A mesma pergunta vale para os dados, e até aqui não havia como
+   responder sem chutar.
+
+   O limite que aperta primeiro é o do APARELHO (~5 MB de localStorage), não o
+   da nuvem (1 GB) — o contrário do que a intuição diz.
+
+   E a projeção é MEDIDA, não estimada: o app já guarda a primeira versão de
+   cada dia dos últimos 60 dias no IndexedDB. Isso é uma série histórica do
+   tamanho do banco; comparar a mais antiga com a de hoje dá o crescimento real. */
+const LIMITE_APARELHO=5*1024*1024;          // ~5 MB, o teto usual do localStorage
+const LIMITE_NUVEM=1024*1024*1024;          // 1 GB do plano gratuito do Firebase
+const MAX_BACKUPS=30;                       // quantas cópias por hora ficam na nuvem
+
+function kb(n){
+  n=Number(n)||0;
+  if(n<1024)return n+' B';
+  if(n<1024*1024)return (n/1024).toFixed(n<10240?1:0)+' KB';
+  return (n/1024/1024).toFixed(2)+' MB';
+}
+function barra(usado,total,cor){
+  const pc=Math.min(100,Math.max(0.6,usado*100/total));
+  return '<div style="height:9px;border-radius:6px;background:rgba(0,0,0,.10);overflow:hidden;margin:5px 0 3px">'
+        +'<div style="height:100%;width:'+pc.toFixed(1)+'%;background:'+cor+'"></div></div>';
+}
+function corDe(fr){return fr>0.85?'#C0392B':fr>0.6?'#D98324':'#4E7C3F';}
+
+/* Tamanho de cada chave do localStorage, separado pelo que é o quê. */
+function medirAparelho(){
+  const r={total:0,banco:0,historico:0,versoes:0,resto:0,chaves:0};
+  try{
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i), v=localStorage.getItem(k)||'';
+      const t=(k.length+v.length);
+      r.total+=t;r.chaves++;
+      if(k===KEY)r.banco+=t;
+      else if(k.indexOf(KEY+'__')===0)r.versoes+=t;   // reserva de quem não tem IndexedDB
+      else if(k===HIST.LOGKEY)r.historico+=t;
+      else r.resto+=t;
+    }
+  }catch(e){}
+  return r;
+}
+
+/* As versões no IndexedDB: quanto ocupam e, principalmente, o histórico de
+   tamanhos que permite medir o crescimento. */
+async function medirVersoes(){
+  const r={bytes:0,itens:0,serie:[]};
+  try{
+    const ks=await idbKeys();
+    for(const k of (ks||[])){
+      const v=await idbGet(k);
+      if(typeof v!=='string')continue;
+      r.bytes+=v.length;r.itens++;
+      const m=String(k).match(/__dia-(\d{4}-\d{2}-\d{2})$/);
+      if(m)r.serie.push({dia:m[1],bytes:v.length});
+    }
+    r.serie.sort((a,b)=>a.dia.localeCompare(b.dia));
+  }catch(e){r.indisponivel=true;}
+  return r;
+}
+
+/* Crescimento medido: primeira versão diária guardada × hoje. */
+function projetarCrescimento(serie,hoje){
+  // basta UMA versão antiga: o segundo ponto da reta é o tamanho de hoje
+  if(!serie||!serie.length)return {podeProjetar:false,motivo:'ainda não há versão de nenhum dia anterior guardada'};
+  const a=serie[0], b={dia:hojeStr(),bytes:hoje};
+  const dias=Math.round((new Date(b.dia)-new Date(a.dia))/86400000);
+  if(dias<7)return {podeProjetar:false,motivo:'só '+dias+' dia(s) de histórico — preciso de 7 para uma conta honesta',dias:dias};
+  const cresceu=hoje-a.bytes;
+  const porDia=cresceu/dias;
+  const o={podeProjetar:true,dias:dias,de:a.bytes,para:hoje,porDia:porDia,desde:a.dia};
+  if(porDia<=0){o.encolheu=true;return o;}
+  const falta=LIMITE_APARELHO-hoje;
+  o.diasAteEncher=falta/porDia;
+  o.anosAteEncher=o.diasAteEncher/365;
+  return o;
+}
+
+async function medirEspaco(){
+  const el=document.getElementById('espaco-box');if(!el)return;
+  el.innerHTML='<p class="hint">medindo…</p>';
+  const ap=medirAparelho();
+  const vs=await medirVersoes();
+  const bancoAgora=(()=>{try{return JSON.stringify(DB).length;}catch(e){return ap.banco;}})();
+
+  // o navegador sabe o número de verdade; usamos quando ele conta
+  let real=null;
+  try{ if(navigator.storage&&navigator.storage.estimate)real=await navigator.storage.estimate(); }catch(e){}
+
+  const proj=projetarCrescimento(vs.serie,ap.banco||bancoAgora);
+  const prev=(()=>{try{return previaArquivo();}catch(e){return null;}})();
+  const nuvemBanco=bancoAgora, nuvemPartes=Math.round(bancoAgora*1.15), nuvemBkp=bancoAgora*MAX_BACKUPS;
+  const nuvemTotal=nuvemBanco+nuvemPartes+nuvemBkp;
+
+  const frAp=ap.total/LIMITE_APARELHO, frNu=nuvemTotal/LIMITE_NUVEM;
+  let h='';
+
+  h+='<div style="border:1px solid var(--border);border-radius:12px;padding:12px;margin-top:8px">'
+    +'<b>No aparelho</b> — o limite que aperta primeiro'
+    +barra(ap.total,LIMITE_APARELHO,corDe(frAp))
+    +'<p class="hint" style="margin:0"><b>'+kb(ap.total)+'</b> de ~5 MB · sobra '+(100-frAp*100).toFixed(1)+'%</p>'
+    +'<p class="hint" style="margin:6px 0 0">banco: '+kb(ap.banco)+' · histórico de mudanças: '+kb(ap.historico)
+    +(ap.versoes?' · versões antigas aqui: '+kb(ap.versoes):'')+' · resto: '+kb(ap.resto)+'</p>';
+  if(vs.indisponivel)h+='<p class="hint" style="margin:6px 0 0">Versões: o IndexedDB não respondeu neste aparelho (o app funciona igual).</p>';
+  else h+='<p class="hint" style="margin:6px 0 0">Versões guardadas à parte (IndexedDB, tem gigabytes): '+kb(vs.bytes)+' em '+vs.itens+' cópia(s)</p>';
+  if(real&&real.quota)h+='<p class="hint" style="margin:6px 0 0">O navegador reserva '+kb(real.quota)+' no total para este endereço e diz que '+kb(real.usage||0)+' estão em uso.</p>';
+  h+='</div>';
+
+  h+='<div style="border:1px solid var(--border);border-radius:12px;padding:12px;margin-top:8px">'
+    +'<b>Crescimento</b> — medido, não estimado';
+  if(!proj.podeProjetar){
+    h+='<p class="hint" style="margin:4px 0 0">Ainda não dá para projetar: '+proj.motivo+'.'
+      +' O app guarda uma versão por dia; volte aqui em uma semana.</p>';
+  }else if(proj.encolheu){
+    h+='<p class="hint" style="margin:4px 0 0">Nos últimos '+proj.dias+' dias o banco <b>não cresceu</b> ('
+      +kb(proj.de)+' → '+kb(proj.para)+'). Provavelmente por causa do arquivamento.</p>';
+  }else{
+    const anos=proj.anosAteEncher;
+    const prazo = anos>50 ? 'mais de 50 anos' : anos>=2 ? ('~'+Math.round(anos)+' anos')
+                : anos>=1 ? '~1 ano' : ('~'+Math.round(proj.diasAteEncher/30)+' meses');
+    h+='<p class="hint" style="margin:4px 0 0">Em '+proj.dias+' dias (desde '+proj.desde.split('-').reverse().slice(0,2).join('/')+'): '
+      +kb(proj.de)+' → '+kb(proj.para)+', ou <b>'+kb(proj.porDia)+' por dia</b>.</p>'
+      +'<p class="hint" style="margin:4px 0 0">Nesse ritmo, o limite do aparelho chega em <b>'+prazo+'</b>.'
+      +(anos<2?' Vale arquivar dados antigos.':'')+'</p>';
+  }
+  h+='</div>';
+
+  h+='<div style="border:1px solid var(--border);border-radius:12px;padding:12px;margin-top:8px">'
+    +'<b>Na nuvem</b> — estimativa'
+    +barra(nuvemTotal,LIMITE_NUVEM,corDe(frNu))
+    +'<p class="hint" style="margin:0"><b>'+kb(nuvemTotal)+'</b> de 1 GB do plano gratuito · '+(frNu*100).toFixed(2)+'% usado</p>'
+    +'<p class="hint" style="margin:6px 0 0">banco: '+kb(nuvemBanco)+' · partes: ~'+kb(nuvemPartes)
+    +' · <b>backups: ~'+kb(nuvemBkp)+'</b> (até '+MAX_BACKUPS+' cópias por hora — é o maior peso, e o menos óbvio)</p>'
+    +'<p class="hint" style="margin:6px 0 0">É conta de casa: o Firebase não informa o tamanho ao app. '
+    +'Medir de verdade <b>consome cota de download</b>.</p>'
+    +'<div class="backup-row" style="margin-top:6px"><button class="btn btn-ghost" onclick="medirNuvemDeVerdade()">Medir de verdade</button></div>'
+    +'<div id="nuvem-real"></div></div>';
+
+  h+='<div style="border:1px solid var(--border);border-radius:12px;padding:12px;margin-top:8px">'
+    +'<b>O que está crescendo</b>'
+    +'<p class="hint" style="margin:4px 0 0">'
+    +(DB.alunos||[]).length+' alunos · '+(DB.movs||[]).length+' linhas de extrato · '
+    +(DB.presencas||[]).length+' presenças · '+(DB.lancamentos||[]).length+' lançamentos</p>';
+  if(prev&&prev.linhas)h+='<p class="hint" style="margin:6px 0 0">Dá para arquivar <b>'+prev.linhas+' linha(s)</b> ('
+    +kb(prev.bytes)+') com mais de '+MESES_JANELA+' meses — use o botão "Ver o que dá para arquivar" acima.</p>';
+  else h+='<p class="hint" style="margin:6px 0 0">Nada com mais de '+MESES_JANELA+' meses para arquivar.</p>';
+  h+='</div>';
+
+  el.innerHTML=h;
+}
+
+/* Só quando pedido: baixa os nós e mede o tamanho real. Custa download. */
+async function medirNuvemDeVerdade(){
+  const el=document.getElementById('nuvem-real');if(!el)return;
+  if(!hasCloud()){el.innerHTML='<p class="hint">Sem nuvem agora.</p>';return;}
+  if(!confirm('Medir de verdade baixa o conteúdo do banco, das partes e dos backups para pesar.\n\n'
+             +'Isso consome cota de download do plano gratuito. Continuar?'))return;
+  el.innerHTML='<p class="hint">baixando para medir…</p>';
+  const alvos=[['banco',fbPath(KEY)],['partes',RAIZ+'/'+V2],
+               ['backups',RAIZ+'/backups'],['arquivo',RAIZ+'/arquivo']];
+  const r={};let total=0;
+  for(const [rot,cam] of alvos){
+    try{
+      const MARCA={_prazo:1};
+      const snap=await comPrazo(window.fbDB.ref(cam).get(),20000,MARCA);
+      if(snap===MARCA){r[rot]=null;continue;}
+      const v=snap.exists()?snap.val():null;
+      const n=v==null?0:(typeof v==='string'?v.length:JSON.stringify(v).length);
+      r[rot]=n;total+=n;
+    }catch(e){r[rot]=null;}
+  }
+  const fr=total/LIMITE_NUVEM;
+  el.innerHTML='<p class="hint" style="margin-top:8px"><b>Medido agora: '+kb(total)+'</b> de 1 GB · '
+    +(fr*100).toFixed(2)+'%</p>'
+    +'<p class="hint" style="margin:4px 0 0">'
+    +alvos.map(([rot])=>rot+': '+(r[rot]==null?'não respondeu':kb(r[rot]))).join(' · ')+'</p>';
+}
+
+/* ===== Conferir números =====
+   Seis checagens. Cada divergência mostra os dois números e um botão que grava
+   a correção COMO MOVIMENTO, preservando a trilha. Nunca corrige sozinho. */
+/* A conta do mês, aluno por aluno, que é o que se quer saber ao conferir:
+   quanto entrou, quanto foi usado e com quanto o aluno está agora. Sai do
+   extrato e da agenda, e não muda nada — é leitura. */
+function tabelaDoMes(){
+  const mk=monthKey();
+  const linhas=(DB.alunos||[]).filter(a=>a.status!=='inativo').map(a=>{
+    const C=fcConciliacao(a,mk);
+    const entrou=C.renovado+C.renovadoGrp;
+    const sobra=(Number(a.creditos)||0)+(Number(a.credGrupo)||0);
+    return {a,entrou,repos:C.reposEntrou,usou:C.consumido,sobra,
+            rep:reposValidas(a),alerta:C.divergeRenovacao};
+  }).sort((x,y)=>x.a.nome.localeCompare(y.a.nome));
+  if(!linhas.length)return '';
+  const cel=(t,e)=>'<span style="min-width:38px;text-align:right'+(e||'')+'">'+t+'</span>';
+  return '<div class="cons info"><h4><span>📋</span>O mês de '+fcRotuloMes(mk)+'</h4>'
+    +'<p>Quanto cada aluno adquiriu na renovação, quanto já usou e com quanto está agora.</p>'
+    +'<div style="margin-top:8px;font-size:12px">'
+    +'<div class="fx-linha" style="font-weight:800;color:#8A7B63"><span style="flex:1">Aluno</span>'
+      +cel('entrou')+cel('usou')+cel('sobra')+'</div>'
+    +linhas.map(l=>'<div class="fx-linha"><span style="flex:1">'+esc(l.a.nome)
+        +(l.alerta?'<br><span class="hint" style="color:#C0392B">renovação não bate com o plano</span>':'')
+        +(l.repos?('<br><span class="hint">'+fmtCred(l.repos)+' reposição(ões) guardada(s)</span>'):'')
+        +'</span>'
+      +cel(fmtCred(l.entrou))
+      +cel(fmtCred(l.usou))
+      +cel('<b>'+fmtCred(l.sobra)+'</b>',l.sobra<0?';color:#C0392B':'')
+      +'</div>').join('')
+    +'</div>'
+    +'<p class="hint" style="margin-top:9px">"Entrou" é a renovação lançada neste mês. "Usou" conta só o que já aconteceu e você confirmou, mais as faltas — aula futura e aula sem ✓ ficam de fora. "Sobra" é o saldo de hoje, créditos e grupo somados.</p>'
+    +'</div>';
+}
+function conferirNumeros(){
+  const box=document.getElementById('conf-box');if(!box)return;
+  const achados=[];
+  (DB.alunos||[]).forEach(a=>{
+    ['creditos','credGrupo','repos','locCred'].forEach(c=>{
+      const atual=Number(a[c])||0, esperado=saldoPeloExtrato(a,c);
+      /* Extrato MENOR que o saldo é o normal: linhas antigas saem para o app
+         caber no aparelho, e o começo da história do aluno deixa de aparecer.
+         Isso nunca foi erro, e acusar como erro fez a conferência pedir para
+         "acertar" alunos que estavam certos. Só entra aqui o outro lado, o
+         extrato MAIOR, que é lançamento que não chegou ao saldo. */
+      if(esperado>atual)achados.push({tipo:'aviso',a,campo:c,atual,esperado,
+        txt:CAMPO_LABEL[c]+' de '+a.nome+': o extrato soma '+fmtCred(esperado)+', mais que o saldo ('+fmtCred(atual)+'). '
+           +'Vale abrir o extrato dele para ver o que entrou e não chegou ao saldo. Ajuste no cadastro, se for o caso.'});
+    });
+    // presença sem débito e débito sem presença
+    const pres=presencasDe(a.id);
+    const refs=new Set(movsDe(a.id).map(m=>m.ref).filter(Boolean));
+    /* Presença fantasma: o extrato já devolveu o crédito daquela aula (você
+       desfez ou desmarcou), mas a linha voltou. É a assinatura do defeito que
+       deixava a remoção só no aparelho — a soma do extrato para aquela aula dá
+       zero e mesmo assim a presença está lá. Marcada de novo depois somaria −1,
+       então só o zero exato é fantasma. */
+    const porRef={};
+    movsDe(a.id).forEach(m=>{if(m.ref)porRef[m.ref]=(porRef[m.ref]||0)+(Number(m.delta)||0);});
+    const fantasmas=pres.filter(p=>p.k&&porRef[p.k]!==undefined&&porRef[p.k]===0);
+    if(fantasmas.length)achados.push({tipo:'fantasma',a,chaves:fantasmas.map(p=>p.k),
+      txt:a.nome+': '+fantasmas.length+' aula(s) que você desfez voltaram para a lista. O crédito já foi devolvido, então a aula está sobrando — apagar não mexe em saldo.'});
+    const semDeb=pres.filter(p=>p.k&&!refs.has(p.k));
+    if(semDeb.length)achados.push({tipo:'aviso',a,
+      txt:a.nome+': '+semDeb.length+' presença(s) sem débito no extrato. Normal para aulas anteriores ao extrato começar.'});
+    const torto=devolucoesTortas(a,pres);
+    if(torto.length){
+      const resumo={};torto.forEach(t=>{resumo[t.campo]=(resumo[t.campo]||0)+t.resto;});
+      const partes=Object.keys(resumo).filter(cp=>resumo[cp]).map(cp=>CAMPO_LABEL[cp]+' '+(resumo[cp]>0?'+':'')+fmtCred(resumo[cp]));
+      achados.push({tipo:'estorno',a,itens:torto,
+        txt:a.nome+': '+torto.length+' devolução(ões) que não fecham com o que saiu ('+partes.join(', ')+'). A aula mudou de tipo ou de duração entre marcar e desmarcar, e o crédito voltou no saldo errado. Acertar deixa cada par em zero.'});
+    }
+    // desconto por reposição: teto do mês, desconto esquecido e vencida ainda no saldo
+    /* Sobra do tempo em que o app abatia reposição sozinho. As reposições já
+       saíram do saldo, mas o desconto nunca virou dinheiro. Fica como aviso
+       para você resolver na conversa — o app não mexe nisso. */
+    if(a.descontoMes&&Number(a.descontoMes.valor)>0)achados.push({tipo:'aviso',a,
+      txt:a.nome+': ficou '+fmt(a.descontoMes.valor||0)+' de desconto guardado de '+(a.descontoMes.mes||'antes')+', do tempo em que o app abatia reposição sozinho. '
+         +fmtCred(a.descontoMes.qtd||0)+' reposição(ões) já saíram do saldo dele. Resolva direto com o aluno.'});
+    const venc=reposVencidas(a);
+    if(venc>0)achados.push({tipo:'aviso',a,
+      txt:a.nome+': '+fmtCred(venc)+' reposição(ões) já passaram de 4 meses e ainda contam no saldo — abra o app uma vez no mês novo para a virada rodar.'});
+    // mensalidade contra o plano
+    const p=Number(a.plano)||0, pg=Number(a.planoGrupo)||0;
+    if(p>0||pg>0){
+      const esp=p*(Number(a.valorAula)||160)+(pg>0?pg*grupoPrecoAula(a.grupoTipo||'Dupla'):0);
+      const m=Number(a.mensalidade)||0;
+      if(esp>0&&Math.abs(esp-m)>1)achados.push({tipo:'aviso',a,
+        txt:'Mensalidade de '+a.nome+': cadastrada '+fmt(m)+', mas o plano dá '+fmt(esp)+'.'});
+    }
+    // mensalidade contra a agenda do mês
+    const g=agendaDoMes(a);
+    if(g.total>0&&g.valor!==(Number(a.mensalidade)||0))achados.push({tipo:'aviso',a,
+      txt:'Agenda de '+a.nome+': '+g.total+' aula(s) dão '+fmt(g.valor)+', a mensalidade é '+fmt(Number(a.mensalidade)||0)+'.'});
+    // DUPLICIDADE 1: mais de uma mensalidade lançada no mesmo mês
+    const mens=mensalidadesDoMes(a);
+    if(mens.length>1)achados.push({tipo:'dup',a,
+      txt:'COBRANÇA DUPLICADA: '+a.nome+' tem '+mens.length+' mensalidades lançadas neste mês ('+mens.map(l=>fmt(l.valor)).join(' + ')+'). Se foi engano, apague a repetida na Caixa.'});
+    // DUPLICIDADE 2: renovação de créditos repetida no mês
+    const rn=renovacoesDoMes(a);
+    if(rn.length>1)achados.push({tipo:'dup',a,
+      txt:'CRÉDITOS DUPLICADOS: '+a.nome+' foi renovado '+rn.length+'x neste mês, somando '+fmtCred(rn.reduce((t,x)=>t+(Number(x.delta)||0),0))+' crédito(s). O plano dele é de '+(Number(a.plano)||0)+'.'});
+    // DUPLICIDADE 3: duas presenças no mesmo dia e hora
+    const vistos={},dupPres=[];
+    presencasDe(a.id).forEach(p=>{
+      const ch=String(p.data||'')+'|'+String(p.hora||'');
+      if(p.hora&&p.hora!=='—'){ if(vistos[ch])dupPres.push(ch); else vistos[ch]=1; }
+    });
+    if(dupPres.length)achados.push({tipo:'dup',a,
+      txt:'AULA DUPLICADA: '+a.nome+' tem duas presenças no mesmo horário ('+dupPres.slice(0,3).map(x=>x.split('|')[0].split('-').reverse().join('/')+' '+x.split('|')[1]).join(', ')+'). Cada uma descontou um crédito.'});
+    /* Repetida de outro jeito: a mesma aula lançada pelo cartão E marcada na
+       agenda. Não bate data+hora (a do cartão não tem hora), então a checagem
+       de cima nunca via. Ela já saiu do histórico e do fechamento sozinha; o
+       que sobra é o crédito descontado duas vezes, e isso é ele quem resolve —
+       em Aulas do aluno, no fim da lista. */
+    const dm=dupsManuaisDe(a.id);
+    if(dm.length)achados.push({tipo:'dup',a,
+      txt:'AULA REPETIDA: '+a.nome+' tem '+dm.length+' aula(s) lançada(s) pelo cartão no mesmo dia de uma aula que já estava marcada na agenda ('
+         +dm.slice(0,3).map(p=>String(p.data||'').split('-').reverse().join('/')).join(', ')+'). '
+         +'Já não contam no histórico nem no fechamento, mas o crédito saiu duas vezes. Abra 📅 Aulas no cartão dele para apagar e devolver.'});
+  });
+  // DUPLICIDADE 4: lançamentos idênticos no mesmo dia (possível toque duplo)
+  const porChave={};
+  (DB.lancamentos||[]).filter(l=>l.mes===monthKey()&&l.valor>0).forEach(l=>{
+    const ch=String(l.desc||'')+'|'+l.valor+'|'+String(l.data||'');
+    (porChave[ch]=porChave[ch]||[]).push(l);
+  });
+  Object.keys(porChave).forEach(ch=>{
+    const g2=porChave[ch];
+    if(g2.length>1)achados.push({tipo:'dup',a:{nome:g2[0].desc||'Caixa'},
+      txt:'LANÇAMENTO REPETIDO: '+g2.length+'x "'+(g2[0].desc||'')+'" de '+fmt(g2[0].valor)+' no mesmo dia ('+String(g2[0].data||'').split('-').reverse().join('/')+'). Confira na Caixa se não foi toque duplo.'});
+  });
+  // "a receber" do painel contra a soma aluno a aluno
+  const soma=(DB.alunos||[]).filter(a=>a.status!=='pago')
+    .reduce((s,a)=>s+(a.status==='parcial'?a.mensalidade*0.5:a.mensalidade),0);
+  const cab='<div class="cons info"><h4><span>🔎</span>Esta tela não altera nada</h4>'
+    +'<p>Ela só mostra. Nenhum botão aqui mexe em crédito, saldo ou aula — quando algo precisar ser acertado, você acerta no cadastro do aluno.</p></div>'
+    +'<div class="cons info"><h4><span>💰</span>A receber</h4><p>Somando aluno por aluno: <b>'+fmt(soma)+'</b>. É o mesmo número que o painel mostra.</p></div>'
+    +tabelaDoMes();
+  if(!achados.length){box.innerHTML=cab+'<div class="cons good"><h4><span>✅</span>Tudo confere</h4><p>Nenhuma divergência entre saldos, extrato, planos e agenda — e nenhuma cobrança, crédito ou aula duplicada.</p></div>';return;}
+  window._conf=achados;
+  box.innerHTML=cab+achados.map((x,i)=>
+    '<div class="cons '+((x.tipo==='saldo'||x.tipo==='dup'||x.tipo==='fantasma'||x.tipo==='estorno')?'bad':'warn')+'"><h4><span>'+(x.tipo==='saldo'?'⚠️':(x.tipo==='dup'?'🔁':(x.tipo==='fantasma'?'👻':(x.tipo==='estorno'?'↩️':'📋'))))+'</span>'+esc(x.a.nome)+'</h4>'
+    +'<p>'+esc(x.txt)
+    +'</p></div>').join('');
+}
+/* ===== Voltar a uma versão anterior =====
+   Junta o que está guardado no aparelho e na nuvem, mostra o retrato de cada
+   versão (alunos, lançamentos, caixa) e deixa ele escolher. Antes de restaurar,
+   a versão atual vira mais um snapshot — dá para desfazer a volta. */
+async function listarVersoes(){
+  const box=document.getElementById('versoes-box');if(!box)return;
+  box.innerHTML='<div class="empty">Procurando versões…</div>';
+  const itens=[];
+  // versões vêm do IndexedDB; o localStorage só é lido como reserva
+  const leia=async k=>{try{const v=await idbGet(k);if(v!=null)return v;}catch(e){}return lsGet(k);};
+  for(let i=0;i<SNAP_N;i++){
+    const raw=await leia(snapKey(i));
+    if(raw)itens.push({origem:'aparelho',rot:i===0?'mais recente':(i+1)+'ª anterior',raw,r:resumoBanco(raw)});
+  }
+  try{
+    const pref=KEY+'__dia-';
+    let ks=[];
+    try{ks=(await idbKeys()||[]).map(String).filter(k=>k.indexOf(pref)===0);}catch(e){}
+    if(!ks.length){for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf(pref)===0)ks.push(k);}}
+    for(const k of ks.sort().reverse()){
+      const raw=await leia(k);
+      if(raw)itens.push({origem:'aparelho',rot:'início do dia '+k.replace(pref,'').split('-').reverse().slice(0,2).join('/'),raw,r:resumoBanco(raw)});
+    }
+  }catch(e){}
+  if(hasCloud()){
+    try{
+      const snap=await window.fbDB.ref(RAIZ+'/backups').get();
+      if(snap.exists()){
+        const v=snap.val()||{};
+        Object.keys(v).sort().reverse().slice(0,12).forEach(k=>{
+          const raw=v[k];
+          const p=k.split('-');
+          itens.push({origem:'nuvem',rot:p[2]+'/'+p[1]+' às '+p[3]+'h',raw,r:resumoBanco(raw)});
+        });
+      }
+    }catch(e){}
+  }
+  if(!itens.length){box.innerHTML='<div class="empty">Nenhuma versão guardada ainda. A partir de agora o app começa a guardar sozinho.</div>';return;}
+  const atual=resumoBanco(JSON.stringify(DB));
+  box.innerHTML='<div class="cons info" style="margin-bottom:8px"><h4><span>📌</span>Como está agora</h4><p>'
+    +esc(descreveResumo(atual)).replace(/\n/g,'<br>')+'</p></div>'
+    +itens.map((it,i)=>{
+      const menor=atual&&it.r&&(it.r.lancamentos>atual.lancamentos||it.r.alunos>atual.alunos);
+      return '<div class="cons '+(menor?'warn':'info')+'">'
+        +'<h4><span>'+(it.origem==='nuvem'?'☁️':'📱')+'</span>'+esc(it.rot)+' · '+it.origem+'</h4>'
+        +'<p>'+esc(descreveResumo(it.r)).replace(/\n/g,'<br>')
+        +(menor?'<br><b>Tem mais dados que o atual.</b>':'')
+        +'<br><button class="btn btn-ghost" style="margin-top:8px;padding:7px 12px;font-size:12px" onclick="restaurarVersao('+i+')">Restaurar esta versão</button></p></div>';
+    }).join('');
+  window._versoes=itens;
+}
+function restaurarVersao(i){
+  const it=(window._versoes||[])[i];if(!it)return;
+  const atual=resumoBanco(JSON.stringify(DB));
+  if(!confirm('Restaurar a versão de '+it.rot+' ('+it.origem+')?\n\n'
+    +'FICARÁ ASSIM:\n'+descreveResumo(it.r)+'\n\n'
+    +'SUBSTITUINDO:\n'+descreveResumo(atual)+'\n\n'
+    +'A versão atual é guardada antes, então dá para voltar atrás.'))return;
+  guardarVersoes(JSON.stringify(DB));   // guarda o atual ANTES de sobrescrever
+  try{DB=JSON.parse(it.raw);}catch(e){toast('Versão ilegível');return;}
+  ensureFields();
+  logAct('Restaurou versão de '+it.rot+' ('+it.origem+')');
+  persist();renderAll();
+  toast('✓ Versão de '+it.rot+' restaurada');
+  listarVersoes();
+}
+/* ===== Lembrete de backup =====
+   O backup existia mas nunca se lembrava dele. Como os dados vivem no
+   navegador, é a diferença entre ter e não ter cópia no dia em que o aparelho
+   der problema. Cobra depois de 30 dias; "depois" cala até fechar o app. */
+function checarBackup(){
+  const b=document.getElementById('bk-banner');if(!b)return;
+  if(sessionStorage.getItem('jv-bk-adiar')){b.style.display='none';return;}
+  const ult=DB.ultimoBackup;
+  const dias=ult?(Date.now()-ult)/864e5:999;
+  if(dias>=30){
+    b.querySelector('.bk-msg').textContent=ult
+      ? ('⚠️ Já faz '+Math.floor(dias)+' dias desde o último backup — vale guardar uma cópia.')
+      : '⚠️ Você ainda não guardou nenhum backup dos seus dados.';
+    b.style.display='flex';
+  }else b.style.display='none';
+}
+function adiarBackup(){sessionStorage.setItem('jv-bk-adiar','1');const b=document.getElementById('bk-banner');if(b)b.style.display='none';}
+function importBackup(input){
+  const f=input.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const d=JSON.parse(r.result);
+      if(!d.alunos||!d.lancamentos)throw new Error();
+      DB=d;if(!DB.agenda)DB.agenda=seedAgenda();ensureFields();
+      persist();renderAll();toast('Backup restaurado');
+    }catch(e){toast('Arquivo inválido');}
+  };
+  r.readAsText(f);input.value='';
+}
+
+/* ================= RENDER ================= */
+/* ================= TORNEIO ================= */
+const GRUPOS_TOR=['A','B','C','D','E'];
+/* texto que vira argumento de string JS dentro de um atributo (onclick/onchange):
+   a barra invertida sobrevive ao parser de HTML, a entidade &#39; nao — ela vira aspa de novo.
+   Escapar so a aspa simples nao basta: a aspa DUPLA fecharia o proprio atributo. */
+function escJs(s){return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function torAttr(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+/* Arraste (toque + mouse) para mover/reordenar jogadores entre os grupos */
+let torDrag=null;
+function torDragDown(e){
+  const row=e.currentTarget.closest('tr.tg-row');if(!row)return;
+  e.preventDefault();
+  const rect=row.getBoundingClientRect();
+  const ghost=document.createElement('div');
+  ghost.className='tg-ghost';ghost.textContent='⠿  '+(row.dataset.name||'');
+  ghost.style.left=rect.left+'px';ghost.style.top=rect.top+'px';
+  document.body.appendChild(ghost);
+  row.classList.add('tg-dragging');
+  torDrag={group:row.dataset.group,name:row.dataset.name,ghost,row,offY:e.clientY-rect.top};
+  document.addEventListener('pointermove',torDragMove);
+  document.addEventListener('pointerup',torDragUp);
+}
+function torClearDropHints(){
+  document.querySelectorAll('tbody.tg-drop').forEach(el=>el.classList.remove('tg-drop'));
+  document.querySelectorAll('.tg-before,.tg-after').forEach(el=>el.classList.remove('tg-before','tg-after'));
+}
+function torDragMove(e){
+  if(!torDrag)return;
+  torDrag.ghost.style.top=(e.clientY-torDrag.offY)+'px';
+  torClearDropHints();
+  torDrag.ghost.style.display='none';
+  const under=document.elementFromPoint(e.clientX,e.clientY);
+  torDrag.ghost.style.display='';
+  if(!under)return;
+  const tb=under.closest('tbody[data-group]');if(tb)tb.classList.add('tg-drop');
+  const over=under.closest('tr.tg-row');
+  if(over&&over!==torDrag.row){const r=over.getBoundingClientRect();over.classList.add((e.clientY-r.top)<r.height/2?'tg-before':'tg-after');}
+}
+function torDragUp(e){
+  if(!torDrag)return;
+  document.removeEventListener('pointermove',torDragMove);
+  document.removeEventListener('pointerup',torDragUp);
+  torDrag.ghost.style.display='none';
+  const under=document.elementFromPoint(e.clientX,e.clientY);
+  torDrag.ghost.remove();torDrag.row.classList.remove('tg-dragging');
+  torClearDropHints();
+  const ctx=torDrag;torDrag=null;
+  if(!under)return;
+  const tb=under.closest('tbody[data-group]');if(!tb)return;
+  const targetGroup=tb.dataset.group;
+  const t=torAtual();
+  const p=t.jogadores.find(x=>x.group===ctx.group&&x.name===ctx.name);if(!p)return;
+  if(targetGroup!==p.group&&t.jogadores.some(x=>x.group===targetGroup&&x.name.toLowerCase()===p.name.toLowerCase())){toast('Já existe esse jogador no grupo '+targetGroup);return;}
+  const groupPlayers=t.jogadores.filter(x=>x.group===targetGroup&&x!==p);
+  const over=under.closest('tr.tg-row');
+  let idx=groupPlayers.length;
+  if(over){const overName=over.dataset.name,overGroup=over.dataset.group;if(overGroup===targetGroup){const r=over.getBoundingClientRect();const before=(e.clientY-r.top)<r.height/2;const j=groupPlayers.findIndex(x=>x.name===overName);if(j!==-1)idx=before?j:j+1;}}
+  const oldGroup=p.group;p.group=targetGroup;
+  groupPlayers.splice(idx,0,p);groupPlayers.forEach((pl,k)=>pl.order=k);
+  persist();renderTorneio();
+  toast(oldGroup!==targetGroup?(p.name+' → Grupo '+targetGroup):'Ordem atualizada ✓');
+}
+function seedBarragem(){
+  const j=[
+    ['A','Rafael',2,0,0],['A','Gustavo',1,1,0],['A','Carolina',0,2,0],
+    ['B','Gabriel',1,0,0],['B','Alexandre',0,1,1],['B','Armando',0,0,0],
+    ['C','Guilherme',1,0,0],['C','Felippe',0,1,0],['C','Junior',0,0,0],
+    ['D','Adriano',3,0,0],['D','Felipe Bittencourt',0,2,0],['D','Paulo',1,1,0],['D','Édson',0,1,0]
+  ];
+  return j.map((x,i)=>({group:x[0],name:x[1],v:x[2],d:x[3],wo:x[4],order:i}));
+}
+function ensureTorneios(){
+  if(!DB.torneios||typeof DB.torneios!=='object')DB.torneios={atual:null,lista:{}};
+  if(!DB.torneios.lista)DB.torneios.lista={};
+  if(Object.keys(DB.torneios.lista).length===0){
+    const id='t'+Date.now();
+    DB.torneios.lista[id]={id,nome:'Barragem '+new Date().getFullYear(),tipo:'barragem',jogadores:seedBarragem(),criadoEm:Date.now()};
+    DB.torneios.atual=id;
+    DB.torneios.seeded=true;
+  } else if(!DB.torneios.seeded){
+    // preenche a Barragem se ela estiver vazia (sem sobrescrever nada que você já tenha digitado)
+    const ids=Object.keys(DB.torneios.lista);
+    if(ids.length===1){
+      const t=DB.torneios.lista[ids[0]];
+      if(t.tipo==='barragem'&&(!t.jogadores||t.jogadores.length===0))t.jogadores=seedBarragem();
+    }
+    DB.torneios.seeded=true;
+  }
+  if(!DB.torneios.atual||!DB.torneios.lista[DB.torneios.atual])DB.torneios.atual=Object.keys(DB.torneios.lista)[0];
+  // etapas: cada torneio tem uma etapa atual, status e histórico
+  Object.keys(DB.torneios.lista).forEach(id=>{
+    const t=DB.torneios.lista[id];
+    if(t.etapa==null)t.etapa=1;
+    if(t.encerrada==null)t.encerrada=false;
+    if(!Array.isArray(t.etapasFin))t.etapasFin=[];
+    if(!t.nomesGrupos||typeof t.nomesGrupos!=='object')t.nomesGrupos={};   // nome próprio de cada grupo (categoria); vazio = "Grupo X"
+    if(!Array.isArray(t.grupos)||!t.grupos.length){
+      // deriva das categorias que já têm jogador (para não surpreender torneios antigos);
+      // torneio vazio começa com A–E, como sempre foi
+      const pres=Array.from(new Set((t.jogadores||[]).map(p=>p.group))).filter(Boolean).sort();
+      t.grupos=pres.length?pres:['A','B','C','D','E'];
+    }
+  });
+}
+/* A escada de categorias deste torneio, em ordem (A é a mais forte). Substitui as
+   listas fixas antigas — agora dá para ter quantas categorias você quiser. */
+function gruposDe(t){return (t&&Array.isArray(t.grupos)&&t.grupos.length)?t.grupos:['A','B','C','D','E'];}
+const ALFA_TOR='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+function adicionarCategoria(){
+  const t=torAtual();
+  const prox=ALFA_TOR.find(l=>t.grupos.indexOf(l)<0);
+  if(!prox){toast('Chegou ao limite de categorias (Z) 🙂');return;}
+  t.grupos.push(prox);t.grupos.sort();
+  logAct('Nova categoria no torneio: Grupo '+prox);
+  persist();renderTorneio();toast('Categoria "Grupo '+prox+'" criada — dê um nome tocando no título, ou adicione jogadores.');
+}
+function removerCategoria(g){
+  const t=torAtual();
+  if(t.jogadores.some(p=>p.group===g)){toast('Tire os jogadores desta categoria antes de removê-la');return;}
+  if(t.grupos.length<=1){toast('O torneio precisa de ao menos uma categoria');return;}
+  if(!confirm('Remover a categoria "'+nomeGrupo(t,g)+'" (vazia)?'))return;
+  t.grupos=t.grupos.filter(x=>x!==g);
+  if(t.nomesGrupos)delete t.nomesGrupos[g];
+  logAct('Categoria removida do torneio: Grupo '+g);
+  persist();renderTorneio();toast('Categoria removida');
+}
+/* Nome que o João deu ao grupo; sem nome, cai no padrão "Grupo A". A letra
+   (A–E) continua sendo a identidade interna e a posição na escada — só o rótulo
+   visível muda. */
+function nomeGrupo(t,g){const n=t&&t.nomesGrupos&&t.nomesGrupos[g];return (n&&String(n).trim())?String(n).trim():('Grupo '+g);}
+function renomearGrupoTor(g){
+  const t=torAtual();
+  const atual=(t.nomesGrupos&&t.nomesGrupos[g])||'';
+  const novo=prompt('Nome da categoria do Grupo '+g+' (deixe vazio para voltar a "Grupo '+g+'"):',atual);
+  if(novo===null)return;
+  const v=novo.trim();
+  if(v)t.nomesGrupos[g]=v; else delete t.nomesGrupos[g];
+  logAct('Categoria do Grupo '+g+': '+(v||'(padrão)'));
+  persist();renderTorneio();toast(v?('Grupo '+g+' agora é "'+v+'"'):('Grupo '+g+' voltou ao padrão'));
+}
+function torAtual(){ensureTorneios();return DB.torneios.lista[DB.torneios.atual];}
+function etapaLabel(t){return 'Etapa '+((t&&t.etapa)||1);}
+function campeoesDe(t){
+  // vencedores por grupo (1º e 2º) segundo a classificação atual
+  const grupos=gruposDe(t).filter(g=>t.jogadores.some(p=>p.group===g));
+  return grupos.map(g=>{
+    const ps=rankPlayersTor(t.jogadores.filter(p=>p.group===g));
+    return {grupo:g,campeao:ps[0]?ps[0].name:'—',vice:ps[1]?ps[1].name:'—'};
+  });
+}
+function encerrarEtapa(){
+  const t=torAtual();
+  if(!t.jogadores||!t.jogadores.length){toast('Adicione jogadores antes de encerrar');return;}
+  if(t.encerrada){toast('Esta etapa já está encerrada');return;}
+  if(!confirm('Encerrar a '+etapaLabel(t)+' de "'+t.nome+'"?\nOs campeões e vices serão definidos pela classificação atual e a premiação aparecerá para os alunos.'))return;
+  const campeoes=campeoesDe(t);
+  t.etapasFin=t.etapasFin||[];
+  // remove registro anterior desta mesma etapa (reencerrar) e regrava
+  t.etapasFin=t.etapasFin.filter(e=>e.etapa!==t.etapa);
+  t.etapasFin.push({etapa:t.etapa,data:new Date().toISOString().slice(0,10),campeoes});
+  t.encerrada=true;
+  persist();renderTorneio();
+  toast('🏁 '+etapaLabel(t)+' encerrada — campeões definidos!');
+}
+function novaEtapa(){
+  const t=torAtual();
+  const mov=movimentosEtapa(t);
+  // ele confirma sabendo quem sobe e quem desce, em vez de descobrir depois
+  let resumo='';
+  if(mov.sobem.length)resumo+='\n⬆️ SOBEM (pontos zerados)\n'+mov.sobem.map(m=>'· '+m.p.name+': '+m.de+' → '+m.para).join('\n')+'\n';
+  if(mov.descem.length)resumo+='\n⬇️ DESCEM (pontos zerados)\n'+mov.descem.map(m=>'· '+m.p.name+': '+m.de+' → '+m.para).join('\n')+'\n';
+  if(mov.ficam.length)resumo+='\n➡️ PERMANECEM (mantêm os pontos)\n'
+    +mov.ficam.map(p=>'· '+p.name+' ('+p.group+'): '+calcPtsTor(p)+' pts').join('\n')+'\n';
+  const aviso=(t.encerrada?'Iniciar a próxima etapa?':'A '+etapaLabel(t)+' ainda não foi encerrada. Iniciar a próxima mesmo assim?')
+    +'\n'+resumo+'\nOs placares V/D/WO zeram para todos.';
+  if(!confirm(aviso))return;
+  // 1) primeiro grava o acumulado e move de categoria...
+  mov.ficam.forEach(p=>{p.ptsAcum=calcPtsTor(p);});
+  mov.sobem.forEach(m=>{m.p.group=m.para;m.p.ptsAcum=0;});
+  mov.descem.forEach(m=>{m.p.group=m.para;m.p.ptsAcum=0;});
+  // 2) ...e só então zera os placares da etapa
+  t.etapa=(Number(t.etapa)||1)+1;
+  t.encerrada=false;
+  (t.jogadores||[]).forEach(p=>{p.v=0;p.d=0;p.wo=0;});
+  t.etapasFin=t.etapasFin||[];
+  const reg=t.etapasFin.find(e=>e.etapa===(t.etapa-1));
+  const movRec={sobem:mov.sobem.map(m=>({nome:m.p.name,de:m.de,para:m.para})),
+                descem:mov.descem.map(m=>({nome:m.p.name,de:m.de,para:m.para}))};
+  if(reg)reg.movimentos=movRec;
+  else t.etapasFin.push({etapa:t.etapa-1,data:new Date().toISOString().slice(0,10),campeoes:[],movimentos:movRec});
+  logAct('Nova etapa do torneio: '+etapaLabel(t));
+  persist();renderTorneio();
+  toast('🎾 '+etapaLabel(t)+' iniciada · '+mov.sobem.length+' subiram, '+mov.descem.length+' desceram');
+}
+function editarEtapaNum(){
+  const t=torAtual();
+  const v=prompt('Número da etapa atual:',String(t.etapa||1));
+  if(v==null)return;
+  const n=parseInt(v,10);
+  if(isNaN(n)||n<1){toast('Número inválido');return;}
+  t.etapa=n;persist();renderTorneio();toast('Etapa definida: '+etapaLabel(t));
+}
+/* ===== Pontos acumulativos =====
+   Antes os pontos zeravam para todo mundo a cada etapa e não existia pontuação
+   de ano. Agora quem PERMANECE na categoria mantém o que somou; só quem sobe ou
+   desce começa do zero. No fim do ano a premiação sai do total de cada
+   categoria. Quem nunca teve etapa anterior tem ptsAcum=0 e se comporta
+   exatamente como antes — nada a migrar. */
+function ptsEtapa(p){return (p.v||0)*3+(p.d||0)*1+(p.wo||0)*1;}
+function calcPtsTor(p){return (Number(p.ptsAcum)||0)+ptsEtapa(p);}
+function rankPlayersTor(jogs){return jogs.slice().sort((a,b)=>calcPtsTor(b)-calcPtsTor(a)||(b.v||0)-(a.v||0)||(a.order??0)-(b.order??0));}
+/* Sobe = letra anterior (B→A). Desce = letra seguinte (B→C). Nas pontas não há
+   para onde ir: quem está lá permanece — e, por permanecer, mantém os pontos. */
+function grupoAcima(t,g){const L=gruposDe(t);const i=L.indexOf(g);return (i>0)?L[i-1]:null;}
+function grupoAbaixo(t,g){const L=gruposDe(t);const i=L.indexOf(g);return (i>=0&&i<L.length-1)?L[i+1]:null;}
+/* Quem sobe, quem desce e quem fica — calculado ANTES de zerar os placares. */
+function movimentosEtapa(t){
+  const porGrupo={};
+  (t.jogadores||[]).forEach(p=>{(porGrupo[p.group]=porGrupo[p.group]||[]).push(p);});
+  const sobem=[],descem=[],ficam=[];
+  Object.keys(porGrupo).forEach(g=>{
+    const ord=rankPlayersTor(porGrupo[g]);
+    if(!ord.length)return;
+    // categoria com um jogador só não tem barragem: sem ninguém para enfrentar,
+    // ele permanece e segue acumulando, em vez de subir de graça toda etapa
+    if(ord.length<2){ficam.push(ord[0]);return;}
+    const primeiro=ord[0], ultimo=ord[ord.length-1];
+    const acima=grupoAcima(t,g), abaixo=grupoAbaixo(t,g);
+    ord.forEach(p=>{
+      if(p===primeiro&&acima)sobem.push({p,de:g,para:acima});
+      else if(p===ultimo&&abaixo&&ord.length>1)descem.push({p,de:g,para:abaixo});
+      else ficam.push(p);
+    });
+  });
+  return {sobem,descem,ficam};
+}
+
+function renderTorneio(){
+  const sel=document.getElementById('tor-sel');if(!sel)return;
+  ensureTorneios();
+  const ids=Object.keys(DB.torneios.lista);
+  sel.innerHTML=ids.map(id=>`<option value="${id}" ${id===DB.torneios.atual?'selected':''}>${esc(DB.torneios.lista[id].nome)}</option>`).join('');
+  const t=torAtual();
+  renderTorEtapa(t);
+  const wrap=document.getElementById('tor-grupos');
+  const temJogador=(t.jogadores||[]).length>0;
+  // com jogadores, mostra TODAS as categorias definidas (uma nova, ainda vazia, aparece)
+  wrap.innerHTML=temJogador?gruposDe(t).map(g=>renderGrupoTor(t,g)).join(''):'<div class="tor-empty">Nenhum jogador ainda neste torneio.<br>Toque em <b>＋ Jogador</b> para montar as categorias. 🎾</div>';
+  renderTorLog();
+}
+function renderTorEtapa(t){
+  const el=document.getElementById('tor-etapa');if(!el)return;
+  const status=t.encerrada?'<span class="te-badge fim">encerrada ✓</span>':'<span class="te-badge on">em andamento</span>';
+  let hist='';
+  const fins=(t.etapasFin||[]).slice().sort((a,b)=>b.etapa-a.etapa);
+  if(fins.length){
+    hist='<div class="te-hist"><div class="te-hist-t">Etapas encerradas</div>'+fins.map(e=>{
+      const linhas=(e.campeoes||[]).map(c=>esc(nomeGrupo(t,c.grupo))+': 🏆 '+esc(c.campeao)+' · 🥈 '+esc(c.vice)).join('<br>');
+      return '<div class="te-hrow"><b>Etapa '+e.etapa+'</b> <span>'+((e.data||'').split('-').reverse().join('/'))+'</span><div class="te-camp">'+linhas+'</div></div>';
+    }).join('')+'</div>';
+  }
+  el.innerHTML='<div class="te-bar">'+
+    '<div class="te-top"><div><span class="te-eyebrow">'+esc(t.nome)+'</span><div class="te-etapa" onclick="editarEtapaNum()" title="Tocar para editar o número">'+etapaLabel(t)+' ✎</div></div>'+status+'</div>'+
+    '<div class="te-acts"><button class="te-fim" onclick="encerrarEtapa()">🏁 Encerrar etapa</button><button class="te-nova" onclick="novaEtapa()">➕ Nova etapa</button></div>'+
+    '</div>'+hist;
+}
+function renderGrupoTor(t,g){
+  const players=rankPlayersTor(t.jogadores.filter(p=>p.group===g));
+  const maxPts=players.length?calcPtsTor(players[0]):0;
+  const rows=players.map((p,i)=>{
+    const lead=i===0&&maxPts>0, rk=i===0?'r1':i===1?'r2':i===2?'r3':'';
+    const q=escJs(p.name);
+    return `<tr class="tg-row" data-group="${torAttr(g)}" data-name="${torAttr(p.name)}">
+      <td><span class="tg-drag" title="Arraste para mover/reordenar" onpointerdown="torDragDown(event)">⠿</span><span class="tg-rank ${rk}">${i+1}</span><span class="tg-name" title="Renomear" onclick="renomearJogadorTor('${escJs(g)}','${q}')">${esc(p.name)}${p.cod?' 🔗':''}</span></td>
+      <td><input class="tg-stat" type="number" min="0" value="${p.v||0}" onchange="updateStatTor('${escJs(g)}','${q}','v',this.value)"></td>
+      <td><input class="tg-stat" type="number" min="0" value="${p.d||0}" onchange="updateStatTor('${escJs(g)}','${q}','d',this.value)"></td>
+      <td><input class="tg-stat" type="number" min="0" value="${p.wo||0}" onchange="updateStatTor('${escJs(g)}','${q}','wo',this.value)"></td>
+      <td><span class="tg-pts ${lead?'lead':''}" style="cursor:pointer" title="Toque para ajustar — ${(Number(p.ptsAcum)||0)>0?(ptsEtapa(p)+' nesta etapa + '+(Number(p.ptsAcum)||0)+' de fora'):'pontos desta etapa'}" onclick="ajustarPontosTor('${escJs(g)}','${q}')">${calcPtsTor(p)}</span>${(Number(p.ptsAcum)||0)>0?`<small class="tg-acum">${ptsEtapa(p)}+${Number(p.ptsAcum)||0}</small>`:''}</td>
+      <td style="white-space:nowrap"><button class="tg-mv" title="Mover de grupo" onclick="abrirMoverTor('${escJs(g)}','${q}')">↔</button><button class="tg-x" title="Remover" onclick="removerJogadorTor('${escJs(g)}','${q}')">✕</button></td>
+    </tr>`;
+  }).join('');
+  const head=`<div class="tg-head"><div class="tg-badge">${esc(g)}</div><div style="flex:1"><div class="tg-title" title="Tocar para dar um nome à categoria" onclick="renomearGrupoTor('${escJs(g)}')">${esc(nomeGrupo(t,g))} ✎</div><div class="tg-count">${players.length} jogador${players.length!==1?'es':''}</div></div>${players.length===0?`<button class="tg-x" title="Remover categoria vazia" onclick="removerCategoria('${escJs(g)}')">🗑️</button>`:''}</div>`;
+  if(players.length===0)
+    return `<div class="tg-card">${head}<div class="tg-count" style="padding:6px 2px 2px">Categoria vazia — use <b>＋ Jogador</b> para adicionar aqui.</div></div>`;
+  return `<div class="tg-card">${head}
+    <table class="tg-tbl"><thead><tr><th>Jogador</th><th title="Vitórias">V</th><th title="Derrotas">D</th><th title="W.O.">WO</th><th title="Pontos">Pts</th><th></th></tr></thead><tbody data-group="${torAttr(g)}">${rows}</tbody></table></div>`;
+}
+function selTorneio(id){ensureTorneios();if(DB.torneios.lista[id]){DB.torneios.atual=id;persist();renderTorneio();}}
+function abrirNovoTorneio(){document.getElementById('tn-nome').value='';document.getElementById('tn-tipo').value='barragem';document.getElementById('ov-tor-novo').classList.add('on');}
+function criarTorneio(){
+  const nome=document.getElementById('tn-nome').value.trim();
+  if(!nome){toast('Dê um nome ao torneio');return;}
+  ensureTorneios();
+  const id='t'+Date.now();
+  DB.torneios.lista[id]={id,nome,tipo:document.getElementById('tn-tipo').value,jogadores:[],criadoEm:Date.now()};
+  DB.torneios.atual=id;persist();closeModal('ov-tor-novo');renderTorneio();toast('Torneio criado ✓');
+}
+function excluirTorneio(){
+  ensureTorneios();
+  if(Object.keys(DB.torneios.lista).length<=1){toast('Crie outro torneio antes de excluir este 🙂');return;}
+  const t=torAtual();
+  if(!confirm('Excluir "'+t.nome+'" e todos os seus dados? Isso não pode ser desfeito.'))return;
+  delete DB.torneios.lista[t.id];
+  DB.torneios.atual=Object.keys(DB.torneios.lista)[0];
+  persist();renderTorneio();toast('Torneio excluído');
+}
+function abrirAddJogador(){
+  document.getElementById('tj-grupo').innerHTML=gruposDe(torAtual()).map(g=>`<option value="${esc(g)}">${esc(nomeGrupo(torAtual(),g))}</option>`).join('');
+  const sel=document.getElementById('tj-aluno');
+  if(sel)sel.innerHTML='<option value="">— Avulso (digitar nome) —</option>'+DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${a.id}">${esc(a.nome)}</option>`).join('');
+  document.getElementById('tj-nome').value='';
+  document.getElementById('ov-tor-jogador').classList.add('on');
+}
+function tjAlunoSel(){
+  const a=DB.alunos.find(x=>x.id===document.getElementById('tj-aluno').value);
+  if(a)document.getElementById('tj-nome').value=a.nome;
+}
+function addJogadorTor(){
+  const av=DB.alunos.find(x=>x.id===document.getElementById('tj-aluno').value);
+  const nome=(av?av.nome:document.getElementById('tj-nome').value.trim());
+  const g=document.getElementById('tj-grupo').value;
+  if(!nome){toast('Digite o nome ou escolha um aluno');return;}
+  const t=torAtual();
+  if(t.jogadores.some(p=>p.group===g&&p.name.toLowerCase()===nome.toLowerCase())){toast('Esse jogador já está no grupo '+g);return;}
+  const novo={group:g,name:nome,v:0,d:0,wo:0,order:t.jogadores.length};
+  if(av){novo.alunoId=av.id;novo.cod=av.codigo;}
+  t.jogadores.push(novo);
+  persist();closeModal('ov-tor-jogador');renderTorneio();toast(nome+' → Grupo '+g+(av?' · vinculado 🔗':''));
+}
+function removerJogadorTor(g,name){
+  if(!confirm('Remover "'+name+'" do grupo '+g+'?'))return;
+  const t=torAtual();t.jogadores=t.jogadores.filter(p=>!(p.group===g&&p.name===name));
+  persist();renderTorneio();
+}
+function renomearJogadorTor(g,name){
+  const novo=prompt('Renomear jogador:',name);if(novo===null)return;
+  const nv=novo.trim();if(!nv)return;
+  const t=torAtual();const p=t.jogadores.find(x=>x.group===g&&x.name===name);if(!p)return;
+  p.name=nv;persist();renderTorneio();
+}
+/* ===== Ajustar os pontos de um jogador =====
+   V, D e WO já eram editáveis; o total, não — ele é calculado. Mas torneio
+   real tem correção: jogo lançado errado, resultado que chegou depois, ponto
+   combinado fora da tabela. Sem um lugar para isso, a saída era mexer no V/D,
+   que inventa uma vitória que não houve e some no meio dos placares.
+
+   O ajuste entra no ptsAcum, que é o mesmo campo que carrega o ponto das
+   etapas anteriores — e a tabela já mostra "3+7" embaixo do total, então quem
+   olha vê que parte veio dos jogos desta etapa e que parte veio de fora. */
+function ajustarPontosTor(g,name){
+  const t=torAtual();const p=t.jogadores.find(x=>x.group===g&&x.name===name);if(!p)return;
+  const daEtapa=ptsEtapa(p), acum=Number(p.ptsAcum)||0, total=daEtapa+acum;
+  const resp=prompt(name+'\n\nPontos totais: '+total
+    +'\n· '+daEtapa+' dos jogos desta etapa ('+(p.v||0)+'V '+(p.d||0)+'D '+(p.wo||0)+'WO)'
+    +'\n· '+acum+' de fora da etapa\n\nDigite o TOTAL que ele deve ficar:',String(total));
+  if(resp===null)return;
+  /* Campo apagado e OK não é "zero": Number('') dá 0, e isso zeraria os pontos
+     de quem só queria desistir do ajuste. */
+  const txt=String(resp).trim();
+  if(!txt)return;
+  const novo=Number(txt.replace(',','.'));
+  if(!isFinite(novo)||novo<0){toast('Digite um número de 0 para cima');return;}
+  if(novo<daEtapa){
+    toast('Os jogos desta etapa já valem '+daEtapa+'. Para ficar abaixo disso, corrija V/D/WO.');
+    return;
+  }
+  p.ptsAcum=novo-daEtapa;
+  logAct('Ajustar pontos no torneio: '+name+' '+total+' → '+novo);
+  persist();renderTorneio();
+  toast('Pontos de '+name+': '+total+' → '+novo);
+}
+function updateStatTor(g,name,field,val){
+  const t=torAtual();const p=t.jogadores.find(x=>x.group===g&&x.name===name);if(!p)return;
+  let v=parseInt(val,10);if(isNaN(v)||v<0)v=0;p[field]=v;persist();renderTorneio();toast('Atualizado',1000);
+}
+let moveTorCtx=null;
+function abrirMoverTor(g,name){
+  moveTorCtx={g,name};
+  document.getElementById('tm-info').textContent=name+' · atualmente em '+nomeGrupo(torAtual(),g);
+  document.getElementById('tm-grupo').innerHTML=gruposDe(torAtual()).filter(x=>x!==g).map(x=>`<option value="${x}">${esc(nomeGrupo(torAtual(),x))}</option>`).join('');
+  document.getElementById('ov-tor-move').classList.add('on');
+}
+function confirmarMoverTor(){
+  if(!moveTorCtx)return;
+  const t=torAtual();const p=t.jogadores.find(x=>x.group===moveTorCtx.g&&x.name===moveTorCtx.name);if(!p)return;
+  p.group=document.getElementById('tm-grupo').value;persist();closeModal('ov-tor-move');renderTorneio();toast('Movido para o Grupo '+p.group);
+}
+function abrirResultadoTor(){
+  const t=torAtual();
+  const grupos=gruposDe(t).filter(g=>t.jogadores.some(p=>p.group===g));
+  if(!grupos.length){toast('Adicione jogadores primeiro 🙂');return;}
+  document.getElementById('tr-grupo').innerHTML='<option value="">Selecionar grupo…</option>'+grupos.map(g=>`<option value="${esc(g)}">${esc(nomeGrupo(t,g))}</option>`).join('');
+  document.getElementById('tr-p1').innerHTML='<option value="">—</option>';
+  document.getElementById('tr-p2').innerHTML='<option value="">—</option>';
+  document.getElementById('tr-venc').innerHTML='<option value="">—</option>';
+  const n=document.querySelector('input[name="tr-tipo"][value="normal"]');if(n)n.checked=true;
+  document.getElementById('ov-tor-result').classList.add('on');
+}
+function trPlayers(){
+  const t=torAtual();const g=document.getElementById('tr-grupo').value;
+  const nomes=t.jogadores.filter(p=>p.group===g).map(p=>p.name);
+  const opts='<option value="">—</option>'+nomes.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  document.getElementById('tr-p1').innerHTML=opts;document.getElementById('tr-p2').innerHTML=opts;document.getElementById('tr-venc').innerHTML=opts;
+}
+function aplicarResultadoTor(t,g,p1,p2,venc,tipo){
+  const perd=venc===p1?p2:p1;
+  const pw=t.jogadores.find(p=>p.group===g&&p.name===venc);
+  const pl=t.jogadores.find(p=>p.group===g&&p.name===perd);
+  if(!pw||!pl)return false;
+  if(tipo==='wo'){pw.wo=(pw.wo||0)+1;}else{pw.v=(pw.v||0)+1;pl.d=(pl.d||0)+1;}
+  return true;
+}
+function salvarResultadoTor(){
+  const t=torAtual();
+  const g=document.getElementById('tr-grupo').value,p1=document.getElementById('tr-p1').value,p2=document.getElementById('tr-p2').value,venc=document.getElementById('tr-venc').value;
+  const tipo=document.querySelector('input[name="tr-tipo"]:checked').value;
+  if(!g||!p1||!p2||!venc){toast('Preencha todos os campos');return;}
+  if(p1===p2){toast('Escolha jogadores diferentes');return;}
+  if(venc!==p1&&venc!==p2){toast('O vencedor deve ser um dos dois');return;}
+  if(!aplicarResultadoTor(t,g,p1,p2,venc,tipo)){toast('Jogador não encontrado');return;}
+  persist();closeModal('ov-tor-result');renderTorneio();toast('✓ '+venc+' venceu!');
+}
+function compartilharTorneio(){
+  const t=torAtual();
+  let txt='🏆 *'+t.nome.toUpperCase()+' — Academia João Victor Tênis*\n\n';
+  const grupos=gruposDe(t).filter(g=>t.jogadores.some(p=>p.group===g));
+  if(!grupos.length){toast('Sem jogadores para compartilhar');return;}
+  grupos.forEach(g=>{
+    txt+='*── GRUPO '+g+' ──*\n';
+    rankPlayersTor(t.jogadores.filter(p=>p.group===g)).forEach((p,i)=>{
+      const m=i===0?'🥇':i===1?'🥈':i===2?'🥉':'▫️';
+      txt+=m+' '+p.name+' — '+calcPtsTor(p)+' pts ('+(p.v||0)+'V/'+(p.d||0)+'D'+((p.wo||0)?('/'+p.wo+'WO'):'')+')\n';
+    });
+    txt+='\n';
+  });
+  txt+='_Acompanhe sua evolução em quadra!_ 🎾';
+  window.open('https://api.whatsapp.com/send?text='+encodeURIComponent(txt),'_blank');
+}
+/* Local primeiro: resolve o CDN sair do ar e faz funcionar offline.
+   O CDN fica de reserva para o caso de o arquivo local faltar num deploy
+   incompleto — as duas juntas cobrem mais que qualquer uma sozinha. */
+async function libLocalOuCdn(local,cdn){
+  try{await carregarLib(local);}catch(e){await carregarLib(cdn);}
+}
+function carregarLib(src){
+  return new Promise(function(resolve,reject){
+    var ex=document.querySelector('script[data-lib="'+src+'"]');
+    if(ex&&ex.getAttribute('data-ok')==='1')return resolve();
+    var s=document.createElement('script');s.src=src;s.async=true;s.setAttribute('data-lib',src);
+    s.onload=function(){s.setAttribute('data-ok','1');resolve();};
+    s.onerror=function(){reject(new Error('falha ao carregar'));};
+    document.head.appendChild(s);
+  });
+}
+async function garantirExportLibs(){
+  if(typeof html2canvas==='undefined')await libLocalOuCdn('lib/html2canvas.min.js','https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+  if(!window.jspdf)await libLocalOuCdn('lib/jspdf.umd.min.js','https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+}
+/* Imagem da semana para mandar ao aluno: mostra o que está livre e o que está
+   ocupado, SEM o nome de ninguém — a agenda é informação dos outros alunos. */
+function montarSemanaExport(days){
+  const br=d=>String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');
+  let html='<div class="sx-head"><div><b>Academia João Victor Tênis</b>'
+    +'<span>Horários da semana · '+br(days[0])+' a '+br(days[days.length-1])+'</span></div>'
+    +'<div class="sx-emb">JV</div></div>';
+  html+='<table class="sx-tbl"><tr><th></th>'
+    +days.map(d=>'<th>'+DIAS[d.getDay()]+'<small>'+br(d)+'</small></th>').join('')+'</tr>';
+  let algumLivre=false;
+  HORAS.forEach(h=>{
+    // linha some quando o horário está fechado em todos os dias da semana
+    const linha=days.map(d=>{
+      const modo=slotModo(d,h);
+      // hora do professor não é hora livre da academia: não se oferece ao aluno
+      // hora liberada ao professor não é hora livre da academia
+      if(modo==='fechado'||slotProfLiberado(d,h))return {cls:'sx-off',txt:'—'};
+      const evs=entriesFor(d,h).filter(e=>e.tipo!=='pessoal');
+      if(evs.length)return {cls:'sx-ocup',txt:'ocupado'};
+      const [hh,mm]=h.split(':');
+      const quando=new Date(d.getFullYear(),d.getMonth(),d.getDate(),Number(hh),Number(mm||0));
+      if(quando.getTime()<=Date.now())return {cls:'sx-off',txt:'—'};   // já passou
+      algumLivre=true;
+      return modo==='loc'?{cls:'sx-loc',txt:'livre<br>locação'}:{cls:'sx-livre',txt:'livre'};
+    });
+    if(linha.every(c=>c.cls==='sx-off'))return;
+    html+='<tr><td class="h">'+h+'</td>'+linha.map(c=>'<td><div class="sx-c '+c.cls+'">'+c.txt+'</div></td>').join('')+'</tr>';
+  });
+  html+='</table>';
+  html+='<div class="sx-leg"><span><i style="background:#E3F2E4;border:1.5px solid #BFDCC4"></i>livre para aula</span>'
+    +'<span><i style="background:#FBF3DC;border:1.5px solid #E4CF92"></i>livre só para locação</span>'
+    +'<span><i style="background:#EFE9DD;border:1px solid #E2D5C0"></i>ocupado</span></div>';
+  html+='<div class="sx-foot">'+(algumLivre?'Escolha um horário livre e me chame no WhatsApp 🎾':'Semana cheia — me chame que a gente encaixa 🎾')+'</div>';
+  document.getElementById('sem-export').innerHTML=html;
+  return algumLivre;
+}
+function semanaDias(){
+  const mon=new Date(agDate);mon.setDate(mon.getDate()-((mon.getDay()+6)%7));
+  return [...Array(6)].map((_,i)=>{const d=new Date(mon);d.setDate(d.getDate()+i);return d;});
+}
+async function enviarSemanaImg(){
+  toast('Preparando a imagem…');
+  try{await garantirExportLibs();}catch(e){toast('Sem internet para gerar a imagem agora');return;}
+  if(typeof html2canvas==='undefined'){toast('Recurso indisponível agora');return;}
+  const days=semanaDias();
+  try{
+    montarSemanaExport(days);
+    const canvas=await html2canvas(document.getElementById('sem-export'),{backgroundColor:'#FAF7F2',scale:2});
+    canvas.toBlob(async(blob)=>{
+      if(!blob){toast('Não consegui gerar a imagem');return;}
+      const nome='horarios-'+dKey(days[0])+'.png';
+      const file=new File([blob],nome,{type:'image/png'});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        try{await navigator.share({files:[file],title:'Horários da semana · JV Tênis',text:'Horários livres desta semana 🎾'});return;}catch(e){}
+      }
+      const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=nome;
+      document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+      toast('🖼️ Imagem salva — é só mandar no WhatsApp');
+    },'image/png');
+  }catch(e){toast('Erro ao gerar a imagem');}
+}
+function montarTorExport(t){
+  const grupos=gruposDe(t).filter(g=>t.jogadores.some(p=>p.group===g));
+  let html='<div class="tex-head"><div><b>Academia João Victor Tênis</b><span>'+esc(t.nome)+' · '+new Date().toLocaleDateString('pt-BR')+'</span></div><div class="tex-emb">JV</div></div>';
+  grupos.forEach(g=>{
+    const players=rankPlayersTor(t.jogadores.filter(p=>p.group===g));
+    const rows=players.map((p,i)=>'<tr class="'+(i===0?'r1':'')+'"><td>'+(i+1)+'. '+esc(p.name)+'</td><td>'+(p.v||0)+'</td><td>'+(p.d||0)+'</td><td>'+(p.wo||0)+'</td><td class="tex-pts">'+calcPtsTor(p)+'</td></tr>').join('');
+    html+='<div class="tex-grp"><h4>Grupo '+g+'</h4><table class="tex-tbl"><thead><tr><th>Jogador</th><th>V</th><th>D</th><th>WO</th><th>Pts</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  });
+  html+='<div class="tex-foot">Disciplina no treino. Evolução no jogo. 🎾</div>';
+  document.getElementById('tor-export').innerHTML=html;
+}
+function barragemCanvas(){
+  const t=torAtual();
+  const grupos=gruposDe(t).filter(g=>t.jogadores.some(p=>p.group===g));
+  if(!grupos.length){toast('Sem jogadores para compartilhar');return Promise.reject('vazio');}
+  montarTorExport(t);
+  return html2canvas(document.getElementById('tor-export'),{backgroundColor:'#ffffff',scale:2});
+}
+async function salvarBarragemImg(){
+  toast('Preparando imagem…');
+  try{await garantirExportLibs();}catch(e){toast('Sem internet para gerar a imagem agora');return;}
+  if(typeof html2canvas==='undefined'){toast('Recurso indisponível agora');return;}
+  try{
+    const canvas=await barragemCanvas();
+    canvas.toBlob(async(blob)=>{
+      if(!blob){toast('Não consegui gerar a imagem');return;}
+      const file=new File([blob],'barragem-jvtenis.png',{type:'image/png'});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        try{await navigator.share({files:[file],title:'Barragem · JV Tênis',text:'Classificação da Barragem 🎾'});return;}catch(e){}
+      }
+      const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='barragem-jvtenis.png';
+      document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+      toast('🖼️ Imagem salva!');
+    },'image/png');
+  }catch(e){if(e!=='vazio')toast('Erro ao gerar imagem');}
+}
+async function baixarBarragemPDF(){
+  toast('Preparando PDF…');
+  try{await garantirExportLibs();}catch(e){toast('Sem internet para gerar o PDF agora');return;}
+  if(typeof html2canvas==='undefined'||!window.jspdf){toast('Recurso indisponível agora');return;}
+  try{
+    const canvas=await barragemCanvas();
+    const img=canvas.toDataURL('image/png');
+    const {jsPDF}=window.jspdf;const pdf=new jsPDF('p','mm','a4');
+    const margin=10,pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
+    let iw=pw-margin*2,ih=canvas.height*iw/canvas.width;
+    if(ih>ph-margin*2){ih=ph-margin*2;iw=canvas.width*ih/canvas.height;}
+    pdf.addImage(img,'PNG',(pw-iw)/2,margin,iw,ih);
+    pdf.save('barragem-jvtenis.pdf');
+    toast('📄 PDF salvo!');
+  }catch(e){if(e!=='vazio')toast('Erro ao gerar PDF');}
+}
+/* Resultados enviados pelos alunos (fila no Firebase) */
+let torFila=[];
+async function syncTorneio(silent){
+  if(!hasCloud()){renderTorLog();return;}
+  try{
+    const snap=await window.fbDB.ref('jvtenis/fila_torneio').get();
+    const val=snap.exists()?snap.val():{};
+    torFila=Object.entries(val||{}).map(([key,m])=>({key,...m})).sort((a,b)=>(a.ts||0)-(b.ts||0));
+  }catch(e){torFila=[];}
+  renderTorLog();
+}
+function renderTorLog(){
+  const wrap=document.getElementById('tor-log-wrap');if(!wrap)return;
+  if(!torFila.length){wrap.innerHTML='';return;}
+  wrap.innerHTML='<div class="tor-log"><h4>📥 Resultados enviados pelos alunos ('+torFila.length+')</h4>'+
+    torFila.map(m=>{
+      const adv=m.vencedor===m.p1?m.p2:m.p1;
+      const desc=m.tipo==='wo'?(esc(m.vencedor)+' venceu por W.O.'):(esc(m.vencedor)+' venceu '+esc(adv));
+      return '<div class="row"><div style="flex:1;min-width:0"><div><b style="color:var(--gold-light)">'+desc+'</b></div><div style="opacity:.72;font-size:11px;margin-top:2px">Grupo '+esc(m.group||'?')+(m.score?(' · '+esc(m.score)):'')+' · por '+esc(m.nome||'aluno')+'</div></div><div style="display:flex;gap:6px"><button class="ap" onclick="aplicarFilaTor(\''+m.key+'\')">Aplicar</button><button class="ds" onclick="descartarFilaTor(\''+m.key+'\')">✕</button></div></div>';
+    }).join('')+'</div>';
+}
+function aplicarFilaTor(key){
+  const m=torFila.find(x=>x.key===key);if(!m)return;
+  const t=torAtual();const g=m.group||'A';
+  [m.p1,m.p2].forEach(n=>{if(n&&!t.jogadores.some(p=>p.group===g&&p.name===n))t.jogadores.push({group:g,name:n,v:0,d:0,wo:0,order:t.jogadores.length});});
+  aplicarResultadoTor(t,g,m.p1,m.p2,m.vencedor,m.tipo||'normal');
+  persist();
+  if(hasCloud())window.fbDB.ref('jvtenis/fila_torneio/'+key).remove().catch(()=>{});
+  torFila=torFila.filter(x=>x.key!==key);renderTorneio();toast('Resultado aplicado ✓');
+}
+function descartarFilaTor(key){
+  if(hasCloud())window.fbDB.ref('jvtenis/fila_torneio/'+key).remove().catch(()=>{});
+  torFila=torFila.filter(x=>x.key!==key);renderTorLog();
+}
+/* Verifica resultados de alunos a cada 45s quando a aba está aberta */
+setInterval(()=>{const pg=document.getElementById('pg-torneio');if(pg&&pg.classList.contains('on'))syncTorneio(true);},45000);
+
+function aulasAmanha(){
+  const am=new Date();am.setDate(am.getDate()+1);
+  const out=[];
+  HORAS.forEach(h=>{entriesFor(am,h).forEach(e=>{
+    if(e.titulo==='☔ Chuva')return;
+    const a=e.alunoId?DB.alunos.find(x=>x.id===e.alunoId):null;
+    out.push({a:a,titulo:e.titulo,hora:h,tipo:e.tipo});
+  });});
+  return {date:am,list:out};
+}
+let CONF_ALUNOS={};   // confirmações feitas pelos alunos (codigo|data|hora)
+async function carregarConfirmacoes(){
+  if(!hasCloud())return;
+  try{
+    const snap=await window.fbDB.ref('jvtenis/fila_confirmacoes').get();
+    const v=snap.exists()?(snap.val()||{}):{};const m={};
+    Object.keys(v).forEach(k=>{const c=v[k];if(c&&c.codigo&&c.data&&c.hora)m[c.codigo+'|'+c.data+'|'+c.hora]=true;});
+    CONF_ALUNOS=m;const b=document.getElementById('confirm-amanha');if(b)renderConfirmAmanha();
+  }catch(e){}
+}
+let CADASTROS={};
+async function carregarCadastros(){
+  if(!hasCloud())return;
+  try{
+    const snap=await window.fbDB.ref('jvtenis/fila_cadastros').get();
+    CADASTROS=snap.exists()?(snap.val()||{}):{};
+    renderCadastros();
+  }catch(e){}
+}
+function renderCadastros(){
+  const wrap=document.getElementById('cadastros-wrap'),box=document.getElementById('cadastros-box');
+  if(!wrap||!box)return;
+  const keys=Object.keys(CADASTROS);
+  wrap.style.display=keys.length?'block':'none';
+  box.innerHTML=keys.map(k=>{
+    const c=CADASTROS[k]||{};
+    return '<div class="mov"><div class="mov-l"><b>'+(c.nome||'—')+'</b><span>📱 '+(c.tel||'—')+' · '+(c.interesse||'')+'</span></div>'
+      +'<div style="display:flex;gap:6px">'
+      +'<button class="btn btn-clay" style="padding:6px 10px;font-size:11.5px" onclick="aprovarCadastro(\''+k+'\')">✓ Criar aluno</button>'
+      +'<button class="btn btn-ghost" style="padding:6px 10px;font-size:11.5px" onclick="descartarCadastro(\''+k+'\')">✕</button>'
+      +'</div></div>';
+  }).join('');
+}
+function aprovarCadastro(key){
+  const c=CADASTROS[key];if(!c)return;
+  let cod;do{cod=genCode();}while(DB.alunos.some(x=>x.codigo===cod));
+  DB.alunos.push({id:'a'+Date.now(),nome:c.nome||'Novo aluno',tel:(c.tel||'').replace(/\D/g,''),tipo:'Particular',plano:0,mensalidade:0,creditos:0,repos:0,locCred:0,status:'pendente',diaVenc:10,codigo:cod,valorAula:160,cardLink:'',mfitLink:''});
+  if(hasCloud())window.fbDB.ref('jvtenis/fila_cadastros/'+key).remove().catch(()=>{});
+  delete CADASTROS[key];
+  logAct('Cadastro aprovado (site): '+(c.nome||''));
+  persist();renderAll();renderCadastros();
+  toast('✓ Aluno criado (sem pacote). Ajuste o plano e envie o acesso 🔑');
+}
+function descartarCadastro(key){
+  if(!confirm('Descartar este pedido de cadastro?'))return;
+  if(hasCloud())window.fbDB.ref('jvtenis/fila_cadastros/'+key).remove().catch(()=>{});
+  delete CADASTROS[key];renderCadastros();toast('Pedido descartado.');
+}
+function confirmarInterno(id,hora){
+  const r=aulasAmanha();const dk=dKey(r.date);
+  DB.confirmacoes=DB.confirmacoes||{};
+  const k=id+'|'+dk+'|'+hora;DB.confirmacoes[k]=!DB.confirmacoes[k];
+  persist();renderConfirmAmanha();
+  toast(DB.confirmacoes[k]?'✅ Aula confirmada (interno).':'Confirmação desfeita.');
+}
+function renderConfirmAmanha(){
+  const box=document.getElementById('confirm-amanha');if(!box)return;
+  const r=aulasAmanha();const dk=dKey(r.date);
+  const dl=document.getElementById('confirm-amanha-data');
+  if(dl)dl.textContent=DIAS[r.date.getDay()]+' '+r.date.getDate()+'/'+(r.date.getMonth()+1);
+  if(!r.list.length){box.innerHTML='<div class="empty" style="padding:12px">Nada agendado para amanhã.</div>';return;}
+  const LBL={aula:'Aula',grupo:'Grupo',personal:'Personal',locacao:'Locação',pessoal:'Compromisso',bloqueio:'Bloqueio'};
+  const CF=DB.confirmacoes||{};
+  box.innerHTML=r.list.map(function(it){
+    var lbl=LBL[it.tipo]||it.tipo;
+    var nome=it.a?it.a.nome:(it.titulo||lbl);
+    var cliente=['aula','grupo','personal','locacao','torneio'].indexOf(it.tipo)>=0;
+    var right='';
+    if(it.a){
+      var jaJoao=!!CF[it.a.id+'|'+dk+'|'+it.hora];
+      var jaAluno=!!CONF_ALUNOS[(it.a.codigo||'')+'|'+dk+'|'+it.hora];
+      var badge=jaAluno?'<span style="font-size:10.5px;color:#2E7D52;font-weight:800">✓ aluno confirmou</span>':'';
+      right='<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end">'+badge
+        +'<button class="btn '+(jaJoao?'btn-ghost':'btn-clay')+'" style="padding:6px 10px;font-size:11.5px" onclick="confirmarInterno(\''+it.a.id+'\',\''+it.hora+'\')">'+(jaJoao?'✓ Confirmada':'✅ Confirmar')+'</button>'
+        +(it.a.tel?'<button class="btn btn-ghost" style="padding:6px 10px;font-size:11.5px" onclick="confirmarAulaWa(\''+it.a.id+'\',\''+it.hora+'\')">📲 WhatsApp</button>':'')
+        +'</div>';
+    } else if(cliente) right='<span style="font-size:11px;color:var(--muted)">sem vínculo</span>';
+    return '<div class="mov"><div class="mov-l"><b>'+nome+'</b><span>'+it.hora+' · '+lbl+'</span></div>'+right+'</div>';
+  }).join('');
+}
+function confirmarAulaWa(id,hora){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  if(!a.tel){toast('Sem telefone cadastrado para '+a.nome);return;}
+  const am=new Date();am.setDate(am.getDate()+1);
+  const msg=encodeURIComponent('Olá '+a.nome.split(' ')[0]+'! 🎾 Passando para confirmar seu horário amanhã ('+am.getDate()+'/'+(am.getMonth()+1)+') às '+hora+'. Posso confirmar? Qualquer coisa me avisa. 😊');
+  window.open('https://wa.me/'+foneWhats(a.tel)+'?text='+msg,'_blank');
+}
+/* Encolhe o cabeçalho depois de uns 40px de rolagem. Histerese (40 para
+   encolher, 20 para voltar) evita o cabeçalho piscar quando a rolagem para
+   bem no limite. */
+(function cabecalhoCompacto(){
+  let compacto=false;
+  const aplica=()=>{
+    const t=document.querySelector('.top');if(!t)return;
+    const y=window.scrollY||document.documentElement.scrollTop||0;
+    if(!compacto&&y>40){compacto=true;t.classList.add('compacto');}
+    else if(compacto&&y<20){compacto=false;t.classList.remove('compacto');}
+  };
+  window.addEventListener('scroll',()=>{requestAnimationFrame(aplica);},{passive:true});
+})();
+function renderAll(){
+  document.getElementById('month-label').textContent=MESES[curMonth]+' '+curYear;
+  const safe=(fn,nome)=>{try{fn();}catch(e){console.warn('Render '+nome+' falhou:',e);}};
+  safe(updateEyeBtn,'olho');safe(renderAlunos,'alunos');safe(renderQuickLanc,'botoescaixa');safe(renderMovs,'caixa');safe(renderDash,'inicio');safe(renderFin,'financeiro');safe(renderAgenda,'agenda');safe(renderTorneio,'torneio');safe(renderConfirmAmanha,'confirmamanha');safe(renderAvaliacoes,'avaliacoes');safe(checarBackup,'backup');safe(renderConta,'conta');safe(prepararAluguel,'aluguel');
+}
+// espera o Firebase ficar pronto (até ~6s) antes de carregar; nunca trava
+(function esperarESubir(t){
+  if(window.fbDB||t>=40){load();return;}
+  setTimeout(()=>esperarESubir(t+1),150);
+})(0);
