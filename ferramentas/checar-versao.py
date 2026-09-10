@@ -39,13 +39,54 @@ def data_do_arquivo(rel):
     return (d or '0000-00-00'), 'último commit'
 
 
+
+def locais_do_app(rel):
+    """O HTML e os scripts locais que ele carrega, como caminhos relativos.
+
+    A constante VERSAO e o codigo que mexe nela sairam do index.html para
+    lib/app-gestao.js. Sem seguir o <script src>, este portao deixaria de achar
+    o carimbo — e, pior, deixaria de perceber que o app mudou quando a mudanca
+    for no arquivo de fora.
+    """
+    caminho = os.path.join(RAIZ, rel)
+    saida = [rel]
+    if not os.path.exists(caminho):
+        return saida
+    txt = open(caminho, encoding='utf-8', errors='replace').read()
+    base = os.path.dirname(rel)
+    for src in re.findall(r'<script[^>]*\bsrc="([^"]+)"', txt):
+        if src.startswith('http') or src.startswith('//'):
+            continue
+        if re.search(r'firebase-|jspdf|html2canvas', src):
+            continue
+        r2 = os.path.normpath(os.path.join(base, src))
+        if os.path.exists(os.path.join(RAIZ, r2)):
+            saida.append(r2)
+    return saida
+
+
+def texto_do_app(rel):
+    return '\n'.join(open(os.path.join(RAIZ, r), encoding='utf-8', errors='replace').read()
+                     for r in locais_do_app(rel))
+
+
+def data_do_app(rel):
+    """A data mais recente entre o HTML e os arquivos que ele carrega."""
+    melhor, origem = '0000-00-00', 'sem commit'
+    for r in locais_do_app(rel):
+        d, o = data_do_arquivo(r)
+        if d > melhor:
+            melhor, origem = d, o + ' (' + r + ')'
+    return melhor, origem
+
+
 def main():
     falhas = 0
     for rel in APPS:
         caminho = os.path.join(RAIZ, rel)
         if not os.path.exists(caminho):
             print('  ⚠️  %s não existe' % rel); falhas += 1; continue
-        txt = open(caminho, encoding='utf-8', errors='replace').read()
+        txt = texto_do_app(rel)
         m = re.search(r"^const VERSAO\s*=\s*'([^']+)'", txt, re.M)
         if not m:
             print('  ❌ %-24s sem a constante VERSAO' % rel); falhas += 1; continue
@@ -53,7 +94,7 @@ def main():
         if not re.match(r'^\d{4}-\d{2}-\d{2}(-\d+)?$', versao):
             print('  ❌ %-24s VERSAO fora do formato AAAA-MM-DD-N: %r' % (rel, versao))
             falhas += 1; continue
-        d_arq, origem = data_do_arquivo(rel)
+        d_arq, origem = data_do_app(rel)
         d_ver = versao[:10]
         if d_arq > d_ver:
             print('  ❌ %-24s carimbo %s, mas o arquivo mudou em %s (%s)'
@@ -68,8 +109,7 @@ def main():
     for rel in APPS:
         caminho = os.path.join(RAIZ, rel)
         if os.path.exists(caminho):
-            m = re.search(r"^const VERSAO\s*=\s*'([^']+)'",
-                          open(caminho, encoding='utf-8', errors='replace').read(), re.M)
+            m = re.search(r"^const VERSAO\s*=\s*'([^']+)'", texto_do_app(rel), re.M)
             if m: vs.append((rel, m.group(1)))
     if len(vs) == 2 and vs[0][1] != vs[1][1]:
         print('  ❌ carimbos diferentes: %s = %s, %s = %s'

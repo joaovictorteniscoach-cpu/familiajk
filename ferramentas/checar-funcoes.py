@@ -1,5 +1,29 @@
 import re,sys
 
+def fontes_do_app(arq):
+    """O HTML mais os scripts locais que ele manda carregar.
+
+    Sem isto, tirar o codigo de dentro do index.html faria este portao olhar
+    para um arquivo quase vazio e aprovar qualquer coisa — portao que para de
+    olhar e pior que portao nenhum.
+    """
+    import os, re as _re
+    txt = open(arq, encoding='utf-8').read()
+    for src in _re.findall(r'<script[^>]*\bsrc="([^"]+)"', txt):
+        if src.startswith('http') or src.startswith('//'):
+            continue
+        if _re.search(r'firebase-|jspdf|html2canvas', src):
+            continue
+        cam = os.path.join(os.path.dirname(arq), src)
+        if os.path.exists(cam):
+            # embrulhado em <script> porque quem le isto procura blocos de
+            # script, nao texto solto
+            txt += '\n<script>\n' + open(cam, encoding='utf-8').read() + '\n</script>\n'
+        else:
+            print('  AVISO: %s aponta para %s, que nao existe' % (arq, src))
+    return txt
+
+
 GLOBAIS=set("""
 if for while switch catch try return typeof new delete void in of do else function
 Array Object String Number Boolean Math JSON Date RegExp Error Promise Set Map Symbol
@@ -72,7 +96,7 @@ def definidos(codes):
     return d
 
 for arq in sys.argv[1:]:
-    html=open(arq,encoding='utf-8').read()
+    html=fontes_do_app(arq)
     js=[limpa(m.group(1)) for m in re.finditer(r'<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)</script>',html)]
     attrs=[(m.group(1),limpa(m.group(2))) for m in re.finditer(r'\bon(\w+)\s*=\s*"([^"]*)"',html)]
     defs=definidos(js)
