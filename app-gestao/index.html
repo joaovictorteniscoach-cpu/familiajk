@@ -1337,7 +1337,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-10-2';
+const VERSAO='2026-09-10-3';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -5502,17 +5502,22 @@ function checarViradaMes(){
   if(DB.mesCreditos===undefined){DB.mesCreditos=m;return true;}   // primeira abertura: nada a converter
   return false;
 }
-/* O que a virada faria, se você mandasse. Não muda nada — só calcula. */
+/* O que a virada faria, se você mandasse. Não muda nada — só calcula.
+   Aluno inativo fica de fora: ele não está fazendo aula, então virar o mês
+   dele só criava número — crédito que ninguém vai usar e uma mensalidade
+   "não paga" que ninguém vai cobrar. O saldo dele congela como está, e se
+   um dia voltar, você renova na mão. */
 function viradaPendente(){
   const m=mesReal();
   if(!DB.mesCreditos||DB.mesCreditos===m)return null;
-  const itens=[];
+  const itens=[];let forinha=0;
   (DB.alunos||[]).forEach(a=>{
+    if(!ehAtivoAluno(a)){forinha++;return;}
     const sobra=Math.max(0,Number(a.creditos)||0), sobraG=Math.max(0,Number(a.credGrupo)||0);
     const venc=reposVencidas(a);
     if(sobra||sobraG||venc)itens.push({a,sobra,sobraG,venc});
   });
-  return {de:DB.mesCreditos,para:m,itens};
+  return {de:DB.mesCreditos,para:m,itens,forinha};
 }
 function aplicarViradaMes(){
   const V=viradaPendente();
@@ -5524,19 +5529,23 @@ function aplicarViradaMes(){
     +(x.venc?((x.sobra||x.sobraG?' · ':'')+'vencem '+fmtCred(x.venc)+' reposição(ões)'):''));
   if(!confirm('Virar de '+V.de+' para '+V.para+'?\n\n'
     +(linhas.length?linhas.join('\n'):'Nenhum aluno tem sobra a converter.')
-    +'\n\nTodos ficam marcados como "não pago" até você renovar.\n\nIsto fica registrado no extrato de cada aluno.'))return;
+    +'\n\nOs ATIVOS ficam marcados como "não pago" até você renovar.'
+    +(V.forinha?('\n'+V.forinha+' aluno(s) inativo(s) ficam de fora: saldo e situação não mudam.'):'')
+    +'\n\nIsto fica registrado no extrato de cada aluno.'))return;
   let venc=0,vencN=0,n=0;
-  (DB.alunos||[]).forEach(a=>{const v=purgarReposVencidas(a);if(v>0){venc+=v;vencN++;}});
-  (DB.alunos||[]).forEach(a=>{
+  const ativos=(DB.alunos||[]).filter(ehAtivoAluno);
+  ativos.forEach(a=>{const v=purgarReposVencidas(a);if(v>0){venc+=v;vencN++;}});
+  ativos.forEach(a=>{
     const sobra=Number(a.creditos)||0, sobraG=Number(a.credGrupo)||0;
     if(sobra>0||sobraG>0){mover(a,'repos',Math.max(0,sobra)+Math.max(0,sobraG),'Sobra do mês virou reposição');n++;}
     if(sobra>0)mover(a,'creditos',-sobra,'Virada de mês — sobra convertida');
     if(sobraG>0)mover(a,'credGrupo',-sobraG,'Virada de mês — sobra convertida');
   });
-  (DB.alunos||[]).forEach(a=>{a.status='pendente';});
+  ativos.forEach(a=>{a.status='pendente';});
   DB.mesCreditos=V.para;
   if(venc>0)logAct('Reposições vencidas: '+fmtCred(venc)+' de '+vencN+' aluno(s) passaram de 4 meses');
-  logAct('Virada de mês aplicada por você: '+V.de+' → '+V.para+' ('+n+' aluno(s) com sobra)');
+  logAct('Virada de mês aplicada por você: '+V.de+' → '+V.para+' ('+n+' aluno(s) com sobra'
+    +(V.forinha?('; '+V.forinha+' inativo(s) fora'):'')+')');
   persist();renderAll();
   toast('🗓️ Virada aplicada · '+n+' aluno(s) tiveram sobra convertida'+(venc>0?(' · '+fmtCred(venc)+' vencida(s)'):''));
 }
@@ -5555,7 +5564,11 @@ function renovarMes(id){
   const resumo='+'+(Number(a.plano)||0)+' crédito(s)'+(pg>0?(' e +'+pg+' de grupo'):'');
   if(acaoRepetida('renov-'+id)){toast('Já renovei agora há pouco — confira os créditos antes de repetir');return;}
   const jaRenov=renovacoesDoMes(a);
-  const aviso=jaRenov.length?('⚠️ '+a.nome+' JÁ foi renovado '+jaRenov.length+'x neste mês (somou '+fmtCred(jaRenov.reduce((t,x)=>t+(Number(x.delta)||0),0))+' crédito(s)).\n\nRenovar de novo DOBRA os créditos. Tem certeza?\n\n'):'';
+  let aviso=jaRenov.length?('⚠️ '+a.nome+' JÁ foi renovado '+jaRenov.length+'x neste mês (somou '+fmtCred(jaRenov.reduce((t,x)=>t+(Number(x.delta)||0),0))+' crédito(s)).\n\nRenovar de novo DOBRA os créditos. Tem certeza?\n\n'):'';
+  /* Renovar quem parou de treinar cria aula que ninguém vai fazer e mensalidade
+     que ninguém vai cobrar. O botão continua funcionando — quem volta a treinar
+     é renovado por aqui — mas não em silêncio. */
+  if(!ehAtivoAluno(a))aviso+='⚠️ '+a.nome+' está como INATIVO (sem plano e sem mensalidade no cadastro).\n\nRenovar vai somar crédito e marcar como "não pago". Se ele voltou a treinar, acerte o plano no cadastro primeiro.\n\n';
   if(confirm(aviso+'Renovar o mês de '+a.nome+'? Soma '+resumo+' e marca como pendente.')){
     mover(a,'creditos',Number(a.plano)||0,'Renovação do mês');
     if(pg>0)mover(a,'credGrupo',pg,'Renovação do mês (grupo)');   // plano misto renova as duas partes
