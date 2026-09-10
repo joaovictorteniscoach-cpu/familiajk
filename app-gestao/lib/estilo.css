@@ -232,9 +232,10 @@ body[data-modo="prof"] .so-dono{display:none!important}
 .fx-obs{background:#FBF1D8;border:1px solid #E7D6A8;color:#7C5E1A;border-radius:10px;padding:9px 11px;font-size:12px;font-weight:600;margin-top:11px}
 /* Fila de quem já recebeu */
 .fq-linha{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)}
+.fq-linha .fq-mark{flex:0 0 auto;background:none;border:none;padding:11px 4px;font-size:17px;line-height:1;color:var(--muted);min-width:32px;text-align:left}
+.fq-linha.ok .fq-mark{color:#2E7D52}
 .fq-linha .fq-nome{flex:1;text-align:left;background:none;border:none;padding:11px 2px;font-size:13.5px;font-weight:700;color:var(--text)}
 .fq-linha.ok .fq-nome{color:#2E7D52}
-.fq-linha .fq-x{background:none;border:none;color:var(--muted);font-size:11.5px;font-weight:700;text-decoration:underline;padding:6px}
 .ferr-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
 .ferr-grid button{background:#fff;border:1px solid var(--border);border-radius:13px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--text);text-align:center}
 .ferr-grid button:active{transform:scale(.99);background:#FBF6EA}
