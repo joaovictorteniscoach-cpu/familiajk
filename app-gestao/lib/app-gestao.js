@@ -15,7 +15,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-10-4';
+const VERSAO='2026-09-10-5';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -510,7 +510,7 @@ async function lerPartes(){
       const no=await pega(nome);
       if(!no)continue;
       Object.keys(no).forEach(k=>{
-        try{d[nome].push(JSON.parse(no[k]));marcaLin[nome][k]=1;}catch(e){}
+        try{d[nome].push(JSON.parse(no[k]));marcaLin[nome][k]=no[k];}catch(e){}
       });
     }
     // as listas voltam na ordem do tempo, não na ordem das chaves do Firebase
@@ -1109,18 +1109,27 @@ async function subirPartes(){
       if(!vivos.has(id)){remover[chaveFb(id)]=null;delete _enviado.alunos[id];}
     }
     if(Object.keys(remover).length)await enviarLote('alunos',remover);
-    // 2) listas que só crescem: só as linhas ainda não enviadas
+    // 2) listas de linhas: sobe o que é novo E o que MUDOU
+    /* Aqui morava um erro sério. A marca de "já enviada" era só um sinal de
+       presença da chave, então uma linha EDITADA — mesma chave, conteúdo
+       diferente — era pulada e nunca chegava na nuvem. Trocar ✓ por 🔁 numa
+       presença reusa a mesma chave (aluno_data_hora): a mudança ficava só no
+       aparelho, a nuvem continuava com a marca velha e, na abertura seguinte,
+       a marca velha voltava por cima e o crédito sumia de novo. Valia igual
+       para lançamento editado na Caixa. Agora a marca guarda o CONTEÚDO
+       enviado — o mesmo que já era feito com os alunos — e a comparação é de
+       texto contra texto. */
     for(const nome of ['movs','presencas','lancamentos']){
-      const ja=_enviado.linhas[nome], lote={}, novas=[];
+      const ja=_enviado.linhas[nome], lote={}, novas={};
       for(const linha of (DB[nome]||[])){
         const ch=chaveFb(CHAVE_LINHA[nome](linha));
-        if(ja[ch])continue;
         const t=JSON.stringify(linha);
-        lote[ch]=t;novas.push(ch);env.linhas++;conta(t);
+        if(ja[ch]===t)continue;
+        lote[ch]=t;novas[ch]=t;env.linhas++;conta(t);
       }
-      if(novas.length){
+      if(Object.keys(novas).length){
         await enviarLote(nome,lote);
-        novas.forEach(ch=>{ja[ch]=1;});
+        Object.assign(ja,novas);
         env.lotes++;
       }
       /* E o que FOI apagado tem que sair da nuvem. Sem este passe, estas listas
@@ -1289,8 +1298,9 @@ async function carregarAnoArquivado(ano){
         if(ja.has(k))return;
         try{DB[nome].push(JSON.parse(v[k]));n++;}catch(e){}
       });
-      // marca como já enviado: são linhas que vieram do arquivo, não são novas
-      Object.keys(v).forEach(k=>{_enviado.linhas[nome][k]=1;});
+      // marca como já enviado: são linhas que vieram do arquivo, não são novas.
+      // guarda o texto, para uma edição posterior nelas ainda subir
+      Object.keys(v).forEach(k=>{_enviado.linhas[nome][k]=v[k];});
     }
     recalcularTransporte();     // o que voltou não pode ser contado duas vezes
     (DB.movs||[]).sort((a,b)=>(a.ts||0)-(b.ts||0));
