@@ -136,3 +136,28 @@ primeiro plano pago, não mais créditos.
 | **Total** | **~8,13** |
 
 Montagem, legendas, transcrição e conferência não custam créditos.
+
+---
+
+## Montagem com movimento (o que faz o vídeo não parecer slideshow)
+
+O montador padrão do pipeline entrega corte seco sobre imagem parada. Para um
+Short infantil isso lê como slideshow e derruba a retenção. A versão de 20 s do
+EP01 usa outra montagem:
+
+| Parâmetro | Valor usado |
+|---|---|
+| Quadros-base | 12 (um por batida da narração) |
+| Duração de cada quadro | `(narração + 11 × 0,45) / 12` ≈ 2,05 s |
+| Movimento | zoom linear 1,00 → 1,16 ao longo do quadro, alternando aproximar/afastar |
+| Passagem | crossfade de 0,45 s (nunca corte seco) |
+| Fonte do zoom | imagem ampliada para 2160×3840 antes do zoom, para não serrilhar |
+
+**Armadilha que custou um render:** alimentar o filtro de zoom com uma imagem
+em repetição (`-loop 1 -t N`) faz ele multiplicar os quadros — o vídeo saiu com
+123 s em vez de 20 s. O certo é entregar **uma única imagem** ao filtro e
+limitar a saída pelo número de quadros.
+
+**Conferência obrigatória:** amostre o vídeo final a cada 0,5 s e compare
+quadros consecutivos. Se alguma diferença der zero, tem imagem parada e a
+montagem precisa ser refeita.
