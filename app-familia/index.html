@@ -245,13 +245,62 @@ body.mode-invest .tab.active{box-shadow:0 5px 16px -5px rgba(79,191,168,.55)}
 .monthchip{display:inline-block;font-family:'Inter';font-size:11px;font-weight:600;letter-spacing:.3px;text-transform:capitalize;color:var(--accent-soft);background:rgba(212,162,58,.1);border:1px solid rgba(212,162,58,.3);padding:3px 11px;border-radius:20px;margin-bottom:8px}
 body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1);border-color:rgba(79,191,168,.3)}
 .monthnav{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px}
-.monthnav .monthchip{margin-bottom:0;min-width:118px;text-align:center}
+.monthnav .monthchip{margin-bottom:0;flex:0 1 118px;min-width:0;text-align:center}
 .monthnav .mn-arrow{padding:1px 9px;font-size:15px;line-height:1.35;border-radius:8px}
 .monthnav .mn-today{padding:2px 9px;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px}
 .advisor-intro{display:flex;gap:10px;align-items:flex-start;background:linear-gradient(180deg,rgba(79,191,168,.08),transparent);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:14px}
 .advisor-intro .av{font-size:22px;line-height:1}
 .advisor-intro .t{font-size:12px;color:var(--muted);line-height:1.55}
 .advisor-intro .t b{color:var(--text)}
+/* ===== Dedo grande, botão pequeno: todo controle passa a ter área de toque
+   confortável (44px é o mínimo recomendado para telas de toque). O visual
+   muda pouco — o que cresce é a área que responde. ===== */
+.iconbtn,.addbtn{display:inline-flex;align-items:center;justify-content:center;
+  min-height:44px;min-width:44px;box-sizing:border-box}
+.tab{min-height:40px;display:inline-flex;align-items:center;justify-content:center}
+select{min-height:44px}
+/* a caixinha de marcar mora dentro do rótulo: quem recebe o toque é o rótulo */
+.toggle{min-height:44px}
+.tabs{gap:7px}
+.monthnav{gap:8px}
+.monthnav .mn-arrow{padding:0;width:46px;min-width:46px;height:44px;font-size:20px;line-height:1;border-radius:11px}
+.monthnav .mn-today{padding:0 12px;height:44px;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+.paybtn{width:44px;height:44px;min-width:44px;font-size:18px}
+.tbl td.paycell,.tbl th.paycell{width:50px}
+.splitbtn{margin-right:6px}
+.chk{width:26px;height:26px}
+.wa{min-height:44px}
+/* dentro da linha empilhada os botões ficam lado a lado, sem esticar — e o
+   `min-width:0` que serve para inputs não pode encolher a área de toque deles */
+body.fit .tbl td>button{flex:0 0 auto;min-width:44px !important}
+.ms{min-height:44px}
+
+/* ===== Atalho: cartão/linha que leva para a aba certa ===== */
+.jump{cursor:pointer}
+.jump:hover{border-color:var(--accent)}
+.jump .k::after{content:' ›';color:var(--accent-soft);font-weight:700}
+button.due{width:100%;font-family:inherit;color:inherit;text-align:left;cursor:pointer}
+button.due .nm{text-align:left}
+.duehint{font-size:11px;color:var(--accent-soft);margin-top:2px}
+
+/* ===== Nada de moldura vazia: tabela sem linha some e dá lugar a um aviso ===== */
+table.tbl.semlinhas{display:none}
+.semdados{font-size:12.5px;color:var(--muted);background:var(--surface2);
+  border:1px dashed var(--line);border-radius:11px;padding:14px;margin:6px 0 0;line-height:1.5}
+
+/* ===== Cabe em tela estreita de verdade =====
+   Filho de grid/flex não encolhe abaixo do próprio conteúdo por padrão
+   (min-width:auto). Era isso que fazia o app rolar de lado em telas menores
+   que ~360px — e o que impedia o zoom de crescer sem estourar. ===== */
+.grid>*,.kpis>*,.card,.result>*,.fire .row>*{min-width:0}
+.chartbox canvas,canvas{max-width:100%}
+.bignum,.kpi .v,.result .blk .v{overflow-wrap:anywhere}
+
+/* ===== Zoom da tela: o app inteiro cresce ou encolhe junto ===== */
+.viewtools{display:inline-flex;align-items:center;gap:6px;padding-left:8px;
+  margin-left:2px;border-left:1px solid var(--line)}
+.viewtools .zbtn{min-width:44px;padding:7px 10px;font-family:'Fraunces',serif}
+.viewtools .zlbl{font-size:11px;color:var(--muted);min-width:38px;text-align:center}
 </style>
 </head>
 <body class="mode-contas">
@@ -263,10 +312,13 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
   <div class="tools">
     <span class="savedot"><b id="dot"></b> salvo neste aparelho</span>
     <button class="iconbtn primary" onclick="openShare()">Compartilhar</button>
-    <button class="iconbtn" onclick="exportJSON()">Backup</button>
-    <button class="iconbtn" onclick="importJSON()">Importar</button>
-    <button class="iconbtn" onclick="resetData()">Exemplo</button>
-    <button class="iconbtn" id="btn-fit" onclick="toggleFit()">—</button>
+    <button class="iconbtn" onclick="openDados()" title="Backup, importar e dados de exemplo">⋯ dados</button>
+    <span class="viewtools">
+      <button class="iconbtn" id="btn-fit" onclick="toggleFit()">—</button>
+      <button class="iconbtn zbtn" onclick="stepZoom(-1)" aria-label="Diminuir a letra" title="Diminuir tudo">A−</button>
+      <span class="zlbl" id="zoom-lbl">100%</span>
+      <button class="iconbtn zbtn" onclick="stepZoom(1)" aria-label="Aumentar a letra" title="Aumentar tudo">A+</button>
+    </span>
   </div>
 </header>
 
@@ -304,8 +356,8 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
       </div>
       <div class="progressbar"><i id="ch-bar" style="width:0%"></i></div>
       <div class="split" style="margin-top:12px">
-        <div><div class="k">Casa — pessoa 1</div><div class="v goldc" id="ch-preta">—</div></div>
-        <div><div class="k">Casa — pessoa 2</div><div class="v goldc" id="ch-preto">—</div></div>
+        <div class="jump" onclick="irPara('c-casa')" title="Abrir as contas da casa"><div class="k">Casa — pessoa 1</div><div class="v goldc" id="ch-preta">—</div></div>
+        <div class="jump" onclick="irPara('c-casa')" title="Abrir as contas da casa"><div class="k">Casa — pessoa 2</div><div class="v goldc" id="ch-preto">—</div></div>
       </div>
     </div>
     <div class="card"><h2>Por grupo</h2><div class="sub">Onde vão as contas</div><div class="chartbox" style="height:210px"><canvas id="grupoChart"></canvas></div></div>
@@ -320,7 +372,7 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
       <button class="iconbtn" onclick="openPasteExtrato()">📋 colar texto</button>
       <button class="iconbtn" onclick="pickFotoExtrato()">📷 foto do extrato</button>
     </div>
-    <p class="note">Três formas de trazer sem digitar um por um: <b>OFX/CSV</b> (exporte no app do banco/XP — o mais confiável), <b>colar</b> o texto copiado do extrato, ou tirar uma <b>foto</b> (leitura por OCR). Tudo acontece só no seu aparelho. Login direto no banco (Open Finance) exige servidor certificado — não dá num app de arquivo único. Para foto com precisão máxima, você também pode me enviar a imagem aqui no chat que eu transcrevo.</p>
+    <p class="note"><b>OFX/CSV</b> é o mais confiável (exporte no app do banco/XP); <b>colar</b> e <b>foto</b> servem para o que não tem arquivo. Tudo acontece só no seu aparelho — login direto no banco exige servidor certificado e não cabe num app de arquivo único.</p>
   </div>
   <div class="card">
     <h2>Próximos vencimentos</h2><div class="sub">As contas ainda não pagas, mais perto de vencer primeiro.</div>
@@ -889,6 +941,20 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
   </div>
 </div>
 
+<div class="overlay" id="dadosModal">
+  <div class="modal">
+    <h3>Dados do aplicativo</h3>
+    <p>Guardar uma cópia, trazer de volta uma cópia guardada, ou começar de novo com os dados de exemplo.</p>
+    <div class="row" style="flex-direction:column;align-items:stretch;gap:8px">
+      <button class="iconbtn primary" onclick="closeDados();exportJSON()">💾 Fazer backup (baixar arquivo)</button>
+      <button class="iconbtn" onclick="closeDados();importJSON()">📂 Importar um backup</button>
+      <button class="iconbtn" onclick="closeDados();resetData()">🧪 Voltar aos dados de exemplo</button>
+      <button class="iconbtn" onclick="irPara('nuvem');closeDados()">☁️ Sincronizar na nuvem</button>
+      <button class="iconbtn" onclick="closeDados()">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="shareModal">
   <div class="modal">
     <h3>Compartilhar</h3>
@@ -1071,6 +1137,8 @@ const DEFAULT={
  },
  /* tabelas empilhadas para caber na tela do celular (padrão ligado) */
  fit:true,
+ /* tamanho da tela: 1 = normal; sobe/desce de 10 em 10% */
+ zoom:1,
  cloud:{url:"",on:false},
  lastBackup:null
 };
@@ -1182,6 +1250,7 @@ function migrate(o){
   if(out.lastBackup===undefined)out.lastBackup=null;
   if(!out.mode)out.mode="contas";
   if(out.fit===undefined)out.fit=true;
+  out.zoom=zoomValido(out.zoom);
   return out;
 }
 function load(){
@@ -1314,7 +1383,7 @@ function switchTab(id,btn){
   document.querySelectorAll('section[data-tab]').forEach(s=>s.classList.toggle('on',s.dataset.tab===id));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));if(btn)btn.classList.add('active');
   if(DRAW[id]){const prev=suppressPush;suppressPush=true;try{DRAW[id]();}catch(e){console.warn('Família JK — falha na aba',id,e);}suppressPush=prev;}
-  rotularTabelas();
+  rotularTabelas();marcarVazias();
 }
 
 /* ===================== CONTAS — render ===================== */
@@ -1395,11 +1464,13 @@ function parseDay(val){const m=(val||'').toString().match(/\d{1,2}/);if(!m)retur
 function dueInfo(day){if(day==null)return null;const today=new Date().getDate();let diff=day-today;if(diff< -3)diff+=30;return diff;}
 function allBills(){
   const arr=[];
-  D.contas.casa.forEach(b=>arr.push({grupo:'Casa',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
-  D.contas.joao.forEach(b=>arr.push({grupo:'João',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
-  D.contas.esposa.forEach(b=>arr.push({grupo:'Kassiana',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
-  D.contas.empresa.forEach(b=>arr.push({grupo:'Empresa JV',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
-  D.contas.empresaKS.forEach(b=>arr.push({grupo:'Studio Kassiana',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
+  /* aba/emp: por onde essa conta se edita — é o que faz a lista de vencimentos
+     virar atalho em vez de só aviso */
+  D.contas.casa.forEach(b=>arr.push({grupo:'Casa',aba:'c-casa',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
+  D.contas.joao.forEach(b=>arr.push({grupo:'João',aba:'c-joao',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
+  D.contas.esposa.forEach(b=>arr.push({grupo:'Kassiana',aba:'c-esposa',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
+  D.contas.empresa.forEach(b=>arr.push({grupo:'Empresa JV',aba:'c-empresa',emp:'jv',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
+  D.contas.empresaKS.forEach(b=>arr.push({grupo:'Studio Kassiana',aba:'c-empresa',emp:'ks',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
   return arr;
 }
 function renderDue(){
@@ -1416,8 +1487,12 @@ function renderDue(){
       else if(b.d<=5){cls='soon';when='vence em '+b.d+'d';wc='goldc';}
       else{when='vence em '+b.d+'d';}
     }
-    h+=`<div class="due ${cls}"><div class="lft"><span class="nm">${esc(b.nome)}</span><span class="meta">${b.grupo}${b.venc?(' · dia '+esc(b.venc)):''}</span></div>
-      <div class="rgt"><div class="val">${brl(b.valor)}</div><div class="when ${wc}">${when}</div></div></div>`;
+    /* cada vencimento é um botão: toca e cai na aba onde essa conta se paga */
+    h+=`<button type="button" class="due ${cls}" onclick="irConta('${b.aba}'${b.emp?(",'"+b.emp+"'"):''})"
+      title="Abrir ${esc(b.grupo)} para pagar ou editar">
+      <div class="lft"><span class="nm">${esc(b.nome)}</span><span class="meta">${b.grupo}${b.venc?(' · dia '+esc(b.venc)):''}</span>
+      <span class="duehint">tocar para abrir ›</span></div>
+      <div class="rgt"><div class="val">${brl(b.valor)}</div><div class="when ${wc}">${when}</div></div></button>`;
   });
   box.innerHTML=h;
 }
@@ -2210,6 +2285,8 @@ window.addEventListener('focus',()=>{if(D.cloud&&D.cloud.on)cloudPull(true);});
 
 /* ---------- compartilhar / backup ---------- */
 function shareURL(){const enc=btoa(unescape(encodeURIComponent(JSON.stringify(D))));return location.href.split('#')[0]+'#d='+enc;}
+function openDados(){document.getElementById('dadosModal').classList.add('on');}
+function closeDados(){document.getElementById('dadosModal').classList.remove('on');}
 function openShare(){document.getElementById('shareText').value=shareURL();document.getElementById('shareModal').classList.add('on');}
 function closeShare(){document.getElementById('shareModal').classList.remove('on');}
 function copyShare(){const t=document.getElementById('shareText');t.select();
@@ -3207,12 +3284,100 @@ function aplicarFit(){
   const on=D&&D.fit!==false;
   document.body.classList.toggle('fit',on);
   const b=document.getElementById('btn-fit');
-  if(b){b.textContent=on?'↔ tabela larga':'📱 caber na tela';
+  if(b){b.textContent=on?'↔ colunas':'📱 caber';
     b.title=on?'Ver as tabelas em colunas, arrastando de lado':'Empilhar as tabelas para caber na tela';}
-  rotularTabelas();
+  rotularTabelas();marcarVazias();
 }
 function toggleFit(){D.fit=!(D.fit!==false);saveLocal();aplicarFit();}
-function tuneInputs(){rotularTabelas();document.querySelectorAll('input[type=number]').forEach(i=>{if(!i.getAttribute('inputmode'))i.setAttribute('inputmode','decimal');});}
+
+/* ---------- zoom da tela ----------
+   Cresce ou encolhe o app inteiro. Como quase tudo aqui é em % ou 100% de
+   largura, aumentar não faz nada estourar de lado: a tela só passa a caber
+   menos coisa, com a letra maior. */
+const ZOOM_MIN=0.8,ZOOM_MAX=1.6;
+/* valor sem sentido volta para 100%; valor fora da faixa encosta no limite
+   (o botão tem de parar no teto, não pular de volta para o começo) */
+function zoomValido(z){
+  z=+z;
+  if(!isFinite(z)||z<=0)return 1;
+  z=Math.round(z*10)/10;
+  return Math.min(ZOOM_MAX,Math.max(ZOOM_MIN,z));
+}
+function aplicarZoom(){
+  const z=zoomValido(D&&D.zoom);
+  D.zoom=z;
+  document.body.style.zoom=z===1?'':String(z);
+  const l=document.getElementById('zoom-lbl');
+  if(l)l.textContent=Math.round(z*100)+'%';
+}
+function stepZoom(dir){
+  D.zoom=zoomValido(zoomValido(D.zoom)+(dir>0?0.1:-0.1));
+  saveLocal();aplicarZoom();
+}
+
+/* ---------- levar aonde deve ir ----------
+   Um toque em qualquer atalho troca de modo se precisar, abre a aba certa e
+   sobe a tela — em vez de só mostrar um número e deixar o usuário procurar. */
+function irPara(id){
+  const modo=/^i-/.test(id)?'invest':(/^c-/.test(id)?'contas':null);
+  if(modo&&D.mode!==modo)setMode(modo);
+  const b=[...document.querySelectorAll('.tab')].find(t=>t.dataset.id===id);
+  if(!b)return false;
+  b.click();
+  if(typeof window!=='undefined'&&window.scrollTo)window.scrollTo({top:0,behavior:'smooth'});
+  return true;
+}
+/* atalho de conta: a Empresa tem duas abas dentro da mesma aba */
+function irConta(aba,emp){
+  if(emp&&EMPS[emp]){D.contas.empSel=emp;saveLocal();}
+  return irPara(aba);
+}
+
+/* ---------- moldura vazia não ocupa tela ----------
+   Tabela só com cabeçalho vira um aviso curto dizendo o que fazer. */
+const VAZIO_MSG={
+  'tbl-resumo':'Nenhum mês fechado ainda. Toque em <b>📸 fechar o mês atual</b> para gravar o primeiro.',
+  'tbl-bens':'Nenhum bem cadastrado. Toque em <b>+ bem</b> para começar.',
+  'tbl-dividas':'Nenhuma dívida cadastrada — ótimo sinal.',
+  'tbl-pat-hist':'Nenhum mês fechado no patrimônio ainda.',
+  'tbl-apolices':'Nenhuma apólice cadastrada. Toque em <b>+ apólice</b>.',
+  'tbl-receb':'Nada recebido lançado neste mês.',
+  'tbl-cartao':'Nenhum cartão cadastrado. Toque em <b>+ novo cartão</b>.',
+  'tbl-casa':'Nenhuma conta da casa. Toque em <b>+ nova conta da casa</b>.',
+  'tbl-joao':'Nenhuma conta pessoal aqui. Toque em <b>+ nova conta</b>.',
+  'tbl-esposa':'Nenhuma conta pessoal aqui. Toque em <b>+ nova conta</b>.',
+  'tbl-empresa':'Nenhuma conta da empresa. Toque em <b>+ nova conta</b>.',
+  'tbl-cat-lanc':'Nenhum lançamento neste mês. Traga o extrato no Painel.',
+  'tbl-cat-resumo':'Sem gastos para somar neste mês.',
+  'tbl-aportes':'Nenhum aporte lançado ainda.',
+  'tbl-ganhos':'Nenhum ganho lançado ainda.',
+  'tbl-binance':'Nenhuma cripto na Binance.',
+  'tbl-plano':'Nenhum plano montado ainda.'
+};
+function marcarVazias(){
+  document.querySelectorAll('table.tbl').forEach(t=>{
+    const vazia=!t.rows||t.rows.length<2;
+    t.classList.toggle('semlinhas',vazia);
+    const pai=t.parentElement;if(!pai)return;
+    let av=pai.querySelector(':scope > .semdados');
+    if(vazia){
+      const msg=VAZIO_MSG[t.id]||'Nada lançado aqui ainda.';
+      if(!av){av=document.createElement('p');av.className='semdados';pai.appendChild(av);}
+      if(av.innerHTML!==msg)av.innerHTML=msg;
+    }else if(av)av.remove();
+  });
+  /* gráfico sem nada para desenhar é só um buraco escuro de 300px: se todas as
+     tabelas do cartão estão vazias, o gráfico daquele cartão também some */
+  document.querySelectorAll('.card').forEach(c=>{
+    const box=c.querySelectorAll(':scope > .chartbox, :scope > div > .chartbox');
+    if(!box.length)return;
+    const tbs=c.querySelectorAll('table.tbl');
+    if(!tbs.length)return;
+    const tudoVazio=[...tbs].every(t=>t.classList.contains('semlinhas'));
+    box.forEach(b=>b.style.display=tudoVazio?'none':'');
+  });
+}
+function tuneInputs(){rotularTabelas();marcarVazias();document.querySelectorAll('input[type=number]').forEach(i=>{if(!i.getAttribute('inputmode'))i.setAttribute('inputmode','decimal');});}
 function refreshInv(){refreshCarteira();drawInvPainel();save();}
 
 /* ============ Importar planilha da XP (.xlsx / .csv) ============ */
@@ -3373,7 +3538,7 @@ function renderAll(){
 }
 document.addEventListener('focusin',e=>{const t=e.target;if(t&&t.tagName==='INPUT'&&t.type!=='checkbox'){setTimeout(()=>{try{t.select()}catch(_){}},0);}});
 
-load();D.contas.mesSel=curMonthKey();initFields();renderAll();setMode(D.mode||'contas');aplicarFit();checkBackup();
+load();D.contas.mesSel=curMonthKey();initFields();renderAll();setMode(D.mode||'contas');aplicarFit();aplicarZoom();checkBackup();
 if(D.cloud&&D.cloud.on&&D.cloud.url){setCloudStatus('conectado');cloudStart();cloudPull(true);}
 /* PWA: instalar na tela de início e abrir offline (rede primeiro, cache de reserva) */
 if('serviceWorker'in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-familia.js').catch(function(){});});}
