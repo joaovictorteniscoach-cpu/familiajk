@@ -2458,7 +2458,26 @@ function copyShare(){const t=document.getElementById('shareText');t.select();
   if(navigator.clipboard){navigator.clipboard.writeText(t.value).then(()=>alert('Link copiado! Cole no WhatsApp ou onde quiser.')).catch(()=>document.execCommand('copy'));}
   else{document.execCommand('copy');alert('Link copiado!');}}
 function shareWA(){window.open('https://wa.me/?text='+encodeURIComponent('Nossas finanças da família 💰🏠 — abra e carregue os dados:\n'+shareURL()),'_blank');}
-function exportJSON(){D.lastBackup=Date.now();save();const b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='familia-jk-backup.json';a.click();URL.revokeObjectURL(u);checkBackup();}
+/* ---------- carimbo de origem ----------
+   Os dois apps da casa (Família e Gestão da academia) nunca compartilharam
+   banco: chaves diferentes no aparelho, projetos diferentes no Firebase. O
+   que os ligou uma vez foi a mão no seletor de arquivos. Então todo backup
+   que sai daqui vai carimbado, e o que entra tem de trazer o carimbo certo —
+   ou nenhum, no caso dos backups antigos, que continuam valendo. */
+const APP_ID='familia-jk';
+const APP_NOMES={'familia-jk':'app da Família','jvtenis-gestao':'app Gestão da academia'};
+function carimbar(o){
+  const c=JSON.parse(JSON.stringify(o));
+  c._app=APP_ID;c._quando=Date.now();
+  return c;
+}
+function exportJSON(){
+  D.lastBackup=Date.now();save();
+  const b=new Blob([JSON.stringify(carimbar(D),null,2)],{type:'application/json'});
+  const u=URL.createObjectURL(b);const a=document.createElement('a');
+  a.href=u;a.download='familia-jk-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();URL.revokeObjectURL(u);checkBackup();
+}
 /* ================= DE ONDE VOLTAR =================
    Este app não tinha volta nenhuma: importar o arquivo errado substituía tudo
    e acabou. Foi assim que a base da família se perdeu em 11/09/2026 — um
@@ -2567,12 +2586,24 @@ function restaurarVersao(i){
    nova" — ou seja, apagava tudo em silêncio. */
 function ehBaseFamilia(o){
   if(!o||typeof o!=='object'||Array.isArray(o))return false;
+  /* carimbo de outro app manda mais que qualquer parecença de conteúdo */
+  if(o._app&&o._app!==APP_ID)return false;
   if(o.contas||o.invest)return true;                          /* base atual */
   if(o.nacional||o.cambio!==undefined||o.proj)return true;    /* cofre antigo */
   if(o.casa||o.cartoes||o.recebidos||o.empresa)return true;   /* contas antigo */
   return false;
 }
-function ehBaseGestao(o){return !!(o&&typeof o==='object'&&(o.alunos||o.lancamentos||o.presencas));}
+function ehBaseGestao(o){
+  if(!o||typeof o!=='object')return false;
+  if(o._app&&o._app!==APP_ID)return true;                     /* carimbado de fora */
+  return !!(o.alunos||o.lancamentos||o.presencas);            /* ou reconhecido pelo conteúdo */
+}
+/* o nome do app de onde o arquivo veio, quando dá para saber */
+function origemDoArquivo(o){
+  if(o&&o._app&&APP_NOMES[o._app])return APP_NOMES[o._app];
+  if(o&&(o.alunos||o.lancamentos||o.presencas))return APP_NOMES['jvtenis-gestao'];
+  return '';
+}
 function importJSON(){
   pickFile('.json,application/json',f=>{
     const r=new FileReader();
@@ -2580,10 +2611,12 @@ function importJSON(){
       let o=null;
       try{o=JSON.parse(r.result);}catch(e){alert('Não consegui ler esse arquivo — ele precisa ser um .json.');return;}
       if(!ehBaseFamilia(o)){
+        const de=origemDoArquivo(o);
         alert(ehBaseGestao(o)
-          ? 'Esse é o backup do app GESTÃO da academia — ele não entra aqui.\n\n'
-            +'Para trazer o faturamento dele, use “📥 faturamento do app Gestão”, na aba Anual. '
-            +'Lá ele é só lido, e nada seu é substituído.'
+          ? ('Esse arquivo é do '+(de||'outro aplicativo')+' — ele não entra aqui.\n\n'
+            +'Os dois apps são independentes: cada um tem o seu banco e a sua memória. '
+            +'Para trazer o faturamento da academia, use “📥 faturamento do app Gestão”, na aba Anual. '
+            +'Lá o arquivo é só lido, e nada seu é substituído.')
           : 'Esse arquivo não é um backup do app da Família.\n\nO arquivo certo começa com “familia-jk-backup”.');
         return;
       }
