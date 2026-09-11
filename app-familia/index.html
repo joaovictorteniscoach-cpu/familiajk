@@ -806,7 +806,7 @@ table.tbl.semlinhas{display:none}
     <label class="toggle"><input type="checkbox" id="cl-on" onchange="cloudApply()"> Sincronizar na nuvem</label>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
       <button class="iconbtn primary" onclick="cloudPush()">Enviar agora</button>
-      <button class="iconbtn" onclick="cloudPull(false)">Buscar agora</button>
+      <button class="iconbtn" onclick="cloudPull(false,true)">Buscar agora</button>
     </div>
     <p class="note" id="cl-status" style="margin-top:12px">sincronização desligada</p>
     <h2 style="font-size:15px;margin-top:20px">Como criar a nuvem grátis (uma vez só, ~5 min)</h2>
@@ -969,8 +969,10 @@ table.tbl.semlinhas{display:none}
       <button class="iconbtn" onclick="closeDados();importJSON()">📂 Importar um backup</button>
       <button class="iconbtn" onclick="closeDados();resetData()">🧪 Voltar aos dados de exemplo</button>
       <button class="iconbtn" onclick="irPara('nuvem');closeDados()">☁️ Sincronizar na nuvem</button>
+      <button class="iconbtn" onclick="abrirVersoes()">🕘 Versões guardadas (voltar no tempo)</button>
       <button class="iconbtn" onclick="closeDados()">Fechar</button>
     </div>
+    <div id="versoes-box"></div>
   </div>
 </div>
 
@@ -1289,7 +1291,7 @@ function load(){
   }
   if(location.hash.startsWith("#d=")){
     try{const shared=JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(3)))));
-      if(confirm("Carregar os dados compartilhados? Isso substitui o que está neste aparelho.")){D=migrate(shared);save()}
+      if(confirm("Carregar os dados compartilhados? Isso substitui o que está neste aparelho.")){guardarVersao('antes de abrir um link compartilhado');D=migrate(shared);save()}
     }catch(e){}
     history.replaceState(null,"",location.pathname+location.search);
   }
@@ -2407,7 +2409,12 @@ async function cloudPush(){
     lastApplied=Date.now();setCloudStatus('☁ salvo na nuvem '+new Date().toLocaleTimeString('pt-BR'),'var(--up)');}
   catch(e){setCloudStatus('⚠ falha de rede ao salvar: '+((e&&e.message)||e),'var(--down)');}
 }
-async function cloudPull(silent){
+/* Cair para menos da metade não é sincronizar, é apagar. */
+function encolheDemais(atual,novo){
+  const perdeu=(x,y)=>x>0&&y<x*0.5;
+  return perdeu(atual.contas,novo.contas)||perdeu(atual.transacoes,novo.transacoes)||perdeu(atual.total,novo.total);
+}
+async function cloudPull(silent,forcar){
   if(!(D.cloud&&D.cloud.url))return;
   if(!/\.json(\?|$)/.test(D.cloud.url)){if(!silent)setCloudStatus('⚠ a URL precisa terminar com .json','var(--down)');return;}
   try{const r=await fetch(D.cloud.url,{cache:'no-store'});
@@ -2418,6 +2425,18 @@ async function cloudPull(silent){
     if(Date.now()-lastPushAt<4000)return;
     const ae=document.activeElement;if(ae&&['INPUT','SELECT','TEXTAREA'].includes(ae.tagName))return;
     let raw;try{raw=(typeof j.data==='string')?JSON.parse(j.data):j.data;}catch(_){if(!silent)setCloudStatus('⚠ dado da nuvem ilegível','var(--down)');return;}
+    /* A nuvem não pode esvaziar este aparelho sem perguntar. Foi exatamente
+       assim que a base da família virou exemplo em 11/09/2026: um aparelho
+       gravou os exemplos na nuvem e o outro puxou por cima do que ainda
+       estava inteiro, sozinho, sem avisar ninguém. */
+    let rNovo=null;try{rNovo=resumoBase(migrate(JSON.parse(JSON.stringify(raw))));}catch(_){}
+    const rAtual=resumoBase(D);
+    if(rAtual&&rNovo&&encolheDemais(rAtual,rNovo)){
+      if(!forcar){setCloudStatus('⚠ a nuvem tem bem menos que este aparelho — não apliquei. Toque em “Buscar agora” para ver e decidir.','var(--down)');return;}
+      if(!confirm('A nuvem tem bem MENOS dados que este aparelho.\n\nVIRIA:\n'+descreveBase(rNovo)
+        +'\n\nSUBSTITUINDO:\n'+descreveBase(rAtual)+'\n\nAplicar mesmo assim?'))return;
+    }
+    guardarVersao('antes de receber a nuvem');
     suppressPush=true;const lc=D.cloud;D=migrate(raw);D.cloud=lc;saveLocal();initFields();renderAll();
     const at=document.querySelector('.tab.active');if(at&&DRAW[at.dataset.id])DRAW[at.dataset.id]();
     suppressPush=false;
@@ -2440,8 +2459,148 @@ function copyShare(){const t=document.getElementById('shareText');t.select();
   else{document.execCommand('copy');alert('Link copiado!');}}
 function shareWA(){window.open('https://wa.me/?text='+encodeURIComponent('Nossas finanças da família 💰🏠 — abra e carregue os dados:\n'+shareURL()),'_blank');}
 function exportJSON(){D.lastBackup=Date.now();save();const b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='familia-jk-backup.json';a.click();URL.revokeObjectURL(u);checkBackup();}
-function importJSON(){const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=e=>{const f=e.target.files[0];const r=new FileReader();r.onload=()=>{try{D=migrate(JSON.parse(r.result));save();initFields();renderAll();setMode(D.mode||'contas')}catch(x){alert('Arquivo inválido.')}};r.readAsText(f)};i.click();}
-function resetData(){if(confirm('Voltar aos dados de exemplo? Os dados atuais deste aparelho serão substituídos.')){D=migrate(structuredClone(DEFAULT));save();initFields();renderAll();setMode(D.mode||'contas')}}
+/* ================= DE ONDE VOLTAR =================
+   Este app não tinha volta nenhuma: importar o arquivo errado substituía tudo
+   e acabou. Foi assim que a base da família se perdeu em 11/09/2026 — um
+   backup do app Gestão entrou aqui, o `migrate` não reconheceu nada dentro
+   dele, concluiu "base nova" e montou os exemplos por cima.
+
+   Agora, antes de QUALQUER coisa que apague o que existe (importar, voltar
+   aos exemplos, abrir um link compartilhado, receber a nuvem por cima), o
+   estado atual é guardado. Dez versões em rodízio, mais uma do início de
+   cada dia — essa sobrevive a dez enganos seguidos no mesmo dia. */
+const SNAP_N=10;
+function snapKey(i){return KEY+'__v'+i;}
+function diaKey(){const d=new Date();
+  return KEY+'__dia-'+d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+/* um retrato do tamanho da base, para dar de comparar antes de trocar */
+function resumoBase(o){
+  if(!o||typeof o!=='object')return null;
+  const c=o.contas||{},n=a=>Array.isArray(a)?a.length:0;
+  const listas=['casa','joao','esposa','empresa','empresaKS','cartoes'];
+  let contas=0,total=0;
+  listas.forEach(k=>{const a=c[k];if(Array.isArray(a)){contas+=a.length;a.forEach(b=>total+=(+b.valor||0));}});
+  return {contas,total,
+    transacoes:n(c.transacoes),recebidos:n(c.recebidos),
+    bens:n(o.patrimonio&&o.patrimonio.bens),
+    ativos:n(o.invest&&o.invest.nacional)+n(o.invest&&o.invest.global)};
+}
+function descreveBase(r){
+  if(!r)return '(ilegível)';
+  return r.contas+' contas · '+brl(r.total)+'\n'
+    +r.transacoes+' lançamentos · '+r.recebidos+' recebidos · '
+    +r.bens+' bens · '+r.ativos+' ativos';
+}
+function guardarVersao(motivo){
+  try{
+    const pac=JSON.stringify({quando:Date.now(),motivo:motivo||'',dados:D});
+    for(let i=SNAP_N-1;i>0;i--){
+      const ant=localStorage.getItem(snapKey(i-1));
+      if(ant!==null){try{localStorage.setItem(snapKey(i),ant);}catch(e){}}
+    }
+    localStorage.setItem(snapKey(0),pac);
+    const dk=diaKey();
+    if(localStorage.getItem(dk)===null){try{localStorage.setItem(dk,pac);}catch(e){}}
+  }catch(e){/* sem espaço não pode impedir a ação do usuário */}
+}
+let _versoes=[];
+function lerVersoes(){
+  const itens=[];
+  for(let i=0;i<SNAP_N;i++){
+    const raw=localStorage.getItem(snapKey(i));
+    if(!raw)continue;
+    try{const v=JSON.parse(raw);itens.push({rot:i===0?'a última antes da troca':(i+1)+'ª anterior',
+      quando:v.quando,motivo:v.motivo,dados:v.dados,r:resumoBase(v.dados)});}catch(e){}
+  }
+  const pref=KEY+'__dia-';
+  const dias=[];
+  for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf(pref)===0)dias.push(k);}
+  dias.sort().reverse().forEach(k=>{
+    try{const v=JSON.parse(localStorage.getItem(k));
+      const d=k.replace(pref,'').split('-');
+      itens.push({rot:'início do dia '+d[2]+'/'+d[1],quando:v.quando,motivo:v.motivo,
+        dados:v.dados,r:resumoBase(v.dados)});}catch(e){}
+  });
+  return itens;
+}
+function abrirVersoes(){
+  const box=document.getElementById('versoes-box');if(!box)return;
+  _versoes=lerVersoes();
+  const atual=resumoBase(D);
+  if(!_versoes.length){
+    box.innerHTML='<p class="semdados">Nenhuma versão guardada ainda. A partir de agora, toda vez que algo for '
+      +'substituir seus dados, o app guarda antes — e esta lista passa a ter de onde voltar.</p>';
+    return;
+  }
+  box.innerHTML='<p class="note" style="margin-top:14px"><b>Como está agora:</b><br>'
+    +esc(descreveBase(atual)).replace(/\n/g,'<br>')+'</p>'
+    +_versoes.map((it,i)=>{
+      const maior=atual&&it.r&&(it.r.contas>atual.contas||it.r.transacoes>atual.transacoes);
+      return '<div class="advice '+(maior?'warn2':'info')+'" style="margin-top:8px">'
+        +'<h4>🕘 '+esc(it.rot)+'</h4><p>'
+        +(it.quando?new Date(it.quando).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'sem data')
+        +(it.motivo?(' · '+esc(it.motivo)):'')+'<br>'
+        +esc(descreveBase(it.r)).replace(/\n/g,'<br>')
+        +(maior?'<br><b>Tem mais dados que o atual.</b>':'')
+        +'<br><button class="iconbtn" style="margin-top:8px" onclick="restaurarVersao('+i+')">Restaurar esta versão</button>'
+        +'</p></div>';
+    }).join('');
+}
+function restaurarVersao(i){
+  /* nao depender de a lista ter sido desenhada antes: chamado de fora da tela
+     (ou depois de um redesenho), ele relê em vez de nao fazer nada em silêncio */
+  if(!_versoes.length)_versoes=lerVersoes();
+  const it=_versoes[i];if(!it){alert('Essa versão não está mais na lista.');return;}
+  if(!confirm('Restaurar a versão de '+it.rot+'?\n\nFICARÁ ASSIM:\n'+descreveBase(it.r)
+    +'\n\nSUBSTITUINDO:\n'+descreveBase(resumoBase(D))
+    +'\n\nA versão atual é guardada antes, então dá para voltar atrás.'))return;
+  guardarVersao('antes de restaurar '+it.rot);
+  D=migrate(JSON.parse(JSON.stringify(it.dados)));
+  save();initFields();renderAll();setMode(D.mode||'contas');
+  abrirVersoes();
+  alert('Versão restaurada.');
+}
+
+/* ---------- o arquivo é mesmo desta casa? ----------
+   O app Gestão confere o arquivo antes de importar; este não conferia nada.
+   Qualquer .json era aceito, e o que não fosse reconhecido virava "base
+   nova" — ou seja, apagava tudo em silêncio. */
+function ehBaseFamilia(o){
+  if(!o||typeof o!=='object'||Array.isArray(o))return false;
+  if(o.contas||o.invest)return true;                          /* base atual */
+  if(o.nacional||o.cambio!==undefined||o.proj)return true;    /* cofre antigo */
+  if(o.casa||o.cartoes||o.recebidos||o.empresa)return true;   /* contas antigo */
+  return false;
+}
+function ehBaseGestao(o){return !!(o&&typeof o==='object'&&(o.alunos||o.lancamentos||o.presencas));}
+function importJSON(){
+  pickFile('.json,application/json',f=>{
+    const r=new FileReader();
+    r.onload=()=>{
+      let o=null;
+      try{o=JSON.parse(r.result);}catch(e){alert('Não consegui ler esse arquivo — ele precisa ser um .json.');return;}
+      if(!ehBaseFamilia(o)){
+        alert(ehBaseGestao(o)
+          ? 'Esse é o backup do app GESTÃO da academia — ele não entra aqui.\n\n'
+            +'Para trazer o faturamento dele, use “📥 faturamento do app Gestão”, na aba Anual. '
+            +'Lá ele é só lido, e nada seu é substituído.'
+          : 'Esse arquivo não é um backup do app da Família.\n\nO arquivo certo começa com “familia-jk-backup”.');
+        return;
+      }
+      let novo=null;
+      try{novo=resumoBase(migrate(JSON.parse(JSON.stringify(o))));}catch(e){alert('Arquivo ilegível.');return;}
+      if(!confirm('Importar este backup? Ele SUBSTITUI o que está neste aparelho.\n\n'
+        +'FICARÁ ASSIM:\n'+descreveBase(novo)+'\n\nSUBSTITUINDO:\n'+descreveBase(resumoBase(D))
+        +'\n\nA versão atual é guardada antes, então dá para voltar atrás.'))return;
+      guardarVersao('antes de importar um backup');
+      D=migrate(o);save();initFields();renderAll();setMode(D.mode||'contas');
+      alert('Backup importado. Se não era isso, use “🕘 Versões guardadas” para voltar.');
+    };
+    r.onerror=()=>alert('Não consegui abrir o arquivo.');
+    r.readAsText(f);
+  });
+}
+function resetData(){if(confirm('Voltar aos dados de exemplo? Os dados atuais deste aparelho serão substituídos.\n\nA versão atual é guardada antes, então dá para voltar atrás.')){guardarVersao('antes de voltar aos exemplos');D=migrate(structuredClone(DEFAULT));save();initFields();renderAll();setMode(D.mode||'contas')}}
 
 /* ================= LANÇAR FALANDO (ou escrevendo) — 100% local =================
    O coração aqui é o interpretador de texto, não a captura de voz: no iPhone a
