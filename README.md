@@ -15,8 +15,9 @@ gera o conteúdo.
 | Pasta          | Público      | O que é                                                        |
 |----------------|--------------|----------------------------------------------------------------|
 | `site/`        | 🎾 Alunos    | **Site institucional** dos alunos: planos, Sistema Flex, avaliações, a **metodologia explicada para alunos** e o folder em PDF. |
-| `site-pro/`    | 👔 Professores | **Site de vendas**: home + página do **curso** (formação Da Base ao Topo) + página do **sistema/app** + `demo/` (cópia navegável do app de gestão, sem Firebase, dados fictícios — gerada por `site-pro/tools/build_demo.py`, rodar de novo sempre que `app-gestao/index.html` ganhar uma aba/funcionalidade nova). |
+| `site-pro/`    | 👔 Professores | **Site de vendas**: home + **landing page** premium `da-base-ao-topo.html` (a página de conversão do método) + página do **curso** (formação Da Base ao Topo) + página do **sistema/app** + `demo/` (cópia navegável do app de gestão, sem Firebase, dados fictícios — gerada por `site-pro/tools/build_demo.py`, rodar de novo sempre que `app-gestao/index.html` ganhar uma aba/funcionalidade nova). |
 | `app-aluno/`   | Alunos       | App do **aluno** (agendamento, pagamentos). PWA + Firebase.    |
+| `app-exercicios/` | 👔 Professores | **Banco de exercícios** da metodologia: 116 drills cruzados por tema do mês, camada da Pirâmide, nível da Trilha, bloco da aula e necessidade do aluno — com montador e impressão de plano de aula. PWA, 100% local (sem Firebase). Conteúdo em `exercicios.js`; ver [`app-exercicios/LEIA-ME.md`](app-exercicios/LEIA-ME.md). |
 | `app-gestao/`  | Professor    | App de **gestão** (agenda, alunos, caixa e financeiro). PWA + Firebase. |
 | `app-familia/` | Pessoal      | App **da família JK** (contas da casa, cartões, investimentos). PWA + Firebase opcional. |
 
@@ -25,9 +26,10 @@ gera o conteúdo.
 | Pasta          | O que é                                                        |
 |----------------|----------------------------------------------------------------|
 | `metodologia/` | **Fonte** da metodologia (`apostila.md`) + `folder.html` (folder comercial) + `export/`. A **apostila é produto pago** e fica fora do ar — o PDF é entregue sob demanda. Gera a página pública `site/metodologia.html`. |
-| `negocio/`     | **Guia de vendas** (`guia-de-vendas.md`): como vender o app para academias e a metodologia como curso. Uso interno. |
+| `negocio/`     | **Guia de vendas** (`guia-de-vendas.md`): como vender o app para academias e a metodologia como curso. Uso interno. Traz também `landing-da-base-ao-topo.md`, a estrutura seção por seção da landing page `site-pro/da-base-ao-topo.html`. |
 
 ## Última versão dos arquivos
+- `app-exercicios/` — criado em 17/09/2026
 - `app-gestao/index.html` — editado em 26/06/2026
 - `app-aluno/index.html` — editado em 26/06/2026
 - `app-familia/index.html` — editado em 29/06/2026
@@ -51,5 +53,9 @@ gera o conteúdo.
   preços dos ETFs globais pela brapi.dev (o service worker não as intercepta).
   Os ícones/splash são **provisórios** (cópia do app-gestão) — troque pela arte
   "JK" quando tiver. Funciona offline depois da primeira abertura.
+- **app-exercicios** é PWA (`sw-exercicios.js` + `manifest-exercicios.webmanifest`) e
+  **não carrega nada de fora**: sem Firebase, sem biblioteca, sem fonte externa —
+  funciona offline desde a primeira abertura. Favoritos e plano de aula ficam no
+  aparelho. Os ícones são provisórios (cópia do app de Gestão).
 - O **site** tem as imagens embutidas em base64 no próprio `index.html`; a pasta
   `site/imagens/` é mantida apenas como cópia dos originais.

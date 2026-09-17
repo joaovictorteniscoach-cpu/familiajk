@@ -3,7 +3,7 @@
 # Uso, a partir da raiz do repositorio:  sh ferramentas/checar-tudo.sh
 set -u
 cd "$(dirname "$0")/.." || exit 1
-APPS="app-aluno/index.html app-gestao/index.html site/index.html"
+APPS="app-aluno/index.html app-gestao/index.html site/index.html site/da-base-ao-topo.html app-exercicios/index.html"
 falhou=0
 
 echo "### 1. Sintaxe dos scripts (erro aqui quebra o app inteiro)"
@@ -19,19 +19,23 @@ python3 ferramentas/checar-ids.py $APPS
 
 echo
 echo "### 4. Colisao de nome de classe no CSS (conferir a olho)"
-python3 ferramentas/checar-css.py app-aluno/index.html app-gestao/index.html
+python3 ferramentas/checar-css.py app-aluno/index.html app-gestao/index.html app-exercicios/index.html
 
 echo
-echo "### 5. Regras do banco contra o que os apps fazem"
+echo "### 5. Banco de exercicios e a tela que le dele"
+node ferramentas/checar-exercicios.js || falhou=1
+
+echo
+echo "### 6. Regras do banco contra o que os apps fazem"
 python3 ferramentas/checar-regras.py || falhou=1
 
 echo
-echo "### 6. Carimbo de versao dos apps"
+echo "### 7. Carimbo de versao dos apps"
 python3 ferramentas/checar-versao.py || falhou=1
 
 echo
 if [ "$falhou" -eq 0 ]; then
-  echo "Sintaxe, regras e versao OK. Leia os avisos dos itens 2 a 4 antes de publicar."
+  echo "Sintaxe, banco, regras e versao OK. Leia os avisos dos itens 2 a 4 antes de publicar."
 else
   echo "ERRO — nao publique antes de corrigir."
   exit 1

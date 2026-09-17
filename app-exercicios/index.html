@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Banco de Exercícios JV · Da Base ao Topo</title>
+<meta name="description" content="Banco de exercícios da metodologia Da Base ao Topo: filtra por tema do mês, nível do aluno, bloco da aula e necessidade específica — e monta o plano de aula.">
+<meta name="theme-color" content="#102438">
+<!-- Ferramenta interna do professor, não página de venda: fora do Google.
+     O conteúdo do banco é o miolo da formação (produto pago) — ver LEIA-ME.md. -->
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="jv-icone-exercicios.png">
+<link rel="apple-touch-icon" href="jv-icone-exercicios-180.png">
+<link rel="manifest" href="manifest-exercicios.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Exercícios JV">
+<style>
+:root{
+  --navy:#102438; --navy-2:#15304A; --navy-3:#1C3F5E; --deep:#0B1B2B;
+  --gold:#D8B45C; --gold-2:#C49A3F; --gold-soft:#E7CE93;
+  --cream:#F4EFE6; --ink:#21303D;
+  --muted:rgba(244,239,230,.62); --muted-2:rgba(244,239,230,.42);
+  --line:rgba(216,180,92,.22); --line-2:rgba(244,239,230,.12);
+  --ok:#7FA650; --warn:#E0784A; --r:14px;
+  --topo:env(safe-area-inset-top,0px); --base:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background:var(--navy);-webkit-text-size-adjust:100%}
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  background:var(--navy);color:var(--cream);font-size:16px;line-height:1.55;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+  padding-bottom:calc(84px + var(--base));
+}
+h1,h2,h3{line-height:1.15;letter-spacing:-.015em;font-weight:800}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input,select{font:inherit}
+.wrap{max-width:900px;margin:0 auto;padding:0 16px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px;border-radius:8px}
+
+/* ---------- barra de cima ---------- */
+header.bar{
+  position:sticky;top:0;z-index:50;background:rgba(11,27,43,.97);
+  backdrop-filter:saturate(140%) blur(10px);border-bottom:1px solid var(--line);
+  padding-top:var(--topo);
+}
+.bar-in{display:flex;align-items:center;gap:12px;height:58px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand .mono{width:36px;height:36px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--navy-3),var(--deep));color:var(--gold-soft);
+  display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px}
+.brand .nm{font-weight:800;font-size:15px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand .nm small{display:block;font-weight:600;font-size:9px;letter-spacing:.14em;
+  color:var(--gold-soft);text-transform:uppercase;margin-top:2px}
+.bar .espaco{flex:1}
+.ico-btn{width:40px;height:40px;border-radius:11px;border:1px solid var(--line-2);
+  display:flex;align-items:center;justify-content:center;font-size:18px;position:relative;flex-shrink:0}
+.ico-btn:active{transform:scale(.94)}
+.selo{position:absolute;top:-5px;right:-5px;min-width:19px;height:19px;border-radius:999px;
+  background:var(--gold);color:#23303b;font-size:11px;font-weight:900;
+  display:flex;align-items:center;justify-content:center;padding:0 5px}
+.selo[hidden]{display:none}
+
+/* ---------- foco do mês ---------- */
+.foco{background:linear-gradient(150deg,var(--deep),var(--navy-3) 160%);
+  border-bottom:1px solid var(--line);padding:13px 0 12px}
+.foco .et{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+.foco h1{font-size:clamp(21px,5.6vw,30px);margin:3px 0 3px;color:#fff}
+.foco .mes{font-size:12.5px;color:var(--gold-soft);font-weight:600}
+.foco .fr{font-size:13px;color:var(--muted);margin-top:6px;font-style:italic;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.foco .ver{margin-top:9px;font-size:13px;font-weight:700;color:var(--gold-soft);
+  border-bottom:1px solid var(--line);padding-bottom:2px;display:inline-block}
+
+/* ---------- tiras de filtro ---------- */
+.tira{display:flex;gap:7px;overflow-x:auto;padding:9px 16px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.tira::-webkit-scrollbar{display:none}
+.tira.centro{max-width:900px;margin:0 auto}
+.chip{flex-shrink:0;padding:8px 14px;border-radius:999px;border:1px solid var(--line-2);
+  font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap;background:var(--navy-2);
+  line-height:1.25;text-align:center}
+.chip:active{transform:scale(.96)}
+.chip.on{background:linear-gradient(135deg,var(--gold-soft),var(--gold-2));color:#23303b;
+  border-color:transparent;font-weight:800}
+.chip .mm{display:block;font-size:9px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;opacity:.72}
+.chip.agora::after{content:"• agora";margin-left:6px;font-size:10px;font-weight:800;letter-spacing:.06em}
+
+.filtros{position:sticky;top:calc(58px + var(--topo));z-index:40;
+  background:rgba(16,36,56,.97);backdrop-filter:blur(8px);border-bottom:1px solid var(--line-2)}
+/* Painel de filtros aberto: a barra para de ser fixa. Fixa em cima, fixa em
+   baixo e painel aberto nao cabem num celular pequeno — o primeiro exercicio
+   fica entalado e o dedo nao alcanca. Aberta, ela rola embora. */
+.filtros.expandido{position:static}
+.busca-linha{display:flex;gap:9px;padding:9px 16px 0;max-width:900px;margin:0 auto}
+.busca{flex:1;display:flex;align-items:center;gap:9px;background:var(--navy-2);
+  border:1px solid var(--line-2);border-radius:12px;padding:0 13px;height:44px}
+.busca input{flex:1;background:none;border:none;color:var(--cream);font-size:15.5px;outline:none;min-width:0}
+.busca input::placeholder{color:var(--muted-2)}
+.mais{height:44px;padding:0 15px;border-radius:12px;border:1px solid var(--line-2);
+  background:var(--navy-2);font-size:13.5px;font-weight:700;color:var(--muted);white-space:nowrap}
+.mais.on{border-color:var(--gold);color:var(--gold-soft)}
+.painel{display:none;padding:4px 16px 14px;max-width:900px;margin:0 auto}
+.painel.aberto{display:block}
+.painel .gr{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.campo label{display:block;font-size:10.5px;font-weight:700;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--gold);margin-bottom:5px}
+.campo select{width:100%;height:42px;border-radius:11px;background:var(--navy-2);
+  border:1px solid var(--line-2);color:var(--cream);padding:0 10px;font-size:14.5px}
+.painel .linha{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.painel .lim{margin-top:12px;font-size:13.5px;font-weight:700;color:var(--warn)}
+.resumo{max-width:900px;margin:0 auto;padding:10px 16px 2px;display:flex;
+  align-items:baseline;justify-content:space-between;gap:10px}
+.resumo .qt{font-size:13.5px;color:var(--muted);font-weight:600}
+.resumo .qt b{color:var(--gold-soft);font-size:16px}
+.resumo .ord{font-size:13px;color:var(--muted);font-weight:700}
+
+/* ---------- lista ---------- */
+.lista{max-width:900px;margin:0 auto;padding:10px 16px 20px;display:grid;gap:11px}
+.card{background:var(--navy-2);border:1px solid var(--line-2);border-radius:var(--r);
+  padding:15px 16px;display:flex;gap:13px;align-items:flex-start;text-align:left;width:100%}
+.card:active{transform:scale(.995)}
+.card.no-plano{border-color:var(--gold);box-shadow:inset 0 0 0 1px rgba(216,180,92,.25)}
+.card .cod{flex-shrink:0;width:46px;height:46px;border-radius:12px;display:flex;
+  align-items:center;justify-content:center;font-weight:900;font-size:13px;
+  background:var(--deep);border:1px solid var(--line-2)}
+.card .mid{flex:1;min-width:0}
+.card h3{font-size:16.5px;color:#fff;margin-bottom:5px}
+.card .obj{font-size:13.5px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;
+  -webkit-box-orient:vertical;overflow:hidden}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.tag{font-size:10.5px;font-weight:700;letter-spacing:.04em;padding:3px 8px;border-radius:6px;
+  background:rgba(244,239,230,.07);color:var(--muted);border:1px solid var(--line-2)}
+.tag.cam{border-color:currentColor}
+.tag.min{color:var(--gold-soft)}
+.tag.apo{color:var(--ok);border-color:rgba(127,166,80,.4)}
+.card .add{flex-shrink:0;width:42px;height:42px;border-radius:11px;border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--gold-soft);align-self:center}
+.card .add.dentro{background:var(--gold);color:#23303b;border-color:transparent}
+.vazio{text-align:center;padding:44px 20px;color:var(--muted)}
+.vazio .em{font-size:36px;margin-bottom:12px}
+.vazio b{color:var(--gold-soft);display:block;margin-bottom:6px;font-size:17px}
+
+/* ---------- barra de baixo ---------- */
+.rodape{position:fixed;left:0;right:0;bottom:0;z-index:55;
+  background:rgba(11,27,43,.98);backdrop-filter:blur(10px);border-top:1px solid var(--line);
+  padding:10px 16px calc(10px + var(--base))}
+.rodape-in{max-width:900px;margin:0 auto;display:flex;gap:10px;align-items:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:800;
+  font-size:15px;padding:13px 20px;border-radius:12px;border:2px solid transparent;flex:1}
+.btn:active{transform:scale(.98)}
+.btn-gold{background:linear-gradient(135deg,var(--gold-soft),var(--gold-2));color:#23303b}
+.btn-line{border-color:var(--line);color:var(--gold-soft)}
+.btn-esc{background:var(--navy-2);border-color:var(--line-2);color:var(--cream)}
+.btn:disabled{opacity:.45}
+.btn.pq{padding:10px 15px;font-size:13.5px;flex:0 0 auto}
+
+/* ---------- ficha e gaveta ---------- */
+.fundo{position:fixed;inset:0;z-index:60;background:rgba(6,14,23,.72);
+  display:none;align-items:flex-end;justify-content:center}
+.fundo.aberto{display:flex}
+.folha{background:var(--navy);width:100%;max-width:900px;max-height:92vh;overflow-y:auto;
+  border-radius:20px 20px 0 0;border-top:1px solid var(--line);
+  padding-bottom:calc(20px + var(--base));-webkit-overflow-scrolling:touch}
+.folha-top{position:sticky;top:0;background:var(--navy);z-index:2;
+  padding:14px 16px 12px;border-bottom:1px solid var(--line-2);display:flex;gap:12px;align-items:flex-start}
+.folha-top .mid{flex:1;min-width:0}
+.folha-top h2{font-size:20px;color:#fff}
+.folha-top .cd{font-size:11.5px;font-weight:800;letter-spacing:.1em;color:var(--gold);text-transform:uppercase}
+.fechar{width:36px;height:36px;border-radius:10px;border:1px solid var(--line-2);
+  display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.folha-corpo{padding:16px}
+.bloco-tx{margin-bottom:18px}
+.bloco-tx .tt{font-size:10.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:6px}
+.bloco-tx p{font-size:15px;color:#E9E2D6}
+.bloco-tx.destaque{background:var(--navy-2);border:1px solid var(--line);border-radius:12px;padding:14px}
+.bloco-tx.alerta{background:rgba(224,120,74,.09);border:1px solid rgba(224,120,74,.3);
+  border-radius:12px;padding:14px}
+.bloco-tx.alerta .tt{color:var(--warn)}
+.bloco-tx.ok{background:rgba(127,166,80,.09);border:1px solid rgba(127,166,80,.3);
+  border-radius:12px;padding:14px}
+.bloco-tx.ok .tt{color:var(--ok)}
+.prog{display:grid;gap:8px}
+.prog .it{display:flex;gap:11px;background:var(--navy-2);border:1px solid var(--line-2);
+  border-radius:11px;padding:11px 13px}
+.prog .it.foco{border-color:var(--gold);background:rgba(216,180,92,.08)}
+.prog .nv{flex-shrink:0;font-size:10px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--gold-soft);width:86px;padding:3px 6px 0 0}
+.prog .tx{flex:1;font-size:14px;color:#E9E2D6}
+.ficha-meta{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:18px}
+.meta{background:var(--navy-2);border:1px solid var(--line-2);border-radius:11px;padding:10px 12px}
+.meta .k{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2)}
+.meta .v{font-size:14px;font-weight:700;color:#fff;margin-top:3px}
+.folha-acoes{display:flex;gap:9px;padding:0 16px 8px;position:sticky;bottom:0;background:var(--navy);
+  padding-top:12px;border-top:1px solid var(--line-2)}
+
+/* ---------- plano de aula ---------- */
+.plano-vazio{text-align:center;padding:30px 16px;color:var(--muted)}
+.plano-cab{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px}
+.plano-cab input,.plano-cab select{width:100%;height:42px;border-radius:11px;background:var(--navy-2);
+  border:1px solid var(--line-2);color:var(--cream);padding:0 11px;font-size:14.5px;outline:none}
+.pb{margin-bottom:16px}
+.pb-tt{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.pb-tt h3{font-size:14.5px;color:var(--gold-soft)}
+.pb-tt .tp{font-size:11.5px;color:var(--muted-2);font-weight:700;margin-left:auto}
+.pi{display:flex;gap:10px;align-items:center;background:var(--navy-2);border:1px solid var(--line-2);
+  border-radius:11px;padding:10px 12px;margin-bottom:7px}
+.pi .cd{font-size:11px;font-weight:900;color:var(--gold);width:38px;flex-shrink:0}
+.pi .nm{flex:1;font-size:14.5px;font-weight:600;min-width:0}
+.pi .mn{font-size:12px;color:var(--muted);font-weight:700}
+.pi .x{width:30px;height:30px;border-radius:8px;border:1px solid var(--line-2);
+  display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;color:var(--warn)}
+.pi .mv{width:28px;height:30px;display:flex;align-items:center;justify-content:center;
+  font-size:13px;color:var(--muted);flex-shrink:0}
+.pb.falta .pb-tt h3::after{content:" — vazio";color:var(--warn);font-weight:700}
+.total{display:flex;align-items:center;justify-content:space-between;background:var(--deep);
+  border:1px solid var(--line);border-radius:12px;padding:13px 15px;margin-bottom:14px}
+.total .n{font-size:24px;font-weight:900;color:var(--gold-soft)}
+.total .l{font-size:12.5px;color:var(--muted);font-weight:700;text-align:right}
+.auto{background:rgba(216,180,92,.08);border:1px dashed var(--line);border-radius:12px;
+  padding:13px 14px;margin-bottom:16px}
+.auto p{font-size:13.5px;color:var(--muted);margin-bottom:10px}
+.auto .ln{display:flex;gap:8px}
+.aviso{font-size:13px;color:var(--ok);font-weight:700;text-align:center;padding:8px 0}
+
+@media(min-width:620px){
+  .lista{grid-template-columns:1fr 1fr}
+  .ficha-meta{grid-template-columns:repeat(4,1fr)}
+  .folha{border-radius:20px;max-height:88vh;margin-bottom:4vh}
+  .fundo{align-items:center}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ---------- impressão: sai só o plano de aula, em preto no branco ------
+   A tela é escura; o papel não. Aqui tudo que é "cinza bonito" na tela vira
+   preto legível, e as outras gavetas (ficha, tema do mês) não vão para o
+   papel — mesmo que tenham sido abertas antes. */
+.det, .cab-imp, .imprimivel{display:none}
+@media print{
+  html,body{background:#fff!important;color:#000!important;padding:0;margin:0}
+  header.bar,.foco,.tira,.filtros,.resumo,.lista,.rodape,.folha-acoes,.auto,
+  .pi .x,.pi .mv,.fechar,.plano-cab,#fundoFicha,#fundoMes{display:none!important}
+  #fundoPlano{position:static;display:block;background:none;inset:auto}
+  #fundoPlano .folha{max-height:none;overflow:visible;background:#fff;border:none;
+    max-width:100%;border-radius:0;margin:0;padding:0}
+  #fundoPlano .folha-top{position:static;background:#fff;border-bottom:2px solid #222;padding:0 0 8px}
+  #fundoPlano .folha-corpo{padding:0}
+  .folha-top h2{color:#000;font-size:19px}
+  .folha-top .cd{color:#555}
+  .cab-imp{display:block;font-size:12.5px;color:#000;margin:10px 0 14px;line-height:1.9}
+  .cab-imp span{display:inline-block;margin-right:22px}
+  .cab-imp b{font-weight:800}
+  .total{background:#fff;border:1px solid #444;color:#000;padding:8px 12px;margin-bottom:14px}
+  .total .n{color:#000;font-size:18px}
+  .total .l{color:#333;font-size:11.5px}
+  .pb{margin-bottom:12px;page-break-inside:avoid}
+  .pb-tt h3{color:#000;font-size:14px}
+  .pb-tt .tp{color:#333;font-size:11px}
+  .pi{background:#fff;border:1px solid #999;color:#000;display:block;
+    padding:8px 11px;margin-bottom:6px;page-break-inside:avoid}
+  .pi .cd{color:#000;font-weight:800;width:auto;font-size:11.5px}
+  .pi .nm{color:#000;font-weight:800;font-size:13.5px;display:inline;padding:0 6px}
+  .pi .mn{color:#000;font-size:11.5px;font-weight:700}
+  .det{display:block;font-size:11.5px;color:#111;margin-top:5px;line-height:1.5}
+  .det b{font-weight:800}
+  .det i{color:#333;font-style:normal}
+  .bloco-tx{margin-bottom:10px}
+  .bloco-tx .tt{color:#000}
+  .bloco-tx p{color:#111!important;font-size:11.5px}
+  .imprimivel{display:block;font-size:10.5px;color:#444;margin-top:12px;
+    border-top:1px solid #999;padding-top:6px}
+}
+</style>
+</head>
+<body>
+
+<header class="bar"><div class="wrap bar-in">
+  <div class="brand">
+    <span class="mono">JV</span>
+    <span class="nm">Banco de Exercícios<small>Da Base ao Topo</small></span>
+  </div>
+  <span class="espaco"></span>
+  <button class="ico-btn" id="btnFav" title="Ver só os favoritos" aria-label="Ver só os favoritos">☆</button>
+  <button class="ico-btn" id="btnPlano" title="Plano de aula" aria-label="Plano de aula">📋<span class="selo" id="seloPlano" hidden>0</span></button>
+</div></header>
+
+<section class="foco"><div class="wrap">
+  <span class="et" id="focoEt">Foco do mês</span>
+  <h1 id="focoTema">—</h1>
+  <div class="mes" id="focoMes">—</div>
+  <p class="fr" id="focoFrase"></p>
+  <button class="ver" id="focoVer">o que este mês trabalha →</button>
+</div></section>
+
+<nav class="tira centro" id="tiraTemas" aria-label="Tema do mês"></nav>
+
+<div class="filtros">
+  <div class="busca-linha">
+    <div class="busca">
+      <span aria-hidden="true">🔎</span>
+      <label class="sr" for="q">Buscar exercício</label>
+      <input id="q" type="search" placeholder="Buscar: nome, objetivo, erro…" autocomplete="off">
+    </div>
+    <button class="mais" id="btnMais" aria-expanded="false">Filtros</button>
+  </div>
+  <nav class="tira centro" id="tiraNiveis" aria-label="Nível do aluno"></nav>
+  <div class="painel" id="painel">
+    <nav class="tira" id="tiraBlocos" style="padding:0 0 4px" aria-label="Bloco da aula"></nav>
+    <div class="gr">
+      <div class="campo"><label for="fNec">Necessidade do aluno</label>
+        <select id="fNec"><option value="">Qualquer necessidade</option></select></div>
+      <div class="campo"><label for="fForm">Formato da aula</label>
+        <select id="fForm"><option value="">Qualquer formato</option></select></div>
+      <div class="campo"><label for="fCam">Camada da Pirâmide</label>
+        <select id="fCam"><option value="">Qualquer camada</option></select></div>
+      <div class="campo"><label for="fMat">Material disponível</label>
+        <select id="fMat"><option value="">Tenho qualquer material</option></select></div>
+      <div class="campo"><label for="fInt">Intensidade</label>
+        <select id="fInt"><option value="">Qualquer intensidade</option>
+          <option value="baixa">Baixa</option><option value="media">Média</option><option value="alta">Alta</option></select></div>
+      <div class="campo"><label for="fOrd">Ordenar por</label>
+        <select id="fOrd"><option value="tema">Ordem do banco</option>
+          <option value="curto">Mais curtos primeiro</option>
+          <option value="longo">Mais longos primeiro</option>
+          <option value="nome">Nome (A–Z)</option></select></div>
+    </div>
+    <div class="linha">
+      <button class="chip" id="cApostila">Só os da apostila</button>
+      <button class="chip" id="cTransv">Esconder transversais</button>
+    </div>
+    <button class="lim" id="btnLimpar">✕ limpar todos os filtros</button>
+  </div>
+</div>
+
+<div class="resumo">
+  <span class="qt" id="qt">—</span>
+  <span class="ord" id="ordAviso"></span>
+</div>
+
+<main class="lista" id="lista"></main>
+
+<div class="rodape"><div class="rodape-in">
+  <button class="btn btn-esc" id="btnMontar">⚡ Montar aula</button>
+  <button class="btn btn-gold" id="btnVerPlano">📋 Plano <span id="planoQt">(0)</span></button>
+</div></div>
+
+<!-- ficha do exercício -->
+<div class="fundo" id="fundoFicha" role="dialog" aria-modal="true" aria-labelledby="fichaNome">
+  <div class="folha" id="folhaFicha"></div>
+</div>
+
+<!-- plano de aula -->
+<div class="fundo" id="fundoPlano" role="dialog" aria-modal="true" aria-labelledby="planoTitulo">
+  <div class="folha">
+    <div class="folha-top">
+      <div class="mid">
+        <span class="cd">Plano de aula</span>
+        <h2 id="planoTitulo">Aula Da Base ao Topo</h2>
+      </div>
+      <button class="fechar" data-fecha="fundoPlano" aria-label="Fechar">✕</button>
+    </div>
+    <div class="folha-corpo" id="planoCorpo"></div>
+    <div class="folha-acoes">
+      <button class="btn btn-esc pq" id="btnLimparPlano">Limpar</button>
+      <button class="btn btn-line pq" id="btnImprimir">Imprimir</button>
+      <button class="btn btn-gold" id="btnCopiar">Copiar / enviar</button>
+    </div>
+  </div>
+</div>
+
+<!-- explicação do mês -->
+<div class="fundo" id="fundoMes" role="dialog" aria-modal="true" aria-labelledby="mesTitulo">
+  <div class="folha">
+    <div class="folha-top">
+      <div class="mid"><span class="cd" id="mesCod">Tema do mês</span><h2 id="mesTitulo">—</h2></div>
+      <button class="fechar" data-fecha="fundoMes" aria-label="Fechar">✕</button>
+    </div>
+    <div class="folha-corpo" id="mesCorpo"></div>
+  </div>
+</div>
+
+<script src="exercicios.js"></script>
+<script>
+'use strict';
+
+/* ==========================================================================
+   ESTADO. Tudo que a tela precisa saber cabe aqui.
+   ========================================================================== */
+var F = {                      // filtros
+  tema:'', niveis:[], blocos:[], nec:'', form:'', cam:'', mat:'', int:'',
+  q:'', ord:'tema', apostila:false, semTransv:false, favs:false
+};
+var FAV = [];                  // ids favoritados
+var PLANO = { aluno:'', nivel:'', tema:'', itens:[] };   // itens: [{id, bloco}]
+var CH_FAV = 'jvex:favoritos', CH_PLANO = 'jvex:plano';
+
+function guardar(chave, valor){
+  try { localStorage.setItem(chave, JSON.stringify(valor)); } catch(e){}
+}
+function ler(chave, reserva){
+  try {
+    var v = localStorage.getItem(chave);
+    return v ? JSON.parse(v) : reserva;
+  } catch(e){ return reserva; }
+}
+function esc(t){
+  return String(t == null ? '' : t)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function el(id){ return document.getElementById(id); }
+
+/* ==========================================================================
+   FILTRO
+   ========================================================================== */
+function passa(e){
+  if (F.tema && e.tema.indexOf(F.tema) < 0) return false;
+  if (F.semTransv && e.transv) return false;
+  if (F.niveis.length && !F.niveis.some(function(n){ return e.niveis.indexOf(n) >= 0; })) return false;
+  if (F.blocos.length && F.blocos.indexOf(e.bloco) < 0) return false;
+  if (F.nec && e.nec.indexOf(F.nec) < 0) return false;
+  if (F.form && e.form.indexOf(F.form) < 0) return false;
+  if (F.cam && e.camada !== Number(F.cam)) return false;
+  if (F.int && e.int !== F.int) return false;
+  if (F.apostila && e.fonte !== 'apostila') return false;
+  if (F.favs && FAV.indexOf(e.id) < 0) return false;
+  // "material disponível": o exercício precisa caber no que o professor tem
+  if (F.mat) {
+    var so = e.mat.filter(function(m){ return m !== 'nada'; });
+    if (so.length && so.indexOf(F.mat) < 0) return false;
+  }
+  if (F.q) {
+    var t = F.q.toLowerCase();
+    var alvo = [e.id, e.nome, e.objetivo, e.execucao, e.montagem, e.erro, e.sucesso]
+      .join(' ').toLowerCase();
+    var tags = e.nec.map(function(n){ var x = necessidade(n); return x ? x.nome : ''; }).join(' ').toLowerCase();
+    if (alvo.indexOf(t) < 0 && tags.indexOf(t) < 0) return false;
+  }
+  return true;
+}
+
+function filtrados(){
+  var r = EX.filter(passa);
+  if (F.ord === 'curto') r.sort(function(a,b){ return a.min - b.min; });
+  else if (F.ord === 'longo') r.sort(function(a,b){ return b.min - a.min; });
+  else if (F.ord === 'nome') r.sort(function(a,b){ return a.nome.localeCompare(b.nome,'pt-BR'); });
+  return r;
+}
+
+/* ==========================================================================
+   DESENHO DA TELA
+   ========================================================================== */
+function desenharFoco(){
+  var t = F.tema ? tema(F.tema) : temaDoMes();
+  var doMes = temaDoMes();
+  var c = camada(t.camada);
+  el('focoEt').textContent = (t.id === doMes.id ? 'Foco do mês · ' + MESES_NOME[new Date().getMonth()] : 'Tema selecionado');
+  el('focoTema').textContent = t.nome;
+  el('focoMes').textContent = t.mesesTx + '  ·  Camada ' + c.n + ' — ' + c.nome;
+  el('focoFrase').textContent = '“' + t.frase + '”';
+}
+
+function desenharTemas(){
+  var atual = temaDoMes();
+  var h = '<button class="chip' + (F.tema === '' ? ' on' : '') + '" data-tema="">Todos os temas</button>';
+  TEMAS.forEach(function(t){
+    h += '<button class="chip' + (F.tema === t.id ? ' on' : '') + (t.id === atual.id ? ' agora' : '') +
+         '" data-tema="' + t.id + '">' + esc(t.nome) +
+         '<span class="mm">' + esc(t.mesesTx) + '</span></button>';
+  });
+  el('tiraTemas').innerHTML = h;
+}
+
+function desenharNiveis(){
+  var h = '<button class="chip' + (F.niveis.length === 0 ? ' on' : '') + '" data-nivel="">Todos os níveis</button>';
+  NIVEIS.forEach(function(n){
+    h += '<button class="chip' + (F.niveis.indexOf(n.id) >= 0 ? ' on' : '') +
+         '" data-nivel="' + n.id + '">' + esc(n.nome) +
+         '<span class="mm">grupo ' + esc(n.grupo) + '</span></button>';
+  });
+  el('tiraNiveis').innerHTML = h;
+}
+
+function desenharBlocos(){
+  var h = '<button class="chip' + (F.blocos.length === 0 ? ' on' : '') + '" data-bloco="">Aula inteira</button>';
+  BLOCOS.forEach(function(b){
+    h += '<button class="chip' + (F.blocos.indexOf(b.id) >= 0 ? ' on' : '') +
+         '" data-bloco="' + b.id + '">' + b.icone + ' ' + esc(b.nome) + '</button>';
+  });
+  el('tiraBlocos').innerHTML = h;
+}
+
+function preencherSelects(){
+  var grupos = {};
+  NECESSIDADES.forEach(function(n){ (grupos[n.grupo] = grupos[n.grupo] || []).push(n); });
+  var h = '<option value="">Qualquer necessidade</option>';
+  Object.keys(grupos).forEach(function(g){
+    h += '<optgroup label="' + esc(g) + '">';
+    grupos[g].forEach(function(n){ h += '<option value="' + n.id + '">' + esc(n.nome) + '</option>'; });
+    h += '</optgroup>';
+  });
+  el('fNec').innerHTML = h;
+
+  el('fForm').innerHTML = '<option value="">Qualquer formato</option>' +
+    FORMATOS.map(function(f){ return '<option value="' + f.id + '">' + esc(f.nome) + '</option>'; }).join('');
+  el('fCam').innerHTML = '<option value="">Qualquer camada</option>' +
+    CAMADAS.map(function(c){ return '<option value="' + c.n + '">' + c.n + ' — ' + esc(c.nome) + '</option>'; }).join('');
+  el('fMat').innerHTML = '<option value="">Tenho qualquer material</option>' +
+    MATERIAIS.filter(function(m){ return m.id !== 'nada'; })
+      .map(function(m){ return '<option value="' + m.id + '">' + esc(m.nome) + '</option>'; }).join('');
+}
+
+function cartao(e){
+  var c = camada(e.camada), b = bloco(e.bloco);
+  var dentro = PLANO.itens.some(function(i){ return i.id === e.id; });
+  return '' +
+  '<div class="card' + (dentro ? ' no-plano' : '') + '">' +
+    '<button class="cod" data-ficha="' + e.id + '" style="color:' + c.cor + '" aria-label="Abrir ' + esc(e.nome) + '">' + esc(e.id) + '</button>' +
+    '<button class="mid" data-ficha="' + e.id + '" style="text-align:left">' +
+      '<h3>' + esc(e.nome) + (FAV.indexOf(e.id) >= 0 ? ' ★' : '') + '</h3>' +
+      '<p class="obj">' + esc(e.objetivo) + '</p>' +
+      '<div class="tags">' +
+        '<span class="tag cam" style="color:' + c.cor + '">' + b.icone + ' ' + esc(b.nome) + '</span>' +
+        '<span class="tag min">' + e.min + ' min</span>' +
+        '<span class="tag">' + esc(e.niveis.map(function(n){ return nivel(n).nome; }).join(' · ')) + '</span>' +
+        (e.fonte === 'apostila' ? '<span class="tag apo">apostila</span>' : '') +
+        (e.transv ? '<span class="tag">todo mês</span>' : '') +
+      '</div>' +
+    '</button>' +
+    '<button class="add' + (dentro ? ' dentro' : '') + '" data-add="' + e.id + '" aria-label="' +
+      (dentro ? 'Tirar do plano' : 'Pôr no plano') + '">' + (dentro ? '✓' : '+') + '</button>' +
+  '</div>';
+}
+
+function desenharLista(){
+  var r = filtrados();
+  el('qt').innerHTML = '<b>' + r.length + '</b> ' + (r.length === 1 ? 'exercício' : 'exercícios') +
+    (F.favs ? ' · favoritos' : '');
+  el('ordAviso').textContent = r.length ? 'total ' + r.reduce(function(s,e){ return s + e.min; }, 0) + ' min' : '';
+  if (!r.length) {
+    el('lista').innerHTML = '<div class="vazio"><div class="em">🎾</div>' +
+      '<b>Nada com esses filtros.</b>Tire um filtro — comece pelo material ou pela necessidade.</div>';
+    return;
+  }
+  el('lista').innerHTML = r.map(cartao).join('');
+}
+
+function marcarChips(){
+  el('cApostila').classList.toggle('on', F.apostila);
+  el('cTransv').classList.toggle('on', F.semTransv);
+  el('btnFav').textContent = F.favs ? '★' : '☆';
+  var ativos = (F.nec ? 1 : 0) + (F.form ? 1 : 0) + (F.cam ? 1 : 0) + (F.mat ? 1 : 0) +
+               (F.int ? 1 : 0) + (F.apostila ? 1 : 0) + (F.semTransv ? 1 : 0) + F.blocos.length;
+  el('btnMais').textContent = ativos ? 'Filtros (' + ativos + ')' : 'Filtros';
+  el('btnMais').classList.toggle('on', ativos > 0);
+}
+
+function atualizar(){
+  desenharFoco(); desenharTemas(); desenharNiveis(); desenharBlocos();
+  marcarChips(); desenharLista(); selo();
+}
+
+/* ==========================================================================
+   FICHA DO EXERCÍCIO
+   ========================================================================== */
+function abrirFicha(id){
+  var e = EX.filter(function(x){ return x.id === id; })[0];
+  if (!e) return;
+  var c = camada(e.camada), b = bloco(e.bloco);
+  var foco = F.niveis.length === 1 ? F.niveis[0] : '';
+  var dentro = PLANO.itens.some(function(i){ return i.id === e.id; });
+
+  var prog = NIVEIS.filter(function(n){ return e.prog && e.prog[n.id]; }).map(function(n){
+    return '<div class="it' + (foco === n.id ? ' foco' : '') + '">' +
+      '<span class="nv">' + esc(n.nome) + '</span>' +
+      '<span class="tx">' + esc(e.prog[n.id]) + '</span></div>';
+  }).join('');
+
+  var mats = e.mat.map(function(m){ var x = material(m); return x ? x.nome : m; }).join(' · ');
+  var necs = e.nec.map(function(n){ var x = necessidade(n); return x ? x.nome : n; }).join(' · ');
+  var forms = e.form.map(function(f){ var x = formato(f); return x ? x.nome : f; }).join(' · ');
+  var temas = e.tema.map(function(t){ var x = tema(t); return x ? x.nome + ' (' + x.mesesTx + ')' : t; });
+  var intTx = { baixa:'Baixa', media:'Média', alta:'Alta' }[e.int];
+
+  el('folhaFicha').innerHTML = '' +
+  '<div class="folha-top">' +
+    '<div class="mid">' +
+      '<span class="cd" style="color:' + c.cor + '">' + esc(e.id) + ' · Camada ' + c.n + ' — ' + esc(c.nome) + '</span>' +
+      '<h2 id="fichaNome">' + esc(e.nome) + '</h2>' +
+    '</div>' +
+    '<button class="fechar" data-fecha="fundoFicha" aria-label="Fechar">✕</button>' +
+  '</div>' +
+  '<div class="folha-corpo">' +
+    '<div class="ficha-meta">' +
+      '<div class="meta"><div class="k">Bloco da aula</div><div class="v">' + b.icone + ' ' + esc(b.nome) + '</div></div>' +
+      '<div class="meta"><div class="k">Duração</div><div class="v">' + e.min + ' min</div></div>' +
+      '<div class="meta"><div class="k">Intensidade</div><div class="v">' + intTx + '</div></div>' +
+      '<div class="meta"><div class="k">Origem</div><div class="v">' + (e.fonte === 'apostila' ? 'Apostila' : 'Banco') + '</div></div>' +
+    '</div>' +
+    '<div class="bloco-tx destaque"><div class="tt">Objetivo — o para quê</div><p>' + esc(e.objetivo) + '</p></div>' +
+    '<div class="bloco-tx"><div class="tt">Montagem</div><p>' + esc(e.montagem) + '</p></div>' +
+    '<div class="bloco-tx"><div class="tt">Execução</div><p>' + esc(e.execucao) + '</p></div>' +
+    '<div class="bloco-tx"><div class="tt">O mesmo exercício em cada nível</div><div class="prog">' + prog + '</div></div>' +
+    '<div class="bloco-tx alerta"><div class="tt">Erro a observar primeiro</div><p>' + esc(e.erro) + '</p></div>' +
+    '<div class="bloco-tx ok"><div class="tt">Como saber que funcionou</div><p>' + esc(e.sucesso) + '</p></div>' +
+    (e.kids ? '<div class="bloco-tx"><div class="tt">Versão Kids</div><p>' + esc(e.kids) + '</p></div>' : '') +
+    '<div class="bloco-tx"><div class="tt">Material</div><p>' + esc(mats) + '</p></div>' +
+    '<div class="bloco-tx"><div class="tt">Serve para</div><p>' + esc(necs) + '</p></div>' +
+    '<div class="bloco-tx"><div class="tt">Formatos</div><p>' + esc(forms) + '</p></div>' +
+    '<div class="bloco-tx"><div class="tt">Tema do mês</div><p>' + esc(temas.join(' · ')) +
+      (e.transv ? '<br><b style="color:var(--gold-soft)">Transversal: serve em qualquer mês.</b>' : '') + '</p></div>' +
+  '</div>' +
+  '<div class="folha-acoes">' +
+    '<button class="btn btn-esc pq" data-favorito="' + e.id + '">' + (FAV.indexOf(e.id) >= 0 ? '★ favorito' : '☆ favoritar') + '</button>' +
+    '<button class="btn btn-gold" data-add="' + e.id + '">' + (dentro ? '✓ no plano — tirar' : '+ pôr no plano') + '</button>' +
+  '</div>';
+  abrir('fundoFicha');
+}
+
+/* ==========================================================================
+   PLANO DE AULA
+   ========================================================================== */
+function noPlano(id){
+  var i = PLANO.itens.map(function(x){ return x.id; }).indexOf(id);
+  if (i >= 0) PLANO.itens.splice(i, 1);
+  else {
+    var e = EX.filter(function(x){ return x.id === id; })[0];
+    if (e) PLANO.itens.push({ id:id, bloco:e.bloco });
+    // o primeiro exercicio define o tema do plano
+    if (!PLANO.tema) PLANO.tema = F.tema || temaDoMes().id;
+  }
+  if (!PLANO.itens.length) PLANO.tema = '';
+  guardar(CH_PLANO, PLANO);
+  atualizar();
+  if (el('fundoPlano').classList.contains('aberto')) desenharPlano();
+  if (el('fundoFicha').classList.contains('aberto')) abrirFicha(id);
+}
+
+function mover(id, passo){
+  var ids = PLANO.itens.map(function(x){ return x.id; });
+  var i = ids.indexOf(id);
+  if (i < 0) return;
+  var mesmoBloco = PLANO.itens.filter(function(x){ return x.bloco === PLANO.itens[i].bloco; });
+  var pos = mesmoBloco.map(function(x){ return x.id; }).indexOf(id) + passo;
+  if (pos < 0 || pos >= mesmoBloco.length) return;
+  var alvo = mesmoBloco[pos].id, j = ids.indexOf(alvo);
+  var tmp = PLANO.itens[i]; PLANO.itens[i] = PLANO.itens[j]; PLANO.itens[j] = tmp;
+  guardar(CH_PLANO, PLANO);
+  desenharPlano();
+}
+
+function itensDoBloco(b){
+  return PLANO.itens.filter(function(i){ return i.bloco === b; })
+    .map(function(i){ return EX.filter(function(x){ return x.id === i.id; })[0]; })
+    .filter(Boolean);
+}
+
+function totalMin(){
+  return PLANO.itens.reduce(function(s, i){
+    var e = EX.filter(function(x){ return x.id === i.id; })[0];
+    return s + (e ? e.min : 0);
+  }, 0);
+}
+
+function selo(){
+  var n = PLANO.itens.length;
+  el('seloPlano').hidden = n === 0;
+  el('seloPlano').textContent = n;
+  el('planoQt').textContent = '(' + n + ')';
+}
+
+function temaDoPlano(){
+  return (PLANO.tema && tema(PLANO.tema)) || (F.tema ? tema(F.tema) : temaDoMes());
+}
+
+function desenharPlano(){
+  var t = temaDoPlano();
+  var h = '';
+  h += '<div class="plano-cab">' +
+    '<input id="pAluno" placeholder="Nome do aluno / turma" value="' + esc(PLANO.aluno) + '">' +
+    '<select id="pNivel"><option value="">Nível do aluno</option>' +
+      NIVEIS.map(function(n){ return '<option value="' + n.id + '"' + (PLANO.nivel === n.id ? ' selected' : '') +
+        '>' + esc(n.nome) + ' (grupo ' + n.grupo + ')</option>'; }).join('') +
+    '</select></div>';
+
+  // linha que só existe no papel: os campos digitados não saem na impressão
+  var nvImp = PLANO.nivel ? nivel(PLANO.nivel) : null;
+  h += '<div class="cab-imp">' +
+    '<span><b>Aluno/turma:</b> ' + (PLANO.aluno ? esc(PLANO.aluno) : '______________________') + '</span>' +
+    '<span><b>Nível:</b> ' + (nvImp ? esc(nvImp.nome) + ' (grupo ' + nvImp.grupo + ')' : '____________') + '</span>' +
+    '<span><b>Data:</b> ____/____/______</span>' +
+    '<span><b>Tema do mês:</b> ' + esc(t.nome) + ' · ' + esc(t.mesesTx) + '</span></div>';
+
+  if (!PLANO.itens.length) {
+    h += '<div class="auto"><p><b style="color:var(--gold-soft)">Plano vazio.</b><br>' +
+      'Monte na mão pelo “+” de cada exercício, ou deixe o app montar uma aula do tema do mês.</p>' +
+      '<div class="ln"><button class="btn btn-gold pq" id="pAuto60">⚡ Aula de 60 min</button>' +
+      '<button class="btn btn-line pq" id="pAuto90">90 min</button></div></div>';
+  } else {
+    var tot = totalMin();
+    h += '<div class="total"><span class="n">' + tot + ' min</span>' +
+      '<span class="l">' + PLANO.itens.length + ' exercícios<br>' + esc(t.nome) + '</span></div>';
+  }
+
+  BLOCOS.forEach(function(b){
+    var itens = itensDoBloco(b.id);
+    h += '<div class="pb' + (PLANO.itens.length && !itens.length ? ' falta' : '') + '">' +
+      '<div class="pb-tt">' + b.icone + ' <h3>' + esc(b.nome) + '</h3>' +
+        '<span class="tp">' + b.tempo + '</span></div>';
+    if (!itens.length) {
+      h += '<p style="font-size:13px;color:var(--muted-2);padding:2px 0 4px">' + esc(b.desc) + '</p>';
+    }
+    itens.forEach(function(e){
+      h += '<div class="pi">' +
+        '<span class="cd">' + esc(e.id) + '</span>' +
+        '<button class="nm" data-ficha="' + e.id + '" style="text-align:left">' + esc(e.nome) + '</button>' +
+        '<span class="mn">' + e.min + '\'</span>' +
+        '<button class="mv" data-sobe="' + e.id + '" aria-label="Subir">▲</button>' +
+        '<button class="mv" data-desce="' + e.id + '" aria-label="Descer">▼</button>' +
+        '<button class="x" data-add="' + e.id + '" aria-label="Tirar do plano">✕</button>' +
+        // detalhe que só aparece no papel: o professor leva a ficha para a quadra
+        '<div class="det"><b>Objetivo:</b> ' + esc(e.objetivo) +
+          '<br><b>Montagem:</b> ' + esc(e.montagem) +
+          '<br><b>Execução:</b> ' + esc(e.execucao) +
+          (PLANO.nivel && e.prog[PLANO.nivel]
+            ? '<br><b>No nível ' + esc(nivel(PLANO.nivel).nome) + ':</b> ' + esc(e.prog[PLANO.nivel]) : '') +
+          '<br><i><b>Erro a observar:</b> ' + esc(e.erro) + '</i>' +
+          '<br><i><b>Funcionou se:</b> ' + esc(e.sucesso) + '</i></div>' +
+      '</div>';
+    });
+    h += '</div>';
+  });
+
+  if (PLANO.itens.length) {
+    h += '<div class="bloco-tx" style="margin-top:6px"><div class="tt">Lembrete da metodologia</div>' +
+      '<p style="font-size:13.5px;color:var(--muted)">A ativação de base é sagrada — ela mantém a espiral girando em todos os níveis. ' +
+      'E todo tema do dia termina aplicado em jogo: técnica que não vira jogo é coreografia.</p></div>';
+  }
+  h += '<div class="imprimivel">Academia JV Tênis · Metodologia Da Base ao Topo · Banco de exercícios ' +
+       esc(VERSAO_BANCO) + '</div>';
+  el('planoCorpo').innerHTML = h;
+
+  var a = el('pAluno'), n = el('pNivel');
+  if (a) a.oninput = function(){ PLANO.aluno = a.value; guardar(CH_PLANO, PLANO); };
+  if (n) n.onchange = function(){ PLANO.nivel = n.value; guardar(CH_PLANO, PLANO); };
+  if (el('pAuto60')) el('pAuto60').onclick = function(){ montarAuto(60); };
+  if (el('pAuto90')) el('pAuto90').onclick = function(){ montarAuto(90); };
+  el('planoTitulo').textContent = 'Aula · ' + t.nome;
+}
+
+/* Monta uma aula do tema atual respeitando os 4 blocos e o tempo disponível.
+   Não é mágica: escolhe entre o que passa nos filtros de nível, material e
+   formato, e prefere o que o professor já marcou como favorito. O plano sai
+   para ser editado — tirar, trocar e reordenar é a parte humana. */
+function montarAuto(minutos){
+  var t = F.tema ? tema(F.tema) : temaDoMes();
+  var nv = PLANO.nivel || (F.niveis.length === 1 ? F.niveis[0] : '');
+  // proporção dos blocos na anatomia da aula JV (apostila, seção 5.1)
+  var alvo = { ativacao:0.18, tema:0.40, jogo:0.33, fechamento:0.07 };
+  var escolhidos = [];
+  function jaTem(id){ return escolhidos.some(function(x){ return x.id === id; }); }
+
+  BLOCOS.forEach(function(b){
+    var teto = Math.max(4, Math.round(minutos * alvo[b.id]));
+    var cand = EX.filter(function(e){
+      if (e.bloco !== b.id) return false;
+      if (e.tema.indexOf(t.id) < 0) return false;
+      if (nv && e.niveis.indexOf(nv) < 0) return false;
+      if (F.form && e.form.indexOf(F.form) < 0) return false;
+      if (F.mat) {
+        var so = e.mat.filter(function(m){ return m !== 'nada'; });
+        if (so.length && so.indexOf(F.mat) < 0) return false;
+      }
+      return true;
+    });
+    // ordem de confiança: favoritos, depois os da apostila, depois os mais longos
+    // (mais longo primeiro aproveita melhor o tempo do bloco)
+    cand.sort(function(a, b2){
+      var fa = (FAV.indexOf(a.id) >= 0 ? 0 : 1) - (FAV.indexOf(b2.id) >= 0 ? 0 : 1);
+      if (fa) return fa;
+      var ap = (a.fonte === 'apostila' ? 0 : 1) - (b2.fonte === 'apostila' ? 0 : 1);
+      if (ap) return ap;
+      return b2.min - a.min;
+    });
+
+    var usado = 0;
+    cand.forEach(function(e){
+      if (jaTem(e.id)) return;
+      if (b.id === 'fechamento' && usado > 0) return;     // um fechamento basta
+      if (usado === 0 || usado + e.min <= teto) {
+        escolhidos.push({ id:e.id, bloco:b.id });
+        usado += e.min;
+      }
+    });
+
+    // sobrou tempo no bloco? enche com o maior exercício que ainda cabe
+    if (b.id !== 'fechamento') {
+      var sobra = teto - usado;
+      while (sobra >= 6) {
+        var melhor = null;
+        cand.forEach(function(e){
+          if (jaTem(e.id) || e.min > sobra) return;
+          if (!melhor || e.min > melhor.min) melhor = e;
+        });
+        if (!melhor) break;
+        escolhidos.push({ id:melhor.id, bloco:b.id });
+        usado += melhor.min;
+        sobra = teto - usado;
+      }
+    }
+  });
+
+  PLANO.itens = escolhidos;
+  PLANO.tema = t.id;
+  guardar(CH_PLANO, PLANO);
+  atualizar(); desenharPlano();
+  if (!el('fundoPlano').classList.contains('aberto')) abrir('fundoPlano');
+}
+
+function planoTexto(){
+  var t = temaDoPlano();
+  var nv = PLANO.nivel ? nivel(PLANO.nivel) : null;
+  var L = [];
+  L.push('PLANO DE AULA · Academia JV Tênis');
+  L.push('Metodologia Da Base ao Topo');
+  L.push('');
+  L.push('Tema do mês: ' + t.nome + ' (' + t.mesesTx + ')');
+  if (PLANO.aluno) L.push('Aluno/turma: ' + PLANO.aluno);
+  if (nv) L.push('Nível: ' + nv.nome + ' — grupo ' + nv.grupo);
+  L.push('Duração total: ' + totalMin() + ' min');
+  L.push('');
+  BLOCOS.forEach(function(b){
+    var itens = itensDoBloco(b.id);
+    if (!itens.length) return;
+    L.push('— ' + b.nome.toUpperCase() + ' (' + b.tempo + ') —');
+    itens.forEach(function(e){
+      L.push('');
+      L.push('[' + e.id + '] ' + e.nome + ' · ' + e.min + ' min');
+      L.push('Objetivo: ' + e.objetivo);
+      L.push('Montagem: ' + e.montagem);
+      L.push('Execução: ' + e.execucao);
+      if (PLANO.nivel && e.prog[PLANO.nivel]) L.push('No nível ' + nivel(PLANO.nivel).nome + ': ' + e.prog[PLANO.nivel]);
+      L.push('Erro a observar: ' + e.erro);
+      L.push('Funcionou se: ' + e.sucesso);
+    });
+    L.push('');
+  });
+  L.push('Banco de exercícios ' + VERSAO_BANCO + ' · JV Tênis');
+  return L.join('\n');
+}
+
+function copiarPlano(){
+  var txt = planoTexto();
+  function aviso(){
+    var d = document.createElement('div');
+    d.className = 'aviso'; d.textContent = '✓ plano copiado — cole no WhatsApp ou no caderno';
+    el('planoCorpo').insertBefore(d, el('planoCorpo').firstChild);
+    setTimeout(function(){ if (d.parentNode) d.parentNode.removeChild(d); }, 2600);
+  }
+  if (navigator.share) {
+    navigator.share({ title:'Plano de aula JV Tênis', text:txt }).catch(function(){ areaTexto(txt, aviso); });
+    return;
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(txt).then(aviso, function(){ areaTexto(txt, aviso); });
+  } else areaTexto(txt, aviso);
+}
+
+/* Reserva para quando não existe clipboard nem share (Safari antigo, http). */
+function areaTexto(txt, depois){
+  var ta = document.createElement('textarea');
+  ta.value = txt; ta.style.position = 'fixed'; ta.style.top = '-1000px';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); depois(); } catch(e){ window.prompt('Copie o plano:', txt); }
+  document.body.removeChild(ta);
+}
+
+/* ==========================================================================
+   MÊS EXPLICADO
+   ========================================================================== */
+function abrirMes(){
+  var t = F.tema ? tema(F.tema) : temaDoMes();
+  var c = camada(t.camada);
+  var doTema = EX.filter(function(e){ return e.tema.indexOf(t.id) >= 0; });
+  el('mesCod').textContent = 'Tema do mês · ' + t.mesesTx;
+  el('mesTitulo').textContent = t.nome;
+  var porNivel = NIVEIS.map(function(n){
+    var q = doTema.filter(function(e){ return e.niveis.indexOf(n.id) >= 0; }).length;
+    return '<div class="it"><span class="nv">' + esc(n.nome) + '</span>' +
+      '<span class="tx">' + q + ' exercícios · régua: ' + esc(n.regua) + '</span></div>';
+  }).join('');
+  var porBloco = BLOCOS.map(function(b){
+    var q = doTema.filter(function(e){ return e.bloco === b.id; }).length;
+    return '<div class="meta"><div class="k">' + b.icone + ' ' + esc(b.nome) + '</div><div class="v">' + q + '</div></div>';
+  }).join('');
+  el('mesCorpo').innerHTML = '' +
+    '<div class="bloco-tx destaque"><div class="tt">Camada ' + c.n + ' — ' + esc(c.nome) + '</div>' +
+      '<p>' + esc(t.foco) + '</p></div>' +
+    '<div class="bloco-tx"><div class="tt">Como o tema entra na aula</div>' +
+      '<p>O tema não substitui a ativação de base: ele é o <b>tema do dia</b>, o miolo da aula. ' +
+      'Toda aula continua começando no chão, com pés e split-step — o que muda é o assunto que ganha o centro do mês.</p></div>' +
+    '<div class="bloco-tx"><div class="tt">Exercícios por bloco</div>' +
+      '<div class="ficha-meta" style="margin:0">' + porBloco + '</div></div>' +
+    '<div class="bloco-tx"><div class="tt">O mesmo tema, do Base ao Topo</div>' +
+      '<div class="prog">' + porNivel + '</div></div>' +
+    '<div class="bloco-tx"><div class="tt">O ano inteiro</div><p>' +
+      TEMAS.map(function(x){ return (x.id === t.id ? '<b style="color:var(--gold-soft)">' : '') +
+        esc(x.mesesTx) + ' — ' + esc(x.nome) + (x.id === t.id ? '</b>' : ''); }).join('<br>') +
+      '</p></div>';
+  abrir('fundoMes');
+}
+
+/* ==========================================================================
+   ABRIR / FECHAR
+   ========================================================================== */
+function abrir(id){
+  el(id).classList.add('aberto');
+  document.body.style.overflow = 'hidden';
+}
+function fechar(id){
+  el(id).classList.remove('aberto');
+  document.body.style.overflow = '';
+}
+
+/* ==========================================================================
+   LIGAÇÕES
+   ========================================================================== */
+function ligar(){
+  document.addEventListener('click', function(ev){
+    var a = ev.target.closest ? ev.target.closest('[data-tema],[data-nivel],[data-bloco],[data-ficha],[data-add],[data-fecha],[data-favorito],[data-sobe],[data-desce]') : null;
+    if (!a) return;
+
+    if (a.hasAttribute('data-tema'))  { F.tema = a.getAttribute('data-tema'); atualizar(); window.scrollTo({ top:0, behavior:'smooth' }); return; }
+    if (a.hasAttribute('data-nivel')) { alterna(F.niveis, a.getAttribute('data-nivel')); atualizar(); return; }
+    if (a.hasAttribute('data-bloco')) { alterna(F.blocos, a.getAttribute('data-bloco')); atualizar(); return; }
+    if (a.hasAttribute('data-ficha')) { abrirFicha(a.getAttribute('data-ficha')); return; }
+    if (a.hasAttribute('data-add'))   { noPlano(a.getAttribute('data-add')); return; }
+    if (a.hasAttribute('data-fecha')) { fechar(a.getAttribute('data-fecha')); return; }
+    if (a.hasAttribute('data-sobe'))  { mover(a.getAttribute('data-sobe'), -1); return; }
+    if (a.hasAttribute('data-desce')) { mover(a.getAttribute('data-desce'), 1); return; }
+    if (a.hasAttribute('data-favorito')) {
+      var id = a.getAttribute('data-favorito'), i = FAV.indexOf(id);
+      if (i >= 0) FAV.splice(i, 1); else FAV.push(id);
+      guardar(CH_FAV, FAV); atualizar(); abrirFicha(id); return;
+    }
+  });
+
+  // fechar clicando no fundo escuro
+  ['fundoFicha','fundoPlano','fundoMes'].forEach(function(id){
+    el(id).addEventListener('click', function(ev){ if (ev.target === el(id)) fechar(id); });
+  });
+  document.addEventListener('keydown', function(ev){
+    if (ev.key === 'Escape') ['fundoFicha','fundoPlano','fundoMes'].forEach(fechar);
+  });
+
+  el('q').addEventListener('input', function(){ F.q = el('q').value.trim(); desenharLista(); });
+  el('btnMais').addEventListener('click', function(){
+    var ab = el('painel').classList.toggle('aberto');
+    document.querySelector('.filtros').classList.toggle('expandido', ab);
+    el('btnMais').setAttribute('aria-expanded', ab ? 'true' : 'false');
+  });
+  el('fNec').addEventListener('change', function(){ F.nec = this.value; marcarChips(); desenharLista(); });
+  el('fForm').addEventListener('change', function(){ F.form = this.value; marcarChips(); desenharLista(); });
+  el('fCam').addEventListener('change', function(){ F.cam = this.value; marcarChips(); desenharLista(); });
+  el('fMat').addEventListener('change', function(){ F.mat = this.value; marcarChips(); desenharLista(); });
+  el('fInt').addEventListener('change', function(){ F.int = this.value; marcarChips(); desenharLista(); });
+  el('fOrd').addEventListener('change', function(){ F.ord = this.value; desenharLista(); });
+  el('cApostila').addEventListener('click', function(){ F.apostila = !F.apostila; marcarChips(); desenharLista(); });
+  el('cTransv').addEventListener('click', function(){ F.semTransv = !F.semTransv; marcarChips(); desenharLista(); });
+  el('btnFav').addEventListener('click', function(){ F.favs = !F.favs; atualizar(); });
+  el('btnLimpar').addEventListener('click', limparFiltros);
+  el('focoVer').addEventListener('click', abrirMes);
+  el('btnPlano').addEventListener('click', function(){ desenharPlano(); abrir('fundoPlano'); });
+  el('btnVerPlano').addEventListener('click', function(){ desenharPlano(); abrir('fundoPlano'); });
+  el('btnMontar').addEventListener('click', function(){ montarAuto(60); });
+  el('btnCopiar').addEventListener('click', copiarPlano);
+  el('btnImprimir').addEventListener('click', function(){ window.print(); });
+  el('btnLimparPlano').addEventListener('click', function(){
+    if (!PLANO.itens.length || window.confirm('Limpar o plano de aula inteiro?')) {
+      PLANO.itens = []; PLANO.tema = ''; guardar(CH_PLANO, PLANO); atualizar(); desenharPlano();
+    }
+  });
+}
+
+function alterna(lista, valor){
+  if (!valor) { lista.length = 0; return; }
+  var i = lista.indexOf(valor);
+  if (i >= 0) lista.splice(i, 1); else lista.push(valor);
+}
+
+function limparFiltros(){
+  F.tema = ''; F.niveis = []; F.blocos = []; F.nec = ''; F.form = ''; F.cam = '';
+  F.mat = ''; F.int = ''; F.q = ''; F.apostila = false; F.semTransv = false; F.favs = false;
+  el('q').value = ''; el('fNec').value = ''; el('fForm').value = ''; el('fCam').value = '';
+  el('fMat').value = ''; el('fInt').value = '';
+  fecharPainel();
+  atualizar();
+}
+
+function fecharPainel(){
+  el('painel').classList.remove('aberto');
+  document.querySelector('.filtros').classList.remove('expandido');
+  el('btnMais').setAttribute('aria-expanded','false');
+}
+
+/* ==========================================================================
+   ABERTURA
+   ========================================================================== */
+function comecar(){
+  FAV = ler(CH_FAV, []) || [];
+  var p = ler(CH_PLANO, null);
+  if (p && p.itens) PLANO = { aluno:p.aluno || '', nivel:p.nivel || '', tema:p.tema || '', itens:p.itens || [] };
+  // o app abre já no tema do mês: é o que o professor precisa em 9 de 10 aberturas
+  F.tema = temaDoMes().id;
+  preencherSelects();
+  ligar();
+  atualizar();
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('./sw-exercicios.js').catch(function(){});
+    });
+  }
+}
+comecar();
+</script>
+</body>
+</html>
