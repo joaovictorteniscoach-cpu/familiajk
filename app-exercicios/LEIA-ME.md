@@ -155,6 +155,20 @@ banco, arraste de novo: o repositório continua sendo a fonte única.
 Se o site for ligado ao GitHub em vez de drag & drop, use *Base directory* =
 `app-exercicios` — o `netlify.toml` da pasta já está pronto para isso.
 
+**Do iPhone, em um arquivo só.** Não dá para enviar uma pasta pelo iPhone, e um
+`.zip` vira pasta se você tocar nele. Para esse caso existe:
+
+```sh
+python3 ferramentas/gerar-arquivo-unico.py
+```
+
+Ele gera um `index.html` com tudo embutido — os dois scripts e o ícone da Tela de
+Início. Esse arquivo abre com um toque no Safari e pode ser enviado sozinho ao
+Netlify. **O nome precisa continuar `index.html`**: é ele que o Netlify serve na
+raiz do site. A troca: essa versão **não funciona offline** (o service worker
+precisa de um arquivo próprio ao lado). Para offline em quadra, publique a pasta
+completa.
+
 Outras opções, se um dia precisar:
 
 - **Abrir o arquivo direto**: `app-exercicios/index.html` funciona aberto do
