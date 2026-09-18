@@ -183,6 +183,8 @@ def main():
     casos.append(('Professor no espaço dele', 'lê o mapa da quadra inteiro', PROF, J+'mapa_quadra', 'read', True, True))
     casos.append(('Professor no espaço dele', 'publica o próprio mapa',       PROF, J+'mapa_quadra/prof-uid-111', 'write', True, True))
     casos.append(('Professor no espaço dele', 'pede um horário novo',  PROF, J+'fila_quadra/-Nnovo', 'write', True, False))
+    # A agenda que a academia marca NO NOME dele: ele lê a sua, e só a sua.
+    casos.append(('Professor no espaço dele', 'lê a agenda que a academia marcou para ele', PROF, J+'agenda_prof/prof-uid-111', 'read', True, True))
     casos.append(('Professor no espaço dele', 'lê o carimbo de versão',PROF, J+'versao_app', 'read', True, True))
     # O caminho exato que o persist() percorre. Se QUALQUER um destes falhar, o
     # app do professor fica preso em "salvo só no aparelho" — que é como o
@@ -208,6 +210,11 @@ def main():
     casos.append(('Professor NÃO pode', 'ler pedido de um aluno',    PROF, J+'aluno-estado/anon-abc123', 'read', False, True))
     casos.append(('Professor NÃO pode', 'escrever o mapa inteiro da quadra', PROF, J+'mapa_quadra', 'write', False, True))
     casos.append(('Professor NÃO pode', 'escrever o mapa de OUTRO professor', PROF, J+'mapa_quadra/prof-uid-222', 'write', False, True))
+    # Quem marca aula no nome do professor é a academia. Se ele pudesse
+    # escrever ali, marcaria aula para si mesmo e o João não saberia.
+    casos.append(('Professor NÃO pode', 'inventar aula na agenda que a academia marca', PROF, J+'agenda_prof/prof-uid-111', 'write', False, True))
+    casos.append(('Professor NÃO pode', 'ler a agenda de OUTRO professor', PROF, J+'agenda_prof/prof-uid-222', 'read', False, True))
+    casos.append(('Professor NÃO pode', 'ler a agenda designada de todos', PROF, J+'agenda_prof', 'read', False, True))
     casos.append(('Professor NÃO pode', 'ler a fila da quadra',      PROF, J+'fila_quadra', 'read', False, True))
     casos.append(('Professor NÃO pode', 'apagar pedido da fila da quadra', PROF, J+'fila_quadra/-Nabc', 'write', False, True))
     casos.append(('Professor NÃO pode', 'listar os professores',     PROF, J+'professores', 'read', False, True))
@@ -225,6 +232,8 @@ def main():
     casos.append(('Gestão (João logado)', 'cadastra um professor',        COACH, J+'professores/prof-uid-111', 'write', True, True))
     casos.append(('Gestão (João logado)', 'publica o próprio mapa da quadra', COACH, J+'mapa_quadra/'+JOAO, 'write', True, True))
     casos.append(('Gestão (João logado)', 'corrige o mapa de um professor',   COACH, J+'mapa_quadra/prof-uid-111', 'write', True, True))
+    casos.append(('Gestão (João logado)', 'marca aula no nome de um professor', COACH, J+'agenda_prof/prof-uid-111', 'write', True, True))
+    casos.append(('Gestão (João logado)', 'relê o que marcou para o professor', COACH, J+'agenda_prof/prof-uid-111', 'read', True, True))
     casos.append(('Gestão (João logado)', 'lê a fila da quadra',          COACH, J+'fila_quadra', 'read', True, True))
     casos.append(('Gestão (João logado)', 'apaga pedido da fila da quadra',COACH, J+'fila_quadra/-Nabc', 'write', True, True))
 
@@ -232,6 +241,7 @@ def main():
     casos.append(('Aluno NÃO pode', 'ler o banco de um professor', ALUNO, J+'prof/prof-uid-111/banco', 'read', False, True))
     casos.append(('Aluno NÃO pode', 'gravar na fila da quadra',    ALUNO, J+'fila_quadra/-Nx', 'write', False, False))
     casos.append(('Aluno NÃO pode', 'sujar o mapa da quadra',      ALUNO, J+'mapa_quadra/anon-abc123', 'write', False, True))
+    casos.append(('Aluno NÃO pode', 'ler a agenda de um professor', ALUNO, J+'agenda_prof/prof-uid-111', 'read', False, True))
 
     # ---- Estranho
     casos.append(('Estranho NÃO pode', 'baixar tudo (/jvtenis)',  NINGUEM, 'jvtenis', 'read', False, True))

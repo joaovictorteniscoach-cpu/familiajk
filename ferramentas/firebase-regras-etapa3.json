@@ -39,6 +39,15 @@
           ".validate": "newData.hasChild('ts') && newData.child('ts').isNumber() && (!newData.hasChild('nome') || newData.child('nome').val().length <= 60)"
         }
       },
+      "agenda_prof": {
+        ".read": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        "$uid": {
+          ".read": "auth != null && (auth.uid === $uid || auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1')",
+          ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+          ".validate": "newData.hasChild('ts') && newData.child('ts').isNumber() && (!newData.hasChild('nome') || newData.child('nome').val().length <= 60)"
+        }
+      },
       "fila_quadra": {
         ".read": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
         ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
