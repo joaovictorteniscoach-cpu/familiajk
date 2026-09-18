@@ -68,10 +68,50 @@ NECESSIDADES.forEach(n => {
   if (!EX.some(e => e.nec.indexOf(n.id) >= 0)) avisos.push(`necessidade "${n.nome}": nenhum exercicio atende`);
 });
 
+/* ---------------------------------------------------------------------------
+   Parte 1b: o desenho da quadra cabe dentro do recorte escolhido?
+   Peca colocada fora da moldura simplesmente nao aparece — e o desenho fica
+   contando a historia errada, sem erro nenhum na tela. Aconteceu em 4
+   exercicios na primeira leva (sacador desenhado fora do recorte 'meia').
+   --------------------------------------------------------------------------- */
+const quadraSrc = fs.readFileSync('app-exercicios/quadra.js', 'utf8');
+const caixaQ = {};
+new Function('g', quadraSrc + '; g.BASES = BASES;')(caixaQ);
+const BASES = caixaQ.BASES;
+
+const PONTOS = {           // quais numeros de cada elemento sao coordenadas
+  aluno:[[1,2]], prof:[[1,2]], colega:[[1,2]], cone:[[1,2]], marca:[[1,2]],
+  escada:[[1,2]], texto:[[1,2]], zona:[[1,2]], bola:[[1,2],[3,4]], mov:[[1,2],[3,4]],
+  corda:[]                 // a corda atravessa a quadra inteira: nao tem ponto proprio
+};
+const FOLGA = { aluno:.75, prof:.75, colega:.75, cone:.65, marca:.3, escada:2.0, zona:.2, texto:.2, bola:.15, mov:.15 };
+
+EX.forEach(e => {
+  if (!e.fig || !e.fig.el) { erros.push(`${e.id}: sem desenho da quadra (fig)`); return; }
+  const b = BASES[e.fig.base || 'meia'];
+  if (!b) { erros.push(`${e.id}: base de desenho "${e.fig.base}" nao existe`); return; }
+  e.fig.el.forEach((el, i) => {
+    const pares = PONTOS[el[0]];
+    if (!pares) { erros.push(`${e.id}: elemento "${el[0]}" nao existe no desenho`); return; }
+    const folga = FOLGA[el[0]] || .2;
+    pares.forEach(([ix, iy]) => {
+      const x = el[ix], y = el[iy];
+      if (typeof x !== 'number' || typeof y !== 'number') {
+        erros.push(`${e.id}: elemento ${i + 1} (${el[0]}) sem coordenada`); return;
+      }
+      if (x - folga < b.x || x + folga > b.x + b.w || y - folga < b.y || y + folga > b.y + b.h)
+        erros.push(`${e.id}: ${el[0]} em (${x}, ${y}) cai fora do recorte "${e.fig.base}"`);
+    });
+  });
+  if (!e.passos || e.passos.length < 3) erros.push(`${e.id}: passo a passo com menos de 3 passos`);
+  if (!e.dica) avisos.push(`${e.id}: sem dica extra`);
+});
+
 console.log(`Banco: ${EX.length} exercicios (${EX.filter(e=>e.fonte==='apostila').length} da apostila, ${EX.filter(e=>e.fonte==='banco').length} de ampliacao)`);
 TEMAS.forEach(t => console.log(`  ${t.mesesTx.padEnd(22)} ${String(EX.filter(e=>e.tema.indexOf(t.id)>=0).length).padStart(3)} exercicios · ${t.nome}`));
 if (avisos.length) { console.log(`\nAVISOS (${avisos.length}) — conferir a olho:`); avisos.forEach(a => console.log('  · ' + a)); }
 if (erros.length)  { console.log(`\nERROS (${erros.length}) — corrigir antes de publicar:`); erros.forEach(e => console.log('  ✗ ' + e)); process.exit(1); }
+
 /* ---------------------------------------------------------------------------
    Parte 2: os ids que a tela procura existem no HTML?
    O app chama os ids por um atalho (`el('x')`), e por isso o checar-ids.py nao

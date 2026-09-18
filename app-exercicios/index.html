@@ -196,6 +196,30 @@ header.bar{
 .folha-acoes{display:flex;gap:9px;padding:0 16px 8px;position:sticky;bottom:0;background:var(--navy);
   padding-top:12px;border-top:1px solid var(--line-2)}
 
+/* ---------- card de treino: o desenho e o passo a passo ---------- */
+.qd-cx{border:1px solid var(--line);border-radius:13px;overflow:hidden;margin-bottom:16px;background:#0E2337}
+.qd{display:block;width:100%}
+.qd-leg{display:flex;flex-wrap:wrap;gap:7px 13px;padding:9px 11px;background:var(--navy-2);
+  font-size:10.5px;color:var(--muted);border-top:1px solid var(--line-2)}
+.qd-leg span{display:flex;align-items:center;gap:5px;white-space:nowrap}
+.qd-leg i{width:10px;height:10px;border-radius:50%;display:inline-block;flex-shrink:0}
+.qd-leg i.tr{width:14px;height:3px;border-radius:2px}
+.qd-leg i.cn{width:0;height:0;border-radius:0;background:none!important;
+  border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:9px solid var(--warn)}
+.qd-leg i.zn{width:12px;height:9px;border-radius:2px;border:1px dashed var(--gold);background:rgba(216,180,92,.2)}
+.qd-nota{font-size:12.5px;color:var(--muted);padding:9px 11px;background:var(--deep);
+  border-top:1px solid var(--line-2);line-height:1.45}
+
+.passos{counter-reset:passo;display:grid;gap:8px}
+.passos li{list-style:none;display:flex;gap:11px;background:var(--navy-2);
+  border:1px solid var(--line-2);border-radius:11px;padding:11px 13px}
+.passos li::before{counter-increment:passo;content:counter(passo);flex-shrink:0;
+  width:22px;height:22px;border-radius:7px;background:var(--gold);color:#22303c;
+  font-size:12.5px;font-weight:900;display:flex;align-items:center;justify-content:center}
+.passos li span{font-size:14.5px;color:#E9E2D6;line-height:1.5}
+.bloco-tx.dica{background:rgba(216,180,92,.1);border:1px solid var(--line);border-radius:12px;padding:14px}
+.bloco-tx.dica .tt{color:var(--gold-soft)}
+
 /* ---------- plano de aula ---------- */
 .plano-vazio{text-align:center;padding:30px 16px;color:var(--muted)}
 .plano-cab{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px}
@@ -263,9 +287,21 @@ header.bar{
   .pi .cd{color:#000;font-weight:800;width:auto;font-size:11.5px}
   .pi .nm{color:#000;font-weight:800;font-size:13.5px;display:inline;padding:0 6px}
   .pi .mn{color:#000;font-size:11.5px;font-weight:700}
-  .det{display:block;font-size:11.5px;color:#111;margin-top:5px;line-height:1.5}
+  .det{display:flex;gap:9px;align-items:flex-start;font-size:11px;color:#111;margin-top:6px;line-height:1.45}
+  /* o desenho manda pela ALTURA, não pela largura: a quadra inteira é um retrato
+     comprido e, medida pela largura, empurrava cada exercício para meia página */
+  .det-qd{flex:0 0 auto;border:1px solid #bbb;border-radius:3px;overflow:hidden}
+  .det-qd svg{width:auto;display:block}
+  .det-qd svg.qd-inteira{height:70mm}   /* retrato 1:2 — precisa de altura para ler o rótulo */
+  .det-qd svg.qd-meia{height:52mm}
+  .det-qd svg.qd-mini{height:50mm}
+  .det-qd svg.qd-fundo{height:38mm}
+  .det-qd svg>rect:first-of-type{fill:#fff}   /* moldura escura não vai para o papel */
+  .det-tx{flex:1;min-width:0}
   .det b{font-weight:800}
   .det i{color:#333;font-style:normal}
+  .det-pa{margin:2px 0 4px 15px;padding:0}
+  .det-pa li{margin-bottom:1px}
   .bloco-tx{margin-bottom:10px}
   .bloco-tx .tt{color:#000}
   .bloco-tx p{color:#111!important;font-size:11.5px}
@@ -381,6 +417,7 @@ header.bar{
   </div>
 </div>
 
+<script src="quadra.js"></script>
 <script src="exercicios.js"></script>
 <script>
 'use strict';
@@ -597,12 +634,19 @@ function abrirFicha(id){
       '<div class="meta"><div class="k">Bloco da aula</div><div class="v">' + b.icone + ' ' + esc(b.nome) + '</div></div>' +
       '<div class="meta"><div class="k">Duração</div><div class="v">' + e.min + ' min</div></div>' +
       '<div class="meta"><div class="k">Intensidade</div><div class="v">' + intTx + '</div></div>' +
-      '<div class="meta"><div class="k">Origem</div><div class="v">' + (e.fonte === 'apostila' ? 'Apostila' : 'Banco') + '</div></div>' +
+      '<div class="meta"><div class="k">Jogadores</div><div class="v">' + quantosJogadores(e) + '</div></div>' +
     '</div>' +
+    '<div class="qd-cx">' + svgQuadra(e.fig) +
+      (e.fig && e.fig.nota ? '<div class="qd-nota">' + esc(e.fig.nota) + '</div>' : '') +
+      legendaQuadra() + '</div>' +
     '<div class="bloco-tx destaque"><div class="tt">Objetivo — o para quê</div><p>' + esc(e.objetivo) + '</p></div>' +
     '<div class="bloco-tx"><div class="tt">Montagem</div><p>' + esc(e.montagem) + '</p></div>' +
-    '<div class="bloco-tx"><div class="tt">Execução</div><p>' + esc(e.execucao) + '</p></div>' +
-    '<div class="bloco-tx"><div class="tt">O mesmo exercício em cada nível</div><div class="prog">' + prog + '</div></div>' +
+    '<div class="bloco-tx"><div class="tt">Como aplicar</div><ol class="passos">' +
+      (e.passos || []).map(function(t){ return '<li><span>' + esc(t) + '</span></li>'; }).join('') +
+    '</ol></div>' +
+    (e.dica ? '<div class="bloco-tx dica"><div class="tt">💡 Dica extra</div><p>' + esc(e.dica) + '</p></div>' : '') +
+    '<div class="bloco-tx"><div class="tt">O mesmo exercício em cada nível — e como dificultar</div>' +
+      '<div class="prog">' + prog + '</div></div>' +
     '<div class="bloco-tx alerta"><div class="tt">Erro a observar primeiro</div><p>' + esc(e.erro) + '</p></div>' +
     '<div class="bloco-tx ok"><div class="tt">Como saber que funcionou</div><p>' + esc(e.sucesso) + '</p></div>' +
     (e.kids ? '<div class="bloco-tx"><div class="tt">Versão Kids</div><p>' + esc(e.kids) + '</p></div>' : '') +
@@ -617,6 +661,16 @@ function abrirFicha(id){
     '<button class="btn btn-gold" data-add="' + e.id + '">' + (dentro ? '✓ no plano — tirar' : '+ pôr no plano') + '</button>' +
   '</div>';
   abrir('fundoFicha');
+}
+
+/* Quantos alunos a atividade comporta — derivado dos formatos que ela atende,
+   para não ter que repetir a informação em cada exercício. */
+function quantosJogadores(e){
+  if (e.form.length === 1 && e.form[0] === 'kids') return 'turma';
+  var max = 1;
+  if (e.form.indexOf('dupla') >= 0) max = 2;
+  if (e.form.indexOf('trio') >= 0 || e.form.indexOf('kids') >= 0) max = 4;
+  return max === 1 ? '1 aluno' : '1 a ' + max;
 }
 
 /* ==========================================================================
@@ -720,14 +774,23 @@ function desenharPlano(){
         '<button class="mv" data-sobe="' + e.id + '" aria-label="Subir">▲</button>' +
         '<button class="mv" data-desce="' + e.id + '" aria-label="Descer">▼</button>' +
         '<button class="x" data-add="' + e.id + '" aria-label="Tirar do plano">✕</button>' +
-        // detalhe que só aparece no papel: o professor leva a ficha para a quadra
-        '<div class="det"><b>Objetivo:</b> ' + esc(e.objetivo) +
-          '<br><b>Montagem:</b> ' + esc(e.montagem) +
-          '<br><b>Execução:</b> ' + esc(e.execucao) +
-          (PLANO.nivel && e.prog[PLANO.nivel]
-            ? '<br><b>No nível ' + esc(nivel(PLANO.nivel).nome) + ':</b> ' + esc(e.prog[PLANO.nivel]) : '') +
-          '<br><i><b>Erro a observar:</b> ' + esc(e.erro) + '</i>' +
-          '<br><i><b>Funcionou se:</b> ' + esc(e.sucesso) + '</i></div>' +
+        // detalhe que só aparece no papel: o professor leva a ficha para a quadra,
+        // com o desenho da montagem ao lado do passo a passo
+        '<div class="det">' +
+          '<div class="det-qd">' + svgQuadra(e.fig) + '</div>' +
+          '<div class="det-tx">' +
+            '<b>Objetivo:</b> ' + esc(e.objetivo) +
+            '<br><b>Montagem:</b> ' + esc(e.montagem) +
+            '<br><b>Como aplicar:</b> ' +
+            '<ol class="det-pa">' + (e.passos || []).map(function(t){
+                return '<li>' + esc(t) + '</li>'; }).join('') + '</ol>' +
+            (PLANO.nivel && e.prog[PLANO.nivel]
+              ? '<b>No nível ' + esc(nivel(PLANO.nivel).nome) + ':</b> ' + esc(e.prog[PLANO.nivel]) + '<br>' : '') +
+            (e.dica ? '<b>Dica extra:</b> ' + esc(e.dica) + '<br>' : '') +
+            '<i><b>Erro a observar:</b> ' + esc(e.erro) + '</i>' +
+            '<br><i><b>Funcionou se:</b> ' + esc(e.sucesso) + '</i>' +
+          '</div>' +
+        '</div>' +
       '</div>';
     });
     h += '</div>';
@@ -840,7 +903,9 @@ function planoTexto(){
       L.push('[' + e.id + '] ' + e.nome + ' · ' + e.min + ' min');
       L.push('Objetivo: ' + e.objetivo);
       L.push('Montagem: ' + e.montagem);
-      L.push('Execução: ' + e.execucao);
+      L.push('Como aplicar:');
+      (e.passos || []).forEach(function(t, i){ L.push('  ' + (i + 1) + '. ' + t); });
+      if (e.dica) L.push('Dica extra: ' + e.dica);
       if (PLANO.nivel && e.prog[PLANO.nivel]) L.push('No nível ' + nivel(PLANO.nivel).nome + ': ' + e.prog[PLANO.nivel]);
       L.push('Erro a observar: ' + e.erro);
       L.push('Funcionou se: ' + e.sucesso);

@@ -14,6 +14,7 @@ Endereço (Pages): `https://joaovictorteniscoach-cpu.github.io/familiajk/app-exe
 |---|---|
 | `index.html` | a tela inteira (filtros, ficha, plano de aula, impressão) |
 | `exercicios.js` | **o banco**: taxonomia + os exercícios. É aqui que se mexe no conteúdo |
+| `quadra.js` | o **desenho da quadra**: transforma a montagem de cada exercício em figura |
 | `sw-exercicios.js` | service worker: abre offline, porque saibro com sinal ruim é a regra |
 | `manifest-exercicios.webmanifest` | ícone e nome ao adicionar na Tela de Início |
 
@@ -36,9 +37,48 @@ certo por caminhos diferentes:
 | **Necessidade** (24) | o atalho do dia a dia: "esse aluno dá dupla falta", "chega atrasado" |
 | **Formato e material** | Particular, Dupla, Trio, Kids, Personal · e o que você tem na mão |
 
-Todo exercício traz **objetivo, montagem, execução, a versão em cada nível, o erro
-a observar primeiro e o critério objetivo de sucesso**. Os 25 drills da apostila
-(D1–D25) estão aqui com o mesmo nome e o mesmo conteúdo, marcados como `apostila`.
+Todo exercício traz **desenho da quadra, objetivo, montagem, passo a passo, dica
+extra, a versão em cada nível, o erro a observar primeiro e o critério objetivo de
+sucesso**. Os 25 drills da apostila (D1–D25) estão aqui com o mesmo nome e o mesmo
+conteúdo, marcados como `apostila`.
+
+## O desenho da quadra
+
+Cada exercício tem uma figura que mostra **quem está onde, para onde a bola vai,
+para onde o aluno corre e onde ficam cones e alvos**. São desenhos feitos na hora
+em SVG, não imagens: pesam alguns bytes, ficam nítidos em qualquer zoom, saem na
+impressão do plano e se editam mudando uma linha de texto — não um arquivo de
+imagem que ninguém sabe abrir depois.
+
+O desenho fica no campo `fig` do exercício:
+
+```js
+fig:{ base:'meia', el:[
+  ['aluno', 0, 11.4, 'espera'],          // quem: aluno · prof · colega
+  ['prof', 0, -1.8, 'bolas na mão'],
+  ['bola', 0,-1.8, 3.6,8.4, .25, ''],    // trajeto da bola (tracejado)
+  ['mov', 0,11.2, 3.4,8.8, .16, 'persegue'],   // deslocamento (linha cheia)
+  ['cone', 0, 12.0, 'volta aqui'],
+  ['zona', -3.2, -9, 3.2, 4, 'alvo cruzado'],
+  ['marca', 3.6, 8.4, 'pega na altura do quadril'],
+  ['escada', -2.8, 9.4, ''], ['corda', 'corda a 1 m'], ['texto', 0, 6, 'nota', .6]
+], nota:`A frase que explica o desenho, abaixo dele.` }
+```
+
+**As coordenadas são as medidas reais da quadra, em metros.** O `x` é 0 no meio
+(±4,115 é a linha de simples, ±5,485 a de duplas) e o `y` é **0 na rede**, com o
+lado do **aluno no positivo** (11,885 é a linha de base, 6,40 a linha de saque).
+Quem olha o desenho está sempre atrás do aluno, de frente para a rede.
+
+O `base` escolhe o recorte: `inteira` (as duas quadras), `meia` (o lado do aluno
+com a rede), `mini` (os quadrados de saque) ou `fundo` (o fundo de quadra).
+**Peça colocada fora do recorte não aparece** — e por isso o
+`ferramentas/checar-exercicios.js` confere isso a cada mudança. Na primeira leva
+ele pegou 13 desenhos assim, todos invisíveis e nenhum com erro na tela.
+
+Dois cuidados ao desenhar: **rótulo curto** (o desenho encolhe o texto comprido
+até caber, e aí ele fica pequeno) e **escolher o recorte pelo elemento mais
+distante** — se o alvo está na quadra do adversário, a base é `inteira`.
 
 ## Acrescentar um exercício
 
@@ -48,6 +88,11 @@ regras que valem a pena respeitar:
 
 - **`sucesso` precisa ser um número.** "Melhorou" não é critério; "8 de 10" é.
 - **`erro` é o erro mais baixo da cadeia.** Se o problema aparece no braço, olhe o pé.
+- **`passos` são imperativos curtos**, de 3 a 6. É o que o professor lê de relance
+  com a cesta na mão — não um parágrafo.
+- **`execucao`** continua no banco, mas não aparece mais na ficha: quem conta o
+  exercício na tela é o passo a passo. Ela serve à **busca** (procurar por uma
+  palavra que só está no texto corrido continua funcionando).
 
 Depois, sempre:
 
@@ -83,17 +128,22 @@ da **formação de professores**, que é produto pago.
 O que já está feito para reduzir o risco:
 
 - o app leva `<meta name="robots" content="noindex,nofollow">` — não entra no Google;
-- **nenhuma página pública aponta para ele** (nem `site/`, nem `site-pro/`). Quem
-  não tem o endereço não chega.
+- **nenhuma página pública aponta para ele** (nem `site/`, nem `site-pro/`);
+- **o GitHub Pages não publica mais esta pasta**: o fluxo de publicação
+  (`.github/workflows/pages.yml`) apaga `app-exercicios/` da cópia que vai para o
+  ar, depois de conferi-la. O endereço `.../familiajk/app-exercicios/` deixa de
+  existir — o material continua no repositório, versionado, mas fora do site.
 
-O que decidir, quando quiser fechar de verdade (em ordem de esforço):
+Como usar o app, agora que ele não está mais no endereço público:
 
-1. **Deixar como está**: endereço não divulgado, fora do Google. Serve para uso
-   próprio e para professor já formado, a quem você passa o link.
-2. **Netlify com senha**: publicar `app-exercicios/` como site separado no Netlify
-   e ligar a proteção por senha do painel (é recurso de plano pago).
-3. **Tirar do repositório público**: mover a pasta para um repositório privado e
-   publicar de lá. É o único jeito de fechar 100% — inclusive o histórico do Git.
+1. **Abrir o arquivo direto** — `app-exercicios/index.html` funciona aberto do
+   próprio aparelho, sem servidor nenhum. Serve para testar.
+2. **Netlify como site separado** (recomendado): arraste a pasta `app-exercicios`
+   para um site novo no Netlify. Sai um endereço só seu, que dá para adicionar à
+   Tela de Início do celular. Com plano pago, dá para pôr senha.
+3. **Tirar do repositório público**: mover a pasta para um repositório privado. É
+   o único jeito de fechar 100% — inclusive o histórico do Git, que guarda tudo
+   o que já esteve aqui.
 
 Vale saber: a **apostila** (`metodologia/apostila.md`) já está nesse mesmo
 repositório público hoje, embora o README diga que ela fica fora do ar. Se a

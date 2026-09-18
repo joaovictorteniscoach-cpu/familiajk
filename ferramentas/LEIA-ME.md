@@ -17,7 +17,7 @@ sh ferramentas/checar-tudo.sh
 | `checar-sintaxe.js` | erro de sintaxe nos scripts | qualquer erro aqui derruba o app inteiro |
 | `checar-funcoes.py` | função chamada que não existe naquele arquivo | o botão "Fechar" da autoavaliação chamava `closeModal()`, que só existia no app da Gestão — o aluno ficava preso no modal |
 | `checar-ids.py` | `getElementById` de um id que não existe | devolve `null` e o código morre ali, sem erro visível |
-| `checar-exercicios.js` | filtro ou id escrito errado no banco de exercícios, e lacuna de cobertura | uma necessidade escrita `consistenciaX` não dá erro nenhum — o exercício só desaparece da busca. O script também avisa se um tema do mês ficou sem exercício para algum nível ou algum bloco da aula |
+| `checar-exercicios.js` | filtro ou id escrito errado, **peça de desenho fora da moldura da quadra**, e lacuna de cobertura | uma necessidade escrita `consistenciaX` não dá erro nenhum — o exercício só desaparece da busca; e uma peça desenhada fora do recorte da quadra some do desenho sem aviso (pegou 13 assim na primeira leva). O script também avisa se um tema do mês ficou sem exercício para algum nível ou algum bloco da aula |
 | `checar-css.py` | classe interna com o mesmo nome de uma regra geral | `.top` das linhas da avaliação herdava a foto verde do cabeçalho e o texto ficava ilegível; `.seg` das barrinhas herdava a grade de 4 colunas e a barra sumia |
 
 O que essas falhas têm em comum: **nenhuma delas dá erro na tela**. O app

@@ -4,8 +4,8 @@
    não carrega biblioteca de fora e não tem dado de aluno na nuvem. Os favoritos
    e o plano de aula ficam no próprio aparelho (localStorage).
    Por que importa: quadra de saibro com sinal ruim é a regra, não a exceção. */
-const CACHE = 'jv-exercicios-v1';
-const SHELL = ['./', './exercicios.js', './manifest-exercicios.webmanifest',
+const CACHE = 'jv-exercicios-v2';
+const SHELL = ['./', './exercicios.js', './quadra.js', './manifest-exercicios.webmanifest',
                './jv-icone-exercicios-192.png'];
 
 self.addEventListener('install', e => {

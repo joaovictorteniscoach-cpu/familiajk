@@ -12,12 +12,16 @@ gera o conteúdo.
 
 ### Sites publicáveis
 
+> O `app-exercicios/` é a exceção: fica no repositório e **não vai para o GitHub
+> Pages** — o fluxo de publicação apaga a pasta antes de subir. É material da
+> formação, de uso do João e dos professores formados.
+
 | Pasta          | Público      | O que é                                                        |
 |----------------|--------------|----------------------------------------------------------------|
 | `site/`        | 🎾 Alunos    | **Site institucional** dos alunos: planos, Sistema Flex, avaliações, a **metodologia explicada para alunos** e o folder em PDF. |
 | `site-pro/`    | 👔 Professores | **Site de vendas**: home + **landing page** premium `da-base-ao-topo.html` (a página de conversão do método) + página do **curso** (formação Da Base ao Topo) + página do **sistema/app** + `demo/` (cópia navegável do app de gestão, sem Firebase, dados fictícios — gerada por `site-pro/tools/build_demo.py`, rodar de novo sempre que `app-gestao/index.html` ganhar uma aba/funcionalidade nova). |
 | `app-aluno/`   | Alunos       | App do **aluno** (agendamento, pagamentos). PWA + Firebase.    |
-| `app-exercicios/` | 👔 Professores | **Banco de exercícios** da metodologia: 116 drills cruzados por tema do mês, camada da Pirâmide, nível da Trilha, bloco da aula e necessidade do aluno — com montador e impressão de plano de aula. PWA, 100% local (sem Firebase). Conteúdo em `exercicios.js`; ver [`app-exercicios/LEIA-ME.md`](app-exercicios/LEIA-ME.md). |
+| `app-exercicios/` | 🔒 **Só professores** | **Banco de exercícios** da metodologia: 116 drills com **desenho da quadra**, passo a passo e dica, cruzados por tema do mês, camada da Pirâmide, nível da Trilha, bloco da aula e necessidade do aluno — com montador e impressão de plano de aula. PWA, 100% local (sem Firebase). **Não é publicado no Pages** (é material da formação): para usar, publique a pasta como site separado. Ver [`app-exercicios/LEIA-ME.md`](app-exercicios/LEIA-ME.md). |
 | `app-gestao/`  | Professor    | App de **gestão** (agenda, alunos, caixa e financeiro). PWA + Firebase. |
 | `app-familia/` | Pessoal      | App **da família JK** (contas da casa, cartões, investimentos). PWA + Firebase opcional. |
 
