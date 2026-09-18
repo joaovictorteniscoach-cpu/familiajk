@@ -390,12 +390,6 @@ function esperarAuth(){
 </section>
 
 <section class="page" id="pg-alunos">
-  <div id="profs-wrap" style="display:none">
-    <p class="sec-eyebrow">Equipe</p>
-    <h2 class="sec-title">👨‍🏫 <em>Professores</em></h2>
-    <div id="profs-lista"></div>
-    <button class="btn btn-ghost" style="width:100%;margin:8px 0 18px;font-size:12.5px" onclick="addProf()">＋ Cadastrar professor</button>
-  </div>
 
   <p class="sec-eyebrow">Cadastro</p>
   <h2 class="sec-title">Meus <em>alunos</em></h2>
@@ -1293,6 +1287,11 @@ function esperarAuth(){
         <div class="field"><label>Recorrência</label>
           <select id="s-rec"><option value="fixo">Toda semana (fixo)</option><option value="pontual">Só nesta data</option></select>
         </div>
+      </div>
+      <div class="field so-dono" id="s-prof-wrap" style="display:none">
+        <label>👨‍🏫 Quem dá esta aula</label>
+        <select id="s-prof"><option value="">Eu</option></select>
+        <p class="hint" style="margin:5px 0 0">A aula continua na sua agenda e ocupando a quadra. Marcada no nome de um professor, ela aparece <b>também no app dele</b> — e ele não pode apagá-la, só você.</p>
       </div>
       <div class="field" id="s-grupo-wrap" style="display:none">
         <label>👥 Pessoas nesta aula em grupo</label>

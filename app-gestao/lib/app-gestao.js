@@ -15,7 +15,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-10-6';
+const VERSAO='2026-09-18-1';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -89,9 +89,20 @@ function slotProfLiberado(date,hora,evs){
    Academia grande tem vários professores. Fica DESLIGADO no app do João (um
    professor só) e é ligado no build da versão Pro, para não haver dois códigos
    diferentes para manter. */
-const PRO_MULTI=false;
+const PRO_MULTI=true;
 let filtroProf='todos';
-function profs(){return (DB.profs&&DB.profs.length)?DB.profs:[];}
+/* Professor aqui é a CONTA de verdade — a que você cadastra na aba Professores
+   e que tem app e banco próprios. Antes era só um rótulo solto guardado no seu
+   banco (DB.profs), que servia para filtrar a sua agenda e nada mais; ter duas
+   listas de professor com o mesmo nome era pedir para designar aula para o
+   professor errado. Ficou uma só.
+   DB.profsLista é a cópia dos nomes, guardada no seu banco para o seletor
+   funcionar sem internet — quem manda continua sendo a nuvem. */
+function profs(){
+  const l=DB.profsLista||{};
+  return Object.keys(l).map(uid=>({id:uid,nome:String(l[uid]||'Professor')}))
+    .sort((x,y)=>x.nome.localeCompare(y.nome));
+}
 function profNome(id){const p=profs().find(x=>x.id===id);return p?p.nome:'';}
 function profDoAluno(a){return (a&&a.profId)||'';}
 /* Um item da agenda pertence ao professor do aluno. Bloqueio, compromisso e
@@ -115,47 +126,6 @@ function renderProfFiltro(){
   box.style.display='';
   box.innerHTML='<button class="'+(filtroProf==='todos'?'on':'')+'" onclick="setFiltroProf(\'todos\',this)">Todos</button>'
     +profs().map(p=>'<button class="'+(filtroProf===p.id?'on':'')+'" onclick="setFiltroProf(\''+p.id+'\',this)">'+esc(p.nome)+'</button>').join('');
-}
-function renderProfs(){
-  const wrap=document.getElementById('profs-wrap');if(!wrap)return;
-  if(!PRO_MULTI){wrap.style.display='none';return;}
-  wrap.style.display='';
-  const lista=profs();
-  document.getElementById('profs-lista').innerHTML=lista.length
-    ? lista.map(p=>{
-        const n=DB.alunos.filter(a=>profDoAluno(a)===p.id).length;
-        return '<div class="prof-row"><span><b>'+esc(p.nome)+'</b><small>'+n+' aluno(s)</small></span>'
-          +'<span class="prof-acts"><button onclick="renomearProf(\''+p.id+'\')">renomear</button>'
-          +'<button class="d" onclick="removerProf(\''+p.id+'\')">remover</button></span></div>';
-      }).join('')
-    : '<div class="empty">Nenhum professor cadastrado ainda.</div>';
-}
-function addProf(){
-  const n=prompt('Nome do professor:','');
-  if(n===null)return;
-  const nome=n.trim();if(!nome){toast('Informe um nome');return;}
-  if(!Array.isArray(DB.profs))DB.profs=[];
-  DB.profs.push({id:'pr'+Date.now(),nome});
-  logAct('Cadastrar professor: '+nome);
-  persist();renderProfs();renderProfFiltro();renderAlunos();
-  toast('✓ '+nome+' cadastrado');
-}
-function renomearProf(id){
-  const p=profs().find(x=>x.id===id);if(!p)return;
-  const n=prompt('Novo nome:',p.nome);if(n===null)return;
-  const nome=n.trim();if(!nome)return;
-  p.nome=nome;persist();renderProfs();renderProfFiltro();renderAlunos();toast('Atualizado');
-}
-function removerProf(id){
-  const p=profs().find(x=>x.id===id);if(!p)return;
-  const n=DB.alunos.filter(a=>profDoAluno(a)===id).length;
-  if(!confirm('Remover '+p.nome+'?'+(n?('\n\n'+n+' aluno(s) ficam sem professor — é só designar outro depois.'):'')))return;
-  DB.profs=profs().filter(x=>x.id!==id);
-  DB.alunos.forEach(a=>{if(profDoAluno(a)===id)a.profId='';});
-  if(filtroProf===id)filtroProf='todos';
-  logAct('Remover professor: '+p.nome);
-  persist();renderProfs();renderProfFiltro();renderAgenda();renderAlunos();
-  toast('Professor removido');
 }
 /* ===== Professores da quadra (contas separadas) =====
    Não confundir com DB.profs, que é só um rótulo para filtrar a SUA agenda.
@@ -217,6 +187,12 @@ async function carregarProfsLista(){
     const out={};
     Object.keys(v).forEach(uid=>{out[uid]={nome:String((v[uid]||{}).nome||'—'),desde:Number((v[uid]||{}).desde)||0};});
     PROFS_CAD=out;
+    /* Cópia dos nomes no banco: o seletor "quem dá esta aula" e o app do aluno
+       precisam deles mesmo quando a internet cai na hora errada. */
+    const nomes={};Object.keys(out).forEach(u=>{nomes[u]=out[u].nome;});
+    if(JSON.stringify(nomes)!==JSON.stringify(DB.profsLista||{})){
+      DB.profsLista=nomes;persist();renderAll();
+    }
     renderProfsPag();
   }catch(e){}
 }
@@ -920,6 +896,8 @@ async function load(){
   syncRequests(true);
   lerMapaQuadra();                 // o que os outros já ocupam na quadra
   publicarMapaQuadra();            // e o que eu ocupo
+  publicarAgendaProf();            // e o que marquei no nome dos professores
+  lerAgendaProf();                 // (no app do professor) o que a academia marcou para ele
 }
 /* ===== Rede de segurança: versões, em vez de uma cópia só =====
    Antes existia UMA cópia no aparelho e UMA na nuvem, as duas sobrescritas a
@@ -1359,6 +1337,7 @@ function persist(){
     }
     publish();
     publicarMapaQuadra();          // a quadra é uma só: avisa quem mais usa ela
+    publicarAgendaProf();          // e o que marquei no nome de cada professor
   },500);
 }
 /* Uma cópia por hora na nuvem, no máximo 30. Mesmo que o aparelho se perca
@@ -1455,6 +1434,8 @@ document.getElementById('save-state').onclick=()=>{
 const MAPA_DIAS=42;                 // seis semanas à frente: cobre o mês e a virada
 let MAPA_OUTROS={};                 // 'AAAA-MM-DD|HH:MM' -> {nome,tipo,uid}
 let _mapaEnviado='', _mapaLido='';
+let _agProfEnviado={}, _agDonoLido='';
+let AGENDA_DONO=null;               // as aulas que a academia marcou no nome deste professor
 function foraDaQuadraMarcado(){
   const el=document.getElementById('s-fora');
   return !!(el&&el.checked&&ehDono());
@@ -1532,7 +1513,75 @@ function meuNomeNaQuadra(){
 function meuUidNaQuadra(){return ehDono()?UID_DONO:PROF_UID;}
 /* Só sobe quando muda. Sem isso, cada gravação do app reenviaria seis semanas
    de agenda — e a agenda muda muito menos do que o banco. */
-let mapaTimer=null;
+let mapaTimer=null, agProfTimer=null;
+/* ===== A agenda que a academia marca no nome do professor =====
+   Vive em jvtenis/agenda_prof/<uid>: só o João escreve, só aquele professor lê
+   (a regra do Firebase é quem garante). Leva o nome do aluno e o tipo da aula,
+   que é o que o professor precisa para dar a aula — e nada mais do banco da
+   academia: nem valor, nem saldo, nem os outros alunos.
+
+   No app dele estas aulas são SÓ LEITURA. Se ele pudesse apagá-las, o João
+   marcaria a aula, o professor tiraria, e nenhum dos dois saberia o que a
+   quadra tem de verdade. Para mudar, fala com o João. */
+function agendaDoProf(uid){
+  const A=DB.agenda||{};
+  const fixos=(A.fixos||[]).filter(f=>profDaEntrada(f)===uid)
+    .map(f=>({id:f.id,dia:f.dia,hora:f.hora,titulo:String(f.titulo||''),tipo:String(f.tipo||'aula'),
+              pessoas:Number(f.pessoas)||0,desde:f.desde||'',ate:f.ate||''}));
+  const hoje=dKey(new Date()), lim=dKey(new Date(Date.now()+MAPA_DIAS*864e5));
+  const eventos=(A.eventos||[]).filter(e=>profDaEntrada(e)===uid&&e.data>=hoje&&e.data<=lim)
+    .map(e=>({id:e.id,data:e.data,hora:e.hora,titulo:String(e.titulo||''),tipo:String(e.tipo||'aula'),
+              pessoas:Number(e.pessoas)||0}));
+  const idsF={};fixos.forEach(f=>{idsF[f.id]=1;});
+  const excecoes=(A.excecoes||[]).filter(x=>idsF[x.fixoId]).map(x=>({fixoId:x.fixoId,data:x.data}));
+  return {nome:meuNomeNaQuadra(),ts:Date.now(),fixos,eventos,excecoes};
+}
+function publicarAgendaProf(){
+  clearTimeout(agProfTimer);
+  agProfTimer=setTimeout(async()=>{
+    if(!CARREGADO||!hasCloud()||!ehDono())return;
+    for(const p of profs()){
+      let bloco;try{bloco=agendaDoProf(p.id);}catch(e){continue;}
+      const ass=JSON.stringify({f:bloco.fixos,e:bloco.eventos,x:bloco.excecoes});
+      if(_agProfEnviado[p.id]===ass)continue;      // nada mudou para ele
+      try{
+        await window.fbDB.ref('jvtenis/agenda_prof/'+p.id).set(bloco);
+        _agProfEnviado[p.id]=ass;
+      }catch(e){}
+    }
+  },2500);
+}
+async function lerAgendaProf(){
+  if(ehDono()||!hasCloud()||!PROF_UID)return;
+  try{
+    const snap=await window.fbDB.ref('jvtenis/agenda_prof/'+PROF_UID).get();
+    const v=snap.exists()?(snap.val()||null):null;
+    const ass=JSON.stringify(v);
+    if(ass===_agDonoLido)return;                   // repintar sem mudança tira você do lugar
+    _agDonoLido=ass;
+    AGENDA_DONO=v;
+    /* Guardado no banco dele também: sem internet a agenda não pode sumir. */
+    if(JSON.stringify(DB.agendaDono||null)!==ass){DB.agendaDono=v;persist();}
+    try{renderAgenda();}catch(e){}
+  }catch(e){}
+}
+/* As aulas da academia neste dia e hora, do ponto de vista do professor. */
+function aulasDaAcademia(dk,dia,hora){
+  if(ehDono())return [];
+  const A=AGENDA_DONO||DB.agendaDono;
+  if(!A)return [];
+  const out=[];
+  (A.fixos||[]).forEach(f=>{
+    if(f.dia!==dia||f.hora!==hora)return;
+    if(!fixoValeEm(f,dk))return;
+    if((A.excecoes||[]).some(x=>x.fixoId===f.id&&x.data===dk))return;
+    out.push(Object.assign({},f,{origem:'dono',doDono:1,alunoId:null}));
+  });
+  (A.eventos||[]).forEach(e=>{
+    if(e.data===dk&&e.hora===hora)out.push(Object.assign({},e,{origem:'dono',doDono:1,alunoId:null}));
+  });
+  return out;
+}
 function publicarMapaQuadra(){
   clearTimeout(mapaTimer);
   mapaTimer=setTimeout(async()=>{
@@ -1593,7 +1642,12 @@ function horaLiberadaProf(date,hora){
   return (doDia&&doDia.indexOf(hora)>=0)?'sim':'nao';
 }
 function ocupadoPorOutro(date,hora){
-  return MAPA_OUTROS[dKey(date)+'|'+hora]||null;
+  const dk=dKey(date);
+  /* A aula que a academia marcou no NOME dele é a aula dele, não "hora de
+     outro professor". Sem isto o mesmo horário apareceria duas vezes na tela
+     dele: uma como a aula, outra como quadra ocupada pelo João. */
+  if(!ehDono()&&aulasDaAcademia(dk,date.getDay(),hora).length)return null;
+  return MAPA_OUTROS[dk+'|'+hora]||null;
 }
 /* Publica os dados que o App do Aluno lê (somente leitura, compartilhado) */
 let pubTimer=null;
@@ -1633,7 +1687,10 @@ async function doPublish(){
       locacaoOnly:DB.locacaoOnly||[],
       horarioCfg:DB.horarioCfg||{},
       horarioData:DB.horarioData||{},
-      alunos:DB.alunos.map(a=>({codigo:a.codigo,nome:a.nome,tipo:a.tipo,plano:a.plano,creditos:a.creditos,repos:a.repos,reposValidas:reposValidas(a),reposVencendo:reposVencendo(a),status:a.status,ultimoPago:a.ultimoPago||'',mensalidade:a.mensalidade,diaVenc:a.diaVenc||10,cardLink:a.cardLink||'',mfitLink:a.mfitLink||'',valorAula:a.valorAula||(a.tipo==='Personal'?130:160),locCred:Number(a.locCred)||0,credGrupo:Number(a.credGrupo)||0,planoGrupo:Number(a.planoGrupo)||0,grupoTipo:a.grupoTipo||'',avaliacoes:(a.avaliacoes||[]).slice(-12),evoMes:serieMensal(a.avaliacoes,a.registros,24),registros:(a.registros||[]).slice(-8)})),
+      /* Quem são os professores da academia. Vai só id e nome — o aluno
+         precisa saber com quem treina e com quem quer treinar, nada além. */
+      profs:profs().map(p=>({id:p.id,nome:p.nome})),
+      alunos:DB.alunos.map(a=>({codigo:a.codigo,nome:a.nome,tipo:a.tipo,profId:profDoAluno(a),prof:profNome(profDoAluno(a)),plano:a.plano,creditos:a.creditos,repos:a.repos,reposValidas:reposValidas(a),reposVencendo:reposVencendo(a),status:a.status,ultimoPago:a.ultimoPago||'',mensalidade:a.mensalidade,diaVenc:a.diaVenc||10,cardLink:a.cardLink||'',mfitLink:a.mfitLink||'',valorAula:a.valorAula||(a.tipo==='Personal'?130:160),locCred:Number(a.locCred)||0,credGrupo:Number(a.credGrupo)||0,planoGrupo:Number(a.planoGrupo)||0,grupoTipo:a.grupoTipo||'',avaliacoes:(a.avaliacoes||[]).slice(-12),evoMes:serieMensal(a.avaliacoes,a.registros,24),registros:(a.registros||[]).slice(-8)})),
       historico:(function(){
         const codeOf={};DB.alunos.forEach(a=>{codeOf[a.id]=a.codigo;});
         const cut=dKey(new Date(Date.now()-60*864e5));const out={};
@@ -1705,12 +1762,20 @@ async function syncRequests(silent){
           nc++;
         }else if(p.rec==='fixo'){
           const dia=new Date(p.data+'T12:00:00').getDay();
-          if(!DB.agenda.fixos.some(f=>f.alunoId===a.id&&f.dia===dia&&f.hora===p.hora&&fixoValeEm(f,p.data)))
-            DB.agenda.fixos.push({id:'f'+Date.now()+idx,dia,hora:p.hora,titulo:a.nome,tipo,alunoId:a.id,desde:p.data});
+          if(!DB.agenda.fixos.some(f=>f.alunoId===a.id&&f.dia===dia&&f.hora===p.hora&&fixoValeEm(f,p.data))){
+            const nf={id:'f'+Date.now()+idx,dia,hora:p.hora,titulo:a.nome,tipo,alunoId:a.id,desde:p.data};
+            /* Com quem o aluno pediu a aula. Ele escolheu no app dele; sem
+               isto a escolha se perdia e a aula caía sempre para o João. */
+            const pf=profPedido(p,a);if(pf)nf.profId=pf;
+            DB.agenda.fixos.push(nf);
+          }
           n++;
         }else{
-          if(!DB.agenda.eventos.some(e=>e.alunoId===a.id&&e.data===p.data&&e.hora===p.hora))
-            DB.agenda.eventos.push({id:'e'+Date.now()+idx,data:p.data,hora:p.hora,titulo:a.nome,tipo,alunoId:a.id,repo:p.repo?1:0});
+          if(!DB.agenda.eventos.some(e=>e.alunoId===a.id&&e.data===p.data&&e.hora===p.hora)){
+            const ne={id:'e'+Date.now()+idx,data:p.data,hora:p.hora,titulo:a.nome,tipo,alunoId:a.id,repo:p.repo?1:0};
+            const pf=profPedido(p,a);if(pf)ne.profId=pf;
+            DB.agenda.eventos.push(ne);
+          }
           n++;
         }
       }
@@ -1726,7 +1791,7 @@ async function syncRequests(silent){
   }catch(e){if(!silent)toast('Erro ao sincronizar');}
   syncing=false;
 }
-setInterval(()=>{syncRequests(true);carregarNotifs();carregarConfirmacoes();carregarCadastros();carregarAutoAval();lerMapaQuadra();},45000);
+setInterval(()=>{syncRequests(true);carregarNotifs();carregarConfirmacoes();carregarCadastros();carregarAutoAval();lerMapaQuadra();lerAgendaProf();},45000);
 setTimeout(carregarAutoAval,4000);
 
 /* ===== Autoavaliações enviadas pelos alunos ===== */
@@ -2313,7 +2378,7 @@ function entriesFor(date,hora){
     .map(f=>({...f,origem:'fixo'}));
   const evs=A.eventos.filter(e=>e.data===dk&&e.hora===hora).map(e=>({...e,origem:'pontual'}));
   const comps=(DB.compromissos||[]).filter(c=>c.data===dk&&(c.hora||'')===hora).map(c=>({id:c.id,titulo:c.titulo,tipo:'pessoal',origem:'compromisso',alunoId:null}));
-  return fixos.concat(evs).concat(comps);
+  return fixos.concat(evs).concat(comps).concat(aulasDaAcademia(dk,dia,hora));
 }
 /* ===== Horários livres da semana → WhatsApp do grupo de alunos ===== */
 function semanaSegSab(base){
@@ -2814,9 +2879,10 @@ function renderAgenda(){
             const pres=linked&&isPres(e,agDate);
             const falt=linked&&isFalta(e,agDate);
             const avis=linked&&isAvisou(e,agDate);
+            if(e.doDono)return `<span class="ev t-outro" title="Aula marcada pela academia no seu nome">👑 ${esc(e.titulo)}<small> · ${esc(e.tipo)} · da academia</small></span>`;
             return `<span class="ev t-${e.tipo} drag-item" data-eid="${e.id}" data-origem="${e.origem}">
               ${linked?`<button class="pres ${pres?'ok':''} ${falt?'falt':''} ${avis?'avis':''}" onclick="togglePresenca('${e.id}')">${pres?'✓':(falt?'✗':(avis?'🔁':'○'))}</button>`:''}
-              <span onclick="openSlot('${h}')">${e.titulo}<small> · ${e.tipo==='grupo'?grupoTag(e.pessoas)+' · ':''}${e.repo?'reposição':(e.origem==='fixo'?'fixo':(e.origem==='compromisso'?'pessoal':'pontual'))}${foraDaQuadra(e)?' · 📍 fora da quadra':''}</small></span>
+              <span onclick="openSlot('${h}')">${e.titulo}<small> · ${e.tipo==='grupo'?grupoTag(e.pessoas)+' · ':''}${e.repo?'reposição':(e.origem==='fixo'?'fixo':(e.origem==='compromisso'?'pessoal':'pontual'))}${foraDaQuadra(e)?' · 📍 fora da quadra':''}${profDaEntrada(e)?' · 👨‍🏫 '+esc(profNome(profDaEntrada(e))||'professor'):''}${e.doDono?' · 👑 marcada pela academia':''}</small></span>
             </span>`;
           }).join('')}
           ${(function(){
@@ -2954,6 +3020,36 @@ function marcarChuvaDia(){
   persist();renderAgenda();
   toast('☔ '+n+' horário(s) marcado(s) como chuva');
 }
+/* ===== Quem dá cada aula =====
+   Sem professor marcado, a aula é minha — como sempre foi. Com professor, ela
+   continua na MINHA agenda e ocupando a quadra (a quadra é uma só), e passa a
+   aparecer também no app dele, em jvtenis/agenda_prof/<uid>. Quem manda nela
+   sou eu: no app dele ela é só leitura, senão eu marcaria a aula e ele
+   apagaria sem eu saber. */
+function profDaEntrada(e){return (e&&e.profId)?String(e.profId):'';}
+/* O professor de um pedido vindo do app do aluno: o que ele escolheu na hora
+   e, se nao escolheu, o do cadastro dele. So vale professor que ainda existe —
+   professor removido nao pode deixar aula pendurada num uid que sumiu. */
+function profPedido(p,a){
+  const alvo=(p&&p.profId)?String(p.profId):profDoAluno(a);
+  if(!alvo)return '';
+  return profs().some(x=>x.id===alvo)?alvo:'';
+}
+function pintarSelProf(valor){
+  const wrap=document.getElementById('s-prof-wrap');
+  const sel=document.getElementById('s-prof');
+  if(!sel||!wrap)return;
+  const lista=profs();
+  wrap.style.display=(ehDono()&&lista.length)?'':'none';
+  sel.innerHTML='<option value="">Eu</option>'
+    +lista.map(p=>'<option value="'+p.id+'">'+esc(p.nome)+'</option>').join('');
+  sel.value=valor||'';
+}
+function profSelecionado(){
+  const sel=document.getElementById('s-prof');
+  if(!sel||!ehDono())return '';
+  return sel.value||'';
+}
 function openSlot(hora){
   slotCtx={hora,date:new Date(agDate)};
   document.getElementById('slot-title').textContent=DIAS[slotCtx.date.getDay()]+' '+slotCtx.date.getDate()+'/'+(slotCtx.date.getMonth()+1)+' · '+hora;
@@ -2962,6 +3058,7 @@ function openSlot(hora){
   sel.innerHTML='<option value="">— sem vínculo —</option>'+DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${a.id}">${esc(a.nome)} (${fmtCred(a.creditos)} créd.)</option>`).join('');
   sel.value='';
   renderSlotEvs();
+  pintarSelProf('');
   document.getElementById('ov-slot').classList.add('on');
   resetSlotForm();
 }
@@ -2977,6 +3074,7 @@ function resetSlotForm(){
   const gn=document.getElementById('s-grupo-n');if(gn)gn.value='2';
   const rp=document.getElementById('s-repo');if(rp)rp.checked=false;
   const fo=document.getElementById('s-fora');if(fo)fo.checked=false;
+  pintarSelProf('');
   try{sincronizarFora((document.getElementById('s-tipo')||{}).value);}catch(e){}
   toggleGrupoWrap();
 }
@@ -2989,6 +3087,9 @@ function slotPickAluno(){
   document.getElementById('s-tipo').value=(a.tipo==='Personal')?'personal':((['Grupo','Dupla','Trio','Quarteto'].indexOf(a.tipo)>=0)?'grupo':'aula');
   const nmap={Dupla:'2',Trio:'3',Quarteto:'4'};
   if(nmap[a.tipo])document.getElementById('s-grupo-n').value=nmap[a.tipo];
+  /* Se o aluno já tem professor no cadastro, ele vem escolhido: é o caso
+     normal, e digitar de novo a cada aula é como se erra. */
+  pintarSelProf(profDoAluno(a));
   toggleGrupoWrap();
 }
 function toggleGrupoWrap(){
@@ -3036,7 +3137,14 @@ function setPessoas(id,origem,nv){
 function renderSlotEvs(){
   const evs=entriesFor(slotCtx.date,slotCtx.hora);
   const el=document.getElementById('slot-evs');
-  el.innerHTML=evs.length?evs.map(e=>`
+  el.innerHTML=evs.length?evs.map(e=>{
+  /* Aula que a academia marcou no nome dele: ele vê, não mexe. Mostrar botões
+     que vão falhar (ou, pior, que apagariam só na tela dele) é pior que não
+     mostrar botão nenhum. */
+  if(e.doDono)return `
+  <div class="mov"><div class="mov-l"><b>👑 ${esc(e.titulo)}</b><span>${esc(e.tipo)}${e.tipo==='grupo'?(' · '+grupoLabel(e.pessoas)):''} · ${e.origem==='dono'?'marcada pela academia':''}</span></div>
+    <div style="font-size:11px;color:var(--muted);font-weight:700;text-align:right;max-width:150px">quem marcou foi a academia — fale com o João para mudar</div></div>`;
+  return `
   <div class="mov"><div class="mov-l"><b>${e.titulo}${e.alunoId?' 🔗':''}</b><span>${e.tipo}${e.tipo==='grupo'?(' · '+grupoLabel(e.pessoas)):''} · ${e.origem==='fixo'?'toda semana':'só nesta data'}</span></div>
     <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">
       ${e.tipo==='grupo'?`<select onchange="setPessoas('${e.id}','${e.origem}',this.value)" style="padding:6px 8px;font-size:11px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--text);font-weight:700">
@@ -3048,7 +3156,7 @@ function renderSlotEvs(){
       ${e.origem==='fixo'?`<button class="btn btn-ghost" style="padding:6px 9px;font-size:11px" onclick="cancelarDia('${e.id}')">Só hoje ✕</button>
       <button class="btn btn-ghost" style="padding:6px 9px;font-size:11px;color:var(--bad)" onclick="removerFixo('${e.id}')">Da grade ✕</button>`
       :`<button class="btn btn-ghost" style="padding:6px 9px;font-size:11px;color:var(--bad)" onclick="removerEvento('${e.id}')">Remover ✕</button>`}
-    </div></div>`).join('')
+    </div></div>`;}).join('')
   :'<div class="empty" style="padding:14px">Horário livre.</div>';
 }
 function saveSlot(){
@@ -3065,6 +3173,7 @@ function saveSlot(){
     const repo=(repoChk&&repoChk.checked&&(tipo==='aula'||tipo==='grupo'||tipo==='personal'))?1:0;
     rec.titulo=t;rec.tipo=tipo;rec.alunoId=alunoId;rec.repo=repo;
     rec.fora=foraDaQuadraMarcado()?1:0;
+    const pf=profSelecionado();if(pf)rec.profId=pf;else delete rec.profId;
     if(tipo==='grupo')rec.pessoas=pessoas;else delete rec.pessoas;
     logAct('Editar marcação: '+t);
     resetSlotForm();
@@ -3100,11 +3209,13 @@ function saveSlot(){
     const desde=dKey(slotCtx.date);
     const novoF={id:'f'+Date.now(),dia:slotCtx.date.getDay(),hora:slotCtx.hora,titulo:t,tipo,alunoId,pessoas,repo,desde};
     novoF.fora=foraDaQuadraMarcado()?1:0;
+    const pfF=profSelecionado();if(pfF)novoF.profId=pfF;
     DB.agenda.fixos.push(novoF);
     toast(t+' fixado toda '+DIAS[slotCtx.date.getDay()]+' às '+slotCtx.hora+' a partir de '+desde.split('-').reverse().slice(0,2).join('/')+(repo?' · 🔁 reposição':''));
   }else{
     const novoE={id:'e'+Date.now(),data:dKey(slotCtx.date),hora:slotCtx.hora,titulo:t,tipo,alunoId,pessoas,repo};
     novoE.fora=foraDaQuadraMarcado()?1:0;
+    const pfE=profSelecionado();if(pfE)novoE.profId=pfE;
     DB.agenda.eventos.push(novoE);
     toast(t+' marcado em '+slotCtx.date.getDate()+'/'+(slotCtx.date.getMonth()+1)+(repo?' · 🔁 reposição':''));
   }
@@ -3162,6 +3273,7 @@ function editarEntrada(id,origem){
   document.getElementById('s-grupo-n').value=String(rec.pessoas||2);
   const rp=document.getElementById('s-repo');if(rp)rp.checked=!!rec.repo;
   const fo=document.getElementById('s-fora');if(fo)fo.checked=foraDaQuadra(rec);
+  pintarSelProf(profDaEntrada(rec));
   const sr=document.getElementById('s-rec');if(sr){sr.value=(origem==='fixo'?'fixo':'pontual');sr.disabled=true;} // recorrência não muda aqui: para isso use os botões da grade
   document.getElementById('s-form-title').textContent='✏️ Editar '+(origem==='fixo'?'(toda '+DIAS[rec.dia]+')':'(só nesta data)');
   document.getElementById('s-save-btn').textContent='Salvar alterações';
@@ -4916,7 +5028,6 @@ key:'<svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="4"/><path d="M11 11l7 7M1
 chart:'<svg viewBox="0 0 24 24"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg>'
 };
 function renderAlunos(){
-  renderProfs();
   const list=document.getElementById('alunos-list');
   const q=(document.getElementById('search').value||'').toLowerCase();
   const items=DB.alunos.filter(a=>a.nome.toLowerCase().includes(q)).filter(a=>{

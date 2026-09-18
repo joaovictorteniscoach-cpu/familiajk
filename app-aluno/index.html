@@ -513,6 +513,7 @@ function esperarAuth(){
     <p class="top-tag">🎾 JV TÊNIS</p>
     <h1 id="hello">Fala!</h1>
     <p>Aqui está seu saldo de aulas atualizado 📊</p>
+    <p id="hello-prof" style="display:none;margin-top:4px;font-weight:700"></p>
   </header>
 
   <div class="wrap">
@@ -786,6 +787,9 @@ function esperarAuth(){
   <div class="modal">
     <h3 id="book-title">Agendar horário 🎾</h3>
     <p class="sub" id="book-sub">—</p>
+    <div class="field" id="book-prof-field" style="display:none"><label>👨‍🏫 Com qual professor</label>
+      <select id="b-prof"><option value="">Com o João</option></select>
+    </div>
     <div class="field" id="book-rec-field"><label>Recorrência</label>
       <select id="b-rec">
         <option value="pontual">Só nesta data</option>
@@ -877,7 +881,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-09-10-6';
+const VERSAO='2026-09-18-1';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -1249,6 +1253,10 @@ function irMarcarReposicao(){
 /* ================= RENDER ================= */
 function render(){
   document.getElementById('hello').textContent='Fala, '+EU.nome.split(' ')[0]+'!';
+  /* Com quem ele treina. Parece detalhe, mas numa academia com mais de um
+     professor é a primeira coisa que o aluno quer confirmar. */
+  const hp=document.getElementById('hello-prof');
+  if(hp){const n=meuProfNome();hp.textContent=n?('👨‍🏫 Seu professor: '+n):'';hp.style.display=n?'':'none';}
   document.getElementById('v-cred').textContent=fmtCred(EU.creditos);
   document.getElementById('v-repos').textContent=fmtCred(EU.repos);
   renderReposBox();
@@ -2735,6 +2743,28 @@ function confirmarLocacao(){
   setTimeout(()=>abrirWhatsApp('5541995415712',msg),300);
   toast('Pedido de locação ('+dur+') enviado ao João! 🎾');
 }
+/* ===== Com qual professor =====
+   A academia pode ter mais de um professor, cada um com a agenda dele. O aluno
+   precisa dizer com quem quer a aula — senão o João teria de adivinhar, e
+   adivinhar errado é aula marcada com o professor errado. Vem já escolhido o
+   professor do cadastro dele, que é o caso normal. */
+function profsPub(){return (PUB&&Array.isArray(PUB.profs))?PUB.profs:[];}
+function meuProfId(){return (EU&&EU.profId)?String(EU.profId):'';}
+function meuProfNome(){
+  if(EU&&EU.prof)return String(EU.prof);
+  const p=profsPub().find(x=>x.id===meuProfId());
+  return p?p.nome:'';
+}
+function pintarProfsBook(){
+  const campo=document.getElementById('book-prof-field');
+  const sel=document.getElementById('b-prof');
+  if(!campo||!sel)return;
+  const lista=profsPub();
+  campo.style.display=lista.length?'':'none';       // academia de um professor só não pergunta
+  sel.innerHTML='<option value="">Com o João</option>'
+    +lista.map(p=>'<option value="'+p.id+'">'+escHtml(p.nome)+'</option>').join('');
+  sel.value=meuProfId();
+}
 function abrirBook(hora,repo,torneio){
   if(!torneio&&bloqueadoParaAgendar()){toast('🔒 Agendamento bloqueado — '+motivoBloqueio()+'. Fale com o João para regularizar. 🙏');return;}
   if(torneio){/* jogo do torneio: inscrição já paga, não usa crédito nem reposição */}
@@ -2746,6 +2776,7 @@ function abrirBook(hora,repo,torneio){
   bookCtx={hora,date:new Date(agDate),repo:!!repo,torneio:!!torneio};
   document.getElementById('book-title').textContent=torneio?'Marcar jogo do torneio 🏆':(repo?'Marcar reposição 🔁':'Agendar horário 🎾');
   document.getElementById('book-sub').textContent=DIAS_FULL[bookCtx.date.getDay()]+', '+bookCtx.date.getDate()+' de '+MESES[bookCtx.date.getMonth()].toLowerCase()+' · '+hora;
+  pintarProfsBook();
   const recField=document.getElementById('book-rec-field');
   document.getElementById('b-rec').value='pontual';
   recField.style.display=(repo||torneio)?'none':'';
@@ -2757,7 +2788,10 @@ async function confirmarAgendamento(){
   const tor=bookCtx.torneio?1:0;
   const rec=(bookCtx.repo||tor)?'pontual':document.getElementById('b-rec').value;
   const repo=bookCtx.repo?1:0;
-  const pedido={id:'p'+Date.now(),codigo:MEU.codigo,nome:EU.nome,data:dKey(bookCtx.date),hora:bookCtx.hora,rec,repo,tor,ts:Date.now()};
+  const selP=document.getElementById('b-prof');
+  const profId=(selP&&selP.value)?String(selP.value):'';
+  const profNome=profId?((profsPub().find(x=>x.id===profId)||{}).nome||''):'';
+  const pedido={id:'p'+Date.now(),codigo:MEU.codigo,nome:EU.nome,data:dKey(bookCtx.date),hora:bookCtx.hora,rec,repo,tor,profId,profNome,ts:Date.now()};
   // push() cria uma entrada única na fila — nunca sobrescreve outro aluno
   let ok=false;
   for(let i=0;i<4&&!ok;i++){
@@ -2771,7 +2805,7 @@ async function confirmarAgendamento(){
   pedirPermissaoNotif();
   notificarJoao(tor?'marcou jogo do torneio':(repo?'pediu reposição':'reservou'),pedido.data,pedido.hora);
   toast(tor?'🏆 Jogo do torneio enviado ao João!':(repo?'✓ Reposição enviada ao João!':'✓ Agendamento enviado ao João! Aparece como confirmado em breve.'));
-  setTimeout(()=>abrirWhatsApp('5541995415712','Olá João! Acabei de '+(tor?'marcar um *jogo do torneio*':(repo?'pedir uma *reposição*':'*reservar* uma aula'))+' para '+fmtData(pedido.data)+' às '+pedido.hora+'. 🎾'),700);
+  setTimeout(()=>abrirWhatsApp('5541995415712','Olá João! Acabei de '+(tor?'marcar um *jogo do torneio*':(repo?'pedir uma *reposição*':'*reservar* uma aula'))+' para '+fmtData(pedido.data)+' às '+pedido.hora+(profNome?(' com o professor *'+profNome+'*'):'')+'. 🎾'),700);
 }
 
 /* ===== O bloqueio precisa cair sozinho =====
