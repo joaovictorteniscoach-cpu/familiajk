@@ -105,6 +105,12 @@ EX.forEach(e => {
   });
   if (!e.passos || e.passos.length < 3) erros.push(`${e.id}: passo a passo com menos de 3 passos`);
   if (!e.dica) avisos.push(`${e.id}: sem dica extra`);
+  // as tres colunas do rodape da ficha
+  if (!e.foco || e.foco.length < 3) erros.push(`${e.id}: foco do professor com menos de 3 itens`);
+  if (!e.erros || e.erros.length < 3) erros.push(`${e.id}: erros mais comuns com menos de 3 itens`);
+  if (!e.dificultar || e.dificultar.length < 2) erros.push(`${e.id}: como dificultar com menos de 2 itens`);
+  // o erro principal mora em `erro`; repeti-lo na lista seria dado duplicado
+  if ((e.erros || []).indexOf(e.erro) >= 0) erros.push(`${e.id}: o erro principal esta repetido na lista de erros`);
 });
 
 console.log(`Banco: ${EX.length} exercicios (${EX.filter(e=>e.fonte==='apostila').length} da apostila, ${EX.filter(e=>e.fonte==='banco').length} de ampliacao)`);

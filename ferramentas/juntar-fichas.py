@@ -42,6 +42,36 @@ def registros(texto):
     return achados
 
 
+def juntar_colunas(colunas):
+    """Injeta as tres colunas do rodape da ficha: foco do treinador, os outros
+    erros comuns e como dificultar. O erro PRINCIPAL continua no campo `erro` —
+    aqui entram so' os demais, para o dado nao ficar repetido."""
+    texto = io.open(CAMINHO, encoding='utf-8').read()
+    achados = registros(texto)
+    porId = {i: (a, b) for i, a, b in achados}
+
+    faltando = [i for i in colunas if i not in porId]
+    if faltando:
+        raise SystemExit('ids que nao existem no banco: %s' % ', '.join(faltando))
+
+    feitos = 0
+    for eid in sorted(colunas, key=lambda i: -porId[i][0]):
+        ini, fim = porId[eid]
+        if 'foco:' in texto[ini:fim]:
+            print('  (ja tinha colunas, pulando: %s)' % eid)
+            continue
+        foco, erros, dificultar = colunas[eid]
+        lista = lambda xs: '[' + ', '.join('`%s`' % x for x in xs) + ']'
+        novo = ',\n  foco:' + lista(foco)
+        novo += ',\n  erros:' + lista(erros)
+        novo += ',\n  dificultar:' + lista(dificultar) + ' '
+        texto = texto[:fim] + novo + texto[fim:]
+        feitos += 1
+
+    io.open(CAMINHO, 'w', encoding='utf-8').write(texto)
+    print('colunas juntadas: %d' % feitos)
+
+
 def juntar(fichas):
     texto = io.open(CAMINHO, encoding='utf-8').read()
     achados = registros(texto)

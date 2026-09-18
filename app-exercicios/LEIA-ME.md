@@ -38,8 +38,8 @@ certo por caminhos diferentes:
 | **Formato e material** | Particular, Dupla, Trio, Kids, Personal · e o que você tem na mão |
 
 Todo exercício traz **desenho da quadra, objetivo, montagem, passo a passo, dica
-extra, a versão em cada nível, o erro a observar primeiro e o critério objetivo de
-sucesso**. Os 25 drills da apostila (D1–D25) estão aqui com o mesmo nome e o mesmo
+extra, a versão em cada nível** e as três colunas de rodapé — **foco do professor,
+erros mais comuns e como dificultar** — além do **critério objetivo de sucesso**. Os 25 drills da apostila (D1–D25) estão aqui com o mesmo nome e o mesmo
 conteúdo, marcados como `apostila`.
 
 ## O desenho da quadra
@@ -93,6 +93,16 @@ regras que valem a pena respeitar:
 - **`execucao`** continua no banco, mas não aparece mais na ficha: quem conta o
   exercício na tela é o passo a passo. Ela serve à **busca** (procurar por uma
   palavra que só está no texto corrido continua funcionando).
+- **`erro` é o principal; `erros` são os outros.** A ficha mostra os dois juntos,
+  com o principal marcado como "olhe este primeiro" — que é a regra da apostila:
+  uma correção por vez, a mais baixa da cadeia. Não repita o principal dentro de
+  `erros`; o validador recusa a repetição.
+- **`dificultar` é o "como dificultar" do exercício em si**; a progressão por
+  nível (`prog`) continua sendo como o mesmo exercício sobe a Trilha. São coisas
+  diferentes: uma aperta a atividade, a outra troca o degrau do aluno.
+
+Campos obrigatórios de um exercício novo: os antigos mais `fig` (desenho),
+`passos` (3 a 6), `foco` (3+), `erros` (3+), `dificultar` (2+) e `dica`.
 
 Depois, sempre:
 
@@ -136,14 +146,22 @@ O que já está feito para reduzir o risco:
 
 Como usar o app, agora que ele não está mais no endereço público:
 
-1. **Abrir o arquivo direto** — `app-exercicios/index.html` funciona aberto do
-   próprio aparelho, sem servidor nenhum. Serve para testar.
-2. **Netlify como site separado** (recomendado): arraste a pasta `app-exercicios`
-   para um site novo no Netlify. Sai um endereço só seu, que dá para adicionar à
-   Tela de Início do celular. Com plano pago, dá para pôr senha.
-3. **Tirar do repositório público**: mover a pasta para um repositório privado. É
-   o único jeito de fechar 100% — inclusive o histórico do Git, que guarda tudo
-   o que já esteve aqui.
+**O caminho escolhido: Netlify, como site separado.** No painel do Netlify, crie
+um site novo e arraste a pasta `app-exercicios` inteira (o `index.html` precisa
+ficar na raiz do que é arrastado — já está). Sai um endereço só seu, que dá para
+**adicionar à Tela de Início** do celular e usar offline em quadra. Mexeu no
+banco, arraste de novo: o repositório continua sendo a fonte única.
+
+Se o site for ligado ao GitHub em vez de drag & drop, use *Base directory* =
+`app-exercicios` — o `netlify.toml` da pasta já está pronto para isso.
+
+Outras opções, se um dia precisar:
+
+- **Abrir o arquivo direto**: `app-exercicios/index.html` funciona aberto do
+  próprio aparelho, sem servidor nenhum. Serve para conferir uma mudança.
+- **Senha no Netlify**: a proteção por senha do painel é recurso de plano pago.
+- **Repositório privado**: é o único jeito de fechar 100% — inclusive o histórico
+  do Git, que guarda tudo o que já esteve aqui.
 
 Vale saber: a **apostila** (`metodologia/apostila.md`) já está nesse mesmo
 repositório público hoje, embora o README diga que ela fica fora do ar. Se a

@@ -218,6 +218,21 @@ header.bar{
   font-size:12.5px;font-weight:900;display:flex;align-items:center;justify-content:center}
 .passos li span{font-size:14.5px;color:#E9E2D6;line-height:1.5}
 .bloco-tx.dica{background:rgba(216,180,92,.1);border:1px solid var(--line);border-radius:12px;padding:14px}
+.colunas{display:grid;gap:11px;margin-bottom:18px}
+.col{background:var(--navy-2);border:1px solid var(--line-2);border-radius:12px;padding:13px 14px}
+.col .tt{font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.col.foco{border-color:rgba(127,166,80,.35)} .col.foco .tt{color:var(--ok)}
+.col.err{border-color:rgba(224,120,74,.35)} .col.err .tt{color:var(--warn)}
+.col.dif{border-color:var(--line)}          .col.dif .tt{color:var(--gold-soft)}
+.col ul{list-style:none;display:grid;gap:6px}
+.col li{font-size:13.5px;color:#E3DCD0;padding-left:14px;position:relative;line-height:1.45}
+.col li::before{content:"•";position:absolute;left:2px;color:var(--muted-2);font-weight:900}
+.col.err li.primeiro{color:#fff;font-weight:600}
+.col.err li.primeiro::before{content:"1";color:var(--warn);font-size:11px;top:1px}
+.col.err li.primeiro em{display:block;font-style:normal;font-size:11px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--warn);margin-top:3px}
+@media(min-width:620px){ .colunas{grid-template-columns:repeat(3,1fr)} }
 .bloco-tx.dica .tt{color:var(--gold-soft)}
 
 /* ---------- plano de aula ---------- */
@@ -302,6 +317,8 @@ header.bar{
   .det i{color:#333;font-style:normal}
   .det-pa{margin:2px 0 4px 15px;padding:0}
   .det-pa li{margin-bottom:1px}
+  .det-col{margin:3px 0;padding:4px 0;border-top:1px solid #ddd;border-bottom:1px solid #ddd}
+  .det-col div{margin-bottom:1px}
   .bloco-tx{margin-bottom:10px}
   .bloco-tx .tt{color:#000}
   .bloco-tx p{color:#111!important;font-size:11.5px}
@@ -647,7 +664,18 @@ function abrirFicha(id){
     (e.dica ? '<div class="bloco-tx dica"><div class="tt">💡 Dica extra</div><p>' + esc(e.dica) + '</p></div>' : '') +
     '<div class="bloco-tx"><div class="tt">O mesmo exercício em cada nível — e como dificultar</div>' +
       '<div class="prog">' + prog + '</div></div>' +
-    '<div class="bloco-tx alerta"><div class="tt">Erro a observar primeiro</div><p>' + esc(e.erro) + '</p></div>' +
+    '<div class="colunas">' +
+      '<div class="col foco"><div class="tt">✅ Foco do professor</div><ul>' +
+        (e.foco || []).map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') +
+      '</ul></div>' +
+      '<div class="col err"><div class="tt">⚠️ Erros mais comuns</div><ul>' +
+        '<li class="primeiro">' + esc(e.erro) + '<em>olhe este primeiro</em></li>' +
+        (e.erros || []).map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') +
+      '</ul></div>' +
+      '<div class="col dif"><div class="tt">📈 Como dificultar</div><ul>' +
+        (e.dificultar || []).map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') +
+      '</ul></div>' +
+    '</div>' +
     '<div class="bloco-tx ok"><div class="tt">Como saber que funcionou</div><p>' + esc(e.sucesso) + '</p></div>' +
     (e.kids ? '<div class="bloco-tx"><div class="tt">Versão Kids</div><p>' + esc(e.kids) + '</p></div>' : '') +
     '<div class="bloco-tx"><div class="tt">Material</div><p>' + esc(mats) + '</p></div>' +
@@ -787,8 +815,12 @@ function desenharPlano(){
             (PLANO.nivel && e.prog[PLANO.nivel]
               ? '<b>No nível ' + esc(nivel(PLANO.nivel).nome) + ':</b> ' + esc(e.prog[PLANO.nivel]) + '<br>' : '') +
             (e.dica ? '<b>Dica extra:</b> ' + esc(e.dica) + '<br>' : '') +
-            '<i><b>Erro a observar:</b> ' + esc(e.erro) + '</i>' +
-            '<br><i><b>Funcionou se:</b> ' + esc(e.sucesso) + '</i>' +
+            '<div class="det-col">' +
+              '<div><b>Foco do professor:</b> ' + esc((e.foco || []).join(' · ')) + '</div>' +
+              '<div><b>Erros mais comuns:</b> ' + esc([e.erro].concat(e.erros || []).join(' · ')) + '</div>' +
+              '<div><b>Como dificultar:</b> ' + esc((e.dificultar || []).join(' · ')) + '</div>' +
+            '</div>' +
+            '<i><b>Funcionou se:</b> ' + esc(e.sucesso) + '</i>' +
           '</div>' +
         '</div>' +
       '</div>';
@@ -907,7 +939,9 @@ function planoTexto(){
       (e.passos || []).forEach(function(t, i){ L.push('  ' + (i + 1) + '. ' + t); });
       if (e.dica) L.push('Dica extra: ' + e.dica);
       if (PLANO.nivel && e.prog[PLANO.nivel]) L.push('No nível ' + nivel(PLANO.nivel).nome + ': ' + e.prog[PLANO.nivel]);
-      L.push('Erro a observar: ' + e.erro);
+      L.push('Foco do professor: ' + (e.foco || []).join(' · '));
+      L.push('Erros mais comuns: ' + [e.erro].concat(e.erros || []).join(' · '));
+      L.push('Como dificultar: ' + (e.dificultar || []).join(' · '));
       L.push('Funcionou se: ' + e.sucesso);
     });
     L.push('');

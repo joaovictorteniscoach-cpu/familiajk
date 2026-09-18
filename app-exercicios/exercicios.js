@@ -171,7 +171,10 @@ const EX = [
     ['texto',0,7.4,'ao comando, todos congelam',.6]
   ], nota:`Alunos espalhados na quadra; ao comando "estátua!", todos congelam em posição de espera.`},
   passos:[`Espalhe os alunos pela quadra, sem raquete.`, `Deslocamento livre e leve, em qualquer direção.`, `Ao comando “estátua!”, todos congelam na posição de espera.`, `Corrija fisicamente, aluno por aluno, com a turma congelada: joelho, peso, mãos.`, `Solte e repita. Cinco comandos por série.`],
-  dica:`Corrija tocando, não falando. A mão do professor no joelho ensina mais rápido que a explicação.` },
+  dica:`Corrija tocando, não falando. A mão do professor no joelho ensina mais rápido que a explicação.` ,
+  foco:[`Peso na metade da frente do pé`, `Joelhos moles, nunca travados`, `Mãos à frente do corpo`, `Ombros soltos, sem tensão`],
+  erros:[`Congelar com os pés juntos demais`, `Olhar para o chão ao congelar`, `Prender a respiração`, `Postura só quando o professor olha`],
+  dificultar:[`Congelar depois de deslocamento intenso`, `Empurrar o ombro do aluno congelado`, `Congelar de olhos fechados`] },
 
 { id:'D2', nome:'Split à batida', fonte:'apostila',
   tema:['footwork','movimentacao'], camada:1, bloco:'ativacao',
@@ -194,7 +197,10 @@ const EX = [
     ['mov',0,11.2, 1.8,10.0, .12, 'primeiro passo']
   ], nota:`O aluno salta no exato momento do contato do professor e dá o primeiro passo na direção da bola.`},
   passos:[`Aluno na linha de base, em posição de espera.`, `Professor do outro lado simula a batida (sem bola, no começo).`, `O aluno salta o split-step no EXATO momento do contato — nem antes, nem depois.`, `Ao aterrissar, dá o primeiro passo na direção apontada.`, `Depois entra a bola de verdade, mantendo o mesmo tempo.`],
-  dica:`Grite “foto!” no meio do rali: no flash, o aluno tem que estar no ar ou aterrissando.` },
+  dica:`Grite “foto!” no meio do rali: no flash, o aluno tem que estar no ar ou aterrissando.` ,
+  foco:[`Tempo do salto x contato do outro lado`, `Altura do salto: curto é melhor`, `Primeiro passo na direção certa`, `Aterrissagem com joelho mole`],
+  erros:[`Saltar alto demais e demorar a sair`, `Aterrissar com os pés parados`, `Split só na primeira bola da série`, `Olhar a bola e esquecer o corpo do outro`],
+  dificultar:[`Contato real em vez de simulado`, `Split dentro de troca viva`, `Conferir no vídeo quantos caíram no contato`] },
 
 { id:'D3', nome:'Relógio de apoios', fonte:'apostila',
   tema:['footwork'], camada:1, bloco:'tema',
@@ -220,7 +226,10 @@ const EX = [
     ['mov',2.4,7.8, 0.2,9.4, -.1, 'e volta']
   ], nota:`Cones em círculo ao redor do aluno, como horas de um relógio. Ele vai à hora cantada, monta base e volta.`},
   passos:[`Monte 4 a 6 cones em círculo ao redor do aluno, como as horas de um relógio.`, `Cante uma hora em voz alta.`, `O aluno desloca-se até o cone e MONTA a base — aberta ou fechada, conforme a direção.`, `Simula o golpe com transferência de peso.`, `Volta ao centro do relógio e espera a próxima hora.`],
-  dica:`A pergunta certa não é “chegou?”, e sim “chegou com que base?”. Direção diferente pede base diferente.` },
+  dica:`A pergunta certa não é “chegou?”, e sim “chegou com que base?”. Direção diferente pede base diferente.` ,
+  foco:[`Base coerente com a direção`, `Transferência de peso visível`, `Volta ao centro sem arrastar`, `Tronco em pé na chegada`],
+  erros:[`Mesma base para todas as horas`, `Voltar andando, sem urgência`, `Girar o tronco antes de apoiar`, `Parar de olhar o professor`],
+  dificultar:[`Bola lançada depois do comando`, `Duas horas seguidas sem voltar ao centro`, `O aluno escolhe e justifica a base`] },
 
 { id:'D4', nome:'Deslize e congela', fonte:'apostila',
   tema:['footwork'], camada:1, bloco:'tema',
@@ -243,7 +252,10 @@ const EX = [
     ['cone',4.1,10.2,'']
   ], nota:`Corrida lateral com deslize final até a linha, congelando 2 segundos em base estável.`},
   passos:[`Marque duas linhas laterais como referência de chegada.`, `Corrida lateral de uma linha à outra.`, `Na chegada, deslize — o pé de fora trava, o tronco fica em pé.`, `Congele 2 segundos em base estável, sem apoiar a mão no chão.`, `Recupere e repita para o outro lado.`],
-  dica:`No saibro, quem não aprende a frear deslizando freia com o joelho. Este exercício é prevenção, não só técnica.` },
+  dica:`No saibro, quem não aprende a frear deslizando freia com o joelho. Este exercício é prevenção, não só técnica.` ,
+  foco:[`Eixo do corpo na freada`, `Pé de fora travando`, `Dois segundos inteiros de congela`, `Recuperação imediata`],
+  erros:[`Apoiar a mão no chão para frear`, `Deslizar com os dois pés juntos`, `Frear com o joelho em vez do pé`, `Sair antes de completar o congela`],
+  dificultar:[`Deslize seguido de golpe`, `Bola aberta de verdade`, `Deslize nos dois lados, cronometrado`] },
 
 { id:'F01', nome:'Saibro que fala', fonte:'banco',
   tema:['footwork'], camada:1, bloco:'tema',
@@ -268,7 +280,10 @@ const EX = [
     ['mov',0,11.4, 3.2,9.6, .12, '']
   ], nota:`Uma faixa de saibro alisada antes da série: depois das 8 bolas, todos vão ler as marcas dos pés.`},
   passos:[`Alise uma faixa de saibro com o rodo antes de começar.`, `Série de 8 bolas de cesta, sempre para o mesmo lado.`, `Acabou a série, TODOS param e vão olhar as marcas no chão.`, `Não diga o erro: pergunte “o que essas marcas contam?”.`, `Alise de novo e repita, agora com o aluno tentando deixar marca melhor.`],
-  dica:`A marca do pé de apoio muito atrás da linha de contato entrega o aluno que bate com a bola em cima do corpo.` },
+  dica:`A marca do pé de apoio muito atrás da linha de contato entrega o aluno que bate com a bola em cima do corpo.` ,
+  foco:[`Marca do pé de apoio x linha de contato`, `Se o pé de trás arrastou`, `Se a base abriu ou ficou de lado`, `Distância entre as duas marcas`],
+  erros:[`Olhar a marca sem saber o que procurar`, `Alisar o saibro no meio da série`, `Procurar culpa no braço`, `Apagar a marca antes de conferir`],
+  dificultar:[`O aluno lê as próprias marcas`, `O aluno prevê a marca antes de olhar`, `Comparar marcas de bola neutra e de defesa`] },
 
 { id:'F02', nome:'Carga e descarga', fonte:'banco',
   tema:['footwork','forehand','backhand'], camada:1, bloco:'tema',
@@ -290,7 +305,10 @@ const EX = [
     ['texto',0,12.6,'3 séries de 6 por lado',.6]
   ], nota:`Arremesso de medicine ball na direção do golpe: a força tem que sair da perna, não do braço.`},
   passos:[`Aluno em base de golpe, medicine ball leve nas mãos (1 a 3 kg).`, `Carrega o peso na perna de trás.`, `Gira o quadril e arremessa a bola na direção do golpe.`, `Três séries de 6 de cada lado.`, `Logo depois, 6 golpes de cesta buscando a MESMA sensação de empurrão.`],
-  dica:`Se a bola sai fraca, foi arremesso de braço. Peça para o aluno dizer de qual perna saiu a força.` },
+  dica:`Se a bola sai fraca, foi arremesso de braço. Peça para o aluno dizer de qual perna saiu a força.` ,
+  foco:[`De qual perna saiu a força`, `Quadril iniciando o movimento`, `Pés no chão no momento do arremesso`, `Mesma sensação no golpe seguinte`],
+  erros:[`Arremessar de braço, sem descarregar a perna`, `Girar o tronco antes de apoiar`, `Bola pesada demais para a idade`, `Fazer série longa e perder a qualidade`],
+  dificultar:[`Arremesso saindo de deslocamento lateral`, `Base aberta e fechada, comparando`, `Arremesso seguido de bola de cesta`] },
 
 { id:'F03', nome:'Um pé só', fonte:'banco',
   tema:['footwork'], camada:1, bloco:'ativacao',
@@ -313,7 +331,10 @@ const EX = [
     ['marca',1.8,9.8,'aterrissa e congela']
   ], nota:`Equilíbrio em um pé só: parado, em sombra de golpe e aterrissando de um salto lateral.`},
   passos:[`Apoiado em um pé só, 20 segundos parado em posição de golpe.`, `Mesmo apoio, agora com sombra lenta de forehand.`, `Pequeno salto lateral, aterrissando NO MESMO pé, e congela.`, `Troque o lado e repita tudo.`, `No Topo: o congela com olhos fechados, e depois com bola aberta de verdade.`],
-  dica:`O pé de apoio da bola aberta é sempre um só. Quem não se equilibra num pé, não defende bola larga.` },
+  dica:`O pé de apoio da bola aberta é sempre um só. Quem não se equilibra num pé, não defende bola larga.` ,
+  foco:[`Estabilidade vindo do quadril`, `Tempo de apoio sem tocar o outro pé`, `Aterrissagem silenciosa`, `Tronco em pé, sem compensar`],
+  erros:[`Apoiar o outro pé sem perceber`, `Prender a respiração`, `Fazer só o lado bom`],
+  dificultar:[`Congela de olhos fechados`, `Salto lateral mais longo`, `Bola aberta batida em apoio único`] },
 
 { id:'F04', nome:'Passinhos ou passo largo?', fonte:'banco',
   tema:['footwork','movimentacao'], camada:1, bloco:'tema',
@@ -334,7 +355,10 @@ const EX = [
     ['mov',0.4,10.4, 3.0,10.4, .14, 'qual deslocamento?']
   ], nota:`Três distâncias marcadas: passinhos no perto, lateral no médio, passo cruzado no longe.`},
   passos:[`Marque três cones: perto (1 passo), médio (3 passos) e longe (5+ passos).`, `Aponte um cone. O aluno vai até lá com o deslocamento CERTO para a distância.`, `Perto: passinhos de ajuste. Médio: deslocamento lateral. Longe: passo cruzado.`, `Chegando, monta base e volta.`, `Depois a bola entra: ela é lançada no cone apontado.`],
-  dica:`Passo cruzado em bola curta faz o aluno atravessar a bola. Passinho em bola longe faz chegar atrasado. A distância decide.` },
+  dica:`Passo cruzado em bola curta faz o aluno atravessar a bola. Passinho em bola longe faz chegar atrasado. A distância decide.` ,
+  foco:[`Tipo de deslocamento x distância`, `Passinhos aparecendo no perto`, `Passo cruzado só no longe`, `Base montada na chegada`],
+  erros:[`Cruzar os pés em ajuste curto`, `Chegar num passo largo só`, `Escolher o deslocamento depois de já ter saído`, `Chegar rápido e parar sem base`],
+  dificultar:[`Sem nomear o deslocamento`, `Bola no cone apontado`, `Sem cone: a bola decide`] },
 
 { id:'F05', nome:'Corda e ritmo', fonte:'banco',
   tema:['footwork'], camada:1, bloco:'ativacao',
@@ -357,7 +381,10 @@ const EX = [
     ['texto',0,12.4,'3 blocos de 40 segundos',.6]
   ], nota:`Corda de pular: dois pés, pés alternados e o bloco do "split" — abrindo e fechando.`},
   passos:[`Uma corda por aluno. Bloco 1: dois pés, ritmo constante, 40 segundos.`, `Bloco 2: pés alternados, rápido, 40 segundos.`, `Bloco 3: “split” — dois pés abrindo e fechando, como o salto do split-step.`, `20 segundos de pausa entre os blocos.`, `No Construção em diante, o bloco 3 termina com 4 bolas de cesta — perna já cansada.`],
-  dica:`O objetivo é frequência, não altura. Quem pula alto está treinando outra coisa.` },
+  dica:`O objetivo é frequência, não altura. Quem pula alto está treinando outra coisa.` ,
+  foco:[`Frequência, não altura`, `Joelho mole na aterrissagem`, `Ritmo constante dentro do bloco`, `Aterrissagem larga no bloco do split`],
+  erros:[`Pular alto e cansar em 20 segundos`, `Parar a corda e recomeçar sem contar`, `Aterrissar de calcanhar`, `Encolher o bloco 3, que é o que interessa`],
+  dificultar:[`Blocos de 60 segundos`, `Bolas de cesta logo depois do bloco 3`, `Bloco 3 no fim, com fadiga proposital`] },
 
 { id:'F06', nome:'Pisa e sai', fonte:'banco',
   tema:['footwork','movimentacao'], camada:1, bloco:'tema',
@@ -381,7 +408,10 @@ const EX = [
     ['cone',0,12.0,'']
   ], nota:`Bola aberta: o aluno bate em base aberta e volta empurrando o chão com o pé de fora.`},
   passos:[`Um cone na zona de espera. Bola aberta de cesta para um lado.`, `O aluno bate em base aberta.`, `No MESMO movimento, empurra o chão com o pé de fora para voltar.`, `Conte em voz alta no tempo do empurrão: “bateu… e sai!”.`, `No Ascensão, a segunda bola vai para o lado oposto — só chega quem empurrou.`],
-  dica:`O primeiro passo de volta tem que começar antes de a bola cruzar a rede. Quem admira a bola já está atrasado.` },
+  dica:`O primeiro passo de volta tem que começar antes de a bola cruzar a rede. Quem admira a bola já está atrasado.` ,
+  foco:[`Momento em que o primeiro passo de volta começa`, `Empurrão do pé de fora`, `Base aberta no golpe`, `Chegada à zona de espera`],
+  erros:[`Admirar a bola antes de voltar`, `Voltar andando de lado, sem empurrar`, `Bater com o peso ainda indo para fora`, `Voltar olhando para o chão`],
+  dificultar:[`Segunda bola no lado oposto`, `Três bolas alternadas em ritmo de jogo`, `Cone deslocado conforme a bola batida`] },
 
 { id:'F07', nome:'Sombra cantada', fonte:'banco',
   tema:['footwork','forehand','backhand'], camada:1, bloco:'ativacao',
@@ -404,7 +434,10 @@ const EX = [
     ['texto',0,12.8,'split · lado · base · bate · volta',.58]
   ], nota:`Sem bola: o professor canta a sequência e o aluno executa em sombra, acelerando o canto.`},
   passos:[`Aluno com raquete, sem bola, na linha de base.`, `Cante a sequência em voz alta: “split! … direita! … base! … bate! … volta!”.`, `O aluno executa cada comando em sombra.`, `Cinco repetições por lado, depois alternando.`, `Vá acelerando o canto até chegar ao ritmo de jogo.`],
-  dica:`Se o aluno esquecer a volta e ficar parado esperando o próximo comando, você achou o buraco: recomece a série.` },
+  dica:`Se o aluno esquecer a volta e ficar parado esperando o próximo comando, você achou o buraco: recomece a série.` ,
+  foco:[`Sequência completa, sem pular etapa`, `Recuperação depois de cada sombra`, `Base montada antes do gesto`, `Ritmo acompanhando o canto`],
+  erros:[`Pular a volta e esperar parado`, `Fazer a sombra sem montar base`, `Antecipar o comando`, `Perder a sequência quando acelera`],
+  dificultar:[`Canto em ritmo de jogo`, `Comandos aleatórios`, `Erro de sequência recomeça a série`] },
 
 { id:'F08', nome:'Base aberta obrigatória', fonte:'banco',
   tema:['footwork','forehand'], camada:1, bloco:'tema',
@@ -428,7 +461,10 @@ const EX = [
     ['cone',4.9,10.6,'']
   ], nota:`Bola cada vez mais larga: só vale bater em base aberta, com o pé de fora travando.`},
   passos:[`Marque com fita ou cone a linha de onde a bola vem larga.`, `Só vale bater em base aberta: pé de fora travando, quadril abrindo, sem passo de lado.`, `Lance cada vez mais largo, forçando o aluno a abrir.`, `Depois repita a MESMA bola em base fechada, para o aluno comparar.`, `Pergunte o que cada base deu e o que cada uma cobrou.`],
-  dica:`O quadril não pode abrir antes de o pé de fora travar — se abrir, o golpe vira empurrão sem apoio.` },
+  dica:`O quadril não pode abrir antes de o pé de fora travar — se abrir, o golpe vira empurrão sem apoio.` ,
+  foco:[`Pé de fora travando antes do quadril abrir`, `Equilíbrio no fim do golpe`, `Recuperação depois da bola larga`, `Profundidade da bola de base aberta`],
+  erros:[`Tentar base fechada em bola larga`, `Cair para fora depois do golpe`, `Bater forte em vez de alto`],
+  dificultar:[`Bola larga sem aviso`, `Forehand e backhand alternados`, `Regra valendo em troca viva`] },
 
 { id:'F09', nome:'Escada dos apoios', fonte:'banco',
   tema:['footwork','movimentacao'], camada:1, bloco:'ativacao',
@@ -453,7 +489,10 @@ const EX = [
     ['mov',-2.6,7.4, 0.4,7.4, -.1, '3 passinhos']
   ], nota:`A escada nunca termina na escada: termina na base montada, depois de 3 passinhos de ajuste.`},
   passos:[`Posicione a escada terminando numa marca de golpe (cone ou prato).`, `Padrão de escada conforme o nível do aluno.`, `Na saída da escada: split-step.`, `Três passinhos de ajuste até a marca — nunca um passo largo.`, `Monta a base e faz a sombra (ou bate a bola, do Construção em diante).`],
-  dica:`Escada que termina na escada é ginástica. O que liga a escada ao tênis são os três passinhos e a base.` },
+  dica:`Escada que termina na escada é ginástica. O que liga a escada ao tênis são os três passinhos e a base.` ,
+  foco:[`Três passinhos antes da base`, `Split na saída da escada`, `Base estável na marca`, `Pés dentro do padrão da escada`],
+  erros:[`Terminar na escada, sem base`, `Olhar os pés o tempo todo`, `Padrão bonito e chegada desequilibrada`],
+  dificultar:[`Bola real na saída`, `Padrão lateral entra-sai`, `Cronometrar a passagem`] },
 
 { id:'F10', nome:'Duas bolas, um eixo', fonte:'banco',
   tema:['footwork'], camada:1, bloco:'jogo',
@@ -475,7 +514,10 @@ const EX = [
     ['texto',0,6.2,'90 segundos · apita no 1º fora de eixo',.55]
   ], nota:`Troca contínua em ritmo alto: o rali para no primeiro golpe com o tronco caindo para fora.`},
   passos:[`Troca viva com o professor ou parceiro, em ritmo alto, por 90 segundos.`, `Regra única: nenhuma bola pode ser batida com o tronco caindo para fora.`, `Apite no primeiro golpe fora de eixo e anote em que segundo aconteceu.`, `Três séries, com descanso entre elas.`, `O objetivo é aumentar o tempo até o primeiro apito.`],
-  dica:`Repare na ordem: primeiro o tronco cai, depois a bola encurta. O eixo avisa antes do erro aparecer.` },
+  dica:`Repare na ordem: primeiro o tronco cai, depois a bola encurta. O eixo avisa antes do erro aparecer.` ,
+  foco:[`Tronco em pé sob cansaço`, `Segundo em que o eixo cai`, `Split mantido com a perna cansada`, `Profundidade caindo junto com o eixo`],
+  erros:[`Bater de braço quando cansa`, `Encurtar a bola sem perceber`, `Parar a série por conta própria`, `Reclamar do ritmo em vez de ajustar a base`],
+  dificultar:[`120 segundos por série`, `Bolas abertas no fim da série`, `Ponto valendo logo depois`] },
 
 { id:'F11', nome:'Peso na ponta', fonte:'banco',
   tema:['footwork'], camada:1, bloco:'fechamento',
@@ -495,7 +537,10 @@ const EX = [
     ['texto',0,12.6,'10 s no calcanhar · 10 s na ponta',.56]
   ], nota:`Fechamento: alternar o peso entre calcanhar e ponta do pé até o corpo entender a diferença.`},
   passos:[`Em pé, 10 segundos com o peso nos calcanhares.`, `10 segundos com o peso na ponta dos pés.`, `O aluno diz em voz alta o que muda: “de calcanhar eu não saio”.`, `Termina em posição de espera, com três split-steps lentos.`, `Do Construção em diante: pergunte em que momento da aula o peso caiu para o calcanhar.`],
-  dica:`Peso à frente não é tronco curvado para frente. Se o aluno dobrar a coluna, a correção foi entendida errado.` },
+  dica:`Peso à frente não é tronco curvado para frente. Se o aluno dobrar a coluna, a correção foi entendida errado.` ,
+  foco:[`Se o aluno sente a diferença`, `Coluna em pé, não curvada`, `Vocabulário usado na resposta`, `Split-steps lentos no fim`],
+  erros:[`Responder o que o professor quer ouvir`, `Fazer sem prestar atenção`, `Pular o fechamento por falta de tempo`],
+  dificultar:[`O aluno diz em que momento da aula o peso caiu`, `Ligar com a meta da próxima aula`, `O aluno conduz o fechamento do colega`] },
 
 { id:'F12', nome:'Ponto só com split', fonte:'banco',
   tema:['footwork'], camada:1, bloco:'jogo',
@@ -519,7 +564,10 @@ const EX = [
     ['texto',0,6.4,'sem split, o ponto é do adversário',.55]
   ], nota:`Ponto valendo com uma regra só: o ponto só conta para quem fez split-step em todas as bolas.`},
   passos:[`Pontos valendo, quadra normal (reduzida no Base).`, `Regra: o ponto só conta para quem fez split-step em TODAS as bolas daquele ponto.`, `Ganhou o rali mas esqueceu um split? Ponto do adversário.`, `O professor é o juiz e narra em voz alta — vira brincadeira séria.`, `Feche contando quantos pontos foram perdidos por pé parado.`],
-  dica:`É aqui que se descobre o split que existe no exercício e some no ponto valendo. Sem placar, não conta.` },
+  dica:`É aqui que se descobre o split que existe no exercício e some no ponto valendo. Sem placar, não conta.` ,
+  foco:[`Split em todas as bolas do ponto`, `Se o split some sob pressão`, `Reação depois do split`, `Honestidade do aluno na contagem`],
+  erros:[`Split só na primeira bola`, `Fazer split e não sair do lugar`, `Discutir a marcação em vez de corrigir`, `Abandonar a regra no fim do tiebreak`],
+  dificultar:[`Vale também a recuperação ao centro`, `Tiebreak inteiro com a regra`, `O colega vira juiz`] },
 
 { id:'F13', nome:'Câmera nos pés', fonte:'banco',
   tema:['footwork','movimentacao'], camada:1, bloco:'fechamento',
@@ -540,7 +588,10 @@ const EX = [
     ['texto',0,13.0,'30 segundos, do chão à cintura',.58]
   ], nota:`Celular apoiado num cone, filmando só do chão até a cintura: o aluno vê os próprios pés.`},
   passos:[`Apoie o celular num cone, enquadrando do chão até a cintura.`, `Grave 30 segundos de rali.`, `Assistam juntos, em silêncio, uma vez.`, `Na segunda vez, o ALUNO pausa em duas bolas: a melhor base e a pior.`, `Ele diz o que viu. Você só confirma.`],
-  dica:`Enquadre na cintura de propósito. Se o golpe aparecer, a conversa vai para o braço — e o assunto de hoje é o pé.` }
+  dica:`Enquadre na cintura de propósito. Se o golpe aparecer, a conversa vai para o braço — e o assunto de hoje é o pé.` ,
+  foco:[`O que o aluno enxerga sozinho`, `Se ele fala do pé ou do braço`, `Duas bolas escolhidas por ele`, `Ajuste concreto para a próxima aula`],
+  erros:[`Enquadrar o corpo inteiro e virar conversa de golpe`, `Assistir comentando por cima`, `Gravar tempo demais`, `Não guardar o vídeo para comparar`],
+  dificultar:[`O aluno escolhe e justifica as duas bolas`, `Comparar com o vídeo do mês passado`, `Definir a meta do próximo ciclo`] }
 ,
 
 /* ---------- TEMA 2 · PREPARAÇÃO E MOVIMENTAÇÃO (Fev · Ago) -------------- */
@@ -570,7 +621,10 @@ const EX = [
     ['cone',0,12.0,'']
   ], nota:`Sem raquete: o aluno persegue a bola lançada, deixa quicar e pega com a mão, ao lado do corpo.`},
   passos:[`Professor com bolas na mão; aluno em posição de espera.`, `Bola lançada para um lado.`, `O aluno faz split-step, persegue e deixa quicar UMA vez.`, `Pega a bola com a mão na altura do quadril, ao lado do corpo — como se fosse bater.`, `Devolve rolando e recupera ao centro.`],
-  dica:`Sem raquete, o erro de distância fica impossível de esconder: ou o braço estica confortável, ou a bola veio em cima.` },
+  dica:`Sem raquete, o erro de distância fica impossível de esconder: ou o braço estica confortável, ou a bola veio em cima.` ,
+  foco:[`Distância lateral entre bola e corpo`, `Altura da pegada: quadril`, `Equilíbrio no momento de pegar`, `Volta ao centro depois de devolver`],
+  erros:[`Pegar com as duas mãos à frente do peito`, `Deixar quicar duas vezes`, `Esquecer o split antes de sair`],
+  dificultar:[`Pega e arremessa num alvo`, `Duas bolas em sequência rápida`, `Alternar a mão que pega`] },
 
 { id:'D6', nome:'Bateu, voltou', fonte:'apostila',
   tema:['movimentacao'], camada:2, bloco:'tema',
@@ -594,7 +648,10 @@ const EX = [
     ['mov',3.0,9.8, 0.4,11.5, .12, 'bateu, voltou']
   ], nota:`Rally cooperativo em que o aluno precisa tocar o cone da zona de espera antes da bola seguinte.`},
   passos:[`Um cone na zona de espera correta.`, `Rally cooperativo com o professor.`, `Depois de CADA bola, o aluno precisa tocar o cone antes da bola seguinte chegar.`, `Dose o tempo para tornar possível — e depois vá apertando.`, `No Ascensão, o cone muda de lugar conforme a bola batida: entra a bissetriz.`],
-  dica:`Repare se o aluno volta olhando para o chão. Recuperar de cabeça baixa é voltar sem ler a próxima bola.` },
+  dica:`Repare se o aluno volta olhando para o chão. Recuperar de cabeça baixa é voltar sem ler a próxima bola.` ,
+  foco:[`Toque no cone antes da bola seguinte`, `Leitura da próxima bola durante a volta`, `Ritmo do rali se mantendo`, `Posição do cone x direção batida`],
+  erros:[`Tocar o cone com pressa e perder o equilíbrio`, `Parar o rali para tocar o cone`, `Voltar sempre ao mesmo ponto`],
+  dificultar:[`Professor varia o canto`, `Cone muda de lugar conforme a bola`, `Sem cone: só o apito quando errar a espera`] },
 
 { id:'D7', nome:'Escada + sombra', fonte:'apostila',
   tema:['movimentacao','footwork'], camada:2, bloco:'ativacao',
@@ -619,7 +676,10 @@ const EX = [
     ['mov',-2.6,7.4, 0.4,7.4, -.1, 'split + 3 passinhos']
   ], nota:`Escada, split-step na saída, três passinhos de ajuste e sombra de golpe com base montada.`},
   passos:[`Escada de agilidade desembocando numa marca de golpe.`, `Padrão de escada definido pelo nível.`, `Split-step na saída da escada.`, `Três passinhos de ajuste.`, `Sombra de golpe com a base montada na marca.`],
-  dica:`O ajuste fino vem ANTES do gesto. Quem chega num passo largo já bate desequilibrado, por melhor que seja o golpe.` },
+  dica:`O ajuste fino vem ANTES do gesto. Quem chega num passo largo já bate desequilibrado, por melhor que seja o golpe.` ,
+  foco:[`Passinhos de calibração`, `Split na saída`, `Base montada antes da sombra`, `Frequência de pés na escada`],
+  erros:[`Sombra sem base`, `Correr a escada olhando os pés`, `Terminar longe da marca`],
+  dificultar:[`Bola real na saída`, `Bola aleatória nos dois lados`, `Padrão escolhido pelo aluno, cronometrado`] },
 
 { id:'D8', nome:'Curta e funda', fonte:'apostila',
   tema:['movimentacao','rede'], camada:2, bloco:'tema',
@@ -644,7 +704,10 @@ const EX = [
     ['mov',0,9.6, -1.4,11.4, -.1, 'recua na diagonal']
   ], nota:`O professor intercala bola curta e bola profunda: entrar na curta, recuar em diagonal na funda.`},
   passos:[`Rally com o professor, que intercala bola curta e bola profunda.`, `Na curta: o aluno entra na quadra e devolve.`, `Na funda: recua em DIAGONAL, nunca de costas, e defende alto.`, `Sempre recuperando a posição depois.`, `No Impulso, avise em voz alta (“curta!”); do Construção em diante, sem aviso.`],
-  dica:`Recuo de costas para a rede é o erro a matar aqui: quem se vira perde a bola de vista e chega tarde.` },
+  dica:`Recuo de costas para a rede é o erro a matar aqui: quem se vira perde a bola de vista e chega tarde.` ,
+  foco:[`Recuo em diagonal, de frente`, `Entrada na quadra na bola curta`, `Altura da defesa na bola funda`, `Recuperação depois de cada uma`],
+  erros:[`Recuar de costas`, `Ficar atrás esperando a curta quicar`, `Bater forte na bola curta`, `Não recuperar depois de entrar`],
+  dificultar:[`Sem aviso de curta ou funda`, `Permanecer dentro depois da curta`, `Curta, funda e curta em sequência`] },
 
 { id:'D25', nome:'Sai e recompõe', fonte:'apostila',
   tema:['movimentacao','footwork'], camada:2, bloco:'tema',
@@ -670,7 +733,10 @@ const EX = [
     ['mov',4.2,9.4, 0.8,12.0, .14, 'volta na hora']
   ], nota:`Uma fileira de cones marca a linha neutra: o aluno sai, bate já preparado e volta para trás dela.`},
   passos:[`Fileira de cones marcando a linha de base neutra; aluno em espera atrás dela.`, `Professor perto da rede arremessa de mão para FORA da linha dos cones.`, `O aluno faz split-step e desloca-se lateralmente JÁ se preparando: giro de tronco, base, raquete atrás.`, `Bate.`, `Volta imediatamente para trás da linha de cones, em posição de espera.`],
-  dica:`O foco é o deslocamento e a preparação — não o golpe. Se a raquete só for atrás depois do último passo, o exercício não aconteceu.` },
+  dica:`O foco é o deslocamento e a preparação — não o golpe. Se a raquete só for atrás depois do último passo, o exercício não aconteceu.` ,
+  foco:[`Raquete atrás antes do último passo`, `Giro de tronco durante o deslocamento`, `Urgência na volta`, `Espera atrás da linha de cones`],
+  erros:[`Preparar só na chegada`, `Voltar andando`, `Parar em cima dos cones`],
+  dificultar:[`Arremessos mais largos`, `Duas bolas seguidas para o mesmo lado`, `Ritmo máximo, sem pausa`] },
 
 { id:'M01', nome:'Preparação na chegada', fonte:'banco',
   tema:['movimentacao','forehand','backhand'], camada:2, bloco:'tema',
@@ -694,7 +760,10 @@ const EX = [
     ['marca',3.0,9.6,'raquete já atrás']
   ], nota:`Congela no penúltimo passo: quando o pé de apoio toca o chão, a raquete já tem que estar atrás.`},
   passos:[`Um cone a três passos de cada lado do aluno.`, `Bola lançada para o cone.`, `Regra: quando o pé de apoio tocar o chão, a raquete JÁ tem que estar atrás.`, `Congele o aluno no penúltimo passo e confira.`, `Depois libere o golpe completo, mantendo a ordem.`],
-  dica:`Preparação que começa depois de o pé travar vira golpe apressado e bola curta — e o professor corrige o braço à toa.` },
+  dica:`Preparação que começa depois de o pé travar vira golpe apressado e bola curta — e o professor corrige o braço à toa.` ,
+  foco:[`Raquete atrás quando o pé toca o chão`, `Giro de tronco no caminho`, `Tamanho da preparação`, `Equilíbrio no contato`],
+  erros:[`Preparação começando depois do apoio`, `Levar a raquete atrás com o braço só`, `Preparação grande em bola apertada`, `Congelar e perder o tempo da bola`],
+  dificultar:[`Foto sem aviso, em troca viva`, `Bola curta e funda alternadas`, `Sem congelar: só o resultado da bola`] },
 
 { id:'M02', nome:'Bissetriz com cones', fonte:'banco',
   tema:['movimentacao'], camada:2, bloco:'tema',
@@ -716,7 +785,10 @@ const EX = [
     ['mov',2.6,10.6, 0.4,12.1, .12, 'espera aqui']
   ], nota:`Três cones atrás da linha: a espera muda conforme a direção da bola que o aluno acabou de bater.`},
   passos:[`Três cones atrás da linha de base: centro, deslocado à direita, deslocado à esquerda.`, `Troca viva com o professor.`, `Depois de cada bola, o aluno recupera para o cone CERTO — o que corresponde à direção que ele bateu.`, `Bateu cruzado, espera mais de um lado; bateu paralelo, do outro.`, `Explique na primeira; depois só aponte.`],
-  dica:`Voltar sempre ao centro geométrico é o erro do aluno organizado. O centro certo é o meio das respostas possíveis.` },
+  dica:`Voltar sempre ao centro geométrico é o erro do aluno organizado. O centro certo é o meio das respostas possíveis.` ,
+  foco:[`Cone escolhido x direção batida`, `Tempo da recuperação`, `Se a espera é ativa ou parada`, `Justificativa da escolha`],
+  erros:[`Escolher o cone depois da bola do professor`, `Esperar parado, sem split`, `Justificar com 'costume'`],
+  dificultar:[`Três cones, sem aviso`, `Sem cones, espera livre`, `O aluno justifica cada espera em voz alta`] },
 
 { id:'M03', nome:'Três zonas, três tempos', fonte:'banco',
   tema:['movimentacao','rede'], camada:2, bloco:'tema',
@@ -739,7 +811,10 @@ const EX = [
     ['aluno',3.4,11.6,'']
   ], nota:`A própria quadra dividida em três faixas: cada profundidade pede um tamanho de preparação.`},
   passos:[`Divida a SUA quadra em três faixas com fita ou giz: fundo, meia-quadra e rede.`, `Lance bolas que caem em faixas diferentes.`, `O aluno diz a faixa em voz alta ANTES de bater: “fundo!”, “meia!”, “rede!”.`, `E ajusta o tamanho da preparação: grande no fundo, média na meia, curta na rede.`, `Do Ascensão em diante, ele reconhece sozinho e você só cobra quando não combinou.`],
-  dica:`Preparação de fundo de quadra usada na meia-quadra manda a bola longa. O aluno acha que errou o golpe; errou o tamanho.` },
+  dica:`Preparação de fundo de quadra usada na meia-quadra manda a bola longa. O aluno acha que errou o golpe; errou o tamanho.` ,
+  foco:[`Tamanho da preparação x faixa da bola`, `Reconhecimento antes do quique`, `Profundidade do resultado`, `Entrada na quadra na faixa da rede`],
+  erros:[`Anunciar a faixa depois de bater`, `Recuar em bola de meia-quadra`, `Bater forte para compensar a bola curta`],
+  dificultar:[`Aluno reconhece sem anúncio`, `Troca viva sem parar`, `Cobrança só quando não combinou`] },
 
 { id:'M04', nome:'Sombra do adversário', fonte:'banco',
   tema:['movimentacao'], camada:2, bloco:'ativacao',
@@ -761,7 +836,10 @@ const EX = [
     ['texto',0,12.8,'30 segundos e troca',.58]
   ], nota:`Um se desloca livremente, o outro espelha mantendo a distância — sem cruzar os pés.`},
   passos:[`Dois alunos frente a frente (ou aluno e professor).`, `Um comanda: desloca-se livremente para os lados, frente e trás.`, `O outro espelha o movimento, mantendo sempre a mesma distância.`, `Quem espelha não pode cruzar os pés em ajustes curtos.`, `Trocam de função a cada 30 segundos.`],
-  dica:`Serve para aula em dupla e para Kids. É o jeito mais divertido de treinar o olho junto com o pé.` },
+  dica:`Serve para aula em dupla e para Kids. É o jeito mais divertido de treinar o olho junto com o pé.` ,
+  foco:[`Distância mantida entre os dois`, `Pés sem cruzar no ajuste curto`, `Mudança de direção com o corpo baixo`, `Olho no parceiro, não no chão`],
+  erros:[`Perder a distância e virar corrida`, `Antecipar o movimento do outro`, `Fazer devagar demais`],
+  dificultar:[`Ritmo de jogo`, `Com raquete e sombra a cada parada`, `Comandos com mudança de direção`] },
 
 { id:'M05', nome:'Recuo em diagonal', fonte:'banco',
   tema:['movimentacao','backhand'], camada:2, bloco:'tema',
@@ -785,7 +863,10 @@ const EX = [
     ['mov',2.8,13.0, 0.8,10.8, .1, 'e volta']
   ], nota:`Bola profunda e pesada: o aluno recua em diagonal passando pelo cone, de frente para a rede.`},
   passos:[`Um cone 1,5 m atrás da linha de base, em diagonal, para cada lado.`, `Lance bola profunda e pesada.`, `O aluno recua em diagonal passando pelo cone: passo cruzado para trás, de lado, olhando a bola.`, `Bate alto e profundo.`, `Volta à linha. No Topo, emende com uma bola curta na sequência.`],
-  dica:`Quando o aluno se vira de costas para correr, ele perde a bola de vista. Defesa boa é feita de frente.` },
+  dica:`Quando o aluno se vira de costas para correr, ele perde a bola de vista. Defesa boa é feita de frente.` ,
+  foco:[`Recuo em diagonal, de lado`, `Bola de vista o tempo todo`, `Altura e profundidade da defesa`, `Volta à linha depois`],
+  erros:[`Recuar de frente andando para trás`, `Defender baixo e curto`, `Ficar atrás depois de recuperar`],
+  dificultar:[`Os dois lados, sem aviso`, `Bola profunda seguida de curta`, `Ritmo de jogo`] },
 
 { id:'M06', nome:'Quatro cantos com decisão', fonte:'banco',
   tema:['movimentacao'], camada:2, bloco:'jogo',
@@ -809,7 +890,10 @@ const EX = [
     ['mov',-0.2,11.4, -3.8,10.6, -.1, 'sem padrão']
   ], nota:`Quatro cantos úteis, sem padrão: o aluno só sabe para onde vai depois do contato do professor.`},
   passos:[`Quatro cones nos cantos úteis: dois no fundo, dois na meia-quadra.`, `Bata a bola de verdade para qualquer um dos quatro, sem padrão.`, `O aluno chega, bate para um alvo fixo (o cruzado) e recupera.`, `Séries de 8 bolas.`, `45 segundos de descanso entre as séries.`],
-  dica:`Se o aluno começar a sair antes do seu contato, ele está chutando o lado. Mude o padrão no meio da série.` },
+  dica:`Se o aluno começar a sair antes do seu contato, ele está chutando o lado. Mude o padrão no meio da série.` ,
+  foco:[`Saída só depois do contato`, `Qualidade da bola sob deslocamento`, `Recuperação entre bolas`, `Série inteira sem perder a base`],
+  erros:[`Parar no meio da série`, `Bater só para devolver`, `Perder a recuperação no fim da série`],
+  dificultar:[`Quatro cantos aleatórios`, `Bola curta obriga a permanecer dentro`, `Séries mais longas`] },
 
 { id:'M07', nome:'Distância na mão', fonte:'banco',
   tema:['movimentacao'], camada:2, bloco:'tema',
@@ -832,7 +916,10 @@ const EX = [
     ['marca',2.6,9.6,'braço esticado, ao lado']
   ], nota:`Sem raquete: o aluno chega e estica o braço de bater onde a bola deveria ser golpeada.`},
   passos:[`Sem raquete. Professor com bolas na mão.`, `Bola lançada; o aluno chega e estica o braço de bater, mão aberta, onde golpearia.`, `Se a mão pega a bola com o braço confortavelmente esticado, a distância está certa.`, `Se a bola bate no corpo ou passa longe, ajusta com passinhos e repete.`, `Com raquete depois, a referência continua sendo a mão: “onde estaria a mão?”.`],
-  dica:`Chegar em cima da bola é o erro mais invisível do iniciante — e some no dia em que ele sente o braço esticar confortável.` },
+  dica:`Chegar em cima da bola é o erro mais invisível do iniciante — e some no dia em que ele sente o braço esticar confortável.` ,
+  foco:[`Braço esticado confortável`, `Espaço lateral entre bola e corpo`, `Ajuste com passinhos`, `Repetição do mesmo ponto de encontro`],
+  erros:[`Esticar o braço sem chegar com os pés`, `Pegar com a outra mão`, `Dobrar o braço para alcançar`],
+  dificultar:[`Bola em ritmo normal`, `Os dois lados`, `Com raquete, mantendo a referência da mão`] },
 
 { id:'M08', nome:'Duas bolas, uma decisão', fonte:'banco',
   tema:['movimentacao','forehand','backhand'], camada:2, bloco:'tema',
@@ -853,7 +940,10 @@ const EX = [
     ['aluno',0,11.6,'']
   ], nota:`O professor mostra as duas bolas e lança uma sem sinalizar: a decisão é no meio do deslocamento.`},
   passos:[`Professor com duas bolas nas mãos, uma de cada lado.`, `Mostra as duas e lança UMA, já em movimento, sem sinalizar qual lado.`, `O aluno não pode se preparar antes do lançamento.`, `Bate e recupera.`, `Variante: grite o alvo no ar (“cruzado!”) com o aluno já deslocando.`],
-  dica:`Quem prepara antes de saber o lado está chutando — e o corpo trava quando a bola vai para o outro.` },
+  dica:`Quem prepara antes de saber o lado está chutando — e o corpo trava quando a bola vai para o outro.` ,
+  foco:[`Preparação só depois de saber o lado`, `Decisão no meio do deslocamento`, `Equilíbrio na chegada`, `Direção pedida cumprida`],
+  erros:[`Preparar antes do lançamento`, `Travar o corpo quando erra o palpite`, `Olhar a mão do professor e não a bola`, `Escolher sempre o lado bom`],
+  dificultar:[`Alvo gritado no ar`, `Direção avisada no último passo`, `Duas bolas em sequência`] },
 
 { id:'M09', nome:'Elástico que puxa de volta', fonte:'banco',
   tema:['movimentacao','footwork'], camada:2, bloco:'ativacao',
@@ -875,7 +965,10 @@ const EX = [
     ['texto',0,12.8,'elástico preso no poste da rede',.56]
   ], nota:`Elástico preso no poste e na cintura: o deslocamento é contra a resistência, a volta vem com ela.`},
   passos:[`Prenda o elástico no poste da rede (ou na cintura de um parceiro) e na cintura do aluno.`, `Ele desloca-se lateralmente CONTRA a resistência.`, `Monta base e faz a sombra de golpe.`, `Deixa o elástico trazê-lo de volta — sem resistir à volta.`, `Séries de 30 segundos por lado.`],
-  dica:`Cuidado para o elástico não comandar o tronco: se o aluno volta inclinado para trás, alivie a resistência.` },
+  dica:`Cuidado para o elástico não comandar o tronco: se o aluno volta inclinado para trás, alivie a resistência.` ,
+  foco:[`Tronco em pé na volta`, `Base montada em cada parada`, `Resistência adequada ao aluno`, `Volta sem resistir ao elástico`],
+  erros:[`Resistência pesada demais`, `Deslocamento curto demais`, `Perder a postura no fim da série`],
+  dificultar:[`Resistência média com sombra completa`, `Bola real no fim do deslocamento`, `Séries mais longas`] },
 
 { id:'M10', nome:'Corredor do cansaço', fonte:'banco',
   tema:['movimentacao'], camada:2, bloco:'jogo',
@@ -899,7 +992,10 @@ const EX = [
     ['texto',0,13.2,'2 min + 4 bolas de cesta no fim',.55]
   ], nota:`Bolas alternadas com intensidade crescente por 2 minutos — e 4 bolas de cesta com a perna cansada.`},
   passos:[`Alimente bolas alternadas com intensidade crescente por 2 minutos.`, `No primeiro minuto o aluno só troca.`, `No segundo, abra mais as bolas.`, `Ao final, 4 bolas de cesta para ele bater CANSADO, com base cobrada.`, `Duas rodadas. No Topo, emende um ponto valendo logo depois.`],
-  dica:`É no cansaço que o split some e o braço assume. As 4 bolas do fim valem mais que as 50 do começo.` },
+  dica:`É no cansaço que o split some e o braço assume. As 4 bolas do fim valem mais que as 50 do começo.` ,
+  foco:[`Split mantido no cansaço`, `Base nas 4 bolas finais`, `Profundidade caindo ou não`, `Recuperação nos últimos 30 segundos`],
+  erros:[`Bater de braço quando cansa`, `Encurtar a bola sem perceber`, `Pedir para parar antes do tempo`, `Fazer as bolas finais sem critério`],
+  dificultar:[`Dois minutos com bolas mais abertas`, `Ponto valendo logo depois`, `Duas rodadas seguidas`] },
 
 { id:'M11', nome:'O que seus pés aprenderam?', fonte:'banco',
   tema:['movimentacao','footwork'], camada:2, bloco:'fechamento',
@@ -921,7 +1017,10 @@ const EX = [
     ['texto',0,5.6,'“o que seus pés aprenderam hoje?”',.58]
   ], nota:`Fechamento junto à rede: uma pergunta, uma frase de resposta, e o alongamento leve durante a conversa.`},
   passos:[`Os dois em pé, perto da rede.`, `Pergunta única: “o que seus pés aprenderam hoje?”.`, `O aluno responde em UMA frase. Espere o silêncio — não responda por ele.`, `Você conecta com a próxima aula, também em uma frase.`, `Alongamento leve de panturrilha, adutores e quadril durante a conversa.`],
-  dica:`Do Impulso em diante, exija uma palavra da Pirâmide na resposta. É assim que o vocabulário do método gruda.` }
+  dica:`Do Impulso em diante, exija uma palavra da Pirâmide na resposta. É assim que o vocabulário do método gruda.` ,
+  foco:[`Se a resposta sai sem ajuda`, `Vocabulário da Pirâmide`, `Clareza em uma frase só`, `Alongamento feito de verdade`],
+  erros:[`Resposta genérica`, `Pular o alongamento`, `Fechar correndo por causa do horário`],
+  dificultar:[`Exigir uma palavra da Pirâmide`, `O aluno diz o que vai treinar sozinho`, `O aluno propõe a pauta da próxima aula`] }
 ,
 
 /* ---------- TEMA 3 · FOREHAND E VARIAÇÕES (Mar · Set) ------------------- */
@@ -949,7 +1048,10 @@ const EX = [
     ['bola',-3.0,6.0, 1.8,8.6, .2, '']
   ], nota:`O gesto decomposto de baixo pra cima: apoio, quadril, tronco, braço, contato à frente.`},
   passos:[`Sem bola primeiro. Decomponha o gesto de baixo pra cima.`, `Apoio e carga na perna → giro de quadril → tronco → braço solto → contato à frente → terminação.`, `TOQUE o segmento que deve iniciar o movimento: “começa daqui”.`, `O aluno repete em câmera lenta antes de acelerar.`, `Só então entra a bola facilitada de cesta, mantendo a mesma ordem.`],
-  dica:`Braço que parte antes do quadril é o erro clássico. Olhe de lado, não de frente — de frente não dá para ver.` },
+  dica:`Braço que parte antes do quadril é o erro clássico. Olhe de lado, não de frente — de frente não dá para ver.` ,
+  foco:[`Ordem da cadeia: perna, quadril, tronco, braço`, `Contato à frente do corpo`, `Braço solto, sem travar o cotovelo`, `Terminação completa`],
+  erros:[`Decompor e nunca juntar de novo`, `Acelerar antes de a ordem estar certa`, `Corrigir dois elos ao mesmo tempo`],
+  dificultar:[`Bola de cesta em ritmo de jogo`, `Correção fina de um elo por ciclo`, `Conferir no vídeo antes e depois`] },
 
 { id:'D14', nome:'Alvo grande, alvo pequeno', fonte:'apostila',
   tema:['forehand','backhand','saque'], camada:4, bloco:'tema',
@@ -974,7 +1076,10 @@ const EX = [
     ['prof',1.0,-11.4,'']
   ], nota:`Alvos na quadra, grandes primeiro: o alvo só encolhe quando caírem 7 de 10 no grande.`},
   passos:[`Monte alvos na quadra — bambolês, cones ou zonas de giz. Grandes primeiro.`, `Séries de 10 bolas por golpe, mirando o alvo.`, `Conte os acertos em voz alta.`, `O alvo só encolhe quando 7 de 10 caírem no grande.`, `Do Ascensão em diante, some uma altura mínima sobre a rede (corda).`],
-  dica:`Quando o aluno erra, ele acelera. A resposta certa é a oposta: desacelerar e mirar. Diga isso antes de acontecer.` },
+  dica:`Quando o aluno erra, ele acelera. A resposta certa é a oposta: desacelerar e mirar. Diga isso antes de acontecer.` ,
+  foco:[`Trajetória sobre a rede`, `Direção antes de força`, `Contagem em voz alta`, `Reação depois do erro`],
+  erros:[`Acelerar quando erra`, `Mirar o alvo e esquecer a profundidade`, `Reduzir o alvo cedo demais`, `Contar só os acertos bons`],
+  dificultar:[`Alvo menor, depois de 7 de 10`, `Altura mínima com corda`, `Alvo anunciado antes de cada bola`] },
 
 { id:'FH1', nome:'Cruzado é a casa', fonte:'banco',
   tema:['forehand'], camada:4, bloco:'tema',
@@ -999,7 +1104,10 @@ const EX = [
     ['corda','corda a 1 m']
   ], nota:`Só forehand cruzado, dentro do corredor e por cima da corda: a bola mais segura do tênis.`},
   passos:[`Marque um corredor cruzado com fita ou 4 cones na quadra de destino.`, `Corda a 1 m sobre a rede (opcional, mas muda o exercício).`, `Só forehand cruzado, por cima da corda, dentro do corredor.`, `Séries de 10: conte as que caem dentro E passaram acima da corda.`, `Trajetória alta e profunda vale mais que bola rápida e rasteira.`],
-  dica:`Se sair paralelo por acidente, a base chegou fechada demais. O erro está no pé, não na mira.` },
+  dica:`Se sair paralelo por acidente, a base chegou fechada demais. O erro está no pé, não na mira.` ,
+  foco:[`Altura sobre a rede`, `Profundidade dentro do corredor`, `Base na chegada`, `Regularidade da trajetória`],
+  erros:[`Bola rasteira e rápida em vez de alta e profunda`, `Chegar fechado demais`, `Contar bola fora do corredor`],
+  dificultar:[`Corredor mais estreito`, `Ritmo de jogo`, `Três alturas diferentes a pedido`] },
 
 { id:'FH2', nome:'Inside-out do lado do backhand', fonte:'banco',
   tema:['forehand'], camada:4, bloco:'tema',
@@ -1022,7 +1130,10 @@ const EX = [
     ['bola',-2.4,10.6, 3.2,-9.2, .14, '']
   ], nota:`Bola no meio: o aluno contorna com passo lateral e manda forehand inside-out no canto do backhand.`},
   passos:[`Alvo grande no canto do backhand do adversário.`, `Bola lançada no meio ou na metade do backhand do aluno.`, `Ele CONTORNA a bola com passo lateral — nunca correndo de lado sem se posicionar.`, `Bate de forehand em base aberta, inside-out, no alvo.`, `Recupera imediatamente: acabou de abandonar meia quadra.`],
-  dica:`Contornar e chegar tarde é pior que bater de backhand. Se a bola já estiver caindo, era backhand mesmo.` },
+  dica:`Contornar e chegar tarde é pior que bater de backhand. Se a bola já estiver caindo, era backhand mesmo.` ,
+  foco:[`Passo lateral para contornar`, `Tempo: bater antes de a bola cair`, `Recuperação depois do inside-out`, `Direção no alvo do backhand`],
+  erros:[`Correr de lado sem se posicionar`, `Esquecer de recuperar`, `Contornar bola que já era backhand`],
+  dificultar:[`Bola na metade do backhand, sem aviso`, `Recuperação cobrada`, `Regra valendo em ponto`] },
 
 { id:'FH3', nome:'Três alturas de forehand', fonte:'banco',
   tema:['forehand'], camada:4, bloco:'tema',
@@ -1045,7 +1156,10 @@ const EX = [
     ['bola',3.0,10.8, -3.2,-5.0, .02, 'rasante: ataque']
   ], nota:`Três séries, três alturas sobre a rede: bola de defesa, bola neutra e bola de ataque.`},
   passos:[`Corda ou elástico a 1,5 m sobre a rede.`, `Série 1: bem acima da corda, alta e profunda — bola de defesa.`, `Série 2: logo acima da corda — bola neutra.`, `Série 3: rasante, quase raspando — bola de ataque.`, `O aluno NOMEIA a bola antes de bater. 8 bolas por série.`],
-  dica:`Altura se muda pela trajetória do movimento, não abrindo a face da raquete. Face aberta é remendo, não técnica.` },
+  dica:`Altura se muda pela trajetória do movimento, não abrindo a face da raquete. Face aberta é remendo, não técnica.` ,
+  foco:[`Altura escolhida x bola recebida`, `Trajetória do movimento, não da face`, `Profundidade em cada altura`, `Nome da bola dito antes`],
+  erros:[`Bola alta sem profundidade`, `Rasante fora de hora`, `Anunciar uma altura e bater outra`],
+  dificultar:[`Três alturas a pedido`, `Aluno escolhe e justifica`, `Em troca viva`] },
 
 { id:'FH4', nome:'Topspin de baixo pra cima', fonte:'banco',
   tema:['forehand','backhand'], camada:4, bloco:'tema',
@@ -1068,7 +1182,10 @@ const EX = [
     ['cone',-3.6,-0.4,'']
   ], nota:`O aluno tenta fazer a bola SUBIR muito e cair dentro: a escovada vem de baixo para cima.`},
   passos:[`Cesta, corda alta sobre a rede, um cone no canto profundo como alvo.`, `O aluno bate 10 bolas tentando fazer a bola SUBIR muito e cair dentro.`, `Observe só o caminho da raquete: entra embaixo da bola e termina alto, do lado oposto.`, `Peça para ele OUVIR o som da escovada.`, `Do Ascensão em diante: em troca viva, toda bola acima da corda.`],
-  dica:`Giro de punho no fim dá efeito sem peso: a bola gira, mas morre no meio da quadra. A escovada é do corpo inteiro.` },
+  dica:`Giro de punho no fim dá efeito sem peso: a bola gira, mas morre no meio da quadra. A escovada é do corpo inteiro.` ,
+  foco:[`Caminho da raquete: de baixo para cima`, `Som da escovada`, `Altura sobre a corda`, `Quique alto do outro lado`],
+  erros:[`Levantar o corpo antes do contato`, `Escovar sem terminar o movimento`, `Terminar o movimento cedo, sem passar do ombro`, `Levantar o corpo antes do contato`],
+  dificultar:[`Alvo profundo obrigatório`, `Troca viva com toda bola acima da corda`, `Efeito com deslocamento`] },
 
 { id:'FH5', nome:'Bola alta de forehand', fonte:'banco',
   tema:['forehand'], camada:4, bloco:'tema',
@@ -1091,7 +1208,10 @@ const EX = [
     ['mov',3.4,9.8, 3.2,7.2, 0, '2. sobe no quique']
   ], nota:`Bola na altura do ombro: recuar e bater na descida, subir no quique ou bloquear quando não dá tempo.`},
   passos:[`Cesta lançando bolas altas e pesadas na metade do forehand.`, `Solução 1 (série de 6): recuar e bater na descida, alto e profundo.`, `Solução 2: subir e bater no alto do quique, à frente.`, `Solução 3: devolver de bloqueio, curto e com efeito, quando não der tempo.`, `O aluno diz qual usou e por quê.`],
-  dica:`Bater na altura do ombro com base fechada e braço travado manda a bola na rede. Sem base aberta, não existe bola alta.` },
+  dica:`Bater na altura do ombro com base fechada e braço travado manda a bola na rede. Sem base aberta, não existe bola alta.` ,
+  foco:[`Solução escolhida x bola recebida`, `Base aberta na bola alta`, `Ponto de contato`, `Profundidade do resultado`],
+  erros:[`Recuar demais e devolver curto`, `Tentar definir bola alta`, `Deixar a bola cair no pé`],
+  dificultar:[`Duas soluções a pedido`, `Três soluções, aluno escolhe`, `Em troca viva`] },
 
 { id:'FH6', nome:'Deixadinha honesta', fonte:'banco',
   tema:['forehand','backhand','rede'], camada:4, bloco:'tema',
@@ -1112,7 +1232,10 @@ const EX = [
     ['marca',1.4,9.0,'bola na cintura ou acima']
   ], nota:`Só vale tentar a deixadinha DENTRO da quadra e com a bola na cintura ou acima.`},
   passos:[`Marque com fita a área válida: dentro do quadrado de saque, perto da rede.`, `Regra de ouro: só vale tentar se o aluno estiver DENTRO da quadra e com a bola na cintura ou acima.`, `Série de 8 tentativas em bolas que cumprem o critério.`, `Depois, 8 tentativas em bolas que NÃO cumprem.`, `Compare os percentuais com o aluno. O número convence mais que o sermão.`],
-  dica:`Deixadinha de trás da linha de base é a jogada que dá o ponto ao adversário. O critério não é gosto, é posição.` },
+  dica:`Deixadinha de trás da linha de base é a jogada que dá o ponto ao adversário. O critério não é gosto, é posição.` ,
+  foco:[`Posição do aluno no momento da tentativa`, `Altura da bola: cintura ou acima`, `Qualidade do toque`, `O que faz depois da deixadinha`],
+  erros:[`Tentar com bola baixa`, `Ficar parado admirando`, `Repetir a jogada no mesmo ponto`],
+  dificultar:[`Só bolas que cumprem o critério`, `Deixadinha seguida de subida`, `Em ponto valendo`] },
 
 { id:'FH7', nome:'Passada cruzada e paralela', fonte:'banco',
   tema:['forehand','backhand','rede'], camada:4, bloco:'tema',
@@ -1134,7 +1257,10 @@ const EX = [
     ['bola',2.0,10.8, -2.6,-10.6, .34, 'lob']
   ], nota:`Três saídas contra quem está na rede: paralela, cruzada e por cima — a posição dele decide qual.`},
   passos:[`O professor sobe à rede em posições diferentes: colado à faixa, aberto, atrasado.`, `Voleador aberto ou colado à faixa → passada PARALELA.`, `Voleador no meio → passada CRUZADA.`, `Voleador muito perto da rede → LOB por cima.`, `Séries de 6 por situação. No Topo, mude de posição no último instante.`],
-  dica:`Acelerar demais é o erro. Bola baixa, no pé do voleador, vale mais que bola forte e fora.` },
+  dica:`Acelerar demais é o erro. Bola baixa, no pé do voleador, vale mais que bola forte e fora.` ,
+  foco:[`Escolha da passada x posição do voleador`, `Altura da bola de passada`, `Decisão tardia`, `Equilíbrio na execução`],
+  erros:[`Escolher sempre a mesma passada`, `Passar alto no voleador colado`, `Decidir antes de ver a posição dele`],
+  dificultar:[`Voleador muda de posição no último instante`, `Séries alternando as três saídas`, `Em ponto valendo`] },
 
 { id:'FH8', nome:'Forehand de corrida', fonte:'banco',
   tema:['forehand','movimentacao'], camada:4, bloco:'tema',
@@ -1158,7 +1284,10 @@ const EX = [
     ['cone',5.3,10.8,'']
   ], nota:`Bola larga, correndo: chega em base aberta, devolve ALTA e CRUZADA — e recupera.`},
   passos:[`Cesta lançando bolas largas para o lado do forehand.`, `O aluno corre e chega em base aberta.`, `Bate ALTO e CRUZADO — a bola de defesa. Nada de tentar definir da defesa.`, `Recupera a posição.`, `Séries de 6 por lado. No Topo, emende uma segunda bola no lado oposto.`],
-  dica:`Acelerar ou cruzar rasteiro na defesa dá erro ou bola curta — e devolve a iniciativa que o aluno estava tentando salvar.` },
+  dica:`Acelerar ou cruzar rasteiro na defesa dá erro ou bola curta — e devolve a iniciativa que o aluno estava tentando salvar.` ,
+  foco:[`Base aberta na corrida`, `Altura e direção da defesa`, `Recuperação depois`, `Profundidade da bola de defesa`],
+  erros:[`Tentar definir da defesa`, `Chegar e parar`, `Bater com o corpo ainda indo para fora`],
+  dificultar:[`Bola mais apertada`, `Recuperação cobrada`, `Segunda bola no lado oposto`] },
 
 { id:'FH9', nome:'Sem backhand', fonte:'banco',
   tema:['forehand'], camada:4, bloco:'jogo',
@@ -1181,7 +1310,10 @@ const EX = [
     ['zona',2.6,-9.0,3.4,4.0,'']
   ], nota:`Ponto valendo: toda bola alcançável de forehand DEVE ser batida de forehand, inclusive contornando.`},
   passos:[`Pontos valendo, quadra normal.`, `Regra: toda bola que o aluno puder alcançar de forehand DEVE ser batida de forehand.`, `Inclui contornar a bola do meio.`, `Bola batida de backhand por comodidade é ponto perdido.`, `Dois tiebreaks.`],
-  dica:`Ele vai virar alvo fácil no lado aberto — e é exatamente aí que aprende o custo do padrão. Deixe acontecer.` },
+  dica:`Ele vai virar alvo fácil no lado aberto — e é exatamente aí que aprende o custo do padrão. Deixe acontecer.` ,
+  foco:[`Contorno quando a bola permite`, `Custo do lado aberto`, `Recuperação depois de contornar`, `Qualidade do forehand sob a regra`],
+  erros:[`Contornar bola apertada`, `Esquecer a recuperação`, `Reclamar da regra em vez de ajustar`, `Bater de backhand por comodidade`],
+  dificultar:[`Toda bola alcançável`, `Adversário explorando o lado aberto`, `Set inteiro com a regra`] },
 
 { id:'FH10', nome:'Cinco bolas e define', fonte:'banco',
   tema:['forehand','backhand'], camada:4, bloco:'jogo',
@@ -1203,7 +1335,10 @@ const EX = [
     ['texto',0,3.0,'5 bolas cruzadas antes de definir',.6]
   ], nota:`O rali só libera a definição depois de 5 bolas cruzadas: quem acelerar antes, perde o ponto.`},
   passos:[`Rali começando cruzado, com o professor ou um parceiro.`, `A definição só libera depois de 5 bolas cruzadas.`, `Quem acelerar antes perde o ponto, mesmo que a bola caia dentro.`, `Da sexta bola em diante, vale tudo.`, `No Topo, a definição só vale se vier de dentro da quadra.`],
-  dica:`Acelerar na terceira bola por ansiedade é o erro mais caro do tênis amador. Aqui ele custa o ponto na hora.` },
+  dica:`Acelerar na terceira bola por ansiedade é o erro mais caro do tênis amador. Aqui ele custa o ponto na hora.` ,
+  foco:[`Paciência até a quinta bola`, `Qualidade das bolas de construção`, `Escolha do momento de definir`, `Profundidade durante a espera`],
+  erros:[`Bater sem intenção nas bolas de espera`, `Definir de trás da linha`, `Perder o controle da contagem`],
+  dificultar:[`Cinco bolas antes de liberar`, `Definição só de dentro da quadra`, `Em set valendo`] },
 
 { id:'FH11', nome:'Contato à frente com cone', fonte:'banco',
   tema:['forehand'], camada:4, bloco:'ativacao',
@@ -1225,7 +1360,10 @@ const EX = [
     ['bola',-3.6,5.6, 2.2,9.2, .2, '']
   ], nota:`Um cone à frente do pé da frente marca a linha do contato: bater atrás dele não conta.`},
   passos:[`Coloque um cone pequeno à frente do pé da frente, na linha onde o contato deveria acontecer.`, `Bolas facilitadas.`, `Regra: a bola tem que ser golpeada na altura do cone ou À FRENTE dele.`, `Contato atrás do cone não conta.`, `O aluno olha o cone entre as bolas — a referência é visual, não verbal.`],
-  dica:`Contato atrás quase nunca é problema de braço: é chegada atrasada. Se repetir, volte para o bloco de pés.` },
+  dica:`Contato atrás quase nunca é problema de braço: é chegada atrasada. Se repetir, volte para o bloco de pés.` ,
+  foco:[`Contato na altura do cone ou à frente`, `Chegada antes do contato`, `Equilíbrio no golpe`, `Olhar o cone entre as bolas`],
+  erros:[`Bater atrás do cone e contar`, `Olhar o cone durante o golpe`, `Corrigir o braço em vez do pé`],
+  dificultar:[`Bola em ritmo normal`, `Troca viva com o cone de referência`, `Cone mais à frente`] },
 
 { id:'FH12', nome:'Aceleração escalonada', fonte:'banco',
   tema:['forehand','backhand'], camada:4, bloco:'tema',
@@ -1247,7 +1385,10 @@ const EX = [
     ['texto',0,13.4,'60% · 75% · 90% · 100%',.6]
   ], nota:`Quatro séries de 10 em percentuais diferentes de força, contando acertos: onde o rendimento cai?`},
   passos:[`Quatro séries de 10 forehands: a 60%, 75%, 90% e 100% da força.`, `Conte os acertos de cada série.`, `No fim, mostre ao aluno em que percentual o rendimento caiu.`, `Quase sempre é entre 85% e 90%.`, `Esse número passa a ser a referência de jogo dele.`],
-  dica:`100% de força não é 100% de aceleração de raquete. A diferença está em onde a energia entra na bola.` },
+  dica:`100% de força não é 100% de aceleração de raquete. A diferença está em onde a energia entra na bola.` ,
+  foco:[`Percentual em que o rendimento cai`, `Diferença entre força e aceleração`, `Qualidade da bola em cada série`, `Honestidade na contagem`],
+  erros:[`Bater 100% o tempo todo`, `Mudar o alvo entre séries`, `Parar a série quando erra`],
+  dificultar:[`Séries em troca viva`, `Aluno conta sozinho`, `Aplicar o percentual em ponto valendo`] },
 
 { id:'FH13', nome:'Mão de fora, mão de dentro', fonte:'banco',
   tema:['forehand'], camada:4, bloco:'ativacao',
@@ -1269,7 +1410,10 @@ const EX = [
     ['marca',1.4,3.6,'mão livre aponta a bola']
   ], nota:`A mão livre aponta a bola que vem e recolhe junto ao peito no contato: é ela que gira o tronco.`},
   passos:[`Bola adaptada e quadra reduzida, ou cesta facilitada.`, `Série 1: a mão livre aponta a bola que vem e recolhe junto ao peito no contato.`, `Série 2: o aluno bate SEM usar a mão livre, braço colado ao corpo.`, `Ele sente sozinho a diferença de equilíbrio.`, `Volta para a série 1.`],
-  dica:`Mão livre caída ao lado do corpo é tronco que parou de girar — e aí o golpe vira braçada, por mais que se corrija o braço.` }
+  dica:`Mão livre caída ao lado do corpo é tronco que parou de girar — e aí o golpe vira braçada, por mais que se corrija o braço.` ,
+  foco:[`Mão livre apontando a bola`, `Recolhimento junto ao peito`, `Giro de tronco acompanhando`, `Equilíbrio nos dois casos`],
+  erros:[`Apontar e esquecer de recolher`, `Braço colado no corpo o tempo todo`, `Fazer só na primeira série`],
+  dificultar:[`Giro de tronco visível cobrado`, `Bola em ritmo normal`, `Manter em troca viva`] }
 ,
 
 /* ---------- TEMA 4 · BACKHAND E VARIAÇÕES (Abr · Out) ------------------- */
@@ -1294,7 +1438,10 @@ const EX = [
     ['cone',-2.0,9.8,'contato aqui']
   ], nota:`Backhand de duas mãos: tronco e braços giram como um bloco só, cotovelos na mesma distância do peito.`},
   passos:[`Bola adaptada ou cesta facilitada; cone marcando o contato à frente.`, `Séries de 10 backhands cruzados.`, `A referência é o giro do TRONCO levando os braços — não os braços puxando.`, `Peça para manter os cotovelos na mesma distância do peito, do começo ao fim.`, `Cobre profundidade: a bola tem que cair depois da linha de saque.`],
-  dica:`Braço de baixo esticando sozinho abre o golpe e tira o controle. Olhe os cotovelos, não a raquete.` },
+  dica:`Braço de baixo esticando sozinho abre o golpe e tira o controle. Olhe os cotovelos, não a raquete.` ,
+  foco:[`Giro do tronco levando os braços`, `Cotovelos à mesma distância do peito`, `Contato à frente`, `Profundidade do resultado`],
+  erros:[`Bater só com os braços`, `Contato ao lado do quadril`, `Perder a base em bola em movimento`],
+  dificultar:[`Bola em ritmo, cruzado profundo`, `Troca viva com profundidade cobrada`, `Alvo obrigatório`] },
 
 { id:'BH2', nome:'Slice que desliza', fonte:'banco',
   tema:['backhand'], camada:4, bloco:'tema',
@@ -1316,7 +1463,10 @@ const EX = [
     ['prof',1.0,-11.2,'']
   ], nota:`Slice de backhand: a bola tem que quicar BAIXO e escorregar, dentro da faixa profunda.`},
   passos:[`Cesta; fita marcando os últimos 2 m da quadra como alvo.`, `Raquete entrando de cima para baixo e para frente, face levemente aberta.`, `Contato ao lado e à frente, terminação longa em direção ao alvo.`, `Séries de 8: a bola tem que quicar BAIXO e escorregar.`, `Confira pelo QUIQUE, não pelo gesto.`],
-  dica:`Cortar só para baixo faz a bola subir e flutuar — vira presente. O slice vai para baixo E para frente.` },
+  dica:`Cortar só para baixo faz a bola subir e flutuar — vira presente. O slice vai para baixo E para frente.` ,
+  foco:[`Quique baixo do outro lado`, `Profundidade na faixa final`, `Terminação longa para frente`, `Face levemente aberta, não virada`],
+  erros:[`Slice curto no meio da quadra`, `Usar slice por preguiça de girar`, `Slice com o corpo de frente, sem giro`, `Soltar a mão de apoio cedo demais`],
+  dificultar:[`Slice em deslocamento`, `Slice como troca de ritmo em jogo`, `Slice curto e angulado para subir`] },
 
 { id:'BH3', nome:'Backhand alto sem medo', fonte:'banco',
   tema:['backhand'], camada:4, bloco:'tema',
@@ -1339,7 +1489,10 @@ const EX = [
     ['mov',-3.4,10.0, -3.2,7.4, 0, '2. slice de bloqueio']
   ], nota:`Bola alta no backhand: recuar e bater na descida, slice de bloqueio, ou subir no quique se a bola for lenta.`},
   passos:[`Cesta lançando bolas altas e pesadas no lado do backhand.`, `Solução 1 (série de 6): recuar e bater na descida, cruzado e alto.`, `Solução 2: slice de bloqueio, baixo e profundo, para ganhar tempo.`, `Solução 3: subir no quique e bater à frente, quando a bola for lenta.`, `O aluno ANUNCIA qual vai usar antes da bola chegar.`],
-  dica:`Bater de frente para a rede, sem giro de tronco, tira toda a profundidade — e o próximo ponto já começa perdido.` },
+  dica:`Bater de frente para a rede, sem giro de tronco, tira toda a profundidade — e o próximo ponto já começa perdido.` ,
+  foco:[`Solução escolhida x bola recebida`, `Giro de tronco na bola alta`, `Profundidade do resultado`, `Recuperação depois`],
+  erros:[`Deixar a bola subir acima do ombro sem recuar`, `Devolver curto e ficar atrás`, `Usar sempre a mesma solução`],
+  dificultar:[`Três soluções a pedido`, `Aluno escolhe em troca viva`, `Bola mais pesada`] },
 
 { id:'BH4', nome:'Backhand que ataca', fonte:'banco',
   tema:['backhand'], camada:4, bloco:'tema',
@@ -1361,7 +1514,10 @@ const EX = [
     ['zona',-3.4,-8.0,2.8,4.0,'alvo paralelo']
   ], nota:`Toda bola que quicar antes da linha de saque tem que ser atacada de backhand, com entrada na quadra.`},
   passos:[`Cesta lançando bolas curtas e médias no backhand.`, `Alvo grande no paralelo.`, `Toda bola que quicar antes da linha de saque DEVE ser atacada.`, `Com entrada na quadra e bola profunda no alvo.`, `Errar atacando vale mais que acertar devolvendo de trás — diga isso em voz alta.`],
-  dica:`Atacar sem entrar manda a bola longa. Se a bola sair, olhe onde estava o pé de apoio antes de corrigir o golpe.` },
+  dica:`Atacar sem entrar manda a bola longa. Se a bola sair, olhe onde estava o pé de apoio antes de corrigir o golpe.` ,
+  foco:[`Pé de apoio dentro da quadra`, `Reconhecimento da bola curta`, `Profundidade do ataque`, `O que faz depois de atacar`],
+  erros:[`Bater forte de trás da linha`, `Reconhecer tarde`, `Atacar e voltar para o fundo`],
+  dificultar:[`Bola curta sutil`, `Subida obrigatória depois`, `Em ponto valendo`] },
 
 { id:'BH5', nome:'Uma mão emprestada', fonte:'banco',
   tema:['backhand'], camada:4, bloco:'tema',
@@ -1384,7 +1540,10 @@ const EX = [
     ['marca',-5.2,8.6,'slice de uma mão']
   ], nota:`Bola fora do alcance das duas mãos: soltar a mão de apoio e devolver de slice, profundo e alto.`},
   passos:[`Cesta lançando bolas largas e baixas, propositalmente fora do alcance das duas mãos.`, `O aluno solta a mão de apoio e devolve de slice de uma mão.`, `Profundo e alto — é bola de sobrevivência, não de ataque.`, `Série de 8.`, `Depois alterne: bola alcançável (duas mãos) e bola larga (uma mão).`],
-  dica:`Insistir nas duas mãos em bola que não alcança faz o aluno chegar esticado e devolver curto. Alcance é tática, não estilo.` },
+  dica:`Insistir nas duas mãos em bola que não alcança faz o aluno chegar esticado e devolver curto. Alcance é tática, não estilo.` ,
+  foco:[`Momento de soltar a mão de apoio`, `Profundidade da bola de uma mão`, `Alcance ganho`, `Decisão entre uma e duas mãos`],
+  erros:[`Insistir nas duas mãos em bola larga`, `Chegar esticado e devolver curto`, `Soltar a mão cedo demais`, `Usar uma mão em bola alcançável`],
+  dificultar:[`Alternar alcançável e larga`, `Decisão do aluno em troca viva`, `Bolas mais baixas`] },
 
 { id:'BH6', nome:'Corredor do backhand', fonte:'banco',
   tema:['backhand'], camada:4, bloco:'tema',
@@ -1409,7 +1568,10 @@ const EX = [
     ['corda','']
   ], nota:`Troca cooperativa só de backhand cruzado dentro do corredor: bola fora do corredor zera o contador.`},
   passos:[`Marque o corredor cruzado de backhand com fita ou cones.`, `Troca cooperativa só de backhand cruzado, dentro do corredor.`, `Conte o recorde da dupla em voz alta.`, `Cada bola fora do corredor zera o contador.`, `Meta por nível: 8 no Impulso, 15 no Construção, 12 em ritmo de jogo no Ascensão.`],
-  dica:`Abrir o corpo para “ajudar” a direção transforma cruzado em paralelo. O corredor cobra o que a boa vontade não cobra.` },
+  dica:`Abrir o corpo para “ajudar” a direção transforma cruzado em paralelo. O corredor cobra o que a boa vontade não cobra.` ,
+  foco:[`Direção dentro do corredor`, `Altura sobre a rede`, `Regularidade sob o contador`, `Base ao mudar de ritmo`],
+  erros:[`Abrir o corpo e mandar paralelo`, `Contar bola fora do corredor`, `Bater mais forte para não perder o recorde`, `Perder a profundidade no fim da série`],
+  dificultar:[`Corredor mais estreito`, `Ritmo de jogo`, `Professor variando altura e efeito`] },
 
 { id:'BH7', nome:'Backhand paralelo na hora certa', fonte:'banco',
   tema:['backhand'], camada:4, bloco:'tema',
@@ -1430,7 +1592,10 @@ const EX = [
     ['bola',-3.0,10.8, -3.4,-9.0, .06, 'vira!']
   ], nota:`Troca cruzada de backhand; ao comando "vira!", o aluno muda a direção para o paralelo.`},
   passos:[`Alvo no corredor paralelo. Troca cruzada de backhand.`, `Quando você gritar “vira!”, o aluno muda a direção para o paralelo.`, `A regra técnica: mudar de direção exige contato MAIS à frente e base mais fechada.`, `Séries de 8 mudanças.`, `No Topo, o comando vem no último instante — e depois por decisão própria, em bola curta.`],
-  dica:`Mudar a direção em bola profunda e apertada é onde a paralela sai fora ou na rede. A escolha da bola é o exercício.` },
+  dica:`Mudar a direção em bola profunda e apertada é onde a paralela sai fora ou na rede. A escolha da bola é o exercício.` ,
+  foco:[`Contato mais à frente na mudança`, `Base mais fechada`, `Escolha da bola certa para virar`, `Profundidade da paralela`],
+  erros:[`Virar sem preparar antes`, `Paralela curta`, `Avisar com o corpo antes de virar`],
+  dificultar:[`Comando no último instante`, `Decisão própria em bola curta`, `Corredor paralelo mais estreito`] },
 
 { id:'BH8', nome:'Lado fraco por 20 minutos', fonte:'banco',
   tema:['backhand'], camada:4, bloco:'jogo',
@@ -1453,7 +1618,10 @@ const EX = [
     ['texto',0,3.0,'contornar é ponto perdido',.6]
   ], nota:`Pontos valendo em que toda bola tem que ser de backhand: contornar para o forehand é ponto perdido.`},
   passos:[`Pontos valendo. Alimente sempre no backhand.`, `Toda bola do aluno tem que ser de backhand — contornar é ponto perdido.`, `Dois games assim.`, `Depois, dois games livres.`, `Pergunte: quanto o backhand ficou mais disponível nos games livres?`],
-  dica:`O hábito de esconder o backhand não se corrige com conselho. Só com volume dirigido — e com placar em cima.` },
+  dica:`O hábito de esconder o backhand não se corrige com conselho. Só com volume dirigido — e com placar em cima.` ,
+  foco:[`Disponibilidade do backhand`, `Qualidade sob volume`, `Postura depois do erro`, `Diferença nos games livres`],
+  erros:[`Bater sem intenção só para cumprir a regra`, `Desanimar depois de dois erros`, `Voltar a esconder o lado nos games livres`],
+  dificultar:[`Contornar vira ponto perdido`, `Set com tema`, `Definição só de backhand`] },
 
 { id:'BH9', nome:'Contato na frente do joelho', fonte:'banco',
   tema:['backhand'], camada:4, bloco:'ativacao',
@@ -1475,7 +1643,10 @@ const EX = [
     ['bola',3.2,5.8, -2.8,9.2, -.2, '']
   ], nota:`Um cone à frente do joelho da frente marca o contato do backhand — mais à frente do que o aluno imagina.`},
   passos:[`Cone no chão, à frente do joelho da frente. Bola adaptada.`, `Bolas facilitadas: a bola tem que ser golpeada na linha do cone ou à frente.`, `Congele o aluno no contato.`, `Mostre a relação entre o cone, a bola e a mão.`, `Do Construção em diante, em troca viva, com o cone como referência.`],
-  dica:`Contato ao lado do quadril manda a bola curta e sem peso — quase sempre na rede. É o defeito nº 1 do backhand amador.` },
+  dica:`Contato ao lado do quadril manda a bola curta e sem peso — quase sempre na rede. É o defeito nº 1 do backhand amador.` ,
+  foco:[`Contato na linha do cone ou à frente`, `Giro de tronco antes do braço`, `Equilíbrio no contato`, `Altura da bola no contato`],
+  erros:[`Bater atrás do cone e contar`, `Olhar só o cone`, `Encolher o gesto para acertar o cone`],
+  dificultar:[`Bola em ritmo`, `Troca viva com o cone`, `Cone mais à frente`] },
 
 { id:'BH10', nome:'Backhand em movimento', fonte:'banco',
   tema:['backhand','movimentacao'], camada:4, bloco:'tema',
@@ -1498,7 +1669,10 @@ const EX = [
     ['cone',-0.6,11.8,'volta ao cone']
   ], nota:`Backhand em movimento: raquete atrás antes do último passo, bola cruzada e alta, e volta ao cone.`},
   passos:[`Cesta lançando bolas largas para o backhand. Cone na zona de espera.`, `O aluno desloca-se JÁ preparando: raquete atrás antes do último passo.`, `Bate cruzado e alto.`, `Recupera tocando o cone.`, `Séries de 6. No Topo, duas bolas largas seguidas, alternando os lados.`],
-  dica:`Preparar na chegada, e não no caminho, é o que encurta a bola. O gesto está certo; o tempo é que não está.` },
+  dica:`Preparar na chegada, e não no caminho, é o que encurta a bola. O gesto está certo; o tempo é que não está.` ,
+  foco:[`Raquete atrás antes do último passo`, `Altura e direção da bola`, `Toque no cone na volta`, `Base na chegada`],
+  erros:[`Bola curta por preparação atrasada`, `Voltar devagar`, `Perder o equilíbrio no fim do golpe`],
+  dificultar:[`Bola mais apertada`, `Duas bolas largas seguidas`, `Alternando os lados`] },
 
 { id:'BH11', nome:'Troca de ritmo com slice', fonte:'banco',
   tema:['backhand'], camada:4, bloco:'jogo',
@@ -1519,7 +1693,10 @@ const EX = [
     ['texto',0,3.0,'1 slice por ponto, antes de definir',.58]
   ], nota:`Ponto valendo com um slice obrigatório antes de qualquer tentativa de definição.`},
   passos:[`Pontos valendo, quadra normal, contador de mão.`, `Regra: em cada ponto, use ao menos um slice de backhand ANTES de tentar definir.`, `Marque no contador cada ponto em que o slice provocou bola fraca do adversário.`, `10 pontos por rodada.`, `No Topo, o aluno escolhe quando usar e registra o efeito de cada escolha.`],
-  dica:`Slice sem profundidade vira presente. Se a bola morrer no meio da quadra, volte ao BH2 antes de insistir no jogo.` },
+  dica:`Slice sem profundidade vira presente. Se a bola morrer no meio da quadra, volte ao BH2 antes de insistir no jogo.` ,
+  foco:[`Profundidade do slice`, `Efeito do slice na bola do adversário`, `Momento escolhido para usar`, `Registro no contador`],
+  erros:[`Slice curto no meio da quadra`, `Usar slice como fuga`, `Esquecer de marcar no contador`, `Slice sempre no mesmo momento`],
+  dificultar:[`Aluno escolhe quando usar`, `Registrar o efeito de cada escolha`, `Contra adversário que ataca bola baixa`] },
 
 { id:'BH12', nome:'Lob de backhand', fonte:'banco',
   tema:['backhand','rede'], camada:4, bloco:'tema',
@@ -1541,7 +1718,10 @@ const EX = [
     ['bola',-3.0,10.8, 1.6,-10.2, -.36, 'lob por cima']
   ], nota:`Lob de backhand contra quem pressiona na rede: alto, profundo, nos últimos metros da quadra.`},
   passos:[`Professor na rede, pressionando. Alvo nos últimos 2 m da quadra.`, `O aluno responde de lob de backhand: alto, profundo, com topspin quando der.`, `Série de 8, alternando lob defensivo (alto e seguro) e lob de ataque.`, `O lob de ataque passa por cima do ombro do voleador.`, `No Topo, o lob de ataque é seguido de subida à rede.`],
-  dica:`Lob curto vira smash e ponto perdido. Profundidade primeiro; refinamento só depois que 6 de 8 caírem no fundo.` },
+  dica:`Lob curto vira smash e ponto perdido. Profundidade primeiro; refinamento só depois que 6 de 8 caírem no fundo.` ,
+  foco:[`Profundidade do lob`, `Altura acima do alcance do voleador`, `Escolha entre defensivo e de ataque`, `Posição depois do lob`],
+  erros:[`Lob sem altura suficiente`, `Lobar de qualquer posição`, `Ficar parado depois do lob de ataque`],
+  dificultar:[`Alternar defensivo e de ataque`, `Lob de ataque seguido de subida`, `Voleador pressionando mais perto`] },
 
 { id:'BH13', nome:'Espelho dos dois lados', fonte:'banco',
   tema:['backhand','forehand'], camada:4, bloco:'tema',
@@ -1565,7 +1745,10 @@ const EX = [
     ['bola',-0.8,11.0, 3.2,-9.2, -.14, '']
   ], nota:`10 de cada lado, mesmos alvos, acertos anotados: o lado mais fraco ganha uma série extra no fim da aula.`},
   passos:[`Dois alvos iguais, um em cada canto profundo. Contador na mão.`, `Série de 10 forehands cruzados no alvo.`, `Série de 10 backhands cruzados no alvo.`, `Anote o número de acertos dos dois lados.`, `O lado com menos acertos ganha uma série extra de 10 no fim da aula. Toda aula, até a diferença encolher.`],
-  dica:`O erro aqui é do professor: dar mais bolas no lado bom porque a aula “flui melhor”. O contador impede isso.` },
+  dica:`O erro aqui é do professor: dar mais bolas no lado bom porque a aula “flui melhor”. O contador impede isso.` ,
+  foco:[`Diferença de acertos entre os lados`, `Qualidade igual nos dois alvos`, `Constância dentro da série`, `Evolução em relação à aula anterior`],
+  erros:[`Contar com boa vontade`, `Mudar o alvo entre as séries`, `Pular a série extra do lado fraco`],
+  dificultar:[`Alvos menores`, `Em troca viva`, `Com variação de altura e efeito`] },
 
 { id:'BH14', nome:'Defesa no canto do backhand', fonte:'banco',
   tema:['backhand','movimentacao'], camada:4, bloco:'tema',
@@ -1587,7 +1770,10 @@ const EX = [
     ['mov',-4.2,9.8, -0.4,11.6, .12, 'recompõe']
   ], nota:`Três bolas seguidas no canto do backhand: defender as duas primeiras e NEUTRALIZAR na terceira.`},
   passos:[`Cesta pressionando o canto do backhand. Cone na bissetriz.`, `Três bolas seguidas, pesadas, no mesmo canto.`, `As duas primeiras: defender alto e cruzado.`, `A terceira: NEUTRALIZAR — bola profunda que devolve o ponto ao equilíbrio.`, `Recuperar até o cone. No Topo, quatro bolas e a última pode ser curta.`],
-  dica:`Tentar virar o ponto na primeira bola de defesa é o erro. Defender é habilidade, não fracasso — diga isso com todas as letras.` }
+  dica:`Tentar virar o ponto na primeira bola de defesa é o erro. Defender é habilidade, não fracasso — diga isso com todas as letras.` ,
+  foco:[`Altura e profundidade nas duas primeiras`, `Neutralização na terceira`, `Recuperação até a bissetriz`, `Postura sob pressão`],
+  erros:[`Devolver curto e ficar atrás`, `Parar de recuperar na terceira`, `Reclamar do ritmo`],
+  dificultar:[`Quatro bolas em ritmo de jogo`, `Última bola podendo ser curta`, `Sem aviso de quantas bolas vêm`] }
 ,
 
 /* ---------- TEMA 5 · APPROACH E REDE (Mai · Nov) ------------------------ */
@@ -1614,7 +1800,10 @@ const EX = [
     ['mov',0.8,2.4, 0.9,1.4, 0, 'passo de ataque']
   ], nota:`Na rede sem raquete: o aluno intercepta com a MÃO, sempre com passo de ataque à frente.`},
   passos:[`Aluno na rede, SEM raquete. Professor do outro lado com bolas controladas.`, `Ele intercepta a bola com a MÃO — pega ou bloqueia.`, `Sempre com passo de ataque à frente e base montada.`, `Dez bolas assim.`, `Só então a raquete entra — e o gesto já existe.`],
-  dica:`Voleio é 80% base e posição. Quem começa pela raquete aprende a “raquetada” e depois passa anos desfazendo.` },
+  dica:`Voleio é 80% base e posição. Quem começa pela raquete aprende a “raquetada” e depois passa anos desfazendo.` ,
+  foco:[`Passo de ataque antes do contato`, `Interceptação à frente do corpo`, `Base montada na rede`, `Mãos firmes, sem recuar`],
+  erros:[`Pegar a bola ao lado do corpo`, `Recuar quando a bola vem forte`, `Recuar quando a bola vem no corpo`, `Interceptar com o braço esticado ao lado`],
+  dificultar:[`Bloquear com raquete depois da mão`, `Voleio de definição com deslocamento`, `Bola mais rápida`] },
 
 { id:'D12', nome:'Bola curta é ordem', fonte:'apostila',
   tema:['rede','movimentacao'], camada:3, bloco:'tema',
@@ -1637,7 +1826,10 @@ const EX = [
     ['marca',1.0,4.4,'pé dentro da quadra']
   ], nota:`Toda bola curta DEVE ser atacada com entrada na quadra — errar entrando vale mais que acertar de trás.`},
   passos:[`Rally com o professor, que insere bolas curtas sem aviso.`, `Toda bola curta DEVE ser atacada, com entrada na quadra.`, `Errar batendo entrando vale mais que acertar ficando atrás — diga isso em voz alta.`, `No Construção, a bola curta é óbvia; no Ascensão, sutil.`, `No Topo, a curta é seguida de subida obrigatória à rede.`],
-  dica:`O sinal do erro é o “ah!” depois do quique: o aluno reconheceu tarde. Reconhecimento se treina, mira não resolve.` },
+  dica:`O sinal do erro é o “ah!” depois do quique: o aluno reconheceu tarde. Reconhecimento se treina, mira não resolve.` ,
+  foco:[`Momento do reconhecimento`, `Pé de apoio dentro da quadra`, `Profundidade do ataque`, `Iniciativa sem esperar autorização`],
+  erros:[`Atacar de trás da linha`, `Voltar para o fundo depois de atacar`, `Bater forte sem direção`],
+  dificultar:[`Bola curta sutil`, `Subida obrigatória depois`, `Em ponto valendo`] },
 
 { id:'R01', nome:'Approach de três passos', fonte:'banco',
   tema:['rede'], camada:5, bloco:'tema',
@@ -1662,7 +1854,10 @@ const EX = [
     ['zona',3.0,2.2,3.0,3.2,'voleio em diagonal']
   ], nota:`Approach profundo, split-step na altura do cone e voleio de definição em diagonal.`},
   passos:[`Um cone na meia-quadra marcando onde o split-step deve acontecer.`, `Bola curta de cesta.`, `O aluno ataca de approach profundo e paralelo.`, `Avança e faz split-step na altura do cone — nem antes, nem depois.`, `Voleia a bola seguinte em diagonal. Séries de 6.`],
-  dica:`Correr até a rede sem parar de ver a bola faz o aluno chegar colado na faixa — e ser passado por baixo.` },
+  dica:`Correr até a rede sem parar de ver a bola faz o aluno chegar colado na faixa — e ser passado por baixo.` ,
+  foco:[`Split na altura do cone`, `Profundidade do approach`, `Direção paralela`, `Voleio em diagonal`],
+  erros:[`Chegar colado na faixa`, `Approach curto`, `Voleio no meio, sem ângulo`],
+  dificultar:[`Bola curta sem aviso`, `Segunda bola mais rápida`, `Segunda bola podendo ser passada ou lob`] },
 
 { id:'R02', nome:'Meia-quadra não é castigo', fonte:'banco',
   tema:['rede'], camada:5, bloco:'tema',
@@ -1686,7 +1881,10 @@ const EX = [
     ['zona',-3.0,-8.4,2.6,3.6,'approach profundo']
   ], nota:`A bola que quica na meia-quadra: approach paralelo, approach angulado ou meia-volei se vier no pé.`},
   passos:[`Marque com fita a faixa entre a linha de saque e 2 m atrás dela.`, `Lance bolas que quicam exatamente nessa faixa.`, `Resposta 1 (série de 6): approach profundo paralelo, e sobe.`, `Resposta 2: approach cruzado angulado, e sobe.`, `Resposta 3: meia-volei, quando a bola vier no pé.`],
-  dica:`Bater a meia-quadra com a preparação do fundo manda a bola longa. É a bola que o aluno odeia porque nunca treina.` },
+  dica:`Bater a meia-quadra com a preparação do fundo manda a bola longa. É a bola que o aluno odeia porque nunca treina.` ,
+  foco:[`Tamanho da preparação na meia-quadra`, `Escolha entre as três respostas`, `Profundidade do approach`, `Avanço depois de bater`],
+  erros:[`Bater forte e mandar longa`, `Ficar na meia-quadra depois`, `Meia-volei com gesto grande`],
+  dificultar:[`Duas respostas a pedido`, `Três respostas, aluno escolhe`, `Bola mais rápida`] },
 
 { id:'R03', nome:'Voleio profundo x voleio angulado', fonte:'banco',
   tema:['rede'], camada:4, bloco:'tema',
@@ -1709,7 +1907,10 @@ const EX = [
     ['zona',3.6,-2.6,2.4,2.4,'angulado e definido']
   ], nota:`A altura da bola decide: abaixo da rede vai profundo e seguro; acima da rede, angulado e definido.`},
   passos:[`Dois alvos: um profundo no fundo, um curto no ângulo.`, `Alterne bolas altas e baixas na rede.`, `Bola ABAIXO da rede → voleio profundo e seguro, no alvo do fundo.`, `Bola ACIMA da rede → voleio angulado, definindo no alvo curto.`, `O aluno anuncia antes de bater. No Topo, o voleio errado conta como erro mesmo caindo dentro.`],
-  dica:`Tentar definir bola baixa levanta a bola e devolve o ponto. A altura da bola não é detalhe: é a decisão.` },
+  dica:`Tentar definir bola baixa levanta a bola e devolve o ponto. A altura da bola não é detalhe: é a decisão.` ,
+  foco:[`Altura da bola no contato`, `Escolha entre profundo e angulado`, `Passo de ataque`, `Posição depois do voleio`],
+  erros:[`Voleio profundo em bola alta e fácil`, `Recuar depois de voleiar`, `Abrir demais o gesto`],
+  dificultar:[`Sem anúncio: aluno decide`, `Voleio errado conta como erro`, `Em ponto valendo`] },
 
 { id:'R04', nome:'Smash com os pés', fonte:'banco',
   tema:['rede'], camada:4, bloco:'tema',
@@ -1732,7 +1933,10 @@ const EX = [
     ['marca',0.6,6.6,'bola à frente do ombro']
   ], nota:`Resolver o lob: girar o corpo de lado, recuar com passo cruzado e bater com a bola à frente do ombro.`},
   passos:[`Aluno na rede; lance lobs de mão ou de raquete.`, `Ele gira o corpo de lado e recua com passo cruzado — nunca de costas, nunca correndo para trás de frente.`, `Deixa a bola vir e bate o smash com a bola À FRENTE do ombro.`, `Séries de 6.`, `Lob muito profundo: deixar quicar e defender é a resposta certa.`],
-  dica:`Recuar de frente correndo para trás é risco de queda, e no saibro é queda feia. Corpo de lado, sempre.` },
+  dica:`Recuar de frente correndo para trás é risco de queda, e no saibro é queda feia. Corpo de lado, sempre.` ,
+  foco:[`Corpo de lado ao recuar`, `Passo cruzado para trás`, `Contato à frente do ombro`, `Decisão entre smash e deixar quicar`],
+  erros:[`Correr para trás de frente`, `Bater com a bola atrás da cabeça`, `Tentar smash em lob muito profundo`],
+  dificultar:[`Lob mais profundo`, `Lob com efeito`, `Smash seguido de nova bola`] },
 
 { id:'R05', nome:'Meia-volei do pé', fonte:'banco',
   tema:['rede'], camada:4, bloco:'tema',
@@ -1753,7 +1957,10 @@ const EX = [
     ['zona',-2.0,-8.6,3.0,3.2,'devolve profundo']
   ], nota:`Bola no pé durante a transição: centro de gravidade baixo, raquete firme à frente — é bloqueio, não golpe.`},
   passos:[`Aluno na meia-quadra; alimente bolas curtas nos pés dele.`, `Ele abaixa o centro de gravidade — joelho perto do chão.`, `Raquete firme e à frente.`, `Devolve profundo SEM gesto: é bloqueio, não golpe.`, `Séries de 8. No Topo, dentro de uma sequência de approach, com a bola seguinte cobrada.`],
-  dica:`Tentar golpear a meia-volei manda a bola longa ou na rede. É a bola que decide se a subida valeu a pena.` },
+  dica:`Tentar golpear a meia-volei manda a bola longa ou na rede. É a bola que decide se a subida valeu a pena.` ,
+  foco:[`Centro de gravidade baixo`, `Raquete firme e à frente`, `Bloqueio sem gesto`, `Profundidade do resultado`],
+  erros:[`Levantar o corpo no contato`, `Recuar em vez de abaixar`, `Raquete mole no impacto`],
+  dificultar:[`Dentro da sequência de approach`, `Bola seguinte cobrada`, `Bola mais rápida no pé`] },
 
 { id:'R06', nome:'Rede a dois', fonte:'banco',
   tema:['rede'], camada:5, bloco:'jogo',
@@ -1775,7 +1982,10 @@ const EX = [
     ['bola',0,-3.0, 0,1.8, 0, 'buraco do meio']
   ], nota:`Os dois na rede se movem como uma cortina: quando um vai para o lado, o outro acompanha.`},
   passos:[`Dois alunos na rede; professor do outro lado. Marque as posições de cortina com fita ou cones.`, `Bata de várias posições.`, `A dupla se desloca JUNTA: quando um vai para o lado, o outro acompanha.`, `A distância entre eles não muda.`, `Cada bola que passa pelo meio é ponto do professor — e a dupla revisa a distância.`],
-  dica:`Um sobe e o outro fica: o buraco no meio é consequência, não causa. Corrija a cortina, não a mira.` },
+  dica:`Um sobe e o outro fica: o buraco no meio é consequência, não causa. Corrija a cortina, não a mira.` ,
+  foco:[`Distância entre os dois`, `Deslocamento junto, como cortina`, `Cobertura do meio`, `Comunicação entre a dupla`],
+  erros:[`Os dois irem para a mesma bola`, `Deixar o meio aberto`, `Ficar colado na faixa`],
+  dificultar:[`Pontos valendo`, `Professor buscando o meio de propósito`, `Bolas mais rápidas`] },
 
 { id:'R07', nome:'Sobe obrigatório', fonte:'banco',
   tema:['rede'], camada:5, bloco:'jogo',
@@ -1798,7 +2008,10 @@ const EX = [
     ['texto',0,7.4,'ponto do fundo não conta',.6]
   ], nota:`Pontos valendo em que só marca ponto quem chegou à rede: ponto ganho do fundo não conta.`},
   passos:[`Pontos valendo, quadra normal.`, `O aluno só marca ponto se tiver chegado à rede naquele ponto.`, `Ponto ganho do fundo não conta.`, `Dois tiebreaks.`, `No Ascensão, só vale subir atrás de bola de approach de verdade — curta ou fraca.`],
-  dica:`Subir atrás de bola profunda e pesada é se entregar. O exercício ensina a diferença entre subir e ser empurrado.` },
+  dica:`Subir atrás de bola profunda e pesada é se entregar. O exercício ensina a diferença entre subir e ser empurrado.` ,
+  foco:[`Bola que autoriza a subida`, `Qualidade do approach`, `Posição na rede`, `Decisão de subir ou ficar`],
+  erros:[`Parar na linha de saque`, `Desistir da regra quando perde pontos`, `Parar na linha de saque em vez de fechar a rede`, `Subir e ficar de pé, sem split`],
+  dificultar:[`Só atrás de bola de approach de verdade`, `Adversário passando e lobando`, `Set inteiro com a regra`] },
 
 { id:'R08', nome:'Passa ou sobe', fonte:'banco',
   tema:['rede'], camada:5, bloco:'jogo',
@@ -1820,7 +2033,10 @@ const EX = [
     ['bola',0.6,-9.2, -3.4,1.6, .16, 'passa, lob ou no pé']
   ], nota:`Um é obrigado a atacar e subir; o outro tem que resolver: passada, lob ou bola no pé.`},
   passos:[`O ponto começa com bola curta para o aluno A, que é obrigado a atacar e subir.`, `O aluno B tem que resolver: passada, lob ou bola nos pés.`, `Cinco pontos.`, `Inverta os papéis e jogue mais cinco.`, `Conte quem venceu mais pontos em cada papel.`],
-  dica:`Quem sobe, sobe demais e fica colado na faixa. Quem defende, tenta passar forte em vez de baixo. São os dois erros do mesmo ponto.` },
+  dica:`Quem sobe, sobe demais e fica colado na faixa. Quem defende, tenta passar forte em vez de baixo. São os dois erros do mesmo ponto.` ,
+  foco:[`Quem sobe: posição e split`, `Quem defende: altura da passada`, `Escolha entre passar, lobar e jogar no pé`, `Rendimento em cada papel`],
+  erros:[`Subir demais e ficar colado`, `Lob curto`, `Desistir do ponto depois da primeira defesa`],
+  dificultar:[`Bola curta variada`, `O defensor pode antecipar e atacar`, `Placar de pressão`] },
 
 { id:'R09', nome:'Voleio de reflexo', fonte:'banco',
   tema:['rede'], camada:4, bloco:'ativacao',
@@ -1844,7 +2060,10 @@ const EX = [
     ['texto',0,5.0,'raquete sempre à frente',.6]
   ], nota:`Troca de voleios curtos dentro do quadrado de saque, sem deixar quicar: conta-se o recorde da dupla.`},
   passos:[`Dois alunos frente a frente, ambos dentro do quadrado de saque, a 4 m um do outro.`, `Troca de voleios rápidos e curtos, sem deixar a bola quicar.`, `Regra: raquete sempre à frente do corpo, nunca atrás.`, `Conte o recorde da dupla.`, `Vá aproximando a distância a cada série.`],
-  dica:`Levar a raquete atrás para “bater” faz o aluno chegar tarde em tudo. Na troca rápida não existe gesto — existe posição.` },
+  dica:`Levar a raquete atrás para “bater” faz o aluno chegar tarde em tudo. Na troca rápida não existe gesto — existe posição.` ,
+  foco:[`Raquete sempre à frente`, `Mão rápida, gesto curto`, `Base firme na troca`, `Recorde subindo`],
+  erros:[`Recuar quando aperta`, `Bater forte e quebrar a troca`, `Contar errado o recorde`],
+  dificultar:[`Distância menor`, `Meta de recorde maior`, `Bola surpresa ao corpo`] },
 
 { id:'R10', nome:'Duas na rede, uma no fundo', fonte:'banco',
   tema:['rede'], camada:5, bloco:'jogo',
@@ -1866,7 +2085,10 @@ const EX = [
     ['zona',-3.6,-6.0,2.6,2.6,'espaço vazio']
   ], nota:`Dois na rede contra um no fundo: a dupla fecha os ângulos, o do fundo passa, loba ou joga no pé.`},
   passos:[`Dois alunos na rede, um no fundo (ou o professor).`, `Pontos começando em troca do fundo.`, `A dupla na rede fecha os ângulos e define.`, `Quem está no fundo passa, loba ou joga nos pés.`, `Rodadas de 5 pontos, com rotação de posições.`],
-  dica:`A dupla mira no jogador em vez de mirar no espaço vazio. É a correção que mais rende nesta situação.` },
+  dica:`A dupla mira no jogador em vez de mirar no espaço vazio. É a correção que mais rende nesta situação.` ,
+  foco:[`Mira no espaço vazio`, `Fechamento dos ângulos`, `Posição da dupla`, `Escolha do defensor`],
+  erros:[`Deixar o meio aberto`, `Ficar atrás da linha de saque`, `Definir de qualquer altura`],
+  dificultar:[`Pontos valendo normais`, `Placar de pressão`, `Rotação de posições`] },
 
 { id:'R11', nome:'Approach paralelo, sempre', fonte:'banco',
   tema:['rede'], camada:5, bloco:'tema',
@@ -1890,7 +2112,10 @@ const EX = [
     ['bola',-1.4,5.0, -3.4,-9.0, -.06, '']
   ], nota:`Approach paralelo e profundo: reduz o ângulo de passada do adversário. É a regra de ouro da subida.`},
   passos:[`Alvo grande no corredor paralelo, profundo. Cesta com bolas curtas.`, `Toda bola curta é atacada PARALELA e profunda no alvo.`, `Seguida de subida.`, `Depois, 5 approaches cruzados, para contraste.`, `Pergunte onde ele se sentiu mais exposto à passada.`],
-  dica:`Approach cruzado por reflexo é o erro: o cruzado é a bola padrão do fundo, não da subida. Paralelo fecha a quadra.` },
+  dica:`Approach cruzado por reflexo é o erro: o cruzado é a bola padrão do fundo, não da subida. Paralelo fecha a quadra.` ,
+  foco:[`Direção paralela`, `Profundidade do approach`, `Ângulo de passada que sobrou`, `Posição na rede depois`],
+  erros:[`Approach curto`, `Subir sem terminar o golpe`, `Approach forte e sem direção`],
+  dificultar:[`Alvo menor`, `Cruzado só quando o adversário está fora de posição`, `Escolha livre com justificativa`] },
 
 { id:'R12', nome:'Rede sem raquete, a dois', fonte:'banco',
   tema:['rede'], camada:4, bloco:'ativacao',
@@ -1912,7 +2137,10 @@ const EX = [
     ['mov',1.0,2.4, 1.0,1.6, 0, 'passo à frente']
   ], nota:`Sem raquete, a dois: um lança de mão, o outro pega com passo à frente e devolve lançando.`},
   passos:[`Dois na rede, sem raquete. Bola adaptada.`, `Um lança a bola de mão.`, `O outro pega com passo à frente e devolve lançando.`, `Alternam. Regra: pegar sempre À FRENTE do corpo, com um passo à frente.`, `Vinte repetições cada, antes de qualquer raquete.`],
-  dica:`Pegar a bola ao lado do corpo, com os pés parados, é exatamente o voleio ruim — só que sem raquete para culpar.` },
+  dica:`Pegar a bola ao lado do corpo, com os pés parados, é exatamente o voleio ruim — só que sem raquete para culpar.` ,
+  foco:[`Passo à frente visível`, `Pegada à frente do corpo`, `Ritmo da troca`, `Transferência para a raquete depois`],
+  erros:[`Lançar forte demais`, `Pular as repetições sem raquete`, `Lançar a bola alta demais para o parceiro`, `Devolver lançando sem sair do lugar`],
+  dificultar:[`Ritmo normal alternando os lados`, `Com raquete mantendo o passo`, `Distância menor`] },
 
 { id:'R13', nome:'Fechamento da rede', fonte:'banco',
   tema:['rede'], camada:5, bloco:'fechamento',
@@ -1932,7 +2160,10 @@ const EX = [
     ['zona',0,6.6,7.0,2.6,'que bola autoriza subir?']
   ], nota:`Fechamento na meia-quadra: o aluno aponta na quadra a bola que autoriza a subida.`},
   passos:[`Os dois em pé na meia-quadra, olhando a quadra.`, `Pergunta: “que bola te autoriza a subir?”.`, `O aluno responde APONTANDO onde essa bola cai.`, `Você confirma ou ajusta em uma frase.`, `No Ascensão, exija dois critérios: profundidade e altura.`],
-  dica:`Resposta genérica (“bola fraca”) não serve. Peça o lugar exato na quadra — critério que não se aponta não se usa em jogo.` }
+  dica:`Resposta genérica (“bola fraca”) não serve. Peça o lugar exato na quadra — critério que não se aponta não se usa em jogo.` ,
+  foco:[`Critério apontado na quadra`, `Dois critérios: profundidade e altura`, `Clareza da resposta`, `Ligação com o que aconteceu na aula`],
+  erros:[`Apontar sem saber explicar`, `Professor responder no lugar`, `Fechar sem apontar nada`],
+  dificultar:[`Exigir dois critérios`, `Considerar a posição do adversário`, `O aluno explica para um colega`] }
 ,
 
 /* ---------- TEMA 6 · SAQUE E DEVOLUÇÃO (Jun · Dez) --------------------- */
@@ -1958,7 +2189,10 @@ const EX = [
     ['bola',-1.4,11.4, -1.0,10.2, .1, 'o toss cai aqui']
   ], nota:`Dez lançamentos SEM sacar: a bola tem que cair na raquete deitada à frente do pé da frente.`},
   passos:[`Deite a raquete no chão à frente do pé da frente (ou use um aro).`, `Dez lançamentos SEM sacar.`, `A bola tem que cair na raquete ou dentro do aro.`, `Só depois disso o saque completo entra na aula.`, `Do Construção em diante, altura e posição padronizadas, sempre iguais.`],
-  dica:`Lançar com o punho faz a bola sair girando e errática. O braço sobe esticado, como quem entrega a bola no alto.` },
+  dica:`Lançar com o punho faz a bola sair girando e errática. O braço sobe esticado, como quem entrega a bola no alto.` ,
+  foco:[`Braço subindo esticado`, `Altura constante do lançamento`, `Posição de queda da bola`, `Repetição do mesmo ponto`],
+  erros:[`Altura diferente a cada lançamento`, `Lançar atrás da cabeça`, `Pular direto para o saque completo`],
+  dificultar:[`Altura e posição padronizadas`, `Olhos seguindo a bola até o alto`, `Toss diferente por tipo de saque`] },
 
 { id:'S01', nome:'Saque do zero, de baixo pra cima', fonte:'banco',
   tema:['saque'], camada:4, bloco:'tema',
@@ -1980,7 +2214,10 @@ const EX = [
     ['bola',-1.4,11.2, 2.4,3.8, .2, '4. saque completo']
   ], nota:`O saque construído na ordem do método: pés e carga de perna primeiro, braço por último.`},
   passos:[`Etapa 1: posição de pés e carga na perna de trás, sem bola. Cinco repetições limpas.`, `Etapa 2: só o lançamento (ver D15).`, `Etapa 3: “coçar as costas” — raquete atrás da cabeça e empurra da perna.`, `Etapa 4: saque completo, sem força.`, `Cada etapa só avança quando sair limpa cinco vezes.`],
-  dica:`No Base, pode terminar no saque por baixo se o gesto completo travar o aluno. Voltar um passo é método, não recuo.` },
+  dica:`No Base, pode terminar no saque por baixo se o gesto completo travar o aluno. Voltar um passo é método, não recuo.` ,
+  foco:[`Carga na perna de trás`, `Ordem das etapas`, `Lançamento antes do gesto`, `Ritmo sem força`],
+  erros:[`Pular etapas para chegar ao saque completo`, `Forçar antes de o gesto existir`, `Perder a etapa 1 quando junta tudo`],
+  dificultar:[`Gesto completo com ritmo`, `Alvo no quadrado`, `Saque em ponto valendo`] },
 
 { id:'S02', nome:'Quatro cantos do saque', fonte:'banco',
   tema:['saque'], camada:4, bloco:'tema',
@@ -2003,7 +2240,10 @@ const EX = [
     ['bola',-1.5,11.4, -0.9,-4.6, .06, '']
   ], nota:`Quatro alvos no quadrado de saque: o aluno anuncia a direção antes de cada saque.`},
   passos:[`Quatro alvos: aberto e no corpo, em cada lado da quadra.`, `Séries de 8 saques, anunciando o alvo ANTES de cada um.`, `Conte acerto de ALVO, não só bola dentro.`, `Alterne os dois lados da quadra.`, `Meta no Ascensão: 70% dos primeiros saques na metade certa do quadrado.`],
-  dica:`Mudar o lançamento para mudar a direção entrega o saque ao adversário. O toss tem que continuar igual.` },
+  dica:`Mudar o lançamento para mudar a direção entrega o saque ao adversário. O toss tem que continuar igual.` ,
+  foco:[`Alvo anunciado e cumprido`, `Lançamento igual para todas as direções`, `Percentual de acerto de direção`, `Alternância entre os lados`],
+  erros:[`Anunciar depois de sacar`, `Contar bola dentro como acerto de alvo`, `Sacar só no lado bom`],
+  dificultar:[`Quatro alvos`, `Alvos menores`, `Coerência tática cobrada`] },
 
 { id:'S03', nome:'Segundo saque com efeito', fonte:'banco',
   tema:['saque'], camada:4, bloco:'tema',
@@ -2025,7 +2265,10 @@ const EX = [
     ['bola',-1.5,11.4, -2.0,-4.4, .24, 'sobe e cai']
   ], nota:`Segundo saque com efeito: tem que passar ACIMA da corda e cair no quadrado. Nunca plano.`},
   passos:[`Corda ou elástico a 1 m acima da rede, no lado do saque.`, `Séries de 10 segundos saques.`, `Todos precisam passar ACIMA da corda e cair no quadrado.`, `Topspin ou slice — nunca plano.`, `Meta: 8 de 10 com trajetória alta.`],
-  dica:`Segundo saque plano e lento é o pior saque do tênis: entra pouco e, quando entra, é atacado.` },
+  dica:`Segundo saque plano e lento é o pior saque do tênis: entra pouco e, quando entra, é atacado.` ,
+  foco:[`Altura sobre a corda`, `Efeito de verdade na bola`, `Percentual de entrada`, `Segurança sob pressão`],
+  erros:[`Bola alta sem efeito`, `Repetir o primeiro saque mais devagar`, `Encolher o gesto por medo`],
+  dificultar:[`Alvo no corpo do adversário`, `Topspin e slice alternados`, `Dupla falta contando dobrado`] },
 
 { id:'S04', nome:'Dupla falta custa caro', fonte:'banco',
   tema:['saque'], camada:4, bloco:'jogo',
@@ -2047,7 +2290,10 @@ const EX = [
     ['texto',0,3.2,'dupla falta vale 2 pontos',.62]
   ], nota:`Games de saque em que cada dupla falta vale DOIS pontos para o adversário.`},
   passos:[`O aluno saca 4 games.`, `Cada dupla falta vale DOIS pontos para o adversário.`, `Ao final, anote: duplas faltas, percentual de primeiro saque e games ganhos.`, `Compare com a sessão anterior.`, `No Topo, jogue sob placar de pressão (começando 30-40).`],
-  dica:`Repetir o segundo saque no mesmo ritmo do primeiro depois de uma falta é a ansiedade decidindo, não o plano.` },
+  dica:`Repetir o segundo saque no mesmo ritmo do primeiro depois de uma falta é a ansiedade decidindo, não o plano.` ,
+  foco:[`Percentual de primeiro saque`, `Número de duplas faltas`, `Rotina mantida depois da falta`, `Games ganhos`],
+  erros:[`Acelerar depois de uma falta`, `Parar de contar quando vai mal`, `Culpar a bola ou o vento`],
+  dificultar:[`Quatro games`, `Dupla falta valendo dois pontos`, `Placar de pressão`] },
 
 { id:'S05', nome:'Saque + 1', fonte:'banco',
   tema:['saque'], camada:5, bloco:'tema',
@@ -2070,7 +2316,10 @@ const EX = [
     ['zona',3.2,-8.6,3.0,3.4,'3. forehand no espaço']
   ], nota:`Saque e a bola seguinte como um padrão só: saque aberto, devolução, forehand no espaço que abriu.`},
   passos:[`Alvo no quadrado de saque e alvo no fundo, para a bola seguinte.`, `O aluno saca no alvo combinado.`, `O professor devolve.`, `O aluno bate a segunda bola no alvo do fundo, dentro do padrão definido.`, `Séries de 6 padrões. No Topo, dois ou três padrões próprios, alternando.`],
-  dica:`Sacar bem e ficar parado admirando quebra o padrão. O saque+1 exige recuperação e preparação imediatas.` },
+  dica:`Sacar bem e ficar parado admirando quebra o padrão. O saque+1 exige recuperação e preparação imediatas.` ,
+  foco:[`Saque no alvo combinado`, `Recuperação imediata`, `Preparação para a segunda bola`, `Padrão completo, não só o saque`],
+  erros:[`Segunda bola sem direção`, `Mudar o padrão no meio da série`, `Esquecer o alvo do fundo`],
+  dificultar:[`Professor devolvendo de formas diferentes`, `Dois ou três padrões alternados`, `Em ponto valendo`] },
 
 { id:'S06', nome:'Devolução em três profundidades', fonte:'banco',
   tema:['saque'], camada:5, bloco:'tema',
@@ -2094,7 +2343,10 @@ const EX = [
     ['bola',1.6,-11.6, 3.0,5.2, .14, '']
   ], nota:`Três posições de espera para devolver: dentro da quadra, sobre a linha e atrás dela.`},
   passos:[`Três cones marcando as posições de espera: dentro da quadra, sobre a linha, atrás da linha.`, `Saque com intensidades diferentes.`, `Antes de cada saque, o aluno ESCOLHE o cone.`, `Depois do saque, avaliem se a escolha deu tempo de devolver em equilíbrio.`, `Séries de 8 saques.`],
-  dica:`Devolver sempre do mesmo lugar, seja qual for o saque, é o que faz a devolução parecer sorte.` },
+  dica:`Devolver sempre do mesmo lugar, seja qual for o saque, é o que faz a devolução parecer sorte.` ,
+  foco:[`Posição escolhida x saque recebido`, `Tempo para devolver em equilíbrio`, `Ajuste entre primeiro e segundo saque`, `Split no contato do sacador`],
+  erros:[`Escolher a posição depois do saque`, `Ficar atrás demais no segundo saque`, `Esquecer o split`],
+  dificultar:[`Três posições`, `Ajuste dentro do game`, `Leitura do sacador`] },
 
 { id:'S07', nome:'Devolução profunda e no meio', fonte:'banco',
   tema:['saque'], camada:5, bloco:'tema',
@@ -2118,7 +2370,10 @@ const EX = [
     ['bola',-2.4,11.0, 0,-9.4, .1, '']
   ], nota:`A devolução padrão: profunda e no meio da quadra — a que neutraliza mais e erra menos.`},
   passos:[`Alvo grande no meio do fundo da quadra.`, `Séries de 10 devoluções, todas para esse alvo.`, `Regra: bola curta não conta, mesmo caindo dentro.`, `Metas: 6 de 10 no Impulso, 7 de 10 no Construção.`, `Só depois disso treine devolução angulada.`],
-  dica:`Tentar devolução vencedora no primeiro saque forte é a bola mais perdida do tênis amador. Primeiro neutralizar.` },
+  dica:`Tentar devolução vencedora no primeiro saque forte é a bola mais perdida do tênis amador. Primeiro neutralizar.` ,
+  foco:[`Profundidade da devolução`, `Direção no meio`, `Preparação curta`, `Percentual dentro`],
+  erros:[`Devolução curta que cai dentro`, `Mirar o ângulo cedo demais`, `Recuar no momento do contato`],
+  dificultar:[`Saque mais forte`, `Devolução de ataque no segundo saque`, `Intenção declarada antes`] },
 
 { id:'S08', nome:'Bloqueio de devolução', fonte:'banco',
   tema:['saque'], camada:4, bloco:'tema',
@@ -2141,7 +2396,10 @@ const EX = [
     ['mov',-2.6,11.0, -2.3,9.6, 0, 'passo à frente']
   ], nota:`Contra saque forte: preparação proibida de passar do ombro. Só giro de tronco e passo à frente.`},
   passos:[`Saque forte (ou bolas lançadas rápido, de perto). Alvo profundo.`, `Séries de 8 devoluções.`, `A preparação é PROIBIDA de passar do ombro.`, `Só giro de tronco, raquete firme e passo à frente.`, `O aluno sente que a bola vai profunda com menos gesto.`],
-  dica:`Preparação grande em saque forte chega tarde sempre. Menos gesto não é menos bola: é mais tempo.` },
+  dica:`Preparação grande em saque forte chega tarde sempre. Menos gesto não é menos bola: é mais tempo.` ,
+  foco:[`Tamanho da preparação`, `Giro de tronco`, `Passo à frente`, `Profundidade com pouco gesto`],
+  erros:[`Preparação passando do ombro`, `Recuar no contato`, `Tentar acelerar`, `Fechar os olhos no saque forte`],
+  dificultar:[`Saque mais forte`, `Alternando os lados`, `Decisão entre bloquear e atacar`] },
 
 { id:'S09', nome:'Rotina de saque', fonte:'banco',
   tema:['saque'], camada:6, bloco:'tema',
@@ -2163,7 +2421,10 @@ const EX = [
     ['marca',-1.8,8.2,'3. respira e saca']
   ], nota:`A rotina pré-saque em três passos, sempre igual — inclusive nos saques que erram.`},
   passos:[`O aluno define a própria rotina em 3 passos.`, `Exemplo: quicar a bola 3 vezes → escolher o alvo em voz baixa → respirar e sacar.`, `Executa 10 saques sempre com a MESMA rotina.`, `Apite se algum passo for pulado.`, `No Topo, confira a rotina no vídeo de um jogo da Barragem.`],
-  dica:`A rotina some justamente depois de uma dupla falta — que é quando ela mais serve. Cobre ali.` },
+  dica:`A rotina some justamente depois de uma dupla falta — que é quando ela mais serve. Cobre ali.` ,
+  foco:[`Rotina completa em todos os saques`, `Mesma ordem, sempre`, `Tempo entre os passos`, `Rotina depois do erro`],
+  erros:[`Rotina que some depois da dupla falta`, `Apressar a rotina quando está atrás`, `Mudar a rotina no meio da série`, `Rotina longa demais`],
+  dificultar:[`Rotina de três passos`, `Sob placar de pressão`, `Conferida em vídeo de jogo`] },
 
 { id:'S10', nome:'Game de saque valendo nota', fonte:'banco',
   tema:['saque'], camada:5, bloco:'jogo',
@@ -2185,7 +2446,10 @@ const EX = [
     ['texto',0,3.2,'4 games · 4 números anotados',.6]
   ], nota:`Quatro games sacando, com quatro números anotados: 1º saque, duplas faltas, saque+1 e games ganhos.`},
   passos:[`Quatro games sacando, valendo.`, `Registre: primeiro saque dentro (%), duplas faltas, pontos ganhos com saque+1 e games ganhos.`, `No Construção, o registro é seu; do Ascensão em diante, é do aluno, entre games.`, `Ao final, o aluno LÊ os quatro números em voz alta.`, `E escolhe UM para melhorar na próxima aula.`],
-  dica:`Treinar saque só em cesta e nunca medir sob placar é como treinar prova sem cronômetro. O número muda o treino.` },
+  dica:`Treinar saque só em cesta e nunca medir sob placar é como treinar prova sem cronômetro. O número muda o treino.` ,
+  foco:[`Os quatro números`, `Honestidade do registro`, `Escolha do número a melhorar`, `Diferença entre treino e jogo`],
+  erros:[`Não registrar quando vai mal`, `Trocar o número escolhido a cada aula`, `Registrar de memória no fim`, `Comparar com outro aluno em vez de consigo`],
+  dificultar:[`Registro feito pelo aluno`, `Comparação com o jogo da Barragem`, `Meta numérica combinada`] },
 
 { id:'S11', nome:'Devolução que abre o ponto', fonte:'banco',
   tema:['saque'], camada:5, bloco:'jogo',
@@ -2207,7 +2471,10 @@ const EX = [
     ['zona',3.6,-5.4,2.4,2.6,'ângulo cruzado']
   ], nota:`Antes de cada ponto o aluno declara a intenção da devolução — e depois confere se cumpriu.`},
   passos:[`Pontos começando no saque.`, `Antes de cada ponto, o aluno DECLARA a intenção da devolução.`, `Opções: profunda no meio, ângulo cruzado, nos pés dele se subir.`, `Marque quantas devoluções cumpriram a intenção.`, `E quantos pontos foram ganhos depois delas.`],
-  dica:`Declarar uma intenção e executar outra — em geral a mais confortável — é o que o contador expõe sem discussão.` },
+  dica:`Declarar uma intenção e executar outra — em geral a mais confortável — é o que o contador expõe sem discussão.` ,
+  foco:[`Intenção declarada e cumprida`, `Qualidade da devolução`, `Pontos ganhos depois dela`, `Leitura do sacador`],
+  erros:[`Escolher sempre a mais confortável`, `Intenção sem olhar o sacador`, `Desistir da intenção no ponto importante`],
+  dificultar:[`Intenção livre`, `Baseada na leitura do sacador`, `Em set valendo`] },
 
 { id:'S12', nome:'Saque sob pressão de placar', fonte:'banco',
   tema:['saque'], camada:6, bloco:'jogo',
@@ -2228,7 +2495,10 @@ const EX = [
     ['texto',0,3.2,'game começa em 30-40',.62]
   ], nota:`Games que começam em placares que decidem: 30-40, 40-30, tiebreak 5-5. Só o final.`},
   passos:[`Games começando em placares dados: 30-40 (contra) e 40-30 (a favor).`, `Joga-se só o final do game.`, `Depois de cada rodada: “que saque esse placar pedia?”.`, `E: “foi o que você fez?”.`, `No Topo, some uma história: “você acabou de dar dupla falta”.`],
-  dica:`Primeiro saque mais forte em 30-40 é a decisão emocional clássica. O placar pede margem, não risco.` },
+  dica:`Primeiro saque mais forte em 30-40 é a decisão emocional clássica. O placar pede margem, não risco.` ,
+  foco:[`Escolha de saque x placar`, `Margem em vez de risco em 30-40`, `Rotina mantida`, `Justificativa da escolha`],
+  erros:[`Mesma escolha em qualquer placar`, `Segundo saque tímido em 40-0`, `Perder a rotina no placar apertado`],
+  dificultar:[`Placares com história`, `Tiebreak 5-5`, `Sequência de placares sem pausa`] },
 
 { id:'S13', nome:'Saque com a perna cansada', fonte:'banco',
   tema:['saque'], camada:4, bloco:'tema',
@@ -2249,7 +2519,10 @@ const EX = [
     ['texto',0,3.2,'30 s de esforço + 5 saques',.6]
   ], nota:`Saque com a perna cansada: 30 segundos de deslocamento intenso e 5 saques no alvo, três vezes.`},
   passos:[`30 segundos de deslocamento intenso (use o M06 ou o F05).`, `Imediatamente depois, 5 saques no alvo.`, `Três rodadas.`, `Compare o percentual da primeira rodada com o da terceira.`, `Meta: diferença abaixo de 20%.`],
-  dica:`Compensar a perna cansada com mais braço machuca o ombro e não entra bola. É o teste real do saque.` },
+  dica:`Compensar a perna cansada com mais braço machuca o ombro e não entra bola. É o teste real do saque.` ,
+  foco:[`Percentual da primeira x terceira rodada`, `Carga de perna com cansaço`, `Ombro sem compensar`, `Rotina mantida cansado`],
+  erros:[`Encurtar o gesto`, `Parar antes de completar a rodada`, `Sacar com o pé de trás arrastando`],
+  dificultar:[`45 segundos de esforço`, `Seis saques por rodada`, `Último saque valendo ponto`] },
 
 { id:'S14', nome:'Fechamento do saque', fonte:'banco',
   tema:['saque'], camada:4, bloco:'fechamento',
@@ -2270,7 +2543,10 @@ const EX = [
     ['texto',0,8.0,'tarefa de casa: lançamentos',.6]
   ], nota:`Fechamento do mês do saque: o número do dia e a tarefa de casa, dita em voz alta.`},
   passos:[`O aluno diz o percentual de primeiro saque do dia.`, `Define a tarefa de casa: quantos lançamentos (D15) vai fazer até a próxima aula.`, `Fecha com 3 saques lentos, sem bola, sentindo a carga da perna.`, `No Ascensão, a meta é numérica e escolhida por ele.`, `Confira a tarefa na aula seguinte — senão ela morre na primeira semana.`],
-  dica:`O saque é o único golpe que se treina sozinho, sem parceiro e sem quadra. Aproveite: peça tarefa toda semana.` }
+  dica:`O saque é o único golpe que se treina sozinho, sem parceiro e sem quadra. Aproveite: peça tarefa toda semana.` ,
+  foco:[`Número do dia dito em voz alta`, `Tarefa combinada`, `Carga de perna nos saques lentos`, `Compromisso até a próxima aula`],
+  erros:[`Tarefa vaga: 'vou treinar saque'`, `Não conferir a tarefa depois`, `Prometer mais do que dá para cumprir`],
+  dificultar:[`Meta numérica escolhida pelo aluno`, `Tarefa registrada e conferida`, `Somar saques imaginários`] }
 ,
 
 /* ---------- TRANSVERSAIS · servem em qualquer mês ----------------------- */
@@ -2301,7 +2577,10 @@ const EX = [
     ['prof',0,-2.0,'']
   ], nota:`As zonas da quadra nomeadas no chão: ao comando "zona!", o aluno diz onde está e onde deveria estar.`},
   passos:[`Desenhe faixas no saibro nomeando fundo, meio e rede.`, `Troca leve com o professor.`, `Congele o jogo ao comando “zona!”.`, `O aluno diz onde está e se deveria estar ali.`, `Depois inverta: você diz uma zona, ele descreve a bola que justifica estar nela.`],
-  dica:`Aluno parado em terra de ninguém sem perceber é o achado mais comum aqui — e a origem de meia dúzia de erros de golpe.` },
+  dica:`Aluno parado em terra de ninguém sem perceber é o achado mais comum aqui — e a origem de meia dúzia de erros de golpe.` ,
+  foco:[`Zona nomeada corretamente`, `Justificativa da posição`, `Vocabulário do método`, `Posição real x posição dita`],
+  erros:[`Ficar em terra de ninguém sem perceber`, `Nomear a zona e não corrigir a posição`, `Decorar o nome sem entender`, `Responder o que o professor quer ouvir`],
+  dificultar:[`Justificar em vez de só nomear`, `Corrigir a posição de um colega`, `Mapear um jogo inteiro`] },
 
 { id:'D10', nome:'Meio das opções', fonte:'apostila', transv:true,
   tema:['footwork','movimentacao','forehand','backhand','rede','saque'], camada:3, bloco:'tema',
@@ -2325,7 +2604,10 @@ const EX = [
     ['mov',0.4,11.2, -1.4,11.8, -.14, 'escolhe antes da bola']
   ], nota:`Dois cones marcam esperas possíveis: o aluno escolhe o cone certo ANTES de o professor bater.`},
   passos:[`Bata de posições diferentes: canto aberto, centro, dentro da quadra.`, `Dois cones marcam as esperas possíveis.`, `ANTES de cada bola, o aluno escolhe o cone certo para esperar.`, `Ponto de “leitura” por acerto — no começo a bola nem precisa ser jogada.`, `No Ascensão, tire os cones: espera livre, com justificativa.`],
-  dica:`Voltar sempre ao centro geométrico é o erro. O centro certo é a bissetriz — o meio das respostas que ele pode dar.` },
+  dica:`Voltar sempre ao centro geométrico é o erro. O centro certo é a bissetriz — o meio das respostas que ele pode dar.` ,
+  foco:[`Cone escolhido antes da bola`, `Bissetriz em vez do centro`, `Justificativa da escolha`, `Espera ativa, com split`],
+  erros:[`Escolher depois de ver a bola`, `Esperar parado`, `Acertar por sorte sem saber por quê`],
+  dificultar:[`Sem cones, espera livre`, `Justificativa obrigatória`, `Integrado a pontos valendo`] },
 
 { id:'D11', nome:'Detetive', fonte:'apostila', transv:true,
   tema:['footwork','movimentacao','forehand','backhand','rede','saque'], camada:3, bloco:'tema',
@@ -2346,7 +2628,10 @@ const EX = [
     ['bola',-2.4,-10.4, 2.8,9.6, .18, 'antes do contato!']
   ], nota:`O aluno grita a direção da bola ANTES do contato do professor: antecipação é leitura, não adivinhação.`},
   passos:[`Aluno na linha de base, observando o professor do outro lado.`, `Prepare golpes com pistas claras: ombro, empunhadura, ponto de contato.`, `O aluno grita a direção ANTES do contato: “cruzada!”.`, `Acertou, ponto.`, `No Construção as pistas são exageradas; no Ascensão, reais, em troca viva.`],
-  dica:`Quem olha só a bola nunca antecipa. A informação está no corpo do outro lado, e aparece antes de a bola sair.` },
+  dica:`Quem olha só a bola nunca antecipa. A informação está no corpo do outro lado, e aparece antes de a bola sair.` ,
+  foco:[`Direção gritada antes do contato`, `Onde o aluno está olhando`, `Acerto x chute`, `Antecipação virando movimento`],
+  erros:[`Gritar depois do contato`, `Chutar sempre o mesmo lado`, `Antecipar e sair antes da hora`],
+  dificultar:[`Pistas reais em troca viva`, `Scouting de um set inteiro`, `Relatório verbal do que viu`] },
 
 { id:'D17', nome:'Corredor cruzado', fonte:'apostila', transv:true,
   tema:['forehand','backhand','movimentacao','rede','saque'], camada:5, bloco:'jogo',
@@ -2369,7 +2654,10 @@ const EX = [
     ['texto',0,3.2,'só abre a quadra de dentro do corredor',.55]
   ], nota:`O rali começa preso ao corredor diagonal; o ponto só libera quando alguém abre a quadra de dentro dele.`},
   passos:[`Marque um corredor diagonal (cruzado) com fita ou giz; cones nos limites laterais.`, `O rali COMEÇA com a bola obrigatoriamente dentro do corredor.`, `Só depois que alguém abre a quadra, de dentro do corredor, o ponto libera para a quadra toda.`, `Corredor largo no Construção, estreito no Ascensão.`, `No Topo, o corredor muda de lado a cada troca de saque.`],
-  dica:`Tentar definir antes de abrir o corredor é o erro — e aqui ele custa o ponto, não só uma observação do professor.` },
+  dica:`Tentar definir antes de abrir o corredor é o erro — e aqui ele custa o ponto, não só uma observação do professor.` ,
+  foco:[`Bola dentro do corredor`, `Momento da abertura`, `Paciência antes de definir`, `Qualidade da bola de abertura`],
+  erros:[`Abrir de posição ruim`, `Bater sem intenção dentro do corredor`, `Discutir a marcação`],
+  dificultar:[`Corredor mais estreito`, `Corredor mudando de lado`, `Em set valendo`] },
 
 { id:'D18', nome:'Zonas de intenção', fonte:'apostila', transv:true,
   tema:['forehand','backhand','rede','saque'], camada:5, bloco:'jogo',
@@ -2392,7 +2680,10 @@ const EX = [
     ['bola',0,11.0, 0,-9.4, .1, '']
   ], nota:`A quadra do adversário dividida em três faixas de intenção: construir, neutralizar e definir.`},
   passos:[`Divida a quadra do adversário em 3 faixas com fita: fundo (constrói), meio (neutra), curta/ângulo (define).`, `Peça uma intenção antes de cada bola.`, `O aluno precisa bater a bola dentro da faixa correspondente.`, `O ponto só conta se a bola cair na zona certa.`, `No Topo, ele escolhe a própria intenção e você avalia se a bola bateu a zona.`],
-  dica:`Sob pressão, o aluno mira a zona errada — quase sempre a “neutra”. A faixa no chão transforma intenção em prova.` },
+  dica:`Sob pressão, o aluno mira a zona errada — quase sempre a “neutra”. A faixa no chão transforma intenção em prova.` ,
+  foco:[`Zona pedida x zona atingida`, `Intenção declarada antes da bola`, `Comportamento sob pressão`, `Profundidade dentro da faixa`],
+  erros:[`Declarar e bater em outra`, `Mirar a zona e perder a profundidade`, `Contar ponto com a bola na zona errada`],
+  dificultar:[`Zonas menores`, `Troca viva`, `O aluno escolhe a própria intenção`] },
 
 { id:'D19', nome:'Pro-set com contador', fonte:'apostila', transv:true,
   tema:['forehand','backhand','rede','saque','movimentacao'], camada:5, bloco:'jogo',
@@ -2414,7 +2705,10 @@ const EX = [
     ['texto',0,3.2,'pro-set de 8 games',.62]
   ], nota:`Pro-set com um tema tático definido antes e um contador de mão: marca-se cada execução do tema.`},
   passos:[`Defina o tema ANTES: “atacar o backhand”, “variar altura”.`, `Contador de mão ou cartão de marcação.`, `Pro-set de 8 games.`, `A cada ponto em que o aluno executa o tema com sucesso — ganhando o ponto ou não — ele marca uma vez.`, `Ao final, compare marcas com games ganhos.`],
-  dica:`Abandonar o tema no primeiro momento de pressão é o padrão. O contador mostra exatamente em que game isso aconteceu.` },
+  dica:`Abandonar o tema no primeiro momento de pressão é o padrão. O contador mostra exatamente em que game isso aconteceu.` ,
+  foco:[`Tema aparecendo nos pontos`, `Marcação honesta no contador`, `Momento em que o tema é abandonado`, `Relação entre tema e games ganhos`],
+  erros:[`Esquecer de marcar`, `Marcar pontos ganhos em vez do tema executado`, `Trocar de tema no meio do set`],
+  dificultar:[`Tema vindo de scouting`, `Contador feito pelo aluno`, `Set inteiro sem lembrete`] },
 
 { id:'D20', nome:'Cinco situações', fonte:'apostila', transv:true,
   tema:['saque','rede','forehand','backhand'], camada:5, bloco:'jogo',
@@ -2438,7 +2732,10 @@ const EX = [
     ['marca',2.2,2.0,'5. na rede']
   ], nota:`Pontos que COMEÇAM em cada uma das cinco situações de jogo, uma rodada por situação.`},
   passos:[`Monte pontos que COMEÇAM em situações montadas.`, `As cinco: sacando, devolvendo, ambos no fundo, um subindo (pós-approach), um na rede.`, `Uma rodada por situação.`, `O aluno VERBALIZA o objetivo daquela situação antes do primeiro ponto.`, `No Ascensão, sorteie a situação ponto a ponto.`],
-  dica:`Jogar toda situação do mesmo jeito é o que trava o jogador tático. Nomear a situação é metade da correção.` },
+  dica:`Jogar toda situação do mesmo jeito é o que trava o jogador tático. Nomear a situação é metade da correção.` ,
+  foco:[`Situação reconhecida`, `Objetivo verbalizado antes`, `Resolução coerente com a situação`, `Transição entre situações`],
+  erros:[`Verbalizar e não cumprir`, `Confundir subir com estar na rede`, `Esquecer a situação no meio do ponto`],
+  dificultar:[`Situações sorteadas ponto a ponto`, `Placar de pressão em cada uma`, `Sem verbalizar antes`] },
 
 { id:'D21', nome:'Trilha da rotina', fonte:'apostila', transv:true,
   tema:['saque','forehand','backhand','rede','movimentacao','footwork'], camada:6, bloco:'jogo',
@@ -2461,7 +2758,10 @@ const EX = [
     ['texto',0,9.0,'20 segundos entre pontos',.6]
   ], nota:`Três marcas no chão atrás da linha: o aluno pisa nas três, em ordem, dentro do tempo-limite.`},
   passos:[`Três marcas pequenas atrás da linha de fundo: respiração (costas para a rede), decisão da jogada, posição de saque ou devolução.`, `Cronômetro visível.`, `Pontos valendo.`, `Entre cada ponto, o aluno pisa nas 3 marcas em ORDEM, dentro de 20 segundos.`, `Pular marca ou estourar o tempo = ponto perdido, mesmo que ganho em quadra.`],
-  dica:`A rotina some exatamente quando mais precisa — depois de uma dupla falta, por exemplo. É ali que o cronômetro educa.` },
+  dica:`A rotina some exatamente quando mais precisa — depois de uma dupla falta, por exemplo. É ali que o cronômetro educa.` ,
+  foco:[`Três marcas pisadas em ordem`, `Tempo dentro do limite`, `Rotina depois do erro`, `Respiração na primeira marca`],
+  erros:[`Rotina que some depois da dupla falta`, `Pisar as marcas com pressa`, `Pular a marca da decisão`, `Estourar o tempo e continuar`],
+  dificultar:[`Três passos com cronômetro`, `Rotina completa mais rotina de saque`, `Tempo reduzido`] },
 
 { id:'D22', nome:'Placar de pressão', fonte:'apostila', transv:true,
   tema:['saque','forehand','backhand','rede'], camada:6, bloco:'jogo',
@@ -2481,7 +2781,10 @@ const EX = [
     ['texto',0,3.4,'30-40 · 40-0 · tiebreak 5-5',.6]
   ], nota:`Só o final do game, muitas vezes: cada rodada começa num placar que muda a escolha certa.`},
   passos:[`Games começando em placares dados: 30-40, 40-0, tiebreak 5-5.`, `Joga-se só o FINAL do game, muitas vezes.`, `Depois de cada um, a pergunta: “o que esse placar pedia?”.`, `No Ascensão, placares padrão.`, `No Topo, com história: “você perdeu os dois últimos pontos bobos”.`],
-  dica:`Mesma escolha de risco em qualquer placar é o que separa quem joga bem de quem ganha jogo.` },
+  dica:`Mesma escolha de risco em qualquer placar é o que separa quem joga bem de quem ganha jogo.` ,
+  foco:[`Escolha coerente com o placar`, `Rotina mantida no placar apertado`, `Justificativa depois de cada game`, `Diferença entre 40-0 e 30-40`],
+  erros:[`Mesmo risco em qualquer placar`, `Justificar depois com o resultado`, `Perder a rotina no placar importante`, `Jogar o final sem intenção`],
+  dificultar:[`Placares com história`, `Tiebreak 5-5`, `Sequência sem pausa`] },
 
 { id:'D23', nome:'Cartão de identidade em quadra', fonte:'apostila', transv:true,
   tema:['forehand','backhand','rede','saque','movimentacao'], camada:6, bloco:'jogo',
@@ -2502,7 +2805,10 @@ const EX = [
     ['texto',0,3.4,'3 comportamentos observáveis',.6]
   ], nota:`Um set com a identidade do aluno traduzida em 3 comportamentos que dá para contar de fora.`},
   passos:[`Traduza a identidade do aluno em 3 comportamentos OBSERVÁVEIS.`, `Exemplo, para “consistente e paciente”: joga 3+ bolas de segurança antes de arriscar; não acelera depois de erro; mantém troca cruzada em bola neutra.`, `Joga-se um set.`, `Você (ou um colega) observa e marca no cartão cada vez que um comportamento aparece.`, `Ao final, conte quantas vezes apareceu x quantas foi abandonado.`],
-  dica:`Identidade escrita numa frase bonita não se treina. Traduzida em comportamento contável, vira treino de verdade.` },
+  dica:`Identidade escrita numa frase bonita não se treina. Traduzida em comportamento contável, vira treino de verdade.` ,
+  foco:[`Comportamentos aparecendo em jogo`, `Quantas vezes foi abandonado`, `Coerência com a identidade escolhida`, `Reação depois do erro`],
+  erros:[`Comportamento vago demais para contar`, `Mudar a identidade quando perde`, `Marcar sem observar de verdade`],
+  dificultar:[`Comportamentos definidos pelo aluno`, `Set inteiro`, `A partir da análise do último jogo`] },
 
 { id:'D24', nome:'Checklist do mentor', fonte:'apostila', transv:true,
   tema:['footwork','movimentacao'], camada:6, bloco:'tema',
@@ -2522,7 +2828,10 @@ const EX = [
     ['texto',0,13.4,'15 min de ativação de base',.58]
   ], nota:`O aluno do Topo conduz 15 minutos de ativação de um iniciante, com um cartão de 5 itens para observar.`},
   passos:[`Monte um cartão com 5 itens tirados dos “erros a observar” das camadas 1 e 2.`, `Peso nos calcanhares, salto atrasado, base errada, tronco caindo, recuperação lenta.`, `O aluno do Topo conduz 15 minutos de ativação de base de um iniciante, sob supervisão.`, `Ele marca no cartão cada vez que observa e corrige um dos 5 itens.`, `Ao final, revisem o cartão juntos.`],
-  dica:`Se o mentor corrigir a mão do iniciante em vez do pé, a conversa não é sobre o iniciante — é sobre o que ele ainda não entendeu do método.` },
+  dica:`Se o mentor corrigir a mão do iniciante em vez do pé, a conversa não é sobre o iniciante — é sobre o que ele ainda não entendeu do método.` ,
+  foco:[`Itens do cartão observados`, `Correção no pé, não na mão`, `Clareza da instrução dada`, `Postura de professor`],
+  erros:[`Falar demais e demonstrar de menos`, `Deixar o iniciante parado`, `Dar aula sem usar o cartão`],
+  dificultar:[`Conduzir o D5 completo`, `Bloco de tema simples`, `Sem supervisão direta, com revisão depois`] },
 
 { id:'T01', nome:'Circuito de coordenação Kids', fonte:'banco', transv:true,
   tema:['footwork','movimentacao'], camada:1, bloco:'ativacao',
@@ -2546,7 +2855,10 @@ const EX = [
     ['texto',0,7.0,'4. salto lateral · 90 s por estação',.55]
   ], nota:`Quatro estações de coordenação em rodízio: escada, arremesso no alvo, equilíbrio e salto lateral.`},
   passos:[`Monte quatro estações: escada de agilidade, arremesso num alvo, equilíbrio numa linha do saibro, salto lateral sobre cones.`, `Rodízio de 90 segundos por estação.`, `Duas voltas.`, `Cada estação tem um “desafio do dia” com contagem.`, `A criança anota o próprio recorde.`],
-  dica:`Fila parada é aula perdida. Toda criança que espera precisa de tarefa — nem que seja contar o recorde do colega.` },
+  dica:`Fila parada é aula perdida. Toda criança que espera precisa de tarefa — nem que seja contar o recorde do colega.` ,
+  foco:[`Qualidade em cada estação`, `Rodízio sem fila parada`, `Recorde anotado`, `Coordenação além do tênis`],
+  erros:[`Fila parada esperando a vez`, `Estação virando brincadeira sem critério`, `Pular a estação difícil`, `Contar o recorde do colega como próprio`],
+  dificultar:[`Com cronômetro e recorde da semana`, `Estações mais complexas`, `Pontuação por equipe`] },
 
 { id:'T02', nome:'Aquecimento articular JV', fonte:'banco', transv:true,
   tema:['footwork','movimentacao','forehand','backhand','rede','saque'], camada:1, bloco:'ativacao',
@@ -2569,7 +2881,10 @@ const EX = [
     ['texto',0,6.6,'termina com trote e split-steps',.56]
   ], nota:`Sequência fixa de 6 minutos, sempre na mesma ordem, antes de qualquer bola.`},
   passos:[`Tornozelo: 10 círculos por lado e 10 elevações de panturrilha.`, `Quadril: 10 balanços de perna à frente e 10 lateral.`, `Tronco: 10 rotações com a raquete nos ombros.`, `Ombro: 10 rotações externas com elástico, ou 10 círculos amplos.`, `20 segundos de trote leve com split-steps.`],
-  dica:`Pular o ombro no mês do saque é o erro mais comum — e é exatamente o mês em que ele mais precisa.` },
+  dica:`Pular o ombro no mês do saque é o erro mais comum — e é exatamente o mês em que ele mais precisa.` ,
+  foco:[`Sequência inteira, na ordem`, `Ombro incluído no mês do saque`, `Amplitude dos movimentos`, `Tempo total de 6 minutos`],
+  erros:[`Fazer contando rápido demais`, `Alongar frio em vez de mobilizar`, `Começar a bater sem terminar a sequência`],
+  dificultar:[`Conduzida pelo aluno`, `Mais elástico no ombro`, `Ativação específica do tema do mês`] },
 
 { id:'T03', nome:'Pergunta do fechamento', fonte:'banco', transv:true,
   tema:['footwork','movimentacao','forehand','backhand','rede','saque'], camada:6, bloco:'fechamento',
@@ -2593,7 +2908,10 @@ const EX = [
     ['texto',0,10.0,'3. o que você leva?',.56]
   ], nota:`Três perguntas, sempre as mesmas, respondidas em uma frase cada — pelo aluno.`},
   passos:[`Os dois em pé, perto da rede.`, `Pergunta 1: “qual foi o tema de hoje?”.`, `Pergunta 2: “o que melhorou?”.`, `Pergunta 3: “o que você leva para a próxima?”.`, `Uma frase cada. Você fecha conectando com a aula seguinte.`],
-  dica:`Fechar a aula falando é o erro do professor. O fechamento é do aluno — espere o silêncio, ele responde.` },
+  dica:`Fechar a aula falando é o erro do professor. O fechamento é do aluno — espere o silêncio, ele responde.` ,
+  foco:[`Respostas saindo sem ajuda`, `Vocabulário da Pirâmide`, `Tarefa concreta na resposta 3`, `Ligação com a próxima aula`],
+  erros:[`Professor responder pelo aluno`, `Resposta genérica`, `Pular o fechamento`, `Fazer as três perguntas de uma vez`],
+  dificultar:[`Exigir o nome da camada`, `Tarefa concreta obrigatória`, `O aluno propõe a pauta seguinte`] },
 
 { id:'T04', nome:'Ficha de nível na quadra', fonte:'banco', transv:true,
   tema:['footwork','movimentacao','forehand','backhand','rede','saque'], camada:3, bloco:'tema',
@@ -2617,7 +2935,10 @@ const EX = [
     ['texto',0,3.4,'4 medições anotadas',.62]
   ], nota:`Quatro medições anotadas: maior troca, alvos de forehand, alvos de backhand e % de primeiro saque.`},
   passos:[`Medição 1: maior troca cooperativa sustentada.`, `Medição 2: acertos em 10 bolas no alvo cruzado de forehand.`, `Medição 3: o mesmo de backhand.`, `Medição 4: percentual de primeiro saque em 10 saques.`, `Compare com a régua do nível e com a medição anterior.`],
-  dica:`Professor que “sente” o nível e nunca mede promove por palpite. Quatro números por trimestre resolvem isso.` },
+  dica:`Professor que “sente” o nível e nunca mede promove por palpite. Quatro números por trimestre resolvem isso.` ,
+  foco:[`Quatro medições anotadas`, `Condições iguais às da última vez`, `Honestidade da contagem`, `Comparação com a régua do nível`],
+  erros:[`Medir só quando o aluno está bem`, `Mudar as condições entre medições`, `Promover por tempo de casa`, `Medir e não anotar`],
+  dificultar:[`Medição em ritmo de jogo`, `Sob pressão`, `Com variação de ritmo e efeito`] },
 
 { id:'T05', nome:'Rei da quadra adaptado', fonte:'banco', transv:true,
   tema:['footwork','movimentacao','forehand','backhand','rede','saque'], camada:5, bloco:'jogo',
@@ -2641,7 +2962,10 @@ const EX = [
     ['texto',0,5.6,'a regra do mês vale no ponto',.58]
   ], nota:`Rei da quadra em mini-quadra, com a regra do tema do mês valendo dentro do ponto.`},
   passos:[`Mini-quadra ou quadra reduzida; bola adaptada; fila de desafiantes.`, `Um aluno é o “rei” de um lado; os outros desafiam em fila.`, `Quem ganha o ponto vira rei (ou continua).`, `A regra extra é o tema do mês — por exemplo, no mês do footwork, o ponto só vale com split-step.`, `Quem espera na fila recebe tarefa: “conte os split-steps dele”.`],
-  dica:`Coroa de papel para o rei. Parece bobagem e funciona por semanas — principalmente no Kids.` },
+  dica:`Coroa de papel para o rei. Parece bobagem e funciona por semanas — principalmente no Kids.` ,
+  foco:[`Regra do mês cumprida no ponto`, `Todos jogando, sem fila parada`, `Tarefa de quem espera`, `Clima da atividade`],
+  erros:[`Regra do mês esquecida no ponto`, `Mesmo aluno rei o tempo todo`, `Discussão de placar`],
+  dificultar:[`Quadra inteira`, `Regra tática do mês`, `Rodízio mais rápido`] },
 
 { id:'T06', nome:'Observador com tarefa', fonte:'banco', transv:true,
   tema:['footwork','movimentacao','forehand','backhand','rede','saque'], camada:3, bloco:'jogo',
@@ -2665,7 +2989,10 @@ const EX = [
     ['texto',0,13.2,'uma coisa só para contar',.6]
   ], nota:`Quem espera a vez recebe uma tarefa de observação: contar UMA coisa e reportar ao colega.`},
   passos:[`Faça um cartão simples com UMA coisa para contar.`, `Split-steps, recuperações ao centro, bolas dentro do corredor, intenções cumpridas.`, `Enquanto um executa, o outro conta e anota.`, `Ao final da série, o observador REPORTA o número ao colega e diz uma observação.`, `Depois invertem.`],
-  dica:`Observador sem tarefa vira conversa, e a aula em dupla perde metade do tempo. Observar com tarefa também ensina.` },
+  dica:`Observador sem tarefa vira conversa, e a aula em dupla perde metade do tempo. Observar com tarefa também ensina.` ,
+  foco:[`Número reportado x observado pelo professor`, `Observação além do número`, `Foco de quem espera`, `Troca de função no tempo certo`],
+  erros:[`Contar de memória`, `Conversar em vez de observar`, `Reportar sem dizer nada útil`],
+  dificultar:[`Contar, comentar e sugerir ajuste`, `Scouting completo`, `Relatório verbal ao fim`] },
 
 /* ---------- COMPLEMENTO DO NÍVEL BASE -----------------------------------
    O aluno da Base também passa pelos meses de rede e de saque — na linguagem
@@ -2693,7 +3020,10 @@ const EX = [
     ['texto',0,5.4,'recorde da dupla',.6]
   ], nota:`Mini-quadra com bola adaptada: troca perto da rede, primeiro com quique e depois sem.`},
   passos:[`Mini-quadra usando os dois quadrados de saque; bola adaptada; cones marcando a espera.`, `Troca cooperativa com os dois perto da rede.`, `No começo, a bola pode quicar uma vez.`, `Quando a troca estabilizar, passa a valer sem quique — vira voleio.`, `Conte o recorde da dupla.`],
-  dica:`Recuar para dentro da quadra quando a bola aperta é o instinto errado. Na rede se anda para frente.` },
+  dica:`Recuar para dentro da quadra quando a bola aperta é o instinto errado. Na rede se anda para frente.` ,
+  foco:[`Posição à frente, sem recuar`, `Contato à frente do corpo`, `Recorde da dupla`, `Transição do quique para o voleio`],
+  erros:[`Deixar quicar depois de combinar sem quique`, `Bater forte e quebrar a troca`, `Contar errado`],
+  dificultar:[`Sem quique na segunda metade`, `Passo de ataque cobrado`, `Distância menor`] },
 
 { id:'R15', nome:'Corre e toca a rede', fonte:'banco',
   tema:['rede','movimentacao'], camada:2, bloco:'ativacao',
@@ -2715,7 +3045,10 @@ const EX = [
     ['mov',0.6,2.2, 0.6,11.4, -.06, 'volta olhando a rede']
   ], nota:`Do fundo até a rede: split-step na linha de saque, toca a faixa e volta de frente para a rede.`},
   passos:[`Do fundo, ao comando, o aluno corre à frente.`, `Split-step na linha de saque.`, `Toca a faixa da rede com a mão.`, `Volta para a linha de base OLHANDO a rede — nunca de costas.`, `Séries de 6 idas.`],
-  dica:`O iniciante tem o reflexo de recuar. O mês da rede começa desfazendo isso — e este exercício nem precisa de bola.` },
+  dica:`O iniciante tem o reflexo de recuar. O mês da rede começa desfazendo isso — e este exercício nem precisa de bola.` ,
+  foco:[`Split na linha de saque`, `Volta de frente para a rede`, `Velocidade da ida`, `Toque na faixa de verdade`],
+  erros:[`Pular o split na linha de saque`, `Correr sem parar em nenhum ponto`, `Diminuir o ritmo na quarta ida`],
+  dificultar:[`Com raquete e sombra de voleio`, `Mais idas por série`, `Cronometrar`] },
 
 { id:'R16', nome:'Ponto que só vale na rede', fonte:'banco',
   tema:['rede'], camada:5, bloco:'jogo',
@@ -2737,7 +3070,10 @@ const EX = [
     ['zona',0,5.6,6.0,2.2,'ponto do fundo vale 1']
   ], nota:`Ponto valendo em quadra reduzida: ponto ganho à frente da linha de saque vale dobrado.`},
   passos:[`Mini-quadra ou quadra reduzida; bola adaptada.`, `Pontos valendo.`, `O ponto vale DOBRADO se quem ganhou estava à frente da linha de saque.`, `Narre o placar em voz alta — o incentivo é o que puxa o aluno para frente.`, `No Impulso, o ponto começa com saque simplificado.`],
-  dica:`Se ele ficar na rede até em bola profunda, mostre o custo com um lob fácil. Aprende em um ponto o que não aprenderia em dez avisos.` },
+  dica:`Se ele ficar na rede até em bola profunda, mostre o custo com um lob fácil. Aprende em um ponto o que não aprenderia em dez avisos.` ,
+  foco:[`Iniciativa de ir para frente`, `Ponto ganho à frente da linha`, `Escolha da bola para subir`, `Reação ao lob`],
+  erros:[`Só subir quando o professor manda`, `Bater forte de qualquer lugar`, `Desanimar depois de ser passado`],
+  dificultar:[`Quadra reduzida em vez de mini`, `Ponto começa com saque simplificado`, `Adversário lobando de propósito`] },
 
 { id:'S15', nome:'Saque de ombro solto', fonte:'banco',
   tema:['saque'], camada:1, bloco:'ativacao',
@@ -2759,7 +3095,10 @@ const EX = [
     ['texto',0,13.2,'8 arremessos por lado',.6]
   ], nota:`Arremessar a bola longe, como uma pedra: é o mesmo movimento do saque, sem a raquete.`},
   passos:[`Uma bola por aluno.`, `Arremesse a bola de tênis longe, como se fosse uma pedra. Oito vezes por lado.`, `Depois, o mesmo arremesso partindo da base de saque, com carga na perna de trás.`, `Dez rotações externas de ombro com elástico.`, `Mostre que o gesto do saque é este arremesso com raquete na mão.`],
-  dica:`Quem nunca arremessou não saca. Arremesso “de cotovelo”, sem rotação de tronco, reaparece igualzinho no saque.` },
+  dica:`Quem nunca arremessou não saca. Arremesso “de cotovelo”, sem rotação de tronco, reaparece igualzinho no saque.` ,
+  foco:[`Corpo de lado no arremesso`, `Rotação de tronco`, `Braço solto`, `Transferência para o saque`],
+  erros:[`Arremessar de frente`, `Pular o ombro no aquecimento`, `Fazer só de um lado`],
+  dificultar:[`Arremesso da base de saque`, `Com carga de perna`, `Seguido de três saques`] },
 
 { id:'S16', nome:'Devolução com a mão', fonte:'banco',
   tema:['saque'], camada:2, bloco:'tema',
@@ -2782,7 +3121,10 @@ const EX = [
     ['marca',-1.8,5.4,'pega na altura do quadril']
   ], nota:`Devolução sem raquete: split no contato, deixa quicar e pega a bola com a mão, ao lado do corpo.`},
   passos:[`Professor sacando devagar (ou lançando de mão, de dentro do quadrado).`, `Aluno sem raquete, na posição de devolução.`, `Split-step no contato do professor.`, `Desloca-se, deixa quicar e pega a bola com a mão na altura do quadril, ao lado do corpo.`, `Dez repetições por lado do quadrado.`],
-  dica:`Split depois de a bola já ter passado custa o ponto inteiro na devolução. Aqui o atraso fica impossível de disfarçar.` },
+  dica:`Split depois de a bola já ter passado custa o ponto inteiro na devolução. Aqui o atraso fica impossível de disfarçar.` ,
+  foco:[`Split no contato do sacador`, `Pegada na altura do quadril`, `Distância lateral`, `Equilíbrio na chegada`],
+  erros:[`Split depois de a bola passar`, `Pegar com as duas mãos`, `Chegar em cima da bola`, `Ficar parado esperando o quique`],
+  dificultar:[`Saque de verdade em ritmo leve`, `Os dois lados do quadrado`, `Saque mais forte`] },
 
 { id:'FH14', nome:'Recorde da dupla', fonte:'banco',
   tema:['forehand','backhand'], camada:5, bloco:'jogo',
@@ -2805,7 +3147,10 @@ const EX = [
     ['texto',0,3.0,'recorde da dupla, em voz alta',.6]
   ], nota:`Troca cooperativa contando em voz alta: o placar é o número de bolas, não o ponto.`},
   passos:[`Quadra reduzida no Base; inteira do Impulso em diante.`, `Troca cooperativa contando em voz alta.`, `O objetivo é bater o recorde anterior da dupla.`, `Cada tentativa começa do zero. Anote o recorde do dia.`, `No mês do forehand, só forehand cruzado; no do backhand, só backhand.`],
-  dica:`Quando alguém acelera para “mostrar serviço”, o recorde cai na hora. O exercício ensina o custo sem nenhum sermão.` },
+  dica:`Quando alguém acelera para “mostrar serviço”, o recorde cai na hora. O exercício ensina o custo sem nenhum sermão.` ,
+  foco:[`Regularidade da troca`, `Escolha da bola segura`, `Contagem em voz alta`, `Reação depois de quebrar o recorde`],
+  erros:[`Contar errado a favor`, `Bater sem direção intencional`, `Desistir depois de dois erros`],
+  dificultar:[`Quadra inteira`, `Direção intencional cobrada`, `Meta maior que o recorde anterior`] },
 
 { id:'BH15', nome:'Dois toques e devolve', fonte:'banco',
   tema:['backhand','forehand'], camada:4, bloco:'ativacao',
@@ -2827,7 +3172,10 @@ const EX = [
     ['marca',-1.6,3.2,'1º toque: ajusta']
   ], nota:`Dois toques permitidos: o primeiro ajusta a bola para cima, o segundo devolve.`},
   passos:[`Bola adaptada. Aluno no quadrado de saque, professor a 4 metros.`, `Lance a bola no lado do backhand.`, `O aluno pode dar DOIS toques: o primeiro só para ajustar (quica na raquete, controlado, para cima).`, `O segundo é a devolução.`, `Vinte repetições. Depois tire o primeiro toque.`],
-  dica:`Fugir da bola girando o corpo para bater de forehand é o que este exercício existe para impedir. Sem pressa, sem susto.` }
+  dica:`Fugir da bola girando o corpo para bater de forehand é o que este exercício existe para impedir. Sem pressa, sem susto.` ,
+  foco:[`Coragem de ficar no lado do backhand`, `Contato à frente no segundo toque`, `Controle no primeiro toque`, `Progresso ao tirar o toque extra`],
+  erros:[`Primeiro toque forte demais`, `Deixar a bola cair no pé`, `Desistir depois de errar duas`],
+  dificultar:[`Dez com dois toques, dez com um`, `Bola em ritmo normal`, `Sem o toque de ajuste`] }
 
 ];
 
