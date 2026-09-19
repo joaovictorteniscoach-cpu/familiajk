@@ -50,12 +50,32 @@ níveis (cinco pontos, acesos onde o exercício serve) e o código. O objetivo s
 da lista — ele está na ficha, e a busca continua achando por ele. A ideia é
 simples: **o professor reconhece o exercício pela forma antes de ler o nome.**
 
+**O card inteiro abre a ficha.** Antes só o desenho e o texto abriam: a borda
+de 10 px e o vão entre eles eram zona morta, e o dedo caía ali sem nada
+acontecer. O `cursor:pointer` no card não é enfeite — sem ele o Safari do iPhone
+não deixa o clique de um `<div>` subir até o `document`, que é onde o app escuta.
+
+**Arrastar não vira toque.** Rolar as tiras de filtro de lado terminava
+selecionando o que estava sob o dedo, porque o navegador manda um clique quando
+o dedo quase não anda — e "quase" é generoso demais para uma tira que rola. O
+gesto agora é medido: acima de 10 px é arrasto, e o clique seguinte é engolido.
+
 **A ficha mostra o essencial e guarda o resto.** Em pé, sem tocar em nada:
-desenho grande, montagem, os dados da atividade, o objetivo em uma frase e o
-passo a passo. As três colunas viraram **abas** (Foco · Erros · Dificultar) —
-uma por vez. E a progressão por nível, a versão Kids e os materiais ficam em
-**gavetas**, a um toque. Nada foi cortado; o que mudou é o que aparece de
-primeira.
+desenho grande, **a frase que conta o que está desenhado**, montagem, os dados
+da atividade, o objetivo em uma frase e o passo a passo. Essa frase existe para
+os 116 exercícios e vivia só no `aria-label` — invisível para quem enxerga. É
+ela que fecha a conta entre a figura e o nome: *"Sem bola: o professor canta a
+sequência e o aluno executa em sombra, acelerando o canto."*
+
+As três colunas viraram **abas** (Foco · Erros · Dificultar) — uma por vez. E a
+versão Kids e os materiais ficam em **gavetas**, a um toque. Nada foi cortado;
+o que mudou é o que aparece de primeira.
+
+**Escolheu um nível na tira, a ficha muda com ele.** A variação daquele nível
+sobe da gaveta para o corpo da ficha, logo abaixo do objetivo, com o nome do
+nível no título. Marcando dois níveis, aparecem os dois — é o caso da turma
+mista. A linha do resumo também passa a dizer qual nível está filtrando, para
+não haver dúvida sobre de onde veio o número de exercícios.
 
 ## O desenho da quadra
 
@@ -138,10 +158,23 @@ para algum nível ou algum bloco da aula, ele avisa.
 
 ## O plano de aula
 
-O botão **⚡ Montar aula** monta um plano do tema do mês nas proporções da anatomia
-da aula JV (18% ativação, 40% tema, 33% jogo, 7% fechamento), preferindo o que o
-professor marcou como favorito e depois os drills da apostila. O plano sai **para
-ser editado** — tirar, trocar e reordenar é a parte humana.
+**A faixa ⚡ Aula pronta**, logo abaixo das tiras, mostra o tempo todo o que
+sairia com o tema e o nível que estão escolhidos naquele momento — *"Forehand e
+variações · nível Impulso · 5 exercícios · 51 min"* — sem tocar no plano que o
+professor já tem na mão. Os botões **60′** e **90′** põem essa aula no plano e
+abrem. É o caminho de dois toques: escolhe o nível, escolhe o tempo, tem aula.
+
+Por isso o cálculo é uma função separada de quem o usa (`montarLista` devolve a
+lista e não altera nada; `montarAuto` é quem grava). Conferido nas **72
+combinações** de tema × nível × duração: todas saem com os quatro blocos, sem
+exercício repetido dentro da mesma aula, entre 46 e 57 min no alvo de 60 e entre
+62 e 87 min no alvo de 90.
+
+O botão **⚡ Montar aula** da barra de baixo faz o mesmo para 60 min. A montagem
+segue as proporções da anatomia da aula JV (18% ativação, 40% tema, 33% jogo, 7%
+fechamento), preferindo o que o professor marcou como favorito e depois os
+drills da apostila. O plano sai **para ser editado** — tirar, trocar e reordenar
+é a parte humana.
 
 - **Copiar / enviar** → texto completo, pronto para o WhatsApp;
 - **Imprimir** → uma folha com aluno, nível, data e a ficha completa de cada

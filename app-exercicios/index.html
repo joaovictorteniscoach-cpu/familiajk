@@ -78,7 +78,8 @@ header.bar{
   font-style:italic;font-family:Georgia,serif;display:flex;align-items:center;justify-content:center}
 
 /* ---------- tiras de filtro ---------- */
-.tira{display:flex;gap:7px;overflow-x:auto;padding:9px 16px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.tira{display:flex;gap:7px;overflow-x:auto;overscroll-behavior-x:contain;
+  padding:9px 16px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .tira::-webkit-scrollbar{display:none}
 .tira.centro{max-width:900px;margin:0 auto}
 .chip{flex-shrink:0;padding:8px 14px;border-radius:999px;border:1px solid var(--line-2);
@@ -125,13 +126,18 @@ header.bar{
 .lista{max-width:900px;margin:0 auto;padding:10px 16px 20px;display:grid;gap:10px}
 /* O card da lista e' quase todo desenho: o professor reconhece o exercicio pela
    forma antes de ler o nome. O objetivo saiu daqui — ele esta' na ficha, e a
-   busca continua achando por ele. */
+   busca continua achando por ele.
+   O card INTEIRO abre a ficha. Antes so' o desenho e o texto abriam, e a
+   borda de 10 px mais o vao de 12 px entre eles eram zona morta: o dedo caia
+   ali e nao acontecia nada. O cursor:pointer nao e' enfeite — sem ele o
+   Safari do iPhone nao manda o clique de um <div> subir ate' o document. */
 .card{background:var(--navy-2);border:1px solid var(--line-2);border-radius:var(--r);
   padding:10px;display:flex;gap:12px;align-items:center;text-align:left;width:100%;
+  cursor:pointer;
   scroll-margin-top:124px}   /* barra de cima + filtros: rolar ate' o card nao o esconde */
-.card:active{transform:scale(.995)}
+.card:active{background:var(--navy-3);border-color:var(--line)}
 .card.no-plano{border-color:var(--gold);box-shadow:inset 0 0 0 1px rgba(216,180,92,.25)}
-.card .miniq{flex:0 0 92px;width:92px;border-radius:10px;overflow:hidden;
+.card .miniq{flex:0 0 104px;width:104px;border-radius:10px;overflow:hidden;
   background:var(--deep);border:1px solid var(--line-2);display:block;padding:0;
   position:static;height:auto}
 .card .miniq svg{display:block;width:100%}
@@ -150,10 +156,30 @@ header.bar{
 .card .add{flex-shrink:0;width:42px;height:42px;border-radius:11px;border:1px solid var(--line);
   display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--gold-soft);align-self:center}
 .card .add.dentro{background:var(--gold);color:#23303b;border-color:transparent}
-@media(min-width:520px){ .card .miniq{flex-basis:118px;width:118px} .card h3{font-size:17px} }
+@media(min-width:520px){ .card .miniq{flex-basis:132px;width:132px} .card h3{font-size:17px} }
 .vazio{text-align:center;padding:44px 20px;color:var(--muted)}
 .vazio .em{font-size:36px;margin-bottom:12px}
 .vazio b{color:var(--gold-soft);display:block;margin-bottom:6px;font-size:17px}
+
+/* ---------- aula pronta ---------- */
+/* Tema mais nivel ja' descrevem uma aula inteira. Em vez de deixar o professor
+   montar a mao, a faixa mostra o que sairia — e um toque poe no plano. */
+.pronta{max-width:900px;margin:0 auto;padding:11px 16px 0}
+.pronta .cx{display:flex;align-items:center;gap:11px;
+  background:linear-gradient(135deg,var(--navy-2),var(--navy-3));
+  border:1px solid var(--line);border-radius:13px;padding:10px 12px}
+.pronta .tx{flex:1;min-width:0}
+.pronta .tt{display:block;font-size:10px;font-weight:800;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--gold)}
+.pronta .sub{display:block;font-size:14px;font-weight:700;color:#fff;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.pronta .mini{display:block;font-size:11.5px;font-weight:600;color:var(--muted);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pronta .bt{display:flex;gap:7px;flex-shrink:0}
+.pronta .bt button{height:40px;padding:0 13px;border-radius:11px;border:1px solid var(--line);
+  font-size:14px;font-weight:800;color:var(--gold-soft);background:var(--deep)}
+.pronta .bt button:active{transform:scale(.95)}
+.pronta[hidden]{display:none}
 
 /* ---------- barra de baixo ---------- */
 .rodape{position:fixed;left:0;right:0;bottom:0;z-index:55;
@@ -170,10 +196,16 @@ header.bar{
 .btn.pq{padding:10px 15px;font-size:13.5px;flex:0 0 auto}
 
 /* ---------- ficha e gaveta ---------- */
-.fundo{position:fixed;inset:0;z-index:60;background:rgba(6,14,23,.72);
-  display:none;align-items:flex-end;justify-content:center}
+/* dvh e nao vh: no Safari do iPhone o vh conta a tela COM a barra de
+   endereco escondida, entao a folha passava por baixo da barra de baixo do
+   navegador e o botao "por no plano" ficava fora do alcance do dedo. */
+.fundo{position:fixed;inset:0;height:100vh;height:100dvh;z-index:60;
+  background:rgba(6,14,23,.72);display:none;align-items:flex-end;justify-content:center}
 .fundo.aberto{display:flex}
-.folha{background:var(--navy);width:100%;max-width:900px;max-height:92vh;overflow-y:auto;
+/* overscroll-behavior:contain — chegando no fim da folha, o arrasto para ali
+   em vez de continuar rolando a lista atras dela. */
+.folha{background:var(--navy);width:100%;max-width:900px;max-height:92vh;max-height:88dvh;
+  overflow-y:auto;overscroll-behavior:contain;
   border-radius:20px 20px 0 0;border-top:1px solid var(--line);
   padding-bottom:calc(20px + var(--base));-webkit-overflow-scrolling:touch}
 .folha-top{position:sticky;top:0;background:var(--navy);z-index:2;
@@ -220,6 +252,10 @@ header.bar{
 .qd-leg i.cn{width:0;height:0;border-radius:0;background:none!important;
   border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:9px solid var(--warn)}
 .qd-leg i.zn{width:12px;height:9px;border-radius:2px;border:1px dashed var(--gold);background:rgba(216,180,92,.2)}
+/* A frase que conta o que o desenho mostra. Existe para os 116 exercicios e
+   estava so' no aria-label, invisivel para quem enxerga. */
+.qd-desc{font-size:14.5px;line-height:1.5;color:#F0E9DC;padding:12px;
+  background:rgba(216,180,92,.08);border-top:1px solid var(--line-2)}
 .qd-nota{font-size:12.5px;color:var(--muted);padding:9px 11px;background:var(--deep);
   border-top:1px solid var(--line-2);line-height:1.45}
 
@@ -341,7 +377,7 @@ header.bar{
 .det, .cab-imp, .imprimivel{display:none}
 @media print{
   html,body{background:#fff!important;color:#000!important;padding:0;margin:0}
-  header.bar,.foco,.tira,.filtros,.resumo,.lista,.rodape,.folha-acoes,.auto,
+  header.bar,.foco,.tira,.filtros,.resumo,.pronta,.lista,.rodape,.folha-acoes,.auto,
   .pi .x,.pi .mv,.fechar,.plano-cab,#fundoFicha,#fundoMes{display:none!important}
   #fundoPlano{position:static;display:block;background:none;inset:auto}
   #fundoPlano .folha{max-height:none;overflow:visible;background:#fff;border:none;
@@ -447,6 +483,18 @@ header.bar{
     <button class="lim" id="btnLimpar">✕ limpar todos os filtros</button>
   </div>
 </div>
+
+<section class="pronta" id="pronta"><div class="cx">
+  <div class="tx">
+    <span class="tt">⚡ Aula pronta</span>
+    <span class="sub" id="prontaSub">—</span>
+    <span class="mini" id="prontaMini">—</span>
+  </div>
+  <div class="bt">
+    <button id="pronta60" aria-label="Montar aula de 60 minutos">60′</button>
+    <button id="pronta90" aria-label="Montar aula de 90 minutos">90′</button>
+  </div>
+</div></section>
 
 <div class="resumo">
   <span class="qt" id="qt">—</span>
@@ -639,11 +687,13 @@ function reguaNiveis(e){
 function cartao(e){
   var c = camada(e.camada), b = bloco(e.bloco);
   var dentro = PLANO.itens.some(function(i){ return i.id === e.id; });
+  // data-ficha vai no card inteiro, e nao em cada pedaco: o dedo acerta a
+  // borda e o vao entre o desenho e o texto, que antes nao respondiam.
   return '' +
-  '<div class="card' + (dentro ? ' no-plano' : '') + '">' +
-    '<button class="miniq" data-ficha="' + e.id + '" aria-label="Abrir ' + esc(e.nome) + '">' +
-      svgQuadra(e.fig, { mini:true }) + '</button>' +
-    '<button class="mid" data-ficha="' + e.id + '" style="text-align:left">' +
+  '<div class="card' + (dentro ? ' no-plano' : '') + '" data-ficha="' + e.id + '"' +
+       ' role="button" tabindex="0" aria-label="Abrir ' + esc(e.nome) + '">' +
+    '<div class="miniq">' + svgQuadra(e.fig, { mini:true }) + '</div>' +
+    '<div class="mid">' +
       '<h3>' + esc(e.nome) + (FAV.indexOf(e.id) >= 0 ? ' ★' : '') + '</h3>' +
       '<div class="sinais">' +
         '<span class="sinal" style="color:' + c.cor + '" title="' + esc(b.nome) + '">' +
@@ -652,7 +702,7 @@ function cartao(e){
         reguaNiveis(e) +
         '<span class="sinal"><span class="cd">' + esc(e.id) + '</span></span>' +
       '</div>' +
-    '</button>' +
+    '</div>' +
     '<button class="add' + (dentro ? ' dentro' : '') + '" data-add="' + e.id + '" aria-label="' +
       (dentro ? 'Tirar do plano' : 'Pôr no plano') + '">' + (dentro ? '✓' : '+') + '</button>' +
   '</div>';
@@ -660,8 +710,9 @@ function cartao(e){
 
 function desenharLista(){
   var r = filtrados();
+  var nvTx = F.niveis.map(function(n){ return nivel(n).nome; }).join(' + ');
   el('qt').innerHTML = '<b>' + r.length + '</b> ' + (r.length === 1 ? 'exercício' : 'exercícios') +
-    (F.favs ? ' · favoritos' : '');
+    (nvTx ? ' · nível ' + esc(nvTx) : '') + (F.favs ? ' · favoritos' : '');
   el('ordAviso').textContent = '';
   if (!r.length) {
     el('lista').innerHTML = '<div class="vazio"><div class="em">🎾</div>' +
@@ -683,7 +734,7 @@ function marcarChips(){
 
 function atualizar(){
   desenharFoco(); desenharTemas(); desenharNiveis(); desenharBlocos();
-  marcarChips(); desenharLista(); selo();
+  marcarChips(); desenharLista(); desenharPronta(); selo();
 }
 
 /* ==========================================================================
@@ -693,12 +744,12 @@ function abrirFicha(id){
   var e = EX.filter(function(x){ return x.id === id; })[0];
   if (!e) return;
   var c = camada(e.camada), b = bloco(e.bloco);
-  var foco = F.niveis.length === 1 ? F.niveis[0] : '';
+  var focos = F.niveis.slice();
   var dentro = PLANO.itens.some(function(i){ return i.id === e.id; });
   var intTx = { baixa:'Baixa', media:'Média', alta:'Alta' }[e.int];
 
   var prog = NIVEIS.filter(function(n){ return e.prog && e.prog[n.id]; }).map(function(n){
-    return '<div class="it' + (foco === n.id ? ' foco' : '') + '">' +
+    return '<div class="it' + (focos.indexOf(n.id) >= 0 ? ' foco' : '') + '">' +
       '<span class="nv">' + esc(n.nome) + '</span>' +
       '<span class="tx">' + esc(e.prog[n.id]) + '</span></div>';
   }).join('');
@@ -724,8 +775,11 @@ function abrirFicha(id){
   '</div>' +
   '<div class="folha-corpo">' +
 
-    // 1. o desenho manda: e' a primeira coisa que aparece
+    // 1. o desenho manda: e' a primeira coisa que aparece, e logo abaixo dele
+    //    a frase que conta o que esta' desenhado — sem ela o professor tinha
+    //    que deduzir a cena a partir das bolinhas e das setas.
     '<div class="qd-cx">' + svgQuadra(e.fig) +
+      (e.fig && e.fig.nota ? '<div class="qd-desc">' + esc(e.fig.nota) + '</div>' : '') +
       '<div class="qd-nota"><b>Montagem:</b> ' + esc(e.montagem) + '</div>' +
       legendaQuadra() + '</div>' +
 
@@ -740,6 +794,13 @@ function abrirFicha(id){
 
     // 3. uma frase: o para quê
     '<p class="objetivo">' + esc(e.objetivo) + '</p>' +
+
+    // 3b. escolheu nível na tira? a versão dele vem para cima, em vez de
+    //     ficar guardada na gaveta "o mesmo exercício em cada nível".
+    focos.filter(function(n){ return e.prog && e.prog[n]; }).map(function(n){
+      return '<div class="bloco-tx destaque"><div class="tt">📶 No nível ' +
+        esc(nivel(n).nome) + '</div><p>' + esc(e.prog[n]) + '</p></div>';
+    }).join('') +
 
     // 4. o passo a passo, que e' o que se le em quadra
     '<div class="bloco-tx"><div class="tt">Como aplicar</div><ol class="passos">' +
@@ -949,13 +1010,17 @@ function desenharPlano(){
   el('planoTitulo').textContent = 'Aula · ' + t.nome;
 }
 
-/* Monta uma aula do tema atual respeitando os 4 blocos e o tempo disponível.
+/* Monta uma aula do tema respeitando os 4 blocos e o tempo disponível.
    Não é mágica: escolhe entre o que passa nos filtros de nível, material e
    formato, e prefere o que o professor já marcou como favorito. O plano sai
-   para ser editado — tirar, trocar e reordenar é a parte humana. */
-function montarAuto(minutos){
-  var t = F.tema ? tema(F.tema) : temaDoMes();
-  var nv = PLANO.nivel || (F.niveis.length === 1 ? F.niveis[0] : '');
+   para ser editado — tirar, trocar e reordenar é a parte humana.
+
+   A conta é separada de quem a usa (montarLista devolve a lista e não mexe em
+   nada) porque a faixa "Aula pronta" precisa mostrar o que sairia SEM apagar
+   o plano que o professor já tem na mão. */
+function montarLista(minutos, temaId, niveis){
+  var t = tema(temaId) || temaDoMes();
+  var nvs = niveis || [];
   // proporção dos blocos na anatomia da aula JV (apostila, seção 5.1)
   var alvo = { ativacao:0.18, tema:0.40, jogo:0.33, fechamento:0.07 };
   var escolhidos = [];
@@ -966,7 +1031,7 @@ function montarAuto(minutos){
     var cand = EX.filter(function(e){
       if (e.bloco !== b.id) return false;
       if (e.tema.indexOf(t.id) < 0) return false;
-      if (nv && e.niveis.indexOf(nv) < 0) return false;
+      if (nvs.length && !nvs.some(function(n){ return e.niveis.indexOf(n) >= 0; })) return false;
       if (F.form && e.form.indexOf(F.form) < 0) return false;
       if (F.mat) {
         var so = e.mat.filter(function(m){ return m !== 'nada'; });
@@ -1011,11 +1076,47 @@ function montarAuto(minutos){
     }
   });
 
-  PLANO.itens = escolhidos;
+  return escolhidos;
+}
+
+function montarAuto(minutos){
+  var t = F.tema ? tema(F.tema) : temaDoMes();
+  // o nível do plano manda; se ele está em branco, valem os níveis da tira
+  var nvs = PLANO.nivel ? [PLANO.nivel] : F.niveis.slice();
+  PLANO.itens = montarLista(minutos, t.id, nvs);
   PLANO.tema = t.id;
+  if (nvs.length === 1) PLANO.nivel = nvs[0];
   guardar(CH_PLANO, PLANO);
   atualizar(); desenharPlano();
   if (!el('fundoPlano').classList.contains('aberto')) abrir('fundoPlano');
+}
+
+/* A faixa "Aula pronta": mostra, antes de qualquer toque, o que sairia com o
+   tema e o nível que estão escolhidos agora. */
+function desenharPronta(){
+  var t = F.tema ? tema(F.tema) : temaDoMes();
+  var nvs = F.niveis.slice();
+  var itens = montarLista(60, t.id, nvs);
+  var min = itens.reduce(function(a, i){
+    var e = EX.filter(function(x){ return x.id === i.id; })[0];
+    return a + (e ? e.min : 0);
+  }, 0);
+  var blocos = BLOCOS.filter(function(b){
+    return itens.some(function(i){ return i.bloco === b.id; });
+  }).length;
+  var nvTx = nvs.map(function(n){ return nivel(n).nome; }).join(' + ');
+  // o tema na linha de cima e o nível na de baixo: juntos não cabiam na tela
+  // do celular e o nome do nível saía cortado justamente onde importa
+  el('prontaSub').textContent = t.nome;
+  el('prontaMini').textContent = (nvTx ? (nvs.length > 1 ? 'níveis ' : 'nível ') + nvTx
+                                       : 'todos os níveis') + ' · ' +
+    (!itens.length ? 'nada neste tema para este nível'
+      : itens.length + ' exercícios · ' + min + ' min' +
+        // os 4 blocos sao o normal (conferido nas 72 combinacoes de tema, nivel
+        // e duracao); so' avisa quando faltar algum, que e' o caso raro
+        (blocos < BLOCOS.length ? ' · só ' + blocos + ' de 4 blocos' : ''));
+  el('pronta60').disabled = !itens.length;
+  el('pronta90').disabled = !itens.length;
 }
 
 function planoTexto(){
@@ -1119,20 +1220,67 @@ function abrirMes(){
 /* ==========================================================================
    ABRIR / FECHAR
    ========================================================================== */
+var FOLHAS = ['fundoFicha','fundoPlano','fundoMes'];
+var ROLAGEM = 0;
+
+function algumaAberta(){
+  return FOLHAS.some(function(id){ return el(id).classList.contains('aberto'); });
+}
+
+/* overflow:hidden no body NAO segura a rolagem no Safari do iPhone: a pagina
+   continua andando atras da folha, e o arrasto dentro dela sai errado. O que
+   segura e' tirar o body do fluxo e devolver a posicao ao fechar. */
+function travarRolagem(){
+  ROLAGEM = window.pageYOffset || document.documentElement.scrollTop || 0;
+  var b = document.body.style;
+  b.position = 'fixed'; b.top = (-ROLAGEM) + 'px'; b.left = '0'; b.right = '0'; b.width = '100%';
+}
+function destravarRolagem(){
+  var b = document.body.style;
+  b.position = ''; b.top = ''; b.left = ''; b.right = ''; b.width = '';
+  window.scrollTo(0, ROLAGEM);
+}
+
 function abrir(id){
+  var tinha = algumaAberta();
   el(id).classList.add('aberto');
-  document.body.style.overflow = 'hidden';
+  if (!tinha) travarRolagem();
 }
 function fechar(id){
   el(id).classList.remove('aberto');
-  document.body.style.overflow = '';
+  if (!algumaAberta()) destravarRolagem();
 }
 
 /* ==========================================================================
    LIGAÇÕES
    ========================================================================== */
+/* Arrastar para rolar as tiras de filtro ou a lista terminava abrindo o que
+   estava embaixo do dedo: o navegador manda um clique quando o dedo quase nao
+   anda, e "quase" e' generoso demais para uma tira que rola de lado. Aqui o
+   gesto e' medido, e acima de 10 px ele e' arrasto, nao toque. */
+var ARRASTOU = false, TOQUE0 = null;
+
+function marcarInicio(x, y){ TOQUE0 = [x, y]; ARRASTOU = false; }
+function marcarMovimento(x, y){
+  if (!TOQUE0) return;
+  if (Math.abs(x - TOQUE0[0]) > 10 || Math.abs(y - TOQUE0[1]) > 10) ARRASTOU = true;
+}
+
+function ligarGestos(){
+  document.addEventListener('pointerdown', function(ev){ marcarInicio(ev.clientX, ev.clientY); }, true);
+  document.addEventListener('pointermove', function(ev){ marcarMovimento(ev.clientX, ev.clientY); }, true);
+  document.addEventListener('touchstart', function(ev){
+    var t = ev.touches[0]; if (t) marcarInicio(t.clientX, t.clientY);
+  }, { passive:true, capture:true });
+  document.addEventListener('touchmove', function(ev){
+    var t = ev.touches[0]; if (t) marcarMovimento(t.clientX, t.clientY);
+  }, { passive:true, capture:true });
+}
+
 function ligar(){
+  ligarGestos();
   document.addEventListener('click', function(ev){
+    if (ARRASTOU) { ARRASTOU = false; return; }
     var a = ev.target.closest ? ev.target.closest('[data-tema],[data-nivel],[data-bloco],[data-ficha],[data-add],[data-fecha],[data-favorito],[data-sobe],[data-desce],[data-aba]') : null;
     if (!a) return;
 
@@ -1153,13 +1301,24 @@ function ligar(){
   });
 
   // fechar clicando no fundo escuro
-  ['fundoFicha','fundoPlano','fundoMes'].forEach(function(id){
+  FOLHAS.forEach(function(id){
     el(id).addEventListener('click', function(ev){ if (ev.target === el(id)) fechar(id); });
   });
   document.addEventListener('keydown', function(ev){
-    if (ev.key === 'Escape') ['fundoFicha','fundoPlano','fundoMes'].forEach(fechar);
+    if (ev.key === 'Escape') FOLHAS.forEach(fechar);
   });
 
+  // o card e' um <div role="button">: quem usa teclado espera Enter e espaco
+  document.addEventListener('keydown', function(ev){
+    if (ev.key !== 'Enter' && ev.key !== ' ') return;
+    var a = ev.target.closest ? ev.target.closest('.card[data-ficha]') : null;
+    if (!a) return;
+    ev.preventDefault();
+    abrirFicha(a.getAttribute('data-ficha'));
+  });
+
+  el('pronta60').addEventListener('click', function(){ montarAuto(60); });
+  el('pronta90').addEventListener('click', function(){ montarAuto(90); });
   el('q').addEventListener('input', function(){ F.q = el('q').value.trim(); desenharLista(); });
   el('btnMais').addEventListener('click', function(){
     var ab = el('painel').classList.toggle('aberto');
