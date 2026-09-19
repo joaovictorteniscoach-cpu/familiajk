@@ -215,15 +215,19 @@ do fundo, o **verde-limão da marca** (`#CBDD4B`) na borda e a **pastilha com o
 nome** encostada na borda de baixo — onde a Gestão escreve `GESTÃO` e o Aluno
 escreve `ALUNO`, este escreve `EXERCÍCIOS`.
 
-Os outros dois continuam com a arte original; a única mudança lá foi o **`JV`,
-que era branco e agora é limão** (`#DDEE66`, o mesmo tom do risco sob a marca,
-um pouco mais claro que o `TÊNIS` logo abaixo). Quem faz isso é:
+Os outros dois continuam com a arte original. Duas coisas mudaram lá: o **`JV`,
+que era branco e agora é limão** (`#DDEE66`, o mesmo tom do risco sob a marca),
+e a **palavra grande do App do Aluno, que era `TÊNIS` e virou `ALUNOS`** — é ela
+que se lê primeiro na tela de início, e agora o app se identifica sem precisar
+da pastilha. Quem faz as duas é:
 
 ```sh
 python3 ferramentas/pintar-jv-limao.py
+python3 ferramentas/escrever-alunos.py
 ```
 
-que repinta os ícones e as splashes da Gestão e do Aluno.
+em cima dos próprios PNGs (ícones e telas de abertura), e os dois podem ser
+repetidos sem estragar nada.
 
 Para gerar de novo, depois de mexer no desenho:
 

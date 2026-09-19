@@ -64,10 +64,14 @@ gera o conteúdo.
   escrito na pastilha de baixo) e se gera com
   `node ferramentas/gerar-icone-exercicios.js` — é o único app da JV que não usa
   o logo, justamente para não virar mais um ícone igual na tela de início.
-- **Os três ícones da JV** se distinguem pela pastilha de baixo (`GESTÃO`,
-  `ALUNO`, `EXERCÍCIOS`). Na Gestão e no Aluno a arte é a original; só o `JV`,
-  que era branco, virou **verde-limão** (`#DDEE66`) — ícones e telas de abertura
-  são repintados por `python3 ferramentas/pintar-jv-limao.py`, que roda em cima
-  dos próprios arquivos e pode ser repetido sem estragar nada.
+- **Os três ícones da JV** se distinguem pela palavra grande — `JV TÊNIS`,
+  `JV ALUNOS`, a quadra — e pela pastilha de baixo (`GESTÃO`, `ALUNO`,
+  `EXERCÍCIOS`). Dois scripts fazem as mudanças em cima dos próprios PNGs, e
+  os dois podem ser repetidos sem estragar nada:
+  - `python3 ferramentas/pintar-jv-limao.py` deixa o `JV`, que era branco,
+    **verde-limão** (`#DDEE66`) na Gestão e no Aluno, ícones e telas de abertura;
+  - `python3 ferramentas/escrever-alunos.py` troca o `TÊNIS` do Aluno por
+    `ALUNOS`, com a mesma altura, espessura, inclinação e degradê da palavra que
+    saiu — as medidas estão no cabeçalho do script, com o valor medido ao lado.
 - O **site** tem as imagens embutidas em base64 no próprio `index.html`; a pasta
   `site/imagens/` é mantida apenas como cópia dos originais.
