@@ -1,2 +1,8 @@
 __pycache__/
 *.pyc
+
+# O arquivo unico do banco de exercicios (gerado por
+# ferramentas/gerar-arquivo-unico.py). Fica de fora do repositorio de
+# proposito: o site publico sai deste repositorio, e o banco e material de
+# formacao paga — ver app-exercicios/LEIA-ME.md.
+banco-exercicios-jv.html

@@ -3,8 +3,9 @@
    Por que existe: os apps da JV usam todos o mesmo logo, e na tela de inicio
    do celular viram tres icones iguais. Este aqui se diferencia pelo ASSUNTO —
    a quadra de saibro vista de cima, com o trajeto da bola — que e' exatamente
-   a linguagem dos 116 desenhos do banco. A familia se mantem pelo preto e pelo
-   verde-limao da marca (tirados do proprio icone da Gestao).
+   a linguagem dos 116 desenhos do banco. A familia se mantem pelo preto, pelo
+   verde-limao da marca e pela pastilha com o nome embaixo — os tres detalhes
+   tirados do proprio icone da Gestao, que tem "GESTAO" escrito no mesmo lugar.
 
    Uso, a partir da raiz do repositorio:
        node ferramentas/gerar-icone-exercicios.js
@@ -41,13 +42,29 @@ function quadra(cx, cy, larg, alt){
 }
 
 /* O trajeto da bola: a assinatura dos desenhos do banco. */
-function trajeto(S, k){
+function trajeto(S){
+  const cy = 0.440;                 // o mesmo centro da quadra
   return `
-    <circle cx="${S*(0.5-0.115*k)}" cy="${S*(0.5-0.235*k)}" r="${S*0.028*k}" fill="#fff"/>
-    <path d="M ${S*(0.5-0.10*k)} ${S*(0.5-0.22*k)}
-             Q ${S*(0.5+0.11*k)} ${S*(0.5-0.02*k)} ${S*(0.5+0.115*k)} ${S*(0.5+0.175*k)}"
-      fill="none" stroke="${LIMA_CLARO}" stroke-width="${S*0.046*k}" stroke-linecap="round"
+    <circle cx="${S*(0.5-0.090)}" cy="${S*(cy-0.181)}" r="${S*0.026}" fill="#fff"/>
+    <path d="M ${S*(0.5-0.079)} ${S*(cy-0.170)}
+             Q ${S*(0.5+0.086)} ${S*(cy-0.017)} ${S*(0.5+0.089)} ${S*(cy+0.136)}"
+      fill="none" stroke="${LIMA_CLARO}" stroke-width="${S*0.043}" stroke-linecap="round"
       marker-end="url(#pta)"/>`;
+}
+
+/* A pastilha com o nome, na mesma altura em que a Gestao e o Aluno trazem a
+   delas: encostada na borda de baixo, limao com a letra escura. */
+function rotulo(S){
+  const larg = S*0.64, alt = S*0.108;
+  const x = (S-larg)/2, y = S*0.925 - alt;
+  return `
+    <g>
+      <rect x="${x}" y="${y}" width="${larg}" height="${alt}" rx="${alt/2}" fill="${LIMA}"/>
+      <text x="${S*0.5}" y="${y+alt*0.72}" text-anchor="middle"
+            font-family="Liberation Sans, Arial, sans-serif" font-weight="700"
+            font-size="${alt*0.60}" letter-spacing="${alt*0.09}"
+            fill="#0B0E13">EXERC\u00cdCIOS</text>
+    </g>`;
 }
 
 /* `mascara` = versao para Android, que recorta o icone num circulo: o desenho
@@ -57,7 +74,9 @@ function svgIcone(S, mascara){
   // mascara deles. Arredondar aqui tambem arredondava duas vezes, e sobrava
   // uma casquinha preta na borda do icone na tela de inicio.
   const r = 0;
-  const k = mascara ? 0.82 : 1;               // escala do conteudo
+  // 0.72 e nao 0.82: com a pastilha, o desenho ficou mais largo e mais alto,
+  // e as pontas dela passavam do circulo seguro que o Android recorta.
+  const k = mascara ? 0.72 : 1;               // escala do conteudo
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${S}" height="${S}" viewBox="0 0 ${S} ${S}">
     <defs>
       <linearGradient id="fundo" x1="0" y1="0" x2="0.35" y2="1">
@@ -70,10 +89,13 @@ function svgIcone(S, mascara){
       </filter>
     </defs>
     <rect width="${S}" height="${S}" rx="${r}" fill="url(#fundo)"/>
-    ${mascara ? '' : `<rect x="${S*0.052}" y="${S*0.052}" width="${S*0.896}" height="${S*0.896}"
+    ${mascara ? '' : `<rect x="${S*0.072}" y="${S*0.072}" width="${S*0.856}" height="${S*0.856}"
       rx="${S*0.17}" fill="none" stroke="${LIMA}" stroke-width="${S*0.026}"/>`}
-    <g filter="url(#sombra)">${quadra(S*0.5, S*0.5, S*0.60*k, S*0.775*k)}</g>
-    ${trajeto(S, k)}
+    <g transform="translate(${S*0.5} ${S*0.5}) scale(${k}) translate(${-S*0.5} ${-S*0.5})">
+      <g filter="url(#sombra)">${quadra(S*0.5, S*0.440, S*0.465, S*0.600)}</g>
+      ${trajeto(S)}
+      ${rotulo(S)}
+    </g>
   </svg>`;
 }
 

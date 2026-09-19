@@ -60,8 +60,14 @@ gera o conteúdo.
 - **app-exercicios** é PWA (`sw-exercicios.js` + `manifest-exercicios.webmanifest`) e
   **não carrega nada de fora**: sem Firebase, sem biblioteca, sem fonte externa —
   funciona offline desde a primeira abertura. Favoritos e plano de aula ficam no
-  aparelho. O ícone é próprio (quadra de saibro vista de cima) e se gera com
+  aparelho. O ícone é próprio (quadra de saibro vista de cima, com `EXERCÍCIOS`
+  escrito na pastilha de baixo) e se gera com
   `node ferramentas/gerar-icone-exercicios.js` — é o único app da JV que não usa
   o logo, justamente para não virar mais um ícone igual na tela de início.
+- **Os três ícones da JV** se distinguem pela pastilha de baixo (`GESTÃO`,
+  `ALUNO`, `EXERCÍCIOS`). Na Gestão e no Aluno a arte é a original; só o `JV`,
+  que era branco, virou **verde-limão** (`#DDEE66`) — ícones e telas de abertura
+  são repintados por `python3 ferramentas/pintar-jv-limao.py`, que roda em cima
+  dos próprios arquivos e pode ser repetido sem estragar nada.
 - O **site** tem as imagens embutidas em base64 no próprio `index.html`; a pasta
   `site/imagens/` é mantida apenas como cópia dos originais.

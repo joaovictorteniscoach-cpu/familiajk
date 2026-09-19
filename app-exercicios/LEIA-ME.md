@@ -210,8 +210,20 @@ esse era o problema a resolver.
 
 Ele se diferencia pelo **assunto**: a quadra de saibro vista de cima com o
 trajeto da bola, que é exatamente a linguagem dos 116 desenhos do banco. A
-família se mantém pelo preto e pelo **verde-limão da marca** (`#CBDD4B`, tirado
-do próprio ícone da Gestão).
+família se mantém por três detalhes tirados do próprio ícone da Gestão: o preto
+do fundo, o **verde-limão da marca** (`#CBDD4B`) na borda e a **pastilha com o
+nome** encostada na borda de baixo — onde a Gestão escreve `GESTÃO` e o Aluno
+escreve `ALUNO`, este escreve `EXERCÍCIOS`.
+
+Os outros dois continuam com a arte original; a única mudança lá foi o **`JV`,
+que era branco e agora é limão** (`#DDEE66`, o mesmo tom do risco sob a marca,
+um pouco mais claro que o `TÊNIS` logo abaixo). Quem faz isso é:
+
+```sh
+python3 ferramentas/pintar-jv-limao.py
+```
+
+que repinta os ícones e as splashes da Gestão e do Aluno.
 
 Para gerar de novo, depois de mexer no desenho:
 
