@@ -42,6 +42,21 @@ extra, a versão em cada nível** e as três colunas de rodapé — **foco do pr
 erros mais comuns e como dificultar** — além do **critério objetivo de sucesso**. Os 25 drills da apostila (D1–D25) estão aqui com o mesmo nome e o mesmo
 conteúdo, marcados como `apostila`.
 
+## Como a tela está organizada
+
+**A lista é de desenhos, não de texto.** Cada linha traz a miniatura da quadra,
+o nome e quatro sinais miúdos: o ícone do bloco da aula, a duração, a régua de
+níveis (cinco pontos, acesos onde o exercício serve) e o código. O objetivo saiu
+da lista — ele está na ficha, e a busca continua achando por ele. A ideia é
+simples: **o professor reconhece o exercício pela forma antes de ler o nome.**
+
+**A ficha mostra o essencial e guarda o resto.** Em pé, sem tocar em nada:
+desenho grande, montagem, os dados da atividade, o objetivo em uma frase e o
+passo a passo. As três colunas viraram **abas** (Foco · Erros · Dificultar) —
+uma por vez. E a progressão por nível, a versão Kids e os materiais ficam em
+**gavetas**, a um toque. Nada foi cortado; o que mudou é o que aparece de
+primeira.
+
 ## O desenho da quadra
 
 Cada exercício tem uma figura que mostra **quem está onde, para onde a bola vai,
@@ -64,6 +79,12 @@ fig:{ base:'meia', el:[
   ['escada', -2.8, 9.4, ''], ['corda', 'corda a 1 m'], ['texto', 0, 6, 'nota', .6]
 ], nota:`A frase que explica o desenho, abaixo dele.` }
 ```
+
+O desenho aparece em dois tamanhos, do mesmo dado: **grande** na ficha e
+**miniatura** na lista (`svgQuadra(fig, {mini:true})`). Na miniatura o rótulo
+sai e o traço engrossa — nesse tamanho o texto viraria borrão, e o que importa é
+a forma. Nos dois casos a moldura **enquadra a ação** em vez de mostrar o recorte
+inteiro: meia quadra vazia só empurra o texto para baixo da dobra.
 
 **As coordenadas são as medidas reais da quadra, em metros.** O `x` é 0 no meio
 (±4,115 é a linha de simples, ±5,485 a de duplas) e o `y` é **0 na rede**, com o

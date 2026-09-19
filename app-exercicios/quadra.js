@@ -57,6 +57,60 @@ let CAIXA = BASES.meia;
    lugar livre. */
 let ROTULOS = [];
 
+/* Modo miniatura: o mesmo desenho, do tamanho de um selo, na lista de
+   exercicios. Nesse tamanho o rotulo vira borrao — entao ele sai, e o traco
+   engrossa para a quadra continuar legivel. O que fica e' a FORMA do exercicio:
+   quadra inteira ou meia, bola atravessando ou indo para a rede, alvo de um
+   lado. E' por essa forma que o professor reconhece o exercicio de relance. */
+let MINI = false;
+function esp(v){ return MINI ? v * 2.3 : v; }
+
+/* A moldura nao e' o recorte inteiro: e' a ACAO do exercicio, enquadrada.
+   Mostrar meia quadra vazia empurra o texto para baixo da dobra na ficha, e na
+   lista faz cada linha ter uma altura diferente. */
+function enquadrar(el, caixa, alvo, minLarg, maxLarg){
+  alvo = alvo || 4 / 3;
+  minLarg = minLarg || 11.4;
+  maxLarg = maxLarg || Infinity;
+
+  var x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity, achou = false;
+  function por(x, y, folga){
+    if (typeof x !== 'number' || typeof y !== 'number') return;
+    achou = true;
+    x1 = Math.min(x1, x - folga); x2 = Math.max(x2, x + folga);
+    y1 = Math.min(y1, y - folga); y2 = Math.max(y2, y + folga);
+  }
+  el.forEach(function(e){
+    var t = e[0];
+    if (t === 'aluno' || t === 'prof' || t === 'colega') por(e[1], e[2], 1.2);
+    else if (t === 'cone' || t === 'marca')              por(e[1], e[2], 1.0);
+    else if (t === 'escada')                             por(e[1], e[2], 2.2);
+    else if (t === 'zona') { por(e[1] - e[3]/2, e[2] - e[4]/2, .4); por(e[1] + e[3]/2, e[2] + e[4]/2, .4); }
+    else if (t === 'bola' || t === 'mov') { por(e[1], e[2], .6); por(e[3], e[4], .6); }
+  });
+  if (!achou) return caixa;
+
+  var larg = x2 - x1, alt = y2 - y1, f;
+
+  // Limite de aproximacao: sem ele, um exercicio com as pecas juntas era
+  // enquadrado tao de perto que virava um borrao de circulos, sem a quadra em
+  // volta para dizer onde aquilo acontece.
+  if (larg < minLarg) { f = (minLarg - larg) / 2; x1 -= f; x2 += f; larg = minLarg; }
+
+  // Formato: alarga ate' o alvo, mas NUNCA alem do limite de largura. Num
+  // exercicio que atravessa a rede, forcar o formato alargava a moldura muito
+  // alem da quadra, e a quadra virava uma tira fina no meio do saibro.
+  var precisa = alt * alvo;
+  if (precisa > larg) {
+    var nova = Math.min(precisa, maxLarg);
+    if (nova > larg) { f = (nova - larg) / 2; x1 -= f; x2 += f; larg = nova; }
+  }
+  var minAlt = larg / alvo;
+  if (alt < minAlt) { f = (minAlt - alt) / 2; y1 -= f; y2 += f; alt = minAlt; }
+
+  return { x:x1, y:y1, w:x2 - x1, h:y2 - y1 };
+}
+
 function bate(a, b){
   return !(a.x + a.w < b.x || b.x + b.w < a.x || a.y + a.h < b.y || b.y + b.h < a.y);
 }
@@ -88,12 +142,13 @@ function nQ(v){ return Math.round(v * 1000) / 1000; }
 
 function qLinha(x1,y1,x2,y2,larg){
   return '<line x1="'+nQ(x1)+'" y1="'+nQ(y1)+'" x2="'+nQ(x2)+'" y2="'+nQ(y2)+
-         '" stroke="'+CQ.linha+'" stroke-width="'+(larg||.09)+'" stroke-linecap="square"/>';
+         '" stroke="'+CQ.linha+'" stroke-width="'+nQ(esp(larg||.09))+'" stroke-linecap="square"/>';
 }
 
 /* Texto com tarja atrás: sem isso, rótulo em cima de linha branca some.
    E preso na moldura: o rótulo empurra para dentro em vez de ser cortado. */
 function qTexto(x,y,txt,op){
+  if (MINI) return '';
   op = op || {};
   var tam = op.tam || .6, margem = .18;
   var cabe = CAIXA.w - margem * 2;
@@ -130,9 +185,11 @@ function qTexto(x,y,txt,op){
 function qJogador(x,y,rot,tipo){
   var cor = tipo === 'prof' ? CQ.prof : (tipo === 'colega' ? CQ.colega : CQ.aluno);
   var letra = tipo === 'prof' ? 'P' : (tipo === 'colega' ? 'C' : 'A');
+  var r = MINI ? .9 : .62;
   var s = '<g>' +
-    '<circle cx="'+nQ(x)+'" cy="'+nQ(y)+'" r=".62" fill="'+cor+'" stroke="rgba(9,22,35,.55)" stroke-width=".1"/>' +
-    '<text x="'+nQ(x)+'" y="'+nQ(y+.26)+'" text-anchor="middle" fill="#12283E" font-size=".72" font-weight="900">'+letra+'</text>';
+    '<circle cx="'+nQ(x)+'" cy="'+nQ(y)+'" r="'+nQ(r)+'" fill="'+cor+'" stroke="rgba(9,22,35,.55)" stroke-width="'+nQ(esp(.1))+'"/>' +
+    (MINI ? '' :
+      '<text x="'+nQ(x)+'" y="'+nQ(y+.26)+'" text-anchor="middle" fill="#12283E" font-size=".72" font-weight="900">'+letra+'</text>');
   // rótulo embaixo do jogador; se não couber, sobe para cima dele
   if (rot) {
     var alvoY = y + 1.6;
@@ -143,16 +200,17 @@ function qJogador(x,y,rot,tipo){
 }
 
 function qCone(x,y,rot){
-  var s = '<g><path d="M '+nQ(x)+' '+nQ(y-.55)+' L '+nQ(x+.42)+' '+nQ(y+.3)+' L '+nQ(x-.42)+' '+nQ(y+.3)+' Z" ' +
-          'fill="'+CQ.cone+'" stroke="rgba(9,22,35,.5)" stroke-width=".07"/>';
+  var k = MINI ? 1.45 : 1;
+  var s = '<g><path d="M '+nQ(x)+' '+nQ(y-.55*k)+' L '+nQ(x+.42*k)+' '+nQ(y+.3*k)+' L '+nQ(x-.42*k)+' '+nQ(y+.3*k)+' Z" ' +
+          'fill="'+CQ.cone+'" stroke="rgba(9,22,35,.5)" stroke-width="'+nQ(esp(.07))+'"/>';
   if (rot) s += qTexto(x, y + 1.3, rot, { tam:.55 });
   return s + '</g>';
 }
 
 function qZona(x,y,larg,alt,rot){
   var s = '<g><rect x="'+nQ(x-larg/2)+'" y="'+nQ(y-alt/2)+'" width="'+nQ(larg)+'" height="'+nQ(alt)+
-    '" rx=".3" fill="'+CQ.zona+'" fill-opacity=".2" stroke="'+CQ.zona+
-    '" stroke-width=".11" stroke-dasharray=".5 .34"/>';
+    '" rx=".3" fill="'+CQ.zona+'" fill-opacity="'+(MINI ? '.34' : '.2')+'" stroke="'+CQ.zona+
+    '" stroke-width="'+nQ(esp(.11))+'" stroke-dasharray="'+(MINI ? '1 .7' : '.5 .34')+'"/>';
   if (rot) s += qTexto(x, y, rot, { tam:.58, fundo:'rgba(9,22,35,.62)' });
   return s + '</g>';
 }
@@ -164,8 +222,8 @@ function qCaminho(x1,y1,x2,y2,curva,cor,tracejado,id){
   var cx = mx - dy/comp * (curva||0) * comp * .5;
   var cy = my + dx/comp * (curva||0) * comp * .5;
   return '<path id="'+id+'" d="M '+nQ(x1)+' '+nQ(y1)+' Q '+nQ(cx)+' '+nQ(cy)+' '+nQ(x2)+' '+nQ(y2)+
-    '" fill="none" stroke="'+cor+'" stroke-width=".15" stroke-linecap="round"' +
-    (tracejado ? ' stroke-dasharray=".62 .46"' : '') +
+    '" fill="none" stroke="'+cor+'" stroke-width="'+nQ(esp(.15))+'" stroke-linecap="round"' +
+    (tracejado ? ' stroke-dasharray="'+(MINI ? '1.2 .9' : '.62 .46')+'"' : '') +
     ' marker-end="url(#seta-'+(tracejado?'bola':'mov')+')"/>';
 }
 
@@ -176,8 +234,10 @@ function qCorte(base){
   var dx = QD.duplaX, sx = QD.simplesX, fy = QD.fundoY, sy = QD.saqueY;
   var ladoPerto = true, ladoLonge = (base === 'inteira' || base === 'mini' || base === 'meia');
 
-  // piso
-  p.push('<rect x="'+(-dx-.7)+'" y="'+nQ(b.y)+'" width="'+nQ(dx*2+1.4)+'" height="'+nQ(b.h)+'" fill="'+CQ.saibro+'"/>');
+  // piso: cobre tudo o que a moldura possa mostrar. Quadra de verdade tem
+  // saibro em volta das linhas — e assim nenhum recorte (inclusive o da
+  // miniatura, calculado depois daqui) fica com tarja escura na lateral.
+  p.push('<rect x="-16" y="-20" width="32" height="40" fill="'+CQ.saibro+'"/>');
   p.push('<rect x="'+(-dx)+'" y="'+(-fy)+'" width="'+nQ(dx*2)+'" height="'+nQ(fy*2)+
          '" fill="'+CQ.saibroEsc+'" fill-opacity=".45"/>');
 
@@ -195,8 +255,9 @@ function qCorte(base){
   p.push(qLinha(0, -fy, 0, -fy + .3, .13));
 
   // rede: faixa clara com a fita em cima
-  p.push('<rect x="'+nQ(-dx-.6)+'" y="-.34" width="'+nQ(dx*2+1.2)+'" height=".68" fill="'+CQ.redeEsc+'" fill-opacity=".85"/>');
-  p.push('<rect x="'+nQ(-dx-.6)+'" y="-.34" width="'+nQ(dx*2+1.2)+'" height=".2" fill="'+CQ.rede+'"/>');
+  var hr = MINI ? .5 : .34;
+  p.push('<rect x="'+nQ(-dx-.6)+'" y="'+nQ(-hr)+'" width="'+nQ(dx*2+1.2)+'" height="'+nQ(hr*2)+'" fill="'+CQ.redeEsc+'" fill-opacity=".85"/>');
+  p.push('<rect x="'+nQ(-dx-.6)+'" y="'+nQ(-hr)+'" width="'+nQ(dx*2+1.2)+'" height="'+nQ(hr*.6)+'" fill="'+CQ.rede+'"/>');
 
   return { pecas:p.join(''), caixa:b, perto:ladoPerto, longe:ladoLonge };
 }
@@ -235,8 +296,11 @@ function qElemento(e){
 function svgQuadra(fig, op){
   if (!fig || !fig.el) return '';
   op = op || {};
+  MINI = !!op.mini;
   var c = qCorte(fig.base || 'meia');
-  var b = c.caixa;
+  //           formato  ·  aproximação máxima  ·  largura máxima
+  var b = MINI ? enquadrar(fig.el, c.caixa, 4 / 3, 11.4)          // selo: formato fixo
+               : enquadrar(fig.el, c.caixa, 1.24, 14.6, 14.6);    // ficha: nunca mais larga que a quadra
   CAIXA = b;                       // prende os rótulos nesta moldura
   ROTULOS = [];                    // cada desenho começa sem rótulo colocado
   // Reserva o espaço de jogadores e cones ANTES de escrever qualquer rótulo:
@@ -249,15 +313,16 @@ function svgQuadra(fig, op){
   });
   var corpo = fig.el.map(qElemento).join('');
   var alt = op.altura ? ' height="'+op.altura+'"' : '';
+  var marcador = MINI ? 6.5 : 4.5;
   var rotulo = fig.nota ? ' aria-label="'+String(fig.nota).replace(/"/g,'&quot;')+'"' : '';
   // a classe do recorte deixa a impressao dar altura diferente para cada tipo:
   // a quadra inteira e' um retrato 1:2 e, na mesma altura das outras, sai estreita
-  return '<svg class="qd qd-' + (fig.base || 'meia') + '" viewBox="'+nQ(b.x)+' '+nQ(b.y)+' '+nQ(b.w)+' '+nQ(b.h)+'" ' +
+  return '<svg class="qd' + (MINI ? ' qd-mini-selo' : '') + ' qd-' + (fig.base || 'meia') + '" viewBox="'+nQ(b.x)+' '+nQ(b.y)+' '+nQ(b.w)+' '+nQ(b.h)+'" ' +
     'width="100%"'+alt+' role="img"'+rotulo+' xmlns="http://www.w3.org/2000/svg">' +
     '<defs>' +
-      '<marker id="seta-bola" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4.5" markerHeight="4.5" orient="auto-start-reverse">' +
+      '<marker id="seta-bola" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="'+marcador+'" markerHeight="'+marcador+'" orient="auto-start-reverse">' +
         '<path d="M 0 1 L 9 5 L 0 9 z" fill="'+CQ.bola+'"/></marker>' +
-      '<marker id="seta-mov" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">' +
+      '<marker id="seta-mov" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="'+(marcador*.9)+'" markerHeight="'+(marcador*.9)+'" orient="auto-start-reverse">' +
         '<path d="M 0 1 L 9 5 L 0 9 z" fill="'+CQ.mov+'"/></marker>' +
     '</defs>' +
     '<rect x="'+nQ(b.x)+'" y="'+nQ(b.y)+'" width="'+nQ(b.w)+'" height="'+nQ(b.h)+'" fill="#0E2337"/>' +

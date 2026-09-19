@@ -2822,10 +2822,10 @@ const EX = [
   mat:['contador'], form:['particular','kids'],
   nec:['mental'] ,
   fig:{base:'meia', el:[
-    ['colega',-2.0,10.6,'iniciante'],
-    ['aluno',1.4,9.0,'mentor, com o cartão'],
-    ['prof',4.6,4.0,'supervisiona'],
-    ['texto',0,13.4,'15 min de ativação de base',.58]
+    ['colega',-2.6,10.8,'iniciante'],
+    ['aluno',1.2,8.4,'mentor'],
+    ['prof',4.8,3.4,'observa'],
+    ['texto',0,13.2,'15 min de ativação de base',.58]
   ], nota:`O aluno do Topo conduz 15 minutos de ativação de um iniciante, com um cartão de 5 itens para observar.`},
   passos:[`Monte um cartão com 5 itens tirados dos “erros a observar” das camadas 1 e 2.`, `Peso nos calcanhares, salto atrasado, base errada, tronco caindo, recuperação lenta.`, `O aluno do Topo conduz 15 minutos de ativação de base de um iniciante, sob supervisão.`, `Ele marca no cartão cada vez que observa e corrige um dos 5 itens.`, `Ao final, revisem o cartão juntos.`],
   dica:`Se o mentor corrigir a mão do iniciante em vez do pé, a conversa não é sobre o iniciante — é sobre o que ele ainda não entendeu do método.` ,
