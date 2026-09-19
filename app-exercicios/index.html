@@ -161,6 +161,27 @@ header.bar{
 .vazio .em{font-size:36px;margin-bottom:12px}
 .vazio b{color:var(--gold-soft);display:block;margin-bottom:6px;font-size:17px}
 
+/* ---------- formulário de exercício ---------- */
+.ed-campo{margin-bottom:14px}
+.ed-campo label{display:block;font-size:10.5px;font-weight:800;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+.ed-campo small{display:block;font-size:12px;color:var(--muted-2);margin-top:5px;line-height:1.4}
+.ed-campo input,.ed-campo select,.ed-campo textarea{width:100%;background:var(--navy-2);
+  border:1px solid var(--line-2);border-radius:11px;color:var(--cream);
+  padding:11px 12px;font-size:15.5px;line-height:1.45;outline:none}
+/* 16px e' o minimo: abaixo disso o Safari do iPhone da' zoom ao tocar no campo,
+   e a tela fica torta ate' a pessoa fechar o teclado. O 15.5 acima vale para
+   os campos de uma linha, que sao curtos; onde se escreve de verdade, 16. */
+.ed-campo textarea{font-family:inherit;resize:vertical;font-size:16px}
+.ed-campo input:focus,.ed-campo select:focus,.ed-campo textarea:focus{border-color:var(--gold)}
+.ed-chips{display:flex;flex-wrap:wrap;gap:7px}
+.ed-chips .chip{flex:0 0 auto}
+.ed-dois{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ed-erro{background:rgba(224,120,74,.12);border:1px solid rgba(224,120,74,.4);
+  border-radius:11px;padding:11px 12px;font-size:14px;color:#F7D4C4;margin-bottom:14px}
+.ed-erro[hidden]{display:none}
+#edCorpo .qd-cx{margin-top:4px}
+
 /* ---------- aula pronta ---------- */
 /* Tema mais nivel ja' descrevem uma aula inteira. Em vez de deixar o professor
    montar a mao, a faixa mostra o que sairia — e um toque poe no plano. */
@@ -342,15 +363,26 @@ header.bar{
 .pb-tt{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .pb-tt h3{font-size:14.5px;color:var(--gold-soft)}
 .pb-tt .tp{font-size:11.5px;color:var(--muted-2);font-weight:700;margin-left:auto}
-.pi{display:flex;gap:10px;align-items:center;background:var(--navy-2);border:1px solid var(--line-2);
-  border-radius:11px;padding:10px 12px;margin-bottom:7px}
+.pi{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--navy-2);
+  border:1px solid var(--line-2);border-radius:11px;padding:10px 12px;margin-bottom:7px}
 .pi .cd{font-size:11px;font-weight:900;color:var(--gold);width:38px;flex-shrink:0}
 .pi .nm{flex:1;font-size:14.5px;font-weight:600;min-width:0}
-.pi .mn{font-size:12px;color:var(--muted);font-weight:700}
-.pi .x{width:30px;height:30px;border-radius:8px;border:1px solid var(--line-2);
-  display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;color:var(--warn)}
-.pi .mv{width:28px;height:30px;display:flex;align-items:center;justify-content:center;
-  font-size:13px;color:var(--muted);flex-shrink:0}
+/* o tempo e' um campo, nao um rotulo: o professor corta 10 para 7 quando a
+   aula aperta, e ate' agora tinha que tirar o exercicio inteiro para isso */
+.pi .mn{width:62px;flex-shrink:0;background:var(--deep);border:1px solid var(--line-2);
+  border-radius:8px;color:var(--gold-soft);font-size:13.5px;font-weight:800;
+  padding:6px 4px 6px 8px;text-align:left}
+/* os botoes descem para uma fila propria: em 390 px nao cabiam na mesma linha
+   do nome sem espremer o nome ate' a ilegibilidade */
+.pi .acs{flex-basis:100%;display:flex;gap:7px;justify-content:flex-end;
+  border-top:1px solid var(--line-2);padding-top:8px}
+.pi .acs button{height:32px;padding:0 10px;border-radius:8px;border:1px solid var(--line-2);
+  font-size:12.5px;font-weight:700;color:var(--muted);display:flex;align-items:center;gap:4px}
+.pi .acs button:active{background:var(--navy-3)}
+.pi .x{color:var(--warn)}
+.pi .mv{width:34px;justify-content:center}
+.pb-mais{width:100%;height:40px;border-radius:10px;border:1px dashed var(--line);
+  color:var(--gold-soft);font-size:13.5px;font-weight:700;margin-bottom:10px}
 .pb.falta .pb-tt h3::after{content:" — vazio";color:var(--warn);font-weight:700}
 .total{display:flex;align-items:center;justify-content:space-between;background:var(--deep);
   border:1px solid var(--line);border-radius:12px;padding:13px 15px;margin-bottom:14px}
@@ -378,7 +410,12 @@ header.bar{
 @media print{
   html,body{background:#fff!important;color:#000!important;padding:0;margin:0}
   header.bar,.foco,.tira,.filtros,.resumo,.pronta,.lista,.rodape,.folha-acoes,.auto,
-  .pi .x,.pi .mv,.fechar,.plano-cab,#fundoFicha,#fundoMes{display:none!important}
+  .pi .acs,.pb-mais,.fechar,.plano-cab,
+  #fundoFicha,#fundoMes,#fundoMeus,#fundoEditor,#fundoEscolher{display:none!important}
+  /* o campo de minutos vira texto no papel: caixa de formulário impressa fica
+     com borda e seta de setinha, que não é o que vai para a quadra */
+  .pi .mn{border:none;background:none;color:#000;font-weight:800;width:auto;
+    padding:0;-webkit-appearance:none;appearance:none}
   #fundoPlano{position:static;display:block;background:none;inset:auto}
   #fundoPlano .folha{max-height:none;overflow:visible;background:#fff;border:none;
     max-width:100%;border-radius:0;margin:0;padding:0}
@@ -432,6 +469,7 @@ header.bar{
     <span class="nm">Banco de Exercícios<small>Da Base ao Topo</small></span>
   </div>
   <span class="espaco"></span>
+  <button class="ico-btn" id="btnMeus" title="Meus exercícios" aria-label="Meus exercícios">✎</button>
   <button class="ico-btn" id="btnFav" title="Ver só os favoritos" aria-label="Ver só os favoritos">☆</button>
   <button class="ico-btn" id="btnPlano" title="Plano de aula" aria-label="Plano de aula">📋<span class="selo" id="seloPlano" hidden>0</span></button>
 </div></header>
@@ -478,6 +516,7 @@ header.bar{
     </div>
     <div class="linha">
       <button class="chip" id="cApostila">Só os da apostila</button>
+      <button class="chip" id="cMeus">Só os meus</button>
       <button class="chip" id="cTransv">Esconder transversais</button>
     </div>
     <button class="lim" id="btnLimpar">✕ limpar todos os filtros</button>
@@ -533,6 +572,41 @@ header.bar{
 </div>
 
 <!-- explicação do mês -->
+<div class="fundo" id="fundoEscolher" role="dialog" aria-modal="true" aria-labelledby="escTitulo">
+  <div class="folha">
+    <div class="folha-top">
+      <div class="mid"><span class="cd" id="escCod">bloco</span><h2 id="escTitulo">Escolher</h2></div>
+      <button class="fechar" data-fecha="fundoEscolher" aria-label="Fechar">✕</button>
+    </div>
+    <div class="folha-corpo" id="escCorpo"></div>
+  </div>
+</div>
+
+<div class="fundo" id="fundoMeus" role="dialog" aria-modal="true" aria-labelledby="meusTitulo">
+  <div class="folha">
+    <div class="folha-top">
+      <div class="mid"><span class="cd">✎ guardados neste aparelho</span>
+        <h2 id="meusTitulo">Meus exercícios</h2></div>
+      <button class="fechar" data-fecha="fundoMeus" aria-label="Fechar">✕</button>
+    </div>
+    <div class="folha-corpo" id="meusCorpo"></div>
+  </div>
+</div>
+
+<div class="fundo" id="fundoEditor" role="dialog" aria-modal="true" aria-labelledby="edTitulo">
+  <div class="folha">
+    <div class="folha-top">
+      <div class="mid"><span class="cd" id="edCod">novo</span><h2 id="edTitulo">Criar exercício</h2></div>
+      <button class="fechar" data-fecha="fundoEditor" aria-label="Fechar">✕</button>
+    </div>
+    <div class="folha-corpo" id="edCorpo"></div>
+    <div class="folha-acoes">
+      <button class="btn btn-esc pq" id="edApagar" aria-label="Apagar este exercício">🗑</button>
+      <button class="btn btn-gold" id="edSalvar">Salvar exercício</button>
+    </div>
+  </div>
+</div>
+
 <div class="fundo" id="fundoMes" role="dialog" aria-modal="true" aria-labelledby="mesTitulo">
   <div class="folha">
     <div class="folha-top">
@@ -553,12 +627,26 @@ header.bar{
    ========================================================================== */
 var F = {                      // filtros
   tema:'', niveis:[], blocos:[], nec:'', form:'', cam:'', mat:'', int:'',
-  q:'', ord:'tema', apostila:false, semTransv:false, favs:false
+  q:'', ord:'tema', apostila:false, meus:false, semTransv:false, favs:false
 };
+var MEUS = [];                 // exercícios criados pelo professor, neste aparelho
+var BANCO = [];                // os 116 do banco + os MEUS, que é o que a tela usa
 var FAV = [];                  // ids favoritados
 var ABA = 'foco';              // aba visível nas três colunas da ficha
 var PLANO = { aluno:'', nivel:'', tema:'', itens:[] };   // itens: [{id, bloco}]
-var CH_FAV = 'jvex:favoritos', CH_PLANO = 'jvex:plano';
+var CH_FAV = 'jvex:favoritos', CH_PLANO = 'jvex:plano', CH_MEUS = 'jvex:meus';
+
+/* O banco de verdade é a soma dos dois. EX é const (vem de exercicios.js e é a
+   parte que não se edita no celular); MEUS fica no aparelho. Tudo na tela lê
+   BANCO, para um exercício criado aqui valer em tudo: busca, filtro, plano,
+   aula pronta e impressão. */
+function montarBanco(){
+  BANCO = EX.concat(MEUS);
+}
+function acharEx(id){
+  for (var i = 0; i < BANCO.length; i++) if (BANCO[i].id === id) return BANCO[i];
+  return null;
+}
 
 function guardar(chave, valor){
   try { localStorage.setItem(chave, JSON.stringify(valor)); } catch(e){}
@@ -589,6 +677,7 @@ function passa(e){
   if (F.cam && e.camada !== Number(F.cam)) return false;
   if (F.int && e.int !== F.int) return false;
   if (F.apostila && e.fonte !== 'apostila') return false;
+  if (F.meus && e.fonte !== 'meu') return false;
   if (F.favs && FAV.indexOf(e.id) < 0) return false;
   // "material disponível": o exercício precisa caber no que o professor tem
   if (F.mat) {
@@ -606,7 +695,7 @@ function passa(e){
 }
 
 function filtrados(){
-  var r = EX.filter(passa);
+  var r = BANCO.filter(passa);
   if (F.ord === 'curto') r.sort(function(a,b){ return a.min - b.min; });
   else if (F.ord === 'longo') r.sort(function(a,b){ return b.min - a.min; });
   else if (F.ord === 'nome') r.sort(function(a,b){ return a.nome.localeCompare(b.nome,'pt-BR'); });
@@ -724,10 +813,12 @@ function desenharLista(){
 
 function marcarChips(){
   el('cApostila').classList.toggle('on', F.apostila);
+  el('cMeus').classList.toggle('on', F.meus);
   el('cTransv').classList.toggle('on', F.semTransv);
   el('btnFav').textContent = F.favs ? '★' : '☆';
   var ativos = (F.nec ? 1 : 0) + (F.form ? 1 : 0) + (F.cam ? 1 : 0) + (F.mat ? 1 : 0) +
-               (F.int ? 1 : 0) + (F.apostila ? 1 : 0) + (F.semTransv ? 1 : 0) + F.blocos.length;
+               (F.int ? 1 : 0) + (F.apostila ? 1 : 0) + (F.meus ? 1 : 0) +
+               (F.semTransv ? 1 : 0) + F.blocos.length;
   el('btnMais').textContent = ativos ? 'Filtros (' + ativos + ')' : 'Filtros';
   el('btnMais').classList.toggle('on', ativos > 0);
 }
@@ -741,7 +832,7 @@ function atualizar(){
    FICHA DO EXERCÍCIO
    ========================================================================== */
 function abrirFicha(id){
-  var e = EX.filter(function(x){ return x.id === id; })[0];
+  var e = acharEx(id);
   if (!e) return;
   var c = camada(e.camada), b = bloco(e.bloco);
   var focos = F.niveis.slice();
@@ -833,7 +924,9 @@ function abrirFicha(id){
         '<p><b>Formatos:</b> ' + esc(forms) + '</p>' +
         '<p><b>Serve para:</b> ' + esc(necs) + '</p>' +
         '<p><b>Tema do mês:</b> ' + esc(temas) + (e.transv ? ' — serve em qualquer mês' : '') + '</p>' +
-        '<p><b>Origem:</b> ' + (e.fonte === 'apostila' ? 'drill da apostila' : 'ampliação do banco') + '</p>' +
+        '<p><b>Origem:</b> ' + (e.fonte === 'apostila' ? 'drill da apostila'
+          : e.fonte === 'meu' ? 'exercício seu — dá para editar em ✎ Meus exercícios'
+          : 'ampliação do banco') + '</p>' +
       '</div></details>' +
   '</div>' +
   '<div class="folha-acoes">' +
@@ -873,7 +966,7 @@ function noPlano(id){
   var i = PLANO.itens.map(function(x){ return x.id; }).indexOf(id);
   if (i >= 0) PLANO.itens.splice(i, 1);
   else {
-    var e = EX.filter(function(x){ return x.id === id; })[0];
+    var e = acharEx(id);
     if (e) PLANO.itens.push({ id:id, bloco:e.bloco });
     // o primeiro exercicio define o tema do plano
     if (!PLANO.tema) PLANO.tema = F.tema || temaDoMes().id;
@@ -900,15 +993,36 @@ function mover(id, passo){
 
 function itensDoBloco(b){
   return PLANO.itens.filter(function(i){ return i.bloco === b; })
-    .map(function(i){ return EX.filter(function(x){ return x.id === i.id; })[0]; })
+    .map(function(i){ return acharEx(i.id); })
     .filter(Boolean);
 }
 
+/* Minutos deste exercício NESTA aula: o professor pode encurtar sem mexer no
+   banco. O i.min só existe quando ele mudou; sem isso vale o do exercício.
+   Um id não se repete dentro de um plano, então procurar por id é seguro. */
+function minNoPlano(id){
+  var e = acharEx(id);
+  if (!e) return 0;
+  var i = PLANO.itens.filter(function(x){ return x.id === id; })[0];
+  return i && typeof i.min === 'number' && i.min > 0 ? i.min : e.min;
+}
+
 function totalMin(){
-  return PLANO.itens.reduce(function(s, i){
-    var e = EX.filter(function(x){ return x.id === i.id; })[0];
-    return s + (e ? e.min : 0);
-  }, 0);
+  return PLANO.itens.reduce(function(s, i){ return s + minNoPlano(i.id); }, 0);
+}
+
+function mudarMin(id, valor){
+  var n = Math.max(1, Math.min(60, Math.round(Number(valor) || 0)));
+  PLANO.itens.forEach(function(i){
+    if (i.id !== id) return;
+    var e = acharEx(id);
+    if (e && n === e.min) delete i.min; else i.min = n;
+  });
+  guardar(CH_PLANO, PLANO);
+  // só o total é redesenhado: redesenhar a folha inteira tirava o foco do
+  // campo e fechava o teclado do celular no meio da digitação
+  var t = el('planoTotal');
+  if (t) t.textContent = totalMin() + ' min';
 }
 
 function selo(){
@@ -947,7 +1061,7 @@ function desenharPlano(){
       '<button class="btn btn-line pq" id="pAuto90">90 min</button></div></div>';
   } else {
     var tot = totalMin();
-    h += '<div class="total"><span class="n">' + tot + ' min</span>' +
+    h += '<div class="total"><span class="n" id="planoTotal">' + tot + ' min</span>' +
       '<span class="l">' + PLANO.itens.length + ' exercícios<br>' + esc(t.nome) + '</span></div>';
   }
 
@@ -963,16 +1077,22 @@ function desenharPlano(){
       h += '<div class="pi">' +
         '<span class="cd">' + esc(e.id) + '</span>' +
         '<button class="nm" data-ficha="' + e.id + '" style="text-align:left">' + esc(e.nome) + '</button>' +
-        '<span class="mn">' + e.min + '\'</span>' +
-        '<button class="mv" data-sobe="' + e.id + '" aria-label="Subir">▲</button>' +
-        '<button class="mv" data-desce="' + e.id + '" aria-label="Descer">▼</button>' +
-        '<button class="x" data-add="' + e.id + '" aria-label="Tirar do plano">✕</button>' +
+        '<input class="mn" type="number" inputmode="numeric" min="1" max="60" ' +
+          'data-min="' + e.id + '" value="' + minNoPlano(e.id) + '" ' +
+          'aria-label="Minutos de ' + esc(e.nome) + '">' +
+        '<div class="acs">' +
+          '<button class="mv" data-sobe="' + e.id + '" aria-label="Subir">▲</button>' +
+          '<button class="mv" data-desce="' + e.id + '" aria-label="Descer">▼</button>' +
+          '<button data-trocar="' + e.id + '">⇄ trocar</button>' +
+          '<button class="x" data-add="' + e.id + '">✕ tirar</button>' +
+        '</div>' +
         // detalhe que só aparece no papel: o professor leva a ficha para a quadra,
         // com o desenho da montagem ao lado do passo a passo
         '<div class="det">' +
           '<div class="det-qd">' + svgQuadra(e.fig) + '</div>' +
           '<div class="det-tx">' +
-            '<b>Objetivo:</b> ' + esc(e.objetivo) +
+            '<b>Tempo:</b> ' + minNoPlano(e.id) + ' min' +
+            '<br><b>Objetivo:</b> ' + esc(e.objetivo) +
             '<br><b>Montagem:</b> ' + esc(e.montagem) +
             '<br><b>Como aplicar:</b> ' +
             '<ol class="det-pa">' + (e.passos || []).map(function(t){
@@ -990,6 +1110,10 @@ function desenharPlano(){
         '</div>' +
       '</div>';
     });
+    if (PLANO.itens.length) {
+      h += '<button class="pb-mais" data-mais="' + b.id + '">+ acrescentar em ' +
+           esc(b.nome.toLowerCase()) + '</button>';
+    }
     h += '</div>';
   });
 
@@ -1007,6 +1131,9 @@ function desenharPlano(){
   if (n) n.onchange = function(){ PLANO.nivel = n.value; guardar(CH_PLANO, PLANO); };
   if (el('pAuto60')) el('pAuto60').onclick = function(){ montarAuto(60); };
   if (el('pAuto90')) el('pAuto90').onclick = function(){ montarAuto(90); };
+  el('planoCorpo').querySelectorAll('[data-min]').forEach(function(c){
+    c.onchange = function(){ mudarMin(c.getAttribute('data-min'), c.value); };
+  });
   el('planoTitulo').textContent = 'Aula · ' + t.nome;
 }
 
@@ -1028,7 +1155,7 @@ function montarLista(minutos, temaId, niveis){
 
   BLOCOS.forEach(function(b){
     var teto = Math.max(4, Math.round(minutos * alvo[b.id]));
-    var cand = EX.filter(function(e){
+    var cand = BANCO.filter(function(e){
       if (e.bloco !== b.id) return false;
       if (e.tema.indexOf(t.id) < 0) return false;
       if (nvs.length && !nvs.some(function(n){ return e.niveis.indexOf(n) >= 0; })) return false;
@@ -1098,7 +1225,7 @@ function desenharPronta(){
   var nvs = F.niveis.slice();
   var itens = montarLista(60, t.id, nvs);
   var min = itens.reduce(function(a, i){
-    var e = EX.filter(function(x){ return x.id === i.id; })[0];
+    var e = acharEx(i.id);
     return a + (e ? e.min : 0);
   }, 0);
   var blocos = BLOCOS.filter(function(b){
@@ -1137,7 +1264,7 @@ function planoTexto(){
     L.push('— ' + b.nome.toUpperCase() + ' (' + b.tempo + ') —');
     itens.forEach(function(e){
       L.push('');
-      L.push('[' + e.id + '] ' + e.nome + ' · ' + e.min + ' min');
+      L.push('[' + e.id + '] ' + e.nome + ' · ' + minNoPlano(e.id) + ' min');
       L.push('Objetivo: ' + e.objetivo);
       L.push('Montagem: ' + e.montagem);
       L.push('Como aplicar:');
@@ -1187,7 +1314,7 @@ function areaTexto(txt, depois){
 function abrirMes(){
   var t = F.tema ? tema(F.tema) : temaDoMes();
   var c = camada(t.camada);
-  var doTema = EX.filter(function(e){ return e.tema.indexOf(t.id) >= 0; });
+  var doTema = BANCO.filter(function(e){ return e.tema.indexOf(t.id) >= 0; });
   el('mesCod').textContent = 'Tema do mês · ' + t.mesesTx;
   el('mesTitulo').textContent = t.nome;
   var porNivel = NIVEIS.map(function(n){
@@ -1218,9 +1345,470 @@ function abrirMes(){
 }
 
 /* ==========================================================================
+   TROCAR E ACRESCENTAR NO PLANO
+   --------------------------------------------------------------------------
+   O plano montado pelo app é um ponto de partida; quem dá a aula é que sabe
+   que aquele exercício não serve hoje. Trocar um por outro do mesmo bloco, ou
+   acrescentar mais um, tinha que passar por fechar o plano, achar o exercício
+   na lista e voltar — três telas para uma decisão de dois segundos.
+   ========================================================================== */
+var TROCANDO = '';        // id que vai sair, vazio quando é só acrescentar
+
+function candidatos(blocoId){
+  var t = temaDoPlano();
+  var dentro = PLANO.itens.map(function(i){ return i.id; });
+  var r = BANCO.filter(function(e){
+    if (e.bloco !== blocoId) return false;
+    if (dentro.indexOf(e.id) >= 0 && e.id !== TROCANDO) return false;
+    if (e.id === TROCANDO) return false;
+    if (e.tema.indexOf(t.id) < 0) return false;
+    if (PLANO.nivel && e.niveis.indexOf(PLANO.nivel) < 0) return false;
+    return true;
+  });
+  // nada no tema e no nível? abre para o bloco inteiro, avisando na tela —
+  // melhor oferecer algo de fora do tema do que uma lista vazia
+  if (!r.length) {
+    r = BANCO.filter(function(e){
+      return e.bloco === blocoId && dentro.indexOf(e.id) < 0;
+    });
+    return { itens:r, largo:true };
+  }
+  return { itens:r, largo:false };
+}
+
+function abrirEscolher(blocoId, trocarId){
+  TROCANDO = trocarId || '';
+  var b = bloco(blocoId), t = temaDoPlano();
+  var r = candidatos(blocoId);
+  el('escCod').textContent = b.icone + ' ' + b.nome;
+  el('escTitulo').textContent = TROCANDO ? 'Trocar por' : 'Acrescentar';
+  var h = '<p style="font-size:13.5px;color:var(--muted);margin-bottom:12px">' +
+    (r.largo ? 'Nada em <b>' + esc(t.nome) + '</b>' +
+        (PLANO.nivel ? ' no nível ' + esc(nivel(PLANO.nivel).nome) : '') +
+        ' para este bloco — mostrando o bloco inteiro.'
+      : esc(t.nome) + (PLANO.nivel ? ' · nível ' + esc(nivel(PLANO.nivel).nome) : '') +
+        ' · ' + r.itens.length + ' opções') + '</p>';
+  h += r.itens.map(function(e){
+    return '<div class="card" data-escolher="' + e.id + '" data-bloco-alvo="' + blocoId + '"' +
+      ' role="button" tabindex="0" aria-label="Usar ' + esc(e.nome) + '">' +
+      '<div class="miniq">' + svgQuadra(e.fig, { mini:true }) + '</div>' +
+      '<div class="mid"><h3>' + esc(e.nome) + '</h3>' +
+        '<div class="sinais"><span class="sinal min">' + e.min + '′</span>' +
+          reguaNiveis(e) +
+          '<span class="sinal"><span class="cd">' + esc(e.id) + '</span></span></div></div>' +
+      '<span class="add" aria-hidden="true">' + (TROCANDO ? '⇄' : '+') + '</span></div>';
+  }).join('') || '<div class="vazio"><b>Nada disponível neste bloco.</b>' +
+      'Todos os exercícios dele já estão no plano.</div>';
+  el('escCorpo').innerHTML = h;
+  abrir('fundoEscolher');
+}
+
+function escolhido(id, blocoId){
+  if (TROCANDO) {
+    PLANO.itens = PLANO.itens.map(function(i){
+      return i.id === TROCANDO ? { id:id, bloco:i.bloco } : i;   // o minuto ajustado era do outro
+    });
+  } else {
+    PLANO.itens.push({ id:id, bloco:blocoId });
+  }
+  TROCANDO = '';
+  guardar(CH_PLANO, PLANO);
+  fechar('fundoEscolher');
+  atualizar(); desenharPlano();
+}
+
+/* ==========================================================================
+   MEUS EXERCÍCIOS — criar, editar e levar para outro aparelho
+   --------------------------------------------------------------------------
+   Os 116 do banco vêm de exercicios.js e não se editam no celular: são a
+   metodologia, e mudá-los sem querer em quadra seria pior que não poder
+   mudá-los. O que o professor cria fica em MEUS, no localStorage deste
+   aparelho, e entra em tudo: busca, filtro, plano, aula pronta e impressão.
+
+   Como o app não fala com servidor nenhum (é o que o deixa abrir offline em
+   quadra), passar os exercícios para o outro professor é por texto: exportar
+   gera um bloco para copiar, importar recebe o mesmo bloco.
+   ========================================================================== */
+
+/* Cenas prontas para o desenho. Desenhar uma quadra num celular pediria um
+   editor de arrastar que ninguém usaria em quadra; escolher a cena mais
+   parecida e descrevê-la em uma frase resolve o mesmo problema em dois
+   toques. Coordenadas em metros: y=0 é a rede, y cresce para o lado do aluno,
+   11,885 é a linha de base. */
+var CENAS = [
+  { id:'prof-lanca', nome:'Professor lança, aluno no fundo', base:'meia', el:[
+      ['prof', 0, -2.6, 'lança'],
+      ['bola', 0, -2.4, 0, 9.4, .35, ''],
+      ['aluno', 0, 11.0, 'devolve'] ] },
+  { id:'peloteio', nome:'Dois peloteando, quadra inteira', base:'inteira', el:[
+      ['colega', 0, -10.5, 'devolve'],
+      ['bola', 0, -10.0, 0, 10.4, .35, ''],
+      ['aluno', 0, 11.0, 'joga'] ] },
+  { id:'rede', nome:'Aluno na rede, professor do outro lado', base:'meia', el:[
+      ['prof', 0, -2.6, 'lança'],
+      ['bola', 0, -2.4, 0, 3.0, .3, ''],
+      ['aluno', 0, 3.4, 'voleia'] ] },
+  { id:'cones', nome:'Cones no fundo, aluno se desloca', base:'fundo', el:[
+      ['cone', -3.2, 9.6, ''],
+      ['cone',  3.2, 9.6, ''],
+      ['aluno', 0, 11.2, 'base'],
+      ['mov', 0, 11.2, -3.2, 9.6, .15, 'vai e volta'] ] },
+  { id:'saque', nome:'Saque e devolução', base:'inteira', el:[
+      ['aluno', 3.0, 11.6, 'saca'],
+      ['bola', 3.0, 11.4, -2.6, -4.2, .4, ''],
+      ['colega', -3.0, -10.5, 'devolve'] ] },
+  { id:'alvo', nome:'Alvo do outro lado', base:'meia', el:[
+      ['aluno', 0, 11.0, 'bate'],
+      ['bola', 0, 10.8, 2.8, -1.2, .35, ''],
+      ['zona', 2.8, -1.6, 2.6, 2.6, 'alvo'] ] },
+  { id:'kids', nome:'Mini quadra (kids)', base:'mini', el:[
+      ['prof', 0, -2.6, 'lança'],
+      ['bola', 0, -2.4, 0, 4.4, .3, ''],
+      ['aluno', 0, 5.2, ''] ] },
+  { id:'vazia', nome:'Quadra vazia (só a frase explica)', base:'meia', el:[] }
+];
+
+function cena(id){
+  for (var i = 0; i < CENAS.length; i++) if (CENAS[i].id === id) return CENAS[i];
+  return CENAS[0];
+}
+
+/* Um exercício só entra no banco se tiver tudo o que a tela lê. Vale para o
+   que vem do formulário e para o que vem de uma importação — um registro pela
+   metade quebraria a lista inteira, não só ele. */
+function exValido(e){
+  return !!(e && typeof e.id === 'string' && e.nome && e.objetivo && e.montagem &&
+    e.erro && e.sucesso && e.fig && e.fig.el &&
+    Array.isArray(e.tema) && e.tema.length &&
+    Array.isArray(e.niveis) && e.niveis.length &&
+    bloco(e.bloco) && typeof e.min === 'number' && e.min > 0);
+}
+
+/* Prefixo JV, que o banco não usa (ele usa D, F, M, FH, BH, R, S e T). Com
+   "M" o exercício novo saía M12, coladinho nos M01..M11 de movimentação — e
+   o código é o que o professor lê em quadra para achar a ficha. */
+function proximoId(){
+  var n = 1, id;
+  do { id = 'JV' + (n < 10 ? '0' : '') + n; n++; } while (acharEx(id));
+  return id;
+}
+
+function linhas(txt){
+  return String(txt || '').split('\n')
+    .map(function(t){ return t.trim(); })
+    .filter(function(t){ return t.length > 0; });
+}
+
+function guardarMeus(){
+  guardar(CH_MEUS, MEUS);
+  montarBanco();
+}
+
+/* A resposta do importar é escrita depois de redesenhar a folha: abrirMeus()
+   refaz o #meusCorpo inteiro, e a mensagem escrita antes sumia junto. */
+var AVISO_MEUS = '';
+
+/* ---------- a lista dos meus ---------- */
+function abrirMeus(){
+  var h = '<button class="btn btn-gold" id="meusNovo" style="width:100%;margin-bottom:14px">' +
+          '+ criar exercício</button>';
+  if (!MEUS.length) {
+    h += '<div class="vazio" style="padding:26px 6px"><div class="em">✎</div>' +
+      '<b>Nenhum exercício seu ainda.</b>' +
+      'O que você criar aqui entra na busca, nos filtros e na aula pronta, ' +
+      'junto com os ' + EX.length + ' do banco.</div>';
+  } else {
+    h += MEUS.map(function(e){
+      return '<div class="card" data-editar="' + e.id + '" role="button" tabindex="0"' +
+        ' aria-label="Editar ' + esc(e.nome) + '">' +
+        '<div class="miniq">' + svgQuadra(e.fig, { mini:true }) + '</div>' +
+        '<div class="mid"><h3>' + esc(e.nome) + '</h3>' +
+          '<div class="sinais"><span class="sinal min">' + e.min + '′</span>' +
+            reguaNiveis(e) +
+            '<span class="sinal"><span class="cd">' + esc(e.id) + '</span></span></div></div>' +
+        '<span class="add" aria-hidden="true">✎</span></div>';
+    }).join('');
+  }
+  h += '<details class="gaveta" style="margin-top:16px"><summary>📤 Levar para outro aparelho</summary>' +
+    '<div class="dentro">' +
+      '<p style="font-size:13.5px;color:var(--muted);margin-bottom:10px">' +
+        'O app não fala com servidor nenhum — é isso que o deixa abrir offline em ' +
+        'quadra. Para passar os seus exercícios ao outro professor, copie o bloco ' +
+        'abaixo e mande; do outro lado, cole no mesmo lugar e toque em importar.</p>' +
+      '<textarea id="meusTexto" rows="5" spellcheck="false" ' +
+        'style="width:100%;background:var(--navy-2);border:1px solid var(--line-2);' +
+        'border-radius:11px;color:var(--cream);padding:10px;font-size:12.5px">' +
+        esc(JSON.stringify(MEUS)) + '</textarea>' +
+      '<div class="linha" style="margin-top:10px">' +
+        '<button class="btn btn-line pq" id="meusCopiar">Copiar</button>' +
+        '<button class="btn btn-esc pq" id="meusImportar">Importar o que está aí</button>' +
+      '</div>' +
+      '<p id="meusAviso" style="font-size:13px;color:var(--gold-soft);margin-top:9px">' +
+      esc(AVISO_MEUS) + '</p>' +
+    '</div></details>';
+  el('meusCorpo').innerHTML = h;
+  if (AVISO_MEUS) {
+    el('meusCorpo').querySelector('details').open = true;   // a resposta tem que estar à vista
+    AVISO_MEUS = '';
+  }
+
+  el('meusNovo').onclick = function(){ abrirEditor(''); };
+  el('meusCopiar').onclick = function(){
+    var t = el('meusTexto');
+    t.select();
+    try { document.execCommand('copy'); } catch(erro){}
+    if (navigator.clipboard) navigator.clipboard.writeText(t.value).catch(function(){});
+    el('meusAviso').textContent = 'Copiado. Cole no WhatsApp e mande.';
+  };
+  el('meusImportar').onclick = importarMeus;
+  abrir('fundoMeus');
+}
+
+function importarMeus(){
+  var aviso = el('meusAviso'), lidos;
+  try { lidos = JSON.parse(el('meusTexto').value); } catch(erro){ lidos = null; }
+  if (!Array.isArray(lidos)) { aviso.textContent = 'Não entendi esse texto. Cole o bloco inteiro, das chaves ao fim.'; return; }
+  var bons = lidos.filter(exValido);
+  if (!bons.length) { aviso.textContent = 'Nenhum exercício completo nesse texto.'; return; }
+  var novos = 0, trocados = 0;
+  bons.forEach(function(e){
+    var i = MEUS.map(function(m){ return m.id; }).indexOf(e.id);
+    e.fonte = 'meu';
+    if (i >= 0) { MEUS[i] = e; trocados++; }
+    else if (EX.some(function(x){ return x.id === e.id; })) {
+      e.id = proximoId(); MEUS.push(e); novos++;   // id batia com o banco: renumera
+    } else { MEUS.push(e); novos++; }
+  });
+  guardarMeus(); atualizar();
+  AVISO_MEUS = novos + ' novo(s), ' + trocados + ' atualizado(s)' +
+    (bons.length < lidos.length ? ' · ' + (lidos.length - bons.length) + ' incompleto(s), fora' : '');
+  abrirMeus();
+}
+
+/* ---------- o formulário ---------- */
+var EDITANDO = '';
+
+function campo(rot, dentro, dica){
+  return '<div class="ed-campo"><label>' + esc(rot) + '</label>' + dentro +
+    (dica ? '<small>' + esc(dica) + '</small>' : '') + '</div>';
+}
+
+function abrirEditor(id){
+  EDITANDO = id;
+  var e = id ? MEUS.filter(function(x){ return x.id === id; })[0] : null;
+  if (id && !e) return;
+  var vazio = { tema:[], niveis:[], mat:[], form:[], nec:[], passos:[], foco:[],
+                erros:[], dificultar:[], fig:{ base:'meia', el:cena('prof-lanca').el, nota:'' } };
+  var v = e || vazio;
+
+  /* O checar-exercicios.js confere cada id procurado pelo JS contra os id=""
+     escritos no arquivo, e id montado por concatenação ele não consegue
+     conferir — essa checagem já pegou erro de verdade aqui. Por isso o id vem
+     escrito por extenso na chamada, e não montado dentro da função. */
+  function area(abre, valor){
+    return abre + esc(valor) + '</textarea>';
+  }
+  function entrada(abre, valor, dica){
+    return abre + ' value="' + esc(valor) + '" placeholder="' + esc(dica || '') + '">';
+  }
+  function opcoes(lista, atual, rotulo){
+    return lista.map(function(o){
+      return '<option value="' + esc(o.id !== undefined ? o.id : o.n) + '"' +
+        ((o.id !== undefined ? o.id : String(o.n)) === String(atual) ? ' selected' : '') + '>' +
+        esc(rotulo(o)) + '</option>';
+    }).join('');
+  }
+  function marcaveis(nome, lista, marcados){
+    return '<div class="ed-chips">' + lista.map(function(o){
+      return '<button type="button" class="chip' + (marcados.indexOf(o.id) >= 0 ? ' on' : '') +
+        '" data-marca="' + nome + '" data-valor="' + o.id + '">' + esc(o.nome) + '</button>';
+    }).join('') + '</div>';
+  }
+
+  el('edCod').textContent = e ? e.id : 'novo';
+  el('edTitulo').textContent = e ? 'Editar exercício' : 'Criar exercício';
+  el('edApagar').style.display = e ? '' : 'none';
+
+  el('edCorpo').innerHTML =
+    '<p class="ed-erro" id="edErro" hidden></p>' +
+    campo('Nome do exercício', entrada('<input id="exNome"', v.nome || '', 'Ex.: Cruzado com alvo')) +
+    campo('Tema do mês', '<select id="exTema">' +
+      opcoes(TEMAS, v.tema[0] || temaDoMes().id, function(t){ return t.nome + ' · ' + t.mesesTx; }) +
+      '</select>', 'em que mês do calendário ele entra') +
+    campo('Bloco da aula', '<select id="exBloco">' +
+      opcoes(BLOCOS, v.bloco || 'tema', function(b){ return b.icone + ' ' + b.nome + ' (' + b.tempo + ')'; }) +
+      '</select>') +
+    campo('Serve para os níveis', marcaveis('nivel', NIVEIS, v.niveis),
+      'marque todos em que o exercício funciona') +
+    '<div class="ed-dois">' +
+      campo('Duração', '<input id="exMin" type="number" min="2" max="45" value="' + (v.min || 10) + '">', 'minutos') +
+      campo('Intensidade', '<select id="exInt">' +
+        ['baixa','media','alta'].map(function(x){
+          return '<option value="' + x + '"' + (v.int === x ? ' selected' : '') + '>' +
+            ({ baixa:'Baixa', media:'Média', alta:'Alta' })[x] + '</option>'; }).join('') +
+        '</select>') +
+    '</div>' +
+    campo('Objetivo', area('<textarea id="exObj" rows="2" spellcheck="true">', v.objetivo || ''), 'uma frase: para quê serve') +
+    campo('Montagem', area('<textarea id="exMont" rows="2" spellcheck="true">', v.montagem || ''), 'o que precisa estar na quadra') +
+    campo('Como aplicar', area('<textarea id="exPassos" rows="4" spellcheck="true">', (v.passos || []).join('\n')), 'um passo por linha') +
+    campo('Erro mais comum', entrada('<input id="exErro"', v.erro || '')) +
+    campo('Funcionou se', entrada('<input id="exSucesso"', v.sucesso || ''), 'o critério que fecha o exercício') +
+
+    '<details class="gaveta"><summary>🎾 O desenho</summary><div class="dentro">' +
+      campo('Cena', '<select id="exCena">' +
+        CENAS.map(function(c){ return '<option value="' + c.id + '">' + esc(c.nome) + '</option>'; }).join('') +
+        '<option value="copiar">— copiar o desenho de outro exercício —</option></select>') +
+      '<div id="exCopiaCx" hidden>' + campo('Copiar de', '<select id="exCopia">' +
+        EX.map(function(x){ return '<option value="' + x.id + '">' + esc(x.id + ' · ' + x.nome) + '</option>'; }).join('') +
+        '</select>') + '</div>' +
+      campo('O que está no desenho', area('<textarea id="exNota" rows="2" spellcheck="true">', (v.fig && v.fig.nota) || ''),
+        'a frase que aparece embaixo da figura') +
+      '<div class="qd-cx" id="exPreview"></div>' +
+    '</div></details>' +
+
+    '<details class="gaveta"><summary>✅ Foco, erros e como dificultar</summary><div class="dentro">' +
+      campo('Foco do professor', area('<textarea id="exFoco" rows="3" spellcheck="true">', (v.foco || []).join('\n')), 'um por linha') +
+      campo('Outros erros comuns', area('<textarea id="exErros" rows="3" spellcheck="true">', (v.erros || []).join('\n')), 'um por linha') +
+      campo('Como dificultar', area('<textarea id="exDificultar" rows="3" spellcheck="true">', (v.dificultar || []).join('\n')), 'um por linha') +
+      campo('Dica extra', area('<textarea id="exDica" rows="2" spellcheck="true">', v.dica || '')) +
+    '</div></details>' +
+
+    '<details class="gaveta"><summary>🎒 Material, formato e camada</summary><div class="dentro">' +
+      campo('Material', marcaveis('mat', MATERIAIS.filter(function(m){ return m.id !== 'nada'; }), v.mat),
+        'nada marcado = só a quadra') +
+      campo('Formato da aula', marcaveis('form', FORMATOS, v.form)) +
+      campo('Camada da Pirâmide', '<select id="exCam">' +
+        opcoes(CAMADAS, v.camada || 4, function(c){ return c.n + ' — ' + c.nome; }) + '</select>') +
+      campo('Variação por nível', area('<textarea id="exProg" rows="5" spellcheck="true">', NIVEIS.map(function(n){
+        return n.nome + ': ' + ((v.prog && v.prog[n.id]) || ''); }).join('\n')),
+        'uma linha por nível, no formato "Nível: o que muda". Linha em branco depois dos dois-pontos é ignorada.') +
+    '</div></details>';
+
+  // estado dos chips, guardado fora do DOM para o salvar ler de um lugar só
+  el('edCorpo').dataset.nivel = (v.niveis || []).join(',');
+  el('edCorpo').dataset.mat = (v.mat || []).join(',');
+  el('edCorpo').dataset.form = (v.form || []).join(',');
+
+  el('exCena').onchange = function(){
+    el('exCopiaCx').hidden = this.value !== 'copiar';
+    verPreview();
+  };
+  el('exCopia').onchange = verPreview;
+  verPreview();
+  abrir('fundoEditor');
+}
+
+function figDoFormulario(){
+  var esc2 = el('exCena').value;
+  if (esc2 === 'copiar') {
+    var o = acharEx(el('exCopia').value);
+    var f = o ? JSON.parse(JSON.stringify(o.fig)) : { base:'meia', el:[] };
+    f.nota = el('exNota').value.trim() || f.nota || '';
+    return f;
+  }
+  var c = cena(esc2);
+  return { base:c.base, el:JSON.parse(JSON.stringify(c.el)), nota:el('exNota').value.trim() };
+}
+
+function verPreview(){
+  el('exPreview').innerHTML = svgQuadra(figDoFormulario());
+}
+
+function marcados(nome){
+  var v = el('edCorpo').dataset[nome] || '';
+  return v ? v.split(',') : [];
+}
+
+function alternarMarca(nome, valor, botao){
+  var lista = marcados(nome), i = lista.indexOf(valor);
+  if (i >= 0) lista.splice(i, 1); else lista.push(valor);
+  el('edCorpo').dataset[nome] = lista.join(',');
+  botao.classList.toggle('on', i < 0);
+}
+
+function salvarEditor(){
+  var faltando = [];
+  function pega(id, rot){
+    var t = el(id).value.trim();
+    if (!t && rot) faltando.push(rot);
+    return t;
+  }
+  var nome = pega('exNome', 'o nome');
+  var obj = pega('exObj', 'o objetivo');
+  var mont = pega('exMont', 'a montagem');
+  var passos = linhas(el('exPassos').value);
+  if (!passos.length) faltando.push('pelo menos um passo em "como aplicar"');
+  var erro = pega('exErro', 'o erro mais comum');
+  var sucesso = pega('exSucesso', 'o "funcionou se"');
+  var niveis = marcados('nivel');
+  if (!niveis.length) faltando.push('pelo menos um nível');
+  var min = Number(el('exMin').value) || 0;
+  if (min < 2) faltando.push('a duração (2 min ou mais)');
+
+  if (faltando.length) {
+    var av = el('edErro');
+    av.hidden = false;
+    av.textContent = 'Falta ' + (faltando.length === 1 ? '' : 'preencher: ') + faltando.join(', ') + '.';
+    el('edCorpo').scrollTop = 0;
+    el('edCorpo').parentNode.scrollTop = 0;
+    return;
+  }
+
+  var prog = {};
+  linhas(el('exProg').value).forEach(function(l){
+    var i = l.indexOf(':');
+    if (i < 0) return;
+    var nm = l.slice(0, i).trim().toLowerCase(), tx = l.slice(i + 1).trim();
+    if (!tx) return;
+    NIVEIS.forEach(function(n){ if (n.nome.toLowerCase() === nm || n.id === nm) prog[n.id] = tx; });
+  });
+
+  var mat = marcados('mat'), form = marcados('form');
+  var novo = {
+    id: EDITANDO || proximoId(),
+    nome: nome, fonte: 'meu',
+    tema: [el('exTema').value],
+    camada: Number(el('exCam').value) || 4,
+    bloco: el('exBloco').value,
+    niveis: NIVEIS.map(function(n){ return n.id; }).filter(function(n){ return niveis.indexOf(n) >= 0; }),
+    min: min, int: el('exInt').value,
+    objetivo: obj, montagem: mont,
+    execucao: passos.join(' '),
+    prog: prog, erro: erro, sucesso: sucesso,
+    mat: mat.length ? mat : ['nada'],
+    form: form.length ? form : FORMATOS.map(function(f){ return f.id; }),
+    nec: [], fig: figDoFormulario(),
+    passos: passos, dica: el('exDica').value.trim(),
+    foco: linhas(el('exFoco').value),
+    erros: linhas(el('exErros').value),
+    dificultar: linhas(el('exDificultar').value)
+  };
+  if (!exValido(novo)) { el('edErro').hidden = false; el('edErro').textContent = 'Faltou alguma coisa.'; return; }
+
+  var i = MEUS.map(function(m){ return m.id; }).indexOf(novo.id);
+  if (i >= 0) MEUS[i] = novo; else MEUS.push(novo);
+  guardarMeus();
+  fechar('fundoEditor');
+  atualizar();
+  abrirMeus();
+}
+
+function apagarEditor(){
+  if (!EDITANDO) return;
+  var e = MEUS.filter(function(x){ return x.id === EDITANDO; })[0];
+  if (!window.confirm('Apagar "' + (e ? e.nome : EDITANDO) + '"? Ele sai também dos planos.')) return;
+  MEUS = MEUS.filter(function(x){ return x.id !== EDITANDO; });
+  PLANO.itens = PLANO.itens.filter(function(i){ return i.id !== EDITANDO; });
+  guardarMeus(); guardar(CH_PLANO, PLANO);
+  fechar('fundoEditor');
+  atualizar();
+  abrirMeus();
+}
+
+/* ==========================================================================
    ABRIR / FECHAR
    ========================================================================== */
-var FOLHAS = ['fundoFicha','fundoPlano','fundoMes'];
+var FOLHAS = ['fundoFicha','fundoPlano','fundoMes','fundoMeus','fundoEditor','fundoEscolher'];
 var ROLAGEM = 0;
 
 function algumaAberta(){
@@ -1243,6 +1831,13 @@ function destravarRolagem(){
 
 function abrir(id){
   var tinha = algumaAberta();
+  // folha que já estava aberta não volta ao topo: abrirFicha() é chamado de
+  // novo ao pôr no plano, e pular para o topo no meio da leitura era pior que
+  // o botão não atualizar
+  if (!el(id).classList.contains('aberto')) {
+    var folha = el(id).querySelector('.folha');
+    if (folha) folha.scrollTop = 0;
+  }
   el(id).classList.add('aberto');
   if (!tinha) travarRolagem();
 }
@@ -1281,8 +1876,22 @@ function ligar(){
   ligarGestos();
   document.addEventListener('click', function(ev){
     if (ARRASTOU) { ARRASTOU = false; return; }
-    var a = ev.target.closest ? ev.target.closest('[data-tema],[data-nivel],[data-bloco],[data-ficha],[data-add],[data-fecha],[data-favorito],[data-sobe],[data-desce],[data-aba]') : null;
+    var a = ev.target.closest ? ev.target.closest('[data-tema],[data-nivel],[data-bloco],[data-ficha],[data-add],[data-fecha],[data-favorito],[data-sobe],[data-desce],[data-aba],[data-editar],[data-marca],[data-trocar],[data-mais],[data-escolher]') : null;
     if (!a) return;
+
+    if (a.hasAttribute('data-marca')) {
+      alternarMarca(a.getAttribute('data-marca'), a.getAttribute('data-valor'), a); return;
+    }
+    if (a.hasAttribute('data-editar')) { abrirEditor(a.getAttribute('data-editar')); return; }
+    if (a.hasAttribute('data-trocar')) {
+      var ex = acharEx(a.getAttribute('data-trocar'));
+      if (ex) abrirEscolher(ex.bloco, ex.id);
+      return;
+    }
+    if (a.hasAttribute('data-mais')) { abrirEscolher(a.getAttribute('data-mais'), ''); return; }
+    if (a.hasAttribute('data-escolher')) {
+      escolhido(a.getAttribute('data-escolher'), a.getAttribute('data-bloco-alvo')); return;
+    }
 
     if (a.hasAttribute('data-tema'))  { F.tema = a.getAttribute('data-tema'); atualizar(); window.scrollTo({ top:0, behavior:'smooth' }); return; }
     if (a.hasAttribute('data-nivel')) { alterna(F.niveis, a.getAttribute('data-nivel')); atualizar(); return; }
@@ -1311,11 +1920,16 @@ function ligar(){
   // o card e' um <div role="button">: quem usa teclado espera Enter e espaco
   document.addEventListener('keydown', function(ev){
     if (ev.key !== 'Enter' && ev.key !== ' ') return;
-    var a = ev.target.closest ? ev.target.closest('.card[data-ficha]') : null;
+    var a = ev.target.closest ? ev.target.closest('.card[data-ficha],.card[data-editar],.card[data-escolher]') : null;
     if (!a) return;
     ev.preventDefault();
-    abrirFicha(a.getAttribute('data-ficha'));
+    if (a.hasAttribute('data-editar')) abrirEditor(a.getAttribute('data-editar'));
+    else if (a.hasAttribute('data-escolher')) escolhido(a.getAttribute('data-escolher'), a.getAttribute('data-bloco-alvo'));
+    else abrirFicha(a.getAttribute('data-ficha'));
   });
+
+  el('edSalvar').addEventListener('click', salvarEditor);
+  el('edApagar').addEventListener('click', apagarEditor);
 
   el('pronta60').addEventListener('click', function(){ montarAuto(60); });
   el('pronta90').addEventListener('click', function(){ montarAuto(90); });
@@ -1332,6 +1946,8 @@ function ligar(){
   el('fInt').addEventListener('change', function(){ F.int = this.value; marcarChips(); desenharLista(); });
   el('fOrd').addEventListener('change', function(){ F.ord = this.value; desenharLista(); });
   el('cApostila').addEventListener('click', function(){ F.apostila = !F.apostila; marcarChips(); desenharLista(); });
+  el('cMeus').addEventListener('click', function(){ F.meus = !F.meus; marcarChips(); desenharLista(); });
+  el('btnMeus').addEventListener('click', abrirMeus);
   el('cTransv').addEventListener('click', function(){ F.semTransv = !F.semTransv; marcarChips(); desenharLista(); });
   el('btnFav').addEventListener('click', function(){ F.favs = !F.favs; atualizar(); });
   el('btnLimpar').addEventListener('click', limparFiltros);
@@ -1356,7 +1972,8 @@ function alterna(lista, valor){
 
 function limparFiltros(){
   F.tema = ''; F.niveis = []; F.blocos = []; F.nec = ''; F.form = ''; F.cam = '';
-  F.mat = ''; F.int = ''; F.q = ''; F.apostila = false; F.semTransv = false; F.favs = false;
+  F.mat = ''; F.int = ''; F.q = ''; F.apostila = false; F.meus = false;
+  F.semTransv = false; F.favs = false;
   el('q').value = ''; el('fNec').value = ''; el('fForm').value = ''; el('fCam').value = '';
   el('fMat').value = ''; el('fInt').value = '';
   fecharPainel();
@@ -1374,6 +1991,8 @@ function fecharPainel(){
    ========================================================================== */
 function comecar(){
   FAV = ler(CH_FAV, []) || [];
+  MEUS = (ler(CH_MEUS, []) || []).filter(exValido);
+  montarBanco();
   var p = ler(CH_PLANO, null);
   if (p && p.itens) PLANO = { aluno:p.aluno || '', nivel:p.nivel || '', tema:p.tema || '', itens:p.itens || [] };
   // o app abre já no tema do mês: é o que o professor precisa em 9 de 10 aberturas

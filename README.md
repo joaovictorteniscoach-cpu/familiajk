@@ -59,8 +59,9 @@ gera o conteúdo.
   "JK" quando tiver. Funciona offline depois da primeira abertura.
 - **app-exercicios** é PWA (`sw-exercicios.js` + `manifest-exercicios.webmanifest`) e
   **não carrega nada de fora**: sem Firebase, sem biblioteca, sem fonte externa —
-  funciona offline desde a primeira abertura. Favoritos e plano de aula ficam no
-  aparelho. O ícone é próprio (quadra de saibro vista de cima, com `EXERCÍCIOS`
+  funciona offline desde a primeira abertura. Favoritos, plano de aula e os
+  **exercícios criados pelo professor** (botão ✎) ficam no aparelho; para passar
+  ao outro professor há exportar/importar por texto, já que não há servidor. O ícone é próprio (quadra de saibro vista de cima, com `EXERCÍCIOS`
   escrito na pastilha de baixo) e se gera com
   `node ferramentas/gerar-icone-exercicios.js` — é o único app da JV que não usa
   o logo, justamente para não virar mais um ícone igual na tela de início.

@@ -121,6 +121,34 @@ Dois cuidados ao desenhar: **rótulo curto** (o desenho encolhe o texto comprido
 até caber, e aí ele fica pequeno) e **escolher o recorte pelo elemento mais
 distante** — se o alvo está na quadra do adversário, a base é `inteira`.
 
+## Meus exercícios — criar e editar no celular
+
+O botão **✎** no cabeçalho abre *Meus exercícios*. O que você cria ali fica
+**neste aparelho** (localStorage) e entra em tudo: busca, filtros, aula pronta,
+plano e impressão. Na lista os seus aparecem junto com os do banco; o filtro
+**Só os meus** separa, e a ficha diz a origem.
+
+**Os 116 do banco não se editam pelo celular, de propósito.** Eles vêm de
+`exercicios.js` — são a metodologia, e mudá-los sem querer em quadra seria pior
+que não poder mudá-los. Para alterar um deles, é no arquivo (seção acima).
+
+O código dos seus sai como `JV01`, `JV02`… O banco usa D, F, M, FH, BH, R, S e
+T, então não há risco de dois exercícios com o mesmo código.
+
+**O desenho.** Desenhar uma quadra num celular pediria um editor de arrastar que
+ninguém usaria em quadra. Em vez disso: escolha entre **oito cenas prontas**
+(professor lança, dois peloteando, aluno na rede, cones no fundo, saque e
+devolução, alvo do outro lado, mini quadra, quadra vazia) — ou **copie o desenho
+de qualquer um dos 116** e escreva a frase que explica a cena. É a mesma frase
+que aparece embaixo da figura na ficha, e é ela que faz o desenho ser entendido.
+
+**Levar para o outro professor.** O app não fala com servidor nenhum — é isso
+que o deixa abrir offline em quadra. Então a gaveta *Levar para outro aparelho*
+gera um bloco de texto para copiar e mandar; do outro lado, cola no mesmo lugar
+e toca em importar. A importação **confere cada registro**: o que vier
+incompleto fica de fora em vez de entrar quebrado, e código que bata com um do
+banco é renumerado.
+
 ## Acrescentar um exercício
 
 Abra `exercicios.js`, copie um bloco inteiro de `EX`, cole no fim da seção do tema
@@ -169,6 +197,20 @@ lista e não altera nada; `montarAuto` é quem grava). Conferido nas **72
 combinações** de tema × nível × duração: todas saem com os quatro blocos, sem
 exercício repetido dentro da mesma aula, entre 46 e 57 min no alvo de 60 e entre
 62 e 87 min no alvo de 90.
+
+**A aula sai para ser mexida.** Em cada exercício do plano:
+
+- o **tempo é um campo**, não um rótulo — cortar de 10 para 7 quando a aula
+  aperta não obriga mais a tirar o exercício inteiro. O total se refaz na hora,
+  e vale no texto copiado e na folha impressa. Voltando ao tempo original, o
+  ajuste some (não fica um número "preso" ali);
+- **⇄ trocar** abre os outros exercícios do mesmo bloco, já no tema e no nível do
+  plano, e troca no lugar com um toque;
+- **+ acrescentar em <bloco>** faz o mesmo sem tirar ninguém.
+
+Se não houver nada no tema e no nível para aquele bloco, a tela abre o bloco
+inteiro e avisa na primeira linha — é melhor oferecer algo de fora do tema do
+que uma lista vazia.
 
 O botão **⚡ Montar aula** da barra de baixo faz o mesmo para 60 min. A montagem
 segue as proporções da anatomia da aula JV (18% ativação, 40% tema, 33% jogo, 7%
