@@ -217,13 +217,14 @@ escreve `ALUNO`, este escreve `EXERCÍCIOS`.
 
 Os outros dois continuam com a arte original. Duas coisas mudaram lá: o **`JV`,
 que era branco e agora é limão** (`#DDEE66`, o mesmo tom do risco sob a marca),
-e a **palavra grande do App do Aluno, que era `TÊNIS` e virou `ALUNOS`** — é ela
-que se lê primeiro na tela de início, e agora o app se identifica sem precisar
-da pastilha. Quem faz as duas é:
+e a **palavra grande**, que é o que se lê primeiro na tela de início — no Aluno
+o `TÊNIS` virou `ALUNOS`, e na Gestão o `TÊNIS` ficou e ganhou `GESTÃO` numa
+linha nova embaixo. Agora cada app se identifica sem precisar da pastilha, que
+no ícone de 60 px do iPhone já não se lê. Quem faz as duas coisas é:
 
 ```sh
 python3 ferramentas/pintar-jv-limao.py
-python3 ferramentas/escrever-alunos.py
+python3 ferramentas/escrever-nos-icones.py
 ```
 
 em cima dos próprios PNGs (ícones e telas de abertura), e os dois podem ser
