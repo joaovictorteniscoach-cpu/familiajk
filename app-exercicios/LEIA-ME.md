@@ -248,6 +248,22 @@ ficar na raiz do que é arrastado — já está). Sai um endereço só seu, que 
 **adicionar à Tela de Início** do celular e usar offline em quadra. Mexeu no
 banco, arraste de novo: o repositório continua sendo a fonte única.
 
+Para mandar a pasta pronta para alguém (ou para o seu próprio celular):
+
+```sh
+python3 ferramentas/gerar-zip.py
+```
+
+Ele gera `banco-exercicios-jv.zip` com a tela, os dois scripts, os cinco ícones,
+o manifest, o service worker, o `robots.txt` e o `netlify.toml`. Os arquivos vão
+na **raiz do zip**, sem pasta por cima — assim serve nos dois caminhos: soltando
+o `.zip` direto no Netlify o `index.html` cai na raiz do site, e descompactando
+antes o iPhone e o Mac criam a pasta sozinhos.
+
+O `LEIA-ME.md` fica **de fora** do zip de propósito: ele traz estas notas
+internas, inclusive a conversa sobre o material ser pago, e tudo que entra no
+zip vai para o ar.
+
 Se o site for ligado ao GitHub em vez de drag & drop, use *Base directory* =
 `app-exercicios` — o `netlify.toml` da pasta já está pronto para isso.
 
