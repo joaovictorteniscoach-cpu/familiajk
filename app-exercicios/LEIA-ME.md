@@ -202,7 +202,28 @@ Vale saber: a **apostila** (`metodologia/apostila.md`) já está nesse mesmo
 repositório público hoje, embora o README diga que ela fica fora do ar. Se a
 decisão for fechar o banco, ela entra na mesma conversa.
 
-## Ícones
+## O ícone
 
-Os ícones são **provisórios** — cópia do app de Gestão. Trocar por arte própria do
-banco de exercícios quando houver.
+O ícone é **próprio deste app**, e não uma cópia do da Gestão. Os apps da JV usam
+todos o mesmo logo, e na tela de início do celular viravam três ícones iguais —
+esse era o problema a resolver.
+
+Ele se diferencia pelo **assunto**: a quadra de saibro vista de cima com o
+trajeto da bola, que é exatamente a linguagem dos 116 desenhos do banco. A
+família se mantém pelo preto e pelo **verde-limão da marca** (`#CBDD4B`, tirado
+do próprio ícone da Gestão).
+
+Para gerar de novo, depois de mexer no desenho:
+
+```sh
+node ferramentas/gerar-icone-exercicios.js
+```
+
+Ele escreve os cinco arquivos direto nesta pasta: `-192`, `-512`, `-180`
+(apple-touch), `-mask` (maskable, para o Android recortar em círculo) e o
+`jv-icone-exercicios.png` do `<link rel="icon">`.
+
+Dois detalhes que valem saber: os arquivos são **quadrados**, sem canto
+arredondado — o iPhone e o Android aplicam a máscara deles, e arredondar aqui
+também deixava uma casquinha preta na borda. E a versão `-mask` tem o desenho
+menor, dentro da área segura, porque o Android corta as pontas.
