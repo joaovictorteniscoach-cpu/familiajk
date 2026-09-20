@@ -76,11 +76,21 @@ const DIST = 100;      // distância focal: só escala o desenho, o viewBox ajus
 /* Cores do desenho. Saibro de verdade, porque é nele que a JV dá aula. */
 const CQ = {
   saibro:'#A85B37', saibroClaro:'#BE7049', saibroEsc:'#95502F', fora:'#8A4C2E',
-  linha:'#F4EFE6', rede:'#EFEBE3', redeMalha:'#20313E', poste:'#43535E',
-  aluno:'#D8B45C', prof:'#E8EDF2', colega:'#8FB0C9',
-  bola:'#D7EE86', mov:'#FFFFFF', cone:'#E0784A', zona:'#D8B45C',
-  texto:'#FFFFFF', fundoTx:'rgba(9,22,35,.82)', sombra:'rgba(50,20,10,.34)'
+  linha:'#F7F3EA', linhaGasta:'#E4D8C6', poeira:'#C98A64',
+  rede:'#EFEBE3', redeMalha:'#1B2A36', poste:'#3B4A55',
+  aluno:'#D8B45C', alunoEsc:'#A9843A', prof:'#E8EDF2', profEsc:'#AFBCC7',
+  colega:'#8FB0C9', colegaEsc:'#5F7F98', pele:'#C98D62', peleEsc:'#A06D48',
+  bola:'#D7EE86', mov:'#FFFFFF', cone:'#E0784A', coneEsc:'#B2542D', zona:'#D8B45C',
+  texto:'#FFFFFF', fundoTx:'rgba(9,22,35,.84)', sombra:'rgba(44,18,8,.38)'
 };
+
+/* Escurece uma cor hexadecimal. Usado para o lado do boneco que fica na
+   sombra: uma silhueta de cor chapada não tem volume nenhum. */
+function escurecer(hex, k){
+  var n = parseInt(hex.slice(1), 16);
+  var r = Math.round(((n >> 16) & 255) * k), g = Math.round(((n >> 8) & 255) * k), b = Math.round((n & 255) * k);
+  return 'rgb(' + r + ',' + g + ',' + b + ')';
+}
 
 /* Modo miniatura: o mesmo desenho, do tamanho de um selo, na lista de
    exercícios. Nesse tamanho o rótulo vira borrão — então ele sai, e o traço
@@ -168,7 +178,7 @@ function enquadrar(base, el){
     fx1 = Math.min(fx1, q.x); fx2 = Math.max(fx2, q.x);
     fy1 = Math.min(fy1, q.y); fy2 = Math.max(fy2, q.y);
   });
-  var minLarg = (fx2 - fx1) * 0.60, minAlt = (fy2 - fy1) * 0.60;
+  var minLarg = (fx2 - fx1) * 0.50, minAlt = (fy2 - fy1) * 0.50;
   if (x2 - x1 < minLarg) { x1 = meioX - minLarg / 2; x2 = meioX + minLarg / 2; }
   if (y2 - y1 < minAlt)  { y1 = meioY - minAlt / 2;  y2 = meioY + minAlt / 2; }
 
@@ -211,7 +221,7 @@ function faixa(x1, y1, x2, y2, larg, cor){
 function piso(base){
   var dx = QD.duplaX, sx = QD.simplesX, fy = QD.fundoY, sy = QD.saqueY;
   var lw = 0.05, lwBase = 0.10;          // largura real das linhas, em metros
-  var p = [];
+  var p = [], i, x;
 
   // o saibro de fora, bem largo: cobre o que a moldura mostrar
   p.push(pol([[-24, -26], [24, -26], [24, 26], [-24, 26]], CQ.fora));
@@ -223,16 +233,40 @@ function piso(base){
               [dx + 4.2, fy + 8.0], [-dx - 4.2, fy + 8.0]], CQ.saibro));
   p.push(pol([[-dx, -fy], [dx, -fy], [dx, fy], [-dx, fy]], CQ.saibroClaro));
 
-  // as linhas
-  [-dx, dx].forEach(function(x){ p.push(faixa(x, -fy, x, fy, lw)); });
-  [-sx, sx].forEach(function(x){ p.push(faixa(x, -fy, x, fy, lw)); });
-  p.push(faixa(-dx, fy, dx, fy, lwBase));
-  p.push(faixa(-dx, -fy, dx, -fy, lwBase));
-  p.push(faixa(-sx, sy, sx, sy, lw));
-  p.push(faixa(-sx, -sy, sx, -sy, lw));
-  p.push(faixa(0, -sy, 0, sy, lw));
-  p.push(faixa(0, fy - 0.3, 0, fy, lwBase));
-  p.push(faixa(0, -fy, 0, -fy + 0.3, lwBase));
+  // MARCAS DE VASSOURA. Saibro varrido tem faixas largas, e é delas que vem
+  // metade da leitura de "isto é uma quadra de verdade": elas mostram a
+  // direção do chão e, por serem paralelas, desenham a perspectiva sozinhas.
+  // Só na ficha — na miniatura de 104 px elas viram sujeira.
+  if (!MINI) {
+    // largas e de leve: estreitas e fortes, elas viravam tábuas de madeira
+    for (i = 0; i < 9; i++) {
+      x = -dx - 3.6 + i * ((dx + 3.6) * 2 / 9);
+      p.push(pol([[x, -fy - 7], [x + 0.62, -fy - 7], [x + 0.62, fy + 7], [x, fy + 7]],
+                 CQ.saibroEsc, ' fill-opacity=".05"'));
+    }
+  }
+
+  // as linhas. Duas passadas: a poeira de saibro que sempre sobra na borda,
+  // e a linha por cima. Sem a borda, a linha fica recortada como adesivo.
+  function linha(x1, y1, x2, y2, larg){
+    if (!MINI) p.push(faixa(x1, y1, x2, y2, larg + 0.05, CQ.poeira));
+    p.push(faixa(x1, y1, x2, y2, larg, CQ.linha));
+  }
+  [-dx, dx, -sx, sx].forEach(function(xx){ linha(xx, -fy, xx, fy, lw); });
+  linha(-dx, fy, dx, fy, lwBase);
+  linha(-dx, -fy, dx, -fy, lwBase);
+  linha(-sx, sy, sx, sy, lw);
+  linha(-sx, -sy, sx, -sy, lw);
+  linha(0, -sy, 0, sy, lw);
+  linha(0, fy - 0.3, 0, fy, lwBase);
+  linha(0, -fy, 0, -fy + 0.3, lwBase);
+
+  // LUZ. Uma clareada perto da rede e um escurecido nas bordas: é o que tira
+  // o desenho do aspecto de cartaz chapado.
+  if (!MINI) {
+    p.push('<rect x="' + nQ(VISTA.x) + '" y="' + nQ(VISTA.y) + '" width="' + nQ(VISTA.w) +
+           '" height="' + nQ(VISTA.h) + '" fill="url(#luz)" style="mix-blend-mode:soft-light"/>');
+  }
   return p.join('');
 }
 
@@ -291,49 +325,78 @@ function traco(metros, p){
    ========================================================================== */
 
 /* Um jogador, em pé, de costas para quem olha (é a vista de trás do fundo).
-   Desenhado dentro de uma caixa de 1,78 m de altura e projetado nela — então
-   quem está no fundo sai menor, sozinho, sem nenhum ajuste por exercício. */
+   Desenhado dentro de uma caixa de 1,78 m e projetado nela — quem está no
+   fundo sai menor sozinho, sem ajuste nenhum por exercício.
+
+   Ele é montado em camadas, e não numa silhueta chapada: perna de trás,
+   perna da frente, short, camisa, braços, cabeça e raquete, cada um com um
+   tom de luz e um de sombra. É daí que vem o volume — uma silhueta de cor
+   única, por melhor desenhada que seja, continua parecendo um pictograma. */
 function qJogador(x, y, rot, tipo){
-  var cor = tipo === 'prof' ? CQ.prof : (tipo === 'colega' ? CQ.colega : CQ.aluno);
+  var cor   = tipo === 'prof' ? CQ.prof   : (tipo === 'colega' ? CQ.colega   : CQ.aluno);
+  var esc0  = tipo === 'prof' ? CQ.profEsc : (tipo === 'colega' ? CQ.colegaEsc : CQ.alunoEsc);
+  var short = escurecer(esc0, 0.86);
   var altura = 1.78;
   var pe = proj(x, y, 0), cabeca = proj(x, y, altura);
-  var h = pe.y - cabeca.y;                    // altura na tela
+  var h = pe.y - cabeca.y;
   if (h < 3) h = 3;
-  var l = h * 0.40;                           // largura do boneco
-  var cx = (pe.x + cabeca.x) / 2;
-  var base = pe.y;
-  var esc = h / 100;                          // unidade local: 1/100 da altura
-  function u(v){ return nQ(v * esc); }
+  var l = h * 0.38;
+  var cx = (pe.x + cabeca.x) / 2, base = pe.y;
+  var u = function(v){ return nQ(v * h / 100); };
+  function px(v){ return nQ(cx + l * v); }
+  function py(v){ return nQ(base - h * v); }
   var s = '<g>';
-  // a sombra no chão, que é o que gruda o boneco na quadra
-  s += '<ellipse cx="' + nQ(cx) + '" cy="' + nQ(base) + '" rx="' + u(26) + '" ry="' + u(7) +
-       '" fill="' + CQ.sombra + '"/>';
-  // pernas, tronco e cabeça, num caminho só
-  s += '<path d="' +
-    'M ' + nQ(cx - l * 0.30) + ' ' + nQ(base) +
-    ' L ' + nQ(cx - l * 0.26) + ' ' + nQ(base - h * 0.44) +
-    ' L ' + nQ(cx + l * 0.26) + ' ' + nQ(base - h * 0.44) +
-    ' L ' + nQ(cx + l * 0.30) + ' ' + nQ(base) +
-    ' L ' + nQ(cx + l * 0.10) + ' ' + nQ(base) +
-    ' L ' + nQ(cx) + ' ' + nQ(base - h * 0.40) +
-    ' L ' + nQ(cx - l * 0.10) + ' ' + nQ(base) + ' Z" fill="' + cor + '"/>';
-  s += '<path d="' +
-    'M ' + nQ(cx - l * 0.34) + ' ' + nQ(base - h * 0.40) +
-    ' L ' + nQ(cx - l * 0.42) + ' ' + nQ(base - h * 0.74) +
-    ' Q ' + nQ(cx) + ' ' + nQ(base - h * 0.86) + ' ' + nQ(cx + l * 0.42) + ' ' + nQ(base - h * 0.74) +
-    ' L ' + nQ(cx + l * 0.34) + ' ' + nQ(base - h * 0.40) + ' Z" fill="' + cor + '"/>';
-  s += '<circle cx="' + nQ(cx) + '" cy="' + nQ(base - h * 0.90) + '" r="' + u(9) + '" fill="' + cor + '"/>';
-  // o braço com a raquete: é ele que diz "tênis" antes de qualquer legenda
-  var bx = cx + l * 0.62, by = base - h * 0.60;
-  s += '<line x1="' + nQ(cx + l * 0.38) + '" y1="' + nQ(base - h * 0.70) +
-       '" x2="' + nQ(bx) + '" y2="' + nQ(by) + '" stroke="' + cor +
-       '" stroke-width="' + u(7) + '" stroke-linecap="round"/>';
-  s += '<line x1="' + nQ(bx) + '" y1="' + nQ(by) + '" x2="' + nQ(bx + l * 0.22) + '" y2="' + nQ(by - h * 0.10) +
-       '" stroke="' + cor + '" stroke-width="' + u(4) + '"/>';
-  s += '<ellipse cx="' + nQ(bx + l * 0.34) + '" cy="' + nQ(by - h * 0.17) + '" rx="' + u(11) + '" ry="' + u(14) +
-       '" fill="none" stroke="' + cor + '" stroke-width="' + u(4) + '"/>';
+
+  // sombra projetada no chão: elipse achatada, deslocada para o lado da luz
+  s += '<ellipse cx="' + px(0.16) + '" cy="' + nQ(base + h * 0.012) + '" rx="' + u(30) +
+       '" ry="' + u(7.5) + '" fill="' + CQ.sombra + '"/>';
+
+  // perna de trás (mais escura) e perna da frente
+  s += '<path d="M ' + px(-0.04) + ' ' + py(0.46) + ' L ' + px(-0.30) + ' ' + py(0.02) +
+       ' L ' + px(-0.10) + ' ' + py(0.0) + ' L ' + px(0.08) + ' ' + py(0.44) + ' Z" fill="' + escurecer(CQ.peleEsc, 0.86) + '"/>';
+  s += '<path d="M ' + px(0.02) + ' ' + py(0.46) + ' L ' + px(0.26) + ' ' + py(0.02) +
+       ' L ' + px(0.06) + ' ' + py(0.0) + ' L ' + px(-0.06) + ' ' + py(0.44) + ' Z" fill="' + CQ.peleEsc + '"/>';
+  // tênis
+  s += '<ellipse cx="' + px(-0.20) + '" cy="' + nQ(base) + '" rx="' + u(8) + '" ry="' + u(3) + '" fill="#E7E0D2"/>';
+  s += '<ellipse cx="' + px(0.16) + '" cy="' + nQ(base) + '" rx="' + u(8) + '" ry="' + u(3) + '" fill="#E7E0D2"/>';
+  // short
+  s += '<path d="M ' + px(-0.32) + ' ' + py(0.52) + ' L ' + px(0.32) + ' ' + py(0.52) +
+       ' L ' + px(0.30) + ' ' + py(0.40) + ' L ' + px(0.04) + ' ' + py(0.43) +
+       ' L ' + px(-0.30) + ' ' + py(0.40) + ' Z" fill="' + short + '"/>';
+  // camisa: lado iluminado e lado na sombra
+  s += '<path d="M ' + px(-0.34) + ' ' + py(0.53) + ' L ' + px(-0.40) + ' ' + py(0.74) +
+       ' Q ' + px(0) + ' ' + py(0.83) + ' ' + px(0.40) + ' ' + py(0.74) +
+       ' L ' + px(0.34) + ' ' + py(0.53) + ' Z" fill="' + cor + '"/>';
+  s += '<path d="M ' + px(-0.34) + ' ' + py(0.53) + ' L ' + px(-0.40) + ' ' + py(0.74) +
+       ' Q ' + px(-0.20) + ' ' + py(0.79) + ' ' + px(-0.10) + ' ' + py(0.795) +
+       ' L ' + px(-0.10) + ' ' + py(0.53) + ' Z" fill="' + esc0 + '" fill-opacity=".55"/>';
+  // pescoço e cabeça
+  s += '<rect x="' + px(-0.10) + '" y="' + py(0.87) + '" width="' + u(7.6) + '" height="' + u(6) +
+       '" fill="' + CQ.peleEsc + '"/>';
+  s += '<circle cx="' + px(0) + '" cy="' + py(0.925) + '" r="' + u(8.2) + '" fill="' + CQ.pele + '"/>';
+  s += '<path d="M ' + px(-0.22) + ' ' + py(0.945) + ' a ' + u(8.2) + ' ' + u(8.2) + ' 0 0 1 ' + u(16.4) +
+       ' 0 Z" fill="#3A2A20"/>';   // cabelo, pela nuca
+
+  // braço livre e braço da raquete
+  s += '<line x1="' + px(-0.34) + '" y1="' + py(0.72) + '" x2="' + px(-0.52) + '" y2="' + py(0.50) +
+       '" stroke="' + CQ.peleEsc + '" stroke-width="' + u(6.5) + '" stroke-linecap="round"/>';
+  var bx = cx + l * 0.66, by = base - h * 0.62;
+  s += '<line x1="' + px(0.34) + '" y1="' + py(0.72) + '" x2="' + nQ(bx) + '" y2="' + nQ(by) +
+       '" stroke="' + CQ.pele + '" stroke-width="' + u(6.8) + '" stroke-linecap="round"/>';
+  // raquete: cabo, garganta, aro e as cordas
+  s += '<line x1="' + nQ(bx) + '" y1="' + nQ(by) + '" x2="' + nQ(bx + l * 0.20) + '" y2="' + nQ(by - h * 0.10) +
+       '" stroke="#26313A" stroke-width="' + u(3.6) + '" stroke-linecap="round"/>';
+  var rx0 = bx + l * 0.34, ry0 = by - h * 0.18;
+  s += '<ellipse cx="' + nQ(rx0) + '" cy="' + nQ(ry0) + '" rx="' + u(10.5) + '" ry="' + u(13.5) +
+       '" fill="#0F1A22" fill-opacity=".22" stroke="#26313A" stroke-width="' + u(3.2) + '"/>';
+  if (!MINI) {
+    s += '<line x1="' + nQ(rx0 - l * 0.11) + '" y1="' + nQ(ry0) + '" x2="' + nQ(rx0 + l * 0.11) + '" y2="' + nQ(ry0) +
+         '" stroke="#EDE7DA" stroke-opacity=".5" stroke-width="' + u(1.2) + '"/>';
+    s += '<line x1="' + nQ(rx0) + '" y1="' + nQ(ry0 - h * 0.075) + '" x2="' + nQ(rx0) + '" y2="' + nQ(ry0 + h * 0.075) +
+         '" stroke="#EDE7DA" stroke-opacity=".5" stroke-width="' + u(1.2) + '"/>';
+  }
   s += '</g>';
-  if (rot) s += qTexto(cx, base + h * 0.16, rot, { tam:h * 0.20 });
+  if (rot) s += qTexto(cx, base + h * 0.18, rot, { tam:h * 0.20 });
   return s;
 }
 
@@ -554,6 +617,13 @@ function svgQuadra(fig, op){
         '" orient="auto-start-reverse"><path d="M 0 1 L 9 5 L 0 9 z" fill="' + CQ.mov + '"/></marker>' +
       '<linearGradient id="ceu" x1="0" y1="0" x2="0" y2="1">' +
         '<stop offset="0" stop-color="#13293D"/><stop offset="1" stop-color="#26404F"/></linearGradient>' +
+      // a luz do chão: clara no meio (perto da rede), escura nas bordas
+      // de leve: com a luz forte o desenho virava holofote, e o saibro das
+      // bordas ficava quase preto
+      '<radialGradient id="luz" cx="50%" cy="30%" r="82%">' +
+        '<stop offset="0" stop-color="#FFF6E6" stop-opacity=".30"/>' +
+        '<stop offset=".6" stop-color="#FFE9CC" stop-opacity=".05"/>' +
+        '<stop offset="1" stop-color="#2A0E03" stop-opacity=".26"/></radialGradient>' +
     '</defs>' +
     '<rect x="' + nQ(VISTA.x) + '" y="' + nQ(VISTA.y) + '" width="' + nQ(VISTA.w) + '" height="' + nQ(VISTA.h) +
       '" fill="url(#ceu)"/>' +

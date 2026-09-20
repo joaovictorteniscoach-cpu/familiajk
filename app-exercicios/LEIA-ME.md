@@ -92,7 +92,17 @@ dentro. Em perspectiva o professor reconhece o exercício como ele acontece.
 
 Quem desenha é uma **câmera**: cada recorte tem uma posição (atrás da linha de
 base, a alguns metros de altura) e um ponto para onde olha. Todo ponto da quadra
-passa por essa projeção antes de virar SVG. É isso que faz, de graça e sem
+passa por essa projeção antes de virar SVG.
+
+O saibro tem marca de vassoura, luz caindo do fundo para as bordas e poeira na
+borda das linhas; os bonecos são montados em camadas (perna de trás, perna da
+frente, short, camisa, braços, cabeça, raquete com corda), cada uma com um tom
+de luz e um de sombra. É de onde vem o volume: uma silhueta de cor única, por
+melhor desenhada que seja, continua parecendo pictograma.
+
+**Isto é ilustração, não foto.** É o preço de o app pesar 300 KB, abrir offline
+em quadra e desenhar os 116 na hora. Para trocar por foto de verdade, veja a
+seção *Trocar o desenho por foto* mais abaixo. É isso que faz, de graça e sem
 ajuste em exercício nenhum, o jogador do fundo sair menor que o da rede, a linha
 de base de longe sair mais fina que a de perto, e a rede aparecer na frente de
 quem está atrás dela e atrás de quem está na frente.
@@ -143,6 +153,42 @@ Os rótulos são colocados depois de o desenho reservar o espaço de cada boneco
 de cada cone. Sem essa reserva o rótulo caía em cima do aluno, e um desenho com
 o texto escrito por cima da pessoa não serve para nada. Quando não cabe embaixo,
 ele sobe; quando também não cabe em cima, anda para o lado.
+
+## Trocar o desenho por foto
+
+O pedido é legítimo e o caminho existe — só não passa por gerar 116 fotos. Vale
+registrar o porquê e o que é preciso.
+
+**Por que não 116 fotos.** Uma foto por exercício seriam 116 imagens de alta
+resolução: dezenas de megabytes. O app hoje tem 300 KB, abre offline na quadra e
+desenha tudo na hora. Fora isso, imagem gerada por IA não coloca o jogador no
+metro certo da quadra — e é exatamente o metro certo que o desenho serve para
+dizer.
+
+**Como se faz de verdade**, e é o que a referência do mercado faz: uma **foto de
+fundo** da quadra vazia, com as pessoas e as setas **por cima**. Reaproveita-se a
+mesma foto nos 116. O que muda de exercício para exercício é a camada de cima,
+que continua vindo dos metros.
+
+Então o que o app precisa receber:
+
+1. **Uma foto da quadra vazia**, de trás da linha de base, com a câmera o mais
+   alta possível (uma escada, a arquibancada, um bastão), apontada para o meio
+   da rede, mostrando a quadra inteira. Sem pessoas, sem bolas. Quanto mais
+   centrada e simétrica, melhor.
+2. **Seis a oito recortes de jogador**, em PNG com fundo transparente: de costas
+   em posição de espera, de costas batendo forehand, batendo backhand, na rede,
+   sacando, e o professor de frente com a cesta. Uma foto de cada, de longe, com
+   o corpo inteiro.
+
+Com isso o desenho passa a ser: foto + jogadores recortados posicionados pela
+mesma projeção + setas, cones e rótulos em vetor. O encaixe é exato — quatro
+cantos da quadra na foto dão a conta que leva metro em pixel, e a conferência é
+a linha de saque cair sozinha em cima da linha de saque da foto.
+
+**A foto tem que ser da quadra da JV.** Foto de banco de imagens custa licença e
+some a identidade; foto do material de outro professor não se usa. A da própria
+academia resolve os dois — e ainda faz o material ser reconhecidamente seu.
 
 ## Meus exercícios — criar e editar no celular
 
