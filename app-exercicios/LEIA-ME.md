@@ -85,6 +85,22 @@ em SVG, não imagens: pesam alguns bytes, ficam nítidos em qualquer zoom, saem 
 impressão do plano e se editam mudando uma linha de texto — não um arquivo de
 imagem que ninguém sabe abrir depois.
 
+**A vista é de trás do fundo, com bonecos** — como quem está atrás do aluno
+olhando para a rede. Antes era de cima. Um desenho visto de cima é uma planta:
+mostra posição, mas não mostra a cena, e a pessoa vira uma bolinha com uma letra
+dentro. Em perspectiva o professor reconhece o exercício como ele acontece.
+
+Quem desenha é uma **câmera**: cada recorte tem uma posição (atrás da linha de
+base, a alguns metros de altura) e um ponto para onde olha. Todo ponto da quadra
+passa por essa projeção antes de virar SVG. É isso que faz, de graça e sem
+ajuste em exercício nenhum, o jogador do fundo sair menor que o da rede, a linha
+de base de longe sair mais fina que a de perto, e a rede aparecer na frente de
+quem está atrás dela e atrás de quem está na frente.
+
+**Nada mudou no jeito de escrever os exercícios.** Eles continuam em metros de
+quadra, exatamente como antes — foi o que permitiu virar os 116 desenhos de uma
+vez, sem reescrever nenhum.
+
 O desenho fica no campo `fig` do exercício:
 
 ```js
@@ -103,8 +119,10 @@ fig:{ base:'meia', el:[
 O desenho aparece em dois tamanhos, do mesmo dado: **grande** na ficha e
 **miniatura** na lista (`svgQuadra(fig, {mini:true})`). Na miniatura o rótulo
 sai e o traço engrossa — nesse tamanho o texto viraria borrão, e o que importa é
-a forma. Nos dois casos a moldura **enquadra a ação** em vez de mostrar o recorte
-inteiro: meia quadra vazia só empurra o texto para baixo da dobra.
+a cena. Nos dois casos a moldura **enquadra a ação** em vez de mostrar o recorte
+inteiro, mas nunca menos que 60% dele: sem esse mínimo, dois jogadores lado a
+lado viravam um retrato deles, sem quadra em volta para dizer *onde* aquilo
+acontece — que é metade do que o desenho serve para contar.
 
 **As coordenadas são as medidas reais da quadra, em metros.** O `x` é 0 no meio
 (±4,115 é a linha de simples, ±5,485 a de duplas) e o `y` é **0 na rede**, com o
@@ -120,6 +138,11 @@ ele pegou 13 desenhos assim, todos invisíveis e nenhum com erro na tela.
 Dois cuidados ao desenhar: **rótulo curto** (o desenho encolhe o texto comprido
 até caber, e aí ele fica pequeno) e **escolher o recorte pelo elemento mais
 distante** — se o alvo está na quadra do adversário, a base é `inteira`.
+
+Os rótulos são colocados depois de o desenho reservar o espaço de cada boneco e
+de cada cone. Sem essa reserva o rótulo caía em cima do aluno, e um desenho com
+o texto escrito por cima da pessoa não serve para nada. Quando não cabe embaixo,
+ele sobe; quando também não cabe em cima, anda para o lado.
 
 ## Meus exercícios — criar e editar no celular
 

@@ -10,11 +10,20 @@
      · para mudar um exercício, muda-se a lista de elementos — não um arquivo
        de imagem que ninguém sabe editar depois.
 
+   A VISTA É DE TRÁS DO FUNDO, como quem está atrás do aluno olhando para a
+   rede — e não mais de cima. Um desenho visto de cima é uma planta: mostra
+   posição, mas não mostra a cena. Em perspectiva o professor reconhece o
+   exercício como ele acontece, e o aluno vira gente em vez de bolinha.
+
+   O que NÃO mudou: cada exercício continua escrito em METROS DE QUADRA, do
+   mesmo jeito. Quem desenha é a câmera. Foi o que permitiu virar os 116
+   desenhos de uma vez, sem reescrever nenhum.
+
    SISTEMA DE COORDENADAS — medidas reais da quadra, em metros
      x: 0 no meio · negativo à esquerda · ±4,115 linha de simples · ±5,485 dupla
-     y: 0 na REDE · positivo é o lado do ALUNO (embaixo) · 11,885 é a linha de
-        base · 6,40 é a linha de saque
-   Ou seja: quem lê o desenho está sempre atrás do aluno, olhando para a rede.
+     y: 0 na REDE · positivo é o lado do ALUNO (perto da câmera) · 11,885 é a
+        linha de base · 6,40 é a linha de saque
+     z: altura do chão, só para quem precisa (rede, cone, jogador)
 
    COMO ESCREVER O DESENHO DE UM EXERCÍCIO (campo `fig` em exercicios.js)
      fig: { base:'meia', el:[
@@ -34,10 +43,14 @@ const QD = {
   simplesX: 4.115,   // meia largura da quadra de simples
   fundoY: 11.885,    // rede → linha de base
   saqueY: 6.40,      // rede → linha de saque
-  corredorY: 0.9     // altura visual da faixa da rede
+  redeMeio: 0.914,   // altura da rede no meio
+  redePoste: 1.07,   // altura da rede no poste
+  postX: 6.40        // onde fica o poste, a partir do meio
 };
 
-/* Cada base é um recorte diferente da quadra. */
+/* Cada base é um recorte diferente da quadra, EM METROS. Continua valendo:
+   é por esta moldura que o ferramentas/checar-exercicios.js confere se uma
+   peça foi colocada fora do desenho. */
 const BASES = {
   inteira: { x:-6.9, y:-13.9, w:13.8, h:27.8 },
   meia:    { x:-6.9, y:-3.4,  w:13.8, h:17.8 },
@@ -45,224 +58,404 @@ const BASES = {
   fundo:   { x:-6.9, y:2.9,   w:13.8, h:11.6 }
 };
 
-/* A moldura do desenho que está sendo montado. Serve para prender o rótulo
-   dentro dela: texto que vaza para fora do viewBox e' simplesmente cortado —
-   foi o primeiro defeito que apareceu ao desenhar os exercicios de verdade. */
-let CAIXA = BASES.meia;
+/* Onde a câmera fica em cada recorte. `y` e `alt` são a posição dela em
+   metros (atrás da linha de base do aluno e acima do chão); `alvo` é o ponto
+   da quadra para onde ela olha, que é o que define a inclinação.
+   Quanto mais baixa a câmera, mais "de dentro da quadra" fica o desenho — e
+   mais as peças do fundo se espremem uma na outra. Estes números são o meio
+   termo: dá para ver a cena e ainda dá para separar duas pessoas no fundo. */
+const CAMERAS = {
+  inteira: { y: 24.0, alt: 9.6, alvo: 0.0 },
+  meia:    { y: 20.0, alt: 7.4, alvo: 3.0 },
+  mini:    { y: 19.0, alt: 7.0, alvo: 1.0 },
+  fundo:   { y: 18.5, alt: 5.6, alvo: 7.6 }
+};
 
-/* Rótulos já colocados neste desenho. Dois rótulos no mesmo lugar viram um
-   borrão ilegível — e, com mais de cem exercícios desenhados à mão, isso ia
-   acontecer em algum deles sem ninguém perceber. Então o desenho desvia
-   sozinho: rótulo que cairia em cima de outro desce (ou sobe) até achar
-   lugar livre. */
-let ROTULOS = [];
+const DIST = 100;      // distância focal: só escala o desenho, o viewBox ajusta
+
+/* Cores do desenho. Saibro de verdade, porque é nele que a JV dá aula. */
+const CQ = {
+  saibro:'#A85B37', saibroClaro:'#BE7049', saibroEsc:'#95502F', fora:'#8A4C2E',
+  linha:'#F4EFE6', rede:'#EFEBE3', redeMalha:'#20313E', poste:'#43535E',
+  aluno:'#D8B45C', prof:'#E8EDF2', colega:'#8FB0C9',
+  bola:'#D7EE86', mov:'#FFFFFF', cone:'#E0784A', zona:'#D8B45C',
+  texto:'#FFFFFF', fundoTx:'rgba(9,22,35,.82)', sombra:'rgba(50,20,10,.34)'
+};
 
 /* Modo miniatura: o mesmo desenho, do tamanho de um selo, na lista de
-   exercicios. Nesse tamanho o rotulo vira borrao — entao ele sai, e o traco
-   engrossa para a quadra continuar legivel. O que fica e' a FORMA do exercicio:
-   quadra inteira ou meia, bola atravessando ou indo para a rede, alvo de um
-   lado. E' por essa forma que o professor reconhece o exercicio de relance. */
+   exercícios. Nesse tamanho o rótulo vira borrão — então ele sai, e o traço
+   engrossa para a quadra continuar legível. O que fica é a CENA: de onde sai
+   a bola, para onde vai, quem está na rede. É por ela que o professor
+   reconhece o exercício de relance. */
 let MINI = false;
-function esp(v){ return MINI ? v * 2.3 : v; }
 
-/* A moldura nao e' o recorte inteiro: e' a ACAO do exercicio, enquadrada.
-   Mostrar meia quadra vazia empurra o texto para baixo da dobra na ficha, e na
-   lista faz cada linha ter uma altura diferente. */
-function enquadrar(el, caixa, alvo, minLarg, maxLarg){
-  alvo = alvo || 4 / 3;
-  minLarg = minLarg || 11.4;
-  maxLarg = maxLarg || Infinity;
+/* Estado do desenho que está sendo montado. */
+let CAM = CAMERAS.meia;      // câmera deste recorte
+let VISTA = { x:0, y:0, w:100, h:100 };   // viewBox, em unidades de tela
+let ROTULOS = [];            // rótulos já colocados, para não empilhar
 
+function nQ(v){ return Math.round(v * 100) / 100; }
+
+/* ==========================================================================
+   A CÂMERA
+   ========================================================================== */
+
+/* Projeta um ponto da quadra (metros) na tela. Câmera em (0, CAM.y, CAM.alt)
+   olhando para (0, CAM.alvo, 0), inclinada para baixo.
+   Devolve {x, y, z} — o z é a profundidade, usada para saber o que desenhar
+   primeiro e para encolher o que está longe. */
+function proj(x, y, z){
+  var a = CAM.y - y;                 // quanto o ponto está à frente da câmera
+  var b = CAM.alt - (z || 0);        // quanto está abaixo dela
+  var d = Math.sqrt((CAM.y - CAM.alvo) * (CAM.y - CAM.alvo) + CAM.alt * CAM.alt);
+  var cos = (CAM.y - CAM.alvo) / d, sen = CAM.alt / d;
+  var prof = a * cos + b * sen;      // profundidade
+  if (prof < 0.4) prof = 0.4;        // atrás da câmera: prende na frente dela
+  var cima = a * sen - b * cos;
+  return { x: DIST * x / prof, y: -DIST * cima / prof, z: prof };
+}
+
+/* Quanto um metro vale, em unidades de tela, à profundidade de um ponto.
+   É o que faz o jogador do fundo ser menor que o da rede sem nenhuma conta
+   extra em cada peça. */
+function escalaEm(p){ return DIST / p.z; }
+
+/* O enquadramento é a AÇÃO, não o recorte inteiro.
+   Enquadrar o recorte todo deixava o exercício pequeno no meio de um mar de
+   saibro: de trás da linha de base, os cantos de perto abrem muito e mandam na
+   largura. Então mede-se onde as peças estão, na tela, e aperta-se nelas —
+   com um mínimo de quadra em volta para o desenho dizer ONDE aquilo acontece.
+   A câmera não muda; muda só o quanto dela se mostra. */
+function enquadrar(base, el){
+  var b = BASES[base] || BASES.meia;
   var x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity, achou = false;
-  function por(x, y, folga){
+  function por(x, y, z, folgaM){
     if (typeof x !== 'number' || typeof y !== 'number') return;
+    var p = proj(x, y, z || 0);
+    var f = (folgaM || 0) * escalaEm(p);
     achou = true;
-    x1 = Math.min(x1, x - folga); x2 = Math.max(x2, x + folga);
-    y1 = Math.min(y1, y - folga); y2 = Math.max(y2, y + folga);
+    x1 = Math.min(x1, p.x - f); x2 = Math.max(x2, p.x + f);
+    y1 = Math.min(y1, p.y - f); y2 = Math.max(y2, p.y + f);
   }
-  el.forEach(function(e){
+  (el || []).forEach(function(e){
     var t = e[0];
-    if (t === 'aluno' || t === 'prof' || t === 'colega') por(e[1], e[2], 1.2);
-    else if (t === 'cone' || t === 'marca')              por(e[1], e[2], 1.0);
-    else if (t === 'escada')                             por(e[1], e[2], 2.2);
-    else if (t === 'zona') { por(e[1] - e[3]/2, e[2] - e[4]/2, .4); por(e[1] + e[3]/2, e[2] + e[4]/2, .4); }
-    else if (t === 'bola' || t === 'mov') { por(e[1], e[2], .6); por(e[3], e[4], .6); }
+    if (t === 'aluno' || t === 'prof' || t === 'colega') {
+      por(e[1], e[2], 0, 1.0); por(e[1], e[2], 1.95, 0.8);   // o boneco sobe do chão
+    } else if (t === 'cone' || t === 'marca') { por(e[1], e[2], 0, 0.9); }
+    else if (t === 'escada') { por(e[1], e[2] - 2.0, 0, .8); por(e[1], e[2] + 2.0, 0, .8); }
+    else if (t === 'zona') {
+      por(e[1] - e[3] / 2, e[2] - e[4] / 2, 0, .5); por(e[1] + e[3] / 2, e[2] + e[4] / 2, 0, .5);
+    } else if (t === 'bola' || t === 'mov') { por(e[1], e[2], 0, .7); por(e[3], e[4], 0, .7); }
+    else if (t === 'corda') { por(-QD.postX, 0, 1.9, .4); por(QD.postX, 0, 1.9, .4); }
   });
-  if (!achou) return caixa;
 
-  var larg = x2 - x1, alt = y2 - y1, f;
-
-  // Limite de aproximacao: sem ele, um exercicio com as pecas juntas era
-  // enquadrado tao de perto que virava um borrao de circulos, sem a quadra em
-  // volta para dizer onde aquilo acontece.
-  if (larg < minLarg) { f = (minLarg - larg) / 2; x1 -= f; x2 += f; larg = minLarg; }
-
-  // Formato: alarga ate' o alvo, mas NUNCA alem do limite de largura. Num
-  // exercicio que atravessa a rede, forcar o formato alargava a moldura muito
-  // alem da quadra, e a quadra virava uma tira fina no meio do saibro.
-  var precisa = alt * alvo;
-  if (precisa > larg) {
-    var nova = Math.min(precisa, maxLarg);
-    if (nova > larg) { f = (nova - larg) / 2; x1 -= f; x2 += f; larg = nova; }
+  // exercício sem peça nenhuma (quadra vazia): mostra o recorte
+  if (!achou) {
+    [[b.x, b.y], [b.x + b.w, b.y], [b.x, b.y + b.h], [b.x + b.w, b.y + b.h]].forEach(function(c){
+      por(c[0], c[1], 0, 0);
+    });
   }
-  var minAlt = larg / alvo;
-  if (alt < minAlt) { f = (minAlt - alt) / 2; y1 -= f; y2 += f; alt = minAlt; }
 
+  // um mínimo de quadra em volta: sem isso, dois jogadores lado a lado viram
+  // um retrato deles, e o desenho deixa de dizer ONDE na quadra aquilo
+  // acontece — que é metade do que ele serve para contar. O mínimo é uma
+  // fração do recorte inteiro, e não uma medida fixa: assim vale igual para o
+  // recorte do fundo e para o da quadra inteira.
+  var meioY = (y1 + y2) / 2, meioX = (x1 + x2) / 2;
+  var fx1 = Infinity, fy1 = Infinity, fx2 = -Infinity, fy2 = -Infinity;
+  [[b.x, b.y], [b.x + b.w, b.y], [b.x, b.y + b.h], [b.x + b.w, b.y + b.h]].forEach(function(c){
+    var q = proj(c[0], c[1], 0);
+    fx1 = Math.min(fx1, q.x); fx2 = Math.max(fx2, q.x);
+    fy1 = Math.min(fy1, q.y); fy2 = Math.max(fy2, q.y);
+  });
+  var minLarg = (fx2 - fx1) * 0.60, minAlt = (fy2 - fy1) * 0.60;
+  if (x2 - x1 < minLarg) { x1 = meioX - minLarg / 2; x2 = meioX + minLarg / 2; }
+  if (y2 - y1 < minAlt)  { y1 = meioY - minAlt / 2;  y2 = meioY + minAlt / 2; }
+
+  // formato: mais largo que alto, como uma foto de quadra
+  var alvo = MINI ? 1.30 : 1.42;
+  var lg = x2 - x1, at = y2 - y1;
+  if (lg / at < alvo) { var fa = (at * alvo - lg) / 2; x1 -= fa; x2 += fa; lg = at * alvo; }
+  else { var fb = (lg / alvo - at) / 2; y1 -= fb; y2 += fb; at = lg / alvo; }
+  // o meio vertical volta para onde a ação está, senão a moldura sobe demais
+  var desvio = meioY - (y1 + y2) / 2;
+  y1 += desvio * 0.35; y2 += desvio * 0.35;
   return { x:x1, y:y1, w:x2 - x1, h:y2 - y1 };
 }
+
+/* ==========================================================================
+   PEÇAS DO CHÃO — tudo o que está deitado na quadra vira polígono projetado,
+   e não traço de espessura fixa. É o que dá a perspectiva certa: a linha de
+   base, que está longe, sai mais fina que a de perto — sozinha, sem truque.
+   ========================================================================== */
+
+function pol(pontos, preenche, op){
+  var d = pontos.map(function(p){ var q = proj(p[0], p[1], p[2] || 0);
+    return nQ(q.x) + ',' + nQ(q.y); }).join(' ');
+  return '<polygon points="' + d + '" fill="' + preenche + '"' + (op || '') + '/>';
+}
+
+/* Uma faixa deitada no chão, de largura real em metros. */
+function faixa(x1, y1, x2, y2, larg, cor){
+  var dx = x2 - x1, dy = y2 - y1;
+  var c = Math.sqrt(dx * dx + dy * dy) || 1;
+  var nx = -dy / c * larg / 2, ny = dx / c * larg / 2;
+  return pol([[x1 + nx, y1 + ny], [x2 + nx, y2 + ny],
+              [x2 - nx, y2 - ny], [x1 - nx, y1 - ny]], cor || CQ.linha);
+}
+
+/* ==========================================================================
+   A QUADRA
+   ========================================================================== */
+
+function piso(base){
+  var dx = QD.duplaX, sx = QD.simplesX, fy = QD.fundoY, sy = QD.saqueY;
+  var lw = 0.05, lwBase = 0.10;          // largura real das linhas, em metros
+  var p = [];
+
+  // o saibro de fora, bem largo: cobre o que a moldura mostrar
+  p.push(pol([[-24, -26], [24, -26], [24, 26], [-24, 26]], CQ.fora));
+  // a área de jogo, um tom mais claro, com a sobra de saibro em volta. A
+  // sobra atrás da linha de base é generosa (8 m, como numa quadra de verdade)
+  // porque é ela que aparece no alto do desenho: com pouca sobra, o saibro
+  // escuro de fora virava uma faixa preta atravessando o topo.
+  p.push(pol([[-dx - 4.2, -fy - 8.0], [dx + 4.2, -fy - 8.0],
+              [dx + 4.2, fy + 8.0], [-dx - 4.2, fy + 8.0]], CQ.saibro));
+  p.push(pol([[-dx, -fy], [dx, -fy], [dx, fy], [-dx, fy]], CQ.saibroClaro));
+
+  // as linhas
+  [-dx, dx].forEach(function(x){ p.push(faixa(x, -fy, x, fy, lw)); });
+  [-sx, sx].forEach(function(x){ p.push(faixa(x, -fy, x, fy, lw)); });
+  p.push(faixa(-dx, fy, dx, fy, lwBase));
+  p.push(faixa(-dx, -fy, dx, -fy, lwBase));
+  p.push(faixa(-sx, sy, sx, sy, lw));
+  p.push(faixa(-sx, -sy, sx, -sy, lw));
+  p.push(faixa(0, -sy, 0, sy, lw));
+  p.push(faixa(0, fy - 0.3, 0, fy, lwBase));
+  p.push(faixa(0, -fy, 0, -fy + 0.3, lwBase));
+  return p.join('');
+}
+
+/* A rede, de frente: malha, fita branca em cima e os dois postes. A barriga
+   no meio é de verdade — 0,914 m no centro contra 1,07 m no poste. */
+function rede(){
+  var px = QD.postX, n = 14, p = [], i, x, alt;
+  function alturaEm(x){
+    var t = Math.abs(x) / px;
+    return QD.redeMeio + (QD.redePoste - QD.redeMeio) * t * t;
+  }
+  // a malha: um polígono que acompanha a barriga
+  var cima = [], baixo = [];
+  for (i = 0; i <= n; i++) {
+    x = -px + (2 * px) * i / n;
+    cima.push([x, 0, alturaEm(x)]);
+    baixo.push([x, 0, 0]);
+  }
+  p.push(pol(cima.concat(baixo.slice().reverse()), CQ.redeMalha, ' fill-opacity=".38"'));
+  // os fios verticais, que é o que faz parecer rede e não parede
+  for (i = 1; i < n; i++) {
+    x = -px + (2 * px) * i / n;
+    var a = proj(x, 0, 0), b = proj(x, 0, alturaEm(x));
+    p.push('<line x1="' + nQ(a.x) + '" y1="' + nQ(a.y) + '" x2="' + nQ(b.x) + '" y2="' + nQ(b.y) +
+           '" stroke="' + CQ.rede + '" stroke-opacity=".30" stroke-width="' + nQ(traco(0.018, a)) + '"/>');
+  }
+  // a fita branca de cima
+  var fita = [], fitaB = [];
+  for (i = 0; i <= n; i++) {
+    x = -px + (2 * px) * i / n;
+    alt = alturaEm(x);
+    fita.push([x, 0, alt]);
+    fitaB.push([x, 0, alt - 0.06]);
+  }
+  p.push(pol(fita.concat(fitaB.slice().reverse()), CQ.rede));
+  // os postes
+  [-px, px].forEach(function(xp){
+    p.push(faixaVertical(xp, 0, QD.redePoste + 0.08, 0.12, CQ.poste));
+  });
+  return p.join('');
+}
+
+/* Um pedaço em pé (poste, haste): retângulo entre o chão e uma altura. */
+function faixaVertical(x, y, alt, larg, cor){
+  return pol([[x - larg / 2, y, 0], [x + larg / 2, y, 0],
+              [x + larg / 2, y, alt], [x - larg / 2, y, alt]], cor);
+}
+
+/* Espessura de traço que respeita a distância. */
+function traco(metros, p){
+  return Math.max(0.35, metros * escalaEm(p) * (MINI ? 1.9 : 1));
+}
+
+/* ==========================================================================
+   OS BONECOS
+   ========================================================================== */
+
+/* Um jogador, em pé, de costas para quem olha (é a vista de trás do fundo).
+   Desenhado dentro de uma caixa de 1,78 m de altura e projetado nela — então
+   quem está no fundo sai menor, sozinho, sem nenhum ajuste por exercício. */
+function qJogador(x, y, rot, tipo){
+  var cor = tipo === 'prof' ? CQ.prof : (tipo === 'colega' ? CQ.colega : CQ.aluno);
+  var altura = 1.78;
+  var pe = proj(x, y, 0), cabeca = proj(x, y, altura);
+  var h = pe.y - cabeca.y;                    // altura na tela
+  if (h < 3) h = 3;
+  var l = h * 0.40;                           // largura do boneco
+  var cx = (pe.x + cabeca.x) / 2;
+  var base = pe.y;
+  var esc = h / 100;                          // unidade local: 1/100 da altura
+  function u(v){ return nQ(v * esc); }
+  var s = '<g>';
+  // a sombra no chão, que é o que gruda o boneco na quadra
+  s += '<ellipse cx="' + nQ(cx) + '" cy="' + nQ(base) + '" rx="' + u(26) + '" ry="' + u(7) +
+       '" fill="' + CQ.sombra + '"/>';
+  // pernas, tronco e cabeça, num caminho só
+  s += '<path d="' +
+    'M ' + nQ(cx - l * 0.30) + ' ' + nQ(base) +
+    ' L ' + nQ(cx - l * 0.26) + ' ' + nQ(base - h * 0.44) +
+    ' L ' + nQ(cx + l * 0.26) + ' ' + nQ(base - h * 0.44) +
+    ' L ' + nQ(cx + l * 0.30) + ' ' + nQ(base) +
+    ' L ' + nQ(cx + l * 0.10) + ' ' + nQ(base) +
+    ' L ' + nQ(cx) + ' ' + nQ(base - h * 0.40) +
+    ' L ' + nQ(cx - l * 0.10) + ' ' + nQ(base) + ' Z" fill="' + cor + '"/>';
+  s += '<path d="' +
+    'M ' + nQ(cx - l * 0.34) + ' ' + nQ(base - h * 0.40) +
+    ' L ' + nQ(cx - l * 0.42) + ' ' + nQ(base - h * 0.74) +
+    ' Q ' + nQ(cx) + ' ' + nQ(base - h * 0.86) + ' ' + nQ(cx + l * 0.42) + ' ' + nQ(base - h * 0.74) +
+    ' L ' + nQ(cx + l * 0.34) + ' ' + nQ(base - h * 0.40) + ' Z" fill="' + cor + '"/>';
+  s += '<circle cx="' + nQ(cx) + '" cy="' + nQ(base - h * 0.90) + '" r="' + u(9) + '" fill="' + cor + '"/>';
+  // o braço com a raquete: é ele que diz "tênis" antes de qualquer legenda
+  var bx = cx + l * 0.62, by = base - h * 0.60;
+  s += '<line x1="' + nQ(cx + l * 0.38) + '" y1="' + nQ(base - h * 0.70) +
+       '" x2="' + nQ(bx) + '" y2="' + nQ(by) + '" stroke="' + cor +
+       '" stroke-width="' + u(7) + '" stroke-linecap="round"/>';
+  s += '<line x1="' + nQ(bx) + '" y1="' + nQ(by) + '" x2="' + nQ(bx + l * 0.22) + '" y2="' + nQ(by - h * 0.10) +
+       '" stroke="' + cor + '" stroke-width="' + u(4) + '"/>';
+  s += '<ellipse cx="' + nQ(bx + l * 0.34) + '" cy="' + nQ(by - h * 0.17) + '" rx="' + u(11) + '" ry="' + u(14) +
+       '" fill="none" stroke="' + cor + '" stroke-width="' + u(4) + '"/>';
+  s += '</g>';
+  if (rot) s += qTexto(cx, base + h * 0.16, rot, { tam:h * 0.20 });
+  return s;
+}
+
+function qCone(x, y, rot){
+  // 0,52 m e não os 0,42 do cone de verdade: a 10 metros da câmera, um cone
+  // na medida certa virava um ponto laranja de três pixels.
+  var pe = proj(x, y, 0), topo = proj(x, y, 0.52);
+  var h = pe.y - topo.y, l = h * 0.66;
+  var cx = (pe.x + topo.x) / 2;
+  var s = '<g>';
+  s += '<ellipse cx="' + nQ(cx) + '" cy="' + nQ(pe.y) + '" rx="' + nQ(l * 0.62) + '" ry="' + nQ(l * 0.20) +
+       '" fill="' + CQ.sombra + '"/>';
+  s += '<path d="M ' + nQ(cx) + ' ' + nQ(topo.y) + ' L ' + nQ(cx + l / 2) + ' ' + nQ(pe.y) +
+       ' L ' + nQ(cx - l / 2) + ' ' + nQ(pe.y) + ' Z" fill="' + CQ.cone + '"/>';
+  s += '</g>';
+  if (rot) s += qTexto(cx, pe.y + h * 0.5, rot, { tam:h * 0.55 });
+  return s;
+}
+
+/* Alvo no chão: quatro cantos projetados. Em perspectiva ele deita na quadra
+   sozinho, em vez de ficar um retângulo colado por cima do desenho. */
+function qZona(x, y, larg, alt, rot){
+  var cantos = [[x - larg/2, y - alt/2], [x + larg/2, y - alt/2],
+                [x + larg/2, y + alt/2], [x - larg/2, y + alt/2]];
+  var meio = proj(x, y, 0);
+  var d = cantos.map(function(c){ var q = proj(c[0], c[1], 0); return nQ(q.x) + ',' + nQ(q.y); }).join(' ');
+  var s = '<g><polygon points="' + d + '" fill="' + CQ.zona + '" fill-opacity="' + (MINI ? '.40' : '.24') +
+    '" stroke="' + CQ.zona + '" stroke-width="' + nQ(traco(0.07, meio)) +
+    '" stroke-dasharray="' + nQ(traco(0.34, meio)) + ' ' + nQ(traco(0.24, meio)) + '"/></g>';
+  if (rot) s += qTexto(meio.x, meio.y, rot, { tam:escalaEm(meio) * 0.42, fundo:'rgba(9,22,35,.7)' });
+  return s;
+}
+
+/* Caminho no chão entre dois pontos, com a curva do exercício. É amostrado em
+   pedaços e projetado pedaço a pedaço: uma reta na quadra não é uma reta na
+   tela depois da perspectiva, e ligar só as pontas saía torto. */
+function qCaminho(x1, y1, x2, y2, curva, cor, tracejado, marcador){
+  var mx = (x1 + x2) / 2, my = (y1 + y2) / 2, dx = x2 - x1, dy = y2 - y1;
+  var comp = Math.sqrt(dx * dx + dy * dy) || 1;
+  var cx = mx - dy / comp * (curva || 0) * comp * 0.5;
+  var cy = my + dx / comp * (curva || 0) * comp * 0.5;
+  var n = 16, d = '', i, t, px2, py2, p;
+  for (i = 0; i <= n; i++) {
+    t = i / n;
+    px2 = (1-t)*(1-t)*x1 + 2*(1-t)*t*cx + t*t*x2;
+    py2 = (1-t)*(1-t)*y1 + 2*(1-t)*t*cy + t*t*y2;
+    p = proj(px2, py2, 0);
+    d += (i ? ' L ' : 'M ') + nQ(p.x) + ' ' + nQ(p.y);
+  }
+  var meio = proj(cx, cy, 0);
+  var w = traco(0.11, meio);
+  return '<path d="' + d + '" fill="none" stroke="' + cor + '" stroke-width="' + nQ(w) +
+    '" stroke-linecap="round" stroke-linejoin="round"' +
+    (tracejado ? ' stroke-dasharray="' + nQ(w * 2.1) + ' ' + nQ(w * 1.5) + '"' : '') +
+    ' marker-end="url(#' + marcador + ')"/>';
+}
+
+/* ==========================================================================
+   RÓTULOS — já em unidades de tela, porque é na tela que eles têm que caber
+   ========================================================================== */
 
 function bate(a, b){
   return !(a.x + a.w < b.x || b.x + b.w < a.x || a.y + a.h < b.y || b.y + b.h < a.y);
 }
+
+/* Acha onde o rótulo cabe: desce, sobe, e por fim anda para os lados. Sem o
+   passo lateral, três rótulos perto do mesmo jogador acabavam empilhados em
+   cima dele — e um desenho com o nome do exercício escrito por cima do aluno
+   não serve para nada. Devolve [x, y]. */
 function lugarLivre(x, y, w, h){
-  var passo = h + .14, tentativas = 10, i, cand;
-  for (i = 0; i < tentativas; i++) {
-    cand = { x:x, y:y + passo * i, w:w, h:h };
-    if (cand.y + h <= CAIXA.y + CAIXA.h - .1 && !ROTULOS.some(function(r){ return bate(cand, r); })) return cand.y;
+  var passo = h * 1.1, lado = w * 0.55, i, j, cand;
+  var desvios = [0, lado, -lado, lado * 2, -lado * 2];
+  for (j = 0; j < desvios.length; j++) {
+    for (i = 0; i < 8; i++) {
+      cand = { x:x + desvios[j], y:y + passo * i, w:w, h:h };
+      if (dentroDaVista(cand) && !ROTULOS.some(function(r){ return bate(cand, r); })) return [cand.x, cand.y];
+      cand = { x:x + desvios[j], y:y - passo * i, w:w, h:h };
+      if (i && dentroDaVista(cand) && !ROTULOS.some(function(r){ return bate(cand, r); })) return [cand.x, cand.y];
+    }
   }
-  for (i = 1; i < tentativas; i++) {   // não coube para baixo: tenta para cima
-    cand = { x:x, y:y - passo * i, w:w, h:h };
-    if (cand.y >= CAIXA.y + .1 && !ROTULOS.some(function(r){ return bate(cand, r); })) return cand.y;
-  }
-  return y;
+  return [x, y];
 }
 
-/* Cores do desenho. Saibro de verdade, porque é nele que a JV dá aula. */
-const CQ = {
-  saibro:'#A9603C', saibroEsc:'#8E4E30', linha:'rgba(255,255,255,.82)',
-  rede:'#E8E4DC', redeEsc:'#7C8A93',
-  aluno:'#D8B45C', prof:'#E8EDF2', colega:'#8FB0C9',
-  bola:'#D7EE86', mov:'#FFFFFF', cone:'#E0784A', zona:'#D8B45C',
-  texto:'#FFFFFF', fundoTx:'rgba(9,22,35,.78)'
-};
-
-function nQ(v){ return Math.round(v * 1000) / 1000; }
-
-/* ---------- peças do desenho ---------- */
-
-function qLinha(x1,y1,x2,y2,larg){
-  return '<line x1="'+nQ(x1)+'" y1="'+nQ(y1)+'" x2="'+nQ(x2)+'" y2="'+nQ(y2)+
-         '" stroke="'+CQ.linha+'" stroke-width="'+nQ(esp(larg||.09))+'" stroke-linecap="square"/>';
+function dentroDaVista(c){
+  return c.x >= VISTA.x && c.x + c.w <= VISTA.x + VISTA.w &&
+         c.y >= VISTA.y && c.y + c.h <= VISTA.y + VISTA.h;
 }
 
-/* Texto com tarja atrás: sem isso, rótulo em cima de linha branca some.
-   E preso na moldura: o rótulo empurra para dentro em vez de ser cortado. */
-function qTexto(x,y,txt,op){
+function qTexto(x, y, txt, op){
   if (MINI) return '';
   op = op || {};
-  var tam = op.tam || .6, margem = .18;
-  var cabe = CAIXA.w - margem * 2;
-  var larg = String(txt).length * tam * 0.56 + tam * 0.7;
-  if (larg > cabe) {                     // rótulo comprido encolhe até caber
-    tam = tam * cabe / larg;
-    larg = cabe;
-  }
-  var cor = op.cor || CQ.texto, ancora = op.ancora || 'middle';
-  var dx = ancora === 'start' ? 0 : (ancora === 'end' ? -larg : -larg/2);
-  var esq = CAIXA.x + margem, dir = CAIXA.x + CAIXA.w - margem;
+  var tam = Math.max(VISTA.w * 0.026, Math.min(op.tam || VISTA.w * 0.032, VISTA.w * 0.042));
+  var margem = VISTA.w * 0.012;
+  var cabe = VISTA.w - margem * 2;
+  var larg = String(txt).length * tam * 0.56 + tam * 0.8;
+  if (larg > cabe) { tam = tam * cabe / larg; larg = cabe; }
+  var esq = VISTA.x + margem, dir = VISTA.x + VISTA.w - margem;
+  var dx = -larg / 2;
   if (x + dx < esq)        x = esq - dx;
   if (x + dx + larg > dir) x = dir - larg - dx;
-  var topo = CAIXA.y + margem + tam, base = CAIXA.y + CAIXA.h - margem - tam*.5;
-  if (y < topo) y = topo;
-  if (y > base) y = base;
-  var alt = tam * 1.42, cima = y - tam * 0.92;
-  cima = lugarLivre(x + dx, cima, larg, alt);
-  y = cima + tam * 0.92;
-  ROTULOS.push({ x:x + dx, y:cima, w:larg, h:alt });
+  var alt = tam * 1.5;
+  var pos = lugarLivre(x + dx, y - tam * 0.75, larg, alt);
+  var esqX = Math.max(esq, Math.min(pos[0], dir - larg));
+  var cima = Math.max(VISTA.y, Math.min(pos[1], VISTA.y + VISTA.h - alt));
+  x = esqX - dx;
+  ROTULOS.push({ x:esqX, y:cima, w:larg, h:alt });
   return '<g>' +
-    '<rect x="'+nQ(x+dx)+'" y="'+nQ(y-tam*0.92)+'" width="'+nQ(larg)+'" height="'+nQ(tam*1.42)+
-      '" rx="'+nQ(tam*0.36)+'" fill="'+(op.fundo || CQ.fundoTx)+'"/>' +
+    '<rect x="' + nQ(esqX) + '" y="' + nQ(cima) + '" width="' + nQ(larg) + '" height="' + nQ(alt) +
+      '" rx="' + nQ(tam * 0.4) + '" fill="' + (op.fundo || CQ.fundoTx) + '"/>' +
     // textLength manda o navegador caber o texto na largura calculada. Sem isso
-    // a conta de largura e' so' estimativa, e uma frase mais larga que a
+    // a conta de largura é só estimativa, e uma frase mais larga que a
     // estimativa vaza para fora do desenho e some.
-    '<text x="'+nQ(x)+'" y="'+nQ(y+tam*0.34)+'" text-anchor="'+ancora+'" fill="'+cor+
-      '" font-size="'+nQ(tam)+'" font-weight="700" textLength="'+nQ(Math.max(larg-tam*0.7,.4))+
-      '" lengthAdjust="spacingAndGlyphs">' +
-      String(txt).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') +
+    '<text x="' + nQ(x) + '" y="' + nQ(cima + alt * 0.72) + '" text-anchor="middle" fill="' +
+      (op.cor || CQ.texto) + '" font-size="' + nQ(tam) + '" font-weight="700" textLength="' +
+      nQ(Math.max(larg - tam * 0.8, tam)) + '" lengthAdjust="spacingAndGlyphs">' +
+      String(txt).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') +
     '</text></g>';
 }
 
-function qJogador(x,y,rot,tipo){
-  var cor = tipo === 'prof' ? CQ.prof : (tipo === 'colega' ? CQ.colega : CQ.aluno);
-  var letra = tipo === 'prof' ? 'P' : (tipo === 'colega' ? 'C' : 'A');
-  var r = MINI ? .9 : .62;
-  var s = '<g>' +
-    '<circle cx="'+nQ(x)+'" cy="'+nQ(y)+'" r="'+nQ(r)+'" fill="'+cor+'" stroke="rgba(9,22,35,.55)" stroke-width="'+nQ(esp(.1))+'"/>' +
-    (MINI ? '' :
-      '<text x="'+nQ(x)+'" y="'+nQ(y+.26)+'" text-anchor="middle" fill="#12283E" font-size=".72" font-weight="900">'+letra+'</text>');
-  // rótulo embaixo do jogador; se não couber, sobe para cima dele
-  if (rot) {
-    var alvoY = y + 1.6;
-    if (alvoY > CAIXA.y + CAIXA.h - .5) alvoY = y - 1.25;
-    s += qTexto(x, alvoY, rot, { tam:.58 });
-  }
-  return s + '</g>';
-}
-
-function qCone(x,y,rot){
-  var k = MINI ? 1.45 : 1;
-  var s = '<g><path d="M '+nQ(x)+' '+nQ(y-.55*k)+' L '+nQ(x+.42*k)+' '+nQ(y+.3*k)+' L '+nQ(x-.42*k)+' '+nQ(y+.3*k)+' Z" ' +
-          'fill="'+CQ.cone+'" stroke="rgba(9,22,35,.5)" stroke-width="'+nQ(esp(.07))+'"/>';
-  if (rot) s += qTexto(x, y + 1.3, rot, { tam:.55 });
-  return s + '</g>';
-}
-
-function qZona(x,y,larg,alt,rot){
-  var s = '<g><rect x="'+nQ(x-larg/2)+'" y="'+nQ(y-alt/2)+'" width="'+nQ(larg)+'" height="'+nQ(alt)+
-    '" rx=".3" fill="'+CQ.zona+'" fill-opacity="'+(MINI ? '.34' : '.2')+'" stroke="'+CQ.zona+
-    '" stroke-width="'+nQ(esp(.11))+'" stroke-dasharray="'+(MINI ? '1 .7' : '.5 .34')+'"/>';
-  if (rot) s += qTexto(x, y, rot, { tam:.58, fundo:'rgba(9,22,35,.62)' });
-  return s + '</g>';
-}
-
-/* Caminho curvo entre dois pontos: `curva` empurra o meio para o lado. */
-function qCaminho(x1,y1,x2,y2,curva,cor,tracejado,id){
-  var mx = (x1+x2)/2, my = (y1+y2)/2, dx = x2-x1, dy = y2-y1;
-  var comp = Math.sqrt(dx*dx + dy*dy) || 1;
-  var cx = mx - dy/comp * (curva||0) * comp * .5;
-  var cy = my + dx/comp * (curva||0) * comp * .5;
-  return '<path id="'+id+'" d="M '+nQ(x1)+' '+nQ(y1)+' Q '+nQ(cx)+' '+nQ(cy)+' '+nQ(x2)+' '+nQ(y2)+
-    '" fill="none" stroke="'+cor+'" stroke-width="'+nQ(esp(.15))+'" stroke-linecap="round"' +
-    (tracejado ? ' stroke-dasharray="'+(MINI ? '1.2 .9' : '.62 .46')+'"' : '') +
-    ' marker-end="url(#seta-'+(tracejado?'bola':'mov')+')"/>';
-}
-
-/* ---------- a quadra ---------- */
-
-function qCorte(base){
-  var b = BASES[base] || BASES.meia, p = [];
-  var dx = QD.duplaX, sx = QD.simplesX, fy = QD.fundoY, sy = QD.saqueY;
-  var ladoPerto = true, ladoLonge = (base === 'inteira' || base === 'mini' || base === 'meia');
-
-  // piso: cobre tudo o que a moldura possa mostrar. Quadra de verdade tem
-  // saibro em volta das linhas — e assim nenhum recorte (inclusive o da
-  // miniatura, calculado depois daqui) fica com tarja escura na lateral.
-  p.push('<rect x="-16" y="-20" width="32" height="40" fill="'+CQ.saibro+'"/>');
-  p.push('<rect x="'+(-dx)+'" y="'+(-fy)+'" width="'+nQ(dx*2)+'" height="'+nQ(fy*2)+
-         '" fill="'+CQ.saibroEsc+'" fill-opacity=".45"/>');
-
-  // linhas: laterais de dupla e de simples, correndo a quadra inteira
-  [-dx, dx, -sx, sx].forEach(function(x){ p.push(qLinha(x, -fy, x, fy)); });
-  // linhas de base
-  p.push(qLinha(-dx, fy, dx, fy, .13));
-  p.push(qLinha(-dx, -fy, dx, -fy, .13));
-  // linhas de saque e linha central de saque
-  p.push(qLinha(-sx, sy, sx, sy));
-  p.push(qLinha(-sx, -sy, sx, -sy));
-  p.push(qLinha(0, -sy, 0, sy));
-  // marcas do centro, no fundo
-  p.push(qLinha(0, fy, 0, fy - .3, .13));
-  p.push(qLinha(0, -fy, 0, -fy + .3, .13));
-
-  // rede: faixa clara com a fita em cima
-  var hr = MINI ? .5 : .34;
-  p.push('<rect x="'+nQ(-dx-.6)+'" y="'+nQ(-hr)+'" width="'+nQ(dx*2+1.2)+'" height="'+nQ(hr*2)+'" fill="'+CQ.redeEsc+'" fill-opacity=".85"/>');
-  p.push('<rect x="'+nQ(-dx-.6)+'" y="'+nQ(-hr)+'" width="'+nQ(dx*2+1.2)+'" height="'+nQ(hr*.6)+'" fill="'+CQ.rede+'"/>');
-
-  return { pecas:p.join(''), caixa:b, perto:ladoPerto, longe:ladoLonge };
-}
-
-/* ---------- elementos que cada exercício declara ---------- */
+/* ==========================================================================
+   OS ELEMENTOS QUE CADA EXERCÍCIO DECLARA
+   ========================================================================== */
 
 function qElemento(e){
   var t = e[0];
@@ -271,74 +464,112 @@ function qElemento(e){
   if (t === 'colega') return qJogador(e[1], e[2], e[3], 'colega');
   if (t === 'cone')   return qCone(e[1], e[2], e[3]);
   if (t === 'zona')   return qZona(e[1], e[2], e[3], e[4], e[5]);
-  if (t === 'bola')   return qCaminho(e[1], e[2], e[3], e[4], e[5], CQ.bola, true, 'b');
-  if (t === 'mov')    return qCaminho(e[1], e[2], e[3], e[4], e[5], CQ.mov, false, 'm');
-  if (t === 'texto')  return qTexto(e[1], e[2], e[3], { tam:e[4] || .62 });
-  if (t === 'marca')  return '<g><circle cx="'+nQ(e[1])+'" cy="'+nQ(e[2])+'" r=".2" fill="'+CQ.mov+'"/>' +
-                             (e[3] ? qTexto(e[1], e[2] + 1.05, e[3], { tam:.55 }) : '') + '</g>';
-  if (t === 'escada') {    // escada de agilidade: 6 degraus
-    var x = e[1], y = e[2], s = '<g>';
-    s += '<rect x="'+nQ(x-.55)+'" y="'+nQ(y-1.8)+'" width="1.1" height="3.6" fill="none" stroke="'+CQ.mov+'" stroke-width=".1"/>';
-    for (var i = 1; i < 6; i++) s += qLinha(x-.55, y-1.8 + i*.6, x+.55, y-1.8 + i*.6, .08);
-    s += '</g>';
-    return s + (e[3] ? qTexto(x, y + 2.5, e[3], { tam:.55 }) : '');
+  if (t === 'bola')   return qCaminho(e[1], e[2], e[3], e[4], e[5], CQ.bola, true, 'seta-bola');
+  if (t === 'mov')    return qCaminho(e[1], e[2], e[3], e[4], e[5], CQ.mov, false, 'seta-mov');
+  if (t === 'texto')  { var pt = proj(e[1], e[2], 0); return qTexto(pt.x, pt.y, e[3], {}); }
+  if (t === 'marca') {
+    var p = proj(e[1], e[2], 0), r = Math.max(0.6, escalaEm(p) * 0.12);
+    return '<g><ellipse cx="' + nQ(p.x) + '" cy="' + nQ(p.y) + '" rx="' + nQ(r) + '" ry="' + nQ(r * 0.4) +
+      '" fill="' + CQ.mov + '"/></g>' +
+      (e[3] ? qTexto(p.x, p.y + r * 2.4, e[3], {}) : '');
   }
-  if (t === 'corda') {     // corda esticada acima da rede
-    return '<g><line x1="'+nQ(-QD.duplaX-.6)+'" y1="-.34" x2="'+nQ(QD.duplaX+.6)+'" y2="-.34" ' +
-      'stroke="'+CQ.zona+'" stroke-width=".13" stroke-dasharray=".4 .3"/>' +
-      qTexto(QD.duplaX - 1.1, -1.15, e[1] || 'corda', { tam:.55, cor:CQ.zona }) + '</g>';
+  if (t === 'escada') {              // escada de agilidade: 6 degraus no chão
+    var x = e[1], y = e[2], s = '<g>', i;
+    s += faixa(x - 0.55, y - 1.8, x - 0.55, y + 1.8, 0.06, CQ.mov);
+    s += faixa(x + 0.55, y - 1.8, x + 0.55, y + 1.8, 0.06, CQ.mov);
+    for (i = 0; i <= 6; i++) s += faixa(x - 0.55, y - 1.8 + i * 0.6, x + 0.55, y - 1.8 + i * 0.6, 0.05, CQ.mov);
+    s += '</g>';
+    return s + (e[3] ? qTexto(proj(x, y + 2.2, 0).x, proj(x, y + 2.2, 0).y, e[3], {}) : '');
+  }
+  if (t === 'corda') {               // corda esticada acima da rede
+    var a = proj(-QD.postX, 0, 1.75), b = proj(QD.postX, 0, 1.75);
+    return '<g><line x1="' + nQ(a.x) + '" y1="' + nQ(a.y) + '" x2="' + nQ(b.x) + '" y2="' + nQ(b.y) +
+      '" stroke="' + CQ.zona + '" stroke-width="' + nQ(traco(0.05, a)) +
+      '" stroke-dasharray="' + nQ(traco(0.3, a)) + ' ' + nQ(traco(0.22, a)) + '"/></g>' +
+      qTexto(b.x, b.y - VISTA.h * 0.03, e[1] || 'corda', { cor:CQ.zona });
   }
   return '';
 }
 
-/* ---------- o desenho pronto ---------- */
+/* O y de quem está mais longe é menor. Desenhar do fundo para a frente é o que
+   faz o jogador da rede aparecer na frente da rede, e o do fundo, atrás dela. */
+function profundidadeDe(e){
+  var t = e[0];
+  if (t === 'bola' || t === 'mov') return Math.min(e[2], e[4]) - 0.01;
+  if (t === 'zona' || t === 'corda') return -99;     // alvo e corda ficam no chão, antes de tudo
+  if (typeof e[2] === 'number') return e[2];
+  return 0;
+}
+
+/* ==========================================================================
+   O DESENHO PRONTO
+   ========================================================================== */
 
 function svgQuadra(fig, op){
   if (!fig || !fig.el) return '';
   op = op || {};
   MINI = !!op.mini;
-  var c = qCorte(fig.base || 'meia');
-  //           formato  ·  aproximação máxima  ·  largura máxima
-  var b = MINI ? enquadrar(fig.el, c.caixa, 4 / 3, 11.4)          // selo: formato fixo
-               : enquadrar(fig.el, c.caixa, 1.24, 14.6, 14.6);    // ficha: nunca mais larga que a quadra
-  CAIXA = b;                       // prende os rótulos nesta moldura
-  ROTULOS = [];                    // cada desenho começa sem rótulo colocado
-  // Reserva o espaço de jogadores e cones ANTES de escrever qualquer rótulo:
-  // assim nenhum texto cai em cima de uma pecinha desenhada depois dele.
+  var base = fig.base || 'meia';
+  CAM = CAMERAS[base] || CAMERAS.meia;
+  VISTA = enquadrar(base, fig.el);
+
+  // Reserva o espaço dos bonecos e dos cones ANTES de escrever qualquer
+  // rótulo. Sem isso o rótulo caía em cima do aluno — e um desenho com o texto
+  // escrito por cima da pessoa não serve para nada.
+  ROTULOS = [];
   fig.el.forEach(function(e){
-    if (e[0] === 'aluno' || e[0] === 'prof' || e[0] === 'colega')
-      ROTULOS.push({ x:e[1]-.7, y:e[2]-.7, w:1.4, h:1.4 });
-    if (e[0] === 'cone')
-      ROTULOS.push({ x:e[1]-.5, y:e[2]-.62, w:1.0, h:1.0 });
+    var t = e[0];
+    if (t === 'aluno' || t === 'prof' || t === 'colega') {
+      var pe = proj(e[1], e[2], 0), ca = proj(e[1], e[2], 1.95);
+      var h = pe.y - ca.y, l = h * 0.5;
+      ROTULOS.push({ x:pe.x - l, y:ca.y, w:l * 2, h:h });
+    } else if (t === 'cone') {
+      var q = proj(e[1], e[2], 0), e2 = escalaEm(q);
+      ROTULOS.push({ x:q.x - e2 * .3, y:q.y - e2 * .5, w:e2 * .6, h:e2 * .6 });
+    }
   });
-  var corpo = fig.el.map(qElemento).join('');
-  var alt = op.altura ? ' height="'+op.altura+'"' : '';
-  var marcador = MINI ? 6.5 : 4.5;
-  var rotulo = fig.nota ? ' aria-label="'+String(fig.nota).replace(/"/g,'&quot;')+'"' : '';
-  // a classe do recorte deixa a impressao dar altura diferente para cada tipo:
-  // a quadra inteira e' um retrato 1:2 e, na mesma altura das outras, sai estreita
-  return '<svg class="qd' + (MINI ? ' qd-mini-selo' : '') + ' qd-' + (fig.base || 'meia') + '" viewBox="'+nQ(b.x)+' '+nQ(b.y)+' '+nQ(b.w)+' '+nQ(b.h)+'" ' +
-    'width="100%"'+alt+' role="img"'+rotulo+' xmlns="http://www.w3.org/2000/svg">' +
+
+  // do fundo para a frente, com a rede no lugar dela (y = 0)
+  var ordenados = fig.el.slice().sort(function(a, b){
+    return profundidadeDe(a) - profundidadeDe(b);
+  });
+  var antes = '', depois = '';
+  ordenados.forEach(function(e){
+    if (profundidadeDe(e) < 0) antes += qElemento(e); else depois += qElemento(e);
+  });
+
+  // A seta do SVG é medida em espessuras de traço, e o traço agora engrossa
+  // com a perspectiva. Com os valores antigos a ponta ficava maior que a
+  // flecha inteira na miniatura.
+  var m = MINI ? 3.4 : 3.0;
+  var alt = op.altura ? ' height="' + op.altura + '"' : '';
+  var rotulo = fig.nota ? ' aria-label="' + String(fig.nota).replace(/"/g, '&quot;') + '"' : '';
+  return '<svg class="qd' + (MINI ? ' qd-mini-selo' : '') + ' qd-' + base + '" viewBox="' +
+    nQ(VISTA.x) + ' ' + nQ(VISTA.y) + ' ' + nQ(VISTA.w) + ' ' + nQ(VISTA.h) + '" ' +
+    'width="100%"' + alt + ' role="img"' + rotulo + ' xmlns="http://www.w3.org/2000/svg">' +
     '<defs>' +
-      '<marker id="seta-bola" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="'+marcador+'" markerHeight="'+marcador+'" orient="auto-start-reverse">' +
-        '<path d="M 0 1 L 9 5 L 0 9 z" fill="'+CQ.bola+'"/></marker>' +
-      '<marker id="seta-mov" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="'+(marcador*.9)+'" markerHeight="'+(marcador*.9)+'" orient="auto-start-reverse">' +
-        '<path d="M 0 1 L 9 5 L 0 9 z" fill="'+CQ.mov+'"/></marker>' +
+      '<marker id="seta-bola" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="' + m + '" markerHeight="' + m +
+        '" orient="auto-start-reverse"><path d="M 0 1 L 9 5 L 0 9 z" fill="' + CQ.bola + '"/></marker>' +
+      '<marker id="seta-mov" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="' + (m * 0.9) + '" markerHeight="' + (m * 0.9) +
+        '" orient="auto-start-reverse"><path d="M 0 1 L 9 5 L 0 9 z" fill="' + CQ.mov + '"/></marker>' +
+      '<linearGradient id="ceu" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0" stop-color="#13293D"/><stop offset="1" stop-color="#26404F"/></linearGradient>' +
     '</defs>' +
-    '<rect x="'+nQ(b.x)+'" y="'+nQ(b.y)+'" width="'+nQ(b.w)+'" height="'+nQ(b.h)+'" fill="#0E2337"/>' +
-    c.pecas + corpo +
+    '<rect x="' + nQ(VISTA.x) + '" y="' + nQ(VISTA.y) + '" width="' + nQ(VISTA.w) + '" height="' + nQ(VISTA.h) +
+      '" fill="url(#ceu)"/>' +
+    piso(base) + antes + rede() + depois +
   '</svg>';
 }
 
 /* Legenda do desenho — as mesmas cores, explicadas uma vez. */
 function legendaQuadra(){
   return '<div class="qd-leg">' +
-    '<span><i style="background:'+CQ.aluno+'"></i>aluno</span>' +
-    '<span><i style="background:'+CQ.prof+'"></i>professor</span>' +
-    '<span><i style="background:'+CQ.colega+'"></i>colega</span>' +
-    '<span><i class="tr" style="background:'+CQ.bola+'"></i>bola</span>' +
-    '<span><i class="tr" style="background:'+CQ.mov+'"></i>deslocamento</span>' +
-    '<span><i class="cn" style="background:'+CQ.cone+'"></i>cone</span>' +
+    '<span><i style="background:' + CQ.aluno + '"></i>aluno</span>' +
+    '<span><i style="background:' + CQ.prof + '"></i>professor</span>' +
+    '<span><i style="background:' + CQ.colega + '"></i>colega</span>' +
+    '<span><i class="tr" style="background:' + CQ.bola + '"></i>bola</span>' +
+    '<span><i class="tr" style="background:' + CQ.mov + '"></i>deslocamento</span>' +
+    '<span><i class="cn" style="background:' + CQ.cone + '"></i>cone</span>' +
     '<span><i class="zn"></i>alvo</span>' +
   '</div>';
 }
