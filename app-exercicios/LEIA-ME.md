@@ -200,8 +200,21 @@ metros.
 | criança de costas, em espera | os exercícios Kids |
 
 Em cada uma: **corpo inteiro**, dos pés à cabeça, de uns 6 a 8 metros de
-distância, com a pessoa ocupando a altura do quadro. Fundo qualquer — eu
-recorto. Se puderem estar com a roupa da academia, melhor ainda.
+distância, com a pessoa ocupando a altura do quadro. Se puderem estar com a
+roupa da academia, melhor ainda.
+
+**Não precisa procurar "PNG transparente" na internet.** O recorte é feito
+aqui, por `ferramentas/recortar-jogador.py`: basta a pessoa estar contra um
+fundo de **cor uniforme** — uma parede lisa, um tapume, o céu. A única
+exigência é que a **roupa não seja da mesma cor do fundo**: jogador de branco
+contra parede branca é o caso que não tem jeito, porque a conta não consegue
+saber onde acaba a camisa e começa a parede.
+
+Vale saber por que os "PNG transparentes" de banco de imagem quase nunca
+servem: eles costumam vir salvos em JPG, e aí o **xadrez cinza-e-branco fica
+gravado dentro do arquivo**. Aquilo não é transparência, é desenho — e onde o
+xadrez caiu por cima da pessoa (numa camisa meio transparente, por exemplo)
+não há conserto, ela sai quadriculada na quadra.
 
 ### O que acontece quando as fotos chegarem
 
