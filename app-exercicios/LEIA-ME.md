@@ -149,6 +149,22 @@ Dois cuidados ao desenhar: **rótulo curto** (o desenho encolhe o texto comprido
 até caber, e aí ele fica pequeno) e **escolher o recorte pelo elemento mais
 distante** — se o alvo está na quadra do adversário, a base é `inteira`.
 
+**Para que lado cada jogador olha, o desenho deduz sozinho.** Quem está no
+começo de uma bola bate, e olha para onde ela vai; quem está no fim recebe, e
+olha para de onde ela vem. Sem bola por perto, vale o deslocamento — num
+exercício de footwork o aluno corre para onde a seta aponta, e é para lá que ele
+tem que estar virado. Quando a bola vai reta para a rede não há lado, e a pose
+fica como está.
+
+Isso é deduzido em vez de marcado à mão em cada um dos 116 porque marcar à mão
+seria errar em algum e nunca descobrir. Dos **209 jogadores** dos desenhos, 128
+têm direção clara e **61 são espelhados** para bater no lado certo.
+
+O único número que não dá para deduzir é `olha`, em `RECORTES`: para que lado a
+pessoa bate **na foto**. Espelhar uma foto troca a mão dela — um destro vira
+canhoto. Com uma foto por pose não há como fugir disso; com as fotos da JV dá
+para guardar as duas mãos e escolher a certa em vez de espelhar.
+
 Os rótulos são colocados depois de o desenho reservar o espaço de cada boneco e
 de cada cone. Sem essa reserva o rótulo caía em cima do aluno, e um desenho com
 o texto escrito por cima da pessoa não serve para nada. Quando não cabe embaixo,

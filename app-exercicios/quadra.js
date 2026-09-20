@@ -101,12 +101,14 @@ const FOTOS = {};
 
    `pe` é onde o pé dela está na imagem, de 0 (topo) a 1 (base): quase nunca é
    exatamente 1, e errar isso faz a pessoa flutuar acima do saibro. */
+/* `olha` = para que lado a pessoa bate NA FOTO, olhando a imagem. É o unico
+   numero que nao da' para deduzir do desenho — o resto o proprio exercicio diz. */
 const RECORTES = {
-  aluno:    { arq:'jog-golpe.png',    altura:1.80, pe:1.0, prop:0.67, rosto:'52% 3%' },
-  prof:     { arq:'jog-backhand.png', altura:1.85, pe:1.0, prop:0.62, rosto:'34% 6%' },
-  colega:   { arq:'jog-saque.png',    altura:1.82, pe:1.0, prop:0.47, rosto:'56% 26%' },
-  saque:    { arq:'jog-saque.png',    altura:1.82, pe:1.0, prop:0.47, rosto:'56% 26%' },
-  backhand: { arq:'jog-backhand.png', altura:1.85, pe:1.0, prop:0.62, rosto:'34% 6%' }
+  aluno:    { arq:'jog-golpe.png',    altura:1.80, pe:1.0, prop:0.67, rosto:'52% 3%',  olha:'dir' },
+  prof:     { arq:'jog-backhand.png', altura:1.85, pe:1.0, prop:0.62, rosto:'34% 6%',  olha:'dir' },
+  colega:   { arq:'jog-saque.png',    altura:1.82, pe:1.0, prop:0.47, rosto:'56% 26%', olha:'esq' },
+  saque:    { arq:'jog-saque.png',    altura:1.82, pe:1.0, prop:0.47, rosto:'56% 26%', olha:'esq' },
+  backhand: { arq:'jog-backhand.png', altura:1.85, pe:1.0, prop:0.62, rosto:'34% 6%',  olha:'dir' }
 };
 
 /* Cores do desenho. Saibro de verdade, porque é nele que a JV dá aula. */
@@ -139,6 +141,8 @@ let MINI = false;
 let CAM = CAMERAS.meia;      // câmera deste recorte
 let VISTA = { x:0, y:0, w:100, h:100 };   // viewBox, em unidades de tela
 let ROTULOS = [];            // rótulos já colocados, para não empilhar
+let PECAS = [];              // as peças deste desenho, para um jogador poder
+                             // olhar as outras e saber para onde vai bater
 
 function nQ(v){ return Math.round(v * 100) / 100; }
 
@@ -369,6 +373,46 @@ function traco(metros, p){
    perna da frente, short, camisa, braços, cabeça e raquete, cada um com um
    tom de luz e um de sombra. É daí que vem o volume — uma silhueta de cor
    única, por melhor desenhada que seja, continua parecendo um pictograma. */
+/* ==========================================================================
+   PARA QUE LADO O JOGADOR OLHA
+   --------------------------------------------------------------------------
+   O desenho já sabe para onde a bola vai: está escrito no próprio exercício.
+   Então a direção de cada jogador é deduzida daí, e não marcada à mão em cada
+   um dos 116 — marcar à mão seria errar em algum e nunca descobrir.
+
+   Quem está no começo de uma bola, bate: olha para onde ela vai.
+   Quem está no fim, recebe: olha para de onde ela vem.
+   ========================================================================== */
+
+/* Para que x este jogador tem que olhar. Devolve null quando não há bola
+   perto dele, ou quando ela vai reto para a rede e não há lado nenhum. */
+function paraOndeOlha(x, y){
+  // A bola manda. Só quando não há bola perto é que o deslocamento serve de
+  // pista: num exercício de footwork sem bola, o aluno corre para onde a seta
+  // aponta, e é para lá que ele tem que estar virado.
+  var achado = maisPerto(x, y, 'bola');
+  if (achado === null) achado = maisPerto(x, y, 'mov');
+  if (achado === null) return null;
+  return Math.abs(achado - x) < 0.8 ? null : achado;   // reta para a rede: não há lado
+}
+
+function maisPerto(x, y, tipo){
+  var melhor = null, dMelhor = 2.6 * 2.6;   // 2,6 m: mais longe que isso não é dele
+  PECAS.forEach(function(e){
+    if (e[0] !== tipo) return;
+    var d1 = (e[1] - x) * (e[1] - x) + (e[2] - y) * (e[2] - y);   // ele é quem começa
+    var d2 = (e[3] - x) * (e[3] - x) + (e[4] - y) * (e[4] - y);   // ele é quem termina
+    if (d1 < dMelhor) { dMelhor = d1; melhor = e[3]; }
+    if (d2 < dMelhor) { dMelhor = d2; melhor = e[1]; }
+  });
+  return melhor;
+}
+
+/* Espelha um pedaço do desenho em torno da linha vertical que passa por cx. */
+function espelharEm(cx){
+  return ' transform="translate(' + nQ(cx * 2) + ' 0) scale(-1 1)"';
+}
+
 /* Quando existe recorte de gente de verdade, é ele que entra. O resto do
    desenho não muda: a pessoa é posicionada e encolhida pela mesma projeção
    que posiciona o boneco. */
@@ -381,11 +425,17 @@ function qRecorte(x, y, rot, tipo, nome){
   var hImg = h / (r.pe == null ? 1 : r.pe);      // a imagem é mais alta que a pessoa
   var l = hImg * (r.prop || 0.42);
   var cx = (pe.x + topo.x) / 2;
+  // `olha` diz para que lado a pessoa bate NA FOTO. Se o exercício pede o
+  // outro, a foto é espelhada — é a diferença entre o aluno bater na direção
+  // da bola e bater de costas para ela.
+  var alvo = paraOndeOlha(x, y);
+  var espelha = alvo !== null && r.olha && (alvo > x ? 'dir' : 'esq') !== r.olha;
   var s = '<g>' +
     '<ellipse cx="' + nQ(cx) + '" cy="' + nQ(pe.y) + '" rx="' + nQ(l * 0.30) + '" ry="' + nQ(h * 0.035) +
       '" fill="' + CQ.sombra + '"/>' +
     '<image href="' + r.arq + '" x="' + nQ(cx - l / 2) + '" y="' + nQ(pe.y - hImg * (r.pe == null ? 1 : r.pe)) +
-      '" width="' + nQ(l) + '" height="' + nQ(hImg) + '" preserveAspectRatio="xMidYMax meet"/></g>';
+      '" width="' + nQ(l) + '" height="' + nQ(hImg) + '" preserveAspectRatio="xMidYMax meet"' +
+      (espelha ? espelharEm(cx) : '') + '/></g>';
   if (rot) s += qTexto(cx, pe.y + h * 0.18, rot, { tam:h * 0.20 });
   return s;
 }
@@ -405,7 +455,10 @@ function qJogador(x, y, rot, tipo, nome){
   var u = function(v){ return nQ(v * h / 100); };
   function px(v){ return nQ(cx + l * v); }
   function py(v){ return nQ(base - h * v); }
-  var s = '<g>';
+  // o boneco é desenhado com a raquete do lado direito, então ele bate para a
+  // direita; quando o exercício pede o outro lado, o desenho inteiro espelha
+  var alvo = paraOndeOlha(x, y);
+  var s = '<g' + (alvo !== null && alvo < x ? espelharEm(cx) : '') + '>';
 
   // sombra projetada no chão: elipse achatada, deslocada para o lado da luz
   s += '<ellipse cx="' + px(0.16) + '" cy="' + nQ(base + h * 0.012) + '" rx="' + u(30) +
@@ -658,6 +711,7 @@ function svgQuadra(fig, op){
   // rótulo. Sem isso o rótulo caía em cima do aluno — e um desenho com o texto
   // escrito por cima da pessoa não serve para nada.
   ROTULOS = [];
+  PECAS = fig.el;
   fig.el.forEach(function(e){
     var t = e[0];
     if (t === 'aluno' || t === 'prof' || t === 'colega') {
