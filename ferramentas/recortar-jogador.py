@@ -27,6 +27,13 @@
    Uso, a partir da raiz do repositorio:
        python3 ferramentas/recortar-jogador.py foto.jpg app-exercicios/jog-espera.png
        python3 ferramentas/recortar-jogador.py foto.jpg saida.png --tol 42 --alt 700
+       python3 ferramentas/recortar-jogador.py foto.jpg saida.png --tirar-sombra 12
+
+   --tol          quanto o fundo pode variar de cor (padrao 38; foto pequena
+                  ou muito comprimida pede menos, uns 8 a 12)
+   --alt          altura do PNG que sai (padrao 720)
+   --tirar-sombra apaga a mancha clara do chao do estudio, nos N% de baixo
+                  (use 100 quando ela subir entre as pernas)
 """
 import os
 import sys
@@ -35,7 +42,7 @@ from collections import deque
 from PIL import Image
 
 
-def recortar(entrada, saida, tol=38, alt_max=720):
+def recortar(entrada, saida, tol=38, alt_max=720, sombra=0):
     im = Image.open(entrada).convert('RGBA')
     larg, altura = im.size
     px = im.load()
@@ -84,6 +91,21 @@ def recortar(entrada, saida, tol=38, alt_max=720):
                 r, g, b, _ = px[x, y]
                 px[x, y] = (r, g, b, 0)
 
+    # A mancha clara que sobra DEBAIXO dos pes e' a sombra do chao do estudio,
+    # gravada na foto. Ela nao encosta na borda (os tenis a cercam), entao o
+    # espalhamento nao chega nela. Aqui ela e' apagada pelo que e': quase
+    # branca, sem cor e na faixa de baixo da imagem.
+    if sombra > 0:
+        de = int(altura * (1 - sombra / 100.0))
+        apagados = 0
+        for y in range(de, altura):
+            for x in range(larg):
+                r, g, b, a = px[x, y]
+                if a and min(r, g, b) > 226 and max(r, g, b) - min(r, g, b) < 12:
+                    px[x, y] = (r, g, b, 0)
+                    apagados += 1
+        print('  sombra do chao: %d pixels apagados nos %d%% de baixo' % (apagados, sombra))
+
     caixa = im.getbbox()
     if not caixa:
         print('ERRO: sobrou imagem nenhuma — o fundo nao e uniforme o bastante.')
@@ -122,12 +144,14 @@ def main(argv):
     if len(argv) < 3:
         print(__doc__)
         return 1
-    tol, alt = 38, 720
+    tol, alt, sombra = 38, 720, 0
     if '--tol' in argv:
         tol = int(argv[argv.index('--tol') + 1])
     if '--alt' in argv:
         alt = int(argv[argv.index('--alt') + 1])
-    return 0 if recortar(argv[1], argv[2], tol, alt) else 1
+    if '--tirar-sombra' in argv:
+        sombra = int(argv[argv.index('--tirar-sombra') + 1])
+    return 0 if recortar(argv[1], argv[2], tol, alt, sombra) else 1
 
 
 if __name__ == '__main__':

@@ -273,6 +273,10 @@ header.bar{
 .qd-leg i.cn{width:0;height:0;border-radius:0;background:none!important;
   border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:9px solid var(--warn)}
 .qd-leg i.zn{width:12px;height:9px;border-radius:2px;border:1px dashed var(--gold);background:rgba(216,180,92,.2)}
+/* quando o papel tem foto, a legenda mostra o rosto — o recorte e' de corpo
+   inteiro, entao a bolinha pega o alto da imagem */
+.qd-leg i.rosto{width:16px;height:16px;background-size:340%;background-position:50% 4%;
+  background-repeat:no-repeat;border:1px solid var(--line-2)}
 /* A frase que conta o que o desenho mostra. Existe para os 116 exercicios e
    estava so' no aria-label, invisivel para quem enxerga. */
 .qd-desc{font-size:14.5px;line-height:1.5;color:#F0E9DC;padding:12px;

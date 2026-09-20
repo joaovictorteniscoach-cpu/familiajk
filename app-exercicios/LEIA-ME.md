@@ -171,6 +171,28 @@ vazia com as pessoas e as setas por cima**. A mesma foto serve nos 116. O que
 muda de exercício para exercício é a camada de cima, que continua vindo dos
 metros.
 
+### Os três jogadores que estão ali agora são PROVISÓRIOS
+
+`jog-golpe.png`, `jog-backhand.png` e `jog-saque.png` vieram de imagens
+encontradas na internet e entraram a pedido, para ver o resultado funcionando.
+**Eles não devem ficar no material vendido**, por dois motivos que valem
+registrar antes que alguém esqueça:
+
+- o de camisa turquesa é o **Roger Federer**, uma pessoa real e identificável.
+  Usar a imagem dele num produto pago é direito de imagem do atleta;
+- o de azul tem quatro logos da **Nike** (bandana, camisa, munhequeira, tênis),
+  e ele e o de vermelho parecem render de videogame — o que traz junto o
+  direito autoral de quem fez.
+
+Trocar é uma linha em `RECORTES` por pose. Enquanto não houver foto da JV, a
+alternativa segura é apagar as entradas de `RECORTES`: sem elas o desenho volta
+sozinho para o boneco desenhado, que é nosso.
+
+Uma marca técnica deles, que a foto da JV não vai ter: o **xadrez de
+transparência ficou gravado por dentro da camisa** nos dois renders. Dá para
+ver de perto, em quadradinhos no vermelho e no ombro do azul. Onde o xadrez caiu
+por cima da pessoa não há recorte que resolva.
+
 ### As fotos que faltam
 
 **1. A quadra vazia** — uma só, e é a mais importante.

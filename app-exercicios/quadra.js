@@ -101,7 +101,13 @@ const FOTOS = {};
 
    `pe` é onde o pé dela está na imagem, de 0 (topo) a 1 (base): quase nunca é
    exatamente 1, e errar isso faz a pessoa flutuar acima do saibro. */
-const RECORTES = {};
+const RECORTES = {
+  aluno:    { arq:'jog-golpe.png',    altura:1.80, pe:1.0, prop:0.67, rosto:'52% 3%' },
+  prof:     { arq:'jog-backhand.png', altura:1.85, pe:1.0, prop:0.62, rosto:'34% 6%' },
+  colega:   { arq:'jog-saque.png',    altura:1.82, pe:1.0, prop:0.47, rosto:'56% 26%' },
+  saque:    { arq:'jog-saque.png',    altura:1.82, pe:1.0, prop:0.47, rosto:'56% 26%' },
+  backhand: { arq:'jog-backhand.png', altura:1.85, pe:1.0, prop:0.62, rosto:'34% 6%' }
+};
 
 /* Cores do desenho. Saibro de verdade, porque é nele que a JV dá aula. */
 const CQ = {
@@ -706,12 +712,25 @@ function svgQuadra(fig, op){
   '</svg>';
 }
 
-/* Legenda do desenho — as mesmas cores, explicadas uma vez. */
+/* Legenda do desenho — as mesmas cores, explicadas uma vez.
+   Quando o papel tem foto, a legenda mostra o ROSTO daquela pessoa e nao a
+   bolinha colorida: com foto no desenho, a cor deixa de ser o que identifica
+   quem e' quem, e uma legenda que continuasse falando de cor estaria mentindo. */
+function marcaPapel(tipo, cor){
+  var r = RECORTES[tipo];
+  if (!r) return '<i style="background:' + cor + '"></i>';
+  // `rosto` diz onde esta' a cabeca no recorte, porque ela nao fica no mesmo
+  // lugar em todas as poses: no saque, por exemplo, a raquete e' que esta' no
+  // alto da imagem, e a legenda mostrava um pedaco de raquete.
+  return '<i class="rosto" style="background-image:url(' + r.arq +
+         ');background-position:' + (r.rosto || '50% 4%') + '"></i>';
+}
+
 function legendaQuadra(){
   return '<div class="qd-leg">' +
-    '<span><i style="background:' + CQ.aluno + '"></i>aluno</span>' +
-    '<span><i style="background:' + CQ.prof + '"></i>professor</span>' +
-    '<span><i style="background:' + CQ.colega + '"></i>colega</span>' +
+    '<span>' + marcaPapel('aluno', CQ.aluno) + 'aluno</span>' +
+    '<span>' + marcaPapel('prof', CQ.prof) + 'professor</span>' +
+    '<span>' + marcaPapel('colega', CQ.colega) + 'colega</span>' +
     '<span><i class="tr" style="background:' + CQ.bola + '"></i>bola</span>' +
     '<span><i class="tr" style="background:' + CQ.mov + '"></i>deslocamento</span>' +
     '<span><i class="cn" style="background:' + CQ.cone + '"></i>cone</span>' +
