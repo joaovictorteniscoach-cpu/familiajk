@@ -187,27 +187,43 @@ vazia com as pessoas e as setas por cima**. A mesma foto serve nos 116. O que
 muda de exercício para exercício é a camada de cima, que continua vindo dos
 metros.
 
-### Os três jogadores que estão ali agora são PROVISÓRIOS
+### Os jogadores que estão ali agora são PROVISÓRIOS
 
-`jog-golpe.png`, `jog-backhand.png` e `jog-saque.png` vieram de imagens
-encontradas na internet e entraram a pedido, para ver o resultado funcionando.
+`jog-aluno.webp`, `jog-prof.webp`, `jog-colega.webp` e `jog-saque.webp` vieram
+de imagens encontradas na internet e entraram a pedido, para ver o resultado
+funcionando.
+
+Os três papéis são a **mesma figura 3D com a camisa repintada**
+(`ferramentas/pintar-camisa.py`), nas cores que o desenho já usava para dizer
+quem é quem: dourado o aluno, branco o professor, azul o colega. Uma figura em
+três uniformes mantém o estilo igual nos três — é o que faz o desenho parecer
+de uma peça só — e devolve o papel à cor, em vez de exigir três pessoas
+diferentes. A legenda volta a ser a bolinha colorida: três rostos iguais nela
+não diriam nada.
+
+Os arquivos são **WebP e não PNG**: a figura é foto, e PNG de foto pesa cinco
+vezes mais (163 KB contra 33 KB, no mesmo tamanho). Os quatro juntos dão 135 KB.
 **Eles não devem ficar no material vendido**, por dois motivos que valem
 registrar antes que alguém esqueça:
 
-- o de camisa turquesa é o **Roger Federer**, uma pessoa real e identificável.
-  Usar a imagem dele num produto pago é direito de imagem do atleta;
-- o de azul tem quatro logos da **Nike** (bandana, camisa, munhequeira, tênis),
-  e ele e o de vermelho parecem render de videogame — o que traz junto o
-  direito autoral de quem fez.
+- a figura dos três papéis tem quatro logos da **Nike** (bandana, camisa,
+  munhequeira, tênis) e parece render de videogame, o que traz junto o direito
+  autoral de quem fez;
+- o mesmo vale para a pose de saque.
+
+(A foto do **Roger Federer**, que esteve aqui no papel de aluno, saiu: além do
+direito de imagem de uma pessoa real e identificável, era a de pior qualidade —
+348 px, indexada, e o recorte comia o short e o tênis.)
 
 Trocar é uma linha em `RECORTES` por pose. Enquanto não houver foto da JV, a
 alternativa segura é apagar as entradas de `RECORTES`: sem elas o desenho volta
 sozinho para o boneco desenhado, que é nosso.
 
 Uma marca técnica deles, que a foto da JV não vai ter: o **xadrez de
-transparência ficou gravado por dentro da camisa** nos dois renders. Dá para
-ver de perto, em quadradinhos no vermelho e no ombro do azul. Onde o xadrez caiu
-por cima da pessoa não há recorte que resolva.
+transparência ficou gravado por dentro da imagem**, entre o antebraço e a
+raquete. Dá para ver ampliando. Tirá-lo com a mesma conta que tira a sombra do
+chão levava junto a bandana e as munhequeiras brancas, que são da mesma cor —
+então ficou. No tamanho em que o jogador é desenhado, não se vê.
 
 ### As fotos que faltam
 

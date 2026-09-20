@@ -113,7 +113,10 @@ def recortar(entrada, saida, tol=38, alt_max=720, sombra=0):
     im = im.crop(caixa)
     if im.height > alt_max:
         im = im.resize((round(im.width * alt_max / im.height), alt_max), Image.LANCZOS)
-    im.save(saida)
+    # webp: a figura e' foto, e PNG de foto pesa cinco vezes mais. A
+    # qualidade 88 nao se ve' no tamanho em que o jogador e' desenhado.
+    im.save(saida, **({'quality': 88, 'method': 6}
+                      if saida.lower().endswith('.webp') else {'optimize': True}))
 
     fatia = 100.0 * tirados / (larg * altura)
     print('%s → %s' % (entrada, saida))

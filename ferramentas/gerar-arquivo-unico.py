@@ -70,7 +70,9 @@ for nome in fotos:
     if not os.path.exists(caminho):
         print('ATENCAO — foto declarada e nao encontrada: %s' % nome)
         continue
-    tipo = 'image/png' if nome.lower().endswith('.png') else 'image/jpeg'
+    n = nome.lower()
+    tipo = ('image/png' if n.endswith('.png') else
+            'image/webp' if n.endswith('.webp') else 'image/jpeg')
     html = html.replace("arq:'%s'" % nome, "arq:'%s'" % dataUri(nome, tipo))
     embutidas.append(nome)
 if embutidas:

@@ -101,14 +101,21 @@ const FOTOS = {};
 
    `pe` é onde o pé dela está na imagem, de 0 (topo) a 1 (base): quase nunca é
    exatamente 1, e errar isso faz a pessoa flutuar acima do saibro. */
-/* `olha` = para que lado a pessoa bate NA FOTO, olhando a imagem. É o unico
-   numero que nao da' para deduzir do desenho — o resto o proprio exercicio diz. */
+/* `olha` = para que lado a pessoa bate NA FOTO, olhando a imagem. É o único
+   número que não dá para deduzir do desenho — o resto o próprio exercício diz.
+
+   Os três papéis são a MESMA figura com a camisa repintada
+   (ferramentas/pintar-camisa.py), nas cores que o desenho já usava para dizer
+   quem é quem: dourado o aluno, branco o professor, azul o colega. Uma figura
+   só, em três uniformes, mantém o estilo igual nos três — que é o que faz o
+   desenho parecer de uma peça só — e devolve o papel à cor, em vez de exigir
+   três pessoas diferentes. */
 const RECORTES = {
-  aluno:    { arq:'jog-golpe.png',    altura:1.80, pe:1.0, prop:0.67, rosto:'52% 3%',  olha:'dir' },
-  prof:     { arq:'jog-backhand.png', altura:1.85, pe:1.0, prop:0.62, rosto:'34% 6%',  olha:'dir' },
-  colega:   { arq:'jog-saque.png',    altura:1.82, pe:1.0, prop:0.47, rosto:'56% 26%', olha:'esq' },
-  saque:    { arq:'jog-saque.png',    altura:1.82, pe:1.0, prop:0.47, rosto:'56% 26%', olha:'esq' },
-  backhand: { arq:'jog-backhand.png', altura:1.85, pe:1.0, prop:0.62, rosto:'34% 6%',  olha:'dir' }
+  aluno:  { arq:'jog-aluno.webp',  altura:1.85, pe:1.0, prop:0.62, olha:'dir' },
+  prof:   { arq:'jog-prof.webp',   altura:1.85, pe:1.0, prop:0.62, olha:'dir' },
+  colega: { arq:'jog-colega.webp', altura:1.85, pe:1.0, prop:0.62, olha:'dir' },
+  // poses com nome, para um exercício pedir no quinto campo do elemento
+  saque:  { arq:'jog-saque.webp',  altura:1.82, pe:1.0, prop:0.47, olha:'esq' }
 };
 
 /* Cores do desenho. Saibro de verdade, porque é nele que a JV dá aula. */
@@ -772,7 +779,10 @@ function svgQuadra(fig, op){
    quem e' quem, e uma legenda que continuasse falando de cor estaria mentindo. */
 function marcaPapel(tipo, cor){
   var r = RECORTES[tipo];
-  if (!r) return '<i style="background:' + cor + '"></i>';
+  // Sem `rosto`, vale a bolinha colorida — e é o caso quando os três papéis
+  // são a mesma pessoa de camisa diferente: três rostos iguais na legenda não
+  // diriam nada, e a cor da camisa já diz.
+  if (!r || !r.rosto) return '<i style="background:' + cor + '"></i>';
   // `rosto` diz onde esta' a cabeca no recorte, porque ela nao fica no mesmo
   // lugar em todas as poses: no saque, por exemplo, a raquete e' que esta' no
   // alto da imagem, e a legenda mostrava um pedaco de raquete.
