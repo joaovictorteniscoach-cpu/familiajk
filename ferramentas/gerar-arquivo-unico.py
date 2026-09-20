@@ -55,6 +55,27 @@ html = re.sub(
     "  // proprio ao lado). Para usar offline em quadra, publique a pasta completa.\n",
     html, count=1, flags=re.S)
 
+# 3b. as fotos da quadra e os recortes de jogador, quando existirem, viram
+#     data URI tambem. Sem isto o arquivo unico daria 404 em cada foto e o
+#     desenho abriria sem fundo nenhum — e o 404 nao apareceria na conferencia
+#     de baixo, porque o href da foto e' montado pelo JS, nao escrito no HTML.
+# so' o codigo: os exemplos de arq:'...' escritos nos comentarios do quadra.js
+# nao sao declaracao nenhuma, e apareciam como foto faltando
+codigo = re.sub(r'/\*.*?\*/', '', html, flags=re.S)
+codigo = '\n'.join(l for l in codigo.split('\n') if not l.lstrip().startswith('//'))
+fotos = sorted(set(re.findall(r"arq:'([^']+)'", codigo)))
+embutidas = []
+for nome in fotos:
+    caminho = os.path.join(APP, nome)
+    if not os.path.exists(caminho):
+        print('ATENCAO — foto declarada e nao encontrada: %s' % nome)
+        continue
+    tipo = 'image/png' if nome.lower().endswith('.png') else 'image/jpeg'
+    html = html.replace("arq:'%s'" % nome, "arq:'%s'" % dataUri(nome, tipo))
+    embutidas.append(nome)
+if embutidas:
+    print('fotos embutidas: %s' % ', '.join(embutidas))
+
 # 4. deixa registrado no proprio arquivo o que ele e'
 html = html.replace('<meta name="robots" content="noindex,nofollow">',
     '<meta name="robots" content="noindex,nofollow">\n'
@@ -64,6 +85,9 @@ html = html.replace('<meta name="robots" content="noindex,nofollow">',
 io.open(destino, 'w', encoding='utf-8').write(html)
 tam = os.path.getsize(destino) / 1024
 print('gerado: %s (%.0f KB)' % (destino, tam))
+if tam > 1500:
+    print('  o arquivo ficou grande para abrir por 4G em quadra — se incomodar,')
+    print('  publique a pasta completa (o zip), que carrega a foto uma vez so.')
 if 'src="' in re.sub(r'src="data:[^"]*"', '', html):
     sobrou = set(re.findall(r'src="(?!data:)([^"]+)"', html)) | set(re.findall(r'href="(?!data:|#|https?:)([^"]+)"', html))
     if sobrou:

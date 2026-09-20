@@ -156,39 +156,83 @@ ele sobe; quando também não cabe em cima, anda para o lado.
 
 ## Trocar o desenho por foto
 
-O pedido é legítimo e o caminho existe — só não passa por gerar 116 fotos. Vale
-registrar o porquê e o que é preciso.
+O app **já está pronto para receber as fotos** — falta só tirá-las. Nada do
+material de outro professor é usado: as pessoas têm que ser as da JV.
 
-**Por que não 116 fotos.** Uma foto por exercício seriam 116 imagens de alta
-resolução: dezenas de megabytes. O app hoje tem 300 KB, abre offline na quadra e
-desenha tudo na hora. Fora isso, imagem gerada por IA não coloca o jogador no
-metro certo da quadra — e é exatamente o metro certo que o desenho serve para
-dizer.
+### Por que não são 116 fotos
 
-**Como se faz de verdade**, e é o que a referência do mercado faz: uma **foto de
-fundo** da quadra vazia, com as pessoas e as setas **por cima**. Reaproveita-se a
-mesma foto nos 116. O que muda de exercício para exercício é a camada de cima,
-que continua vindo dos metros.
+Uma foto por exercício seriam 116 imagens de alta resolução, dezenas de
+megabytes, num app que hoje tem 300 KB e abre offline em quadra. E imagem
+gerada por IA não coloca o jogador no metro certo — e é exatamente o metro
+certo que o desenho serve para dizer.
 
-Então o que o app precisa receber:
+O jeito que funciona, e que o mercado usa, é **uma foto de fundo da quadra
+vazia com as pessoas e as setas por cima**. A mesma foto serve nos 116. O que
+muda de exercício para exercício é a camada de cima, que continua vindo dos
+metros.
 
-1. **Uma foto da quadra vazia**, de trás da linha de base, com a câmera o mais
-   alta possível (uma escada, a arquibancada, um bastão), apontada para o meio
-   da rede, mostrando a quadra inteira. Sem pessoas, sem bolas. Quanto mais
-   centrada e simétrica, melhor.
-2. **Seis a oito recortes de jogador**, em PNG com fundo transparente: de costas
-   em posição de espera, de costas batendo forehand, batendo backhand, na rede,
-   sacando, e o professor de frente com a cesta. Uma foto de cada, de longe, com
-   o corpo inteiro.
+### As fotos que faltam
 
-Com isso o desenho passa a ser: foto + jogadores recortados posicionados pela
-mesma projeção + setas, cones e rótulos em vetor. O encaixe é exato — quatro
-cantos da quadra na foto dão a conta que leva metro em pixel, e a conferência é
-a linha de saque cair sozinha em cima da linha de saque da foto.
+**1. A quadra vazia** — uma só, e é a mais importante.
 
-**A foto tem que ser da quadra da JV.** Foto de banco de imagens custa licença e
-some a identidade; foto do material de outro professor não se usa. A da própria
-academia resolve os dois — e ainda faz o material ser reconhecidamente seu.
+- de **trás da linha de base**, no meio (em cima da marca central);
+- câmera **o mais alta que der**: escada, arquibancada, bastão com o celular
+  na ponta, alguém segurando o braço esticado em cima de um banco. Quanto mais
+  alta, menos as pessoas vão se esconder atrás umas das outras no desenho;
+- apontada para o **meio da rede**, mostrando a quadra inteira até a linha de
+  base do outro lado;
+- **sem pessoas, sem bolas, sem cestos**;
+- **sem grande-angular** (no iPhone, o "1x", nunca o "0,5x"): a conta supõe
+  lente sem distorção, e o 0,5x entorta as linhas retas;
+- o celular **na horizontal**, o mais nivelado possível;
+- quadra varrida, linhas limpas — ela vai aparecer em 116 telas.
+
+**2. Os jogadores** — seis a oito fotos, cada uma de uma pessoa da JV:
+
+| pose | para quê |
+|---|---|
+| de costas, em posição de espera | a posição mais comum do banco |
+| de costas, batendo forehand | os exercícios de forehand |
+| de costas, batendo backhand | os de backhand |
+| de frente, na rede, voleando | approach e rede |
+| de costas, sacando (braço em cima) | saque e devolução |
+| de frente, com a cesta | o professor, no lado de lá |
+| criança de costas, em espera | os exercícios Kids |
+
+Em cada uma: **corpo inteiro**, dos pés à cabeça, de uns 6 a 8 metros de
+distância, com a pessoa ocupando a altura do quadro. Fundo qualquer — eu
+recorto. Se puderem estar com a roupa da academia, melhor ainda.
+
+### O que acontece quando as fotos chegarem
+
+```sh
+python3 ferramentas/calibrar-foto.py foto-quadra.jpg \
+  fundo-perto-esq=312,1402 fundo-perto-dir=2441,1402 \
+  fundo-longe-esq=1012,388 fundo-longe-dir=1741,388 \
+  rede-esq=380,980 rede-dir=2380,980
+```
+
+Ele descobre **qual câmera tirou aquela foto** — onde estava, que altura, para
+onde olhava, que abertura — a partir de pontos da quadra que dá para apontar a
+olho. Não é esticar imagem: é achar a câmera de verdade, e por isso o encaixe
+vale também para o que sobe do chão (pessoa, cone, rede). Um encaixe que só
+servisse para o chão deixaria todo mundo flutuando.
+
+A saída é um bloco para colar em `FOTOS`, no `quadra.js`, e uma imagem de
+conferência com a quadra desenhada por cima da foto. **O que prova o acerto são
+as linhas que não entraram na conta**: se a linha de saque cair sozinha em cima
+da linha de saque da foto, e os postes amarelos fecharem na altura da rede, a
+câmera está certa. Conferido num teste com erro de dedo de 4 px em seis pontos:
+a câmera voltou com 1,2 px de erro médio.
+
+Os recortes de jogador entram em `RECORTES`, e cada exercício pode pedir a pose
+que quiser (`['aluno', 0, 11.4, 'espera', 'backhand']`). Sem recorte, continua
+o boneco desenhado — os dois convivem, então dá para começar com duas poses e
+ir acrescentando.
+
+O `gerar-zip.py` leva as fotos junto sozinho, e o `gerar-arquivo-unico.py`
+embute cada uma como data URI (e avisa se o arquivo único passar de 1,5 MB, que
+é quando vale mais publicar a pasta completa).
 
 ## Meus exercícios — criar e editar no celular
 

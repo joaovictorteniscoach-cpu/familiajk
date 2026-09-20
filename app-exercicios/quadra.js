@@ -71,7 +71,37 @@ const CAMERAS = {
   fundo:   { y: 18.5, alt: 5.6, alvo: 7.6 }
 };
 
-const DIST = 100;      // distância focal: só escala o desenho, o viewBox ajusta
+let DIST = 100;        // distância focal: só escala o desenho, o viewBox ajusta
+let CENTRO = { x:0, y:0 };   // ponto principal da imagem (0,0 quando é desenho)
+
+/* ==========================================================================
+   FOTO DE FUNDO — quando existir, o desenho senta em cima de uma foto de
+   verdade da quadra da JV, e não na quadra desenhada.
+   --------------------------------------------------------------------------
+   O que muda é SÓ o fundo e os bonecos: setas, cones, alvos e rótulos
+   continuam em vetor, porque é neles que está a leitura do exercício. E os
+   116 continuam escritos em metros — quem encaixa metro em pixel é a câmera
+   ajustada à foto por ferramentas/calibrar-foto.py.
+
+   Para ligar, preencha uma entrada aqui e ponha o arquivo na pasta do app:
+
+     meia: { arq:'foto-meia.jpg', larg:2752, alt:1536,
+             cam:{ x:0.1, y:19.4, alt:7.1, alvo:2.8, dist:1480, cx:1376, cy:610 } }
+
+   `cam` sai pronto do calibrar-foto.py, com o erro de encaixe medido em
+   pixels. Sem entrada, o desenho continua sendo a quadra desenhada. */
+const FOTOS = {};
+
+/* Recortes de jogador em PNG com fundo transparente. Cada um é uma pessoa da
+   JV, fotografada de corpo inteiro, e entra no lugar do boneco desenhado.
+   `altura` é a altura real da pessoa em metros — é ela que faz o recorte
+   encolher com a distância, igual ao boneco.
+
+     espera: { arq:'jog-espera.png', altura:1.78, pe:0.97 }
+
+   `pe` é onde o pé dela está na imagem, de 0 (topo) a 1 (base): quase nunca é
+   exatamente 1, e errar isso faz a pessoa flutuar acima do saibro. */
+const RECORTES = {};
 
 /* Cores do desenho. Saibro de verdade, porque é nele que a JV dá aula. */
 const CQ = {
@@ -122,7 +152,8 @@ function proj(x, y, z){
   var prof = a * cos + b * sen;      // profundidade
   if (prof < 0.4) prof = 0.4;        // atrás da câmera: prende na frente dela
   var cima = a * sen - b * cos;
-  return { x: DIST * x / prof, y: -DIST * cima / prof, z: prof };
+  return { x: CENTRO.x + DIST * (x - (CAM.x || 0)) / prof,
+           y: CENTRO.y - DIST * cima / prof, z: prof };
 }
 
 /* Quanto um metro vale, em unidades de tela, à profundidade de um ponto.
@@ -332,7 +363,30 @@ function traco(metros, p){
    perna da frente, short, camisa, braços, cabeça e raquete, cada um com um
    tom de luz e um de sombra. É daí que vem o volume — uma silhueta de cor
    única, por melhor desenhada que seja, continua parecendo um pictograma. */
-function qJogador(x, y, rot, tipo){
+/* Quando existe recorte de gente de verdade, é ele que entra. O resto do
+   desenho não muda: a pessoa é posicionada e encolhida pela mesma projeção
+   que posiciona o boneco. */
+function qRecorte(x, y, rot, tipo, nome){
+  var r = RECORTES[nome] || RECORTES[tipo];
+  if (!r) return null;
+  var pe = proj(x, y, 0), topo = proj(x, y, r.altura || 1.78);
+  var h = pe.y - topo.y;
+  if (h < 3) h = 3;
+  var hImg = h / (r.pe == null ? 1 : r.pe);      // a imagem é mais alta que a pessoa
+  var l = hImg * (r.prop || 0.42);
+  var cx = (pe.x + topo.x) / 2;
+  var s = '<g>' +
+    '<ellipse cx="' + nQ(cx) + '" cy="' + nQ(pe.y) + '" rx="' + nQ(l * 0.30) + '" ry="' + nQ(h * 0.035) +
+      '" fill="' + CQ.sombra + '"/>' +
+    '<image href="' + r.arq + '" x="' + nQ(cx - l / 2) + '" y="' + nQ(pe.y - hImg * (r.pe == null ? 1 : r.pe)) +
+      '" width="' + nQ(l) + '" height="' + nQ(hImg) + '" preserveAspectRatio="xMidYMax meet"/></g>';
+  if (rot) s += qTexto(cx, pe.y + h * 0.18, rot, { tam:h * 0.20 });
+  return s;
+}
+
+function qJogador(x, y, rot, tipo, nome){
+  var foto = qRecorte(x, y, rot, tipo, nome);
+  if (foto) return foto;
   var cor   = tipo === 'prof' ? CQ.prof   : (tipo === 'colega' ? CQ.colega   : CQ.aluno);
   var esc0  = tipo === 'prof' ? CQ.profEsc : (tipo === 'colega' ? CQ.colegaEsc : CQ.alunoEsc);
   var short = escurecer(esc0, 0.86);
@@ -522,9 +576,10 @@ function qTexto(x, y, txt, op){
 
 function qElemento(e){
   var t = e[0];
-  if (t === 'aluno')  return qJogador(e[1], e[2], e[3], 'aluno');
-  if (t === 'prof')   return qJogador(e[1], e[2], e[3], 'prof');
-  if (t === 'colega') return qJogador(e[1], e[2], e[3], 'colega');
+  // e[4] opcional: o nome do recorte a usar ('saque', 'rede', 'backhand'…)
+  if (t === 'aluno')  return qJogador(e[1], e[2], e[3], 'aluno', e[4]);
+  if (t === 'prof')   return qJogador(e[1], e[2], e[3], 'prof', e[4]);
+  if (t === 'colega') return qJogador(e[1], e[2], e[3], 'colega', e[4]);
   if (t === 'cone')   return qCone(e[1], e[2], e[3]);
   if (t === 'zona')   return qZona(e[1], e[2], e[3], e[4], e[5]);
   if (t === 'bola')   return qCaminho(e[1], e[2], e[3], e[4], e[5], CQ.bola, true, 'seta-bola');
@@ -573,8 +628,25 @@ function svgQuadra(fig, op){
   op = op || {};
   MINI = !!op.mini;
   var base = fig.base || 'meia';
-  CAM = CAMERAS[base] || CAMERAS.meia;
+  var foto = FOTOS[base];
+  if (foto) {
+    // a câmera vem da foto, e o desenho passa a morar no espaço de pixels dela
+    CAM = { x:foto.cam.x || 0, y:foto.cam.y, alt:foto.cam.alt, alvo:foto.cam.alvo };
+    DIST = foto.cam.dist;
+    CENTRO = { x:foto.cam.cx, y:foto.cam.cy };
+  } else {
+    CAM = CAMERAS[base] || CAMERAS.meia;
+    DIST = 100;
+    CENTRO = { x:0, y:0 };
+  }
   VISTA = enquadrar(base, fig.el);
+  if (foto) {
+    // a moldura não pode sair da foto: fora dela não há pixel nenhum
+    if (VISTA.w > foto.larg) { VISTA.x = 0; VISTA.w = foto.larg; }
+    if (VISTA.h > foto.alt)  { VISTA.y = 0; VISTA.h = foto.alt; }
+    VISTA.x = Math.max(0, Math.min(VISTA.x, foto.larg - VISTA.w));
+    VISTA.y = Math.max(0, Math.min(VISTA.y, foto.alt - VISTA.h));
+  }
 
   // Reserva o espaço dos bonecos e dos cones ANTES de escrever qualquer
   // rótulo. Sem isso o rótulo caía em cima do aluno — e um desenho com o texto
@@ -627,7 +699,10 @@ function svgQuadra(fig, op){
     '</defs>' +
     '<rect x="' + nQ(VISTA.x) + '" y="' + nQ(VISTA.y) + '" width="' + nQ(VISTA.w) + '" height="' + nQ(VISTA.h) +
       '" fill="url(#ceu)"/>' +
-    piso(base) + antes + rede() + depois +
+    (foto
+      ? '<image href="' + foto.arq + '" x="0" y="0" width="' + foto.larg + '" height="' + foto.alt +
+        '" preserveAspectRatio="none"/>' + antes + depois
+      : piso(base) + antes + rede() + depois) +
   '</svg>';
 }
 
