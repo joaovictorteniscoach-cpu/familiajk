@@ -42,6 +42,41 @@ extra, a versão em cada nível** e as três colunas de rodapé — **foco do pr
 erros mais comuns e como dificultar** — além do **critério objetivo de sucesso**. Os 25 drills da apostila (D1–D25) estão aqui com o mesmo nome e o mesmo
 conteúdo, marcados como `apostila`.
 
+### Leitura de outros métodos — 16 exercícios acrescentados
+
+O banco tinha 116 exercícios e tem **132**. Os 16 novos vieram de uma leitura do
+que os outros programas de formação recomendam, com um filtro duro: **só entrou
+o que não existia aqui** e o que aparece repetidamente em mais de um método.
+Cada um foi reescrito na linguagem da metodologia — níveis da Trilha, blocos da
+aula, erro mais baixo da cadeia primeiro — e não é cópia de texto de ninguém.
+
+| De onde veio | O que entrou |
+|---|---|
+| ITF Play and Stay · Tennis10s (quadra vermelha, laranja, verde) | **T11** saca, troca e pontua desde a primeira aula · **T08** semáforo · **T10** equilibrista da raquete |
+| USTA Net Generation (Red) | **T09** limpa a quadra (arremesso por cima do ombro = gesto do saque) |
+| LTA Youth · Tennis Australia Hot Shots | **T07** roda-gigante (o "corre-corre") |
+| Método espanhol — Pato Álvarez, Bruguera | **F14** equis · **D27** dois contra um · **FH16** dois cruzados e um paralelo |
+| Repertório internacional de alto rendimento | **D26** oito deitado (figure-8) · **R18** guerra de voleios cruzados · **BH16** deixada e lob |
+| Percepção de bola (linha do *bounce–hit*) | **M12** quica e bate |
+| Aquecimento clássico e treino sozinho | **M13** mini-tênis de aquecimento · **FH15** frontão de trinta bolas |
+| Correção clássica de trajetória do saque | **S17** saque de joelhos |
+| Volta à calma | **T12** mini-troca leve + a frase do dia |
+
+O que esses 16 corrigiram no banco, em número:
+
+| | antes | agora |
+|---|---|---|
+| nível Base, no tema mais magro (rede) | 9 | 10 |
+| nível Base, no tema mais forte (movimentação) | 15 | 23 |
+| exercícios que servem turma Kids | 38 | 48 |
+| ativação no mês do saque | 2 | 3 |
+| fechamento, somando os seis temas | 13 | 19 |
+
+O que **não** entrou, e por quê: *king of the court* (já é o **T05**), pega-pega
+(**D5**), alvos e bambolês (**D14**), voleio de reflexo alimentado (**R09**),
+saque + 1 (**S05**), zonas de ataque e defesa (**D18**) e placar de pressão
+(**D22**). Todos já existiam com outro nome.
+
 ## Como a tela está organizada
 
 **A lista é de desenhos, não de texto.** Cada linha traz a miniatura da quadra,
@@ -63,7 +98,7 @@ gesto agora é medido: acima de 10 px é arrasto, e o clique seguinte é engolid
 **A ficha mostra o essencial e guarda o resto.** Em pé, sem tocar em nada:
 desenho grande, **a frase que conta o que está desenhado**, montagem, os dados
 da atividade, o objetivo em uma frase e o passo a passo. Essa frase existe para
-os 116 exercícios e vivia só no `aria-label` — invisível para quem enxerga. É
+todos os exercícios do banco e vivia só no `aria-label` — invisível para quem enxerga. É
 ela que fecha a conta entre a figura e o nome: *"Sem bola: o professor canta a
 sequência e o aluno executa em sombra, acelerando o canto."*
 
@@ -101,14 +136,14 @@ de luz e um de sombra. É de onde vem o volume: uma silhueta de cor única, por
 melhor desenhada que seja, continua parecendo pictograma.
 
 **Isto é ilustração, não foto.** É o preço de o app pesar 300 KB, abrir offline
-em quadra e desenhar os 116 na hora. Para trocar por foto de verdade, veja a
+em quadra e desenhar todos eles na hora. Para trocar por foto de verdade, veja a
 seção *Trocar o desenho por foto* mais abaixo. É isso que faz, de graça e sem
 ajuste em exercício nenhum, o jogador do fundo sair menor que o da rede, a linha
 de base de longe sair mais fina que a de perto, e a rede aparecer na frente de
 quem está atrás dela e atrás de quem está na frente.
 
 **Nada mudou no jeito de escrever os exercícios.** Eles continuam em metros de
-quadra, exatamente como antes — foi o que permitiu virar os 116 desenhos de uma
+quadra, exatamente como antes — foi o que permitiu virar todos os desenhos de uma
 vez, sem reescrever nenhum.
 
 O desenho fica no campo `fig` do exercício:
@@ -156,7 +191,7 @@ exercício de footwork o aluno corre para onde a seta aponta, e é para lá que 
 tem que estar virado. Quando a bola vai reta para a rede não há lado, e a pose
 fica como está.
 
-Isso é deduzido em vez de marcado à mão em cada um dos 116 porque marcar à mão
+Isso é deduzido em vez de marcado à mão em cada exercício porque marcar à mão
 seria errar em algum e nunca descobrir. Dos **209 jogadores** dos desenhos, 128
 têm direção clara e **61 são espelhados** para bater no lado certo.
 
@@ -175,15 +210,15 @@ ele sobe; quando também não cabe em cima, anda para o lado.
 O app **já está pronto para receber as fotos** — falta só tirá-las. Nada do
 material de outro professor é usado: as pessoas têm que ser as da JV.
 
-### Por que não são 116 fotos
+### Por que não é uma foto por exercício
 
-Uma foto por exercício seriam 116 imagens de alta resolução, dezenas de
+Uma foto por exercício seriam mais de cem imagens de alta resolução, dezenas de
 megabytes, num app que hoje tem 300 KB e abre offline em quadra. E imagem
 gerada por IA não coloca o jogador no metro certo — e é exatamente o metro
 certo que o desenho serve para dizer.
 
 O jeito que funciona, e que o mercado usa, é **uma foto de fundo da quadra
-vazia com as pessoas e as setas por cima**. A mesma foto serve nos 116. O que
+vazia com as pessoas e as setas por cima**. A mesma foto serve em todos. O que
 muda de exercício para exercício é a camada de cima, que continua vindo dos
 metros.
 
@@ -239,7 +274,7 @@ então ficou. No tamanho em que o jogador é desenhado, não se vê.
 - **sem grande-angular** (no iPhone, o "1x", nunca o "0,5x"): a conta supõe
   lente sem distorção, e o 0,5x entorta as linhas retas;
 - o celular **na horizontal**, o mais nivelado possível;
-- quadra varrida, linhas limpas — ela vai aparecer em 116 telas.
+- quadra varrida, linhas limpas — ela vai aparecer em todas as fichas.
 
 **2. Os jogadores** — seis a oito fotos, cada uma de uma pessoa da JV:
 
@@ -308,7 +343,7 @@ O botão **✎** no cabeçalho abre *Meus exercícios*. O que você cria ali fic
 plano e impressão. Na lista os seus aparecem junto com os do banco; o filtro
 **Só os meus** separa, e a ficha diz a origem.
 
-**Os 116 do banco não se editam pelo celular, de propósito.** Eles vêm de
+**Os exercícios do banco não se editam pelo celular, de propósito.** Eles vêm de
 `exercicios.js` — são a metodologia, e mudá-los sem querer em quadra seria pior
 que não poder mudá-los. Para alterar um deles, é no arquivo (seção acima).
 
@@ -319,7 +354,7 @@ T, então não há risco de dois exercícios com o mesmo código.
 ninguém usaria em quadra. Em vez disso: escolha entre **oito cenas prontas**
 (professor lança, dois peloteando, aluno na rede, cones no fundo, saque e
 devolução, alvo do outro lado, mini quadra, quadra vazia) — ou **copie o desenho
-de qualquer um dos 116** e escreva a frase que explica a cena. É a mesma frase
+de qualquer exercício do banco** e escreva a frase que explica a cena. É a mesma frase
 que aparece embaixo da figura na ficha, e é ela que faz o desenho ser entendido.
 
 **Levar para o outro professor.** O app não fala com servidor nenhum — é isso
