@@ -195,6 +195,42 @@ Isso é deduzido em vez de marcado à mão em cada exercício porque marcar à m
 seria errar em algum e nunca descobrir. Dos **209 jogadores** dos desenhos, 128
 têm direção clara e **61 são espelhados** para bater no lado certo.
 
+### De frente ou de costas: quem está de que lado da rede
+
+Espelhar resolve o lado, mas não resolve o **sentido**. A câmera está atrás da
+linha de base: quem está **do lado de cá** tem que aparecer **de costas**, e
+quem está **além da rede**, de frente. As fotos que temos são todas de frente —
+usadas do lado de cá, o jogador ficava olhando para quem vê, ou seja, de costas
+para a rede, e parecia bater na direção contrária à da bola. Espelhar não
+conserta isso: o erro é de 180 graus, não de lado.
+
+Por isso cada recorte tem duas versões, e o desenho escolhe pelo sinal do `y`:
+
+| onde está | o que aparece | arquivo |
+|---|---|---|
+| `y > 0` — lado de cá da rede | de costas | `jog-*-costas.webp` |
+| `y < 0` — além da rede | de frente | `jog-*.webp` |
+
+As versões de costas não são fotos novas: saem da própria foto de frente, pelo
+`ferramentas/virar-de-costas.py`. No tamanho em que a figura aparece (60 a 140
+px de altura), o único detalhe que grita "de frente" é o **rosto** — camisa,
+braços, pernas, tênis e raquete leem igual dos dois lados. Então a ferramenta
+espelha para baixo a faixa de cabelo que está acima da testeira, com máscara
+oval e borda esfumada: sai uma nuca com a textura do cabelo daquela mesma foto,
+e não um borrão marrom. O resto do pixel não é tocado.
+
+```
+python3 ferramentas/virar-de-costas.py app-exercicios/jog-aluno.webp \
+        app-exercicios/jog-aluno-costas.webp \
+        --testeira 30,48 --queixo 88 --colunas 69,141 --conferir prova.png
+```
+
+Sem os números ele tenta achar a cabeça sozinho; com raquete levantada acima
+dela — o caso do saque — medir uma vez sai mais barato que adivinhar. **O
+recorte do saque continua só de frente**, de propósito: a cabeça está inclinada
+para trás olhando o lançamento, não há faixa de cabelo para espelhar, e no
+tamanho do desenho quem conta a história ali é o braço levantado, não o rosto.
+
 O único número que não dá para deduzir é `olha`, em `RECORTES`: para que lado a
 pessoa bate **na foto**. Espelhar uma foto troca a mão dela — um destro vira
 canhoto. Com uma foto por pose não há como fugir disso; com as fotos da JV dá
@@ -291,6 +327,12 @@ então ficou. No tamanho em que o jogador é desenhado, não se vê.
 Em cada uma: **corpo inteiro**, dos pés à cabeça, de uns 6 a 8 metros de
 distância, com a pessoa ocupando a altura do quadro. Se puderem estar com a
 roupa da academia, melhor ainda.
+
+**Tire cada pose duas vezes: de costas e de frente.** É o que a seção *De
+frente ou de costas* explica — quem está do lado de cá da rede aparece de
+costas, quem está além dela, de frente. Com o par pronto, o `virar-de-costas.py`
+deixa de ser necessário: ele existe porque as fotos de agora só têm o lado de
+frente. Se só der para tirar uma, tire **de costas**: é a que aparece grande.
 
 **Não precisa procurar "PNG transparente" na internet.** O recorte é feito
 aqui, por `ferramentas/recortar-jogador.py`: basta a pessoa estar contra um

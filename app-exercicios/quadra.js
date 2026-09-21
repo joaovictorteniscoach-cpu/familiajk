@@ -111,9 +111,9 @@ const FOTOS = {};
    desenho parecer de uma peça só — e devolve o papel à cor, em vez de exigir
    três pessoas diferentes. */
 const RECORTES = {
-  aluno:  { arq:'jog-aluno.webp',  altura:1.85, pe:1.0, prop:0.62, olha:'dir' },
-  prof:   { arq:'jog-prof.webp',   altura:1.85, pe:1.0, prop:0.62, olha:'dir' },
-  colega: { arq:'jog-colega.webp', altura:1.85, pe:1.0, prop:0.62, olha:'dir' },
+  aluno:  { arq:'jog-aluno.webp',  costas:'jog-aluno-costas.webp',  altura:1.85, pe:1.0, prop:0.62, olha:'dir' },
+  prof:   { arq:'jog-prof.webp',   costas:'jog-prof-costas.webp',   altura:1.85, pe:1.0, prop:0.62, olha:'dir' },
+  colega: { arq:'jog-colega.webp', costas:'jog-colega-costas.webp', altura:1.85, pe:1.0, prop:0.62, olha:'dir' },
   // poses com nome, para um exercício pedir no quinto campo do elemento
   saque:  { arq:'jog-saque.webp',  altura:1.82, pe:1.0, prop:0.47, olha:'esq' }
 };
@@ -271,6 +271,12 @@ function piso(base){
   var lw = 0.05, lwBase = 0.10;          // largura real das linhas, em metros
   var p = [], i, x;
 
+  // Antes de tudo, o quadro inteiro pintado de saibro escuro. Num desenho
+  // muito fechado (R06, os dois na rede) a moldura chega a subir acima do
+  // horizonte, onde polígono nenhum alcança — e ali aparecia o fundo da
+  // página atravessando o alto da figura.
+  p.push('<rect x="' + nQ(VISTA.x) + '" y="' + nQ(VISTA.y) + '" width="' + nQ(VISTA.w) +
+         '" height="' + nQ(VISTA.h) + '" fill="' + CQ.fora + '"/>');
   // o saibro de fora, bem largo: cobre o que a moldura mostrar
   p.push(pol([[-24, -26], [24, -26], [24, 26], [-24, 26]], CQ.fora));
   // a área de jogo, um tom mais claro, com a sobra de saibro em volta. A
@@ -426,6 +432,13 @@ function espelharEm(cx){
 function qRecorte(x, y, rot, tipo, nome){
   var r = RECORTES[nome] || RECORTES[tipo];
   if (!r) return null;
+  // A câmera fica atrás da linha de base: quem está DO LADO DE CÁ (y > 0)
+  // aparece DE COSTAS, quem está além da rede aparece DE FRENTE. As fotos são
+  // de frente; usadas do lado de cá, o jogador fica olhando para quem vê — de
+  // costas para a rede — e parece bater na direção contrária à da bola.
+  // Espelhar não resolve: o erro é de 180 graus, não de lado. Por isso cada
+  // recorte tem a versão `costas`, feita pelo ferramentas/virar-de-costas.py.
+  var arq = (y > 0 && r.costas) ? r.costas : r.arq;
   var pe = proj(x, y, 0), topo = proj(x, y, r.altura || 1.78);
   var h = pe.y - topo.y;
   if (h < 3) h = 3;
@@ -440,7 +453,7 @@ function qRecorte(x, y, rot, tipo, nome){
   var s = '<g>' +
     '<ellipse cx="' + nQ(cx) + '" cy="' + nQ(pe.y) + '" rx="' + nQ(l * 0.30) + '" ry="' + nQ(h * 0.035) +
       '" fill="' + CQ.sombra + '"/>' +
-    '<image href="' + r.arq + '" x="' + nQ(cx - l / 2) + '" y="' + nQ(pe.y - hImg * (r.pe == null ? 1 : r.pe)) +
+    '<image href="' + arq + '" x="' + nQ(cx - l / 2) + '" y="' + nQ(pe.y - hImg * (r.pe == null ? 1 : r.pe)) +
       '" width="' + nQ(l) + '" height="' + nQ(hImg) + '" preserveAspectRatio="xMidYMax meet"' +
       (espelha ? espelharEm(cx) : '') + '/></g>';
   if (rot) s += qTexto(cx, pe.y + h * 0.18, rot, { tam:h * 0.20 });
