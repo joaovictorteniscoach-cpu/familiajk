@@ -300,9 +300,29 @@ elemento: `['aluno', x, y, 'rótulo', 'espera']`.
 | `espera` | posição de espera, de costas, pés abertos | **D1** Estátua pronta · **D2** Split à batida · **T08** Semáforo |
 | `prepara` | raquete já no alto, de costas | **M01** Preparação na chegada |
 | `saque` | **de frente E de costas** — a única pose completa | os 18 desenhos em que alguém saca de verdade: D15, S01–S17 |
-| `voleio` | de costas, raquete à frente | os 10 desenhos de quem está na rede voleando: R03, R06, R09, R10, R13, R14, R16, R18 |
+| `voleio` | de costas, raquete à frente | quem está na rede, voleando |
+| `prepara` | de costas, raquete já atrás | quem está no fundo com bola vindo |
+| `espera` | de costas, posição de espera, sem raquete | quem está esperando, observando, contando ou sem raquete na mão |
 
-**O saque é a primeira pose 100% da JV.** Chegaram as duas metades — uma foto
+**Todas as 152 figuras do lado de cá já são da JV**, e a pose sai do que o
+exercício pede. A escolha foi feita por regra, e depois revisada a olho:
+
+```
+tem "sem raquete" no rótulo        -> espera   (é a única pose sem raquete)
+está na rede (y ≤ 4,6 m)           -> voleio
+meia-quadra num exercício de rede  -> voleio
+o desenho não tem bola             -> espera
+senão                              -> prepara
+```
+
+Onze figuras a regra errou, e estão escritas na mão dentro do script: quem
+**observa** (D23, D24), quem **conta e anota** (T06), quem está **na fila**
+(T07), quem **lança de mão** (M07), quem **arremessa sem raquete** (T09), quem
+**equilibra a bola nas cordas** (T10), a **pergunta do fechamento** (M11, T03),
+a **espera atrás dos cones** (D25) — e o **smash** do R04, que usa a pose do
+saque, porque o gesto é o mesmo.
+
+**O saque é a primeira pose completa da JV.** Chegaram as duas metades — uma foto
 de frente e uma de costas — então o desenho escolhe pelo lado da rede e a
 figura do jogo 3D saiu de cena ali. Antes, só duas figuras pediam a pose de
 saque; agora ela está em todas as que sacam mesmo, conferidas uma a uma: quem
@@ -349,6 +369,28 @@ A do **voleio** (124×178) entrou apesar de pequena, e a razão é o contrário
 das outras: **a raquete está à frente e bem visível**, que é justamente o que
 o desenho de rede precisa dizer. Na folha A4 ela fica um pouco macia — é o
 preço, e foi aceito olhando o resultado impresso, não a régua.
+
+### Como as figuras são preparadas
+
+`ferramentas/montar-figuras-jv.sh` faz as cinco poses nas três cores de uma vez
+só, a partir das fotos originais. Rodar tudo junto é o que mantém o desenho
+parecendo de uma peça só: preparada na mão, uma foto sai com franja, outra sai
+com outra escala.
+
+O trabalho fino está no `ferramentas/preparar-recorte.py`, e ele conserta três
+coisas que o redimensionamento cru jogava fora:
+
+1. **A franja.** Recorte feito no celular deixa uma orla de pixels claros da
+   parede em volta da pessoa. Sobre o saibro escuro ela vira um contorno
+   branco — é o que denuncia "colagem" antes de qualquer outra coisa. A
+   ferramenta encolhe o alfa e puxa a cor da borda para dentro.
+2. **A escala.** Ampliar sem nitidez devolve borrão. Lanczos mais máscara de
+   nitidez recupera boa parte da aparência de detalhe, porque o que falta não é
+   informação nova: é contraste de borda. E a altura de saída é limitada por
+   foto — ampliar além disso inventa borrão, não detalhe.
+3. **A compressão.** WebP na qualidade 88 comia justamente a borda da raquete,
+   que é fina e de alto contraste — o detalhe que mais conta no desenho. Subiu
+   para 92.
 
 O corte da decisão é este: no desenho a figura tem de 60 a 140 px de altura e
 na folha A4 chega a 250. Abaixo de uns 400 px de altura de origem, o borrão
