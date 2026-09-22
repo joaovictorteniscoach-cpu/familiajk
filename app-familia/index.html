@@ -1070,7 +1070,7 @@ const CATPAL=["#d4a23a","#4fbfa8","#e6c277","#a98fd0","#f0a868","#c2956a","#8fb6
   "#c98f8f","#6fa8c9","#7f9c8b","#b39ddb","#86e2d0","#e59ac0","#9aa0ad","#7e9ec7","#c07b7b","#8bbf9f",
   "#d0b48f","#5fd08a","#6b7b82"];
 const CAT_KW=[
- ["Moradia",["aluguel","condominio","imobiliaria","energia","cemig","enel","cpfl","light","copel","celesc","sabesp","copasa","sanepar","agua","gas ","iptu","internet","fibra","vivo","claro","net ","tim ","oi ","nextel","sky","hughesnet","starlink","sindico","gas natural","ultragaz","liquigas","copagaz"]],
+ ["Moradia",["aluguel","condominio","imobiliaria","imob ","imoveis","administradora de imoveis","energia","cemig","enel","cpfl","light","copel","celesc","sabesp","copasa","sanepar","agua","gas ","iptu","internet","fibra","vivo","claro","net ","tim ","oi ","nextel","sky","hughesnet","starlink","sindico","gas natural","ultragaz","liquigas","copagaz"]],
  ["Bebidas",["adega","bebidas","cervej","chopp","chope","ze delivery","zedelivery","distribuidora de bebida","emporio da cerveja","destilados","vinho","wine","whisky","vodka","choperia","taberna"]],
  ["Combustível",["posto","gasolina","combustivel","etanol","alcool comb","diesel","ipiranga","shell","petrobras","texaco","raizen","ale combust","rodoil","gnv","abastecimento","auto posto","br mania","charrua","sim rede de posto"]],
  ["Seguro",["seguro ","seguros","seguradora","apolice","porto seguro","tokio marine","mapfre","allianz","sulamerica seg","sul america seg","bradesco seg","itau seguros","azul seguros","hdi seg","liberty seg","zurich","sompo","icatu","metlife","prudential","cardif","suhai","youse"]],
@@ -3137,14 +3137,32 @@ function ehPagamentoFatura(desc){
 }
 function categorize(desc,amount){
   const d=norm(desc);
-  for(const key in D.contas.catMemory){if(key&&key.length>=3&&d.includes(key))return D.contas.catMemory[key];}
   if(amount>0)return "Entradas";
   /* antes de qualquer palavra-chave: "PAGTO FATURA CARTAO XP" tem "xp" dentro
      e cairia em investimento; "cartao de credito" cairia em Serviços */
   if(ehPagamentoFatura(desc))return "Cartão de crédito";
   for(const [re,cat] of CAT_MARCA){if(re.test(d))return cat;}
-  for(const pair of CAT_KW){if(pair[0]==="Entradas")continue;if(pair[1].some(k=>catMatch(d,k)))return pair[0];}
-  return "Outros";
+  /* A EVIDÊNCIA MAIS LONGA GANHA.
+     "Condor" é rede de supermercado E nome da imobiliária do aluguel. Quando a
+     memória aprendida vencia tudo, corrigir uma compra do supermercado ensinava
+     a palavra "condor" e levava o aluguel junto para Mercado. Agora "imobiliaria"
+     (11 letras) diz mais sobre a linha do que "condor" (6), e ganha — enquanto
+     em "SUPERMERCADO CONDOR" quem ganha é "supermerc". O aprendizado continua
+     valendo onde é a única pista. */
+  /* Empate fica com o que você ensinou: se a palavra aprendida é a mesma que a
+     regra traz, quem mandou por último foi você. */
+  let melhor=null,peso=0;
+  for(const key in D.contas.catMemory){
+    if(key&&key.length>=3&&key.length>peso&&catMatch(d,key+' ')){peso=key.length;melhor=D.contas.catMemory[key];}
+  }
+  for(const pair of CAT_KW){
+    if(pair[0]==="Entradas")continue;
+    for(const k of pair[1]){
+      const kk=norm(k).trim();
+      if(kk.length>peso&&catMatch(d,k)){peso=kk.length;melhor=pair[0];}
+    }
+  }
+  return melhor||"Outros";
 }
 function isIncomeDesc(desc){return /(recebid|salario|deposito|rendimento|estorno|reembolso|provento|pagamento receb|credito receb)/.test(norm(desc));}
 
