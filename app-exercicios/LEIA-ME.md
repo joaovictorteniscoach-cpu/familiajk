@@ -79,6 +79,12 @@ saque + 1 (**S05**), zonas de ataque e defesa (**D18**) e placar de pressão
 
 ## Como a tela está organizada
 
+**O plano de aula também mostra o desenho.** Cada item do plano traz a
+miniatura da quadra ao lado do nome, e tocar nela abre a ficha. Sem ela o plano
+era uma lista de títulos: para lembrar qual era o exercício, o professor tinha
+que abrir a ficha de cada um. No papel a miniatura sai — ali o desenho já vem
+em tamanho grande, ao lado do passo a passo.
+
 **A lista é de desenhos, não de texto.** Cada linha traz a miniatura da quadra,
 o nome e quatro sinais miúdos: o ícone do bloco da aula, a duração, a régua de
 níveis (cinco pontos, acesos onde o exercício serve) e o código. O objetivo saiu
@@ -95,16 +101,32 @@ selecionando o que estava sob o dedo, porque o navegador manda um clique quando
 o dedo quase não anda — e "quase" é generoso demais para uma tira que rola. O
 gesto agora é medido: acima de 10 px é arrasto, e o clique seguinte é engolido.
 
-**A ficha mostra o essencial e guarda o resto.** Em pé, sem tocar em nada:
-desenho grande, **a frase que conta o que está desenhado**, montagem, os dados
-da atividade, o objetivo em uma frase e o passo a passo. Essa frase existe para
-todos os exercícios do banco e vivia só no `aria-label` — invisível para quem enxerga. É
-ela que fecha a conta entre a figura e o nome: *"Sem bola: o professor canta a
-sequência e o aluno executa em sombra, acelerando o canto."*
+**A ficha é lida de cima para baixo, na ordem de uma folha de treino.** Essa
+distribuição substituiu a anterior, que escondia parte do conteúdo atrás de
+abas:
 
-As três colunas viraram **abas** (Foco · Erros · Dificultar) — uma por vez. E a
-versão Kids e os materiais ficam em **gavetas**, a um toque. Nada foi cortado;
-o que mudou é o que aparece de primeira.
+1. **faixa de dados** — níveis, duração, jogadores, intensidade e materiais,
+   antes de tudo. É por ela que o professor decide se o exercício cabe na aula
+   de hoje, sem ler mais nada;
+2. **o objetivo**, em uma frase, em corpo maior;
+3. **o desenho de um lado e o passo a passo do outro**. Abaixo da figura, a
+   frase que conta o que está desenhado — ela existe para todos os exercícios
+   do banco e vivia só no `aria-label`, invisível para quem enxerga: *"Sem
+   bola: o professor canta a sequência e o aluno executa em sombra, acelerando
+   o canto."* Depois dela vêm a montagem e a legenda. Do outro lado, os passos
+   numerados e a **dica extra**. No celular as duas colunas viram uma, com o
+   desenho em cima; a partir de 720 px ficam lado a lado;
+4. **as três colunas do rodapé** — foco do professor, erros mais comuns e como
+   dificultar —, as três à vista, cada uma com sua cor no topo. Eram abas, uma
+   por vez: em quadra o professor quer bater o olho nas três sem ter que
+   escolher qual ver;
+5. **funcionou se**, o critério objetivo;
+6. só o que não é de quadra fica em **gavetas**: a progressão por nível, a
+   versão Kids e formatos/necessidades/tema.
+
+O preço dessa ordem é uma ficha mais comprida no celular: nada está escondido,
+então tudo rola. Foi a troca escolhida de propósito — é a distribuição de uma
+folha de treino, e é assim que ela se lê.
 
 **Escolheu um nível na tira, a ficha muda com ele.** A variação daquele nível
 sobe da gaveta para o corpo da ficha, logo abaixo do objetivo, com o nome do

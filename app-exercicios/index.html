@@ -293,14 +293,24 @@ header.bar{
 .passos li span{font-size:14.5px;color:#E9E2D6;line-height:1.5}
 .bloco-tx.dica{background:rgba(216,180,92,.1);border:1px solid var(--line);border-radius:12px;padding:14px}
 /* Faixa de sinais da ficha: tudo o que antes eram quatro caixas de texto. */
-.sinais-ficha{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
-  padding:12px 14px;background:var(--navy-2);border:1px solid var(--line-2);
-  border-radius:12px;margin-bottom:16px}
-.sinais-ficha .s{display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:700;color:#E9E2D6}
+/* Grade, não linha que embrulha: em flex os cinco dados quebravam tortos
+   (três numa linha, um na outra). Duas colunas no celular, cinco quando a
+   tela deixa — como a faixa de dados de uma folha impressa. */
+.sinais-ficha{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:13px 14px;padding:13px 14px;background:var(--navy-2);
+  border:1px solid var(--line-2);border-radius:12px;margin-bottom:16px}
+.sinais-ficha .s{display:flex;align-items:center;gap:7px;font-size:13.5px;
+  font-weight:700;color:#E9E2D6;min-width:0}
+.sinais-ficha .s>div{min-width:0}
 .sinais-ficha .s .ic{font-size:15px}
 .sinais-ficha .s small{font-size:10px;font-weight:800;letter-spacing:.12em;
   text-transform:uppercase;color:var(--muted-2);display:block;margin-bottom:1px}
 .sinais-ficha .s div{line-height:1.2}
+.sinais-ficha .s.larga{grid-column:1/-1;font-weight:600;color:#DCD5C9}
+@media(min-width:560px){
+  .sinais-ficha{grid-template-columns:repeat(5,minmax(0,1fr))}
+  .sinais-ficha .s.larga{grid-column:auto}
+}
 .forca{display:flex;gap:3px;align-items:flex-end;height:14px}
 .forca i{width:5px;border-radius:1px;background:rgba(244,239,230,.18);display:block}
 .forca i:nth-child(1){height:6px} .forca i:nth-child(2){height:10px} .forca i:nth-child(3){height:14px}
@@ -313,21 +323,41 @@ header.bar{
   margin:0 2px 18px;letter-spacing:-.01em}
 .objetivo b{color:var(--gold-soft);font-weight:700}
 
-/* As três colunas viram abas: uma por vez, em vez de três blocos empilhados. */
-.abas{display:flex;gap:6px;margin-bottom:10px}
-.abas button{flex:1;padding:10px 6px;border-radius:11px;border:1px solid var(--line-2);
-  background:var(--navy-2);font-size:12.5px;font-weight:700;color:var(--muted);
-  display:flex;align-items:center;justify-content:center;gap:5px;min-height:44px}
-.abas button .ic{font-size:14px}
-.abas button.on{background:rgba(216,180,92,.13);border-color:var(--gold);color:var(--gold-soft)}
-.painel-aba{display:none;background:var(--navy-2);border:1px solid var(--line-2);
-  border-radius:12px;padding:13px 15px;margin-bottom:18px}
-.painel-aba.on{display:block}
-.painel-aba ul{list-style:none;display:grid;gap:7px}
-.painel-aba li{font-size:14.5px;color:#E3DCD0;padding-left:15px;position:relative;line-height:1.45}
-.painel-aba li::before{content:"•";position:absolute;left:2px;color:var(--muted-2);font-weight:900}
-.painel-aba li.primeiro{color:#fff;font-weight:600}
-.painel-aba li.primeiro::before{content:"!";color:var(--warn);font-weight:900;left:4px}
+/* As três colunas do rodapé: foco, erros e como dificultar, as TRÊS à vista.
+   Eram abas (uma por vez) e viraram colunas de novo — em quadra o professor
+   quer bater o olho nas três sem escolher qual ver. No celular elas empilham;
+   a partir de 720 px ficam lado a lado, como numa folha. */
+.tres{display:grid;gap:10px;margin-bottom:18px}
+.tres .cl{background:var(--navy-2);border:1px solid var(--line-2);
+  border-radius:12px;padding:12px 14px;border-top:3px solid var(--muted-2)}
+.tres .cl.ok{border-top-color:#7FA650}
+.tres .cl.err{border-top-color:var(--warn)}
+.tres .cl.dif{border-top-color:#4E9AC4}
+.tres .tt{display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:900;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
+.tres .tt .ic{font-size:14px;letter-spacing:0}
+.tres ul{list-style:none;display:grid;gap:7px}
+.tres li{font-size:14.5px;color:#E3DCD0;padding-left:15px;position:relative;line-height:1.45}
+.tres li::before{content:"•";position:absolute;left:2px;color:var(--muted-2);font-weight:900}
+.tres li.primeiro{color:#fff;font-weight:600}
+.tres li.primeiro::before{content:"!";color:var(--warn);font-weight:900;left:4px}
+
+/* Corpo da ficha em duas colunas quando a tela deixa: o desenho de um lado e
+   o passo a passo do outro, em vez de um debaixo do outro numa rolagem longa. */
+.ficha-2col{display:grid;gap:14px;margin-bottom:18px}
+.ficha-2col .lado{display:grid;gap:14px;align-content:start}
+@media(min-width:720px){
+  .ficha-2col{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:18px;align-items:start}
+  .tres{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+
+/* Miniatura do exercício dentro do plano de aula. O plano listava só o nome:
+   o professor reconhece o exercício pela forma antes de ler o nome, e sem o
+   desenho ele tinha que abrir a ficha de cada item para lembrar qual era. */
+.pi-qd{flex:0 0 74px;width:74px;border-radius:9px;overflow:hidden;
+  border:1px solid var(--line-2);background:var(--deep);cursor:pointer}
+.pi-qd svg{display:block;width:100%}
+@media(min-width:520px){ .pi-qd{flex-basis:96px;width:96px} }
 
 /* O que não é essencial fica a um toque, não empilhado na rolagem. */
 .gaveta{border:1px solid var(--line-2);border-radius:12px;background:var(--navy-2);
@@ -414,7 +444,7 @@ header.bar{
 @media print{
   html,body{background:#fff!important;color:#000!important;padding:0;margin:0}
   header.bar,.foco,.tira,.filtros,.resumo,.pronta,.lista,.rodape,.folha-acoes,.auto,
-  .pi .acs,.pb-mais,.fechar,.plano-cab,
+  .pi .acs,.pi-qd,.pb-mais,.fechar,.plano-cab,
   #fundoFicha,#fundoMes,#fundoMeus,#fundoEditor,#fundoEscolher{display:none!important}
   /* o campo de minutos vira texto no papel: caixa de formulário impressa fica
      com borda e seta de setinha, que não é o que vai para a quadra */
@@ -636,7 +666,6 @@ var F = {                      // filtros
 var MEUS = [];                 // exercícios criados pelo professor, neste aparelho
 var BANCO = [];                // os 116 do banco + os MEUS, que é o que a tela usa
 var FAV = [];                  // ids favoritados
-var ABA = 'foco';              // aba visível nas três colunas da ficha
 var PLANO = { aluno:'', nivel:'', tema:'', itens:[] };   // itens: [{id, bloco}]
 var CH_FAV = 'jvex:favoritos', CH_PLANO = 'jvex:plano', CH_MEUS = 'jvex:meus';
 
@@ -870,61 +899,65 @@ function abrirFicha(id){
   '</div>' +
   '<div class="folha-corpo">' +
 
-    // 1. o desenho manda: e' a primeira coisa que aparece, e logo abaixo dele
-    //    a frase que conta o que esta' desenhado — sem ela o professor tinha
-    //    que deduzir a cena a partir das bolinhas e das setas.
-    '<div class="qd-cx">' + svgQuadra(e.fig) +
-      (e.fig && e.fig.nota ? '<div class="qd-desc">' + esc(e.fig.nota) + '</div>' : '') +
-      '<div class="qd-nota"><b>Montagem:</b> ' + esc(e.montagem) + '</div>' +
-      legendaQuadra() + '</div>' +
-
-    // 2. os dados da atividade, numa faixa so'
+    // 1. a faixa de dados vem ANTES de tudo: nível, duração, jogadores,
+    //    intensidade e material. É o cabeçalho de quem bate o olho na ficha e
+    //    decide se aquele exercício cabe na aula de hoje.
     '<div class="sinais-ficha">' +
+      '<span class="s"><div><small>níveis</small>' + reguaNiveis(e) + '</div></span>' +
       '<span class="s"><span class="ic">⏱</span><div><small>duração</small>' + e.min + ' min</div></span>' +
+      '<span class="s"><span class="ic">👥</span><div><small>jogadores</small>' + quantosJogadores(e) + '</div></span>' +
       '<span class="s"><span class="forca ' + e.int + '" role="img" aria-label="Intensidade ' + intTx + '">' +
         '<i></i><i></i><i></i></span><div><small>intensidade</small>' + intTx + '</div></span>' +
-      '<span class="s"><span class="ic">👥</span><div><small>jogadores</small>' + quantosJogadores(e) + '</div></span>' +
-      '<span class="s"><div><small>níveis</small>' + reguaNiveis(e) + '</div></span>' +
+      '<span class="s larga"><span class="ic">🎒</span><div><small>materiais</small>' + esc(mats) + '</div></span>' +
     '</div>' +
 
-    // 3. uma frase: o para quê
+    // 2. uma frase: o para quê
     '<p class="objetivo">' + esc(e.objetivo) + '</p>' +
 
-    // 3b. escolheu nível na tira? a versão dele vem para cima, em vez de
-    //     ficar guardada na gaveta "o mesmo exercício em cada nível".
-    focos.filter(function(n){ return e.prog && e.prog[n]; }).map(function(n){
-      return '<div class="bloco-tx destaque"><div class="tt">📶 No nível ' +
-        esc(nivel(n).nome) + '</div><p>' + esc(e.prog[n]) + '</p></div>';
-    }).join('') +
+    // 3. o desenho de um lado, o passo a passo do outro. A frase que conta o
+    //    que está desenhado vem logo abaixo da figura — sem ela o professor
+    //    tinha que deduzir a cena a partir das bolinhas e das setas.
+    '<div class="ficha-2col">' +
+      '<div class="qd-cx">' + svgQuadra(e.fig) +
+        (e.fig && e.fig.nota ? '<div class="qd-desc">' + esc(e.fig.nota) + '</div>' : '') +
+        '<div class="qd-nota"><b>Montagem:</b> ' + esc(e.montagem) + '</div>' +
+        legendaQuadra() + '</div>' +
+      '<div class="lado">' +
 
-    // 4. o passo a passo, que e' o que se le em quadra
-    '<div class="bloco-tx"><div class="tt">Como aplicar</div><ol class="passos">' +
-      (e.passos || []).map(function(t){ return '<li><span>' + esc(t) + '</span></li>'; }).join('') +
-    '</ol></div>' +
-    (e.dica ? '<div class="bloco-tx dica"><div class="tt">💡 Dica extra</div><p>' + esc(e.dica) + '</p></div>' : '') +
+        // escolheu nível na tira? a versão dele vem para cima, em vez de
+        // ficar guardada na gaveta "o mesmo exercício em cada nível".
+        focos.filter(function(n){ return e.prog && e.prog[n]; }).map(function(n){
+          return '<div class="bloco-tx destaque"><div class="tt">📶 No nível ' +
+            esc(nivel(n).nome) + '</div><p>' + esc(e.prog[n]) + '</p></div>';
+        }).join('') +
 
-    // 5. as tres colunas, uma por vez
-    '<div class="abas">' +
-      '<button data-aba="foco" class="' + (ABA === 'foco' ? 'on' : '') + '"><span class="ic">✅</span>Foco</button>' +
-      '<button data-aba="err" class="' + (ABA === 'err' ? 'on' : '') + '"><span class="ic">⚠️</span>Erros</button>' +
-      '<button data-aba="dif" class="' + (ABA === 'dif' ? 'on' : '') + '"><span class="ic">📈</span>Dificultar</button>' +
+        '<div class="bloco-tx"><div class="tt">Como aplicar</div><ol class="passos">' +
+          (e.passos || []).map(function(t){ return '<li><span>' + esc(t) + '</span></li>'; }).join('') +
+        '</ol></div>' +
+        (e.dica ? '<div class="bloco-tx dica"><div class="tt">💡 Dica extra</div><p>' + esc(e.dica) + '</p></div>' : '') +
+      '</div>' +
     '</div>' +
-    '<div class="painel-aba' + (ABA === 'foco' ? ' on' : '') + '" data-painel="foco">' + lista(e.foco || []) + '</div>' +
-    '<div class="painel-aba' + (ABA === 'err' ? ' on' : '') + '" data-painel="err">' +
-      lista([e.erro].concat(e.erros || []), true) + '</div>' +
-    '<div class="painel-aba' + (ABA === 'dif' ? ' on' : '') + '" data-painel="dif">' + lista(e.dificultar || []) + '</div>' +
 
-    // 6. o criterio: uma linha, em destaque
+    // 4. as três colunas, as três à vista
+    '<div class="tres">' +
+      '<div class="cl ok"><div class="tt"><span class="ic">✅</span>Foco do professor</div>' +
+        lista(e.foco || []) + '</div>' +
+      '<div class="cl err"><div class="tt"><span class="ic">⚠️</span>Erros mais comuns</div>' +
+        lista([e.erro].concat(e.erros || []), true) + '</div>' +
+      '<div class="cl dif"><div class="tt"><span class="ic">📈</span>Como dificultar</div>' +
+        lista(e.dificultar || []) + '</div>' +
+    '</div>' +
+
+    // 5. o critério: uma linha, em destaque
     '<div class="bloco-tx ok"><div class="tt">Funcionou se</div><p>' + esc(e.sucesso) + '</p></div>' +
 
-    // 7. o resto fica guardado
+    // 6. o resto fica guardado
     '<details class="gaveta"><summary>📶 O mesmo exercício em cada nível</summary>' +
       '<div class="dentro"><div class="prog">' + prog + '</div></div></details>' +
     (e.kids ? '<details class="gaveta"><summary>🧒 Versão Kids</summary>' +
       '<div class="dentro"><p>' + esc(e.kids) + '</p></div></details>' : '') +
-    '<details class="gaveta"><summary>🎒 Material, formatos e tema</summary>' +
+    '<details class="gaveta"><summary>🎒 Formatos, necessidades e tema</summary>' +
       '<div class="dentro">' +
-        '<p><b>Material:</b> ' + esc(mats) + '</p>' +
         '<p><b>Formatos:</b> ' + esc(forms) + '</p>' +
         '<p><b>Serve para:</b> ' + esc(necs) + '</p>' +
         '<p><b>Tema do mês:</b> ' + esc(temas) + (e.transv ? ' — serve em qualquer mês' : '') + '</p>' +
@@ -938,19 +971,6 @@ function abrirFicha(id){
     '<button class="btn btn-gold" data-add="' + e.id + '">' + (dentro ? '✓ no plano — tirar' : '+ pôr no plano') + '</button>' +
   '</div>';
   abrir('fundoFicha');
-}
-
-/* Aba visível nas três colunas. Fica guardada enquanto o app está aberto, para
-   quem usa sempre a mesma não precisar escolher em cada exercício. */
-function trocarAba(qual){
-  ABA = qual;
-  var folha = el('folhaFicha');
-  folha.querySelectorAll('[data-aba]').forEach(function(b){
-    b.classList.toggle('on', b.getAttribute('data-aba') === qual);
-  });
-  folha.querySelectorAll('[data-painel]').forEach(function(d){
-    d.classList.toggle('on', d.getAttribute('data-painel') === qual);
-  });
 }
 
 /* Quantos alunos a atividade comporta — derivado dos formatos que ela atende,
@@ -1079,6 +1099,12 @@ function desenharPlano(){
     }
     itens.forEach(function(e){
       h += '<div class="pi">' +
+        // o desenho antes do nome: o professor reconhece o exercício pela
+        // forma antes de ler o nome, e sem ele o plano era uma lista de
+        // títulos que só dizia alguma coisa abrindo a ficha de cada um
+        '<div class="pi-qd" data-ficha="' + e.id + '" role="button" tabindex="0" ' +
+          'aria-label="Abrir a ficha de ' + esc(e.nome) + '">' +
+          svgQuadra(e.fig, { mini:true }) + '</div>' +
         '<span class="cd">' + esc(e.id) + '</span>' +
         '<button class="nm" data-ficha="' + e.id + '" style="text-align:left">' + esc(e.nome) + '</button>' +
         '<input class="mn" type="number" inputmode="numeric" min="1" max="60" ' +
@@ -1880,7 +1906,7 @@ function ligar(){
   ligarGestos();
   document.addEventListener('click', function(ev){
     if (ARRASTOU) { ARRASTOU = false; return; }
-    var a = ev.target.closest ? ev.target.closest('[data-tema],[data-nivel],[data-bloco],[data-ficha],[data-add],[data-fecha],[data-favorito],[data-sobe],[data-desce],[data-aba],[data-editar],[data-marca],[data-trocar],[data-mais],[data-escolher]') : null;
+    var a = ev.target.closest ? ev.target.closest('[data-tema],[data-nivel],[data-bloco],[data-ficha],[data-add],[data-fecha],[data-favorito],[data-sobe],[data-desce],[data-editar],[data-marca],[data-trocar],[data-mais],[data-escolher]') : null;
     if (!a) return;
 
     if (a.hasAttribute('data-marca')) {
@@ -1903,7 +1929,6 @@ function ligar(){
     if (a.hasAttribute('data-ficha')) { abrirFicha(a.getAttribute('data-ficha')); return; }
     if (a.hasAttribute('data-add'))   { noPlano(a.getAttribute('data-add')); return; }
     if (a.hasAttribute('data-fecha')) { fechar(a.getAttribute('data-fecha')); return; }
-    if (a.hasAttribute('data-aba'))   { trocarAba(a.getAttribute('data-aba')); return; }
     if (a.hasAttribute('data-sobe'))  { mover(a.getAttribute('data-sobe'), -1); return; }
     if (a.hasAttribute('data-desce')) { mover(a.getAttribute('data-desce'), 1); return; }
     if (a.hasAttribute('data-favorito')) {
