@@ -134,6 +134,43 @@ nível no título. Marcando dois níveis, aparecem os dois — é o caso da turm
 mista. A linha do resumo também passa a dizer qual nível está filtrando, para
 não haver dúvida sobre de onde veio o número de exercícios.
 
+## A folha de treino — uma página A4 por exercício
+
+O plano impresso mostra **a aula inteira**, em lista, numa folha. A folha de
+treino é a outra coisa: **o exercício, um por página**, com tudo à vista e
+nada atrás de um toque. É o que o professor leva para a quadra e o que o aluno
+consegue ler sozinho — e é o formato que vira PDF.
+
+Dois botões chamam a mesma função:
+
+| onde | botão | o que sai |
+|---|---|---|
+| dentro da ficha | **🖨 folha** | uma página: aquele exercício |
+| no plano de aula | **🖨 folhas** | uma página por exercício do plano, na ordem |
+| no plano de aula | **🖨 plano** | o que já existia: a aula inteira numa folha |
+
+Para virar PDF: imprimir e escolher *Salvar como PDF* (no iPhone, o botão de
+compartilhar dentro da tela de impressão).
+
+A ordem da página é a mesma da ficha: faixa de dados, objetivo, desenho e
+passo a passo lado a lado, dica extra, as três colunas do rodapé, a espiral
+dos níveis e o critério de sucesso. Nada é escrito à mão — sai tudo do banco,
+então exercício novo já nasce com folha.
+
+**Detalhes que custaram para acertar:**
+
+- `print-color-adjust:exact` na folha. Sem isso o Chrome e o Safari imprimem a
+  faixa escura do cabeçalho em branco, porque fundo colorido, por padrão, não
+  vai para o papel.
+- As folhas são montadas **só na hora de imprimir** e desmontadas depois. Num
+  plano de seis exercícios seriam seis quadras desenhadas à toa dentro da
+  rolagem.
+- O `onafterprint` não é confiável no Safari do iPhone, então um tempo de 4
+  segundos é a rede de segurança que limpa a tela de qualquer jeito.
+- A página cabe em A4 com folga (as folhas medidas ficaram entre 930 e 1025 px
+  de 1040 úteis). Exercício com passo a passo muito longo é o que pode passar:
+  se acontecer, encurte um passo, não o corpo da letra.
+
 ## O desenho da quadra
 
 Cada exercício tem uma figura que mostra **quem está onde, para onde a bola vai,
@@ -252,6 +289,35 @@ dela — o caso do saque — medir uma vez sai mais barato que adivinhar. **O
 recorte do saque continua só de frente**, de propósito: a cabeça está inclinada
 para trás olhando o lançamento, não há faixa de cabelo para espelhar, e no
 tamanho do desenho quem conta a história ali é o braço levantado, não o rosto.
+
+### As duas poses que já são da JV
+
+Duas fotos de verdade, da JV, entraram como **poses com nome** — o quinto
+campo do elemento: `['aluno', x, y, 'rótulo', 'espera']`.
+
+| pose | o que é | onde está usada |
+|---|---|---|
+| `espera` | posição de espera, de costas, pés abertos | **D1** Estátua pronta · **D2** Split à batida · **T08** Semáforo |
+| `prepara` | raquete já no alto, de costas | **M01** Preparação na chegada |
+
+Elas **não** viraram a figura padrão, e a razão é honesta: a foto de espera
+não tem raquete na mão. Colocada nos 132 desenhos, todo mundo virava gente de
+pé com as pernas abertas — num diagrama de tênis a raquete é metade da
+leitura. Nos quatro exercícios acima ela é exatamente a pose certa, porque o
+exercício *é* a posição de espera; nos outros, a figura com raquete continua
+contando melhor a história.
+
+Cada pose tem uma versão por papel (`papel:{aluno, prof, colega}`), com a
+camisa repintada pelo `pintar-camisa.py`, senão os três papéis ficariam iguais
+e a legenda passaria a mentir. E `costasSo:true` diz que a pose só vale para
+quem está do lado de cá: pedida para alguém além da rede, o desenho volta
+sozinho para a foto de frente do papel.
+
+**O que falta para trocar TODAS as figuras pelas da JV:** fotos de costas
+**com a raquete na mão**, batendo — forehand, backhand, voleio e saque — e as
+mesmas poses de frente, para quem está além da rede. Duas das quatro fotos
+enviadas não deu para usar: estão em baixa resolução e com o movimento
+borrado (180×339 e 150×210 px), e no tamanho da folha A4 apareceria.
 
 O único número que não dá para deduzir é `olha`, em `RECORTES`: para que lado a
 pessoa bate **na foto**. Espelhar uma foto troca a mão dela — um destro vira

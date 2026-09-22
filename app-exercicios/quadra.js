@@ -110,12 +110,39 @@ const FOTOS = {};
    só, em três uniformes, mantém o estilo igual nos três — que é o que faz o
    desenho parecer de uma peça só — e devolve o papel à cor, em vez de exigir
    três pessoas diferentes. */
+/* Cada papel tem DUAS versões, porque a câmera fica atrás da linha de base:
+   `arq` é a foto de frente, para quem está além da rede, e `costas` é a de
+   trás, para quem está do lado de cá. Como são fotos diferentes, cada uma
+   traz a sua própria geometria — `altura` é a altura real do TOPO DA IMAGEM
+   acima do chão (na pose de espera a cabeça baixa; com a raquete no alto ela
+   passa de dois metros), `pe` é onde o pé cai dentro da imagem e `prop` é a
+   proporção do arquivo. Errar `altura` faz a pessoa flutuar ou afundar. */
 const RECORTES = {
-  aluno:  { arq:'jog-aluno.webp',  costas:'jog-aluno-costas.webp',  altura:1.85, pe:1.0, prop:0.62, olha:'dir' },
-  prof:   { arq:'jog-prof.webp',   costas:'jog-prof-costas.webp',   altura:1.85, pe:1.0, prop:0.62, olha:'dir' },
-  colega: { arq:'jog-colega.webp', costas:'jog-colega-costas.webp', altura:1.85, pe:1.0, prop:0.62, olha:'dir' },
-  // poses com nome, para um exercício pedir no quinto campo do elemento
-  saque:  { arq:'jog-saque.webp',  altura:1.82, pe:1.0, prop:0.47, olha:'esq' }
+  aluno:  { arq:'jog-aluno.webp',  altura:1.85, pe:1.0, prop:0.62, olha:'dir',
+            costas:{ arq:'jog-aluno-costas.webp',  altura:1.85, pe:1.0, prop:0.62, olha:'dir' } },
+  prof:   { arq:'jog-prof.webp',   altura:1.85, pe:1.0, prop:0.62, olha:'dir',
+            costas:{ arq:'jog-prof-costas.webp',   altura:1.85, pe:1.0, prop:0.62, olha:'dir' } },
+  colega: { arq:'jog-colega.webp', altura:1.85, pe:1.0, prop:0.62, olha:'dir',
+            costas:{ arq:'jog-colega-costas.webp', altura:1.85, pe:1.0, prop:0.62, olha:'dir' } },
+
+  /* POSES COM NOME — um exercício pede no quinto campo do elemento:
+     ['aluno', x, y, 'rótulo', 'espera'].
+
+     `espera` e `prepara` são FOTOS DA JV, de costas, uma por papel (`papel`
+     escolhe o arquivo pela cor da camisa). Como são de costas, só valem para
+     quem está do lado de cá: pedidas para alguém além da rede, `costasSo`
+     manda voltar para a foto de frente do papel.
+
+     `altura` é a altura real do TOPO DA IMAGEM acima do chão — na pose de
+     espera a cabeça baixa (1,70 m) e com a raquete no alto passa de dois
+     metros. Errar isso faz a pessoa flutuar ou afundar no saibro. */
+  saque:   { arq:'jog-saque.webp', altura:1.82, pe:1.0, prop:0.47, olha:'esq' },
+  espera:  { costasSo:true, altura:1.70, pe:1.0, prop:0.641, olha:'dir',
+             papel:{ aluno:'jv-espera-aluno.webp', prof:'jv-espera-prof.webp',
+                     colega:'jv-espera-colega.webp' } },
+  prepara: { costasSo:true, altura:2.34, pe:1.0, prop:0.396, olha:'dir',
+             papel:{ aluno:'jv-prepara-aluno.webp', prof:'jv-prepara-prof.webp',
+                     colega:'jv-prepara-colega.webp' } }
 };
 
 /* Cores do desenho. Saibro de verdade, porque é nele que a JV dá aula. */
@@ -438,7 +465,10 @@ function qRecorte(x, y, rot, tipo, nome){
   // costas para a rede — e parece bater na direção contrária à da bola.
   // Espelhar não resolve: o erro é de 180 graus, não de lado. Por isso cada
   // recorte tem a versão `costas`, feita pelo ferramentas/virar-de-costas.py.
-  var arq = (y > 0 && r.costas) ? r.costas : r.arq;
+  // pose de costas pedida para alguém ALÉM da rede: lá se vê de frente
+  if (r.costasSo && y <= 0) { r = RECORTES[tipo]; if (!r) return null; }
+  if (y > 0 && r.costas) r = r.costas;
+  var arq = r.papel ? (r.papel[tipo] || r.papel.aluno) : r.arq;
   var pe = proj(x, y, 0), topo = proj(x, y, r.altura || 1.78);
   var h = pe.y - topo.y;
   if (h < 3) h = 3;

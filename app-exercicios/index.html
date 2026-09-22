@@ -259,7 +259,7 @@ header.bar{
 .meta{background:var(--navy-2);border:1px solid var(--line-2);border-radius:11px;padding:10px 12px}
 .meta .k{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2)}
 .meta .v{font-size:14px;font-weight:700;color:#fff;margin-top:3px}
-.folha-acoes{display:flex;gap:9px;padding:0 16px 8px;position:sticky;bottom:0;background:var(--navy);
+.folha-acoes{display:flex;flex-wrap:wrap;gap:9px;padding:0 16px 8px;position:sticky;bottom:0;background:var(--navy);
   padding-top:12px;border-top:1px solid var(--line-2)}
 
 /* ---------- card de treino: o desenho e o passo a passo ---------- */
@@ -493,6 +493,100 @@ header.bar{
   .imprimivel{display:block;font-size:10.5px;color:#444;margin-top:12px;
     border-top:1px solid #999;padding-top:6px}
 }
+
+/* ==========================================================================
+   FOLHA DE TREINO — uma página A4 por exercício, para virar PDF
+   --------------------------------------------------------------------------
+   O plano impresso é a VISÃO DA AULA: tudo numa folha, em lista. Esta é a
+   outra coisa: a folha do exercício, uma por página, com tudo à vista e
+   nada escondido — é o que o professor leva para a quadra e o que o aluno
+   consegue ler sozinho. Sai do mesmo banco: nenhum texto é escrito à mão.
+   ========================================================================== */
+#folhasImp{display:none}
+@media print{
+  /* no modo folhas, só as folhas vão para o papel */
+  body.folhas>*{display:none!important}
+  body.folhas #folhasImp{display:block!important}
+  body.folhas{background:#fff!important}
+}
+@page{size:A4;margin:11mm}
+
+.ft{color:#16212B;font-size:9.5pt;line-height:1.36;page-break-after:always;
+  /* sem isto o Chrome e o Safari imprimem a faixa escura em branco */
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+.ft:last-child{page-break-after:auto}
+.ft h1,.ft h2,.ft h3{margin:0}
+
+/* cabeçalho: faixa escura com o código, o nome e a marca */
+.ft-top{background:#16212B;color:#fff;padding:5.5mm 7mm;border-radius:2.5mm;
+  position:relative;overflow:hidden;padding-right:44mm}
+.ft-top::after{content:"";position:absolute;right:-14mm;top:-14mm;width:42mm;height:42mm;
+  border-radius:50%;background:rgba(216,180,92,.12)}
+.ft-olho{font-size:7.6pt;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
+  color:#D8B45C;margin-bottom:1.4mm}
+.ft-top h1{font-size:19pt;font-weight:900;letter-spacing:-.01em;line-height:1.05}
+.ft-sub{font-size:8.6pt;color:rgba(255,255,255,.72);margin-top:1.2mm}
+.ft-marca{position:absolute;right:7mm;top:50%;transform:translateY(-50%);text-align:right;
+  font-size:7pt;font-weight:800;letter-spacing:.1em;color:rgba(255,255,255,.5);z-index:1}
+.ft-marca span{display:block;font-weight:600;letter-spacing:.02em;color:#D8B45C}
+
+/* faixa de dados: os cinco números antes de tudo, como na folha impressa */
+.ft-dados{display:grid;grid-template-columns:repeat(4,1fr) 1.65fr;gap:0;
+  border:.35mm solid #C9CFD5;border-radius:2mm;margin-top:3.5mm;overflow:hidden}
+.ft-dados>div{padding:2.6mm 3mm;border-left:.35mm solid #E2E6EA}
+.ft-dados>div:first-child{border-left:none}
+.ft-dados small{display:block;font-size:6.8pt;font-weight:800;letter-spacing:.13em;
+  text-transform:uppercase;color:#7A858F;margin-bottom:.7mm}
+.ft-dados b{font-size:9pt;font-weight:700;display:block}
+.ft-dados .obj{background:#F3F5F7}
+.ft-dados .obj b{font-weight:600;font-size:8.4pt;line-height:1.3}
+
+/* corpo: o desenho de um lado, o passo a passo do outro */
+.ft-corpo{display:grid;grid-template-columns:1.2fr 1fr;gap:4mm;margin-top:3.5mm}
+.ft-qd{border:.35mm solid #C9CFD5;border-radius:2mm;overflow:hidden}
+.ft-qd svg{display:block;width:100%;height:auto}
+.ft-legenda{margin:0;padding:2.4mm 3mm;font-size:8.4pt;background:#F3F5F7;
+  border-top:.35mm solid #E2E6EA}
+.ft-montagem{margin:0;padding:2.2mm 3mm;font-size:8pt;color:#41505C;
+  border-top:.35mm solid #E2E6EA}
+.ft-passos h2,.ft-tres h3,.ft-niveis h3{font-size:8pt;font-weight:900;letter-spacing:.13em;
+  text-transform:uppercase;color:#41505C;margin-bottom:2mm}
+.ft-passos ol{list-style:none;margin:0;padding:0;display:grid;gap:1.8mm}
+.ft-passos li{display:flex;gap:2.4mm;align-items:flex-start;font-size:8.8pt}
+.ft-passos li i{flex:0 0 4.6mm;height:4.6mm;border-radius:1.4mm;background:#16212B;color:#fff;
+  font-size:7.4pt;font-weight:900;font-style:normal;display:flex;align-items:center;
+  justify-content:center;margin-top:.2mm}
+.ft-dica{margin-top:3mm;border:.35mm solid #D8B45C;border-left:1.2mm solid #D8B45C;
+  border-radius:2mm;background:#FBF6E9;padding:2.6mm 3mm}
+.ft-dica h3{font-size:7.6pt;font-weight:900;letter-spacing:.13em;text-transform:uppercase;
+  color:#8A6A18;margin-bottom:1.2mm}
+.ft-dica p{margin:0;font-size:8.4pt}
+
+/* as três colunas do rodapé, as três à vista */
+.ft-tres{display:grid;grid-template-columns:repeat(3,1fr);gap:3mm;margin-top:3.5mm}
+.ft-tres>div{border:.35mm solid #C9CFD5;border-radius:2mm;padding:2.6mm 3mm;border-top:1mm solid}
+.ft-tres .ok{border-top-color:#5E8C3A}
+.ft-tres .err{border-top-color:#C4622F}
+.ft-tres .dif{border-top-color:#3D7FA8}
+.ft-tres ul{list-style:none;margin:0;padding:0;display:grid;gap:1.1mm}
+.ft-tres li{font-size:8.2pt;padding-left:2.8mm;position:relative}
+.ft-tres li::before{content:"•";position:absolute;left:0;color:#9AA4AD}
+.ft-tres li.primeiro{font-weight:700}
+.ft-tres li.primeiro::before{content:"!";color:#C4622F;font-weight:900}
+
+/* a espiral: o mesmo exercício em cada nível, que na tela mora numa gaveta */
+.ft-niveis{margin-top:3.5mm;border:.35mm solid #C9CFD5;border-radius:2mm;padding:2.6mm 3mm}
+.ft-nv{display:grid;grid-template-columns:20mm 1fr;gap:2mm;font-size:8pt;
+  padding:1.1mm 0;border-top:.3mm solid #EDF0F2}
+.ft-nv:first-of-type{border-top:none}
+.ft-nv b{font-weight:800;color:#41505C}
+.ft-nv.foco{background:#FBF6E9;margin:0 -3mm;padding-left:3mm;padding-right:3mm}
+
+.ft-fim{margin-top:3.5mm;display:grid;gap:1.6mm}
+.ft-ok{margin:0;border:.35mm solid #5E8C3A;border-radius:2mm;background:#F2F7ED;
+  padding:2.4mm 3mm;font-size:8.6pt}
+.ft-kids{margin:0;font-size:8.2pt;color:#41505C}
+.ft-rod{margin:0;font-size:7.2pt;color:#7A858F;border-top:.3mm solid #D8DDE2;padding-top:1.6mm}
 </style>
 </head>
 <body>
@@ -599,7 +693,8 @@ header.bar{
     <div class="folha-corpo" id="planoCorpo"></div>
     <div class="folha-acoes">
       <button class="btn btn-esc pq" id="btnLimparPlano">Limpar</button>
-      <button class="btn btn-line pq" id="btnImprimir">Imprimir</button>
+      <button class="btn btn-line pq" id="btnImprimir" title="O plano inteiro numa folha">🖨 plano</button>
+      <button class="btn btn-line pq" id="btnFolhas" title="Uma folha A4 por exercício">🖨 folhas</button>
       <button class="btn btn-gold" id="btnCopiar">Copiar / enviar</button>
     </div>
   </div>
@@ -653,6 +748,10 @@ header.bar{
 
 <script src="quadra.js"></script>
 <script src="exercicios.js"></script>
+
+<!-- as folhas de treino, montadas só na hora de imprimir -->
+<div id="folhasImp" aria-hidden="true"></div>
+
 <script>
 'use strict';
 
@@ -968,9 +1067,103 @@ function abrirFicha(id){
   '</div>' +
   '<div class="folha-acoes">' +
     '<button class="btn btn-esc pq" data-favorito="' + e.id + '">' + (FAV.indexOf(e.id) >= 0 ? '★' : '☆') + '</button>' +
+    '<button class="btn btn-line pq" data-folha="' + e.id + '" title="Folha A4 deste exercício">🖨 folha</button>' +
     '<button class="btn btn-gold" data-add="' + e.id + '">' + (dentro ? '✓ no plano — tirar' : '+ pôr no plano') + '</button>' +
   '</div>';
   abrir('fundoFicha');
+}
+
+/* ==========================================================================
+   FOLHA DE TREINO — uma página A4 por exercício
+   --------------------------------------------------------------------------
+   O plano impresso mostra A AULA inteira em lista. Esta função monta a outra
+   coisa que faltava: a folha DO EXERCÍCIO, uma por página, com tudo à vista
+   e nada atrás de um toque — é o que vai para a quadra e o que o aluno lê
+   sozinho. Todo texto sai do banco; nada aqui é escrito à mão.
+   ========================================================================== */
+function folhaTreino(e, minutos, nivelSel){
+  var c = camada(e.camada), b = bloco(e.bloco);
+  var temas = e.tema.map(function(t){ var x = tema(t); return x ? x.nome : t; }).join(' · ');
+  var mats = e.mat.map(function(m){ var x = material(m); return x ? x.nome : m; }).join(', ');
+  var nvs  = e.niveis.map(function(n){ var x = nivel(n); return x ? x.nome : n; }).join(' · ');
+  var intTx = { baixa:'Baixa', media:'Média', alta:'Alta' }[e.int];
+
+  function itens(lista, primeiro){
+    return '<ul>' + lista.map(function(t, i){
+      return '<li' + (i === 0 && primeiro ? ' class="primeiro"' : '') + '>' + esc(t) + '</li>';
+    }).join('') + '</ul>';
+  }
+  var linhasNivel = NIVEIS.filter(function(n){ return e.prog && e.prog[n.id]; }).map(function(n){
+    return '<div class="ft-nv' + (nivelSel === n.id ? ' foco' : '') + '">' +
+      '<b>' + esc(n.nome) + '</b><span>' + esc(e.prog[n.id]) + '</span></div>';
+  }).join('');
+
+  return '' +
+  '<section class="ft">' +
+    '<header class="ft-top">' +
+      '<div class="ft-olho">Exercício ' + esc(e.id) + ' · ' + esc(b.nome) + '</div>' +
+      '<h1>' + esc(e.nome) + '</h1>' +
+      '<div class="ft-sub">' + esc(e.transv ? 'Transversal — serve em qualquer mês' : temas) +
+        ' · Camada ' + e.camada + ' — ' + esc(c.nome) + ' · Intensidade ' + intTx + '</div>' +
+      '<div class="ft-marca">Academia JV Tênis<span>Da Base ao Topo</span></div>' +
+    '</header>' +
+
+    '<div class="ft-dados">' +
+      '<div><small>Nível</small><b>' + esc(nvs) + '</b></div>' +
+      '<div><small>Duração</small><b>' + (minutos || e.min) + ' min</b></div>' +
+      '<div><small>Jogadores</small><b>' + esc(quantosJogadores(e)) + '</b></div>' +
+      '<div><small>Materiais</small><b>' + esc(mats) + '</b></div>' +
+      '<div class="obj"><small>Objetivo</small><b>' + esc(e.objetivo) + '</b></div>' +
+    '</div>' +
+
+    '<div class="ft-corpo">' +
+      '<div class="ft-qd">' + svgQuadra(e.fig) +
+        (e.fig && e.fig.nota ? '<p class="ft-legenda">' + esc(e.fig.nota) + '</p>' : '') +
+        '<p class="ft-montagem"><b>Montagem:</b> ' + esc(e.montagem) + '</p>' +
+      '</div>' +
+      '<div class="ft-passos">' +
+        '<h2>Como aplicar</h2>' +
+        '<ol>' + (e.passos || []).map(function(t, i){
+          return '<li><i>' + (i + 1) + '</i><span>' + esc(t) + '</span></li>'; }).join('') + '</ol>' +
+        (e.dica ? '<div class="ft-dica"><h3>Dica extra</h3><p>' + esc(e.dica) + '</p></div>' : '') +
+      '</div>' +
+    '</div>' +
+
+    '<div class="ft-tres">' +
+      '<div class="ok"><h3>Foco do professor</h3>' + itens(e.foco || []) + '</div>' +
+      '<div class="err"><h3>Erros mais comuns</h3>' + itens([e.erro].concat(e.erros || []), true) + '</div>' +
+      '<div class="dif"><h3>Como dificultar</h3>' + itens(e.dificultar || []) + '</div>' +
+    '</div>' +
+
+    (linhasNivel ? '<div class="ft-niveis"><h3>O mesmo exercício em cada nível</h3>' +
+      linhasNivel + '</div>' : '') +
+
+    '<div class="ft-fim">' +
+      '<p class="ft-ok"><b>Funcionou se:</b> ' + esc(e.sucesso) + '</p>' +
+      (e.kids ? '<p class="ft-kids"><b>Versão Kids:</b> ' + esc(e.kids) + '</p>' : '') +
+      '<p class="ft-rod">Academia JV Tênis · Metodologia Da Base ao Topo · banco ' +
+        esc(VERSAO_BANCO) + ' · ficha ' + esc(e.id) + '</p>' +
+    '</div>' +
+  '</section>';
+}
+
+/* Monta as folhas, manda imprimir e desmonta. Ficam fora da tela até o
+   momento da impressão para não pesar a rolagem com mais um desenho por
+   exercício — no plano de 6 exercícios seriam seis quadras desenhadas à toa. */
+function imprimirFolhas(lista){
+  if (!lista.length) return;
+  el('folhasImp').innerHTML = lista.map(function(x){
+    return folhaTreino(x.ex, x.min, PLANO.nivel || (F.niveis.length === 1 ? F.niveis[0] : ''));
+  }).join('');
+  document.body.classList.add('folhas');
+  var limpar = function(){
+    document.body.classList.remove('folhas');
+    el('folhasImp').innerHTML = '';
+  };
+  // o onafterprint não é confiável no Safari do iPhone: o tempo é a rede de segurança
+  window.onafterprint = function(){ limpar(); window.onafterprint = null; };
+  setTimeout(limpar, 4000);
+  window.print();
 }
 
 /* Quantos alunos a atividade comporta — derivado dos formatos que ela atende,
@@ -1906,7 +2099,7 @@ function ligar(){
   ligarGestos();
   document.addEventListener('click', function(ev){
     if (ARRASTOU) { ARRASTOU = false; return; }
-    var a = ev.target.closest ? ev.target.closest('[data-tema],[data-nivel],[data-bloco],[data-ficha],[data-add],[data-fecha],[data-favorito],[data-sobe],[data-desce],[data-editar],[data-marca],[data-trocar],[data-mais],[data-escolher]') : null;
+    var a = ev.target.closest ? ev.target.closest('[data-tema],[data-nivel],[data-bloco],[data-ficha],[data-add],[data-fecha],[data-favorito],[data-sobe],[data-desce],[data-folha],[data-editar],[data-marca],[data-trocar],[data-mais],[data-escolher]') : null;
     if (!a) return;
 
     if (a.hasAttribute('data-marca')) {
@@ -1931,6 +2124,11 @@ function ligar(){
     if (a.hasAttribute('data-fecha')) { fechar(a.getAttribute('data-fecha')); return; }
     if (a.hasAttribute('data-sobe'))  { mover(a.getAttribute('data-sobe'), -1); return; }
     if (a.hasAttribute('data-desce')) { mover(a.getAttribute('data-desce'), 1); return; }
+    if (a.hasAttribute('data-folha')) {
+      var exF = acharEx(a.getAttribute('data-folha'));
+      if (exF) imprimirFolhas([{ ex:exF, min:minNoPlano(exF.id) || exF.min }]);
+      return;
+    }
     if (a.hasAttribute('data-favorito')) {
       var id = a.getAttribute('data-favorito'), i = FAV.indexOf(id);
       if (i >= 0) FAV.splice(i, 1); else FAV.push(id);
@@ -1986,6 +2184,12 @@ function ligar(){
   el('btnMontar').addEventListener('click', function(){ montarAuto(60); });
   el('btnCopiar').addEventListener('click', copiarPlano);
   el('btnImprimir').addEventListener('click', function(){ window.print(); });
+  el('btnFolhas').addEventListener('click', function(){
+    imprimirFolhas(PLANO.itens.map(function(i){
+      var ex = acharEx(i.id);
+      return ex ? { ex:ex, min:minNoPlano(i.id) } : null;
+    }).filter(Boolean));
+  });
   el('btnLimparPlano').addEventListener('click', function(){
     if (!PLANO.itens.length || window.confirm('Limpar o plano de aula inteiro?')) {
       PLANO.itens = []; PLANO.tema = ''; guardar(CH_PLANO, PLANO); atualizar(); desenharPlano();

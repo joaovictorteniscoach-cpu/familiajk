@@ -167,7 +167,7 @@ const EX = [
   nec:['footwork','equilibrio','coordenacao'],
   kids:`"Batata-quente congelada": música toca, todos se movem; música para, todos viram estátua de tenista.` ,
   fig:{base:'mini', el:[
-    ['aluno',-2.4,4.6,''], ['aluno',1.2,5.8,''], ['aluno',2.8,3.2,''],
+    ['aluno',-2.4,4.6,'','espera'], ['aluno',1.2,5.8,'','espera'], ['aluno',2.8,3.2,'','espera'],
     ['texto',0,7.4,'ao comando, todos congelam',.6]
   ], nota:`Alunos espalhados na quadra; ao comando "estátua!", todos congelam em posição de espera.`},
   passos:[`Espalhe os alunos pela quadra, sem raquete.`, `Deslocamento livre e leve, em qualquer direção.`, `Ao comando “estátua!”, todos congelam na posição de espera.`, `Corrija fisicamente, aluno por aluno, com a turma congelada: joelho, peso, mãos.`, `Solte e repita. Cinco comandos por série.`],
@@ -192,7 +192,7 @@ const EX = [
   mat:['nada','celular'], form:['particular','dupla','trio','kids'],
   nec:['footwork','leitura','equilibrio'] ,
   fig:{base:'inteira', el:[
-    ['aluno',0,11.4,'split no contato'], ['prof',0,-11.2,'bate'],
+    ['aluno',0,11.4,'split no contato','espera'], ['prof',0,-11.2,'bate'],
     ['bola',0,-10.8, 2.6,9.0, .18, ''],
     ['mov',0,11.2, 1.8,10.0, .12, 'primeiro passo']
   ], nota:`O aluno salta no exato momento do contato do professor e dá o primeiro passo na direção da bola.`},
@@ -753,7 +753,7 @@ const EX = [
   mat:['cones','cesta'], form:['particular','dupla','trio'],
   nec:['footwork','profundidade','consistencia'] ,
   fig:{base:'fundo', el:[
-    ['aluno',0,10.4,''],
+    ['aluno',0,10.4,'','prepara'],
     ['cone',-3.0,10.0,''], ['cone',3.0,10.0,''],
     ['bola',-4.6,5.0, 3.0,9.6, .2, ''],
     ['mov',0.2,10.4, 2.8,9.8, .12, ''],
@@ -3352,7 +3352,7 @@ const EX = [
   nec:['footwork','coordenacao','equilibrio'],
   kids:`Quem errar o comando volta uma "casa" (um cone). O primeiro a chegar na rede ganha a rodada.` ,
   fig:{base:'meia', el:[
-    ['aluno',-2.4,10.6,''], ['aluno',0,11.0,''], ['aluno',2.4,10.6,''],
+    ['aluno',-2.4,10.6,'','espera'], ['aluno',0,11.0,'','espera'], ['aluno',2.4,10.6,'','espera'],
     ['mov',-2.4,10.2, -2.4,2.2, .0, 'verde: corre'],
     ['marca',0,6.4,'amarelo: passinhos de ajuste'],
     ['texto',0,13.2,'vermelho: congela em posição de espera',.5]

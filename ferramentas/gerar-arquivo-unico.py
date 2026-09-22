@@ -63,9 +63,12 @@ html = re.sub(
 # nao sao declaracao nenhuma, e apareciam como foto faltando
 codigo = re.sub(r'/\*.*?\*/', '', html, flags=re.S)
 codigo = '\n'.join(l for l in codigo.split('\n') if not l.lstrip().startswith('//'))
-# `arq` e a foto de frente; `costas` e a mesma pessoa vista por tras, usada
-# para quem esta do lado de ca da camera. As duas precisam entrar.
-fotos = sorted(set(re.findall(r"(?:arq|costas):'([^']+)'", codigo)))
+# Pega QUALQUER nome de arquivo de imagem escrito no codigo — `arq`, `costas`
+# e os arquivos por papel dentro de `papel:{...}`. Casar campo por campo dava
+# foto de fora toda vez que o quadra.js ganhava um campo novo, e o 404 so'
+# aparecia em quadra. So' entra o que existe mesmo na pasta.
+fotos = sorted(set(n for n in re.findall(r"'([A-Za-z0-9._-]+\.(?:webp|png|jpe?g))'", codigo)
+                   if os.path.exists(os.path.join(APP, n))))
 embutidas = []
 for nome in fotos:
     caminho = os.path.join(APP, nome)
@@ -75,9 +78,7 @@ for nome in fotos:
     n = nome.lower()
     tipo = ('image/png' if n.endswith('.png') else
             'image/webp' if n.endswith('.webp') else 'image/jpeg')
-    uri = dataUri(nome, tipo)
-    for campo in ('arq', 'costas'):
-        html = html.replace("%s:'%s'" % (campo, nome), "%s:'%s'" % (campo, uri))
+    html = html.replace("'%s'" % nome, "'%s'" % dataUri(nome, tipo))
     embutidas.append(nome)
 if embutidas:
     print('fotos embutidas: %s' % ', '.join(embutidas))
