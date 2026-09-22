@@ -593,6 +593,9 @@ table.tbl.livre td:last-child{width:42%}
       <div class="kpi"><div class="k">Entradas</div><div class="v up" id="cat-entrada">—</div></div>
       <div class="kpi"><div class="k">Saldo</div><div class="v" id="cat-saldo">—</div></div>
       <div class="kpi"><div class="k">Lançamentos</div><div class="v" id="cat-n">—</div></div>
+    </div>
+    <p class="note" id="cat-fora"></p>
+    <div class="kpis">
       <div class="kpi"><div class="k" id="cat-k-preto">João</div><div class="v down" id="cat-preto">—</div></div>
       <div class="kpi"><div class="k" id="cat-k-preta">Kassiana</div><div class="v down" id="cat-preta">—</div></div>
     </div>
@@ -1043,27 +1046,42 @@ function valorDe(t,quem){
   if(t.pes==='ambos')return v/2;
   return 0;
 }
-function gastoPessoa(txs,quem){return (txs||[]).filter(t=>t.amount<0).reduce((s,t)=>s+valorDe(t,quem),0);}
+/* ---------- o que NÃO entra na soma do mês ----------
+   Pagar a fatura do cartão não é um gasto novo: as compras daquela fatura já
+   foram contadas uma a uma. Contar as duas coisas dobra o mês inteiro. O
+   mesmo vale para aplicar dinheiro ou mandar para uma conta sua.
+
+   A categoria é o próprio controle: pôr um lançamento em "Cartão de crédito"
+   tira ele da soma, e tirar de lá devolve. Sem caixinha escondida. */
+const CAT_FORA_DA_SOMA=["Cartão de crédito"];
+function naoSoma(t){return !!(t&&(t.nc===true||CAT_FORA_DA_SOMA.includes(t.cat)));}
+function txSoma(txs){return (txs||[]).filter(t=>!naoSoma(t));}
+function gastoPessoa(txs,quem){return txSoma(txs).filter(t=>t.amount<0).reduce((s,t)=>s+valorDe(t,quem),0);}
 /* aprende de quem é, pelo nome — igual ao aprendizado da categoria */
 function pesDe(desc,padrao){
   const d=norm(desc);
   for(const k in (D.contas.pesMemory||{})){if(k&&k.length>=3&&d.includes(k))return D.contas.pesMemory[k];}
   return PES_VALIDO.includes(padrao)?padrao:(D.contas.exPessoa||'ambos');
 }
-const CATEGORIAS=["Moradia","Mercado","Alimentação","Transporte","Saúde","Educação","Assinaturas","Lazer","Compras","Serviços","Tarifas/Impostos","Pets","Entradas","Outros"];
-const CATPAL=["#d4a23a","#4fbfa8","#e6c277","#8fb6c9","#c98f8f","#7f9c8b","#b39ddb","#86e2d0","#f0a868","#9aa0ad","#c07b7b","#8bbf9f","#5fd08a","#6b7b82"];
+const CATEGORIAS=["Moradia","Mercado","Alimentação","Bebidas","Combustível","Transporte","Saúde","Seguro",
+  "Educação","Assinaturas","Lazer","Compras","Serviços","Tarifas/Impostos","Pets","Cartão de crédito","Entradas","Outros"];
+const CATPAL=["#d4a23a","#4fbfa8","#e6c277","#a98fd0","#f0a868","#8fb6c9","#c98f8f","#6fa8c9",
+  "#7f9c8b","#b39ddb","#86e2d0","#e59ac0","#9aa0ad","#c07b7b","#8bbf9f","#d0b48f","#5fd08a","#6b7b82"];
 const CAT_KW=[
  ["Moradia",["aluguel","condominio","imobiliaria","energia","cemig","enel","cpfl","light","copel","celesc","sabesp","copasa","sanepar","agua","gas ","iptu","internet","fibra","vivo","claro","net ","tim ","oi ","nextel","sky","hughesnet","starlink","sindico","gas natural","ultragaz","liquigas","copagaz"]],
+ ["Bebidas",["adega","bebidas","cervej","chopp","chope","ze delivery","zedelivery","distribuidora de bebida","emporio da cerveja","destilados","vinho","wine","whisky","vodka","choperia","taberna"]],
+ ["Combustível",["posto","gasolina","combustivel","etanol","alcool comb","diesel","ipiranga","shell","petrobras","texaco","raizen","ale combust","rodoil","gnv","abastecimento","auto posto","br mania","charrua","sim rede de posto"]],
+ ["Seguro",["seguro ","seguros","seguradora","apolice","porto seguro","tokio marine","mapfre","allianz","sulamerica seg","sul america seg","bradesco seg","itau seguros","azul seguros","hdi seg","liberty seg","zurich","sompo","icatu","metlife","prudential","cardif","suhai","youse"]],
  ["Mercado",["mercado","supermerc","atacad","assai","carrefour","pao de acucar","angeloni","zaffari","hortifruti","sacolao","havan","atacadao","tenda","dia ","big ","fort ","comper","sonda","tenda atacado","sam s club","makro","acougue","quitanda","emporio","armazem","mercearia"]],
  ["Alimentação",["ifood","rappi","restaurante","lanchonete","pizzaria","burger","mcdonald","bk ","subway","padaria","cafe","boteco","habib","outback","spoleto","food","doceria","sorveteria","mc donald","giraffas","madero","coco bambu","confeitaria","cafeteria","starbucks","churrascaria","espetinho","lanche","bar ","aiqfome"]],
- ["Transporte",["uber","99app","99 ","cabify","posto","gasolina","combustivel","ipiranga","shell","petrobras","estacion","pedagio","sem parar","conectcar","veloe","onibus","metro","mecanic","oficina","seguro auto","ipva","detran","licenciamento","autopista","99pop","99 pop","indriver","blablacar","zul digital","zona azul","cet ","borracharia","autopecas","auto pecas","lava rapido","lavajato","ecovias","arteris","pneu"]],
+ ["Transporte",["uber","99app","99 ","cabify","estacion","pedagio","sem parar","conectcar","veloe","onibus","metro","mecanic","oficina","ipva","detran","licenciamento","autopista","99pop","99 pop","indriver","blablacar","zul digital","zona azul","cet ","borracharia","autopecas","auto pecas","lava rapido","lavajato","ecovias","arteris","pneu","taxi","buser","clickbus","rodoviaria"]],
  ["Saúde",["farmacia","drogaria","droga ","pague menos","raia","drogasil","panvel","hospital","clinica","laboratorio","medic","dentista","psicolog","plano de saude","unimed","amil","hapvida","academia","smartfit","gympass","wellhub","odonto","sulamerica","sul america","bradesco saude","notredame","intermedica","exame","fisioterapia","psiquiatra","terapia","oftalmo","dermato","ortopedi","vacina","otica"]],
  ["Educação",["escola","faculdade","universidade","curso","udemy","alura","colegio","material escolar","livraria","kindle","descomplica","coursera","duolingo","kumon","wizard","ccaa","fisk","cultura inglesa"]],
  ["Assinaturas",["netflix","spotify","disney","hbo","max ","prime video","amazon prime","paramount","globoplay","youtube premium","apple.com","apple ","icloud","google ","microsoft","office","adobe","chatgpt","openai","canva","melimax","dropbox","deezer","tidal","office 365","microsoft 365"]],
  ["Lazer",["cinema","steam","playstation","xbox","nintendo","viagem","hotel","airbnb","booking","decolar","latam","gol ","azul ","ingresso","show ","evento","parque","clube","cinemark","cinepolis","uci ","sympla","eventim","123 milhas","hoteis","pousada","azul linhas","gol linhas","netshoes ingresso"]],
  ["Compras",["amazon","mercado livre","mercadolivre","magazine","magalu","americanas","shopee","aliexpress","shein","renner","riachuelo","c&a","zara","centauro","nike","adidas","shopping","loja","marisa","leroy","kabum","casas bahia","decathlon","netshoes","dafiti","cea","pernambucanas","telha norte","ponto frio","pichau","temu"]],
  ["Serviços",["cartorio","correios","lavanderia","barbearia","salao","cabeleireiro","manicure","contador","advogado","chaveiro","picpay","mercado pago","pagseguro","pagbank","stone","cielo","rede ","getnet","sumup","infinitepay","electron","tin-","cartao de credito maquin","estetica","encanador","eletricista","diarista","faxina"]],
- ["Tarifas/Impostos",["tarifa","juros","iof","anuidade","imposto","darf","das ","inss","fgts","multa","taxa ","tributo","crefisa","emprestimo","financiamento","consignado","credito pessoal","seguro auto","seguro de vida","porto seguro","itau seguros","tokio marine","mapfre","allianz","ted ","doc ","pacote de servicos","cesta de servicos"]],
+ ["Tarifas/Impostos",["tarifa","juros","iof","anuidade","imposto","darf","das ","inss","fgts","multa","taxa ","tributo","crefisa","emprestimo","financiamento","consignado","credito pessoal","ted ","doc ","pacote de servicos","cesta de servicos","manutencao de conta"]],
  ["Pets",["pet ","petshop","pet shop","veterinar","cobasi","petz","racao","petlove","veterinari","banho e tosa"]],
  ["Entradas",["salario","recebido","pix recebid","deposito","rendimento","estorno","reembolso","provento","transferencia recebid","ted recebid","credito receb","pagamento receb"]]
 ];
@@ -1241,7 +1259,7 @@ function migrateContas(o){
   Object.keys(o.pesMemory).forEach(k=>{if(!PES_VALIDO.includes(o.pesMemory[k]))delete o.pesMemory[k];});
   if(!PES_VALIDO.includes(o.exPessoa))o.exPessoa='ambos';
   /* transação antiga não tinha dono: entra como dividida, que é o neutro */
-  (o.transacoes||[]).forEach(t=>{if(!PES_VALIDO.includes(t.pes))t.pes='ambos';});
+  (o.transacoes||[]).forEach(t=>{if(!PES_VALIDO.includes(t.pes))t.pes='ambos';if(t.nc!==true)t.nc=false;});
   /* Studio Kassiana — segundo negócio (os dados antigos ficam todos na Empresa JV) */
   if(!Array.isArray(o.empresaKS))o.empresaKS=[];
   if(!o.empSel)o.empSel='jv';
@@ -3099,12 +3117,24 @@ const CAT_MARCA=[
   [/mercado ?pago|mercadopago|mp \*/,"Serviços"],
   [/casa ?do ?constru|constru ?mega|telha ?norte|leroy/,"Compras"],
   [/farmacia ?pague ?menos|pague ?menos/,"Saúde"],
-  [/posto ?ipiranga|ipiranga ?abastec/,"Transporte"]
+  /* "posto" quase sempre é combustível, menos quando é posto de saúde */
+  [/posto ?de ?saude|posto ?medico|unidade ?basica|ubs\b/,"Saúde"],
+  [/posto ?ipiranga|ipiranga ?abastec|auto ?posto|posto ?shell|shell ?select|posto ?petrobras|br ?mania/,"Combustível"],
+  [/ze ?delivery|zedelivery|distribuidora ?de ?bebida|empori?o ?da ?cerveja|adega\b/,"Bebidas"],
+  /* bebida comprada DENTRO do mercado não vira Bebidas: a linha é do mercado */
+  [/(super)?mercado|atacad|assai|carrefour|angeloni|zaffari/,"Mercado"]
 ];
+function ehPagamentoFatura(desc){
+  const d=norm(desc);
+  return TX_CARTAO.some(k=>d.includes(norm(k)));
+}
 function categorize(desc,amount){
   const d=norm(desc);
   for(const key in D.contas.catMemory){if(key&&key.length>=3&&d.includes(key))return D.contas.catMemory[key];}
   if(amount>0)return "Entradas";
+  /* antes de qualquer palavra-chave: "PAGTO FATURA CARTAO XP" tem "xp" dentro
+     e cairia em investimento; "cartao de credito" cairia em Serviços */
+  if(ehPagamentoFatura(desc))return "Cartão de crédito";
   for(const [re,cat] of CAT_MARCA){if(re.test(d))return cat;}
   for(const pair of CAT_KW){if(pair[0]==="Entradas")continue;if(pair[1].some(k=>catMatch(d,k)))return pair[0];}
   return "Outros";
@@ -3164,13 +3194,21 @@ function pareceBinario(t){
   return (amostra.length&&ruins/amostra.length>0.06)?'arquivo binário':false;
 }
 /* respeita as caixas de seleção do modal */
-function txIgnorado(x){
-  if(x.tipo==='saldo')return true;           /* nunca conta: não é lançamento */
-  if(x.jaTem)return true;                    /* já está salvo, não conta de novo */
+/* fora da SOMA, mas ainda assim gravado — você precisa ver que o pagamento
+   da fatura aconteceu, só não quer ele somando duas vezes */
+function txNaoConta(x){
   if(x.tipo==='cartao')return !((document.getElementById('ex-cartao')||{}).checked===false);
   if(x.tipo==='invest')return !((document.getElementById('ex-invest')||{}).checked===false);
   return false;
 }
+function txIgnorado(x){
+  if(x.tipo==='saldo')return true;           /* nunca conta: não é lançamento */
+  if(x.jaTem)return true;                    /* já está salvo, não conta de novo */
+  return txNaoConta(x);
+}
+/* tudo que vale a pena gravar: linha de saldo do banco não é lançamento, e o
+   que já está salvo não entra de novo. O resto entra — contando ou não. */
+function txSalvaveis(){return extratoTxns.filter(x=>x.tipo!=='saldo'&&!x.jaTem);}
 /* esta linha já foi importada numa vez anterior? */
 function jaImportado(x){
   const k=txKey(x);
@@ -3248,17 +3286,24 @@ function renderExtratoPreview(){
   document.getElementById('tbl-extrato').innerHTML=h;
 }
 function exSaveTx(){
-  if(!extratoTxns.length)return;let n=0;
-  /* só o que conta: fora ficam saldo do dia, já lançados e o que as caixas
-     de seleção pedem para deixar de fora */
-  txContaveis().forEach(x=>{
+  if(!extratoTxns.length)return;let n=0,fora=0;
+  /* Grava tudo que é lançamento de verdade, inclusive o que não soma. Antes
+     essas linhas eram simplesmente descartadas: o pagamento da fatura sumia
+     do app e não dava para conferir que ele tinha acontecido. Agora fica
+     gravado e marcado — visível na lista, fora da soma. */
+  txSalvaveis().forEach(x=>{
     const key=txKey(x);
     if(D.contas.transacoes.some(t=>t._k===key))return;
+    const nc=txNaoConta(x);
     D.contas.transacoes.push({_k:key,date:x.date||'',mes:mesFromDate(x.date),desc:(x.desc||'').slice(0,60),
-      amount:x.amount,cat:x.cat||categorize(x.desc,x.amount),pes:x.pes||'ambos'});n++;
+      amount:x.amount,cat:x.cat||categorize(x.desc,x.amount),pes:x.pes||'ambos',nc:nc});
+    n++;if(nc)fora++;
   });
   save();closeExtrato();safeRun(renderCategorias);
-  alert(n?('Salvei '+n+' transação(ões) já separadas por categoria. Veja na aba Categorias (modo Contas).'):'Essas transações já estavam salvas — nada duplicado.');
+  alert(n?('Salvei '+n+' transação(ões) já separadas por categoria.'
+      +(fora?('\n'+fora+' ficaram gravadas MAS fora da soma (fatura do cartão / dinheiro seu), para não contar duas vezes.'):'')
+      +'\nVeja na aba Categorias (modo Contas).')
+    :'Essas transações já estavam salvas — nada duplicado.');
 }
 function parseTextExtrato(text){
   const out=[];
@@ -3570,21 +3615,31 @@ function renderCategorias(){
   const sel=document.getElementById('cat-mes');
   if(sel)sel.innerHTML=meses.map(m=>'<option'+(m===catFiltroMes?' selected':'')+'>'+m+'</option>').join('');
   const tx=all.filter(t=>catFiltroMes==='Todos'||t.mes===catFiltroMes);
-  const gasto=tx.filter(t=>t.amount<0).reduce((s,t)=>s-t.amount,0);
-  const entrada=tx.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
+  /* a soma usa só o que conta; a LISTA mostra tudo, inclusive o que ficou de fora */
+  const txC=txSoma(tx),txFora=tx.filter(naoSoma);
+  const gasto=txC.filter(t=>t.amount<0).reduce((s,t)=>s-t.amount,0);
+  const entrada=txC.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
+  const foraVal=txFora.reduce((s,t)=>s+Math.abs(+t.amount||0),0);
   set('cat-gasto',brl(gasto));set('cat-entrada',brl(entrada));
+  const ef=document.getElementById('cat-fora');
+  if(ef)ef.innerHTML=txFora.length
+    ? ('<b>'+txFora.length+' lançamento(s) fora da soma</b> — '+brl(foraVal)
+      +'. É a fatura do cartão e o dinheiro que você mandou para você mesmo: as compras '
+      +'daquela fatura já foram contadas uma a uma, então somar o pagamento contaria o mês duas vezes. '
+      +'Para incluir algum, troque a categoria dele na lista abaixo.')
+    : '';
   const es=document.getElementById('cat-saldo');if(es){es.textContent=brl(entrada-gasto);es.className='v '+((entrada-gasto)>=0?'up':'down');}
   set('cat-n',tx.length+'');
   /* quanto do gasto é de cada um — "os dois" conta metade para cada */
   set('cat-k-preto',pesNome('preto'));set('cat-k-preta',pesNome('preta'));
   set('cat-preto',brl(gastoPessoa(tx,'preto')));set('cat-preta',brl(gastoPessoa(tx,'preta')));
-  const map={},cnt={};tx.filter(t=>t.amount<0).forEach(t=>{const c=t.cat||'Outros';map[c]=(map[c]||0)+(-t.amount);cnt[c]=(cnt[c]||0)+1;});
+  const map={},cnt={};txC.filter(t=>t.amount<0).forEach(t=>{const c=t.cat||'Outros';map[c]=(map[c]||0)+(-t.amount);cnt[c]=(cnt[c]||0)+1;});
   const cats=Object.keys(map).sort((a,b)=>map[b]-map[a]);
   destroy('cat');
   if(cats.length&&window.Chart){charts.cat=new Chart(document.getElementById('catChart'),{type:'doughnut',
-    data:{labels:cats,datasets:[{data:cats.map(c=>map[c]),backgroundColor:cats.map(c=>{const i=CATEGORIAS.indexOf(c);return CATPAL[i>=0?i:13];}),borderColor:COL.ink,borderWidth:3}]},
+    data:{labels:cats,datasets:[{data:cats.map(c=>map[c]),backgroundColor:cats.map(c=>{const i=CATEGORIAS.indexOf(c);return CATPAL[i>=0?i:CATPAL.length-1];}),borderColor:COL.ink,borderWidth:3}]},
     options:{cutout:'58%',plugins:{legend:{position:'bottom',labels:{color:COL.mut,boxWidth:10,padding:8,font:{size:11}}},tooltip:{callbacks:{label:c=>c.label+': '+brl(c.raw)+' ('+pct(gasto?c.raw/gasto:0)+')'}}}}});}
-  renderCatResumo(cats,map,cnt,gasto,tx);
+  renderCatResumo(cats,map,cnt,gasto,txC);
   let r='<tr><th>Data e descrição</th><th>Categoria e dono</th><th>Valor</th><th></th></tr>';
   const idxs=all.map((t,i)=>i).filter(i=>catFiltroMes==='Todos'||all[i].mes===catFiltroMes).sort((a,b)=>(all[b].date||'').localeCompare(all[a].date||'')).slice(0,400);
   /* data+descrição de um lado, categoria+dono do outro: quatro colunas em pé
@@ -3598,7 +3653,8 @@ function renderCategorias(){
         +CATEGORIAS.map(c=>'<option'+(c===t.cat?' selected':'')+'>'+c+'</option>').join('')+'</select>'
       +'<select class="cell txt" style="width:100%;max-width:140px;font-size:11px;margin-top:4px" onchange="setTxPes('+i+',this.value)">'
         +PES_VALIDO.map(pp=>'<option value="'+pp+'"'+(pp===(t.pes||'ambos')?' selected':'')+'>'+esc(pesNome(pp))+'</option>').join('')+'</select></td>'
-    +'<td class="'+(t.amount<0?'down':'up')+'">'+brl(t.amount)+'</td>'
+    +'<td class="'+(naoSoma(t)?'mut':(t.amount<0?'down':'up'))+'">'+brl(t.amount)
+      +(naoSoma(t)?'<div class="tag">fora da soma</div>':'')+'</td>'
     +'<td><button class="iconbtn" style="padding:2px 8px" onclick="delTx('+i+')">×</button></td></tr>';});
   if(!all.length)r+='<tr><td class="mut" colspan="4">Nenhuma transação importada ainda. Use o card “Automático — importar extrato” no Painel, ou o botão “importar extrato” acima.</td></tr>';
   document.getElementById('tbl-cat-lanc').innerHTML=r;
@@ -3701,6 +3757,10 @@ function addOrcamento(){
 function setTxCat(i,cat){
   const t=D.contas.transacoes[i];if(!t)return;
   t.cat=cat;
+  /* a categoria é o controle: escolher "Cartão de crédito" tira da soma, e
+     escolher qualquer outra devolve — inclusive para um lançamento que tinha
+     entrado como transferência sua */
+  t.nc=CAT_FORA_DA_SOMA.includes(cat);
   /* aprende pela palavra distintiva, nunca por código de transação: nomes como
      "ELECTRON FESTVAL TIN-001073" traziam o TIN-001073, que muda a cada compra
      e não serviria para reconhecer as próximas */
