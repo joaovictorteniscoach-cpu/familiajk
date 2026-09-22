@@ -593,6 +593,9 @@ table.tbl.livre td:last-child{width:42%}
       <label>Nomes, CPF ou CNPJ que são seus (um por linha)</label>
       <textarea id="meus-nomes" rows="4" style="width:100%;background:var(--surface2);border:1px solid var(--line);color:var(--text);font-family:inherit;font-size:12.5px;padding:8px;border-radius:9px" oninput="setMeusNomes(this.value)"></textarea>
       <div class="hint">PIX e TED para você mesmo não são gasto — é dinheiro trocando de bolso. O que bater com esta lista entra no app marcado como <b>fora da soma</b>. Ex.: seu nome completo como aparece no extrato, ou o CNPJ da sua empresa.</div>
+      <label style="margin-top:14px">Minhas regras — <i>trecho do nome</i> = <i>categoria</i> (uma por linha)</label>
+      <textarea id="regras-txt" rows="6" style="width:100%;background:var(--surface2);border:1px solid var(--line);color:var(--text);font-family:inherit;font-size:12.5px;padding:8px;border-radius:9px" oninput="setMinhasRegras(this.value)"></textarea>
+      <div class="hint" id="regras-hint">Para o que só você sabe o que é: <code>rafael minore = Empresa</code>. Vale para as próximas importações também. Corrigir a categoria de um lançamento na lista abaixo cria a regra sozinho.</div>
     </div>
     <div class="kpis" style="margin-top:14px">
       <div class="kpi"><div class="k">Gasto no período</div><div class="v down" id="cat-gasto">—</div></div>
@@ -3165,6 +3168,14 @@ function limpaComercio(desc){
           .replace(/-\d{3,}\b/g,' ')
           .replace(/\s+/g,' ').trim();
 }
+/* A palavra aprendida tem de começar onde uma palavra começa — assim "pao" não
+   reconhece "pagamento". Mas o fim fica solto de propósito: quem escreve
+   "tavares transporte" espera pegar "TAVARES TRANSPORTES" também. */
+function memMatch(d,key){
+  const k=norm(key).trim();
+  if(!k)return false;
+  return new RegExp('(^|[^a-z0-9])'+k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).test(d);
+}
 function categorize(desc,amount){
   const d=limpaComercio(desc)||norm(desc);
   if(amount>0)return "Entradas";
@@ -3183,7 +3194,7 @@ function categorize(desc,amount){
      regra traz, quem mandou por último foi você. */
   let melhor=null,peso=0;
   for(const key in D.contas.catMemory){
-    if(key&&key.length>=3&&key.length>peso&&catMatch(d,key+' ')){peso=key.length;melhor=D.contas.catMemory[key];}
+    if(key&&key.length>=3&&key.length>peso&&memMatch(d,key)){peso=key.length;melhor=D.contas.catMemory[key];}
   }
   for(const pair of CAT_KW){
     if(pair[0]==="Entradas")continue;
@@ -3218,7 +3229,35 @@ function toggleMeus(){
   const b=document.getElementById('meus-box');if(!b)return;
   const abrir=b.style.display==='none';
   b.style.display=abrir?'':'none';
-  if(abrir)document.getElementById('meus-nomes').value=(D.contas.meusNomes||[]).join('\n');
+  if(!abrir)return;
+  document.getElementById('meus-nomes').value=(D.contas.meusNomes||[]).join('\n');
+  const r=document.getElementById('regras-txt');
+  if(r)r.value=Object.keys(D.contas.catMemory||{}).sort()
+    .map(k=>k+' = '+D.contas.catMemory[k]).join('\n');
+}
+/* As regras que o João escreve à mão vão para o MESMO lugar onde o app guarda
+   o que aprendeu sozinho: uma palavra do nome do comércio apontando para uma
+   categoria. Assim não existem dois sistemas para a mesma coisa — e nada
+   disso entra no código, porque são nomes de outras pessoas. */
+function setMinhasRegras(txt){
+  const novo={},recusadas=[];
+  String(txt||'').split(/\r?\n/).forEach(l=>{
+    if(!l.trim())return;
+    const i=l.indexOf('=');
+    if(i<0){recusadas.push(l.trim()+' (falta o "=")');return;}
+    const chave=norm(l.slice(0,i)).trim(),cat=l.slice(i+1).trim();
+    if(chave.length<3){recusadas.push(l.trim()+' (trecho curto demais)');return;}
+    const achou=CATEGORIAS.find(c=>norm(c)===norm(cat));
+    if(!achou){recusadas.push(l.trim()+' (categoria "'+cat+'" não existe)');return;}
+    novo[chave]=achou;
+  });
+  D.contas.catMemory=novo;save();
+  const h=document.getElementById('regras-hint');
+  if(h)h.innerHTML=recusadas.length
+    ? ('⚠ '+recusadas.length+' linha(s) fora: '+esc(recusadas.slice(0,3).join('; '))
+      +'<br>Categorias válidas: '+CATEGORIAS.join(', '))
+    : (Object.keys(novo).length+' regra(s) valendo. Vale para as próximas importações também.');
+  safeRun(renderCategorias);
 }
 const TX_INVEST=['aplicacao','aplic automatica','aplic ','resgate','investimento','invest ',
   'cdb','rdb','lci','lca','tesouro','poupanca','previdencia','fundo de invest',
