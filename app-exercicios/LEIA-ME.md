@@ -300,6 +300,7 @@ elemento: `['aluno', x, y, 'rótulo', 'espera']`.
 | `espera` | posição de espera, de costas, pés abertos | **D1** Estátua pronta · **D2** Split à batida · **T08** Semáforo |
 | `prepara` | raquete já no alto, de costas | **M01** Preparação na chegada |
 | `saque` | **de frente E de costas** — a única pose completa | os 18 desenhos em que alguém saca de verdade: D15, S01–S17 |
+| `voleio` | de costas, raquete à frente | os 10 desenhos de quem está na rede voleando: R03, R06, R09, R10, R13, R14, R16, R18 |
 
 **O saque é a primeira pose 100% da JV.** Chegaram as duas metades — uma foto
 de frente e uma de costas — então o desenho escolhe pelo lado da rede e a
@@ -328,8 +329,8 @@ brilho só dos pixels que já estão na faixa do dourado, sem tocar em pele,
 cabelo, calça ou tênis.
 
 **O que falta para trocar TODAS as figuras pelas da JV:** de costas **com a
-raquete na mão, batendo** — forehand, backhand e voleio — e as mesmas de
-frente, para quem está além da rede. É a única lacuna que sobrou.
+raquete na mão, batendo de fundo** — forehand e backhand —, e as mesmas de
+frente, para quem está além da rede. O voleio e o saque já estão.
 
 **O que não deu para usar, das nove fotos enviadas, e por quê:**
 
@@ -341,6 +342,13 @@ frente, para quem está além da rede. É a única lacuna que sobrou.
 | braços abertos | 143×198 | pequena demais |
 | braços para cima | 66×270 | estreita e pequena demais |
 | costas, raquete atrás da cabeça | 150×409 | testada em BH1 e revertida: no tamanho do desenho o corpo dobrado esconde a raquete, e a figura vira um vulto |
+| costas, curvado, braço atrás | 111×209 | pequena, e a raquete não aparece |
+| costas, braços para cima | 65×213 | estreita demais; o alto já é coberto pela pose do saque |
+
+A do **voleio** (124×178) entrou apesar de pequena, e a razão é o contrário
+das outras: **a raquete está à frente e bem visível**, que é justamente o que
+o desenho de rede precisa dizer. Na folha A4 ela fica um pouco macia — é o
+preço, e foi aceito olhando o resultado impresso, não a régua.
 
 O corte da decisão é este: no desenho a figura tem de 60 a 140 px de altura e
 na folha A4 chega a 250. Abaixo de uns 400 px de altura de origem, o borrão

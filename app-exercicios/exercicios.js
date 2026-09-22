@@ -1900,7 +1900,7 @@ const EX = [
   mat:['alvos','cesta'], form:['particular','dupla','trio'],
   nec:['volei','tatica','direcao'] ,
   fig:{base:'inteira', el:[
-    ['aluno',0,2.4,'na rede'],
+    ['aluno',0,2.4,'na rede','voleio'],
     ['prof',0,-3.0,''],
     ['bola',0,-2.8, -0.6,2.0, -.1, 'baixa'],
     ['zona',-2.6,-9.0,2.8,3.2,'profundo e seguro'],
@@ -1976,7 +1976,7 @@ const EX = [
   mat:['fita','cones'], form:['dupla','trio'],
   nec:['duplas','volei','posicionamento'] ,
   fig:{base:'meia', el:[
-    ['aluno',-1.8,2.4,''], ['colega',1.8,2.4,''],
+    ['aluno',-1.8,2.4,'','voleio'], ['colega',1.8,2.4,'','voleio'],
     ['prof',0,-2.6,''],
     ['mov',-1.8,3.6, 1.0,3.6, 0, 'a dupla anda junta'],
     ['bola',0,-3.0, 0,1.8, 0, 'buraco do meio']
@@ -2054,7 +2054,7 @@ const EX = [
   nec:['volei','coordenacao','footwork'],
   kids:`Recorde do dia anotado num quadro; a turma tenta bater na semana seguinte.` ,
   fig:{base:'mini', el:[
-    ['aluno',0,2.0,''], ['colega',0,-2.6,''],
+    ['aluno',0,2.0,'','voleio'], ['colega',0,-2.6,''],
     ['bola',0,-2.4, 0,1.6, .18, ''],
     ['bola',0,1.8, 0,-2.2, -.18, ''],
     ['texto',0,5.0,'raquete sempre à frente',.6]
@@ -2079,7 +2079,7 @@ const EX = [
   mat:['nada'], form:['trio','dupla'],
   nec:['duplas','volei','tatica'] ,
   fig:{base:'inteira', el:[
-    ['aluno',-1.8,2.4,''], ['colega',1.8,2.4,''],
+    ['aluno',-1.8,2.4,'','voleio'], ['colega',1.8,2.4,'','voleio'],
     ['prof',0,-11.0,'sozinho no fundo'],
     ['bola',0,-10.6, 0,1.6, .1, 'passa, lob ou no pé'],
     ['zona',-3.6,-6.0,2.6,2.6,'espaço vazio']
@@ -2156,7 +2156,7 @@ const EX = [
   mat:['nada'], form:['particular','dupla','trio'],
   nec:['transicao','tatica'] ,
   fig:{base:'inteira', el:[
-    ['aluno',0,3.4,''], ['prof',-1.2,-3.0,''],
+    ['aluno',0,3.4,'','voleio'], ['prof',-1.2,-3.0,''],
     ['zona',0,6.6,7.0,2.6,'que bola autoriza subir?']
   ], nota:`Fechamento na meia-quadra: o aluno aponta na quadra a bola que autoriza a subida.`},
   passos:[`Os dois em pé na meia-quadra, olhando a quadra.`, `Pergunta: “que bola te autoriza a subir?”.`, `O aluno responde APONTANDO onde essa bola cai.`, `Você confirma ou ajusta em uma frase.`, `No Ascensão, exija dois critérios: profundidade e altura.`],
@@ -3013,7 +3013,7 @@ const EX = [
   nec:['volei','coordenacao','consistencia'],
   kids:`Recorde da dupla anotado; a turma tenta bater o recorde da semana.` ,
   fig:{base:'mini', el:[
-    ['aluno',1.2,2.6,''], ['colega',-1.2,-3.0,''],
+    ['aluno',1.2,2.6,'','voleio'], ['colega',-1.2,-3.0,''],
     ['bola',-1.2,-2.8, 1.2,2.2, .16, ''],
     ['bola',1.2,2.4, -1.2,-2.6, -.16, ''],
     ['cone',2.8,2.6,''], ['cone',-2.8,-3.0,''],
@@ -3064,7 +3064,7 @@ const EX = [
   nec:['transicao','volei','mental'],
   kids:`Ponto na rede vale 2, ponto no fundo vale 1 — a criança faz a conta em voz alta.` ,
   fig:{base:'mini', el:[
-    ['aluno',0.8,2.4,'ponto vale 2 aqui'],
+    ['aluno',0.8,2.4,'ponto vale 2 aqui','voleio'],
     ['colega',-0.8,-3.4,''],
     ['bola',-0.8,-3.2, 0.8,2.0, .14, ''],
     ['zona',0,5.6,6.0,2.2,'ponto do fundo vale 1']
@@ -3566,7 +3566,7 @@ const EX = [
   nec:['volei','duplas','leitura'],
   kids:`Distância maior e bola adaptada. Vale ponto em dobro quando a bola volta no primeiro toque.` ,
   fig:{base:'mini', el:[
-    ['aluno',2.0,2.6,''], ['colega',-2.0,-2.6,''],
+    ['aluno',2.0,2.6,'','voleio'], ['colega',-2.0,-2.6,''],
     ['zona',0,0,4.8,5.0,'só na diagonal'],
     ['bola',2.2,2.2, -2.2,-2.2, .14, ''],
     ['bola',-1.6,-2.8, 1.6,2.8, -.14, ''],
