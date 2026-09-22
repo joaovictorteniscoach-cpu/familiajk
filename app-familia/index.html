@@ -587,12 +587,12 @@ table.tbl.livre td:last-child{width:42%}
       <select class="cell txt" id="cat-mes" style="max-width:150px" onchange="onCatMes(this.value)"></select>
       <button class="iconbtn primary" onclick="pickExtrato()">＋ importar extrato</button>
       <button class="iconbtn" onclick="clearTx()">limpar</button>
-      <button class="iconbtn" onclick="toggleMeus()">👤 nomes que são meus</button>
+      <button class="iconbtn" onclick="toggleMeus()">👤 nomes da família</button>
     </div>
     <div class="field" id="meus-box" style="display:none;margin-top:12px">
-      <label>Nomes, CPF ou CNPJ que são seus (um por linha)</label>
+      <label>Nomes, CPF ou CNPJ da família (um por linha)</label>
       <textarea id="meus-nomes" rows="4" style="width:100%;background:var(--surface2);border:1px solid var(--line);color:var(--text);font-family:inherit;font-size:12.5px;padding:8px;border-radius:9px" oninput="setMeusNomes(this.value)"></textarea>
-      <div class="hint">PIX e TED para você mesmo não são gasto — é dinheiro trocando de bolso. O que bater com esta lista entra no app marcado como <b>fora da soma</b>. Ex.: seu nome completo como aparece no extrato, ou o CNPJ da sua empresa.</div>
+      <div class="hint">PIX e TED entre você, a Kassiana e suas próprias contas não são gasto — é dinheiro trocando de bolso. O que bater com esta lista entra marcado como <b>fora da soma</b>, saindo <b>e</b> entrando. Ex.: seu nome completo e o dela como aparecem no extrato, ou o CNPJ da sua empresa.</div>
       <label style="margin-top:14px">Minhas regras — <i>trecho do nome</i> = <i>categoria</i> (uma por linha)</label>
       <textarea id="regras-txt" rows="6" style="width:100%;background:var(--surface2);border:1px solid var(--line);color:var(--text);font-family:inherit;font-size:12.5px;padding:8px;border-radius:9px" oninput="setMinhasRegras(this.value)"></textarea>
       <div class="hint" id="regras-hint">Para o que só você sabe o que é: <code>rafael minore = Empresa</code>. Vale para as próximas importações também. Corrigir a categoria de um lançamento na lista abaixo cria a regra sozinho.</div>
@@ -1092,7 +1092,8 @@ const CAT_KW=[
  ["Assinaturas",["netflix","spotify","disney","hbo","max ","prime video","amazon prime","paramount","globoplay","youtube premium","apple.com","apple ","icloud","google ","microsoft","office","adobe","chatgpt","openai","canva","melimax","dropbox","deezer","tidal","office 365","microsoft 365"]],
  ["Lazer",["cinema","steam","playstation","xbox","nintendo","viagem","hotel","airbnb","booking","decolar","latam","gol ","azul ","ingresso","show ","evento","parque","clube","cinemark","cinepolis","uci ","sympla","eventim","123 milhas","hoteis","pousada","azul linhas","gol linhas","netshoes ingresso"]],
  ["Compras",["havan","amazon","mercado livre","mercadolivre","magazine","magalu","americanas","shopee","aliexpress","shein","renner","riachuelo","c&a","zara","centauro","nike","adidas","shopping","loja","marisa","leroy","kabum","casas bahia","decathlon","netshoes","dafiti","cea","pernambucanas","telha norte","ponto frio","pichau","temu"]],
- ["Empresa",["contador","contabilidade","honorarios contab","simples nacional","das mei","mei ","alvara","junta comercial","material empresa","aluguel quadra","aluguel de quadra","cnpj","nota fiscal","escritorio contab","sebrae","material esportivo"]],
+ ["Empresa",["contador","contabilidade","honorarios contab","simples nacional","das mei","mei ","alvara","junta comercial","material empresa","aluguel quadra","aluguel de quadra","cnpj","nota fiscal","escritorio contab","sebrae","material esportivo",
+   "devolucao aluno","devolucao de aluno","devolucao aula","devolucao de aula","estorno aluno","reembolso aluno"]],
  ["Serviços",["cartorio","correios","lavanderia","barbearia","salao","cabeleireiro","manicure","advogado","chaveiro","picpay","mercado pago","pagseguro","pagbank","stone","cielo","rede ","getnet","sumup","infinitepay","cartao de credito maquin","estetica","encanador","eletricista","diarista","faxina"]],
  ["Tarifas/Impostos",["parcela giro","giro ","tarifa","juros","iof","anuidade","imposto","darf","das ","inss","fgts","multa","taxa ","tributo","crefisa","emprestimo","financiamento","consignado","credito pessoal","ted ","doc ","pacote de servicos","cesta de servicos","manutencao de conta"]],
  ["Pets",["pet ","petshop","pet shop","veterinar","cobasi","petz","racao","petlove","veterinari","banho e tosa"]],
@@ -3139,7 +3140,14 @@ const CAT_MARCA=[
      sozinho cai em Moradia, que vem antes na lista */
   [/aluguel ?(de )?quadra|locacao ?(de )?quadra/,"Empresa"],
   /* bebida comprada DENTRO do mercado não vira Bebidas: a linha é do mercado */
-  [/(super)?mercado|atacad|assai|carrefour|angeloni|zaffari/,"Mercado"]
+  [/(super)?mercado|atacad|assai|carrefour|angeloni|zaffari/,"Mercado"],
+  /* "distribuidora" sozinha, no extrato do João, quase sempre é bebida. Mas
+     combustível, alimentos e remédios também se vendem por distribuidora — e
+     "PETROBRAS DISTRIBUIDORA" não pode virar cerveja. Estas três vêm antes. */
+  [/(petrobras|ipiranga|raizen|vibra|shell|texaco|charrua|ale)\s*distrib|distribuidora\s*(de\s*)?(combustiv|petrole|deriv|lubrific)/,"Combustível"],
+  [/distribuidora\s*(de\s*)?(aliment|hortifrut|carnes|frios|laticinio)/,"Mercado"],
+  [/distribuidora\s*(de\s*)?(medicament|farmac|hospitalar)/,"Saúde"],
+  [/\bdistribuidora\b|\bdistrib\b/,"Bebidas"]
 ];
 function ehPagamentoFatura(desc){
   const d=norm(desc);
@@ -3265,10 +3273,13 @@ const TX_INVEST=['aplicacao','aplic automatica','aplic ','resgate','investimento
   'xp investimentos','xp inv','corretora'];
 function tipoTx(desc,amount){
   if(ehLinhaSaldo(desc))return 'saldo';      /* saldo do dia não é movimentação */
+  /* Dinheiro que anda entre você e a Kassiana (ou entre suas próprias contas)
+     não é gasto NEM entrada — nos DOIS sentidos. Antes só a saída era vista:
+     o que ela mandava de volta entrava como receita e inflava o mês. */
+  if(ehTransfPropria(desc))return 'invest';
   if(amount>0)return 'normal';               /* entradas nunca são fatura/aplicação */
   const d=norm(desc);
   if(TX_CARTAO.some(k=>d.includes(norm(k))))return 'cartao';
-  if(ehTransfPropria(desc))return 'invest';   /* dinheiro seu indo para você */
   /* "HAVAN FUNDO DE INVESTIMENTO EM DIREITOS CREDITORIOS" é o nome de quem
      recebe uma compra na Havan, não uma aplicação. Quando a linha já tem um
      comércio reconhecido, ela é gasto — a palavra "investimento" só decide
@@ -3276,7 +3287,7 @@ function tipoTx(desc,amount){
   if(TX_INVEST.some(k=>d.includes(norm(k)))&&categorize(desc,amount)==='Outros')return 'invest';
   return 'normal';
 }
-const TX_ROTULO={cartao:'fatura do cartão',invest:'investimento / você mesmo',
+const TX_ROTULO={cartao:'fatura do cartão',invest:'investimento / dinheiro entre vocês',
   saldo:'linha de saldo, não é lançamento',jalancado:'já lançado antes'};
 
 /* Linhas que o banco imprime no extrato mas NÃO são movimentação: saldo do dia,
