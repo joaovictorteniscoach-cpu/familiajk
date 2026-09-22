@@ -2184,7 +2184,7 @@ const EX = [
   nec:['saque1','saque2','coordenacao'],
   kids:`Um bambolê no chão: a bola tem que cair dentro, valendo ponto por acerto.` ,
   fig:{base:'fundo', el:[
-    ['aluno',-1.4,11.9,'na base'],
+    ['aluno',-1.4,11.9,'na base','saque'],
     ['zona',-1.0,10.2,1.6,1.6,'raquete no chão'],
     ['bola',-1.4,11.4, -1.0,10.2, .1, 'o toss cai aqui']
   ], nota:`Dez lançamentos SEM sacar: a bola tem que cair na raquete deitada à frente do pé da frente.`},
@@ -2207,7 +2207,7 @@ const EX = [
   mat:['adaptada','cesta'], form:['particular','dupla','trio','kids'],
   nec:['saque1','coordenacao','potencia'] ,
   fig:{base:'fundo', el:[
-    ['aluno',-1.6,12.0,''],
+    ['aluno',-1.6,12.0,'','saque'],
     ['marca',-1.6,10.8,'1. pés e carga'],
     ['marca',-1.2,9.8,'2. lançamento'],
     ['marca',-0.8,8.8,'3. raquete atrás'],
@@ -2233,7 +2233,7 @@ const EX = [
   mat:['alvos','cesta','contador'], form:['particular','dupla','trio'],
   nec:['saque1','direcao','tatica'] ,
   fig:{base:'inteira', el:[
-    ['aluno',-1.6,12.0,''],
+    ['aluno',-1.6,12.0,'','saque'],
     ['zona',-3.4,-4.6,1.8,2.6,'aberto'],
     ['zona',-0.9,-4.6,1.8,2.6,'no corpo'],
     ['bola',-1.5,11.4, -3.4,-4.6, .12, ''],
@@ -2259,7 +2259,7 @@ const EX = [
   mat:['corda','elastico','alvos','cesta'], form:['particular','dupla','trio'],
   nec:['saque2','efeito','mental'] ,
   fig:{base:'inteira', el:[
-    ['aluno',-1.6,12.0,''],
+    ['aluno',-1.6,12.0,'','saque'],
     ['corda','corda a 1 m'],
     ['zona',-2.0,-4.4,2.6,2.6,'no corpo dele'],
     ['bola',-1.5,11.4, -2.0,-4.4, .24, 'sobe e cai']
@@ -2284,7 +2284,7 @@ const EX = [
   mat:['contador'], form:['particular','dupla'],
   nec:['saque2','mental','saque1'] ,
   fig:{base:'inteira', el:[
-    ['aluno',-1.6,12.0,''],
+    ['aluno',-1.6,12.0,'','saque'],
     ['prof',1.6,-12.0,'devolve'],
     ['bola',-1.5,11.4, 2.0,-4.8, .14, ''],
     ['texto',0,3.2,'dupla falta vale 2 pontos',.62]
@@ -2308,7 +2308,7 @@ const EX = [
   mat:['alvos','cesta'], form:['particular','dupla'],
   nec:['saque1','tatica','potencia'] ,
   fig:{base:'inteira', el:[
-    ['aluno',-1.6,12.0,''],
+    ['aluno',-1.6,12.0,'','saque'],
     ['bola',-1.5,11.4, -3.2,-4.6, .12, '1. saque aberto'],
     ['prof',-3.4,-8.0,''],
     ['bola',-3.4,-7.6, 0.6,8.4, -.12, '2. devolução'],
@@ -2335,7 +2335,7 @@ const EX = [
   mat:['cones','cesta'], form:['particular','dupla'],
   nec:['devolucao','posicionamento','leitura'] ,
   fig:{base:'inteira', el:[
-    ['prof',1.6,-11.6,'saca'],
+    ['prof',1.6,-11.6,'saca','saque'],
     ['cone',3.0,5.6,'saque fraco'],
     ['cone',3.4,11.9,'neutro'],
     ['cone',3.8,13.0,'saque forte'],
@@ -2363,7 +2363,7 @@ const EX = [
   mat:['alvos','cesta'], form:['particular','dupla','trio'],
   nec:['devolucao','profundidade','consistencia'] ,
   fig:{base:'inteira', el:[
-    ['prof',1.6,-12.0,''],
+    ['prof',1.6,-12.0,'','saque'],
     ['bola',1.6,-11.6, -2.0,5.0, .12, ''],
     ['aluno',-2.4,11.4,''],
     ['zona',0,-9.4,3.6,3.4,'meio profundo'],
@@ -2389,7 +2389,7 @@ const EX = [
   mat:['cesta','alvos'], form:['particular','dupla'],
   nec:['devolucao','consistencia','leitura'] ,
   fig:{base:'inteira', el:[
-    ['prof',1.6,-11.6,'saque forte'],
+    ['prof',1.6,-11.6,'saque forte','saque'],
     ['bola',1.6,-11.6, -2.2,5.2, .12, ''],
     ['aluno',-2.6,11.2,''],
     ['marca',-2.4,9.8,'preparação curta'],
@@ -2415,7 +2415,7 @@ const EX = [
   mat:['cronometro'], form:['particular','dupla','trio'],
   nec:['mental','saque1','saque2'] ,
   fig:{base:'fundo', el:[
-    ['aluno',-1.6,12.0,''],
+    ['aluno',-1.6,12.0,'','saque'],
     ['marca',-2.6,11.0,'1. quica 3 vezes'],
     ['marca',-2.2,9.6,'2. escolhe o alvo'],
     ['marca',-1.8,8.2,'3. respira e saca']
@@ -2440,7 +2440,7 @@ const EX = [
   mat:['celular','contador'], form:['particular','dupla'],
   nec:['saque1','saque2','mental','tatica'] ,
   fig:{base:'inteira', el:[
-    ['aluno',-1.6,12.0,''],
+    ['aluno',-1.6,12.0,'','saque'],
     ['prof',1.4,-12.0,''],
     ['bola',-1.5,11.4, 2.2,-5.0, .14, ''],
     ['texto',0,3.2,'4 games · 4 números anotados',.6]
@@ -2464,7 +2464,7 @@ const EX = [
   mat:['alvos','contador'], form:['particular','dupla'],
   nec:['devolucao','tatica','mental'] ,
   fig:{base:'inteira', el:[
-    ['prof',1.6,-12.0,''],
+    ['prof',1.6,-12.0,'','saque'],
     ['bola',1.6,-11.6, -2.0,5.0, .12, ''],
     ['aluno',-2.4,11.4,''],
     ['zona',0,-9.2,3.0,3.0,'meio profundo'],
@@ -2489,7 +2489,7 @@ const EX = [
   mat:['nada'], form:['particular','dupla'],
   nec:['mental','saque1','saque2','tatica'] ,
   fig:{base:'inteira', el:[
-    ['aluno',-1.6,12.0,''],
+    ['aluno',-1.6,12.0,'','saque'],
     ['prof',1.4,-12.0,''],
     ['bola',-1.5,11.4, -2.6,-4.8, .2, 'margem, não risco'],
     ['texto',0,3.2,'game começa em 30-40',.62]
@@ -2513,7 +2513,7 @@ const EX = [
   mat:['cesta','cronometro','alvos'], form:['particular','dupla','personal'],
   nec:['fisico','saque1','mental'] ,
   fig:{base:'inteira', el:[
-    ['aluno',-1.6,12.0,''],
+    ['aluno',-1.6,12.0,'','saque'],
     ['zona',-2.4,-4.6,2.6,2.6,'alvo'],
     ['bola',-1.5,11.4, -2.4,-4.6, .14, ''],
     ['texto',0,3.2,'30 s de esforço + 5 saques',.6]
@@ -2539,7 +2539,7 @@ const EX = [
   mat:['nada'], form:['particular','dupla','trio'],
   nec:['saque1','saque2','mental'] ,
   fig:{base:'fundo', el:[
-    ['aluno',-1.6,12.0,'3 saques lentos'],
+    ['aluno',-1.6,12.0,'3 saques lentos','saque'],
     ['texto',0,8.0,'tarefa de casa: lançamentos',.6]
   ], nota:`Fechamento do mês do saque: o número do dia e a tarefa de casa, dita em voz alta.`},
   passos:[`O aluno diz o percentual de primeiro saque do dia.`, `Define a tarefa de casa: quantos lançamentos (D15) vai fazer até a próxima aula.`, `Fecha com 3 saques lentos, sem bola, sentindo a carga da perna.`, `No Ascensão, a meta é numérica e escolhida por ele.`, `Confira a tarefa na aula seguinte — senão ela morre na primeira semana.`],
@@ -3090,7 +3090,7 @@ const EX = [
   nec:['saque1','coordenacao','fisico'],
   kids:`Concurso de arremesso: quem joga a bola mais longe (e depois quem acerta o alvo).` ,
   fig:{base:'fundo', el:[
-    ['aluno',-2.0,11.0,''],
+    ['aluno',-2.0,11.0,'','saque'],
     ['bola',-1.8,10.6, 3.0,5.0, .18, 'arremessa longe'],
     ['texto',0,13.2,'8 arremessos por lado',.6]
   ], nota:`Arremessar a bola longe, como uma pedra: é o mesmo movimento do saque, sem a raquete.`},
@@ -3114,7 +3114,7 @@ const EX = [
   nec:['devolucao','leitura','footwork'],
   kids:`"Pega o saque": conta quantas pegou sem deixar cair.` ,
   fig:{base:'inteira', el:[
-    ['prof',1.6,-11.2,'saca devagar'],
+    ['prof',1.6,-11.2,'saca devagar','saque'],
     ['bola',1.6,-11.2, -1.8,5.4, .14, ''],
     ['aluno',-2.2,11.2,'sem raquete'],
     ['mov',-2.2,11.0, -1.9,5.8, .08, 'split e persegue'],

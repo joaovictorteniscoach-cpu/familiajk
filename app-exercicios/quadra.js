@@ -136,7 +136,12 @@ const RECORTES = {
      `altura` é a altura real do TOPO DA IMAGEM acima do chão — na pose de
      espera a cabeça baixa (1,70 m) e com a raquete no alto passa de dois
      metros. Errar isso faz a pessoa flutuar ou afundar no saibro. */
-  saque:   { arq:'jog-saque.webp', altura:1.82, pe:1.0, prop:0.47, olha:'esq' },
+  saque:   { altura:2.18, pe:1.0, prop:0.402, olha:'dir',
+             papel:{ aluno:'jv-saque-frente-aluno.webp', prof:'jv-saque-frente-prof.webp',
+                     colega:'jv-saque-frente-colega.webp' },
+             costas:{ altura:2.10, pe:1.0, prop:0.320, olha:'dir',
+                      papel:{ aluno:'jv-saque-costas-aluno.webp', prof:'jv-saque-costas-prof.webp',
+                              colega:'jv-saque-costas-colega.webp' } } },
   espera:  { costasSo:true, altura:1.70, pe:1.0, prop:0.641, olha:'dir',
              papel:{ aluno:'jv-espera-aluno.webp', prof:'jv-espera-prof.webp',
                      colega:'jv-espera-colega.webp' } },

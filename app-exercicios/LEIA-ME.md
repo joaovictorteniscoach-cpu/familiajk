@@ -290,15 +290,22 @@ recorte do saque continua só de frente**, de propósito: a cabeça está inclin
 para trás olhando o lançamento, não há faixa de cabelo para espelhar, e no
 tamanho do desenho quem conta a história ali é o braço levantado, não o rosto.
 
-### As duas poses que já são da JV
+### As poses que já são da JV
 
-Duas fotos de verdade, da JV, entraram como **poses com nome** — o quinto
-campo do elemento: `['aluno', x, y, 'rótulo', 'espera']`.
+Fotos de verdade, da JV, entraram como **poses com nome** — o quinto campo do
+elemento: `['aluno', x, y, 'rótulo', 'espera']`.
 
 | pose | o que é | onde está usada |
 |---|---|---|
 | `espera` | posição de espera, de costas, pés abertos | **D1** Estátua pronta · **D2** Split à batida · **T08** Semáforo |
 | `prepara` | raquete já no alto, de costas | **M01** Preparação na chegada |
+| `saque` | **de frente E de costas** — a única pose completa | os 18 desenhos em que alguém saca de verdade: D15, S01–S17 |
+
+**O saque é a primeira pose 100% da JV.** Chegaram as duas metades — uma foto
+de frente e uma de costas — então o desenho escolhe pelo lado da rede e a
+figura do jogo 3D saiu de cena ali. Antes, só duas figuras pediam a pose de
+saque; agora ela está em todas as que sacam mesmo, conferidas uma a uma: quem
+devolve continua com a figura de golpe de fundo.
 
 Elas **não** viraram a figura padrão, e a razão é honesta: a foto de espera
 não tem raquete na mão. Colocada nos 132 desenhos, todo mundo virava gente de
@@ -313,11 +320,31 @@ e a legenda passaria a mentir. E `costasSo:true` diz que a pose só vale para
 quem está do lado de cá: pedida para alguém além da rede, o desenho volta
 sozinho para a foto de frente do papel.
 
-**O que falta para trocar TODAS as figuras pelas da JV:** fotos de costas
-**com a raquete na mão**, batendo — forehand, backhand, voleio e saque — e as
-mesmas poses de frente, para quem está além da rede. Duas das quatro fotos
-enviadas não deu para usar: estão em baixa resolução e com o movimento
-borrado (180×339 e 150×210 px), e no tamanho da folha A4 apareceria.
+A camisa do aluno passa por mais um passo depois do giro de matiz, o
+`ferramentas/camisa-dourada.py`: girar o matiz preservando o brilho de uma
+camisa azul-escura devolve um dourado escuro, que em quadra lê como
+verde-oliva — e a legenda diz que aluno é dourado. O passo levanta saturação e
+brilho só dos pixels que já estão na faixa do dourado, sem tocar em pele,
+cabelo, calça ou tênis.
+
+**O que falta para trocar TODAS as figuras pelas da JV:** de costas **com a
+raquete na mão, batendo** — forehand, backhand e voleio — e as mesmas de
+frente, para quem está além da rede. É a única lacuna que sobrou.
+
+**O que não deu para usar, das nove fotos enviadas, e por quê:**
+
+| foto | tamanho | motivo |
+|---|---|---|
+| espera sem raquete | 326×508 | usada, mas só nos 3 exercícios de espera: sem raquete na mão, não serve de figura padrão |
+| costas bem curvado | 180×339 | baixa resolução e movimento borrado |
+| costas agachado | 150×210 | baixa resolução e movimento borrado |
+| braços abertos | 143×198 | pequena demais |
+| braços para cima | 66×270 | estreita e pequena demais |
+| costas, raquete atrás da cabeça | 150×409 | testada em BH1 e revertida: no tamanho do desenho o corpo dobrado esconde a raquete, e a figura vira um vulto |
+
+O corte da decisão é este: no desenho a figura tem de 60 a 140 px de altura e
+na folha A4 chega a 250. Abaixo de uns 400 px de altura de origem, o borrão
+aparece; e pose em que a raquete some é pose que não conta a história.
 
 O único número que não dá para deduzir é `olha`, em `RECORTES`: para que lado a
 pessoa bate **na foto**. Espelhar uma foto troca a mão dela — um destro vira
@@ -348,9 +375,11 @@ metros.
 
 ### Os jogadores que estão ali agora são PROVISÓRIOS
 
-`jog-aluno.webp`, `jog-prof.webp`, `jog-colega.webp` e `jog-saque.webp` vieram
-de imagens encontradas na internet e entraram a pedido, para ver o resultado
-funcionando.
+`jog-aluno.webp`, `jog-prof.webp` e `jog-colega.webp` vieram de imagens
+encontradas na internet e entraram a pedido, para ver o resultado funcionando.
+**A figura do saque já não é mais uma delas:** o `jog-saque.webp` saiu, e no
+lugar entraram fotos da JV, de frente e de costas (ver *As poses que já são da
+JV*).
 
 Os três papéis são a **mesma figura 3D com a camisa repintada**
 (`ferramentas/pintar-camisa.py`), nas cores que o desenho já usava para dizer
