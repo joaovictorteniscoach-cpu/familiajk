@@ -1063,10 +1063,12 @@ function pesDe(desc,padrao){
   for(const k in (D.contas.pesMemory||{})){if(k&&k.length>=3&&d.includes(k))return D.contas.pesMemory[k];}
   return PES_VALIDO.includes(padrao)?padrao:(D.contas.exPessoa||'ambos');
 }
-const CATEGORIAS=["Moradia","Mercado","Alimentação","Bebidas","Combustível","Transporte","Saúde","Seguro",
-  "Educação","Assinaturas","Lazer","Compras","Serviços","Tarifas/Impostos","Pets","Cartão de crédito","Entradas","Outros"];
-const CATPAL=["#d4a23a","#4fbfa8","#e6c277","#a98fd0","#f0a868","#8fb6c9","#c98f8f","#6fa8c9",
-  "#7f9c8b","#b39ddb","#86e2d0","#e59ac0","#9aa0ad","#c07b7b","#8bbf9f","#d0b48f","#5fd08a","#6b7b82"];
+const CATEGORIAS=["Moradia","Mercado","Alimentação","Bebidas","Combustível","Manutenção do carro","Transporte",
+  "Saúde","Seguro","Educação","Assinaturas","Lazer","Compras","Serviços","Empresa","Tarifas/Impostos","Pets",
+  "Cartão de crédito","Entradas","Outros"];
+const CATPAL=["#d4a23a","#4fbfa8","#e6c277","#a98fd0","#f0a868","#c2956a","#8fb6c9",
+  "#c98f8f","#6fa8c9","#7f9c8b","#b39ddb","#86e2d0","#e59ac0","#9aa0ad","#7e9ec7","#c07b7b","#8bbf9f",
+  "#d0b48f","#5fd08a","#6b7b82"];
 const CAT_KW=[
  ["Moradia",["aluguel","condominio","imobiliaria","energia","cemig","enel","cpfl","light","copel","celesc","sabesp","copasa","sanepar","agua","gas ","iptu","internet","fibra","vivo","claro","net ","tim ","oi ","nextel","sky","hughesnet","starlink","sindico","gas natural","ultragaz","liquigas","copagaz"]],
  ["Bebidas",["adega","bebidas","cervej","chopp","chope","ze delivery","zedelivery","distribuidora de bebida","emporio da cerveja","destilados","vinho","wine","whisky","vodka","choperia","taberna"]],
@@ -1074,13 +1076,15 @@ const CAT_KW=[
  ["Seguro",["seguro ","seguros","seguradora","apolice","porto seguro","tokio marine","mapfre","allianz","sulamerica seg","sul america seg","bradesco seg","itau seguros","azul seguros","hdi seg","liberty seg","zurich","sompo","icatu","metlife","prudential","cardif","suhai","youse"]],
  ["Mercado",["mercado","supermerc","atacad","assai","carrefour","pao de acucar","angeloni","zaffari","hortifruti","sacolao","havan","atacadao","tenda","dia ","big ","fort ","comper","sonda","tenda atacado","sam s club","makro","acougue","quitanda","emporio","armazem","mercearia"]],
  ["Alimentação",["ifood","rappi","restaurante","lanchonete","pizzaria","burger","mcdonald","bk ","subway","padaria","cafe","boteco","habib","outback","spoleto","food","doceria","sorveteria","mc donald","giraffas","madero","coco bambu","confeitaria","cafeteria","starbucks","churrascaria","espetinho","lanche","bar ","aiqfome"]],
- ["Transporte",["uber","99app","99 ","cabify","estacion","pedagio","sem parar","conectcar","veloe","onibus","metro","mecanic","oficina","ipva","detran","licenciamento","autopista","99pop","99 pop","indriver","blablacar","zul digital","zona azul","cet ","borracharia","autopecas","auto pecas","lava rapido","lavajato","ecovias","arteris","pneu","taxi","buser","clickbus","rodoviaria"]],
+ ["Manutenção do carro",["mecanic","oficina","autopecas","auto pecas","auto center","autocenter","pneu","borracharia","lava rapido","lava jato","lavajato","troca de oleo","alinhamento","balanceamento","funilaria","retifica","revisao","concessionaria","acessorios automotivos","bosch car","car service"]],
+ ["Transporte",["uber","99app","99 ","cabify","estacion","pedagio","sem parar","conectcar","veloe","onibus","metro","ipva","detran","licenciamento","autopista","99pop","99 pop","indriver","blablacar","zul digital","zona azul","cet ","ecovias","arteris","taxi","buser","clickbus","rodoviaria"]],
  ["Saúde",["farmacia","drogaria","droga ","pague menos","raia","drogasil","panvel","hospital","clinica","laboratorio","medic","dentista","psicolog","plano de saude","unimed","amil","hapvida","academia","smartfit","gympass","wellhub","odonto","sulamerica","sul america","bradesco saude","notredame","intermedica","exame","fisioterapia","psiquiatra","terapia","oftalmo","dermato","ortopedi","vacina","otica"]],
  ["Educação",["escola","faculdade","universidade","curso","udemy","alura","colegio","material escolar","livraria","kindle","descomplica","coursera","duolingo","kumon","wizard","ccaa","fisk","cultura inglesa"]],
  ["Assinaturas",["netflix","spotify","disney","hbo","max ","prime video","amazon prime","paramount","globoplay","youtube premium","apple.com","apple ","icloud","google ","microsoft","office","adobe","chatgpt","openai","canva","melimax","dropbox","deezer","tidal","office 365","microsoft 365"]],
  ["Lazer",["cinema","steam","playstation","xbox","nintendo","viagem","hotel","airbnb","booking","decolar","latam","gol ","azul ","ingresso","show ","evento","parque","clube","cinemark","cinepolis","uci ","sympla","eventim","123 milhas","hoteis","pousada","azul linhas","gol linhas","netshoes ingresso"]],
  ["Compras",["amazon","mercado livre","mercadolivre","magazine","magalu","americanas","shopee","aliexpress","shein","renner","riachuelo","c&a","zara","centauro","nike","adidas","shopping","loja","marisa","leroy","kabum","casas bahia","decathlon","netshoes","dafiti","cea","pernambucanas","telha norte","ponto frio","pichau","temu"]],
- ["Serviços",["cartorio","correios","lavanderia","barbearia","salao","cabeleireiro","manicure","contador","advogado","chaveiro","picpay","mercado pago","pagseguro","pagbank","stone","cielo","rede ","getnet","sumup","infinitepay","electron","tin-","cartao de credito maquin","estetica","encanador","eletricista","diarista","faxina"]],
+ ["Empresa",["contador","contabilidade","honorarios contab","simples nacional","das mei","mei ","alvara","junta comercial","material empresa","aluguel quadra","aluguel de quadra","cnpj","nota fiscal","escritorio contab","sebrae","material esportivo"]],
+ ["Serviços",["cartorio","correios","lavanderia","barbearia","salao","cabeleireiro","manicure","advogado","chaveiro","picpay","mercado pago","pagseguro","pagbank","stone","cielo","rede ","getnet","sumup","infinitepay","electron","tin-","cartao de credito maquin","estetica","encanador","eletricista","diarista","faxina"]],
  ["Tarifas/Impostos",["tarifa","juros","iof","anuidade","imposto","darf","das ","inss","fgts","multa","taxa ","tributo","crefisa","emprestimo","financiamento","consignado","credito pessoal","ted ","doc ","pacote de servicos","cesta de servicos","manutencao de conta"]],
  ["Pets",["pet ","petshop","pet shop","veterinar","cobasi","petz","racao","petlove","veterinari","banho e tosa"]],
  ["Entradas",["salario","recebido","pix recebid","deposito","rendimento","estorno","reembolso","provento","transferencia recebid","ted recebid","credito receb","pagamento receb"]]
@@ -3121,6 +3125,9 @@ const CAT_MARCA=[
   [/posto ?de ?saude|posto ?medico|unidade ?basica|ubs\b/,"Saúde"],
   [/posto ?ipiranga|ipiranga ?abastec|auto ?posto|posto ?shell|shell ?select|posto ?petrobras|br ?mania/,"Combustível"],
   [/ze ?delivery|zedelivery|distribuidora ?de ?bebida|empori?o ?da ?cerveja|adega\b/,"Bebidas"],
+  /* "aluguel de quadra" é custo da academia, não a moradia — e "aluguel"
+     sozinho cai em Moradia, que vem antes na lista */
+  [/aluguel ?(de )?quadra|locacao ?(de )?quadra/,"Empresa"],
   /* bebida comprada DENTRO do mercado não vira Bebidas: a linha é do mercado */
   [/(super)?mercado|atacad|assai|carrefour|angeloni|zaffari/,"Mercado"]
 ];
