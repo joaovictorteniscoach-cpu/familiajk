@@ -975,8 +975,8 @@ table.tbl.livre td:last-child{width:42%}
         <label><input type="radio" name="imp-target" value="glob" onchange="renderImpPreview()"> Global XP (US$)</label>
       </div>
       <div class="imp-grp"><span class="imp-lbl">Modo</span>
-        <label><input type="radio" name="imp-mode" value="add" checked> Adicionar aos atuais</label>
-        <label><input type="radio" name="imp-mode" value="replace"> Substituir a lista</label>
+        <label><input type="radio" name="imp-mode" value="add" checked> Atualizar — casa os nomes iguais e acrescenta os novos</label>
+        <label><input type="radio" name="imp-mode" value="replace"> Substituir a lista inteira</label>
       </div>
     </div>
     <div class="scroll" style="max-height:42vh;border:1px solid var(--line);border-radius:10px"><table class="tbl" id="tbl-imp"></table></div>
@@ -2196,12 +2196,43 @@ function refreshMensal(){
   save();
 }
 function addMensal(){D.invest.mensal.push({mes:"",patr:null,aporte:null});renderMensal();drawMensal()}
+/* O retrato do mês nasce sozinho. Atualizou a carteira — por foto ou por
+   planilha —, o mês e o ano da evolução já recebem o total novo, sem depender
+   de você lembrar de apertar um botão depois. Só o mês de HOJE é escrito: os
+   meses em que você não mediu nada ficam em branco, porque inventar valor
+   para eles seria inventar patrimônio. */
+function registrarPatrimonio(){
+  const hoje=new Date(),lbl=monthLabel(hoje),ano=String(hoje.getFullYear()),t=invTotal();
+  D.invest.mensal=D.invest.mensal||[];
+  let row=D.invest.mensal.find(m=>m.mes===lbl),mesNovo=!row;
+  if(row)row.patr=t;
+  else{
+    /* entra na posição do calendário, não no fim da lista */
+    const at=D.invest.mensal.findIndex(m=>mesOrdem(m.mes)>mesOrdem(lbl));
+    const novo={mes:lbl,patr:t,aporte:0};
+    if(at>=0)D.invest.mensal.splice(at,0,novo);else D.invest.mensal.push(novo);
+  }
+  D.invest.anual=D.invest.anual||[];
+  let lin=D.invest.anual.find(a=>String(a.ano)===ano),anoNovo=!lin;
+  if(lin)lin.patr=t;
+  else{
+    const at=D.invest.anual.findIndex(a=>(+a.ano||0)>(+ano));
+    const novo={ano:ano,patr:t,aporte:null};
+    if(at>=0)D.invest.anual.splice(at,0,novo);else D.invest.anual.push(novo);
+  }
+  save();
+  ['renderMensal','drawMensal','renderAnual','drawAnual','drawInvPainel']
+    .forEach(f=>{if(typeof window[f]==='function')safeRun(window[f]);});
+  return {lbl,ano,total:t,mesNovo,anoNovo};
+}
+function textoRegistro(r){
+  return 'Evolução em dia: '+brl(r.total)+' guardado'
+    +(r.mesNovo?' como o fechamento de ':' no lugar do valor anterior de ')+r.lbl
+    +' e no ano de '+r.ano+'.';
+}
 function snapInvMonth(calado){
-  const lbl=monthLabel(new Date()),t=invTotal();
-  let row=D.invest.mensal.find(m=>m.mes===lbl);
-  if(row){row.patr=t;}else{D.invest.mensal.push({mes:lbl,patr:t,aporte:0});}
-  renderMensal();drawMensal();save();
-  if(!calado)alert('Mês '+lbl+' registrado com o patrimônio atual ('+brl(t)+').');
+  const reg=registrarPatrimonio();
+  if(!calado)alert(textoRegistro(reg));
 }
 
 function renderAnual(){
@@ -3624,7 +3655,56 @@ function ehLinhaResumoInvest(nome){
   if(!/[a-z]{3}/.test(n))return true;
   return false;
 }
+/* ---------- a tela "Detalhe do Produto" da corretora ----------
+   Ela nao e uma lista: cada ativo vem num bloco de rotulo e valor.
+
+     REMX
+     VanEck Rare Earth/Strategic Metals ETF
+     Posicao        US$ 461,35
+     Quantidade     6,72624 unid.
+     Preco Medio    US$ 91,63
+     Preco Atual    US$ 68,59
+
+   Lendo linha a linha, "Preco Atual 68,59" viraria um ativo chamado "Preco
+   Atual" valendo 68,59. Aqui o bloco inteiro vira UM ativo, ja com a
+   quantidade e o preco — que e o que a carteira Global precisa e o que voce
+   tinha de digitar a mao. */
+function parseBlocosInvest(text){
+  const linhas=(text||'').split(/\r?\n/).map(l=>l.replace(/\s+/g,' ').trim());
+  const out=[];let b=null;
+  const fecha=()=>{
+    if(b&&b.tk&&b.valor>0&&(b.qtd>0||b.pa>0)){
+      out.push({nome:(b.tk+' '+(b.desc||'')).trim().slice(0,48),
+                valor:b.valor,qtd:b.qtd||0,pm:b.pm||0,pa:b.pa||0});
+    }
+    b=null;
+  };
+  const numDe=l=>{const m=l.match(/-?\d{1,3}(?:\.\d{3})*,\d+|-?\d+,\d+|-?\d+(?:\.\d+)?/g);
+    return m?parseBRNum(m[m.length-1]):null;};
+  linhas.forEach(l=>{
+    if(!l)return;
+    const so=l.match(/^([A-Z]{2,5})$/);
+    if(so){fecha();b={tk:so[1],desc:'',valor:0,qtd:0,pm:0,pa:0};return;}
+    if(!b)return;
+    const n=norm(l);
+    if(/^posicao/.test(n)){b.valor=numDe(l)||0;return;}
+    if(/^quantidade/.test(n)){b.qtd=numDe(l)||0;return;}
+    if(/^preco medio/.test(n)){b.pm=numDe(l)||0;return;}
+    if(/^preco atual/.test(n)){b.pa=numDe(l)||0;return;}
+    if(/^(rendimentos|rentabilidade|valor aplicado|comprar|vender|detalhe do produto)/.test(n)){
+      if(/^(comprar|vender)/.test(n))fecha();
+      return;
+    }
+    if(!b.desc&&/[a-z]{3}/.test(n)&&!/\d{1,3},\d{2}/.test(l))b.desc=l.slice(0,40);
+  });
+  fecha();
+  return out;
+}
 function parseTextInvest(text){
+  /* o formato de blocos vem primeiro: se a foto for a tela de detalhe, ler
+     linha a linha so produziria lixo */
+  const blocos=parseBlocosInvest(text);
+  if(blocos.length)return blocos;
   const out=[];
   (text||'').split(/\r?\n/).forEach(raw=>{
     const line=raw.replace(/\s+/g,' ').trim();if(line.length<3)return;
@@ -3649,13 +3729,14 @@ function invAlvos(){
   (D.invest.nacional||[]).forEach((x,i)=>a.push(['nac:'+i,'Nacional · '+x.nome]));
   (D.invest.global||[]).forEach((x,i)=>a.push(['glob:'+i,'Global · '+(x.tk?(x.tk+' — '):'')+x.nome]));
   (D.invest.binance||[]).forEach((x,i)=>a.push(['bin:'+i,'Binance · '+x.nome]));
-  a.push(['novo-nac','+ novo ativo em Nacional']);
+  a.push(['novo-nac','+ novo ativo em Nacional (R$)']);
+  a.push(['novo-glob','+ novo ETF na Global (US$)']);
   a.push(['novo-bin','+ novo ativo na Binance']);
   return a;
 }
 /* a conta de cada destino decide a moeda e como o valor é gravado */
 function contaDoAlvo(alvo){
-  if(/^glob:/.test(alvo||''))return 'global';
+  if(/^glob:/.test(alvo||'')||alvo==='novo-glob')return 'global';
   if(/^bin:/.test(alvo||'')||alvo==='novo-bin')return 'binance';
   return 'nacional';
 }
@@ -3703,7 +3784,42 @@ function casarAtivo(nome){
   (D.invest.nacional||[]).forEach((x,i)=>avaliar(x,'nac:'+i));
   (D.invest.global||[]).forEach((x,i)=>avaliar(x,'glob:'+i));
   (D.invest.binance||[]).forEach((x,i)=>avaliar(x,'bin:'+i));
-  return melhor||'novo-nac';
+  return melhor||(pareceETFglobal(nome)?'novo-glob':'novo-nac');
+}
+/* Casa um ativo da planilha com o que já está na carteira, dentro da conta
+   escolhida: primeiro o código de bolsa por inteiro, depois as palavras
+   distintivas do nome — o mesmo critério da foto. Sem isto, "adicionar aos
+   atuais" empilhava uma segunda cópia de cada ativo a cada importação. */
+function acharNaConta(arr,nome,tk){
+  const t=norm(tk||'').trim();
+  if(t){const i=(arr||[]).findIndex(x=>norm(x.tk||'').trim()===t);if(i>=0)return i;}
+  const pal=palavrasAtivo(nome||tk||'');
+  if(!pal.length)return -1;
+  let melhor=-1,ponto=0;
+  (arr||[]).forEach((x,i)=>{
+    const p2=palavrasAtivo(x.nome||x.tk||'');
+    if(!p2.length)return;
+    const comuns=p2.filter(w=>pal.includes(w)).length;
+    if(!comuns)return;
+    const s=comuns/p2.length+comuns/1000;
+    if(s>ponto){ponto=s;melhor=i;}
+  });
+  return melhor;
+}
+/* "IVV iShares Core S&P 500 ETF" é um ETF americano, não um fundo brasileiro.
+   Sem isto, todo ETF novo entrava na carteira Nacional, em reais. Só decide
+   quando o nome diz de verdade que é ETF — na dúvida fica em Nacional, e o
+   destino continua trocável na tela. */
+const CASA_ETF=/\b(ishares|vanguard|invesco|vaneck|global ?x|spdr|schwab|proshares|ark ?invest|wisdomtree|first ?trust)\b/i;
+function pareceETFglobal(nome){
+  const t=String(nome||'');
+  return /\betfs?\b/i.test(t)||CASA_ETF.test(t);
+}
+/* o código de bolsa é a primeira palavra só de letras maiúsculas */
+function tickerDe(nome){
+  const m=String(nome||'').trim().match(/^([A-Z]{2,5})\b/);
+  if(m)return m[1];
+  return String(nome||'').trim().split(/\s+/)[0].toUpperCase().slice(0,5);
 }
 /* quanto aquele ativo vale hoje, JÁ na moeda da conta dele: a Nacional e a
    Binance guardam reais; a Global guarda quantidade × preço em dólar */
@@ -3714,7 +3830,17 @@ function valorAtualDe(alvo){
 }
 function qtdAtualDe(alvo){const x=ativoDoAlvo(alvo);return x?(+x.qtd||0):0;}
 let invFoto=[],invFotoMoeda='BRL';
-function invFotoSetMoeda(m){invFotoMoeda=(m==='USD')?'USD':'BRL';renderInvestFoto();}
+function invFotoSetMoeda(m){
+  invFotoMoeda=(m==='USD')?'USD':'BRL';
+  /* Você fotografou a tela em dólar: o que for ativo NOVO nasce na Global, e
+     volta para a Nacional se você trocar para R$. O que já casou com um ativo
+     da carteira não se mexe — a conta dele já está decidida. */
+  invFoto.forEach(r=>{
+    if(r.alvo==='novo-nac'&&invFotoMoeda==='USD')r.alvo='novo-glob';
+    else if(r.alvo==='novo-glob'&&invFotoMoeda==='BRL')r.alvo='novo-nac';
+  });
+  renderInvestFoto();
+}
 /* converte o número lido na foto para a moeda da conta de destino */
 function valorNaConta(alvo,v){
   const cam=+D.invest.cambio||0;
@@ -3750,7 +3876,10 @@ async function runOCRInvest(file){
 }
 function showInvestFoto(lista){
   invFoto=lista.map(x=>{const alvo=casarAtivo(x.nome);
-    return {nome:x.nome,valor:x.valor,alvo,antigo:valorAtualDe(alvo),qtd:qtdAtualDe(alvo)};});
+    /* quantidade e preço médio lidos na própria foto valem mais do que os
+       guardados: a foto é a posição de hoje */
+    return {nome:x.nome,valor:x.valor,alvo,antigo:valorAtualDe(alvo),
+            qtd:(+x.qtd>0)?+x.qtd:qtdAtualDe(alvo),pm:+x.pm||0};});
   renderInvestFoto();
   document.getElementById('invFotoModal').classList.add('on');
 }
@@ -3808,6 +3937,14 @@ function invFotoAplicar(){
     if(r.alvo==='ignorar'||!(r.valor>0))return;
     const v=valorNaConta(r.alvo,r.valor);              /* já na moeda da conta */
     if(r.alvo==='novo-nac'){D.invest.nacional.push({nome:r.nome,classe:guessClasse(r.nome),valor:v,apl:null});novos++;return;}
+    if(r.alvo==='novo-glob'){
+      /* a Global guarda quantidade × preço. Sem a quantidade, guarda 1 cota
+         valendo o total: a soma fica certa e você ajusta depois. */
+      const q=+r.qtd||0;
+      D.invest.global.push({tk:tickerDe(r.nome),nome:r.nome,classe:guessClasse(r.nome),
+        qtd:q>0?q:1,pm:+r.pm||0,pa:q>0?(v/q):v,apl:null});
+      novos++;return;
+    }
     if(r.alvo==='novo-bin'){D.invest.binance.push({nome:r.nome,classe:'Cripto',valor:v,apl:null});novos++;return;}
     const x=ativoDoAlvo(r.alvo);if(!x)return;
     if(contaDoAlvo(r.alvo)==='global'){
@@ -3815,7 +3952,9 @@ function invFotoAplicar(){
          tela (o João pode ter corrigido) e recalcula o preço pelo valor lido */
       const q=+r.qtd||0;
       if(!(q>0)){semQtd++;return;}
-      x.qtd=q;x.pa=v/q;atualizados++;return;
+      x.qtd=q;x.pa=v/q;
+      if(+r.pm>0)x.pm=+r.pm;      /* preço médio, quando a foto trouxe */
+      atualizados++;return;
     }
     x.valor=v;atualizados++;
   });
@@ -3826,20 +3965,12 @@ function invFotoAplicar(){
   }
   save();closeInvestFoto();
   ['renderNac','renderGlob','renderBin','refreshCarteira','drawInvPainel','renderGanhos'].forEach(f=>{if(typeof window[f]==='function')safeRun(window[f]);});
-  const tot=invTotal();
-  let msg='Carteira atualizada.\n'+atualizados+' ativo(s) com valor novo'
+  const reg=registrarPatrimonio();
+  alert('Carteira atualizada.\n'+atualizados+' ativo(s) com valor novo'
     +(novos?(' e '+novos+' ativo(s) acrescentado(s)'):'')
     +(semQtd?('\n'+semQtd+' da Global ficaram de fora por falta de quantidade.'):'')
-    +'\nTotal investido agora: '+brl(tot);
-  /* a evolução mês a mês só existe se alguém guardar o retrato do mês. É aqui
-     que ele nasce sem trabalho: acabou de atualizar, então é agora. */
-  const lbl=monthLabel(new Date());
-  const jaTem=(D.invest.mensal||[]).find(m=>m.mes===lbl);
-  if(confirm(msg+'\n\nGuardar '+brl(tot)+' como o fechamento de '+lbl+'?'
-    +(jaTem?('\n(já existe um valor para '+lbl+' — ele será trocado)'):'')
-    +'\n\nÉ isso que monta a evolução mês a mês.')){
-    snapInvMonth(true);
-  }else alert(msg);
+    +'\nTotal investido agora: '+brl(reg.total)
+    +'\n\n'+textoRegistro(reg));
 }
 
 /* em ordem de calendário, e com uma gaveta para o que ficou sem data —
@@ -4303,11 +4434,45 @@ function applyImport(){
     }
   });
   if(!itens.length){alert('Não encontrei ativos válidos. Confira se a coluna do nome está marcada como "Nome do ativo".');return;}
-  if(!confirm(itens.length+' ativo(s) serão '+(mode==='replace'?'colocados no lugar da lista atual':'adicionados')+' na carteira '+(target==='nac'?'Nacional':'Global')+'. Continuar?'))return;
-  if(target==='nac'){if(mode==='replace')D.invest.nacional=[];D.invest.nacional.push(...itens);renderNac();}
-  else{if(mode==='replace')D.invest.global=[];D.invest.global.push(...itens);renderGlob();}
+  const arr=target==='nac'?(D.invest.nacional||[]):(D.invest.global||[]);
+  /* "Atualizar" casa cada linha com o ativo que já existe e só acrescenta o
+     que é novo de verdade. Antes esse modo empilhava uma segunda cópia de
+     cada ativo, e o patrimônio dobrava a cada planilha importada. */
+  let casa=0;
+  if(mode!=='replace')itens.forEach(it=>{if(acharNaConta(arr,it.nome,it.tk)>=0)casa++;});
+  const aviso=mode==='replace'
+    ? (itens.length+' ativo(s) vão entrar no LUGAR da lista atual da carteira '
+       +(target==='nac'?'Nacional':'Global')+' — os '+arr.length+' de hoje serão apagados. Continuar?')
+    : (casa+' ativo(s) já existem e vão receber o valor novo; '+(itens.length-casa)
+       +' serão acrescentados na carteira '+(target==='nac'?'Nacional':'Global')+'. Continuar?');
+  if(!confirm(aviso))return;
+  let atualizados=0,novos=0;
+  if(mode==='replace'){
+    if(target==='nac'){D.invest.nacional=itens.slice();renderNac();}
+    else{D.invest.global=itens.slice();renderGlob();}
+    novos=itens.length;
+  }else{
+    itens.forEach(it=>{
+      const i=acharNaConta(arr,it.nome,it.tk);
+      if(i<0){arr.push(it);novos++;return;}
+      const x=arr[i];
+      if(target==='nac'){x.valor=it.valor;if(it.apl!=null&&it.apl!==0)x.apl=it.apl;}
+      else{
+        if(it.qtd)x.qtd=it.qtd;
+        if(it.pa)x.pa=it.pa;
+        if(it.apl)x.apl=it.apl;
+        if(!x.tk&&it.tk)x.tk=it.tk;
+      }
+      atualizados++;
+    });
+    if(target==='nac')renderNac();else renderGlob();
+  }
   refreshInv();closeImport();
-  alert(itens.length+' ativo(s) importado(s) com sucesso.');
+  const reg=registrarPatrimonio();
+  alert((atualizados?(atualizados+' ativo(s) com valor novo'):'')
+    +(atualizados&&novos?' e ':'')+(novos?(novos+' ativo(s) acrescentado(s)'):'')+'.'
+    +'\nTotal investido agora: '+brl(reg.total)
+    +'\n\n'+textoRegistro(reg));
 }
 function refreshCon(){renderDue();drawConPainel();save();}
 function initFields(){
