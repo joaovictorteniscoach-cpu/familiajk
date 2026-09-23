@@ -15,7 +15,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-23-2';
+const VERSAO='2026-09-23-3';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -411,6 +411,7 @@ function setSave(s,cls){const e=document.getElementById('save-state');e.textCont
 
 /* ===== Camada de armazenamento: aparelho + Firebase (nuvem real) ===== */
 let lastCloudError='';
+let _abriuSemConferir=false;   // abriu pela cópia do aparelho sem a nuvem responder
 let cloudPending=false;
 function hasCloud(){return !!(window.fbDB);}
 function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
@@ -902,6 +903,23 @@ async function load(){
       marcarSemNuvem(false);   // a dúvida foi resolvida: a marca não vale mais
     }
   }
+  /* cloudGet devolve null tanto para "a nuvem não tem nada" quanto para "a
+     nuvem não respondeu" — e a diferença aqui vale um banco inteiro.
+
+     Subir a cópia do aparelho porque a nuvem está VAZIA é certo: é a primeira
+     vez. Subir porque ela NÃO RESPONDEU é sobrescrever o bom com o atrasado —
+     e, como persist() carimba a data de agora, a cópia atrasada vira "a mais
+     recente" e passa a ganhar de todas as próximas.
+
+     Isso fica pior com dois endereços (Pages e Netlify) apontando para o mesmo
+     banco: cada endereço tem o SEU armazenamento no celular. Abrir aquele que
+     você não usa há semanas traz de volta a cópia daquela época — foi assim
+     que reapareceram nomes de aluno que não treinam mais. */
+  const nuvemRespondeu=hasCloud()&&!_nuvemMuda&&!lastCloudError;
+  if(hasCloud()&&!nuvemRespondeu&&!cloudRaw&&localRaw){
+    travado=true;               // abriu pela cópia do aparelho sem poder conferir
+    _abriuSemConferir=true;
+  }
   if(chosen){try{DB=JSON.parse(chosen);}catch(e){}}
   setSave(hasCloud()?'✓ pronto':'⚠ só no aparelho','ok');
   let dirty=false;
@@ -916,8 +934,9 @@ async function load(){
   if(!ehDono()){buscarNomeProf();conferirAcessoProf();}   // e com que nome — ou se nem devia estar aqui
   checarPortaEntrada();                     // e, se ninguém se identificou, para aqui
   conferirVersao();                         // este endereço está atualizado?
-  if(travado){setSave('⚠ confira os dados antes de salvar','err');}
-  else if(dirty||!chosen||(hasCloud()&&!cloudRaw&&localRaw)||(localRaw&&cloudRaw&&tsOf(localRaw)!==tsOf(cloudRaw)))persist();else publish();
+  try{conferirEndereco();}catch(e){}        // e é o endereço de sempre?
+  if(travado){setSave(_abriuSemConferir?'⚠ abriu sem falar com a nuvem ⓘ':'⚠ confira os dados antes de salvar','err');}
+  else if(dirty||!chosen||(nuvemRespondeu&&!cloudRaw&&localRaw)||(localRaw&&cloudRaw&&tsOf(localRaw)!==tsOf(cloudRaw)))persist();else publish();
   renderAll();
   try{HIST.prev=snapDB();}catch(e){}
   syncRequests(true);
@@ -6483,6 +6502,24 @@ async function conferirVersao(){
     }
     if(versaoCmp(VERSAO,naNuvem)<0)mostrarBarraVersao(naNuvem);
   }catch(e){/* nunca atrapalhar a abertura por causa de um aviso */}
+}
+/* ===== Dois endereços, duas cópias =====
+   O app vive em dois lugares (GitHub Pages e Netlify) de propósito: se um cair,
+   o outro serve. Mas o celular guarda uma cópia SEPARADA para cada endereço.
+   Alternar entre eles é o jeito mais fácil de trazer de volta um banco velho —
+   e a pessoa não tem como adivinhar isso olhando a tela. Então a tela diz. */
+function conferirEndereco(){
+  const bar=document.getElementById('barra-versao');
+  if(!bar||bar.style.display==='block')return;     // o aviso de versão é mais urgente
+  let aqui='';try{aqui=location.href||'';}catch(e){return;}
+  if(!aqui||aqui.indexOf('http')!==0)return;       // aberto de arquivo: não é o caso
+  if(aqui.indexOf(ENDERECO_ATUAL)===0)return;      // está no endereço de sempre
+  const t=document.getElementById('bv-texto'), l=document.getElementById('bv-link');
+  if(t)t.textContent=' Você abriu pelo endereço reserva. Cada endereço guarda uma '
+    +'cópia própria neste celular, e alternar entre eles pode trazer dados antigos '
+    +'de volta. Use sempre este: ';
+  if(l){l.textContent=ENDERECO_ATUAL;l.href=ENDERECO_ATUAL;}
+  bar.style.display='block';
 }
 function mostrarBarraVersao(naNuvem){
   const bar=document.getElementById('barra-versao');
