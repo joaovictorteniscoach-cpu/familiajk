@@ -920,6 +920,12 @@ table.tbl.livre td:last-child{width:42%}
   <div class="modal" style="max-width:560px">
     <h3>Extrato importado</h3>
     <p id="ex-sum">—</p>
+    <p id="ex-meses" class="note" style="margin:-4px 0 8px"></p>
+    <div class="field" id="ex-semdata-box" style="display:none;margin:2px 0 10px">
+      <label>Lançamentos sem data — em que mês eles entram?</label>
+      <select id="ex-mes-sem" class="cell txt" onchange="exSetMesSemData(this.value)"></select>
+      <div class="hint" id="ex-semdata-hint"></div>
+    </div>
     <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin:2px 0 4px;cursor:pointer"><input type="checkbox" id="ex-fatura" onchange="exToggleFatura()" style="width:auto"> É fatura de cartão — tratar tudo como gasto</label>
     <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin:0 0 4px;cursor:pointer"><input type="checkbox" id="ex-cartao" checked onchange="exToggleFatura()" style="width:auto"> Não contar pagamento de fatura do cartão <span class="tag">as compras já estão em Cartões</span></label>
     <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin:0 0 8px;cursor:pointer"><input type="checkbox" id="ex-invest" checked onchange="exToggleFatura()" style="width:auto"> Não contar investimento / transferência minha <span class="tag">não é gasto</span></label>
@@ -928,7 +934,7 @@ table.tbl.livre td:last-child{width:42%}
       <select id="ex-pessoa" class="cell txt" onchange="exSetPessoa(this.value)"></select>
       <div class="hint" id="ex-pessoa-hint"></div>
     </div>
-    <div class="scroll" style="max-height:220px;border:1px solid var(--line);border-radius:10px"><table class="tbl" id="tbl-extrato"></table></div>
+    <div class="scroll" style="max-height:220px;overflow-y:auto;border:1px solid var(--line);border-radius:10px"><table class="tbl" id="tbl-extrato"></table></div>
     <div class="row" style="flex-direction:column;gap:8px;align-items:stretch">
       <button class="iconbtn primary" onclick="exSaveTx()">🏷️ Salvar já separado por categoria</button>
       <button class="iconbtn" onclick="exApplyAnual()">📆 Lançar totais no mês atual (Anual)</button>
@@ -2990,7 +2996,7 @@ function parseOFX(text){
     const amt=parseFloat((tag(b,'TRNAMT')||'').replace(',','.'));if(isNaN(amt))return;
     const dt=(tag(b,'DTPOSTED')||'').slice(0,8);
     const desc=(tag(b,'MEMO')||tag(b,'NAME')||tag(b,'CHECKNUM')||'—');
-    let d='';if(dt.length>=8)d=dt.slice(6,8)+'/'+dt.slice(4,6)+'/'+dt.slice(0,4);
+    let d=dataNorm(dt)||dataNorm(tag(b,'DTPOSTED'));
     txns.push({date:d,desc,amount:amt});
   });
   return txns;
@@ -3042,9 +3048,9 @@ function parseCSV(text){
     let vidx=vi;
     if(vidx<0){for(let k=parts.length-1;k>=0;k--){if(parseBRNum(parts[k])!=null&&/\d/.test(parts[k])){vidx=k;break;}}}
     const amt=parseBRNum(parts[vidx]);if(amt==null)continue;
-    let dateS=(di>=0?parts[di]:(parts.find(p=>/\d{2}[\/\-]\d{2}/.test(p))||'')).trim();
+    let dateS=(di>=0?parts[di]:(parts.find(p=>/\d{4}[-.\/]\d{1,2}[-.\/]\d{1,2}|\d{1,2}[\/\-.]\d{1,2}/.test(p))||'')).trim();
     let descS=(xi>=0?parts[xi]:parts.filter((p,k)=>k!==vidx&&p.trim()!==dateS).sort((a,b)=>b.length-a.length)[0]||'—').trim();
-    txns.push({date:dateS,desc:descS||'—',amount:amt});
+    txns.push({date:dataNorm(dateS)||dateS,desc:descS||'—',amount:amt});
   }
   return txns;
 }
@@ -3347,12 +3353,66 @@ function jaImportado(x){
 function txContaveis(){return extratoTxns.filter(x=>!txIgnorado(x));}
 /* impressão digital de um lançamento — usada para nunca importar o mesmo duas vezes */
 function txKey(x){return (x.date||'')+'|'+(+x.amount||0).toFixed(2)+'|'+norm(x.desc).slice(0,22);}
-function mesFromDate(dstr){
-  const m=(dstr||'').match(/(\d{2})[\/\-.](\d{2})(?:[\/\-.](\d{2,4}))?/);if(!m)return '—';
-  const mm=+m[2],yy=m[3]?(m[3].length===2?('20'+m[3]):m[3]):(''+new Date().getFullYear());
-  return (MESES[mm-1]||'??')+'/'+String(yy).slice(2);
+/* ---------- a data, do jeito que cada banco escreve ----------
+   15/07/2026 · 15/07/26 · 15-07 · 2026-07-15 (Nubank e Inter exportam assim)
+   · 20260715 (OFX cru) · "15 de julho de 2026" (foto do app do banco).
+   Tudo vira dd/mm/aaaa aqui. Sem isto, "2026-07-15" era lido como dia 15 do
+   mês 07 do ano 15: o extrato do ano inteiro caía numa gaveta só, num ano
+   que não existe. */
+const MES_NOME={jan:1,fev:2,mar:3,abr:4,mai:5,jun:6,jul:7,ago:8,set:9,out:10,nov:11,dez:12};
+function pad2(n){return String(n).length<2?('0'+n):String(n);}
+function anoDe2(y){y=+y;return y>=70?(1900+y):(2000+y);}
+/* Sem o ano escrito, a data é do extrato que você está importando agora: se o
+   mês ainda não chegou neste ano, ele é do ano passado. Antes tudo virava o
+   ano corrente e um extrato de novembro ia parar no futuro. */
+function anoProvavel(mm){
+  const h=new Date(),ano=h.getFullYear();
+  return mm>(h.getMonth()+1)?(ano-1):ano;
 }
-let extratoOrig=[],catFiltroMes='Todos';
+function dataNorm(s){
+  const t=String(s||'').trim();if(!t)return '';
+  let m;
+  if((m=t.match(/(\d{4})[-.\/](\d{1,2})[-.\/](\d{1,2})/))){
+    const mm=+m[2],dd=+m[3];
+    if(mm>=1&&mm<=12&&dd>=1&&dd<=31)return pad2(dd)+'/'+pad2(mm)+'/'+m[1];
+  }
+  if((m=t.match(/\b(\d{4})(\d{2})(\d{2})\b/))){
+    const mm=+m[2],dd=+m[3];
+    if(mm>=1&&mm<=12&&dd>=1&&dd<=31)return m[3]+'/'+m[2]+'/'+m[1];
+  }
+  if((m=t.match(/(\d{1,2})\s*(?:de\s+)?(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)[a-zç]*\.?\s*(?:de\s+)?(\d{2,4})?/i))){
+    const dd=+m[1],mm=MES_NOME[m[2].toLowerCase()];
+    if(dd>=1&&dd<=31)return pad2(dd)+'/'+pad2(mm)+'/'+(m[3]?(m[3].length<=2?anoDe2(m[3]):+m[3]):anoProvavel(mm));
+  }
+  const re=/(\d{1,2})[-.\/](\d{1,2})(?:[-.\/](\d{2,4}))?/g;
+  while((m=re.exec(t))){
+    const dd=+m[1],mm=+m[2];
+    if(dd<1||dd>31||mm<1||mm>12)continue;
+    return pad2(dd)+'/'+pad2(mm)+'/'+(m[3]?(m[3].length<=2?anoDe2(m[3]):+m[3]):anoProvavel(mm));
+  }
+  return '';
+}
+function mesFromDate(dstr){
+  const d=dataNorm(dstr);if(!d)return '—';
+  return (MESES[(+d.slice(3,5))-1]||'??')+'/'+d.slice(8);
+}
+/* 'jul/26' vira 2607, para ordenar mês a mês; 'sem data' fica no fim */
+function mesOrdem(m){
+  const p=String(m||'').split('/');const i=MESES.indexOf(p[0]);
+  if(i<0||!p[1])return 999999;
+  return (+p[1])*100+(i+1);
+}
+let extratoOrig=[],catFiltroMes='Todos',exMesSemData='';
+/* últimos 24 meses, para o caso de o arquivo vir sem data nenhuma */
+function mesesRecentes(n){
+  const out=[],h=new Date();
+  for(let i=0;i<(n||24);i++){
+    const d=new Date(h.getFullYear(),h.getMonth()-i,1);
+    out.push(MESES[d.getMonth()]+'/'+String(d.getFullYear()).slice(2));
+  }
+  return out;
+}
+function exSetMesSemData(v){exMesSemData=v||'';applyExtrato();}
 function showExtratoPreview(t){
   if(!t||!t.length){alert('Não identifiquei transações. Dicas: exporte OFX (mais confiável), confira o texto colado, ou tire uma foto mais nítida. Você também pode me enviar a imagem no chat que eu transcrevo com precisão.');return;}
   extratoOrig=t.map(x=>({date:x.date,desc:x.desc,amount:x.amount}));
@@ -3382,6 +3442,10 @@ function applyExtrato(){
     let amt=x.amount;if(fat&&amt>0&&!isIncomeDesc(x.desc))amt=-Math.abs(amt);
     const y={date:x.date,desc:x.desc,amount:amt,cat:categorize(x.desc,amt),tipo:tipoTx(x.desc,amt),
              pes:pesDe(x.desc,D.contas.exPessoa)};
+    /* cada lançamento vai para o SEU mês, lido da data da linha. O que veio
+       sem data só entra depois que você disser em qual mês ele cai. */
+    y.mes=mesFromDate(y.date);
+    if(y.mes==='—'&&exMesSemData)y.mes=exMesSemData;
     y.jaTem=y.tipo!=='saldo'&&jaImportado(y);
     if(y.jaTem)y.tipo='jalancado';
     return y;
@@ -3403,6 +3467,28 @@ function renderExtratoPreview(){
   if(outrosFora.length)notas.push(outrosFora.length+' fora da conta ('+brl(foraVal)+') — fatura de cartão e investimento');
   document.getElementById('ex-sum').innerHTML=cont.length+' transações novas · <b class="down">saídas '+brl(saidas)+'</b> · <b class="up">entradas '+brl(entradas)+'</b>'
     +(notas.length?('<br><span class="mut" style="font-size:11px">'+notas.join(' · ')+'</span>'):'');
+  /* Antes de salvar você vê em quantos meses o arquivo se divide. É o que
+     evita o extrato do ano inteiro cair num mês só sem ninguém perceber. */
+  const salv=txSalvaveis(),porMes={};
+  salv.forEach(x=>{const m=x.mes||'—';porMes[m]=(porMes[m]||0)+1;});
+  const ordem2=Object.keys(porMes).sort((a,b)=>mesOrdem(a)-mesOrdem(b));
+  const semData=porMes['—']||0;
+  const em=document.getElementById('ex-meses');
+  if(em)em.innerHTML=!salv.length?'' :
+    ('<b>Vai lançar em '+(ordem2.filter(m=>m!=='—').length||0)+' mês(es):</b> '
+     +ordem2.map(m=>(m==='—'?'<b class="down">sem data</b>':esc(m))+' ('+porMes[m]+')').join(' · '));
+  const cx=document.getElementById('ex-semdata-box');
+  if(cx){
+    cx.style.display=semData?'':'none';
+    const sl=document.getElementById('ex-mes-sem');
+    if(sl&&!(sl.options||[]).length){
+      sl.innerHTML='<option value="">— escolher mês —</option>'
+        +mesesRecentes(24).map(m=>'<option value="'+m+'">'+m+'</option>').join('');
+    }
+    const hn=document.getElementById('ex-semdata-hint');
+    if(hn)hn.textContent=semData+' lançamento(s) vieram sem data no arquivo. '
+      +'Na foto do extrato a data costuma aparecer só no topo do grupo — se o app não achou, escolha o mês aqui.';
+  }
   let h='<tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th></tr>';
   /* as novas primeiro: é nelas que você precisa olhar */
   const ordem=t.slice().sort((a,b)=>(txIgnorado(a)?1:0)-(txIgnorado(b)?1:0));
@@ -3414,6 +3500,11 @@ function renderExtratoPreview(){
       +'<td class="'+(ig?'mut':(x.amount<0?'down':'up'))+'">'+brl(x.amount)+'</td></tr>';});
   if(t.length>300)h+='<tr><td class="mut" colspan="4">… +'+(t.length-300)+' transações</td></tr>';
   document.getElementById('tbl-extrato').innerHTML=h;
+  /* A tabela da prévia nasce vazia junto com a página e ganhava o aviso de
+     "nada lançado aqui" — que a esconde por CSS. Resultado: o extrato era
+     lido, mas a lista para conferir não aparecia. Depois de preencher ela
+     precisa ser rotulada e remarcada, como qualquer outra tabela do app. */
+  if(typeof tuneInputs==='function')tuneInputs();
 }
 function exSaveTx(){
   if(!extratoTxns.length)return;let n=0,fora=0;
@@ -3425,7 +3516,7 @@ function exSaveTx(){
     const key=txKey(x);
     if(D.contas.transacoes.some(t=>t._k===key))return;
     const nc=txNaoConta(x);
-    D.contas.transacoes.push({_k:key,date:x.date||'',mes:mesFromDate(x.date),desc:(x.desc||'').slice(0,60),
+    D.contas.transacoes.push({_k:key,date:x.date||'',mes:x.mes||mesFromDate(x.date),desc:(x.desc||'').slice(0,60),
       amount:x.amount,cat:x.cat||categorize(x.desc,x.amount),pes:x.pes||'ambos',nc:nc});
     n++;if(nc)fora++;
   });
@@ -3435,11 +3526,22 @@ function exSaveTx(){
       +'\nVeja na aba Categorias (modo Contas).')
     :'Essas transações já estavam salvas — nada duplicado.');
 }
+/* Na foto do app do banco a data aparece UMA vez, no topo do grupo:
+     15 de julho de 2026
+     MERCADO CENTRAL        120,50
+     POSTO SHELL             80,00
+   Sem guardar essa data, todas as linhas entravam sem mês e o extrato do ano
+   inteiro virava uma gaveta só. A data do cabeçalho vale para as linhas
+   seguintes, até vir outra. */
 function parseTextExtrato(text){
-  const out=[];
+  const out=[];let ultimaData='';
   (text||'').split(/\r?\n/).forEach(raw=>{
     const line=raw.replace(/\s+/g,' ').trim();if(line.length<3)return;
-    const nums=line.match(/\d{1,3}(?:\.\d{3})*,\d{2}/g);if(!nums)return;
+    const nums=line.match(/\d{1,3}(?:\.\d{3})*,\d{2}/g);
+    /* a data é procurada sem os valores, senão "1.234,56" vira dia 1 mês 23 */
+    const dCab=dataNorm(line.replace(/\d{1,3}(?:\.\d{3})*,\d{2}/g,' '));
+    if(dCab)ultimaData=dCab;
+    if(!nums)return;
     const valStr=nums[nums.length-1];
     let amt=parseFloat(valStr.replace(/\./g,'').replace(',','.'));if(isNaN(amt))return;
     const idx=line.lastIndexOf(valStr);
@@ -3450,7 +3552,7 @@ function parseTextExtrato(text){
     const pos=/^\s*c\b/i.test(after)||/(recebid|cr[eé]dito|dep[óo]sito|sal[áa]rio|rendimento|estorno|pix recebid|transfer\S* recebid|entrada|provento)/.test(low);
     amt=Math.abs(amt);amt=(pos&&!neg)?amt:-amt;
     const dm=line.match(/(\d{2})[\/\-.](\d{2})(?:[\/\-.](\d{2,4}))?/);
-    const date=dm?(dm[1]+'/'+dm[2]+(dm[3]?('/'+dm[3]):'')):'';
+    const date=dCab||ultimaData;
     let desc=line.replace(valStr,'');if(dm)desc=desc.replace(dm[0],'');
     desc=desc.replace(/r\$/ig,'').replace(/[|;]+/g,' ').replace(/\s{2,}/g,' ').trim().slice(0,42)||'—';
     out.push({date,desc,amount:amt});
@@ -3737,13 +3839,22 @@ function invFotoAplicar(){
   }else alert(msg);
 }
 
-function catMonths(){const s=new Set(D.contas.transacoes.map(t=>t.mes).filter(m=>m&&m!=='—'));return ['Todos',...[...s]];}
+/* em ordem de calendário, e com uma gaveta para o que ficou sem data —
+   escondê-la fazia esses lançamentos somarem em "Todos" sem aparecer em
+   lugar nenhum para você corrigir */
+function catMonths(){
+  const s=new Set((D.contas.transacoes||[]).map(t=>t.mes).filter(m=>m&&m!=='—'));
+  const temSem=(D.contas.transacoes||[]).some(t=>!t.mes||t.mes==='—');
+  const arr=[...s].sort((a,b)=>mesOrdem(b)-mesOrdem(a));
+  return ['Todos',...arr,...(temSem?['—']:[])];
+}
 function onCatMes(v){catFiltroMes=v;renderCategorias();}
 function renderCategorias(){
   const all=D.contas.transacoes||[];
   const meses=catMonths();if(!meses.includes(catFiltroMes))catFiltroMes='Todos';
   const sel=document.getElementById('cat-mes');
-  if(sel)sel.innerHTML=meses.map(m=>'<option'+(m===catFiltroMes?' selected':'')+'>'+m+'</option>').join('');
+  if(sel)sel.innerHTML=meses.map(m=>'<option value="'+esc(m)+'"'+(m===catFiltroMes?' selected':'')
+    +'>'+(m==='—'?'sem data':esc(m))+'</option>').join('');
   const tx=all.filter(t=>catFiltroMes==='Todos'||t.mes===catFiltroMes);
   /* a soma usa só o que conta; a LISTA mostra tudo, inclusive o que ficou de fora */
   const txC=txSoma(tx),txFora=tx.filter(naoSoma);
