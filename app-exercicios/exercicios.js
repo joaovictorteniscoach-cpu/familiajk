@@ -455,7 +455,7 @@ const EX = [
   fig:{base:'meia', el:[
     ['prof',0,-2.0,'cesta'],
     ['bola',0,-1.8, 5.0,8.6, .24, ''],
-    ['aluno',1.0,11.2,'','prepara'],
+    ['aluno',1.0,11.2,'','forehand'],
     ['mov',1.2,11.0, 4.8,8.8, .1, ''],
     ['marca',5.0,8.6,'pé de fora trava'],
     ['cone',4.9,10.6,'']
@@ -857,7 +857,7 @@ const EX = [
   fig:{base:'meia', el:[
     ['prof',0,-1.8,'bola pesada'],
     ['bola',0,-1.6, 2.0,11.4, .18, ''],
-    ['aluno',0.6,10.0,'','prepara'],
+    ['aluno',0.6,10.0,'','backhand'],
     ['cone',3.0,13.0,''],
     ['mov',0.8,10.4, 2.8,12.8, .1, 'recua na diagonal'],
     ['mov',2.8,13.0, 0.8,10.8, .1, 'e volta']
@@ -1096,7 +1096,7 @@ const EX = [
   mat:['fita','cones','corda','cesta'], form:['particular','dupla','trio'],
   nec:['consistencia','direcao','profundidade'] ,
   fig:{base:'inteira', el:[
-    ['aluno',3.2,11.4,'forehand','prepara'],
+    ['aluno',3.2,11.4,'forehand','forehand'],
     ['prof',-3.0,-11.0,''],
     ['zona',-3.3,-9.0,3.2,4.4,'corredor cruzado'],
     ['bola',3.2,11.0, -3.3,-9.0, .16, ''],
@@ -1123,7 +1123,7 @@ const EX = [
   mat:['alvos','cesta'], form:['particular','dupla'],
   nec:['tatica','potencia','footwork','direcao'] ,
   fig:{base:'inteira', el:[
-    ['aluno',-1.0,11.2,'contorna','prepara'],
+    ['aluno',-1.0,11.2,'contorna','forehand'],
     ['bola',-2.2,-2.0, -0.6,9.6, .18, 'bola no meio'],
     ['mov',-0.6,11.4, -2.6,10.8, -.12, 'passo lateral'],
     ['zona',3.2,-9.2,3.0,4.0,'alvo inside-out'],
@@ -1149,7 +1149,7 @@ const EX = [
   mat:['corda','elastico','cesta'], form:['particular','dupla','trio'],
   nec:['efeito','defesa','profundidade','consistencia'] ,
   fig:{base:'inteira', el:[
-    ['aluno',3.0,11.2,'','prepara'],
+    ['aluno',3.0,11.2,'','forehand'],
     ['corda','corda a 1,5 m'],
     ['bola',3.0,10.8, -3.0,-10.2, .3, 'alta: defesa'],
     ['bola',3.0,10.8, -3.0,-7.6, .12, 'neutra'],
@@ -1203,7 +1203,7 @@ const EX = [
   fig:{base:'meia', el:[
     ['prof',0,-1.8,'bola alta e pesada'],
     ['bola',0,-1.6, 3.4,8.0, .3, ''],
-    ['aluno',3.4,10.0,'','prepara'],
+    ['aluno',3.4,10.0,'','forehand'],
     ['mov',3.4,10.2, 3.4,12.4, 0, '1. recua e bate na descida'],
     ['mov',3.4,9.8, 3.2,7.2, 0, '2. sobe no quique']
   ], nota:`Bola na altura do ombro: recuar e bater na descida, subir no quique ou bloquear quando não dá tempo.`},
@@ -1278,7 +1278,7 @@ const EX = [
   fig:{base:'meia', el:[
     ['prof',0,-1.8,''],
     ['bola',0,-1.6, 5.2,9.0, .22, ''],
-    ['aluno',1.2,11.2,'','prepara'],
+    ['aluno',1.2,11.2,'','forehand'],
     ['mov',1.4,11.0, 5.0,9.2, .1, 'corre'],
     ['bola',5.2,9.0, -3.6,-2.0, .3, 'alta e cruzada'],
     ['cone',5.3,10.8,'']
@@ -1303,7 +1303,7 @@ const EX = [
   mat:['nada'], form:['particular','dupla','trio'],
   nec:['tatica','footwork','potencia'] ,
   fig:{base:'inteira', el:[
-    ['aluno',-1.0,11.2,'tudo de forehand','prepara'],
+    ['aluno',-1.0,11.2,'tudo de forehand','forehand'],
     ['prof',0,-11.0,''],
     ['bola',0,-10.6, -1.6,9.8, -.14, 'bola no meio'],
     ['mov',-0.8,11.4, -2.8,10.8, -.12, 'contorna'],
@@ -1355,7 +1355,7 @@ const EX = [
   nec:['consistencia','equilibrio','potencia'],
   kids:`O cone vira "porta mágica": a bola só pode ser batida depois de passar pela porta.` ,
   fig:{base:'fundo', el:[
-    ['aluno',0.6,10.4,'','prepara'],
+    ['aluno',0.6,10.4,'','forehand'],
     ['cone',2.2,9.2,'bate na altura do cone'],
     ['bola',-3.6,5.6, 2.2,9.2, .2, '']
   ], nota:`Um cone à frente do pé da frente marca a linha do contato: bater atrás dele não conta.`},
@@ -1404,7 +1404,7 @@ const EX = [
   nec:['equilibrio','coordenacao','potencia'],
   kids:`"Mão que aponta e abraça": aponta a bola, abraça o peito.` ,
   fig:{base:'mini', el:[
-    ['aluno',1.4,5.0,'','prepara'],
+    ['aluno',1.4,5.0,'','forehand'],
     ['prof',-1.0,-3.4,''],
     ['bola',-1.0,-3.2, 1.6,4.6, .2, ''],
     ['marca',1.4,3.6,'mão livre aponta a bola']
@@ -1434,7 +1434,7 @@ const EX = [
   fig:{base:'meia', el:[
     ['prof',0,-1.8,'cesta facilitada'],
     ['bola',0,-1.6, -3.0,9.0, -.22, ''],
-    ['aluno',-3.0,11.0,'','prepara'],
+    ['aluno',-3.0,11.0,'','backhand'],
     ['cone',-2.0,9.8,'contato aqui']
   ], nota:`Backhand de duas mãos: tronco e braços giram como um bloco só, cotovelos na mesma distância do peito.`},
   passos:[`Bola adaptada ou cesta facilitada; cone marcando o contato à frente.`, `Séries de 10 backhands cruzados.`, `A referência é o giro do TRONCO levando os braços — não os braços puxando.`, `Peça para manter os cotovelos na mesma distância do peito, do começo ao fim.`, `Cobre profundidade: a bola tem que cair depois da linha de saque.`],
@@ -1457,7 +1457,7 @@ const EX = [
   mat:['cesta','fita'], form:['particular','dupla','trio'],
   nec:['efeito','defesa','tatica'] ,
   fig:{base:'inteira', el:[
-    ['aluno',-3.0,11.2,'','prepara'],
+    ['aluno',-3.0,11.2,'','backhand'],
     ['zona',2.6,-9.4,3.4,3.6,'faixa profunda'],
     ['bola',-3.0,10.8, 2.6,-9.4, .1, 'baixa e longa'],
     ['prof',1.0,-11.2,'']
@@ -1484,7 +1484,7 @@ const EX = [
   fig:{base:'meia', el:[
     ['prof',0,-1.8,'alta e pesada'],
     ['bola',0,-1.6, -3.4,8.2, -.3, ''],
-    ['aluno',-3.4,10.2,'','prepara'],
+    ['aluno',-3.4,10.2,'','backhand'],
     ['mov',-3.4,10.4, -3.4,12.6, 0, '1. recua e bate na descida'],
     ['mov',-3.4,10.0, -3.2,7.4, 0, '2. slice de bloqueio']
   ], nota:`Bola alta no backhand: recuar e bater na descida, slice de bloqueio, ou subir no quique se a bola for lenta.`},
@@ -1509,7 +1509,7 @@ const EX = [
   fig:{base:'inteira', el:[
     ['prof',0,-2.0,''],
     ['bola',0,-1.8, -2.4,5.0, -.16, 'curta'],
-    ['aluno',-1.6,9.6,'','prepara'],
+    ['aluno',-1.6,9.6,'','backhand'],
     ['mov',-1.6,9.4, -2.4,5.4, -.1, 'entra na quadra'],
     ['zona',-3.4,-8.0,2.8,4.0,'alvo paralelo']
   ], nota:`Toda bola que quicar antes da linha de saque tem que ser atacada de backhand, com entrada na quadra.`},
@@ -1535,7 +1535,7 @@ const EX = [
   fig:{base:'meia', el:[
     ['prof',0,-1.8,''],
     ['bola',0,-1.6, -5.2,8.6, -.24, 'larga e baixa'],
-    ['aluno',-2.0,11.0,'','prepara'],
+    ['aluno',-2.0,11.0,'','backhand'],
     ['mov',-1.8,10.8, -5.0,8.8, -.1, 'solta a mão de apoio'],
     ['marca',-5.2,8.6,'slice de uma mão']
   ], nota:`Bola fora do alcance das duas mãos: soltar a mão de apoio e devolver de slice, profundo e alto.`},
@@ -1560,7 +1560,7 @@ const EX = [
   mat:['fita','cones','corda'], form:['particular','dupla','trio'],
   nec:['consistencia','direcao','profundidade'] ,
   fig:{base:'inteira', el:[
-    ['aluno',-3.2,11.2,'','prepara'],
+    ['aluno',-3.2,11.2,'','backhand'],
     ['prof',3.0,-11.0,''],
     ['zona',3.3,-9.0,3.2,4.4,'corredor'],
     ['bola',-3.2,10.8, 3.3,-9.0, -.16, ''],
@@ -1586,7 +1586,7 @@ const EX = [
   mat:['alvos','cesta'], form:['particular','dupla'],
   nec:['direcao','tatica','potencia'] ,
   fig:{base:'inteira', el:[
-    ['aluno',-3.0,11.2,'','prepara'],
+    ['aluno',-3.0,11.2,'','backhand'],
     ['bola',2.8,-10.4, -3.2,10.6, -.16, 'vem cruzada'],
     ['zona',-3.4,-9.0,2.6,4.2,'corredor paralelo'],
     ['bola',-3.0,10.8, -3.4,-9.0, .06, 'vira!']
@@ -1612,7 +1612,7 @@ const EX = [
   mat:['adaptada'], form:['particular','dupla','trio'],
   nec:['consistencia','mental','tatica'] ,
   fig:{base:'inteira', el:[
-    ['aluno',-2.6,11.2,'tudo de backhand','prepara'],
+    ['aluno',-2.6,11.2,'tudo de backhand','backhand'],
     ['prof',0,-11.0,'alimenta no backhand'],
     ['bola',0,-10.6, -2.8,9.8, -.14, ''],
     ['texto',0,3.0,'contornar é ponto perdido',.6]
@@ -1638,7 +1638,7 @@ const EX = [
   nec:['consistencia','potencia','equilibrio'],
   kids:`"Porta do backhand": bater só depois que a bola passar pela porta do cone.` ,
   fig:{base:'fundo', el:[
-    ['aluno',-1.4,10.4,'','prepara'],
+    ['aluno',-1.4,10.4,'','backhand'],
     ['cone',-2.8,9.2,'contato na frente do joelho'],
     ['bola',3.2,5.8, -2.8,9.2, -.2, '']
   ], nota:`Um cone à frente do joelho da frente marca o contato do backhand — mais à frente do que o aluno imagina.`},
@@ -1664,7 +1664,7 @@ const EX = [
   fig:{base:'meia', el:[
     ['prof',0,-1.8,''],
     ['bola',0,-1.6, -4.8,9.0, -.22, 'larga'],
-    ['aluno',-1.0,11.2,'','prepara'],
+    ['aluno',-1.0,11.2,'','backhand'],
     ['mov',-1.2,11.0, -4.6,9.2, -.1, 'prepara no caminho'],
     ['cone',-0.6,11.8,'volta ao cone']
   ], nota:`Backhand em movimento: raquete atrás antes do último passo, bola cruzada e alta, e volta ao cone.`},
@@ -1687,7 +1687,7 @@ const EX = [
   mat:['contador'], form:['particular','dupla'],
   nec:['tatica','efeito','mental'] ,
   fig:{base:'inteira', el:[
-    ['aluno',-3.0,11.2,'','prepara'], ['prof',2.6,-11.0,''],
+    ['aluno',-3.0,11.2,'','backhand'], ['prof',2.6,-11.0,''],
     ['bola',-3.0,10.8, 2.8,-9.6, -.12, 'slice: muda o ritmo'],
     ['bola',2.6,-10.4, -3.2,10.4, -.16, ''],
     ['texto',0,3.0,'1 slice por ponto, antes de definir',.58]
@@ -1713,7 +1713,7 @@ const EX = [
   nec:['defesa','bolaalta','tatica'] ,
   fig:{base:'inteira', el:[
     ['prof',-2.0,-3.2,'pressiona na rede'],
-    ['aluno',-3.0,11.2,'','prepara'],
+    ['aluno',-3.0,11.2,'','backhand'],
     ['zona',1.6,-10.2,3.4,2.4,'últimos 3 m'],
     ['bola',-3.0,10.8, 1.6,-10.2, -.36, 'lob por cima']
   ], nota:`Lob de backhand contra quem pressiona na rede: alto, profundo, nos últimos metros da quadra.`},
@@ -1765,7 +1765,7 @@ const EX = [
   fig:{base:'meia', el:[
     ['prof',0,-1.8,'3 bolas pesadas'],
     ['bola',0,-1.6, -4.4,9.4, -.22, ''],
-    ['aluno',-3.6,10.6,'','prepara'],
+    ['aluno',-3.6,10.6,'','backhand'],
     ['cone',0,11.9,'bissetriz'],
     ['mov',-4.2,9.8, -0.4,11.6, .12, 'recompõe']
   ], nota:`Três bolas seguidas no canto do backhand: defender as duas primeiras e NEUTRALIZAR na terceira.`},

@@ -511,82 +511,99 @@ header.bar{
 }
 @page{size:A4;margin:11mm}
 
-.ft{color:#16212B;font-size:9.5pt;line-height:1.36;page-break-after:always;
-  /* sem isto o Chrome e o Safari imprimem a faixa escura em branco */
+.ft{color:#17222C;font-size:9.4pt;line-height:1.34;page-break-after:always;
+  /* sem isto o Chrome e o Safari imprimem toda faixa colorida em branco */
   -webkit-print-color-adjust:exact;print-color-adjust:exact}
 .ft:last-child{page-break-after:auto}
 .ft h1,.ft h2,.ft h3{margin:0}
+.ft b{font-weight:800}
 
-/* cabeçalho: faixa escura com o código, o nome e a marca */
-.ft-top{background:#16212B;color:#fff;padding:5.5mm 7mm;border-radius:2.5mm;
-  position:relative;overflow:hidden;padding-right:44mm}
-.ft-top::after{content:"";position:absolute;right:-14mm;top:-14mm;width:42mm;height:42mm;
-  border-radius:50%;background:rgba(216,180,92,.12)}
-.ft-olho{font-size:7.6pt;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
-  color:#D8B45C;margin-bottom:1.4mm}
-.ft-top h1{font-size:19pt;font-weight:900;letter-spacing:-.01em;line-height:1.05}
-.ft-sub{font-size:8.6pt;color:rgba(255,255,255,.72);margin-top:1.2mm}
-.ft-marca{position:absolute;right:7mm;top:50%;transform:translateY(-50%);text-align:right;
-  font-size:7pt;font-weight:800;letter-spacing:.1em;color:rgba(255,255,255,.5);z-index:1}
-.ft-marca span{display:block;font-weight:600;letter-spacing:.02em;color:#D8B45C}
+/* ---- cabeçalho: a faixa escura que dá o tom da folha ---------------------
+   As proporções vêm medidas de uma folha de treino impressa que serve de
+   referência: cabeçalho 20% da altura, faixa de dados 7%, corpo 47%, as três
+   colunas 17%. O que é da JV e não da referência: o verde-limão da marca
+   (#DDEE66), a tipografia e o grafismo do canto. */
+.ft-top{background:#141C24;color:#fff;padding:5mm 7mm 4.5mm;position:relative;overflow:hidden;
+  min-height:32mm;display:flex;flex-direction:column;justify-content:center}
+.ft-top::before{content:"";position:absolute;right:-6mm;top:-18mm;width:56mm;height:86mm;
+  background:linear-gradient(200deg,rgba(221,238,102,.14) 0%,rgba(221,238,102,.03) 55%,transparent 56%);
+  transform:rotate(-13deg)}
+.ft-top::after{content:"JV";position:absolute;right:6mm;bottom:2mm;font-size:26pt;
+  font-weight:900;letter-spacing:-.04em;color:rgba(221,238,102,.11);line-height:1}
+.ft-cap{font-size:7pt;font-weight:800;letter-spacing:.2em;text-transform:uppercase;
+  color:#DDEE66;border-left:.8mm solid #DDEE66;padding-left:2.4mm;margin-bottom:2.2mm;line-height:1.45}
+.ft-cap span{display:block;color:rgba(255,255,255,.62);letter-spacing:.16em}
+.ft-top h1{font-size:23pt;font-weight:900;letter-spacing:-.02em;line-height:.94;
+  text-transform:uppercase}
+.ft-top h1 em{font-style:normal;color:#DDEE66;display:block;font-size:14pt;letter-spacing:-.01em}
+.ft-sub{font-size:7.8pt;color:rgba(255,255,255,.7);margin-top:1.8mm;
+  text-transform:uppercase;letter-spacing:.04em;max-width:118mm}
+.ft-selo{position:absolute;right:7mm;top:6mm;background:#DDEE66;color:#141C24;
+  font-size:11pt;font-weight:900;padding:1.4mm 3mm;border-radius:1.2mm;z-index:1}
+.ft-frase{position:absolute;right:27mm;top:9mm;width:46mm;font-size:7.6pt;line-height:1.38;
+  color:rgba(255,255,255,.72);font-style:italic;z-index:1}
 
-/* faixa de dados: os cinco números antes de tudo, como na folha impressa */
-.ft-dados{display:grid;grid-template-columns:repeat(4,1fr) 1.65fr;gap:0;
-  border:.35mm solid #C9CFD5;border-radius:2mm;margin-top:3.5mm;overflow:hidden}
-.ft-dados>div{padding:2.6mm 3mm;border-left:.35mm solid #E2E6EA}
-.ft-dados>div:first-child{border-left:none}
-.ft-dados small{display:block;font-size:6.8pt;font-weight:800;letter-spacing:.13em;
-  text-transform:uppercase;color:#7A858F;margin-bottom:.7mm}
-.ft-dados b{font-size:9pt;font-weight:700;display:block}
-.ft-dados .obj{background:#F3F5F7}
-.ft-dados .obj b{font-weight:600;font-size:8.4pt;line-height:1.3}
+/* ---- faixa de dados: os cinco números antes de tudo --------------------- */
+.ft-dados{display:grid;grid-template-columns:1fr .76fr .86fr 1.06fr 1.62fr;gap:0;
+  padding:2.8mm 0;border-bottom:.35mm solid #D9DEE3;align-items:start}
+.ft-dados>div{padding:0 3mm;border-left:.3mm solid #E4E8EC;display:flex;gap:2mm;min-width:0}
+.ft-dados>div:first-child{border-left:none;padding-left:0}
+.ft-dados i{flex:0 0 6.4mm;height:6.4mm;border-radius:50%;background:#DDEE66;
+  display:flex;align-items:center;justify-content:center;font-style:normal;font-size:8pt}
+.ft-dados small{display:block;font-size:6.6pt;font-weight:900;letter-spacing:.1em;
+  text-transform:uppercase;color:#141C24;margin-bottom:.6mm}
+.ft-dados b{font-size:8pt;font-weight:600;display:block;color:#3D4A55;line-height:1.28}
 
-/* corpo: o desenho de um lado, o passo a passo do outro */
-.ft-corpo{display:grid;grid-template-columns:1.2fr 1fr;gap:4mm;margin-top:3.5mm}
-.ft-qd{border:.35mm solid #C9CFD5;border-radius:2mm;overflow:hidden}
+/* ---- corpo: a quadra de um lado, o passo a passo do outro --------------- */
+.ft-corpo{display:grid;grid-template-columns:61.5% 1fr;gap:4.5mm;margin-top:3.4mm}
+.ft-qd{border:.35mm solid #D9DEE3;border-radius:1.6mm;overflow:hidden}
 .ft-qd svg{display:block;width:100%;height:auto}
-.ft-legenda{margin:0;padding:2.4mm 3mm;font-size:8.4pt;background:#F3F5F7;
-  border-top:.35mm solid #E2E6EA}
-.ft-montagem{margin:0;padding:2.2mm 3mm;font-size:8pt;color:#41505C;
-  border-top:.35mm solid #E2E6EA}
-.ft-passos h2,.ft-tres h3,.ft-niveis h3{font-size:8pt;font-weight:900;letter-spacing:.13em;
-  text-transform:uppercase;color:#41505C;margin-bottom:2mm}
-.ft-passos ol{list-style:none;margin:0;padding:0;display:grid;gap:1.8mm}
-.ft-passos li{display:flex;gap:2.4mm;align-items:flex-start;font-size:8.8pt}
-.ft-passos li i{flex:0 0 4.6mm;height:4.6mm;border-radius:1.4mm;background:#16212B;color:#fff;
-  font-size:7.4pt;font-weight:900;font-style:normal;display:flex;align-items:center;
-  justify-content:center;margin-top:.2mm}
-.ft-dica{margin-top:3mm;border:.35mm solid #D8B45C;border-left:1.2mm solid #D8B45C;
-  border-radius:2mm;background:#FBF6E9;padding:2.6mm 3mm}
-.ft-dica h3{font-size:7.6pt;font-weight:900;letter-spacing:.13em;text-transform:uppercase;
-  color:#8A6A18;margin-bottom:1.2mm}
-.ft-dica p{margin:0;font-size:8.4pt}
+.ft-legenda{margin:0;padding:2.2mm 3mm;font-size:8pt;line-height:1.3;background:#F4F6F8;
+  border-top:.3mm solid #E4E8EC}
+.ft-montagem{margin:0;padding:2.2mm 3mm;font-size:7.8pt;color:#41505C;
+  border-top:.3mm solid #E4E8EC}
+.ft-passos h2{font-size:11.5pt;font-weight:900;letter-spacing:-.01em;
+  text-transform:uppercase;margin-bottom:2mm}
+.ft-mont{margin:0 0 2.4mm;font-size:7.8pt;color:#41505C;border-left:.8mm solid #DDEE66;
+  padding-left:2.4mm;line-height:1.32}
+.ft-passos ol{list-style:none;margin:0;padding:0;display:grid;gap:1.9mm}
+.ft-passos li{display:flex;gap:2.8mm;align-items:flex-start;font-size:8.4pt;line-height:1.32}
+.ft-passos li i{flex:0 0 5.4mm;height:5.4mm;border-radius:50%;background:#DDEE66;color:#141C24;
+  font-size:7.6pt;font-weight:900;font-style:normal;display:flex;align-items:center;
+  justify-content:center;margin-top:-.2mm}
+.ft-dica{margin-top:3mm;background:#DDEE66;border-radius:1.6mm;padding:2.6mm 3mm}
+.ft-dica h3{font-size:9.5pt;font-weight:900;letter-spacing:.02em;text-transform:uppercase;
+  margin-bottom:1.4mm;display:flex;align-items:center;gap:2mm}
+.ft-dica p{margin:0;font-size:8.2pt;line-height:1.38}
 
-/* as três colunas do rodapé, as três à vista */
-.ft-tres{display:grid;grid-template-columns:repeat(3,1fr);gap:3mm;margin-top:3.5mm}
-.ft-tres>div{border:.35mm solid #C9CFD5;border-radius:2mm;padding:2.6mm 3mm;border-top:1mm solid}
-.ft-tres .ok{border-top-color:#5E8C3A}
-.ft-tres .err{border-top-color:#C4622F}
-.ft-tres .dif{border-top-color:#3D7FA8}
+/* ---- as três colunas do rodapé ----------------------------------------- */
+.ft-tres{display:grid;grid-template-columns:repeat(3,1fr);gap:4.5mm;margin-top:3.4mm;
+  border-top:.35mm solid #D9DEE3;padding-top:2.8mm}
+.ft-tres h3{font-size:9pt;font-weight:900;letter-spacing:.02em;text-transform:uppercase;
+  margin-bottom:2.2mm;display:flex;align-items:center;gap:2.2mm}
+.ft-tres h3 i{flex:0 0 5.6mm;height:5.6mm;border-radius:50%;background:#DDEE66;
+  display:flex;align-items:center;justify-content:center;font-style:normal;font-size:7.4pt}
 .ft-tres ul{list-style:none;margin:0;padding:0;display:grid;gap:1.1mm}
-.ft-tres li{font-size:8.2pt;padding-left:2.8mm;position:relative}
-.ft-tres li::before{content:"•";position:absolute;left:0;color:#9AA4AD}
+.ft-tres li{font-size:8pt;padding-left:3.2mm;position:relative;line-height:1.28}
+.ft-tres li::before{content:"";position:absolute;left:0;top:1.5mm;width:1.4mm;height:1.4mm;
+  border-radius:50%;background:#141C24}
 .ft-tres li.primeiro{font-weight:700}
-.ft-tres li.primeiro::before{content:"!";color:#C4622F;font-weight:900}
 
-/* a espiral: o mesmo exercício em cada nível, que na tela mora numa gaveta */
-.ft-niveis{margin-top:3.5mm;border:.35mm solid #C9CFD5;border-radius:2mm;padding:2.6mm 3mm}
-.ft-nv{display:grid;grid-template-columns:20mm 1fr;gap:2mm;font-size:8pt;
-  padding:1.1mm 0;border-top:.3mm solid #EDF0F2}
-.ft-nv:first-of-type{border-top:none}
-.ft-nv b{font-weight:800;color:#41505C}
-.ft-nv.foco{background:#FBF6E9;margin:0 -3mm;padding-left:3mm;padding-right:3mm}
-
-.ft-fim{margin-top:3.5mm;display:grid;gap:1.6mm}
-.ft-ok{margin:0;border:.35mm solid #5E8C3A;border-radius:2mm;background:#F2F7ED;
-  padding:2.4mm 3mm;font-size:8.6pt}
-.ft-kids{margin:0;font-size:8.2pt;color:#41505C}
-.ft-rod{margin:0;font-size:7.2pt;color:#7A858F;border-top:.3mm solid #D8DDE2;padding-top:1.6mm}
+/* ---- pé: a espiral dos níveis e o critério, em faixa fina --------------- */
+.ft-niveis{margin-top:3mm;border-top:.35mm solid #D9DEE3;padding-top:2.2mm;
+  display:grid;grid-template-columns:repeat(5,1fr);gap:2.6mm}
+.ft-niveis>div{font-size:7pt;line-height:1.26}
+.ft-niveis b{display:block;font-size:6.8pt;font-weight:900;letter-spacing:.1em;
+  text-transform:uppercase;color:#141C24;border-bottom:.6mm solid #DDEE66;
+  padding-bottom:.6mm;margin-bottom:1mm}
+.ft-niveis .ft-agora b{background:#DDEE66;padding:.4mm 1.2mm .6mm;border-bottom:none}
+.ft-fim{margin-top:2.4mm;display:flex;gap:4mm;align-items:baseline}
+.ft-ok{margin:0;flex:1;font-size:8.4pt;background:#141C24;color:#fff;
+  padding:2.4mm 3.4mm;border-radius:1.6mm}
+.ft-ok b{color:#DDEE66}
+.ft-kids{margin:0;font-size:7.6pt;color:#41505C;flex:1}
+.ft-rod{margin:2.4mm 0 0;font-size:6.9pt;color:#8A949D;letter-spacing:.04em;
+  text-transform:uppercase}
 </style>
 </head>
 <body>
@@ -1082,68 +1099,77 @@ function abrirFicha(id){
    sozinho. Todo texto sai do banco; nada aqui é escrito à mão.
    ========================================================================== */
 function folhaTreino(e, minutos, nivelSel){
-  var c = camada(e.camada), b = bloco(e.bloco);
-  var temas = e.tema.map(function(t){ var x = tema(t); return x ? x.nome : t; }).join(' · ');
-  var mats = e.mat.map(function(m){ var x = material(m); return x ? x.nome : m; }).join(', ');
+  var c = camada(e.camada), b = bloco(e.bloco), t = tema(e.tema[0]);
+  var listaMat = e.mat.map(function(m){ var x = material(m); return x ? x.nome : m; });
+  // material comprido quebrava a célula em sete linhas e empurrava a folha
+  // para fora da página: entram os três primeiros e o resto vira "+2"
+  var mats = listaMat.slice(0, 3).join(', ') + (listaMat.length > 3 ? ' +' + (listaMat.length - 3) : '');
   var nvs  = e.niveis.map(function(n){ var x = nivel(n); return x ? x.nome : n; }).join(' · ');
   var intTx = { baixa:'Baixa', media:'Média', alta:'Alta' }[e.int];
 
+  // o nome quebra em duas linhas: a primeira grande, o resto em limão — é o
+  // que dá ao título o peso de capa sem precisar de fonte de fora
+  var nome = e.nome, corte = nome.indexOf(':');
+  if (corte < 0) { var p = nome.split(' '); corte = p.length > 2 ? nome.indexOf(' ', Math.ceil(nome.length * 0.42)) : -1; }
+  var t1 = corte > 0 ? nome.slice(0, corte).trim() : nome;
+  var t2 = corte > 0 ? nome.slice(corte + 1).trim() : '';
+
   function itens(lista, primeiro){
-    return '<ul>' + lista.map(function(t, i){
-      return '<li' + (i === 0 && primeiro ? ' class="primeiro"' : '') + '>' + esc(t) + '</li>';
+    return '<ul>' + lista.map(function(x, i){
+      return '<li' + (i === 0 && primeiro ? ' class="primeiro"' : '') + '>' + esc(x) + '</li>';
     }).join('') + '</ul>';
   }
   var linhasNivel = NIVEIS.filter(function(n){ return e.prog && e.prog[n.id]; }).map(function(n){
-    return '<div class="ft-nv' + (nivelSel === n.id ? ' foco' : '') + '">' +
-      '<b>' + esc(n.nome) + '</b><span>' + esc(e.prog[n.id]) + '</span></div>';
+    return '<div' + (nivelSel === n.id ? ' class="ft-agora"' : '') + '><b>' + esc(n.nome) + '</b>' +
+      esc(e.prog[n.id]) + '</div>';
   }).join('');
 
   return '' +
   '<section class="ft">' +
     '<header class="ft-top">' +
-      '<div class="ft-olho">Exercício ' + esc(e.id) + ' · ' + esc(b.nome) + '</div>' +
-      '<h1>' + esc(e.nome) + '</h1>' +
-      '<div class="ft-sub">' + esc(e.transv ? 'Transversal — serve em qualquer mês' : temas) +
-        ' · Camada ' + e.camada + ' — ' + esc(c.nome) + ' · Intensidade ' + intTx + '</div>' +
-      '<div class="ft-marca">Academia JV Tênis<span>Da Base ao Topo</span></div>' +
+      '<div class="ft-selo">' + esc(e.id) + '</div>' +
+      (t ? '<div class="ft-frase">“' + esc(t.frase) + '”</div>' : '') +
+      '<div class="ft-cap">' + esc(b.nome) + '<span>Camada ' + e.camada + ' · ' + esc(c.nome) + '</span></div>' +
+      '<h1>' + esc(t1) + (t2 ? '<em>' + esc(t2) + '</em>' : '') + '</h1>' +
+      '<div class="ft-sub">' + esc(e.transv ? 'Transversal — serve em qualquer mês' : (t ? t.nome : '')) +
+        ' · intensidade ' + intTx + '</div>' +
     '</header>' +
 
     '<div class="ft-dados">' +
-      '<div><small>Nível</small><b>' + esc(nvs) + '</b></div>' +
-      '<div><small>Duração</small><b>' + (minutos || e.min) + ' min</b></div>' +
-      '<div><small>Jogadores</small><b>' + esc(quantosJogadores(e)) + '</b></div>' +
-      '<div><small>Materiais</small><b>' + esc(mats) + '</b></div>' +
-      '<div class="obj"><small>Objetivo</small><b>' + esc(e.objetivo) + '</b></div>' +
+      '<div><i>📶</i><div><small>Nível</small><b>' + esc(nvs) + '</b></div></div>' +
+      '<div><i>⏱</i><div><small>Duração</small><b>' + (minutos || e.min) + ' min</b></div></div>' +
+      '<div><i>👥</i><div><small>Jogadores</small><b>' + esc(quantosJogadores(e)) + '</b></div></div>' +
+      '<div><i>🎒</i><div><small>Materiais</small><b>' + esc(mats) + '</b></div></div>' +
+      '<div><i>🎯</i><div><small>Objetivo</small><b>' + esc(e.objetivo) + '</b></div></div>' +
     '</div>' +
 
     '<div class="ft-corpo">' +
-      '<div class="ft-qd">' + svgQuadra(e.fig) +
+      '<div class="ft-qd">' + svgQuadra(e.fig, { prop:1.18 }) +
         (e.fig && e.fig.nota ? '<p class="ft-legenda">' + esc(e.fig.nota) + '</p>' : '') +
-        '<p class="ft-montagem"><b>Montagem:</b> ' + esc(e.montagem) + '</p>' +
       '</div>' +
       '<div class="ft-passos">' +
         '<h2>Como aplicar</h2>' +
-        '<ol>' + (e.passos || []).map(function(t, i){
-          return '<li><i>' + (i + 1) + '</i><span>' + esc(t) + '</span></li>'; }).join('') + '</ol>' +
-        (e.dica ? '<div class="ft-dica"><h3>Dica extra</h3><p>' + esc(e.dica) + '</p></div>' : '') +
+        '<p class="ft-mont"><b>Montagem:</b> ' + esc(e.montagem) + '</p>' +
+        '<ol>' + (e.passos || []).map(function(x, i){
+          return '<li><i>' + (i + 1) + '</i><span>' + esc(x) + '</span></li>'; }).join('') + '</ol>' +
+        (e.dica ? '<div class="ft-dica"><h3>💡 Dica extra</h3><p>' + esc(e.dica) + '</p></div>' : '') +
       '</div>' +
     '</div>' +
 
     '<div class="ft-tres">' +
-      '<div class="ok"><h3>Foco do professor</h3>' + itens(e.foco || []) + '</div>' +
-      '<div class="err"><h3>Erros mais comuns</h3>' + itens([e.erro].concat(e.erros || []), true) + '</div>' +
-      '<div class="dif"><h3>Como dificultar</h3>' + itens(e.dificultar || []) + '</div>' +
+      '<div><h3><i>✅</i>Foco do professor</h3>' + itens(e.foco || []) + '</div>' +
+      '<div><h3><i>⚠️</i>Erros mais comuns</h3>' + itens([e.erro].concat(e.erros || []), true) + '</div>' +
+      '<div><h3><i>📈</i>Como dificultar</h3>' + itens(e.dificultar || []) + '</div>' +
     '</div>' +
 
-    (linhasNivel ? '<div class="ft-niveis"><h3>O mesmo exercício em cada nível</h3>' +
-      linhasNivel + '</div>' : '') +
+    (linhasNivel ? '<div class="ft-niveis">' + linhasNivel + '</div>' : '') +
 
     '<div class="ft-fim">' +
       '<p class="ft-ok"><b>Funcionou se:</b> ' + esc(e.sucesso) + '</p>' +
       (e.kids ? '<p class="ft-kids"><b>Versão Kids:</b> ' + esc(e.kids) + '</p>' : '') +
-      '<p class="ft-rod">Academia JV Tênis · Metodologia Da Base ao Topo · banco ' +
-        esc(VERSAO_BANCO) + ' · ficha ' + esc(e.id) + '</p>' +
     '</div>' +
+    '<p class="ft-rod">Academia JV Tênis · Metodologia Da Base ao Topo · banco ' +
+      esc(VERSAO_BANCO) + ' · ficha ' + esc(e.id) + '</p>' +
   '</section>';
 }
 

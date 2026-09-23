@@ -142,13 +142,30 @@ const RECORTES = {
              costas:{ altura:2.10, pe:1.0, prop:0.320, olha:'dir',
                       papel:{ aluno:'jv-saque-costas-aluno.webp', prof:'jv-saque-costas-prof.webp',
                               colega:'jv-saque-costas-colega.webp' } } },
-  voleio:  { costasSo:true, altura:1.69, pe:1.0, prop:0.698, olha:'dir',
+  voleio:  { costasSo:true, lado:'golpe', raqueta:'esq',
+             altura:1.69, pe:1.0, prop:0.698,
              papel:{ aluno:'jv-voleio-aluno.webp', prof:'jv-voleio-prof.webp',
                      colega:'jv-voleio-colega.webp' } },
   espera:  { costasSo:true, altura:1.70, pe:1.0, prop:0.641, olha:'dir',
              papel:{ aluno:'jv-espera-aluno.webp', prof:'jv-espera-prof.webp',
                      colega:'jv-espera-colega.webp' } },
-  prepara: { costasSo:true, altura:2.34, pe:1.0, prop:0.396, olha:'dir',
+  prepara: { costasSo:true, lado:'golpe', raqueta:'esq',
+             altura:2.34, pe:1.0, prop:0.396,
+             papel:{ aluno:'jv-prepara-aluno.webp', prof:'jv-prepara-prof.webp',
+                     colega:'jv-prepara-colega.webp' } },
+
+  /* As mesmas fotos da `prepara`, com o lado FORÇADO. A regra do lado da
+     quadra (direita = forehand) é boa na maioria, mas erra justamente nos
+     exercícios que existem para contrariá-la: o inside-out é um forehand
+     batido do canto do backhand, e "só de forehand" é só de forehand mesmo,
+     esteja o aluno onde estiver. Quando o exercício é de um golpe só, o TEMA
+     manda; nos outros, manda o lado. */
+  forehand:{ costasSo:true, lado:'dir', raqueta:'esq',
+             altura:2.34, pe:1.0, prop:0.396,
+             papel:{ aluno:'jv-prepara-aluno.webp', prof:'jv-prepara-prof.webp',
+                     colega:'jv-prepara-colega.webp' } },
+  backhand:{ costasSo:true, lado:'esq', raqueta:'esq',
+             altura:2.34, pe:1.0, prop:0.396,
              papel:{ aluno:'jv-prepara-aluno.webp', prof:'jv-prepara-prof.webp',
                      colega:'jv-prepara-colega.webp' } }
 };
@@ -182,6 +199,7 @@ let MINI = false;
 /* Estado do desenho que está sendo montado. */
 let CAM = CAMERAS.meia;      // câmera deste recorte
 let VISTA = { x:0, y:0, w:100, h:100 };   // viewBox, em unidades de tela
+let PROP = 0;            // proporcao pedida (largura/altura); 0 = a do padrao
 let ROTULOS = [];            // rótulos já colocados, para não empilhar
 let PECAS = [];              // as peças deste desenho, para um jogador poder
                              // olhar as outras e saber para onde vai bater
@@ -266,7 +284,10 @@ function enquadrar(base, el){
   if (y2 - y1 < minAlt)  { y1 = meioY - minAlt / 2;  y2 = meioY + minAlt / 2; }
 
   // formato: mais largo que alto, como uma foto de quadra
-  var alvo = MINI ? 1.30 : 1.42;
+  // A folha de treino pede a quadra EM RETRATO, como numa foto tirada de
+  // trás do fundo: é a proporção que mostra a quadra inteira sem espremer.
+  // Na tela a miniatura continua deitada, que é o que cabe numa lista.
+  var alvo = PROP || (MINI ? 1.30 : 1.42);
   var lg = x2 - x1, at = y2 - y1;
   if (lg / at < alvo) { var fa = (at * alvo - lg) / 2; x1 -= fa; x2 += fa; lg = at * alvo; }
   else { var fb = (lg / alvo - at) / 2; y1 -= fb; y2 += fb; at = lg / alvo; }
@@ -486,8 +507,21 @@ function qRecorte(x, y, rot, tipo, nome){
   // `olha` diz para que lado a pessoa bate NA FOTO. Se o exercício pede o
   // outro, a foto é espelhada — é a diferença entre o aluno bater na direção
   // da bola e bater de costas para ela.
-  var alvo = paraOndeOlha(x, y);
-  var espelha = alvo !== null && r.olha && (alvo > x ? 'dir' : 'esq') !== r.olha;
+  var espelha;
+  if (r.lado === 'golpe' || r.lado === 'dir' || r.lado === 'esq') {
+    /* DE QUE LADO A RAQUETE FICA, numa pose de golpe.
+       No tênis, bola do lado DIREITO da imagem é forehand; do lado esquerdo,
+       backhand. É isso que manda — e não para onde a bola vai. A regra antiga
+       apontava a raquete na direção da bola, e com isso todo forehand cruzado
+       virava um backhand: o aluno no canto direito batendo para a esquerda
+       aparecia com a raquete do lado esquerdo. `raqueta` diz de que lado ela
+       está NA FOTO; o desenho espelha quando o lado pedido é o outro. */
+    var querDir = (r.lado === 'dir') ? true : (r.lado === 'esq') ? false : (x >= 0);
+    espelha = querDir === (r.raqueta === 'esq');
+  } else {
+    var alvo = paraOndeOlha(x, y);
+    espelha = alvo !== null && r.olha && (alvo > x ? 'dir' : 'esq') !== r.olha;
+  }
   var s = '<g>' +
     '<ellipse cx="' + nQ(cx) + '" cy="' + nQ(pe.y) + '" rx="' + nQ(l * 0.30) + '" ry="' + nQ(h * 0.035) +
       '" fill="' + CQ.sombra + '"/>' +
@@ -744,6 +778,7 @@ function svgQuadra(fig, op){
   if (!fig || !fig.el) return '';
   op = op || {};
   MINI = !!op.mini;
+  PROP = op.prop || 0;
   var base = fig.base || 'meia';
   var foto = FOTOS[base];
   if (foto) {

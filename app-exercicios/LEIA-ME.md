@@ -157,6 +157,19 @@ passo a passo lado a lado, dica extra, as três colunas do rodapé, a espiral
 dos níveis e o critério de sucesso. Nada é escrito à mão — sai tudo do banco,
 então exercício novo já nasce com folha.
 
+**As proporções vêm medidas de uma folha de treino impressa** que serve de
+referência: cabeçalho 20% da altura, faixa de dados 7%, corpo 47%, as três
+colunas 17%, e o desenho ocupando 61,5% da largura do corpo. O que é da JV e
+não da referência: o **verde-limão da marca** (`#DDEE66`), a tipografia, o
+grafismo do canto do cabeçalho e o conteúdo inteiro. Nenhum arquivo, nenhuma
+arte e nenhum texto de terceiro entrou.
+
+**A quadra sai em retrato na folha** (`svgQuadra(fig, {prop:1.18})`), como numa
+foto tirada de trás do fundo — na tela a miniatura continua deitada, que é o
+que cabe numa lista. O 1,18 não é gosto: é o número em que as **132 folhas**
+couberam em A4. A mais alta ficou em 1031 px dos 1039 úteis, e a medida está
+no `alturas.js` para refazer quando o banco crescer.
+
 **Detalhes que custaram para acertar:**
 
 - `print-color-adjust:exact` na folha. Sem isso o Chrome e o Safari imprimem a
@@ -321,6 +334,29 @@ Onze figuras a regra errou, e estão escritas na mão dentro do script: quem
 **equilibra a bola nas cordas** (T10), a **pergunta do fechamento** (M11, T03),
 a **espera atrás dos cones** (D25) — e o **smash** do R04, que usa a pose do
 saque, porque o gesto é o mesmo.
+
+### De que lado a raquete fica: forehand à direita, backhand à esquerda
+
+Esta é a correção que mais mudou os desenhos. A regra antiga apontava a raquete
+**para onde a bola vai** — e com isso todo forehand cruzado virava um backhand:
+o aluno no canto direito batendo para a esquerda aparecia com a raquete do lado
+esquerdo. No tênis não é assim. Bola do lado **direito** da imagem é
+**forehand**; do lado **esquerdo**, **backhand**. A direção da bola já está
+desenhada na seta; a raquete diz o GOLPE.
+
+Nas poses de golpe (`prepara`, `voleio`) o lado agora sai de duas coisas, nesta
+ordem:
+
+1. **O tema do exercício**, quando ele é de um golpe só. Mês de forehand →
+   forehand, esteja o aluno onde estiver; mês de backhand → backhand. São 23
+   figuras. É o que salva o **inside-out** (FH2): um forehand batido do canto
+   do backhand, que pela regra do lado sairia errado. E o "só de forehand"
+   (FH9) é só de forehand mesmo.
+2. **O lado da quadra**, em todo o resto: `x ≥ 0` (direita da imagem) →
+   forehand; `x < 0` → backhand.
+
+O saque e a espera ficam de fora dessa conta: no saque quem manda é para onde
+a bola vai, e a espera é simétrica.
 
 **O saque é a primeira pose completa da JV.** Chegaram as duas metades — uma foto
 de frente e uma de costas — então o desenho escolhe pelo lado da rede e a
