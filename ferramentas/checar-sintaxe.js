@@ -18,7 +18,9 @@ function blocosDe(f){
     .forEach((m,i)=>saida.push([`${nome} · bloco ${i+1}`, m[1]]));
   // 2. arquivos locais que o HTML manda carregar (os de fora ficam de fora)
   [...html.matchAll(/<script[^>]*\bsrc="([^"]+)"/g)].forEach(m=>{
-    const src=m[1];
+    // o endereco leva a versao (lib/app.js?v=AAAA-MM-DD-N) para o celular nao
+    // servir um arquivo velho; no disco o nome e so o que vem antes do "?"
+    const src=m[1].split('?')[0];
     if(/^https?:|^\/\//.test(src)) return;          // CDN: nao e nosso
     if(/firebase-|jspdf|html2canvas/.test(src)) return; // biblioteca de terceiro
     const alvo=path.join(dir,src);

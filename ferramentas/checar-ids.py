@@ -10,6 +10,7 @@ def fontes_do_app(arq):
     import os, re as _re
     txt = open(arq, encoding='utf-8').read()
     for src in _re.findall(r'<script[^>]*\bsrc="([^"]+)"', txt):
+        src = src.split('?')[0]   # o endereco leva a versao; o arquivo no disco nao
         if src.startswith('http') or src.startswith('//'):
             continue
         if _re.search(r'firebase-|jspdf|html2canvas', src):

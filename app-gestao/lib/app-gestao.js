@@ -15,7 +15,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-23-1';
+const VERSAO='2026-09-23-2';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -862,17 +862,44 @@ async function load(){
   let travado=false;
   if(chosen&&rejeitada){
     const a=resumoBanco(chosen), b=resumoBanco(rejeitada);
-    if(a&&b&&(a.lancamentos<b.lancamentos||a.alunos<b.alunos)){
+    /* Dois motivos para parar e perguntar em vez de adotar sozinho:
+
+       1. A escolhida tem MENOS dado que a descartada. Foi assim que sumiram
+          lançamentos.
+       2. A escolhida é a do APARELHO e ela foi salva sem a nuvem confirmar.
+          Nesse caso a data é de agora mas o conteúdo pode ser velho — foi
+          assim que voltaram nomes de aluno que não treinam mais. Repare que
+          essa cópia costuma ser a MAIOR, então o aviso 1 não a pegava.
+
+       Nos dois casos o app NÃO grava nada até você decidir: era o persist()
+       automático logo abaixo que carimbava a data de agora na cópia atrasada e
+       apagava a boa. */
+    const semNuvem=salvouSemNuvem();
+    const motivo=motivoParaPerguntar(a,b,chosen===localRaw,semNuvem);
+    const desconfiada=(motivo==='semNuvem');
+    if(motivo){
       const qualEscolhida=(chosen===cloudRaw)?'nuvem':'aparelho';
       const qualOutra=(chosen===cloudRaw)?'aparelho':'nuvem';
+      /* Qual delas recomendar muda conforme o motivo: no caso 1 a maior é a
+         boa; no caso 2 a do aparelho é que está sob suspeita, então a
+         recomendada é a da nuvem. */
+      const porque=desconfiada
+        ? ('A cópia do APARELHO foi salva em '+new Date(semNuvem).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})
+           +' sem a nuvem confirmar.\nEla tem data nova, mas o conteúdo pode estar atrasado.')
+        : ('A mais recente ('+qualEscolhida+') tem MENOS dados que a outra.');
+      const recomendada=desconfiada?'nuvem':qualOutra;
       const msg='⚠️ ATENÇÃO — as duas cópias estão diferentes\n\n'
-        +'A mais recente ('+qualEscolhida+') tem MENOS dados que a outra:\n\n'
+        +porque+'\n\n'
         +qualEscolhida.toUpperCase()+' (mais recente)\n'+descreveResumo(a)+'\n\n'
         +qualOutra.toUpperCase()+'\n'+descreveResumo(b)+'\n\n'
-        +'OK = usar a maior ('+qualOutra+'), que provavelmente é a certa.\n'
-        +'Cancelar = usar a mais recente ('+qualEscolhida+').';
-      if(confirm(msg)){chosen=rejeitada;}
+        +'OK = usar a da '+recomendada.toUpperCase()+' (a recomendada).\n'
+        +'Cancelar = usar a outra.\n\n'
+        +'Nada é gravado até você escolher, e dá para trocar depois em '
+        +'Mais → Versões salvas.';
+      const querOutra=(recomendada===qualOutra);
+      if(confirm(msg)===querOutra){chosen=rejeitada;}
       travado=true;   // seja qual for a escolha, não grava sozinho neste boot
+      marcarSemNuvem(false);   // a dúvida foi resolvida: a marca não vale mais
     }
   }
   if(chosen){try{DB=JSON.parse(chosen);}catch(e){}}
@@ -1034,6 +1061,37 @@ async function migrarVersoesParaIdb(){
    O truque que torna isso seguro: NENHUM ponto de chamada muda. persist()
    guarda o que subiu da última vez e compara — comparar string em memória é
    barato perto de subir 830 KB. */
+/* ===== A marca de "salvei sem a nuvem confirmar" =====
+   Foi isto que trouxe de volta nomes de aluno que nao treinam mais.
+
+   Quando o app abre e a nuvem nao responde, ele segue com a copia do aparelho
+   — ate ai certo. Mas o primeiro persist() carimbava a data de AGORA naquela
+   copia. Se ela estava atrasada, virava "a mais recente" do banco: na abertura
+   seguinte ganhava da nuvem e depois subia por cima da copia boa. E passava
+   despercebida justamente por ser MAIOR — o aviso que existia so olhava para
+   copia MENOR que a outra.
+
+   A marca fica FORA do banco, no aparelho: ela e uma propriedade deste
+   celular ("o que esta aqui pode nao ter chegado na nuvem"), nao do dado. */
+const MARCA_SEM_NUVEM=KEY+'__semnuvem';
+function marcarSemNuvem(sim){
+  try{
+    if(sim)lsSet(MARCA_SEM_NUVEM,String(Date.now()));
+    else localStorage.removeItem(MARCA_SEM_NUVEM);
+  }catch(e){}
+}
+function salvouSemNuvem(){try{return Number(lsGet(MARCA_SEM_NUVEM))||0;}catch(e){return 0;}}
+/* Vale parar e perguntar antes de adotar esta copia? Devolve o motivo, ou ''.
+   Funcao separada porque e a regra mais delicada do app: e ela que decide se
+   um dado seu sobrevive ou e sobrescrito. */
+function motivoParaPerguntar(a,b,ehDoAparelho,semNuvem){
+  if(!a||!b)return '';
+  if(a.lancamentos<b.lancamentos||a.alunos<b.alunos)return 'encolheu';
+  if(ehDoAparelho&&semNuvem&&
+     (a.lancamentos!==b.lancamentos||a.alunos!==b.alunos||a.presencas!==b.presencas))
+    return 'semNuvem';
+  return '';
+}
 const V2='v2';
 function v2ref(cam){return window.fbDB.ref(RAIZ+'/'+V2+'/'+cam);}
 let _enviado={alunos:{},agenda:'',config:'',linhas:{movs:{},presencas:{},lancamentos:{}}};
@@ -1321,15 +1379,15 @@ function persist(){
   // 2) envia para a nuvem com retentativas
   clearTimeout(saveTimer);
   saveTimer=setTimeout(async()=>{
-    if(!hasCloud()){cloudPending=true;setSave(okLocal?'⚠ salvo só no aparelho ⓘ':'erro ao salvar',okLocal?'ok':'err');return;}
+    if(!hasCloud()){cloudPending=true;marcarSemNuvem(true);setSave(okLocal?'⚠ salvo só no aparelho ⓘ':'erro ao salvar',okLocal?'ok':'err');return;}
     setSave('enviando à nuvem…');
     const env=await subirPartes();
     if(env){
-      cloudPending=false;setSave('✓ salvo na nuvem','ok');
+      cloudPending=false;marcarSemNuvem(false);setSave('✓ salvo na nuvem','ok');
       subirBlobDeReserva();backupNuvem();
     }
     else{
-      cloudPending=true;
+      cloudPending=true;marcarSemNuvem(true);
       /* "salvo só no aparelho" é verdade, mas não diz nada. Ficar dias assim
          sem saber por quê foi o que aconteceu no celular emprestado. Recusa do
          servidor é um problema de regra, não de sinal, e não passa sozinha. */
@@ -1367,8 +1425,8 @@ async function gravarAgora(){
   try{
     const env=await subirPartes();          // as partes primeiro: é o dado vivo
     const ok=await cloudSet(KEY,JSON.stringify(DB));   // e a reserva completa
-    cloudPending=!(env&&ok);
-  }catch(e){cloudPending=true;}
+    cloudPending=!(env&&ok);marcarSemNuvem(cloudPending);
+  }catch(e){cloudPending=true;marcarSemNuvem(true);}
 }
 document.addEventListener('visibilitychange',()=>{if(document.hidden)gravarAgora();});
 window.addEventListener('pagehide',()=>{gravarAgora();});
@@ -1376,7 +1434,7 @@ window.addEventListener('pagehide',()=>{gravarAgora();});
 setInterval(async()=>{
   if(!CARREGADO||!cloudPending||!hasCloud())return;
   const ok=await cloudSet(KEY,JSON.stringify(DB));
-  if(ok){cloudPending=false;setSave('✓ salvo na nuvem','ok');publish();}
+  if(ok){cloudPending=false;marcarSemNuvem(false);setSave('✓ salvo na nuvem','ok');publish();}
 },30000);
 /* Diagnóstico: toque no indicador para entender a situação */
 /* O Firebase devolve "permission_denied" quando a regra barra. É diferente de
@@ -1411,7 +1469,7 @@ document.getElementById('save-state').onclick=()=>{
 [1500,4000,8000].forEach(t=>setTimeout(async()=>{
   if(hasCloud()&&cloudPending){
     const ok=await cloudSet(KEY,JSON.stringify(DB));
-    if(ok){cloudPending=false;setSave('✓ salvo na nuvem','ok');publish();}
+    if(ok){cloudPending=false;marcarSemNuvem(false);setSave('✓ salvo na nuvem','ok');publish();}
   }
 },t));
 /* ===== Mapa da quadra: a quadra é UMA, os bancos são dois =====

@@ -55,6 +55,7 @@ def locais_do_app(rel):
     txt = open(caminho, encoding='utf-8', errors='replace').read()
     base = os.path.dirname(rel)
     for src in re.findall(r'<script[^>]*\bsrc="([^"]+)"', txt):
+        src = src.split('?')[0]   # o endereco leva a versao; o arquivo no disco nao
         if src.startswith('http') or src.startswith('//'):
             continue
         if re.search(r'firebase-|jspdf|html2canvas', src):
@@ -103,6 +104,32 @@ def main():
             falhas += 1
         else:
             print('  ✅ %-24s %s' % (rel, versao))
+
+    # O endereço dos arquivos do app leva a versão (lib/app.js?v=AAAA-MM-DD-N).
+    # É isso que impede o celular de servir um código velho junto de uma tela
+    # nova — o par trocado abria o app com dados antigos e os botões mortos.
+    # Se o "?v=" ficar para trás do VERSAO, TODO mundo cai na tela de socorro.
+    for rel in APPS:
+        caminho = os.path.join(RAIZ, rel)
+        if not os.path.exists(caminho):
+            continue
+        html = open(caminho, encoding='utf-8', errors='replace').read()
+        m = re.search(r"^const VERSAO\s*=\s*'([^']+)'", texto_do_app(rel), re.M)
+        if not m:
+            continue
+        versao = m.group(1)
+        marcas = set(re.findall(r'(?:src|href)="(?:lib/)?[^"]+\?v=([^"&]+)"', html))
+        if not marcas:
+            continue
+        erradas = sorted(x for x in marcas if x != versao)
+        if erradas:
+            print('  ❌ %-24s carimbo %s, mas o endereço dos arquivos diz %s'
+                  % (rel, versao, ', '.join(erradas)))
+            print('     → o celular vai abrir a tela nova com o código velho.')
+            print('        Deixe o "?v=" igual ao VERSAO nos dois lugares.')
+            falhas += 1
+        else:
+            print('  ✅ %-24s endereço dos arquivos com ?v=%s' % (rel, versao))
 
     # os dois têm de andar IGUAIS: comparam com o mesmo carimbo na nuvem
     vs = []

@@ -38,7 +38,7 @@
 <link rel="apple-touch-startup-image" media="screen and (device-width:375px) and (device-height:667px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)" href="splash-gestao-750x1334.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="lib/estilo.css">
+<link rel="stylesheet" href="lib/estilo.css?v=2026-09-23-2">
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
 <script src="lib/firebase-database-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js\'><\/script>')"></script>
@@ -881,7 +881,7 @@ function esperarAuth(){
   <button class="so-dono" onclick="go('torneio',this)"><span class="ico" data-ic="trophy"></span><span class="nav-badge" id="nb-torneio"></span>Torneio</button>
   <button id="nav-mais" onclick="abrirMais()"><span class="ico"><svg viewBox="0 0 24 24" width="24" height="24"><circle cx="5" cy="12" r="2.2" fill="#D4AF58"/><circle cx="12" cy="12" r="2.2" fill="#D4AF58"/><circle cx="19" cy="12" r="2.2" fill="#D4AF58"/></svg></span>Mais</button>
 </nav>
-<script src="lib/icones.js"></script>
+<script src="lib/icones.js?v=2026-09-23-2"></script>
 
 <!-- MODAL ALUNO -->
 <div class="overlay" id="ov-aluno" onclick="if(event.target===this)closeModal('ov-aluno')">
@@ -1356,7 +1356,51 @@ function esperarAuth(){
 
 <div class="toast" id="toast"></div>
 
-<script src="lib/app-gestao.js"></script>
+<script src="lib/app-gestao.js?v=2026-09-23-2"></script>
+<script>
+/* Rede de seguranca do par tela+codigo.
+
+   A tela (index.html) e o codigo do app moram em arquivos separados, e o
+   celular guarda cada um por sua conta. Deu para abrir com um par trocado —
+   tela nova com codigo velho — e o resultado nao era uma tela de erro: era o
+   app abrindo com dados antigos e com os botoes mortos, porque o codigo velho
+   nao conhece os botoes da tela nova. Parecia que o app tinha estragado.
+
+   Agora cada arquivo e pedido com a versao no endereco, entao o par trocado
+   nao deveria acontecer mais. Esta guarda e o cinto: se ainda assim vier
+   torto, o app busca o par certo uma vez e, se insistir, DIZ o que houve em
+   vez de deixar voce tocando em botao que nao responde. */
+(function(){
+  var ESPERADA='2026-09-23-2';
+  function tela(motivo){
+    var d=document.createElement('div');
+    d.style.cssText='position:fixed;inset:0;z-index:99999;background:#1A2E14;color:#FAF7F2;'
+      +'display:flex;align-items:center;justify-content:center;text-align:center;padding:28px;'
+      +'font:15px/1.55 system-ui,-apple-system,sans-serif';
+    d.innerHTML='<div style="max-width:320px"><div style="font-size:38px;margin-bottom:10px">&#127934;</div>'
+      +'<b style="font-size:17px">O app nao carregou por inteiro</b>'
+      +'<p style="margin:8px 0 0;opacity:.85;font-size:13px">'+motivo+'</p>'
+      +'<button style="margin-top:18px;padding:12px 20px;border-radius:11px;border:0;background:#C9472B;'
+      +'color:#fff;font-weight:700;font-size:15px" onclick="location.reload()">Tentar de novo</button>'
+      +'<p style="margin:14px 0 0;opacity:.7;font-size:12px">Se continuar: confira a internet, feche o app '
+      +'por completo e abra de novo. <b>Seus dados estao guardados</b> — isto e so a tela.</p></div>';
+    document.body.appendChild(d);
+  }
+  function socorro(motivo){
+    var jaTentou=false;
+    try{jaTentou=sessionStorage.getItem('jvt-par')==='1';sessionStorage.setItem('jvt-par','1');}catch(e){}
+    if(jaTentou){tela(motivo);return;}
+    location.reload();
+  }
+  if(typeof VERSAO==='undefined'||typeof renderAll!=='function'){
+    socorro('O arquivo com o codigo do app nao chegou.');return;
+  }
+  if(VERSAO!==ESPERADA){
+    socorro('A tela e o codigo sao de versoes diferentes ('+ESPERADA+' e '+VERSAO+').');return;
+  }
+  try{sessionStorage.removeItem('jvt-par');}catch(e){}
+})();
+</script>
 <script>
 /* ============ HISTÓRICO DE MUDANÇAS (desfazer · refazer · registro) ============ */
 var HIST={undo:[],redo:[],prev:null,pending:null,suppress:false,LOG:[],CAP:40,LOGCAP:250,LOGKEY:'jvtenis_hist_log'};
