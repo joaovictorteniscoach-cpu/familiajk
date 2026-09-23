@@ -2989,8 +2989,11 @@ function pickExtrato(){
   const i=document.createElement('input');i.type='file';
   /* tipos MIME além das extensões: no iOS o app Arquivos desabilita .ofx,
      que não tem tipo registrado no sistema, e o arquivo fica impossível de escolher */
-  i.accept='.ofx,.qfx,.csv,.txt,text/plain,text/csv,text/comma-separated-values,application/x-ofx,application/vnd.intu.qfx,application/octet-stream';
+  i.accept='.ofx,.qfx,.csv,.txt,.pdf,text/plain,text/csv,text/comma-separated-values,application/pdf,application/x-ofx,application/vnd.intu.qfx,application/octet-stream';
   i.onchange=e=>{const f=e.target.files[0];i.remove();if(!f)return;
+    /* o banco e a corretora exportam em PDF; era o único formato que o app
+       mandava você fotografar em vez de ler */
+    if(/\.pdf$/i.test(f.name)||f.type==='application/pdf'){lerPDFExtrato(f);return;}
     const r=new FileReader();
     r.onerror=()=>alert('Não consegui ler o arquivo "'+f.name+'". Se ele veio de um app de banco, tente exportar de novo ou salvar no Arquivos antes de escolher.');
     r.onload=()=>{
@@ -3088,12 +3091,77 @@ function parseCSV(text){
   }
   return txns;
 }
+/* ---------- ler o PDF do banco e da fatura ----------
+   O pdf.js devolve cada pedaço de texto com a posição na página. Juntar por
+   linha (mesma altura) devolve o extrato como ele aparece impresso, que é o
+   que o leitor de texto do app já sabe separar. */
+let pdfLoad=null;
+function ensurePDFjs(){
+  if(window.pdfjsLib)return Promise.resolve();
+  if(pdfLoad)return pdfLoad;
+  pdfLoad=new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+    s.onload=()=>{
+      try{window.pdfjsLib.GlobalWorkerOptions.workerSrc=
+        'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';}catch(_){}
+      res();
+    };
+    s.onerror=()=>rej(new Error('cdn'));
+    document.head.appendChild(s);
+  });
+  return pdfLoad;
+}
+/* junta os pedaços da página em linhas, pela altura de cada um */
+function linhasDoPDF(itens){
+  const linhas=[];
+  (itens||[]).forEach(it=>{
+    const txt=(it.str||'');
+    if(!txt.trim())return;
+    const y=Math.round((it.transform&&it.transform[5])||0);
+    const x=(it.transform&&it.transform[4])||0;
+    let l=linhas.find(L=>Math.abs(L.y-y)<=3);
+    if(!l){l={y,pedacos:[]};linhas.push(l);}
+    l.pedacos.push({x,txt});
+  });
+  return linhas.sort((a,b)=>b.y-a.y)
+    .map(L=>L.pedacos.sort((a,b)=>a.x-b.x).map(p=>p.txt).join(' ')
+      .replace(/\s+/g,' ').trim())
+    .filter(Boolean);
+}
+async function lerPDFExtrato(file){
+  try{
+    ocrToast('Abrindo o PDF…');
+    await ensurePDFjs();
+    const buf=await file.arrayBuffer();
+    const doc=await window.pdfjsLib.getDocument({data:new Uint8Array(buf)}).promise;
+    const todas=[];
+    for(let n=1;n<=doc.numPages;n++){
+      ocrToast('Lendo página '+n+' de '+doc.numPages+'…');
+      const pg=await doc.getPage(n);
+      const tc=await pg.getTextContent();
+      linhasDoPDF(tc.items).forEach(l=>todas.push(l));
+    }
+    ocrToast(false);
+    const txt=todas.join('\n');
+    if(!txt.trim()){
+      alert('Esse PDF não tem texto — é só imagem (PDF escaneado).\n\nUse "foto do extrato": o app lê a imagem.');
+      return;
+    }
+    showExtratoPreview(parseTextExtrato(txt));
+  }catch(e){
+    ocrToast(false);
+    const det=(e&&e.message)?('\n\nDetalhe: '+e.message):'';
+    alert('Não consegui ler esse PDF.'+det
+      +'\n\nSe der, exporte o extrato em OFX ou CSV — é sempre mais fiel. Ou use "foto do extrato".');
+  }
+}
 function loadExtrato(text,name){
   const bin=pareceBinario(text);
   if(bin){
     alert('Esse arquivo não é um extrato em texto — parece '+bin+'.\n\n'
-      +'O app lê OFX, CSV, QFX e TXT. No app do banco procure "exportar" ou "baixar extrato" e escolha OFX (o mais fiel) ou CSV.\n\n'
-      +'Se você só tem o PDF, tire uma foto ou print da lista e use "foto do extrato".');
+      +'O app lê OFX, CSV, QFX, TXT e PDF. No app do banco procure "exportar" ou "baixar extrato" e escolha OFX (o mais fiel) ou CSV.\n\n'
+      +'Se for um PDF, escolha o arquivo de novo pelo botão de importar: o app lê PDF direto.');
     return;
   }
   const isOFX=/\.(ofx|qfx)$/i.test(name)||/<OFX>|<STMTTRN>/i.test(text);
@@ -3414,8 +3482,11 @@ function dataNorm(s){
     const mm=+m[2],dd=+m[3];
     if(mm>=1&&mm<=12&&dd>=1&&dd<=31)return m[3]+'/'+m[2]+'/'+m[1];
   }
-  if((m=t.match(/(\d{1,2})\s*(?:de\s+)?(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)[a-zç]*\.?\s*(?:de\s+)?(\d{2,4})?/i))){
-    const dd=+m[1],mm=MES_NOME[m[2].toLowerCase()];
+  /* O nome do mês precisa terminar onde um mês termina. Sem isto, "PIX
+     RECEBIDO MARCELO09/09" virava 09 de MARço: "MARCELO" começa com "mar", e
+     o lançamento de setembro ia parar em março. */
+  if((m=t.match(/(\d{1,2})\s*(?:de\s+)?(jan(?:eiro)?|fev(?:ereiro)?|mar(?:ço|co)?|abr(?:il)?|mai(?:o)?|jun(?:ho)?|jul(?:ho)?|ago(?:sto)?|set(?:embro)?|out(?:ubro)?|nov(?:embro)?|dez(?:embro)?)\.?\b\s*(?:de\s+)?(\d{2,4})?/i))){
+    const dd=+m[1],mm=MES_NOME[norm(m[2]).slice(0,3)];
     if(dd>=1&&dd<=31)return pad2(dd)+'/'+pad2(mm)+'/'+(m[3]?(m[3].length<=2?anoDe2(m[3]):+m[3]):anoProvavel(mm));
   }
   const re=/(\d{1,2})[-.\/](\d{1,2})(?:[-.\/](\d{2,4}))?/g;
@@ -3450,10 +3521,15 @@ function exSetMesSemData(v){exMesSemData=v||'';applyExtrato();}
 /* A fatura do cartão se reconhece sozinha: duas colunas de dinheiro (R$ e
    US$) e a linha do pagamento com menos na frente. Marcar a caixa à mão era
    fácil de esquecer — e esquecer significa o pagamento entrar como compra. */
+const FATURA_PALAVRA=/(pagamento de fatura|pagamentos validos|pagamento minimo|total da fatura|melhor dia de compra|limite total|fatura anterior|saldo anterior da fatura)/;
 function pareceFatura(t){
-  const duas=(t||[]).filter(x=>x.col2).length;
-  const pag=(t||[]).some(x=>x.cred&&/pagament|estorno|credito/i.test(norm(x.desc||'')));
-  return duas>=3||pag;
+  /* Duas colunas de dinheiro com a SEGUNDA zerada é a assinatura da fatura:
+     R$ e US$ lado a lado. O extrato do Itaú também tem duas colunas (valor e
+     saldo), mas a segunda nunca é 0,00 — e "PAGAMENTOS CONDOR SUPER CENTER"
+     tem a palavra "pagamento" sem ser fatura nenhuma. */
+  const dolarZero=(t||[]).filter(x=>x.col2&&x.zero2).length;
+  const pag=(t||[]).some(x=>FATURA_PALAVRA.test(norm(x.desc||'')));
+  return dolarZero>=3||pag;
 }
 function showExtratoPreview(t){
   if(!t||!t.length){alert('Não identifiquei transações. Dicas: exporte OFX (mais confiável), confira o texto colado, ou tire uma foto mais nítida. Você também pode me enviar a imagem no chat que eu transcrevo com precisão.');return;}
@@ -3614,8 +3690,13 @@ function parseTextExtrato(text){
        outra coluna colada na descrição ("RENATA GAS 252,00") */
     let desc=line.replace(/-?\d{1,3}(?:\.\d{3})*,\d{2}/g,' ');
     if(dm)desc=desc.replace(dm[0],'');
-    desc=desc.replace(/r\$|us\$/ig,'').replace(/[|;]+/g,' ').replace(/\s{2,}/g,' ').trim().slice(0,42)||'—';
-    out.push({date,desc,amount:amt,cred,col2:nums.length>1});
+    desc=desc.replace(/r\$|us\$/ig,'').replace(/[|;]+/g,' ').replace(/\s{2,}/g,' ').trim().slice(0,42);
+    /* "R$ 2.890,29 R$ 6.200,00 R$ 0,00 R$ 6.200,00" é o cabeçalho de saldo e
+       limite da conta: sem nenhuma letra sobrando, não é lançamento. Entrava
+       como um gasto de R$ 2.890,29 com o nome vazio. */
+    if(!/[a-zà-ú]{3}/i.test(desc))return;
+    const zero2=nums.length>1&&Math.abs(valores[valores.length-1]||0)<0.005;
+    out.push({date,desc,amount:amt,cred,col2:nums.length>1,zero2});
   });
   return out;
 }
