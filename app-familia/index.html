@@ -3290,13 +3290,26 @@ function limpaComercio(desc){
 /* A palavra aprendida tem de começar onde uma palavra começa — assim "pao" não
    reconhece "pagamento". Mas o fim fica solto de propósito: quem escreve
    "tavares transporte" espera pegar "TAVARES TRANSPORTES" também. */
+/* Algumas linhas só trazem o CPF/CNPJ de quem recebeu — o nome nunca vem:
+   "PIX ENVIADO 014.429.329-37", "PAGAMENTOS 10.573.521/0001-91". A limpeza
+   joga o documento fora junto com o resto do ruído e não sobra nada para
+   ensinar. Guardados só os dígitos, o documento vira a chave da regra. */
+function docDe(desc){
+  const m=norm(desc).match(/\d[\d.\-\/]{9,}\d/);
+  if(!m)return '';
+  const d=m[0].replace(/\D/g,'');
+  return (d.length===11||d.length===14)?d:'';
+}
 function memMatch(d,key){
   const k=norm(key).trim();
   if(!k)return false;
   return new RegExp('(^|[^a-z0-9])'+k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).test(d);
 }
 function categorize(desc,amount){
-  const d=limpaComercio(desc)||norm(desc);
+  /* Sobrando só o documento, o número não pode virar palavra-chave: um CPF
+     terminado em 99 casava com "99" (o aplicativo de corrida) e o PIX ia
+     parar em Transporte. */
+  const d=limpaComercio(desc)||norm(desc).replace(/[\d][\d.\-\/]{7,}/g,' ').replace(/\s+/g,' ').trim();
   if(amount>0)return "Entradas";
   /* antes de qualquer palavra-chave: "PAGTO FATURA CARTAO XP" tem "xp" dentro
      e cairia em investimento; "cartao de credito" cairia em Serviços */
@@ -3312,8 +3325,13 @@ function categorize(desc,amount){
   /* Empate fica com o que você ensinou: se a palavra aprendida é a mesma que a
      regra traz, quem mandou por último foi você. */
   let melhor=null,peso=0;
+  const doc=docDe(desc);
   for(const key in D.contas.catMemory){
-    if(key&&key.length>=3&&key.length>peso&&memMatch(d,key)){peso=key.length;melhor=D.contas.catMemory[key];}
+    if(!key)continue;
+    /* documento bate por inteiro: é identidade, ganha de qualquer palavra */
+    const kd=key.replace(/\D/g,'');
+    if(doc&&(kd.length===11||kd.length===14)&&kd===doc){peso=99;melhor=D.contas.catMemory[key];continue;}
+    if(key.length>=3&&key.length>peso&&memMatch(d,key)){peso=key.length;melhor=D.contas.catMemory[key];}
   }
   for(const pair of CAT_KW){
     if(pair[0]==="Entradas")continue;
@@ -3365,6 +3383,12 @@ function setMinhasRegras(txt){
     const i=l.indexOf('=');
     if(i<0){recusadas.push(l.trim()+' (falta o "=")');return;}
     const chave=norm(l.slice(0,i)).trim(),cat=l.slice(i+1).trim();
+    const soDig=chave.replace(/\D/g,'');
+    if(soDig.length===11||soDig.length===14){
+      const achouD=CATEGORIAS.find(c=>norm(c)===norm(cat));
+      if(!achouD){recusadas.push(l.trim()+' (categoria "'+cat+'" não existe)');return;}
+      novo[soDig]=achouD;return;                /* CPF ou CNPJ vira regra */
+    }
     if(chave.length<3){recusadas.push(l.trim()+' (trecho curto demais)');return;}
     const achou=CATEGORIAS.find(c=>norm(c)===norm(cat));
     if(!achou){recusadas.push(l.trim()+' (categoria "'+cat+'" não existe)');return;}
@@ -4341,11 +4365,20 @@ function setTxCat(i,cat){
   /* aprende do nome limpo: "ELECTRON FESTVAL TIN-001073" ensinaria "electron",
      que é a bandeira do cartão e é justamente o que a leitura descarta — a
      palavra aprendida nunca mais bateria. Do nome limpo ela aprende "festval". */
-  const w=limpaComercio(t.desc).split(/\s+/)
+  let w=limpaComercio(t.desc).split(/\s+/)
     .filter(x=>x.length>=4&&!/\d/.test(x))
     .sort((a,b)=>b.length-a.length)[0];
+  /* sem nenhuma palavra útil, aprende pelo documento de quem recebeu */
+  const doc=w?'':docDe(t.desc);
   let juntos=0;
-  if(w){
+  if(doc){
+    D.contas.catMemory[doc]=cat;
+    (D.contas.transacoes||[]).forEach((o,k)=>{
+      if(k===i||o.cat===cat)return;
+      if(docDe(o.desc)===doc){o.cat=cat;juntos++;}
+    });
+    w=doc;
+  }else if(w){
     D.contas.catMemory[w]=cat;
     (D.contas.transacoes||[]).forEach((o,k)=>{
       if(k===i||o.cat===cat)return;
