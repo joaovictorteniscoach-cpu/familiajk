@@ -3669,13 +3669,16 @@ function ehLinhaResumoInvest(nome){
    Atual" valendo 68,59. Aqui o bloco inteiro vira UM ativo, ja com a
    quantidade e o preco — que e o que a carteira Global precisa e o que voce
    tinha de digitar a mao. */
+/* Linhas que aparecem dentro de um bloco e não são nem nome nem valor. */
+const BLOCO_LIXO=/^(rendimentos|rentabilidade|valor aplicado|comprar|vender|detalhe do produto|pnl|earn|trade|swap concluido|nao realizado)/;
 function parseBlocosInvest(text){
   const linhas=(text||'').split(/\r?\n/).map(l=>l.replace(/\s+/g,' ').trim());
   const out=[];let b=null;
   const fecha=()=>{
     if(b&&b.tk&&b.valor>0&&(b.qtd>0||b.pa>0)){
       out.push({nome:(b.tk+' '+(b.desc||'')).trim().slice(0,48),
-                valor:b.valor,qtd:b.qtd||0,pm:b.pm||0,pa:b.pa||0});
+                valor:b.valor,qtd:b.qtd||0,pm:b.pm||0,pa:b.pa||0,
+                conta:b.conta||'',moeda:b.moeda||''});
     }
     b=null;
   };
@@ -3683,18 +3686,26 @@ function parseBlocosInvest(text){
     return m?parseBRNum(m[m.length-1]):null;};
   linhas.forEach(l=>{
     if(!l)return;
-    const so=l.match(/^([A-Z]{2,5})$/);
-    if(so){fecha();b={tk:so[1],desc:'',valor:0,qtd:0,pm:0,pa:0};return;}
+    /* o código da moeda/ativo sozinho na linha abre um bloco. "S" (Sonic) tem
+       uma letra só, então o mínimo é 1 — um bloco sem valor é descartado. */
+    const so=l.match(/^([A-Z][A-Z0-9]{0,5})$/);
+    if(so){fecha();b={tk:so[1],desc:'',valor:0,qtd:0,pm:0,pa:0,conta:''};return;}
     if(!b)return;
     const n=norm(l);
-    if(/^posicao/.test(n)){b.valor=numDe(l)||0;return;}
+    if(BLOCO_LIXO.test(n))    /* "PNL não realizado -R$ 135,27" tem R$ e não é a posição */
+      {if(/^(comprar|vender)/.test(n))fecha();return;}
+    if(/^posicao/.test(n)){b.valor=numDe(l)||0;b.moeda=/us\$|usd/.test(n)?'USD':'BRL';return;}
     if(/^quantidade/.test(n)){b.qtd=numDe(l)||0;return;}
     if(/^preco medio/.test(n)){b.pm=numDe(l)||0;return;}
     if(/^preco atual/.test(n)){b.pa=numDe(l)||0;return;}
-    if(/^(rendimentos|rentabilidade|valor aplicado|comprar|vender|detalhe do produto)/.test(n)){
-      if(/^(comprar|vender)/.test(n))fecha();
-      return;
-    }
+    /* Formato da Binance: o código, o nome, a quantidade solta e o valor em R$.
+         USDT
+         TetherUS
+         233,97927404
+         R$ 1.212,01
+       Sem isto, a quantidade da moeda virava o valor dela. */
+    if(/^r\$/.test(n)){if(!b.valor){b.valor=numDe(l)||0;b.conta='bin';b.moeda='BRL';}return;}
+    if(/^[\d.,]+$/.test(l)){if(!b.qtd)b.qtd=parseBRNum(l)||0;return;}
     if(!b.desc&&/[a-z]{3}/.test(n)&&!/\d{1,3},\d{2}/.test(l))b.desc=l.slice(0,40);
   });
   fecha();
@@ -3718,8 +3729,15 @@ function parseTextInvest(text){
       .replace(/\s{2,}/g,' ').trim();
     nome=nome.replace(/[.,;:\-–—]+$/,'').trim();
     if(nome.length<3)return;
+    /* "Saldo conta investimento global US$ 398,31" é o dinheiro parado na
+       corretora — não é ativo, mas faz parte do patrimônio e tem campo
+       próprio. Sem isto a linha era descartada junto com os outros totais. */
+    if(/^saldo (da )?conta (de )?investimento/.test(norm(nome))){
+      out.push({nome:nome.slice(0,48),valor,conta:'caixa',
+                moeda:/us\$|usd/.test(norm(line))?'USD':'BRL'});return;
+    }
     if(ehLinhaResumoInvest(nome))return;              /* total, nome de conta ou rodapé */
-    out.push({nome:nome.slice(0,48),valor});
+    out.push({nome:nome.slice(0,48),valor,moeda:/us\$|usd/.test(norm(line))?'USD':(/r\$/.test(norm(line))?'BRL':'')});
   });
   return out;
 }
@@ -3729,6 +3747,7 @@ function invAlvos(){
   (D.invest.nacional||[]).forEach((x,i)=>a.push(['nac:'+i,'Nacional · '+x.nome]));
   (D.invest.global||[]).forEach((x,i)=>a.push(['glob:'+i,'Global · '+(x.tk?(x.tk+' — '):'')+x.nome]));
   (D.invest.binance||[]).forEach((x,i)=>a.push(['bin:'+i,'Binance · '+x.nome]));
+  a.push(['caixa-glob','Saldo parado na conta global (US$)']);
   a.push(['novo-nac','+ novo ativo em Nacional (R$)']);
   a.push(['novo-glob','+ novo ETF na Global (US$)']);
   a.push(['novo-bin','+ novo ativo na Binance']);
@@ -3736,7 +3755,7 @@ function invAlvos(){
 }
 /* a conta de cada destino decide a moeda e como o valor é gravado */
 function contaDoAlvo(alvo){
-  if(/^glob:/.test(alvo||'')||alvo==='novo-glob')return 'global';
+  if(/^glob:/.test(alvo||'')||alvo==='novo-glob'||alvo==='caixa-glob')return 'global';
   if(/^bin:/.test(alvo||'')||alvo==='novo-bin')return 'binance';
   return 'nacional';
 }
@@ -3758,10 +3777,26 @@ function palavrasAtivo(nome){
 /* casa o nome lido na foto com um ativo da carteira. Pontua pelas palavras
    distintivas em comum; sem nenhuma, é ativo novo — melhor acrescentar do que
    sobrescrever o valor do ativo errado. */
-function casarAtivo(nome){
+/* `conta` é a dica de onde o ativo mora, quando a própria tela diz: a lista da
+   Binance traz código, quantidade e R$. Com ela, a busca fica DENTRO da conta
+   — senão o BTC da Binance casava com o fundo "Hashdex Bitcoin" da carteira
+   Nacional, só porque os dois têm a palavra "bitcoin". */
+function casarAtivo(nome,conta){
   const alvo=limpaDesc(nome);
   if(!alvo)return 'ignorar';
   const palAlvo=palavrasAtivo(nome);
+  if(conta==='bin'){
+    let achou=null,pt=0;
+    (D.invest.binance||[]).forEach((x,i)=>{
+      const p2=palavrasAtivo(x.nome||'');
+      if(!p2.length)return;
+      const c=p2.filter(w=>palAlvo.includes(w)).length;
+      if(!c)return;
+      const s2=c/p2.length+c/1000;
+      if(s2>pt){pt=s2;achou='bin:'+i;}
+    });
+    return achou||'novo-bin';
+  }
   if(!palAlvo.length)return 'novo-nac';
   /* 1) código de bolsa batendo por inteiro ganha de qualquer parecença de nome */
   let porTicker=null;
@@ -3806,6 +3841,18 @@ function acharNaConta(arr,nome,tk){
   });
   return melhor;
 }
+/* Moedas que aparecem na Binance. Sem isto, fotografar a Binance cadastrava
+   nove "fundos brasileiros" em reais na carteira Nacional. */
+const CRIPTO_TK=new Set(['btc','eth','usdt','usdc','bnb','xrp','ada','doge','sol','dot','matic','pol',
+  'ltc','shib','avax','link','atom','near','uni','trx','xlm','etc','fil','icp','apt','arb','op','sui',
+  'ton','pepe','spell','sonic','busd','dai','bch','sand','mana','aave','algo','vet','egld','hbar']);
+const CRIPTO_NOME=/\b(bitcoin|ethereum|tether|solana|stellar|lumens|shiba|dogecoin|cardano|polygon|ripple|binance coin|litecoin|avalanche|chainlink|polkadot|spell token|sonic|cripto|crypto|usd coin)\b/i;
+function ehCripto(nome){
+  const t=String(nome||'').trim();
+  if(CRIPTO_NOME.test(t))return true;
+  const p=t.split(/\s+/)[0]||'';
+  return CRIPTO_TK.has(p.toLowerCase());
+}
 /* "IVV iShares Core S&P 500 ETF" é um ETF americano, não um fundo brasileiro.
    Sem isto, todo ETF novo entrava na carteira Nacional, em reais. Só decide
    quando o nome diz de verdade que é ETF — na dúvida fica em Nacional, e o
@@ -3824,6 +3871,7 @@ function tickerDe(nome){
 /* quanto aquele ativo vale hoje, JÁ na moeda da conta dele: a Nacional e a
    Binance guardam reais; a Global guarda quantidade × preço em dólar */
 function valorAtualDe(alvo){
+  if(alvo==='caixa-glob')return +D.invest.caixaGlobalUSD||0;
   const x=ativoDoAlvo(alvo);if(!x)return null;
   if(contaDoAlvo(alvo)==='global')return (+x.qtd||0)*(+x.pa||0);
   return +x.valor||0;
@@ -3875,7 +3923,16 @@ async function runOCRInvest(file){
   }
 }
 function showInvestFoto(lista){
-  invFoto=lista.map(x=>{const alvo=casarAtivo(x.nome);
+  /* A moeda sai do próprio texto lido: a Binance escreve R$, a XP global
+     escreve US$. Sem isto, fotografar a Binance logo depois da global
+     multiplicava tudo pelo câmbio, porque o botão ficava em US$. */
+  const moedas=lista.map(x=>x.moeda).filter(Boolean);
+  if(moedas.length&&moedas.every(m=>m===moedas[0]))invFotoMoeda=moedas[0];
+  invFoto=lista.map(x=>{
+    /* de que conta a tela lida está falando — a Binance se anuncia pelo
+       formato, e o nome da moeda confirma */
+    const dica=(x.conta==='bin'||ehCripto(x.nome))?'bin':'';
+    const alvo=x.conta==='caixa'?'caixa-glob':casarAtivo(x.nome,dica);
     /* quantidade e preço médio lidos na própria foto valem mais do que os
        guardados: a foto é a posição de hoje */
     return {nome:x.nome,valor:x.valor,alvo,antigo:valorAtualDe(alvo),
@@ -3902,7 +3959,7 @@ function renderInvestFoto(){
     const conta=contaDoAlvo(r.alvo),moeda=moedaDoAlvo(r.alvo);
     const novo=valorNaConta(r.alvo,r.valor);                 /* já na moeda da conta */
     const muda=r.antigo!=null&&Math.abs(r.antigo-novo)>0.005;
-    const ehGlobal=/^glob:/.test(r.alvo);
+    const ehGlobal=/^glob:/.test(r.alvo)||r.alvo==='novo-glob';
     h+='<tr'+(r.alvo==='ignorar'?' style="opacity:.45"':'')+'>'
       +'<td class="name" style="white-space:normal">'
         +'<div style="font-size:12px;line-height:1.3;overflow-wrap:anywhere">'+esc(r.nome)+'</div>'
@@ -3936,6 +3993,7 @@ function invFotoAplicar(){
   invFoto.forEach(r=>{
     if(r.alvo==='ignorar'||!(r.valor>0))return;
     const v=valorNaConta(r.alvo,r.valor);              /* já na moeda da conta */
+    if(r.alvo==='caixa-glob'){D.invest.caixaGlobalUSD=v;atualizados++;return;}
     if(r.alvo==='novo-nac'){D.invest.nacional.push({nome:r.nome,classe:guessClasse(r.nome),valor:v,apl:null});novos++;return;}
     if(r.alvo==='novo-glob'){
       /* a Global guarda quantidade × preço. Sem a quantidade, guarda 1 cota
