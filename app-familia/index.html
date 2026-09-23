@@ -593,6 +593,9 @@ table.tbl.livre td:last-child{width:42%}
       <label>Nomes, CPF ou CNPJ da família (um por linha)</label>
       <textarea id="meus-nomes" rows="4" style="width:100%;background:var(--surface2);border:1px solid var(--line);color:var(--text);font-family:inherit;font-size:12.5px;padding:8px;border-radius:9px" oninput="setMeusNomes(this.value)"></textarea>
       <div class="hint">PIX e TED entre você, a Kassiana e suas próprias contas não são gasto — é dinheiro trocando de bolso. O que bater com esta lista entra marcado como <b>fora da soma</b>, saindo <b>e</b> entrando. Ex.: seu nome completo e o dela como aparecem no extrato, ou o CNPJ da sua empresa.</div>
+      <label style="margin-top:14px">Contas de investimento (uma por linha)</label>
+      <textarea id="nomes-invest" rows="3" style="width:100%;background:var(--surface2);border:1px solid var(--line);color:var(--text);font-family:inherit;font-size:12.5px;padding:8px;border-radius:9px" oninput="setNomesInvest(this.value)"></textarea>
+      <div class="hint">O PIX que sai da conta para <b>cá</b> não é gasto: é <b>aporte</b>. Fica anotado na aba Aportes e entra na coluna “aportado” da evolução mensal — é o que separa o que rendeu do que você pôs lá dentro. Escreva o nome como ele aparece no extrato (o seu nome completo, a corretora, o que for).</div>
       <label style="margin-top:14px">Minhas regras — <i>trecho do nome</i> = <i>categoria</i> (uma por linha)</label>
       <textarea id="regras-txt" rows="6" style="width:100%;background:var(--surface2);border:1px solid var(--line);color:var(--text);font-family:inherit;font-size:12.5px;padding:8px;border-radius:9px" oninput="setMinhasRegras(this.value)"></textarea>
       <div class="hint" id="regras-hint">Para o que só você sabe o que é: <code>rafael minore = Empresa</code>. Vale para as próximas importações também. Corrigir a categoria de um lançamento na lista abaixo cria a regra sozinho.</div>
@@ -688,6 +691,8 @@ table.tbl.livre td:last-child{width:42%}
     <h2>Aportes</h2><div class="sub">Registre cada depósito — e quem aportou.</div>
     <div class="scroll"><table class="tbl" id="tbl-aportes"></table></div>
     <button class="addbtn" onclick="addAporte()">+ novo aporte</button>
+    <button class="addbtn" onclick="aportesDoExtrato()">↓ trazer os aportes do extrato</button>
+    <p class="note">“Trazer do extrato” varre tudo o que já foi importado e anota como aporte cada transferência que foi para as suas <b>contas de investimento</b> (a lista fica em Categorias → 👤 nomes da família). Nada é anotado duas vezes.</p>
   </div>
 </section>
 
@@ -1287,6 +1292,7 @@ function migrateContas(o){
   /* transação antiga não tinha dono: entra como dividida, que é o neutro */
   (o.transacoes||[]).forEach(t=>{if(!PES_VALIDO.includes(t.pes))t.pes='ambos';if(t.nc!==true)t.nc=false;});
   if(!Array.isArray(o.meusNomes))o.meusNomes=[];
+  if(!Array.isArray(o.nomesInvest))o.nomesInvest=[];
   /* Studio Kassiana — segundo negócio (os dados antigos ficam todos na Empresa JV) */
   if(!Array.isArray(o.empresaKS))o.empresaKS=[];
   if(!o.empSel)o.empSel='jv';
@@ -3353,7 +3359,22 @@ const TX_CARTAO=['pagamento de fatura','pagamento fatura','pagto fatura','pgto f
   'pagamento de cartao','fatura c/c','deb fatura','debito fatura'];
 /* Transferência para você mesmo não é gasto: o dinheiro só mudou de bolso.
    O extrato traz o nome completo do destinatário, então basta reconhecê-lo. */
-function meusNomes(){return (D.contas.meusNomes||[]).filter(x=>x&&x.length>=4);}
+/* Os nomes das SUAS contas de investimento entram junto: o que vai para lá
+   nunca é gasto — e, além disso, é aporte. */
+function nomesInvest(){return (D.contas.nomesInvest||[]).filter(x=>x&&x.length>=4);}
+function meusNomes(){
+  return (D.contas.meusNomes||[]).concat(D.contas.nomesInvest||[]).filter(x=>x&&x.length>=4);
+}
+/* PIX da empresa para a sua corretora: saída de dinheiro que não é gasto
+   nenhum — é dinheiro trocando de lugar para render. */
+function ehAporteDesc(desc){
+  const d=norm(desc);
+  return nomesInvest().some(n=>d.includes(norm(n)));
+}
+function setNomesInvest(txt){
+  D.contas.nomesInvest=String(txt||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+  save();
+}
 function ehTransfPropria(desc){
   const d=norm(desc);
   return meusNomes().some(n=>d.includes(norm(n)));
@@ -3368,6 +3389,8 @@ function toggleMeus(){
   b.style.display=abrir?'':'none';
   if(!abrir)return;
   document.getElementById('meus-nomes').value=(D.contas.meusNomes||[]).join('\n');
+  const ni=document.getElementById('nomes-invest');
+  if(ni)ni.value=(D.contas.nomesInvest||[]).join('\n');
   const r=document.getElementById('regras-txt');
   if(r)r.value=Object.keys(D.contas.catMemory||{}).sort()
     .map(k=>k+' = '+D.contas.catMemory[k]).join('\n');
@@ -3589,6 +3612,7 @@ function applyExtrato(){
        o pagamento da fatura e os estornos. Não é gasto — e não pode virar um,
        senão o mês conta o pagamento como se fosse compra. */
     if(fat&&x.cred){y.tipo='cartao';y.cat='Cartão de crédito';y.amount=-Math.abs(amt);}
+    y.aporte=y.amount<0&&ehAporteDesc(y.desc);
     /* cada lançamento vai para o SEU mês, lido da data da linha. O que veio
        sem data só entra depois que você disser em qual mês ele cai. */
     y.mes=mesFromDate(y.date);
@@ -3612,6 +3636,9 @@ function renderExtratoPreview(){
   if(jaTem)notas.push('<b>'+jaTem+' já estavam lançados</b> e não entram de novo');
   if(saldos)notas.push(saldos+' linha(s) de saldo do banco (não são movimentação)');
   if(outrosFora.length)notas.push(outrosFora.length+' fora da conta ('+brl(foraVal)+') — fatura de cartão e investimento');
+  const aps=t.filter(x=>x.aporte&&!x.jaTem);
+  if(aps.length)notas.push('<b>'+aps.length+' aporte(s)</b> para a sua corretora ('
+    +brl(aps.reduce((s,x)=>s+Math.abs(+x.amount||0),0))+') — vão para a aba Aportes');
   document.getElementById('ex-sum').innerHTML=cont.length+' transações novas · <b class="down">saídas '+brl(saidas)+'</b> · <b class="up">entradas '+brl(entradas)+'</b>'
     +(notas.length?('<br><span class="mut" style="font-size:11px">'+notas.join(' · ')+'</span>'):'');
   /* Antes de salvar você vê em quantos meses o arquivo se divide. É o que
@@ -3653,8 +3680,79 @@ function renderExtratoPreview(){
      precisa ser rotulada e remarcada, como qualquer outra tabela do app. */
   if(typeof tuneInputs==='function')tuneInputs();
 }
+/* ---------- aporte: dinheiro que saiu da conta para a sua corretora ----------
+   Fica anotado na aba Aportes, com data e mês, e alimenta a coluna "aportado"
+   da evolução mensal e anual. É o que separa o que RENDEU do que você
+   simplesmente pôs lá dentro. */
+function aporteKey(x){return (x.date||'')+'|'+Math.abs(+x.amount||0).toFixed(2)+'|'+norm(x.desc).slice(0,22);}
+function lancaAportes(lista){
+  if(!lista||!lista.length)return {n:0,total:0};
+  D.invest.aportes=D.invest.aportes||[];
+  let n=0,total=0;
+  const pessoa=(D.contas.exPessoa==='preta')?'Esposa':((D.contas.exPessoa==='preto')?'João':'Conjunto');
+  lista.forEach(x=>{
+    const k=aporteKey(x);
+    if(D.invest.aportes.some(a=>a._k===k))return;
+    const v=Math.abs(+x.amount||0);
+    if(!(v>0))return;
+    D.invest.aportes.push({_k:k,data:x.date||'',mes:x.mes||mesFromDate(x.date),
+      conta:'Nacional XP',pessoa,ativo:(x.desc||'').slice(0,30),valor:v});
+    n++;total+=v;
+  });
+  if(n){somaAportesNoMes();save();
+    ['renderAportes','renderMensal','drawMensal','renderAnual','drawAnual']
+      .forEach(f=>{if(typeof window[f]==='function')safeRun(window[f]);});}
+  return {n,total};
+}
+/* a coluna "aportado" de cada mês e de cada ano é a soma dos aportes dele */
+function somaAportesNoMes(){
+  const porMes={},porAno={};
+  (D.invest.aportes||[]).forEach(a=>{
+    const m=a.mes||mesFromDate(a.data);if(!m||m==='—')return;
+    porMes[m]=(porMes[m]||0)+(+a.valor||0);
+    const ano='20'+String(m).split('/')[1];
+    if(ano&&ano.length===4)porAno[ano]=(porAno[ano]||0)+(+a.valor||0);
+  });
+  D.invest.mensal=D.invest.mensal||[];
+  Object.keys(porMes).forEach(m=>{
+    let row=D.invest.mensal.find(r=>r.mes===m);
+    if(!row){
+      row={mes:m,patr:null,aporte:0};
+      const at=D.invest.mensal.findIndex(r=>mesOrdem(r.mes)>mesOrdem(m));
+      if(at>=0)D.invest.mensal.splice(at,0,row);else D.invest.mensal.push(row);
+    }
+    row.aporte=porMes[m];
+  });
+  D.invest.anual=D.invest.anual||[];
+  Object.keys(porAno).forEach(y=>{
+    let lin=D.invest.anual.find(a=>String(a.ano)===y);
+    if(!lin){
+      lin={ano:y,patr:null,aporte:0};
+      const at=D.invest.anual.findIndex(a=>(+a.ano||0)>(+y));
+      if(at>=0)D.invest.anual.splice(at,0,lin);else D.invest.anual.push(lin);
+    }
+    lin.aporte=porAno[y];
+  });
+}
+/* Para o que JÁ está importado: varre os lançamentos salvos e traz os que
+   foram para a corretora. É o "desde o início dos extratos". */
+function aportesDoExtrato(){
+  const achados=(D.contas.transacoes||[]).filter(t=>(+t.amount||0)<0&&ehAporteDesc(t.desc));
+  if(!nomesInvest().length){
+    alert('Antes disso, escreva o nome da sua conta de investimento em\n'
+      +'Categorias → 👤 nomes da família → "Contas de investimento".\n\n'
+      +'É o nome como ele aparece no extrato quando você manda o PIX.');
+    return;
+  }
+  const r=lancaAportes(achados);
+  alert(!achados.length
+    ? 'Nenhuma transferência para a sua corretora nos lançamentos importados.'
+    : (r.n?(r.n+' aporte(s) anotado(s), somando '+brl(r.total)+'.'
+        +'\nA coluna "aportado" da evolução mensal e anual já foi atualizada.')
+      :'Esses '+achados.length+' já estavam anotados — nada repetido.'));
+}
 function exSaveTx(){
-  if(!extratoTxns.length)return;let n=0,fora=0;
+  if(!extratoTxns.length)return;let n=0,fora=0;const novosAportes=[];
   /* Grava tudo que é lançamento de verdade, inclusive o que não soma. Antes
      essas linhas eram simplesmente descartadas: o pagamento da fatura sumia
      do app e não dava para conferir que ele tinha acontecido. Agora fica
@@ -3666,10 +3764,14 @@ function exSaveTx(){
     D.contas.transacoes.push({_k:key,date:x.date||'',mes:x.mes||mesFromDate(x.date),desc:(x.desc||'').slice(0,60),
       amount:x.amount,cat:x.cat||categorize(x.desc,x.amount),pes:x.pes||'ambos',nc:nc});
     n++;if(nc)fora++;
+    if(x.aporte)novosAportes.push(x);
   });
+  const ap=lancaAportes(novosAportes);
   save();closeExtrato();safeRun(renderCategorias);
   alert(n?('Salvei '+n+' transação(ões) já separadas por categoria.'
       +(fora?('\n'+fora+' ficaram gravadas MAS fora da soma (fatura do cartão / dinheiro seu), para não contar duas vezes.'):'')
+      +(ap.n?('\n'+ap.n+' foram para a sua corretora: anotadas como APORTE de '+brl(ap.total)
+        +', na aba Aportes e na evolução mensal.'):'')
       +'\nVeja na aba Categorias (modo Contas).')
     :'Essas transações já estavam salvas — nada duplicado.');
 }
