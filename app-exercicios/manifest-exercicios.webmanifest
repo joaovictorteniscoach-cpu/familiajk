@@ -1,0 +1,17 @@
+{
+  "name": "Banco de Exercícios JV · Da Base ao Topo",
+  "short_name": "Exercícios JV",
+  "description": "O banco de exercícios da metodologia Da Base ao Topo: filtra por tema do mês, nível do aluno, bloco da aula e necessidade específica — e monta o plano de aula.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#102438",
+  "theme_color": "#102438",
+  "orientation": "portrait",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "jv-icone-exercicios-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "jv-icone-exercicios-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "jv-icone-exercicios-mask.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -1,0 +1,31 @@
+ÍCONES E TELAS DE ABERTURA — Academia JV Tênis
+==============================================
+Cada pasta vai INTEIRA para dentro da pasta do app correspondente, no
+mesmo nível do index.html. Os nomes têm que ficar exatamente como estão:
+são eles que o manifest e o <head> procuram.
+
+O QUE CADA ARQUIVO FAZ
+  jv-icone-<app>-180.png     ícone da Tela de Início do iPhone (apple-touch-icon)
+  jv-icone-<app>-192.png     ícone do Android e da aba do navegador
+  jv-icone-<app>-512.png     ícone grande: loja, compartilhamento, Android
+  jv-icone-<app>.png         o mesmo 512, com o nome curto que o <head> usa
+  jv-icone-<app>-mask.png    ícone "maskable": o Android recorta em círculo,
+                             folha ou quadrado conforme o aparelho, e este
+                             tem margem sobrando para o corte não comer a arte
+  splash-<app>-LxA.png       tela de abertura do iPhone, uma por tamanho de
+                             tela. Sem elas o app pisca uma tela BRANCA ao
+                             abrir da Tela de Início — no iPhone parece
+                             travamento. O Android não precisa: usa o ícone
+                             e a cor do manifest.
+  manifest-<app>.webmanifest o arquivo que diz ao celular o nome do app, a
+                             cor e quais ícones usar
+
+DEPOIS DE PUBLICAR
+O celular guarda o ícone antigo. Para ver o novo: apague o atalho da Tela
+de Início e adicione de novo. Só recarregar a página não troca o ícone.
+
+QUAL É QUAL
+  app-gestao      JV TÊNIS + GESTÃO   (verde-limão)
+  app-aluno       JV ALUNOS           (verde-limão)
+  app-exercicios  quadra + EXERCÍCIOS (verde-limão)
+  app-familia     JK Família Gestão   (dourado — outra marca, não mexido)
