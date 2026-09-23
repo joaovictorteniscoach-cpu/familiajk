@@ -34,6 +34,7 @@ for arq in sys.argv[1:]:
     # sem seguir o link, o portao passaria a olhar para o vazio e aprovar tudo
     import os
     for href in re.findall(r'<link[^>]*rel="stylesheet"[^>]*href="([^"]+)"', src):
+        href = href.split('?')[0]   # o endereco leva a versao; o arquivo no disco nao
         if href.startswith('http') or href.startswith('//'):
             continue
         cam = os.path.join(os.path.dirname(arq), href)
