@@ -15,7 +15,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-23-3';
+const VERSAO='2026-09-23-4';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -412,6 +412,7 @@ function setSave(s,cls){const e=document.getElementById('save-state');e.textCont
 /* ===== Camada de armazenamento: aparelho + Firebase (nuvem real) ===== */
 let lastCloudError='';
 let _abriuSemConferir=false;   // abriu pela cópia do aparelho sem a nuvem responder
+let _semDados=false;           // abriu SEM dado nenhum e sem poder conferir na nuvem
 let cloudPending=false;
 function hasCloud(){return !!(window.fbDB);}
 function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
@@ -926,7 +927,29 @@ async function load(){
   /* A grade-semente é a do João, com os nomes dos alunos dele. Um professor
      que abre o app pela primeira vez tem de começar com a agenda em branco —
      senão veria a semana da academia como se fosse dele. */
-  if(!DB.agenda){DB.agenda=ehDono()?seedAgenda():{fixos:[],eventos:[],excecoes:[]};dirty=true;}
+  /* ===== A grade-semente e uma arma carregada =====
+     seedAgenda() e a agenda do Joao de quando o app nasceu: nomes e horarios
+     de meses atras, e TODA marcacao sem alunoId. Ela existe so para um espaco
+     NOVO nao abrir com a tela vazia.
+
+     O estrago: apagar e recolocar o atalho na Tela de Inicio limpa o
+     armazenamento do site. Se a nuvem nao respondesse naquele instante, o app
+     nao achava agenda nenhuma, montava esta grade, marcava dirty e GRAVAVA —
+     por cima do banco na nuvem e por cima da publicacao que o app do aluno le.
+     Voltavam alunos que ja pararam, horarios antigos, e nenhuma marcacao tinha
+     o botao de presenca, porque a semente nao tem alunoId.
+
+     Agora ela so entra quando a nuvem RESPONDEU e disse que nao ha nada. Sem
+     essa certeza o app nao inventa agenda e nao grava. */
+  if(!DB.agenda){
+    const espacoNovoDeVerdade=nuvemRespondeu&&!cloudRaw&&!localRaw;
+    if(!ehDono()){DB.agenda={fixos:[],eventos:[],excecoes:[]};dirty=true;}
+    else if(espacoNovoDeVerdade){DB.agenda=seedAgenda();dirty=true;}
+    else{
+      DB.agenda={fixos:[],eventos:[],excecoes:[]};
+      travado=true;_abriuSemConferir=true;_semDados=true;
+    }
+  }
   if(ensureFields())dirty=true;
   if(checarViradaMes())dirty=true;   // só detecta e avisa — a conversão espera você confirmar
   CARREGADO=true;                           // a partir daqui pode gravar
@@ -935,6 +958,7 @@ async function load(){
   checarPortaEntrada();                     // e, se ninguém se identificou, para aqui
   conferirVersao();                         // este endereço está atualizado?
   try{conferirEndereco();}catch(e){}        // e é o endereço de sempre?
+  if(_semDados){try{telaSemNuvem();}catch(e){}}   // sem dado e sem nuvem: não abre
   if(travado){setSave(_abriuSemConferir?'⚠ abriu sem falar com a nuvem ⓘ':'⚠ confira os dados antes de salvar','err');}
   else if(dirty||!chosen||(nuvemRespondeu&&!cloudRaw&&localRaw)||(localRaw&&cloudRaw&&tsOf(localRaw)!==tsOf(cloudRaw)))persist();else publish();
   renderAll();
@@ -6521,6 +6545,27 @@ function conferirEndereco(){
   if(l){l.textContent=ENDERECO_ATUAL;l.href=ENDERECO_ATUAL;}
   bar.style.display='block';
 }
+/* Abrir o app sem dado nenhum e sem conseguir falar com a nuvem e o pior
+   estado possivel: qualquer toque a partir dali vira "dado novo" e sobe por
+   cima do que existe de verdade. Melhor nao abrir. */
+function telaSemNuvem(){
+  if(document.getElementById('ov-semnuvem'))return;
+  var d=document.createElement('div');
+  d.id='ov-semnuvem';
+  d.style.cssText='position:fixed;inset:0;z-index:99998;background:#1A2E14;color:#FAF7F2;display:flex;'
+    +'align-items:center;justify-content:center;text-align:center;padding:28px;'
+    +'font:15px/1.55 system-ui,-apple-system,sans-serif';
+  d.innerHTML='<div style="max-width:330px"><div style="font-size:38px;margin-bottom:10px">&#9729;&#65039;</div>'
+    +'<b style="font-size:17px">Nao consegui falar com a nuvem</b>'
+    +'<p style="margin:9px 0 0;opacity:.88;font-size:13.5px">Este aparelho esta sem os seus dados e a nuvem nao '
+    +'respondeu. <b>Nao vou abrir com a agenda em branco</b>: se voce mexesse em algo agora, isso subiria por '
+    +'cima dos seus dados de verdade.</p>'
+    +'<button style="margin-top:18px;padding:12px 20px;border-radius:11px;border:0;background:#C9472B;'
+    +'color:#fff;font-weight:700;font-size:15px" onclick="location.reload()">Tentar de novo</button>'
+    +'<p style="margin:14px 0 0;opacity:.72;font-size:12px">Confira a internet e tente de novo. Seus dados '
+    +'continuam guardados na nuvem — o que faltou foi chegar ate eles.</p></div>';
+  document.body.appendChild(d);
+}
 function mostrarBarraVersao(naNuvem){
   const bar=document.getElementById('barra-versao');
   if(!bar)return;
@@ -7305,7 +7350,10 @@ function importBackup(input){
     try{
       const d=JSON.parse(r.result);
       if(!d.alunos||!d.lancamentos)throw new Error();
-      DB=d;if(!DB.agenda)DB.agenda=seedAgenda();ensureFields();
+      /* Backup sem agenda entra com a agenda VAZIA. Preencher com a
+         grade-semente colocaria alunos de meses atras dentro de um
+         arquivo que você acabou de escolher como sendo o certo. */
+      DB=d;if(!DB.agenda)DB.agenda={fixos:[],eventos:[],excecoes:[]};ensureFields();
       persist();renderAll();toast('Backup restaurado');
     }catch(e){toast('Arquivo inválido');}
   };
