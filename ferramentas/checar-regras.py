@@ -103,6 +103,8 @@ def avaliar(expr, auth, curingas, data_existe, new_existe, new_data=None, root_v
         return repr(val is not None and val.startswith(m.group(2)))
     e = re.sub(r"\$(\w+)\.beginsWith\('([^']*)'\)", bw, e)
     e = e.replace('===', '==').replace('&&', ' and ').replace('||', ' or ')
+    e = re.sub(r'\btrue\b', 'True', e, flags=re.I)
+    e = re.sub(r'\bfalse\b', 'False', e, flags=re.I)
     # $curinga solto vira o valor capturado no caminho. Antes virava string vazia
     # sempre, o que fazia auth.uid === $uid nunca ser verdadeiro — uma regra
     # correta apareceria como bloqueio.
