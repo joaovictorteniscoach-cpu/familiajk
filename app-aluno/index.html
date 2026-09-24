@@ -1373,9 +1373,11 @@ async function entrar(){
   show();
 }
 function show(){
+  document.body.dataset.aba='inicio';
   document.getElementById('login').style.display='none';
   document.getElementById('app').style.display='block';
   render();
+  jvCarregarAvatarAluno();
 }
 async function sair(){
   try{if(MEU&&MEU.codigo)localStorage.removeItem('jvt-pub-cache-seguro-'+MEU.codigo);localStorage.removeItem('jvt-pub-cache');}catch(e){}
@@ -1513,9 +1515,116 @@ function renderVinculoStatus(){
   }
   box.style.display='none';
 }
+const JV_AVATAR_ALUNO_KEY='jvt-avatar-aluno-v1';
+function jvAvatarAlunoAtual(){
+  return lsGet(JV_AVATAR_ALUNO_KEY)||'jv-icone-aluno.png';
+}
+function jvCarregarAvatarAluno(){
+  const src=jvAvatarAlunoAtual();
+  document.querySelectorAll('.jv-avatar-aluno-img').forEach(function(img){img.src=src;});
+}
+function jvEscolherAvatarAluno(){
+  const el=document.getElementById('jv-avatar-file-aluno');if(el)el.click();
+}
+function jvComprimirAvatar(file,cb){
+  if(!file)return cb(null);
+  const reader=new FileReader();
+  reader.onload=function(){
+    const img=new Image();
+    img.onload=function(){
+      const lado=Math.min(img.naturalWidth||img.width,img.naturalHeight||img.height);
+      const sx=((img.naturalWidth||img.width)-lado)/2, sy=((img.naturalHeight||img.height)-lado)/2;
+      const cv=document.createElement('canvas');cv.width=320;cv.height=320;
+      const ctx=cv.getContext('2d');ctx.drawImage(img,sx,sy,lado,lado,0,0,320,320);
+      let out='';try{out=cv.toDataURL('image/webp',.72);}catch(e){}
+      if(!out||out.indexOf('data:image/')!==0)out=cv.toDataURL('image/jpeg',.76);
+      cb(out);
+    };
+    img.onerror=function(){cb(null);};
+    img.src=reader.result;
+  };
+  reader.onerror=function(){cb(null);};
+  reader.readAsDataURL(file);
+}
+function jvSalvarAvatarAluno(input){
+  const file=input&&input.files&&input.files[0];if(!file)return;
+  jvComprimirAvatar(file,function(out){
+    if(!out){toast('Não consegui ler essa foto. Tente outra imagem.');return;}
+    try{localStorage.setItem(JV_AVATAR_ALUNO_KEY,out);}catch(e){toast('A foto ficou grande demais para este aparelho.');return;}
+    jvCarregarAvatarAluno();toast('📷 Foto de perfil atualizada!');
+    if(input)input.value='';
+  });
+}
+function jvProximaAula(){
+  if(!PUB||!EU)return null;
+  const itens=[], G=PUB.grade||{fixos:[],eventos:[],excecoes:[]}, exc=G.excecoes||[];
+  const hoje=new Date();
+  (G.fixos||[]).filter(f=>f.cod===MEU.codigo).forEach(function(f){
+    for(let i=0;i<35;i++){
+      const d=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()+i,12);
+      if(d.getDay()!==f.dia)continue;
+      const dk=dKey(d);
+      if(!fixoValeEm(f,dk)||horasAte(dk,f.hora)<-1||foiCancelado(dk,f.hora))continue;
+      if(exc.some(x=>x.fixoId===f.id&&x.data===dk))continue;
+      itens.push({data:dk,hora:f.hora,quadra:f.quadra||'',status:'confirmada'});
+    }
+  });
+  (G.eventos||[]).filter(e=>e.cod===MEU.codigo).forEach(function(e){
+    if(horasAte(e.data,e.hora)<-1||foiCancelado(e.data,e.hora))return;
+    itens.push({data:e.data,hora:e.hora,quadra:e.quadra||'',status:'confirmada'});
+  });
+  (MEU.pedidos||[]).forEach(function(p){
+    if(foiCancelado(p.data,p.hora)||horasAte(p.data,p.hora)<-1)return;
+    itens.push({data:p.data,hora:p.hora,quadra:p.quadra||'',status:'aguardando'});
+  });
+  itens.sort((a,b)=>(a.data+a.hora).localeCompare(b.data+b.hora));
+  return itens[0]||null;
+}
+function jvDataLonga(dk){
+  if(!dk)return '—';
+  const p=dk.split('-').map(Number),d=new Date(p[0],p[1]-1,p[2],12);
+  return String(d.getDate()).padStart(2,'0')+' '+MESES[d.getMonth()].slice(0,3).toUpperCase()+' '+d.getFullYear();
+}
+function jvAbrirCreditos(){
+  const b=[...document.querySelectorAll('.nav button')].find(x=>(x.getAttribute('onclick')||'').indexOf("goAluno('creditos'")>=0);
+  goAluno('creditos',b||null);
+}
+function jvIrMinhasAulas(){goAluno('aulas',null);renderMinhas();renderHistAluno();}
+function jvRenderPremiumAluno(){
+  if(!EU)return;
+  jvCarregarAvatarAluno();
+  const nome=(EU.nome||'Aluno').split(' ')[0];
+  const hello=document.getElementById('hello');if(hello)hello.textContent='Olá, '+nome+'!';
+  const prox=jvProximaAula(), nd=document.getElementById('jv-next-date'), nm=document.getElementById('jv-next-meta');
+  if(nd)nd.textContent=prox?jvDataLonga(prox.data):'Sem aula marcada';
+  if(nm)nm.textContent=prox?((prox.hora||'')+(prox.quadra?(' · '+prox.quadra):'')+(prox.status==='aguardando'?' · aguardando':' · confirmada')):'Abra a Agenda para escolher um horário.';
+  const total=(Number(EU.plano)||0)+(Number(EU.planoGrupo)||0), cred=Math.max(0,Number(EU.creditos)||0);
+  const prog=document.getElementById('jv-credit-progress');if(prog)prog.style.width=(total>0?Math.min(100,Math.max(0,cred/total*100)):0)+'%';
+  const psub=document.getElementById('jv-plan-sub');if(psub)psub.textContent=total>0?(total+' aula'+(total===1?'':'s')+' por mês'):'Plano personalizado';
+  const foco=(PUB&&((PUB.focoMes&&String(PUB.focoMes).trim())||(PUB.foco&&String(PUB.foco).trim())))||'Foco definido com seu professor';
+  const fe=document.getElementById('jv-focus');if(fe)fe.textContent=foco;
+  const fes=document.getElementById('jv-focus-sub');if(fes)fes.textContent=(PUB&&PUB.focoMes)?'Conteúdo atual da academia.':'Acompanhe sua evolução aula a aula.';
+  const status=EU.status==='pago'?'Em dia':EU.status==='parcial'?'Parcial':(EU.status||'Pendente');
+  ['jv-pay-status','jv-pay-status-page'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=status;});
+  const val=fmt(EU.mensalidade);
+  ['jv-pay-value','jv-mens-page'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=val;});
+  const due='Vencimento dia '+diaVencEU()+(textoVencimento()?(' · '+textoVencimento()):'');
+  ['jv-pay-due','jv-due-page'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=due;});
+  const temPix=!!(PUB&&PUB.pix&&String(PUB.pix).trim());
+  ['jv-pix-main','jv-pix-page'].forEach(id=>{const el=document.getElementById(id);if(el){el.style.display=temPix?'flex':'none';el.disabled=!temPix;}});
+  const cpg=document.getElementById('jv-cred-page');if(cpg)cpg.textContent=fmtCred(EU.creditos);
+  const rpg=document.getElementById('jv-repos-page');if(rpg)rpg.textContent=fmtCred(EU.repos);
+  const pl=document.getElementById('jv-plan-page');if(pl)pl.textContent=(EU.tipo||'Plano')+(total?(' · '+total+' aula'+(total===1?'':'s')+'/mês'):'');
+  const pls=document.getElementById('jv-plan-page-sub');if(pls)pls.textContent='Mensalidade '+val;
+  const pn=document.getElementById('jv-profile-name');if(pn)pn.textContent=EU.nome||'Aluno';
+  const pm=document.getElementById('jv-profile-meta');if(pm)pm.textContent=(meuProfNome()?('Prof. '+meuProfNome()+' · '):'')+(EU.tipo||'Aluno JV');
+  const pp=document.getElementById('jv-profile-plan');if(pp)pp.textContent=(EU.tipo||'Plano')+(total?(' · '+total+'/mês'):'')+' ›';
+  const tor=document.getElementById('jv-torneio-extra');if(tor)tor.style.display=isPersonal()?'none':'flex';
+}
+
 function render(){
   renderVinculoStatus();
-  document.getElementById('hello').textContent='Fala, '+EU.nome.split(' ')[0]+'!';
+  jvRenderPremiumAluno();
   /* Com quem ele treina. Parece detalhe, mas numa academia com mais de um
      professor é a primeira coisa que o aluno quer confirmar. */
   const hp=document.getElementById('hello-prof');
@@ -1547,6 +1656,7 @@ function render(){
   checarRenovacao();
   checarFeriados();
   applyTipoUI();renderPayLock();corEvoBtn();pintarAvisos();
+  jvRenderPremiumAluno();
 }
 // Botão da evolução vestido com o metal do nível atual do aluno
 function corEvoBtn(){
@@ -1677,24 +1787,16 @@ function meuEmoji(){return isPersonal()?'🏋️':'🎾';}
 function applyTipoUI(){
   const personal=isPersonal();
   const nav=document.querySelector('.nav');
-  const tBtn=document.getElementById('nav-torneio');
-  if(tBtn)tBtn.style.display=personal?'none':'';
-  if(nav)nav.style.gridTemplateColumns='repeat('+(personal?4:5)+',1fr)';
-  const aIco=document.getElementById('nav-aulas-ico');
-  if(aIco)aIco.innerHTML=(typeof NAVIC!=='undefined')?NAVIC.ball:meuEmoji();
+  if(nav)nav.style.gridTemplateColumns='repeat(5,1fr)';
   const buyBtn=document.getElementById('buy-btn-main');
   if(buyBtn)buyBtn.textContent=personal?'🏋️ Comprar treino avulso · pacotes':'💳 Comprar créditos · aula avulsa · locar quadra';
   const mb=document.getElementById('mfit-box');
   if(mb)mb.style.display=personal?'block':'none';
-  // se for personal e por acaso estiver na aba Torneio (escondida), volta pra Início
+  const tor=document.getElementById('jv-torneio-extra');if(tor)tor.style.display=personal?'none':'flex';
   if(personal){
     const tp=document.getElementById('apg-torneio');
     if(tp&&tp.classList.contains('on')){
-      document.querySelectorAll('#app .page').forEach(p=>p.classList.remove('on'));
-      const ini=document.getElementById('apg-inicio');if(ini)ini.classList.add('on');
-      document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('on'));
-      const first=nav?nav.querySelector('button'):null;if(first)first.classList.add('on');
-      window.scrollTo({top:0});
+      const first=nav?nav.querySelector('button'):null;goAluno('inicio',first);
     }
   }
 }
@@ -1758,7 +1860,7 @@ function _albMarcar(tab){
   _albSalvar(v);atualizarBadgesAluno();
 }
 function goAluno(id,btn){
-  document.body.dataset.aba=id;      // o CSS usa isto para o saldo aparecer só onde deve
+  document.body.dataset.aba=id;
   document.querySelectorAll('#app .page').forEach(p=>p.classList.remove('on'));
   const el=document.getElementById('apg-'+id);if(el)el.classList.add('on');
   document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('on'));
@@ -1766,6 +1868,7 @@ function goAluno(id,btn){
   if(id==='evolucao')renderEvolucaoPage();
   if(id==='agenda')_albMarcar('agenda');
   if(id==='torneio')_albMarcar('torneio');
+  if(id==='creditos'||id==='perfil'||id==='inicio')jvRenderPremiumAluno();
   window.scrollTo({top:0});
 }
 
