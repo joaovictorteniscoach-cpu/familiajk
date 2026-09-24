@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-24-4';
+const VERSAO='2026-09-24-5';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -421,6 +421,35 @@ let cloudPending=false;
 function hasCloud(){return !!(window.fbDB);}
 function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
 function lsSet(k,v){try{localStorage.setItem(k,v);return true;}catch(e){return false;}}
+const JV_AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
+function jvCarregarAvatarGestao(){
+  const img=document.getElementById('jv-avatar-gestao');if(!img)return;
+  img.src=lsGet(JV_AVATAR_GESTAO_KEY)||'jv-icone-gestao.png';
+}
+function jvEscolherAvatarGestao(){
+  const el=document.getElementById('jv-avatar-file-gestao');if(el)el.click();
+}
+function jvSalvarAvatarGestao(input){
+  const file=input&&input.files&&input.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=function(){
+    const im=new Image();
+    im.onload=function(){
+      const w=im.naturalWidth||im.width,h=im.naturalHeight||im.height,l=Math.min(w,h);
+      const cv=document.createElement('canvas');cv.width=320;cv.height=320;
+      cv.getContext('2d').drawImage(im,(w-l)/2,(h-l)/2,l,l,0,0,320,320);
+      let out='';try{out=cv.toDataURL('image/webp',.72);}catch(e){}
+      if(!out||out.indexOf('data:image/')!==0)out=cv.toDataURL('image/jpeg',.76);
+      try{localStorage.setItem(JV_AVATAR_GESTAO_KEY,out);}catch(e){toast('A foto ficou grande demais para este aparelho.');return;}
+      jvCarregarAvatarGestao();
+      if(typeof toast==='function')toast('📷 Foto de perfil atualizada!');
+      if(input)input.value='';
+    };
+    im.onerror=function(){if(typeof toast==='function')toast('Não consegui ler essa foto.');};
+    im.src=r.result;
+  };
+  r.readAsDataURL(file);
+}
 /* O banco do dono continua exatamente onde sempre esteve — mexer nisso seria
    mudar de lugar dado que já está em uso. O do professor vai para dentro do
    espaço dele. O resto (publicação, agendamentos) é global e não muda. */
@@ -8474,7 +8503,7 @@ function confirmarAulaWa(id,hora){
 function renderAll(){
   document.getElementById('month-label').textContent=MESES[curMonth]+' '+curYear;
   const safe=(fn,nome)=>{try{fn();}catch(e){console.warn('Render '+nome+' falhou:',e);}};
-  safe(updateEyeBtn,'olho');safe(renderAlunos,'alunos');safe(renderQuickLanc,'botoescaixa');safe(renderMovs,'caixa');safe(renderDash,'inicio');safe(renderFin,'financeiro');safe(renderAgenda,'agenda');safe(renderTorneio,'torneio');safe(renderConfirmAmanha,'confirmamanha');safe(renderAvaliacoes,'avaliacoes');safe(checarBackup,'backup');safe(renderConta,'conta');safe(prepararAluguel,'aluguel');
+  safe(updateEyeBtn,'olho');safe(jvCarregarAvatarGestao,'avatar');safe(renderAlunos,'alunos');safe(renderQuickLanc,'botoescaixa');safe(renderMovs,'caixa');safe(renderDash,'inicio');safe(renderFin,'financeiro');safe(renderAgenda,'agenda');safe(renderTorneio,'torneio');safe(renderConfirmAmanha,'confirmamanha');safe(renderAvaliacoes,'avaliacoes');safe(checarBackup,'backup');safe(renderConta,'conta');safe(prepararAluguel,'aluguel');
 }
 // espera o Firebase ficar pronto (até ~6s) antes de carregar; nunca trava
 (function esperarESubir(t){
