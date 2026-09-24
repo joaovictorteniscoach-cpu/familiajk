@@ -1111,13 +1111,13 @@ const CAT_KW=[
  ["Assinaturas",["netflix","spotify","disney","hbo","max ","prime video","amazon prime","paramount","globoplay","youtube premium","apple.com","apple ","icloud","google ","microsoft","office","adobe","chatgpt","openai","canva","melimax","melimais","meli mais","netlify","vercel","github","cloudflare","lovable","dropbox","deezer","tidal","office 365","microsoft 365"]],
  ["Lazer",["cinema","steam","playstation","xbox","nintendo","viagem","hotel","airbnb","booking","decolar","latam","gol ","azul ","ingresso","show ","evento","parque","clube","cinemark","cinepolis","uci ","sympla","eventim","123 milhas","hoteis","pousada","azul linhas","gol linhas","netshoes ingresso"]],
  ["Compras",["havan","amazon","mercado livre","mercadolivre","magazine","magalu","americanas","shopee","aliexpress","shein","renner","riachuelo","c&a","zara","centauro","nike","adidas","shopping","loja","marisa","leroy","kabum","casas bahia","decathlon","netshoes","dafiti","cea","pernambucanas","telha norte","ponto frio","pichau","temu"]],
- ["Empresa",["contador","contabilidade","honorarios contab","simples nacional","das mei","mei ","alvara","junta comercial","material empresa","aluguel quadra","aluguel de quadra","cnpj","nota fiscal","escritorio contab","sebrae","material esportivo",
+ ["Empresa",["contador","contabilidade","honorarios contab","simples nacional","das mei","mei ","alvara","junta comercial","material empresa","aluguel quadra","aluguel de quadra","cnpj","nota fiscal","escritorio contab","contabil","sebrae","material esportivo",
    "devolucao aluno","devolucao de aluno","devolucao aula","devolucao de aula","estorno aluno","reembolso aluno",
    "manutencao de quadra","manutencao quadra","reforma da quadra","reforma de quadra","pintura da quadra",
    "piso da quadra","tela da quadra","rede de quadra","material para a quadra","material de quadra",
    "iluminacao da quadra","limpeza da quadra"]],
  ["Serviços",["cartorio","correios","lavanderia","barbearia","salao","cabeleireiro","manicure","advogado","chaveiro","picpay","mercado pago","pagseguro","pagbank","stone","cielo","rede ","getnet","sumup","infinitepay","cartao de credito maquin","estetica","encanador","eletricista","diarista","faxina"]],
- ["Tarifas/Impostos",["parcela giro","giro ","tarifa","juros","iof","anuidade","imposto","darf","das ","inss","fgts","multa","taxa ","tributo","crefisa","emprestimo","financiamento","consignado","credito pessoal","ted ","doc ","pacote de servicos","cesta de servicos","manutencao de conta"]],
+ ["Tarifas/Impostos",["parcela giro","giro ","tarifa","tar ","sefa","juros","iof","anuidade","imposto","darf","das ","inss","fgts","multa","taxa ","tributo","crefisa","emprestimo","financiamento","consignado","credito pessoal","ted ","doc ","pacote de servicos","cesta de servicos","manutencao de conta"]],
  ["Pets",["pet ","petshop","pet shop","veterinar","cobasi","petz","racao","petlove","veterinari","banho e tosa"]],
  ["Entradas",["salario","recebido","pix recebid","deposito","rendimento","estorno","reembolso","provento","transferencia recebid","ted recebid","credito receb","pagamento receb"]]
 ];
@@ -3828,7 +3828,7 @@ function exSaveTx(){
     const key=txKey(x);
     if(D.contas.transacoes.some(t=>t._k===key))return;
     const nc=txNaoConta(x);
-    D.contas.transacoes.push({_k:key,date:x.date||'',mes:x.mes||mesFromDate(x.date),desc:(x.desc||'').slice(0,60),
+    D.contas.transacoes.push({_k:key,date:x.date||'',mes:x.mes||mesFromDate(x.date),desc:(x.desc||'').slice(0,80),
       amount:x.amount,cat:x.cat||categorize(x.desc,x.amount),pes:x.pes||'ambos',nc:nc});
     n++;if(nc)fora++;
     if(x.aporte)novosAportes.push(x);
@@ -3883,7 +3883,12 @@ function parseTextExtrato(text){
        outra coluna colada na descrição ("RENATA GAS 252,00") */
     let desc=line.replace(/-?\d{1,3}(?:\.\d{3})*,\d{2}/g,' ');
     if(dm)desc=desc.replace(dm[0],'');
-    desc=desc.replace(/r\$|us\$/ig,'').replace(/[|;]+/g,' ').replace(/\s{2,}/g,' ').trim().slice(0,42);
+    /* 80, não 42: o nome do estabelecimento estava sendo cortado no meio e
+       levava a categoria junto. "PAGAMENTOS PIX QR-CODE ORCONSIL CONTABILIDADE
+       07.514.352/0001-04" virava "...ORCONSIL CONTABILID", e "contabilidade"
+       deixava de casar. A tabela mostra só os primeiros caracteres de
+       qualquer jeito — quem precisava do nome inteiro era a categoria. */
+    desc=desc.replace(/r\$|us\$/ig,'').replace(/[|;]+/g,' ').replace(/\s{2,}/g,' ').trim().slice(0,80);
     /* "R$ 2.890,29 R$ 6.200,00 R$ 0,00 R$ 6.200,00" é o cabeçalho de saldo e
        limite da conta: sem nenhuma letra sobrando, não é lançamento. Entrava
        como um gasto de R$ 2.890,29 com o nome vazio. */
