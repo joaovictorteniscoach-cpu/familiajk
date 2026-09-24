@@ -711,7 +711,7 @@ body{background:
   linear-gradient(180deg,#081912 0%,#06140F 42%,#04100B 100%);
   color:var(--text);max-width:520px}
 .top.jv-premium-hero{
-  min-height:315px;position:sticky;top:0;overflow:hidden;padding:calc(18px + env(safe-area-inset-top,0px)) 18px 17px;
+  min-height:315px;position:relative;overflow:hidden;padding:calc(18px + env(safe-area-inset-top,0px)) 18px 17px;
   background:
     linear-gradient(180deg,rgba(2,10,7,.24),rgba(4,16,11,.94)),
     linear-gradient(90deg,rgba(5,18,13,.97) 0%,rgba(5,18,13,.67) 58%,rgba(185,93,42,.16) 100%),
