@@ -26,7 +26,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="JV Tênis · Aluno">
-<meta name="theme-color" content="#C9472B">
+<meta name="theme-color" content="#06140F">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest-aluno.webmanifest">
 <link rel="apple-touch-startup-image" media="screen and (device-width:430px) and (device-height:932px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)" href="splash-aluno-1290x2796.png">
@@ -514,7 +514,7 @@ body{background:
 .nav button.on{color:var(--jv-gold-soft)!important;background:rgba(224,185,79,.09)!important}
 .nav button.on:after{content:'';position:absolute;bottom:3px;width:22px;height:2px;border-radius:99px;background:var(--jv-gold)}
 .nav button .ico{height:24px}
-#apg-agenda,#apg-aulas,#apg-torneio,#apg-evolucao,#apg-creditos,#apg-perfil{padding-top:2px}
+#apg-agenda,#apg-aulas,#apg-torneio,#apg-evolucao{padding-top:2px}\n#apg-creditos,#apg-perfil{padding:14px 14px 110px}
 @media(max-width:355px){
   #app>.top.jv-premium-hero h1{font-size:30px}.jv-home-grid{gap:7px}.jv-home-card{padding:11px}.jv-pay-card{grid-template-columns:1fr}
   .jv-pay-head,.jv-pix-btn{grid-column:1}.jv-quick{grid-template-columns:1fr}.jv-quick button{min-height:52px}
@@ -736,7 +736,7 @@ function esperarAuth(){
     <div class="jv-quick">
       <button type="button" onclick="goAluno('agenda',document.getElementById('nav-al-agenda'))"><span>📅</span>Agendar aula</button>
       <button type="button" onclick="irMarcarReposicao()"><span>↻</span>Solicitar reposição</button>
-      <button type="button" onclick="irEvolucao()"><span>↗</span>Ver treino do mês</button>
+      <button type="button" onclick="abrirTreinoPremium()"><span>↗</span>Ver treino do mês</button>
     </div>
     <div class="buy-box" id="mfit-box" style="display:none">
       <p class="sec-eyebrow">Seu treino</p>
@@ -1606,6 +1606,10 @@ function irMarcarReposicao(){
   goAluno('agenda',b);
   toast('Toque num horário livre e escolha "Marcar reposição" 🔁');
 }
+function abrirTreinoPremium(){
+  if(EU&&EU.mfitLink&&String(EU.mfitLink).trim())abrirMFit();
+  else irEvolucao();
+}
 
 /* ================= RENDER ================= */
 function renderVinculoStatus(){
@@ -1680,11 +1684,12 @@ function proximaAulaPremium(){
       const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()+i);
       if(d.getDay()!==Number(f.dia))continue;
       const dk=dKey(d);if(!fixoValeEm(f,dk))continue;
+      if(foiCancelado(dk,f.hora))continue;
       if(exc.some(x=>x.fixoId===f.id&&x.data===dk))continue;
       considerar(dk,f.hora,'aula');break;
     }
   });
-  (G.eventos||[]).filter(e=>String(e.cod||'')===String(MEU.codigo||'')).forEach(e=>considerar(e.data,e.hora,e.tipo));
+  (G.eventos||[]).filter(e=>String(e.cod||'')===String(MEU.codigo||'')&&!foiCancelado(e.data,e.hora)).forEach(e=>considerar(e.data,e.hora,e.tipo));
   return best;
 }
 function formatoDataPremium(dk){
@@ -1693,7 +1698,9 @@ function formatoDataPremium(dk){
 }
 function planoPremium(){
   if(!EU)return '—';
-  const n=Number(EU.plano)||0;
+  const n=Number(EU.plano)||0,g=Number(EU.planoGrupo)||0;
+  if(n&&g)return n+' individual + '+g+' '+(EU.grupoTipo||'grupo')+'/mês';
+  if(g&&!n)return (EU.grupoTipo||'Grupo')+' · '+g+' aulas/mês';
   return n>0?(isPersonal()?('Personal · '+n+' treinos/mês'):(EU.tipo+' · Flex '+n)):(EU.tipo+' · sem pacote');
 }
 function focoPremium(){
@@ -1715,7 +1722,7 @@ function renderPremiumAluno(){
   const prox=proximaAulaPremium(),pd=document.getElementById('home-prox-date'),pm=document.getElementById('home-prox-meta');
   if(pd)pd.textContent=prox?formatoDataPremium(prox.data):'Sem aula marcada';
   if(pm)pm.textContent=prox?(DIAS_FULL[dtOf(prox.data,prox.hora).getDay()]+' • '+prox.hora+' • confira a quadra na Agenda'):'Veja os horários disponíveis na Agenda';
-  const saldo=Number(EU.creditos)||0,plano=Number(EU.plano)||0;
+  const saldo=(Number(EU.creditos)||0)+(Number(EU.credGrupo)||0),plano=(Number(EU.plano)||0)+(Number(EU.planoGrupo)||0);
   const hc=document.getElementById('home-cred');if(hc)hc.textContent=fmtCred(saldo);
   const hcs=document.getElementById('home-cred-sub');if(hcs)hcs.textContent=plano>0?('de '+plano+' no plano atual'):'saldo atual';
   const hf=document.getElementById('home-cred-fill');if(hf)hf.style.width=(plano>0?Math.max(0,Math.min(100,saldo/plano*100)):(saldo>0?100:0))+'%';
