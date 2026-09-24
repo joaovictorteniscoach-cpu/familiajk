@@ -150,3 +150,10 @@ input::placeholder,textarea::placeholder{color:#8C948D!important}
   #app .top{border-radius:0 0 26px 26px}
   .wrap{padding-left:18px!important;padding-right:18px!important}
 }
+
+/* O dashboard-resumo pertence apenas à Home. As outras abas ficam limpas. */
+body[data-aba]:not([data-aba="inicio"]) #bloco-saldo{display:none!important}
+body[data-aba="agenda"] #apg-agenda,
+body[data-aba="evolucao"] #apg-evolucao,
+body[data-aba="creditos"] #apg-creditos,
+body[data-aba="perfil"] #apg-perfil{padding-top:10px!important}
