@@ -6,6 +6,9 @@
   --jv-green:#36D76D;--jv-green-soft:#8BF09A;--jv-clay:#B95D2A;
   --jv-orange:#D97935;--jv-text:#F8F5ED;--jv-muted:#C8C2B6;
   --jv-border:rgba(224,185,79,.24);--jv-border-green:rgba(54,215,109,.24);
+  --cream:#07170F;--dark:#04100B;--gold:#E0B94F;--gold-light:#F0D57C;
+  --green:#123F2B;--green-2:#174A34;--text:#F8F5ED;--muted:#B8B1A5;
+  --border:rgba(255,255,255,.10);--clay:#B95D2A;--clay-light:#D97935;
 }
 body{
   background:
@@ -165,3 +168,16 @@ body[data-aba="perfil"] #apg-perfil{padding-top:10px!important}
 #apg-creditos .jv-payment-card{margin-top:10px!important}
 #apg-perfil .jv-avatar-btn{overflow:visible!important}
 #apg-perfil .jv-profile-photo{border:none!important}
+
+.hist-card,.scard,.status-line,.comprar-item,.wk-scroll,.cal,.empty,.mine-item,
+.evo-panel,.evo-mes,.atg-card,.pick-opt,.grp-ref,.field select{
+  background:var(--jv-card)!important;color:var(--jv-text)!important;
+  border-color:rgba(255,255,255,.08)!important
+}
+.mine-item small,.hist-row,.evo-panel small,.comprar-item small{color:var(--jv-muted)!important}
+.month-btn,.mt-n button,.auto-seg button,.tor-radio label{
+  background:rgba(255,255,255,.055)!important;color:var(--jv-text)!important;
+  border-color:rgba(255,255,255,.10)!important
+}
+/* O cartão exportável do torneio continua claro para salvar imagem/PDF legível. */
+#tor-capture{color:#2A2016}
