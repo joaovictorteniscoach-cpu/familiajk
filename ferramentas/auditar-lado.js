@@ -15,9 +15,9 @@ for(const e of eb.EX){
   for(const el of e.fig.el){
     if(!['aluno','prof','colega'].includes(el[0])) continue;
     const [t,x,y,rot,pose]=el;
-    let r=sb.R[pose]||sb.R[t]; if(r.costasSo&&y<=0) r=sb.R[t]; if(y>0&&r.costas) r=r.costas;
-    if(!r.lado) { continue; }
-    const q=r.lado==='dir'?true:r.lado==='esq'?false:sb.lado(x,y);
+    const r=sb.R[pose]||sb.R[t]; const v=y>0?r.costas:r.frente;
+    if(typeof v!=='object'||!r.lado||r.lado==='vai') continue;
+    const q=r.lado==='fh'?y>0:r.lado==='bh'?!(y>0):sb.lado(x,y);   // raquete à direita da imagem?
     // lado do golpe para o próprio jogador (destro): de costas, dir=FH; de frente, esq=FH
     const fh = y>0 ? q : !q;
     // bolas que chegam e saem dele

@@ -246,7 +246,7 @@ const EX = [
   mat:['nada','cesta'], form:['particular','dupla','trio','personal'],
   nec:['footwork','defesa','equilibrio','fisico'] ,
   fig:{base:'fundo', el:[
-    ['aluno',-3.4,10.2,'sai daqui','espera'],
+    ['aluno',-3.4,10.2,'sai daqui','desloca'],
     ['mov',-3.2,10.2, 3.0,10.2, 0, 'corrida lateral'],
     ['marca',3.4,10.2,'desliza e congela 2s'],
     ['cone',4.1,10.2,'']
@@ -350,7 +350,7 @@ const EX = [
   mat:['cones','cesta'], form:['particular','dupla','trio'],
   nec:['footwork','leitura','equilibrio'] ,
   fig:{base:'fundo', el:[
-    ['aluno',0,10.4,'','espera'],
+    ['aluno',0,10.4,'','desloca'],
     ['cone',1.4,10.4,'perto'], ['cone',3.2,10.4,'médio'], ['cone',5.0,10.4,'longe'],
     ['mov',0.4,10.4, 3.0,10.4, .14, 'qual deslocamento?']
   ], nota:`Três distâncias marcadas: passinhos no perto, lateral no médio, passo cruzado no longe.`},
@@ -428,7 +428,7 @@ const EX = [
   nec:['footwork','recuperacao','coordenacao'],
   kids:`Vira "Seu mestre mandou": quem executa o comando errado paga uma prenda divertida.` ,
   fig:{base:'fundo', el:[
-    ['aluno',0,10.6,'','espera'],
+    ['aluno',0,10.6,'','desloca'],
     ['mov',0,10.6, 2.8,10.0, .12, 'direita'],
     ['mov',0,10.6, -2.8,10.0, -.12, 'esquerda'],
     ['texto',0,12.8,'split · lado · base · bate · volta',.58]
@@ -508,7 +508,7 @@ const EX = [
   mat:['cronometro'], form:['particular','dupla','trio','personal'],
   nec:['equilibrio','fisico','consistencia'] ,
   fig:{base:'inteira', el:[
-    ['aluno',0,11.2,'','prepara'], ['prof',0,-11.0,''],
+    ['aluno',0,11.2,'','prepara'], ['prof',0,-11.0,'','prepara'],
     ['bola',0,-10.6, 1.8,9.6, .16, ''],
     ['bola',1.8,9.4, -1.6,-9.4, .16, ''],
     ['texto',0,6.2,'90 segundos · apita no 1º fora de eixo',.55]
@@ -699,7 +699,7 @@ const EX = [
     ['prof',0,-2.0,''],
     ['bola',0,-1.8, 0.6,4.2, .12, 'curta'],
     ['bola',0,-1.8, -1.2,11.0, -.12, 'funda'],
-    ['aluno',0,9.4,'','prepara'],
+    ['aluno',0,9.4,'','aproxima'],
     ['mov',0,9.2, 0.6,4.6, .1, 'entra'],
     ['mov',0,9.6, -1.4,11.4, -.1, 'recua na diagonal']
   ], nota:`O professor intercala bola curta e bola profunda: entrar na curta, recuar em diagonal na funda.`},
@@ -959,7 +959,7 @@ const EX = [
   mat:['elastico'], form:['particular','dupla','personal'],
   nec:['recuperacao','fisico','footwork'] ,
   fig:{base:'meia', el:[
-    ['aluno',0,10.2,'','espera'],
+    ['aluno',0,10.2,'','desloca'],
     ['mov',0.2,10.2, 3.6,9.4, .12, 'vai contra o elástico'],
     ['mov',3.6,9.6, 0.4,10.4, .12, 'o elástico traz'],
     ['texto',0,12.8,'elástico preso no poste da rede',.56]
@@ -1097,7 +1097,7 @@ const EX = [
   nec:['consistencia','direcao','profundidade'] ,
   fig:{base:'inteira', el:[
     ['aluno',3.2,11.4,'forehand','forehand'],
-    ['prof',-3.0,-11.0,''],
+    ['prof',-3.0,-11.0,'','prepara'],
     ['zona',-3.3,-9.0,3.2,4.4,'corredor cruzado'],
     ['bola',3.2,11.0, -3.3,-9.0, .16, ''],
     ['bola',-3.0,-10.6, 3.4,10.6, .16, ''],
@@ -1250,7 +1250,7 @@ const EX = [
   mat:['cesta'], form:['particular','dupla'],
   nec:['defesa','direcao','tatica'] ,
   fig:{base:'inteira', el:[
-    ['prof',-2.6,-3.0,'na rede'],
+    ['prof',-2.6,-3.0,'na rede','voleio'],
     ['aluno',2.0,11.2,'','prepara'],
     ['bola',2.0,10.8, -4.0,-6.0, .12, 'paralela'],
     ['bola',2.0,10.8, 1.2,-6.6, -.14, 'cruzada'],
@@ -1329,7 +1329,7 @@ const EX = [
   mat:['nada'], form:['particular','dupla','trio'],
   nec:['consistencia','tatica','mental'] ,
   fig:{base:'inteira', el:[
-    ['aluno',3.0,11.2,'','prepara'], ['prof',-3.0,-11.0,''],
+    ['aluno',3.0,11.2,'','prepara'], ['prof',-3.0,-11.0,'','prepara'],
     ['bola',3.0,10.8, -3.2,-9.8, .16, ''],
     ['bola',-3.0,-10.4, 3.2,10.4, .16, ''],
     ['texto',0,3.0,'5 bolas cruzadas antes de definir',.6]
@@ -1460,7 +1460,7 @@ const EX = [
     ['aluno',-3.0,11.2,'','backhand'],
     ['zona',2.6,-9.4,3.4,3.6,'faixa profunda'],
     ['bola',-3.0,10.8, 2.6,-9.4, .1, 'baixa e longa'],
-    ['prof',1.0,-11.2,'']
+    ['prof',1.0,-11.2,'','prepara']
   ], nota:`Slice de backhand: a bola tem que quicar BAIXO e escorregar, dentro da faixa profunda.`},
   passos:[`Cesta; fita marcando os últimos 2 m da quadra como alvo.`, `Raquete entrando de cima para baixo e para frente, face levemente aberta.`, `Contato ao lado e à frente, terminação longa em direção ao alvo.`, `Séries de 8: a bola tem que quicar BAIXO e escorregar.`, `Confira pelo QUIQUE, não pelo gesto.`],
   dica:`Cortar só para baixo faz a bola subir e flutuar — vira presente. O slice vai para baixo E para frente.` ,
@@ -1561,7 +1561,7 @@ const EX = [
   nec:['consistencia','direcao','profundidade'] ,
   fig:{base:'inteira', el:[
     ['aluno',-3.2,11.2,'','backhand'],
-    ['prof',3.0,-11.0,''],
+    ['prof',3.0,-11.0,'','prepara'],
     ['zona',3.3,-9.0,3.2,4.4,'corredor'],
     ['bola',-3.2,10.8, 3.3,-9.0, -.16, ''],
     ['bola',3.0,-10.6, -3.4,10.4, -.16, ''],
@@ -1687,7 +1687,7 @@ const EX = [
   mat:['contador'], form:['particular','dupla'],
   nec:['tatica','efeito','mental'] ,
   fig:{base:'inteira', el:[
-    ['aluno',-3.0,11.2,'','backhand'], ['prof',2.6,-11.0,''],
+    ['aluno',-3.0,11.2,'','backhand'], ['prof',2.6,-11.0,'','prepara'],
     ['bola',-3.0,10.8, 2.8,-9.6, -.12, 'slice: muda o ritmo'],
     ['bola',2.6,-10.4, -3.2,10.4, -.16, ''],
     ['texto',0,3.0,'1 slice por ponto, antes de definir',.58]
@@ -1712,7 +1712,7 @@ const EX = [
   mat:['cesta','alvos'], form:['particular','dupla'],
   nec:['defesa','bolaalta','tatica'] ,
   fig:{base:'inteira', el:[
-    ['prof',-2.0,-3.2,'pressiona na rede'],
+    ['prof',-2.0,-3.2,'pressiona na rede','voleio'],
     ['aluno',-3.0,11.2,'','backhand'],
     ['zona',1.6,-10.2,3.4,2.4,'últimos 3 m'],
     ['bola',-3.0,10.8, 1.6,-10.2, -.36, 'lob por cima']
@@ -1821,7 +1821,7 @@ const EX = [
   fig:{base:'meia', el:[
     ['prof',0,-1.8,'insere curta sem avisar'],
     ['bola',0,-1.6, 1.0,4.4, .14, 'curta'],
-    ['aluno',0,10.4,'','prepara'],
+    ['aluno',0,10.4,'','aproxima'],
     ['mov',0,10.2, 1.0,4.8, .1, 'entra e ataca'],
     ['marca',1.0,4.4,'pé dentro da quadra']
   ], nota:`Toda bola curta DEVE ser atacada com entrada na quadra — errar entrando vale mais que acertar de trás.`},
@@ -1847,7 +1847,7 @@ const EX = [
   fig:{base:'meia', el:[
     ['prof',-2.4,-2.0,'bola curta'],
     ['bola',-2.4,-1.8, -1.2,7.2, -.18, ''],
-    ['aluno',0,11.2,'','prepara'],
+    ['aluno',0,11.2,'','aproxima'],
     ['mov',0,11.0, -1.2,7.0, -.1, '1. ataca'],
     ['cone',-0.6,5.0,'2. split aqui'],
     ['mov',-1.0,6.6, -0.6,2.8, 0, '3. avança'],
@@ -2001,7 +2001,7 @@ const EX = [
   mat:['nada'], form:['particular','dupla','trio'],
   nec:['transicao','volei','tatica','mental'] ,
   fig:{base:'inteira', el:[
-    ['aluno',0,11.2,'','prepara'],
+    ['aluno',0,11.2,'','aproxima'],
     ['prof',0,-11.0,''],
     ['mov',0,11.0, -0.4,3.0, .1, 'sobe para pontuar'],
     ['bola',0,-10.6, 0.6,5.6, .12, ''],
@@ -2027,7 +2027,7 @@ const EX = [
   nec:['transicao','volei','defesa','tatica'] ,
   fig:{base:'inteira', el:[
     ['prof',-2.6,-2.2,'dá a bola curta'],
-    ['aluno',0,11.0,'A ataca e sobe','prepara'],
+    ['aluno',0,11.0,'A ataca e sobe','aproxima'],
     ['mov',0,10.8, -1.0,3.4, -.1, ''],
     ['colega',0.6,-9.6,'B resolve'],
     ['bola',0.6,-9.2, -3.4,1.6, .16, 'passa, lob ou no pé']
@@ -2054,7 +2054,7 @@ const EX = [
   nec:['volei','coordenacao','footwork'],
   kids:`Recorde do dia anotado num quadro; a turma tenta bater na semana seguinte.` ,
   fig:{base:'mini', el:[
-    ['aluno',0,2.0,'','voleio'], ['colega',0,-2.6,''],
+    ['aluno',0,2.0,'','voleio'], ['colega',0,-2.6,'','voleio'],
     ['bola',0,-2.4, 0,1.6, .18, ''],
     ['bola',0,1.8, 0,-2.2, -.18, ''],
     ['texto',0,5.0,'raquete sempre à frente',.6]
@@ -2106,7 +2106,7 @@ const EX = [
   fig:{base:'inteira', el:[
     ['prof',0,-2.2,'bola curta'],
     ['bola',0,-2.0, -1.4,5.4, -.12, ''],
-    ['aluno',-0.6,9.8,'','prepara'],
+    ['aluno',-0.6,9.8,'','aproxima'],
     ['mov',-0.6,9.6, -1.4,5.0, -.06, 'entra'],
     ['zona',-3.4,-9.0,2.4,3.6,'alvo paralelo profundo'],
     ['bola',-1.4,5.0, -3.4,-9.0, -.06, '']
@@ -3013,7 +3013,7 @@ const EX = [
   nec:['volei','coordenacao','consistencia'],
   kids:`Recorde da dupla anotado; a turma tenta bater o recorde da semana.` ,
   fig:{base:'mini', el:[
-    ['aluno',1.2,2.6,'','voleio'], ['colega',-1.2,-3.0,''],
+    ['aluno',1.2,2.6,'','voleio'], ['colega',-1.2,-3.0,'','voleio'],
     ['bola',-1.2,-2.8, 1.2,2.2, .16, ''],
     ['bola',1.2,2.4, -1.2,-2.6, -.16, ''],
     ['cone',2.8,2.6,''], ['cone',-2.8,-3.0,''],
@@ -3141,7 +3141,7 @@ const EX = [
   nec:['consistencia','mental','direcao'],
   kids:`Recorde num quadro com o nome da dupla. Funciona por semanas.` ,
   fig:{base:'inteira', el:[
-    ['aluno',3.0,11.2,'','prepara'], ['colega',-3.0,-11.0,''],
+    ['aluno',3.0,11.2,'','prepara'], ['colega',-3.0,-11.0,'','prepara'],
     ['bola',3.0,10.8, -3.2,-9.8, .16, ''],
     ['bola',-3.0,-10.4, 3.2,10.4, .16, ''],
     ['texto',0,3.0,'recorde da dupla, em voz alta',.6]
@@ -3241,7 +3241,7 @@ const EX = [
   nec:['consistencia','coordenacao','leitura'],
   kids:`Recorde da dupla no quadro. A turma tenta bater o recorde da semana antes de sair da mini-quadra.` ,
   fig:{base:'mini', el:[
-    ['aluno',1.0,3.2,'','voleio'], ['colega',-1.0,-3.4,''],
+    ['aluno',1.0,3.2,'','voleio'], ['colega',-1.0,-3.4,'','prepara'],
     ['zona',0,3.2,5.4,2.6,'a bola mora aqui'],
     ['bola',-1.0,-3.2, 1.0,2.8, .16, ''],
     ['bola',1.0,3.0, -1.0,-3.0, -.16, ''],
@@ -3326,7 +3326,7 @@ const EX = [
   fig:{base:'inteira', el:[
     ['colega',-1.6,11.4,'bate e corre','prepara'],
     ['colega',-3.6,12.6,'fila','espera'],
-    ['aluno',1.6,-11.4,''],
+    ['aluno',1.6,-11.4,'','prepara'],
     ['colega',3.6,-12.6,'fila'],
     ['bola',-1.6,11.0, 1.6,-11.0, .10, ''],
     ['mov',-1.6,11.4, -5.8,9.0, .25, 'volta por fora'],
@@ -3428,7 +3428,7 @@ const EX = [
   kids:`Quadro de resultados da turma na parede, atualizado toda semana. Rodízio obrigatório: ninguém joga duas vezes seguidas com o mesmo adversário.` ,
   fig:{base:'mini', el:[
     ['aluno',1.8,3.0,'','saque'],
-    ['colega',-1.4,-3.2,''],
+    ['colega',-1.4,-3.2,'','prepara'],
     ['bola',1.8,2.6, -1.2,-2.0, .16, 'saque do aluno, sempre'],
     ['texto',0,6.4,'partidas de 7 pontos e rodízio de adversário',.55]
   ], nota:`Partida de verdade em quadra do tamanho do aluno: saque dele, troca e placar desde as primeiras aulas.`},
@@ -3483,7 +3483,7 @@ const EX = [
   nec:['direcao','tatica','consistencia'],
   fig:{base:'inteira', el:[
     ['aluno',3.2,11.0,'','prepara'],
-    ['colega',-3.0,-11.0,''],
+    ['colega',-3.0,-11.0,'','prepara'],
     ['zona',-3.0,-9.0,3.2,3.8,'alvo cruzado'],
     ['zona',3.2,-9.0,2.6,3.8,'alvo paralelo'],
     ['bola',3.0,10.6, -3.0,-9.4, .12, '1 e 2'],
@@ -3510,7 +3510,7 @@ const EX = [
   mat:['contador','cronometro'], form:['particular','dupla'],
   nec:['recuperacao','fisico','direcao'],
   fig:{base:'inteira', el:[
-    ['aluno',3.0,11.0,'','prepara'], ['colega',-3.0,-11.0,''],
+    ['aluno',3.0,11.0,'','prepara'], ['colega',-3.0,-11.0,'','prepara'],
     ['zona',-3.0,-9.0,3.2,3.8,'ele só joga cruzado'],
     ['zona',-3.2,9.0,3.2,3.8,'e ele só joga paralelo'],
     ['bola',3.0,10.6, -3.0,-9.4, .12, ''],
@@ -3566,7 +3566,7 @@ const EX = [
   nec:['volei','duplas','leitura'],
   kids:`Distância maior e bola adaptada. Vale ponto em dobro quando a bola volta no primeiro toque.` ,
   fig:{base:'mini', el:[
-    ['aluno',2.0,2.6,'','voleio'], ['colega',-2.0,-2.6,''],
+    ['aluno',2.0,2.6,'','voleio'], ['colega',-2.0,-2.6,'','voleio'],
     ['zona',0,0,4.8,5.0,'só na diagonal'],
     ['bola',2.2,2.2, -2.2,-2.2, .14, ''],
     ['bola',-1.6,-2.8, 1.6,2.8, -.14, ''],
@@ -3620,7 +3620,7 @@ const EX = [
   nec:['fisico','mental','consistencia'],
   kids:`Roda sentada no fundo da quadra: cada um diz uma coisa que aprendeu e uma que quer tentar na próxima.` ,
   fig:{base:'mini', el:[
-    ['aluno',1.0,2.8,'','voleio'], ['colega',-1.0,-3.0,''],
+    ['aluno',1.0,2.8,'','voleio'], ['colega',-1.0,-3.0,'','prepara'],
     ['bola',-1.0,-2.8, 1.0,2.4, .16, ''],
     ['bola',1.0,2.6, -1.0,-2.6, -.16, ''],
     ['texto',0,6.2,'mini-troca leve + a frase do dia',.58]
@@ -3922,7 +3922,7 @@ const EX = [
     ['colega',-1.6,12.2,'saca','saque'],
     ['bola',-1.6,11.8, 2.6,-4.8, .1, ''],
     ['prof',3.4,-11.4,'devolve cruzado'],
-    ['colega',-2.2,-3.4,''],
+    ['colega',-2.2,-3.4,'','voleio'],
     ['aluno',1.8,3.2,'','voleio'],
     ['bola',3.4,-11.0, -0.6,2.4, -.08, ''],
     ['mov',1.8,3.0, -0.4,2.2, .1, 'cruza'],
@@ -3951,8 +3951,8 @@ const EX = [
   fig:{base:'inteira', el:[
     ['aluno',3.2,11.2,'','prepara'],
     ['colega',-2.0,3.4,'','voleio'],
-    ['prof',-3.2,-11.2,''],
-    ['colega',2.0,-3.4,''],
+    ['prof',-3.2,-11.2,'','prepara'],
+    ['colega',2.0,-3.4,'','voleio'],
     ['bola',3.0,10.8, -3.2,-9.6, .1, 'troca cruzada'],
     ['bola',-3.2,-10.8, 3.2,10.4, -.1, ''],
     ['mov',-2.0,3.2, -0.4,2.4, .0, 'intercepta a que flutuar'],

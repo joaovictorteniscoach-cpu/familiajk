@@ -102,96 +102,68 @@ let CENTRO = { x:0, y:0 };   // ponto principal da imagem (0,0 quando é desenho
    pixels. Sem entrada, o desenho continua sendo a quadra desenhada. */
 const FOTOS = {};
 
-/* Recortes de jogador em PNG com fundo transparente. Cada um é uma pessoa da
-   JV, fotografada de corpo inteiro, e entra no lugar do boneco desenhado.
-   `altura` é a altura real da pessoa em metros — é ela que faz o recorte
-   encolher com a distância, igual ao boneco.
+/* OS JOGADORES SÃO AS FIGURAS DA JV, recortadas da prancha de poses que o
+   João criou (ferramentas/originais/prancha-poses-jv.png) pelo
+   ferramentas/recortar-poses-jv.py. É a mesma pessoa em todas, de camisa
+   preta JV — como na folha modelo. Quem é quem (aluno, professor, colega)
+   fica no ARO colorido embaixo dos pés, nas cores da legenda: repintar a
+   camisa estragaria justamente o que a figura tem de mais reconhecível.
 
-     espera: { arq:'jog-espera.png', altura:1.78, pe:0.97 }
+   A câmera fica atrás da linha de base: quem está DO LADO DE CÁ (y > 0)
+   aparece de COSTAS, quem está além da rede aparece de FRENTE. A prancha tem
+   as duas vistas da espera e do golpe de fundo; voleio, aproximação e
+   deslocamento são de perfil, que serve dos dois lados da rede.
 
-   `pe` é onde o pé dela está na imagem, de 0 (topo) a 1 (base): quase nunca é
-   exatamente 1, e errar isso faz a pessoa flutuar acima do saibro. */
-/* `olha` = para que lado a pessoa bate NA FOTO, olhando a imagem. É o único
-   número que não dá para deduzir do desenho — o resto o próprio exercício diz.
-
-   Os três papéis são a MESMA figura com a camisa repintada
-   (ferramentas/pintar-camisa.py), nas cores que o desenho já usava para dizer
-   quem é quem: dourado o aluno, branco o professor, azul o colega. Uma figura
-   só, em três uniformes, mantém o estilo igual nos três — que é o que faz o
-   desenho parecer de uma peça só — e devolve o papel à cor, em vez de exigir
-   três pessoas diferentes. */
-/* Cada papel tem DUAS versões, porque a câmera fica atrás da linha de base:
-   `arq` é a foto de frente, para quem está além da rede, e `costas` é a de
-   trás, para quem está do lado de cá. Como são fotos diferentes, cada uma
-   traz a sua própria geometria — `altura` é a altura real do TOPO DA IMAGEM
-   acima do chão (na pose de espera a cabeça baixa; com a raquete no alto ela
-   passa de dois metros), `pe` é onde o pé cai dentro da imagem e `prop` é a
-   proporção do arquivo. Errar `altura` faz a pessoa flutuar ou afundar. */
-/* Quem não pede pose aparece EM ESPERA — de costas do lado de cá, de frente
-   além da rede, com a raquete à frente do corpo, como o jogador do outro
-   lado na folha de referência. As duas são fotos da JV: a de frente é a
-   mesma espera, virada pelo ferramentas/virar-de-frente.py (não existe foto
-   dele de frente fora do saque). Antes, o padrão era uma figura 3D tirada da
-   internet fazendo backhand de duas mãos: além de não ser da JV, punha um
-   backhand em todo jogador do outro lado, qualquer que fosse o golpe. A
-   espera é neutra — não tem lado para errar. */
-const RECORTES = {
-  aluno:  { altura:1.70, pe:1.0, prop:0.641, arq:'jv-espera-frente-aluno.webp',
-            costas:{ altura:1.70, pe:1.0, prop:0.641, arq:'jv-espera-aluno.webp' } },
-  prof:   { altura:1.70, pe:1.0, prop:0.641, arq:'jv-espera-frente-prof.webp',
-            costas:{ altura:1.70, pe:1.0, prop:0.641, arq:'jv-espera-prof.webp' } },
-  colega: { altura:1.70, pe:1.0, prop:0.641, arq:'jv-espera-frente-colega.webp',
-            costas:{ altura:1.70, pe:1.0, prop:0.641, arq:'jv-espera-colega.webp' } },
-
-  /* POSES COM NOME — um exercício pede no quinto campo do elemento:
-     ['aluno', x, y, 'rótulo', 'espera'].
-
-     `espera` e `prepara` são FOTOS DA JV, de costas, uma por papel (`papel`
-     escolhe o arquivo pela cor da camisa). Como são de costas, só valem para
-     quem está do lado de cá: pedidas para alguém além da rede, `costasSo`
-     manda voltar para a foto de frente do papel.
-
-     `lado:'golpe'` + `raqueta`: nas poses de golpe, a raquete vai para o lado
-     da IMAGEM em que a bola chega nele (ver ladoDoGolpe) — do lado de cá, à
-     direita é forehand, à esquerda é backhand. `raqueta` diz de que lado ela
-     está NA FOTO; o desenho espelha quando o lado pedido é o outro.
-
-     `altura` é a altura real do TOPO DA IMAGEM acima do chão — na pose de
-     espera a cabeça baixa (1,70 m) e com a raquete no alto passa de dois
-     metros. Errar isso faz a pessoa flutuar ou afundar no saibro. */
-  saque:   { altura:2.18, pe:1.0, prop:0.402, olha:'dir',
-             papel:{ aluno:'jv-saque-frente-aluno.webp', prof:'jv-saque-frente-prof.webp',
-                     colega:'jv-saque-frente-colega.webp' },
-             costas:{ altura:2.10, pe:1.0, prop:0.320, olha:'dir',
-                      papel:{ aluno:'jv-saque-costas-aluno.webp', prof:'jv-saque-costas-prof.webp',
-                              colega:'jv-saque-costas-colega.webp' } } },
-  voleio:  { costasSo:true, lado:'golpe', raqueta:'esq',
-             altura:1.69, pe:1.0, prop:0.698,
-             papel:{ aluno:'jv-voleio-aluno.webp', prof:'jv-voleio-prof.webp',
-                     colega:'jv-voleio-colega.webp' } },
-  espera:  { costasSo:true, altura:1.70, pe:1.0, prop:0.641, olha:'dir',
-             papel:{ aluno:'jv-espera-aluno.webp', prof:'jv-espera-prof.webp',
-                     colega:'jv-espera-colega.webp' } },
-  prepara: { costasSo:true, lado:'golpe', raqueta:'esq',
-             altura:2.34, pe:1.0, prop:0.396,
-             papel:{ aluno:'jv-prepara-aluno.webp', prof:'jv-prepara-prof.webp',
-                     colega:'jv-prepara-colega.webp' } },
-
-  /* As mesmas fotos da `prepara`, com o lado FORÇADO. A regra do lado da
-     quadra (direita = forehand) é boa na maioria, mas erra justamente nos
-     exercícios que existem para contrariá-la: o inside-out é um forehand
-     batido do canto do backhand, e "só de forehand" é só de forehand mesmo,
-     esteja o aluno onde estiver. Quando o exercício é de um golpe só, o TEMA
-     manda; nos outros, manda o lado. */
-  forehand:{ costasSo:true, lado:'dir', raqueta:'esq',
-             altura:2.34, pe:1.0, prop:0.396,
-             papel:{ aluno:'jv-prepara-aluno.webp', prof:'jv-prepara-prof.webp',
-                     colega:'jv-prepara-colega.webp' } },
-  backhand:{ costasSo:true, lado:'esq', raqueta:'esq',
-             altura:2.34, pe:1.0, prop:0.396,
-             papel:{ aluno:'jv-prepara-aluno.webp', prof:'jv-prepara-prof.webp',
-                     colega:'jv-prepara-colega.webp' } }
+   FIG guarda, por arquivo, a altura real do TOPO DA IMAGEM acima do chão (em
+   metros), a proporção do arquivo e ONDE ESTÃO OS PÉS na largura da imagem
+   (de 0 a 1). Errar a altura faz a pessoa flutuar ou afundar no saibro; sem
+   o ponto dos pés, a figura ficava centrada na imagem, e a raquete esticada
+   para um lado empurrava a pessoa para o outro. Os números saem do
+   recortar-poses-jv.py. */
+const FIG = {
+  'jv-espera-frente.webp':    [1.62, 0.721, 0.498], 'jv-espera-costas.webp':    [1.65, 0.707, 0.500],
+  'jv-golpe-frente-fh.webp':  [1.60, 0.829, 0.589], 'jv-golpe-frente-bh.webp':  [1.61, 0.840, 0.399],
+  'jv-golpe-costas-fh.webp':  [1.66, 0.849, 0.362], 'jv-golpe-costas-bh.webp':  [1.66, 0.849, 0.636],
+  'jv-voleio.webp':           [1.68, 0.785, 0.372], 'jv-voleio-esq.webp':       [1.68, 0.785, 0.626],
+  'jv-saque-frente.webp':     [1.95, 0.465, 0.333], 'jv-saque-costas.webp':     [1.80, 0.616, 0.399],
+  'jv-aproxima.webp':         [1.58, 0.692, 0.370], 'jv-aproxima-esq.webp':     [1.58, 0.692, 0.627],
+  'jv-desloca.webp':          [1.49, 0.643, 0.409], 'jv-desloca-esq.webp':      [1.49, 0.643, 0.587]
 };
+
+/* POSES — um exercício pede no quinto campo do elemento:
+   ['aluno', x, y, 'rótulo', 'voleio']. Sem pose, a pessoa aparece em espera.
+
+   Cada pose diz o arquivo DE FRENTE e o DE COSTAS. Quando a pose tem lado,
+   `dir` é a figura com a raquete (ou o corpo) virada para a DIREITA da
+   imagem e `esq` para a esquerda — e a prancha tem os dois lados do golpe de
+   fundo desenhados de verdade: de costas, forehand à direita; de frente, o
+   forehand dele fica à esquerda de quem olha. Onde a prancha só tem um lado
+   (perfil, e o backhand de costas, que esconde a raquete), o outro é o
+   espelho com o logo JV desespelhado.
+
+   `lado` escolhe entre `dir` e `esq`:
+     'golpe' — o lado em que a bola CHEGA nele (ladoDoGolpe);
+     'fh'/'bh' — forehand/backhand dele, esteja onde estiver: é o que salva o
+                 inside-out e o "só de forehand";
+     'vai'   — para onde ele se desloca ou bate (paraOndeOlha).
+   O saque não muda de lado: a figura é de um destro, e é assim que ele saca
+   dos dois lados da quadra. */
+var GOLPE_F = { dir:'jv-golpe-frente-bh.webp', esq:'jv-golpe-frente-fh.webp' };
+var GOLPE_C = { dir:'jv-golpe-costas-fh.webp', esq:'jv-golpe-costas-bh.webp' };
+var VOLEIO  = { dir:'jv-voleio.webp',   esq:'jv-voleio-esq.webp' };
+var APROX   = { dir:'jv-aproxima.webp', esq:'jv-aproxima-esq.webp' };
+var DESLOCA = { dir:'jv-desloca.webp',  esq:'jv-desloca-esq.webp' };
+const RECORTES = {
+  espera:   { frente:'jv-espera-frente.webp', costas:'jv-espera-costas.webp' },
+  prepara:  { lado:'golpe', frente:GOLPE_F, costas:GOLPE_C },
+  forehand: { lado:'fh',    frente:GOLPE_F, costas:GOLPE_C },
+  backhand: { lado:'bh',    frente:GOLPE_F, costas:GOLPE_C },
+  voleio:   { lado:'golpe', frente:VOLEIO,  costas:VOLEIO },
+  saque:    { frente:'jv-saque-frente.webp', costas:'jv-saque-costas.webp' },
+  aproxima: { lado:'vai',   frente:APROX,   costas:APROX },
+  desloca:  { lado:'vai',   frente:DESLOCA, costas:DESLOCA }
+};
+RECORTES.aluno = RECORTES.prof = RECORTES.colega = RECORTES.espera;
 
 /* Cores do desenho. Saibro de verdade, porque é nele que a JV dá aula. */
 const CQ = {
@@ -306,7 +278,7 @@ function enquadrar(base, el){
   (el || []).forEach(function(e){
     var t = e[0];
     if (t === 'aluno' || t === 'prof' || t === 'colega') {
-      por(e[1], e[2], 0, 1.0); por(e[1], e[2], 1.95, 0.8);   // o boneco sobe do chão
+      por(e[1], e[2], 0, 1.0); por(e[1], e[2], 1.95 * ESC_FIG, 0.8);   // o boneco sobe do chão (na escala de leitura)
     } else if (t === 'cone' || t === 'marca') { por(e[1], e[2], 0, 0.9); }
     else if (t === 'escada') { por(e[1], e[2] - 2.0, 0, .8); por(e[1], e[2] + 2.0, 0, .8); }
     else if (t === 'zona') {
@@ -562,47 +534,33 @@ function ladoDoGolpe(x, y){
 function qRecorte(x, y, rot, tipo, nome){
   var r = RECORTES[nome] || RECORTES[tipo];
   if (!r) return null;
-  // A câmera fica atrás da linha de base: quem está DO LADO DE CÁ (y > 0)
-  // aparece DE COSTAS, quem está além da rede aparece DE FRENTE. As fotos são
-  // de frente; usadas do lado de cá, o jogador fica olhando para quem vê — de
-  // costas para a rede — e parece bater na direção contrária à da bola.
-  // Espelhar não resolve: o erro é de 180 graus, não de lado. Por isso cada
-  // recorte tem a versão `costas`, feita pelo ferramentas/virar-de-costas.py.
-  // pose de costas pedida para alguém ALÉM da rede: lá se vê de frente
-  if (r.costasSo && y <= 0) { r = RECORTES[tipo]; if (!r) return null; }
-  if (y > 0 && r.costas) r = r.costas;
-  var arq = r.papel ? (r.papel[tipo] || r.papel.aluno) : r.arq;
-  var pe = proj(x, y, 0), topo = proj(x, y, r.altura || 1.78);
+  var v = y > 0 ? r.costas : r.frente;
+  var arq = v;
+  if (typeof v === 'object') {
+    var querDir;
+    if (r.lado === 'fh') querDir = y > 0;          // de frente, o forehand dele é à esquerda da imagem
+    else if (r.lado === 'bh') querDir = !(y > 0);
+    else if (r.lado === 'golpe') querDir = ladoDoGolpe(x, y);
+    else { var alvo = paraOndeOlha(x, y); querDir = alvo === null ? x < 0 : alvo >= x; }
+    arq = querDir ? v.dir : v.esq;
+  }
+  var g = FIG[arq] || [1.7, 0.7, 0.5];
+  var pe = proj(x, y, 0), topo = proj(x, y, g[0]);
   var h = (pe.y - topo.y) * ESC_FIG;
   if (h < 3) h = 3;
-  var hImg = h / (r.pe == null ? 1 : r.pe);      // a imagem é mais alta que a pessoa
-  var l = hImg * (r.prop || 0.42);
-  var cx = (pe.x + topo.x) / 2;
-  // `olha` diz para que lado a pessoa bate NA FOTO. Se o exercício pede o
-  // outro, a foto é espelhada — é a diferença entre o aluno bater na direção
-  // da bola e bater de costas para ela.
-  var espelha;
-  if (r.lado === 'golpe' || r.lado === 'dir' || r.lado === 'esq') {
-    /* DE QUE LADO A RAQUETE FICA, numa pose de golpe.
-       No tênis, bola do lado DIREITO da imagem é forehand; do lado esquerdo,
-       backhand. É isso que manda — e não para onde a bola vai. A regra antiga
-       apontava a raquete na direção da bola, e com isso todo forehand cruzado
-       virava um backhand: o aluno no canto direito batendo para a esquerda
-       aparecia com a raquete do lado esquerdo. `raqueta` diz de que lado ela
-       está NA FOTO; o desenho espelha quando o lado pedido é o outro. */
-    var querDir = (r.lado === 'dir') ? true : (r.lado === 'esq') ? false : ladoDoGolpe(x, y);
-    espelha = querDir === (r.raqueta === 'esq');
-  } else {
-    var alvo = paraOndeOlha(x, y);
-    espelha = alvo !== null && r.olha && (alvo > x ? 'dir' : 'esq') !== r.olha;
-  }
+  var l = h * g[1];
+  var cx = pe.x;                         // os pés ficam em cima do ponto do exercício
+  // quem é quem: um aro na cor do papel, deitado no chão embaixo dos pés
+  var cor = tipo === 'prof' ? CQ.prof : (tipo === 'colega' ? CQ.colega : CQ.aluno);
+  var rx = h * 0.24, ry = h * 0.055;
   var s = '<g>' +
-    '<ellipse cx="' + nQ(cx) + '" cy="' + nQ(pe.y) + '" rx="' + nQ(l * 0.30) + '" ry="' + nQ(h * 0.035) +
+    '<ellipse cx="' + nQ(cx) + '" cy="' + nQ(pe.y) + '" rx="' + nQ(rx) + '" ry="' + nQ(ry) +
       '" fill="' + CQ.sombra + '"/>' +
-    '<image href="' + arq + '" x="' + nQ(cx - l / 2) + '" y="' + nQ(pe.y - hImg * (r.pe == null ? 1 : r.pe)) +
-      '" width="' + nQ(l) + '" height="' + nQ(hImg) + '" preserveAspectRatio="xMidYMax meet"' +
-      (espelha ? espelharEm(cx) : '') + '/></g>';
-  if (rot) s += qTexto(cx, pe.y + h * 0.18, rot, { tam:h * 0.20 });
+    '<ellipse cx="' + nQ(cx) + '" cy="' + nQ(pe.y) + '" rx="' + nQ(rx) + '" ry="' + nQ(ry) +
+      '" fill="' + cor + '" fill-opacity=".30" stroke="' + cor + '" stroke-width="' + nQ(h * 0.016) + '"/>' +
+    '<image href="' + arq + '" x="' + nQ(cx - l * g[2]) + '" y="' + nQ(pe.y - h) +
+      '" width="' + nQ(l) + '" height="' + nQ(h) + '" preserveAspectRatio="xMidYMax meet"/></g>';
+  if (rot) s += qTexto(cx, pe.y + h * 0.16, rot, { tam:h * (ESC_FIG > 1 ? 0.16 : 0.20) });
   return s;
 }
 
