@@ -72,6 +72,14 @@
         ".read": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
         ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'"
       },
+      "backups_dia": {
+        ".read": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'"
+      },
+      "backups_dia_idx": {
+        ".read": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'"
+      },
       "notificacoes": {
         ".read": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
         ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",

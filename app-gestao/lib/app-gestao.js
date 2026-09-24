@@ -15,7 +15,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-23-4';
+const VERSAO='2026-09-24-1';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -503,6 +503,61 @@ async function lerPartes(){
   }catch(e){lastCloudError=String(e&&e.message||e);return null;}
 }
 /* Retrato de uma cópia do banco, para comparar duas antes de adotar uma. */
+/* ===== Agenda: reconhecer a grade-semente e recuperar a de verdade =====
+   A semente tem assinatura clara: ids curtos ('f0'..'f90' — os de verdade
+   levam Date.now(), com 13 digitos) e NENHUMA marcacao com aluno vinculado.
+   Uma agenda de verdade, mesmo nascida da semente, ganhou alunoId com o uso:
+   e isso que faz aparecer o botao de presenca. */
+function pareceSemente(agenda){
+  const fx=(agenda&&agenda.fixos)||[];
+  const curtos=fx.filter(f=>/^f\d{1,3}$/.test(String(f&&f.id||''))).length;
+  const comAluno=fx.filter(f=>f&&f.alunoId).length;
+  return curtos>=20&&comAluno===0;
+}
+function diasDeChuva(agenda){
+  const d={};
+  ((agenda&&agenda.eventos)||[]).forEach(e=>{
+    if(e&&e.tipo==='bloqueio'&&(e.motivo==='chuva'||/chuva/i.test(e.titulo||'')))d[e.data]=1;
+  });
+  return Object.keys(d).length;
+}
+/* Traz de volta a agenda de uma versao antiga SEM mexer em mais nada.
+
+   Feito para o estrago da grade-semente: ela trocou so a agenda — alunos,
+   lancamentos, presencas e extrato ficaram onde estavam. Restaurar a versao
+   INTEIRA voltaria esses tambem no tempo e perderia o que veio depois; trazer
+   so a agenda, nao.
+
+   A agenda antiga e a base. Da atual sobrevive o que e de verdade e nao existe
+   na antiga — fixo com aluno vinculado, marcacao avulsa, dia de chuva,
+   excecao. O que tem cara de semente (id curto e sem aluno) fica de fora. */
+function juntarAgenda(atual,antiga){
+  const A=atual||{}, B=antiga||{};
+  const ehSem=f=>/^f\d{1,3}$/.test(String(f&&f.id||''))&&!(f&&f.alunoId);
+  const fixos=(B.fixos||[]).slice();
+  const idsB={};fixos.forEach(f=>{idsB[f.id]=1;});
+  let fixosNovos=0;
+  (A.fixos||[]).forEach(f=>{
+    if(!f||idsB[f.id]||ehSem(f))return;
+    fixos.push(f);idsB[f.id]=1;fixosNovos++;
+  });
+  const kE=e=>e.data+'|'+e.hora+'|'+(e.titulo||'')+'|'+(e.alunoId||'');
+  const eventos=(B.eventos||[]).slice();
+  const ksE={};eventos.forEach(e=>{ksE[kE(e)]=1;});
+  let eventosNovos=0;
+  (A.eventos||[]).forEach(e=>{
+    if(!e||ksE[kE(e)])return;
+    eventos.push(e);ksE[kE(e)]=1;eventosNovos++;
+  });
+  // excecao so vale para fixo que existe: as da semente (f0..f90) morreriam soltas
+  const kX=x=>x.fixoId+'|'+x.data;
+  const excecoes=[];const ksX={};
+  (B.excecoes||[]).concat(A.excecoes||[]).forEach(x=>{
+    if(!x||!idsB[x.fixoId]||ksX[kX(x)])return;
+    excecoes.push(x);ksX[kX(x)]=1;
+  });
+  return {agenda:{fixos,eventos,excecoes},fixosNovos,eventosNovos};
+}
 function resumoBanco(raw){
   try{
     const d=(typeof raw==='string')?JSON.parse(raw):raw;
@@ -514,6 +569,9 @@ function resumoBanco(raw){
       caixa:lan.filter(l=>l&&l.valor>0).reduce((s,l)=>s+(Number(l.valor)||0),0),
       presencas:(d.presencas||[]).length,
       eventos:((d.agenda&&d.agenda.eventos)||[]).length,
+      fixosAluno:((d.agenda&&d.agenda.fixos)||[]).filter(f=>f&&f.alunoId).length,
+      chuvaDias:diasDeChuva(d.agenda),
+      semente:pareceSemente(d.agenda),
       savedAt:d.savedAt||0
     };
   }catch(e){return null;}
@@ -522,7 +580,9 @@ function descreveResumo(r){
   if(!r)return '(ilegível)';
   const q=r.savedAt?new Date(r.savedAt).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'sem data';
   return q+'\n'+r.alunos+' alunos · '+r.lancamentos+' lançamentos · R$ '
-    +Number(r.caixa).toLocaleString('pt-BR')+'\n'+r.presencas+' presenças · '+r.eventos+' eventos';
+    +Number(r.caixa).toLocaleString('pt-BR')+'\n'+r.presencas+' presenças · '+r.eventos+' eventos'
+    +'\n'+(r.fixosAluno||0)+' horários fixos com aluno · '+(r.chuvaDias||0)+' dia(s) de chuva'
+    +(r.semente?'\n⚠️ AGENDA = GRADE-SEMENTE ANTIGA (sem alunos)':'');
 }
 function genCode(){return String(Math.floor(1000+Math.random()*9000));}
 /* ===== Extrato dos saldos =====
@@ -959,6 +1019,7 @@ async function load(){
   conferirVersao();                         // este endereço está atualizado?
   try{conferirEndereco();}catch(e){}        // e é o endereço de sempre?
   if(_semDados){try{telaSemNuvem();}catch(e){}}   // sem dado e sem nuvem: não abre
+  else{try{conferirSemente();}catch(e){}}         // agenda com cara de semente: avisa
   if(travado){setSave(_abriuSemConferir?'⚠ abriu sem falar com a nuvem ⓘ':'⚠ confira os dados antes de salvar','err');}
   else if(dirty||!chosen||(nuvemRespondeu&&!cloudRaw&&localRaw)||(localRaw&&cloudRaw&&tsOf(localRaw)!==tsOf(cloudRaw)))persist();else publish();
   renderAll();
@@ -1427,7 +1488,7 @@ function persist(){
     const env=await subirPartes();
     if(env){
       cloudPending=false;marcarSemNuvem(false);setSave('✓ salvo na nuvem','ok');
-      subirBlobDeReserva();backupNuvem();
+      subirBlobDeReserva();backupNuvem();backupDoDia();
     }
     else{
       cloudPending=true;marcarSemNuvem(true);
@@ -1444,6 +1505,71 @@ function persist(){
 /* Uma cópia por hora na nuvem, no máximo 30. Mesmo que o aparelho se perca
    inteiro, existe de onde voltar. */
 let _ultBkpNuvem=0;
+/* ===== Uma cópia por DIA, guardada 45 dias =====
+   As cópias de hora em hora são 30: cobrem pouco mais de um dia. Se o banco
+   fica errado e o app segue aberto, em 30 horas as cópias boas já foram
+   empurradas para fora — foi assim que os dias de chuva ficaram sem de onde
+   voltar.
+
+   A do dia é a PRIMEIRA gravação boa de cada dia, e fica 45 dias. Primeira, e
+   não última, de propósito: se algo der errado no meio do dia, a cópia daquele
+   dia ainda é a de antes do problema.
+
+   O índice (backups_dia_idx) guarda só a data e um retrato de números de cada
+   cópia. É ele que a lista de versões lê — baixar 45 cópias inteiras só para
+   mostrar a lista pesaria dezenas de megas no celular. A cópia inteira só é
+   buscada quando você escolhe uma. */
+let _ultBkpDia='',_bkpDiaRodando=false,_bkpDiaTentou=0;
+async function backupDoDia(){
+  if(!hasCloud()||!CARREGADO)return;
+  if(pareceSemente(DB.agenda))return;        // nunca guardar a semente como "cópia boa do dia"
+  const dia=dKey(new Date());
+  if(_ultBkpDia===dia)return;
+  /* Uma tentativa por vez, e no máximo a cada 10 min se falhar (sem sinal,
+     ou regras ainda não publicadas) — sem isso cada gravação abria outra. */
+  if(_bkpDiaRodando||Date.now()-_bkpDiaTentou<600e3)return;
+  _bkpDiaRodando=true;_bkpDiaTentou=Date.now();
+  try{
+    const idxSnap=await nuvemOuNada(window.fbDB.ref(RAIZ+'/backups_dia_idx').get(),15000);
+    if(!idxSnap)return;                      // a nuvem não respondeu: tenta mais tarde
+    const idx=idxSnap.exists()?(idxSnap.val()||{}):{};
+    if(!idx[dia]){
+      const json=JSON.stringify(DB);
+      await window.fbDB.ref(RAIZ+'/backups_dia/'+dia).set(json);
+      const r=resumoBanco(json)||{};
+      const reg={ts:Date.now(),alunos:r.alunos||0,lancamentos:r.lancamentos||0,caixa:r.caixa||0,
+                 presencas:r.presencas||0,eventos:r.eventos||0,fixosAluno:r.fixosAluno||0,
+                 chuvaDias:r.chuvaDias||0,savedAt:r.savedAt||0};
+      await window.fbDB.ref(RAIZ+'/backups_dia_idx/'+dia).set(reg);
+      idx[dia]=reg;
+    }
+    _ultBkpDia=dia;
+    const ks=Object.keys(idx).sort();
+    while(ks.length>45){
+      const k=ks.shift();
+      await window.fbDB.ref(RAIZ+'/backups_dia/'+k).remove();
+      await window.fbDB.ref(RAIZ+'/backups_dia_idx/'+k).remove();
+    }
+  }catch(e){}
+  finally{_bkpDiaRodando=false;}
+}
+async function pegarCopiaDoDia(dia){
+  const s=await nuvemOuNada(window.fbDB.ref(RAIZ+'/backups_dia/'+dia).get(),20000);
+  return s&&s.exists()?s.val():null;
+}
+/* Busca a cópia do dia e entrega para o mesmo fluxo de sempre — mesma
+   conferência, mesma confirmação, mesma cópia de segurança antes de trocar. */
+async function usarCopiaDoDia(dia,oQue){
+  if(!hasCloud()){toast('Sem nuvem agora');return;}
+  toast('Buscando a cópia de '+dia.split('-').reverse().slice(0,2).join('/')+'…');
+  let raw=null;try{raw=await pegarCopiaDoDia(dia);}catch(e){}
+  if(!raw){toast('Não consegui buscar essa cópia');return;}
+  const it={origem:'nuvem',rot:'início do dia '+dia.split('-').reverse().slice(0,2).join('/'),raw,r:resumoBanco(raw)};
+  window._versoes=window._versoes||[];
+  window._versoes.push(it);
+  const i=window._versoes.length-1;
+  if(oQue==='agenda')recuperarAgenda(i);else restaurarVersao(i);
+}
 async function backupNuvem(){
   if(!hasCloud())return;
   const agora=Date.now();
@@ -1641,6 +1767,7 @@ function publicarAgendaProf(){
   clearTimeout(agProfTimer);
   agProfTimer=setTimeout(async()=>{
     if(!CARREGADO||!hasCloud()||!ehDono())return;
+    if(pareceSemente(DB.agenda))return;             // nem marcar aula falsa no nome de professor
     for(const p of profs()){
       let bloco;try{bloco=agendaDoProf(p.id);}catch(e){continue;}
       const ass=JSON.stringify({f:bloco.fixos,e:bloco.eventos,x:bloco.excecoes});
@@ -1688,6 +1815,7 @@ function publicarMapaQuadra(){
   mapaTimer=setTimeout(async()=>{
     if(!CARREGADO||!hasCloud())return;
     const uid=meuUidNaQuadra();if(!uid)return;
+    if(ehDono()&&pareceSemente(DB.agenda))return;   // não espalhar ocupação falsa na quadra
     let m;try{m=meuMapaQuadra();}catch(e){return;}
     const assinatura=JSON.stringify(m.dias);
     if(assinatura===_mapaEnviado)return;
@@ -1760,6 +1888,10 @@ async function doPublish(){
   if(!CARREGADO)return;                     // publicar vazio apagaria a tela dos alunos
   if(!ehDono())return;                      // o App do Aluno é da academia, não do professor
   if(!hasCloud())return;
+  /* Publicar a grade-semente foi o que fez o app dos alunos voltar no tempo:
+     cada aluno passou a ver horários de meses atrás. Com a agenda nesse
+     estado, a publicação fica suspensa até a agenda de verdade voltar. */
+  if(pareceSemente(DB.agenda)){console.warn('publicação suspensa: agenda parece a grade-semente');return;}
   try{
     const hoje=new Date();const lim=new Date();lim.setDate(lim.getDate()+60);
     const codeOf=id=>{const a=DB.alunos.find(x=>x.id===id);return a?a.codigo:null;};
@@ -7264,6 +7396,13 @@ function conferirNumeros(){
    Junta o que está guardado no aparelho e na nuvem, mostra o retrato de cada
    versão (alunos, lançamentos, caixa) e deixa ele escolher. Antes de restaurar,
    a versão atual vira mais um snapshot — dá para desfazer a volta. */
+/* A lista de versões não pode ficar presa esperando a nuvem: com sinal fraco
+   o Firebase tenta para sempre e a lista nunca aparecia — nem as cópias do
+   próprio aparelho. Aqui o prazo só desiste da nuvem; não marca o app como
+   "sem nuvem" (isso é trabalho do boot). */
+function nuvemOuNada(promessa,ms){
+  return Promise.race([Promise.resolve(promessa),new Promise(r=>setTimeout(()=>r(null),ms||8000))]);
+}
 async function listarVersoes(){
   const box=document.getElementById('versoes-box');if(!box)return;
   box.innerHTML='<div class="empty">Procurando versões…</div>';
@@ -7286,8 +7425,8 @@ async function listarVersoes(){
   }catch(e){}
   if(hasCloud()){
     try{
-      const snap=await window.fbDB.ref(RAIZ+'/backups').get();
-      if(snap.exists()){
+      const snap=await nuvemOuNada(window.fbDB.ref(RAIZ+'/backups').get(),10000);
+      if(snap&&snap.exists()){
         const v=snap.val()||{};
         Object.keys(v).sort().reverse().slice(0,12).forEach(k=>{
           const raw=v[k];
@@ -7297,19 +7436,116 @@ async function listarVersoes(){
       }
     }catch(e){}
   }
-  if(!itens.length){box.innerHTML='<div class="empty">Nenhuma versão guardada ainda. A partir de agora o app começa a guardar sozinho.</div>';return;}
+  /* As cópias do dia vêm do índice: número sem baixar a cópia inteira. */
+  let dias=[];
+  if(hasCloud()){
+    try{
+      const s2=await nuvemOuNada(window.fbDB.ref(RAIZ+'/backups_dia_idx').get(),8000);
+      if(s2&&s2.exists()){
+        const v=s2.val()||{};
+        dias=Object.keys(v).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).sort().reverse().map(k=>({dia:k,r:v[k]}));
+      }
+    }catch(e){}
+  }
+  if(!itens.length&&!dias.length){box.innerHTML='<div class="empty">Nenhuma versão guardada ainda. A partir de agora o app começa a guardar sozinho.</div>';return;}
   const atual=resumoBanco(JSON.stringify(DB));
   box.innerHTML='<div class="cons info" style="margin-bottom:8px"><h4><span>📌</span>Como está agora</h4><p>'
     +esc(descreveResumo(atual)).replace(/\n/g,'<br>')+'</p></div>'
     +itens.map((it,i)=>{
       const menor=atual&&it.r&&(it.r.lancamentos>atual.lancamentos||it.r.alunos>atual.alunos);
-      return '<div class="cons '+(menor?'warn':'info')+'">'
+      /* O que mais importa depois do estrago da semente: esta cópia tem a
+         agenda de verdade? E os dias de chuva? Dizer isso na própria lista
+         poupa você de restaurar uma por uma para descobrir. */
+      const agendaMelhor=atual&&it.r&&!it.r.semente&&(
+        (it.r.fixosAluno||0)>(atual.fixosAluno||0)||(it.r.chuvaDias||0)>(atual.chuvaDias||0));
+      return '<div class="cons '+(it.r&&it.r.semente?'bad':((menor||agendaMelhor)?'warn':'info'))+'">'
         +'<h4><span>'+(it.origem==='nuvem'?'☁️':'📱')+'</span>'+esc(it.rot)+' · '+it.origem+'</h4>'
         +'<p>'+esc(descreveResumo(it.r)).replace(/\n/g,'<br>')
         +(menor?'<br><b>Tem mais dados que o atual.</b>':'')
-        +'<br><button class="btn btn-ghost" style="margin-top:8px;padding:7px 12px;font-size:12px" onclick="restaurarVersao('+i+')">Restaurar esta versão</button></p></div>';
-    }).join('');
+        +(agendaMelhor?'<br><b>A agenda desta cópia está mais completa que a atual.</b>':'')
+        +'<br><button class="btn btn-ghost" style="margin-top:8px;padding:7px 12px;font-size:12px" onclick="restaurarVersao('+i+')">Restaurar esta versão</button>'
+        +((it.r&&!it.r.semente)?' <button class="btn btn-ghost" style="margin-top:8px;padding:7px 12px;font-size:12px" onclick="recuperarAgenda('+i+')">Trazer só a agenda</button>':'')
+        +'</p></div>';
+    }).join('')
+    +(dias.length?('<p class="sec-eyebrow" style="margin-top:14px">Uma por dia · até 45 dias</p>'
+      +dias.map(x=>{
+        const r=x.r||{};
+        const rotulo=x.dia.split('-').reverse().join('/');
+        const agendaMelhor=atual&&((r.fixosAluno||0)>(atual.fixosAluno||0)||(r.chuvaDias||0)>(atual.chuvaDias||0));
+        return '<div class="cons '+(agendaMelhor?'warn':'info')+'">'
+          +'<h4><span>📅</span>início do dia '+esc(rotulo)+' · nuvem</h4>'
+          +'<p>'+esc(descreveResumo(r)).replace(/\n/g,'<br>')
+          +(agendaMelhor?'<br><b>A agenda desta cópia está mais completa que a atual.</b>':'')
+          +'<br><button class="btn btn-ghost" style="margin-top:8px;padding:7px 12px;font-size:12px" onclick="usarCopiaDoDia(\''+x.dia+'\',\'tudo\')">Restaurar esta versão</button>'
+          +' <button class="btn btn-ghost" style="margin-top:8px;padding:7px 12px;font-size:12px" onclick="usarCopiaDoDia(\''+x.dia+'\',\'agenda\')">Trazer só a agenda</button>'
+          +'</p></div>';
+      }).join('')):'');
   window._versoes=itens;
+}
+/* Trazer de volta SÓ a agenda de uma cópia — ver juntarAgenda(). */
+function aplicarAgendaRecuperada(antiga,rotulo){
+  if(!antiga||!antiga.agenda){toast('Esta cópia não tem agenda');return false;}
+  if(pareceSemente(antiga.agenda)){
+    toast('Esta cópia também tem a grade-semente antiga — escolha outra');return false;
+  }
+  const r=juntarAgenda(DB.agenda,antiga.agenda);
+  const comAluno=r.agenda.fixos.filter(f=>f.alunoId).length;
+  if(!confirm('Trazer de volta a AGENDA de '+rotulo+'?\n\n'
+    +'FICA ASSIM:\n'
+    +'· '+r.agenda.fixos.length+' horários fixos ('+comAluno+' com aluno vinculado)\n'
+    +'· '+diasDeChuva(r.agenda)+' dia(s) de chuva\n'
+    +'· '+r.agenda.eventos.length+' marcações avulsas e bloqueios\n\n'
+    +'Da agenda de agora continua junto o que não existe na antiga: '
+    +r.fixosNovos+' fixo(s) e '+r.eventosNovos+' avulsa(s).\n\n'
+    +'NÃO MUDA: alunos, créditos, lançamentos, presenças, extrato.\n\n'
+    +'A agenda atual é guardada antes — dá para voltar atrás em Versões salvas.'))return false;
+  guardarVersoes(JSON.stringify(DB));      // o atual fica guardado antes de trocar
+  DB.agenda=r.agenda;
+  logAct('Recuperou a agenda de '+rotulo);
+  persist();renderAll();
+  try{esconderBarraSemente();}catch(e){}
+  toast('✓ Agenda de '+rotulo+' recuperada');
+  return true;
+}
+function recuperarAgenda(i){
+  const it=(window._versoes||[])[i];if(!it)return;
+  let antiga;try{antiga=JSON.parse(it.raw);}catch(e){toast('Cópia ilegível');return;}
+  if(aplicarAgendaRecuperada(antiga,it.rot+' ('+it.origem+')'))listarVersoes();
+}
+function importarSoAgenda(input){
+  const f=input.files&&input.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    let d=null;try{d=JSON.parse(r.result);}catch(e){}
+    if(!d||typeof d!=='object'){toast('Arquivo inválido');return;}
+    aplicarAgendaRecuperada(d,'o arquivo '+f.name);
+  };
+  r.readAsText(f);input.value='';
+}
+/* Aviso fixo no topo quando a agenda que está na tela tem cara de semente.
+   Não trava nada — só não deixa você trabalhar em cima dela sem saber. */
+function conferirSemente(){
+  if(!ehDono()||!DB||!pareceSemente(DB.agenda)){esconderBarraSemente();return;}
+  if(document.getElementById('barra-semente'))return;
+  const d=document.createElement('div');
+  d.id='barra-semente';
+  d.style.cssText='position:sticky;top:0;z-index:285;background:#8A2C18;color:#fff;padding:12px 14px;'
+    +'font-size:13.5px;line-height:1.45;font-weight:600';
+  d.innerHTML='⚠️ <b>Esta agenda parece a grade antiga do app</b> (MARIO, KARINE, CLEIDE…), sem nenhum aluno vinculado — '
+    +'por isso não aparece o botão de presença. Seus alunos, créditos e lançamentos não foram tocados.'
+    +'<br><button style="margin-top:8px;padding:8px 13px;border-radius:9px;border:0;background:#fff;color:#8A2C18;font-weight:800;font-size:13px" '
+    +'onclick="abrirRecuperacaoAgenda()">Recuperar a agenda de verdade</button>';
+  document.body.insertBefore(d,document.body.firstChild);
+  // e o app do aluno não pode receber isto: ver doPublish()
+}
+function esconderBarraSemente(){const b=document.getElementById('barra-semente');if(b)b.remove();}
+function abrirRecuperacaoAgenda(){
+  irParaAba('fin');
+  setTimeout(()=>{
+    listarVersoes();
+    const b=document.getElementById('versoes-box');
+    if(b)b.scrollIntoView({behavior:'smooth',block:'start'});
+  },150);
 }
 function restaurarVersao(i){
   const it=(window._versoes||[])[i];if(!it)return;
