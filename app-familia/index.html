@@ -695,6 +695,7 @@ table.tbl.livre td:last-child{width:42%}
     <div class="scroll"><table class="tbl" id="tbl-aportes"></table></div>
     <button class="addbtn" onclick="addAporte()">+ novo aporte</button>
     <button class="addbtn" onclick="aportesDoExtrato()">↓ trazer os aportes do extrato</button>
+    <button class="addbtn" onclick="limparExemplos()">🧹 apagar os aportes e meses de exemplo</button>
     <p class="note">“Trazer do extrato” varre tudo o que já foi importado e anota como aporte cada transferência que foi para as suas <b>contas de investimento</b> (a lista fica em Categorias → 👤 nomes da família). Nada é anotado duas vezes.</p>
   </div>
 </section>
@@ -3762,6 +3763,36 @@ function somaAportesNoMes(){
 }
 /* Para o que JÁ está importado: varre os lançamentos salvos e traz os que
    foram para a corretora. É o "desde o início dos extratos". */
+/* ---------- os dados de exemplo que vem no app ----------
+   O app nasce com aportes e meses de exemplo, para a tela nao aparecer vazia.
+   Quando os seus numeros de verdade chegam, os exemplos continuam la somando
+   junto - aporte de janeiro que nunca existiu. Isto apaga SO o que e
+   identico ao exemplo, linha por linha: o que voce mexeu fica. */
+function ehLinhaExemplo(tipo,x){
+  const d=DEFAULT.invest[tipo]||[];
+  return d.some(e=>Object.keys(e).every(k=>String(e[k])===String(x[k])));
+}
+function limparExemplos(){
+  const ap=(D.invest.aportes||[]).filter(a=>ehLinhaExemplo('aportes',a));
+  const me=(D.invest.mensal||[]).filter(m=>ehLinhaExemplo('mensal',m));
+  const an=(D.invest.anual||[]).filter(a=>ehLinhaExemplo('anual',a));
+  if(!ap.length&&!me.length&&!an.length){
+    alert('Nenhuma linha de exemplo sobrou — o que está aí é seu.');return;
+  }
+  if(!confirm('Apagar as linhas de EXEMPLO que vieram com o app?\n\n'
+    +ap.length+' aporte(s)\n'+me.length+' mês(es) da evolução\n'+an.length+' ano(s)\n\n'
+    +'Só some o que está exatamente igual ao exemplo. O que você digitou ou '
+    +'importou não é tocado.'))return;
+  guardarVersao('antes de apagar os exemplos');
+  D.invest.aportes=(D.invest.aportes||[]).filter(a=>!ehLinhaExemplo('aportes',a));
+  D.invest.mensal=(D.invest.mensal||[]).filter(m=>!ehLinhaExemplo('mensal',m));
+  D.invest.anual=(D.invest.anual||[]).filter(a=>!ehLinhaExemplo('anual',a));
+  somaAportesNoMes();save();
+  ['renderAportes','renderMensal','drawMensal','renderAnual','drawAnual','drawInvPainel']
+    .forEach(f=>{if(typeof window[f]==='function')safeRun(window[f]);});
+  alert('Pronto: '+ap.length+' aporte(s), '+me.length+' mês(es) e '+an.length
+    +' ano(s) de exemplo saíram.\nDá para desfazer em Resumo → versões guardadas.');
+}
 function aportesDoExtrato(){
   const todas=(D.contas.transacoes||[]).filter(t=>(+t.amount||0)<0&&ehAporteDesc(t.desc));
   const achados=todas.filter(t=>Math.abs(+t.amount||0)<limiteAporte());
