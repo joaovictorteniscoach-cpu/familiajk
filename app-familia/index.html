@@ -3391,7 +3391,8 @@ function ehAporteDesc(desc){
    pendência no mesmo arquivo sem atrapalhar. Nada é aplicado sem você ver
    antes quantas linhas de cada tipo entraram. */
 function lerBlocoRegras(txt){
-  const r={familia:[],invest:[],limite:null,regras:[]};
+  const r={familia:[],invest:[],limite:null,regras:[],
+           nac:[],glob:[],bin:[],cambio:null,caixa:null};
   let onde='';
   String(txt||'').split(/\r?\n/).forEach(linha=>{
     const l=linha.trim();
@@ -3401,26 +3402,80 @@ function lerBlocoRegras(txt){
     const cab=l.match(/^\[([^\]]+)\]/);
     if(cab){
       const n=norm(cab[1]);
-      onde=/familia/.test(n)?'familia'
-         :/investimento/.test(n)?'invest'
+      onde=/carteira.*(nacional|brasil)/.test(n)?'nac'
+         :/carteira.*(global|etf|exterior)/.test(n)?'glob'
+         :/carteira.*(binance|cripto)/.test(n)?'bin'
+         :/cambio|dolar/.test(n)?'cambio'
+         :/saldo.*(global|conta)/.test(n)?'caixa'
+         :/contas? de investimento/.test(n)?'invest'
+         :/familia/.test(n)?'familia'
          :/fatura/.test(n)?'limite'
          :/regra/.test(n)?'regras':'';
       return;
     }
-    if(/^[=\-_*]{4,}/.test(l))
-      {if(!/^\[/.test(l))onde=onde;return;}          /* linha de moldura */
+    /* uma linha de moldura (=====) fecha a seção: o que vem depois dela,
+       até o próximo colchete, é recado e não entra em lista nenhuma */
+    if(/^[=\-_*]{4,}/.test(l)){onde='';return;}
     if(/^[a-zà-ú].*:$/i.test(l)&&!onde)return;
     if(!onde)return;
     if(/^[(#]/.test(l))return;                      /* comentário entre parênteses */
     if(onde==='limite'){const v=parseBRNum(l);if(v!=null&&v>0)r.limite=v;return;}
+    if(onde==='cambio'){const v=parseBRNum(l);if(v!=null&&v>0)r.cambio=v;return;}
+    if(onde==='caixa'){const v=parseBRNum(l);if(v!=null&&v>=0)r.caixa=v;return;}
     if(onde==='regras'){if(l.indexOf('=')>0)r.regras.push(l);return;}
+    if(onde==='nac'||onde==='glob'||onde==='bin'){
+      const it=leAtivoDoBloco(l,onde);if(it)r[onde].push(it);return;
+    }
     r[onde].push(l);
   });
   return r;
 }
+/* Uma linha de ativo no arquivo:
+     Nacional e Binance:  Nome do ativo = 25.081,93        [| Classe]
+     Global:              QQQ = 0,85814 x 739,93           [| Classe]
+                          QQQ = 634,96        (só a posição, sem a quantidade)
+   O "| Classe" no fim é opcional — sem ele o app adivinha pelo nome. */
+function leAtivoDoBloco(linha,conta){
+  let l=String(linha||''),classe='';
+  const bar=l.lastIndexOf('|');
+  if(bar>0){classe=l.slice(bar+1).trim();l=l.slice(0,bar);}
+  const i=l.indexOf('=');if(i<0)return null;
+  const nome=l.slice(0,i).trim();if(nome.length<2)return null;
+  const resto=l.slice(i+1).trim();
+  const cls=CLASSES.find(c=>norm(c)===norm(classe))||guessClasse(classe||nome);
+  if(conta==='glob'){
+    const m=resto.split(/\s*[x×]\s*/);
+    const qtd=parseBRNum(m[0]),pre=m.length>1?parseBRNum(m[1]):null;
+    const tk=tickerDe(nome);
+    if(m.length>1){
+      if(qtd==null||pre==null||!(qtd>0))return null;
+      return {tk,nome,classe:cls,qtd,pm:0,pa:pre,apl:0};
+    }
+    if(qtd==null||!(qtd>0))return null;
+    return {tk,nome,classe:cls,qtd:1,pm:0,pa:qtd,apl:0};   /* só a posição */
+  }
+  const v=parseBRNum(resto);
+  if(v==null||!(v>0))return null;
+  return {nome,classe:cls,valor:v,apl:null};
+}
+/* coloca a lista do arquivo na carteira: casa os nomes iguais, acrescenta os
+   novos — o mesmo critério da planilha e da foto */
+function fundeCarteira(arr,itens,conta){
+  let mexeu=0,novos=0;
+  (itens||[]).forEach(it=>{
+    const i=acharNaConta(arr,it.nome,it.tk||'');
+    if(i<0){arr.push(it);novos++;return;}
+    const x=arr[i];
+    if(conta==='glob'){if(it.qtd)x.qtd=it.qtd;if(it.pa)x.pa=it.pa;if(!x.tk&&it.tk)x.tk=it.tk;}
+    else x.valor=it.valor;
+    mexeu++;
+  });
+  return {mexeu,novos};
+}
 function aplicaBlocoRegras(txt){
   const r=lerBlocoRegras(txt);
-  const nada=!r.familia.length&&!r.invest.length&&r.limite==null&&!r.regras.length;
+  const nada=!r.familia.length&&!r.invest.length&&r.limite==null&&!r.regras.length
+    &&!r.nac.length&&!r.glob.length&&!r.bin.length&&r.cambio==null&&r.caixa==null;
   if(nada){
     alert('Não achei nenhuma das quatro listas nesse arquivo.\n\n'
       +'Ele precisa ter as seções entre colchetes, assim:\n'
@@ -3428,16 +3483,30 @@ function aplicaBlocoRegras(txt){
       +'[ Acima de quanto é pagamento de fatura (R$) ]\n[ Minhas regras ]');
     return false;
   }
-  if(!confirm('Vou colocar no lugar do que está aí hoje:\n\n'
-    +r.familia.length+' nome(s) da família\n'
-    +r.invest.length+' conta(s) de investimento\n'
-    +(r.limite!=null?('corte de fatura: '+brl(r.limite)):'corte de fatura: sem mudança')+'\n'
-    +r.regras.length+' regra(s) de categoria\n\nContinuar?'))return false;
+  const linhas=[];
+  if(r.familia.length)linhas.push(r.familia.length+' nome(s) da família');
+  if(r.invest.length)linhas.push(r.invest.length+' conta(s) de investimento');
+  if(r.limite!=null)linhas.push('corte de fatura: '+brl(r.limite));
+  if(r.regras.length)linhas.push(r.regras.length+' regra(s) de categoria');
+  if(r.nac.length)linhas.push(r.nac.length+' ativo(s) na carteira Nacional');
+  if(r.glob.length)linhas.push(r.glob.length+' ativo(s) na carteira Global');
+  if(r.bin.length)linhas.push(r.bin.length+' moeda(s) na Binance');
+  if(r.cambio!=null)linhas.push('câmbio: '+r.cambio);
+  if(r.caixa!=null)linhas.push('saldo da conta global: US$ '+r.caixa);
+  if(!confirm('Vou atualizar:\n\n'+linhas.join('\n')
+    +'\n\nO que já existe recebe o valor novo; o que é novo entra. Continuar?'))return false;
   guardarVersao('antes de trazer nomes e regras do arquivo');
   if(r.familia.length)D.contas.meusNomes=r.familia.slice();
   if(r.invest.length)D.contas.nomesInvest=r.invest.slice();
   if(r.limite!=null)D.contas.limiteAporte=r.limite;
   if(r.regras.length)setMinhasRegras(r.regras.join('\n'));
+  /* a carteira entra casando os nomes, como a planilha e a foto */
+  let carteira=0;
+  if(r.cambio!=null){D.invest.cambio=r.cambio;carteira++;}
+  if(r.caixa!=null){D.invest.caixaGlobalUSD=r.caixa;carteira++;}
+  if(r.nac.length){fundeCarteira(D.invest.nacional=D.invest.nacional||[],r.nac,'nac');carteira++;}
+  if(r.glob.length){fundeCarteira(D.invest.global=D.invest.global||[],r.glob,'glob');carteira++;}
+  if(r.bin.length){fundeCarteira(D.invest.binance=D.invest.binance||[],r.bin,'bin');carteira++;}
   save();
   /* recarrega os campos da tela com o que entrou */
   const f=document.getElementById('meus-nomes');if(f)f.value=(D.contas.meusNomes||[]).join('\n');
@@ -3447,10 +3516,17 @@ function aplicaBlocoRegras(txt){
   if(rg)rg.value=Object.keys(D.contas.catMemory||{}).sort()
     .map(k=>k+' = '+D.contas.catMemory[k]).join('\n');
   safeRun(renderCategorias);
+  let extra='';
+  if(carteira){
+    ['renderNac','renderGlob','renderBin','refreshCarteira','drawInvPainel','renderGanhos']
+      .forEach(f=>{if(typeof window[f]==='function')safeRun(window[f]);});
+    const reg=registrarPatrimonio();
+    extra='\n\nCarteira atualizada: '+brl(reg.total)+' no total.\n'+textoRegistro(reg);
+  }
   alert('Pronto.\n'+(D.contas.meusNomes||[]).length+' nome(s) da família, '
     +(D.contas.nomesInvest||[]).length+' conta(s) de investimento, corte de '
     +brl(limiteAporte())+' e '+Object.keys(D.contas.catMemory||{}).length+' regra(s).'
-    +'\n\nDá para desfazer em Resumo → versões guardadas.');
+    +extra+'\n\nDá para desfazer em Resumo → versões guardadas.');
   return true;
 }
 function pickBlocoRegras(){
