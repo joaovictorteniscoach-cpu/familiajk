@@ -157,3 +157,11 @@ body[data-aba="agenda"] #apg-agenda,
 body[data-aba="evolucao"] #apg-evolucao,
 body[data-aba="creditos"] #apg-creditos,
 body[data-aba="perfil"] #apg-perfil{padding-top:10px!important}
+
+/* As duas páginas novas ficam fora do wrapper legado de propósito, sem mexer
+   na árvore das páginas antigas; esta margem lhes dá o mesmo respiro visual. */
+#apg-creditos,#apg-perfil{margin:0 14px 100px!important}
+#apg-creditos.page.on,#apg-perfil.page.on{display:block!important}
+#apg-creditos .jv-payment-card{margin-top:10px!important}
+#apg-perfil .jv-avatar-btn{overflow:visible!important}
+#apg-perfil .jv-profile-photo{border:none!important}
