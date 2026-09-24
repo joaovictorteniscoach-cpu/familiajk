@@ -1,8 +1,8 @@
 # Segurança P0 — App Gestão + App Aluno
 
-## Migração sem aluno por aluno
+## Migração com confirmação de identidade
 
-A Gestão reúne os aparelhos que pediram acesso e reconhece automaticamente os que usam um código já existente. O gestor pode tocar em **Aprovar acessos reconhecidos em lote** para autorizar todos de uma vez. Códigos inexistentes ou suspeitos ficam fora do lote e continuam visíveis para revisão manual. Nenhum plano, crédito, agenda ou avaliação precisa ser recadastrado.
+A Gestão reúne os aparelhos que pediram acesso, mas **não aprova nenhum deles automaticamente só porque o código de 4 dígitos existe**. Na etapa de transição o blob legado ainda pode revelar esses códigos a usuários autenticados, portanto cada novo UID deve ser aprovado individualmente somente depois de confirmação externa com o aluno (por exemplo, WhatsApp). Nenhum plano, crédito, agenda ou avaliação precisa ser recadastrado.
 
 
 ## Objetivo
@@ -19,7 +19,7 @@ jvtenis/
   fila_vinculos/<uid>/       # novo aparelho pedindo autorização
 ```
 
-A publicação pública leva agenda somente como **ocupado/livre**, sem nome/código do aluno. O bloco privado leva apenas o cadastro do aluno vinculado, histórico, horários próprios, avaliações, pagamento e demais dados individuais.
+A publicação compartilhada leva agenda somente como estado operacional **ocupado/bloqueio** (e o motivo controlado `chuva` quando aplicável), sem nome/código, categoria pessoal ou motivo livre. O bloco privado leva apenas o cadastro do aluno vinculado, histórico, horários próprios, avaliações, pagamento e demais dados individuais.
 
 ## O que foi alterado
 
@@ -27,7 +27,7 @@ A publicação pública leva agenda somente como **ocupado/livre**, sem nome/có
 - Se o aparelho ainda não estiver vinculado, cria um pedido em `fila_vinculos/<uid>`.
 - Na fase de transição, o app ainda pode usar o blob legado **somente online**, para não interromper o funcionamento enquanto os aparelhos são aprovados.
 - Assim que a arquitetura nova é detectada, o cache legado com a lista completa é apagado do aparelho.
-- Gestão ganhou painel **Acessos do App do Aluno** para aprovar, recusar e revogar aparelhos.
+- Gestão ganhou painel **Acessos do App do Aluno** para aprovar individualmente, recusar e revogar aparelhos; o código sozinho nunca dispara aprovação em lote.
 - Gestão publica automaticamente o bloco privado de cada aparelho autorizado.
 - Toda fila passa a carregar `uid` + `codigo`.
 - Gestão ignora pedidos cuja identidade não esteja vinculada.

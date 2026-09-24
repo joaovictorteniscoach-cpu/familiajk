@@ -81,12 +81,12 @@ pode ficar fechada.
 ## Conferir as regras antes de publicar
 
 ```sh
-python3 ferramentas/checar-regras.py                       # etapa 2 (padrão)
-python3 ferramentas/checar-regras.py ferramentas/firebase-regras-etapa1.json
+python3 ferramentas/checar-regras.py ferramentas/firebase-regras-etapa3-transicao.json
+python3 ferramentas/checar-regras.py ferramentas/firebase-regras-etapa4-estrita.json
+python3 ferramentas/checar-seguranca-p0.py
 ```
 
-Simula as regras contra **as 79 operações que os apps realmente fazem** — as que
-têm de funcionar e as que têm de continuar bloqueadas. Regra errada não dá erro
+Simula as regras contra as operações críticas que os apps realmente fazem nas fases de transição e final, incluindo UID, vínculo ativo e correspondência do código. Em seguida o checker P0 protege os invariantes estáticos. Regra errada não dá erro
 na tela: o app só para de gravar e diz "salvo só no aparelho", ou o pedido do
 aluno nunca chega. Daí o script.
 

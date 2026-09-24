@@ -22,11 +22,19 @@ echo "### 4. Colisao de nome de classe no CSS (conferir a olho)"
 python3 ferramentas/checar-css.py app-aluno/index.html app-gestao/index.html
 
 echo
-echo "### 5. Segurança P0: vínculo, privacidade e filas"
+echo "### 5. Regressao das regras Firebase — transicao"
+python3 ferramentas/checar-regras.py ferramentas/firebase-regras-etapa3-transicao.json || falhou=1
+
+echo
+echo "### 6. Regressao das regras Firebase — final"
+python3 ferramentas/checar-regras.py ferramentas/firebase-regras-etapa4-estrita.json || falhou=1
+
+echo
+echo "### 7. Segurança P0: vínculo, privacidade e filas"
 python3 ferramentas/checar-seguranca-p0.py || falhou=1
 
 echo
-echo "### 6. Carimbo de versao dos apps"
+echo "### 8. Carimbo de versao dos apps"
 python3 ferramentas/checar-versao.py || falhou=1
 
 echo

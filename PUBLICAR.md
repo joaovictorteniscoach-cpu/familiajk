@@ -4,7 +4,7 @@
 >
 > 1. Publique primeiro os `index.html` novos de `app-gestao` e `app-aluno`.
 > 2. Depois publique `ferramentas/firebase-regras-etapa3-transicao.json`.
-> 3. Em Gestão → Financeiro → Segurança, use **Aprovar acessos reconhecidos em lote**. Você não precisa abrir cadastro por cadastro; pedidos com código inexistente ficam separados para revisão.
+> 3. Em Gestão → Financeiro → Segurança, aprove **cada aparelho individualmente somente depois de confirmar com o aluno por um canal externo** (por exemplo, WhatsApp). O código de 4 dígitos sozinho não prova identidade.
 > 4. Só depois da migração publique `firebase-regras-etapa4-estrita.json`.
 >
 > Detalhes: `ferramentas/SEGURANCA-P0.md`.

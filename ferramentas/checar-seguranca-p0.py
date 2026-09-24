@@ -51,8 +51,16 @@ ok('async function publicarSeguro(pub)' in g,'Gestão publica dados privados por
 ok('function pedidoConfiavel(p)' in g,'Gestão valida vínculo antes de processar solicitações')
 ok('if(!pedidoConfiavel(p)){nb++;return;}' in g,'agenda ignora pedido sem vínculo confiável')
 ok('id="vinculos-box"' in g,'Gestão tem painel para aprovar/revogar aparelhos')
-ok('async function aprovarVinculosReconhecidos()' in g,'Gestão permite aprovar acessos reconhecidos em lote')
-ok("window.fbDB.ref('jvtenis').update(updates)" in g,'aprovação em lote usa atualização atômica no Firebase')
+ok('aprovarVinculosReconhecidos' not in g,'Gestão não autoaprova vínculo em lote só por código')
+ok('canal externo' in g and 'WhatsApp' in g,'aprovação individual exige confirmação externa explícita')
+grade=g.split('function gradePublicaSegura(g){',1)[1].split('async function publicarSeguro(pub)',1)[0]
+ok('tipo:e.tipo' not in grade and 'motivo:e.motivo' not in grade,'grade pública não replica tipo/motivo privados')
+ok("?'bloqueio':'ocupado'" in grade and "out.motivo='chuva'" in grade,'grade pública usa somente ocupado/bloqueio e chuva controlada')
+sh=(ROOT/'ferramentas/checar-tudo.sh').read_text(encoding='utf-8')
+i3=sh.find('checar-regras.py ferramentas/firebase-regras-etapa3-transicao.json')
+i4=sh.find('checar-regras.py ferramentas/firebase-regras-etapa4-estrita.json')
+ip0=sh.find('checar-seguranca-p0.py')
+ok(i3>=0 and i4>i3 and ip0>i4,'suíte roda regressão das regras de transição e final antes do checker P0')
 
 print(f'\n{len(falhas)} falha(s)')
 sys.exit(1 if falhas else 0)

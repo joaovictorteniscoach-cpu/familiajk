@@ -1068,7 +1068,7 @@ function esperarAuth(){
   <div id="conta-box"></div>
 
   <h2 class="sec-title" style="margin-top:18px">Acessos do <em>App do Aluno</em></h2>
-  <p class="hint">Cada celular recebe uma identificação própria. O código de 4 dígitos localiza o cadastro; os acessos reconhecidos podem ser aprovados todos de uma vez, sem abrir aluno por aluno.</p>
+  <p class="hint">Cada celular recebe uma identificação própria. O código de 4 dígitos serve apenas para localizar o cadastro — não prova identidade. Cada novo aparelho deve ser aprovado individualmente, depois de confirmar com o aluno por um canal externo (por exemplo, WhatsApp).</p>
   <div id="vinculos-box"></div>
 
   <h2 class="sec-title" style="margin-top:18px">Ferramentas &amp; <em>segurança</em></h2>
@@ -1776,7 +1776,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-24-1';
+const VERSAO='2026-09-24-2';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -2853,31 +2853,23 @@ async function carregarVinculos(silent){
   _vincCarregando=false;
   renderVinculos();
 }
-function vinculosPendentesReconhecidos(){
-  return VINC_REQ_LIST.map((r,i)=>({r:r,i:i,al:DB.alunos.find(x=>String(x.codigo||'')===String(r.codigo||''))})).filter(x=>!!x.al);
-}
 function renderVinculos(){
   const box=document.getElementById('vinculos-box');if(!box)return;
   const ativos=Object.keys(VINCULOS).map(uid=>({uid:uid,v:VINCULOS[uid]})).filter(x=>x.v&&x.v.ativo===true);
-  const reconhecidos=vinculosPendentesReconhecidos();
-  const invalidos=VINC_REQ_LIST.length-reconhecidos.length;
+  const invalidos=VINC_REQ_LIST.filter(r=>!DB.alunos.some(x=>String(x.codigo||'')===String(r.codigo||''))).length;
   let h='';
   if(VINC_REQ_LIST.length){
     h+='<div style="border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:8px 0 10px">';
-    h+='<div style="padding:9px 11px;background:#FFF6DF;font-size:12px;font-weight:800;color:#7A5E10">🔐 '+VINC_REQ_LIST.length+' aparelho(s) aguardando aprovação</div>';
-    if(reconhecidos.length){
-      h+='<div style="padding:10px 11px;background:#F3F8F0;border-top:1px solid var(--border)">'
-        +'<button class="btn btn-clay" style="width:100%;justify-content:center" onclick="aprovarVinculosReconhecidos()">✓ Aprovar '+reconhecidos.length+' acesso(s) reconhecido(s) em lote</button>'
-        +'<div class="hint" style="margin-top:6px">Só entram no lote aparelhos cujo código corresponde a um aluno já cadastrado. Você não precisa abrir cadastro por cadastro.</div></div>';
-    }
-    if(invalidos>0)h+='<div style="padding:8px 11px;background:#FFF0ED;border-top:1px solid var(--border);font-size:11.5px;font-weight:800;color:#A33A27">⚠ '+invalidos+' pedido(s) com código não encontrado ficam fora do lote para revisão manual.</div>';
+    h+='<div style="padding:9px 11px;background:#FFF6DF;font-size:12px;font-weight:800;color:#7A5E10">🔐 '+VINC_REQ_LIST.length+' aparelho(s) aguardando aprovação individual</div>';
+    h+='<div style="padding:9px 11px;background:#FFFDF6;border-top:1px solid var(--border);font-size:11.5px;line-height:1.45;color:var(--muted)">⚠ O código de 4 dígitos só localiza o cadastro. Antes de aprovar, confirme com o aluno por um canal externo (ex.: WhatsApp) que ele está solicitando acesso neste aparelho.</div>';
+    if(invalidos>0)h+='<div style="padding:8px 11px;background:#FFF0ED;border-top:1px solid var(--border);font-size:11.5px;font-weight:800;color:#A33A27">⚠ '+invalidos+' pedido(s) com código não encontrado não podem ser aprovados.</div>';
     VINC_REQ_LIST.forEach((r,i)=>{
       const al=DB.alunos.find(x=>String(x.codigo||'')===String(r.codigo||''));
       const nome=al?al.nome:'Código não encontrado';
       const fim=String(r.uid||'').slice(-7);
       h+='<div style="padding:10px 11px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px">'
         +'<div style="flex:1;min-width:0"><b>'+contaEsc(nome)+'</b><div class="hint">código '+contaEsc(r.codigo||'—')+' · aparelho …'+contaEsc(fim)+'</div></div>'
-        +(al?'<button class="btn btn-clay" style="padding:7px 10px;font-size:11.5px" onclick="aprovarVinculoReq('+i+')">✓ Aprovar</button>':'')
+        +(al?'<button class="btn btn-clay" style="padding:7px 10px;font-size:11.5px" onclick="aprovarVinculoReq('+i+')">✓ Conferir e aprovar</button>':'')
         +'<button class="btn btn-ghost" style="padding:7px 10px;font-size:11.5px" onclick="recusarVinculoReq('+i+')">✕</button></div>';
     });
     h+='</div>';
@@ -2895,34 +2887,12 @@ function renderVinculos(){
   }
   box.innerHTML=h;
 }
-async function aprovarVinculosReconhecidos(){
-  const itens=vinculosPendentesReconhecidos();
-  if(!itens.length){toast('Nenhum acesso reconhecido para aprovar');return;}
-  const nomes=itens.slice(0,8).map(x=>x.al.nome.split(' ')[0]).join(', ')+(itens.length>8?' e +'+(itens.length-8):'');
-  if(!confirm('Autorizar '+itens.length+' aparelho(s) reconhecido(s) de uma vez?\n\n'+nomes+'\n\nPedidos com código inexistente não entram neste lote.'))return;
-  const agora=Date.now(),updates={};
-  itens.forEach(x=>{
-    const val={codigo:String(x.al.codigo||''),alunoId:x.al.id,nome:x.al.nome,ativo:true,ts:agora};
-    updates[VINC_KEY+'/'+x.r.uid]=val;
-    updates[VINC_REQ_KEY+'/'+x.r.uid]=null;
-    VINCULOS[x.r.uid]=val;
-  });
-  try{
-    await window.fbDB.ref('jvtenis').update(updates);
-    const aprovados=new Set(itens.map(x=>x.r.uid));
-    VINC_REQ_LIST=VINC_REQ_LIST.filter(r=>!aprovados.has(r.uid));
-    renderVinculos();await doPublish();
-    toast('🔐 '+itens.length+' acesso(s) autorizado(s) em lote');
-  }catch(e){
-    await carregarVinculos(true);
-    toast('Não consegui aprovar o lote agora');
-  }
-}
 async function aprovarVinculoReq(i){
   const r=VINC_REQ_LIST[i];if(!r)return;
   const al=DB.alunos.find(x=>String(x.codigo||'')===String(r.codigo||''));
   if(!al){toast('Código não corresponde a nenhum aluno cadastrado');return;}
-  if(!confirm('Autorizar este aparelho para '+al.nome+'?'))return;
+  const fim=String(r.uid||'').slice(-7);
+  if(!confirm('Confirme primeiro por um canal externo (ex.: WhatsApp) que '+al.nome+' está solicitando acesso no aparelho …'+fim+'.\n\nJá confirmou a identidade e quer autorizar este aparelho?'))return;
   const val={codigo:String(al.codigo||''),alunoId:al.id,nome:al.nome,ativo:true,ts:Date.now()};
   try{
     await window.fbDB.ref('jvtenis/'+VINC_KEY+'/'+r.uid).set(val);
@@ -2952,9 +2922,15 @@ async function revogarVinculo(uid){
 }
 function gradePublicaSegura(g){
   g=g||{fixos:[],eventos:[],excecoes:[]};
+  const tipoPublico=x=>x&&x.tipo==='bloqueio'?'bloqueio':'ocupado';
   return {
-    fixos:(g.fixos||[]).map(f=>({id:f.id,dia:f.dia,hora:f.hora,tipo:f.tipo,desde:f.desde||'',ate:f.ate||''})),
-    eventos:(g.eventos||[]).map(e=>({id:e.id,data:e.data,hora:e.hora,tipo:e.tipo,motivo:e.motivo||''})),
+    fixos:(g.fixos||[]).map(f=>({id:f.id,dia:f.dia,hora:f.hora,tipo:tipoPublico(f),desde:f.desde||'',ate:f.ate||''})),
+    eventos:(g.eventos||[]).map(e=>{
+      const out={id:e.id,data:e.data,hora:e.hora,tipo:tipoPublico(e)};
+      // Única razão pública permitida: chuva. Nunca replica motivo/categoria livre.
+      if(e&&e.tipo==='bloqueio'&&String(e.motivo||'').toLowerCase()==='chuva')out.motivo='chuva';
+      return out;
+    }),
     excecoes:(g.excecoes||[]).map(x=>({fixoId:x.fixoId,data:x.data}))
   };
 }
