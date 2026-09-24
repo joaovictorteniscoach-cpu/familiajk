@@ -882,7 +882,7 @@ function esperarAuth(){
       </div>
       <div class="jv-quick">
         <button type="button" onclick="goAluno('aulas',null)"><span>🎾</span>Minhas aulas</button>
-        <button type="button" onclick="goAluno('torneio',null)"><span>🏆</span>Torneio <i class="nav-badge" id="nb-al-torneio"></i></button>
+        <button type="button" id="perfil-torneio-btn" onclick="goAluno('torneio',null)"><span>🏆</span>Torneio <i class="nav-badge" id="nb-al-torneio"></i></button>
         <button type="button" onclick="sair()"><span>↪</span>Sair do app</button>
       </div>
     </section>
@@ -1915,11 +1915,12 @@ function meuEmoji(){return isPersonal()?'🏋️':'🎾';}
 function applyTipoUI(){
   const personal=isPersonal();
   const nav=document.querySelector('.nav');
-  const tBtn=document.getElementById('nav-torneio');
+  /* A barra premium tem cinco abas fixas para todos. Torneio e Minhas aulas
+     continuam no Perfil, então tipo Personal não pode mais encolher a barra
+     para quatro colunas (isso fazia o quinto botão quebrar para outra linha). */
+  const tBtn=document.getElementById('perfil-torneio-btn');
   if(tBtn)tBtn.style.display=personal?'none':'';
-  if(nav)nav.style.gridTemplateColumns='repeat('+(personal?4:5)+',1fr)';
-  const aIco=document.getElementById('nav-aulas-ico');
-  if(aIco)aIco.innerHTML=(typeof NAVIC!=='undefined')?NAVIC.ball:meuEmoji();
+  if(nav)nav.style.gridTemplateColumns='repeat(5,1fr)';
   const buyBtn=document.getElementById('buy-btn-main');
   if(buyBtn)buyBtn.textContent=personal?'🏋️ Comprar treino avulso · pacotes':'💳 Comprar créditos · aula avulsa · locar quadra';
   const mb=document.getElementById('mfit-box');
