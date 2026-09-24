@@ -79,7 +79,14 @@ def avaliar(expr, auth, curingas, data_existe, new_existe, new_data=None, root_v
             elif pedaco == 'auth.uid':
                 if not auth: return 'None'
                 cam += auth['uid']
-            elif pedaco.startswith('
+            elif pedaco.startswith('$'):
+                v = curingas.get(pedaco[1:])
+                if v is None: return 'None'
+                cam += v
+            else:
+                raise SystemExit('root.child com pedaço que não sei resolver: %r' % pedaco)
+        return repr(root_values.get(cam))
+    e = re.sub(r"root\.child\(([^()]*)\)\.val\(\)", rootv, e)
     e = re.sub(r'\bauth\s*!=\s*null\b', 'True' if auth else 'False', e)
     e = re.sub(r'\bauth\s*==\s*null\b', 'False' if auth else 'True', e)
     if 'auth.uid' in e:
