@@ -585,10 +585,17 @@ table.tbl.livre td:last-child{width:42%}
     <div class="yearnav" style="flex-wrap:wrap">
       <span class="k" style="font-size:12px;color:var(--muted)">Mês</span>
       <select class="cell txt" id="cat-mes" style="max-width:150px" onchange="onCatMes(this.value)"></select>
+      <span class="k" style="font-size:12px;color:var(--muted)">Origem</span>
+      <select class="cell txt" id="cat-fonte" style="max-width:150px" onchange="onCatFonte(this.value)">
+        <option value="tudo">tudo junto</option>
+        <option value="cartao">só a fatura do cartão</option>
+        <option value="conta">só a conta do banco</option>
+      </select>
       <button class="iconbtn primary" onclick="pickExtrato()">＋ importar extrato</button>
       <button class="iconbtn" onclick="clearTx()">limpar</button>
       <button class="iconbtn" onclick="toggleMeus()">👤 nomes da família</button>
     </div>
+    <p class="note" id="cat-fonte-nota" style="margin:8px 0 0"></p>
     <div class="field" id="meus-box" style="display:none;margin-top:12px">
       <button class="iconbtn primary" onclick="pickBlocoRegras()" style="margin-bottom:12px">📄 trazer nomes e regras de um arquivo</button>
       <label>Nomes, CPF ou CNPJ da família (um por linha)</label>
@@ -3041,14 +3048,19 @@ function parseBRNum(s){
 }
 function parseOFX(text){
   const txns=[];const blocks=text.match(/<STMTTRN>[\s\S]*?<\/STMTTRN>/gi)||[];
+  /* O padrão OFX tem um bloco próprio para cartão de crédito: CCSTMTRS, dentro
+     de CREDITCARDMSGSRSV1. É o jeito certo de saber que o arquivo é uma fatura
+     — sem ele, o extrato do cartão entrava como se fosse da conta corrente. */
+  const ehCartao=/<CCSTMTRS>|CREDITCARDMSGSRSV1|<CCACCTFROM>/i.test(text||'');
   const tag=(b,t)=>{const m=b.match(new RegExp('<'+t+'>([^<\\r\\n]*)','i'));return m?m[1].trim():'';};
   blocks.forEach(b=>{
     const amt=parseFloat((tag(b,'TRNAMT')||'').replace(',','.'));if(isNaN(amt))return;
     const dt=(tag(b,'DTPOSTED')||'').slice(0,8);
     const desc=(tag(b,'MEMO')||tag(b,'NAME')||tag(b,'CHECKNUM')||'—');
     let d=dataNorm(dt)||dataNorm(tag(b,'DTPOSTED'));
-    txns.push({date:d,desc,amount:amt});
+    txns.push({date:d,desc,amount:amt,fatura:ehCartao});
   });
+  txns.ehFatura=ehCartao;
   return txns;
 }
 /* Divide uma linha de CSV respeitando aspas: "MERCADO, LTDA" é UM campo, não
@@ -3735,7 +3747,7 @@ function mesOrdem(m){
   if(i<0||!p[1])return 999999;
   return (+p[1])*100+(i+1);
 }
-let extratoOrig=[],catFiltroMes='Todos',exMesSemData='';
+let extratoOrig=[],catFiltroMes='Todos',catFiltroFonte='tudo',exMesSemData='';
 /* últimos 24 meses, para o caso de o arquivo vir sem data nenhuma */
 function mesesRecentes(n){
   const out=[],h=new Date();
@@ -3751,6 +3763,7 @@ function exSetMesSemData(v){exMesSemData=v||'';applyExtrato();}
    fácil de esquecer — e esquecer significa o pagamento entrar como compra. */
 const FATURA_PALAVRA=/(pagamento de fatura|pagamentos validos|pagamento minimo|total da fatura|melhor dia de compra|limite total|fatura anterior|saldo anterior da fatura)/;
 function pareceFatura(t){
+  if(t&&(t.ehFatura||(t.some&&t.some(x=>x&&x.fatura))))return true;
   /* Duas colunas de dinheiro com a SEGUNDA zerada é a assinatura da fatura:
      R$ e US$ lado a lado. O extrato do Itaú também tem duas colunas (valor e
      saldo), mas a segunda nunca é 0,00 — e "PAGAMENTOS CONDOR SUPER CENTER"
@@ -3794,6 +3807,10 @@ function applyExtrato(){
        senão o mês conta o pagamento como se fosse compra. */
     if(fat&&x.cred){y.tipo='cartao';y.cat='Cartão de crédito';y.amount=-Math.abs(amt);}
     y.aporte=y.amount<0&&ehAporteDesc(y.desc)&&Math.abs(y.amount)<limiteAporte();
+    /* de onde veio o lançamento: a fatura do cartão ou o extrato da conta.
+       É o que permite depois olhar só o cartão e ver onde a fatura se
+       desmancha, categoria por categoria. */
+    y.fonte=fat?'cartao':'conta';
     /* acima do corte, a transferência é o pagamento da fatura: continua fora
        da soma (as compras já vieram da própria fatura), mas com o nome certo */
     if(y.amount<0&&ehPagamentoFaturaValor(y.desc,y.amount)){y.tipo='cartao';y.cat='Cartão de crédito';}
@@ -3979,7 +3996,7 @@ function aportesDoExtrato(){
         +(arrumadas?(' ('+arrumadas+' remarcada(s) agora)'):'')+', fora da soma.'):'')));
 }
 function exSaveTx(){
-  if(!extratoTxns.length)return;let n=0,fora=0;const novosAportes=[];
+  if(!extratoTxns.length)return;let n=0,fora=0,remarcados=0;const novosAportes=[];
   /* Grava tudo que é lançamento de verdade, inclusive o que não soma. Antes
      essas linhas eram simplesmente descartadas: o pagamento da fatura sumia
      do app e não dava para conferir que ele tinha acontecido. Agora fica
@@ -3989,9 +4006,18 @@ function exSaveTx(){
     if(D.contas.transacoes.some(t=>t._k===key))return;
     const nc=txNaoConta(x);
     D.contas.transacoes.push({_k:key,date:x.date||'',mes:x.mes||mesFromDate(x.date),desc:(x.desc||'').slice(0,80),
-      amount:x.amount,cat:x.cat||categorize(x.desc,x.amount),pes:x.pes||'ambos',nc:nc});
+      amount:x.amount,cat:x.cat||categorize(x.desc,x.amount),pes:x.pes||'ambos',nc:nc,
+      fonte:x.fonte||'conta'});
     n++;if(nc)fora++;
     if(x.aporte)novosAportes.push(x);
+  });
+  /* Reimportar a mesma fatura não duplica nada — mas marca a origem no que já
+     estava salvo. É assim que o histórico antigo ganha a marca de "cartão",
+     sem precisar apagar e importar tudo de novo. */
+  extratoTxns.forEach(x=>{
+    if(x.tipo==='saldo'||!x.fonte)return;
+    const velho=D.contas.transacoes.find(t=>t._k===txKey(x));
+    if(velho&&velho.fonte!==x.fonte){velho.fonte=x.fonte;remarcados++;}
   });
   const ap=lancaAportes(novosAportes);
   save();closeExtrato();safeRun(renderCategorias);
@@ -4000,7 +4026,8 @@ function exSaveTx(){
       +(ap.n?('\n'+ap.n+' foram para a sua corretora: anotadas como APORTE de '+brl(ap.total)
         +', na aba Aportes e na evolução mensal.'):'')
       +'\nVeja na aba Categorias (modo Contas).')
-    :'Essas transações já estavam salvas — nada duplicado.');
+    :('Essas transações já estavam salvas — nada duplicado.'
+      +(remarcados?('\n'+remarcados+' foram marcadas como fatura do cartão.'):'')));
 }
 /* Na foto do app do banco a data aparece UMA vez, no topo do grupo:
      15 de julho de 2026
@@ -4555,13 +4582,18 @@ function catMonths(){
   return ['Todos',...arr,...(temSem?['—']:[])];
 }
 function onCatMes(v){catFiltroMes=v;renderCategorias();}
+function onCatFonte(v){catFiltroFonte=(v==='cartao'||v==='conta')?v:'tudo';renderCategorias();}
+/* lançamento sem marca é do extrato da conta: é de onde vinha tudo antes */
+function fonteDe(t){return (t&&t.fonte==='cartao')?'cartao':'conta';}
 function renderCategorias(){
   const all=D.contas.transacoes||[];
   const meses=catMonths();if(!meses.includes(catFiltroMes))catFiltroMes='Todos';
   const sel=document.getElementById('cat-mes');
   if(sel)sel.innerHTML=meses.map(m=>'<option value="'+esc(m)+'"'+(m===catFiltroMes?' selected':'')
     +'>'+(m==='—'?'sem data':esc(m))+'</option>').join('');
-  const tx=all.filter(t=>catFiltroMes==='Todos'||t.mes===catFiltroMes);
+  const tx=all.filter(t=>(catFiltroMes==='Todos'||t.mes===catFiltroMes)
+    &&(catFiltroFonte==='tudo'||fonteDe(t)===catFiltroFonte));
+  const selF=document.getElementById('cat-fonte');if(selF)selF.value=catFiltroFonte;
   /* a soma usa só o que conta; a LISTA mostra tudo, inclusive o que ficou de fora */
   const txC=txSoma(tx),txFora=tx.filter(naoSoma);
   const gasto=txC.filter(t=>t.amount<0).reduce((s,t)=>s-t.amount,0);
@@ -4576,6 +4608,18 @@ function renderCategorias(){
       +'Para incluir algum, troque a categoria dele na lista abaixo.')
     : '';
   const es=document.getElementById('cat-saldo');if(es){es.textContent=brl(entrada-gasto);es.className='v '+((entrada-gasto)>=0?'up':'down');}
+  /* quando você olha só o cartão, o número de cima é a própria fatura —
+     e o gráfico abaixo mostra onde ela se desmanchou */
+  const nf=document.getElementById('cat-fonte-nota');
+  if(nf){
+    const temCartao=(D.contas.transacoes||[]).some(t=>fonteDe(t)==='cartao');
+    nf.innerHTML=catFiltroFonte==='cartao'
+      ? ('<b>Fatura do cartão'+(catFiltroMes==='Todos'?'':' de '+esc(catFiltroMes))+': '+brl(gasto)+'</b> em '
+         +txC.filter(t=>t.amount<0).length+' compra(s). O gráfico abaixo mostra onde ela foi parar.')
+      : (catFiltroFonte==='conta'
+        ? 'Só o que passou pela conta do banco — as compras do cartão estão na fatura.'
+        : (temCartao?'':'Importe a fatura do cartão para separar o que foi no crédito do que saiu da conta.'));
+  }
   set('cat-n',tx.length+'');
   /* quanto do gasto é de cada um — "os dois" conta metade para cada */
   set('cat-k-preto',pesNome('preto'));set('cat-k-preta',pesNome('preta'));
@@ -4588,7 +4632,8 @@ function renderCategorias(){
     options:{cutout:'58%',plugins:{legend:{position:'bottom',labels:{color:COL.mut,boxWidth:10,padding:8,font:{size:11}}},tooltip:{callbacks:{label:c=>c.label+': '+brl(c.raw)+' ('+pct(gasto?c.raw/gasto:0)+')'}}}}});}
   renderCatResumo(cats,map,cnt,gasto,txC);
   let r='<tr><th>Data e descrição</th><th>Categoria e dono</th><th>Valor</th><th></th></tr>';
-  const idxs=all.map((t,i)=>i).filter(i=>catFiltroMes==='Todos'||all[i].mes===catFiltroMes).sort((a,b)=>(all[b].date||'').localeCompare(all[a].date||'')).slice(0,400);
+  const idxs=all.map((t,i)=>i).filter(i=>(catFiltroMes==='Todos'||all[i].mes===catFiltroMes)
+      &&(catFiltroFonte==='tudo'||fonteDe(all[i])===catFiltroFonte)).sort((a,b)=>(all[b].date||'').localeCompare(all[a].date||'')).slice(0,400);
   /* data+descrição de um lado, categoria+dono do outro: quatro colunas em pé
      não cabem na tela do celular */
   idxs.forEach(i=>{const t=all[i];
