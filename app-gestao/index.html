@@ -38,7 +38,8 @@
 <link rel="apple-touch-startup-image" media="screen and (device-width:375px) and (device-height:667px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)" href="splash-gestao-750x1334.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="lib/estilo.css?v=2026-09-24-4">
+<link rel="stylesheet" href="lib/estilo.css?v=2026-09-24-5">
+<link rel="stylesheet" href="lib/premium.css?v=2026-09-24-5">
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
 <script src="lib/firebase-database-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js\'><\/script>')"></script>
@@ -250,7 +251,15 @@ function esperarAuth(){
 <header class="top">
   <img class="marca-jv" src="jv-icone-gestao.png" alt="Academia João Victor Tênis">
   <div class="top-tag">Academia João Victor Tênis</div>
+  <button class="profile-avatar-control" onclick="jvEscolherAvatarGestao()" aria-label="Adicionar ou trocar foto de perfil" title="Foto de perfil">
+    <img id="jv-avatar-gestao" src="jv-icone-gestao.png" alt="Foto de perfil da Gestão">
+    <span class="jv-cam" aria-hidden="true">📷</span>
+  </button>
+  <input id="jv-avatar-file-gestao" type="file" accept="image/*" style="display:none" onchange="jvSalvarAvatarGestao(this)">
+  <p class="premium-greeting">Olá, João Victor!</p>
   <h1>Painel de <em>gestão</em></h1>
+  <p class="premium-motivation">Pronto para mais um mês de <strong>resultados?</strong></p>
+  <p class="premium-sub">Disciplina hoje, grandes conquistas amanhã.</p>
   <div class="top-actions">
     <button id="bell-btn" class="eye-btn bell-btn" onclick="abrirNotifs()" title="Avisos">🔔<span class="bell-badge" id="bell-badge" style="display:none">0</span></button>
     <button id="ped-btn" class="eye-btn ped-btn" onclick="abrirPedidos()" title="Pedidos dos alunos">🧾<span class="bell-badge" id="ped-badge" style="display:none">0</span></button>
@@ -258,9 +267,9 @@ function esperarAuth(){
     <button id="eye-btn" class="eye-btn" onclick="toggleHide()" title="Ocultar/mostrar valores"></button>
   </div>
   <div class="top-month">
-    <button class="month-btn" onclick="shiftMonth(-1)">‹</button>
+    <button class="month-btn" onclick="shiftMonth(-1)" aria-label="Mês anterior">‹</button>
     <div class="month-label" id="month-label">—</div>
-    <button class="month-btn" onclick="shiftMonth(1)">›</button>
+    <button class="month-btn" onclick="shiftMonth(1)" aria-label="Próximo mês">›</button>
     <span class="save-state" id="save-state">conectando…</span>
   </div>
 </header>
@@ -874,22 +883,22 @@ function esperarAuth(){
 
 <div class="mais-fundo" id="mais-fundo" onclick="fecharMais()"></div>
 <div class="mais-pop" id="mais-pop">
-  <button onclick="irDoMais('fin')"><span class="ico" data-ic="bars"></span>Financeiro</button>
+  <button onclick="irDoMais('aval')"><span class="ico" data-ic="clip"></span>Avaliações &amp; evolução</button>
+  <button onclick="irDoMais('lanc')"><span class="ico" data-ic="cash"></span>Caixa rápido</button>
+  <button class="so-dono" onclick="irDoMais('torneio')"><span class="ico" data-ic="trophy"></span><span class="nav-badge" id="nb-torneio"></span>Torneio / Barragem</button>
   <button onclick="irDoMais('graf')"><span class="ico" data-ic="line"></span>Gráficos</button>
   <button onclick="irDoMais('fech')"><span class="ico" style="font-size:19px">🧾</span>Fechamento</button>
-  <button class="so-dono" onclick="irDoMais('profs')"><span class="ico" style="font-size:19px">👨‍🏫</span>Professores</button>
+  <button class="so-dono" onclick="irDoMais('profs')"><span class="ico" style="font-size:19px">👨‍🏫</span>Professores &amp; acessos</button>
 </div>
 
-<nav class="nav">
+<nav class="nav" aria-label="Navegação principal da Gestão">
   <button class="on" onclick="go('dash',this)"><span class="ico" data-ic="home"></span><span class="nav-badge" id="nb-inicio"></span>Início</button>
   <button onclick="go('agenda',this)"><span class="ico" data-ic="cal"></span><span class="nav-badge" id="nb-agenda"></span>Agenda</button>
   <button onclick="go('alunos',this)"><span class="ico" data-ic="ball"></span>Alunos</button>
-  <button onclick="go('aval',this)"><span class="ico" data-ic="clip"></span>Avaliações</button>
-  <button onclick="go('lanc',this)"><span class="ico" data-ic="cash"></span>Caixa</button>
-  <button class="so-dono" onclick="go('torneio',this)"><span class="ico" data-ic="trophy"></span><span class="nav-badge" id="nb-torneio"></span>Torneio</button>
+  <button onclick="go('fin',this)"><span class="ico" data-ic="cash"></span>Financeiro</button>
   <button id="nav-mais" onclick="abrirMais()"><span class="ico"><svg viewBox="0 0 24 24" width="24" height="24"><circle cx="5" cy="12" r="2.2" fill="#D4AF58"/><circle cx="12" cy="12" r="2.2" fill="#D4AF58"/><circle cx="19" cy="12" r="2.2" fill="#D4AF58"/></svg></span>Mais</button>
 </nav>
-<script src="lib/icones.js?v=2026-09-24-4"></script>
+<script src="lib/icones.js?v=2026-09-24-5"></script>
 
 <!-- MODAL ALUNO -->
 <div class="overlay" id="ov-aluno" onclick="if(event.target===this)closeModal('ov-aluno')">
@@ -1364,7 +1373,7 @@ function esperarAuth(){
 
 <div class="toast" id="toast"></div>
 
-<script src="lib/app-gestao.js?v=2026-09-24-4"></script>
+<script src="lib/app-gestao.js?v=2026-09-24-5"></script>
 <script>
 /* Rede de seguranca do par tela+codigo.
 
@@ -1379,7 +1388,7 @@ function esperarAuth(){
    torto, o app busca o par certo uma vez e, se insistir, DIZ o que houve em
    vez de deixar voce tocando em botao que nao responde. */
 (function(){
-  var ESPERADA='2026-09-24-4';
+  var ESPERADA='2026-09-24-5';
   function tela(motivo){
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;z-index:99999;background:#1A2E14;color:#FAF7F2;'
@@ -1470,7 +1479,7 @@ function limparHist(){
 }
 histLogLoad();
 // PWA: registra o service worker (permite instalar o painel e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-gestao.js?v=2026-09-24-4').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-gestao.js?v=2026-09-24-5').catch(function(){});});}
 </script>
 </body>
 </html>
