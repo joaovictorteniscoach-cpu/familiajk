@@ -590,6 +590,7 @@ table.tbl.livre td:last-child{width:42%}
       <button class="iconbtn" onclick="toggleMeus()">👤 nomes da família</button>
     </div>
     <div class="field" id="meus-box" style="display:none;margin-top:12px">
+      <button class="iconbtn primary" onclick="pickBlocoRegras()" style="margin-bottom:12px">📄 trazer nomes e regras de um arquivo</button>
       <label>Nomes, CPF ou CNPJ da família (um por linha)</label>
       <textarea id="meus-nomes" rows="4" style="width:100%;background:var(--surface2);border:1px solid var(--line);color:var(--text);font-family:inherit;font-size:12.5px;padding:8px;border-radius:9px" oninput="setMeusNomes(this.value)"></textarea>
       <div class="hint">PIX e TED entre você, a Kassiana e suas próprias contas não são gasto — é dinheiro trocando de bolso. O que bater com esta lista entra marcado como <b>fora da soma</b>, saindo <b>e</b> entrando. Ex.: seu nome completo e o dela como aparecem no extrato, ou o CNPJ da sua empresa.</div>
@@ -3376,6 +3377,89 @@ function meusNomes(){
 function ehAporteDesc(desc){
   const d=norm(desc);
   return nomesInvest().some(n=>d.includes(norm(n)));
+}
+/* ---------- trazer nomes e regras de um arquivo ----------
+   São quatro listas que moram só no aparelho e que hoje se digitam à mão.
+   O arquivo traz as quatro de uma vez, em seções marcadas com colchetes:
+
+     [ Nomes, CPF ou CNPJ da família ]
+     [ Contas de investimento ]
+     [ Acima de quanto é pagamento de fatura (R$) ]
+     [ Minhas regras — trecho do nome = categoria ]
+
+   Qualquer outra seção é ignorada — dá para deixar recados e listas de
+   pendência no mesmo arquivo sem atrapalhar. Nada é aplicado sem você ver
+   antes quantas linhas de cada tipo entraram. */
+function lerBlocoRegras(txt){
+  const r={familia:[],invest:[],limite:null,regras:[]};
+  let onde='';
+  String(txt||'').split(/\r?\n/).forEach(linha=>{
+    const l=linha.trim();
+    if(!l)return;
+    /* o cabeçalho pode ter um comentário depois do colchete:
+         [ Contas de investimento ]   (vira aporte) */
+    const cab=l.match(/^\[([^\]]+)\]/);
+    if(cab){
+      const n=norm(cab[1]);
+      onde=/familia/.test(n)?'familia'
+         :/investimento/.test(n)?'invest'
+         :/fatura/.test(n)?'limite'
+         :/regra/.test(n)?'regras':'';
+      return;
+    }
+    if(/^[=\-_*]{4,}/.test(l))
+      {if(!/^\[/.test(l))onde=onde;return;}          /* linha de moldura */
+    if(/^[a-zà-ú].*:$/i.test(l)&&!onde)return;
+    if(!onde)return;
+    if(/^[(#]/.test(l))return;                      /* comentário entre parênteses */
+    if(onde==='limite'){const v=parseBRNum(l);if(v!=null&&v>0)r.limite=v;return;}
+    if(onde==='regras'){if(l.indexOf('=')>0)r.regras.push(l);return;}
+    r[onde].push(l);
+  });
+  return r;
+}
+function aplicaBlocoRegras(txt){
+  const r=lerBlocoRegras(txt);
+  const nada=!r.familia.length&&!r.invest.length&&r.limite==null&&!r.regras.length;
+  if(nada){
+    alert('Não achei nenhuma das quatro listas nesse arquivo.\n\n'
+      +'Ele precisa ter as seções entre colchetes, assim:\n'
+      +'[ Nomes, CPF ou CNPJ da família ]\n[ Contas de investimento ]\n'
+      +'[ Acima de quanto é pagamento de fatura (R$) ]\n[ Minhas regras ]');
+    return false;
+  }
+  if(!confirm('Vou colocar no lugar do que está aí hoje:\n\n'
+    +r.familia.length+' nome(s) da família\n'
+    +r.invest.length+' conta(s) de investimento\n'
+    +(r.limite!=null?('corte de fatura: '+brl(r.limite)):'corte de fatura: sem mudança')+'\n'
+    +r.regras.length+' regra(s) de categoria\n\nContinuar?'))return false;
+  guardarVersao('antes de trazer nomes e regras do arquivo');
+  if(r.familia.length)D.contas.meusNomes=r.familia.slice();
+  if(r.invest.length)D.contas.nomesInvest=r.invest.slice();
+  if(r.limite!=null)D.contas.limiteAporte=r.limite;
+  if(r.regras.length)setMinhasRegras(r.regras.join('\n'));
+  save();
+  /* recarrega os campos da tela com o que entrou */
+  const f=document.getElementById('meus-nomes');if(f)f.value=(D.contas.meusNomes||[]).join('\n');
+  const i=document.getElementById('nomes-invest');if(i)i.value=(D.contas.nomesInvest||[]).join('\n');
+  const li=document.getElementById('lim-aporte');if(li)li.value=limiteAporte();
+  const rg=document.getElementById('regras-txt');
+  if(rg)rg.value=Object.keys(D.contas.catMemory||{}).sort()
+    .map(k=>k+' = '+D.contas.catMemory[k]).join('\n');
+  safeRun(renderCategorias);
+  alert('Pronto.\n'+(D.contas.meusNomes||[]).length+' nome(s) da família, '
+    +(D.contas.nomesInvest||[]).length+' conta(s) de investimento, corte de '
+    +brl(limiteAporte())+' e '+Object.keys(D.contas.catMemory||{}).length+' regra(s).'
+    +'\n\nDá para desfazer em Resumo → versões guardadas.');
+  return true;
+}
+function pickBlocoRegras(){
+  pickFile('.txt,.json,text/plain,application/json',f=>{
+    const r=new FileReader();
+    r.onerror=()=>alert('Não consegui ler o arquivo.');
+    r.onload=()=>aplicaBlocoRegras(String(r.result||''));
+    r.readAsText(f,'utf-8');
+  });
 }
 function setNomesInvest(txt){
   D.contas.nomesInvest=String(txt||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
