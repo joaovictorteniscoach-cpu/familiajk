@@ -1143,7 +1143,10 @@ async function refreshSeguroRaw(){
   const pubRaw=await cloudGet(SECUREPUBKEY);
   if(!pubRaw){
     const c=lsGet(cacheKey);
-    return {raw:c||null,disponivel:lsGet('jvt-secure-ready')==='1',pendente:!vinculado};
+    /* Mesmo antes da primeira publicação segura, o aluno precisa ver que o
+       aparelho pediu autorização. A transição continua usando o blob legado
+       para não cortar o acesso enquanto o vínculo é aprovado. */
+    return {raw:c||null,disponivel:(!vinculado)||lsGet('jvt-secure-ready')==='1',pendente:!vinculado};
   }
   lsSet('jvt-secure-ready','1');
   try{localStorage.removeItem('jvt-pub-cache');}catch(e){}
