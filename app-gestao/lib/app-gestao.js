@@ -19,7 +19,40 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-24-4';
+const VERSAO='2026-09-24-5';
+
+const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
+function carregarAvatarGestao(){
+  let data=null;try{data=localStorage.getItem(AVATAR_GESTAO_KEY);}catch(e){}
+  const img=document.getElementById('avatar-gestao-img'),fb=document.getElementById('avatar-gestao-fallback');
+  if(!img||!fb)return;
+  if(data){img.src=data;img.style.display='block';fb.style.display='none';}
+  else{img.style.display='none';fb.style.display='flex';fb.textContent='JV';}
+}
+function trocarAvatarGestao(inp){
+  const file=inp&&inp.files&&inp.files[0];if(!file)return;
+  if(!/^image\//.test(file.type||'')){if(typeof toast==='function')toast('Escolha uma foto da sua galeria.');inp.value='';return;}
+  const rd=new FileReader();
+  rd.onload=function(){
+    const im=new Image();
+    im.onload=function(){
+      try{
+        const w=im.naturalWidth||im.width,h=im.naturalHeight||im.height,side=Math.min(w,h),sx=(w-side)/2,sy=(h-side)/2;
+        const cv=document.createElement('canvas');cv.width=320;cv.height=320;
+        cv.getContext('2d').drawImage(im,sx,sy,side,side,0,0,320,320);
+        let out='';try{out=cv.toDataURL('image/webp',.78);}catch(e){out=cv.toDataURL('image/jpeg',.80);}
+        if(!out||out.length>850000)out=cv.toDataURL('image/jpeg',.72);
+        try{localStorage.setItem(AVATAR_GESTAO_KEY,out);carregarAvatarGestao();if(typeof toast==='function')toast('📷 Foto de perfil atualizada');}
+        catch(e){if(typeof toast==='function')toast('Não foi possível salvar a foto neste aparelho.');}
+      }catch(e){if(typeof toast==='function')toast('Não foi possível preparar essa imagem.');}
+      inp.value='';
+    };
+    im.onerror=function(){if(typeof toast==='function')toast('Este formato de foto não foi reconhecido.');inp.value='';};
+    im.src=rd.result;
+  };
+  rd.readAsDataURL(file);
+}
+
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -8472,6 +8505,7 @@ function confirmarAulaWa(id,hora){
   window.addEventListener('scroll',()=>{requestAnimationFrame(aplica);},{passive:true});
 })();
 function renderAll(){
+  carregarAvatarGestao();
   document.getElementById('month-label').textContent=MESES[curMonth]+' '+curYear;
   const safe=(fn,nome)=>{try{fn();}catch(e){console.warn('Render '+nome+' falhou:',e);}};
   safe(updateEyeBtn,'olho');safe(renderAlunos,'alunos');safe(renderQuickLanc,'botoescaixa');safe(renderMovs,'caixa');safe(renderDash,'inicio');safe(renderFin,'financeiro');safe(renderAgenda,'agenda');safe(renderTorneio,'torneio');safe(renderConfirmAmanha,'confirmamanha');safe(renderAvaliacoes,'avaliacoes');safe(checarBackup,'backup');safe(renderConta,'conta');safe(prepararAluguel,'aluguel');
