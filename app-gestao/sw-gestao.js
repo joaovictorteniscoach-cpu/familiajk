@@ -10,7 +10,8 @@ const CACHE = 'jvtenis-gestao-v10';
 const V = '2026-09-24-5';
 const SHELL = ['./', './manifest-gestao.webmanifest', './jv-icone-gestao.png',
                './jv-icone-gestao-180.png',
-               './lib/estilo.css?v='+V, './lib/icones.js?v='+V, './lib/app-gestao.js?v='+V];
+               './lib/estilo.css?v='+V, './lib/icones.js?v='+V, './lib/app-gestao.js?v='+V,
+               '../site/img/quadra-2.webp'];
 
 self.addEventListener('install', e => {
   self.skipWaiting();
