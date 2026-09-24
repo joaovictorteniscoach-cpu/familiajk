@@ -1,5 +1,13 @@
 # Regras do banco de dados (Firebase)
 
+> **Atualização de segurança P0 — 24/09/2026**
+>
+> A migração atual usa duas regras novas: `firebase-regras-etapa3-transicao.json`
+> e `firebase-regras-etapa4-estrita.json`. O plano e a ordem exata estão em
+> `SEGURANCA-P0.md`. Não publique a etapa 4 antes de vincular os aparelhos dos
+> alunos; ela fecha o blob legado e exige vínculo UID → aluno nas filas.
+
+
 As regras dizem **quem pode ler e quem pode gravar** no banco. Elas ficam em
 `console.firebase.google.com` → projeto **academia-jv-tenis** → *Realtime
 Database* → aba **Regras**. As cópias aqui existem para que elas não vivam só

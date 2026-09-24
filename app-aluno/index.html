@@ -831,7 +831,11 @@ function esperarAuth(){
 
 <script>
 /* ================= CONFIG ================= */
-const PUBKEY='jvtenis-app-aluno';      // publicado pelo painel do João (compartilhado)
+const PUBKEY='jvtenis-app-aluno';      // legado: usado apenas durante a migração de segurança
+const SECUREPUBKEY='jvtenis-app-publico';
+const VINC_KEY='aluno_vinculos';
+const VINC_REQ_KEY='fila_vinculos';
+const PRIV_KEY='alunos_privados';
 const BOOKKEY='jvtenis-agendamentos';  // fila de agendamentos dos alunos (compartilhado)
 const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, salvo na nuvem)
 /* Carimbo desta PUBLICAÇÃO — não deste arquivo. Os dois apps saem juntos do
@@ -839,7 +843,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-09-03-1';
+const VERSAO='2026-09-24-1';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -890,7 +894,7 @@ async function filaPush(cam,obj){
   try{await esperarAuth();}catch(e){}
   /* ts sempre presente (as regras exigem, para barrar lixo) e uid junto, para o
      painel saber de qual aparelho veio o pedido. */
-  const item=Object.assign({ts:Date.now()},obj||{},{uid:authUid()});
+  const item=Object.assign({ts:Date.now()},obj||{},{uid:authUid(),codigo:String((MEU&&MEU.codigo)||'')});
   return window.fbDB.ref(cam).push(item);
 }
 async function cloudSet(k,v){
@@ -1004,6 +1008,62 @@ function authUid(){
   return (window.AUTH_USER&&window.AUTH_USER.uid)||
     (window.firebase&&firebase.auth&&firebase.auth().currentUser&&firebase.auth().currentUser.uid)||'';
 }
+let VINCULO_ESTADO='desconhecido';
+async function solicitarVinculo(codigo){
+  const uid=authUid();codigo=String(codigo||'');
+  if(!hasCloud()||!uid||codigo.length!==4)return false;
+  try{
+    await window.fbDB.ref('jvtenis/'+VINC_REQ_KEY+'/'+uid).set({uid:uid,codigo:codigo,ts:Date.now()});
+    VINCULO_ESTADO='pendente';return true;
+  }catch(e){return false;}
+}
+function juntarGradeSegura(publica,minha,codigo){
+  publica=publica||{fixos:[],eventos:[],excecoes:[]};minha=minha||{fixos:[],eventos:[],excecoes:[]};
+  const mf=(minha.fixos||[]).map(x=>Object.assign({},x,{cod:codigo}));
+  const me=(minha.eventos||[]).map(x=>Object.assign({},x,{cod:codigo}));
+  const idsF=new Set(mf.map(x=>x.id)),idsE=new Set(me.map(x=>x.id));
+  const fix=(publica.fixos||[]).filter(x=>!idsF.has(x.id)).concat(mf);
+  const ev=(publica.eventos||[]).filter(x=>!idsE.has(x.id)).concat(me);
+  const ex=[...(publica.excecoes||[])];
+  (minha.excecoes||[]).forEach(x=>{if(!ex.some(y=>y.fixoId===x.fixoId&&y.data===x.data))ex.push(x);});
+  return {fixos:fix,eventos:ev,excecoes:ex};
+}
+async function refreshSeguroRaw(){
+  if(!MEU.codigo)return {raw:null,disponivel:false};
+  const cacheKey='jvt-pub-cache-seguro-'+MEU.codigo;
+  if(!hasCloud()){
+    const c=lsGet(cacheKey);return {raw:c||null,disponivel:lsGet('jvt-secure-ready')==='1'};
+  }
+  try{await esperarAuth();}catch(e){}
+  const uid=authUid();if(!uid)return {raw:null,disponivel:false};
+  let pubRaw=await cloudGet(SECUREPUBKEY);
+  if(!pubRaw){const c=lsGet(cacheKey);return {raw:c||null,disponivel:lsGet('jvt-secure-ready')==='1'};}
+  lsSet('jvt-secure-ready','1');
+  // A publicação antiga continha dados de todos os alunos. Assim que este
+  // aparelho enxerga a arquitetura nova, apaga qualquer cache legado local.
+  try{localStorage.removeItem('jvt-pub-cache');}catch(e){}
+  let shared=null;try{shared=JSON.parse(pubRaw);}catch(e){return {raw:null,disponivel:true};}
+  const link=await cloudGet('jvtenis/'+VINC_KEY+'/'+uid);
+  if(!link||link.ativo!==true||String(link.codigo||'')!==String(MEU.codigo||'')){
+    await solicitarVinculo(MEU.codigo);
+    return {raw:null,disponivel:true,pendente:true};
+  }
+  const privRaw=await cloudGet('jvtenis/'+PRIV_KEY+'/'+uid);
+  if(!privRaw){VINCULO_ESTADO='aprovado-sem-dados';return {raw:null,disponivel:true,pendente:true};}
+  let priv=null;try{priv=JSON.parse(privRaw);}catch(e){return {raw:null,disponivel:true};}
+  if(!priv||!priv.aluno||String(priv.aluno.codigo||'')!==String(MEU.codigo||''))return {raw:null,disponivel:true};
+  const merged=Object.assign({},shared,{
+    alunos:[priv.aluno],historico:{},
+    grade:juntarGradeSegura(shared.grade,priv.gradeMeu,MEU.codigo),
+    chuvas:priv.chuvas||[],torneio:priv.torneio||null,
+    pix:priv.pix||'',pixNome:priv.pixNome||'',pixCidade:priv.pixCidade||'',pixTipo:priv.pixTipo||'celular',cardLink:priv.cardLink||''
+  });
+  merged.historico[MEU.codigo]=priv.historico||[];
+  const raw=JSON.stringify(merged);
+  lsSet(cacheKey,raw);VINCULO_ESTADO='ativo';
+  try{localStorage.removeItem('jvt-pub-cache');}catch(e){}
+  return {raw:raw,disponivel:true};
+}
 /* O estado pessoal (pedidos, cancelamentos, aceite do termo) morava numa chave
    derivada do código de 4 dígitos, e a regra liberava qualquer chave com esse
    prefixo. Na prática, quem adivinhasse 4 dígitos lia E ESCREVIA no espaço de
@@ -1031,10 +1091,23 @@ async function saveMeu(){
 }
 async function refresh(silent){
   let raw=null;
-  if(hasCloud())raw=await cloudGet(PUBKEY);
-  if(raw){lsSet('jvt-pub-cache',raw);} // guarda cópia local
-  else{raw=lsGet('jvt-pub-cache');if(raw&&!silent)toast('Mostrando últimos dados salvos');}
-  if(!raw){if(!silent)toast('Dados ainda não publicados pelo professor');return false;}
+  const seg=await refreshSeguroRaw();
+  if(seg.raw)raw=seg.raw;
+  else if(seg.disponivel){
+    // Durante a migração, o endereço antigo continua funcionando. Depois que as
+    // regras finais fecharem o legado, um aparelho não aprovado para aqui.
+    if(hasCloud())raw=await cloudGet(PUBKEY);
+    // Não persiste mais o blob legado no aparelho: ele contém a lista completa.
+    if(raw&&seg.pendente&&!silent)toast('🔐 Este aparelho aguarda autorização do João');
+  }else{
+    if(hasCloud())raw=await cloudGet(PUBKEY);
+    if(raw)lsSet('jvt-pub-cache',raw);
+    else{raw=lsGet('jvt-pub-cache');if(raw&&!silent)toast('Mostrando últimos dados salvos');}
+  }
+  if(!raw){
+    if(!silent)toast(VINCULO_ESTADO==='pendente'?'🔐 Acesso solicitado — aguarde o João aprovar este aparelho':'Dados ainda não publicados pelo professor');
+    return false;
+  }
   try{PUB=JSON.parse(raw);}catch(e){return false;}
   if(MEU.codigo)EU=PUB.alunos.find(a=>a.codigo===MEU.codigo)||null;
   // limpa pedidos já confirmados na grade ou com mais de 7 dias
@@ -1083,7 +1156,13 @@ async function entrar(){
   MEU.codigo=c;
   await carregarMeuNuvem();
   const ok=await refresh(true);
-  if(!ok){err.textContent='Não consegui acessar os dados. Verifique sua internet.';MEU.codigo=null;return;}
+  if(!ok){
+    if(VINCULO_ESTADO==='pendente'||VINCULO_ESTADO==='aprovado-sem-dados'){
+      err.textContent='Acesso solicitado. Aguarde o João aprovar este aparelho e tente novamente em instantes.';
+      return;
+    }
+    err.textContent='Não consegui acessar os dados. Verifique sua internet.';MEU.codigo=null;return;
+  }
   if(!EU){err.textContent='Código não encontrado. Confira com o João.';MEU.codigo=null;return;}
   const keep=document.getElementById('keep-in')?document.getElementById('keep-in').checked:true;
   lsSet('jvt-keep',keep?'1':'0');
@@ -1096,6 +1175,7 @@ function show(){
   render();
 }
 async function sair(){
+  try{if(MEU&&MEU.codigo)localStorage.removeItem('jvt-pub-cache-seguro-'+MEU.codigo);localStorage.removeItem('jvt-pub-cache');}catch(e){}
   MEU={codigo:null,pedidos:[],cancelados:[]};
   lsSet(MYKEY,JSON.stringify(MEU));
   location.reload();

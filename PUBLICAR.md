@@ -1,5 +1,15 @@
 # Onde os apps ficam publicados
 
+> ## Segurança P0 — ordem antes de mexer nas regras
+>
+> 1. Publique primeiro os `index.html` novos de `app-gestao` e `app-aluno`.
+> 2. Depois publique `ferramentas/firebase-regras-etapa3-transicao.json`.
+> 3. Em Gestão → Financeiro → Segurança, use **Aprovar acessos reconhecidos em lote**. Você não precisa abrir cadastro por cadastro; pedidos com código inexistente ficam separados para revisão.
+> 4. Só depois da migração publique `firebase-regras-etapa4-estrita.json`.
+>
+> Detalhes: `ferramentas/SEGURANCA-P0.md`.
+
+
 **Principal: GitHub Pages.** Gratuito, sem cota que acabe.
 
 | | Endereço |

@@ -22,8 +22,8 @@ echo "### 4. Colisao de nome de classe no CSS (conferir a olho)"
 python3 ferramentas/checar-css.py app-aluno/index.html app-gestao/index.html
 
 echo
-echo "### 5. Regras do banco contra o que os apps fazem"
-python3 ferramentas/checar-regras.py || falhou=1
+echo "### 5. Segurança P0: vínculo, privacidade e filas"
+python3 ferramentas/checar-seguranca-p0.py || falhou=1
 
 echo
 echo "### 6. Carimbo de versao dos apps"
