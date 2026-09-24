@@ -145,6 +145,24 @@ def main():
         print('     estiver atrás mostra "desatualizado" sem estar. Deixe os dois iguais.')
         falhas += 1
 
+    # A Gestão modular tem uma sentinela inline que compara a tela com o JS.
+    # Se ficar um número atrás, o app abre a tela de socorro mesmo com os
+    # arquivos corretos. O workflow do Pages roda este script antes de publicar.
+    gestao_html = open(os.path.join(RAIZ, 'app-gestao/index.html'),
+                       encoding='utf-8', errors='replace').read()
+    gestao_js = open(os.path.join(RAIZ, 'app-gestao/lib/app-gestao.js'),
+                     encoding='utf-8', errors='replace').read()
+    me = re.search(r"var\s+ESPERADA='([^']+)'", gestao_html)
+    mv = re.search(r"^const\s+VERSAO\s*=\s*'([^']+)'", gestao_js, re.M)
+    if not me or not mv:
+        print('  ❌ Gestão modular sem ESPERADA/VERSAO verificável')
+        falhas += 1
+    elif me.group(1) != mv.group(1):
+        print('  ❌ Gestão modular: ESPERADA=%s, mas VERSAO=%s' % (me.group(1), mv.group(1)))
+        falhas += 1
+    else:
+        print('  ✅ Gestão modular: ESPERADA e VERSAO = %s' % mv.group(1))
+
     print('\n%d app(s) · %d falha(s)' % (len(APPS), falhas))
     return 1 if falhas else 0
 
