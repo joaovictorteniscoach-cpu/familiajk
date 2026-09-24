@@ -100,7 +100,15 @@ let CENTRO = { x:0, y:0 };   // ponto principal da imagem (0,0 quando é desenho
 
    `cam` sai pronto do calibrar-foto.py, com o erro de encaixe medido em
    pixels. Sem entrada, o desenho continua sendo a quadra desenhada. */
-const FOTOS = {};
+const FOTOS = {
+  /* A QUADRA DA FOLHA MODELO do João, vazia (ferramentas/limpar-quadra-modelo.py)
+     e com a câmera achada pelo calibrar-foto.py: 10 pontos, erro médio de
+     6,6 px em 1304 (a foto não é uma câmera perfeita — as linhas dela fazem
+     uma curva leve). `inteira`: a foto é a quadra toda, e o desenho mostra
+     a foto toda, em todo exercício — é o padrão da folha modelo. */
+  jv: { arq:'quadra-jv.webp', larg:1304, alt:1406, inteira:true,
+        cam:{ x:0.025, y:35.083, alt:16.812, alvo:4.854, dist:3917.3, cx:648.6, cy:799.8 } }
+};
 
 /* OS JOGADORES SÃO AS FIGURAS DA JV, recortadas da prancha de poses que o
    João criou (ferramentas/originais/prancha-poses-jv.png) pelo
@@ -172,8 +180,8 @@ const CQ = {
   rede:'#EFEBE3', redeMalha:'#1B2A36', poste:'#3B4A55',
   aluno:'#D8B45C', alunoEsc:'#A9843A', prof:'#E8EDF2', profEsc:'#AFBCC7',
   colega:'#8FB0C9', colegaEsc:'#5F7F98', pele:'#C98D62', peleEsc:'#A06D48',
-  bola:'#D7EE86', mov:'#FFFFFF', cone:'#E0784A', coneEsc:'#B2542D', zona:'#D8B45C',
-  texto:'#FFFFFF', fundoTx:'rgba(9,22,35,.84)', sombra:'rgba(44,18,8,.38)'
+  bola:'#D6F03A', mov:'#FFFFFF', cone:'#E0784A', coneEsc:'#B2542D', zona:'#D8B45C',
+  texto:'#FFFFFF', fundoTx:'rgba(16,15,13,.88)', sombra:'rgba(44,18,8,.38)'
 };
 
 /* Escurece uma cor hexadecimal. Usado para o lado do boneco que fica na
@@ -200,6 +208,8 @@ let PROP = 0;            // proporcao pedida (largura/altura); 0 = a do padrao
    o boneco sai em ESCALA DE LEITURA, maior que o real, como em toda folha de
    treino impressa. Só a folha usa isto; a tela continua em escala real. */
 let ESC_FIG = 1;
+let ARO = true;
+let FOTO_FIXA = false;      // desenho em cima da foto da quadra inteira (moldura fixa)             // o aro colorido de quem é quem (a folha não usa: lá o modelo não tem)
 let ROTULOS = [];            // rótulos já colocados, para não empilhar
 let PECAS = [];              // as peças deste desenho, para um jogador poder
                              // olhar as outras e saber para onde vai bater
@@ -547,6 +557,9 @@ function qRecorte(x, y, rot, tipo, nome){
   var g = FIG[arq] || [1.7, 0.7, 0.5];
   var pe = proj(x, y, 0), topo = proj(x, y, g[0]);
   var h = (pe.y - topo.y) * ESC_FIG;
+  // na foto a moldura é fixa: quem está no fundo de lá, ampliado, sairia com
+  // a cabeça para fora dela. Ali a figura encolhe até caber.
+  if (FOTO_FIXA) h = Math.min(h, (pe.y - VISTA.y) * 0.97);
   if (h < 3) h = 3;
   var l = h * g[1];
   var cx = pe.x;                         // os pés ficam em cima do ponto do exercício
@@ -556,11 +569,11 @@ function qRecorte(x, y, rot, tipo, nome){
   var s = '<g>' +
     '<ellipse cx="' + nQ(cx) + '" cy="' + nQ(pe.y) + '" rx="' + nQ(rx) + '" ry="' + nQ(ry) +
       '" fill="' + CQ.sombra + '"/>' +
-    '<ellipse cx="' + nQ(cx) + '" cy="' + nQ(pe.y) + '" rx="' + nQ(rx) + '" ry="' + nQ(ry) +
-      '" fill="' + cor + '" fill-opacity=".30" stroke="' + cor + '" stroke-width="' + nQ(h * 0.016) + '"/>' +
+    (ARO ? '<ellipse cx="' + nQ(cx) + '" cy="' + nQ(pe.y) + '" rx="' + nQ(rx) + '" ry="' + nQ(ry) +
+      '" fill="' + cor + '" fill-opacity=".30" stroke="' + cor + '" stroke-width="' + nQ(h * 0.016) + '"/>' : '') +
     '<image href="' + arq + '" x="' + nQ(cx - l * g[2]) + '" y="' + nQ(pe.y - h) +
       '" width="' + nQ(l) + '" height="' + nQ(h) + '" preserveAspectRatio="xMidYMax meet"/></g>';
-  if (rot) s += qTexto(cx, pe.y + h * 0.16, rot, { tam:h * (ESC_FIG > 1 ? 0.16 : 0.20) });
+  if (rot) s += qTexto(cx, pe.y + h * 0.12, rot, { tam:h * (ESC_FIG > 1 ? 0.10 : 0.20) });
   return s;
 }
 
@@ -638,16 +651,29 @@ function qJogador(x, y, rot, tipo, nome){
 }
 
 function qCone(x, y, rot){
-  // 0,52 m e não os 0,42 do cone de verdade: a 10 metros da câmera, um cone
-  // na medida certa virava um ponto laranja de três pixels.
-  var pe = proj(x, y, 0), topo = proj(x, y, 0.52);
-  var h = pe.y - topo.y, l = h * 0.66;
-  var cx = (pe.x + topo.x) / 2;
-  var s = '<g>';
-  s += '<ellipse cx="' + nQ(cx) + '" cy="' + nQ(pe.y) + '" rx="' + nQ(l * 0.62) + '" ry="' + nQ(l * 0.20) +
+  // Como o cone da folha modelo: laranja vivo, com duas faixas brancas,
+  // luz de um lado e a base quadrada. Mais alto que o de verdade (0,42 m),
+  // na mesma escala de leitura dos jogadores: senão vira um ponto laranja.
+  var alto = 0.46 * Math.max(1, ESC_FIG * 0.85);
+  var pe = proj(x, y, 0), topo = proj(x, y, alto);
+  var h = pe.y - topo.y, l = h * 0.62;
+  var cx = (pe.x + topo.x) / 2, id = 'cn' + Math.round(cx * 7 + pe.y * 3);
+  var faixa = function(t0, t1){
+    var ya = topo.y + h * t0, yb = topo.y + h * t1, la = l * t0 / 2, lb = l * t1 / 2;
+    return '<path d="M ' + nQ(cx - la) + ' ' + nQ(ya) + ' L ' + nQ(cx + la) + ' ' + nQ(ya) +
+      ' L ' + nQ(cx + lb) + ' ' + nQ(yb) + ' L ' + nQ(cx - lb) + ' ' + nQ(yb) + ' Z" fill="#F6F2EA"/>';
+  };
+  var s = '<g><defs><linearGradient id="' + id + '" x1="0" x2="1">' +
+    '<stop offset="0" stop-color="#FF9A4A"/><stop offset=".45" stop-color="#F26A1B"/>' +
+    '<stop offset="1" stop-color="#B8430C"/></linearGradient></defs>';
+  s += '<ellipse cx="' + nQ(cx + l * 0.12) + '" cy="' + nQ(pe.y) + '" rx="' + nQ(l * 0.75) + '" ry="' + nQ(l * 0.2) +
        '" fill="' + CQ.sombra + '"/>';
-  s += '<path d="M ' + nQ(cx) + ' ' + nQ(topo.y) + ' L ' + nQ(cx + l / 2) + ' ' + nQ(pe.y) +
-       ' L ' + nQ(cx - l / 2) + ' ' + nQ(pe.y) + ' Z" fill="' + CQ.cone + '"/>';
+  s += '<rect x="' + nQ(cx - l * 0.62) + '" y="' + nQ(pe.y - h * 0.07) + '" width="' + nQ(l * 1.24) +
+       '" height="' + nQ(h * 0.09) + '" rx="' + nQ(h * 0.02) + '" fill="#C9500F"/>';
+  s += '<path d="M ' + nQ(cx - l * 0.06) + ' ' + nQ(topo.y) + ' L ' + nQ(cx + l * 0.06) + ' ' + nQ(topo.y) +
+       ' L ' + nQ(cx + l / 2) + ' ' + nQ(pe.y - h * 0.06) + ' L ' + nQ(cx - l / 2) + ' ' + nQ(pe.y - h * 0.06) +
+       ' Z" fill="url(#' + id + ')"/>';
+  s += faixa(0.30, 0.42) + faixa(0.60, 0.72);
   s += '</g>';
   if (rot) s += qTexto(cx, pe.y + h * 0.5, rot, { tam:h * 0.55 });
   return s;
@@ -684,10 +710,13 @@ function qCaminho(x1, y1, x2, y2, curva, cor, tracejado, marcador){
     d += (i ? ' L ' : 'M ') + nQ(p.x) + ' ' + nQ(p.y);
   }
   var meio = proj(cx, cy, 0);
-  var w = traco(0.11, meio);
-  return '<path d="' + d + '" fill="none" stroke="' + cor + '" stroke-width="' + nQ(w) +
-    '" stroke-linecap="round" stroke-linejoin="round"' +
-    (tracejado ? ' stroke-dasharray="' + nQ(w * 2.1) + ' ' + nQ(w * 1.5) + '"' : '') +
+  var w = traco(tracejado ? 0.13 : 0.11, meio);
+  var tr = tracejado ? ' stroke-dasharray="' + nQ(w * 2.4) + ' ' + nQ(w * 1.4) + '"' : '';
+  // a sombra embaixo do traço é o que faz a seta limão aparecer no saibro claro
+  return (MINI ? '' : '<path d="' + d + '" fill="none" stroke="rgba(20,12,6,.38)" stroke-width="' + nQ(w * 1.9) +
+      '" stroke-linecap="round" stroke-linejoin="round"' + tr + ' transform="translate(' + nQ(w * 0.25) + ' ' + nQ(w * 0.35) + ')"/>') +
+    '<path d="' + d + '" fill="none" stroke="' + cor + '" stroke-width="' + nQ(w) +
+    '" stroke-linecap="round" stroke-linejoin="round"' + tr +
     ' marker-end="url(#' + marcador + ')"/>';
 }
 
@@ -725,7 +754,7 @@ function dentroDaVista(c){
 function qTexto(x, y, txt, op){
   if (MINI) return '';
   op = op || {};
-  var tam = Math.max(VISTA.w * 0.026, Math.min(op.tam || VISTA.w * 0.032, VISTA.w * 0.042));
+  var tam = Math.max(VISTA.w * 0.024, Math.min(op.tam || VISTA.w * 0.030, VISTA.w * 0.036));
   var margem = VISTA.w * 0.012;
   var cabe = VISTA.w - margem * 2;
   var larg = String(txt).length * tam * 0.56 + tam * 0.8;
@@ -742,7 +771,7 @@ function qTexto(x, y, txt, op){
   ROTULOS.push({ x:esqX, y:cima, w:larg, h:alt });
   return '<g>' +
     '<rect x="' + nQ(esqX) + '" y="' + nQ(cima) + '" width="' + nQ(larg) + '" height="' + nQ(alt) +
-      '" rx="' + nQ(tam * 0.4) + '" fill="' + (op.fundo || CQ.fundoTx) + '"/>' +
+      '" rx="' + nQ(tam * 0.4) + '" fill="' + (op.fundo || CQ.fundoTx) + '" stroke="#E4DDB8" stroke-opacity=".75" stroke-width="' + nQ(tam * 0.07) + '"/>' +
     // textLength manda o navegador caber o texto na largura calculada. Sem isso
     // a conta de largura é só estimativa, e uma frase mais larga que a
     // estimativa vaza para fora do desenho e some.
@@ -813,7 +842,9 @@ function svgQuadra(fig, op){
   PROP = op.prop || 0;
   ESC_FIG = op.escalaFig || 1;
   var base = fig.base || 'meia';
-  var foto = FOTOS[base];
+  var foto = op.desenho ? null : (FOTOS.jv || FOTOS[base]);
+  ARO = op.aro !== false;
+  FOTO_FIXA = !!(foto && foto.inteira);
   if (foto) {
     // a câmera vem da foto, e o desenho passa a morar no espaço de pixels dela
     CAM = { x:foto.cam.x || 0, y:foto.cam.y, alt:foto.cam.alt, alvo:foto.cam.alvo };
@@ -824,7 +855,8 @@ function svgQuadra(fig, op){
     DIST = 100;
     CENTRO = { x:0, y:0 };
   }
-  VISTA = op.inteira && !foto ? quadraInteira(fig.el) : enquadrar(base, fig.el);
+  VISTA = foto && foto.inteira ? { x:0, y:0, w:foto.larg, h:foto.alt }
+        : op.inteira && !foto ? quadraInteira(fig.el) : enquadrar(base, fig.el);
   if (foto) {
     // a moldura não pode sair da foto: fora dela não há pixel nenhum
     if (VISTA.w > foto.larg) { VISTA.x = 0; VISTA.w = foto.larg; }
@@ -841,9 +873,12 @@ function svgQuadra(fig, op){
   fig.el.forEach(function(e){
     var t = e[0];
     if (t === 'aluno' || t === 'prof' || t === 'colega') {
-      var pe = proj(e[1], e[2], 0), ca = proj(e[1], e[2], 1.95);
-      var h = pe.y - ca.y, l = h * 0.5;
-      ROTULOS.push({ x:pe.x - l, y:ca.y, w:l * 2, h:h });
+      // o lugar da pessoa NA ESCALA em que ela é desenhada (na folha, 2,3 vezes)
+      var pe = proj(e[1], e[2], 0), ca = proj(e[1], e[2], 1.75);
+      var h = (pe.y - ca.y) * ESC_FIG;
+      if (FOTO_FIXA) h = Math.min(h, (pe.y - VISTA.y) * 0.97);
+      var l = h * 0.34;
+      ROTULOS.push({ x:pe.x - l, y:pe.y - h, w:l * 2, h:h });
     } else if (t === 'cone') {
       var q = proj(e[1], e[2], 0), e2 = escalaEm(q);
       ROTULOS.push({ x:q.x - e2 * .3, y:q.y - e2 * .5, w:e2 * .6, h:e2 * .6 });
@@ -862,7 +897,7 @@ function svgQuadra(fig, op){
   // A seta do SVG é medida em espessuras de traço, e o traço agora engrossa
   // com a perspectiva. Com os valores antigos a ponta ficava maior que a
   // flecha inteira na miniatura.
-  var m = MINI ? 3.4 : 3.0;
+  var m = MINI ? 3.4 : 3.6;          // ponta grande, como a das setas da folha modelo
   var alt = op.altura ? ' height="' + op.altura + '"' : '';
   var rotulo = fig.nota ? ' aria-label="' + String(fig.nota).replace(/"/g, '&quot;') + '"' : '';
   return '<svg class="qd' + (MINI ? ' qd-mini-selo' : '') + ' qd-' + base + '" viewBox="' +

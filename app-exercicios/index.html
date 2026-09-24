@@ -951,7 +951,7 @@ function cartao(e){
   return '' +
   '<div class="card' + (dentro ? ' no-plano' : '') + '" data-ficha="' + e.id + '"' +
        ' role="button" tabindex="0" aria-label="Abrir ' + esc(e.nome) + '">' +
-    '<div class="miniq">' + svgQuadra(e.fig, { mini:true }) + '</div>' +
+    '<div class="miniq">' + svgQuadra(e.fig, { mini:true, escalaFig:2.3 }) + '</div>' +
     '<div class="mid">' +
       '<h3>' + esc(e.nome) + (FAV.indexOf(e.id) >= 0 ? ' ★' : '') + '</h3>' +
       '<div class="sinais">' +
@@ -1055,7 +1055,7 @@ function abrirFicha(id){
     //    que está desenhado vem logo abaixo da figura — sem ela o professor
     //    tinha que deduzir a cena a partir das bolinhas e das setas.
     '<div class="ficha-2col">' +
-      '<div class="qd-cx">' + svgQuadra(e.fig, { escalaFig:1.4 }) +
+      '<div class="qd-cx">' + svgQuadra(e.fig, { escalaFig:2.1 }) +
         (e.fig && e.fig.nota ? '<div class="qd-desc">' + esc(e.fig.nota) + '</div>' : '') +
         '<div class="qd-nota"><b>Montagem:</b> ' + esc(e.montagem) + '</div>' +
         legendaQuadra() + '</div>' +
@@ -1202,7 +1202,9 @@ function folhaTreino(e, minutos, nivelSel, pagina){
   var b = bloco(e.bloco), t = tema(e.tema[0]);
   var listaMat = e.mat.map(function(m){ var x = material(m); return x ? x.nome : m; });
   var mats = listaMat.slice(0, 3).join(', ') + (listaMat.length > 3 ? ' +' + (listaMat.length - 3) : '');
-  var nvs  = e.niveis.map(function(n){ var x = nivel(n); return x ? x.nome : n; }).join(', ');
+  var nomesNv = e.niveis.map(function(n){ var x = nivel(n); return x ? x.nome : n; });
+  // uma linha só, como no modelo: com mais de dois níveis, vira faixa
+  var nvs = nomesNv.length > 2 ? nomesNv[0] + ' a ' + nomesNv[nomesNv.length - 1] : nomesNv.join(', ');
 
   // o lema do cabeçalho sai do foco do professor: "A, B e C."
   var fo = (e.foco || []).slice(0, 3).map(function(x){ return curto(x).toLowerCase(); });
@@ -1227,7 +1229,7 @@ function folhaTreino(e, minutos, nivelSel, pagina){
   return '' +
   '<section class="ft">' +
     '<div class="ft-barra">' + RISCO_SVG + icone('trofeu') +
-      '<p class="ft-pilula"><b>Funcionou se:</b> ' + esc(curto(e.sucesso, 110)) + '.</p>' +
+      '<p class="ft-pilula"><b>Funcionou se:</b> ' + esc(curto(e.sucesso, 92)) + '.</p>' +
       marcaJV(true) +
     '</div>' +
     '<header class="ft-top">' + LUZ_SVG + BOLA_SVG + marcaJV(false) +
@@ -1248,7 +1250,7 @@ function folhaTreino(e, minutos, nivelSel, pagina){
     '</div>' +
 
     '<div class="ft-corpo">' +
-      '<div class="ft-qd">' + svgQuadra(e.fig, { inteira:true, prop:0.86, escalaFig:2.3 }) + '</div>' +
+      '<div class="ft-qd">' + svgQuadra(e.fig, { inteira:true, escalaFig:2.3, aro:false }) + '</div>' +
       '<div class="ft-lado">' +
         '<div class="ft-aplicar"><h3>Como aplicar</h3><ol>' +
           (e.passos || []).slice(0, 6).map(function(x, i){
@@ -1429,7 +1431,7 @@ function desenharPlano(){
         // títulos que só dizia alguma coisa abrindo a ficha de cada um
         '<div class="pi-qd" data-ficha="' + e.id + '" role="button" tabindex="0" ' +
           'aria-label="Abrir a ficha de ' + esc(e.nome) + '">' +
-          svgQuadra(e.fig, { mini:true }) + '</div>' +
+          svgQuadra(e.fig, { mini:true, escalaFig:2.3 }) + '</div>' +
         '<span class="cd">' + esc(e.id) + '</span>' +
         '<button class="nm" data-ficha="' + e.id + '" style="text-align:left">' + esc(e.nome) + '</button>' +
         '<input class="mn" type="number" inputmode="numeric" min="1" max="60" ' +
@@ -1444,7 +1446,7 @@ function desenharPlano(){
         // detalhe que só aparece no papel: o professor leva a ficha para a quadra,
         // com o desenho da montagem ao lado do passo a passo
         '<div class="det">' +
-          '<div class="det-qd">' + svgQuadra(e.fig, { escalaFig:1.4 }) + '</div>' +
+          '<div class="det-qd">' + svgQuadra(e.fig, { escalaFig:2.1 }) + '</div>' +
           '<div class="det-tx">' +
             '<b>Tempo:</b> ' + minNoPlano(e.id) + ' min' +
             '<br><b>Objetivo:</b> ' + esc(e.objetivo) +
@@ -1746,7 +1748,7 @@ function abrirEscolher(blocoId, trocarId){
   h += r.itens.map(function(e){
     return '<div class="card" data-escolher="' + e.id + '" data-bloco-alvo="' + blocoId + '"' +
       ' role="button" tabindex="0" aria-label="Usar ' + esc(e.nome) + '">' +
-      '<div class="miniq">' + svgQuadra(e.fig, { mini:true }) + '</div>' +
+      '<div class="miniq">' + svgQuadra(e.fig, { mini:true, escalaFig:2.3 }) + '</div>' +
       '<div class="mid"><h3>' + esc(e.nome) + '</h3>' +
         '<div class="sinais"><span class="sinal min">' + e.min + '′</span>' +
           reguaNiveis(e) +
@@ -1876,7 +1878,7 @@ function abrirMeus(){
     h += MEUS.map(function(e){
       return '<div class="card" data-editar="' + e.id + '" role="button" tabindex="0"' +
         ' aria-label="Editar ' + esc(e.nome) + '">' +
-        '<div class="miniq">' + svgQuadra(e.fig, { mini:true }) + '</div>' +
+        '<div class="miniq">' + svgQuadra(e.fig, { mini:true, escalaFig:2.3 }) + '</div>' +
         '<div class="mid"><h3>' + esc(e.nome) + '</h3>' +
           '<div class="sinais"><span class="sinal min">' + e.min + '′</span>' +
             reguaNiveis(e) +

@@ -200,11 +200,20 @@ então exercício novo já nasce com folha.
 modelo: lá ela tem 118 px de largura, e ampliada para o papel sairia borrada.
 O contorno foi tirado do modelo e depois limpo à mão, reta por reta.
 
-**A quadra da folha** tem câmera própria (`CAMERAS.folha`), proporção **0,86**
-e os jogadores com **escala de leitura 2,3** (`escalaFig`): em tamanho real
-eles viram formigas numa quadra inteira vista do alto. Na tela do celular a
-escala é 1,4. As **145 folhas cabem em A4** sem nada transbordar dos cartões —
-medido com a fonte já carregada, que é o que conta.
+**A quadra é a da folha modelo** — a foto de saibro vista de trás e do alto,
+**em todos os exercícios**, na folha e no app. O
+`ferramentas/limpar-quadra-modelo.py` tira dela os dois jogadores, os cones,
+as setas e os rótulos do exercício do modelo (o lugar de cada coisa é coberto
+com o saibro e a tela da rede do lado, na mesma altura, e só as linhas que
+passavam por baixo são redesenhadas, seguindo a curva que elas têm na foto) e
+grava `quadra-jv.webp`. A câmera foi achada pelo `calibrar-foto.py` (10
+pontos, erro médio de 6,6 px em 1304) e mora em `FOTOS.jv`, no `quadra.js`.
+Por cima dela entram, em vetor, os jogadores, as setas limão com a ponta
+grande, os cones laranja de faixa branca e os rótulos escuros — como no
+modelo. Os jogadores entram com **escala de leitura 2,3** na folha (2,1 na
+tela): quem está no fundo de lá encolhe até caber na foto. Na folha não há o
+aro de papel embaixo dos pés, porque o modelo não tem; no app, com a legenda,
+ele fica. As **145 folhas cabem em A4**.
 
 **A letra é a Barlow Condensed** (`fonte-barlow-condensed-*.woff2`, licença SIL
 OFL 1.1 em `LICENCA-FONTE-BARLOW.txt`), embutida no app e no arquivo único.
@@ -378,19 +387,13 @@ vazia com as pessoas e as setas por cima**. A mesma foto serve em todos. O que
 muda de exercício para exercício é a camada de cima, que continua vindo dos
 metros.
 
-### A foto que falta
+### Trocar a quadra por uma foto da quadra da JV
 
-**A quadra vazia** — uma só. Com ela o desenho troca o saibro desenhado pela
-foto da quadra da JV, com as figuras e as setas por cima.
-
-- de **trás da linha de base**, no meio (em cima da marca central);
-- câmera **o mais alta que der**: escada, arquibancada, bastão com o celular
-  na ponta. Quanto mais alta, menos as pessoas se escondem umas atrás das
-  outras no desenho;
-- apontada para o **meio da rede**, mostrando a quadra inteira;
-- **sem pessoas, sem bolas, sem cestos**;
-- **sem grande-angular** (no iPhone, o "1x", nunca o "0,5x");
-- o celular **na horizontal**, o mais nivelado possível.
+Hoje a quadra de fundo é a da folha modelo. Para usar uma foto da quadra da
+própria academia: tirar de **trás da linha de base, no meio, o mais alto que
+der**, apontada para o meio da rede, **sem pessoas nem bolas** e **sem
+grande-angular** (no iPhone, o "1x"); calibrar com o `calibrar-foto.py`
+(abaixo) e trocar a entrada `jv` do `FOTOS`. O resto do desenho não muda.
 
 ### O que acontece quando as fotos chegarem
 
