@@ -3851,7 +3851,16 @@ function exSaveTx(){
    seguintes, até vir outra. */
 function parseTextExtrato(text){
   const out=[];let ultimaData='';
-  (text||'').split(/\r?\n/).forEach(raw=>{
+  const linhas=(text||'').split(/\r?\n/);
+  /* Quando o arquivo marca as SAÍDAS com um menos na frente do valor — é o
+     caso do extrato do Itaú —, a linha sem menos é ENTRADA. Sem isto, o
+     recebimento cujo nome "quebrou" para a linha de baixo ("PIX RECEBIDO" numa
+     linha, o nome e o valor na outra) virava gasto: 90 linhas de dinheiro
+     entrando eram contadas como dinheiro saindo. */
+  let comMenos=0;
+  linhas.forEach(l=>{if(/-\s?\d{1,3}(?:\.\d{3})*,\d{2}/.test(l))comMenos++;});
+  const marcaSaida=comMenos>=3;
+  linhas.forEach(raw=>{
     const line=raw.replace(/\s+/g,' ').trim();if(line.length<3)return;
     const nums=line.match(/\d{1,3}(?:\.\d{3})*,\d{2}/g);
     /* a data é procurada sem os valores, senão "1.234,56" vira dia 1 mês 23 */
@@ -3876,7 +3885,9 @@ function parseTextExtrato(text){
     const low=line.toLowerCase();
     const neg=/[-(]/.test(before)||/^\s*-/.test(after)||/^\s*d\b/i.test(after)||/(compra|pagament|saque|d[eé]bito|pix enviad|enviad|ted enviad|doc enviad|transfer\S* enviad|tarifa|boleto|fatura|iof|anuidade)/.test(low);
     const pos=/^\s*c\b/i.test(after)||/(recebid|cr[eé]dito|dep[óo]sito|sal[áa]rio|rendimento|estorno|pix recebid|transfer\S* recebid|entrada|provento)/.test(low);
-    amt=Math.abs(amt);amt=(pos&&!neg)?amt:-amt;
+    amt=Math.abs(amt);
+    /* no arquivo que marca as saídas, quem manda é o sinal impresso */
+    amt=marcaSaida?(cred?-amt:amt):((pos&&!neg)?amt:-amt);
     const dm=line.match(/(\d{2})[\/\-.](\d{2})(?:[\/\-.](\d{2,4}))?/);
     const date=dCab||ultimaData;
     /* tira TODOS os valores do nome, não só o escolhido: senão sobrava a
