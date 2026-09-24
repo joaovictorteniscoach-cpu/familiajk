@@ -1,3 +1,12 @@
+> ## Segurança P0 — ordem da migração
+>
+> 1. Publique primeiro o App Aluno e a Gestão modular (`app-gestao/index.html` + `app-gestao/lib/app-gestao.js`).
+> 2. Publique `ferramentas/firebase-regras-etapa3-transicao.json`.
+> 3. Em Gestão → Segurança, aprove cada aparelho individualmente só depois de confirmar com o aluno por um canal externo (ex.: WhatsApp). O código de 4 dígitos sozinho não prova identidade.
+> 4. Depois de migrar os aparelhos ativos, publique `firebase-regras-etapa4-estrita.json`.
+>
+> Detalhes: `ferramentas/SEGURANCA-P0.md`.
+
 # Onde os apps ficam publicados
 
 **Principal: GitHub Pages.** Gratuito, sem cota que acabe.
