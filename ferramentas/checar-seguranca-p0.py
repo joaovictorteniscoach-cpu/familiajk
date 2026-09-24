@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 from pathlib import Path
-import json, sys
+import json, sys, re
 ROOT=Path(__file__).resolve().parent.parent
 ADMIN='XEulBs95uZV1JhfUuz6SmjUaeVv1'
 falhas=[]
@@ -32,6 +32,9 @@ h=(ROOT/'app-gestao/index.html').read_text(encoding='utf-8')
 g=(ROOT/'app-gestao/lib/app-gestao.js').read_text(encoding='utf-8')
 sh=(ROOT/'ferramentas/checar-tudo.sh').read_text(encoding='utf-8')
 ok('src="lib/app-gestao.js?v=' in h and len(h.encode())<150000,'Gestão continua modular')
+mexp=re.search(r"var\\s+ESPERADA='([^']+)'",h)
+mver=re.search(r"const\\s+VERSAO='([^']+)'",g)
+ok(bool(mexp and mver and mexp.group(1)==mver.group(1)),'ESPERADA do HTML modular igual à VERSAO do app-gestao.js')
 ok("const SECUREPUBKEY='jvtenis-app-publico'" in a and 'async function refreshSeguroRaw()' in a,'Aluno usa publicação segura')
 ok("codigo:String((MEU&&MEU.codigo)||'')" in a,'filas do aluno levam UID + código')
 ok("const SECUREPUBKEY='jvtenis-app-publico'" in g and 'async function publicarSeguro(pub)' in g,'Gestão modular publica seguro')
