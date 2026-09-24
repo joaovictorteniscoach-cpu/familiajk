@@ -519,6 +519,16 @@ function esperarAuth(){
   </header>
 
   <div class="wrap">
+    <div id="vinculo-status-box" style="display:none;background:#FFF6DF;border:1px solid #E8D39A;border-radius:14px;padding:13px 15px;margin-bottom:12px;color:#6E5310">
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        <div style="font-size:24px;line-height:1">🔐</div>
+        <div style="flex:1;min-width:0">
+          <b id="vinculo-status-titulo" style="font-size:14px">Atualização de segurança pendente</b>
+          <p id="vinculo-status-texto" style="margin:4px 0 9px;font-size:12.8px;line-height:1.45">Este aparelho ainda precisa ser autorizado pelo João.</p>
+          <button onclick="refresh(false)" style="background:#6E5310;color:#fff;border:none;border-radius:9px;padding:8px 12px;font-weight:800;font-size:12px">Verificar autorização</button>
+        </div>
+      </div>
+    </div>
     <div class="aviso" id="aviso-box" style="display:none">
       <b>⚡ Situação atual</b>
       <p id="aviso-txt"></p>
@@ -887,7 +897,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-09-24-3';
+const VERSAO='2026-09-24-4';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -1394,7 +1404,28 @@ function irMarcarReposicao(){
 }
 
 /* ================= RENDER ================= */
+function renderVinculoStatus(){
+  const box=document.getElementById('vinculo-status-box');if(!box)return;
+  if(VINCULO_ESTADO==='pendente'){
+    box.style.display='block';
+    const t=document.getElementById('vinculo-status-titulo');
+    const p=document.getElementById('vinculo-status-texto');
+    if(t)t.textContent='Atualização de segurança pendente';
+    if(p)p.textContent='Este aparelho já pediu autorização. Aguarde o João aprovar. Durante a transição, você ainda pode usar o app normalmente.';
+    return;
+  }
+  if(VINCULO_ESTADO==='aprovado-sem-dados'){
+    box.style.display='block';
+    const t=document.getElementById('vinculo-status-titulo');
+    const p=document.getElementById('vinculo-status-texto');
+    if(t)t.textContent='Aparelho autorizado';
+    if(p)p.textContent='A autorização foi concluída. Toque em “Verificar autorização” para carregar seus dados seguros.';
+    return;
+  }
+  box.style.display='none';
+}
 function render(){
+  renderVinculoStatus();
   document.getElementById('hello').textContent='Fala, '+EU.nome.split(' ')[0]+'!';
   /* Com quem ele treina. Parece detalhe, mas numa academia com mais de um
      professor é a primeira coisa que o aluno quer confirmar. */
@@ -2975,7 +3006,7 @@ setInterval(()=>{if(!document.hidden)checarLiberacao();},60000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-09-24-3').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-09-24-4').catch(function(){});});}
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
 (function esperarEIniciar(t){
