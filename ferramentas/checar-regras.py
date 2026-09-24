@@ -128,7 +128,8 @@ def main():
     # ---- Gestão: tudo que app-gestao/index.html realmente faz
     for cam in ['jvtenis-gestao-v1','jvtenis-app-aluno','jvtenis-agendamentos','precos_publicos',
                 'v2/alunos','v2/movs','v2/presencas','v2/lancamentos','v2/agenda','v2/config',
-                'v2/carimbos/savedAt','arquivo/2024/movs','backups/2026-08-11-12','backups']:
+                'v2/carimbos/savedAt','arquivo/2024/movs','backups/2026-08-11-12','backups',
+                'backups_dia/2026-09-24','backups_dia_idx/2026-09-24','backups_dia_idx']:
         casos.append(('Gestão (João logado)', 'grava '+cam, COACH, J+cam, 'write', True, True))
         casos.append(('Gestão (João logado)', 'lê '+cam,     COACH, J+cam, 'read',  True, True))
     for f in FILAS + ['fila_cadastros']:
@@ -163,6 +164,8 @@ def main():
     casos.append(('Aluno NÃO pode', 'gravar na publicação',    ALUNO, J+'jvtenis-app-aluno', 'write', False, True))
     casos.append(('Aluno NÃO pode', 'gravar em v2',            ALUNO, J+'v2/alunos', 'write', False, True))
     casos.append(('Aluno NÃO pode', 'ler os backups',          ALUNO, J+'backups', 'read',  False, True))
+    casos.append(('Aluno NÃO pode', 'ler as cópias do dia',    ALUNO, J+'backups_dia', 'read', False, True))
+    casos.append(('Aluno NÃO pode', 'ler o índice das cópias', ALUNO, J+'backups_dia_idx', 'read', False, True))
     casos.append(('Aluno NÃO pode', 'mexer no carimbo de versão',ALUNO, J+'versao_app', 'write', False, True))
 
     casos.append(('Outro aluno NÃO pode', 'ler o espaço do primeiro',  ALUNO2, J+'aluno-estado/anon-abc123', 'read',  False, True))
@@ -176,7 +179,8 @@ def main():
     # Isto é o que de fato separa a academia do professor. A tela do app pode
     # esconder botões; só a regra impede que o app dele leia o faturamento.
     for cam in ['banco','v2/alunos','v2/movs','v2/presencas','v2/lancamentos',
-                'v2/agenda','v2/config','arquivo/2026/movs','backups/2026-09-05-10']:
+                'v2/agenda','v2/config','arquivo/2026/movs','backups/2026-09-05-10',
+                'backups_dia/2026-09-24','backups_dia_idx']:
         casos.append(('Professor no espaço dele', 'grava '+cam, PROF, J+'prof/prof-uid-111/'+cam, 'write', True, True))
         casos.append(('Professor no espaço dele', 'lê '+cam,     PROF, J+'prof/prof-uid-111/'+cam, 'read',  True, True))
     casos.append(('Professor no espaço dele', 'lê o próprio cadastro', PROF, J+'professores/prof-uid-111', 'read', True, True))
@@ -190,7 +194,8 @@ def main():
     # app do professor fica preso em "salvo só no aparelho" — que é como o
     # bloqueio aparece na tela, sem dizer o motivo.
     for cam in ['v2/carimbos/savedAt','v2/alunos/a1','v2/movs/m1','v2/presencas/p1',
-                'v2/lancamentos/l1','v2/agenda','v2/config','banco','backups/2026-09-06-14']:
+                'v2/lancamentos/l1','v2/agenda','v2/config','banco','backups/2026-09-06-14',
+                'backups_dia/2026-09-24','backups_dia_idx/2026-09-24']:
         casos.append(('Professor grava (caminho do persist)', cam, PROF, J+'prof/prof-uid-111/'+cam, 'write', True, True))
     casos.append(('Professor grava (caminho do persist)', 'mapa_quadra (o mapa da quadra)', PROF, J+'mapa_quadra/prof-uid-111', 'write', True, True))
     casos.append(('Professor no espaço dele', 'lê os preços públicos', PROF, J+'precos_publicos', 'read', True, True))
@@ -202,6 +207,8 @@ def main():
         casos.append(('Professor NÃO pode', 'ler '+cam+' da academia', PROF, J+cam, 'read', False, True))
         casos.append(('Professor NÃO pode', 'gravar '+cam+' da academia', PROF, J+cam, 'write', False, True))
     casos.append(('Professor NÃO pode', 'ler os backups da academia',PROF, J+'backups', 'read',  False, True))
+    casos.append(('Professor NÃO pode', 'ler as cópias do dia da academia',PROF, J+'backups_dia', 'read', False, True))
+    casos.append(('Professor NÃO pode', 'apagar as cópias do dia da academia',PROF, J+'backups_dia/2026-09-24', 'write', False, True))
     casos.append(('Professor NÃO pode', 'ler o arquivo da academia', PROF, J+'arquivo', 'read',  False, True))
     casos.append(('Professor NÃO pode', 'gravar na publicação',      PROF, J+'jvtenis-app-aluno', 'write', False, True))
     casos.append(('Professor NÃO pode', 'ler as filas dos alunos',   PROF, J+'fila_pedidos', 'read', False, True))
@@ -252,6 +259,7 @@ def main():
     casos.append(('Estranho NÃO pode', 'ler o banco da gestão',   NINGUEM, J+'jvtenis-gestao-v1', 'read', False, True))
     casos.append(('Estranho NÃO pode', 'ler os telefones do site',NINGUEM, J+'fila_cadastros', 'read', False, True))
     casos.append(('Estranho NÃO pode', 'apagar os backups',       NINGUEM, J+'backups', 'write', False, True))
+    casos.append(('Estranho NÃO pode', 'apagar as cópias do dia', NINGUEM, J+'backups_dia', 'write', False, True))
     casos.append(('Estranho NÃO pode', 'apagar tudo',             NINGUEM, 'jvtenis', 'write', False, True))
     casos.append(('Estranho NÃO pode', 'usar o banco de depósito',NINGUEM, 'lixo/arquivo', 'write', False, True))
     casos.append(('Estranho NÃO pode', 'ler pedido de um aluno',  NINGUEM, J+'aluno-estado/anon-abc123', 'read', False, True))

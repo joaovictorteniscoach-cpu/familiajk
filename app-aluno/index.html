@@ -883,7 +883,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-09-23-4';
+const VERSAO='2026-09-24-1';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -1030,6 +1030,19 @@ async function init(){
 /* Este endereço está atualizado? O aluno pode ter o ícone antigo no celular
    depois de o endereço mudar; sem aviso ele usaria uma cópia velha sem saber.
    Só lê — nunca grava, nunca bloqueia, e nunca atrasa a abertura. */
+/* Comparar "2026-09-23-4" com "2026-09-23-10" como TEXTO dá errado: o "4"
+   vem depois do "1", e o app velho se achava mais novo que o atual — o aviso
+   nunca aparecia justamente quando mais precisava. Compara número a número. */
+function versaoPartes(v){
+  const m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})(?:-(\d+))?$/);
+  return m?[+m[1],+m[2],+m[3],+(m[4]||0)]:null;
+}
+function versaoCmp(a,b){
+  const x=versaoPartes(a),y=versaoPartes(b);
+  if(!x||!y)return String(a||'')<String(b||'')?-1:(String(a||'')>String(b||'')?1:0);
+  for(let i=0;i<4;i++){if(x[i]!==y[i])return x[i]<y[i]?-1:1;}
+  return 0;
+}
 async function conferirVersao(){
   if(!hasCloud())return;
   try{
@@ -1037,11 +1050,50 @@ async function conferirVersao(){
     const snap=await comPrazo(window.fbDB.ref('jvtenis/versao_app').get(),PRAZO_NUVEM,MARCA);
     if(snap===MARCA||!snap.exists())return;
     const naNuvem=String(snap.val()||'');
-    if(!naNuvem||VERSAO>=naNuvem)return;
+    if(!naNuvem||versaoCmp(VERSAO,naNuvem)>=0)return;
+    avisoVersaoVelha(naNuvem);
+  }catch(e){/* aviso nunca pode atrapalhar */}
+}
+/* O aviso de versão velha, GRANDE. A faixa fininha de antes passava batido —
+   e quem ficava na versão velha via horário antigo e achava que era o certo.
+   Cobre a tela, diz o que fazer em uma frase e tem um botão só. "Agora não"
+   existe porque aviso que não deixa usar vira motivo para desinstalar; ele
+   volta na próxima abertura. */
+function avisoVersaoVelha(naNuvem){
+  try{if(sessionStorage.getItem('jvt-aluno-velha-ok')==='1')return;}catch(e){}
+  if(document.getElementById('ov-versao-velha'))return;
+  const d=document.createElement('div');
+  d.id='ov-versao-velha';
+  d.style.cssText='position:fixed;inset:0;z-index:99990;background:rgba(14,12,8,.92);display:flex;'
+    +'align-items:center;justify-content:center;padding:22px;font-family:system-ui,-apple-system,sans-serif';
+  d.innerHTML='<div style="background:#FAF7F2;color:#2A2016;border-radius:18px;max-width:360px;width:100%;'
+    +'padding:26px 22px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.5)">'
+    +'<div style="font-size:44px;line-height:1">&#9888;&#65039;</div>'
+    +'<h2 style="font-size:21px;margin:12px 0 6px;color:#8A2C18">Seu app está desatualizado</h2>'
+    +'<p style="font-size:14.5px;line-height:1.5;margin:0 0 6px">Os horários e o saldo que aparecem aqui '
+    +'<b>podem estar errados</b>. Toque no botão para abrir a versão certa.</p>'
+    +'<p style="font-size:12px;color:#6B5E4A;margin:0 0 18px">Esta: '+escHtml(VERSAO)+' · atual: '+escHtml(naNuvem)+'</p>'
+    +'<button id="bvv-ok" style="width:100%;padding:15px;border:0;border-radius:12px;background:#C9472B;'
+    +'color:#fff;font-weight:800;font-size:16px">Atualizar agora</button>'
+    +'<button id="bvv-depois" style="width:100%;margin-top:10px;padding:11px;border:0;background:none;'
+    +'color:#6B5E4A;font-size:13px;text-decoration:underline">Agora não</button>'
+    +'<p style="font-size:11.5px;color:#6B5E4A;margin:14px 0 0;line-height:1.45">Se continuar aparecendo: '
+    +'apague o atalho da tela de início e abra de novo pelo link que o João enviou.</p></div>';
+  document.body.appendChild(d);
+  document.getElementById('bvv-ok').onclick=function(){
+    /* No endereço certo, recarregar busca a versão nova (o service worker
+       pede à rede primeiro). No endereço errado, leva ao certo. */
+    let aqui='';try{aqui=location.href||'';}catch(e){}
+    if(aqui.indexOf(ENDERECO_ATUAL)===0)location.reload();
+    else location.href=ENDERECO_ATUAL;
+  };
+  document.getElementById('bvv-depois').onclick=function(){
+    try{sessionStorage.setItem('jvt-aluno-velha-ok','1');}catch(e){}
+    d.remove();
     const bar=document.getElementById('barra-versao'), l=document.getElementById('bv-link');
     if(l){l.textContent='Toque aqui para abrir o atual';l.href=ENDERECO_ATUAL;}
-    if(bar)bar.style.display='block';
-  }catch(e){/* aviso nunca pode atrapalhar */}
+    if(bar)bar.style.display='block';        // a faixa fica, para não esquecer
+  };
 }
 function authUid(){
   return (window.AUTH_USER&&window.AUTH_USER.uid)||
