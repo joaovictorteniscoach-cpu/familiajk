@@ -975,12 +975,13 @@ table.tbl.livre td:last-child{width:42%}
 
 <div class="overlay" id="impModal">
   <div class="modal" style="max-width:760px">
-    <h3>Importar planilha da XP</h3>
+    <h3>Importar planilha da carteira</h3>
     <p id="imp-info">—</p>
     <div class="imp-opts">
       <div class="imp-grp"><span class="imp-lbl">Destino</span>
         <label><input type="radio" name="imp-target" value="nac" checked onchange="renderImpPreview()"> Nacional XP (R$)</label>
         <label><input type="radio" name="imp-target" value="glob" onchange="renderImpPreview()"> Global XP (US$)</label>
+        <label><input type="radio" name="imp-target" value="bin" onchange="renderImpPreview()"> Binance (R$)</label>
       </div>
       <div class="imp-grp"><span class="imp-lbl">Modo</span>
         <label><input type="radio" name="imp-mode" value="add" checked> Atualizar — casa os nomes iguais e acrescenta os novos</label>
@@ -1106,7 +1107,7 @@ const CAT_KW=[
    "ensino de esportes","escola de esportes","nutricion","nutri ","fonoaudiolog","quiropraxia","acupuntura",
    "fisio "]],
  ["Educação",["escola","faculdade","universidade","curso","udemy","alura","colegio","material escolar","livraria","kindle","descomplica","coursera","duolingo","kumon","wizard","ccaa","fisk","cultura inglesa"]],
- ["Assinaturas",["netflix","spotify","disney","hbo","max ","prime video","amazon prime","paramount","globoplay","youtube premium","apple.com","apple ","icloud","google ","microsoft","office","adobe","chatgpt","openai","canva","melimax","melimais","meli mais","netlify","vercel","github","cloudflare","dropbox","deezer","tidal","office 365","microsoft 365"]],
+ ["Assinaturas",["netflix","spotify","disney","hbo","max ","prime video","amazon prime","paramount","globoplay","youtube premium","apple.com","apple ","icloud","google ","microsoft","office","adobe","chatgpt","openai","canva","melimax","melimais","meli mais","netlify","vercel","github","cloudflare","lovable","dropbox","deezer","tidal","office 365","microsoft 365"]],
  ["Lazer",["cinema","steam","playstation","xbox","nintendo","viagem","hotel","airbnb","booking","decolar","latam","gol ","azul ","ingresso","show ","evento","parque","clube","cinemark","cinepolis","uci ","sympla","eventim","123 milhas","hoteis","pousada","azul linhas","gol linhas","netshoes ingresso"]],
  ["Compras",["havan","amazon","mercado livre","mercadolivre","magazine","magalu","americanas","shopee","aliexpress","shein","renner","riachuelo","c&a","zara","centauro","nike","adidas","shopping","loja","marisa","leroy","kabum","casas bahia","decathlon","netshoes","dafiti","cea","pernambucanas","telha norte","ponto frio","pichau","temu"]],
  ["Empresa",["contador","contabilidade","honorarios contab","simples nacional","das mei","mei ","alvara","junta comercial","material empresa","aluguel quadra","aluguel de quadra","cnpj","nota fiscal","escritorio contab","sebrae","material esportivo",
@@ -4059,7 +4060,11 @@ function ativoDoAlvo(alvo){
 const ATIVO_GENERICO=new Set(['fundo','fundos','fic','fim','firf','fif','rf','ref','di','cp','rl',
   'multi','multimercado','invest','investimento','investimentos','renda','fixa','acoes','etf',
   'classe','cotas','credito','privado','longo','prazo','curto','simples','plus','master','xp',
-  'itau','bb','trend','global','nacional','brasil','br','fia','fidc','lp','cnpj','total','valor']);
+  'itau','bb','trend','global','nacional','brasil','br','fia','fidc','lp','cnpj','total','valor',
+  /* palavras que quase toda cripto e todo ETF carregam: "Spell Token" e
+     "Polygon Ecosystem Token" casavam por "token", e uma sobrescrevia a outra */
+  'token','tokens','coin','moeda','crypto','cripto','network','protocol','chain','ecosystem',
+  'trust','index','funds','fund','shares','ltd','inc','ltda','series','tech','strategic']);
 function palavrasAtivo(nome){
   return limpaDesc(nome).split(' ').filter(w=>w.length>=3&&!ATIVO_GENERICO.has(w)&&!/^\d+$/.test(w));
 }
@@ -4681,10 +4686,11 @@ function refreshInv(){refreshCarteira();drawInvPainel();save();}
 let impRows=[],impHeaderIdx=0,impMap={};
 const IMP_FIELDS={
   nac:[['','Ignorar'],['nome','Nome do ativo'],['classe','Classe'],['valor','Valor (R$)'],['aplicado','Aplicado (R$)']],
+  bin:[['','Ignorar'],['nome','Moeda'],['classe','Classe'],['valor','Valor (R$)'],['aplicado','Aplicado (R$)']],
   glob:[['','Ignorar'],['ticker','Ticker'],['nome','Nome'],['classe','Classe'],['qtd','Quantidade'],['preco','Preço atual (US$)'],['aplicado','Aplicado (US$)']]
 };
 const IMP_KEYS={
-  nome:['produto','ativo','nome','papel','descricao','fundo','especificacao','instrumento'],
+  nome:['produto','ativo','nome','papel','descricao','fundo','especificacao','instrumento','moeda','cripto'],
   ticker:['ticker','codigo','simbolo','papel'],
   classe:['classe','categoria','tipo','segmento'],
   valor:['valor bruto','valor liquido','valor atual','posicao','saldo','financeiro','valor','bruto','total'],
@@ -4793,39 +4799,42 @@ function applyImport(){
     if(/^(total|subtotal|saldo|patrimonio|posicao total|consolidado|resumo)/.test(norm(rot)))return;
     const cv=String(cell(r,iCl));
     const classe=CLASSES.find(c=>norm(c)===norm(cv))||guessClasse(cv||rot);
-    if(target==='nac'){
+    if(target==='nac'||target==='bin'){
       const valor=num(cell(r,iVal));
       if(!valor&&iVal>=0)return;
-      itens.push({nome:rot,classe,valor,apl:iApl>=0?num(cell(r,iApl)):null});
+      itens.push({nome:rot,classe:(target==='bin'&&!cv)?'Cripto':classe,
+                  valor,apl:iApl>=0?num(cell(r,iApl)):null});
     }else{
       itens.push({tk:(tk||rot).toUpperCase(),nome:nome||tk||rot,classe,
         qtd:num(cell(r,iQtd)),pm:0,pa:num(cell(r,iPre)),apl:iApl>=0?num(cell(r,iApl)):0});
     }
   });
   if(!itens.length){alert('Não encontrei ativos válidos. Confira se a coluna do nome está marcada como "Nome do ativo".');return;}
-  const arr=target==='nac'?(D.invest.nacional||[]):(D.invest.global||[]);
+  const arr=target==='nac'?(D.invest.nacional||[]):(target==='bin'?(D.invest.binance||[]):(D.invest.global||[]));
   /* "Atualizar" casa cada linha com o ativo que já existe e só acrescenta o
      que é novo de verdade. Antes esse modo empilhava uma segunda cópia de
      cada ativo, e o patrimônio dobrava a cada planilha importada. */
   let casa=0;
+  const nomeConta=target==='nac'?'Nacional':(target==='bin'?'Binance':'Global');
   if(mode!=='replace')itens.forEach(it=>{if(acharNaConta(arr,it.nome,it.tk)>=0)casa++;});
   const aviso=mode==='replace'
     ? (itens.length+' ativo(s) vão entrar no LUGAR da lista atual da carteira '
-       +(target==='nac'?'Nacional':'Global')+' — os '+arr.length+' de hoje serão apagados. Continuar?')
+       +nomeConta+' — os '+arr.length+' de hoje serão apagados. Continuar?')
     : (casa+' ativo(s) já existem e vão receber o valor novo; '+(itens.length-casa)
-       +' serão acrescentados na carteira '+(target==='nac'?'Nacional':'Global')+'. Continuar?');
+       +' serão acrescentados na carteira '+nomeConta+'. Continuar?');
   if(!confirm(aviso))return;
   let atualizados=0,novos=0;
   if(mode==='replace'){
     if(target==='nac'){D.invest.nacional=itens.slice();renderNac();}
+    else if(target==='bin'){D.invest.binance=itens.slice();renderBin();}
     else{D.invest.global=itens.slice();renderGlob();}
     novos=itens.length;
   }else{
     itens.forEach(it=>{
-      const i=acharNaConta(arr,it.nome,it.tk);
+      const i=acharNaConta(arr,it.nome,it.tk||'');
       if(i<0){arr.push(it);novos++;return;}
       const x=arr[i];
-      if(target==='nac'){x.valor=it.valor;if(it.apl!=null&&it.apl!==0)x.apl=it.apl;}
+      if(target==='nac'||target==='bin'){x.valor=it.valor;if(it.apl!=null&&it.apl!==0)x.apl=it.apl;}
       else{
         if(it.qtd)x.qtd=it.qtd;
         if(it.pa)x.pa=it.pa;
@@ -4834,7 +4843,7 @@ function applyImport(){
       }
       atualizados++;
     });
-    if(target==='nac')renderNac();else renderGlob();
+    if(target==='nac')renderNac();else if(target==='bin')renderBin();else renderGlob();
   }
   refreshInv();closeImport();
   const reg=registrarPatrimonio();
