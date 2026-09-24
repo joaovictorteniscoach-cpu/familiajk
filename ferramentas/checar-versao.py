@@ -163,6 +163,22 @@ def main():
     else:
         print('  ✅ Gestão modular: ESPERADA e VERSAO = %s' % mv.group(1))
 
+    # O PWA também precisa trocar o service worker quando a versão muda.
+    # Sem isso, o ícone instalado na tela inicial pode continuar servindo a
+    # reserva antiga mesmo depois do deploy novo.
+    for pasta, sw_nome in [('app-gestao','sw-gestao.js'), ('app-aluno','sw-aluno.js')]:
+        html = open(os.path.join(RAIZ, pasta, 'index.html'), encoding='utf-8', errors='replace').read()
+        app_txt = texto_do_app(os.path.join(pasta, 'index.html'))
+        ma = re.search(r"^const VERSAO\s*=\s*'([^']+)'", app_txt, re.M)
+        reg = re.search(r"serviceWorker\.register\('"+re.escape(sw_nome)+r"\?v=([^']+)'\)", html)
+        sw = open(os.path.join(RAIZ, pasta, sw_nome), encoding='utf-8', errors='replace').read()
+        msw = re.search(r"^const V\s*=\s*'([^']+)'", sw, re.M)
+        if not ma or not reg or not msw or ma.group(1) != reg.group(1) or ma.group(1) != msw.group(1):
+            print('  ❌ %-24s service worker fora da versão do app' % pasta)
+            falhas += 1
+        else:
+            print('  ✅ %-24s service worker %s' % (pasta, ma.group(1)))
+
     print('\n%d app(s) · %d falha(s)' % (len(APPS), falhas))
     return 1 if falhas else 0
 
