@@ -65,6 +65,16 @@ const BASES = {
    mais as peças do fundo se espremem uma na outra. Estes números são o meio
    termo: dá para ver a cena e ainda dá para separar duas pessoas no fundo. */
 const CAMERAS = {
+  // A folha de treino impressa: a quadra INTEIRA, vista do alto e de trás do
+  // fundo, sempre do mesmo jeito — como uma foto de drone. Todas as folhas
+  // com a mesma câmera é o que faz o caderno parecer uma coleção, e não 132
+  // desenhos cada um enquadrado de um jeito.
+  // Números ACHADOS, não escolhidos: busca em grade pela câmera cuja quadra
+  // projetada tem as três medidas da folha de referência — o fundo de lá com
+  // 0,66 da largura do fundo de cá, a quadra com 1,035 vez essa largura de
+  // altura na imagem, e a rede a 40% do caminho entre os fundos. Deu
+  // 0,661 · 1,034 · 0,398: a "vista de drone" da referência, alta e de trás.
+  folha:   { y: 36.0, alt: 25.0, alvo: 8.0 },
   inteira: { y: 24.0, alt: 9.6, alvo: 0.0 },
   meia:    { y: 20.0, alt: 7.4, alvo: 3.0 },
   mini:    { y: 19.0, alt: 7.0, alvo: 1.0 },
@@ -117,13 +127,21 @@ const FOTOS = {};
    acima do chão (na pose de espera a cabeça baixa; com a raquete no alto ela
    passa de dois metros), `pe` é onde o pé cai dentro da imagem e `prop` é a
    proporção do arquivo. Errar `altura` faz a pessoa flutuar ou afundar. */
+/* Quem não pede pose aparece EM ESPERA — de costas do lado de cá, de frente
+   além da rede, com a raquete à frente do corpo, como o jogador do outro
+   lado na folha de referência. As duas são fotos da JV: a de frente é a
+   mesma espera, virada pelo ferramentas/virar-de-frente.py (não existe foto
+   dele de frente fora do saque). Antes, o padrão era uma figura 3D tirada da
+   internet fazendo backhand de duas mãos: além de não ser da JV, punha um
+   backhand em todo jogador do outro lado, qualquer que fosse o golpe. A
+   espera é neutra — não tem lado para errar. */
 const RECORTES = {
-  aluno:  { arq:'jog-aluno.webp',  altura:1.85, pe:1.0, prop:0.62, olha:'dir',
-            costas:{ arq:'jog-aluno-costas.webp',  altura:1.85, pe:1.0, prop:0.62, olha:'dir' } },
-  prof:   { arq:'jog-prof.webp',   altura:1.85, pe:1.0, prop:0.62, olha:'dir',
-            costas:{ arq:'jog-prof-costas.webp',   altura:1.85, pe:1.0, prop:0.62, olha:'dir' } },
-  colega: { arq:'jog-colega.webp', altura:1.85, pe:1.0, prop:0.62, olha:'dir',
-            costas:{ arq:'jog-colega-costas.webp', altura:1.85, pe:1.0, prop:0.62, olha:'dir' } },
+  aluno:  { altura:1.70, pe:1.0, prop:0.641, arq:'jv-espera-frente-aluno.webp',
+            costas:{ altura:1.70, pe:1.0, prop:0.641, arq:'jv-espera-aluno.webp' } },
+  prof:   { altura:1.70, pe:1.0, prop:0.641, arq:'jv-espera-frente-prof.webp',
+            costas:{ altura:1.70, pe:1.0, prop:0.641, arq:'jv-espera-prof.webp' } },
+  colega: { altura:1.70, pe:1.0, prop:0.641, arq:'jv-espera-frente-colega.webp',
+            costas:{ altura:1.70, pe:1.0, prop:0.641, arq:'jv-espera-colega.webp' } },
 
   /* POSES COM NOME — um exercício pede no quinto campo do elemento:
      ['aluno', x, y, 'rótulo', 'espera'].
@@ -132,6 +150,11 @@ const RECORTES = {
      escolhe o arquivo pela cor da camisa). Como são de costas, só valem para
      quem está do lado de cá: pedidas para alguém além da rede, `costasSo`
      manda voltar para a foto de frente do papel.
+
+     `lado:'golpe'` + `raqueta`: nas poses de golpe, a raquete vai para o lado
+     da IMAGEM em que a bola chega nele (ver ladoDoGolpe) — do lado de cá, à
+     direita é forehand, à esquerda é backhand. `raqueta` diz de que lado ela
+     está NA FOTO; o desenho espelha quando o lado pedido é o outro.
 
      `altura` é a altura real do TOPO DA IMAGEM acima do chão — na pose de
      espera a cabeça baixa (1,70 m) e com a raquete no alto passa de dois
@@ -200,6 +223,11 @@ let MINI = false;
 let CAM = CAMERAS.meia;      // câmera deste recorte
 let VISTA = { x:0, y:0, w:100, h:100 };   // viewBox, em unidades de tela
 let PROP = 0;            // proporcao pedida (largura/altura); 0 = a do padrao
+/* Na folha impressa a quadra inteira cabe num quadrado de 12 cm, e um jogador
+   em escala real vira um risco de 5 mm. Folha de treino não é planta baixa:
+   o boneco sai em ESCALA DE LEITURA, maior que o real, como em toda folha de
+   treino impressa. Só a folha usa isto; a tela continua em escala real. */
+let ESC_FIG = 1;
 let ROTULOS = [];            // rótulos já colocados, para não empilhar
 let PECAS = [];              // as peças deste desenho, para um jogador poder
                              // olhar as outras e saber para onde vai bater
@@ -237,6 +265,33 @@ function escalaEm(p){ return DIST / p.z; }
    largura. Então mede-se onde as peças estão, na tela, e aperta-se nelas —
    com um mínimo de quadra em volta para o desenho dizer ONDE aquilo acontece.
    A câmera não muda; muda só o quanto dela se mostra. */
+/* A moldura da folha impressa: a quadra inteira de fundo a fundo, com uma
+   sobra de saibro em volta e altura para o jogador do fundo caber de pé.
+   Não olha para as peças — é isso que faz toda folha sair igual. */
+function quadraInteira(el){
+  // Margens medidas na folha de referência: o fundo de cá a 89% da altura,
+  // o de lá a 9%, e os cantos do fundo de cá a 8% das bordas laterais.
+  var nE = proj(-QD.duplaX,  QD.fundoY, 0), nD = proj(QD.duplaX,  QD.fundoY, 0);
+  var fE = proj(-QD.duplaX, -QD.fundoY, 0);
+  var h = (nE.y - fE.y) / 0.80, w = (nD.x - nE.x) / 0.84;
+  var y1 = fE.y - 0.09 * h, x1 = nE.x - 0.08 * w, y2 = y1 + h, x2 = x1 + w;
+  // Quem está de pé no fundo de lá tem a cabeça ACIMA da moldura da
+  // referência (lá o jogador do fundo está na rede). A moldura abre o que
+  // precisar para ninguém sair cortado — e só isso.
+  (el || []).forEach(function(e){
+    if (e[0] !== 'aluno' && e[0] !== 'prof' && e[0] !== 'colega') return;
+    var pe = proj(e[1], e[2], 0), ca = proj(e[1], e[2], 1.9);
+    var topo = pe.y - (pe.y - ca.y) * ESC_FIG * 1.12;
+    y1 = Math.min(y1, topo - h * 0.015);
+    y2 = Math.max(y2, pe.y + h * 0.03);
+  });
+  w = x2 - x1; h = y2 - y1;
+  var alvo = PROP || (w / h);
+  if (w / h < alvo) { var fa = (h * alvo - w) / 2; x1 -= fa; w = h * alvo; }
+  else { var fb = (w / alvo - h) / 2; y1 -= fb; h = w / alvo; }
+  return { x:x1, y:y1, w:w, h:h };
+}
+
 function enquadrar(base, el){
   var b = BASES[base] || BASES.meia;
   var x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity, achou = false;
@@ -485,6 +540,25 @@ function espelharEm(cx){
 /* Quando existe recorte de gente de verdade, é ele que entra. O resto do
    desenho não muda: a pessoa é posicionada e encolhida pela mesma projeção
    que posiciona o boneco. */
+/* De que lado da imagem a raquete fica. O que manda é DE QUE LADO A BOLA
+   CHEGA nele: bola caindo à direita de quem bate é golpe do lado direito da
+   imagem — forehand para quem está de costas, e o forehand à esquerda de
+   quem olha para quem está de frente, que é a direita dele. Olhar só onde o
+   jogador está parado errava no aluno que CORRE até a bola (D5: começa à
+   esquerda e vai pegar a bola à direita). A posição dele só decide quando a
+   bola vem reta para o corpo. Bola que SAI dele não conta: essa ele já bateu. */
+function ladoDoGolpe(x, y){
+  var dx = null, dMin = 5.5 * 5.5;
+  PECAS.forEach(function(e){
+    if (e[0] !== 'bola') return;
+    if ((e[1] - x) * (e[1] - x) + (e[2] - y) * (e[2] - y) < 1.6 * 1.6) return;
+    var d = (e[3] - x) * (e[3] - x) + (e[4] - y) * (e[4] - y);
+    if (d < dMin) { dMin = d; dx = e[3] - x; }
+  });
+  if (dx !== null && Math.abs(dx) >= 0.8) return dx > 0;
+  return x >= 0;
+}
+
 function qRecorte(x, y, rot, tipo, nome){
   var r = RECORTES[nome] || RECORTES[tipo];
   if (!r) return null;
@@ -499,7 +573,7 @@ function qRecorte(x, y, rot, tipo, nome){
   if (y > 0 && r.costas) r = r.costas;
   var arq = r.papel ? (r.papel[tipo] || r.papel.aluno) : r.arq;
   var pe = proj(x, y, 0), topo = proj(x, y, r.altura || 1.78);
-  var h = pe.y - topo.y;
+  var h = (pe.y - topo.y) * ESC_FIG;
   if (h < 3) h = 3;
   var hImg = h / (r.pe == null ? 1 : r.pe);      // a imagem é mais alta que a pessoa
   var l = hImg * (r.prop || 0.42);
@@ -516,7 +590,7 @@ function qRecorte(x, y, rot, tipo, nome){
        virava um backhand: o aluno no canto direito batendo para a esquerda
        aparecia com a raquete do lado esquerdo. `raqueta` diz de que lado ela
        está NA FOTO; o desenho espelha quando o lado pedido é o outro. */
-    var querDir = (r.lado === 'dir') ? true : (r.lado === 'esq') ? false : (x >= 0);
+    var querDir = (r.lado === 'dir') ? true : (r.lado === 'esq') ? false : ladoDoGolpe(x, y);
     espelha = querDir === (r.raqueta === 'esq');
   } else {
     var alvo = paraOndeOlha(x, y);
@@ -540,7 +614,7 @@ function qJogador(x, y, rot, tipo, nome){
   var short = escurecer(esc0, 0.86);
   var altura = 1.78;
   var pe = proj(x, y, 0), cabeca = proj(x, y, altura);
-  var h = pe.y - cabeca.y;
+  var h = (pe.y - cabeca.y) * ESC_FIG;
   if (h < 3) h = 3;
   var l = h * 0.38;
   var cx = (pe.x + cabeca.x) / 2, base = pe.y;
@@ -779,6 +853,7 @@ function svgQuadra(fig, op){
   op = op || {};
   MINI = !!op.mini;
   PROP = op.prop || 0;
+  ESC_FIG = op.escalaFig || 1;
   var base = fig.base || 'meia';
   var foto = FOTOS[base];
   if (foto) {
@@ -787,11 +862,11 @@ function svgQuadra(fig, op){
     DIST = foto.cam.dist;
     CENTRO = { x:foto.cam.cx, y:foto.cam.cy };
   } else {
-    CAM = CAMERAS[base] || CAMERAS.meia;
+    CAM = (op.inteira ? CAMERAS.folha : CAMERAS[base]) || CAMERAS.meia;
     DIST = 100;
     CENTRO = { x:0, y:0 };
   }
-  VISTA = enquadrar(base, fig.el);
+  VISTA = op.inteira && !foto ? quadraInteira(fig.el) : enquadrar(base, fig.el);
   if (foto) {
     // a moldura não pode sair da foto: fora dela não há pixel nenhum
     if (VISTA.w > foto.larg) { VISTA.x = 0; VISTA.w = foto.larg; }

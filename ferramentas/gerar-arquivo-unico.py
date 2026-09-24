@@ -48,6 +48,9 @@ html = html.replace('href="jv-icone-exercicios.png"', 'href="%s"' % dataUri('jv-
 html = html.replace('href="jv-icone-exercicios-180.png"', 'href="%s"' % dataUri('jv-icone-exercicios-180.png'), 1)
 
 # 3. tira o que depende de arquivo ao lado (so' daria 404 nesta versao)
+# a tela de abertura do iPhone e' uma imagem por tamanho de tela: embutir as
+# sete pesaria mais que o app inteiro. Sem elas, o iPhone abre em fundo liso.
+html = re.sub(r'<link rel="apple-touch-startup-image"[^>]*>\n?', '', html)
 html = html.replace('<link rel="manifest" href="manifest-exercicios.webmanifest">\n', '', 1)
 html = re.sub(
     r"  if \('serviceWorker' in navigator\) \{\n.*?\n  \}\n",
@@ -82,6 +85,18 @@ for nome in fotos:
     embutidas.append(nome)
 if embutidas:
     print('fotos embutidas: %s' % ', '.join(embutidas))
+
+# 3c. a letra da folha (Barlow Condensed) tambem entra embutida: sem ela a
+#     folha A4 sai na fonte do sistema, mais larga, e o rodape cai para fora da
+#     pagina. A licenca (SIL OFL 1.1) permite embutir; o aviso vai junto.
+fontes = re.findall(r'url\((fonte-[A-Za-z0-9-]+\.woff2)\)', html)
+for nome in sorted(set(fontes)):
+    html = html.replace('url(%s)' % nome, 'url(%s)' % dataUri(nome, 'font/woff2'))
+if fontes:
+    html = html.replace('<style>', '<style>\n/* Fonte Barlow Condensed, Copyright 2017 The Barlow Project Authors\n'
+                        '   (https://github.com/jpt/barlow), sob a SIL Open Font License 1.1\n'
+                        '   (https://openfontlicense.org). */', 1)
+    print('fontes embutidas: %s' % ', '.join(sorted(set(fontes))))
 
 # 4. deixa registrado no proprio arquivo o que ele e'
 html = html.replace('<meta name="robots" content="noindex,nofollow">',

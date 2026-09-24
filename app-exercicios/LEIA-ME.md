@@ -44,7 +44,7 @@ conteúdo, marcados como `apostila`.
 
 ### Leitura de outros métodos — 16 exercícios acrescentados
 
-O banco tinha 116 exercícios e tem **132**. Os 16 novos vieram de uma leitura do
+O banco tinha 116 exercícios e passou a **132**. Os 16 novos vieram de uma leitura do
 que os outros programas de formação recomendam, com um filtro duro: **só entrou
 o que não existia aqui** e o que aparece repetidamente em mais de um método.
 Cada um foi reescrito na linguagem da metodologia — níveis da Trilha, blocos da
@@ -76,6 +76,29 @@ O que **não** entrou, e por quê: *king of the court* (já é o **T05**), pega-
 (**D5**), alvos e bambolês (**D14**), voleio de reflexo alimentado (**R09**),
 saque + 1 (**S05**), zonas de ataque e defesa (**D18**) e placar de pressão
 (**D22**). Todos já existiam com outro nome.
+
+### Revisão exercício por exercício — 13 variações acrescentadas
+
+Depois dos 16, o banco foi lido exercício por exercício procurando **a variação
+que um treinador sente falta** quando monta a aula. São 13, e o banco tem
+**145**:
+
+| lacuna | o que entrou |
+|---|---|
+| o inside-out não tinha a outra metade | **FH17** inside-in: o paralelo invertido, com a mesma preparação |
+| ninguém treinava tirar tempo do adversário | **FH18** na subida, em cima da linha (forehand e backhand) |
+| defesa de forehand esticado | **FH19** defesa alta, que dá tempo |
+| backhand só tinha cruzado fundo e paralelo | **BH17** ângulo curto de backhand |
+| voleio tratado como um golpe só | **R19** voleio baixo × voleio alto · **R20** voleio de backhand, bloco firme |
+| rede sem toque | **R21** deixada de voleio |
+| lob e smash nunca se encontravam | **R22** lob e smash, valendo ponto |
+| saque sem a jogada de rede | **S18** saque e voleio |
+| devolução só defensiva | **S19** ataque ao segundo saque |
+| **nenhum exercício de duplas de verdade** | **R23** o poach do jogador da rede · **R24** um em cima, um embaixo |
+| transição defesa → ataque | **M14** defesa que vira ataque |
+
+Nos exercícios de duplas com quatro pessoas no desenho, a folha diz
+**4 (duplas)** em *Nº de jogadores*, em vez de "1 a 4".
 
 ## Como a tela está organizada
 
@@ -157,18 +180,32 @@ passo a passo lado a lado, dica extra, as três colunas do rodapé, a espiral
 dos níveis e o critério de sucesso. Nada é escrito à mão — sai tudo do banco,
 então exercício novo já nasce com folha.
 
-**As proporções vêm medidas de uma folha de treino impressa** que serve de
-referência: cabeçalho 20% da altura, faixa de dados 7%, corpo 47%, as três
-colunas 17%, e o desenho ocupando 61,5% da largura do corpo. O que é da JV e
-não da referência: o **verde-limão da marca** (`#DDEE66`), a tipografia, o
-grafismo do canto do cabeçalho e o conteúdo inteiro. Nenhum arquivo, nenhuma
-arte e nenhum texto de terceiro entrou.
+**O desenho da página copia a disposição da folha de referência** que o João
+mandou — só a disposição. Cabeçalho preto com o número do treino enorme em
+itálico condensado, o nome em verde-limão, a linha de apoio em caixa alta, a
+frase do tema entre aspas, a bola e uma foto da JV esmaecida ao fundo; faixa
+clara de dados (nível, duração, nº de jogadores, materiais, objetivo) com
+ícones; a quadra à esquerda (61,5% da largura) e, à direita, **Como aplicar**
+com os passos numerados em círculos verde-limão e a **Dica extra** num bloco
+verde-limão; embaixo, as três colunas (foco do professor, erros mais comuns,
+como dificultar) e a faixa escura do rodapé com o critério de sucesso. O que é
+da JV: o verde-limão da marca (`#DDEE66`), as fotos, os ícones e a bola
+(desenhados aqui), e o texto inteiro. Nenhum arquivo, arte ou texto de
+terceiro entrou.
 
-**A quadra sai em retrato na folha** (`svgQuadra(fig, {prop:1.18})`), como numa
-foto tirada de trás do fundo — na tela a miniatura continua deitada, que é o
-que cabe numa lista. O 1,18 não é gosto: é o número em que as **132 folhas**
-couberam em A4. A mais alta ficou em 1031 px dos 1039 úteis, e a medida está
-no `alturas.js` para refazer quando o banco crescer.
+**A letra é a Barlow Condensed** (`fonte-barlow-condensed-*.woff2`, licença SIL
+OFL 1.1 em `LICENCA-FONTE-BARLOW.txt`), embutida no app e no arquivo único.
+Sem ela a folha sai na fonte do sistema, mais larga, e o rodapé cai para fora
+da página. Por isso ela está no cache do service worker.
+
+**A quadra da folha tem câmera própria** (`CAMERAS.folha`: 36 m atrás, 25 m de
+altura), achada por busca para bater três medidas da referência: largura do
+fundo de lá / de cá = 0,66, altura da quadra / largura do fundo de cá = 1,035 e
+a rede a 40% da altura. Os jogadores entram com **escala de leitura 1,9**
+(`escalaFig`), só na folha: na altura real eles viram formigas numa quadra
+inteira vista do alto. A proporção do quadro é **0,92** (`prop`), a maior em
+que **as 145 folhas cabem em A4** — medido com a fonte já carregada, que é o
+que conta: medir antes dá 14 folhas "estouradas" que não estouram.
 
 **Detalhes que custaram para acertar:**
 
@@ -280,28 +317,22 @@ Por isso cada recorte tem duas versões, e o desenho escolhe pelo sinal do `y`:
 
 | onde está | o que aparece | arquivo |
 |---|---|---|
-| `y > 0` — lado de cá da rede | de costas | `jog-*-costas.webp` |
-| `y < 0` — além da rede | de frente | `jog-*.webp` |
+| `y > 0` — lado de cá da rede | de costas | `jv-espera-<papel>.webp` (ou a pose pedida) |
+| `y < 0` — além da rede | de frente | `jv-espera-frente-<papel>.webp` (ou o saque de frente) |
 
-As versões de costas não são fotos novas: saem da própria foto de frente, pelo
-`ferramentas/virar-de-costas.py`. No tamanho em que a figura aparece (60 a 140
-px de altura), o único detalhe que grita "de frente" é o **rosto** — camisa,
-braços, pernas, tênis e raquete leem igual dos dois lados. Então a ferramenta
-espelha para baixo a faixa de cabelo que está acima da testeira, com máscara
-oval e borda esfumada: sai uma nuca com a textura do cabelo daquela mesma foto,
-e não um borrão marrom. O resto do pixel não é tocado.
+**A espera de frente sai da própria espera de costas**, pelo
+`ferramentas/virar-de-frente.py` — não existe foto da JV de frente fora do
+saque. A ferramenta troca a nuca por rosto (pele no tom das fotos de frente,
+com sombreado e traços discretos), a gola de trás pela gola redonda da frente
+e traz os antebraços para a frente, segurando a raquete diante da barriga,
+como o jogador do outro lado na folha de referência. No tamanho em que ele
+aparece (1 a 3 cm na folha) é isso que diz "de frente". Visto de perto parece
+desenho — **uma foto de verdade da JV de frente, em espera, substitui isso
+com vantagem** (ver *As fotos que faltam*).
 
-```
-python3 ferramentas/virar-de-costas.py app-exercicios/jog-aluno.webp \
-        app-exercicios/jog-aluno-costas.webp \
-        --testeira 30,48 --queixo 88 --colunas 69,141 --conferir prova.png
-```
-
-Sem os números ele tenta achar a cabeça sozinho; com raquete levantada acima
-dela — o caso do saque — medir uma vez sai mais barato que adivinhar. **O
-recorte do saque continua só de frente**, de propósito: a cabeça está inclinada
-para trás olhando o lançamento, não há faixa de cabelo para espelhar, e no
-tamanho do desenho quem conta a história ali é o braço levantado, não o rosto.
+A espera é **neutra**: não tem lado para errar. Antes, quem estava além da rede
+era uma figura 3D da internet fazendo backhand de duas mãos — todo jogador do
+outro lado aparecia batendo backhand, qualquer que fosse o golpe.
 
 ### As poses que já são da JV
 
@@ -344,16 +375,27 @@ esquerdo. No tênis não é assim. Bola do lado **direito** da imagem é
 **forehand**; do lado **esquerdo**, **backhand**. A direção da bola já está
 desenhada na seta; a raquete diz o GOLPE.
 
-Nas poses de golpe (`prepara`, `voleio`) o lado agora sai de duas coisas, nesta
+Nas poses de golpe (`prepara`, `voleio`) o lado sai de duas coisas, nesta
 ordem:
 
-1. **O tema do exercício**, quando ele é de um golpe só. Mês de forehand →
-   forehand, esteja o aluno onde estiver; mês de backhand → backhand. São 23
-   figuras. É o que salva o **inside-out** (FH2): um forehand batido do canto
-   do backhand, que pela regra do lado sairia errado. E o "só de forehand"
-   (FH9) é só de forehand mesmo.
-2. **O lado da quadra**, em todo o resto: `x ≥ 0` (direita da imagem) →
-   forehand; `x < 0` → backhand.
+1. **O tema do exercício**, quando ele é de um golpe só: poses `forehand` e
+   `backhand` forçam o lado. É o que salva o **inside-out** (FH2) e o
+   **inside-in** (FH17): forehands batidos do canto do backhand.
+2. **De que lado a bola CHEGA nele** (`ladoDoGolpe`): a bola que cai até 5,5 m
+   dele decide — caiu à direita da imagem, raquete à direita. Olhar só onde o
+   jogador está parado errava no aluno que corre até a bola (D5: começa no
+   meio e vai buscar à direita). A posição dele só decide quando a bola vem
+   reta para o corpo, ou quando não há bola chegando. Bola que SAI dele não
+   conta: essa ele já bateu.
+
+A mesma regra de tela vale dos dois lados da rede: de frente, a raquete à
+esquerda da imagem é a direita dele — o forehand. Na rede em dupla (R06, R10)
+isso dá o certo sem ninguém marcar à mão: a bola no meio é forehand de quem
+está à esquerda e backhand de quem está à direita.
+
+Para conferir: `node ferramentas/auditar-lado.js` lista, para cada jogador, o
+lado escolhido, as bolas que chegam e saem e um alerta (`!!`) quando o tema é
+de um golpe só e o lado contradiz. Rode depois de mexer em desenho.
 
 O saque e a espera ficam de fora dessa conta: no saque quem manda é para onde
 a bola vai, e a espera é simétrica.
@@ -364,12 +406,9 @@ figura do jogo 3D saiu de cena ali. Antes, só duas figuras pediam a pose de
 saque; agora ela está em todas as que sacam mesmo, conferidas uma a uma: quem
 devolve continua com a figura de golpe de fundo.
 
-Elas **não** viraram a figura padrão, e a razão é honesta: a foto de espera
-não tem raquete na mão. Colocada nos 132 desenhos, todo mundo virava gente de
-pé com as pernas abertas — num diagrama de tênis a raquete é metade da
-leitura. Nos quatro exercícios acima ela é exatamente a pose certa, porque o
-exercício *é* a posição de espera; nos outros, a figura com raquete continua
-contando melhor a história.
+Quem não pede pose aparece **em espera** — de costas do lado de cá, de frente
+além da rede. Do lado de cá quase ninguém fica sem pose (todo jogador de lá
+tem raquete na mão na versão de frente); do lado de lá, é a figura padrão.
 
 Cada pose tem uma versão por papel (`papel:{aluno, prof, colega}`), com a
 camisa repintada pelo `pintar-camisa.py`, senão os três papéis ficariam iguais
@@ -459,45 +498,14 @@ vazia com as pessoas e as setas por cima**. A mesma foto serve em todos. O que
 muda de exercício para exercício é a camada de cima, que continua vindo dos
 metros.
 
-### Os jogadores que estão ali agora são PROVISÓRIOS
+### Todos os jogadores já são da JV
 
-`jog-aluno.webp`, `jog-prof.webp` e `jog-colega.webp` vieram de imagens
-encontradas na internet e entraram a pedido, para ver o resultado funcionando.
-**A figura do saque já não é mais uma delas:** o `jog-saque.webp` saiu, e no
-lugar entraram fotos da JV, de frente e de costas (ver *As poses que já são da
-JV*).
-
-Os três papéis são a **mesma figura 3D com a camisa repintada**
-(`ferramentas/pintar-camisa.py`), nas cores que o desenho já usava para dizer
-quem é quem: dourado o aluno, branco o professor, azul o colega. Uma figura em
-três uniformes mantém o estilo igual nos três — é o que faz o desenho parecer
-de uma peça só — e devolve o papel à cor, em vez de exigir três pessoas
-diferentes. A legenda volta a ser a bolinha colorida: três rostos iguais nela
-não diriam nada.
-
-Os arquivos são **WebP e não PNG**: a figura é foto, e PNG de foto pesa cinco
-vezes mais (163 KB contra 33 KB, no mesmo tamanho). Os quatro juntos dão 135 KB.
-**Eles não devem ficar no material vendido**, por dois motivos que valem
-registrar antes que alguém esqueça:
-
-- a figura dos três papéis tem quatro logos da **Nike** (bandana, camisa,
-  munhequeira, tênis) e parece render de videogame, o que traz junto o direito
-  autoral de quem fez;
-- o mesmo vale para a pose de saque.
-
-(A foto do **Roger Federer**, que esteve aqui no papel de aluno, saiu: além do
-direito de imagem de uma pessoa real e identificável, era a de pior qualidade —
-348 px, indexada, e o recorte comia o short e o tênis.)
-
-Trocar é uma linha em `RECORTES` por pose. Enquanto não houver foto da JV, a
-alternativa segura é apagar as entradas de `RECORTES`: sem elas o desenho volta
-sozinho para o boneco desenhado, que é nosso.
-
-Uma marca técnica deles, que a foto da JV não vai ter: o **xadrez de
-transparência ficou gravado por dentro da imagem**, entre o antebraço e a
-raquete. Dá para ver ampliando. Tirá-lo com a mesma conta que tira a sombra do
-chão levava junto a bandana e as munhequeiras brancas, que são da mesma cor —
-então ficou. No tamanho em que o jogador é desenhado, não se vê.
+A figura 3D tirada da internet (`jog-*.webp`, com logos da Nike e cara de
+render de videogame) **saiu do app**: não pode estar em material vendido, e
+fazia backhand de duas mãos em todo jogador do outro lado. No lugar dela
+entrou a espera da JV — de costas do lado de cá, e a versão de frente
+(`virar-de-frente.py`) além da rede. Os arquivos foram apagados; o
+`virar-de-costas.py`, feito para eles, fica na pasta de ferramentas.
 
 ### As fotos que faltam
 
@@ -524,6 +532,7 @@ então ficou. No tamanho em que o jogador é desenhado, não se vê.
 | de costas, batendo backhand | os de backhand |
 | de frente, na rede, voleando | approach e rede |
 | de costas, sacando (braço em cima) | saque e devolução |
+| **de frente, em espera, com raquete** | **quem está além da rede — hoje é a espera virada pelo `virar-de-frente.py`** |
 | de frente, com a cesta | o professor, no lado de lá |
 | criança de costas, em espera | os exercícios Kids |
 

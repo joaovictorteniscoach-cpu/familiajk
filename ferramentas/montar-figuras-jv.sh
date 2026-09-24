@@ -18,10 +18,9 @@ mkdir -p "$TRAB"
 
 # pose:altura-em-px-do-arquivo-final — quem ja' e' grande desce, quem e'
 # pequeno sobe so' o necessario. Ampliar alem disso inventa borrao, nao detalhe.
-for par in espera:560 prepara:560 saque-frente:560 saque-costas:560 voleio:420; do
-  pose=${par%%:*}; alt=${par##*:}
-  python3 ferramentas/preparar-recorte.py "$ORIG/$pose.png" "$TRAB/$pose.png" --alt "$alt"
-
+# pinta a camisa nas tres cores de papel e grava os .webp do app
+colorir() {
+  pose=$1
   # colega fica com a camisa original (azul), que ja' e' a cor dele
   cp "$TRAB/$pose.png" "$TRAB/$pose-colega.png"
   # professor: camisa sem cor
@@ -41,4 +40,16 @@ im.save(sys.argv[2], 'WEBP', quality=92, method=6)
 " "$TRAB/$pose-$papel.png" "$APP/jv-$pose-$papel.webp"
   done
   echo "  $pose -> jv-$pose-{aluno,prof,colega}.webp"
+}
+
+# pose:altura-em-px-do-arquivo-final — quem ja' e' grande desce, quem e'
+# pequeno sobe so' o necessario. Ampliar alem disso inventa borrao, nao detalhe.
+for par in espera:560 prepara:560 saque-frente:560 saque-costas:560 voleio:420; do
+  pose=${par%%:*}; alt=${par##*:}
+  python3 ferramentas/preparar-recorte.py "$ORIG/$pose.png" "$TRAB/$pose.png" --alt "$alt"
+  colorir "$pose"
 done
+
+# o jogador do outro lado da rede: a mesma espera, vista de frente
+python3 ferramentas/virar-de-frente.py "$TRAB/espera.png" "$TRAB/espera-frente.png"
+colorir espera-frente

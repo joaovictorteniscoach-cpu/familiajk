@@ -4,9 +4,14 @@
    não carrega biblioteca de fora e não tem dado de aluno na nuvem. Os favoritos
    e o plano de aula ficam no próprio aparelho (localStorage).
    Por que importa: quadra de saibro com sinal ruim é a regra, não a exceção. */
-const CACHE = 'jv-exercicios-v18';   /* sobe a cada mudanca de tela: o v2 e' apagado no activate */
+const CACHE = 'jv-exercicios-v19';   /* sobe a cada mudanca de tela: o v2 e' apagado no activate */
 const SHELL = ['./', './exercicios.js', './quadra.js', './manifest-exercicios.webmanifest',
-               './jv-icone-exercicios-192.png'];
+               './jv-icone-exercicios-192.png',
+               /* a letra da folha A4: sem ela, offline, a folha sai na fonte do
+                  sistema, mais larga, e o rodapé cai para fora da página */
+               './fonte-barlow-condensed-500-normal.woff2', './fonte-barlow-condensed-600-normal.woff2',
+               './fonte-barlow-condensed-700-normal.woff2', './fonte-barlow-condensed-800-italic.woff2',
+               './fonte-barlow-condensed-900-italic.woff2'];
 
 self.addEventListener('install', e => {
   self.skipWaiting();
