@@ -38,7 +38,7 @@
 <link rel="apple-touch-startup-image" media="screen and (device-width:375px) and (device-height:667px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)" href="splash-gestao-750x1334.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="lib/estilo.css?v=2026-09-24-4">
+<link rel="stylesheet" href="lib/estilo.css?v=2026-09-24-5">
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
 <script src="lib/firebase-database-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js\'><\/script>')"></script>
@@ -247,23 +247,38 @@ function esperarAuth(){
   <p style="margin-top:26px;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;color:rgba(201,160,74,.7)">Da base ao topo 🎾</p>
 </section>
 
-<header class="top">
-  <img class="marca-jv" src="jv-icone-gestao.png" alt="Academia João Victor Tênis">
-  <div class="top-tag">Academia João Victor Tênis</div>
-  <h1>Painel de <em>gestão</em></h1>
-  <div class="top-actions">
-    <button id="bell-btn" class="eye-btn bell-btn" onclick="abrirNotifs()" title="Avisos">🔔<span class="bell-badge" id="bell-badge" style="display:none">0</span></button>
-    <button id="ped-btn" class="eye-btn ped-btn" onclick="abrirPedidos()" title="Pedidos dos alunos">🧾<span class="bell-badge" id="ped-badge" style="display:none">0</span></button>
-    <button id="hist-btn" class="eye-btn hist-btn" onclick="abrirHist()" title="Histórico de mudanças">🕘</button>
-    <button id="eye-btn" class="eye-btn" onclick="toggleHide()" title="Ocultar/mostrar valores"></button>
+<header class="top jv-premium-hero">
+  <div class="jv-brand-row">
+    <div class="jv-brand-lockup">
+      <img class="marca-jv" src="jv-icone-gestao.png" alt="Academia João Victor Tênis">
+      <div><div class="top-tag">Academia</div><div class="jv-brand-name">João Victor</div><div class="jv-brand-sub">Tênis</div></div>
+    </div>
+    <div class="top-actions">
+      <button id="bell-btn" class="eye-btn bell-btn" onclick="abrirNotifs()" title="Avisos" aria-label="Avisos">🔔<span class="bell-badge" id="bell-badge" style="display:none">0</span></button>
+      <button id="ped-btn" class="eye-btn ped-btn" onclick="abrirPedidos()" title="Pedidos dos alunos" aria-label="Pedidos dos alunos">🧾<span class="bell-badge" id="ped-badge" style="display:none">0</span></button>
+      <button id="hist-btn" class="eye-btn hist-btn" onclick="abrirHist()" title="Histórico de mudanças" aria-label="Histórico de mudanças">🕘</button>
+      <button id="eye-btn" class="eye-btn" onclick="toggleHide()" title="Ocultar/mostrar valores" aria-label="Ocultar ou mostrar valores"></button>
+      <button class="jv-avatar-btn" onclick="jvEscolherAvatarGestao()" title="Alterar foto de perfil" aria-label="Alterar foto de perfil">
+        <span id="jv-avatar-gestao-fallback">JV</span>
+        <img id="jv-avatar-gestao" alt="Foto de perfil de João Victor" style="display:none">
+        <span class="jv-camera-badge">📷</span>
+      </button>
+    </div>
+  </div>
+  <div class="jv-hero-copy">
+    <div class="jv-greeting">Olá, João Victor!</div>
+    <h1>Painel de <em>gestão</em></h1>
+    <div class="jv-motiva">Pronto para mais um mês<br>de <strong>resultados?</strong></div>
+    <p class="jv-motto">Disciplina hoje, grandes conquistas amanhã.</p>
   </div>
   <div class="top-month">
-    <button class="month-btn" onclick="shiftMonth(-1)">‹</button>
+    <button class="month-btn" onclick="shiftMonth(-1)" aria-label="Mês anterior">‹</button>
     <div class="month-label" id="month-label">—</div>
-    <button class="month-btn" onclick="shiftMonth(1)">›</button>
+    <button class="month-btn" onclick="shiftMonth(1)" aria-label="Próximo mês">›</button>
     <span class="save-state" id="save-state">conectando…</span>
   </div>
 </header>
+<input id="jv-avatar-gestao-input" type="file" accept="image/*" hidden onchange="jvSalvarAvatarGestao(this)">
 
 <section class="page on" id="pg-dash">
   <div class="bk-banner" id="bk-banner" style="display:none">
@@ -874,22 +889,22 @@ function esperarAuth(){
 
 <div class="mais-fundo" id="mais-fundo" onclick="fecharMais()"></div>
 <div class="mais-pop" id="mais-pop">
-  <button onclick="irDoMais('fin')"><span class="ico" data-ic="bars"></span>Financeiro</button>
+  <button onclick="irDoMais('aval')"><span class="ico" data-ic="clip"></span>Avaliações & evolução</button>
+  <button onclick="irDoMais('lanc')"><span class="ico" data-ic="cash"></span>Novo lançamento / Caixa</button>
+  <button class="so-dono" onclick="irDoMais('torneio')"><span class="ico" data-ic="trophy"></span><span class="nav-badge" id="nb-torneio"></span>Torneio / Barragem</button>
   <button onclick="irDoMais('graf')"><span class="ico" data-ic="line"></span>Gráficos</button>
   <button onclick="irDoMais('fech')"><span class="ico" style="font-size:19px">🧾</span>Fechamento</button>
   <button class="so-dono" onclick="irDoMais('profs')"><span class="ico" style="font-size:19px">👨‍🏫</span>Professores</button>
 </div>
 
-<nav class="nav">
+<nav class="nav jv-nav-5">
   <button class="on" onclick="go('dash',this)"><span class="ico" data-ic="home"></span><span class="nav-badge" id="nb-inicio"></span>Início</button>
   <button onclick="go('agenda',this)"><span class="ico" data-ic="cal"></span><span class="nav-badge" id="nb-agenda"></span>Agenda</button>
   <button onclick="go('alunos',this)"><span class="ico" data-ic="ball"></span>Alunos</button>
-  <button onclick="go('aval',this)"><span class="ico" data-ic="clip"></span>Avaliações</button>
-  <button onclick="go('lanc',this)"><span class="ico" data-ic="cash"></span>Caixa</button>
-  <button class="so-dono" onclick="go('torneio',this)"><span class="ico" data-ic="trophy"></span><span class="nav-badge" id="nb-torneio"></span>Torneio</button>
+  <button onclick="go('fin',this)"><span class="ico" data-ic="cash"></span>Financeiro</button>
   <button id="nav-mais" onclick="abrirMais()"><span class="ico"><svg viewBox="0 0 24 24" width="24" height="24"><circle cx="5" cy="12" r="2.2" fill="#D4AF58"/><circle cx="12" cy="12" r="2.2" fill="#D4AF58"/><circle cx="19" cy="12" r="2.2" fill="#D4AF58"/></svg></span>Mais</button>
 </nav>
-<script src="lib/icones.js?v=2026-09-24-4"></script>
+<script src="lib/icones.js?v=2026-09-24-5"></script>
 
 <!-- MODAL ALUNO -->
 <div class="overlay" id="ov-aluno" onclick="if(event.target===this)closeModal('ov-aluno')">
@@ -1364,7 +1379,7 @@ function esperarAuth(){
 
 <div class="toast" id="toast"></div>
 
-<script src="lib/app-gestao.js?v=2026-09-24-4"></script>
+<script src="lib/app-gestao.js?v=2026-09-24-5"></script>
 <script>
 /* Rede de seguranca do par tela+codigo.
 
@@ -1379,7 +1394,7 @@ function esperarAuth(){
    torto, o app busca o par certo uma vez e, se insistir, DIZ o que houve em
    vez de deixar voce tocando em botao que nao responde. */
 (function(){
-  var ESPERADA='2026-09-24-4';
+  var ESPERADA='2026-09-24-5';
   function tela(motivo){
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;z-index:99999;background:#1A2E14;color:#FAF7F2;'
@@ -1470,7 +1485,43 @@ function limparHist(){
 }
 histLogLoad();
 // PWA: registra o service worker (permite instalar o painel e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-gestao.js?v=2026-09-24-4').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-gestao.js?v=2026-09-24-5').catch(function(){});});}
 </script>
+
+<script>
+/* Foto de perfil local: visual apenas, sem tocar no Firebase/P0. */
+(function(){
+  var KEY='jvt-avatar-gestao-v1';
+  window.jvEscolherAvatarGestao=function(){
+    var i=document.getElementById('jv-avatar-gestao-input');if(i)i.click();
+  };
+  function aplicar(src){
+    var img=document.getElementById('jv-avatar-gestao'),fb=document.getElementById('jv-avatar-gestao-fallback');
+    if(!img)return;
+    if(src){img.src=src;img.style.display='block';if(fb)fb.style.display='none';}
+    else{img.removeAttribute('src');img.style.display='none';if(fb)fb.style.display='grid';}
+  }
+  window.jvSalvarAvatarGestao=function(input){
+    var file=input&&input.files&&input.files[0];if(!file)return;
+    if(!/^image\//.test(file.type||'')){if(window.toast)toast('Escolha uma imagem.');return;}
+    var rd=new FileReader();
+    rd.onload=function(){
+      var im=new Image();
+      im.onload=function(){
+        var s=Math.min(im.width,im.height),sx=(im.width-s)/2,sy=(im.height-s)/2;
+        var cv=document.createElement('canvas');cv.width=cv.height=320;
+        cv.getContext('2d').drawImage(im,sx,sy,s,s,0,0,320,320);
+        var out='';try{out=cv.toDataURL('image/webp',.76);}catch(e){out=cv.toDataURL('image/jpeg',.78);}
+        try{localStorage.setItem(KEY,out);}catch(e){if(window.toast)toast('A foto ficou grande demais para este aparelho.');return;}
+        aplicar(out);if(window.toast)toast('Foto de perfil atualizada ✓');
+      };
+      im.src=rd.result;
+    };
+    rd.readAsDataURL(file);input.value='';
+  };
+  document.addEventListener('DOMContentLoaded',function(){try{aplicar(localStorage.getItem(KEY)||'');}catch(e){}});
+})();
+</script>
+
 </body>
 </html>
