@@ -36,6 +36,8 @@ mexp=re.search(r"var\s+ESPERADA='([^']+)'",h)
 mver=re.search(r"const\s+VERSAO='([^']+)'",g)
 ok(bool(mexp and mver and mexp.group(1)==mver.group(1)),'ESPERADA do HTML modular igual à VERSAO do app-gestao.js')
 ok("const SECUREPUBKEY='jvtenis-app-publico'" in a and 'async function refreshSeguroRaw()' in a,'Aluno usa publicação segura')
+seg=a.split('async function refreshSeguroRaw(){',1)[1].split('function meuKey(){',1)[0]
+ok(seg.find("cloudGet('jvtenis/'+VINC_KEY+'/'+uid)")>=0 and seg.find("cloudGet('jvtenis/'+VINC_KEY+'/'+uid)")<seg.find('cloudGet(SECUREPUBKEY)'),'pedido de vínculo independe da publicação segura existir')
 ok("codigo:String((MEU&&MEU.codigo)||'')" in a,'filas do aluno levam UID + código')
 ok("const SECUREPUBKEY='jvtenis-app-publico'" in g and 'async function publicarSeguro(pub)' in g,'Gestão modular publica seguro')
 ok('function pedidoConfiavel(p)' in g and 'if(!pedidoConfiavel(p)){nb++;return;}' in g,'Gestão valida identidade nas solicitações')
