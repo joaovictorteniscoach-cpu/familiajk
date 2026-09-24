@@ -5,7 +5,11 @@
    ponto onde o bloco estava, depois do HTML das telas e antes do bloco do
    historico. */
 /* ================= ESTADO & PERSISTÊNCIA ================= */
-const PUBKEY='jvtenis-app-aluno';
+const PUBKEY='jvtenis-app-aluno';                  // legado: só durante a migração P0
+const SECUREPUBKEY='jvtenis-app-publico';          // publicação sem dados pessoais
+const VINC_KEY='aluno_vinculos';                   // uid aprovado -> aluno
+const VINC_REQ_KEY='fila_vinculos';                // pedidos de novo aparelho
+const PRIV_KEY='alunos_privados';                  // bloco privado por uid
 const BOOKKEY='jvtenis-agendamentos';
 /* Carimbo desta cópia. O app existe em dois endereços (GitHub Pages e Netlify)
    que são publicados em momentos diferentes — o Netlify, hoje, na mão. Sem
@@ -15,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-24-1';
+const VERSAO='2026-09-24-2';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
@@ -1884,6 +1888,151 @@ function publish(){
   clearTimeout(pubTimer);
   pubTimer=setTimeout(doPublish,1200);
 }
+
+/* ===== Segurança P0 — identidade e dados privados do aluno ================= */
+let VINCULOS={};
+let VINC_REQ_LIST=[];
+let _vincPromise=null;
+function vincEsc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+async function carregarVinculos(silent){
+  if(!ehDono()||!hasCloud())return VINCULOS;
+  if(_vincPromise)return _vincPromise;
+  _vincPromise=(async()=>{
+    try{
+      const [vs,rs]=await Promise.all([
+        window.fbDB.ref('jvtenis/'+VINC_KEY).get(),
+        window.fbDB.ref('jvtenis/'+VINC_REQ_KEY).get()
+      ]);
+      VINCULOS=vs.exists()?(vs.val()||{}):{};
+      const rv=rs.exists()?(rs.val()||{}):{};
+      VINC_REQ_LIST=Object.keys(rv).map(uid=>Object.assign({uid:uid},rv[uid]||{})).sort((x,y)=>(x.ts||0)-(y.ts||0));
+      return VINCULOS;
+    }catch(e){if(!silent)toast('Não consegui carregar os acessos dos alunos');return VINCULOS;}
+  })();
+  try{return await _vincPromise;}finally{_vincPromise=null;renderVinculos();}
+}
+async function lerVinculosNuvem(){await carregarVinculos(true);return VINCULOS;}
+function pedidoConfiavel(p){
+  if(!p||!p.uid||!p.codigo)return false;
+  const v=VINCULOS[p.uid];
+  return !!(v&&v.ativo===true&&String(v.codigo||'')===String(p.codigo||''));
+}
+function pedidoAgendaValido(p,a){
+  if(!p||!a||!/^\d{4}-\d{2}-\d{2}$/.test(String(p.data||''))||HORAS.indexOf(String(p.hora||''))<0)return false;
+  const d=new Date(p.data+'T12:00:00');if(isNaN(d.getTime()))return false;
+  const dias=(d.getTime()-new Date().setHours(0,0,0,0))/864e5;
+  if(dias < -1 || dias > 90)return false;
+  if(p.acao==='cancelar')return true;
+  if(entriesFor(d,p.hora).length>0)return false;
+  const modo=slotModo(d,p.hora);
+  if(modo==='fechado')return false;
+  if(modo==='loc'&&!p.repo&&!p.tor)return false;
+  return true;
+}
+function renderVinculos(){
+  const box=document.getElementById('vinculos-box');if(!box)return;
+  if(!ehDono()){box.innerHTML='';return;}
+  const ativos=Object.keys(VINCULOS).map(uid=>({uid:uid,v:VINCULOS[uid]})).filter(x=>x.v&&x.v.ativo===true);
+  const invalidos=VINC_REQ_LIST.filter(r=>!DB.alunos.some(x=>String(x.codigo||'')===String(r.codigo||''))).length;
+  let h='';
+  if(VINC_REQ_LIST.length){
+    h+='<div style="border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:8px 0 10px">';
+    h+='<div style="padding:9px 11px;background:#FFF6DF;font-size:12px;font-weight:800;color:#7A5E10">🔐 '+VINC_REQ_LIST.length+' aparelho(s) aguardando aprovação individual</div>';
+    h+='<div style="padding:9px 11px;background:#FFFDF6;border-top:1px solid var(--border);font-size:11.5px;line-height:1.45;color:var(--muted)">⚠ O código de 4 dígitos só localiza o cadastro. Antes de aprovar, confirme com o aluno por um canal externo (ex.: WhatsApp).</div>';
+    if(invalidos>0)h+='<div style="padding:8px 11px;background:#FFF0ED;border-top:1px solid var(--border);font-size:11.5px;font-weight:800;color:#A33A27">⚠ '+invalidos+' pedido(s) com código não encontrado não podem ser aprovados.</div>';
+    VINC_REQ_LIST.forEach((r,i)=>{
+      const al=DB.alunos.find(x=>String(x.codigo||'')===String(r.codigo||''));
+      const nome=al?al.nome:'Código não encontrado', fim=String(r.uid||'').slice(-7);
+      h+='<div style="padding:10px 11px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px">'
+        +'<div style="flex:1;min-width:0"><b>'+vincEsc(nome)+'</b><div class="hint">código '+vincEsc(r.codigo||'—')+' · aparelho …'+vincEsc(fim)+'</div></div>'
+        +(al?'<button class="btn btn-clay" style="padding:7px 10px;font-size:11.5px" onclick="aprovarVinculoReq('+i+')">✓ Conferir e aprovar</button>':'')
+        +'<button class="btn btn-ghost" style="padding:7px 10px;font-size:11.5px" onclick="recusarVinculoReq('+i+')">✕</button></div>';
+    }); h+='</div>';
+  }else h+='<p class="hint" style="color:var(--ok);font-weight:700">✓ Nenhum aparelho aguardando aprovação.</p>';
+  if(ativos.length){
+    h+='<details style="margin-top:7px"><summary style="cursor:pointer;font-size:12px;font-weight:800;color:var(--muted)">'+ativos.length+' aparelho(s) autorizado(s)</summary><div style="margin-top:7px">';
+    ativos.forEach(x=>{
+      const al=DB.alunos.find(a=>a.id===x.v.alunoId)||DB.alunos.find(a=>String(a.codigo||'')===String(x.v.codigo||''));
+      const uidJs=String(x.uid||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border)"><div style="flex:1"><b>'
+        +vincEsc(al?al.nome:(x.v.nome||'Aluno'))+'</b><div class="hint">…'+vincEsc(String(x.uid).slice(-7))+'</div></div>'
+        +'<button class="btn btn-ghost" style="padding:6px 9px;font-size:11px" onclick="revogarVinculo(\''+uidJs+'\')">Revogar</button></div>';
+    }); h+='</div></details>';
+  }
+  box.innerHTML=h;
+}
+async function aprovarVinculoReq(i){
+  const r=VINC_REQ_LIST[i];if(!r)return;
+  const al=DB.alunos.find(x=>String(x.codigo||'')===String(r.codigo||''));
+  if(!al){toast('Código não corresponde a nenhum aluno cadastrado');return;}
+  const fim=String(r.uid||'').slice(-7);
+  if(!confirm('Confirme primeiro por um canal externo (ex.: WhatsApp) que '+al.nome+' está solicitando acesso no aparelho …'+fim+'.\n\nJá confirmou a identidade e quer autorizar este aparelho?'))return;
+  const val={codigo:String(al.codigo||''),alunoId:al.id,nome:al.nome,ativo:true,ts:Date.now()};
+  try{
+    await window.fbDB.ref('jvtenis/'+VINC_KEY+'/'+r.uid).set(val);
+    await window.fbDB.ref('jvtenis/'+VINC_REQ_KEY+'/'+r.uid).remove();
+    VINCULOS[r.uid]=val;VINC_REQ_LIST.splice(i,1);renderVinculos();await doPublish();
+    toast('🔐 Aparelho autorizado para '+al.nome);
+  }catch(e){toast('Não consegui autorizar agora');}
+}
+async function recusarVinculoReq(i){
+  const r=VINC_REQ_LIST[i];if(!r)return;
+  if(!confirm('Recusar este pedido de acesso?'))return;
+  try{await window.fbDB.ref('jvtenis/'+VINC_REQ_KEY+'/'+r.uid).remove();}catch(e){}
+  VINC_REQ_LIST.splice(i,1);renderVinculos();toast('Pedido recusado');
+}
+async function revogarVinculo(uid){
+  const v=VINCULOS[uid];if(!v)return;
+  const al=DB.alunos.find(a=>a.id===v.alunoId)||DB.alunos.find(a=>String(a.codigo||'')===String(v.codigo||''));
+  if(!confirm('Revogar o acesso deste aparelho'+(al?' de '+al.nome:'')+'?'))return;
+  try{
+    await window.fbDB.ref('jvtenis/'+VINC_KEY+'/'+uid).set(Object.assign({},v,{ativo:false,ts:Date.now()}));
+    await window.fbDB.ref('jvtenis/'+PRIV_KEY+'/'+uid).remove();
+    VINCULOS[uid]=Object.assign({},v,{ativo:false,ts:Date.now()});renderVinculos();toast('Acesso revogado');
+  }catch(e){toast('Não consegui revogar agora');}
+}
+function gradePublicaSegura(g){
+  g=g||{fixos:[],eventos:[],excecoes:[]};
+  const tipoPublico=x=>x&&x.tipo==='bloqueio'?'bloqueio':'ocupado';
+  return {
+    fixos:(g.fixos||[]).map(f=>({id:f.id,dia:f.dia,hora:f.hora,tipo:tipoPublico(f),desde:f.desde||'',ate:f.ate||''})),
+    eventos:(g.eventos||[]).map(e=>{
+      const out={id:e.id,data:e.data,hora:e.hora,tipo:tipoPublico(e)};
+      if(e&&e.tipo==='bloqueio'&&String(e.motivo||'').toLowerCase()==='chuva')out.motivo='chuva';
+      return out;
+    }),
+    excecoes:(g.excecoes||[]).map(x=>({fixoId:x.fixoId,data:x.data}))
+  };
+}
+async function publicarSeguro(pub){
+  if(!ehDono()||!hasCloud())return;
+  const links=await lerVinculosNuvem();
+  const shared={
+    updatedAt:pub.updatedAt,aviso:pub.aviso||'',termo:pub.termo||'',termoVer:pub.termoVer||0,
+    precos:pub.precos||{},planos:pub.planos||{},grupoPreco:pub.grupoPreco||{},horas:pub.horas||[],
+    locacaoOnly:pub.locacaoOnly||[],horarioCfg:pub.horarioCfg||{},horarioData:pub.horarioData||{},
+    profs:pub.profs||[],grade:gradePublicaSegura(pub.grade)
+  };
+  await window.fbDB.ref('jvtenis/'+SECUREPUBKEY).set(JSON.stringify(shared));
+  const tarefas=[];
+  Object.keys(links||{}).forEach(uid=>{
+    const lk=links[uid];if(!lk||lk.ativo!==true)return;
+    const base=DB.alunos.find(x=>x.id===lk.alunoId)||DB.alunos.find(x=>String(x.codigo||'')===String(lk.codigo||''));
+    if(!base)return;
+    const code=String(base.codigo||'');
+    const al=(pub.alunos||[]).find(x=>String(x.codigo||'')===code);if(!al)return;
+    const fix=(pub.grade&&pub.grade.fixos||[]).filter(f=>String(f.cod||'')===code);
+    const ids=new Set(fix.map(f=>f.id));
+    const priv={
+      updatedAt:pub.updatedAt,aluno:al,historico:(pub.historico&&pub.historico[code])||[],
+      gradeMeu:{fixos:fix,eventos:(pub.grade&&pub.grade.eventos||[]).filter(e=>String(e.cod||'')===code),excecoes:(pub.grade&&pub.grade.excecoes||[]).filter(x=>ids.has(x.fixoId))},
+      chuvas:(pub.chuvas||[]).filter(c=>Array.isArray(c.cods)&&c.cods.some(x=>String(x||'')===code)).map(c=>({data:c.data,hora:c.hora,ts:c.ts||0,cods:[code]})),
+      pix:pub.pix||'',pixNome:pub.pixNome||'',pixCidade:pub.pixCidade||'',pixTipo:pub.pixTipo||'celular',cardLink:pub.cardLink||'',torneio:pub.torneio||null
+    };
+    tarefas.push(window.fbDB.ref('jvtenis/'+PRIV_KEY+'/'+uid).set(JSON.stringify(priv)));
+  });
+  if(tarefas.length)await Promise.all(tarefas);
+}
 async function doPublish(){
   if(!CARREGADO)return;                     // publicar vazio apagaria a tela dos alunos
   if(!ehDono())return;                      // o App do Aluno é da academia, não do professor
@@ -1958,7 +2107,8 @@ async function doPublish(){
       if(data<dKey(hoje)||data>dKey(lim))return;
       pub.grade.eventos.push({id:'q'+data+hora,data,hora,tipo:'ocupado'});
     });
-    await cloudSet(PUBKEY,JSON.stringify(pub));
+    await cloudSet(PUBKEY,JSON.stringify(pub));             // legado: retirar quando a migração terminar
+    try{await publicarSeguro(pub);}catch(e){console.warn('Publicação segura pendente:',e);}
     // Nó público mínimo: só os três preços de grupo, que é tudo o que o site
     // do jvtenis.com.br precisa. Sem ele, o site teria que ler a publicação
     // inteira — e aí os dados dos alunos precisariam ficar abertos a todos.
@@ -1972,15 +2122,18 @@ async function syncRequests(silent){
   if(syncing)return;syncing=true;
   if(!hasCloud()){if(!silent)toast('Nuvem (Firebase) não conectada');syncing=false;return;}
   try{
+    await carregarVinculos(true);
     const ref=window.fbDB.ref('jvtenis/fila_agendamentos');
     const snap=await ref.get();
     if(!snap.exists()){if(!silent)toast('Nenhum agendamento novo de alunos');syncing=false;return;}
     const fila=snap.val()||{};
     const chaves=Object.keys(fila);
-    let n=0,nc=0;
+    let n=0,nc=0,nb=0,nr=0;
     chaves.forEach((key,idx)=>{
       const p=fila[key];
+      if(!pedidoConfiavel(p)){nb++;return;}
       const a=DB.alunos.find(x=>x.codigo===p.codigo);
+      if(!pedidoAgendaValido(p,a)){nr++;ref.child(key).remove().catch(()=>{});return;}
       if(a){
         const tipo=p.tor?'torneio':catAgendaDe(a.tipo);   // jogo do torneio: já pago, não usa crédito
         if(p.acao==='cancelar'){
@@ -2020,11 +2173,11 @@ async function syncRequests(silent){
       const partes=[];if(n>0)partes.push(n+' reserva'+(n===1?'':'s'));if(nc>0)partes.push(nc+' cancelamento'+(nc===1?'':'s'));
       toast('📥 '+partes.join(' · ')+' de alunos');
     }
-    else if(!silent)toast('Nenhuma novidade de alunos');
+    else if(!silent)toast(nb?'Há '+nb+' solicitação(ões) aguardando vínculo do aparelho':(nr?'Solicitação inválida descartada por segurança':'Nenhuma novidade de alunos'));
   }catch(e){if(!silent)toast('Erro ao sincronizar');}
   syncing=false;
 }
-setInterval(()=>{syncRequests(true);carregarNotifs();carregarConfirmacoes();carregarCadastros();carregarAutoAval();lerMapaQuadra();lerAgendaProf();},45000);
+setInterval(()=>{carregarVinculos(true);syncRequests(true);carregarNotifs();carregarConfirmacoes();carregarCadastros();carregarAutoAval();lerMapaQuadra();lerAgendaProf();},45000);
 setTimeout(carregarAutoAval,4000);
 
 /* ===== Autoavaliações enviadas pelos alunos ===== */
@@ -2032,9 +2185,10 @@ let AUTOAVAL=[];
 async function carregarAutoAval(){
   if(!hasCloud())return;
   try{
+    await carregarVinculos(true);
     const snap=await window.fbDB.ref('jvtenis/fila_autoaval').get();
     const v=snap.exists()?(snap.val()||{}):{};
-    AUTOAVAL=Object.keys(v).map(k=>Object.assign({_k:k},v[k])).filter(x=>x&&x.codigo).sort((a,b)=>(b.ts||0)-(a.ts||0));
+    AUTOAVAL=Object.keys(v).map(k=>Object.assign({_k:k},v[k])).filter(x=>x&&x.codigo&&pedidoConfiavel(x)).sort((a,b)=>(b.ts||0)-(a.ts||0));
   }catch(e){}
   renderAvaliacoes();
 }
@@ -2060,7 +2214,7 @@ async function descartarAutoAval(chave){
   try{await window.fbDB.ref('jvtenis/fila_autoaval/'+chave).remove();}catch(e){}
   AUTOAVAL=AUTOAVAL.filter(x=>x._k!==chave);renderAvaliacoes();toast('Autoavaliação descartada');
 }
-setTimeout(()=>{carregarConfirmacoes();carregarCadastros();},3500);   // primeira carga: confirmações + cadastros do site
+setTimeout(()=>{carregarVinculos(true);carregarConfirmacoes();carregarCadastros();},3500);   // primeira carga: confirmações + cadastros do site
 
 /* ================= AVISOS (sininho) ================= */
 let NOTIF=[],notifSeen=Number((typeof localStorage!=='undefined'&&localStorage.getItem('jv-notif-seen'))||0),notifMax=notifSeen,notifPrimeira=true;
@@ -2127,9 +2281,10 @@ function textoNotif(n){
 async function carregarNotifs(){
   if(!hasCloud())return;
   try{
+    await carregarVinculos(true);
     const snap=await window.fbDB.ref('jvtenis/notificacoes').get();
     const v=snap.exists()?(snap.val()||{}):{};
-    NOTIF=Object.keys(v).map(k=>v[k]).filter(n=>n&&n.ts).sort((a,b)=>b.ts-a.ts).slice(0,60);
+    NOTIF=Object.keys(v).map(k=>v[k]).filter(n=>n&&n.ts&&pedidoConfiavel(n)).sort((a,b)=>b.ts-a.ts).slice(0,60);
     const max=NOTIF.length?NOTIF[0].ts:0;
     if(!notifPrimeira&&max>notifMax){
       const novas=NOTIF.filter(n=>n.ts>notifMax);
@@ -2424,9 +2579,10 @@ let pedFila=[];
 async function syncPedidos(silent){
   if(!hasCloud()){renderPedList();return;}
   try{
+    await carregarVinculos(true);
     const snap=await window.fbDB.ref('jvtenis/fila_pedidos').get();
     const v=snap.exists()?(snap.val()||{}):{};
-    pedFila=Object.entries(v).map(([key,m])=>({key,...m})).sort((a,b)=>(a.ts||0)-(b.ts||0));
+    pedFila=Object.entries(v).map(([key,m])=>({key,...m})).filter(p=>pedidoConfiavel(p)).sort((a,b)=>(a.ts||0)-(b.ts||0));
   }catch(e){pedFila=[];}
   updatePedBadge();
   const ov=document.getElementById('ov-ped');if(ov&&ov.classList.contains('on'))renderPedList();
@@ -6983,22 +7139,20 @@ async function testarConexao(){
     try{if(app2)await app2.delete();}catch(e){}
     return resumoTeste(r,feito.filter(Boolean).length);
   }
-  // 6) o aluno lê a publicação e consegue mandar um pedido
+  // 6) o aluno lê a publicação segura e consegue solicitar vínculo
   {
-    const a=await tenta(()=>db2.ref('jvtenis/'+PUBKEY).get());
+    const uid2=(app2.auth().currentUser&&app2.auth().currentUser.uid)||'';
+    const a=await tenta(()=>db2.ref('jvtenis/'+SECUREPUBKEY).get());
     if(!a.ok){
-      passo(false,'Aluno lê a publicação',a.prazo?'sem resposta':a.erro,
-        'em jvtenis-app-aluno, ".read" precisa aceitar quem está identificado (auth != null)');
+      passo(false,'Aluno lê a publicação segura',a.prazo?'sem resposta':a.erro,
+        'publique o app novo e as regras P0: jvtenis-app-publico precisa aceitar auth != null');
     }else{
-      const ref=db2.ref('jvtenis/fila_pedidos').push();
-      const b=await tenta(()=>ref.set({teste:true,texto:'teste de conexão',ts:Date.now()}));
-      if(b.ok){
-        try{await window.fbDB.ref('jvtenis/fila_pedidos/'+ref.key).remove();}catch(e){}
-        passo(true,'Aluno lê e manda pedido','a publicação chega nele e o pedido chega em você');
-      }else{
-        passo(false,'Aluno manda pedido',b.prazo?'sem resposta':b.erro,
-          'em fila_pedidos, o item novo precisa de ".write": "auth != null && !data.exists() && newData.exists()"');
-      }
+      const cam='jvtenis/'+VINC_REQ_KEY+'/'+uid2;
+      const b=uid2?await tenta(()=>db2.ref(cam).set({uid:uid2,codigo:'0000',ts:Date.now()})):{ok:false,erro:'sem identificação'};
+      try{if(uid2)await window.fbDB.ref(cam).remove();}catch(e){}
+      if(b.ok)passo(true,'Aluno pede vínculo','a publicação segura chega e o aparelho consegue pedir autorização');
+      else passo(false,'Aluno pede vínculo',b.prazo?'sem resposta':b.erro,
+        'em fila_vinculos/$uid, o próprio auth.uid precisa poder criar o pedido');
     }
   }
   // 7) e NÃO pode ler a fila dos outros
@@ -8173,9 +8327,10 @@ let torFila=[];
 async function syncTorneio(silent){
   if(!hasCloud()){renderTorLog();return;}
   try{
+    await carregarVinculos(true);
     const snap=await window.fbDB.ref('jvtenis/fila_torneio').get();
     const val=snap.exists()?snap.val():{};
-    torFila=Object.entries(val||{}).map(([key,m])=>({key,...m})).sort((a,b)=>(a.ts||0)-(b.ts||0));
+    torFila=Object.entries(val||{}).map(([key,m])=>({key,...m})).filter(p=>pedidoConfiavel(p)).sort((a,b)=>(a.ts||0)-(b.ts||0));
   }catch(e){torFila=[];}
   renderTorLog();
 }
@@ -8219,9 +8374,10 @@ let CONF_ALUNOS={};   // confirmações feitas pelos alunos (codigo|data|hora)
 async function carregarConfirmacoes(){
   if(!hasCloud())return;
   try{
+    await carregarVinculos(true);
     const snap=await window.fbDB.ref('jvtenis/fila_confirmacoes').get();
     const v=snap.exists()?(snap.val()||{}):{};const m={};
-    Object.keys(v).forEach(k=>{const c=v[k];if(c&&c.codigo&&c.data&&c.hora)m[c.codigo+'|'+c.data+'|'+c.hora]=true;});
+    Object.keys(v).forEach(k=>{const c=v[k];if(c&&c.codigo&&c.data&&c.hora&&pedidoConfiavel(c))m[c.codigo+'|'+c.data+'|'+c.hora]=true;});
     CONF_ALUNOS=m;const b=document.getElementById('confirm-amanha');if(b)renderConfirmAmanha();
   }catch(e){}
 }
