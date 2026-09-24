@@ -35,12 +35,21 @@ EXISTE = {
     'jvtenis/professores/prof-uid-111',
     'jvtenis/professores/prof-uid-222',
 }
+ROOT_VALORES = {
+    'jvtenis/aluno_vinculos/anon-abc123/ativo': True,
+    'jvtenis/aluno_vinculos/anon-abc123/codigo': '1234',
+}
+PAYLOAD_OK = {'uid': 'anon-abc123', 'codigo': '1234'}
+PAYLOAD_UID_FALSO = {'uid': 'anon-xyz789', 'codigo': '1234'}
+PAYLOAD_COD_FALSO = {'uid': 'anon-abc123', 'codigo': '9999'}
 
 
-def avaliar(expr, auth, curingas, data_existe, new_existe):
+def avaliar(expr, auth, curingas, data_existe, new_existe, new_data=None, root_values=None):
     """Avalia o subconjunto de expressão usado nas nossas regras."""
     if expr is True:  return True
     if expr is False: return False
+    new_data = new_data or {}
+    root_values = root_values or {}
     e = str(expr)
     # root.child(...).exists() — o caminho é montado por pedaços ('texto',
     # $curinga, auth.uid). Tem de ser resolvido ANTES das outras trocas, senão
@@ -62,13 +71,29 @@ def avaliar(expr, auth, curingas, data_existe, new_existe):
                 raise SystemExit('root.child com pedaço que não sei resolver: %r' % pedaco)
         return repr(cam in EXISTE)
     e = re.sub(r"root\.child\(([^()]*)\)\.exists\(\)", rootc, e)
-    # auth
+    def rootv(m):
+        cam = ''
+        for pedaco in m.group(1).split('+'):
+            pedaco = pedaco.strip()
+            if pedaco.startswith("'") and pedaco.endswith("'"): cam += pedaco[1:-1]
+            elif pedaco == 'auth.uid':
+                if not auth: return 'None'
+                cam += auth['uid']
+            elif pedaco.startswith('$'):
+                v = curingas.get(pedaco[1:])
+                if v is None: return 'None'
+                cam += v
+            else:
+                raise SystemExit('root.child com pedaço que não sei resolver: %r' % pedaco)
+        return repr(root_values.get(cam))
+    e = re.sub(r"root\.child\(([^()]*)\)\.val\(\)", rootv, e)
     e = re.sub(r'\bauth\s*!=\s*null\b', 'True' if auth else 'False', e)
     e = re.sub(r'\bauth\s*==\s*null\b', 'False' if auth else 'True', e)
     if 'auth.uid' in e:
         if not auth: return False          # auth nulo: acesso a .uid derruba a regra
         e = e.replace('auth.uid', repr(auth['uid']))
     # data / newData
+    e = re.sub(r"newData\.child\('([^']+)'\)\.val\(\)", lambda m: repr(new_data.get(m.group(1))), e)
     e = re.sub(r'!\s*data\.exists\(\)', 'True' if not data_existe else 'False', e)
     e = re.sub(r'\bdata\.exists\(\)',   'True' if data_existe else 'False', e)
     e = re.sub(r'\bnewData\.exists\(\)','True' if new_existe else 'False', e)
@@ -78,6 +103,8 @@ def avaliar(expr, auth, curingas, data_existe, new_existe):
         return repr(val is not None and val.startswith(m.group(2)))
     e = re.sub(r"\$(\w+)\.beginsWith\('([^']*)'\)", bw, e)
     e = e.replace('===', '==').replace('&&', ' and ').replace('||', ' or ')
+    e = re.sub(r'\btrue\b', 'True', e, flags=re.I)
+    e = re.sub(r'\bfalse\b', 'False', e, flags=re.I)
     # $curinga solto vira o valor capturado no caminho. Antes virava string vazia
     # sempre, o que fazia auth.uid === $uid nunca ser verdadeiro — uma regra
     # correta apareceria como bloqueio.
@@ -91,14 +118,16 @@ def avaliar(expr, auth, curingas, data_existe, new_existe):
         raise SystemExit('não consegui avaliar a expressão: %r' % expr)
 
 
-def permite(regras, caminho, tipo, auth, data_existe=False, new_existe=True):
+def permite(regras, caminho, tipo, auth, data_existe=False, new_existe=True,
+            new_data=None, root_values=None):
     """True se o Firebase permitiria .read/.write em `caminho`."""
     segs = [s for s in caminho.split('/') if s]
     no, curingas = regras, {}
     # a raiz das regras também pode conceder
     for i in range(len(segs) + 1):
         if isinstance(no, dict) and no.get('.' + tipo) is not None:
-            if avaliar(no['.' + tipo], auth, curingas, data_existe, new_existe):
+            if avaliar(no['.' + tipo], auth, curingas, data_existe, new_existe,
+                       new_data=new_data, root_values=root_values):
                 return True
         if i == len(segs): break
         s = segs[i]
@@ -117,7 +146,10 @@ def main():
     arq = sys.argv[1] if len(sys.argv) > 1 else \
         os.path.join(os.path.dirname(__file__), 'firebase-regras-etapa3.json')
     regras = json.load(open(arq, encoding='utf-8'))['rules']
-    print('conferindo:', os.path.basename(arq), '\n')
+    nome = os.path.basename(arq)
+    p0 = nome in ('firebase-regras-etapa3-transicao.json','firebase-regras-etapa4-estrita.json')
+    final = nome == 'firebase-regras-etapa4-estrita.json'
+    print('conferindo:', nome, '\n')
 
     J = 'jvtenis/'
     FILAS = ['fila_pedidos','fila_agendamentos','fila_autoaval',
@@ -143,13 +175,32 @@ def main():
     # ---- o carimbo de versao: Gestao grava, todo mundo identificado le
     casos.append(('Gestão (João logado)', 'grava o carimbo de versão', COACH, J+'versao_app', 'write', True, True))
     casos.append(('Gestão (João logado)', 'lê o carimbo de versão',    COACH, J+'versao_app', 'read',  True, True))
+    if p0:
+        for cam in ['jvtenis-app-publico','aluno_vinculos/anon-abc123','alunos_privados/anon-abc123','fila_vinculos/anon-abc123']:
+            casos.append(('Gestão (João logado)', 'grava '+cam, COACH, J+cam, 'write', True, True))
+            casos.append(('Gestão (João logado)', 'lê '+cam, COACH, J+cam, 'read', True, True))
 
     # ---- Aluno: o que app-aluno/index.html faz
-    casos.append(('App do aluno (anônimo)', 'lê a publicação', ALUNO, J+'jvtenis-app-aluno', 'read', True, True))
+    casos.append(('App do aluno (anônimo)', 'lê a publicação legada', ALUNO, J+'jvtenis-app-aluno', 'read', not final, True))
+    if p0:
+        casos.append(('App do aluno (anônimo)', 'lê a publicação segura', ALUNO, J+'jvtenis-app-publico', 'read', True, True))
+        casos.append(('App do aluno (anônimo)', 'lê o próprio vínculo', ALUNO, J+'aluno_vinculos/anon-abc123', 'read', True, True))
+        casos.append(('App do aluno (anônimo)', 'pede vínculo no próprio UID', ALUNO, J+'fila_vinculos/anon-abc123', 'write', True, False))
+        casos.append(('App do aluno (anônimo)', 'lê dados privados quando vinculado', ALUNO, J+'alunos_privados/anon-abc123', 'read', True, True, None, ROOT_VALORES))
+        casos.append(('Aluno NÃO pode', 'listar todos os vínculos', ALUNO, J+'aluno_vinculos', 'read', False, True))
+        casos.append(('Aluno NÃO pode', 'aprovar o próprio vínculo', ALUNO, J+'aluno_vinculos/anon-abc123', 'write', False, True))
+        casos.append(('Aluno NÃO pode', 'ler dados privados de outro UID', ALUNO, J+'alunos_privados/anon-xyz789', 'read', False, True, None, ROOT_VALORES))
+        casos.append(('Aluno NÃO pode', 'ler o mapa interno da quadra', ALUNO, J+'mapa_quadra', 'read', False, True))
     casos.append(('App do aluno (anônimo)', 'lê os próprios pedidos',  ALUNO, J+'aluno-estado/anon-abc123', 'read', True, True))
     casos.append(('App do aluno (anônimo)', 'grava os próprios pedidos',ALUNO, J+'aluno-estado/anon-abc123', 'write', True, True))
     for f in FILAS:
-        casos.append(('App do aluno (anônimo)', 'manda pedido novo em '+f, ALUNO, J+f+'/-Nnovo', 'write', True, False))
+        if p0:
+            casos.append(('App do aluno (anônimo)', 'manda pedido válido em '+f, ALUNO, J+f+'/-Nnovo', 'write', True, False, PAYLOAD_OK, ROOT_VALORES))
+            casos.append(('Aluno NÃO pode', 'forjar UID em '+f, ALUNO, J+f+'/-Nuid', 'write', False, False, PAYLOAD_UID_FALSO, ROOT_VALORES))
+            if final:
+                casos.append(('Aluno NÃO pode', 'forjar código em '+f, ALUNO, J+f+'/-Ncod', 'write', False, False, PAYLOAD_COD_FALSO, ROOT_VALORES))
+        else:
+            casos.append(('App do aluno (anônimo)', 'manda pedido novo em '+f, ALUNO, J+f+'/-Nnovo', 'write', True, False))
     casos.append(('App do aluno (anônimo)', 'lê o carimbo de versão', ALUNO, J+'versao_app', 'read', True, True))
     # ...e o que ele NÃO pode
     for f in FILAS:
@@ -170,6 +221,8 @@ def main():
 
     casos.append(('Outro aluno NÃO pode', 'ler o espaço do primeiro',  ALUNO2, J+'aluno-estado/anon-abc123', 'read',  False, True))
     casos.append(('Outro aluno NÃO pode', 'gravar no espaço do primeiro',ALUNO2, J+'aluno-estado/anon-abc123','write', False, True))
+    if final:
+        casos.append(('Outro aluno NÃO pode', 'usar fila sem vínculo ativo', ALUNO2, J+'fila_pedidos/-Nnovo', 'write', False, False, {'uid':'anon-xyz789','codigo':'1234'}, ROOT_VALORES))
 
     # ---- Site público, sem login nenhum
     casos.append(('Site público (sem login)', 'lê os preços',        NINGUEM, J+'precos_publicos', 'read', True, True))
@@ -268,11 +321,14 @@ def main():
     casos.append(('Estranho NÃO pode', 'mexer no carimbo',       NINGUEM, J+'versao_app', 'write', False, True))
 
     falhas, grupo_atual = 0, None
-    for grupo, desc, ator, cam, tipo, esperado, existe in casos:
+    for caso in casos:
+        grupo, desc, ator, cam, tipo, esperado, existe, *extra = caso
+        new_data = extra[0] if len(extra) > 0 else None
+        root_values = extra[1] if len(extra) > 1 else None
         if grupo != grupo_atual:
             print('\n== %s' % grupo); grupo_atual = grupo
         real = permite(regras, cam, tipo, ator, data_existe=existe,
-                       new_existe=True)
+                       new_existe=True, new_data=new_data, root_values=root_values)
         ok = (real == esperado)
         if not ok: falhas += 1
         print('  %s %-34s %s' % ('✅' if ok else '❌', desc,

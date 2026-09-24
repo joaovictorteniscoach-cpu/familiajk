@@ -38,7 +38,7 @@
 <link rel="apple-touch-startup-image" media="screen and (device-width:375px) and (device-height:667px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)" href="splash-gestao-750x1334.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="lib/estilo.css?v=2026-09-24-1">
+<link rel="stylesheet" href="lib/estilo.css?v=2026-09-24-2">
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
 <script src="lib/firebase-database-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js\'><\/script>')"></script>
@@ -543,8 +543,14 @@ function esperarAuth(){
   <p class="sec-eyebrow" style="margin-top:18px">Segurança</p>
   <h2 class="sec-title">Sua <em>conta</em></h2>
   <p class="hint" id="versao-linha" style="font-weight:700"></p>
-  <p class="hint">Entrando com a sua conta, este aparelho passa a ser reconhecido pelo banco de dados. Hoje isso é opcional e não muda nada no uso — é o preparo para fechar o banco, de modo que só você possa alterar ou apagar os dados. O aparelho continua conectado depois de fechar o app.</p>
+  <p class="hint">Entrando com a sua conta, este aparelho passa a ser reconhecido pelo banco de dados. O login identifica o administrador e protege os dados da gestão. Sem ele, a cópia local continua disponível, mas a nuvem administrativa permanece fechada. O aparelho continua conectado depois de fechar o app.</p>
   <div id="conta-box"></div>
+
+  <div class="so-dono">
+    <h2 class="sec-title" style="margin-top:18px">Acessos do <em>App do Aluno</em></h2>
+    <p class="hint">O código de 4 dígitos só localiza o cadastro — não prova identidade. Cada aparelho novo deve ser aprovado individualmente depois de confirmar com o aluno por um canal externo, como WhatsApp.</p>
+    <div id="vinculos-box"></div>
+  </div>
 
   <h2 class="sec-title" style="margin-top:18px">Ferramentas &amp; <em>segurança</em></h2>
   <p class="hint">Tudo num lugar só. Toque para usar — o resultado aparece logo abaixo.</p>
@@ -883,7 +889,7 @@ function esperarAuth(){
   <button class="so-dono" onclick="go('torneio',this)"><span class="ico" data-ic="trophy"></span><span class="nav-badge" id="nb-torneio"></span>Torneio</button>
   <button id="nav-mais" onclick="abrirMais()"><span class="ico"><svg viewBox="0 0 24 24" width="24" height="24"><circle cx="5" cy="12" r="2.2" fill="#D4AF58"/><circle cx="12" cy="12" r="2.2" fill="#D4AF58"/><circle cx="19" cy="12" r="2.2" fill="#D4AF58"/></svg></span>Mais</button>
 </nav>
-<script src="lib/icones.js?v=2026-09-24-1"></script>
+<script src="lib/icones.js?v=2026-09-24-2"></script>
 
 <!-- MODAL ALUNO -->
 <div class="overlay" id="ov-aluno" onclick="if(event.target===this)closeModal('ov-aluno')">
@@ -1358,7 +1364,7 @@ function esperarAuth(){
 
 <div class="toast" id="toast"></div>
 
-<script src="lib/app-gestao.js?v=2026-09-24-1"></script>
+<script src="lib/app-gestao.js?v=2026-09-24-2"></script>
 <script>
 /* Rede de seguranca do par tela+codigo.
 
@@ -1373,7 +1379,7 @@ function esperarAuth(){
    torto, o app busca o par certo uma vez e, se insistir, DIZ o que houve em
    vez de deixar voce tocando em botao que nao responde. */
 (function(){
-  var ESPERADA='2026-09-24-1';
+  var ESPERADA='2026-09-24-2';
   function tela(motivo){
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;z-index:99999;background:#1A2E14;color:#FAF7F2;'

@@ -1,3 +1,18 @@
+# Segurança P0
+
+As variantes P0 são derivadas da regra atual `firebase-regras-etapa3.json`, preservando multi-professor e os demais caminhos existentes.
+
+```sh
+python3 ferramentas/checar-regras.py ferramentas/firebase-regras-etapa3.json
+python3 ferramentas/checar-regras.py ferramentas/firebase-regras-etapa3-transicao.json
+python3 ferramentas/checar-regras.py ferramentas/firebase-regras-etapa4-estrita.json
+python3 ferramentas/checar-seguranca-p0.py
+```
+
+Aprovação de aparelho é individual, com confirmação externa; código de 4 dígitos não autoriza em lote.
+
+---
+
 # Regras do banco de dados (Firebase)
 
 As regras dizem **quem pode ler e quem pode gravar** no banco. Elas ficam em

@@ -1,0 +1,211 @@
+{
+  "rules": {
+    "jvtenis": {
+      "precos_publicos": {
+        ".read": true,
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'"
+      },
+      "versao_app": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'"
+      },
+      "jvtenis-app-aluno": {
+        ".read": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".validate": "newData.isString() && newData.val().length <= 5000000"
+      },
+      "jvtenis-gestao-v1": {
+        ".read": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'"
+      },
+      "professores": {
+        ".read": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        "$uid": {
+          ".read": "auth != null && (auth.uid === $uid || auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1')",
+          ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'"
+        }
+      },
+      "prof": {
+        ".read": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        "$uid": {
+          ".read": "auth != null && (auth.uid === $uid || auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1')",
+          ".write": "auth != null && (auth.uid === $uid || auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1')"
+        }
+      },
+      "mapa_quadra": {
+        ".read": "auth != null && (auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1' || root.child('jvtenis/professores/' + auth.uid).exists())",
+        "$uid": {
+          ".write": "auth != null && (auth.uid === $uid || auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1') && (root.child('jvtenis/professores/' + $uid).exists() || $uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1')",
+          ".validate": "newData.hasChild('ts') && newData.child('ts').isNumber() && (!newData.hasChild('nome') || newData.child('nome').val().length <= 60)"
+        }
+      },
+      "agenda_prof": {
+        ".read": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        "$uid": {
+          ".read": "auth != null && (auth.uid === $uid || auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1')",
+          ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+          ".validate": "newData.hasChild('ts') && newData.child('ts').isNumber() && (!newData.hasChild('nome') || newData.child('nome').val().length <= 60)"
+        }
+      },
+      "fila_quadra": {
+        ".read": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        "$item": {
+          ".write": "auth != null && !data.exists() && newData.exists() && root.child('jvtenis/professores/' + auth.uid).exists()",
+          ".validate": "newData.hasChild('ts') && newData.child('ts').isNumber() && (!newData.hasChild('nome') || newData.child('nome').val().length <= 120) && (!newData.hasChild('texto') || newData.child('texto').val().length <= 500) && (!newData.hasChild('desc') || newData.child('desc').val().length <= 300)"
+        }
+      },
+      "jvtenis-agendamentos": {
+        ".read": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'"
+      },
+      "v2": {
+        ".read": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'"
+      },
+      "arquivo": {
+        ".read": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'"
+      },
+      "backups": {
+        ".read": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'"
+      },
+      "backups_dia": {
+        ".read": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'"
+      },
+      "backups_dia_idx": {
+        ".read": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'"
+      },
+      "notificacoes": {
+        ".read": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        "$item": {
+          ".write": "auth != null && !data.exists() && newData.exists() && newData.child('uid').val() === auth.uid && root.child('jvtenis/aluno_vinculos/' + auth.uid + '/ativo').val() === true && newData.child('codigo').val() === root.child('jvtenis/aluno_vinculos/' + auth.uid + '/codigo').val()",
+          ".validate": "newData.hasChild('ts') && newData.child('ts').isNumber() && newData.hasChild('uid') && newData.child('uid').isString() && newData.child('uid').val().length <= 128 && newData.hasChild('codigo') && newData.child('codigo').isString() && newData.child('codigo').val().length === 4 && (!newData.hasChild('nome') || (newData.child('nome').isString() && newData.child('nome').val().length <= 120)) && (!newData.hasChild('texto') || (newData.child('texto').isString() && newData.child('texto').val().length <= 500)) && (!newData.hasChild('desc') || (newData.child('desc').isString() && newData.child('desc').val().length <= 300))"
+        }
+      },
+      "fila_pedidos": {
+        ".read": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        "$item": {
+          ".write": "auth != null && !data.exists() && newData.exists() && newData.child('uid').val() === auth.uid && root.child('jvtenis/aluno_vinculos/' + auth.uid + '/ativo').val() === true && newData.child('codigo').val() === root.child('jvtenis/aluno_vinculos/' + auth.uid + '/codigo').val()",
+          ".validate": "newData.hasChild('ts') && newData.child('ts').isNumber() && newData.hasChild('uid') && newData.child('uid').isString() && newData.child('uid').val().length <= 128 && newData.hasChild('codigo') && newData.child('codigo').isString() && newData.child('codigo').val().length === 4 && (!newData.hasChild('nome') || (newData.child('nome').isString() && newData.child('nome').val().length <= 120)) && (!newData.hasChild('texto') || (newData.child('texto').isString() && newData.child('texto').val().length <= 500)) && (!newData.hasChild('desc') || (newData.child('desc').isString() && newData.child('desc').val().length <= 300))"
+        }
+      },
+      "fila_agendamentos": {
+        ".read": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        "$item": {
+          ".write": "auth != null && !data.exists() && newData.exists() && newData.child('uid').val() === auth.uid && root.child('jvtenis/aluno_vinculos/' + auth.uid + '/ativo').val() === true && newData.child('codigo').val() === root.child('jvtenis/aluno_vinculos/' + auth.uid + '/codigo').val()",
+          ".validate": "newData.hasChild('ts') && newData.child('ts').isNumber() && newData.hasChild('uid') && newData.child('uid').isString() && newData.child('uid').val().length <= 128 && newData.hasChild('codigo') && newData.child('codigo').isString() && newData.child('codigo').val().length === 4 && (!newData.hasChild('nome') || (newData.child('nome').isString() && newData.child('nome').val().length <= 120)) && (!newData.hasChild('texto') || (newData.child('texto').isString() && newData.child('texto').val().length <= 500)) && (!newData.hasChild('desc') || (newData.child('desc').isString() && newData.child('desc').val().length <= 300))"
+        }
+      },
+      "fila_autoaval": {
+        ".read": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        "$item": {
+          ".write": "auth != null && !data.exists() && newData.exists() && newData.child('uid').val() === auth.uid && root.child('jvtenis/aluno_vinculos/' + auth.uid + '/ativo').val() === true && newData.child('codigo').val() === root.child('jvtenis/aluno_vinculos/' + auth.uid + '/codigo').val()",
+          ".validate": "newData.hasChild('ts') && newData.child('ts').isNumber() && newData.hasChild('uid') && newData.child('uid').isString() && newData.child('uid').val().length <= 128 && newData.hasChild('codigo') && newData.child('codigo').isString() && newData.child('codigo').val().length === 4 && (!newData.hasChild('nome') || (newData.child('nome').isString() && newData.child('nome').val().length <= 120)) && (!newData.hasChild('texto') || (newData.child('texto').isString() && newData.child('texto').val().length <= 500)) && (!newData.hasChild('desc') || (newData.child('desc').isString() && newData.child('desc').val().length <= 300))"
+        }
+      },
+      "fila_confirmacoes": {
+        ".read": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        "$item": {
+          ".write": "auth != null && !data.exists() && newData.exists() && newData.child('uid').val() === auth.uid && root.child('jvtenis/aluno_vinculos/' + auth.uid + '/ativo').val() === true && newData.child('codigo').val() === root.child('jvtenis/aluno_vinculos/' + auth.uid + '/codigo').val()",
+          ".validate": "newData.hasChild('ts') && newData.child('ts').isNumber() && newData.hasChild('uid') && newData.child('uid').isString() && newData.child('uid').val().length <= 128 && newData.hasChild('codigo') && newData.child('codigo').isString() && newData.child('codigo').val().length === 4 && (!newData.hasChild('nome') || (newData.child('nome').isString() && newData.child('nome').val().length <= 120)) && (!newData.hasChild('texto') || (newData.child('texto').isString() && newData.child('texto').val().length <= 500)) && (!newData.hasChild('desc') || (newData.child('desc').isString() && newData.child('desc').val().length <= 300))"
+        }
+      },
+      "fila_torneio": {
+        ".read": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        "$item": {
+          ".write": "auth != null && !data.exists() && newData.exists() && newData.child('uid').val() === auth.uid && root.child('jvtenis/aluno_vinculos/' + auth.uid + '/ativo').val() === true && newData.child('codigo').val() === root.child('jvtenis/aluno_vinculos/' + auth.uid + '/codigo').val()",
+          ".validate": "newData.hasChild('ts') && newData.child('ts').isNumber() && newData.hasChild('uid') && newData.child('uid').isString() && newData.child('uid').val().length <= 128 && newData.hasChild('codigo') && newData.child('codigo').isString() && newData.child('codigo').val().length === 4 && (!newData.hasChild('nome') || (newData.child('nome').isString() && newData.child('nome').val().length <= 120)) && (!newData.hasChild('texto') || (newData.child('texto').isString() && newData.child('texto').val().length <= 500)) && (!newData.hasChild('desc') || (newData.child('desc').isString() && newData.child('desc').val().length <= 300))"
+        }
+      },
+      "fila_cadastros": {
+        ".read": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        "$item": {
+          ".write": "auth != null && !data.exists() && newData.exists()",
+          ".validate": "newData.hasChild('ts') && newData.child('ts').isNumber() && (!newData.hasChild('nome') || newData.child('nome').val().length <= 120)"
+        }
+      },
+      "aluno-estado": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.isString() && newData.val().length <= 100000"
+        }
+      },
+      "jvtenis-app-publico": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".validate": "newData.isString() && newData.val().length <= 900000"
+      },
+      "aluno_vinculos": {
+        ".read": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        "$uid": {
+          ".read": "auth != null && (auth.uid === $uid || auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1')",
+          ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+          ".validate": "newData.hasChildren(['codigo','alunoId','ativo','ts']) && newData.child('codigo').isString() && newData.child('codigo').val().length === 4 && newData.child('alunoId').isString() && newData.child('alunoId').val().length <= 80 && newData.child('ativo').isBoolean() && newData.child('ts').isNumber() && (!newData.hasChild('nome') || (newData.child('nome').isString() && newData.child('nome').val().length <= 120))",
+          "codigo": {
+            ".validate": true
+          },
+          "alunoId": {
+            ".validate": true
+          },
+          "ativo": {
+            ".validate": true
+          },
+          "ts": {
+            ".validate": true
+          },
+          "nome": {
+            ".validate": true
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      },
+      "alunos_privados": {
+        ".read": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        "$uid": {
+          ".read": "auth != null && (auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1' || (auth.uid === $uid && root.child('jvtenis/aluno_vinculos/' + $uid + '/ativo').val() === true))",
+          ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+          ".validate": "newData.isString() && newData.val().length <= 400000"
+        }
+      },
+      "fila_vinculos": {
+        ".read": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+        "$uid": {
+          ".read": "auth != null && (auth.uid === $uid || auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1')",
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.hasChildren(['uid','codigo','ts']) && newData.child('uid').val() === $uid && newData.child('codigo').isString() && newData.child('codigo').val().length === 4 && newData.child('ts').isNumber()",
+          "uid": {
+            ".validate": true
+          },
+          "codigo": {
+            ".validate": true
+          },
+          "ts": {
+            ".validate": true
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
+    }
+  }
+}
