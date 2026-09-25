@@ -53,6 +53,13 @@ for x in ['Início','Agenda','Alunos','Financeiro','Mais']:
 ok('id="vinculos-box"' in g,'painel de acessos P0 continua na Gestão')
 ok('Acessos do aluno' in g and 'function irAcessosAluno()' in gj,'menu Mais abre diretamente os acessos do App Aluno')
 
+print('\n== Legibilidade e proporções')
+ok('JV Legibilidade 2026-09-25-4 · Gestão' in gc,'passe de contraste/legibilidade da Gestão presente')
+ok('--jv-ink:#10261E' in gc and '.mov-l b' in gc and '.tg-name' in gc,'superfícies claras da Gestão têm tinta escura explícita')
+ok('.wk th' in gc and 'background:#0B3C2B!important' in gc,'grade semanal mantém cabeçalho escuro de alto contraste')
+ok('JV Legibilidade 2026-09-25-4 · App Aluno' in a,'passe de contraste/legibilidade do Aluno presente')
+ok('.jv-pay-card' in a and '.jv-home-card' in a and '.jv-quick button' in a,'Home do aluno mantém proporções premium')
+
 print('\n== PWA premium')
 ok(ma.get('theme_color')=='#06140F' and ma.get('background_color')=='#06140F','manifest do aluno no tema premium')
 ok(mg.get('theme_color')=='#06140F' and mg.get('background_color')=='#06140F','manifest da Gestão no tema premium')
