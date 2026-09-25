@@ -1005,3 +1005,130 @@ input,select,textarea{min-height:44px}
   .tg-tbl{font-size:12.5px!important}.tg-stat{width:44px!important}
   .chart-lab{width:72px!important}.chart-val{width:78px!important;font-size:12px!important}
 }
+
+
+/* ===== JV Polimento final 2026-09-25-5 · contraste, leitura e proporção =====
+   Ajustes guiados pelos testes reais no iPhone. Mantém a paleta premium e
+   corrige apenas hierarquia, contraste, safe-area e densidade visual. */
+:root{
+  --jv-copy:#F8F5ED;
+  --jv-copy-soft:rgba(248,245,237,.80);
+  --jv-copy-muted:rgba(248,245,237,.66);
+  --jv-paper:#FBF8F2;
+  --jv-paper-2:#F2ECE2;
+  --jv-paper-ink:#10261E;
+  --jv-paper-muted:#6B6255;
+}
+
+/* Dynamic Island / barra de status: nada importante encosta no recorte. */
+.top.jv-premium-hero{
+  padding-top:calc(22px + env(safe-area-inset-top,0px))!important;
+}
+.top.compacto.jv-premium-hero{
+  padding-top:calc(14px + env(safe-area-inset-top,0px))!important;
+  min-height:calc(96px + env(safe-area-inset-top,0px))!important;
+}
+.top.compacto.jv-premium-hero h1{padding-top:2px!important}
+.top.compacto .jv-avatar-btn{top:calc(12px + env(safe-area-inset-top,0px))!important}
+.top.compacto .top-actions{top:calc(13px + env(safe-area-inset-top,0px))!important}
+
+/* Texto escuro só em superfícies claras; em superfícies escuras, branco quente. */
+.page .hint,.page .sub,.page small{line-height:1.4}
+.comp-item b,.pend-item b,.cons h4,.dobra-cab,.fech-card b,.fq-linha b{color:#FFF!important}
+.comp-info,.comp-info span,.pend-item span,.cons p,.dobra-cab small,.fech-card span,.fq-linha span{
+  color:var(--jv-copy-soft)!important
+}
+
+/* Alunos — busca/filtros compactos, cards mais baixos e leitura imediata. */
+#pg-alunos .toolbar{grid-template-columns:minmax(0,1fr) auto auto!important;align-items:stretch!important}
+#pg-alunos .toolbar input{min-width:0!important}
+#pg-alunos .seg-scroll{
+  display:flex!important;overflow-x:auto!important;gap:7px!important;padding:6px!important;
+  scrollbar-width:none;-webkit-overflow-scrolling:touch
+}
+#pg-alunos .seg-scroll::-webkit-scrollbar{display:none}
+#pg-alunos .seg-scroll button{flex:0 0 auto!important;padding:9px 13px!important;min-height:42px!important}
+.aluno-head{min-height:80px!important}
+.aluno-name{font-size:17px!important;letter-spacing:-.1px!important}
+.aluno-sub{font-size:13px!important}
+#alunos-resumo .rc{min-height:88px!important}
+#alunos-resumo .rc b{line-height:1!important}
+
+/* Caixa — atalhos proporcionais e lista clara, sem texto “lavado”. */
+.quick{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.quick button{min-height:104px!important}
+.mov{gap:10px!important}
+.mov-l b,.mov-l span{opacity:1!important}
+.mov-l span{color:#6B6255!important}
+.mov-v{white-space:nowrap!important}
+
+/* Financeiro — os números têm prioridade; o rótulo não desaparece. */
+.fin-card{
+  background:linear-gradient(145deg,#0D3425,#08251B)!important;
+  border:1px solid rgba(224,185,79,.18)!important
+}
+.fin-card .l{color:rgba(248,245,237,.78)!important;letter-spacing:.7px!important}
+.fin-card .v{font-family:'DM Sans',sans-serif!important;font-weight:850!important;letter-spacing:-.6px!important}
+.chart-lab{color:#655D52!important}
+.chart-val{color:#10261E!important}
+.chart-track{background:#E7E0D5!important}
+.desp-item .di-d,.desp-item .di-c,.desp-item .di-v{opacity:1!important}
+
+/* Torneio — primeira coluna ganha espaço; controles continuam tocáveis. */
+.tg-card{overflow:hidden!important}
+.tg-head{align-items:center!important;gap:12px!important}
+.tg-title{color:#FFF!important;text-shadow:none!important}
+.tg-count{color:rgba(255,255,255,.76)!important}
+.tg-tbl{table-layout:fixed!important;width:100%!important}
+.tg-tbl th:first-child,.tg-tbl td:first-child{width:40%!important}
+.tg-tbl th:nth-child(2),.tg-tbl th:nth-child(3),.tg-tbl th:nth-child(4),
+.tg-tbl td:nth-child(2),.tg-tbl td:nth-child(3),.tg-tbl td:nth-child(4){width:10.5%!important}
+.tg-tbl th:nth-child(5),.tg-tbl td:nth-child(5){width:12%!important}
+.tg-tbl th:last-child,.tg-tbl td:last-child{width:16.5%!important}
+.tg-name{font-size:13.5px!important;color:#10261E!important;overflow-wrap:anywhere}
+.tg-stat{
+  width:100%!important;min-width:0!important;max-width:46px!important;height:42px!important;
+  color:#10261E!important;background:#FFFCF6!important;-webkit-text-fill-color:#10261E!important
+}
+.tg-pts{font-size:13.5px!important}
+.tg-mv,.tg-x{min-width:28px!important;min-height:36px!important;padding:0!important}
+
+/* Agenda — título fora do recorte e grade com células mais respiradas. */
+#pg-agenda{padding-top:18px!important}
+#pg-agenda>.sec-eyebrow:first-child{margin-top:4px!important}
+#pg-agenda>.sec-title:first-of-type{margin-top:0!important}
+.ag-ferr{margin-bottom:14px!important}
+.wk-scroll{overflow:auto!important;-webkit-overflow-scrolling:touch}
+.wk{min-width:620px!important}
+.wk th{height:54px!important}
+.wk td{height:max(var(--wk-h,34px),44px)!important}
+.wk-cell{font-size:max(var(--wk-fs,10px),11.5px)!important;line-height:1.18!important}
+.wk td.hr{min-width:70px!important}
+.ev{font-weight:750!important}
+.ev small{opacity:.82!important}
+
+/* Menu Mais: não escurece a tela; abre acima da barra e respeita o iPhone. */
+.mais-fundo.on{background:transparent!important}
+.mais-pop{
+  bottom:calc(88px + env(safe-area-inset-bottom,0px))!important;
+  width:min(250px,calc(100vw - 24px))!important;
+  right:12px!important
+}
+.mais-pop button{min-height:46px!important;font-size:14px!important}
+
+/* Barra inferior: toque confortável sem consumir altura demais. */
+.nav{min-height:78px!important}
+.nav button{min-height:60px!important}
+.nav button .ico{opacity:.94}
+.nav button:not(.on):not(.aberto){color:rgba(248,245,237,.72)!important}
+
+/* iPhone estreito: evita quebra agressiva sem diminuir legibilidade. */
+@media(max-width:390px){
+  .page{padding-left:14px!important;padding-right:14px!important}
+  #pg-alunos .toolbar{grid-template-columns:minmax(0,1fr) 82px 72px!important;gap:7px!important}
+  #pg-alunos .toolbar .btn{padding-left:8px!important;padding-right:8px!important;font-size:12px!important}
+  .tg-tbl th:first-child,.tg-tbl td:first-child{width:38%!important}
+  .tg-name{font-size:12.5px!important}
+  .tg-rank{width:25px!important;height:25px!important;margin-right:4px!important}
+  .tg-drag{padding-right:3px!important}
+}
