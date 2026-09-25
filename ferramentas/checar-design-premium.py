@@ -16,6 +16,18 @@ def ok(cond,msg):
     print(('✅ ' if cond else '❌ ')+msg)
     if not cond: falhas.append(msg)
 
+def carimbo(txt,rotulo,alvo,msg):
+    """Confere que um passe de design existe, SEM prender o numero da versao.
+
+    Prender o numero fazia o portao ficar vermelho sozinho: a cada ajuste o
+    carimbo vira -7, -8, e a linha 'JV Auditoria final 2026-09-25-6' deixava
+    de casar mesmo com o passe inteiro no lugar. O que interessa e que o
+    bloco continue ali - e agora o portao ainda diz qual versao encontrou.
+    """
+    m=re.search(r'JV\s+'+re.escape(rotulo)+r'\s+([0-9][0-9.\-]*)\s*·\s*([^\n=]*)',txt)
+    achou=bool(m) and (alvo.lower() in m.group(2).lower() if alvo else True)
+    ok(achou,msg+(' ('+m.group(1).strip()+')' if m else ''))
+
 a=(ROOT/'app-aluno/index.html').read_text(encoding='utf-8',errors='replace')
 g=(ROOT/'app-gestao/index.html').read_text(encoding='utf-8',errors='replace')
 gc=(ROOT/'app-gestao/lib/estilo.css').read_text(encoding='utf-8',errors='replace')
@@ -54,20 +66,20 @@ ok('id="vinculos-box"' in g,'painel de acessos P0 continua na Gestão')
 ok('Acessos do aluno' in g and 'function irAcessosAluno()' in gj,'menu Mais abre diretamente os acessos do App Aluno')
 
 print('\n== Legibilidade e proporções')
-ok('JV Legibilidade' in gc and '· Gestão' in gc,'passe de contraste/legibilidade da Gestão presente')
+carimbo(gc,'Legibilidade','Gestão','passe de contraste/legibilidade da Gestão presente')
 ok('--jv-ink:#10261E' in gc and '.mov-l b' in gc and '.tg-name' in gc,'superfícies claras da Gestão têm tinta escura explícita')
 ok('.wk th' in gc and 'background:#0B3C2B!important' in gc,'grade semanal mantém cabeçalho escuro de alto contraste')
-ok('JV Legibilidade' in a and '· App Aluno' in a,'passe de contraste/legibilidade do Aluno presente')
+carimbo(a,'Legibilidade','App Aluno','passe de contraste/legibilidade do Aluno presente')
 ok('.jv-pay-card' in a and '.jv-home-card' in a and '.jv-quick button' in a,'Home do aluno mantém proporções premium')
-ok('JV Auditoria final 2026-09-25-6 · contraste WCAG' in gc,'auditoria final de contraste da Gestão presente')
+carimbo(gc,'Auditoria final','contraste WCAG','auditoria final de contraste da Gestão presente')
 ok('-webkit-text-fill-color:#10261E' in gc and '.tg-head .tg-title' in gc,'Torneio da Gestão fixa contraste claro/escuro no iPhone')
 ok('.quick .q1,.quick .q2,.quick .q4' in gc and '.fin-card .l' in gc,'Caixa e Financeiro têm contraste explícito')
-ok('JV Auditoria final 2026-09-25-6 · App Aluno' in a,'auditoria final de contraste do App Aluno presente')
+carimbo(a,'Auditoria final','App Aluno','auditoria final de contraste do App Aluno presente')
 ok('@media (display-mode:standalone)' in a and '@media (display-mode:standalone)' in gc,'safe-area da Dynamic Island protegida nos dois apps')
 ok('font-size:16px!important' in a and 'font-size:16px!important' in gc,'inputs mobile evitam zoom automático do Safari')
 
-ok('JV Revisão iPhone 2026-09-25-7 · contraste + proporção' in gc,'revisão iPhone v7 da Gestão presente')
-ok('JV Revisão iPhone 2026-09-25-7 · App Aluno' in a,'revisão iPhone v7 do App Aluno presente')
+carimbo(gc,'Revisão iPhone','contraste','revisão iPhone da Gestão presente')
+carimbo(a,'Revisão iPhone','App Aluno','revisão iPhone do App Aluno presente')
 ok('#pg-torneio .tg-head .tg-title' in gc and '#pg-lanc .quick .q1' in gc,'correções específicas dos screenshots preservadas')
 
 print('\n== PWA premium')
