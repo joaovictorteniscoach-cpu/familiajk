@@ -66,6 +66,10 @@ ok('JV Auditoria final 2026-09-25-6 · App Aluno' in a,'auditoria final de contr
 ok('@media (display-mode:standalone)' in a and '@media (display-mode:standalone)' in gc,'safe-area da Dynamic Island protegida nos dois apps')
 ok('font-size:16px!important' in a and 'font-size:16px!important' in gc,'inputs mobile evitam zoom automático do Safari')
 
+ok('JV Revisão iPhone 2026-09-25-7 · contraste + proporção' in gc,'revisão iPhone v7 da Gestão presente')
+ok('JV Revisão iPhone 2026-09-25-7 · App Aluno' in a,'revisão iPhone v7 do App Aluno presente')
+ok('#pg-torneio .tg-head .tg-title' in gc and '#pg-lanc .quick .q1' in gc,'correções específicas dos screenshots preservadas')
+
 print('\n== PWA premium')
 ok(ma.get('theme_color')=='#06140F' and ma.get('background_color')=='#06140F','manifest do aluno no tema premium')
 ok(mg.get('theme_color')=='#06140F' and mg.get('background_color')=='#06140F','manifest da Gestão no tema premium')

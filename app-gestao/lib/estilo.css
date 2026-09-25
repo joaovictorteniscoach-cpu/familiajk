@@ -1259,3 +1259,137 @@ button,.btn,.month-btn,.tg-stat{min-height:44px}
   .tg-tbl th:last-child,.tg-tbl td:last-child{width:17%!important}
   .wk{min-width:650px!important}
 }
+
+
+/* ===== JV Revisão iPhone 2026-09-25-7 · contraste + proporção =====
+   Camada final baseada nos screenshots reais. Não muda a paleta nem a lógica:
+   apenas fixa contraste, densidade e áreas de toque nas superfícies já aprovadas. */
+
+/* CAIXA: cada cor mantém sua identidade, mas texto deixa de herdar tinta errada. */
+#pg-lanc .quick .q1{
+  background:#0B281C!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important
+}
+#pg-lanc .quick .q2{
+  background:#123925!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important
+}
+#pg-lanc .quick .q3{
+  background:#E0B94F!important;color:#10261E!important;-webkit-text-fill-color:#10261E!important
+}
+#pg-lanc .quick .q4{
+  background:#C9652C!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important
+}
+#pg-lanc .quick .q1 small,#pg-lanc .quick .q2 small,#pg-lanc .quick .q4 small{
+  color:#FFF!important;-webkit-text-fill-color:#FFF!important;opacity:.96!important
+}
+#pg-lanc .quick .q3 small{color:#203027!important;-webkit-text-fill-color:#203027!important;opacity:.92!important}
+#pg-lanc .quick button{justify-content:center!important;line-height:1.25!important}
+#pg-lanc .quick small{font-family:'DM Sans',sans-serif!important;font-size:18px!important;line-height:1.15!important;margin-top:4px!important}
+#pg-lanc .quick .qb-x{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+#pg-lanc .quick .qb-novo,#pg-lanc .quick .qb-novo small{
+  color:#EEE7DA!important;-webkit-text-fill-color:#EEE7DA!important
+}
+#pg-lanc .mov{background:#FBF8F2!important}
+#pg-lanc .mov-l b{color:#10261E!important;-webkit-text-fill-color:#10261E!important}
+#pg-lanc .mov-l span{color:#625A4F!important;-webkit-text-fill-color:#625A4F!important}
+
+/* ALUNOS: resumo claro = tinta escura; lista verde = tinta clara. */
+#pg-alunos #alunos-resumo .rc{
+  background:#FBF8F2!important;color:#10261E!important;-webkit-text-fill-color:#10261E!important
+}
+#pg-alunos #alunos-resumo .rc b{color:#0B3C2B!important;-webkit-text-fill-color:#0B3C2B!important}
+#pg-alunos #alunos-resumo .rc.pend b{color:#B64235!important;-webkit-text-fill-color:#B64235!important}
+#pg-alunos #alunos-resumo .rc span{color:#675F54!important;-webkit-text-fill-color:#675F54!important;opacity:1!important}
+#pg-alunos #alunos-resumo .rc.on{
+  background:#F2E7C8!important;border-color:#E0B94F!important;box-shadow:0 0 0 2px rgba(224,185,79,.14)!important
+}
+#pg-alunos .aluno,#pg-alunos .aluno *{text-shadow:none!important}
+#pg-alunos .aluno-name{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+#pg-alunos .aluno-sub{color:#D8D2C7!important;-webkit-text-fill-color:#D8D2C7!important}
+#pg-alunos .toolbar input::placeholder{color:#71695D!important;-webkit-text-fill-color:#71695D!important;opacity:1!important}
+
+/* FINANCEIRO: separa claramente cartões escuros da comparação branca. */
+#pg-fin .fin-card{background:linear-gradient(145deg,#0D3425,#08251B)!important}
+#pg-fin .fin-card .l{color:#DED8CD!important;-webkit-text-fill-color:#DED8CD!important;opacity:1!important}
+#pg-fin .fin-card .v{color:#FFF!important;-webkit-text-fill-color:#FFF!important;opacity:1!important}
+#pg-fin .chart{background:#FBF8F2!important;border-color:#D9C9A7!important}
+#pg-fin .chart-lab{color:#625A4F!important;-webkit-text-fill-color:#625A4F!important;font-weight:800!important}
+#pg-fin .chart-val{color:#10261E!important;-webkit-text-fill-color:#10261E!important;font-weight:850!important}
+#pg-fin .chart-track{height:48px!important;border-radius:13px!important;background:#E8E1D7!important}
+#pg-fin .chart-row{min-height:58px!important;gap:12px!important}
+#pg-fin .desp-item{background:#FBF8F2!important}
+#pg-fin .desp-item .di-d{color:#10261E!important;-webkit-text-fill-color:#10261E!important}
+#pg-fin .desp-item .di-c{color:#675F54!important;-webkit-text-fill-color:#675F54!important}
+#pg-fin #meta-input{min-height:58px!important;background:#FBF8F2!important;color:#10261E!important;-webkit-text-fill-color:#10261E!important}
+
+/* TORNEIO: corrige exatamente o caso do print — cabeçalho escuro e tabela clara. */
+#pg-torneio .tg-card{background:#FBF8F2!important;border-color:#D9C9A7!important}
+#pg-torneio .tg-head{background:#073323!important;color:#FFF!important}
+#pg-torneio .tg-head .tg-title{
+  color:#FFF!important;-webkit-text-fill-color:#FFF!important;opacity:1!important;font-size:16px!important
+}
+#pg-torneio .tg-head .tg-count{
+  color:#DAD4CA!important;-webkit-text-fill-color:#DAD4CA!important;opacity:1!important;font-size:12px!important
+}
+#pg-torneio .tg-head .tg-badge{
+  background:#E0B94F!important;color:#173225!important;-webkit-text-fill-color:#173225!important
+}
+#pg-torneio .tg-tbl{background:#FBF8F2!important}
+#pg-torneio .tg-tbl th{
+  color:#625A4F!important;-webkit-text-fill-color:#625A4F!important;background:#FBF8F2!important;
+  font-size:11px!important;padding:11px 4px!important
+}
+#pg-torneio .tg-tbl td{
+  color:#10261E!important;-webkit-text-fill-color:#10261E!important;background:#FBF8F2!important;
+  padding:10px 4px!important;min-height:58px!important
+}
+#pg-torneio .tg-tbl td:first-child{padding-left:12px!important}
+#pg-torneio .tg-name,#pg-torneio .tg-tbl td:first-child .tg-name{
+  color:#10261E!important;-webkit-text-fill-color:#10261E!important;opacity:1!important;
+  font-size:13px!important;font-weight:800!important;line-height:1.25!important
+}
+#pg-torneio .tg-drag{color:#8A8174!important;-webkit-text-fill-color:#8A8174!important}
+#pg-torneio .tg-stat{
+  width:44px!important;max-width:44px!important;height:42px!important;min-height:42px!important;
+  border-radius:12px!important;background:#FFFCF6!important;border-color:#E3C974!important;
+  color:#10261E!important;-webkit-text-fill-color:#10261E!important;font-size:15px!important;font-weight:850!important
+}
+#pg-torneio .tg-pts{
+  min-width:42px!important;height:42px!important;border-radius:12px!important;display:inline-flex!important;
+  align-items:center!important;justify-content:center!important;color:#143B2C!important;-webkit-text-fill-color:#143B2C!important
+}
+#pg-torneio .tg-pts.lead{
+  background:#073323!important;color:#F0D57C!important;-webkit-text-fill-color:#F0D57C!important
+}
+#pg-torneio .tg-acum{color:#746B5E!important;-webkit-text-fill-color:#746B5E!important;font-size:10.5px!important}
+#pg-torneio .tg-mv,#pg-torneio .tg-x{width:32px!important;min-width:32px!important}
+
+/* AGENDA: células respiram sem transformar a grade em uma tabela gigante. */
+#pg-agenda .seg{margin-top:2px!important}
+#pg-agenda .ag-nav-label{font-size:16px!important;line-height:1.28!important}
+#pg-agenda .ag-nav-label small{font-size:12px!important}
+#pg-agenda .ag-ferr>summary{font-size:14px!important}
+#pg-agenda .wk{min-width:670px!important}
+#pg-agenda .wk th{height:52px!important;padding:8px 5px!important}
+#pg-agenda .wk td{height:max(var(--wk-h,34px),42px)!important}
+#pg-agenda .wk td.hr{min-width:64px!important;width:64px!important}
+#pg-agenda .wk-cell{font-size:max(var(--wk-fs,10px),11.5px)!important;line-height:1.17!important;padding:4px 5px!important}
+#pg-agenda .wk-cell.free{color:#766E62!important;-webkit-text-fill-color:#766E62!important}
+#pg-agenda .wk-cell.t-aula,#pg-agenda .wk-cell.t-locacao,#pg-agenda .wk-cell.t-torneio,
+#pg-agenda .wk-cell.t-bloqueio,#pg-agenda .wk-cell.t-pessoal,#pg-agenda .wk-cell.t-grupo,
+#pg-agenda .wk-cell.t-personal,#pg-agenda .wk-cell.t-outro,#pg-agenda .wk-cell.multi{
+  color:#FFF!important;-webkit-text-fill-color:#FFF!important;font-weight:800!important
+}
+
+/* Barra inferior: rótulos ficam legíveis, sem crescer além do mockup. */
+.nav button{font-size:11.5px!important;color:rgba(248,245,237,.75)!important}
+.nav button.on,.nav button.aberto{color:#F0D57C!important;-webkit-text-fill-color:#F0D57C!important}
+.nav button:not(.on):not(.aberto){-webkit-text-fill-color:rgba(248,245,237,.75)!important}
+
+@media(max-width:390px){
+  #pg-torneio .tg-tbl th:first-child,#pg-torneio .tg-tbl td:first-child{width:37%!important}
+  #pg-torneio .tg-stat{width:40px!important;max-width:40px!important}
+  #pg-fin .chart-lab{width:74px!important}
+  #pg-fin .chart-val{width:82px!important}
+  #pg-agenda .wk{min-width:680px!important}
+}
+
