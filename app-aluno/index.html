@@ -667,6 +667,131 @@ body{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
   .jv-quick button{min-height:54px!important}
 }
 
+
+
+/* ===== JV Polimento final 2026-09-25-5 · App Aluno =====
+   Mantém a Home aprovada e reforça contraste, proporção e leitura no iPhone. */
+:root{
+  --jv-copy:#F8F5ED;
+  --jv-copy-soft:rgba(248,245,237,.80);
+  --jv-copy-muted:rgba(248,245,237,.66);
+  --jv-paper:#FBF8F2;
+  --jv-paper-ink:#10261E;
+  --jv-paper-muted:#6B6255;
+}
+#app>.top.jv-premium-hero{
+  padding-top:calc(22px + env(safe-area-inset-top,0px))!important;
+  min-height:296px!important;
+}
+.jv-student-brand span{color:#F0D57C!important}
+.jv-student-brand b{color:#FFF!important}
+.jv-hero-greet{color:rgba(248,245,237,.92)!important}
+.jv-hero-motiv{color:rgba(248,245,237,.80)!important;line-height:1.5!important}
+.jv-avatar-btn{top:calc(18px + env(safe-area-inset-top,0px))!important}
+#app>.top .top-actions{top:calc(21px + env(safe-area-inset-top,0px))!important}
+
+/* Home: mantém 2x2, mas cada informação ganha hierarquia clara. */
+.jv-home-card{
+  min-height:158px!important;
+  padding:15px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  text-align:left!important
+}
+.jv-home-card .hc-top{min-height:34px!important;color:#F0D57C!important;font-size:12px!important}
+.jv-home-card .hc-main{
+  margin-top:13px!important;
+  font-size:21px!important;
+  line-height:1.12!important;
+  color:#FFF!important;
+  overflow-wrap:anywhere
+}
+.jv-home-card .hc-sub{margin-top:auto!important;padding-top:7px!important;color:rgba(248,245,237,.76)!important}
+.jv-home-card.gold .hc-main{color:#FFF!important}
+.jv-progress{background:rgba(255,255,255,.13)!important}
+
+/* Mensalidade e PIX: valor e status nunca desaparecem no fundo. */
+.jv-pay-card{
+  background:linear-gradient(145deg,rgba(71,52,17,.94),rgba(17,31,22,.97))!important;
+  border-color:rgba(224,185,79,.32)!important
+}
+.jv-pay-head b{color:#FFF!important}
+.jv-pay-status{background:#0C5A38!important;color:#8AF4AA!important;border-color:rgba(126,240,161,.22)!important}
+.jv-pay-lbl{color:rgba(248,245,237,.72)!important}
+.jv-pay-value{color:#FFF!important;font-weight:900!important}
+.jv-pix-btn{
+  background:linear-gradient(90deg,#B68C22,#D9B348)!important;
+  color:#10261E!important;
+  text-shadow:none!important
+}
+
+/* Ações rápidas e abas internas. */
+.jv-quick button{color:#FFF!important}
+.jv-quick button:nth-child(2){color:#FFF!important}
+.jv-subhero{
+  background:
+    linear-gradient(90deg,rgba(5,25,17,.98),rgba(5,25,17,.78)),
+    url('../assets/jv-saibro-premium.svg') center/cover no-repeat!important
+}
+.jv-subhero h2{color:#FFF!important}
+.jv-subhero p{color:rgba(248,245,237,.78)!important}
+.jv-credit-panel,.jv-section-card,.jv-profile-card{
+  background:linear-gradient(145deg,#0D3425,#08251B)!important;
+  border-color:rgba(224,185,79,.20)!important
+}
+.jv-row span{color:rgba(248,245,237,.76)!important}
+.jv-row b{color:#FFF!important}
+
+/* Agenda: superfícies claras usam tinta escura, estados escuros usam branco. */
+#apg-agenda .wc.livre,
+#apg-agenda .cal-day,
+#apg-agenda .slot-body{
+  background:#FBF8F2!important;
+  color:#10261E!important
+}
+#apg-agenda .wc.meu{color:#FFF!important}
+#apg-agenda .wc.ocup{color:#4E493F!important}
+#apg-agenda .ag-nav-label{color:#FFF!important}
+#apg-agenda .legend span{color:rgba(248,245,237,.78)!important}
+#apg-aulas .hist-row{color:#FFF!important}
+#apg-aulas .hr-d{color:#FFF!important}
+#apg-aulas .hr-h{color:rgba(248,245,237,.70)!important}
+
+/* Evolução: evita textos auxiliares apagados. */
+#apg-evolucao .evo-xp,
+#apg-evolucao .evo-prio,
+#apg-evolucao .evo-mes,
+#apg-evolucao .evo-hist .hr{
+  background:linear-gradient(145deg,#0D3425,#08251B)!important;
+  color:#FFF!important
+}
+#apg-evolucao .evo-row .nm,
+#apg-evolucao .evo-row .st{color:#FFF!important}
+#apg-evolucao .evo-row small,
+#apg-evolucao .evo-cap,
+#apg-evolucao .evo-mes-reg{color:rgba(248,245,237,.68)!important}
+
+/* Perfil */
+.jv-profile-card h3{color:#FFF!important}
+.jv-profile-card p{color:rgba(248,245,237,.72)!important}
+.jv-profile-actions button{color:#FFF!important;background:rgba(255,255,255,.06)!important}
+
+/* Navegação inferior — ativa forte, inativas ainda legíveis. */
+.nav button:not(.on){color:rgba(248,245,237,.72)!important}
+.nav button.on{color:#F0D57C!important}
+.nav button .ico{opacity:.95}
+
+/* Proporção em telas estreitas: não reduz abaixo do legível. */
+@media(max-width:390px){
+  .wrap{padding-left:14px!important;padding-right:14px!important}
+  .jv-home-grid{gap:9px!important}
+  .jv-home-card{min-height:154px!important;padding:13px!important}
+  .jv-home-card .hc-main{font-size:19px!important}
+  .jv-home-card .hc-sub{font-size:11.2px!important}
+  .jv-pay-card{gap:11px!important;padding:15px!important}
+  .jv-pay-value{font-size:22px!important}
+}
+
 </style>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
