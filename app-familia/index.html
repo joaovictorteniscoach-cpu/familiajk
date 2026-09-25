@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Família JK — Contas e Investimentos</title>
 <link rel="manifest" href="manifest-familia.webmanifest">
-<meta name="theme-color" content="#0c1b30">
+<meta name="theme-color" content="#06140F">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -316,10 +316,133 @@ table.tbl.livre td:last-child{width:42%}
   margin-left:2px;border-left:1px solid var(--line)}
 .viewtools .zbtn{min-width:44px;padding:7px 10px;font-family:'Fraunces',serif}
 .viewtools .zlbl{font-size:11px;color:var(--muted);min-width:38px;text-align:center}
+
+/* ===== JV Premium 2026-09-25-1 · Família JK =====
+   A mesma identidade dos apps Gestão e Aluno — verde profundo, dourado e
+   creme — aplicada por cima do estilo de sempre. Só visual: nenhum id,
+   nenhuma função de dados e nenhum dado mudam. Os tokens de cor foram
+   re-apontados, então o app inteiro acompanha sem reescrever regra por
+   regra; o resto são as peças que pedem desenho próprio. */
+:root{
+  --ink:#04100B;--surface:#0B281C;--surface2:#123925;--line:rgba(224,185,79,.20);
+  --text:#F8F5ED;--muted:#C8C2B6;--gold:#E0B94F;--gold-soft:#F0D57C;
+  --teal:#5FD4A8;--teal-soft:#9BE8C9;--up:#58D982;--down:#E27666;
+  --clay:#B95D2A;--radius:18px;
+}
+html{background:#04100B}
+body{
+  background:
+    radial-gradient(circle at 88% 2%,rgba(185,93,42,.16),transparent 30%),
+    linear-gradient(180deg,#081912 0%,#06140F 42%,#04100B 100%);
+  background-attachment:fixed;color:var(--text);
+  --accent:var(--gold);--accent-soft:var(--gold-soft);--accent-d:#B8912F;
+}
+body.mode-invest{--accent:var(--teal);--accent-soft:var(--teal-soft);--accent-d:#2E9E77}
+
+/* Cabeçalho: vira o hero premium, com a mesma assinatura dos outros apps */
+.topbar.jv-premium-hero{
+  position:relative;overflow:hidden;display:block;max-width:none;
+  padding:calc(16px + env(safe-area-inset-top,0px)) 18px 18px;margin:0 0 4px;
+  background:
+    linear-gradient(180deg,rgba(2,10,7,.10),rgba(4,16,11,.88)),
+    linear-gradient(115deg,rgba(11,40,28,.98) 0%,rgba(6,20,15,.92) 60%,rgba(185,93,42,.22) 100%);
+  border-bottom:1px solid rgba(224,185,79,.18);box-shadow:0 18px 45px rgba(0,0,0,.26)
+}
+.topbar.jv-premium-hero:after{
+  content:'';position:absolute;right:-60px;bottom:-90px;width:230px;height:230px;border-radius:50%;
+  border:1px solid rgba(224,185,79,.23);
+  box-shadow:0 0 0 28px rgba(224,185,79,.035),0 0 0 58px rgba(224,185,79,.025);pointer-events:none
+}
+.jv-premium-hero .brand{position:relative;z-index:3}
+.jv-premium-hero .crest{
+  width:42px;height:42px;border-radius:50%;
+  background:linear-gradient(145deg,#1B4A33,#0B2118);color:var(--gold-soft);
+  border:1.5px solid rgba(224,185,79,.58);box-shadow:0 5px 18px rgba(0,0,0,.34);
+  font-family:'Inter',system-ui,sans-serif;font-weight:900;font-size:14px
+}
+.jv-premium-hero .brand h1{font-family:'Inter',system-ui,sans-serif;font-size:13px;font-weight:800;letter-spacing:.4px;color:#fff}
+.jv-premium-hero .brand span{font-size:9.5px;letter-spacing:1.9px;color:var(--gold-soft);font-weight:800}
+.jv-premium-hero .tools{position:relative;z-index:4;margin-top:12px;gap:6px}
+.jv-premium-hero .iconbtn{
+  background:rgba(4,16,11,.62);border:1px solid rgba(255,255,255,.12);color:#fff;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:12px;padding:7px 11px
+}
+.jv-premium-hero .iconbtn.primary{background:linear-gradient(150deg,var(--gold),#B8912F);color:#1a1304;border-color:transparent}
+.jv-premium-hero .savedot{color:rgba(248,245,237,.66)}
+.jv-premium-hero .zlbl{color:rgba(248,245,237,.72)}
+.jv-fam-hero{position:relative;z-index:3;margin-top:22px}
+.jv-hero-greet{margin:0 0 2px;color:rgba(248,245,237,.84);font-size:13.5px;font-weight:650}
+.jv-fam-title{font-family:'Inter',system-ui,sans-serif;font-size:34px;line-height:1.03;color:#fff;
+  font-weight:850;letter-spacing:-1.2px;margin:0 0 8px;max-width:330px}
+.jv-fam-title em{color:var(--gold);font-style:normal}
+body.mode-invest .jv-fam-title em{color:var(--teal)}
+.jv-hero-motto{color:var(--muted);font-size:12.5px;line-height:1.45;max-width:300px}
+
+/* Contas / Investimentos: segmento premium */
+.modeswitch{padding:12px 16px 0;gap:8px}
+.ms{background:rgba(10,36,25,.88);border:1px solid rgba(224,185,79,.16);color:var(--muted);
+  font-family:'Inter',system-ui,sans-serif;font-weight:700;border-radius:16px;padding:10px 18px;
+  box-shadow:0 10px 24px rgba(0,0,0,.12)}
+#ms-contas.on{background:linear-gradient(150deg,var(--gold),#B8912F);color:#1a1304}
+#ms-invest.on{background:linear-gradient(150deg,var(--teal),#2E9E77);color:#04231d}
+
+/* Abas: uma faixa só, que desliza de lado. Eram 13 pílulas em quatro
+   fileiras, e no celular elas ocupavam a tela inteira antes do primeiro
+   número. */
+.tabs{flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none;padding:12px 16px 6px;gap:7px;
+  scroll-snap-type:x proximity;
+  -webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent)}
+.tabs::-webkit-scrollbar{display:none}
+.tab{scroll-snap-align:start;background:rgba(10,36,25,.88);border:1px solid rgba(224,185,79,.14);
+  color:var(--muted);border-radius:14px;padding:8px 14px;font-weight:600}
+.tab.active{background:linear-gradient(150deg,var(--accent),var(--accent-d));color:#1a1304;
+  border-color:transparent;font-weight:800;box-shadow:0 8px 20px rgba(0,0,0,.18)}
+body.mode-invest .tab.active{color:#04231d}
+
+/* Cartões */
+.card{
+  background:linear-gradient(145deg,rgba(15,49,34,.96),rgba(7,27,19,.96));
+  border:1px solid rgba(224,185,79,.16);border-radius:var(--radius);
+  box-shadow:0 14px 34px rgba(0,0,0,.18)
+}
+.card h2{font-family:'Inter',system-ui,sans-serif;font-weight:800;letter-spacing:-.2px;color:#fff}
+.card .sub,.hint,.note{color:var(--muted)}
+.hero::after{height:2px;background:linear-gradient(90deg,var(--accent),transparent)}
+.hero .eyebrow{color:var(--gold-soft);letter-spacing:1.6px}
+body.mode-invest .hero .eyebrow{color:var(--teal-soft)}
+.bignum{color:#fff}
+.bignum.ok{color:var(--up)}
+.monthchip{background:rgba(224,185,79,.12);border-color:rgba(224,185,79,.32);color:var(--gold-soft)}
+.pill{background:rgba(255,255,255,.06);border-color:rgba(224,185,79,.18)}
+.progressbar{background:rgba(255,255,255,.07);border-color:rgba(224,185,79,.14)}
+.progressbar>i{background:linear-gradient(90deg,var(--gold),#63D887)}
+.iconbtn{background:rgba(10,36,25,.88);border-color:rgba(224,185,79,.16);border-radius:12px}
+.iconbtn.primary{background:linear-gradient(150deg,var(--accent),var(--accent-d))}
+.kpi{background:rgba(10,36,25,.70);border:1px solid rgba(224,185,79,.14);border-radius:15px}
+input.cell,select.cell{background:rgba(255,255,255,.055);border-color:rgba(224,185,79,.18);color:var(--text)}
+input.cell:focus,select.cell:focus{border-color:var(--accent);outline:none}
+.tbl th{color:var(--gold-soft)}
+.tbl td{border-bottom-color:rgba(224,185,79,.10)}
+.banner{background:linear-gradient(145deg,rgba(77,55,17,.94),rgba(29,30,16,.96));
+  border:1px solid rgba(224,185,79,.30);border-radius:var(--radius);color:var(--gold-soft)}
+.modal{background:linear-gradient(145deg,#0F3122,#07150F);border:1px solid rgba(224,185,79,.20);border-radius:20px}
+.semdados{background:rgba(255,255,255,.04);border-color:rgba(224,185,79,.20)}
+/* Os botões do topo são ferramenta, não conteúdo: menores e numa linha só,
+   para o hero chegar logo ao número do mês. Continuam com 36px de altura,
+   que o dedo alcança sem errar. */
+.jv-premium-hero .tools{display:flex;flex-wrap:wrap;align-items:center}
+.jv-premium-hero .tools .iconbtn{padding:7px 10px;font-size:11.5px;min-height:36px}
+.jv-premium-hero .savedot{font-size:10.5px;flex:1 0 100%;order:9;margin-top:2px}
+.jv-premium-hero .viewtools{border-left:0;padding-left:0;margin-left:0;gap:5px}
+.jv-premium-hero .viewtools .zbtn{min-width:36px;padding:7px 8px;font-family:'Inter',system-ui,sans-serif;font-weight:700}
+/* o aviso de backup é um aviso: dourado nos dois modos, para não parecer
+   mais um botão do modo investimento */
+.banner .iconbtn.primary{background:linear-gradient(150deg,#E0B94F,#B8912F);color:#1a1304}
 </style>
 </head>
 <body class="mode-contas">
-<header class="topbar">
+<header class="topbar jv-premium-hero">
   <div class="brand">
     <div class="crest">JK</div>
     <div><h1>Família J K</h1><span>João e Kassiana</span></div>
@@ -334,6 +457,11 @@ table.tbl.livre td:last-child{width:42%}
       <span class="zlbl" id="zoom-lbl">100%</span>
       <button class="iconbtn zbtn" onclick="stepZoom(1)" aria-label="Aumentar a letra" title="Aumentar tudo">A+</button>
     </span>
+  </div>
+  <div class="jv-fam-hero">
+    <p class="jv-hero-greet" id="jv-fam-greet">Olá, família</p>
+    <h2 class="jv-fam-title" id="jv-fam-title">Painel da <em>família</em></h2>
+    <p class="jv-hero-motto">Cada real no lugar certo — e cada mês mais perto dos sonhos.</p>
   </div>
 </header>
 
@@ -1492,11 +1620,26 @@ function buildTabs(m){
 const DRAW={'i-painel':()=>drawInvPainel(),'i-mensal':()=>drawMensal(),'i-anual':()=>drawAnual(),'i-projecao':()=>onProj(),
   'i-analise':()=>{drawAnalise();renderAlloc();},'i-ganhos':()=>renderGanhos(),'i-plano':()=>onPlano(),'i-metas':()=>renderGoals(),
   'c-painel':()=>drawConPainel(),'c-casa':()=>renderCasa(),'c-joao':()=>renderPess('joao','tbl-joao'),'c-esposa':()=>renderPess('esposa','tbl-esposa'),'c-empresa':()=>drawEmpresa(),'c-recebidos':()=>renderReceb(),'c-patrimonio':()=>drawPatrimonio(),'c-protecao':()=>drawProtecao(),'c-resumo':()=>drawResumo(),'c-anual':()=>renderControle(),'c-categorias':()=>renderCategorias(),'c-conselhos':()=>renderConselhos(),'c-cartao':()=>refreshCartao()};
+/* O cabeçalho premium acompanha a hora do dia e o modo do app. Tudo aqui é
+   só texto de tela: se falhar, o app segue igual. */
+function heroFamilia(){
+  try{
+    const h=new Date().getHours();
+    const g=document.getElementById('jv-fam-greet');
+    if(g)g.textContent=(h<12?'Bom dia':(h<18?'Boa tarde':'Boa noite'))+', família';
+    const t=document.getElementById('jv-fam-title');
+    if(t)t.innerHTML=document.body.classList.contains('mode-invest')
+      ?'Seu <em>patrimônio</em>':'Painel da <em>família</em>';
+  }catch(_){}
+}
 function switchTab(id,btn){
   document.querySelectorAll('section[data-tab]').forEach(s=>s.classList.toggle('on',s.dataset.tab===id));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));if(btn)btn.classList.add('active');
   if(DRAW[id]){const prev=suppressPush;suppressPush=true;try{DRAW[id]();}catch(e){console.warn('Família JK — falha na aba',id,e);}suppressPush=prev;}
   rotularTabelas();marcarVazias();
+  /* com as abas numa faixa que desliza, a escolhida precisa ficar à vista */
+  try{if(btn&&btn.scrollIntoView)btn.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'});}catch(_){}
+  heroFamilia();
 }
 
 /* ===================== CONTAS — render ===================== */
