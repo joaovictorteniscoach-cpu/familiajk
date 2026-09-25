@@ -25,20 +25,75 @@ COACH    = {'uid': JOAO}          # João logado por e-mail e senha
 ALUNO    = {'uid': 'anon-abc123'} # app do aluno, entrada anônima
 ALUNO2   = {'uid': 'anon-xyz789'} # OUTRO aluno, para provar que um não alcança o outro
 NINGUEM  = None                   # site público, ou qualquer estranho
+PROF     = {'uid': 'prof-uid-111'}# professor que dá aula na quadra, logado por e-mail
+PROF2    = {'uid': 'prof-uid-222'}# OUTRO professor, para provar que um não alcança o outro
+
+# O que já EXISTE no banco quando a regra é avaliada. Só precisa cobrir os nós
+# que as regras consultam com root.child(...).exists() — hoje, quem foi
+# cadastrado como professor pelo João.
+EXISTE = {
+    'jvtenis/professores/prof-uid-111',
+    'jvtenis/professores/prof-uid-222',
+}
+ROOT_VALORES = {
+    'jvtenis/aluno_vinculos/anon-abc123/ativo': True,
+    'jvtenis/aluno_vinculos/anon-abc123/codigo': '1234',
+}
+PAYLOAD_OK = {'uid': 'anon-abc123', 'codigo': '1234'}
+PAYLOAD_UID_FALSO = {'uid': 'anon-xyz789', 'codigo': '1234'}
+PAYLOAD_COD_FALSO = {'uid': 'anon-abc123', 'codigo': '9999'}
 
 
-def avaliar(expr, auth, curingas, data_existe, new_existe):
+def avaliar(expr, auth, curingas, data_existe, new_existe, new_data=None, root_values=None):
     """Avalia o subconjunto de expressão usado nas nossas regras."""
     if expr is True:  return True
     if expr is False: return False
+    new_data = new_data or {}
+    root_values = root_values or {}
     e = str(expr)
-    # auth
+    # root.child(...).exists() — o caminho é montado por pedaços ('texto',
+    # $curinga, auth.uid). Tem de ser resolvido ANTES das outras trocas, senão
+    # auth.uid já virou 'texto' e o padrão não casa mais.
+    def rootc(m):
+        cam = ''
+        for pedaco in m.group(1).split('+'):
+            pedaco = pedaco.strip()
+            if pedaco.startswith("'") and pedaco.endswith("'"):
+                cam += pedaco[1:-1]
+            elif pedaco == 'auth.uid':
+                if not auth: return 'False'
+                cam += auth['uid']
+            elif pedaco.startswith('$'):
+                v = curingas.get(pedaco[1:])
+                if v is None: return 'False'
+                cam += v
+            else:
+                raise SystemExit('root.child com pedaço que não sei resolver: %r' % pedaco)
+        return repr(cam in EXISTE)
+    e = re.sub(r"root\.child\(([^()]*)\)\.exists\(\)", rootc, e)
+    def rootv(m):
+        cam = ''
+        for pedaco in m.group(1).split('+'):
+            pedaco = pedaco.strip()
+            if pedaco.startswith("'") and pedaco.endswith("'"): cam += pedaco[1:-1]
+            elif pedaco == 'auth.uid':
+                if not auth: return 'None'
+                cam += auth['uid']
+            elif pedaco.startswith('$'):
+                v = curingas.get(pedaco[1:])
+                if v is None: return 'None'
+                cam += v
+            else:
+                raise SystemExit('root.child com pedaço que não sei resolver: %r' % pedaco)
+        return repr(root_values.get(cam))
+    e = re.sub(r"root\.child\(([^()]*)\)\.val\(\)", rootv, e)
     e = re.sub(r'\bauth\s*!=\s*null\b', 'True' if auth else 'False', e)
     e = re.sub(r'\bauth\s*==\s*null\b', 'False' if auth else 'True', e)
     if 'auth.uid' in e:
         if not auth: return False          # auth nulo: acesso a .uid derruba a regra
         e = e.replace('auth.uid', repr(auth['uid']))
     # data / newData
+    e = re.sub(r"newData\.child\('([^']+)'\)\.val\(\)", lambda m: repr(new_data.get(m.group(1))), e)
     e = re.sub(r'!\s*data\.exists\(\)', 'True' if not data_existe else 'False', e)
     e = re.sub(r'\bdata\.exists\(\)',   'True' if data_existe else 'False', e)
     e = re.sub(r'\bnewData\.exists\(\)','True' if new_existe else 'False', e)
@@ -48,6 +103,8 @@ def avaliar(expr, auth, curingas, data_existe, new_existe):
         return repr(val is not None and val.startswith(m.group(2)))
     e = re.sub(r"\$(\w+)\.beginsWith\('([^']*)'\)", bw, e)
     e = e.replace('===', '==').replace('&&', ' and ').replace('||', ' or ')
+    e = re.sub(r'\btrue\b', 'True', e, flags=re.I)
+    e = re.sub(r'\bfalse\b', 'False', e, flags=re.I)
     # $curinga solto vira o valor capturado no caminho. Antes virava string vazia
     # sempre, o que fazia auth.uid === $uid nunca ser verdadeiro — uma regra
     # correta apareceria como bloqueio.
@@ -61,14 +118,16 @@ def avaliar(expr, auth, curingas, data_existe, new_existe):
         raise SystemExit('não consegui avaliar a expressão: %r' % expr)
 
 
-def permite(regras, caminho, tipo, auth, data_existe=False, new_existe=True):
+def permite(regras, caminho, tipo, auth, data_existe=False, new_existe=True,
+            new_data=None, root_values=None):
     """True se o Firebase permitiria .read/.write em `caminho`."""
     segs = [s for s in caminho.split('/') if s]
     no, curingas = regras, {}
     # a raiz das regras também pode conceder
     for i in range(len(segs) + 1):
         if isinstance(no, dict) and no.get('.' + tipo) is not None:
-            if avaliar(no['.' + tipo], auth, curingas, data_existe, new_existe):
+            if avaliar(no['.' + tipo], auth, curingas, data_existe, new_existe,
+                       new_data=new_data, root_values=root_values):
                 return True
         if i == len(segs): break
         s = segs[i]
@@ -85,9 +144,12 @@ def permite(regras, caminho, tipo, auth, data_existe=False, new_existe=True):
 
 def main():
     arq = sys.argv[1] if len(sys.argv) > 1 else \
-        os.path.join(os.path.dirname(__file__), 'firebase-regras-etapa2.json')
+        os.path.join(os.path.dirname(__file__), 'firebase-regras-etapa3.json')
     regras = json.load(open(arq, encoding='utf-8'))['rules']
-    print('conferindo:', os.path.basename(arq), '\n')
+    nome = os.path.basename(arq)
+    p0 = nome in ('firebase-regras-etapa3-transicao.json','firebase-regras-etapa4-estrita.json')
+    final = nome == 'firebase-regras-etapa4-estrita.json'
+    print('conferindo:', nome, '\n')
 
     J = 'jvtenis/'
     FILAS = ['fila_pedidos','fila_agendamentos','fila_autoaval',
@@ -98,7 +160,8 @@ def main():
     # ---- Gestão: tudo que app-gestao/index.html realmente faz
     for cam in ['jvtenis-gestao-v1','jvtenis-app-aluno','jvtenis-agendamentos','precos_publicos',
                 'v2/alunos','v2/movs','v2/presencas','v2/lancamentos','v2/agenda','v2/config',
-                'v2/carimbos/savedAt','arquivo/2024/movs','backups/2026-08-11-12','backups']:
+                'v2/carimbos/savedAt','arquivo/2024/movs','backups/2026-08-11-12','backups',
+                'backups_dia/2026-09-24','backups_dia_idx/2026-09-24','backups_dia_idx']:
         casos.append(('Gestão (João logado)', 'grava '+cam, COACH, J+cam, 'write', True, True))
         casos.append(('Gestão (João logado)', 'lê '+cam,     COACH, J+cam, 'read',  True, True))
     for f in FILAS + ['fila_cadastros']:
@@ -112,13 +175,32 @@ def main():
     # ---- o carimbo de versao: Gestao grava, todo mundo identificado le
     casos.append(('Gestão (João logado)', 'grava o carimbo de versão', COACH, J+'versao_app', 'write', True, True))
     casos.append(('Gestão (João logado)', 'lê o carimbo de versão',    COACH, J+'versao_app', 'read',  True, True))
+    if p0:
+        for cam in ['jvtenis-app-publico','aluno_vinculos/anon-abc123','alunos_privados/anon-abc123','fila_vinculos/anon-abc123']:
+            casos.append(('Gestão (João logado)', 'grava '+cam, COACH, J+cam, 'write', True, True))
+            casos.append(('Gestão (João logado)', 'lê '+cam, COACH, J+cam, 'read', True, True))
 
     # ---- Aluno: o que app-aluno/index.html faz
-    casos.append(('App do aluno (anônimo)', 'lê a publicação', ALUNO, J+'jvtenis-app-aluno', 'read', True, True))
+    casos.append(('App do aluno (anônimo)', 'lê a publicação legada', ALUNO, J+'jvtenis-app-aluno', 'read', not final, True))
+    if p0:
+        casos.append(('App do aluno (anônimo)', 'lê a publicação segura', ALUNO, J+'jvtenis-app-publico', 'read', True, True))
+        casos.append(('App do aluno (anônimo)', 'lê o próprio vínculo', ALUNO, J+'aluno_vinculos/anon-abc123', 'read', True, True))
+        casos.append(('App do aluno (anônimo)', 'pede vínculo no próprio UID', ALUNO, J+'fila_vinculos/anon-abc123', 'write', True, False))
+        casos.append(('App do aluno (anônimo)', 'lê dados privados quando vinculado', ALUNO, J+'alunos_privados/anon-abc123', 'read', True, True, None, ROOT_VALORES))
+        casos.append(('Aluno NÃO pode', 'listar todos os vínculos', ALUNO, J+'aluno_vinculos', 'read', False, True))
+        casos.append(('Aluno NÃO pode', 'aprovar o próprio vínculo', ALUNO, J+'aluno_vinculos/anon-abc123', 'write', False, True))
+        casos.append(('Aluno NÃO pode', 'ler dados privados de outro UID', ALUNO, J+'alunos_privados/anon-xyz789', 'read', False, True, None, ROOT_VALORES))
+        casos.append(('Aluno NÃO pode', 'ler o mapa interno da quadra', ALUNO, J+'mapa_quadra', 'read', False, True))
     casos.append(('App do aluno (anônimo)', 'lê os próprios pedidos',  ALUNO, J+'aluno-estado/anon-abc123', 'read', True, True))
     casos.append(('App do aluno (anônimo)', 'grava os próprios pedidos',ALUNO, J+'aluno-estado/anon-abc123', 'write', True, True))
     for f in FILAS:
-        casos.append(('App do aluno (anônimo)', 'manda pedido novo em '+f, ALUNO, J+f+'/-Nnovo', 'write', True, False))
+        if p0:
+            casos.append(('App do aluno (anônimo)', 'manda pedido válido em '+f, ALUNO, J+f+'/-Nnovo', 'write', True, False, PAYLOAD_OK, ROOT_VALORES))
+            casos.append(('Aluno NÃO pode', 'forjar UID em '+f, ALUNO, J+f+'/-Nuid', 'write', False, False, PAYLOAD_UID_FALSO, ROOT_VALORES))
+            if final:
+                casos.append(('Aluno NÃO pode', 'forjar código em '+f, ALUNO, J+f+'/-Ncod', 'write', False, False, PAYLOAD_COD_FALSO, ROOT_VALORES))
+        else:
+            casos.append(('App do aluno (anônimo)', 'manda pedido novo em '+f, ALUNO, J+f+'/-Nnovo', 'write', True, False))
     casos.append(('App do aluno (anônimo)', 'lê o carimbo de versão', ALUNO, J+'versao_app', 'read', True, True))
     # ...e o que ele NÃO pode
     for f in FILAS:
@@ -133,22 +215,104 @@ def main():
     casos.append(('Aluno NÃO pode', 'gravar na publicação',    ALUNO, J+'jvtenis-app-aluno', 'write', False, True))
     casos.append(('Aluno NÃO pode', 'gravar em v2',            ALUNO, J+'v2/alunos', 'write', False, True))
     casos.append(('Aluno NÃO pode', 'ler os backups',          ALUNO, J+'backups', 'read',  False, True))
+    casos.append(('Aluno NÃO pode', 'ler as cópias do dia',    ALUNO, J+'backups_dia', 'read', False, True))
+    casos.append(('Aluno NÃO pode', 'ler o índice das cópias', ALUNO, J+'backups_dia_idx', 'read', False, True))
     casos.append(('Aluno NÃO pode', 'mexer no carimbo de versão',ALUNO, J+'versao_app', 'write', False, True))
 
     casos.append(('Outro aluno NÃO pode', 'ler o espaço do primeiro',  ALUNO2, J+'aluno-estado/anon-abc123', 'read',  False, True))
     casos.append(('Outro aluno NÃO pode', 'gravar no espaço do primeiro',ALUNO2, J+'aluno-estado/anon-abc123','write', False, True))
+    if final:
+        casos.append(('Outro aluno NÃO pode', 'usar fila sem vínculo ativo', ALUNO2, J+'fila_pedidos/-Nnovo', 'write', False, False, {'uid':'anon-xyz789','codigo':'1234'}, ROOT_VALORES))
 
     # ---- Site público, sem login nenhum
     casos.append(('Site público (sem login)', 'lê os preços',        NINGUEM, J+'precos_publicos', 'read', True, True))
     casos.append(('Site público (sem login)', 'NÃO grava sem se identificar', NINGUEM, J+'fila_cadastros/-Nnovo', 'write', False, False))
 
+    # ---- Professor: o espaço dele é dele, e só dele
+    # Isto é o que de fato separa a academia do professor. A tela do app pode
+    # esconder botões; só a regra impede que o app dele leia o faturamento.
+    for cam in ['banco','v2/alunos','v2/movs','v2/presencas','v2/lancamentos',
+                'v2/agenda','v2/config','arquivo/2026/movs','backups/2026-09-05-10',
+                'backups_dia/2026-09-24','backups_dia_idx']:
+        casos.append(('Professor no espaço dele', 'grava '+cam, PROF, J+'prof/prof-uid-111/'+cam, 'write', True, True))
+        casos.append(('Professor no espaço dele', 'lê '+cam,     PROF, J+'prof/prof-uid-111/'+cam, 'read',  True, True))
+    casos.append(('Professor no espaço dele', 'lê o próprio cadastro', PROF, J+'professores/prof-uid-111', 'read', True, True))
+    casos.append(('Professor no espaço dele', 'lê o mapa da quadra inteiro', PROF, J+'mapa_quadra', 'read', True, True))
+    casos.append(('Professor no espaço dele', 'publica o próprio mapa',       PROF, J+'mapa_quadra/prof-uid-111', 'write', True, True))
+    casos.append(('Professor no espaço dele', 'pede um horário novo',  PROF, J+'fila_quadra/-Nnovo', 'write', True, False))
+    # A agenda que a academia marca NO NOME dele: ele lê a sua, e só a sua.
+    casos.append(('Professor no espaço dele', 'lê a agenda que a academia marcou para ele', PROF, J+'agenda_prof/prof-uid-111', 'read', True, True))
+    casos.append(('Professor no espaço dele', 'lê o carimbo de versão',PROF, J+'versao_app', 'read', True, True))
+    # O caminho exato que o persist() percorre. Se QUALQUER um destes falhar, o
+    # app do professor fica preso em "salvo só no aparelho" — que é como o
+    # bloqueio aparece na tela, sem dizer o motivo.
+    for cam in ['v2/carimbos/savedAt','v2/alunos/a1','v2/movs/m1','v2/presencas/p1',
+                'v2/lancamentos/l1','v2/agenda','v2/config','banco','backups/2026-09-06-14',
+                'backups_dia/2026-09-24','backups_dia_idx/2026-09-24']:
+        casos.append(('Professor grava (caminho do persist)', cam, PROF, J+'prof/prof-uid-111/'+cam, 'write', True, True))
+    casos.append(('Professor grava (caminho do persist)', 'mapa_quadra (o mapa da quadra)', PROF, J+'mapa_quadra/prof-uid-111', 'write', True, True))
+    casos.append(('Professor no espaço dele', 'lê os preços públicos', PROF, J+'precos_publicos', 'read', True, True))
+
+    # ---- e o que ele NÃO pode: é aqui que mora a promessa "a gestão é só minha"
+    casos.append(('Professor NÃO pode', 'ler o banco da academia',  PROF, J+'jvtenis-gestao-v1', 'read',  False, True))
+    casos.append(('Professor NÃO pode', 'gravar no banco da academia',PROF, J+'jvtenis-gestao-v1','write', False, True))
+    for cam in ['v2/alunos','v2/lancamentos','v2/movs','v2/config']:
+        casos.append(('Professor NÃO pode', 'ler '+cam+' da academia', PROF, J+cam, 'read', False, True))
+        casos.append(('Professor NÃO pode', 'gravar '+cam+' da academia', PROF, J+cam, 'write', False, True))
+    casos.append(('Professor NÃO pode', 'ler os backups da academia',PROF, J+'backups', 'read',  False, True))
+    casos.append(('Professor NÃO pode', 'ler as cópias do dia da academia',PROF, J+'backups_dia', 'read', False, True))
+    casos.append(('Professor NÃO pode', 'apagar as cópias do dia da academia',PROF, J+'backups_dia/2026-09-24', 'write', False, True))
+    casos.append(('Professor NÃO pode', 'ler o arquivo da academia', PROF, J+'arquivo', 'read',  False, True))
+    casos.append(('Professor NÃO pode', 'gravar na publicação',      PROF, J+'jvtenis-app-aluno', 'write', False, True))
+    casos.append(('Professor NÃO pode', 'ler as filas dos alunos',   PROF, J+'fila_pedidos', 'read', False, True))
+    casos.append(('Professor NÃO pode', 'ler as notificações',       PROF, J+'notificacoes', 'read', False, True))
+    casos.append(('Professor NÃO pode', 'ler os telefones do site',  PROF, J+'fila_cadastros', 'read', False, True))
+    casos.append(('Professor NÃO pode', 'ler pedido de um aluno',    PROF, J+'aluno-estado/anon-abc123', 'read', False, True))
+    casos.append(('Professor NÃO pode', 'escrever o mapa inteiro da quadra', PROF, J+'mapa_quadra', 'write', False, True))
+    casos.append(('Professor NÃO pode', 'escrever o mapa de OUTRO professor', PROF, J+'mapa_quadra/prof-uid-222', 'write', False, True))
+    # Quem marca aula no nome do professor é a academia. Se ele pudesse
+    # escrever ali, marcaria aula para si mesmo e o João não saberia.
+    casos.append(('Professor NÃO pode', 'inventar aula na agenda que a academia marca', PROF, J+'agenda_prof/prof-uid-111', 'write', False, True))
+    casos.append(('Professor NÃO pode', 'ler a agenda de OUTRO professor', PROF, J+'agenda_prof/prof-uid-222', 'read', False, True))
+    casos.append(('Professor NÃO pode', 'ler a agenda designada de todos', PROF, J+'agenda_prof', 'read', False, True))
+    casos.append(('Professor NÃO pode', 'ler a fila da quadra',      PROF, J+'fila_quadra', 'read', False, True))
+    casos.append(('Professor NÃO pode', 'apagar pedido da fila da quadra', PROF, J+'fila_quadra/-Nabc', 'write', False, True))
+    casos.append(('Professor NÃO pode', 'listar os professores',     PROF, J+'professores', 'read', False, True))
+    casos.append(('Professor NÃO pode', 'se cadastrar sozinho',      PROF, J+'professores/prof-uid-111', 'write', False, True))
+    casos.append(('Professor NÃO pode', 'baixar tudo (/jvtenis)',    PROF, 'jvtenis', 'read', False, True))
+    casos.append(('Professor NÃO pode', 'listar todos os espaços de professor', PROF, J+'prof', 'read', False, True))
+
+    casos.append(('Um professor NÃO alcança o outro', 'ler o banco do outro',   PROF2, J+'prof/prof-uid-111/banco', 'read',  False, True))
+    casos.append(('Um professor NÃO alcança o outro', 'gravar no banco do outro',PROF2, J+'prof/prof-uid-111/banco','write', False, True))
+    casos.append(('Um professor NÃO alcança o outro', 'ler o cadastro do outro', PROF2, J+'professores/prof-uid-111','read', False, True))
+
+    # ---- o João continua dono de tudo, inclusive do espaço do professor
+    casos.append(('Gestão (João logado)', 'lê o espaço de um professor',  COACH, J+'prof/prof-uid-111/banco', 'read',  True, True))
+    casos.append(('Gestão (João logado)', 'lista os espaços de professor',COACH, J+'prof', 'read', True, True))
+    casos.append(('Gestão (João logado)', 'cadastra um professor',        COACH, J+'professores/prof-uid-111', 'write', True, True))
+    casos.append(('Gestão (João logado)', 'publica o próprio mapa da quadra', COACH, J+'mapa_quadra/'+JOAO, 'write', True, True))
+    casos.append(('Gestão (João logado)', 'corrige o mapa de um professor',   COACH, J+'mapa_quadra/prof-uid-111', 'write', True, True))
+    casos.append(('Gestão (João logado)', 'marca aula no nome de um professor', COACH, J+'agenda_prof/prof-uid-111', 'write', True, True))
+    casos.append(('Gestão (João logado)', 'relê o que marcou para o professor', COACH, J+'agenda_prof/prof-uid-111', 'read', True, True))
+    casos.append(('Gestão (João logado)', 'lê a fila da quadra',          COACH, J+'fila_quadra', 'read', True, True))
+    casos.append(('Gestão (João logado)', 'apaga pedido da fila da quadra',COACH, J+'fila_quadra/-Nabc', 'write', True, True))
+
+    # ---- aluno e estranho perto do que é do professor
+    casos.append(('Aluno NÃO pode', 'ler o banco de um professor', ALUNO, J+'prof/prof-uid-111/banco', 'read', False, True))
+    casos.append(('Aluno NÃO pode', 'gravar na fila da quadra',    ALUNO, J+'fila_quadra/-Nx', 'write', False, False))
+    casos.append(('Aluno NÃO pode', 'sujar o mapa da quadra',      ALUNO, J+'mapa_quadra/anon-abc123', 'write', False, True))
+    casos.append(('Aluno NÃO pode', 'ler a agenda de um professor', ALUNO, J+'agenda_prof/prof-uid-111', 'read', False, True))
+
     # ---- Estranho
     casos.append(('Estranho NÃO pode', 'baixar tudo (/jvtenis)',  NINGUEM, 'jvtenis', 'read', False, True))
+    casos.append(('Estranho NÃO pode', 'ler o banco de um professor', NINGUEM, J+'prof/prof-uid-111/banco', 'read', False, True))
+    casos.append(('Estranho NÃO pode', 'ler o mapa da quadra',    NINGUEM, J+'mapa_quadra', 'read', False, True))
     casos.append(('Estranho NÃO pode', 'baixar a raiz (/)',       NINGUEM, '', 'read', False, True))
     casos.append(('Estranho NÃO pode', 'ler a publicação',        NINGUEM, J+'jvtenis-app-aluno', 'read', False, True))
     casos.append(('Estranho NÃO pode', 'ler o banco da gestão',   NINGUEM, J+'jvtenis-gestao-v1', 'read', False, True))
     casos.append(('Estranho NÃO pode', 'ler os telefones do site',NINGUEM, J+'fila_cadastros', 'read', False, True))
     casos.append(('Estranho NÃO pode', 'apagar os backups',       NINGUEM, J+'backups', 'write', False, True))
+    casos.append(('Estranho NÃO pode', 'apagar as cópias do dia', NINGUEM, J+'backups_dia', 'write', False, True))
     casos.append(('Estranho NÃO pode', 'apagar tudo',             NINGUEM, 'jvtenis', 'write', False, True))
     casos.append(('Estranho NÃO pode', 'usar o banco de depósito',NINGUEM, 'lixo/arquivo', 'write', False, True))
     casos.append(('Estranho NÃO pode', 'ler pedido de um aluno',  NINGUEM, J+'aluno-estado/anon-abc123', 'read', False, True))
@@ -157,11 +321,14 @@ def main():
     casos.append(('Estranho NÃO pode', 'mexer no carimbo',       NINGUEM, J+'versao_app', 'write', False, True))
 
     falhas, grupo_atual = 0, None
-    for grupo, desc, ator, cam, tipo, esperado, existe in casos:
+    for caso in casos:
+        grupo, desc, ator, cam, tipo, esperado, existe, *extra = caso
+        new_data = extra[0] if len(extra) > 0 else None
+        root_values = extra[1] if len(extra) > 1 else None
         if grupo != grupo_atual:
             print('\n== %s' % grupo); grupo_atual = grupo
         real = permite(regras, cam, tipo, ator, data_existe=existe,
-                       new_existe=True)
+                       new_existe=True, new_data=new_data, root_values=root_values)
         ok = (real == esperado)
         if not ok: falhas += 1
         print('  %s %-34s %s' % ('✅' if ok else '❌', desc,

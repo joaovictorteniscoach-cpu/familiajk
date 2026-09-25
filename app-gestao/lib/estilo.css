@@ -1,0 +1,1493 @@
+:root{
+  --clay:#C9472B;--clay-light:#E05E3A;--cream:#FAF7F2;--dark:#0E0C08;
+  --gold:#C9A04A;--gold-light:#D4AF58;--green:#1A2E14;--green-2:#24401C;
+  --text:#2A2016;--muted:#6B5E4A;--border:#E2D5C0;
+  --ok:#2E7D32;--warn:#B8860B;--bad:#B3261E;--wapp:#25D366;
+  --c-aula:#3B6FB5;--c-loc:#226833;--c-tor:#8A6A14;--c-bloq:#C0392B;--c-pess:#9C5A0E;--c-grupo:#6A4FA3;--c-personal:#0A6B6B;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);max-width:520px;margin:0 auto;line-height:1.55;padding-bottom:89px;overscroll-behavior-y:none}
+button{font-family:'DM Sans',sans-serif;cursor:pointer}
+input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
+
+.top{background:var(--green);padding:calc(12px + env(safe-area-inset-top,0px)) 20px 16px;position:sticky;top:0;z-index:60;overflow:hidden;transition:padding .18s ease}
+/* Ao rolar, o cabecalho encolhe para uma faixa fina: devolve tela sem perder o
+   seletor de mes, que e o controle mais usado daqui. */
+.top.compacto{padding:calc(6px + env(safe-area-inset-top,0px)) 20px 8px}
+.top.compacto .top-tag{display:none}
+.top.compacto h1{font-size:19px;margin-bottom:2px}
+.top.compacto .top-actions{margin:4px 0 2px}
+.top.compacto .top-actions .eye-btn{width:30px;height:30px;font-size:13px}
+.top.compacto .top-actions .eye-btn svg{width:16px;height:16px}
+.top.compacto .marca-jv{width:34px;height:34px}
+.marca-jv{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));right:16px;width:46px;height:46px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(201,160,74,.55);box-shadow:0 3px 12px rgba(0,0,0,.35);background:#0E0C08;transition:width .18s ease,height .18s ease;z-index:2}
+.eye-btn{position:absolute;top:16px;right:16px;z-index:5;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);color:#fff;font-size:18px;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0}
+.eye-btn:active{transform:scale(.94)}
+.eye-btn.off{background:rgba(201,160,74,.28);border-color:rgba(201,160,74,.5)}
+.bell-btn{right:62px}
+.hist-btn{right:108px;font-size:17px}
+.ped-btn{right:154px;font-size:16px}
+.top-actions{display:flex;justify-content:flex-start;gap:9px;margin:10px 0 4px}
+.top-actions .eye-btn{position:relative;top:auto;right:auto;width:38px;height:38px;font-size:16px}
+.top-actions .eye-btn svg{width:20px;height:20px;display:block}
+.hist-acts{display:flex;gap:8px;margin-bottom:10px}
+.hist-acts .btn{flex:1}
+.btn.is-off{opacity:.4;pointer-events:none}
+.so-dono{}
+/* No modo professor somem as ferramentas que são da academia. Isto é conforto,
+   não proteção: quem protege é a regra do Firebase e o cintoDeSeguranca(). */
+body[data-modo="prof"] .so-dono{display:none!important}
+.fita-prof{background:#2E5E8C;color:#EAF2FA;font-size:12.5px;font-weight:700;padding:7px 14px;text-align:center;letter-spacing:.01em}
+.hist-list{max-height:46vh;overflow:auto;margin:4px 0 2px;border:1px solid var(--border);border-radius:12px}
+.hist-item{display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:9px 12px;border-bottom:1px solid var(--border);font-size:13px}
+.hist-item:last-child{border-bottom:0}
+.hist-item .hi-when{color:var(--muted);font-size:11px;white-space:nowrap}
+.hist-empty{padding:18px;text-align:center;color:var(--muted);font-size:13px;line-height:1.6}
+#tor-export{position:fixed;left:-10000px;top:0;width:430px;background:#fff;padding:22px;color:#2A2016}
+#sem-export{position:fixed;left:-10000px;top:0;width:720px;background:#FAF7F2;padding:26px;color:#2A2016;font-family:'DM Sans',-apple-system,Roboto,sans-serif}
+.sx-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #C9A04A;padding-bottom:12px;margin-bottom:16px}
+.sx-head b{font-size:19px;color:#1A2E14;display:block}
+.sx-head span{font-size:13px;color:#6B5E4A}
+.sx-emb{width:44px;height:44px;border-radius:50%;background:#1A2E14;color:#C9A04A;font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center}
+.sx-tbl{width:100%;border-collapse:separate;border-spacing:5px}
+.sx-tbl th{font-size:12.5px;font-weight:800;color:#1A2E14;padding:5px 2px;text-align:center}
+.sx-tbl th small{display:block;font-size:10.5px;color:#6B5E4A;font-weight:600}
+.sx-tbl td.h{font-size:12px;font-weight:800;color:#6B5E4A;text-align:right;padding-right:6px;width:56px}
+.sx-c{border-radius:9px;padding:9px 3px;text-align:center;font-size:11.5px;font-weight:800;line-height:1.15}
+.sx-livre{background:#E3F2E4;color:#2E7D52;border:1.5px solid #BFDCC4}
+.sx-loc{background:#FBF3DC;color:#9A7B2E;border:1.5px solid #E4CF92}
+.sx-ocup{background:#EFE9DD;color:#A99C86;border:1px solid #E2D5C0}
+.sx-off{background:#F5F1E9;color:#C9C0AF;border:1px dashed #E2D5C0}
+.sx-leg{display:flex;gap:14px;flex-wrap:wrap;margin-top:16px;font-size:12px;font-weight:700;color:#6B5E4A;align-items:center}
+.sx-leg i{width:15px;height:15px;border-radius:5px;display:inline-block;vertical-align:-3px;margin-right:5px}
+.sx-foot{margin-top:14px;font-size:12px;color:#6B5E4A;text-align:center;font-weight:600}
+.tex-head{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:2px solid var(--gold);padding-bottom:12px;margin-bottom:16px}
+.tex-head b{font-size:16px;color:var(--green);display:block;font-weight:700}
+.tex-head span{font-size:12px;color:var(--muted)}
+.tex-emb{width:44px;height:44px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:600;font-size:19px;flex-shrink:0}
+.tex-grp{margin-bottom:16px}
+.tex-grp h4{font-size:14px;margin:0 0 7px;color:var(--green);font-weight:700}
+.tex-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tex-tbl th{background:var(--green);color:#fff;font-weight:600;font-size:11px;padding:7px 9px;text-align:center}
+.tex-tbl th:first-child{text-align:left}
+.tex-tbl td{padding:7px 9px;text-align:center;border-bottom:1px solid #ececec}
+.tex-tbl td:first-child{text-align:left;font-weight:600}
+.tex-tbl tr.r1 td{background:#FBF4DF}
+.tex-pts{font-weight:800;color:var(--clay)}
+.tex-foot{margin-top:10px;font-size:11px;color:var(--muted);text-align:center;font-style:italic}
+/* devolutiva da avaliação (export) */
+#aval-export{position:fixed;left:-10000px;top:0;width:430px;background:#fff;padding:24px;color:#2A2016}
+.aex-nivel{text-align:center;margin:14px 0 8px}
+.aviso-btn{width:100%;border:1.5px solid var(--gold);background:#fff;color:#7C5E1A;font-size:14px;font-weight:800;padding:12px;border-radius:12px;margin-bottom:6px}
+.aviso-btn[data-st="granted"]{border-color:var(--ok);color:var(--ok)}
+.aviso-btn[data-st="denied"],.aviso-btn[data-st="nao-suportado"]{border-color:var(--border);color:var(--muted)}
+.aviso-cap{font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.5}
+/* Panorama mês a mês */
+.evo-sec{font-size:12px;font-weight:800;color:var(--green);margin:14px 0 9px}
+.evo-mes{background:#fff;border:1px solid var(--border);border-radius:14px;padding:12px 14px 10px;margin-bottom:14px}
+.evo-mes-row{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.evo-mes-row:last-child{margin-bottom:2px}
+.evo-mes-row.carry{opacity:.55}
+.evo-mes-lab{flex:0 0 44px;font-size:11px;font-weight:800;color:var(--muted);text-transform:capitalize}
+.evo-mes-track{flex:1;height:13px;border-radius:8px;background:#EFE9DD;overflow:hidden}
+.evo-mes-bar{display:block;height:100%;border-radius:8px;transition:width .9s cubic-bezier(.2,.8,.2,1)}
+.evo-mes-val{flex:0 0 76px;text-align:right;font-size:12px;font-weight:900;color:var(--text);font-variant-numeric:tabular-nums}
+.evo-mes-reg{display:block;font-size:9.5px;font-weight:700;font-style:normal;color:var(--muted)}
+.evo-mes-cap{font-size:11.5px;font-weight:800;color:#3F7A4E;text-align:center;margin:-6px 0 14px}
+.aex-badge{display:inline-block;background:var(--lcd,#93701C);color:#fff;font-weight:800;font-size:15px;padding:8px 20px;border-radius:22px}
+.aex-trilha{display:flex;gap:5px;margin:10px 0 16px}
+.aex-step{flex:1;text-align:center;font-size:10px;font-weight:700;color:#8a8478;padding:8px 2px;border-radius:8px;background:#F1ECE0;line-height:1.2}
+.aex-step.done,.aex-step.cur{color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.28)}
+.aex-step.cur{outline:2px solid rgba(0,0,0,.18);outline-offset:-3px}
+.aex-prio{background:#F4F7EC;border:1px solid #dfe6c9;border-radius:11px;padding:11px 13px;margin:0 0 16px;font-size:13px}
+.aex-prio b{color:var(--green)}
+.aex-sec{font-size:12px;font-weight:800;color:var(--green);margin:14px 0 9px}
+.aex-row{margin-bottom:10px}
+.aex-row .aex-top{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px}
+.aex-row .aex-top .st{font-weight:700;color:var(--lcd,#93701C)}
+.aex-bar{height:9px;border-radius:6px;background:#EBE5DA;overflow:hidden}
+.aex-bar>i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--lc,#C9A04A),var(--lcd,#93701C))}
+.bell-badge{position:absolute;top:-4px;right:-4px;background:var(--clay);color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid var(--green)}
+.drag-item{touch-action:pan-y}
+.dragging{opacity:.35}
+.drag-ghost{position:fixed;z-index:999;pointer-events:none;background:var(--green);color:#fff;font-size:12px;font-weight:700;padding:7px 11px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.3);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transform:translate(-50%,-130%)}
+.drop-hot{outline:2px dashed var(--clay);outline-offset:-2px;background:#FBEDE9 !important}
+.link-row{display:flex;flex-direction:column;gap:6px;background:#fff;border:1px solid var(--border);border-radius:11px;padding:11px 13px;margin-bottom:9px}
+.link-name{font-size:14px;font-weight:700}
+.link-name small{font-weight:500;color:var(--muted);font-size:11px}
+.link-sel{width:100%;padding:9px;border:1px solid var(--border);border-radius:9px;font-size:13px;background:#fff}
+.top::before{content:'';position:absolute;width:220px;height:220px;border-radius:50%;top:-90px;right:-60px;background:radial-gradient(circle,rgba(201,71,43,.25),transparent 65%)}
+.top-tag{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--gold-light);font-weight:600}
+.top h1{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:26px;color:var(--cream);line-height:1.05}
+.top h1 em{font-style:italic;color:var(--clay-light)}
+.top-month{display:flex;align-items:center;gap:10px;margin-top:9px;position:relative}
+.month-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:var(--cream);width:30px;height:30px;border-radius:8px;font-size:15px}
+.month-label{font-size:13px;font-weight:600;color:var(--gold-light);letter-spacing:1px;text-transform:uppercase;min-width:140px;text-align:center}
+.save-state{position:absolute;right:0;font-size:10px;letter-spacing:1px;color:rgba(250,247,242,.5)}
+.save-state.ok{color:#8FD694}
+.save-state.err{color:#FF9B8A}
+
+.nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;background:var(--dark);display:grid;grid-template-columns:repeat(7,1fr);padding:8px 2px calc(8px + env(safe-area-inset-bottom));z-index:50;border-top:1px solid rgba(255,255,255,.08)}
+/* Preenchimento abaixo da barra: no iPhone, quando o iOS desloca a barra fixa
+   (rubber band, mudança de viewport), aparecia uma faixa creme entre ela e o fim
+   da tela. Isto pinta esse pedaço com a própria cor da barra. É absoluto de
+   propósito — como filho de um grid, em fluxo normal viraria mais uma coluna. */
+.nav::after{content:'';position:absolute;left:0;right:0;top:100%;height:140px;background:var(--dark);pointer-events:none}
+.nav button{position:relative;background:none;border:none;color:rgba(250,247,242,.72);font-size:10px;font-weight:500;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 1px 8px;border-radius:10px;letter-spacing:.1px}
+.nav-badge{position:absolute;top:1px;right:calc(50% - 20px);background:var(--clay);color:#fff;font-size:9.5px;font-weight:800;min-width:16px;height:16px;border-radius:9px;display:none;align-items:center;justify-content:center;padding:0 4px;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+.nav-badge.on{display:flex}
+.nav button .ico{font-size:18px;display:flex;align-items:center;justify-content:center;height:27px}
+.nav button .ico img{width:25px;height:25px;object-fit:contain;display:block}
+.nav button .ico svg{display:block}
+/* Cada figurinha tem uma sobra diferente ao redor do desenho: a da Caixa e larga e
+   baixa, a de Avaliacoes estreita e alta. A caixa e ajustada uma a uma para todas
+   ocuparem a mesma area aparente. */
+.nav .ico[data-ic="home"] img,.nav .ico[data-ic="ball"] img{width:23px;height:23px}
+.nav .ico[data-ic="cal"] img{width:24px;height:24px}
+.nav .ico[data-ic="clip"] img{width:26px;height:26px}
+.nav .ico[data-ic="cash"] img{width:28px;height:28px}
+/* Aba apagada fica na mesma forca do rotulo; a aberta acende junto. */
+.nav button .ico img,.nav button .ico svg{opacity:.72;transition:opacity .15s}
+.nav button.on .ico img,.nav button.on .ico svg,
+.nav button.aberto .ico img,.nav button.aberto .ico svg{opacity:1}
+.nav button.on{color:#E7C574;font-weight:700;background:rgba(212,175,88,.14)}
+
+.page{display:none;padding:18px 16px 30px}
+.page.on{display:block}
+/* Seções que podem ficar minimizadas no Início, para a tela caber sem rolar
+   tanto — e para o painel abrir discreto quando está na frente do aluno. */
+.dobra{margin-bottom:14px}
+.dobra-cab{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:none;padding:0 0 10px;color:var(--text)}
+.dobra-cab .dc-tit{flex:1;min-width:0}
+.dobra-cab .dc-eyebrow{display:block;font-size:9.5px;letter-spacing:3px;text-transform:uppercase;color:var(--clay);font-weight:600}
+.dobra-cab .dc-nome{display:block;font-family:'Cormorant Garamond',serif;font-size:23px;font-weight:400;line-height:1.2}
+.dobra-cab .dc-nome em{font-style:italic;color:var(--clay)}
+.dobra-cab .dc-n{flex-shrink:0;min-width:24px;height:24px;border-radius:12px;background:var(--clay);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 7px}
+.dobra-cab .dc-n.zero{background:#E3EAE4;color:#2E7D52}
+.dobra-cab .dc-seta{flex-shrink:0;font-size:19px;color:var(--muted);transition:transform .18s ease}
+.dobra.on .dc-seta{transform:rotate(90deg)}
+.dobra-corpo{display:none}
+.dobra.on .dobra-corpo{display:block}
+.sec-eyebrow{font-size:9.5px;letter-spacing:3px;text-transform:uppercase;color:var(--clay);font-weight:600}
+.sec-title{font-family:'Cormorant Garamond',serif;font-size:23px;font-weight:400;margin-bottom:14px}
+.sec-title em{font-style:italic;color:var(--clay)}
+
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.kpi{border-radius:14px;padding:15px 14px}
+/* Só o cartão que leva a algum lugar ganha cara de botão — os outros três
+   continuam sendo só número, para não prometer toque onde não há destino. */
+.kpi.tocavel{cursor:pointer;transition:transform .12s}
+.kpi.tocavel:active{transform:scale(.975)}
+.kpi-seta{opacity:.75;font-weight:900;margin-left:2px}
+.kpi:not(.tocavel) .kpi-seta{display:none}
+.avcard-ver{cursor:pointer}
+.avcard-ver:active{transform:scale(.995)}
+.mov-vai{cursor:pointer;position:relative}
+.mov-vai:active{transform:scale(.99)}
+.mov-seta{align-self:center;font-size:20px;font-weight:900;color:var(--muted);padding-left:6px}
+/* Realce de quem acabou de ser procurado: chama o olho e some sozinho. */
+@keyframes piscaAchei{0%,100%{box-shadow:0 0 0 0 rgba(201,71,43,0)}
+  25%,75%{box-shadow:0 0 0 4px rgba(201,71,43,.45)}}
+.slot-piscando,.achei{animation:piscaAchei 1.3s ease-in-out 2;border-radius:12px}
+.kpi.dark{background:var(--green);color:var(--cream)}
+.kpi.clay{background:var(--clay);color:#fff}
+.kpi.light{background:#fff;border:1px solid var(--border)}
+.kpi-l{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;opacity:.7;font-weight:600}
+.kpi-v{font-family:'Cormorant Garamond',serif;font-size:27px;font-weight:600;line-height:1.15}
+.kpi-s{font-size:11px;opacity:.65;margin-top:1px}
+.bar-wrap{background:#fff;border:1px solid var(--border);border-radius:14px;padding:15px;margin-bottom:14px}
+.bar-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;font-weight:500}
+.bar{height:9px;border-radius:6px;background:#EFE7D8;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--clay),var(--gold));border-radius:6px;transition:width .4s}
+.bar i.loc{background:linear-gradient(90deg,#2E8B45,#8CC26A)}
+.bar i.batida{background:linear-gradient(90deg,var(--gold),#2E7D32)}
+/* Início — "O que pede ação" e "Resolver em segundos" */
+.acao-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.acao-item{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:#FBF6EA;border:1px solid #E7D6A8;border-radius:13px;padding:12px 13px;color:var(--text)}
+.acao-item:active{transform:scale(.995)}
+.acao-item .ai-ico{width:30px;height:30px;flex-shrink:0;border-radius:50%;background:#F0E3C2;display:flex;align-items:center;justify-content:center;font-size:15px}
+.acao-item .ai-txt{flex:1;min-width:0}
+.acao-item b{display:block;font-size:13.5px;font-weight:800;line-height:1.25}
+.acao-item small{display:block;font-size:11.5px;color:var(--muted);margin-top:2px}
+.acao-item .ai-n{flex-shrink:0;min-width:24px;height:24px;border-radius:12px;background:var(--clay);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 7px}
+.acao-item.ouro{background:#FBF1D8;border-color:#E7D6A8}
+.acao-item.ouro .ai-n{background:var(--gold);color:var(--green)}
+/* Ferramentas do Financeiro: uma grade de ícones no lugar de seis seções soltas */
+/* Cartão do fechamento: é ele que vira a imagem enviada ao aluno */
+.fx-card{background:#FBF8F2;border:1px solid var(--border);border-radius:16px;padding:18px 16px;max-width:420px;margin:0 auto}
+.fx-topo{display:flex;align-items:center;gap:11px;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:13px}
+.fx-topo img{width:46px;height:46px;border-radius:50%;object-fit:contain;flex-shrink:0}
+.fx-topo b{display:block;font-size:11px;letter-spacing:2px;color:var(--green);font-weight:800}
+.fx-topo span{display:block;font-size:11.5px;color:var(--muted);font-weight:600;margin-top:1px}
+.fx-nome{font-family:'Cormorant Garamond',serif;font-size:25px;font-weight:600;line-height:1.15}
+.fx-mes{font-size:12px;color:var(--clay);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px}
+.fx-sec{font-size:9.5px;letter-spacing:2.5px;text-transform:uppercase;color:var(--clay);font-weight:700;margin:14px 0 6px}
+.fx-linha{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:5px 0;border-bottom:1px dashed rgba(0,0,0,.07)}
+.fx-linha span:first-child{font-weight:600}
+.fx-linha span:last-child{font-weight:700;white-space:nowrap}
+.fx-total{display:flex;justify-content:space-between;align-items:baseline;margin-top:12px;padding-top:11px;border-top:2px solid var(--green)}
+.fx-total span{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.fx-total b{font-family:'Cormorant Garamond',serif;font-size:29px;color:var(--green)}
+.fx-obs{background:#FBF1D8;border:1px solid #E7D6A8;color:#7C5E1A;border-radius:10px;padding:9px 11px;font-size:12px;font-weight:600;margin-top:11px}
+/* Fila de quem já recebeu */
+.fq-linha{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)}
+.fq-linha .fq-mark{flex:0 0 auto;background:none;border:none;padding:11px 4px;font-size:17px;line-height:1;color:var(--muted);min-width:32px;text-align:left}
+.fq-linha.ok .fq-mark{color:#2E7D52}
+.fq-linha .fq-nome{flex:1;text-align:left;background:none;border:none;padding:11px 2px;font-size:13.5px;font-weight:700;color:var(--text)}
+.fq-linha.ok .fq-nome{color:#2E7D52}
+.ferr-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.ferr-grid button{background:#fff;border:1px solid var(--border);border-radius:13px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--text);text-align:center}
+.ferr-grid button:active{transform:scale(.99);background:#FBF6EA}
+.ferr-grid button i{font-style:normal;font-size:19px;line-height:1}
+.ferr-grid button span{font-size:12.5px;font-weight:700}
+.ferr-grid button small{font-size:10.5px;color:var(--muted);font-weight:600}
+.rapidas{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.rapidas button{background:#fff;border:1px solid var(--border);border-radius:13px;padding:13px 8px;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--text)}
+.rapidas button:active{transform:scale(.99);background:#FBF6EA}
+.rapidas button i{font-style:normal;font-size:19px;line-height:1}
+.rapidas button span{font-size:12px;font-weight:700;text-align:center}
+/* folha das aulas de hoje */
+.ah-linha{display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);padding:11px 0}
+.ah-linha .ah-h{font-size:12.5px;font-weight:800;color:var(--muted);width:52px;flex-shrink:0}
+.ah-linha .ah-n{flex:1;min-width:0;font-size:13.5px;font-weight:700}
+.ah-linha .ah-n small{display:block;font-size:11px;font-weight:600;color:var(--muted)}
+.ah-linha button{border:none;background:var(--green);color:#fff;font-size:11.5px;font-weight:800;padding:8px 12px;border-radius:11px;flex-shrink:0}
+.ah-linha button[disabled]{background:#E7EDE7;color:#6B8A73}
+.foco-repos{background:#FBF1D8;border:1px solid #E7D6A8;color:#7C5E1A;font-size:12.5px;font-weight:600;border-radius:10px;padding:9px 12px;margin-bottom:10px}
+.foco-repos a{color:var(--clay);font-weight:800;text-decoration:underline;cursor:pointer;margin-left:4px}
+.pend-list{display:flex;flex-direction:column;gap:8px}
+/* etiqueta de prazo na lista de pendentes — nome proprio para nao colidir */
+.venc-tag{display:inline-block;margin-top:4px;font-size:10.5px;font-weight:800;letter-spacing:.3px;padding:2px 8px;border-radius:20px;background:#EFE7D8;color:#7a6f5e}
+.venc-tag.late{background:#F6D7D2;color:#8E2C1E}
+.venc-tag.soon{background:#FBEFD2;color:#7A5B10}
+.venc-tag.mut{background:#EFE7D8;color:#7a6f5e}
+/* conselhos automaticos do dashboard */
+.cons{border:1px solid var(--border);border-left-width:4px;border-radius:12px;padding:11px 13px;background:#fff;margin-bottom:8px}
+.cons h4{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:800;color:var(--green);margin:0 0 3px}
+.cons p{font-size:12px;line-height:1.55;color:#5b5142;margin:0}
+.cons.bad{border-left-color:#C9472B;background:#FDF6F4}
+.cons.warn{border-left-color:#C99A2B;background:#FEFAF0}
+.cons.good{border-left-color:#2E7D52;background:#F5FAF6}
+.cons.info{border-left-color:#8a7f6c}
+/* faixa de lembrete de backup */
+.bk-banner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:#FBEFD2;border:1px solid #E8D5A0;border-radius:13px;padding:12px 14px;margin-bottom:14px}
+.bk-banner .bk-msg{font-size:12.5px;font-weight:700;color:#7A5B10;flex:1;min-width:180px}
+.bk-banner .bk-acts{display:flex;gap:7px}
+.aulas-mes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px}
+.am-card{background:#fff;border:1px solid var(--border);border-radius:13px;padding:13px 8px;text-align:center}
+.am-v{font-size:24px;font-weight:800;color:var(--green);line-height:1}
+.am-card.personal .am-v{color:var(--c-personal)}
+.am-card.tenis .am-v{color:var(--c-aula)}
+.am-l{font-size:10.5px;color:var(--muted);letter-spacing:.5px;margin-top:5px;font-weight:600}
+.comp-head{display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+.comp-head .sec-eyebrow,.comp-head .sec-title{margin:0}
+.comp-list{display:flex;flex-direction:column;gap:8px;margin:12px 0 18px}
+.comp-item{display:flex;align-items:center;gap:11px;background:#fff;border:1px solid var(--border);border-radius:13px;padding:10px 12px}
+.comp-date{flex-shrink:0;width:48px;text-align:center;background:var(--green);color:#fff;border-radius:10px;padding:7px 4px}
+.comp-date .cd-d{font-size:17px;font-weight:800;line-height:1}
+.comp-date .cd-m{font-size:9px;letter-spacing:1px;opacity:.92;margin-top:2px}
+.comp-info{flex:1;min-width:0}
+.comp-info b{font-size:14px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.comp-info span{font-size:12px;color:var(--muted)}
+.comp-x{background:none;border:none;color:#C0392B;font-size:15px;cursor:pointer;padding:6px;flex-shrink:0}
+.pend-item{background:#fff;border:1px solid var(--border);border-left:4px solid var(--bad);border-radius:11px;padding:11px 13px;display:flex;justify-content:space-between;align-items:center;font-size:13px}
+.pend-item.parcial{border-left-color:var(--warn)}
+.pend-item b{font-weight:600}
+.pend-item span{font-size:12px;color:var(--muted)}
+.empty{background:#fff;border:1px dashed var(--border);border-radius:12px;padding:22px;text-align:center;font-size:13px;color:var(--muted)}
+
+/* AGENDA */
+.seg{display:grid;grid-template-columns:repeat(4,1fr);background:#EFE7D8;border-radius:11px;padding:4px;margin-bottom:13px}
+.seg button{border:none;background:none;padding:8px 4px;font-size:12px;font-weight:600;border-radius:8px;color:var(--muted)}
+.seg button.on{background:var(--green);color:var(--cream)}
+.seg.seg-scroll{display:flex;gap:2px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.seg.seg-scroll::-webkit-scrollbar{display:none}
+.seg.seg-scroll button{flex:0 0 auto;white-space:nowrap;padding:8px 12px}
+.ag-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.ag-nav .month-btn{background:#fff;border:1px solid var(--border);color:var(--text)}
+.ag-nav-label{font-weight:700;font-size:13.5px;text-transform:capitalize;text-align:center;flex:1}
+.ag-nav-label small{display:block;font-weight:500;font-size:11px;color:var(--muted);text-transform:none}
+/* A legenda desceu para DEPOIS da grade: é referência, consultada de vez em
+   quando, e ocupava quatro linhas acima do que importa. */
+.legend{display:flex;gap:5px;flex-wrap:wrap;margin:14px 0 4px;opacity:.85}
+/* As ferramentas da agenda ficam recolhidas atrás de um toque. Antes eram
+   cinco botões empilhados entre a navegação e a grade, empurrando o horário
+   para fora da tela — que é justamente o que se abre a aba para ver. */
+.ag-ferr{margin-bottom:12px;border:1px solid var(--border);border-radius:12px;background:#fff}
+.ag-ferr>summary{list-style:none;cursor:pointer;padding:9px 13px;font-size:12.5px;
+  font-weight:700;color:var(--muted);display:flex;align-items:center;gap:7px}
+.ag-ferr>summary::-webkit-details-marker{display:none}
+.ag-ferr>summary::after{content:'▾';margin-left:auto;font-size:11px;transition:transform .15s}
+.ag-ferr[open]>summary::after{transform:rotate(180deg)}
+.ag-ferr[open]>summary{border-bottom:1px solid var(--border)}
+.ag-ferr .ferr-corpo{display:flex;flex-direction:column;gap:7px;padding:11px 13px 13px}
+.ag-ferr .ferr-corpo button{width:100%;border-radius:11px;font-size:12.5px;font-weight:700;
+  padding:9px 12px;border:1px solid var(--border);background:#fff;color:var(--text);cursor:pointer}
+.ag-ferr .ferr-corpo button.destaque{border:none;background:var(--green);color:#fff}
+.ag-ferr .ferr-corpo button.ouro{border:none;background:var(--gold);color:var(--green)}
+@media (prefers-reduced-motion:reduce){.ag-ferr>summary::after{transition:none}}
+.legend span{font-size:10px;font-weight:600;padding:3px 9px;border-radius:14px;color:#fff;letter-spacing:.3px}
+.slot{display:flex;gap:10px;margin-bottom:7px}
+.slot-h{width:46px;font-size:12px;font-weight:700;color:var(--muted);padding-top:9px;flex-shrink:0;text-align:right}
+.slot-body{flex:1;min-height:38px;border-radius:10px;border:1px dashed var(--border);background:#fff;display:flex;flex-wrap:wrap;gap:5px;padding:5px;align-items:center}
+.slot-body.has{border-style:solid}
+.ev{font-size:11.5px;font-weight:600;color:#fff;padding:5px 9px;border-radius:8px;border:none;display:flex;align-items:center;gap:6px;max-width:100%}
+.ev small{font-weight:400;opacity:.85;font-size:9.5px}
+.ev.t-aula{background:var(--c-aula)}.ev.t-locacao{background:var(--c-loc)}.ev.t-torneio{background:var(--c-tor)}
+.ev.t-bloqueio{background:var(--c-bloq)}.ev.t-pessoal{background:var(--c-pess)}
+.ev.t-grupo{background:var(--c-grupo)}.ev.t-personal{background:var(--c-personal)}
+/* Horário de outro professor. Cor fora da paleta das SUAS aulas de propósito:
+   à distância de um olhar tem de dar para ver que aquela hora não é sua. */
+.ev.t-outro{background:repeating-linear-gradient(135deg,#4C5B6E,#4C5B6E 7px,#3E4A5A 7px,#3E4A5A 14px);opacity:.95}
+.ev.t-outro small{opacity:.9}
+/* Hora que a academia liberou para o professor (vista do João) e hora que não é
+   dele (vista do professor). Nenhuma das duas é aula de ninguém ainda, então
+   nenhuma leva cor cheia: são estados do horário, não marcações. */
+.ev.t-liberado{background:#EAF0F7;color:#2E5E8C;border:1px dashed #9FB8D4;font-weight:700}
+.ev.t-nliberado{background:#F2F0EB;color:#9A948A;border:1px dashed #D9D3C7;font-weight:600}
+.ev .pres{background:rgba(255,255,255,.25);border:none;color:#fff;border-radius:6px;width:24px;height:24px;font-size:12px;flex-shrink:0}
+.ev .pres.ok{background:#fff;color:var(--ok);font-weight:800}
+.ev .pres.falt{background:#fff;color:var(--c-bloq,#C0392B);font-weight:800}
+.ev .pres.avis{background:#fff;font-size:10px}
+.slot-add{border:none;background:#F4EDE0;color:var(--muted);width:28px;height:28px;border-radius:8px;font-size:15px;font-weight:600}
+.wk-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border);border-radius:13px;background:#fff}
+.wk{border-collapse:collapse;min-width:var(--wk-min,660px);width:100%}
+.wk th{position:sticky;top:0;background:var(--green);color:var(--cream);font-size:var(--wk-thfs,10.5px);padding:7px 4px;font-weight:600;letter-spacing:.3px;z-index:2}
+.wk th small{display:block;font-weight:400;opacity:.7;font-size:calc(var(--wk-thfs,10.5px) - 1.5px)}
+.wk td{border:1px solid #F0E8D8;padding:0;height:var(--wk-h,34px);min-width:var(--wk-col,92px);vertical-align:middle}
+.wk td.hr{position:sticky;left:0;background:#FDFBF7;font-size:var(--wk-thfs,10.5px);font-weight:700;color:var(--muted);text-align:center;min-width:48px;width:48px;z-index:1;border-right:2px solid var(--border)}
+.wk-cell{width:100%;height:100%;border:none;background:none;font-size:var(--wk-fs,10px);font-weight:600;color:#fff;padding:2px 4px;line-height:1.2;overflow:hidden;display:block}
+.wk-zoom{display:flex;align-items:center;gap:8px;margin-bottom:9px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.wk-zoom .wz{width:34px;height:32px;border:1px solid var(--border);background:#fff;color:var(--text);border-radius:9px;font-size:17px;font-weight:800;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.wk-zoom .wz:active{transform:scale(.94)}
+.wk-zoom .wz-lbl{min-width:44px;text-align:center;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
+.wk-zoom .wz-fit{width:auto;padding:0 12px;font-size:12.5px;font-weight:700;gap:5px}
+.wk-cell.t-aula{background:var(--c-aula)}.wk-cell.t-locacao{background:var(--c-loc)}.wk-cell.t-torneio{background:var(--c-tor)}
+.wk-cell.t-bloqueio{background:var(--c-bloq)}.wk-cell.t-pessoal{background:var(--c-pess)}
+.wk-cell.t-grupo{background:var(--c-grupo)}.wk-cell.t-personal{background:var(--c-personal)}
+.wk-cell.t-outro{background:repeating-linear-gradient(135deg,#4C5B6E,#4C5B6E 6px,#3E4A5A 6px,#3E4A5A 12px)}
+.wk-cell.t-liberado{background:#EAF0F7;color:#2E5E8C;font-weight:700}
+.wk-cell.t-nliberado{background:#F2F0EB;color:#B9B2A6;font-weight:600}
+.wk-cell.free{color:var(--muted);font-weight:600;font-size:9.5px;letter-spacing:.2px}
+.wk-cell.multi{background:repeating-linear-gradient(45deg,var(--c-aula),var(--c-aula) 8px,#2F5A94 8px,#2F5A94 16px)}
+.cal{background:#fff;border:1px solid var(--border);border-radius:13px;padding:12px}
+.cal-head{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:6px}
+.cal-head span{font-size:10px;font-weight:700;color:var(--muted);text-align:center;text-transform:uppercase}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-day{aspect-ratio:1;border:none;border-radius:9px;background:#FDFBF7;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:12px;font-weight:600;color:var(--text)}
+.cal-day.out{opacity:.25}
+.cal-day.today{outline:2px solid var(--gold)}
+.cal-day .n{line-height:1}
+.cal-day .c{font-size:9px;font-weight:700;color:#fff;background:var(--c-aula);border-radius:8px;padding:1px 6px;line-height:1.3}
+.cal-day.o1{background:#EAF1E6}.cal-day.o2{background:#CFE3C4}.cal-day.o3{background:#A9CD96}.cal-day.o4{background:#7FB565}
+.tri{display:flex;flex-direction:column;gap:12px}
+.tri-month{background:#fff;border:1px solid var(--border);border-radius:13px;padding:11px}
+.tri-month h4{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;margin-bottom:7px;text-transform:capitalize;display:flex;justify-content:space-between;align-items:baseline}
+.tri-month h4 small{font-family:'DM Sans',sans-serif;font-size:11px;color:var(--muted);font-weight:500}
+.tri-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.tri-day{aspect-ratio:1.4;border-radius:5px;background:#F4EDE0;border:none;font-size:9px;font-weight:600;color:var(--muted)}
+.tri-day.o1{background:#DCE9D4;color:#3A5C2E}.tri-day.o2{background:#B7D6A4;color:#2E4A22}
+.tri-day.o3{background:#8FBE74;color:#fff}.tri-day.o4{background:#5E9A41;color:#fff}
+.tri-day.out{opacity:0;pointer-events:none}
+
+/* ALUNOS */
+.toolbar{display:flex;gap:8px;margin-bottom:12px}
+.toolbar input{flex:1;border:1px solid var(--border);border-radius:11px;padding:10px 13px;background:#fff;outline:none}
+.btn{border:none;border-radius:11px;padding:10px 15px;font-weight:600;font-size:13px;letter-spacing:.3px}
+.btn-clay{background:var(--clay);color:#fff;box-shadow:0 3px 12px rgba(201,71,43,.3)}
+.btn-clay:active{transform:scale(.97)}
+.btn-ghost{background:none;border:1px solid var(--border);color:var(--muted)}
+.aluno{background:#fff;border:1px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden}
+.aluno-head{display:flex;justify-content:space-between;align-items:center;padding:13px 14px;cursor:pointer}
+.aluno-name{font-weight:600;font-size:14px}
+.aluno-sub{font-size:11.5px;color:var(--muted)}
+.badge{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:4px 9px;border-radius:20px}
+.badge.pago{background:#E3F2E4;color:var(--ok)}
+.badge.parcial{background:#FFF6DF;color:var(--warn)}
+.badge.pendente{background:#FCE8E6;color:var(--bad)}
+/* abre e fecha animando a altura: grid 0fr->1fr nao precisa de altura fixa.
+   a borda e o padding ficam no miolo, senao aparece um risco com o card fechado */
+.aluno-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .26s ease}
+.aluno.open .aluno-body{grid-template-rows:1fr}
+.ab-in{overflow:hidden;min-height:0}
+.aluno.open .ab-in{border-top:1px solid #F0E8D8;padding:13px 14px;background:#FDFBF7}
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:11px}
+.chip{font-size:11.5px;background:var(--green);color:var(--cream);padding:5px 11px;border-radius:18px;font-weight:500}
+.chip.gold{background:var(--gold);color:var(--dark)}
+.chip.warn{background:#8a5a00;color:#fff}
+.chip.code{background:#fff;border:1.5px dashed var(--gold);color:var(--text);font-weight:700;letter-spacing:2px}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.act{border:none;border-radius:10px;padding:10px 8px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-align:center;transition:transform .1s ease}
+/* o toque precisa se mover: antes so o numero trocava e parecia que nao pegou */
+.act:active{transform:scale(.96)}
+.linkbtn:active{transform:scale(.94)}
+/* acao do dia a dia, em destaque e largura total */
+.act.principal{grid-column:1/-1;padding:13px 8px;font-size:13.5px;font-weight:800}
+/* camada escondida atras de "Mais acoes" */
+.acts-mais{display:none;margin-top:7px}
+.aluno.mais .acts-mais{display:block}
+.acts-mais .acts{margin-bottom:0}
+.act.maisbtn{grid-column:1/-1;background:none;border:1px dashed var(--border);color:var(--muted);font-weight:700}
+.aluno.mais .act.maisbtn{background:#F4EDE0;border-style:solid}
+/* pulso no chip de credito quando o saldo muda */
+@keyframes chippulse{0%{transform:scale(1)}35%{transform:scale(1.16)}100%{transform:scale(1)}}
+.chip.pulsa{animation:chippulse .45s ease}
+.act svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+.act.a1{background:var(--green);color:var(--cream)}
+.act.a2{background:var(--gold);color:var(--dark)}
+.act.a3{background:#E3F2E4;color:var(--ok)}
+.act.a4{background:#F4EDE0;color:var(--muted)}
+.act.aval{grid-column:1/-1;background:#F5ECD6;color:#7C5E1A}
+.act:active{transform:scale(.97)}
+/* ===== Avaliação (card Da Base ao Topo) ===== */
+.aval-blk{margin:14px 0 4px}
+.aval-blk h4{font-size:12.5px;font-weight:800;color:var(--green);letter-spacing:.3px;margin:0 0 8px;display:flex;align-items:center;gap:7px}
+.aval-item{margin-bottom:11px}
+.aval-item>label{display:block;font-size:12.5px;font-weight:700;color:var(--dark);margin-bottom:5px}
+.seg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.seg5{grid-template-columns:repeat(5,1fr)}
+.seg5 button{font-size:14px;font-weight:800;padding:9px 4px}
+.aval-rot{font-size:11.5px;font-weight:700;color:var(--muted);margin-top:5px;min-height:16px}
+.aval-rot.on{color:#7C5E1A}
+.hrow-ed{cursor:pointer;flex:1}
+.hrow-ed:active{opacity:.6}
+.seg3 button{border:1.5px solid var(--border);background:#fff;color:var(--muted);border-radius:9px;padding:8px 4px;font-size:11px;font-weight:600;line-height:1.25;cursor:pointer}
+.seg3 button.on{border-color:#C9A04A;background:#F5ECD6;color:#7C5E1A;font-weight:800}
+.seg3 button:active{transform:scale(.97)}
+.trilha-pills{display:flex;flex-wrap:wrap;gap:6px}
+.trilha-pills button{border:1.5px solid var(--border);background:#fff;color:var(--muted);border-radius:20px;padding:8px 13px;font-size:12px;font-weight:700;cursor:pointer}
+.trilha-pills button.on{border-color:var(--green);background:var(--green);color:var(--cream)}
+.aval-hist{margin-top:6px}
+.aval-hist .hrow{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#F7F4EE;border:1px solid var(--border);border-radius:9px;padding:8px 11px;margin-bottom:6px;font-size:12.5px}
+.aval-hist .hrow b{color:var(--green)}
+.aval-hist .hrow .del{background:none;border:none;color:#B23A2E;font-weight:700;cursor:pointer;font-size:12px}
+/* aba Avaliações — visão geral */
+.aval-resumo{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:2px 0 14px}
+.aval-resumo .rc{background:#fff;border:1px solid var(--border);border-radius:13px;padding:11px 8px;text-align:center}
+.aval-resumo .rc b{display:block;font-size:22px;font-weight:800;line-height:1.1;color:var(--green)}
+.aval-resumo .rc.pend b{color:#B23A2E}
+#alunos-resumo .rc{cursor:pointer;transition:border-color .12s,background .12s}
+#alunos-resumo .rc:active{transform:scale(.99)}
+#alunos-resumo .rc.on{border-color:var(--gold);background:rgba(212,175,88,.12)}
+.aval-resumo .rc span{font-size:10.5px;color:var(--muted);font-weight:600}
+.avcard{background:#fff;border:1px solid var(--border);border-radius:14px;padding:13px 14px;margin-bottom:10px}
+.avcard .avtop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.avcard .avnome{font-size:15px;font-weight:800;color:var(--dark)}
+.avcard .avsub{font-size:11.5px;color:var(--muted);margin-top:2px}
+.avnivel{flex-shrink:0;font-size:11px;font-weight:800;padding:5px 11px;border-radius:16px;background:#F5ECD6;color:#7C5E1A}
+.avnivel.none{background:#F3EFE6;color:#9a9182}
+.avmini{display:flex;align-items:center;gap:10px;margin:11px 0 3px}
+.avmini .avbar{flex:1;height:10px;border-radius:6px;background:#EBE5DA;overflow:hidden}
+.avmini .avbar>i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,#C9A04A,#8A6A14);transition:width .4s}
+.avmini .avpct{font-size:12px;font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums;min-width:34px;text-align:right}
+.avacts{display:flex;gap:6px;flex-wrap:wrap;margin-top:11px}
+.avacts button{border:none;border-radius:9px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.avacts button svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+.avacts .b1{background:#F5ECD6;color:#7C5E1A}
+.avacts .b2{background:#F4EDE0;color:var(--muted)}
+.avacts .b3{background:#E3F2E4;color:var(--ok)}
+.avacts .b4{background:#F6E7E4;color:#B23A2E}
+.prof-row{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;border:1px solid var(--border);border-radius:11px;padding:10px 13px;margin-bottom:7px}
+.prof-row b{font-size:13.5px}
+.prof-row small{display:block;font-size:11px;color:var(--muted);font-weight:600}
+.prof-acts{display:flex;gap:6px;flex-shrink:0}
+.prof-acts button{border:none;border-radius:8px;padding:6px 10px;font-size:11.5px;font-weight:800;background:#F5ECD6;color:#7C5E1A;cursor:pointer}
+.prof-acts button.d{background:#F6E7E4;color:#B23A2E}
+.avauto{margin-top:9px;background:#EAF4EC;border:1px solid #cfe6d5;border-radius:10px;padding:9px 11px;font-size:12px;color:#215B39;font-weight:600}
+.avauto-acts{display:flex;gap:6px;margin-top:7px}
+.avauto-acts button{border:none;border-radius:8px;padding:7px 11px;font-size:11.5px;font-weight:800;background:#2E7D52;color:#fff;cursor:pointer}
+.avauto-acts button.d{background:#F1ECE0;color:var(--muted)}
+.avdue{display:inline-block;font-size:10.5px;font-weight:700;color:#B23A2E;background:#F9E4E0;border-radius:12px;padding:2px 9px;margin-top:8px}
+.aluno-foot{display:flex;justify-content:space-between;margin-top:10px;flex-wrap:wrap;gap:4px}
+.ha-box{margin:2px 0 10px;background:#fff;border:1px solid var(--border);border-radius:11px;padding:9px 11px}
+.ha-title{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:5px}
+.ha-row{display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0;border-bottom:1px dashed #EEE6D6}
+.ha-row:last-child{border-bottom:0}
+.ha-empty{font-size:12px;color:var(--muted)}
+.linkbtn{background:none;border:none;font-size:12px;font-weight:600;color:var(--clay);padding:4px}
+.linkbtn.del{color:var(--bad)}
+.linkbtn.wa{color:#128C4B}
+
+/* LANÇAMENTOS */
+.quick{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px}
+.quick button{border:none;border-radius:13px;padding:15px 10px;font-weight:600;font-size:12.5px;display:flex;flex-direction:column;gap:3px;align-items:center}
+.quick .q1{background:var(--green);color:var(--cream)}
+.quick .q2{background:var(--green-2);color:var(--cream)}
+.quick .q3{background:var(--gold);color:var(--dark)}
+.quick .q4{background:var(--clay);color:#fff}
+.quick small{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600}
+.quick .qb-custom{position:relative}
+.quick .qb-x{position:absolute;top:5px;right:7px;width:19px;height:19px;border-radius:50%;background:rgba(0,0,0,.28);color:#fff;font-size:11px;line-height:19px;text-align:center;font-weight:800}
+.quick .qb-novo{background:transparent;border:1.5px dashed var(--border);color:var(--muted)}
+.quick .qb-novo small{color:var(--muted)}
+.mov{background:#fff;border:1px solid var(--border);border-radius:11px;padding:10px 13px;margin-bottom:7px;display:flex;justify-content:space-between;align-items:center;font-size:13px}
+.mov-l b{display:block;font-weight:600}
+.mov-l span{font-size:11px;color:var(--muted)}
+.mov-v{font-weight:700;white-space:nowrap}
+.mov-v.in{color:var(--ok)}
+.mov-v.out{color:var(--bad,#C0392B)}
+.mov-x{background:none;border:none;color:#C8B89A;font-size:15px;margin-left:9px}
+
+/* FINANCEIRO */
+.fin-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.fin-card{background:#fff;border:1px solid var(--border);border-radius:13px;padding:13px}
+.fin-card .l{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);font-weight:600}
+.fin-card .v{font-family:'Cormorant Garamond',serif;font-size:23px;font-weight:600}
+.fin-card.hero{grid-column:1/-1;background:var(--green);border:none;color:var(--cream)}
+.fin-card.hero .l{color:var(--gold-light)}
+.fin-card.hero .v{font-size:32px;color:#fff}
+.fin-card.desp{background:#FBEDE9;border-color:#EBC9BE}
+.fin-card.desp .v{color:var(--clay)}
+.fin-card.saldo{background:var(--green-2);border:none;color:var(--cream)}
+.fin-card.saldo .l{color:var(--gold-light)}
+.fin-card.saldo .v{color:#fff}
+.chart{background:#fff;border:1px solid var(--border);border-radius:13px;padding:15px 15px 9px;margin-bottom:14px}
+.chart-row{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+.chart-row-clic{cursor:pointer;border-radius:10px;padding:4px 6px;margin:0 -6px 7px;transition:background .12s,transform .12s}
+.chart-row-clic:active{transform:scale(.99)}
+.chart-row-clic:hover{background:rgba(0,0,0,.035)}
+/* mini-menu do botao "Mais": um cartaozinho que sobe do proprio botao.
+   O fundo invisivel fica ABAIXO da barra, para as outras abas seguirem clicaveis. */
+.mais-fundo{position:fixed;inset:0;z-index:45;display:none}
+.mais-fundo.on{display:block}
+.mais-pop{position:fixed;right:8px;bottom:84px;width:220px;background:var(--cream);border:1px solid var(--border);border-radius:14px;box-shadow:0 12px 34px rgba(0,0,0,.3);padding:6px;z-index:55;display:none}
+.mais-pop.on{display:block;animation:maisSobe .15s ease-out}
+@keyframes maisSobe{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:none}}
+.mais-pop:after{content:'';position:absolute;right:24px;bottom:-7px;width:12px;height:12px;background:var(--cream);border-right:1px solid var(--border);border-bottom:1px solid var(--border);transform:rotate(45deg)}
+.mais-pop button{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:none;border-radius:10px;padding:11px 10px;color:var(--text);font-size:14px;font-weight:700}
+.mais-pop button+button{margin-top:2px}
+.mais-pop button:active{background:rgba(212,175,88,.18)}
+.mais-pop .ico{width:24px;height:24px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.mais-pop .ico img{width:22px;height:22px;object-fit:contain;display:block}
+.nav button.aberto{color:#E7C574;font-weight:700;background:rgba(212,175,88,.14)}
+.chuva-emblema{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#2F5A94,#3B6FB5);color:#fff;border-radius:16px;padding:15px 17px;margin-bottom:12px;box-shadow:0 3px 14px rgba(47,90,148,.28)}
+.chuva-emblema .ce-selo{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.45);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
+.chuva-emblema .ce-pct{font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:700;line-height:1}
+.chuva-emblema .ce-l{font-size:12px;opacity:.9;margin-top:2px}
+.aulas-clic{cursor:pointer;transition:transform .12s}
+.aulas-clic:active{transform:scale(.99)}
+.fin-clic{cursor:pointer;transition:transform .12s}
+.fin-clic:active{transform:scale(.98)}
+.reg-item{border-bottom:1px solid var(--border)}
+.reg-item:last-child{border-bottom:none}
+.reg-head{cursor:pointer}
+.reg-cur{display:inline-block;transition:transform .15s;color:var(--muted);margin-right:4px;font-size:11px}
+.reg-item.open .reg-cur{transform:rotate(90deg)}
+.reg-det{display:none;padding:2px 2px 12px}
+.reg-item.open .reg-det{display:block}
+.rgd-row{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;padding:6px 0;font-size:12.5px;border-top:1px dashed var(--border)}
+.rgd-row:first-child{border-top:none}
+.rgd-l{color:var(--muted);flex-shrink:0}
+.rgd-v{font-weight:600;text-align:right;color:var(--text)}
+.chart-lab{width:74px;font-size:10.5px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);flex-shrink:0}
+.chart-track{flex:1;background:#F0ECE4;border-radius:7px;height:22px;overflow:hidden}
+.chart-bar{display:block;height:100%;border-radius:7px;min-width:2px;transition:width .4s}
+.chart-bar.meta{background:var(--gold)}
+.chart-bar.rec{background:var(--green)}
+.chart-bar.arec{background:#C99A3A;opacity:.55}
+.chart-bar.desp{background:var(--clay)}
+.chart-bar.neg{background:#B23A2A}
+.chart-val.neg{color:#B23A2A}
+.chart-val{width:78px;text-align:right;font-size:12px;font-weight:700;flex-shrink:0}
+.desp-item{display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid var(--border);border-radius:11px;padding:10px 13px;margin-bottom:8px}
+.desp-item .di-d{font-size:13px;font-weight:600}
+.desp-item .di-c{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.desp-item .di-v{font-size:14px;font-weight:700;color:var(--clay)}
+.desp-item .di-x{background:none;border:none;color:var(--muted);font-size:17px;padding:0 2px 0 10px}
+.field{margin-bottom:11px}
+.field label{display:block;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.field input,.field select,.field textarea{width:100%;border:1px solid var(--border);border-radius:10px;padding:11px 12px;background:#fff;outline:none}
+.field textarea{resize:vertical;min-height:64px}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--gold)}
+.backup-row{display:flex;gap:8px;margin-top:16px}
+.backup-row .btn{flex:1;font-size:12px}
+.hint{font-size:11.5px;color:var(--muted);margin-top:-6px;margin-bottom:11px;line-height:1.5}
+/* O .hint sobe 6px para colar embaixo de um título. Numa caixa que começa com
+   ele — ou logo depois de uma fila de botões — esse empurrão o joga por cima do
+   que está acima. Aqui a caixa manda, não a herança. */
+#profs-pag,#profs-libs{margin-top:14px}
+/* Duas colunas não cabem aqui: o campo de mês do iPhone escreve "agosto de
+   2026" por extenso e o rótulo do valor quebra em duas linhas — um passava por
+   cima do outro. Empilhado cabe sempre. */
+#pg-profs .row2{grid-template-columns:1fr}
+#profs-pag>.hint:first-child,#profs-libs>.hint:first-child{margin-top:0}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(14,12,8,.55);display:none;z-index:100;align-items:flex-end;justify-content:center}
+.overlay.on{display:flex}
+.modal{background:var(--cream);width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom));max-height:88vh;overflow-y:auto}
+.modal h3{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:600;margin-bottom:14px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.modal-acts{display:flex;gap:9px;margin-top:16px}
+/* tabela do extrato — nome proprio, sem herdar de .tbl de outro lugar */
+.tbl-ext{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+.tbl-ext th{text-align:left;font-size:10px;letter-spacing:.5px;color:var(--muted);text-transform:uppercase;padding:5px 6px;border-bottom:1px solid var(--border)}
+.tbl-ext td{padding:7px 6px;border-bottom:1px solid #F2ECE0;vertical-align:top}
+.modal-acts .btn{flex:1;padding:13px}
+.toast{position:fixed;bottom:92px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--dark);color:var(--cream);font-size:13px;font-weight:500;padding:11px 18px;border-radius:24px;opacity:0;transition:all .3s;z-index:200;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* ===== TORNEIO ===== */
+.tor-bar{display:flex;gap:8px;align-items:center;margin-bottom:14px}
+.tor-bar select{flex:1;padding:11px 12px;border:1px solid var(--border);border-radius:12px;background:#fff;font-size:14px;color:var(--text);font-weight:700}
+.tor-novo{padding:11px 13px;border-radius:12px;border:1px solid var(--border);background:#fff;color:var(--green);font-weight:700;font-size:13px;white-space:nowrap;cursor:pointer}
+/* etapa do torneio */
+.te-bar{background:linear-gradient(140deg,#16260F,#24401C);color:#fff;border-radius:16px;padding:14px 15px;margin-bottom:12px;box-shadow:0 6px 16px rgba(26,46,20,.22)}
+.te-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.te-eyebrow{font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);font-weight:800}
+.te-etapa{font-size:21px;font-weight:900;margin-top:2px;cursor:pointer}
+.te-badge{font-size:11px;font-weight:800;padding:5px 11px;border-radius:14px;white-space:nowrap}
+.te-badge.on{background:rgba(255,255,255,.16);color:#fff}
+.te-badge.fim{background:var(--gold);color:#241c07}
+.te-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.te-acts button{padding:11px;border-radius:11px;border:none;font-weight:800;font-size:13px;cursor:pointer}
+.te-acts .te-fim{background:var(--gold);color:#241c07}
+.te-acts .te-nova{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.25)}
+.te-hist{background:#fff;border:1px solid var(--border);border-radius:14px;padding:11px 13px;margin-bottom:16px}
+.te-hist-t{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);font-weight:800;margin-bottom:7px}
+.te-hrow{padding:8px 0;border-top:1px solid var(--border)}
+.te-hrow:first-of-type{border-top:none}
+.te-hrow b{color:var(--green)}
+.te-hrow>span{font-size:12px;color:var(--muted);margin-left:6px}
+.te-camp{font-size:12.5px;color:var(--text);margin-top:4px;line-height:1.5}
+.tor-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}
+.tor-acts button{padding:12px;border-radius:12px;border:none;font-weight:700;font-size:13px;cursor:pointer}
+.tor-acts .b-add{background:var(--green);color:var(--cream)}
+.tor-acts .b-res{background:var(--clay);color:#fff}
+.tor-acts .b-wpp{background:var(--wapp);color:#fff}
+.tor-acts .b-cfg{background:#fff;color:var(--muted);border:1px solid var(--border)}
+.tg-card{background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+.tg-head{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--green);color:var(--cream)}
+.tg-badge{width:34px;height:34px;border-radius:10px;background:var(--gold);color:var(--green);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;font-family:'Cormorant Garamond',serif}
+.tg-title{font-weight:700;font-size:15px}
+.tg-count{font-size:11px;opacity:.72}
+.tg-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tg-tbl th{font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:700;padding:9px 3px;text-align:center;border-bottom:1px solid var(--border)}
+.tg-tbl th:first-child{text-align:left;padding-left:14px}
+.tg-tbl td{padding:7px 3px;text-align:center;border-bottom:1px solid #F1EADD}
+.tg-tbl tr:last-child td{border-bottom:none}
+.tg-tbl td:first-child{text-align:left;padding-left:14px}
+.tg-name{font-weight:600;color:var(--text);cursor:pointer}
+.tg-rank{display:inline-flex;width:21px;height:21px;border-radius:50%;align-items:center;justify-content:center;font-size:11px;font-weight:800;margin-right:8px;background:#EFE7D8;color:var(--muted);vertical-align:middle}
+.tg-rank.r1{background:var(--gold);color:var(--green)}
+.tg-rank.r2{background:#BFB7A8;color:#fff}
+.tg-rank.r3{background:#D9A066;color:#fff}
+.tg-stat{width:44px;padding:6px 2px;text-align:center;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:700;background:var(--cream);color:var(--text)}
+.tg-pts{display:inline-block;min-width:30px;padding:4px 8px;border-radius:8px;background:#EFE7D8;font-weight:800;color:var(--green)}
+.tg-pts.lead{background:var(--green);color:var(--gold-light)}
+/* abre a conta: quanto veio desta etapa e quanto vem acumulado */
+.tg-acum{display:block;font-size:9.5px;color:var(--muted);font-weight:700;margin-top:2px}
+.tg-x{background:none;border:none;color:var(--bad);font-size:14px;cursor:pointer;opacity:.55}
+.tg-mv{background:none;border:none;color:var(--gold);font-size:15px;cursor:pointer;opacity:.7;margin-right:2px}
+.tor-log{background:var(--green);color:var(--cream);border-radius:16px;padding:14px 16px;margin-top:8px}
+.tor-log h4{margin:0 0 6px;font-size:13px;color:var(--gold-light)}
+.tor-log .row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-top:1px solid rgba(255,255,255,.08);font-size:12.5px}
+.tor-log .row:first-of-type{border-top:none}
+.tor-log .ap{background:var(--ok);color:#fff;border:none;border-radius:8px;padding:7px 11px;font-weight:700;font-size:12px;cursor:pointer}
+.tor-log .ds{background:none;border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:8px;padding:7px 10px;cursor:pointer;font-size:12px}
+.tor-empty{text-align:center;color:var(--muted);padding:34px 16px;font-size:13.5px;background:#fff;border:1px dashed var(--border);border-radius:16px}
+.tor-radio{display:flex;gap:10px;margin-top:4px}
+.tor-radio label{flex:1;display:flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:13px;cursor:pointer}
+.tg-drag{cursor:grab;color:var(--muted);font-size:16px;line-height:1;padding:4px 7px 4px 0;user-select:none;touch-action:none;display:inline-block;vertical-align:middle}
+.tg-drag:active{cursor:grabbing;color:var(--gold)}
+.tg-row{transition:opacity .15s}
+.tg-row.tg-dragging{opacity:.3}
+tbody.tg-drop{background:rgba(201,160,74,.10);outline:1px dashed var(--gold);outline-offset:-2px}
+.tg-row.tg-before td{box-shadow:inset 0 2px 0 var(--gold)}
+.tg-row.tg-after td{box-shadow:inset 0 -2px 0 var(--gold)}
+.tg-ghost{position:fixed;z-index:9999;pointer-events:none;opacity:.95;background:#fff;border:1.5px solid var(--gold);border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.28);padding:10px 14px;font-weight:700;color:var(--text);font-size:13px}
+
+
+/* ===== JV Premium 2026-09-25-2 · Gestão ===== */
+:root{
+  --cream:#07150F;--dark:#04100B;--green:#0B281C;--green-2:#123925;
+  --gold:#E0B94F;--gold-light:#F0D57C;--clay:#B95D2A;--clay-light:#E49A66;
+  --text:#F8F5ED;--muted:#C8C2B6;--border:rgba(224,185,79,.20);
+  --ok:#58D982;--warn:#E0B94F;--bad:#E27666;
+}
+html{background:#04100B}
+body{background:
+  radial-gradient(circle at 88% 3%,rgba(185,93,42,.16),transparent 28%),
+  linear-gradient(180deg,#081912 0%,#06140F 42%,#04100B 100%);
+  color:var(--text);max-width:520px}
+.top.jv-premium-hero{
+  min-height:315px;position:relative;overflow:hidden;padding:calc(18px + env(safe-area-inset-top,0px)) 18px 17px;
+  background:
+    linear-gradient(180deg,rgba(2,10,7,.24),rgba(4,16,11,.94)),
+    linear-gradient(90deg,rgba(5,18,13,.97) 0%,rgba(5,18,13,.67) 58%,rgba(185,93,42,.16) 100%),
+    url('../../assets/jv-saibro-premium.svg') center 58%/cover no-repeat;
+  border-bottom:1px solid rgba(224,185,79,.18);box-shadow:0 18px 45px rgba(0,0,0,.26)
+}
+.top.jv-premium-hero:after{
+  content:'';position:absolute;right:-58px;bottom:-86px;width:220px;height:220px;border-radius:50%;
+  border:1px solid rgba(224,185,79,.23);box-shadow:0 0 0 28px rgba(224,185,79,.035),0 0 0 58px rgba(224,185,79,.025);
+  pointer-events:none
+}
+.jv-gestao-brand{display:flex;align-items:center;gap:9px;position:relative;z-index:3;max-width:235px}
+.jv-gestao-brand .marca-jv{position:static;width:42px;height:42px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(224,185,79,.58);box-shadow:0 5px 18px rgba(0,0,0,.34)}
+.jv-gestao-brand span{font-size:9px;letter-spacing:1.9px;text-transform:uppercase;color:var(--gold-light);font-weight:800;line-height:1.35}
+.jv-gestao-brand b{display:block;color:#fff;font-size:13px;letter-spacing:.4px}
+.jv-avatar-btn{position:absolute;right:16px;top:calc(14px + env(safe-area-inset-top,0px));z-index:8;width:54px;height:54px;border-radius:50%;border:2px solid var(--gold);padding:0;background:#10241b;box-shadow:0 7px 22px rgba(0,0,0,.35);overflow:visible}
+.jv-avatar-btn img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:none}
+.jv-avatar-fallback{display:flex;width:100%;height:100%;align-items:center;justify-content:center;border-radius:50%;font-size:14px;font-weight:900;color:var(--gold-light);background:linear-gradient(145deg,#163b29,#0b2118)}
+.jv-avatar-camera{position:absolute;right:-3px;bottom:-3px;width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--gold);color:#142017;font-size:10px;border:2px solid #07150f}
+.jv-hero-greet{position:relative;z-index:3;margin:34px 0 2px;color:rgba(248,245,237,.84);font-size:13.5px;font-weight:650}
+.top.jv-premium-hero h1{position:relative;z-index:3;font-size:37px;line-height:1.02;color:#fff;margin:0 0 9px;font-weight:850;letter-spacing:-1.3px;max-width:315px}
+.top.jv-premium-hero h1 em{color:var(--gold);font-style:normal}
+.jv-hero-question{position:relative;z-index:3;color:#fff;font-size:18px;line-height:1.2;font-weight:800;margin:2px 0 4px;max-width:300px}
+.jv-hero-question em{color:var(--gold);font-style:normal}
+.jv-hero-motto{position:relative;z-index:3;color:var(--muted);font-size:12.5px;line-height:1.4;max-width:290px}
+.top.jv-premium-hero .top-actions{position:absolute;right:79px;top:calc(17px + env(safe-area-inset-top,0px));z-index:7;display:flex;gap:6px;margin:0}
+.top.jv-premium-hero .top-actions .eye-btn{position:relative;top:auto;right:auto;width:37px;height:37px;border:1px solid rgba(255,255,255,.12);background:rgba(4,16,11,.66);backdrop-filter:blur(8px);color:#fff}
+.top.jv-premium-hero .top-month{position:relative;z-index:3;margin-top:15px;max-width:100%;padding:7px 10px;border:1px solid rgba(224,185,79,.18);border-radius:14px;background:rgba(4,16,11,.45);backdrop-filter:blur(8px)}
+.top.jv-premium-hero .month-btn{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.10);color:var(--gold-light)}
+.top.jv-premium-hero .month-label{color:var(--gold-light);font-size:12px}
+.top.jv-premium-hero .save-state{right:8px;color:rgba(248,245,237,.56)}
+.top.compacto.jv-premium-hero{min-height:auto;padding:calc(7px + env(safe-area-inset-top,0px)) 14px 9px}
+.top.compacto .jv-gestao-brand,.top.compacto .jv-hero-greet,.top.compacto .jv-hero-question,.top.compacto .jv-hero-motto{display:none}
+.top.compacto.jv-premium-hero h1{font-size:20px;margin:0 0 5px}
+.top.compacto .jv-avatar-btn{width:38px;height:38px;top:calc(5px + env(safe-area-inset-top,0px))}
+.top.compacto .top-actions{top:calc(6px + env(safe-area-inset-top,0px));right:61px}
+.top.compacto .top-actions .eye-btn{width:32px;height:32px}
+.top.compacto .top-month{margin-top:3px;padding:4px 7px}
+
+/* Dashboard */
+#pg-dash{padding-top:16px}
+.sec-eyebrow{color:var(--gold-light)!important;letter-spacing:1.45px}
+.sec-title{color:#fff!important}.sec-title em{color:var(--gold)!important;font-style:normal!important}
+.kpis{gap:10px}
+.kpi{
+  border:1px solid rgba(224,185,79,.16)!important;border-radius:18px!important;padding:15px!important;
+  background:linear-gradient(145deg,rgba(15,49,34,.96),rgba(7,27,19,.96))!important;
+  box-shadow:0 14px 34px rgba(0,0,0,.18)!important;color:#fff!important;min-height:120px
+}
+.kpi.clay{background:linear-gradient(145deg,rgba(77,55,17,.94),rgba(29,30,16,.96))!important}
+.kpi .kpi-l{color:var(--gold-light)!important}.kpi .kpi-v{color:#fff!important;font-size:23px!important}.kpi .kpi-s{color:var(--muted)!important}
+.bar-wrap{
+  background:linear-gradient(145deg,rgba(14,44,31,.94),rgba(7,26,18,.96))!important;border:1px solid rgba(224,185,79,.15)!important;
+  border-radius:17px!important;padding:14px!important;box-shadow:0 12px 28px rgba(0,0,0,.14)
+}
+.bar-row{color:#fff}.bar{background:rgba(255,255,255,.09)!important}.bar i{background:linear-gradient(90deg,var(--gold),#63D887)!important}
+.rapidas{gap:10px}
+.rapidas button,.ferr-grid button{
+  background:rgba(10,36,25,.88)!important;border:1px solid rgba(224,185,79,.16)!important;color:#fff!important;border-radius:15px!important;
+  box-shadow:0 10px 24px rgba(0,0,0,.12)
+}
+.rapidas button:active,.ferr-grid button:active{background:rgba(18,55,38,.96)!important}
+.rapidas button i,.ferr-grid button i{color:var(--gold-light)}
+.rapidas button span,.ferr-grid button span{color:#fff}.ferr-grid button small{color:var(--muted)!important}
+.aulas-mes{gap:9px}.am-card{
+  background:rgba(10,36,25,.88)!important;border:1px solid rgba(224,185,79,.14)!important;color:#fff!important;border-radius:15px!important
+}
+.am-v{color:var(--gold-light)!important}.am-l{color:var(--muted)!important}
+
+/* Demais abas: limpa e coerente sem alterar os fluxos */
+.page{color:var(--text);background:transparent}
+.comp-item,.pend-item,.cons,.empty,.ag-ferr,.aluno,.mov-card,.graf-card,.fin-card,.dobra-cab,.dobra-corpo,.fech-card,.fq-linha{
+  background:rgba(10,35,24,.86)!important;border-color:rgba(224,185,79,.15)!important;color:#fff!important
+}
+.comp-info span,.pend-item span,.cons p,.empty,.aluno-sub,.hint,.sub,.ag-nav-label small{color:var(--muted)!important}
+.comp-date{background:#174F37!important;color:#fff!important}
+.seg{background:rgba(255,255,255,.065)!important}
+.seg button{color:var(--muted)!important}
+.seg button.on{background:#1E704D!important;color:#fff!important}
+.ag-nav .month-btn{background:rgba(255,255,255,.07)!important;border-color:rgba(224,185,79,.16)!important;color:var(--gold-light)!important}
+.ag-nav-label{color:#fff!important}
+.ag-ferr>summary{color:var(--muted)!important}
+.ag-ferr .ferr-corpo button{
+  background:rgba(255,255,255,.055)!important;border-color:rgba(224,185,79,.16)!important;color:#fff!important
+}
+.ag-ferr .ferr-corpo button.destaque{background:#1E704D!important}.ag-ferr .ferr-corpo button.ouro{background:#7A5A18!important;color:#fff!important}
+input,select,textarea{
+  background:#F8F5ED!important;color:#142017!important;border-color:rgba(224,185,79,.28)!important;border-radius:11px!important
+}
+.field label{color:var(--gold-light)!important}
+.modal{background:#0B281C!important;color:#fff!important;border:1px solid rgba(224,185,79,.22)}
+.overlay{backdrop-filter:blur(8px)}
+.btn-ghost{background:rgba(255,255,255,.065)!important;color:#fff!important;border-color:rgba(224,185,79,.18)!important}
+.btn-clay{background:linear-gradient(135deg,#B95D2A,#D97935)!important;color:#fff!important}
+.badge.pago{background:rgba(46,214,107,.12)!important;color:#7BEF8A!important}.badge.pendente{background:rgba(185,93,42,.16)!important;color:#F0B98C!important}
+.chip{border-color:rgba(224,185,79,.16)!important}
+.aluno-name{color:#fff!important}
+.aluno-head{border-color:rgba(255,255,255,.07)!important}
+.legend span{color:#fff!important}
+.mais-pop{background:#0B281C!important;border:1px solid rgba(224,185,79,.22)!important;box-shadow:0 18px 40px rgba(0,0,0,.45)}
+.mais-pop button{color:#fff!important;border-bottom-color:rgba(255,255,255,.07)!important}
+.mais-pop button:active{background:rgba(224,185,79,.08)!important}
+
+/* Navegação principal simplificada */
+.nav{grid-template-columns:repeat(5,1fr)!important;background:rgba(4,16,11,.96)!important;border-top:1px solid rgba(224,185,79,.20)!important;backdrop-filter:blur(16px)}
+.nav::after{background:#04100B!important}
+.nav button{color:rgba(248,245,237,.64)!important;min-height:57px}
+.nav button.on,.nav button.aberto{color:var(--gold-light)!important;background:rgba(224,185,79,.09)!important}
+.nav button.on:after,.nav button.aberto:after{content:'';position:absolute;bottom:3px;width:22px;height:2px;border-radius:99px;background:var(--gold)}
+.nav button .ico{height:24px}
+
+/* alertas e blocos críticos mantêm contraste */
+.bk-banner{background:rgba(111,75,17,.28)!important;border-color:rgba(224,185,79,.28)!important}.bk-banner .bk-msg{color:#F3DA8E!important}
+.foco-repos{background:rgba(111,75,17,.28)!important;border-color:rgba(224,185,79,.25)!important;color:#F3DA8E!important}
+.cons.bad{background:rgba(153,58,42,.16)!important}.cons.warn{background:rgba(142,104,23,.16)!important}.cons.good{background:rgba(34,115,73,.16)!important}
+@media(max-width:355px){
+  .top.jv-premium-hero h1{font-size:32px}.jv-hero-question{font-size:16px}.top.jv-premium-hero .top-actions{right:73px;gap:4px}
+  .top.jv-premium-hero .top-actions .eye-btn{width:34px;height:34px}.kpi{padding:12px!important}.kpi .kpi-v{font-size:20px!important}
+}
+
+
+/* ===== JV Legibilidade 2026-09-25-4 · Gestão ===== */
+:root{
+  /* mantém a paleta premium, mas restaura o sentido semântico de "cream":
+     vários componentes legados usam cream COMO TEXTO sobre verde. */
+  --cream:#F8F5ED;
+  --jv-ink:#10261E;
+  --jv-ink-soft:#625B50;
+  --jv-light:#FAF7F1;
+  --jv-light-2:#F2ECE2;
+  --jv-light-border:#D9C9A7;
+}
+html,body{min-height:100%;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+.page{padding-left:16px;padding-right:16px;padding-bottom:calc(108px + env(safe-area-inset-bottom,0px))}
+.sec-eyebrow{font-size:11.5px!important;font-weight:800!important;letter-spacing:1.7px!important}
+.sec-title{font-size:30px!important;line-height:1.08!important;margin-bottom:16px!important}
+
+/* navegação: mais espaço, contraste e safe area */
+.nav{
+  min-height:76px!important;
+  padding:6px 5px max(8px,env(safe-area-inset-bottom,0px))!important;
+}
+.nav button{min-height:62px!important;font-size:11.5px!important;font-weight:650!important;border-radius:16px!important;gap:4px!important}
+.nav button .ico{height:25px!important}
+.nav button.on,.nav button.aberto{background:rgba(224,185,79,.11)!important;color:#F0D57C!important}
+.nav button.on:after,.nav button.aberto:after{bottom:5px!important;height:3px!important;width:26px!important}
+
+/* controles principais */
+.toolbar{gap:10px!important;margin-bottom:15px!important}
+.toolbar input{min-height:54px!important;padding:13px 15px!important;background:var(--jv-light)!important;color:var(--jv-ink)!important;border-color:var(--jv-light-border)!important;font-size:15px!important}
+.toolbar .btn{min-height:54px!important}
+.seg{padding:5px!important;border-radius:15px!important;margin-bottom:16px!important}
+.seg button{min-height:44px!important;font-size:13px!important}
+.seg button.on{background:#247D57!important;color:#fff!important}
+
+/* lista de alunos: mantém o cartão escuro, mas aumenta leitura e respiro */
+.aluno{border-radius:18px!important;margin-bottom:12px!important;background:linear-gradient(145deg,#0D3425,#08251B)!important;border:1px solid rgba(224,185,79,.18)!important}
+.aluno-head{padding:16px!important;min-height:86px!important}
+.aluno-name{font-size:16px!important;font-weight:800!important;color:#FFF!important;line-height:1.25!important}
+.aluno-sub{font-size:12.5px!important;color:rgba(248,245,237,.76)!important;line-height:1.4!important;margin-top:3px!important}
+.badge{font-size:10.5px!important;padding:6px 10px!important}
+.badge.pago{background:#0D5033!important;color:#7EF0A1!important}
+.badge.parcial{background:#5E4816!important;color:#F3D57A!important}
+.badge.pendente{background:#5B2B22!important;color:#F0A294!important}
+
+/* resumo dos alunos/avaliações: superfícies claras precisam de tinta escura */
+.aval-resumo{gap:10px!important;margin:4px 0 18px!important}
+.aval-resumo .rc{
+  min-height:94px!important;padding:14px 10px!important;border-radius:18px!important;
+  background:var(--jv-light)!important;border:1px solid var(--jv-light-border)!important;color:var(--jv-ink)!important;
+  display:flex!important;flex-direction:column!important;justify-content:center!important
+}
+.aval-resumo .rc b{font-size:28px!important;color:#0B3C2B!important}
+.aval-resumo .rc.pend b{color:#B64235!important}
+.aval-resumo .rc span{font-size:11.5px!important;color:#6A6257!important}
+#alunos-resumo .rc.on{border:2px solid var(--gold)!important;box-shadow:0 0 0 2px rgba(224,185,79,.12)!important}
+.avcard{background:var(--jv-light)!important;border-color:var(--jv-light-border)!important;color:var(--jv-ink)!important}
+.avcard .avnome{color:var(--jv-ink)!important}.avcard .avsub,.avmini .avpct{color:#6A6257!important}
+
+/* Caixa / movimentos: a lista branca fica deliberadamente clara e legível */
+.mov{
+  min-height:76px!important;padding:14px 16px!important;margin-bottom:10px!important;border-radius:17px!important;
+  background:var(--jv-light)!important;border:1px solid var(--jv-light-border)!important;color:var(--jv-ink)!important;
+  box-shadow:0 6px 18px rgba(0,0,0,.07)!important
+}
+.mov-l{min-width:0!important;padding-right:10px!important}
+.mov-l b{font-size:14.5px!important;font-weight:800!important;color:var(--jv-ink)!important;line-height:1.28!important}
+.mov-l span{font-size:12px!important;color:#726A5E!important;line-height:1.4!important}
+.mov-v{font-size:14.5px!important;font-weight:850!important}
+.mov-v.in{color:#249B5C!important}.mov-v.out{color:#C85C49!important}
+.mov-x{color:#9C8E77!important;font-size:19px!important;min-width:36px!important;min-height:36px!important}
+
+/* atalhos da Caixa: restaura branco sobre verdes, preservando ouro e saibro */
+.quick{gap:12px!important;margin-bottom:20px!important}
+.quick button{min-height:112px!important;border-radius:20px!important;padding:18px 12px!important;font-size:14px!important;font-weight:800!important}
+.quick .q1,.quick .q2{color:#fff!important}.quick .q3{color:#10261E!important}.quick .q4{color:#fff!important}
+.quick small{font-size:20px!important}
+.quick .qb-novo{color:#F2E9D9!important;border-color:rgba(224,185,79,.36)!important;background:rgba(255,255,255,.035)!important}
+.quick .qb-novo small{color:#F2E9D9!important}
+
+/* Financeiro */
+.fin-grid{gap:12px!important;margin-bottom:20px!important}
+.fin-card{min-height:108px!important;border-radius:18px!important;padding:16px!important}
+.fin-card .l{font-size:11px!important;color:rgba(248,245,237,.74)!important;font-weight:750!important}
+.fin-card .v{font-size:27px!important;color:#FFF!important;line-height:1.15!important;margin-top:5px!important}
+.fin-card.hero .v{font-size:35px!important}.fin-card.hero .l,.fin-card.saldo .l{color:#F0D57C!important}
+.fin-card.desp .v{color:#F0A077!important}
+
+/* gráfico do mês: superfície clara => texto escuro */
+.chart{
+  background:var(--jv-light)!important;border:1px solid var(--jv-light-border)!important;border-radius:20px!important;
+  padding:20px 17px 12px!important;margin-bottom:20px!important;box-shadow:0 8px 22px rgba(0,0,0,.08)!important
+}
+.chart-row{gap:10px!important;margin-bottom:14px!important;min-height:30px!important}
+.chart-lab{width:86px!important;font-size:11.5px!important;font-weight:800!important;color:#6B6255!important}
+.chart-track{height:25px!important;background:#E9E3D9!important;border-radius:9px!important}
+.chart-bar{border-radius:9px!important}
+.chart-val{width:92px!important;font-size:13px!important;font-weight:850!important;color:var(--jv-ink)!important}
+.chart-val.neg{color:#B74C3B!important}
+
+/* despesas: cartão claro sem texto lavado */
+.desp-item{
+  min-height:82px!important;padding:15px 16px!important;margin-bottom:11px!important;border-radius:17px!important;
+  background:var(--jv-light)!important;border:1px solid var(--jv-light-border)!important;color:var(--jv-ink)!important;
+  box-shadow:0 5px 16px rgba(0,0,0,.06)!important
+}
+.desp-item .di-d{font-size:14.5px!important;font-weight:800!important;color:var(--jv-ink)!important}
+.desp-item .di-c{font-size:11px!important;color:#756B5D!important}
+.desp-item .di-v{font-size:16px!important;font-weight:850!important;color:#C25B31!important}
+.desp-item .di-x{color:#9D907E!important;min-width:38px!important;min-height:38px!important}
+
+/* Torneio: cabeçalho escuro com texto claro; tabela clara com texto escuro */
+.tg-card{
+  background:var(--jv-light)!important;border:1px solid var(--jv-light-border)!important;border-radius:20px!important;
+  margin-bottom:18px!important;box-shadow:0 8px 24px rgba(0,0,0,.09)!important;color:var(--jv-ink)!important
+}
+.tg-head{padding:16px!important;background:#0A3B2B!important;color:#FFF!important;min-height:88px!important}
+.tg-badge{width:42px!important;height:42px!important;border-radius:13px!important;background:#E0B94F!important;color:#173225!important;font-size:20px!important}
+.tg-title{font-size:16px!important;font-weight:850!important;color:#FFF!important;line-height:1.25!important}
+.tg-count{font-size:12px!important;color:rgba(255,255,255,.72)!important;opacity:1!important;margin-top:3px!important}
+.tg-tbl{font-size:13.5px!important;background:var(--jv-light)!important}
+.tg-tbl th{padding:11px 4px!important;font-size:10.5px!important;color:#72695D!important;background:#F2ECE2!important;border-bottom:1px solid #DFD3BF!important}
+.tg-tbl th:first-child{padding-left:16px!important}
+.tg-tbl td{padding:10px 4px!important;border-bottom:1px solid #E6DDCF!important;color:var(--jv-ink)!important}
+.tg-tbl td:first-child{padding-left:12px!important}
+.tg-name{color:var(--jv-ink)!important;font-weight:800!important;line-height:1.25!important}
+.tg-drag{color:#A29684!important}
+.tg-rank{width:28px!important;height:28px!important;margin-right:7px!important;font-size:12px!important;background:#E8E0D2!important;color:#675F53!important}
+.tg-rank.r1{background:#E0B94F!important;color:#173225!important}.tg-rank.r2{background:#BBB3A4!important;color:#FFF!important}.tg-rank.r3{background:#D99759!important;color:#FFF!important}
+.tg-stat{width:48px!important;min-height:42px!important;padding:8px 3px!important;background:#FFFCF6!important;color:#15251E!important;border:1px solid #DDC995!important;border-radius:11px!important;font-size:14px!important;font-weight:850!important}
+.tg-pts{min-width:36px!important;padding:7px 9px!important;background:#EAE2D5!important;color:#143B2C!important}
+.tg-pts.lead{background:#0B3C2B!important;color:#F0D57C!important}
+.tg-acum{color:#7B7164!important}.tg-mv{font-size:18px!important;opacity:.9!important}.tg-x{font-size:18px!important;opacity:.7!important}
+.tor-empty{background:var(--jv-light)!important;color:#6B6256!important;border-color:var(--jv-light-border)!important}
+
+/* Agenda: preserva as cores dos tipos de aula, mas melhora a grade e textos */
+.ag-nav-label{font-size:15px!important}
+.ag-ferr{border-radius:17px!important}
+.ag-ferr>summary{min-height:52px!important;padding:13px 15px!important;font-size:13.5px!important;color:#F3EDE2!important}
+.wk-scroll{background:var(--jv-light)!important;border-color:var(--jv-light-border)!important;border-radius:18px!important}
+.wk th{background:#0B3C2B!important;color:#FFF!important;padding:10px 5px!important;font-size:max(var(--wk-thfs,10.5px),11px)!important;font-weight:800!important}
+.wk th small{color:rgba(255,255,255,.72)!important;opacity:1!important}
+.wk td{height:max(var(--wk-h,34px),40px)!important;border-color:#E2D8C9!important}
+.wk td.hr{background:#F7F2E9!important;color:#756D60!important;border-right:2px solid #D7C7A7!important;font-size:max(var(--wk-thfs,10.5px),11px)!important}
+.wk-cell{font-size:max(var(--wk-fs,10px),11px)!important;font-weight:750!important;line-height:1.22!important;padding:4px 5px!important}
+.wk-cell.free{background:#FFFCF7!important;color:#82796C!important;font-weight:700!important}
+.wk-zoom{color:#E9E1D5!important;margin-bottom:12px!important}
+.wk-zoom .wz{width:46px!important;height:46px!important;border-radius:13px!important;background:var(--jv-light)!important;color:var(--jv-ink)!important;border-color:var(--jv-light-border)!important}
+.wk-zoom .wz-lbl{color:#FFF!important;font-size:14px!important}
+.wk-zoom .wz-fit{width:auto!important;padding:0 15px!important;color:var(--jv-ink)!important}
+.slot-h{color:#E4DAC9!important;font-size:12.5px!important}
+.slot-body{min-height:46px!important;background:var(--jv-light)!important;border-color:#D8CBAF!important}
+.slot-add{width:38px!important;height:38px!important;background:#EDE5D9!important;color:#615A4F!important}
+
+/* campos e labels em cartões claros */
+input,select,textarea{min-height:44px}
+#meta-input{min-height:58px!important;font-size:18px!important;background:var(--jv-light)!important;color:var(--jv-ink)!important}
+
+/* mantém o cabeçalho compacto legível no iPhone */
+.top.compacto.jv-premium-hero{
+  min-height:calc(82px + env(safe-area-inset-top,0px))!important;
+  background:
+    linear-gradient(180deg,rgba(4,16,11,.92),rgba(4,16,11,.98)),
+    url('../../assets/jv-saibro-premium.svg') center/cover no-repeat!important
+}
+@media(max-width:390px){
+  .page{padding-left:13px;padding-right:13px}
+  .sec-title{font-size:27px!important}
+  .aval-resumo{gap:7px!important}.aval-resumo .rc{min-height:86px!important;padding:11px 6px!important}.aval-resumo .rc b{font-size:24px!important}
+  .tg-tbl{font-size:12.5px!important}.tg-stat{width:44px!important}
+  .chart-lab{width:72px!important}.chart-val{width:78px!important;font-size:12px!important}
+}
+
+
+/* ===== JV Polimento final 2026-09-25-5 · contraste, leitura e proporção =====
+   Ajustes guiados pelos testes reais no iPhone. Mantém a paleta premium e
+   corrige apenas hierarquia, contraste, safe-area e densidade visual. */
+:root{
+  --jv-copy:#F8F5ED;
+  --jv-copy-soft:rgba(248,245,237,.80);
+  --jv-copy-muted:rgba(248,245,237,.66);
+  --jv-paper:#FBF8F2;
+  --jv-paper-2:#F2ECE2;
+  --jv-paper-ink:#10261E;
+  --jv-paper-muted:#6B6255;
+}
+
+/* Dynamic Island / barra de status: nada importante encosta no recorte. */
+.top.jv-premium-hero{
+  padding-top:calc(22px + env(safe-area-inset-top,0px))!important;
+}
+.top.compacto.jv-premium-hero{
+  padding-top:calc(14px + env(safe-area-inset-top,0px))!important;
+  min-height:calc(96px + env(safe-area-inset-top,0px))!important;
+}
+.top.compacto.jv-premium-hero h1{padding-top:2px!important}
+.top.compacto .jv-avatar-btn{top:calc(12px + env(safe-area-inset-top,0px))!important}
+.top.compacto .top-actions{top:calc(13px + env(safe-area-inset-top,0px))!important}
+
+/* Texto escuro só em superfícies claras; em superfícies escuras, branco quente. */
+.page .hint,.page .sub,.page small{line-height:1.4}
+.comp-item b,.pend-item b,.cons h4,.dobra-cab,.fech-card b,.fq-linha b{color:#FFF!important}
+.comp-info,.comp-info span,.pend-item span,.cons p,.dobra-cab small,.fech-card span,.fq-linha span{
+  color:var(--jv-copy-soft)!important
+}
+
+/* Alunos — busca/filtros compactos, cards mais baixos e leitura imediata. */
+#pg-alunos .toolbar{grid-template-columns:minmax(0,1fr) auto auto!important;align-items:stretch!important}
+#pg-alunos .toolbar input{min-width:0!important}
+#pg-alunos .seg-scroll{
+  display:flex!important;overflow-x:auto!important;gap:7px!important;padding:6px!important;
+  scrollbar-width:none;-webkit-overflow-scrolling:touch
+}
+#pg-alunos .seg-scroll::-webkit-scrollbar{display:none}
+#pg-alunos .seg-scroll button{flex:0 0 auto!important;padding:9px 13px!important;min-height:42px!important}
+.aluno-head{min-height:80px!important}
+.aluno-name{font-size:17px!important;letter-spacing:-.1px!important}
+.aluno-sub{font-size:13px!important}
+#alunos-resumo .rc{min-height:88px!important}
+#alunos-resumo .rc b{line-height:1!important}
+
+/* Caixa — atalhos proporcionais e lista clara, sem texto “lavado”. */
+.quick{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.quick button{min-height:104px!important}
+.mov{gap:10px!important}
+.mov-l b,.mov-l span{opacity:1!important}
+.mov-l span{color:#6B6255!important}
+.mov-v{white-space:nowrap!important}
+
+/* Financeiro — os números têm prioridade; o rótulo não desaparece. */
+.fin-card{
+  background:linear-gradient(145deg,#0D3425,#08251B)!important;
+  border:1px solid rgba(224,185,79,.18)!important
+}
+.fin-card .l{color:rgba(248,245,237,.78)!important;letter-spacing:.7px!important}
+.fin-card .v{font-family:'DM Sans',sans-serif!important;font-weight:850!important;letter-spacing:-.6px!important}
+.chart-lab{color:#655D52!important}
+.chart-val{color:#10261E!important}
+.chart-track{background:#E7E0D5!important}
+.desp-item .di-d,.desp-item .di-c,.desp-item .di-v{opacity:1!important}
+
+/* Torneio — primeira coluna ganha espaço; controles continuam tocáveis. */
+.tg-card{overflow:hidden!important}
+.tg-head{align-items:center!important;gap:12px!important}
+.tg-title{color:#FFF!important;text-shadow:none!important}
+.tg-count{color:rgba(255,255,255,.76)!important}
+.tg-tbl{table-layout:fixed!important;width:100%!important}
+.tg-tbl th:first-child,.tg-tbl td:first-child{width:40%!important}
+.tg-tbl th:nth-child(2),.tg-tbl th:nth-child(3),.tg-tbl th:nth-child(4),
+.tg-tbl td:nth-child(2),.tg-tbl td:nth-child(3),.tg-tbl td:nth-child(4){width:10.5%!important}
+.tg-tbl th:nth-child(5),.tg-tbl td:nth-child(5){width:12%!important}
+.tg-tbl th:last-child,.tg-tbl td:last-child{width:16.5%!important}
+.tg-name{font-size:13.5px!important;color:#10261E!important;overflow-wrap:anywhere}
+.tg-stat{
+  width:100%!important;min-width:0!important;max-width:46px!important;height:42px!important;
+  color:#10261E!important;background:#FFFCF6!important;-webkit-text-fill-color:#10261E!important
+}
+.tg-pts{font-size:13.5px!important}
+.tg-mv,.tg-x{min-width:28px!important;min-height:36px!important;padding:0!important}
+
+/* Agenda — título fora do recorte e grade com células mais respiradas. */
+#pg-agenda{padding-top:18px!important}
+#pg-agenda>.sec-eyebrow:first-child{margin-top:4px!important}
+#pg-agenda>.sec-title:first-of-type{margin-top:0!important}
+.ag-ferr{margin-bottom:14px!important}
+.wk-scroll{overflow:auto!important;-webkit-overflow-scrolling:touch}
+.wk{min-width:620px!important}
+.wk th{height:54px!important}
+.wk td{height:max(var(--wk-h,34px),44px)!important}
+.wk-cell{font-size:max(var(--wk-fs,10px),11.5px)!important;line-height:1.18!important}
+.wk td.hr{min-width:70px!important}
+.ev{font-weight:750!important}
+.ev small{opacity:.82!important}
+
+/* Menu Mais: não escurece a tela; abre acima da barra e respeita o iPhone. */
+.mais-fundo.on{background:transparent!important}
+.mais-pop{
+  bottom:calc(88px + env(safe-area-inset-bottom,0px))!important;
+  width:min(250px,calc(100vw - 24px))!important;
+  right:12px!important
+}
+.mais-pop button{min-height:46px!important;font-size:14px!important}
+
+/* Barra inferior: toque confortável sem consumir altura demais. */
+.nav{min-height:78px!important}
+.nav button{min-height:60px!important}
+.nav button .ico{opacity:.94}
+.nav button:not(.on):not(.aberto){color:rgba(248,245,237,.72)!important}
+
+/* iPhone estreito: evita quebra agressiva sem diminuir legibilidade. */
+@media(max-width:390px){
+  .page{padding-left:14px!important;padding-right:14px!important}
+  #pg-alunos .toolbar{grid-template-columns:minmax(0,1fr) 82px 72px!important;gap:7px!important}
+  #pg-alunos .toolbar .btn{padding-left:8px!important;padding-right:8px!important;font-size:12px!important}
+  .tg-tbl th:first-child,.tg-tbl td:first-child{width:38%!important}
+  .tg-name{font-size:12.5px!important}
+  .tg-rank{width:25px!important;height:25px!important;margin-right:4px!important}
+  .tg-drag{padding-right:3px!important}
+}
+
+
+/* ===== JV Auditoria final 2026-09-25-6 · contraste WCAG, iPhone e proporção ===== */
+/* Camada final deliberadamente específica. Mantém a paleta aprovada e elimina
+   combinações herdadas de texto claro/claro ou escuro/escuro nas telas antigas. */
+:root{
+  --jv-readable-white:#F8F5ED;
+  --jv-readable-soft:#D8D2C7;
+  --jv-readable-dark:#10261E;
+  --jv-readable-muted:#625A4F;
+  --jv-readable-paper:#FBF8F2;
+}
+html,body{background:#06140F!important;-webkit-text-size-adjust:100%}
+.page{color:var(--jv-readable-white)!important}
+.page>.sec-title,.page .comp-head .sec-title,.page .dobra-cab .dc-nome{color:#FFF!important}
+.page>.sec-eyebrow,.page .comp-head .sec-eyebrow,.page .dobra-cab .dc-eyebrow{color:#F0D57C!important}
+
+/* Em PWA com status bar translúcida, o conteúdo pode passar por baixo da
+   Dynamic Island ao rolar. A máscara preserva a área segura sem alterar o layout. */
+@media (display-mode:standalone){
+  body::before{
+    content:"";position:fixed;left:0;right:0;top:0;height:env(safe-area-inset-top,0px);
+    background:#06140F;z-index:49;pointer-events:none
+  }
+}
+
+/* iOS amplia automaticamente inputs abaixo de 16px; isso distorcia proporções. */
+@media(max-width:520px){
+  input,select,textarea{font-size:16px!important}
+}
+
+/* CAIXA — cores originais preservadas, texto fixado conforme a superfície. */
+.quick .q1,.quick .q2,.quick .q4{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+.quick .q1 small,.quick .q2 small,.quick .q4 small{color:inherit!important;-webkit-text-fill-color:currentColor!important}
+.quick .q3{color:#10261E!important;-webkit-text-fill-color:#10261E!important}
+.quick .q3 small{color:#2F342E!important;-webkit-text-fill-color:#2F342E!important}
+.quick .qb-novo,.quick .qb-novo small{color:#F8F5ED!important;-webkit-text-fill-color:#F8F5ED!important}
+.mov,.mov *{opacity:1}
+.mov-l b{color:#10261E!important;-webkit-text-fill-color:#10261E!important}
+.mov-l span{color:#625A4F!important;-webkit-text-fill-color:#625A4F!important}
+.mov-v.in{color:#159452!important;-webkit-text-fill-color:#159452!important}
+.mov-v.out{color:#C85340!important;-webkit-text-fill-color:#C85340!important}
+
+/* FINANCEIRO — card escuro sempre recebe texto claro; superfícies claras,
+   tinta escura. Evita o efeito visto nos KPIs e no comparativo. */
+.fin-card,.fin-card *{text-shadow:none!important}
+.fin-card .l{color:#DED8CD!important;-webkit-text-fill-color:#DED8CD!important;opacity:1!important}
+.fin-card .v{color:#FFF!important;-webkit-text-fill-color:#FFF!important;opacity:1!important}
+.fin-card.desp .v{color:#F1A17B!important;-webkit-text-fill-color:#F1A17B!important}
+.chart,.chart *{opacity:1}
+.chart-lab{color:#625A4F!important;-webkit-text-fill-color:#625A4F!important}
+.chart-val{color:#10261E!important;-webkit-text-fill-color:#10261E!important}
+.desp-item .di-d{color:#10261E!important;-webkit-text-fill-color:#10261E!important}
+.desp-item .di-c{color:#6A6256!important;-webkit-text-fill-color:#6A6256!important}
+.desp-item .di-v{color:#B94F2D!important;-webkit-text-fill-color:#B94F2D!important}
+
+/* ALUNOS — nomes e status legíveis sem mudar o verde dos cartões. */
+.aluno-name{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+.aluno-sub{color:#D2CBC0!important;-webkit-text-fill-color:#D2CBC0!important}
+.badge.pago{color:#82F0A4!important;-webkit-text-fill-color:#82F0A4!important}
+.badge.parcial{color:#F4D778!important;-webkit-text-fill-color:#F4D778!important}
+.badge.pendente{color:#FFB0A2!important;-webkit-text-fill-color:#FFB0A2!important}
+#alunos-resumo .rc b,#alunos-resumo .rc span{
+  opacity:1!important;-webkit-text-fill-color:currentColor
+}
+
+/* TORNEIO — correção explícita do caso mais crítico dos prints:
+   cabeçalho verde = branco; corpo creme = verde quase preto. */
+.tg-head{color:#FFF!important}
+.tg-head .tg-title{color:#FFF!important;-webkit-text-fill-color:#FFF!important;opacity:1!important}
+.tg-head .tg-count{color:#DAD4CA!important;-webkit-text-fill-color:#DAD4CA!important;opacity:1!important}
+.tg-head .tg-badge{color:#173225!important;-webkit-text-fill-color:#173225!important}
+.tg-tbl,.tg-tbl tbody,.tg-tbl tr{background:#FBF8F2!important}
+.tg-tbl th{color:#655D52!important;-webkit-text-fill-color:#655D52!important;opacity:1!important}
+.tg-tbl td{color:#10261E!important;-webkit-text-fill-color:#10261E!important;opacity:1!important}
+.tg-name{color:#10261E!important;-webkit-text-fill-color:#10261E!important;opacity:1!important}
+.tg-drag{color:#8A8174!important;-webkit-text-fill-color:#8A8174!important}
+.tg-stat{color:#10261E!important;-webkit-text-fill-color:#10261E!important;opacity:1!important}
+.tg-pts{color:#143B2C!important;-webkit-text-fill-color:#143B2C!important}
+.tg-pts.lead{color:#F0D57C!important;-webkit-text-fill-color:#F0D57C!important}
+.tg-acum{color:#746B5E!important;-webkit-text-fill-color:#746B5E!important}
+.tg-mv{font-size:19px!important;filter:none!important}
+.tg-x{font-size:18px!important;filter:none!important}
+
+/* AGENDA — preserva a codificação por cor, mas toda célula colorida usa branco. */
+.wk th,.wk th *{color:#FFF!important;-webkit-text-fill-color:#FFF!important;opacity:1!important}
+.wk th small{color:#D7D1C7!important;-webkit-text-fill-color:#D7D1C7!important}
+.wk-cell.t-aula,.wk-cell.t-locacao,.wk-cell.t-torneio,.wk-cell.t-bloqueio,
+.wk-cell.t-pessoal,.wk-cell.t-grupo,.wk-cell.t-personal,.wk-cell.t-outro,.wk-cell.multi{
+  color:#FFF!important;-webkit-text-fill-color:#FFF!important;text-shadow:0 1px 1px rgba(0,0,0,.24)
+}
+.wk-cell.free{color:#6F675C!important;-webkit-text-fill-color:#6F675C!important}
+.wk-cell.t-liberado{color:#245884!important;-webkit-text-fill-color:#245884!important}
+.wk-cell.t-nliberado{color:#857D71!important;-webkit-text-fill-color:#857D71!important}
+.wk td.hr{color:#6D6559!important;-webkit-text-fill-color:#6D6559!important}
+.ag-nav-label{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+.ag-nav-label small{color:#D6D0C5!important;-webkit-text-fill-color:#D6D0C5!important}
+
+/* Componentes de superfície clara: blindagem contra herança do tema escuro. */
+.toolbar input,.modal input,.modal select,.modal textarea,#meta-input,
+.aval-resumo .rc,.chart,.desp-item,.tg-tbl,.wk-scroll{
+  color:#10261E!important
+}
+.toolbar input::placeholder,.modal input::placeholder,.modal textarea::placeholder{
+  color:#746C61!important;opacity:1
+}
+
+/* Escala mínima de leitura e alvos de toque. */
+button,.btn,.month-btn,.tg-stat{min-height:44px}
+.sec-title{font-size:clamp(27px,7vw,31px)!important}
+.sec-eyebrow{font-size:11.5px!important}
+.fin-card .l{font-size:11.5px!important}
+.aluno-sub{font-size:13px!important}
+.tg-tbl th{font-size:11px!important}
+.tg-name{font-size:13px!important}
+.wk-cell{font-size:max(var(--wk-fs,10px),11.5px)!important}
+
+/* 320–390px: mantém conteúdo dentro da tela sem sacrificar leitura. */
+@media(max-width:390px){
+  .page{padding-left:13px!important;padding-right:13px!important}
+  .quick{gap:9px!important}
+  .quick button{min-height:98px!important;padding:14px 9px!important;font-size:13.5px!important}
+  .fin-card{min-height:100px!important;padding:14px!important}
+  .tg-tbl th:first-child,.tg-tbl td:first-child{width:39%!important}
+  .tg-tbl th:last-child,.tg-tbl td:last-child{width:17%!important}
+  .wk{min-width:650px!important}
+}
+
+
+/* ===== JV Revisão iPhone 2026-09-25-7 · contraste + proporção =====
+   Camada final baseada nos screenshots reais. Não muda a paleta nem a lógica:
+   apenas fixa contraste, densidade e áreas de toque nas superfícies já aprovadas. */
+
+/* CAIXA: cada cor mantém sua identidade, mas texto deixa de herdar tinta errada. */
+#pg-lanc .quick .q1{
+  background:#0B281C!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important
+}
+#pg-lanc .quick .q2{
+  background:#123925!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important
+}
+#pg-lanc .quick .q3{
+  background:#E0B94F!important;color:#10261E!important;-webkit-text-fill-color:#10261E!important
+}
+#pg-lanc .quick .q4{
+  background:#C9652C!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important
+}
+#pg-lanc .quick .q1 small,#pg-lanc .quick .q2 small,#pg-lanc .quick .q4 small{
+  color:#FFF!important;-webkit-text-fill-color:#FFF!important;opacity:.96!important
+}
+#pg-lanc .quick .q3 small{color:#203027!important;-webkit-text-fill-color:#203027!important;opacity:.92!important}
+#pg-lanc .quick button{justify-content:center!important;line-height:1.25!important}
+#pg-lanc .quick small{font-family:'DM Sans',sans-serif!important;font-size:18px!important;line-height:1.15!important;margin-top:4px!important}
+#pg-lanc .quick .qb-x{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+#pg-lanc .quick .qb-novo,#pg-lanc .quick .qb-novo small{
+  color:#EEE7DA!important;-webkit-text-fill-color:#EEE7DA!important
+}
+#pg-lanc .mov{background:#FBF8F2!important}
+#pg-lanc .mov-l b{color:#10261E!important;-webkit-text-fill-color:#10261E!important}
+#pg-lanc .mov-l span{color:#625A4F!important;-webkit-text-fill-color:#625A4F!important}
+
+/* ALUNOS: resumo claro = tinta escura; lista verde = tinta clara. */
+#pg-alunos #alunos-resumo .rc{
+  background:#FBF8F2!important;color:#10261E!important;-webkit-text-fill-color:#10261E!important
+}
+#pg-alunos #alunos-resumo .rc b{color:#0B3C2B!important;-webkit-text-fill-color:#0B3C2B!important}
+#pg-alunos #alunos-resumo .rc.pend b{color:#B64235!important;-webkit-text-fill-color:#B64235!important}
+#pg-alunos #alunos-resumo .rc span{color:#675F54!important;-webkit-text-fill-color:#675F54!important;opacity:1!important}
+#pg-alunos #alunos-resumo .rc.on{
+  background:#F2E7C8!important;border-color:#E0B94F!important;box-shadow:0 0 0 2px rgba(224,185,79,.14)!important
+}
+#pg-alunos .aluno,#pg-alunos .aluno *{text-shadow:none!important}
+#pg-alunos .aluno-name{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+#pg-alunos .aluno-sub{color:#D8D2C7!important;-webkit-text-fill-color:#D8D2C7!important}
+#pg-alunos .toolbar input::placeholder{color:#71695D!important;-webkit-text-fill-color:#71695D!important;opacity:1!important}
+
+/* FINANCEIRO: separa claramente cartões escuros da comparação branca. */
+#pg-fin .fin-card{background:linear-gradient(145deg,#0D3425,#08251B)!important}
+#pg-fin .fin-card .l{color:#DED8CD!important;-webkit-text-fill-color:#DED8CD!important;opacity:1!important}
+#pg-fin .fin-card .v{color:#FFF!important;-webkit-text-fill-color:#FFF!important;opacity:1!important}
+#pg-fin .chart{background:#FBF8F2!important;border-color:#D9C9A7!important}
+#pg-fin .chart-lab{color:#625A4F!important;-webkit-text-fill-color:#625A4F!important;font-weight:800!important}
+#pg-fin .chart-val{color:#10261E!important;-webkit-text-fill-color:#10261E!important;font-weight:850!important}
+#pg-fin .chart-track{height:48px!important;border-radius:13px!important;background:#E8E1D7!important}
+#pg-fin .chart-row{min-height:58px!important;gap:12px!important}
+#pg-fin .desp-item{background:#FBF8F2!important}
+#pg-fin .desp-item .di-d{color:#10261E!important;-webkit-text-fill-color:#10261E!important}
+#pg-fin .desp-item .di-c{color:#675F54!important;-webkit-text-fill-color:#675F54!important}
+#pg-fin #meta-input{min-height:58px!important;background:#FBF8F2!important;color:#10261E!important;-webkit-text-fill-color:#10261E!important}
+
+/* TORNEIO: corrige exatamente o caso do print — cabeçalho escuro e tabela clara. */
+#pg-torneio .tg-card{background:#FBF8F2!important;border-color:#D9C9A7!important}
+#pg-torneio .tg-head{background:#073323!important;color:#FFF!important}
+#pg-torneio .tg-head .tg-title{
+  color:#FFF!important;-webkit-text-fill-color:#FFF!important;opacity:1!important;font-size:16px!important
+}
+#pg-torneio .tg-head .tg-count{
+  color:#DAD4CA!important;-webkit-text-fill-color:#DAD4CA!important;opacity:1!important;font-size:12px!important
+}
+#pg-torneio .tg-head .tg-badge{
+  background:#E0B94F!important;color:#173225!important;-webkit-text-fill-color:#173225!important
+}
+#pg-torneio .tg-tbl{background:#FBF8F2!important}
+#pg-torneio .tg-tbl th{
+  color:#625A4F!important;-webkit-text-fill-color:#625A4F!important;background:#FBF8F2!important;
+  font-size:11px!important;padding:11px 4px!important
+}
+#pg-torneio .tg-tbl td{
+  color:#10261E!important;-webkit-text-fill-color:#10261E!important;background:#FBF8F2!important;
+  padding:10px 4px!important;min-height:58px!important
+}
+#pg-torneio .tg-tbl td:first-child{padding-left:12px!important}
+#pg-torneio .tg-name,#pg-torneio .tg-tbl td:first-child .tg-name{
+  color:#10261E!important;-webkit-text-fill-color:#10261E!important;opacity:1!important;
+  font-size:13px!important;font-weight:800!important;line-height:1.25!important
+}
+#pg-torneio .tg-drag{color:#8A8174!important;-webkit-text-fill-color:#8A8174!important}
+#pg-torneio .tg-stat{
+  width:44px!important;max-width:44px!important;height:42px!important;min-height:42px!important;
+  border-radius:12px!important;background:#FFFCF6!important;border-color:#E3C974!important;
+  color:#10261E!important;-webkit-text-fill-color:#10261E!important;font-size:15px!important;font-weight:850!important
+}
+#pg-torneio .tg-pts{
+  min-width:42px!important;height:42px!important;border-radius:12px!important;display:inline-flex!important;
+  align-items:center!important;justify-content:center!important;color:#143B2C!important;-webkit-text-fill-color:#143B2C!important
+}
+#pg-torneio .tg-pts.lead{
+  background:#073323!important;color:#F0D57C!important;-webkit-text-fill-color:#F0D57C!important
+}
+#pg-torneio .tg-acum{color:#746B5E!important;-webkit-text-fill-color:#746B5E!important;font-size:10.5px!important}
+#pg-torneio .tg-mv,#pg-torneio .tg-x{width:32px!important;min-width:32px!important}
+
+/* AGENDA: células respiram sem transformar a grade em uma tabela gigante. */
+#pg-agenda .seg{margin-top:2px!important}
+#pg-agenda .ag-nav-label{font-size:16px!important;line-height:1.28!important}
+#pg-agenda .ag-nav-label small{font-size:12px!important}
+#pg-agenda .ag-ferr>summary{font-size:14px!important}
+#pg-agenda .wk{min-width:670px!important}
+#pg-agenda .wk th{height:52px!important;padding:8px 5px!important}
+#pg-agenda .wk td{height:max(var(--wk-h,34px),42px)!important}
+#pg-agenda .wk td.hr{min-width:64px!important;width:64px!important}
+#pg-agenda .wk-cell{font-size:max(var(--wk-fs,10px),11.5px)!important;line-height:1.17!important;padding:4px 5px!important}
+#pg-agenda .wk-cell.free{color:#766E62!important;-webkit-text-fill-color:#766E62!important}
+#pg-agenda .wk-cell.t-aula,#pg-agenda .wk-cell.t-locacao,#pg-agenda .wk-cell.t-torneio,
+#pg-agenda .wk-cell.t-bloqueio,#pg-agenda .wk-cell.t-pessoal,#pg-agenda .wk-cell.t-grupo,
+#pg-agenda .wk-cell.t-personal,#pg-agenda .wk-cell.t-outro,#pg-agenda .wk-cell.multi{
+  color:#FFF!important;-webkit-text-fill-color:#FFF!important;font-weight:800!important
+}
+
+/* Barra inferior: rótulos ficam legíveis, sem crescer além do mockup. */
+.nav button{font-size:11.5px!important;color:rgba(248,245,237,.75)!important}
+.nav button.on,.nav button.aberto{color:#F0D57C!important;-webkit-text-fill-color:#F0D57C!important}
+.nav button:not(.on):not(.aberto){-webkit-text-fill-color:rgba(248,245,237,.75)!important}
+
+@media(max-width:390px){
+  #pg-torneio .tg-tbl th:first-child,#pg-torneio .tg-tbl td:first-child{width:37%!important}
+  #pg-torneio .tg-stat{width:40px!important;max-width:40px!important}
+  #pg-fin .chart-lab{width:74px!important}
+  #pg-fin .chart-val{width:82px!important}
+  #pg-agenda .wk{min-width:680px!important}
+}
+
+
+/* ===== JV Publicação 2026-09-25-8 · contraste final dos screenshots =====
+   Última camada: mantém a paleta premium e força leitura correta no Safari/iPhone. */
+#pg-torneio .tg-head,
+#pg-torneio .tg-head *{
+  color:#FFF!important;-webkit-text-fill-color:#FFF!important;opacity:1!important
+}
+#pg-torneio .tg-head .tg-badge{
+  color:#173225!important;-webkit-text-fill-color:#173225!important;background:#E0B94F!important
+}
+#pg-torneio .tg-tbl,
+#pg-torneio .tg-tbl tbody,
+#pg-torneio .tg-tbl tr,
+#pg-torneio .tg-tbl td,
+#pg-torneio .tg-tbl th{background:#FBF8F2!important}
+#pg-torneio .tg-tbl th{
+  color:#625A4F!important;-webkit-text-fill-color:#625A4F!important;font-weight:900!important
+}
+#pg-torneio .tg-tbl td,
+#pg-torneio .tg-name,
+#pg-torneio .tg-stat,
+#pg-torneio .tg-pts:not(.lead){
+  color:#10261E!important;-webkit-text-fill-color:#10261E!important;opacity:1!important
+}
+#pg-torneio .tg-pts.lead{
+  background:#073323!important;color:#F0D57C!important;-webkit-text-fill-color:#F0D57C!important
+}
+
+/* Caixa: botões escuros/brancos e histórico claro/escuro, sem herança cruzada. */
+#pg-lanc .quick .q1,#pg-lanc .quick .q2{background:#0B3C2B!important}
+#pg-lanc .quick .q4{background:#C9652C!important}
+#pg-lanc .quick .q1,#pg-lanc .quick .q1 *,
+#pg-lanc .quick .q2,#pg-lanc .quick .q2 *,
+#pg-lanc .quick .q4,#pg-lanc .quick .q4 *{
+  color:#FFF!important;-webkit-text-fill-color:#FFF!important;opacity:1!important
+}
+#pg-lanc .quick .q3,#pg-lanc .quick .q3 *{
+  background:#E0B94F!important;color:#10261E!important;-webkit-text-fill-color:#10261E!important
+}
+#pg-lanc .mov,#pg-lanc .mov *{text-shadow:none!important}
+#pg-lanc .mov{background:#FBF8F2!important}
+#pg-lanc .mov-l b{color:#10261E!important;-webkit-text-fill-color:#10261E!important}
+#pg-lanc .mov-l span{color:#625A4F!important;-webkit-text-fill-color:#625A4F!important}
+
+/* Alunos: cards verdes usam branco quente; resumo claro usa tinta escura. */
+#pg-alunos .aluno{background:#083323!important;border-color:rgba(224,185,79,.20)!important}
+#pg-alunos .aluno-name{color:#FFF!important;-webkit-text-fill-color:#FFF!important;font-weight:850!important}
+#pg-alunos .aluno-sub{color:#D8D2C7!important;-webkit-text-fill-color:#D8D2C7!important;opacity:1!important}
+#pg-alunos #alunos-resumo .rc,
+#pg-alunos #alunos-resumo .rc span{
+  color:#625A4F!important;-webkit-text-fill-color:#625A4F!important
+}
+#pg-alunos #alunos-resumo .rc b{color:#0B3C2B!important;-webkit-text-fill-color:#0B3C2B!important}
+
+/* Financeiro: KPI escuro = texto claro; comparativo/listas claros = texto escuro. */
+#pg-fin .fin-card .l{color:#DED8CD!important;-webkit-text-fill-color:#DED8CD!important;opacity:1!important}
+#pg-fin .fin-card .v{color:#FFF!important;-webkit-text-fill-color:#FFF!important;opacity:1!important}
+#pg-fin .chart,#pg-fin .desp-item,#pg-fin #meta-input{background:#FBF8F2!important}
+#pg-fin .chart-lab,#pg-fin .desp-item .di-c{
+  color:#625A4F!important;-webkit-text-fill-color:#625A4F!important
+}
+#pg-fin .chart-val,#pg-fin .desp-item .di-d,#pg-fin #meta-input{
+  color:#10261E!important;-webkit-text-fill-color:#10261E!important
+}
+
+/* Agenda semanal: cabeçalho verde com branco e células claras com tinta escura. */
+#pg-agenda .wk th,#pg-agenda .wk th *{
+  background:#0B3C2B!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important;opacity:1!important
+}
+#pg-agenda .wk td.hr{background:#FBF8F2!important;color:#6D6559!important;-webkit-text-fill-color:#6D6559!important}
+#pg-agenda .wk-cell.free{
+  background:#FBF8F2!important;color:#766E62!important;-webkit-text-fill-color:#766E62!important
+}
+#pg-agenda .wk-cell.t-liberado{
+  background:#EAF2F8!important;color:#245884!important;-webkit-text-fill-color:#245884!important
+}
+#pg-agenda .wk-cell.t-aula,#pg-agenda .wk-cell.t-locacao,#pg-agenda .wk-cell.t-torneio,
+#pg-agenda .wk-cell.t-bloqueio,#pg-agenda .wk-cell.t-pessoal,#pg-agenda .wk-cell.t-grupo,
+#pg-agenda .wk-cell.t-personal,#pg-agenda .wk-cell.t-outro,#pg-agenda .wk-cell.multi{
+  color:#FFF!important;-webkit-text-fill-color:#FFF!important;font-weight:800!important
+}
+
+/* Navegação: cinco destinos, rótulo ativo forte e inativos ainda legíveis. */
+.nav button{color:rgba(248,245,237,.76)!important;-webkit-text-fill-color:rgba(248,245,237,.76)!important}
+.nav button.on,.nav button.aberto{color:#F0D57C!important;-webkit-text-fill-color:#F0D57C!important}
+
+/* Proporção e safe-area no iPhone. */
+@media(max-width:430px){
+  .page{padding-left:16px!important;padding-right:16px!important}
+  #pg-torneio .tg-tbl th:first-child,#pg-torneio .tg-tbl td:first-child{width:38%!important}
+  #pg-torneio .tg-stat{min-width:40px!important;width:40px!important}
+  #pg-fin .chart-row{grid-template-columns:82px minmax(90px,1fr) 96px!important}
+  #pg-agenda .wk{min-width:680px!important}
+}
+@media (display-mode:standalone){
+  .nav{padding-bottom:max(10px,env(safe-area-inset-bottom,0px))!important}
+}
+

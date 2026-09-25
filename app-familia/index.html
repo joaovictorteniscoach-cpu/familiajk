@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Família JK — Contas e Investimentos</title>
 <link rel="manifest" href="manifest-familia.webmanifest">
-<meta name="theme-color" content="#0c1b30">
+<meta name="theme-color" content="#06140F">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -127,6 +127,34 @@ select.cell option{background:var(--surface)}
 .goal .meta-inputs{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px}
 .goal .meta-inputs .f label{font-size:10.5px;color:var(--muted);display:block;margin-bottom:3px}
 .goal .meta-inputs .f input{width:130px;background:rgba(79,191,168,.07);border:1px solid var(--line);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;padding:7px 8px;border-radius:7px}
+/* ===== Modo "caber na tela": cada linha vira um cartão empilhado, com o
+   rótulo da coluna ao lado do valor. Assim nenhuma aba precisa ser arrastada
+   de lado — e a letra fica maior, porque sobra largura. ===== */
+body.fit .scroll{overflow-x:visible}
+body.fit .tbl{font-size:14px}
+body.fit .tbl tr:first-child{display:none}          /* o cabeçalho vira rótulo de cada célula */
+body.fit .tbl tr{display:block;box-sizing:border-box;width:100%;
+  border:1px solid var(--line);border-radius:11px;
+  background:var(--surface2);padding:6px 10px;margin-bottom:8px}
+body.fit .tbl{table-layout:fixed;width:100%}
+body.fit .tbl td{box-sizing:border-box}
+body.fit .tbl td{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  width:auto;text-align:right;white-space:normal;border:none;padding:5px 0;max-width:none}
+body.fit .tbl td+td{border-top:1px solid rgba(38,69,79,.45)}
+body.fit .tbl td::before{content:attr(data-lab);flex:0 0 auto;text-align:left;
+  font-family:'Inter',sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:.4px;
+  color:var(--muted);font-weight:600}
+body.fit .tbl td[data-lab=""]::before,body.fit .tbl td.semlab::before{content:none}
+/* nada dentro da célula pode impor largura mínima: várias tabelas trazem
+   min-width/max-width em linha, feitos para o modo de colunas */
+body.fit .tbl td *{min-width:0 !important;max-width:100% !important}
+body.fit .tbl td>input,body.fit .tbl td>select{max-width:62% !important;width:auto;flex:0 1 auto}
+body.fit .tbl td>.minibar{flex:1 1 auto;max-width:45% !important}
+body.fit .tbl tr.sumrow{background:transparent;border-color:var(--accent);border-width:1px}
+body.fit .tbl tr.rowpaid{opacity:.62}
+body.fit .tbl td.paycell{width:auto;padding-left:0}
+/* linha vazia (só botão de remover) não precisa de moldura própria */
+body.fit .tbl td:only-child{justify-content:flex-end}
 .minibar{height:7px;background:var(--ink);border:1px solid var(--line);border-radius:5px;overflow:hidden;margin-bottom:4px;min-width:80px}
 .minibar>i{display:block;height:100%;border-radius:5px;transition:width .4s ease}
 .barstack{height:16px;background:var(--ink);border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex}
@@ -217,17 +245,204 @@ body.mode-invest .tab.active{box-shadow:0 5px 16px -5px rgba(79,191,168,.55)}
 .monthchip{display:inline-block;font-family:'Inter';font-size:11px;font-weight:600;letter-spacing:.3px;text-transform:capitalize;color:var(--accent-soft);background:rgba(212,162,58,.1);border:1px solid rgba(212,162,58,.3);padding:3px 11px;border-radius:20px;margin-bottom:8px}
 body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1);border-color:rgba(79,191,168,.3)}
 .monthnav{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px}
-.monthnav .monthchip{margin-bottom:0;min-width:118px;text-align:center}
+.monthnav .monthchip{margin-bottom:0;flex:0 1 118px;min-width:0;text-align:center}
 .monthnav .mn-arrow{padding:1px 9px;font-size:15px;line-height:1.35;border-radius:8px}
 .monthnav .mn-today{padding:2px 9px;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px}
 .advisor-intro{display:flex;gap:10px;align-items:flex-start;background:linear-gradient(180deg,rgba(79,191,168,.08),transparent);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:14px}
 .advisor-intro .av{font-size:22px;line-height:1}
 .advisor-intro .t{font-size:12px;color:var(--muted);line-height:1.55}
 .advisor-intro .t b{color:var(--text)}
+/* ===== Dedo grande, botão pequeno: todo controle passa a ter área de toque
+   confortável (44px é o mínimo recomendado para telas de toque). O visual
+   muda pouco — o que cresce é a área que responde. ===== */
+.iconbtn,.addbtn{display:inline-flex;align-items:center;justify-content:center;
+  min-height:44px;min-width:44px;box-sizing:border-box}
+.tab{min-height:40px;display:inline-flex;align-items:center;justify-content:center}
+select{min-height:44px}
+/* a caixinha de marcar mora dentro do rótulo: quem recebe o toque é o rótulo */
+.toggle{min-height:44px}
+.tabs{gap:7px}
+.monthnav{gap:8px}
+.monthnav .mn-arrow{padding:0;width:46px;min-width:46px;height:44px;font-size:20px;line-height:1;border-radius:11px}
+.monthnav .mn-today{padding:0 12px;height:44px;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+.paybtn{width:44px;height:44px;min-width:44px;font-size:18px}
+.tbl td.paycell,.tbl th.paycell{width:50px}
+.splitbtn{margin-right:6px}
+.chk{width:26px;height:26px}
+.wa{min-height:44px}
+/* dentro da linha empilhada os botões ficam lado a lado, sem esticar — e o
+   `min-width:0` que serve para inputs não pode encolher a área de toque deles */
+body.fit .tbl td>button{flex:0 0 auto;min-width:44px !important}
+.ms{min-height:44px}
+
+/* ===== Atalho: cartão/linha que leva para a aba certa ===== */
+.jump{cursor:pointer}
+.jump:hover{border-color:var(--accent)}
+.jump .k::after{content:' ›';color:var(--accent-soft);font-weight:700}
+button.due{width:100%;font-family:inherit;color:inherit;text-align:left;cursor:pointer}
+button.due .nm{text-align:left}
+.duehint{font-size:11px;color:var(--accent-soft);margin-top:2px}
+
+/* ===== Nada de moldura vazia: tabela sem linha some e dá lugar a um aviso ===== */
+table.tbl.semlinhas{display:none}
+.semdados{font-size:12.5px;color:var(--muted);background:var(--surface2);
+  border:1px dashed var(--line);border-radius:11px;padding:14px;margin:6px 0 0;line-height:1.5}
+
+/* ===== Cabe em tela estreita de verdade =====
+   Filho de grid/flex não encolhe abaixo do próprio conteúdo por padrão
+   (min-width:auto). Era isso que fazia o app rolar de lado em telas menores
+   que ~360px — e o que impedia o zoom de crescer sem estourar. ===== */
+.grid>*,.kpis>*,.card,.result>*,.fire .row>*{min-width:0}
+.chartbox canvas,canvas{max-width:100%}
+.bignum,.kpi .v,.result .blk .v{overflow-wrap:anywhere}
+
+/* ===== Tabela que NÃO empilha =====
+   O modo "caber na tela" transforma cada linha num cartão. Isso é ótimo para
+   tabela de números, mas a prévia da foto já é um formulário de duas colunas
+   desenhado para o celular: empilhar espreme o seletor até sumir. Ela pede
+   para ficar como está. ===== */
+body.fit table.tbl.livre{table-layout:fixed;width:100%}
+body.fit table.tbl.livre tr:first-child{display:table-row}
+body.fit table.tbl.livre tr{display:table-row;border:none;background:none;padding:0;margin:0}
+body.fit table.tbl.livre td,body.fit table.tbl.livre th{display:table-cell;text-align:left;
+  border:none;border-bottom:1px solid var(--line);padding:9px 6px;vertical-align:top}
+body.fit table.tbl.livre td::before,body.fit table.tbl.livre th::before{content:none}
+body.fit table.tbl.livre td>select,body.fit table.tbl.livre td>div>input{max-width:100% !important;width:100%}
+table.tbl.livre td:first-child{width:58%}
+table.tbl.livre td:last-child{width:42%}
+
+/* ===== Zoom da tela: o app inteiro cresce ou encolhe junto ===== */
+.viewtools{display:inline-flex;align-items:center;gap:6px;padding-left:8px;
+  margin-left:2px;border-left:1px solid var(--line)}
+.viewtools .zbtn{min-width:44px;padding:7px 10px;font-family:'Fraunces',serif}
+.viewtools .zlbl{font-size:11px;color:var(--muted);min-width:38px;text-align:center}
+
+/* ===== JV Premium 2026-09-25-1 · Família JK =====
+   A mesma identidade dos apps Gestão e Aluno — verde profundo, dourado e
+   creme — aplicada por cima do estilo de sempre. Só visual: nenhum id,
+   nenhuma função de dados e nenhum dado mudam. Os tokens de cor foram
+   re-apontados, então o app inteiro acompanha sem reescrever regra por
+   regra; o resto são as peças que pedem desenho próprio. */
+:root{
+  --ink:#04100B;--surface:#0B281C;--surface2:#123925;--line:rgba(224,185,79,.20);
+  --text:#F8F5ED;--muted:#C8C2B6;--gold:#E0B94F;--gold-soft:#F0D57C;
+  --teal:#5FD4A8;--teal-soft:#9BE8C9;--up:#58D982;--down:#E27666;
+  --clay:#B95D2A;--radius:18px;
+}
+html{background:#04100B}
+body{
+  background:
+    radial-gradient(circle at 88% 2%,rgba(185,93,42,.16),transparent 30%),
+    linear-gradient(180deg,#081912 0%,#06140F 42%,#04100B 100%);
+  background-attachment:fixed;color:var(--text);
+  --accent:var(--gold);--accent-soft:var(--gold-soft);--accent-d:#B8912F;
+}
+body.mode-invest{--accent:var(--teal);--accent-soft:var(--teal-soft);--accent-d:#2E9E77}
+
+/* Cabeçalho: vira o hero premium, com a mesma assinatura dos outros apps */
+.topbar.jv-premium-hero{
+  position:relative;overflow:hidden;display:block;max-width:none;
+  padding:calc(16px + env(safe-area-inset-top,0px)) 18px 18px;margin:0 0 4px;
+  background:
+    linear-gradient(180deg,rgba(2,10,7,.10),rgba(4,16,11,.88)),
+    linear-gradient(115deg,rgba(11,40,28,.98) 0%,rgba(6,20,15,.92) 60%,rgba(185,93,42,.22) 100%);
+  border-bottom:1px solid rgba(224,185,79,.18);box-shadow:0 18px 45px rgba(0,0,0,.26)
+}
+.topbar.jv-premium-hero:after{
+  content:'';position:absolute;right:-60px;bottom:-90px;width:230px;height:230px;border-radius:50%;
+  border:1px solid rgba(224,185,79,.23);
+  box-shadow:0 0 0 28px rgba(224,185,79,.035),0 0 0 58px rgba(224,185,79,.025);pointer-events:none
+}
+.jv-premium-hero .brand{position:relative;z-index:3}
+.jv-premium-hero .crest{
+  width:42px;height:42px;border-radius:50%;
+  background:linear-gradient(145deg,#1B4A33,#0B2118);color:var(--gold-soft);
+  border:1.5px solid rgba(224,185,79,.58);box-shadow:0 5px 18px rgba(0,0,0,.34);
+  font-family:'Inter',system-ui,sans-serif;font-weight:900;font-size:14px
+}
+.jv-premium-hero .brand h1{font-family:'Inter',system-ui,sans-serif;font-size:13px;font-weight:800;letter-spacing:.4px;color:#fff}
+.jv-premium-hero .brand span{font-size:9.5px;letter-spacing:1.9px;color:var(--gold-soft);font-weight:800}
+.jv-premium-hero .tools{position:relative;z-index:4;margin-top:12px;gap:6px}
+.jv-premium-hero .iconbtn{
+  background:rgba(4,16,11,.62);border:1px solid rgba(255,255,255,.12);color:#fff;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:12px;padding:7px 11px
+}
+.jv-premium-hero .iconbtn.primary{background:linear-gradient(150deg,var(--gold),#B8912F);color:#1a1304;border-color:transparent}
+.jv-premium-hero .savedot{color:rgba(248,245,237,.66)}
+.jv-premium-hero .zlbl{color:rgba(248,245,237,.72)}
+.jv-fam-hero{position:relative;z-index:3;margin-top:22px}
+.jv-hero-greet{margin:0 0 2px;color:rgba(248,245,237,.84);font-size:13.5px;font-weight:650}
+.jv-fam-title{font-family:'Inter',system-ui,sans-serif;font-size:34px;line-height:1.03;color:#fff;
+  font-weight:850;letter-spacing:-1.2px;margin:0 0 8px;max-width:330px}
+.jv-fam-title em{color:var(--gold);font-style:normal}
+body.mode-invest .jv-fam-title em{color:var(--teal)}
+.jv-hero-motto{color:var(--muted);font-size:12.5px;line-height:1.45;max-width:300px}
+
+/* Contas / Investimentos: segmento premium */
+.modeswitch{padding:12px 16px 0;gap:8px}
+.ms{background:rgba(10,36,25,.88);border:1px solid rgba(224,185,79,.16);color:var(--muted);
+  font-family:'Inter',system-ui,sans-serif;font-weight:700;border-radius:16px;padding:10px 18px;
+  box-shadow:0 10px 24px rgba(0,0,0,.12)}
+#ms-contas.on{background:linear-gradient(150deg,var(--gold),#B8912F);color:#1a1304}
+#ms-invest.on{background:linear-gradient(150deg,var(--teal),#2E9E77);color:#04231d}
+
+/* Abas: uma faixa só, que desliza de lado. Eram 13 pílulas em quatro
+   fileiras, e no celular elas ocupavam a tela inteira antes do primeiro
+   número. */
+.tabs{flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none;padding:12px 16px 6px;gap:7px;
+  scroll-snap-type:x proximity;
+  -webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent)}
+.tabs::-webkit-scrollbar{display:none}
+.tab{scroll-snap-align:start;background:rgba(10,36,25,.88);border:1px solid rgba(224,185,79,.14);
+  color:var(--muted);border-radius:14px;padding:8px 14px;font-weight:600}
+.tab.active{background:linear-gradient(150deg,var(--accent),var(--accent-d));color:#1a1304;
+  border-color:transparent;font-weight:800;box-shadow:0 8px 20px rgba(0,0,0,.18)}
+body.mode-invest .tab.active{color:#04231d}
+
+/* Cartões */
+.card{
+  background:linear-gradient(145deg,rgba(15,49,34,.96),rgba(7,27,19,.96));
+  border:1px solid rgba(224,185,79,.16);border-radius:var(--radius);
+  box-shadow:0 14px 34px rgba(0,0,0,.18)
+}
+.card h2{font-family:'Inter',system-ui,sans-serif;font-weight:800;letter-spacing:-.2px;color:#fff}
+.card .sub,.hint,.note{color:var(--muted)}
+.hero::after{height:2px;background:linear-gradient(90deg,var(--accent),transparent)}
+.hero .eyebrow{color:var(--gold-soft);letter-spacing:1.6px}
+body.mode-invest .hero .eyebrow{color:var(--teal-soft)}
+.bignum{color:#fff}
+.bignum.ok{color:var(--up)}
+.monthchip{background:rgba(224,185,79,.12);border-color:rgba(224,185,79,.32);color:var(--gold-soft)}
+.pill{background:rgba(255,255,255,.06);border-color:rgba(224,185,79,.18)}
+.progressbar{background:rgba(255,255,255,.07);border-color:rgba(224,185,79,.14)}
+.progressbar>i{background:linear-gradient(90deg,var(--gold),#63D887)}
+.iconbtn{background:rgba(10,36,25,.88);border-color:rgba(224,185,79,.16);border-radius:12px}
+.iconbtn.primary{background:linear-gradient(150deg,var(--accent),var(--accent-d))}
+.kpi{background:rgba(10,36,25,.70);border:1px solid rgba(224,185,79,.14);border-radius:15px}
+input.cell,select.cell{background:rgba(255,255,255,.055);border-color:rgba(224,185,79,.18);color:var(--text)}
+input.cell:focus,select.cell:focus{border-color:var(--accent);outline:none}
+.tbl th{color:var(--gold-soft)}
+.tbl td{border-bottom-color:rgba(224,185,79,.10)}
+.banner{background:linear-gradient(145deg,rgba(77,55,17,.94),rgba(29,30,16,.96));
+  border:1px solid rgba(224,185,79,.30);border-radius:var(--radius);color:var(--gold-soft)}
+.modal{background:linear-gradient(145deg,#0F3122,#07150F);border:1px solid rgba(224,185,79,.20);border-radius:20px}
+.semdados{background:rgba(255,255,255,.04);border-color:rgba(224,185,79,.20)}
+/* Os botões do topo são ferramenta, não conteúdo: menores e numa linha só,
+   para o hero chegar logo ao número do mês. Continuam com 36px de altura,
+   que o dedo alcança sem errar. */
+.jv-premium-hero .tools{display:flex;flex-wrap:wrap;align-items:center}
+.jv-premium-hero .tools .iconbtn{padding:7px 10px;font-size:11.5px;min-height:36px}
+.jv-premium-hero .savedot{font-size:10.5px;flex:1 0 100%;order:9;margin-top:2px}
+.jv-premium-hero .viewtools{border-left:0;padding-left:0;margin-left:0;gap:5px}
+.jv-premium-hero .viewtools .zbtn{min-width:36px;padding:7px 8px;font-family:'Inter',system-ui,sans-serif;font-weight:700}
+/* o aviso de backup é um aviso: dourado nos dois modos, para não parecer
+   mais um botão do modo investimento */
+.banner .iconbtn.primary{background:linear-gradient(150deg,#E0B94F,#B8912F);color:#1a1304}
 </style>
 </head>
 <body class="mode-contas">
-<header class="topbar">
+<header class="topbar jv-premium-hero">
   <div class="brand">
     <div class="crest">JK</div>
     <div><h1>Família J K</h1><span>João e Kassiana</span></div>
@@ -235,9 +450,18 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
   <div class="tools">
     <span class="savedot"><b id="dot"></b> salvo neste aparelho</span>
     <button class="iconbtn primary" onclick="openShare()">Compartilhar</button>
-    <button class="iconbtn" onclick="exportJSON()">Backup</button>
-    <button class="iconbtn" onclick="importJSON()">Importar</button>
-    <button class="iconbtn" onclick="resetData()">Exemplo</button>
+    <button class="iconbtn" onclick="openDados()" title="Backup, importar e dados de exemplo">⋯ dados</button>
+    <span class="viewtools">
+      <button class="iconbtn" id="btn-fit" onclick="toggleFit()">—</button>
+      <button class="iconbtn zbtn" onclick="stepZoom(-1)" aria-label="Diminuir a letra" title="Diminuir tudo">A−</button>
+      <span class="zlbl" id="zoom-lbl">100%</span>
+      <button class="iconbtn zbtn" onclick="stepZoom(1)" aria-label="Aumentar a letra" title="Aumentar tudo">A+</button>
+    </span>
+  </div>
+  <div class="jv-fam-hero">
+    <p class="jv-hero-greet" id="jv-fam-greet">Olá, família</p>
+    <h2 class="jv-fam-title" id="jv-fam-title">Painel da <em>família</em></h2>
+    <p class="jv-hero-motto">Cada real no lugar certo — e cada mês mais perto dos sonhos.</p>
   </div>
 </header>
 
@@ -275,8 +499,8 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
       </div>
       <div class="progressbar"><i id="ch-bar" style="width:0%"></i></div>
       <div class="split" style="margin-top:12px">
-        <div><div class="k">Casa — pessoa 1</div><div class="v goldc" id="ch-preta">—</div></div>
-        <div><div class="k">Casa — pessoa 2</div><div class="v goldc" id="ch-preto">—</div></div>
+        <div class="jump" onclick="irPara('c-casa')" title="Abrir as contas da casa"><div class="k">Casa — pessoa 1</div><div class="v goldc" id="ch-preta">—</div></div>
+        <div class="jump" onclick="irPara('c-casa')" title="Abrir as contas da casa"><div class="k">Casa — pessoa 2</div><div class="v goldc" id="ch-preto">—</div></div>
       </div>
     </div>
     <div class="card"><h2>Por grupo</h2><div class="sub">Onde vão as contas</div><div class="chartbox" style="height:210px"><canvas id="grupoChart"></canvas></div></div>
@@ -291,7 +515,7 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
       <button class="iconbtn" onclick="openPasteExtrato()">📋 colar texto</button>
       <button class="iconbtn" onclick="pickFotoExtrato()">📷 foto do extrato</button>
     </div>
-    <p class="note">Três formas de trazer sem digitar um por um: <b>OFX/CSV</b> (exporte no app do banco/XP — o mais confiável), <b>colar</b> o texto copiado do extrato, ou tirar uma <b>foto</b> (leitura por OCR). Tudo acontece só no seu aparelho. Login direto no banco (Open Finance) exige servidor certificado — não dá num app de arquivo único. Para foto com precisão máxima, você também pode me enviar a imagem aqui no chat que eu transcrevo.</p>
+    <p class="note"><b>OFX/CSV</b> é o mais confiável (exporte no app do banco/XP); <b>colar</b> e <b>foto</b> servem para o que não tem arquivo. Tudo acontece só no seu aparelho — login direto no banco exige servidor certificado e não cabe num app de arquivo único.</p>
   </div>
   <div class="card">
     <h2>Próximos vencimentos</h2><div class="sub">As contas ainda não pagas, mais perto de vencer primeiro.</div>
@@ -462,6 +686,7 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
       <button class="iconbtn" onclick="ctrlYearStep(1)">ano ›</button>
       <button class="iconbtn primary" onclick="ctrlPullCurrent()">📥 puxar mês atual das contas</button>
       <button class="iconbtn" onclick="ctrlSpreadForward()">🔁 repetir previsto p/ meses seguintes</button>
+      <button class="iconbtn" onclick="pickGestao()" title="Ler o backup do app Gestão e preencher o Recebido de cada mês">📥 faturamento do app Gestão</button>
     </div>
     <div class="kpis" style="margin-top:14px">
       <div class="kpi"><div class="k">Previsto no ano</div><div class="v" id="ca-prev">—</div></div>
@@ -488,14 +713,42 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
     <div class="yearnav" style="flex-wrap:wrap">
       <span class="k" style="font-size:12px;color:var(--muted)">Mês</span>
       <select class="cell txt" id="cat-mes" style="max-width:150px" onchange="onCatMes(this.value)"></select>
+      <span class="k" style="font-size:12px;color:var(--muted)">Origem</span>
+      <select class="cell txt" id="cat-fonte" style="max-width:150px" onchange="onCatFonte(this.value)">
+        <option value="tudo">tudo junto</option>
+        <option value="cartao">só a fatura do cartão</option>
+        <option value="conta">só a conta do banco</option>
+      </select>
       <button class="iconbtn primary" onclick="pickExtrato()">＋ importar extrato</button>
       <button class="iconbtn" onclick="clearTx()">limpar</button>
+      <button class="iconbtn" onclick="toggleMeus()">👤 nomes da família</button>
+    </div>
+    <p class="note" id="cat-fonte-nota" style="margin:8px 0 0"></p>
+    <div class="field" id="meus-box" style="display:none;margin-top:12px">
+      <button class="iconbtn primary" onclick="pickBlocoRegras()" style="margin-bottom:12px">📄 trazer nomes e regras de um arquivo</button>
+      <label>Nomes, CPF ou CNPJ da família (um por linha)</label>
+      <textarea id="meus-nomes" rows="4" style="width:100%;background:var(--surface2);border:1px solid var(--line);color:var(--text);font-family:inherit;font-size:12.5px;padding:8px;border-radius:9px" oninput="setMeusNomes(this.value)"></textarea>
+      <div class="hint">PIX e TED entre você, a Kassiana e suas próprias contas não são gasto — é dinheiro trocando de bolso. O que bater com esta lista entra marcado como <b>fora da soma</b>, saindo <b>e</b> entrando. Ex.: seu nome completo e o dela como aparecem no extrato, ou o CNPJ da sua empresa.</div>
+      <label style="margin-top:14px">Contas de investimento (uma por linha)</label>
+      <textarea id="nomes-invest" rows="3" style="width:100%;background:var(--surface2);border:1px solid var(--line);color:var(--text);font-family:inherit;font-size:12.5px;padding:8px;border-radius:9px" oninput="setNomesInvest(this.value)"></textarea>
+      <div class="hint">O PIX que sai da conta para <b>cá</b> não é gasto: é <b>aporte</b>. Fica anotado na aba Aportes e entra na coluna “aportado” da evolução mensal — é o que separa o que rendeu do que você pôs lá dentro. Escreva o nome como ele aparece no extrato (o seu nome completo, a corretora, o que for).</div>
+      <label style="margin-top:14px">Acima de quanto é pagamento de fatura (R$)</label>
+      <input id="lim-aporte" type="number" step="50" class="cell" style="max-width:160px;text-align:left" oninput="setLimiteAporte(this.value)">
+      <div class="hint" id="lim-aporte-hint">O pagamento da fatura do cartão sai da mesma conta e para o mesmo nome do aporte — o que separa os dois é o tamanho. Abaixo do corte vira aporte; acima vira <b>pagamento de fatura</b>, fora da soma (as compras já vieram da própria fatura).</div>
+      <label style="margin-top:14px">Minhas regras — <i>trecho do nome</i> = <i>categoria</i> (uma por linha)</label>
+      <textarea id="regras-txt" rows="6" style="width:100%;background:var(--surface2);border:1px solid var(--line);color:var(--text);font-family:inherit;font-size:12.5px;padding:8px;border-radius:9px" oninput="setMinhasRegras(this.value)"></textarea>
+      <div class="hint" id="regras-hint">Para o que só você sabe o que é: <code>rafael minore = Empresa</code>. Vale para as próximas importações também. Corrigir a categoria de um lançamento na lista abaixo cria a regra sozinho.</div>
     </div>
     <div class="kpis" style="margin-top:14px">
       <div class="kpi"><div class="k">Gasto no período</div><div class="v down" id="cat-gasto">—</div></div>
       <div class="kpi"><div class="k">Entradas</div><div class="v up" id="cat-entrada">—</div></div>
       <div class="kpi"><div class="k">Saldo</div><div class="v" id="cat-saldo">—</div></div>
       <div class="kpi"><div class="k">Lançamentos</div><div class="v" id="cat-n">—</div></div>
+    </div>
+    <p class="note" id="cat-fora"></p>
+    <div class="kpis">
+      <div class="kpi"><div class="k" id="cat-k-preto">João</div><div class="v down" id="cat-preto">—</div></div>
+      <div class="kpi"><div class="k" id="cat-k-preta">Kassiana</div><div class="v down" id="cat-preta">—</div></div>
     </div>
     <div class="chartbox" style="margin-top:16px"><canvas id="catChart"></canvas></div>
     <div class="scroll" style="margin-top:10px"><table class="tbl" id="tbl-cat-resumo"></table></div>
@@ -506,7 +759,8 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
     </div>
     <p class="note" id="cat-orc-nota"></p>
     <h2 style="font-size:14px;margin-top:24px">Lançamentos</h2>
-    <div class="sub">Toque na categoria para trocar — o app memoriza para as próximas importações.</div>
+    <div class="sub">Toque na categoria para trocar. O app memoriza <b>e corrige de uma vez todos os lançamentos com o mesmo nome</b> — é assim que a peneira final fica rápida.</div>
+    <p class="note" id="cat-aprendeu" style="color:var(--teal)"></p>
     <div class="scroll"><table class="tbl" id="tbl-cat-lanc"></table></div>
     <p class="note">As transações ficam só neste aparelho. Importe pelo Painel ou pelo botão acima: arquivo <b>OFX/CSV</b>, <b>colar texto</b> ou <b>foto</b>.</p>
   </div>
@@ -576,6 +830,9 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
     <h2>Aportes</h2><div class="sub">Registre cada depósito — e quem aportou.</div>
     <div class="scroll"><table class="tbl" id="tbl-aportes"></table></div>
     <button class="addbtn" onclick="addAporte()">+ novo aporte</button>
+    <button class="addbtn" onclick="aportesDoExtrato()">↓ trazer os aportes do extrato</button>
+    <button class="addbtn" onclick="limparExemplos()">🧹 apagar os aportes e meses de exemplo</button>
+    <p class="note">“Trazer do extrato” varre tudo o que já foi importado e anota como aporte cada transferência que foi para as suas <b>contas de investimento</b> (a lista fica em Categorias → 👤 nomes da família). Nada é anotado duas vezes.</p>
   </div>
 </section>
 
@@ -583,7 +840,14 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
   <div class="card">
     <h2>Evolução mensal</h2><div class="sub">Patrimônio mês a mês. Rendimento e % são automáticos.</div>
     <div class="warn">Os meses antigos são exemplo — troque pelos seus valores reais.</div>
+    <div class="kpis" style="margin-bottom:14px">
+      <div class="kpi"><div class="k">Variação do último mês</div><div class="v" id="im-ultimo">—</div></div>
+      <div class="kpi"><div class="k">Somando os meses</div><div class="v" id="im-soma">—</div></div>
+      <div class="kpi"><div class="k">Melhor mês</div><div class="v" id="im-melhor">—</div></div>
+      <div class="kpi"><div class="k">Pior mês</div><div class="v" id="im-pior">—</div></div>
+    </div>
     <div class="chartbox"><canvas id="mensalChart"></canvas></div>
+    <p class="note" id="im-nota"></p>
     <div class="scroll" style="margin-top:16px"><table class="tbl" id="tbl-mensal"></table></div>
     <button class="addbtn" onclick="snapInvMonth()">📸 fechar mês com a carteira atual</button>
     <button class="addbtn" onclick="addMensal()">+ novo mês</button>
@@ -721,7 +985,7 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
     <label class="toggle"><input type="checkbox" id="cl-on" onchange="cloudApply()"> Sincronizar na nuvem</label>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
       <button class="iconbtn primary" onclick="cloudPush()">Enviar agora</button>
-      <button class="iconbtn" onclick="cloudPull(false)">Buscar agora</button>
+      <button class="iconbtn" onclick="cloudPull(false,true)">Buscar agora</button>
     </div>
     <p class="note" id="cl-status" style="margin-top:12px">sincronização desligada</p>
     <h2 style="font-size:15px;margin-top:20px">Como criar a nuvem grátis (uma vez só, ~5 min)</h2>
@@ -801,10 +1065,21 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
   <div class="modal" style="max-width:560px">
     <h3>Extrato importado</h3>
     <p id="ex-sum">—</p>
+    <p id="ex-meses" class="note" style="margin:-4px 0 8px"></p>
+    <div class="field" id="ex-semdata-box" style="display:none;margin:2px 0 10px">
+      <label>Lançamentos sem data — em que mês eles entram?</label>
+      <select id="ex-mes-sem" class="cell txt" onchange="exSetMesSemData(this.value)"></select>
+      <div class="hint" id="ex-semdata-hint"></div>
+    </div>
     <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin:2px 0 4px;cursor:pointer"><input type="checkbox" id="ex-fatura" onchange="exToggleFatura()" style="width:auto"> É fatura de cartão — tratar tudo como gasto</label>
     <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin:0 0 4px;cursor:pointer"><input type="checkbox" id="ex-cartao" checked onchange="exToggleFatura()" style="width:auto"> Não contar pagamento de fatura do cartão <span class="tag">as compras já estão em Cartões</span></label>
     <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin:0 0 8px;cursor:pointer"><input type="checkbox" id="ex-invest" checked onchange="exToggleFatura()" style="width:auto"> Não contar investimento / transferência minha <span class="tag">não é gasto</span></label>
-    <div class="scroll" style="max-height:220px;border:1px solid var(--line);border-radius:10px"><table class="tbl" id="tbl-extrato"></table></div>
+    <div class="field" style="margin:2px 0 10px">
+      <label>De quem é este extrato?</label>
+      <select id="ex-pessoa" class="cell txt" onchange="exSetPessoa(this.value)"></select>
+      <div class="hint" id="ex-pessoa-hint"></div>
+    </div>
+    <div class="scroll" style="max-height:220px;overflow-y:auto;border:1px solid var(--line);border-radius:10px"><table class="tbl" id="tbl-extrato"></table></div>
     <div class="row" style="flex-direction:column;gap:8px;align-items:stretch">
       <button class="iconbtn primary" onclick="exSaveTx()">🏷️ Salvar já separado por categoria</button>
       <button class="iconbtn" onclick="exApplyAnual()">📆 Lançar totais no mês atual (Anual)</button>
@@ -820,9 +1095,14 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
   <div class="modal" style="max-width:600px">
     <h3>Atualizar carteira pela foto</h3>
     <p>Li estes ativos na imagem. Confira para onde vai cada um — o app tentou casar com o que já existe na sua carteira. Só aplica quando você confirmar.</p>
-    <div class="scroll" style="max-height:46vh"><table class="tbl" id="tbl-inv-foto"></table></div>
+    <div class="yearnav" style="margin-bottom:10px">
+      <span style="font-size:12.5px;color:var(--muted)">Os valores da foto estão em:</span>
+      <button class="iconbtn primary" id="inv-moeda-brl" onclick="invFotoSetMoeda('BRL')">R$</button>
+      <button class="iconbtn" id="inv-moeda-usd" onclick="invFotoSetMoeda('USD')">US$</button>
+    </div>
+    <div class="scroll" style="max-height:46vh;overflow-y:auto"><table class="tbl livre" id="tbl-inv-foto"></table></div>
     <p class="note" id="inv-foto-nota"></p>
-    <p class="note">A carteira <b>Global</b> não entra aqui: ela é em dólar, com quantidade e preço por ativo, e continua vindo da planilha da XP, que traz esses campos certos.</p>
+    <p class="note">A carteira <b>Global</b> é em dólar, com quantidade e preço por ativo: o app mantém a quantidade e recalcula o preço a partir do valor lido. Confira a quantidade se ela mudou.</p>
     <div class="row">
       <button class="iconbtn primary" onclick="invFotoAplicar()">✓ atualizar carteira</button>
       <button class="iconbtn" onclick="closeInvestFoto()">Cancelar</button>
@@ -832,16 +1112,17 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
 
 <div class="overlay" id="impModal">
   <div class="modal" style="max-width:760px">
-    <h3>Importar planilha da XP</h3>
+    <h3>Importar planilha da carteira</h3>
     <p id="imp-info">—</p>
     <div class="imp-opts">
       <div class="imp-grp"><span class="imp-lbl">Destino</span>
         <label><input type="radio" name="imp-target" value="nac" checked onchange="renderImpPreview()"> Nacional XP (R$)</label>
         <label><input type="radio" name="imp-target" value="glob" onchange="renderImpPreview()"> Global XP (US$)</label>
+        <label><input type="radio" name="imp-target" value="bin" onchange="renderImpPreview()"> Binance (R$)</label>
       </div>
       <div class="imp-grp"><span class="imp-lbl">Modo</span>
-        <label><input type="radio" name="imp-mode" value="add" checked> Adicionar aos atuais</label>
-        <label><input type="radio" name="imp-mode" value="replace"> Substituir a lista</label>
+        <label><input type="radio" name="imp-mode" value="add" checked> Atualizar — casa os nomes iguais e acrescenta os novos</label>
+        <label><input type="radio" name="imp-mode" value="replace"> Substituir a lista inteira</label>
       </div>
     </div>
     <div class="scroll" style="max-height:42vh;border:1px solid var(--line);border-radius:10px"><table class="tbl" id="tbl-imp"></table></div>
@@ -849,6 +1130,40 @@ body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(79,191,168,.1
       <button class="iconbtn primary" onclick="applyImport()">Importar</button>
       <button class="iconbtn" onclick="closeImport()">Cancelar</button>
     </div>
+  </div>
+</div>
+
+<div class="overlay" id="gestaoModal">
+  <div class="modal">
+    <h3>Faturamento vindo do app Gestão</h3>
+    <p id="gs-sub">—</p>
+    <div class="yearnav" style="margin-bottom:10px">
+      <span style="font-size:12.5px;color:var(--muted)">Lançar em “Recebido”:</span>
+      <button class="iconbtn" id="gs-b-bruto" onclick="gsUsar('bruto')">faturamento</button>
+      <button class="iconbtn" id="gs-b-sobra" onclick="gsUsar('sobra')">sobra (− despesas)</button>
+    </div>
+    <div class="scroll"><table class="tbl" id="tbl-gestao"></table></div>
+    <p class="note" id="gs-nota"></p>
+    <div class="row">
+      <button class="iconbtn primary" id="gs-ok" onclick="gsAplicar()">Atualizar os meses</button>
+      <button class="iconbtn" onclick="closeGestao()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="dadosModal">
+  <div class="modal">
+    <h3>Dados do aplicativo</h3>
+    <p>Guardar uma cópia, trazer de volta uma cópia guardada, ou começar de novo com os dados de exemplo.</p>
+    <div class="row" style="flex-direction:column;align-items:stretch;gap:8px">
+      <button class="iconbtn primary" onclick="closeDados();exportJSON()">💾 Fazer backup (baixar arquivo)</button>
+      <button class="iconbtn" onclick="closeDados();importJSON()">📂 Importar um backup</button>
+      <button class="iconbtn" onclick="closeDados();resetData()">🧪 Voltar aos dados de exemplo</button>
+      <button class="iconbtn" onclick="irPara('nuvem');closeDados()">☁️ Sincronizar na nuvem</button>
+      <button class="iconbtn" onclick="abrirVersoes()">🕘 Versões guardadas (voltar no tempo)</button>
+      <button class="iconbtn" onclick="closeDados()">Fechar</button>
+    </div>
+    <div id="versoes-box"></div>
   </div>
 </div>
 
@@ -878,21 +1193,68 @@ const TABS_INVEST=[["i-painel","Painel"],["i-carteira","Carteira"],["i-aportes",
 const TABS_SHARED=[["nuvem","Nuvem"],["guia","Guia"]];
 const CLASSES=["Renda Fixa / Caixa","Ações (EUA)","Ouro","Prata","Cripto","Setoriais","Outros"];
 const PESSOAS=["João","Esposa","Conjunto"];
-const CATEGORIAS=["Moradia","Mercado","Alimentação","Transporte","Saúde","Educação","Assinaturas","Lazer","Compras","Serviços","Tarifas/Impostos","Pets","Entradas","Outros"];
-const CATPAL=["#d4a23a","#4fbfa8","#e6c277","#8fb6c9","#c98f8f","#7f9c8b","#b39ddb","#86e2d0","#f0a868","#9aa0ad","#c07b7b","#8bbf9f","#5fd08a","#6b7b82"];
+/* dono de um gasto importado — mesmos apelidos das contas da casa */
+const PES_VALIDO=['preto','preta','ambos'];
+function pesNome(p){
+  if(p==='preto')return (D.nomes&&D.nomes.preto)||'João';
+  if(p==='preta')return (D.nomes&&D.nomes.preta)||'Kassiana';
+  return 'os dois (50/50)';
+}
+/* quanto deste lançamento é de quem: "ambos" divide ao meio */
+function valorDe(t,quem){
+  const v=Math.abs(+t.amount||0);
+  if(t.pes===quem)return v;
+  if(t.pes==='ambos')return v/2;
+  return 0;
+}
+/* ---------- o que NÃO entra na soma do mês ----------
+   Pagar a fatura do cartão não é um gasto novo: as compras daquela fatura já
+   foram contadas uma a uma. Contar as duas coisas dobra o mês inteiro. O
+   mesmo vale para aplicar dinheiro ou mandar para uma conta sua.
+
+   A categoria é o próprio controle: pôr um lançamento em "Cartão de crédito"
+   tira ele da soma, e tirar de lá devolve. Sem caixinha escondida. */
+const CAT_FORA_DA_SOMA=["Cartão de crédito"];
+function naoSoma(t){return !!(t&&(t.nc===true||CAT_FORA_DA_SOMA.includes(t.cat)));}
+function txSoma(txs){return (txs||[]).filter(t=>!naoSoma(t));}
+function gastoPessoa(txs,quem){return txSoma(txs).filter(t=>t.amount<0).reduce((s,t)=>s+valorDe(t,quem),0);}
+/* aprende de quem é, pelo nome — igual ao aprendizado da categoria */
+function pesDe(desc,padrao){
+  const d=norm(desc);
+  for(const k in (D.contas.pesMemory||{})){if(k&&k.length>=3&&d.includes(k))return D.contas.pesMemory[k];}
+  return PES_VALIDO.includes(padrao)?padrao:(D.contas.exPessoa||'ambos');
+}
+const CATEGORIAS=["Moradia","Mercado","Alimentação","Bebidas","Combustível","Manutenção do carro","Transporte",
+  "Saúde","Seguro","Educação","Assinaturas","Lazer","Compras","Serviços","Empresa","Tarifas/Impostos","Pets",
+  "Cartão de crédito","Entradas","Outros"];
+const CATPAL=["#d4a23a","#4fbfa8","#e6c277","#a98fd0","#f0a868","#c2956a","#8fb6c9",
+  "#c98f8f","#6fa8c9","#7f9c8b","#b39ddb","#86e2d0","#e59ac0","#9aa0ad","#7e9ec7","#c07b7b","#8bbf9f",
+  "#d0b48f","#5fd08a","#6b7b82"];
 const CAT_KW=[
- ["Moradia",["aluguel","condominio","imobiliaria","energia","cemig","enel","cpfl","light","copel","celesc","sabesp","copasa","sanepar","agua","gas ","iptu","internet","fibra","vivo","claro","net "]],
- ["Mercado",["mercado","supermerc","atacad","assai","carrefour","pao de acucar","angeloni","zaffari","hortifruti","sacolao","havan","atacadao","tenda","dia "]],
- ["Alimentação",["ifood","rappi","restaurante","lanchonete","pizzaria","burger","mcdonald","bk ","subway","padaria","cafe","boteco","habib","outback","spoleto","food","doceria","sorveteria"]],
- ["Transporte",["uber","99app","99 ","cabify","posto","gasolina","combustivel","ipiranga","shell","petrobras","estacion","pedagio","sem parar","conectcar","veloe","onibus","metro","mecanic","oficina","seguro auto","ipva","detran","licenciamento","autopista"]],
- ["Saúde",["farmacia","drogaria","droga ","pague menos","raia","drogasil","panvel","hospital","clinica","laboratorio","medic","dentista","psicolog","plano de saude","unimed","amil","hapvida","academia","smartfit","gympass","wellhub"]],
- ["Educação",["escola","faculdade","universidade","curso","udemy","alura","colegio","material escolar","livraria","kindle","descomplica"]],
- ["Assinaturas",["netflix","spotify","disney","hbo","max ","prime video","amazon prime","paramount","globoplay","youtube premium","apple.com","apple ","icloud","google ","microsoft","office","adobe","chatgpt","openai","canva","melimax","dropbox"]],
- ["Lazer",["cinema","steam","playstation","xbox","nintendo","viagem","hotel","airbnb","booking","decolar","latam","gol ","azul ","ingresso","show ","evento","parque","clube"]],
- ["Compras",["amazon","mercado livre","mercadolivre","magazine","magalu","americanas","shopee","aliexpress","shein","renner","riachuelo","c&a","zara","centauro","nike","adidas","shopping","loja","marisa","leroy","kabum","casas bahia"]],
- ["Serviços",["cartorio","correios","lavanderia","barbearia","salao","cabeleireiro","manicure","contador","advogado","chaveiro"]],
- ["Tarifas/Impostos",["tarifa","juros","iof","anuidade","imposto","darf","das ","inss","fgts","multa","taxa ","tributo"]],
- ["Pets",["pet ","petshop","pet shop","veterinar","cobasi","petz","racao"]],
+ ["Moradia",["aluguel","condominio","imobiliaria","imob ","imoveis","administradora de imoveis","energia","cemig","enel","cpfl","light","copel","celesc","sabesp","copasa","sanepar","agua","gas ","iptu","internet","fibra","vivo","claro","net ","tim ","oi ","nextel","sky","hughesnet","starlink","sindico","gas natural","ultragaz","liquigas","copagaz"]],
+ ["Bebidas",["adega","bebidas","kartel","cervej","chopp","chope","ze delivery","zedelivery","distribuidora de bebida","emporio da cerveja","destilados","vinho","wine","whisky","vodka","choperia","taberna"]],
+ ["Combustível",["posto","gasolina","combustivel","etanol","alcool comb","diesel","ipiranga","shell","petrobras","texaco","raizen","ale combust","rodoil","gnv","abastecimento","auto posto","br mania","charrua","sim rede de posto"]],
+ ["Seguro",["seguro ","seguros","seguradora","apolice","porto seguro","tokio marine","mapfre","allianz","sulamerica seg","sul america seg","bradesco seg","itau seguros","azul seguros","hdi seg","liberty seg","zurich","sompo","icatu","metlife","prudential","cardif","suhai","youse"]],
+ ["Mercado",["mercado","supermerc","atacad","assai","carrefour","pao de acucar","angeloni","zaffari","hortifruti","sacolao","festval","festival sa","condor","muffato","super muffato","jacomar","mercadorama","atacadao","tenda","dia ","big ","fort ","comper","sonda","tenda atacado","sam s club","makro","acougue","quitanda","emporio","armazem","mercearia"]],
+ ["Alimentação",["ifood","ifd*","rappi","restaurante","lanchonete","pizzaria","burger","mcdonald","bk ","subway","padaria","cafe","boteco","habib","outback","spoleto","food","doceria","sorveteria","mc donald","giraffas","madero","coco bambu","confeitaria","cafeteria","starbucks","churrascaria","espetinho","lanche","bar ","aiqfome"]],
+ ["Manutenção do carro",["mecanic","oficina","autopecas","auto pecas","auto center","autocenter","centro auto","pneu","borracharia","lava rapido","lava jato","lavajato","troca de oleo","alinhamento","balanceamento","funilaria","retifica","revisao","concessionaria","acessorios automotivos","bosch car","car service"]],
+ ["Transporte",["uber","99app","99 ","cabify","estacion","pedagio","sem parar","conectcar","veloe","onibus","metro","ipva","detran","licenciamento","autopista","99pop","99 pop","indriver","blablacar","zul digital","zona azul","cet ","ecovias","arteris","taxi","buser","clickbus","rodoviaria"]],
+ ["Saúde",["farmacia","farma ","drogaria","droga ","pague menos","raia","drogasil","panvel","hospital","clinica","laboratorio","medic","dentista","psicolog","plano de saude","unimed","amil","hapvida","academia","smartfit","gympass","wellhub","odonto","sulamerica","sul america","bradesco saude","notredame","intermedica","exame","fisioterapia","psiquiatra","terapia","oftalmo","dermato","ortopedi","vacina","otica",
+   "natacao","escola de natacao","hidroginastica","pilates","crossfit","musculacao","personal trainer",
+   "ensino de esportes","escola de esportes","nutricion","nutri ","fonoaudiolog","quiropraxia","acupuntura",
+   "fisio "]],
+ ["Educação",["escola","faculdade","universidade","curso","udemy","alura","colegio","material escolar","livraria","kindle","descomplica","coursera","duolingo","kumon","wizard","ccaa","fisk","cultura inglesa"]],
+ ["Assinaturas",["netflix","spotify","disney","hbo","max ","prime video","amazon prime","paramount","globoplay","youtube premium","apple.com","apple ","icloud","google ","microsoft","office","adobe","chatgpt","openai","canva","melimax","melimais","meli mais","netlify","vercel","github","cloudflare","lovable","dropbox","deezer","tidal","office 365","microsoft 365"]],
+ ["Lazer",["cinema","steam","playstation","xbox","nintendo","viagem","hotel","airbnb","booking","decolar","latam","gol ","azul ","ingresso","show ","evento","parque","clube","cinemark","cinepolis","uci ","sympla","eventim","123 milhas","hoteis","pousada","azul linhas","gol linhas","netshoes ingresso"]],
+ ["Compras",["havan","amazon","mercado livre","mercadolivre","magazine","magalu","americanas","shopee","aliexpress","shein","renner","riachuelo","c&a","zara","centauro","nike","adidas","shopping","loja","marisa","leroy","kabum","casas bahia","decathlon","netshoes","dafiti","cea","pernambucanas","telha norte","ponto frio","pichau","temu"]],
+ ["Empresa",["contador","contabilidade","honorarios contab","simples nacional","das mei","mei ","alvara","junta comercial","material empresa","aluguel quadra","aluguel de quadra","cnpj","nota fiscal","escritorio contab","contabil","sebrae","material esportivo",
+   "devolucao aluno","devolucao de aluno","devolucao aula","devolucao de aula","estorno aluno","reembolso aluno",
+   "manutencao de quadra","manutencao quadra","reforma da quadra","reforma de quadra","pintura da quadra",
+   "piso da quadra","tela da quadra","rede de quadra","material para a quadra","material de quadra",
+   "iluminacao da quadra","limpeza da quadra"]],
+ ["Serviços",["cartorio","correios","lavanderia","barbearia","salao","cabeleireiro","manicure","advogado","chaveiro","picpay","mercado pago","pagseguro","pagbank","stone","cielo","rede ","getnet","sumup","infinitepay","cartao de credito maquin","estetica","encanador","eletricista","diarista","faxina"]],
+ ["Tarifas/Impostos",["parcela giro","giro ","tarifa","tar ","sefa","juros","iof","anuidade","imposto","darf","das ","inss","fgts","multa","taxa ","tributo","crefisa","emprestimo","financiamento","consignado","credito pessoal","ted ","doc ","pacote de servicos","cesta de servicos","manutencao de conta"]],
+ ["Pets",["pet ","petshop","pet shop","veterinar","cobasi","petz","racao","petlove","veterinari","banho e tosa"]],
  ["Entradas",["salario","recebido","pix recebid","deposito","rendimento","estorno","reembolso","provento","transferencia recebid","ted recebid","credito receb","pagamento receb"]]
 ];
 
@@ -1011,6 +1373,10 @@ const DEFAULT={
    allocTarget:{"Renda Fixa / Caixa":40,"Ações (EUA)":30,"Ouro":10,"Prata":5,"Cripto":5,"Setoriais":10,"Outros":0},
    plano:{joao:700,esposa:300}
  },
+ /* tabelas empilhadas para caber na tela do celular (padrão ligado) */
+ fit:true,
+ /* tamanho da tela: 1 = normal; sobe/desce de 10 em 10% */
+ zoom:1,
  cloud:{url:"",on:false},
  lastBackup:null
 };
@@ -1059,6 +1425,16 @@ function migrateContas(o){
   if(!o.anualAno)o.anualAno=new Date().getFullYear();
   if(!Array.isArray(o.transacoes))o.transacoes=[];
   if(!o.catMemory||typeof o.catMemory!=='object'||Array.isArray(o.catMemory))o.catMemory={};
+  /* de quem é cada gasto importado: 'preto' (João), 'preta' (Kassiana) ou
+     'ambos' (divide 50/50, como as contas da casa) */
+  if(!o.pesMemory||typeof o.pesMemory!=='object'||Array.isArray(o.pesMemory))o.pesMemory={};
+  Object.keys(o.pesMemory).forEach(k=>{if(!PES_VALIDO.includes(o.pesMemory[k]))delete o.pesMemory[k];});
+  if(!PES_VALIDO.includes(o.exPessoa))o.exPessoa='ambos';
+  /* transação antiga não tinha dono: entra como dividida, que é o neutro */
+  (o.transacoes||[]).forEach(t=>{if(!PES_VALIDO.includes(t.pes))t.pes='ambos';if(t.nc!==true)t.nc=false;});
+  if(!Array.isArray(o.meusNomes))o.meusNomes=[];
+  if(!Array.isArray(o.nomesInvest))o.nomesInvest=[];
+  if(typeof o.limiteAporte!=='number'||!(o.limiteAporte>0))o.limiteAporte=2500;
   /* Studio Kassiana — segundo negócio (os dados antigos ficam todos na Empresa JV) */
   if(!Array.isArray(o.empresaKS))o.empresaKS=[];
   if(!o.empSel)o.empSel='jv';
@@ -1114,6 +1490,8 @@ function migrate(o){
   if(!out.cloud)out.cloud={url:"",on:false};
   if(out.lastBackup===undefined)out.lastBackup=null;
   if(!out.mode)out.mode="contas";
+  if(out.fit===undefined)out.fit=true;
+  out.zoom=zoomValido(out.zoom);
   return out;
 }
 function load(){
@@ -1133,7 +1511,7 @@ function load(){
   }
   if(location.hash.startsWith("#d=")){
     try{const shared=JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(3)))));
-      if(confirm("Carregar os dados compartilhados? Isso substitui o que está neste aparelho.")){D=migrate(shared);save()}
+      if(confirm("Carregar os dados compartilhados? Isso substitui o que está neste aparelho.")){guardarVersao('antes de abrir um link compartilhado');D=migrate(shared);save()}
     }catch(e){}
     history.replaceState(null,"",location.pathname+location.search);
   }
@@ -1146,7 +1524,10 @@ const brl=v=>'R$ '+(+v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maxim
 const usd=v=>'US$ '+(+v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const pct=v=>((+v||0)*100).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%';
 const brlk=v=>Math.abs(v)>=1e6?'R$ '+(v/1e6).toFixed(1)+'M':'R$ '+(v/1000).toFixed(1)+'k';
-const esc=s=>(s||'').toString().replace(/"/g,'&quot;');
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* para texto que vira argumento de string JS dentro de um atributo (onclick/oninput):
+   a barra invertida sobrevive ao parser de HTML, a entidade &#39; nao — ela vira aspa de novo. */
+const escJs=s=>String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const v=id=>document.getElementById(id).value;
 function set(id,t){const e=document.getElementById(id);if(e)e.textContent=t}
 
@@ -1239,10 +1620,26 @@ function buildTabs(m){
 const DRAW={'i-painel':()=>drawInvPainel(),'i-mensal':()=>drawMensal(),'i-anual':()=>drawAnual(),'i-projecao':()=>onProj(),
   'i-analise':()=>{drawAnalise();renderAlloc();},'i-ganhos':()=>renderGanhos(),'i-plano':()=>onPlano(),'i-metas':()=>renderGoals(),
   'c-painel':()=>drawConPainel(),'c-casa':()=>renderCasa(),'c-joao':()=>renderPess('joao','tbl-joao'),'c-esposa':()=>renderPess('esposa','tbl-esposa'),'c-empresa':()=>drawEmpresa(),'c-recebidos':()=>renderReceb(),'c-patrimonio':()=>drawPatrimonio(),'c-protecao':()=>drawProtecao(),'c-resumo':()=>drawResumo(),'c-anual':()=>renderControle(),'c-categorias':()=>renderCategorias(),'c-conselhos':()=>renderConselhos(),'c-cartao':()=>refreshCartao()};
+/* O cabeçalho premium acompanha a hora do dia e o modo do app. Tudo aqui é
+   só texto de tela: se falhar, o app segue igual. */
+function heroFamilia(){
+  try{
+    const h=new Date().getHours();
+    const g=document.getElementById('jv-fam-greet');
+    if(g)g.textContent=(h<12?'Bom dia':(h<18?'Boa tarde':'Boa noite'))+', família';
+    const t=document.getElementById('jv-fam-title');
+    if(t)t.innerHTML=document.body.classList.contains('mode-invest')
+      ?'Seu <em>patrimônio</em>':'Painel da <em>família</em>';
+  }catch(_){}
+}
 function switchTab(id,btn){
   document.querySelectorAll('section[data-tab]').forEach(s=>s.classList.toggle('on',s.dataset.tab===id));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));if(btn)btn.classList.add('active');
   if(DRAW[id]){const prev=suppressPush;suppressPush=true;try{DRAW[id]();}catch(e){console.warn('Família JK — falha na aba',id,e);}suppressPush=prev;}
+  rotularTabelas();marcarVazias();
+  /* com as abas numa faixa que desliza, a escolhida precisa ficar à vista */
+  try{if(btn&&btn.scrollIntoView)btn.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'});}catch(_){}
+  heroFamilia();
 }
 
 /* ===================== CONTAS — render ===================== */
@@ -1323,11 +1720,13 @@ function parseDay(val){const m=(val||'').toString().match(/\d{1,2}/);if(!m)retur
 function dueInfo(day){if(day==null)return null;const today=new Date().getDate();let diff=day-today;if(diff< -3)diff+=30;return diff;}
 function allBills(){
   const arr=[];
-  D.contas.casa.forEach(b=>arr.push({grupo:'Casa',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
-  D.contas.joao.forEach(b=>arr.push({grupo:'João',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
-  D.contas.esposa.forEach(b=>arr.push({grupo:'Kassiana',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
-  D.contas.empresa.forEach(b=>arr.push({grupo:'Empresa JV',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
-  D.contas.empresaKS.forEach(b=>arr.push({grupo:'Studio Kassiana',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
+  /* aba/emp: por onde essa conta se edita — é o que faz a lista de vencimentos
+     virar atalho em vez de só aviso */
+  D.contas.casa.forEach(b=>arr.push({grupo:'Casa',aba:'c-casa',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
+  D.contas.joao.forEach(b=>arr.push({grupo:'João',aba:'c-joao',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
+  D.contas.esposa.forEach(b=>arr.push({grupo:'Kassiana',aba:'c-esposa',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
+  D.contas.empresa.forEach(b=>arr.push({grupo:'Empresa JV',aba:'c-empresa',emp:'jv',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
+  D.contas.empresaKS.forEach(b=>arr.push({grupo:'Studio Kassiana',aba:'c-empresa',emp:'ks',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
   return arr;
 }
 function renderDue(){
@@ -1344,8 +1743,12 @@ function renderDue(){
       else if(b.d<=5){cls='soon';when='vence em '+b.d+'d';wc='goldc';}
       else{when='vence em '+b.d+'d';}
     }
-    h+=`<div class="due ${cls}"><div class="lft"><span class="nm">${esc(b.nome)}</span><span class="meta">${b.grupo}${b.venc?(' · dia '+esc(b.venc)):''}</span></div>
-      <div class="rgt"><div class="val">${brl(b.valor)}</div><div class="when ${wc}">${when}</div></div></div>`;
+    /* cada vencimento é um botão: toca e cai na aba onde essa conta se paga */
+    h+=`<button type="button" class="due ${cls}" onclick="irConta('${b.aba}'${b.emp?(",'"+b.emp+"'"):''})"
+      title="Abrir ${esc(b.grupo)} para pagar ou editar">
+      <div class="lft"><span class="nm">${esc(b.nome)}</span><span class="meta">${b.grupo}${b.venc?(' · dia '+esc(b.venc)):''}</span>
+      <span class="duehint">tocar para abrir ›</span></div>
+      <div class="rgt"><div class="val">${brl(b.valor)}</div><div class="when ${wc}">${when}</div></div></button>`;
   });
   box.innerHTML=h;
 }
@@ -1595,6 +1998,133 @@ function ctrlPullCurrent(){
   renderControle();save();
   alert('Mês '+MESES[ref.getMonth()]+'/'+String(ref.getFullYear()).slice(2)+' preenchido com suas contas:\nPrevisto '+brl(m.previsto)+' · Pago '+brl(m.pago)+' · Recebido '+brl(m.recebido));
 }
+/* ================= FATURAMENTO VINDO DO APP GESTÃO =================
+   O app da academia é o dono do número: é lá que cada aula, mensalidade e
+   despesa é lançada. Aqui a gente só lê o backup dele (Ajustes → backup, o
+   arquivo jvtenis-backup-AAAA-MM-DD.json) e usa isso para acertar o Recebido
+   de cada mês do Controle anual.
+
+   A conta é copiada do Gestão de propósito, para os dois apps nunca darem
+   números diferentes para o mesmo mês:
+     faturamento = soma dos lançamentos POSITIVOS do mês
+     despesa     = soma dos lançamentos NEGATIVOS do mês (em módulo)
+   e os meses de antes do Caixa (histMes, vindos da planilha antiga) só valem
+   onde o Caixa não tem nada — havendo lançamento no mês, quem manda é ele.
+
+   Nada do Gestão é gravado neste app: só o número de cada mês. E só a coluna
+   Recebido é tocada — Previsto e Pago continuam sendo as contas da casa. */
+function faturamentoGestao(bk){
+  const fat={},desp={},fonte={};
+  const lanc=(bk&&Array.isArray(bk.lancamentos))?bk.lancamentos:[];
+  lanc.forEach(l=>{
+    const mk=l&&l.mes;
+    if(!/^\d{4}-\d{2}$/.test(String(mk||'')))return;
+    const v=+l.valor||0;
+    if(v>0)fat[mk]=(fat[mk]||0)+v;
+    else if(v<0)desp[mk]=(desp[mk]||0)+Math.abs(v);
+    else return;                                  /* zero não cria mês */
+    fonte[mk]='caixa';
+  });
+  const H=(bk&&bk.histMes&&typeof bk.histMes==='object'&&!Array.isArray(bk.histMes))?bk.histMes:{};
+  Object.keys(H).forEach(mk=>{
+    if(fonte[mk])return;                          /* o Caixa manda */
+    if(!/^\d{4}-\d{2}$/.test(mk))return;
+    const h=H[mk]||{};
+    fat[mk]=+h.bruto||0;desp[mk]=+h.desp||0;fonte[mk]='planilha';
+  });
+  const out={};
+  Object.keys(fonte).forEach(mk=>{
+    out[mk]={bruto:fat[mk]||0,desp:desp[mk]||0,fonte:fonte[mk]};
+  });
+  return out;
+}
+/* o que muda em cada mês do ano escolhido, sem gravar nada ainda */
+function planoGestao(mapa,ano,modo){
+  const arr=ctrlYearArr(ano),linhas=[];
+  for(let i=0;i<12;i++){
+    const mk=ano+'-'+String(i+1).padStart(2,'0'),g=mapa[mk];
+    if(!g)continue;
+    const novo=(modo==='sobra')?(g.bruto-g.desp):g.bruto;
+    const atual=arr[i].recebido;
+    let estado='igual';
+    if(atual==null)estado='novo';
+    else if(Math.abs((+atual||0)-novo)>0.005)estado='corrige';
+    linhas.push({i,mk,bruto:g.bruto,desp:g.desp,fonte:g.fonte,novo,atual,estado});
+  }
+  return linhas;
+}
+let gsMapa=null,gsModo='bruto';
+function pickGestao(){
+  pickFile('.json,application/json',f=>{
+    const r=new FileReader();
+    r.onload=()=>{
+      let bk=null;
+      try{bk=JSON.parse(r.result);}catch(e){alert('Não consegui ler esse arquivo — ele precisa ser o backup em .json do app Gestão.');return;}
+      abrirGestao(bk);
+    };
+    r.onerror=()=>alert('Não consegui abrir o arquivo.');
+    r.readAsText(f);
+  });
+}
+function abrirGestao(bk){
+  const temLanc=bk&&Array.isArray(bk.lancamentos),temHist=bk&&bk.histMes&&typeof bk.histMes==='object';
+  if(!temLanc&&!temHist){
+    alert('Esse arquivo não parece um backup do app Gestão.\n\nNo app Gestão: Ajustes → Fazer backup. O arquivo começa com "jvtenis-backup".');
+    return;
+  }
+  gsMapa=faturamentoGestao(bk);
+  if(!Object.keys(gsMapa).length){
+    alert('O backup abriu, mas não há nenhum mês com faturamento dentro dele.');
+    return;
+  }
+  document.getElementById('gestaoModal').classList.add('on');
+  renderGestao();
+}
+function closeGestao(){document.getElementById('gestaoModal').classList.remove('on');}
+function gsUsar(m){gsModo=(m==='sobra')?'sobra':'bruto';renderGestao();}
+function renderGestao(){
+  if(!gsMapa)return;
+  const ano=+D.contas.anualAno||new Date().getFullYear();
+  const linhas=planoGestao(gsMapa,ano,gsModo);
+  /* ids escritos por inteiro: montar o id com + esconde do checador de ids */
+  const bB=document.getElementById('gs-b-bruto'),bS=document.getElementById('gs-b-sobra');
+  if(bB)bB.classList.toggle('primary',gsModo==='bruto');
+  if(bS)bS.classList.toggle('primary',gsModo==='sobra');
+  const fora=Object.keys(gsMapa).filter(mk=>mk.slice(0,4)!==String(ano)).length;
+  set('gs-sub','Meses de '+ano+' encontrados no backup: '+linhas.length
+    +(fora?(' · outros '+fora+' mês(es) são de outro ano — troque o ano no Controle anual para trazer esses.'):''));
+  let h='<tr><th>Mês</th><th>Faturamento</th><th>Despesa</th><th>Sobra</th><th>Recebido hoje</th><th>Fica</th></tr>';
+  linhas.forEach(l=>{
+    const cor=l.estado==='corrige'?'goldc':(l.estado==='novo'?'up':'mut');
+    const txt=l.estado==='corrige'?'corrige':(l.estado==='novo'?'preenche':'igual');
+    h+='<tr><td class="name">'+MESES[l.i]+'/'+String(ano).slice(2)
+      +(l.fonte==='planilha'?' <span class="mut" title="mês de antes do Caixa, vindo da planilha">*</span>':'')+'</td>'
+      +'<td>'+brl(l.bruto)+'</td><td>'+brl(l.desp)+'</td><td>'+brl(l.bruto-l.desp)+'</td>'
+      +'<td class="mut">'+(l.atual==null?'—':brl(l.atual))+'</td>'
+      +'<td class="'+cor+'">'+brl(l.novo)+' · '+txt+'</td></tr>';
+  });
+  document.getElementById('tbl-gestao').innerHTML=h;
+  marcarVazias();                 /* sem isto a tabela fica com o aviso de vazia de antes */
+  const muda=linhas.filter(l=>l.estado!=='igual').length;
+  const temPlan=linhas.some(l=>l.fonte==='planilha');
+  const nota=document.getElementById('gs-nota');
+  if(nota)nota.innerHTML=(muda?('Vou mexer em '+muda+' mês(es); os iguais ficam como estão. '):'Nada a mudar — os meses já batem. ')
+    +'Só a coluna <b>Recebido</b> muda; Previsto e Pago continuam sendo as contas da casa.'
+    +(temPlan?' O <b>*</b> marca mês de antes do Caixa, que vem da planilha antiga guardada no Gestão.':'');
+  const ok=document.getElementById('gs-ok');
+  if(ok){ok.disabled=!muda;ok.style.opacity=muda?'':'.5';}
+  rotularTabelas();
+}
+function gsAplicar(){
+  if(!gsMapa)return;
+  const ano=+D.contas.anualAno||new Date().getFullYear();
+  const linhas=planoGestao(gsMapa,ano,gsModo),arr=ctrlYearArr(ano);
+  let n=0;
+  linhas.forEach(l=>{if(l.estado!=='igual'){arr[l.i].recebido=l.novo;n++;}});
+  closeGestao();renderControle();save();
+  alert(n?('Pronto: '+n+' mês(es) de '+ano+' atualizados com o '
+    +(gsModo==='sobra'?'que sobrou':'faturamento')+' do app Gestão.'):'Os meses já estavam certos — não mudei nada.');
+}
 function ctrlSpreadForward(){
   const now=new Date(),ano=+D.contas.anualAno||now.getFullYear(),arr=ctrlYearArr(ano);
   const startIdx=(ano===now.getFullYear())?now.getMonth():0;
@@ -1824,15 +2354,48 @@ function refreshMensal(){
   D.invest.mensal.forEach((m,i)=>{const er=document.getElementById('m-r-'+i),ep=document.getElementById('m-p-'+i);if(!er)return;
     const prev=i>0?D.invest.mensal[i-1].patr:null;
     if(m.patr!=null&&prev!=null){const r=m.patr-prev-(+m.aporte||0);er.textContent=brl(r);er.className=r>=0?'up':'down';ep.textContent=prev?pct(r/prev):'—';ep.className=r>=0?'up':'down';}
-    else{er.textContent='—';ep.textContent='—';er.className='mut';ep.className='mut';}});save();
+    else{er.textContent='—';ep.textContent='—';er.className='mut';ep.className='mut';}});
+  refreshMensalKPI();      /* digitar um mês muda o movimento: os cartões acompanham */
+  save();
 }
 function addMensal(){D.invest.mensal.push({mes:"",patr:null,aporte:null});renderMensal();drawMensal()}
-function snapInvMonth(){
-  const lbl=monthLabel(new Date()),t=invTotal();
-  let row=D.invest.mensal.find(m=>m.mes===lbl);
-  if(row){row.patr=t;}else{D.invest.mensal.push({mes:lbl,patr:t,aporte:0});}
-  renderMensal();drawMensal();save();
-  alert('Mês '+lbl+' registrado com o patrimônio atual ('+brl(t)+').');
+/* O retrato do mês nasce sozinho. Atualizou a carteira — por foto ou por
+   planilha —, o mês e o ano da evolução já recebem o total novo, sem depender
+   de você lembrar de apertar um botão depois. Só o mês de HOJE é escrito: os
+   meses em que você não mediu nada ficam em branco, porque inventar valor
+   para eles seria inventar patrimônio. */
+function registrarPatrimonio(){
+  const hoje=new Date(),lbl=monthLabel(hoje),ano=String(hoje.getFullYear()),t=invTotal();
+  D.invest.mensal=D.invest.mensal||[];
+  let row=D.invest.mensal.find(m=>m.mes===lbl),mesNovo=!row;
+  if(row)row.patr=t;
+  else{
+    /* entra na posição do calendário, não no fim da lista */
+    const at=D.invest.mensal.findIndex(m=>mesOrdem(m.mes)>mesOrdem(lbl));
+    const novo={mes:lbl,patr:t,aporte:0};
+    if(at>=0)D.invest.mensal.splice(at,0,novo);else D.invest.mensal.push(novo);
+  }
+  D.invest.anual=D.invest.anual||[];
+  let lin=D.invest.anual.find(a=>String(a.ano)===ano),anoNovo=!lin;
+  if(lin)lin.patr=t;
+  else{
+    const at=D.invest.anual.findIndex(a=>(+a.ano||0)>(+ano));
+    const novo={ano:ano,patr:t,aporte:null};
+    if(at>=0)D.invest.anual.splice(at,0,novo);else D.invest.anual.push(novo);
+  }
+  save();
+  ['renderMensal','drawMensal','renderAnual','drawAnual','drawInvPainel']
+    .forEach(f=>{if(typeof window[f]==='function')safeRun(window[f]);});
+  return {lbl,ano,total:t,mesNovo,anoNovo};
+}
+function textoRegistro(r){
+  return 'Evolução em dia: '+brl(r.total)+' guardado'
+    +(r.mesNovo?' como o fechamento de ':' no lugar do valor anterior de ')+r.lbl
+    +' e no ano de '+r.ano+'.';
+}
+function snapInvMonth(calado){
+  const reg=registrarPatrimonio();
+  if(!calado)alert(textoRegistro(reg));
 }
 
 function renderAnual(){
@@ -1876,11 +2439,56 @@ function drawInvPainel(){
       backgroundColor:c=>{const g=c.chart.ctx.createLinearGradient(0,0,0,46);g.addColorStop(0,'rgba(212,162,58,.35)');g.addColorStop(1,'rgba(212,162,58,0)');return g}}]},
     options:{plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{display:false},y:{display:false}}}});
 }
+/* O rendimento de cada mês: o que o patrimônio andou sozinho, tirando o que
+   foi depositado. Sem isso o gráfico só mostra o tamanho, nunca o movimento. */
+function rendimentoMensal(){
+  const arr=D.invest.mensal||[];
+  return arr.map((m,i)=>{
+    const prev=i>0?arr[i-1].patr:null;
+    if(m.patr==null||prev==null)return null;
+    return m.patr-prev-(+m.aporte||0);
+  });
+}
 function drawMensal(){
-  destroy('mensal');charts.mensal=new Chart(document.getElementById('mensalChart'),{type:'line',
-    data:{labels:D.invest.mensal.map(m=>m.mes),datasets:[{label:'Patrimônio (R$)',data:D.invest.mensal.map(m=>m.patr),
-      borderColor:COL.gold,backgroundColor:'rgba(212,162,58,.12)',borderWidth:2.5,tension:.35,pointRadius:3,pointBackgroundColor:COL.gold,fill:true}]},
-    options:{plugins:{legend:{display:false}},scales:{y:moneyAxis,x:{grid:{display:false}}}}});
+  const arr=D.invest.mensal||[],rend=rendimentoMensal();
+  destroy('mensal');charts.mensal=new Chart(document.getElementById('mensalChart'),{
+    data:{labels:arr.map(m=>m.mes),datasets:[
+      {type:'bar',label:'Variação no mês (R$)',data:rend,order:2,
+        backgroundColor:rend.map(v=>v==null?'rgba(144,168,173,.25)':(v>=0?'rgba(79,191,168,.65)':'rgba(232,117,95,.65)')),
+        borderColor:rend.map(v=>v==null?'rgba(144,168,173,.4)':(v>=0?COL.teal:COL.down)),
+        borderWidth:1.5,borderRadius:5,yAxisID:'y2'},
+      {type:'line',label:'Patrimônio (R$)',data:arr.map(m=>m.patr),order:1,
+        borderColor:COL.gold,backgroundColor:'rgba(212,162,58,.12)',borderWidth:2.5,
+        tension:.35,pointRadius:3,pointBackgroundColor:COL.gold,fill:true,yAxisID:'y'}]},
+    options:{plugins:{legend:{display:true,labels:{boxWidth:12,font:{size:11}}}},
+      scales:{y:moneyAxis,
+        y2:{position:'right',grid:{display:false},ticks:{callback:v=>brlk(v),font:{size:10}}},
+        x:{grid:{display:false}}}}});
+  refreshMensalKPI();
+}
+/* os números que respondem "quanto mudou", sem ter de ler o gráfico */
+function refreshMensalKPI(){
+  const arr=D.invest.mensal||[],rend=rendimentoMensal();
+  const comValor=rend.map((v,i)=>({v,mes:arr[i].mes})).filter(x=>x.v!=null);
+  const ult=comValor.length?comValor[comValor.length-1]:null;
+  const soma=comValor.reduce((s,x)=>s+x.v,0);
+  const melhor=comValor.length?comValor.reduce((a,b)=>b.v>a.v?b:a):null;
+  const pior=comValor.length?comValor.reduce((a,b)=>b.v<a.v?b:a):null;
+  /* zero e um numero: "nao mudou nada" e uma resposta, nao a falta de uma.
+     Com `if(!x)` um mes de variacao zero aparecia como travessao. */
+  const por=(id,x,sinal)=>{const e=document.getElementById(id);if(!e)return;
+    if(x==null){e.textContent='—';e.className='v mut';return;}
+    const v=(typeof x==='number')?x:x.v;
+    e.textContent=(sinal&&v>0?'+':'')+brl(v)+(x.mes?(' · '+x.mes):'');
+    e.className='v '+(v>=0?'up':'down');};
+  por('im-ultimo',ult,true);
+  por('im-soma',comValor.length?soma:null,true);
+  por('im-melhor',melhor,true);
+  por('im-pior',pior,true);
+  const n=document.getElementById('im-nota');
+  if(n)n.textContent=comValor.length<2
+    ? 'Feche pelo menos dois meses (📸 abaixo) para o app medir o movimento entre eles.'
+    : ('Barra verde = o dinheiro rendeu no mês; vermelha = recuou. A linha dourada é o tamanho do patrimônio. Aporte não conta como rendimento.');
 }
 function drawAnual(){
   destroy('anual');charts.anual=new Chart(document.getElementById('anualChart'),{type:'bar',
@@ -2114,7 +2722,12 @@ async function cloudPush(){
     lastApplied=Date.now();setCloudStatus('☁ salvo na nuvem '+new Date().toLocaleTimeString('pt-BR'),'var(--up)');}
   catch(e){setCloudStatus('⚠ falha de rede ao salvar: '+((e&&e.message)||e),'var(--down)');}
 }
-async function cloudPull(silent){
+/* Cair para menos da metade não é sincronizar, é apagar. */
+function encolheDemais(atual,novo){
+  const perdeu=(x,y)=>x>0&&y<x*0.5;
+  return perdeu(atual.contas,novo.contas)||perdeu(atual.transacoes,novo.transacoes)||perdeu(atual.total,novo.total);
+}
+async function cloudPull(silent,forcar){
   if(!(D.cloud&&D.cloud.url))return;
   if(!/\.json(\?|$)/.test(D.cloud.url)){if(!silent)setCloudStatus('⚠ a URL precisa terminar com .json','var(--down)');return;}
   try{const r=await fetch(D.cloud.url,{cache:'no-store'});
@@ -2125,6 +2738,18 @@ async function cloudPull(silent){
     if(Date.now()-lastPushAt<4000)return;
     const ae=document.activeElement;if(ae&&['INPUT','SELECT','TEXTAREA'].includes(ae.tagName))return;
     let raw;try{raw=(typeof j.data==='string')?JSON.parse(j.data):j.data;}catch(_){if(!silent)setCloudStatus('⚠ dado da nuvem ilegível','var(--down)');return;}
+    /* A nuvem não pode esvaziar este aparelho sem perguntar. Foi exatamente
+       assim que a base da família virou exemplo em 11/09/2026: um aparelho
+       gravou os exemplos na nuvem e o outro puxou por cima do que ainda
+       estava inteiro, sozinho, sem avisar ninguém. */
+    let rNovo=null;try{rNovo=resumoBase(migrate(JSON.parse(JSON.stringify(raw))));}catch(_){}
+    const rAtual=resumoBase(D);
+    if(rAtual&&rNovo&&encolheDemais(rAtual,rNovo)){
+      if(!forcar){setCloudStatus('⚠ a nuvem tem bem menos que este aparelho — não apliquei. Toque em “Buscar agora” para ver e decidir.','var(--down)');return;}
+      if(!confirm('A nuvem tem bem MENOS dados que este aparelho.\n\nVIRIA:\n'+descreveBase(rNovo)
+        +'\n\nSUBSTITUINDO:\n'+descreveBase(rAtual)+'\n\nAplicar mesmo assim?'))return;
+    }
+    guardarVersao('antes de receber a nuvem');
     suppressPush=true;const lc=D.cloud;D=migrate(raw);D.cloud=lc;saveLocal();initFields();renderAll();
     const at=document.querySelector('.tab.active');if(at&&DRAW[at.dataset.id])DRAW[at.dataset.id]();
     suppressPush=false;
@@ -2138,15 +2763,190 @@ window.addEventListener('focus',()=>{if(D.cloud&&D.cloud.on)cloudPull(true);});
 
 /* ---------- compartilhar / backup ---------- */
 function shareURL(){const enc=btoa(unescape(encodeURIComponent(JSON.stringify(D))));return location.href.split('#')[0]+'#d='+enc;}
+function openDados(){document.getElementById('dadosModal').classList.add('on');}
+function closeDados(){document.getElementById('dadosModal').classList.remove('on');}
 function openShare(){document.getElementById('shareText').value=shareURL();document.getElementById('shareModal').classList.add('on');}
 function closeShare(){document.getElementById('shareModal').classList.remove('on');}
 function copyShare(){const t=document.getElementById('shareText');t.select();
   if(navigator.clipboard){navigator.clipboard.writeText(t.value).then(()=>alert('Link copiado! Cole no WhatsApp ou onde quiser.')).catch(()=>document.execCommand('copy'));}
   else{document.execCommand('copy');alert('Link copiado!');}}
 function shareWA(){window.open('https://wa.me/?text='+encodeURIComponent('Nossas finanças da família 💰🏠 — abra e carregue os dados:\n'+shareURL()),'_blank');}
-function exportJSON(){D.lastBackup=Date.now();save();const b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='familia-jk-backup.json';a.click();URL.revokeObjectURL(u);checkBackup();}
-function importJSON(){const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=e=>{const f=e.target.files[0];const r=new FileReader();r.onload=()=>{try{D=migrate(JSON.parse(r.result));save();initFields();renderAll();setMode(D.mode||'contas')}catch(x){alert('Arquivo inválido.')}};r.readAsText(f)};i.click();}
-function resetData(){if(confirm('Voltar aos dados de exemplo? Os dados atuais deste aparelho serão substituídos.')){D=migrate(structuredClone(DEFAULT));save();initFields();renderAll();setMode(D.mode||'contas')}}
+/* ---------- carimbo de origem ----------
+   Os dois apps da casa (Família e Gestão da academia) nunca compartilharam
+   banco: chaves diferentes no aparelho, projetos diferentes no Firebase. O
+   que os ligou uma vez foi a mão no seletor de arquivos. Então todo backup
+   que sai daqui vai carimbado, e o que entra tem de trazer o carimbo certo —
+   ou nenhum, no caso dos backups antigos, que continuam valendo. */
+const APP_ID='familia-jk';
+const APP_NOMES={'familia-jk':'app da Família','jvtenis-gestao':'app Gestão da academia'};
+function carimbar(o){
+  const c=JSON.parse(JSON.stringify(o));
+  c._app=APP_ID;c._quando=Date.now();
+  return c;
+}
+function exportJSON(){
+  D.lastBackup=Date.now();save();
+  const b=new Blob([JSON.stringify(carimbar(D),null,2)],{type:'application/json'});
+  const u=URL.createObjectURL(b);const a=document.createElement('a');
+  a.href=u;a.download='familia-jk-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();URL.revokeObjectURL(u);checkBackup();
+}
+/* ================= DE ONDE VOLTAR =================
+   Este app não tinha volta nenhuma: importar o arquivo errado substituía tudo
+   e acabou. Foi assim que a base da família se perdeu em 11/09/2026 — um
+   backup do app Gestão entrou aqui, o `migrate` não reconheceu nada dentro
+   dele, concluiu "base nova" e montou os exemplos por cima.
+
+   Agora, antes de QUALQUER coisa que apague o que existe (importar, voltar
+   aos exemplos, abrir um link compartilhado, receber a nuvem por cima), o
+   estado atual é guardado. Dez versões em rodízio, mais uma do início de
+   cada dia — essa sobrevive a dez enganos seguidos no mesmo dia. */
+const SNAP_N=10;
+function snapKey(i){return KEY+'__v'+i;}
+function diaKey(){const d=new Date();
+  return KEY+'__dia-'+d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+/* um retrato do tamanho da base, para dar de comparar antes de trocar */
+function resumoBase(o){
+  if(!o||typeof o!=='object')return null;
+  const c=o.contas||{},n=a=>Array.isArray(a)?a.length:0;
+  const listas=['casa','joao','esposa','empresa','empresaKS','cartoes'];
+  let contas=0,total=0;
+  listas.forEach(k=>{const a=c[k];if(Array.isArray(a)){contas+=a.length;a.forEach(b=>total+=(+b.valor||0));}});
+  return {contas,total,
+    transacoes:n(c.transacoes),recebidos:n(c.recebidos),
+    bens:n(o.patrimonio&&o.patrimonio.bens),
+    ativos:n(o.invest&&o.invest.nacional)+n(o.invest&&o.invest.global)};
+}
+function descreveBase(r){
+  if(!r)return '(ilegível)';
+  return r.contas+' contas · '+brl(r.total)+'\n'
+    +r.transacoes+' lançamentos · '+r.recebidos+' recebidos · '
+    +r.bens+' bens · '+r.ativos+' ativos';
+}
+function guardarVersao(motivo){
+  try{
+    const pac=JSON.stringify({quando:Date.now(),motivo:motivo||'',dados:D});
+    for(let i=SNAP_N-1;i>0;i--){
+      const ant=localStorage.getItem(snapKey(i-1));
+      if(ant!==null){try{localStorage.setItem(snapKey(i),ant);}catch(e){}}
+    }
+    localStorage.setItem(snapKey(0),pac);
+    const dk=diaKey();
+    if(localStorage.getItem(dk)===null){try{localStorage.setItem(dk,pac);}catch(e){}}
+  }catch(e){/* sem espaço não pode impedir a ação do usuário */}
+}
+let _versoes=[];
+function lerVersoes(){
+  const itens=[];
+  for(let i=0;i<SNAP_N;i++){
+    const raw=localStorage.getItem(snapKey(i));
+    if(!raw)continue;
+    try{const v=JSON.parse(raw);itens.push({rot:i===0?'a última antes da troca':(i+1)+'ª anterior',
+      quando:v.quando,motivo:v.motivo,dados:v.dados,r:resumoBase(v.dados)});}catch(e){}
+  }
+  const pref=KEY+'__dia-';
+  const dias=[];
+  for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf(pref)===0)dias.push(k);}
+  dias.sort().reverse().forEach(k=>{
+    try{const v=JSON.parse(localStorage.getItem(k));
+      const d=k.replace(pref,'').split('-');
+      itens.push({rot:'início do dia '+d[2]+'/'+d[1],quando:v.quando,motivo:v.motivo,
+        dados:v.dados,r:resumoBase(v.dados)});}catch(e){}
+  });
+  return itens;
+}
+function abrirVersoes(){
+  const box=document.getElementById('versoes-box');if(!box)return;
+  _versoes=lerVersoes();
+  const atual=resumoBase(D);
+  if(!_versoes.length){
+    box.innerHTML='<p class="semdados">Nenhuma versão guardada ainda. A partir de agora, toda vez que algo for '
+      +'substituir seus dados, o app guarda antes — e esta lista passa a ter de onde voltar.</p>';
+    return;
+  }
+  box.innerHTML='<p class="note" style="margin-top:14px"><b>Como está agora:</b><br>'
+    +esc(descreveBase(atual)).replace(/\n/g,'<br>')+'</p>'
+    +_versoes.map((it,i)=>{
+      const maior=atual&&it.r&&(it.r.contas>atual.contas||it.r.transacoes>atual.transacoes);
+      return '<div class="advice '+(maior?'warn2':'info')+'" style="margin-top:8px">'
+        +'<h4>🕘 '+esc(it.rot)+'</h4><p>'
+        +(it.quando?new Date(it.quando).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'sem data')
+        +(it.motivo?(' · '+esc(it.motivo)):'')+'<br>'
+        +esc(descreveBase(it.r)).replace(/\n/g,'<br>')
+        +(maior?'<br><b>Tem mais dados que o atual.</b>':'')
+        +'<br><button class="iconbtn" style="margin-top:8px" onclick="restaurarVersao('+i+')">Restaurar esta versão</button>'
+        +'</p></div>';
+    }).join('');
+}
+function restaurarVersao(i){
+  /* nao depender de a lista ter sido desenhada antes: chamado de fora da tela
+     (ou depois de um redesenho), ele relê em vez de nao fazer nada em silêncio */
+  if(!_versoes.length)_versoes=lerVersoes();
+  const it=_versoes[i];if(!it){alert('Essa versão não está mais na lista.');return;}
+  if(!confirm('Restaurar a versão de '+it.rot+'?\n\nFICARÁ ASSIM:\n'+descreveBase(it.r)
+    +'\n\nSUBSTITUINDO:\n'+descreveBase(resumoBase(D))
+    +'\n\nA versão atual é guardada antes, então dá para voltar atrás.'))return;
+  guardarVersao('antes de restaurar '+it.rot);
+  D=migrate(JSON.parse(JSON.stringify(it.dados)));
+  save();initFields();renderAll();setMode(D.mode||'contas');
+  abrirVersoes();
+  alert('Versão restaurada.');
+}
+
+/* ---------- o arquivo é mesmo desta casa? ----------
+   O app Gestão confere o arquivo antes de importar; este não conferia nada.
+   Qualquer .json era aceito, e o que não fosse reconhecido virava "base
+   nova" — ou seja, apagava tudo em silêncio. */
+function ehBaseFamilia(o){
+  if(!o||typeof o!=='object'||Array.isArray(o))return false;
+  /* carimbo de outro app manda mais que qualquer parecença de conteúdo */
+  if(o._app&&o._app!==APP_ID)return false;
+  if(o.contas||o.invest)return true;                          /* base atual */
+  if(o.nacional||o.cambio!==undefined||o.proj)return true;    /* cofre antigo */
+  if(o.casa||o.cartoes||o.recebidos||o.empresa)return true;   /* contas antigo */
+  return false;
+}
+function ehBaseGestao(o){
+  if(!o||typeof o!=='object')return false;
+  if(o._app&&o._app!==APP_ID)return true;                     /* carimbado de fora */
+  return !!(o.alunos||o.lancamentos||o.presencas);            /* ou reconhecido pelo conteúdo */
+}
+/* o nome do app de onde o arquivo veio, quando dá para saber */
+function origemDoArquivo(o){
+  if(o&&o._app&&APP_NOMES[o._app])return APP_NOMES[o._app];
+  if(o&&(o.alunos||o.lancamentos||o.presencas))return APP_NOMES['jvtenis-gestao'];
+  return '';
+}
+function importJSON(){
+  pickFile('.json,application/json',f=>{
+    const r=new FileReader();
+    r.onload=()=>{
+      let o=null;
+      try{o=JSON.parse(r.result);}catch(e){alert('Não consegui ler esse arquivo — ele precisa ser um .json.');return;}
+      if(!ehBaseFamilia(o)){
+        const de=origemDoArquivo(o);
+        alert(ehBaseGestao(o)
+          ? ('Esse arquivo é do '+(de||'outro aplicativo')+' — ele não entra aqui.\n\n'
+            +'Os dois apps são independentes: cada um tem o seu banco e a sua memória. '
+            +'Para trazer o faturamento da academia, use “📥 faturamento do app Gestão”, na aba Anual. '
+            +'Lá o arquivo é só lido, e nada seu é substituído.')
+          : 'Esse arquivo não é um backup do app da Família.\n\nO arquivo certo começa com “familia-jk-backup”.');
+        return;
+      }
+      let novo=null;
+      try{novo=resumoBase(migrate(JSON.parse(JSON.stringify(o))));}catch(e){alert('Arquivo ilegível.');return;}
+      if(!confirm('Importar este backup? Ele SUBSTITUI o que está neste aparelho.\n\n'
+        +'FICARÁ ASSIM:\n'+descreveBase(novo)+'\n\nSUBSTITUINDO:\n'+descreveBase(resumoBase(D))
+        +'\n\nA versão atual é guardada antes, então dá para voltar atrás.'))return;
+      guardarVersao('antes de importar um backup');
+      D=migrate(o);save();initFields();renderAll();setMode(D.mode||'contas');
+      alert('Backup importado. Se não era isso, use “🕘 Versões guardadas” para voltar.');
+    };
+    r.onerror=()=>alert('Não consegui abrir o arquivo.');
+    r.readAsText(f);
+  });
+}
+function resetData(){if(confirm('Voltar aos dados de exemplo? Os dados atuais deste aparelho serão substituídos.\n\nA versão atual é guardada antes, então dá para voltar atrás.')){guardarVersao('antes de voltar aos exemplos');D=migrate(structuredClone(DEFAULT));save();initFields();renderAll();setMode(D.mode||'contas')}}
 
 /* ================= LANÇAR FALANDO (ou escrevendo) — 100% local =================
    O coração aqui é o interpretador de texto, não a captura de voz: no iPhone a
@@ -2335,7 +3135,8 @@ function falarLancar(){
   if(D.contas.transacoes.some(t=>t._k===key)){
     alert('Esse lançamento já está salvo — nada foi duplicado.');closeFalar();return;
   }
-  D.contas.transacoes.push({_k:key,date:fl.date,mes:mesFromDate(fl.date),desc,amount,cat:fl.cat||categorize(desc,amount)});
+  D.contas.transacoes.push({_k:key,date:fl.date,mes:mesFromDate(fl.date),desc,amount,
+    cat:fl.cat||categorize(desc,amount),pes:fl.pes||pesDe(desc,D.contas.exPessoa)});
   /* entrada também vai para a aba Recebidos — são vistas diferentes do mesmo
      fato: nenhum número do app soma as duas listas */
   if(fl.tipo==='entrada')D.contas.recebidos.push({_k:key,valor:Math.abs(fl.valor),data:fl.date.slice(0,5),desc});
@@ -2351,8 +3152,11 @@ function pickExtrato(){
   const i=document.createElement('input');i.type='file';
   /* tipos MIME além das extensões: no iOS o app Arquivos desabilita .ofx,
      que não tem tipo registrado no sistema, e o arquivo fica impossível de escolher */
-  i.accept='.ofx,.qfx,.csv,.txt,text/plain,text/csv,text/comma-separated-values,application/x-ofx,application/vnd.intu.qfx,application/octet-stream';
+  i.accept='.ofx,.qfx,.csv,.txt,.pdf,text/plain,text/csv,text/comma-separated-values,application/pdf,application/x-ofx,application/vnd.intu.qfx,application/octet-stream';
   i.onchange=e=>{const f=e.target.files[0];i.remove();if(!f)return;
+    /* o banco e a corretora exportam em PDF; era o único formato que o app
+       mandava você fotografar em vez de ler */
+    if(/\.pdf$/i.test(f.name)||f.type==='application/pdf'){lerPDFExtrato(f);return;}
     const r=new FileReader();
     r.onerror=()=>alert('Não consegui ler o arquivo "'+f.name+'". Se ele veio de um app de banco, tente exportar de novo ou salvar no Arquivos antes de escolher.');
     r.onload=()=>{
@@ -2387,14 +3191,19 @@ function parseBRNum(s){
 }
 function parseOFX(text){
   const txns=[];const blocks=text.match(/<STMTTRN>[\s\S]*?<\/STMTTRN>/gi)||[];
+  /* O padrão OFX tem um bloco próprio para cartão de crédito: CCSTMTRS, dentro
+     de CREDITCARDMSGSRSV1. É o jeito certo de saber que o arquivo é uma fatura
+     — sem ele, o extrato do cartão entrava como se fosse da conta corrente. */
+  const ehCartao=/<CCSTMTRS>|CREDITCARDMSGSRSV1|<CCACCTFROM>/i.test(text||'');
   const tag=(b,t)=>{const m=b.match(new RegExp('<'+t+'>([^<\\r\\n]*)','i'));return m?m[1].trim():'';};
   blocks.forEach(b=>{
     const amt=parseFloat((tag(b,'TRNAMT')||'').replace(',','.'));if(isNaN(amt))return;
     const dt=(tag(b,'DTPOSTED')||'').slice(0,8);
     const desc=(tag(b,'MEMO')||tag(b,'NAME')||tag(b,'CHECKNUM')||'—');
-    let d='';if(dt.length>=8)d=dt.slice(6,8)+'/'+dt.slice(4,6)+'/'+dt.slice(0,4);
-    txns.push({date:d,desc,amount:amt});
+    let d=dataNorm(dt)||dataNorm(tag(b,'DTPOSTED'));
+    txns.push({date:d,desc,amount:amt,fatura:ehCartao});
   });
+  txns.ehFatura=ehCartao;
   return txns;
 }
 /* Divide uma linha de CSV respeitando aspas: "MERCADO, LTDA" é UM campo, não
@@ -2444,13 +3253,85 @@ function parseCSV(text){
     let vidx=vi;
     if(vidx<0){for(let k=parts.length-1;k>=0;k--){if(parseBRNum(parts[k])!=null&&/\d/.test(parts[k])){vidx=k;break;}}}
     const amt=parseBRNum(parts[vidx]);if(amt==null)continue;
-    let dateS=(di>=0?parts[di]:(parts.find(p=>/\d{2}[\/\-]\d{2}/.test(p))||'')).trim();
+    let dateS=(di>=0?parts[di]:(parts.find(p=>/\d{4}[-.\/]\d{1,2}[-.\/]\d{1,2}|\d{1,2}[\/\-.]\d{1,2}/.test(p))||'')).trim();
     let descS=(xi>=0?parts[xi]:parts.filter((p,k)=>k!==vidx&&p.trim()!==dateS).sort((a,b)=>b.length-a.length)[0]||'—').trim();
-    txns.push({date:dateS,desc:descS||'—',amount:amt});
+    txns.push({date:dataNorm(dateS)||dateS,desc:descS||'—',amount:amt});
   }
   return txns;
 }
+/* ---------- ler o PDF do banco e da fatura ----------
+   O pdf.js devolve cada pedaço de texto com a posição na página. Juntar por
+   linha (mesma altura) devolve o extrato como ele aparece impresso, que é o
+   que o leitor de texto do app já sabe separar. */
+let pdfLoad=null;
+function ensurePDFjs(){
+  if(window.pdfjsLib)return Promise.resolve();
+  if(pdfLoad)return pdfLoad;
+  pdfLoad=new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+    s.onload=()=>{
+      try{window.pdfjsLib.GlobalWorkerOptions.workerSrc=
+        'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';}catch(_){}
+      res();
+    };
+    s.onerror=()=>rej(new Error('cdn'));
+    document.head.appendChild(s);
+  });
+  return pdfLoad;
+}
+/* junta os pedaços da página em linhas, pela altura de cada um */
+function linhasDoPDF(itens){
+  const linhas=[];
+  (itens||[]).forEach(it=>{
+    const txt=(it.str||'');
+    if(!txt.trim())return;
+    const y=Math.round((it.transform&&it.transform[5])||0);
+    const x=(it.transform&&it.transform[4])||0;
+    let l=linhas.find(L=>Math.abs(L.y-y)<=3);
+    if(!l){l={y,pedacos:[]};linhas.push(l);}
+    l.pedacos.push({x,txt});
+  });
+  return linhas.sort((a,b)=>b.y-a.y)
+    .map(L=>L.pedacos.sort((a,b)=>a.x-b.x).map(p=>p.txt).join(' ')
+      .replace(/\s+/g,' ').trim())
+    .filter(Boolean);
+}
+async function lerPDFExtrato(file){
+  try{
+    ocrToast('Abrindo o PDF…');
+    await ensurePDFjs();
+    const buf=await file.arrayBuffer();
+    const doc=await window.pdfjsLib.getDocument({data:new Uint8Array(buf)}).promise;
+    const todas=[];
+    for(let n=1;n<=doc.numPages;n++){
+      ocrToast('Lendo página '+n+' de '+doc.numPages+'…');
+      const pg=await doc.getPage(n);
+      const tc=await pg.getTextContent();
+      linhasDoPDF(tc.items).forEach(l=>todas.push(l));
+    }
+    ocrToast(false);
+    const txt=todas.join('\n');
+    if(!txt.trim()){
+      alert('Esse PDF não tem texto — é só imagem (PDF escaneado).\n\nUse "foto do extrato": o app lê a imagem.');
+      return;
+    }
+    showExtratoPreview(parseTextExtrato(txt));
+  }catch(e){
+    ocrToast(false);
+    const det=(e&&e.message)?('\n\nDetalhe: '+e.message):'';
+    alert('Não consegui ler esse PDF.'+det
+      +'\n\nSe der, exporte o extrato em OFX ou CSV — é sempre mais fiel. Ou use "foto do extrato".');
+  }
+}
 function loadExtrato(text,name){
+  const bin=pareceBinario(text);
+  if(bin){
+    alert('Esse arquivo não é um extrato em texto — parece '+bin+'.\n\n'
+      +'O app lê OFX, CSV, QFX, TXT e PDF. No app do banco procure "exportar" ou "baixar extrato" e escolha OFX (o mais fiel) ou CSV.\n\n'
+      +'Se for um PDF, escolha o arquivo de novo pelo botão de importar: o app lê PDF direto.');
+    return;
+  }
   const isOFX=/\.(ofx|qfx)$/i.test(name)||/<OFX>|<STMTTRN>/i.test(text);
   showExtratoPreview(isOFX?parseOFX(text):parseCSV(text));
 }
@@ -2522,12 +3403,112 @@ function catMatch(d,k){
   if(!inteira)return d.includes(kk);
   return new RegExp('(^|[^a-z0-9])'+kk.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'([^a-z0-9]|$)').test(d);
 }
-function categorize(desc,amount){
+/* Marcas cujo nome contém uma palavra genérica de outra categoria. Sem isto,
+   "Mercado Livre" e "Mercado Pago" caem em Mercado (supermercado) só por conter
+   "mercado". Decididas antes da lista geral. */
+const CAT_MARCA=[
+  [/mercado ?livre|mercadolivre|meli\b|mercado ?envios/,"Compras"],
+  [/mercado ?pago|mercadopago|mp \*/,"Serviços"],
+  [/casa ?do ?constru|constru ?mega|telha ?norte|leroy/,"Compras"],
+  [/farmacia ?pague ?menos|pague ?menos/,"Saúde"],
+  /* "posto" quase sempre é combustível, menos quando é posto de saúde */
+  [/posto ?de ?saude|posto ?medico|unidade ?basica|ubs\b/,"Saúde"],
+  [/posto ?ipiranga|ipiranga ?abastec|auto ?posto|posto ?shell|shell ?select|posto ?petrobras|br ?mania/,"Combustível"],
+  [/ze ?delivery|zedelivery|distribuidora ?de ?bebida|empori?o ?da ?cerveja|adega\b/,"Bebidas"],
+  /* "aluguel de quadra" é custo da academia, não a moradia — e "aluguel"
+     sozinho cai em Moradia, que vem antes na lista */
+  [/aluguel ?(de )?quadra|locacao ?(de )?quadra/,"Empresa"],
+  /* bebida comprada DENTRO do mercado não vira Bebidas: a linha é do mercado */
+  [/(super)?mercado|atacad|assai|carrefour|angeloni|zaffari/,"Mercado"],
+  /* "distribuidora" sozinha, no extrato do João, quase sempre é bebida. Mas
+     combustível, alimentos e remédios também se vendem por distribuidora — e
+     "PETROBRAS DISTRIBUIDORA" não pode virar cerveja. Estas três vêm antes. */
+  [/(petrobras|ipiranga|raizen|vibra|shell|texaco|charrua|ale)\s*distrib|distribuidora\s*(de\s*)?(combustiv|petrole|deriv|lubrific)/,"Combustível"],
+  [/distribuidora\s*(de\s*)?(aliment|hortifrut|carnes|frios|laticinio)/,"Mercado"],
+  [/distribuidora\s*(de\s*)?(medicament|farmac|hospitalar)/,"Saúde"],
+  [/\bdistribuidora\b|\bdistrib\b/,"Bebidas"]
+];
+function ehPagamentoFatura(desc){
   const d=norm(desc);
-  for(const key in D.contas.catMemory){if(key&&key.length>=3&&d.includes(key))return D.contas.catMemory[key];}
+  return TX_CARTAO.some(k=>d.includes(norm(k)));
+}
+/* ---------- tirar o ruído que o banco imprime ----------
+   O extrato do Itaú vem assim:
+     ELECTRON FESTVAL TIN-001073      → cartão Visa Electron + terminal
+     PAGAMENTOS PIX QR-CODE CONDOR SUPER CENTER LTDA 76.189.406/0001-26
+     BOLETO PAGO KONDOR IMOVE KONDOR IMOVEIS LTDA EPP 79.197.893/0001-67
+   O que interessa é o nome do comércio no meio. "ELECTRON" é a bandeira do
+   cartão, não o estabelecimento — e estava jogando 29 compras de mercado e
+   posto para Serviços, porque "electron" era palavra-chave de lá. */
+const LIXO_EXTRATO=[
+  /^(electron|elcss|elccs|elcs|elcc|elo|visa|master|maestro|debito|credito)\s+/,
+  /^pagamentos?\s+pix\s+qr-?code\s+/,
+  /^pagamentos?\s+trib\s+cod\s+barras\s+/,
+  /^boleto\s+pago\s+/,
+  /^(pix|ted|doc)\s+(enviado|recebido)\s+/,
+  /^pagamentos?\s+/
+];
+function limpaComercio(desc){
+  let d=norm(desc);
+  LIXO_EXTRATO.forEach(re=>{d=d.replace(re,'');});
+  return d.replace(/[\d.\/-]{11,}/g,' ')     /* CPF, CNPJ e id de terminal */
+          .replace(/-\d{3,}\b/g,' ')
+          .replace(/\s+/g,' ').trim();
+}
+/* A palavra aprendida tem de começar onde uma palavra começa — assim "pao" não
+   reconhece "pagamento". Mas o fim fica solto de propósito: quem escreve
+   "tavares transporte" espera pegar "TAVARES TRANSPORTES" também. */
+/* Algumas linhas só trazem o CPF/CNPJ de quem recebeu — o nome nunca vem:
+   "PIX ENVIADO 014.429.329-37", "PAGAMENTOS 10.573.521/0001-91". A limpeza
+   joga o documento fora junto com o resto do ruído e não sobra nada para
+   ensinar. Guardados só os dígitos, o documento vira a chave da regra. */
+function docDe(desc){
+  const m=norm(desc).match(/\d[\d.\-\/]{9,}\d/);
+  if(!m)return '';
+  const d=m[0].replace(/\D/g,'');
+  return (d.length===11||d.length===14)?d:'';
+}
+function memMatch(d,key){
+  const k=norm(key).trim();
+  if(!k)return false;
+  return new RegExp('(^|[^a-z0-9])'+k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).test(d);
+}
+function categorize(desc,amount){
+  /* Sobrando só o documento, o número não pode virar palavra-chave: um CPF
+     terminado em 99 casava com "99" (o aplicativo de corrida) e o PIX ia
+     parar em Transporte. */
+  const d=limpaComercio(desc)||norm(desc).replace(/[\d][\d.\-\/]{7,}/g,' ').replace(/\s+/g,' ').trim();
   if(amount>0)return "Entradas";
-  for(const pair of CAT_KW){if(pair[0]==="Entradas")continue;if(pair[1].some(k=>catMatch(d,k)))return pair[0];}
-  return "Outros";
+  /* antes de qualquer palavra-chave: "PAGTO FATURA CARTAO XP" tem "xp" dentro
+     e cairia em investimento; "cartao de credito" cairia em Serviços */
+  if(ehPagamentoFatura(desc))return "Cartão de crédito";
+  for(const [re,cat] of CAT_MARCA){if(re.test(d))return cat;}
+  /* A EVIDÊNCIA MAIS LONGA GANHA.
+     "Condor" é rede de supermercado E nome da imobiliária do aluguel. Quando a
+     memória aprendida vencia tudo, corrigir uma compra do supermercado ensinava
+     a palavra "condor" e levava o aluguel junto para Mercado. Agora "imobiliaria"
+     (11 letras) diz mais sobre a linha do que "condor" (6), e ganha — enquanto
+     em "SUPERMERCADO CONDOR" quem ganha é "supermerc". O aprendizado continua
+     valendo onde é a única pista. */
+  /* Empate fica com o que você ensinou: se a palavra aprendida é a mesma que a
+     regra traz, quem mandou por último foi você. */
+  let melhor=null,peso=0;
+  const doc=docDe(desc);
+  for(const key in D.contas.catMemory){
+    if(!key)continue;
+    /* documento bate por inteiro: é identidade, ganha de qualquer palavra */
+    const kd=key.replace(/\D/g,'');
+    if(doc&&(kd.length===11||kd.length===14)&&kd===doc){peso=99;melhor=D.contas.catMemory[key];continue;}
+    if(key.length>=3&&key.length>peso&&memMatch(d,key)){peso=key.length;melhor=D.contas.catMemory[key];}
+  }
+  for(const pair of CAT_KW){
+    if(pair[0]==="Entradas")continue;
+    for(const k of pair[1]){
+      const kk=norm(k).trim();
+      if(kk.length>peso&&catMatch(d,k)){peso=kk.length;melhor=pair[0];}
+    }
+  }
+  return melhor||"Outros";
 }
 function isIncomeDesc(desc){return /(recebid|salario|deposito|rendimento|estorno|reembolso|provento|pagamento receb|credito receb)/.test(norm(desc));}
 
@@ -2538,39 +3519,423 @@ function isIncomeDesc(desc){return /(recebid|salario|deposito|rendimento|estorno
 const TX_CARTAO=['pagamento de fatura','pagamento fatura','pagto fatura','pgto fatura','pag fatura',
   'fatura cartao','fatura do cartao','cartao de credito','pagamento cartao','pagto cartao','pgto cartao',
   'pagamento de cartao','fatura c/c','deb fatura','debito fatura'];
+/* Transferência para você mesmo não é gasto: o dinheiro só mudou de bolso.
+   O extrato traz o nome completo do destinatário, então basta reconhecê-lo. */
+/* Os nomes das SUAS contas de investimento entram junto: o que vai para lá
+   nunca é gasto — e, além disso, é aporte. */
+function nomesInvest(){return (D.contas.nomesInvest||[]).filter(x=>x&&x.length>=4);}
+function meusNomes(){
+  return (D.contas.meusNomes||[]).concat(D.contas.nomesInvest||[]).filter(x=>x&&x.length>=4);
+}
+/* PIX da empresa para a sua corretora: saída de dinheiro que não é gasto
+   nenhum — é dinheiro trocando de lugar para render. */
+function ehAporteDesc(desc){
+  const d=norm(desc);
+  return nomesInvest().some(n=>d.includes(norm(n)));
+}
+/* ---------- trazer nomes e regras de um arquivo ----------
+   São quatro listas que moram só no aparelho e que hoje se digitam à mão.
+   O arquivo traz as quatro de uma vez, em seções marcadas com colchetes:
+
+     [ Nomes, CPF ou CNPJ da família ]
+     [ Contas de investimento ]
+     [ Acima de quanto é pagamento de fatura (R$) ]
+     [ Minhas regras — trecho do nome = categoria ]
+
+   Qualquer outra seção é ignorada — dá para deixar recados e listas de
+   pendência no mesmo arquivo sem atrapalhar. Nada é aplicado sem você ver
+   antes quantas linhas de cada tipo entraram. */
+function lerBlocoRegras(txt){
+  const r={familia:[],invest:[],limite:null,regras:[],
+           nac:[],glob:[],bin:[],cambio:null,caixa:null};
+  let onde='';
+  String(txt||'').split(/\r?\n/).forEach(linha=>{
+    const l=linha.trim();
+    if(!l)return;
+    /* o cabeçalho pode ter um comentário depois do colchete:
+         [ Contas de investimento ]   (vira aporte) */
+    const cab=l.match(/^\[([^\]]+)\]/);
+    if(cab){
+      const n=norm(cab[1]);
+      onde=/carteira.*(nacional|brasil)/.test(n)?'nac'
+         :/carteira.*(global|etf|exterior)/.test(n)?'glob'
+         :/carteira.*(binance|cripto)/.test(n)?'bin'
+         :/cambio|dolar/.test(n)?'cambio'
+         :/saldo.*(global|conta)/.test(n)?'caixa'
+         :/contas? de investimento/.test(n)?'invest'
+         :/familia/.test(n)?'familia'
+         :/fatura/.test(n)?'limite'
+         :/regra/.test(n)?'regras':'';
+      return;
+    }
+    /* uma linha de moldura (=====) fecha a seção: o que vem depois dela,
+       até o próximo colchete, é recado e não entra em lista nenhuma */
+    if(/^[=\-_*]{4,}/.test(l)){onde='';return;}
+    if(/^[a-zà-ú].*:$/i.test(l)&&!onde)return;
+    if(!onde)return;
+    if(/^[(#]/.test(l))return;                      /* comentário entre parênteses */
+    if(onde==='limite'){const v=parseBRNum(l);if(v!=null&&v>0)r.limite=v;return;}
+    if(onde==='cambio'){const v=parseBRNum(l);if(v!=null&&v>0)r.cambio=v;return;}
+    if(onde==='caixa'){const v=parseBRNum(l);if(v!=null&&v>=0)r.caixa=v;return;}
+    if(onde==='regras'){if(l.indexOf('=')>0)r.regras.push(l);return;}
+    if(onde==='nac'||onde==='glob'||onde==='bin'){
+      const it=leAtivoDoBloco(l,onde);if(it)r[onde].push(it);return;
+    }
+    r[onde].push(l);
+  });
+  return r;
+}
+/* Uma linha de ativo no arquivo:
+     Nacional e Binance:  Nome do ativo = 25.081,93        [| Classe]
+     Global:              QQQ = 0,85814 x 739,93           [| Classe]
+                          QQQ = 634,96        (só a posição, sem a quantidade)
+   O "| Classe" no fim é opcional — sem ele o app adivinha pelo nome. */
+function leAtivoDoBloco(linha,conta){
+  let l=String(linha||''),classe='';
+  const bar=l.lastIndexOf('|');
+  if(bar>0){classe=l.slice(bar+1).trim();l=l.slice(0,bar);}
+  const i=l.indexOf('=');if(i<0)return null;
+  const nome=l.slice(0,i).trim();if(nome.length<2)return null;
+  const resto=l.slice(i+1).trim();
+  const cls=CLASSES.find(c=>norm(c)===norm(classe))||guessClasse(classe||nome);
+  if(conta==='glob'){
+    const m=resto.split(/\s*[x×]\s*/);
+    const qtd=parseBRNum(m[0]),pre=m.length>1?parseBRNum(m[1]):null;
+    const tk=tickerDe(nome);
+    if(m.length>1){
+      if(qtd==null||pre==null||!(qtd>0))return null;
+      return {tk,nome,classe:cls,qtd,pm:0,pa:pre,apl:0};
+    }
+    if(qtd==null||!(qtd>0))return null;
+    return {tk,nome,classe:cls,qtd:1,pm:0,pa:qtd,apl:0};   /* só a posição */
+  }
+  const v=parseBRNum(resto);
+  if(v==null||!(v>0))return null;
+  return {nome,classe:cls,valor:v,apl:null};
+}
+/* coloca a lista do arquivo na carteira: casa os nomes iguais, acrescenta os
+   novos — o mesmo critério da planilha e da foto */
+function fundeCarteira(arr,itens,conta){
+  let mexeu=0,novos=0;
+  (itens||[]).forEach(it=>{
+    const i=acharNaConta(arr,it.nome,it.tk||'');
+    if(i<0){arr.push(it);novos++;return;}
+    const x=arr[i];
+    if(conta==='glob'){if(it.qtd)x.qtd=it.qtd;if(it.pa)x.pa=it.pa;if(!x.tk&&it.tk)x.tk=it.tk;}
+    else x.valor=it.valor;
+    mexeu++;
+  });
+  return {mexeu,novos};
+}
+function aplicaBlocoRegras(txt){
+  const r=lerBlocoRegras(txt);
+  const nada=!r.familia.length&&!r.invest.length&&r.limite==null&&!r.regras.length
+    &&!r.nac.length&&!r.glob.length&&!r.bin.length&&r.cambio==null&&r.caixa==null;
+  if(nada){
+    alert('Não achei nenhuma das quatro listas nesse arquivo.\n\n'
+      +'Ele precisa ter as seções entre colchetes, assim:\n'
+      +'[ Nomes, CPF ou CNPJ da família ]\n[ Contas de investimento ]\n'
+      +'[ Acima de quanto é pagamento de fatura (R$) ]\n[ Minhas regras ]');
+    return false;
+  }
+  const linhas=[];
+  if(r.familia.length)linhas.push(r.familia.length+' nome(s) da família');
+  if(r.invest.length)linhas.push(r.invest.length+' conta(s) de investimento');
+  if(r.limite!=null)linhas.push('corte de fatura: '+brl(r.limite));
+  if(r.regras.length)linhas.push(r.regras.length+' regra(s) de categoria');
+  if(r.nac.length)linhas.push(r.nac.length+' ativo(s) na carteira Nacional');
+  if(r.glob.length)linhas.push(r.glob.length+' ativo(s) na carteira Global');
+  if(r.bin.length)linhas.push(r.bin.length+' moeda(s) na Binance');
+  if(r.cambio!=null)linhas.push('câmbio: '+r.cambio);
+  if(r.caixa!=null)linhas.push('saldo da conta global: US$ '+r.caixa);
+  if(!confirm('Vou atualizar:\n\n'+linhas.join('\n')
+    +'\n\nO que já existe recebe o valor novo; o que é novo entra. Continuar?'))return false;
+  guardarVersao('antes de trazer nomes e regras do arquivo');
+  if(r.familia.length)D.contas.meusNomes=r.familia.slice();
+  if(r.invest.length)D.contas.nomesInvest=r.invest.slice();
+  if(r.limite!=null)D.contas.limiteAporte=r.limite;
+  if(r.regras.length)setMinhasRegras(r.regras.join('\n'));
+  /* a carteira entra casando os nomes, como a planilha e a foto */
+  let carteira=0;
+  if(r.cambio!=null){D.invest.cambio=r.cambio;carteira++;}
+  if(r.caixa!=null){D.invest.caixaGlobalUSD=r.caixa;carteira++;}
+  if(r.nac.length){fundeCarteira(D.invest.nacional=D.invest.nacional||[],r.nac,'nac');carteira++;}
+  if(r.glob.length){fundeCarteira(D.invest.global=D.invest.global||[],r.glob,'glob');carteira++;}
+  if(r.bin.length){fundeCarteira(D.invest.binance=D.invest.binance||[],r.bin,'bin');carteira++;}
+  save();
+  /* recarrega os campos da tela com o que entrou */
+  const f=document.getElementById('meus-nomes');if(f)f.value=(D.contas.meusNomes||[]).join('\n');
+  const i=document.getElementById('nomes-invest');if(i)i.value=(D.contas.nomesInvest||[]).join('\n');
+  const li=document.getElementById('lim-aporte');if(li)li.value=limiteAporte();
+  const rg=document.getElementById('regras-txt');
+  if(rg)rg.value=Object.keys(D.contas.catMemory||{}).sort()
+    .map(k=>k+' = '+D.contas.catMemory[k]).join('\n');
+  safeRun(renderCategorias);
+  let extra='';
+  if(carteira){
+    ['renderNac','renderGlob','renderBin','refreshCarteira','drawInvPainel','renderGanhos']
+      .forEach(f=>{if(typeof window[f]==='function')safeRun(window[f]);});
+    const reg=registrarPatrimonio();
+    extra='\n\nCarteira atualizada: '+brl(reg.total)+' no total.\n'+textoRegistro(reg);
+  }
+  alert('Pronto.\n'+(D.contas.meusNomes||[]).length+' nome(s) da família, '
+    +(D.contas.nomesInvest||[]).length+' conta(s) de investimento, corte de '
+    +brl(limiteAporte())+' e '+Object.keys(D.contas.catMemory||{}).length+' regra(s).'
+    +extra+'\n\nDá para desfazer em Resumo → versões guardadas.');
+  return true;
+}
+function pickBlocoRegras(){
+  pickFile('.txt,.json,text/plain,application/json',f=>{
+    const r=new FileReader();
+    r.onerror=()=>alert('Não consegui ler o arquivo.');
+    r.onload=()=>aplicaBlocoRegras(String(r.result||''));
+    r.readAsText(f,'utf-8');
+  });
+}
+function setNomesInvest(txt){
+  D.contas.nomesInvest=String(txt||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+  save();
+}
+/* Nem tudo que vai para a corretora é aporte: o pagamento da fatura do cartão
+   sai da mesma conta e para o mesmo nome. O que separa os dois é o tamanho —
+   a fatura é alta, o aporte do mês é menor. O corte fica aqui, editável,
+   porque só o dono sabe onde ele passa. */
+function limiteAporte(){const v=+((D.contas||{}).limiteAporte);return v>0?v:2500;}
+function setLimiteAporte(v){
+  const n=+v;D.contas.limiteAporte=(n>0)?n:2500;save();
+  const h=document.getElementById('lim-aporte-hint');
+  if(h)h.textContent='Abaixo de '+brl(limiteAporte())+' é aporte; acima é pagamento de fatura.';
+}
+function ehPagamentoFaturaValor(desc,amount){
+  return ehAporteDesc(desc)&&Math.abs(+amount||0)>=limiteAporte();
+}
+function ehTransfPropria(desc){
+  const d=norm(desc);
+  return meusNomes().some(n=>d.includes(norm(n)));
+}
+function setMeusNomes(txt){
+  D.contas.meusNomes=String(txt||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+  save();
+}
+function toggleMeus(){
+  const b=document.getElementById('meus-box');if(!b)return;
+  const abrir=b.style.display==='none';
+  b.style.display=abrir?'':'none';
+  if(!abrir)return;
+  document.getElementById('meus-nomes').value=(D.contas.meusNomes||[]).join('\n');
+  const ni=document.getElementById('nomes-invest');
+  if(ni)ni.value=(D.contas.nomesInvest||[]).join('\n');
+  const li=document.getElementById('lim-aporte');
+  if(li)li.value=limiteAporte();
+  const r=document.getElementById('regras-txt');
+  if(r)r.value=Object.keys(D.contas.catMemory||{}).sort()
+    .map(k=>k+' = '+D.contas.catMemory[k]).join('\n');
+}
+/* As regras que o João escreve à mão vão para o MESMO lugar onde o app guarda
+   o que aprendeu sozinho: uma palavra do nome do comércio apontando para uma
+   categoria. Assim não existem dois sistemas para a mesma coisa — e nada
+   disso entra no código, porque são nomes de outras pessoas. */
+function setMinhasRegras(txt){
+  const novo={},recusadas=[];
+  String(txt||'').split(/\r?\n/).forEach(l=>{
+    if(!l.trim())return;
+    const i=l.indexOf('=');
+    if(i<0){recusadas.push(l.trim()+' (falta o "=")');return;}
+    const chave=norm(l.slice(0,i)).trim(),cat=l.slice(i+1).trim();
+    const soDig=chave.replace(/\D/g,'');
+    if(soDig.length===11||soDig.length===14){
+      const achouD=CATEGORIAS.find(c=>norm(c)===norm(cat));
+      if(!achouD){recusadas.push(l.trim()+' (categoria "'+cat+'" não existe)');return;}
+      novo[soDig]=achouD;return;                /* CPF ou CNPJ vira regra */
+    }
+    if(chave.length<3){recusadas.push(l.trim()+' (trecho curto demais)');return;}
+    const achou=CATEGORIAS.find(c=>norm(c)===norm(cat));
+    if(!achou){recusadas.push(l.trim()+' (categoria "'+cat+'" não existe)');return;}
+    novo[chave]=achou;
+  });
+  D.contas.catMemory=novo;save();
+  const h=document.getElementById('regras-hint');
+  if(h)h.innerHTML=recusadas.length
+    ? ('⚠ '+recusadas.length+' linha(s) fora: '+esc(recusadas.slice(0,3).join('; '))
+      +'<br>Categorias válidas: '+CATEGORIAS.join(', '))
+    : (Object.keys(novo).length+' regra(s) valendo. Vale para as próximas importações também.');
+  safeRun(renderCategorias);
+}
 const TX_INVEST=['aplicacao','aplic automatica','aplic ','resgate','investimento','invest ',
   'cdb','rdb','lci','lca','tesouro','poupanca','previdencia','fundo de invest',
   'mesma titularidade','mesmo titular','entre contas proprias','transf entre contas',
   'xp investimentos','xp inv','corretora'];
 function tipoTx(desc,amount){
+  if(ehLinhaSaldo(desc))return 'saldo';      /* saldo do dia não é movimentação */
+  /* Dinheiro que anda entre você e a Kassiana (ou entre suas próprias contas)
+     não é gasto NEM entrada — nos DOIS sentidos. Antes só a saída era vista:
+     o que ela mandava de volta entrava como receita e inflava o mês. */
+  if(ehTransfPropria(desc))return 'invest';
   if(amount>0)return 'normal';               /* entradas nunca são fatura/aplicação */
   const d=norm(desc);
   if(TX_CARTAO.some(k=>d.includes(norm(k))))return 'cartao';
-  if(TX_INVEST.some(k=>d.includes(norm(k))))return 'invest';
+  /* "HAVAN FUNDO DE INVESTIMENTO EM DIREITOS CREDITORIOS" é o nome de quem
+     recebe uma compra na Havan, não uma aplicação. Quando a linha já tem um
+     comércio reconhecido, ela é gasto — a palavra "investimento" só decide
+     quando não há explicação melhor. */
+  if(TX_INVEST.some(k=>d.includes(norm(k)))&&categorize(desc,amount)==='Outros')return 'invest';
   return 'normal';
 }
-const TX_ROTULO={cartao:'fatura do cartão',invest:'investimento / você mesmo'};
+const TX_ROTULO={cartao:'fatura do cartão',invest:'investimento / dinheiro entre vocês',
+  saldo:'linha de saldo, não é lançamento',jalancado:'já lançado antes'};
+
+/* Linhas que o banco imprime no extrato mas NÃO são movimentação: saldo do dia,
+   saldo anterior, totais. Elas repetem todo dia com o valor do saldo, então
+   entravam como se fossem gasto e inflavam tudo. */
+const TX_SALDO=/^(saldo|s\.?\s?anterior|total\b|subtotal|limite|extrato|resumo|posi[cç][aã]o|movimenta[cç][aã]o do dia|lan[cç]amentos? do dia)/;
+function ehLinhaSaldo(desc){
+  const d=norm(desc);
+  if(!d)return true;
+  if(TX_SALDO.test(d))return true;
+  if(/\bsaldo\b/.test(d)&&/(disponivel|anterior|do dia|atual|final|bloqueado|conta)/.test(d))return true;
+  return false;
+}
+
+/* Um arquivo binário (PDF, XLSX, imagem) lido como texto vira lixo que o leitor
+   interpreta como valores gigantes. Antes de tentar ler, checa se é texto. */
+function pareceBinario(t){
+  if(typeof t!=='string'||!t)return true;
+  const cab=t.slice(0,8);
+  if(cab.startsWith('%PDF'))return 'PDF';
+  if(cab.startsWith('PK\u0003\u0004'))return 'planilha ou .zip';
+  if(cab.startsWith('\u00d0\u00cf\u0011\u00e0'))return 'Excel antigo (.xls)';
+  if(/^\u00ff\u00d8\u00ff|^\u0089PNG/.test(cab))return 'imagem';
+  const amostra=t.slice(0,4000);
+  let ruins=0;
+  for(let i=0;i<amostra.length;i++){
+    const c=amostra.charCodeAt(i);
+    if(c===9||c===10||c===13)continue;
+    if(c<32||c===0xFFFD||(c>=0x80&&c<=0x9f))ruins++;
+  }
+  return (amostra.length&&ruins/amostra.length>0.06)?'arquivo binário':false;
+}
 /* respeita as caixas de seleção do modal */
-function txIgnorado(x){
+/* fora da SOMA, mas ainda assim gravado — você precisa ver que o pagamento
+   da fatura aconteceu, só não quer ele somando duas vezes */
+function txNaoConta(x){
   if(x.tipo==='cartao')return !((document.getElementById('ex-cartao')||{}).checked===false);
   if(x.tipo==='invest')return !((document.getElementById('ex-invest')||{}).checked===false);
   return false;
 }
+function txIgnorado(x){
+  if(x.tipo==='saldo')return true;           /* nunca conta: não é lançamento */
+  if(x.jaTem)return true;                    /* já está salvo, não conta de novo */
+  return txNaoConta(x);
+}
+/* tudo que vale a pena gravar: linha de saldo do banco não é lançamento, e o
+   que já está salvo não entra de novo. O resto entra — contando ou não. */
+function txSalvaveis(){return extratoTxns.filter(x=>x.tipo!=='saldo'&&!x.jaTem);}
+/* esta linha já foi importada numa vez anterior? */
+function jaImportado(x){
+  const k=txKey(x);
+  return (D.contas.transacoes||[]).some(t=>t._k===k);
+}
 function txContaveis(){return extratoTxns.filter(x=>!txIgnorado(x));}
 /* impressão digital de um lançamento — usada para nunca importar o mesmo duas vezes */
 function txKey(x){return (x.date||'')+'|'+(+x.amount||0).toFixed(2)+'|'+norm(x.desc).slice(0,22);}
-function mesFromDate(dstr){
-  const m=(dstr||'').match(/(\d{2})[\/\-.](\d{2})(?:[\/\-.](\d{2,4}))?/);if(!m)return '—';
-  const mm=+m[2],yy=m[3]?(m[3].length===2?('20'+m[3]):m[3]):(''+new Date().getFullYear());
-  return (MESES[mm-1]||'??')+'/'+String(yy).slice(2);
+/* ---------- a data, do jeito que cada banco escreve ----------
+   15/07/2026 · 15/07/26 · 15-07 · 2026-07-15 (Nubank e Inter exportam assim)
+   · 20260715 (OFX cru) · "15 de julho de 2026" (foto do app do banco).
+   Tudo vira dd/mm/aaaa aqui. Sem isto, "2026-07-15" era lido como dia 15 do
+   mês 07 do ano 15: o extrato do ano inteiro caía numa gaveta só, num ano
+   que não existe. */
+const MES_NOME={jan:1,fev:2,mar:3,abr:4,mai:5,jun:6,jul:7,ago:8,set:9,out:10,nov:11,dez:12};
+function pad2(n){return String(n).length<2?('0'+n):String(n);}
+function anoDe2(y){y=+y;return y>=70?(1900+y):(2000+y);}
+/* Sem o ano escrito, a data é do extrato que você está importando agora: se o
+   mês ainda não chegou neste ano, ele é do ano passado. Antes tudo virava o
+   ano corrente e um extrato de novembro ia parar no futuro. */
+function anoProvavel(mm){
+  const h=new Date(),ano=h.getFullYear();
+  return mm>(h.getMonth()+1)?(ano-1):ano;
 }
-let extratoOrig=[],catFiltroMes='Todos';
+function dataNorm(s){
+  const t=String(s||'').trim();if(!t)return '';
+  let m;
+  if((m=t.match(/(\d{4})[-.\/](\d{1,2})[-.\/](\d{1,2})/))){
+    const mm=+m[2],dd=+m[3];
+    if(mm>=1&&mm<=12&&dd>=1&&dd<=31)return pad2(dd)+'/'+pad2(mm)+'/'+m[1];
+  }
+  if((m=t.match(/\b(\d{4})(\d{2})(\d{2})\b/))){
+    const mm=+m[2],dd=+m[3];
+    if(mm>=1&&mm<=12&&dd>=1&&dd<=31)return m[3]+'/'+m[2]+'/'+m[1];
+  }
+  /* O nome do mês precisa terminar onde um mês termina. Sem isto, "PIX
+     RECEBIDO MARCELO09/09" virava 09 de MARço: "MARCELO" começa com "mar", e
+     o lançamento de setembro ia parar em março. */
+  if((m=t.match(/(\d{1,2})\s*(?:de\s+)?(jan(?:eiro)?|fev(?:ereiro)?|mar(?:ço|co)?|abr(?:il)?|mai(?:o)?|jun(?:ho)?|jul(?:ho)?|ago(?:sto)?|set(?:embro)?|out(?:ubro)?|nov(?:embro)?|dez(?:embro)?)\.?\b\s*(?:de\s+)?(\d{2,4})?/i))){
+    const dd=+m[1],mm=MES_NOME[norm(m[2]).slice(0,3)];
+    if(dd>=1&&dd<=31)return pad2(dd)+'/'+pad2(mm)+'/'+(m[3]?(m[3].length<=2?anoDe2(m[3]):+m[3]):anoProvavel(mm));
+  }
+  const re=/(\d{1,2})[-.\/](\d{1,2})(?:[-.\/](\d{2,4}))?/g;
+  while((m=re.exec(t))){
+    const dd=+m[1],mm=+m[2];
+    if(dd<1||dd>31||mm<1||mm>12)continue;
+    return pad2(dd)+'/'+pad2(mm)+'/'+(m[3]?(m[3].length<=2?anoDe2(m[3]):+m[3]):anoProvavel(mm));
+  }
+  return '';
+}
+function mesFromDate(dstr){
+  const d=dataNorm(dstr);if(!d)return '—';
+  return (MESES[(+d.slice(3,5))-1]||'??')+'/'+d.slice(8);
+}
+/* 'jul/26' vira 2607, para ordenar mês a mês; 'sem data' fica no fim */
+function mesOrdem(m){
+  const p=String(m||'').split('/');const i=MESES.indexOf(p[0]);
+  if(i<0||!p[1])return 999999;
+  return (+p[1])*100+(i+1);
+}
+let extratoOrig=[],catFiltroMes='Todos',catFiltroFonte='tudo',exMesSemData='';
+/* últimos 24 meses, para o caso de o arquivo vir sem data nenhuma */
+function mesesRecentes(n){
+  const out=[],h=new Date();
+  for(let i=0;i<(n||24);i++){
+    const d=new Date(h.getFullYear(),h.getMonth()-i,1);
+    out.push(MESES[d.getMonth()]+'/'+String(d.getFullYear()).slice(2));
+  }
+  return out;
+}
+function exSetMesSemData(v){exMesSemData=v||'';applyExtrato();}
+/* A fatura do cartão se reconhece sozinha: duas colunas de dinheiro (R$ e
+   US$) e a linha do pagamento com menos na frente. Marcar a caixa à mão era
+   fácil de esquecer — e esquecer significa o pagamento entrar como compra. */
+const FATURA_PALAVRA=/(pagamento de fatura|pagamentos validos|pagamento minimo|total da fatura|melhor dia de compra|limite total|fatura anterior|saldo anterior da fatura)/;
+function pareceFatura(t){
+  if(t&&(t.ehFatura||(t.some&&t.some(x=>x&&x.fatura))))return true;
+  /* Duas colunas de dinheiro com a SEGUNDA zerada é a assinatura da fatura:
+     R$ e US$ lado a lado. O extrato do Itaú também tem duas colunas (valor e
+     saldo), mas a segunda nunca é 0,00 — e "PAGAMENTOS CONDOR SUPER CENTER"
+     tem a palavra "pagamento" sem ser fatura nenhuma. */
+  const dolarZero=(t||[]).filter(x=>x.col2&&x.zero2).length;
+  const pag=(t||[]).some(x=>FATURA_PALAVRA.test(norm(x.desc||'')));
+  return dolarZero>=3||pag;
+}
 function showExtratoPreview(t){
   if(!t||!t.length){alert('Não identifiquei transações. Dicas: exporte OFX (mais confiável), confira o texto colado, ou tire uma foto mais nítida. Você também pode me enviar a imagem no chat que eu transcrevo com precisão.');return;}
-  extratoOrig=t.map(x=>({date:x.date,desc:x.desc,amount:x.amount}));
-  const cb=document.getElementById('ex-fatura');if(cb)cb.checked=false;
+  extratoOrig=t.map(x=>({date:x.date,desc:x.desc,amount:x.amount,cred:!!x.cred,col2:!!x.col2}));
+  const ehFat=pareceFatura(t);
+  const cb=document.getElementById('ex-fatura');if(cb)cb.checked=ehFat;
+  exFillPessoa();
   applyExtrato();
   document.getElementById('extratoModal').classList.add('on');
+}
+function exSetPessoa(v){
+  if(!PES_VALIDO.includes(v))v='ambos';
+  D.contas.exPessoa=v;save();applyExtrato();
+}
+function exFillPessoa(){
+  const sel=document.getElementById('ex-pessoa');if(!sel)return;
+  const atual=D.contas.exPessoa||'ambos';
+  sel.innerHTML=PES_VALIDO.map(p=>'<option value="'+p+'"'+(p===atual?' selected':'')+'>'+esc(pesNome(p))+'</option>').join('');
+  const h=document.getElementById('ex-pessoa-hint');
+  if(h)h.textContent=atual==='ambos'
+    ?'Cada gasto conta metade para cada um, como as contas da casa.'
+    :('Tudo deste arquivo entra como gasto de '+pesNome(atual)+'. Dá para mudar linha a linha depois, na aba Categorias.');
 }
 function applyExtrato(){
   const fat=(document.getElementById('ex-fatura')||{}).checked;
@@ -2578,7 +3943,27 @@ function applyExtrato(){
   const vistos={};
   extratoTxns=extratoOrig.map(x=>{
     let amt=x.amount;if(fat&&amt>0&&!isIncomeDesc(x.desc))amt=-Math.abs(amt);
-    return {date:x.date,desc:x.desc,amount:amt,cat:categorize(x.desc,amt),tipo:tipoTx(x.desc,amt)};
+    const y={date:x.date,desc:x.desc,amount:amt,cat:categorize(x.desc,amt),tipo:tipoTx(x.desc,amt),
+             pes:pesDe(x.desc,D.contas.exPessoa)};
+    /* Na fatura, o valor impresso com menos na frente é crédito a seu favor:
+       o pagamento da fatura e os estornos. Não é gasto — e não pode virar um,
+       senão o mês conta o pagamento como se fosse compra. */
+    if(fat&&x.cred){y.tipo='cartao';y.cat='Cartão de crédito';y.amount=-Math.abs(amt);}
+    y.aporte=y.amount<0&&ehAporteDesc(y.desc)&&Math.abs(y.amount)<limiteAporte();
+    /* de onde veio o lançamento: a fatura do cartão ou o extrato da conta.
+       É o que permite depois olhar só o cartão e ver onde a fatura se
+       desmancha, categoria por categoria. */
+    y.fonte=fat?'cartao':'conta';
+    /* acima do corte, a transferência é o pagamento da fatura: continua fora
+       da soma (as compras já vieram da própria fatura), mas com o nome certo */
+    if(y.amount<0&&ehPagamentoFaturaValor(y.desc,y.amount)){y.tipo='cartao';y.cat='Cartão de crédito';}
+    /* cada lançamento vai para o SEU mês, lido da data da linha. O que veio
+       sem data só entra depois que você disser em qual mês ele cai. */
+    y.mes=mesFromDate(y.date);
+    if(y.mes==='—'&&exMesSemData)y.mes=exMesSemData;
+    y.jaTem=y.tipo!=='saldo'&&jaImportado(y);
+    if(y.jaTem)y.tipo='jalancado';
+    return y;
   }).filter(x=>{const k=txKey(x);if(vistos[k])return false;vistos[k]=1;return true;});
   renderExtratoPreview();
 }
@@ -2587,12 +3972,48 @@ function renderExtratoPreview(){
   const t=extratoTxns,cont=txContaveis();
   const saidas=cont.filter(x=>x.amount<0).reduce((s,x)=>s-x.amount,0);
   const entradas=cont.filter(x=>x.amount>0).reduce((s,x)=>s+x.amount,0);
-  const fora=t.length-cont.length;
-  const foraVal=t.filter(txIgnorado).reduce((s,x)=>s+Math.abs(+x.amount||0),0);
-  document.getElementById('ex-sum').innerHTML=cont.length+' transações contadas · <b class="down">saídas '+brl(saidas)+'</b> · <b class="up">entradas '+brl(entradas)+'</b>'
-    +(fora?('<br><span class="mut" style="font-size:11px">'+fora+' fora da conta ('+brl(foraVal)+') — fatura de cartão e investimento, para não contar duas vezes</span>'):'');
+  const jaTem=t.filter(x=>x.jaTem).length;
+  const saldos=t.filter(x=>x.tipo==='saldo').length;
+  const outrosFora=t.filter(x=>txIgnorado(x)&&!x.jaTem&&x.tipo!=='saldo');
+  const foraVal=outrosFora.reduce((s,x)=>s+Math.abs(+x.amount||0),0);
+  let notas=[];
+  if(jaTem)notas.push('<b>'+jaTem+' já estavam lançados</b> e não entram de novo');
+  if(saldos)notas.push(saldos+' linha(s) de saldo do banco (não são movimentação)');
+  if(outrosFora.length)notas.push(outrosFora.length+' fora da conta ('+brl(foraVal)+') — fatura de cartão e investimento');
+  const aps=t.filter(x=>x.aporte&&!x.jaTem);
+  if(aps.length)notas.push('<b>'+aps.length+' aporte(s)</b> para a sua corretora ('
+    +brl(aps.reduce((s,x)=>s+Math.abs(+x.amount||0),0))+') — vão para a aba Aportes');
+  const fats=t.filter(x=>!x.jaTem&&(+x.amount||0)<0&&ehPagamentoFaturaValor(x.desc,x.amount));
+  if(fats.length)notas.push(fats.length+' acima de '+brl(limiteAporte())+' ('
+    +brl(fats.reduce((s,x)=>s+Math.abs(+x.amount||0),0))+') — pagamento da fatura, não aporte');
+  document.getElementById('ex-sum').innerHTML=cont.length+' transações novas · <b class="down">saídas '+brl(saidas)+'</b> · <b class="up">entradas '+brl(entradas)+'</b>'
+    +(notas.length?('<br><span class="mut" style="font-size:11px">'+notas.join(' · ')+'</span>'):'');
+  /* Antes de salvar você vê em quantos meses o arquivo se divide. É o que
+     evita o extrato do ano inteiro cair num mês só sem ninguém perceber. */
+  const salv=txSalvaveis(),porMes={};
+  salv.forEach(x=>{const m=x.mes||'—';porMes[m]=(porMes[m]||0)+1;});
+  const ordem2=Object.keys(porMes).sort((a,b)=>mesOrdem(a)-mesOrdem(b));
+  const semData=porMes['—']||0;
+  const em=document.getElementById('ex-meses');
+  if(em)em.innerHTML=!salv.length?'' :
+    ('<b>Vai lançar em '+(ordem2.filter(m=>m!=='—').length||0)+' mês(es):</b> '
+     +ordem2.map(m=>(m==='—'?'<b class="down">sem data</b>':esc(m))+' ('+porMes[m]+')').join(' · '));
+  const cx=document.getElementById('ex-semdata-box');
+  if(cx){
+    cx.style.display=semData?'':'none';
+    const sl=document.getElementById('ex-mes-sem');
+    if(sl&&!(sl.options||[]).length){
+      sl.innerHTML='<option value="">— escolher mês —</option>'
+        +mesesRecentes(24).map(m=>'<option value="'+m+'">'+m+'</option>').join('');
+    }
+    const hn=document.getElementById('ex-semdata-hint');
+    if(hn)hn.textContent=semData+' lançamento(s) vieram sem data no arquivo. '
+      +'Na foto do extrato a data costuma aparecer só no topo do grupo — se o app não achou, escolha o mês aqui.';
+  }
   let h='<tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th></tr>';
-  t.slice(0,300).forEach(x=>{
+  /* as novas primeiro: é nelas que você precisa olhar */
+  const ordem=t.slice().sort((a,b)=>(txIgnorado(a)?1:0)-(txIgnorado(b)?1:0));
+  ordem.slice(0,300).forEach(x=>{
     const ig=txIgnorado(x);
     h+='<tr'+(ig?' style="opacity:.45"':'')+'><td class="name" style="font-size:11px">'+esc(x.date||'—')+'</td>'
       +'<td class="name" style="font-size:11px">'+esc((x.desc||'').slice(0,30))+(ig?'<div class="tag">fora: '+TX_ROTULO[x.tipo]+'</div>':'')+'</td>'
@@ -2600,36 +4021,221 @@ function renderExtratoPreview(){
       +'<td class="'+(ig?'mut':(x.amount<0?'down':'up'))+'">'+brl(x.amount)+'</td></tr>';});
   if(t.length>300)h+='<tr><td class="mut" colspan="4">… +'+(t.length-300)+' transações</td></tr>';
   document.getElementById('tbl-extrato').innerHTML=h;
+  /* A tabela da prévia nasce vazia junto com a página e ganhava o aviso de
+     "nada lançado aqui" — que a esconde por CSS. Resultado: o extrato era
+     lido, mas a lista para conferir não aparecia. Depois de preencher ela
+     precisa ser rotulada e remarcada, como qualquer outra tabela do app. */
+  if(typeof tuneInputs==='function')tuneInputs();
+}
+/* ---------- aporte: dinheiro que saiu da conta para a sua corretora ----------
+   Fica anotado na aba Aportes, com data e mês, e alimenta a coluna "aportado"
+   da evolução mensal e anual. É o que separa o que RENDEU do que você
+   simplesmente pôs lá dentro. */
+function aporteKey(x){return (x.date||'')+'|'+Math.abs(+x.amount||0).toFixed(2)+'|'+norm(x.desc).slice(0,22);}
+function lancaAportes(lista){
+  if(!lista||!lista.length)return {n:0,total:0};
+  D.invest.aportes=D.invest.aportes||[];
+  let n=0,total=0;
+  const pessoa=(D.contas.exPessoa==='preta')?'Esposa':((D.contas.exPessoa==='preto')?'João':'Conjunto');
+  lista.forEach(x=>{
+    const k=aporteKey(x);
+    if(D.invest.aportes.some(a=>a._k===k))return;
+    const v=Math.abs(+x.amount||0);
+    if(!(v>0))return;
+    D.invest.aportes.push({_k:k,data:x.date||'',mes:x.mes||mesFromDate(x.date),
+      conta:'Nacional XP',pessoa,ativo:(x.desc||'').slice(0,30),valor:v});
+    n++;total+=v;
+  });
+  if(n){somaAportesNoMes();save();
+    ['renderAportes','renderMensal','drawMensal','renderAnual','drawAnual']
+      .forEach(f=>{if(typeof window[f]==='function')safeRun(window[f]);});}
+  return {n,total};
+}
+/* a coluna "aportado" de cada mês e de cada ano é a soma dos aportes dele */
+function somaAportesNoMes(){
+  const porMes={},porAno={};
+  (D.invest.aportes||[]).forEach(a=>{
+    const m=a.mes||mesFromDate(a.data);if(!m||m==='—')return;
+    porMes[m]=(porMes[m]||0)+(+a.valor||0);
+    const ano='20'+String(m).split('/')[1];
+    if(ano&&ano.length===4)porAno[ano]=(porAno[ano]||0)+(+a.valor||0);
+  });
+  D.invest.mensal=D.invest.mensal||[];
+  Object.keys(porMes).forEach(m=>{
+    let row=D.invest.mensal.find(r=>r.mes===m);
+    if(!row){
+      row={mes:m,patr:null,aporte:0};
+      const at=D.invest.mensal.findIndex(r=>mesOrdem(r.mes)>mesOrdem(m));
+      if(at>=0)D.invest.mensal.splice(at,0,row);else D.invest.mensal.push(row);
+    }
+    row.aporte=porMes[m];
+  });
+  D.invest.anual=D.invest.anual||[];
+  Object.keys(porAno).forEach(y=>{
+    let lin=D.invest.anual.find(a=>String(a.ano)===y);
+    if(!lin){
+      lin={ano:y,patr:null,aporte:0};
+      const at=D.invest.anual.findIndex(a=>(+a.ano||0)>(+y));
+      if(at>=0)D.invest.anual.splice(at,0,lin);else D.invest.anual.push(lin);
+    }
+    lin.aporte=porAno[y];
+  });
+}
+/* Para o que JÁ está importado: varre os lançamentos salvos e traz os que
+   foram para a corretora. É o "desde o início dos extratos". */
+/* ---------- os dados de exemplo que vem no app ----------
+   O app nasce com aportes e meses de exemplo, para a tela nao aparecer vazia.
+   Quando os seus numeros de verdade chegam, os exemplos continuam la somando
+   junto - aporte de janeiro que nunca existiu. Isto apaga SO o que e
+   identico ao exemplo, linha por linha: o que voce mexeu fica. */
+function ehLinhaExemplo(tipo,x){
+  const d=DEFAULT.invest[tipo]||[];
+  return d.some(e=>Object.keys(e).every(k=>String(e[k])===String(x[k])));
+}
+function limparExemplos(){
+  const ap=(D.invest.aportes||[]).filter(a=>ehLinhaExemplo('aportes',a));
+  const me=(D.invest.mensal||[]).filter(m=>ehLinhaExemplo('mensal',m));
+  const an=(D.invest.anual||[]).filter(a=>ehLinhaExemplo('anual',a));
+  if(!ap.length&&!me.length&&!an.length){
+    alert('Nenhuma linha de exemplo sobrou — o que está aí é seu.');return;
+  }
+  if(!confirm('Apagar as linhas de EXEMPLO que vieram com o app?\n\n'
+    +ap.length+' aporte(s)\n'+me.length+' mês(es) da evolução\n'+an.length+' ano(s)\n\n'
+    +'Só some o que está exatamente igual ao exemplo. O que você digitou ou '
+    +'importou não é tocado.'))return;
+  guardarVersao('antes de apagar os exemplos');
+  D.invest.aportes=(D.invest.aportes||[]).filter(a=>!ehLinhaExemplo('aportes',a));
+  D.invest.mensal=(D.invest.mensal||[]).filter(m=>!ehLinhaExemplo('mensal',m));
+  D.invest.anual=(D.invest.anual||[]).filter(a=>!ehLinhaExemplo('anual',a));
+  somaAportesNoMes();save();
+  ['renderAportes','renderMensal','drawMensal','renderAnual','drawAnual','drawInvPainel']
+    .forEach(f=>{if(typeof window[f]==='function')safeRun(window[f]);});
+  alert('Pronto: '+ap.length+' aporte(s), '+me.length+' mês(es) e '+an.length
+    +' ano(s) de exemplo saíram.\nDá para desfazer em Resumo → versões guardadas.');
+}
+function aportesDoExtrato(){
+  const todas=(D.contas.transacoes||[]).filter(t=>(+t.amount||0)<0&&ehAporteDesc(t.desc));
+  const achados=todas.filter(t=>Math.abs(+t.amount||0)<limiteAporte());
+  const faturas=todas.filter(t=>Math.abs(+t.amount||0)>=limiteAporte());
+  if(!nomesInvest().length){
+    alert('Antes disso, escreva o nome da sua conta de investimento em\n'
+      +'Categorias → 👤 nomes da família → "Contas de investimento".\n\n'
+      +'É o nome como ele aparece no extrato quando você manda o PIX.');
+    return;
+  }
+  const r=lancaAportes(achados);
+  /* as altas ficam marcadas como pagamento de fatura, fora da soma */
+  let arrumadas=0;
+  faturas.forEach(t=>{if(t.cat!=='Cartão de crédito'){t.cat='Cartão de crédito';t.nc=true;arrumadas++;}});
+  if(arrumadas){save();safeRun(renderCategorias);}
+  alert(!todas.length
+    ? 'Nenhuma transferência para a sua corretora nos lançamentos importados.'
+    : ((r.n?(r.n+' aporte(s) anotado(s), somando '+brl(r.total)+'.'
+        +'\nA coluna "aportado" da evolução mensal e anual já foi atualizada.')
+      :(achados.length?('Esses '+achados.length+' aporte(s) já estavam anotados — nada repetido.')
+        :'Nenhum aporte abaixo de '+brl(limiteAporte())+'.'))
+      +(faturas.length?('\n\n'+faturas.length+' transferência(s) acima de '+brl(limiteAporte())
+        +' foram tratadas como pagamento da fatura do cartão'
+        +(arrumadas?(' ('+arrumadas+' remarcada(s) agora)'):'')+', fora da soma.'):'')));
 }
 function exSaveTx(){
-  if(!extratoTxns.length)return;let n=0;
-  extratoTxns.forEach(x=>{
+  if(!extratoTxns.length)return;let n=0,fora=0,remarcados=0;const novosAportes=[];
+  /* Grava tudo que é lançamento de verdade, inclusive o que não soma. Antes
+     essas linhas eram simplesmente descartadas: o pagamento da fatura sumia
+     do app e não dava para conferir que ele tinha acontecido. Agora fica
+     gravado e marcado — visível na lista, fora da soma. */
+  txSalvaveis().forEach(x=>{
     const key=txKey(x);
     if(D.contas.transacoes.some(t=>t._k===key))return;
-    D.contas.transacoes.push({_k:key,date:x.date||'',mes:mesFromDate(x.date),desc:(x.desc||'').slice(0,60),amount:x.amount,cat:x.cat||categorize(x.desc,x.amount)});n++;
+    const nc=txNaoConta(x);
+    D.contas.transacoes.push({_k:key,date:x.date||'',mes:x.mes||mesFromDate(x.date),desc:(x.desc||'').slice(0,80),
+      amount:x.amount,cat:x.cat||categorize(x.desc,x.amount),pes:x.pes||'ambos',nc:nc,
+      fonte:x.fonte||'conta'});
+    n++;if(nc)fora++;
+    if(x.aporte)novosAportes.push(x);
   });
+  /* Reimportar a mesma fatura não duplica nada — mas marca a origem no que já
+     estava salvo. É assim que o histórico antigo ganha a marca de "cartão",
+     sem precisar apagar e importar tudo de novo. */
+  extratoTxns.forEach(x=>{
+    if(x.tipo==='saldo'||!x.fonte)return;
+    const velho=D.contas.transacoes.find(t=>t._k===txKey(x));
+    if(velho&&velho.fonte!==x.fonte){velho.fonte=x.fonte;remarcados++;}
+  });
+  const ap=lancaAportes(novosAportes);
   save();closeExtrato();safeRun(renderCategorias);
-  alert(n?('Salvei '+n+' transação(ões) já separadas por categoria. Veja na aba Categorias (modo Contas).'):'Essas transações já estavam salvas — nada duplicado.');
+  alert(n?('Salvei '+n+' transação(ões) já separadas por categoria.'
+      +(fora?('\n'+fora+' ficaram gravadas MAS fora da soma (fatura do cartão / dinheiro seu), para não contar duas vezes.'):'')
+      +(ap.n?('\n'+ap.n+' foram para a sua corretora: anotadas como APORTE de '+brl(ap.total)
+        +', na aba Aportes e na evolução mensal.'):'')
+      +'\nVeja na aba Categorias (modo Contas).')
+    :('Essas transações já estavam salvas — nada duplicado.'
+      +(remarcados?('\n'+remarcados+' foram marcadas como fatura do cartão.'):'')));
 }
+/* Na foto do app do banco a data aparece UMA vez, no topo do grupo:
+     15 de julho de 2026
+     MERCADO CENTRAL        120,50
+     POSTO SHELL             80,00
+   Sem guardar essa data, todas as linhas entravam sem mês e o extrato do ano
+   inteiro virava uma gaveta só. A data do cabeçalho vale para as linhas
+   seguintes, até vir outra. */
 function parseTextExtrato(text){
-  const out=[];
-  (text||'').split(/\r?\n/).forEach(raw=>{
+  const out=[];let ultimaData='';
+  const linhas=(text||'').split(/\r?\n/);
+  /* Quando o arquivo marca as SAÍDAS com um menos na frente do valor — é o
+     caso do extrato do Itaú —, a linha sem menos é ENTRADA. Sem isto, o
+     recebimento cujo nome "quebrou" para a linha de baixo ("PIX RECEBIDO" numa
+     linha, o nome e o valor na outra) virava gasto: 90 linhas de dinheiro
+     entrando eram contadas como dinheiro saindo. */
+  let comMenos=0;
+  linhas.forEach(l=>{if(/-\s?\d{1,3}(?:\.\d{3})*,\d{2}/.test(l))comMenos++;});
+  const marcaSaida=comMenos>=3;
+  linhas.forEach(raw=>{
     const line=raw.replace(/\s+/g,' ').trim();if(line.length<3)return;
-    const nums=line.match(/\d{1,3}(?:\.\d{3})*,\d{2}/g);if(!nums)return;
-    const valStr=nums[nums.length-1];
-    let amt=parseFloat(valStr.replace(/\./g,'').replace(',','.'));if(isNaN(amt))return;
-    const idx=line.lastIndexOf(valStr);
+    const nums=line.match(/\d{1,3}(?:\.\d{3})*,\d{2}/g);
+    /* a data é procurada sem os valores, senão "1.234,56" vira dia 1 mês 23 */
+    const dCab=dataNorm(line.replace(/\d{1,3}(?:\.\d{3})*,\d{2}/g,' '));
+    if(dCab)ultimaData=dCab;
+    if(!nums)return;
+    /* Uma linha pode ter DUAS colunas de dinheiro: a fatura do cartão imprime
+       "R$" e "US$" lado a lado, e muito extrato imprime valor e saldo. A que
+       vale é a PRIMEIRA com valor — antes o app pegava a última e toda compra
+       nacional entrava como 0,00 (a coluna em dólar), enquanto a compra no
+       exterior entrava com o valor em dólar em vez do valor em reais. */
+    const valores=nums.map(v=>parseFloat(v.replace(/\./g,'').replace(',','.')));
+    let escolhido=valores.findIndex(v=>!isNaN(v)&&Math.abs(v)>0.005);
+    if(escolhido<0)return;
+    const valStr=nums[escolhido];
+    let amt=valores[escolhido];if(isNaN(amt))return;
+    const idx=line.indexOf(valStr);
     const before=line.slice(Math.max(0,idx-3),idx);
     const after=line.slice(idx+valStr.length,idx+valStr.length+3);
+    /* o menos impresso na frente do valor: na fatura é pagamento/estorno */
+    const cred=/-\s*$/.test(before)||/\(\s*$/.test(before);
     const low=line.toLowerCase();
     const neg=/[-(]/.test(before)||/^\s*-/.test(after)||/^\s*d\b/i.test(after)||/(compra|pagament|saque|d[eé]bito|pix enviad|enviad|ted enviad|doc enviad|transfer\S* enviad|tarifa|boleto|fatura|iof|anuidade)/.test(low);
     const pos=/^\s*c\b/i.test(after)||/(recebid|cr[eé]dito|dep[óo]sito|sal[áa]rio|rendimento|estorno|pix recebid|transfer\S* recebid|entrada|provento)/.test(low);
-    amt=Math.abs(amt);amt=(pos&&!neg)?amt:-amt;
+    amt=Math.abs(amt);
+    /* no arquivo que marca as saídas, quem manda é o sinal impresso */
+    amt=marcaSaida?(cred?-amt:amt):((pos&&!neg)?amt:-amt);
     const dm=line.match(/(\d{2})[\/\-.](\d{2})(?:[\/\-.](\d{2,4}))?/);
-    const date=dm?(dm[1]+'/'+dm[2]+(dm[3]?('/'+dm[3]):'')):'';
-    let desc=line.replace(valStr,'');if(dm)desc=desc.replace(dm[0],'');
-    desc=desc.replace(/r\$/ig,'').replace(/[|;]+/g,' ').replace(/\s{2,}/g,' ').trim().slice(0,42)||'—';
-    out.push({date,desc,amount:amt});
+    const date=dCab||ultimaData;
+    /* tira TODOS os valores do nome, não só o escolhido: senão sobrava a
+       outra coluna colada na descrição ("RENATA GAS 252,00") */
+    let desc=line.replace(/-?\d{1,3}(?:\.\d{3})*,\d{2}/g,' ');
+    if(dm)desc=desc.replace(dm[0],'');
+    /* 80, não 42: o nome do estabelecimento estava sendo cortado no meio e
+       levava a categoria junto. "PAGAMENTOS PIX QR-CODE ORCONSIL CONTABILIDADE
+       07.514.352/0001-04" virava "...ORCONSIL CONTABILID", e "contabilidade"
+       deixava de casar. A tabela mostra só os primeiros caracteres de
+       qualquer jeito — quem precisava do nome inteiro era a categoria. */
+    desc=desc.replace(/r\$|us\$/ig,'').replace(/[|;]+/g,' ').replace(/\s{2,}/g,' ').trim().slice(0,80);
+    /* "R$ 2.890,29 R$ 6.200,00 R$ 0,00 R$ 6.200,00" é o cabeçalho de saldo e
+       limite da conta: sem nenhuma letra sobrando, não é lançamento. Entrava
+       como um gasto de R$ 2.890,29 com o nome vazio. */
+    if(!/[a-zà-ú]{3}/i.test(desc))return;
+    const zero2=nums.length>1&&Math.abs(valores[valores.length-1]||0)<0.005;
+    out.push({date,desc,amount:amt,cred,col2:nums.length>1,zero2});
   });
   return out;
 }
@@ -2676,8 +4282,106 @@ async function runOCR(file){
    ideia é atualizar, não recadastrar. Só Nacional e Binance, que guardam valor
    em reais; a carteira Global é em dólar, com quantidade e preço, e continua
    vindo da planilha da XP (importar planilha), que traz esses campos certos. */
-const INV_IGNORAR=/^(total|saldo|patrim[oô]nio|posi[cç][aã]o|carteira|investimentos?|resumo|rentabilidade|valor bruto|valor l[ií]quido|subtotal)\b/;
+/* Linhas da tela da corretora que NÃO são ativo: totais, nomes de conta e
+   textos de rodapé. Sem isto, fotografar a tela "Meu Patrimônio" cadastrava
+   "Nacional XP" e "Open Finance" como se fossem fundos. */
+const INV_IGNORAR=/^(total|saldo|(meu )?patrim\w*|posi[cç][aã]o|carteira|investimentos?|resumo|rentabilidade|valor bruto|valor l[ií]quido|subtotal|aplicado|bruto|liquido|dolar|d[oó]lar|cambio|c[aâ]mbio|conta|disponivel|dispon[ií]vel|filtrar|no ano|no mes|no m[eê]s)\b/;
+/* nomes de conta/agregador — são somas, não ativos */
+const INV_CONTA=/\b(nacional xp|global xp|open finance|xp investimentos|conta corrente|renda variavel|renda vari[aá]vel|tesouro direto|previdencia|previd[eê]ncia)\b/;
+function ehLinhaResumoInvest(nome){
+  const n=norm(nome);
+  if(!n||n.length<3)return true;
+  if(INV_IGNORAR.test(n))return true;
+  if(INV_CONTA.test(n))return true;
+  /* "79% Nacional XP" e "< 1% Open Finance": linha que começa com percentual
+     é fatia da carteira, não ativo */
+  if(/^[<>]?\s*\d{1,3}\s*%/.test(n))return true;
+  if(/^[<>]\s/.test(n))return true;
+  /* sobrou só pontuação ou número */
+  if(!/[a-z]{3}/.test(n))return true;
+  return false;
+}
+/* ---------- a tela "Detalhe do Produto" da corretora ----------
+   Ela nao e uma lista: cada ativo vem num bloco de rotulo e valor.
+
+     REMX
+     VanEck Rare Earth/Strategic Metals ETF
+     Posicao        US$ 461,35
+     Quantidade     6,72624 unid.
+     Preco Medio    US$ 91,63
+     Preco Atual    US$ 68,59
+
+   Lendo linha a linha, "Preco Atual 68,59" viraria um ativo chamado "Preco
+   Atual" valendo 68,59. Aqui o bloco inteiro vira UM ativo, ja com a
+   quantidade e o preco — que e o que a carteira Global precisa e o que voce
+   tinha de digitar a mao. */
+/* Linhas que aparecem dentro de um bloco e não são nem nome nem valor. */
+const BLOCO_LIXO=/^(rendimentos|rentabilidade|valor aplicado|comprar|vender|detalhe do produto|pnl|earn|trade|swap concluido|nao realizado)/;
+function parseBlocosInvest(text){
+  const linhas=(text||'').split(/\r?\n/).map(l=>l.replace(/\s+/g,' ').trim());
+  const out=[];let b=null;
+  const fecha=()=>{
+    if(b&&b.tk&&b.valor>0&&(b.qtd>0||b.pa>0)){
+      out.push({nome:(b.tk+' '+(b.desc||'')).trim().slice(0,48),
+                valor:b.valor,qtd:b.qtd||0,pm:b.pm||0,pa:b.pa||0,
+                conta:b.conta||'',moeda:b.moeda||''});
+    }
+    b=null;
+  };
+  const numDe=l=>{const m=l.match(/-?\d{1,3}(?:\.\d{3})*,\d+|-?\d+,\d+|-?\d+(?:\.\d+)?/g);
+    return m?parseBRNum(m[m.length-1]):null;};
+  linhas.forEach(l=>{
+    if(!l)return;
+    /* o código da moeda/ativo sozinho na linha abre um bloco. "S" (Sonic) tem
+       uma letra só, então o mínimo é 1 — um bloco sem valor é descartado. */
+    const so=l.match(/^([A-Z][A-Z0-9]{0,5})$/);
+    if(so){fecha();b={tk:so[1],desc:'',valor:0,qtd:0,pm:0,pa:0,conta:''};return;}
+    if(!b)return;
+    const n=norm(l);
+    if(BLOCO_LIXO.test(n))    /* "PNL não realizado -R$ 135,27" tem R$ e não é a posição */
+      {if(/^(comprar|vender)/.test(n))fecha();return;}
+    if(/^posicao/.test(n)){b.valor=numDe(l)||0;b.moeda=/us\$|usd/.test(n)?'USD':'BRL';return;}
+    if(/^quantidade/.test(n)){b.qtd=numDe(l)||0;return;}
+    if(/^preco medio/.test(n)){b.pm=numDe(l)||0;return;}
+    if(/^preco atual/.test(n)){b.pa=numDe(l)||0;return;}
+    /* Formato da Binance: o código, o nome, a quantidade solta e o valor em R$.
+         USDT
+         TetherUS
+         233,97927404
+         R$ 1.212,01
+       Sem isto, a quantidade da moeda virava o valor dela. */
+    if(/^r\$/.test(n)){if(!b.valor){b.valor=numDe(l)||0;b.conta='bin';b.moeda='BRL';}return;}
+    if(/^[\d.,]+$/.test(l)){if(!b.qtd)b.qtd=parseBRNum(l)||0;return;}
+    if(!b.desc&&/[a-z]{3}/.test(n)&&!/\d{1,3},\d{2}/.test(l))b.desc=l.slice(0,40);
+  });
+  fecha();
+  return out;
+}
+/* A tela quase sempre diz o total dela: "Valor Total Est. R$ 2.161,76",
+   "Total investido R$ 47.919,42". O numero costuma vir na linha de baixo.
+   Serve de conferencia: se a soma do que foi lido nao bate com o total da
+   tela, sobrou ativo fora do enquadramento da foto. */
+const TOT_TELA=/^(valor total|total investido|total da carteira|patrimonio total|total geral|total)(\s|$)/;
+function lerTotalTela(text){
+  const linhas=(text||'').split(/\r?\n/).map(l=>l.replace(/\s+/g,' ').trim());
+  for(let i=0;i<linhas.length;i++){
+    const n=norm(linhas[i]);
+    if(!TOT_TELA.test(n))continue;
+    for(let k=i;k<Math.min(i+3,linhas.length);k++){
+      const m=linhas[k].match(/(r\$|us\$|\$)\s*(-?[\d.]+,\d{2})/i);
+      if(!m)continue;
+      const v=parseBRNum(m[2]);
+      if(v!=null&&v>0)return {valor:v,moeda:/us\$/i.test(m[1])?'USD':'BRL'};
+    }
+  }
+  return null;
+}
 function parseTextInvest(text){
+  /* o formato de blocos vem primeiro: se a foto for a tela de detalhe, ler
+     linha a linha so produziria lixo */
+  const tot=lerTotalTela(text);
+  const blocos=parseBlocosInvest(text);
+  if(blocos.length){blocos.totalTela=tot;return blocos;}
   const out=[];
   (text||'').split(/\r?\n/).forEach(raw=>{
     const line=raw.replace(/\s+/g,' ').trim();if(line.length<3)return;
@@ -2691,40 +4395,92 @@ function parseTextInvest(text){
       .replace(/\s{2,}/g,' ').trim();
     nome=nome.replace(/[.,;:\-–—]+$/,'').trim();
     if(nome.length<3)return;
-    if(INV_IGNORAR.test(norm(nome)))return;          /* linha de total, não é ativo */
-    out.push({nome:nome.slice(0,48),valor});
+    /* "Saldo conta investimento global US$ 398,31" é o dinheiro parado na
+       corretora — não é ativo, mas faz parte do patrimônio e tem campo
+       próprio. Sem isto a linha era descartada junto com os outros totais. */
+    if(/^saldo (da )?conta (de )?investimento/.test(norm(nome))){
+      out.push({nome:nome.slice(0,48),valor,conta:'caixa',
+                moeda:/us\$|usd/.test(norm(line))?'USD':'BRL'});return;
+    }
+    if(ehLinhaResumoInvest(nome))return;              /* total, nome de conta ou rodapé */
+    out.push({nome:nome.slice(0,48),valor,moeda:/us\$|usd/.test(norm(line))?'USD':(/r\$/.test(norm(line))?'BRL':'')});
   });
+  out.totalTela=tot;
   return out;
 }
 /* onde cada linha lida pode cair */
 function invAlvos(){
   const a=[['ignorar','— não usar esta linha —']];
   (D.invest.nacional||[]).forEach((x,i)=>a.push(['nac:'+i,'Nacional · '+x.nome]));
+  (D.invest.global||[]).forEach((x,i)=>a.push(['glob:'+i,'Global · '+(x.tk?(x.tk+' — '):'')+x.nome]));
   (D.invest.binance||[]).forEach((x,i)=>a.push(['bin:'+i,'Binance · '+x.nome]));
-  a.push(['novo-nac','+ novo ativo em Nacional']);
+  a.push(['caixa-glob','Saldo parado na conta global (US$)']);
+  a.push(['novo-nac','+ novo ativo em Nacional (R$)']);
+  a.push(['novo-glob','+ novo ETF na Global (US$)']);
   a.push(['novo-bin','+ novo ativo na Binance']);
   return a;
+}
+/* a conta de cada destino decide a moeda e como o valor é gravado */
+function contaDoAlvo(alvo){
+  if(/^glob:/.test(alvo||'')||alvo==='novo-glob'||alvo==='caixa-glob')return 'global';
+  if(/^bin:/.test(alvo||'')||alvo==='novo-bin')return 'binance';
+  return 'nacional';
+}
+function moedaDoAlvo(alvo){return contaDoAlvo(alvo)==='global'?'USD':'BRL';}
+function ativoDoAlvo(alvo){
+  const m=/^(nac|glob|bin):(\d+)$/.exec(alvo||'');if(!m)return null;
+  const arr=m[1]==='nac'?D.invest.nacional:(m[1]==='glob'?D.invest.global:D.invest.binance);
+  return (arr&&arr[+m[2]])||null;
 }
 /* Palavras que aparecem em quase todo nome de fundo e não distinguem nada —
    casar por elas é o mesmo erro de casar conta pela palavra "PAGAMENTO". */
 const ATIVO_GENERICO=new Set(['fundo','fundos','fic','fim','firf','fif','rf','ref','di','cp','rl',
   'multi','multimercado','invest','investimento','investimentos','renda','fixa','acoes','etf',
   'classe','cotas','credito','privado','longo','prazo','curto','simples','plus','master','xp',
-  'itau','bb','trend','global','nacional','brasil','br','fia','fidc','lp','cnpj','total','valor']);
+  'itau','bb','trend','global','nacional','brasil','br','fia','fidc','lp','cnpj','total','valor',
+  /* palavras que quase toda cripto e todo ETF carregam: "Spell Token" e
+     "Polygon Ecosystem Token" casavam por "token", e uma sobrescrevia a outra */
+  'token','tokens','coin','moeda','crypto','cripto','network','protocol','chain','ecosystem',
+  'trust','index','funds','fund','shares','ltd','inc','ltda','series','tech','strategic']);
 function palavrasAtivo(nome){
   return limpaDesc(nome).split(' ').filter(w=>w.length>=3&&!ATIVO_GENERICO.has(w)&&!/^\d+$/.test(w));
 }
 /* casa o nome lido na foto com um ativo da carteira. Pontua pelas palavras
    distintivas em comum; sem nenhuma, é ativo novo — melhor acrescentar do que
    sobrescrever o valor do ativo errado. */
-function casarAtivo(nome){
+/* `conta` é a dica de onde o ativo mora, quando a própria tela diz: a lista da
+   Binance traz código, quantidade e R$. Com ela, a busca fica DENTRO da conta
+   — senão o BTC da Binance casava com o fundo "Hashdex Bitcoin" da carteira
+   Nacional, só porque os dois têm a palavra "bitcoin". */
+function casarAtivo(nome,conta){
   const alvo=limpaDesc(nome);
   if(!alvo)return 'ignorar';
   const palAlvo=palavrasAtivo(nome);
+  if(conta==='bin'){
+    let achou=null,pt=0;
+    (D.invest.binance||[]).forEach((x,i)=>{
+      const p2=palavrasAtivo(x.nome||'');
+      if(!p2.length)return;
+      const c=p2.filter(w=>palAlvo.includes(w)).length;
+      if(!c)return;
+      const s2=c/p2.length+c/1000;
+      if(s2>pt){pt=s2;achou='bin:'+i;}
+    });
+    return achou||'novo-bin';
+  }
+  if(!palAlvo.length)return 'novo-nac';
+  /* 1) código de bolsa batendo por inteiro ganha de qualquer parecença de nome */
+  let porTicker=null;
+  (D.invest.global||[]).forEach((x,i)=>{
+    const tk=(x.tk||'').toLowerCase().trim();
+    if(tk&&palAlvo.indexOf(tk)>=0&&porTicker===null)porTicker='glob:'+i;
+  });
+  if(porTicker)return porTicker;
+  /* 2) senão, pontua pelas palavras distintivas em comum */
   let melhor=null,melhorPonto=0;
   const avaliar=(x,chave)=>{
-    const pal=palavrasAtivo(x.nome);
-    if(!pal.length||!palAlvo.length)return;
+    const pal=palavrasAtivo(x.nome||'');
+    if(!pal.length)return;
     const comuns=pal.filter(w=>palAlvo.includes(w)).length;
     if(!comuns)return;
     /* proporção do nome cadastrado que foi reconhecida, com desempate pelo nº de palavras */
@@ -2732,15 +4488,88 @@ function casarAtivo(nome){
     if(ponto>melhorPonto){melhorPonto=ponto;melhor=chave;}
   };
   (D.invest.nacional||[]).forEach((x,i)=>avaliar(x,'nac:'+i));
+  (D.invest.global||[]).forEach((x,i)=>avaliar(x,'glob:'+i));
   (D.invest.binance||[]).forEach((x,i)=>avaliar(x,'bin:'+i));
-  return melhor||'novo-nac';
+  return melhor||(pareceETFglobal(nome)?'novo-glob':'novo-nac');
 }
+/* Casa um ativo da planilha com o que já está na carteira, dentro da conta
+   escolhida: primeiro o código de bolsa por inteiro, depois as palavras
+   distintivas do nome — o mesmo critério da foto. Sem isto, "adicionar aos
+   atuais" empilhava uma segunda cópia de cada ativo a cada importação. */
+function acharNaConta(arr,nome,tk){
+  const t=norm(tk||'').trim();
+  if(t){const i=(arr||[]).findIndex(x=>norm(x.tk||'').trim()===t);if(i>=0)return i;}
+  const pal=palavrasAtivo(nome||tk||'');
+  if(!pal.length)return -1;
+  let melhor=-1,ponto=0;
+  (arr||[]).forEach((x,i)=>{
+    const p2=palavrasAtivo(x.nome||x.tk||'');
+    if(!p2.length)return;
+    const comuns=p2.filter(w=>pal.includes(w)).length;
+    if(!comuns)return;
+    const s=comuns/p2.length+comuns/1000;
+    if(s>ponto){ponto=s;melhor=i;}
+  });
+  return melhor;
+}
+/* Moedas que aparecem na Binance. Sem isto, fotografar a Binance cadastrava
+   nove "fundos brasileiros" em reais na carteira Nacional. */
+const CRIPTO_TK=new Set(['btc','eth','usdt','usdc','bnb','xrp','ada','doge','sol','dot','matic','pol',
+  'ltc','shib','avax','link','atom','near','uni','trx','xlm','etc','fil','icp','apt','arb','op','sui',
+  'ton','pepe','spell','sonic','busd','dai','bch','sand','mana','aave','algo','vet','egld','hbar']);
+const CRIPTO_NOME=/\b(bitcoin|ethereum|tether|solana|stellar|lumens|shiba|dogecoin|cardano|polygon|ripple|binance coin|litecoin|avalanche|chainlink|polkadot|spell token|sonic|cripto|crypto|usd coin)\b/i;
+function ehCripto(nome){
+  const t=String(nome||'').trim();
+  if(CRIPTO_NOME.test(t))return true;
+  const p=t.split(/\s+/)[0]||'';
+  return CRIPTO_TK.has(p.toLowerCase());
+}
+/* "IVV iShares Core S&P 500 ETF" é um ETF americano, não um fundo brasileiro.
+   Sem isto, todo ETF novo entrava na carteira Nacional, em reais. Só decide
+   quando o nome diz de verdade que é ETF — na dúvida fica em Nacional, e o
+   destino continua trocável na tela. */
+const CASA_ETF=/\b(ishares|vanguard|invesco|vaneck|global ?x|spdr|schwab|proshares|ark ?invest|wisdomtree|first ?trust)\b/i;
+function pareceETFglobal(nome){
+  const t=String(nome||'');
+  return /\betfs?\b/i.test(t)||CASA_ETF.test(t);
+}
+/* o código de bolsa é a primeira palavra só de letras maiúsculas */
+function tickerDe(nome){
+  const m=String(nome||'').trim().match(/^([A-Z]{2,5})\b/);
+  if(m)return m[1];
+  return String(nome||'').trim().split(/\s+/)[0].toUpperCase().slice(0,5);
+}
+/* quanto aquele ativo vale hoje, JÁ na moeda da conta dele: a Nacional e a
+   Binance guardam reais; a Global guarda quantidade × preço em dólar */
 function valorAtualDe(alvo){
-  const m=/^(nac|bin):(\d+)$/.exec(alvo||'');if(!m)return null;
-  const arr=m[1]==='nac'?D.invest.nacional:D.invest.binance;
-  const x=arr&&arr[+m[2]];return x?(+x.valor||0):null;
+  if(alvo==='caixa-glob')return +D.invest.caixaGlobalUSD||0;
+  const x=ativoDoAlvo(alvo);if(!x)return null;
+  if(contaDoAlvo(alvo)==='global')return (+x.qtd||0)*(+x.pa||0);
+  return +x.valor||0;
 }
-let invFoto=[];
+function qtdAtualDe(alvo){const x=ativoDoAlvo(alvo);return x?(+x.qtd||0):0;}
+let invFoto=[],invFotoMoeda='BRL',invFotoTotalTela=null;
+function invFotoSetMoeda(m){
+  invFotoMoeda=(m==='USD')?'USD':'BRL';
+  /* Você fotografou a tela em dólar: o que for ativo NOVO nasce na Global, e
+     volta para a Nacional se você trocar para R$. O que já casou com um ativo
+     da carteira não se mexe — a conta dele já está decidida. */
+  invFoto.forEach(r=>{
+    if(r.alvo==='novo-nac'&&invFotoMoeda==='USD')r.alvo='novo-glob';
+    else if(r.alvo==='novo-glob'&&invFotoMoeda==='BRL')r.alvo='novo-nac';
+  });
+  renderInvestFoto();
+}
+/* converte o número lido na foto para a moeda da conta de destino */
+function valorNaConta(alvo,v){
+  const cam=+D.invest.cambio||0;
+  const querUSD=moedaDoAlvo(alvo)==='USD';
+  v=+v||0;
+  if(querUSD&&invFotoMoeda==='BRL')return cam>0?v/cam:0;
+  if(!querUSD&&invFotoMoeda==='USD')return v*cam;
+  return v;
+}
+const moedaFmt=(m,v)=>m==='USD'?usd(v):brl(v);
 function pickFotoInvest(){pickFile('image/*',f=>runOCRInvest(f));}
 async function runOCRInvest(file){
   const ALT='\n\nAlternativa: use “importar planilha” (o arquivo da XP é sempre mais fiel que a foto).';
@@ -2755,7 +4584,7 @@ async function runOCRInvest(file){
     const txt=(data&&data.text)||'';
     if(!txt.trim()){alert('O leitor funcionou, mas não achou texto nessa imagem.\n\nTente uma foto mais próxima e sem reflexo.'+ALT);return;}
     const lista=parseTextInvest(txt);
-    if(!lista.length){alert('Li o texto da imagem, mas não reconheci nenhum ativo (preciso do nome e do valor em reais na mesma linha).\n\nDica: fotografe só a lista de ativos, sem o gráfico.'+ALT);return;}
+    if(!lista.length){alert('Li o texto da imagem, mas não reconheci nenhum ativo.\n\nSe você fotografou a tela de resumo (“Meu Patrimônio”, com Nacional XP / Global XP), ela mostra o total de cada conta, não os ativos — o app ignora essas linhas de propósito, para não cadastrar conta como se fosse fundo.\n\nEntre na conta e fotografe a LISTA DE ATIVOS, com o nome e o valor de cada um.'+ALT);return;}
     showInvestFoto(lista);
   }catch(e){
     ocrToast(false);
@@ -2765,85 +4594,204 @@ async function runOCRInvest(file){
   }
 }
 function showInvestFoto(lista){
-  invFoto=lista.map(x=>{const alvo=casarAtivo(x.nome);return {nome:x.nome,valor:x.valor,alvo,antigo:valorAtualDe(alvo)};});
+  /* A moeda sai do próprio texto lido: a Binance escreve R$, a XP global
+     escreve US$. Sem isto, fotografar a Binance logo depois da global
+     multiplicava tudo pelo câmbio, porque o botão ficava em US$. */
+  invFotoTotalTela=(lista&&lista.totalTela)||null;
+  const moedas=lista.map(x=>x.moeda).filter(Boolean);
+  if(moedas.length&&moedas.every(m=>m===moedas[0]))invFotoMoeda=moedas[0];
+  invFoto=lista.map(x=>{
+    /* de que conta a tela lida está falando — a Binance se anuncia pelo
+       formato, e o nome da moeda confirma */
+    const dica=(x.conta==='bin'||ehCripto(x.nome))?'bin':'';
+    const alvo=x.conta==='caixa'?'caixa-glob':casarAtivo(x.nome,dica);
+    /* quantidade e preço médio lidos na própria foto valem mais do que os
+       guardados: a foto é a posição de hoje */
+    return {nome:x.nome,valor:x.valor,alvo,antigo:valorAtualDe(alvo),
+            qtd:(+x.qtd>0)?+x.qtd:qtdAtualDe(alvo),pm:+x.pm||0};});
   renderInvestFoto();
   document.getElementById('invFotoModal').classList.add('on');
 }
 function closeInvestFoto(){document.getElementById('invFotoModal').classList.remove('on');}
 function invFotoSet(i,campo,v){
   const r=invFoto[i];if(!r)return;
-  if(campo==='alvo'){r.alvo=v;r.antigo=valorAtualDe(v);}
+  if(campo==='alvo'){r.alvo=v;r.antigo=valorAtualDe(v);r.qtd=qtdAtualDe(v);}
+  else if(campo==='qtd')r.qtd=+v||0;
   else r.valor=+v||0;
   renderInvestFoto();
 }
 function renderInvestFoto(){
   const alvos=invAlvos();
+  ['BRL','USD'].forEach(m=>{const b=document.getElementById(m==='BRL'?'inv-moeda-brl':'inv-moeda-usd');
+    if(b)b.classList.toggle('primary',invFotoMoeda===m);});
   /* duas colunas só: nome e destino empilhados de um lado, valor do outro.
      Em quatro colunas o "novo valor" — que é o ponto — saía da tela do celular. */
-  let h='<tr><th>Ativo e destino</th><th>Novo valor (R$)</th></tr>';
+  let h='<tr><th>Ativo e destino</th><th>Novo valor ('+(invFotoMoeda==='USD'?'US$':'R$')+')</th></tr>';
   invFoto.forEach((r,i)=>{
-    const muda=r.antigo!=null&&Math.abs(r.antigo-r.valor)>0.005;
+    const conta=contaDoAlvo(r.alvo),moeda=moedaDoAlvo(r.alvo);
+    const novo=valorNaConta(r.alvo,r.valor);                 /* já na moeda da conta */
+    const muda=r.antigo!=null&&Math.abs(r.antigo-novo)>0.005;
+    const ehGlobal=/^glob:/.test(r.alvo)||r.alvo==='novo-glob';
     h+='<tr'+(r.alvo==='ignorar'?' style="opacity:.45"':'')+'>'
-      +'<td class="name" style="white-space:normal;max-width:190px">'
-        +'<div style="font-size:12px;line-height:1.3">'+esc(r.nome)+'</div>'
-        +'<select class="cell txt" style="width:100%;max-width:190px;font-size:11px;margin-top:4px" onchange="invFotoSet('+i+',\'alvo\',this.value)">'
-        +alvos.map(a=>'<option value="'+a[0]+'"'+(a[0]===r.alvo?' selected':'')+'>'+esc(a[1])+'</option>').join('')+'</select></td>'
-      +'<td style="white-space:normal"><input class="cell" type="number" step="0.01" style="min-width:104px" value="'+r.valor+'" oninput="invFotoSet('+i+',\'valor\',this.value)">'
-        +'<div class="mut" style="font-size:10px;margin-top:3px">'+(r.antigo!=null?('hoje '+brl(r.antigo)):'ativo novo')+'</div>'
-        +(muda?'<div class="'+(r.valor>r.antigo?'up':'down')+'" style="font-size:10px">'+(r.valor>r.antigo?'▲ ':'▼ ')+brl(Math.abs(r.valor-r.antigo))+'</div>':'')
+      +'<td class="name" style="white-space:normal">'
+        +'<div style="font-size:12px;line-height:1.3;overflow-wrap:anywhere">'+esc(r.nome)+'</div>'
+        +'<select class="cell txt" style="width:100%;font-size:11px;margin-top:4px" onchange="invFotoSet('+i+',\'alvo\',this.value)">'
+        +alvos.map(a=>'<option value="'+a[0]+'"'+(a[0]===r.alvo?' selected':'')+'>'+esc(a[1])+'</option>').join('')+'</select>'
+        +(ehGlobal?('<div style="margin-top:5px;font-size:10px" class="mut">quantidade'
+            +'<input class="cell" type="number" step="0.00001" style="width:100%;margin-top:2px" value="'+r.qtd+'" oninput="invFotoSet('+i+',\'qtd\',this.value)"></div>'):'')
+        +'</td>'
+      +'<td style="white-space:normal"><input class="cell" type="number" step="0.01" style="width:100%;min-width:0" value="'+r.valor+'" oninput="invFotoSet('+i+',\'valor\',this.value)">'
+        +'<div class="mut" style="font-size:10px;margin-top:3px">'+(r.antigo!=null?('hoje '+moedaFmt(moeda,r.antigo)):'ativo novo')+'</div>'
+        +(muda?'<div class="'+(novo>r.antigo?'up':'down')+'" style="font-size:10px">'+(novo>r.antigo?'▲ ':'▼ ')+moedaFmt(moeda,Math.abs(novo-r.antigo))+'</div>':'')
+        +(ehGlobal&&r.qtd>0?('<div class="mut" style="font-size:10px">preço '+usd(novo/r.qtd)+'</div>')
+          :(ehGlobal?'<div class="down" style="font-size:10px">informe a quantidade</div>':''))
         +'</td></tr>';
   });
   const usadas=invFoto.filter(r=>r.alvo!=='ignorar');
-  h+='<tr class="sumrow"><td>'+usadas.length+' de '+invFoto.length+' linha(s)</td><td>'+brl(usadas.reduce((s,r)=>s+(+r.valor||0),0))+'</td></tr>';
+  /* o total do rodapé sempre em reais: é a única moeda que compara tudo */
+  const totBRL=usadas.reduce((s,r)=>{
+    const v=valorNaConta(r.alvo,r.valor);
+    return s+(moedaDoAlvo(r.alvo)==='USD'?v*(+D.invest.cambio||0):v);},0);
+  h+='<tr class="sumrow"><td>'+usadas.length+' de '+invFoto.length+' linha(s)</td><td>'+brl(totBRL)+'</td></tr>';
   document.getElementById('tbl-inv-foto').innerHTML=h;
-  set('inv-foto-nota',usadas.length?('Confira cada linha. As marcadas como “não usar” ficam de fora.')
-    :'Nenhuma linha selecionada — escolha o destino de pelo menos uma.');
+  const semQtd=usadas.filter(r=>/^glob:/.test(r.alvo)&&!(r.qtd>0)).length;
+  /* confere com o total que a própria tela mostrava: o que falta é ativo que
+     ficou fora do enquadramento da foto */
+  let confere='';
+  if(invFotoTotalTela&&usadas.length){
+    const cam=+D.invest.cambio||0;
+    const alvoBRL=invFotoTotalTela.moeda==='USD'?invFotoTotalTela.valor*cam:invFotoTotalTela.valor;
+    const falta=alvoBRL-totBRL;
+    confere=Math.abs(falta)<Math.max(1,alvoBRL*0.005)
+      ? ('✓ bate com o total da tela ('+brl(alvoBRL)+').')
+      : ((falta>0?'Faltam ':'Sobram ')+brl(Math.abs(falta))+' para o total da tela ('+brl(alvoBRL)+')'
+         +(falta>0?' — provavelmente tem ativo que ficou fora da foto. Tire outra foto rolando a lista e importe de novo: o que já entrou é atualizado, não duplicado.':'.'));
+  }
+  set('inv-foto-nota',!usadas.length?'Nenhuma linha selecionada — escolha o destino de pelo menos uma.'
+    :(semQtd?(semQtd+' ativo(s) da Global sem quantidade — sem ela não dá para calcular o preço unitário. '+confere)
+      :('Confira cada linha. As marcadas como “não usar” ficam de fora. '+confere)));
   if(typeof tuneInputs==='function')tuneInputs();
 }
 function invFotoAplicar(){
-  let atualizados=0,novos=0;
+  let atualizados=0,novos=0,semQtd=0;
   invFoto.forEach(r=>{
     if(r.alvo==='ignorar'||!(r.valor>0))return;
-    if(r.alvo==='novo-nac'){D.invest.nacional.push({nome:r.nome,classe:guessClasse(r.nome),valor:r.valor,apl:null});novos++;return;}
-    if(r.alvo==='novo-bin'){D.invest.binance.push({nome:r.nome,classe:'Cripto',valor:r.valor,apl:null});novos++;return;}
-    const m=/^(nac|bin):(\d+)$/.exec(r.alvo);if(!m)return;
-    const arr=m[1]==='nac'?D.invest.nacional:D.invest.binance;
-    const x=arr&&arr[+m[2]];if(!x)return;
-    x.valor=r.valor;atualizados++;
+    const v=valorNaConta(r.alvo,r.valor);              /* já na moeda da conta */
+    if(r.alvo==='caixa-glob'){D.invest.caixaGlobalUSD=v;atualizados++;return;}
+    if(r.alvo==='novo-nac'){D.invest.nacional.push({nome:r.nome,classe:guessClasse(r.nome),valor:v,apl:null});novos++;return;}
+    if(r.alvo==='novo-glob'){
+      /* a Global guarda quantidade × preço. Sem a quantidade, guarda 1 cota
+         valendo o total: a soma fica certa e você ajusta depois. */
+      const q=+r.qtd||0;
+      D.invest.global.push({tk:tickerDe(r.nome),nome:r.nome,classe:guessClasse(r.nome),
+        qtd:q>0?q:1,pm:+r.pm||0,pa:q>0?(v/q):v,apl:null});
+      novos++;return;
+    }
+    if(r.alvo==='novo-bin'){D.invest.binance.push({nome:r.nome,classe:'Cripto',valor:v,apl:null});novos++;return;}
+    const x=ativoDoAlvo(r.alvo);if(!x)return;
+    if(contaDoAlvo(r.alvo)==='global'){
+      /* a Global guarda quantidade × preço: mantém a quantidade que veio da
+         tela (o João pode ter corrigido) e recalcula o preço pelo valor lido */
+      const q=+r.qtd||0;
+      if(!(q>0)){semQtd++;return;}
+      x.qtd=q;x.pa=v/q;
+      if(+r.pm>0)x.pm=+r.pm;      /* preço médio, quando a foto trouxe */
+      atualizados++;return;
+    }
+    x.valor=v;atualizados++;
   });
-  if(!atualizados&&!novos){alert('Nada foi aplicado — todas as linhas estavam como “não usar”.');return;}
+  if(!atualizados&&!novos){
+    alert(semQtd?('Nada foi aplicado: '+semQtd+' ativo(s) da Global estão sem quantidade.\nPreencha a quantidade de cada um e tente de novo.')
+      :'Nada foi aplicado — todas as linhas estavam como “não usar”.');
+    return;
+  }
   save();closeInvestFoto();
-  ['renderNac','renderBin','refreshCarteira','drawInvPainel','renderGanhos'].forEach(f=>{if(typeof window[f]==='function')safeRun(window[f]);});
-  alert('Carteira atualizada.\n'+atualizados+' ativo(s) com valor novo'+(novos?(' e '+novos+' ativo(s) acrescentado(s)'):'')+'.\nTotal investido agora: '+brl(invTotal()));
+  ['renderNac','renderGlob','renderBin','refreshCarteira','drawInvPainel','renderGanhos'].forEach(f=>{if(typeof window[f]==='function')safeRun(window[f]);});
+  const reg=registrarPatrimonio();
+  alert('Carteira atualizada.\n'+atualizados+' ativo(s) com valor novo'
+    +(novos?(' e '+novos+' ativo(s) acrescentado(s)'):'')
+    +(semQtd?('\n'+semQtd+' da Global ficaram de fora por falta de quantidade.'):'')
+    +'\nTotal investido agora: '+brl(reg.total)
+    +'\n\n'+textoRegistro(reg));
 }
 
-function catMonths(){const s=new Set(D.contas.transacoes.map(t=>t.mes).filter(m=>m&&m!=='—'));return ['Todos',...[...s]];}
+/* em ordem de calendário, e com uma gaveta para o que ficou sem data —
+   escondê-la fazia esses lançamentos somarem em "Todos" sem aparecer em
+   lugar nenhum para você corrigir */
+function catMonths(){
+  const s=new Set((D.contas.transacoes||[]).map(t=>t.mes).filter(m=>m&&m!=='—'));
+  const temSem=(D.contas.transacoes||[]).some(t=>!t.mes||t.mes==='—');
+  const arr=[...s].sort((a,b)=>mesOrdem(b)-mesOrdem(a));
+  return ['Todos',...arr,...(temSem?['—']:[])];
+}
 function onCatMes(v){catFiltroMes=v;renderCategorias();}
+function onCatFonte(v){catFiltroFonte=(v==='cartao'||v==='conta')?v:'tudo';renderCategorias();}
+/* lançamento sem marca é do extrato da conta: é de onde vinha tudo antes */
+function fonteDe(t){return (t&&t.fonte==='cartao')?'cartao':'conta';}
 function renderCategorias(){
   const all=D.contas.transacoes||[];
   const meses=catMonths();if(!meses.includes(catFiltroMes))catFiltroMes='Todos';
   const sel=document.getElementById('cat-mes');
-  if(sel)sel.innerHTML=meses.map(m=>'<option'+(m===catFiltroMes?' selected':'')+'>'+m+'</option>').join('');
-  const tx=all.filter(t=>catFiltroMes==='Todos'||t.mes===catFiltroMes);
-  const gasto=tx.filter(t=>t.amount<0).reduce((s,t)=>s-t.amount,0);
-  const entrada=tx.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
+  if(sel)sel.innerHTML=meses.map(m=>'<option value="'+esc(m)+'"'+(m===catFiltroMes?' selected':'')
+    +'>'+(m==='—'?'sem data':esc(m))+'</option>').join('');
+  const tx=all.filter(t=>(catFiltroMes==='Todos'||t.mes===catFiltroMes)
+    &&(catFiltroFonte==='tudo'||fonteDe(t)===catFiltroFonte));
+  const selF=document.getElementById('cat-fonte');if(selF)selF.value=catFiltroFonte;
+  /* a soma usa só o que conta; a LISTA mostra tudo, inclusive o que ficou de fora */
+  const txC=txSoma(tx),txFora=tx.filter(naoSoma);
+  const gasto=txC.filter(t=>t.amount<0).reduce((s,t)=>s-t.amount,0);
+  const entrada=txC.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
+  const foraVal=txFora.reduce((s,t)=>s+Math.abs(+t.amount||0),0);
   set('cat-gasto',brl(gasto));set('cat-entrada',brl(entrada));
+  const ef=document.getElementById('cat-fora');
+  if(ef)ef.innerHTML=txFora.length
+    ? ('<b>'+txFora.length+' lançamento(s) fora da soma</b> — '+brl(foraVal)
+      +'. É a fatura do cartão e o dinheiro que você mandou para você mesmo: as compras '
+      +'daquela fatura já foram contadas uma a uma, então somar o pagamento contaria o mês duas vezes. '
+      +'Para incluir algum, troque a categoria dele na lista abaixo.')
+    : '';
   const es=document.getElementById('cat-saldo');if(es){es.textContent=brl(entrada-gasto);es.className='v '+((entrada-gasto)>=0?'up':'down');}
+  /* quando você olha só o cartão, o número de cima é a própria fatura —
+     e o gráfico abaixo mostra onde ela se desmanchou */
+  const nf=document.getElementById('cat-fonte-nota');
+  if(nf){
+    const temCartao=(D.contas.transacoes||[]).some(t=>fonteDe(t)==='cartao');
+    nf.innerHTML=catFiltroFonte==='cartao'
+      ? ('<b>Fatura do cartão'+(catFiltroMes==='Todos'?'':' de '+esc(catFiltroMes))+': '+brl(gasto)+'</b> em '
+         +txC.filter(t=>t.amount<0).length+' compra(s). O gráfico abaixo mostra onde ela foi parar.')
+      : (catFiltroFonte==='conta'
+        ? 'Só o que passou pela conta do banco — as compras do cartão estão na fatura.'
+        : (temCartao?'':'Importe a fatura do cartão para separar o que foi no crédito do que saiu da conta.'));
+  }
   set('cat-n',tx.length+'');
-  const map={},cnt={};tx.filter(t=>t.amount<0).forEach(t=>{const c=t.cat||'Outros';map[c]=(map[c]||0)+(-t.amount);cnt[c]=(cnt[c]||0)+1;});
+  /* quanto do gasto é de cada um — "os dois" conta metade para cada */
+  set('cat-k-preto',pesNome('preto'));set('cat-k-preta',pesNome('preta'));
+  set('cat-preto',brl(gastoPessoa(tx,'preto')));set('cat-preta',brl(gastoPessoa(tx,'preta')));
+  const map={},cnt={};txC.filter(t=>t.amount<0).forEach(t=>{const c=t.cat||'Outros';map[c]=(map[c]||0)+(-t.amount);cnt[c]=(cnt[c]||0)+1;});
   const cats=Object.keys(map).sort((a,b)=>map[b]-map[a]);
   destroy('cat');
   if(cats.length&&window.Chart){charts.cat=new Chart(document.getElementById('catChart'),{type:'doughnut',
-    data:{labels:cats,datasets:[{data:cats.map(c=>map[c]),backgroundColor:cats.map(c=>{const i=CATEGORIAS.indexOf(c);return CATPAL[i>=0?i:13];}),borderColor:COL.ink,borderWidth:3}]},
+    data:{labels:cats,datasets:[{data:cats.map(c=>map[c]),backgroundColor:cats.map(c=>{const i=CATEGORIAS.indexOf(c);return CATPAL[i>=0?i:CATPAL.length-1];}),borderColor:COL.ink,borderWidth:3}]},
     options:{cutout:'58%',plugins:{legend:{position:'bottom',labels:{color:COL.mut,boxWidth:10,padding:8,font:{size:11}}},tooltip:{callbacks:{label:c=>c.label+': '+brl(c.raw)+' ('+pct(gasto?c.raw/gasto:0)+')'}}}}});}
-  renderCatResumo(cats,map,cnt,gasto,tx);
-  let r='<tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th></th></tr>';
-  const idxs=all.map((t,i)=>i).filter(i=>catFiltroMes==='Todos'||all[i].mes===catFiltroMes).sort((a,b)=>(all[b].date||'').localeCompare(all[a].date||'')).slice(0,400);
-  idxs.forEach(i=>{const t=all[i];r+='<tr><td class="name" style="font-size:11px">'+esc(t.date||'—')+'</td><td class="name" style="font-size:12px">'+esc((t.desc||'').slice(0,32))+'</td>'
-    +'<td><select class="cell txt" style="min-width:118px;font-size:11px" onchange="setTxCat('+i+',this.value)">'+CATEGORIAS.map(c=>'<option'+(c===t.cat?' selected':'')+'>'+c+'</option>').join('')+'</select></td>'
-    +'<td class="'+(t.amount<0?'down':'up')+'">'+brl(t.amount)+'</td>'
+  renderCatResumo(cats,map,cnt,gasto,txC);
+  let r='<tr><th>Data e descrição</th><th>Categoria e dono</th><th>Valor</th><th></th></tr>';
+  const idxs=all.map((t,i)=>i).filter(i=>(catFiltroMes==='Todos'||all[i].mes===catFiltroMes)
+      &&(catFiltroFonte==='tudo'||fonteDe(all[i])===catFiltroFonte)).sort((a,b)=>(all[b].date||'').localeCompare(all[a].date||'')).slice(0,400);
+  /* data+descrição de um lado, categoria+dono do outro: quatro colunas em pé
+     não cabem na tela do celular */
+  idxs.forEach(i=>{const t=all[i];
+    r+='<tr><td class="name" style="white-space:normal;max-width:150px">'
+      +'<div class="mut" style="font-size:10.5px">'+esc(t.date||'—')+'</div>'
+      +'<div style="font-size:12px;line-height:1.3">'+esc((t.desc||'').slice(0,40))+'</div></td>'
+    +'<td style="white-space:normal">'
+      +'<select class="cell txt" style="width:100%;max-width:140px;font-size:11px" onchange="setTxCat('+i+',this.value)">'
+        +CATEGORIAS.map(c=>'<option'+(c===t.cat?' selected':'')+'>'+c+'</option>').join('')+'</select>'
+      +'<select class="cell txt" style="width:100%;max-width:140px;font-size:11px;margin-top:4px" onchange="setTxPes('+i+',this.value)">'
+        +PES_VALIDO.map(pp=>'<option value="'+pp+'"'+(pp===(t.pes||'ambos')?' selected':'')+'>'+esc(pesNome(pp))+'</option>').join('')+'</select></td>'
+    +'<td class="'+(naoSoma(t)?'mut':(t.amount<0?'down':'up'))+'">'+brl(t.amount)
+      +(naoSoma(t)?'<div class="tag">fora da soma</div>':'')+'</td>'
     +'<td><button class="iconbtn" style="padding:2px 8px" onclick="delTx('+i+')">×</button></td></tr>';});
-  if(!all.length)r+='<tr><td class="mut" colspan="5">Nenhuma transação importada ainda. Use o card “Automático — importar extrato” no Painel, ou o botão “importar extrato” acima.</td></tr>';
+  if(!all.length)r+='<tr><td class="mut" colspan="4">Nenhuma transação importada ainda. Use o card “Automático — importar extrato” no Painel, ou o botão “importar extrato” acima.</td></tr>';
   document.getElementById('tbl-cat-lanc').innerHTML=r;
   if(typeof tuneInputs==='function')tuneInputs();
 }
@@ -2889,7 +4837,7 @@ function renderCatResumo(cats,map,cnt,gasto,tx){
   lista.forEach((c,i)=>{
     const teto=orcOf(c),g=map[c]||0,estourou=teto>0&&g>teto;
     h+='<tr><td class="name">'+esc(c)+'</td>'
-      +'<td><input class="cell" type="number" step="0.01" style="min-width:82px" value="'+(teto>0?teto:'')+'" oninput="setOrcamento(\''+esc(c)+'\',this.value,'+i+')"></td>'
+      +'<td><input class="cell" type="number" step="0.01" style="min-width:82px" value="'+(teto>0?teto:'')+'" oninput="setOrcamento(\''+escJs(c)+'\',this.value,'+i+')"></td>'
       +'<td class="'+(estourou?'down':'mut')+'">'+brl(g)+'</td>'
       +'<td id="orcsit-'+i+'" style="width:96px">'+sitOrc(c,g)+'</td></tr>';
   });
@@ -2938,10 +4886,68 @@ function addOrcamento(){
   const sel=document.getElementById('cat-orc-sel');if(!sel||!sel.value)return;
   setOrcamento(sel.value,0.01);
 }
-function setTxCat(i,cat){const t=D.contas.transacoes[i];if(!t)return;t.cat=cat;
-  const w=norm(t.desc).split(/\s+/).filter(x=>x.length>=4&&!/^\d+$/.test(x)).sort((a,b)=>b.length-a.length)[0];
-  if(w)D.contas.catMemory[w]=cat;
-  save();renderCategorias();}
+/* Corrigir uma linha corrige TODAS as parecidas de uma vez. É o que torna a
+   peneira final rápida: você arruma "IFOOD" uma vez e todos os iFood do
+   histórico vão junto — e as próximas importações já nascem certas. */
+function setTxCat(i,cat){
+  const t=D.contas.transacoes[i];if(!t)return;
+  t.cat=cat;
+  /* a categoria é o controle: escolher "Cartão de crédito" tira da soma, e
+     escolher qualquer outra devolve — inclusive para um lançamento que tinha
+     entrado como transferência sua */
+  t.nc=CAT_FORA_DA_SOMA.includes(cat);
+  /* aprende pela palavra distintiva, nunca por código de transação: nomes como
+     "ELECTRON FESTVAL TIN-001073" traziam o TIN-001073, que muda a cada compra
+     e não serviria para reconhecer as próximas */
+  /* aprende do nome limpo: "ELECTRON FESTVAL TIN-001073" ensinaria "electron",
+     que é a bandeira do cartão e é justamente o que a leitura descarta — a
+     palavra aprendida nunca mais bateria. Do nome limpo ela aprende "festval". */
+  let w=limpaComercio(t.desc).split(/\s+/)
+    .filter(x=>x.length>=4&&!/\d/.test(x))
+    .sort((a,b)=>b.length-a.length)[0];
+  /* sem nenhuma palavra útil, aprende pelo documento de quem recebeu */
+  const doc=w?'':docDe(t.desc);
+  let juntos=0;
+  if(doc){
+    D.contas.catMemory[doc]=cat;
+    (D.contas.transacoes||[]).forEach((o,k)=>{
+      if(k===i||o.cat===cat)return;
+      if(docDe(o.desc)===doc){o.cat=cat;juntos++;}
+    });
+    w=doc;
+  }else if(w){
+    D.contas.catMemory[w]=cat;
+    (D.contas.transacoes||[]).forEach((o,k)=>{
+      if(k===i||o.cat===cat)return;
+      if(limpaComercio(o.desc).includes(w)){o.cat=cat;juntos++;}
+    });
+  }
+  save();renderCategorias();
+  const el=document.getElementById('cat-aprendeu');
+  if(el)el.textContent=w
+    ?('Aprendi: “'+w+'” → '+cat+'.'+(juntos?(' Ajustei mais '+juntos+' lançamento(s) com esse nome.'):' As próximas importações já vêm assim.'))
+    :'';
+}
+/* Trocar o dono de um lançamento vale para todos os parecidos, e o app aprende
+   para as próximas importações — mesma regra da categoria. */
+function setTxPes(i,pes){
+  const t=D.contas.transacoes[i];if(!t||!PES_VALIDO.includes(pes))return;
+  t.pes=pes;
+  const w=norm(t.desc).split(/\s+/).filter(x=>x.length>=4&&!/\d/.test(x)).sort((a,b)=>b.length-a.length)[0];
+  let juntos=0;
+  if(w){
+    D.contas.pesMemory[w]=pes;
+    (D.contas.transacoes||[]).forEach((o,k)=>{
+      if(k===i||o.pes===pes)return;
+      if(norm(o.desc).includes(w)){o.pes=pes;juntos++;}
+    });
+  }
+  save();renderCategorias();
+  const el=document.getElementById('cat-aprendeu');
+  if(el)el.textContent=w
+    ?('Aprendi: “'+w+'” é de '+pesNome(pes)+'.'+(juntos?(' Ajustei mais '+juntos+' lançamento(s).'):' As próximas importações já vêm assim.'))
+    :'';
+}
 function delTx(i){D.contas.transacoes.splice(i,1);save();renderCategorias();}
 function clearTx(){if(confirm('Apagar todas as transações importadas? (não mexe nas suas contas fixas, só na aba Categorias)')){D.contas.transacoes=[];save();renderCategorias();}}
 
@@ -2956,17 +4962,130 @@ function checkBackup(){
 function snoozeBanner(){sessionStorage.setItem('jk_snooze','1');document.getElementById('backupBanner').style.display='none';}
 
 /* ---------- boot ---------- */
-function tuneInputs(){document.querySelectorAll('input[type=number]').forEach(i=>{if(!i.getAttribute('inputmode'))i.setAttribute('inputmode','decimal');});}
+/* Copia o texto do cabeçalho para cada célula da coluna (data-lab). É isso que
+   permite empilhar a tabela sem tocar em nenhuma das 26 funções de desenho. */
+function rotularTabelas(){
+  document.querySelectorAll('table.tbl').forEach(t=>{
+    const cab=t.rows&&t.rows[0];if(!cab)return;
+    const rot=[...cab.cells].map(c=>(c.textContent||'').trim());
+    for(let i=1;i<t.rows.length;i++){
+      const cs=t.rows[i].cells;
+      for(let j=0;j<cs.length;j++){
+        const lab=rot[j]||'';
+        if(cs[j].getAttribute('data-lab')!==lab)cs[j].setAttribute('data-lab',lab);
+      }
+    }
+  });
+}
+function aplicarFit(){
+  const on=D&&D.fit!==false;
+  document.body.classList.toggle('fit',on);
+  const b=document.getElementById('btn-fit');
+  if(b){b.textContent=on?'↔ colunas':'📱 caber';
+    b.title=on?'Ver as tabelas em colunas, arrastando de lado':'Empilhar as tabelas para caber na tela';}
+  rotularTabelas();marcarVazias();
+}
+function toggleFit(){D.fit=!(D.fit!==false);saveLocal();aplicarFit();}
+
+/* ---------- zoom da tela ----------
+   Cresce ou encolhe o app inteiro. Como quase tudo aqui é em % ou 100% de
+   largura, aumentar não faz nada estourar de lado: a tela só passa a caber
+   menos coisa, com a letra maior. */
+const ZOOM_MIN=0.8,ZOOM_MAX=1.6;
+/* valor sem sentido volta para 100%; valor fora da faixa encosta no limite
+   (o botão tem de parar no teto, não pular de volta para o começo) */
+function zoomValido(z){
+  z=+z;
+  if(!isFinite(z)||z<=0)return 1;
+  z=Math.round(z*10)/10;
+  return Math.min(ZOOM_MAX,Math.max(ZOOM_MIN,z));
+}
+function aplicarZoom(){
+  const z=zoomValido(D&&D.zoom);
+  D.zoom=z;
+  document.body.style.zoom=z===1?'':String(z);
+  const l=document.getElementById('zoom-lbl');
+  if(l)l.textContent=Math.round(z*100)+'%';
+}
+function stepZoom(dir){
+  D.zoom=zoomValido(zoomValido(D.zoom)+(dir>0?0.1:-0.1));
+  saveLocal();aplicarZoom();
+}
+
+/* ---------- levar aonde deve ir ----------
+   Um toque em qualquer atalho troca de modo se precisar, abre a aba certa e
+   sobe a tela — em vez de só mostrar um número e deixar o usuário procurar. */
+function irPara(id){
+  const modo=/^i-/.test(id)?'invest':(/^c-/.test(id)?'contas':null);
+  if(modo&&D.mode!==modo)setMode(modo);
+  const b=[...document.querySelectorAll('.tab')].find(t=>t.dataset.id===id);
+  if(!b)return false;
+  b.click();
+  if(typeof window!=='undefined'&&window.scrollTo)window.scrollTo({top:0,behavior:'smooth'});
+  return true;
+}
+/* atalho de conta: a Empresa tem duas abas dentro da mesma aba */
+function irConta(aba,emp){
+  if(emp&&EMPS[emp]){D.contas.empSel=emp;saveLocal();}
+  return irPara(aba);
+}
+
+/* ---------- moldura vazia não ocupa tela ----------
+   Tabela só com cabeçalho vira um aviso curto dizendo o que fazer. */
+const VAZIO_MSG={
+  'tbl-resumo':'Nenhum mês fechado ainda. Toque em <b>📸 fechar o mês atual</b> para gravar o primeiro.',
+  'tbl-bens':'Nenhum bem cadastrado. Toque em <b>+ bem</b> para começar.',
+  'tbl-dividas':'Nenhuma dívida cadastrada — ótimo sinal.',
+  'tbl-pat-hist':'Nenhum mês fechado no patrimônio ainda.',
+  'tbl-apolices':'Nenhuma apólice cadastrada. Toque em <b>+ apólice</b>.',
+  'tbl-receb':'Nada recebido lançado neste mês.',
+  'tbl-cartao':'Nenhum cartão cadastrado. Toque em <b>+ novo cartão</b>.',
+  'tbl-casa':'Nenhuma conta da casa. Toque em <b>+ nova conta da casa</b>.',
+  'tbl-joao':'Nenhuma conta pessoal aqui. Toque em <b>+ nova conta</b>.',
+  'tbl-esposa':'Nenhuma conta pessoal aqui. Toque em <b>+ nova conta</b>.',
+  'tbl-empresa':'Nenhuma conta da empresa. Toque em <b>+ nova conta</b>.',
+  'tbl-cat-lanc':'Nenhum lançamento neste mês. Traga o extrato no Painel.',
+  'tbl-cat-resumo':'Sem gastos para somar neste mês.',
+  'tbl-aportes':'Nenhum aporte lançado ainda.',
+  'tbl-ganhos':'Nenhum ganho lançado ainda.',
+  'tbl-binance':'Nenhuma cripto na Binance.',
+  'tbl-plano':'Nenhum plano montado ainda.'
+};
+function marcarVazias(){
+  document.querySelectorAll('table.tbl').forEach(t=>{
+    const vazia=!t.rows||t.rows.length<2;
+    t.classList.toggle('semlinhas',vazia);
+    const pai=t.parentElement;if(!pai)return;
+    let av=pai.querySelector(':scope > .semdados');
+    if(vazia){
+      const msg=VAZIO_MSG[t.id]||'Nada lançado aqui ainda.';
+      if(!av){av=document.createElement('p');av.className='semdados';pai.appendChild(av);}
+      if(av.innerHTML!==msg)av.innerHTML=msg;
+    }else if(av)av.remove();
+  });
+  /* gráfico sem nada para desenhar é só um buraco escuro de 300px: se todas as
+     tabelas do cartão estão vazias, o gráfico daquele cartão também some */
+  document.querySelectorAll('.card').forEach(c=>{
+    const box=c.querySelectorAll(':scope > .chartbox, :scope > div > .chartbox');
+    if(!box.length)return;
+    const tbs=c.querySelectorAll('table.tbl');
+    if(!tbs.length)return;
+    const tudoVazio=[...tbs].every(t=>t.classList.contains('semlinhas'));
+    box.forEach(b=>b.style.display=tudoVazio?'none':'');
+  });
+}
+function tuneInputs(){rotularTabelas();marcarVazias();document.querySelectorAll('input[type=number]').forEach(i=>{if(!i.getAttribute('inputmode'))i.setAttribute('inputmode','decimal');});}
 function refreshInv(){refreshCarteira();drawInvPainel();save();}
 
 /* ============ Importar planilha da XP (.xlsx / .csv) ============ */
 let impRows=[],impHeaderIdx=0,impMap={};
 const IMP_FIELDS={
   nac:[['','Ignorar'],['nome','Nome do ativo'],['classe','Classe'],['valor','Valor (R$)'],['aplicado','Aplicado (R$)']],
+  bin:[['','Ignorar'],['nome','Moeda'],['classe','Classe'],['valor','Valor (R$)'],['aplicado','Aplicado (R$)']],
   glob:[['','Ignorar'],['ticker','Ticker'],['nome','Nome'],['classe','Classe'],['qtd','Quantidade'],['preco','Preço atual (US$)'],['aplicado','Aplicado (US$)']]
 };
 const IMP_KEYS={
-  nome:['produto','ativo','nome','papel','descricao','fundo','especificacao','instrumento'],
+  nome:['produto','ativo','nome','papel','descricao','fundo','especificacao','instrumento','moeda','cripto'],
   ticker:['ticker','codigo','simbolo','papel'],
   classe:['classe','categoria','tipo','segmento'],
   valor:['valor bruto','valor liquido','valor atual','posicao','saldo','financeiro','valor','bruto','total'],
@@ -3075,21 +5194,58 @@ function applyImport(){
     if(/^(total|subtotal|saldo|patrimonio|posicao total|consolidado|resumo)/.test(norm(rot)))return;
     const cv=String(cell(r,iCl));
     const classe=CLASSES.find(c=>norm(c)===norm(cv))||guessClasse(cv||rot);
-    if(target==='nac'){
+    if(target==='nac'||target==='bin'){
       const valor=num(cell(r,iVal));
       if(!valor&&iVal>=0)return;
-      itens.push({nome:rot,classe,valor,apl:iApl>=0?num(cell(r,iApl)):null});
+      itens.push({nome:rot,classe:(target==='bin'&&!cv)?'Cripto':classe,
+                  valor,apl:iApl>=0?num(cell(r,iApl)):null});
     }else{
       itens.push({tk:(tk||rot).toUpperCase(),nome:nome||tk||rot,classe,
         qtd:num(cell(r,iQtd)),pm:0,pa:num(cell(r,iPre)),apl:iApl>=0?num(cell(r,iApl)):0});
     }
   });
   if(!itens.length){alert('Não encontrei ativos válidos. Confira se a coluna do nome está marcada como "Nome do ativo".');return;}
-  if(!confirm(itens.length+' ativo(s) serão '+(mode==='replace'?'colocados no lugar da lista atual':'adicionados')+' na carteira '+(target==='nac'?'Nacional':'Global')+'. Continuar?'))return;
-  if(target==='nac'){if(mode==='replace')D.invest.nacional=[];D.invest.nacional.push(...itens);renderNac();}
-  else{if(mode==='replace')D.invest.global=[];D.invest.global.push(...itens);renderGlob();}
+  const arr=target==='nac'?(D.invest.nacional||[]):(target==='bin'?(D.invest.binance||[]):(D.invest.global||[]));
+  /* "Atualizar" casa cada linha com o ativo que já existe e só acrescenta o
+     que é novo de verdade. Antes esse modo empilhava uma segunda cópia de
+     cada ativo, e o patrimônio dobrava a cada planilha importada. */
+  let casa=0;
+  const nomeConta=target==='nac'?'Nacional':(target==='bin'?'Binance':'Global');
+  if(mode!=='replace')itens.forEach(it=>{if(acharNaConta(arr,it.nome,it.tk)>=0)casa++;});
+  const aviso=mode==='replace'
+    ? (itens.length+' ativo(s) vão entrar no LUGAR da lista atual da carteira '
+       +nomeConta+' — os '+arr.length+' de hoje serão apagados. Continuar?')
+    : (casa+' ativo(s) já existem e vão receber o valor novo; '+(itens.length-casa)
+       +' serão acrescentados na carteira '+nomeConta+'. Continuar?');
+  if(!confirm(aviso))return;
+  let atualizados=0,novos=0;
+  if(mode==='replace'){
+    if(target==='nac'){D.invest.nacional=itens.slice();renderNac();}
+    else if(target==='bin'){D.invest.binance=itens.slice();renderBin();}
+    else{D.invest.global=itens.slice();renderGlob();}
+    novos=itens.length;
+  }else{
+    itens.forEach(it=>{
+      const i=acharNaConta(arr,it.nome,it.tk||'');
+      if(i<0){arr.push(it);novos++;return;}
+      const x=arr[i];
+      if(target==='nac'||target==='bin'){x.valor=it.valor;if(it.apl!=null&&it.apl!==0)x.apl=it.apl;}
+      else{
+        if(it.qtd)x.qtd=it.qtd;
+        if(it.pa)x.pa=it.pa;
+        if(it.apl)x.apl=it.apl;
+        if(!x.tk&&it.tk)x.tk=it.tk;
+      }
+      atualizados++;
+    });
+    if(target==='nac')renderNac();else if(target==='bin')renderBin();else renderGlob();
+  }
   refreshInv();closeImport();
-  alert(itens.length+' ativo(s) importado(s) com sucesso.');
+  const reg=registrarPatrimonio();
+  alert((atualizados?(atualizados+' ativo(s) com valor novo'):'')
+    +(atualizados&&novos?' e ':'')+(novos?(novos+' ativo(s) acrescentado(s)'):'')+'.'
+    +'\nTotal investido agora: '+brl(reg.total)
+    +'\n\n'+textoRegistro(reg));
 }
 function refreshCon(){renderDue();drawConPainel();save();}
 function initFields(){
@@ -3117,7 +5273,7 @@ function renderAll(){
 }
 document.addEventListener('focusin',e=>{const t=e.target;if(t&&t.tagName==='INPUT'&&t.type!=='checkbox'){setTimeout(()=>{try{t.select()}catch(_){}},0);}});
 
-load();D.contas.mesSel=curMonthKey();initFields();renderAll();setMode(D.mode||'contas');checkBackup();
+load();D.contas.mesSel=curMonthKey();initFields();renderAll();setMode(D.mode||'contas');aplicarFit();aplicarZoom();checkBackup();
 if(D.cloud&&D.cloud.on&&D.cloud.url){setCloudStatus('conectado');cloudStart();cloudPull(true);}
 /* PWA: instalar na tela de início e abrir offline (rede primeiro, cache de reserva) */
 if('serviceWorker'in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-familia.js').catch(function(){});});}
