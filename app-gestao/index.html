@@ -38,7 +38,7 @@
 <link rel="apple-touch-startup-image" media="screen and (device-width:375px) and (device-height:667px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)" href="splash-gestao-750x1334.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="lib/estilo.css?v=2026-09-24-5">
+<link rel="stylesheet" href="lib/estilo.css?v=2026-09-24-6">
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
 <script src="lib/firebase-database-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js\'><\/script>')"></script>
@@ -900,7 +900,7 @@ function esperarAuth(){
   <button onclick="go('fin',this)"><span class="ico" data-ic="bars"></span>Financeiro</button>
   <button id="nav-mais" onclick="abrirMais()"><span class="ico"><svg viewBox="0 0 24 24" width="24" height="24"><circle cx="5" cy="12" r="2.2" fill="currentColor"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/><circle cx="19" cy="12" r="2.2" fill="currentColor"/></svg></span>Mais</button>
 </nav>
-<script src="lib/icones.js?v=2026-09-24-5"></script>
+<script src="lib/icones.js?v=2026-09-24-6"></script>
 
 <!-- MODAL ALUNO -->
 <div class="overlay" id="ov-aluno" onclick="if(event.target===this)closeModal('ov-aluno')">
@@ -1375,7 +1375,7 @@ function esperarAuth(){
 
 <div class="toast" id="toast"></div>
 
-<script src="lib/app-gestao.js?v=2026-09-24-5"></script>
+<script src="lib/app-gestao.js?v=2026-09-24-6"></script>
 <script>
 /* Rede de seguranca do par tela+codigo.
 
@@ -1390,7 +1390,7 @@ function esperarAuth(){
    torto, o app busca o par certo uma vez e, se insistir, DIZ o que houve em
    vez de deixar voce tocando em botao que nao responde. */
 (function(){
-  var ESPERADA='2026-09-24-5';
+  var ESPERADA='2026-09-24-6';
   function tela(motivo){
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;z-index:99999;background:#1A2E14;color:#FAF7F2;'
@@ -1481,7 +1481,7 @@ function limparHist(){
 }
 histLogLoad();
 // PWA: registra o service worker (permite instalar o painel e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-gestao.js?v=2026-09-24-5').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-gestao.js?v=2026-09-24-6').catch(function(){});});}
 </script>
 </body>
 </html>

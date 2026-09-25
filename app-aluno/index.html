@@ -335,6 +335,12 @@ body[data-aba="aulas"] #bloco-saldo #repos-box{display:none}
 .tp-ov.on .tp-card{transform:scale(1) translateY(0)}
 .tp-card.champ{background:linear-gradient(160deg,#7E5A11,#C9A04A 52%,#EAD08A)}
 .tp-card.vice{background:linear-gradient(160deg,#565E65,#98A0A8 52%,#CDD3D8)}
+.tp-card.vitoria{background:linear-gradient(160deg,#0B3D29,#167A4E 52%,#2BA96D)}
+.tp-card.derrota{background:linear-gradient(160deg,#172B25,#244438 56%,#355A4A)}
+.tp-card.fim{background:linear-gradient(160deg,#173126,#6F5B20 58%,#B58D2D)}
+.tp-msg{font-size:13px;line-height:1.55;margin:12px auto 0;max-width:270px;color:rgba(255,255,255,.92);position:relative}
+.tp-score{font-size:12px;font-weight:850;letter-spacing:.6px;margin-top:9px;color:rgba(255,255,255,.84);position:relative}
+
 .tp-card::before{content:"";position:absolute;top:-40%;left:50%;width:200%;height:120%;transform:translateX(-50%);background:radial-gradient(circle at top,rgba(255,255,255,.32),transparent 55%);pointer-events:none}
 .tp-emb{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.22);border:1.5px solid rgba(255,255,255,.55);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;margin:0 auto 6px;letter-spacing:.5px;position:relative}
 .tp-trophy{font-size:66px;line-height:1;position:relative;filter:drop-shadow(0 5px 9px rgba(0,0,0,.3))}
@@ -408,7 +414,7 @@ body[data-aba="aulas"] #bloco-saldo #repos-box{display:none}
 .grp-ref-note{font-size:11.5px;color:var(--muted);margin:9px 0 4px;line-height:1.45}
 .pick-note{font-size:12.5px;color:var(--muted);background:#F6F3EC;border-radius:10px;padding:9px 12px;margin-bottom:10px;line-height:1.45}
 
-/* ===== JV Premium 2026-09-24-5 · App Aluno ===== */
+/* ===== JV Premium 2026-09-24-6 · App Aluno ===== */
 :root{
   --jv-bg:#06140F;--jv-bg-2:#0A2117;--jv-card:rgba(8,35,24,.91);
   --jv-card-strong:#0B281C;--jv-gold:#E0B94F;--jv-gold-soft:#F0D57C;
@@ -516,6 +522,31 @@ body{background:
 .nav button .ico{height:24px}
 #apg-agenda,#apg-aulas,#apg-torneio,#apg-evolucao{padding-top:2px}
 #apg-creditos,#apg-perfil{padding:14px 14px 110px}
+#apg-inicio{padding-bottom:8px}
+.jv-section-card{background:linear-gradient(145deg,rgba(15,49,34,.95),rgba(7,27,19,.96));border:1px solid var(--jv-border);border-radius:18px;padding:15px;margin:0 0 11px;color:var(--jv-text);box-shadow:0 12px 28px rgba(0,0,0,.16)}
+.jv-section-card .sec-title{margin-bottom:12px}
+.jv-section-card .pay-grid{margin-bottom:0}
+.jv-section-card .pay-btn{min-height:74px;border:1px solid rgba(255,255,255,.10);box-shadow:none}
+.jv-wide-action{background:linear-gradient(90deg,#1B6847,#245F45)!important;color:#fff!important;box-shadow:none!important}
+.jv-notif-card{text-align:center}
+.jv-notif-card .aviso-btn{background:rgba(255,255,255,.055);color:var(--jv-gold-soft);border-color:var(--jv-border)}
+.jv-notif-card .aviso-cap{color:var(--jv-muted)}
+.jv-logout{width:100%;border:1px solid rgba(226,118,102,.25);background:rgba(226,118,102,.08);color:#F1A99E;border-radius:14px;padding:13px;font-weight:850;font-size:12px;margin-top:2px}
+#apg-agenda,#apg-aulas,#apg-torneio,#apg-evolucao{padding:14px 14px 110px!important}
+#apg-agenda .sec-title,#apg-aulas .sec-title,#apg-torneio .sec-title,#apg-evolucao .sec-title{font-size:25px}
+#apg-agenda .ag-nav,#apg-aulas .minhas,#apg-torneio #tor-capture,#apg-evolucao .evo-xp,#apg-evolucao .evo-mes,#apg-evolucao .evo-prio,#apg-evolucao .evo-hist .hr{
+  background:linear-gradient(145deg,rgba(15,49,34,.94),rgba(7,27,19,.96))!important;border-color:rgba(224,185,79,.18)!important;color:var(--jv-text)!important
+}
+#apg-torneio .atg-card{background:rgba(8,35,24,.94)!important;border-color:rgba(224,185,79,.18)!important}
+#apg-torneio .atg-tbl td,#apg-torneio .atg-tbl th{color:var(--jv-text)!important;border-color:rgba(255,255,255,.07)!important}
+#apg-torneio .atg-tbl th{color:var(--jv-muted)!important}
+#apg-torneio .atg-tbl tr.me td{background:rgba(224,185,79,.12)!important}
+#apg-aulas .hist-card{background:rgba(8,35,24,.94)!important}
+#apg-aulas .hist-row{border-color:rgba(255,255,255,.07)!important}
+#apg-aulas .hr-d{color:#fff!important}
+#apg-agenda .legend{color:var(--jv-muted)}
+#apg-evolucao .evo-font{color:var(--jv-text)}
+
 @media(max-width:355px){
   #app>.top.jv-premium-hero h1{font-size:30px}.jv-home-grid{gap:7px}.jv-home-card{padding:11px}.jv-pay-card{grid-template-columns:1fr}
   .jv-pay-head,.jv-pix-btn{grid-column:1}.jv-quick{grid-template-columns:1fr}.jv-quick button{min-height:52px}
@@ -702,7 +733,7 @@ function esperarAuth(){
 
 
     <section class="page on" id="apg-inicio">
-    <div class="jv-home-grid" id="jv-home-grid">
+    <div class="jv-home-grid">
       <button class="jv-home-card" type="button" onclick="goAluno('agenda',document.getElementById('nav-al-agenda'))">
         <div class="hc-top"><span class="hc-icon">📅</span><span>Próxima aula ›</span></div>
         <div class="hc-main" id="home-prox-date">—</div>
@@ -711,7 +742,7 @@ function esperarAuth(){
       <button class="jv-home-card gold" type="button" onclick="goAluno('creditos',document.getElementById('nav-al-creditos'))">
         <div class="hc-top"><span class="hc-icon">◎</span><span>Créditos ›</span></div>
         <div class="hc-main"><span id="home-cred">0</span> créditos</div>
-        <div class="hc-sub" id="home-cred-sub">Saldo atual</div>
+        <div class="hc-sub" id="home-cred-sub">saldo atual</div>
         <div class="jv-progress"><i id="home-cred-fill"></i></div>
       </button>
       <button class="jv-home-card" type="button" onclick="goAluno('creditos',document.getElementById('nav-al-creditos'))">
@@ -725,60 +756,19 @@ function esperarAuth(){
         <div class="hc-sub" id="home-foco-sub">Definido a partir da sua evolução</div>
       </button>
     </div>
-
     <div class="jv-pay-card" id="jv-home-pay">
       <div class="jv-pay-head"><b>Mensalidade</b><span class="jv-pay-status" id="home-pay-status">—</span></div>
       <div><div class="jv-pay-lbl">Próximo vencimento</div><div class="jv-pay-value" id="home-venc">—</div></div>
       <div><div class="jv-pay-lbl">Valor do plano</div><div class="jv-pay-value" id="home-mens">—</div></div>
       <button class="jv-pix-btn" id="home-pix-btn" type="button" onclick="pagarPix()">◇ Pagar com PIX ›</button>
     </div>
-
     <div class="jv-quick-title">⚡ Ações rápidas</div>
     <div class="jv-quick">
       <button type="button" onclick="goAluno('agenda',document.getElementById('nav-al-agenda'))"><span>📅</span>Agendar aula</button>
       <button type="button" onclick="irMarcarReposicao()"><span>↻</span>Solicitar reposição</button>
       <button type="button" onclick="abrirTreinoPremium()"><span>↗</span>Ver treino do mês</button>
     </div>
-    <div class="buy-box" id="mfit-box" style="display:none">
-      <p class="sec-eyebrow">Seu treino</p>
-      <h2 class="sec-title">Treino no <em>MFit</em></h2>
-      <button class="buy-btn" style="background:var(--green);color:#fff;box-shadow:0 4px 16px rgba(26,46,20,.3)" onclick="abrirMFit()"><svg class="lni" viewBox="0 0 24 24"><path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10"/></svg> Abrir meu treino no MFit</button>
-    </div>
-    <div id="pay-box" style="display:none">
-      <p class="sec-eyebrow">Pagamento</p>
-      <h2 class="sec-title">Pagar minha <em>mensalidade</em></h2>
-      <div class="pay-grid" id="pay-grid"></div>
-    </div>
-
-    <div class="buy-box">
-      <p class="sec-eyebrow">Mensalidade</p>
-      <h2 class="sec-title">Planos &amp; <em>renovação</em></h2>
-      <button class="buy-btn" style="background:var(--gold);color:#1c1407;box-shadow:0 4px 16px rgba(201,160,74,.28)" onclick="abrirPlanos()"><svg class="lni" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg> Ver planos e preços</button>
-    </div>
-
-    <div class="buy-box">
-      <p class="sec-eyebrow">Créditos & quadra</p>
-      <h2 class="sec-title">Comprar ou <em>reservar</em></h2>
-      <button class="buy-btn" id="buy-btn-main" onclick="openComprar()">💳 Comprar créditos · aula avulsa · locar quadra</button>
-    </div>
-
-    <div class="buy-box" id="evo-box">
-      <p class="sec-eyebrow">Metodologia Da Base ao Topo</p>
-      <h2 class="sec-title">Minha <em>evolução</em></h2>
-      <button class="buy-btn" id="btn-evolucao" style="background:linear-gradient(135deg,#C9A04A,#93701C);color:#fff;box-shadow:0 4px 16px rgba(147,112,28,.28)" onclick="irEvolucao()"><svg class="lni" viewBox="0 0 24 24"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg> Ver minha avaliação e evolução</button>
-    </div>
-
-    <div class="buy-box" style="text-align:center">
-      <button id="btn-avisos" class="aviso-btn" onclick="ativarAvisos('jv-icone-aluno.png')">🔔 Ativar avisos</button>
-      <p class="aviso-cap">Receba o lembrete da sua aula no celular. Funciona com o app aberto; no iPhone, adicione à Tela de Início.</p>
-    </div>
-
-    <div class="foot">
-      <button class="wapp-btn" onclick="falarComProfessor()"><svg class="lni" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.5 7.2L4 20l1-4.5A8 8 0 1 1 21 12z"/></svg> Falar com o João</button>
-      <p class="foot-tag">JV Tênis Academy</p>
-      <p class="motto">Disciplina no treino. Evolução no jogo. 👊</p>
-    </div>
-    </section>
+  </section>
 
     <section class="page" id="apg-agenda">
     <p class="sec-eyebrow">Quadro de horários</p>
@@ -845,7 +835,7 @@ function esperarAuth(){
 
 
     <section class="page" id="apg-creditos">
-      <div class="jv-subhero"><h2>Créditos <em>e plano</em></h2><p>Controle aulas, reposições e pagamentos.</p></div>
+      <div class="jv-subhero"><h2>Créditos <em>e plano</em></h2><p>Controle aulas, reposições e pagamentos em um só lugar.</p></div>
       <div class="jv-credit-panel">
         <div class="jv-pay-lbl">Créditos disponíveis</div>
         <div class="jv-credit-big"><span id="cred-page-saldo">0</span> <small>créditos</small></div>
@@ -855,6 +845,22 @@ function esperarAuth(){
         <div class="jv-row"><span>Mensalidade</span><b id="cred-page-mens">—</b></div>
         <div class="jv-row"><span>Situação</span><b id="cred-page-status">—</b></div>
       </div>
+      <div id="pay-box" class="jv-section-card" style="display:none">
+        <p class="sec-eyebrow">Pagamento</p>
+        <h2 class="sec-title">Pagar minha <em>mensalidade</em></h2>
+        <div class="pay-grid" id="pay-grid"></div>
+      </div>
+      <div class="jv-section-card">
+        <p class="sec-eyebrow">Mensalidade</p>
+        <h2 class="sec-title">Planos &amp; <em>renovação</em></h2>
+        <button class="buy-btn jv-wide-action" onclick="abrirPlanos()">♛ Ver planos e preços</button>
+      </div>
+      <div class="jv-section-card">
+        <p class="sec-eyebrow">Créditos &amp; quadra</p>
+        <h2 class="sec-title">Comprar ou <em>reservar</em></h2>
+        <button class="buy-btn jv-wide-action" id="buy-btn-main" onclick="openComprar()">💳 Comprar créditos · aula avulsa · locar quadra</button>
+      </div>
+      <div class="jv-quick-title">⚡ Ações rápidas</div>
       <div class="jv-quick">
         <button type="button" id="cred-page-pix" onclick="pagarPix()"><span>◇</span>Pagar mensalidade</button>
         <button type="button" onclick="irMarcarReposicao()"><span>↻</span>Solicitar reposição</button>
@@ -880,11 +886,22 @@ function esperarAuth(){
         <div class="jv-row"><span>Plano</span><b id="perfil-plano">—</b></div>
         <div class="jv-row"><span>Segurança do aparelho</span><b id="perfil-vinculo">—</b></div>
       </div>
+      <div class="jv-section-card" id="mfit-box" style="display:none">
+        <p class="sec-eyebrow">Seu treino</p>
+        <h2 class="sec-title">Treino no <em>MFit</em></h2>
+        <button class="buy-btn jv-wide-action" onclick="abrirMFit()">↗ Abrir meu treino no MFit</button>
+      </div>
+      <div class="jv-section-card jv-notif-card">
+        <button id="btn-avisos" class="aviso-btn" onclick="ativarAvisos('jv-icone-aluno.png')">🔔 Ativar avisos</button>
+        <p class="aviso-cap">Receba lembretes de aula e atualizações importantes no celular.</p>
+      </div>
+      <div class="jv-quick-title">Mais do aluno</div>
       <div class="jv-quick">
         <button type="button" onclick="goAluno('aulas',null)"><span>🎾</span>Minhas aulas</button>
         <button type="button" id="perfil-torneio-btn" onclick="goAluno('torneio',null)"><span>🏆</span>Torneio <i class="nav-badge" id="nb-al-torneio"></i></button>
-        <button type="button" onclick="sair()"><span>↪</span>Sair do app</button>
+        <button type="button" onclick="falarComProfessor()"><span>💬</span>Falar com a academia</button>
       </div>
+      <button type="button" class="jv-logout" onclick="sair()">↪ Sair do aplicativo</button>
     </section>
 
   <nav class="nav">
@@ -1102,7 +1119,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-09-24-5';
+const VERSAO='2026-09-24-6';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -1997,10 +2014,11 @@ function _albMarcar(tab){
   _albSalvar(v);atualizarBadgesAluno();
 }
 function goAluno(id,btn){
-  document.body.dataset.aba=id;      // o CSS usa isto para o saldo aparecer só onde deve
+  document.body.dataset.aba=id;      // cada área é uma tela própria; Aulas/Torneio são detalhes do Perfil
   document.querySelectorAll('#app .page').forEach(p=>p.classList.remove('on'));
   const el=document.getElementById('apg-'+id);if(el)el.classList.add('on');
   document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('on'));
+  if(!btn&&(id==='aulas'||id==='torneio'))btn=document.getElementById('nav-al-perfil');
   if(btn)btn.classList.add('on');
   if(id==='evolucao')renderEvolucaoPage();
   if(id==='inicio'||id==='creditos'||id==='perfil')renderPremiumAluno();
@@ -2470,39 +2488,73 @@ function checarPremiacaoTor(t,grupos,meu){
     const players=rankTorAl(t.jogadores.filter(p=>p.group===g));
     const idx=players.findIndex(p=>ehMesmoJogador(p,meu));
     if(idx<0)continue;                          // não está neste grupo
-    if(idx>1)return;                            // fora do pódio (1º/2º)
     const p=players[idx];
     const jogos=(Number(p.v)||0)+(Number(p.d)||0)+(Number(p.wo)||0);
-    if(jogos<1)return;                          // ainda não jogou — não premia
-    const tipo=idx===0?'campeao':'vice';
+    if(jogos<1)return;                          // ainda não jogou — não mostra encerramento
+    const tipo=idx===0?'campeao':(idx===1?'vice':'fim');
     const catTxt=(t.nome||'Torneio')+' · Etapa '+etapa;
-    const chave='jvt-tor-premio-'+cod+'-'+t.id+'-e'+etapa+'-'+g+'-'+tipo;
-    if(lsGet(chave))return;                     // já comemorou esta etapa
+    const chave='jvt-tor-fim-'+cod+'-'+t.id+'-e'+etapa+'-'+g;
+    if(lsGet(chave))return;                     // uma única mensagem por encerramento
     lsSet(chave,'1');
     setTimeout(()=>celebraTorneioPremio(tipo,g,catTxt,(EU&&EU.nome)||p.name||''),650);
     return;
   }
 }
 function celebraTorneioPremio(tipo,grupo,torNome,nome){
-  const champ=(tipo==='campeao');
-  confeteBurst(champ?'#C9A04A':'#AEB6BD');
+  const champ=(tipo==='campeao'),vice=(tipo==='vice');
+  if(champ||vice)confeteBurst(champ?'#C9A04A':'#AEB6BD');
   const ov=document.createElement('div');ov.className='tp-ov';
-  const card=document.createElement('div');card.className='tp-card '+(champ?'champ':'vice');
+  const card=document.createElement('div');card.className='tp-card '+(champ?'champ':(vice?'vice':'fim'));
+  const titulo=champ?'CAMPEÃO':(vice?'VICE-CAMPEÃO':'ETAPA CONCLUÍDA');
+  const trofeu=champ?'🏆':(vice?'🥈':'🎾');
+  const msg=champ?'Você transformou treino, disciplina e decisão em resultado. Aproveite essa conquista!':
+            (vice?'Grande campanha. Cada ponto jogado constrói o próximo nível — siga nessa evolução.':
+                   'Mais uma etapa concluída. Resultado passa; experiência fica. Use cada jogo para chegar mais forte ao próximo desafio.');
   card.innerHTML='<div class="tp-emb">JV</div>'+
-    '<div class="tp-trophy">'+(champ?'🏆':'🥈')+'</div>'+
-    '<div class="tp-parabens">Parabéns!</div>'+
-    '<div class="tp-title">'+(champ?'CAMPEÃO':'VICE-CAMPEÃO')+'</div>'+
+    '<div class="tp-trophy">'+trofeu+'</div>'+
+    '<div class="tp-parabens">'+(champ||vice?'Parabéns!':'Fim de etapa')+'</div>'+
+    '<div class="tp-title">'+titulo+'</div>'+
     '<div class="tp-cat">Grupo '+torEscAl(grupo)+' · '+torEscAl(torNome)+'</div>'+
+    '<div class="tp-msg">'+msg+'</div>'+
     (nome?'<div class="tp-name">🎾 '+torEscAl(nome)+'</div>':'')+
-    '<div class="tp-foot">Academia João Victor Tênis</div>'+
-    '<button class="tp-close">Comemorar 🎉</button>';
-  ov.appendChild(card);
-  document.body.appendChild(ov);
+    '<div class="tp-foot">Academia João Victor Tênis · Da base ao topo</div>'+
+    '<button class="tp-close">'+(champ?'Comemorar 🎉':'Continuar')+'</button>';
+  ov.appendChild(card);document.body.appendChild(ov);
   const fecha=()=>{ov.classList.remove('on');setTimeout(()=>ov.remove(),350);};
   card.querySelector('.tp-close').addEventListener('click',fecha);
   ov.addEventListener('click',e=>{if(e.target===ov)fecha();});
   requestAnimationFrame(()=>ov.classList.add('on'));
-  try{if(navigator.vibrate)navigator.vibrate([50,60,50,60,90]);}catch(e){}
+  try{if(navigator.vibrate)navigator.vibrate(champ?[50,60,50,60,90]:[45]);}catch(e){}
+}
+function nomeTorneioEhMeu(nome){
+  const a=normNomeTor(nome),b=normNomeTor(EU&&EU.nome);if(!a||!b)return false;
+  if(a===b)return true;
+  const curto=n=>{const p=n.split(' ').filter(Boolean);return p.length>1?(p[0]+' '+p[p.length-1]):n;};
+  return curto(a)===curto(b);
+}
+function celebraResultadoTorneio(venceu,adversario,score,torNome,aoFechar){
+  const ov=document.createElement('div');ov.className='tp-ov';
+  const card=document.createElement('div');card.className='tp-card '+(venceu?'vitoria':'derrota');
+  if(venceu)confeteBurst('#2ED66B');
+  const msg=venceu
+    ?'Excelente! Vitória construída ponto a ponto. Valorize o que funcionou e leve essa confiança para o próximo jogo.'
+    :'Resultado registrado. Uma derrota também entrega informação: ajuste, treine e volte para a quadra ainda mais preparado.';
+  card.innerHTML='<div class="tp-emb">JV</div>'+
+    '<div class="tp-trophy">'+(venceu?'🏆':'🎾')+'</div>'+
+    '<div class="tp-parabens">'+(venceu?'Parabéns pela vitória!':'Seguimos evoluindo')+'</div>'+
+    '<div class="tp-title">'+(venceu?'VITÓRIA REGISTRADA':'RESULTADO REGISTRADO')+'</div>'+
+    '<div class="tp-cat">'+torEscAl(torNome||'Torneio')+(adversario?' · vs. '+torEscAl(adversario):'')+'</div>'+
+    (score?'<div class="tp-score">'+torEscAl(score)+'</div>':'')+
+    '<div class="tp-msg">'+msg+'</div>'+
+    '<div class="tp-foot">Academia João Victor Tênis · Da base ao topo</div>'+
+    '<button class="tp-close">Continuar</button>';
+  ov.appendChild(card);document.body.appendChild(ov);
+  let fechou=false;
+  const fecha=()=>{if(fechou)return;fechou=true;ov.classList.remove('on');setTimeout(()=>{ov.remove();if(typeof aoFechar==='function')aoFechar();},350);};
+  card.querySelector('.tp-close').addEventListener('click',fecha);
+  ov.addEventListener('click',e=>{if(e.target===ov)fecha();});
+  requestAnimationFrame(()=>ov.classList.add('on'));
+  try{if(navigator.vibrate)navigator.vibrate(venceu?[45,55,75]:[35]);}catch(e){}
 }
 function abrirRegResultado(){
   const t=PUB&&PUB.torneio;
@@ -2536,8 +2588,15 @@ async function enviarResultadoAluno(){
   }
   document.getElementById('ov-tor-result').classList.remove('on');
   toast('Resultado enviado ao João ✓');
-  const txt='🎾 *Resultado — '+((PUB.torneio&&PUB.torneio.nome)||'Torneio')+'*\nGrupo '+g+': *'+venc+'* venceu '+(tipo==='wo'?'por W.O. ('+adv+')':adv)+(score?(' — '+score):'')+'.';
-  setTimeout(()=>abrirWhatsApp('5541995415712',txt),700);
+  const torNome=(PUB.torneio&&PUB.torneio.nome)||'Torneio';
+  const txt='🎾 *Resultado — '+torNome+'*\nGrupo '+g+': *'+venc+'* venceu '+(tipo==='wo'?'por W.O. ('+adv+')':adv)+(score?(' — '+score):'')+'.';
+  const souP1=nomeTorneioEhMeu(p1),souP2=nomeTorneioEhMeu(p2);
+  if(souP1||souP2){
+    const ganhou=nomeTorneioEhMeu(venc),adversario=souP1?p2:p1;
+    setTimeout(()=>celebraResultadoTorneio(ganhou,adversario,score,torNome,()=>abrirWhatsApp('5541995415712',txt)),220);
+  }else{
+    setTimeout(()=>abrirWhatsApp('5541995415712',txt),700);
+  }
 }
 function temCardLink(){return !!((EU&&EU.cardLink&&EU.cardLink.trim())||(PUB&&PUB.cardLink&&PUB.cardLink.trim()));}
 function cardBtnHTML(onclickFn){
@@ -3335,7 +3394,7 @@ setInterval(()=>{if(!document.hidden)checarLiberacao();},60000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-09-24-5').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-09-24-6').catch(function(){});});}
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
 (function esperarEIniciar(t){
