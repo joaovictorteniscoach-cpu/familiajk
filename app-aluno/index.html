@@ -414,7 +414,7 @@ body[data-aba="aulas"] #bloco-saldo #repos-box{display:none}
 .grp-ref-note{font-size:11.5px;color:var(--muted);margin:9px 0 4px;line-height:1.45}
 .pick-note{font-size:12.5px;color:var(--muted);background:#F6F3EC;border-radius:10px;padding:9px 12px;margin-bottom:10px;line-height:1.45}
 
-/* ===== JV Premium 2026-09-25-5 · App Aluno ===== */
+/* ===== JV Premium 2026-09-25-6 · App Aluno ===== */
 :root{
   --jv-bg:#06140F;--jv-bg-2:#0A2117;--jv-card:rgba(8,35,24,.91);
   --jv-card-strong:#0B281C;--jv-gold:#E0B94F;--jv-gold-soft:#F0D57C;
@@ -553,7 +553,7 @@ body{background:
 }
 
 
-/* ===== JV Legibilidade 2026-09-25-5 · App Aluno ===== */
+/* ===== JV Legibilidade 2026-09-25-6 · App Aluno ===== */
 :root{
   --jv-light:#FAF7F1;
   --jv-light-2:#F2ECE2;
@@ -669,7 +669,7 @@ body{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
 
 
 
-/* ===== JV Polimento final 2026-09-25-5 · App Aluno =====
+/* ===== JV Polimento final 2026-09-25-6 · App Aluno =====
    Mantém a Home aprovada e reforça contraste, proporção e leitura no iPhone. */
 :root{
   --jv-copy:#F8F5ED;
@@ -792,6 +792,126 @@ body{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
   .jv-pay-value{font-size:22px!important}
 }
 
+
+
+/* ===== JV Auditoria final 2026-09-25-6 · App Aluno ===== */
+/* Última camada de leitura. Mantém a Home aprovada e a paleta, mas impede
+   heranças antigas de criarem texto claro em cartão claro ou escuro em verde. */
+:root{
+  --jv-readable-white:#F8F5ED;
+  --jv-readable-soft:#D8D2C7;
+  --jv-readable-dark:#10261E;
+  --jv-readable-muted:#625A4F;
+  --jv-readable-paper:#FBF8F2;
+}
+html,body{-webkit-text-size-adjust:100%;background:#06140F!important}
+
+/* Área da Dynamic Island protegida quando instalado como PWA. */
+@media (display-mode:standalone){
+  body::before{
+    content:"";position:fixed;left:0;right:0;top:0;height:env(safe-area-inset-top,0px);
+    background:#06140F;z-index:39;pointer-events:none
+  }
+}
+
+/* Evita zoom automático do Safari e mantém proporções do layout. */
+@media(max-width:520px){
+  #app input,#app select,#app textarea{font-size:16px!important}
+}
+
+/* Hero e navegação: contraste alto sem mudar a identidade. */
+.jv-hero-greet{color:#F2EEE6!important;-webkit-text-fill-color:#F2EEE6!important}
+#app>.top.jv-premium-hero h1{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+#app>.top.jv-premium-hero h1 em{color:#F0D57C!important;-webkit-text-fill-color:#F0D57C!important}
+.jv-hero-motiv{color:#D8D2C7!important;-webkit-text-fill-color:#D8D2C7!important}
+#hello-prof{color:#8AF2A2!important;-webkit-text-fill-color:#8AF2A2!important}
+.nav button:not(.on){color:#D3CEC5!important;-webkit-text-fill-color:#D3CEC5!important}
+.nav button.on{color:#F0D57C!important;-webkit-text-fill-color:#F0D57C!important}
+
+/* Home — quatro cartões, mensalidade e ações rápidas. */
+.jv-home-card .hc-top{color:#F0D57C!important;-webkit-text-fill-color:#F0D57C!important}
+.jv-home-card .hc-main{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+.jv-home-card .hc-sub{color:#D5CEC4!important;-webkit-text-fill-color:#D5CEC4!important}
+.jv-pay-head b,.jv-pay-value{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+.jv-pay-lbl{color:#D1C9BD!important;-webkit-text-fill-color:#D1C9BD!important}
+.jv-pay-status{color:#8AF4AA!important;-webkit-text-fill-color:#8AF4AA!important}
+.jv-pix-btn{color:#10261E!important;-webkit-text-fill-color:#10261E!important}
+.jv-quick button{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+
+/* Telas internas escuras. */
+.jv-subhero h2,.jv-credit-big,.jv-profile-card h3,
+.jv-section-card .sec-title,.jv-row b{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+.jv-subhero p,.jv-credit-big small,.jv-profile-card p,.jv-row span{
+  color:#D4CEC4!important;-webkit-text-fill-color:#D4CEC4!important
+}
+.page>.sec-title,.page .sec-title{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+.page>.sec-eyebrow,.page .sec-eyebrow{color:#F0D57C!important;-webkit-text-fill-color:#F0D57C!important}
+
+/* Agenda — cartões claros recebem tinta escura; estados coloridos, branco. */
+#apg-agenda .wc.livre,#apg-agenda .cal-day,#apg-agenda .slot-body,
+#apg-agenda .month-btn{
+  background:#FBF8F2!important;color:#10261E!important;-webkit-text-fill-color:#10261E!important
+}
+#apg-agenda .wc.meu,#apg-agenda .wc.pend{
+  color:#FFF!important;-webkit-text-fill-color:#FFF!important
+}
+#apg-agenda .wc.ocup{color:#4E493F!important;-webkit-text-fill-color:#4E493F!important}
+#apg-agenda .ag-nav-label{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+#apg-agenda .ag-nav-label small{color:#D4CEC4!important;-webkit-text-fill-color:#D4CEC4!important}
+#apg-agenda .legend span{opacity:1!important}
+
+/* Aulas/histórico. */
+#apg-aulas .hist-row,#apg-aulas .hr-d{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+#apg-aulas .hr-h{color:#D0C9BF!important;-webkit-text-fill-color:#D0C9BF!important}
+#apg-aulas .empty{color:#D8D2C7!important;-webkit-text-fill-color:#D8D2C7!important}
+
+/* Evolução — nenhuma legenda some no fundo escuro. */
+#apg-evolucao .evo-xp,#apg-evolucao .evo-prio,#apg-evolucao .evo-mes,
+#apg-evolucao .evo-hist .hr{color:#FFF!important}
+#apg-evolucao .evo-row .nm,#apg-evolucao .evo-row .st{
+  color:#FFF!important;-webkit-text-fill-color:#FFF!important
+}
+#apg-evolucao .evo-row small,#apg-evolucao .evo-cap,
+#apg-evolucao .evo-mes-reg,#apg-evolucao .evo-pal-cap{
+  color:#D0C9BF!important;-webkit-text-fill-color:#D0C9BF!important
+}
+
+/* Torneio do aluno. */
+#apg-torneio .atg-card{color:#F8F5ED!important}
+#apg-torneio .atg-tbl th{color:#CFC8BD!important;-webkit-text-fill-color:#CFC8BD!important}
+#apg-torneio .atg-tbl td{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+#apg-torneio .atg-tbl tr.me td{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+
+/* Perfil e créditos. */
+.jv-profile-actions button{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+.jv-credit-panel,.jv-profile-card,.jv-section-card{color:#F8F5ED!important}
+.jv-logout{color:#FFB7AB!important;-webkit-text-fill-color:#FFB7AB!important}
+
+/* Alertas claros precisam permanecer escuros. */
+.aviso b{color:#795B10!important;-webkit-text-fill-color:#795B10!important}
+.aviso p{color:#403A31!important;-webkit-text-fill-color:#403A31!important}
+#vinculo-status-box b{color:#FFF0C5!important;-webkit-text-fill-color:#FFF0C5!important}
+#vinculo-status-box p{color:#F6E4AD!important;-webkit-text-fill-color:#F6E4AD!important}
+
+/* Escala mínima: sem microtexto ilegível e sem alvos menores que o dedo. */
+#app button{min-height:44px}
+.page .sec-title{font-size:clamp(26px,7vw,30px)!important;line-height:1.08!important}
+.page .sec-eyebrow{font-size:11.5px!important}
+.jv-home-card .hc-top{font-size:12px!important}
+.jv-home-card .hc-sub{font-size:11.5px!important}
+.jv-row{font-size:13px!important}
+.nav button{font-size:11.5px!important}
+
+/* Proporção em iPhones estreitos: mantém duas colunas, mas sem apertar texto. */
+@media(max-width:390px){
+  .wrap{padding-left:13px!important;padding-right:13px!important}
+  .jv-home-grid{gap:8px!important}
+  .jv-home-card{min-height:154px!important;padding:13px!important}
+  .jv-home-card .hc-main{font-size:19px!important}
+  .jv-home-card .hc-sub{font-size:11px!important}
+  .jv-quick{gap:7px!important}
+  .jv-quick button{font-size:11px!important;padding-left:5px!important;padding-right:5px!important}
+}
 </style>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -1366,7 +1486,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-09-25-5';
+const VERSAO='2026-09-25-6';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -3642,7 +3762,7 @@ setInterval(()=>{if(!document.hidden)checarLiberacao();},60000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-09-25-5').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-09-25-6').catch(function(){});});}
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
 (function esperarEIniciar(t){
