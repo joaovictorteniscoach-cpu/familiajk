@@ -1132,3 +1132,130 @@ input,select,textarea{min-height:44px}
   .tg-rank{width:25px!important;height:25px!important;margin-right:4px!important}
   .tg-drag{padding-right:3px!important}
 }
+
+
+/* ===== JV Auditoria final 2026-09-25-6 · contraste WCAG, iPhone e proporção ===== */
+/* Camada final deliberadamente específica. Mantém a paleta aprovada e elimina
+   combinações herdadas de texto claro/claro ou escuro/escuro nas telas antigas. */
+:root{
+  --jv-readable-white:#F8F5ED;
+  --jv-readable-soft:#D8D2C7;
+  --jv-readable-dark:#10261E;
+  --jv-readable-muted:#625A4F;
+  --jv-readable-paper:#FBF8F2;
+}
+html,body{background:#06140F!important;-webkit-text-size-adjust:100%}
+.page{color:var(--jv-readable-white)!important}
+.page>.sec-title,.page .comp-head .sec-title,.page .dobra-cab .dc-nome{color:#FFF!important}
+.page>.sec-eyebrow,.page .comp-head .sec-eyebrow,.page .dobra-cab .dc-eyebrow{color:#F0D57C!important}
+
+/* Em PWA com status bar translúcida, o conteúdo pode passar por baixo da
+   Dynamic Island ao rolar. A máscara preserva a área segura sem alterar o layout. */
+@media (display-mode:standalone){
+  body::before{
+    content:"";position:fixed;left:0;right:0;top:0;height:env(safe-area-inset-top,0px);
+    background:#06140F;z-index:49;pointer-events:none
+  }
+}
+
+/* iOS amplia automaticamente inputs abaixo de 16px; isso distorcia proporções. */
+@media(max-width:520px){
+  input,select,textarea{font-size:16px!important}
+}
+
+/* CAIXA — cores originais preservadas, texto fixado conforme a superfície. */
+.quick .q1,.quick .q2,.quick .q4{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+.quick .q1 small,.quick .q2 small,.quick .q4 small{color:inherit!important;-webkit-text-fill-color:currentColor!important}
+.quick .q3{color:#10261E!important;-webkit-text-fill-color:#10261E!important}
+.quick .q3 small{color:#2F342E!important;-webkit-text-fill-color:#2F342E!important}
+.quick .qb-novo,.quick .qb-novo small{color:#F8F5ED!important;-webkit-text-fill-color:#F8F5ED!important}
+.mov,.mov *{opacity:1}
+.mov-l b{color:#10261E!important;-webkit-text-fill-color:#10261E!important}
+.mov-l span{color:#625A4F!important;-webkit-text-fill-color:#625A4F!important}
+.mov-v.in{color:#159452!important;-webkit-text-fill-color:#159452!important}
+.mov-v.out{color:#C85340!important;-webkit-text-fill-color:#C85340!important}
+
+/* FINANCEIRO — card escuro sempre recebe texto claro; superfícies claras,
+   tinta escura. Evita o efeito visto nos KPIs e no comparativo. */
+.fin-card,.fin-card *{text-shadow:none!important}
+.fin-card .l{color:#DED8CD!important;-webkit-text-fill-color:#DED8CD!important;opacity:1!important}
+.fin-card .v{color:#FFF!important;-webkit-text-fill-color:#FFF!important;opacity:1!important}
+.fin-card.desp .v{color:#F1A17B!important;-webkit-text-fill-color:#F1A17B!important}
+.chart,.chart *{opacity:1}
+.chart-lab{color:#625A4F!important;-webkit-text-fill-color:#625A4F!important}
+.chart-val{color:#10261E!important;-webkit-text-fill-color:#10261E!important}
+.desp-item .di-d{color:#10261E!important;-webkit-text-fill-color:#10261E!important}
+.desp-item .di-c{color:#6A6256!important;-webkit-text-fill-color:#6A6256!important}
+.desp-item .di-v{color:#B94F2D!important;-webkit-text-fill-color:#B94F2D!important}
+
+/* ALUNOS — nomes e status legíveis sem mudar o verde dos cartões. */
+.aluno-name{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+.aluno-sub{color:#D2CBC0!important;-webkit-text-fill-color:#D2CBC0!important}
+.badge.pago{color:#82F0A4!important;-webkit-text-fill-color:#82F0A4!important}
+.badge.parcial{color:#F4D778!important;-webkit-text-fill-color:#F4D778!important}
+.badge.pendente{color:#FFB0A2!important;-webkit-text-fill-color:#FFB0A2!important}
+#alunos-resumo .rc b,#alunos-resumo .rc span{
+  opacity:1!important;-webkit-text-fill-color:currentColor
+}
+
+/* TORNEIO — correção explícita do caso mais crítico dos prints:
+   cabeçalho verde = branco; corpo creme = verde quase preto. */
+.tg-head{color:#FFF!important}
+.tg-head .tg-title{color:#FFF!important;-webkit-text-fill-color:#FFF!important;opacity:1!important}
+.tg-head .tg-count{color:#DAD4CA!important;-webkit-text-fill-color:#DAD4CA!important;opacity:1!important}
+.tg-head .tg-badge{color:#173225!important;-webkit-text-fill-color:#173225!important}
+.tg-tbl,.tg-tbl tbody,.tg-tbl tr{background:#FBF8F2!important}
+.tg-tbl th{color:#655D52!important;-webkit-text-fill-color:#655D52!important;opacity:1!important}
+.tg-tbl td{color:#10261E!important;-webkit-text-fill-color:#10261E!important;opacity:1!important}
+.tg-name{color:#10261E!important;-webkit-text-fill-color:#10261E!important;opacity:1!important}
+.tg-drag{color:#8A8174!important;-webkit-text-fill-color:#8A8174!important}
+.tg-stat{color:#10261E!important;-webkit-text-fill-color:#10261E!important;opacity:1!important}
+.tg-pts{color:#143B2C!important;-webkit-text-fill-color:#143B2C!important}
+.tg-pts.lead{color:#F0D57C!important;-webkit-text-fill-color:#F0D57C!important}
+.tg-acum{color:#746B5E!important;-webkit-text-fill-color:#746B5E!important}
+.tg-mv{font-size:19px!important;filter:none!important}
+.tg-x{font-size:18px!important;filter:none!important}
+
+/* AGENDA — preserva a codificação por cor, mas toda célula colorida usa branco. */
+.wk th,.wk th *{color:#FFF!important;-webkit-text-fill-color:#FFF!important;opacity:1!important}
+.wk th small{color:#D7D1C7!important;-webkit-text-fill-color:#D7D1C7!important}
+.wk-cell.t-aula,.wk-cell.t-locacao,.wk-cell.t-torneio,.wk-cell.t-bloqueio,
+.wk-cell.t-pessoal,.wk-cell.t-grupo,.wk-cell.t-personal,.wk-cell.t-outro,.wk-cell.multi{
+  color:#FFF!important;-webkit-text-fill-color:#FFF!important;text-shadow:0 1px 1px rgba(0,0,0,.24)
+}
+.wk-cell.free{color:#6F675C!important;-webkit-text-fill-color:#6F675C!important}
+.wk-cell.t-liberado{color:#245884!important;-webkit-text-fill-color:#245884!important}
+.wk-cell.t-nliberado{color:#857D71!important;-webkit-text-fill-color:#857D71!important}
+.wk td.hr{color:#6D6559!important;-webkit-text-fill-color:#6D6559!important}
+.ag-nav-label{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+.ag-nav-label small{color:#D6D0C5!important;-webkit-text-fill-color:#D6D0C5!important}
+
+/* Componentes de superfície clara: blindagem contra herança do tema escuro. */
+.toolbar input,.modal input,.modal select,.modal textarea,#meta-input,
+.aval-resumo .rc,.chart,.desp-item,.tg-tbl,.wk-scroll{
+  color:#10261E!important
+}
+.toolbar input::placeholder,.modal input::placeholder,.modal textarea::placeholder{
+  color:#746C61!important;opacity:1
+}
+
+/* Escala mínima de leitura e alvos de toque. */
+button,.btn,.month-btn,.tg-stat{min-height:44px}
+.sec-title{font-size:clamp(27px,7vw,31px)!important}
+.sec-eyebrow{font-size:11.5px!important}
+.fin-card .l{font-size:11.5px!important}
+.aluno-sub{font-size:13px!important}
+.tg-tbl th{font-size:11px!important}
+.tg-name{font-size:13px!important}
+.wk-cell{font-size:max(var(--wk-fs,10px),11.5px)!important}
+
+/* 320–390px: mantém conteúdo dentro da tela sem sacrificar leitura. */
+@media(max-width:390px){
+  .page{padding-left:13px!important;padding-right:13px!important}
+  .quick{gap:9px!important}
+  .quick button{min-height:98px!important;padding:14px 9px!important;font-size:13.5px!important}
+  .fin-card{min-height:100px!important;padding:14px!important}
+  .tg-tbl th:first-child,.tg-tbl td:first-child{width:39%!important}
+  .tg-tbl th:last-child,.tg-tbl td:last-child{width:17%!important}
+  .wk{min-width:650px!important}
+}
