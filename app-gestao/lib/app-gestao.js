@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-25-2';
+const VERSAO='2026-09-25-3';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2478,6 +2478,15 @@ function fecharMais(){
   const b=document.getElementById('nav-mais');if(b)b.classList.remove('aberto');
 }
 function irDoMais(id){fecharMais();irParaAba(id);window.scrollTo({top:0});}
+function irAcessosAluno(){
+  fecharMais();irParaAba('fin');
+  setTimeout(()=>{
+    const alvo=document.getElementById('vinculos-box');
+    if(!alvo)return;
+    const titulo=alvo.previousElementSibling||alvo;
+    titulo.scrollIntoView({behavior:'smooth',block:'start'});
+  },160);
+}
 /* ===== Porta de entrada =====
    Quando abrir direto era razoável: um dono, um aparelho, banco aberto. Hoje há
    professores e a regra do servidor decide quem lê o quê — e um link aberto no
