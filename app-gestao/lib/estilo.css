@@ -831,3 +831,177 @@ input,select,textarea{
   .top.jv-premium-hero h1{font-size:32px}.jv-hero-question{font-size:16px}.top.jv-premium-hero .top-actions{right:73px;gap:4px}
   .top.jv-premium-hero .top-actions .eye-btn{width:34px;height:34px}.kpi{padding:12px!important}.kpi .kpi-v{font-size:20px!important}
 }
+
+
+/* ===== JV Legibilidade 2026-09-25-4 · Gestão ===== */
+:root{
+  /* mantém a paleta premium, mas restaura o sentido semântico de "cream":
+     vários componentes legados usam cream COMO TEXTO sobre verde. */
+  --cream:#F8F5ED;
+  --jv-ink:#10261E;
+  --jv-ink-soft:#625B50;
+  --jv-light:#FAF7F1;
+  --jv-light-2:#F2ECE2;
+  --jv-light-border:#D9C9A7;
+}
+html,body{min-height:100%;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+.page{padding-left:16px;padding-right:16px;padding-bottom:calc(108px + env(safe-area-inset-bottom,0px))}
+.sec-eyebrow{font-size:11.5px!important;font-weight:800!important;letter-spacing:1.7px!important}
+.sec-title{font-size:30px!important;line-height:1.08!important;margin-bottom:16px!important}
+
+/* navegação: mais espaço, contraste e safe area */
+.nav{
+  min-height:76px!important;
+  padding:6px 5px max(8px,env(safe-area-inset-bottom,0px))!important;
+}
+.nav button{min-height:62px!important;font-size:11.5px!important;font-weight:650!important;border-radius:16px!important;gap:4px!important}
+.nav button .ico{height:25px!important}
+.nav button.on,.nav button.aberto{background:rgba(224,185,79,.11)!important;color:#F0D57C!important}
+.nav button.on:after,.nav button.aberto:after{bottom:5px!important;height:3px!important;width:26px!important}
+
+/* controles principais */
+.toolbar{gap:10px!important;margin-bottom:15px!important}
+.toolbar input{min-height:54px!important;padding:13px 15px!important;background:var(--jv-light)!important;color:var(--jv-ink)!important;border-color:var(--jv-light-border)!important;font-size:15px!important}
+.toolbar .btn{min-height:54px!important}
+.seg{padding:5px!important;border-radius:15px!important;margin-bottom:16px!important}
+.seg button{min-height:44px!important;font-size:13px!important}
+.seg button.on{background:#247D57!important;color:#fff!important}
+
+/* lista de alunos: mantém o cartão escuro, mas aumenta leitura e respiro */
+.aluno{border-radius:18px!important;margin-bottom:12px!important;background:linear-gradient(145deg,#0D3425,#08251B)!important;border:1px solid rgba(224,185,79,.18)!important}
+.aluno-head{padding:16px!important;min-height:86px!important}
+.aluno-name{font-size:16px!important;font-weight:800!important;color:#FFF!important;line-height:1.25!important}
+.aluno-sub{font-size:12.5px!important;color:rgba(248,245,237,.76)!important;line-height:1.4!important;margin-top:3px!important}
+.badge{font-size:10.5px!important;padding:6px 10px!important}
+.badge.pago{background:#0D5033!important;color:#7EF0A1!important}
+.badge.parcial{background:#5E4816!important;color:#F3D57A!important}
+.badge.pendente{background:#5B2B22!important;color:#F0A294!important}
+
+/* resumo dos alunos/avaliações: superfícies claras precisam de tinta escura */
+.aval-resumo{gap:10px!important;margin:4px 0 18px!important}
+.aval-resumo .rc{
+  min-height:94px!important;padding:14px 10px!important;border-radius:18px!important;
+  background:var(--jv-light)!important;border:1px solid var(--jv-light-border)!important;color:var(--jv-ink)!important;
+  display:flex!important;flex-direction:column!important;justify-content:center!important
+}
+.aval-resumo .rc b{font-size:28px!important;color:#0B3C2B!important}
+.aval-resumo .rc.pend b{color:#B64235!important}
+.aval-resumo .rc span{font-size:11.5px!important;color:#6A6257!important}
+#alunos-resumo .rc.on{border:2px solid var(--gold)!important;box-shadow:0 0 0 2px rgba(224,185,79,.12)!important}
+.avcard{background:var(--jv-light)!important;border-color:var(--jv-light-border)!important;color:var(--jv-ink)!important}
+.avcard .avnome{color:var(--jv-ink)!important}.avcard .avsub,.avmini .avpct{color:#6A6257!important}
+
+/* Caixa / movimentos: a lista branca fica deliberadamente clara e legível */
+.mov{
+  min-height:76px!important;padding:14px 16px!important;margin-bottom:10px!important;border-radius:17px!important;
+  background:var(--jv-light)!important;border:1px solid var(--jv-light-border)!important;color:var(--jv-ink)!important;
+  box-shadow:0 6px 18px rgba(0,0,0,.07)!important
+}
+.mov-l{min-width:0!important;padding-right:10px!important}
+.mov-l b{font-size:14.5px!important;font-weight:800!important;color:var(--jv-ink)!important;line-height:1.28!important}
+.mov-l span{font-size:12px!important;color:#726A5E!important;line-height:1.4!important}
+.mov-v{font-size:14.5px!important;font-weight:850!important}
+.mov-v.in{color:#249B5C!important}.mov-v.out{color:#C85C49!important}
+.mov-x{color:#9C8E77!important;font-size:19px!important;min-width:36px!important;min-height:36px!important}
+
+/* atalhos da Caixa: restaura branco sobre verdes, preservando ouro e saibro */
+.quick{gap:12px!important;margin-bottom:20px!important}
+.quick button{min-height:112px!important;border-radius:20px!important;padding:18px 12px!important;font-size:14px!important;font-weight:800!important}
+.quick .q1,.quick .q2{color:#fff!important}.quick .q3{color:#10261E!important}.quick .q4{color:#fff!important}
+.quick small{font-size:20px!important}
+.quick .qb-novo{color:#F2E9D9!important;border-color:rgba(224,185,79,.36)!important;background:rgba(255,255,255,.035)!important}
+.quick .qb-novo small{color:#F2E9D9!important}
+
+/* Financeiro */
+.fin-grid{gap:12px!important;margin-bottom:20px!important}
+.fin-card{min-height:108px!important;border-radius:18px!important;padding:16px!important}
+.fin-card .l{font-size:11px!important;color:rgba(248,245,237,.74)!important;font-weight:750!important}
+.fin-card .v{font-size:27px!important;color:#FFF!important;line-height:1.15!important;margin-top:5px!important}
+.fin-card.hero .v{font-size:35px!important}.fin-card.hero .l,.fin-card.saldo .l{color:#F0D57C!important}
+.fin-card.desp .v{color:#F0A077!important}
+
+/* gráfico do mês: superfície clara => texto escuro */
+.chart{
+  background:var(--jv-light)!important;border:1px solid var(--jv-light-border)!important;border-radius:20px!important;
+  padding:20px 17px 12px!important;margin-bottom:20px!important;box-shadow:0 8px 22px rgba(0,0,0,.08)!important
+}
+.chart-row{gap:10px!important;margin-bottom:14px!important;min-height:30px!important}
+.chart-lab{width:86px!important;font-size:11.5px!important;font-weight:800!important;color:#6B6255!important}
+.chart-track{height:25px!important;background:#E9E3D9!important;border-radius:9px!important}
+.chart-bar{border-radius:9px!important}
+.chart-val{width:92px!important;font-size:13px!important;font-weight:850!important;color:var(--jv-ink)!important}
+.chart-val.neg{color:#B74C3B!important}
+
+/* despesas: cartão claro sem texto lavado */
+.desp-item{
+  min-height:82px!important;padding:15px 16px!important;margin-bottom:11px!important;border-radius:17px!important;
+  background:var(--jv-light)!important;border:1px solid var(--jv-light-border)!important;color:var(--jv-ink)!important;
+  box-shadow:0 5px 16px rgba(0,0,0,.06)!important
+}
+.desp-item .di-d{font-size:14.5px!important;font-weight:800!important;color:var(--jv-ink)!important}
+.desp-item .di-c{font-size:11px!important;color:#756B5D!important}
+.desp-item .di-v{font-size:16px!important;font-weight:850!important;color:#C25B31!important}
+.desp-item .di-x{color:#9D907E!important;min-width:38px!important;min-height:38px!important}
+
+/* Torneio: cabeçalho escuro com texto claro; tabela clara com texto escuro */
+.tg-card{
+  background:var(--jv-light)!important;border:1px solid var(--jv-light-border)!important;border-radius:20px!important;
+  margin-bottom:18px!important;box-shadow:0 8px 24px rgba(0,0,0,.09)!important;color:var(--jv-ink)!important
+}
+.tg-head{padding:16px!important;background:#0A3B2B!important;color:#FFF!important;min-height:88px!important}
+.tg-badge{width:42px!important;height:42px!important;border-radius:13px!important;background:#E0B94F!important;color:#173225!important;font-size:20px!important}
+.tg-title{font-size:16px!important;font-weight:850!important;color:#FFF!important;line-height:1.25!important}
+.tg-count{font-size:12px!important;color:rgba(255,255,255,.72)!important;opacity:1!important;margin-top:3px!important}
+.tg-tbl{font-size:13.5px!important;background:var(--jv-light)!important}
+.tg-tbl th{padding:11px 4px!important;font-size:10.5px!important;color:#72695D!important;background:#F2ECE2!important;border-bottom:1px solid #DFD3BF!important}
+.tg-tbl th:first-child{padding-left:16px!important}
+.tg-tbl td{padding:10px 4px!important;border-bottom:1px solid #E6DDCF!important;color:var(--jv-ink)!important}
+.tg-tbl td:first-child{padding-left:12px!important}
+.tg-name{color:var(--jv-ink)!important;font-weight:800!important;line-height:1.25!important}
+.tg-drag{color:#A29684!important}
+.tg-rank{width:28px!important;height:28px!important;margin-right:7px!important;font-size:12px!important;background:#E8E0D2!important;color:#675F53!important}
+.tg-rank.r1{background:#E0B94F!important;color:#173225!important}.tg-rank.r2{background:#BBB3A4!important;color:#FFF!important}.tg-rank.r3{background:#D99759!important;color:#FFF!important}
+.tg-stat{width:48px!important;min-height:42px!important;padding:8px 3px!important;background:#FFFCF6!important;color:#15251E!important;border:1px solid #DDC995!important;border-radius:11px!important;font-size:14px!important;font-weight:850!important}
+.tg-pts{min-width:36px!important;padding:7px 9px!important;background:#EAE2D5!important;color:#143B2C!important}
+.tg-pts.lead{background:#0B3C2B!important;color:#F0D57C!important}
+.tg-acum{color:#7B7164!important}.tg-mv{font-size:18px!important;opacity:.9!important}.tg-x{font-size:18px!important;opacity:.7!important}
+.tor-empty{background:var(--jv-light)!important;color:#6B6256!important;border-color:var(--jv-light-border)!important}
+
+/* Agenda: preserva as cores dos tipos de aula, mas melhora a grade e textos */
+.ag-nav-label{font-size:15px!important}
+.ag-ferr{border-radius:17px!important}
+.ag-ferr>summary{min-height:52px!important;padding:13px 15px!important;font-size:13.5px!important;color:#F3EDE2!important}
+.wk-scroll{background:var(--jv-light)!important;border-color:var(--jv-light-border)!important;border-radius:18px!important}
+.wk th{background:#0B3C2B!important;color:#FFF!important;padding:10px 5px!important;font-size:max(var(--wk-thfs,10.5px),11px)!important;font-weight:800!important}
+.wk th small{color:rgba(255,255,255,.72)!important;opacity:1!important}
+.wk td{height:max(var(--wk-h,34px),40px)!important;border-color:#E2D8C9!important}
+.wk td.hr{background:#F7F2E9!important;color:#756D60!important;border-right:2px solid #D7C7A7!important;font-size:max(var(--wk-thfs,10.5px),11px)!important}
+.wk-cell{font-size:max(var(--wk-fs,10px),11px)!important;font-weight:750!important;line-height:1.22!important;padding:4px 5px!important}
+.wk-cell.free{background:#FFFCF7!important;color:#82796C!important;font-weight:700!important}
+.wk-zoom{color:#E9E1D5!important;margin-bottom:12px!important}
+.wk-zoom .wz{width:46px!important;height:46px!important;border-radius:13px!important;background:var(--jv-light)!important;color:var(--jv-ink)!important;border-color:var(--jv-light-border)!important}
+.wk-zoom .wz-lbl{color:#FFF!important;font-size:14px!important}
+.wk-zoom .wz-fit{width:auto!important;padding:0 15px!important;color:var(--jv-ink)!important}
+.slot-h{color:#E4DAC9!important;font-size:12.5px!important}
+.slot-body{min-height:46px!important;background:var(--jv-light)!important;border-color:#D8CBAF!important}
+.slot-add{width:38px!important;height:38px!important;background:#EDE5D9!important;color:#615A4F!important}
+
+/* campos e labels em cartões claros */
+input,select,textarea{min-height:44px}
+#meta-input{min-height:58px!important;font-size:18px!important;background:var(--jv-light)!important;color:var(--jv-ink)!important}
+
+/* mantém o cabeçalho compacto legível no iPhone */
+.top.compacto.jv-premium-hero{
+  min-height:calc(82px + env(safe-area-inset-top,0px))!important;
+  background:
+    linear-gradient(180deg,rgba(4,16,11,.92),rgba(4,16,11,.98)),
+    url('../../assets/jv-saibro-premium.svg') center/cover no-repeat!important
+}
+@media(max-width:390px){
+  .page{padding-left:13px;padding-right:13px}
+  .sec-title{font-size:27px!important}
+  .aval-resumo{gap:7px!important}.aval-resumo .rc{min-height:86px!important;padding:11px 6px!important}.aval-resumo .rc b{font-size:24px!important}
+  .tg-tbl{font-size:12.5px!important}.tg-stat{width:44px!important}
+  .chart-lab{width:72px!important}.chart-val{width:78px!important;font-size:12px!important}
+}
