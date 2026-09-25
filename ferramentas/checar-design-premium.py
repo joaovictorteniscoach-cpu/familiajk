@@ -51,6 +51,7 @@ gnav=g.split('<nav class="nav">',1)[1].split('</nav>',1)[0]
 for x in ['Início','Agenda','Alunos','Financeiro','Mais']:
     ok(x in gnav,'navegação da Gestão: '+x)
 ok('id="vinculos-box"' in g,'painel de acessos P0 continua na Gestão')
+ok('Acessos do aluno' in g and 'function irAcessosAluno()' in gj,'menu Mais abre diretamente os acessos do App Aluno')
 
 print('\n== PWA premium')
 ok(ma.get('theme_color')=='#06140F' and ma.get('background_color')=='#06140F','manifest do aluno no tema premium')
