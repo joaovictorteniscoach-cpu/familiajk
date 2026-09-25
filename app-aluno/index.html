@@ -414,7 +414,7 @@ body[data-aba="aulas"] #bloco-saldo #repos-box{display:none}
 .grp-ref-note{font-size:11.5px;color:var(--muted);margin:9px 0 4px;line-height:1.45}
 .pick-note{font-size:12.5px;color:var(--muted);background:#F6F3EC;border-radius:10px;padding:9px 12px;margin-bottom:10px;line-height:1.45}
 
-/* ===== JV Premium 2026-09-25-2 · App Aluno ===== */
+/* ===== JV Premium 2026-09-25-3 · App Aluno ===== */
 :root{
   --jv-bg:#06140F;--jv-bg-2:#0A2117;--jv-card:rgba(8,35,24,.91);
   --jv-card-strong:#0B281C;--jv-gold:#E0B94F;--jv-gold-soft:#F0D57C;
@@ -1125,7 +1125,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-09-25-2';
+const VERSAO='2026-09-25-3';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -1745,7 +1745,8 @@ function renderPremiumAluno(){
   if(!EU)return;carregarAvatarAluno();
   const prox=proximaAulaPremium(),pd=document.getElementById('home-prox-date'),pm=document.getElementById('home-prox-meta');
   if(pd)pd.textContent=prox?formatoDataPremium(prox.data):'Sem aula marcada';
-  if(pm)pm.textContent=prox?(DIAS_FULL[dtOf(prox.data,prox.hora).getDay()]+' • '+prox.hora+' • confira a quadra na Agenda'):'Veja os horários disponíveis na Agenda';
+  const profPremium=meuProfNome();
+  if(pm)pm.textContent=prox?(DIAS_FULL[dtOf(prox.data,prox.hora).getDay()]+' • '+prox.hora+(profPremium?' • Prof. '+profPremium:'')):'Veja os horários disponíveis na Agenda';
   const saldo=(Number(EU.creditos)||0)+(Number(EU.credGrupo)||0),plano=(Number(EU.plano)||0)+(Number(EU.planoGrupo)||0);
   const hc=document.getElementById('home-cred');if(hc)hc.textContent=fmtCred(saldo);
   const hcs=document.getElementById('home-cred-sub');if(hcs)hcs.textContent=plano>0?('de '+plano+' no plano atual'):'saldo atual';
@@ -3400,7 +3401,7 @@ setInterval(()=>{if(!document.hidden)checarLiberacao();},60000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-09-25-2').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-09-25-3').catch(function(){});});}
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
 (function esperarEIniciar(t){
