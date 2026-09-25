@@ -414,7 +414,7 @@ body[data-aba="aulas"] #bloco-saldo #repos-box{display:none}
 .grp-ref-note{font-size:11.5px;color:var(--muted);margin:9px 0 4px;line-height:1.45}
 .pick-note{font-size:12.5px;color:var(--muted);background:#F6F3EC;border-radius:10px;padding:9px 12px;margin-bottom:10px;line-height:1.45}
 
-/* ===== JV Premium 2026-09-25-1 · App Aluno ===== */
+/* ===== JV Premium 2026-09-25-2 · App Aluno ===== */
 :root{
   --jv-bg:#06140F;--jv-bg-2:#0A2117;--jv-card:rgba(8,35,24,.91);
   --jv-card-strong:#0B281C;--jv-gold:#E0B94F;--jv-gold-soft:#F0D57C;
@@ -432,7 +432,7 @@ body{background:
   background:
     linear-gradient(180deg,rgba(3,14,10,.30),rgba(4,16,11,.93)),
     linear-gradient(90deg,rgba(6,20,15,.97) 0%,rgba(6,20,15,.65) 56%,rgba(185,93,42,.12) 100%),
-    url('../site/img/quadra-2.webp') center 58%/cover no-repeat;
+    url('../assets/jv-saibro-premium.svg') center 58%/cover no-repeat;
   border-bottom:1px solid rgba(224,185,79,.18);box-shadow:0 18px 45px rgba(0,0,0,.24)
 }
 #app>.top.jv-premium-hero:after{
@@ -502,7 +502,7 @@ body{background:
 #app input,#app select,#app textarea{background:#F8F5ED;color:#142017;border-color:rgba(224,185,79,.35)}
 .jv-subhero{margin:-2px 0 14px;padding:16px;border-radius:17px;background:
  linear-gradient(90deg,rgba(7,31,21,.96),rgba(7,31,21,.72)),
- url('../site/img/quadra-2.webp') center/cover;border:1px solid var(--jv-border)}
+ url('../assets/jv-saibro-premium.svg') center/cover;border:1px solid var(--jv-border)}
 .jv-subhero h2{margin:0;color:#fff;font-size:26px;line-height:1}.jv-subhero h2 em{color:var(--jv-gold);font-style:normal}
 .jv-subhero p{margin:7px 0 0;color:var(--jv-muted);font-size:12px}
 .jv-credit-panel{padding:15px;margin-bottom:10px}
@@ -1125,7 +1125,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-09-25-1';
+const VERSAO='2026-09-25-2';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -3400,7 +3400,7 @@ setInterval(()=>{if(!document.hidden)checarLiberacao();},60000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-09-25-1').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-09-25-2').catch(function(){});});}
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
 (function esperarEIniciar(t){
