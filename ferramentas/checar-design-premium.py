@@ -59,6 +59,12 @@ ok('--jv-ink:#10261E' in gc and '.mov-l b' in gc and '.tg-name' in gc,'superfíc
 ok('.wk th' in gc and 'background:#0B3C2B!important' in gc,'grade semanal mantém cabeçalho escuro de alto contraste')
 ok('JV Legibilidade' in a and '· App Aluno' in a,'passe de contraste/legibilidade do Aluno presente')
 ok('.jv-pay-card' in a and '.jv-home-card' in a and '.jv-quick button' in a,'Home do aluno mantém proporções premium')
+ok('JV Auditoria final 2026-09-25-6 · contraste WCAG' in gc,'auditoria final de contraste da Gestão presente')
+ok('-webkit-text-fill-color:#10261E' in gc and '.tg-head .tg-title' in gc,'Torneio da Gestão fixa contraste claro/escuro no iPhone')
+ok('.quick .q1,.quick .q2,.quick .q4' in gc and '.fin-card .l' in gc,'Caixa e Financeiro têm contraste explícito')
+ok('JV Auditoria final 2026-09-25-6 · App Aluno' in a,'auditoria final de contraste do App Aluno presente')
+ok('@media (display-mode:standalone)' in a and '@media (display-mode:standalone)' in gc,'safe-area da Dynamic Island protegida nos dois apps')
+ok('font-size:16px!important' in a and 'font-size:16px!important' in gc,'inputs mobile evitam zoom automático do Safari')
 
 print('\n== PWA premium')
 ok(ma.get('theme_color')=='#06140F' and ma.get('background_color')=='#06140F','manifest do aluno no tema premium')
