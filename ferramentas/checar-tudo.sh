@@ -21,9 +21,11 @@ echo; echo "### 8. Segurança P0: identidade, privacidade e modularizacao"
 python3 ferramentas/checar-seguranca-p0.py || falhou=1
 echo; echo "### 9. Carimbo de versao dos apps"
 python3 ferramentas/checar-versao.py || falhou=1
+echo; echo "### 10. Estrutura do redesign premium"
+python3 ferramentas/checar-design-premium.py || falhou=1
 echo
 if [ "$falhou" -eq 0 ]; then
-  echo "Sintaxe, regras, segurança P0 e versao OK. Leia os avisos dos itens 2 a 4 antes de publicar."
+  echo "Sintaxe, regras, segurança P0, versão e redesign premium OK. Leia os avisos dos itens 2 a 4 antes de publicar."
 else
   echo "ERRO — nao publique antes de corrigir."
   exit 1
