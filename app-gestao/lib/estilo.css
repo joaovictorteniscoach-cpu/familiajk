@@ -698,7 +698,7 @@ tbody.tg-drop{background:rgba(201,160,74,.10);outline:1px dashed var(--gold);out
 .tg-ghost{position:fixed;z-index:9999;pointer-events:none;opacity:.95;background:#fff;border:1.5px solid var(--gold);border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.28);padding:10px 14px;font-weight:700;color:var(--text);font-size:13px}
 
 
-/* ===== JV Premium 2026-09-25-1 · Gestão ===== */
+/* ===== JV Premium 2026-09-25-2 · Gestão ===== */
 :root{
   --cream:#07150F;--dark:#04100B;--green:#0B281C;--green-2:#123925;
   --gold:#E0B94F;--gold-light:#F0D57C;--clay:#B95D2A;--clay-light:#E49A66;
@@ -715,7 +715,7 @@ body{background:
   background:
     linear-gradient(180deg,rgba(2,10,7,.24),rgba(4,16,11,.94)),
     linear-gradient(90deg,rgba(5,18,13,.97) 0%,rgba(5,18,13,.67) 58%,rgba(185,93,42,.16) 100%),
-    url('../../site/img/quadra-2.webp') center 58%/cover no-repeat;
+    url('../../assets/jv-saibro-premium.svg') center 58%/cover no-repeat;
   border-bottom:1px solid rgba(224,185,79,.18);box-shadow:0 18px 45px rgba(0,0,0,.26)
 }
 .top.jv-premium-hero:after{
