@@ -9,7 +9,7 @@
 
    Uso:
        python3 ferramentas/gerar-splash.py app-exercicios/jv-icone-exercicios.png \\
-           app-exercicios splash-exercicios --fundo "#06140F"
+           app-exercicios splash-exercicios --fundo "#102438"
 
    Imprime no fim o bloco de <link> pronto para colar no <head>.
 """

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Banco de Exercícios JV · Da Base ao Topo</title>
 <meta name="description" content="Banco de exercícios da metodologia Da Base ao Topo: filtra por tema do mês, nível do aluno, bloco da aula e necessidade específica — e monta o plano de aula.">
-<meta name="theme-color" content="#06140F">
+<meta name="theme-color" content="#102438">
 <!-- Ferramenta interna do professor, não página de venda: fora do Google.
      O conteúdo do banco é o miolo da formação (produto pago) — ver LEIA-ME.md. -->
 <meta name="robots" content="noindex,nofollow">
@@ -32,14 +32,11 @@
 <meta name="apple-mobile-web-app-title" content="Exercícios JV">
 <style>
 :root{
-  /* verde premium JV — o mesmo da Gestão e do App Aluno (fundo #06140F,
-     dourado #E8B83E). Os nomes das variáveis ficaram "navy" por história. */
-  --navy:#072A1F; --navy-2:#0B3A2B; --navy-3:#105039; --deep:#041A13;
-  --gold:#E8B83E; --gold-2:#C9982A; --gold-soft:#F2CF62;
-  --cream:#EEF2E5; --ink:#10261E;
-  /* texto secundário: .42 dava 3,3:1 sobre o cartão — abaixo do mínimo */
-  --muted:rgba(238,242,229,.74); --muted-2:rgba(238,242,229,.62);
-  --line:rgba(232,184,62,.24); --line-2:rgba(238,242,229,.14);
+  --navy:#102438; --navy-2:#15304A; --navy-3:#1C3F5E; --deep:#0B1B2B;
+  --gold:#D8B45C; --gold-2:#C49A3F; --gold-soft:#E7CE93;
+  --cream:#F4EFE6; --ink:#21303D;
+  --muted:rgba(244,239,230,.62); --muted-2:rgba(244,239,230,.42);
+  --line:rgba(216,180,92,.22); --line-2:rgba(244,239,230,.12);
   --ok:#7FA650; --warn:#E0784A; --r:14px;
   --topo:env(safe-area-inset-top,0px); --base:env(safe-area-inset-bottom,0px);
 }
@@ -60,7 +57,7 @@ input,select{font:inherit}
 
 /* ---------- barra de cima ---------- */
 header.bar{
-  position:sticky;top:0;z-index:50;background:rgba(4,26,19,.97);
+  position:sticky;top:0;z-index:50;background:rgba(11,27,43,.97);
   backdrop-filter:saturate(140%) blur(10px);border-bottom:1px solid var(--line);
   padding-top:var(--topo);
 }
@@ -100,7 +97,7 @@ header.bar{
   padding:9px 16px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .tira::-webkit-scrollbar{display:none}
 .tira.centro{max-width:900px;margin:0 auto}
-.chip{flex-shrink:0;min-height:40px;padding:8px 14px;border-radius:999px;border:1px solid var(--line-2);
+.chip{flex-shrink:0;padding:8px 14px;border-radius:999px;border:1px solid var(--line-2);
   font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap;background:var(--navy-2);
   line-height:1.25;text-align:center}
 .chip:active{transform:scale(.96)}
@@ -112,7 +109,7 @@ header.bar{
 .chip.agora::after{content:"• agora";margin-left:6px;font-size:10px;font-weight:800;letter-spacing:.06em}
 
 .filtros{position:sticky;top:calc(58px + var(--topo));z-index:40;
-  background:rgba(7,42,31,.97);backdrop-filter:blur(8px);border-bottom:1px solid var(--line-2)}
+  background:rgba(16,36,56,.97);backdrop-filter:blur(8px);border-bottom:1px solid var(--line-2)}
 /* Painel de filtros aberto: a barra para de ser fixa. Fixa em cima, fixa em
    baixo e painel aberto nao cabem num celular pequeno — o primeiro exercicio
    fica entalado e o dedo nao alcanca. Aberta, ela rola embora. */
@@ -120,7 +117,7 @@ header.bar{
 .busca-linha{display:flex;gap:9px;padding:9px 16px 0;max-width:900px;margin:0 auto}
 .busca{flex:1;display:flex;align-items:center;gap:9px;background:var(--navy-2);
   border:1px solid var(--line-2);border-radius:12px;padding:0 13px;height:44px}
-.busca input{min-height:40px;flex:1;background:none;border:none;color:var(--cream);font-size:15.5px;outline:none;min-width:0}
+.busca input{flex:1;background:none;border:none;color:var(--cream);font-size:15.5px;outline:none;min-width:0}
 .busca input::placeholder{color:var(--muted-2)}
 .mais{height:44px;padding:0 15px;border-radius:12px;border:1px solid var(--line-2);
   background:var(--navy-2);font-size:13.5px;font-weight:700;color:var(--muted);white-space:nowrap}
@@ -222,7 +219,7 @@ header.bar{
 
 /* ---------- barra de baixo ---------- */
 .rodape{position:fixed;left:0;right:0;bottom:0;z-index:55;
-  background:rgba(4,26,19,.98);backdrop-filter:blur(10px);border-top:1px solid var(--line);
+  background:rgba(11,27,43,.98);backdrop-filter:blur(10px);border-top:1px solid var(--line);
   padding:10px 16px calc(10px + var(--base))}
 .rodape-in{max-width:900px;margin:0 auto;display:flex;gap:10px;align-items:center}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:800;
@@ -239,7 +236,7 @@ header.bar{
    endereco escondida, entao a folha passava por baixo da barra de baixo do
    navegador e o botao "por no plano" ficava fora do alcance do dedo. */
 .fundo{position:fixed;inset:0;height:100vh;height:100dvh;z-index:60;
-  background:rgba(2,12,8,.74);display:none;align-items:flex-end;justify-content:center}
+  background:rgba(6,14,23,.72);display:none;align-items:flex-end;justify-content:center}
 .fundo.aberto{display:flex}
 /* overscroll-behavior:contain — chegando no fim da folha, o arrasto para ali
    em vez de continuar rolando a lista atras dela. */
@@ -281,7 +278,7 @@ header.bar{
   padding-top:12px;border-top:1px solid var(--line-2)}
 
 /* ---------- card de treino: o desenho e o passo a passo ---------- */
-.qd-cx{border:1px solid var(--line);border-radius:13px;overflow:hidden;margin-bottom:16px;background:var(--navy-2)}
+.qd-cx{border:1px solid var(--line);border-radius:13px;overflow:hidden;margin-bottom:16px;background:#0E2337}
 .qd{display:block;width:100%}
 .qd-leg{display:flex;flex-wrap:wrap;gap:7px 13px;padding:9px 11px;background:var(--navy-2);
   font-size:10.5px;color:var(--muted);border-top:1px solid var(--line-2)}
@@ -298,7 +295,7 @@ header.bar{
 /* A frase que conta o que o desenho mostra. Existe para os 116 exercicios e
    estava so' no aria-label, invisivel para quem enxerga. */
 .qd-desc{font-size:14.5px;line-height:1.5;color:#F0E9DC;padding:12px;
-  background:rgba(232,184,62,.07);border-top:1px solid var(--line-2)}
+  background:rgba(216,180,92,.08);border-top:1px solid var(--line-2)}
 .qd-nota{font-size:12.5px;color:var(--muted);padding:9px 11px;background:var(--deep);
   border-top:1px solid var(--line-2);line-height:1.45}
 

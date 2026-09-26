@@ -909,7 +909,7 @@ function svgQuadra(fig, op){
       '<marker id="seta-mov" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="' + (m * 0.9) + '" markerHeight="' + (m * 0.9) +
         '" orient="auto-start-reverse"><path d="M 0 1 L 9 5 L 0 9 z" fill="' + CQ.mov + '"/></marker>' +
       '<linearGradient id="ceu" x1="0" y1="0" x2="0" y2="1">' +
-        '<stop offset="0" stop-color="#062C20"/><stop offset="1" stop-color="#0B3A2B"/></linearGradient>' +
+        '<stop offset="0" stop-color="#13293D"/><stop offset="1" stop-color="#26404F"/></linearGradient>' +
       // a luz do chão: clara no meio (perto da rede), escura nas bordas
       // de leve: com a luz forte o desenho virava holofote, e o saibro das
       // bordas ficava quase preto
