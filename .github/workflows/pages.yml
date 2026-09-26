@@ -52,6 +52,10 @@ jobs:
           node ferramentas/checar-sintaxe.js app-gestao/index.html
           node ferramentas/checar-sintaxe.js app-aluno/index.html
           node ferramentas/checar-sintaxe.js site/index.html
+          node ferramentas/checar-sintaxe.js site-pro/index.html
+          node ferramentas/checar-sintaxe.js site-pro/sistema.html
+          node ferramentas/checar-sintaxe.js site-pro/curso.html
+          node ferramentas/checar-sintaxe.js site-pro/demo/index.html
 
       - name: Conferir as regras do banco
         # 94 casos de quem pode ler e gravar o quê. Rodava só na máquina de
