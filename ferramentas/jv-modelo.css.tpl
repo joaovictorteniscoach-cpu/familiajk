@@ -13,12 +13,33 @@ html,body{background:var(--m-bg)!important}
 body,button,input,select,textarea{font-family:'DM Sans',system-ui,-apple-system,sans-serif}
 
 /* ---------------------------------------------------------------- topo */
-HERO{display:grid!important;grid-template-columns:minmax(0,1fr) 44px!important;
-  grid-template-areas:"brand avatar" "greet greet" "title title" "motiv motiv" "month month" "agt agt" "ags ags"!important;
+HERO{display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto 44px!important;
+  grid-template-areas:"brand brand avatar" "greet greet greet" "title acts acts" "motiv motiv motiv" "month month month" "agt agt agt" "ags ags ags"!important;
   gap:0 10px!important;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 8px!important;min-height:0!important;border:0!important;
   background:linear-gradient(180deg,rgba(2,22,15,0) 58%,rgba(2,22,15,.6) 86%,var(--m-bg) 100%),url('ASSETS/jv-topo-quadra.webp') right center/cover no-repeat,#07241A!important}
 HERO::before,HERO::after{display:none!important}
-HERO .top-actions,HERO .jv-hero-question,HERO .jv-hero-motto,HERO #hello-prof:empty{display:none!important}
+HERO .jv-hero-question,HERO .jv-hero-motto,HERO #hello-prof:empty{display:none!important}
+/* botões do topo de volta (avisos, pedidos, histórico e o olho de ocultar
+   valores): na Gestão ficam à direita, na linha do "Painel de gestão", logo
+   abaixo da foto; no Aluno, o "Atualizar" volta ao lado da foto, como antes. */
+HERO .top-actions{grid-area:acts!important;position:static!important;display:flex!important;align-items:center!important;justify-content:flex-end!important;align-self:center!important;
+  gap:6px!important;margin:3px 0 0!important;padding:0!important;inset:auto!important;transform:none!important}
+HERO .top-actions .eye-btn{position:relative!important;inset:auto!important;display:flex!important;align-items:center!important;justify-content:center!important;
+  width:32px!important;height:32px!important;min-width:32px!important;min-height:32px!important;flex:0 0 32px!important;padding:0!important;border-radius:50%!important;
+  background:rgba(3,22,15,.62)!important;border:1px solid rgba(235,195,94,.38)!important;box-shadow:none!important;color:var(--m-ouro)!important;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+HERO .top-actions .eye-btn svg,HERO .top-actions .eye-btn [data-ic] svg{width:16px!important;height:16px!important;display:block!important;color:var(--m-ouro)!important}
+HERO .top-actions .eye-btn [data-ic]{display:flex!important}
+HERO .top-actions .eye-btn.off{background:rgba(235,195,94,.2)!important;border-color:rgba(235,195,94,.6)!important}
+HERO .top-actions .bell-badge{top:-4px!important;right:-4px!important}
+@media (max-width:380px){HERO .top-actions{gap:4px!important}
+  HERO .top-actions .eye-btn{width:30px!important;height:30px!important;min-width:30px!important;min-height:30px!important;flex-basis:30px!important}}
+html body #app>.top.jv-premium-hero{grid-template-areas:"brand acts avatar" "greet greet greet" "title title title" "motiv motiv motiv" "month month month" "agt agt agt" "ags ags ags"!important}
+html body #app>.top.jv-premium-hero .top-actions{margin:0!important}
+html body #app>.top.jv-premium-hero .top-actions button{display:flex!important;align-items:center!important;justify-content:center!important;width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important;padding:0!important;border-radius:50%!important;
+  font-size:0!important;color:var(--m-ouro)!important;background:rgba(3,22,15,.62)!important;border:1px solid rgba(235,195,94,.38)!important}
+html body #app>.top.jv-premium-hero .top-actions button:first-child::before{content:"↻"!important;font-size:19px!important;line-height:1!important;color:var(--m-ouro)!important}
+html body #app>.top.jv-premium-hero .top-actions button:last-child{display:none!important}
 HERO .jv-gestao-brand,HERO .jv-aluno-brand,HERO>div:first-child{grid-area:brand!important;display:flex!important;align-items:center!important;gap:10px!important;min-width:0!important;max-width:none!important;margin:0!important}
 HERO .marca-linha{display:block!important;width:38px!important;height:38px!important;flex:0 0 38px!important;color:#E7BC4E!important}
 HERO .marca-linha svg{width:38px!important;height:38px!important}
@@ -50,6 +71,8 @@ HERO .jv-mes .save-state::before{content:""!important;display:inline-block!impor
 HERO .jv-mes .save-state.err{color:#FFB19A!important;-webkit-text-fill-color:#FFB19A!important}
 /* na Agenda o topo vira "Minha agenda" */
 AGENDA HERO .jv-hero-greet,AGENDA HERO h1,AGENDA HERO .jv-hero-motiv,AGENDA HERO .top-month,AGENDA HERO #hello-prof{display:none!important}
+AGENDA HERO{grid-template-areas:"brand brand avatar" "greet greet greet" "title title title" "motiv motiv motiv" "month month month" "agt acts acts" "ags ags ags"!important}
+html body[data-aba="agenda"] #app>.top.jv-premium-hero{grid-template-areas:"brand acts avatar" "greet greet greet" "title title title" "motiv motiv motiv" "month month month" "agt agt agt" "ags ags ags"!important}
 AGENDA HERO .jv-ag-titulo{display:block!important;grid-area:agt!important;margin:16px 0 0!important;font-size:29px!important;line-height:1.12!important;font-weight:700!important;color:#fff!important;-webkit-text-fill-color:#fff!important}
 AGENDA HERO .jv-ag-sub{display:block!important;grid-area:ags!important;margin:4px 0 2px!important;font-size:16px!important;line-height:1.3!important;color:var(--m-sub)!important;-webkit-text-fill-color:var(--m-sub)!important}
 
@@ -140,17 +163,17 @@ html body #apg-inicio .jv-quick button span{display:flex!important;background:no
 html body #apg-inicio .jv-quick button span svg{width:22px!important;height:22px!important}
 
 /* ------------------------------------------------------ barra de baixo */
-html body nav.nav.jv-nav-linha{height:auto!important;min-height:0!important;padding:8px 4px calc(8px + env(safe-area-inset-bottom,0px))!important;
+html body nav.nav.jv-nav-linha{height:auto!important;min-height:0!important;padding:3px 4px calc(3px + env(safe-area-inset-bottom,0px))!important;
   background:#03170F!important;border-top:1px solid rgba(232,190,90,.2)!important;box-shadow:0 -6px 18px rgba(0,0,0,.35)!important;display:grid!important;grid-template-columns:repeat(5,1fr)!important;gap:0!important}
-html body nav.nav.jv-nav-linha button{position:relative!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;gap:5px!important;
-  min-height:58px!important;padding:6px 0 9px!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;
-  font-family:'DM Sans',sans-serif!important;font-size:13px!important;font-weight:500!important;letter-spacing:0!important;color:#E7E2D7!important;-webkit-text-fill-color:#E7E2D7!important}
+html body nav.nav.jv-nav-linha button{position:relative!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;gap:3px!important;
+  min-height:52px!important;padding:6px 0 8px!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;
+  font-family:'DM Sans',sans-serif!important;font-size:11.5px!important;font-weight:500!important;letter-spacing:0!important;line-height:1.1!important;color:#E7E2D7!important;-webkit-text-fill-color:#E7E2D7!important}
 html body nav.nav.jv-nav-linha button::before{display:none!important}
-html body nav.nav.jv-nav-linha button .ico{display:flex!important;width:26px!important;height:26px!important;background:none!important;border:0!important;box-shadow:none!important;filter:none!important;color:#E7E2D7!important;transform:none!important}
-html body nav.nav.jv-nav-linha button .ico svg{width:26px!important;height:26px!important}
+html body nav.nav.jv-nav-linha button .ico{display:flex!important;width:22px!important;height:22px!important;background:none!important;border:0!important;box-shadow:none!important;filter:none!important;color:#E7E2D7!important;transform:none!important}
+html body nav.nav.jv-nav-linha button .ico svg{width:22px!important;height:22px!important}
 html body nav.nav.jv-nav-linha button.on{color:var(--m-ouro)!important;-webkit-text-fill-color:var(--m-ouro)!important;font-weight:600!important;background:transparent!important}
 html body nav.nav.jv-nav-linha button.on .ico{color:var(--m-ouro)!important}
-html body nav.nav.jv-nav-linha button.on::after{content:""!important;display:block!important;position:absolute!important;left:50%!important;bottom:1px!important;top:auto!important;width:34px!important;height:3px!important;border-radius:2px!important;background:var(--m-ouro)!important;transform:translateX(-50%)!important;box-shadow:none!important}
+html body nav.nav.jv-nav-linha button.on::after{content:""!important;display:block!important;position:absolute!important;left:50%!important;bottom:1px!important;top:auto!important;width:30px!important;height:2.5px!important;border-radius:2px!important;background:var(--m-ouro)!important;transform:translateX(-50%)!important;box-shadow:none!important}
 
 /* ---------------------------------------------------------------- Agenda */
 html body #pg-agenda,html body #apg-agenda{padding-top:12px!important}
@@ -229,3 +252,7 @@ html body #apg-agenda{padding-left:0!important;padding-right:0!important}
 html body :is(#pg-agenda,#apg-agenda) table.wk :is(td.hr,th.jv-th-hr){min-width:58px!important;width:58px!important;white-space:nowrap!important}
 html body :is(#pg-agenda,#apg-agenda) .legend.jv-leg{gap:8px 18px!important}
 html body :is(#pg-agenda,#apg-agenda) .legend.jv-leg span{font-size:13.5px!important}
+/* seta verde do "Total recebido no mês" (o app reescreve o texto, então vai por CSS) */
+html body .jv-ref-kpi #k-recebido-s::before{content:"";display:inline-block;width:14px;height:14px;flex:0 0 14px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%236ED291' d='M12 5.5 20 13h-4.5v5.5h-7V13H4z'/%3E%3C/svg%3E") center/contain no-repeat}
+html body .jv-ref-kpi #k-recebido-s .jv-sobe{display:none!important}
