@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>JV Tennis Club — Investidores</title>
+<meta name="description" content="JV Tennis Club — oportunidade, simulador e projeto visual.">
+<style>
+:root{--bg:#061116;--panel:#0e222a;--panel2:#122d35;--line:#274750;--gold:#d8b56a;--text:#f2f5f5;--muted:#9eb0b6;--good:#6fd5a2;--warn:#efbe5b;--bad:#ff8178}
+*{box-sizing:border-box;min-width:0}html,body{margin:0;max-width:100%;overflow-x:hidden;scroll-behavior:smooth}body{background:linear-gradient(180deg,#061116,#091920 45%,#071318);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Arial,sans-serif}
+img{display:block;max-width:100%}.wrap{max-width:1120px;margin:auto;padding:0 16px}
+nav{position:sticky;top:0;z-index:40;background:rgba(6,17,22,.96);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}.navin{min-height:60px;display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{font-weight:900;letter-spacing:.11em}.brand b{color:var(--gold)}
+.tabs{display:flex;gap:7px;overflow:auto}.tab{border:1px solid var(--line);background:#0b2027;color:#dce5e7;border-radius:999px;padding:8px 11px;font-size:12px;white-space:nowrap;cursor:pointer}.tab.active{background:var(--gold);border-color:var(--gold);color:#111;font-weight:850}.panel{display:none}.panel.active{display:block}
+.hero{padding:34px 0 18px}.heroGrid{display:grid;grid-template-columns:1.05fr .95fr;gap:16px;align-items:center}.eyebrow{color:var(--gold);font-size:11px;letter-spacing:.15em;text-transform:uppercase;font-weight:900}h1{font-size:clamp(36px,7vw,64px);line-height:.96;letter-spacing:-.04em;margin:10px 0 14px}h2{font-size:28px;line-height:1.08;margin:7px 0 11px}h3{margin:0 0 7px}.lead{font-size:17px;color:#d3dde0;max-width:760px}
+.card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:17px;overflow:hidden}.heroCard img{width:100%;aspect-ratio:4/3;object-fit:cover;background:#07191f}.heroCard .pad{padding:15px}
+.badges,.btnrow{display:flex;gap:8px;flex-wrap:wrap}.badges{margin-top:14px}.badge{padding:7px 10px;border:1px solid rgba(216,181,106,.4);background:rgba(216,181,106,.08);border-radius:999px;font-size:12px}.btn{padding:10px 13px;border:1px solid var(--line);border-radius:999px;background:#10262d;color:#fff;cursor:pointer}.btn.primary{background:var(--gold);border-color:var(--gold);color:#111;font-weight:850}
+section{padding:30px 0;border-top:1px solid rgba(255,255,255,.04)}.sub{color:var(--muted)}.grid{display:grid;gap:11px}.profiles{grid-template-columns:repeat(4,minmax(0,1fr))}.profile{padding:14px;display:flex;flex-direction:column;gap:7px}.profile .price{font-size:24px;font-weight:950;color:#f0dba5}.tag{font-size:11px;color:var(--muted)}.mini{display:grid;grid-template-columns:1fr auto;gap:4px 8px;font-size:12px}.mini span{color:var(--muted)}.mini b{text-align:right}
+details{border-top:1px solid var(--line);padding-top:8px;margin-top:auto}summary{cursor:pointer;font-weight:800;color:#ead7a8}.fin{border-color:#3c6973}.family{border-color:rgba(216,181,106,.55)}.hybrid{border-color:#52765e}
+.scenarios{grid-template-columns:repeat(2,minmax(0,1fr))}.scenario{padding:14px}.scenario.recommended{border-color:rgba(216,181,106,.68)}.line{display:grid;grid-template-columns:1fr auto;gap:5px 8px;font-size:13px}.line span{color:var(--muted)}.line b{text-align:right}.compare{display:grid;grid-template-columns:.9fr 1.1fr;gap:12px}.controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.control{padding:12px;background:#07191f;border:1px solid var(--line);border-radius:13px}.head{display:flex;justify-content:space-between;align-items:center;gap:10px}.head label{font-size:12px;color:#d9e2e4;font-weight:750}.val{color:#f1dcaa;font-weight:900;white-space:nowrap}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:32px;background:transparent;cursor:pointer}input[type=range]::-webkit-slider-runnable-track{height:8px;border-radius:999px;background:linear-gradient(90deg,#315e68,#d8b56a)}input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:25px;height:25px;border-radius:50%;background:#f7e5b7;border:4px solid #0b2229;margin-top:-8px}.hints{display:flex;justify-content:space-between;color:var(--muted);font-size:10px}.results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.out{padding:12px;background:#07191f;border:1px solid var(--line);border-radius:12px}.out span{display:block;color:var(--muted);font-size:10px;text-transform:uppercase}.out b{display:block;font-size:20px;margin-top:4px}.out.big{grid-column:1/-1;border-color:rgba(216,181,106,.45)}.good{color:var(--good)}.warn{color:var(--warn)}
+.quick{grid-template-columns:repeat(4,minmax(0,1fr))}.quick .card{padding:13px}.quick span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}.quick b{display:block;font-size:23px}.gallery{grid-template-columns:repeat(2,minmax(0,1fr))}.shot img{width:100%;height:auto;object-fit:contain;background:#07191f}.caption{padding:10px 12px;border-top:1px solid var(--line);font-size:12px;color:#d7e0e2}
+.note{border-left:3px solid var(--gold);padding:11px 13px;background:rgba(216,181,106,.08);border-radius:0 12px 12px 0}.footer{padding:28px 0 44px;color:var(--muted);font-size:11px}
+@media(max-width:900px){.heroGrid,.profiles,.scenarios,.compare,.gallery{grid-template-columns:1fr}.controls{grid-template-columns:1fr}}@media(max-width:560px){.navin{padding:8px 0;align-items:flex-start;flex-direction:column}.tabs{width:100%}.profiles{grid-template-columns:1fr 1fr}.quick{grid-template-columns:1fr 1fr}h2{font-size:25px}.lead{font-size:15px}.results{grid-template-columns:1fr 1fr}.out b{font-size:17px}}
+</style>
+</head><body>
+<nav><div class="wrap navin"><div class="brand"><b>JV</b> TENNIS CLUB</div><div class="tabs"><button class="tab active" data-tab="home">Oportunidade</button><button class="tab" data-tab="sim">Simular</button><button class="tab" data-tab="proj">Projeto Visual</button></div></div></nav>
+<main>
+<div class="panel active" id="home">
+<div class="wrap hero"><div class="heroGrid">
+<div><div class="eyebrow">Rodada fundadora • 10 cotas</div><h1>Invista no JV Tennis Club.</h1><p class="lead">Duas quadras de saibro cobertas em Curitiba, metodologia própria e quatro perfis para combinar benefício de uso, família e retorno financeiro.</p><div class="badges"><span class="badge">R$ 600 mil de captação</span><span class="badge">10 cotas de R$ 60 mil</span><span class="badge">2 quadras cobertas</span><span class="badge">Cobertura cotada: R$ 198,75 mil</span></div><div class="btnrow" style="margin-top:14px"><button class="btn primary" data-go="sim">Simular cenários</button><button class="btn" data-go="proj">Ver projeto visual</button></div></div>
+<div class="card heroCard"><img id="img-render-main" alt="Render 3D"><div class="pad"><div class="eyebrow">Projeto visual</div><h3>Vista principal do clube</h3><div class="sub">O investidor visualiza o ativo antes de entrar nos detalhes.</div></div></div>
+</div></div>
+
+<section><div class="wrap"><div class="eyebrow">Perfis de cota</div><h2>Quatro opções, leitura rápida</h2><div class="grid profiles">
+<div class="card profile fin"><div class="eyebrow">Financeiro</div><div class="price">R$ 60 mil</div><div class="tag">Não joga. Busca remuneração.</div><div class="mini"><span>Taxa em estudo</span><b>2% a.m.</b><span>Valor mensal</span><b>R$ 1.200</b><span>Quadra</span><b>0 h</b></div><details><summary>Ver condições</summary><ul><li>Pagamento após abertura.</li><li>Até 5 cotas financeiras.</li><li>Prazo e principal definidos em contrato.</li></ul></details></div>
+<div class="card profile"><div class="eyebrow">Atleta</div><div class="price">R$ 60 mil</div><div class="tag">Joga e quer benefícios.</div><div class="mini"><span>Mensalidade</span><b>R$ 349</b><span>Quadra</span><b>2 h/mês</b><span>Treino</span><b>2 créditos/mês</b></div><details><summary>Ver benefícios</summary><ul><li>Metodologia Da Base ao Topo.</li><li>2 torneios/ano.</li><li>1 kit Fundador.</li><li>Prioridade e descontos.</li></ul></details></div>
+<div class="card profile family"><div class="eyebrow">Família</div><div class="price">R$ 60 mil</div><div class="tag">Até 4 familiares.</div><div class="mini"><span>Mensalidade</span><b>R$ 549</b><span>Quadra</span><b>4 h/mês</b><span>Treino</span><b>4 créditos/mês</b></div><details><summary>Ver benefícios</summary><ul><li>Uso compartilhado.</li><li>4 torneios/ano.</li><li>2 kits Família Fundadora.</li><li>Prioridade em eventos futuros.</li></ul></details></div>
+<div class="card profile hybrid"><div class="eyebrow">Híbrido</div><div class="price">R$ 60 mil</div><div class="tag">Uso + parte da remuneração.</div><div class="mini"><span>Taxa em estudo</span><b>1% a.m.</b><span>Valor mensal</span><b>R$ 600</b><span>Quadra</span><b>1 h/mês</b></div><details><summary>Ver benefícios</summary><ul><li>1 crédito de treino/mês.</li><li>1 torneio/ano.</li><li>1 kit Fundador.</li><li>Baixa ocupação da grade.</li></ul></details></div>
+</div></div></section>
+
+<section><div class="wrap"><div class="eyebrow">Cenários rápidos</div><h2>B ou C?</h2><div class="grid scenarios">
+<div class="card scenario recommended"><div class="eyebrow">B • Equilibrado</div><h3>4 Atleta + 4 Família + 1 Híbrido + 1 Financeiro</h3><div class="line"><span>Quadra comprometida</span><b>25 h/mês</b><span>Mensalidades</span><b>R$ 3.592</b><span>Remuneração em estudo</span><b>R$ 1.800</b><span>Saldo das cotas</span><b class="good">+ R$ 1.792</b></div></div>
+<div class="card scenario"><div class="eyebrow">C • Mais financeiro</div><h3>3 Atleta + 3 Família + 2 Híbridos + 2 Financeiros</h3><div class="line"><span>Quadra comprometida</span><b>20 h/mês</b><span>Mensalidades</span><b>R$ 2.694</b><span>Remuneração em estudo</span><b>R$ 3.600</b><span>Saldo das cotas</span><b class="warn">− R$ 906</b></div></div>
+</div></div></section></div>
+
+<div class="panel" id="sim"><section><div class="wrap"><div class="eyebrow">Simulador de cotas</div><h2>Arraste e compare em tempo real</h2><p class="sub">São sempre 10 cotas. Família completa automaticamente o total.</p>
+<div class="compare"><div class="controls">
+<div class="control"><div class="head"><label>Financeiros</label><span class="val" id="vFin">1</span></div><input id="fin" type="range" min="0" max="5" step="1" value="1"><div class="hints"><span>0</span><span>5</span></div></div>
+<div class="control"><div class="head"><label>Híbridos</label><span class="val" id="vHyb">1</span></div><input id="hyb" type="range" min="0" max="5" step="1" value="1"><div class="hints"><span>0</span><span>5</span></div></div>
+<div class="control"><div class="head"><label>Atletas</label><span class="val" id="vAth">4</span></div><input id="ath" type="range" min="0" max="8" step="1" value="4"><div class="hints"><span>0</span><span id="aMax">8</span></div></div>
+<div class="control"><div class="head"><label>Famílias</label><span class="val" id="vFam">4</span></div><div class="sub">Automático para completar 10 cotas.</div></div>
+<div class="control"><div class="head"><label>Mensalidade Atleta</label><span class="val" id="vAF">R$ 349</span></div><input id="af" type="range" min="250" max="500" step="10" value="349"></div>
+<div class="control"><div class="head"><label>Mensalidade Família</label><span class="val" id="vFF">R$ 549</span></div><input id="ff" type="range" min="350" max="750" step="10" value="549"></div>
+<div class="control"><div class="head"><label>Taxa Financeiro</label><span class="val" id="vFR">2,0%</span></div><input id="fr" type="range" min="1" max="2.5" step=".1" value="2"></div>
+<div class="control"><div class="head"><label>Taxa Híbrido</label><span class="val" id="vHR">1,0%</span></div><input id="hr" type="range" min=".5" max="1.5" step=".1" value="1"></div>
+</div><div class="card"><div class="results">
+<div class="out"><span>Capital captado</span><b>R$ 600 mil</b></div><div class="out"><span>Horas de quadra</span><b id="oHours">25 h/mês</b></div><div class="out"><span>Capacidade</span><b id="oCap">4,8%</b></div><div class="out"><span>Mensalidades</span><b id="oFees">R$ 3.592</b></div><div class="out"><span>Remuneração</span><b id="oPay">R$ 1.800</b></div><div class="out big"><span>Saldo mensal das cotas</span><b id="oNet" class="good">+ R$ 1.792</b></div><div class="out"><span>Custo anual</span><b id="oAnnual">R$ 21.600</b></div><div class="out"><span>Custo em 48 meses</span><b id="o48">R$ 86.400</b></div>
+</div></div></div></div></section></div>
+
+<div class="panel" id="proj"><section><div class="wrap"><div class="eyebrow">Projeto Visual</div><h2>O investidor vê o ativo em imagens</h2>
+<div class="grid quick"><div class="card"><span>Terreno</span><b>1.307 m²</b></div><div class="card"><span>Quadras</span><b>2 saibro</b></div><div class="card"><span>Cobertura</span><b>30×33×8</b></div><div class="card"><span>Cotação</span><b>R$ 198,75 mil</b></div></div>
+<div class="grid gallery" style="margin-top:14px">
+<div class="card shot"><img id="img-render" alt="Render 3D"><div class="caption">Render 3D — visão principal</div></div>
+<div class="card shot"><img id="img-maquete" alt="Maquete 3D"><div class="caption">Maquete 3D — volumetria do clube</div></div>
+<div class="card shot"><img id="img-implantacao" alt="Implantação"><div class="caption">Implantação revisada no terreno</div></div>
+<div class="card shot"><img id="img-prancha" alt="Prancha arquitetônica"><div class="caption">Prancha arquitetônica</div></div>
+<div class="card shot"><img id="img-terreno" alt="Terreno real"><div class="caption">Terreno real — contexto da implantação</div></div>
+</div>
+<div class="note" style="margin-top:14px">Imagens de estudo preliminar. Implantação e estrutura dependem de projeto executivo, levantamentos e aprovações.</div>
+</div></section></div>
+</main>
+<div class="footer"><div class="wrap">JV Tennis Club • estudo para investidores • condições financeiras sujeitas a estruturação contratual e jurídica.</div></div>
+<script>
+const tabs=document.querySelectorAll('.tab'),panels=document.querySelectorAll('.panel');
+function go(id){tabs.forEach(b=>b.classList.toggle('active',b.dataset.tab===id));panels.forEach(p=>p.classList.toggle('active',p.id===id));window.scrollTo({top:0,behavior:'smooth'})}
+tabs.forEach(b=>b.addEventListener('click',()=>go(b.dataset.tab)));document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.go)));
+const BRL=n=>Number(n).toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}),P=n=>(n*100).toFixed(1).replace('.',',')+'%';
+const fin=document.getElementById('fin'),hyb=document.getElementById('hyb'),ath=document.getElementById('ath'),af=document.getElementById('af'),ff=document.getElementById('ff'),fr=document.getElementById('fr'),hr=document.getElementById('hr');
+function calc(){let f=+fin.value,h=+hyb.value;if(f+h>9){h=Math.max(0,9-f);hyb.value=h}let max=10-f-h;ath.max=max;if(+ath.value>max)ath.value=max;let a=+ath.value,fam=10-f-h-a;let fees=a*(+af.value)+fam*(+ff.value),pay=f*60000*(+fr.value/100)+h*60000*(+hr.value/100),hours=a*2+fam*4+h,net=fees-pay;
+vFin.textContent=f;vHyb.textContent=h;vAth.textContent=a;vFam.textContent=fam;aMax.textContent=max;vAF.textContent=BRL(+af.value);vFF.textContent=BRL(+ff.value);vFR.textContent=(+fr.value).toFixed(1).replace('.',',')+'%';vHR.textContent=(+hr.value).toFixed(1).replace('.',',')+'%';oHours.textContent=hours+' h/mês';oCap.textContent=P(hours/520);oFees.textContent=BRL(fees);oPay.textContent=BRL(pay);oNet.textContent=(net>=0?'+ ':'− ')+BRL(Math.abs(net));oNet.className=net>=0?'good':'warn';oAnnual.textContent=BRL(pay*12);o48.textContent=BRL(pay*48)}
+[fin,hyb,ath,af,ff,fr,hr].forEach(x=>x.addEventListener('input',calc));calc();
+
+async function setImg(id,file){
+  try{const r=await fetch('assets/'+file);const b=(await r.text()).replace(/s+/g,'');document.getElementById(id).src='data:image/webp;base64,'+b}catch(e){}
+}
+setImg('img-render-main','render-3d.b64');setImg('img-render','render-3d.b64');setImg('img-maquete','maquete-3d.b64');setImg('img-implantacao','implantacao.b64');setImg('img-prancha','prancha.b64');setImg('img-terreno','terreno.b64');
+</script></body></html>
