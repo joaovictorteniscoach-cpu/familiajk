@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-26-10';
+const VERSAO='2026-09-26-11';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -447,12 +447,12 @@ function seedAgenda(){
 function setSave(s,cls){
   const e=document.getElementById('save-state');if(!e)return;
   const full=String(s||'');let curto=full;
-  if(/salvo na nuvem/i.test(full))curto='✓ Nuvem';
-  else if(/salvo só no aparelho/i.test(full))curto='✓ Aparelho';
-  else if(/salvo no aparelho/i.test(full))curto='✓ Aparelho';
-  else if(/enviando/i.test(full))curto='↗ Nuvem';
-  else if(/conectando/i.test(full))curto='↻ Nuvem';
-  else if(/erro/i.test(full))curto='⚠ Nuvem';
+  if(/salvo na nuvem/i.test(full))curto='Salvo na nuvem';
+  else if(/só no aparelho/i.test(full))curto='Só no aparelho';
+  else if(/salvo no aparelho/i.test(full))curto='Só no aparelho';
+  else if(/enviando/i.test(full))curto='Enviando…';
+  else if(/conectando/i.test(full))curto='Conectando…';
+  else if(/erro/i.test(full))curto='Erro ao salvar';
   e.textContent=curto;e.title=full;e.setAttribute('aria-label',full||curto);e.className='save-state '+(cls||'');
 }
 
@@ -2765,6 +2765,14 @@ function shiftMonth(d){
   renderAll();
 }
 function monthKey(){return curYear+'-'+String(curMonth+1).padStart(2,'0');}
+/* Seletor do mês do topo (modelo aprovado): "Setembro 2026 ˅" abre o seletor
+   de mês do próprio celular. Escolhido o mês, anda até ele com o mesmo
+   shiftMonth das setas de antes — nada muda no resto do app. */
+function jvEscolherMes(v){
+  const m=String(v||'').match(/^(\d{4})-(\d{2})$/);if(!m)return;
+  const d=(+m[1]-curYear)*12+(+m[2]-1-curMonth);
+  if(d)shiftMonth(d);
+}
 /* Começa SEMPRE oculto: o painel costuma ser aberto na frente do aluno. O olho
    revela durante a sessão, mas na próxima abertura volta a esconder — por isso
    a escolha não é guardada no aparelho. */
@@ -3305,6 +3313,13 @@ function togglePresenca(entryId){
   persist();renderAgenda();renderAlunos();renderDash();
 }
 
+/* Rótulos da semana no modelo: "Seg 21" no cabeçalho, "21 – 26 setembro 2026" no topo. */
+function jvDiaCurto(d){const n=DIAS[d.getDay()];return n.charAt(0).toUpperCase()+n.slice(1,3);}
+function jvRotuloSemana(a,b){
+  const m=x=>MESES[x.getMonth()].toLowerCase();
+  if(a.getMonth()===b.getMonth())return a.getDate()+' – '+b.getDate()+' '+m(b)+' '+b.getFullYear();
+  return a.getDate()+' '+m(a)+' – '+b.getDate()+' '+m(b)+' '+b.getFullYear();
+}
 function renderAgenda(){
   renderProfFiltro();
   const el=document.getElementById('ag-view');
@@ -3349,16 +3364,17 @@ function renderAgenda(){
   else if(agView==='semana'){
     const mon=new Date(agDate);mon.setDate(mon.getDate()-((mon.getDay()+6)%7));
     const days=[...Array(6)].map((_,i)=>{const d=new Date(mon);d.setDate(d.getDate()+i);return d;});
-    lbl.innerHTML='Semana de '+days[0].getDate()+'/'+(days[0].getMonth()+1)+' a '+days[5].getDate()+'/'+(days[5].getMonth()+1)+'<small>toque p/ editar · arraste p/ mover ou trocar</small>';
-    let html='<div class="wk-zoom"><button class="wz" onclick="wkZoomStep(-1)" title="Diminuir">−</button><span class="wz-lbl" id="wk-zoom-lbl">'+Math.round(wkZoom*100)+'%</span><button class="wz" onclick="wkZoomStep(1)" title="Aumentar">+</button><button class="wz wz-fit" onclick="wkZoomFit()">↔ Semana toda</button></div>';
-    html+='<div class="wk-scroll"><table class="wk" style="'+wkVars(wkZoom)+'"><tr><th></th>'+days.map(d=>`<th>${DIAS[d.getDay()]}<small>${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}</small></th>`).join('')+'</tr>';
+    lbl.innerHTML=jvRotuloSemana(days[0],days[5])+'<small>toque p/ editar · arraste p/ mover ou trocar</small>';
+    let html='<div class="wk-zoom"><div class="jv-zoom"><button class="wz" onclick="wkZoomStep(-1)" title="Diminuir" aria-label="Diminuir">−</button><span class="wz-lbl" id="wk-zoom-lbl">'+Math.round(wkZoom*100)+'%</span><button class="wz" onclick="wkZoomStep(1)" title="Aumentar" aria-label="Aumentar">+</button></div><button class="wz wz-fit" onclick="wkZoomFit()"><span data-ic="l-expand"></span>Ajustar à tela</button></div>';
+    html+='<div class="wk-scroll"><table class="wk" style="'+wkVars(wkZoom)+'"><tr><th class="jv-th-hr">Horário</th>'+days.map(d=>`<th>${jvDiaCurto(d)}<small>${d.getDate()}</small></th>`).join('')+'</tr>';
     HORAS.forEach(h=>{
       html+=`<tr><td class="hr">${h}</td>`;
       days.forEach(d=>{
         const evs=entriesFor(d,h).filter(itemVisivelProf);
         const outro=ocupadoPorOutro(d,h);
-        let cls='free',txt='livre',drag='';
-        if(evs.length===1){cls='t-'+evs[0].tipo;txt=evs[0].titulo;drag=`drag-item" data-eid="${evs[0].id}" data-origem="${evs[0].origem}`;}
+        let cls='free',txt='Livre',drag='';
+        if(evs.length===1){cls='t-'+evs[0].tipo;txt=evs[0].titulo;drag=`drag-item" data-eid="${evs[0].id}" data-origem="${evs[0].origem}`;
+          if(evs[0].tipo==='bloqueio'&&(evs[0].motivo==='chuva'||/chuva/i.test(evs[0].titulo||''))){cls+=' t-chuva';txt='Chuva';}}
         else if(evs.length>1){cls='multi';txt=evs.length+' marcações';}
         // horário de outro professor só aparece onde eu não tenho nada: quadra
         // ocupada por dois é problema para resolver, não para esconder
@@ -3366,13 +3382,17 @@ function renderAgenda(){
         else{
           const md=slotModo(d,h);
           if(!ehDono()&&md==='fechado'){cls='t-nliberado';txt='—';}
-          else if(ehDono()&&slotProfLiberado(d,h)){cls='t-liberado';txt='👨‍🏫 prof';}
+          else if(ehDono()&&slotProfLiberado(d,h)){cls='t-liberado';txt='Prof.';}
         }
         html+=`<td data-drop-d="${dKey(d)}" data-drop-h="${h}"><button class="wk-cell ${cls} ${drag}" onclick="gotoSlot(${d.getFullYear()},${d.getMonth()},${d.getDate()},'${h}')">${txt}</button></td>`;
       });
       html+='</tr>';
     });
     el.innerHTML=html+'</table></div>';
+    if(typeof pintarIcones==='function')pintarIcones();
+    // sem zoom escolhido, abre com a semana inteira na tela (como no modelo)
+    let jvZ=null;try{jvZ=localStorage.getItem('jv-wkzoom');}catch(e){}
+    if(!jvZ)requestAnimationFrame(wkZoomFit);
   }
   else if(agView==='mes'){
     const y=agDate.getFullYear(),m=agDate.getMonth();
@@ -8535,6 +8555,7 @@ function confirmarAulaWa(id,hora){
 function renderAll(){
   carregarAvatarGestao();
   document.getElementById('month-label').textContent=MESES[curMonth]+' '+curYear;
+  const jvMi=document.getElementById('jv-mes-input');if(jvMi)jvMi.value=monthKey();
   const safe=(fn,nome)=>{try{fn();}catch(e){console.warn('Render '+nome+' falhou:',e);}};
   safe(updateEyeBtn,'olho');safe(renderAlunos,'alunos');safe(renderQuickLanc,'botoescaixa');safe(renderMovs,'caixa');safe(renderDash,'inicio');safe(renderFin,'financeiro');safe(renderAgenda,'agenda');safe(renderTorneio,'torneio');safe(renderConfirmAmanha,'confirmamanha');safe(renderAvaliacoes,'avaliacoes');safe(checarBackup,'backup');safe(renderConta,'conta');safe(prepararAluguel,'aluguel');
 }

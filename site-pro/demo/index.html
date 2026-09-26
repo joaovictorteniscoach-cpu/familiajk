@@ -38,7 +38,7 @@
 <link rel="apple-touch-startup-image" media="screen and (device-width:375px) and (device-height:667px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)" href="../../app-gestao/splash-gestao-750x1334.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../../app-gestao/lib/estilo.css?v=2026-09-26-10">
+<link rel="stylesheet" href="../../app-gestao/lib/estilo.css?v=2026-09-26-11">
 <!-- ================= DEMO ISOLADA ================= -->
 <script>
 /* Espelho comercial do Gestão atual.
@@ -102,6 +102,7 @@ function esperarAuth(){return Promise.resolve();}
   }catch(e){console.warn('Não foi possível preparar a demonstração',e);}
 })();
 </script>
+<link rel="stylesheet" href="../../app-gestao/lib/jv-modelo.css?v=2026-09-26-11">
 </head>
 <body>
 <div id="demo-fita" style="position:relative;z-index:400;background:#D4AF58;color:#10261E;padding:8px 12px;text-align:center;font:800 11px/1.3 'DM Sans',system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase">Demonstração · dados fictícios · nenhuma alteração vai para a nuvem</div>
@@ -130,7 +131,7 @@ function esperarAuth(){return Promise.resolve();}
 
 <header class="top jv-premium-hero">
   <div class="jv-gestao-brand">
-    <img class="marca-jv" src="../../app-gestao/jv-icone-gestao.png" alt="Academia João Victor Tênis">
+    <span class="marca-linha" data-ic="l-logo" role="img" aria-label="Academia João Victor Tênis"></span>
     <span>Academia <b>João Victor Tênis</b></span>
   </div>
   <button class="jv-avatar-btn" type="button" onclick="document.getElementById('avatar-gestao-file').click()" aria-label="Adicionar ou trocar foto de perfil">
@@ -140,6 +141,8 @@ function esperarAuth(){return Promise.resolve();}
   </button>
   <input id="avatar-gestao-file" type="file" accept="image/*" style="display:none" onchange="trocarAvatarGestao(this)">
   <p class="jv-hero-greet">Olá, João Victor!</p>
+  <p class="jv-ag-titulo">Minha agenda</p>
+  <p class="jv-ag-sub">Aulas, treinos e disponibilidades.</p>
   <h1>Painel de <em>gestão</em></h1>
   <p class="jv-hero-question">Pronto para mais um mês <em>de resultados?</em></p>
   <p class="jv-hero-motto">Disciplina hoje, grandes conquistas amanhã.</p>
@@ -149,13 +152,8 @@ function esperarAuth(){return Promise.resolve();}
     <button id="hist-btn" class="eye-btn hist-btn" onclick="abrirHist()" title="Histórico de mudanças" aria-label="Histórico"><span data-ic="history"></span></button>
     <button id="eye-btn" class="eye-btn" onclick="toggleHide()" title="Ocultar/mostrar valores" aria-label="Ocultar ou mostrar valores"></button>
   </div>
-  <div class="top-month jv-ref-month-row">
-    <div class="jv-ref-month-chip">
-      <button class="month-btn" onclick="shiftMonth(-1)" aria-label="Mês anterior">‹</button>
-      <span class="jv-ref-month-cal" data-ic="cal"></span>
-      <div class="month-label" id="month-label">—</div>
-      <button class="month-btn" onclick="shiftMonth(1)" aria-label="Próximo mês">›</button>
-    </div>
+  <div class="top-month jv-ref-month-row jv-mes">
+    <label class="jv-mes-sel"><span class="jv-mes-cal" data-ic="l-cal"></span><span class="month-label" id="month-label">—</span><span class="jv-mes-seta" data-ic="l-down"></span><input type="month" id="jv-mes-input" onchange="jvEscolherMes(this.value)" aria-label="Escolher o mês"></label>
     <span class="save-state ok" id="save-state">Demo local</span>
   </div>
 </header>
@@ -172,22 +170,22 @@ function esperarAuth(){return Promise.resolve();}
   <div class="jv-ref-dashboard">
     <div class="jv-ref-kpis">
       <button class="jv-ref-kpi recebido" id="kpi-recebido" onclick="verCaixaMes()">
-        <div class="jv-ref-kpi-title"><span class="jv-ref-round-icon" data-ic="bars"></span><b>Recebido</b></div>
+        <div class="jv-ref-kpi-title"><span class="jv-ref-round-icon" data-ic="l-bars"></span><b>Recebido</b></div>
         <strong id="k-recebido">R$ 0</strong>
-        <small id="k-recebido-s">Total recebido no mês</small>
+        <small id="k-recebido-s"><span class="jv-sobe" data-ic="l-up"></span>Total recebido no mês</small>
       </button>
       <button class="jv-ref-kpi receber" id="kpi-pendente" onclick="verPendentes()">
-        <div class="jv-ref-kpi-title"><span class="jv-ref-round-icon" data-ic="clock"></span><b>A receber</b></div>
+        <div class="jv-ref-kpi-title"><span class="jv-ref-round-icon" data-ic="l-clock"></span><b>A receber</b></div>
         <strong id="k-pendente">R$ 0</strong>
         <small id="k-pendente-s">0 mensalidades pendentes</small>
       </button>
       <div class="jv-ref-kpi meta">
-        <div class="jv-ref-kpi-title"><span class="jv-ref-round-icon" data-ic="target"></span><b>Meta</b></div>
+        <div class="jv-ref-kpi-title"><span class="jv-ref-round-icon" data-ic="l-target"></span><b>Meta</b></div>
         <strong id="k-ref-meta">R$ 0</strong>
         <small>Meta de faturamento do mês</small>
       </div>
       <div class="jv-ref-kpi despesas">
-        <div class="jv-ref-kpi-title"><span class="jv-ref-round-icon" data-ic="receipt"></span><b>Despesas</b></div>
+        <div class="jv-ref-kpi-title"><span class="jv-ref-round-icon" data-ic="l-doc"></span><b>Despesas</b></div>
         <strong id="k-ref-desp">R$ 0</strong>
         <small id="k-ref-desp-s">Saídas registradas</small>
       </div>
@@ -203,12 +201,12 @@ function esperarAuth(){return Promise.resolve();}
 
     <div id="virada-aviso"></div>
     <div id="acao-wrap" class="jv-ref-attention" style="display:none">
-      <div class="jv-ref-section-head"><b>Atenção hoje</b><button type="button" onclick="verPendentes()">Ver todos ›</button></div>
+      <div class="jv-ref-section-head"><b>Atenção hoje</b><button type="button" onclick="verPendentes()">Ver todos</button></div>
       <div class="acao-list" id="acao-list"></div>
     </div>
     <div class="jv-ref-actions">
-      <button class="primary" type="button" onclick="openLancModal()"><span>＋</span>Lançamento</button>
-      <button type="button" onclick="verAgendaHoje()"><span data-ic="cal"></span>Agenda</button>
+      <button class="primary" type="button" onclick="openLancModal()"><span data-ic="l-plus"></span>Lançamento</button>
+      <button type="button" onclick="verAgendaHoje()"><span data-ic="l-cal"></span>Agenda</button>
     </div>
 
     <div class="jv-data-hooks" aria-hidden="true">
@@ -279,11 +277,19 @@ function esperarAuth(){return Promise.resolve();}
     <button onclick="setView('mes',this)">Mês</button>
   </div>
   <div class="ag-nav">
-    <button class="month-btn" onclick="agShift(-1)">‹</button>
+    <button class="month-btn" onclick="agShift(-1)" aria-label="Anterior"><span data-ic="l-left"></span></button>
     <div class="ag-nav-label" id="ag-label">—</div>
-    <button class="month-btn" onclick="agShift(1)">›</button>
+    <button class="month-btn" onclick="agShift(1)" aria-label="Próximo"><span data-ic="l-right"></span></button>
   </div>
   <div class="seg seg-scroll" id="prof-filtro" style="display:none"></div>
+  <div id="ag-view"></div>
+  <div class="legend jv-leg">
+    <span class="lg-livre">Livre</span>
+    <span class="lg-aula">Aula</span>
+    <span class="lg-chuva">Chuva</span>
+    <span class="lg-prof">Prof.</span>
+  </div>
+  <p class="jv-ag-info"><span data-ic="l-info"></span>Amplie para ver os detalhes de cada aula.</p>
   <details class="ag-ferr">
     <summary>⚙︎ Ferramentas da agenda</summary>
     <div class="ferr-corpo">
@@ -294,16 +300,6 @@ function esperarAuth(){return Promise.resolve();}
       <button onclick="abrirVincular()">🔗 Vincular nomes aos alunos</button>
     </div>
   </details>
-  <div id="ag-view"></div>
-  <div class="legend">
-    <span style="background:var(--c-aula)">Tênis</span>
-    <span style="background:var(--c-grupo)">Grupo</span>
-    <span style="background:var(--c-personal)">Personal</span>
-    <span style="background:var(--c-loc)">Locação</span>
-    <span style="background:var(--c-tor)">🏆 Torneio</span>
-    <span style="background:var(--c-pess)">Pessoal</span>
-    <span style="background:var(--c-bloq)">Bloqueio</span>
-  </div>
 </section>
 
 <section class="page" id="pg-alunos">
@@ -803,14 +799,14 @@ function esperarAuth(){return Promise.resolve();}
   <button class="so-dono" onclick="irDoMais('profs')"><span class="ico" style="font-size:19px">👨‍🏫</span>Professores</button>
 </div>
 
-<nav class="nav jv-nav-3d">
-  <button class="on" onclick="go('dash',this)"><span class="ico" data-ic="navhome"></span><span class="nav-badge" id="nb-inicio"></span>Início</button>
-  <button onclick="go('agenda',this)"><span class="ico" data-ic="navcal"></span><span class="nav-badge" id="nb-agenda"></span>Agenda</button>
-  <button onclick="go('alunos',this)"><span class="ico" data-ic="navball"></span>Alunos</button>
-  <button onclick="go('lanc',this)"><span class="ico" data-ic="navcash"></span>Caixa</button>
-  <button id="nav-mais" onclick="abrirMais()"><span class="ico" data-ic="navmore"></span>Mais</button>
+<nav class="nav jv-nav-3d jv-nav-linha">
+  <button class="on" onclick="go('dash',this)"><span class="ico" data-ic="l-home"></span><span class="nav-badge" id="nb-inicio"></span>Início</button>
+  <button onclick="go('agenda',this)"><span class="ico" data-ic="l-cal"></span><span class="nav-badge" id="nb-agenda"></span>Agenda</button>
+  <button onclick="go('alunos',this)"><span class="ico" data-ic="l-users"></span>Alunos</button>
+  <button onclick="go('lanc',this)"><span class="ico" data-ic="l-cash"></span>Caixa</button>
+  <button id="nav-mais" onclick="abrirMais()"><span class="ico" data-ic="l-more"></span>Mais</button>
 </nav>
-<script src="../../app-gestao/lib/icones.js?v=2026-09-26-10"></script>
+<script src="../../app-gestao/lib/icones.js?v=2026-09-26-11"></script>
 
 <!-- MODAL ALUNO -->
 <div class="overlay" id="ov-aluno" onclick="if(event.target===this)closeModal('ov-aluno')">
@@ -1285,7 +1281,7 @@ function esperarAuth(){return Promise.resolve();}
 
 <div class="toast" id="toast"></div>
 
-<script src="app-demo.js?v=2026-09-26-10"></script>
+<script src="app-demo.js?v=2026-09-26-11"></script>
 <script>
 /* Rede de seguranca do par tela+codigo.
 
@@ -1300,7 +1296,7 @@ function esperarAuth(){return Promise.resolve();}
    torto, o app busca o par certo uma vez e, se insistir, DIZ o que houve em
    vez de deixar voce tocando em botao que nao responde. */
 (function(){
-  var ESPERADA='2026-09-26-10';
+  var ESPERADA='2026-09-26-11';
   function tela(motivo){
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;z-index:99999;background:#1A2E14;color:#FAF7F2;'

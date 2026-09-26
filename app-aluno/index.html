@@ -1632,6 +1632,7 @@ function esperarAuth(){
   if(t<40)setTimeout(()=>aguardarFirebase(t+1),150);
 })(0);
 </script>
+<link rel="stylesheet" href="lib/jv-modelo.css?v=2026-09-26-11">
 </head>
 <body data-aba="inicio">
 
@@ -1665,7 +1666,7 @@ function esperarAuth(){
 <div id="app">
   <header class="top jv-premium-hero">
     <div class="jv-student-brand">
-      <img src="jv-icone-aluno.png" alt="JV Tênis">
+      <span class="marca-linha" data-ic="l-logo" role="img" aria-label="Academia João Victor Tênis"></span>
       <span>Academia <b>João Victor Tênis</b></span>
     </div>
     <div class="top-actions">
@@ -1679,6 +1680,8 @@ function esperarAuth(){
     </button>
     <input id="avatar-aluno-file" type="file" accept="image/*" style="display:none" onchange="trocarAvatarAluno(this)">
     <p class="jv-hero-greet" id="hello">Olá!</p>
+    <p class="jv-ag-titulo">Minha agenda</p>
+    <p class="jv-ag-sub">Aulas, treinos e disponibilidades.</p>
     <h1>Seu painel de <em>treino</em></h1>
     <p class="jv-hero-motiv">Cada aula te aproxima do seu melhor tênis.</p>
     <p id="hello-prof" style="display:none;margin-top:7px;font-weight:700"></p>
@@ -1747,23 +1750,23 @@ function esperarAuth(){
     <section class="page on" id="apg-inicio">
     <div class="jv-home-grid">
       <button class="jv-home-card" type="button" onclick="goAluno('agenda',document.getElementById('nav-al-agenda'))">
-        <div class="hc-top"><span class="hc-icon" data-ic="cal"></span><span>Próxima aula ›</span></div>
+        <div class="hc-top"><span class="hc-icon" data-ic="l-cal"></span><span>Próxima aula ›</span></div>
         <div class="hc-main" id="home-prox-date">—</div>
         <div class="hc-sub" id="home-prox-meta">Carregando sua agenda…</div>
       </button>
       <button class="jv-home-card gold" type="button" onclick="goAluno('creditos',document.getElementById('nav-al-creditos'))">
-        <div class="hc-top"><span class="hc-icon" data-ic="coins"></span><span>Créditos ›</span></div>
+        <div class="hc-top"><span class="hc-icon" data-ic="l-coins"></span><span>Créditos ›</span></div>
         <div class="hc-main"><span id="home-cred">0</span> créditos</div>
         <div class="hc-sub" id="home-cred-sub">saldo atual</div>
         <div class="jv-progress"><i id="home-cred-fill"></i></div>
       </button>
       <button class="jv-home-card" type="button" onclick="goAluno('creditos',document.getElementById('nav-al-creditos'))">
-        <div class="hc-top"><span class="hc-icon" data-ic="clip"></span><span>Plano atual ›</span></div>
+        <div class="hc-top"><span class="hc-icon" data-ic="l-doc"></span><span>Plano atual ›</span></div>
         <div class="hc-main" id="home-plano">—</div>
         <div class="hc-sub" id="home-plano-sub">Seu plano da academia</div>
       </button>
       <button class="jv-home-card gold" type="button" onclick="irEvolucao()">
-        <div class="hc-top"><span class="hc-icon" data-ic="target"></span><span>Foco do mês ›</span></div>
+        <div class="hc-top"><span class="hc-icon" data-ic="l-target"></span><span>Foco do mês ›</span></div>
         <div class="hc-main" id="home-foco">Próximo passo</div>
         <div class="hc-sub" id="home-foco-sub">Definido a partir da sua evolução</div>
       </button>
@@ -1772,13 +1775,13 @@ function esperarAuth(){
       <div class="jv-pay-head"><b>Mensalidade</b><span class="jv-pay-status" id="home-pay-status">—</span></div>
       <div><div class="jv-pay-lbl" id="home-venc-label">Vencimento</div><div class="jv-pay-value" id="home-venc">—</div></div>
       <div><div class="jv-pay-lbl">Valor do plano</div><div class="jv-pay-value" id="home-mens">—</div></div>
-      <button class="jv-pix-btn" id="home-pix-btn" type="button" onclick="pagarPix()">◇ Pagar com PIX ›</button>
+      <button class="jv-pix-btn" id="home-pix-btn" type="button" onclick="pagarPix()"><span class="jv-pix-logo" data-ic="l-pix"></span><i class="jv-pix-sep"></i><b>Pagar com PIX ›</b></button>
     </div>
-    <div class="jv-quick-title">⚡ Ações rápidas</div>
+    <div class="jv-quick-title">Ações rápidas</div>
     <div class="jv-quick">
-      <button type="button" onclick="goAluno('agenda',document.getElementById('nav-al-agenda'))"><span data-ic="cal"></span>Agendar aula</button>
-      <button type="button" onclick="irMarcarReposicao()"><span data-ic="refresh"></span>Solicitar reposição</button>
-      <button type="button" onclick="abrirTreinoPremium()"><span data-ic="line"></span>Ver treino do mês</button>
+      <button type="button" onclick="goAluno('agenda',document.getElementById('nav-al-agenda'))"><span data-ic="l-cal"></span>Agendar</button>
+      <button type="button" onclick="irMarcarReposicao()"><span data-ic="l-refresh"></span>Reposição</button>
+      <button type="button" onclick="abrirTreinoPremium()"><span data-ic="l-bars"></span>Treino</button>
     </div>
   </section>
 
@@ -1795,16 +1798,18 @@ function esperarAuth(){
       <button onclick="setView('mes',this)">Mês</button>
     </div>
     <div class="ag-nav">
-      <button class="month-btn" onclick="agShift(-1)">‹</button>
+      <button class="month-btn" onclick="agShift(-1)" aria-label="Anterior"><span data-ic="l-left"></span></button>
       <div class="ag-nav-label" id="ag-label">—</div>
-      <button class="month-btn" onclick="agShift(1)">›</button>
-    </div>
-    <div class="legend">
-      <span class="lg-livre">Disponível</span>
-      <span class="lg-meu">Minha aula</span>
-      <span class="lg-ocup">Reservado</span>
+      <button class="month-btn" onclick="agShift(1)" aria-label="Próximo"><span data-ic="l-right"></span></button>
     </div>
     <div id="ag-view"></div>
+    <div class="legend jv-leg">
+      <span class="lg-livre">Livre</span>
+      <span class="lg-aula">Aula</span>
+      <span class="lg-chuva">Chuva</span>
+      <span class="lg-prof">Ocupado</span>
+    </div>
+    <p class="jv-ag-info"><span data-ic="l-info"></span>Amplie para ver os detalhes de cada aula.</p>
 
     </section>
 
@@ -1922,14 +1927,14 @@ function esperarAuth(){
       <button type="button" class="jv-logout" onclick="sair()">↪ Sair do aplicativo</button>
     </section>
 
-  <nav class="nav jv-nav-3d">
-    <button id="nav-al-inicio" class="on" onclick="goAluno('inicio',this)"><span class="ico" data-ic="navhome"></span>Início</button>
-    <button id="nav-al-agenda" onclick="goAluno('agenda',this)"><span class="ico" data-ic="navcal"></span><span class="nav-badge" id="nb-al-agenda"></span>Agenda</button>
-    <button id="nav-evolucao" onclick="goAluno('evolucao',this)"><span class="ico" data-ic="navline"></span>Evolução</button>
-    <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
-    <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
+  <nav class="nav jv-nav-3d jv-nav-linha">
+    <button id="nav-al-inicio" class="on" onclick="goAluno('inicio',this)"><span class="ico" data-ic="l-home"></span>Início</button>
+    <button id="nav-al-agenda" onclick="goAluno('agenda',this)"><span class="ico" data-ic="l-cal"></span><span class="nav-badge" id="nb-al-agenda"></span>Agenda</button>
+    <button id="nav-evolucao" onclick="goAluno('evolucao',this)"><span class="ico" data-ic="l-line"></span>Evolução</button>
+    <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="l-card"></span>Créditos</button>
+    <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="l-user"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-09-26-10"></script>
+<script src="lib/icones.js?v=2026-09-26-11"></script>
 </div>
 
 <!-- MODAL ESCOLHER O QUE FAZER NO HORÁRIO -->
@@ -2136,7 +2141,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-09-26-10';
+const VERSAO='2026-09-26-11';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -3966,6 +3971,13 @@ function gotoDay(y,m,d){
   document.querySelectorAll('.seg button').forEach((b,i)=>b.classList.toggle('on',i===0));
   renderAgenda();
 }
+/* Rótulos da semana no modelo: "Seg 21" no cabeçalho, "21 – 26 setembro 2026" no topo. */
+function jvDiaCurto(d){const n=DIAS[d.getDay()];return n.charAt(0).toUpperCase()+n.slice(1,3);}
+function jvRotuloSemana(a,b){
+  const m=x=>MESES[x.getMonth()].toLowerCase();
+  if(a.getMonth()===b.getMonth())return a.getDate()+' – '+b.getDate()+' '+m(b)+' '+b.getFullYear();
+  return a.getDate()+' '+m(a)+' – '+b.getDate()+' '+m(b)+' '+b.getFullYear();
+}
 function renderAgenda(){
   const el=document.getElementById('ag-view');
   const lbl=document.getElementById('ag-label');
@@ -3987,8 +3999,8 @@ function renderAgenda(){
   else if(agView==='semana'){
     const mon=new Date(agDate);mon.setDate(mon.getDate()-((mon.getDay()+6)%7));
     const days=[...Array(6)].map((_,i)=>{const d=new Date(mon);d.setDate(d.getDate()+i);return d;});
-    lbl.innerHTML='Semana de '+days[0].getDate()+'/'+(days[0].getMonth()+1)+' a '+days[5].getDate()+'/'+(days[5].getMonth()+1)+'<small>verde = livre · toque para agendar</small>';
-    let html='<div class="wk-tools"><button class="wk-zbtn" type="button" aria-label="Diminuir agenda" onclick="alunoWkZoomStep(-1)">−</button><span class="wk-zlbl" id="al-wk-zlbl">100%</span><button class="wk-zbtn" type="button" aria-label="Aumentar agenda" onclick="alunoWkZoomStep(1)">+</button><button class="wk-fit" type="button" onclick="alunoWkZoomFit()">↔ Semana toda</button></div><div class="wk-scroll"><table class="wk"><tr><th></th>'+days.map(d=>`<th>${DIAS[d.getDay()]}<small>${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}</small></th>`).join('')+'</tr>';
+    lbl.innerHTML=jvRotuloSemana(days[0],days[5])+'<small>verde = livre · toque para agendar</small>';
+    let html='<div class="wk-tools"><div class="jv-zoom"><button class="wk-zbtn" type="button" aria-label="Diminuir agenda" onclick="alunoWkZoomStep(-1)">−</button><span class="wk-zlbl" id="al-wk-zlbl">100%</span><button class="wk-zbtn" type="button" aria-label="Aumentar agenda" onclick="alunoWkZoomStep(1)">+</button></div><button class="wk-fit" type="button" onclick="alunoWkZoomFit()"><span data-ic="l-expand"></span>Ajustar à tela</button></div><div class="wk-scroll"><table class="wk"><tr><th class="jv-th-hr">Horário</th>'+days.map(d=>`<th>${jvDiaCurto(d)}<small>${d.getDate()}</small></th>`).join('')+'</tr>';
     PUB.horas.forEach(h=>{
       html+=`<tr><td class="hr">${h}</td>`;
       days.forEach(d=>{
@@ -3997,13 +4009,14 @@ function renderAgenda(){
            responder ao toque fazia a semana inteira parecer travada. */
         const passou=horasAte(dKey(d),h)<=0;
         const cls=(s.st==='livre'&&passou)?'passou':s.st;
-        const txt=s.st==='livre'?(passou?'—':'Livre'):s.st==='meu'?'Você '+meuEmoji():s.st==='pend'?'⏳':s.st==='chuva'?'☔':s.st==='bloq'?'—':s.st==='loc'?'Loc':s.st==='fechado'?'—':'•';
+        const txt=s.st==='livre'?(passou?'—':'Livre'):s.st==='meu'?'Aula':s.st==='pend'?'Pedido':s.st==='chuva'?'Chuva':s.st==='bloq'?'—':s.st==='loc'?'Loc':s.st==='fechado'?'—':'Ocupado';
         const click=passou?`onclick="toast('Esse horário já passou 🙏')"`:(s.st==='livre'?`onclick="gotoBook(${d.getFullYear()},${d.getMonth()},${d.getDate()},'${h}')"`:(s.st==='loc'?`onclick="gotoDay(${d.getFullYear()},${d.getMonth()},${d.getDate()})"`:''));
         html+=`<td><button class="wc ${cls}" title="${s.label||''}" ${click}>${txt}</button></td>`;
       });
       html+='</tr>';
     });
     el.innerHTML=html+'</table></div>';
+    if(typeof pintarIcones==='function')pintarIcones();
     requestAnimationFrame(function(){
       if(!alunoWkPreferencia)alunoWkZoomFit();
       else aplicarAlunoWkVars();
@@ -4474,7 +4487,7 @@ setInterval(()=>{if(!document.hidden)checarLiberacao();},60000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-09-26-10').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-09-26-11').catch(function(){});});}
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
 (function esperarEIniciar(t){
