@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-26-5';
+const VERSAO='2026-09-26-6';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -411,7 +411,7 @@ let DB={alunos:[],lancamentos:[],meta:10000,agenda:null,presencas:[],compromisso
 let now=new Date();
 let curMonth=now.getMonth(),curYear=now.getFullYear();
 let agDate=new Date(now.getFullYear(),now.getMonth(),now.getDate());
-let agView='dia';
+let agView='semana';
 let saveTimer=null;
 let slotCtx=null;
 
@@ -5803,11 +5803,19 @@ function renderDash(){
   const pendValor=pendAlunos.reduce((s,a)=>s+(a.status==='parcial'?a.mensalidade*0.5:a.mensalidade),0);
   const creditos=DB.alunos.reduce((s,a)=>s+a.creditos,0);
   const repos=DB.alunos.reduce((s,a)=>s+a.repos,0);
+  const despesas=Math.abs(movs.filter(l=>Number(l.valor)<0).reduce((s,l)=>s+Number(l.valor||0),0));
 
   document.getElementById('k-recebido').textContent=fmt(recebido);
-  document.getElementById('k-recebido-s').textContent=movs.length+' lançamento'+(movs.length===1?'':'s');
+  document.getElementById('k-recebido-s').textContent='Total recebido no mês';
   document.getElementById('k-pendente').textContent=fmt(pendValor);
-  document.getElementById('k-pendente-s').textContent=pendAlunos.length+' aluno'+(pendAlunos.length===1?'':'s');
+  document.getElementById('k-pendente-s').textContent=pendAlunos.length+' mensalidade'+(pendAlunos.length===1?'':'s')+' pendente'+(pendAlunos.length===1?'':'s');
+  const _km=document.getElementById('k-ref-meta');if(_km)_km.textContent=fmt(DB.meta);
+  const _kd=document.getElementById('k-ref-desp');if(_kd)_kd.textContent=fmt(despesas);
+  const _kds=document.getElementById('k-ref-desp-s');if(_kds)_kds.textContent=despesas?'Saídas registradas no mês':'Nenhuma saída registrada';
+  const _cmpMax=Math.max(Number(DB.meta)||0,recebido,pendValor,despesas,1);
+  const _cmpSet=(idTxt,idFill,val)=>{const t=document.getElementById(idTxt),f=document.getElementById(idFill);if(t)t.textContent=fmt(val);if(f)f.style.width=Math.min(100,Math.round((Number(val)||0)/_cmpMax*100))+'%';};
+  _cmpSet('cmp-meta','cmp-meta-fill',DB.meta);_cmpSet('cmp-rec','cmp-rec-fill',recebido);
+  _cmpSet('cmp-pend','cmp-pend-fill',pendValor);_cmpSet('cmp-desp','cmp-desp-fill',despesas);
   // só vira botão quando há alguém para mostrar: prometer toque sem destino é pior que não ter
   const kp=document.getElementById('kpi-pendente');
   if(kp)kp.classList.toggle('tocavel',pendAlunos.length>0);
