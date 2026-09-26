@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-25-8';
+const VERSAO='2026-09-25-9';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2733,6 +2733,7 @@ setInterval(()=>syncPedidos(true),30000);
 
 /* ================= NAVEGAÇÃO ================= */
 function go(id,btn){
+  document.body.dataset.pagina=id;
   if(typeof fecharMais==='function')fecharMais();
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.getElementById('pg-'+id).classList.add('on');
@@ -3138,13 +3139,13 @@ function gotoDay(y,m,d){
    Muda a densidade (largura da coluna, altura e fonte) sem transform, para o
    arrastar continuar batendo o toque com a célula. A tabela e os horários são os
    mesmos — só cabem mais ou menos por tela. */
-let wkZoom=(function(){const v=parseFloat((typeof localStorage!=='undefined'&&localStorage.getItem('jv-wkzoom'))||'');return (v>=0.45&&v<=1.8)?v:1;})();
+let wkZoom=(function(){const v=parseFloat((typeof localStorage!=='undefined'&&localStorage.getItem('jv-wkzoom'))||'');return (v>=0.35&&v<=1.8)?v:1;})();
 const WK_COL=92;
 function wkVars(z){
   const col=Math.round(WK_COL*z);
-  const h=Math.max(22,Math.round(34*z));
-  const fs=Math.max(7.5,+(10*z).toFixed(1));
-  const thfs=Math.max(8,+(10.5*z).toFixed(1));
+  const h=Math.max(44,Math.round(44*z));
+  const fs=Math.max(11.5,+(12*z).toFixed(1));
+  const thfs=Math.max(11,+(12*z).toFixed(1));
   const min=48+6*col;
   return `--wk-col:${col}px;--wk-h:${h}px;--wk-fs:${fs}px;--wk-thfs:${thfs}px;--wk-min:${min}px`;
 }
@@ -3154,13 +3155,13 @@ function aplicarWkVars(){
   try{localStorage.setItem('jv-wkzoom',String(wkZoom));}catch(e){}
 }
 function wkZoomStep(dir){
-  wkZoom=Math.min(1.8,Math.max(0.45,+(wkZoom+dir*0.1).toFixed(2)));
+  wkZoom=Math.min(1.8,Math.max(0.35,+(wkZoom+dir*0.1).toFixed(2)));
   aplicarWkVars();
 }
 function wkZoomFit(){
   const sc=document.querySelector('.wk-scroll'); if(!sc)return;
   const disp=Math.max(240,sc.clientWidth-6);   // desconta a borda/padding
-  wkZoom=Math.min(1.8,Math.max(0.45,+(((disp-48)/6)/WK_COL).toFixed(2)));
+  wkZoom=Math.min(1.8,Math.max(0.35,Math.floor(((disp-48)/6)/WK_COL*100)/100));
   aplicarWkVars();
 }
 function presId(e,date){return dKey(date)+'|'+e.hora+'|'+e.alunoId;}
@@ -8078,7 +8079,7 @@ function renderGrupoTor(t,g){
   if(players.length===0)
     return `<div class="tg-card">${head}<div class="tg-count" style="padding:6px 2px 2px">Categoria vazia — use <b>＋ Jogador</b> para adicionar aqui.</div></div>`;
   return `<div class="tg-card">${head}
-    <table class="tg-tbl"><thead><tr><th>Jogador</th><th title="Vitórias">V</th><th title="Derrotas">D</th><th title="W.O.">WO</th><th title="Pontos">Pts</th><th></th></tr></thead><tbody data-group="${torAttr(g)}">${rows}</tbody></table></div>`;
+    <div class="tg-table-scroll" tabindex="0" role="region" aria-label="Classificação do torneio: deslize para ver todas as colunas"><table class="tg-tbl"><thead><tr><th>Jogador</th><th title="Vitórias">V</th><th title="Derrotas">D</th><th title="W.O.">WO</th><th title="Pontos">Pts</th><th>Ações</th></tr></thead><tbody data-group="${torAttr(g)}">${rows}</tbody></table></div><p class="tg-scroll-hint">Deslize a tabela para ver todas as colunas →</p></div>`;
 }
 function selTorneio(id){ensureTorneios();if(DB.torneios.lista[id]){DB.torneios.atual=id;persist();renderTorneio();}}
 function abrirNovoTorneio(){document.getElementById('tn-nome').value='';document.getElementById('tn-tipo').value='barragem';document.getElementById('ov-tor-novo').classList.add('on');}
