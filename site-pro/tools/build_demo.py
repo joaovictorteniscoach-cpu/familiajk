@@ -32,11 +32,11 @@ if pat_css.search(h):
     css = _ler("estilo.css")
     # o fundo do topo (a quadra renderizada) mora em app-gestao/assets/; na
     # demo, que e' um arquivo so', ele vai embutido
-    img = os.path.join(REPO_ROOT, "app-gestao", "assets", "jv-quadra-3d.webp")
+    img = os.path.join(REPO_ROOT, "app-gestao", "assets", "jv-topo-quadra.webp")
     if os.path.exists(img):
         import base64
         uri = "data:image/webp;base64," + base64.b64encode(open(img, "rb").read()).decode()
-        css = css.replace("url('../assets/jv-quadra-3d.webp')", "url('%s')" % uri)
+        css = css.replace("url('../assets/jv-topo-quadra.webp')", "url('%s')" % uri)
     h = pat_css.sub(lambda m: "<style>\n/* ===== lib/estilo.css ===== */\n%s\n</style>" % css, h, count=1)
 for _n in ("icones.js", "app-gestao.js"):
     if ('src="lib/' + _n) in h:

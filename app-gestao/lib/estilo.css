@@ -715,7 +715,7 @@ body{background:
   background:
     linear-gradient(180deg,rgba(2,10,7,.24),rgba(4,16,11,.94)),
     linear-gradient(90deg,rgba(5,18,13,.97) 0%,rgba(5,18,13,.67) 58%,rgba(185,93,42,.16) 100%),
-    url('../assets/jv-quadra-3d.webp') center 58%/cover no-repeat;
+    url('../assets/jv-topo-quadra.webp') center 58%/cover no-repeat;
   border-bottom:1px solid rgba(224,185,79,.18);box-shadow:0 18px 45px rgba(0,0,0,.26)
 }
 .top.jv-premium-hero:after{
@@ -996,7 +996,7 @@ input,select,textarea{min-height:44px}
   min-height:calc(82px + env(safe-area-inset-top,0px))!important;
   background:
     linear-gradient(180deg,rgba(4,16,11,.92),rgba(4,16,11,.98)),
-    url('../assets/jv-quadra-3d.webp') center/cover no-repeat!important
+    url('../assets/jv-topo-quadra.webp') center/cover no-repeat!important
 }
 @media(max-width:390px){
   .page{padding-left:13px;padding-right:13px}
@@ -1766,7 +1766,7 @@ html,body{background:#041A13!important}
   background:
     linear-gradient(180deg,rgba(3,18,13,.34),rgba(3,18,13,.94)),
     linear-gradient(90deg,rgba(3,24,17,.98) 0%,rgba(4,28,19,.78) 58%,rgba(154,82,34,.16) 100%),
-    url('../assets/jv-quadra-3d.webp') center 48%/cover no-repeat!important;
+    url('../assets/jv-topo-quadra.webp') center 48%/cover no-repeat!important;
   border-bottom:1px solid rgba(224,185,79,.20)!important
 }
 .top.jv-premium-hero .jv-gestao-brand{grid-area:brand;align-self:center;max-width:none!important}
@@ -2089,7 +2089,7 @@ html,body{background:#031D15!important}
   display:grid!important;grid-template-columns:minmax(0,1fr) 44px!important;
   grid-template-areas:"brand avatar" "greet greet" "title title" "month month"!important;
   gap:2px 8px!important;padding:calc(13px + env(safe-area-inset-top,0px)) 14px 11px!important;min-height:0!important;
-  background:linear-gradient(180deg,rgba(0,25,17,.18),rgba(0,25,17,.88)),linear-gradient(90deg,rgba(0,40,28,.96),rgba(0,45,30,.72) 56%,rgba(146,74,25,.18)),url('../assets/jv-quadra-3d.webp') center 52%/cover no-repeat!important;
+  background:linear-gradient(180deg,rgba(0,25,17,.18),rgba(0,25,17,.88)),linear-gradient(90deg,rgba(0,40,28,.96),rgba(0,45,30,.72) 56%,rgba(146,74,25,.18)),url('../assets/jv-topo-quadra.webp') center 52%/cover no-repeat!important;
   border-bottom:1px solid rgba(232,184,62,.24)!important}
 .top.jv-premium-hero .jv-gestao-brand{grid-area:brand;align-self:center;max-width:none!important;gap:8px!important}
 .jv-gestao-brand .marca-jv{width:38px!important;height:38px!important}
@@ -2159,16 +2159,15 @@ button.jv-ref-kpi{cursor:pointer;font-family:inherit}.jv-ref-kpi.receber{backgro
 .top.jv-premium-hero .top-month.jv-ref-month-row .month-label{min-width:max-content!important;padding:0 2px!important}
 .top.jv-premium-hero .top-month.jv-ref-month-row .save-state{position:static!important;transform:none!important;width:auto!important;overflow:visible!important}
 
-/* ===== Quadra renderizada no topo · 2026-09-26-9 =====
-   O fundo do topo era um SVG de 2 KB com meia dúzia de linhas — na tela, um
-   rabisco. Agora é a quadra de saibro renderizada em 3D
-   (ferramentas/renderizar-quadra-hero.py), e as camadas por cima deixam ela
-   aparecer como no modelo: escuro à esquerda, onde está o texto, e embaixo,
-   onde o topo encontra o painel; a quadra clara à direita. Saem o brilho
-   laranja e o arco decorativo, que ficavam por cima da rede. */
+/* ===== Fundo do topo = o do modelo aprovado · 2026-09-26-10 =====
+   O João pediu EXATAMENTE o fundo da imagem modelo dos três celulares, e não
+   uma quadra desenhada ou renderizada. jv-topo-quadra.webp é o próprio topo
+   do celular do modelo, sem os textos e ícones
+   (ferramentas/extrair-fundo-topo.py). Ele já traz o escurecido da esquerda,
+   então por cima vai só uma sombra leve embaixo, onde o topo encontra o
+   painel. Saem o brilho laranja e o arco decorativo. */
 .top.jv-premium-hero{
   background:
-    linear-gradient(180deg,rgba(3,29,21,.30) 0%,rgba(3,29,21,.05) 38%,rgba(3,29,21,.30) 68%,rgba(3,29,21,.94) 100%),
-    linear-gradient(90deg,rgba(3,29,21,.90) 0%,rgba(3,29,21,.62) 40%,rgba(3,29,21,.10) 78%,rgba(3,29,21,0) 100%),
-    url('../assets/jv-quadra-3d.webp') 62% 40%/cover no-repeat!important}
+    linear-gradient(180deg,rgba(3,29,21,0) 55%,rgba(3,29,21,.55) 88%,rgba(3,29,21,.85) 100%),
+    url('../assets/jv-topo-quadra.webp') right center/cover no-repeat,#07241A!important}
 .top.jv-premium-hero::before,.top.jv-premium-hero::after{display:none!important}
