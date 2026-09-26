@@ -1429,6 +1429,91 @@ body{padding-bottom:calc(72px + env(safe-area-inset-bottom,0px))!important}
   #apg-inicio .jv-quick button{font-size:9.1px!important}
 }
 
+
+
+/* ===== Barra inferior 3D final · referência aprovada · 2026-09-26-4 =====
+   Ícones raster dourados restaurados, proporção e brilho calibrados para iPhone. */
+.jv-nav-3d{
+  min-height:72px!important;
+  grid-template-columns:repeat(5,minmax(0,1fr))!important;
+  padding:6px 7px max(8px,env(safe-area-inset-bottom,0px))!important;
+  background:
+    linear-gradient(180deg,rgba(4,27,19,.985),rgba(3,18,13,.995))!important;
+  border-top:1px solid rgba(224,185,79,.18)!important;
+  box-shadow:0 -10px 28px rgba(0,0,0,.34)!important;
+  backdrop-filter:blur(14px)!important
+}
+.jv-nav-3d button{
+  position:relative!important;
+  min-width:0!important;
+  min-height:58px!important;
+  padding:6px 2px 9px!important;
+  gap:3px!important;
+  border-radius:20px!important;
+  background:transparent!important;
+  color:#C9C7C0!important;
+  -webkit-text-fill-color:#C9C7C0!important;
+  font-size:10.5px!important;
+  font-weight:700!important;
+  letter-spacing:0!important;
+  line-height:1.05!important;
+  overflow:visible!important
+}
+.jv-nav-3d button .ico{
+  width:31px!important;height:31px!important;min-width:31px!important;min-height:31px!important;
+  display:grid!important;place-items:center!important;
+  margin:0 auto!important;opacity:1!important;color:inherit!important;
+  filter:none!important
+}
+.jv-nav-3d button .ico img{
+  width:31px!important;height:31px!important;
+  object-fit:contain!important;display:block!important;
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,.45)) drop-shadow(0 0 6px rgba(224,185,79,.10))!important;
+  transform:translateZ(0)!important
+}
+.jv-nav-3d button .ico svg{
+  width:27px!important;height:27px!important;display:block!important;
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,.34))!important
+}
+.jv-nav-3d button:not(.on):not(.aberto){background:transparent!important}
+.jv-nav-3d button:not(.on):not(.aberto) .ico img{opacity:.92!important}
+.jv-nav-3d button.on,.jv-nav-3d button.aberto{
+  background:linear-gradient(145deg,rgba(65,78,31,.50),rgba(29,45,21,.64))!important;
+  color:#F2D575!important;
+  -webkit-text-fill-color:#F2D575!important;
+  box-shadow:inset 0 0 0 1px rgba(224,185,79,.10),0 7px 18px rgba(0,0,0,.16)!important
+}
+.jv-nav-3d button.on .ico img,.jv-nav-3d button.aberto .ico img{
+  opacity:1!important;
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,.48)) drop-shadow(0 0 7px rgba(224,185,79,.16)) brightness(1.05)!important
+}
+.jv-nav-3d button.on .ico svg,.jv-nav-3d button.aberto .ico svg{
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,.34)) drop-shadow(0 0 6px rgba(224,185,79,.14))!important
+}
+.jv-nav-3d button.on:after,.jv-nav-3d button.aberto:after{
+  content:""!important;
+  position:absolute!important;left:50%!important;bottom:3px!important;
+  width:34px!important;height:3px!important;
+  transform:translateX(-50%)!important;
+  border-radius:999px!important;
+  background:#E0B94F!important;
+  box-shadow:0 0 8px rgba(224,185,79,.30)!important
+}
+.jv-nav-3d .nav-badge{
+  top:3px!important;right:calc(50% - 20px)!important;z-index:3!important
+}
+.jv-nav-3d .jv-nav-dots circle{fill:#8F928C!important}
+.jv-nav-3d button.on .jv-nav-dots circle,
+.jv-nav-3d button.aberto .jv-nav-dots circle{fill:#D8D0B6!important}
+.jv-nav-3d .jv-nav-metal{overflow:visible!important}
+@media(max-width:390px){
+  .jv-nav-3d{min-height:68px!important;padding-left:5px!important;padding-right:5px!important}
+  .jv-nav-3d button{min-height:55px!important;font-size:10px!important;border-radius:18px!important}
+  .jv-nav-3d button .ico{width:29px!important;height:29px!important;min-width:29px!important;min-height:29px!important}
+  .jv-nav-3d button .ico img{width:29px!important;height:29px!important}
+  .jv-nav-3d button .ico svg{width:25px!important;height:25px!important}
+}
+
 </style>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
