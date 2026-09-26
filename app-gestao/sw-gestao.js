@@ -7,11 +7,11 @@ const CACHE = 'jvtenis-gestao-v21';
 // Com a versao no endereco, a reserva tem de guardar o MESMO endereco que a
 // tela pede — senao o app pede lib/app-gestao.js?v=X, nao acha, e fica sem
 // codigo justamente quando esta sem internet.
-const V = '2026-09-26-8';
+const V = '2026-09-26-9';
 const SHELL = ['./', './manifest-gestao.webmanifest', './jv-icone-gestao.png',
                './jv-icone-gestao-180.png',
                './lib/estilo.css?v='+V, './lib/icones.js?v='+V, './lib/app-gestao.js?v='+V,
-               './assets/jv-saibro-premium.svg'];
+               './assets/jv-quadra-3d.webp'];
 
 self.addEventListener('install', e => {
   self.skipWaiting();
