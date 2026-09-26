@@ -2021,3 +2021,63 @@ html,body{background:#041A13!important}
   .jv-nav-3d button .ico img{width:29px!important;height:29px!important}
   .jv-nav-3d button .ico svg{width:25px!important;height:25px!important}
 }
+
+
+/* ===== Lapidação de proporção + Caixa rápido · 2026-09-26-5 ===== */
+.top.jv-premium-hero{padding:calc(11px + env(safe-area-inset-top,0px)) 13px 9px!important;row-gap:1px!important}
+.top.jv-premium-hero .jv-gestao-brand{transform:scale(.96);transform-origin:left center}
+.top.jv-premium-hero .top-actions{gap:3px!important}
+.top.jv-premium-hero .top-actions .eye-btn{width:28px!important;height:28px!important;min-width:28px!important;min-height:28px!important;flex-basis:28px!important}
+.top.jv-premium-hero .top-actions [data-ic] svg{width:13px!important;height:13px!important}
+.top.jv-premium-hero .jv-avatar-btn{width:39px!important;height:39px!important;min-width:39px!important;min-height:39px!important}
+.top.jv-premium-hero .jv-hero-greet{margin-top:8px!important;font-size:12px!important}
+.top.jv-premium-hero h1{font-size:clamp(31px,8.3vw,36px)!important;line-height:1!important;margin-top:0!important}
+.top.jv-premium-hero .jv-hero-question{font-size:14px!important;line-height:1.2!important;margin-top:5px!important}
+.top.jv-premium-hero .jv-hero-motto{font-size:10.7px!important;line-height:1.3!important;margin:2px 0 2px!important}
+
+.top.jv-premium-hero .top-month{display:grid!important;grid-template-columns:30px minmax(0,1fr) 30px!important;align-items:center!important;gap:6px!important;margin-top:5px!important;padding:5px 7px!important;min-height:44px!important;border-radius:12px!important;background:rgba(4,29,20,.66)!important;border:1px solid rgba(224,185,79,.20)!important}
+.top.jv-premium-hero .top-month .month-btn{width:30px!important;height:30px!important;min-width:30px!important;min-height:30px!important;border-radius:8px!important;font-size:14px!important}
+.top.jv-premium-hero .month-core{min-width:0;display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;line-height:1}
+.top.jv-premium-hero .top-month .month-label{min-width:0!important;font-size:11.5px!important;line-height:1!important;letter-spacing:1px!important;white-space:nowrap!important}
+.top.jv-premium-hero .top-month .save-state{position:static!important;right:auto!important;top:auto!important;transform:none!important;width:auto!important;max-width:none!important;overflow:visible!important;grid-column:auto!important;font-size:8.5px!important;line-height:1!important;letter-spacing:.2px!important;white-space:nowrap!important;color:#9BE3B4!important;-webkit-text-fill-color:#9BE3B4!important;opacity:.96!important}
+.top.jv-premium-hero .top-month .save-state::before{content:none!important}
+.top.jv-premium-hero .top-month .save-state:not(.ok):not(.err){color:#D7D2C7!important;-webkit-text-fill-color:#D7D2C7!important}
+.top.jv-premium-hero .top-month .save-state.err{color:#FFB19A!important;-webkit-text-fill-color:#FFB19A!important}
+
+#pg-dash{padding-top:12px!important}
+#pg-dash>.sec-eyebrow{margin-bottom:1px!important}
+#pg-dash>.sec-title{font-size:27px!important;line-height:1!important;margin-bottom:10px!important}
+#pg-dash .kpis{gap:7px!important;margin-bottom:9px!important}
+#pg-dash .kpi{min-height:104px!important;padding:10px!important;border-radius:15px!important}
+#pg-dash .kpi-l{min-height:27px!important;gap:6px!important;font-size:10px!important}
+#pg-dash .kpi-icon{width:26px!important;height:26px!important;flex-basis:26px!important}
+#pg-dash .kpi-icon svg{width:14px!important;height:14px!important}
+#pg-dash .kpi-v{font-size:20px!important;margin-top:6px!important}
+#pg-dash .kpi-s{font-size:10.2px!important;line-height:1.22!important;margin-top:4px!important}
+#pg-dash .bar-wrap{padding:10px 11px!important;border-radius:14px!important;margin-bottom:10px!important}
+#pg-dash .bar-row{font-size:10.8px!important;margin-bottom:5px!important}
+#pg-dash .bar{height:7px!important}
+#pg-dash .rapidas{gap:6px!important;margin-bottom:11px!important}
+#pg-dash .rapidas button{min-height:44px!important;padding:7px 9px!important;border-radius:12px!important}
+
+.jv-nav-3d{min-height:60px!important;padding:4px 6px max(6px,env(safe-area-inset-bottom,0px))!important}
+.jv-nav-3d button{min-height:49px!important;padding:4px 2px 7px!important;gap:2px!important;border-radius:15px!important;font-size:9.2px!important}
+.jv-nav-3d button .ico{width:23px!important;height:23px!important;min-width:23px!important;min-height:23px!important}
+.jv-nav-3d button .ico img{width:23px!important;height:23px!important}
+.jv-nav-3d button .ico svg{width:21px!important;height:21px!important}
+.jv-nav-3d button.on,.jv-nav-3d button.aberto{background:linear-gradient(145deg,rgba(65,78,31,.35),rgba(29,45,21,.40))!important}
+.jv-nav-3d button.on:after,.jv-nav-3d button.aberto:after{bottom:2px!important;width:24px!important;height:2px!important}
+.jv-nav-3d .nav-badge{top:1px!important;right:calc(50% - 16px)!important}
+
+@media(max-width:390px){
+  .top.jv-premium-hero{padding-left:11px!important;padding-right:11px!important}
+  .top.jv-premium-hero h1{font-size:30px!important}
+  .top.jv-premium-hero .jv-hero-question{font-size:13.5px!important}
+  .top.jv-premium-hero .top-month .month-label{font-size:10.8px!important}
+  #pg-dash .kpi{min-height:101px!important;padding:9px!important}
+  #pg-dash .kpi-v{font-size:19px!important}
+  .jv-nav-3d{min-height:58px!important}
+  .jv-nav-3d button{min-height:47px!important;font-size:8.8px!important}
+  .jv-nav-3d button .ico,.jv-nav-3d button .ico img{width:22px!important;height:22px!important;min-width:22px!important;min-height:22px!important}
+  .jv-nav-3d button .ico svg{width:20px!important;height:20px!important}
+}

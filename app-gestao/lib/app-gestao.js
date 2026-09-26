@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-26-4';
+const VERSAO='2026-09-26-5';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -444,7 +444,17 @@ function seedAgenda(){
   return {fixos:F,eventos:[],excecoes:[]};
 }
 
-function setSave(s,cls){const e=document.getElementById('save-state');e.textContent=s;e.className='save-state '+(cls||'');}
+function setSave(s,cls){
+  const e=document.getElementById('save-state');if(!e)return;
+  const full=String(s||'');let curto=full;
+  if(/salvo na nuvem/i.test(full))curto='✓ Nuvem';
+  else if(/salvo só no aparelho/i.test(full))curto='✓ Aparelho';
+  else if(/salvo no aparelho/i.test(full))curto='✓ Aparelho';
+  else if(/enviando/i.test(full))curto='↗ Nuvem';
+  else if(/conectando/i.test(full))curto='↻ Nuvem';
+  else if(/erro/i.test(full))curto='⚠ Nuvem';
+  e.textContent=curto;e.title=full;e.setAttribute('aria-label',full||curto);e.className='save-state '+(cls||'');
+}
 
 /* ===== Camada de armazenamento: aparelho + Firebase (nuvem real) ===== */
 let lastCloudError='';
