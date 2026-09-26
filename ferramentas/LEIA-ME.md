@@ -17,9 +17,10 @@ sh ferramentas/checar-tudo.sh
 | `checar-sintaxe.js` | erro de sintaxe nos scripts | qualquer erro aqui derruba o app inteiro |
 | `checar-funcoes.py` | função chamada que não existe naquele arquivo | o botão "Fechar" da autoavaliação chamava `closeModal()`, que só existia no app da Gestão — o aluno ficava preso no modal |
 | `checar-ids.py` | `getElementById` de um id que não existe | devolve `null` e o código morre ali, sem erro visível |
+| `checar-exercicios.js` | filtro ou id escrito errado, **peça de desenho fora da moldura da quadra**, e lacuna de cobertura | uma necessidade escrita `consistenciaX` não dá erro nenhum — o exercício só desaparece da busca; e uma peça desenhada fora do recorte da quadra some do desenho sem aviso (pegou 13 assim na primeira leva). O script também avisa se um tema do mês ficou sem exercício para algum nível ou algum bloco da aula |
 | `checar-css.py` | classe interna com o mesmo nome de uma regra geral | `.top` das linhas da avaliação herdava a foto verde do cabeçalho e o texto ficava ilegível; `.seg` das barrinhas herdava a grade de 4 colunas e a barra sumia |
 
-O que essas quatro falhas têm em comum: **nenhuma delas dá erro na tela**. O app
+O que essas falhas têm em comum: **nenhuma delas dá erro na tela**. O app
 continua funcionando, só que uma parte para de responder ou fica ilegível — e
 isso só aparece quando alguém usa. Daí os scripts.
 
@@ -32,6 +33,10 @@ isso só aparece quando alguém usa. Daí os scripts.
   - `qrcode()` é a biblioteca externa do QR do Pix, carregada sob demanda;
   - `AbortController()` no `site/` é do próprio navegador, usada com `new`;
   - ids montados por concatenação (`'apg-'+id`) aparecem cortados no prefixo.
+  - o `checar-funcoes.py` junta ao HTML os `.js` **próprios** carregados por
+    `<script src>` (é assim que `app-exercicios/index.html` acha as funções de
+    `exercicios.js`). O que está em `lib/` fica de fora de propósito: biblioteca
+    minificada define centenas de nomes curtos e passaria a esconder erro de verdade.
 - **CSS**: aqui o normal é sobrar alguns avisos legítimos. Quando a regra
   aninhada é o **mesmo elemento** em outro estado (`.aluno.open .aluno-body`),
   herdar é o comportamento desejado. O que importa é quando são elementos

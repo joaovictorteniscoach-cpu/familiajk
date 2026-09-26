@@ -53,3 +53,43 @@ document.addEventListener('DOMContentLoaded',pintarIcones);
   Object.keys(JVNAV3D).forEach(function(k){NAVIC[k]=JVNAV3D[k];});
   pintarIcones();
 })();
+
+/* ===== Ícones de traço · modelo aprovado 2026-09-26-11 =====
+   Os três celulares do modelo usam ícones de TRAÇO fino (dourados quando
+   ativos), não sólidos nem 3D. Chaves "l-*", usadas pelo topo, pelos cartões,
+   pela agenda e pela barra de baixo. O logo da academia (círculo com a
+   costura da bola) também mora aqui. */
+(function(){
+  var S='<svg class="jv-line-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">';
+  var F='<svg class="jv-line-icon cheio" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true" focusable="false">';
+  var L={
+    'l-home':S+'<path d="M3.5 10.5 12 3.5l8.5 7"/><path d="M5.5 9v11h13V9"/><path d="M10 20v-5.5h4V20"/></svg>',
+    'l-cal':S+'<rect x="3.5" y="5" width="17" height="15.5" rx="2.2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><path d="M8 13.5h2.5v2.5H8zM13.5 13.5H16v2.5h-2.5z" stroke-width="1.4"/></svg>',
+    'l-users':S+'<circle cx="9" cy="8" r="3.3"/><path d="M3 19.5c.6-3.4 3-5.3 6-5.3s5.4 1.9 6 5.3"/><circle cx="16.8" cy="9" r="2.6"/><path d="M16.2 14.3c2.5.1 4.3 1.8 4.8 4.7"/></svg>',
+    'l-cash':'<svg class="jv-line-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2.5" y="6" width="19" height="12.5" rx="2"/><circle cx="12" cy="12.25" r="2.6"/><path d="M6 9.5v5.5M18 9.5v5.5"/></svg>',
+    'l-fin':S+'<path d="M5 20V13M10 20V9M15 20v-6M20 20V5"/><path d="M3 20.5h18"/></svg>',
+    'l-more':F+'<circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>',
+    'l-line':S+'<path d="M3.5 3.5v17h17"/><path d="m7 15 4-4.5 3 2.5 5.5-6.5"/><path d="M15.5 6.5h4v4"/></svg>',
+    'l-card':S+'<rect x="3" y="5.5" width="18" height="13" rx="2.2"/><path d="M3 10h18M6.5 14.5h4"/></svg>',
+    'l-user':S+'<circle cx="12" cy="8" r="3.8"/><path d="M4.5 20.5c.8-4 3.7-6.3 7.5-6.3s6.7 2.3 7.5 6.3"/></svg>',
+    'l-bars':F+'<rect x="3.5" y="13" width="4.2" height="7.5" rx=".8"/><rect x="9.9" y="9" width="4.2" height="11.5" rx=".8"/><rect x="16.3" y="4.5" width="4.2" height="16" rx=".8"/></svg>',
+    'l-clock':S+'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>',
+    'l-target':S+'<circle cx="11" cy="13" r="7.5"/><circle cx="11" cy="13" r="3.8"/><circle cx="11" cy="13" r=".9" fill="currentColor"/><path d="m11 13 8-8M16 5h3v3"/></svg>',
+    'l-doc':S+'<path d="M6 3.5h8l4 4v13H6z"/><path d="M14 3.5v4h4M9 12h6M9 15.5h6"/></svg>',
+    'l-coins':S+'<ellipse cx="12" cy="6.5" rx="7" ry="2.8"/><path d="M5 6.5v4c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8v-4"/><path d="M5 10.5v4c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8v-4"/><path d="M5 14.5v3c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8v-3"/></svg>',
+    'l-refresh':S+'<path d="M19.5 9.5A7.8 7.8 0 0 0 5.2 7.8"/><path d="M5 3.8v4.3h4.3"/><path d="M4.5 14.5a7.8 7.8 0 0 0 14.3 1.7"/><path d="M19 20.2v-4.3h-4.3"/></svg>',
+    'l-down':S+'<path d="m7 10 5 5 5-5"/></svg>',
+    'l-left':S+'<path d="m14.5 6-6 6 6 6"/></svg>',
+    'l-right':S+'<path d="m9.5 6 6 6-6 6"/></svg>',
+    'l-cloud':S+'<path d="M7 18.5h10.2a4 4 0 0 0 .5-8A5.6 5.6 0 0 0 6.9 9.3 4.6 4.6 0 0 0 7 18.5z"/></svg>',
+    'l-expand':S+'<path d="M4 9.5V4h5.5M4 4l6 6M20 14.5V20h-5.5M20 20l-6-6"/></svg>',
+    'l-info':F+'<path fill-rule="evenodd" d="M12 2.5a9.5 9.5 0 1 1 0 19 9.5 9.5 0 0 1 0-19zm-1 8v7h2v-7zm1-4.3a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6z"/></svg>',
+    'l-plus':S+'<path d="M12 5v14M5 12h14" stroke-width="2.2"/></svg>',
+    'l-alert':F+'<circle cx="12" cy="12" r="11"/><path d="M11 6.5h2l-.3 7.5h-1.4zM12 15.8a1.3 1.3 0 1 1 0 2.6 1.3 1.3 0 0 1 0-2.6z" fill="#fff"/></svg>',
+    'l-up':F+'<path d="M12 5.5 20 13h-4.5v5.5h-7V13H4z"/></svg>',
+    'l-logo':'<svg class="jv-logo-linha" viewBox="0 0 48 48" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="24" cy="24" r="21.5"/><path d="M13.5 7.2c4.6 6.8 5.4 14.2 2.3 21.6-1.7 4.1-1.4 8.4 1 12.3"/><path d="M34.5 7.2c-2.4 3.9-2.7 8.2-1 12.3 3.1 7.4 2.3 14.8-2.3 21.6" /></svg>',
+    'l-pix':'<svg class="jv-pix" viewBox="0 0 110 40" width="110" height="40" aria-hidden="true" focusable="false"><g transform="rotate(45 20 20)" fill="#32BCAD"><rect x="6.5" y="6.5" width="12" height="12" rx="3"/><rect x="21.5" y="6.5" width="12" height="12" rx="3"/><rect x="6.5" y="21.5" width="12" height="12" rx="3"/><rect x="21.5" y="21.5" width="12" height="12" rx="3"/></g><g fill="none" stroke="#5E6C67" stroke-width="2.8" stroke-linecap="round"><path d="M50 31V18c0-3.4 2.6-6 6-6s6 2.6 6 6-2.6 6-6 6h-4"/><path d="M68 12v12M68 6.8v.4"/><path d="m74 12 11 12M85 12 74 24"/></g></svg>'
+  };
+  Object.keys(L).forEach(function(k){NAVIC[k]=L[k];});
+  if(typeof pintarIcones==='function')pintarIcones();
+})();

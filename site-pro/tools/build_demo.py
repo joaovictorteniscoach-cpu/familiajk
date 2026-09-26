@@ -15,6 +15,33 @@ DSTDIR = os.path.join(REPO_ROOT, "site-pro", "demo")
 os.makedirs(DSTDIR, exist_ok=True)
 h = open(SRC, encoding="utf-8").read()
 
+# ---------- 0) O app foi modularizado: o codigo, o visual e os icones moram em
+# app-gestao/lib/. A demo e' um arquivo so' (pasta propria no site de vendas),
+# entao os tres entram embutidos aqui, antes das trocas abaixo — senao as
+# ancoras (KEY, load, seedAgenda...) nao sao achadas no index.html.
+LIB = os.path.join(REPO_ROOT, "app-gestao", "lib")
+def _ler(n): return open(os.path.join(LIB, n), encoding="utf-8").read()
+def _embutir_js(h, nome):
+    pat = re.compile(r'<script src="lib/' + re.escape(nome) + r'(\?[^"]*)?"></script>')
+    assert pat.search(h), "tag de lib/%s nao encontrada" % nome
+    cod = _ler(nome)
+    assert "</script" not in cod.lower(), "lib/%s tem </script>" % nome
+    return pat.sub(lambda m: "<script>\n/* ===== lib/%s ===== */\n%s\n</script>" % (nome, cod), h, count=1)
+pat_css = re.compile(r'<link rel="stylesheet" href="lib/estilo\.css(\?[^"]*)?">')
+if pat_css.search(h):
+    css = _ler("estilo.css")
+    # o fundo do topo (a quadra renderizada) mora em app-gestao/assets/; na
+    # demo, que e' um arquivo so', ele vai embutido
+    img = os.path.join(REPO_ROOT, "app-gestao", "assets", "jv-topo-quadra.webp")
+    if os.path.exists(img):
+        import base64
+        uri = "data:image/webp;base64," + base64.b64encode(open(img, "rb").read()).decode()
+        css = css.replace("url('../assets/jv-topo-quadra.webp')", "url('%s')" % uri)
+    h = pat_css.sub(lambda m: "<style>\n/* ===== lib/estilo.css ===== */\n%s\n</style>" % css, h, count=1)
+for _n in ("icones.js", "app-gestao.js"):
+    if ('src="lib/' + _n) in h:
+        h = _embutir_js(h, _n)
+
 # ---------- 1) Remover Firebase (CDN + config) e instalar MOCK offline ----------
 demo_fb = '''<script>
 /* ====== MODO DEMONSTRAÇÃO — 100% offline, sem conexão com dados reais ====== */
@@ -43,13 +70,24 @@ window.__DEMO = true;
 # O bloco do Firebase agora comeca no arquivo LOCAL (lib/), nao mais na URL do
 # gstatic — as bibliotecas foram trazidas para dentro do app. O gstatic ainda
 # aparece dentro da tag, como reserva, e por isso nao serve mais de ancora.
-pat_fb = re.compile(r'<script src="lib/firebase-app-compat\.js".*?\}\)\(0\);\s*</script>', re.S)
+pat_fb = re.compile(r'<script src="lib/firebase-app-compat\.js"[^\n]*\n<script src="lib/firebase-database-compat\.js"[^\n]*\n<script src="lib/firebase-auth-compat\.js"[^\n]*</script>')
 assert pat_fb.search(h), "bloco firebase nao encontrado"
 h = pat_fb.sub(demo_fb, h, count=1)
 
+# ---------- 1b) A configuracao do Firebase mora agora no index.html, fora do
+# bloco das bibliotecas: sem troca, a chave e o endereco reais iriam para o
+# site de vendas. Na demo ela fica com o marcador "COLE_AQUI" — o app le isso
+# como "sem nuvem" e roda so' no aparelho.
+pat_cfg = re.compile(r'const firebaseConfig = \{.*?\};', re.S)
+assert pat_cfg.search(h), "firebaseConfig nao encontrado"
+h = pat_cfg.sub('const firebaseConfig = { apiKey:"COLE_AQUI" };  /* demo: sem nuvem */', h, count=1)
+# o aviso da grade antiga cita nomes de alunos reais: na demo, nomes genericos
+h = h.replace("(MARIO, KARINE, CLEIDE…)", "(nomes da grade de exemplo)")
+
 # ---------- 2) Chave de armazenamento isolada da demo ----------
-assert "const KEY='jvtenis-gestao-v1';" in h
-h = h.replace("const KEY='jvtenis-gestao-v1';", "const KEY='jvtenis-DEMO-v1';")
+# a chave do dono agora e' KEY_DONO (o KEY vira a do professor quando e' ele)
+assert "var KEY_DONO='jvtenis-gestao-v1';" in h, "chave do banco nao encontrada"
+h = h.replace("var KEY_DONO='jvtenis-gestao-v1';", "var KEY_DONO='jvtenis-DEMO-v1';")
 
 # ---------- 3) seedAgenda com nomes FICTÍCIOS ----------
 novo_seed = '''function seedAgenda(){
@@ -125,7 +163,7 @@ h = h.replace(alvo, alvo + " else if(window.__DEMO){DB=DEMO_SEED();}", 1)
 # ---------- Recursos exclusivos da versão Pro ----------
 # Multi-professor: o app do João tem um professor só, mas a versão vendida para
 # academias precisa disso. Mesmo código, só o interruptor muda.
-assert "const PRO_MULTI=false;" in h, "flag PRO_MULTI sumiu do app-gestao"
+assert ("const PRO_MULTI=false;" in h) or ("const PRO_MULTI=true;" in h), "flag PRO_MULTI sumiu do app-gestao"
 h = h.replace("const PRO_MULTI=false;", "const PRO_MULTI=true;   /* versão Pro */")
 
 h = h.replace("Academia João Victor Tênis · Curitiba", "Sistema de Gestão · Demonstração")

@@ -1,0 +1,2379 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Banco de Exercícios JV · Da Base ao Topo</title>
+<meta name="description" content="Banco de exercícios da metodologia Da Base ao Topo: filtra por tema do mês, nível do aluno, bloco da aula e necessidade específica — e monta o plano de aula.">
+<meta name="theme-color" content="#102438">
+<!-- Ferramenta interna do professor, não página de venda: fora do Google.
+     O conteúdo do banco é o miolo da formação (produto pago) — ver LEIA-ME.md. -->
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="jv-icone-exercicios.png">
+<link rel="apple-touch-icon" sizes="180x180" href="jv-icone-exercicios-180.png">
+<!-- telas de abertura do iOS: sem elas o app pisca uma tela branca ao abrir -->
+<link rel="apple-touch-startup-image" href="splash-exercicios-1290x2796.png"
+      media="screen and (device-width:430px) and (device-height:932px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)">
+<link rel="apple-touch-startup-image" href="splash-exercicios-1179x2556.png"
+      media="screen and (device-width:393px) and (device-height:852px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)">
+<link rel="apple-touch-startup-image" href="splash-exercicios-1170x2532.png"
+      media="screen and (device-width:390px) and (device-height:844px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)">
+<link rel="apple-touch-startup-image" href="splash-exercicios-1242x2688.png"
+      media="screen and (device-width:414px) and (device-height:896px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)">
+<link rel="apple-touch-startup-image" href="splash-exercicios-1125x2436.png"
+      media="screen and (device-width:375px) and (device-height:812px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)">
+<link rel="apple-touch-startup-image" href="splash-exercicios-828x1792.png"
+      media="screen and (device-width:414px) and (device-height:896px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)">
+<link rel="apple-touch-startup-image" href="splash-exercicios-750x1334.png"
+      media="screen and (device-width:375px) and (device-height:667px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)">
+<link rel="manifest" href="manifest-exercicios.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Exercícios JV">
+<style>
+:root{
+  --navy:#102438; --navy-2:#15304A; --navy-3:#1C3F5E; --deep:#0B1B2B;
+  --gold:#D8B45C; --gold-2:#C49A3F; --gold-soft:#E7CE93;
+  --cream:#F4EFE6; --ink:#21303D;
+  --muted:rgba(244,239,230,.62); --muted-2:rgba(244,239,230,.42);
+  --line:rgba(216,180,92,.22); --line-2:rgba(244,239,230,.12);
+  --ok:#7FA650; --warn:#E0784A; --r:14px;
+  --topo:env(safe-area-inset-top,0px); --base:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background:var(--navy);-webkit-text-size-adjust:100%}
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  background:var(--navy);color:var(--cream);font-size:16px;line-height:1.55;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+  padding-bottom:calc(84px + var(--base));
+}
+h1,h2,h3{line-height:1.15;letter-spacing:-.015em;font-weight:800}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input,select{font:inherit}
+.wrap{max-width:900px;margin:0 auto;padding:0 16px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px;border-radius:8px}
+
+/* ---------- barra de cima ---------- */
+header.bar{
+  position:sticky;top:0;z-index:50;background:rgba(11,27,43,.97);
+  backdrop-filter:saturate(140%) blur(10px);border-bottom:1px solid var(--line);
+  padding-top:var(--topo);
+}
+.bar-in{display:flex;align-items:center;gap:12px;height:58px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand .mono{width:36px;height:36px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--navy-3),var(--deep));color:var(--gold-soft);
+  display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px}
+.brand .nm{font-weight:800;font-size:15px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand .nm small{display:block;font-weight:600;font-size:9px;letter-spacing:.14em;
+  color:var(--gold-soft);text-transform:uppercase;margin-top:2px}
+.bar .espaco{flex:1}
+.ico-btn{width:40px;height:40px;border-radius:11px;border:1px solid var(--line-2);
+  display:flex;align-items:center;justify-content:center;font-size:18px;position:relative;flex-shrink:0}
+.ico-btn:active{transform:scale(.94)}
+.selo{position:absolute;top:-5px;right:-5px;min-width:19px;height:19px;border-radius:999px;
+  background:var(--gold);color:#23303b;font-size:11px;font-weight:900;
+  display:flex;align-items:center;justify-content:center;padding:0 5px}
+.selo[hidden]{display:none}
+
+/* ---------- foco do mês ---------- */
+/* O mês cabe em uma linha. O detalhe (camada, frase, o que o mês trabalha)
+   está a um toque no "i" — no topo ele era leitura ocupando meia tela. */
+.foco{background:linear-gradient(150deg,var(--deep),var(--navy-3) 160%);
+  border-bottom:1px solid var(--line);padding:9px 0}
+.linha-mes{display:flex;align-items:center;gap:12px}
+.linha-mes .tx{flex:1;min-width:0}
+.foco .et{font-size:9.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+.foco h1{font-size:clamp(19px,5.2vw,26px);margin:1px 0 0;color:#fff;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.foco .ver{flex-shrink:0;width:36px;height:36px;border-radius:50%;
+  border:1px solid var(--line);color:var(--gold-soft);font-size:15px;font-weight:800;
+  font-style:italic;font-family:Georgia,serif;display:flex;align-items:center;justify-content:center}
+
+/* ---------- tiras de filtro ---------- */
+.tira{display:flex;gap:7px;overflow-x:auto;overscroll-behavior-x:contain;
+  padding:9px 16px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.tira::-webkit-scrollbar{display:none}
+.tira.centro{max-width:900px;margin:0 auto}
+.chip{flex-shrink:0;padding:8px 14px;border-radius:999px;border:1px solid var(--line-2);
+  font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap;background:var(--navy-2);
+  line-height:1.25;text-align:center}
+.chip:active{transform:scale(.96)}
+.chip.on{background:linear-gradient(135deg,var(--gold-soft),var(--gold-2));color:#23303b;
+  border-color:transparent;font-weight:800}
+.chip .mm{display:block;font-size:9px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;opacity:.72}
+.chip .gr{font-size:9.5px;font-weight:800;margin-left:5px;opacity:.6;
+  border:1px solid currentColor;border-radius:4px;padding:0 3px;vertical-align:1px}
+.chip.agora::after{content:"• agora";margin-left:6px;font-size:10px;font-weight:800;letter-spacing:.06em}
+
+.filtros{position:sticky;top:calc(58px + var(--topo));z-index:40;
+  background:rgba(16,36,56,.97);backdrop-filter:blur(8px);border-bottom:1px solid var(--line-2)}
+/* Painel de filtros aberto: a barra para de ser fixa. Fixa em cima, fixa em
+   baixo e painel aberto nao cabem num celular pequeno — o primeiro exercicio
+   fica entalado e o dedo nao alcanca. Aberta, ela rola embora. */
+.filtros.expandido{position:static}
+.busca-linha{display:flex;gap:9px;padding:9px 16px 0;max-width:900px;margin:0 auto}
+.busca{flex:1;display:flex;align-items:center;gap:9px;background:var(--navy-2);
+  border:1px solid var(--line-2);border-radius:12px;padding:0 13px;height:44px}
+.busca input{flex:1;background:none;border:none;color:var(--cream);font-size:15.5px;outline:none;min-width:0}
+.busca input::placeholder{color:var(--muted-2)}
+.mais{height:44px;padding:0 15px;border-radius:12px;border:1px solid var(--line-2);
+  background:var(--navy-2);font-size:13.5px;font-weight:700;color:var(--muted);white-space:nowrap}
+.mais.on{border-color:var(--gold);color:var(--gold-soft)}
+.painel{display:none;padding:4px 16px 14px;max-width:900px;margin:0 auto}
+.painel.aberto{display:block}
+.painel .gr{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.campo label{display:block;font-size:10.5px;font-weight:700;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--gold);margin-bottom:5px}
+.campo select{width:100%;height:42px;border-radius:11px;background:var(--navy-2);
+  border:1px solid var(--line-2);color:var(--cream);padding:0 10px;font-size:14.5px}
+.painel .linha{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.painel .lim{margin-top:12px;font-size:13.5px;font-weight:700;color:var(--warn)}
+.resumo{max-width:900px;margin:0 auto;padding:10px 16px 2px;display:flex;
+  align-items:baseline;justify-content:space-between;gap:10px}
+.resumo .qt{font-size:13.5px;color:var(--muted);font-weight:600}
+.resumo .qt b{color:var(--gold-soft);font-size:16px}
+.resumo .ord{font-size:13px;color:var(--muted);font-weight:700}
+
+/* ---------- lista ---------- */
+.lista{max-width:900px;margin:0 auto;padding:10px 16px 20px;display:grid;gap:10px}
+/* O card da lista e' quase todo desenho: o professor reconhece o exercicio pela
+   forma antes de ler o nome. O objetivo saiu daqui — ele esta' na ficha, e a
+   busca continua achando por ele.
+   O card INTEIRO abre a ficha. Antes so' o desenho e o texto abriam, e a
+   borda de 10 px mais o vao de 12 px entre eles eram zona morta: o dedo caia
+   ali e nao acontecia nada. O cursor:pointer nao e' enfeite — sem ele o
+   Safari do iPhone nao manda o clique de um <div> subir ate' o document. */
+.card{background:var(--navy-2);border:1px solid var(--line-2);border-radius:var(--r);
+  padding:10px;display:flex;gap:12px;align-items:center;text-align:left;width:100%;
+  cursor:pointer;
+  scroll-margin-top:124px}   /* barra de cima + filtros: rolar ate' o card nao o esconde */
+.card:active{background:var(--navy-3);border-color:var(--line)}
+.card.no-plano{border-color:var(--gold);box-shadow:inset 0 0 0 1px rgba(216,180,92,.25)}
+.card .miniq{flex:0 0 104px;width:104px;border-radius:10px;overflow:hidden;
+  background:var(--deep);border:1px solid var(--line-2);display:block;padding:0;
+  position:static;height:auto}
+.card .miniq svg{display:block;width:100%}
+.card .mid{flex:1;min-width:0;align-self:center}
+.card h3{font-size:16px;color:#fff;line-height:1.2;margin-bottom:7px}
+.sinais{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.sinal{display:flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700;color:var(--muted)}
+.sinal .ic{font-size:13px}
+.sinal.min{color:var(--gold-soft)}
+.sinal .cd{font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--muted-2)}
+/* Régua de nível: 5 pontos, acesos nos níveis que o exercício atende.
+   Diz "do Base ao Topo" sem escrever "do Base ao Topo". */
+.regua{display:flex;gap:3px;align-items:center}
+.regua i{width:7px;height:7px;border-radius:50%;background:rgba(244,239,230,.16);display:block}
+.regua i.on{background:var(--gold)}
+.card .add{flex-shrink:0;width:42px;height:42px;border-radius:11px;border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--gold-soft);align-self:center}
+.card .add.dentro{background:var(--gold);color:#23303b;border-color:transparent}
+@media(min-width:520px){ .card .miniq{flex-basis:132px;width:132px} .card h3{font-size:17px} }
+.vazio{text-align:center;padding:44px 20px;color:var(--muted)}
+.vazio .em{font-size:36px;margin-bottom:12px}
+.vazio b{color:var(--gold-soft);display:block;margin-bottom:6px;font-size:17px}
+
+/* ---------- formulário de exercício ---------- */
+.ed-campo{margin-bottom:14px}
+.ed-campo label{display:block;font-size:10.5px;font-weight:800;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+.ed-campo small{display:block;font-size:12px;color:var(--muted-2);margin-top:5px;line-height:1.4}
+.ed-campo input,.ed-campo select,.ed-campo textarea{width:100%;background:var(--navy-2);
+  border:1px solid var(--line-2);border-radius:11px;color:var(--cream);
+  padding:11px 12px;font-size:15.5px;line-height:1.45;outline:none}
+/* 16px e' o minimo: abaixo disso o Safari do iPhone da' zoom ao tocar no campo,
+   e a tela fica torta ate' a pessoa fechar o teclado. O 15.5 acima vale para
+   os campos de uma linha, que sao curtos; onde se escreve de verdade, 16. */
+.ed-campo textarea{font-family:inherit;resize:vertical;font-size:16px}
+.ed-campo input:focus,.ed-campo select:focus,.ed-campo textarea:focus{border-color:var(--gold)}
+.ed-chips{display:flex;flex-wrap:wrap;gap:7px}
+.ed-chips .chip{flex:0 0 auto}
+.ed-dois{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ed-erro{background:rgba(224,120,74,.12);border:1px solid rgba(224,120,74,.4);
+  border-radius:11px;padding:11px 12px;font-size:14px;color:#F7D4C4;margin-bottom:14px}
+.ed-erro[hidden]{display:none}
+#edCorpo .qd-cx{margin-top:4px}
+
+/* ---------- aula pronta ---------- */
+/* Tema mais nivel ja' descrevem uma aula inteira. Em vez de deixar o professor
+   montar a mao, a faixa mostra o que sairia — e um toque poe no plano. */
+.pronta{max-width:900px;margin:0 auto;padding:11px 16px 0}
+.pronta .cx{display:flex;align-items:center;gap:11px;
+  background:linear-gradient(135deg,var(--navy-2),var(--navy-3));
+  border:1px solid var(--line);border-radius:13px;padding:10px 12px}
+.pronta .tx{flex:1;min-width:0}
+.pronta .tt{display:block;font-size:10px;font-weight:800;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--gold)}
+.pronta .sub{display:block;font-size:14px;font-weight:700;color:#fff;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.pronta .mini{display:block;font-size:11.5px;font-weight:600;color:var(--muted);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pronta .bt{display:flex;gap:7px;flex-shrink:0}
+.pronta .bt button{height:40px;padding:0 13px;border-radius:11px;border:1px solid var(--line);
+  font-size:14px;font-weight:800;color:var(--gold-soft);background:var(--deep)}
+.pronta .bt button:active{transform:scale(.95)}
+.pronta[hidden]{display:none}
+
+/* ---------- barra de baixo ---------- */
+.rodape{position:fixed;left:0;right:0;bottom:0;z-index:55;
+  background:rgba(11,27,43,.98);backdrop-filter:blur(10px);border-top:1px solid var(--line);
+  padding:10px 16px calc(10px + var(--base))}
+.rodape-in{max-width:900px;margin:0 auto;display:flex;gap:10px;align-items:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:800;
+  font-size:15px;padding:13px 20px;border-radius:12px;border:2px solid transparent;flex:1}
+.btn:active{transform:scale(.98)}
+.btn-gold{background:linear-gradient(135deg,var(--gold-soft),var(--gold-2));color:#23303b}
+.btn-line{border-color:var(--line);color:var(--gold-soft)}
+.btn-esc{background:var(--navy-2);border-color:var(--line-2);color:var(--cream)}
+.btn:disabled{opacity:.45}
+.btn.pq{padding:10px 15px;font-size:13.5px;flex:0 0 auto}
+
+/* ---------- ficha e gaveta ---------- */
+/* dvh e nao vh: no Safari do iPhone o vh conta a tela COM a barra de
+   endereco escondida, entao a folha passava por baixo da barra de baixo do
+   navegador e o botao "por no plano" ficava fora do alcance do dedo. */
+.fundo{position:fixed;inset:0;height:100vh;height:100dvh;z-index:60;
+  background:rgba(6,14,23,.72);display:none;align-items:flex-end;justify-content:center}
+.fundo.aberto{display:flex}
+/* overscroll-behavior:contain — chegando no fim da folha, o arrasto para ali
+   em vez de continuar rolando a lista atras dela. */
+.folha{background:var(--navy);width:100%;max-width:900px;max-height:92vh;max-height:88dvh;
+  overflow-y:auto;overscroll-behavior:contain;
+  border-radius:20px 20px 0 0;border-top:1px solid var(--line);
+  padding-bottom:calc(20px + var(--base));-webkit-overflow-scrolling:touch}
+.folha-top{position:sticky;top:0;background:var(--navy);z-index:2;
+  padding:14px 16px 12px;border-bottom:1px solid var(--line-2);display:flex;gap:12px;align-items:flex-start}
+.folha-top .mid{flex:1;min-width:0}
+.folha-top h2{font-size:20px;color:#fff}
+.folha-top .cd{font-size:11.5px;font-weight:800;letter-spacing:.1em;color:var(--gold);text-transform:uppercase}
+.fechar{width:36px;height:36px;border-radius:10px;border:1px solid var(--line-2);
+  display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.folha-corpo{padding:16px}
+.bloco-tx{margin-bottom:18px}
+.bloco-tx .tt{font-size:10.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:6px}
+.bloco-tx p{font-size:15px;color:#E9E2D6}
+.bloco-tx.destaque{background:var(--navy-2);border:1px solid var(--line);border-radius:12px;padding:14px}
+.bloco-tx.alerta{background:rgba(224,120,74,.09);border:1px solid rgba(224,120,74,.3);
+  border-radius:12px;padding:14px}
+.bloco-tx.alerta .tt{color:var(--warn)}
+.bloco-tx.ok{background:rgba(127,166,80,.09);border:1px solid rgba(127,166,80,.3);
+  border-radius:12px;padding:14px}
+.bloco-tx.ok .tt{color:var(--ok)}
+.prog{display:grid;gap:8px}
+.prog .it{display:flex;gap:11px;background:var(--navy-2);border:1px solid var(--line-2);
+  border-radius:11px;padding:11px 13px}
+.prog .it.foco{border-color:var(--gold);background:rgba(216,180,92,.08)}
+.prog .nv{flex-shrink:0;font-size:10px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--gold-soft);width:86px;padding:3px 6px 0 0}
+.prog .tx{flex:1;font-size:14px;color:#E9E2D6}
+.ficha-meta{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:18px}
+.meta{background:var(--navy-2);border:1px solid var(--line-2);border-radius:11px;padding:10px 12px}
+.meta .k{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2)}
+.meta .v{font-size:14px;font-weight:700;color:#fff;margin-top:3px}
+.folha-acoes{display:flex;flex-wrap:wrap;gap:9px;padding:0 16px 8px;position:sticky;bottom:0;background:var(--navy);
+  padding-top:12px;border-top:1px solid var(--line-2)}
+
+/* ---------- card de treino: o desenho e o passo a passo ---------- */
+.qd-cx{border:1px solid var(--line);border-radius:13px;overflow:hidden;margin-bottom:16px;background:#0E2337}
+.qd{display:block;width:100%}
+.qd-leg{display:flex;flex-wrap:wrap;gap:7px 13px;padding:9px 11px;background:var(--navy-2);
+  font-size:10.5px;color:var(--muted);border-top:1px solid var(--line-2)}
+.qd-leg span{display:flex;align-items:center;gap:5px;white-space:nowrap}
+.qd-leg i{width:10px;height:10px;border-radius:50%;display:inline-block;flex-shrink:0}
+.qd-leg i.tr{width:14px;height:3px;border-radius:2px}
+.qd-leg i.cn{width:0;height:0;border-radius:0;background:none!important;
+  border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:9px solid var(--warn)}
+.qd-leg i.zn{width:12px;height:9px;border-radius:2px;border:1px dashed var(--gold);background:rgba(216,180,92,.2)}
+/* quando o papel tem foto, a legenda mostra o rosto — o recorte e' de corpo
+   inteiro, entao a bolinha pega o alto da imagem */
+.qd-leg i.rosto{width:16px;height:16px;background-size:340%;background-position:50% 4%;
+  background-repeat:no-repeat;border:1px solid var(--line-2)}
+/* A frase que conta o que o desenho mostra. Existe para os 116 exercicios e
+   estava so' no aria-label, invisivel para quem enxerga. */
+.qd-desc{font-size:14.5px;line-height:1.5;color:#F0E9DC;padding:12px;
+  background:rgba(216,180,92,.08);border-top:1px solid var(--line-2)}
+.qd-nota{font-size:12.5px;color:var(--muted);padding:9px 11px;background:var(--deep);
+  border-top:1px solid var(--line-2);line-height:1.45}
+
+.passos{counter-reset:passo;display:grid;gap:8px}
+.passos li{list-style:none;display:flex;gap:11px;background:var(--navy-2);
+  border:1px solid var(--line-2);border-radius:11px;padding:11px 13px}
+.passos li::before{counter-increment:passo;content:counter(passo);flex-shrink:0;
+  width:22px;height:22px;border-radius:7px;background:var(--gold);color:#22303c;
+  font-size:12.5px;font-weight:900;display:flex;align-items:center;justify-content:center}
+.passos li span{font-size:14.5px;color:#E9E2D6;line-height:1.5}
+.bloco-tx.dica{background:rgba(216,180,92,.1);border:1px solid var(--line);border-radius:12px;padding:14px}
+/* Faixa de sinais da ficha: tudo o que antes eram quatro caixas de texto. */
+/* Grade, não linha que embrulha: em flex os cinco dados quebravam tortos
+   (três numa linha, um na outra). Duas colunas no celular, cinco quando a
+   tela deixa — como a faixa de dados de uma folha impressa. */
+.sinais-ficha{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:13px 14px;padding:13px 14px;background:var(--navy-2);
+  border:1px solid var(--line-2);border-radius:12px;margin-bottom:16px}
+.sinais-ficha .s{display:flex;align-items:center;gap:7px;font-size:13.5px;
+  font-weight:700;color:#E9E2D6;min-width:0}
+.sinais-ficha .s>div{min-width:0}
+.sinais-ficha .s .ic{font-size:15px}
+.sinais-ficha .s small{font-size:10px;font-weight:800;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--muted-2);display:block;margin-bottom:1px}
+.sinais-ficha .s div{line-height:1.2}
+.sinais-ficha .s.larga{grid-column:1/-1;font-weight:600;color:#DCD5C9}
+@media(min-width:560px){
+  .sinais-ficha{grid-template-columns:repeat(5,minmax(0,1fr))}
+  .sinais-ficha .s.larga{grid-column:auto}
+}
+.forca{display:flex;gap:3px;align-items:flex-end;height:14px}
+.forca i{width:5px;border-radius:1px;background:rgba(244,239,230,.18);display:block}
+.forca i:nth-child(1){height:6px} .forca i:nth-child(2){height:10px} .forca i:nth-child(3){height:14px}
+.forca.baixa i:nth-child(1),
+.forca.media i:nth-child(1),.forca.media i:nth-child(2),
+.forca.alta i{background:var(--gold)}
+
+/* Objetivo: a frase que manda na ficha. Sem caixa, em corpo maior. */
+.objetivo{font-size:17.5px;line-height:1.45;color:#fff;font-weight:600;
+  margin:0 2px 18px;letter-spacing:-.01em}
+.objetivo b{color:var(--gold-soft);font-weight:700}
+
+/* As três colunas do rodapé: foco, erros e como dificultar, as TRÊS à vista.
+   Eram abas (uma por vez) e viraram colunas de novo — em quadra o professor
+   quer bater o olho nas três sem escolher qual ver. No celular elas empilham;
+   a partir de 720 px ficam lado a lado, como numa folha. */
+.tres{display:grid;gap:10px;margin-bottom:18px}
+.tres .cl{background:var(--navy-2);border:1px solid var(--line-2);
+  border-radius:12px;padding:12px 14px;border-top:3px solid var(--muted-2)}
+.tres .cl.ok{border-top-color:#7FA650}
+.tres .cl.err{border-top-color:var(--warn)}
+.tres .cl.dif{border-top-color:#4E9AC4}
+.tres .tt{display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:900;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
+.tres .tt .ic{font-size:14px;letter-spacing:0}
+.tres ul{list-style:none;display:grid;gap:7px}
+.tres li{font-size:14.5px;color:#E3DCD0;padding-left:15px;position:relative;line-height:1.45}
+.tres li::before{content:"•";position:absolute;left:2px;color:var(--muted-2);font-weight:900}
+.tres li.primeiro{color:#fff;font-weight:600}
+.tres li.primeiro::before{content:"!";color:var(--warn);font-weight:900;left:4px}
+
+/* Corpo da ficha em duas colunas quando a tela deixa: o desenho de um lado e
+   o passo a passo do outro, em vez de um debaixo do outro numa rolagem longa. */
+.ficha-2col{display:grid;gap:14px;margin-bottom:18px}
+.ficha-2col .lado{display:grid;gap:14px;align-content:start}
+@media(min-width:720px){
+  .ficha-2col{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:18px;align-items:start}
+  .tres{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+
+/* Miniatura do exercício dentro do plano de aula. O plano listava só o nome:
+   o professor reconhece o exercício pela forma antes de ler o nome, e sem o
+   desenho ele tinha que abrir a ficha de cada item para lembrar qual era. */
+.pi-qd{flex:0 0 74px;width:74px;border-radius:9px;overflow:hidden;
+  border:1px solid var(--line-2);background:var(--deep);cursor:pointer}
+.pi-qd svg{display:block;width:100%}
+@media(min-width:520px){ .pi-qd{flex-basis:96px;width:96px} }
+
+/* O que não é essencial fica a um toque, não empilhado na rolagem. */
+.gaveta{border:1px solid var(--line-2);border-radius:12px;background:var(--navy-2);
+  margin-bottom:10px;padding:0 14px}
+.gaveta summary{cursor:pointer;list-style:none;min-height:48px;display:flex;align-items:center;
+  gap:9px;font-size:14px;font-weight:700;color:#E9E2D6}
+.gaveta summary::-webkit-details-marker{display:none}
+.gaveta summary::after{content:"+";margin-left:auto;color:var(--gold);font-weight:800;font-size:19px}
+.gaveta[open] summary::after{content:"–"}
+.gaveta .dentro{padding:2px 0 14px}
+.gaveta .dentro p{font-size:14px;color:var(--muted);margin-bottom:8px}
+.gaveta .dentro p b{color:var(--gold-soft)}
+
+.colunas{display:grid;gap:11px;margin-bottom:18px}
+.col{background:var(--navy-2);border:1px solid var(--line-2);border-radius:12px;padding:13px 14px}
+.col .tt{font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.col.foco{border-color:rgba(127,166,80,.35)} .col.foco .tt{color:var(--ok)}
+.col.err{border-color:rgba(224,120,74,.35)} .col.err .tt{color:var(--warn)}
+.col.dif{border-color:var(--line)}          .col.dif .tt{color:var(--gold-soft)}
+.col ul{list-style:none;display:grid;gap:6px}
+.col li{font-size:13.5px;color:#E3DCD0;padding-left:14px;position:relative;line-height:1.45}
+.col li::before{content:"•";position:absolute;left:2px;color:var(--muted-2);font-weight:900}
+.col.err li.primeiro{color:#fff;font-weight:600}
+.col.err li.primeiro::before{content:"1";color:var(--warn);font-size:11px;top:1px}
+.col.err li.primeiro em{display:block;font-style:normal;font-size:11px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--warn);margin-top:3px}
+@media(min-width:620px){ .colunas{grid-template-columns:repeat(3,1fr)} }
+.bloco-tx.dica .tt{color:var(--gold-soft)}
+
+/* ---------- plano de aula ---------- */
+.plano-vazio{text-align:center;padding:30px 16px;color:var(--muted)}
+.plano-cab{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px}
+.plano-cab input,.plano-cab select{width:100%;height:42px;border-radius:11px;background:var(--navy-2);
+  border:1px solid var(--line-2);color:var(--cream);padding:0 11px;font-size:14.5px;outline:none}
+.pb{margin-bottom:16px}
+.pb-tt{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.pb-tt h3{font-size:14.5px;color:var(--gold-soft)}
+.pb-tt .tp{font-size:11.5px;color:var(--muted-2);font-weight:700;margin-left:auto}
+.pi{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--navy-2);
+  border:1px solid var(--line-2);border-radius:11px;padding:10px 12px;margin-bottom:7px}
+.pi .cd{font-size:11px;font-weight:900;color:var(--gold);width:38px;flex-shrink:0}
+.pi .nm{flex:1;font-size:14.5px;font-weight:600;min-width:0}
+/* o tempo e' um campo, nao um rotulo: o professor corta 10 para 7 quando a
+   aula aperta, e ate' agora tinha que tirar o exercicio inteiro para isso */
+.pi .mn{width:62px;flex-shrink:0;background:var(--deep);border:1px solid var(--line-2);
+  border-radius:8px;color:var(--gold-soft);font-size:13.5px;font-weight:800;
+  padding:6px 4px 6px 8px;text-align:left}
+/* os botoes descem para uma fila propria: em 390 px nao cabiam na mesma linha
+   do nome sem espremer o nome ate' a ilegibilidade */
+.pi .acs{flex-basis:100%;display:flex;gap:7px;justify-content:flex-end;
+  border-top:1px solid var(--line-2);padding-top:8px}
+.pi .acs button{height:32px;padding:0 10px;border-radius:8px;border:1px solid var(--line-2);
+  font-size:12.5px;font-weight:700;color:var(--muted);display:flex;align-items:center;gap:4px}
+.pi .acs button:active{background:var(--navy-3)}
+.pi .x{color:var(--warn)}
+.pi .mv{width:34px;justify-content:center}
+.pb-mais{width:100%;height:40px;border-radius:10px;border:1px dashed var(--line);
+  color:var(--gold-soft);font-size:13.5px;font-weight:700;margin-bottom:10px}
+.pb.falta .pb-tt h3::after{content:" — vazio";color:var(--warn);font-weight:700}
+.total{display:flex;align-items:center;justify-content:space-between;background:var(--deep);
+  border:1px solid var(--line);border-radius:12px;padding:13px 15px;margin-bottom:14px}
+.total .n{font-size:24px;font-weight:900;color:var(--gold-soft)}
+.total .l{font-size:12.5px;color:var(--muted);font-weight:700;text-align:right}
+.auto{background:rgba(216,180,92,.08);border:1px dashed var(--line);border-radius:12px;
+  padding:13px 14px;margin-bottom:16px}
+.auto p{font-size:13.5px;color:var(--muted);margin-bottom:10px}
+.auto .ln{display:flex;gap:8px}
+.aviso{font-size:13px;color:var(--ok);font-weight:700;text-align:center;padding:8px 0}
+
+@media(min-width:620px){
+  .lista{grid-template-columns:1fr 1fr}
+  .ficha-meta{grid-template-columns:repeat(4,1fr)}
+  .folha{border-radius:20px;max-height:88vh;margin-bottom:4vh}
+  .fundo{align-items:center}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ---------- impressão: sai só o plano de aula, em preto no branco ------
+   A tela é escura; o papel não. Aqui tudo que é "cinza bonito" na tela vira
+   preto legível, e as outras gavetas (ficha, tema do mês) não vão para o
+   papel — mesmo que tenham sido abertas antes. */
+.det, .cab-imp, .imprimivel{display:none}
+@media print{
+  html,body{background:#fff!important;color:#000!important;padding:0;margin:0}
+  header.bar,.foco,.tira,.filtros,.resumo,.pronta,.lista,.rodape,.folha-acoes,.auto,
+  .pi .acs,.pi-qd,.pb-mais,.fechar,.plano-cab,
+  #fundoFicha,#fundoMes,#fundoMeus,#fundoEditor,#fundoEscolher{display:none!important}
+  /* o campo de minutos vira texto no papel: caixa de formulário impressa fica
+     com borda e seta de setinha, que não é o que vai para a quadra */
+  .pi .mn{border:none;background:none;color:#000;font-weight:800;width:auto;
+    padding:0;-webkit-appearance:none;appearance:none}
+  #fundoPlano{position:static;display:block;background:none;inset:auto}
+  #fundoPlano .folha{max-height:none;overflow:visible;background:#fff;border:none;
+    max-width:100%;border-radius:0;margin:0;padding:0}
+  #fundoPlano .folha-top{position:static;background:#fff;border-bottom:2px solid #222;padding:0 0 8px}
+  #fundoPlano .folha-corpo{padding:0}
+  .folha-top h2{color:#000;font-size:19px}
+  .folha-top .cd{color:#555}
+  .cab-imp{display:block;font-size:12.5px;color:#000;margin:10px 0 14px;line-height:1.9}
+  .cab-imp span{display:inline-block;margin-right:22px}
+  .cab-imp b{font-weight:800}
+  .total{background:#fff;border:1px solid #444;color:#000;padding:8px 12px;margin-bottom:14px}
+  .total .n{color:#000;font-size:18px}
+  .total .l{color:#333;font-size:11.5px}
+  .pb{margin-bottom:12px;page-break-inside:avoid}
+  .pb-tt h3{color:#000;font-size:14px}
+  .pb-tt .tp{color:#333;font-size:11px}
+  .pi{background:#fff;border:1px solid #999;color:#000;display:block;
+    padding:8px 11px;margin-bottom:6px;page-break-inside:avoid}
+  .pi .cd{color:#000;font-weight:800;width:auto;font-size:11.5px}
+  .pi .nm{color:#000;font-weight:800;font-size:13.5px;display:inline;padding:0 6px}
+  .pi .mn{color:#000;font-size:11.5px;font-weight:700}
+  .det{display:flex;gap:9px;align-items:flex-start;font-size:11px;color:#111;margin-top:6px;line-height:1.45}
+  /* o desenho manda pela ALTURA, não pela largura: a quadra inteira é um retrato
+     comprido e, medida pela largura, empurrava cada exercício para meia página */
+  .det-qd{flex:0 0 auto;border:1px solid #bbb;border-radius:3px;overflow:hidden}
+  /* Largura fixa, altura natural: agora que o desenho enquadra a ação, cada um
+     tem uma proporção própria — mandar pela altura deixava uns largos e outros
+     estreitos na mesma folha. Pela largura, a coluna do desenho fica alinhada. */
+  .det-qd svg{width:44mm;height:auto;display:block}
+  .det-qd svg>rect:first-of-type{fill:#fff}   /* moldura escura não vai para o papel */
+  .det-tx{flex:1;min-width:0}
+  .det b{font-weight:800}
+  .det i{color:#333;font-style:normal}
+  .det-pa{margin:2px 0 4px 15px;padding:0}
+  .det-pa li{margin-bottom:1px}
+  .det-col{margin:3px 0;padding:4px 0;border-top:1px solid #ddd;border-bottom:1px solid #ddd}
+  .det-col div{margin-bottom:1px}
+  .bloco-tx{margin-bottom:10px}
+  .bloco-tx .tt{color:#000}
+  .bloco-tx p{color:#111!important;font-size:11.5px}
+  .imprimivel{display:block;font-size:10.5px;color:#444;margin-top:12px;
+    border-top:1px solid #999;padding-top:6px}
+}
+
+/* ==========================================================================
+   FOLHA DE TREINO — uma página A4 por exercício, para virar PDF
+   --------------------------------------------------------------------------
+   O plano impresso é a VISÃO DA AULA: tudo numa folha, em lista. Esta é a
+   outra coisa: a folha do exercício, uma por página, com tudo à vista e
+   nada escondido — é o que o professor leva para a quadra e o que o aluno
+   consegue ler sozinho. Sai do mesmo banco: nenhum texto é escrito à mão.
+   ========================================================================== */
+#folhasImp{display:none}
+@media print{
+  /* no modo folhas, só as folhas vão para o papel */
+  body.folhas>*{display:none!important}
+  body.folhas #folhasImp{display:block!important}
+  body.folhas{background:#fff!important}
+}
+@page{size:A4;margin:11mm}
+
+/* ---- a fonte da folha: Barlow Condensed, licença OFL (LICENCA-FONTE-BARLOW.txt).
+   Vai embutida no app porque a folha precisa sair igual sem internet. */
+@font-face{font-family:"JV Cond";font-weight:500;font-style:normal;src:url(fonte-barlow-condensed-500-normal.woff2) format("woff2")}
+@font-face{font-family:"JV Cond";font-weight:600;font-style:normal;src:url(fonte-barlow-condensed-600-normal.woff2) format("woff2")}
+@font-face{font-family:"JV Cond";font-weight:700;font-style:normal;src:url(fonte-barlow-condensed-700-normal.woff2) format("woff2")}
+@font-face{font-family:"JV Cond";font-weight:800;font-style:italic;src:url(fonte-barlow-condensed-800-italic.woff2) format("woff2")}
+@font-face{font-family:"JV Cond";font-weight:900;font-style:italic;src:url(fonte-barlow-condensed-900-italic.woff2) format("woff2")}
+
+/* ==== A FOLHA DE TREINO ====================================================
+   Uma página A4 inteira, sem margem: o cabeçalho escuro vai de borda a borda.
+   Segue a folha modelo que o João criou (ferramentas/originais/
+   modelo-folha-jv.jpg): barra do topo com o troféu, o "funcionou se" e a
+   marca; cabeçalho preto; faixa de dados; quadra e passo a passo lado a
+   lado; três cartões até o pé da página. */
+.ft{width:210mm;height:297mm;overflow:hidden;position:relative;display:flex;flex-direction:column;
+  background:#EEF0F2;color:#1B232A;font-family:"JV Cond","Arial Narrow",sans-serif;font-weight:500;
+  font-size:9pt;line-height:1.28;page-break-after:always;break-after:page;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+.ft:last-child{page-break-after:auto;break-after:auto}
+.ft h1,.ft h2,.ft h3,.ft p{margin:0}
+.ft b{font-weight:700}
+.ft svg.ic{display:block;flex:0 0 auto}
+
+/* ---- barra do topo: troféu, "funcionou se" e a marca -------------------- */
+.ft-barra{position:relative;flex:0 0 14mm;background:#0B0E0D;display:flex;align-items:center;gap:3.4mm;
+  padding:0 8mm 0 9mm;overflow:hidden}
+.ft-barra svg.ic{width:8.2mm;height:8.2mm}
+.ft-barra .risco{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.ft-pilula{position:relative;flex:0 1 auto;max-width:128mm;min-width:0;border:.35mm solid #DDEE66;border-radius:1.8mm;
+  padding:1.5mm 3.4mm;font-weight:700;font-size:9.6pt;letter-spacing:.02em;line-height:1.15;color:#DDEE66;
+  text-transform:uppercase}
+.ft-pilula b{color:#fff;font-weight:700}
+.ft-barra .ft-logo{position:relative;margin-left:auto;display:flex;align-items:center;gap:2.2mm}
+.ft-barra .ft-logo svg{width:15mm;height:auto}
+.ft-barra .ft-logo span{color:#fff;font-weight:600;font-size:9.4pt;letter-spacing:.42em}
+
+/* ---- cabeçalho ---------------------------------------------------------- */
+.ft-top{position:relative;height:50mm;flex:0 0 50mm;background:#0B0E0D;color:#fff;overflow:hidden;
+  padding:4.6mm 10mm 0 9mm}
+.ft-top .luz{position:absolute;inset:0;pointer-events:none}
+.ft-top .ft-logo{position:absolute;right:10mm;top:5.5mm;display:flex;flex-direction:column;align-items:center;gap:1.6mm}
+.ft-top .ft-logo svg{width:27mm;height:auto}
+.ft-top .ft-logo span{color:#fff;font-weight:600;font-size:12pt;letter-spacing:.5em;margin-right:-.5em}
+.ft-bola{position:absolute;right:-7mm;bottom:-19mm;width:38mm;height:38mm}
+.ft-cap{position:relative;border-left:.9mm solid #DDEE66;padding-left:2.6mm;margin-bottom:3.4mm;
+  font-weight:700;font-size:9.4pt;letter-spacing:.06em;text-transform:uppercase;line-height:1.22}
+.ft-cap span{display:block;color:#DDEE66}
+.ft-top h1{position:relative;font-weight:900;font-style:italic;font-size:52pt;line-height:.86;
+  letter-spacing:-.005em;text-transform:uppercase}
+.ft-top h2{position:relative;font-weight:900;font-style:italic;font-size:24pt;line-height:.95;
+  color:#DDEE66;text-transform:uppercase;margin-top:1.4mm;max-width:140mm}
+.ft-lema{position:relative;font-weight:500;font-size:11pt;letter-spacing:.01em;color:#E1E5E8;
+  text-transform:uppercase;margin-top:1.8mm;max-width:150mm}
+.ft-frase{position:absolute;right:44mm;top:10mm;width:37mm;font-weight:500;font-style:italic;
+  font-size:10pt;line-height:1.28;color:#E1E5E8}
+.ft-frase::after{content:"";display:block;width:9mm;height:.5mm;background:#DDEE66;margin-top:2.6mm}
+
+/* ---- faixa de dados ----------------------------------------------------- */
+.ft-dados{flex:0 0 auto;display:grid;grid-template-columns:.95fr .78fr 1.12fr 1.05fr 1.4fr;
+  background:#F7F8F9;padding:4.2mm 8mm 4mm;border-bottom:.3mm solid #DCE0E4}
+.ft-dados>div{display:flex;gap:2.4mm;align-items:flex-start;padding:0 2.6mm;border-left:.3mm solid #D8DDE1;min-width:0}
+.ft-dados>div:first-child{border-left:none;padding-left:0}
+.ft-dados svg.ic{width:9.4mm;height:9.4mm;margin-top:-.4mm}
+.ft-dados small{display:block;font-weight:700;font-size:9pt;letter-spacing:.02em;text-transform:uppercase;
+  color:#111;line-height:1.05;margin-bottom:.7mm}
+.ft-dados span{display:block;font-size:8.8pt;color:#4A5560;line-height:1.2}
+
+/* ---- corpo: a quadra e o passo a passo --------------------------------- */
+.ft-corpo{flex:0 0 auto;display:grid;grid-template-columns:61.5% 1fr;gap:4.4mm;padding:4.6mm 8mm 0;align-items:stretch}
+.ft-qd{border-radius:3mm;overflow:hidden;align-self:start;box-shadow:0 .6mm 2.4mm rgba(0,0,0,.18)}
+.ft-qd svg{display:block;width:100%;height:auto}
+.ft-qd svg text{font-family:"JV Cond","Arial Narrow",sans-serif!important;font-weight:700;
+  text-transform:uppercase;letter-spacing:.02em}
+.ft-lado{display:flex;flex-direction:column;gap:3.6mm;min-height:0}
+.ft-lado .ft-aplicar{flex:1 1 auto}
+.ft-aplicar{background:#E3E6E9;border-radius:3mm;padding:4.4mm 4.2mm 4mm}
+.ft-aplicar h3{font-weight:900;font-style:italic;font-size:16pt;text-transform:uppercase;line-height:1;margin-bottom:3.4mm}
+.ft-aplicar ol{list-style:none;margin:0;padding:0;display:grid;gap:2.6mm}
+.ft-aplicar li{display:flex;gap:2.8mm;align-items:flex-start;font-size:9.6pt;line-height:1.24;color:#3A4650}
+.ft-aplicar li i{flex:0 0 6mm;height:6mm;border-radius:50%;background:#DDEE66;color:#0B0E0D;
+  font-style:normal;font-weight:700;font-size:10pt;display:flex;align-items:center;justify-content:center;margin-top:-.4mm}
+.ft-nivel{margin-top:3.2mm;padding-top:2.6mm;border-top:.3mm solid #CBD1D6;font-size:8.4pt;color:#3A4650;line-height:1.24}
+.ft-nivel b{font-weight:700;color:#111;text-transform:uppercase;letter-spacing:.02em}
+.ft-dica{background:linear-gradient(160deg,#E6F27F 0%,#DDEE66 55%,#D2E657 100%);border-radius:3mm;
+  padding:4mm 4.2mm 4.2mm;color:#1B232A}
+.ft-dica h3{display:flex;align-items:center;gap:2.2mm;font-weight:900;font-style:italic;font-size:13.5pt;
+  text-transform:uppercase;line-height:1;margin-bottom:2.2mm}
+.ft-dica h3 svg.ic{width:7mm;height:7mm}
+.ft-dica p{font-size:9.6pt;line-height:1.26;color:#27313A}
+
+/* ---- as três colunas: um cartão cada, até o pé da página --------------- */
+.ft-tres{flex:1 1 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:4mm;margin:4.4mm 8mm 7mm}
+.ft-tres>div{background:#E3E6E9;border-radius:3mm;padding:4mm 4mm 3.6mm}
+.ft-tres h3{display:flex;align-items:center;gap:2.4mm;font-weight:700;font-size:11pt;letter-spacing:.01em;
+  text-transform:uppercase;line-height:1;margin-bottom:3mm}
+.ft-tres h3 svg.ic{width:8.4mm;height:8.4mm}
+.ft-tres ul{list-style:none;margin:0;padding:0;display:grid;gap:1.5mm}
+.ft-tres li{position:relative;padding-left:3.4mm;font-size:9.6pt;line-height:1.22;color:#2F3A44}
+.ft-tres li::before{content:"";position:absolute;left:0;top:1.5mm;width:1.4mm;height:1.4mm;border-radius:50%;background:#1B232A}
+</style>
+</head>
+<body>
+
+<header class="bar"><div class="wrap bar-in">
+  <div class="brand">
+    <span class="mono">JV</span>
+    <span class="nm">Banco de Exercícios<small>Da Base ao Topo</small></span>
+  </div>
+  <span class="espaco"></span>
+  <button class="ico-btn" id="btnMeus" title="Meus exercícios" aria-label="Meus exercícios">✎</button>
+  <button class="ico-btn" id="btnFav" title="Ver só os favoritos" aria-label="Ver só os favoritos">☆</button>
+  <button class="ico-btn" id="btnPlano" title="Plano de aula" aria-label="Plano de aula">📋<span class="selo" id="seloPlano" hidden>0</span></button>
+</div></header>
+
+<section class="foco"><div class="wrap linha-mes">
+  <div class="tx">
+    <span class="et" id="focoEt">Foco do mês</span>
+    <h1 id="focoTema">—</h1>
+  </div>
+  <button class="ver" id="focoVer" aria-label="O que este mês trabalha">i</button>
+</div></section>
+
+<nav class="tira centro" id="tiraTemas" aria-label="Tema do mês"></nav>
+
+<div class="filtros">
+  <div class="busca-linha">
+    <div class="busca">
+      <span aria-hidden="true">🔎</span>
+      <label class="sr" for="q">Buscar exercício</label>
+      <input id="q" type="search" placeholder="Buscar exercício" autocomplete="off">
+    </div>
+    <button class="mais" id="btnMais" aria-expanded="false">Filtros</button>
+  </div>
+  <nav class="tira centro" id="tiraNiveis" aria-label="Nível do aluno"></nav>
+  <div class="painel" id="painel">
+    <nav class="tira" id="tiraBlocos" style="padding:0 0 4px" aria-label="Bloco da aula"></nav>
+    <div class="gr">
+      <div class="campo"><label for="fNec">Necessidade do aluno</label>
+        <select id="fNec"><option value="">Qualquer necessidade</option></select></div>
+      <div class="campo"><label for="fForm">Formato da aula</label>
+        <select id="fForm"><option value="">Qualquer formato</option></select></div>
+      <div class="campo"><label for="fCam">Camada da Pirâmide</label>
+        <select id="fCam"><option value="">Qualquer camada</option></select></div>
+      <div class="campo"><label for="fMat">Material disponível</label>
+        <select id="fMat"><option value="">Tenho qualquer material</option></select></div>
+      <div class="campo"><label for="fInt">Intensidade</label>
+        <select id="fInt"><option value="">Qualquer intensidade</option>
+          <option value="baixa">Baixa</option><option value="media">Média</option><option value="alta">Alta</option></select></div>
+      <div class="campo"><label for="fOrd">Ordenar por</label>
+        <select id="fOrd"><option value="tema">Ordem do banco</option>
+          <option value="curto">Mais curtos primeiro</option>
+          <option value="longo">Mais longos primeiro</option>
+          <option value="nome">Nome (A–Z)</option></select></div>
+    </div>
+    <div class="linha">
+      <button class="chip" id="cApostila">Só os da apostila</button>
+      <button class="chip" id="cMeus">Só os meus</button>
+      <button class="chip" id="cTransv">Esconder transversais</button>
+    </div>
+    <button class="lim" id="btnLimpar">✕ limpar todos os filtros</button>
+  </div>
+</div>
+
+<section class="pronta" id="pronta"><div class="cx">
+  <div class="tx">
+    <span class="tt">⚡ Aula pronta</span>
+    <span class="sub" id="prontaSub">—</span>
+    <span class="mini" id="prontaMini">—</span>
+  </div>
+  <div class="bt">
+    <button id="pronta60" aria-label="Montar aula de 60 minutos">60′</button>
+    <button id="pronta90" aria-label="Montar aula de 90 minutos">90′</button>
+  </div>
+</div></section>
+
+<div class="resumo">
+  <span class="qt" id="qt">—</span>
+  <span class="ord" id="ordAviso"></span>
+</div>
+
+<main class="lista" id="lista"></main>
+
+<div class="rodape"><div class="rodape-in">
+  <button class="btn btn-esc" id="btnMontar">⚡ Montar aula</button>
+  <button class="btn btn-gold" id="btnVerPlano">📋 Plano <span id="planoQt">(0)</span></button>
+</div></div>
+
+<!-- ficha do exercício -->
+<div class="fundo" id="fundoFicha" role="dialog" aria-modal="true" aria-labelledby="fichaNome">
+  <div class="folha" id="folhaFicha"></div>
+</div>
+
+<!-- plano de aula -->
+<div class="fundo" id="fundoPlano" role="dialog" aria-modal="true" aria-labelledby="planoTitulo">
+  <div class="folha">
+    <div class="folha-top">
+      <div class="mid">
+        <span class="cd">Plano de aula</span>
+        <h2 id="planoTitulo">Aula Da Base ao Topo</h2>
+      </div>
+      <button class="fechar" data-fecha="fundoPlano" aria-label="Fechar">✕</button>
+    </div>
+    <div class="folha-corpo" id="planoCorpo"></div>
+    <div class="folha-acoes">
+      <button class="btn btn-esc pq" id="btnLimparPlano">Limpar</button>
+      <button class="btn btn-line pq" id="btnImprimir" title="O plano inteiro numa folha">🖨 plano</button>
+      <button class="btn btn-line pq" id="btnFolhas" title="Uma folha A4 por exercício">🖨 folhas</button>
+      <button class="btn btn-gold" id="btnCopiar">Copiar / enviar</button>
+    </div>
+  </div>
+</div>
+
+<!-- explicação do mês -->
+<div class="fundo" id="fundoEscolher" role="dialog" aria-modal="true" aria-labelledby="escTitulo">
+  <div class="folha">
+    <div class="folha-top">
+      <div class="mid"><span class="cd" id="escCod">bloco</span><h2 id="escTitulo">Escolher</h2></div>
+      <button class="fechar" data-fecha="fundoEscolher" aria-label="Fechar">✕</button>
+    </div>
+    <div class="folha-corpo" id="escCorpo"></div>
+  </div>
+</div>
+
+<div class="fundo" id="fundoMeus" role="dialog" aria-modal="true" aria-labelledby="meusTitulo">
+  <div class="folha">
+    <div class="folha-top">
+      <div class="mid"><span class="cd">✎ guardados neste aparelho</span>
+        <h2 id="meusTitulo">Meus exercícios</h2></div>
+      <button class="fechar" data-fecha="fundoMeus" aria-label="Fechar">✕</button>
+    </div>
+    <div class="folha-corpo" id="meusCorpo"></div>
+  </div>
+</div>
+
+<div class="fundo" id="fundoEditor" role="dialog" aria-modal="true" aria-labelledby="edTitulo">
+  <div class="folha">
+    <div class="folha-top">
+      <div class="mid"><span class="cd" id="edCod">novo</span><h2 id="edTitulo">Criar exercício</h2></div>
+      <button class="fechar" data-fecha="fundoEditor" aria-label="Fechar">✕</button>
+    </div>
+    <div class="folha-corpo" id="edCorpo"></div>
+    <div class="folha-acoes">
+      <button class="btn btn-esc pq" id="edApagar" aria-label="Apagar este exercício">🗑</button>
+      <button class="btn btn-gold" id="edSalvar">Salvar exercício</button>
+    </div>
+  </div>
+</div>
+
+<div class="fundo" id="fundoMes" role="dialog" aria-modal="true" aria-labelledby="mesTitulo">
+  <div class="folha">
+    <div class="folha-top">
+      <div class="mid"><span class="cd" id="mesCod">Tema do mês</span><h2 id="mesTitulo">—</h2></div>
+      <button class="fechar" data-fecha="fundoMes" aria-label="Fechar">✕</button>
+    </div>
+    <div class="folha-corpo" id="mesCorpo"></div>
+  </div>
+</div>
+
+<script src="quadra.js"></script>
+<script src="exercicios.js"></script>
+
+<!-- as folhas de treino, montadas só na hora de imprimir -->
+<div id="folhasImp" aria-hidden="true"></div>
+
+<script>
+'use strict';
+
+/* ==========================================================================
+   ESTADO. Tudo que a tela precisa saber cabe aqui.
+   ========================================================================== */
+var F = {                      // filtros
+  tema:'', niveis:[], blocos:[], nec:'', form:'', cam:'', mat:'', int:'',
+  q:'', ord:'tema', apostila:false, meus:false, semTransv:false, favs:false
+};
+var MEUS = [];                 // exercícios criados pelo professor, neste aparelho
+var BANCO = [];                // os 116 do banco + os MEUS, que é o que a tela usa
+var FAV = [];                  // ids favoritados
+var PLANO = { aluno:'', nivel:'', tema:'', itens:[] };   // itens: [{id, bloco}]
+var CH_FAV = 'jvex:favoritos', CH_PLANO = 'jvex:plano', CH_MEUS = 'jvex:meus';
+
+/* O banco de verdade é a soma dos dois. EX é const (vem de exercicios.js e é a
+   parte que não se edita no celular); MEUS fica no aparelho. Tudo na tela lê
+   BANCO, para um exercício criado aqui valer em tudo: busca, filtro, plano,
+   aula pronta e impressão. */
+function montarBanco(){
+  BANCO = EX.concat(MEUS);
+}
+function acharEx(id){
+  for (var i = 0; i < BANCO.length; i++) if (BANCO[i].id === id) return BANCO[i];
+  return null;
+}
+
+function guardar(chave, valor){
+  try { localStorage.setItem(chave, JSON.stringify(valor)); } catch(e){}
+}
+function ler(chave, reserva){
+  try {
+    var v = localStorage.getItem(chave);
+    return v ? JSON.parse(v) : reserva;
+  } catch(e){ return reserva; }
+}
+function esc(t){
+  return String(t == null ? '' : t)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function el(id){ return document.getElementById(id); }
+
+/* ==========================================================================
+   FILTRO
+   ========================================================================== */
+function passa(e){
+  if (F.tema && e.tema.indexOf(F.tema) < 0) return false;
+  if (F.semTransv && e.transv) return false;
+  if (F.niveis.length && !F.niveis.some(function(n){ return e.niveis.indexOf(n) >= 0; })) return false;
+  if (F.blocos.length && F.blocos.indexOf(e.bloco) < 0) return false;
+  if (F.nec && e.nec.indexOf(F.nec) < 0) return false;
+  if (F.form && e.form.indexOf(F.form) < 0) return false;
+  if (F.cam && e.camada !== Number(F.cam)) return false;
+  if (F.int && e.int !== F.int) return false;
+  if (F.apostila && e.fonte !== 'apostila') return false;
+  if (F.meus && e.fonte !== 'meu') return false;
+  if (F.favs && FAV.indexOf(e.id) < 0) return false;
+  // "material disponível": o exercício precisa caber no que o professor tem
+  if (F.mat) {
+    var so = e.mat.filter(function(m){ return m !== 'nada'; });
+    if (so.length && so.indexOf(F.mat) < 0) return false;
+  }
+  if (F.q) {
+    var t = F.q.toLowerCase();
+    var alvo = [e.id, e.nome, e.objetivo, e.execucao, e.montagem, e.erro, e.sucesso]
+      .join(' ').toLowerCase();
+    var tags = e.nec.map(function(n){ var x = necessidade(n); return x ? x.nome : ''; }).join(' ').toLowerCase();
+    if (alvo.indexOf(t) < 0 && tags.indexOf(t) < 0) return false;
+  }
+  return true;
+}
+
+function filtrados(){
+  var r = BANCO.filter(passa);
+  if (F.ord === 'curto') r.sort(function(a,b){ return a.min - b.min; });
+  else if (F.ord === 'longo') r.sort(function(a,b){ return b.min - a.min; });
+  else if (F.ord === 'nome') r.sort(function(a,b){ return a.nome.localeCompare(b.nome,'pt-BR'); });
+  return r;
+}
+
+/* ==========================================================================
+   DESENHO DA TELA
+   ========================================================================== */
+function desenharFoco(){
+  var t = F.tema ? tema(F.tema) : temaDoMes();
+  var doMes = temaDoMes();
+  var c = camada(t.camada);
+  el('focoEt').textContent = (t.id === doMes.id ? MESES_NOME[new Date().getMonth()] + ' · foco do mês'
+                                                 : t.mesesTx + ' · tema escolhido');
+  el('focoTema').textContent = t.nome;
+
+}
+
+function desenharTemas(){
+  var atual = temaDoMes();
+  var h = '<button class="chip' + (F.tema === '' ? ' on' : '') + '" data-tema="">Todos os temas</button>';
+  TEMAS.forEach(function(t){
+    h += '<button class="chip' + (F.tema === t.id ? ' on' : '') + (t.id === atual.id ? ' agora' : '') +
+         '" data-tema="' + t.id + '" title="' + esc(t.mesesTx) + '">' + esc(t.nome) + '</button>';
+  });
+  el('tiraTemas').innerHTML = h;
+}
+
+function desenharNiveis(){
+  var h = '<button class="chip' + (F.niveis.length === 0 ? ' on' : '') + '" data-nivel="">Todos os níveis</button>';
+  NIVEIS.forEach(function(n){
+    h += '<button class="chip' + (F.niveis.indexOf(n.id) >= 0 ? ' on' : '') +
+         '" data-nivel="' + n.id + '" title="grupo ' + esc(n.grupo) + ' da Barragem">' +
+         esc(n.nome) + '<b class="gr">' + esc(n.grupo) + '</b></button>';
+  });
+  el('tiraNiveis').innerHTML = h;
+}
+
+function desenharBlocos(){
+  var h = '<button class="chip' + (F.blocos.length === 0 ? ' on' : '') + '" data-bloco="">Aula inteira</button>';
+  BLOCOS.forEach(function(b){
+    h += '<button class="chip' + (F.blocos.indexOf(b.id) >= 0 ? ' on' : '') +
+         '" data-bloco="' + b.id + '">' + b.icone + ' ' + esc(b.nome) + '</button>';
+  });
+  el('tiraBlocos').innerHTML = h;
+}
+
+function preencherSelects(){
+  var grupos = {};
+  NECESSIDADES.forEach(function(n){ (grupos[n.grupo] = grupos[n.grupo] || []).push(n); });
+  var h = '<option value="">Qualquer necessidade</option>';
+  Object.keys(grupos).forEach(function(g){
+    h += '<optgroup label="' + esc(g) + '">';
+    grupos[g].forEach(function(n){ h += '<option value="' + n.id + '">' + esc(n.nome) + '</option>'; });
+    h += '</optgroup>';
+  });
+  el('fNec').innerHTML = h;
+
+  el('fForm').innerHTML = '<option value="">Qualquer formato</option>' +
+    FORMATOS.map(function(f){ return '<option value="' + f.id + '">' + esc(f.nome) + '</option>'; }).join('');
+  el('fCam').innerHTML = '<option value="">Qualquer camada</option>' +
+    CAMADAS.map(function(c){ return '<option value="' + c.n + '">' + c.n + ' — ' + esc(c.nome) + '</option>'; }).join('');
+  el('fMat').innerHTML = '<option value="">Tenho qualquer material</option>' +
+    MATERIAIS.filter(function(m){ return m.id !== 'nada'; })
+      .map(function(m){ return '<option value="' + m.id + '">' + esc(m.nome) + '</option>'; }).join('');
+}
+
+/* Régua de níveis: 5 pontos, acesos onde o exercício serve. */
+function reguaNiveis(e){
+  var pontos = NIVEIS.map(function(n){
+    return '<i class="' + (e.niveis.indexOf(n.id) >= 0 ? 'on' : '') + '"></i>';
+  }).join('');
+  var nomes = e.niveis.map(function(n){ return nivel(n).nome; }).join(', ');
+  return '<span class="regua" role="img" aria-label="Níveis: ' + esc(nomes) + '">' + pontos + '</span>';
+}
+
+function cartao(e){
+  var c = camada(e.camada), b = bloco(e.bloco);
+  var dentro = PLANO.itens.some(function(i){ return i.id === e.id; });
+  // data-ficha vai no card inteiro, e nao em cada pedaco: o dedo acerta a
+  // borda e o vao entre o desenho e o texto, que antes nao respondiam.
+  return '' +
+  '<div class="card' + (dentro ? ' no-plano' : '') + '" data-ficha="' + e.id + '"' +
+       ' role="button" tabindex="0" aria-label="Abrir ' + esc(e.nome) + '">' +
+    '<div class="miniq">' + svgQuadra(e.fig, { mini:true, escalaFig:2.3 }) + '</div>' +
+    '<div class="mid">' +
+      '<h3>' + esc(e.nome) + (FAV.indexOf(e.id) >= 0 ? ' ★' : '') + '</h3>' +
+      '<div class="sinais">' +
+        '<span class="sinal" style="color:' + c.cor + '" title="' + esc(b.nome) + '">' +
+          '<span class="ic">' + b.icone + '</span></span>' +
+        '<span class="sinal min">' + e.min + '′</span>' +
+        reguaNiveis(e) +
+        '<span class="sinal"><span class="cd">' + esc(e.id) + '</span></span>' +
+      '</div>' +
+    '</div>' +
+    '<button class="add' + (dentro ? ' dentro' : '') + '" data-add="' + e.id + '" aria-label="' +
+      (dentro ? 'Tirar do plano' : 'Pôr no plano') + '">' + (dentro ? '✓' : '+') + '</button>' +
+  '</div>';
+}
+
+function desenharLista(){
+  var r = filtrados();
+  var nvTx = F.niveis.map(function(n){ return nivel(n).nome; }).join(' + ');
+  el('qt').innerHTML = '<b>' + r.length + '</b> ' + (r.length === 1 ? 'exercício' : 'exercícios') +
+    (nvTx ? ' · nível ' + esc(nvTx) : '') + (F.favs ? ' · favoritos' : '');
+  el('ordAviso').textContent = '';
+  if (!r.length) {
+    el('lista').innerHTML = '<div class="vazio"><div class="em">🎾</div>' +
+      '<b>Nada com esses filtros.</b>Tire um filtro — comece pelo material ou pela necessidade.</div>';
+    return;
+  }
+  el('lista').innerHTML = r.map(cartao).join('');
+}
+
+function marcarChips(){
+  el('cApostila').classList.toggle('on', F.apostila);
+  el('cMeus').classList.toggle('on', F.meus);
+  el('cTransv').classList.toggle('on', F.semTransv);
+  el('btnFav').textContent = F.favs ? '★' : '☆';
+  var ativos = (F.nec ? 1 : 0) + (F.form ? 1 : 0) + (F.cam ? 1 : 0) + (F.mat ? 1 : 0) +
+               (F.int ? 1 : 0) + (F.apostila ? 1 : 0) + (F.meus ? 1 : 0) +
+               (F.semTransv ? 1 : 0) + F.blocos.length;
+  el('btnMais').textContent = ativos ? 'Filtros (' + ativos + ')' : 'Filtros';
+  el('btnMais').classList.toggle('on', ativos > 0);
+}
+
+function atualizar(){
+  desenharFoco(); desenharTemas(); desenharNiveis(); desenharBlocos();
+  marcarChips(); desenharLista(); desenharPronta(); selo();
+}
+
+/* ==========================================================================
+   FICHA DO EXERCÍCIO
+   ========================================================================== */
+function abrirFicha(id){
+  var e = acharEx(id);
+  if (!e) return;
+  var c = camada(e.camada), b = bloco(e.bloco);
+  var focos = F.niveis.slice();
+  var dentro = PLANO.itens.some(function(i){ return i.id === e.id; });
+  var intTx = { baixa:'Baixa', media:'Média', alta:'Alta' }[e.int];
+
+  var prog = NIVEIS.filter(function(n){ return e.prog && e.prog[n.id]; }).map(function(n){
+    return '<div class="it' + (focos.indexOf(n.id) >= 0 ? ' foco' : '') + '">' +
+      '<span class="nv">' + esc(n.nome) + '</span>' +
+      '<span class="tx">' + esc(e.prog[n.id]) + '</span></div>';
+  }).join('');
+
+  var mats = e.mat.map(function(m){ var x = material(m); return x ? x.nome : m; }).join(' · ');
+  var necs = e.nec.map(function(n){ var x = necessidade(n); return x ? x.nome : n; }).join(' · ');
+  var forms = e.form.map(function(f){ var x = formato(f); return x ? x.nome : f; }).join(' · ');
+  var temas = e.tema.map(function(t){ var x = tema(t); return x ? x.nome : t; }).join(' · ');
+
+  function lista(itens, classePrimeiro){
+    return '<ul>' + itens.map(function(t, i){
+      return '<li' + (i === 0 && classePrimeiro ? ' class="primeiro"' : '') + '>' + esc(t) + '</li>';
+    }).join('') + '</ul>';
+  }
+
+  el('folhaFicha').innerHTML = '' +
+  '<div class="folha-top">' +
+    '<div class="mid">' +
+      '<span class="cd" style="color:' + c.cor + '">' + esc(e.id) + ' · ' + b.icone + ' ' + esc(b.nome) + '</span>' +
+      '<h2 id="fichaNome">' + esc(e.nome) + '</h2>' +
+    '</div>' +
+    '<button class="fechar" data-fecha="fundoFicha" aria-label="Fechar">✕</button>' +
+  '</div>' +
+  '<div class="folha-corpo">' +
+
+    // 1. a faixa de dados vem ANTES de tudo: nível, duração, jogadores,
+    //    intensidade e material. É o cabeçalho de quem bate o olho na ficha e
+    //    decide se aquele exercício cabe na aula de hoje.
+    '<div class="sinais-ficha">' +
+      '<span class="s"><div><small>níveis</small>' + reguaNiveis(e) + '</div></span>' +
+      '<span class="s"><span class="ic">⏱</span><div><small>duração</small>' + e.min + ' min</div></span>' +
+      '<span class="s"><span class="ic">👥</span><div><small>jogadores</small>' + quantosJogadores(e) + '</div></span>' +
+      '<span class="s"><span class="forca ' + e.int + '" role="img" aria-label="Intensidade ' + intTx + '">' +
+        '<i></i><i></i><i></i></span><div><small>intensidade</small>' + intTx + '</div></span>' +
+      '<span class="s larga"><span class="ic">🎒</span><div><small>materiais</small>' + esc(mats) + '</div></span>' +
+    '</div>' +
+
+    // 2. uma frase: o para quê
+    '<p class="objetivo">' + esc(e.objetivo) + '</p>' +
+
+    // 3. o desenho de um lado, o passo a passo do outro. A frase que conta o
+    //    que está desenhado vem logo abaixo da figura — sem ela o professor
+    //    tinha que deduzir a cena a partir das bolinhas e das setas.
+    '<div class="ficha-2col">' +
+      '<div class="qd-cx">' + svgQuadra(e.fig, { escalaFig:2.1 }) +
+        (e.fig && e.fig.nota ? '<div class="qd-desc">' + esc(e.fig.nota) + '</div>' : '') +
+        '<div class="qd-nota"><b>Montagem:</b> ' + esc(e.montagem) + '</div>' +
+        legendaQuadra() + '</div>' +
+      '<div class="lado">' +
+
+        // escolheu nível na tira? a versão dele vem para cima, em vez de
+        // ficar guardada na gaveta "o mesmo exercício em cada nível".
+        focos.filter(function(n){ return e.prog && e.prog[n]; }).map(function(n){
+          return '<div class="bloco-tx destaque"><div class="tt">📶 No nível ' +
+            esc(nivel(n).nome) + '</div><p>' + esc(e.prog[n]) + '</p></div>';
+        }).join('') +
+
+        '<div class="bloco-tx"><div class="tt">Como aplicar</div><ol class="passos">' +
+          (e.passos || []).map(function(t){ return '<li><span>' + esc(t) + '</span></li>'; }).join('') +
+        '</ol></div>' +
+        (e.dica ? '<div class="bloco-tx dica"><div class="tt">💡 Dica extra</div><p>' + esc(e.dica) + '</p></div>' : '') +
+      '</div>' +
+    '</div>' +
+
+    // 4. as três colunas, as três à vista
+    '<div class="tres">' +
+      '<div class="cl ok"><div class="tt"><span class="ic">✅</span>Foco do professor</div>' +
+        lista(e.foco || []) + '</div>' +
+      '<div class="cl err"><div class="tt"><span class="ic">⚠️</span>Erros mais comuns</div>' +
+        lista([e.erro].concat(e.erros || []), true) + '</div>' +
+      '<div class="cl dif"><div class="tt"><span class="ic">📈</span>Como dificultar</div>' +
+        lista(e.dificultar || []) + '</div>' +
+    '</div>' +
+
+    // 5. o critério: uma linha, em destaque
+    '<div class="bloco-tx ok"><div class="tt">Funcionou se</div><p>' + esc(e.sucesso) + '</p></div>' +
+
+    // 6. o resto fica guardado
+    '<details class="gaveta"><summary>📶 O mesmo exercício em cada nível</summary>' +
+      '<div class="dentro"><div class="prog">' + prog + '</div></div></details>' +
+    (e.kids ? '<details class="gaveta"><summary>🧒 Versão Kids</summary>' +
+      '<div class="dentro"><p>' + esc(e.kids) + '</p></div></details>' : '') +
+    '<details class="gaveta"><summary>🎒 Formatos, necessidades e tema</summary>' +
+      '<div class="dentro">' +
+        '<p><b>Formatos:</b> ' + esc(forms) + '</p>' +
+        '<p><b>Serve para:</b> ' + esc(necs) + '</p>' +
+        '<p><b>Tema do mês:</b> ' + esc(temas) + (e.transv ? ' — serve em qualquer mês' : '') + '</p>' +
+        '<p><b>Origem:</b> ' + (e.fonte === 'apostila' ? 'drill da apostila'
+          : e.fonte === 'meu' ? 'exercício seu — dá para editar em ✎ Meus exercícios'
+          : 'ampliação do banco') + '</p>' +
+      '</div></details>' +
+  '</div>' +
+  '<div class="folha-acoes">' +
+    '<button class="btn btn-esc pq" data-favorito="' + e.id + '">' + (FAV.indexOf(e.id) >= 0 ? '★' : '☆') + '</button>' +
+    '<button class="btn btn-line pq" data-folha="' + e.id + '" title="Folha A4 deste exercício">🖨 folha</button>' +
+    '<button class="btn btn-gold" data-add="' + e.id + '">' + (dentro ? '✓ no plano — tirar' : '+ pôr no plano') + '</button>' +
+  '</div>';
+  abrir('fundoFicha');
+}
+
+/* ==========================================================================
+   FOLHA DE TREINO — uma página A4 por exercício
+   --------------------------------------------------------------------------
+   O plano impresso mostra A AULA inteira em lista. Esta função monta a outra
+   coisa que faltava: a folha DO EXERCÍCIO, uma por página, com tudo à vista
+   e nada atrás de um toque — é o que vai para a quadra e o que o aluno lê
+   sozinho. Todo texto sai do banco; nada aqui é escrito à mão.
+   ========================================================================== */
+/* Ícones da folha, desenhados aqui (nenhum arquivo de fora). Limão com traço
+   escuro: limão puro some sobre o cinza claro da faixa de dados. */
+var ESC_ = '#1B232A', LIM_ = '#DDEE66';
+/* Como no modelo: o desenho escuro dentro de um círculo verde-limão. */
+var ICONE = {
+  nivel:   '<rect x="6.6" y="12.6" width="2.8" height="5.4" rx=".5"/><rect x="10.6" y="9.4" width="2.8" height="8.6" rx=".5"/>' +
+           '<rect x="14.6" y="6" width="2.8" height="12" rx=".5"/>',
+  relogio: '<circle cx="12" cy="12" r="6.6" fill="none" stroke="' + ESC_ + '" stroke-width="1.7"/>' +
+           '<path d="M12 8.2V12l2.7 1.7" fill="none" stroke="' + ESC_ + '" stroke-width="1.7" stroke-linecap="round"/>',
+  gente:   '<circle cx="12" cy="8.4" r="2.4"/><path d="M7.9 17.4c0-2.9 1.8-4.8 4.1-4.8s4.1 1.9 4.1 4.8z"/>' +
+           '<circle cx="7.2" cy="9.8" r="1.8"/><path d="M4.2 16.6c0-2.2 1.3-3.6 3-3.6 .6 0 1.2.2 1.6.5-.9 1-1.4 2.2-1.5 3.1z"/>' +
+           '<circle cx="16.8" cy="9.8" r="1.8"/><path d="M19.8 16.6c0-2.2-1.3-3.6-3-3.6-.6 0-1.2.2-1.6.5.9 1 1.4 2.2 1.5 3.1z"/>',
+  cone:    '<path d="M12 5.2 8.2 16.4h7.6z"/><path d="M10.4 10h3.2M9.6 12.7h4.8" stroke="' + LIM_ + '" stroke-width="1.1"/>' +
+           '<rect x="6.4" y="16.2" width="11.2" height="1.8" rx=".5"/>',
+  alvo:    '<circle cx="12" cy="12" r="6.6" fill="none" stroke="' + ESC_ + '" stroke-width="1.6"/>' +
+           '<circle cx="12" cy="12" r="3.8" fill="none" stroke="' + ESC_ + '" stroke-width="1.6"/><circle cx="12" cy="12" r="1.4"/>',
+  foco:    '<path d="M7.2 12.3l3.2 3.2 6.4-6.7" fill="none" stroke="' + ESC_ + '" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>',
+  alerta:  '<path d="M12 5.4 5.6 17.2h12.8z" fill="none" stroke="' + ESC_ + '" stroke-width="1.6" stroke-linejoin="round"/>' +
+           '<path d="M12 9.6v3.6" stroke="' + ESC_ + '" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="15.2" r="1"/>',
+  sobe:    '<rect x="6.6" y="12.6" width="2.8" height="5.4" rx=".5"/><rect x="10.6" y="9.4" width="2.8" height="8.6" rx=".5"/>' +
+           '<rect x="14.6" y="6" width="2.8" height="12" rx=".5"/>',
+  lampada: '<path d="M12 2.6a6.7 6.7 0 0 0-3.9 12.2c.8.6 1.2 1.4 1.2 2.3v.8h5.4v-.8c0-.9.4-1.7 1.2-2.3A6.7 6.7 0 0 0 12 2.6z" fill="none" stroke="' + ESC_ + '" stroke-width="1.8"/>' +
+           '<path d="M9.4 20.4h5.2M10.3 22.7h3.4" stroke="' + ESC_ + '" stroke-width="1.8" stroke-linecap="round"/>',
+  trofeu:  '<path d="M7 2.8h10v5.8a5 5 0 0 1-10 0z" fill="' + LIM_ + '"/>' +
+           '<path d="M7 4.8H3.4v1.6A3.7 3.7 0 0 0 7 10.1M17 4.8h3.6v1.6a3.7 3.7 0 0 1-3.6 3.7" fill="none" stroke="' + LIM_ + '" stroke-width="1.8"/>' +
+           '<path d="M12 13.6v3.4" stroke="' + LIM_ + '" stroke-width="2.2"/><rect x="8" y="17" width="8" height="4.6" rx="1" fill="' + LIM_ + '"/>'
+};
+/* ícone no círculo limão (a lâmpada da dica e o troféu da barra ficam soltos) */
+function icone(nome){
+  var solto = nome === 'lampada' || nome === 'trofeu';
+  return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">' +
+    (solto ? ICONE[nome] : '<circle cx="12" cy="12" r="12" fill="' + LIM_ + '"/><g fill="' + ESC_ + '">' + ICONE[nome] + '</g>') +
+    '</svg>';
+}
+
+/* A marca JV TÊNIS, redesenhada em vetor a partir do modelo do João (o
+   arquivo tinha 118 px de largura: ampliada, a marca sairia borrada no
+   papel). `deitada` é a da barra do topo: JV e TÊNIS lado a lado. */
+var JV_PATH = 'M34.0,0.7 58.5,0.3 63.0,30.7 84.3,0.7 99.0,0.7 66.3,47.0 54.0,47.3 47.3,15.0 40.7,42.0 36.0,47.7 26.3,51.0 2.7,51.0 0.7,48.7 4.7,29.0 16.3,28.3 15.3,38.0 26.7,38.0 30.3,35.7 34.7,17.0 34.7,13.0 31.7,11.3Z';
+function marcaJV(deitada){
+  return '<div class="ft-logo"><svg viewBox="0 0 100 52" aria-label="JV"><path fill="' + LIM_ + '" d="' + JV_PATH + '"/></svg>' +
+    '<span>TÊNIS</span></div>';
+}
+
+/* A bola de tênis do cabeçalho, desenhada: gradiente para o volume, ruído
+   para o feltro e as duas costuras. */
+var BOLA_SVG = '<svg class="ft-bola" viewBox="0 0 100 100" aria-hidden="true"><defs>' +
+  '<radialGradient id="ftBolaG" cx="34%" cy="30%" r="78%"><stop offset="0" stop-color="#F4FBA6"/>' +
+  '<stop offset=".42" stop-color="#D9ED52"/><stop offset=".82" stop-color="#9AB51D"/><stop offset="1" stop-color="#5E7409"/></radialGradient>' +
+  '<filter id="ftFeltro" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="1.6" numOctaves="2" seed="7" result="r"/>' +
+  '<feColorMatrix in="r" values="0 0 0 0 .98  0 0 0 0 1  0 0 0 0 .78  0 0 0 .55 0" result="f"/>' +
+  '<feComposite in="f" in2="SourceGraphic" operator="in"/></filter></defs>' +
+  '<circle cx="50" cy="50" r="48" fill="url(#ftBolaG)"/>' +
+  '<circle cx="50" cy="50" r="48" fill="#fff" filter="url(#ftFeltro)" opacity=".5"/>' +
+  '<path d="M9 28C36 37 39 63 12 77" fill="none" stroke="#F9FCE3" stroke-width="3.4" stroke-linecap="round"/>' +
+  '<path d="M91 23C63 33 61 64 89 73" fill="none" stroke="#F9FCE3" stroke-width="3.4" stroke-linecap="round"/></svg>';
+var LUZ_SVG = '<svg class="luz" viewBox="0 0 210 50" preserveAspectRatio="none" aria-hidden="true"><defs>' +
+  '<linearGradient id="ftRaio" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#DDEE66" stop-opacity="0"/>' +
+  '<stop offset=".55" stop-color="#DDEE66" stop-opacity=".7"/><stop offset="1" stop-color="#DDEE66" stop-opacity="0"/></linearGradient>' +
+  '<radialGradient id="ftVinheta" cx="30%" cy="40%" r="85%"><stop offset="0" stop-color="#1A2320" stop-opacity=".0"/>' +
+  '<stop offset="1" stop-color="#000" stop-opacity=".55"/></radialGradient></defs>' +
+  '<path d="M96 58 112 10 124 30 139 -2" fill="none" stroke="#DDEE66" stroke-opacity=".38" stroke-width=".4"/>' +
+  '<path d="M124 30 150 18" fill="none" stroke="#DDEE66" stroke-opacity=".35" stroke-width=".3"/>' +
+  '<path d="M150 70 212 2" stroke="url(#ftRaio)" stroke-width=".55"/></svg>';
+var RISCO_SVG = '<svg class="risco" viewBox="0 0 210 14" preserveAspectRatio="none" aria-hidden="true">' +
+  '<path d="M150 16 170 -2" stroke="#DDEE66" stroke-opacity=".6" stroke-width=".35"/></svg>';
+
+/* Texto curto: a folha de referência tem frases de 3 a 8 palavras. Onde o
+   banco tem uma frase comprida com travessão, a primeira parte é a ideia e
+   a segunda é a explicação — na folha fica a ideia. */
+function curto(t, max){
+  t = String(t || '').trim();
+  var corte = t.search(/ — |: /);
+  if (corte >= 18) t = t.slice(0, corte);
+  t = t.replace(/[.;]\s*$/, '');
+  if (max && t.length > max) t = t.slice(0, t.lastIndexOf(' ', max)) + '…';
+  return t;
+}
+
+function folhaTreino(e, minutos, nivelSel, pagina){
+  var b = bloco(e.bloco), t = tema(e.tema[0]);
+  var listaMat = e.mat.map(function(m){ var x = material(m); return x ? x.nome : m; });
+  var mats = listaMat.slice(0, 3).join(', ') + (listaMat.length > 3 ? ' +' + (listaMat.length - 3) : '');
+  var nomesNv = e.niveis.map(function(n){ var x = nivel(n); return x ? x.nome : n; });
+  // uma linha só, como no modelo: com mais de dois níveis, vira faixa
+  var nvs = nomesNv.length > 2 ? nomesNv[0] + ' a ' + nomesNv[nomesNv.length - 1] : nomesNv.join(', ');
+
+  // o lema do cabeçalho sai do foco do professor: "A, B e C."
+  var fo = (e.foco || []).slice(0, 3).map(function(x){ return curto(x).toLowerCase(); });
+  var lema = fo.length > 1 ? fo.slice(0, -1).join(', ') + ' e ' + fo[fo.length - 1] : (fo[0] || '');
+  // uma linha só, como no modelo: se não couber, fica com menos itens
+  if (lema.length > 78) lema = fo.slice(0, 2).join(' e ');
+  if (lema.length > 78) lema = fo[0];
+  if (lema.length > 78) lema = curto(lema, 78);
+
+  function itens(lista){
+    return '<ul>' + lista.slice(0, 5).map(function(x){ return '<li>' + esc(curto(x)) + '</li>'; }).join('') + '</ul>';
+  }
+  // o erro principal abre a coluna; da lista sai o que repete a mesma ideia
+  // (mesmas três primeiras palavras), senão a coluna diz duas vezes a mesma coisa
+  function inicio(x){ return x.toLowerCase().replace(/[^a-zà-ú ]/g, '').split(' ').slice(0, 3).join(' '); }
+  var erros = [curto(e.erro)].concat(e.erros || []).filter(function(x, i, a){
+    for (var j = 0; j < i; j++) if (a[j] === x || inicio(a[j]) === inicio(x)) return false;
+    return true;
+  });
+  var nv = nivelSel && e.prog && e.prog[nivelSel] ? nivel(nivelSel) : null;
+
+  return '' +
+  '<section class="ft">' +
+    '<div class="ft-barra">' + RISCO_SVG + icone('trofeu') +
+      '<p class="ft-pilula"><b>Funcionou se:</b> ' + esc(curto(e.sucesso, 92)) + '.</p>' +
+      marcaJV(true) +
+    '</div>' +
+    '<header class="ft-top">' + LUZ_SVG + BOLA_SVG + marcaJV(false) +
+      '<div class="ft-cap">' + (e.transv ? 'Transversal' : 'Tema ' + (t ? t.ordem : '')) + ' · ' + esc(b.nome) +
+        '<span>' + esc(e.transv ? 'Serve em qualquer mês' : (t ? t.nome : '')) + '</span></div>' +
+      '<h1>Treino ' + esc(e.id) + '</h1>' +
+      '<h2>' + esc(e.nome) + '</h2>' +
+      (lema ? '<p class="ft-lema">' + esc(lema) + '.</p>' : '') +
+      (t ? '<p class="ft-frase">“' + esc(t.frase) + '”</p>' : '') +
+    '</header>' +
+
+    '<div class="ft-dados">' +
+      '<div>' + icone('nivel') + '<div><small>Nível</small><span>' + esc(nvs) + '</span></div></div>' +
+      '<div>' + icone('relogio') + '<div><small>Duração</small><span>' + (minutos || e.min) + ' min</span></div></div>' +
+      '<div>' + icone('gente') + '<div><small>Nº de jogadores</small><span>' + esc(quantosJogadores(e)) + '</span></div></div>' +
+      '<div>' + icone('cone') + '<div><small>Materiais</small><span>' + esc(mats) + '</span></div></div>' +
+      '<div>' + icone('alvo') + '<div><small>Objetivo</small><span>' + esc(curto(e.objetivo, 96)) + '.</span></div></div>' +
+    '</div>' +
+
+    '<div class="ft-corpo">' +
+      '<div class="ft-qd">' + svgQuadra(e.fig, { inteira:true, escalaFig:2.3, aro:false }) + '</div>' +
+      '<div class="ft-lado">' +
+        '<div class="ft-aplicar"><h3>Como aplicar</h3><ol>' +
+          (e.passos || []).slice(0, 6).map(function(x, i){
+            return '<li><i>' + (i + 1) + '</i><span>' + esc(x) + '</span></li>'; }).join('') + '</ol>' +
+          (nv ? '<p class="ft-nivel"><b>No nível ' + esc(nv.nome) + ':</b> ' + esc(e.prog[nivelSel]) + '</p>' : '') +
+        '</div>' +
+        (e.dica ? '<div class="ft-dica"><h3>' + icone('lampada') + 'Dica extra</h3>' +
+          '<p>' + esc(e.dica) + '</p></div>' : '') +
+      '</div>' +
+    '</div>' +
+
+    '<div class="ft-tres">' +
+      '<div><h3>' + icone('foco') + 'Foco do treinador</h3>' + itens(e.foco || []) + '</div>' +
+      '<div><h3>' + icone('alerta') + 'Erros mais comuns</h3>' + itens(erros) + '</div>' +
+      '<div><h3>' + icone('sobe') + 'Como dificultar</h3>' + itens(e.dificultar || []) + '</div>' +
+    '</div>' +
+
+  '</section>';
+}
+
+/* Monta as folhas, manda imprimir e desmonta. Ficam fora da tela até o
+   momento da impressão para não pesar a rolagem com mais um desenho por
+   exercício — no plano de 6 exercícios seriam seis quadras desenhadas à toa. */
+function imprimirFolhas(lista){
+  if (!lista.length) return;
+  el('folhasImp').innerHTML = lista.map(function(x, i){
+    return folhaTreino(x.ex, x.min, PLANO.nivel || (F.niveis.length === 1 ? F.niveis[0] : ''), i + 1);
+  }).join('');
+  document.body.classList.add('folhas');
+  // a folha vai de borda a borda: só enquanto ela imprime, a página não tem
+  // margem (o plano de aula continua com a margem dele)
+  var pagina = document.createElement('style');
+  pagina.id = 'paginaFolha';
+  pagina.textContent = '@page{size:A4;margin:0}';
+  document.head.appendChild(pagina);
+  var limpar = function(){
+    document.body.classList.remove('folhas');
+    el('folhasImp').innerHTML = '';
+    if (pagina.parentNode) pagina.parentNode.removeChild(pagina);
+  };
+  // o onafterprint não é confiável no Safari do iPhone: o tempo é a rede de segurança
+  window.onafterprint = function(){ limpar(); window.onafterprint = null; };
+  setTimeout(limpar, 4000);
+  window.print();
+}
+
+/* Quantos alunos a atividade comporta — derivado dos formatos que ela atende,
+   para não ter que repetir a informação em cada exercício. */
+function quantosJogadores(e){
+  if (e.form.length === 1 && e.form[0] === 'kids') return 'turma';
+  // jogo de duplas pede quatro em quadra, com o professor completando
+  var gente = e.fig.el.filter(function(x){ return /^(aluno|prof|colega)$/.test(x[0]); }).length;
+  if (e.nec.indexOf('duplas') >= 0 && gente >= 4) return '4 (duplas)';
+  var max = 1;
+  if (e.form.indexOf('dupla') >= 0) max = 2;
+  if (e.form.indexOf('trio') >= 0 || e.form.indexOf('kids') >= 0) max = 4;
+  return max === 1 ? '1 aluno' : '1 a ' + max;
+}
+
+/* ==========================================================================
+   PLANO DE AULA
+   ========================================================================== */
+function noPlano(id){
+  var i = PLANO.itens.map(function(x){ return x.id; }).indexOf(id);
+  if (i >= 0) PLANO.itens.splice(i, 1);
+  else {
+    var e = acharEx(id);
+    if (e) PLANO.itens.push({ id:id, bloco:e.bloco });
+    // o primeiro exercicio define o tema do plano
+    if (!PLANO.tema) PLANO.tema = F.tema || temaDoMes().id;
+  }
+  if (!PLANO.itens.length) PLANO.tema = '';
+  guardar(CH_PLANO, PLANO);
+  atualizar();
+  if (el('fundoPlano').classList.contains('aberto')) desenharPlano();
+  if (el('fundoFicha').classList.contains('aberto')) abrirFicha(id);
+}
+
+function mover(id, passo){
+  var ids = PLANO.itens.map(function(x){ return x.id; });
+  var i = ids.indexOf(id);
+  if (i < 0) return;
+  var mesmoBloco = PLANO.itens.filter(function(x){ return x.bloco === PLANO.itens[i].bloco; });
+  var pos = mesmoBloco.map(function(x){ return x.id; }).indexOf(id) + passo;
+  if (pos < 0 || pos >= mesmoBloco.length) return;
+  var alvo = mesmoBloco[pos].id, j = ids.indexOf(alvo);
+  var tmp = PLANO.itens[i]; PLANO.itens[i] = PLANO.itens[j]; PLANO.itens[j] = tmp;
+  guardar(CH_PLANO, PLANO);
+  desenharPlano();
+}
+
+function itensDoBloco(b){
+  return PLANO.itens.filter(function(i){ return i.bloco === b; })
+    .map(function(i){ return acharEx(i.id); })
+    .filter(Boolean);
+}
+
+/* Minutos deste exercício NESTA aula: o professor pode encurtar sem mexer no
+   banco. O i.min só existe quando ele mudou; sem isso vale o do exercício.
+   Um id não se repete dentro de um plano, então procurar por id é seguro. */
+function minNoPlano(id){
+  var e = acharEx(id);
+  if (!e) return 0;
+  var i = PLANO.itens.filter(function(x){ return x.id === id; })[0];
+  return i && typeof i.min === 'number' && i.min > 0 ? i.min : e.min;
+}
+
+function totalMin(){
+  return PLANO.itens.reduce(function(s, i){ return s + minNoPlano(i.id); }, 0);
+}
+
+function mudarMin(id, valor){
+  var n = Math.max(1, Math.min(60, Math.round(Number(valor) || 0)));
+  PLANO.itens.forEach(function(i){
+    if (i.id !== id) return;
+    var e = acharEx(id);
+    if (e && n === e.min) delete i.min; else i.min = n;
+  });
+  guardar(CH_PLANO, PLANO);
+  // só o total é redesenhado: redesenhar a folha inteira tirava o foco do
+  // campo e fechava o teclado do celular no meio da digitação
+  var t = el('planoTotal');
+  if (t) t.textContent = totalMin() + ' min';
+}
+
+function selo(){
+  var n = PLANO.itens.length;
+  el('seloPlano').hidden = n === 0;
+  el('seloPlano').textContent = n;
+  el('planoQt').textContent = '(' + n + ')';
+}
+
+function temaDoPlano(){
+  return (PLANO.tema && tema(PLANO.tema)) || (F.tema ? tema(F.tema) : temaDoMes());
+}
+
+function desenharPlano(){
+  var t = temaDoPlano();
+  var h = '';
+  h += '<div class="plano-cab">' +
+    '<input id="pAluno" placeholder="Nome do aluno / turma" value="' + esc(PLANO.aluno) + '">' +
+    '<select id="pNivel"><option value="">Nível do aluno</option>' +
+      NIVEIS.map(function(n){ return '<option value="' + n.id + '"' + (PLANO.nivel === n.id ? ' selected' : '') +
+        '>' + esc(n.nome) + ' (grupo ' + n.grupo + ')</option>'; }).join('') +
+    '</select></div>';
+
+  // linha que só existe no papel: os campos digitados não saem na impressão
+  var nvImp = PLANO.nivel ? nivel(PLANO.nivel) : null;
+  h += '<div class="cab-imp">' +
+    '<span><b>Aluno/turma:</b> ' + (PLANO.aluno ? esc(PLANO.aluno) : '______________________') + '</span>' +
+    '<span><b>Nível:</b> ' + (nvImp ? esc(nvImp.nome) + ' (grupo ' + nvImp.grupo + ')' : '____________') + '</span>' +
+    '<span><b>Data:</b> ____/____/______</span>' +
+    '<span><b>Tema do mês:</b> ' + esc(t.nome) + ' · ' + esc(t.mesesTx) + '</span></div>';
+
+  if (!PLANO.itens.length) {
+    h += '<div class="auto"><p><b style="color:var(--gold-soft)">Plano vazio.</b><br>' +
+      'Monte na mão pelo “+” de cada exercício, ou deixe o app montar uma aula do tema do mês.</p>' +
+      '<div class="ln"><button class="btn btn-gold pq" id="pAuto60">⚡ Aula de 60 min</button>' +
+      '<button class="btn btn-line pq" id="pAuto90">90 min</button></div></div>';
+  } else {
+    var tot = totalMin();
+    h += '<div class="total"><span class="n" id="planoTotal">' + tot + ' min</span>' +
+      '<span class="l">' + PLANO.itens.length + ' exercícios<br>' + esc(t.nome) + '</span></div>';
+  }
+
+  BLOCOS.forEach(function(b){
+    var itens = itensDoBloco(b.id);
+    h += '<div class="pb' + (PLANO.itens.length && !itens.length ? ' falta' : '') + '">' +
+      '<div class="pb-tt">' + b.icone + ' <h3>' + esc(b.nome) + '</h3>' +
+        '<span class="tp">' + b.tempo + '</span></div>';
+    if (!itens.length) {
+      h += '<p style="font-size:13px;color:var(--muted-2);padding:2px 0 4px">' + esc(b.desc) + '</p>';
+    }
+    itens.forEach(function(e){
+      h += '<div class="pi">' +
+        // o desenho antes do nome: o professor reconhece o exercício pela
+        // forma antes de ler o nome, e sem ele o plano era uma lista de
+        // títulos que só dizia alguma coisa abrindo a ficha de cada um
+        '<div class="pi-qd" data-ficha="' + e.id + '" role="button" tabindex="0" ' +
+          'aria-label="Abrir a ficha de ' + esc(e.nome) + '">' +
+          svgQuadra(e.fig, { mini:true, escalaFig:2.3 }) + '</div>' +
+        '<span class="cd">' + esc(e.id) + '</span>' +
+        '<button class="nm" data-ficha="' + e.id + '" style="text-align:left">' + esc(e.nome) + '</button>' +
+        '<input class="mn" type="number" inputmode="numeric" min="1" max="60" ' +
+          'data-min="' + e.id + '" value="' + minNoPlano(e.id) + '" ' +
+          'aria-label="Minutos de ' + esc(e.nome) + '">' +
+        '<div class="acs">' +
+          '<button class="mv" data-sobe="' + e.id + '" aria-label="Subir">▲</button>' +
+          '<button class="mv" data-desce="' + e.id + '" aria-label="Descer">▼</button>' +
+          '<button data-trocar="' + e.id + '">⇄ trocar</button>' +
+          '<button class="x" data-add="' + e.id + '">✕ tirar</button>' +
+        '</div>' +
+        // detalhe que só aparece no papel: o professor leva a ficha para a quadra,
+        // com o desenho da montagem ao lado do passo a passo
+        '<div class="det">' +
+          '<div class="det-qd">' + svgQuadra(e.fig, { escalaFig:2.1 }) + '</div>' +
+          '<div class="det-tx">' +
+            '<b>Tempo:</b> ' + minNoPlano(e.id) + ' min' +
+            '<br><b>Objetivo:</b> ' + esc(e.objetivo) +
+            '<br><b>Montagem:</b> ' + esc(e.montagem) +
+            '<br><b>Como aplicar:</b> ' +
+            '<ol class="det-pa">' + (e.passos || []).map(function(t){
+                return '<li>' + esc(t) + '</li>'; }).join('') + '</ol>' +
+            (PLANO.nivel && e.prog[PLANO.nivel]
+              ? '<b>No nível ' + esc(nivel(PLANO.nivel).nome) + ':</b> ' + esc(e.prog[PLANO.nivel]) + '<br>' : '') +
+            (e.dica ? '<b>Dica extra:</b> ' + esc(e.dica) + '<br>' : '') +
+            '<div class="det-col">' +
+              '<div><b>Foco do professor:</b> ' + esc((e.foco || []).join(' · ')) + '</div>' +
+              '<div><b>Erros mais comuns:</b> ' + esc([e.erro].concat(e.erros || []).join(' · ')) + '</div>' +
+              '<div><b>Como dificultar:</b> ' + esc((e.dificultar || []).join(' · ')) + '</div>' +
+            '</div>' +
+            '<i><b>Funcionou se:</b> ' + esc(e.sucesso) + '</i>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    });
+    if (PLANO.itens.length) {
+      h += '<button class="pb-mais" data-mais="' + b.id + '">+ acrescentar em ' +
+           esc(b.nome.toLowerCase()) + '</button>';
+    }
+    h += '</div>';
+  });
+
+  if (PLANO.itens.length) {
+    h += '<div class="bloco-tx" style="margin-top:6px"><div class="tt">Lembrete da metodologia</div>' +
+      '<p style="font-size:13.5px;color:var(--muted)">A ativação de base é sagrada — ela mantém a espiral girando em todos os níveis. ' +
+      'E todo tema do dia termina aplicado em jogo: técnica que não vira jogo é coreografia.</p></div>';
+  }
+  h += '<div class="imprimivel">Academia JV Tênis · Metodologia Da Base ao Topo · Banco de exercícios ' +
+       esc(VERSAO_BANCO) + '</div>';
+  el('planoCorpo').innerHTML = h;
+
+  var a = el('pAluno'), n = el('pNivel');
+  if (a) a.oninput = function(){ PLANO.aluno = a.value; guardar(CH_PLANO, PLANO); };
+  if (n) n.onchange = function(){ PLANO.nivel = n.value; guardar(CH_PLANO, PLANO); };
+  if (el('pAuto60')) el('pAuto60').onclick = function(){ montarAuto(60); };
+  if (el('pAuto90')) el('pAuto90').onclick = function(){ montarAuto(90); };
+  el('planoCorpo').querySelectorAll('[data-min]').forEach(function(c){
+    c.onchange = function(){ mudarMin(c.getAttribute('data-min'), c.value); };
+  });
+  el('planoTitulo').textContent = 'Aula · ' + t.nome;
+}
+
+/* Monta uma aula do tema respeitando os 4 blocos e o tempo disponível.
+   Não é mágica: escolhe entre o que passa nos filtros de nível, material e
+   formato, e prefere o que o professor já marcou como favorito. O plano sai
+   para ser editado — tirar, trocar e reordenar é a parte humana.
+
+   A conta é separada de quem a usa (montarLista devolve a lista e não mexe em
+   nada) porque a faixa "Aula pronta" precisa mostrar o que sairia SEM apagar
+   o plano que o professor já tem na mão. */
+function montarLista(minutos, temaId, niveis){
+  var t = tema(temaId) || temaDoMes();
+  var nvs = niveis || [];
+  // proporção dos blocos na anatomia da aula JV (apostila, seção 5.1)
+  var alvo = { ativacao:0.18, tema:0.40, jogo:0.33, fechamento:0.07 };
+  var escolhidos = [];
+  function jaTem(id){ return escolhidos.some(function(x){ return x.id === id; }); }
+
+  BLOCOS.forEach(function(b){
+    var teto = Math.max(4, Math.round(minutos * alvo[b.id]));
+    var cand = BANCO.filter(function(e){
+      if (e.bloco !== b.id) return false;
+      if (e.tema.indexOf(t.id) < 0) return false;
+      if (nvs.length && !nvs.some(function(n){ return e.niveis.indexOf(n) >= 0; })) return false;
+      if (F.form && e.form.indexOf(F.form) < 0) return false;
+      if (F.mat) {
+        var so = e.mat.filter(function(m){ return m !== 'nada'; });
+        if (so.length && so.indexOf(F.mat) < 0) return false;
+      }
+      return true;
+    });
+    // ordem de confiança: favoritos, depois os da apostila, depois os mais longos
+    // (mais longo primeiro aproveita melhor o tempo do bloco)
+    cand.sort(function(a, b2){
+      var fa = (FAV.indexOf(a.id) >= 0 ? 0 : 1) - (FAV.indexOf(b2.id) >= 0 ? 0 : 1);
+      if (fa) return fa;
+      var ap = (a.fonte === 'apostila' ? 0 : 1) - (b2.fonte === 'apostila' ? 0 : 1);
+      if (ap) return ap;
+      return b2.min - a.min;
+    });
+
+    var usado = 0;
+    cand.forEach(function(e){
+      if (jaTem(e.id)) return;
+      if (b.id === 'fechamento' && usado > 0) return;     // um fechamento basta
+      if (usado === 0 || usado + e.min <= teto) {
+        escolhidos.push({ id:e.id, bloco:b.id });
+        usado += e.min;
+      }
+    });
+
+    // sobrou tempo no bloco? enche com o maior exercício que ainda cabe
+    if (b.id !== 'fechamento') {
+      var sobra = teto - usado;
+      while (sobra >= 6) {
+        var melhor = null;
+        cand.forEach(function(e){
+          if (jaTem(e.id) || e.min > sobra) return;
+          if (!melhor || e.min > melhor.min) melhor = e;
+        });
+        if (!melhor) break;
+        escolhidos.push({ id:melhor.id, bloco:b.id });
+        usado += melhor.min;
+        sobra = teto - usado;
+      }
+    }
+  });
+
+  return escolhidos;
+}
+
+function montarAuto(minutos){
+  var t = F.tema ? tema(F.tema) : temaDoMes();
+  // o nível do plano manda; se ele está em branco, valem os níveis da tira
+  var nvs = PLANO.nivel ? [PLANO.nivel] : F.niveis.slice();
+  PLANO.itens = montarLista(minutos, t.id, nvs);
+  PLANO.tema = t.id;
+  if (nvs.length === 1) PLANO.nivel = nvs[0];
+  guardar(CH_PLANO, PLANO);
+  atualizar(); desenharPlano();
+  if (!el('fundoPlano').classList.contains('aberto')) abrir('fundoPlano');
+}
+
+/* A faixa "Aula pronta": mostra, antes de qualquer toque, o que sairia com o
+   tema e o nível que estão escolhidos agora. */
+function desenharPronta(){
+  var t = F.tema ? tema(F.tema) : temaDoMes();
+  var nvs = F.niveis.slice();
+  var itens = montarLista(60, t.id, nvs);
+  var min = itens.reduce(function(a, i){
+    var e = acharEx(i.id);
+    return a + (e ? e.min : 0);
+  }, 0);
+  var blocos = BLOCOS.filter(function(b){
+    return itens.some(function(i){ return i.bloco === b.id; });
+  }).length;
+  var nvTx = nvs.map(function(n){ return nivel(n).nome; }).join(' + ');
+  // o tema na linha de cima e o nível na de baixo: juntos não cabiam na tela
+  // do celular e o nome do nível saía cortado justamente onde importa
+  el('prontaSub').textContent = t.nome;
+  el('prontaMini').textContent = (nvTx ? (nvs.length > 1 ? 'níveis ' : 'nível ') + nvTx
+                                       : 'todos os níveis') + ' · ' +
+    (!itens.length ? 'nada neste tema para este nível'
+      : itens.length + ' exercícios · ' + min + ' min' +
+        // os 4 blocos sao o normal (conferido nas 72 combinacoes de tema, nivel
+        // e duracao); so' avisa quando faltar algum, que e' o caso raro
+        (blocos < BLOCOS.length ? ' · só ' + blocos + ' de 4 blocos' : ''));
+  el('pronta60').disabled = !itens.length;
+  el('pronta90').disabled = !itens.length;
+}
+
+function planoTexto(){
+  var t = temaDoPlano();
+  var nv = PLANO.nivel ? nivel(PLANO.nivel) : null;
+  var L = [];
+  L.push('PLANO DE AULA · Academia JV Tênis');
+  L.push('Metodologia Da Base ao Topo');
+  L.push('');
+  L.push('Tema do mês: ' + t.nome + ' (' + t.mesesTx + ')');
+  if (PLANO.aluno) L.push('Aluno/turma: ' + PLANO.aluno);
+  if (nv) L.push('Nível: ' + nv.nome + ' — grupo ' + nv.grupo);
+  L.push('Duração total: ' + totalMin() + ' min');
+  L.push('');
+  BLOCOS.forEach(function(b){
+    var itens = itensDoBloco(b.id);
+    if (!itens.length) return;
+    L.push('— ' + b.nome.toUpperCase() + ' (' + b.tempo + ') —');
+    itens.forEach(function(e){
+      L.push('');
+      L.push('[' + e.id + '] ' + e.nome + ' · ' + minNoPlano(e.id) + ' min');
+      L.push('Objetivo: ' + e.objetivo);
+      L.push('Montagem: ' + e.montagem);
+      L.push('Como aplicar:');
+      (e.passos || []).forEach(function(t, i){ L.push('  ' + (i + 1) + '. ' + t); });
+      if (e.dica) L.push('Dica extra: ' + e.dica);
+      if (PLANO.nivel && e.prog[PLANO.nivel]) L.push('No nível ' + nivel(PLANO.nivel).nome + ': ' + e.prog[PLANO.nivel]);
+      L.push('Foco do professor: ' + (e.foco || []).join(' · '));
+      L.push('Erros mais comuns: ' + [e.erro].concat(e.erros || []).join(' · '));
+      L.push('Como dificultar: ' + (e.dificultar || []).join(' · '));
+      L.push('Funcionou se: ' + e.sucesso);
+    });
+    L.push('');
+  });
+  L.push('Banco de exercícios ' + VERSAO_BANCO + ' · JV Tênis');
+  return L.join('\n');
+}
+
+function copiarPlano(){
+  var txt = planoTexto();
+  function aviso(){
+    var d = document.createElement('div');
+    d.className = 'aviso'; d.textContent = '✓ plano copiado — cole no WhatsApp ou no caderno';
+    el('planoCorpo').insertBefore(d, el('planoCorpo').firstChild);
+    setTimeout(function(){ if (d.parentNode) d.parentNode.removeChild(d); }, 2600);
+  }
+  if (navigator.share) {
+    navigator.share({ title:'Plano de aula JV Tênis', text:txt }).catch(function(){ areaTexto(txt, aviso); });
+    return;
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(txt).then(aviso, function(){ areaTexto(txt, aviso); });
+  } else areaTexto(txt, aviso);
+}
+
+/* Reserva para quando não existe clipboard nem share (Safari antigo, http). */
+function areaTexto(txt, depois){
+  var ta = document.createElement('textarea');
+  ta.value = txt; ta.style.position = 'fixed'; ta.style.top = '-1000px';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); depois(); } catch(e){ window.prompt('Copie o plano:', txt); }
+  document.body.removeChild(ta);
+}
+
+/* ==========================================================================
+   MÊS EXPLICADO
+   ========================================================================== */
+function abrirMes(){
+  var t = F.tema ? tema(F.tema) : temaDoMes();
+  var c = camada(t.camada);
+  var doTema = BANCO.filter(function(e){ return e.tema.indexOf(t.id) >= 0; });
+  el('mesCod').textContent = 'Tema do mês · ' + t.mesesTx;
+  el('mesTitulo').textContent = t.nome;
+  var porNivel = NIVEIS.map(function(n){
+    var q = doTema.filter(function(e){ return e.niveis.indexOf(n.id) >= 0; }).length;
+    return '<div class="it"><span class="nv">' + esc(n.nome) + '</span>' +
+      '<span class="tx">' + q + ' exercícios · régua: ' + esc(n.regua) + '</span></div>';
+  }).join('');
+  var porBloco = BLOCOS.map(function(b){
+    var q = doTema.filter(function(e){ return e.bloco === b.id; }).length;
+    return '<div class="meta"><div class="k">' + b.icone + ' ' + esc(b.nome) + '</div><div class="v">' + q + '</div></div>';
+  }).join('');
+  el('mesCorpo').innerHTML = '' +
+    '<p class="objetivo" style="font-style:italic">“' + esc(t.frase) + '”</p>' +
+    '<div class="bloco-tx destaque"><div class="tt">Camada ' + c.n + ' — ' + esc(c.nome) + '</div>' +
+      '<p>' + esc(t.foco) + '</p></div>' +
+    '<div class="bloco-tx"><div class="tt">Como o tema entra na aula</div>' +
+      '<p>O tema não substitui a ativação de base: ele é o <b>tema do dia</b>, o miolo da aula. ' +
+      'Toda aula continua começando no chão, com pés e split-step — o que muda é o assunto que ganha o centro do mês.</p></div>' +
+    '<div class="bloco-tx"><div class="tt">Exercícios por bloco</div>' +
+      '<div class="ficha-meta" style="margin:0">' + porBloco + '</div></div>' +
+    '<div class="bloco-tx"><div class="tt">O mesmo tema, do Base ao Topo</div>' +
+      '<div class="prog">' + porNivel + '</div></div>' +
+    '<div class="bloco-tx"><div class="tt">O ano inteiro</div><p>' +
+      TEMAS.map(function(x){ return (x.id === t.id ? '<b style="color:var(--gold-soft)">' : '') +
+        esc(x.mesesTx) + ' — ' + esc(x.nome) + (x.id === t.id ? '</b>' : ''); }).join('<br>') +
+      '</p></div>';
+  abrir('fundoMes');
+}
+
+/* ==========================================================================
+   TROCAR E ACRESCENTAR NO PLANO
+   --------------------------------------------------------------------------
+   O plano montado pelo app é um ponto de partida; quem dá a aula é que sabe
+   que aquele exercício não serve hoje. Trocar um por outro do mesmo bloco, ou
+   acrescentar mais um, tinha que passar por fechar o plano, achar o exercício
+   na lista e voltar — três telas para uma decisão de dois segundos.
+   ========================================================================== */
+var TROCANDO = '';        // id que vai sair, vazio quando é só acrescentar
+
+function candidatos(blocoId){
+  var t = temaDoPlano();
+  var dentro = PLANO.itens.map(function(i){ return i.id; });
+  var r = BANCO.filter(function(e){
+    if (e.bloco !== blocoId) return false;
+    if (dentro.indexOf(e.id) >= 0 && e.id !== TROCANDO) return false;
+    if (e.id === TROCANDO) return false;
+    if (e.tema.indexOf(t.id) < 0) return false;
+    if (PLANO.nivel && e.niveis.indexOf(PLANO.nivel) < 0) return false;
+    return true;
+  });
+  // nada no tema e no nível? abre para o bloco inteiro, avisando na tela —
+  // melhor oferecer algo de fora do tema do que uma lista vazia
+  if (!r.length) {
+    r = BANCO.filter(function(e){
+      return e.bloco === blocoId && dentro.indexOf(e.id) < 0;
+    });
+    return { itens:r, largo:true };
+  }
+  return { itens:r, largo:false };
+}
+
+function abrirEscolher(blocoId, trocarId){
+  TROCANDO = trocarId || '';
+  var b = bloco(blocoId), t = temaDoPlano();
+  var r = candidatos(blocoId);
+  el('escCod').textContent = b.icone + ' ' + b.nome;
+  el('escTitulo').textContent = TROCANDO ? 'Trocar por' : 'Acrescentar';
+  var h = '<p style="font-size:13.5px;color:var(--muted);margin-bottom:12px">' +
+    (r.largo ? 'Nada em <b>' + esc(t.nome) + '</b>' +
+        (PLANO.nivel ? ' no nível ' + esc(nivel(PLANO.nivel).nome) : '') +
+        ' para este bloco — mostrando o bloco inteiro.'
+      : esc(t.nome) + (PLANO.nivel ? ' · nível ' + esc(nivel(PLANO.nivel).nome) : '') +
+        ' · ' + r.itens.length + ' opções') + '</p>';
+  h += r.itens.map(function(e){
+    return '<div class="card" data-escolher="' + e.id + '" data-bloco-alvo="' + blocoId + '"' +
+      ' role="button" tabindex="0" aria-label="Usar ' + esc(e.nome) + '">' +
+      '<div class="miniq">' + svgQuadra(e.fig, { mini:true, escalaFig:2.3 }) + '</div>' +
+      '<div class="mid"><h3>' + esc(e.nome) + '</h3>' +
+        '<div class="sinais"><span class="sinal min">' + e.min + '′</span>' +
+          reguaNiveis(e) +
+          '<span class="sinal"><span class="cd">' + esc(e.id) + '</span></span></div></div>' +
+      '<span class="add" aria-hidden="true">' + (TROCANDO ? '⇄' : '+') + '</span></div>';
+  }).join('') || '<div class="vazio"><b>Nada disponível neste bloco.</b>' +
+      'Todos os exercícios dele já estão no plano.</div>';
+  el('escCorpo').innerHTML = h;
+  abrir('fundoEscolher');
+}
+
+function escolhido(id, blocoId){
+  if (TROCANDO) {
+    PLANO.itens = PLANO.itens.map(function(i){
+      return i.id === TROCANDO ? { id:id, bloco:i.bloco } : i;   // o minuto ajustado era do outro
+    });
+  } else {
+    PLANO.itens.push({ id:id, bloco:blocoId });
+  }
+  TROCANDO = '';
+  guardar(CH_PLANO, PLANO);
+  fechar('fundoEscolher');
+  atualizar(); desenharPlano();
+}
+
+/* ==========================================================================
+   MEUS EXERCÍCIOS — criar, editar e levar para outro aparelho
+   --------------------------------------------------------------------------
+   Os 116 do banco vêm de exercicios.js e não se editam no celular: são a
+   metodologia, e mudá-los sem querer em quadra seria pior que não poder
+   mudá-los. O que o professor cria fica em MEUS, no localStorage deste
+   aparelho, e entra em tudo: busca, filtro, plano, aula pronta e impressão.
+
+   Como o app não fala com servidor nenhum (é o que o deixa abrir offline em
+   quadra), passar os exercícios para o outro professor é por texto: exportar
+   gera um bloco para copiar, importar recebe o mesmo bloco.
+   ========================================================================== */
+
+/* Cenas prontas para o desenho. Desenhar uma quadra num celular pediria um
+   editor de arrastar que ninguém usaria em quadra; escolher a cena mais
+   parecida e descrevê-la em uma frase resolve o mesmo problema em dois
+   toques. Coordenadas em metros: y=0 é a rede, y cresce para o lado do aluno,
+   11,885 é a linha de base. */
+var CENAS = [
+  { id:'prof-lanca', nome:'Professor lança, aluno no fundo', base:'meia', el:[
+      ['prof', 0, -2.6, 'lança'],
+      ['bola', 0, -2.4, 0, 9.4, .35, ''],
+      ['aluno', 0, 11.0, 'devolve'] ] },
+  { id:'peloteio', nome:'Dois peloteando, quadra inteira', base:'inteira', el:[
+      ['colega', 0, -10.5, 'devolve'],
+      ['bola', 0, -10.0, 0, 10.4, .35, ''],
+      ['aluno', 0, 11.0, 'joga'] ] },
+  { id:'rede', nome:'Aluno na rede, professor do outro lado', base:'meia', el:[
+      ['prof', 0, -2.6, 'lança'],
+      ['bola', 0, -2.4, 0, 3.0, .3, ''],
+      ['aluno', 0, 3.4, 'voleia'] ] },
+  { id:'cones', nome:'Cones no fundo, aluno se desloca', base:'fundo', el:[
+      ['cone', -3.2, 9.6, ''],
+      ['cone',  3.2, 9.6, ''],
+      ['aluno', 0, 11.2, 'base'],
+      ['mov', 0, 11.2, -3.2, 9.6, .15, 'vai e volta'] ] },
+  { id:'saque', nome:'Saque e devolução', base:'inteira', el:[
+      ['aluno', 3.0, 11.6, 'saca'],
+      ['bola', 3.0, 11.4, -2.6, -4.2, .4, ''],
+      ['colega', -3.0, -10.5, 'devolve'] ] },
+  { id:'alvo', nome:'Alvo do outro lado', base:'meia', el:[
+      ['aluno', 0, 11.0, 'bate'],
+      ['bola', 0, 10.8, 2.8, -1.2, .35, ''],
+      ['zona', 2.8, -1.6, 2.6, 2.6, 'alvo'] ] },
+  { id:'kids', nome:'Mini quadra (kids)', base:'mini', el:[
+      ['prof', 0, -2.6, 'lança'],
+      ['bola', 0, -2.4, 0, 4.4, .3, ''],
+      ['aluno', 0, 5.2, ''] ] },
+  { id:'vazia', nome:'Quadra vazia (só a frase explica)', base:'meia', el:[] }
+];
+
+function cena(id){
+  for (var i = 0; i < CENAS.length; i++) if (CENAS[i].id === id) return CENAS[i];
+  return CENAS[0];
+}
+
+/* Um exercício só entra no banco se tiver tudo o que a tela lê. Vale para o
+   que vem do formulário e para o que vem de uma importação — um registro pela
+   metade quebraria a lista inteira, não só ele. */
+function exValido(e){
+  return !!(e && typeof e.id === 'string' && e.nome && e.objetivo && e.montagem &&
+    e.erro && e.sucesso && e.fig && e.fig.el &&
+    Array.isArray(e.tema) && e.tema.length &&
+    Array.isArray(e.niveis) && e.niveis.length &&
+    bloco(e.bloco) && typeof e.min === 'number' && e.min > 0);
+}
+
+/* Prefixo JV, que o banco não usa (ele usa D, F, M, FH, BH, R, S e T). Com
+   "M" o exercício novo saía M12, coladinho nos M01..M11 de movimentação — e
+   o código é o que o professor lê em quadra para achar a ficha. */
+function proximoId(){
+  var n = 1, id;
+  do { id = 'JV' + (n < 10 ? '0' : '') + n; n++; } while (acharEx(id));
+  return id;
+}
+
+function linhas(txt){
+  return String(txt || '').split('\n')
+    .map(function(t){ return t.trim(); })
+    .filter(function(t){ return t.length > 0; });
+}
+
+function guardarMeus(){
+  guardar(CH_MEUS, MEUS);
+  montarBanco();
+}
+
+/* A resposta do importar é escrita depois de redesenhar a folha: abrirMeus()
+   refaz o #meusCorpo inteiro, e a mensagem escrita antes sumia junto. */
+var AVISO_MEUS = '';
+
+/* ---------- a lista dos meus ---------- */
+function abrirMeus(){
+  var h = '<button class="btn btn-gold" id="meusNovo" style="width:100%;margin-bottom:14px">' +
+          '+ criar exercício</button>';
+  if (!MEUS.length) {
+    h += '<div class="vazio" style="padding:26px 6px"><div class="em">✎</div>' +
+      '<b>Nenhum exercício seu ainda.</b>' +
+      'O que você criar aqui entra na busca, nos filtros e na aula pronta, ' +
+      'junto com os ' + EX.length + ' do banco.</div>';
+  } else {
+    h += MEUS.map(function(e){
+      return '<div class="card" data-editar="' + e.id + '" role="button" tabindex="0"' +
+        ' aria-label="Editar ' + esc(e.nome) + '">' +
+        '<div class="miniq">' + svgQuadra(e.fig, { mini:true, escalaFig:2.3 }) + '</div>' +
+        '<div class="mid"><h3>' + esc(e.nome) + '</h3>' +
+          '<div class="sinais"><span class="sinal min">' + e.min + '′</span>' +
+            reguaNiveis(e) +
+            '<span class="sinal"><span class="cd">' + esc(e.id) + '</span></span></div></div>' +
+        '<span class="add" aria-hidden="true">✎</span></div>';
+    }).join('');
+  }
+  h += '<details class="gaveta" style="margin-top:16px"><summary>📤 Levar para outro aparelho</summary>' +
+    '<div class="dentro">' +
+      '<p style="font-size:13.5px;color:var(--muted);margin-bottom:10px">' +
+        'O app não fala com servidor nenhum — é isso que o deixa abrir offline em ' +
+        'quadra. Para passar os seus exercícios ao outro professor, copie o bloco ' +
+        'abaixo e mande; do outro lado, cole no mesmo lugar e toque em importar.</p>' +
+      '<textarea id="meusTexto" rows="5" spellcheck="false" ' +
+        'style="width:100%;background:var(--navy-2);border:1px solid var(--line-2);' +
+        'border-radius:11px;color:var(--cream);padding:10px;font-size:12.5px">' +
+        esc(JSON.stringify(MEUS)) + '</textarea>' +
+      '<div class="linha" style="margin-top:10px">' +
+        '<button class="btn btn-line pq" id="meusCopiar">Copiar</button>' +
+        '<button class="btn btn-esc pq" id="meusImportar">Importar o que está aí</button>' +
+      '</div>' +
+      '<p id="meusAviso" style="font-size:13px;color:var(--gold-soft);margin-top:9px">' +
+      esc(AVISO_MEUS) + '</p>' +
+    '</div></details>';
+  el('meusCorpo').innerHTML = h;
+  if (AVISO_MEUS) {
+    el('meusCorpo').querySelector('details').open = true;   // a resposta tem que estar à vista
+    AVISO_MEUS = '';
+  }
+
+  el('meusNovo').onclick = function(){ abrirEditor(''); };
+  el('meusCopiar').onclick = function(){
+    var t = el('meusTexto');
+    t.select();
+    try { document.execCommand('copy'); } catch(erro){}
+    if (navigator.clipboard) navigator.clipboard.writeText(t.value).catch(function(){});
+    el('meusAviso').textContent = 'Copiado. Cole no WhatsApp e mande.';
+  };
+  el('meusImportar').onclick = importarMeus;
+  abrir('fundoMeus');
+}
+
+function importarMeus(){
+  var aviso = el('meusAviso'), lidos;
+  try { lidos = JSON.parse(el('meusTexto').value); } catch(erro){ lidos = null; }
+  if (!Array.isArray(lidos)) { aviso.textContent = 'Não entendi esse texto. Cole o bloco inteiro, das chaves ao fim.'; return; }
+  var bons = lidos.filter(exValido);
+  if (!bons.length) { aviso.textContent = 'Nenhum exercício completo nesse texto.'; return; }
+  var novos = 0, trocados = 0;
+  bons.forEach(function(e){
+    var i = MEUS.map(function(m){ return m.id; }).indexOf(e.id);
+    e.fonte = 'meu';
+    if (i >= 0) { MEUS[i] = e; trocados++; }
+    else if (EX.some(function(x){ return x.id === e.id; })) {
+      e.id = proximoId(); MEUS.push(e); novos++;   // id batia com o banco: renumera
+    } else { MEUS.push(e); novos++; }
+  });
+  guardarMeus(); atualizar();
+  AVISO_MEUS = novos + ' novo(s), ' + trocados + ' atualizado(s)' +
+    (bons.length < lidos.length ? ' · ' + (lidos.length - bons.length) + ' incompleto(s), fora' : '');
+  abrirMeus();
+}
+
+/* ---------- o formulário ---------- */
+var EDITANDO = '';
+
+function campo(rot, dentro, dica){
+  return '<div class="ed-campo"><label>' + esc(rot) + '</label>' + dentro +
+    (dica ? '<small>' + esc(dica) + '</small>' : '') + '</div>';
+}
+
+function abrirEditor(id){
+  EDITANDO = id;
+  var e = id ? MEUS.filter(function(x){ return x.id === id; })[0] : null;
+  if (id && !e) return;
+  var vazio = { tema:[], niveis:[], mat:[], form:[], nec:[], passos:[], foco:[],
+                erros:[], dificultar:[], fig:{ base:'meia', el:cena('prof-lanca').el, nota:'' } };
+  var v = e || vazio;
+
+  /* O checar-exercicios.js confere cada id procurado pelo JS contra os id=""
+     escritos no arquivo, e id montado por concatenação ele não consegue
+     conferir — essa checagem já pegou erro de verdade aqui. Por isso o id vem
+     escrito por extenso na chamada, e não montado dentro da função. */
+  function area(abre, valor){
+    return abre + esc(valor) + '</textarea>';
+  }
+  function entrada(abre, valor, dica){
+    return abre + ' value="' + esc(valor) + '" placeholder="' + esc(dica || '') + '">';
+  }
+  function opcoes(lista, atual, rotulo){
+    return lista.map(function(o){
+      return '<option value="' + esc(o.id !== undefined ? o.id : o.n) + '"' +
+        ((o.id !== undefined ? o.id : String(o.n)) === String(atual) ? ' selected' : '') + '>' +
+        esc(rotulo(o)) + '</option>';
+    }).join('');
+  }
+  function marcaveis(nome, lista, marcados){
+    return '<div class="ed-chips">' + lista.map(function(o){
+      return '<button type="button" class="chip' + (marcados.indexOf(o.id) >= 0 ? ' on' : '') +
+        '" data-marca="' + nome + '" data-valor="' + o.id + '">' + esc(o.nome) + '</button>';
+    }).join('') + '</div>';
+  }
+
+  el('edCod').textContent = e ? e.id : 'novo';
+  el('edTitulo').textContent = e ? 'Editar exercício' : 'Criar exercício';
+  el('edApagar').style.display = e ? '' : 'none';
+
+  el('edCorpo').innerHTML =
+    '<p class="ed-erro" id="edErro" hidden></p>' +
+    campo('Nome do exercício', entrada('<input id="exNome"', v.nome || '', 'Ex.: Cruzado com alvo')) +
+    campo('Tema do mês', '<select id="exTema">' +
+      opcoes(TEMAS, v.tema[0] || temaDoMes().id, function(t){ return t.nome + ' · ' + t.mesesTx; }) +
+      '</select>', 'em que mês do calendário ele entra') +
+    campo('Bloco da aula', '<select id="exBloco">' +
+      opcoes(BLOCOS, v.bloco || 'tema', function(b){ return b.icone + ' ' + b.nome + ' (' + b.tempo + ')'; }) +
+      '</select>') +
+    campo('Serve para os níveis', marcaveis('nivel', NIVEIS, v.niveis),
+      'marque todos em que o exercício funciona') +
+    '<div class="ed-dois">' +
+      campo('Duração', '<input id="exMin" type="number" min="2" max="45" value="' + (v.min || 10) + '">', 'minutos') +
+      campo('Intensidade', '<select id="exInt">' +
+        ['baixa','media','alta'].map(function(x){
+          return '<option value="' + x + '"' + (v.int === x ? ' selected' : '') + '>' +
+            ({ baixa:'Baixa', media:'Média', alta:'Alta' })[x] + '</option>'; }).join('') +
+        '</select>') +
+    '</div>' +
+    campo('Objetivo', area('<textarea id="exObj" rows="2" spellcheck="true">', v.objetivo || ''), 'uma frase: para quê serve') +
+    campo('Montagem', area('<textarea id="exMont" rows="2" spellcheck="true">', v.montagem || ''), 'o que precisa estar na quadra') +
+    campo('Como aplicar', area('<textarea id="exPassos" rows="4" spellcheck="true">', (v.passos || []).join('\n')), 'um passo por linha') +
+    campo('Erro mais comum', entrada('<input id="exErro"', v.erro || '')) +
+    campo('Funcionou se', entrada('<input id="exSucesso"', v.sucesso || ''), 'o critério que fecha o exercício') +
+
+    '<details class="gaveta"><summary>🎾 O desenho</summary><div class="dentro">' +
+      campo('Cena', '<select id="exCena">' +
+        CENAS.map(function(c){ return '<option value="' + c.id + '">' + esc(c.nome) + '</option>'; }).join('') +
+        '<option value="copiar">— copiar o desenho de outro exercício —</option></select>') +
+      '<div id="exCopiaCx" hidden>' + campo('Copiar de', '<select id="exCopia">' +
+        EX.map(function(x){ return '<option value="' + x.id + '">' + esc(x.id + ' · ' + x.nome) + '</option>'; }).join('') +
+        '</select>') + '</div>' +
+      campo('O que está no desenho', area('<textarea id="exNota" rows="2" spellcheck="true">', (v.fig && v.fig.nota) || ''),
+        'a frase que aparece embaixo da figura') +
+      '<div class="qd-cx" id="exPreview"></div>' +
+    '</div></details>' +
+
+    '<details class="gaveta"><summary>✅ Foco, erros e como dificultar</summary><div class="dentro">' +
+      campo('Foco do professor', area('<textarea id="exFoco" rows="3" spellcheck="true">', (v.foco || []).join('\n')), 'um por linha') +
+      campo('Outros erros comuns', area('<textarea id="exErros" rows="3" spellcheck="true">', (v.erros || []).join('\n')), 'um por linha') +
+      campo('Como dificultar', area('<textarea id="exDificultar" rows="3" spellcheck="true">', (v.dificultar || []).join('\n')), 'um por linha') +
+      campo('Dica extra', area('<textarea id="exDica" rows="2" spellcheck="true">', v.dica || '')) +
+    '</div></details>' +
+
+    '<details class="gaveta"><summary>🎒 Material, formato e camada</summary><div class="dentro">' +
+      campo('Material', marcaveis('mat', MATERIAIS.filter(function(m){ return m.id !== 'nada'; }), v.mat),
+        'nada marcado = só a quadra') +
+      campo('Formato da aula', marcaveis('form', FORMATOS, v.form)) +
+      campo('Camada da Pirâmide', '<select id="exCam">' +
+        opcoes(CAMADAS, v.camada || 4, function(c){ return c.n + ' — ' + c.nome; }) + '</select>') +
+      campo('Variação por nível', area('<textarea id="exProg" rows="5" spellcheck="true">', NIVEIS.map(function(n){
+        return n.nome + ': ' + ((v.prog && v.prog[n.id]) || ''); }).join('\n')),
+        'uma linha por nível, no formato "Nível: o que muda". Linha em branco depois dos dois-pontos é ignorada.') +
+    '</div></details>';
+
+  // estado dos chips, guardado fora do DOM para o salvar ler de um lugar só
+  el('edCorpo').dataset.nivel = (v.niveis || []).join(',');
+  el('edCorpo').dataset.mat = (v.mat || []).join(',');
+  el('edCorpo').dataset.form = (v.form || []).join(',');
+
+  el('exCena').onchange = function(){
+    el('exCopiaCx').hidden = this.value !== 'copiar';
+    verPreview();
+  };
+  el('exCopia').onchange = verPreview;
+  verPreview();
+  abrir('fundoEditor');
+}
+
+function figDoFormulario(){
+  var esc2 = el('exCena').value;
+  if (esc2 === 'copiar') {
+    var o = acharEx(el('exCopia').value);
+    var f = o ? JSON.parse(JSON.stringify(o.fig)) : { base:'meia', el:[] };
+    f.nota = el('exNota').value.trim() || f.nota || '';
+    return f;
+  }
+  var c = cena(esc2);
+  return { base:c.base, el:JSON.parse(JSON.stringify(c.el)), nota:el('exNota').value.trim() };
+}
+
+function verPreview(){
+  el('exPreview').innerHTML = svgQuadra(figDoFormulario());
+}
+
+function marcados(nome){
+  var v = el('edCorpo').dataset[nome] || '';
+  return v ? v.split(',') : [];
+}
+
+function alternarMarca(nome, valor, botao){
+  var lista = marcados(nome), i = lista.indexOf(valor);
+  if (i >= 0) lista.splice(i, 1); else lista.push(valor);
+  el('edCorpo').dataset[nome] = lista.join(',');
+  botao.classList.toggle('on', i < 0);
+}
+
+function salvarEditor(){
+  var faltando = [];
+  function pega(id, rot){
+    var t = el(id).value.trim();
+    if (!t && rot) faltando.push(rot);
+    return t;
+  }
+  var nome = pega('exNome', 'o nome');
+  var obj = pega('exObj', 'o objetivo');
+  var mont = pega('exMont', 'a montagem');
+  var passos = linhas(el('exPassos').value);
+  if (!passos.length) faltando.push('pelo menos um passo em "como aplicar"');
+  var erro = pega('exErro', 'o erro mais comum');
+  var sucesso = pega('exSucesso', 'o "funcionou se"');
+  var niveis = marcados('nivel');
+  if (!niveis.length) faltando.push('pelo menos um nível');
+  var min = Number(el('exMin').value) || 0;
+  if (min < 2) faltando.push('a duração (2 min ou mais)');
+
+  if (faltando.length) {
+    var av = el('edErro');
+    av.hidden = false;
+    av.textContent = 'Falta ' + (faltando.length === 1 ? '' : 'preencher: ') + faltando.join(', ') + '.';
+    el('edCorpo').scrollTop = 0;
+    el('edCorpo').parentNode.scrollTop = 0;
+    return;
+  }
+
+  var prog = {};
+  linhas(el('exProg').value).forEach(function(l){
+    var i = l.indexOf(':');
+    if (i < 0) return;
+    var nm = l.slice(0, i).trim().toLowerCase(), tx = l.slice(i + 1).trim();
+    if (!tx) return;
+    NIVEIS.forEach(function(n){ if (n.nome.toLowerCase() === nm || n.id === nm) prog[n.id] = tx; });
+  });
+
+  var mat = marcados('mat'), form = marcados('form');
+  var novo = {
+    id: EDITANDO || proximoId(),
+    nome: nome, fonte: 'meu',
+    tema: [el('exTema').value],
+    camada: Number(el('exCam').value) || 4,
+    bloco: el('exBloco').value,
+    niveis: NIVEIS.map(function(n){ return n.id; }).filter(function(n){ return niveis.indexOf(n) >= 0; }),
+    min: min, int: el('exInt').value,
+    objetivo: obj, montagem: mont,
+    execucao: passos.join(' '),
+    prog: prog, erro: erro, sucesso: sucesso,
+    mat: mat.length ? mat : ['nada'],
+    form: form.length ? form : FORMATOS.map(function(f){ return f.id; }),
+    nec: [], fig: figDoFormulario(),
+    passos: passos, dica: el('exDica').value.trim(),
+    foco: linhas(el('exFoco').value),
+    erros: linhas(el('exErros').value),
+    dificultar: linhas(el('exDificultar').value)
+  };
+  if (!exValido(novo)) { el('edErro').hidden = false; el('edErro').textContent = 'Faltou alguma coisa.'; return; }
+
+  var i = MEUS.map(function(m){ return m.id; }).indexOf(novo.id);
+  if (i >= 0) MEUS[i] = novo; else MEUS.push(novo);
+  guardarMeus();
+  fechar('fundoEditor');
+  atualizar();
+  abrirMeus();
+}
+
+function apagarEditor(){
+  if (!EDITANDO) return;
+  var e = MEUS.filter(function(x){ return x.id === EDITANDO; })[0];
+  if (!window.confirm('Apagar "' + (e ? e.nome : EDITANDO) + '"? Ele sai também dos planos.')) return;
+  MEUS = MEUS.filter(function(x){ return x.id !== EDITANDO; });
+  PLANO.itens = PLANO.itens.filter(function(i){ return i.id !== EDITANDO; });
+  guardarMeus(); guardar(CH_PLANO, PLANO);
+  fechar('fundoEditor');
+  atualizar();
+  abrirMeus();
+}
+
+/* ==========================================================================
+   ABRIR / FECHAR
+   ========================================================================== */
+var FOLHAS = ['fundoFicha','fundoPlano','fundoMes','fundoMeus','fundoEditor','fundoEscolher'];
+var ROLAGEM = 0;
+
+function algumaAberta(){
+  return FOLHAS.some(function(id){ return el(id).classList.contains('aberto'); });
+}
+
+/* overflow:hidden no body NAO segura a rolagem no Safari do iPhone: a pagina
+   continua andando atras da folha, e o arrasto dentro dela sai errado. O que
+   segura e' tirar o body do fluxo e devolver a posicao ao fechar. */
+function travarRolagem(){
+  ROLAGEM = window.pageYOffset || document.documentElement.scrollTop || 0;
+  var b = document.body.style;
+  b.position = 'fixed'; b.top = (-ROLAGEM) + 'px'; b.left = '0'; b.right = '0'; b.width = '100%';
+}
+function destravarRolagem(){
+  var b = document.body.style;
+  b.position = ''; b.top = ''; b.left = ''; b.right = ''; b.width = '';
+  window.scrollTo(0, ROLAGEM);
+}
+
+function abrir(id){
+  var tinha = algumaAberta();
+  // folha que já estava aberta não volta ao topo: abrirFicha() é chamado de
+  // novo ao pôr no plano, e pular para o topo no meio da leitura era pior que
+  // o botão não atualizar
+  if (!el(id).classList.contains('aberto')) {
+    var folha = el(id).querySelector('.folha');
+    if (folha) folha.scrollTop = 0;
+  }
+  el(id).classList.add('aberto');
+  if (!tinha) travarRolagem();
+}
+function fechar(id){
+  el(id).classList.remove('aberto');
+  if (!algumaAberta()) destravarRolagem();
+}
+
+/* ==========================================================================
+   LIGAÇÕES
+   ========================================================================== */
+/* Arrastar para rolar as tiras de filtro ou a lista terminava abrindo o que
+   estava embaixo do dedo: o navegador manda um clique quando o dedo quase nao
+   anda, e "quase" e' generoso demais para uma tira que rola de lado. Aqui o
+   gesto e' medido, e acima de 10 px ele e' arrasto, nao toque. */
+var ARRASTOU = false, TOQUE0 = null;
+
+function marcarInicio(x, y){ TOQUE0 = [x, y]; ARRASTOU = false; }
+function marcarMovimento(x, y){
+  if (!TOQUE0) return;
+  if (Math.abs(x - TOQUE0[0]) > 10 || Math.abs(y - TOQUE0[1]) > 10) ARRASTOU = true;
+}
+
+function ligarGestos(){
+  document.addEventListener('pointerdown', function(ev){ marcarInicio(ev.clientX, ev.clientY); }, true);
+  document.addEventListener('pointermove', function(ev){ marcarMovimento(ev.clientX, ev.clientY); }, true);
+  document.addEventListener('touchstart', function(ev){
+    var t = ev.touches[0]; if (t) marcarInicio(t.clientX, t.clientY);
+  }, { passive:true, capture:true });
+  document.addEventListener('touchmove', function(ev){
+    var t = ev.touches[0]; if (t) marcarMovimento(t.clientX, t.clientY);
+  }, { passive:true, capture:true });
+}
+
+function ligar(){
+  ligarGestos();
+  document.addEventListener('click', function(ev){
+    if (ARRASTOU) { ARRASTOU = false; return; }
+    var a = ev.target.closest ? ev.target.closest('[data-tema],[data-nivel],[data-bloco],[data-ficha],[data-add],[data-fecha],[data-favorito],[data-sobe],[data-desce],[data-folha],[data-editar],[data-marca],[data-trocar],[data-mais],[data-escolher]') : null;
+    if (!a) return;
+
+    if (a.hasAttribute('data-marca')) {
+      alternarMarca(a.getAttribute('data-marca'), a.getAttribute('data-valor'), a); return;
+    }
+    if (a.hasAttribute('data-editar')) { abrirEditor(a.getAttribute('data-editar')); return; }
+    if (a.hasAttribute('data-trocar')) {
+      var ex = acharEx(a.getAttribute('data-trocar'));
+      if (ex) abrirEscolher(ex.bloco, ex.id);
+      return;
+    }
+    if (a.hasAttribute('data-mais')) { abrirEscolher(a.getAttribute('data-mais'), ''); return; }
+    if (a.hasAttribute('data-escolher')) {
+      escolhido(a.getAttribute('data-escolher'), a.getAttribute('data-bloco-alvo')); return;
+    }
+
+    if (a.hasAttribute('data-tema'))  { F.tema = a.getAttribute('data-tema'); atualizar(); window.scrollTo({ top:0, behavior:'smooth' }); return; }
+    if (a.hasAttribute('data-nivel')) { alterna(F.niveis, a.getAttribute('data-nivel')); atualizar(); return; }
+    if (a.hasAttribute('data-bloco')) { alterna(F.blocos, a.getAttribute('data-bloco')); atualizar(); return; }
+    if (a.hasAttribute('data-ficha')) { abrirFicha(a.getAttribute('data-ficha')); return; }
+    if (a.hasAttribute('data-add'))   { noPlano(a.getAttribute('data-add')); return; }
+    if (a.hasAttribute('data-fecha')) { fechar(a.getAttribute('data-fecha')); return; }
+    if (a.hasAttribute('data-sobe'))  { mover(a.getAttribute('data-sobe'), -1); return; }
+    if (a.hasAttribute('data-desce')) { mover(a.getAttribute('data-desce'), 1); return; }
+    if (a.hasAttribute('data-folha')) {
+      var exF = acharEx(a.getAttribute('data-folha'));
+      if (exF) imprimirFolhas([{ ex:exF, min:minNoPlano(exF.id) || exF.min }]);
+      return;
+    }
+    if (a.hasAttribute('data-favorito')) {
+      var id = a.getAttribute('data-favorito'), i = FAV.indexOf(id);
+      if (i >= 0) FAV.splice(i, 1); else FAV.push(id);
+      guardar(CH_FAV, FAV); atualizar(); abrirFicha(id); return;
+    }
+  });
+
+  // fechar clicando no fundo escuro
+  FOLHAS.forEach(function(id){
+    el(id).addEventListener('click', function(ev){ if (ev.target === el(id)) fechar(id); });
+  });
+  document.addEventListener('keydown', function(ev){
+    if (ev.key === 'Escape') FOLHAS.forEach(fechar);
+  });
+
+  // o card e' um <div role="button">: quem usa teclado espera Enter e espaco
+  document.addEventListener('keydown', function(ev){
+    if (ev.key !== 'Enter' && ev.key !== ' ') return;
+    var a = ev.target.closest ? ev.target.closest('.card[data-ficha],.card[data-editar],.card[data-escolher]') : null;
+    if (!a) return;
+    ev.preventDefault();
+    if (a.hasAttribute('data-editar')) abrirEditor(a.getAttribute('data-editar'));
+    else if (a.hasAttribute('data-escolher')) escolhido(a.getAttribute('data-escolher'), a.getAttribute('data-bloco-alvo'));
+    else abrirFicha(a.getAttribute('data-ficha'));
+  });
+
+  el('edSalvar').addEventListener('click', salvarEditor);
+  el('edApagar').addEventListener('click', apagarEditor);
+
+  el('pronta60').addEventListener('click', function(){ montarAuto(60); });
+  el('pronta90').addEventListener('click', function(){ montarAuto(90); });
+  el('q').addEventListener('input', function(){ F.q = el('q').value.trim(); desenharLista(); });
+  el('btnMais').addEventListener('click', function(){
+    var ab = el('painel').classList.toggle('aberto');
+    document.querySelector('.filtros').classList.toggle('expandido', ab);
+    el('btnMais').setAttribute('aria-expanded', ab ? 'true' : 'false');
+  });
+  el('fNec').addEventListener('change', function(){ F.nec = this.value; marcarChips(); desenharLista(); });
+  el('fForm').addEventListener('change', function(){ F.form = this.value; marcarChips(); desenharLista(); });
+  el('fCam').addEventListener('change', function(){ F.cam = this.value; marcarChips(); desenharLista(); });
+  el('fMat').addEventListener('change', function(){ F.mat = this.value; marcarChips(); desenharLista(); });
+  el('fInt').addEventListener('change', function(){ F.int = this.value; marcarChips(); desenharLista(); });
+  el('fOrd').addEventListener('change', function(){ F.ord = this.value; desenharLista(); });
+  el('cApostila').addEventListener('click', function(){ F.apostila = !F.apostila; marcarChips(); desenharLista(); });
+  el('cMeus').addEventListener('click', function(){ F.meus = !F.meus; marcarChips(); desenharLista(); });
+  el('btnMeus').addEventListener('click', abrirMeus);
+  el('cTransv').addEventListener('click', function(){ F.semTransv = !F.semTransv; marcarChips(); desenharLista(); });
+  el('btnFav').addEventListener('click', function(){ F.favs = !F.favs; atualizar(); });
+  el('btnLimpar').addEventListener('click', limparFiltros);
+  el('focoVer').addEventListener('click', abrirMes);
+  el('btnPlano').addEventListener('click', function(){ desenharPlano(); abrir('fundoPlano'); });
+  el('btnVerPlano').addEventListener('click', function(){ desenharPlano(); abrir('fundoPlano'); });
+  el('btnMontar').addEventListener('click', function(){ montarAuto(60); });
+  el('btnCopiar').addEventListener('click', copiarPlano);
+  el('btnImprimir').addEventListener('click', function(){ window.print(); });
+  el('btnFolhas').addEventListener('click', function(){
+    imprimirFolhas(PLANO.itens.map(function(i){
+      var ex = acharEx(i.id);
+      return ex ? { ex:ex, min:minNoPlano(i.id) } : null;
+    }).filter(Boolean));
+  });
+  el('btnLimparPlano').addEventListener('click', function(){
+    if (!PLANO.itens.length || window.confirm('Limpar o plano de aula inteiro?')) {
+      PLANO.itens = []; PLANO.tema = ''; guardar(CH_PLANO, PLANO); atualizar(); desenharPlano();
+    }
+  });
+}
+
+function alterna(lista, valor){
+  if (!valor) { lista.length = 0; return; }
+  var i = lista.indexOf(valor);
+  if (i >= 0) lista.splice(i, 1); else lista.push(valor);
+}
+
+function limparFiltros(){
+  F.tema = ''; F.niveis = []; F.blocos = []; F.nec = ''; F.form = ''; F.cam = '';
+  F.mat = ''; F.int = ''; F.q = ''; F.apostila = false; F.meus = false;
+  F.semTransv = false; F.favs = false;
+  el('q').value = ''; el('fNec').value = ''; el('fForm').value = ''; el('fCam').value = '';
+  el('fMat').value = ''; el('fInt').value = '';
+  fecharPainel();
+  atualizar();
+}
+
+function fecharPainel(){
+  el('painel').classList.remove('aberto');
+  document.querySelector('.filtros').classList.remove('expandido');
+  el('btnMais').setAttribute('aria-expanded','false');
+}
+
+/* ==========================================================================
+   ABERTURA
+   ========================================================================== */
+function comecar(){
+  FAV = ler(CH_FAV, []) || [];
+  MEUS = (ler(CH_MEUS, []) || []).filter(exValido);
+  montarBanco();
+  var p = ler(CH_PLANO, null);
+  if (p && p.itens) PLANO = { aluno:p.aluno || '', nivel:p.nivel || '', tema:p.tema || '', itens:p.itens || [] };
+  // o app abre já no tema do mês: é o que o professor precisa em 9 de 10 aberturas
+  F.tema = temaDoMes().id;
+  preencherSelects();
+  ligar();
+  atualizar();
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('./sw-exercicios.js').catch(function(){});
+    });
+  }
+}
+comecar();
+</script>
+</body>
+</html>

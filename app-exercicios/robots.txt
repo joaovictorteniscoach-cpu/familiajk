@@ -1,0 +1,5 @@
+# Ferramenta interna do professor, não página de venda.
+# O index.html já leva <meta name="robots" content="noindex,nofollow">;
+# este arquivo é o mesmo recado para quem lê o robots antes da página.
+User-agent: *
+Disallow: /

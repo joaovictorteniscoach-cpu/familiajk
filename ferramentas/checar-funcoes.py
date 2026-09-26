@@ -1,4 +1,4 @@
-import re,sys
+import re,sys,os
 
 def fontes_do_app(arq):
     """O HTML mais os scripts locais que ele manda carregar.
@@ -96,11 +96,26 @@ def definidos(codes):
         d|=set(re.findall(r'\bcatch\s*\(\s*([A-Za-z_$][\w$]*)',code))
     return d
 
+def anexos(arq,html):
+    """Arquivos .js proprios carregados por <script src>, para o caso de a
+    funcao morar num arquivo ao lado (o banco de exercicios e' assim).
+    Biblioteca de terceiro (lib/) fica DE FORA de proposito: um arquivo
+    minificado define centenas de nomes curtos e passaria a esconder o erro
+    que este script existe para achar."""
+    base=os.path.dirname(arq);fora=[]
+    for m in re.finditer(r'<script[^>]*\bsrc="([^"]+)"',html):
+        cam=m.group(1)
+        if cam.startswith(('http','//')) or '/lib/' in cam or cam.startswith('lib/'): continue
+        cheio=os.path.join(base,cam.lstrip('./'))
+        if os.path.exists(cheio): fora.append((cam,limpa(open(cheio,encoding='utf-8').read())))
+    return fora
+
 for arq in sys.argv[1:]:
     html=fontes_do_app(arq)
     js=[limpa(m.group(1)) for m in re.finditer(r'<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)</script>',html)]
+    juntos=anexos(arq,html)
     attrs=[(m.group(1),limpa(m.group(2))) for m in re.finditer(r'\bon(\w+)\s*=\s*"([^"]*)"',html)]
-    defs=definidos(js)
+    defs=definidos(js+[c for _,c in juntos])
     usos={}
     def varre(code,origem):
         for m in re.finditer(r'(?:^|[^\w$.])([A-Za-z_$][\w$]*)\s*\(',code):
@@ -111,6 +126,7 @@ for arq in sys.argv[1:]:
     faltando={n:sorted(o) for n,o in usos.items() if n not in defs}
     print('='*58);print(arq)
     print(f'  {len(js)} scripts · {len(attrs)} handlers inline · {len(defs)} nomes definidos · {len(usos)} chamados')
+    if juntos: print('  + arquivo(s) ao lado: ' + ', '.join(n for n,_ in juntos))
     if not faltando: print('  ✅ toda funcao chamada existe neste arquivo')
     else:
         print(f'  ⚠️  {len(faltando)} chamada(s) sem definicao:')

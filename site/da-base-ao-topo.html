@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tênis da Base ao Topo · Academia JV Tênis · Curitiba</title>
+<meta name="description" content="O método que começa nos pés e leva você do primeiro contato com a quadra até o jogo que não desmonta na pressão. Academia JV Tênis, Santa Felicidade, Curitiba.">
+<meta name="theme-color" content="#102438">
+<link rel="icon" href="img/logo.png">
+<link rel="apple-touch-icon" href="img/logo.png">
+<meta property="og:title" content="Tênis da Base ao Topo · Academia JV Tênis">
+<meta property="og:description" content="Aula com método, ordem e critério de evolução. Do primeiro dia à competição, em Curitiba.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="img/share.jpg">
+<meta name="robots" content="index,follow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ===========================================================================
+   Landing page "Tênis da Base ao Topo" — Academia JV Tênis.
+   Desenhada para CELULAR primeiro (390 px) e só depois crescida. Uma página,
+   um objetivo: marcar a aula de avaliação. Por isso não tem menu.
+   A estrutura seção por seção está em negocio/landing-da-base-ao-topo.md.
+   =========================================================================== */
+:root{
+  --navy:#102438; --navy-2:#15304A; --navy-3:#1C3F5E; --deep:#0B1B2B; --fundo:#081521;
+  --gold:#D8B45C; --gold-2:#C49A3F; --gold-soft:#E7CE93;
+  --cream:#F4EFE6; --muted:rgba(244,239,230,.66); --muted-2:rgba(244,239,230,.4);
+  --line:rgba(216,180,92,.22); --line-2:rgba(244,239,230,.12);
+  --alerta:#E0784A; --wapp:#25D366; --r:15px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;background:var(--navy);-webkit-text-size-adjust:100%}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:var(--navy);color:var(--cream);font-size:16.5px;line-height:1.6;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden}
+h1,h2,h3{line-height:1.1;letter-spacing:-.02em;font-weight:800}
+a{color:inherit;text-decoration:none}
+img{display:block;max-width:100%}
+.wrap{max-width:1020px;margin:0 auto;padding:0 20px}
+:focus-visible{outline:3px solid var(--gold);outline-offset:3px;border-radius:8px}
+
+.et{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--gold);border:1px solid var(--line);
+  border-radius:999px;padding:7px 15px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  font-weight:800;font-size:16px;min-height:52px;padding:14px 24px;border-radius:13px;
+  border:2px solid transparent;width:100%;text-align:center}
+.btn:active{transform:scale(.985)}
+.btn-gold{background:linear-gradient(135deg,var(--gold-soft),var(--gold-2));color:#22303c}
+.btn-linha{border-color:var(--line-2);color:var(--cream)}
+.mini{display:inline-block;font-size:15px;font-weight:700;color:var(--gold-soft);
+  border-bottom:1px solid var(--line);padding-bottom:2px;min-height:44px;line-height:40px}
+
+/* ---------- barra: marca + um botão. Sem menu, de propósito ---------- */
+header.bar{position:sticky;top:0;z-index:60;background:rgba(8,21,33,.96);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.bar-in{display:flex;align-items:center;justify-content:space-between;gap:12px;height:60px}
+.marca{display:flex;align-items:center;gap:10px;min-width:0}
+.marca img{width:36px;height:36px;border-radius:10px;flex-shrink:0}
+.marca b{font-size:15.5px;font-weight:800;line-height:1.05;display:block}
+.marca small{display:block;font-size:9px;font-weight:700;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--gold-soft);margin-top:2px}
+.bar .btn{width:auto;min-height:40px;padding:9px 16px;font-size:13.5px;flex-shrink:0}
+
+/* ---------- 1 · hero ---------- */
+.hero{position:relative;min-height:92svh;display:flex;align-items:flex-end;
+  padding:90px 0 40px;overflow:hidden;background:var(--deep)}
+.hero-foto{position:absolute;inset:0;z-index:0}
+.hero-foto img{width:100%;height:100%;object-fit:cover;object-position:50% 42%}
+.hero-foto::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(8,21,33,.62) 0%,rgba(8,21,33,.55) 32%,rgba(11,27,43,.95) 78%,var(--navy) 100%)}
+.hero-in{position:relative;z-index:1;width:100%}
+.hero h1{font-size:clamp(38px,11.5vw,72px);font-weight:900;color:#fff;margin:16px 0 14px}
+.hero h1 em{display:block;color:var(--gold-soft);font-style:normal}
+.hero p{font-size:clamp(16.5px,4.3vw,20px);color:#E8E1D5;max-width:560px;margin-bottom:8px}
+.hero .loc{font-size:14px;color:var(--muted);margin-bottom:24px}
+.hero .acoes{display:flex;flex-direction:column;gap:12px;align-items:flex-start;max-width:420px}
+
+.google{display:flex;align-items:center;gap:12px;background:rgba(21,48,74,.72);
+  border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin-top:22px;
+  max-width:420px}
+.google .n{font-size:30px;font-weight:900;color:var(--gold-soft);line-height:1}
+.google .es{color:var(--gold);font-size:15px;letter-spacing:2px}
+.google .tx{font-size:12.5px;color:var(--muted);line-height:1.35}
+.google .lg{font-weight:800;font-size:15px}
+.google .lg b:nth-child(1){color:#4285F4}.google .lg b:nth-child(2){color:#EA4335}
+.google .lg b:nth-child(3){color:#FBBC05}.google .lg b:nth-child(4){color:#4285F4}
+.google .lg b:nth-child(5){color:#34A853}.google .lg b:nth-child(6){color:#EA4335}
+
+/* ---------- seções ---------- */
+section.s{padding:62px 0;background:var(--navy);scroll-margin-top:66px}
+section.s.alt{background:var(--navy-2)}
+.cab{max-width:640px;margin-bottom:30px}
+.cab.meio{margin-left:auto;margin-right:auto;text-align:center}
+.cab .et{margin-bottom:14px}
+.cab h2{font-size:clamp(26px,7.2vw,42px);color:#fff;margin-bottom:12px}
+.cab p{font-size:16.5px;color:var(--muted)}
+.cab p b{color:var(--gold-soft);font-weight:700}
+
+/* ---------- 2 · problema ---------- */
+.dores{display:grid;gap:11px;margin-bottom:28px}
+.dor{background:var(--navy-2);border:1px solid var(--line-2);border-radius:13px;
+  padding:15px 16px 15px 46px;position:relative;font-size:15.5px}
+.s.alt .dor{background:var(--navy)}
+.dor::before{content:"✕";position:absolute;left:17px;top:14px;color:var(--alerta);font-weight:800}
+.virada{font-size:clamp(19px,5.4vw,26px);font-weight:800;color:var(--gold-soft);
+  line-height:1.25;padding:26px 0 6px;letter-spacing:-.02em}
+
+/* ---------- 3 · pirâmide ---------- */
+.pir{display:flex;flex-direction:column-reverse;gap:7px;margin-bottom:26px}
+.cam{border-radius:11px;padding:13px 16px;border:1px solid var(--line-2);
+  background:var(--navy-2);margin:0 auto;width:100%}
+.s.alt .cam{background:var(--navy)}
+.cam .nn{font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;opacity:.75}
+.cam b{display:block;font-size:16px;font-weight:800;color:#fff;margin:2px 0 1px}
+.cam span{font-size:13px;color:var(--muted)}
+.cam:nth-child(1){width:100%}   /* 6 · topo da lista invertida = base */
+.cam:nth-child(2){width:96%}
+.cam:nth-child(3){width:92%}
+.cam:nth-child(4){width:88%}
+.cam:nth-child(5){width:84%}
+.cam:nth-child(6){width:80%}
+.cita{background:var(--deep);border:1px solid var(--line);border-left:3px solid var(--gold);
+  border-radius:13px;padding:20px}
+.cita p{font-size:16.5px;font-style:italic;color:#EFE8DC;margin-bottom:12px}
+.cita .as{display:flex;align-items:center;gap:11px}
+.cita .as img{width:38px;height:38px;border-radius:50%;object-fit:cover}
+.cita .as div{font-size:13px;color:var(--muted)}
+.cita .as b{display:block;font-size:14.5px;color:var(--gold-soft)}
+
+/* ---------- 4 · engrenagens + calendário ---------- */
+.eng{display:grid;gap:13px;margin-bottom:30px}
+.pas{background:var(--navy-2);border:1px solid var(--line);border-radius:var(--r);padding:20px}
+.s.alt .pas{background:var(--navy)}
+.pas .n{font-size:28px;font-weight:900;color:var(--gold);line-height:1;margin-bottom:8px}
+.pas h3{font-size:18px;color:#fff;margin-bottom:5px}
+.pas p{font-size:14.5px;color:var(--muted)}
+.ano{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-bottom:26px}
+.ano .tt{background:var(--deep);padding:13px 16px;font-size:11px;font-weight:800;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+.mes{display:flex;flex-wrap:wrap;align-items:baseline;gap:3px 12px;padding:13px 16px;
+  border-top:1px solid var(--line-2);background:var(--navy-2)}
+.s.alt .mes{background:var(--navy)}
+.mes .mm{font-size:11.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--muted-2);width:104px;flex-shrink:0}
+.mes .tm{font-size:15.5px;font-weight:700;color:#fff;flex:1 1 auto;min-width:0}
+.mes.agora{background:rgba(216,180,92,.12)}
+.mes.agora .mm{color:var(--gold)}
+.mes.agora .tm{color:var(--gold-soft)}
+/* A etiqueta do mes atual desce para a linha de baixo, alinhada com o tema:
+   no celular, deixa-la na mesma linha quebrava o nome do tema em tres pedacos. */
+.mes.agora::after{content:"foco deste mês";flex:1 0 100%;margin-left:116px;
+  font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--gold);white-space:nowrap}
+@media(min-width:560px){
+  .mes.agora::after{flex:0 0 auto;margin-left:auto}
+}
+
+/* ---------- 5 · demonstração ---------- */
+.aula{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-bottom:16px}
+.aula .tt{background:var(--deep);padding:14px 16px}
+.aula .tt b{font-size:15px;color:#fff;display:block}
+.aula .tt span{font-size:12.5px;color:var(--muted)}
+.bl{padding:14px 16px;border-top:1px solid var(--line-2);background:var(--navy-2)}
+.s.alt .bl{background:var(--navy)}
+.bl .lin{display:flex;align-items:baseline;gap:9px;margin-bottom:4px}
+.bl .ic{font-size:15px}
+.bl b{font-size:14.5px;color:var(--gold-soft)}
+.bl .tp{margin-left:auto;font-size:11.5px;font-weight:700;color:var(--muted-2);white-space:nowrap}
+.bl p{font-size:14px;color:var(--muted);padding-left:24px}
+.drill{background:var(--deep);border:1px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:16px}
+.drill .cd{font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.drill h3{font-size:19px;color:#fff;margin:4px 0 12px}
+.drill dl div{border-top:1px solid var(--line-2);padding:10px 0}
+.drill dt{font-size:10px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--muted-2);margin-bottom:3px}
+.drill dd{font-size:14.5px;color:#E9E2D6}
+.drill .al dt{color:var(--alerta)}
+.foto{border-radius:var(--r);overflow:hidden;border:1px solid var(--line-2);margin-bottom:16px}
+.foto img{width:100%;aspect-ratio:3/4;object-fit:cover}
+.foto figcaption{font-size:12.5px;color:var(--muted-2);padding:10px 14px;background:var(--deep)}
+.nums{display:flex;gap:10px;text-align:center}
+.num{flex:1;background:var(--navy-2);border:1px solid var(--line);border-radius:13px;padding:16px 8px}
+.s.alt .num{background:var(--navy)}
+.num b{display:block;font-size:26px;font-weight:900;color:var(--gold-soft);line-height:1}
+.num span{font-size:11.5px;color:var(--muted);font-weight:600}
+
+/* ---------- 6 · benefícios ---------- */
+.bens{display:grid;gap:12px}
+.ben{background:var(--navy-2);border:1px solid var(--line-2);border-radius:13px;padding:18px}
+.s.alt .ben{background:var(--navy)}
+.ben .ic{font-size:24px;margin-bottom:9px}
+.ben h3{font-size:16.5px;color:#fff;margin-bottom:4px}
+.ben p{font-size:14px;color:var(--muted)}
+
+/* ---------- 7 · para quem ---------- */
+.quem{display:grid;gap:12px;margin-bottom:20px}
+.qc{background:var(--navy-2);border:1px solid var(--line);border-radius:13px;padding:18px}
+.s.alt .qc{background:var(--navy)}
+.qc b{display:block;font-size:16.5px;color:var(--gold-soft);margin-bottom:4px}
+.qc p{font-size:14.5px;color:var(--muted)}
+.fora{font-size:14px;color:var(--muted-2);margin-bottom:24px}
+
+/* ---------- 8 · diferenciais ---------- */
+.difs{display:grid;gap:2px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.dif{display:flex;gap:13px;padding:16px;background:var(--navy-2);border-bottom:1px solid var(--line-2)}
+.s.alt .dif{background:var(--navy)}
+.dif:last-child{border-bottom:none}
+.dif .ic{font-size:20px;flex-shrink:0;width:26px;text-align:center}
+.dif b{display:block;font-size:15.5px;color:#fff;margin-bottom:2px}
+.dif p{font-size:13.5px;color:var(--muted)}
+.pilares{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+.pil{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--gold-soft);border:1px solid var(--line);border-radius:999px;padding:7px 14px}
+
+/* ---------- 9 · prova social ---------- */
+.depos{display:grid;gap:12px;margin-top:22px}
+.dep{background:var(--navy-2);border:1px solid var(--line-2);border-radius:13px;padding:18px}
+.s.alt .dep{background:var(--navy)}
+.dep .es{color:var(--gold);font-size:14px;letter-spacing:2px;margin-bottom:8px}
+.dep p{font-size:15px;color:#E9E2D6;font-style:italic;margin-bottom:10px}
+.dep b{font-size:13.5px;color:var(--gold-soft)}
+
+/* ---------- 10 · FAQ ---------- */
+.faq{max-width:760px;margin:0 auto}
+.faq details{border:1px solid var(--line-2);border-radius:13px;background:var(--navy-2);
+  margin-bottom:10px;padding:0 18px}
+.s.alt .faq details{background:var(--navy)}
+.faq details[open]{border-color:var(--line)}
+.faq summary{cursor:pointer;list-style:none;font-weight:700;font-size:16px;color:#fff;
+  padding:16px 0;min-height:48px;display:flex;align-items:center;gap:12px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";margin-left:auto;color:var(--gold);font-weight:800;font-size:22px;line-height:1}
+.faq details[open] summary::after{content:"–"}
+.faq p{font-size:14.5px;color:var(--muted);padding:0 0 16px}
+
+/* ---------- 11 · fechamento ---------- */
+.final{background:var(--fundo);padding:74px 0;text-align:center}
+.final h2{font-size:clamp(30px,8.6vw,50px);font-weight:900;color:#fff;margin-bottom:14px}
+.final h2 em{color:var(--gold-soft);font-style:normal;display:block}
+.final p{font-size:16.5px;color:var(--muted);max-width:480px;margin:0 auto 26px}
+.final .btn{max-width:420px;margin:0 auto}
+.final .end{margin-top:26px;font-size:13.5px;color:var(--muted-2);line-height:1.8}
+.final .end a{color:var(--gold-soft);font-weight:700}
+
+footer{background:#06111b;color:#8FA2B1;padding:34px 0;text-align:center;font-size:12.5px}
+footer b{color:var(--cream);display:block;font-size:15px;margin-bottom:4px}
+footer .lk{margin:12px 0 10px;display:flex;gap:18px;justify-content:center;flex-wrap:wrap}
+footer .lk a{color:var(--gold-soft);font-weight:700;font-size:13px}
+
+.fab{position:fixed;right:16px;bottom:16px;z-index:70;background:var(--wapp);color:#fff;
+  width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:26px;box-shadow:0 8px 24px rgba(37,211,102,.4)}
+.fab:active{transform:scale(.94)}
+
+/* Entrada suave — e a regra mais importante dela: o conteudo e' VISIVEL por
+   padrao. So esconde quando o proprio script confirma que vai animar (classe
+   "anima" no <html>). Assim, sem JS, com JS quebrado ou com o observer
+   falhando, a pagina aparece inteira em vez de ficar em branco. */
+.anima .rv{opacity:0;transform:translateY(16px);transition:opacity .5s ease,transform .5s ease}
+.anima .rv.vis{opacity:1;transform:none}
+
+@media(min-width:720px){
+  section.s{padding:80px 0}
+  /* a foto em retrato esticava a coluna da direita bem mais que a da esquerda */
+  .foto img{aspect-ratio:4/5;max-height:560px}
+  .btn{width:auto}
+  .hero .acoes{flex-direction:row;align-items:center;max-width:none}
+  .dores{grid-template-columns:1fr 1fr}
+  .eng{grid-template-columns:repeat(3,1fr)}
+  .bens,.quem{grid-template-columns:repeat(3,1fr)}
+  .quem{grid-template-columns:repeat(2,1fr)}
+  .duas{display:grid;grid-template-columns:1.1fr .9fr;gap:22px;align-items:start}
+  .cam{max-width:620px}
+  .pir{align-items:center}
+}
+@media(prefers-reduced-motion:reduce){
+  .anima .rv{opacity:1;transform:none;transition:none}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<header class="bar"><div class="wrap bar-in">
+  <a class="marca" href="#topo" aria-label="Academia JV Tênis">
+    <img src="img/logo.webp" alt="" width="36" height="36" onerror="this.src='img/logo.png'">
+    <span><b>Academia JV Tênis</b><small>Da base ao topo</small></span>
+  </a>
+  <a class="btn btn-gold" href="https://wa.me/5541995415712?text=Ol%C3%A1%20Jo%C3%A3o%21%20Vim%20pela%20p%C3%A1gina%20Da%20Base%20ao%20Topo%20e%20quero%20marcar%20uma%20aula%20de%20avalia%C3%A7%C3%A3o.%20%F0%9F%8E%BE" target="_blank" rel="noopener">Marcar aula</a>
+</div></header>
+
+<!-- ============ 1 · HERO ============ -->
+<section class="hero" id="topo">
+  <div class="hero-foto">
+    <picture>
+      <source srcset="img/hero.webp" type="image/webp">
+      <img src="img/hero.jpg" alt="Quadra de saibro da Academia JV Tênis em Santa Felicidade, Curitiba" width="1125" height="1500">
+    </picture>
+  </div>
+  <div class="wrap hero-in">
+    <span class="et">Metodologia autoral · Curitiba</span>
+    <h1>Tênis da base<em>ao topo.</em></h1>
+    <p>O método que começa nos pés — e leva você do primeiro contato com a quadra até o jogo que não desmonta na pressão.</p>
+    <p class="loc">Academia JV Tênis · saibro em Santa Felicidade</p>
+    <div class="acoes">
+      <a class="btn btn-gold" href="https://wa.me/5541995415712?text=Ol%C3%A1%20Jo%C3%A3o%21%20Vim%20pela%20p%C3%A1gina%20Da%20Base%20ao%20Topo%20e%20quero%20marcar%20uma%20aula%20de%20avalia%C3%A7%C3%A3o.%20%F0%9F%8E%BE" target="_blank" rel="noopener">Marcar aula de avaliação</a>
+      <a class="mini" href="#metodo">ver como funciona ↓</a>
+    </div>
+    <div class="google">
+      <span class="n">5,0</span>
+      <span class="tx">
+        <span class="lg"><b>G</b><b>o</b><b>o</b><b>g</b><b>l</b><b>e</b></span><br>
+        <span class="es">★★★★★</span><br>
+        a nota dos alunos da JV Tênis
+      </span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2 · O PROBLEMA DO ALUNO ============ -->
+<section class="s">
+  <div class="wrap">
+    <div class="cab rv">
+      <span class="et">O problema</span>
+      <h2>Você não travou por falta de talento.</h2>
+      <p>A aula tradicional começa pela raquete: “segura assim, gira, bate”. Funciona enquanto a bola vem mansa. Quando o tênis vira <b>jogo</b>, aquela técnica ensaiada na cesta desmonta — e a conclusão errada é sempre a mesma: “não levo jeito”.</p>
+    </div>
+    <div class="dores">
+      <div class="dor rv">Chega atrasado na bola e bate desequilibrado.</div>
+      <div class="dor rv">Treina há meses e não sabe dizer o que melhorou.</div>
+      <div class="dor rv">Na aula acerta; no jogo, erra.</div>
+      <div class="dor rv">Cada aula parece um assunto novo, sem sequência.</div>
+    </div>
+    <p class="virada rv">O golpe é a parte visível. O erro está três elos antes — nos pés.</p>
+  </div>
+</section>
+
+<!-- ============ 3 · A METODOLOGIA ============ -->
+<section class="s alt" id="metodo">
+  <div class="wrap">
+    <div class="cab rv">
+      <span class="et">A metodologia</span>
+      <h2>Da Base ao Topo: o tênis ensinado na ordem em que o corpo executa.</h2>
+      <p>Primeiro os pés e a base. Depois a movimentação. Depois o posicionamento. E só então a batida — aprendida com o corpo no lugar certo, no tempo certo.</p>
+    </div>
+    <div class="duas">
+      <div class="pir rv" role="img" aria-label="A Pirâmide da metodologia: seis camadas, da base ao topo — Pés no Saibro, Deslocamento, Leitura de Quadra, A Batida, O Jogo, O Topo">
+        <div class="cam"><span class="nn">Camada 1</span><b>Pés no Saibro</b><span>base, apoios e equilíbrio</span></div>
+        <div class="cam"><span class="nn">Camada 2</span><b>Deslocamento</b><span>chegar bem em qualquer bola</span></div>
+        <div class="cam"><span class="nn">Camada 3</span><b>Leitura de Quadra</b><span>onde estar, e por quê</span></div>
+        <div class="cam"><span class="nn">Camada 4</span><b>A Batida</b><span>fundamentos técnicos</span></div>
+        <div class="cam"><span class="nn">Camada 5</span><b>O Jogo</b><span>tática e construção de ponto</span></div>
+        <div class="cam"><span class="nn">Camada 6</span><b>O Topo</b><span>competição e mentalidade</span></div>
+      </div>
+      <div class="cita rv">
+        <p>“O tênis se aprende de baixo pra cima. Na base e nos pés, na movimentação e no posicionamento — antes da batida e dos fundamentos.”</p>
+        <div class="as">
+          <img src="img/logo.png" alt="" width="38" height="38">
+          <div><b>João Victor</b>fundador da Academia JV Tênis</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4 · COMO FUNCIONA ============ -->
+<section class="s">
+  <div class="wrap">
+    <div class="cab rv">
+      <span class="et">Como funciona</span>
+      <h2>Três engrenagens que giram juntas.</h2>
+      <p>A Pirâmide diz <b>o que</b> se ensina. A Trilha diz <b>para quem</b>. O calendário diz <b>quando</b>. Junto, isso responde o que quase nenhuma academia responde: o que exatamente vai acontecer nas suas próximas 12 aulas.</p>
+    </div>
+    <div class="eng">
+      <div class="pas rv"><div class="n">1</div><h3>A Pirâmide</h3><p>O conteúdo: seis camadas empilhadas de baixo pra cima. Nenhuma recebe conteúdo novo antes de a de baixo sustentar.</p></div>
+      <div class="pas rv"><div class="n">2</div><h3>A Trilha</h3><p>O seu lugar: cinco níveis, do primeiro contato ao competitivo — com régua objetiva. Avança quem cumpre o critério, não quem faz tempo que treina.</p></div>
+      <div class="pas rv"><div class="n">3</div><h3>O calendário</h3><p>O tema do mês: seis temas que rodam duas vezes por ano. A academia inteira gira em torno do foco do mês, cada aluno na sua intensidade.</p></div>
+    </div>
+    <div class="ano rv">
+      <div class="tt">O ano inteiro, mês a mês</div>
+      <div class="mes" data-mes="1,7"><span class="mm">Jan · Jul</span><span class="tm">Footwork e transferência</span></div>
+      <div class="mes" data-mes="2,8"><span class="mm">Fev · Ago</span><span class="tm">Preparação e movimentação</span></div>
+      <div class="mes" data-mes="3,9"><span class="mm">Mar · Set</span><span class="tm">Forehand e variações</span></div>
+      <div class="mes" data-mes="4,10"><span class="mm">Abr · Out</span><span class="tm">Backhand e variações</span></div>
+      <div class="mes" data-mes="5,11"><span class="mm">Mai · Nov</span><span class="tm">Approach e rede</span></div>
+      <div class="mes" data-mes="6,12"><span class="mm">Jun · Dez</span><span class="tm">Saque e devolução</span></div>
+    </div>
+    <a class="btn btn-gold rv" href="https://wa.me/5541995415712?text=Ol%C3%A1%20Jo%C3%A3o%21%20Vim%20pela%20p%C3%A1gina%20Da%20Base%20ao%20Topo%20e%20quero%20come%C3%A7ar%20pelo%20meu%20n%C3%ADvel.%20%F0%9F%8E%BE" target="_blank" rel="noopener">Quero começar pelo meu nível</a>
+  </div>
+</section>
+
+<!-- ============ 5 · DEMONSTRAÇÃO DOS TREINOS ============ -->
+<section class="s alt">
+  <div class="wrap">
+    <div class="cab rv">
+      <span class="et">Na prática</span>
+      <h2>É assim que a sua aula é montada.</h2>
+      <p>Toda aula tem a mesma espinha dorsal, em quatro blocos. O que muda é o tema do mês e a intensidade do seu nível.</p>
+    </div>
+    <div class="duas">
+      <div>
+        <div class="aula rv">
+          <div class="tt"><b>Aula de 60 minutos</b><span>exemplo no mês do forehand, nível Construção</span></div>
+          <div class="bl"><div class="lin"><span class="ic">🦶</span><b>Ativação de base</b><span class="tp">8–12 min</span></div>
+            <p>Pés, split-step e mini-troca. Aquecimento que já é conteúdo — nunca “correr em volta da quadra”.</p></div>
+          <div class="bl"><div class="lin"><span class="ic">🎯</span><b>Tema do dia</b><span class="tp">20–25 min</span></div>
+            <p>O tema do mês, do simples ao complexo. Uma correção por vez, começando pela mais baixa da cadeia.</p></div>
+          <div class="bl"><div class="lin"><span class="ic">🎾</span><b>Aplicação em jogo</b><span class="tp">15–20 min</span></div>
+            <p>O mesmo tema dentro de ponto valendo, com regra dirigida. Técnica que não vira jogo é coreografia.</p></div>
+          <div class="bl"><div class="lin"><span class="ic">🤝</span><b>Fechamento</b><span class="tp">3–5 min</span></div>
+            <p>Você diz em uma frase o que levou da aula. O professor conecta com a próxima.</p></div>
+        </div>
+        <div class="drill rv">
+          <span class="cd">Exercício do banco · D14</span>
+          <h3>Alvo grande, alvo pequeno</h3>
+          <dl>
+            <div><dt>Objetivo</dt><dd>Trajetória e direção antes de força. Mirar é uma habilidade treinável.</dd></div>
+            <div class="al"><dt>O erro que o professor observa primeiro</dt><dd>O aluno acelera quando erra. A resposta certa é a oposta.</dd></div>
+            <div><dt>Como saber que funcionou</dt><dd>7 de 10 bolas no alvo grande antes de reduzir o alvo.</dd></div>
+          </dl>
+        </div>
+      </div>
+      <div>
+        <figure class="foto rv">
+          <picture>
+            <source srcset="img/quadra-1.webp" type="image/webp">
+            <img src="img/quadra-1.jpg" alt="Treino na quadra de saibro da Academia JV Tênis" width="900" height="1200" loading="lazy">
+          </picture>
+          <figcaption>Saibro em Santa Felicidade: o piso que ensina a se apoiar.</figcaption>
+        </figure>
+        <!-- Os três números são reais e conferíveis: 6 temas do calendário,
+             5 níveis da Trilha e o total do banco (app-exercicios/exercicios.js).
+             Ao acrescentar exercício no banco, atualizar o 116 nos DOIS lugares
+             desta página — `node ferramentas/checar-exercicios.js` diz o total. -->
+        <div class="nums rv">
+          <div class="num"><b>6</b><span>temas do mês</span></div>
+          <div class="num"><b>5</b><span>níveis da Trilha</span></div>
+          <div class="num"><b>116</b><span>exercícios catalogados</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6 · BENEFÍCIOS ============ -->
+<section class="s">
+  <div class="wrap">
+    <div class="cab meio rv"><span class="et">Benefícios</span><h2>O que muda no seu tênis.</h2></div>
+    <div class="bens">
+      <div class="ben rv"><div class="ic">👟</div><h3>Você chega na bola</h3><p>Pé antes de braço. Quando a chegada melhora, o golpe fica fácil.</p></div>
+      <div class="ben rv"><div class="ic">📋</div><h3>Sabe o que treinou</h3><p>Sai de cada aula sabendo o que evoluiu — e por quê.</p></div>
+      <div class="ben rv"><div class="ic">📏</div><h3>Evolui com critério</h3><p>Avança quem cumpre o critério, com número na mão. Não é achismo.</p></div>
+      <div class="ben rv"><div class="ic">🎾</div><h3>Joga desde o primeiro dia</h3><p>Jogo adaptado ao que você já sustenta: bola mais lenta, quadra menor, regra simples.</p></div>
+      <div class="ben rv"><div class="ic">🧠</div><h3>Aguenta a pressão</h3><p>Técnica construída sobre base não desmonta na hora do jogo.</p></div>
+      <div class="ben rv"><div class="ic">🏆</div><h3>Tem para onde ir</h3><p>Barragem interna com grupos, do iniciante ao avançado. Sempre existe um próximo degrau.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 7 · PARA QUEM É ============ -->
+<section class="s alt">
+  <div class="wrap">
+    <div class="cab rv"><span class="et">Para quem é</span><h2>O método é o mesmo para todos. O caminho é de cada um.</h2></div>
+    <div class="quem">
+      <div class="qc rv"><b>Nunca jogou</b><p>Começa aprendendo a estar em quadra — e joga já na primeira aula, num jogo do tamanho da sua base.</p></div>
+      <div class="qc rv"><b>Joga, mas travou</b><p>Reconstrói a base e destrava o que não evoluía. É o público que o método atende melhor.</p></div>
+      <div class="qc rv"><b>Criança (Kids)</b><p>A mesma Trilha na linguagem da idade: tudo vira jogo, com bola, raquete e quadra adaptadas.</p></div>
+      <div class="qc rv"><b>Compete</b><p>Refinamento fino, padrões próprios de construção de ponto e cabeça de jogo sob pressão.</p></div>
+    </div>
+    <p class="fora rv">Se você procura só bater bola, sem método nem sequência, provavelmente não é aqui.</p>
+    <a class="btn btn-linha rv" href="https://wa.me/5541995415712?text=Ol%C3%A1%20Jo%C3%A3o%21%20Vim%20pela%20p%C3%A1gina%20Da%20Base%20ao%20Topo.%20Qual%20%C3%A9%20o%20meu%20n%C3%ADvel%20hoje%3F%20%F0%9F%8E%BE" target="_blank" rel="noopener">Qual é o meu nível?</a>
+  </div>
+</section>
+
+<!-- ============ 8 · DIFERENCIAIS ============ -->
+<section class="s">
+  <div class="wrap">
+    <div class="cab rv"><span class="et">A academia</span><h2>Por que na JV Tênis.</h2></div>
+    <div class="difs rv">
+      <div class="dif"><span class="ic">📘</span><div><b>Metodologia autoral e documentada</b><p>Apostila própria, construída aula após aula no saibro — não é manual copiado.</p></div></div>
+      <div class="dif"><span class="ic">🎾</span><div><b>Saibro em Santa Felicidade</b><p>O piso que cobra apoio e equilíbrio. Quem aprende a se apoiar nele, se apoia em qualquer quadra.</p></div></div>
+      <div class="dif"><span class="ic">👥</span><div><b>Turma pequena de verdade</b><p>Particular, Dupla, Trio, Quarteto e Kids. O nível é do aluno, não da turma.</p></div></div>
+      <div class="dif"><span class="ic">🔄</span><div><b>Sistema Flex</b><p>Remarcação com regra clara e prazo definido. Aula paga não vira aula perdida.</p></div></div>
+      <div class="dif"><span class="ic">📱</span><div><b>App do aluno</b><p>Agenda, presença e pagamento no celular. Organização que você vê.</p></div></div>
+      <div class="dif"><span class="ic">🏅</span><div><b>Barragem</b><p>Torneio interno com grupos, do iniciante ao avançado. Sua evolução tem régua e tem palco.</p></div></div>
+      <div class="dif"><span class="ic">💪</span><div><b>Parceria Personal</b><p>A parte física conversando com a fase do seu treino — prevenção e potência de pernas.</p></div></div>
+    </div>
+    <div class="pilares rv">
+      <span class="pil">Pontualidade</span><span class="pil">Profissionalismo</span>
+      <span class="pil">Equilíbrio</span><span class="pil">Aprendizado</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 9 · PROVA SOCIAL ============ -->
+<section class="s alt">
+  <div class="wrap">
+    <div class="cab meio rv"><span class="et">Prova social</span><h2>Quem treina aqui.</h2></div>
+    <div class="google rv" style="margin:0 auto">
+      <span class="n">5,0</span>
+      <span class="tx">
+        <span class="lg"><b>G</b><b>o</b><b>o</b><b>g</b><b>l</b><b>e</b></span><br>
+        <span class="es">★★★★★</span><br>
+        a nota dos alunos da JV Tênis
+      </span>
+    </div>
+    <p style="text-align:center;margin-top:16px">
+      <a class="mini" href="https://g.page/r/CWk4e_Gx_ukNEBE/review" target="_blank" rel="noopener">ver as avaliações no Google →</a>
+    </p>
+
+    <!-- ========================================================================
+         DEPOIMENTOS REAIS — COLAR AQUI E DESCOMENTAR.
+         Regra da página: não publicar depoimento inventado, em nenhuma hipótese.
+         Copie a avaliação do Google (nome e texto, como a pessoa escreveu),
+         cole no lugar dos [colchetes] e apague as duas linhas de comentário
+         que cercam o bloco.
+         =====================================================================
+    <div class="depos rv">
+      <div class="dep"><div class="es">★★★★★</div><p>“[texto da avaliação, como a pessoa escreveu]”</p><b>[Nome] · [aluno desde 20XX]</b></div>
+      <div class="dep"><div class="es">★★★★★</div><p>“[texto da avaliação]”</p><b>[Nome] · [mãe do aluno X]</b></div>
+      <div class="dep"><div class="es">★★★★★</div><p>“[texto da avaliação]”</p><b>[Nome] · [grupo B da Barragem]</b></div>
+    </div>
+         ======================================================================== -->
+
+    <div class="nums rv" style="margin-top:24px">
+      <div class="num"><b>6</b><span>temas do mês</span></div>
+      <div class="num"><b>5</b><span>níveis da Trilha</span></div>
+      <div class="num"><b>116</b><span>exercícios catalogados</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 10 · PERGUNTAS FREQUENTES ============ -->
+<section class="s">
+  <div class="wrap">
+    <div class="cab meio rv"><span class="et">Dúvidas</span><h2>Perguntas que todo mundo faz.</h2></div>
+    <div class="faq rv">
+      <details><summary>Nunca joguei. Consigo acompanhar?</summary>
+        <p>Sim — e é justamente o melhor jeito de começar. O nível <b>Base</b> existe para isso: você aprende a estar em quadra antes de aprender a bater, com bola adaptada e quadra reduzida.</p></details>
+      <details><summary>Preciso ter raquete?</summary>
+        <p>Não na primeira aula: a gente empresta. Depois ajudamos você a escolher a raquete certa para o seu jogo — não a mais cara.</p></details>
+      <details><summary>Quanto tempo até eu jogar de verdade?</summary>
+        <p>Você joga na primeira aula. O jogo é adaptado ao que a sua base já sustenta: bola mais lenta, quadra menor e regra simplificada. Jogo de verdade, do seu tamanho.</p></details>
+      <details><summary>Como sei que estou evoluindo?</summary>
+        <p>Pela régua de troca de bola e pela ficha de avaliação — com números, não com opinião. Cada nível tem critério objetivo de avanço, e você sabe qual é o seu.</p></details>
+      <details><summary>A aula é individual ou em grupo?</summary>
+        <p>Você escolhe: Particular, Dupla, Trio, Quarteto ou Kids. Em qualquer formato, o nível é <b>do aluno</b>, não da turma: o mesmo tema roda em intensidades diferentes.</p></details>
+      <details><summary>E se eu faltar?</summary>
+        <p>Existe o <b>Sistema Flex</b>, com regra de remarcação clara e prazo definido. A regra é combinada antes, para não virar discussão depois.</p></details>
+      <details><summary>Tem aula para criança?</summary>
+        <p>Sim. A mesma Trilha na linguagem da idade: tudo em forma de jogo e história, blocos curtos de atenção e coordenação geral como conteúdo. Regra de ouro: a criança sai querendo voltar.</p></details>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 11 · CHAMADA FINAL ============ -->
+<section class="final">
+  <div class="wrap rv">
+    <h2>Comece pela base.<em>Chegue ao topo.</em></h2>
+    <p>Marque uma aula de avaliação: a gente mede o seu nível, você entende a Trilha e sai sabendo exatamente qual é o próximo passo.</p>
+    <a class="btn btn-gold" href="https://wa.me/5541995415712?text=Ol%C3%A1%20Jo%C3%A3o%21%20Vim%20pela%20p%C3%A1gina%20Da%20Base%20ao%20Topo%20e%20quero%20marcar%20uma%20aula%20de%20avalia%C3%A7%C3%A3o.%20%F0%9F%8E%BE" target="_blank" rel="noopener">Marcar aula de avaliação</a>
+    <p class="end">
+      <a href="https://www.google.com/maps/search/?api=1&query=Rua+Joao+Azolin+795+Santa+Felicidade+Curitiba" target="_blank" rel="noopener">Rua João Azolin, 795 — Santa Felicidade, Curitiba/PR</a><br>
+      WhatsApp (41) 99541-5712 · <a href="https://instagram.com/joaovictortenis" target="_blank" rel="noopener">@joaovictortenis</a>
+    </p>
+  </div>
+</section>
+
+<footer><div class="wrap">
+  <b>Academia JV Tênis</b>
+  Metodologia Da Base ao Topo 🎾
+  <div class="lk">
+    <a href="index.html">Site da academia</a>
+    <a href="metodologia.html">A metodologia</a>
+    <a href="privacidade.html">Privacidade</a>
+  </div>
+  © 2026 JV Tênis — João Victor · Santa Felicidade, Curitiba/PR
+</div></footer>
+
+<a class="fab" href="https://wa.me/5541995415712?text=Ol%C3%A1%20Jo%C3%A3o%21%20Vim%20pela%20p%C3%A1gina%20Da%20Base%20ao%20Topo%20e%20quero%20marcar%20uma%20aula%20de%20avalia%C3%A7%C3%A3o.%20%F0%9F%8E%BE" target="_blank" rel="noopener" aria-label="Falar no WhatsApp">💬</a>
+
+<script>
+/* Duas coisas pequenas, e nada mais: a página tem que abrir rápido no celular. */
+(function(){
+  'use strict';
+
+  /* 1. Destaca o tema do mês de hoje na tabela do ano. Isso faz a página
+        parecer atualizada sem ninguém mexer nela — e é verdade. */
+  var mesHoje = new Date().getMonth() + 1;
+  var linhas = document.querySelectorAll('.mes[data-mes]');
+  for (var i = 0; i < linhas.length; i++) {
+    var meses = linhas[i].getAttribute('data-mes').split(',');
+    if (meses.indexOf(String(mesHoje)) >= 0) linhas[i].classList.add('agora');
+  }
+
+  /* 2. Entrada suave das seções — com duas garantias, porque conteúdo
+        invisível é pior do que conteúdo sem animação:
+        (a) só esconde depois de confirmar que dá para animar;
+        (b) rede de segurança: passados 4 segundos, mostra tudo o que sobrou. */
+  var pedeCalma = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var alvos = document.querySelectorAll('.rv');
+  function mostrarTudo(){
+    for (var i = 0; i < alvos.length; i++) alvos[i].classList.add('vis');
+  }
+  if (pedeCalma || !('IntersectionObserver' in window) || !alvos.length) { mostrarTudo(); return; }
+
+  document.documentElement.classList.add('anima');
+  var obs = new IntersectionObserver(function(entradas){
+    entradas.forEach(function(e){
+      if (e.isIntersecting) { e.target.classList.add('vis'); obs.unobserve(e.target); }
+    });
+  }, { threshold:.08, rootMargin:'0px 0px -30px 0px' });
+  for (var k = 0; k < alvos.length; k++) obs.observe(alvos[k]);
+  setTimeout(mostrarTudo, 4000);
+})();
+</script>
+</body>
+</html>

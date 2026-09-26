@@ -39,11 +39,11 @@ gc=(ROOT/'app-gestao/lib/estilo.css').read_text(encoding='utf-8',errors='replace
 gj=(ROOT/'app-gestao/lib/app-gestao.js').read_text(encoding='utf-8',errors='replace')
 ma=json.loads((ROOT/'app-aluno/manifest-aluno.webmanifest').read_text(encoding='utf-8'))
 mg=json.loads((ROOT/'app-gestao/manifest-gestao.webmanifest').read_text(encoding='utf-8'))
-saibro=ROOT/'app-aluno/assets/jv-saibro-premium.svg'
+saibro=ROOT/'app-aluno/assets/jv-topo-quadra.webp'
 
 print('== App Aluno premium')
-ok(saibro.exists() and (ROOT/'app-gestao/assets/jv-saibro-premium.svg').exists(),'cada app inclui seu fundo no deploy independente')
-ok("url('assets/jv-saibro-premium.svg')" in a,'Aluno usa fundo local de saibro')
+ok(saibro.exists() and (ROOT/'app-gestao/assets/jv-topo-quadra.webp').exists(),'cada app inclui seu fundo no deploy independente')
+ok("url('assets/jv-topo-quadra.webp')" in a,'Aluno usa a quadra de saibro renderizada (local)')
 ok('jv-premium-hero' in a and 'Seu painel de <em>treino</em>' in a,'hero premium do aluno')
 ok('Cada aula te aproxima do seu melhor tênis.' in a,'frase motivacional do aluno')
 for x in ['home-prox-date','home-cred','home-plano','home-foco','home-mens','home-pix-btn']:
@@ -62,7 +62,7 @@ ok('jv-premium-hero' in g and 'Painel de <em>gestão</em>' in g,'hero premium da
 ok('Pronto para mais um mês <em>de resultados?</em>' in g,'pergunta motivacional da Gestão')
 ok('Disciplina hoje, grandes conquistas amanhã.' in g,'frase motivacional da Gestão')
 ok("const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1'" in gj and 'trocarAvatarGestao' in gj,'foto de perfil local da Gestão')
-ok("url('../assets/jv-saibro-premium.svg')" in gc,'fundo de quadra de saibro no hero da Gestão')
+ok("url('../assets/jv-topo-quadra.webp')" in gc,'quadra de saibro renderizada no hero da Gestão')
 ok('grid-template-columns:repeat(5,1fr)!important' in gc,'Gestão com navegação principal de 5 itens')
 gnav=nav_html(g)
 for x in ['Início','Agenda','Alunos','Caixa','Mais']:

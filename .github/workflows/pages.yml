@@ -52,10 +52,22 @@ jobs:
           node ferramentas/checar-sintaxe.js app-gestao/index.html
           node ferramentas/checar-sintaxe.js app-aluno/index.html
           node ferramentas/checar-sintaxe.js site/index.html
+          node ferramentas/checar-sintaxe.js site/da-base-ao-topo.html
+          node ferramentas/checar-sintaxe.js app-exercicios/index.html
+          node ferramentas/checar-exercicios.js
           node ferramentas/checar-sintaxe.js site-pro/index.html
           node ferramentas/checar-sintaxe.js site-pro/sistema.html
           node ferramentas/checar-sintaxe.js site-pro/curso.html
           node ferramentas/checar-sintaxe.js site-pro/demo/index.html
+
+      - name: Tirar o banco de exercícios do site público
+        # O banco é o material da formação — produto pago — e ferramenta interna
+        # dos professores. Ele continua no repositório e continua sendo conferido
+        # no passo acima, mas NÃO vai para o endereço público do Pages.
+        # Isto aqui só apaga a cópia do runner; o repositório não é tocado.
+        # Para usá-lo, publique a pasta app-exercicios como site separado (por
+        # exemplo no Netlify, com senha) — ver app-exercicios/LEIA-ME.md.
+        run: rm -rf app-exercicios
 
       - name: Conferir as regras do banco
         # 94 casos de quem pode ler e gravar o quê. Rodava só na máquina de

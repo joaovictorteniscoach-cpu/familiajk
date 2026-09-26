@@ -1,7 +1,7 @@
 #!/bin/sh
 set -u
 cd "$(dirname "$0")/.." || exit 1
-APPS="app-aluno/index.html app-gestao/index.html site/index.html"
+APPS="app-aluno/index.html app-gestao/index.html site/index.html app-exercicios/index.html"
 falhou=0
 echo "### 1. Sintaxe dos scripts (erro aqui quebra o app inteiro)"
 for f in $APPS; do node ferramentas/checar-sintaxe.js "$f" || falhou=1; done
@@ -10,7 +10,7 @@ python3 ferramentas/checar-funcoes.py $APPS
 echo; echo "### 3. Ids de elemento procurados que nao existem"
 python3 ferramentas/checar-ids.py $APPS
 echo; echo "### 4. Colisao de nome de classe no CSS (conferir a olho)"
-python3 ferramentas/checar-css.py app-aluno/index.html app-gestao/index.html
+python3 ferramentas/checar-css.py app-aluno/index.html app-gestao/index.html app-exercicios/index.html
 echo; echo "### 5. Regressao das regras atuais"
 python3 ferramentas/checar-regras.py ferramentas/firebase-regras-etapa3.json || falhou=1
 echo; echo "### 6. Regressao das regras P0 — transicao"
@@ -19,6 +19,8 @@ echo; echo "### 7. Regressao das regras P0 — final"
 python3 ferramentas/checar-regras.py ferramentas/firebase-regras-etapa4-estrita.json || falhou=1
 echo; echo "### 8. Segurança P0: identidade, privacidade e modularizacao"
 python3 ferramentas/checar-seguranca-p0.py || falhou=1
+echo; echo "### 8b. Banco de exercicios e a tela que le dele"
+node ferramentas/checar-exercicios.js || falhou=1
 echo; echo "### 9. Carimbo de versao dos apps"
 python3 ferramentas/checar-versao.py || falhou=1
 echo; echo "### 10. Estrutura do redesign premium"
