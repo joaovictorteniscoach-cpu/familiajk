@@ -28,6 +28,11 @@ def carimbo(txt,rotulo,alvo,msg):
     achou=bool(m) and (alvo.lower() in m.group(2).lower() if alvo else True)
     ok(achou,msg+(' ('+m.group(1).strip()+')' if m else ''))
 
+
+def nav_html(txt):
+    m=re.search(r'<nav\s+class="[^"]*\bnav\b[^"]*"[^>]*>(.*?)</nav>',txt,re.S)
+    return m.group(1) if m else ''
+
 a=(ROOT/'app-aluno/index.html').read_text(encoding='utf-8',errors='replace')
 g=(ROOT/'app-gestao/index.html').read_text(encoding='utf-8',errors='replace')
 gc=(ROOT/'app-gestao/lib/estilo.css').read_text(encoding='utf-8',errors='replace')
@@ -44,11 +49,11 @@ ok('Cada aula te aproxima do seu melhor tênis.' in a,'frase motivacional do alu
 for x in ['home-prox-date','home-cred','home-plano','home-foco','home-mens','home-pix-btn']:
     ok(('id="'+x+'"') in a,'home do aluno contém '+x)
 ok('id="apg-creditos"' in a and 'id="apg-perfil"' in a,'abas Créditos e Perfil existem')
-ok('Minha <em>agenda</em>' in a and 'Organize suas aulas, jogos e reposições.' in a,'Agenda com cabeçalho premium')
+ok('Minha <em>agenda</em>' in a and ('Aulas, treinos e disponibilidades.' in a or 'Organize suas aulas, jogos e reposições.' in a),'Agenda com cabeçalho premium')
 ok('Sua <em>evolução</em>' in a and 'Acompanhe sua técnica, constância e progresso.' in a,'Evolução com cabeçalho premium')
 ok("const AVATAR_ALUNO_KEY='jvt-avatar-aluno-v1'" in a and 'trocarAvatarAluno' in a,'foto de perfil local do aluno')
 ok('Atualização de segurança pendente' in a and 'Verificar autorização' in a,'aviso P0 preservado')
-nav=a.split('<nav class="nav">',1)[1].split('</nav>',1)[0]
+nav=nav_html(a)
 for x in ['Início','Agenda','Evolução','Créditos','Perfil']:
     ok(x in nav,'navegação do aluno: '+x)
 
@@ -59,9 +64,10 @@ ok('Disciplina hoje, grandes conquistas amanhã.' in g,'frase motivacional da Ge
 ok("const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1'" in gj and 'trocarAvatarGestao' in gj,'foto de perfil local da Gestão')
 ok("url('../assets/jv-saibro-premium.svg')" in gc,'fundo de quadra de saibro no hero da Gestão')
 ok('grid-template-columns:repeat(5,1fr)!important' in gc,'Gestão com navegação principal de 5 itens')
-gnav=g.split('<nav class="nav">',1)[1].split('</nav>',1)[0]
-for x in ['Início','Agenda','Alunos','Financeiro','Mais']:
+gnav=nav_html(g)
+for x in ['Início','Agenda','Alunos','Caixa','Mais']:
     ok(x in gnav,'navegação da Gestão: '+x)
+ok('Financeiro' in g and "irDoMais('fin')" in g,'Financeiro continua acessível pelo menu Mais')
 ok('id="vinculos-box"' in g,'painel de acessos P0 continua na Gestão')
 ok('Acessos do aluno' in g and 'function irAcessosAluno()' in gj,'menu Mais abre diretamente os acessos do App Aluno')
 

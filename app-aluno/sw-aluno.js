@@ -1,7 +1,7 @@
 /* Service Worker — Academia João Victor Tênis (app do aluno)
    Estratégia: network-first (sempre tenta a versão nova online),
    com cache de reserva para abrir offline. NÃO intercepta o Firebase. */
-const V = '2026-09-26-6';
+const V = '2026-09-26-7';
 const CACHE = 'jvtenis-aluno-v18';
 const SHELL = ['./', './manifest-aluno.webmanifest', './jv-icone-aluno.png', './jv-icone-aluno-180.png', './assets/jv-saibro-premium.svg', './lib/icones.js?v='+V];
 
