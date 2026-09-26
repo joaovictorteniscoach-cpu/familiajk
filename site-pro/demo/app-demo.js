@@ -21,7 +21,7 @@ const BOOKKEY='jvtenis-agendamentos';
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
 const VERSAO='2026-09-26-6';
 
-const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
+const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
   let data=null;try{data=localStorage.getItem(AVATAR_GESTAO_KEY);}catch(e){}
   const img=document.getElementById('avatar-gestao-img'),fb=document.getElementById('avatar-gestao-fallback');
@@ -461,7 +461,7 @@ let lastCloudError='';
 let _abriuSemConferir=false;   // abriu pela cópia do aparelho sem a nuvem responder
 let _semDados=false;           // abriu SEM dado nenhum e sem poder conferir na nuvem
 let cloudPending=false;
-function hasCloud(){return !!(window.fbDB);}
+function hasCloud(){return false;} // DEMO: nunca toca a nuvem real
 function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
 function lsSet(k,v){try{localStorage.setItem(k,v);return true;}catch(e){return false;}}
 /* O banco do dono continua exatamente onde sempre esteve — mexer nisso seria
@@ -6842,7 +6842,7 @@ async function exportarHistPDF(){
    AVISA, NÃO BLOQUEIA. Impedir a cópia velha de gravar protegeria mais, mas
    criaria justamente o que não pode acontecer: abrir o app e não conseguir
    salvar. */
-const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-gestao/';
+const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/site-pro/demo/';
 function dataBonita(v){
   const m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})/);
   return m?(m[3]+'/'+m[2]):String(v||'?');
@@ -8540,6 +8540,6 @@ function renderAll(){
 }
 // espera o Firebase ficar pronto (até ~6s) antes de carregar; nunca trava
 (function esperarESubir(t){
-  if(window.fbDB||t>=40){load();return;}
+  if(window.JV_DEMO||window.fbDB||t>=40){load();return;}
   setTimeout(()=>esperarESubir(t+1),150);
 })(0);

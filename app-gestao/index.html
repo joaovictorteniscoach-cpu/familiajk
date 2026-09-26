@@ -26,7 +26,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="JV Tênis · Gestão">
-<meta name="theme-color" content="#1A2E14">
+<meta name="theme-color" content="#06140F">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest-gestao.webmanifest">
 <link rel="apple-touch-startup-image" media="screen and (device-width:430px) and (device-height:932px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)" href="splash-gestao-1290x2796.png">
@@ -38,7 +38,7 @@
 <link rel="apple-touch-startup-image" media="screen and (device-width:375px) and (device-height:667px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)" href="splash-gestao-750x1334.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="lib/estilo.css?v=2026-09-25-8">
+<link rel="stylesheet" href="lib/estilo.css?v=2026-09-26-6">
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
 <script src="lib/firebase-database-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js\'><\/script>')"></script>
@@ -255,7 +255,7 @@ function esperarAuth(){
   <button class="jv-avatar-btn" type="button" onclick="document.getElementById('avatar-gestao-file').click()" aria-label="Adicionar ou trocar foto de perfil">
     <span class="jv-avatar-fallback" id="avatar-gestao-fallback">JV</span>
     <img id="avatar-gestao-img" alt="Foto de perfil da gestão">
-    <span class="jv-avatar-camera">📷</span>
+    <span class="jv-avatar-camera" data-ic="camera"></span>
   </button>
   <input id="avatar-gestao-file" type="file" accept="image/*" style="display:none" onchange="trocarAvatarGestao(this)">
   <p class="jv-hero-greet">Olá, João Victor!</p>
@@ -263,16 +263,19 @@ function esperarAuth(){
   <p class="jv-hero-question">Pronto para mais um mês <em>de resultados?</em></p>
   <p class="jv-hero-motto">Disciplina hoje, grandes conquistas amanhã.</p>
   <div class="top-actions">
-    <button id="bell-btn" class="eye-btn bell-btn" onclick="abrirNotifs()" title="Avisos" aria-label="Avisos">🔔<span class="bell-badge" id="bell-badge" style="display:none">0</span></button>
-    <button id="ped-btn" class="eye-btn ped-btn" onclick="abrirPedidos()" title="Pedidos dos alunos" aria-label="Pedidos dos alunos">🧾<span class="bell-badge" id="ped-badge" style="display:none">0</span></button>
-    <button id="hist-btn" class="eye-btn hist-btn" onclick="abrirHist()" title="Histórico de mudanças" aria-label="Histórico">🕘</button>
+    <button id="bell-btn" class="eye-btn bell-btn" onclick="abrirNotifs()" title="Avisos" aria-label="Avisos"><span data-ic="bell"></span><span class="bell-badge" id="bell-badge" style="display:none">0</span></button>
+    <button id="ped-btn" class="eye-btn ped-btn" onclick="abrirPedidos()" title="Pedidos dos alunos" aria-label="Pedidos dos alunos"><span data-ic="receipt"></span><span class="bell-badge" id="ped-badge" style="display:none">0</span></button>
+    <button id="hist-btn" class="eye-btn hist-btn" onclick="abrirHist()" title="Histórico de mudanças" aria-label="Histórico"><span data-ic="history"></span></button>
     <button id="eye-btn" class="eye-btn" onclick="toggleHide()" title="Ocultar/mostrar valores" aria-label="Ocultar ou mostrar valores"></button>
   </div>
-  <div class="top-month">
-    <button class="month-btn" onclick="shiftMonth(-1)" aria-label="Mês anterior">‹</button>
-    <div class="month-label" id="month-label">—</div>
-    <button class="month-btn" onclick="shiftMonth(1)" aria-label="Próximo mês">›</button>
-    <span class="save-state" id="save-state">conectando…</span>
+  <div class="top-month jv-ref-month-row">
+    <div class="jv-ref-month-chip">
+      <button class="month-btn" onclick="shiftMonth(-1)" aria-label="Mês anterior">‹</button>
+      <span class="jv-ref-month-cal" data-ic="cal"></span>
+      <div class="month-label" id="month-label">—</div>
+      <button class="month-btn" onclick="shiftMonth(1)" aria-label="Próximo mês">›</button>
+    </div>
+    <span class="save-state" id="save-state">↻ Nuvem</span>
   </div>
 </header>
 
@@ -284,33 +287,54 @@ function esperarAuth(){
       <button class="btn btn-ghost" style="padding:8px 12px;font-size:12px" onclick="adiarBackup()">depois</button>
     </div>
   </div>
-  <p class="sec-eyebrow">Visão geral</p>
-  <h2 class="sec-title">Resumo do <em>mês</em></h2>
-  <div class="kpis">
-    <div class="kpi dark tocavel" id="kpi-recebido" onclick="verCaixaMes()"><div class="kpi-l">Recebido <span class="kpi-seta">›</span></div><div class="kpi-v" id="k-recebido">R$ 0</div><div class="kpi-s" id="k-recebido-s"></div></div>
-    <div class="kpi clay" id="kpi-pendente" onclick="verPendentes()"><div class="kpi-l">A receber <span class="kpi-seta">›</span></div><div class="kpi-v" id="k-pendente">R$ 0</div><div class="kpi-s" id="k-pendente-s"></div></div>
-    <div class="kpi light tocavel" id="kpi-alunos" onclick="verAlunosAtivos()"><div class="kpi-l">Alunos ativos <span class="kpi-seta">›</span></div><div class="kpi-v" id="k-alunos">0</div><div class="kpi-s" id="k-alunos-s"></div></div>
-    <div class="kpi light" id="kpi-cred" onclick="verReposicoes()"><div class="kpi-l">Créditos em aberto <span class="kpi-seta">›</span></div><div class="kpi-v" id="k-creditos">0</div><div class="kpi-s" id="k-repos-s"></div></div>
-  </div>
-  <div class="bar-wrap">
-    <div class="bar-row"><span>Meta de faturamento</span><span id="bar-txt">—</span></div>
-    <div class="bar"><i id="bar-fill" style="width:0%"></i></div>
-  </div>
-  <div id="virada-aviso"></div>
 
-  <div id="acao-wrap" style="display:none">
-    <p class="sec-eyebrow">Atenção hoje</p>
-    <h2 class="sec-title">O que pede <em>ação</em></h2>
-    <div class="acao-list" id="acao-list"></div>
-  </div>
+  <div class="jv-ref-dashboard">
+    <div class="jv-ref-kpis">
+      <button class="jv-ref-kpi recebido" id="kpi-recebido" onclick="verCaixaMes()">
+        <div class="jv-ref-kpi-title"><span class="jv-ref-round-icon" data-ic="bars"></span><b>Recebido</b></div>
+        <strong id="k-recebido">R$ 0</strong>
+        <small id="k-recebido-s">Total recebido no mês</small>
+      </button>
+      <button class="jv-ref-kpi receber" id="kpi-pendente" onclick="verPendentes()">
+        <div class="jv-ref-kpi-title"><span class="jv-ref-round-icon" data-ic="clock"></span><b>A receber</b></div>
+        <strong id="k-pendente">R$ 0</strong>
+        <small id="k-pendente-s">0 mensalidades pendentes</small>
+      </button>
+      <div class="jv-ref-kpi meta">
+        <div class="jv-ref-kpi-title"><span class="jv-ref-round-icon" data-ic="target"></span><b>Meta</b></div>
+        <strong id="k-ref-meta">R$ 0</strong>
+        <small>Meta de faturamento do mês</small>
+      </div>
+      <div class="jv-ref-kpi despesas">
+        <div class="jv-ref-kpi-title"><span class="jv-ref-round-icon" data-ic="receipt"></span><b>Despesas</b></div>
+        <strong id="k-ref-desp">R$ 0</strong>
+        <small id="k-ref-desp-s">Saídas registradas</small>
+      </div>
+    </div>
 
-  <p class="sec-eyebrow">Ações rápidas</p>
-  <h2 class="sec-title">Resolver em <em>segundos</em></h2>
-  <div class="rapidas">
-    <button onclick="openLancModal()"><i>＋</i><span>Novo lançamento</span></button>
-    <button onclick="verAgendaHoje()"><i>📅</i><span>Agenda de hoje</span></button>
-    <button onclick="buscarAluno()"><i>🔍</i><span>Buscar aluno</span></button>
-    <button onclick="abrirAulasDeHoje()"><i>✓</i><span>Aula realizada</span></button>
+    <div class="jv-ref-comparativo">
+      <h3>Comparativo do mês</h3>
+      <div class="jv-ref-bar-row meta"><span>Meta</span><i><b id="cmp-meta-fill"></b></i><strong id="cmp-meta">R$ 0</strong></div>
+      <div class="jv-ref-bar-row recebido"><span>Recebido</span><i><b id="cmp-rec-fill"></b></i><strong id="cmp-rec">R$ 0</strong></div>
+      <div class="jv-ref-bar-row receber"><span>A receber</span><i><b id="cmp-pend-fill"></b></i><strong id="cmp-pend">R$ 0</strong></div>
+      <div class="jv-ref-bar-row despesa"><span>Despesas</span><i><b id="cmp-desp-fill"></b></i><strong id="cmp-desp">R$ 0</strong></div>
+    </div>
+
+    <div id="virada-aviso"></div>
+    <div id="acao-wrap" class="jv-ref-attention" style="display:none">
+      <div class="jv-ref-section-head"><b>Atenção hoje</b><button type="button" onclick="verPendentes()">Ver todos ›</button></div>
+      <div class="acao-list" id="acao-list"></div>
+    </div>
+    <div class="jv-ref-actions">
+      <button class="primary" type="button" onclick="openLancModal()"><span>＋</span>Lançamento</button>
+      <button type="button" onclick="verAgendaHoje()"><span data-ic="cal"></span>Agenda</button>
+    </div>
+
+    <div class="jv-data-hooks" aria-hidden="true">
+      <div id="kpi-alunos"><span id="k-alunos"></span><span id="k-alunos-s"></span></div>
+      <div id="kpi-cred"><span id="k-creditos"></span><span id="k-repos-s"></span></div>
+      <div class="bar-wrap"><span id="bar-txt"></span><div class="bar"><i id="bar-fill"></i></div></div>
+    </div>
   </div>
 
   <p class="sec-eyebrow">Atividade</p>
@@ -368,11 +392,10 @@ function esperarAuth(){
 <section class="page" id="pg-agenda">
   <p class="sec-eyebrow">Quadro de horários</p>
   <h2 class="sec-title">Minha <em>agenda</em></h2>
-  <div class="seg">
-    <button class="on" onclick="setView('dia',this)">Dia</button>
-    <button onclick="setView('semana',this)">Semana</button>
+  <div class="seg jv-ref-ag-tabs">
+    <button onclick="setView('dia',this)">Dia</button>
+    <button class="on" onclick="setView('semana',this)">Semana</button>
     <button onclick="setView('mes',this)">Mês</button>
-    <button onclick="setView('tri',this)">Trimestre</button>
   </div>
   <div class="ag-nav">
     <button class="month-btn" onclick="agShift(-1)">‹</button>
@@ -885,8 +908,13 @@ function esperarAuth(){
 
 <div class="mais-fundo" id="mais-fundo" onclick="fecharMais()"></div>
 <div class="mais-pop" id="mais-pop">
+  <button onclick="fecharMais();abrirNotifs()"><span class="ico" data-ic="bell"></span>Avisos</button>
+  <button onclick="fecharMais();abrirPedidos()"><span class="ico" data-ic="receipt"></span>Pedidos dos alunos</button>
+  <button onclick="fecharMais();abrirHist()"><span class="ico" data-ic="history"></span>Histórico</button>
+  <button onclick="fecharMais();toggleHide()"><span class="ico" data-ic="search"></span>Mostrar / ocultar valores</button>
+  <button onclick="irDoMais('lanc')"><span class="ico" data-ic="cash"></span>Caixa / lançamentos</button>
   <button onclick="irDoMais('aval')"><span class="ico" data-ic="clip"></span>Avaliações</button>
-  <button onclick="irDoMais('lanc')"><span class="ico" data-ic="cash"></span>Caixa</button>
+  <button onclick="irDoMais('fin')"><span class="ico" data-ic="bars"></span>Financeiro</button>
   <button class="so-dono" onclick="irDoMais('torneio')"><span class="ico" data-ic="trophy"></span><span class="nav-badge" id="nb-torneio"></span>Torneio</button>
   <button onclick="irDoMais('graf')"><span class="ico" data-ic="line"></span>Gráficos</button>
   <button onclick="irDoMais('fech')"><span class="ico" style="font-size:19px">🧾</span>Fechamento</button>
@@ -894,14 +922,14 @@ function esperarAuth(){
   <button class="so-dono" onclick="irDoMais('profs')"><span class="ico" style="font-size:19px">👨‍🏫</span>Professores</button>
 </div>
 
-<nav class="nav">
-  <button class="on" onclick="go('dash',this)"><span class="ico" data-ic="home"></span><span class="nav-badge" id="nb-inicio"></span>Início</button>
-  <button onclick="go('agenda',this)"><span class="ico" data-ic="cal"></span><span class="nav-badge" id="nb-agenda"></span>Agenda</button>
-  <button onclick="go('alunos',this)"><span class="ico" data-ic="ball"></span>Alunos</button>
-  <button onclick="go('fin',this)"><span class="ico" data-ic="bars"></span>Financeiro</button>
-  <button id="nav-mais" onclick="abrirMais()"><span class="ico"><svg viewBox="0 0 24 24" width="24" height="24"><circle cx="5" cy="12" r="2.2" fill="currentColor"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/><circle cx="19" cy="12" r="2.2" fill="currentColor"/></svg></span>Mais</button>
+<nav class="nav jv-nav-3d">
+  <button class="on" onclick="go('dash',this)"><span class="ico" data-ic="navhome"></span><span class="nav-badge" id="nb-inicio"></span>Início</button>
+  <button onclick="go('agenda',this)"><span class="ico" data-ic="navcal"></span><span class="nav-badge" id="nb-agenda"></span>Agenda</button>
+  <button onclick="go('alunos',this)"><span class="ico" data-ic="navball"></span>Alunos</button>
+  <button onclick="go('fin',this)"><span class="ico" data-ic="navbars"></span>Financeiro</button>
+  <button id="nav-mais" onclick="abrirMais()"><span class="ico" data-ic="navmore"></span>Mais</button>
 </nav>
-<script src="lib/icones.js?v=2026-09-25-8"></script>
+<script src="lib/icones.js?v=2026-09-26-6"></script>
 
 <!-- MODAL ALUNO -->
 <div class="overlay" id="ov-aluno" onclick="if(event.target===this)closeModal('ov-aluno')">
@@ -1376,7 +1404,7 @@ function esperarAuth(){
 
 <div class="toast" id="toast"></div>
 
-<script src="lib/app-gestao.js?v=2026-09-25-8"></script>
+<script src="lib/app-gestao.js?v=2026-09-26-6"></script>
 <script>
 /* Rede de seguranca do par tela+codigo.
 
@@ -1391,7 +1419,7 @@ function esperarAuth(){
    torto, o app busca o par certo uma vez e, se insistir, DIZ o que houve em
    vez de deixar voce tocando em botao que nao responde. */
 (function(){
-  var ESPERADA='2026-09-25-8';
+  var ESPERADA='2026-09-26-6';
   function tela(motivo){
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;z-index:99999;background:#1A2E14;color:#FAF7F2;'
@@ -1482,7 +1510,7 @@ function limparHist(){
 }
 histLogLoad();
 // PWA: registra o service worker (permite instalar o painel e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-gestao.js?v=2026-09-25-8').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-gestao.js?v=2026-09-26-6').catch(function(){});});}
 </script>
 </body>
 </html>

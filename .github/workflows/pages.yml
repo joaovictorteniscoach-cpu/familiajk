@@ -55,6 +55,10 @@ jobs:
           node ferramentas/checar-sintaxe.js site/da-base-ao-topo.html
           node ferramentas/checar-sintaxe.js app-exercicios/index.html
           node ferramentas/checar-exercicios.js
+          node ferramentas/checar-sintaxe.js site-pro/index.html
+          node ferramentas/checar-sintaxe.js site-pro/sistema.html
+          node ferramentas/checar-sintaxe.js site-pro/curso.html
+          node ferramentas/checar-sintaxe.js site-pro/demo/index.html
 
       - name: Tirar o banco de exercícios do site público
         # O banco é o material da formação — produto pago — e ferramenta interna

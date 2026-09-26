@@ -34,11 +34,11 @@ gc=(ROOT/'app-gestao/lib/estilo.css').read_text(encoding='utf-8',errors='replace
 gj=(ROOT/'app-gestao/lib/app-gestao.js').read_text(encoding='utf-8',errors='replace')
 ma=json.loads((ROOT/'app-aluno/manifest-aluno.webmanifest').read_text(encoding='utf-8'))
 mg=json.loads((ROOT/'app-gestao/manifest-gestao.webmanifest').read_text(encoding='utf-8'))
-saibro=ROOT/'assets/jv-saibro-premium.svg'
+saibro=ROOT/'app-aluno/assets/jv-saibro-premium.svg'
 
 print('== App Aluno premium')
-ok(saibro.exists(),'asset local de quadra de saibro existe')
-ok("url('../assets/jv-saibro-premium.svg')" in a,'Aluno usa fundo local de saibro')
+ok(saibro.exists() and (ROOT/'app-gestao/assets/jv-saibro-premium.svg').exists(),'cada app inclui seu fundo no deploy independente')
+ok("url('assets/jv-saibro-premium.svg')" in a,'Aluno usa fundo local de saibro')
 ok('jv-premium-hero' in a and 'Seu painel de <em>treino</em>' in a,'hero premium do aluno')
 ok('Cada aula te aproxima do seu melhor tênis.' in a,'frase motivacional do aluno')
 for x in ['home-prox-date','home-cred','home-plano','home-foco','home-mens','home-pix-btn']:
@@ -57,7 +57,7 @@ ok('jv-premium-hero' in g and 'Painel de <em>gestão</em>' in g,'hero premium da
 ok('Pronto para mais um mês <em>de resultados?</em>' in g,'pergunta motivacional da Gestão')
 ok('Disciplina hoje, grandes conquistas amanhã.' in g,'frase motivacional da Gestão')
 ok("const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1'" in gj and 'trocarAvatarGestao' in gj,'foto de perfil local da Gestão')
-ok("url('../../assets/jv-saibro-premium.svg')" in gc,'fundo de quadra de saibro no hero da Gestão')
+ok("url('../assets/jv-saibro-premium.svg')" in gc,'fundo de quadra de saibro no hero da Gestão')
 ok('grid-template-columns:repeat(5,1fr)!important' in gc,'Gestão com navegação principal de 5 itens')
 gnav=g.split('<nav class="nav">',1)[1].split('</nav>',1)[0]
 for x in ['Início','Agenda','Alunos','Financeiro','Mais']:
@@ -75,11 +75,13 @@ carimbo(gc,'Auditoria final','contraste WCAG','auditoria final de contraste da G
 ok('-webkit-text-fill-color:#10261E' in gc and '.tg-head .tg-title' in gc,'Torneio da Gestão fixa contraste claro/escuro no iPhone')
 ok('.quick .q1,.quick .q2,.quick .q4' in gc and '.fin-card .l' in gc,'Caixa e Financeiro têm contraste explícito')
 carimbo(a,'Auditoria final','App Aluno','auditoria final de contraste do App Aluno presente')
+ok('#apg-inicio .jv-home-card .hc-sub' in a and '-webkit-text-fill-color:#D8D2C7' in a,'texto secundário da Home do aluno tem contraste explícito')
 ok('@media (display-mode:standalone)' in a and '@media (display-mode:standalone)' in gc,'safe-area da Dynamic Island protegida nos dois apps')
 ok('font-size:16px!important' in a and 'font-size:16px!important' in gc,'inputs mobile evitam zoom automático do Safari')
 
 carimbo(gc,'Revisão iPhone','contraste','revisão iPhone da Gestão presente')
 carimbo(a,'Revisão iPhone','App Aluno','revisão iPhone do App Aluno presente')
+ok('#apg-agenda .ag-nav-label small' in a and '-webkit-text-fill-color:#D8D2C7' in a,'Agenda do aluno mantém texto secundário legível')
 ok('#pg-torneio .tg-head .tg-title' in gc and '#pg-lanc .quick .q1' in gc,'correções específicas dos screenshots preservadas')
 
 print('\n== PWA premium')
