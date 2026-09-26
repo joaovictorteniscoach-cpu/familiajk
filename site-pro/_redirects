@@ -1,0 +1,7 @@
+# A demo do sistema e' publicada so' pelo GitHub Pages: ela usa o visual e os
+# icones do proprio app (../../app-gestao/), que existem la' — no Netlify cada
+# site publica so' a propria pasta, e a demo abria sem estilo. Quem chegar pelo
+# endereco antigo /demo/ daqui vai para a de la'. O "!" forca o desvio mesmo
+# com a pasta demo/ presente no deploy.
+/demo    https://joaovictorteniscoach-cpu.github.io/familiajk/site-pro/demo/    302!
+/demo/*  https://joaovictorteniscoach-cpu.github.io/familiajk/site-pro/demo/:splat    302!
