@@ -20,6 +20,9 @@ var NAVIC=(function(){
     plus:'<circle cx="12" cy="12" r="9.5"/><path class="cut" d="M11 6.5h2v4.5h4.5v2H13v4.5h-2V13H6.5v-2H11z"/>',
     search:'<path fill-rule="evenodd" d="M10.5 2.5a8 8 0 1 1-4.7 14.5l-3.7 3.7-1.8-1.8L4 15.2A8 8 0 0 1 10.5 2.5zm0 2.7a5.3 5.3 0 1 0 0 10.6 5.3 5.3 0 0 0 0-10.6z"/>',
     check:'<circle cx="12" cy="12" r="9.5"/><path class="cut" d="m10.4 16.7-4-4 1.8-1.8 2.2 2.2 5.6-6 1.9 1.7z"/>',
+    clock:'<circle cx="12" cy="12" r="9.5"/><path class="cut-stroke" d="M12 6.5v5.8l4 2.2"/>',
+    coins:'<ellipse cx="12" cy="6" rx="7.2" ry="3.1"/><path d="M4.8 6v4.4c0 1.8 3.2 3.2 7.2 3.2s7.2-1.4 7.2-3.2V6"/><path d="M4.8 10.4v4.4c0 1.8 3.2 3.2 7.2 3.2s7.2-1.4 7.2-3.2v-4.4"/><path d="M4.8 14.8v2.8c0 1.9 3.2 3.4 7.2 3.4s7.2-1.5 7.2-3.4v-2.8"/>',
+    target:'<circle cx="12" cy="12" r="9.5"/><circle class="cut" cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="2.4"/><path d="M15.8 8.2 21 3m-2.2 0H21v2.2"/>',
     more:'<circle cx="5" cy="12" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="19" cy="12" r="2.2"/>'
   },icons={};
   Object.keys(p).forEach(function(k){
