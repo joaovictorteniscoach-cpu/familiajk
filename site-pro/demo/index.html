@@ -38,7 +38,7 @@
 <link rel="apple-touch-startup-image" media="screen and (device-width:375px) and (device-height:667px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)" href="../../app-gestao/splash-gestao-750x1334.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../../app-gestao/lib/estilo.css?v=2026-09-26-3">
+<link rel="stylesheet" href="../../app-gestao/lib/estilo.css?v=2026-09-26-4">
 <!-- ================= DEMO ISOLADA ================= -->
 <script>
 /* Espelho comercial do Gestão atual.
@@ -775,14 +775,14 @@ function esperarAuth(){return Promise.resolve();}
   <button class="so-dono" onclick="irDoMais('profs')"><span class="ico" style="font-size:19px">👨‍🏫</span>Professores</button>
 </div>
 
-<nav class="nav">
-  <button class="on" onclick="go('dash',this)"><span class="ico" data-ic="home"></span><span class="nav-badge" id="nb-inicio"></span>Início</button>
-  <button onclick="go('agenda',this)"><span class="ico" data-ic="cal"></span><span class="nav-badge" id="nb-agenda"></span>Agenda</button>
-  <button onclick="go('alunos',this)"><span class="ico" data-ic="users"></span>Alunos</button>
-  <button onclick="go('fin',this)"><span class="ico" data-ic="bars"></span>Financeiro</button>
-  <button id="nav-mais" onclick="abrirMais()"><span class="ico"><svg viewBox="0 0 24 24" width="24" height="24"><circle cx="5" cy="12" r="2.2" fill="currentColor"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/><circle cx="19" cy="12" r="2.2" fill="currentColor"/></svg></span>Mais</button>
+<nav class="nav jv-nav-3d">
+  <button class="on" onclick="go('dash',this)"><span class="ico" data-ic="navhome"></span><span class="nav-badge" id="nb-inicio"></span>Início</button>
+  <button onclick="go('agenda',this)"><span class="ico" data-ic="navcal"></span><span class="nav-badge" id="nb-agenda"></span>Agenda</button>
+  <button onclick="go('alunos',this)"><span class="ico" data-ic="navball"></span>Alunos</button>
+  <button onclick="go('fin',this)"><span class="ico" data-ic="navbars"></span>Financeiro</button>
+  <button id="nav-mais" onclick="abrirMais()"><span class="ico" data-ic="navmore"></span>Mais</button>
 </nav>
-<script src="../../app-gestao/lib/icones.js?v=2026-09-26-3"></script>
+<script src="../../app-gestao/lib/icones.js?v=2026-09-26-4"></script>
 
 <!-- MODAL ALUNO -->
 <div class="overlay" id="ov-aluno" onclick="if(event.target===this)closeModal('ov-aluno')">
@@ -1257,7 +1257,7 @@ function esperarAuth(){return Promise.resolve();}
 
 <div class="toast" id="toast"></div>
 
-<script src="app-demo.js?v=2026-09-26-3"></script>
+<script src="app-demo.js?v=2026-09-26-4"></script>
 <script>
 /* Rede de seguranca do par tela+codigo.
 
@@ -1272,7 +1272,7 @@ function esperarAuth(){return Promise.resolve();}
    torto, o app busca o par certo uma vez e, se insistir, DIZ o que houve em
    vez de deixar voce tocando em botao que nao responde. */
 (function(){
-  var ESPERADA='2026-09-26-3';
+  var ESPERADA='2026-09-26-4';
   function tela(motivo){
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;z-index:99999;background:#1A2E14;color:#FAF7F2;'
