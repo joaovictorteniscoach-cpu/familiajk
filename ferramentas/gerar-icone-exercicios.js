@@ -3,9 +3,10 @@
    Por que existe: os apps da JV usam todos o mesmo logo, e na tela de inicio
    do celular viram tres icones iguais. Este aqui se diferencia pelo ASSUNTO —
    a quadra de saibro vista de cima, com o trajeto da bola — que e' exatamente
-   a linguagem dos 116 desenhos do banco. A familia se mantem pelo preto, pelo
-   verde-limao da marca e pela pastilha com o nome embaixo — os tres detalhes
+   a linguagem dos desenhos do banco. A familia se mantem pelo verde-limao da
+   marca e pela pastilha com o nome embaixo — detalhes
    tirados do proprio icone da Gestao, que tem "GESTAO" escrito no mesmo lugar.
+   O fundo e' o verde premium do app (#041A13), o mesmo da tela.
 
    Uso, a partir da raiz do repositorio:
        node ferramentas/gerar-icone-exercicios.js
@@ -80,7 +81,7 @@ function svgIcone(S, mascara){
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${S}" height="${S}" viewBox="0 0 ${S} ${S}">
     <defs>
       <linearGradient id="fundo" x1="0" y1="0" x2="0.35" y2="1">
-        <stop offset="0" stop-color="#151A22"/><stop offset="1" stop-color="#07090D"/>
+        <stop offset="0" stop-color="#0B3A2B"/><stop offset="1" stop-color="#041A13"/>
       </linearGradient>
       <marker id="pta" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="3.5" markerHeight="3.5"
               orient="auto-start-reverse"><path d="M 0 1 L 9 5 L 0 9 z" fill="${LIMA_CLARO}"/></marker>
