@@ -2135,3 +2135,26 @@ button.jv-ref-kpi{cursor:pointer;font-family:inherit}.jv-ref-kpi.receber{backgro
    prioriza Caixa para lançamentos avulsos; Financeiro permanece no menu Mais. */
 .jv-nav-3d button{min-width:0!important}
 .jv-nav-3d button .ico{flex:0 0 auto!important}
+
+/* ===== JV Revisão celular 2026-09-26-8 · contraste e toque =====
+   "Atenção hoje" ficou com fundo verde-escuro (layout de referência), mas uma
+   regra anterior força a tinta escura nos .acao-item (feita para o cartão
+   claro): o texto sumia, contraste 1,7:1. Aqui a tinta volta a ser clara, em
+   tamanho de leitura. E as setas do mês, com 22 px, viram alvos de toque de
+   36 px, com o rótulo e o estado da nuvem legíveis. */
+.jv-ref-attention .acao-item{min-height:58px!important}
+.jv-ref-attention .acao-item b{color:#F4F0E8!important;-webkit-text-fill-color:#F4F0E8!important;font-size:13.5px!important;line-height:1.25!important}
+.jv-ref-attention .acao-item small{color:#D3D6CE!important;-webkit-text-fill-color:#D3D6CE!important;font-size:11.5px!important;line-height:1.3!important}
+.top.jv-premium-hero .jv-ref-month-row .jv-ref-month-chip{height:40px!important;padding:2px 3px!important;gap:3px!important}
+.top.jv-premium-hero .top-month.jv-ref-month-row .jv-ref-month-chip .month-btn{width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important;font-size:18px!important}
+.top.jv-premium-hero .jv-ref-month-row .jv-ref-month-chip .month-label{font-size:12px!important}
+.top.jv-premium-hero .top-month.jv-ref-month-row .save-state{font-size:11px!important;margin-left:auto!important}
+.jv-ref-month-row .save-state::before{font-size:11px!important}
+#pg-agenda .ag-nav .month-btn{width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important}
+/* a linha do mês é flex (chip do mês à esquerda, nuvem à direita): uma regra
+   mais antiga do hero a transformava em grade de 30px|280px|30px, e o chip
+   inteiro cabia na coluna de 30px — o "›" caía em cima do nome do mês */
+.top.jv-premium-hero .top-month.jv-ref-month-row{display:flex!important;grid-template-columns:none!important;align-items:center!important;justify-content:space-between!important;gap:8px!important;padding:4px 8px 4px 4px!important}
+.top.jv-premium-hero .top-month.jv-ref-month-row .jv-ref-month-chip{flex:0 0 auto!important;width:auto!important}
+.top.jv-premium-hero .top-month.jv-ref-month-row .month-label{min-width:max-content!important;padding:0 2px!important}
+.top.jv-premium-hero .top-month.jv-ref-month-row .save-state{position:static!important;transform:none!important;width:auto!important;overflow:visible!important}
