@@ -2082,7 +2082,7 @@ html,body{background:#041A13!important}
   .jv-nav-3d button .ico svg{width:20px!important;height:20px!important}
 }
 
-/* ===== LAYOUT DE REFERÊNCIA APROVADO · 2026-09-26-6 ===== */
+/* ===== LAYOUT DE REFERÊNCIA APROVADO · 2026-09-26-7 ===== */
 :root{--ref-gold:#E8B83E;--ref-gold2:#F2CF62;--ref-cream:#EEF2E5;--ref-orange:#E97745}
 html,body{background:#031D15!important}
 .top.jv-premium-hero{
@@ -2128,3 +2128,10 @@ button.jv-ref-kpi{cursor:pointer;font-family:inherit}.jv-ref-kpi.receber{backgro
 #pg-agenda .wk-zoom{gap:5px!important;margin:5px 0 7px!important}#pg-agenda .wk-zoom .wz,#pg-agenda .wk-zoom .wz-fit{height:34px!important;min-height:34px!important;border-radius:8px!important;font-size:10px!important}#pg-agenda .wk-scroll{border:1px solid rgba(232,184,62,.28)!important;border-radius:11px!important;background:#EEF2E5!important;box-shadow:none!important}#pg-agenda .wk th{background:#EEF2E5!important;color:#14271F!important;-webkit-text-fill-color:#14271F!important;border-color:#D3D8CA!important}#pg-agenda .wk td{border-color:#D6DCCE!important;color:#17271F!important}#pg-agenda .wk td.hr{background:#F3F5EC!important;color:#14271F!important}#pg-agenda .wk-cell{border-radius:0!important;box-shadow:none!important}.mais-pop{background:#062C20!important;border:1px solid rgba(232,184,62,.23)!important}.mais-pop button{color:#F4F0E8!important}
 @media(min-width:720px){#pg-dash{padding-left:22px!important;padding-right:22px!important}.jv-ref-dashboard{max-width:760px}.jv-ref-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:390px){.top.jv-premium-hero{padding-left:11px!important;padding-right:11px!important}.top.jv-premium-hero .jv-hero-greet{font-size:19px!important}.jv-ref-kpi{min-height:101px!important;padding:9px!important}.jv-ref-kpi strong{font-size:20px!important}.jv-ref-bar-row{grid-template-columns:53px minmax(0,1fr) 61px}}
+
+
+/* ===== ENTREGA FINAL DE MERGE · 2026-09-26-7 =====
+   Layout de referência aprovado preservado. A barra operacional da Gestão
+   prioriza Caixa para lançamentos avulsos; Financeiro permanece no menu Mais. */
+.jv-nav-3d button{min-width:0!important}
+.jv-nav-3d button .ico{flex:0 0 auto!important}
