@@ -1,0 +1,96 @@
+/* JV Saibro · superfícies suaves e controles proporcionais. */
+:root{--jv-bg:#071E19;--jv-card:#214639;--jv-panel:#2B5142;--jv-control:#315A49;--jv-ink:#10261E;--jv-text:#F6F2EA;--jv-muted:#D9E2D8;--jv-gold:#D5B24A;--jv-border:rgba(190,211,190,.25)}
+html,body{background:var(--jv-bg)!important;color:var(--jv-text)!important}
+#app>.top.jv-premium-hero{padding:calc(12px + env(safe-area-inset-top,0px)) 16px 12px!important;grid-template-columns:minmax(0,1fr) 44px;gap:3px 10px;background:linear-gradient(90deg,rgba(7,30,25,.94),rgba(7,30,25,.68) 60%,rgba(7,30,25,.20)),url('../assets/jv-saibro-realista.webp') center 64%/cover!important}
+#app>.top.jv-premium-hero .jv-avatar-btn{width:44px!important;height:44px!important}
+#app>.top.jv-premium-hero:after{display:none}
+#app>.top.jv-premium-hero .jv-hero-greet{font-size:26px!important;line-height:1.2;font-weight:750;margin:12px 0 0!important}
+#app>.top.jv-premium-hero h1{font-size:22px!important;line-height:1.25!important;letter-spacing:-.4px;margin:0!important;max-width:none!important}
+#app>.top.jv-premium-hero h1 em{color:var(--jv-text)!important;-webkit-text-fill-color:var(--jv-text)!important}
+#app>.top.jv-premium-hero .jv-hero-motiv{font-size:12px;line-height:1.45;max-width:none;margin:3px 0 0}
+body:not([data-aba="inicio"]) #app>.top.jv-premium-hero{grid-template-columns:minmax(0,1fr) 44px 44px}
+body:not([data-aba="inicio"]) #app>.top.jv-premium-hero .jv-avatar-btn{grid-column:3}
+body:not([data-aba="inicio"]) #app>.top.jv-premium-hero .top-actions{grid-column:2;grid-row:1}
+body:not([data-aba="inicio"]) #app>.top.jv-premium-hero .jv-hero-greet{display:none}
+.jv-subhero{background:linear-gradient(90deg,rgba(7,30,25,.95),rgba(7,30,25,.55)),url('../assets/jv-saibro-realista.webp') center 62%/cover!important;padding:14px!important}
+.jv-subhero h2{font-family:'DM Sans',system-ui,sans-serif;font-size:25px!important}
+#apg-inicio .jv-home-card,#apg-inicio .jv-home-card.gold{background:linear-gradient(145deg,#244B3D,#193B30)!important;border-color:var(--jv-border)!important;min-height:128px!important;padding:12px!important;border-radius:16px!important}
+#apg-inicio .jv-home-card .hc-top,#apg-inicio .jv-home-card.gold .hc-top{color:var(--jv-text)!important;-webkit-text-fill-color:var(--jv-text)!important;font-size:12px!important}
+#apg-inicio .jv-home-card .hc-main{font-size:20px!important;line-height:1.25!important;letter-spacing:-.35px!important;margin-top:9px}
+#apg-inicio .jv-home-card .hc-sub{font-size:13px!important;line-height:1.35!important;color:var(--jv-muted)!important;-webkit-text-fill-color:var(--jv-muted)!important}
+.jv-home-card:after,.jv-pay-card:after{display:none}
+#apg-inicio .jv-pay-card,#apg-creditos .jv-credit-panel,#apg-creditos .jv-section-card,#apg-perfil .jv-credit-panel,#apg-perfil .jv-profile-card,#apg-perfil .jv-section-card{background:var(--jv-panel)!important;border-color:var(--jv-border)!important;border-radius:16px!important}
+#apg-inicio .jv-pay-card{padding:14px!important;gap:10px;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)!important}
+#apg-inicio .jv-pay-head,#apg-inicio .jv-pix-btn{grid-column:1/-1!important}
+#apg-inicio .jv-pay-head b{font-size:16px!important}
+#apg-inicio .jv-pay-value{font-size:21px!important;line-height:1.3;overflow-wrap:anywhere}
+#apg-inicio .jv-pay-lbl{font-size:12px!important;text-transform:none;letter-spacing:0}
+.jv-pay-status{background:#95D4A7!important;color:#10261E!important;-webkit-text-fill-color:#10261E!important;font-size:12px!important;padding:5px 10px}
+.jv-pay-status[data-status="pendente"],.jv-pay-status[data-status="parcial"]{background:#E7CF8E!important}
+#apg-inicio .jv-pix-btn,.pay-btn.pix{background:linear-gradient(110deg,#D5B24A,#E6C360)!important;color:#10261E!important;-webkit-text-fill-color:#10261E!important;min-height:48px!important;padding:10px 12px!important;font-size:14px!important;box-shadow:0 4px 12px #071E1926}
+.jv-pix-mark{display:inline-block;width:25px;height:25px;vertical-align:middle;flex:0 0 25px;object-fit:contain}
+#apg-creditos #cred-page-pix{background:#D5B24A!important;color:#10261E!important;-webkit-text-fill-color:#10261E!important}
+.jv-quick{gap:8px}.jv-quick-title{font-size:14px;letter-spacing:.2px;text-transform:none;margin-top:14px}
+.jv-quick button,.jv-quick button:nth-child(2),.jv-profile-actions button,.pay-btn.card,.pay-btn.cash,#app .buy-btn,#app .btn-sec,#app .ag-nav .month-btn{background:var(--jv-control)!important;color:var(--jv-text)!important;-webkit-text-fill-color:var(--jv-text)!important;border:1px solid var(--jv-border)!important;box-shadow:none!important}
+.jv-quick button{min-height:58px!important;padding:10px 6px!important;font-size:12px!important;border-radius:12px!important}
+.jv-quick button span{font-size:18px;margin-bottom:5px}.jv-quick button span svg{width:18px;height:18px}
+#app .seg{background:#173B30!important;border:1px solid var(--jv-border)}
+#app .seg button{color:var(--jv-muted)!important;-webkit-text-fill-color:var(--jv-muted)!important;min-height:44px}
+#app .seg button.on{background:var(--jv-gold)!important;color:var(--jv-ink)!important;-webkit-text-fill-color:var(--jv-ink)!important}
+#app input,#app select,#app textarea{background:#D3DFD4!important;color:var(--jv-ink)!important;-webkit-text-fill-color:var(--jv-ink)!important}
+#app input::placeholder,#app textarea::placeholder{color:#42554A!important;-webkit-text-fill-color:#42554A!important;opacity:1}
+#app #renova-box{background:#2B5142!important;border:1px solid #D5B24A66!important}
+#app #renova-box button,#app #lembrete-box button{background:var(--jv-control)!important;color:var(--jv-text)!important;-webkit-text-fill-color:var(--jv-text)!important;border:1px solid var(--jv-border)!important}
+#app #renova-box a{color:#F0D57C!important}
+.nav,.nav:after{background:#103428!important}
+.nav button.on{background:#315A4966!important}
+/* Disponibilidade usa sálvia; aula, chuva e pendência preservam distinção. */
+#apg-agenda .wk-scroll,#apg-agenda .cal{background:#D3DFD4!important;border-color:#91AC99!important}
+#apg-agenda .wk{table-layout:fixed;min-width:var(--al-wk-min,600px)!important;width:max(100%,var(--al-wk-min,600px))!important}
+#apg-agenda .wk th{background:#B8CBBB!important;color:#10261E!important;-webkit-text-fill-color:#10261E!important;font-size:12px;padding:8px 2px}
+#apg-agenda .wk th small{font-size:11px;opacity:1}
+#apg-agenda .wk td{min-width:0!important;height:var(--al-wk-h,44px)!important;border-color:#B0C4B5}
+#apg-agenda .wk td.hr,#apg-agenda .wk th:first-child{width:44px;min-width:44px!important;background:#CAD9CE!important;color:#10261E!important;-webkit-text-fill-color:#10261E!important;font-size:11px;padding:2px}
+#apg-agenda .wc{font-size:var(--al-wk-fs,12px)!important;min-height:44px;white-space:normal;overflow-wrap:anywhere;padding:4px 2px;line-height:1.25}
+#apg-agenda .wc.livre,#apg-agenda .sl.livre{background:#C7D9C7!important;color:#10261E!important;-webkit-text-fill-color:#10261E!important}
+#apg-agenda .wc.meu,#apg-agenda .sl.meu{background:#24533F!important;color:#F6F2EA!important;-webkit-text-fill-color:#F6F2EA!important}
+#apg-agenda .wc.pend,#apg-agenda .sl.pend,#apg-agenda .wc.loc{background:#E7CF8E!important;color:#10261E!important;-webkit-text-fill-color:#10261E!important}
+#apg-agenda .wc.chuva,#apg-agenda .sl.chuva{background:#BED0D3!important;color:#10261E!important;-webkit-text-fill-color:#10261E!important}
+#apg-agenda .wc.ocup,#apg-agenda .wc.bloq,#apg-agenda .wc.fechado,#apg-agenda .wc.passou,#apg-agenda .sl.ocup,#apg-agenda .sl.bloq{background:#B8C6BD!important;color:#30483C!important;-webkit-text-fill-color:#30483C!important}
+#apg-agenda .cal-day{background:#C7D9C7!important}.cal-head span{color:#30483C!important}
+.jv-ag-zoom{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:10px 0}
+.jv-ag-zoom button{min-width:44px;min-height:44px;border-radius:10px;border:1px solid #95B39C;background:var(--jv-control);color:var(--jv-text);font-size:20px;font-weight:700}
+.jv-ag-zoom output{min-width:40px;text-align:center;font-size:13px;font-variant-numeric:tabular-nums}
+.jv-ag-zoom .fit{font-size:12px;padding:8px 10px;margin-left:auto}
+.jv-ag-zoom button:disabled{opacity:.5}
+.jv-ag-hint{font-size:12px;line-height:1.4;color:var(--jv-muted);margin:9px 0}
+@media(max-width:359px){#apg-inicio .jv-home-card .hc-main{font-size:18px!important}.jv-home-card .hc-top{flex-wrap:wrap}#apg-inicio .jv-pay-value{font-size:18px!important}.jv-ag-zoom{gap:4px}}
+@media(display-mode:standalone){body:before{background:var(--jv-bg)!important}}
+/* Integração com a referência publicada na versão -6. */
+#app>.top.jv-premium-hero{grid-template-columns:minmax(0,1fr) 44px!important;grid-template-areas:"brand avatar" "greet greet" "title title" "motiv motiv" "prof prof"!important}
+body:not([data-aba="inicio"]) #app>.top.jv-premium-hero{grid-template-columns:minmax(0,1fr) 44px!important;grid-template-areas:"brand avatar"!important}
+body:not([data-aba="inicio"]) #app>.top.jv-premium-hero .jv-avatar-btn{grid-area:avatar!important}
+#app>.top.jv-premium-hero .jv-hero-motiv{font-size:12px!important;line-height:1.4!important;max-width:none!important}
+#app #apg-inicio{background:transparent!important}
+#apg-inicio .jv-quick-title{font-size:14px!important;margin:12px 1px 7px!important}
+#apg-inicio .jv-quick button{background:var(--jv-control)!important;color:var(--jv-text)!important;font-size:12px!important;min-height:52px!important}
+#apg-inicio .jv-quick button span svg{width:18px!important;height:18px!important}
+#apg-agenda .jv-ref-agenda-hero{background:linear-gradient(90deg,rgba(7,30,25,.95),rgba(7,30,25,.55)),url('../assets/jv-saibro-realista.webp') center 62%/cover!important}
+#apg-agenda .jv-ref-agenda-hero p{font-size:12px!important}
+#apg-agenda .seg button,#apg-agenda .month-btn,#apg-agenda .wk-tools button{min-height:44px!important;font-size:12px!important}
+#apg-agenda .month-btn,#apg-agenda .wk-tools .wk-zbtn{width:44px!important;min-width:44px!important}
+#apg-agenda .wk-tools button{background:var(--jv-control)!important;color:var(--jv-text)!important;-webkit-text-fill-color:var(--jv-text)!important;border-color:#95B39C!important}
+#apg-agenda .wk-tools{flex-wrap:wrap!important}
+#apg-agenda .wk-tools .wk-zlbl{color:var(--jv-text)!important;font-size:13px!important}
+#apg-agenda .wk td{height:var(--al-wk-row,44px)!important}
+#apg-agenda .ag-nav-label{font-size:14px!important}
+#apg-agenda .wc{min-height:44px!important;height:100%!important;font-size:var(--al-wk-fs,12px)!important}
+#apg-agenda .wk th{font-size:var(--al-wk-thfs,12px)!important}
+#apg-agenda .wk th small{font-size:11px!important;opacity:1!important}
+.nav.jv-nav-3d button{font-size:11px!important;min-height:52px!important;gap:4px!important}
+.nav.jv-nav-3d button .ico,.nav.jv-nav-3d button .ico img{width:22px!important;height:22px!important;min-width:22px!important;min-height:22px!important}
+.nav.jv-nav-3d button .ico img{object-fit:contain}
+#app,#app .page{background:transparent!important}
+#apg-inicio .jv-quick button:nth-child(2){background:var(--jv-control)!important;color:var(--jv-text)!important;-webkit-text-fill-color:var(--jv-text)!important}
+#apg-agenda .wk-tools .wk-fit{background:var(--jv-control)!important;color:var(--jv-text)!important;-webkit-text-fill-color:var(--jv-text)!important}
+#apg-inicio .jv-pay-status{font-size:12px!important;padding:5px 10px!important;color:#10261E!important;-webkit-text-fill-color:#10261E!important}

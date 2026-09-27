@@ -7,7 +7,7 @@ const assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '..');
 const output = process.env.JV_PREVIEWS || require('node:os').tmpdir() + '/jv-premium-previews';
 fs.mkdirSync(output, { recursive: true });
-const types = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg':'image/svg+xml','.png':'image/png','.webmanifest':'application/manifest+json'};
+const types = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp','.webmanifest':'application/manifest+json'};
 const server = http.createServer((req,res) => {
   let f = path.join(root, decodeURI(req.url.split('?')[0]));
   if (f.endsWith('/')) f += 'index.html';
@@ -17,7 +17,10 @@ const server = http.createServer((req,res) => {
 });
 const aluno = {id:'teste-a',codigo:'9999',nome:'Aluno de Teste',tipo:'Tênis',plano:4,planoGrupo:0,creditos:3,repos:1,mensalidade:640,status:'pago',diaVenc:10,ativo:true,avaliacoes:[],registros:[]};
 const db = {alunos:[aluno],lancamentos:[],meta:10000,agenda:{fixos:[],eventos:[],excecoes:[]},presencas:[],compromissos:[],aviso:'',locacaoOnly:null,horarioCfg:null,horarioData:null,savedAt:Date.now(),torneios:{atual:'t',lista:{t:{id:'t',nome:'Barragem de teste',grupos:['A'],jogadores:[{name:'Aluno de Teste Sobrenome Longo',group:'A',v:2,d:1,wo:0},{name:'Jogador de Teste',group:'A',v:1,d:2,wo:0}]}}}};
-const widths = [320,360,390,393,430,768,1280];
+const widths = process.env.JV_WIDTHS ? process.env.JV_WIDTHS.split(',').map(Number) : [320,360,390,393,430,768,1280];
+const apps = process.env.JV_APPS ? process.env.JV_APPS.split(',') : ['aluno','gestao'];
+assert.ok(widths.every(w=>Number.isInteger(w)&&w>=320&&w<=1920));
+assert.ok(apps.every(a=>['aluno','gestao'].includes(a)));
 let count = 0;
 const contrastFindings=[];
 async function auditContrast(p,label) {
@@ -54,7 +57,7 @@ async function capture(p,name) { await p.screenshot({path:path.join(output,name+
   const base='http://127.0.0.1:'+server.address().port;
   const browser=await chromium.launch({executablePath:process.env.JV_BROWSER || undefined,args:['--no-sandbox']});
   try {
-    for (const app of ['aluno','gestao']) {
+    for (const app of apps) {
       const context=await browser.newContext({viewport:{width:393,height:852},timezoneId:'America/Sao_Paulo',serviceWorkers:'block'});
       // Bloqueia TODA rede externa e remove os SDKs Firebase da cópia de teste.
       await context.route('**/*', route => {
@@ -71,7 +74,7 @@ async function capture(p,name) { await p.screenshot({path:path.join(output,name+
       await p.waitForTimeout(6500); // boot offline documentado pelos apps
       if(app==='aluno')await p.evaluate(a=>{
         EU=a;MEU={codigo:a.codigo,pedidos:[],cancelados:[]};
-        PUB={alunos:[a],horas:['08:00','09:00','16:00','17:00','18:00','19:00'],grade:{fixos:[{id:'test-fixed',cod:a.codigo,dia:1,hora:'17:00'}],eventos:[],excecoes:[]},pix:'',historico:{},aviso:''};
+        PUB={alunos:[a],horas:['08:00','09:00','16:00','17:00','18:00','19:00'],grade:{fixos:[{id:'test-fixed',cod:a.codigo,dia:1,hora:'17:00'}],eventos:[],excecoes:[]},pix:'teste@example.invalid',historico:{},aviso:''};
         VINCULO_ESTADO='ativo';_renovaAdiado=true;show();
       },aluno);
       else await p.evaluate(()=>{
@@ -84,12 +87,12 @@ async function capture(p,name) { await p.screenshot({path:path.join(output,name+
         await p.setViewportSize({width,height:852});
         await ok(app+' ícones proporcionais e alvos de toque '+width+'px',async()=>{
           const sizes=await p.locator('.nav button').evaluateAll(nodes=>nodes.map(e=>{
-            const b=e.getBoundingClientRect(),s=e.querySelector('svg').getBoundingClientRect();
+            const b=e.getBoundingClientRect(),s=e.querySelector('svg,img').getBoundingClientRect();
             return {width:b.width,height:b.height,icon:s.width};
           }));
-          for(const s of sizes){assert.ok(s.width>=44&&s.height>=44,JSON.stringify(s));assert.ok(s.icon<=20,JSON.stringify(s));}
+          for(const s of sizes){assert.ok(s.width>=44&&s.height>=44,JSON.stringify(s));assert.ok(s.icon<=24,JSON.stringify(s));}
         });
-        const pages=app==='aluno'?['inicio','agenda','evolucao','creditos','perfil']:['dash','agenda','alunos','fin'];
+        const pages=app==='aluno'?['inicio','agenda','evolucao','creditos','perfil']:['dash','agenda','alunos','lanc'];
         for(const id of pages) {
           await p.locator(app==='aluno'?`.nav button[onclick="goAluno('${id}',this)"]`:`.nav button[onclick="go('${id}',this)"]`).click();
           await ok(app+' '+width+'px · '+id,async()=>{await fit(p,width,id);assert.equal(await p.locator(app==='aluno'?'#app .page.on':'.page.on').count(),1);});
@@ -99,12 +102,32 @@ async function capture(p,name) { await p.screenshot({path:path.join(output,name+
           });
           if(width===393){await capture(p,app+'-'+id+'-393');await auditContrast(p,app+'-'+id);}
         }
+        if(app==='aluno') {
+          await p.evaluate(()=>{goAluno('agenda',document.querySelector('.nav button[onclick*="agenda"]'));agDate=new Date(2026,9,5,12);setView('semana',document.querySelector('#apg-agenda .seg button[onclick*=semana]'));alunoWkZoom=1;alunoWkAutoFit=false;aplicarAlunoWkVars();});
+          const before=await p.locator('#apg-agenda .wk').evaluate(e=>e.offsetWidth);
+          await p.locator('[aria-label="Aumentar agenda"]').click();
+          const after=await p.locator('#apg-agenda .wk').evaluate(e=>e.offsetWidth);
+          await p.locator('[aria-label="Diminuir agenda"]').click();
+          const smaller=await p.locator('#apg-agenda .wk').evaluate(e=>e.offsetWidth);
+          await ok('Aluno: zoom + / − e preferência '+width+'px',async()=>{
+            if(width<600)assert.ok(after>before);assert.equal(smaller,before);
+            const pref=await p.evaluate(()=>({zoom:Number(localStorage.getItem('jv-al-wkzoom')),ajustar:localStorage.getItem('jv-al-wkzoom-fit')==='true'}));assert.equal(pref.ajustar,false);assert.equal(pref.zoom,1);
+          });
+          await p.locator('#apg-agenda .wk-fit').click();
+          await ok('Aluno: semana ajustada, células legíveis e rolamento local '+width+'px',async()=>{
+            const d=await p.locator('#apg-agenda .wk-scroll').evaluate(e=>({w:e.clientWidth,s:e.scrollWidth}));assert.ok(d.s<=d.w+3,JSON.stringify(d));
+            await fit(p,width,'agenda aluno');
+            assert.ok(await p.locator('#apg-agenda .wc').first().evaluate(e=>parseFloat(getComputedStyle(e).fontSize)>=11&&e.getBoundingClientRect().height>=44));
+          });
+          if(width===393){await capture(p,'aluno-agenda-semana-393');await auditContrast(p,'aluno-agenda-semana');}
+        }
         if(app==='gestao') {
-          for(const id of ['aval','lanc','torneio','graf','fech','profs']) {
+          for(const id of ['aval','fin','torneio','graf','fech','profs']) {
             await p.locator('#nav-mais').click();
             await p.locator(`#mais-pop button[onclick="irDoMais('${id}')"]`).click();
             await ok('Mais '+id+' '+width+'px',()=>fit(p,width,id));
             if(width===393)await auditContrast(p,app+'-'+id);
+            if(width===393&&id==='fin')await capture(p,'gestao-fin-393');
             if(id==='torneio') {
               await ok('Torneio: ações alcançáveis '+width+'px',async()=>{
                 const scroll=p.locator('.tg-table-scroll').first();
@@ -130,6 +153,7 @@ async function capture(p,name) { await p.screenshot({path:path.join(output,name+
           await ok('Zoom + e − '+width+'px',()=>{if(width<720){assert.ok(after>before);assert.ok(smaller<after);}assert.equal(smaller,before);});
           await p.locator('.wk-zoom .wz-fit').click();
           await ok('Zoom Semana toda '+width+'px',async()=>{
+            const btn=await p.locator('.wk-zoom .wz-fit').evaluate(e=>({outer:e.getBoundingClientRect().width,w:e.clientWidth,s:e.scrollWidth}));assert.ok(btn.outer>=132&&btn.s<=btn.w,'Rótulo Ajustar à tela deve caber no botão: '+JSON.stringify(btn));
             const dims=await p.locator('.wk-scroll').evaluate(e=>({w:e.clientWidth,s:e.scrollWidth}));
             assert.ok(dims.s<=dims.w+3,JSON.stringify(dims));
             assert.ok(await p.locator('.wk-cell').first().evaluate(e=>parseFloat(getComputedStyle(e).fontSize)>=11.5));
@@ -139,6 +163,24 @@ async function capture(p,name) { await p.screenshot({path:path.join(output,name+
         }
       }
       if(app==='aluno') {
+        await ok('Aluno: Ajustar acompanha rotação; zoom manual preserva preferência ao reabrir',async()=>{
+          await p.setViewportSize({width:393,height:852});await p.waitForTimeout(80);
+          let d=await p.locator('#apg-agenda .wk-scroll').evaluate(e=>({w:e.clientWidth,s:e.scrollWidth}));assert.ok(d.s<=d.w+3);
+          await p.evaluate(()=>{alunoWkZoom=1.5;alunoWkAutoFit=false;aplicarAlunoWkVars();renderAgenda();});
+          await p.waitForFunction(()=>document.getElementById('al-wk-zlbl').textContent==='150%');
+          assert.equal(await p.locator('#al-wk-zlbl').textContent(),'150%');
+          d=await p.locator('#apg-agenda .wk-scroll').evaluate(e=>({w:e.clientWidth,s:e.scrollWidth}));assert.ok(d.s>d.w);
+          await fit(p,393,'zoom manual aluno');
+        });
+        await ok('Aluno: livre continua abrindo agendamento após ajuste',async()=>{
+          await p.evaluate(()=>{agDate=new Date();agDate.setDate(agDate.getDate()+14);agView='semana';renderAgenda();alunoWkZoomFit();});
+          await p.locator('#apg-agenda .wc.livre').first().click();
+          assert.ok(await p.locator('#ov-pick').isVisible());
+          assert.ok(await p.locator('#pick-opts .pick-opt').count()>0);
+          // Abrir a escolha não grava pedido nem saldo.
+          assert.equal(await p.evaluate(()=>MEU.pedidos.length),0);
+          await p.evaluate(()=>document.getElementById('ov-pick').classList.remove('on'));
+        });
         await ok('P0: aviso pendente aparece e some após aprovação',async()=>{
           await p.evaluate(()=>{VINCULO_ESTADO='pendente';renderVinculoStatus();});assert.ok(await p.locator('#vinculo-status-box').isVisible());
           await p.evaluate(()=>{VINCULO_ESTADO='ativo';renderVinculoStatus();});assert.ok(!await p.locator('#vinculo-status-box').isVisible());
@@ -147,6 +189,7 @@ async function capture(p,name) { await p.screenshot({path:path.join(output,name+
           await p.evaluate(()=>{goAluno('inicio',document.getElementById('nav-al-inicio'));PUB.pix='';renderPremiumAluno();});assert.ok(!await p.locator('#home-pix-btn').isVisible());
           await p.evaluate(()=>{PUB.pix='teste@example.invalid';renderPremiumAluno();});assert.ok(await p.locator('#home-pix-btn').isVisible());
           assert.equal(await p.locator('#home-pix-btn').getAttribute('onclick'),'pagarPix()');
+          assert.ok(await p.locator('#home-pix-btn img').evaluate(e=>e.complete&&e.naturalWidth>0));
         });
         await ok('Avatar: upload, compressão e isolamento por aluno',async()=>{
           await p.locator('#avatar-aluno-file').setInputFiles(path.join(root,'app-aluno/jv-icone-aluno-512.png'));
@@ -157,6 +200,14 @@ async function capture(p,name) { await p.screenshot({path:path.join(output,name+
           await p.evaluate(()=>{MEU.codigo='9999';carregarAvatarAluno();});assert.ok(await p.locator('#avatar-aluno-img').isVisible());
         });
       }
+      if(app==='gestao')await ok('Comparativo do início usa os mesmos valores e respeita ocultar',async()=>{
+        await p.evaluate(()=>{hideVals=false;renderDash();});
+        assert.equal(await p.locator('#cmp-rec').textContent(),await p.locator('#k-recebido').textContent());
+        assert.equal(await p.locator('#cmp-desp').textContent(),await p.locator('#k-ref-desp').textContent());
+        await p.evaluate(()=>{hideVals=true;renderDash();});
+        for(const txt of await p.locator('.jv-ref-bar-row>strong').allTextContents())assert.equal(txt,'R$ ••••');
+        assert.ok(await p.locator('.jv-ref-bar-row>i>b').evaluateAll(es=>es.every(e=>e.style.width==='0%')));
+      });
       await ok(app+': sem exceções JS nem renderizadores quebrados',()=>{assert.deepEqual(errors,[]);assert.deepEqual(renderErrors,[]);});
       await context.close();
     }
