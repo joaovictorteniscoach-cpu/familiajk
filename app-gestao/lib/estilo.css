@@ -2250,3 +2250,6 @@ html,body{background:var(--jv-bg)!important}
 .top.jv-premium-hero .top-actions .eye-btn svg{width:19px!important;height:19px!important}
 .mais-pop{width:min(252px,calc(100vw - 24px))!important;background:#214639!important;max-height:calc(100dvh - 130px - env(safe-area-inset-top,0px));overscroll-behavior:contain}
 .mais-pop button{min-height:44px!important;padding:9px 10px!important;font-size:14px!important;line-height:1.3!important;color:#F6F2EA!important}
+/* Uma única reserva para a barra fixa, sem somar duas margens inferiores. */
+body{padding-bottom:calc(56px + max(5px,env(safe-area-inset-bottom,0px)))!important}
+.page,#pg-dash{padding-bottom:12px!important}
