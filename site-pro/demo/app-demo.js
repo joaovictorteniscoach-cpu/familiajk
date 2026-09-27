@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-26-12';
+const VERSAO='2026-09-27-1';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2750,7 +2750,10 @@ function go(id,btn){
   document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
   window.scrollTo({top:0});
-  if(id==='agenda'){syncRequests(true);marcarVisto('agenda');}
+  if(id==='agenda'){syncRequests(true);marcarVisto('agenda');
+    /* sem zoom escolhido, a semana abre inteira na tela: só dá para medir agora que a página aparece */
+    let z=null;try{z=localStorage.getItem('jv-wkzoom');}catch(e){}
+    if(!z&&typeof wkZoomFit==='function')requestAnimationFrame(wkZoomFit);}
   if(id==='lanc'){filtroLancCat=null;renderMovs();}   // abrir a Caixa pela barra mostra tudo
   if(id==='fech')abrirFechamento();
   if(id==='profs')prepararAluguel();
@@ -3177,7 +3180,8 @@ function wkZoomStep(dir){
   aplicarWkVars();
 }
 function wkZoomFit(){
-  const sc=document.querySelector('.wk-scroll'); if(!sc)return;
+  /* com a Agenda escondida a largura é 0: não mede nem grava nada */
+  const sc=document.querySelector('.wk-scroll'); if(!sc||!sc.clientWidth)return;
   const disp=Math.max(240,sc.clientWidth-6);   // desconta a borda/padding
   wkZoom=Math.min(1.8,Math.max(0.35,Math.floor(((disp-48)/6)/WK_COL*100)/100));
   aplicarWkVars();

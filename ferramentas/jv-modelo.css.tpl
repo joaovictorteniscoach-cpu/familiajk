@@ -1,4 +1,4 @@
-/* ===== JV Modelo aprovado 2026-09-26-11 · Gestão, Aluno e Agenda =====
+/* ===== JV Modelo aprovado 2026-09-27-1 · Gestão, Aluno e Agenda =====
    Refaz as três telas da imagem modelo dos três celulares (guardada em
    ferramentas/originais/modelo-apps-jv.png), medida a medida: topo com o
    logo de traço, "Olá, João Victor!", o mês como "Setembro 2026 ˅" e
@@ -256,3 +256,159 @@ html body :is(#pg-agenda,#apg-agenda) .legend.jv-leg span{font-size:13.5px!impor
 html body .jv-ref-kpi #k-recebido-s::before{content:"";display:inline-block;width:14px;height:14px;flex:0 0 14px;
   background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%236ED291' d='M12 5.5 20 13h-4.5v5.5h-7V13H4z'/%3E%3C/svg%3E") center/contain no-repeat}
 html body .jv-ref-kpi #k-recebido-s .jv-sobe{display:none!important}
+
+/* ===== Medidas exatas do modelo (2026-09-27) =====
+   Medido pixel a pixel na imagem modelo (tela reduzida a 390 px de largura):
+   o modelo é mais enxuto que a primeira versão — topo 50 px mais baixo,
+   letras um pouco menores e cartões mais justos. Cores dos círculos dos
+   ícones tiradas da própria imagem. */
+HERO{padding:calc(10px + env(safe-area-inset-top,0px)) 17px 3px 19px!important}
+HERO .marca-linha,HERO .marca-linha svg{width:32px!important;height:32px!important;flex-basis:32px!important}
+HERO .jv-gestao-brand,HERO>div:first-child{gap:10px!important}
+HERO .jv-gestao-brand span:not(.marca-linha),HERO>div:first-child>span:not(.marca-linha){font-size:8.5px!important;letter-spacing:3px!important}
+HERO .jv-gestao-brand span b,HERO>div:first-child>span b{font-size:15.5px!important;margin-top:2px!important;letter-spacing:.5px!important}
+HERO .jv-avatar-btn{width:36px!important;height:36px!important;min-height:36px!important}
+HERO .jv-avatar-fallback{font-size:14px!important}
+HERO .jv-hero-greet{margin:10px 0 0!important;font-size:27px!important;line-height:1.12!important}
+HERO h1{margin:1px 0 0!important;font-size:17.5px!important;line-height:1.2!important;align-self:start!important}
+HERO .top-actions{margin:0!important;align-self:start!important}
+HERO .top-actions .eye-btn{width:28px!important;height:28px!important;min-width:28px!important;min-height:28px!important;flex-basis:28px!important}
+HERO .top-actions .eye-btn svg,HERO .top-actions .eye-btn [data-ic] svg{width:15px!important;height:15px!important}
+HERO .top-month.jv-mes{margin:2px 0 0!important;min-height:30px!important}
+HERO .jv-mes-sel{min-height:30px!important;gap:12px!important}
+HERO .jv-mes-sel .jv-mes-cal svg{width:18px!important;height:18px!important}
+HERO .jv-mes-sel .jv-mes-seta svg{width:14px!important;height:14px!important}
+HERO .jv-mes .month-label{font-size:15.5px!important}
+HERO .jv-mes .save-state{font-size:12.5px!important;gap:6px!important}
+HERO .jv-mes .save-state::before{width:16px!important;height:16px!important}
+AGENDA HERO .jv-ag-titulo{margin:10px 0 0!important;font-size:27px!important}
+AGENDA HERO .jv-ag-sub{font-size:15px!important}
+@media (max-width:380px){HERO .top-actions .eye-btn{width:28px!important;height:28px!important;min-width:28px!important;min-height:28px!important;flex-basis:28px!important}}
+html body #app>.top.jv-premium-hero .top-actions button{width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important}
+
+html body #pg-dash{padding:5px 10px 18px!important}
+html body .jv-ref-kpis{gap:10px 8px!important;margin:0 0 10px!important}
+html body .jv-ref-kpi{min-height:100px!important;padding:11px 11px 12px!important}
+html body .jv-ref-kpi-title{gap:10px!important}
+html body .jv-ref-kpi-title b{font-size:14px!important;font-weight:500!important}
+html body .jv-ref-round-icon{width:32px!important;height:32px!important;flex:0 0 32px!important}
+html body .jv-ref-round-icon svg{width:19px!important;height:19px!important}
+html body .jv-ref-kpi.recebido .jv-ref-round-icon,html body .jv-ref-kpi.meta .jv-ref-round-icon{background:#145039!important;color:#F7F5EE!important}
+html body .jv-ref-kpi.receber .jv-ref-round-icon{background:#2B3E2D!important;color:#F6CF5A!important}
+html body .jv-ref-kpi.despesas .jv-ref-round-icon{background:#1C3026!important;color:#ECE9E1!important}
+html body .jv-ref-kpi strong{margin:2px 0 0 42px!important;font-size:24px!important;line-height:1.05!important;letter-spacing:-.4px!important}
+html body .jv-ref-kpi.recebido strong{margin-left:5px!important}
+html body .jv-ref-kpi small{margin:4px 0 0 42px!important;font-size:11px!important;gap:4px!important}
+html body .jv-ref-kpi #k-recebido-s{margin-left:8px!important}
+html body .jv-ref-kpi #k-recebido-s::before{width:13px!important;height:13px!important;flex-basis:13px!important}
+html body .jv-ref-comparativo{padding:13px 13px 11px!important;margin:0 0 12px!important;border-radius:14px!important}
+html body .jv-ref-comparativo h3{font-size:16.5px!important;margin:0 0 6px!important}
+html body .jv-ref-bar-row{grid-template-columns:62px minmax(0,1fr) 84px!important;gap:10px!important;min-height:27.5px!important}
+html body .jv-ref-bar-row span,html body .jv-ref-bar-row strong{font-size:13.5px!important}
+html body .jv-ref-bar-row i{height:13px!important}
+html body .jv-ref-section-head{margin:0 3px 7px!important}
+html body .jv-ref-section-head b{font-size:16.5px!important}
+html body .jv-ref-section-head button{font-size:14.5px!important;min-height:28px!important;padding:2px 0 2px 10px!important}
+html body .jv-ref-attention{margin:0 0 12px!important}
+html body .jv-ref-attention .acao-item{min-height:63px!important;padding:10px 14px 10px 13px!important;gap:14px!important}
+html body .jv-ref-attention .acao-item .ai-ico{width:37px!important;height:37px!important;flex-basis:37px!important}
+html body .jv-ref-attention .acao-item b{font-size:15.5px!important}
+html body .jv-ref-attention .acao-item small{font-size:13.5px!important;margin-top:2px!important}
+html body .jv-ref-actions{gap:10px!important;margin:0 0 14px!important}
+html body .jv-ref-actions button{height:42px!important;min-height:42px!important;font-size:16px!important;border-radius:11px!important}
+html body .jv-ref-actions button.primary{font-weight:700!important}
+html body .jv-ref-actions button:not(.primary){border:1.5px solid rgba(110,170,135,.55)!important;background:rgba(9,40,29,.85)!important}
+html body .jv-ref-actions button span svg{width:20px!important;height:20px!important}
+
+html body nav.nav.jv-nav-linha{padding:4px 4px calc(4px + env(safe-area-inset-bottom,0px))!important;background:#041D16!important}
+html body nav.nav.jv-nav-linha button{min-height:50px!important;padding:5px 0 9px!important;gap:5px!important;font-size:12px!important}
+html body nav.nav.jv-nav-linha button .ico,html body nav.nav.jv-nav-linha button .ico svg{width:21px!important;height:21px!important}
+html body nav.nav.jv-nav-linha button.on::after{width:34px!important;height:3px!important;bottom:0!important}
+/* fundo: cada app tem o recorte do seu celular no modelo (a imagem já traz o
+   escurecimento do modelo); só um fio de transição embaixo */
+HERO{background:linear-gradient(180deg,rgba(2,22,15,0) 82%,var(--m-bg) 100%),url('ASSETS/jv-topo-quadra.webp') center top/cover no-repeat,#07241A!important}
+HERO .jv-mes-sel .jv-mes-cal,HERO .jv-mes-sel .jv-mes-seta,HERO .jv-mes-sel .jv-mes-cal svg,HERO .jv-mes-sel .jv-mes-seta svg{color:#F4F1EA!important;stroke:currentColor}
+html body #pg-dash{padding-top:1px!important}
+html body .jv-ref-kpi strong{font-size:22.5px!important;white-space:nowrap!important;letter-spacing:-.5px!important}
+html body .jv-ref-kpi small{font-size:10.5px!important;white-space:nowrap!important;letter-spacing:-.1px!important}
+html body .jv-ref-kpi.receber small{margin-left:37px!important}
+/* "Recebido": barras cheias em branco, como no modelo */
+html body .jv-ref-kpi.recebido .jv-ref-round-icon svg{display:none!important}
+html body .jv-ref-kpi.recebido .jv-ref-round-icon{background:#145039 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23F7F5EE'%3E%3Crect x='4' y='13' width='4' height='7' rx='.8'/%3E%3Crect x='10' y='8.5' width='4' height='11.5' rx='.8'/%3E%3Crect x='16' y='4' width='4' height='16' rx='.8'/%3E%3C/svg%3E") center/19px no-repeat!important}
+html body .jv-ref-bar-row{grid-template-columns:64px minmax(0,1fr) 78px!important}
+html body .jv-ref-bar-row span,html body .jv-ref-bar-row strong{font-size:13px!important;white-space:nowrap!important}
+html body .jv-ref-bar-row i{height:14px!important}
+html body .jv-ref-kpi.meta .jv-ref-round-icon svg{color:#F7F5EE!important}
+html body .jv-ref-kpi.receber .jv-ref-round-icon svg{color:#F6CF5A!important}
+html body .jv-ref-kpi.despesas .jv-ref-round-icon svg{color:#ECE9E1!important}
+html body .jv-ref-kpi .jv-ref-round-icon svg{width:21px!important;height:21px!important}
+html body .jv-ref-kpi .jv-ref-round-icon svg *{stroke-width:2.1px}
+html body .jv-ref-kpi.recebido .jv-ref-round-icon{background-size:21px!important}
+html body .jv-ref-kpi-title b{font-size:15px!important}
+html body .jv-ref-comparativo{padding:10px 13px 9px!important}
+html body .jv-ref-comparativo h3{line-height:1.2!important;margin:0 0 5px!important;padding:0!important}
+html body .jv-ref-comparativo{margin-bottom:8px!important}
+html body .jv-ref-section-head{margin-bottom:5px!important}
+html body .jv-ref-actions button.primary span,html body .jv-ref-actions button.primary span svg{color:#15130B!important;stroke:#15130B!important;opacity:1!important}
+html body .jv-ref-actions button:not(.primary) span,html body .jv-ref-actions button:not(.primary) span svg{color:#F4F1EA!important}
+
+/* ----- Aluno medido no modelo (2026-09-27) */
+html body #app .wrap{padding-top:8px!important;padding-left:8px!important;padding-right:12px!important}
+html body .jv-home-grid{gap:7px 10px!important;margin:0 0 13px!important}
+html body .jv-home-card{min-height:140px!important;padding:9px 11px 11px!important}
+html body .jv-home-card .hc-top{gap:10px!important}
+html body .jv-home-card .hc-top span:last-child{font-size:14.5px!important;font-weight:600!important}
+html body .jv-home-card .hc-icon{width:33px!important;height:33px!important;flex:0 0 33px!important;background:#153A2D!important}
+html body .jv-home-card .hc-icon svg{width:21px!important;height:21px!important}
+html body .jv-home-card .hc-icon svg *{stroke-width:2px}
+html body .jv-home-grid>:nth-child(odd) .hc-icon,html body .jv-home-grid>:nth-child(odd) .hc-icon svg{color:#F7F5EE!important}
+html body .jv-home-grid>:nth-child(even) .hc-icon,html body .jv-home-grid>:nth-child(even) .hc-icon svg{color:#F2CB55!important}
+html body .jv-home-card .hc-main{margin:7px 0 0!important;font-size:22.5px!important;line-height:1.07!important}
+html body .jv-home-card .hc-sub{margin:5px 0 0!important;font-size:13.5px!important;line-height:1.2!important}
+html body .jv-home-card .jv-progress{height:8px!important;margin:auto 0 5px!important}
+html body .jv-pay-card{padding:11px 14px 12px!important;margin:0 0 12px!important}
+html body .jv-pay-card .jv-pay-head{margin:0 0 5px!important}
+html body .jv-pay-card .jv-pay-head b{font-size:16.5px!important}
+html body .jv-pay-card .jv-pay-status{padding:3px 17px!important;font-size:13.5px!important}
+html body .jv-pay-card .jv-pay-lbl{font-size:13px!important}
+html body .jv-pay-card .jv-pay-value{font-size:22.5px!important;margin-top:1px!important}
+html body .jv-pay-card .jv-pix-btn{height:48px!important;min-height:48px!important;margin-top:8px!important}
+html body #apg-inicio .jv-quick-title{font-size:16.5px!important;margin:0 2px 8px!important}
+html body #apg-inicio .jv-quick button{height:44px!important;min-height:44px!important;font-size:14.5px!important}
+html body #apg-inicio .jv-quick button span svg{width:21px!important;height:21px!important}
+html body .jv-home-card .hc-main{margin-top:5px!important}
+html body .jv-home-card .hc-sub{margin-top:3px!important;padding-top:0!important}
+html body .jv-pay-card .jv-pay-head{margin-bottom:2px!important;min-height:0!important}
+html body .jv-pay-card .jv-pay-status{padding:2px 17px!important;line-height:1.35!important}
+html body .jv-pay-card .jv-pay-lbl{line-height:1.25!important}
+html body .jv-pay-card .jv-pay-value{line-height:1.12!important}
+html body .jv-pay-card .jv-pix-btn{margin-top:7px!important}
+html body #apg-inicio .jv-quick-title{margin:6px 2px 7px!important}
+html body .jv-pay-card{margin-bottom:4px!important;padding-top:10px!important;padding-bottom:10px!important}
+html body #apg-inicio .jv-quick-title{margin:0 2px 6px!important;line-height:1.2!important;padding-top:6px!important}
+
+/* ----- Agenda medida no modelo (2026-09-27) */
+html body #pg-agenda,html body #apg-agenda{padding-top:6px!important}
+html body :is(#pg-agenda,#apg-agenda) .seg.jv-ref-ag-tabs{margin:0 0 11px!important}
+html body :is(#pg-agenda,#apg-agenda) .seg.jv-ref-ag-tabs button{height:30px!important;min-height:30px!important;font-size:15px!important;border-radius:9px!important}
+html body :is(#pg-agenda,#apg-agenda) .ag-nav{grid-template-columns:32px minmax(0,1fr) 32px!important;margin:0 0 10px!important;padding:0 0 8px!important}
+html body :is(#pg-agenda,#apg-agenda) .ag-nav .month-btn{width:32px!important;height:32px!important;min-width:32px!important;min-height:32px!important;border-radius:8px!important}
+html body :is(#pg-agenda,#apg-agenda) .ag-nav .month-btn svg{width:18px!important;height:18px!important}
+html body :is(#pg-agenda,#apg-agenda) .ag-nav-label{font-size:17px!important}
+html body :is(#pg-agenda,#apg-agenda) :is(.wk-zoom,.wk-tools){margin:0 0 9px!important}
+html body :is(#pg-agenda,#apg-agenda) .jv-zoom{grid-template-columns:38px 1fr 38px!important;width:156px!important;height:38px!important}
+html body :is(#pg-agenda,#apg-agenda) .jv-zoom :is(.wz,.wk-zbtn){width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;font-size:22px!important}
+html body :is(#pg-agenda,#apg-agenda) .jv-zoom :is(.wz-lbl,.wk-zlbl){font-size:15px!important}
+html body :is(#pg-agenda,#apg-agenda) :is(.wz-fit,.wk-fit){height:38px!important;min-height:38px!important;font-size:15px!important;padding:0 18px!important}
+html body :is(#pg-agenda,#apg-agenda) :is(.wz-fit,.wk-fit) svg{width:18px!important;height:18px!important}
+html body :is(#pg-agenda,#apg-agenda) :is(.wk-scroll,.legend.jv-leg,.jv-ag-info){margin-left:-7px!important;margin-right:-7px!important}
+html body :is(#pg-agenda,#apg-agenda) table.wk th{height:46px!important;padding:4px 2px!important;font-size:13px!important}
+html body :is(#pg-agenda,#apg-agenda) table.wk td,html body :is(#pg-agenda,#apg-agenda) table.wk td.hr{height:36px!important}
+html body :is(#pg-agenda,#apg-agenda) table.wk td.hr{font-size:13.5px!important}
+html body :is(#pg-agenda,#apg-agenda) table.wk :is(.wk-cell,.wc){min-height:35px!important}
+html body #pg-agenda{padding-top:0!important}
+html body #apg-agenda{padding-top:0!important}
+html body #app .wrap:has(#apg-agenda.on){padding-top:0!important}
+html body :is(#pg-agenda,#apg-agenda) .seg.jv-ref-ag-tabs{padding:2px!important;margin-bottom:10px!important}
+html body :is(#pg-agenda,#apg-agenda) .seg.jv-ref-ag-tabs button{height:34px!important;min-height:34px!important}
+html body :is(#pg-agenda,#apg-agenda) table.wk :is(.wk-cell,.wc){height:35px!important}
