@@ -50,10 +50,9 @@ async function contrast(p){return p.evaluate(()=>{
     for(const mode of ['contas','invest']){
       await p.evaluate(m=>setMode(m),mode);
       const ids=await p.locator('#tabs button[data-id]').evaluateAll(es=>es.map(e=>e.dataset.id));
-      ok(mode+': quatro atalhos, Mais e nenhuma função duplicada',await p.locator('#tabs>button').count()===4&&ids.length===new Set(ids).size&&ids.length===(mode==='contas'?15:12));
+      ok(mode+': todas as abas numa faixa só, sem função duplicada',await p.locator('#tabs>button').count()===ids.length&&ids.length===new Set(ids).size&&ids.length===(mode==='contas'?15:12));
       for(const id of ids){
         const btn=p.locator('#tabs button[data-id="'+id+'"]');
-        if(await btn.evaluate(e=>!!e.closest('.jk-more-panel')))await p.locator('.jk-more-toggle').click();
         await btn.click();
         ok(mode+' / '+id,await p.locator('section[data-tab="'+id+'"].on').isVisible()&&await p.locator('section[data-tab].on').count()===1);
         allIssues.push(...(await contrast(p)).map(x=>({page:id,...x})));

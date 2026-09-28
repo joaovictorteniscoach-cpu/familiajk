@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Família JK — Contas e Investimentos</title>
 <link rel="manifest" href="manifest-familia.webmanifest">
-<meta name="theme-color" content="#101113">
+<meta name="theme-color" content="#06140F">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="lib/chart.umd.min.js?v=2026-09-28-1"></script>
+<script src="lib/chart.umd.min.js?v=2026-09-28-2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
@@ -326,7 +326,7 @@ table.tbl.livre td:last-child{width:42%}
 :root{
   --ink:#04100B;--surface:#0B281C;--surface2:#123925;--line:rgba(224,185,79,.20);
   --text:#F8F5ED;--muted:#C8C2B6;--gold:#E0B94F;--gold-soft:#F0D57C;
-  --teal:#5FD4A8;--teal-soft:#9BE8C9;--up:#58D982;--down:#E27666;
+  --teal:#5FD4A8;--teal-soft:#9BE8C9;--up:#58D982;--down:#EE8878;
   --clay:#B95D2A;--radius:18px;
 }
 html{background:#04100B}
@@ -439,13 +439,14 @@ input.cell:focus,select.cell:focus{border-color:var(--accent);outline:none}
 /* o aviso de backup é um aviso: dourado nos dois modos, para não parecer
    mais um botão do modo investimento */
 .banner .iconbtn.primary{background:linear-gradient(150deg,#E0B94F,#B8912F);color:#1a1304}
+/* com viewport-fit=cover, o fim da página não pode ficar sob a barra do iPhone */
+body{padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
 </style>
-<link rel="stylesheet" href="lib/black-gold.css?v=2026-09-28-1">
 </head>
 <body class="mode-contas">
 <header class="topbar jv-premium-hero">
   <div class="brand">
-    <div class="crest"><img src="icone-jk-gestao-192.png" alt="JK" width="44" height="44"></div>
+    <div class="crest">JK</div>
     <div><h1>Família J K</h1><span>João e Kassiana</span></div>
   </div>
   <div class="tools">
@@ -467,8 +468,8 @@ input.cell:focus,select.cell:focus{border-color:var(--accent);outline:none}
 </header>
 
 <div class="modeswitch">
-  <button class="ms on" id="ms-contas" onclick="setMode('contas')"><svg class="jk-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-8h6v8"/></svg>Contas</button>
-  <button class="ms" id="ms-invest" onclick="setMode('invest')"><svg class="jk-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M6 15l5-5 4 3 6-8M16 5h5v5"/></svg>Investimentos</button>
+  <button class="ms on" id="ms-contas" onclick="setMode('contas')"><span class="ic">🏠</span>Contas</button>
+  <button class="ms" id="ms-invest" onclick="setMode('invest')"><span class="ic">📈</span>Investimentos</button>
 </div>
 
 <div class="banner" id="backupBanner" style="display:none">
@@ -1003,7 +1004,7 @@ input.cell:focus,select.cell:focus{border-color:var(--accent);outline:none}
   <div class="card">
     <h2>Como usar (e não perder nada)</h2><div class="sub">Feito para vocês dois.</div>
     <ul class="intro">
-      <li><b>Dois modos no topo:</b> <b>Contas</b> e <b>Investimentos</b>. As áreas mais usadas ficam à vista; as demais estão em <b>Mais</b>.</li>
+      <li><b>Dois modos no topo:</b> 🏠 <b>Contas</b> e 📈 <b>Investimentos</b>. As abas ficam numa faixa só: deslize para o lado para ver todas.</li>
       <li><b>Salva sozinho</b> neste navegador. Toque em qualquer número que ele já vem selecionado — é só digitar por cima.</li>
       <li><b>Para nunca perder:</b> use <b>Backup</b> às vezes (baixa um <code>.json</code>) e <b>Importar</b> para restaurar. Backups antigos do Cofre ou do app de Contas são reconhecidos automaticamente.</li>
       <li><b>Compartilhar:</b> gera um link com tudo embutido (contas + investimentos). Quem abrir carrega no próprio aparelho.</li>
@@ -1180,7 +1181,7 @@ input.cell:focus,select.cell:focus{border-color:var(--accent);outline:none}
   </div>
 </div>
 
-<div class="foot">Família JK · Black &amp; Gold · 2026-09-28-1 · dados guardados no seu dispositivo</div>
+<div class="foot">Família JK · contas da casa + investimentos · dados guardados no seu dispositivo</div>
 
 <script>
 const KEY="familiajk_v1";
@@ -1614,16 +1615,9 @@ function setMode(m){
 function buildTabs(m){
   const n=document.getElementById('tabs');n.innerHTML='';
   const list=(m==='invest'?TABS_INVEST:TABS_CONTAS).concat(TABS_SHARED);
-  const primary=m==='invest'?['i-painel','i-carteira','i-aportes','i-metas']:['c-painel','c-casa','c-cartao','c-recebidos'];
-  const more=document.createElement('details');more.className='jk-more';
-  const summary=document.createElement('summary');summary.className='tab jk-more-toggle';summary.textContent='Mais';summary.setAttribute('aria-label','Mais áreas da família');more.appendChild(summary);
-  const panel=document.createElement('div');panel.className='jk-more-panel';more.appendChild(panel);
-  list.forEach(t=>{const b=document.createElement('button');b.type='button';b.className='tab';b.textContent=t[0]==='c-recebidos'?'Entradas':t[1];b.dataset.id=t[0];b.onclick=()=>{switchTab(t[0],b);more.open=false;};(primary.includes(t[0])?n:panel).appendChild(b);});
-  n.appendChild(more);
+  list.forEach(t=>{const b=document.createElement('button');b.type='button';b.className='tab';b.textContent=t[1];b.dataset.id=t[0];b.onclick=()=>switchTab(t[0],b);n.appendChild(b);});
   switchTab(list[0][0],n.firstChild);
 }
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){const m=document.querySelector('.jk-more[open]');if(m){m.open=false;m.querySelector('summary').focus();}}});
-document.addEventListener('click',e=>{const m=document.querySelector('.jk-more[open]');if(m&&!m.contains(e.target))m.open=false;});
 const DRAW={'i-painel':()=>drawInvPainel(),'i-mensal':()=>drawMensal(),'i-anual':()=>drawAnual(),'i-projecao':()=>onProj(),
   'i-analise':()=>{drawAnalise();renderAlloc();},'i-ganhos':()=>renderGanhos(),'i-plano':()=>onPlano(),'i-metas':()=>renderGoals(),
   'c-painel':()=>drawConPainel(),'c-casa':()=>renderCasa(),'c-joao':()=>renderPess('joao','tbl-joao'),'c-esposa':()=>renderPess('esposa','tbl-esposa'),'c-empresa':()=>drawEmpresa(),'c-recebidos':()=>renderReceb(),'c-patrimonio':()=>drawPatrimonio(),'c-protecao':()=>drawProtecao(),'c-resumo':()=>drawResumo(),'c-anual':()=>renderControle(),'c-categorias':()=>renderCategorias(),'c-conselhos':()=>renderConselhos(),'c-cartao':()=>refreshCartao()};
@@ -1642,11 +1636,10 @@ function heroFamilia(){
 function switchTab(id,btn){
   document.querySelectorAll('section[data-tab]').forEach(s=>s.classList.toggle('on',s.dataset.tab===id));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));if(btn)btn.classList.add('active');
-  const more=document.querySelector('.jk-more-toggle');if(more){const secondary=!!(btn&&btn.closest('.jk-more-panel'));more.classList.toggle('active',secondary);more.textContent=secondary?btn.textContent:'Mais';}
   if(DRAW[id]){const prev=suppressPush;suppressPush=true;try{DRAW[id]();}catch(e){console.warn('Família JK — falha na aba',id,e);}suppressPush=prev;}
   rotularTabelas();marcarVazias();
   /* com as abas numa faixa que desliza, a escolhida precisa ficar à vista */
-  try{if(btn&&!btn.closest('.jk-more-panel')&&btn.scrollIntoView)btn.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'});}catch(_){}
+  try{if(btn&&btn.scrollIntoView)btn.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'});}catch(_){}
   heroFamilia();
 }
 
@@ -2425,7 +2418,7 @@ function refreshAnual(){
 function addAnual(){D.invest.anual.push({ano:"",patr:null,aporte:null});renderAnual();drawAnual()}
 
 /* charts */
-if(window.Chart){Chart.defaults.color='#C9C4B9';Chart.defaults.font.family='Inter';Chart.defaults.font.size=11;}
+if(window.Chart){Chart.defaults.color='#C8C2B6';Chart.defaults.font.family='Inter';Chart.defaults.font.size=11;}
 const COL={gold:'#d4a23a',teal:'#4fbfa8',muted:'#90a8ad',ink:'#0a171c',up:'#5fd08a',down:'#e8755f'};
 const PAL=['#4fbfa8','#d4a23a','#e6c277','#8fb6c9','#c98f8f','#7f9c8b','#9aa0ad'];
 let charts={};
@@ -5291,7 +5284,7 @@ document.addEventListener('focusin',e=>{const t=e.target;if(t&&t.tagName==='INPU
 load();D.contas.mesSel=curMonthKey();initFields();renderAll();setMode(D.mode||'contas');aplicarFit();aplicarZoom();checkBackup();
 if(D.cloud&&D.cloud.on&&D.cloud.url){setCloudStatus('conectado');cloudStart();cloudPull(true);}
 /* PWA: instalar na tela de início e abrir offline (rede primeiro, cache de reserva) */
-if('serviceWorker'in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-familia.js?v=2026-09-28-1').catch(function(){});});}
+if('serviceWorker'in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-familia.js?v=2026-09-28-2').catch(function(){});});}
 </script>
 </body>
 </html>
