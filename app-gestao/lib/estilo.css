@@ -2292,3 +2292,13 @@ body{padding-bottom:calc(56px + max(5px,env(safe-area-inset-bottom,0px)))!import
 #pg-agenda .wk-cell.t-chuva{background:#D5E6F1!important;color:#304F68!important;-webkit-text-fill-color:#304F68!important}
 #pg-agenda .wk-cell.multi{background:repeating-linear-gradient(45deg,#3B6FB5,#3B6FB5 8px,#2F5A94 8px,#2F5A94 16px)!important;color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important}
 #pg-agenda #ag-view .jv-ag-hint{color:#5F584D!important;-webkit-text-fill-color:#5F584D!important}
+
+/* ===== Barras do "Comparativo do mês" nas cores do modelo · 2026-09-28-3 =====
+   Só as cores: trilho verde bem escuro, Meta dourada, Recebido verde-sálvia
+   (com leve degradê), A receber dourado e Despesas terracota. "A receber"
+   pequeno aparece como um ponto redondo, como no modelo, em vez de um fio. */
+.jv-ref-comparativo .jv-ref-bar-row>i{background:#0F2A20!important}
+.jv-ref-comparativo .jv-ref-bar-row.meta>i>b{background:#EBBF58!important}
+.jv-ref-comparativo .jv-ref-bar-row.recebido>i>b{background:linear-gradient(90deg,#57A072,#78B48F)!important}
+.jv-ref-comparativo .jv-ref-bar-row.receber>i>b{background:#EDC35E!important;min-width:12px}
+.jv-ref-comparativo .jv-ref-bar-row.despesa>i>b{background:#D27244!important}
