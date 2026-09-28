@@ -721,6 +721,8 @@ body{padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
         <option value="cartao">só a fatura do cartão</option>
         <option value="conta">só a conta do banco</option>
       </select>
+      <span class="k" style="font-size:12px;color:var(--muted)">De quem</span>
+      <select class="cell txt" id="cat-pes" style="max-width:150px" onchange="onCatPes(this.value)"></select>
       <button class="iconbtn primary" onclick="pickExtrato()">＋ importar extrato</button>
       <button class="iconbtn" onclick="clearTx()">limpar</button>
       <button class="iconbtn" onclick="toggleMeus()">👤 nomes da família</button>
@@ -749,8 +751,8 @@ body{padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
     </div>
     <p class="note" id="cat-fora"></p>
     <div class="kpis">
-      <div class="kpi"><div class="k" id="cat-k-preto">João</div><div class="v down" id="cat-preto">—</div></div>
-      <div class="kpi"><div class="k" id="cat-k-preta">Kassiana</div><div class="v down" id="cat-preta">—</div></div>
+      <div class="kpi" role="button" tabindex="0" style="cursor:pointer" onclick="onCatPes(catFiltroPes==='preto'?'todos':'preto')"><div class="k" id="cat-k-preto">João</div><div class="v down" id="cat-preto">—</div></div>
+      <div class="kpi" role="button" tabindex="0" style="cursor:pointer" onclick="onCatPes(catFiltroPes==='preta'?'todos':'preta')"><div class="k" id="cat-k-preta">Kassiana</div><div class="v down" id="cat-preta">—</div></div>
     </div>
     <div class="chartbox" style="margin-top:16px"><canvas id="catChart"></canvas></div>
     <div class="scroll" style="margin-top:10px"><table class="tbl" id="tbl-cat-resumo"></table></div>
@@ -1431,6 +1433,9 @@ function migrateContas(o){
   if(!o.pesMemory||typeof o.pesMemory!=='object'||Array.isArray(o.pesMemory))o.pesMemory={};
   Object.keys(o.pesMemory).forEach(k=>{if(!PES_VALIDO.includes(o.pesMemory[k]))delete o.pesMemory[k];});
   if(!PES_VALIDO.includes(o.exPessoa))o.exPessoa='ambos';
+  /* de quem é cada conta de banco, aprendido nas importações (fica só no aparelho/nuvem da família) */
+  if(!o.contaDono||typeof o.contaDono!=='object'||Array.isArray(o.contaDono))o.contaDono={};
+  Object.keys(o.contaDono).forEach(k=>{if(!PES_VALIDO.includes(o.contaDono[k]))delete o.contaDono[k];});
   /* transação antiga não tinha dono: entra como dividida, que é o neutro */
   (o.transacoes||[]).forEach(t=>{if(!PES_VALIDO.includes(t.pes))t.pes='ambos';if(t.nc!==true)t.nc=false;});
   if(!Array.isArray(o.meusNomes))o.meusNomes=[];
@@ -3324,7 +3329,7 @@ async function lerPDFExtrato(file){
       alert('Esse PDF não tem texto — é só imagem (PDF escaneado).\n\nUse "foto do extrato": o app lê a imagem.');
       return;
     }
-    showExtratoPreview(parseTextExtrato(txt));
+    showExtratoPreview(parseTextExtrato(txt),txt);
   }catch(e){
     ocrToast(false);
     const det=(e&&e.message)?('\n\nDetalhe: '+e.message):'';
@@ -3341,7 +3346,7 @@ function loadExtrato(text,name){
     return;
   }
   const isOFX=/\.(ofx|qfx)$/i.test(name)||/<OFX>|<STMTTRN>/i.test(text);
-  showExtratoPreview(isOFX?parseOFX(text):parseCSV(text));
+  showExtratoPreview(isOFX?parseOFX(text):parseCSV(text),text);
 }
 function closeExtrato(){document.getElementById('extratoModal').classList.remove('on');}
 function exApplyAnual(){
@@ -3898,7 +3903,7 @@ function mesOrdem(m){
   if(i<0||!p[1])return 999999;
   return (+p[1])*100+(i+1);
 }
-let extratoOrig=[],catFiltroMes='Todos',catFiltroFonte='tudo',exMesSemData='';
+let extratoOrig=[],catFiltroMes='Todos',catFiltroFonte='tudo',catFiltroPes='todos',exMesSemData='';
 /* últimos 24 meses, para o caso de o arquivo vir sem data nenhuma */
 function mesesRecentes(n){
   const out=[],h=new Date();
@@ -3923,27 +3928,86 @@ function pareceFatura(t){
   const pag=(t||[]).some(x=>FATURA_PALAVRA.test(norm(x.desc||'')));
   return dolarZero>=3||pag;
 }
-function showExtratoPreview(t){
+/* ---------- de quem é o extrato ----------
+   A Kassiana baixa o extrato dela e importa: o app tem que saber sozinho que
+   aquilo é dela, sem depender de alguém lembrar de trocar a caixinha. Três
+   pistas, da mais firme para a mais fraca:
+     1. a conta já foi importada antes (número da conta no OFX ou no cabeçalho);
+     2. o nome do titular no cabeçalho do arquivo — só o cabeçalho, porque no
+        meio do extrato do João aparece "PIX KASSIANA" a toda hora;
+     3. a última escolha feita neste aparelho (o celular dela lembra dela). */
+const KEY_EU='familiajk_eu';
+function euGet(){try{const v=localStorage.getItem(KEY_EU);return PES_VALIDO.includes(v)?v:'';}catch(_){return '';}}
+function euSet(v){try{if(PES_VALIDO.includes(v))localStorage.setItem(KEY_EU,v);}catch(_){}}
+function contaDoExtrato(bruto){
+  const t=String(bruto||'');
+  let m=t.match(/<ACCTID>\s*([^<\r\n]+)/i);
+  if(m){const d=m[1].replace(/\D/g,'');if(d.length>=4)return 'c'+d;}
+  const cab=cabecalhoExtrato(t).join(' ');
+  m=cab.match(/ag(?:[eê]ncia|\.)?\s*:?\s*(\d{3,5})\b[^\d]{0,25}?(?:conta(?:\s+corrente)?|c\/c|cc)\s*:?\s*([\d.\-\/]{4,16})/i);
+  if(m){const c=m[2].replace(/\D/g,'');if(c.length>=4)return 'a'+m[1]+'c'+c;}
+  return '';
+}
+/* as linhas antes do primeiro valor em dinheiro. Parar só na primeira linha
+   com data E valor não basta: no extrato do Nubank a data vem sozinha, e o
+   "Pix recebido JOÃO…" logo abaixo entraria como se fosse o titular. */
+function cabecalhoExtrato(bruto){
+  const t=String(bruto||'');
+  const i=t.search(/<STMTTRN>/i);
+  if(i>=0)return [t.slice(0,i)];
+  const out=[];
+  for(const l of t.split(/\r?\n/).slice(0,40)){
+    if(/\d,\d{2}\b/.test(l))break;
+    out.push(l);
+  }
+  return out;
+}
+function primeiroNome(p){return norm(pesNome(p)).split(/\s+/)[0]||'';}
+function donoPeloCabecalho(bruto){
+  const cab=' '+norm(cabecalhoExtrato(bruto).join(' ')).replace(/[^a-z0-9]+/g,' ')+' ';
+  const achou=['preto','preta'].filter(p=>{const n=primeiroNome(p);return n.length>=3&&cab.includes(' '+n+' ');});
+  return achou.length===1?achou[0]:'';
+}
+let exConta='',exDonoMotivo='';
+function donoDoExtrato(bruto){
+  exConta=contaDoExtrato(bruto);
+  const mem=exConta&&(D.contas.contaDono||{})[exConta];
+  if(mem)return {pes:mem,motivo:'conta'};
+  const cab=donoPeloCabecalho(bruto);
+  if(cab)return {pes:cab,motivo:'nome'};
+  const eu=euGet();
+  if(eu)return {pes:eu,motivo:'aparelho'};
+  return {pes:D.contas.exPessoa||'ambos',motivo:''};
+}
+function showExtratoPreview(t,bruto){
   if(!t||!t.length){alert('Não identifiquei transações. Dicas: exporte OFX (mais confiável), confira o texto colado, ou tire uma foto mais nítida. Você também pode me enviar a imagem no chat que eu transcrevo com precisão.');return;}
   extratoOrig=t.map(x=>({date:x.date,desc:x.desc,amount:x.amount,cred:!!x.cred,col2:!!x.col2}));
   const ehFat=pareceFatura(t);
   const cb=document.getElementById('ex-fatura');if(cb)cb.checked=ehFat;
+  const dono=donoDoExtrato(bruto);D.contas.exPessoa=dono.pes;exDonoMotivo=dono.motivo;
   exFillPessoa();
   applyExtrato();
   document.getElementById('extratoModal').classList.add('on');
 }
 function exSetPessoa(v){
   if(!PES_VALIDO.includes(v))v='ambos';
-  D.contas.exPessoa=v;save();applyExtrato();
+  D.contas.exPessoa=v;exDonoMotivo='escolha';
+  /* escolha feita à mão: vale para esta conta nas próximas vezes e vira o
+     padrão deste aparelho */
+  euSet(v);if(exConta)D.contas.contaDono[exConta]=v;
+  save();exFillPessoa();applyExtrato();
 }
 function exFillPessoa(){
   const sel=document.getElementById('ex-pessoa');if(!sel)return;
   const atual=D.contas.exPessoa||'ambos';
   sel.innerHTML=PES_VALIDO.map(p=>'<option value="'+p+'"'+(p===atual?' selected':'')+'>'+esc(pesNome(p))+'</option>').join('');
   const h=document.getElementById('ex-pessoa-hint');
-  if(h)h.textContent=atual==='ambos'
+  const porque={conta:'Reconheci a conta — já foi importada antes como de '+pesNome(atual)+'. ',
+    nome:'Reconheci pelo nome do titular no extrato: é de '+pesNome(atual)+'. ',
+    aparelho:'Neste aparelho os extratos costumam ser de '+pesNome(atual)+'. '}[exDonoMotivo]||'';
+  if(h)h.textContent=porque+(atual==='ambos'
     ?'Cada gasto conta metade para cada um, como as contas da casa.'
-    :('Tudo deste arquivo entra como gasto de '+pesNome(atual)+'. Dá para mudar linha a linha depois, na aba Categorias.');
+    :('Tudo deste arquivo entra como gasto de '+pesNome(atual)+', menos o que vocês já ensinaram ser de outro jeito. Dá para mudar linha a linha depois, na aba Categorias.'));
 }
 function applyExtrato(){
   const fat=(document.getElementById('ex-fatura')||{}).checked;
@@ -4171,6 +4235,7 @@ function exSaveTx(){
     if(velho&&velho.fonte!==x.fonte){velho.fonte=x.fonte;remarcados++;}
   });
   const ap=lancaAportes(novosAportes);
+  if(exConta)D.contas.contaDono[exConta]=D.contas.exPessoa||'ambos';
   save();closeExtrato();safeRun(renderCategorias);
   alert(n?('Salvei '+n+' transação(ões) já separadas por categoria.'
       +(fora?('\n'+fora+' ficaram gravadas MAS fora da soma (fatura do cartão / dinheiro seu), para não contar duas vezes.'):'')
@@ -4249,7 +4314,7 @@ function parseTextExtrato(text){
 }
 function openPasteExtrato(){document.getElementById('pasteText').value='';document.getElementById('pasteModal').classList.add('on');}
 function closePaste(){document.getElementById('pasteModal').classList.remove('on');}
-function readPasteExtrato(){const t=parseTextExtrato(document.getElementById('pasteText').value);closePaste();showExtratoPreview(t);}
+function readPasteExtrato(){const txt=document.getElementById('pasteText').value;const t=parseTextExtrato(txt);closePaste();showExtratoPreview(t,txt);}
 function ocrToast(msg){const e=document.getElementById('ocrToast');if(!e)return;if(msg===false){e.style.display='none';return;}e.textContent=msg;e.style.display='block';}
 /* Um seletor de arquivo que funciona no iPhone: o input precisa estar na
    página, senão o Safari às vezes ignora o .click() e nada acontece. */
@@ -4276,7 +4341,7 @@ async function runOCR(file){
     if(!txt.trim()){alert('O leitor funcionou, mas não achou texto nessa imagem.\n\nTente uma foto mais próxima, bem iluminada e sem reflexo — ou use “colar texto”.');return;}
     const t=parseTextExtrato(txt);
     if(!t.length){alert('Li o texto da imagem, mas não reconheci nenhum lançamento (preciso de data e valor na mesma linha).\n\nDica: fotografe só a lista de transações.'+ALT);return;}
-    showExtratoPreview(t);
+    showExtratoPreview(t,txt);
   }catch(e){
     ocrToast(false);
     const det=(e&&e.message)?('\n\nDetalhe: '+e.message):'';
@@ -4734,6 +4799,11 @@ function catMonths(){
 }
 function onCatMes(v){catFiltroMes=v;renderCategorias();}
 function onCatFonte(v){catFiltroFonte=(v==='cartao'||v==='conta')?v:'tudo';renderCategorias();}
+/* "de quem": o que é só dela, o que é só dele — e o que é dos dois entra
+   pela metade, igual às contas da casa */
+function onCatPes(v){catFiltroPes=(v==='preto'||v==='preta')?v:'todos';renderCategorias();}
+function catPesOk(t){return catFiltroPes==='todos'||t.pes===catFiltroPes||(t.pes||'ambos')==='ambos';}
+function catVal(t){return catFiltroPes==='todos'?Math.abs(+t.amount||0):valorDe(t,catFiltroPes);}
 /* lançamento sem marca é do extrato da conta: é de onde vinha tudo antes */
 function fonteDe(t){return (t&&t.fonte==='cartao')?'cartao':'conta';}
 function renderCategorias(){
@@ -4742,14 +4812,17 @@ function renderCategorias(){
   const sel=document.getElementById('cat-mes');
   if(sel)sel.innerHTML=meses.map(m=>'<option value="'+esc(m)+'"'+(m===catFiltroMes?' selected':'')
     +'>'+(m==='—'?'sem data':esc(m))+'</option>').join('');
-  const tx=all.filter(t=>(catFiltroMes==='Todos'||t.mes===catFiltroMes)
+  const txTodos=all.filter(t=>(catFiltroMes==='Todos'||t.mes===catFiltroMes)
     &&(catFiltroFonte==='tudo'||fonteDe(t)===catFiltroFonte));
+  const tx=txTodos.filter(catPesOk);
   const selF=document.getElementById('cat-fonte');if(selF)selF.value=catFiltroFonte;
+  const selP=document.getElementById('cat-pes');
+  if(selP){selP.innerHTML='<option value="todos">os dois</option><option value="preto">só '+esc(pesNome('preto'))+'</option><option value="preta">só '+esc(pesNome('preta'))+'</option>';selP.value=catFiltroPes;}
   /* a soma usa só o que conta; a LISTA mostra tudo, inclusive o que ficou de fora */
   const txC=txSoma(tx),txFora=tx.filter(naoSoma);
-  const gasto=txC.filter(t=>t.amount<0).reduce((s,t)=>s-t.amount,0);
-  const entrada=txC.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
-  const foraVal=txFora.reduce((s,t)=>s+Math.abs(+t.amount||0),0);
+  const gasto=txC.filter(t=>t.amount<0).reduce((s,t)=>s+catVal(t),0);
+  const entrada=txC.filter(t=>t.amount>0).reduce((s,t)=>s+catVal(t),0);
+  const foraVal=txFora.reduce((s,t)=>s+catVal(t),0);
   set('cat-gasto',brl(gasto));set('cat-entrada',brl(entrada));
   const ef=document.getElementById('cat-fora');
   if(ef)ef.innerHTML=txFora.length
@@ -4770,12 +4843,16 @@ function renderCategorias(){
       : (catFiltroFonte==='conta'
         ? 'Só o que passou pela conta do banco — as compras do cartão estão na fatura.'
         : (temCartao?'':'Importe a fatura do cartão para separar o que foi no crédito do que saiu da conta.'));
+    if(catFiltroPes!=='todos')nf.innerHTML+=(nf.innerHTML?' ':'')+'Mostrando o que é de <b>'+esc(pesNome(catFiltroPes))
+      +'</b>: o que é só '+(catFiltroPes==='preta'?'dela':'dele')+' entra inteiro; o que é dos dois, pela metade.';
   }
   set('cat-n',tx.length+'');
   /* quanto do gasto é de cada um — "os dois" conta metade para cada */
   set('cat-k-preto',pesNome('preto'));set('cat-k-preta',pesNome('preta'));
-  set('cat-preto',brl(gastoPessoa(tx,'preto')));set('cat-preta',brl(gastoPessoa(tx,'preta')));
-  const map={},cnt={};txC.filter(t=>t.amount<0).forEach(t=>{const c=t.cat||'Outros';map[c]=(map[c]||0)+(-t.amount);cnt[c]=(cnt[c]||0)+1;});
+  set('cat-preto',brl(gastoPessoa(txTodos,'preto')));set('cat-preta',brl(gastoPessoa(txTodos,'preta')));
+  ['preto','preta'].forEach(p=>{const k=document.getElementById('cat-k-'+p);const box=k&&k.parentElement;
+    if(box){box.style.outline=catFiltroPes===p?'2px solid var(--gold)':'';box.setAttribute('aria-pressed',catFiltroPes===p?'true':'false');}});
+  const map={},cnt={};txC.filter(t=>t.amount<0).forEach(t=>{const c=t.cat||'Outros';map[c]=(map[c]||0)+catVal(t);cnt[c]=(cnt[c]||0)+1;});
   const cats=Object.keys(map).sort((a,b)=>map[b]-map[a]);
   destroy('cat');
   if(cats.length&&window.Chart){charts.cat=new Chart(document.getElementById('catChart'),{type:'doughnut',
@@ -4784,7 +4861,7 @@ function renderCategorias(){
   renderCatResumo(cats,map,cnt,gasto,txC);
   let r='<tr><th>Data e descrição</th><th>Categoria e dono</th><th>Valor</th><th></th></tr>';
   const idxs=all.map((t,i)=>i).filter(i=>(catFiltroMes==='Todos'||all[i].mes===catFiltroMes)
-      &&(catFiltroFonte==='tudo'||fonteDe(all[i])===catFiltroFonte)).sort((a,b)=>(all[b].date||'').localeCompare(all[a].date||'')).slice(0,400);
+      &&(catFiltroFonte==='tudo'||fonteDe(all[i])===catFiltroFonte)&&catPesOk(all[i])).sort((a,b)=>(all[b].date||'').localeCompare(all[a].date||'')).slice(0,400);
   /* data+descrição de um lado, categoria+dono do outro: quatro colunas em pé
      não cabem na tela do celular */
   idxs.forEach(i=>{const t=all[i];
@@ -4941,13 +5018,14 @@ function setTxCat(i,cat){
 function setTxPes(i,pes){
   const t=D.contas.transacoes[i];if(!t||!PES_VALIDO.includes(pes))return;
   t.pes=pes;
-  const w=norm(t.desc).split(/\s+/).filter(x=>x.length>=4&&!/\d/.test(x)).sort((a,b)=>b.length-a.length)[0];
+  /* palavra do nome limpo — "enviado" ou "transferencia" marcaria meio extrato */
+  const w=limpaDesc(limpaComercio(t.desc)).split(/\s+/).filter(x=>x.length>=4&&!/\d/.test(x)).sort((a,b)=>b.length-a.length)[0];
   let juntos=0;
   if(w){
     D.contas.pesMemory[w]=pes;
     (D.contas.transacoes||[]).forEach((o,k)=>{
       if(k===i||o.pes===pes)return;
-      if(norm(o.desc).includes(w)){o.pes=pes;juntos++;}
+      if(limpaComercio(o.desc).includes(w)){o.pes=pes;juntos++;}
     });
   }
   save();renderCategorias();
