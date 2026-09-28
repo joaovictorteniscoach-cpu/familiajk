@@ -94,3 +94,33 @@ body:not([data-aba="inicio"]) #app>.top.jv-premium-hero .jv-avatar-btn{grid-area
 #apg-inicio .jv-quick button:nth-child(2){background:var(--jv-control)!important;color:var(--jv-text)!important;-webkit-text-fill-color:var(--jv-text)!important}
 #apg-agenda .wk-tools .wk-fit{background:var(--jv-control)!important;color:var(--jv-text)!important;-webkit-text-fill-color:var(--jv-text)!important}
 #apg-inicio .jv-pay-status{font-size:12px!important;padding:5px 10px!important;color:#10261E!important;-webkit-text-fill-color:#10261E!important}
+
+/* Torneio: mesma paleta sálvia da Gestão, inclusive no compartilhamento. */
+#apg-torneio #tor-capture,#apg-torneio .atg-card{background:#D3DFD4!important;color:#10261E!important;-webkit-text-fill-color:#10261E!important;border-color:#ADC1B3!important}
+#apg-torneio .tor-cap-head b{color:#10261E!important;-webkit-text-fill-color:#10261E!important}
+#apg-torneio .tor-cap-head span{color:#30483C!important;-webkit-text-fill-color:#30483C!important}
+#apg-torneio .atg-head,#apg-torneio .tor-cap-emb{background:#214639!important;color:#F6F2EA!important;-webkit-text-fill-color:#F6F2EA!important}
+#apg-torneio .atg-title{color:#F6F2EA!important;-webkit-text-fill-color:#F6F2EA!important}
+#apg-torneio .atg-badge,#apg-torneio .atg-rank{color:#10261E!important;-webkit-text-fill-color:#10261E!important}
+#apg-torneio .atg-tbl th{background:#B8CBBB!important;color:#30483C!important;-webkit-text-fill-color:#30483C!important;font-size:11px!important}
+#apg-torneio .atg-tbl td{background:#D3DFD4!important;color:#10261E!important;-webkit-text-fill-color:#10261E!important;border-color:#ADC1B3!important;font-size:13px!important}
+#apg-torneio .atg-tbl tr.me td{background:#BCD3BC!important;color:#10261E!important;-webkit-text-fill-color:#10261E!important}
+#apg-torneio .atg-tbl td.l{overflow-wrap:anywhere}
+#ov-tor-result .tor-radio label{background:#315A49!important;color:#F6F2EA!important;-webkit-text-fill-color:#F6F2EA!important;border-color:#658473!important;min-height:44px}
+/* Os modais legados ainda são claros: não herdar a tinta clara do app. */
+.modal{background:#D3DFD4;color:#10261E;-webkit-text-fill-color:#10261E}
+.modal h3{color:#10261E;-webkit-text-fill-color:#10261E}
+.modal .sub,.modal .field>label{color:#30483C;-webkit-text-fill-color:#30483C}
+.modal button,.modal input,.modal select,.modal textarea{-webkit-text-fill-color:currentColor}
+
+/* Agenda clássica clara; o restante do app mantém o visual premium. */
+#apg-agenda .wk-scroll{background:#FFFFFF!important;border-color:#DDD5C5!important}
+#apg-agenda .wk th,#apg-agenda .wk th *{background:#203A27!important;color:#F6F2EA!important;-webkit-text-fill-color:#F6F2EA!important}
+#apg-agenda .wk td{height:var(--al-wk-row,44px)!important;border-color:#E5DFD2!important}
+#apg-agenda .wk td.hr{background:#F7F4ED!important;color:#5F584D!important;-webkit-text-fill-color:#5F584D!important}
+#apg-agenda .wc{min-height:var(--al-wk-row,44px)!important;line-height:1.2!important;padding:3px 2px!important}
+#apg-agenda .wc.livre,#apg-agenda .sl.livre{background:#FFFFFF!important;color:#31533B!important;-webkit-text-fill-color:#31533B!important}
+#apg-agenda .wc.meu,#apg-agenda .sl.meu{background:#3B6FB5!important;color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important}
+#apg-agenda .wc.pend,#apg-agenda .sl.pend{background:#F4E4B1!important;color:#614C15!important;-webkit-text-fill-color:#614C15!important}
+#apg-agenda .wc.chuva,#apg-agenda .sl.chuva{background:#D5E6F1!important;color:#304F68!important;-webkit-text-fill-color:#304F68!important}
+#apg-agenda .wc.ocup,#apg-agenda .wc.bloq,#apg-agenda .wc.fechado,#apg-agenda .wc.passou,#apg-agenda .sl.ocup,#apg-agenda .sl.bloq{background:#E9E5DD!important;color:#5F584D!important;-webkit-text-fill-color:#5F584D!important}
