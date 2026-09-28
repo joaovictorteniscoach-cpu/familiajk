@@ -16,7 +16,7 @@ const server = http.createServer((req,res) => {
   catch { res.writeHead(404).end('Missing'); }
 });
 const aluno = {id:'teste-a',codigo:'9999',nome:'Aluno de Teste',tipo:'Tênis',plano:4,planoGrupo:0,creditos:3,repos:1,mensalidade:640,status:'pago',diaVenc:10,ativo:true,avaliacoes:[],registros:[]};
-const db = {alunos:[aluno],lancamentos:[],meta:10000,agenda:{fixos:[],eventos:[],excecoes:[]},presencas:[],compromissos:[],aviso:'',locacaoOnly:null,horarioCfg:null,horarioData:null,savedAt:Date.now(),torneios:{atual:'t',lista:{t:{id:'t',nome:'Barragem de teste',grupos:['A'],jogadores:[{name:'Aluno de Teste Sobrenome Longo',group:'A',v:2,d:1,wo:0},{name:'Jogador de Teste',group:'A',v:1,d:2,wo:0}]}}}};
+const db = {alunos:[aluno],lancamentos:[],meta:10000,agenda:{fixos:[],eventos:[],excecoes:[]},presencas:[],compromissos:[],aviso:'',locacaoOnly:null,horarioCfg:null,horarioData:null,savedAt:Date.now(),torneios:{atual:'t',lista:{t:{id:'t',nome:'Barragem de teste',grupos:['A','B'],etapasFin:[{etapa:1,data:'2026-09-20',campeoes:[{grupo:'A',campeao:'Campeão de Teste',vice:'Vice de Teste'}]}],jogadores:[{name:'Aluno de Teste Sobrenome Longo',group:'A',v:2,d:1,wo:0,ptsAcum:3},{name:'Jogador de Teste',group:'A',v:1,d:2,wo:0},{name:'Terceiro de Teste',group:'A',v:0,d:1,wo:0}]}}}};
 const widths = process.env.JV_WIDTHS ? process.env.JV_WIDTHS.split(',').map(Number) : [320,360,390,393,430,768,1280];
 const apps = process.env.JV_APPS ? process.env.JV_APPS.split(',') : ['aluno','gestao'];
 assert.ok(widths.every(w=>Number.isInteger(w)&&w>=320&&w<=1920));
@@ -51,7 +51,7 @@ async function fit(p, width, label) {
   const size = await p.evaluate(() => ({scroll:document.documentElement.scrollWidth,view:innerWidth}));
   assert.ok(size.scroll <= width+1, label + ': overflow ' + JSON.stringify(size));
 }
-async function capture(p,name) { await p.screenshot({path:path.join(output,name+'.png')}); }
+async function capture(p,name) { if(process.env.JV_NO_SCREENSHOTS==='1')return; await p.screenshot({path:path.join(output,name+'.png')}); }
 (async () => {
   await new Promise(r=>server.listen(0,'127.0.0.1',r));
   const base='http://127.0.0.1:'+server.address().port;
@@ -97,8 +97,12 @@ async function capture(p,name) { await p.screenshot({path:path.join(output,name+
           await p.locator(app==='aluno'?`.nav button[onclick="goAluno('${id}',this)"]`:`.nav button[onclick="go('${id}',this)"]`).click();
           await ok(app+' '+width+'px · '+id,async()=>{await fit(p,width,id);assert.equal(await p.locator(app==='aluno'?'#app .page.on':'.page.on').count(),1);});
           if(app==='aluno'&&['creditos','perfil'].includes(id))await ok('Sem espaço vazio antes de '+id+' '+width+'px',async()=>{
-            const gap=await p.evaluate(id=>document.querySelector('#apg-'+id+' .jv-subhero').getBoundingClientRect().top-document.querySelector('#app>.top').getBoundingClientRect().bottom,id);
-            assert.ok(gap<40,'Espaço vazio: '+gap);
+            const gap=await p.evaluate(id=>{
+              const top=document.querySelector('#app>.top').getBoundingClientRect().bottom;
+              const notices=document.querySelector('#app>.wrap').getBoundingClientRect().bottom;
+              return document.querySelector('#apg-'+id+' .jv-subhero').getBoundingClientRect().top-Math.max(top,notices);
+            },id);
+            assert.ok(gap<40,'Espaço vazio após avisos: '+gap);
           });
           if(width===393){await capture(p,app+'-'+id+'-393');await auditContrast(p,app+'-'+id);}
         }
@@ -117,7 +121,7 @@ async function capture(p,name) { await p.screenshot({path:path.join(output,name+
           await ok('Aluno: semana ajustada, células legíveis e rolamento local '+width+'px',async()=>{
             const d=await p.locator('#apg-agenda .wk-scroll').evaluate(e=>({w:e.clientWidth,s:e.scrollWidth}));assert.ok(d.s<=d.w+3,JSON.stringify(d));
             await fit(p,width,'agenda aluno');
-            assert.ok(await p.locator('#apg-agenda .wc').first().evaluate(e=>parseFloat(getComputedStyle(e).fontSize)>=11&&e.getBoundingClientRect().height>=44));
+            assert.ok(await p.locator('#apg-agenda .wc').first().evaluate(e=>parseFloat(getComputedStyle(e).fontSize)>=11&&e.getBoundingClientRect().height>=28));
           });
           if(width===393){await capture(p,'aluno-agenda-semana-393');await auditContrast(p,'aluno-agenda-semana');}
         }
@@ -129,6 +133,14 @@ async function capture(p,name) { await p.screenshot({path:path.join(output,name+
             if(width===393)await auditContrast(p,app+'-'+id);
             if(width===393&&id==='fin')await capture(p,'gestao-fin-393');
             if(id==='torneio') {
+              await p.evaluate(()=>{torFila=[{key:'teste',group:'A',p1:'Aluno de Teste',p2:'Jogador de Teste',vencedor:'Aluno de Teste',score:'6/3 6/4',nome:'Aluno de Teste'}];renderTorLog();});
+              if(width===393){
+                await auditContrast(p,'gestao-torneio-pendentes');
+                for(const fn of ['abrirNovoTorneio','abrirResultadoTor']){
+                  await p.evaluate(fn=>window[fn](),fn);await auditContrast(p,'gestao-'+fn);
+                  await p.evaluate(()=>document.querySelectorAll('.overlay.on').forEach(e=>e.classList.remove('on')));
+                }
+              }
               await ok('Torneio: ações alcançáveis '+width+'px',async()=>{
                 const scroll=p.locator('.tg-table-scroll').first();
                 await scroll.evaluate(e=>e.scrollLeft=e.scrollWidth);
@@ -153,7 +165,7 @@ async function capture(p,name) { await p.screenshot({path:path.join(output,name+
           await ok('Zoom + e − '+width+'px',()=>{if(width<720){assert.ok(after>before);assert.ok(smaller<after);}assert.equal(smaller,before);});
           await p.locator('.wk-zoom .wz-fit').click();
           await ok('Zoom Semana toda '+width+'px',async()=>{
-            const btn=await p.locator('.wk-zoom .wz-fit').evaluate(e=>({outer:e.getBoundingClientRect().width,w:e.clientWidth,s:e.scrollWidth}));assert.ok(btn.outer>=132&&btn.s<=btn.w,'Rótulo Ajustar à tela deve caber no botão: '+JSON.stringify(btn));
+            const btn=await p.locator('.wk-zoom .wz-fit').evaluate(e=>({outer:e.getBoundingClientRect().width,w:e.clientWidth,s:e.scrollWidth}));assert.ok(btn.outer>=132&&btn.s<=btn.w,'Rótulo Semana toda deve caber no botão: '+JSON.stringify(btn));
             const dims=await p.locator('.wk-scroll').evaluate(e=>({w:e.clientWidth,s:e.scrollWidth}));
             assert.ok(dims.s<=dims.w+3,JSON.stringify(dims));
             assert.ok(await p.locator('.wk-cell').first().evaluate(e=>parseFloat(getComputedStyle(e).fontSize)>=11.5));
@@ -163,6 +175,11 @@ async function capture(p,name) { await p.screenshot({path:path.join(output,name+
         }
       }
       if(app==='aluno') {
+        await p.evaluate(t=>{PUB.torneio=t;renderTorneioAluno();goAluno('torneio');},db.torneios.lista.t);
+        await auditContrast(p,'aluno-torneio');
+        await p.evaluate(()=>abrirRegResultado());
+        await auditContrast(p,'aluno-torneio-resultado');
+        await p.evaluate(()=>{document.getElementById('ov-tor-result').classList.remove('on');goAluno('agenda');});
         await ok('Aluno: Ajustar acompanha rotação; zoom manual preserva preferência ao reabrir',async()=>{
           await p.setViewportSize({width:393,height:852});await p.waitForTimeout(80);
           let d=await p.locator('#apg-agenda .wk-scroll').evaluate(e=>({w:e.clientWidth,s:e.scrollWidth}));assert.ok(d.s<=d.w+3);

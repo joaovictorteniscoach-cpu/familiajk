@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-27-3';
+const VERSAO='2026-09-28-1';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -3154,7 +3154,7 @@ let wkAutoFit=(function(){try{return localStorage.getItem('jv-wkzoom-fit')!=='fa
 const WK_COL=92;
 function wkVars(z){
   const col=Math.round(WK_COL*z);
-  const h=Math.max(44,Math.round(44*z));
+  const h=Math.max(28,Math.round(44*z));
   const fs=Math.max(11.5,+(12*z).toFixed(1));
   const thfs=Math.max(11,+(12*z).toFixed(1));
   const min=48+6*col;
@@ -3355,7 +3355,7 @@ function renderAgenda(){
     const mon=new Date(agDate);mon.setDate(mon.getDate()-((mon.getDay()+6)%7));
     const days=[...Array(6)].map((_,i)=>{const d=new Date(mon);d.setDate(d.getDate()+i);return d;});
     lbl.innerHTML='Semana de '+days[0].getDate()+'/'+(days[0].getMonth()+1)+' a '+days[5].getDate()+'/'+(days[5].getMonth()+1)+'<small>toque p/ editar · arraste p/ mover ou trocar</small>';
-    let html='<div class="wk-zoom"><button class="wz" onclick="wkZoomStep(-1)" title="Diminuir">−</button><span class="wz-lbl" id="wk-zoom-lbl">'+Math.round(wkZoom*100)+'%</span><button class="wz" onclick="wkZoomStep(1)" title="Aumentar">+</button><button class="wz wz-fit" onclick="wkZoomFit()">Ajustar à tela</button></div>';
+    let html='<div class="wk-zoom"><button class="wz" onclick="wkZoomStep(-1)" title="Diminuir">−</button><span class="wz-lbl" id="wk-zoom-lbl">'+Math.round(wkZoom*100)+'%</span><button class="wz" onclick="wkZoomStep(1)" title="Aumentar">+</button><button class="wz wz-fit" onclick="wkZoomFit()">Semana toda</button></div>';
     html+='<div class="wk-scroll"><table class="wk" style="'+wkVars(wkZoom)+'"><tr><th></th>'+days.map(d=>`<th>${DIAS[d.getDay()]}<small>${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}</small></th>`).join('')+'</tr>';
     HORAS.forEach(h=>{
       html+=`<tr><td class="hr">${h}</td>`;

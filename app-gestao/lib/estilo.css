@@ -2253,3 +2253,42 @@ html,body{background:var(--jv-bg)!important}
 /* Uma única reserva para a barra fixa, sem somar duas margens inferiores. */
 body{padding-bottom:calc(56px + max(5px,env(safe-area-inset-bottom,0px)))!important}
 .page,#pg-dash{padding-bottom:12px!important}
+
+/* Torneio: contraste explícito em rankings, etapas e resultados pendentes. */
+#pg-torneio .te-bar,#pg-torneio .te-hist,#pg-torneio .tor-log{background:#214639!important;color:#F6F2EA!important;-webkit-text-fill-color:#F6F2EA!important;border-color:#658473!important}
+#pg-torneio .te-eyebrow,#pg-torneio .te-hist-t,#pg-torneio .tor-log h4,#pg-torneio .tor-log b{color:#F0D57C!important;-webkit-text-fill-color:#F0D57C!important}
+#pg-torneio .te-hrow b,#pg-torneio .te-camp{color:#F6F2EA!important;-webkit-text-fill-color:#F6F2EA!important}
+#pg-torneio .te-hrow>span,#pg-torneio .tor-log .row>div>div{color:#D9E2D8!important;-webkit-text-fill-color:#D9E2D8!important;opacity:1!important}
+#pg-torneio .te-fim,#pg-torneio .te-badge.fim{background:#D5B24A!important;color:#10261E!important;-webkit-text-fill-color:#10261E!important}
+#pg-torneio .te-nova,#pg-torneio .tor-log .ap,#pg-torneio .tor-log .ds{background:#315A49!important;color:#F6F2EA!important;-webkit-text-fill-color:#F6F2EA!important;min-height:44px}
+#pg-torneio .tg-card>.tg-count,#pg-torneio .tg-acum,#pg-torneio .tg-scroll-hint{color:#30483C!important;-webkit-text-fill-color:#30483C!important;opacity:1!important;font-size:12px!important}
+#pg-torneio .tg-card>.tg-count{padding:12px!important;line-height:1.5}
+#pg-torneio .tg-rank{color:#10261E!important;-webkit-text-fill-color:#10261E!important}
+#pg-torneio .tg-mv{color:#30483C!important;-webkit-text-fill-color:#30483C!important;opacity:1!important}
+#pg-torneio .tg-tbl .tg-x{color:#873B2D!important;-webkit-text-fill-color:#873B2D!important;opacity:1!important}
+#pg-torneio .tor-empty{background:#D3DFD4!important;color:#30483C!important;-webkit-text-fill-color:#30483C!important}
+
+/* Agenda no molde clássico aprovado: leitura clara e cores por modalidade. */
+#pg-agenda #ag-view{background:#F7F4ED;border-radius:14px;padding:8px}
+#pg-agenda .slot-h{color:#5F584D!important;-webkit-text-fill-color:#5F584D!important}
+#pg-agenda .slot-body{background:#FFFFFF!important;border-color:#DDD5C5!important}
+#pg-agenda .ev,#pg-agenda .ev span,#pg-agenda .ev small{color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important;opacity:1!important}
+#pg-agenda .wk-scroll{background:#FFFFFF!important;border-color:#DDD5C5!important}
+#pg-agenda .wk th,#pg-agenda .wk th *{background:#203A27!important;color:#F6F2EA!important;-webkit-text-fill-color:#F6F2EA!important}
+#pg-agenda .wk td{height:var(--wk-h,44px)!important;border-color:#E5DFD2!important}
+#pg-agenda .wk td.hr{background:#F7F4ED!important;color:#5F584D!important;-webkit-text-fill-color:#5F584D!important}
+#pg-agenda .wk-cell{min-height:var(--wk-h,44px)!important;line-height:1.2!important;padding:3px 2px!important}
+#pg-agenda .wk-cell.free{background:#FFFFFF!important;color:#5F584D!important;-webkit-text-fill-color:#5F584D!important}
+#pg-agenda .wk-zoom .wz-lbl{color:#10261E!important;-webkit-text-fill-color:#10261E!important}
+#pg-agenda .wk-cell.t-aula,#pg-agenda .ev.t-aula{background:#3B6FB5!important;color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important}
+#pg-agenda .wk-cell.t-grupo,#pg-agenda .ev.t-grupo{background:#6A4FA3!important;color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important}
+#pg-agenda .wk-cell.t-personal,#pg-agenda .ev.t-personal{background:#0A6B6B!important;color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important}
+#pg-agenda .wk-cell.t-locacao,#pg-agenda .ev.t-locacao{background:#226833!important;color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important}
+#pg-agenda .wk-cell.t-torneio,#pg-agenda .ev.t-torneio{background:#806012!important;color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important}
+#pg-agenda .wk-cell.t-bloqueio,#pg-agenda .ev.t-bloqueio{background:#B7352B!important;color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important}
+#pg-agenda .wk-cell.t-pessoal,#pg-agenda .ev.t-pessoal{background:#92520B!important;color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important}
+#pg-agenda .wk-cell.t-liberado,#pg-agenda .ev.t-liberado{background:#EAF0F7!important;color:#2E5E8C!important;-webkit-text-fill-color:#2E5E8C!important}
+#pg-agenda .wk-cell.t-nliberado,#pg-agenda .ev.t-nliberado{background:#E9E5DD!important;color:#5F584D!important;-webkit-text-fill-color:#5F584D!important}
+#pg-agenda .wk-cell.t-chuva{background:#D5E6F1!important;color:#304F68!important;-webkit-text-fill-color:#304F68!important}
+#pg-agenda .wk-cell.multi{background:repeating-linear-gradient(45deg,#3B6FB5,#3B6FB5 8px,#2F5A94 8px,#2F5A94 16px)!important;color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important}
+#pg-agenda #ag-view .jv-ag-hint{color:#5F584D!important;-webkit-text-fill-color:#5F584D!important}
