@@ -1,4 +1,4 @@
-/* ===== JV Modelo aprovado 2026-09-27-1 · Gestão, Aluno e Agenda =====
+/* ===== JV Modelo aprovado 2026-09-28-2 · Gestão, Aluno e Agenda =====
    Refaz as três telas da imagem modelo dos três celulares (guardada em
    ferramentas/originais/modelo-apps-jv.png), medida a medida: topo com o
    logo de traço, "Olá, João Victor!", o mês como "Setembro 2026 ˅" e
@@ -412,3 +412,9 @@ html body #app .wrap:has(#apg-agenda.on){padding-top:0!important}
 html body :is(#pg-agenda,#apg-agenda) .seg.jv-ref-ag-tabs{padding:2px!important;margin-bottom:10px!important}
 html body :is(#pg-agenda,#apg-agenda) .seg.jv-ref-ag-tabs button{height:34px!important;min-height:34px!important}
 html body :is(#pg-agenda,#apg-agenda) table.wk :is(.wk-cell,.wc){height:35px!important}
+
+/* ----- junto com a versão 2026-09-28 da main: a aba "Trimestre" entra na
+   mesma barra das abas, e a semana fica sobre o fundo escuro do modelo (o
+   cartão claro da main continua no Dia, no Mês e no Trimestre) */
+html body :is(#pg-agenda,#apg-agenda) .seg.jv-ref-ag-tabs:has(>button:nth-child(4)){grid-template-columns:repeat(4,1fr)!important}
+html body #pg-agenda #ag-view:has(.wk-scroll){background:transparent!important;padding:0!important;border-radius:0!important}

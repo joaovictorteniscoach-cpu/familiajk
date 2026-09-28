@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-27-1';
+const VERSAO='2026-09-28-2';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2750,10 +2750,7 @@ function go(id,btn){
   document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
   window.scrollTo({top:0});
-  if(id==='agenda'){syncRequests(true);marcarVisto('agenda');
-    /* sem zoom escolhido, a semana abre inteira na tela: só dá para medir agora que a página aparece */
-    let z=null;try{z=localStorage.getItem('jv-wkzoom');}catch(e){}
-    if(!z&&typeof wkZoomFit==='function')requestAnimationFrame(wkZoomFit);}
+  if(id==='agenda'){syncRequests(true);marcarVisto('agenda');if(wkAutoFit)wkZoomFit();}
   if(id==='lanc'){filtroLancCat=null;renderMovs();}   // abrir a Caixa pela barra mostra tudo
   if(id==='fech')abrirFechamento();
   if(id==='profs')prepararAluguel();
@@ -3160,11 +3157,12 @@ function gotoDay(y,m,d){
    Muda a densidade (largura da coluna, altura e fonte) sem transform, para o
    arrastar continuar batendo o toque com a célula. A tabela e os horários são os
    mesmos — só cabem mais ou menos por tela. */
-let wkZoom=(function(){const v=parseFloat((typeof localStorage!=='undefined'&&localStorage.getItem('jv-wkzoom'))||'');return (v>=0.35&&v<=1.8)?v:1;})();
+let wkZoom=(function(){try{const v=parseFloat(localStorage.getItem('jv-wkzoom')||'');return (v>=0.35&&v<=1.8)?v:1;}catch(e){return 1;}})();
+let wkAutoFit=(function(){try{return localStorage.getItem('jv-wkzoom-fit')!=='false';}catch(e){return true;}})();
 const WK_COL=92;
 function wkVars(z){
   const col=Math.round(WK_COL*z);
-  const h=Math.max(44,Math.round(44*z));
+  const h=Math.max(28,Math.round(44*z));
   const fs=Math.max(11.5,+(12*z).toFixed(1));
   const thfs=Math.max(11,+(12*z).toFixed(1));
   const min=48+6*col;
@@ -3173,19 +3171,22 @@ function wkVars(z){
 function aplicarWkVars(){
   const t=document.querySelector('.wk'); if(t)t.setAttribute('style',wkVars(wkZoom));
   const l=document.getElementById('wk-zoom-lbl'); if(l)l.textContent=Math.round(wkZoom*100)+'%';
-  try{localStorage.setItem('jv-wkzoom',String(wkZoom));}catch(e){}
+  const fit=document.querySelector('.wk-zoom .wz-fit');if(fit)fit.setAttribute('aria-pressed',String(wkAutoFit));
+  try{localStorage.setItem('jv-wkzoom',String(wkZoom));localStorage.setItem('jv-wkzoom-fit',String(wkAutoFit));}catch(e){}
 }
 function wkZoomStep(dir){
+  wkAutoFit=false;
   wkZoom=Math.min(1.8,Math.max(0.35,+(wkZoom+dir*0.1).toFixed(2)));
   aplicarWkVars();
 }
 function wkZoomFit(){
-  /* com a Agenda escondida a largura é 0: não mede nem grava nada */
-  const sc=document.querySelector('.wk-scroll'); if(!sc||!sc.clientWidth)return;
+  wkAutoFit=true;
+  const sc=document.querySelector('#pg-agenda .wk-scroll'); if(!sc||sc.clientWidth<1)return;
   const disp=Math.max(240,sc.clientWidth-6);   // desconta a borda/padding
   wkZoom=Math.min(1.8,Math.max(0.35,Math.floor(((disp-48)/6)/WK_COL*100)/100));
   aplicarWkVars();
 }
+window.addEventListener('resize',()=>{if(wkAutoFit)wkZoomFit();});
 function presId(e,date){return dKey(date)+'|'+e.hora+'|'+e.alunoId;}
 /* Aula duplicada: o lançamento manual do cartão ("Aula realizada") caiu num
    dia em que a aula daquele aluno JÁ estava marcada na agenda. É a mesma aula
@@ -3394,9 +3395,7 @@ function renderAgenda(){
     });
     el.innerHTML=html+'</table></div>';
     if(typeof pintarIcones==='function')pintarIcones();
-    // sem zoom escolhido, abre com a semana inteira na tela (como no modelo)
-    let jvZ=null;try{jvZ=localStorage.getItem('jv-wkzoom');}catch(e){}
-    if(!jvZ)requestAnimationFrame(wkZoomFit);
+    if(wkAutoFit)wkZoomFit();
   }
   else if(agView==='mes'){
     const y=agDate.getFullYear(),m=agDate.getMonth();
@@ -5837,7 +5836,7 @@ function renderDash(){
   const _kd=document.getElementById('k-ref-desp');if(_kd)_kd.textContent=fmt(despesas);
   const _kds=document.getElementById('k-ref-desp-s');if(_kds)_kds.textContent=despesas?'Saídas registradas no mês':'Nenhuma saída registrada';
   const _cmpMax=Math.max(Number(DB.meta)||0,recebido,pendValor,despesas,1);
-  const _cmpSet=(idTxt,idFill,val)=>{const t=document.getElementById(idTxt),f=document.getElementById(idFill);if(t)t.textContent=fmt(val);if(f)f.style.width=Math.min(100,Math.round((Number(val)||0)/_cmpMax*100))+'%';};
+  const _cmpSet=(idTxt,idFill,val)=>{const t=document.getElementById(idTxt),f=document.getElementById(idFill);if(t)t.textContent=fmt(val);if(f)f.style.width=(hideVals?0:Math.min(100,Math.round((Number(val)||0)/_cmpMax*100)))+'%';};
   _cmpSet('cmp-meta','cmp-meta-fill',DB.meta);_cmpSet('cmp-rec','cmp-rec-fill',recebido);
   _cmpSet('cmp-pend','cmp-pend-fill',pendValor);_cmpSet('cmp-desp','cmp-desp-fill',despesas);
   // só vira botão quando há alguém para mostrar: prometer toque sem destino é pior que não ter
@@ -6256,7 +6255,7 @@ function renderChart(recebido,aReceber,despesas){
   el.innerHTML=linhas.map(([lab,cls,val])=>`
     <div class="chart-row">
       <span class="chart-lab">${lab}</span>
-      <span class="chart-track"><span class="chart-bar ${cls}" style="width:${Math.round(val/max*100)}%"></span></span>
+      <span class="chart-track"><span class="chart-bar ${cls}" style="width:${hideVals?0:Math.round(val/max*100)}%"></span></span>
       <span class="chart-val">${fmt(val)}</span>
     </div>`).join('');
 }

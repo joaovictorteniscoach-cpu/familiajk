@@ -91,8 +91,8 @@ ok('#apg-agenda .ag-nav-label small' in a and '-webkit-text-fill-color:#D8D2C7' 
 ok('#pg-torneio .tg-head .tg-title' in gc and '#pg-lanc .quick .q1' in gc,'correções específicas dos screenshots preservadas')
 
 print('\n== PWA premium')
-ok(ma.get('theme_color')=='#06140F' and ma.get('background_color')=='#06140F','manifest do aluno no tema premium')
-ok(mg.get('theme_color')=='#06140F' and mg.get('background_color')=='#06140F','manifest da Gestão no tema premium')
+ok(ma.get('theme_color')=='#071E19' and ma.get('background_color')=='#071E19','manifest do aluno no tema premium')
+ok(mg.get('theme_color')=='#071E19' and mg.get('background_color')=='#071E19','manifest da Gestão no tema premium')
 
 print('\n%d falha(s)' % len(falhas))
 sys.exit(1 if falhas else 0)
