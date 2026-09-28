@@ -125,7 +125,8 @@ body:not([data-aba="inicio"]) #app>.top.jv-premium-hero .jv-avatar-btn{grid-area
 #apg-agenda .wc.chuva,#apg-agenda .sl.chuva{background:#D5E6F1!important;color:#304F68!important;-webkit-text-fill-color:#304F68!important}
 #apg-agenda .wc.ocup,#apg-agenda .wc.bloq,#apg-agenda .wc.fechado,#apg-agenda .wc.passou,#apg-agenda .sl.ocup,#apg-agenda .sl.bloq{background:#E9E5DD!important;color:#5F584D!important;-webkit-text-fill-color:#5F584D!important}
 
-/* ===== Barra de progresso nas cores do modelo · 2026-09-28-3 =====
-   Créditos: trilho claro verde-acinzentado e preenchimento dourado. */
-html body .jv-progress,html body #apg-inicio .jv-progress{background:rgba(215,228,218,.72)!important}
-html body .jv-progress i{background:#EBBF58!important}
+/* ===== Barra de progresso igual à do app Família · 2026-09-28-3 =====
+   Créditos: 14 px, cantos arredondados, trilho escuro com fio dourado e
+   degradê do dourado ao verde, como a barra "Já pago" do app Família. */
+html body .jv-progress,html body #apg-inicio .jv-progress{height:14px!important;background:rgba(255,255,255,.07)!important;border:1px solid rgba(224,185,79,.14)!important;border-radius:10px!important;overflow:hidden!important;box-sizing:border-box}
+html body .jv-progress i{background:linear-gradient(90deg,#E0B94F,#63D887)!important;border-radius:10px!important}
