@@ -2,10 +2,10 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Família JK — Contas e Investimentos</title>
 <link rel="manifest" href="manifest-familia.webmanifest">
-<meta name="theme-color" content="#06140F">
+<meta name="theme-color" content="#101113">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="lib/chart.umd.min.js?v=2026-09-28-1"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
@@ -440,11 +440,12 @@ input.cell:focus,select.cell:focus{border-color:var(--accent);outline:none}
    mais um botão do modo investimento */
 .banner .iconbtn.primary{background:linear-gradient(150deg,#E0B94F,#B8912F);color:#1a1304}
 </style>
+<link rel="stylesheet" href="lib/black-gold.css?v=2026-09-28-1">
 </head>
 <body class="mode-contas">
 <header class="topbar jv-premium-hero">
   <div class="brand">
-    <div class="crest">JK</div>
+    <div class="crest"><img src="icone-jk-gestao-192.png" alt="JK" width="44" height="44"></div>
     <div><h1>Família J K</h1><span>João e Kassiana</span></div>
   </div>
   <div class="tools">
@@ -466,8 +467,8 @@ input.cell:focus,select.cell:focus{border-color:var(--accent);outline:none}
 </header>
 
 <div class="modeswitch">
-  <button class="ms on" id="ms-contas" onclick="setMode('contas')"><span class="ic">🏠</span>Contas</button>
-  <button class="ms" id="ms-invest" onclick="setMode('invest')"><span class="ic">📈</span>Investimentos</button>
+  <button class="ms on" id="ms-contas" onclick="setMode('contas')"><svg class="jk-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-8h6v8"/></svg>Contas</button>
+  <button class="ms" id="ms-invest" onclick="setMode('invest')"><svg class="jk-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M6 15l5-5 4 3 6-8M16 5h5v5"/></svg>Investimentos</button>
 </div>
 
 <div class="banner" id="backupBanner" style="display:none">
@@ -981,21 +982,20 @@ input.cell:focus,select.cell:focus{border-color:var(--accent);outline:none}
   <div class="card">
     <h2>Nuvem — os dois sempre com a versão mais nova</h2>
     <div class="sub">Liga o app (contas + investimentos) a um banco de dados grátis. Os dois usam o mesmo link e veem sempre o último estado.</div>
-    <div class="field" style="max-width:560px"><label>URL de sincronização</label><input id="cl-url" type="text" placeholder="https://SEU-PROJETO-default-rtdb.firebaseio.com/jk/familia-jk.json" oninput="cloudApply()"></div>
+    <div class="field" style="max-width:560px"><label for="cl-url">Seu link de sincronização</label><input id="cl-url" type="url" autocomplete="off" spellcheck="false" placeholder="Cole aqui o mesmo link usado pela família" onchange="cloudApply()"></div>
     <label class="toggle"><input type="checkbox" id="cl-on" onchange="cloudApply()"> Sincronizar na nuvem</label>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
       <button class="iconbtn primary" onclick="cloudPush()">Enviar agora</button>
       <button class="iconbtn" onclick="cloudPull(false,true)">Buscar agora</button>
     </div>
     <p class="note" id="cl-status" style="margin-top:12px">sincronização desligada</p>
-    <h2 style="font-size:15px;margin-top:20px">Como criar a nuvem grátis (uma vez só, ~5 min)</h2>
+    <h2 style="font-size:15px;margin-top:20px">Conectar sem criar outro login</h2>
     <ul class="intro">
-      <li>Acesse <b>console.firebase.google.com</b> e clique em <b>Adicionar projeto</b> (pode pular o Analytics).</li>
-      <li>Abra <b>Build → Realtime Database → Criar banco de dados</b>, escolha a localização e o modo <b>de teste</b>.</li>
-      <li>Copie a URL e cole aqui acrescentando <code>/jk/um-codigo-secreto.json</code> no fim — ex.: <code>.../jk/familia-jk-7x9.json</code>.</li>
-      <li>Marque <b>Sincronizar na nuvem</b> e clique <b>Enviar agora</b>.</li>
+      <li>Cole o <b>link que vocês já usam</b>, terminado em <code>.json</code>.</li>
+      <li>Marque <b>Sincronizar na nuvem</b>. O app busca os dados antes de enviar alterações.</li>
+      <li>Se a nuvem estiver vazia, confira os dados deste aparelho e toque em <b>Enviar agora</b>.</li>
     </ul>
-    <p class="note">Quem tiver a URL completa consegue ver/editar — escolha um código secreto difícil e não publique. Mesmo com a nuvem, faça <b>Backup</b> de vez em quando.</p>
+    <p class="note">Trate esse link como uma chave: não publique nem envie a terceiros. O acesso depende das regras do seu banco; este app não altera essas regras. Mantenha um <b>Backup</b> antes de trocar de aparelho.</p>
   </div>
 </section>
 
@@ -1003,7 +1003,7 @@ input.cell:focus,select.cell:focus{border-color:var(--accent);outline:none}
   <div class="card">
     <h2>Como usar (e não perder nada)</h2><div class="sub">Feito para vocês dois.</div>
     <ul class="intro">
-      <li><b>Dois modos no topo:</b> 🏠 <b>Contas</b> (dourado) e 📈 <b>Investimentos</b> (verde-água). Tudo separado, num app só.</li>
+      <li><b>Dois modos no topo:</b> <b>Contas</b> e <b>Investimentos</b>. As áreas mais usadas ficam à vista; as demais estão em <b>Mais</b>.</li>
       <li><b>Salva sozinho</b> neste navegador. Toque em qualquer número que ele já vem selecionado — é só digitar por cima.</li>
       <li><b>Para nunca perder:</b> use <b>Backup</b> às vezes (baixa um <code>.json</code>) e <b>Importar</b> para restaurar. Backups antigos do Cofre ou do app de Contas são reconhecidos automaticamente.</li>
       <li><b>Compartilhar:</b> gera um link com tudo embutido (contas + investimentos). Quem abrir carrega no próprio aparelho.</li>
@@ -1170,7 +1170,7 @@ input.cell:focus,select.cell:focus{border-color:var(--accent);outline:none}
 <div class="overlay" id="shareModal">
   <div class="modal">
     <h3>Compartilhar</h3>
-    <p>Este link leva uma cópia de tudo (contas e investimentos). Quem abrir poderá carregar no próprio aparelho.</p>
+    <p>Este link leva uma cópia das contas, investimentos e configuração de nuvem. Envie apenas à sua família: quem receber poderá carregar esses dados e o link de acesso.</p>
     <textarea id="shareText" readonly></textarea>
     <div class="row">
       <button class="iconbtn primary" onclick="copyShare()">Copiar link</button>
@@ -1180,7 +1180,7 @@ input.cell:focus,select.cell:focus{border-color:var(--accent);outline:none}
   </div>
 </div>
 
-<div class="foot">Família JK · contas da casa + investimentos · dados guardados no seu dispositivo</div>
+<div class="foot">Família JK · Black &amp; Gold · 2026-09-28-1 · dados guardados no seu dispositivo</div>
 
 <script>
 const KEY="familiajk_v1";
@@ -1614,9 +1614,16 @@ function setMode(m){
 function buildTabs(m){
   const n=document.getElementById('tabs');n.innerHTML='';
   const list=(m==='invest'?TABS_INVEST:TABS_CONTAS).concat(TABS_SHARED);
-  list.forEach(t=>{const b=document.createElement('button');b.className='tab';b.textContent=t[1];b.dataset.id=t[0];b.onclick=()=>switchTab(t[0],b);n.appendChild(b);});
+  const primary=m==='invest'?['i-painel','i-carteira','i-aportes','i-metas']:['c-painel','c-casa','c-cartao','c-recebidos'];
+  const more=document.createElement('details');more.className='jk-more';
+  const summary=document.createElement('summary');summary.className='tab jk-more-toggle';summary.textContent='Mais';summary.setAttribute('aria-label','Mais áreas da família');more.appendChild(summary);
+  const panel=document.createElement('div');panel.className='jk-more-panel';more.appendChild(panel);
+  list.forEach(t=>{const b=document.createElement('button');b.type='button';b.className='tab';b.textContent=t[0]==='c-recebidos'?'Entradas':t[1];b.dataset.id=t[0];b.onclick=()=>{switchTab(t[0],b);more.open=false;};(primary.includes(t[0])?n:panel).appendChild(b);});
+  n.appendChild(more);
   switchTab(list[0][0],n.firstChild);
 }
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){const m=document.querySelector('.jk-more[open]');if(m){m.open=false;m.querySelector('summary').focus();}}});
+document.addEventListener('click',e=>{const m=document.querySelector('.jk-more[open]');if(m&&!m.contains(e.target))m.open=false;});
 const DRAW={'i-painel':()=>drawInvPainel(),'i-mensal':()=>drawMensal(),'i-anual':()=>drawAnual(),'i-projecao':()=>onProj(),
   'i-analise':()=>{drawAnalise();renderAlloc();},'i-ganhos':()=>renderGanhos(),'i-plano':()=>onPlano(),'i-metas':()=>renderGoals(),
   'c-painel':()=>drawConPainel(),'c-casa':()=>renderCasa(),'c-joao':()=>renderPess('joao','tbl-joao'),'c-esposa':()=>renderPess('esposa','tbl-esposa'),'c-empresa':()=>drawEmpresa(),'c-recebidos':()=>renderReceb(),'c-patrimonio':()=>drawPatrimonio(),'c-protecao':()=>drawProtecao(),'c-resumo':()=>drawResumo(),'c-anual':()=>renderControle(),'c-categorias':()=>renderCategorias(),'c-conselhos':()=>renderConselhos(),'c-cartao':()=>refreshCartao()};
@@ -1635,10 +1642,11 @@ function heroFamilia(){
 function switchTab(id,btn){
   document.querySelectorAll('section[data-tab]').forEach(s=>s.classList.toggle('on',s.dataset.tab===id));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));if(btn)btn.classList.add('active');
+  const more=document.querySelector('.jk-more-toggle');if(more){const secondary=!!(btn&&btn.closest('.jk-more-panel'));more.classList.toggle('active',secondary);more.textContent=secondary?btn.textContent:'Mais';}
   if(DRAW[id]){const prev=suppressPush;suppressPush=true;try{DRAW[id]();}catch(e){console.warn('Família JK — falha na aba',id,e);}suppressPush=prev;}
   rotularTabelas();marcarVazias();
   /* com as abas numa faixa que desliza, a escolhida precisa ficar à vista */
-  try{if(btn&&btn.scrollIntoView)btn.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'});}catch(_){}
+  try{if(btn&&!btn.closest('.jk-more-panel')&&btn.scrollIntoView)btn.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'});}catch(_){}
   heroFamilia();
 }
 
@@ -2417,7 +2425,7 @@ function refreshAnual(){
 function addAnual(){D.invest.anual.push({ano:"",patr:null,aporte:null});renderAnual();drawAnual()}
 
 /* charts */
-Chart.defaults.color='#90a8ad';Chart.defaults.font.family='Inter';Chart.defaults.font.size=11;
+if(window.Chart){Chart.defaults.color='#C9C4B9';Chart.defaults.font.family='Inter';Chart.defaults.font.size=11;}
 const COL={gold:'#d4a23a',teal:'#4fbfa8',muted:'#90a8ad',ink:'#0a171c',up:'#5fd08a',down:'#e8755f'};
 const PAL=['#4fbfa8','#d4a23a','#e6c277','#8fb6c9','#c98f8f','#7f9c8b','#9aa0ad'];
 let charts={};
@@ -2710,16 +2718,18 @@ function fillAplFromAportes(){
 }
 
 /* ---------- nuvem ---------- */
-let cloudTimer=null,suppressPush=false,pushTimer=null,lastPushAt=0,lastApplied=0;
+let cloudTimer=null,suppressPush=false,pushTimer=null,lastPushAt=0,lastApplied=0,cloudReadyUrl='';
 function setCloudStatus(t,c){const e=document.getElementById('cl-status');if(e){e.textContent=t;e.style.color=c||'var(--muted)';}}
-function schedulePush(){if(!(D.cloud&&D.cloud.on&&D.cloud.url))return;clearTimeout(pushTimer);pushTimer=setTimeout(cloudPush,1500);}
+function schedulePush(){if(!(D.cloud&&D.cloud.on&&D.cloud.url&&cloudReadyUrl===D.cloud.url))return;clearTimeout(pushTimer);pushTimer=setTimeout(cloudPush,1500);}
 async function cloudPush(){
   if(!(D.cloud&&D.cloud.url))return;
+  const requestedUrl=D.cloud.url;
   if(!/\.json(\?|$)/.test(D.cloud.url)){setCloudStatus('⚠ a URL precisa terminar com .json — ex.: .../jk/familia-jk-7x9.json','var(--down)');return;}
   try{setCloudStatus('salvando na nuvem…','var(--accent-soft)');lastPushAt=Date.now();
     const r=await fetch(D.cloud.url,{method:'PUT',body:JSON.stringify({updatedAt:Date.now(),data:JSON.stringify(D)})});
-    if(!r.ok){setCloudStatus('⚠ erro '+r.status+' ao salvar — confira as Regras (.read/.write: true) e a URL','var(--down)');return;}
-    lastApplied=Date.now();setCloudStatus('☁ salvo na nuvem '+new Date().toLocaleTimeString('pt-BR'),'var(--up)');}
+    if(D.cloud.url!==requestedUrl)return;
+    if(!r.ok){setCloudStatus('⚠ erro '+r.status+' ao salvar — confira o link e as permissões do seu banco','var(--down)');return;}
+    cloudReadyUrl=D.cloud.url;lastApplied=Date.now();setCloudStatus('☁ salvo na nuvem '+new Date().toLocaleTimeString('pt-BR'),'var(--up)');}
   catch(e){setCloudStatus('⚠ falha de rede ao salvar: '+((e&&e.message)||e),'var(--down)');}
 }
 /* Cair para menos da metade não é sincronizar, é apagar. */
@@ -2729,14 +2739,17 @@ function encolheDemais(atual,novo){
 }
 async function cloudPull(silent,forcar){
   if(!(D.cloud&&D.cloud.url))return;
+  const requestedUrl=D.cloud.url;
   if(!/\.json(\?|$)/.test(D.cloud.url)){if(!silent)setCloudStatus('⚠ a URL precisa terminar com .json','var(--down)');return;}
   try{const r=await fetch(D.cloud.url,{cache:'no-store'});
+    if(D.cloud.url!==requestedUrl)return;
     if(!r.ok){if(!silent)setCloudStatus('⚠ erro '+r.status+' ao buscar — confira a URL e as Regras','var(--down)');return;}
     let j=null;try{j=await r.json()}catch(_){if(!silent)setCloudStatus('⚠ resposta inválida — confira se a URL termina em .json','var(--down)');return;}
-    if(!j||!j.data){if(!silent)setCloudStatus('nuvem vazia — clique em "Enviar agora"');return;}
+    if(D.cloud.url!==requestedUrl)return;
+    if(!j||!j.data){if(!silent)setCloudStatus('nuvem vazia — confira os dados deste aparelho antes de usar "Enviar agora"');return;}
     if(j.updatedAt&&j.updatedAt<=lastApplied)return;
     if(Date.now()-lastPushAt<4000)return;
-    const ae=document.activeElement;if(ae&&['INPUT','SELECT','TEXTAREA'].includes(ae.tagName))return;
+    const ae=document.activeElement;if(!forcar&&ae&&['INPUT','SELECT','TEXTAREA'].includes(ae.tagName))return;
     let raw;try{raw=(typeof j.data==='string')?JSON.parse(j.data):j.data;}catch(_){if(!silent)setCloudStatus('⚠ dado da nuvem ilegível','var(--down)');return;}
     /* A nuvem não pode esvaziar este aparelho sem perguntar. Foi exatamente
        assim que a base da família virou exemplo em 11/09/2026: um aparelho
@@ -2753,12 +2766,14 @@ async function cloudPull(silent,forcar){
     suppressPush=true;const lc=D.cloud;D=migrate(raw);D.cloud=lc;saveLocal();initFields();renderAll();
     const at=document.querySelector('.tab.active');if(at&&DRAW[at.dataset.id])DRAW[at.dataset.id]();
     suppressPush=false;
-    lastApplied=j.updatedAt||Date.now();setCloudStatus('☁ atualizado da nuvem '+new Date().toLocaleTimeString('pt-BR'),'var(--up)');}
+    cloudReadyUrl=D.cloud.url;lastApplied=j.updatedAt||Date.now();setCloudStatus('☁ atualizado da nuvem '+new Date().toLocaleTimeString('pt-BR'),'var(--up)');}
   catch(e){if(!silent)setCloudStatus('⚠ falha de rede ao buscar: '+((e&&e.message)||e),'var(--down)');}
+  finally{suppressPush=false;}
 }
 function cloudStart(){if(cloudTimer)clearInterval(cloudTimer);cloudTimer=setInterval(()=>{if(D.cloud&&D.cloud.on)cloudPull(true);},15000);}
-function cloudApply(){D.cloud.url=document.getElementById('cl-url').value.trim();D.cloud.on=document.getElementById('cl-on').checked;saveLocal();
-  if(D.cloud.on&&D.cloud.url){setCloudStatus('conectando…');cloudPush();cloudStart();}else setCloudStatus('sincronização desligada');}
+function cloudApply(){clearTimeout(pushTimer);clearInterval(cloudTimer);cloudReadyUrl='';lastApplied=0;lastPushAt=0;
+  D.cloud.url=document.getElementById('cl-url').value.trim();D.cloud.on=document.getElementById('cl-on').checked;saveLocal();
+  if(D.cloud.on&&D.cloud.url){setCloudStatus('buscando seus dados…');cloudPull(false,true);cloudStart();}else setCloudStatus('sincronização desligada');}
 window.addEventListener('focus',()=>{if(D.cloud&&D.cloud.on)cloudPull(true);});
 
 /* ---------- compartilhar / backup ---------- */
@@ -3068,7 +3083,7 @@ function openFalar(){
   const t=document.getElementById('fl-texto');if(t)t.value='';
   const pv=document.getElementById('fl-previa');if(pv)pv.style.display='none';
   const mic=document.getElementById('fl-mic');if(mic)mic.style.display=vozUsavel()?'':'none';
-  set('fl-nota',vozUsavel()?'Nada sai do aparelho: a frase é interpretada aqui mesmo.'
+  set('fl-nota',vozUsavel()?'Confira antes de salvar. A interpretação é local; a transcrição de voz pode usar o serviço do navegador.'
     :'Neste aparelho o microfone do app não funciona (limitação do iPhone com o app instalado na tela de início). Toque no campo e use o 🎤 do próprio teclado — funciona igual.');
   document.getElementById('falarModal').classList.add('on');
   setTimeout(()=>{try{t.focus()}catch(_){}},60);
@@ -5276,7 +5291,7 @@ document.addEventListener('focusin',e=>{const t=e.target;if(t&&t.tagName==='INPU
 load();D.contas.mesSel=curMonthKey();initFields();renderAll();setMode(D.mode||'contas');aplicarFit();aplicarZoom();checkBackup();
 if(D.cloud&&D.cloud.on&&D.cloud.url){setCloudStatus('conectado');cloudStart();cloudPull(true);}
 /* PWA: instalar na tela de início e abrir offline (rede primeiro, cache de reserva) */
-if('serviceWorker'in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-familia.js').catch(function(){});});}
+if('serviceWorker'in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-familia.js?v=2026-09-28-1').catch(function(){});});}
 </script>
 </body>
 </html>
