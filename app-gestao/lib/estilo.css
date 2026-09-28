@@ -2301,3 +2301,18 @@ body{padding-bottom:calc(56px + max(5px,env(safe-area-inset-bottom,0px)))!import
 .jv-ref-comparativo .jv-ref-bar-row>i,.bar,#pg-dash .bar,.avmini .avbar{height:14px!important;background:rgba(255,255,255,.07)!important;border:1px solid rgba(224,185,79,.14)!important;border-radius:10px!important;overflow:hidden!important;box-sizing:border-box}
 .jv-ref-comparativo .jv-ref-bar-row>i>b,.bar i,#pg-dash .bar i,.bar i.loc,.bar i.batida,#pg-dash .bar i.loc,#pg-dash .bar i.batida,.avmini .avbar>i{background:linear-gradient(90deg,#E0B94F,#63D887)!important;border-radius:10px!important}
 .jv-ref-comparativo .jv-ref-bar-row.receber>i>b{min-width:12px}
+
+/* ===== Agenda · Dia mais enxuta · 2026-09-28-4 =====
+   Linhas e botões menores, e a presença com só dois estados à vista:
+   ○ (a confirmar) e ✓ (confirmada, verde). Antes o ✓ ficava branco sobre
+   branco e parecia que o botão tinha apagado. */
+#pg-agenda .slot{margin-bottom:5px!important}
+#pg-agenda .slot-h{font-size:12px!important;padding-top:10px!important;width:42px!important}
+#pg-agenda .slot-body{min-height:40px!important;padding:4px 5px!important;gap:5px!important}
+#pg-agenda .slot-add{width:30px!important;height:30px!important;min-width:30px!important;min-height:30px!important;padding:0!important;margin-left:auto!important;font-size:17px!important;line-height:1!important;border-radius:8px!important}
+#pg-agenda .slot-body .ev{padding:4px 9px 4px 5px!important;min-height:30px!important;font-size:12.5px!important;gap:7px!important;align-items:center!important}
+#pg-agenda .slot-body .ev .pres{width:24px!important;height:24px!important;min-width:24px!important;min-height:24px!important;padding:0!important;border-radius:50%!important;
+  background:transparent!important;border:2px solid rgba(255,255,255,.9)!important;color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important;
+  font-size:13px!important;font-weight:800!important;line-height:1!important;display:inline-flex!important;align-items:center!important;justify-content:center!important}
+#pg-agenda .slot-body .ev .pres.ok{background:#2E9E5B!important;border-color:#2E9E5B!important;color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important}
+#pg-agenda .slot-body .ev .pres.falt,#pg-agenda .slot-body .ev .pres.avis{background:rgba(255,255,255,.18)!important;color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important}

@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-28-3';
+const VERSAO='2026-09-28-4';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -1917,6 +1917,17 @@ function horaLiberadaProf(date,hora){
   const doDia=lib[dKey(date)];
   return (doDia&&doDia.indexOf(hora)>=0)?'sim':'nao';
 }
+/* Na tela, a Gestão da academia só mostra o outro professor quando ele tem
+   aula marcada. Compromisso pessoal dele, bloqueio ou hora liberada não
+   aparecem — é informação dele. A trava de conflito ao salvar continua
+   usando ocupadoPorOutro(), que vê tudo. */
+const TIPOS_AULA_OUTRO={aula:1,grupo:1,personal:1};
+function outroNaTela(date,hora){
+  const o=ocupadoPorOutro(date,hora);
+  if(!o)return null;
+  if(ehDono()&&!TIPOS_AULA_OUTRO[o.tipo||'aula'])return null;
+  return o;
+}
 function ocupadoPorOutro(date,hora){
   const dk=dKey(date);
   /* A aula que a academia marcou no NOME dele é a aula dele, não "hora de
@@ -3207,7 +3218,10 @@ function togglePresenca(entryId){
   const a=DB.alunos.find(x=>x.id===entry.alunoId);
   if(!a){toast('Aluno não encontrado');return;}
   const k=presId(entry,agDate);
-  /* Ciclo: nada → presença → falta → avisou → nada.
+  /* Toque: ○ → ✓ confirma a aula (debita); ✓ → ○ desfaz (devolve).
+     Falta e "avisou" antigos, se existirem, voltam para ○ no toque,
+     devolvendo o que a falta tinha consumido.
+     (Antes o ciclo era nada → presença → falta → avisou → nada.)
      Faltar CONSOME a aula: quem não avisou perde o crédito, igual a ter vindo.
      Avisar não consome: o crédito volta e a aula sai do fechamento, mas não
      vira reposição — o crédito apenas não foi gasto.
@@ -3223,16 +3237,13 @@ function togglePresenca(entryId){
     persist();renderAgenda();renderAlunos();renderDash();return;
   }
   const iFalta=(DB.presencas||[]).findIndex(p=>p.k===k&&ehFalta(p));
-  if(iFalta>=0){                                   // falta → avisou (devolve)
+  if(iFalta>=0){                                   // falta antiga → nada (devolve)
     const reg=DB.presencas[iFalta];
     marcarRemovida('presencas',reg);
     DB.presencas.splice(iFalta,1);
     const dev=estornoPorRef(a,k,reg);
-    Object.keys(dev).forEach(cp=>mover(a,cp,dev[cp],'Cancelou avisando',k));
-    DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo:'avisou',custo:0});
-    const volta=Object.keys(dev).map(cp=>fmtCred(dev[cp])+' de '+CAMPO_LABEL[cp]).join(', ');
-    logAct('Marcar aviso prévio: '+a.nome);
-    toast('🔁 Avisou · '+a.nome+(volta?(' → devolvido '+volta):' — crédito preservado'));
+    Object.keys(dev).forEach(cp=>mover(a,cp,dev[cp],'Presença desmarcada',k));
+    logAct('Tirar falta: '+a.nome);toast('Desfeito · '+a.nome);
     persist();renderAgenda();renderAlunos();renderDash();return;
   }
   const idx=DB.presencas.findIndex(p=>p.k===k&&!ehFalta(p));
@@ -3249,23 +3260,12 @@ function togglePresenca(entryId){
        O tipo que vale é o GRAVADO na presença, não o do slot agora: o slot pode
        ter virado grupo (ou meia hora) depois que a presença foi marcada. */
     const tipoReal=reg.tipo||reg.modo||(isTor?'torneio':isLoc?'locacao':(isRepo?'reposicao':(isGrp?'grupo':'aula')));
-    const viraFalta=(tipoReal==='aula'||tipoReal==='grupo'||tipoReal==='reposicao');
-    if(viraFalta){
-      /* Segundo toque: falta. NÃO devolve — o aluno perde a aula. O débito
-         segue de pé no extrato, sob a mesma chave, e é ele que volta se você
-         tirar a falta depois. Guardo o tipo e o custo originais para o estorno
-         funcionar mesmo se o extrato daquela aula já tiver sido podado. */
-      DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo:'falta',custo:0,
-                         origTipo:tipoReal,origCusto:Number(reg.custo)||0});
-      logAct('Marcar falta: '+a.nome);
-      toast('✗ Falta · '+a.nome+' — a aula foi consumida, o saldo não volta');
-    }else{
-      /* Torneio e locação não viram falta: seguem devolvendo como sempre. */
-      const dev=estornoPorRef(a,k,reg);
-      Object.keys(dev).forEach(cp=>mover(a,cp,dev[cp],ROTULO_DEVOLVE[cp]||'Presença desmarcada',k));
-      if(tipoReal==='torneio'){logAct('Desmarcar jogo do torneio: '+a.nome);toast('Jogo do torneio desmarcado · '+a.nome);}
-      else{logAct('Desmarcar locação: '+a.nome);toast('Locação desfeita · '+a.nome+' → '+fmtCred(a.locCred)+'h de locação');}
-    }
+    /* Segundo toque: desfaz. Devolve exatamente o que saiu, saldo por saldo. */
+    const dev=estornoPorRef(a,k,reg);
+    Object.keys(dev).forEach(cp=>mover(a,cp,dev[cp],ROTULO_DEVOLVE[cp]||'Presença desmarcada',k));
+    if(tipoReal==='torneio'){logAct('Desmarcar jogo do torneio: '+a.nome);toast('Jogo do torneio desmarcado · '+a.nome);}
+    else if(tipoReal==='locacao'){logAct('Desmarcar locação: '+a.nome);toast('Locação desfeita · '+a.nome+' → '+fmtCred(a.locCred)+'h de locação');}
+    else{logAct('Desmarcar presença: '+a.nome);toast('Desfeito · '+a.nome);}
   }else{
     /* Só debita se a aula desse dia ainda não estiver registrada. Se ele já
        tinha apertado "Aula realizada" no cartão, marcar o ✓ aqui seria o
@@ -3315,10 +3315,10 @@ function renderAgenda(){
   const el=document.getElementById('ag-view');
   const lbl=document.getElementById('ag-label');
   if(agView==='dia'){
-    lbl.innerHTML=DIAS[agDate.getDay()]+', '+agDate.getDate()+' de '+MESES[agDate.getMonth()].toLowerCase()+'<small>'+countDay(agDate)+' atendimentos · ○→✓ veio→✗ faltou→🔁 avisou · arraste p/ trocar horário</small>';
+    lbl.innerHTML=DIAS[agDate.getDay()]+', '+agDate.getDate()+' de '+MESES[agDate.getMonth()].toLowerCase()+'<small>'+countDay(agDate)+' atendimentos · toque no ○ para confirmar, toque de novo para desfazer · arraste p/ trocar horário</small>';
     el.innerHTML='<button class="btn btn-ghost" style="width:100%;margin-bottom:10px;color:var(--c-bloq);border-color:#E5C0BA;font-size:12px" onclick="marcarChuvaDia()">☔ Marcar o dia inteiro como chuva</button>'+HORAS.map(h=>{
       const evs=entriesFor(agDate,h).filter(itemVisivelProf);
-      const outro=ocupadoPorOutro(agDate,h);
+      const outro=outroNaTela(agDate,h);
       return `<div class="slot" data-drop-d="${dKey(agDate)}" data-drop-h="${h}"><div class="slot-h">${h}</div>
         <div class="slot-body ${(evs.length||outro)?'has':''}">
           ${evs.map(e=>{
@@ -3333,17 +3333,16 @@ function renderAgenda(){
             </span>`;
           }).join('')}
           ${(function(){
-            const o=ocupadoPorOutro(agDate,h);
+            const o=outroNaTela(agDate,h);
             if(o)return `<span class="ev t-outro" title="Horário de outro professor — a quadra está ocupada">👨‍🏫 ${esc(o.nome)}<small> · ${esc(rotuloTipoOutro(o.tipo))}</small></span>`;
             /* Compromisso seu fora da quadra: a hora é sua, a quadra não.
                Dizer isso na tela evita a dúvida "por que ele marcou aqui?". */
-            if(evs.length)return (ehDono()&&slotProfLiberado(agDate,h,evs))
-              ? '<span class="ev t-liberado">👨‍🏫 quadra livre para o professor</span>' : '';
+            /* hora liberada ao professor não aparece mais: só a aula dele */
+            if(evs.length)return '';
             const md=slotModo(agDate,h);
             // hora vazia que não é sua: dizer por quê, em vez de deixar o "+"
             // prometer o que vai ser recusado no salvar
             if(!ehDono()&&md==='fechado')return '<span class="ev t-nliberado">não liberado</span>';
-            if(ehDono()&&slotProfLiberado(agDate,h))return '<span class="ev t-liberado">👨‍🏫 quadra liberada ao professor</span>';
             return '';
             return '';
           })()}
@@ -3361,7 +3360,7 @@ function renderAgenda(){
       html+=`<tr><td class="hr">${h}</td>`;
       days.forEach(d=>{
         const evs=entriesFor(d,h).filter(itemVisivelProf);
-        const outro=ocupadoPorOutro(d,h);
+        const outro=outroNaTela(d,h);
         let cls='free',txt='livre',drag='';
         if(evs.length===1){cls='t-'+evs[0].tipo;txt=evs[0].titulo;drag=`drag-item" data-eid="${evs[0].id}" data-origem="${evs[0].origem}`;}
         else if(evs.length>1){cls='multi';txt=evs.length+' marcações';}
@@ -3371,7 +3370,6 @@ function renderAgenda(){
         else{
           const md=slotModo(d,h);
           if(!ehDono()&&md==='fechado'){cls='t-nliberado';txt='—';}
-          else if(ehDono()&&slotProfLiberado(d,h)){cls='t-liberado';txt='👨‍🏫 prof';}
         }
         html+=`<td data-drop-d="${dKey(d)}" data-drop-h="${h}"><button class="wk-cell ${cls} ${drag}" onclick="gotoSlot(${d.getFullYear()},${d.getMonth()},${d.getDate()},'${h}')">${txt}</button></td>`;
       });
