@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-28-1';
+const VERSAO='2026-09-28-2';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -159,10 +159,13 @@ function setFiltroProf(id,btn){
 }
 function renderProfFiltro(){
   const box=document.getElementById('prof-filtro');if(!box)return;
-  if(!PRO_MULTI||!profs().length){box.style.display='none';return;}
+  const aulas=[...(DB.agenda.fixos||[]),...(DB.agenda.eventos||[])];
+  const comAulas=profs().filter(p=>aulas.some(e=>DB.alunos.some(a=>a.id===e.alunoId&&profDoAluno(a)===p.id)));
+  if(!PRO_MULTI||!comAulas.length){filtroProf='todos';box.style.display='none';return;}
+  if(filtroProf!=='todos'&&!comAulas.some(p=>p.id===filtroProf))filtroProf='todos';
   box.style.display='';
   box.innerHTML='<button class="'+(filtroProf==='todos'?'on':'')+'" onclick="setFiltroProf(\'todos\',this)">Todos</button>'
-    +profs().map(p=>'<button class="'+(filtroProf===p.id?'on':'')+'" onclick="setFiltroProf(\''+p.id+'\',this)">'+esc(p.nome)+'</button>').join('');
+    +comAulas.map(p=>'<button class="'+(filtroProf===p.id?'on':'')+'" onclick="setFiltroProf(\''+p.id+'\',this)">'+esc(p.nome)+'</button>').join('');
 }
 /* ===== Professores da quadra (contas separadas) =====
    Não confundir com DB.profs, que é só um rótulo para filtrar a SUA agenda.
@@ -3149,13 +3152,13 @@ function gotoDay(y,m,d){
    Muda a densidade (largura da coluna, altura e fonte) sem transform, para o
    arrastar continuar batendo o toque com a célula. A tabela e os horários são os
    mesmos — só cabem mais ou menos por tela. */
-let wkZoom=(function(){try{const v=parseFloat(localStorage.getItem('jv-wkzoom')||'');return (v>=0.35&&v<=1.8)?v:1;}catch(e){return 1;}})();
-let wkAutoFit=(function(){try{return localStorage.getItem('jv-wkzoom-fit')!=='false';}catch(e){return true;}})();
-const WK_COL=92;
+let wkZoom=(function(){try{const v=parseFloat(localStorage.getItem('jv-wkzoom')||'');return (v>=0.25&&v<=1.8)?v:1;}catch(e){return 1;}})();
+let wkAutoFit=(function(){try{return localStorage.getItem('jv-wkzoom-fit')==='true';}catch(e){return false;}})();
+const WK_COL=124;
 function wkVars(z){
   const col=Math.round(WK_COL*z);
-  const h=Math.max(28,Math.round(44*z));
-  const fs=Math.max(11.5,+(12*z).toFixed(1));
+  const h=Math.max(44,Math.round(52*z));
+  const fs=Math.max(11.5,+(13*z).toFixed(1));
   const thfs=Math.max(11,+(12*z).toFixed(1));
   const min=48+6*col;
   return `--wk-col:${col}px;--wk-h:${h}px;--wk-fs:${fs}px;--wk-thfs:${thfs}px;--wk-min:${min}px`;
@@ -3168,16 +3171,17 @@ function aplicarWkVars(){
 }
 function wkZoomStep(dir){
   wkAutoFit=false;
-  wkZoom=Math.min(1.8,Math.max(0.35,+(wkZoom+dir*0.1).toFixed(2)));
+  wkZoom=Math.min(1.8,Math.max(0.25,+(wkZoom+dir*0.1).toFixed(2)));
   aplicarWkVars();
 }
 function wkZoomFit(){
   wkAutoFit=true;
   const sc=document.querySelector('#pg-agenda .wk-scroll'); if(!sc||sc.clientWidth<1)return;
   const disp=Math.max(240,sc.clientWidth-6);   // desconta a borda/padding
-  wkZoom=Math.min(1.8,Math.max(0.35,Math.floor(((disp-48)/6)/WK_COL*100)/100));
+  wkZoom=Math.min(1.8,Math.max(0.25,Math.floor(((disp-48)/6)/WK_COL*100)/100));
   aplicarWkVars();
 }
+function wkLerNomes(){wkAutoFit=false;wkZoom=1;aplicarWkVars();}
 window.addEventListener('resize',()=>{if(wkAutoFit)wkZoomFit();});
 function presId(e,date){return dKey(date)+'|'+e.hora+'|'+e.alunoId;}
 /* Aula duplicada: o lançamento manual do cartão ("Aula realizada") caiu num
@@ -3313,6 +3317,7 @@ function togglePresenca(entryId){
 function renderAgenda(){
   renderProfFiltro();
   const el=document.getElementById('ag-view');
+  el.classList.toggle('ag-week',agView==='semana');
   const lbl=document.getElementById('ag-label');
   if(agView==='dia'){
     lbl.innerHTML=DIAS[agDate.getDay()]+', '+agDate.getDate()+' de '+MESES[agDate.getMonth()].toLowerCase()+'<small>'+countDay(agDate)+' atendimentos · ○→✓ veio→✗ faltou→🔁 avisou · arraste p/ trocar horário</small>';
@@ -3335,16 +3340,12 @@ function renderAgenda(){
           ${(function(){
             const o=ocupadoPorOutro(agDate,h);
             if(o)return `<span class="ev t-outro" title="Horário de outro professor — a quadra está ocupada">👨‍🏫 ${esc(o.nome)}<small> · ${esc(rotuloTipoOutro(o.tipo))}</small></span>`;
-            /* Compromisso seu fora da quadra: a hora é sua, a quadra não.
-               Dizer isso na tela evita a dúvida "por que ele marcou aqui?". */
-            if(evs.length)return (ehDono()&&slotProfLiberado(agDate,h,evs))
-              ? '<span class="ev t-liberado">👨‍🏫 quadra livre para o professor</span>' : '';
+            // O nome de outro professor aparece apenas quando há aula dele.
+            if(evs.length)return '';
             const md=slotModo(agDate,h);
             // hora vazia que não é sua: dizer por quê, em vez de deixar o "+"
             // prometer o que vai ser recusado no salvar
             if(!ehDono()&&md==='fechado')return '<span class="ev t-nliberado">não liberado</span>';
-            if(ehDono()&&slotProfLiberado(agDate,h))return '<span class="ev t-liberado">👨‍🏫 quadra liberada ao professor</span>';
-            return '';
             return '';
           })()}
           <button class="slot-add" onclick="openSlot('${h}')">+</button>
@@ -3355,7 +3356,7 @@ function renderAgenda(){
     const mon=new Date(agDate);mon.setDate(mon.getDate()-((mon.getDay()+6)%7));
     const days=[...Array(6)].map((_,i)=>{const d=new Date(mon);d.setDate(d.getDate()+i);return d;});
     lbl.innerHTML='Semana de '+days[0].getDate()+'/'+(days[0].getMonth()+1)+' a '+days[5].getDate()+'/'+(days[5].getMonth()+1)+'<small>toque p/ editar · arraste p/ mover ou trocar</small>';
-    let html='<div class="wk-zoom"><button class="wz" onclick="wkZoomStep(-1)" title="Diminuir">−</button><span class="wz-lbl" id="wk-zoom-lbl">'+Math.round(wkZoom*100)+'%</span><button class="wz" onclick="wkZoomStep(1)" title="Aumentar">+</button><button class="wz wz-fit" onclick="wkZoomFit()">Semana toda</button></div>';
+    let html='<div class="wk-zoom"><button class="wz" onclick="wkZoomStep(-1)" title="Diminuir">−</button><span class="wz-lbl" id="wk-zoom-lbl">'+Math.round(wkZoom*100)+'%</span><button class="wz" onclick="wkZoomStep(1)" title="Aumentar">+</button><button class="wz wz-fit" onclick="wkZoomFit()">Semana toda</button><button class="wz wz-read" onclick="wkLerNomes()">Ler nomes</button></div>';
     html+='<div class="wk-scroll"><table class="wk" style="'+wkVars(wkZoom)+'"><tr><th></th>'+days.map(d=>`<th>${DIAS[d.getDay()]}<small>${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}</small></th>`).join('')+'</tr>';
     HORAS.forEach(h=>{
       html+=`<tr><td class="hr">${h}</td>`;
@@ -3371,7 +3372,7 @@ function renderAgenda(){
         else{
           const md=slotModo(d,h);
           if(!ehDono()&&md==='fechado'){cls='t-nliberado';txt='—';}
-          else if(ehDono()&&slotProfLiberado(d,h)){cls='t-liberado';txt='👨‍🏫 prof';}
+          else if(ehDono()&&slotProfLiberado(d,h)){cls='t-liberado';txt='livre';}
         }
         html+=`<td data-drop-d="${dKey(d)}" data-drop-h="${h}"><button class="wk-cell ${cls} ${drag}" onclick="gotoSlot(${d.getFullYear()},${d.getMonth()},${d.getDate()},'${h}')">${txt}</button></td>`;
       });

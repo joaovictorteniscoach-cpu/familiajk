@@ -1551,7 +1551,7 @@ html,body{background:#031D15!important}body{color:#F8F5EE!important;padding-bott
 @media(max-width:390px){#app>.top.jv-premium-hero{padding-left:11px!important;padding-right:11px!important}#apg-inicio .jv-home-card{min-height:108px!important;padding:8px!important}#apg-inicio .jv-home-card .hc-main{font-size:17px!important}}
 
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-09-28-1">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-09-28-2">
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
 <script src="lib/firebase-database-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js\'><\/script>')"></script>
@@ -1917,7 +1917,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-09-28-1"></script>
+<script src="lib/icones.js?v=2026-09-28-2"></script>
 </div>
 
 <!-- MODAL ESCOLHER O QUE FAZER NO HORÁRIO -->
@@ -2124,7 +2124,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-09-28-1';
+const VERSAO='2026-09-28-2';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -3899,12 +3899,12 @@ let alunoWkZoom=(function(){
   try{const v=parseFloat(localStorage.getItem('jv-al-wkzoom')||'');return (v>=.35&&v<=1.8)?v:1;}
   catch(e){return 1;}
 })();
-let alunoWkAutoFit=(function(){try{return localStorage.getItem('jv-al-wkzoom-fit')!=='false';}catch(e){return true;}})();
+let alunoWkAutoFit=(function(){try{return localStorage.getItem('jv-al-wkzoom-fit')==='true';}catch(e){return false;}})();
 const AL_WK_COL=92,AL_WK_HOUR=44;
 function alunoWkVars(z){
   const col=Math.floor(AL_WK_COL*z);
   const hour=AL_WK_HOUR;
-  const row=Math.max(28,Math.round(44*z));
+  const row=Math.max(44,Math.round(48*z));
   const fs=Math.max(11,+(12*z).toFixed(1));
   const th=Math.max(11,+(12*z).toFixed(1));
   const sm=11;
@@ -3928,6 +3928,7 @@ function alunoWkZoomStep(dir){
   alunoWkZoom=Math.min(1.8,Math.max(.35,+(alunoWkZoom+dir*.1).toFixed(2)));
   aplicarAlunoWkVars();
 }
+function alunoWkLerDetalhes(){alunoWkAutoFit=false;alunoWkZoom=1;aplicarAlunoWkVars();}
 function alunoWkZoomFit(){
   alunoWkAutoFit=true;
   const sc=document.querySelector('#apg-agenda .wk-scroll');if(!sc||sc.clientWidth<1)return;
@@ -3957,6 +3958,7 @@ function gotoDay(y,m,d){
 }
 function renderAgenda(){
   const el=document.getElementById('ag-view');
+  el.classList.toggle('ag-week',agView==='semana');
   const lbl=document.getElementById('ag-label');
   if(agView==='dia'){
     lbl.innerHTML=DIAS_FULL[agDate.getDay()]+', '+agDate.getDate()+' de '+MESES[agDate.getMonth()].toLowerCase()+'<small>toque num horário disponível para agendar</small>';
@@ -3977,7 +3979,7 @@ function renderAgenda(){
     const mon=new Date(agDate);mon.setDate(mon.getDate()-((mon.getDay()+6)%7));
     const days=[...Array(6)].map((_,i)=>{const d=new Date(mon);d.setDate(d.getDate()+i);return d;});
     lbl.innerHTML='Semana de '+days[0].getDate()+'/'+(days[0].getMonth()+1)+' a '+days[5].getDate()+'/'+(days[5].getMonth()+1)+'<small>verde = livre · toque para agendar</small>';
-    let html='<div class="wk-tools"><button class="wk-zbtn" type="button" aria-label="Diminuir agenda" onclick="alunoWkZoomStep(-1)">−</button><span class="wk-zlbl" id="al-wk-zlbl">100%</span><button class="wk-zbtn" type="button" aria-label="Aumentar agenda" onclick="alunoWkZoomStep(1)">+</button><button class="wk-fit" type="button" onclick="alunoWkZoomFit()">Semana toda</button></div><div class="wk-scroll"><table class="wk"><tr><th></th>'+days.map(d=>`<th>${DIAS[d.getDay()]}<small>${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}</small></th>`).join('')+'</tr>';
+    let html='<div class="wk-tools"><button class="wk-zbtn" type="button" aria-label="Diminuir agenda" onclick="alunoWkZoomStep(-1)">−</button><span class="wk-zlbl" id="al-wk-zlbl">100%</span><button class="wk-zbtn" type="button" aria-label="Aumentar agenda" onclick="alunoWkZoomStep(1)">+</button><button class="wk-fit" type="button" onclick="alunoWkZoomFit()">Semana toda</button><button class="wk-read" type="button" onclick="alunoWkLerDetalhes()">Detalhes</button></div><div class="wk-scroll"><table class="wk"><tr><th></th>'+days.map(d=>`<th>${DIAS[d.getDay()]}<small>${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}</small></th>`).join('')+'</tr>';
     PUB.horas.forEach(h=>{
       html+=`<tr><td class="hr">${h}</td>`;
       days.forEach(d=>{
@@ -4463,7 +4465,7 @@ setInterval(()=>{if(!document.hidden)checarLiberacao();},60000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-09-28-1').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-09-28-2').catch(function(){});});}
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
 (function esperarEIniciar(t){

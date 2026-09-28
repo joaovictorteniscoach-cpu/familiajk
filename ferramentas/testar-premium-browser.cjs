@@ -81,7 +81,7 @@ async function capture(p,name) { if(process.env.JV_NO_SCREENSHOTS==='1')return; 
         document.getElementById('splash-gestao').style.display='none';
         document.getElementById('barra-versao').style.display='none';
         hideVals=false;renderAll();setSave('Prévia local · dados de teste');
-        DB.agenda.fixos=[{id:'test-fixed',alunoId:'teste-a',nome:'Aluno de Teste',dia:1,hora:'17:00',tipo:'aula'}];renderAgenda();
+        DB.agenda.fixos=[{id:'test-fixed',alunoId:'teste-a',titulo:'Aluno de Teste',dia:1,hora:'17:00',tipo:'aula'}];renderAgenda();
       });
       for(const width of widths) {
         await p.setViewportSize({width,height:852});
@@ -170,6 +170,12 @@ async function capture(p,name) { if(process.env.JV_NO_SCREENSHOTS==='1')return; 
             assert.ok(dims.s<=dims.w+3,JSON.stringify(dims));
             assert.ok(await p.locator('.wk-cell').first().evaluate(e=>parseFloat(getComputedStyle(e).fontSize)>=11.5));
           });
+          await p.locator('.wk-zoom .wz-read').click();
+          await ok('Ler nomes: coluna larga e preferência manual '+width+'px',async()=>{
+            assert.ok(await p.locator('.wk td:not(.hr)').first().evaluate(e=>e.getBoundingClientRect().width>=120));
+            assert.equal(await p.evaluate(()=>wkAutoFit),false);
+          });
+          await p.locator('.wk-zoom .wz-fit').click();
           if(width===393)await capture(p,'gestao-agenda-zoom-393');
           if(width===1280)await capture(p,'gestao-agenda-desktop');
         }
@@ -225,6 +231,48 @@ async function capture(p,name) { if(process.env.JV_NO_SCREENSHOTS==='1')return; 
         for(const txt of await p.locator('.jv-ref-bar-row>strong').allTextContents())assert.equal(txt,'R$ ••••');
         assert.ok(await p.locator('.jv-ref-bar-row>i>b').evaluateAll(es=>es.every(e=>e.style.width==='0%')));
       });
+      await ok(app+': barra inferior compacta sem reduzir alvo de toque',async()=>{
+        assert.ok(await p.locator('.nav').evaluate(e=>e.getBoundingClientRect().height<=54));
+        assert.ok(await p.locator('.nav button').evaluateAll(es=>es.every(e=>e.getBoundingClientRect().height>=44)));
+      });
+      if(app==='gestao'){
+        await p.evaluate(()=>{agDate=new Date(2026,9,5,12);agView='dia';go('agenda',document.querySelector('.nav button[onclick*="agenda"]'));renderAgenda();});
+        await p.locator('#pg-agenda .pres').first().click();
+        await ok('Presença: ✓ visível sobre verde, sem quadrado branco',async()=>{
+          const d=await p.locator('#pg-agenda .pres.ok').first().evaluate(e=>({text:e.textContent,bg:getComputedStyle(e).backgroundColor,fg:getComputedStyle(e).webkitTextFillColor}));
+          assert.equal(d.text,'✓');assert.equal(d.bg,'rgb(33, 92, 54)');assert.equal(d.fg,'rgb(255, 255, 255)');
+        });
+      }
+      if(process.env.JV_APPROVAL_PREVIEW==='1'){
+        await p.setViewportSize({width:393,height:852});
+        if(app==='gestao'){
+          await p.evaluate(()=>{
+            hideVals=false;agDate=new Date(2026,9,28,12);
+            const names=['Mariana Oliveira','João Pedro Almeida','Camila Rodrigues','Rafael Albuquerque','Luiza Fernandes','Gabriel Santana'];
+            DB.agenda.fixos=names.flatMap((nome,i)=>[8,9,10,11,14,15,16,17].filter((h,j)=>(i+j)%3!==0).map(h=>({id:'demo-'+i+'-'+h,alunoId:'teste-a',titulo:nome,dia:i+1,hora:String(h).padStart(2,'0')+':00',tipo:i%3===0?'grupo':'aula'})));
+            DB.alunos[0].nome='Mariana Oliveira';DB.presencas=[];agView='semana';wkAutoFit=false;wkZoom=1;renderAgenda();
+            document.getElementById('toast').classList.remove('show');
+          });
+          await p.locator('#pg-agenda .wk-zoom').scrollIntoViewIfNeeded();
+          await p.screenshot({path:path.join(output,'aprovacao-gestao-semana.png')});
+          await p.evaluate(()=>wkZoomFit());
+          await p.screenshot({path:path.join(output,'aprovacao-gestao-semana-toda.png')});
+          await p.evaluate(()=>{agView='dia';renderAgenda();});
+          await p.locator('#pg-agenda .pres').first().click();
+          await p.locator('#pg-agenda .pres.ok').first().scrollIntoViewIfNeeded();
+          await p.evaluate(()=>document.getElementById('toast').classList.remove('show'));
+          await p.screenshot({path:path.join(output,'aprovacao-gestao-dia.png')});
+          await p.evaluate(()=>{go('lanc',document.querySelector('.nav button[onclick*="lanc"]'));window.scrollTo(0,0);});
+          await p.locator('#quick-lanc').scrollIntoViewIfNeeded();
+          await p.screenshot({path:path.join(output,'aprovacao-caixa.png')});
+          await p.locator('#nav-mais').click();
+          await p.screenshot({path:path.join(output,'aprovacao-mais.png')});
+        }else{
+          await p.evaluate(()=>{goAluno('agenda',document.querySelector('.nav button[onclick*="agenda"]'));agDate=new Date(2026,9,5,12);agView='semana';renderAgenda();alunoWkZoomFit();});
+          await p.locator('#apg-agenda .wk-tools').scrollIntoViewIfNeeded();
+          await p.screenshot({path:path.join(output,'aprovacao-aluno.png')});
+        }
+      }
       await ok(app+': sem exceções JS nem renderizadores quebrados',()=>{assert.deepEqual(errors,[]);assert.deepEqual(renderErrors,[]);});
       await context.close();
     }
