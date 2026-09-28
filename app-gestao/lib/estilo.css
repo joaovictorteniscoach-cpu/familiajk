@@ -2292,3 +2292,12 @@ body{padding-bottom:calc(56px + max(5px,env(safe-area-inset-bottom,0px)))!import
 #pg-agenda .wk-cell.t-chuva{background:#D5E6F1!important;color:#304F68!important;-webkit-text-fill-color:#304F68!important}
 #pg-agenda .wk-cell.multi{background:repeating-linear-gradient(45deg,#3B6FB5,#3B6FB5 8px,#2F5A94 8px,#2F5A94 16px)!important;color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important}
 #pg-agenda #ag-view .jv-ag-hint{color:#5F584D!important;-webkit-text-fill-color:#5F584D!important}
+
+/* ===== Barras de progresso iguais às do app Família · 2026-09-28-3 =====
+   Mesmo desenho da barra "Já pago" do app Família: 14 px de altura, cantos
+   arredondados, trilho escuro com fio dourado e preenchimento em degradê do
+   dourado ao verde. Vale para todas as barras de progresso da Gestão; o
+   restante do app fica como está. "A receber" pequeno vira um ponto redondo. */
+.jv-ref-comparativo .jv-ref-bar-row>i,.bar,#pg-dash .bar,.avmini .avbar{height:14px!important;background:rgba(255,255,255,.07)!important;border:1px solid rgba(224,185,79,.14)!important;border-radius:10px!important;overflow:hidden!important;box-sizing:border-box}
+.jv-ref-comparativo .jv-ref-bar-row>i>b,.bar i,#pg-dash .bar i,.bar i.loc,.bar i.batida,#pg-dash .bar i.loc,#pg-dash .bar i.batida,.avmini .avbar>i{background:linear-gradient(90deg,#E0B94F,#63D887)!important;border-radius:10px!important}
+.jv-ref-comparativo .jv-ref-bar-row.receber>i>b{min-width:12px}
