@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-28-4';
+const VERSAO='2026-09-28-5';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -3328,7 +3328,7 @@ function renderAgenda(){
             const avis=linked&&isAvisou(e,agDate);
             if(e.doDono)return `<span class="ev t-outro" title="Aula marcada pela academia no seu nome">👑 ${esc(e.titulo)}<small> · ${esc(e.tipo)} · da academia</small></span>`;
             return `<span class="ev t-${e.tipo} drag-item" data-eid="${e.id}" data-origem="${e.origem}">
-              ${linked?`<button class="pres ${pres?'ok':''} ${falt?'falt':''} ${avis?'avis':''}" onclick="togglePresenca('${e.id}')">${pres?'✓':(falt?'✗':(avis?'🔁':'○'))}</button>`:''}
+              ${linked?`<button class="pres ${pres?'ok':''} ${falt?'falt':''} ${avis?'avis':''}" aria-label="${pres?'Presença confirmada — toque para desfazer':(falt?'Falta — toque para desfazer':(avis?'Avisou — toque para desfazer':'Confirmar presença'))}" onclick="togglePresenca('${e.id}')">${pres?'✓':(falt?'✗':(avis?'🔁':'○'))}</button>`:''}
               <span onclick="openSlot('${h}')">${e.titulo}<small> · ${e.tipo==='grupo'?grupoTag(e.pessoas)+' · ':''}${e.repo?'reposição':(e.origem==='fixo'?'fixo':(e.origem==='compromisso'?'pessoal':'pontual'))}${foraDaQuadra(e)?' · 📍 fora da quadra':''}${profDaEntrada(e)?' · 👨‍🏫 '+esc(profNome(profDaEntrada(e))||'professor'):''}${e.doDono?' · 👑 marcada pela academia':''}</small></span>
             </span>`;
           }).join('')}
