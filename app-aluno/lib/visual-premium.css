@@ -130,3 +130,7 @@ body:not([data-aba="inicio"]) #app>.top.jv-premium-hero .jv-avatar-btn{grid-area
    degradê do dourado ao verde, como a barra "Já pago" do app Família. */
 html body .jv-progress,html body #apg-inicio .jv-progress{height:14px!important;background:rgba(255,255,255,.07)!important;border:1px solid rgba(224,185,79,.14)!important;border-radius:10px!important;overflow:hidden!important;box-sizing:border-box}
 html body .jv-progress i{background:linear-gradient(90deg,#E0B94F,#63D887)!important;border-radius:10px!important}
+
+/* ===== Barra de baixo mais perto da borda · 2026-09-28-5 ===== */
+html body .nav.jv-nav-3d{padding-bottom:max(3px,calc(env(safe-area-inset-bottom,0px) - 20px))!important}
+@media (display-mode:standalone){html body .nav.jv-nav-3d{padding-bottom:max(3px,calc(env(safe-area-inset-bottom,0px) - 20px))!important}}

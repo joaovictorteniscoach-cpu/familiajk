@@ -2316,3 +2316,28 @@ body{padding-bottom:calc(56px + max(5px,env(safe-area-inset-bottom,0px)))!import
   font-size:13px!important;font-weight:800!important;line-height:1!important;display:inline-flex!important;align-items:center!important;justify-content:center!important}
 #pg-agenda .slot-body .ev .pres.ok{background:#2E9E5B!important;border-color:#2E9E5B!important;color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important}
 #pg-agenda .slot-body .ev .pres.falt,#pg-agenda .slot-body .ev .pres.avis{background:rgba(255,255,255,.18)!important;color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important}
+
+/* ===== Barra de baixo mais perto da borda e presença refeita · 2026-09-28-5 =====
+   A barra usava toda a margem de segurança do iPhone embaixo dos rótulos
+   (uns 34 px vazios). Agora usa só o necessário para não brigar com a
+   linha de voltar ao início do iPhone. */
+html body .nav.jv-nav-3d{padding-bottom:max(3px,calc(env(safe-area-inset-bottom,0px) - 20px))!important}
+html body .nav.jv-nav-3d button{padding-bottom:3px!important}
+@media (display-mode:standalone){html body .nav.jv-nav-3d{padding-bottom:max(3px,calc(env(safe-area-inset-bottom,0px) - 20px))!important}}
+
+/* Presença no Dia: círculo limpo com ícone desenhado (sem caractere de
+   texto). A confirmar = anel branco; confirmada = verde com visto branco e
+   um anel claro em volta; falta/avisou antigos com ícone próprio. */
+#pg-agenda .slot-body .ev .pres{position:relative!important;width:28px!important;height:28px!important;min-width:28px!important;min-height:28px!important;
+  font-size:0!important;color:transparent!important;-webkit-text-fill-color:transparent!important;
+  border:2px solid rgba(255,255,255,.92)!important;background:rgba(255,255,255,.10)!important;border-radius:50%!important;
+  box-shadow:0 1px 3px rgba(0,0,0,.25)!important;transition:transform .12s ease,background-color .18s ease,border-color .18s ease!important;
+  -webkit-tap-highlight-color:transparent;cursor:pointer}
+#pg-agenda .slot-body .ev .pres:active{transform:scale(.88)!important}
+#pg-agenda .slot-body .ev .pres::after{content:"";position:absolute;inset:0;border-radius:50%;background:center/16px no-repeat}
+#pg-agenda .slot-body .ev .pres.ok{background:linear-gradient(180deg,#36B56E,#1F8F4E)!important;border-color:#FFFFFF!important;box-shadow:0 0 0 2px rgba(54,181,110,.35),0 2px 5px rgba(0,0,0,.28)!important}
+#pg-agenda .slot-body .ev .pres.ok::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E")}
+#pg-agenda .slot-body .ev .pres.falt{background:#C4533B!important;border-color:#FFFFFF!important}
+#pg-agenda .slot-body .ev .pres.falt::after{background-size:13px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.4' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E")}
+#pg-agenda .slot-body .ev .pres.avis{background:#C99A2E!important;border-color:#FFFFFF!important}
+#pg-agenda .slot-body .ev .pres.avis::after{background-size:15px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 7L5 11l4 4'/%3E%3Cpath d='M5 11h9a5 5 0 0 1 0 10h-2'/%3E%3C/svg%3E")}
