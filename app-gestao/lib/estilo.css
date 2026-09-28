@@ -2293,12 +2293,16 @@ body{padding-bottom:calc(56px + max(5px,env(safe-area-inset-bottom,0px)))!import
 #pg-agenda .wk-cell.multi{background:repeating-linear-gradient(45deg,#3B6FB5,#3B6FB5 8px,#2F5A94 8px,#2F5A94 16px)!important;color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important}
 #pg-agenda #ag-view .jv-ag-hint{color:#5F584D!important;-webkit-text-fill-color:#5F584D!important}
 
-/* ===== Barras do "Comparativo do mês" nas cores do modelo · 2026-09-28-3 =====
-   Só as cores: trilho verde bem escuro, Meta dourada, Recebido verde-sálvia
-   (com leve degradê), A receber dourado e Despesas terracota. "A receber"
-   pequeno aparece como um ponto redondo, como no modelo, em vez de um fio. */
-.jv-ref-comparativo .jv-ref-bar-row>i{background:#0F2A20!important}
+/* ===== Barras de progresso nas cores do modelo · 2026-09-28-3 =====
+   Só as cores, em todas as barras de progresso: trilho verde bem escuro,
+   dourado para meta/ocupação, verde-sálvia (leve degradê) para recebido,
+   locações e meta batida, dourado para "A receber" (um ponto redondo quando
+   é pequeno) e terracota para despesas. Tamanhos e o resto ficam como estão. */
+.jv-ref-comparativo .jv-ref-bar-row>i,.bar,.avmini .avbar{background:#0F2A20!important}
+#pg-dash .bar{background:#0F2A20!important}
 .jv-ref-comparativo .jv-ref-bar-row.meta>i>b{background:#EBBF58!important}
 .jv-ref-comparativo .jv-ref-bar-row.recebido>i>b{background:linear-gradient(90deg,#57A072,#78B48F)!important}
 .jv-ref-comparativo .jv-ref-bar-row.receber>i>b{background:#EDC35E!important;min-width:12px}
 .jv-ref-comparativo .jv-ref-bar-row.despesa>i>b{background:#D27244!important}
+.bar i,#pg-dash .bar i,.avmini .avbar>i{background:#EBBF58!important}
+.bar i.loc,.bar i.batida,#pg-dash .bar i.loc,#pg-dash .bar i.batida{background:linear-gradient(90deg,#57A072,#78B48F)!important}

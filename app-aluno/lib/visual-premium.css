@@ -124,3 +124,8 @@ body:not([data-aba="inicio"]) #app>.top.jv-premium-hero .jv-avatar-btn{grid-area
 #apg-agenda .wc.pend,#apg-agenda .sl.pend{background:#F4E4B1!important;color:#614C15!important;-webkit-text-fill-color:#614C15!important}
 #apg-agenda .wc.chuva,#apg-agenda .sl.chuva{background:#D5E6F1!important;color:#304F68!important;-webkit-text-fill-color:#304F68!important}
 #apg-agenda .wc.ocup,#apg-agenda .wc.bloq,#apg-agenda .wc.fechado,#apg-agenda .wc.passou,#apg-agenda .sl.ocup,#apg-agenda .sl.bloq{background:#E9E5DD!important;color:#5F584D!important;-webkit-text-fill-color:#5F584D!important}
+
+/* ===== Barra de progresso nas cores do modelo · 2026-09-28-3 =====
+   Créditos: trilho claro verde-acinzentado e preenchimento dourado. */
+html body .jv-progress,html body #apg-inicio .jv-progress{background:rgba(215,228,218,.72)!important}
+html body .jv-progress i{background:#EBBF58!important}
