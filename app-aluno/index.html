@@ -1550,8 +1550,24 @@ html,body{background:#031D15!important}body{color:#F8F5EE!important;padding-bott
 .jv-nav-3d{min-height:58px!important;padding:3px 5px max(5px,env(safe-area-inset-bottom,0px))!important;background:rgba(2,25,18,.985)!important;border-top:1px solid rgba(232,184,62,.30)!important;box-shadow:0 -6px 16px rgba(0,0,0,.25)!important}.jv-nav-3d button{min-height:48px!important;padding:4px 1px 6px!important;border-radius:0!important;background:transparent!important;gap:1px!important;font-size:8.5px!important;font-weight:650!important;color:#ECE9E1!important;-webkit-text-fill-color:#ECE9E1!important}.jv-nav-3d button .ico{width:21px!important;height:21px!important;min-width:21px!important;min-height:21px!important}.jv-nav-3d button .ico img{width:21px!important;height:21px!important}.jv-nav-3d button .ico svg{width:19px!important;height:19px!important}.jv-nav-3d button.on{background:transparent!important;color:#F2CF62!important;-webkit-text-fill-color:#F2CF62!important}.jv-nav-3d button.on:after{bottom:0!important;width:23px!important;height:2px!important;background:#F0C84E!important}
 @media(max-width:390px){#app>.top.jv-premium-hero{padding-left:11px!important;padding-right:11px!important}#apg-inicio .jv-home-card{min-height:108px!important;padding:8px!important}#apg-inicio .jv-home-card .hc-main{font-size:17px!important}}
 
+
+/* ===== Cadastro de novo aluno ===== */
+.login-new-btn{margin-top:10px;width:200px;padding:12px 14px;border-radius:14px;border:1px solid rgba(201,160,74,.55);background:rgba(255,255,255,.07);color:var(--gold-light);font-weight:700;font-size:13px;position:relative}
+.login-new-btn:active{transform:scale(.97)}
+.cad-new-modal{max-width:430px}
+.cad-new-intro{font-size:13px;color:var(--muted);line-height:1.5;margin:5px 0 15px}
+.cad-new-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cad-new-grid .field.full{grid-column:1/-1}
+.cad-new-state{text-align:center;padding:8px 2px 2px}
+.cad-new-state .cad-new-ok{width:58px;height:58px;margin:0 auto 12px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#EAF7EF;color:#27764A;font-size:28px;font-weight:900}
+.cad-new-state h3{margin-bottom:6px}
+.cad-new-state p{font-size:13px;color:var(--muted);line-height:1.5}
+.cad-new-actions{display:flex;gap:9px;margin-top:15px}
+.cad-new-actions .btn{flex:1}
+@media(max-width:520px){.cad-new-grid{grid-template-columns:1fr}.cad-new-grid .field.full{grid-column:auto}}
+
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-09-28-5">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-09-29-1">
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
 <script src="lib/firebase-database-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js\'><\/script>')"></script>
@@ -1639,15 +1655,54 @@ function esperarAuth(){
   <p class="login-tag">Academia João Victor Tênis · Curitiba</p>
   <h1>JV <em>Tênis</em></h1>
   <p class="login-sub">Seja bem-vindo 🎾</p>
-  <p>Digite o código que o João Victor te enviou</p>
+  <p>Já é aluno? Digite seu código de acesso</p>
   <input class="code-input" id="code-in" maxlength="4" inputmode="numeric" placeholder="••••">
   <label class="keep-lab"><input type="checkbox" id="keep-in" checked> Manter-me conectado</label>
-  <button class="login-btn" onclick="entrar()">Entrar 🎾</button>
+  <button class="login-btn" onclick="entrar()">Acessar app</button>
+  <button class="login-new-btn" onclick="abrirCadastroNovo()">Sou novo · solicitar acesso</button>
   <div class="login-err" id="login-err"></div>
-  <p class="login-hint">Não tem código? <b onclick="abrirWhatsApp('5541995415712','Olá João! Quero começar a usar o app da academia. 🎾')" style="color:#C9E265;text-decoration:underline;cursor:pointer">Fale com o João</b></p>
+  <p class="login-hint">Novo na academia? Você pode solicitar seu acesso aqui mesmo.</p>
   <p class="login-slogan">Da base ao topo 🎾</p>
   <a href="privacidade.html" class="login-priv">Política de Privacidade</a>
 </section>
+
+<!-- NOVO ALUNO — solicitação de acesso -->
+<div class="overlay" id="ov-cadastro-novo" onclick="if(event.target===this)fecharCadastroNovo()">
+  <div class="modal cad-new-modal">
+    <div id="cad-new-form">
+      <h3>Solicitar acesso ao App JV Tênis</h3>
+      <p class="cad-new-intro">Preencha seus dados. A academia recebe a solicitação na Gestão e, após a aprovação, este aparelho passa a acessar o app automaticamente.</p>
+      <div class="cad-new-grid">
+        <div class="field full"><label>Nome completo</label><input id="cad-new-nome" autocomplete="name" maxlength="120" placeholder="Seu nome"></div>
+        <div class="field"><label>WhatsApp com DDD</label><input id="cad-new-tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="(41) 99999-9999"></div>
+        <div class="field"><label>E-mail (opcional)</label><input id="cad-new-email" type="email" autocomplete="email" maxlength="160" placeholder="voce@email.com"></div>
+        <div class="field full"><label>Tenho interesse em</label>
+          <select id="cad-new-interesse">
+            <option value="Aulas particulares">Aulas particulares</option>
+            <option value="Aulas em grupo">Aulas em grupo</option>
+            <option value="Grupo Família">Grupo Família</option>
+            <option value="Locação de quadra">Locação de quadra</option>
+          </select>
+        </div>
+      </div>
+      <p class="login-err" id="cad-new-err" style="text-align:left"></p>
+      <div class="cad-new-actions">
+        <button class="btn btn-ghost" onclick="fecharCadastroNovo()">Cancelar</button>
+        <button class="btn btn-clay" id="cad-new-send" onclick="enviarCadastroNovo()">Enviar solicitação</button>
+      </div>
+    </div>
+    <div id="cad-new-pendente" class="cad-new-state" style="display:none">
+      <div class="cad-new-ok">✓</div>
+      <h3>Solicitação enviada</h3>
+      <p id="cad-new-pendente-texto">Seu pedido chegou à academia. Assim que for aprovado, este aparelho será liberado automaticamente.</p>
+      <div class="cad-new-actions">
+        <button class="btn btn-ghost" onclick="fecharCadastroNovo()">Fechar</button>
+        <button class="btn btn-clay" onclick="verificarCadastroNovo(false)">Verificar liberação</button>
+      </div>
+      <button class="btn btn-ghost" style="width:100%;margin-top:8px" onclick="abrirWhatsApp('5541995415712','Olá João! Acabei de solicitar meu acesso ao App JV Tênis. 🎾')">Falar no WhatsApp</button>
+    </div>
+  </div>
+</div>
 
 <!-- APP -->
 <div id="app">
@@ -1917,7 +1972,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-09-28-5"></script>
+<script src="lib/icones.js?v=2026-09-29-1"></script>
 </div>
 
 <!-- MODAL ESCOLHER O QUE FAZER NO HORÁRIO -->
@@ -2124,7 +2179,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-09-28-5';
+const VERSAO='2026-09-29-1';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -2200,6 +2255,106 @@ function falarComProfessor(){
   const nome=(EU&&EU.nome)?EU.nome.split(' ')[0]:'';
   abrirWhatsApp('5541995415712','Olá João! '+(nome?'Aqui é '+nome+'. ':'')+'Tenho uma dúvida sobre meu saldo/horários. 🎾');
 }
+
+/* ===== Auto cadastro de novo aluno ======================================== */
+const CADASTRO_PENDENTE_KEY='jvt-cadastro-pendente-v1';
+function lerCadastroPendente(){
+  try{const r=localStorage.getItem(CADASTRO_PENDENTE_KEY);return r?JSON.parse(r):null;}catch(e){return null;}
+}
+function salvarCadastroPendente(v){
+  try{if(v)localStorage.setItem(CADASTRO_PENDENTE_KEY,JSON.stringify(v));else localStorage.removeItem(CADASTRO_PENDENTE_KEY);}catch(e){}
+}
+function mostrarCadastroPendente(nome){
+  const form=document.getElementById('cad-new-form'),pend=document.getElementById('cad-new-pendente');
+  if(form)form.style.display='none';
+  if(pend)pend.style.display='block';
+  const p=document.getElementById('cad-new-pendente-texto');
+  if(p)p.textContent=(nome?nome.split(' ')[0]+', ':'')+'seu pedido chegou à academia. Assim que for aprovado, este aparelho será liberado automaticamente.';
+}
+function abrirCadastroNovo(){
+  const ov=document.getElementById('ov-cadastro-novo');if(!ov)return;
+  const pend=lerCadastroPendente();
+  const form=document.getElementById('cad-new-form'),box=document.getElementById('cad-new-pendente');
+  if(form)form.style.display=pend?'none':'block';
+  if(box)box.style.display=pend?'block':'none';
+  if(pend)mostrarCadastroPendente(pend.nome||'');
+  ov.classList.add('on');
+}
+function fecharCadastroNovo(){const ov=document.getElementById('ov-cadastro-novo');if(ov)ov.classList.remove('on');}
+async function enviarCadastroNovo(){
+  const nome=(document.getElementById('cad-new-nome').value||'').trim();
+  const tel=(document.getElementById('cad-new-tel').value||'').replace(/\D/g,'');
+  const email=(document.getElementById('cad-new-email').value||'').trim().toLowerCase();
+  const interesse=document.getElementById('cad-new-interesse').value||'Aulas particulares';
+  const err=document.getElementById('cad-new-err'),btn=document.getElementById('cad-new-send');
+  if(nome.length<2){err.textContent='Informe seu nome completo.';return;}
+  if(tel.length<10||tel.length>13){err.textContent='Informe um WhatsApp válido com DDD.';return;}
+  if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){err.textContent='Confira o e-mail informado.';return;}
+  err.textContent='Enviando…';btn.disabled=true;
+  try{
+    await esperarAuth();
+    const uid=authUid();
+    if(!hasCloud()||!uid)throw new Error('sem conexão');
+    const item={uid:uid,nome:nome,tel:tel,email:email,interesse:interesse,origem:'app-aluno',ts:Date.now()};
+    await window.fbDB.ref('jvtenis/fila_cadastros/'+uid).set(item);
+    salvarCadastroPendente({uid:uid,nome:nome,tel:tel,email:email,ts:item.ts});
+    err.textContent='';
+    mostrarCadastroPendente(nome);
+  }catch(e){
+    const ja=lerCadastroPendente();
+    if(ja){
+      err.textContent='';
+      mostrarCadastroPendente(ja.nome||nome);
+    }else if(/permission|denied/i.test(String(e&&e.message||e))){
+      err.textContent='Pode já existir uma solicitação deste aparelho. Se você já enviou, aguarde a aprovação da academia.';
+    }else err.textContent='Não consegui enviar agora. Verifique sua internet e tente novamente.';
+  }finally{btn.disabled=false;}
+}
+async function verificarCadastroNovo(silencioso){
+  const pend=lerCadastroPendente();
+  if(!pend&&!silencioso)return false;
+  try{
+    await esperarAuth();
+    const uid=authUid();if(!uid||!hasCloud())throw new Error('sem conexão');
+    const link=await cloudGet('jvtenis/'+VINC_KEY+'/'+uid);
+    if(link&&link.ativo===true&&String(link.codigo||'').length===4){
+      MEU.codigo=String(link.codigo);
+      lsSet('jvt-keep','1');
+      await carregarMeuNuvem();
+      const ok=await refresh(true);
+      if(ok&&EU){
+        salvarCadastroPendente(null);
+        fecharCadastroNovo();
+        show();
+        toast('✓ Acesso aprovado. Bem-vindo à JV Tênis!');
+        return true;
+      }
+      if(!silencioso){
+        const p=document.getElementById('cad-new-pendente-texto');
+        if(p)p.textContent='Seu acesso já foi aprovado. A academia está finalizando seus dados; tente novamente em instantes.';
+      }
+      return false;
+    }
+    if(!silencioso){
+      mostrarCadastroPendente((pend&&pend.nome)||'');
+      const p=document.getElementById('cad-new-pendente-texto');
+      if(p)p.textContent=((pend&&pend.nome)?pend.nome.split(' ')[0]+', ':'')+'seu pedido ainda está aguardando aprovação da academia.';
+    }
+  }catch(e){if(!silencioso)toast('Não consegui verificar agora. Tente novamente.');}
+  return false;
+}
+function iniciarCadastroNovo(){
+  const pend=lerCadastroPendente();
+  let novo=false;try{novo=new URLSearchParams(location.search).get('novo')==='1';}catch(e){}
+  if(pend){abrirCadastroNovo();verificarCadastroNovo(true);}
+  else if(novo)abrirCadastroNovo();
+}
+/* Enquanto existe uma solicitação, verifica só o vínculo deste aparelho.
+   É uma leitura minúscula e para sozinha assim que o acesso é aprovado. */
+setInterval(function(){
+  if(lerCadastroPendente()&&document.visibilityState!=='hidden')verificarCadastroNovo(true);
+},15000);
+
 function dKey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function fmt(v){return 'R$ '+Number(v||0).toLocaleString('pt-BR');}
 function fmtCred(n){const r=Math.round(Number(n||0)*2)/2;return r%1===0?String(r):String(r).replace('.',',');}
@@ -4463,7 +4618,8 @@ setInterval(()=>{if(!document.hidden)checarLiberacao();},60000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-09-28-5').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-09-29-1').catch(function(){});});}
+window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
 (function esperarEIniciar(t){

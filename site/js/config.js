@@ -21,6 +21,6 @@ window.JV_CONFIG = Object.freeze({
   },
   urls: {
     whatsapp: "https://wa.me/5541995415712",
-    statusQuadra: "https://academia-jv-tenis-default-rtdb.firebaseio.com/jvtenis/status_quadra.json"
+    statusQuadra: "https://academia-jv-tenis-default-rtdb.firebaseio.com/jvtenis/precos_publicos/status_quadra.json"
   }
 });

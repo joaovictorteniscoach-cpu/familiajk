@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-28-5';
+const VERSAO='2026-09-29-1';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2166,8 +2166,11 @@ async function doPublish(){
     // Nó público mínimo: só os três preços de grupo, que é tudo o que o site
     // do jvtenis.com.br precisa. Sem ele, o site teria que ler a publicação
     // inteira — e aí os dados dos alunos precisariam ficar abertos a todos.
-    try{await window.fbDB.ref('jvtenis/precos_publicos')
-      .set(DB.grupoPreco||{dupla:90,trio:85,quarteto:80});}catch(e){}
+    try{
+      const mini=Object.assign({},DB.grupoPreco||{dupla:90,trio:85,quarteto:80});
+      mini.status_quadra=statusQuadraValor();
+      await window.fbDB.ref('jvtenis/precos_publicos').set(mini);
+    }catch(e){}
   }catch(e){/* melhor esforço */}
 }
 /* Importa agendamentos feitos pelos alunos no App do Aluno (fila push do Firebase) */
@@ -2231,6 +2234,40 @@ async function syncRequests(silent){
   }catch(e){if(!silent)toast('Erro ao sincronizar');}
   syncing=false;
 }
+
+/* ===== Status público da quadra — nó mínimo, sem peso no site ============ */
+const STATUS_QUADRA_OPCOES={
+  liberada:{rotulo:'🟢 Liberada'},
+  avaliacao:{rotulo:'🟡 Em avaliação'},
+  chuva:{rotulo:'🌧️ Fechada por chuva'},
+  fechada:{rotulo:'🔴 Temporariamente fechada'}
+};
+function statusQuadraValor(){
+  const v=DB&&DB.statusQuadra;
+  return v&&STATUS_QUADRA_OPCOES[v.status]?v:{status:'avaliacao',atualizado_em:'',ts:0};
+}
+function renderStatusQuadraGestao(){
+  const el=document.getElementById('quadra-status-atual');if(!el)return;
+  const v=statusQuadraValor(),o=STATUS_QUADRA_OPCOES[v.status];
+  el.textContent=o.rotulo+(v.atualizado_em?' · '+v.atualizado_em:'');
+  document.querySelectorAll('[data-quadra-status]').forEach(function(b){
+    b.classList.toggle('btn-clay',b.getAttribute('data-quadra-status')===v.status);
+    b.classList.toggle('btn-ghost',b.getAttribute('data-quadra-status')!==v.status);
+  });
+}
+async function definirStatusQuadra(status){
+  if(!ehDono()||!STATUS_QUADRA_OPCOES[status])return;
+  const d=new Date(),pad=n=>String(n).padStart(2,'0');
+  const v={status:status,atualizado_em:pad(d.getDate())+'/'+pad(d.getMonth()+1)+' '+pad(d.getHours())+':'+pad(d.getMinutes()),ts:Date.now()};
+  DB.statusQuadra=v;
+  persist();renderStatusQuadraGestao();
+  if(hasCloud()){
+    try{await window.fbDB.ref('jvtenis/precos_publicos/status_quadra').set(v);toast('Status da quadra atualizado');}
+    catch(e){toast('Status salvo no app; publicação na nuvem pendente');}
+  }else toast('Status salvo no app; sem conexão com a nuvem');
+}
+setTimeout(renderStatusQuadraGestao,1800);
+
 setInterval(()=>{carregarVinculos(true);syncRequests(true);carregarNotifs();carregarConfirmacoes();carregarCadastros();carregarAutoAval();lerMapaQuadra();lerAgendaProf();},45000);
 setTimeout(carregarAutoAval,4000);
 
@@ -2652,9 +2689,11 @@ async function syncPedidos(silent){
 }
 function updatePedBadge(){
   const b=document.getElementById('ped-badge');if(!b)return;
-  if(pedFila.length){b.style.display='flex';b.textContent=pedFila.length>9?'9+':String(pedFila.length);}else b.style.display='none';
+  const cadN=Object.keys((typeof CADASTROS!=='undefined'&&CADASTROS)||{}).length;
+  const total=pedFila.length+cadN;
+  if(total){b.style.display='flex';b.textContent=total>9?'9+':String(total);}else b.style.display='none';
   const nb=document.getElementById('nb-inicio');
-  if(nb){if(pedFila.length){nb.textContent=pedFila.length>9?'9+':String(pedFila.length);nb.classList.add('on');}else nb.classList.remove('on');}
+  if(nb){if(total){nb.textContent=total>9?'9+':String(total);nb.classList.add('on');}else nb.classList.remove('on');}
 }
 function pedEsc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function pedDesc(p){
@@ -2670,8 +2709,17 @@ function pedDesc(p){
 function abrirPedidos(){renderPedList();document.getElementById('ov-ped').classList.add('on');}
 function renderPedList(){
   const el=document.getElementById('ped-list');if(!el)return;
-  if(!pedFila.length){el.innerHTML='<div class="empty">Nenhum pedido no momento. Compras, planos e avisos de pagamento dos alunos aparecem aqui.</div>';return;}
-  el.innerHTML=pedFila.map(p=>{
+  const cadKeys=Object.keys((typeof CADASTROS!=='undefined'&&CADASTROS)||{});
+  if(!pedFila.length&&!cadKeys.length){el.innerHTML='<div class="empty">Nenhum pedido no momento. Cadastros, compras, planos e avisos de pagamento aparecem aqui.</div>';return;}
+  const cadHtml=cadKeys.map(k=>{
+    const c=CADASTROS[k]||{}, keyJs=String(k).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return '<div style="display:flex;align-items:center;gap:8px;border-left:4px solid var(--clay);padding:11px 0 11px 9px;border-bottom:1px solid var(--border)">'
+      +'<div style="flex:1;min-width:0"><div><b>🆕 Novo acesso · '+vincEsc(c.nome||'Aluno')+'</b></div>'
+      +'<div style="opacity:.7;font-size:11px;margin-top:2px">'+cadastroContato(c)+'</div></div>'
+      +'<div style="display:flex;gap:6px"><button class="ap" onclick="aprovarCadastro(\''+keyJs+'\')">Aprovar</button>'
+      +'<button class="ds" onclick="descartarCadastro(\''+keyJs+'\')">✕</button></div></div>';
+  }).join('');
+  el.innerHTML=cadHtml+pedFila.map(p=>{
     const q=new Date(p.ts||Date.now());
     const hm=String(q.getHours()).padStart(2,'0')+':'+String(q.getMinutes()).padStart(2,'0');
     const cor=p.kind==='plano'?'var(--gold-light)':'var(--c-loc)';
@@ -8446,43 +8494,72 @@ async function carregarConfirmacoes(){
     CONF_ALUNOS=m;const b=document.getElementById('confirm-amanha');if(b)renderConfirmAmanha();
   }catch(e){}
 }
-let CADASTROS={};
+var CADASTROS={};
 async function carregarCadastros(){
   if(!hasCloud())return;
   try{
     const snap=await window.fbDB.ref('jvtenis/fila_cadastros').get();
     CADASTROS=snap.exists()?(snap.val()||{}):{};
     renderCadastros();
+    if(typeof updatePedBadge==='function')updatePedBadge();
+    const ov=document.getElementById('ov-ped');if(ov&&ov.classList.contains('on')&&typeof renderPedList==='function')renderPedList();
   }catch(e){}
+}
+function cadastroContato(c){
+  const partes=[];
+  if(c&&c.tel)partes.push('📱 '+vincEsc(c.tel));
+  if(c&&c.email)partes.push('✉ '+vincEsc(c.email));
+  if(c&&c.interesse)partes.push(vincEsc(c.interesse));
+  return partes.join(' · ')||'Sem contato informado';
 }
 function renderCadastros(){
   const wrap=document.getElementById('cadastros-wrap'),box=document.getElementById('cadastros-box');
   if(!wrap||!box)return;
-  const keys=Object.keys(CADASTROS);
+  const keys=Object.keys(CADASTROS||{});
   wrap.style.display=keys.length?'block':'none';
   box.innerHTML=keys.map(k=>{
-    const c=CADASTROS[k]||{};
-    return '<div class="mov"><div class="mov-l"><b>'+(c.nome||'—')+'</b><span>📱 '+(c.tel||'—')+' · '+(c.interesse||'')+'</span></div>'
+    const c=CADASTROS[k]||{},keyJs=String(k).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return '<div class="mov"><div class="mov-l"><b>'+vincEsc(c.nome||'—')+'</b><span>'+cadastroContato(c)+'</span></div>'
       +'<div style="display:flex;gap:6px">'
-      +'<button class="btn btn-clay" style="padding:6px 10px;font-size:11.5px" onclick="aprovarCadastro(\''+k+'\')">✓ Criar aluno</button>'
-      +'<button class="btn btn-ghost" style="padding:6px 10px;font-size:11.5px" onclick="descartarCadastro(\''+k+'\')">✕</button>'
+      +'<button class="btn btn-clay" style="padding:6px 10px;font-size:11.5px" onclick="aprovarCadastro(\''+keyJs+'\')">✓ Aprovar acesso</button>'
+      +'<button class="btn btn-ghost" style="padding:6px 10px;font-size:11.5px" onclick="descartarCadastro(\''+keyJs+'\')">✕</button>'
       +'</div></div>';
   }).join('');
+  if(typeof updatePedBadge==='function')updatePedBadge();
 }
-function aprovarCadastro(key){
+async function aprovarCadastro(key){
   const c=CADASTROS[key];if(!c)return;
   let cod;do{cod=genCode();}while(DB.alunos.some(x=>x.codigo===cod));
-  DB.alunos.push({id:'a'+Date.now(),nome:c.nome||'Novo aluno',tel:(c.tel||'').replace(/\D/g,''),tipo:'Particular',plano:0,mensalidade:0,creditos:0,repos:0,locCred:0,status:'pendente',diaVenc:10,codigo:cod,valorAula:160,cardLink:'',mfitLink:''});
-  if(hasCloud())window.fbDB.ref('jvtenis/fila_cadastros/'+key).remove().catch(()=>{});
+  const id='a'+Date.now();
+  const aluno={id:id,nome:String(c.nome||'Novo aluno').slice(0,120),tel:String(c.tel||'').replace(/\D/g,'').slice(0,13),email:String(c.email||'').slice(0,160),tipo:'Particular',plano:0,mensalidade:0,creditos:0,repos:0,locCred:0,status:'pendente',diaVenc:10,codigo:cod,valorAula:160,cardLink:'',mfitLink:''};
+  DB.alunos.push(aluno);
+  let auto=false;
+  if(hasCloud()&&c.uid){
+    try{
+      const link={codigo:cod,alunoId:id,nome:aluno.nome,ativo:true,ts:Date.now()};
+      await window.fbDB.ref('jvtenis/'+VINC_KEY+'/'+c.uid).set(link);
+      VINCULOS[c.uid]=link;
+      auto=true;
+    }catch(e){console.warn('cadastro criado, vínculo automático pendente',e);}
+  }
+  if(hasCloud())try{await window.fbDB.ref('jvtenis/fila_cadastros/'+key).remove();}catch(e){}
   delete CADASTROS[key];
-  logAct('Cadastro aprovado (site): '+(c.nome||''));
+  logAct('Cadastro aprovado (app/site): '+aluno.nome);
   persist();renderAll();renderCadastros();
-  toast('✓ Aluno criado (sem pacote). Ajuste o plano e envie o acesso 🔑');
+  if(typeof renderPedList==='function')renderPedList();
+  if(auto){
+    try{await doPublish();}catch(e){console.warn('publicação após cadastro pendente',e);}
+    toast('✓ '+aluno.nome+' criado e acesso liberado automaticamente');
+  }else{
+    toast('✓ Aluno criado. Código de acesso: '+cod);
+  }
 }
-function descartarCadastro(key){
+async function descartarCadastro(key){
   if(!confirm('Descartar este pedido de cadastro?'))return;
-  if(hasCloud())window.fbDB.ref('jvtenis/fila_cadastros/'+key).remove().catch(()=>{});
-  delete CADASTROS[key];renderCadastros();toast('Pedido descartado.');
+  if(hasCloud())try{await window.fbDB.ref('jvtenis/fila_cadastros/'+key).remove();}catch(e){}
+  delete CADASTROS[key];renderCadastros();
+  if(typeof renderPedList==='function')renderPedList();
+  toast('Pedido descartado.');
 }
 function confirmarInterno(id,hora){
   const r=aulasAmanha();const dk=dKey(r.date);
