@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-29-1';
+const VERSAO='2026-09-29-2';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -5897,6 +5897,7 @@ function renderDash(){
   const aulasMes=contarAulas(_ini,_fim);
   setTxt('k-aulas-dia-total',aulasDia.total);setTxt('k-aulas-dia-personal',aulasDia.personal);setTxt('k-aulas-dia-tenis',aulasDia.tenis);
   setTxt('k-aulas-total',aulasMes.total);setTxt('k-aulas-personal',aulasMes.personal);setTxt('k-aulas-tenis',aulasMes.tenis);
+  const aml=document.getElementById('aulas-mes-label');if(aml)aml.textContent=MESES[curMonth]+' '+curYear;
   const ocMes=ocupacao(_ini,_fim), ocHoje=ocupacao(_hoje,_hoje);
   const ofill=document.getElementById('ocup-fill'); if(ofill)ofill.style.width=ocMes.pct+'%';
   setTxt('ocup-txt',ocMes.pct+'% no mês');
@@ -8473,6 +8474,56 @@ function descartarFilaTor(key){
 /* Verifica resultados de alunos a cada 45s quando a aba está aberta */
 setInterval(()=>{const pg=document.getElementById('pg-torneio');if(pg&&pg.classList.contains('on'))syncTorneio(true);},45000);
 
+
+function atividadesHoje(){
+  const hoje=new Date();
+  const out=[];
+  HORAS.forEach(h=>{entriesFor(hoje,h).forEach(e=>{
+    if(e.titulo==='☔ Chuva'||e.tipo==='bloqueio')return;
+    const a=e.alunoId?DB.alunos.find(x=>x.id===e.alunoId):null;
+    out.push({a:a,titulo:e.titulo,hora:h,tipo:e.tipo});
+  });});
+  return {date:hoje,list:out};
+}
+function confirmarInternoHoje(id,hora){
+  const hoje=new Date(),dk=dKey(hoje);
+  DB.confirmacoes=DB.confirmacoes||{};
+  const k=id+'|'+dk+'|'+hora;DB.confirmacoes[k]=!DB.confirmacoes[k];
+  persist();renderAtividadesHoje();
+  toast(DB.confirmacoes[k]?'✅ Aula confirmada.':'Confirmação desfeita.');
+}
+function confirmarAulaWaHoje(id,hora){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  if(!a.tel){toast('Sem telefone cadastrado para '+a.nome);return;}
+  const h=new Date();
+  const msg=encodeURIComponent('Olá '+a.nome.split(' ')[0]+'! 🎾 Passando para confirmar seu horário de hoje ('+h.getDate()+'/'+(h.getMonth()+1)+') às '+hora+'. Qualquer coisa me avisa. 😊');
+  window.open('https://wa.me/'+foneWhats(a.tel)+'?text='+msg,'_blank');
+}
+function renderAtividadesHoje(){
+  const box=document.getElementById('atividades-hoje');if(!box)return;
+  const r=atividadesHoje(),dk=dKey(r.date),CF=DB.confirmacoes||{};
+  if(!r.list.length){box.innerHTML='<div class="jv-today-empty">Nenhuma atividade agendada para hoje.</div>';return;}
+  const LBL={aula:'Aula',grupo:'Grupo',personal:'Personal',locacao:'Locação',pessoal:'Compromisso',torneio:'Torneio'};
+  box.innerHTML=r.list.map(function(it){
+    const lbl=LBL[it.tipo]||it.tipo||'Atividade';
+    const nome=it.a?it.a.nome:(it.titulo||lbl);
+    let right='';
+    if(it.a){
+      const jaJoao=!!CF[it.a.id+'|'+dk+'|'+it.hora];
+      const jaAluno=!!CONF_ALUNOS[(it.a.codigo||'')+'|'+dk+'|'+it.hora];
+      right='<div class="jv-today-actions">'
+        +(jaAluno?'<span class="jv-today-confirmed">✓ aluno confirmou</span>':'')
+        +'<button class="btn '+(jaJoao?'btn-ghost':'btn-clay')+'" onclick="confirmarInternoHoje(\''+it.a.id+'\',\''+it.hora+'\')">'+(jaJoao?'✓ Confirmada':'✓ Confirmar')+'</button>'
+        +(it.a.tel?'<button class="btn btn-ghost jv-wa-btn" onclick="confirmarAulaWaHoje(\''+it.a.id+'\',\''+it.hora+'\')"><span aria-hidden="true">↗</span> WhatsApp</button>':'')
+        +'</div>';
+    }
+    return '<div class="jv-today-item">'
+      +'<div class="jv-today-time"><b>'+esc(it.hora)+'</b><span>'+esc(lbl)+'</span></div>'
+      +'<div class="jv-today-name">'+esc(nome)+'</div>'
+      +right+'</div>';
+  }).join('');
+}
+
 function aulasAmanha(){
   const am=new Date();am.setDate(am.getDate()+1);
   const out=[];
@@ -8491,7 +8542,9 @@ async function carregarConfirmacoes(){
     const snap=await window.fbDB.ref('jvtenis/fila_confirmacoes').get();
     const v=snap.exists()?(snap.val()||{}):{};const m={};
     Object.keys(v).forEach(k=>{const c=v[k];if(c&&c.codigo&&c.data&&c.hora&&pedidoConfiavel(c))m[c.codigo+'|'+c.data+'|'+c.hora]=true;});
-    CONF_ALUNOS=m;const b=document.getElementById('confirm-amanha');if(b)renderConfirmAmanha();
+    CONF_ALUNOS=m;
+    if(document.getElementById('atividades-hoje'))renderAtividadesHoje();
+    const b=document.getElementById('confirm-amanha');if(b)renderConfirmAmanha();
   }catch(e){}
 }
 var CADASTROS={};
@@ -8617,7 +8670,7 @@ function renderAll(){
   carregarAvatarGestao();
   document.getElementById('month-label').textContent=MESES[curMonth]+' '+curYear;
   const safe=(fn,nome)=>{try{fn();}catch(e){console.warn('Render '+nome+' falhou:',e);}};
-  safe(updateEyeBtn,'olho');safe(renderAlunos,'alunos');safe(renderQuickLanc,'botoescaixa');safe(renderMovs,'caixa');safe(renderDash,'inicio');safe(renderFin,'financeiro');safe(renderAgenda,'agenda');safe(renderTorneio,'torneio');safe(renderConfirmAmanha,'confirmamanha');safe(renderAvaliacoes,'avaliacoes');safe(checarBackup,'backup');safe(renderConta,'conta');safe(prepararAluguel,'aluguel');
+  safe(updateEyeBtn,'olho');safe(renderAlunos,'alunos');safe(renderQuickLanc,'botoescaixa');safe(renderMovs,'caixa');safe(renderDash,'inicio');safe(renderAtividadesHoje,'atividadeshoje');safe(renderFin,'financeiro');safe(renderAgenda,'agenda');safe(renderTorneio,'torneio');safe(renderConfirmAmanha,'confirmamanha');safe(renderAvaliacoes,'avaliacoes');safe(checarBackup,'backup');safe(renderConta,'conta');safe(prepararAluguel,'aluguel');
 }
 // espera o Firebase ficar pronto (até ~6s) antes de carregar; nunca trava
 (function esperarESubir(t){
