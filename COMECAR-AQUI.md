@@ -11,16 +11,18 @@ Estado do sistema e o que fazer no dia a dia. O detalhe de cada assunto está em
 | **Endereço oficial** | `https://joaovictorteniscoach-cpu.github.io/familiajk/app-gestao/` |
 | App do aluno | `.../familiajk/app-aluno/` · Site: `.../familiajk/site/` |
 | Reserva | Netlify, publica sozinho no mesmo envio que o Pages |
-| Banco | regras da **etapa 2** no ar — só o João grava, aluno só acrescenta |
-| Login | conta criada, e-mail/senha e entrada anônima ligados |
-| Autoteste | **8 de 8** |
+| Banco | transição P0 informada pelo responsável; confirmar a regra vigente no console antes de alterar |
+| Login | Gestão usa conta autorizada; aparelhos de aluno recebem UID anônimo e aprovação individual |
+| Testes | `checar-tudo.sh` valida arquivos locais; não comprova regras ou dados atualmente no Firebase |
 
 ## O que fazer quando
 
 ### Mexeu nas regras do Firebase
-*Financeiro → Segurança → **🔌 Testar conexão***. Tem que dar 8 de 8. Cada falha
-diz o que fazer. Se travar alguma coisa, cole de volta
-`ferramentas/firebase-regras-etapa1.json` e nada se perde no meio-tempo.
+Confira a regra vigente no console do projeto **academia-jv-tenis** e guarde uma
+cópia antes de qualquer alteração autorizada. **Não use a etapa 1 como recuperação:**
+ela libera leitura e escrita em caminhos sensíveis. O teste de conexão do app
+faz gravações temporárias; não é uma inspeção somente de leitura.
+Siga [`ferramentas/FIREBASE.md`](ferramentas/FIREBASE.md).
 
 ### Apareceu barra vermelha no topo
 Os dois endereços publicam sozinhos, então isso deixou de ser rotina e virou
@@ -29,9 +31,11 @@ certo — e, quando puder, veja no painel do Netlify se o último deploy falhou.
 Para forçar: *Deploys → Trigger deploy → Deploy site*.
 
 ### O app abriu vazio
-**Não mexa em nada.** Vazio quer dizer que ele não conseguiu ler o Firebase.
+**Não apague dados locais nem reinstale.** Uma tela vazia pode indicar falha de
+conexão, login ou permissão; não comprova perda dos dados do Firebase.
 Existe uma trava (`CARREGADO`) que impede gravar por cima do dado bom nessa
-situação. Espere a internet voltar e reabra.
+situação. Exporte o backup se o app permitir, confirme a conexão e a conta
+autorizada e anote a mensagem de erro antes de tentar corrigir.
 
 ### Algum número parece errado
 1. *Financeiro → **🔎 Conferir números*** — aponta o que não fecha, sem corrigir

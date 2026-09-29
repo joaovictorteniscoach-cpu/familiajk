@@ -11,11 +11,11 @@ echo; echo "### 3. Ids de elemento procurados que nao existem"
 python3 ferramentas/checar-ids.py $APPS
 echo; echo "### 4. Colisao de nome de classe no CSS (conferir a olho)"
 python3 ferramentas/checar-css.py app-aluno/index.html app-gestao/index.html
-echo; echo "### 5. Regressao das regras atuais"
+echo; echo "### 5. Regressao do arquivo etapa 3 (nao consulta o Firebase publicado)"
 python3 ferramentas/checar-regras.py ferramentas/firebase-regras-etapa3.json || falhou=1
-echo; echo "### 6. Regressao das regras P0 — transicao"
+echo; echo "### 6. Regressao do arquivo P0 — transicao (validacao local)"
 python3 ferramentas/checar-regras.py ferramentas/firebase-regras-etapa3-transicao.json || falhou=1
-echo; echo "### 7. Regressao das regras P0 — final"
+echo; echo "### 7. Regressao do arquivo P0 — final (nao autoriza publicacao)"
 python3 ferramentas/checar-regras.py ferramentas/firebase-regras-etapa4-estrita.json || falhou=1
 echo; echo "### 8. Segurança P0: identidade, privacidade e modularizacao"
 python3 ferramentas/checar-seguranca-p0.py || falhou=1
