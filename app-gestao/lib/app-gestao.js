@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-29-3';
+const VERSAO='2026-09-29-2';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2237,29 +2237,23 @@ async function syncRequests(silent){
 
 /* ===== Status público da quadra — nó mínimo, sem peso no site ============ */
 const STATUS_QUADRA_OPCOES={
-  liberada:{rotulo:'Liberada',icone:'check'},
-  avaliacao:{rotulo:'Em avaliação',icone:'clock'},
-  chuva:{rotulo:'Fechada por chuva',icone:'rain'},
-  fechada:{rotulo:'Temporariamente fechada',icone:'block'}
+  liberada:{rotulo:'🟢 Liberada'},
+  avaliacao:{rotulo:'🟡 Em avaliação'},
+  chuva:{rotulo:'🌧️ Fechada por chuva'},
+  fechada:{rotulo:'🔴 Temporariamente fechada'}
 };
 function statusQuadraValor(){
   const v=DB&&DB.statusQuadra;
   return v&&STATUS_QUADRA_OPCOES[v.status]?v:{status:'avaliacao',atualizado_em:'',ts:0};
 }
 function renderStatusQuadraGestao(){
+  const el=document.getElementById('quadra-status-atual');if(!el)return;
   const v=statusQuadraValor(),o=STATUS_QUADRA_OPCOES[v.status];
-  const label=document.getElementById('quadra-status-top-label');
-  const tempo=document.getElementById('quadra-status-top-time');
-  const icon=document.getElementById('quadra-status-icon');
-  const card=document.getElementById('jv-court-top');
-  if(label)label.textContent=o.rotulo;
-  if(tempo)tempo.textContent=v.atualizado_em?('Atualizado '+v.atualizado_em):'Toque para atualizar';
-  if(icon){icon.setAttribute('data-ic',o.icone);if(window.NAVIC&&NAVIC[o.icone])icon.innerHTML=NAVIC[o.icone];}
-  if(card)card.setAttribute('data-state',v.status);
+  el.textContent=o.rotulo+(v.atualizado_em?' · '+v.atualizado_em:'');
   document.querySelectorAll('[data-quadra-status]').forEach(function(b){
-    b.classList.toggle('on',b.getAttribute('data-quadra-status')===v.status);
+    b.classList.toggle('btn-clay',b.getAttribute('data-quadra-status')===v.status);
+    b.classList.toggle('btn-ghost',b.getAttribute('data-quadra-status')!==v.status);
   });
-  if(typeof pintarIcones==='function')pintarIcones();
 }
 async function definirStatusQuadra(status){
   if(!ehDono()||!STATUS_QUADRA_OPCOES[status])return;
@@ -5853,44 +5847,6 @@ function renderViradaAviso(){
     +' <button class="btn btn-ghost" style="margin-top:9px;padding:7px 12px;font-size:12px" onclick="pularViradaMes()">Encerrar sem converter</button>'
     +'</p></div>';
 }
-
-function pctSeguro(parte,total){return total>0?Math.max(0,Math.min(100,Math.round(parte/total*100))):0;}
-function atualizarAneisDia(aulasDia){
-  const total=Math.max(1,Number(aulasDia.total)||0);
-  const set=(id,p)=>{const e=document.getElementById(id);if(e)e.style.setProperty('--pct',String(Math.max(0,Math.min(100,p)))+'%');};
-  set('ring-dia-total',aulasDia.total?100:0);
-  set('ring-dia-personal',pctSeguro(aulasDia.personal,total));
-  set('ring-dia-tenis',pctSeguro(aulasDia.tenis,total));
-}
-function pontosAulasMes(ano,mes){
-  const ultimo=new Date(ano,mes+1,0).getDate();
-  const cortes=[1,Math.max(2,Math.round(ultimo*.25)),Math.round(ultimo*.5),Math.round(ultimo*.75),ultimo];
-  return cortes.map(function(d){
-    return contarAulas(new Date(ano,mes,1),new Date(ano,mes,d));
-  });
-}
-function renderGraficoAulasMes(){
-  const svg=document.getElementById('aulas-mes-svg');if(!svg)return;
-  const pts=pontosAulasMes(curYear,curMonth);
-  const max=Math.max(1,...pts.map(p=>p.total));
-  const poly=(campo,cls)=>{
-    const arr=pts.map((p,i)=>{
-      const x=8+i*(304/(pts.length-1));
-      const y=102-(Number(p[campo]||0)/max)*86;
-      return x.toFixed(1)+','+y.toFixed(1);
-    }).join(' ');
-    return '<polyline class="'+cls+'" points="'+arr+'"></polyline>';
-  };
-  svg.innerHTML='<g class="grid"><path d="M8 22H312M8 48H312M8 74H312M8 100H312"></path></g>'
-    +poly('total','total')+poly('personal','personal')+poly('tenis','tenis');
-}
-function atualizarRotulosPreview(){
-  const hoje=new Date();
-  const h=document.getElementById('jv-hoje-label');
-  if(h)h.textContent='Hoje · '+DIAS[hoje.getDay()]+' '+String(hoje.getDate()).padStart(2,'0')+'/'+String(hoje.getMonth()+1).padStart(2,'0');
-  const c=document.getElementById('jv-comparativo-mes');
-  if(c)c.textContent=MESES[curMonth]+' '+curYear;
-}
 function renderDash(){
   renderViradaAviso();
   const movs=DB.lancamentos.filter(l=>l.mes===monthKey());
@@ -5942,9 +5898,6 @@ function renderDash(){
   setTxt('k-aulas-dia-total',aulasDia.total);setTxt('k-aulas-dia-personal',aulasDia.personal);setTxt('k-aulas-dia-tenis',aulasDia.tenis);
   setTxt('k-aulas-total',aulasMes.total);setTxt('k-aulas-personal',aulasMes.personal);setTxt('k-aulas-tenis',aulasMes.tenis);
   const aml=document.getElementById('aulas-mes-label');if(aml)aml.textContent=MESES[curMonth]+' '+curYear;
-  atualizarAneisDia(aulasDia);
-  renderGraficoAulasMes();
-  atualizarRotulosPreview();
   const ocMes=ocupacao(_ini,_fim), ocHoje=ocupacao(_hoje,_hoje);
   const ofill=document.getElementById('ocup-fill'); if(ofill)ofill.style.width=ocMes.pct+'%';
   setTxt('ocup-txt',ocMes.pct+'% no mês');
@@ -8549,8 +8502,6 @@ function confirmarAulaWaHoje(id,hora){
 function renderAtividadesHoje(){
   const box=document.getElementById('atividades-hoje');if(!box)return;
   const r=atividadesHoje(),dk=dKey(r.date),CF=DB.confirmacoes||{};
-  const n=document.getElementById('atividades-hoje-count');
-  if(n)n.textContent=r.list.length+' atividade'+(r.list.length===1?'':'s');
   if(!r.list.length){box.innerHTML='<div class="jv-today-empty">Nenhuma atividade agendada para hoje.</div>';return;}
   const LBL={aula:'Aula',grupo:'Grupo',personal:'Personal',locacao:'Locação',pessoal:'Compromisso',torneio:'Torneio'};
   box.innerHTML=r.list.map(function(it){
@@ -8561,9 +8512,9 @@ function renderAtividadesHoje(){
       const jaJoao=!!CF[it.a.id+'|'+dk+'|'+it.hora];
       const jaAluno=!!CONF_ALUNOS[(it.a.codigo||'')+'|'+dk+'|'+it.hora];
       right='<div class="jv-today-actions">'
-        +(jaAluno?'<span class="jv-today-confirmed">Aluno confirmou</span>':'')
-        +'<button class="btn '+(jaJoao?'btn-ghost':'btn-clay')+'" onclick="confirmarInternoHoje(\''+it.a.id+'\',\''+it.hora+'\')"><span class="jv-btn-ic" data-ic="check"></span>'+(jaJoao?'Confirmada':'Confirmar')+'</button>'
-        +(it.a.tel?'<button class="btn btn-ghost jv-wa-btn" onclick="confirmarAulaWaHoje(\''+it.a.id+'\',\''+it.hora+'\')"><span class="jv-btn-ic" data-ic="whatsapp"></span><span class="jv-wa-text">WhatsApp</span></button>':'')
+        +(jaAluno?'<span class="jv-today-confirmed">✓ aluno confirmou</span>':'')
+        +'<button class="btn '+(jaJoao?'btn-ghost':'btn-clay')+'" onclick="confirmarInternoHoje(\''+it.a.id+'\',\''+it.hora+'\')">'+(jaJoao?'✓ Confirmada':'✓ Confirmar')+'</button>'
+        +(it.a.tel?'<button class="btn btn-ghost jv-wa-btn" onclick="confirmarAulaWaHoje(\''+it.a.id+'\',\''+it.hora+'\')"><span aria-hidden="true">↗</span> WhatsApp</button>':'')
         +'</div>';
     }
     return '<div class="jv-today-item">'
@@ -8571,7 +8522,6 @@ function renderAtividadesHoje(){
       +'<div class="jv-today-name">'+esc(nome)+'</div>'
       +right+'</div>';
   }).join('');
-  if(typeof pintarIcones==='function')pintarIcones();
 }
 
 function aulasAmanha(){
@@ -8716,18 +8666,11 @@ function confirmarAulaWa(id,hora){
   };
   window.addEventListener('scroll',()=>{requestAnimationFrame(aplica);},{passive:true});
 })();
-
-function prepararAtividadesRecolhiveis(){
-  const d=document.getElementById('atividades-hoje-wrap');if(!d||d.dataset.ready)return;
-  d.dataset.ready='1';
-  try{const v=localStorage.getItem('jv-atividades-hoje-aberto');if(v!==null)d.open=v==='1';}catch(e){}
-  d.addEventListener('toggle',function(){try{localStorage.setItem('jv-atividades-hoje-aberto',d.open?'1':'0');}catch(e){}});
-}
 function renderAll(){
   carregarAvatarGestao();
   document.getElementById('month-label').textContent=MESES[curMonth]+' '+curYear;
   const safe=(fn,nome)=>{try{fn();}catch(e){console.warn('Render '+nome+' falhou:',e);}};
-  safe(updateEyeBtn,'olho');safe(prepararAtividadesRecolhiveis,'recolhivel');safe(renderAlunos,'alunos');safe(renderQuickLanc,'botoescaixa');safe(renderMovs,'caixa');safe(renderDash,'inicio');safe(renderAtividadesHoje,'atividadeshoje');safe(renderFin,'financeiro');safe(renderAgenda,'agenda');safe(renderTorneio,'torneio');safe(renderConfirmAmanha,'confirmamanha');safe(renderAvaliacoes,'avaliacoes');safe(checarBackup,'backup');safe(renderConta,'conta');safe(prepararAluguel,'aluguel');
+  safe(updateEyeBtn,'olho');safe(renderAlunos,'alunos');safe(renderQuickLanc,'botoescaixa');safe(renderMovs,'caixa');safe(renderDash,'inicio');safe(renderAtividadesHoje,'atividadeshoje');safe(renderFin,'financeiro');safe(renderAgenda,'agenda');safe(renderTorneio,'torneio');safe(renderConfirmAmanha,'confirmamanha');safe(renderAvaliacoes,'avaliacoes');safe(checarBackup,'backup');safe(renderConta,'conta');safe(prepararAluguel,'aluguel');
 }
 // espera o Firebase ficar pronto (até ~6s) antes de carregar; nunca trava
 (function esperarESubir(t){
