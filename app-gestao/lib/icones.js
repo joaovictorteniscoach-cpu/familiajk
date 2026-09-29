@@ -23,7 +23,11 @@ var NAVIC=(function(){
     clock:'<circle cx="12" cy="12" r="9.5"/><path class="cut-stroke" d="M12 6.5v5.8l4 2.2"/>',
     coins:'<ellipse cx="12" cy="6" rx="7.2" ry="3.1"/><path d="M4.8 6v4.4c0 1.8 3.2 3.2 7.2 3.2s7.2-1.4 7.2-3.2V6"/><path d="M4.8 10.4v4.4c0 1.8 3.2 3.2 7.2 3.2s7.2-1.4 7.2-3.2v-4.4"/><path d="M4.8 14.8v2.8c0 1.9 3.2 3.4 7.2 3.4s7.2-1.5 7.2-3.4v-2.8"/>',
     target:'<circle cx="12" cy="12" r="9.5"/><circle class="cut" cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="2.4"/><path d="M15.8 8.2 21 3m-2.2 0H21v2.2"/>',
-    more:'<circle cx="5" cy="12" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="19" cy="12" r="2.2"/>'
+    more:'<circle cx="5" cy="12" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="19" cy="12" r="2.2"/>',
+    chevron:'<path d="m8.2 9.2 3.8 3.8 3.8-3.8 1.7 1.7-5.5 5.5-5.5-5.5z"/>',
+    rain:'<path d="M7.5 7.5a5.7 5.7 0 0 1 10.8 1.8 4.5 4.5 0 0 1 .2 9H6.2a4.7 4.7 0 0 1-.4-9.4 6.3 6.3 0 0 1 1.7-1.4z"/><path class="cut-stroke" d="m8 20-1 2m5-2-1 2m5-2-1 2"/>',
+    block:'<circle cx="12" cy="12" r="9.5"/><path class="cut-stroke" d="M5.5 5.5l13 13"/>',
+    whatsapp:'<path fill-rule="evenodd" d="M12 2.4a9.1 9.1 0 0 0-7.8 13.8L3 21l4.9-1.3A9.1 9.1 0 1 0 12 2.4zm0 2.2a6.9 6.9 0 0 1 5.9 10.5l-.4.6.7 2.6-2.7-.7-.6.4A6.9 6.9 0 1 1 12 4.6z"/><path d="M8.6 7.4c.3-.3.8-.4 1.1 0l1.1 1.7c.2.3.1.6-.1.9l-.6.7c-.2.2-.2.5 0 .7.7 1 1.6 1.8 2.7 2.3.3.1.5.1.7-.1l.7-.8c.2-.3.6-.3.9-.1l1.7 1.1c.3.2.4.6.2.9-.5.9-1.4 1.4-2.5 1.4-3.7-.2-7.5-4-7.7-7.7 0-.4.2-.8.8-1z"/>'
   },icons={};
   Object.keys(p).forEach(function(k){
     icons[k]='<svg class="jv-solid-icon" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true" focusable="false">'+p[k]+'</svg>';
