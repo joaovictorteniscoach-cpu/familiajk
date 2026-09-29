@@ -2349,6 +2349,11 @@ function iniciarCadastroNovo(){
   if(pend){abrirCadastroNovo();verificarCadastroNovo(true);}
   else if(novo)abrirCadastroNovo();
 }
+/* Enquanto existe uma solicitação, verifica só o vínculo deste aparelho.
+   É uma leitura minúscula e para sozinha assim que o acesso é aprovado. */
+setInterval(function(){
+  if(lerCadastroPendente()&&document.visibilityState!=='hidden')verificarCadastroNovo(true);
+},15000);
 
 function dKey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function fmt(v){return 'R$ '+Number(v||0).toLocaleString('pt-BR');}
