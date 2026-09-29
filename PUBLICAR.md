@@ -1,9 +1,9 @@
 > ## Segurança P0 — ordem da migração
 >
 > 1. Publique primeiro o App Aluno e a Gestão modular (`app-gestao/index.html` + `app-gestao/lib/app-gestao.js`).
-> 2. Publique `ferramentas/firebase-regras-etapa3-transicao.json`.
+> 2. Confira a regra vigente no console antes de qualquer alteração autorizada. A transição P0 foi informada pelo responsável; os checkers não consultam a regra publicada.
 > 3. Em Gestão → Segurança, aprove cada aparelho individualmente só depois de confirmar com o aluno por um canal externo (ex.: WhatsApp). O código de 4 dígitos sozinho não prova identidade.
-> 4. Depois de migrar os aparelhos ativos, publique `firebase-regras-etapa4-estrita.json`.
+> 4. A etapa final `firebase-regras-etapa4-estrita.json` exige migração concluída, revisão e autorização explícita. Não publicá-la nesta etapa.
 >
 > Detalhes: `ferramentas/SEGURANCA-P0.md`.
 
@@ -95,9 +95,20 @@ publicação por sessão e o filtro funcionando, o automático é seguro.
 
 ## Publicar
 
-Todo push na `main` publica nos dois lugares. O workflow do Pages está em
-`.github/workflows/pages.yml` e **confere a sintaxe dos três apps antes de
-publicar** — se algum script estiver quebrado, ele não publica.
+O workflow `.github/workflows/pages.yml` publica somente a `main`, depois de
+`checar-tudo.sh` e da sintaxe do site-pro. O artefato é montado por
+`ferramentas/preparar-pages.py`: somente `app-gestao/`, `app-aluno/`, `site/` e
+`site-pro/`, com arquivos web permitidos. Não envie a raiz do repositório.
+
+O CI de pull requests valida o mesmo pacote, sem permissão nem etapa de deploy.
+Família JK, negócio, metodologia, exercícios e ferramentas ficam fora do Pages;
+isso **não torna privados os arquivos nem o histórico do Git público**.
+O PDF `site/Metodologia-JV-Tenis.pdf` permanece nesta fase: sua revisão/retirada
+é a etapa 2b, depois de validar a fase 2 em produção.
+
+Antes da primeira publicação restrita, confirme o endereço independente do
+Família JK e o acesso por ele. Só depois confirme 404 nos caminhos retirados do
+Pages. Não altere o projeto Netlify da família nesta etapa.
 
 O Pages foi ligado uma vez em `Settings → Pages → Source: GitHub Actions`.
 
@@ -154,7 +165,7 @@ mudando só a **Base directory**. São estáticos: **não há build**.
 | `site-pro`             | cursoecapacitacao      | 👔 Professores — venda do curso e do app   |
 | `app-aluno`            | appalunos              | App do aluno (PWA)                          |
 | `app-gestao`           | app de gestão          | App de gestão (PWA)                         |
-| `app-familia`          | familiajk              | App pessoal da família (PWA)                |
+| `app-familia`          | [jkgestao](https://jkgestao.netlify.app/) | App pessoal da família (PWA), endereço independente |
 
 > ⚠️ **Atenção ao Base directory:** ele tem que ser o **nome da pasta** (ex.: `site`,
 > `site-pro`), NÃO o nome do site no Netlify. Se ficar errado (ex.: `cursoecapacitacao`),
