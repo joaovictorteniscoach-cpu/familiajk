@@ -25,8 +25,7 @@
     text("[data-preco='avulsa']", brl(p.particular.avulsa));
 
     ["dupla", "trio", "quarteto"].forEach(function (k) {
-      text("[data-preco-novo='" + k + "']", brl(p.grupoNovo1x[k]));
-      text("[data-preco-fidelidade='" + k + "']", brl(p.grupoFidelidade[k]));
+      text("[data-preco-novo='" + k + "']", brl(p.grupo[k]));
     });
 
     text("[data-preco='familia3']", brl(p.familia.ate3));
@@ -39,29 +38,10 @@
     text("[data-regra='antecedencia']", cfg.creditos.antecedenciaCancelamentoHoras);
   }
 
-  function applyPublishedLoyaltyPrices(gp) {
-    if (!gp) return;
-    ["dupla", "trio", "quarteto"].forEach(function (k) {
-      var n = Number(gp[k]);
-      if (n > 0) cfg.precos.grupoFidelidade[k] = n;
-    });
-    syncPrices();
-  }
-
-  function loadPublishedPrices() {
-    if (!window.fetch) return;
-    fetch(cfg.urls.precosPublicos)
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(applyPublishedLoyaltyPrices)
-      .catch(function () {});
-  }
-
   function setupCalculator() {
     var modalidade = document.getElementById("calc-modalidade");
-    var condicao = document.getElementById("calc-condicao");
     var pessoas = document.getElementById("calc-pessoas");
     var aulas = document.getElementById("calc-aulas");
-    var boxCondicao = document.getElementById("calc-condicao-wrap");
     var boxPessoas = document.getElementById("calc-pessoas-wrap");
     var resultado = document.getElementById("calc-resultado");
     var detalhe = document.getElementById("calc-detalhe");
@@ -84,7 +64,6 @@
       var unitLabel = "";
       var descricao = "";
 
-      boxCondicao.hidden = mod !== "grupo";
       boxPessoas.hidden = !(mod === "grupo" || mod === "familia");
 
       if (mod === "particular") {
@@ -94,12 +73,10 @@
         descricao = qtdAulas + " aulas particulares";
       } else if (mod === "grupo") {
         var k = keyGrupo(pessoas.value);
-        var tabela = condicao.value === "fidelidade" ? cfg.precos.grupoFidelidade : cfg.precos.grupoNovo1x;
-        valor = tabela[k];
+        valor = cfg.precos.grupo[k];
         label = "Grupo · " + pessoas.value + " pessoas";
         unitLabel = "por pessoa / aula";
-        descricao = qtdAulas + " aulas em grupo para " + pessoas.value + " pessoas (" +
-          (condicao.value === "fidelidade" ? "aluno antigo ou 2x/semana" : "novo aluno · 1x/semana") + ")";
+        descricao = qtdAulas + " aulas em grupo para " + pessoas.value + " pessoas";
       } else {
         valor = pessoas.value === "4" ? cfg.precos.familia.quatro : cfg.precos.familia.ate3;
         label = pessoas.value === "4" ? "Grupo Família · 4 pessoas" : "Grupo Família · até 3 pessoas";
@@ -118,7 +95,7 @@
       wa.href = cfg.urls.whatsapp + "?text=" + encodeURIComponent(msg);
     }
 
-    [modalidade, condicao, pessoas, aulas].forEach(function (el) {
+    [modalidade, pessoas, aulas].forEach(function (el) {
       if (el) el.addEventListener("change", update);
     });
     aulas.addEventListener("input", update);
@@ -148,14 +125,13 @@
 
   function loadCourtStatus() {
     if (!window.fetch) return;
-    fetch(cfg.urls.statusQuadra)
+    fetch(cfg.urls.statusQuadra, { cache: "no-store" })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(setCourtStatus)
       .catch(function () {});
   }
 
   syncPrices();
-  loadPublishedPrices();
   setupCalculator();
   loadCourtStatus();
 })();
