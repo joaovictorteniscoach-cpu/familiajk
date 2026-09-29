@@ -38,7 +38,7 @@
 <link rel="apple-touch-startup-image" media="screen and (device-width:375px) and (device-height:667px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)" href="splash-gestao-750x1334.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="lib/estilo.css?v=2026-09-29-2">
+<link rel="stylesheet" href="lib/estilo.css?v=2026-09-29-3">
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
 <script src="lib/firebase-database-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js\'><\/script>')"></script>
@@ -262,6 +262,23 @@ function esperarAuth(){
   <h1>Painel de <em>gestão</em></h1>
   <p class="jv-hero-question">Pronto para mais um mês <em>de resultados?</em></p>
   <p class="jv-hero-motto">Disciplina hoje, grandes conquistas amanhã.</p>
+  <details class="jv-court-top" id="jv-court-top">
+    <summary>
+      <span class="jv-court-top-icon" id="quadra-status-icon" data-ic="ball"></span>
+      <span class="jv-court-top-copy">
+        <small>Situação da quadra</small>
+        <b id="quadra-status-top-label">Em avaliação</b>
+        <em id="quadra-status-top-time">Toque para atualizar</em>
+      </span>
+      <span class="jv-court-top-chevron" data-ic="chevron"></span>
+    </summary>
+    <div class="jv-court-top-options">
+      <button type="button" data-quadra-status="liberada" onclick="definirStatusQuadra('liberada')"><span data-ic="check"></span> Liberada</button>
+      <button type="button" data-quadra-status="avaliacao" onclick="definirStatusQuadra('avaliacao')"><span data-ic="clock"></span> Avaliação</button>
+      <button type="button" data-quadra-status="chuva" onclick="definirStatusQuadra('chuva')"><span data-ic="rain"></span> Chuva</button>
+      <button type="button" data-quadra-status="fechada" onclick="definirStatusQuadra('fechada')"><span data-ic="block"></span> Fechada</button>
+    </div>
+  </details>
   <div class="top-actions">
     <button id="eye-btn" class="eye-btn" onclick="toggleHide()" title="Ocultar/mostrar valores" aria-label="Ocultar ou mostrar valores"></button>
     <button id="hist-btn" class="eye-btn hist-btn" onclick="abrirHist()" title="Histórico de mudanças" aria-label="Histórico"><span data-ic="history"></span></button>
@@ -289,36 +306,86 @@ function esperarAuth(){
   </div>
 
   <div class="jv-ref-dashboard">
+
     <div class="jv-ref-kpis">
       <button class="jv-ref-kpi recebido" id="kpi-recebido" onclick="verCaixaMes()">
         <div class="jv-ref-kpi-title"><span class="jv-ref-round-icon" data-ic="bars"></span><b>Recebido</b></div>
-        <strong id="k-recebido">R$ 0</strong>
-        <small id="k-recebido-s">Total recebido no mês</small>
+        <strong id="k-recebido">R$ 0</strong><small id="k-recebido-s">Total recebido no mês</small>
       </button>
       <button class="jv-ref-kpi receber" id="kpi-pendente" onclick="verPendentes()">
         <div class="jv-ref-kpi-title"><span class="jv-ref-round-icon" data-ic="clock"></span><b>A receber</b></div>
-        <strong id="k-pendente">R$ 0</strong>
-        <small id="k-pendente-s">0 mensalidades pendentes</small>
+        <strong id="k-pendente">R$ 0</strong><small id="k-pendente-s">0 mensalidades pendentes</small>
       </button>
-      <div class="jv-ref-kpi meta">
-        <div class="jv-ref-kpi-title"><span class="jv-ref-round-icon" data-ic="target"></span><b>Meta</b></div>
-        <strong id="k-ref-meta">R$ 0</strong>
-        <small>Meta de faturamento do mês</small>
-      </div>
-      <div class="jv-ref-kpi despesas">
-        <div class="jv-ref-kpi-title"><span class="jv-ref-round-icon" data-ic="receipt"></span><b>Despesas</b></div>
-        <strong id="k-ref-desp">R$ 0</strong>
-        <small id="k-ref-desp-s">Saídas registradas</small>
-      </div>
+      <div class="jv-ref-kpi meta"><div class="jv-ref-kpi-title"><span class="jv-ref-round-icon" data-ic="target"></span><b>Meta</b></div><strong id="k-ref-meta">R$ 0</strong><small>Meta de faturamento do mês</small></div>
+      <div class="jv-ref-kpi despesas"><div class="jv-ref-kpi-title"><span class="jv-ref-round-icon" data-ic="receipt"></span><b>Despesas</b></div><strong id="k-ref-desp">R$ 0</strong><small id="k-ref-desp-s">Saídas registradas</small></div>
     </div>
 
-    <div class="jv-ref-comparativo">
-      <h3>Comparativo do mês</h3>
-      <div class="jv-ref-bar-row meta"><span>Meta</span><i><b id="cmp-meta-fill"></b></i><strong id="cmp-meta">R$ 0</strong></div>
-      <div class="jv-ref-bar-row recebido"><span>Recebido</span><i><b id="cmp-rec-fill"></b></i><strong id="cmp-rec">R$ 0</strong></div>
-      <div class="jv-ref-bar-row receber"><span>A receber</span><i><b id="cmp-pend-fill"></b></i><strong id="cmp-pend">R$ 0</strong></div>
-      <div class="jv-ref-bar-row despesa"><span>Despesas</span><i><b id="cmp-desp-fill"></b></i><strong id="cmp-desp">R$ 0</strong></div>
-    </div>
+    <section class="jv-ref-comparativo jv-preview-comparativo">
+      <div class="jv-preview-section-title"><span data-ic="bars"></span><b>Comparativo do mês</b><small id="jv-comparativo-mes">—</small></div>
+      <div class="jv-preview-compare-grid">
+        <div class="jv-preview-compare-card meta"><span>Meta</span><strong id="cmp-meta">R$ 0</strong><i><b id="cmp-meta-fill"></b></i></div>
+        <div class="jv-preview-compare-card recebido"><span>Recebido</span><strong id="cmp-rec">R$ 0</strong><i><b id="cmp-rec-fill"></b></i></div>
+        <div class="jv-preview-compare-card receber"><span>A receber</span><strong id="cmp-pend">R$ 0</strong><i><b id="cmp-pend-fill"></b></i></div>
+        <div class="jv-preview-compare-card despesa"><span>Despesas</span><strong id="cmp-desp">R$ 0</strong><i><b id="cmp-desp-fill"></b></i></div>
+      </div>
+    </section>
+
+    <section class="jv-preview-day" aria-label="Aulas do dia">
+      <div class="jv-preview-section-title"><span data-ic="cal"></span><b>Aulas do dia</b><small id="jv-hoje-label">Hoje</small></div>
+      <div class="jv-day-rings aulas-clic" onclick="verAgendaHoje()" title="Ver a agenda de hoje">
+        <div class="jv-day-ring total" id="ring-dia-total"><div><strong id="k-aulas-dia-total">0</strong><span>Total</span></div></div>
+        <div class="jv-day-ring personal" id="ring-dia-personal"><div><strong id="k-aulas-dia-personal">0</strong><span>Personal</span></div></div>
+        <div class="jv-day-ring tenis" id="ring-dia-tenis"><div><strong id="k-aulas-dia-tenis">0</strong><span>Tênis</span></div></div>
+      </div>
+    </section>
+
+    <details class="jv-today-section jv-today-details" id="atividades-hoje-wrap" open>
+      <summary class="jv-today-summary">
+        <span class="jv-today-summary-icon" data-ic="cal"></span>
+        <span><b>Atividades do dia</b><small id="atividades-hoje-count">0 atividades</small></span>
+        <span class="jv-today-summary-chevron" data-ic="chevron"></span>
+      </summary>
+      <div id="atividades-hoje" class="jv-today-list"></div>
+      <button type="button" class="jv-today-all" onclick="verAgendaHoje()">Ver todas as aulas do dia <span data-ic="chevron"></span></button>
+    </details>
+
+    <section class="jv-month-preview" aria-label="Aulas no mês">
+      <div class="jv-preview-section-title"><span data-ic="line"></span><b>Aulas no mês</b><small id="aulas-mes-label">—</small></div>
+      <div class="jv-month-chart" onclick="verAgendaMes()" title="Ver a agenda do mês">
+        <svg id="aulas-mes-svg" viewBox="0 0 320 118" preserveAspectRatio="none" aria-hidden="true"></svg>
+        <div class="jv-month-legend">
+          <span class="total"><i></i><b id="k-aulas-total">0</b><small>Total</small></span>
+          <span class="personal"><i></i><b id="k-aulas-personal">0</b><small>Personal</small></span>
+          <span class="tenis"><i></i><b id="k-aulas-tenis">0</b><small>Tênis</small></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="jv-indicadores" aria-label="Indicadores">
+      <div class="jv-data-hooks">
+        <button id="kpi-alunos" onclick="verAlunosAtivos()">
+          <span class="jv-indicator-icon" data-ic="users"></span>
+          <span class="jv-indicator-copy"><b>Alunos ativos</b><strong id="k-alunos"></strong><small class="jv-indicator-foot" id="k-alunos-s"></small></span>
+        </button>
+        <button id="kpi-cred" onclick="verReposicoes()">
+          <span class="jv-indicator-icon" data-ic="coins"></span>
+          <span class="jv-indicator-copy"><b>Créditos em aberto</b><strong id="k-creditos"></strong><small class="jv-indicator-foot" id="k-repos-s"></small></span>
+        </button>
+      </div>
+    </section>
+
+    <section class="jv-preview-mini-grid">
+      <div class="jv-preview-mini-card">
+        <span class="jv-preview-mini-icon" data-ic="target"></span>
+        <span><small>Taxa de ocupação</small><strong id="ocup-txt">—</strong><em id="ocup-sub"></em></span>
+        <div class="bar"><i id="ocup-fill" style="width:0%"></i></div>
+      </div>
+      <div class="jv-preview-mini-card">
+        <span class="jv-preview-mini-icon" data-ic="cal"></span>
+        <span><small>Locações</small><strong id="loc-txt">—</strong><em id="loc-sub"></em></span>
+        <div class="bar"><i id="loc-fill" class="loc"></i></div>
+      </div>
+    </section>
 
     <div id="virada-aviso"></div>
     <div id="acao-wrap" class="jv-ref-attention" style="display:none">
@@ -326,71 +393,8 @@ function esperarAuth(){
       <div class="acao-list" id="acao-list"></div>
     </div>
     <div class="jv-ref-actions">
-      <button class="primary" type="button" onclick="openLancModal()"><span>＋</span>Lançamento</button>
+      <button class="primary" type="button" onclick="openLancModal()"><span data-ic="plus"></span>Lançamento</button>
       <button type="button" onclick="verAgendaHoje()"><span data-ic="cal"></span>Agenda</button>
-    </div>
-
-
-    <section class="jv-today-section" aria-labelledby="atividades-hoje-title">
-      <div class="jv-home-section-head">
-        <div>
-          <span>ATIVIDADE</span>
-          <h2 id="atividades-hoje-title">Atividades <em>de hoje</em></h2>
-        </div>
-        <button type="button" onclick="verAgendaHoje()">Ver agenda ›</button>
-      </div>
-      <div id="atividades-hoje" class="jv-today-list"></div>
-    </section>
-
-    <section class="jv-aulas-resumo" aria-label="Resumo de aulas">
-      <div class="jv-aulas-bloco">
-        <div class="jv-aulas-head"><b>Aulas do dia</b><span>Hoje</span></div>
-        <div class="aulas-mes aulas-clic" onclick="verAgendaHoje()" title="Ver a agenda de hoje">
-          <div class="am-card"><div class="am-v" id="k-aulas-dia-total">0</div><div class="am-l">Total</div></div>
-          <div class="am-card personal"><div class="am-v" id="k-aulas-dia-personal">0</div><div class="am-l">💪 Personal</div></div>
-          <div class="am-card tenis"><div class="am-v" id="k-aulas-dia-tenis">0</div><div class="am-l">🎾 Tênis</div></div>
-        </div>
-      </div>
-
-      <div class="jv-aulas-bloco">
-        <div class="jv-aulas-head"><b>Aulas no mês</b><span id="aulas-mes-label">—</span></div>
-        <div class="aulas-mes aulas-clic" onclick="verAgendaMes()" title="Ver a agenda do mês">
-          <div class="am-card"><div class="am-v" id="k-aulas-total">0</div><div class="am-l">Total</div></div>
-          <div class="am-card personal"><div class="am-v" id="k-aulas-personal">0</div><div class="am-l">💪 Personal</div></div>
-          <div class="am-card tenis"><div class="am-v" id="k-aulas-tenis">0</div><div class="am-l">🎾 Tênis</div></div>
-        </div>
-      </div>
-    </section>
-
-    <section class="jv-indicadores" aria-labelledby="indicadores-title">
-      <div class="jv-home-section-head compact">
-        <div>
-          <span>INDICADORES</span>
-          <h2 id="indicadores-title">Resumo <em>da academia</em></h2>
-        </div>
-      </div>
-      <div class="jv-data-hooks">
-        <button id="kpi-alunos" onclick="verAlunosAtivos()">
-          <b>Alunos ativos</b>
-          <strong id="k-alunos"></strong>
-          <span class="jv-indicator-foot" id="k-alunos-s"></span>
-        </button>
-        <button id="kpi-cred" onclick="verReposicoes()">
-          <b>Créditos em aberto</b>
-          <strong id="k-creditos"></strong>
-          <span class="jv-indicator-foot" id="k-repos-s"></span>
-        </button>
-        <div class="bar-wrap"><span id="bar-txt"></span><div class="bar"><i id="bar-fill"></i></div></div>
-      </div>
-    </section>
-
-    <div class="bar-wrap jv-ocupacao" style="margin-top:14px">
-      <div class="bar-row"><span>Taxa de ocupação <small id="ocup-sub"></small></span><span id="ocup-txt">—</span></div>
-      <div class="bar"><i id="ocup-fill" style="width:0%"></i></div>
-    </div>
-    <div class="bar-wrap jv-ocupacao" style="margin-top:10px">
-      <div class="bar-row"><span>Locações <small id="loc-sub"></small></span><span id="loc-txt">—</span></div>
-      <div class="bar"><i id="loc-fill" class="loc"></i></div>
     </div>
   </div>
 
@@ -400,21 +404,6 @@ function esperarAuth(){
   </div>
   <div class="comp-list" id="comp-list"></div>
   <div id="datas-inicio"></div>
-  <div id="quadra-status-admin" style="margin:16px 0;padding:16px;border:1px solid var(--border);border-radius:16px;background:var(--card)">
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
-      <div>
-        <p class="sec-eyebrow" style="margin-bottom:3px">Quadra de saibro</p>
-        <h2 class="sec-title" style="font-size:20px;margin:0">Status para o <em>site</em></h2>
-        <p id="quadra-status-atual" class="hint" style="margin-top:4px">🟡 Em avaliação</p>
-      </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap">
-        <button class="btn btn-ghost" data-quadra-status="liberada" onclick="definirStatusQuadra('liberada')" style="padding:8px 10px;font-size:11.5px">🟢 Liberada</button>
-        <button class="btn btn-ghost" data-quadra-status="avaliacao" onclick="definirStatusQuadra('avaliacao')" style="padding:8px 10px;font-size:11.5px">🟡 Avaliação</button>
-        <button class="btn btn-ghost" data-quadra-status="chuva" onclick="definirStatusQuadra('chuva')" style="padding:8px 10px;font-size:11.5px">🌧️ Chuva</button>
-        <button class="btn btn-ghost" data-quadra-status="fechada" onclick="definirStatusQuadra('fechada')" style="padding:8px 10px;font-size:11.5px">🔴 Fechada</button>
-      </div>
-    </div>
-  </div>
   <div id="cadastros-wrap" style="display:none">
     <p class="sec-eyebrow">Novos alunos</p>
     <h2 class="sec-title">🆕 Pedidos de <em>cadastro</em> (site)</h2>
@@ -976,7 +965,7 @@ function esperarAuth(){
   <button onclick="go('lanc',this)"><span class="ico" data-ic="navcash"></span>Caixa</button>
   <button id="nav-mais" onclick="abrirMais()"><span class="ico" data-ic="navmore"></span>Mais</button>
 </nav>
-<script src="lib/icones.js?v=2026-09-29-2"></script>
+<script src="lib/icones.js?v=2026-09-29-3"></script>
 
 <!-- MODAL ALUNO -->
 <div class="overlay" id="ov-aluno" onclick="if(event.target===this)closeModal('ov-aluno')">
@@ -1451,7 +1440,7 @@ function esperarAuth(){
 
 <div class="toast" id="toast"></div>
 
-<script src="lib/app-gestao.js?v=2026-09-29-2"></script>
+<script src="lib/app-gestao.js?v=2026-09-29-3"></script>
 <script>
 /* Rede de seguranca do par tela+codigo.
 
@@ -1466,7 +1455,7 @@ function esperarAuth(){
    torto, o app busca o par certo uma vez e, se insistir, DIZ o que houve em
    vez de deixar voce tocando em botao que nao responde. */
 (function(){
-  var ESPERADA='2026-09-29-2';
+  var ESPERADA='2026-09-29-3';
   function tela(motivo){
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;z-index:99999;background:#1A2E14;color:#FAF7F2;'
@@ -1557,7 +1546,7 @@ function limparHist(){
 }
 histLogLoad();
 // PWA: registra o service worker (permite instalar o painel e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-gestao.js?v=2026-09-29-2').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-gestao.js?v=2026-09-29-3').catch(function(){});});}
 </script>
 </body>
 </html>
