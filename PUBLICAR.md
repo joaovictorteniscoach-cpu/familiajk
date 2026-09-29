@@ -103,8 +103,8 @@ O workflow `.github/workflows/pages.yml` publica somente a `main`, depois de
 O CI de pull requests valida o mesmo pacote, sem permissão nem etapa de deploy.
 Família JK, negócio, metodologia, exercícios e ferramentas ficam fora do Pages;
 isso **não torna privados os arquivos nem o histórico do Git público**.
-O PDF `site/Metodologia-JV-Tenis.pdf` permanece nesta fase: sua revisão/retirada
-é a etapa 2b, depois de validar a fase 2 em produção.
+PDFs também ficam fora do pacote público, incluindo
+`site/Metodologia-JV-Tenis.pdf`; os atalhos de download foram retirados do site.
 
 Antes da primeira publicação restrita, confirme o endereço independente do
 Família JK e o acesso por ele. Só depois confirme 404 nos caminhos retirados do

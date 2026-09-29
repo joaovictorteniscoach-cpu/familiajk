@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Academia JV Tênis — Da base ao topo | Santa Felicidade, Curitiba</title>
-<meta name="description" content="Academia JV Tênis em Santa Felicidade, Curitiba. Saibro de verdade, mensalidade Flex (3, 4, 6 ou 8 aulas), particular ou em grupo, ranking e torneios no app oficial.">
+<meta name="description" content="Academia JV Tênis em Santa Felicidade, Curitiba. Aulas no saibro com pacotes de créditos a partir de 3 aulas, particular, grupo e grupo família, reposições e app oficial.">
 <meta name="theme-color" content="#102438">
 <meta property="og:title" content="Academia JV Tênis — Da base ao topo">
-<meta property="og:description" content="Saibro de verdade, mensalidade Flex e horário fixo garantido. Santa Felicidade, Curitiba.">
+<meta property="og:description" content="Saibro de verdade, pacotes de créditos a partir de 3 aulas, regras claras de reposição e aplicativo próprio. Santa Felicidade, Curitiba.">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://joaovictorteniscoach-cpu.github.io/familiajk/site/img/share.jpg">
 <meta property="og:image:width" content="1200">
@@ -179,15 +179,71 @@ footer .cr{color:#6B7E8C;font-size:12.5px}
 .rv{opacity:0;transform:translateY(20px);transition:opacity .6s,transform .6s}
 .rv.in{opacity:1;transform:none}
 
+
+.plans-v2{grid-template-columns:repeat(3,1fr)}
+.price-main{padding:18px 0 14px;border-top:1px solid rgba(244,239,230,.1);border-bottom:1px solid rgba(244,239,230,.1);margin-bottom:4px}
+.price-main span{display:block;font-size:34px;line-height:1;font-weight:900;color:var(--gold-soft)}
+.price-main small{display:block;margin-top:7px;color:var(--muted);font-size:12.5px}
+.price-band{margin-top:14px;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.035);border:1px solid rgba(244,239,230,.1)}
+.price-band-head{margin-bottom:3px}
+.price-band-head b{display:block;color:#fff;font-size:14px}
+.price-band-head small{display:block;color:var(--muted);font-size:11.5px;line-height:1.35;margin-top:2px}
+.price-band .tier{padding:8px 0}
+.price-band .tier .val{font-size:18px}
+.clarity-strip{margin-top:24px;padding:18px 20px;border:1px solid var(--line);border-radius:16px;background:var(--navy-2);display:flex;gap:18px;justify-content:center;flex-wrap:wrap;font-size:13.5px;color:var(--cream)}
+.calc-card{display:grid;grid-template-columns:1.25fr .75fr;gap:22px;background:var(--navy-2);border:1px solid var(--line);border-radius:20px;padding:24px}
+.calc-fields{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.calc-fields label{display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:700;color:var(--gold-soft)}
+.calc-fields select,.calc-fields input{width:100%;padding:13px 14px;border-radius:11px;border:1px solid rgba(244,239,230,.18);background:var(--deep);color:#fff;font:inherit;outline:none}
+.calc-fields select:focus,.calc-fields input:focus{border-color:var(--gold)}
+.calc-result{background:var(--deep);border:1px solid var(--line);border-radius:16px;padding:22px}
+.calc-result .calc-label{font-size:11px;text-transform:uppercase;letter-spacing:.15em;color:var(--gold)}
+.calc-result h3{font-size:20px;margin:6px 0;color:#fff}
+.calc-result p{font-size:14px;color:var(--muted)}
+.calc-result strong{display:block;font-size:36px;color:var(--gold-soft);line-height:1.1;margin:10px 0 5px}
+.calc-result small{display:block;color:var(--muted);font-size:11.5px;margin-bottom:16px}
+.rules-v2{grid-template-columns:1fr 1fr}
+.rule b{color:var(--gold-soft)}
+.good-rule{border-color:rgba(99,190,129,.35)}
+.warn-rule{border-color:rgba(224,120,74,.38)}
+.rain-rule{border-color:rgba(110,170,220,.35)}
+.court-status{margin-top:22px;display:flex;justify-content:space-between;align-items:center;gap:18px;border:1px solid var(--line);border-radius:18px;background:var(--navy-2);padding:22px}
+.court-status h3{font-size:20px;color:#fff;margin:9px 0 4px}
+.court-status p{font-size:13.5px;color:var(--muted)}
+.faq{margin-top:34px}
+.faq details{border-top:1px solid rgba(244,239,230,.12);padding:0}
+.faq details:last-child{border-bottom:1px solid rgba(244,239,230,.12)}
+.faq summary{cursor:pointer;padding:17px 4px;font-weight:700;color:#fff;list-style:none}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";float:right;color:var(--gold);font-size:20px}
+.faq details[open] summary::after{content:"−"}
+.faq details p{padding:0 34px 16px 4px;color:var(--muted);font-size:14.5px}
+.cta-app-logo{width:20px;height:20px;border-radius:6px;object-fit:cover;box-shadow:0 2px 7px rgba(0,0,0,.22);flex:0 0 auto}
+.cta-svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+.btn .cta-svg,.btn .cta-app-logo{margin-right:1px}
+.mobile-dock .cta-app-logo,.mobile-dock .cta-svg{width:18px;height:18px;margin:0 auto 3px;display:block}
+.fab .cta-svg{width:28px;height:28px;stroke-width:1.7}
+.mobile-dock{display:none}
+
 @media(max-width:860px){
   .links .lnk{display:none}
   .menu-tgl{display:flex;align-items:center;justify-content:center}
   .links.open{position:absolute;top:64px;left:0;right:0;flex-direction:column;align-items:stretch;background:var(--paper);border-bottom:1px solid #ECE3D2;padding:16px 22px;gap:14px}
   .links.open .lnk{display:block}
-  .plans,.rules,.loc-card,.reviews{grid-template-columns:1fr}
+  .plans,.rules,.loc-card,.reviews,.calc-card{grid-template-columns:1fr}
   .phil,.appgrid,.steps{grid-template-columns:1fr 1fr}
 }
-@media(max-width:520px){section.sec{padding:56px 0}.hero .cta-row .btn{flex:1}}
+@media(max-width:640px){
+  section.sec{padding:56px 0}
+  .hero .cta-row .btn{flex:1}
+  .calc-fields{grid-template-columns:1fr}
+  .court-status{align-items:flex-start;flex-direction:column}
+  .mobile-dock{display:grid;grid-template-columns:repeat(3,1fr);position:fixed;left:10px;right:10px;bottom:10px;z-index:90;background:rgba(11,27,43,.96);border:1px solid var(--line);border-radius:15px;padding:7px;box-shadow:0 12px 40px rgba(0,0,0,.4);backdrop-filter:blur(12px)}
+  .mobile-dock a{text-align:center;padding:9px 5px;font-size:11.5px;font-weight:800;border-radius:10px;color:#fff}
+  .mobile-dock a.primary{background:linear-gradient(135deg,var(--gold-soft),var(--gold-2));color:#23303b}
+  .fab{display:none}
+  body{padding-bottom:82px}
+}
 @media(prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}*{scroll-behavior:auto}}
 :focus-visible{outline:3px solid var(--gold);outline-offset:2px;border-radius:6px}
 </style>
@@ -202,12 +258,13 @@ footer .cr{color:#6B7E8C;font-size:12.5px}
     </a>
     <nav class="links" id="nav">
       <a class="lnk" href="#planos">Planos</a>
-      <a class="lnk" href="#flex">Sistema Flex</a>
+      <a class="lnk" href="#flex">Créditos</a>
+      <a class="lnk" href="#regras">Regras</a>
       <a class="lnk" href="#avaliacoes">Avaliações</a>
       <a class="lnk" href="#onde">Onde fica</a>
       <a class="lnk" href="metodologia.html">Metodologia</a>
-      <a class="lnk" href="#" onclick="abrirCadastro();return false" style="font-weight:800">Criar conta</a>
-      <a data-app-aluno class="btn btn-navy" href="https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/" target="_blank" rel="noopener">Entrar</a>
+      <a data-app-novo class="lnk" href="https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/?novo=1" target="_blank" rel="noopener" style="font-weight:800">Criar acesso</a>
+      <a data-app-aluno class="btn btn-navy" href="https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/" target="_blank" rel="noopener"><img class="cta-app-logo" src="img/logo.webp" alt="" aria-hidden="true">Acessar app</a>
     </nav>
     <button class="menu-tgl" id="mtgl" aria-label="Menu">☰</button>
   </div>
@@ -220,10 +277,10 @@ footer .cr{color:#6B7E8C;font-size:12.5px}
   <div class="wrap hero-in">
     <span class="eyebrow">Temporada 2026 · Aplicativo oficial</span>
     <h1>Da base ao topo.<span class="gold">Sua evolução em quadra.</span></h1>
-    <p class="lead">Saibro de verdade, atendimento de alto nível e o sistema <b>Flex</b> de mensalidade — você monta sua grade e o crédito é seu.</p>
+    <p class="lead">Saibro de verdade, metodologia própria, aplicativo oficial e <b>pacotes de créditos</b> a partir de 3 aulas — com regras claras para reposições e chuva.</p>
     <div class="cta-row">
       <a class="btn btn-gold" href="#planos">Ver planos →</a>
-      <a data-app-aluno class="btn btn-line" href="https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/" target="_blank" rel="noopener">Acessar minha conta</a>
+      <a data-app-aluno class="btn btn-line" href="https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/" target="_blank" rel="noopener"><img class="cta-app-logo" src="img/logo.webp" alt="" aria-hidden="true">Acessar app</a>
     </div>
     <p class="addr">📍 <a href="https://www.google.com/maps/search/?api=1&query=Rua+Joao+Azolin+795+Santa+Felicidade+Curitiba" target="_blank" rel="noopener">Rua João Azolin, 795 — Santa Felicidade, Curitiba</a></p>
   </div>
@@ -232,55 +289,114 @@ footer .cr{color:#6B7E8C;font-size:12.5px}
 <section class="sec" id="planos">
   <div class="wrap">
     <div class="sec-head">
-      <span class="eyebrow">Mensalidade Flex · 2026</span>
-      <h2>Escolha o seu plano</h2>
-      <p>Aulas de 60 minutos, créditos válidos por 4 meses e horário fixo garantido enquanto a mensalidade estiver em dia.</p>
+      <span class="eyebrow">Planos & valores · 2026</span>
+      <h2>Escolha como você quer treinar</h2>
+      <p>Pacotes de créditos a partir de <b data-regra="minimo">3</b> aulas. Você escolhe a quantidade de aulas e acompanha seus créditos pelo aplicativo.</p>
     </div>
-    <div class="plans">
-      <div class="plan feat rv">
+
+    <div class="plans plans-v2">
+      <article class="plan feat rv">
         <span class="tag">Mais procurado</span>
         <span class="kic">Particular</span>
         <h3>Individual</h3>
-        <p class="sub">Atenção total do professor, no seu ritmo.</p>
-        <div class="tier"><span class="lbl">Flex 3 <small>3 aulas / mês</small></span><span class="val">R$ 480</span></div>
-        <div class="tier"><span class="lbl">Flex 4 <small>4 aulas / mês</small></span><span class="val">R$ 640</span></div>
-        <div class="tier"><span class="lbl">Flex 6 <small>6 aulas / mês</small></span><span class="val">R$ 960</span></div>
-        <div class="tier"><span class="lbl">Flex 8 <small>8 aulas / mês</small></span><span class="val">R$ 1.260</span></div>
-        <a class="btn btn-gold btn-block" href="https://wa.me/5541995415712?text=Ol%C3%A1%20Jo%C3%A3o!%20Tenho%20interesse%20no%20plano%20Flex%20Particular.%20Pode%20me%20passar%20os%20detalhes%3F%20%F0%9F%8E%BE" target="_blank" rel="noopener">Quero o Particular</a>
-      </div>
-      <div class="plan rv">
-        <span class="kic">Grupo</span>
-        <h3>Em grupo</h3>
-        <p class="sub">Dupla, trio ou quarteto — quanto mais gente em quadra, menor o valor por pessoa.</p>
-        <div class="tier"><span class="lbl">A partir de <small>por pessoa, por aula</small></span><span class="val" data-grp="from">R$ 90</span></div>
-        <details class="grp-det">
-          <summary>👥 Quero em grupo — ver valores para 2, 3 ou 4 pessoas</summary>
-          <div class="grp-opts">
-            <div class="tier"><span class="lbl">👥 Dupla <small>2 pessoas</small></span><span class="val" data-grp="dupla">R$ 90 <small>cada / aula</small></span></div>
-            <div class="tier"><span class="lbl">👥 Trio <small>3 pessoas</small></span><span class="val" data-grp="trio">R$ 85 <small>cada / aula</small></span></div>
-            <div class="tier"><span class="lbl">👥 Quarteto <small>4 pessoas</small></span><span class="val" data-grp="quarteto">R$ 80 <small>cada / aula</small></span></div>
-            <p class="sub" style="margin:10px 0 0;font-size:12.5px;opacity:.8">Cada pessoa paga o valor por aula × nº de aulas do plano. Ex.: no Flex 8, cada um paga <span data-grp="exemplo">R$ 720 (dupla), R$ 680 (trio) ou R$ 640 (quarteto)</span>.</p>
-          </div>
-        </details>
-        <a class="btn btn-line btn-block" href="https://wa.me/5541995415712?text=Ol%C3%A1%20Jo%C3%A3o!%20Tenho%20interesse%20no%20plano%20Flex%20em%20Grupo.%20Pode%20me%20passar%20os%20detalhes%3F%20%F0%9F%8E%BE" target="_blank" rel="noopener">Quero o Grupo</a>
-      </div>
+        <p class="sub">Atenção total do professor e evolução no seu ritmo.</p>
+        <div class="price-main"><span data-preco="particular">R$ 160,00</span><small>por aula em pacote</small></div>
+        <div class="tier"><span class="lbl">Exemplo · 4 aulas</span><span class="val" data-preco="particular4">R$ 640,00</span></div>
+        <div class="tier"><span class="lbl">Aula avulsa</span><span class="val" data-preco="avulsa">R$ 180,00</span></div>
+        <a class="btn btn-gold btn-block" href="#calculadora">Calcular meu pacote</a>
+      </article>
+
+      <article class="plan rv">
+        <span class="kic">Em grupo</span>
+        <h3>2, 3 ou 4 pessoas</h3>
+        <p class="sub">Valores por pessoa e por aula para novos alunos.</p>
+
+        <div class="price-band">
+          <div class="price-band-head"><b>Aulas em grupo</b><small>Escolha entre dupla, trio ou quarteto</small></div>
+          <div class="tier"><span class="lbl">2 pessoas</span><span class="val" data-preco-novo="dupla">R$ 95,00</span></div>
+          <div class="tier"><span class="lbl">3 pessoas</span><span class="val" data-preco-novo="trio">R$ 90,00</span></div>
+          <div class="tier"><span class="lbl">4 pessoas</span><span class="val" data-preco-novo="quarteto">R$ 85,00</span></div>
+        </div>
+
+        <a class="btn btn-line btn-block" href="#calculadora">Calcular grupo</a>
+      </article>
+
+      <article class="plan rv">
+        <span class="kic">Grupo Família</span>
+        <h3>Treine em família</h3>
+        <p class="sub">Valor por hora para a família, com pacote a partir de 3 aulas.</p>
+        <div class="tier"><span class="lbl">Até 3 pessoas <small>por hora</small></span><span class="val" data-preco="familia3">R$ 180,00</span></div>
+        <div class="tier"><span class="lbl">Exemplo · 4 aulas</span><span class="val" data-preco="familia3x4">R$ 720,00</span></div>
+        <div class="tier"><span class="lbl">4 pessoas <small>por hora</small></span><span class="val" data-preco="familia4">R$ 200,00</span></div>
+        <div class="tier"><span class="lbl">Exemplo · 4 aulas</span><span class="val" data-preco="familia4x4">R$ 800,00</span></div>
+        <a class="btn btn-line btn-block" href="#calculadora">Calcular grupo família</a>
+      </article>
     </div>
-    <p class="note">Também há <b>aula avulsa</b> e <b>locação de quadra</b>. Fale comigo no WhatsApp para combinar o melhor formato. 🎾</p>
+
+    <div class="clarity-strip rv">
+      <span>🎟️ <b>A partir de 3 aulas</b></span>
+      <span>🗓️ Quantidade de créditos à sua escolha</span>
+      <span>⏳ Validade de <b>4 meses</b></span>
+      <span>🔄 Reposição dentro das regras da academia</span>
+    </div>
   </div>
 </section>
 
 <section class="sec alt" id="flex">
   <div class="wrap">
     <div class="sec-head">
-      <span class="eyebrow">O sistema Flex</span>
-      <h2>Você no comando da sua grade</h2>
-      <p>Monte sua grade mensal escolhendo dias e horários. O pagamento gera créditos usados no mês, com horário fixo garantido.</p>
+      <span class="eyebrow">Como funcionam os créditos</span>
+      <h2>Simples para comprar, usar e repor</h2>
+      <p>Você compra a quantidade de aulas que faz sentido para sua rotina, a partir de <b data-regra="minimo">3</b> créditos.</p>
     </div>
     <div class="steps">
-      <div class="step rv"><div class="n">1</div><div><h3>Pagamento 100%</h3><p>Horário confirmado e garantido durante todo o mês.</p></div></div>
-      <div class="step rv"><div class="n">2</div><div><h3>Pagamento 50%</h3><p>Garante sua vaga e preserva os créditos no mês.</p></div></div>
-      <div class="step rv"><div class="n">3</div><div><h3>Mínimo de 3 aulas</h3><p>Necessário para ativar o pacote Flex mensal.</p></div></div>
-      <div class="step rv"><div class="n">4</div><div><h3>Matrícula automática</h3><p>Efetivada já na sua primeira aula.</p></div></div>
+      <div class="step rv"><div class="n">1</div><div><h3>Escolha seu pacote</h3><p>A partir de <b data-regra="minimo">3</b> aulas, sem precisar ficar preso apenas a pacotes fechados de 4, 6 ou 8.</p></div></div>
+      <div class="step rv"><div class="n">2</div><div><h3>Créditos válidos por 4 meses</h3><p>Cada aula utiliza um crédito. Créditos não utilizados expiram após <b data-regra="validade">4</b> meses.</p></div></div>
+      <div class="step rv"><div class="n">3</div><div><h3>Horário organizado</h3><p>Seu horário é combinado conforme a modalidade, frequência contratada e disponibilidade da agenda.</p></div></div>
+      <div class="step rv"><div class="n">4</div><div><h3>Acompanhe pelo app</h3><p>Agenda, créditos, reposições e informações da academia ficam centralizados no aplicativo.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="calculadora">
+  <div class="wrap">
+    <div class="sec-head center">
+      <span class="eyebrow">Calculadora de pacote</span>
+      <h2>Veja quanto fica o seu plano</h2>
+      <p>Escolha a modalidade e a quantidade de aulas. O cálculo é feito automaticamente com a tabela vigente.</p>
+    </div>
+
+    <div class="calc-card rv">
+      <div class="calc-fields">
+        <label>Modalidade
+          <select id="calc-modalidade">
+            <option value="particular">Particular</option>
+            <option value="grupo">Em grupo</option>
+            <option value="familia">Grupo Família</option>
+          </select>
+        </label>
+
+        <label id="calc-pessoas-wrap" hidden>Número de pessoas
+          <select id="calc-pessoas">
+            <option value="2">2 pessoas</option>
+            <option value="3">3 pessoas</option>
+            <option value="4">4 pessoas</option>
+          </select>
+        </label>
+
+        <label>Quantidade de aulas
+          <input id="calc-aulas" type="number" min="3" step="1" value="4" inputmode="numeric">
+        </label>
+      </div>
+
+      <div class="calc-result" id="calc-resultado">
+        <span class="calc-label">Seu pacote</span>
+        <h3 id="calc-detalhe">Particular · 4 aulas</h3>
+        <p id="calc-unidade">R$ 160,00 por aula</p>
+        <strong id="calc-total">R$ 640,00</strong>
+        <small>Valor estimado conforme as opções selecionadas.</small>
+        <a id="calc-whatsapp" class="btn btn-wapp btn-block" href="#" target="_blank" rel="noopener"><svg class="cta-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.4-4A8 8 0 1 1 20 11.5Z"></path><path d="M8.3 8.1c.2-.4.4-.4.7-.4h.5c.2 0 .4 0 .5.4l.7 1.7c.1.3.1.5-.1.7l-.6.7c-.2.2-.1.4 0 .6.7 1.2 1.6 2.1 2.8 2.7.2.1.4.1.6-.1l.8-1c.2-.2.4-.3.7-.2l1.8.8c.3.1.4.3.4.5 0 .5-.2 1.4-.7 1.9-.5.5-1.4.8-2.3.8-1 0-2.2-.4-3.8-1.3-2.2-1.3-3.7-3.2-4.1-4.5-.4-1.2 0-2.5.5-3.1.4-.4.9-.6 1.6-.6Z"></path></svg>Consultar horários no WhatsApp</a>
+      </div>
     </div>
   </div>
 </section>
@@ -289,30 +405,72 @@ footer .cr{color:#6B7E8C;font-size:12.5px}
   <img src="img/quadra-1.webp" onerror="this.onerror=null;this.src='img/quadra-1.jpg'" alt="Bolas ODEA na raquete, na quadra de saibro" width="900" height="1200" decoding="async" loading="lazy">
 </div>
 
-<section class="sec">
+<section class="sec" id="regras">
   <div class="wrap">
     <div class="sec-head">
-      <span class="eyebrow">Faltas & créditos</span>
-      <h2>Reposições com regras claras</h2>
-      <p>Transparência total: você sempre sabe como funcionam seus créditos e reposições.</p>
+      <span class="eyebrow">Regras sem dúvida</span>
+      <h2>Cancelamentos, reposições e chuva</h2>
+      <p>As regras principais estão resumidas abaixo para que você saiba exatamente o que acontece com seus créditos.</p>
     </div>
-    <div class="rules">
-      <div class="rule rv">
-        <h3>Créditos de aula</h3>
+
+    <div class="rules rules-v2">
+      <div class="rule rv good-rule">
+        <h3>✅ Cancelou com antecedência</h3>
         <ul>
-          <li>Desconto de até 25% da mensalidade em aulas não realizadas.</li>
-          <li>Créditos válidos por 4 meses — expiram automaticamente.</li>
-          <li>O crédito é seu: use dentro da validade como preferir.</li>
+          <li>Avise com pelo menos <b data-regra="antecedencia">4</b> horas de antecedência.</li>
+          <li>O crédito permanece disponível para reposição.</li>
+          <li>O crédito continua sujeito à validade de <b data-regra="validade">4</b> meses.</li>
         </ul>
       </div>
-      <div class="rule rv">
-        <h3>Reposições</h3>
+
+      <div class="rule rv warn-rule">
+        <h3>❌ Falta sem aviso</h3>
         <ul>
-          <li>Somente com a mensalidade em dia.</li>
-          <li>Aviso mínimo de 4 horas de antecedência.</li>
-          <li>Falta sem aviso: crédito utilizado, sem reposição.</li>
+          <li>Se não houver aviso dentro do prazo, o crédito é debitado.</li>
+          <li>Nesse caso, não é gerado crédito de reposição.</li>
+          <li>Evite perder a aula: cancele assim que souber que não poderá comparecer.</li>
         </ul>
       </div>
+
+      <div class="rule rv rain-rule">
+        <h3>🌧️ Chuva e condições da quadra</h3>
+        <ul>
+          <li>Se a academia cancelar por chuva ou por condição inadequada do saibro, você não perde a aula.</li>
+          <li>O crédito permanece disponível para reposição dentro da validade.</li>
+          <li>A decisão sobre as condições da quadra é feita pela academia visando segurança e preservação do saibro.</li>
+        </ul>
+      </div>
+
+      <div class="rule rv credit-rule">
+        <h3>🎟️ Seus créditos</h3>
+        <ul>
+          <li>Pacotes podem ser adquiridos a partir de <b data-regra="minimo">3</b> aulas.</li>
+          <li>Você pode escolher a quantidade de créditos que desejar.</li>
+          <li>Os créditos expiram em <b data-regra="validade">4</b> meses.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="court-status rv">
+      <div>
+        <span class="eyebrow">Status da quadra</span>
+        <h3 data-court-status>🌧️ Em dias de chuva, confirme o status antes de sair</h3>
+        <p data-court-status-time>Quando houver um status publicado pela academia, ele aparece aqui automaticamente.</p>
+      </div>
+      <a class="btn btn-line" href="https://wa.me/5541995415712?text=Ol%C3%A1%20Jo%C3%A3o!%20Pode%20me%20confirmar%20o%20status%20da%20quadra%20hoje%3F" target="_blank" rel="noopener">Confirmar no WhatsApp</a>
+    </div>
+
+    <div class="faq rv">
+      <div class="sec-head" style="margin-bottom:20px">
+        <span class="eyebrow">Dúvidas rápidas</span>
+        <h2 style="font-size:30px">Perguntas frequentes</h2>
+      </div>
+      <details><summary>Posso comprar somente 3 aulas?</summary><p>Sim. Os pacotes começam em 3 aulas e você pode escolher uma quantidade maior de créditos conforme sua rotina.</p></details>
+      <details><summary>Posso comprar 5 ou 7 aulas?</summary><p>Sim. A quantidade não precisa ficar limitada a 4, 6 ou 8 aulas.</p></details>
+      <details><summary>Se eu cancelar com antecedência, perco o crédito?</summary><p>Não. Com aviso mínimo de 4 horas, o crédito permanece disponível para reposição, respeitando a validade de 4 meses.</p></details>
+      <details><summary>E se eu faltar sem avisar?</summary><p>O crédito é debitado e não é gerada reposição.</p></details>
+      <details><summary>O que acontece quando chove?</summary><p>Se a academia cancelar a aula porque a quadra não tem condição de uso, o crédito permanece disponível para reposição dentro da validade.</p></details>
+      <details><summary>Quanto custa a aula em grupo?</summary><p>Para novos alunos, os valores são R$ 95 por pessoa em dupla, R$ 90 por pessoa em trio e R$ 85 por pessoa em quarteto, por aula.</p></details>
     </div>
   </div>
 </section>
@@ -366,10 +524,10 @@ footer .cr{color:#6B7E8C;font-size:12.5px}
       <div class="appf rv"><div class="ic">💳</div><h3>Pagamentos</h3><p>Pix, cartão e dinheiro direto no app.</p></div>
     </div>
     <div class="appcta">
-      <a data-app-aluno class="btn btn-gold" href="https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/" target="_blank" rel="noopener">Já sou aluno → entrar</a>
-      <a class="btn btn-line" href="#" onclick="abrirCadastro();return false">Quero criar minha conta</a>
-      <a class="btn btn-wapp" href="https://wa.me/5541995415712?text=Ol%C3%A1%20Jo%C3%A3o!%20Quero%20come%C3%A7ar%20a%20treinar%20na%20JV%20T%C3%AAnis.%20%F0%9F%8E%BE" target="_blank" rel="noopener">💬 Quero começar (sou novo)</a>
-      <span class="hint">Já é aluno? Entre com o código de acesso que o João te enviou.</span>
+      <a data-app-aluno class="btn btn-gold" href="https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/" target="_blank" rel="noopener"><img class="cta-app-logo" src="img/logo.webp" alt="" aria-hidden="true">Acessar app</a>
+      <a data-app-novo class="btn btn-line" href="https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/?novo=1" target="_blank" rel="noopener">＋ Criar acesso</a>
+      <a class="btn btn-wapp" href="https://wa.me/5541995415712?text=Ol%C3%A1%20Jo%C3%A3o!%20Quero%20come%C3%A7ar%20a%20treinar%20na%20JV%20T%C3%AAnis.%20%F0%9F%8E%BE" target="_blank" rel="noopener"><svg class="cta-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.4-4A8 8 0 1 1 20 11.5Z"></path><path d="M8.3 8.1c.2-.4.4-.4.7-.4h.5c.2 0 .4 0 .5.4l.7 1.7c.1.3.1.5-.1.7l-.6.7c-.2.2-.1.4 0 .6.7 1.2 1.6 2.1 2.8 2.7.2.1.4.1.6-.1l.8-1c.2-.2.4-.3.7-.2l1.8.8c.3.1.4.3.4.5 0 .5-.2 1.4-.7 1.9-.5.5-1.4.8-2.3.8-1 0-2.2-.4-3.8-1.3-2.2-1.3-3.7-3.2-4.1-4.5-.4-1.2 0-2.5.5-3.1.4-.4.9-.6 1.6-.6Z"></path></svg>Falar no WhatsApp</a>
+      <span class="hint">Já é aluno? Acesse o app. É novo? Solicite seu acesso e aguarde a aprovação da academia.</span>
     </div>
   </div>
 </section>
@@ -383,7 +541,7 @@ footer .cr{color:#6B7E8C;font-size:12.5px}
         <p>📍 Rua João Azolin, 795<br>Santa Felicidade — Curitiba/PR</p>
         <p>🎾 Quadra de saibro oficial</p>
         <p>📸 <a class="ig" href="https://instagram.com/joaovictortenis" target="_blank" rel="noopener">@joaovictortenis</a></p>
-        <div style="margin-top:18px"><a class="btn btn-wapp" href="https://wa.me/5541995415712?text=Ol%C3%A1%20Jo%C3%A3o!%20Quero%20conhecer%20a%20JV%20T%C3%AAnis.%20%F0%9F%8E%BE" target="_blank" rel="noopener">💬 Falar no WhatsApp</a></div>
+        <div style="margin-top:18px"><a class="btn btn-wapp" href="https://wa.me/5541995415712?text=Ol%C3%A1%20Jo%C3%A3o!%20Quero%20conhecer%20a%20JV%20T%C3%AAnis.%20%F0%9F%8E%BE" target="_blank" rel="noopener"><svg class="cta-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.4-4A8 8 0 1 1 20 11.5Z"></path><path d="M8.3 8.1c.2-.4.4-.4.7-.4h.5c.2 0 .4 0 .5.4l.7 1.7c.1.3.1.5-.1.7l-.6.7c-.2.2-.1.4 0 .6.7 1.2 1.6 2.1 2.8 2.7.2.1.4.1.6-.1l.8-1c.2-.2.4-.3.7-.2l1.8.8c.3.1.4.3.4.5 0 .5-.2 1.4-.7 1.9-.5.5-1.4.8-2.3.8-1 0-2.2-.4-3.8-1.3-2.2-1.3-3.7-3.2-4.1-4.5-.4-1.2 0-2.5.5-3.1.4-.4.9-.6 1.6-.6Z"></path></svg>Falar no WhatsApp</a></div>
       </div>
       <iframe title="Mapa — Academia JV Tênis" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=Rua%20Joao%20Azolin%20795%20Santa%20Felicidade%20Curitiba&z=15&output=embed"></iframe>
     </div>
@@ -396,7 +554,7 @@ footer .cr{color:#6B7E8C;font-size:12.5px}
     <h2 class="rv" style="margin-top:14px">Bora pra <em>quadra?</em></h2>
     <p class="rv">Fale comigo e a gente combina o melhor horário pra você sentir o saibro. Da base ao topo. 🎾</p>
     <div class="cta-row rv">
-      <a class="btn btn-gold" href="https://wa.me/5541995415712?text=Ol%C3%A1%20Jo%C3%A3o!%20Vim%20pela%20p%C3%A1gina%20da%20JV%20T%C3%AAnis%20e%20gostaria%20de%20mais%20informa%C3%A7%C3%B5es.%20%F0%9F%8E%BE" target="_blank" rel="noopener">💬 Entre em contato</a>
+      <a class="btn btn-gold" href="https://wa.me/5541995415712?text=Ol%C3%A1%20Jo%C3%A3o!%20Vim%20pela%20p%C3%A1gina%20da%20JV%20T%C3%AAnis%20e%20gostaria%20de%20mais%20informa%C3%A7%C3%B5es.%20%F0%9F%8E%BE" target="_blank" rel="noopener"><svg class="cta-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.4-4A8 8 0 1 1 20 11.5Z"></path><path d="M8.3 8.1c.2-.4.4-.4.7-.4h.5c.2 0 .4 0 .5.4l.7 1.7c.1.3.1.5-.1.7l-.6.7c-.2.2-.1.4 0 .6.7 1.2 1.6 2.1 2.8 2.7.2.1.4.1.6-.1l.8-1c.2-.2.4-.3.7-.2l1.8.8c.3.1.4.3.4.5 0 .5-.2 1.4-.7 1.9-.5.5-1.4.8-2.3.8-1 0-2.2-.4-3.8-1.3-2.2-1.3-3.7-3.2-4.1-4.5-.4-1.2 0-2.5.5-3.1.4-.4.9-.6 1.6-.6Z"></path></svg>Entre em contato</a>
       <a class="btn btn-line" href="#planos">Ver planos</a>
     </div>
   </div>
@@ -409,7 +567,8 @@ footer .cr{color:#6B7E8C;font-size:12.5px}
     <div class="tag">Da base ao topo 🎾</div>
     <div class="fl">
       <a href="#planos">Planos</a>
-      <a href="#flex">Sistema Flex</a>
+      <a href="#flex">Créditos</a>
+      <a href="#regras">Regras</a>
       <a href="#avaliacoes">Avaliações</a>
       <a href="metodologia.html">Metodologia</a>
       <a data-app-aluno href="https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/" target="_blank" rel="noopener">App do aluno</a>
@@ -420,7 +579,13 @@ footer .cr{color:#6B7E8C;font-size:12.5px}
   </div>
 </footer>
 
-<a class="fab" href="https://wa.me/5541995415712?text=Ol%C3%A1%20Jo%C3%A3o!%20Vim%20pela%20p%C3%A1gina%20da%20JV%20T%C3%AAnis.%20%F0%9F%8E%BE" target="_blank" rel="noopener" aria-label="Falar no WhatsApp">💬</a>
+<nav class="mobile-dock" aria-label="Atalhos">
+  <a href="#planos">🎾 Valores</a>
+  <a data-app-aluno href="https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/" target="_blank" rel="noopener"><img class="cta-app-logo" src="img/logo.webp" alt="" aria-hidden="true"><span>Acessar app</span></a>
+  <a class="primary" href="https://wa.me/5541995415712?text=Ol%C3%A1%20Jo%C3%A3o!%20Vim%20pela%20p%C3%A1gina%20da%20JV%20T%C3%AAnis.%20%F0%9F%8E%BE" target="_blank" rel="noopener"><svg class="cta-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.4-4A8 8 0 1 1 20 11.5Z"></path><path d="M8.3 8.1c.2-.4.4-.4.7-.4h.5c.2 0 .4 0 .5.4l.7 1.7c.1.3.1.5-.1.7l-.6.7c-.2.2-.1.4 0 .6.7 1.2 1.6 2.1 2.8 2.7.2.1.4.1.6-.1l.8-1c.2-.2.4-.3.7-.2l1.8.8c.3.1.4.3.4.5 0 .5-.2 1.4-.7 1.9-.5.5-1.4.8-2.3.8-1 0-2.2-.4-3.8-1.3-2.2-1.3-3.7-3.2-4.1-4.5-.4-1.2 0-2.5.5-3.1.4-.4.9-.6 1.6-.6Z"></path></svg><span>WhatsApp</span></a>
+</nav>
+
+<a class="fab" href="https://wa.me/5541995415712?text=Ol%C3%A1%20Jo%C3%A3o!%20Vim%20pela%20p%C3%A1gina%20da%20JV%20T%C3%AAnis.%20%F0%9F%8E%BE" target="_blank" rel="noopener" aria-label="Falar no WhatsApp"><svg class="cta-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.4-4A8 8 0 1 1 20 11.5Z"></path><path d="M8.3 8.1c.2-.4.4-.4.7-.4h.5c.2 0 .4 0 .5.4l.7 1.7c.1.3.1.5-.1.7l-.6.7c-.2.2-.1.4 0 .6.7 1.2 1.6 2.1 2.8 2.7.2.1.4.1.6-.1l.8-1c.2-.2.4-.3.7-.2l1.8.8c.3.1.4.3.4.5 0 .5-.2 1.4-.7 1.9-.5.5-1.4.8-2.3.8-1 0-2.2-.4-3.8-1.3-2.2-1.3-3.7-3.2-4.1-4.5-.4-1.2 0-2.5.5-3.1.4-.4.9-.6 1.6-.6Z"></path></svg></a>
 
 <script>
 var mt=document.getElementById('mtgl'),nv=document.getElementById('nav');
@@ -432,77 +597,6 @@ if(!window.matchMedia||!window.matchMedia('(prefers-reduced-motion: reduce)').ma
 }else{document.querySelectorAll('.rv').forEach(function(el){el.classList.add('in');});}
 </script>
 
-<!-- ===== Criar conta (pedido de cadastro → gestão) ===== -->
-<div id="ov-cadastro" style="display:none;position:fixed;inset:0;background:rgba(10,18,8,.72);z-index:200;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)this.style.display='none'">
-  <div style="background:#FAF7F2;color:#241f16;border-radius:18px;padding:24px 22px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.4)">
-    <h3 style="font-size:22px;margin:0 0 4px">Criar minha conta 🎾</h3>
-    <p style="font-size:13.5px;color:#6a6458;margin:0 0 14px">Preencha e o João cria seu acesso ao App do Aluno — você recebe o código pelo WhatsApp.</p>
-    <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Seu nome</label>
-    <input id="cad-nome" style="width:100%;padding:12px;border:1px solid #d8d0bd;border-radius:11px;margin-bottom:10px;font-size:15px" placeholder="Nome completo">
-    <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">WhatsApp (com DDD)</label>
-    <input id="cad-tel" inputmode="numeric" style="width:100%;padding:12px;border:1px solid #d8d0bd;border-radius:11px;margin-bottom:10px;font-size:15px" placeholder="41999999999">
-    <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Tenho interesse em</label>
-    <select id="cad-int" style="width:100%;padding:12px;border:1px solid #d8d0bd;border-radius:11px;margin-bottom:6px;font-size:15px;background:#fff">
-      <option>Aulas particulares</option><option>Aulas em grupo</option><option>Personal / planilha</option><option>Kids</option><option>Locação de quadra</option>
-    </select>
-    <p id="cad-msg" style="display:none;font-size:12.5px;color:#C9472B;margin:4px 0 0"></p>
-    <div style="display:flex;gap:9px;margin-top:14px">
-      <button onclick="document.getElementById('ov-cadastro').style.display='none'" style="flex:1;padding:13px;border:1px solid #d8d0bd;background:none;border-radius:12px;font-size:14px;cursor:pointer">Cancelar</button>
-      <button onclick="enviarCadastro()" style="flex:1;padding:13px;border:none;background:#1A2E14;color:#fff;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer">Criar conta ✓</button>
-    </div>
-  </div>
-</div>
-<script>
-function abrirCadastro(){document.getElementById('ov-cadastro').style.display='flex';}
-function enviarCadastro(){
-  var nome=(document.getElementById('cad-nome').value||'').trim();
-  var tel=(document.getElementById('cad-tel').value||'').replace(/\D/g,'');
-  var interesse=document.getElementById('cad-int').value;
-  var msg=document.getElementById('cad-msg');
-  if(!nome||tel.length<10){msg.textContent='Preencha seu nome e um WhatsApp válido com DDD.';msg.style.display='block';return;}
-  var enviado=false;
-  try{
-    if(typeof firebase!=='undefined'&&firebase.apps&&firebase.apps.length){
-      firebase.database().ref('jvtenis/fila_cadastros').push({nome:nome,tel:tel,interesse:interesse,ts:Date.now()});
-      enviado=true;
-    }
-  }catch(e){}
-  document.getElementById('ov-cadastro').style.display='none';
-  var wa='https://wa.me/5541995415712?text='+encodeURIComponent('Olá João! Acabei de pedir minha conta pelo site. 🎾\nNome: '+nome+'\nWhatsApp: '+tel+'\nInteresse: '+interesse);
-  alert(enviado?'✅ Pedido enviado! O João vai criar seu acesso e te mandar o código pelo WhatsApp.':'Abrindo o WhatsApp para enviar seu pedido ao João. 🎾');
-  if(!enviado)window.open(wa,'_blank');
-}
-</script>
-
-<!-- ===== Preços de grupo ao vivo ===== -->
-<script>
-/* Lê os três preços de grupo publicados pelo app de gestão.
-   Antes isto carregava 193 KB de biblioteca do Firebase para ler 3 números — num
-   site público, onde cada visita paga esse preço. O Realtime Database responde a
-   um GET comum, então um fetch de ~100 bytes faz o mesmo trabalho. É leitura de
-   um nó público (jvtenis/precos_publicos); não há chave nem dado de aluno aqui.
-   Falhou? Ficam os valores escritos no HTML. */
-(function(){
-  var URL='https://academia-jv-tenis-default-rtdb.firebaseio.com/jvtenis/precos_publicos.json';
-  function set(sel,html){var el=document.querySelector(sel);if(el)el.innerHTML=html;}
-  function aplicar(gp){
-    if(!gp)return;
-    var d=Number(gp.dupla)||90, t=Number(gp.trio)||85, q=Number(gp.quarteto)||80;
-    set('[data-grp="dupla"]','R$ '+d+' <small>cada / aula</small>');
-    set('[data-grp="trio"]','R$ '+t+' <small>cada / aula</small>');
-    set('[data-grp="quarteto"]','R$ '+q+' <small>cada / aula</small>');
-    set('[data-grp="from"]','R$ '+d);
-    set('[data-grp="exemplo"]','R$ '+(d*8)+' (dupla), R$ '+(t*8)+' (trio) ou R$ '+(q*8)+' (quarteto)');
-  }
-  if(!window.fetch)return;
-  var ctl=window.AbortController?new AbortController():null;
-  if(ctl)setTimeout(function(){try{ctl.abort();}catch(e){}},6000);
-  fetch(URL,ctl?{signal:ctl.signal}:undefined)
-    .then(function(r){return r.ok?r.json():null;})
-    .then(aplicar)
-    .catch(function(){/* mantém os valores do HTML */});
-})();
-</script>
 <script>
 /* Endereço do App do Aluno.
    O padrão é o GitHub Pages, que é o endereço oficial. Quando o site está sendo
@@ -515,8 +609,11 @@ function enviarCadastro(){
   var irmao=location.pathname.slice(0,i)+'/app-aluno/';
   var n=0;
   [].forEach.call(document.querySelectorAll('a[data-app-aluno]'),function(a){a.href=irmao;n++;});
+  [].forEach.call(document.querySelectorAll('a[data-app-novo]'),function(a){a.href=irmao+'?novo=1';n++;});
   if(window.console&&!n)console.warn('nenhum link do app do aluno encontrado');
 })();
 </script>
+<script src="js/config.js"></script>
+<script src="js/site-v2.js"></script>
 </body>
 </html>

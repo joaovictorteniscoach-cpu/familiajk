@@ -9,8 +9,6 @@ RAIZ = Path(__file__).resolve().parent.parent
 PUBLICOS = {'app-gestao', 'app-aluno', 'site', 'site-pro'}
 EXTENSOES = {'.html', '.css', '.js', '.webmanifest', '.png', '.jpg', '.jpeg',
              '.webp', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.otf'}
-# Fase 2b separada: revisar/remover este folder após validar a fase 2 no ar.
-EXCECOES = {'site/Metodologia-JV-Tenis.pdf'}
 
 
 def preparar(destino):
@@ -27,7 +25,7 @@ def preparar(destino):
         rel = Path(nome)
         if rel.parts[0] not in PUBLICOS or any(p.startswith('.') for p in rel.parts):
             raise ValueError(f'Caminho não permitido: {nome}')
-        if rel.suffix.lower() not in EXTENSOES and nome not in EXCECOES:
+        if rel.suffix.lower() not in EXTENSOES:
             continue
         origem = RAIZ / rel
         if any(p.is_symlink() for p in [origem, *origem.parents]) or not origem.is_file():
