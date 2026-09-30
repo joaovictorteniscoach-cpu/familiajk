@@ -38,7 +38,7 @@
 <link rel="apple-touch-startup-image" media="screen and (device-width:375px) and (device-height:667px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)" href="splash-gestao-750x1334.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="lib/estilo.css?v=2026-09-29-4">
+<link rel="stylesheet" href="lib/estilo.css?v=2026-09-30-1">
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
 <script src="lib/firebase-database-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js\'><\/script>')"></script>
@@ -280,6 +280,40 @@ function esperarAuth(){
 </header>
 
 <section class="page on" id="pg-dash">
+  <!-- Início no layout de referência (30/09/2026).
+       Tudo que já existia continua aqui: os ids que o app preenche são os
+       mesmos, só mudaram de lugar. O cabeçalho antigo (.top) segue valendo
+       para as outras telas; no Início ele fica escondido e este herói assume. -->
+  <div class="jh-hero">
+    <div class="jh-top">
+      <button class="jh-ico-btn" type="button" onclick="abrirMenuInicio()" aria-label="Abrir menu">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6.5h16M4 12h16M4 17.5h16"/></svg>
+        <span class="jh-dot" id="jh-menu-dot" hidden></span>
+      </button>
+      <button class="jh-avatar" type="button" onclick="document.getElementById('avatar-gestao-file').click()" aria-label="Trocar foto de perfil">
+        <span id="jh-avatar-fb">JV</span><img id="jh-avatar-img" alt="">
+      </button>
+      <div class="jh-greet"><b id="jh-saud">Olá, João</b><span><span id="jh-data">—</span><button type="button" class="jh-sync" id="jh-sync" onclick="document.getElementById('save-state').click()" title="Situação da nuvem"></button></span></div>
+      <button class="jh-ico-btn jh-olho-btn" id="jh-olho-btn" type="button" onclick="toggleHide()" aria-label="Mostrar ou ocultar valores" title="Mostrar/ocultar valores"></button>
+      <button class="jh-ico-btn jh-bell" type="button" onclick="abrirNotifs()" aria-label="Notificações">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true"><path d="M12 2.2a1.6 1.6 0 0 1 1.6 1.6v.6a6.6 6.6 0 0 1 5 6.4v4.4l1.8 2.4c.4.6 0 1.4-.7 1.4H4.3c-.7 0-1.1-.8-.7-1.4l1.8-2.4v-4.4a6.6 6.6 0 0 1 5-6.4v-.6A1.6 1.6 0 0 1 12 2.2zM9.4 20.2h5.2a2.6 2.6 0 0 1-5.2 0z"/></svg>
+        <span class="jh-badge" id="jh-bell-badge" hidden>0</span>
+      </button>
+    </div>
+    <div class="jh-hero-row">
+      <p class="jh-motto">Disciplina hoje,<br><em>resultados sempre.</em></p>
+      <button class="jh-quadra" id="jh-quadra" type="button" onclick="abrirStatusQuadra()" data-state="avaliacao">
+        <span class="jh-quadra-ball" aria-hidden="true"></span>
+        <span class="jh-quadra-txt">
+          <small>Situação da quadra</small>
+          <b><i class="jh-led"></i><span id="jh-quadra-rot">—</span></b>
+          <small id="jh-quadra-tempo">—</small>
+        </span>
+        <span class="jh-chev" aria-hidden="true">›</span>
+      </button>
+    </div>
+  </div>
+
   <div class="bk-banner" id="bk-banner" style="display:none">
     <span class="bk-msg"></span>
     <div class="bk-acts">
@@ -288,36 +322,99 @@ function esperarAuth(){
     </div>
   </div>
 
-  <div class="jv-ref-dashboard">
-    <div class="jv-ref-kpis">
-      <button class="jv-ref-kpi recebido" id="kpi-recebido" onclick="verCaixaMes()">
-        <div class="jv-ref-kpi-title"><span class="jv-ref-round-icon" data-ic="bars"></span><b>Recebido</b></div>
-        <strong id="k-recebido">R$ 0</strong>
-        <small id="k-recebido-s">Total recebido no mês</small>
-      </button>
-      <button class="jv-ref-kpi receber" id="kpi-pendente" onclick="verPendentes()">
-        <div class="jv-ref-kpi-title"><span class="jv-ref-round-icon" data-ic="clock"></span><b>A receber</b></div>
-        <strong id="k-pendente">R$ 0</strong>
-        <small id="k-pendente-s">0 mensalidades pendentes</small>
-      </button>
-      <div class="jv-ref-kpi meta">
-        <div class="jv-ref-kpi-title"><span class="jv-ref-round-icon" data-ic="target"></span><b>Meta</b></div>
-        <strong id="k-ref-meta">R$ 0</strong>
-        <small>Meta de faturamento do mês</small>
+  <div class="jh-body">
+    <!-- 1. Comparativo do mês (aulas) + troca de mês -->
+    <section class="jh-card" aria-labelledby="jh-cmp-tit">
+      <div class="jh-head">
+        <span class="jh-hic"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="3" y="13" width="3.6" height="8" rx="1"/><rect x="8.4" y="9" width="3.6" height="12" rx="1"/><rect x="13.8" y="5" width="3.6" height="16" rx="1"/><rect x="19.2" y="2" width="2.8" height="19" rx="1"/></svg></span>
+        <h3 id="jh-cmp-tit">Comparativo do mês</h3>
+        <div class="jh-mes">
+          <button type="button" onclick="shiftMonth(-1)" aria-label="Mês anterior">‹</button>
+          <span id="jh-mes-label">—</span>
+          <button type="button" onclick="shiftMonth(1)" aria-label="Próximo mês">›</button>
+        </div>
       </div>
-      <div class="jv-ref-kpi despesas">
-        <div class="jv-ref-kpi-title"><span class="jv-ref-round-icon" data-ic="receipt"></span><b>Despesas</b></div>
-        <strong id="k-ref-desp">R$ 0</strong>
-        <small id="k-ref-desp-s">Saídas registradas</small>
+      <div class="jh-cmp">
+        <div class="jh-cmp-i total"><i></i><span>Total</span><strong id="jh-cmp-total">0</strong><em class="jh-delta" id="jh-cmp-total-d"></em><small>vs. mês anterior</small></div>
+        <div class="jh-cmp-i personal"><i></i><span>Personal</span><strong id="jh-cmp-personal">0</strong><em class="jh-delta" id="jh-cmp-personal-d"></em><small>vs. mês anterior</small></div>
+        <div class="jh-cmp-i tenis"><i></i><span>Tênis</span><strong id="jh-cmp-tenis">0</strong><em class="jh-delta" id="jh-cmp-tenis-d"></em><small>vs. mês anterior</small></div>
       </div>
-    </div>
+    </section>
 
-    <div class="jv-ref-comparativo">
-      <h3>Comparativo do mês</h3>
-      <div class="jv-ref-bar-row meta"><span>Meta</span><i><b id="cmp-meta-fill"></b></i><strong id="cmp-meta">R$ 0</strong></div>
-      <div class="jv-ref-bar-row recebido"><span>Recebido</span><i><b id="cmp-rec-fill"></b></i><strong id="cmp-rec">R$ 0</strong></div>
-      <div class="jv-ref-bar-row receber"><span>A receber</span><i><b id="cmp-pend-fill"></b></i><strong id="cmp-pend">R$ 0</strong></div>
-      <div class="jv-ref-bar-row despesa"><span>Despesas</span><i><b id="cmp-desp-fill"></b></i><strong id="cmp-desp">R$ 0</strong></div>
+    <!-- 2. Aulas do dia em anéis -->
+    <section class="jh-card" aria-labelledby="jh-dia-tit">
+      <div class="jh-head">
+        <span class="jh-hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M7.5 13h.01M12 13h.01M16.5 13h.01M7.5 17h.01M12 17h.01M16.5 17h.01" stroke-width="2.6" stroke-linecap="round"/></svg></span>
+        <h3 id="jh-dia-tit">Aulas do dia</h3>
+        <button class="jh-link" type="button" onclick="verAgendaHoje()"><span id="jh-hoje-label">Hoje</span> ›</button>
+      </div>
+      <div class="jh-rings" onclick="verAgendaHoje()" title="Ver a agenda de hoje">
+        <div class="jh-ring total"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="bg" cx="60" cy="60" r="50"/><circle class="fg" id="jh-ring-total" cx="60" cy="60" r="50"/></svg><div><b id="k-aulas-dia-total">0</b><span>Total</span></div></div>
+        <div class="jh-ring personal"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="bg" cx="60" cy="60" r="50"/><circle class="fg" id="jh-ring-personal" cx="60" cy="60" r="50"/></svg><div><b id="k-aulas-dia-personal">0</b><span>Personal</span></div></div>
+        <div class="jh-ring tenis"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="bg" cx="60" cy="60" r="50"/><circle class="fg" id="jh-ring-tenis" cx="60" cy="60" r="50"/></svg><div><b id="k-aulas-dia-tenis">0</b><span>Tênis</span></div></div>
+      </div>
+    </section>
+
+    <!-- 3. Atividades do dia (recolhível) -->
+    <section class="jh-card jh-atv aberta" id="jh-atv" aria-labelledby="atividades-hoje-title">
+      <button class="jh-head jh-head-btn" type="button" onclick="alternarAtividadesInicio()" aria-expanded="true" id="jh-atv-cab">
+        <span class="jh-hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M7.5 13h.01M12 13h.01M16.5 13h.01M7.5 17h.01M12 17h.01M16.5 17h.01" stroke-width="2.6" stroke-linecap="round"/></svg></span>
+        <h3 id="atividades-hoje-title">Atividades do dia <span id="jh-atv-n">(0)</span></h3>
+        <span class="jh-caret" aria-hidden="true"></span>
+      </button>
+      <div class="jh-atv-corpo">
+        <div id="atividades-hoje" class="jh-atv-list"></div>
+        <button class="jh-ver-todas" id="jh-atv-mais" type="button" onclick="verTodasAtividadesInicio()"><span id="jh-atv-mais-txt">Ver todas as aulas do dia</span><span aria-hidden="true">›</span></button>
+      </div>
+    </section>
+
+    <!-- 4. Aulas no mês: gráfico acumulado dia a dia -->
+    <section class="jh-card" aria-labelledby="jh-mes-tit">
+      <div class="jh-head">
+        <span class="jh-hic"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="3" y="13" width="3.6" height="8" rx="1"/><rect x="8.4" y="9" width="3.6" height="12" rx="1"/><rect x="13.8" y="5" width="3.6" height="16" rx="1"/><rect x="19.2" y="2" width="2.8" height="19" rx="1"/></svg></span>
+        <h3 id="jh-mes-tit">Aulas no mês</h3>
+        <button class="jh-link" type="button" onclick="verAgendaMes()"><span id="aulas-mes-label">—</span> ›</button>
+      </div>
+      <div class="jh-graf-wrap" onclick="verAgendaMes()" title="Ver a agenda do mês">
+        <svg id="jh-graf" viewBox="0 0 300 120" preserveAspectRatio="none" aria-label="Aulas acumuladas no mês"></svg>
+        <ul class="jh-legend">
+          <li class="total"><i></i><span>Total</span><b id="k-aulas-total">0</b><em class="jh-delta" id="jh-leg-total-d"></em></li>
+          <li class="personal"><i></i><span>Personal</span><b id="k-aulas-personal">0</b><em class="jh-delta" id="jh-leg-personal-d"></em></li>
+          <li class="tenis"><i></i><span>Tênis</span><b id="k-aulas-tenis">0</b><em class="jh-delta" id="jh-leg-tenis-d"></em></li>
+        </ul>
+      </div>
+      <p class="jh-graf-nota">Aulas acumuladas dia a dia, pela agenda.</p>
+    </section>
+
+    <!-- 5. Indicadores -->
+    <div class="jh-tiles">
+      <button class="jh-tile" id="kpi-alunos" type="button" onclick="verAlunosAtivos()">
+        <span class="jh-tic"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="7.5" r="3.6"/><path d="M2.5 19.5c0-3.6 2.9-6.3 6.5-6.3s6.5 2.7 6.5 6.3v.8h-13z"/><circle cx="17.2" cy="9" r="2.8"/><path d="M16.6 13.3c3 .1 5.2 2.3 5.2 5.3v.9h-4.6c0-2.4-.2-4.4-.6-6.2z"/></svg></span>
+        <span class="jh-tt"><small>Alunos ativos</small><strong id="k-alunos">0</strong><em id="k-alunos-s"></em></span>
+      </button>
+      <button class="jh-tile" id="kpi-cred" type="button" onclick="verReposicoes()">
+        <span class="jh-tic"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><ellipse cx="12" cy="5.5" rx="7.5" ry="3"/><path d="M4.5 7.6v3c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3v-3c-1.4 1.3-4.3 2-7.5 2s-6.1-.7-7.5-2zm0 5v3c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3v-3c-1.4 1.3-4.3 2-7.5 2s-6.1-.7-7.5-2zm0 5v1.4c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3v-1.4c-1.4 1.3-4.3 2-7.5 2s-6.1-.7-7.5-2z"/></svg></span>
+        <span class="jh-tt"><small>Créditos em aberto</small><strong id="k-creditos">0</strong><em id="k-repos-s"></em></span>
+      </button>
+      <button class="jh-tile" type="button" onclick="verAgendaHoje()">
+        <span class="jh-tic"><svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="15" fill="none" stroke="currentColor" stroke-width="3"/><path id="jh-ocup-pie" fill="currentColor" d=""/></svg></span>
+        <span class="jh-tt"><small>Taxa de ocupação</small><strong><span id="jh-ocup-hoje">—</span> <u>Hoje</u></strong><em id="ocup-txt">—</em></span>
+      </button>
+      <button class="jh-tile" type="button" onclick="verAgendaHoje()">
+        <span class="jh-tic"><svg viewBox="0 0 36 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="1.5" y="1.5" width="33" height="21" rx="1.5"/><path d="M18 1.5v21M1.5 7h5v10h-5M34.5 7h-5v10h5"/><circle cx="18" cy="12" r="3"/></svg></span>
+        <span class="jh-tt"><small>Locações</small><strong><span id="jh-loc-hoje">0</span> <u>Hoje</u></strong><em id="loc-txt">—</em></span>
+      </button>
+    </div>
+    <p class="jh-sub-ocup"><small id="ocup-sub"></small> <small id="loc-sub"></small></p>
+
+    <!-- 6. Cobranças pendentes (mesma lista de antes, agora em linha) -->
+    <div class="dobra jh-dobra" id="dob-pend">
+      <button class="dobra-cab" onclick="dobrar('dob-pend')">
+        <span class="jh-hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><path d="M6 2.8h8.2L19 7.6V21H6z"/><path d="M14 2.8v5h5M9 12h7M9 15.5h7M9 19h4"/></svg></span>
+        <span class="dc-tit"><span class="dc-nome">Cobranças pendentes</span></span>
+        <span class="dc-n" id="dob-pend-n">0</span><span class="dc-seta">›</span>
+      </button>
+      <div class="dobra-corpo"><div class="pend-list" id="pend-list"></div></div>
     </div>
 
     <div id="virada-aviso"></div>
@@ -325,73 +422,48 @@ function esperarAuth(){
       <div class="jv-ref-section-head"><b>Atenção hoje</b><button type="button" onclick="verPendentes()">Ver todos ›</button></div>
       <div class="acao-list" id="acao-list"></div>
     </div>
-    <div class="jv-ref-actions">
-      <button class="primary" type="button" onclick="openLancModal()"><span>＋</span>Lançamento</button>
-      <button type="button" onclick="verAgendaHoje()"><span data-ic="cal"></span>Agenda</button>
-    </div>
 
-
-    <section class="jv-today-section" aria-labelledby="atividades-hoje-title">
-      <div class="jv-home-section-head">
-        <div>
-          <span>ATIVIDADE</span>
-          <h2 id="atividades-hoje-title">Atividades <em>de hoje</em></h2>
-        </div>
-        <button type="button" onclick="verAgendaHoje()">Ver agenda ›</button>
+    <!-- 7. Financeiro do mês (tudo que o Início já mostrava) -->
+    <section class="jh-card jh-fin" aria-labelledby="jh-fin-tit">
+      <div class="jh-head">
+        <span class="jh-hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><rect x="2.5" y="6" width="19" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.8"/><path d="M6 9.5v.01M18 15.5v.01" stroke-width="2.6" stroke-linecap="round"/></svg></span>
+        <h3 id="jh-fin-tit">Financeiro do mês</h3>
+        <button class="jh-link jh-olho" type="button" onclick="toggleHide()" id="jh-olho-txt">Mostrar valores</button>
       </div>
-      <div id="atividades-hoje" class="jv-today-list"></div>
-    </section>
-
-    <section class="jv-aulas-resumo" aria-label="Resumo de aulas">
-      <div class="jv-aulas-bloco">
-        <div class="jv-aulas-head"><b>Aulas do dia</b><span>Hoje</span></div>
-        <div class="aulas-mes aulas-clic" onclick="verAgendaHoje()" title="Ver a agenda de hoje">
-          <div class="am-card"><div class="am-v" id="k-aulas-dia-total">0</div><div class="am-l">Total</div></div>
-          <div class="am-card personal"><div class="am-v" id="k-aulas-dia-personal">0</div><div class="am-l">💪 Personal</div></div>
-          <div class="am-card tenis"><div class="am-v" id="k-aulas-dia-tenis">0</div><div class="am-l">🎾 Tênis</div></div>
-        </div>
-      </div>
-
-      <div class="jv-aulas-bloco">
-        <div class="jv-aulas-head"><b>Aulas no mês</b><span id="aulas-mes-label">—</span></div>
-        <div class="aulas-mes aulas-clic" onclick="verAgendaMes()" title="Ver a agenda do mês">
-          <div class="am-card"><div class="am-v" id="k-aulas-total">0</div><div class="am-l">Total</div></div>
-          <div class="am-card personal"><div class="am-v" id="k-aulas-personal">0</div><div class="am-l">💪 Personal</div></div>
-          <div class="am-card tenis"><div class="am-v" id="k-aulas-tenis">0</div><div class="am-l">🎾 Tênis</div></div>
-        </div>
-      </div>
-    </section>
-
-    <section class="jv-indicadores" aria-labelledby="indicadores-title">
-      <div class="jv-home-section-head compact">
-        <div>
-          <span>INDICADORES</span>
-          <h2 id="indicadores-title">Resumo <em>da academia</em></h2>
-        </div>
-      </div>
-      <div class="jv-data-hooks">
-        <button id="kpi-alunos" onclick="verAlunosAtivos()">
-          <b>Alunos ativos</b>
-          <strong id="k-alunos"></strong>
-          <span class="jv-indicator-foot" id="k-alunos-s"></span>
+      <div class="jv-ref-kpis">
+        <button class="jv-ref-kpi recebido" id="kpi-recebido" onclick="verCaixaMes()">
+          <div class="jv-ref-kpi-title"><span class="jv-ref-round-icon" data-ic="bars"></span><b>Recebido</b></div>
+          <strong id="k-recebido">R$ 0</strong>
+          <small id="k-recebido-s">Total recebido no mês</small>
         </button>
-        <button id="kpi-cred" onclick="verReposicoes()">
-          <b>Créditos em aberto</b>
-          <strong id="k-creditos"></strong>
-          <span class="jv-indicator-foot" id="k-repos-s"></span>
+        <button class="jv-ref-kpi receber" id="kpi-pendente" onclick="verPendentes()">
+          <div class="jv-ref-kpi-title"><span class="jv-ref-round-icon" data-ic="clock"></span><b>A receber</b></div>
+          <strong id="k-pendente">R$ 0</strong>
+          <small id="k-pendente-s">0 mensalidades pendentes</small>
         </button>
-        <div class="bar-wrap"><span id="bar-txt"></span><div class="bar"><i id="bar-fill"></i></div></div>
+        <div class="jv-ref-kpi meta">
+          <div class="jv-ref-kpi-title"><span class="jv-ref-round-icon" data-ic="target"></span><b>Meta</b></div>
+          <strong id="k-ref-meta">R$ 0</strong>
+          <small>Meta de faturamento do mês</small>
+        </div>
+        <div class="jv-ref-kpi despesas">
+          <div class="jv-ref-kpi-title"><span class="jv-ref-round-icon" data-ic="receipt"></span><b>Despesas</b></div>
+          <strong id="k-ref-desp">R$ 0</strong>
+          <small id="k-ref-desp-s">Saídas registradas</small>
+        </div>
+      </div>
+      <div class="jv-ref-comparativo">
+        <div class="jv-ref-bar-row meta"><span>Meta</span><i><b id="cmp-meta-fill"></b></i><strong id="cmp-meta">R$ 0</strong></div>
+        <div class="jv-ref-bar-row recebido"><span>Recebido</span><i><b id="cmp-rec-fill"></b></i><strong id="cmp-rec">R$ 0</strong></div>
+        <div class="jv-ref-bar-row receber"><span>A receber</span><i><b id="cmp-pend-fill"></b></i><strong id="cmp-pend">R$ 0</strong></div>
+        <div class="jv-ref-bar-row despesa"><span>Despesas</span><i><b id="cmp-desp-fill"></b></i><strong id="cmp-desp">R$ 0</strong></div>
+      </div>
+      <div class="bar-wrap jh-meta-bar"><span id="bar-txt"></span><div class="bar"><i id="bar-fill"></i></div></div>
+      <div class="jv-ref-actions">
+        <button class="primary" type="button" onclick="openLancModal()"><span>＋</span>Lançamento</button>
+        <button type="button" onclick="verAgendaHoje()"><span data-ic="cal"></span>Agenda</button>
       </div>
     </section>
-
-    <div class="bar-wrap jv-ocupacao" style="margin-top:14px">
-      <div class="bar-row"><span>Taxa de ocupação <small id="ocup-sub"></small></span><span id="ocup-txt">—</span></div>
-      <div class="bar"><i id="ocup-fill" style="width:0%"></i></div>
-    </div>
-    <div class="bar-wrap jv-ocupacao" style="margin-top:10px">
-      <div class="bar-row"><span>Locações <small id="loc-sub"></small></span><span id="loc-txt">—</span></div>
-      <div class="bar"><i id="loc-fill" class="loc"></i></div>
-    </div>
   </div>
 
   <div class="comp-head">
@@ -400,21 +472,6 @@ function esperarAuth(){
   </div>
   <div class="comp-list" id="comp-list"></div>
   <div id="datas-inicio"></div>
-  <div id="quadra-status-admin" style="margin:16px 0;padding:16px;border:1px solid var(--border);border-radius:16px;background:var(--card)">
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
-      <div>
-        <p class="sec-eyebrow" style="margin-bottom:3px">Quadra de saibro</p>
-        <h2 class="sec-title" style="font-size:20px;margin:0">Status para o <em>site</em></h2>
-        <p id="quadra-status-atual" class="hint" style="margin-top:4px">🟡 Em avaliação</p>
-      </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap">
-        <button class="btn btn-ghost" data-quadra-status="liberada" onclick="definirStatusQuadra('liberada')" style="padding:8px 10px;font-size:11.5px">🟢 Liberada</button>
-        <button class="btn btn-ghost" data-quadra-status="avaliacao" onclick="definirStatusQuadra('avaliacao')" style="padding:8px 10px;font-size:11.5px">🟡 Avaliação</button>
-        <button class="btn btn-ghost" data-quadra-status="chuva" onclick="definirStatusQuadra('chuva')" style="padding:8px 10px;font-size:11.5px">🌧️ Chuva</button>
-        <button class="btn btn-ghost" data-quadra-status="fechada" onclick="definirStatusQuadra('fechada')" style="padding:8px 10px;font-size:11.5px">🔴 Fechada</button>
-      </div>
-    </div>
-  </div>
   <div id="cadastros-wrap" style="display:none">
     <p class="sec-eyebrow">Novos alunos</p>
     <h2 class="sec-title">🆕 Pedidos de <em>cadastro</em> (site)</h2>
@@ -423,22 +480,43 @@ function esperarAuth(){
   <p class="sec-eyebrow">Confirmações</p>
   <h2 class="sec-title">📲 Agenda de <em>amanhã</em> <small id="confirm-amanha-data" style="font-weight:600;color:var(--muted);font-size:12px"></small></h2>
   <div id="confirm-amanha"></div>
-  <div class="dobra" id="dob-pend" style="margin-top:16px">
-    <button class="dobra-cab" onclick="dobrar('dob-pend')">
-      <span class="dc-tit"><span class="dc-eyebrow">Cobranças</span><span class="dc-nome">Pagamentos <em>pendentes</em></span></span>
-      <span class="dc-n" id="dob-pend-n">0</span><span class="dc-seta">›</span>
-    </button>
-    <div class="dobra-corpo"><div class="pend-list" id="pend-list"></div></div>
-  </div>
 
-  <div class="dobra" id="dob-consel">
+  <div class="dobra" id="dob-consel" style="margin-top:16px">
     <button class="dobra-cab" onclick="dobrar('dob-consel')">
       <span class="dc-tit"><span class="dc-eyebrow">Leitura automática</span><span class="dc-nome">O que merece sua <em>atenção</em></span></span>
       <span class="dc-n" id="dob-consel-n">0</span><span class="dc-seta">›</span>
     </button>
     <div class="dobra-corpo"><div id="conselhos-box"></div></div>
   </div>
+
 </section>
+  <!-- Menu do topo: o que antes eram os botões do cabeçalho -->
+  <div class="overlay" id="ov-menu-inicio" onclick="if(event.target===this)closeModal('ov-menu-inicio')">
+    <div class="modal jh-menu">
+      <h3>Menu</h3>
+      <button type="button" onclick="closeModal('ov-menu-inicio');toggleHide()"><span>👁️</span><b id="jh-menu-olho">Mostrar valores</b></button>
+      <button type="button" onclick="closeModal('ov-menu-inicio');abrirPedidos()"><span>🧾</span><b>Pedidos e novos acessos</b><em class="jh-badge" id="jh-ped-badge" hidden>0</em></button>
+      <button type="button" onclick="closeModal('ov-menu-inicio');abrirHist()"><span>🕘</span><b>Histórico de mudanças</b></button>
+      <button type="button" onclick="closeModal('ov-menu-inicio');exportBackup()"><span>💾</span><b>Fazer backup agora</b></button>
+      <button type="button" onclick="closeModal('ov-menu-inicio');document.getElementById('avatar-gestao-file').click()"><span>📷</span><b>Trocar foto de perfil</b></button>
+      <button type="button" onclick="closeModal('ov-menu-inicio');abrirMais()"><span>☰</span><b>Mais opções do app</b></button>
+      <button type="button" class="jh-menu-fechar" onclick="closeModal('ov-menu-inicio')">Fechar</button>
+    </div>
+  </div>
+
+  <!-- Status da quadra: os mesmos 4 estados, agora abertos pelo selo do topo -->
+  <div class="overlay" id="ov-quadra" onclick="if(event.target===this)closeModal('ov-quadra')">
+    <div class="modal jh-menu" id="quadra-status-admin">
+      <h3>Situação da quadra</h3>
+      <p class="hint" id="quadra-status-atual">🟡 Em avaliação</p>
+      <p class="hint">Aparece no site e no app do aluno.</p>
+      <button type="button" data-quadra-status="liberada" onclick="definirStatusQuadra('liberada');closeModal('ov-quadra')"><span>🟢</span><b>Liberada</b></button>
+      <button type="button" data-quadra-status="avaliacao" onclick="definirStatusQuadra('avaliacao');closeModal('ov-quadra')"><span>🟡</span><b>Em avaliação</b></button>
+      <button type="button" data-quadra-status="chuva" onclick="definirStatusQuadra('chuva');closeModal('ov-quadra')"><span>🌧️</span><b>Fechada por chuva</b></button>
+      <button type="button" data-quadra-status="fechada" onclick="definirStatusQuadra('fechada');closeModal('ov-quadra')"><span>🔴</span><b>Temporariamente fechada</b></button>
+      <button type="button" class="jh-menu-fechar" onclick="closeModal('ov-quadra')">Fechar</button>
+    </div>
+  </div>
 
 <section class="page" id="pg-agenda">
   <p class="sec-eyebrow">Quadro de horários</p>
@@ -976,7 +1054,7 @@ function esperarAuth(){
   <button onclick="go('lanc',this)"><span class="ico" data-ic="navcash"></span>Caixa</button>
   <button id="nav-mais" onclick="abrirMais()"><span class="ico" data-ic="navmore"></span>Mais</button>
 </nav>
-<script src="lib/icones.js?v=2026-09-29-4"></script>
+<script src="lib/icones.js?v=2026-09-30-1"></script>
 
 <!-- MODAL ALUNO -->
 <div class="overlay" id="ov-aluno" onclick="if(event.target===this)closeModal('ov-aluno')">
@@ -1451,7 +1529,7 @@ function esperarAuth(){
 
 <div class="toast" id="toast"></div>
 
-<script src="lib/app-gestao.js?v=2026-09-29-4"></script>
+<script src="lib/app-gestao.js?v=2026-09-30-1"></script>
 <script>
 /* Rede de seguranca do par tela+codigo.
 
@@ -1466,7 +1544,7 @@ function esperarAuth(){
    torto, o app busca o par certo uma vez e, se insistir, DIZ o que houve em
    vez de deixar voce tocando em botao que nao responde. */
 (function(){
-  var ESPERADA='2026-09-29-4';
+  var ESPERADA='2026-09-30-1';
   function tela(motivo){
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;z-index:99999;background:#1A2E14;color:#FAF7F2;'
@@ -1557,7 +1635,7 @@ function limparHist(){
 }
 histLogLoad();
 // PWA: registra o service worker (permite instalar o painel e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-gestao.js?v=2026-09-29-4').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-gestao.js?v=2026-09-30-1').catch(function(){});});}
 </script>
 </body>
 </html>
