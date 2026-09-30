@@ -334,10 +334,11 @@ function esperarAuth(){
           <button type="button" onclick="shiftMonth(1)" aria-label="Próximo mês">›</button>
         </div>
       </div>
+      <p class="jh-cmp-sub" id="jh-cmp-sub"></p>
       <div class="jh-cmp">
-        <div class="jh-cmp-i total"><i></i><span>Total</span><strong id="jh-cmp-total">0</strong><em class="jh-delta" id="jh-cmp-total-d"></em><small>vs. mês anterior</small></div>
-        <div class="jh-cmp-i personal"><i></i><span>Personal</span><strong id="jh-cmp-personal">0</strong><em class="jh-delta" id="jh-cmp-personal-d"></em><small>vs. mês anterior</small></div>
-        <div class="jh-cmp-i tenis"><i></i><span>Tênis</span><strong id="jh-cmp-tenis">0</strong><em class="jh-delta" id="jh-cmp-tenis-d"></em><small>vs. mês anterior</small></div>
+        <div class="jh-cmp-i total"><i></i><span>Total</span><strong id="jh-cmp-total">0</strong><em class="jh-delta" id="jh-cmp-total-d"></em></div>
+        <div class="jh-cmp-i personal"><i></i><span>Personal</span><strong id="jh-cmp-personal">0</strong><em class="jh-delta" id="jh-cmp-personal-d"></em></div>
+        <div class="jh-cmp-i tenis"><i></i><span>Tênis</span><strong id="jh-cmp-tenis">0</strong><em class="jh-delta" id="jh-cmp-tenis-d"></em></div>
       </div>
     </section>
 
@@ -353,6 +354,7 @@ function esperarAuth(){
         <div class="jh-ring personal"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="bg" cx="60" cy="60" r="50"/><circle class="fg" id="jh-ring-personal" cx="60" cy="60" r="50"/></svg><div><b id="k-aulas-dia-personal">0</b><span>Personal</span></div></div>
         <div class="jh-ring tenis"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="bg" cx="60" cy="60" r="50"/><circle class="fg" id="jh-ring-tenis" cx="60" cy="60" r="50"/></svg><div><b id="k-aulas-dia-tenis">0</b><span>Tênis</span></div></div>
       </div>
+      <p class="jh-rings-sub" id="jh-ring-total-sub"></p>
     </section>
 
     <!-- 3. Atividades do dia (recolhível) -->
@@ -378,12 +380,12 @@ function esperarAuth(){
       <div class="jh-graf-wrap" onclick="verAgendaMes()" title="Ver a agenda do mês">
         <svg id="jh-graf" viewBox="0 0 300 120" preserveAspectRatio="none" aria-label="Aulas acumuladas no mês"></svg>
         <ul class="jh-legend">
-          <li class="total"><i></i><span>Total</span><b id="k-aulas-total">0</b><em class="jh-delta" id="jh-leg-total-d"></em></li>
-          <li class="personal"><i></i><span>Personal</span><b id="k-aulas-personal">0</b><em class="jh-delta" id="jh-leg-personal-d"></em></li>
-          <li class="tenis"><i></i><span>Tênis</span><b id="k-aulas-tenis">0</b><em class="jh-delta" id="jh-leg-tenis-d"></em></li>
+          <li class="total"><i></i><span>Total</span></li>
+          <li class="personal"><i></i><span>Personal</span></li>
+          <li class="tenis"><i></i><span>Tênis</span></li>
         </ul>
       </div>
-      <p class="jh-graf-nota">Aulas acumuladas dia a dia, pela agenda.</p>
+      <p class="jh-graf-nota" id="jh-graf-nota">Aulas acumuladas dia a dia, pela agenda.</p>
     </section>
 
     <!-- 5. Indicadores -->
@@ -405,7 +407,6 @@ function esperarAuth(){
         <span class="jh-tt"><small>Locações</small><strong><span id="jh-loc-hoje">0</span> <u>Hoje</u></strong><em id="loc-txt">—</em></span>
       </button>
     </div>
-    <p class="jh-sub-ocup"><small id="ocup-sub"></small> <small id="loc-sub"></small></p>
 
     <!-- 6. Cobranças pendentes (mesma lista de antes, agora em linha) -->
     <div class="dobra jh-dobra" id="dob-pend">
@@ -419,7 +420,7 @@ function esperarAuth(){
 
     <div id="virada-aviso"></div>
     <div id="acao-wrap" class="jv-ref-attention" style="display:none">
-      <div class="jv-ref-section-head"><b>Atenção hoje</b><button type="button" onclick="verPendentes()">Ver todos ›</button></div>
+      <div class="jv-ref-section-head"><b>Atenção hoje</b></div>
       <div class="acao-list" id="acao-list"></div>
     </div>
 
@@ -428,7 +429,6 @@ function esperarAuth(){
       <div class="jh-head">
         <span class="jh-hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><rect x="2.5" y="6" width="19" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.8"/><path d="M6 9.5v.01M18 15.5v.01" stroke-width="2.6" stroke-linecap="round"/></svg></span>
         <h3 id="jh-fin-tit">Financeiro do mês</h3>
-        <button class="jh-link jh-olho" type="button" onclick="toggleHide()" id="jh-olho-txt">Mostrar valores</button>
       </div>
       <div class="jv-ref-kpis">
         <button class="jv-ref-kpi recebido" id="kpi-recebido" onclick="verCaixaMes()">
@@ -452,16 +452,9 @@ function esperarAuth(){
           <small id="k-ref-desp-s">Saídas registradas</small>
         </div>
       </div>
-      <div class="jv-ref-comparativo">
-        <div class="jv-ref-bar-row meta"><span>Meta</span><i><b id="cmp-meta-fill"></b></i><strong id="cmp-meta">R$ 0</strong></div>
-        <div class="jv-ref-bar-row recebido"><span>Recebido</span><i><b id="cmp-rec-fill"></b></i><strong id="cmp-rec">R$ 0</strong></div>
-        <div class="jv-ref-bar-row receber"><span>A receber</span><i><b id="cmp-pend-fill"></b></i><strong id="cmp-pend">R$ 0</strong></div>
-        <div class="jv-ref-bar-row despesa"><span>Despesas</span><i><b id="cmp-desp-fill"></b></i><strong id="cmp-desp">R$ 0</strong></div>
-      </div>
       <div class="bar-wrap jh-meta-bar"><span id="bar-txt"></span><div class="bar"><i id="bar-fill"></i></div></div>
       <div class="jv-ref-actions">
         <button class="primary" type="button" onclick="openLancModal()"><span>＋</span>Lançamento</button>
-        <button type="button" onclick="verAgendaHoje()"><span data-ic="cal"></span>Agenda</button>
       </div>
     </section>
   </div>
@@ -494,7 +487,6 @@ function esperarAuth(){
   <div class="overlay" id="ov-menu-inicio" onclick="if(event.target===this)closeModal('ov-menu-inicio')">
     <div class="modal jh-menu">
       <h3>Menu</h3>
-      <button type="button" onclick="closeModal('ov-menu-inicio');toggleHide()"><span>👁️</span><b id="jh-menu-olho">Mostrar valores</b></button>
       <button type="button" onclick="closeModal('ov-menu-inicio');abrirPedidos()"><span>🧾</span><b>Pedidos e novos acessos</b><em class="jh-badge" id="jh-ped-badge" hidden>0</em></button>
       <button type="button" onclick="closeModal('ov-menu-inicio');abrirHist()"><span>🕘</span><b>Histórico de mudanças</b></button>
       <button type="button" onclick="closeModal('ov-menu-inicio');exportBackup()"><span>💾</span><b>Fazer backup agora</b></button>
@@ -603,7 +595,7 @@ function esperarAuth(){
 
 <section class="page" id="pg-fin">
   <p class="sec-eyebrow">Financeiro</p>
-  <h2 class="sec-title">Fechamento do <em>mês</em></h2>
+  <h2 class="sec-title">Resumo do <em>mês</em></h2>
   <div id="arq-aviso"></div>
   <div class="fin-grid">
     <div class="fin-card hero"><div class="l">Total recebido no mês</div><div class="v" id="f-total">R$ 0</div></div>
@@ -617,7 +609,7 @@ function esperarAuth(){
     <div class="fin-card"><div class="l">💪 Personal (receita)</div><div class="v" id="f-personal">R$ 0</div></div>
     <div class="fin-card"><div class="l">Previsto (mensalidades)</div><div class="v" id="f-previsto">R$ 0</div></div>
     <div class="fin-card"><div class="l">📅 Previsto pela agenda</div><div class="v" id="f-prev-agenda">R$ 0</div></div>
-    <div class="fin-card"><div class="l">Inadimplência</div><div class="v" id="f-inad">R$ 0</div></div>
+    <div class="fin-card"><div class="l">A receber</div><div class="v" id="f-inad">R$ 0</div></div>
   </div>
 
   <p class="sec-eyebrow">Visão do mês</p>
@@ -800,7 +792,7 @@ function esperarAuth(){
 
   <div class="fin-grid">
     <div class="fin-card hero"><div class="l">Faturamento no ano <span id="g-ano-lbl"></span></div><div class="v" id="g-ano-fat">R$ 0</div></div>
-    <div class="fin-card"><div class="l">Alunos hoje</div><div class="v" id="g-alunos-hoje">0</div></div>
+    <div class="fin-card"><div class="l">Alunos ativos hoje</div><div class="v" id="g-alunos-hoje">0</div></div>
     <div class="fin-card"><div class="l">Média mensal no ano</div><div class="v" id="g-media-mes">R$ 0</div></div>
   </div>
   <p class="hint">📊 Os gráficos mostram <b>mês a mês</b>. Como você começou agora, aparecem os últimos 6 meses — os anteriores ficam zerados e vão se preenchendo conforme você lança pagamentos e despesas. Em poucos meses isso vira um gráfico completo de evolução.</p>
