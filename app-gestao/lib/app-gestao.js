@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-30-1';
+const VERSAO='2026-09-30-2';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2087,6 +2087,22 @@ async function publicarSeguro(pub){
   });
   if(tarefas.length)await Promise.all(tarefas);
 }
+/* Bloco legado (jvtenis-app-aluno): qualquer aparelho que abre o App do Aluno
+   consegue ler, mesmo sem aprovação — a regra de transição só exige login
+   anônimo. Enquanto houver aluno sem aparelho aprovado ele continua existindo,
+   mas só com o necessário para o app funcionar (horários, créditos, plano,
+   situação e valor da mensalidade para pagar). Avaliações, presenças, datas de
+   pagamento e links pessoais saem daqui e seguem só pelo bloco privado de cada
+   aparelho aprovado (alunos_privados/<uid>). Os campos continuam existindo,
+   vazios, para o app antigo não quebrar. */
+function publicacaoLegadaEnxuta(pub){
+  const out=Object.assign({},pub);
+  out.alunos=(pub.alunos||[]).map(a=>Object.assign({},a,{
+    ultimoPago:'',cardLink:'',mfitLink:'',avaliacoes:[],evoMes:[],registros:[]
+  }));
+  out.historico={};
+  return out;
+}
 async function doPublish(){
   if(!CARREGADO)return;                     // publicar vazio apagaria a tela dos alunos
   if(!ehDono())return;                      // o App do Aluno é da academia, não do professor
@@ -2161,7 +2177,7 @@ async function doPublish(){
       if(data<dKey(hoje)||data>dKey(lim))return;
       pub.grade.eventos.push({id:'q'+data+hora,data,hora,tipo:'ocupado'});
     });
-    await cloudSet(PUBKEY,JSON.stringify(pub));             // legado: retirar quando a migração terminar
+    await cloudSet(PUBKEY,JSON.stringify(publicacaoLegadaEnxuta(pub)));   // legado: retirar quando a migração terminar
     try{await publicarSeguro(pub);}catch(e){console.warn('Publicação segura pendente:',e);}
     // Nó público mínimo: só os três preços de grupo, que é tudo o que o site
     // do jvtenis.com.br precisa. Sem ele, o site teria que ler a publicação
