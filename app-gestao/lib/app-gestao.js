@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-29-4';
+const VERSAO='2026-09-30-1';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2254,6 +2254,7 @@ function renderStatusQuadraGestao(){
     b.classList.toggle('btn-clay',b.getAttribute('data-quadra-status')===v.status);
     b.classList.toggle('btn-ghost',b.getAttribute('data-quadra-status')!==v.status);
   });
+  if(typeof renderQuadraInicio==='function')renderQuadraInicio();
 }
 async function definirStatusQuadra(status){
   if(!ehDono()||!STATUS_QUADRA_OPCOES[status])return;
@@ -5847,6 +5848,191 @@ function renderViradaAviso(){
     +' <button class="btn btn-ghost" style="margin-top:9px;padding:7px 12px;font-size:12px" onclick="pularViradaMes()">Encerrar sem converter</button>'
     +'</p></div>';
 }
+/* ===== Início no layout de referência (30/09/2026) ========================
+   Só apresentação: todos os números saem das mesmas contas de antes
+   (contarAulas, ocupacao, contagemAlunos, atividadesHoje). O que é novo é a
+   comparação com o mês anterior e o gráfico dia a dia — e os dois também são
+   contarAulas, só que rodando para outro intervalo. */
+const MESES_CURTO=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const DIASEM_CURTO=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+let atvInicioAberta=true, atvInicioTodas=false;
+
+function deltaAulas(atual,anterior){
+  // sem base no mês anterior não existe porcentagem honesta: não mostra nada
+  if(!anterior)return null;
+  return Math.round((atual-anterior)/anterior*100);
+}
+function pintarDelta(id,p){
+  const e=document.getElementById(id);if(!e)return;
+  if(p===null||!isFinite(p)){e.textContent='';e.className='jh-delta vazio';return;}
+  e.textContent=(p>0?'↑ ':p<0?'↓ ':'= ')+Math.abs(p)+'%';
+  e.className='jh-delta '+(p>0?'sobe':p<0?'desce':'igual');
+}
+function pintarAnel(id,frac){
+  const c=document.getElementById(id);if(!c)return;
+  const C=2*Math.PI*50, f=Math.max(0,Math.min(1,Number(frac)||0));
+  c.style.strokeDasharray=(C*f).toFixed(1)+' '+C.toFixed(1);
+  c.style.opacity=f>0?'1':'0';
+}
+function arcoPizza(pct){
+  const p=Math.max(0,Math.min(100,Number(pct)||0));
+  if(p<=0)return '';
+  if(p>=100)return 'M18 7a11 11 0 1 1 0 22a11 11 0 1 1 0-22z';
+  const a=p/100*2*Math.PI, x=18+11*Math.sin(a), y=18-11*Math.cos(a);
+  return 'M18 18V7A11 11 0 '+(p>50?1:0)+' 1 '+x.toFixed(2)+' '+y.toFixed(2)+'z';
+}
+/* Série do gráfico: aulas acumuladas no mês, dia a dia. Acumulado porque o
+   número do fim da linha é exatamente o da legenda — dá para conferir. */
+function serieAulasMes(ano,mes){
+  const ult=new Date(ano,mes+1,0).getDate(), out=[];
+  let t=0,p=0,te=0;
+  for(let d=1;d<=ult;d++){
+    const dia=new Date(ano,mes,d), c=contarAulas(dia,dia);
+    t+=c.total;p+=c.personal;te+=c.tenis;
+    out.push({total:t,personal:p,tenis:te});
+  }
+  return out;
+}
+function renderGraficoInicio(){
+  const svg=document.getElementById('jh-graf');if(!svg)return;
+  const s=serieAulasMes(curYear,curMonth), n=s.length;
+  const W=300,H=120,top=8,base=112;
+  const max=Math.max(1,s.length?s[n-1].total:0);
+  const xDe=i=>(n<=1?0:i/(n-1)*W);
+  const yDe=v=>base-(v/max)*(base-top);
+  const linha=k=>s.map((v,i)=>(i?'L':'M')+xDe(i).toFixed(1)+' '+yDe(v[k]).toFixed(1)).join(' ');
+  const area=k=>linha(k)+' L'+W+' '+base+' L0 '+base+' Z';
+  let hoje='';
+  const h=new Date();
+  if(h.getFullYear()===curYear&&h.getMonth()===curMonth){
+    const x=xDe(h.getDate()-1).toFixed(1);
+    hoje='<line class="hoje" x1="'+x+'" x2="'+x+'" y1="'+top+'" y2="'+base+'"/>';
+  }
+  const grade=[0.25,0.5,0.75,1].map(f=>'<line class="grade" x1="0" x2="'+W+'" y1="'+yDe(max*f).toFixed(1)+'" y2="'+yDe(max*f).toFixed(1)+'"/>').join('');
+  svg.innerHTML='<defs>'
+    +'<linearGradient id="jhg-t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F2B233" stop-opacity=".42"/><stop offset="1" stop-color="#F2B233" stop-opacity="0"/></linearGradient>'
+    +'<linearGradient id="jhg-p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5DBB63" stop-opacity=".30"/><stop offset="1" stop-color="#5DBB63" stop-opacity="0"/></linearGradient>'
+    +'<linearGradient id="jhg-e" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E8793A" stop-opacity=".30"/><stop offset="1" stop-color="#E8793A" stop-opacity="0"/></linearGradient>'
+    +'</defs>'+grade+hoje
+    +'<path class="area" fill="url(#jhg-t)" d="'+area('total')+'"/>'
+    +'<path class="area" fill="url(#jhg-p)" d="'+area('personal')+'"/>'
+    +'<path class="area" fill="url(#jhg-e)" d="'+area('tenis')+'"/>'
+    +'<path class="ln tenis" d="'+linha('tenis')+'"/>'
+    +'<path class="ln personal" d="'+linha('personal')+'"/>'
+    +'<path class="ln total" d="'+linha('total')+'"/>';
+}
+function renderInicioRef(aulasDia,aulasMes,ocHoje,ocMes){
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  const h=new Date(), hr=h.getHours();
+  // o painel também abre no modo professor: lá a saudação não leva o nome do dono
+  const dono=(typeof ehDono!=='function')||ehDono();
+  set('jh-saud',(hr<12?'Bom dia':hr<18?'Boa tarde':'Boa noite')+(dono?', João':''));
+  set('jh-data',DIASEM_CURTO[h.getDay()]+', '+h.getDate()+' de '+MESES_CURTO[h.getMonth()]);
+  set('jh-mes-label',MESES[curMonth]+' '+curYear);
+  set('jh-hoje-label','Hoje · '+DIASEM_CURTO[h.getDay()]+', '+String(h.getDate()).padStart(2,'0')+'/'+String(h.getMonth()+1).padStart(2,'0'));
+
+  // comparativo: mês inteiro contra o mês anterior inteiro, pela agenda
+  const pIni=new Date(curYear,curMonth-1,1), pFim=new Date(curYear,curMonth,0);
+  const ant=contarAulas(pIni,pFim);
+  ['total','personal','tenis'].forEach(k=>{
+    set('jh-cmp-'+k,aulasMes[k]);
+    const d=deltaAulas(aulasMes[k],ant[k]);
+    pintarDelta('jh-cmp-'+k+'-d',d);pintarDelta('jh-leg-'+k+'-d',d);
+  });
+
+  // anéis: total cheio quando há aula; personal e tênis como fatia do dia
+  const tot=Number(aulasDia.total)||0;
+  pintarAnel('jh-ring-total',tot?1:0);
+  pintarAnel('jh-ring-personal',tot?aulasDia.personal/tot:0);
+  pintarAnel('jh-ring-tenis',tot?aulasDia.tenis/tot:0);
+
+  renderGraficoInicio();
+
+  // ocupação e locações de HOJE em destaque; o mês fica na linha de baixo
+  set('jh-ocup-hoje',ocHoje.disp?ocHoje.pct+'%':'—');
+  const pie=document.getElementById('jh-ocup-pie');if(pie)pie.setAttribute('d',arcoPizza(ocHoje.pct));
+  set('ocup-txt',ocMes.pct+'% no mês');
+  set('jh-loc-hoje',ocHoje.locUsados);
+  set('loc-txt',ocMes.locUsados+'h no mês');
+  set('ocup-sub',ocMes.disp?('Ocupação no mês: '+ocMes.ocup+' de '+ocMes.disp+' horários de aula'):'');
+  set('loc-sub',ocMes.locDisp?('· locação usa '+ocMes.locPct+'% da grade'):'');
+
+  const olho=hideVals?'Mostrar valores':'Ocultar valores';
+  set('jh-olho-txt',olho);set('jh-menu-olho',olho);
+  const ob=document.getElementById('jh-olho-btn'),oe=document.getElementById('eye-btn');
+  if(ob&&oe){ob.innerHTML=oe.innerHTML;ob.classList.toggle('off',hideVals);ob.setAttribute('aria-label',olho);ob.title=olho;}
+  renderQuadraInicio();espelharTopoInicio();
+}
+
+/* O cabeçalho antigo continua existindo (as outras telas usam), então o
+   Início só espelha o que ele mostra: selos, foto e situação da nuvem. */
+function espelharTopoInicio(){
+  const copia=(de,para)=>{
+    const a=document.getElementById(de),b=document.getElementById(para);if(!a||!b)return 0;
+    const vis=a.style.display!=='none'&&String(a.textContent||'').trim()!==''&&String(a.textContent).trim()!=='0';
+    b.textContent=a.textContent;b.hidden=!vis;return vis?1:0;
+  };
+  copia('bell-badge','jh-bell-badge');
+  const temPed=copia('ped-badge','jh-ped-badge');
+  const dot=document.getElementById('jh-menu-dot');if(dot)dot.hidden=!temPed;
+  const ss=document.getElementById('save-state'),js=document.getElementById('jh-sync');
+  if(ss&&js){js.textContent=ss.textContent?('· '+ss.textContent):'';js.className='jh-sync '+(ss.className||'').replace('save-state','');}
+  const im=document.getElementById('avatar-gestao-img'),ji=document.getElementById('jh-avatar-img'),jf=document.getElementById('jh-avatar-fb');
+  if(im&&ji&&jf){
+    const tem=im.style.display==='block'&&im.getAttribute('src');
+    if(tem){ji.src=im.getAttribute('src');ji.style.display='block';jf.style.display='none';}
+    else{ji.removeAttribute('src');ji.style.display='none';jf.style.display='flex';}
+  }
+}
+(function observarTopoInicio(){
+  if(typeof MutationObserver!=='function')return;
+  const ob=new MutationObserver(()=>{try{espelharTopoInicio();}catch(e){}});
+  ['bell-badge','ped-badge','save-state','avatar-gestao-img'].forEach(id=>{
+    const e=document.getElementById(id);
+    if(e)ob.observe(e,{attributes:true,childList:true,characterData:true,subtree:true});
+  });
+})();
+
+function tempoRelativo(ts){
+  if(!ts)return '';
+  const m=Math.floor((Date.now()-ts)/60000);
+  if(m<1)return 'Atualizado agora';
+  if(m<60)return 'Atualizado há '+m+' min';
+  const hh=Math.floor(m/60);
+  if(hh<24)return 'Atualizado há '+hh+' h';
+  const d=new Date(ts);
+  return 'Atualizado em '+String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');
+}
+function renderQuadraInicio(){
+  const card=document.getElementById('jh-quadra');if(!card||typeof statusQuadraValor!=='function')return;
+  const v=statusQuadraValor();
+  const ROT={liberada:'Liberada',avaliacao:'Em avaliação',chuva:'Chuva',fechada:'Fechada'};
+  card.setAttribute('data-state',v.status);
+  const r=document.getElementById('jh-quadra-rot');if(r)r.textContent=ROT[v.status]||'—';
+  const t=document.getElementById('jh-quadra-tempo');
+  if(t)t.textContent=tempoRelativo(v.ts)||(v.atualizado_em?('Atualizado '+v.atualizado_em):'Toque para atualizar');
+}
+setInterval(()=>{try{renderQuadraInicio();}catch(e){}},60000);
+function abrirStatusQuadra(){
+  if(typeof ehDono==='function'&&!ehDono()){toast('Só a conta da academia altera a situação da quadra.');return;}
+  if(typeof renderStatusQuadraGestao==='function')renderStatusQuadraGestao();
+  document.getElementById('ov-quadra').classList.add('on');
+}
+function abrirMenuInicio(){
+  espelharTopoInicio();
+  document.getElementById('ov-menu-inicio').classList.add('on');
+}
+function alternarAtividadesInicio(){
+  atvInicioAberta=!atvInicioAberta;
+  const c=document.getElementById('jh-atv');if(c)c.classList.toggle('aberta',atvInicioAberta);
+  const b=document.getElementById('jh-atv-cab');if(b)b.setAttribute('aria-expanded',String(atvInicioAberta));
+}
+function verTodasAtividadesInicio(){
+  const r=atividadesHoje();
+  if(r.list.length<=4){verAgendaHoje();return;}
+  atvInicioTodas=!atvInicioTodas;renderAtividadesHoje();
+}
+
 function renderDash(){
   renderViradaAviso();
   const movs=DB.lancamentos.filter(l=>l.mes===monthKey());
@@ -5899,12 +6085,11 @@ function renderDash(){
   setTxt('k-aulas-total',aulasMes.total);setTxt('k-aulas-personal',aulasMes.personal);setTxt('k-aulas-tenis',aulasMes.tenis);
   const aml=document.getElementById('aulas-mes-label');if(aml)aml.textContent=MESES[curMonth]+' '+curYear;
   const ocMes=ocupacao(_ini,_fim), ocHoje=ocupacao(_hoje,_hoje);
-  const ofill=document.getElementById('ocup-fill'); if(ofill)ofill.style.width=ocMes.pct+'%';
   setTxt('ocup-txt',ocMes.pct+'% no mês');
   setTxt('ocup-sub','· hoje '+ocHoje.pct+'% · '+ocMes.ocup+'/'+ocMes.disp+' horários de aula');
-  const lfill=document.getElementById('loc-fill'); if(lfill)lfill.style.width=ocMes.locPct+'%';
   setTxt('loc-txt',ocMes.locUsados+'h no mês');
   setTxt('loc-sub',ocMes.locDisp?('· '+ocMes.locPct+'% da grade de locação'):'');
+  try{renderInicioRef(aulasDia,aulasMes,ocHoje,ocMes);}catch(e){console.warn('Início (layout novo) falhou:',e);}
   renderCompromissos();renderDatasInicio();
   marcarDobra('dob-pend-n',pendAlunos.length,pendAlunos.length===0);
   if(!pendAlunos.length){pl.innerHTML='<div class="empty">🎉 Todos os alunos estão em dia!</div>';}
@@ -8502,26 +8687,41 @@ function confirmarAulaWaHoje(id,hora){
 function renderAtividadesHoje(){
   const box=document.getElementById('atividades-hoje');if(!box)return;
   const r=atividadesHoje(),dk=dKey(r.date),CF=DB.confirmacoes||{};
-  if(!r.list.length){box.innerHTML='<div class="jv-today-empty">Nenhuma atividade agendada para hoje.</div>';return;}
+  const n=document.getElementById('jh-atv-n');if(n)n.textContent='('+r.list.length+')';
+  const mais=document.getElementById('jh-atv-mais'),maisTxt=document.getElementById('jh-atv-mais-txt');
+  if(!r.list.length){
+    box.innerHTML='<div class="jv-today-empty">Nenhuma atividade agendada para hoje.</div>';
+    if(maisTxt)maisTxt.textContent='Abrir agenda do dia';
+    return;
+  }
   const LBL={aula:'Aula',grupo:'Grupo',personal:'Personal',locacao:'Locação',pessoal:'Compromisso',torneio:'Torneio'};
-  box.innerHTML=r.list.map(function(it){
+  /* Recolhido mostra as 4 próximas (a que está acontecendo entra). As que já
+     passaram só aparecem em "ver todas" — somem da frente, não do dia. */
+  const agora=new Date(),minAgora=agora.getHours()*60+agora.getMinutes();
+  const minDe=h=>{const p=String(h).split(':');return (+p[0])*60+(+p[1]||0);};
+  let ini=r.list.findIndex(it=>minDe(it.hora)+60>minAgora);
+  if(ini<0)ini=Math.max(0,r.list.length-4);
+  ini=Math.min(ini,Math.max(0,r.list.length-4));
+  const lista=(atvInicioTodas||r.list.length<=4)?r.list:r.list.slice(ini,ini+4);
+  const WA='<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12 2.4a9.1 9.1 0 0 0-7.8 13.8L3 21l4.9-1.3A9.1 9.1 0 1 0 12 2.4zm0 2.2a6.9 6.9 0 0 1 5.9 10.5l-.4.6.7 2.6-2.7-.7-.6.4A6.9 6.9 0 1 1 12 4.6z"/><path d="M8.6 7.4c.3-.3.8-.4 1.1 0l1.1 1.7c.2.3.1.6-.1.9l-.6.7c-.2.2-.2.5 0 .7.7 1 1.6 1.8 2.7 2.3.3.1.5.1.7-.1l.7-.8c.2-.3.6-.3.9-.1l1.7 1.1c.3.2.4.6.2.9-.5.9-1.4 1.4-2.5 1.4-3.7-.2-7.5-4-7.7-7.7 0-.4.2-.8.8-1z"/></svg>';
+  box.innerHTML=lista.map(function(it){
     const lbl=LBL[it.tipo]||it.tipo||'Atividade';
     const nome=it.a?it.a.nome:(it.titulo||lbl);
-    let right='';
+    const passou=minDe(it.hora)+60<=minAgora;
+    let acoes='';
     if(it.a){
       const jaJoao=!!CF[it.a.id+'|'+dk+'|'+it.hora];
-      const jaAluno=!!CONF_ALUNOS[(it.a.codigo||'')+'|'+dk+'|'+it.hora];
-      right='<div class="jv-today-actions">'
-        +(jaAluno?'<span class="jv-today-confirmed">✓ aluno confirmou</span>':'')
-        +'<button class="btn '+(jaJoao?'btn-ghost':'btn-clay')+'" onclick="confirmarInternoHoje(\''+it.a.id+'\',\''+it.hora+'\')">'+(jaJoao?'✓ Confirmada':'✓ Confirmar')+'</button>'
-        +(it.a.tel?'<button class="btn btn-ghost jv-wa-btn" onclick="confirmarAulaWaHoje(\''+it.a.id+'\',\''+it.hora+'\')"><span aria-hidden="true">↗</span> WhatsApp</button>':'')
-        +'</div>';
+      acoes='<button class="jh-conf'+(jaJoao?' ok':'')+'" onclick="confirmarInternoHoje(\''+it.a.id+'\',\''+it.hora+'\')"><i aria-hidden="true">✓</i>'+(jaJoao?'Confirmada':'Confirmar')+'</button>'
+        +(it.a.tel?'<button class="jh-wa" onclick="confirmarAulaWaHoje(\''+it.a.id+'\',\''+it.hora+'\')" aria-label="Confirmar pelo WhatsApp com '+esc(nome)+'">'+WA+'</button>':'<span class="jh-wa vazio"></span>');
     }
-    return '<div class="jv-today-item">'
-      +'<div class="jv-today-time"><b>'+esc(it.hora)+'</b><span>'+esc(lbl)+'</span></div>'
-      +'<div class="jv-today-name">'+esc(nome)+'</div>'
-      +right+'</div>';
+    const jaAluno=it.a&&!!CONF_ALUNOS[(it.a.codigo||'')+'|'+dk+'|'+it.hora];
+    return '<div class="jh-atv-item'+(passou?' passou':'')+'">'
+      +'<span class="jh-atv-h">'+esc(it.hora)+'</span>'
+      +'<span class="jh-atv-nome">'+esc(nome)+'<small class="jh-atv-t2">'+esc(lbl)+'</small>'+(jaAluno?'<small>✓ aluno confirmou</small>':'')+'</span>'
+      +'<span class="jh-atv-tipo">'+esc(lbl)+'</span>'
+      +'<span class="jh-atv-acoes">'+acoes+'</span></div>';
   }).join('');
+  if(maisTxt)maisTxt.textContent=r.list.length<=4?'Abrir agenda do dia':(atvInicioTodas?'Mostrar só as próximas':'Ver todas as aulas do dia ('+r.list.length+')');
 }
 
 function aulasAmanha(){
