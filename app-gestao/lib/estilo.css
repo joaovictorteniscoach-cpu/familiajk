@@ -2687,3 +2687,20 @@ body #pg-dash.page{padding-top:0!important;background:linear-gradient(180deg,#05
   #pg-dash .jh-body{max-width:760px}
   #pg-dash .jh-tiles{grid-template-columns:repeat(4,1fr)}
 }
+
+/* Ajustes 30/09: comparativo por período, legenda só com cores, cartões sem vazar */
+#pg-dash .jh-cmp-sub{margin:-4px 0 10px;font-size:11px;color:var(--jh-mut);line-height:1.35}
+#pg-dash .jh-cmp-sub:empty{display:none}
+#pg-dash .jh-cmp-i{grid-template-areas:"n n" "v d"}
+#pg-dash .jh-rings-sub{margin:8px 0 0;text-align:center;font-size:11.5px;color:var(--jh-mut)}
+#pg-dash .jh-rings-sub:empty{display:none}
+#pg-dash .jh-legend li{grid-template-columns:10px 1fr!important}
+#pg-dash .jh-tiles{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+#pg-dash .jh-tiles>*{min-width:0!important;overflow:hidden}
+#pg-dash .jh-tt{flex:1 1 auto}
+#pg-dash .jh-tt small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#pg-dash .jh-tt em{white-space:normal!important;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+@media(max-width:380px){
+  #pg-dash .jh-legend{grid-template-columns:repeat(3,auto)!important;justify-content:space-between}
+}
+@media(min-width:720px){#pg-dash .jh-tiles{grid-template-columns:repeat(4,minmax(0,1fr))!important}}

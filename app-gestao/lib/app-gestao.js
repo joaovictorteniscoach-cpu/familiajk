@@ -2943,6 +2943,8 @@ function contarAulas(dFrom,dTo){
   while(cur<=end){
     HORAS.forEach(h=>{
       const evs=entriesFor(cur,h).filter(e=>e.origem!=='compromisso');
+      // aula em horário bloqueado (chuva, quadra fechada) não aconteceu
+      if(evs.some(e=>e.tipo==='bloqueio'))return;
       if(evs.some(e=>e.tipo==='aula'||e.tipo==='grupo'))tenis++;
       if(evs.some(e=>e.tipo==='personal'))personal++;
     });
@@ -5426,7 +5428,9 @@ function renderAcoes(pendAlunos,pendValor){
   if(!wrap||!box)return;
   const itens=[];
 
-  if(pendAlunos.length){
+  /* Mensalidades pendentes saíram daqui: o Início já mostra "Cobranças
+     pendentes" logo acima, com o mesmo número e a mesma lista. */
+  if(false&&pendAlunos.length){
     const urgentes=pendAlunos.filter(a=>{const d=vencDe(a);return d!==null&&d<=0;}).length;
     itens.push({ico:'💵',cls:'',n:pendAlunos.length,
       t:pendAlunos.length+' mensalidade'+(pendAlunos.length===1?'':'s')+' pendente'+(pendAlunos.length===1?'':'s'),
@@ -5947,20 +5951,57 @@ function renderInicioRef(aulasDia,aulasMes,ocHoje,ocMes){
   set('jh-mes-label',MESES[curMonth]+' '+curYear);
   set('jh-hoje-label','Hoje · '+DIASEM_CURTO[h.getDay()]+', '+String(h.getDate()).padStart(2,'0')+'/'+String(h.getMonth()+1).padStart(2,'0'));
 
-  // comparativo: mês inteiro contra o mês anterior inteiro, pela agenda
-  const pIni=new Date(curYear,curMonth-1,1), pFim=new Date(curYear,curMonth,0);
-  const ant=contarAulas(pIni,pFim);
+  /* Comparativo justo: compara períodos do mesmo tamanho.
+     - mês atual: do dia 1 até hoje, contra o dia 1 até o mesmo dia do mês
+       anterior (comparar o mês inteiro agendado com um mês já encerrado
+       inflava o começo do mês, porque o futuro ainda não teve cancelamentos);
+     - mês que já passou: mês inteiro contra o mês anterior inteiro;
+     - mês futuro: só o que está agendado, sem porcentagem. */
+  const hojeD=new Date(h.getFullYear(),h.getMonth(),h.getDate());
+  const iniSel=new Date(curYear,curMonth,1), fimSel=new Date(curYear,curMonth+1,0);
+  const ehAtual=(curYear===h.getFullYear()&&curMonth===h.getMonth());
+  const ehFuturo=iniSel>hojeD;
+  const mesAntNome=MESES[(curMonth+11)%12].toLowerCase();
+  let base=aulasMes, ant=null, sub='';
+  if(ehAtual){
+    base=contarAulas(iniSel,hojeD);
+    const dia=Math.min(h.getDate(),new Date(curYear,curMonth,0).getDate());
+    ant=contarAulas(new Date(curYear,curMonth-1,1),new Date(curYear,curMonth-1,dia));
+    sub='Até hoje ('+h.getDate()+'/'+String(h.getMonth()+1).padStart(2,'0')+') · % contra o mesmo período de '+mesAntNome;
+  }else if(ehFuturo){
+    sub='Aulas agendadas para o mês';
+  }else{
+    ant=contarAulas(new Date(curYear,curMonth-1,1),new Date(curYear,curMonth,0));
+    sub='Mês fechado · % contra '+mesAntNome;
+  }
+  set('jh-cmp-sub',sub);
   ['total','personal','tenis'].forEach(k=>{
-    set('jh-cmp-'+k,aulasMes[k]);
-    const d=deltaAulas(aulasMes[k],ant[k]);
-    pintarDelta('jh-cmp-'+k+'-d',d);pintarDelta('jh-leg-'+k+'-d',d);
+    set('jh-cmp-'+k,base[k]);
+    pintarDelta('jh-cmp-'+k+'-d',ant?deltaAulas(base[k],ant[k]):null);
   });
 
-  // anéis: total cheio quando há aula; personal e tênis como fatia do dia
+  /* Anéis do dia: o Total mostra quanto do dia já foi dado (e deixa de ser um
+     anel sempre cheio); Personal e Tênis mostram a fatia de cada um no dia. */
   const tot=Number(aulasDia.total)||0;
-  pintarAnel('jh-ring-total',tot?1:0);
+  let feitas=0;
+  try{
+    const minAgora=h.getHours()*60+h.getMinutes();
+    HORAS.forEach(hr_=>{
+      const p=hr_.split(':'),ini=(+p[0])*60+(+p[1]||0);
+      if(ini+60>minAgora)return;
+      const evs=entriesFor(hojeD,hr_).filter(e=>e.origem!=='compromisso');
+      if(evs.some(e=>e.tipo==='bloqueio'))return;
+      if(evs.some(e=>e.tipo==='aula'||e.tipo==='grupo'))feitas++;
+      if(evs.some(e=>e.tipo==='personal'))feitas++;
+    });
+  }catch(e){}
+  pintarAnel('jh-ring-total',tot?Math.min(1,feitas/tot):0);
+  set('jh-ring-total-sub',tot?(feitas+' de '+tot+' já dadas'):'');
   pintarAnel('jh-ring-personal',tot?aulasDia.personal/tot:0);
   pintarAnel('jh-ring-tenis',tot?aulasDia.tenis/tot:0);
+
+  const nota=document.getElementById('jh-graf-nota');
+  if(nota)nota.textContent=ehAtual?'Aulas acumuladas dia a dia. Depois da linha tracejada (hoje), é o que está agendado.':'Aulas acumuladas dia a dia, pela agenda.';
 
   renderGraficoInicio();
 
@@ -5970,11 +6011,8 @@ function renderInicioRef(aulasDia,aulasMes,ocHoje,ocMes){
   set('ocup-txt',ocMes.pct+'% no mês');
   set('jh-loc-hoje',ocHoje.locUsados);
   set('loc-txt',ocMes.locUsados+'h no mês');
-  set('ocup-sub',ocMes.disp?('Ocupação no mês: '+ocMes.ocup+' de '+ocMes.disp+' horários de aula'):'');
-  set('loc-sub',ocMes.locDisp?('· locação usa '+ocMes.locPct+'% da grade'):'');
 
   const olho=hideVals?'Mostrar valores':'Ocultar valores';
-  set('jh-olho-txt',olho);set('jh-menu-olho',olho);
   const ob=document.getElementById('jh-olho-btn'),oe=document.getElementById('eye-btn');
   if(ob&&oe){ob.innerHTML=oe.innerHTML;ob.classList.toggle('off',hideVals);ob.setAttribute('aria-label',olho);ob.title=olho;}
   renderQuadraInicio();espelharTopoInicio();
@@ -6158,7 +6196,7 @@ function renderConselhos(){
 
   // 3. agenda diferente do plano contratado
   const dif=alunos.map(a=>({a,g:agendaDoMes(a)})).filter(x=>x.g.total>0&&x.g.valor!==(Number(x.a.mensalidade)||0)&&!difSilenciada(x.a));
-  if(dif.length){
+  if(false&&dif.length){   // já aparece em "Atenção hoje" (valores a confirmar)
     const delta=dif.reduce((s,x)=>s+(x.g.valor-(Number(x.a.mensalidade)||0)),0);
     t.push([delta>0?'warn':'info','📅','Agenda diferente do plano',dif.length+' aluno(s) com a agenda deste mês fora do plano cadastrado — '+(delta>0?'R$ '+Math.abs(delta).toLocaleString('pt-BR')+' a mais':'R$ '+Math.abs(delta).toLocaleString('pt-BR')+' a menos')+' no total: '+nomes(dif.map(x=>x.a))+'. O botão "Cobrar pela agenda" no card de cada um acerta o valor.']);
   }
@@ -6179,8 +6217,8 @@ function renderConselhos(){
     const hoje=new Date(), fimMes=new Date(hoje.getFullYear(),hoje.getMonth()+1,0).getDate();
     const faltamDias=fimMes-hoje.getDate();
     const falta=meta-fh;
-    if(falta<=0)t.push(['good','🎯','Meta batida','Você já passou a meta de '+fmt(meta)+' — recebeu '+fmt(fh)+' este mês.']);
-    else t.push([faltamDias<=7?'warn':'info','🎯','Meta do mês','Faltam '+fmt(falta)+' para a meta de '+fmt(meta)+', com '+faltamDias+' dia(s) restantes no mês.']);
+    // meta batida já aparece na barra da meta do Início; aqui só o que falta
+    if(falta>0)t.push([faltamDias<=7?'warn':'info','🎯','Meta do mês','Faltam '+fmt(falta)+' para a meta de '+fmt(meta)+', com '+faltamDias+' dia(s) restantes no mês.']);
   }
 
   // 6. horários livres na semana
@@ -6799,7 +6837,7 @@ function renderGraf(){
   const mesesComFat=Object.keys(fatPorMes).filter(mk=>mk.slice(0,4)===anoAtual).length||1;
   document.getElementById('g-ano-lbl').textContent=anoAtual;
   document.getElementById('g-ano-fat').textContent=fmt(fatAno);
-  document.getElementById('g-alunos-hoje').textContent=DB.alunos.length;
+  document.getElementById('g-alunos-hoje').textContent=contagemAlunos().ativos;
   document.getElementById('g-media-mes').textContent=fmt(Math.round(fatAno/mesesComFat));
   renderHistLista();
   const nHist=Object.keys(ehHist).length;
@@ -8737,7 +8775,7 @@ function renderAtividadesHoje(){
       +'<span class="jh-atv-tipo">'+esc(lbl)+'</span>'
       +'<span class="jh-atv-acoes">'+acoes+'</span></div>';
   }).join('');
-  if(maisTxt)maisTxt.textContent=r.list.length<=4?'Abrir agenda do dia':(atvInicioTodas?'Mostrar só as próximas':'Ver todas as aulas do dia ('+r.list.length+')');
+  if(maisTxt)maisTxt.textContent=r.list.length<=4?'Abrir agenda do dia':(atvInicioTodas?'Mostrar só as próximas':'Ver todas as atividades do dia ('+r.list.length+')');
 }
 
 function aulasAmanha(){
