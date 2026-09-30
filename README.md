@@ -1,8 +1,12 @@
 # JV Tênis — Academia João Victor Tênis
 
-Repositório com os projetos da academia (backup versionado dos arquivos
-publicados no Netlify). Todos são **estáticos / PWA** e funcionam por
-**drag & drop** ou **deploy automático via GitHub** no Netlify.
+Repositório com os projetos da academia. Todos são **estáticos / PWA**, sem
+etapa de build, e publicam **sozinhos** a cada merge na `main` (GitHub Pages
+como endereço principal e Netlify como reserva).
+
+- Estado atual e rotina do dia a dia: [`COMECAR-AQUI.md`](COMECAR-AQUI.md)
+- Endereços e como a publicação funciona: [`PUBLICAR.md`](PUBLICAR.md)
+- Banco de dados e regras: [`ferramentas/FIREBASE.md`](ferramentas/FIREBASE.md)
 
 ## Projetos
 
@@ -28,21 +32,13 @@ gera o conteúdo.
 | `negocio/`     | **Guia de vendas** (`guia-de-vendas.md`): como vender o app para academias e a metodologia como curso. Uso interno. |
 
 ## Última versão dos arquivos
-- `app-gestao/index.html` — editado em 03/09/2026
-- `app-aluno/index.html` — editado em 03/09/2026
-- `app-familia/index.html` — editado em 03/09/2026
-- `site/index.html` — editado em 14/08/2026
+A data que vale é a do Git: `git log -1 --date=short -- <arquivo>`.
 
-> A data que vale é sempre a do Git (`git log -1 --date=short -- <arquivo>`);
-> esta lista é só um atalho e pode atrasar.
-
-## Como publicar (Netlify, drag & drop)
-1. Acesse o painel do Netlify e abra o site correspondente (cada projeto é um
-   site separado no Netlify).
-2. Vá em **Deploys** e arraste a **pasta** do projeto (ou o `.zip` dela) para a
-   área de upload.
-3. Importante: o `index.html` precisa ficar na **raiz** do que é arrastado —
-   neste repositório cada pasta já está nesse formato correto.
+## Como publicar
+A `main` é protegida: toda mudança entra por **pull request**. O PR roda a
+checagem `validar` (a mesma do `bash ferramentas/checar-tudo.sh`); depois do
+merge, o GitHub Pages e o Netlify republicam sozinhos em 1 a 2 minutos. Não é
+mais preciso arrastar pastas no Netlify.
 
 ## Observações técnicas
 - **app-gestao** e **app-aluno** carregam o Firebase via CDN (`gstatic.com`) e
@@ -54,5 +50,6 @@ gera o conteúdo.
   preços dos ETFs globais pela brapi.dev (o service worker não as intercepta).
   Os ícones/splash são **provisórios** (cópia do app-gestão) — troque pela arte
   "JK" quando tiver. Funciona offline depois da primeira abertura.
-- O **site** tem as imagens embutidas em base64 no próprio `index.html`; a pasta
-  `site/imagens/` é mantida apenas como cópia dos originais.
+- O **site** carrega as imagens de `site/img/` (WebP). Não volte a colar imagem
+  em base64 dentro do HTML (ver `PUBLICAR.md`). A imagem do **Tema do mês** tem
+  nome fixo, `site/img/foco-do-mes.webp`: para trocar, suba outra com o mesmo nome.
