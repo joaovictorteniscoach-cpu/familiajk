@@ -1566,6 +1566,18 @@ html,body{background:#031D15!important}body{color:#F8F5EE!important;padding-bott
 .cad-new-actions .btn{flex:1}
 @media(max-width:520px){.cad-new-grid{grid-template-columns:1fr}.cad-new-grid .field.full{grid-column:auto}}
 
+
+/* Situação da quadra no topo do app (mesmo dado que o site e a Gestão mostram) */
+#app>.top .jv-quadra-chip{position:relative;z-index:3;display:inline-flex!important;width:auto!important;max-width:max-content;min-height:0!important;align-items:center;gap:9px;margin-top:10px;padding:8px 13px 8px 11px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:rgba(6,26,17,.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#fff;text-align:left;font:inherit;box-shadow:0 6px 18px rgba(0,0,0,.28)}
+#app>.top .jv-quadra-chip[hidden]{display:none!important}
+#app>.top .jv-quadra-chip span{display:flex;flex-direction:column;line-height:1.2}
+#app>.top .jv-quadra-chip small{font-size:10.5px;color:rgba(255,255,255,.72)!important;-webkit-text-fill-color:rgba(255,255,255,.72)!important}
+#app>.top .jv-quadra-chip b{font-size:15px;font-weight:700;color:#fff!important;-webkit-text-fill-color:#fff!important}
+#app>.top .jv-quadra-chip .led{width:11px;height:11px;border-radius:50%;flex:0 0 11px;background:#F2B233;box-shadow:0 0 8px #F2B233}
+#app>.top .jv-quadra-chip[data-state="liberada"] .led{background:#3FCB5B;box-shadow:0 0 8px #3FCB5B}
+#app>.top .jv-quadra-chip[data-state="chuva"] .led{background:#5FA8E8;box-shadow:0 0 8px #5FA8E8}
+#app>.top .jv-quadra-chip[data-state="fechada"] .led{background:#E5533B;box-shadow:0 0 8px #E5533B}
+body[data-aba]:not([data-aba="inicio"]) #app>.top .jv-quadra-chip{display:none!important}
 </style>
 <link rel="stylesheet" href="lib/visual-premium.css?v=2026-09-30-2">
 <!-- ================= FIREBASE ================= -->
@@ -1724,6 +1736,10 @@ function esperarAuth(){
     <p class="jv-hero-greet" id="hello">Olá!</p>
     <h1>Seu painel de <em>treino</em></h1>
     <p class="jv-hero-motiv">Cada aula te aproxima do seu melhor tênis.</p>
+    <button type="button" class="jv-quadra-chip" id="aluno-quadra" hidden onclick="carregarStatusQuadra()" aria-label="Situação da quadra — toque para atualizar">
+      <i class="led" aria-hidden="true"></i>
+      <span><small>Situação da quadra</small><b id="aluno-quadra-rot">—</b><small id="aluno-quadra-tempo"></small></span>
+    </button>
     <p id="hello-prof" style="display:none;margin-top:7px;font-weight:700"></p>
   </header>
 
@@ -4615,6 +4631,40 @@ async function checarLiberacao(){
   _bloqAntes=agora;
 }
 setInterval(()=>{if(!document.hidden)checarLiberacao();},60000);
+/* ===== Situação da quadra (nó público mínimo, o mesmo que o site lê) ===== */
+const QUADRA_URL='https://academia-jv-tenis-default-rtdb.firebaseio.com/jvtenis/precos_publicos/status_quadra.json';
+const QUADRA_ROT={liberada:'Liberada',avaliacao:'Em avaliação',chuva:'Fechada por chuva',fechada:'Temporariamente fechada'};
+function quadraTempo(ts,txt){
+  if(!ts)return txt?('Atualizado '+txt):'';
+  const m=Math.floor((Date.now()-ts)/60000);
+  if(m<1)return 'Atualizado agora';
+  if(m<60)return 'Atualizado há '+m+' min';
+  const h=Math.floor(m/60);
+  if(h<24)return 'Atualizado há '+h+' h';
+  const d=new Date(ts);return 'Atualizado em '+String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');
+}
+let QUADRA_ULT=null;
+function pintarQuadra(){
+  const el=document.getElementById('aluno-quadra');if(!el)return;
+  const v=QUADRA_ULT;
+  if(!v||!QUADRA_ROT[v.status]){el.hidden=true;return;}
+  el.hidden=false;el.dataset.state=v.status;
+  const r=document.getElementById('aluno-quadra-rot');if(r)r.textContent=QUADRA_ROT[v.status];
+  const t=document.getElementById('aluno-quadra-tempo');if(t)t.textContent=quadraTempo(v.ts,v.atualizado_em);
+}
+async function carregarStatusQuadra(){
+  let v=null;
+  try{const r=await fetch(QUADRA_URL,{cache:'no-store'});if(r.ok)v=await r.json();}catch(e){}
+  if(!v){try{v=await cloudGet('jvtenis/precos_publicos/status_quadra');}catch(e){}}
+  if(v&&typeof v==='object'){QUADRA_ULT=v;try{localStorage.setItem('jvt-quadra',JSON.stringify(v));}catch(e){}}
+  else if(!QUADRA_ULT){try{QUADRA_ULT=JSON.parse(localStorage.getItem('jvt-quadra')||'null');}catch(e){}}
+  pintarQuadra();
+}
+setTimeout(carregarStatusQuadra,1200);
+setInterval(()=>{if(!document.hidden)carregarStatusQuadra();},5*60000);
+setInterval(pintarQuadra,60000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarStatusQuadra();});
+
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
