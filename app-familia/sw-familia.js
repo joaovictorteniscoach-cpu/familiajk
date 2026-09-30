@@ -2,18 +2,20 @@
    Estratégia: network-first (sempre tenta a versão nova online),
    com cache de reserva para abrir offline. NÃO intercepta o Firebase
    nem as APIs de cotação ao vivo (câmbio e preços dos ativos). */
-const CACHE = 'jk-familia-v4';
-const SHELL = ['./', './manifest-familia.webmanifest', './icone-jk-gestao-192.png'];
+const CACHE = 'jk-familia-v6';
+const V = '2026-09-28-2';
+const SHELL = ['./', './manifest-familia.webmanifest', './icone-jk-gestao-192.png',
+  './lib/chart.umd.min.js?v='+V];
 
 self.addEventListener('install', e => {
   self.skipWaiting();
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL).catch(() => {})));
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)));
 });
 
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
-      .then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(ks => Promise.all(ks.filter(k => k.startsWith('jk-familia-') && k !== CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -23,6 +25,7 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET') return;
   let u;
   try { u = new URL(req.url); } catch (_) { return; }
+  if(u.origin!==self.location.origin || !u.href.startsWith(self.registration.scope))return;
   // Deixa passar direto (sem cache) o que precisa de rede ao vivo:
   // Firebase (nuvem) e as APIs de cotação (câmbio + preços dos ativos).
   const h = u.hostname;
@@ -38,10 +41,11 @@ self.addEventListener('fetch', e => {
   e.respondWith(
     fetch(req)
       .then(resp => {
+        if(!resp.ok)return resp;
         const copy = resp.clone();
         caches.open(CACHE).then(c => c.put(req, copy).catch(() => {}));
         return resp;
       })
-      .catch(() => caches.match(req).then(m => m || caches.match('./')))
+      .catch(() => caches.match(req).then(m => m || (req.mode==='navigate'?caches.match('./'):Response.error())))
   );
 });

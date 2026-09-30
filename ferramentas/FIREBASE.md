@@ -1,153 +1,65 @@
-# Segurança P0
+# Firebase — Academia JV Tênis
 
-As variantes P0 são derivadas da regra atual `firebase-regras-etapa3.json`, preservando multi-professor e os demais caminhos existentes.
+Projeto: **academia-jv-tenis**. Banco: **Realtime Database**.
+Antes de qualquer alteração, confira a aba **Regras** no console e guarde uma
+cópia do que está publicado. Um arquivo do Git não comprova a regra vigente.
 
-```sh
-python3 ferramentas/checar-regras.py ferramentas/firebase-regras-etapa3.json
-python3 ferramentas/checar-regras.py ferramentas/firebase-regras-etapa3-transicao.json
-python3 ferramentas/checar-regras.py ferramentas/firebase-regras-etapa4-estrita.json
-python3 ferramentas/checar-seguranca-p0.py
-```
+## Estado e arquivos
 
-Aprovação de aparelho é individual, com confirmação externa; código de 4 dígitos não autoriza em lote.
+O responsável informou que publicou a transição P0. A revisão de publicação
+de 29/09/2026 não acessou o console autenticado para confirmar essa informação.
+Não trocar regras com base somente neste documento ou no resultado dos checkers.
 
----
+| Arquivo | Uso |
+|---|---|
+| `firebase-regras-etapa1.json` | histórico permissivo; **não usar para recuperação** |
+| `firebase-regras-etapa2.json` | histórico anterior à migração P0 |
+| `firebase-regras-etapa3.json` | referência dos testes anteriores à migração P0 |
+| `firebase-regras-etapa3-transicao.json` | transição P0 informada pelo responsável |
+| `firebase-regras-etapa4-estrita.json` | etapa futura; exige migração concluída e autorização explícita |
 
-# Regras do banco de dados (Firebase)
+A etapa 1 permite leitura e escrita públicas em caminhos sensíveis. Publicá-la
+para resolver um erro de acesso reabre essa exposição. Regras não apagam dados
+diretamente, mas podem permitir alterações indevidas ou bloquear o funcionamento.
 
-As regras dizem **quem pode ler e quem pode gravar** no banco. Elas ficam em
-`console.firebase.google.com` → projeto **academia-jv-tenis** → *Realtime
-Database* → aba **Regras**. As cópias aqui existem para que elas não vivam só
-no painel: se alguém trocar por engano, é só colar de volta.
+## Acesso dos alunos
 
-Trocar as regras **não é arriscado**: nada é apagado, e voltar atrás leva
-10 segundos na mesma tela. O acesso ao painel é pela conta Google do João e não
-depende do app.
+O código de quatro dígitos é um localizador, não uma autorização. Cada aparelho
+recebe UID anônimo e pede vínculo em `fila_vinculos/<uid>`. A Gestão confirma a
+identidade por canal externo e aprova **cada aparelho individualmente**.
 
-## As duas etapas
+`aluno_vinculos/<uid>` registra o vínculo e `alunos_privados/<uid>` publica os
+dados individuais. `jvtenis-app-publico` contém dados compartilhados sanitizados.
+Na transição, o acesso legado ainda pode existir; a etapa final o fecha.
+Não publicar a etapa final nesta correção de hospedagem.
 
-| Arquivo | O que faz | Precisa de quê |
-|---|---|---|
-| `firebase-regras-etapa1.json` | fecha a raiz e lista os caminhos que existem | nada |
-| `firebase-regras-etapa2.json` | só o João grava; aluno só acrescenta | login criado e testado |
+## Erro de acesso à nuvem
 
-### Etapa 1 — a cerca
+1. Não reinstale o app nem limpe seu armazenamento. Exporte o backup local se
+   a interface permitir e guarde a mensagem de erro.
+2. Confira a internet, o endereço usado e a versão mostrada no app.
+3. Confira se a Gestão está conectada com a conta autorizada da academia.
+4. No console, leia a regra vigente e confira o UID autorizado em
+   **Authentication → Users**. Não substitua regras nem recrie usuários para testar.
+5. Diferencie falha de rede de `PERMISSION_DENIED`. A leitura de um caminho
+   protegido sem autenticação pode ser recusada normalmente; isso não comprova
+   perda de dados. Confirmar os dados privados exige acesso autorizado ao banco.
+6. Se o problema começou após uma mudança de regras, compare com a cópia
+   anterior validada. Qualquer restauração exige revisão e autorização; nunca
+   use uma etapa antiga mais permissiva como atalho.
 
-Antes: `.read` e `.write` valendo `true` na raiz. Qualquer pessoa com o endereço
-do banco baixava **tudo** num pedido só (`.../jvtenis.json`) e podia apagar
-tudo. Pior: podia **gravar** qualquer coisa em qualquer lugar — e um estranho
-usando o banco como depósito estoura a cota do plano gratuito, o que derruba o
-app sem o João ter feito nada.
+O botão **Testar conexão** da Gestão não é somente leitura: faz gravações e
+remoções temporárias e usa uma sessão anônima de teste. O resultado deve ser
+interpretado conforme a regra realmente publicada; não fixa uma etapa vigente.
 
-Depois: a raiz fica fechada e só os 14 caminhos que os apps realmente usam
-existem. Acaba o despejo num pedido só e acaba o depósito.
-
-O que **não** resolve: quem souber o nome de um caminho continua lendo e
-apagando. É uma cerca, não uma tranca — porque sem login **nenhuma regra
-consegue distinguir o app do João do navegador de um estranho**: a chave do
-banco está escrita na página, que é pública por necessidade (senão o app do
-aluno não abriria).
-
-### Etapa 2 — a tranca
-
-Depende de duas coisas no painel:
-
-1. **Authentication → Sign-in method**: ativar **E-mail/senha** e **Anônimo**.
-2. **Authentication → Users → Add user**: criar a conta do João (e-mail e
-   senha). Copiar o **UID** que aparece na lista.
-
-Depois entrar no app da Gestão em *Financeiro → Segurança → Sua conta* e
-confirmar que aparece **✅ Conectado**. Só então trocar as regras, substituindo
-os `COLE_AQUI_O_UID_DO_JOAO` pelo UID copiado (são 14 lugares — usar
-"substituir tudo" do editor, ou colar já trocado).
-
-Quem pode o quê, depois disso:
-
-| Caminho | João logado | App do aluno | Site público | Qualquer outro |
-|---|---|---|---|---|
-| `precos_publicos` | grava | lê | **lê** | lê |
-| `jvtenis-app-aluno` (publicação) | grava | lê | — | nada |
-| `jvtenis-gestao-v1`, `v2`, `arquivo`, `backups` | tudo | nada | — | nada |
-| `notificacoes`, `fila_*` | lê e apaga | **só acrescenta** | — | nada |
-| `fila_cadastros` | lê e apaga | — | **só acrescenta** | nada |
-| `jvt-aluno-meu-<código>` | — | lê e grava | — | nada |
-
-"Só acrescenta" é a regra `!data.exists()`: dá para criar um item novo, nunca
-alterar ou apagar um que já existe. Então um aluno manda o pedido dele, mas não
-lê nem apaga o pedido dos outros.
-
-`fila_cadastros` é o formulário de contato do site, que é anônimo por
-natureza — fica aberto para criar, fechado para ler. Igual a qualquer
-formulário de contato da internet.
-
-`precos_publicos` existe justamente para isso: o site precisava dos três preços
-de grupo e, para pegá-los, lia a **publicação inteira** — que tem nome, código
-e saldo de todos os alunos. Agora ele lê um nó de três números, e a publicação
-pode ficar fechada.
-
-## Conferir as regras antes de publicar
+## Validação local
 
 ```sh
-python3 ferramentas/checar-regras.py                       # etapa 2 (padrão)
-python3 ferramentas/checar-regras.py ferramentas/firebase-regras-etapa1.json
+bash ferramentas/checar-tudo.sh
 ```
 
-Simula as regras contra **as 79 operações que os apps realmente fazem** — as que
-têm de funcionar e as que têm de continuar bloqueadas. Regra errada não dá erro
-na tela: o app só para de gravar e diz "salvo só no aparelho", ou o pedido do
-aluno nunca chega. Daí o script.
+A suíte testa os arquivos de regras, a segurança P0 no código, a arquitetura
+modular e regressões dos apps. Não publica regras, não lê os dados privados da
+nuvem e não comprova a integridade do banco em produção.
 
-Rodando contra as regras antigas (`.read`/`.write` na raiz), ele acusa 25
-falhas, entre elas "baixar tudo" e "apagar tudo" — é assim que se sabe que ele
-está mesmo conferindo, e não só dizendo que está tudo bem.
-
-## Depois de trocar: rodar o autoteste
-
-*Financeiro → Segurança → **🔌 Testar conexão***. Oito passos, na ordem em que
-as coisas realmente acontecem:
-
-1. o João está logado;
-2. a Gestão lê o banco;
-3. a Gestão grava (e apaga a marca de teste);
-4. o site público lê os preços **sem login**;
-5. o aluno se identifica (a entrada anônima está ligada);
-6. o aluno lê a publicação e **consegue mandar um pedido**;
-7. o aluno **não** consegue ler a fila dos outros;
-8. o aluno guarda e relê os **próprios pedidos pendentes** (`jvt-aluno-meu-…`).
-
-O passo 8 existe porque esse caminho fica num bloco de regra à parte (`$aluno`):
-quebra sozinho sem nenhum dos outros acusar, e quem sofre é o aluno — os pedidos
-pendentes dele somem e ele pede de novo, sem o João ver nada.
-
-Os passos 5–8 são o motivo de existir: testam o lado do aluno **de dentro do app
-do João**, que é o que não dava para conferir sem pegar o celular de alguém. E o
-passo 7 é o que distingue a cerca da tranca — com a etapa 1 no ar, ele reprova,
-porque a fila está aberta.
-
-Cada falha vem com o que fazer, não só com o que falhou.
-
-Detalhe de implementação que importa: o teste do aluno usa uma **segunda
-instância** do Firebase (`initializeApp(config,'teste')`), com autenticação
-própria, apagada no fim. A sessão do João não é tocada — está nos testes.
-
-## Se algo parar de funcionar depois de trocar
-
-O sintoma é sempre o mesmo: o app abre, mostra os dados do aparelho e avisa
-`⚠ salvo só no aparelho`. **Nenhum dado se perde** — o app trabalha local e
-sobe quando voltar. Para voltar atrás, cole o `etapa1.json` e publique.
-
-Vale conferir, nessa ordem — mas antes rode o **🔌 Testar conexão**, que
-responde os três de uma vez:
-
-1. *Financeiro → Segurança → Sua conta* mostra **✅ Conectado**?
-2. O UID nas regras é o mesmo que aparece em *Authentication → Users*?
-3. Em *Sign-in method*, **Anônimo** está ativado? (sem ele o app do aluno não
-   se identifica e para de mandar pedidos)
-
-## Por que o login não pode ser obrigatório
-
-O app precisa continuar abrindo e salvando **mesmo sem login e mesmo sem
-internet** — é o que garante que nunca falte acesso aos dados. Por isso o
-código trata a identificação como algo que *pode falhar*: espera no máximo 5
-segundos, e o que não der certo não impede nada. Com as regras da etapa 2, o
-que acontece sem login é o app trabalhar só no aparelho até conseguir entrar.
+Detalhes do vínculo: [`SEGURANCA-P0.md`](SEGURANCA-P0.md).

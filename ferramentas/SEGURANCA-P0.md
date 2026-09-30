@@ -16,9 +16,9 @@ A grade compartilhada contém apenas ocupado/bloqueio e, quando aplicável, o mo
 
 ## Migração
 1. Publique os apps com o mesmo carimbo.
-2. Publique `firebase-regras-etapa3-transicao.json`.
+2. Confira a regra vigente no console. A transição `firebase-regras-etapa3-transicao.json` foi informada pelo responsável; qualquer alteração exige revisão e autorização.
 3. Confirme externamente cada novo aparelho e aprove individualmente. Não existe aprovação em lote apenas pelo código.
-4. Depois de migrar os aparelhos ativos, publique `firebase-regras-etapa4-estrita.json`.
+4. Depois de migrar os aparelhos ativos, a publicação de `firebase-regras-etapa4-estrita.json` exige revisão e autorização explícita. Não publicar nesta etapa.
 
 Na fase final, o blob legado fecha para alunos e as filas exigem UID vinculado + código correspondente.
 
@@ -26,4 +26,4 @@ Na fase final, o blob legado fecha para alunos e as filas exigem UID vinculado +
 ```sh
 bash ferramentas/checar-tudo.sh
 ```
-A suíte mantém os testes atuais, inclusive multi-professor, e acrescenta os casos P0.
+A suíte mantém os testes locais, inclusive multi-professor e casos P0. Ela não consulta nem comprova as regras publicadas no Firebase.

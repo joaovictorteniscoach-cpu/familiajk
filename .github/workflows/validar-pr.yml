@@ -1,0 +1,30 @@
+name: Validar pull request
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validar-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validar apps e sites
+        run: |
+          bash ferramentas/checar-tudo.sh
+          node ferramentas/checar-sintaxe.js site-pro/index.html
+          node ferramentas/checar-sintaxe.js site-pro/sistema.html
+          node ferramentas/checar-sintaxe.js site-pro/curso.html
+          node ferramentas/checar-sintaxe.js site-pro/demo/index.html
+      - name: Validar o pacote público sem publicar
+        run: python3 ferramentas/preparar-pages.py "$RUNNER_TEMP/pages"
