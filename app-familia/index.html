@@ -1278,6 +1278,7 @@ function migrateInvest(o){
   if(!Array.isArray(o.global))o.global=structuredClone(d.global);
   if(o.caixaGlobalUSD===undefined)o.caixaGlobalUSD=d.caixaGlobalUSD;
   if(!Array.isArray(o.binance))o.binance=[];
+  if(o.binanceInformado===undefined)o.binanceInformado=null;
   if(!Array.isArray(o.aportes))o.aportes=structuredClone(d.aportes);
   if(!Array.isArray(o.mensal))o.mensal=structuredClone(d.mensal);
   if(!Array.isArray(o.anual))o.anual=structuredClone(d.anual);
@@ -1428,13 +1429,20 @@ function set(id,t){const e=document.getElementById(id);if(e)e.textContent=t}
 
 /* ---------- somas INVEST ---------- */
 function totNac(){return D.invest.nacional.reduce((s,a)=>s+(+a.valor||0),0)}
-function totBin(){return (D.invest.binance||[]).reduce((s,a)=>s+(+a.valor||0),0)}
+function totBin(){
+  const informado=+D.invest.binanceInformado;
+  return D.invest.binanceInformado!==null&&D.invest.binanceInformado!==''&&isFinite(informado)&&informado>=0
+    ? informado
+    :(D.invest.binance||[]).reduce((s,a)=>s+(+a.valor||0),0);
+}
 function globUSD(){return D.invest.global.reduce((s,g)=>s+(g.qtd*g.pa||0),0)+(+D.invest.caixaGlobalUSD||0)}
 function globBRL(){return globUSD()*(+D.invest.cambio||0)}
 function invTotal(){return totNac()+globBRL()+totBin()}
 function classeVal(cl){
   let s=D.invest.nacional.filter(a=>a.classe===cl).reduce((t,a)=>t+(+a.valor||0),0);
-  s+=(D.invest.binance||[]).filter(a=>a.classe===cl).reduce((t,a)=>t+(+a.valor||0),0);
+  const binInformado=D.invest.binanceInformado!==null&&D.invest.binanceInformado!==''&&isFinite(+D.invest.binanceInformado)&&(+D.invest.binanceInformado)>=0;
+  if(cl==="Cripto"&&binInformado)s+=+D.invest.binanceInformado;
+  else s+=(D.invest.binance||[]).filter(a=>a.classe===cl).reduce((t,a)=>t+(+a.valor||0),0);
   s+=D.invest.global.filter(g=>g.classe===cl).reduce((t,g)=>t+(g.qtd*g.pa||0),0)*(+D.invest.cambio||0);
   if(cl==="Renda Fixa / Caixa") s+=(+D.invest.caixaGlobalUSD||0)*(+D.invest.cambio||0);
   return s;
@@ -2341,6 +2349,9 @@ function renderBin(){
     <td><input class="cell" type="number" step="0.01" value="${a.valor}" oninput="D.invest.binance[${i}].valor=+this.value;refreshInv()"></td>
     <td id="bin-p-${i}" class="mut"></td>
     <td><button class="iconbtn" onclick="deleteItem('invest.binance',${i})">×</button></td></tr>`;});
+  h+=`<tr><td class="name">Total informado pela Binance<div class="mut" style="font-size:10px;margin-top:3px">Quando preenchido, este total prevalece sem apagar a lista de moedas.</div></td><td>Cripto</td>
+    <td><input class="cell" type="number" step="0.01" placeholder="usar soma das moedas" value="${D.invest.binanceInformado==null?'':D.invest.binanceInformado}" oninput="D.invest.binanceInformado=this.value===''?null:+this.value;refreshInv()"></td>
+    <td></td><td></td></tr>`;
   h+=`<tr class="sumrow"><td>Subtotal Binance</td><td></td><td id="bin-sum"></td><td id="bin-sump"></td><td></td></tr>`;
   document.getElementById('tbl-binance').innerHTML=h;tuneInputs();
 }
@@ -3861,7 +3872,7 @@ function ehAporteDesc(desc){
    antes quantas linhas de cada tipo entraram. */
 function lerBlocoRegras(txt){
   const r={familia:[],invest:[],limite:null,regras:[],
-           nac:[],glob:[],bin:[],cambio:null,caixa:null};
+           nac:[],glob:[],bin:[],cambio:null,caixa:null,binTotal:null};
   let onde='';
   String(txt||'').split(/\r?\n/).forEach(linha=>{
     const l=linha.trim();
@@ -3873,6 +3884,7 @@ function lerBlocoRegras(txt){
       const n=norm(cab[1]);
       onde=/carteira.*(nacional|brasil)/.test(n)?'nac'
          :/carteira.*(global|etf|exterior)/.test(n)?'glob'
+         :/total.*binance|binance.*total/.test(n)?'binTotal'
          :/carteira.*(binance|cripto)/.test(n)?'bin'
          :/cambio|dolar/.test(n)?'cambio'
          :/saldo.*(global|conta)/.test(n)?'caixa'
@@ -3891,6 +3903,7 @@ function lerBlocoRegras(txt){
     if(onde==='limite'){const v=parseBRNum(l);if(v!=null&&v>0)r.limite=v;return;}
     if(onde==='cambio'){const v=parseBRNum(l);if(v!=null&&v>0)r.cambio=v;return;}
     if(onde==='caixa'){const v=parseBRNum(l);if(v!=null&&v>=0)r.caixa=v;return;}
+    if(onde==='binTotal'){const v=parseBRNum(l);if(v!=null&&v>=0)r.binTotal=v;return;}
     if(onde==='regras'){if(l.indexOf('=')>0)r.regras.push(l);return;}
     if(onde==='nac'||onde==='glob'||onde==='bin'){
       const it=leAtivoDoBloco(l,onde);if(it)r[onde].push(it);return;
@@ -3921,7 +3934,7 @@ function leAtivoDoBloco(linha,conta){
       return {tk,nome,classe:cls,qtd,pm:0,pa:pre,apl:0};
     }
     if(qtd==null||!(qtd>0))return null;
-    return {tk,nome,classe:cls,qtd:1,pm:0,pa:qtd,apl:0};   /* só a posição */
+    return {tk,nome,classe:cls,posicao:qtd,pm:0,apl:0};   /* só a posição */
   }
   const v=parseBRNum(resto);
   if(v==null||!(v>0))return null;
@@ -3933,10 +3946,20 @@ function fundeCarteira(arr,itens,conta){
   let mexeu=0,novos=0;
   (itens||[]).forEach(it=>{
     const i=acharNaConta(arr,it.nome,it.tk||'');
-    if(i<0){arr.push(it);novos++;return;}
+    if(i<0){
+      if(conta==='glob'&&it.posicao!=null){
+        const novo={...it,qtd:1,pa:it.posicao};delete novo.posicao;arr.push(novo);
+      }else arr.push(it);
+      novos++;return;
+    }
     const x=arr[i];
-    if(conta==='glob'){if(it.qtd)x.qtd=it.qtd;if(it.pa)x.pa=it.pa;if(!x.tk&&it.tk)x.tk=it.tk;}
-    else x.valor=it.valor;
+    if(conta==='glob'){
+      if(it.posicao!=null){
+        const q=+x.qtd||0;
+        if(q>0)x.pa=it.posicao/q;else{x.qtd=1;x.pa=it.posicao;}
+      }else{if(it.qtd)x.qtd=it.qtd;if(it.pa)x.pa=it.pa;}
+      if(!x.tk&&it.tk)x.tk=it.tk;
+    }else x.valor=it.valor;
     mexeu++;
   });
   return {mexeu,novos};
@@ -3944,7 +3967,7 @@ function fundeCarteira(arr,itens,conta){
 function aplicaBlocoRegras(txt){
   const r=lerBlocoRegras(txt);
   const nada=!r.familia.length&&!r.invest.length&&r.limite==null&&!r.regras.length
-    &&!r.nac.length&&!r.glob.length&&!r.bin.length&&r.cambio==null&&r.caixa==null;
+    &&!r.nac.length&&!r.glob.length&&!r.bin.length&&r.cambio==null&&r.caixa==null&&r.binTotal==null;
   if(nada){
     alert('Não achei nenhuma das quatro listas nesse arquivo.\n\n'
       +'Ele precisa ter as seções entre colchetes, assim:\n'
@@ -3960,6 +3983,7 @@ function aplicaBlocoRegras(txt){
   if(r.nac.length)linhas.push(r.nac.length+' ativo(s) na carteira Nacional');
   if(r.glob.length)linhas.push(r.glob.length+' ativo(s) na carteira Global');
   if(r.bin.length)linhas.push(r.bin.length+' moeda(s) na Binance');
+  if(r.binTotal!=null)linhas.push('total informado da Binance: '+brl(r.binTotal));
   if(r.cambio!=null)linhas.push('câmbio: '+r.cambio);
   if(r.caixa!=null)linhas.push('saldo da conta global: US$ '+r.caixa);
   if(!confirm('Vou atualizar:\n\n'+linhas.join('\n')
@@ -3973,6 +3997,7 @@ function aplicaBlocoRegras(txt){
   let carteira=0;
   if(r.cambio!=null){D.invest.cambio=r.cambio;carteira++;}
   if(r.caixa!=null){D.invest.caixaGlobalUSD=r.caixa;carteira++;}
+  if(r.binTotal!=null){D.invest.binanceInformado=r.binTotal;carteira++;}
   /* O arquivo traz a carteira INTEIRA de cada conta. O que estava no app e
      não aparece mais nele foi vendido (ou era o exemplo do app): continuar
      somando isso deixava o total R$ 7 mil acima do real. Pergunta antes. */
@@ -3983,7 +4008,7 @@ function aplicaBlocoRegras(txt){
   };
   if(r.nac.length){D.invest.nacional=D.invest.nacional||[];quemSobra(D.invest.nacional,r.nac,'Nacional');fundeCarteira(D.invest.nacional,r.nac,'nac');carteira++;}
   if(r.glob.length){D.invest.global=D.invest.global||[];quemSobra(D.invest.global,r.glob,'Global');fundeCarteira(D.invest.global,r.glob,'glob');carteira++;}
-  if(r.bin.length){D.invest.binance=D.invest.binance||[];quemSobra(D.invest.binance,r.bin,'Binance');fundeCarteira(D.invest.binance,r.bin,'bin');carteira++;}
+  if(r.bin.length){D.invest.binance=D.invest.binance||[];quemSobra(D.invest.binance,r.bin,'Binance');fundeCarteira(D.invest.binance,r.bin,'bin');D.invest.binanceInformado=null;carteira++;}
   if(sobras.length){
     const valorDe1=s=>s.conta==='Global'?(+s.x.qtd||0)*(+s.x.pa||0)*(+D.invest.cambio||0):(+s.x.valor||0);
     const lista=sobras.map(s=>'• '+(s.x.tk?s.x.tk+' ':'')+(s.x.nome||'').slice(0,40)+' ('+s.conta+') — '+brl(valorDe1(s))).join('\n');
