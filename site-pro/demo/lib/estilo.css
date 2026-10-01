@@ -2930,3 +2930,85 @@ body #pg-dash.page{padding-top:0!important;background:linear-gradient(180deg,#05
 #mais-pop .ico[data-ic="receipt"]{background-position:0 33.333%!important}
 #mais-pop .ico[data-ic="user"]{background-position:66.667% 66.667%!important}
 #mais-pop .ico[data-ic="users"]{background-position:0 100%!important}
+
+/* ===== Alunos: lista enxuta + ficha em tela cheia =====
+   Classes próprias (al-*, fic-*) para nenhuma regra antiga do cartão sanfona
+   (.aluno, .act, .acts) vazar para cá. Cores do tema atual (--jv-*). */
+#pg-alunos .al-lista{display:flex;flex-direction:column;gap:8px}
+#pg-alunos .al-row{display:flex;align-items:center;gap:10px;padding:12px 12px 12px 14px;border-radius:16px;
+  background:linear-gradient(145deg,#244B3D,#193B30);border:1px solid var(--jv-line,rgba(190,211,190,.25));cursor:pointer;
+  transition:transform .1s ease;min-height:64px}
+#pg-alunos .al-row:active{transform:scale(.985)}
+#pg-alunos .al-row.inativo{opacity:.62}
+#pg-alunos .al-info{flex:1;min-width:0}
+#pg-alunos .al-nome{font-size:16px;font-weight:800;color:#FFF;-webkit-text-fill-color:#FFF;line-height:1.25;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#pg-alunos .al-saldo{font-size:13px;color:#D8D2C7;-webkit-text-fill-color:#D8D2C7;margin-top:3px;line-height:1.35;border-radius:6px}
+#pg-alunos .al-saldo b{color:#FFF;-webkit-text-fill-color:#FFF;font-weight:800}
+#pg-alunos .al-saldo .neg,#pg-alunos .al-saldo b.neg{color:#FFB4A4;-webkit-text-fill-color:#FFB4A4;font-weight:800}
+#pg-alunos .al-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+#pg-alunos .al-tag{font-size:11px;font-weight:800;padding:3px 8px;border-radius:20px;line-height:1.3}
+#pg-alunos .al-tag.alerta{background:#5B2B22;color:#FFC2B3;-webkit-text-fill-color:#FFC2B3}
+#pg-alunos .al-tag.ouro{background:#5E4816;color:#F6DB86;-webkit-text-fill-color:#F6DB86}
+#pg-alunos .al-tag.cinza{background:rgba(255,255,255,.10);color:#D8D2C7;-webkit-text-fill-color:#D8D2C7}
+#pg-alunos .al-aula{flex:0 0 auto;width:58px;height:58px;border-radius:15px;border:1px solid rgba(255,255,255,.14);
+  background:#0F5A3A;color:#EFFFF4;-webkit-text-fill-color:#EFFFF4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  font-weight:800;transition:transform .1s ease}
+#pg-alunos .al-aula:active{transform:scale(.92)}
+#pg-alunos .al-aula svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+#pg-alunos .al-aula small{font-size:10.5px;letter-spacing:.3px}
+#pg-alunos .al-seta{flex:0 0 auto;width:28px;text-align:center;font-size:26px;color:rgba(255,255,255,.45);-webkit-text-fill-color:rgba(255,255,255,.45)}
+.pulsa{animation:chippulse .45s ease}
+
+.ficha{position:fixed;inset:0;z-index:95;background:var(--jv-bg,#071E19);overflow-y:auto;-webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;transform:translateX(100%);visibility:hidden;transition:transform .22s ease,visibility 0s linear .22s}
+.ficha.on{transform:none;visibility:visible;transition:transform .22s ease}
+body.ficha-on{overflow:hidden}
+.ficha *{text-shadow:none}
+.fic-top{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:10px;
+  padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px;background:rgba(7,30,25,.94);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--jv-line,rgba(190,211,190,.25))}
+.fic-voltar{border:1px solid var(--jv-line,rgba(190,211,190,.25));background:var(--jv-control,#315A49);color:#F6F2EA;-webkit-text-fill-color:#F6F2EA;
+  font-size:14px;font-weight:800;padding:9px 14px;border-radius:12px;flex:0 0 auto}
+.fic-top-nome{font-size:14px;font-weight:700;color:#D8D2C7;-webkit-text-fill-color:#D8D2C7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fic-corpo{max-width:520px;margin:0 auto;padding:16px 16px calc(40px + env(safe-area-inset-bottom,0px))}
+.fic-hero{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.fic-hero-l{min-width:0}
+.fic-nome{font-size:22px;font-weight:850;color:#FFF;-webkit-text-fill-color:#FFF;line-height:1.2}
+.fic-sub{font-size:13.5px;color:#D8D2C7;-webkit-text-fill-color:#D8D2C7;margin-top:4px;line-height:1.4}
+.fic-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.fic-chip{font-size:12px;font-weight:700;padding:5px 10px;border-radius:20px;background:var(--jv-panel,#2B5142);color:#EEF2E5;-webkit-text-fill-color:#EEF2E5}
+.fic-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:14px}
+.fic-tile{background:linear-gradient(145deg,#244B3D,#193B30);border:1px solid var(--jv-line,rgba(190,211,190,.25));border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:2px}
+.fic-tile b{font-size:28px;font-weight:850;line-height:1;color:#FFF;-webkit-text-fill-color:#FFF}
+.fic-tile span{font-size:12.5px;color:#D8D2C7;-webkit-text-fill-color:#D8D2C7;font-weight:600}
+.fic-tile small{font-size:11.5px;color:#F6DB86;-webkit-text-fill-color:#F6DB86;font-weight:700;margin-top:3px}
+.fic-tile.neg{border-color:rgba(255,140,120,.45)}
+.fic-tile.neg b{color:#FFB4A4;-webkit-text-fill-color:#FFB4A4}
+.fic-agenda{font-size:12.5px;color:#D8D2C7;-webkit-text-fill-color:#D8D2C7;margin-top:9px}
+.fic-sec{margin-top:18px}
+.fic-sec-t{font-size:11px;letter-spacing:1.6px;text-transform:uppercase;font-weight:800;color:#E8B83E;-webkit-text-fill-color:#E8B83E;margin-bottom:8px}
+.fic-sec-pend{background:rgba(232,184,62,.08);border:1px solid rgba(232,184,62,.35);border-radius:16px;padding:12px}
+.fic-pend+.fic-pend{margin-top:12px;padding-top:12px;border-top:1px dashed rgba(232,184,62,.3)}
+.fic-pend p{font-size:13.5px;color:#F6F2EA;-webkit-text-fill-color:#F6F2EA;line-height:1.4;margin-bottom:8px}
+.fic-pend p b{color:#FFF;-webkit-text-fill-color:#FFF}
+.fic-g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.fic-g2:first-child{margin-top:0}
+.fic-b{border:1px solid transparent;border-radius:12px;padding:12px 8px;font-size:13px;font-weight:750;display:flex;align-items:center;justify-content:center;
+  gap:6px;text-align:center;line-height:1.25;min-height:46px;width:100%;transition:transform .1s ease}
+.fic-b:active{transform:scale(.96)}
+.fic-b svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+.fic-b.prim{background:#0F5A3A;color:#EFFFF4;-webkit-text-fill-color:#EFFFF4;font-size:15px;font-weight:850;min-height:54px;border-color:rgba(255,255,255,.14)}
+.fic-b.prim2{background:#16533A;color:#EFFFF4;-webkit-text-fill-color:#EFFFF4;border-color:rgba(255,255,255,.12)}
+.fic-b.ouro{background:#D5B24A;color:#1E1A0E;-webkit-text-fill-color:#1E1A0E}
+.fic-b.ok{background:#1E6B45;color:#DFFFEA;-webkit-text-fill-color:#DFFFEA}
+.fic-b.neutro{background:var(--jv-control,#315A49);color:#F6F2EA;-webkit-text-fill-color:#F6F2EA;border-color:var(--jv-line,rgba(190,211,190,.25))}
+.fic-b.wa{background:#12462F;color:#BFF5D2;-webkit-text-fill-color:#BFF5D2;border-color:rgba(37,211,102,.35)}
+.fic-pend>.fic-b{width:100%}
+.fic-lista{background:linear-gradient(145deg,#244B3D,#193B30);border:1px solid var(--jv-line,rgba(190,211,190,.25));border-radius:14px;padding:6px 12px}
+.fic-li{display:flex;justify-content:space-between;font-size:13.5px;padding:7px 0;color:#F6F2EA;-webkit-text-fill-color:#F6F2EA;border-bottom:1px dashed rgba(255,255,255,.12)}
+.fic-li:last-child{border-bottom:0}
+.fic-vazio{font-size:13px;color:#D8D2C7;-webkit-text-fill-color:#D8D2C7;padding:6px 0}
+.fic-vazio b{color:#FFF;-webkit-text-fill-color:#FFF;letter-spacing:1px}
+.fic-excluir{display:block;margin:16px auto 0;background:none;border:none;color:#FF9C88;-webkit-text-fill-color:#FF9C88;font-size:13px;font-weight:700;text-decoration:underline;padding:8px}
+.ficha.sob-faixa .fic-top{padding-top:10px}
