@@ -7,7 +7,7 @@ const CACHE = 'jvtenis-gestao-v33';
 // Com a versao no endereco, a reserva tem de guardar o MESMO endereco que a
 // tela pede — senao o app pede lib/app-gestao.js?v=X, nao acha, e fica sem
 // codigo justamente quando esta sem internet.
-const V = '2026-10-01-6';
+const V = '2026-10-01-7';
 const SHELL = ['./', './manifest-gestao.webmanifest', './jv-icone-gestao.png',
                './jv-icone-gestao-180.png',
                './lib/estilo.css?v='+V, './lib/icones.js?v='+V, './lib/app-gestao.js?v='+V,
@@ -37,7 +37,10 @@ self.addEventListener('fetch', e => {
   e.respondWith((async () => {
     const cache = await caches.open(CACHE);
     try {
-      const resp = await fetch(req);
+      // A página sempre confere com o servidor (no-cache): sem isso o
+      // navegador reaproveitava a cópia guardada por até 10 min no GitHub
+      // Pages, e uma atualização publicada demorava a aparecer.
+      const resp = await fetch(req, req.mode === 'navigate' ? { cache: 'no-cache' } : undefined);
       if (resp.ok && !resp.redirected && resp.type === 'basic') {
         await cache.put(req, resp.clone()).catch(() => {});
       }
