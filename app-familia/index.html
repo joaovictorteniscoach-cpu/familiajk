@@ -527,7 +527,8 @@ table.tbl.livre td:last-child{width:42%}
 <section data-tab="c-resumo">
   <div class="card">
     <h2>Resumo mensal</h2><div class="sub">Feche o mês com um clique e acompanhe a evolução das contas.</div>
-    <div class="chartbox"><canvas id="resumoChart"></canvas></div>
+    <div class="chartbox" id="resumo-box"><canvas id="resumoChart"></canvas></div>
+    <p class="note" id="resumo-nota"></p>
     <div class="scroll" style="margin-top:16px"><table class="tbl" id="tbl-resumo"></table></div>
     <button class="addbtn" onclick="snapConMonth()">📸 fechar o mês atual</button>
     <button class="addbtn" onclick="addResumo()">+ linha manual</button>
@@ -552,7 +553,7 @@ table.tbl.livre td:last-child{width:42%}
       <div class="kpi"><div class="k">Recebido no ano</div><div class="v" id="ca-receb">—</div></div>
       <div class="kpi"><div class="k">Saldo do ano</div><div class="v" id="ca-saldo">—</div></div>
     </div>
-    <div class="chartbox" style="margin-top:14px"><canvas id="ctrlChart"></canvas></div>
+    <div class="chartbox" id="ctrl-box" style="margin-top:14px"><canvas id="ctrlChart"></canvas></div>
     <div class="legend-colors">
       <span><b style="background:var(--muted)"></b>Previsto</span>
       <span><b style="background:var(--gold)"></b>Pago</span>
@@ -1944,7 +1945,31 @@ function drawResumo(){
   renderResumo();drawResumoChart();
 }
 function drawResumoChart(){
-  destroy('resumo');charts.resumo=new Chart(document.getElementById('resumoChart'),{type:'bar',
+  destroy('resumo');
+  const box=document.getElementById('resumo-box'),nota=document.getElementById('resumo-nota');
+  /* Sem nenhum mês fechado à mão, o gráfico mostra o que os extratos já dizem:
+     quanto saiu e quanto entrou em cada mês. Antes ficava em branco mesmo com
+     o ano inteiro importado. */
+  if(!(D.contas.resumo||[]).length){
+    const por={};
+    txSoma(D.contas.transacoes||[]).forEach(t=>{const m=t.mes;if(!m||m==='—')return;
+      const o=por[m]||(por[m]={g:0,e:0});const v=+t.amount||0;if(v<0)o.g-=v;else o.e+=v;});
+    const meses=Object.keys(por).sort((a,b)=>mesOrdem(a)-mesOrdem(b)).slice(-12);
+    if(box)box.style.display=meses.length?'':'none';
+    if(nota)nota.textContent=meses.length
+      ?'Gastos e entradas de cada mês, tirados dos extratos importados. Ao fechar um mês (📸), o gráfico passa a mostrar os meses fechados.'
+      :'Importe um extrato ou feche um mês (📸) para ver a evolução aqui.';
+    if(!meses.length||!window.Chart)return;
+    charts.resumo=new Chart(document.getElementById('resumoChart'),{type:'bar',
+      data:{labels:meses,datasets:[
+        {label:'Gastos',data:meses.map(m=>Math.round(por[m].g*100)/100),backgroundColor:COL.down},
+        {label:'Entradas',data:meses.map(m=>Math.round(por[m].e*100)/100),backgroundColor:COL.up}]},
+      options:{plugins:{legend:{position:'bottom',labels:{boxWidth:12}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+brl(c.raw)}}},
+        scales:{y:moneyAxis,x:{grid:{display:false}}}}});
+    return;
+  }
+  if(box)box.style.display='';if(nota)nota.textContent='';
+  charts.resumo=new Chart(document.getElementById('resumoChart'),{type:'bar',
     data:{labels:D.contas.resumo.map(m=>m.mes),datasets:[
       {label:'Contas',data:D.contas.resumo.map(m=>m.contas),backgroundColor:'rgba(220,196,142,.6)',borderRadius:5},
       {label:'Recebido',data:D.contas.resumo.map(m=>m.recebido),backgroundColor:'rgba(143,198,232,.6)',borderRadius:5}]},
@@ -2165,6 +2190,10 @@ function ctrlSet(i,campo,val){
 }
 function drawCtrlChart(arr){
   const dP=arr.map(m=>m.previsto),dPg=arr.map(m=>m.pago),dR=arr.map(m=>m.recebido);
+  /* tudo vazio: em vez de um eixo com "R$ 0.0k" repetido doze vezes, some o gráfico */
+  const temAlgo=dP.concat(dPg,dR).some(v=>(+v||0)!==0);
+  const box=document.getElementById('ctrl-box');if(box)box.style.display=temAlgo?'':'none';
+  if(!temAlgo){destroy('ctrl');return;}
   if(charts.ctrl){charts.ctrl.data.datasets[0].data=dP;charts.ctrl.data.datasets[1].data=dPg;charts.ctrl.data.datasets[2].data=dR;charts.ctrl.update('none');return;}
   charts.ctrl=new Chart(document.getElementById('ctrlChart'),{type:'bar',
     data:{labels:MESES.slice(),datasets:[
@@ -3920,9 +3949,25 @@ function aplicaBlocoRegras(txt){
   let carteira=0;
   if(r.cambio!=null){D.invest.cambio=r.cambio;carteira++;}
   if(r.caixa!=null){D.invest.caixaGlobalUSD=r.caixa;carteira++;}
-  if(r.nac.length){fundeCarteira(D.invest.nacional=D.invest.nacional||[],r.nac,'nac');carteira++;}
-  if(r.glob.length){fundeCarteira(D.invest.global=D.invest.global||[],r.glob,'glob');carteira++;}
-  if(r.bin.length){fundeCarteira(D.invest.binance=D.invest.binance||[],r.bin,'bin');carteira++;}
+  /* O arquivo traz a carteira INTEIRA de cada conta. O que estava no app e
+     não aparece mais nele foi vendido (ou era o exemplo do app): continuar
+     somando isso deixava o total R$ 7 mil acima do real. Pergunta antes. */
+  const sobras=[];
+  const quemSobra=(arr,itens,conta)=>{
+    const usados=new Set(itens.map(it=>acharNaConta(arr,it.nome,it.tk||'')).filter(i=>i>=0));
+    arr.forEach((x,i)=>{if(!usados.has(i))sobras.push({arr,x,conta});});
+  };
+  if(r.nac.length){D.invest.nacional=D.invest.nacional||[];quemSobra(D.invest.nacional,r.nac,'Nacional');fundeCarteira(D.invest.nacional,r.nac,'nac');carteira++;}
+  if(r.glob.length){D.invest.global=D.invest.global||[];quemSobra(D.invest.global,r.glob,'Global');fundeCarteira(D.invest.global,r.glob,'glob');carteira++;}
+  if(r.bin.length){D.invest.binance=D.invest.binance||[];quemSobra(D.invest.binance,r.bin,'Binance');fundeCarteira(D.invest.binance,r.bin,'bin');carteira++;}
+  if(sobras.length){
+    const valorDe1=s=>s.conta==='Global'?(+s.x.qtd||0)*(+s.x.pa||0)*(+D.invest.cambio||0):(+s.x.valor||0);
+    const lista=sobras.map(s=>'• '+(s.x.tk?s.x.tk+' ':'')+(s.x.nome||'').slice(0,40)+' ('+s.conta+') — '+brl(valorDe1(s))).join('\n');
+    if(confirm('Estes ativos estão no app mas NÃO aparecem no arquivo:\n\n'+lista
+      +'\n\nSe você vendeu (ou é exemplo do app), eles devem sair para o total bater. Tirar da carteira?')){
+      sobras.forEach(s=>{const i=s.arr.indexOf(s.x);if(i>=0)s.arr.splice(i,1);});
+    }
+  }
   save();
   /* recarrega os campos da tela com o que entrou */
   const f=document.getElementById('meus-nomes');if(f)f.value=(D.contas.meusNomes||[]).join('\n');
@@ -4399,8 +4444,8 @@ function lancaAportes(lista){
       conta:'Nacional XP',pessoa,ativo:x.desc||'',desc:x.desc||'',bankId:x.bankId||'',bankScope:x.bankScope||'',valor:v});
     n++;total+=v;
   });
-  if(n){somaAportesNoMes();save();
-    ['renderAportes','renderMensal','drawMensal','renderAnual','drawAnual']
+  if(n){tiraExemplosSozinho();somaAportesNoMes();save();
+    ['renderAportes','renderMensal','drawMensal','renderAnual','drawAnual','drawInvPainel','onProj']
       .forEach(f=>{if(typeof window[f]==='function')safeRun(window[f]);});}
   return {n,total};
 }
@@ -4444,6 +4489,41 @@ function somaAportesNoMes(){
 function ehLinhaExemplo(tipo,x){
   const d=DEFAULT.invest[tipo]||[];
   return d.some(e=>Object.keys(e).every(k=>String(e[k])===String(x[k])));
+}
+/* ---------- exemplos saem sozinhos ----------
+   O app nasce com meses, aportes e um ano de exemplo para não abrir vazio.
+   Assim que existe dado de verdade, o exemplo só atrapalha: os meses de
+   exemplo somados aos aportes reais viravam "perdas" de R$ 9 mil que nunca
+   aconteceram. Sai só o que é exatamente igual ao exemplo, e antes disso o
+   app guarda uma versão (dá para desfazer em Resumo → versões guardadas). */
+function exemploMensal(m){
+  const d=(DEFAULT.invest.mensal||[]).find(e=>e.mes===m.mes);
+  return !!d&&m.patr!=null&&m.patr!==''&&Math.abs((+m.patr||0)-(+d.patr||0))<0.005;
+}
+function temDadosReais(){
+  return (D.invest.aportes||[]).some(a=>!ehLinhaExemplo('aportes',a))
+    ||(D.invest.mensal||[]).some(m=>(+m.patr||0)>0&&!exemploMensal(m));
+}
+function tiraExemplosSozinho(){
+  if(!D||!D.invest||!temDadosReais())return false;
+  const ap=(D.invest.aportes||[]).filter(a=>ehLinhaExemplo('aportes',a));
+  const me=(D.invest.mensal||[]).filter(exemploMensal);
+  const an=(D.invest.anual||[]).filter(a=>a.patr!=null&&ehLinhaExemplo('anual',a));
+  const pj=D.invest.proj&&DEFAULT.invest.proj&&Math.abs((+D.invest.proj.saldo||0)-(+DEFAULT.invest.proj.saldo||0))<0.005;
+  if(!ap.length&&!me.length&&!an.length&&!pj)return false;
+  guardarVersao('antes de tirar os exemplos (sozinho)');
+  D.invest.aportes=(D.invest.aportes||[]).filter(a=>!ehLinhaExemplo('aportes',a));
+  const porMes={};
+  D.invest.aportes.forEach(a=>{const k=a.mes||mesFromDate(a.data);porMes[k]=(porMes[k]||0)+(+a.valor||0);});
+  /* mês de exemplo: o patrimônio inventado sai; o aporte passa a ser só o real;
+     sem nada real, a linha some */
+  me.forEach(m=>{m.patr=null;m.aporte=porMes[m.mes]||0;});
+  D.invest.mensal=(D.invest.mensal||[]).filter(m=>!(me.includes(m)&&!m.aporte));
+  an.forEach(a=>{a.patr=null;a.aporte=null;});
+  if(pj&&typeof invTotal==='function')D.invest.proj.saldo=Math.round(invTotal()*100)/100;
+  if(typeof somaAportesNoMes==='function')somaAportesNoMes();
+  save();
+  return true;
 }
 function limparExemplos(){
   const ap=(D.invest.aportes||[]).filter(a=>ehLinhaExemplo('aportes',a));
@@ -5078,11 +5158,15 @@ function catMonths(){
   const arr=[...s].sort((a,b)=>mesOrdem(b)-mesOrdem(a));
   return ['Todos',...arr,...(temSem?['—']:[])];
 }
-function onCatMes(v){catFiltroMes=v;renderCategorias();}
-function onCatFonte(v){catFiltroFonte=(v==='cartao'||v==='conta')?v:'tudo';renderCategorias();}
+/* "dd/mm/aaaa" vira "aaaammdd": ordenar o texto da data punha o dia na frente do mês e do ano */
+function chaveData(d){const n=dataNorm(d);return n?n.slice(6,10)+n.slice(3,5)+n.slice(0,2):'';}
+let catLimite=30;
+function catMais(){catLimite+=30;renderCategorias();}
+function onCatMes(v){catFiltroMes=v;catLimite=30;renderCategorias();}
+function onCatFonte(v){catFiltroFonte=(v==='cartao'||v==='conta')?v:'tudo';catLimite=30;renderCategorias();}
 /* "de quem": o que é só dela, o que é só dele — e o que é dos dois entra
    pela metade, igual às contas da casa */
-function onCatPes(v){catFiltroPes=(v==='preto'||v==='preta')?v:'todos';renderCategorias();}
+function onCatPes(v){catFiltroPes=(v==='preto'||v==='preta')?v:'todos';catLimite=30;renderCategorias();}
 function catPesOk(t){return catFiltroPes==='todos'||t.pes===catFiltroPes||(t.pes||'ambos')==='ambos';}
 function catVal(t){return catFiltroPes==='todos'?Math.abs(+t.amount||0):valorDe(t,catFiltroPes);}
 /* lançamento sem marca é do extrato da conta: é de onde vinha tudo antes */
@@ -5142,7 +5226,9 @@ function renderCategorias(){
   renderCatResumo(cats,map,cnt,gasto,txC);
   let r='<tr><th>Data e descrição</th><th>Categoria e dono</th><th>Valor</th><th></th></tr>';
   const idxs=all.map((t,i)=>i).filter(i=>(catFiltroMes==='Todos'||all[i].mes===catFiltroMes)
-      &&(catFiltroFonte==='tudo'||fonteDe(all[i])===catFiltroFonte)&&catPesOk(all[i])).sort((a,b)=>(all[b].date||'').localeCompare(all[a].date||'')).slice(0,400);
+      &&(catFiltroFonte==='tudo'||fonteDe(all[i])===catFiltroFonte)&&catPesOk(all[i])).sort((a,b)=>chaveData(all[b].date).localeCompare(chaveData(all[a].date)));
+  /* 30 por vez: 400 cartões de uma vez davam umas 270 telas de rolagem */
+  const totalLista=idxs.length;idxs.splice(catLimite);
   /* data+descrição de um lado, categoria+dono do outro: quatro colunas em pé
      não cabem na tela do celular */
   idxs.forEach(i=>{const t=all[i];
@@ -5159,6 +5245,13 @@ function renderCategorias(){
     +'<td><button class="iconbtn" style="padding:2px 8px" onclick="delTx('+i+')">×</button></td></tr>';});
   if(!all.length)r+='<tr><td class="mut" colspan="4">Nenhuma transação importada ainda. Use o card “Automático — importar extrato” no Painel, ou o botão “importar extrato” acima.</td></tr>';
   document.getElementById('tbl-cat-lanc').innerHTML=r;
+  let mais=document.getElementById('cat-mais');
+  if(!mais){mais=document.createElement('div');mais.id='cat-mais';mais.style.cssText='display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:10px';
+    const tb=document.getElementById('tbl-cat-lanc');(tb.closest('.scroll')||tb).after(mais);}
+  mais.innerHTML=totalLista>idxs.length
+    ?('<span class="note" style="margin:0">Mostrando '+idxs.length+' de '+totalLista+' lançamentos</span>'
+      +'<button class="iconbtn primary" onclick="catMais()">Mostrar mais 30</button>')
+    :(totalLista>30?'<span class="note" style="margin:0">Todos os '+totalLista+' lançamentos</span>':'');
   if(typeof tuneInputs==='function')tuneInputs();
 }
 /* Tabela de resumo por categoria. Com um mês escolhido ela vira orçamento
@@ -5178,16 +5271,18 @@ function sitOrc(c,g){
 }
 function renderCatResumo(cats,map,cnt,gasto,tx){
   const mesUnico=catFiltroMes!=='Todos';
+  {const tr=document.getElementById('tbl-cat-resumo');if(tr&&tr.classList)tr.classList.remove('compacta');}
   const box=document.getElementById('cat-orc-box'),nota=document.getElementById('cat-orc-nota');
   if(box)box.style.display=mesUnico?'':'none';
   let h;
   if(!mesUnico){
     if(nota)nota.textContent='O teto por categoria é mensal — escolha um mês acima para comparar previsto e gasto.';
     h='<tr><th>Categoria</th><th>Total</th><th>%</th><th>nº</th></tr>';
-    cats.forEach(c=>{h+='<tr><td class="name">'+esc(c)+'</td><td class="down">'+brl(map[c])+'</td><td class="mut">'+pct(gasto?map[c]/gasto:0)+'</td><td class="mut">'+(cnt[c]||0)+'</td></tr>';});
+    const corCat=c=>{const i=CATEGORIAS.indexOf(c);return CATPAL[i>=0?i:CATPAL.length-1];};
+    cats.forEach(c=>{h+='<tr><td class="name"><i class="catdot" style="background:'+corCat(c)+'"></i>'+esc(c)+'</td><td class="down">'+brl(map[c])+'</td><td class="mut">'+pct(gasto?map[c]/gasto:0)+'</td><td class="mut">'+(cnt[c]||0)+'</td></tr>';});
     if(cats.length)h+='<tr class="sumrow"><td>Total gasto</td><td class="down">'+brl(gasto)+'</td><td>100%</td><td>'+tx.filter(t=>t.amount<0).length+'</td></tr>';
     else h+='<tr><td class="mut" colspan="4">Sem gastos no período.</td></tr>';
-    document.getElementById('tbl-cat-resumo').innerHTML=h;
+    const tr=document.getElementById('tbl-cat-resumo');tr.innerHTML=h;tr.classList.add('compacta');
     return;
   }
   /* categorias com gasto no mês OU com teto definido */
@@ -5648,6 +5743,7 @@ function initFields(){
 }
 function safeRun(fn){try{fn();}catch(e){console.warn('Família JK — falha ao desenhar:',e);}}
 function renderAll(){
+  try{tiraExemplosSozinho();}catch(e){console.warn('Família JK — exemplos',e);}
   [renderNac,renderGlob,renderBin,renderAportes,renderMensal,renderAnual,refreshCarteira,drawInvPainel,onProj,renderGoals,renderAlloc,renderGanhos,onPlano,
    renderCasa,()=>renderPess('joao','tbl-joao'),()=>renderPess('esposa','tbl-esposa'),drawEmpresa,
    renderCartao,renderReceb,renderResumo,renderControle,renderCategorias,drawConPainel,renderConselhos,
