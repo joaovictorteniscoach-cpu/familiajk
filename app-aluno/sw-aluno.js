@@ -1,7 +1,7 @@
 /* Service Worker — Academia João Victor Tênis (app do aluno)
    Estratégia: network-first (sempre tenta a versão nova online),
    com cache de reserva para abrir offline. NÃO intercepta o Firebase. */
-const V = '2026-10-01-6';
+const V = '2026-10-01-7';
 const CACHE = 'jvtenis-aluno-v30';
 const SHELL = ['./', './manifest-aluno.webmanifest', './jv-icone-aluno.png', './jv-icone-aluno-180.png', './assets/jv-saibro-premium.svg', './assets/jv-saibro-realista.webp', './assets/pix-simbolo.svg', './lib/visual-premium.css?v='+V, './lib/icones.js?v='+V];
 
@@ -29,7 +29,10 @@ self.addEventListener('fetch', e => {
   e.respondWith((async () => {
     const cache = await caches.open(CACHE);
     try {
-      const resp = await fetch(req);
+      // A página sempre confere com o servidor (no-cache): sem isso o
+      // navegador reaproveitava a cópia guardada por até 10 min no GitHub
+      // Pages, e uma atualização publicada demorava a aparecer.
+      const resp = await fetch(req, req.mode === 'navigate' ? { cache: 'no-cache' } : undefined);
       if (resp.ok && !resp.redirected && resp.type === 'basic') {
         await cache.put(req, resp.clone()).catch(() => {});
       }
