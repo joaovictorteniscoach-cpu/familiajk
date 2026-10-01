@@ -3028,3 +3028,42 @@ body.ficha-on{overflow:hidden}
 #pg-alunos .al-total b{color:#FFF;-webkit-text-fill-color:#FFF;font-size:15px}
 #pg-alunos .al-total .ok{color:#7EF0A1;-webkit-text-fill-color:#7EF0A1;font-weight:700}
 #pg-alunos .al-total .pend{color:#FFB4A4;-webkit-text-fill-color:#FFB4A4;font-weight:700}
+
+/* ===== Renovar o mês (todos) e desconto de reposições ===== */
+#pg-alunos .al-renova{display:flex;align-items:center;gap:10px;width:100%;text-align:left;margin:0 0 12px;padding:12px 14px;border-radius:14px;
+  background:rgba(232,184,62,.12);border:1px solid rgba(232,184,62,.45);color:#F6DB86;-webkit-text-fill-color:#F6DB86;font-size:13.5px;font-weight:600}
+#pg-alunos .al-renova span{flex:1}
+#pg-alunos .al-renova b{color:#FFE7A0;-webkit-text-fill-color:#FFE7A0}
+.fic-desc{margin-top:10px;font-size:13px;line-height:1.45;color:#F6DB86;-webkit-text-fill-color:#F6DB86;background:rgba(232,184,62,.08);border:1px solid rgba(232,184,62,.3);border-radius:12px;padding:10px 12px}
+.fic-desc+.fic-b{margin-top:8px}
+#renova-mes .fic-corpo{padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
+.rm-intro{font-size:13.5px;line-height:1.45;color:#D8D2C7;-webkit-text-fill-color:#D8D2C7;margin-bottom:12px}
+.rm-intro b{color:#FFF;-webkit-text-fill-color:#FFF}
+.rm-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.rm-chips span{font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;background:var(--jv-panel,#2B5142);color:#EEF2E5;-webkit-text-fill-color:#EEF2E5}
+.rm-chips .at{background:#5E4816;color:#F6DB86;-webkit-text-fill-color:#F6DB86}
+.rm-chips .bl{background:rgba(255,255,255,.10);color:#D8D2C7;-webkit-text-fill-color:#D8D2C7}
+.rm-row{display:flex;gap:10px;align-items:flex-start;padding:12px;margin-bottom:8px;border-radius:14px;
+  background:linear-gradient(145deg,#244B3D,#193B30);border:1px solid var(--jv-line,rgba(190,211,190,.25))}
+.rm-row.at{border-color:rgba(232,184,62,.55)}
+.rm-row.off{opacity:.55}
+.rm-row.bloq{opacity:.6}
+.rm-chk{flex:0 0 auto;width:26px;padding-top:2px;text-align:center;font-size:16px;color:#D8D2C7;-webkit-text-fill-color:#D8D2C7}
+.rm-chk input{width:22px;height:22px;accent-color:#2FBF5A}
+.rm-info{flex:1;min-width:0}
+.rm-nome{display:flex;justify-content:space-between;gap:8px;font-size:15px;font-weight:800;color:#FFF;-webkit-text-fill-color:#FFF}
+.rm-nome span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rm-nome b{flex:0 0 auto;color:#7EF0A1;-webkit-text-fill-color:#7EF0A1}
+.rm-l{font-size:13px;line-height:1.45;color:#D8D2C7;-webkit-text-fill-color:#D8D2C7;margin-top:4px}
+.rm-l b{color:#FFF;-webkit-text-fill-color:#FFF}
+.rm-l small{color:#B9C4B8;-webkit-text-fill-color:#B9C4B8}
+.rm-dif{color:#F6DB86;-webkit-text-fill-color:#F6DB86;font-weight:700}
+.rm-esc{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px}
+.rm-esc button{border:1px solid var(--jv-line,rgba(190,211,190,.25));background:var(--jv-control,#315A49);color:#F6F2EA;-webkit-text-fill-color:#F6F2EA;
+  border-radius:10px;padding:8px 6px;font-size:12px;font-weight:750;line-height:1.25}
+.rm-esc button.on{background:#D5B24A;color:#1E1A0E;-webkit-text-fill-color:#1E1A0E;border-color:#D5B24A}
+.rm-aviso{font-size:12.5px;line-height:1.4;margin-top:6px;color:#F6DB86;-webkit-text-fill-color:#F6DB86}
+.rm-env{margin-top:8px}
+.rm-pe{position:sticky;bottom:0;padding:10px 16px calc(12px + env(safe-area-inset-bottom,0px));background:rgba(7,30,25,.96);border-top:1px solid var(--jv-line,rgba(190,211,190,.25))}
+.rm-pe .fic-b{max-width:520px;margin:0 auto}
+.rm-pe .fic-b[disabled]{opacity:.45}
