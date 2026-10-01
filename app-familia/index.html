@@ -1095,9 +1095,9 @@ const CATEGORIAS=["Moradia","Mercado","Alimentação","Bebidas","Combustível","
   "Cartão de crédito","Entradas","Outros"];
 /* uma cor viva por categoria, na ordem de CATEGORIAS — as vizinhas ficam
    longe umas das outras (Saúde e Tarifas, Seguro e Empresa não se confundem mais) */
-const CATPAL=["#F5B931","#22C55E","#FF7A30","#9B5CFF","#EF4444","#A0632D","#38BDF8",
-  "#FF4FA3","#0FB5A6","#4F6BFF","#D35CF0","#A3E635","#FFA8C5","#C4B5FD","#1D6FE0","#B91C3C","#C9A27A",
-  "#E8E2D0","#16A34A","#7B8494"];
+const CATPAL=["#E6B340","#2EB961","#EF7E40","#9E68F3","#E25151","#976436","#46B7EA",
+  "#F25CA4","#1BA99C","#5C74F2","#CC67E5","#A0D942","#F8AFC7","#C7BAF8","#2C71D1","#AD2843","#C3A280",
+  "#E6E1D2","#21984D","#7D8592"];
 const CAT_KW=[
  ["Moradia",["aluguel","condominio","imobiliaria","imob ","imoveis","administradora de imoveis","energia","cemig","enel","cpfl","light","copel","celesc","sabesp","copasa","sanepar","agua","gas ","iptu","internet","fibra","vivo","claro","net ","tim ","oi ","nextel","sky","hughesnet","starlink","sindico","gas natural","ultragaz","liquigas","copagaz"]],
  ["Bebidas",["adega","bebidas","kartel","cervej","chopp","chope","ze delivery","zedelivery","distribuidora de bebida","emporio da cerveja","destilados","vinho","wine","whisky","vodka","choperia","taberna"]],
@@ -1738,7 +1738,8 @@ function drawEmpresa(){
   set('emp-h','Contas · '+emp.nome);
   renderPess(emp.bills,'tbl-empresa');
 }
-function fmtMonth(d){return d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});}
+/* "Outubro de 2026": só a primeira letra maiúscula (o capitalize do CSS fazia "Outubro De 2026") */
+function fmtMonth(d){const t=d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});return t.charAt(0).toUpperCase()+t.slice(1);}
 function renderContasMonth(){renderCasa();renderPess('joao','tbl-joao');renderPess('esposa','tbl-esposa');drawEmpresa();renderCartao();drawConPainel();}
 function setMonth(k){D.contas.mesSel=k;save();renderContasMonth();}
 function stepMonth(d){const x=selMonthDate();x.setMonth(x.getMonth()+d);setMonth(keyOf(x));}
@@ -2396,17 +2397,17 @@ function addAnual(){D.invest.anual.push({ano:"",patr:null,aporte:null});renderAn
 
 /* charts */
 Chart.defaults.color='#aeb8c4';Chart.defaults.font.family='system-ui, sans-serif';Chart.defaults.font.size=13;Chart.defaults.maintainAspectRatio=false;Chart.defaults.plugins.legend.labels.usePointStyle=true;Chart.defaults.plugins.legend.labels.pointStyle='circle';Chart.defaults.plugins.legend.labels.boxWidth=8;
-const COL={gold:'#F5B931',teal:'#38BDF8',muted:'#94A3B8',mut:'#C9CFD8',ink:'#0E1013',up:'#22C55E',down:'#F05252'};
-const PAL=['#38BDF8','#F5B931','#FF7A30','#8B5CF6','#FF4F79','#2DD4A0','#8A94A6'];
-/* ---------- gráficos com profundidade ----------
-   Um só lugar decide como TODO gráfico é pintado: cor viva, degradê que dá
-   volume (a rosca vira um anel com brilho no meio, a barra fica clara em cima
-   e escura embaixo) e sombra por baixo. Os gráficos continuam escrevendo as
-   cores antigas; aqui elas são trocadas pelas novas. */
-const COR_NOVA={'220,196,142':'#F5B931','143,198,232':'#38BDF8','235,216,175':'#FF7A30','143,182,201':'#8B5CF6',
-  '201,143,143':'#FF4F79','127,156,139':'#2DD4A0','154,160,173':'#8A94A6','144,167,172':'#8A94A6','144,168,173':'#8A94A6',
-  '174,184,196':'#94A3B8','187,167,223':'#C084FC','95,208,138':'#22C55E','141,199,163':'#22C55E',
-  '232,117,95':'#F05252','234,162,143':'#F05252','16,19,23':'#0E1013'};
+const COL={gold:'#E6B340',teal:'#46B7EA',muted:'#97A3B5',mut:'#C9CFD8',ink:'#0E1013',up:'#2EB961',down:'#E45E5E'};
+const PAL=['#46B7EA','#E6B340','#EF7E40','#9068EA','#F25C80','#3AC79B','#8C95A4'];
+/* ---------- visual dos gráficos ----------
+   Um só lugar decide como TODO gráfico é pintado: cores vivas (um pouco
+   suavizadas), rosca lisa com fatias separadas e o total no meio, barra com
+   cantos redondos e um degradê leve, linha com a área desbotando para baixo.
+   Os gráficos continuam escrevendo as cores antigas; aqui elas são trocadas. */
+const COR_NOVA={'220,196,142':'#E6B340','143,198,232':'#46B7EA','235,216,175':'#EF7E40','143,182,201':'#9068EA',
+  '201,143,143':'#F25C80','127,156,139':'#3AC79B','154,160,173':'#8C95A4','144,167,172':'#8C95A4','144,168,173':'#8C95A4',
+  '174,184,196':'#97A3B5','187,167,223':'#C08DF3','95,208,138':'#2EB961','141,199,163':'#2EB961',
+  '232,117,95':'#E45E5E','234,162,143':'#E45E5E','16,19,23':'#0E1013'};
 function rgbDe(c){
   c=String(c||'').trim();let m=c.match(/^#([0-9a-f]{6})$/i);
   if(m){const n=parseInt(m[1],16);return [n>>16&255,n>>8&255,n&255];}
@@ -2423,54 +2424,62 @@ function grad3d(ctx,tipo,base){
   if(!base)return COL.muted;
   const ch=ctx.chart,area=ch&&ch.chartArea;if(!area||ctx.dataIndex==null&&tipo==='arc')return base;
   const c=ch.ctx;
-  if(tipo==='arc'){
-    const el=ch.getDatasetMeta(ctx.datasetIndex).data[ctx.dataIndex];
-    if(!el||!(el.outerRadius>0))return base;
-    const ri=Math.max(0,el.innerRadius||0),ro=el.outerRadius;
-    const g=c.createRadialGradient(el.x,el.y,ri,el.x,el.y,ro);
-    g.addColorStop(0,tom(base,-.45));g.addColorStop(.38,tom(base,.28));
-    g.addColorStop(.62,base);g.addColorStop(1,tom(base,-.38));
-    return g;
-  }
+  if(tipo==='arc')return base;
   const hor=ch.options.indexAxis==='y';
   const g=hor?c.createLinearGradient(area.left,0,area.right,0):c.createLinearGradient(0,area.top,0,area.bottom);
-  if(tipo==='area'){g.addColorStop(0,alfa(base,.38));g.addColorStop(1,alfa(base,0));return g;}
-  g.addColorStop(0,tom(base,.32));g.addColorStop(.45,base);g.addColorStop(1,tom(base,-.42));
+  if(tipo==='area'){g.addColorStop(0,alfa(base,.30));g.addColorStop(.7,alfa(base,.06));g.addColorStop(1,alfa(base,0));return g;}
+  g.addColorStop(0,tom(base,.14));g.addColorStop(1,tom(base,-.16));
   return g;
 }
 const JK_3D={id:'jk3d',
   beforeUpdate(ch){
     const tipoGraf=ch.config.type;
+    if((tipoGraf==='doughnut'||tipoGraf==='pie')&&!ch.options._jkCut){ch.options.cutout='70%';ch.options._jkCut=true;}
     ch.data.datasets.forEach(ds=>{
       if(ds._jk3d)return;ds._jk3d=true;
       const t=ds.type||tipoGraf;
       const lista=v=>[].concat(v==null?[]:v).map(corViva);
       if(t==='doughnut'||t==='pie'){
         const bases=lista(ds.backgroundColor);if(!bases.length)return;ds._jkBases=bases;
-        ds.backgroundColor=ctx=>grad3d(ctx,'arc',bases[(ctx.dataIndex||0)%bases.length]);
-        ds.borderColor=COL.ink;ds.borderWidth=2;if(ds.hoverOffset==null)ds.hoverOffset=10;
+        ds.backgroundColor=bases;ds.hoverBackgroundColor=bases.map(b=>tom(b,.12));
+        ds.borderWidth=0;ds.spacing=3;ds.borderRadius=5;if(ds.hoverOffset==null)ds.hoverOffset=6;
       }else if(t==='bar'){
         const bases=lista(ds.backgroundColor);if(!bases.length)return;ds._jkBases=bases;
         ds.backgroundColor=ctx=>grad3d(ctx,'bar',bases[(ctx.dataIndex||0)%bases.length]);
         ds.borderColor=bases.map(b=>tom(b,.35));ds.borderWidth=0;
-        if(ds.borderRadius==null)ds.borderRadius=7;ds.borderSkipped=false;
+        ds.borderRadius=8;ds.borderSkipped=false;
+        if(ds.maxBarThickness==null)ds.maxBarThickness=26;
       }else if(t==='line'){
         const base=lista(ds.borderColor)[0]||COL.teal;ds.borderColor=base;ds._jkBases=[base];
         if(ds.fill)ds.backgroundColor=ctx=>grad3d(ctx,'area',base);
-        ds.borderWidth=Math.max(+ds.borderWidth||0,2.5);
-        if(ds.pointBackgroundColor==null)ds.pointBackgroundColor=base;
-        if(ds.pointBorderColor==null)ds.pointBorderColor=COL.ink;
-        if(ds.pointBorderWidth==null)ds.pointBorderWidth=1.5;
+        ds.borderWidth=Math.max(+ds.borderWidth||0,2.5);ds.tension=.4;ds.cubicInterpolationMode='monotone';
+        ds.pointBackgroundColor=base;ds.pointBorderColor=COL.ink;ds.pointBorderWidth=1.5;
+        ds.pointRadius=ctx=>{const n=(ctx.dataset.data||[]).length;return n>8?0:3;};ds.pointHoverRadius=6;
+        ds.spanGaps=true;
       }
     });
   },
   beforeDatasetDraw(ch,args){
     const c=ch.ctx,ds=ch.data.datasets[args.index],t=ds.type||ch.config.type;c.save();
-    if(t==='doughnut'||t==='pie'){c.shadowColor='rgba(0,0,0,.6)';c.shadowBlur=16;c.shadowOffsetY=8;}
-    else if(t==='bar'){c.shadowColor='rgba(0,0,0,.5)';c.shadowBlur=8;c.shadowOffsetX=3;c.shadowOffsetY=4;}
-    else if(t==='line'){c.shadowColor=alfa(corViva([].concat(ds.borderColor)[0]),.55);c.shadowBlur=10;c.shadowOffsetY=4;}
+    if(t==='line'){c.shadowColor=alfa(corViva([].concat(ds.borderColor)[0]),.35);c.shadowBlur=8;c.shadowOffsetY=3;}
   },
-  afterDatasetDraw(ch){ch.ctx.restore();}
+  afterDatasetDraw(ch){ch.ctx.restore();},
+  /* rosca: o total no meio, como nos apps de banco */
+  afterDatasetsDraw(ch){
+    const t=ch.config.type;if(t!=='doughnut'&&t!=='pie')return;
+    const meta=ch.getDatasetMeta(0),el=meta&&meta.data&&meta.data[0];if(!el||!(el.innerRadius>28))return;
+    const ds=ch.data.datasets[0]||{};let tot=0;
+    (ds.data||[]).forEach((v,i)=>{if(ch.getDataVisibility(i))tot+=Math.abs(+v||0);});
+    const c=ch.ctx,r=el.innerRadius;c.save();c.textAlign='center';c.textBaseline='middle';
+    const txt=tot>=1e6?'R$ '+(tot/1e6).toFixed(1).replace('.',',')+' mi':(tot>=1e4?'R$ '+(tot/1e3).toFixed(1).replace('.',',')+' mil':brl(tot).replace(/,\d{2}$/,''));
+    c.fillStyle='#F5F1E9';
+    let fs=Math.min(22,r*.36);c.font='700 '+fs+'px system-ui, sans-serif';
+    /* o número tem de caber dentro do furo, com folga */
+    while(fs>9&&c.measureText(txt).width>r*1.6){fs-=1;c.font='700 '+fs+'px system-ui, sans-serif';}
+    c.fillText(txt,el.x,el.y-(r>45?7:0));
+    if(r>45){c.fillStyle='#97A3B5';c.font='500 '+Math.max(10,Math.min(12,r*.17))+'px system-ui, sans-serif';c.fillText('total',el.x,el.y+13);}
+    c.restore();
+  }
 };
 /* a bolinha da legenda é a cor pura — o degradê é para o desenho, não para a legenda */
 function legendaViva(orig){
