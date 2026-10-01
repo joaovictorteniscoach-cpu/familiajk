@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-01-8';
+const VERSAO='2026-10-01-9';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -3467,7 +3467,8 @@ function renderAgenda(){
         const outro=agTipoFiltro?null:outroNaTela(d,h);
         let cls='free',txt='',drag='';
         if(evs.length===1){cls='t-'+evs[0].tipo;txt=nomeCurtoWk(evs[0].titulo);drag=`drag-item" data-eid="${evs[0].id}" data-origem="${evs[0].origem}`;}
-        else if(evs.length>1){cls='multi';txt=evs.length+(evs.every(e=>/^(aula|grupo|personal)$/.test(e.tipo))?' aulas':' itens');}
+        // cada aluno é uma marcação: vários no mesmo horário = turma/dupla
+        else if(evs.length>1){const ehAula=evs.every(e=>/^(aula|grupo|personal)$/.test(e.tipo));cls=evs.every(e=>e.tipo==='grupo')?'t-grupo':'multi';txt=evs.length+(ehAula?' alunos':' itens');}
         // horário de outro professor só aparece onde eu não tenho nada: quadra
         // ocupada por dois é problema para resolver, não para esconder
         else if(outro){cls='t-outro';txt='👨‍🏫 '+outro.nome;}
