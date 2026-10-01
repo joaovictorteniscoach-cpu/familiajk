@@ -54,3 +54,14 @@ body,body.mode-invest{background:var(--ink);color:var(--text);--accent:var(--gol
 .iconbtn:not(.primary):not(.zbtn):not(.mn-arrow){border-color:rgba(240,190,70,.42)}
 .monthchip{text-transform:none!important;font-family:inherit!important}
 .progressbar>i{background:linear-gradient(90deg,#DFA425,#F4C653)!important;box-shadow:0 0 8px rgba(240,184,58,.45)}
+/* resumo por categoria ("Todos"): tabela compacta com a cor de cada uma, não um cartão por categoria */
+.catdot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;vertical-align:middle;flex:0 0 10px}
+@media(max-width:860px){
+body.fit #tbl-cat-resumo.compacta{table-layout:auto;font-size:13px}
+body.fit #tbl-cat-resumo.compacta tr,body.fit #tbl-cat-resumo.compacta tr:first-child{display:table-row;border:0;background:none;padding:0;margin:0}
+body.fit #tbl-cat-resumo.compacta td,body.fit #tbl-cat-resumo.compacta th{display:table-cell;padding:9px 4px;border:0;border-bottom:1px solid rgba(255,255,255,.06);text-align:right;white-space:nowrap}
+body.fit #tbl-cat-resumo.compacta th{font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:600}
+body.fit #tbl-cat-resumo.compacta td::before{content:none}
+body.fit #tbl-cat-resumo.compacta td.name,body.fit #tbl-cat-resumo.compacta th:first-child{text-align:left;white-space:normal}
+body.fit #tbl-cat-resumo.compacta tr.sumrow td{border-top:1px solid var(--accent);font-weight:600}
+}
