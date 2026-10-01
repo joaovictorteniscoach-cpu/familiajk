@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-01-3';
+const VERSAO='2026-10-01-4';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -6198,7 +6198,7 @@ function pintarClimaGestao(){
   el.hidden=false;
   document.getElementById('jh-clima-ic').textContent=prevista?'🌦️':ic;
   document.getElementById('jh-clima-temp').textContent=Math.round(v.temp)+'°C';
-  document.getElementById('jh-clima-txt').textContent=prevista?('Chuva prevista ('+v.chuva+'%)'):txt;
+  document.getElementById('jh-clima-txt').textContent=prevista?(window.innerWidth<400?('Chuva '+v.chuva+'%'):('Chuva prevista ('+v.chuva+'%)')):txt;
 }
 async function carregarClimaGestao(forcar){
   if(!forcar){try{const c=JSON.parse(localStorage.getItem('jvt-clima')||'null');if(c&&Date.now()-c.ts<30*60000){CLIMA_ULT=c;pintarClimaGestao();return;}}catch(e){}}
