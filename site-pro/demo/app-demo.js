@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-01-9';
+const VERSAO='2026-10-01-10';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -3468,7 +3468,7 @@ function renderAgenda(){
         let cls='free',txt='',drag='';
         if(evs.length===1){cls='t-'+evs[0].tipo;txt=nomeCurtoWk(evs[0].titulo);drag=`drag-item" data-eid="${evs[0].id}" data-origem="${evs[0].origem}`;}
         // cada aluno é uma marcação: vários no mesmo horário = turma/dupla
-        else if(evs.length>1){const ehAula=evs.every(e=>/^(aula|grupo|personal)$/.test(e.tipo));cls=evs.every(e=>e.tipo==='grupo')?'t-grupo':'multi';txt=evs.length+(ehAula?' alunos':' itens');}
+        else if(evs.length>1){const ehAula=evs.every(e=>/^(aula|grupo|personal)$/.test(e.tipo));const soGrupo=evs.every(e=>e.tipo==='grupo');cls=soGrupo?'t-grupo':'multi';txt=soGrupo?'Grupo<small>'+evs.length+' alunos</small>':evs.length+(ehAula?' alunos':' itens');}
         // horário de outro professor só aparece onde eu não tenho nada: quadra
         // ocupada por dois é problema para resolver, não para esconder
         else if(outro){cls='t-outro';txt='👨‍🏫 '+outro.nome;}
@@ -3685,10 +3685,25 @@ function setPessoas(id,origem,nv){
   logAct('Grupo: '+rec.titulo+' = '+grupoLabel(rec.pessoas));
   persist();renderSlotEvs();renderAgenda();toast(grupoLabel(rec.pessoas)+' ✓');
 }
+/* Turma do horário: na aula em grupo cada aluno é uma marcação com o mesmo
+   título ("Dupla · Ana / Juliana"). A lista diz quem está nesta turma. */
+function turmaDoHorario(evs){
+  const nomes=[];
+  evs.filter(e=>e.tipo==='grupo'&&e.alunoId).forEach(e=>{
+    const a=DB.alunos.find(x=>x.id===e.alunoId);
+    if(a&&nomes.indexOf(a.nome)<0)nomes.push(a.nome);
+  });
+  if(!nomes.length)return '';
+  return `<div class="slot-turma"><b>👥 Aula em grupo · ${nomes.length===1?'1 aluno':nomes.length+' alunos'}</b><ul>${nomes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul></div>`;
+}
+function nomeNaLista(e){
+  const a=e.tipo==='grupo'&&e.alunoId&&DB.alunos.find(x=>x.id===e.alunoId);
+  return a?esc(a.nome):e.titulo;
+}
 function renderSlotEvs(){
   const evs=entriesFor(slotCtx.date,slotCtx.hora);
   const el=document.getElementById('slot-evs');
-  el.innerHTML=evs.length?evs.map(e=>{
+  el.innerHTML=turmaDoHorario(evs)+(evs.length?evs.map(e=>{
   /* Aula que a academia marcou no nome dele: ele vê, não mexe. Mostrar botões
      que vão falhar (ou, pior, que apagariam só na tela dele) é pior que não
      mostrar botão nenhum. */
@@ -3696,7 +3711,7 @@ function renderSlotEvs(){
   <div class="mov"><div class="mov-l"><b>👑 ${esc(e.titulo)}</b><span>${esc(e.tipo)}${e.tipo==='grupo'?(' · '+grupoLabel(e.pessoas)):''} · ${e.origem==='dono'?'marcada pela academia':''}</span></div>
     <div style="font-size:11px;color:var(--muted);font-weight:700;text-align:right;max-width:150px">quem marcou foi a academia — fale com o João para mudar</div></div>`;
   return `
-  <div class="mov"><div class="mov-l"><b>${e.titulo}${e.alunoId?' 🔗':''}</b><span>${e.tipo}${e.tipo==='grupo'?(' · '+grupoLabel(e.pessoas)):''} · ${e.origem==='fixo'?'toda semana':'só nesta data'}</span></div>
+  <div class="mov"><div class="mov-l"><b>${nomeNaLista(e)}${e.alunoId?' 🔗':''}</b><span>${e.tipo==='grupo'&&nomeNaLista(e)!==e.titulo?'aula em grupo · '+grupoLabel(e.pessoas):e.tipo+(e.tipo==='grupo'?(' · '+grupoLabel(e.pessoas)):'')} · ${e.origem==='fixo'?'toda semana':'só nesta data'}</span></div>
     <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">
       ${e.tipo==='grupo'?`<select onchange="setPessoas('${e.id}','${e.origem}',this.value)" style="padding:6px 8px;font-size:11px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--text);font-weight:700">
         <option value="2"${(e.pessoas||2)==2?' selected':''}>👥 Dupla</option>
@@ -3708,7 +3723,7 @@ function renderSlotEvs(){
       <button class="btn btn-ghost" style="padding:6px 9px;font-size:11px;color:var(--bad)" onclick="removerFixo('${e.id}')">Da grade ✕</button>`
       :`<button class="btn btn-ghost" style="padding:6px 9px;font-size:11px;color:var(--bad)" onclick="removerEvento('${e.id}')">Remover ✕</button>`}
     </div></div>`;}).join('')
-  :'<div class="empty" style="padding:14px">Horário livre.</div>';
+  :'<div class="empty" style="padding:14px">Horário livre.</div>');
 }
 function saveSlot(){
   const t=document.getElementById('s-titulo').value.trim();
