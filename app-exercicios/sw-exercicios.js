@@ -4,11 +4,15 @@
    não carrega biblioteca de fora e não tem dado de aluno na nuvem. Os favoritos
    e o plano de aula ficam no próprio aparelho (localStorage).
    Por que importa: quadra de saibro com sinal ruim é a regra, não a exceção. */
-const CACHE = 'jv-exercicios-v23';   /* sobe a cada mudanca de tela: o v2 e' apagado no activate */
+const CACHE = 'jv-exercicios-v25';   /* sobe a cada mudanca de tela: o v2 e' apagado no activate */
 const SHELL = ['./', './exercicios.js', './quadra.js', './manifest-exercicios.webmanifest',
                './jv-icone-exercicios-192.png',
                /* gera o PDF da aula dentro do app (enviar / imprimir pelo celular) */
                './lib/html2canvas.min.js',
+               /* o fundo e as poses da folha deitada (sequência do movimento) */
+               './fundo-paisagem.webp', './fundo-sequencia.webp',
+               './jv-aproxima-hd.webp', './jv-desloca-esq-hd.webp', './jv-desloca-hd.webp', './jv-espera-frente-hd.webp', './jv-fh-fim-hd.webp', './jv-lat-bh-hd.webp', './jv-lat-espera-hd.webp', './jv-lat-fh-hd.webp', './jv-lat-reves-hd.webp', './jv-saque-costas-hd.webp', './jv-saque-frente-hd.webp', './jv-saque-lanca-hd.webp', './jv-split-hd.webp', './jv-voleio-hd.webp',
+               './jv-lat-bh-esq.webp',
                /* a letra da folha A4: sem ela, offline, a folha sai na fonte do
                   sistema, mais larga, e o rodapé cai para fora da página */
                './fonte-barlow-condensed-500-normal.woff2', './fonte-barlow-condensed-600-normal.woff2',
