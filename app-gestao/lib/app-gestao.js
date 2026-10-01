@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-01-10';
+const VERSAO='2026-10-01-11';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -6304,7 +6304,8 @@ function renderDash(){
   renderViradaAviso();
   const movs=DB.lancamentos.filter(l=>l.mes===monthKey());
   const recebido=movs.filter(l=>l.valor>0).reduce((s,l)=>s+l.valor,0);
-  const pendAlunos=DB.alunos.filter(a=>a.status!=='pago');
+  // inativo não faz aula nem paga mensalidade: não entra no "A receber"
+  const pendAlunos=DB.alunos.filter(a=>a.status!=='pago'&&ehAtivoAluno(a));
   const pendValor=pendAlunos.reduce((s,a)=>s+(a.status==='parcial'?a.mensalidade*0.5:a.mensalidade),0);
   const creditos=DB.alunos.reduce((s,a)=>s+a.creditos,0);
   const repos=DB.alunos.reduce((s,a)=>s+a.repos,0);
@@ -6391,7 +6392,7 @@ function renderConselhos(){
   const alunos=DB.alunos||[];
 
   // 1. mensalidades vencidas / vencendo
-  const pend=alunos.filter(a=>a.status!=='pago'&&(Number(a.mensalidade)||0)>0);
+  const pend=alunos.filter(a=>a.status!=='pago'&&ehAtivoAluno(a)&&(Number(a.mensalidade)||0)>0);
   const venc=pend.filter(a=>{const d=vencDe(a);return d!==null&&d<0;});
   if(venc.length){
     const tot=venc.reduce((s,a)=>s+(a.status==='parcial'?a.mensalidade*0.5:a.mensalidade),0);
@@ -6697,7 +6698,7 @@ function renderFin(){
   const prevAg=DB.alunos.reduce((s,a)=>s+mensalidadeDaAgenda(a,curYear,curMonth).valor,0);
   const elPA=document.getElementById('f-prev-agenda');
   if(elPA)elPA.textContent=fmt(prevAg);
-  const inad=DB.alunos.filter(a=>a.status!=='pago').reduce((s,a)=>s+(a.status==='parcial'?a.mensalidade*0.5:a.mensalidade),0);
+  const inad=DB.alunos.filter(a=>a.status!=='pago'&&ehAtivoAluno(a)).reduce((s,a)=>s+(a.status==='parcial'?a.mensalidade*0.5:a.mensalidade),0);
   document.getElementById('f-inad').textContent=fmt(inad);
   const mi=document.getElementById('meta-input');
   if(hideVals){mi.type='text';mi.value='••••';mi.readOnly=true;}
@@ -8099,7 +8100,7 @@ function conferirNumeros(){
       txt:'LANÇAMENTO REPETIDO: '+g2.length+'x "'+(g2[0].desc||'')+'" de '+fmt(g2[0].valor)+' no mesmo dia ('+String(g2[0].data||'').split('-').reverse().join('/')+'). Confira na Caixa se não foi toque duplo.'});
   });
   // "a receber" do painel contra a soma aluno a aluno
-  const soma=(DB.alunos||[]).filter(a=>a.status!=='pago')
+  const soma=(DB.alunos||[]).filter(a=>a.status!=='pago'&&ehAtivoAluno(a))
     .reduce((s,a)=>s+(a.status==='parcial'?a.mensalidade*0.5:a.mensalidade),0);
   const cab='<div class="cons info"><h4><span>🔎</span>Esta tela não altera nada</h4>'
     +'<p>Ela só mostra. Nenhum botão aqui mexe em crédito, saldo ou aula — quando algo precisar ser acertado, você acerta no cadastro do aluno.</p></div>'
