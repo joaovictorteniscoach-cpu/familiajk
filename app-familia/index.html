@@ -836,12 +836,11 @@ table.tbl.livre td:last-child{width:42%}
 <section data-tab="nuvem">
   <div class="card">
     <h2>Nuvem da família</h2>
-    <div class="sub">Entre com sua conta para sincronizar. Se os dois alterarem os dados, você poderá conferir as versões antes de substituir.</div>
-    <details><summary>Configurar conexão</summary>
-      <div class="field"><label for="cl-url">URL do banco da família</label><input id="cl-url" type="url" placeholder="https://SEU-PROJETO.firebaseio.com/familias/jk/dados.json" onchange="cloudApply()"></div>
+    <div class="sub">Cole o link da família e ligue a sincronização: os dois aparelhos passam a ver os mesmos dados. Se os dois alterarem ao mesmo tempo, você confere as versões antes de substituir.</div>
+    <div class="field"><label for="cl-url">Link da família</label><input id="cl-url" type="url" autocomplete="off" spellcheck="false" placeholder="Cole aqui o mesmo link usado pela família (termina em .json)" onchange="cloudApply()"></div>
+    <details><summary>Login com e-mail e senha (opcional)</summary>
+      <p class="note">Só para quem configurou contas no Firebase. Com a chave preenchida, a nuvem passa a exigir login; deixe em branco para usar só o link.</p>
       <div class="field"><label for="cl-api-key">Chave pública Web API Key do Firebase</label><input id="cl-api-key" type="text" autocomplete="off" onchange="cloudApply()"></div>
-      <p class="note">A configuração e as regras de acesso estão explicadas no arquivo CONFIGURAR-NUVEM.md incluído no pacote.</p>
-    </details>
     <form class="auth-form" onsubmit="event.preventDefault();cloudLogin()">
       <div class="field"><label for="cl-email">E-mail</label><input id="cl-email" type="email" autocomplete="username" required></div>
       <div class="field"><label for="cl-password">Senha</label><input id="cl-password" type="password" autocomplete="current-password" required></div>
@@ -849,6 +848,7 @@ table.tbl.livre td:last-child{width:42%}
     </form>
     <p id="cl-auth-status" role="status" class="note">Entre para acessar a nuvem. O uso local continua disponível.</p>
     <p class="note">A senha não é salva pelo app. A sessão da nuvem fica na memória até fechar ou recarregar esta página. O login protege a nuvem; os dados locais continuam acessíveis neste navegador.</p>
+    </details>
     <label class="toggle"><input type="checkbox" id="cl-on" onchange="cloudApply()"> Sincronizar na nuvem</label>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
       <button class="iconbtn primary" onclick="cloudPush()">Enviar agora</button>
@@ -856,7 +856,7 @@ table.tbl.livre td:last-child{width:42%}
     </div>
     <p class="note" id="cl-status" style="margin-top:12px">sincronização desligada</p>
     <div id="cl-conflict" class="sync-conflict" role="status" hidden><h3>Há duas versões para conferir</h3><p>A sincronização automática está pausada. Escolha qual versão completa usar; o app não mistura lançamentos automaticamente.</p><p id="cl-differences" class="note"></p><strong>Neste aparelho</strong><p id="cl-local-summary" style="white-space:pre-line"></p><strong>Na nuvem</strong><p id="cl-remote-summary" style="white-space:pre-line"></p><div class="row"><button class="iconbtn" onclick="exportJSON()">Backup deste aparelho</button><button class="iconbtn" id="cl-download-remote" onclick="cloudBackupRemote()">Backup da nuvem</button><button class="iconbtn" onclick="cloudUseLocal()">Enviar este aparelho</button><button class="iconbtn" id="cl-use-remote" onclick="cloudUseRemote()">Usar a nuvem</button></div></div>
-    <p class="note">O acesso precisa estar restrito aos usuários autorizados nas regras do Firebase. Não use leitura e escrita públicas.</p>
+    <p class="note">Guarde o link só entre vocês dois: sem login, quem tiver o link consegue ler e alterar os dados da família.</p>
   </div>
 </section>
 
@@ -2694,11 +2694,15 @@ function fillAplFromAportes(){
 let cloudTimer=null,suppressPush=false,pushTimer=null,lastPushAt=0,lastApplied=0;
 let cloudEpoch=0,pushRequest=null,pullRequest=null,cloudSync=null,cloudConflict=null;
 let authSession=null,authEpoch=0,authRequest=null,authRefreshPromise=null;
+/* Como era antes: sem chave do Firebase preenchida, a nuvem funciona só com o
+   link, sem conta e sem senha. Com a chave, passa a exigir o login. */
+function semLogin(){return !!(D.cloud&&D.cloud.url&&!D.cloud.apiKey);}
+function nuvemPronta(){return !!authSession||semLogin();}
 function setCloudStatus(t,c){const e=document.getElementById('cl-status');if(e){e.textContent=t;e.style.color=c||'var(--muted)';}}
 function cleanCloudURL(value){
   const u=new URL(value);
-  if(u.protocol!=='https:'||u.username||u.password||u.port||!/^[-a-z0-9.]+\.(firebaseio\.com|firebasedatabase\.app)$/i.test(u.hostname)||!/^\/.+\.json$/.test(u.pathname))throw new Error('Use a URL HTTPS de um caminho do Realtime Database, terminada em .json.');
-  u.search='';u.hash='';return u.href;
+  if(u.protocol!=='https:'||u.username||u.password||!/\.json$/.test(u.pathname))throw new Error('Use o link da família: começa com https:// e termina com .json.');
+  u.hash='';return u.href;
 }
 function syncData(data=D){
   const copy=structuredClone(data);
@@ -2724,7 +2728,7 @@ function renderAuth(){
   const logout=document.getElementById('cl-logout');if(logout)logout.hidden=!authSession;
 }
 function schedulePush(){
-  if(!(D.cloud&&D.cloud.on&&D.cloud.url&&authSession)||cloudConflict)return;
+  if(!(D.cloud&&D.cloud.on&&D.cloud.url&&nuvemPronta())||cloudConflict)return;
   if(cloudSync&&syncFingerprint()===cloudSync.baseline)return;
   clearTimeout(pushTimer);pushTimer=setTimeout(()=>{pushTimer=null;if(D.cloud&&D.cloud.on)cloudPush();},1500);
 }
@@ -2772,20 +2776,25 @@ async function cloudToken(){
   authRefreshPromise=task;try{return await task;}finally{if(authRefreshPromise===task)authRefreshPromise=null;}
 }
 async function cloudFetch(options={}){
-  const url=cleanCloudURL(D.cloud.url),epoch=authEpoch,token=await cloudToken();
+  const url=cleanCloudURL(D.cloud.url),epoch=authEpoch,token=semLogin()?'':await cloudToken();
   if(epoch!==authEpoch||url!==cleanCloudURL(D.cloud.url))throw new Error('Conexão alterada.');
   if(options.signal&&options.signal.aborted)throw new Error('Operação cancelada.');
-  const target=new URL(url);target.searchParams.set('auth',token);
+  const target=new URL(url);if(token)target.searchParams.set('auth',token);
   return fetch(target.href,{cache:'no-store',...options,headers:{'X-Firebase-ETag':'true',...(options.headers||{})}});
 }
 async function readRemote(response){
   if(!response.ok)throw new Error('Erro '+response.status+'. Confira a conta e as permissões da família.');
-  const etag=response.headers.get('ETag');if(!etag)throw new Error('A nuvem não informou a versão. Nenhum envio será feito.');
-  const envelope=await response.json();if(envelope===null)return {etag,data:null,fp:null};
+  /* Sem o ETag visível (alguns servidores não liberam o cabeçalho para o
+     navegador), a versão passa a ser o próprio conteúdo: muda o conteúdo,
+     muda a versão. É como a nuvem funcionava antes. */
+  const texto=await response.text();
+  const etag=response.headers.get('ETag')||versaoPorConteudo(texto);
+  const envelope=texto?JSON.parse(texto):null;if(envelope===null)return {etag,data:null,fp:null};
   const raw=envelope&&typeof envelope.data==='string'?JSON.parse(envelope.data):envelope&&envelope.data;
   if(!ehBaseFamilia(raw))throw new Error('A nuvem não contém uma base válida da Família. Nada foi alterado.');
   const data=migrate(raw);return {etag,data,fp:syncFingerprint(data)};
 }
+function versaoPorConteudo(t){let h=5381;t=String(t||'');for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;return 'conteudo:'+(h>>>0).toString(36)+':'+t.length;}
 function showCloudConflict(remote){
   clearTimeout(pushTimer);pushTimer=null;cloudConflict=remote;
   const box=document.getElementById('cl-conflict');box.hidden=false;
@@ -2818,7 +2827,7 @@ function applyCloudRemote(remote){
 }
 async function cloudPull(silent,forcar){
   if(!(D.cloud&&D.cloud.url)||pullRequest)return;
-  if(!authSession){if(!silent)setCloudStatus('Entre com a conta da família para acessar a nuvem.');return;}
+  if(!nuvemPronta()){if(!silent)setCloudStatus('Entre com a conta da família para acessar a nuvem.');return;}
   if(pushTimer||pushRequest){if(!silent)setCloudStatus('Há alterações locais aguardando envio. Aguarde antes de buscar.');return;}
   const epoch=cloudEpoch,local=syncFingerprint(),controller=new AbortController(),choice=forcar==='remote'?cloudConflict:null;pullRequest=controller;
   const timeout=setTimeout(()=>controller.abort(),15000);
@@ -2843,7 +2852,7 @@ async function cloudPull(silent,forcar){
   finally{clearTimeout(timeout);if(pullRequest===controller)pullRequest=null;}
 }
 async function cloudPush(resolve=false){
-  if(!authSession){setCloudStatus('Entre com a conta da família para enviar os dados.');return;}
+  if(!nuvemPronta()){setCloudStatus('Entre com a conta da família para enviar os dados.');return;}
   if(pushRequest)return;
   if(cloudConflict&&!resolve){setCloudStatus('Resolva a diferença entre versões antes de enviar.','var(--gold)');return;}
   if(!cloudSync&&!cloudConflict){await cloudPull(false);if(!cloudSync||cloudConflict)return;}
@@ -2856,13 +2865,15 @@ async function cloudPush(resolve=false){
     if(resolve&&!guardarVersao('antes de resolver diferença com a nuvem'))throw new Error('Não consegui guardar uma cópia local. Faça um backup antes de resolver.');
     setCloudStatus('Enviando com proteção contra alterações simultâneas…');lastPushAt=stamp;
     const data={...syncData(),_app:APP_ID};
-    const r=await cloudFetch({method:'PUT',signal:controller.signal,headers:{'Content-Type':'application/json','if-match':expected},body:JSON.stringify({updatedAt:stamp,writerUid:authSession.uid,data:JSON.stringify(data)})});
+    const corpo=JSON.stringify({updatedAt:stamp,writerUid:authSession?authSession.uid:'',data:JSON.stringify(data)});
+    const cab={'Content-Type':'application/json'};if(!String(expected).startsWith('conteudo:'))cab['if-match']=expected;
+    const r=await cloudFetch({method:'PUT',signal:controller.signal,headers:cab,body:corpo});
     if(epoch!==cloudEpoch)return;
     if(r.status===412){
       const remote=await readRemote(await cloudFetch({signal:controller.signal}));if(epoch===cloudEpoch)showCloudConflict(remote);return;
     }
     if(!r.ok)throw new Error('Erro '+r.status+' ao enviar. Confira a conta e as permissões da família.');
-    const etag=r.headers.get('ETag');if(!etag){cloudSync=null;throw new Error('Envio recebido, mas sem confirmação de versão. Busque a nuvem antes de continuar.');}
+    const etag=r.headers.get('ETag')||versaoPorConteudo(await r.text());
     rememberCloud(etag,fp);clearCloudConflict();lastApplied=stamp;setCloudStatus('Salvo na nuvem.','var(--up)');
     if(fp!==syncFingerprint())schedulePush();
   }catch(e){if(epoch===cloudEpoch)setCloudStatus(e.message||'Não foi possível enviar. Seus dados continuam neste aparelho.','var(--down)');}
@@ -2870,16 +2881,16 @@ async function cloudPush(resolve=false){
 }
 function cloudUseLocal(){if(cloudConflict&&confirm('Enviar a versão deste aparelho no lugar da versão da nuvem? As alterações que existem somente na nuvem serão substituídas.'))return cloudPush(true);}
 function cloudUseRemote(){if(cloudConflict&&cloudConflict.data&&confirm('Usar a versão da nuvem? A base atual deste aparelho será guardada em Versões guardadas.'))return cloudPull(false,'remote');}
-function cloudStart(){clearInterval(cloudTimer);cloudTimer=setInterval(()=>{if(D.cloud&&D.cloud.on&&authSession&&!cloudConflict)cloudPull(true);},15000);}
+function cloudStart(){clearInterval(cloudTimer);cloudTimer=setInterval(()=>{if(D.cloud&&D.cloud.on&&nuvemPronta()&&!cloudConflict)cloudPull(true);},15000);}
 function cloudApply(){
   let url=document.getElementById('cl-url').value.trim();const on=document.getElementById('cl-on').checked,apiKey=document.getElementById('cl-api-key').value.trim();
   try{if(url)url=cleanCloudURL(url);}catch(e){setCloudStatus(e.message,'var(--down)');return false;}
   if(D.cloud.url===url&&D.cloud.on===on&&D.cloud.apiKey===apiKey)return true;
   const different=D.cloud.url!==url||D.cloud.apiKey!==apiKey;
   cancelCloudWork();if(different)cloudLogout();D.cloud={url,on,apiKey};saveLocal();readCloudReference();document.getElementById('cl-url').value=url;
-  if(on&&url&&authSession){cloudStart();cloudPull(false);}else setCloudStatus(on?'Entre com a conta da família para sincronizar.':'Sincronização automática desligada.');return true;
+  if(on&&url&&nuvemPronta()){cloudStart();cloudPull(false);}else setCloudStatus(on?(url?'Entre com a conta da família para sincronizar.':'Cole o link da família para sincronizar.'):'Sincronização automática desligada.');return true;
 }
-window.addEventListener('focus',()=>{if(D.cloud&&D.cloud.on&&authSession&&!cloudConflict)cloudPull(true);});
+window.addEventListener('focus',()=>{if(D.cloud&&D.cloud.on&&nuvemPronta()&&!cloudConflict)cloudPull(true);});
 
 /* ---------- compartilhar / backup ---------- */
 function shareURL(){const dados=carimbar(D);dados.cloud={url:'',on:false};const enc=btoa(unescape(encodeURIComponent(JSON.stringify(dados))));return location.href.split('#')[0]+'#d='+enc;}
@@ -5555,7 +5566,7 @@ document.querySelectorAll('.overlay').forEach(overlay=>{
 });
 
 
-readCloudReference();renderAuth();if(D.cloud&&D.cloud.on)setCloudStatus('Entre com a conta da família para retomar a sincronização.');
+readCloudReference();renderAuth();if(D.cloud&&D.cloud.on){if(semLogin()){cloudStart();cloudPull(true);}else setCloudStatus('Entre com a conta da família para retomar a sincronização.');}
 /* PWA: instalar na tela de início e abrir offline (rede primeiro, cache de reserva) */
 if('serviceWorker'in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-familia.js').catch(function(){});});}
 </script>
