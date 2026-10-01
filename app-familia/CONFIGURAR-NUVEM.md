@@ -13,7 +13,7 @@ Sem login, quem tiver o link consegue ler e alterar os dados. Guarde o link só 
 
 ## Opcional: login com e-mail e senha
 
-Só se quiserem proteger a nuvem com contas. Preencher a **Web API Key** passa a exigir login; deixe em branco para usar só o link.
+Só se quiserem proteger a nuvem com contas. O link continua funcionando para quem não entrar; o login é só uma opção a mais.
 
 
 O código está incluído no pacote. A configuração abaixo precisa ser realizada no projeto Firebase da família antes de usar a nuvem. Nenhuma conta foi criada e nenhuma regra foi publicada automaticamente.
