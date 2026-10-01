@@ -1578,8 +1578,11 @@ html,body{background:#031D15!important}body{color:#F8F5EE!important;padding-bott
 #app>.top .jv-quadra-chip[data-state="chuva"] .led{background:#5FA8E8;box-shadow:0 0 8px #5FA8E8}
 #app>.top .jv-quadra-chip[data-state="fechada"] .led{background:#E5533B;box-shadow:0 0 8px #E5533B}
 body[data-aba]:not([data-aba="inicio"]) #app>.top .jv-quadra-chip{display:none!important}
+/* Clima de Curitiba ao lado da situação da quadra */
+#app>.top .jv-chips-topo{position:relative;z-index:3;display:flex;flex-wrap:wrap;gap:8px;align-items:stretch}
+#app>.top .jv-clima-chip .clima-ic{font-style:normal;font-size:22px;line-height:1}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-01-1">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-01-2">
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
 <script src="lib/firebase-database-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js\'><\/script>')"></script>
@@ -1736,10 +1739,16 @@ function esperarAuth(){
     <p class="jv-hero-greet" id="hello">Olá!</p>
     <h1>Seu painel de <em>treino</em></h1>
     <p class="jv-hero-motiv">Cada aula te aproxima do seu melhor tênis.</p>
+    <div class="jv-chips-topo">
     <button type="button" class="jv-quadra-chip" id="aluno-quadra" hidden onclick="carregarStatusQuadra()" aria-label="Situação da quadra — toque para atualizar">
       <i class="led" aria-hidden="true"></i>
       <span><small>Situação da quadra</small><b id="aluno-quadra-rot">—</b><small id="aluno-quadra-tempo"></small></span>
     </button>
+    <button type="button" class="jv-quadra-chip jv-clima-chip" id="aluno-clima" hidden onclick="carregarClima(true)" aria-label="Tempo em Curitiba — toque para atualizar">
+      <i class="clima-ic" id="aluno-clima-ic" aria-hidden="true">☀️</i>
+      <span><small>Curitiba</small><b id="aluno-clima-temp">—</b><small id="aluno-clima-txt"></small></span>
+    </button>
+    </div>
     <p id="hello-prof" style="display:none;margin-top:7px;font-weight:700"></p>
   </header>
 
@@ -1988,7 +1997,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-10-01-1"></script>
+<script src="lib/icones.js?v=2026-10-01-2"></script>
 </div>
 
 <!-- MODAL ESCOLHER O QUE FAZER NO HORÁRIO -->
@@ -2195,7 +2204,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-10-01-1';
+const VERSAO='2026-10-01-2';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -4661,6 +4670,48 @@ async function carregarStatusQuadra(){
   pintarQuadra();
 }
 setTimeout(carregarStatusQuadra,1200);
+/* ===== Tempo em Curitiba (Open-Meteo: gratuito, sem chave) =====
+   Só informação: temperatura agora e o ícone do céu, com aviso quando há
+   chuva prevista nas próximas horas. Falhou a rede, o chip some — nunca
+   atrapalha o resto do app. Guarda 30 min no aparelho. */
+const CLIMA_URL='https://api.open-meteo.com/v1/forecast?latitude=-25.43&longitude=-49.27'
+  +'&current=temperature_2m,weather_code,is_day&hourly=precipitation_probability&forecast_hours=6&timezone=America%2FSao_Paulo';
+function climaDoCodigo(c,dia){
+  if(c===0)return dia?['☀️','Sol']:['🌙','Céu limpo'];
+  if(c===1||c===2)return dia?['⛅','Poucas nuvens']:['☁️','Poucas nuvens'];
+  if(c===3)return ['☁️','Nublado'];
+  if(c===45||c===48)return ['🌫️','Neblina'];
+  if(c>=51&&c<=57)return ['🌦️','Garoa'];
+  if((c>=61&&c<=67)||(c>=80&&c<=82))return ['🌧️','Chuva'];
+  if(c>=71&&c<=77||c===85||c===86)return ['❄️','Frio intenso'];
+  if(c>=95)return ['⛈️','Temporal'];
+  return ['🌤️','—'];
+}
+let CLIMA_ULT=null;
+function pintarClima(){
+  const el=document.getElementById('aluno-clima');if(!el)return;
+  const v=CLIMA_ULT;
+  if(!v||typeof v.temp!=='number'){el.hidden=true;return;}
+  const [ic,txt]=climaDoCodigo(v.code,v.dia);
+  const chovendo=/Chuva|Garoa|Temporal/.test(txt);
+  el.hidden=false;
+  document.getElementById('aluno-clima-ic').textContent=(!chovendo&&v.chuva>=60)?'🌦️':ic;
+  document.getElementById('aluno-clima-temp').textContent=Math.round(v.temp)+'°C';
+  document.getElementById('aluno-clima-txt').textContent=(!chovendo&&v.chuva>=60)?('Chuva prevista ('+v.chuva+'%)'):txt;
+}
+async function carregarClima(forcar){
+  if(!forcar){try{const c=JSON.parse(localStorage.getItem('jvt-clima')||'null');if(c&&Date.now()-c.ts<30*60000){CLIMA_ULT=c;pintarClima();return;}}catch(e){}}
+  try{
+    const r=await fetch(CLIMA_URL,{cache:'no-store'});if(!r.ok)throw 0;
+    const d=await r.json(),cur=d&&d.current;if(!cur||typeof cur.temperature_2m!=='number')throw 0;
+    const probs=(d.hourly&&d.hourly.precipitation_probability||[]).filter(x=>typeof x==='number');
+    CLIMA_ULT={ts:Date.now(),temp:cur.temperature_2m,code:cur.weather_code,dia:cur.is_day===1,chuva:probs.length?Math.max.apply(null,probs):0};
+    try{localStorage.setItem('jvt-clima',JSON.stringify(CLIMA_ULT));}catch(e){}
+  }catch(e){if(!CLIMA_ULT){try{CLIMA_ULT=JSON.parse(localStorage.getItem('jvt-clima')||'null');}catch(_){}}}
+  pintarClima();
+}
+setTimeout(carregarClima,1500);
+setInterval(()=>{if(!document.hidden)carregarClima();},30*60000);
 setInterval(()=>{if(!document.hidden)carregarStatusQuadra();},5*60000);
 setInterval(pintarQuadra,60000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarStatusQuadra();});
@@ -4668,7 +4719,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-01-1').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-01-2').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava

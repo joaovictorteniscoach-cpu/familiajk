@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-01-1';
+const VERSAO='2026-10-01-2';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -4904,22 +4904,60 @@ function pularViradaMes(){
    duas vezes sem querer não dobra nada. Saldo negativo (devendo) volta para o
    pacote. Se a virada já converteu a sobra, não há o que converter de novo. */
 function renovarMes(id){
-  const a=DB.alunos.find(x=>x.id===id);
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
   const p=Number(a.plano)||0, pg=Number(a.planoGrupo)||0;
-  const cAnt=Number(a.creditos)||0, gAnt=Number(a.credGrupo)||0;
-  const resumo=p+' crédito(s)'+(pg>0?(' e '+pg+' de grupo'):'');
+  const cAnt=Number(a.creditos)||0, gAnt=Number(a.credGrupo)||0, rAnt=Number(a.repos)||0;
   if(acaoRepetida('renov-'+id)){toast('Já renovei agora há pouco — confira os créditos antes de repetir');return;}
+
+  /* ===== Barreira 1: sem pacote, não há o que renovar =====
+     Renovar com plano 0 zeraria os créditos do aluno. */
+  if(p<=0&&pg<=0){
+    alert('🔒 Renovação bloqueada\n\n'+a.nome+' não tem pacote no cadastro (plano = 0).\n\nAbra o cadastro, escolha o número de aulas do mês e renove de novo.');
+    return;
+  }
   const jaRenov=renovacoesDoMes(a);
-  let aviso=jaRenov.length?('ℹ️ '+a.nome+' já foi renovado neste mês. Renovar de novo NÃO soma: o saldo só volta a ser o do pacote.\n\n'):'';
   /* Só a PRIMEIRA renovação do mês converte sobra: numa segunda, o que está no
      saldo é crédito deste mês, e virar reposição de novo daria aula a mais. */
   const sobra=jaRenov.length?0:Math.max(0,cAnt)+(pg>0?Math.max(0,gAnt):0);
-  if(sobra>0)aviso+='Sobraram '+fmtCred(sobra)+' aula(s) do mês passado: viram reposição.\n\n';
-  /* Renovar quem parou de treinar cria aula que ninguém vai fazer e mensalidade
-     que ninguém vai cobrar. O botão continua funcionando — quem volta a treinar
-     é renovado por aqui — mas não em silêncio. */
-  if(!ehAtivoAluno(a))aviso+='⚠️ '+a.nome+' está como INATIVO (sem plano e sem mensalidade no cadastro).\n\nRenovar vai somar crédito e marcar como "não pago". Se ele voltou a treinar, acerte o plano no cadastro primeiro.\n\n';
-  if(confirm(aviso+'Renovar o mês de '+a.nome+'? Fica com '+resumo+' do pacote'+(sobra>0?(' + '+fmtCred(sobra)+' reposição(ões)'):'')+', e marca como pendente.')){
+  const depois={c:p, g:pg>0?pg:gAnt, r:rAnt+sobra};
+  const dispAnt=Math.max(0,cAnt)+Math.max(0,gAnt)+rAnt, dispDep=depois.c+Math.max(0,depois.g)+depois.r;
+
+  /* ===== Barreira 2: renovar nunca pode TIRAR aula do aluno =====
+     Créditos + grupo + reposições depois da renovação têm de ser pelo menos o
+     que ele tinha antes. Se não forem, algo está errado (pacote menor que o
+     saldo, renovação repetida) — melhor parar do que sumir com crédito. */
+  if(dispDep<dispAnt){
+    alert('🔒 Renovação bloqueada\n\n'+a.nome+' ficaria com MENOS aulas do que tem hoje:\n'
+      +'hoje '+fmtCred(dispAnt)+' → depois '+fmtCred(dispDep)+'.\n\n'
+      +'Isso acontece quando o pacote do cadastro é menor que o saldo ou quando ele já foi renovado neste mês. '
+      +'Confira o cadastro e o extrato dele; nada foi alterado.');
+    return;
+  }
+  /* ===== Barreira 3: segunda renovação no mês só digitando =====
+     É o jeito mais comum de dar aula a mais sem perceber. */
+  if(jaRenov.length){
+    const r=prompt('⚠️ '+a.nome+' JÁ foi renovado neste mês.\n\nRenovar de novo devolve o saldo ao pacote ('+fmtCred(p)+') e pode dar aula a mais.\n\nSe é isso mesmo, digite RENOVAR:','');
+    if(r===null||String(r).trim().toUpperCase()!=='RENOVAR'){toast('Renovação cancelada — nada mudou');return;}
+  }
+
+  /* ===== Prévia: o que muda, linha a linha, antes de mudar ===== */
+  const g=agendaDoMes(a);
+  const linha=(nome,de,para)=>'  '+nome+': '+fmtCred(de)+' → '+fmtCred(para)+(de===para?'':(para>de?'  (+'+fmtCred(para-de)+')':'  ('+fmtCred(para-de)+')'));
+  let txt='Renovar o mês de '+a.nome+'?\n\n'
+    +linha('Créditos',cAnt,depois.c)+'\n'
+    +(pg>0||gAnt?linha('Créditos de grupo',gAnt,depois.g)+'\n':'')
+    +linha('Reposições',rAnt,depois.r)+'\n'
+    +'  Total de aulas disponíveis: '+fmtCred(dispAnt)+' → '+fmtCred(dispDep)+'\n';
+  if(sobra>0)txt+='\nAs '+fmtCred(sobra)+' aula(s) que sobraram do mês passado viram reposição — o aluno não perde nenhuma.';
+  if(cAnt<0)txt+='\n⚠️ O saldo estava negativo ('+fmtCred(cAnt)+'): volta para o pacote.';
+  if(g.total>0&&g.total!==(p+pg))txt+='\n⚠️ A agenda deste mês tem '+g.total+' aula(s), mas o pacote é de '+(p+pg)+'. Confira o cadastro se mudou o plano.';
+  if(!ehAtivoAluno(a))txt+='\n⚠️ '+a.nome+' está como INATIVO. Se voltou a treinar, acerte o cadastro primeiro.';
+  txt+='\n\nMarca a mensalidade como pendente. Dá para desfazer em Menu → Histórico de mudanças.';
+  if(!confirm(txt))return;
+
+  /* ===== Aplica, conferindo no fim; se não bater, desfaz tudo ===== */
+  const antes=JSON.stringify(a), nMovs=(DB.movs||[]).length;
+  try{
     // a sobra vai para reposição com o mesmo nome que a virada usa (a conferência conta igual)
     if(sobra>0)mover(a,'repos',sobra,'Sobra do mês virou reposição');
     /* No extrato ficam duas linhas: o saldo anterior zerado e o pacote entrando.
@@ -4933,9 +4971,30 @@ function renovarMes(id){
       if(gAnt!==0)mover(a,'credGrupo',-gAnt,(gAnt>0&&sobra>0)?'Virada de mês — sobra convertida':'Saldo de grupo anterior zerado na renovação');
       mover(a,'credGrupo',pg,'Renovação do mês (grupo)');
     }
-    a.status='pendente';delete a.difOk;delete a.difUndo;persist();renderAll();   // novo ciclo: reavalia a diferença do zero
-    toast('Mês renovado para '+a.nome+' · '+resumo+(sobra>0?(' + '+fmtCred(sobra)+' reposição(ões)'):''));
+    const ok=(Number(a.creditos)||0)===depois.c&&(Number(a.credGrupo)||0)===depois.g&&(Number(a.repos)||0)===depois.r;
+    if(!ok)throw new Error('saldo não bateu com a prévia');
+  }catch(e){
+    // volta o aluno e o extrato exatamente como estavam
+    const idx=DB.alunos.indexOf(a);if(idx>=0)DB.alunos[idx]=Object.assign(a,JSON.parse(antes));
+    if(DB.movs)DB.movs.length=nMovs;
+    alert('🔒 A renovação de '+a.nome+' foi desfeita: o resultado não bateu com a prévia ('+(e&&e.message||e)+'). Nada mudou.');
+    renderAll();return;
   }
+  a.status='pendente';delete a.difOk;delete a.difUndo;   // novo ciclo: reavalia a diferença do zero
+  a.ultimaRenovacao={ts:Date.now(),creditos:depois.c,credGrupo:depois.g,repos:depois.r};   // registro do que entrou na última renovação
+  logAct('Renovação do mês: '+a.nome+' → '+fmtCred(depois.c)+' crédito(s)'+(pg>0?(' + '+fmtCred(depois.g)+' grupo'):'')+' · '+fmtCred(depois.r)+' reposição(ões)');
+  persist();renderAll();
+  toast('Mês renovado para '+a.nome+' · '+fmtCred(depois.c)+' crédito(s)'+(sobra>0?(' + '+fmtCred(sobra)+' reposição(ões)'):''));
+  /* Para o aluno saber como ficou o banco de créditos dele, na hora. */
+  if(a.tel&&confirm('Mandar para '+a.nome.split(' ')[0]+' o resumo da renovação no WhatsApp?'))enviarResumoRenovacao(a,sobra);
+}
+function enviarResumoRenovacao(a,sobra){
+  const pg=Number(a.planoGrupo)||0;
+  const msg=encodeURIComponent('Olá '+a.nome.split(' ')[0]+'! 🎾 Sua mensalidade da JV Tênis foi renovada.\n\n'
+    +'📋 Aulas do pacote: *'+fmtCred(Number(a.creditos)||0)+'*'+(pg>0?(' + *'+fmtCred(Number(a.credGrupo)||0)+'* em grupo'):'')
+    +'\n🔁 Reposições: *'+fmtCred(Number(a.repos)||0)+'*'+(sobra>0?(' (inclui '+fmtCred(sobra)+' que sobrou do mês passado)'):'')
+    +'\n\nVocê confere tudo no app do aluno. Qualquer dúvida me chama! 😊');
+  window.open('https://wa.me/'+foneWhats(a.tel)+'?text='+msg,'_blank');
 }
 function enviarAcesso(id){
   const a=DB.alunos.find(x=>x.id===id);
