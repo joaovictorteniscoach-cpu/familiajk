@@ -33,10 +33,11 @@
 <style>
 :root{
   --navy:#102438; --navy-2:#15304A; --navy-3:#1C3F5E; --deep:#0B1B2B;
-  --gold:#D8B45C; --gold-2:#C49A3F; --gold-soft:#E7CE93;
+  /* destaque: o verde-limão da folha A4 (o nome --gold ficou do tema antigo, dourado) */
+  --gold:#DDEE66; --gold-2:#C2D642; --gold-soft:#E6F27F;
   --cream:#F4EFE6; --ink:#21303D;
   --muted:rgba(244,239,230,.62); --muted-2:rgba(244,239,230,.42);
-  --line:rgba(216,180,92,.22); --line-2:rgba(244,239,230,.12);
+  --line:rgba(221,238,102,.22); --line-2:rgba(244,239,230,.12);
   --ok:#7FA650; --warn:#E0784A; --r:14px;
   --topo:env(safe-area-inset-top,0px); --base:env(safe-area-inset-bottom,0px);
 }
@@ -151,7 +152,7 @@ header.bar{
   cursor:pointer;
   scroll-margin-top:124px}   /* barra de cima + filtros: rolar ate' o card nao o esconde */
 .card:active{background:var(--navy-3);border-color:var(--line)}
-.card.no-plano{border-color:var(--gold);box-shadow:inset 0 0 0 1px rgba(216,180,92,.25)}
+.card.no-plano{border-color:var(--gold);box-shadow:inset 0 0 0 1px rgba(221,238,102,.25)}
 .card .miniq{flex:0 0 104px;width:104px;border-radius:10px;overflow:hidden;
   background:var(--deep);border:1px solid var(--line-2);display:block;padding:0;
   position:static;height:auto}
@@ -279,7 +280,7 @@ header.bar{
 .prog{display:grid;gap:8px}
 .prog .it{display:flex;gap:11px;background:var(--navy-2);border:1px solid var(--line-2);
   border-radius:11px;padding:11px 13px}
-.prog .it.foco{border-color:var(--gold);background:rgba(216,180,92,.08)}
+.prog .it.foco{border-color:var(--gold);background:rgba(221,238,102,.08)}
 .prog .nv{flex-shrink:0;font-size:10px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;
   color:var(--gold-soft);width:86px;padding:3px 6px 0 0}
 .prog .tx{flex:1;font-size:14px;color:#E9E2D6}
@@ -300,7 +301,7 @@ header.bar{
 .qd-leg i.tr{width:14px;height:3px;border-radius:2px}
 .qd-leg i.cn{width:0;height:0;border-radius:0;background:none!important;
   border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:9px solid var(--warn)}
-.qd-leg i.zn{width:12px;height:9px;border-radius:2px;border:1px dashed var(--gold);background:rgba(216,180,92,.2)}
+.qd-leg i.zn{width:12px;height:9px;border-radius:2px;border:1px dashed var(--gold);background:rgba(221,238,102,.2)}
 /* quando o papel tem foto, a legenda mostra o rosto — o recorte e' de corpo
    inteiro, entao a bolinha pega o alto da imagem */
 .qd-leg i.rosto{width:16px;height:16px;background-size:340%;background-position:50% 4%;
@@ -308,7 +309,7 @@ header.bar{
 /* A frase que conta o que o desenho mostra. Existe para os 116 exercicios e
    estava so' no aria-label, invisivel para quem enxerga. */
 .qd-desc{font-size:14.5px;line-height:1.5;color:#F0E9DC;padding:12px;
-  background:rgba(216,180,92,.08);border-top:1px solid var(--line-2)}
+  background:rgba(221,238,102,.08);border-top:1px solid var(--line-2)}
 .qd-nota{font-size:12.5px;color:var(--muted);padding:9px 11px;background:var(--deep);
   border-top:1px solid var(--line-2);line-height:1.45}
 
@@ -319,7 +320,7 @@ header.bar{
   width:22px;height:22px;border-radius:7px;background:var(--gold);color:#22303c;
   font-size:12.5px;font-weight:900;display:flex;align-items:center;justify-content:center}
 .passos li span{font-size:14.5px;color:#E9E2D6;line-height:1.5}
-.bloco-tx.dica{background:rgba(216,180,92,.1);border:1px solid var(--line);border-radius:12px;padding:14px}
+.bloco-tx.dica{background:rgba(221,238,102,.1);border:1px solid var(--line);border-radius:12px;padding:14px}
 /* Faixa de sinais da ficha: tudo o que antes eram quatro caixas de texto. */
 /* Grade, não linha que embrulha: em flex os cinco dados quebravam tortos
    (três numa linha, um na outra). Duas colunas no celular, cinco quando a
@@ -450,7 +451,7 @@ header.bar{
   border:1px solid var(--line);border-radius:12px;padding:13px 15px;margin-bottom:14px}
 .total .n{font-size:24px;font-weight:900;color:var(--gold-soft)}
 .total .l{font-size:12.5px;color:var(--muted);font-weight:700;text-align:right}
-.auto{background:rgba(216,180,92,.08);border:1px dashed var(--line);border-radius:12px;
+.auto{background:rgba(221,238,102,.08);border:1px dashed var(--line);border-radius:12px;
   padding:13px 14px;margin-bottom:16px}
 .auto p{font-size:13.5px;color:var(--muted);margin-bottom:10px}
 .auto .ln{display:flex;gap:8px}
