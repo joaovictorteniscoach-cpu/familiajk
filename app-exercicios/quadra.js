@@ -1,0 +1,957 @@
+/* ==========================================================================
+   DESENHO DA QUADRA — Banco de Exercícios JV · Da Base ao Topo
+   --------------------------------------------------------------------------
+   Transforma a montagem de cada exercício num desenho: quem está onde, para
+   onde a bola vai, para onde o aluno corre, onde estão os cones e os alvos.
+   É SVG puro, desenhado na hora — não são imagens. Isso quer dizer que:
+     · pesa alguns bytes, não megabytes (o app abre em quadra, no 4G ruim);
+     · fica nítido em qualquer tela e em qualquer zoom;
+     · o desenho sai junto na impressão do plano de aula;
+     · para mudar um exercício, muda-se a lista de elementos — não um arquivo
+       de imagem que ninguém sabe editar depois.
+
+   A VISTA É DE TRÁS DO FUNDO, como quem está atrás do aluno olhando para a
+   rede — e não mais de cima. Um desenho visto de cima é uma planta: mostra
+   posição, mas não mostra a cena. Em perspectiva o professor reconhece o
+   exercício como ele acontece, e o aluno vira gente em vez de bolinha.
+
+   O que NÃO mudou: cada exercício continua escrito em METROS DE QUADRA, do
+   mesmo jeito. Quem desenha é a câmera. Foi o que permitiu virar os 116
+   desenhos de uma vez, sem reescrever nenhum.
+
+   SISTEMA DE COORDENADAS — medidas reais da quadra, em metros
+     x: 0 no meio · negativo à esquerda · ±4,115 linha de simples · ±5,485 dupla
+     y: 0 na REDE · positivo é o lado do ALUNO (perto da câmera) · 11,885 é a
+        linha de base · 6,40 é a linha de saque
+     z: altura do chão, só para quem precisa (rede, cone, jogador)
+
+   COMO ESCREVER O DESENHO DE UM EXERCÍCIO (campo `fig` em exercicios.js)
+     fig: { base:'meia', el:[
+       ['aluno', 0, 11.5, 'espera'],
+       ['prof', 0, -3, 'cesta'],
+       ['bola', 0,-3, 3.5,8, .3, ''],
+       ['mov', 0,11.5, 3.5,8, .1, 'chega'],
+       ['cone', 0, 11.9, 'volta aqui']
+     ]}
+   base: 'inteira' (as duas quadras) · 'meia' (só o lado do aluno, com a rede)
+         · 'mini' (os dois quadrados de saque) · 'fundo' (recorte do fundo)
+   ========================================================================== */
+
+/* Medidas oficiais, em metros. */
+const QD = {
+  duplaX: 5.485,     // meia largura da quadra de duplas
+  simplesX: 4.115,   // meia largura da quadra de simples
+  fundoY: 11.885,    // rede → linha de base
+  saqueY: 6.40,      // rede → linha de saque
+  redeMeio: 0.914,   // altura da rede no meio
+  redePoste: 1.07,   // altura da rede no poste
+  postX: 6.40        // onde fica o poste, a partir do meio
+};
+
+/* Cada base é um recorte diferente da quadra, EM METROS. Continua valendo:
+   é por esta moldura que o ferramentas/checar-exercicios.js confere se uma
+   peça foi colocada fora do desenho. */
+const BASES = {
+  inteira: { x:-6.9, y:-13.9, w:13.8, h:27.8 },
+  meia:    { x:-6.9, y:-3.4,  w:13.8, h:17.8 },
+  mini:    { x:-5.7, y:-8.2,  w:11.4, h:16.4 },
+  fundo:   { x:-6.9, y:2.9,   w:13.8, h:11.6 }
+};
+
+/* Onde a câmera fica em cada recorte. `y` e `alt` são a posição dela em
+   metros (atrás da linha de base do aluno e acima do chão); `alvo` é o ponto
+   da quadra para onde ela olha, que é o que define a inclinação.
+   Quanto mais baixa a câmera, mais "de dentro da quadra" fica o desenho — e
+   mais as peças do fundo se espremem uma na outra. Estes números são o meio
+   termo: dá para ver a cena e ainda dá para separar duas pessoas no fundo. */
+const CAMERAS = {
+  // A folha de treino impressa: a quadra INTEIRA, vista do alto e de trás do
+  // fundo, sempre do mesmo jeito — como uma foto de drone. Todas as folhas
+  // com a mesma câmera é o que faz o caderno parecer uma coleção, e não 132
+  // desenhos cada um enquadrado de um jeito.
+  // Números ACHADOS, não escolhidos: busca em grade pela câmera cuja quadra
+  // projetada tem as três medidas da folha de referência — o fundo de lá com
+  // 0,66 da largura do fundo de cá, a quadra com 1,035 vez essa largura de
+  // altura na imagem, e a rede a 40% do caminho entre os fundos. Deu
+  // 0,661 · 1,034 · 0,398: a "vista de drone" da referência, alta e de trás.
+  folha:   { y: 36.0, alt: 25.0, alvo: 8.0 },
+  inteira: { y: 24.0, alt: 9.6, alvo: 0.0 },
+  meia:    { y: 20.0, alt: 7.4, alvo: 3.0 },
+  mini:    { y: 19.0, alt: 7.0, alvo: 1.0 },
+  fundo:   { y: 18.5, alt: 5.6, alvo: 7.6 }
+};
+
+let DIST = 100;        // distância focal: só escala o desenho, o viewBox ajusta
+let CENTRO = { x:0, y:0 };   // ponto principal da imagem (0,0 quando é desenho)
+
+/* ==========================================================================
+   FOTO DE FUNDO — quando existir, o desenho senta em cima de uma foto de
+   verdade da quadra da JV, e não na quadra desenhada.
+   --------------------------------------------------------------------------
+   O que muda é SÓ o fundo e os bonecos: setas, cones, alvos e rótulos
+   continuam em vetor, porque é neles que está a leitura do exercício. E os
+   116 continuam escritos em metros — quem encaixa metro em pixel é a câmera
+   ajustada à foto por ferramentas/calibrar-foto.py.
+
+   Para ligar, preencha uma entrada aqui e ponha o arquivo na pasta do app:
+
+     meia: { arq:'foto-meia.jpg', larg:2752, alt:1536,
+             cam:{ x:0.1, y:19.4, alt:7.1, alvo:2.8, dist:1480, cx:1376, cy:610 } }
+
+   `cam` sai pronto do calibrar-foto.py, com o erro de encaixe medido em
+   pixels. Sem entrada, o desenho continua sendo a quadra desenhada. */
+const FOTOS = {
+  /* A QUADRA DA FOLHA MODELO do João, vazia (ferramentas/limpar-quadra-modelo.py)
+     e com a câmera achada pelo calibrar-foto.py: 10 pontos, erro médio de
+     6,6 px em 1304 (a foto não é uma câmera perfeita — as linhas dela fazem
+     uma curva leve). `inteira`: a foto é a quadra toda, e o desenho mostra
+     a foto toda, em todo exercício — é o padrão da folha modelo. */
+  jv: { arq:'quadra-jv.webp', larg:1304, alt:1406, inteira:true,
+        cam:{ x:0.025, y:35.083, alt:16.812, alvo:4.854, dist:3917.3, cx:648.6, cy:799.8 } }
+};
+
+/* OS JOGADORES SÃO AS FIGURAS DA JV, recortadas da prancha de poses que o
+   João criou (ferramentas/originais/prancha-poses-jv.png) pelo
+   ferramentas/recortar-poses-jv.py. É a mesma pessoa em todas, de camisa
+   preta JV — como na folha modelo. Quem é quem (aluno, professor, colega)
+   fica no ARO colorido embaixo dos pés, nas cores da legenda: repintar a
+   camisa estragaria justamente o que a figura tem de mais reconhecível.
+
+   A câmera fica atrás da linha de base: quem está DO LADO DE CÁ (y > 0)
+   aparece de COSTAS, quem está além da rede aparece de FRENTE. A prancha tem
+   as duas vistas da espera e do golpe de fundo; voleio, aproximação e
+   deslocamento são de perfil, que serve dos dois lados da rede.
+
+   FIG guarda, por arquivo, a altura real do TOPO DA IMAGEM acima do chão (em
+   metros), a proporção do arquivo e ONDE ESTÃO OS PÉS na largura da imagem
+   (de 0 a 1). Errar a altura faz a pessoa flutuar ou afundar no saibro; sem
+   o ponto dos pés, a figura ficava centrada na imagem, e a raquete esticada
+   para um lado empurrava a pessoa para o outro. Os números saem do
+   recortar-poses-jv.py. */
+const FIG = {
+  'jv-espera-frente.webp':    [1.62, 0.721, 0.498], 'jv-espera-costas.webp':    [1.65, 0.707, 0.500],
+  'jv-golpe-frente-fh.webp':  [1.60, 0.829, 0.589], 'jv-golpe-frente-bh.webp':  [1.61, 0.840, 0.399],
+  'jv-golpe-costas-fh.webp':  [1.66, 0.849, 0.362], 'jv-golpe-costas-bh.webp':  [1.66, 0.849, 0.636],
+  'jv-voleio.webp':           [1.68, 0.785, 0.372], 'jv-voleio-esq.webp':       [1.68, 0.785, 0.626],
+  'jv-saque-frente.webp':     [1.95, 0.465, 0.333], 'jv-saque-costas.webp':     [1.80, 0.616, 0.399],
+  'jv-aproxima.webp':         [1.58, 0.692, 0.370], 'jv-aproxima-esq.webp':     [1.58, 0.692, 0.627],
+  'jv-desloca.webp':          [1.49, 0.643, 0.409], 'jv-desloca-esq.webp':      [1.49, 0.643, 0.587]
+};
+
+/* POSES — um exercício pede no quinto campo do elemento:
+   ['aluno', x, y, 'rótulo', 'voleio']. Sem pose, a pessoa aparece em espera.
+
+   Cada pose diz o arquivo DE FRENTE e o DE COSTAS. Quando a pose tem lado,
+   `dir` é a figura com a raquete (ou o corpo) virada para a DIREITA da
+   imagem e `esq` para a esquerda — e a prancha tem os dois lados do golpe de
+   fundo desenhados de verdade: de costas, forehand à direita; de frente, o
+   forehand dele fica à esquerda de quem olha. Onde a prancha só tem um lado
+   (perfil, e o backhand de costas, que esconde a raquete), o outro é o
+   espelho com o logo JV desespelhado.
+
+   `lado` escolhe entre `dir` e `esq`:
+     'golpe' — o lado em que a bola CHEGA nele (ladoDoGolpe);
+     'fh'/'bh' — forehand/backhand dele, esteja onde estiver: é o que salva o
+                 inside-out e o "só de forehand";
+     'vai'   — para onde ele se desloca ou bate (paraOndeOlha).
+   O saque não muda de lado: a figura é de um destro, e é assim que ele saca
+   dos dois lados da quadra. */
+var GOLPE_F = { dir:'jv-golpe-frente-bh.webp', esq:'jv-golpe-frente-fh.webp' };
+var GOLPE_C = { dir:'jv-golpe-costas-fh.webp', esq:'jv-golpe-costas-bh.webp' };
+var VOLEIO  = { dir:'jv-voleio.webp',   esq:'jv-voleio-esq.webp' };
+var APROX   = { dir:'jv-aproxima.webp', esq:'jv-aproxima-esq.webp' };
+var DESLOCA = { dir:'jv-desloca.webp',  esq:'jv-desloca-esq.webp' };
+const RECORTES = {
+  espera:   { frente:'jv-espera-frente.webp', costas:'jv-espera-costas.webp' },
+  prepara:  { lado:'golpe', frente:GOLPE_F, costas:GOLPE_C },
+  forehand: { lado:'fh',    frente:GOLPE_F, costas:GOLPE_C },
+  backhand: { lado:'bh',    frente:GOLPE_F, costas:GOLPE_C },
+  voleio:   { lado:'golpe', frente:VOLEIO,  costas:VOLEIO },
+  saque:    { frente:'jv-saque-frente.webp', costas:'jv-saque-costas.webp' },
+  aproxima: { lado:'vai',   frente:APROX,   costas:APROX },
+  desloca:  { lado:'vai',   frente:DESLOCA, costas:DESLOCA }
+};
+RECORTES.aluno = RECORTES.prof = RECORTES.colega = RECORTES.espera;
+
+/* Cores do desenho. Saibro de verdade, porque é nele que a JV dá aula. */
+const CQ = {
+  saibro:'#A85B37', saibroClaro:'#BE7049', saibroEsc:'#95502F', fora:'#8A4C2E',
+  linha:'#F7F3EA', linhaGasta:'#E4D8C6', poeira:'#C98A64',
+  rede:'#EFEBE3', redeMalha:'#1B2A36', poste:'#3B4A55',
+  aluno:'#D8B45C', alunoEsc:'#A9843A', prof:'#E8EDF2', profEsc:'#AFBCC7',
+  colega:'#8FB0C9', colegaEsc:'#5F7F98', pele:'#C98D62', peleEsc:'#A06D48',
+  bola:'#D6F03A', mov:'#FFFFFF', cone:'#E0784A', coneEsc:'#B2542D', zona:'#D8B45C',
+  texto:'#FFFFFF', fundoTx:'rgba(16,15,13,.88)', sombra:'rgba(44,18,8,.38)'
+};
+
+/* Escurece uma cor hexadecimal. Usado para o lado do boneco que fica na
+   sombra: uma silhueta de cor chapada não tem volume nenhum. */
+function escurecer(hex, k){
+  var n = parseInt(hex.slice(1), 16);
+  var r = Math.round(((n >> 16) & 255) * k), g = Math.round(((n >> 8) & 255) * k), b = Math.round((n & 255) * k);
+  return 'rgb(' + r + ',' + g + ',' + b + ')';
+}
+
+/* Modo miniatura: o mesmo desenho, do tamanho de um selo, na lista de
+   exercícios. Nesse tamanho o rótulo vira borrão — então ele sai, e o traço
+   engrossa para a quadra continuar legível. O que fica é a CENA: de onde sai
+   a bola, para onde vai, quem está na rede. É por ela que o professor
+   reconhece o exercício de relance. */
+let MINI = false;
+
+/* Estado do desenho que está sendo montado. */
+let CAM = CAMERAS.meia;      // câmera deste recorte
+let VISTA = { x:0, y:0, w:100, h:100 };   // viewBox, em unidades de tela
+let PROP = 0;            // proporcao pedida (largura/altura); 0 = a do padrao
+/* Na folha impressa a quadra inteira cabe num quadrado de 12 cm, e um jogador
+   em escala real vira um risco de 5 mm. Folha de treino não é planta baixa:
+   o boneco sai em ESCALA DE LEITURA, maior que o real, como em toda folha de
+   treino impressa. Só a folha usa isto; a tela continua em escala real. */
+let ESC_FIG = 1;
+let ARO = true;
+let FOTO_FIXA = false;      // desenho em cima da foto da quadra inteira (moldura fixa)             // o aro colorido de quem é quem (a folha não usa: lá o modelo não tem)
+let ROTULOS = [];            // rótulos já colocados, para não empilhar
+let PECAS = [];              // as peças deste desenho, para um jogador poder
+                             // olhar as outras e saber para onde vai bater
+
+function nQ(v){ return Math.round(v * 100) / 100; }
+
+/* ==========================================================================
+   A CÂMERA
+   ========================================================================== */
+
+/* Projeta um ponto da quadra (metros) na tela. Câmera em (0, CAM.y, CAM.alt)
+   olhando para (0, CAM.alvo, 0), inclinada para baixo.
+   Devolve {x, y, z} — o z é a profundidade, usada para saber o que desenhar
+   primeiro e para encolher o que está longe. */
+function proj(x, y, z){
+  var a = CAM.y - y;                 // quanto o ponto está à frente da câmera
+  var b = CAM.alt - (z || 0);        // quanto está abaixo dela
+  var d = Math.sqrt((CAM.y - CAM.alvo) * (CAM.y - CAM.alvo) + CAM.alt * CAM.alt);
+  var cos = (CAM.y - CAM.alvo) / d, sen = CAM.alt / d;
+  var prof = a * cos + b * sen;      // profundidade
+  if (prof < 0.4) prof = 0.4;        // atrás da câmera: prende na frente dela
+  var cima = a * sen - b * cos;
+  return { x: CENTRO.x + DIST * (x - (CAM.x || 0)) / prof,
+           y: CENTRO.y - DIST * cima / prof, z: prof };
+}
+
+/* Quanto um metro vale, em unidades de tela, à profundidade de um ponto.
+   É o que faz o jogador do fundo ser menor que o da rede sem nenhuma conta
+   extra em cada peça. */
+function escalaEm(p){ return DIST / p.z; }
+
+/* O enquadramento é a AÇÃO, não o recorte inteiro.
+   Enquadrar o recorte todo deixava o exercício pequeno no meio de um mar de
+   saibro: de trás da linha de base, os cantos de perto abrem muito e mandam na
+   largura. Então mede-se onde as peças estão, na tela, e aperta-se nelas —
+   com um mínimo de quadra em volta para o desenho dizer ONDE aquilo acontece.
+   A câmera não muda; muda só o quanto dela se mostra. */
+/* A moldura da folha impressa: a quadra inteira de fundo a fundo, com uma
+   sobra de saibro em volta e altura para o jogador do fundo caber de pé.
+   Não olha para as peças — é isso que faz toda folha sair igual. */
+function quadraInteira(el){
+  // Margens medidas na folha de referência: o fundo de cá a 89% da altura,
+  // o de lá a 9%, e os cantos do fundo de cá a 8% das bordas laterais.
+  var nE = proj(-QD.duplaX,  QD.fundoY, 0), nD = proj(QD.duplaX,  QD.fundoY, 0);
+  var fE = proj(-QD.duplaX, -QD.fundoY, 0);
+  var h = (nE.y - fE.y) / 0.80, w = (nD.x - nE.x) / 0.84;
+  var y1 = fE.y - 0.09 * h, x1 = nE.x - 0.08 * w, y2 = y1 + h, x2 = x1 + w;
+  // Quem está de pé no fundo de lá tem a cabeça ACIMA da moldura da
+  // referência (lá o jogador do fundo está na rede). A moldura abre o que
+  // precisar para ninguém sair cortado — e só isso.
+  (el || []).forEach(function(e){
+    if (e[0] !== 'aluno' && e[0] !== 'prof' && e[0] !== 'colega') return;
+    var pe = proj(e[1], e[2], 0), ca = proj(e[1], e[2], 1.9);
+    var topo = pe.y - (pe.y - ca.y) * ESC_FIG * 1.12;
+    y1 = Math.min(y1, topo - h * 0.015);
+    y2 = Math.max(y2, pe.y + h * 0.03);
+  });
+  w = x2 - x1; h = y2 - y1;
+  var alvo = PROP || (w / h);
+  if (w / h < alvo) { var fa = (h * alvo - w) / 2; x1 -= fa; w = h * alvo; }
+  else { var fb = (w / alvo - h) / 2; y1 -= fb; h = w / alvo; }
+  return { x:x1, y:y1, w:w, h:h };
+}
+
+function enquadrar(base, el){
+  var b = BASES[base] || BASES.meia;
+  var x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity, achou = false;
+  function por(x, y, z, folgaM){
+    if (typeof x !== 'number' || typeof y !== 'number') return;
+    var p = proj(x, y, z || 0);
+    var f = (folgaM || 0) * escalaEm(p);
+    achou = true;
+    x1 = Math.min(x1, p.x - f); x2 = Math.max(x2, p.x + f);
+    y1 = Math.min(y1, p.y - f); y2 = Math.max(y2, p.y + f);
+  }
+  (el || []).forEach(function(e){
+    var t = e[0];
+    if (t === 'aluno' || t === 'prof' || t === 'colega') {
+      por(e[1], e[2], 0, 1.0); por(e[1], e[2], 1.95 * ESC_FIG, 0.8);   // o boneco sobe do chão (na escala de leitura)
+    } else if (t === 'cone' || t === 'marca') { por(e[1], e[2], 0, 0.9); }
+    else if (t === 'escada') { por(e[1], e[2] - 2.0, 0, .8); por(e[1], e[2] + 2.0, 0, .8); }
+    else if (t === 'zona') {
+      por(e[1] - e[3] / 2, e[2] - e[4] / 2, 0, .5); por(e[1] + e[3] / 2, e[2] + e[4] / 2, 0, .5);
+    } else if (t === 'bola' || t === 'mov') { por(e[1], e[2], 0, .7); por(e[3], e[4], 0, .7); }
+    else if (t === 'corda') { por(-QD.postX, 0, 1.9, .4); por(QD.postX, 0, 1.9, .4); }
+  });
+
+  // exercício sem peça nenhuma (quadra vazia): mostra o recorte
+  if (!achou) {
+    [[b.x, b.y], [b.x + b.w, b.y], [b.x, b.y + b.h], [b.x + b.w, b.y + b.h]].forEach(function(c){
+      por(c[0], c[1], 0, 0);
+    });
+  }
+
+  // um mínimo de quadra em volta: sem isso, dois jogadores lado a lado viram
+  // um retrato deles, e o desenho deixa de dizer ONDE na quadra aquilo
+  // acontece — que é metade do que ele serve para contar. O mínimo é uma
+  // fração do recorte inteiro, e não uma medida fixa: assim vale igual para o
+  // recorte do fundo e para o da quadra inteira.
+  var meioY = (y1 + y2) / 2, meioX = (x1 + x2) / 2;
+  var fx1 = Infinity, fy1 = Infinity, fx2 = -Infinity, fy2 = -Infinity;
+  [[b.x, b.y], [b.x + b.w, b.y], [b.x, b.y + b.h], [b.x + b.w, b.y + b.h]].forEach(function(c){
+    var q = proj(c[0], c[1], 0);
+    fx1 = Math.min(fx1, q.x); fx2 = Math.max(fx2, q.x);
+    fy1 = Math.min(fy1, q.y); fy2 = Math.max(fy2, q.y);
+  });
+  var minLarg = (fx2 - fx1) * 0.50, minAlt = (fy2 - fy1) * 0.50;
+  if (x2 - x1 < minLarg) { x1 = meioX - minLarg / 2; x2 = meioX + minLarg / 2; }
+  if (y2 - y1 < minAlt)  { y1 = meioY - minAlt / 2;  y2 = meioY + minAlt / 2; }
+
+  // formato: mais largo que alto, como uma foto de quadra
+  // A folha de treino pede a quadra EM RETRATO, como numa foto tirada de
+  // trás do fundo: é a proporção que mostra a quadra inteira sem espremer.
+  // Na tela a miniatura continua deitada, que é o que cabe numa lista.
+  var alvo = PROP || (MINI ? 1.30 : 1.42);
+  var lg = x2 - x1, at = y2 - y1;
+  if (lg / at < alvo) { var fa = (at * alvo - lg) / 2; x1 -= fa; x2 += fa; lg = at * alvo; }
+  else { var fb = (lg / alvo - at) / 2; y1 -= fb; y2 += fb; at = lg / alvo; }
+  // o meio vertical volta para onde a ação está, senão a moldura sobe demais
+  var desvio = meioY - (y1 + y2) / 2;
+  y1 += desvio * 0.35; y2 += desvio * 0.35;
+  return { x:x1, y:y1, w:x2 - x1, h:y2 - y1 };
+}
+
+/* ==========================================================================
+   PEÇAS DO CHÃO — tudo o que está deitado na quadra vira polígono projetado,
+   e não traço de espessura fixa. É o que dá a perspectiva certa: a linha de
+   base, que está longe, sai mais fina que a de perto — sozinha, sem truque.
+   ========================================================================== */
+
+function pol(pontos, preenche, op){
+  var d = pontos.map(function(p){ var q = proj(p[0], p[1], p[2] || 0);
+    return nQ(q.x) + ',' + nQ(q.y); }).join(' ');
+  return '<polygon points="' + d + '" fill="' + preenche + '"' + (op || '') + '/>';
+}
+
+/* Uma faixa deitada no chão, de largura real em metros. */
+function faixa(x1, y1, x2, y2, larg, cor){
+  var dx = x2 - x1, dy = y2 - y1;
+  var c = Math.sqrt(dx * dx + dy * dy) || 1;
+  var nx = -dy / c * larg / 2, ny = dx / c * larg / 2;
+  return pol([[x1 + nx, y1 + ny], [x2 + nx, y2 + ny],
+              [x2 - nx, y2 - ny], [x1 - nx, y1 - ny]], cor || CQ.linha);
+}
+
+/* ==========================================================================
+   A QUADRA
+   ========================================================================== */
+
+function piso(base){
+  var dx = QD.duplaX, sx = QD.simplesX, fy = QD.fundoY, sy = QD.saqueY;
+  var lw = 0.05, lwBase = 0.10;          // largura real das linhas, em metros
+  var p = [], i, x;
+
+  // Antes de tudo, o quadro inteiro pintado de saibro escuro. Num desenho
+  // muito fechado (R06, os dois na rede) a moldura chega a subir acima do
+  // horizonte, onde polígono nenhum alcança — e ali aparecia o fundo da
+  // página atravessando o alto da figura.
+  p.push('<rect x="' + nQ(VISTA.x) + '" y="' + nQ(VISTA.y) + '" width="' + nQ(VISTA.w) +
+         '" height="' + nQ(VISTA.h) + '" fill="' + CQ.fora + '"/>');
+  // o saibro de fora, bem largo: cobre o que a moldura mostrar
+  p.push(pol([[-24, -26], [24, -26], [24, 26], [-24, 26]], CQ.fora));
+  // a área de jogo, um tom mais claro, com a sobra de saibro em volta. A
+  // sobra atrás da linha de base é generosa (8 m, como numa quadra de verdade)
+  // porque é ela que aparece no alto do desenho: com pouca sobra, o saibro
+  // escuro de fora virava uma faixa preta atravessando o topo.
+  p.push(pol([[-dx - 4.2, -fy - 8.0], [dx + 4.2, -fy - 8.0],
+              [dx + 4.2, fy + 8.0], [-dx - 4.2, fy + 8.0]], CQ.saibro));
+  p.push(pol([[-dx, -fy], [dx, -fy], [dx, fy], [-dx, fy]], CQ.saibroClaro));
+
+  // MARCAS DE VASSOURA. Saibro varrido tem faixas largas, e é delas que vem
+  // metade da leitura de "isto é uma quadra de verdade": elas mostram a
+  // direção do chão e, por serem paralelas, desenham a perspectiva sozinhas.
+  // Só na ficha — na miniatura de 104 px elas viram sujeira.
+  if (!MINI) {
+    // largas e de leve: estreitas e fortes, elas viravam tábuas de madeira
+    for (i = 0; i < 9; i++) {
+      x = -dx - 3.6 + i * ((dx + 3.6) * 2 / 9);
+      p.push(pol([[x, -fy - 7], [x + 0.62, -fy - 7], [x + 0.62, fy + 7], [x, fy + 7]],
+                 CQ.saibroEsc, ' fill-opacity=".05"'));
+    }
+  }
+
+  // as linhas. Duas passadas: a poeira de saibro que sempre sobra na borda,
+  // e a linha por cima. Sem a borda, a linha fica recortada como adesivo.
+  function linha(x1, y1, x2, y2, larg){
+    if (!MINI) p.push(faixa(x1, y1, x2, y2, larg + 0.05, CQ.poeira));
+    p.push(faixa(x1, y1, x2, y2, larg, CQ.linha));
+  }
+  [-dx, dx, -sx, sx].forEach(function(xx){ linha(xx, -fy, xx, fy, lw); });
+  linha(-dx, fy, dx, fy, lwBase);
+  linha(-dx, -fy, dx, -fy, lwBase);
+  linha(-sx, sy, sx, sy, lw);
+  linha(-sx, -sy, sx, -sy, lw);
+  linha(0, -sy, 0, sy, lw);
+  linha(0, fy - 0.3, 0, fy, lwBase);
+  linha(0, -fy, 0, -fy + 0.3, lwBase);
+
+  // LUZ. Uma clareada perto da rede e um escurecido nas bordas: é o que tira
+  // o desenho do aspecto de cartaz chapado.
+  if (!MINI) {
+    p.push('<rect x="' + nQ(VISTA.x) + '" y="' + nQ(VISTA.y) + '" width="' + nQ(VISTA.w) +
+           '" height="' + nQ(VISTA.h) + '" fill="url(#luz)" style="mix-blend-mode:soft-light"/>');
+  }
+  return p.join('');
+}
+
+/* A rede, de frente: malha, fita branca em cima e os dois postes. A barriga
+   no meio é de verdade — 0,914 m no centro contra 1,07 m no poste. */
+function rede(){
+  var px = QD.postX, n = 14, p = [], i, x, alt;
+  function alturaEm(x){
+    var t = Math.abs(x) / px;
+    return QD.redeMeio + (QD.redePoste - QD.redeMeio) * t * t;
+  }
+  // a malha: um polígono que acompanha a barriga
+  var cima = [], baixo = [];
+  for (i = 0; i <= n; i++) {
+    x = -px + (2 * px) * i / n;
+    cima.push([x, 0, alturaEm(x)]);
+    baixo.push([x, 0, 0]);
+  }
+  p.push(pol(cima.concat(baixo.slice().reverse()), CQ.redeMalha, ' fill-opacity=".38"'));
+  // os fios verticais, que é o que faz parecer rede e não parede
+  for (i = 1; i < n; i++) {
+    x = -px + (2 * px) * i / n;
+    var a = proj(x, 0, 0), b = proj(x, 0, alturaEm(x));
+    p.push('<line x1="' + nQ(a.x) + '" y1="' + nQ(a.y) + '" x2="' + nQ(b.x) + '" y2="' + nQ(b.y) +
+           '" stroke="' + CQ.rede + '" stroke-opacity=".30" stroke-width="' + nQ(traco(0.018, a)) + '"/>');
+  }
+  // a fita branca de cima
+  var fita = [], fitaB = [];
+  for (i = 0; i <= n; i++) {
+    x = -px + (2 * px) * i / n;
+    alt = alturaEm(x);
+    fita.push([x, 0, alt]);
+    fitaB.push([x, 0, alt - 0.06]);
+  }
+  p.push(pol(fita.concat(fitaB.slice().reverse()), CQ.rede));
+  // os postes
+  [-px, px].forEach(function(xp){
+    p.push(faixaVertical(xp, 0, QD.redePoste + 0.08, 0.12, CQ.poste));
+  });
+  return p.join('');
+}
+
+/* Um pedaço em pé (poste, haste): retângulo entre o chão e uma altura. */
+function faixaVertical(x, y, alt, larg, cor){
+  return pol([[x - larg / 2, y, 0], [x + larg / 2, y, 0],
+              [x + larg / 2, y, alt], [x - larg / 2, y, alt]], cor);
+}
+
+/* Espessura de traço que respeita a distância. */
+function traco(metros, p){
+  return Math.max(0.35, metros * escalaEm(p) * (MINI ? 1.9 : 1));
+}
+
+/* ==========================================================================
+   OS BONECOS
+   ========================================================================== */
+
+/* Um jogador, em pé, de costas para quem olha (é a vista de trás do fundo).
+   Desenhado dentro de uma caixa de 1,78 m e projetado nela — quem está no
+   fundo sai menor sozinho, sem ajuste nenhum por exercício.
+
+   Ele é montado em camadas, e não numa silhueta chapada: perna de trás,
+   perna da frente, short, camisa, braços, cabeça e raquete, cada um com um
+   tom de luz e um de sombra. É daí que vem o volume — uma silhueta de cor
+   única, por melhor desenhada que seja, continua parecendo um pictograma. */
+/* ==========================================================================
+   PARA QUE LADO O JOGADOR OLHA
+   --------------------------------------------------------------------------
+   O desenho já sabe para onde a bola vai: está escrito no próprio exercício.
+   Então a direção de cada jogador é deduzida daí, e não marcada à mão em cada
+   um dos 116 — marcar à mão seria errar em algum e nunca descobrir.
+
+   Quem está no começo de uma bola, bate: olha para onde ela vai.
+   Quem está no fim, recebe: olha para de onde ela vem.
+   ========================================================================== */
+
+/* Para que x este jogador tem que olhar. Devolve null quando não há bola
+   perto dele, ou quando ela vai reto para a rede e não há lado nenhum. */
+function paraOndeOlha(x, y){
+  // A bola manda. Só quando não há bola perto é que o deslocamento serve de
+  // pista: num exercício de footwork sem bola, o aluno corre para onde a seta
+  // aponta, e é para lá que ele tem que estar virado.
+  var achado = maisPerto(x, y, 'bola');
+  if (achado === null) achado = maisPerto(x, y, 'mov');
+  if (achado === null) return null;
+  return Math.abs(achado - x) < 0.8 ? null : achado;   // reta para a rede: não há lado
+}
+
+function maisPerto(x, y, tipo){
+  var melhor = null, dMelhor = 2.6 * 2.6;   // 2,6 m: mais longe que isso não é dele
+  PECAS.forEach(function(e){
+    if (e[0] !== tipo) return;
+    var d1 = (e[1] - x) * (e[1] - x) + (e[2] - y) * (e[2] - y);   // ele é quem começa
+    var d2 = (e[3] - x) * (e[3] - x) + (e[4] - y) * (e[4] - y);   // ele é quem termina
+    if (d1 < dMelhor) { dMelhor = d1; melhor = e[3]; }
+    if (d2 < dMelhor) { dMelhor = d2; melhor = e[1]; }
+  });
+  return melhor;
+}
+
+/* Espelha um pedaço do desenho em torno da linha vertical que passa por cx. */
+function espelharEm(cx){
+  return ' transform="translate(' + nQ(cx * 2) + ' 0) scale(-1 1)"';
+}
+
+/* Quando existe recorte de gente de verdade, é ele que entra. O resto do
+   desenho não muda: a pessoa é posicionada e encolhida pela mesma projeção
+   que posiciona o boneco. */
+/* De que lado da imagem a raquete fica. O que manda é DE QUE LADO A BOLA
+   CHEGA nele: bola caindo à direita de quem bate é golpe do lado direito da
+   imagem — forehand para quem está de costas, e o forehand à esquerda de
+   quem olha para quem está de frente, que é a direita dele. Olhar só onde o
+   jogador está parado errava no aluno que CORRE até a bola (D5: começa à
+   esquerda e vai pegar a bola à direita). A posição dele só decide quando a
+   bola vem reta para o corpo. Bola que SAI dele não conta: essa ele já bateu. */
+function ladoDoGolpe(x, y){
+  var dx = null, dMin = 5.5 * 5.5;
+  PECAS.forEach(function(e){
+    if (e[0] !== 'bola') return;
+    if ((e[1] - x) * (e[1] - x) + (e[2] - y) * (e[2] - y) < 1.6 * 1.6) return;
+    var d = (e[3] - x) * (e[3] - x) + (e[4] - y) * (e[4] - y);
+    if (d < dMin) { dMin = d; dx = e[3] - x; }
+  });
+  if (dx !== null && Math.abs(dx) >= 0.8) return dx > 0;
+  return x >= 0;
+}
+
+function qRecorte(x, y, rot, tipo, nome){
+  var r = RECORTES[nome] || RECORTES[tipo];
+  if (!r) return null;
+  var v = y > 0 ? r.costas : r.frente;
+  var arq = v;
+  if (typeof v === 'object') {
+    var querDir;
+    if (r.lado === 'fh') querDir = y > 0;          // de frente, o forehand dele é à esquerda da imagem
+    else if (r.lado === 'bh') querDir = !(y > 0);
+    else if (r.lado === 'golpe') querDir = ladoDoGolpe(x, y);
+    else { var alvo = paraOndeOlha(x, y); querDir = alvo === null ? x < 0 : alvo >= x; }
+    arq = querDir ? v.dir : v.esq;
+  }
+  var g = FIG[arq] || [1.7, 0.7, 0.5];
+  var pe = proj(x, y, 0), topo = proj(x, y, g[0]);
+  var h = (pe.y - topo.y) * ESC_FIG;
+  // na foto a moldura é fixa: quem está no fundo de lá, ampliado, sairia com
+  // a cabeça para fora dela. Ali a figura encolhe até caber.
+  if (FOTO_FIXA) h = Math.min(h, (pe.y - VISTA.y) * 0.97);
+  if (h < 3) h = 3;
+  var l = h * g[1];
+  var cx = pe.x;                         // os pés ficam em cima do ponto do exercício
+  // quem é quem: um aro na cor do papel, deitado no chão embaixo dos pés
+  var cor = tipo === 'prof' ? CQ.prof : (tipo === 'colega' ? CQ.colega : CQ.aluno);
+  var rx = h * 0.24, ry = h * 0.055;
+  var s = '<g>' +
+    '<ellipse cx="' + nQ(cx) + '" cy="' + nQ(pe.y) + '" rx="' + nQ(rx) + '" ry="' + nQ(ry) +
+      '" fill="' + CQ.sombra + '"/>' +
+    (ARO ? '<ellipse cx="' + nQ(cx) + '" cy="' + nQ(pe.y) + '" rx="' + nQ(rx) + '" ry="' + nQ(ry) +
+      '" fill="' + cor + '" fill-opacity=".30" stroke="' + cor + '" stroke-width="' + nQ(h * 0.016) + '"/>' : '') +
+    '<image href="' + arq + '" x="' + nQ(cx - l * g[2]) + '" y="' + nQ(pe.y - h) +
+      '" width="' + nQ(l) + '" height="' + nQ(h) + '" preserveAspectRatio="xMidYMax meet"/></g>';
+  if (rot) s += qTexto(cx, pe.y + h * 0.12, rot, { tam:h * (ESC_FIG > 1 ? 0.10 : 0.20) });
+  return s;
+}
+
+function qJogador(x, y, rot, tipo, nome){
+  var foto = qRecorte(x, y, rot, tipo, nome);
+  if (foto) return foto;
+  var cor   = tipo === 'prof' ? CQ.prof   : (tipo === 'colega' ? CQ.colega   : CQ.aluno);
+  var esc0  = tipo === 'prof' ? CQ.profEsc : (tipo === 'colega' ? CQ.colegaEsc : CQ.alunoEsc);
+  var short = escurecer(esc0, 0.86);
+  var altura = 1.78;
+  var pe = proj(x, y, 0), cabeca = proj(x, y, altura);
+  var h = (pe.y - cabeca.y) * ESC_FIG;
+  if (h < 3) h = 3;
+  var l = h * 0.38;
+  var cx = (pe.x + cabeca.x) / 2, base = pe.y;
+  var u = function(v){ return nQ(v * h / 100); };
+  function px(v){ return nQ(cx + l * v); }
+  function py(v){ return nQ(base - h * v); }
+  // o boneco é desenhado com a raquete do lado direito, então ele bate para a
+  // direita; quando o exercício pede o outro lado, o desenho inteiro espelha
+  var alvo = paraOndeOlha(x, y);
+  var s = '<g' + (alvo !== null && alvo < x ? espelharEm(cx) : '') + '>';
+
+  // sombra projetada no chão: elipse achatada, deslocada para o lado da luz
+  s += '<ellipse cx="' + px(0.16) + '" cy="' + nQ(base + h * 0.012) + '" rx="' + u(30) +
+       '" ry="' + u(7.5) + '" fill="' + CQ.sombra + '"/>';
+
+  // perna de trás (mais escura) e perna da frente
+  s += '<path d="M ' + px(-0.04) + ' ' + py(0.46) + ' L ' + px(-0.30) + ' ' + py(0.02) +
+       ' L ' + px(-0.10) + ' ' + py(0.0) + ' L ' + px(0.08) + ' ' + py(0.44) + ' Z" fill="' + escurecer(CQ.peleEsc, 0.86) + '"/>';
+  s += '<path d="M ' + px(0.02) + ' ' + py(0.46) + ' L ' + px(0.26) + ' ' + py(0.02) +
+       ' L ' + px(0.06) + ' ' + py(0.0) + ' L ' + px(-0.06) + ' ' + py(0.44) + ' Z" fill="' + CQ.peleEsc + '"/>';
+  // tênis
+  s += '<ellipse cx="' + px(-0.20) + '" cy="' + nQ(base) + '" rx="' + u(8) + '" ry="' + u(3) + '" fill="#E7E0D2"/>';
+  s += '<ellipse cx="' + px(0.16) + '" cy="' + nQ(base) + '" rx="' + u(8) + '" ry="' + u(3) + '" fill="#E7E0D2"/>';
+  // short
+  s += '<path d="M ' + px(-0.32) + ' ' + py(0.52) + ' L ' + px(0.32) + ' ' + py(0.52) +
+       ' L ' + px(0.30) + ' ' + py(0.40) + ' L ' + px(0.04) + ' ' + py(0.43) +
+       ' L ' + px(-0.30) + ' ' + py(0.40) + ' Z" fill="' + short + '"/>';
+  // camisa: lado iluminado e lado na sombra
+  s += '<path d="M ' + px(-0.34) + ' ' + py(0.53) + ' L ' + px(-0.40) + ' ' + py(0.74) +
+       ' Q ' + px(0) + ' ' + py(0.83) + ' ' + px(0.40) + ' ' + py(0.74) +
+       ' L ' + px(0.34) + ' ' + py(0.53) + ' Z" fill="' + cor + '"/>';
+  s += '<path d="M ' + px(-0.34) + ' ' + py(0.53) + ' L ' + px(-0.40) + ' ' + py(0.74) +
+       ' Q ' + px(-0.20) + ' ' + py(0.79) + ' ' + px(-0.10) + ' ' + py(0.795) +
+       ' L ' + px(-0.10) + ' ' + py(0.53) + ' Z" fill="' + esc0 + '" fill-opacity=".55"/>';
+  // pescoço e cabeça
+  s += '<rect x="' + px(-0.10) + '" y="' + py(0.87) + '" width="' + u(7.6) + '" height="' + u(6) +
+       '" fill="' + CQ.peleEsc + '"/>';
+  s += '<circle cx="' + px(0) + '" cy="' + py(0.925) + '" r="' + u(8.2) + '" fill="' + CQ.pele + '"/>';
+  s += '<path d="M ' + px(-0.22) + ' ' + py(0.945) + ' a ' + u(8.2) + ' ' + u(8.2) + ' 0 0 1 ' + u(16.4) +
+       ' 0 Z" fill="#3A2A20"/>';   // cabelo, pela nuca
+
+  // braço livre e braço da raquete
+  s += '<line x1="' + px(-0.34) + '" y1="' + py(0.72) + '" x2="' + px(-0.52) + '" y2="' + py(0.50) +
+       '" stroke="' + CQ.peleEsc + '" stroke-width="' + u(6.5) + '" stroke-linecap="round"/>';
+  var bx = cx + l * 0.66, by = base - h * 0.62;
+  s += '<line x1="' + px(0.34) + '" y1="' + py(0.72) + '" x2="' + nQ(bx) + '" y2="' + nQ(by) +
+       '" stroke="' + CQ.pele + '" stroke-width="' + u(6.8) + '" stroke-linecap="round"/>';
+  // raquete: cabo, garganta, aro e as cordas
+  s += '<line x1="' + nQ(bx) + '" y1="' + nQ(by) + '" x2="' + nQ(bx + l * 0.20) + '" y2="' + nQ(by - h * 0.10) +
+       '" stroke="#26313A" stroke-width="' + u(3.6) + '" stroke-linecap="round"/>';
+  var rx0 = bx + l * 0.34, ry0 = by - h * 0.18;
+  s += '<ellipse cx="' + nQ(rx0) + '" cy="' + nQ(ry0) + '" rx="' + u(10.5) + '" ry="' + u(13.5) +
+       '" fill="#0F1A22" fill-opacity=".22" stroke="#26313A" stroke-width="' + u(3.2) + '"/>';
+  if (!MINI) {
+    s += '<line x1="' + nQ(rx0 - l * 0.11) + '" y1="' + nQ(ry0) + '" x2="' + nQ(rx0 + l * 0.11) + '" y2="' + nQ(ry0) +
+         '" stroke="#EDE7DA" stroke-opacity=".5" stroke-width="' + u(1.2) + '"/>';
+    s += '<line x1="' + nQ(rx0) + '" y1="' + nQ(ry0 - h * 0.075) + '" x2="' + nQ(rx0) + '" y2="' + nQ(ry0 + h * 0.075) +
+         '" stroke="#EDE7DA" stroke-opacity=".5" stroke-width="' + u(1.2) + '"/>';
+  }
+  s += '</g>';
+  if (rot) s += qTexto(cx, base + h * 0.18, rot, { tam:h * 0.20 });
+  return s;
+}
+
+function qCone(x, y, rot){
+  // Como o cone da folha modelo: laranja vivo, com duas faixas brancas,
+  // luz de um lado e a base quadrada. Mais alto que o de verdade (0,42 m),
+  // na mesma escala de leitura dos jogadores: senão vira um ponto laranja.
+  var alto = 0.46 * Math.max(1, ESC_FIG * 0.85);
+  var pe = proj(x, y, 0), topo = proj(x, y, alto);
+  var h = pe.y - topo.y, l = h * 0.62;
+  var cx = (pe.x + topo.x) / 2, id = 'cn' + Math.round(cx * 7 + pe.y * 3);
+  var faixa = function(t0, t1){
+    var ya = topo.y + h * t0, yb = topo.y + h * t1, la = l * t0 / 2, lb = l * t1 / 2;
+    return '<path d="M ' + nQ(cx - la) + ' ' + nQ(ya) + ' L ' + nQ(cx + la) + ' ' + nQ(ya) +
+      ' L ' + nQ(cx + lb) + ' ' + nQ(yb) + ' L ' + nQ(cx - lb) + ' ' + nQ(yb) + ' Z" fill="#F6F2EA"/>';
+  };
+  var s = '<g><defs><linearGradient id="' + id + '" x1="0" x2="1">' +
+    '<stop offset="0" stop-color="#FF9A4A"/><stop offset=".45" stop-color="#F26A1B"/>' +
+    '<stop offset="1" stop-color="#B8430C"/></linearGradient></defs>';
+  s += '<ellipse cx="' + nQ(cx + l * 0.12) + '" cy="' + nQ(pe.y) + '" rx="' + nQ(l * 0.75) + '" ry="' + nQ(l * 0.2) +
+       '" fill="' + CQ.sombra + '"/>';
+  s += '<rect x="' + nQ(cx - l * 0.62) + '" y="' + nQ(pe.y - h * 0.07) + '" width="' + nQ(l * 1.24) +
+       '" height="' + nQ(h * 0.09) + '" rx="' + nQ(h * 0.02) + '" fill="#C9500F"/>';
+  s += '<path d="M ' + nQ(cx - l * 0.06) + ' ' + nQ(topo.y) + ' L ' + nQ(cx + l * 0.06) + ' ' + nQ(topo.y) +
+       ' L ' + nQ(cx + l / 2) + ' ' + nQ(pe.y - h * 0.06) + ' L ' + nQ(cx - l / 2) + ' ' + nQ(pe.y - h * 0.06) +
+       ' Z" fill="url(#' + id + ')"/>';
+  s += faixa(0.30, 0.42) + faixa(0.60, 0.72);
+  s += '</g>';
+  if (rot) s += qTexto(cx, pe.y + h * 0.5, rot, { tam:h * 0.55 });
+  return s;
+}
+
+/* Alvo no chão: quatro cantos projetados. Em perspectiva ele deita na quadra
+   sozinho, em vez de ficar um retângulo colado por cima do desenho. */
+function qZona(x, y, larg, alt, rot){
+  var cantos = [[x - larg/2, y - alt/2], [x + larg/2, y - alt/2],
+                [x + larg/2, y + alt/2], [x - larg/2, y + alt/2]];
+  var meio = proj(x, y, 0);
+  var d = cantos.map(function(c){ var q = proj(c[0], c[1], 0); return nQ(q.x) + ',' + nQ(q.y); }).join(' ');
+  var s = '<g><polygon points="' + d + '" fill="' + CQ.zona + '" fill-opacity="' + (MINI ? '.40' : '.24') +
+    '" stroke="' + CQ.zona + '" stroke-width="' + nQ(traco(0.07, meio)) +
+    '" stroke-dasharray="' + nQ(traco(0.34, meio)) + ' ' + nQ(traco(0.24, meio)) + '"/></g>';
+  if (rot) s += qTexto(meio.x, meio.y, rot, { tam:escalaEm(meio) * 0.42, fundo:'rgba(9,22,35,.7)' });
+  return s;
+}
+
+/* Caminho no chão entre dois pontos, com a curva do exercício. É amostrado em
+   pedaços e projetado pedaço a pedaço: uma reta na quadra não é uma reta na
+   tela depois da perspectiva, e ligar só as pontas saía torto. */
+function qCaminho(x1, y1, x2, y2, curva, cor, tracejado, marcador){
+  var mx = (x1 + x2) / 2, my = (y1 + y2) / 2, dx = x2 - x1, dy = y2 - y1;
+  var comp = Math.sqrt(dx * dx + dy * dy) || 1;
+  var cx = mx - dy / comp * (curva || 0) * comp * 0.5;
+  var cy = my + dx / comp * (curva || 0) * comp * 0.5;
+  var n = 16, d = '', i, t, px2, py2, p;
+  for (i = 0; i <= n; i++) {
+    t = i / n;
+    px2 = (1-t)*(1-t)*x1 + 2*(1-t)*t*cx + t*t*x2;
+    py2 = (1-t)*(1-t)*y1 + 2*(1-t)*t*cy + t*t*y2;
+    p = proj(px2, py2, 0);
+    d += (i ? ' L ' : 'M ') + nQ(p.x) + ' ' + nQ(p.y);
+  }
+  var meio = proj(cx, cy, 0);
+  var w = traco(tracejado ? 0.13 : 0.11, meio);
+  var tr = tracejado ? ' stroke-dasharray="' + nQ(w * 2.4) + ' ' + nQ(w * 1.4) + '"' : '';
+  // a sombra embaixo do traço é o que faz a seta limão aparecer no saibro claro
+  return (MINI ? '' : '<path d="' + d + '" fill="none" stroke="rgba(20,12,6,.38)" stroke-width="' + nQ(w * 1.9) +
+      '" stroke-linecap="round" stroke-linejoin="round"' + tr + ' transform="translate(' + nQ(w * 0.25) + ' ' + nQ(w * 0.35) + ')"/>') +
+    '<path d="' + d + '" fill="none" stroke="' + cor + '" stroke-width="' + nQ(w) +
+    '" stroke-linecap="round" stroke-linejoin="round"' + tr +
+    ' marker-end="url(#' + marcador + ')"/>';
+}
+
+/* ==========================================================================
+   RÓTULOS — já em unidades de tela, porque é na tela que eles têm que caber
+   ========================================================================== */
+
+function bate(a, b){
+  return !(a.x + a.w < b.x || b.x + b.w < a.x || a.y + a.h < b.y || b.y + b.h < a.y);
+}
+
+/* Acha onde o rótulo cabe: desce, sobe, e por fim anda para os lados. Sem o
+   passo lateral, três rótulos perto do mesmo jogador acabavam empilhados em
+   cima dele — e um desenho com o nome do exercício escrito por cima do aluno
+   não serve para nada. Devolve [x, y]. */
+function lugarLivre(x, y, w, h){
+  var passo = h * 1.1, lado = w * 0.55, i, j, cand;
+  var desvios = [0, lado, -lado, lado * 2, -lado * 2];
+  for (j = 0; j < desvios.length; j++) {
+    for (i = 0; i < 8; i++) {
+      cand = { x:x + desvios[j], y:y + passo * i, w:w, h:h };
+      if (dentroDaVista(cand) && !ROTULOS.some(function(r){ return bate(cand, r); })) return [cand.x, cand.y];
+      cand = { x:x + desvios[j], y:y - passo * i, w:w, h:h };
+      if (i && dentroDaVista(cand) && !ROTULOS.some(function(r){ return bate(cand, r); })) return [cand.x, cand.y];
+    }
+  }
+  return [x, y];
+}
+
+function dentroDaVista(c){
+  return c.x >= VISTA.x && c.x + c.w <= VISTA.x + VISTA.w &&
+         c.y >= VISTA.y && c.y + c.h <= VISTA.y + VISTA.h;
+}
+
+function qTexto(x, y, txt, op){
+  if (MINI) return '';
+  op = op || {};
+  var tam = Math.max(VISTA.w * 0.024, Math.min(op.tam || VISTA.w * 0.030, VISTA.w * 0.036));
+  var margem = VISTA.w * 0.012;
+  var cabe = VISTA.w - margem * 2;
+  var larg = String(txt).length * tam * 0.56 + tam * 0.8;
+  if (larg > cabe) { tam = tam * cabe / larg; larg = cabe; }
+  var esq = VISTA.x + margem, dir = VISTA.x + VISTA.w - margem;
+  var dx = -larg / 2;
+  if (x + dx < esq)        x = esq - dx;
+  if (x + dx + larg > dir) x = dir - larg - dx;
+  var alt = tam * 1.5;
+  var pos = lugarLivre(x + dx, y - tam * 0.75, larg, alt);
+  var esqX = Math.max(esq, Math.min(pos[0], dir - larg));
+  var cima = Math.max(VISTA.y, Math.min(pos[1], VISTA.y + VISTA.h - alt));
+  x = esqX - dx;
+  ROTULOS.push({ x:esqX, y:cima, w:larg, h:alt });
+  return '<g>' +
+    '<rect x="' + nQ(esqX) + '" y="' + nQ(cima) + '" width="' + nQ(larg) + '" height="' + nQ(alt) +
+      '" rx="' + nQ(tam * 0.4) + '" fill="' + (op.fundo || CQ.fundoTx) + '" stroke="#E4DDB8" stroke-opacity=".75" stroke-width="' + nQ(tam * 0.07) + '"/>' +
+    // textLength manda o navegador caber o texto na largura calculada. Sem isso
+    // a conta de largura é só estimativa, e uma frase mais larga que a
+    // estimativa vaza para fora do desenho e some.
+    '<text x="' + nQ(x) + '" y="' + nQ(cima + alt * 0.72) + '" text-anchor="middle" fill="' +
+      (op.cor || CQ.texto) + '" font-size="' + nQ(tam) + '" font-weight="700" textLength="' +
+      nQ(Math.max(larg - tam * 0.8, tam)) + '" lengthAdjust="spacingAndGlyphs">' +
+      String(txt).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') +
+    '</text></g>';
+}
+
+/* ==========================================================================
+   OS ELEMENTOS QUE CADA EXERCÍCIO DECLARA
+   ========================================================================== */
+
+function qElemento(e){
+  var t = e[0];
+  // e[4] opcional: o nome do recorte a usar ('saque', 'rede', 'backhand'…)
+  if (t === 'aluno')  return qJogador(e[1], e[2], e[3], 'aluno', e[4]);
+  if (t === 'prof')   return qJogador(e[1], e[2], e[3], 'prof', e[4]);
+  if (t === 'colega') return qJogador(e[1], e[2], e[3], 'colega', e[4]);
+  if (t === 'cone')   return qCone(e[1], e[2], e[3]);
+  if (t === 'zona')   return qZona(e[1], e[2], e[3], e[4], e[5]);
+  if (t === 'bola')   return qCaminho(e[1], e[2], e[3], e[4], e[5], CQ.bola, true, 'seta-bola');
+  if (t === 'mov')    return qCaminho(e[1], e[2], e[3], e[4], e[5], CQ.mov, false, 'seta-mov');
+  if (t === 'texto')  { var pt = proj(e[1], e[2], 0); return qTexto(pt.x, pt.y, e[3], {}); }
+  if (t === 'marca') {
+    var p = proj(e[1], e[2], 0), r = Math.max(0.6, escalaEm(p) * 0.12);
+    return '<g><ellipse cx="' + nQ(p.x) + '" cy="' + nQ(p.y) + '" rx="' + nQ(r) + '" ry="' + nQ(r * 0.4) +
+      '" fill="' + CQ.mov + '"/></g>' +
+      (e[3] ? qTexto(p.x, p.y + r * 2.4, e[3], {}) : '');
+  }
+  if (t === 'escada') {              // escada de agilidade: 6 degraus no chão
+    var x = e[1], y = e[2], s = '<g>', i;
+    s += faixa(x - 0.55, y - 1.8, x - 0.55, y + 1.8, 0.06, CQ.mov);
+    s += faixa(x + 0.55, y - 1.8, x + 0.55, y + 1.8, 0.06, CQ.mov);
+    for (i = 0; i <= 6; i++) s += faixa(x - 0.55, y - 1.8 + i * 0.6, x + 0.55, y - 1.8 + i * 0.6, 0.05, CQ.mov);
+    s += '</g>';
+    return s + (e[3] ? qTexto(proj(x, y + 2.2, 0).x, proj(x, y + 2.2, 0).y, e[3], {}) : '');
+  }
+  if (t === 'corda') {               // corda esticada acima da rede
+    var a = proj(-QD.postX, 0, 1.75), b = proj(QD.postX, 0, 1.75);
+    return '<g><line x1="' + nQ(a.x) + '" y1="' + nQ(a.y) + '" x2="' + nQ(b.x) + '" y2="' + nQ(b.y) +
+      '" stroke="' + CQ.zona + '" stroke-width="' + nQ(traco(0.05, a)) +
+      '" stroke-dasharray="' + nQ(traco(0.3, a)) + ' ' + nQ(traco(0.22, a)) + '"/></g>' +
+      qTexto(b.x, b.y - VISTA.h * 0.03, e[1] || 'corda', { cor:CQ.zona });
+  }
+  return '';
+}
+
+/* O y de quem está mais longe é menor. Desenhar do fundo para a frente é o que
+   faz o jogador da rede aparecer na frente da rede, e o do fundo, atrás dela. */
+function profundidadeDe(e){
+  var t = e[0];
+  if (t === 'bola' || t === 'mov') return Math.min(e[2], e[4]) - 0.01;
+  if (t === 'zona' || t === 'corda') return -99;     // alvo e corda ficam no chão, antes de tudo
+  if (typeof e[2] === 'number') return e[2];
+  return 0;
+}
+
+/* ==========================================================================
+   O DESENHO PRONTO
+   ========================================================================== */
+
+function svgQuadra(fig, op){
+  if (!fig || !fig.el) return '';
+  op = op || {};
+  MINI = !!op.mini;
+  PROP = op.prop || 0;
+  ESC_FIG = op.escalaFig || 1;
+  var base = fig.base || 'meia';
+  var foto = op.desenho ? null : (FOTOS.jv || FOTOS[base]);
+  ARO = op.aro !== false;
+  FOTO_FIXA = !!(foto && foto.inteira);
+  if (foto) {
+    // a câmera vem da foto, e o desenho passa a morar no espaço de pixels dela
+    CAM = { x:foto.cam.x || 0, y:foto.cam.y, alt:foto.cam.alt, alvo:foto.cam.alvo };
+    DIST = foto.cam.dist;
+    CENTRO = { x:foto.cam.cx, y:foto.cam.cy };
+  } else {
+    CAM = (op.inteira ? CAMERAS.folha : CAMERAS[base]) || CAMERAS.meia;
+    DIST = 100;
+    CENTRO = { x:0, y:0 };
+  }
+  VISTA = foto && foto.inteira ? { x:0, y:0, w:foto.larg, h:foto.alt }
+        : op.inteira && !foto ? quadraInteira(fig.el) : enquadrar(base, fig.el);
+  if (foto) {
+    // a moldura não pode sair da foto: fora dela não há pixel nenhum
+    if (VISTA.w > foto.larg) { VISTA.x = 0; VISTA.w = foto.larg; }
+    if (VISTA.h > foto.alt)  { VISTA.y = 0; VISTA.h = foto.alt; }
+    VISTA.x = Math.max(0, Math.min(VISTA.x, foto.larg - VISTA.w));
+    VISTA.y = Math.max(0, Math.min(VISTA.y, foto.alt - VISTA.h));
+  }
+
+  // Reserva o espaço dos bonecos e dos cones ANTES de escrever qualquer
+  // rótulo. Sem isso o rótulo caía em cima do aluno — e um desenho com o texto
+  // escrito por cima da pessoa não serve para nada.
+  ROTULOS = [];
+  PECAS = fig.el;
+  fig.el.forEach(function(e){
+    var t = e[0];
+    if (t === 'aluno' || t === 'prof' || t === 'colega') {
+      // o lugar da pessoa NA ESCALA em que ela é desenhada (na folha, 2,3 vezes)
+      var pe = proj(e[1], e[2], 0), ca = proj(e[1], e[2], 1.75);
+      var h = (pe.y - ca.y) * ESC_FIG;
+      if (FOTO_FIXA) h = Math.min(h, (pe.y - VISTA.y) * 0.97);
+      var l = h * 0.34;
+      ROTULOS.push({ x:pe.x - l, y:pe.y - h, w:l * 2, h:h });
+    } else if (t === 'cone') {
+      var q = proj(e[1], e[2], 0), e2 = escalaEm(q);
+      ROTULOS.push({ x:q.x - e2 * .3, y:q.y - e2 * .5, w:e2 * .6, h:e2 * .6 });
+    }
+  });
+
+  // do fundo para a frente, com a rede no lugar dela (y = 0)
+  var ordenados = fig.el.slice().sort(function(a, b){
+    return profundidadeDe(a) - profundidadeDe(b);
+  });
+  var antes = '', depois = '';
+  ordenados.forEach(function(e){
+    if (profundidadeDe(e) < 0) antes += qElemento(e); else depois += qElemento(e);
+  });
+
+  // A seta do SVG é medida em espessuras de traço, e o traço agora engrossa
+  // com a perspectiva. Com os valores antigos a ponta ficava maior que a
+  // flecha inteira na miniatura.
+  var m = MINI ? 3.4 : 3.6;          // ponta grande, como a das setas da folha modelo
+  var alt = op.altura ? ' height="' + op.altura + '"' : '';
+  var rotulo = fig.nota ? ' aria-label="' + String(fig.nota).replace(/"/g, '&quot;') + '"' : '';
+  return '<svg class="qd' + (MINI ? ' qd-mini-selo' : '') + ' qd-' + base + '" viewBox="' +
+    nQ(VISTA.x) + ' ' + nQ(VISTA.y) + ' ' + nQ(VISTA.w) + ' ' + nQ(VISTA.h) + '" ' +
+    'width="100%"' + alt + ' role="img"' + rotulo + ' xmlns="http://www.w3.org/2000/svg">' +
+    '<defs>' +
+      '<marker id="seta-bola" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="' + m + '" markerHeight="' + m +
+        '" orient="auto-start-reverse"><path d="M 0 1 L 9 5 L 0 9 z" fill="' + CQ.bola + '"/></marker>' +
+      '<marker id="seta-mov" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="' + (m * 0.9) + '" markerHeight="' + (m * 0.9) +
+        '" orient="auto-start-reverse"><path d="M 0 1 L 9 5 L 0 9 z" fill="' + CQ.mov + '"/></marker>' +
+      '<linearGradient id="ceu" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0" stop-color="#13293D"/><stop offset="1" stop-color="#26404F"/></linearGradient>' +
+      // a luz do chão: clara no meio (perto da rede), escura nas bordas
+      // de leve: com a luz forte o desenho virava holofote, e o saibro das
+      // bordas ficava quase preto
+      '<radialGradient id="luz" cx="50%" cy="30%" r="82%">' +
+        '<stop offset="0" stop-color="#FFF6E6" stop-opacity=".30"/>' +
+        '<stop offset=".6" stop-color="#FFE9CC" stop-opacity=".05"/>' +
+        '<stop offset="1" stop-color="#2A0E03" stop-opacity=".26"/></radialGradient>' +
+    '</defs>' +
+    '<rect x="' + nQ(VISTA.x) + '" y="' + nQ(VISTA.y) + '" width="' + nQ(VISTA.w) + '" height="' + nQ(VISTA.h) +
+      '" fill="url(#ceu)"/>' +
+    (foto
+      ? '<image href="' + foto.arq + '" x="0" y="0" width="' + foto.larg + '" height="' + foto.alt +
+        '" preserveAspectRatio="none"/>' + antes + depois
+      : piso(base) + antes + rede() + depois) +
+  '</svg>';
+}
+
+/* Legenda do desenho — as mesmas cores, explicadas uma vez.
+   Quando o papel tem foto, a legenda mostra o ROSTO daquela pessoa e nao a
+   bolinha colorida: com foto no desenho, a cor deixa de ser o que identifica
+   quem e' quem, e uma legenda que continuasse falando de cor estaria mentindo. */
+function marcaPapel(tipo, cor){
+  var r = RECORTES[tipo];
+  // Sem `rosto`, vale a bolinha colorida — e é o caso quando os três papéis
+  // são a mesma pessoa de camisa diferente: três rostos iguais na legenda não
+  // diriam nada, e a cor da camisa já diz.
+  if (!r || !r.rosto) return '<i style="background:' + cor + '"></i>';
+  // `rosto` diz onde esta' a cabeca no recorte, porque ela nao fica no mesmo
+  // lugar em todas as poses: no saque, por exemplo, a raquete e' que esta' no
+  // alto da imagem, e a legenda mostrava um pedaco de raquete.
+  return '<i class="rosto" style="background-image:url(' + r.arq +
+         ');background-position:' + (r.rosto || '50% 4%') + '"></i>';
+}
+
+function legendaQuadra(){
+  return '<div class="qd-leg">' +
+    '<span>' + marcaPapel('aluno', CQ.aluno) + 'aluno</span>' +
+    '<span>' + marcaPapel('prof', CQ.prof) + 'professor</span>' +
+    '<span>' + marcaPapel('colega', CQ.colega) + 'colega</span>' +
+    '<span><i class="tr" style="background:' + CQ.bola + '"></i>bola</span>' +
+    '<span><i class="tr" style="background:' + CQ.mov + '"></i>deslocamento</span>' +
+    '<span><i class="cn" style="background:' + CQ.cone + '"></i>cone</span>' +
+    '<span><i class="zn"></i>alvo</span>' +
+  '</div>';
+}
