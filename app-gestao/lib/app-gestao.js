@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-01-5';
+const VERSAO='2026-10-01-6';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -6035,9 +6035,9 @@ function renderGraficoInicio(){
   }
   const grade=[0.25,0.5,0.75,1].map(f=>'<line class="grade" x1="0" x2="'+W+'" y1="'+yDe(max*f).toFixed(1)+'" y2="'+yDe(max*f).toFixed(1)+'"/>').join('');
   svg.innerHTML='<defs>'
-    +'<linearGradient id="jhg-t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F2B233" stop-opacity=".42"/><stop offset="1" stop-color="#F2B233" stop-opacity="0"/></linearGradient>'
-    +'<linearGradient id="jhg-p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5DBB63" stop-opacity=".30"/><stop offset="1" stop-color="#5DBB63" stop-opacity="0"/></linearGradient>'
-    +'<linearGradient id="jhg-e" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E8793A" stop-opacity=".30"/><stop offset="1" stop-color="#E8793A" stop-opacity="0"/></linearGradient>'
+    +'<linearGradient id="jhg-t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFC53D" stop-opacity=".55"/><stop offset="1" stop-color="#FFC53D" stop-opacity="0"/></linearGradient>'
+    +'<linearGradient id="jhg-p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4CE06E" stop-opacity=".42"/><stop offset="1" stop-color="#4CE06E" stop-opacity="0"/></linearGradient>'
+    +'<linearGradient id="jhg-e" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF8740" stop-opacity=".42"/><stop offset="1" stop-color="#FF8740" stop-opacity="0"/></linearGradient>'
     +'</defs>'+grade+hoje
     +'<path class="area" fill="url(#jhg-t)" d="'+area('total')+'"/>'
     +'<path class="area" fill="url(#jhg-p)" d="'+area('personal')+'"/>'

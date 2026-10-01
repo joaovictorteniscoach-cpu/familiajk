@@ -2738,3 +2738,24 @@ body #pg-dash.page{padding-top:0!important;background:linear-gradient(180deg,#05
 #pg-dash .jh-chips .jh-quadra-txt b{font-size:13px;margin:1px 0;text-shadow:0 1px 6px rgba(0,0,0,.55)}
 #pg-dash .jh-chips .jh-quadra-txt small{text-shadow:0 1px 5px rgba(0,0,0,.6)}
 @media(max-width:400px){#pg-dash .jh-chips .jh-quadra-txt b{font-size:12.5px}}
+
+/* Quadrinhos sem desfoque: com o blur a foto escura borrava e o quadrinho
+   continuava parecendo sólido. Agora a quadra aparece de verdade por trás. */
+#pg-dash .jh-chips .jh-quadra{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:rgba(6,26,17,.10)!important}
+
+/* Gráficos mais vivos (01/10): cores mais saturadas, um pouco mais claras e
+   com brilho. Vale para o Início (linhas, áreas e anéis) e para as barras de
+   Gráficos e Financeiro. */
+#pg-dash{--jh-gold:#FFC53D;--jh-green:#4CE06E;--jh-orange:#FF8740}
+#pg-dash #jh-graf .ln{stroke-width:2.6;filter:drop-shadow(0 0 3px currentColor)}
+#pg-dash #jh-graf .ln.total{color:#FFC53D}#pg-dash #jh-graf .ln.personal{color:#4CE06E}#pg-dash #jh-graf .ln.tenis{color:#FF8740}
+#pg-dash .jh-ring .fg{filter:drop-shadow(0 0 4px rgba(255,197,61,.55))}
+#pg-dash .jh-ring.personal .fg{filter:drop-shadow(0 0 4px rgba(76,224,110,.55))}
+#pg-dash .jh-ring.tenis .fg{filter:drop-shadow(0 0 4px rgba(255,135,64,.55))}
+#pg-dash .jh-ring .bg{stroke:rgba(255,255,255,.09)}
+#pg-dash .jh-ring.personal .bg{stroke:rgba(76,224,110,.16)}#pg-dash .jh-ring.tenis .bg{stroke:rgba(255,135,64,.18)}
+.chart-bar.meta{background:linear-gradient(90deg,#E8A92A,#FFD24D)!important;box-shadow:0 0 8px rgba(255,197,61,.45)}
+.chart-bar.rec{background:linear-gradient(90deg,#2FBF5A,#5CF07E)!important;box-shadow:0 0 8px rgba(76,224,110,.40)}
+.chart-bar.arec{background:linear-gradient(90deg,#F0C75E,#FFE08A)!important;box-shadow:0 0 8px rgba(255,214,110,.38)}
+.chart-bar.desp{background:linear-gradient(90deg,#F06A2E,#FF9A55)!important;box-shadow:0 0 8px rgba(255,135,64,.42)}
+.chart-bar.neg{background:linear-gradient(90deg,#E63B3B,#FF6B5E)!important;box-shadow:0 0 8px rgba(255,90,80,.40)}
