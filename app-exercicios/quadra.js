@@ -131,7 +131,7 @@ const FOTOS = {
 const FIG = {
   'jv-espera-frente.webp':    [1.62, 0.721, 0.498], 'jv-espera-costas.webp':    [1.65, 0.707, 0.500],
   'jv-golpe-frente-fh.webp':  [1.60, 0.829, 0.589], 'jv-golpe-frente-bh.webp':  [1.61, 0.840, 0.399],
-  'jv-golpe-costas-fh.webp':  [1.66, 0.849, 0.362], 'jv-golpe-costas-bh.webp':  [1.66, 0.849, 0.636],
+  'jv-golpe-costas-fh.webp':  [1.66, 0.849, 0.362], 'jv-lat-bh-esq.webp':       [1.59, 0.897, 0.605],
   'jv-voleio.webp':           [1.68, 0.785, 0.372], 'jv-voleio-esq.webp':       [1.68, 0.785, 0.626],
   'jv-saque-frente.webp':     [1.95, 0.465, 0.333], 'jv-saque-costas.webp':     [1.80, 0.616, 0.399],
   'jv-aproxima.webp':         [1.58, 0.692, 0.370], 'jv-aproxima-esq.webp':     [1.58, 0.692, 0.627],
@@ -157,7 +157,10 @@ const FIG = {
    O saque não muda de lado: a figura é de um destro, e é assim que ele saca
    dos dois lados da quadra. */
 var GOLPE_F = { dir:'jv-golpe-frente-bh.webp', esq:'jv-golpe-frente-fh.webp' };
-var GOLPE_C = { dir:'jv-golpe-costas-fh.webp', esq:'jv-golpe-costas-bh.webp' };
+/* o backhand visto de trás: a prancha esconde a raquete nessa vista, e o
+   forehand espelhado parecia um canhoto. Fica o backhand de DUAS MÃOS de
+   perfil, virado para a esquerda da imagem (o lado do backhand dele). */
+var GOLPE_C = { dir:'jv-golpe-costas-fh.webp', esq:'jv-lat-bh-esq.webp' };
 var VOLEIO  = { dir:'jv-voleio.webp',   esq:'jv-voleio-esq.webp' };
 var APROX   = { dir:'jv-aproxima.webp', esq:'jv-aproxima-esq.webp' };
 var DESLOCA = { dir:'jv-desloca.webp',  esq:'jv-desloca-esq.webp' };
@@ -925,6 +928,32 @@ function svgQuadra(fig, op){
         '" preserveAspectRatio="none"/>' + antes + depois
       : piso(base) + antes + rede() + depois) +
   '</svg>';
+}
+
+/* Recorte deitado da foto, para o diagrama da folha paisagem. A foto é a
+   quadra inteira (mais alta que larga); a folha pede uma janela larga. A
+   janela fica com a largura toda da foto e desce até onde está o que o
+   exercício usa — pessoas, cones, rótulos, setas e zonas. Se não couber
+   tudo, fica o lado de cá (onde está o aluno). Chame logo depois do
+   svgQuadra da mesma figura: usa a câmera e as caixas que ele deixou. */
+function janelaDaFoto(fig, aspecto){
+  var foto = FOTOS.jv;
+  if (!foto || !FOTO_FIXA || !fig || !fig.el) return null;
+  var h = Math.min(foto.alt, foto.larg / aspecto), cima = Infinity, baixo = -Infinity;
+  function inclui(y){ if (isFinite(y)) { cima = Math.min(cima, y); baixo = Math.max(baixo, y); } }
+  ROTULOS.forEach(function(r){ inclui(r.y); inclui(r.y + r.h); });
+  fig.el.forEach(function(e){
+    var t = e[0];
+    if (t === 'bola' || t === 'mov') { inclui(proj(e[1], e[2], 0).y); inclui(proj(e[3], e[4], 0).y); }
+    else if (t === 'zona') { inclui(proj(e[1], e[2] - e[4] / 2, 0).y); inclui(proj(e[1], e[2] + e[4] / 2, 0).y); }
+    else if (t === 'marca' || t === 'escada' || t === 'texto') inclui(proj(e[1], e[2], 0).y);
+  });
+  if (!isFinite(cima)) return { x:0, y:(foto.alt - h) / 2, w:foto.larg, h:h };
+  var folga = h * 0.05, y0;
+  if (baixo - cima + folga * 2 <= h) y0 = (cima + baixo) / 2 - h / 2;
+  else y0 = baixo + folga - h;
+  y0 = Math.max(0, Math.min(y0, foto.alt - h));
+  return { x:0, y:y0, w:foto.larg, h:h };
 }
 
 /* Legenda do desenho — as mesmas cores, explicadas uma vez.

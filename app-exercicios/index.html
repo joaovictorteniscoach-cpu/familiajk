@@ -586,7 +586,6 @@ header.bar{
 .ft-top .ft-logo{position:absolute;right:10mm;top:5.5mm;display:flex;flex-direction:column;align-items:center;gap:1.6mm}
 .ft-top .ft-logo svg{width:27mm;height:auto}
 .ft-top .ft-logo span{color:#fff;font-weight:600;font-size:12pt;letter-spacing:.5em;margin-right:-.5em}
-.ft-bola{position:absolute;right:-7mm;bottom:-19mm;width:38mm;height:38mm}
 .ft-cap{position:relative;border-left:.9mm solid #DDEE66;padding-left:2.6mm;margin-bottom:3.4mm;
   font-weight:700;font-size:9.4pt;letter-spacing:.06em;text-transform:uppercase;line-height:1.22}
 .ft-cap span{display:block;color:#DDEE66}
@@ -651,7 +650,7 @@ header.bar{
    principal agora é o PDF gerado aqui mesmo, sem internet, e entregue pelo
    menu de compartilhar do celular — de lá vai para o WhatsApp, para Arquivos
    ou para a impressora ("Imprimir" aparece no próprio menu). */
-#pdfPalco{position:fixed;left:-10000px;top:0;width:210mm;pointer-events:none}
+#pdfPalco{position:fixed;left:-10000px;top:0;pointer-events:none}
 #pdfAviso{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;
   background:rgba(6,14,24,.72);padding:20px}
 #pdfAviso.aberto{display:flex}
@@ -673,6 +672,104 @@ header.bar{
 #fundoPlano .folha-acoes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 #fundoPlano .folha-acoes #btnPdf{grid-column:1/-1;order:-1}
 #fundoPlano .folha-acoes .btn.pq{padding:9px 6px;font-size:12.5px;min-width:0}
+
+/* ==== A FOLHA DE TREINO, DEITADA ===========================================
+   A4 em paisagem, no modelo que o João criou (ferramentas/originais/
+   referencia-folha-paisagem-treino22.jpg): foto de saibro de fundo, o
+   jogador grande à esquerda com o título, a coluna de cartões à direita
+   (camada, nível, objetivo, dados, diagrama da quadra, passo a passo,
+   foco, erros, facilitar, dificultar, variações), a sequência do movimento
+   embaixo e a faixa de quatro cartões no pé. Medidas tiradas do modelo. */
+.fp{width:297mm;height:210mm;overflow:hidden;position:relative;
+  background:#3A1A0C url(fundo-paisagem.webp) center/cover no-repeat;color:#1B232A;
+  font-family:"JV Cond","Arial Narrow",sans-serif;font-weight:500;font-size:8.4pt;line-height:1.2;
+  page-break-after:always;break-after:page;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.fp:last-child{page-break-after:auto;break-after:auto}
+.fp *{box-sizing:border-box}
+.fp h1,.fp h2,.fp h3,.fp p,.fp ul,.fp ol{margin:0;padding:0;list-style:none}
+.fp b{font-weight:700}
+.fp .ic{width:100%;height:100%;display:block}
+
+/* topo à esquerda: pílulas, título, frase */
+.fp-pilulas{position:absolute;left:7.3mm;top:5.4mm;display:flex;align-items:center;z-index:3}
+.fp-pilulas span{display:block;font-weight:900;font-style:italic;font-size:13pt;line-height:1;color:#0B0E0D;text-transform:uppercase;
+  background:#DDEE66;border-radius:3mm;padding:1.3mm 4.2mm 1.1mm 3.4mm;position:relative;z-index:2}
+.fp-pilulas em{display:block;font-style:normal;font-weight:700;font-size:7.6pt;letter-spacing:.03em;color:#fff;
+  text-transform:uppercase;border:.35mm solid #DDEE66;border-left:none;border-radius:0 3mm 3mm 0;
+  padding:1.25mm 3.2mm 1.1mm 4.4mm;margin-left:-2.6mm;background:rgba(11,14,13,.72)}
+.fp-pilulas em i{font-style:normal;color:#DDEE66}
+.fp-titulo{position:absolute;left:7.5mm;top:14.2mm;width:96mm;z-index:3;font-weight:900;font-style:italic;
+  text-transform:uppercase;line-height:.9;letter-spacing:-.005em}
+.fp-titulo span{display:block;color:#fff;text-shadow:0 .4mm 1.6mm rgba(0,0,0,.45)}
+.fp-titulo span+span{color:#DDEE66}
+.fp-sub{position:absolute;left:8mm;width:62mm;z-index:3;font-weight:700;font-size:10.6pt;line-height:1.14;
+  color:#fff;text-transform:uppercase;text-shadow:0 .3mm 1.2mm rgba(0,0,0,.55)}
+
+/* o jogador grande, com a sombra no chão */
+.fp-heroi{position:absolute;z-index:2;bottom:91mm;height:96mm;display:block}
+.fp-sombra{position:absolute;z-index:1;width:62mm;height:7mm;bottom:88.2mm;border-radius:50%;
+  background:radial-gradient(ellipse at center,rgba(0,0,0,.55) 0%,rgba(0,0,0,.22) 45%,rgba(0,0,0,0) 72%)}
+
+/* a marca, no canto */
+.fp-marca{position:absolute;right:7mm;top:3.2mm;display:flex;align-items:center;gap:2.2mm;z-index:3}
+.fp-marca svg{width:11.5mm;height:6mm;display:block}
+.fp-marca p{font-weight:700;font-size:7.2pt;letter-spacing:.22em;line-height:1.25;color:#fff}
+
+/* coluna da direita */
+.fp-cx{position:absolute;border-radius:2.4mm}
+.fp-esc{background:rgba(11,14,13,.82);border:.35mm solid #DDEE66;color:#fff;display:flex;align-items:center;gap:3.4mm;
+  padding:0 3.6mm}
+.fp-esc svg{flex:0 0 11mm;width:11mm;height:11mm}
+.fp-esc small{display:block;font-weight:700;font-size:7.4pt;letter-spacing:.04em;text-transform:uppercase}
+.fp-esc b{display:block;font-weight:900;font-style:italic;font-size:13pt;line-height:1.02;color:#DDEE66;text-transform:uppercase}
+.fp-esc i{display:block;font-style:normal;font-size:6.4pt;color:#E9E2D6;margin-top:.4mm}
+.fp-cl{background:rgba(248,249,250,.95);display:flex;align-items:center;gap:3mm;padding:0 3.4mm;
+  box-shadow:0 .5mm 1.8mm rgba(0,0,0,.18)}
+.fp-cl>svg{flex:0 0 9.6mm;width:9.6mm;height:9.6mm}
+.fp-cl small{display:block;font-weight:700;font-size:7.6pt;letter-spacing:.03em;text-transform:uppercase;color:#0B0E0D}
+.fp-cl span{display:block;font-size:9pt;line-height:1.15;color:#27313A}
+
+.fp-painel{position:absolute;left:167.8mm;top:69.1mm;width:126.1mm;height:116.5mm;border-radius:2.6mm;
+  background:rgba(238,240,242,.96);box-shadow:0 .6mm 2.4mm rgba(0,0,0,.22)}
+.fp-painel>div{position:absolute}
+.fp-bar{display:flex;align-items:center;gap:2.2mm;height:5.6mm;border-radius:1.6mm;background:#0B0E0D;color:#fff;
+  font-weight:700;font-size:8pt;letter-spacing:.03em;text-transform:uppercase;padding:0 2.4mm;white-space:nowrap}
+.fp-bar svg{flex:0 0 4.6mm;width:4.6mm;height:4.6mm}
+.fp-diag{overflow:hidden;border-radius:1.8mm;background:#0B0E0D}
+.fp-diag .fp-bar{position:absolute;left:0;top:0;right:0;z-index:2;border-radius:1.8mm 1.8mm 0 0;background:rgba(11,14,13,.86)}
+.fp-diag .qd,.fp-diag canvas{display:block;width:100%;height:100%}
+.fp-diag svg text{font-family:"JV Cond","Arial Narrow",sans-serif!important;font-weight:700;text-transform:uppercase;letter-spacing:.02em}
+.fp-passos ol{margin-top:2mm}
+.fp-passos li{display:flex;gap:2mm;align-items:flex-start;margin-bottom:1.3mm;font-size:8.1pt;line-height:1.16;color:#27313A}
+.fp-passos .fp-aperta li{font-size:7.7pt;margin-bottom:1.05mm}
+.fp-passos li i{flex:0 0 5.2mm;height:5.2mm;border-radius:50%;background:#DDEE66;color:#0B0E0D;font-style:normal;
+  font-weight:700;font-size:8.4pt;display:flex;align-items:center;justify-content:center;margin-top:-.3mm}
+.fp-lista{padding:2mm 1.8mm 0 2.4mm}
+.fp-lista li{display:flex;gap:1.4mm;font-size:8pt;line-height:1.16;color:#27313A;margin-bottom:.6mm}
+.fp-lista li i{font-style:normal;color:#0B0E0D;flex:0 0 auto}
+.fp-bloco{background:rgba(255,255,255,.62);border-radius:1.8mm}
+
+/* a sequência do movimento */
+.fp-seq{position:absolute;left:4.6mm;top:124.7mm;width:162mm;height:60.9mm;border-radius:2.4mm;
+  background:rgba(11,14,13,.80);border:.3mm solid rgba(221,238,102,.55);padding:1.5mm}
+.fp-seq h3{font-weight:700;font-size:8.4pt;letter-spacing:.04em;color:#fff;text-transform:uppercase;padding:.6mm 1.2mm 1.4mm}
+.fp-quadros{display:flex;gap:1.2mm}
+.fp-quadros>div{flex:1 1 0;min-width:0}
+.fp-q{height:43.2mm;border-radius:1.4mm 1.4mm 0 0;overflow:hidden;position:relative;
+  background:#7A3A1A url(fundo-sequencia.webp) no-repeat;background-size:cover}
+.fp-q img{position:absolute;bottom:3mm;left:50%;height:35mm;display:block}
+.fp-q .fp-pe{position:absolute;bottom:1.8mm;left:50%;width:22mm;height:3.4mm;margin-left:-11mm;border-radius:50%;
+  background:radial-gradient(ellipse at center,rgba(0,0,0,.5) 0%,rgba(0,0,0,0) 70%)}
+.fp-quadros p{background:#0B0E0D;color:#fff;font-weight:700;font-size:6.9pt;letter-spacing:.01em;text-transform:uppercase;
+  text-align:center;padding:1.15mm .6mm;border-radius:0 0 1.4mm 1.4mm;white-space:nowrap;overflow:hidden}
+
+/* a faixa de baixo */
+.fp-pe4{position:absolute;top:189.6mm;height:16mm;background:rgba(248,249,250,.96);border-radius:2.2mm;
+  display:flex;align-items:center;gap:3mm;padding:0 3.2mm;box-shadow:0 .5mm 1.8mm rgba(0,0,0,.2)}
+.fp-pe4>svg{flex:0 0 10.4mm;width:10.4mm;height:10.4mm}
+.fp-pe4 small{display:block;font-weight:700;font-size:7.8pt;letter-spacing:.03em;text-transform:uppercase;color:#0B0E0D;margin-bottom:.5mm}
+.fp-pe4>div{min-width:0;max-height:14mm;overflow:hidden}
+.fp-pe4 span{display:block;font-size:8.2pt;line-height:1.15;color:#27313A}
 
 /* ---- página de resumo do PDF: a aula inteira numa folha, no visual da
    folha de treino (cabeçalho preto, faixa de dados, cartões claros) ---- */
@@ -1244,18 +1341,6 @@ function marcaJV(deitada){
     '<span>TÊNIS</span></div>';
 }
 
-/* A bola de tênis do cabeçalho, desenhada: gradiente para o volume, ruído
-   para o feltro e as duas costuras. */
-var BOLA_SVG = '<svg class="ft-bola" viewBox="0 0 100 100" aria-hidden="true"><defs>' +
-  '<radialGradient id="ftBolaG" cx="34%" cy="30%" r="78%"><stop offset="0" stop-color="#F4FBA6"/>' +
-  '<stop offset=".42" stop-color="#D9ED52"/><stop offset=".82" stop-color="#9AB51D"/><stop offset="1" stop-color="#5E7409"/></radialGradient>' +
-  '<filter id="ftFeltro" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="1.6" numOctaves="2" seed="7" result="r"/>' +
-  '<feColorMatrix in="r" values="0 0 0 0 .98  0 0 0 0 1  0 0 0 0 .78  0 0 0 .55 0" result="f"/>' +
-  '<feComposite in="f" in2="SourceGraphic" operator="in"/></filter></defs>' +
-  '<circle cx="50" cy="50" r="48" fill="url(#ftBolaG)"/>' +
-  '<circle cx="50" cy="50" r="48" fill="#fff" filter="url(#ftFeltro)" opacity=".5"/>' +
-  '<path d="M9 28C36 37 39 63 12 77" fill="none" stroke="#F9FCE3" stroke-width="3.4" stroke-linecap="round"/>' +
-  '<path d="M91 23C63 33 61 64 89 73" fill="none" stroke="#F9FCE3" stroke-width="3.4" stroke-linecap="round"/></svg>';
 var LUZ_SVG = '<svg class="luz" viewBox="0 0 210 50" preserveAspectRatio="none" aria-hidden="true"><defs>' +
   '<linearGradient id="ftRaio" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#DDEE66" stop-opacity="0"/>' +
   '<stop offset=".55" stop-color="#DDEE66" stop-opacity=".7"/><stop offset="1" stop-color="#DDEE66" stop-opacity="0"/></linearGradient>' +
@@ -1275,80 +1360,225 @@ function curto(t, max){
   var corte = t.search(/ — |: /);
   if (corte >= 18) t = t.slice(0, corte);
   t = t.replace(/[.;]\s*$/, '');
-  if (max && t.length > max) t = t.slice(0, t.lastIndexOf(' ', max)) + '…';
+  if (max && t.length > max) t = t.slice(0, t.lastIndexOf(' ', max)).replace(/[,;:(\s]+$/, '') + '…';
   return t;
 }
 
+/* ==========================================================================
+   A FOLHA DE TREINO, DEITADA (A4 paisagem) — no modelo do Treino 22 que o
+   João criou. Tudo sai do banco: nenhum texto é escrito à mão aqui.
+   ========================================================================== */
+
+/* A sequência do movimento: cinco quadros com as poses da prancha da JV
+   (ferramentas/recortar-poses-jv.py). Cada tema tem a sua; o jogador grande
+   do topo é o momento principal dela. */
+var SEQUENCIAS = {
+  fh:    { heroi:'jv-lat-fh-hd.webp', q:[['Posição de espera','jv-lat-espera-hd.webp'], ['Deslocamento','jv-desloca-hd.webp'],
+           ['Preparação','jv-aproxima-hd.webp'], ['Contato','jv-lat-fh-hd.webp'], ['Finalização','jv-fh-fim-hd.webp']] },
+  bh:    { heroi:'jv-lat-bh-hd.webp', q:[['Posição de espera','jv-lat-espera-hd.webp'], ['Deslocamento','jv-desloca-esq-hd.webp'],
+           ['Preparação','jv-lat-reves-hd.webp'], ['Contato','jv-lat-bh-hd.webp'], ['Volta ao centro','jv-espera-frente-hd.webp']] },
+  rede:  { heroi:'jv-voleio-hd.webp', q:[['Posição de espera','jv-lat-espera-hd.webp'], ['Aproximação','jv-aproxima-hd.webp'],
+           ['Split-step','jv-split-hd.webp'], ['Voleio','jv-voleio-hd.webp'], ['Volta à posição','jv-espera-frente-hd.webp']] },
+  saque: { heroi:'jv-saque-frente-hd.webp', q:[['Posição inicial','jv-lat-espera-hd.webp'], ['Lançamento','jv-saque-lanca-hd.webp'],
+           ['Troféu','jv-saque-costas-hd.webp'], ['Contato','jv-saque-frente-hd.webp'], ['Recuperação','jv-espera-frente-hd.webp']] },
+  pes:   { heroi:'jv-desloca-hd.webp', q:[['Posição de espera','jv-lat-espera-hd.webp'], ['Split-step','jv-split-hd.webp'],
+           ['Deslocamento','jv-desloca-hd.webp'], ['Apoio e freio','jv-aproxima-hd.webp'], ['Recuperação','jv-espera-frente-hd.webp']] },
+  mov:   { heroi:'jv-aproxima-hd.webp', q:[['Posição de espera','jv-lat-espera-hd.webp'], ['Deslocamento','jv-desloca-hd.webp'],
+           ['Ajuste','jv-aproxima-hd.webp'], ['Golpe','jv-lat-fh-hd.webp'], ['Recuperação','jv-desloca-esq-hd.webp']] }
+};
+/* largura ÷ altura de cada recorte, para centrar o jogador sem esperar a imagem */
+var PROP_POSE = { 'jv-aproxima-hd.webp':0.691, 'jv-desloca-esq-hd.webp':0.639, 'jv-desloca-hd.webp':0.639, 'jv-espera-frente-hd.webp':0.715, 'jv-fh-fim-hd.webp':0.807, 'jv-lat-bh-hd.webp':0.897, 'jv-lat-espera-hd.webp':0.697, 'jv-lat-fh-hd.webp':1.031, 'jv-lat-reves-hd.webp':0.784, 'jv-saque-costas-hd.webp':0.593, 'jv-saque-frente-hd.webp':0.46, 'jv-saque-lanca-hd.webp':0.405, 'jv-split-hd.webp':0.969, 'jv-voleio-hd.webp':0.782 };
+
+function sequenciaDo(e){
+  var poses = e.fig.el.filter(function(x){ return x[0] === 'aluno'; }).map(function(x){ return x[4] || ''; });
+  var t = e.tema[0];
+  if (t === 'saque' || (poses.indexOf('saque') >= 0 && e.tema.indexOf('saque') >= 0)) return SEQUENCIAS.saque;
+  if (t === 'rede') return SEQUENCIAS.rede;
+  if (t === 'backhand') return SEQUENCIAS.bh;
+  if (t === 'forehand') return poses.indexOf('backhand') >= 0 && poses.indexOf('forehand') < 0 ? SEQUENCIAS.bh : SEQUENCIAS.fh;
+  if (t === 'footwork') return SEQUENCIAS.pes;
+  return SEQUENCIAS.mov;
+}
+
+/* O nome em duas linhas, como "FOREHAND / EM MOVIMENTO": a primeira branca,
+   a segunda limão. Corta onde as duas ficam mais parecidas, sem deixar
+   preposição sobrando no fim da primeira. */
+var LIGA_TITULO = ['DE','DO','DA','DOS','DAS','NA','NO','NAS','NOS','EM','COM','E','A','O','À','AO','PRA','PARA','SEM',
+  'POR','UM','UMA','+','—','-','OU','QUE'];
+function partirTitulo(nome){
+  var p = String(nome).toUpperCase().split(/\s+/).filter(Boolean);
+  if (p.length < 2) return [p.join(' '), ''];
+  var total = p.join(' ').length, melhor = 1, nota = Infinity;
+  for (var i = 1; i < p.length; i++) {
+    var a = p.slice(0, i).join(' ').length, b = total - a - 1;
+    var n = Math.max(a, b) + (LIGA_TITULO.indexOf(p[i - 1]) >= 0 ? 6 : 0);
+    if (n < nota) { nota = n; melhor = i; }
+  }
+  return [p.slice(0, melhor).join(' '), p.slice(melhor).join(' ')];
+}
+
+/* os ícones da folha deitada (os do círculo limão vêm do icone()) */
+function icoFP(nome){
+  var L = LIM_, E = ESC_, s;
+  var circ = function(g){ return '<circle cx="12" cy="12" r="12" fill="' + L + '"/>' + g; };
+  switch (nome) {
+    case 'piramide': s = '<path d="M12 2.5 22 21H2z" fill="none" stroke="' + L + '" stroke-width="1.5" stroke-linejoin="round"/>' +
+      '<path d="M7.1 12h9.8M4.7 16.5h14.6" stroke="' + L + '" stroke-width="1.5"/>'; break;
+    case 'barras': s = '<rect x="2.6" y="14" width="4.4" height="7.4" rx=".6" fill="' + L + '"/>' +
+      '<rect x="9.8" y="9.2" width="4.4" height="12.2" rx=".6" fill="' + L + '"/><rect x="17" y="3.6" width="4.4" height="17.8" rx=".6" fill="' + L + '"/>'; break;
+    case 'lupa': s = '<circle cx="10.4" cy="10.4" r="6.2" fill="none" stroke="' + L + '" stroke-width="2.4"/>' +
+      '<path d="M15 15l5.6 5.6" stroke="' + L + '" stroke-width="2.8" stroke-linecap="round"/>'; break;
+    case 'xis': s = '<rect x="1" y="1" width="22" height="22" rx="6" fill="#E5484D"/>' +
+      '<path d="M8 8l8 8M16 8l-8 8" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>'; break;
+    case 'desce': s = circ('<path d="M12 6.4v10M7.6 12 12 16.5l4.4-4.5" fill="none" stroke="' + E + '" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>'); break;
+    case 'sobe': s = circ('<path d="M12 17.6v-10M7.6 12 12 7.5l4.4 4.5" fill="none" stroke="' + E + '" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>'); break;
+    case 'ciclo': s = '<path d="M19.4 12a7.4 7.4 0 0 1-12.6 5.2M4.6 12a7.4 7.4 0 0 1 12.6-5.2" fill="none" stroke="' + L + '" stroke-width="2.5" stroke-linecap="round"/>' +
+      '<path d="M17.6 2.8l-.3 4.4-4.3-.5M6.4 21.2l.3-4.4 4.3.5" fill="none" stroke="' + L + '" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>'; break;
+    case 'lampada': s = circ('<path d="M12 5.4a4.7 4.7 0 0 0-2.8 8.5c.5.4.8 1 .8 1.6v.7h4v-.7c0-.6.3-1.2.8-1.6A4.7 4.7 0 0 0 12 5.4z" fill="none" stroke="' + E + '" stroke-width="1.6"/>' +
+      '<path d="M10.1 18.2h3.8M10.8 20h2.4" stroke="' + E + '" stroke-width="1.5" stroke-linecap="round"/>'); break;
+    case 'balao': s = circ('<path d="M12 6.2c-3.6 0-6.4 2.4-6.4 5.3 0 1.5.7 2.9 1.9 3.9l-.6 2.7 3-1.6c.7.2 1.4.3 2.1.3 3.6 0 6.4-2.4 6.4-5.3S15.6 6.2 12 6.2z" fill="none" stroke="' + E + '" stroke-width="1.7" stroke-linejoin="round"/>'); break;
+    case 'etiqueta': s = circ('<path d="M6 6.4h5.4l6.8 6.8-5.4 5.4L6 11.8z" fill="none" stroke="' + E + '" stroke-width="1.7" stroke-linejoin="round"/><circle cx="9.1" cy="9.4" r="1.3" fill="' + E + '"/>'); break;
+    default: return icone(nome);
+  }
+  return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">' + s + '</svg>';
+}
+
+function juntarE(l){ return l.length > 1 ? l.slice(0, -1).join(', ') + ' e ' + l[l.length - 1] : (l[0] || ''); }
+
 function folhaTreino(e, minutos, nivelSel, pagina){
-  var b = bloco(e.bloco), t = tema(e.tema[0]);
+  var b = bloco(e.bloco), t = tema(e.tema[0]), cam = CAMADAS[(e.camada || 1) - 1];
   var listaMat = e.mat.map(function(m){ var x = material(m); return x ? x.nome : m; });
   var mats = listaMat.slice(0, 3).join(', ') + (listaMat.length > 3 ? ' +' + (listaMat.length - 3) : '');
   var nomesNv = e.niveis.map(function(n){ var x = nivel(n); return x ? x.nome : n; });
-  // uma linha só, como no modelo: com mais de dois níveis, vira faixa
-  var nvs = nomesNv.length > 2 ? nomesNv[0] + ' a ' + nomesNv[nomesNv.length - 1] : nomesNv.join(', ');
+  var nvSel = nivelSel && e.prog && e.prog[nivelSel] ? nivel(nivelSel) : null;
+  var nvTx, nvNota;
+  if (nvSel) {
+    nvTx = nvSel.nome;
+    var outros = nomesNv.filter(function(n){ return n !== nvSel.nome; });
+    nvNota = outros.length ? '(pode ser adaptado para ' + juntarE(outros) + ')' : '';
+  } else {
+    nvTx = nomesNv.length > 2 ? nomesNv[0] + ' a ' + nomesNv[nomesNv.length - 1] : nomesNv.join(' e ');
+    nvNota = nomesNv.length > 1 ? '(cada nível tem a sua versão no app)' : '';
+  }
 
-  // o lema do cabeçalho sai do foco do professor: "A, B e C."
+  // o lema embaixo do título sai do foco do professor: "A, B e C."
   var fo = (e.foco || []).slice(0, 3).map(function(x){ return curto(x).toLowerCase(); });
   var lema = fo.length > 1 ? fo.slice(0, -1).join(', ') + ' e ' + fo[fo.length - 1] : (fo[0] || '');
-  // uma linha só, como no modelo: se não couber, fica com menos itens
-  if (lema.length > 78) lema = fo.slice(0, 2).join(' e ');
-  if (lema.length > 78) lema = fo[0];
-  if (lema.length > 78) lema = curto(lema, 78);
+  if (lema.length > 84) lema = fo.slice(0, 2).join(' e ');
+  if (lema.length > 84) lema = curto(fo[0], 84);
 
-  function itens(lista){
-    return '<ul>' + lista.slice(0, 5).map(function(x){ return '<li>' + esc(curto(x)) + '</li>'; }).join('') + '</ul>';
-  }
-  // o erro principal abre a coluna; da lista sai o que repete a mesma ideia
-  // (mesmas três primeiras palavras), senão a coluna diz duas vezes a mesma coisa
   function inicio(x){ return x.toLowerCase().replace(/[^a-zà-ú ]/g, '').split(' ').slice(0, 3).join(' '); }
   var erros = [curto(e.erro)].concat(e.erros || []).filter(function(x, i, a){
     for (var j = 0; j < i; j++) if (a[j] === x || inicio(a[j]) === inicio(x)) return false;
     return true;
   });
-  var nv = nivelSel && e.prog && e.prog[nivelSel] ? nivel(nivelSel) : null;
+  // `total`: quantas letras cabem no cartão; o item que passar disso fica de fora
+  function lista(l, n, max, total){
+    var soma = 0, cabe = l.slice(0, n).map(function(x){ return curto(x, max); }).filter(function(x, i){
+      soma += x.length;
+      return i === 0 || !total || soma <= total;
+    });
+    return '<ul class="fp-lista">' + cabe.map(function(x){
+      return '<li><i>•</i><span>' + esc(x) + '</span></li>'; }).join('') + '</ul>';
+  }
+  // facilitar: a versão do nível mais baixo (e a de criança, se houver)
+  var baixo = e.niveis[0], alto = e.niveis[e.niveis.length - 1];
+  var facil = [];
+  if (e.prog && e.prog[baixo]) facil.push(e.prog[baixo]);
+  if (e.kids) facil.push('Kids: ' + e.kids);
+  // variações: o que muda no nível escolhido, ou nos níveis de cima
+  var vari = [];
+  if (nvSel) vari.push('No ' + nvSel.nome + ': ' + e.prog[nivelSel]);
+  e.niveis.slice(-2).reverse().forEach(function(n){
+    if (e.prog && e.prog[n] && n !== nivelSel && n !== baixo && vari.length < 2) vari.push(nivel(n).nome + ': ' + e.prog[n]);
+  });
+  if (!vari.length && e.prog && e.prog[alto]) vari.push(e.prog[alto]);
+
+  var tags = [];
+  e.tema.forEach(function(id){ var x = tema(id); if (x) tags.push(x.nome.split(' ')[0].toLowerCase()); });
+  if (cam) tags.push(cam.nome.toLowerCase());
+  (e.nec || []).slice(0, 3).forEach(function(id){
+    var x = NECESSIDADES.filter(function(n){ return n.id === id; })[0];
+    if (x) tags.push(x.nome.split(' · ')[0].toLowerCase());
+  });
+  tags.push(b.nome.toLowerCase());
+  tags = tags.filter(function(x, i, a){ return a.indexOf(x) === i; }).slice(0, 5);
+  while (tags.length > 2 && tags.join(', ').length > 64) tags.pop();
+
+  var passosTx = (e.passos || []).slice(0, 5).map(function(x){ return curto(x, 78); }).join('');
+  var sq = sequenciaDo(e);
+  var tt = partirTitulo(e.nome), maior = Math.max(tt[0].length, tt[1].length);
+  var tam = Math.max(8.6, Math.min(15.6, 84 / (0.45 * maior)));          // mm, para caber em ~84 mm
+  var subTopo = 14.2 + tam * 0.9 * (tt[1] ? 2 : 1) + 3.6;
+  var hAlt = 90, hProp = PROP_POSE[sq.heroi] || 0.8, hLarg = hAlt * hProp;
+  var hEsq = Math.min(150 - hLarg, 112 - hLarg * 0.42);                  // o corpo perto dos 112 mm, sem invadir a coluna
+
+  var qd = svgQuadra(e.fig, { inteira:true, escalaFig:2.3, aro:false });
+  var jan = janelaDaFoto(e.fig, 69.2 / 54.3);
+  if (jan) qd = qd.replace(/viewBox="[^"]*"/, 'viewBox="' + nQ(jan.x) + ' ' + nQ(jan.y) + ' ' + nQ(jan.w) + ' ' + nQ(jan.h) + '"')
+                  .replace('<svg ', '<svg preserveAspectRatio="xMidYMid slice" ');
 
   return '' +
-  '<section class="ft">' +
-    '<div class="ft-barra">' + RISCO_SVG + icone('trofeu') +
-      '<p class="ft-pilula"><b>Funcionou se:</b> ' + esc(curto(e.sucesso, 92)) + '.</p>' +
-      marcaJV(true) +
-    '</div>' +
-    '<header class="ft-top">' + LUZ_SVG + BOLA_SVG + marcaJV(false) +
-      '<div class="ft-cap">' + (e.transv ? 'Transversal' : 'Tema ' + (t ? t.ordem : '')) + ' · ' + esc(b.nome) +
-        '<span>' + esc(e.transv ? 'Serve em qualquer mês' : (t ? t.nome : '')) + '</span></div>' +
-      '<h1>Treino ' + esc(e.id) + '</h1>' +
-      '<h2>' + esc(e.nome) + '</h2>' +
-      (lema ? '<p class="ft-lema">' + esc(lema) + '.</p>' : '') +
-      (t ? '<p class="ft-frase">“' + esc(t.frase) + '”</p>' : '') +
-    '</header>' +
+  '<section class="fp">' +
+    // sem código (BH9, FH3…): o que aparece é a ordem na aula e o foco do trabalho
+    '<div class="fp-pilulas"><span>Treino' + (pagina ? ' ' + pagina : '') + '</span>' +
+      '<em>Foco: <i>' + esc(e.transv ? 'transversal' : (t ? t.nome : b.nome)) + '</i></em></div>' +
+    '<h1 class="fp-titulo" style="font-size:' + tam.toFixed(2) + 'mm"><span>' + esc(tt[0]) + '</span>' +
+      (tt[1] ? '<span>' + esc(tt[1]) + '</span>' : '') + '</h1>' +
+    (lema ? '<p class="fp-sub" style="top:' + subTopo.toFixed(1) + 'mm">' + esc(lema) + '.</p>' : '') +
+    '<div class="fp-sombra" style="left:' + (hEsq + hLarg / 2 - 31).toFixed(1) + 'mm"></div>' +
+    '<img class="fp-heroi" src="' + sq.heroi + '" alt="" style="left:' + hEsq.toFixed(1) + 'mm;width:' + hLarg.toFixed(1) + 'mm">' +
+    '<div class="fp-marca"><svg viewBox="0 0 100 52" aria-label="JV"><path fill="' + LIM_ + '" d="' + JV_PATH + '"/></svg>' +
+      '<p>ACADEMIA<br>JV TÊNIS</p></div>' +
 
-    '<div class="ft-dados">' +
-      '<div>' + icone('nivel') + '<div><small>Nível</small><span>' + esc(nvs) + '</span></div></div>' +
-      '<div>' + icone('relogio') + '<div><small>Duração</small><span>' + (minutos || e.min) + ' min</span></div></div>' +
-      '<div>' + icone('gente') + '<div><small>Nº de jogadores</small><span>' + esc(quantosJogadores(e)) + '</span></div></div>' +
-      '<div>' + icone('cone') + '<div><small>Materiais</small><span>' + esc(mats) + '</span></div></div>' +
-      '<div>' + icone('alvo') + '<div><small>Objetivo</small><span>' + esc(curto(e.objetivo, 96)) + '.</span></div></div>' +
+    '<div class="fp-cx fp-esc" style="left:167.8mm;top:14.8mm;width:63.2mm;height:15.6mm">' + icoFP('piramide') +
+      '<div><small>Camada da pirâmide</small><b>' + (cam ? cam.n + '. ' + esc(cam.nome) : '') + '</b></div></div>' +
+    '<div class="fp-cx fp-esc" style="left:233mm;top:14.8mm;width:60.2mm;height:15.6mm">' + icoFP('barras') +
+      '<div><small>Nível recomendado</small><b>' + esc(nvTx) + '</b>' + (nvNota ? '<i>' + esc(nvNota) + '</i>' : '') + '</div></div>' +
+    '<div class="fp-cx fp-cl" style="left:167.8mm;top:32.4mm;width:125.4mm;height:15.4mm">' + icone('alvo') +
+      '<div><small>Objetivo</small><span>' + esc(curto(e.objetivo, 170)) + '.</span></div></div>' +
+    '<div class="fp-cx fp-cl" style="left:167.8mm;top:49.8mm;width:36.7mm;height:17.2mm">' + icone('relogio') +
+      '<div><small>Duração</small><span>' + (minutos || e.min) + ' min</span></div></div>' +
+    '<div class="fp-cx fp-cl" style="left:206.5mm;top:49.8mm;width:39.4mm;height:17.2mm">' + icone('gente') +
+      '<div><small>Jogadores</small><span>' + esc(quantosJogadores(e)) + '</span></div></div>' +
+    '<div class="fp-cx fp-cl" style="left:247.9mm;top:49.8mm;width:45.3mm;height:17.2mm">' + icone('cone') +
+      '<div><small>Materiais</small><span>' + esc(mats) + '.</span></div></div>' +
+
+    '<div class="fp-painel">' +
+      '<div class="fp-diag" style="left:1.8mm;top:1.8mm;width:69.2mm;height:54.3mm">' +
+        '<div class="fp-bar">Diagrama da quadra</div>' + qd + '</div>' +
+      '<div class="fp-passos" style="left:73mm;top:1.8mm;width:51.3mm;height:54.3mm">' +
+        '<div class="fp-bar">Passo a passo</div><ol' + (passosTx.length > 280 ? ' class="fp-aperta"' : '') + '>' +
+        (e.passos || []).slice(0, 5).map(function(x, i){
+          return '<li><i>' + (i + 1) + '</i><span>' + esc(curto(x, 78)) + '</span></li>'; }).join('') + '</ol></div>' +
+      '<div class="fp-bloco" style="left:1.8mm;top:58mm;width:65.6mm;height:27.6mm">' +
+        '<div class="fp-bar">' + icoFP('lupa') + 'Foco do treinador</div>' + lista(e.foco || [], 4, 58, 190) + '</div>' +
+      '<div class="fp-bloco" style="left:69.2mm;top:58mm;width:55.1mm;height:27.6mm">' +
+        '<div class="fp-bar">' + icoFP('xis') + 'Erros mais comuns</div>' + lista(erros, 4, 58, 150) + '</div>' +
+      '<div class="fp-bloco" style="left:1.8mm;top:87.4mm;width:37mm;height:27.4mm">' +
+        '<div class="fp-bar">' + icoFP('desce') + 'Como facilitar</div>' + lista(facil, 2, 62, 110) + '</div>' +
+      '<div class="fp-bloco" style="left:40.4mm;top:87.4mm;width:37.6mm;height:27.4mm">' +
+        '<div class="fp-bar">' + icoFP('sobe') + 'Como dificultar</div>' + lista(e.dificultar || [], 3, 44, 105) + '</div>' +
+      '<div class="fp-bloco" style="left:79.6mm;top:87.4mm;width:44.7mm;height:27.4mm">' +
+        '<div class="fp-bar">' + icoFP('ciclo') + 'Variações</div>' + lista(vari, 2, 70, 130) + '</div>' +
     '</div>' +
 
-    '<div class="ft-corpo">' +
-      '<div class="ft-qd">' + svgQuadra(e.fig, { inteira:true, escalaFig:2.3, aro:false }) + '</div>' +
-      '<div class="ft-lado">' +
-        '<div class="ft-aplicar"><h3>Como aplicar</h3><ol>' +
-          (e.passos || []).slice(0, 6).map(function(x, i){
-            return '<li><i>' + (i + 1) + '</i><span>' + esc(x) + '</span></li>'; }).join('') + '</ol>' +
-          (nv ? '<p class="ft-nivel"><b>No nível ' + esc(nv.nome) + ':</b> ' + esc(e.prog[nivelSel]) + '</p>' : '') +
-        '</div>' +
-        (e.dica ? '<div class="ft-dica"><h3>' + icone('lampada') + 'Dica extra</h3>' +
-          '<p>' + esc(e.dica) + '</p></div>' : '') +
-      '</div>' +
-    '</div>' +
+    '<div class="fp-seq"><h3>Sequência do movimento</h3><div class="fp-quadros">' +
+      sq.q.map(function(x, i){
+        var larg = 35 * (PROP_POSE[x[1]] || 0.75);
+        return '<div><div class="fp-q" style="background-position:' + (i * 25) + '% 60%"><i class="fp-pe"></i>' +
+          '<img src="' + x[1] + '" alt="" style="width:' + larg.toFixed(1) + 'mm;margin-left:-' + (larg / 2).toFixed(1) + 'mm"></div>' +
+          '<p>' + (i + 1) + '. ' + esc(x[0]) + '</p></div>';
+      }).join('') + '</div></div>' +
 
-    '<div class="ft-tres">' +
-      '<div><h3>' + icone('foco') + 'Foco do treinador</h3>' + itens(e.foco || []) + '</div>' +
-      '<div><h3>' + icone('alerta') + 'Erros mais comuns</h3>' + itens(erros) + '</div>' +
-      '<div><h3>' + icone('sobe') + 'Como dificultar</h3>' + itens(e.dificultar || []) + '</div>' +
-    '</div>' +
-
+    '<div class="fp-pe4" style="left:4.6mm;width:91.7mm">' + icone('foco') +
+      '<div><small>Funcionou se</small><span>' + esc(curto(e.sucesso, 150)) + '.</span></div></div>' +
+    '<div class="fp-pe4" style="left:98.6mm;width:75mm">' + icoFP('lampada') +
+      '<div><small>Dica JV</small><span>“' + esc(curto(e.dica, 96)) + '.”</span></div></div>' +
+    '<div class="fp-pe4" style="left:175.6mm;width:58.4mm">' + icoFP('balao') +
+      '<div><small>Frase pedagógica</small><span>“' + esc(t ? t.frase : b.desc.split('. ')[0] + '.') + '”</span></div></div>' +
+    '<div class="fp-pe4" style="left:235.5mm;width:57.7mm">' + icoFP('etiqueta') +
+      '<div><small>Tags</small><span>' + esc(tags.join(', ')) + '</span></div></div>' +
   '</section>';
 }
 
@@ -1359,23 +1589,24 @@ function imprimirFolhas(lista){
   if (!lista.length) return;
   imprimirPaginas(lista.map(function(x, i){
     return folhaTreino(x.ex, x.min, PLANO.nivel || (F.niveis.length === 1 ? F.niveis[0] : ''), i + 1);
-  }).join(''));
+  }).join(''), true);
 }
 
 /* O plano no papel é o mesmo resumo da primeira página do PDF: a aula
    curta, com a quadra de cada exercício. */
 function imprimirResumo(){
   if (!PLANO.itens.length) return;
-  paginasResumo(el('pdfPalco')).then(function(pags){ imprimirPaginas(pags.join('')); });
+  paginasResumo(el('pdfPalco')).then(function(pags){ imprimirPaginas(pags.join(''), false); });
 }
 
-function imprimirPaginas(html){
+/* `deitada`: as folhas dos exercícios saem em A4 paisagem; o resumo, em pé */
+function imprimirPaginas(html, deitada){
   el('folhasImp').innerHTML = html;
   document.body.classList.add('folhas');
   // a folha vai de borda a borda: só enquanto ela imprime, a página não tem margem
   var pagina = document.createElement('style');
   pagina.id = 'paginaFolha';
-  pagina.textContent = '@page{size:A4;margin:0}';
+  pagina.textContent = '@page{size:A4 ' + (deitada ? 'landscape' : 'portrait') + ';margin:0}';
   document.head.appendChild(pagina);
   var limpo = false;
   var limpar = function(){
@@ -1409,9 +1640,19 @@ function prontoParaPapel(raiz){
       esperas.push(document.fonts.load(f).catch(function(){}));
     });
   }
+  var urls = [];
   Array.prototype.forEach.call(raiz.querySelectorAll('image'), function(im){
-    var u = im.getAttribute('href') || im.getAttribute('xlink:href');
-    if (u && u.indexOf('data:') !== 0) esperas.push(new Promise(function(ok){
+    urls.push(im.getAttribute('href') || im.getAttribute('xlink:href'));
+  });
+  // a folha deitada também tem foto em <img> (o jogador, a sequência) e de
+  // fundo no CSS (o saibro): sem esperar por elas, o papel sai sem foto
+  Array.prototype.forEach.call(raiz.querySelectorAll('img'), function(im){ urls.push(im.getAttribute('src')); });
+  Array.prototype.forEach.call(raiz.querySelectorAll('.fp, .fp-q'), function(x){
+    var m = /url\(["']?([^"')]+)/.exec(getComputedStyle(x).backgroundImage || '');
+    if (m) urls.push(m[1]);
+  });
+  urls.filter(function(u, i){ return u && u.indexOf('data:') !== 0 && urls.indexOf(u) === i; }).forEach(function(u){
+    esperas.push(new Promise(function(ok){
       var i = new Image(); i.onload = i.onerror = ok; i.src = u;
     }));
   });
@@ -1462,8 +1703,7 @@ function letraRotulo(){
   return _letraRotulo;
 }
 function quadrasEmAlta(raiz, escala){
-  // a bola do cabeçalho vai junto: o feltro dela (filtro de ruído) o html2canvas não desenha
-  var svgs = Array.prototype.slice.call(raiz.querySelectorAll('svg.qd, svg.ft-bola'));
+  var svgs = Array.prototype.slice.call(raiz.querySelectorAll('svg.qd'));
   return letraRotulo().then(function(css){
     return Promise.all(svgs.map(function(sv){
       var r = sv.getBoundingClientRect();
@@ -1497,7 +1737,6 @@ function quadrasEmAlta(raiz, escala){
               var cv = document.createElement('canvas');
               cv.width = w; cv.height = h;
               cv.getContext('2d').drawImage(im, 0, 0, w, h);
-              cv.setAttribute('class', sv.getAttribute('class') || '');   // a posição (a bola) vem da classe
               cv.style.width = r.width + 'px'; cv.style.height = r.height + 'px'; cv.style.display = 'block';
               sv.parentNode.replaceChild(cv, sv);
             } catch (e) { /* fica o SVG: o html2canvas desenha do jeito dele */ }
@@ -1541,7 +1780,7 @@ function folhaResumo(grupos, cont){
         // a mesma quadra da folha do exercício, recortada para caber no cartão
         var qd = svgQuadra(e.fig, { mini:true, escalaFig:2.3 }).replace('<svg ', '<svg preserveAspectRatio="xMidYMid slice" ');
         return '<div class="ftr-ex"><div class="im">' + qd + '</div>' +
-          '<div class="tx"><span class="cd">' + esc(e.id) + '</span>' +
+          '<div class="tx"><span class="cd">' + (PLANO.itens.map(function(i){ return i.id; }).indexOf(e.id) + 1) + 'º</span>' +
           '<span class="nm">' + esc(e.nome) + '</span>' +
           '<span class="ob">' + esc(curto(e.objetivo, 120)) + '.</span></div>' +
           '<span class="mn">' + minNoPlano(e.id) + '<small>MIN</small></span></div>';
@@ -1555,7 +1794,7 @@ function folhaResumo(grupos, cont){
   if (cont) return '<section class="ft ftr ftr-cont">' + barra + '<div class="ftr-corpo">' + blocos + '</div></section>';
   return '' +
   '<section class="ft ftr">' + barra +
-    '<header class="ft-top">' + LUZ_SVG + BOLA_SVG + marcaJV(false) +
+    '<header class="ft-top">' + LUZ_SVG + marcaJV(false) +
       '<div class="ft-cap">Tema do mês · ' + esc(t.mesesTx) + '<span>' + esc(t.nome) + '</span></div>' +
       '<h1>Aula</h1>' +
       '<h2>' + esc(PLANO.aluno || t.nome) + '</h2>' +
@@ -1612,13 +1851,15 @@ function pdfDeJpegs(pags){
   var enc = new TextEncoder(), partes = [], tam = 0, xref = [];
   function add(x){ var b = typeof x === 'string' ? enc.encode(x) : x; partes.push(b); tam += b.length; }
   function obj(n, corpo){ xref[n] = tam; add(n + ' 0 obj\n'); corpo(); add('\nendobj\n'); }
-  var W = 595.28, H = 841.89, n = pags.length;
+  var n = pags.length;
   add('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
   obj(1, function(){ add('<< /Type /Catalog /Pages 2 0 R >>'); });
   var kids = []; for (var i = 0; i < n; i++) kids.push((3 + i * 3) + ' 0 R');
   obj(2, function(){ add('<< /Type /Pages /Kids [' + kids.join(' ') + '] /Count ' + n + ' >>'); });
   pags.forEach(function(pg, i){
     var o = 3 + i * 3;
+    // a folha do exercício é deitada (A4 paisagem); o resumo, em pé
+    var W = pg.deitada ? 841.89 : 595.28, H = pg.deitada ? 595.28 : 841.89;
     var cs = 'q ' + W + ' 0 0 ' + H + ' 0 0 cm /Im' + i + ' Do Q';
     obj(o, function(){ add('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + W + ' ' + H + '] ' +
       '/Resources << /XObject << /Im' + i + ' ' + (o + 1) + ' 0 R >> >> /Contents ' + (o + 2) + ' 0 R >>'); });
@@ -1678,7 +1919,7 @@ function gerarPdf(lista, comResumo, nomeArq){
         }).then(function(cv){
           var b64 = cv.toDataURL('image/jpeg', 0.92).split(',')[1], bin = atob(b64), u8 = new Uint8Array(bin.length);
           for (var k = 0; k < bin.length; k++) u8[k] = bin.charCodeAt(k);
-          pags.push({ jpg:u8, w:cv.width, h:cv.height });
+          pags.push({ jpg:u8, w:cv.width, h:cv.height, deitada:cv.width > cv.height });
           cv.width = cv.height = 0;   // o iPhone tem pouca memória para canvas: devolve já
         });
       });
