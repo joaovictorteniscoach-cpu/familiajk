@@ -1,0 +1,19 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "familias": {
+      "jk": {
+        "dados": {
+          ".read": "auth != null && (auth.uid === 'SUBSTITUA_UID_JOAO' || auth.uid === 'SUBSTITUA_UID_KASSIANA')",
+          ".write": "auth != null && newData.exists() && (auth.uid === 'SUBSTITUA_UID_JOAO' || auth.uid === 'SUBSTITUA_UID_KASSIANA')",
+          ".validate": "newData.hasChildren(['data', 'updatedAt', 'writerUid'])",
+          "data": { ".validate": "newData.isString() && newData.val().length < 8000000" },
+          "updatedAt": { ".validate": "newData.isNumber()" },
+          "writerUid": { ".validate": "newData.isString() && newData.val() === auth.uid" },
+          "$other": { ".validate": false }
+        }
+      }
+    }
+  }
+}
