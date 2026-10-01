@@ -238,6 +238,19 @@ header.bar{
 .fundo{position:fixed;inset:0;height:100vh;height:100dvh;z-index:60;
   background:rgba(6,14,23,.72);display:none;align-items:flex-end;justify-content:center}
 .fundo.aberto{display:flex}
+/* Desenho ampliado: toque no desenho da ficha abre ele grande, na própria
+   página; toque de novo aproxima (e dá para arrastar); ✕ ou o fundo fecham. */
+.qd-cx > svg{cursor:zoom-in}
+#zoomQd{position:fixed;inset:0;z-index:9999;background:rgba(4,10,16,.94);display:none;
+  overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y pinch-zoom}
+#zoomQd.aberto{display:block}
+#zoomQd .zq-palco{min-height:100%;display:flex;align-items:center;justify-content:center;padding:56px 10px 18px}
+#zoomQd svg{display:block;width:auto;height:auto;max-width:100%;max-height:calc(100dvh - 80px);cursor:zoom-in;border-radius:10px}
+#zoomQd.perto .zq-palco{display:block;width:220vw;padding:56px 10px 18px}
+#zoomQd.perto svg{max-width:none!important;max-height:none!important;width:100%!important;height:auto!important;cursor:zoom-out}
+#zoomQd .zq-x{position:fixed;top:12px;right:12px;width:42px;height:42px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.35);background:rgba(16,15,13,.85);color:#fff;font-size:19px;z-index:2}
+#zoomQd .zq-dica{position:fixed;top:20px;left:16px;color:#cfc6b6;font-size:12px;font-weight:600}
 /* overscroll-behavior:contain — chegando no fim da folha, o arrasto para ali
    em vez de continuar rolando a lista atras dela. */
 .folha{background:var(--navy);width:100%;max-width:900px;max-height:92vh;max-height:88dvh;
@@ -2167,6 +2180,7 @@ function apagarEditor(){
    ========================================================================== */
 var FOLHAS = ['fundoFicha','fundoPlano','fundoMes','fundoMeus','fundoEditor','fundoEscolher'];
 var ROLAGEM = 0;
+var CAMADA = 60;
 
 function algumaAberta(){
   return FOLHAS.some(function(id){ return el(id).classList.contains('aberto'); });
@@ -2195,10 +2209,51 @@ function abrir(id){
     var folha = el(id).querySelector('.folha');
     if (folha) folha.scrollTop = 0;
   }
+  // a folha aberta por ÚLTIMO fica na frente. Todas tinham o mesmo z-index, e
+  // a ficha (que vem antes no HTML) abria ATRÁS do plano de aula: tocar num
+  // exercício do plano parecia não fazer nada
+  CAMADA += 1;
+  el(id).style.zIndex = CAMADA;
   el(id).classList.add('aberto');
   if (!tinha) travarRolagem();
 }
+function ampliarDesenho(svg){
+  var z = document.getElementById('zoomQd');
+  if (!z) {
+    z = document.createElement('div');
+    z.id = 'zoomQd';
+    z.setAttribute('role', 'dialog');
+    z.setAttribute('aria-label', 'Desenho ampliado');
+    z.innerHTML = '<button class="zq-x" aria-label="Fechar">✕</button>' +
+      '<span class="zq-dica">Toque no desenho para aproximar</span><div class="zq-palco"></div>';
+    document.body.appendChild(z);
+    z.addEventListener('click', function(ev){
+      if (ev.target.closest('svg')) { z.classList.toggle('perto'); centrarZoom(z); return; }
+      z.classList.remove('aberto', 'perto');
+    });
+  }
+  z.querySelector('.zq-palco').innerHTML = svg.outerHTML;
+  z.classList.remove('perto');
+  z.classList.add('aberto');
+  z.scrollTop = 0; z.scrollLeft = 0;
+}
+/* ao aproximar, centraliza no meio do desenho */
+function centrarZoom(z){
+  if (!z.classList.contains('perto')) return;
+  z.scrollLeft = (z.scrollWidth - z.clientWidth) / 2;
+  z.scrollTop = (z.scrollHeight - z.clientHeight) / 2;
+}
+document.addEventListener('click', function(ev){
+  var s = ev.target.closest ? ev.target.closest('.qd-cx > svg') : null;
+  if (s) ampliarDesenho(s);
+});
+document.addEventListener('keydown', function(ev){
+  var z = document.getElementById('zoomQd');
+  if (ev.key === 'Escape' && z && z.classList.contains('aberto')) { z.classList.remove('aberto', 'perto'); ev.stopPropagation(); }
+}, true);
+
 function fechar(id){
+  el(id).style.zIndex = '';
   el(id).classList.remove('aberto');
   if (!algumaAberta()) destravarRolagem();
 }
