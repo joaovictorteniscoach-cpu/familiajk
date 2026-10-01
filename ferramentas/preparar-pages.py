@@ -6,7 +6,7 @@ import shutil
 import subprocess
 
 RAIZ = Path(__file__).resolve().parent.parent
-PUBLICOS = {'app-gestao', 'app-aluno', 'site', 'site-pro'}
+PUBLICOS = {'app-gestao', 'app-aluno', 'app-familia', 'site', 'site-pro'}
 EXTENSOES = {'.html', '.css', '.js', '.webmanifest', '.png', '.jpg', '.jpeg',
              '.webp', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.otf'}
 
