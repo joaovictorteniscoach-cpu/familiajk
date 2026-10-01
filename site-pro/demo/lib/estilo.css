@@ -2709,3 +2709,23 @@ body #pg-dash.page{padding-top:0!important;background:linear-gradient(180deg,#05
 #pg-dash .jh-chips{flex:0 0 auto;display:flex;flex-direction:column;gap:7px;align-items:stretch}
 #pg-dash .jh-clima[hidden]{display:none!important}
 #pg-dash .jh-clima .jh-clima-ic{width:28px;flex:0 0 28px;text-align:center;font-size:22px;line-height:1}
+/* Frase sempre inteira: no celular ela ocupa a linha toda e os dois
+   quadrinhos (quadra e tempo) vêm logo abaixo, lado a lado. Em tela larga
+   voltam para o lado da frase, sem encostar nela. */
+#pg-dash .jh-hero-row{flex-wrap:wrap;align-items:flex-end}
+#pg-dash .jh-motto{flex:1 1 100%;white-space:normal}
+#pg-dash .jh-chips{flex:1 1 100%;flex-direction:row;gap:8px}
+#pg-dash .jh-chips>.jh-quadra{flex:1 1 0;min-width:0}
+#pg-dash .jh-chips .jh-quadra-txt{min-width:0}
+#pg-dash .jh-chips .jh-quadra-txt small,#pg-dash .jh-chips .jh-quadra-txt b{overflow:hidden;text-overflow:ellipsis}
+@media(min-width:640px){
+  #pg-dash .jh-hero-row{flex-wrap:nowrap}
+  #pg-dash .jh-motto{flex:1 1 auto;white-space:nowrap}
+  #pg-dash .jh-chips{flex:0 0 auto;flex-direction:column}
+}
+#pg-dash .jh-chips>#jh-quadra{flex:1.45 1 0}
+@media(max-width:400px){
+  #pg-dash .jh-chips .jh-chev{display:none}
+  #pg-dash .jh-chips .jh-quadra-txt b{font-size:14.5px}
+}
+@media(min-width:640px){#pg-dash .jh-chips>#jh-quadra{flex:0 0 auto}}
