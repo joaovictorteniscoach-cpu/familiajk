@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-01-12';
+const VERSAO='2026-10-01-13';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2821,6 +2821,7 @@ setInterval(()=>syncPedidos(true),30000);
 function go(id,btn){
   document.body.dataset.pagina=id;
   if(typeof fecharMais==='function')fecharMais();
+  if(typeof fecharFicha==='function')fecharFicha();
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.getElementById('pg-'+id).classList.add('on');
   document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('on'));
@@ -4605,15 +4606,6 @@ function delAluno(id){
     DB.alunos=DB.alunos.filter(x=>x.id!==id);persist();renderAll();toast('Aluno excluído');
   }
 }
-function toggleAluno(el){el.classList.toggle('open');}
-/* "Mais ações" por cartão — mesma ideia do toggleAluno: uma classe no pai e o
-   CSS faz o resto, sem variável global para dois cartões abertos brigarem. */
-function toggleMais(id){
-  const c=document.getElementById('card-'+id);if(!c)return;
-  c.classList.toggle('mais');
-  const b=c.querySelector('.act.maisbtn');
-  if(b)b.textContent=c.classList.contains('mais')?'⋯ Menos ações':'⋯ Mais ações';
-}
 /* Valor da aula EM GRUPO: preço por pessoa/aula do formato do aluno. */
 function valorAulaGrupoDe(a){
   const gt=a.grupoTipo||'Dupla';
@@ -4694,10 +4686,10 @@ function desfazerAula(id,k,modo){
 }
 /* O número mudou: dá um pulso no chip para o toque ter resposta visível. */
 function pulsarCredito(id){
-  const card=document.getElementById('card-'+id);if(!card)return;
-  const chip=card.querySelector('.chip');if(!chip)return;
-  chip.classList.remove('pulsa');void chip.offsetWidth;   // reinicia a animação
-  chip.classList.add('pulsa');
+  document.querySelectorAll('[data-pulsa="'+id+'"]').forEach(el=>{
+    el.classList.remove('pulsa');void el.offsetWidth;     // reinicia a animação
+    el.classList.add('pulsa');
+  });
 }
 /* Quem realmente usa locação: tem saldo, está marcado como perfil de locação,
    ou tem horário de locação na agenda. Para o resto, os três botões de locação
@@ -5686,11 +5678,6 @@ function fmtDataCurta(s){
   const dows=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
   return String(pr[2]||0).padStart(2,'0')+'/'+String(pr[1]||0).padStart(2,'0')+' · '+dows[dt.getDay()];
 }
-function histAlunoHTML(id){
-  const arr=ultimasAulas(id,8);
-  if(!arr.length)return '<div class="ha-box"><div class="ha-empty">Nenhuma aula registrada ainda.</div></div>';
-  return '<div class="ha-box"><div class="ha-title">📋 Últimas aulas</div>'+arr.map(p=>'<div class="ha-row"><span>'+fmtDataCurta(p.data)+'</span><span>'+(p.hora&&p.hora!=='—'?p.hora+'h':'')+'</span></div>').join('')+'</div>';
-}
 const BI={
 check:'<svg viewBox="0 0 24 24"><polyline points="4 12 10 18 20 6"/></svg>',
 plus:'<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
@@ -5700,7 +5687,60 @@ keyplus:'<svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="4"/><path d="M11 11l7
 key:'<svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="4"/><path d="M11 11l7 7M14 20h6"/></svg>',
 chart:'<svg viewBox="0 0 24 24"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg>'
 };
+/* ===== Lista de alunos + ficha do aluno =====
+   O cartão que abria dentro da lista tinha chegado a 22 botões, com alguns
+   repetidos ("Usar reposição" para quem não tinha reposição, "Cobrar pela
+   agenda" duas vezes) e dois quase homônimos que fazem coisas diferentes
+   ("Renovar mês" mexe nos créditos; "Renovação" só abre o WhatsApp).
+
+   Agora a lista é uma linha por aluno — nome, saldo e só os avisos que pedem
+   ação — com o botão de aula à mão. Tocar no nome abre a ficha em tela cheia,
+   com tudo separado por assunto. Os botões chamam exatamente as mesmas funções
+   de antes, com as mesmas travas (aula repetida no dia, desfazer, confirmação). */
+let fichaId=null;
+/* Botão da linha: só para quem tem pacote ativo. Quem é só de grupo lança
+   aula de grupo; o resto, aula particular — o mesmo botão principal do cartão. */
+function aulaRapidaDe(a){
+  if(!a||!ehAtivoAluno(a))return null;
+  const pf=perfilDe(a);if(pf==='torneio'||pf==='locacao')return null;
+  const p=Number(a.plano)||0,pg=Number(a.planoGrupo)||0;
+  if(p>0)return {modo:'',rot:'Aula'};
+  if(pg>0)return {modo:'grupo',rot:'Grupo'};
+  return null;
+}
+function saldoLinhaAluno(a){
+  const c=Number(a.creditos)||0,g=Number(a.credGrupo)||0,r=Number(a.repos)||0,l=Number(a.locCred)||0;
+  const p=[];
+  p.push(c<0?'<b class="neg">'+fmtCred(c)+' devendo</b>':'<b>'+fmtCred(c)+'</b> crédito'+(c===1?'':'s'));
+  if((Number(a.planoGrupo)||0)>0||g!==0)p.push('<span'+(g<0?' class="neg"':'')+'>👥 '+fmtCred(g)+'</span>');
+  if(r>0)p.push('🔁 '+fmtCred(r));
+  if(usaLocacao(a))p.push('<span'+(l<0?' class="neg"':'')+'>🔑 '+fmtCred(l)+'h</span>');
+  return p.join(' · ');
+}
+function linhaAluno(a){
+  const ativo=ehAtivoAluno(a);
+  const ag=agendaDoMes(a);
+  const difere=ag.total>0&&ag.valor!==(Number(a.mensalidade)||0)&&!difSilenciada(a);
+  const venc=reposVencendo(a);
+  const tags=[];
+  if(!ativo)tags.push('<span class="al-tag cinza">📦 inativo</span>');
+  else if(a.status==='parcial')tags.push('<span class="al-tag alerta">💸 pagou 50%</span>');
+  else if(a.status!=='pago')tags.push('<span class="al-tag alerta">💸 a pagar</span>');
+  if(difere)tags.push('<span class="al-tag ouro">📅 agenda ≠ plano</span>');
+  if(venc>0)tags.push('<span class="al-tag ouro">⏳ '+fmtCred(venc)+' repos. vencem</span>');
+  if(perfilDe(a)==='torneio')tags.push('<span class="al-tag cinza">🏆 torneio</span>');
+  const rap=aulaRapidaDe(a);
+  return `<div class="al-row${ativo?'':' inativo'}" id="al-${a.id}" onclick="abrirFicha('${a.id}')">
+    <div class="al-info">
+      <div class="al-nome">${ehPersonalTipo(a.tipo)?'💪':'🎾'} ${esc(a.nome)}</div>
+      <div class="al-saldo" data-pulsa="${a.id}">${saldoLinhaAluno(a)}</div>
+      ${tags.length?'<div class="al-tags">'+tags.join('')+'</div>':''}
+    </div>
+    ${rap?`<button class="al-aula" title="Lançar aula de hoje" onclick="event.stopPropagation();aulaRealizada('${a.id}'${rap.modo?",'grupo'":''})">${BI.check}<small>${rap.rot}</small></button>`:'<span class="al-seta">›</span>'}
+  </div>`;
+}
 function renderAlunos(){
+  try{if(fichaId)renderFicha();}catch(e){console.warn('ficha',e);}
   const list=document.getElementById('alunos-list');
   const q=(document.getElementById('search').value||'').toLowerCase();
   const items=DB.alunos.filter(a=>a.nome.toLowerCase().includes(q)).filter(a=>{
@@ -5714,97 +5754,150 @@ function renderAlunos(){
   const avisoRepos=focoRepos?'<div class="foco-repos">🔁 Mostrando só quem tem <b>reposição pendente</b> · <a onclick="limparFocoRepos()">ver todos</a></div>':
     (focoDif?'<div class="foco-repos">📅 Mostrando só quem tem a <b>agenda diferente do plano</b> · <a onclick="limparFocoDif()">ver todos</a></div>':'');
   if(!items.length){list.innerHTML=avisoRepos+'<div class="empty">Nenhum aluno '+(q||filtroAluno!=='todos'||filtroAtivo!=='todos'||focoRepos||focoDif?'encontrado':'cadastrado ainda — toque em <b>+ Novo</b> para começar')+'.</div>';return;}
-  // guarda quais cartões estão abertos: toda ação chama renderAll e reconstrói a
-  // lista, e sem isso o cartão se fechava embaixo do dedo a cada toque
-  const abertos=new Set(),comMais=new Set();
-  list.querySelectorAll('.aluno').forEach(el=>{
-    const id=el.id.replace('card-','');
-    if(el.classList.contains('open'))abertos.add(id);
-    if(el.classList.contains('mais'))comMais.add(id);
+  list.innerHTML=avisoRepos+'<div class="al-lista">'+items.map(linhaAluno).join('')+'</div>';
+}
+
+/* ----- a ficha ----- */
+function abrirFicha(id){
+  if(!DB.alunos.find(x=>x.id===id))return;
+  fichaId=id;
+  const f=document.getElementById('ficha-aluno');if(!f)return;
+  renderFicha();
+  ajustarTopoFicha();
+  f.scrollTop=0;
+  f.classList.add('on');f.setAttribute('aria-hidden','false');
+  document.body.classList.add('ficha-on');
+  /* O "voltar" do Android fecha a ficha em vez de sair do app. */
+  try{if(!(history.state&&history.state.ficha))history.pushState({ficha:1},'');}catch(e){}
+}
+/* As faixas de aviso do topo (endereço reserva, versão, grade-semente) ficam
+   por cima de tudo. A ficha começa logo abaixo delas — senão a faixa cobria o
+   "‹ Alunos" e não havia como voltar. */
+function ajustarTopoFicha(){
+  const f=document.getElementById('ficha-aluno');if(!f)return;
+  let y=0;
+  ['barra-versao','barra-semente'].forEach(i=>{
+    const b=document.getElementById(i);
+    if(!b||b.style.display==='none'||!b.offsetHeight)return;
+    const r=b.getBoundingClientRect();if(r.top<=1)y=Math.max(y,r.bottom);
   });
-  list.innerHTML=avisoRepos+items.map(a=>{
-    const ag=agendaDoMes(a);
-    const difere=ag.total>0&&ag.valor!==(Number(a.mensalidade)||0)&&!difSilenciada(a);
-    // o cartão passa a mostrar só o que se aplica a este aluno hoje
-    const loc=usaLocacao(a);
-    const temRepos=(Number(a.repos)||0)>0;
-    const vencendo=reposVencendo(a);                 // vencem na próxima virada de mês
-    const devendo=a.status!=='pago';
-    const temGrupo=(Number(a.planoGrupo)||0)>0;
-    return `
-  <div class="aluno" id="card-${a.id}">
-    <div class="aluno-head" onclick="toggleAluno(document.getElementById('card-${a.id}'))">
-      <div><div class="aluno-name">${ehPersonalTipo(a.tipo)?'💪 ':'🎾 '}${esc(a.nome)}</div><div class="aluno-sub">${a.tipo} · ${a.plano>0?('Flex '+a.plano):'sem pacote'} · ${fmt(a.mensalidade)}/mês</div></div>
-      <span class="badge ${a.status}">${a.status==='parcial'?'50%':a.status}</span>
-    </div>
-    <div class="aluno-body"><div class="ab-in">
-      <div class="chips">
-        <span class="chip" style="${a.creditos<0?'background:#F6D7D2;color:#8E2C1E;font-weight:800':''}">🎾 ${fmtCred(a.creditos)} ${a.creditos<0?'aula(s) devendo':('crédito'+(a.creditos===1?'':'s'))}</span>
-        ${a.creditos<0?`<span class="chip" style="background:#F6D7D2;color:#8E2C1E;font-weight:800">💸 ${fmt(devidoExtraPart(a))} extra particular</span>`:''}
-        ${(Number(a.credGrupo)||0)<0?`<span class="chip" style="background:#F6D7D2;color:#8E2C1E;font-weight:800">💸 ${fmt(devidoExtraGrupo(a))} extra grupo</span>`:''}
-        ${(Number(a.planoGrupo)||0)>0||(Number(a.credGrupo)||0)!==0?`<span class="chip" style="${(Number(a.credGrupo)||0)<0?'background:#F6D7D2;color:#8E2C1E;font-weight:800':'background:#EDE7FB00;background:#E7F0E8;color:#2E7D52;font-weight:700'}">👥 ${fmtCred(Number(a.credGrupo)||0)} grupo</span>`:''}
-        ${temRepos?`<span class="chip warn">🔁 ${fmtCred(a.repos)} reposiç${a.repos===1?'ão':'ões'}</span>`:''}
-        ${loc?`<span class="chip" style="${(Number(a.locCred)||0)<0?'background:#F6D7D2;color:#8E2C1E;font-weight:800':''}">🔑 ${fmtCred(Number(a.locCred)||0)}h locação${(Number(a.locCred)||0)<0?' (devendo)':''}</span>`:''}
-        ${PRO_MULTI&&profDoAluno(a)?`<span class="chip" style="background:#E7F0E8;color:#2E7D52;font-weight:700">👨‍🏫 ${esc(profNome(profDoAluno(a)))}</span>`:''}
-        ${filtroAluno==='todos'?`<span class="chip" style="background:#EFE7D8;color:#5b5142;font-weight:700">${PERFIL_LABELS[perfilDe(a)]||''}</span>`:''}
-        ${(a.avaliacoes&&a.avaliacoes.length)?`<span class="chip" style="background:${metalDe(a.avaliacoes[a.avaliacoes.length-1].nivel).m};color:#fff;font-weight:800">📈 ${a.avaliacoes[a.avaliacoes.length-1].nivel||'—'}</span>`:''}
-        ${a.termoAceitoEm?`<span class="chip" style="background:#E6F0E6;color:#2E7D52">📄 termo aceito</span>`:''}
-        ${!ehAtivoAluno(a)?`<span class="chip" style="background:#EDE9E1;color:#6B5E4A;font-weight:700">📦 inativo</span>`:''}
-        ${vencendo>0?`<span class="chip" style="background:#FBEFD2;color:#7A5B10;font-weight:800">⏳ ${fmtCred(vencendo)} reposição(ões) vencem no fim do mês</span>`:''}
-        ${ag.total>0?`<span class="chip" style="${difere?'background:#FBEFD2;color:#7A5B10;font-weight:800':'background:#E7F0E8;color:#2E7D52;font-weight:700'}">📅 ${ag.part>0&&ag.grupo>0?(ag.part+' aula(s) + '+ag.grupo+' em grupo'):(ag.total+' aula(s)')} na agenda${difere?(' · '+fmt(ag.valor)+' (cadastro: '+fmt(a.mensalidade)+')'):''}</span>`:''}
-      </div>
-      ${histAlunoHTML(a.id)}
-      <div class="acts">
-        <button class="act a1 principal" onclick="aulaRealizada('${a.id}')">${BI.check}Aula realizada (−1)</button>
-        ${temGrupo?`<button class="act a1" onclick="aulaRealizada('${a.id}','grupo')">${BI.check}Aula em grupo (−1)</button>`:''}
-        ${devendo?`<button class="act a3" onclick="marcarPago('${a.id}')">${BI.money}Marcar pago</button>`:''}
-        ${difere?`<button class="act a2" onclick="cobrarPelaAgenda('${a.id}')">📅 Cobrar pela agenda (${fmt(ag.valor)})</button>`:''}
-        ${difere?`<button class="act a4" onclick="manterValorAnotado('${a.id}')">✓ Manter ${fmt(a.mensalidade)}</button>`:''}
-        ${(a.difUndo&&a.difUndo.mes===monthKey())?`<button class="act a1" onclick="desfazerDecisaoDif('${a.id}')">↩︎ Desfazer cobrança</button>`:''}
-        ${temRepos?`<button class="act a4" onclick="usarRepos('${a.id}')">${BI.undo}Usar reposição</button>`:''}
-        <button class="act maisbtn" onclick="toggleMais('${a.id}')">⋯ Mais ações</button>
-      </div>
-      <div class="acts-mais">
-        <div class="acts">
-          <button class="act a2" onclick="addRepos('${a.id}')">${BI.plus}Reposição</button>
-          <button class="act a4" onclick="arquivarAluno('${a.id}')">${ehAtivoAluno(a)?'📦 Marcar inativo':'✅ Reativar aluno'}</button>
-          <button class="act aval" style="grid-column:auto" onclick="openAvalModal('${a.id}')">${BI.chart}Avaliar</button>
-          ${!difere&&ag.total>0?`<button class="act a4" onclick="cobrarPelaAgenda('${a.id}')">📅 Cobrar pela agenda (${fmt(ag.valor)})</button>`:''}
-          ${!temRepos?`<button class="act a4" onclick="usarRepos('${a.id}')">${BI.undo}Usar reposição</button>`:''}
-          ${loc?`<button class="act a2" onclick="addLocacao('${a.id}')">${BI.keyplus}+1h locação</button>`:''}
-          ${loc?`<button class="act a1" onclick="usarLocacao('${a.id}')">${BI.key}Locação feita (−1h)</button>`:''}
-          ${loc?`<button class="act a3" onclick="locacaoPaga('${a.id}')">${BI.money}Locação paga</button>`:''}
-          ${!loc?`<button class="act a4" onclick="addLocacao('${a.id}')">${BI.keyplus}Começar locação</button>`:''}
-        </div>
-        <div class="aluno-foot">
-          <button class="linkbtn" onclick="openAlunoModal('${a.id}')">Editar</button>
-          <button class="linkbtn" onclick="openRegistroModal('${a.id}')">Registro 📝</button>
-          <button class="linkbtn" onclick="abrirExtrato('${a.id}')">Extrato 📋</button>
-          <button class="linkbtn" onclick="openHistAulas('${a.id}')">Aulas 📅</button>
-          ${(a.avaliacoes&&a.avaliacoes.length)?`<button class="linkbtn" onclick="openAvalExport('${a.id}')">Devolutiva 📤</button>`:''}
-          <button class="linkbtn" onclick="renovarMes('${a.id}')">Renovar mês</button>
-          ${a.tel?`<button class="linkbtn wa" onclick="enviarAcesso('${a.id}')">Acesso 🔑 ${a.codigo||'—'}</button>`:''}
-          ${a.tel?`<button class="linkbtn wa" onclick="enviarRenovacaoWa('${a.id}')">Renovação 📲</button>`:''}
-          ${!a.tel?`<span class="linkbtn" style="color:var(--muted)">🔑 ${a.codigo||'—'}</span>`:''}
-          <button class="linkbtn del" onclick="delAluno('${a.id}')">Excluir</button>
-        </div>
-      </div>
-    </div></div>
-  </div>`;}).join('');
-  // devolve o estado de cada cartão. sem transição no primeiro instante, senão
-  // a lista inteira "sanfona" a cada re-render
-  abertos.forEach(id=>{
-    const el=document.getElementById('card-'+id);if(!el)return;
-    const body=el.querySelector('.aluno-body');
-    if(body)body.style.transition='none';
-    el.classList.add('open');
-    if(body)requestAnimationFrame(()=>{body.style.transition='';});
-  });
-  comMais.forEach(id=>{
-    const el=document.getElementById('card-'+id);if(!el)return;
-    el.classList.add('mais');
-    const b=el.querySelector('.act.maisbtn');if(b)b.textContent='⋯ Menos ações';
-  });
+  f.style.top=y>0?Math.round(y)+'px':'';
+  f.classList.toggle('sob-faixa',y>0);
+}
+function esconderFicha(){
+  fichaId=null;
+  const f=document.getElementById('ficha-aluno');
+  if(f){f.classList.remove('on');f.setAttribute('aria-hidden','true');}
+  document.body.classList.remove('ficha-on');
+}
+function fecharFicha(){
+  if(!fichaId)return;
+  esconderFicha();
+  try{if(history.state&&history.state.ficha)history.back();}catch(e){}
+}
+window.addEventListener('popstate',()=>{if(fichaId)esconderFicha();});
+
+function fxBotao(cls,fn,txt){return '<button class="fic-b '+cls+'" onclick="'+fn+'">'+txt+'</button>';}
+function fxSecao(titulo,corpo){return corpo?'<div class="fic-sec"><div class="fic-sec-t">'+titulo+'</div>'+corpo+'</div>':'';}
+function renderFicha(){
+  const box=document.getElementById('fic-corpo');if(!box)return;
+  const a=DB.alunos.find(x=>x.id===fichaId);
+  if(!a){fecharFicha();return;}                 // excluído: a ficha sai sozinha
+  const id=a.id, ativo=ehAtivoAluno(a);
+  const ag=agendaDoMes(a), mens=Number(a.mensalidade)||0;
+  const agDif=ag.total>0&&ag.valor!==mens;
+  const difere=agDif&&!difSilenciada(a);
+  const loc=usaLocacao(a);
+  const c=Number(a.creditos)||0, g=Number(a.credGrupo)||0, r=Number(a.repos)||0, l=Number(a.locCred)||0;
+  const temGrupo=(Number(a.planoGrupo)||0)>0;
+  const venc=reposVencendo(a);
+  const devendo=a.status!=='pago';
+  const av=(a.avaliacoes&&a.avaliacoes.length)?a.avaliacoes[a.avaliacoes.length-1]:null;
+  const nomeTopo=document.getElementById('fic-top-nome');if(nomeTopo)nomeTopo.textContent=a.nome;
+
+  /* cabeçalho */
+  const plano=(Number(a.plano)||0)>0?('Flex '+a.plano):'sem pacote';
+  const chips=[];
+  if(PRO_MULTI&&profDoAluno(a))chips.push('<span class="fic-chip">👨‍🏫 '+esc(profNome(profDoAluno(a)))+'</span>');
+  const pf=perfilDe(a);if(pf!=='tenis'&&pf!=='personal')chips.push('<span class="fic-chip">'+(PERFIL_LABELS[pf]||'')+'</span>');
+  if(av)chips.push('<span class="fic-chip" style="background:'+metalDe(av.nivel).m+';color:#fff">📈 '+esc(av.nivel||'—')+'</span>');
+  if(a.termoAceitoEm)chips.push('<span class="fic-chip">📄 termo aceito</span>');
+  if(!ativo)chips.push('<span class="fic-chip">📦 inativo</span>');
+  let h='<div class="fic-hero">'
+    +'<div class="fic-hero-l"><div class="fic-nome">'+(ehPersonalTipo(a.tipo)?'💪 ':'🎾 ')+esc(a.nome)+'</div>'
+    +'<div class="fic-sub">'+esc(a.tipo||'')+' · '+plano+(temGrupo?' + '+a.planoGrupo+' em grupo':'')+' · '+fmt(mens)+'/mês</div></div>'
+    +'<span class="badge '+esc(a.status||'pendente')+'">'+(a.status==='parcial'?'50%':esc(a.status||'pendente'))+'</span></div>'
+    +(chips.length?'<div class="fic-chips">'+chips.join('')+'</div>':'');
+
+  /* saldos */
+  const tile=(v,rot,extra,neg)=>'<div class="fic-tile'+(neg?' neg':'')+'" data-pulsa="'+id+'"><b>'+v+'</b><span>'+rot+'</span>'+(extra?'<small>'+extra+'</small>':'')+'</div>';
+  let t=tile(fmtCred(c),c<0?'aula(s) devendo':'crédito'+(c===1?'':'s'),c<0?fmt(devidoExtraPart(a))+' extra a cobrar':'',c<0);
+  if(temGrupo||g!==0)t+=tile(fmtCred(g),'grupo',g<0?fmt(devidoExtraGrupo(a))+' extra a cobrar':'',g<0);
+  if(r>0||venc>0)t+=tile(fmtCred(r),'reposiç'+(r===1?'ão':'ões'),venc>0?fmtCred(venc)+' vence(m) no fim do mês':'',false);
+  if(loc)t+=tile(fmtCred(l)+'h','locação',l<0?'devendo':'',l<0);
+  h+='<div class="fic-tiles">'+t+'</div>';
+  if(ag.total>0)h+='<div class="fic-agenda">📅 '+(ag.part>0&&ag.grupo>0?(ag.part+' aula(s) + '+ag.grupo+' em grupo'):(ag.total+' aula(s)'))+' na agenda deste mês</div>';
+
+  /* pendências: só o que pede decisão agora */
+  let pend='';
+  if(devendo&&ativo)pend+='<div class="fic-pend"><p>💸 Mensalidade do mês '+(a.status==='parcial'?'paga pela metade':'em aberto')+' · <b>'+fmt(mens)+'</b></p>'
+    +fxBotao('ok',"marcarPago('"+id+"')",BI.money+'Marcar pago')+'</div>';
+  if(difere)pend+='<div class="fic-pend"><p>📅 A agenda do mês dá <b>'+fmt(ag.valor)+'</b>; o cadastro diz <b>'+fmt(mens)+'</b>.</p><div class="fic-g2">'
+    +fxBotao('ouro',"cobrarPelaAgenda('"+id+"')",'Cobrar '+fmt(ag.valor))
+    +fxBotao('neutro',"manterValorAnotado('"+id+"')",'Manter '+fmt(mens))+'</div></div>';
+  if(a.difUndo&&a.difUndo.mes===monthKey())pend+='<div class="fic-pend"><p>↩︎ Você cobrou pela agenda este mês.</p>'
+    +fxBotao('neutro',"desfazerDecisaoDif('"+id+"')",'Desfazer cobrança')+'</div>';
+  if(venc>0)pend+='<div class="fic-pend"><p>⏳ '+fmtCred(venc)+' reposição(ões) vencem na virada do mês.</p>'
+    +fxBotao('neutro',"usarRepos('"+id+"')",BI.undo+'Usar reposição')+'</div>';
+  if(pend)h+='<div class="fic-sec fic-sec-pend"><div class="fic-sec-t">Pede atenção</div>'+pend+'</div>';
+
+  /* aula */
+  let aula=fxBotao('prim',"aulaRealizada('"+id+"')",BI.check+'Aula realizada (−1)');
+  let g2='';
+  if(temGrupo)g2+=fxBotao('prim2',"aulaRealizada('"+id+"','grupo')",BI.check+'Aula em grupo (−1)');
+  if(r>0&&!venc)g2+=fxBotao('neutro',"usarRepos('"+id+"')",BI.undo+'Usar reposição');
+  g2+=fxBotao('neutro',"addRepos('"+id+"')",BI.plus+'Anotar reposição');
+  if(loc){g2+=fxBotao('prim2',"usarLocacao('"+id+"')",BI.key+'Locação feita (−1h)');g2+=fxBotao('neutro',"addLocacao('"+id+"')",BI.keyplus+'+1h locação');}
+  h+=fxSecao('Aula',aula+'<div class="fic-g2">'+g2+'</div>');
+
+  /* dinheiro */
+  let din='';
+  if(devendo&&!ativo)din+=fxBotao('ok',"marcarPago('"+id+"')",BI.money+'Marcar pago');
+  if(agDif&&!difere)din+=fxBotao('neutro',"cobrarPelaAgenda('"+id+"')",'📅 Cobrar pela agenda ('+fmt(ag.valor)+')');
+  if(loc)din+=fxBotao('ok',"locacaoPaga('"+id+"')",BI.money+'Locação paga');
+  din+=fxBotao('neutro',"renovarMes('"+id+"')",'🔄 Renovar créditos do mês');
+  h+=fxSecao('Dinheiro','<div class="fic-g2">'+din+'</div>');
+
+  /* histórico */
+  const ult=ultimasAulas(id,5);
+  const lista=ult.length?ult.map(p=>'<div class="fic-li"><span>'+fmtDataCurta(p.data)+'</span><span>'+(p.hora&&p.hora!=='—'?esc(p.hora)+'h':'')+'</span></div>').join('')
+    :'<div class="fic-vazio">Nenhuma aula registrada ainda.</div>';
+  h+=fxSecao('Últimas aulas','<div class="fic-lista">'+lista+'</div><div class="fic-g2">'
+    +fxBotao('neutro',"openHistAulas('"+id+"')",'📅 Todas as aulas')
+    +fxBotao('neutro',"abrirExtrato('"+id+"')",'📋 Extrato de créditos')+'</div>');
+
+  /* pedagógico */
+  let ped=fxBotao('neutro',"openRegistroModal('"+id+"')",'📝 Registro da aula')
+    +fxBotao('neutro',"openAvalModal('"+id+"')",BI.chart+'Avaliar');
+  if(av)ped+=fxBotao('neutro',"openAvalExport('"+id+"')",'📤 Devolutiva');
+  h+=fxSecao('Treino','<div class="fic-g2">'+ped+'</div>');
+
+  /* whatsapp */
+  const wa=a.tel
+    ?'<div class="fic-g2">'+fxBotao('wa',"enviarAcesso('"+id+"')",'🔑 Enviar acesso · '+esc(a.codigo||'—'))
+      +fxBotao('wa',"enviarRenovacaoWa('"+id+"')",'📲 Mensagem de renovação')+'</div>'
+    :'<div class="fic-vazio">🔑 Código de acesso: <b>'+esc(a.codigo||'—')+'</b> · sem telefone no cadastro</div>';
+  h+=fxSecao('WhatsApp',wa);
+
+  /* cadastro */
+  let cad=fxBotao('neutro',"openAlunoModal('"+id+"')",'✏️ Editar cadastro')
+    +fxBotao('neutro',"arquivarAluno('"+id+"')",ativo?'📦 Marcar inativo':'✅ Reativar aluno');
+  if(!loc)cad+=fxBotao('neutro',"addLocacao('"+id+"')",BI.keyplus+'Começar locação');
+  h+=fxSecao('Cadastro','<div class="fic-g2">'+cad+'</div>'
+    +'<button class="fic-excluir" onclick="delAluno(\''+id+'\')">Excluir aluno</button>');
+
+  box.innerHTML=h;
+  ajustarTopoFicha();
 }
 
 /* ================= LANÇAMENTOS ================= */
