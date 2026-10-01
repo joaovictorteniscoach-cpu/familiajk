@@ -677,21 +677,31 @@ header.bar{
 /* ---- página de resumo do PDF: a aula inteira numa folha, no visual da
    folha de treino (cabeçalho preto, faixa de dados, cartões claros) ---- */
 .ftr-dados{grid-template-columns:1.25fr .9fr .8fr .8fr}
-.ftr-corpo{flex:1 1 auto;padding:4.6mm 8mm 0;display:flex;flex-direction:column;gap:3.4mm;min-height:0}
-.ftr-bloco{background:#E3E6E9;border-radius:3mm;padding:3.2mm 4mm 2.6mm}
+.ftr-corpo{flex:1 1 auto;padding:4mm 8mm 3mm;display:flex;flex-direction:column;gap:2.6mm;min-height:0}
+.ftr-bloco{background:#E3E6E9;border-radius:3mm;padding:2.6mm 3.4mm 2.4mm}
 .ftr-bloco h3{display:flex;justify-content:space-between;align-items:baseline;font-weight:900;font-style:italic;
-  font-size:13pt;text-transform:uppercase;line-height:1;margin-bottom:2.2mm}
+  font-size:13pt;text-transform:uppercase;line-height:1;margin-bottom:1.8mm}
 .ftr-bloco h3 small{font-style:normal;font-weight:700;font-size:8.6pt;letter-spacing:.04em;color:#4A5560}
-.ftr-ex{display:grid;grid-template-columns:13mm 1fr 13mm;gap:2.6mm;align-items:start;padding:1.6mm 0;border-top:.3mm solid #CBD1D6}
-.ftr-ex:first-of-type{border-top:none}
-.ftr-ex .cd{font-weight:700;font-size:9pt;color:#0B0E0D;background:#DDEE66;border-radius:1.4mm;text-align:center;padding:.6mm 0}
-.ftr-ex .nm{font-weight:700;font-size:10.5pt;text-transform:uppercase;line-height:1.1;color:#111}
-.ftr-ex .ob{display:block;font-weight:500;font-size:8.8pt;color:#3A4650;line-height:1.22;text-transform:none;margin-top:.6mm}
-.ftr-ex .mn{font-weight:900;font-style:italic;font-size:13pt;text-align:right;line-height:1}
-.ftr-ex .mn small{display:block;font-style:normal;font-weight:700;font-size:7pt;letter-spacing:.06em;color:#4A5560}
-.ftr-nota{margin:auto 8mm 7mm;padding:3.2mm 4mm;border-radius:3mm;
+/* cada exercício num cartão com a quadra dele, dois por linha: a aula de
+   90 min (oito exercícios) cabe numa folha só */
+.ftr-grade{display:grid;grid-template-columns:1fr 1fr;gap:2.2mm}
+.ftr-ex{display:grid;grid-template-columns:20mm 1fr;gap:2.6mm;align-items:start;background:#F7F8F9;
+  border-radius:2.2mm;padding:1.6mm;position:relative}
+.ftr-ex .im{width:20mm;height:21.6mm;border-radius:1.6mm;overflow:hidden;background:#9C4A22}
+.ftr-ex .im svg,.ftr-ex .im canvas{display:block;width:100%;height:100%}
+.ftr-ex .tx{min-width:0;padding:.6mm 9mm 0 0}
+.ftr-ex .cd{display:inline-block;font-weight:700;font-size:8.4pt;color:#0B0E0D;background:#DDEE66;border-radius:1.2mm;
+  padding:.3mm 1.6mm;line-height:1.3}
+.ftr-ex .nm{display:block;font-weight:700;font-size:10pt;text-transform:uppercase;line-height:1.08;color:#111;margin-top:1mm}
+.ftr-ex .ob{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+  font-weight:500;font-size:8.3pt;color:#3A4650;line-height:1.2;margin-top:.8mm}
+.ftr-ex .mn{position:absolute;top:1.8mm;right:2mm;font-weight:900;font-style:italic;font-size:13pt;text-align:right;line-height:1}
+.ftr-ex .mn small{display:block;font-style:normal;font-weight:700;font-size:6.6pt;letter-spacing:.06em;color:#4A5560}
+.ftr-cont .ftr-corpo{padding-top:6mm}
+.ftr-corpo{overflow:hidden}
+.ft .ftr-nota{margin:auto 8mm 6mm;padding:2.8mm 4mm;border-radius:3mm;
   background:linear-gradient(160deg,#E6F27F 0%,#DDEE66 55%,#D2E657 100%);font-size:9.4pt;line-height:1.28;color:#27313A}
-.ftr-nota b{text-transform:uppercase;letter-spacing:.02em}
+.ft .ftr-nota b{text-transform:uppercase;letter-spacing:.02em}
 </style>
 </head>
 <body>
@@ -798,7 +808,7 @@ header.bar{
     <div class="folha-corpo" id="planoCorpo"></div>
     <div class="folha-acoes">
       <button class="btn btn-gold" id="btnPdf" title="Resumo da aula + uma folha A4 por exercício, em PDF">📄 Enviar aula em PDF</button>
-      <button class="btn btn-line pq" id="btnImprimir" title="O plano inteiro, em lista">🖨 Plano</button>
+      <button class="btn btn-line pq" id="btnImprimir" title="O resumo da aula, com a quadra de cada exercício">🖨 Plano</button>
       <button class="btn btn-line pq" id="btnFolhas" title="Uma folha A4 por exercício">🖨 Folhas</button>
       <button class="btn btn-line pq" id="btnCopiar" title="O plano em texto, para colar no WhatsApp">Texto</button>
       <button class="btn btn-esc pq" id="btnLimparPlano">Limpar</button>
@@ -1347,12 +1357,22 @@ function folhaTreino(e, minutos, nivelSel, pagina){
    exercício — no plano de 6 exercícios seriam seis quadras desenhadas à toa. */
 function imprimirFolhas(lista){
   if (!lista.length) return;
-  el('folhasImp').innerHTML = lista.map(function(x, i){
+  imprimirPaginas(lista.map(function(x, i){
     return folhaTreino(x.ex, x.min, PLANO.nivel || (F.niveis.length === 1 ? F.niveis[0] : ''), i + 1);
-  }).join('');
+  }).join(''));
+}
+
+/* O plano no papel é o mesmo resumo da primeira página do PDF: a aula
+   curta, com a quadra de cada exercício. */
+function imprimirResumo(){
+  if (!PLANO.itens.length) return;
+  paginasResumo(el('pdfPalco')).then(function(pags){ imprimirPaginas(pags.join('')); });
+}
+
+function imprimirPaginas(html){
+  el('folhasImp').innerHTML = html;
   document.body.classList.add('folhas');
-  // a folha vai de borda a borda: só enquanto ela imprime, a página não tem
-  // margem (o plano de aula continua com a margem dele)
+  // a folha vai de borda a borda: só enquanto ela imprime, a página não tem margem
   var pagina = document.createElement('style');
   pagina.id = 'paginaFolha';
   pagina.textContent = '@page{size:A4;margin:0}';
@@ -1426,6 +1446,70 @@ function carregarH2C(){
 /* As imagens de dentro do desenho (quadra, bonecos) entram como data: URL —
    desenho convertido em imagem não busca arquivo de fora. */
 var _dataUrl = {};
+/* A quadra vai para o PDF desenhada pelo próprio navegador, na resolução
+   final da página: o html2canvas, sozinho, achata o desenho na resolução da
+   tela e ele sai borrado. O SVG vira imagem fora da página, então leva junto
+   a letra dos rótulos. */
+var ESCALA_PDF = 2.5;
+var _letraRotulo = null;
+function letraRotulo(){
+  if (_letraRotulo) return _letraRotulo;
+  _letraRotulo = fetch('fonte-barlow-condensed-700-normal.woff2').then(function(r){ return r.blob(); }).then(function(bl){
+    return new Promise(function(ok){ var fr = new FileReader(); fr.onload = function(){ ok(fr.result); }; fr.readAsDataURL(bl); });
+  }).then(function(d){
+    return '@font-face{font-family:"JV Cond";font-weight:700;font-style:normal;src:url(' + d + ') format("woff2")}';
+  }).catch(function(){ return ''; });
+  return _letraRotulo;
+}
+function quadrasEmAlta(raiz, escala){
+  // a bola do cabeçalho vai junto: o feltro dela (filtro de ruído) o html2canvas não desenha
+  var svgs = Array.prototype.slice.call(raiz.querySelectorAll('svg.qd, svg.ft-bola'));
+  return letraRotulo().then(function(css){
+    return Promise.all(svgs.map(function(sv){
+      var r = sv.getBoundingClientRect();
+      if (!r.width || !r.height) return null;
+      var w = Math.round(r.width * escala), h = Math.round(r.height * escala);
+      var c = sv.cloneNode(true);
+      c.setAttribute('width', w); c.setAttribute('height', h);
+      // fora da página o CSS da folha não chega: o rótulo leva junto a letra,
+      // o peso e a caixa alta que tinha na tela
+      var orig = sv.querySelectorAll('text'), copia = c.querySelectorAll('text');
+      for (var i = 0; i < orig.length; i++) {
+        var cs = getComputedStyle(orig[i]);
+        if (cs.textTransform === 'uppercase') copia[i].textContent = copia[i].textContent.toUpperCase();
+        copia[i].setAttribute('font-family', cs.fontFamily);
+        copia[i].setAttribute('font-weight', cs.fontWeight);
+        if (cs.letterSpacing && cs.letterSpacing !== 'normal') copia[i].setAttribute('letter-spacing', cs.letterSpacing);
+      }
+      c.setAttribute('font-family', '"JV Cond","Arial Narrow",sans-serif');
+      if (css) {
+        var st = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+        st.textContent = css;
+        c.insertBefore(st, c.firstChild);
+      }
+      var url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(new XMLSerializer().serializeToString(c));
+      return new Promise(function(ok){
+        var im = new Image();
+        im.onload = function(){
+          // dá um instante para a letra embutida entrar antes de desenhar
+          setTimeout(function(){
+            try {
+              var cv = document.createElement('canvas');
+              cv.width = w; cv.height = h;
+              cv.getContext('2d').drawImage(im, 0, 0, w, h);
+              cv.setAttribute('class', sv.getAttribute('class') || '');   // a posição (a bola) vem da classe
+              cv.style.width = r.width + 'px'; cv.style.height = r.height + 'px'; cv.style.display = 'block';
+              sv.parentNode.replaceChild(cv, sv);
+            } catch (e) { /* fica o SVG: o html2canvas desenha do jeito dele */ }
+            ok();
+          }, 60);
+        };
+        im.onerror = function(){ ok(); };
+        im.src = url;
+      });
+    }));
+  });
+}
 function embutirImagens(raiz){
   var ims = Array.prototype.slice.call(raiz.querySelectorAll('image'));
   return Promise.all(ims.map(function(im){
@@ -1438,27 +1522,39 @@ function embutirImagens(raiz){
   }));
 }
 
-function folhaResumo(){
+/* A aula em grupos de bloco, na ordem do plano: [{ b, itens:[ex...] }] */
+function gruposDoPlano(){
+  return BLOCOS.map(function(b){ return { b:b, itens:itensDoBloco(b.id) }; })
+    .filter(function(g){ return g.itens.length; });
+}
+
+/* Página de resumo do plano. `grupos` é o pedaço da aula que cabe nesta
+   página; `cont` marca as páginas de continuação (sem o cabeçalho grande). */
+function folhaResumo(grupos, cont){
   var t = temaDoPlano();
   var nv = PLANO.nivel ? nivel(PLANO.nivel) : null;
   var hoje = new Date();
   var data = ('0' + hoje.getDate()).slice(-2) + '/' + ('0' + (hoje.getMonth() + 1)).slice(-2) + '/' + hoje.getFullYear();
-  var blocos = BLOCOS.map(function(b){
-    var itens = itensDoBloco(b.id);
-    if (!itens.length) return '';
-    return '<div class="ftr-bloco"><h3>' + esc(b.nome) + '<small>' + esc(b.tempo) + '</small></h3>' +
-      itens.map(function(e){
-        return '<div class="ftr-ex"><span class="cd">' + esc(e.id) + '</span>' +
-          '<span class="nm">' + esc(e.nome) + '<span class="ob">' + esc(curto(e.objetivo, 120)) + '.</span></span>' +
+  var blocos = (grupos || gruposDoPlano()).map(function(g){
+    return '<div class="ftr-bloco"><h3>' + esc(g.b.nome) + '<small>' + esc(g.b.tempo) + '</small></h3>' +
+      '<div class="ftr-grade">' + g.itens.map(function(e){
+        // a mesma quadra da folha do exercício, recortada para caber no cartão
+        var qd = svgQuadra(e.fig, { mini:true, escalaFig:2.3 }).replace('<svg ', '<svg preserveAspectRatio="xMidYMid slice" ');
+        return '<div class="ftr-ex"><div class="im">' + qd + '</div>' +
+          '<div class="tx"><span class="cd">' + esc(e.id) + '</span>' +
+          '<span class="nm">' + esc(e.nome) + '</span>' +
+          '<span class="ob">' + esc(curto(e.objetivo, 120)) + '.</span></div>' +
           '<span class="mn">' + minNoPlano(e.id) + '<small>MIN</small></span></div>';
-      }).join('') + '</div>';
+      }).join('') + '</div></div>';
   }).join('');
-  return '' +
-  '<section class="ft ftr">' +
-    '<div class="ft-barra">' + RISCO_SVG + icone('trofeu') +
-      '<p class="ft-pilula"><b>Plano de aula</b> · ' + PLANO.itens.length + ' exercícios · ' + totalMin() + ' min</p>' +
+  var barra = '<div class="ft-barra">' + RISCO_SVG + icone('trofeu') +
+      '<p class="ft-pilula"><b>Plano de aula</b> · ' + PLANO.itens.length + ' exercícios · ' + totalMin() + ' min' +
+      (cont ? ' · continuação' : '') + '</p>' +
       marcaJV(true) +
-    '</div>' +
+    '</div>';
+  if (cont) return '<section class="ft ftr ftr-cont">' + barra + '<div class="ftr-corpo">' + blocos + '</div></section>';
+  return '' +
+  '<section class="ft ftr">' + barra +
     '<header class="ft-top">' + LUZ_SVG + BOLA_SVG + marcaJV(false) +
       '<div class="ft-cap">Tema do mês · ' + esc(t.mesesTx) + '<span>' + esc(t.nome) + '</span></div>' +
       '<h1>Aula</h1>' +
@@ -1475,6 +1571,40 @@ function folhaResumo(){
     '<p class="ftr-nota"><b>Lembrete da metodologia:</b> a ativação de base é sagrada — ela mantém a espiral ' +
       'girando em todos os níveis. E todo tema do dia termina aplicado em jogo: técnica que não vira jogo é coreografia.</p>' +
   '</section>';
+}
+
+/* Quebra o resumo em quantas páginas forem precisas: monta no palco, mede
+   e passa para a página seguinte o primeiro cartão que sai da folha. */
+function paginasResumo(palco){
+  var seq = [];
+  gruposDoPlano().forEach(function(g){ g.itens.forEach(function(e){ seq.push({ b:g.b, e:e }); }); });
+  function agrupar(pedaco){
+    var gs = [];
+    pedaco.forEach(function(x){
+      var ult = gs[gs.length - 1];
+      if (ult && ult.b === x.b) ult.itens.push(x.e); else gs.push({ b:x.b, itens:[x.e] });
+    });
+    return gs;
+  }
+  var paginas = [], ini = 0, guarda = 0;
+  return prontoParaPapel(palco).then(function(){
+    while (ini < seq.length && guarda++ < 20) {
+      var resto = seq.slice(ini), cont = paginas.length > 0;
+      palco.innerHTML = folhaResumo(agrupar(resto), cont);
+      var corpo = palco.querySelector('.ftr-corpo'), lim = corpo.getBoundingClientRect().bottom + 0.5;
+      var cartoes = palco.querySelectorAll('.ftr-ex'), cabe = cartoes.length;
+      for (var i = 0; i < cartoes.length; i++) {
+        if (cartoes[i].getBoundingClientRect().bottom > lim) { cabe = i; break; }
+      }
+      // os dois cartões de uma linha têm o mesmo pé: a linha desce inteira
+      cabe = Math.max(1, cabe);
+      if (cabe < resto.length) palco.innerHTML = folhaResumo(agrupar(resto.slice(0, cabe)), cont);
+      paginas.push(palco.innerHTML);
+      ini += cabe;
+    }
+    palco.innerHTML = '';
+    return paginas;
+  });
 }
 
 /* PDF mínimo: uma página A4 por JPEG. */
@@ -1529,29 +1659,34 @@ function gerarPdf(lista, comResumo, nomeArq){
   passo(0);
   var palco = el('pdfPalco');
   var nv = PLANO.nivel || (F.niveis.length === 1 ? F.niveis[0] : '');
-  var htmls = (comResumo ? [folhaResumo()] : []).concat(lista.map(function(x, i){
-    return folhaTreino(x.ex, x.min, nv, i + 1);
-  }));
+  var folhas = lista.map(function(x, i){ return folhaTreino(x.ex, x.min, nv, i + 1); });
   var pags = [];
   carregarH2C().then(function(){
+    return comResumo ? paginasResumo(palco) : [];
+  }).then(function(resumo){
+    var htmls = resumo.concat(folhas);
+    total = htmls.length;
     return htmls.reduce(function(cadeia, html, i){
       return cadeia.then(function(){
         passo(i);
         palco.innerHTML = html;
         return embutirImagens(palco).then(function(){ return prontoParaPapel(palco); }).then(function(){
-          return window.html2canvas(palco.firstElementChild, { scale:1.6, backgroundColor:'#ffffff', logging:false,
+          return quadrasEmAlta(palco, ESCALA_PDF);
+        }).then(function(){
+          return window.html2canvas(palco.firstElementChild, { scale:ESCALA_PDF, backgroundColor:'#ffffff', logging:false,
             ignoreElements:function(n){ return n.parentNode === document.body && n.id !== 'pdfPalco'; } });
         }).then(function(cv){
-          var b64 = cv.toDataURL('image/jpeg', 0.86).split(',')[1], bin = atob(b64), u8 = new Uint8Array(bin.length);
+          var b64 = cv.toDataURL('image/jpeg', 0.92).split(',')[1], bin = atob(b64), u8 = new Uint8Array(bin.length);
           for (var k = 0; k < bin.length; k++) u8[k] = bin.charCodeAt(k);
           pags.push({ jpg:u8, w:cv.width, h:cv.height });
+          cv.width = cv.height = 0;   // o iPhone tem pouca memória para canvas: devolve já
         });
       });
     }, Promise.resolve());
   }).then(function(){
     palco.innerHTML = '';
     var arq = new File([pdfDeJpegs(pags)], nomeArq + '.pdf', { type:'application/pdf' });
-    pdfPronto(arq, total);
+    pdfPronto(arq, pags.length);
   }).catch(function(err){
     palco.innerHTML = '';
     el('pdfTit').textContent = 'Não deu para gerar o PDF';
@@ -2656,7 +2791,7 @@ function ligar(){
   el('btnImprimir').addEventListener('click', function(){
     // o nome digitado entra na linha do papel (antes só entrava depois de reabrir o plano)
     desenharPlano();
-    prontoParaPapel(document.body).then(function(){ window.print(); });
+    imprimirResumo();
   });
   el('btnPdf').addEventListener('click', function(){
     var lista = PLANO.itens.map(function(i){
