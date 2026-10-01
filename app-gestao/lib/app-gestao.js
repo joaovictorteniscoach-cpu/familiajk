@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-01-8';
+const VERSAO='2026-10-01-9';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2826,7 +2826,7 @@ function go(id,btn){
   document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
   window.scrollTo({top:0});
-  if(id==='agenda'){syncRequests(true);marcarVisto('agenda');if(wkAutoFit)wkZoomFit();}
+  if(id==='agenda'){syncRequests(true);marcarVisto('agenda');if(wkAutoFit)wkZoomFit();setTimeout(rolarAgendaAgora,80);}
   if(id==='lanc'){filtroLancCat=null;renderMovs();}   // abrir a Caixa pela barra mostra tudo
   if(id==='fech')abrirFechamento();
   if(id==='profs')prepararAluguel();
@@ -3241,7 +3241,7 @@ function wkVars(z){
 function aplicarWkVars(){
   const t=document.querySelector('.wk'); if(t)t.setAttribute('style',wkVars(wkZoom));
   const l=document.getElementById('wk-zoom-lbl'); if(l)l.textContent=Math.round(wkZoom*100)+'%';
-  const fit=document.querySelector('.wk-zoom .wz-fit');if(fit)fit.setAttribute('aria-pressed',String(wkAutoFit));
+  document.querySelectorAll('.wk-modo button').forEach(b=>{const on=b.classList.contains('wk-fit')===wkAutoFit;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));});
   try{localStorage.setItem('jv-wkzoom',String(wkZoom));localStorage.setItem('jv-wkzoom-fit',String(wkAutoFit));}catch(e){}
 }
 function wkZoomStep(dir){
@@ -3249,6 +3249,7 @@ function wkZoomStep(dir){
   wkZoom=Math.min(1.8,Math.max(0.35,+(wkZoom+dir*0.1).toFixed(2)));
   aplicarWkVars();
 }
+function wkAmpliar(){wkAutoFit=false;wkZoom=1;aplicarWkVars();}
 function wkZoomFit(){
   wkAutoFit=true;
   const sc=document.querySelector('#pg-agenda .wk-scroll'); if(!sc||sc.clientWidth<1)return;
@@ -3377,16 +3378,49 @@ function togglePresenca(entryId){
   persist();renderAgenda();renderAlunos();renderDash();
 }
 
+/* Filtro por tipo: a legenda de cores virou filtro. Só esconde na tela —
+   não muda nada salvo, e volta a "Todos" ao recarregar o app. */
+let agTipoFiltro=null;
+const AG_TIPOS=[['aula','Tênis','--c-aula'],['grupo','Grupo','--c-grupo'],['personal','Personal','--c-personal'],['locacao','Locação','--c-loc'],['torneio','Torneio','--c-tor'],['pessoal','Pessoal','--c-pess'],['bloqueio','Bloqueio','--c-bloq']];
+function itemVisivelTipo(e){return !agTipoFiltro||e.tipo===agTipoFiltro;}
+function filtrarTipoAg(t){agTipoFiltro=(t&&agTipoFiltro!==t)?t:null;renderAgenda();}
+function renderLegendaAg(){
+  const box=document.getElementById('ag-legenda');if(!box)return;
+  const mostra=agView==='dia'||agView==='semana';
+  box.hidden=!mostra;if(!mostra)return;
+  box.innerHTML=`<button type="button" class="${agTipoFiltro?'':'on'}" aria-pressed="${!agTipoFiltro}" onclick="filtrarTipoAg(null)">Todos</button>`+
+    AG_TIPOS.map(([t,n,c])=>`<button type="button" class="${agTipoFiltro===t?'on':''}" aria-pressed="${agTipoFiltro===t}" style="--cor:var(${c})" onclick="filtrarTipoAg('${t}')"><i></i>${n}</button>`).join('');
+}
+/* Horário "de agora": o último da grade que já começou hoje. */
+function slotAgora(){
+  const n=new Date(),m=n.getHours()*60+n.getMinutes();let r=null;
+  HORAS.forEach(h=>{const[a,b]=h.split(':').map(Number);if(a*60+b<=m)r=h;});
+  return r;
+}
+function rolarAgendaAgora(){
+  if(agView!=='dia'&&agView!=='semana')return;
+  const el=document.querySelector('#pg-agenda .agora');if(!el)return;
+  const y=el.getBoundingClientRect().top+window.scrollY-Math.round(window.innerHeight*0.32);
+  if(y>0)window.scrollTo({top:y,behavior:'smooth'});
+}
+/* Na grade da semana a coluna é estreita: palavra longa vira abreviação
+   ("Grupo intermediário" → "Grupo interm.") em vez de quebrar no meio. */
+function nomeCurtoWk(t){return esc(String(t||'').split(' ').map(w=>w.length>10?w.slice(0,6)+'.':w).join(' '));}
 function renderAgenda(){
   renderProfFiltro();
+  renderLegendaAg();
+  const hojeK=dKey(new Date()),agoraH=slotAgora();
   const el=document.getElementById('ag-view');
   const lbl=document.getElementById('ag-label');
   if(agView==='dia'){
-    lbl.innerHTML=DIAS[agDate.getDay()]+', '+agDate.getDate()+' de '+MESES[agDate.getMonth()].toLowerCase()+'<small>'+countDay(agDate)+' atendimentos · toque no ○ para confirmar, toque de novo para desfazer · arraste p/ trocar horário</small>';
-    el.innerHTML='<button class="btn btn-ghost" style="width:100%;margin-bottom:10px;color:var(--c-bloq);border-color:#E5C0BA;font-size:12px" onclick="marcarChuvaDia()">☔ Marcar o dia inteiro como chuva</button>'+HORAS.map(h=>{
-      const evs=entriesFor(agDate,h).filter(itemVisivelProf);
-      const outro=outroNaTela(agDate,h);
-      return `<div class="slot" data-drop-d="${dKey(agDate)}" data-drop-h="${h}"><div class="slot-h">${h}</div>
+    const dn=DIAS[agDate.getDay()],nAt=countDay(agDate);
+    lbl.innerHTML=dn.charAt(0).toUpperCase()+dn.slice(1)+', '+agDate.getDate()+' de '+MESES[agDate.getMonth()].toLowerCase()+'<small>'+(nAt===1?'1 atendimento':nAt+' atendimentos')+' · toque no ○ para confirmar</small>';
+    const ehHoje=dKey(agDate)===hojeK;
+    el.innerHTML='<button class="btn btn-ghost ag-chuva" onclick="marcarChuvaDia()">☔ Marcar o dia inteiro como chuva</button>'+HORAS.map(h=>{
+      const evs=entriesFor(agDate,h).filter(itemVisivelProf).filter(itemVisivelTipo);
+      const outro=agTipoFiltro?null:outroNaTela(agDate,h);
+      const ag=ehHoje&&h===agoraH;
+      return `<div class="slot${ag?' agora':''}" data-drop-d="${dKey(agDate)}" data-drop-h="${h}"><div class="slot-h">${h}${ag?'<em>agora</em>':''}</div>
         <div class="slot-body ${(evs.length||outro)?'has':''}">
           ${evs.map(e=>{
             const linked=!!e.alunoId;
@@ -3400,7 +3434,7 @@ function renderAgenda(){
             </span>`;
           }).join('')}
           ${(function(){
-            const o=outroNaTela(agDate,h);
+            const o=outro;
             if(o)return `<span class="ev t-outro" title="Horário de outro professor — a quadra está ocupada">👨‍🏫 ${esc(o.nome)}<small> · ${esc(rotuloTipoOutro(o.tipo))}</small></span>`;
             /* Compromisso seu fora da quadra: a hora é sua, a quadra não.
                Dizer isso na tela evita a dúvida "por que ele marcou aqui?". */
@@ -3420,17 +3454,21 @@ function renderAgenda(){
   else if(agView==='semana'){
     const mon=new Date(agDate);mon.setDate(mon.getDate()-((mon.getDay()+6)%7));
     const days=[...Array(6)].map((_,i)=>{const d=new Date(mon);d.setDate(d.getDate()+i);return d;});
-    lbl.innerHTML='Semana de '+days[0].getDate()+'/'+(days[0].getMonth()+1)+' a '+days[5].getDate()+'/'+(days[5].getMonth()+1)+'<small>toque p/ editar · arraste p/ mover ou trocar</small>';
-    let html='<div class="wk-zoom"><button class="wz" onclick="wkZoomStep(-1)" title="Diminuir">−</button><span class="wz-lbl" id="wk-zoom-lbl">'+Math.round(wkZoom*100)+'%</span><button class="wz" onclick="wkZoomStep(1)" title="Aumentar">+</button><button class="wz wz-fit" onclick="wkZoomFit()">Semana toda</button></div>';
-    html+='<div class="wk-scroll"><table class="wk" style="'+wkVars(wkZoom)+'"><tr><th></th>'+days.map(d=>`<th>${DIAS[d.getDay()]}<small>${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}</small></th>`).join('')+'</tr>';
+    const dd=d=>String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');
+    lbl.innerHTML='Semana de '+dd(days[0])+' a '+dd(days[5])+'<small>toque para abrir · arraste para mover</small>';
+    const hojeNa=days.some(d=>dKey(d)===hojeK);
+    let html='<div class="wk-modo" role="group" aria-label="Tamanho da grade"><button type="button" class="wk-fit'+(wkAutoFit?' on':'')+'" aria-pressed="'+wkAutoFit+'" onclick="wkZoomFit()">Semana toda</button><button type="button" class="wk-amp'+(wkAutoFit?'':' on')+'" aria-pressed="'+!wkAutoFit+'" onclick="wkAmpliar()">Ampliada</button></div>';
+    html+='<div class="wk-scroll"><table class="wk" style="'+wkVars(wkZoom)+'"><tr><th></th>'+days.map(d=>`<th${dKey(d)===hojeK?' class="hoje"':''}>${DIAS[d.getDay()]}<small>${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}</small></th>`).join('')+'</tr>';
     HORAS.forEach(h=>{
-      html+=`<tr><td class="hr">${h}</td>`;
+      const ag=hojeNa&&h===agoraH;
+      html+=`<tr${ag?' class="agora"':''}><td class="hr">${h}</td>`;
       days.forEach(d=>{
-        const evs=entriesFor(d,h).filter(itemVisivelProf);
-        const outro=outroNaTela(d,h);
-        let cls='free',txt='livre',drag='';
-        if(evs.length===1){cls='t-'+evs[0].tipo;txt=evs[0].titulo;drag=`drag-item" data-eid="${evs[0].id}" data-origem="${evs[0].origem}`;}
-        else if(evs.length>1){cls='multi';txt=evs.length+' marcações';}
+        const evs=entriesFor(d,h).filter(itemVisivelProf).filter(itemVisivelTipo);
+        const outro=agTipoFiltro?null:outroNaTela(d,h);
+        let cls='free',txt='',drag='';
+        if(evs.length===1){cls='t-'+evs[0].tipo;txt=nomeCurtoWk(evs[0].titulo);drag=`drag-item" data-eid="${evs[0].id}" data-origem="${evs[0].origem}`;}
+        // cada aluno é uma marcação: vários no mesmo horário = turma/dupla
+        else if(evs.length>1){const ehAula=evs.every(e=>/^(aula|grupo|personal)$/.test(e.tipo));cls=evs.every(e=>e.tipo==='grupo')?'t-grupo':'multi';txt=evs.length+(ehAula?' alunos':' itens');}
         // horário de outro professor só aparece onde eu não tenho nada: quadra
         // ocupada por dois é problema para resolver, não para esconder
         else if(outro){cls='t-outro';txt='👨‍🏫 '+outro.nome;}
@@ -3438,16 +3476,16 @@ function renderAgenda(){
           const md=slotModo(d,h);
           if(!ehDono()&&md==='fechado'){cls='t-nliberado';txt='—';}
         }
-        html+=`<td data-drop-d="${dKey(d)}" data-drop-h="${h}"><button class="wk-cell ${cls} ${drag}" onclick="gotoSlot(${d.getFullYear()},${d.getMonth()},${d.getDate()},'${h}')">${txt}</button></td>`;
+        html+=`<td${dKey(d)===hojeK?' class="hoje"':''} data-drop-d="${dKey(d)}" data-drop-h="${h}"><button class="wk-cell ${cls} ${drag}"${txt?'':` aria-label="${DIAS[d.getDay()]} ${h} livre"`} onclick="gotoSlot(${d.getFullYear()},${d.getMonth()},${d.getDate()},'${h}')">${txt}</button></td>`;
       });
       html+='</tr>';
     });
-    el.innerHTML=html+'</table></div><p class="jv-ag-hint">Use − e + para ajustar a grade. Toque para ver ou editar a marcação.</p>';
+    el.innerHTML=html+'</table></div><p class="jv-ag-hint">Toque num horário vazio para marcar, ou numa aula para ver e editar.</p>';
     if(wkAutoFit)wkZoomFit();
   }
   else if(agView==='mes'){
     const y=agDate.getFullYear(),m=agDate.getMonth();
-    lbl.innerHTML=MESES[m]+' '+y+'<small>toque no dia para abrir · arraste um dia sobre outro p/ mover os atendimentos</small>';
+    lbl.innerHTML=MESES[m]+' '+y+'<small>toque no dia para abrir · arraste para mover</small>';
     el.innerHTML='<div class="cal"><div class="cal-head">'+['D','S','T','Q','Q','S','S'].map(d=>`<span>${d}</span>`).join('')+'</div><div class="cal-grid">'+monthCells(y,m,true)+'</div></div>';
   }
   else{
