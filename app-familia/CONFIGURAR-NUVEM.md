@@ -1,4 +1,20 @@
-# Login da família e sincronização
+# Nuvem da família
+
+## Jeito simples (padrão): só o link
+
+1. Abra o app → **Nuvem**.
+2. Em **Link da família**, cole o mesmo link que vocês já usavam (começa com `https://` e termina com `.json`).
+3. Ligue **Sincronizar na nuvem**.
+4. Faça o mesmo no outro celular, com o mesmo link.
+
+Na primeira vez o app compara o aparelho com a nuvem e, se forem diferentes, pergunta qual versão usar (baixe os dois backups antes de escolher, se tiver dúvida). Depois disso, cada alteração sobe sozinha e o outro aparelho recebe em até 15 segundos.
+
+Sem login, quem tiver o link consegue ler e alterar os dados. Guarde o link só entre vocês dois e não publique.
+
+## Opcional: login com e-mail e senha
+
+Só se quiserem proteger a nuvem com contas. Preencher a **Web API Key** passa a exigir login; deixe em branco para usar só o link.
+
 
 O código está incluído no pacote. A configuração abaixo precisa ser realizada no projeto Firebase da família antes de usar a nuvem. Nenhuma conta foi criada e nenhuma regra foi publicada automaticamente.
 
