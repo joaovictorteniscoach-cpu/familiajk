@@ -1291,13 +1291,9 @@ const SNAPSHOT_JOAO_20261001={
 };
 function aplicarSnapshotJoao20261001(o){
   const s=SNAPSHOT_JOAO_20261001;
-  if(o._snapshotJoao20261001){
-    if(!o._cambioJoao20261001Corrigido){
-      o.cambio=s.cambio;
-      o._cambioJoao20261001Corrigido=true;
-    }
-    return o;
-  }
+  /* V2: alguns aparelhos/nuvem já tinham o marcador antigo, mas ficaram
+     com posições anteriores. Reaplica o retrato completo uma única vez. */
+  if(o._snapshotJoao20261001V2)return o;
   o.cambio=s.cambio;
   o.nacional=s.nacional.map(x=>({nome:x[0],classe:x[1],valor:x[2],apl:null}));
   const nomes={
@@ -1327,6 +1323,7 @@ function aplicarSnapshotJoao20261001(o){
   o.binanceInformado=s.binanceInformado;
   o._snapshotJoao20261001=true;
   o._cambioJoao20261001Corrigido=true;
+  o._snapshotJoao20261001V2=true;
   return o;
 }
 
