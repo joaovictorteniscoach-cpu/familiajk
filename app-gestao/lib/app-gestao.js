@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-30-2';
+const VERSAO='2026-10-01-1';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -4814,8 +4814,33 @@ function marcarPago(id){
    vai mudar. */
 function checarViradaMes(){
   const m=mesReal();
-  if(DB.mesCreditos===undefined){DB.mesCreditos=m;return true;}   // primeira abertura: nada a converter
-  return false;
+  let mudou=false;
+  if(DB.mesCreditos===undefined){DB.mesCreditos=m;mudou=true;}   // primeira abertura: nada a converter
+  if(zerarPagamentosDoMes())mudou=true;
+  return mudou;
+}
+/* Mês novo, cobrança nova: todo aluno ATIVO volta a aparecer como pendente, e
+   você vai marcando quem pagou. Antes o "pago" só voltava a "pendente" quando
+   a virada era aplicada — e "Encerrar sem converter" nem isso —, então no fim
+   do mês era preciso desativar aluno por aluno para zerar.
+   Isto é SÓ o status de pagamento: créditos, reposições e mensalidades lançadas
+   não mudam (a conversão de sobra continua esperando você em "Ver e converter").
+   Quem já pagou no mês novo (ultimoPago = mês atual) fica como está. Roda uma
+   vez por mês, em qualquer aparelho: DB.mesPagamentos guarda o mês já zerado. */
+function zerarPagamentosDoMes(){
+  const m=mesReal();
+  if(DB.mesPagamentos===m)return false;
+  // primeira vez com esta versão: o mês de referência é o da última virada
+  const desde=DB.mesPagamentos||DB.mesCreditos;
+  DB.mesPagamentos=m;
+  if(desde===m)return true;               // a virada deste mês já tinha rodado
+  let n=0;
+  (DB.alunos||[]).forEach(a=>{
+    if(!ehAtivoAluno(a))return;
+    if((a.status==='pago'||a.status==='parcial')&&a.ultimoPago!==m){a.status='pendente';n++;}
+  });
+  if(n)logAct('Mês novo ('+m+'): '+n+' aluno(s) voltaram para "pendente" — marque quem já pagou');
+  return true;
 }
 /* O que a virada faria, se você mandasse. Não muda nada — só calcula.
    Aluno inativo fica de fora: ele não está fazendo aula, então virar o mês
@@ -4873,22 +4898,37 @@ function pularViradaMes(){
   logAct('Virada de mês dispensada por você: '+V.de+' → '+V.para+' (nada convertido)');
   persist();renderAll();toast('Mês encerrado sem converter nada');
 }
+/* Renovar deixa o saldo IGUAL ao pacote do aluno — não soma. Plano de 3 aulas
+   renovado fica com 3 créditos, tenha sobrado 1 ou faltado 2. Assim renovar
+   duas vezes sem querer não dobra nada: a segunda vez não muda o número. */
 function renovarMes(id){
   const a=DB.alunos.find(x=>x.id===id);
-  const pg=Number(a.planoGrupo)||0;
-  const resumo='+'+(Number(a.plano)||0)+' crédito(s)'+(pg>0?(' e +'+pg+' de grupo'):'');
+  const p=Number(a.plano)||0, pg=Number(a.planoGrupo)||0;
+  const cAnt=Number(a.creditos)||0, gAnt=Number(a.credGrupo)||0;
+  const resumo=p+' crédito(s)'+(pg>0?(' e '+pg+' de grupo'):'');
   if(acaoRepetida('renov-'+id)){toast('Já renovei agora há pouco — confira os créditos antes de repetir');return;}
   const jaRenov=renovacoesDoMes(a);
-  let aviso=jaRenov.length?('⚠️ '+a.nome+' JÁ foi renovado '+jaRenov.length+'x neste mês (somou '+fmtCred(jaRenov.reduce((t,x)=>t+(Number(x.delta)||0),0))+' crédito(s)).\n\nRenovar de novo DOBRA os créditos. Tem certeza?\n\n'):'';
+  let aviso=jaRenov.length?('ℹ️ '+a.nome+' já foi renovado neste mês. Renovar de novo NÃO soma: o saldo só volta a ser o do pacote.\n\n'):'';
+  if(cAnt!==p||(pg>0&&gAnt!==pg))aviso+='Saldo hoje: '+fmtCred(cAnt)+' crédito(s)'+(pg>0?(' e '+fmtCred(gAnt)+' de grupo'):'')
+    +'. Depois de renovar: '+resumo+' — o que sobrou ou faltou não entra na conta.\n\n';
   /* Renovar quem parou de treinar cria aula que ninguém vai fazer e mensalidade
      que ninguém vai cobrar. O botão continua funcionando — quem volta a treinar
      é renovado por aqui — mas não em silêncio. */
   if(!ehAtivoAluno(a))aviso+='⚠️ '+a.nome+' está como INATIVO (sem plano e sem mensalidade no cadastro).\n\nRenovar vai somar crédito e marcar como "não pago". Se ele voltou a treinar, acerte o plano no cadastro primeiro.\n\n';
-  if(confirm(aviso+'Renovar o mês de '+a.nome+'? Soma '+resumo+' e marca como pendente.')){
-    mover(a,'creditos',Number(a.plano)||0,'Renovação do mês');
-    if(pg>0)mover(a,'credGrupo',pg,'Renovação do mês (grupo)');   // plano misto renova as duas partes
+  if(confirm(aviso+'Renovar o mês de '+a.nome+'? O saldo fica em '+resumo+', igual ao pacote, e marca como pendente.')){
+    /* No extrato ficam duas linhas: o saldo anterior zerado e o pacote entrando.
+       Assim o extrato continua somando o saldo, e a conferência do mês lê a
+       renovação como o pacote inteiro (igual ao plano), não como diferença. */
+    if(cAnt!==p){
+      if(cAnt!==0)mover(a,'creditos',-cAnt,'Saldo anterior zerado na renovação');
+      mover(a,'creditos',p,'Renovação do mês');
+    }
+    if(pg>0&&gAnt!==pg){   // plano misto renova as duas partes
+      if(gAnt!==0)mover(a,'credGrupo',-gAnt,'Saldo de grupo anterior zerado na renovação');
+      mover(a,'credGrupo',pg,'Renovação do mês (grupo)');
+    }
     a.status='pendente';delete a.difOk;delete a.difUndo;persist();renderAll();   // novo ciclo: reavalia a diferença do zero
-    toast('Mês renovado para '+a.nome+' · '+resumo);
+    toast('Mês renovado para '+a.nome+' · saldo: '+resumo);
   }
 }
 function enviarAcesso(id){
