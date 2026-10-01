@@ -2704,3 +2704,8 @@ body #pg-dash.page{padding-top:0!important;background:linear-gradient(180deg,#05
   #pg-dash .jh-legend{grid-template-columns:repeat(3,auto)!important;justify-content:space-between}
 }
 @media(min-width:720px){#pg-dash .jh-tiles{grid-template-columns:repeat(4,minmax(0,1fr))!important}}
+
+/* Tempo em Curitiba, logo abaixo da situação da quadra */
+#pg-dash .jh-chips{flex:0 0 auto;display:flex;flex-direction:column;gap:7px;align-items:stretch}
+#pg-dash .jh-clima[hidden]{display:none!important}
+#pg-dash .jh-clima .jh-clima-ic{width:28px;flex:0 0 28px;text-align:center;font-size:22px;line-height:1}

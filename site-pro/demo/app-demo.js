@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-01-2';
+const VERSAO='2026-10-01-3';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -6172,6 +6172,47 @@ function renderQuadraInicio(){
   if(t)t.textContent=tempoRelativo(v.ts)||(v.atualizado_em?('Atualizado '+v.atualizado_em):'Toque para atualizar');
 }
 setInterval(()=>{try{renderQuadraInicio();}catch(e){}},60000);
+/* ===== Tempo em Curitiba (Open-Meteo: gratuito, sem chave) =====
+   O mesmo quadrinho do app do aluno: temperatura agora e o céu, com aviso de
+   chuva prevista nas próximas 6 h. Falhou a rede, ele some. Guarda 30 min. */
+const CLIMA_URL='https://api.open-meteo.com/v1/forecast?latitude=-25.43&longitude=-49.27'
+  +'&current=temperature_2m,weather_code,is_day&hourly=precipitation_probability&forecast_hours=6&timezone=America%2FSao_Paulo';
+function climaDoCodigo(c,dia){
+  if(c===0)return dia?['☀️','Sol']:['🌙','Céu limpo'];
+  if(c===1||c===2)return dia?['⛅','Poucas nuvens']:['☁️','Poucas nuvens'];
+  if(c===3)return ['☁️','Nublado'];
+  if(c===45||c===48)return ['🌫️','Neblina'];
+  if(c>=51&&c<=57)return ['🌦️','Garoa'];
+  if((c>=61&&c<=67)||(c>=80&&c<=82))return ['🌧️','Chuva'];
+  if((c>=71&&c<=77)||c===85||c===86)return ['❄️','Frio intenso'];
+  if(c>=95)return ['⛈️','Temporal'];
+  return ['🌤️','—'];
+}
+let CLIMA_ULT=null;
+function pintarClimaGestao(){
+  const el=document.getElementById('jh-clima');if(!el)return;
+  const v=CLIMA_ULT;
+  if(!v||typeof v.temp!=='number'){el.hidden=true;return;}
+  const [ic,txt]=climaDoCodigo(v.code,v.dia);
+  const chovendo=/Chuva|Garoa|Temporal/.test(txt), prevista=!chovendo&&v.chuva>=60;
+  el.hidden=false;
+  document.getElementById('jh-clima-ic').textContent=prevista?'🌦️':ic;
+  document.getElementById('jh-clima-temp').textContent=Math.round(v.temp)+'°C';
+  document.getElementById('jh-clima-txt').textContent=prevista?('Chuva prevista ('+v.chuva+'%)'):txt;
+}
+async function carregarClimaGestao(forcar){
+  if(!forcar){try{const c=JSON.parse(localStorage.getItem('jvt-clima')||'null');if(c&&Date.now()-c.ts<30*60000){CLIMA_ULT=c;pintarClimaGestao();return;}}catch(e){}}
+  try{
+    const r=await fetch(CLIMA_URL,{cache:'no-store'});if(!r.ok)throw 0;
+    const d=await r.json(),cur=d&&d.current;if(!cur||typeof cur.temperature_2m!=='number')throw 0;
+    const probs=(d.hourly&&d.hourly.precipitation_probability||[]).filter(x=>typeof x==='number');
+    CLIMA_ULT={ts:Date.now(),temp:cur.temperature_2m,code:cur.weather_code,dia:cur.is_day===1,chuva:probs.length?Math.max.apply(null,probs):0};
+    try{localStorage.setItem('jvt-clima',JSON.stringify(CLIMA_ULT));}catch(e){}
+  }catch(e){if(!CLIMA_ULT){try{CLIMA_ULT=JSON.parse(localStorage.getItem('jvt-clima')||'null');}catch(_){}}}
+  pintarClimaGestao();
+}
+setTimeout(()=>{try{carregarClimaGestao();}catch(e){}},1500);
+setInterval(()=>{if(!document.hidden){try{carregarClimaGestao();}catch(e){}}},30*60000);
 function abrirStatusQuadra(){
   if(typeof ehDono==='function'&&!ehDono()){toast('Só a conta da academia altera a situação da quadra.');return;}
   if(typeof renderStatusQuadraGestao==='function')renderStatusQuadraGestao();
