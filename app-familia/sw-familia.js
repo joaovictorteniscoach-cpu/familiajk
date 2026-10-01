@@ -1,51 +1,30 @@
-/* Service Worker — Família JK (app de contas + investimentos)
-   Estratégia: network-first (sempre tenta a versão nova online),
-   com cache de reserva para abrir offline. NÃO intercepta o Firebase
-   nem as APIs de cotação ao vivo (câmbio e preços dos ativos). */
-const CACHE = 'jk-familia-v6';
-const V = '2026-09-28-2';
-const SHELL = ['./', './manifest-familia.webmanifest', './icone-jk-gestao-192.png',
-  './lib/chart.umd.min.js?v='+V];
-
-self.addEventListener('install', e => {
-  self.skipWaiting();
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)));
+/* Família JK — assets locais, rede primeiro e reserva offline.
+   APIs e bibliotecas de OCR seguem diretamente para a rede. */
+const CACHE = 'jk-familia-black-gold-20260925-r2';
+const SHELL = ['./', './index.html', './layout.css', './vendor/chart.umd.min.js',
+  './vendor/xlsx.full.min.js', './manifest-familia.webmanifest',
+  './icone-jk-gestao-180.png', './icone-jk-gestao-192.png',
+  './icone-jk-gestao-512.png', './icone-jk-gestao-mask.png'];
+const URLS = new Set(SHELL.map(path => new URL(path, self.registration.scope).href));
+self.addEventListener('install', event => {
+  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting()));
 });
-
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys()
-      .then(ks => Promise.all(ks.filter(k => k.startsWith('jk-familia-') && k !== CACHE).map(k => caches.delete(k))))
-      .then(() => self.clients.claim())
-  );
+self.addEventListener('activate', event => {
+  event.waitUntil(caches.keys().then(keys => Promise.all(keys
+    .filter(key => key.startsWith('jk-familia-') && key !== CACHE)
+    .map(key => caches.delete(key)))).then(() => self.clients.claim()));
 });
-
-self.addEventListener('fetch', e => {
-  const req = e.request;
-  if (req.method !== 'GET') return;
-  let u;
-  try { u = new URL(req.url); } catch (_) { return; }
-  if(u.origin!==self.location.origin || !u.href.startsWith(self.registration.scope))return;
-  // Deixa passar direto (sem cache) o que precisa de rede ao vivo:
-  // Firebase (nuvem) e as APIs de cotação (câmbio + preços dos ativos).
-  const h = u.hostname;
-  if (h.includes('firebaseio') || h.includes('firebase') || h.includes('googleapis') ||
-      h.includes('gstatic') || h.includes('google') || h.includes('whatsapp') || h.includes('wa.me') ||
-      h.includes('awesomeapi') || h.includes('brapi') ||
-      // Bibliotecas pesadas carregadas sob demanda (leitor de imagem, planilha, gráficos).
-      // Interceptar o worker, o WASM e o arquivo de idioma quebra a leitura por foto.
-      h.includes('jsdelivr') || h.includes('unpkg') || h.includes('cdnjs') ||
-      h.includes('tessdata') || h.includes('projectnaptha')) {
-    return;
-  }
-  e.respondWith(
-    fetch(req)
-      .then(resp => {
-        if(!resp.ok)return resp;
-        const copy = resp.clone();
-        caches.open(CACHE).then(c => c.put(req, copy).catch(() => {}));
-        return resp;
-      })
-      .catch(() => caches.match(req).then(m => m || (req.mode==='navigate'?caches.match('./'):Response.error())))
-  );
+self.addEventListener('fetch', event => {
+  const request = event.request;
+  if (request.method !== 'GET' || !URLS.has(request.url)) return;
+  event.respondWith(fetch(request).then(response => {
+    if (response.ok) {
+      const copy = response.clone();
+      event.waitUntil(caches.open(CACHE).then(cache => cache.put(request, copy)));
+    }
+    return response;
+  }).catch(async () => {
+    const cached = await caches.match(request);
+    return cached || (request.mode === 'navigate' ? await caches.match('./index.html') : null) || Response.error();
+  }));
 });
