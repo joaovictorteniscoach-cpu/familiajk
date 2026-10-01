@@ -2729,3 +2729,12 @@ body #pg-dash.page{padding-top:0!important;background:linear-gradient(180deg,#05
   #pg-dash .jh-chips .jh-quadra-txt b{font-size:14.5px}
 }
 @media(min-width:640px){#pg-dash .jh-chips>#jh-quadra{flex:0 0 auto}}
+/* Quadrinhos da quadra e do tempo mais sutis: menores e 90% translúcidos
+   (fundo com 10% de opacidade). O desfoque por trás mantém o texto legível. */
+#pg-dash .jh-chips .jh-quadra{padding:5px 6px 5px 7px;gap:6px;border-radius:13px;background:rgba(6,26,17,.10);border-color:rgba(255,255,255,.16);box-shadow:none;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+#pg-dash .jh-chips .jh-quadra-ball{width:20px;height:20px;flex:0 0 20px}
+#pg-dash .jh-chips .jh-clima-ic{width:20px;flex:0 0 20px;font-size:17px}
+#pg-dash .jh-chips .jh-quadra-txt small{font-size:9px}
+#pg-dash .jh-chips .jh-quadra-txt b{font-size:13px;margin:1px 0;text-shadow:0 1px 6px rgba(0,0,0,.55)}
+#pg-dash .jh-chips .jh-quadra-txt small{text-shadow:0 1px 5px rgba(0,0,0,.6)}
+@media(max-width:400px){#pg-dash .jh-chips .jh-quadra-txt b{font-size:12.5px}}
