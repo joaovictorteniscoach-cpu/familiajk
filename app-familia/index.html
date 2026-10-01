@@ -1094,9 +1094,11 @@ function pesDe(desc,padrao){
 const CATEGORIAS=["Moradia","Mercado","Alimentação","Bebidas","Combustível","Manutenção do carro","Transporte",
   "Saúde","Seguro","Educação","Assinaturas","Lazer","Compras","Serviços","Empresa","Tarifas/Impostos","Pets",
   "Cartão de crédito","Entradas","Outros"];
-const CATPAL=["#dcc48e","#8fc6e8","#ebd8af","#a98fd0","#f0a868","#c2956a","#8fb6c9",
-  "#c98f8f","#6fa8c9","#7f9c8b","#b39ddb","#c4e2f5","#e59ac0","#9aa0ad","#7e9ec7","#c07b7b","#8bbf9f",
-  "#d0b48f","#8dc7a3","#6b7b82"];
+/* uma cor viva por categoria, na ordem de CATEGORIAS — as vizinhas ficam
+   longe umas das outras (Saúde e Tarifas, Seguro e Empresa não se confundem mais) */
+const CATPAL=["#F5B931","#22C55E","#FF7A30","#9B5CFF","#EF4444","#A0632D","#38BDF8",
+  "#FF4FA3","#0FB5A6","#4F6BFF","#D35CF0","#A3E635","#FFA8C5","#C4B5FD","#1D6FE0","#B91C3C","#C9A27A",
+  "#E8E2D0","#16A34A","#7B8494"];
 const CAT_KW=[
  ["Moradia",["aluguel","condominio","imobiliaria","imob ","imoveis","administradora de imoveis","energia","cemig","enel","cpfl","light","copel","celesc","sabesp","copasa","sanepar","agua","gas ","iptu","internet","fibra","vivo","claro","net ","tim ","oi ","nextel","sky","hughesnet","starlink","sindico","gas natural","ultragaz","liquigas","copagaz"]],
  ["Bebidas",["adega","bebidas","kartel","cervej","chopp","chope","ze delivery","zedelivery","distribuidora de bebida","emporio da cerveja","destilados","vinho","wine","whisky","vodka","choperia","taberna"]],
@@ -2395,11 +2397,117 @@ function addAnual(){D.invest.anual.push({ano:"",patr:null,aporte:null});renderAn
 
 /* charts */
 Chart.defaults.color='#aeb8c4';Chart.defaults.font.family='system-ui, sans-serif';Chart.defaults.font.size=13;Chart.defaults.maintainAspectRatio=false;Chart.defaults.plugins.legend.labels.usePointStyle=true;Chart.defaults.plugins.legend.labels.pointStyle='circle';Chart.defaults.plugins.legend.labels.boxWidth=8;
-const COL={gold:'#dcc48e',teal:'#8fc6e8',muted:'#aeb8c4',ink:'#101317',up:'#8dc7a3',down:'#eaa28f'};
-const PAL=['#8fc6e8','#dcc48e','#ebd8af','#8fb6c9','#c98f8f','#7f9c8b','#9aa0ad'];
+const COL={gold:'#F5B931',teal:'#38BDF8',muted:'#94A3B8',mut:'#C9CFD8',ink:'#0E1013',up:'#22C55E',down:'#F05252'};
+const PAL=['#38BDF8','#F5B931','#FF7A30','#8B5CF6','#FF4F79','#2DD4A0','#8A94A6'];
+/* ---------- gráficos com profundidade ----------
+   Um só lugar decide como TODO gráfico é pintado: cor viva, degradê que dá
+   volume (a rosca vira um anel com brilho no meio, a barra fica clara em cima
+   e escura embaixo) e sombra por baixo. Os gráficos continuam escrevendo as
+   cores antigas; aqui elas são trocadas pelas novas. */
+const COR_NOVA={'220,196,142':'#F5B931','143,198,232':'#38BDF8','235,216,175':'#FF7A30','143,182,201':'#8B5CF6',
+  '201,143,143':'#FF4F79','127,156,139':'#2DD4A0','154,160,173':'#8A94A6','144,167,172':'#8A94A6','144,168,173':'#8A94A6',
+  '174,184,196':'#94A3B8','187,167,223':'#C084FC','95,208,138':'#22C55E','141,199,163':'#22C55E',
+  '232,117,95':'#F05252','234,162,143':'#F05252','16,19,23':'#0E1013'};
+function rgbDe(c){
+  c=String(c||'').trim();let m=c.match(/^#([0-9a-f]{6})$/i);
+  if(m){const n=parseInt(m[1],16);return [n>>16&255,n>>8&255,n&255];}
+  m=c.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);return m?[+m[1],+m[2],+m[3]]:null;
+}
+function corViva(c){const r=rgbDe(c);if(!r)return c;const n=COR_NOVA[r.join(',')];return n||('#'+r.map(v=>v.toString(16).padStart(2,'0')).join(''));}
+function tom(c,k){/* k>0 clareia, k<0 escurece */
+  const r=rgbDe(c)||[128,128,128];
+  const f=v=>Math.round(k>=0?v+(255-v)*k:v*(1+k));
+  return 'rgb('+r.map(f).join(',')+')';
+}
+function alfa(c,a){const r=rgbDe(c)||[128,128,128];return 'rgba('+r.join(',')+','+a+')';}
+function grad3d(ctx,tipo,base){
+  if(!base)return COL.muted;
+  const ch=ctx.chart,area=ch&&ch.chartArea;if(!area||ctx.dataIndex==null&&tipo==='arc')return base;
+  const c=ch.ctx;
+  if(tipo==='arc'){
+    const el=ch.getDatasetMeta(ctx.datasetIndex).data[ctx.dataIndex];
+    if(!el||!(el.outerRadius>0))return base;
+    const ri=Math.max(0,el.innerRadius||0),ro=el.outerRadius;
+    const g=c.createRadialGradient(el.x,el.y,ri,el.x,el.y,ro);
+    g.addColorStop(0,tom(base,-.45));g.addColorStop(.38,tom(base,.28));
+    g.addColorStop(.62,base);g.addColorStop(1,tom(base,-.38));
+    return g;
+  }
+  const hor=ch.options.indexAxis==='y';
+  const g=hor?c.createLinearGradient(area.left,0,area.right,0):c.createLinearGradient(0,area.top,0,area.bottom);
+  if(tipo==='area'){g.addColorStop(0,alfa(base,.38));g.addColorStop(1,alfa(base,0));return g;}
+  g.addColorStop(0,tom(base,.32));g.addColorStop(.45,base);g.addColorStop(1,tom(base,-.42));
+  return g;
+}
+const JK_3D={id:'jk3d',
+  beforeUpdate(ch){
+    const tipoGraf=ch.config.type;
+    ch.data.datasets.forEach(ds=>{
+      if(ds._jk3d)return;ds._jk3d=true;
+      const t=ds.type||tipoGraf;
+      const lista=v=>[].concat(v==null?[]:v).map(corViva);
+      if(t==='doughnut'||t==='pie'){
+        const bases=lista(ds.backgroundColor);if(!bases.length)return;ds._jkBases=bases;
+        ds.backgroundColor=ctx=>grad3d(ctx,'arc',bases[(ctx.dataIndex||0)%bases.length]);
+        ds.borderColor=COL.ink;ds.borderWidth=2;if(ds.hoverOffset==null)ds.hoverOffset=10;
+      }else if(t==='bar'){
+        const bases=lista(ds.backgroundColor);if(!bases.length)return;ds._jkBases=bases;
+        ds.backgroundColor=ctx=>grad3d(ctx,'bar',bases[(ctx.dataIndex||0)%bases.length]);
+        ds.borderColor=bases.map(b=>tom(b,.35));ds.borderWidth=0;
+        if(ds.borderRadius==null)ds.borderRadius=7;ds.borderSkipped=false;
+      }else if(t==='line'){
+        const base=lista(ds.borderColor)[0]||COL.teal;ds.borderColor=base;ds._jkBases=[base];
+        if(ds.fill)ds.backgroundColor=ctx=>grad3d(ctx,'area',base);
+        ds.borderWidth=Math.max(+ds.borderWidth||0,2.5);
+        if(ds.pointBackgroundColor==null)ds.pointBackgroundColor=base;
+        if(ds.pointBorderColor==null)ds.pointBorderColor=COL.ink;
+        if(ds.pointBorderWidth==null)ds.pointBorderWidth=1.5;
+      }
+    });
+  },
+  beforeDatasetDraw(ch,args){
+    const c=ch.ctx,ds=ch.data.datasets[args.index],t=ds.type||ch.config.type;c.save();
+    if(t==='doughnut'||t==='pie'){c.shadowColor='rgba(0,0,0,.6)';c.shadowBlur=16;c.shadowOffsetY=8;}
+    else if(t==='bar'){c.shadowColor='rgba(0,0,0,.5)';c.shadowBlur=8;c.shadowOffsetX=3;c.shadowOffsetY=4;}
+    else if(t==='line'){c.shadowColor=alfa(corViva([].concat(ds.borderColor)[0]),.55);c.shadowBlur=10;c.shadowOffsetY=4;}
+  },
+  afterDatasetDraw(ch){ch.ctx.restore();}
+};
+/* a bolinha da legenda é a cor pura — o degradê é para o desenho, não para a legenda */
+function legendaViva(orig){
+  return function(ch){
+    const itens=orig.call(this,ch);
+    itens.forEach(it=>{
+      const porFatia=it.index!=null&&it.datasetIndex==null;
+      const ds=ch.data.datasets[porFatia?0:it.datasetIndex];const b=ds&&ds._jkBases;if(!b||!b.length)return;
+      const c=porFatia?b[it.index%b.length]:b[b.length-1];
+      it.fillStyle=c;it.strokeStyle=c;it.lineWidth=0;
+    });
+    return itens;
+  };
+}
+if(window.Chart){
+  try{Chart.register(JK_3D);}catch(_){}
+  try{
+    const lg=Chart.defaults.plugins.legend.labels;lg.generateLabels=legendaViva(lg.generateLabels);
+    ['doughnut','pie'].forEach(t=>{const o=Chart.overrides[t]&&Chart.overrides[t].plugins&&Chart.overrides[t].plugins.legend&&Chart.overrides[t].plugins.legend.labels;
+      if(o&&o.generateLabels)o.generateLabels=legendaViva(o.generateLabels);});
+  }catch(_){}
+  const d=Chart.defaults;
+  try{
+    d.color='#C9CFD8';d.font.weight=500;
+    d.animation.duration=900;d.animation.easing='easeOutQuart';
+    const tt=d.plugins.tooltip;tt.backgroundColor='rgba(16,18,22,.96)';tt.borderColor='rgba(245,185,49,.55)';tt.borderWidth=1;
+    tt.padding=12;tt.cornerRadius=12;tt.titleColor='#F5F1E9';tt.bodyColor='#E6E1D6';tt.titleFont={weight:'700',size:13};
+    tt.bodyFont={size:13};tt.boxPadding=6;tt.usePointStyle=true;
+    d.plugins.legend.labels.color='#C9CFD8';d.plugins.legend.labels.padding=14;
+    d.elements.point.radius=3;d.elements.point.hoverRadius=6;d.elements.line.tension=.35;
+    d.scale.grid.color='rgba(255,255,255,.06)';d.scale.border={display:false};
+  }catch(_){}
+}
 let charts={};
 function destroy(k){if(charts[k]){charts[k].destroy();delete charts[k]}}
-const moneyAxis={ticks:{callback:v=>brlk(v)},grid:{color:'rgba(52,62,73,.4)'}};
+const moneyAxis={ticks:{callback:v=>brlk(v)},grid:{color:'rgba(255,255,255,.06)'}};
 
 function drawInvPainel(){
   set('h-total',brl(invTotal()));set('h-nac',brl(totNac()));set('h-glob',brl(globBRL()));set('h-cambio',brl(D.invest.cambio));
