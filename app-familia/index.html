@@ -527,7 +527,7 @@ table.tbl.livre td:last-child{width:42%}
 <section data-tab="c-resumo">
   <div class="card">
     <h2>Resumo mensal</h2><div class="sub">Feche o mês com um clique e acompanhe a evolução das contas.</div>
-    <div class="chartbox" id="resumo-box"><canvas id="resumoChart"></canvas></div>
+    <div class="chartbox" id="resumo-box" data-proprio="1"><canvas id="resumoChart"></canvas></div>
     <p class="note" id="resumo-nota"></p>
     <div class="scroll" style="margin-top:16px"><table class="tbl" id="tbl-resumo"></table></div>
     <button class="addbtn" onclick="snapConMonth()">📸 fechar o mês atual</button>
@@ -553,7 +553,7 @@ table.tbl.livre td:last-child{width:42%}
       <div class="kpi"><div class="k">Recebido no ano</div><div class="v" id="ca-receb">—</div></div>
       <div class="kpi"><div class="k">Saldo do ano</div><div class="v" id="ca-saldo">—</div></div>
     </div>
-    <div class="chartbox" id="ctrl-box" style="margin-top:14px"><canvas id="ctrlChart"></canvas></div>
+    <div class="chartbox" id="ctrl-box" data-proprio="1" style="margin-top:14px"><canvas id="ctrlChart"></canvas></div>
     <div class="legend-colors">
       <span><b style="background:var(--muted)"></b>Previsto</span>
       <span><b style="background:var(--gold)"></b>Pago</span>
@@ -648,7 +648,7 @@ table.tbl.livre td:last-child{width:42%}
 <!-- ===================== INVESTIMENTOS ===================== -->
 <section data-tab="i-painel">
   <div class="investment-layout">
-    <div class="wealth-panel"><div class="eyebrow">Total investido</div><div class="bignum" id="h-total">—</div><div class="section-heading history-heading"><span>Evolução do patrimônio</span><button class="text-button" onclick="irPara('i-mensal')">Ver histórico ›</button></div><div class="wealth-chart"><canvas id="sparkChart"></canvas></div><p class="note">Histórico cadastrado. Os meses de exemplo podem ser editados em Evolução mensal.</p>
+    <div class="wealth-panel"><div class="eyebrow">Total investido</div><div class="bignum" id="h-total">—</div><div class="section-heading history-heading"><span>Evolução do patrimônio</span><button class="text-button" onclick="irPara('i-mensal')">Ver histórico ›</button></div><div class="wealth-chart"><canvas id="sparkChart"></canvas></div><p class="note">Cada mês fechado (📸 em Mensal) vira um ponto da linha.</p>
     <div class="card contribution-card"><div><div class="eyebrow">Plano de aportes</div><strong id="h-plano">—</strong><span class="mut"> / mês</span></div><button class="text-button" onclick="irPara('i-plano')">Ajustar ›</button></div>
     <button class="iconbtn primary wide-button" onclick="startEntry('aporte')">＋ Adicionar aporte</button></div>
     <div class="allocation-panel"><div class="section-heading"><h2>Distribuição</h2><button class="text-button" onclick="irPara('i-carteira')">Ver carteira ›</button></div><div class="allocation-bar" aria-label="Distribuição por conta"><i id="alloc-nac"></i><i id="alloc-global"></i><i id="alloc-bin"></i></div>
@@ -696,7 +696,7 @@ table.tbl.livre td:last-child{width:42%}
 <section data-tab="i-mensal">
   <div class="card">
     <h2>Evolução mensal</h2><div class="sub">Patrimônio mês a mês. Rendimento e % são automáticos.</div>
-    <div class="warn">Os meses antigos são exemplo — troque pelos seus valores reais.</div>
+    <div class="warn" id="im-aviso-exemplo">Os meses antigos são exemplo — troque pelos seus valores reais.</div>
     <div class="kpis" style="margin-bottom:14px">
       <div class="kpi"><div class="k">Variação do último mês</div><div class="v" id="im-ultimo">—</div></div>
       <div class="kpi"><div class="k">Somando os meses</div><div class="v" id="im-soma">—</div></div>
@@ -2483,7 +2483,9 @@ const JK_3D={id:'jk3d',
         if(ds.fill)ds.backgroundColor=ctx=>grad3d(ctx,'area',base);
         ds.borderWidth=Math.max(+ds.borderWidth||0,2.5);ds.tension=.4;ds.cubicInterpolationMode='monotone';
         ds.pointBackgroundColor=base;ds.pointBorderColor=COL.ink;ds.pointBorderWidth=1.5;
-        ds.pointRadius=ctx=>{const n=(ctx.dataset.data||[]).length;return n>8?0:3;};ds.pointHoverRadius=6;
+        /* série longa sem pontos — mas o ponto sozinho (vizinhos vazios) aparece, senão some */
+        ds.pointRadius=ctx=>{const d=ctx.dataset.data||[],i=ctx.dataIndex,vz=v=>v==null||v==='';
+          if(d.length<=8)return 3;return (vz(d[i-1])&&vz(d[i+1]))?4:0;};ds.pointHoverRadius=6;
         ds.spanGaps=true;
       }
     });
@@ -2581,6 +2583,8 @@ function rendimentoMensal(){
    Resumo e na Análise. */
 function drawMensal(){
   destroy('mensal');
+  /* o aviso de exemplo só aparece enquanto houver mês de exemplo */
+  const av=document.getElementById('im-aviso-exemplo');if(av)av.style.display=(D.invest.mensal||[]).some(exemploMensal)?'':'none';
   refreshMensalKPI();
 }
 /* os números que respondem "quanto mudou", sem ter de ler o gráfico */
@@ -5533,7 +5537,8 @@ function marcarVazias(){
     const tbs=c.querySelectorAll('table.tbl');
     if(!tbs.length)return;
     const tudoVazio=[...tbs].every(t=>t.classList.contains('semlinhas'));
-    box.forEach(b=>b.style.display=tudoVazio?'none':'');
+    /* data-proprio: o gráfico decide sozinho se aparece (o Resumo se desenha com os extratos) */
+    box.forEach(b=>{if(!b.dataset.proprio)b.style.display=tudoVazio?'none':'';});
   });
 }
 function enhanceTables(){
