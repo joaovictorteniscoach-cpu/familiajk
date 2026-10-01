@@ -1271,6 +1271,58 @@ function pagoSet(id,val,key){if(!id)return;const k=key||selMonthKey();D.contas.p
 function togglePago(id){pagoSet(id,!pagoGet(id));renderContasMonth();}
 
 /* ---------- migração ---------- */
+const SNAPSHOT_JOAO_20261001={
+  cambio:5.20055,
+  nacional:[
+    ["Dinheiro disponível","Renda Fixa / Caixa",5500.00],
+    ["Saldo conta investimento XP","Renda Fixa / Caixa",957.42],
+    ["XP Liquidez FIC de FIF","Renda Fixa / Caixa",25158.03],
+    ["Trend Nasdaq","Ações (EUA)",10552.47],
+    ["Trend Ouro","Ouro",5928.35],
+    ["Trend Inteligência A","Ações (EUA)",1326.64],
+    ["Hashdex Bitcoin","Cripto",338.16],
+    ["Investback","Outros",274.85],
+    ["Nubank Turbo 115% CDI","Renda Fixa / Caixa",1504.68],
+    ["Nubank Fixos Investimentos","Renda Fixa / Caixa",17.49]
+  ],
+  global:{LIT:279.99,QQQ:633.11,VOO:205.26,NLR:294.82,REMX:417.83},
+  caixaGlobalUSD:298.69,
+  binanceInformado:2185.90
+};
+function aplicarSnapshotJoao20261001(o){
+  if(o._snapshotJoao20261001)return o;
+  const s=SNAPSHOT_JOAO_20261001;
+  o.cambio=s.cambio;
+  o.nacional=s.nacional.map(x=>({nome:x[0],classe:x[1],valor:x[2],apl:null}));
+  const nomes={
+    LIT:"Global X Lithium & Battery Tech ETF",
+    QQQ:"Invesco QQQ Trust",
+    VOO:"Vanguard S&P 500 ETF",
+    NLR:"VanEck Uranium & Nuclear Energy ETF",
+    REMX:"VanEck Rare Earth/Strategic Metals ETF"
+  };
+  const classes={LIT:"Setoriais",QQQ:"Ações (EUA)",VOO:"Ações (EUA)",NLR:"Setoriais",REMX:"Setoriais"};
+  const anteriores=Array.isArray(o.global)?o.global:[];
+  o.global=Object.entries(s.global).map(([tk,pos])=>{
+    const antigo=anteriores.find(g=>String(g.tk||"").toUpperCase()===tk);
+    const qtd=antigo&&(+antigo.qtd||0)>0?+antigo.qtd:1;
+    return {
+      tk,
+      nome:(antigo&&antigo.nome)||nomes[tk],
+      classe:(antigo&&antigo.classe)||classes[tk],
+      qtd,
+      pm:antigo&&isFinite(+antigo.pm)?+antigo.pm:0,
+      pa:pos/qtd,
+      apl:antigo&&isFinite(+antigo.apl)?+antigo.apl:0
+    };
+  });
+  o.caixaGlobalUSD=s.caixaGlobalUSD;
+  if(!Array.isArray(o.binance))o.binance=[];
+  o.binanceInformado=s.binanceInformado;
+  o._snapshotJoao20261001=true;
+  return o;
+}
+
 function migrateInvest(o){
   o=o||{};const d=DEFAULT.invest;
   if(o.cambio===undefined)o.cambio=d.cambio;
@@ -1292,6 +1344,7 @@ function migrateInvest(o){
   o.aportes.forEach(a=>{if(a.pessoa===undefined)a.pessoa="Conjunto"});
   o.nacional.forEach(a=>{if(a.apl===undefined)a.apl=null});
   if(!o.plano)o.plano=structuredClone(d.plano);
+  aplicarSnapshotJoao20261001(o);
   return o;
 }
 function migrateContas(o){
