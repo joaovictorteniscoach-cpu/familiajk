@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-01-7';
+const VERSAO='2026-10-01-8';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -6046,6 +6046,9 @@ function renderGraficoInicio(){
     +'<path class="ln personal" d="'+linha('personal')+'"/>'
     +'<path class="ln total" d="'+linha('total')+'"/>';
 }
+/* Período do comparativo do Início: semana ou mês (lembrado no aparelho). */
+function periodoCmp(){try{return localStorage.getItem('jvt-cmp-periodo')==='mes'?'mes':'semana';}catch(e){return 'semana';}}
+function trocarPeriodoCmp(m){try{localStorage.setItem('jvt-cmp-periodo',m==='mes'?'mes':'semana');}catch(e){}renderAll();}
 function renderInicioRef(aulasDia,aulasMes,ocHoje,ocMes){
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
   const h=new Date(), hr=h.getHours();
@@ -6068,7 +6071,18 @@ function renderInicioRef(aulasDia,aulasMes,ocHoje,ocMes){
   const ehFuturo=iniSel>hojeD;
   const mesAntNome=MESES[(curMonth+11)%12].toLowerCase();
   let base=aulasMes, ant=null, sub='';
-  if(ehAtual){
+  const modo=periodoCmp();
+  ['semana','mes'].forEach(m=>{const b=document.getElementById('jh-cmp-'+m);if(b){b.classList.toggle('on',m===modo);b.setAttribute('aria-selected',String(m===modo));}});
+  const nav=document.getElementById('jh-cmp-mesnav');if(nav)nav.hidden=(modo==='semana');
+  if(modo==='semana'){
+    /* Semana: de segunda até hoje, contra os mesmos dias da semana passada. */
+    const seg=new Date(hojeD);seg.setDate(seg.getDate()-((seg.getDay()+6)%7));
+    const segAnt=new Date(seg);segAnt.setDate(segAnt.getDate()-7);
+    const hojeAnt=new Date(hojeD);hojeAnt.setDate(hojeAnt.getDate()-7);
+    base=contarAulas(seg,hojeD);ant=contarAulas(segAnt,hojeAnt);
+    const dd=d=>String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');
+    sub='Esta semana ('+dd(seg)+' a '+dd(hojeD)+') · % contra os mesmos dias da semana passada';
+  }else if(ehAtual){
     base=contarAulas(iniSel,hojeD);
     const dia=Math.min(h.getDate(),new Date(curYear,curMonth,0).getDate());
     ant=contarAulas(new Date(curYear,curMonth-1,1),new Date(curYear,curMonth-1,dia));
