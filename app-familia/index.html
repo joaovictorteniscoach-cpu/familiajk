@@ -702,7 +702,6 @@ table.tbl.livre td:last-child{width:42%}
       <div class="kpi"><div class="k">Melhor mês</div><div class="v" id="im-melhor">—</div></div>
       <div class="kpi"><div class="k">Pior mês</div><div class="v" id="im-pior">—</div></div>
     </div>
-    <div class="chartbox"><canvas id="mensalChart"></canvas></div>
     <p class="note" id="im-nota"></p>
     <div class="scroll" style="margin-top:16px"><table class="tbl" id="tbl-mensal"></table></div>
     <button class="addbtn" onclick="snapInvMonth()">📸 fechar mês com a carteira atual</button>
@@ -2538,21 +2537,12 @@ function rendimentoMensal(){
     return m.patr-prev-(+m.aporte||0);
   });
 }
+/* O gráfico da evolução mensal (barras de variação + linha do patrimônio, dois
+   eixos) saiu a pedido: confundia mais do que mostrava. Os quatro números de
+   cima e a tabela respondem o mesmo — e a evolução do patrimônio continua no
+   Resumo e na Análise. */
 function drawMensal(){
-  const arr=D.invest.mensal||[],rend=rendimentoMensal();
-  destroy('mensal');charts.mensal=new Chart(document.getElementById('mensalChart'),{
-    data:{labels:arr.map(m=>m.mes),datasets:[
-      {type:'bar',label:'Variação no mês (R$)',data:rend,order:2,
-        backgroundColor:rend.map(v=>v==null?'rgba(144,168,173,.25)':(v>=0?'rgba(143,198,232,.65)':'rgba(232,117,95,.65)')),
-        borderColor:rend.map(v=>v==null?'rgba(144,168,173,.4)':(v>=0?COL.teal:COL.down)),
-        borderWidth:1.5,borderRadius:5,yAxisID:'y2'},
-      {type:'line',label:'Patrimônio (R$)',data:arr.map(m=>m.patr),order:1,
-        borderColor:COL.gold,backgroundColor:'rgba(220,196,142,.12)',borderWidth:2.5,
-        tension:.35,pointRadius:3,pointBackgroundColor:COL.gold,fill:true,yAxisID:'y'}]},
-    options:{plugins:{legend:{display:true,labels:{boxWidth:12,font:{size:11}}}},
-      scales:{y:moneyAxis,
-        y2:{position:'right',grid:{display:false},ticks:{callback:v=>brlk(v),font:{size:10}}},
-        x:{grid:{display:false}}}}});
+  destroy('mensal');
   refreshMensalKPI();
 }
 /* os números que respondem "quanto mudou", sem ter de ler o gráfico */
@@ -2577,7 +2567,7 @@ function refreshMensalKPI(){
   const n=document.getElementById('im-nota');
   if(n)n.textContent=comValor.length<2
     ? 'Feche pelo menos dois meses (📸 abaixo) para o app medir o movimento entre eles.'
-    : ('Barra verde = o dinheiro rendeu no mês; vermelha = recuou. A linha dourada é o tamanho do patrimônio. Aporte não conta como rendimento.');
+    : ('Verde = o dinheiro rendeu no mês; vermelho = recuou. Aporte não conta como rendimento.');
 }
 function drawAnual(){
   destroy('anual');charts.anual=new Chart(document.getElementById('anualChart'),{type:'bar',
