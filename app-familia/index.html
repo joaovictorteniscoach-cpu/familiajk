@@ -839,7 +839,7 @@ table.tbl.livre td:last-child{width:42%}
     <div class="sub">Cole o link da família e ligue a sincronização: os dois aparelhos passam a ver os mesmos dados. Se os dois alterarem ao mesmo tempo, você confere as versões antes de substituir.</div>
     <div class="field"><label for="cl-url">Link da família</label><input id="cl-url" type="url" autocomplete="off" spellcheck="false" placeholder="Cole aqui o mesmo link usado pela família (termina em .json)" onchange="cloudApply()"></div>
     <details><summary>Login com e-mail e senha (opcional)</summary>
-      <p class="note">Só para quem configurou contas no Firebase. Com a chave preenchida, a nuvem passa a exigir login; deixe em branco para usar só o link.</p>
+      <p class="note">Não é obrigatório: o link sozinho já sincroniza. Use só se configurou contas no Firebase e quiser entrar com elas.</p>
       <div class="field"><label for="cl-api-key">Chave pública Web API Key do Firebase</label><input id="cl-api-key" type="text" autocomplete="off" onchange="cloudApply()"></div>
     <form class="auth-form" onsubmit="event.preventDefault();cloudLogin()">
       <div class="field"><label for="cl-email">E-mail</label><input id="cl-email" type="email" autocomplete="username" required></div>
@@ -2694,9 +2694,10 @@ function fillAplFromAportes(){
 let cloudTimer=null,suppressPush=false,pushTimer=null,lastPushAt=0,lastApplied=0;
 let cloudEpoch=0,pushRequest=null,pullRequest=null,cloudSync=null,cloudConflict=null;
 let authSession=null,authEpoch=0,authRequest=null,authRefreshPromise=null;
-/* Como era antes: sem chave do Firebase preenchida, a nuvem funciona só com o
-   link, sem conta e sem senha. Com a chave, passa a exigir o login. */
-function semLogin(){return !!(D.cloud&&D.cloud.url&&!D.cloud.apiKey);}
+/* O link basta: João e Kassiana sincronizam só com ele, sem conta e sem
+   senha. O login é opcional — quem entrar sincroniza com a conta; quem não
+   entrar continua usando o link, mesmo com a chave preenchida. */
+function semLogin(){return !!(D.cloud&&D.cloud.url&&!authSession);}
 function nuvemPronta(){return !!authSession||semLogin();}
 function setCloudStatus(t,c){const e=document.getElementById('cl-status');if(e){e.textContent=t;e.style.color=c||'var(--muted)';}}
 function cleanCloudURL(value){
@@ -2724,7 +2725,7 @@ function readCloudReference(){
   try{const state=JSON.parse(localStorage.getItem(KEY+'__sync'));cloudSync=state&&state.url===cleanCloudURL(D.cloud.url)&&typeof state.baseline==='string'&&typeof state.etag==='string'?state:null;}catch(e){cloudSync=null;}
 }
 function renderAuth(){
-  set('cl-auth-status',authSession?'Conectado como '+authSession.email:'Entre para acessar a nuvem. O uso local continua disponível.');
+  set('cl-auth-status',authSession?'Conectado como '+authSession.email:'Sem login: sincronizando só com o link.');
   const logout=document.getElementById('cl-logout');if(logout)logout.hidden=!authSession;
 }
 function schedulePush(){
@@ -2740,7 +2741,9 @@ function cancelCloudWork(){
 }
 function cloudLogout(){
   authEpoch++;if(authRequest)authRequest.abort();authRequest=null;authSession=null;authRefreshPromise=null;
-  cancelCloudWork();renderAuth();setCloudStatus('Você saiu da nuvem. Os dados locais continuam neste aparelho.');
+  cancelCloudWork();renderAuth();
+  if(D.cloud&&D.cloud.on&&D.cloud.url){setCloudStatus('Você saiu da conta. A sincronização continua pelo link.');cloudStart();}
+  else setCloudStatus('Você saiu da nuvem. Os dados locais continuam neste aparelho.');
 }
 async function cloudLogin(){
   const password=document.getElementById('cl-password').value,email=document.getElementById('cl-email').value.trim();
@@ -5566,7 +5569,7 @@ document.querySelectorAll('.overlay').forEach(overlay=>{
 });
 
 
-readCloudReference();renderAuth();if(D.cloud&&D.cloud.on){if(semLogin()){cloudStart();cloudPull(true);}else setCloudStatus('Entre com a conta da família para retomar a sincronização.');}
+readCloudReference();renderAuth();if(D.cloud&&D.cloud.on&&D.cloud.url){cloudStart();cloudPull(true);}
 /* PWA: instalar na tela de início e abrir offline (rede primeiro, cache de reserva) */
 if('serviceWorker'in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-familia.js').catch(function(){});});}
 </script>
