@@ -38,7 +38,7 @@
 <link rel="apple-touch-startup-image" media="screen and (device-width:375px) and (device-height:667px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)" href="splash-gestao-750x1334.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="lib/estilo.css?v=2026-10-01-14">
+<link rel="stylesheet" href="lib/estilo.css?v=2026-10-01-15">
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
 <script src="lib/firebase-database-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js\'><\/script>')"></script>
@@ -571,6 +571,7 @@ function esperarAuth(){
     <button onclick="setFiltroAluno('locacao',this)">🔑 Locação</button>
     <button onclick="setFiltroAluno('torneio',this)">🏆 Torneio</button>
   </div>
+  <div id="alunos-renova"></div>
   <div class="seg" id="alunos-pag"></div>
   <div class="al-total" id="alunos-total"></div>
   <div id="alunos-list"></div>
@@ -1054,7 +1055,7 @@ function esperarAuth(){
   <button onclick="go('lanc',this)"><span class="ico" data-ic="navcash"></span>Caixa</button>
   <button id="nav-mais" onclick="abrirMais()"><span class="ico" data-ic="navmore"></span>Mais</button>
 </nav>
-<script src="lib/icones.js?v=2026-10-01-14"></script>
+<script src="lib/icones.js?v=2026-10-01-15"></script>
 
 <!-- MODAL ALUNO -->
 <div class="overlay" id="ov-aluno" onclick="if(event.target===this)closeModal('ov-aluno')">
@@ -1527,6 +1528,15 @@ function esperarAuth(){
   </div>
 </div>
 
+<!-- Renovar o mês: todos os alunos numa tela, com a conta pronta -->
+<section class="ficha" id="renova-mes" aria-hidden="true">
+  <div class="fic-top">
+    <button class="fic-voltar" onclick="fecharRenovaMes()">‹ Voltar</button>
+    <span class="fic-top-nome">🔄 Renovar o mês</span>
+  </div>
+  <div class="fic-corpo" id="rm-corpo"></div>
+  <div class="rm-pe" id="rm-pe"></div>
+</section>
 <!-- Ficha do aluno: tela cheia que abre ao tocar no nome na lista de Alunos -->
 <section class="ficha" id="ficha-aluno" aria-hidden="true">
   <div class="fic-top">
@@ -1537,7 +1547,7 @@ function esperarAuth(){
 </section>
 <div class="toast" id="toast"></div>
 
-<script src="lib/app-gestao.js?v=2026-10-01-14"></script>
+<script src="lib/app-gestao.js?v=2026-10-01-15"></script>
 <script>
 /* Rede de seguranca do par tela+codigo.
 
@@ -1552,7 +1562,7 @@ function esperarAuth(){
    torto, o app busca o par certo uma vez e, se insistir, DIZ o que houve em
    vez de deixar voce tocando em botao que nao responde. */
 (function(){
-  var ESPERADA='2026-10-01-14';
+  var ESPERADA='2026-10-01-15';
   function tela(motivo){
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;z-index:99999;background:#1A2E14;color:#FAF7F2;'
@@ -1643,7 +1653,7 @@ function limparHist(){
 }
 histLogLoad();
 // PWA: registra o service worker (permite instalar o painel e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-gestao.js?v=2026-10-01-14').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-gestao.js?v=2026-10-01-15').catch(function(){});});}
 </script>
 </body>
 </html>
