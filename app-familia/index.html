@@ -1058,6 +1058,14 @@ const TIPOS_APOLICE=["Vida","Saúde","Automóvel","Residencial","Empresarial","O
 const MESES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
 const TABS_INVEST=[["i-painel","Painel"],["i-carteira","Carteira"],["i-aportes","Aportes"],["i-mensal","Mensal"],["i-anual","Anual"],["i-projecao","Projeção"],["i-analise","Análise"],["i-ganhos","Ganhos"],["i-plano","Plano"],["i-metas","Metas"]];
 const TABS_SHARED=[["nuvem","Nuvem"],["guia","Guia"]];
+/* Menu de cima agrupado por assunto: as telas parentes ficam juntas e à vista,
+   em vez de escondidas num "Mais" com quinze itens. */
+const GRUPOS_TABS={
+  contas:[["Dia a dia",["c-painel","c-casa","c-cartao","c-recebidos","c-categorias"]],
+          ["Pessoas",["c-joao","c-esposa","c-empresa"]],
+          ["Planejamento",["c-resumo","c-anual","c-patrimonio","c-protecao","c-conselhos"]]],
+  invest:[["Carteira",["i-painel","i-carteira","i-aportes","i-metas"]],
+          ["Evolução",["i-mensal","i-anual","i-projecao","i-analise","i-ganhos","i-plano"]]]};
 const CLASSES=["Renda Fixa / Caixa","Ações (EUA)","Ouro","Prata","Cripto","Setoriais","Outros"];
 const PESSOAS=["João","Esposa","Conjunto"];
 /* dono de um gasto importado — mesmos apelidos das contas da casa */
@@ -1552,11 +1560,19 @@ function setMode(m){
 function buildTabs(m){
   const n=document.getElementById('tabs');n.innerHTML='';
   const list=(m==='invest'?TABS_INVEST:TABS_CONTAS).concat(TABS_SHARED);
-  list.forEach((t,i)=>{const b=document.createElement('button');b.className='tab';b.innerHTML=navIcon(t[0])+'<span>'+esc(t[1]==='Painel'?'Visão geral':t[1])+'</span>';b.dataset.id=t[0];b.onclick=()=>switchTab(t[0],b);if(t[0]==='nuvem')b.classList.add('nav-divider');n.appendChild(b);});
-  const primary=m==='invest'?['i-painel','i-carteira','i-aportes']:['c-painel','c-casa','c-cartao'];
+  const grupos=(GRUPOS_TABS[m==='invest'?'invest':'contas']).concat([["App",TABS_SHARED.map(t=>t[0])]]);
+  const usados=new Set();
+  const poe=(t)=>{const b=document.createElement('button');b.className='tab';b.innerHTML=navIcon(t[0])+'<span>'+esc(t[1]==='Painel'?'Visão geral':t[1])+'</span>';b.dataset.id=t[0];b.onclick=()=>switchTab(t[0],b);n.appendChild(b);usados.add(t[0]);};
+  grupos.forEach(([nome,ids])=>{
+    const g=document.createElement('span');g.className='tab-grupo';g.textContent=nome;n.appendChild(g);
+    ids.forEach(id=>{const t=list.find(x=>x[0]===id);if(t)poe(t);});
+  });
+  list.forEach(t=>{if(!usados.has(t[0]))poe(t);});   /* tela nova sem grupo não some */
+  /* embaixo: o Resumo e os itens mais usados, mais o atalho de lançar */
+  const primary=m==='invest'?['i-painel','i-carteira','i-aportes','i-metas']:['c-painel','c-casa','c-cartao','c-categorias'];
   const mobile=document.getElementById('mobile-nav');mobile.innerHTML='';
-  primary.forEach(id=>{const t=list.find(t=>t[0]===id);const b=document.createElement('button');b.dataset.id=id;b.innerHTML=navIcon(id)+'<span>'+(id.endsWith('painel')?'Resumo':id==='c-casa'?'Contas':esc(t[1]))+'</span>';b.onclick=()=>switchTab(id);mobile.appendChild(b)});
-  const more=document.createElement('button');more.id='more-button';more.innerHTML=navIcon('more')+'<span>Mais</span>';more.setAttribute('aria-haspopup','dialog');more.onclick=()=>document.getElementById('more-dialog').showModal();mobile.appendChild(more);
+  primary.forEach(id=>{const t=list.find(t=>t[0]===id);const b=document.createElement('button');b.dataset.id=id;b.innerHTML=navIcon(id)+'<span>'+(id.endsWith('painel')?'Resumo':esc(t[1]))+'</span>';b.onclick=()=>switchTab(id);mobile.appendChild(b)});
+  const novo=document.createElement('button');novo.id='nav-novo';novo.className='nav-novo';novo.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Lançar</span>';novo.setAttribute('aria-haspopup','dialog');novo.onclick=()=>document.getElementById('entry-dialog').showModal();mobile.appendChild(novo);
   const box=document.getElementById('more-links');box.innerHTML='';list.forEach(t=>{const b=document.createElement('button');b.innerHTML=navIcon(t[0])+'<span>'+esc(t[1])+'</span>';b.onclick=()=>{document.getElementById('more-dialog').close();switchTab(t[0]);};box.appendChild(b)});
   document.getElementById('area-label').textContent=m==='invest'?'Investimentos':'Contas';
   document.getElementById('ms-contas').setAttribute('aria-pressed',String(m!=='invest'));
@@ -1597,6 +1613,10 @@ function switchTab(id,btn){
   document.querySelectorAll('section[data-tab]').forEach(s=>s.classList.toggle('on',s.dataset.tab===id));
   document.querySelectorAll('#tabs .tab, #mobile-nav [data-id]').forEach(t=>{const active=t.dataset.id===id;t.classList.toggle('active',active);if(active)t.setAttribute('aria-current','page');else t.removeAttribute('aria-current');});
   const more=document.getElementById('more-button');if(more)more.classList.toggle('active',!document.querySelector('#mobile-nav [data-id="'+id+'"]'));
+  /* a aba escolhida fica à vista na faixa de cima (só rola de lado) */
+  const at=document.querySelector('#tabs .tab.active');
+  if(at&&at.parentElement&&at.parentElement.scrollWidth>at.parentElement.clientWidth){
+    const pai=at.parentElement;pai.scrollTo({left:Math.max(0,at.offsetLeft-pai.clientWidth/2+at.offsetWidth/2),behavior:'smooth'});}
   const list=TABS_CONTAS.concat(TABS_INVEST,TABS_SHARED),item=list.find(t=>t[0]===id);
   set('page-title',id==='i-painel'?'Meu patrimônio':id==='c-painel'?'Visão geral':item?.[1]||'Família JK');
   set('page-kicker',id==='guia'||id==='nuvem'?'FAMÍLIA JK':D.mode==='invest'?'PATRIMÔNIO E FUTURO':'CONTAS DA FAMÍLIA');
