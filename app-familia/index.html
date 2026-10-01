@@ -1272,7 +1272,7 @@ function togglePago(id){pagoSet(id,!pagoGet(id));renderContasMonth();}
 
 /* ---------- migração ---------- */
 const SNAPSHOT_JOAO_20261001={
-  cambio:5.20055,
+  cambio:5.1877,
   nacional:[
     ["Dinheiro disponível","Renda Fixa / Caixa",5500.00],
     ["Saldo conta investimento XP","Renda Fixa / Caixa",957.42],
@@ -1290,8 +1290,14 @@ const SNAPSHOT_JOAO_20261001={
   binanceInformado:2185.90
 };
 function aplicarSnapshotJoao20261001(o){
-  if(o._snapshotJoao20261001)return o;
   const s=SNAPSHOT_JOAO_20261001;
+  if(o._snapshotJoao20261001){
+    if(!o._cambioJoao20261001Corrigido){
+      o.cambio=s.cambio;
+      o._cambioJoao20261001Corrigido=true;
+    }
+    return o;
+  }
   o.cambio=s.cambio;
   o.nacional=s.nacional.map(x=>({nome:x[0],classe:x[1],valor:x[2],apl:null}));
   const nomes={
@@ -1320,6 +1326,7 @@ function aplicarSnapshotJoao20261001(o){
   if(!Array.isArray(o.binance))o.binance=[];
   o.binanceInformado=s.binanceInformado;
   o._snapshotJoao20261001=true;
+  o._cambioJoao20261001Corrigido=true;
   return o;
 }
 
