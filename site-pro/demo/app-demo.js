@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-01-13';
+const VERSAO='2026-10-01-14';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -5717,33 +5717,72 @@ function saldoLinhaAluno(a){
   if(usaLocacao(a))p.push('<span'+(l<0?' class="neg"':'')+'>🔑 '+fmtCred(l)+'h</span>');
   return p.join(' · ');
 }
+/* Situação do mês para o selo e para o filtro. Inativo não entra em
+   "pendente": ele já não entra no "A receber" do Início, e o selo aqui segue
+   a mesma regra. */
+function situacaoPag(a){
+  if(!ehAtivoAluno(a))return 'inativo';
+  if(a.status==='pago')return 'pago';
+  return a.status==='parcial'?'parcial':'pendente';
+}
+function seloPagamento(a){
+  const s=situacaoPag(a);
+  const R={pago:'PAGO',parcial:'50%',pendente:'PENDENTE',inativo:'INATIVO'};
+  return '<span class="al-selo '+s+'">'+R[s]+'</span>';
+}
+let filtroPag='todos';                     // todos · pendentes · pagos
+function passaFiltroPag(a,f){
+  const s=situacaoPag(a);
+  if(f==='pagos')return s==='pago';
+  if(f==='pendentes')return s==='pendente'||s==='parcial';
+  return true;
+}
+function setFiltroPag(f){
+  filtroPag=(filtroPag===f&&f!=='todos')?'todos':f;   // tocar de novo volta para todos
+  renderAlunos();
+}
 function linhaAluno(a){
   const ativo=ehAtivoAluno(a);
   const ag=agendaDoMes(a);
   const difere=ag.total>0&&ag.valor!==(Number(a.mensalidade)||0)&&!difSilenciada(a);
   const venc=reposVencendo(a);
   const tags=[];
-  if(!ativo)tags.push('<span class="al-tag cinza">📦 inativo</span>');
-  else if(a.status==='parcial')tags.push('<span class="al-tag alerta">💸 pagou 50%</span>');
-  else if(a.status!=='pago')tags.push('<span class="al-tag alerta">💸 a pagar</span>');
   if(difere)tags.push('<span class="al-tag ouro">📅 agenda ≠ plano</span>');
   if(venc>0)tags.push('<span class="al-tag ouro">⏳ '+fmtCred(venc)+' repos. vencem</span>');
   if(perfilDe(a)==='torneio')tags.push('<span class="al-tag cinza">🏆 torneio</span>');
   const rap=aulaRapidaDe(a);
   return `<div class="al-row${ativo?'':' inativo'}" id="al-${a.id}" onclick="abrirFicha('${a.id}')">
     <div class="al-info">
-      <div class="al-nome">${ehPersonalTipo(a.tipo)?'💪':'🎾'} ${esc(a.nome)}</div>
+      <div class="al-topo"><div class="al-nome">${ehPersonalTipo(a.tipo)?'💪':'🎾'} ${esc(a.nome)}</div>${seloPagamento(a)}</div>
       <div class="al-saldo" data-pulsa="${a.id}">${saldoLinhaAluno(a)}</div>
       ${tags.length?'<div class="al-tags">'+tags.join('')+'</div>':''}
     </div>
     ${rap?`<button class="al-aula" title="Lançar aula de hoje" onclick="event.stopPropagation();aulaRealizada('${a.id}'${rap.modo?",'grupo'":''})">${BI.check}<small>${rap.rot}</small></button>`:'<span class="al-seta">›</span>'}
   </div>`;
 }
+/* Todos · Pendentes · Pagos, com quantos há em cada um dentro do que já está
+   escolhido (perfil, ativos/inativos, busca). */
+function renderFiltroPag(base){
+  const el=document.getElementById('alunos-pag');if(!el)return;
+  const n=f=>base.filter(a=>passaFiltroPag(a,f)).length;
+  const bt=(f,rot)=>'<button class="'+(filtroPag===f?'on':'')+'" onclick="setFiltroPag(\''+f+'\')">'+rot+' <b>'+n(f)+'</b></button>';
+  el.innerHTML=bt('todos','Todos')+bt('pendentes','Pendentes')+bt('pagos','Pagos');
+}
+/* O total do que está na tela agora, e quanto falta receber dele. */
+function renderTotalAlunos(items){
+  const el=document.getElementById('alunos-total');if(!el)return;
+  const pagos=items.filter(a=>situacaoPag(a)==='pago').length;
+  const pend=items.filter(a=>{const s=situacaoPag(a);return s==='pendente'||s==='parcial';});
+  const falta=pend.reduce((t,a)=>t+(Number(a.mensalidade)||0)*(a.status==='parcial'?.5:1),0);
+  el.innerHTML='<b>'+items.length+'</b> aluno'+(items.length===1?'':'s')+' na seleção'
+    +' · <span class="ok">'+pagos+' pago'+(pagos===1?'':'s')+'</span>'
+    +' · <span class="pend">'+pend.length+' pendente'+(pend.length===1?'':'s')+(pend.length?' ('+fmt(falta)+')':'')+'</span>';
+}
 function renderAlunos(){
   try{if(fichaId)renderFicha();}catch(e){console.warn('ficha',e);}
   const list=document.getElementById('alunos-list');
   const q=(document.getElementById('search').value||'').toLowerCase();
-  const items=DB.alunos.filter(a=>a.nome.toLowerCase().includes(q)).filter(a=>{
+  const base=DB.alunos.filter(a=>a.nome.toLowerCase().includes(q)).filter(a=>{
     if(filtroAluno==='todos')return true;
     return perfilDe(a)===filtroAluno;
   }).filter(a=>filtroAtivo==='todos'||(filtroAtivo==='ativos')===ehAtivoAluno(a))
@@ -5751,9 +5790,12 @@ function renderAlunos(){
     .filter(a=>{if(!focoDif)return true;const ag=agendaDoMes(a);return ag.total>0&&ag.valor!==(Number(a.mensalidade)||0)&&!difSilenciada(a);})
     .sort((x,y)=>x.nome.localeCompare(y.nome));
   renderResumoAlunos();
+  renderFiltroPag(base);
+  const items=base.filter(a=>passaFiltroPag(a,filtroPag));
+  renderTotalAlunos(items);
   const avisoRepos=focoRepos?'<div class="foco-repos">🔁 Mostrando só quem tem <b>reposição pendente</b> · <a onclick="limparFocoRepos()">ver todos</a></div>':
     (focoDif?'<div class="foco-repos">📅 Mostrando só quem tem a <b>agenda diferente do plano</b> · <a onclick="limparFocoDif()">ver todos</a></div>':'');
-  if(!items.length){list.innerHTML=avisoRepos+'<div class="empty">Nenhum aluno '+(q||filtroAluno!=='todos'||filtroAtivo!=='todos'||focoRepos||focoDif?'encontrado':'cadastrado ainda — toque em <b>+ Novo</b> para começar')+'.</div>';return;}
+  if(!items.length){list.innerHTML=avisoRepos+'<div class="empty">Nenhum aluno '+(q||filtroAluno!=='todos'||filtroAtivo!=='todos'||filtroPag!=='todos'||focoRepos||focoDif?'encontrado':'cadastrado ainda — toque em <b>+ Novo</b> para começar')+'.</div>';return;}
   list.innerHTML=avisoRepos+'<div class="al-lista">'+items.map(linhaAluno).join('')+'</div>';
 }
 
