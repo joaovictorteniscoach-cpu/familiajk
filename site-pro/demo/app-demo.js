@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-09-30-2';
+const VERSAO='2026-10-01-1';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -4814,8 +4814,33 @@ function marcarPago(id){
    vai mudar. */
 function checarViradaMes(){
   const m=mesReal();
-  if(DB.mesCreditos===undefined){DB.mesCreditos=m;return true;}   // primeira abertura: nada a converter
-  return false;
+  let mudou=false;
+  if(DB.mesCreditos===undefined){DB.mesCreditos=m;mudou=true;}   // primeira abertura: nada a converter
+  if(zerarPagamentosDoMes())mudou=true;
+  return mudou;
+}
+/* Mês novo, cobrança nova: todo aluno ATIVO volta a aparecer como pendente, e
+   você vai marcando quem pagou. Antes o "pago" só voltava a "pendente" quando
+   a virada era aplicada — e "Encerrar sem converter" nem isso —, então no fim
+   do mês era preciso desativar aluno por aluno para zerar.
+   Isto é SÓ o status de pagamento: créditos, reposições e mensalidades lançadas
+   não mudam (a conversão de sobra continua esperando você em "Ver e converter").
+   Quem já pagou no mês novo (ultimoPago = mês atual) fica como está. Roda uma
+   vez por mês, em qualquer aparelho: DB.mesPagamentos guarda o mês já zerado. */
+function zerarPagamentosDoMes(){
+  const m=mesReal();
+  if(DB.mesPagamentos===m)return false;
+  // primeira vez com esta versão: o mês de referência é o da última virada
+  const desde=DB.mesPagamentos||DB.mesCreditos;
+  DB.mesPagamentos=m;
+  if(desde===m)return true;               // a virada deste mês já tinha rodado
+  let n=0;
+  (DB.alunos||[]).forEach(a=>{
+    if(!ehAtivoAluno(a))return;
+    if((a.status==='pago'||a.status==='parcial')&&a.ultimoPago!==m){a.status='pendente';n++;}
+  });
+  if(n)logAct('Mês novo ('+m+'): '+n+' aluno(s) voltaram para "pendente" — marque quem já pagou');
+  return true;
 }
 /* O que a virada faria, se você mandasse. Não muda nada — só calcula.
    Aluno inativo fica de fora: ele não está fazendo aula, então virar o mês
@@ -4873,22 +4898,43 @@ function pularViradaMes(){
   logAct('Virada de mês dispensada por você: '+V.de+' → '+V.para+' (nada convertido)');
   persist();renderAll();toast('Mês encerrado sem converter nada');
 }
+/* Renovar = créditos IGUAIS ao pacote do aluno + o que sobrou do mês passado
+   vira REPOSIÇÃO. Plano de 3 com 1 aula não feita: 3 créditos e +1 reposição —
+   é isso que o aluno vê no app. O crédito nunca passa do pacote, então renovar
+   duas vezes sem querer não dobra nada. Saldo negativo (devendo) volta para o
+   pacote. Se a virada já converteu a sobra, não há o que converter de novo. */
 function renovarMes(id){
   const a=DB.alunos.find(x=>x.id===id);
-  const pg=Number(a.planoGrupo)||0;
-  const resumo='+'+(Number(a.plano)||0)+' crédito(s)'+(pg>0?(' e +'+pg+' de grupo'):'');
+  const p=Number(a.plano)||0, pg=Number(a.planoGrupo)||0;
+  const cAnt=Number(a.creditos)||0, gAnt=Number(a.credGrupo)||0;
+  const resumo=p+' crédito(s)'+(pg>0?(' e '+pg+' de grupo'):'');
   if(acaoRepetida('renov-'+id)){toast('Já renovei agora há pouco — confira os créditos antes de repetir');return;}
   const jaRenov=renovacoesDoMes(a);
-  let aviso=jaRenov.length?('⚠️ '+a.nome+' JÁ foi renovado '+jaRenov.length+'x neste mês (somou '+fmtCred(jaRenov.reduce((t,x)=>t+(Number(x.delta)||0),0))+' crédito(s)).\n\nRenovar de novo DOBRA os créditos. Tem certeza?\n\n'):'';
+  let aviso=jaRenov.length?('ℹ️ '+a.nome+' já foi renovado neste mês. Renovar de novo NÃO soma: o saldo só volta a ser o do pacote.\n\n'):'';
+  /* Só a PRIMEIRA renovação do mês converte sobra: numa segunda, o que está no
+     saldo é crédito deste mês, e virar reposição de novo daria aula a mais. */
+  const sobra=jaRenov.length?0:Math.max(0,cAnt)+(pg>0?Math.max(0,gAnt):0);
+  if(sobra>0)aviso+='Sobraram '+fmtCred(sobra)+' aula(s) do mês passado: viram reposição.\n\n';
   /* Renovar quem parou de treinar cria aula que ninguém vai fazer e mensalidade
      que ninguém vai cobrar. O botão continua funcionando — quem volta a treinar
      é renovado por aqui — mas não em silêncio. */
   if(!ehAtivoAluno(a))aviso+='⚠️ '+a.nome+' está como INATIVO (sem plano e sem mensalidade no cadastro).\n\nRenovar vai somar crédito e marcar como "não pago". Se ele voltou a treinar, acerte o plano no cadastro primeiro.\n\n';
-  if(confirm(aviso+'Renovar o mês de '+a.nome+'? Soma '+resumo+' e marca como pendente.')){
-    mover(a,'creditos',Number(a.plano)||0,'Renovação do mês');
-    if(pg>0)mover(a,'credGrupo',pg,'Renovação do mês (grupo)');   // plano misto renova as duas partes
+  if(confirm(aviso+'Renovar o mês de '+a.nome+'? Fica com '+resumo+' do pacote'+(sobra>0?(' + '+fmtCred(sobra)+' reposição(ões)'):'')+', e marca como pendente.')){
+    // a sobra vai para reposição com o mesmo nome que a virada usa (a conferência conta igual)
+    if(sobra>0)mover(a,'repos',sobra,'Sobra do mês virou reposição');
+    /* No extrato ficam duas linhas: o saldo anterior zerado e o pacote entrando.
+       Assim o extrato continua somando o saldo, e a conferência do mês lê a
+       renovação como o pacote inteiro (igual ao plano), não como diferença. */
+    if(cAnt!==p){
+      if(cAnt!==0)mover(a,'creditos',-cAnt,(cAnt>0&&sobra>0)?'Virada de mês — sobra convertida':'Saldo anterior zerado na renovação');
+      mover(a,'creditos',p,'Renovação do mês');
+    }
+    if(pg>0&&gAnt!==pg){   // plano misto renova as duas partes
+      if(gAnt!==0)mover(a,'credGrupo',-gAnt,(gAnt>0&&sobra>0)?'Virada de mês — sobra convertida':'Saldo de grupo anterior zerado na renovação');
+      mover(a,'credGrupo',pg,'Renovação do mês (grupo)');
+    }
     a.status='pendente';delete a.difOk;delete a.difUndo;persist();renderAll();   // novo ciclo: reavalia a diferença do zero
-    toast('Mês renovado para '+a.nome+' · '+resumo);
+    toast('Mês renovado para '+a.nome+' · '+resumo+(sobra>0?(' + '+fmtCred(sobra)+' reposição(ões)'):''));
   }
 }
 function enviarAcesso(id){
