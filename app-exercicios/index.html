@@ -471,6 +471,9 @@ header.bar{
 .det, .cab-imp, .imprimivel{display:none}
 @media print{
   html,body{background:#fff!important;color:#000!important;padding:0;margin:0}
+  /* com uma gaveta aberta o body fica position:fixed (trava a rolagem do
+     iPhone); no papel isso imprimia só a primeira página */
+  body{position:static!important;top:auto!important;left:auto!important;right:auto!important;width:auto!important}
   header.bar,.foco,.tira,.filtros,.resumo,.pronta,.lista,.rodape,.folha-acoes,.auto,
   .pi .acs,.pi-qd,.pb-mais,.fechar,.plano-cab,
   #fundoFicha,#fundoMes,#fundoMeus,#fundoEditor,#fundoEscolher{display:none!important}
@@ -638,6 +641,56 @@ header.bar{
 .ft-tres ul{list-style:none;margin:0;padding:0;display:grid;gap:1.5mm}
 .ft-tres li{position:relative;padding-left:3.4mm;font-size:9.6pt;line-height:1.22;color:#2F3A44}
 .ft-tres li::before{content:"";position:absolute;left:0;top:1.5mm;width:1.4mm;height:1.4mm;border-radius:50%;background:#1B232A}
+
+/* ==========================================================================
+   ENVIAR PDF e impressão confiável (2026-10)
+   --------------------------------------------------------------------------
+   No iPhone, com o app instalado na tela inicial, a janela de impressão do
+   navegador falha (abre sem prévia, ou nem abre). Por isso o caminho
+   principal agora é o PDF gerado aqui mesmo, sem internet, e entregue pelo
+   menu de compartilhar do celular — de lá vai para o WhatsApp, para Arquivos
+   ou para a impressora ("Imprimir" aparece no próprio menu). */
+#pdfPalco{position:fixed;left:-10000px;top:0;width:210mm;pointer-events:none}
+#pdfAviso{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;
+  background:rgba(6,14,24,.72);padding:20px}
+#pdfAviso.aberto{display:flex}
+#pdfAviso .cx{width:100%;max-width:360px;background:var(--navy);border:1px solid var(--line);border-radius:18px;
+  padding:20px 18px 16px;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.45)}
+#pdfAviso h3{margin:0 0 6px;font-size:17px;color:#fff}
+#pdfAviso p{margin:0 0 14px;font-size:13.5px;color:var(--muted);line-height:1.45}
+#pdfAviso .barra{height:8px;border-radius:6px;background:var(--navy-2);overflow:hidden;margin:4px 0 14px}
+#pdfAviso .barra i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold-soft),var(--gold-2));transition:width .25s}
+#pdfAviso .acs{display:grid;gap:9px}
+#pdfAviso .acs .btn{width:100%}
+#pdfAviso .acs .ln{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+
+/* rodapé do plano: o envio em PDF em destaque; imprimir, texto e limpar
+   numa linha só, menores. O rodapé encosta na borda de baixo: antes sobrava
+   uma faixa por onde a lista aparecia por baixo dos botões. */
+.folha:has(>.folha-acoes){padding-bottom:0}
+.folha-acoes{padding-bottom:calc(10px + var(--base))}
+#fundoPlano .folha-acoes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+#fundoPlano .folha-acoes #btnPdf{grid-column:1/-1;order:-1}
+#fundoPlano .folha-acoes .btn.pq{padding:9px 6px;font-size:12.5px;min-width:0}
+
+/* ---- página de resumo do PDF: a aula inteira numa folha, no visual da
+   folha de treino (cabeçalho preto, faixa de dados, cartões claros) ---- */
+.ftr-dados{grid-template-columns:1.25fr .9fr .8fr .8fr}
+.ftr-corpo{flex:1 1 auto;padding:4.6mm 8mm 0;display:flex;flex-direction:column;gap:3.4mm;min-height:0}
+.ftr-bloco{background:#E3E6E9;border-radius:3mm;padding:3.2mm 4mm 2.6mm}
+.ftr-bloco h3{display:flex;justify-content:space-between;align-items:baseline;font-weight:900;font-style:italic;
+  font-size:13pt;text-transform:uppercase;line-height:1;margin-bottom:2.2mm}
+.ftr-bloco h3 small{font-style:normal;font-weight:700;font-size:8.6pt;letter-spacing:.04em;color:#4A5560}
+.ftr-ex{display:grid;grid-template-columns:13mm 1fr 13mm;gap:2.6mm;align-items:start;padding:1.6mm 0;border-top:.3mm solid #CBD1D6}
+.ftr-ex:first-of-type{border-top:none}
+.ftr-ex .cd{font-weight:700;font-size:9pt;color:#0B0E0D;background:#DDEE66;border-radius:1.4mm;text-align:center;padding:.6mm 0}
+.ftr-ex .nm{font-weight:700;font-size:10.5pt;text-transform:uppercase;line-height:1.1;color:#111}
+.ftr-ex .ob{display:block;font-weight:500;font-size:8.8pt;color:#3A4650;line-height:1.22;text-transform:none;margin-top:.6mm}
+.ftr-ex .mn{font-weight:900;font-style:italic;font-size:13pt;text-align:right;line-height:1}
+.ftr-ex .mn small{display:block;font-style:normal;font-weight:700;font-size:7pt;letter-spacing:.06em;color:#4A5560}
+.ftr-nota{margin:auto 8mm 7mm;padding:3.2mm 4mm;border-radius:3mm;
+  background:linear-gradient(160deg,#E6F27F 0%,#DDEE66 55%,#D2E657 100%);font-size:9.4pt;line-height:1.28;color:#27313A}
+.ftr-nota b{text-transform:uppercase;letter-spacing:.02em}
 </style>
 </head>
 <body>
@@ -743,10 +796,11 @@ header.bar{
     </div>
     <div class="folha-corpo" id="planoCorpo"></div>
     <div class="folha-acoes">
+      <button class="btn btn-gold" id="btnPdf" title="Resumo da aula + uma folha A4 por exercício, em PDF">📄 Enviar aula em PDF</button>
+      <button class="btn btn-line pq" id="btnImprimir" title="O plano inteiro, em lista">🖨 Plano</button>
+      <button class="btn btn-line pq" id="btnFolhas" title="Uma folha A4 por exercício">🖨 Folhas</button>
+      <button class="btn btn-line pq" id="btnCopiar" title="O plano em texto, para colar no WhatsApp">Texto</button>
       <button class="btn btn-esc pq" id="btnLimparPlano">Limpar</button>
-      <button class="btn btn-line pq" id="btnImprimir" title="O plano inteiro numa folha">🖨 plano</button>
-      <button class="btn btn-line pq" id="btnFolhas" title="Uma folha A4 por exercício">🖨 folhas</button>
-      <button class="btn btn-gold" id="btnCopiar">Copiar / enviar</button>
     </div>
   </div>
 </div>
@@ -802,6 +856,9 @@ header.bar{
 
 <!-- as folhas de treino, montadas só na hora de imprimir -->
 <div id="folhasImp" aria-hidden="true"></div>
+<!-- palco fora da tela onde cada folha vira imagem para o PDF -->
+<div id="pdfPalco" aria-hidden="true"></div>
+<div id="pdfAviso" role="dialog" aria-modal="true" aria-labelledby="pdfTit"><div class="cx"><h3 id="pdfTit">Gerando o PDF…</h3><p id="pdfTx"></p><div class="barra"><i id="pdfBarra"></i></div><div class="acs" id="pdfAcs"></div></div></div>
 
 <script>
 'use strict';
@@ -1118,7 +1175,7 @@ function abrirFicha(id){
   '</div>' +
   '<div class="folha-acoes">' +
     '<button class="btn btn-esc pq" data-favorito="' + e.id + '">' + (FAV.indexOf(e.id) >= 0 ? '★' : '☆') + '</button>' +
-    '<button class="btn btn-line pq" data-folha="' + e.id + '" title="Folha A4 deste exercício">🖨 folha</button>' +
+    '<button class="btn btn-line pq" data-folha="' + e.id + '" title="Folha A4 deste exercício, em PDF para enviar ou imprimir">📄 folha</button>' +
     '<button class="btn btn-gold" data-add="' + e.id + '">' + (dentro ? '✓ no plano — tirar' : '+ pôr no plano') + '</button>' +
   '</div>';
   abrir('fundoFicha');
@@ -1299,15 +1356,238 @@ function imprimirFolhas(lista){
   pagina.id = 'paginaFolha';
   pagina.textContent = '@page{size:A4;margin:0}';
   document.head.appendChild(pagina);
+  var limpo = false;
   var limpar = function(){
+    if (limpo) return; limpo = true;
     document.body.classList.remove('folhas');
     el('folhasImp').innerHTML = '';
     if (pagina.parentNode) pagina.parentNode.removeChild(pagina);
+    document.removeEventListener('pointerdown', limpar, true);
   };
-  // o onafterprint não é confiável no Safari do iPhone: o tempo é a rede de segurança
   window.onafterprint = function(){ limpar(); window.onafterprint = null; };
-  setTimeout(limpar, 4000);
-  window.print();
+  /* Antes a folha ia para a impressora no mesmo instante em que era montada:
+     a fonte e os desenhos ainda não tinham carregado e o papel saía com os
+     cartões vazios, sem texto. Agora espera os dois. E não some sozinha
+     depois de 4 s (o iPhone ainda podia estar gerando a prévia): sai no
+     afterprint ou no próximo toque na tela. */
+  prontoParaPapel(el('folhasImp')).then(function(){
+    setTimeout(function(){ document.addEventListener('pointerdown', limpar, true); }, 800);
+    window.print();
+  });
+}
+
+/* ==========================================================================
+   PAPEL PRONTO: fonte da folha e desenhos carregados antes de imprimir ou
+   de virar PDF. Com tempo-limite: sem rede e sem cache, segue assim mesmo.
+   ========================================================================== */
+function prontoParaPapel(raiz){
+  var esperas = [];
+  if (document.fonts && document.fonts.load) {
+    ['500 12px "JV Cond"', '600 12px "JV Cond"', '700 12px "JV Cond"',
+     'italic 800 12px "JV Cond"', 'italic 900 12px "JV Cond"'].forEach(function(f){
+      esperas.push(document.fonts.load(f).catch(function(){}));
+    });
+  }
+  Array.prototype.forEach.call(raiz.querySelectorAll('image'), function(im){
+    var u = im.getAttribute('href') || im.getAttribute('xlink:href');
+    if (u && u.indexOf('data:') !== 0) esperas.push(new Promise(function(ok){
+      var i = new Image(); i.onload = i.onerror = ok; i.src = u;
+    }));
+  });
+  var limite = new Promise(function(ok){ setTimeout(ok, 6000); });
+  return Promise.race([Promise.all(esperas), limite]);
+}
+
+/* ==========================================================================
+   ENVIAR AULA EM PDF
+   --------------------------------------------------------------------------
+   Gera o PDF aqui mesmo (sem internet, sem servidor): página 1 com o resumo
+   da aula, depois uma folha A4 por exercício — as mesmas da impressão. Cada
+   página vira imagem (html2canvas, em lib/, licença MIT) e o PDF é montado
+   à mão, que é só um envelope de JPEGs. No fim, um toque em "Enviar" abre o
+   compartilhar do celular (WhatsApp, Arquivos, Imprimir...). O toque é
+   separado de propósito: o iPhone só abre o compartilhar se ele vier logo
+   de um toque, e gerar as páginas leva alguns segundos.
+   ========================================================================== */
+var _h2c = null;
+function carregarH2C(){
+  if (window.html2canvas) return Promise.resolve();
+  if (_h2c) return _h2c;
+  _h2c = new Promise(function(ok, falha){
+    var sc = document.createElement('script');
+    sc.src = 'lib/html2canvas.min.js';
+    sc.onload = ok; sc.onerror = function(){ _h2c = null; falha(new Error('sem a biblioteca do PDF')); };
+    document.head.appendChild(sc);
+  });
+  return _h2c;
+}
+
+/* As imagens de dentro do desenho (quadra, bonecos) entram como data: URL —
+   desenho convertido em imagem não busca arquivo de fora. */
+var _dataUrl = {};
+function embutirImagens(raiz){
+  var ims = Array.prototype.slice.call(raiz.querySelectorAll('image'));
+  return Promise.all(ims.map(function(im){
+    var u = im.getAttribute('href') || im.getAttribute('xlink:href');
+    if (!u || u.indexOf('data:') === 0) return null;
+    var pronto = _dataUrl[u] || (_dataUrl[u] = fetch(u).then(function(r){ return r.blob(); }).then(function(bl){
+      return new Promise(function(ok){ var fr = new FileReader(); fr.onload = function(){ ok(fr.result); }; fr.readAsDataURL(bl); });
+    }));
+    return pronto.then(function(d){ im.setAttribute('href', d); im.removeAttribute('xlink:href'); }).catch(function(){});
+  }));
+}
+
+function folhaResumo(){
+  var t = temaDoPlano();
+  var nv = PLANO.nivel ? nivel(PLANO.nivel) : null;
+  var hoje = new Date();
+  var data = ('0' + hoje.getDate()).slice(-2) + '/' + ('0' + (hoje.getMonth() + 1)).slice(-2) + '/' + hoje.getFullYear();
+  var blocos = BLOCOS.map(function(b){
+    var itens = itensDoBloco(b.id);
+    if (!itens.length) return '';
+    return '<div class="ftr-bloco"><h3>' + esc(b.nome) + '<small>' + esc(b.tempo) + '</small></h3>' +
+      itens.map(function(e){
+        return '<div class="ftr-ex"><span class="cd">' + esc(e.id) + '</span>' +
+          '<span class="nm">' + esc(e.nome) + '<span class="ob">' + esc(curto(e.objetivo, 120)) + '.</span></span>' +
+          '<span class="mn">' + minNoPlano(e.id) + '<small>MIN</small></span></div>';
+      }).join('') + '</div>';
+  }).join('');
+  return '' +
+  '<section class="ft ftr">' +
+    '<div class="ft-barra">' + RISCO_SVG + icone('trofeu') +
+      '<p class="ft-pilula"><b>Plano de aula</b> · ' + PLANO.itens.length + ' exercícios · ' + totalMin() + ' min</p>' +
+      marcaJV(true) +
+    '</div>' +
+    '<header class="ft-top">' + LUZ_SVG + BOLA_SVG + marcaJV(false) +
+      '<div class="ft-cap">Tema do mês · ' + esc(t.mesesTx) + '<span>' + esc(t.nome) + '</span></div>' +
+      '<h1>Aula</h1>' +
+      '<h2>' + esc(PLANO.aluno || t.nome) + '</h2>' +
+      '<p class="ft-frase">“' + esc(t.frase) + '”</p>' +
+    '</header>' +
+    '<div class="ft-dados ftr-dados">' +
+      '<div>' + icone('gente') + '<div><small>Aluno / turma</small><span>' + esc(PLANO.aluno || '—') + '</span></div></div>' +
+      '<div>' + icone('nivel') + '<div><small>Nível</small><span>' + (nv ? esc(nv.nome) : 'Todos') + '</span></div></div>' +
+      '<div>' + icone('relogio') + '<div><small>Duração</small><span>' + totalMin() + ' min</span></div></div>' +
+      '<div>' + icone('alvo') + '<div><small>Data</small><span>' + data + '</span></div></div>' +
+    '</div>' +
+    '<div class="ftr-corpo">' + blocos + '</div>' +
+    '<p class="ftr-nota"><b>Lembrete da metodologia:</b> a ativação de base é sagrada — ela mantém a espiral ' +
+      'girando em todos os níveis. E todo tema do dia termina aplicado em jogo: técnica que não vira jogo é coreografia.</p>' +
+  '</section>';
+}
+
+/* PDF mínimo: uma página A4 por JPEG. */
+function pdfDeJpegs(pags){
+  var enc = new TextEncoder(), partes = [], tam = 0, xref = [];
+  function add(x){ var b = typeof x === 'string' ? enc.encode(x) : x; partes.push(b); tam += b.length; }
+  function obj(n, corpo){ xref[n] = tam; add(n + ' 0 obj\n'); corpo(); add('\nendobj\n'); }
+  var W = 595.28, H = 841.89, n = pags.length;
+  add('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+  obj(1, function(){ add('<< /Type /Catalog /Pages 2 0 R >>'); });
+  var kids = []; for (var i = 0; i < n; i++) kids.push((3 + i * 3) + ' 0 R');
+  obj(2, function(){ add('<< /Type /Pages /Kids [' + kids.join(' ') + '] /Count ' + n + ' >>'); });
+  pags.forEach(function(pg, i){
+    var o = 3 + i * 3;
+    var cs = 'q ' + W + ' 0 0 ' + H + ' 0 0 cm /Im' + i + ' Do Q';
+    obj(o, function(){ add('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + W + ' ' + H + '] ' +
+      '/Resources << /XObject << /Im' + i + ' ' + (o + 1) + ' 0 R >> >> /Contents ' + (o + 2) + ' 0 R >>'); });
+    obj(o + 1, function(){ add('<< /Type /XObject /Subtype /Image /Width ' + pg.w + ' /Height ' + pg.h +
+      ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + pg.jpg.length + ' >>\nstream\n');
+      add(pg.jpg); add('\nendstream'); });
+    obj(o + 2, function(){ add('<< /Length ' + cs.length + ' >>\nstream\n' + cs + '\nendstream'); });
+  });
+  var total = 3 + n * 3, ini = tam;
+  add('xref\n0 ' + total + '\n0000000000 65535 f \n');
+  for (var k = 1; k < total; k++) add(('000000000' + xref[k]).slice(-10) + ' 00000 n \n');
+  add('trailer\n<< /Size ' + total + ' /Root 1 0 R >>\nstartxref\n' + ini + '\n%%EOF');
+  var out = new Uint8Array(tam), pos = 0;
+  partes.forEach(function(b){ out.set(b, pos); pos += b.length; });
+  return out;
+}
+
+function avisoPdf(){
+  var a = el('pdfAviso');
+  a.classList.add('aberto');
+  return a;
+}
+function fecharAvisoPdf(){ var a = el('pdfAviso'); if (a) a.classList.remove('aberto'); }
+
+var _gerandoPdf = false;
+function gerarPdf(lista, comResumo, nomeArq){
+  if (_gerandoPdf || !lista.length) return;
+  _gerandoPdf = true;
+  avisoPdf();
+  el('pdfTit').textContent = 'Gerando o PDF…';
+  el('pdfAcs').innerHTML = '';
+  el('pdfBarra').parentNode.style.display = '';
+  var total = lista.length + (comResumo ? 1 : 0);
+  function passo(i){
+    el('pdfTx').textContent = 'Página ' + Math.min(i + 1, total) + ' de ' + total + '. Leva alguns segundos — não precisa de internet.';
+    el('pdfBarra').style.width = Math.round(i / total * 100) + '%';
+  }
+  passo(0);
+  var palco = el('pdfPalco');
+  var nv = PLANO.nivel || (F.niveis.length === 1 ? F.niveis[0] : '');
+  var htmls = (comResumo ? [folhaResumo()] : []).concat(lista.map(function(x, i){
+    return folhaTreino(x.ex, x.min, nv, i + 1);
+  }));
+  var pags = [];
+  carregarH2C().then(function(){
+    return htmls.reduce(function(cadeia, html, i){
+      return cadeia.then(function(){
+        passo(i);
+        palco.innerHTML = html;
+        return embutirImagens(palco).then(function(){ return prontoParaPapel(palco); }).then(function(){
+          return window.html2canvas(palco.firstElementChild, { scale:1.6, backgroundColor:'#ffffff', logging:false,
+            ignoreElements:function(n){ return n.parentNode === document.body && n.id !== 'pdfPalco'; } });
+        }).then(function(cv){
+          var b64 = cv.toDataURL('image/jpeg', 0.86).split(',')[1], bin = atob(b64), u8 = new Uint8Array(bin.length);
+          for (var k = 0; k < bin.length; k++) u8[k] = bin.charCodeAt(k);
+          pags.push({ jpg:u8, w:cv.width, h:cv.height });
+        });
+      });
+    }, Promise.resolve());
+  }).then(function(){
+    palco.innerHTML = '';
+    var arq = new File([pdfDeJpegs(pags)], nomeArq + '.pdf', { type:'application/pdf' });
+    pdfPronto(arq, total);
+  }).catch(function(err){
+    palco.innerHTML = '';
+    el('pdfTit').textContent = 'Não deu para gerar o PDF';
+    el('pdfTx').textContent = (err && err.message ? err.message + '. ' : '') + 'Abra o app com internet uma vez e tente de novo, ou use “Imprimir”.';
+    el('pdfBarra').parentNode.style.display = 'none';
+    el('pdfAcs').innerHTML = '<button class="btn btn-esc" id="pdfFechar">Fechar</button>';
+    el('pdfFechar').onclick = fecharAvisoPdf;
+  }).then(function(){ _gerandoPdf = false; });
+}
+
+function pdfPronto(arq, paginas){
+  el('pdfTit').textContent = '✓ PDF pronto';
+  el('pdfTx').textContent = paginas + (paginas === 1 ? ' página' : ' páginas') + ' · ' + Math.max(1, Math.round(arq.size / 1024)) + ' KB. ' +
+    'No “Enviar” aparecem WhatsApp, Arquivos e Imprimir.';
+  el('pdfBarra').parentNode.style.display = 'none';
+  var podeEnviar = !!(navigator.canShare && navigator.canShare({ files:[arq] }));
+  el('pdfAcs').innerHTML =
+    (podeEnviar ? '<button class="btn btn-gold" id="pdfEnviar">📤 Enviar / imprimir</button>' : '') +
+    '<div class="ln"><button class="btn btn-line" id="pdfAbrir">' + (podeEnviar ? 'Abrir' : '⬇ Baixar PDF') + '</button>' +
+    '<button class="btn btn-esc" id="pdfFechar">Fechar</button></div>';
+  if (podeEnviar) el('pdfEnviar').onclick = function(){
+    navigator.share({ files:[arq], title:arq.name.replace(/\.pdf$/, '') }).catch(function(){});
+  };
+  el('pdfAbrir').onclick = function(){
+    var url = URL.createObjectURL(arq);
+    var a = document.createElement('a');
+    a.href = url; a.download = arq.name; a.target = '_blank'; a.rel = 'noopener';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
+  };
+  el('pdfFechar').onclick = fecharAvisoPdf;
+}
+
+function nomePdf(base){
+  var hoje = new Date();
+  var d = hoje.getFullYear() + '-' + ('0' + (hoje.getMonth() + 1)).slice(-2) + '-' + ('0' + hoje.getDate()).slice(-2);
+  return (base + ' ' + d).replace(/[^\w\sÀ-ÿ().,-]+/g, '').replace(/\s+/g, ' ').trim();
 }
 
 /* Quantos alunos a atividade comporta — derivado dos formatos que ela atende,
@@ -2315,7 +2595,7 @@ function ligar(){
     if (a.hasAttribute('data-desce')) { mover(a.getAttribute('data-desce'), 1); return; }
     if (a.hasAttribute('data-folha')) {
       var exF = acharEx(a.getAttribute('data-folha'));
-      if (exF) imprimirFolhas([{ ex:exF, min:minNoPlano(exF.id) || exF.min }]);
+      if (exF) gerarPdf([{ ex:exF, min:minNoPlano(exF.id) || exF.min }], false, nomePdf('Treino ' + exF.id + ' ' + exF.nome));
       return;
     }
     if (a.hasAttribute('data-favorito')) {
@@ -2372,7 +2652,19 @@ function ligar(){
   el('btnVerPlano').addEventListener('click', function(){ desenharPlano(); abrir('fundoPlano'); });
   el('btnMontar').addEventListener('click', function(){ montarAuto(60); });
   el('btnCopiar').addEventListener('click', copiarPlano);
-  el('btnImprimir').addEventListener('click', function(){ window.print(); });
+  el('btnImprimir').addEventListener('click', function(){
+    // o nome digitado entra na linha do papel (antes só entrava depois de reabrir o plano)
+    desenharPlano();
+    prontoParaPapel(document.body).then(function(){ window.print(); });
+  });
+  el('btnPdf').addEventListener('click', function(){
+    var lista = PLANO.itens.map(function(i){
+      var ex = acharEx(i.id);
+      return ex ? { ex:ex, min:minNoPlano(i.id) } : null;
+    }).filter(Boolean);
+    if (!lista.length) { window.alert('O plano está vazio. Monte a aula primeiro.'); return; }
+    gerarPdf(lista, true, nomePdf('Aula ' + (PLANO.aluno || temaDoPlano().nome)));
+  });
   el('btnFolhas').addEventListener('click', function(){
     imprimirFolhas(PLANO.itens.map(function(i){
       var ex = acharEx(i.id);
