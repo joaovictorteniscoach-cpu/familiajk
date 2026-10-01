@@ -1,0 +1,63 @@
+<!-- ================= DEMO ISOLADA ================= -->
+<script>
+/* Espelho comercial do Gestão atual.
+   Usa o mesmo HTML/CSS/runtime da versão publicada, mas com banco local próprio,
+   dados 100% fictícios e nenhuma conexão com o Firebase da academia. */
+window.JV_DEMO=true;
+var UID_DONO='DEMO_OWNER_JV_TENIS';
+var KEY_DONO='jvtenis-demo-espelho-v1';
+var MODO='dono',PROF_UID='',KEY=KEY_DONO,RAIZ='jvtenis-demo';
+window._espacoAberto=true;
+window.fbDB=null;
+window.AUTH_USER=null;
+window.AUTH_ERRO='';
+function ehDono(){return true;}
+function esperarAuth(){return Promise.resolve();}
+(function prepararDemo(){
+  try{
+    if(localStorage.getItem(KEY))return;
+    var hoje=new Date(), ano=hoje.getFullYear(), mes=String(hoje.getMonth()+1).padStart(2,'0');
+    var mk=ano+'-'+mes;
+    var alunos=[
+      {id:'demo-a1',nome:'Marina Alves',tel:'41990000001',tipo:'Particular',plano:4,mensalidade:640,creditos:3,repos:1,locCred:0,status:'pago',diaVenc:10,codigo:'2417',valorAula:160,arquivado:false,avaliacoes:[],registros:[]},
+      {id:'demo-a2',nome:'Pedro Lima',tel:'41990000002',tipo:'Particular',plano:4,mensalidade:640,creditos:2,repos:0,locCred:0,status:'pendente',diaVenc:10,codigo:'3158',valorAula:160,arquivado:false,avaliacoes:[],registros:[]},
+      {id:'demo-a3',nome:'Ana Costa',tel:'41990000003',tipo:'Dupla',plano:4,mensalidade:360,creditos:0,credGrupo:3,repos:1,locCred:0,status:'pago',diaVenc:10,codigo:'4286',valorAula:90,arquivado:false,avaliacoes:[],registros:[]},
+      {id:'demo-a4',nome:'Lucas Rocha',tel:'41990000004',tipo:'Personal',plano:4,mensalidade:520,creditos:3,repos:0,locCred:0,status:'pago',diaVenc:10,codigo:'5072',valorAula:130,arquivado:false,avaliacoes:[],registros:[]},
+      {id:'demo-a5',nome:'Camila Nunes',tel:'41990000005',tipo:'Trio',plano:4,mensalidade:340,creditos:0,credGrupo:2,repos:0,locCred:0,status:'parcial',diaVenc:10,codigo:'6194',valorAula:85,arquivado:false,avaliacoes:[],registros:[]},
+      {id:'demo-a6',nome:'Rafael Martins',tel:'41990000006',tipo:'Particular',plano:6,mensalidade:960,creditos:5,repos:2,locCred:1,status:'pago',diaVenc:10,codigo:'7341',valorAula:160,arquivado:false,avaliacoes:[],registros:[]},
+      {id:'demo-a7',nome:'Juliana Souza',tel:'41990000007',tipo:'Quarteto',plano:4,mensalidade:320,creditos:0,credGrupo:4,repos:0,locCred:0,status:'pendente',diaVenc:15,codigo:'8453',valorAula:80,arquivado:false,avaliacoes:[],registros:[]},
+      {id:'demo-a8',nome:'Bruno Freitas',tel:'41990000008',tipo:'Particular',plano:4,mensalidade:640,creditos:1,repos:1,locCred:0,status:'pago',diaVenc:10,codigo:'9265',valorAula:160,arquivado:false,avaliacoes:[],registros:[]}
+    ];
+    var fixos=[],n=0;
+    function add(d,h,id,tipo,titulo){fixos.push({id:'demo-f'+(++n),dia:d,hora:h,titulo:titulo||((alunos.find(function(a){return a.id===id;})||{}).nome)||'Locação',tipo:tipo||'aula',alunoId:id||null});}
+    add(1,'16:00','demo-a1','aula'); add(3,'16:00','demo-a1','aula');
+    add(2,'16:00','demo-a2','aula'); add(4,'16:00','demo-a2','aula');
+    add(1,'17:00','demo-a3','grupo','Dupla · Ana / Juliana'); add(1,'17:00','demo-a7','grupo','Dupla · Ana / Juliana');
+    add(3,'17:00','demo-a3','grupo','Dupla · Ana / Juliana'); add(3,'17:00','demo-a7','grupo','Dupla · Ana / Juliana');
+    add(2,'17:00','demo-a4','personal'); add(4,'17:00','demo-a4','personal');
+    add(1,'18:00','demo-a5','grupo','Grupo intermediário'); add(3,'18:00','demo-a5','grupo','Grupo intermediário');
+    add(2,'18:00','demo-a6','aula'); add(4,'18:00','demo-a6','aula');
+    add(1,'19:00','demo-a8','aula'); add(3,'19:00','demo-a8','aula');
+    add(2,'14:00',null,'locacao','Locação'); add(4,'14:00',null,'locacao','Locação'); add(5,'15:00',null,'locacao','Locação');
+    var lanc=[
+      ['demo-l1','Mensalidade · Marina Alves',640,'mensalidade','demo-a1','tenis'],
+      ['demo-l2','Mensalidade · Ana Costa',360,'mensalidade','demo-a3','tenis'],
+      ['demo-l3','Mensalidade · Lucas Rocha',520,'mensalidade','demo-a4','personal'],
+      ['demo-l4','Mensalidade · Rafael Martins',960,'mensalidade','demo-a6','tenis'],
+      ['demo-l5','Mensalidade · Bruno Freitas',640,'mensalidade','demo-a8','tenis'],
+      ['demo-l6','Locação avulsa',200,'locacao',null,'tenis'],
+      ['demo-l7','Aluguel de quadra',-2500,'quadra',null,'tenis']
+    ].map(function(x,i){return {id:x[0],mes:mk,desc:x[1],valor:x[2],cat:x[3],alunoId:x[4],modal:x[5],data:ano+'-'+mes+'-'+String(Math.min(5+i,24)).padStart(2,'0')};});
+    var hist={};
+    for(var k=1;k<=5;k++){var d=new Date(ano,hoje.getMonth()-k,1),key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');hist[key]=Math.max(5600,8200-k*420);}
+    var db={
+      alunos:alunos,lancamentos:lanc,meta:10000,agenda:{fixos:fixos,eventos:[],excecoes:[]},presencas:[],movs:[],compromissos:[],
+      aviso:'Bem-vindo à demonstração do Sistema JV Tênis.',locacaoOnly:[],horarioCfg:null,horarioData:{},horarioProf:{},horarioProfData:{},
+      mesCreditos:mk,histMes:hist,snapAlunos:{},grupoPreco:{dupla:90,trio:85,quarteto:80},precos:{avulsaPart:170,avulsaGrupo:95,locacao:100,personal:130,planilha:0,kids:0},
+      pix:'41999999999',pixNome:'JV Tênis · Demonstração',pixCidade:'Curitiba',pixTipo:'celular',termo:'',termoVer:0,cardLink:'',profs:[],chuvas:[],savedAt:Date.now(),migValorAula0704:true
+    };
+    db.snapAlunos[mk]=alunos.length;
+    localStorage.setItem(KEY,JSON.stringify(db));
+  }catch(e){console.warn('Não foi possível preparar a demonstração',e);}
+})();
+</script>

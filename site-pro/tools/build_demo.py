@@ -1,157 +1,86 @@
 # -*- coding: utf-8 -*-
-"""Gera site-pro/demo/index.html: cópia do app de gestão, sem Firebase, dados fictícios.
+"""Gera site-pro/demo/: a Gestão ATUAL em modo demonstração, sem Firebase e com dados fictícios.
 
-Rode de novo sempre que app-gestao/index.html ganhar uma aba/funcionalidade nova
-(a demo é uma cópia transformada — não puxa nada em tempo real). Uso:
+Rode de novo sempre que a Gestão mudar (a demo é uma cópia transformada, não
+puxa nada em tempo real). A partir da raiz do repositório:
 
     python3 site-pro/tools/build_demo.py
+
+A demo é AUTOSSUFICIENTE: o estilo, os ícones e as imagens são copiados para
+dentro de site-pro/demo/. Antes ela buscava em ../../app-gestao/, caminho que só
+existe no GitHub Pages — no Netlify do site-pro (cursoecapacitacao) a pasta
+app-gestao não existe, e a demonstração abria sem estilo e quebrada.
+
+O bloco offline (banco local + dados fictícios) fica em tools/bloco_demo.html.
 """
-import re, os, shutil
+import os, re, shutil
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-REPO_ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
-SRC = os.path.join(REPO_ROOT, "app-gestao", "index.html")
-DSTDIR = os.path.join(REPO_ROOT, "site-pro", "demo")
-os.makedirs(DSTDIR, exist_ok=True)
-h = open(SRC, encoding="utf-8").read()
+RAIZ = os.path.abspath(os.path.join(HERE, "..", ".."))
+GEST = os.path.join(RAIZ, "app-gestao")
+DST = os.path.join(RAIZ, "site-pro", "demo")
 
-# ---------- 1) Remover Firebase (CDN + config) e instalar MOCK offline ----------
-demo_fb = '''<script>
-/* ====== MODO DEMONSTRAÇÃO — 100% offline, sem conexão com dados reais ====== */
-window.__DEMO = true;
-(function(){
-  var empty={exists:function(){return false;},val:function(){return null;},forEach:function(){}};
-  function later(v){return new Promise(function(res){setTimeout(function(){res(v);},0);});}
-  function R(){return {
-    get:function(){return later(empty);},
-    once:function(){return later(empty);},
-    on:function(e,cb){setTimeout(function(){try{cb&&cb(empty);}catch(_){}} ,0);return cb;},
-    off:function(){},
-    set:function(){return later();},update:function(){return later();},remove:function(){return later();},
-    push:function(){return {key:'demo-'+Date.now()+'-'+Math.floor(Math.random()*1e6)};},
-    child:function(){return R();}
-  };}
-  function install(){window.fbDB={ref:function(){return R();}};}
-  /* só fica disponível depois que a página inteira (todos os <script>) terminou de
-     carregar — imita a demora real do SDK do Firebase e evita que o polling
-     'esperarESubir' do app dispare load() antes dos scripts finais (histórico
-     de mudanças etc.) terem sido definidos. */
-  if(document.readyState==='complete'){setTimeout(install,0);}
-  else{window.addEventListener('load',function(){setTimeout(install,0);});}
-})();
-</script>'''
-# O bloco do Firebase agora comeca no arquivo LOCAL (lib/), nao mais na URL do
-# gstatic — as bibliotecas foram trazidas para dentro do app. O gstatic ainda
-# aparece dentro da tag, como reserva, e por isso nao serve mais de ancora.
-pat_fb = re.compile(r'<script src="lib/firebase-app-compat\.js".*?\}\)\(0\);\s*</script>', re.S)
-assert pat_fb.search(h), "bloco firebase nao encontrado"
-h = pat_fb.sub(demo_fb, h, count=1)
+def ler(p): return open(p, encoding="utf-8").read()
+def troca(txt, a, b, n=1):
+    assert txt.count(a) >= 1, "nao achei: " + a[:70]
+    return txt.replace(a, b) if n == 0 else txt.replace(a, b, n)
 
-# ---------- 2) Chave de armazenamento isolada da demo ----------
-assert "const KEY='jvtenis-gestao-v1';" in h
-h = h.replace("const KEY='jvtenis-gestao-v1';", "const KEY='jvtenis-DEMO-v1';")
+# ---------- index.html ----------
+h = ler(os.path.join(GEST, "index.html"))
+h = troca(h, "<title>JV Tênis · Gestão</title>", "<title>JV Tênis · Gestão — Demonstração</title>")
+h = re.sub(r'<link rel="manifest" href="manifest-gestao\.webmanifest">\s*', "", h)
+h = re.sub(r'<link rel="apple-touch-startup-image"[^>]*>\s*', "", h)
 
-# ---------- 3) seedAgenda com nomes FICTÍCIOS ----------
-novo_seed = '''function seedAgenda(){
-  const F=[];let i=0;
-  const add=(dia,hora,titulo,tipo)=>F.push({id:'f'+(i++),dia,hora,titulo,tipo,alunoId:null});
-  [[1,'ANA'],[2,'BRUNO'],[3,'ANA'],[4,'BRUNO'],[5,'ANA']].forEach(([d,n])=>add(d,'06:00',n,'aula'));
-  [[1,'CARLA'],[2,'DIEGO'],[3,'CARLA'],[4,'DIEGO'],[5,'CARLA'],[6,'DUPLA MANHÃ']].forEach(([d,n])=>add(d,'07:00',n,'aula'));
-  [[1,'EDUARDA'],[2,'FELIPE'],[4,'FELIPE'],[5,'EDUARDA'],[6,'GABRIELA']].forEach(([d,n])=>add(d,'08:00',n,'aula'));
-  [[1,'HENRIQUE'],[4,'HENRIQUE']].forEach(([d,n])=>add(d,'09:00',n,'aula'));
-  add(6,'09:00','ISABELA','aula');
-  add(2,'10:00','LUCAS','aula');add(4,'10:00','MARINA','aula');add(5,'10:00','RAFAEL','aula');add(6,'10:00','ANA','aula');
-  add(1,'11:00','RAFAEL','aula');add(5,'11:00','BRUNO','aula');add(6,'11:00','CARLA','aula');
-  [1,2,3,4,5,6].forEach(d=>add(d,'12:00','ALMOÇO','bloqueio'));
-  [1,2,3,4,5,6].forEach(d=>add(d,'13:00','ALMOÇO','bloqueio'));
-  ['14:00','14:30','15:00','15:30'].forEach(h=>[1,2,3,4,5].forEach(d=>add(d,h,'Locação','locacao')));
-  add(1,'16:00','DIEGO','aula');add(3,'16:00','EDUARDA','aula');add(4,'16:00','FELIPE','aula');add(5,'16:00','GABRIELA E PAI','aula');
-  add(1,'17:00','HENRIQUE','aula');add(2,'17:00','ISABELA','aula');add(3,'17:00','LUCAS','aula');add(4,'17:00','ISABELA','aula');add(5,'17:00','MARINA','aula');
-  add(1,'18:00','ANA','aula');add(2,'18:00','BRUNO','aula');add(3,'18:00','CARLA','aula');add(4,'18:00','DIEGO','aula');add(5,'18:00','EDUARDA','aula');
-  ['19:00','19:30'].forEach(h=>{add(1,h,'FELIPE','aula');add(2,h,'GABRIELA','aula');add(3,h,'HENRIQUE','aula');add(4,h,'Grupo Escola','grupo');add(5,h,'LUCAS','aula');});
-  ['20:00','20:30'].forEach(h=>add(2,h,'Grupo adulto','grupo'));
-  return {fixos:F,eventos:[],excecoes:[]};
-}'''
-pat_seed = re.compile(r'function seedAgenda\(\)\{.*?return \{fixos:F,eventos:\[\],excecoes:\[\]\};\s*\}', re.S)
-assert pat_seed.search(h), "seedAgenda nao encontrada"
-h = pat_seed.sub(novo_seed, h, count=1)
+# troca o bloco do Firebase (bibliotecas + configuração + login) pelo bloco offline
+ini = h.index("<!-- ================= FIREBASE")
+fim = h.index("</script>", h.index("aguardarFirebase", ini)) + len("</script>")
+h = h[:ini] + ler(os.path.join(HERE, "bloco_demo.html")) + h[fim:]
 
-# ---------- 4) DEMO_SEED (alunos + lancamentos ficticios) + injeção no load ----------
-demo_seed_fn = '''function DEMO_SEED(){
-  var mk=(typeof monthKey==='function')?monthKey():(new Date().toISOString().slice(0,7));
-  var hoje=new Date().toISOString().slice(0,10);
-  var A=function(id,nome,tel,tipo,plano,mens,status,cred,rep,venc,val){return {id:id,nome:nome,tel:tel,tipo:tipo,plano:plano,mensalidade:mens,creditos:cred,repos:rep,locCred:0,status:status,diaVenc:venc,codigo:String(1000+(+id.slice(1))),valorAula:val,cardLink:'',mfitLink:''};};
-  var alunos=[
-    A('a1','Ana Ribeiro','41999990001','Particular',8,1260,'pago',1,0,5,160),
-    A('a2','Bruno Almeida','41999990002','Particular',4,640,'pendente',0,1,10,160),
-    A('a3','Carla Souza','41999990003','Personal',8,1040,'pago',0,0,5,130),
-    A('a4','Diego Martins','41999990004','Dupla',8,720,'parcial',0,0,10,160),
-    A('a5','Eduarda Lima','41999990005','Particular',6,960,'pago',2,1,15,160),
-    A('a6','Felipe Nunes','41999990006','Personal',4,520,'pendente',0,0,10,130),
-    A('a7','Gabriela Rocha','41999990007','Trio',8,680,'pago',0,0,5,160),
-    A('a8','Henrique Dias','41999990008','Particular',3,480,'pago',0,0,20,160),
-    A('a9','Isabela Cardoso','41999990009','Particular',4,640,'pendente',3,0,10,160),
-    A('a10','Lucas Ferreira','41999990010','Particular',10,1600,'pago',0,0,5,160)
-  ];
-  var L=function(id,desc,valor,cat,modal){return {id:id,mes:mk,desc:desc,valor:valor,cat:cat,modal:modal||'tenis',data:hoje};};
-  var lancamentos=[
-    L('l1','Mensalidade · Ana Ribeiro',1260,'mensalidade','tenis'),
-    L('l2','Mensalidade · Carla Souza',1040,'mensalidade','personal'),
-    L('l3','Mensalidade · Eduarda Lima',960,'mensalidade','tenis'),
-    L('l4','Mensalidade · Gabriela Rocha',680,'mensalidade','tenis'),
-    L('l5','Mensalidade · Henrique Dias',480,'mensalidade','tenis'),
-    L('l6','Mensalidade · Lucas Ferreira',1600,'mensalidade','tenis'),
-    L('l7','Aula avulsa · visitante',160,'avulsa','tenis'),
-    L('l8','Locação de quadra',70,'locacao','tenis'),
-    L('l9','Compra de bolas',-320,'despesa','tenis')
-  ];
-  var profs=[{id:'pr1',nome:'Prof. João'},{id:'pr2',nome:'Profa. Marina'},{id:'pr3',nome:'Prof. Rafael'}];
-  alunos.forEach(function(a,i){a.profId=profs[i%3].id;});
-  /* liga os horários da grade aos alunos fictícios: sem isso o filtro por
-     professor não teria o que filtrar na demonstração */
-  var ag=seedAgenda();
-  var aulas=ag.fixos.filter(function(f){return f.tipo==='aula'||f.tipo==='grupo'||f.tipo==='personal';});
-  aulas.forEach(function(f,i){var a=alunos[i%alunos.length];f.alunoId=a.id;f.titulo=a.nome.split(' ')[0];});
-  return {profs:profs,alunos:alunos,lancamentos:lancamentos,meta:12000,agenda:ag,presencas:[],compromissos:[],aviso:'Bem-vindo à demonstração do sistema! Explore à vontade — os dados são fictícios.'};
-}
-'''
-assert "async function load(){" in h
-h = h.replace("async function load(){", demo_seed_fn + "async function load(){", 1)
-alvo = "if(chosen){try{DB=JSON.parse(chosen);}catch(e){}}"
-assert alvo in h
-h = h.replace(alvo, alvo + " else if(window.__DEMO){DB=DEMO_SEED();}", 1)
+h = troca(h, "<body>\n", "<body>\n" + '<div id="demo-fita" style="position:relative;z-index:400;background:#D4AF58;color:#10261E;padding:8px 12px;text-align:center;font:800 11px/1.3 \'DM Sans\',system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase">Demonstração · dados fictícios · nenhuma alteração vai para a nuvem</div>\n')
+h = re.sub(r'<span class="save-state[^"]*" id="save-state">[^<]*</span>', '<span class="save-state ok" id="save-state">Demo local</span>', h, count=1)
+h = re.sub(r'<script src="lib/app-gestao\.js\?v=([^"]+)"></script>', r'<script src="app-demo.js?v=\1"></script>', h, count=1)
+h = troca(h, "LOGKEY:'jvtenis_hist_log'", "LOGKEY:'jvtenis_demo_hist_log'")
+h = re.sub(r"if\('serviceWorker' in navigator\)\{[^\n]*\}", "/* DEMO: sem service worker próprio; evita cache/instalação confundirem com o app real. */", h, count=1)
 
-# ---------- 5) Branding genérico / demonstração ----------
-# ---------- Recursos exclusivos da versão Pro ----------
-# Multi-professor: o app do João tem um professor só, mas a versão vendida para
-# academias precisa disso. Mesmo código, só o interruptor muda.
-assert "const PRO_MULTI=false;" in h, "flag PRO_MULTI sumiu do app-gestao"
-h = h.replace("const PRO_MULTI=false;", "const PRO_MULTI=true;   /* versão Pro */")
-
+# marca da demonstração (a demo é vitrine do sistema para outras academias)
 h = h.replace("Academia João Victor Tênis · Curitiba", "Sistema de Gestão · Demonstração")
+h = h.replace("Academia <b>João Victor Tênis</b>", "Academia <b>Demonstração</b>")
 h = h.replace("Bem-vindo, João 🎾", "Dados fictícios — explore à vontade 🎾")
-h = h.replace('<div class="top-tag">Academia João Victor Tênis</div>', '<div class="top-tag">Academia Demonstração</div>')
 h = h.replace(">Entrar 🎾</button>", ">Entrar na demonstração 🎾</button>")
 
-# ---------- 6) Remover service worker + manifest + splash startup (evita 404) ----------
-h = re.sub(r"if\('serviceWorker' in navigator\)\{[^\n]*\}", "/* SW desativado na demo */", h)
-h = h.replace('<link rel="manifest" href="manifest-gestao.webmanifest">', '')
-h = re.sub(r'<link rel="apple-touch-startup-image"[^>]*>\s*', '', h)
+# ---------- app-demo.js (o app inteiro, sem tocar a nuvem) ----------
+j = ler(os.path.join(GEST, "lib", "app-gestao.js"))
+j = troca(j, "const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';", "const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';")
+j = troca(j, "function hasCloud(){return !!(window.fbDB);}", "function hasCloud(){return false;} // DEMO: nunca toca a nuvem real")
+j = re.sub(r"const ENDERECO_ATUAL='[^']*';", "const ENDERECO_ATUAL='https://cursoecapacitacao.netlify.app/demo/';", j, count=1)
+j = troca(j, "if(window.fbDB||t>=40){load();return;}", "if(window.JV_DEMO||window.fbDB||t>=40){load();return;}")
+# na demo os valores já aparecem: esconder era proteção do caixa real
+j = troca(j, "let hideVals=true;", "let hideVals=false;")
+j = j.replace("(dono?', João':'')", "''")
+# a demo roda em dois endereços (Netlify do site-pro e GitHub Pages): o aviso de
+# "endereço reserva" e o de versão não fazem sentido numa demonstração
+j = troca(j, "function conferirEndereco(){", "function conferirEndereco(){return; /* DEMO */")
+j = troca(j, "function mostrarBarraVersao(naNuvem){", "function mostrarBarraVersao(naNuvem){return; /* DEMO */")
 
-# ---------- 7) Selo fixo DEMONSTRAÇÃO + reiniciar ----------
-selo = '''<div id="demo-flag" style="position:fixed;top:10px;left:10px;z-index:500;background:rgba(201,71,43,.95);color:#fff;font:700 11px system-ui,sans-serif;padding:6px 12px;border-radius:999px;box-shadow:0 3px 12px rgba(0,0,0,.35);cursor:pointer" onclick="if(confirm('Reiniciar a demonstração com os dados de exemplo?')){try{localStorage.removeItem(KEY);}catch(e){}location.reload();}">DEMO · reiniciar ↺</div>
-'''
-h = h.replace("<body>\n", "<body>\n" + selo, 1)
+# ---------- grava e copia o que a página usa ----------
+if os.path.isdir(DST):
+    for n in os.listdir(DST):
+        if n != "netlify.toml":
+            p = os.path.join(DST, n)
+            shutil.rmtree(p) if os.path.isdir(p) else os.remove(p)
+os.makedirs(os.path.join(DST, "lib"), exist_ok=True)
+open(os.path.join(DST, "index.html"), "w", encoding="utf-8").write(h)
+open(os.path.join(DST, "app-demo.js"), "w", encoding="utf-8").write(j)
+for f in ("estilo.css", "icones.js"):
+    shutil.copy(os.path.join(GEST, "lib", f), os.path.join(DST, "lib", f))
+shutil.copytree(os.path.join(GEST, "assets"), os.path.join(DST, "assets"))
+for f in os.listdir(GEST):
+    if f.startswith("jv-icone-gestao") and f.endswith(".png"):
+        shutil.copy(os.path.join(GEST, f), os.path.join(DST, f))
 
-open(os.path.join(DSTDIR, "index.html"), "w", encoding="utf-8").write(h)
-# copiar o icone usado no splash (só se ainda não existir/for igual — evita diff à toa)
-shutil.copy(os.path.join(REPO_ROOT, "app-gestao", "jv-icone-gestao.png"), os.path.join(DSTDIR, "jv-icone-gestao.png"))
-if not os.path.exists(os.path.join(DSTDIR, "netlify.toml")):
-    open(os.path.join(DSTDIR, "netlify.toml"), "w", encoding="utf-8").write('[build]\n  publish = "."\n')
-print("demo gerada:", os.path.getsize(os.path.join(DSTDIR,"index.html")), "bytes")
-# checagens de seguranca
-final=open(os.path.join(DSTDIR,"index.html"),encoding="utf-8").read()
-print("Firebase presente?", ("gstatic.com/firebasejs" in final) or ("lib/firebase" in final), "(deve ser False)")
-print("databaseURL real presente?", "academia-jv-tenis-default-rtdb" in final, "(deve ser False)")
-print("apiKey real presente?", "AIzaSyCs7o" in final, "(deve ser False)")
-print("nomes reais (MARIO/KARINE) presentes?", ("MARIO" in final or "KARINE" in final), "(deve ser False)")
+# ---------- conferências: nada da academia real pode sobrar ----------
+tudo = h + j
+proibido = ["firebaseio.com", "apiKey", "firebase-app-compat", "gstatic.com/firebasejs", "../../app-gestao"]
+sobras = [p for p in proibido if p in tudo]
+assert not sobras, "sobrou na demo: %s" % sobras
+print("demo gerada em site-pro/demo/ — sem Firebase, sem caminho para app-gestao")
