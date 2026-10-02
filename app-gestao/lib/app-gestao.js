@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-02-11';
+const VERSAO='2026-10-02-12';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2053,6 +2053,19 @@ function renderVinculos(){
    aprovado. Para o código ela está pronta; quem decide se pode publicar é a
    migração: aluno ativo sem aparelho aprovado fica, com ela, sem ver horários
    e sem conseguir agendar. Esta caixa só LISTA — não muda nada. */
+/* Convite para o aluno abrir o app e pedir o acesso do aparelho. Guarda a data
+   do convite só para a lista mostrar quem já foi chamado. */
+const APP_ALUNO_URL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
+function convidarAparelho(id){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  if(!a.tel){toast('Sem telefone no cadastro de '+a.nome.split(' ')[0]);return;}
+  const msg='Olá '+a.nome.split(' ')[0]+'! 🎾 Estou deixando o app da academia mais seguro. '
+    +'Para continuar vendo seus horários e marcando aulas, abra o App do Aluno no seu celular:\n'+APP_ALUNO_URL
+    +'\n\nEntre com o seu código *'+(a.codigo||'')+'*. Vai aparecer um pedido de acesso — eu confirmo por aqui e libero na hora. Qualquer dúvida me chama!';
+  window.open('https://wa.me/'+foneWhats(a.tel)+'?text='+encodeURIComponent(msg),'_blank');
+  a.convidadoEm=dKey(new Date());
+  persist();renderVinculos();
+}
 function prontidaoRegraFinal(ativos){
   if(!VINC_LIDO)return '<p class="hint" style="margin-top:10px">Carregando a lista de aparelhos para conferir a regra final…</p>';
   const comAparelho=new Set();
@@ -2064,13 +2077,20 @@ function prontidaoRegraFinal(ativos){
   const sem=alunos.filter(a=>!comAparelho.has(a.id)).sort((x,y)=>x.nome.localeCompare(y.nome));
   const codRuim=alunos.filter(a=>!/^\d{4}$/.test(String(a.codigo||'')));
   const lista=arr=>arr.map(a=>vincEsc(a.nome)+' <span class="hint">· código '+vincEsc(a.codigo||'—')+'</span>').join('<br>');
+  /* quem falta, com o convite à mão: um toque abre o WhatsApp do aluno */
+  const listaConvite=arr=>arr.map(a=>{
+    const conv=a.convidadoEm?'<span class="hint"> · convidado em '+fmtDataCurta(a.convidadoEm)+'</span>':'';
+    const bt=a.tel?'<button class="btn btn-ghost pr-conv" onclick="convidarAparelho(\''+argJs(a.id)+'\')">📲 '+(a.convidadoEm?'De novo':'Convidar')+'</button>'
+      :'<span class="hint">sem telefone</span>';
+    return '<div class="pr-li"><div><b>'+vincEsc(a.nome)+'</b>'+conv+'</div>'+bt+'</div>';
+  }).join('');
   let h='<div style="border:1px solid var(--border);border-radius:12px;padding:10px 11px;margin-top:12px">'
     +'<div style="font-size:12px;font-weight:800;letter-spacing:.4px">🔒 Pronto para a regra final?</div>';
   if(!sem.length&&!codRuim.length){
     h+='<p class="hint" style="color:var(--ok);font-weight:700;margin-top:6px">✓ Os '+alunos.length+' alunos ativos têm aparelho aprovado. Pelo lado do app, a regra final (etapa 4) pode ser publicada.</p>';
   }else{
     if(sem.length)h+='<p class="hint" style="margin-top:6px"><b>⏳ Faltam '+sem.length+' de '+alunos.length+' alunos ativos</b> com aparelho aprovado. Com a regra final, eles ficariam sem ver horários e sem conseguir agendar. Peça para abrirem o app: o pedido de acesso aparece aqui em cima.</p>'
-      +'<details style="margin-top:4px"><summary style="cursor:pointer;font-size:12px;font-weight:800;color:var(--muted)">Ver quem falta</summary><div style="margin-top:6px;font-size:12.5px;line-height:1.6">'+lista(sem)+'</div></details>';
+      +'<details style="margin-top:4px"><summary style="cursor:pointer;font-size:12px;font-weight:800;color:var(--muted)">Ver quem falta e convidar ('+sem.filter(a=>a.convidadoEm).length+' já convidado'+(sem.filter(a=>a.convidadoEm).length===1?'':'s')+')</summary><div style="margin-top:6px">'+listaConvite(sem)+'</div></details>';
     if(codRuim.length)h+='<p class="hint" style="margin-top:6px;color:var(--bad,#C0392B);font-weight:700">⚠ '+codRuim.length+' aluno(s) com código fora do padrão de 4 números: a regra final recusaria os pedidos deles.</p>'
       +'<div style="font-size:12.5px;line-height:1.6">'+lista(codRuim)+'</div>';
   }
