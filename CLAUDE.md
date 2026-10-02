@@ -47,7 +47,7 @@ Use `grep -n` pelos títulos de seção (`/* ===== Título =====`) ou pelo nome 
 Convenções: `fmt()` mascara valores quando `hideVals` está ligado — em mensagem ao aluno
 e PDF use `fmtRs()`. Datas locais com `dKey(new Date())` (nunca `toISOString().slice(0,10)`).
 Classes CSS novas com prefixo próprio (já usados: `al-`, `fic-`, `rm-`, `cx-`; `fx-` colide).
-Tema escuro premium: variáveis `--jv-*` em `estilo.css`. Escape HTML com `esc()` em todo
+Tema escuro premium: variáveis `--jv-*` em `estilo.css`. Tema **Saibro** (padrão; "Verde clássico" em Mais → Segurança e dados): `lib/estilo-saibro.css` é **gerado** — mudou `estilo.css`, rode `python3 ferramentas/tema-saibro.py` (o `checar-tudo.sh` acusa se esquecer). Escape HTML com `esc()` em todo
 texto vindo de aluno/nuvem; dentro de `onclick="f('…')"` use `argJs()` (escapa para JS e
 depois HTML — só `esc()` não basta, o navegador desfaz o `&#39;` antes de rodar).
 Nada de nome real de aluno ou compromisso pessoal no código: ele é público (Pages + GitHub).

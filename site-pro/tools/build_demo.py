@@ -71,7 +71,7 @@ if os.path.isdir(DST):
 os.makedirs(os.path.join(DST, "lib"), exist_ok=True)
 open(os.path.join(DST, "index.html"), "w", encoding="utf-8").write(h)
 open(os.path.join(DST, "app-demo.js"), "w", encoding="utf-8").write(j)
-for f in ("estilo.css", "icones.js"):
+for f in ("estilo.css", "estilo-saibro.css", "icones.js"):
     shutil.copy(os.path.join(GEST, "lib", f), os.path.join(DST, "lib", f))
 shutil.copytree(os.path.join(GEST, "assets"), os.path.join(DST, "assets"))
 for f in os.listdir(GEST):

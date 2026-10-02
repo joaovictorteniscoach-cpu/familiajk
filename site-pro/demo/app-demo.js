@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-02-15';
+const VERSAO='2026-10-02-16';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -8219,7 +8219,25 @@ function mostrarBarraVersao(naNuvem){return; /* DEMO */
 /* ===== Conta: entrar e sair =====
    Falhar aqui não pode custar nada: o app inteiro segue funcionando deslogado
    enquanto as regras do banco estiverem abertas. */
+/* ===== Cores do app (Saibro / Verde clássico) =====
+   Só troca o arquivo de estilo (estilo-saibro.css é gerado de estilo.css por
+   ferramentas/tema-saibro.py). Preferência do aparelho, não vai para a nuvem. */
+function temaAtual(){try{return localStorage.getItem('jv-tema')==='classico'?'classico':'saibro';}catch(e){return 'saibro';}}
+function marcarTema(){
+  const t=temaAtual();
+  document.querySelectorAll('#tema-esc button').forEach(b=>b.classList.toggle('on',b.dataset.tema===t));
+}
+function escolherTema(t){
+  try{localStorage.setItem('jv-tema',t==='classico'?'classico':'saibro');}catch(e){}
+  const l=document.getElementById('css-tema');
+  if(l){const h=l.getAttribute('href').replace('estilo-saibro.css','estilo.css');
+    l.setAttribute('href',t==='classico'?h:h.replace('estilo.css','estilo-saibro.css'));}
+  document.documentElement.classList.toggle('tema-saibro',t!=='classico');
+  marcarTema();
+  toast(t==='classico'?'Cores: Verde clássico':'Cores: Saibro');
+}
 function renderConta(){
+  try{marcarTema();}catch(e){}
   var lv=document.getElementById('versao-linha');
   if(lv)lv.textContent='Versão deste endereço: '+dataBonita(VERSAO)+'  ('+VERSAO+')';
   var el=document.getElementById('conta-box');if(!el)return;
@@ -9295,27 +9313,25 @@ function caixaMudaDia(n){
   const k=dKey(d);if(k>hoje)return;
   caixaDia=(k===hoje)?null:k;renderCaixaDia();renderQuickLanc();
 }
-const CX_DIA_MAX=4;   // o dia completo está nas Movimentações, logo abaixo
+/* Faixa fina de uma linha: dia + quanto entrou/saiu. A lista do dia está logo
+   abaixo, em Movimentações (o grupo "Hoje"), então não se repete aqui. */
 function renderCaixaDia(){
   const el=document.getElementById('caixa-dia');if(!el)return;
   const hoje=dKey(new Date()), dia=caixaDia||hoje;
-  const ls=(DB.lancamentos||[]).filter(l=>diaDoLanc(l)===dia).sort((a,b)=>String(b.id).localeCompare(String(a.id)));
+  const ls=(DB.lancamentos||[]).filter(l=>diaDoLanc(l)===dia);
   const entrou=ls.filter(l=>Number(l.valor)>0).reduce((t,l)=>t+Number(l.valor),0);
   const saiu=ls.filter(l=>Number(l.valor)<0).reduce((t,l)=>t-Number(l.valor),0);
-  const p=dia.split('-'), dow=['domingo','segunda','terça','quarta','quinta','sexta','sábado'][new Date(dia+'T12:00:00').getDay()];
-  const rot=dia===hoje?'Hoje':(p[2]+'/'+p[1]);
+  const p=dia.split('-'), dow=['dom','seg','ter','qua','qui','sex','sáb'][new Date(dia+'T12:00:00').getDay()];
   el.innerHTML='<div class="cx-dia">'
-    +'<div class="cx-top"><button class="cx-seta" onclick="caixaMudaDia(-1)" aria-label="Dia anterior">‹</button>'
-    +'<div class="cx-tit"><b>'+rot+'</b><span>'+dow+(dia===hoje?' · '+p[2]+'/'+p[1]:'')+'</span></div>'
-    +'<button class="cx-seta" onclick="caixaMudaDia(1)" '+(dia===hoje?'disabled':'')+' aria-label="Dia seguinte">›</button></div>'
-    +'<div class="cx-total"><div><span>Entrou</span><b>'+fmt(entrou)+'</b></div>'
-    +'<div><span>Saiu</span><b class="out">'+fmt(saiu)+'</b></div></div>'
-    +(ls.length?('<div class="cx-lista">'+ls.slice(0,CX_DIA_MAX).map(l=>{const s=Number(l.valor)<0;
-        return '<div class="cx-li" onclick="abrirLancEdit(\''+argJs(l.id)+'\')"><span>'+esc(l.desc||'—')+'</span><b class="'+(s?'out':'in')+'">'+(s?'− ':'+ ')+fmt(Math.abs(Number(l.valor)||0))+'</b></div>';}).join('')
-        +(ls.length>CX_DIA_MAX?'<div class="cx-mais">e mais '+(ls.length-CX_DIA_MAX)+' — veja em Movimentações</div>':'')+'</div>')
-      :'<div class="cx-vazio">Nada lançado '+(dia===hoje?'hoje':'neste dia')+'.</div>')
+    +'<button class="cx-seta" onclick="caixaMudaDia(-1)" aria-label="Dia anterior">‹</button>'
+    +'<div class="cx-tit"'+(dia===hoje?'':' onclick="caixaHoje()" title="Voltar para hoje"')+'><b>'+(dia===hoje?'Hoje':(p[2]+'/'+p[1]))+'</b>'
+    +'<span>'+(dia===hoje?dow+' · '+p[2]+'/'+p[1]:dow+' · voltar p/ hoje')+'</span></div>'
+    +'<div class="cx-vals"><span class="in">'+fmt(entrou)+'</span>'
+    +'<small>'+(saiu?('saiu <i>'+fmt(saiu)+'</i> · '):'')+ls.length+' lanç.</small></div>'
+    +'<button class="cx-seta" onclick="caixaMudaDia(1)" '+(dia===hoje?'disabled':'')+' aria-label="Dia seguinte">›</button>'
     +'</div>';
 }
+function caixaHoje(){caixaDia=null;renderCaixaDia();renderQuickLanc();}
 
 /* ===== Voltar a uma versão anterior =====
    Junta o que está guardado no aparelho e na nuvem, mostra o retrato de cada
