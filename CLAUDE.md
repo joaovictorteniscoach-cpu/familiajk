@@ -37,7 +37,7 @@ Use `grep -n` pelos títulos de seção (`/* ===== Título =====`) ou pelo nome 
 - Pacote único: `Pacote único` (`unificado(a)`, `pacoteDoAluno`, `DB.pacoteUnico`)
 - Mês: `Renovar o mês`, `renovarMes(id)`, `Desconto de reposições`, `valorDoMes`, `Fechamento mensal`
 - Alunos: `Lista de alunos + ficha do aluno` (`linhaAluno`, `renderFicha`, `abrirFicha`)
-- Financeiro: `Ferramentas do Financeiro` (`FERR_BOXES`, `abrirFerr`), `Conferir números` (`achadosDoAluno`), `Caixa`
+- Financeiro: `Caixa`; aba **Segurança e dados** (`pg-seg`, menu Mais): conta, acessos do aluno e ferramentas (`FERR_BOXES`, `abrirFerr`, `Conferir números`/`achadosDoAluno`)
 - Alunos ↔ app do aluno: `Segurança P0` (`pedidoConfiavel`, `publicarSeguro`), `doPublish`, `FILA DE PEDIDOS`
 - Navegação: `go(id)`; render geral: `renderAll()`
 
@@ -57,7 +57,7 @@ Nada de nome real de aluno ou compromisso pessoal no código: ele é público (P
   não depender da cota do Netlify. Não reabrir sem ele pedir.
 - Cópia legada `jvtenis-app-aluno` vai sem `mensalidade`/`valorAula` (`valoresOcultos`).
 - Regra `etapa4-estrita`: código pronto; publicar só com a caixa "Pronto para a regra final?"
-  (Gestão → Segurança) em ✓ e autorização do João. Passo a passo em `ferramentas/SEGURANCA-P0.md`.
+  (Mais → Segurança e dados) em ✓ e autorização do João. Passo a passo em `ferramentas/SEGURANCA-P0.md`.
 - App Check: código pronto e desligado (`APPCHECK_SITE_KEY` vazio nos dois `index.html`).
 - Repositório público: decisão pendente do João (privado exige GitHub Pro para manter o Pages).
 

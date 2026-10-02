@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-02-13';
+const VERSAO='2026-10-02-14';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -647,7 +647,7 @@ const CAMPO_LABEL={creditos:'créditos',credGrupo:'grupo',repos:'reposições',l
    ligado, tudo mora em "creditos" — e o redirecionamento acontece aqui, no
    mover(), por onde passa TODA mudança de saldo: marcar, desmarcar, avisar,
    renovar e virar o mês seguem a mesma regra sem exceção.
-   Liga e desliga em Financeiro → Ferramentas → Pacote único. */
+   Liga e desliga em Mais → Segurança e dados → Pacote único. */
 function ehMisto(a){return (Number(a&&a.plano)||0)>0&&(Number(a&&a.planoGrupo)||0)>0;}
 function pacoteUnicoAtivo(){return !!(typeof DB!=='undefined'&&DB&&DB.pacoteUnico&&DB.pacoteUnico.ativo);}
 function unificado(a){return !!a&&pacoteUnicoAtivo()&&!ehMisto(a);}
@@ -1690,7 +1690,7 @@ document.getElementById('save-state').onclick=()=>{
       +'Isto não é falta de sinal — é a regra do banco de dados dizendo que esta conta não pode gravar aqui. '
       +'Esperar não resolve, e o app vai seguir salvando só neste aparelho.\n\n'
       +(ehDono()
-        ? 'Você está no app da academia. Confira se está conectado com a sua conta em Financeiro → Sua conta.'
+        ? 'Você está no app da academia. Confira se está conectado com a sua conta em Mais → Segurança e dados.'
         : 'Você está no app do professor. Peça ao João para colar a versão nova das Regras no Firebase (o arquivo firebase-regras-etapa3.json) e para conferir se a sua conta está cadastrada em Professores.')
       +'\n\nEspaço: '+(ehDono()?'academia':'professor '+PROF_UID)
       +'\nÚltimo erro: '+(lastCloudError||'desconhecido');
@@ -2671,7 +2671,7 @@ function fecharMais(){
 }
 function irDoMais(id){fecharMais();irParaAba(id);window.scrollTo({top:0});}
 function irAcessosAluno(){
-  fecharMais();irParaAba('fin');
+  fecharMais();irParaAba('seg');
   setTimeout(()=>{
     const alvo=document.getElementById('vinculos-box');
     if(!alvo)return;
@@ -2940,7 +2940,7 @@ function go(id,btn){
   if(typeof fecharMais==='function')fecharMais();
   if(typeof fecharFicha==='function')fecharFicha();
   if(typeof fecharRenovaMes==='function')fecharRenovaMes();
-  if(id!=='fin'&&typeof soEsteFerr==='function')soEsteFerr('');   // resultado velho não fica aberto
+  if(id!=='seg'&&typeof soEsteFerr==='function')soEsteFerr('');   // resultado velho não fica aberto
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.getElementById('pg-'+id).classList.add('on');
   document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('on'));
@@ -2953,6 +2953,7 @@ function go(id,btn){
   if(id==='graf')renderGraf();
   if(id==='aval')renderAvaliacoes();
   if(id==='torneio'){renderTorneio();syncTorneio(true);marcarVisto('torneio');}
+  if(id==='seg'){if(typeof renderConta==='function')renderConta();if(typeof carregarVinculos==='function')carregarVinculos(true);}
 }
 function shiftMonth(d){
   curMonth+=d;
@@ -9377,7 +9378,7 @@ function conferirSemente(){
 }
 function esconderBarraSemente(){const b=document.getElementById('barra-semente');if(b)b.remove();}
 function abrirRecuperacaoAgenda(){
-  irParaAba('fin');
+  irParaAba('seg');
   setTimeout(()=>{
     listarVersoes();
     const b=document.getElementById('versoes-box');
