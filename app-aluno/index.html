@@ -1589,6 +1589,11 @@ body[data-aba]:not([data-aba="inicio"]) #app>.top .jv-quadra-chip{display:none!i
 #app>.top .jv-chips-topo .jv-quadra-chip .led{width:9px;height:9px;flex:0 0 9px}
 </style>
 <link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-02-16">
+<!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
+     acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
+     clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-02-16">
+<script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
 <script src="lib/firebase-database-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js\'><\/script>')"></script>

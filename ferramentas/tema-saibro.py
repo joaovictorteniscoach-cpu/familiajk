@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
-"""Gera app-gestao/lib/estilo-saibro.css a partir de estilo.css.
+"""Gera o tema Saibro dos dois apps.
+
+  Gestão: app-gestao/lib/estilo-saibro.css = estilo.css com as cores trocadas
+          (o index troca um arquivo pelo outro).
+  Aluno:  app-aluno/lib/tema-saibro.css = só as declarações de COR do <style>
+          do index.html e de visual-premium.css, já trocadas, na mesma ordem.
+          Carregado depois dos dois, reescreve as cores sem duplicar o resto
+          (o <style> do aluno tem ~370 KB). Desligado = "Verde clássico".
 
 O tema Saibro (escolhido pelo João em 2026-10-02) não é uma folha separada
 escrita à mão: é a mesma estilo.css com as cores trocadas por regra. Assim
@@ -23,6 +30,9 @@ import colorsys, os, re, sys
 RAIZ = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 ORIG = os.path.join(RAIZ, "app-gestao", "lib", "estilo.css")
 DEST = os.path.join(RAIZ, "app-gestao", "lib", "estilo-saibro.css")
+AL_HTML = os.path.join(RAIZ, "app-aluno", "index.html")
+AL_VP = os.path.join(RAIZ, "app-aluno", "lib", "visual-premium.css")
+AL_DEST = os.path.join(RAIZ, "app-aluno", "lib", "tema-saibro.css")
 
 CAB = ("/* GERADO por ferramentas/tema-saibro.py a partir de estilo.css — NÃO EDITE.\n"
        "   Mude estilo.css e rode o script de novo. */\n")
@@ -94,6 +104,112 @@ def gerar(css):
     return CAB + DECL.sub(decl, css)
 
 
+def troca_valor(prop, val):
+    texto = prop.lower() in PROPS_TEXTO
+    val = HEX.sub(lambda x: hex_novo(x, texto), val)
+    return RGBA.sub(lambda x: rgba_novo(x, texto), val)
+
+
+COR_LIT = re.compile(r"#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(")
+PROPS_COR = {"color", "-webkit-text-fill-color", "caret-color", "background", "background-color",
+             "background-image", "border", "border-top", "border-right", "border-bottom", "border-left",
+             "border-color", "border-top-color", "border-right-color", "border-bottom-color",
+             "border-left-color", "outline", "outline-color", "box-shadow", "text-shadow", "fill",
+             "stroke", "accent-color", "text-decoration-color", "column-rule-color"}
+
+
+def _fecha(css, i):
+    """Índice logo depois da chave que fecha o bloco aberto em css[i-1]."""
+    n, q = 1, None
+    while i < len(css) and n:
+        c = css[i]
+        if q:
+            if c == "\\":
+                i += 1
+            elif c == q:
+                q = None
+        elif c in "'\"":
+            q = c
+        elif c == "{":
+            n += 1
+        elif c == "}":
+            n -= 1
+        i += 1
+    return i
+
+
+def _decls(corpo):
+    """Separa declarações por ';' fora de aspas e parênteses (data: URIs têm ';')."""
+    out, cur, prof, q = [], "", 0, None
+    for c in corpo:
+        if q:
+            cur += c
+            if c == q:
+                q = None
+            continue
+        if c in "'\"":
+            q = c
+        elif c == "(":
+            prof += 1
+        elif c == ")":
+            prof -= 1
+        elif c == ";" and prof == 0:
+            out.append(cur)
+            cur = ""
+            continue
+        cur += c
+    if cur.strip():
+        out.append(cur)
+    return out
+
+
+def so_cores(css):
+    """Só as declarações de cor de cada regra, já trocadas, na ordem original.
+    Restatar TODAS as de cor (mudadas ou não) mantém a cascata igual à do
+    arquivo transformado inteiro."""
+    css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    out, i = [], 0
+    while i < len(css):
+        j = css.find("{", i)
+        if j < 0:
+            break
+        pre = css[i:j].strip()
+        # @import/@charset soltos antes do bloco
+        if ";" in pre and pre.lstrip().startswith("@"):
+            pre = pre[pre.rfind(";") + 1:].strip()
+        fim = _fecha(css, j + 1)
+        corpo = css[j + 1:fim - 1]
+        low = pre.lower()
+        if low.startswith(("@media", "@supports", "@layer", "@container")):
+            dentro = so_cores(corpo)
+            if dentro.strip():
+                out.append(pre + "{" + dentro + "}")
+        elif "keyframes" in low:
+            novo = DECL.sub(lambda m: m.group(1) + m.group(2) + m.group(3) + troca_valor(m.group(2), m.group(4)), "{" + corpo)[1:]
+            if novo != corpo:
+                out.append(pre + "{" + novo + "}")
+        elif low.startswith("@"):
+            pass                       # @font-face, @page: sem cor
+        elif pre:
+            ds = []
+            for d in _decls(corpo):
+                if ":" not in d:
+                    continue
+                prop, val = d.split(":", 1)
+                prop = prop.strip()
+                pl = prop.lower()
+                novo = troca_valor(prop, val.strip())
+                # variável com imagem (data: URI de 250 KB) e sem mudança: fica de fora
+                if pl.startswith("--") and "url(" in val and novo == val.strip():
+                    continue
+                if pl.startswith("--") or pl in PROPS_COR or COR_LIT.search(val):
+                    ds.append(prop + ":" + novo)
+            if ds:
+                out.append(pre + "{" + ";".join(ds) + "}")
+        i = fim
+    return "\n".join(out)
+
+
 # Toques só do Saibro, por cima de tudo: aba ativa e seleção em saibro, fio
 # saibro em cima da barra, botões de ação na cor da bolinha.
 EXTRA = """
@@ -108,20 +224,47 @@ EXTRA = """
 /* bolinha nos botões de ação */
 .al-aula,.fic-b.prim,.fic-b.prim2,.fic-b.ok,#pg-lanc .cx-ac.in{background:%(b)s!important;border-color:%(b)s!important;color:%(t)s!important;-webkit-text-fill-color:%(t)s!important}
 .al-aula *,.fic-b.prim *,.fic-b.prim2 *,.fic-b.ok *,#pg-lanc .cx-ac.in *{color:%(t)s!important;-webkit-text-fill-color:%(t)s!important;stroke:%(t)s!important}
+/* Caixa: valores dos atalhos também na cor da bolinha */
+#pg-lanc .cx-at b{color:%(b)s!important;-webkit-text-fill-color:%(b)s!important}
 """ % {"b": BOLA, "t": BOLA_TXT}
+
+# Só no app do aluno: botões de pagar na cor da bolinha, abas da agenda em saibro.
+EXTRA_ALUNO = """
+/* ===== Toques do tema Saibro no app do aluno ===== */
+.lock-pay,.jv-pix-btn,#apg-inicio .jv-pix-btn{background:%(b)s!important;border-color:%(b)s!important;color:%(t)s!important;-webkit-text-fill-color:%(t)s!important}
+.seg.jv-ref-ag-tabs button.on,.jv-ref-ag-tabs button.on{background:#C2582E!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+""" % {"b": BOLA, "t": BOLA_TXT}
+
+CAB_AL = ("/* GERADO por ferramentas/tema-saibro.py — NÃO EDITE. Só as cores do <style> de\n"
+          "   app-aluno/index.html e de visual-premium.css, trocadas para o tema Saibro. */\n")
+
+
+def gerar_aluno():
+    h = open(AL_HTML, encoding="utf-8").read()
+    a = h.index("<style>") + 7
+    b = h.index("</style>", a)
+    vp = open(AL_VP, encoding="utf-8").read()
+    # o <style> do index resolve url() a partir de app-aluno/; o arquivo gerado
+    # mora em app-aluno/lib/, então caminho relativo ganha "../"
+    do_index = re.sub(r"""url\((['"]?)(?!data:|https?:|/|\.\./)""", r"url(\1../", so_cores(h[a:b]))
+    return CAB_AL + do_index + "\n" + so_cores(vp) + "\n" + EXTRA + EXTRA_ALUNO
 
 
 def main():
-    novo = gerar(open(ORIG, encoding="utf-8").read()) + EXTRA
+    saidas = [(DEST, gerar(open(ORIG, encoding="utf-8").read()) + EXTRA),
+              (AL_DEST, gerar_aluno())]
     if "--checar" in sys.argv:
-        atual = open(DEST, encoding="utf-8").read() if os.path.exists(DEST) else ""
-        if atual != novo:
-            print("❌ estilo-saibro.css desatualizado: rode python3 ferramentas/tema-saibro.py")
+        ruins = [d for d, novo in saidas
+                 if not os.path.exists(d) or open(d, encoding="utf-8").read() != novo]
+        if ruins:
+            print("❌ tema Saibro desatualizado (%s): rode python3 ferramentas/tema-saibro.py"
+                  % ", ".join(os.path.relpath(d, RAIZ) for d in ruins))
             sys.exit(1)
-        print("✅ tema Saibro em dia com estilo.css")
+        print("✅ tema Saibro em dia (Gestão e Aluno)")
         return
-    open(DEST, "w", encoding="utf-8").write(novo)
-    print("tema Saibro gerado em app-gestao/lib/estilo-saibro.css")
+    for d, novo in saidas:
+        open(d, "w", encoding="utf-8").write(novo)
+        print("tema Saibro gerado em", os.path.relpath(d, RAIZ), "(%d KB)" % (len(novo) // 1024))
 
 
 if __name__ == "__main__":

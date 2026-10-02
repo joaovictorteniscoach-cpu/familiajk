@@ -17,8 +17,8 @@ Sobe `AAAA-MM-DD-N` nos 5 arquivos que precisam andar juntos (app-aluno/index.ht
 sw-aluno.js, app-gestao/index.html, sw-gestao.js, lib/app-gestao.js). Mudança só em
 docs, `.claude/` ou `ferramentas/` não sobe versão.
 
-## 2b. Tema Saibro — quando mudou `app-gestao/lib/estilo.css`
-`python3 ferramentas/tema-saibro.py` (regera `estilo-saibro.css`; commitar junto).
+## 2b. Tema Saibro — quando mudou o CSS da Gestão ou do Aluno
+`python3 ferramentas/tema-saibro.py` (regera `app-gestao/lib/estilo-saibro.css` e `app-aluno/lib/tema-saibro.css`; commitar junto).
 
 ## 3. Demo — quando mudou app-gestao
 `python3 site-pro/tools/build_demo.py` (regenera `site-pro/demo/`; commitar junto).

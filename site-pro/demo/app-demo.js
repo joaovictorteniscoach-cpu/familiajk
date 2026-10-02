@@ -6715,7 +6715,7 @@ function renderMovs(){
   const res=document.getElementById('cx-mes-resumo');
   if(res)res.innerHTML='<div class="cx-res"><div><span>Entrou</span><b class="in">'+fmt(ent)+'</b></div>'
     +'<div><span>Saiu</span><b class="out">'+fmt(sai)+'</b></div>'
-    +'<div><span>Saldo</span><b>'+fmt(ent-sai)+'</b></div></div>';
+    +'<div><span>Saldo</span><b class="'+(ent-sai<0?'out':'in')+'">'+fmt(ent-sai)+'</b></div></div>';
   const fl=document.getElementById('cx-filtros');
   if(fl)fl.innerHTML=CX_FILTROS.map(([k,r])=>'<button class="'+((filtroLancCat||'')===k?'on':'')+'" onclick="cxFiltrar(\''+k+'\')">'+r+'</button>').join('');
   const bx=document.getElementById('cx-busca');if(bx&&bx.value!==cxBusca)bx.value=cxBusca;

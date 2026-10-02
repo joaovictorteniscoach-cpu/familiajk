@@ -3185,3 +3185,5 @@ body.ficha-on{overflow:hidden}
 /* bolinha nos botões de ação */
 .al-aula,.fic-b.prim,.fic-b.prim2,.fic-b.ok,#pg-lanc .cx-ac.in{background:#D4E157!important;border-color:#D4E157!important;color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important}
 .al-aula *,.fic-b.prim *,.fic-b.prim2 *,.fic-b.ok *,#pg-lanc .cx-ac.in *{color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important;stroke:#1E2A0E!important}
+/* Caixa: valores dos atalhos também na cor da bolinha */
+#pg-lanc .cx-at b{color:#D4E157!important;-webkit-text-fill-color:#D4E157!important}

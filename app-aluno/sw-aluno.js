@@ -3,7 +3,7 @@
    com cache de reserva para abrir offline. NÃO intercepta o Firebase. */
 const V = '2026-10-02-16';
 const CACHE = 'jvtenis-aluno-v30';
-const SHELL = ['./', './manifest-aluno.webmanifest', './jv-icone-aluno.png', './jv-icone-aluno-180.png', './assets/jv-saibro-premium.svg', './assets/jv-saibro-realista.webp', './assets/pix-simbolo.svg', './lib/visual-premium.css?v='+V, './lib/icones.js?v='+V];
+const SHELL = ['./', './manifest-aluno.webmanifest', './jv-icone-aluno.png', './jv-icone-aluno-180.png', './assets/jv-saibro-premium.svg', './assets/jv-saibro-realista.webp', './assets/pix-simbolo.svg', './lib/visual-premium.css?v='+V, './lib/tema-saibro.css?v='+V, './lib/icones.js?v='+V];
 
 self.addEventListener('install', e => {
   self.skipWaiting();
