@@ -27,6 +27,8 @@ echo; echo "### 10. Estrutura do redesign premium"
 python3 ferramentas/checar-design-premium.py || falhou=1
 echo; echo "### 11. Regressões funcionais do redesign e isolamento PWA"
 node ferramentas/checar-premium-runtime.js || falhou=1
+echo; echo "### 12. Tema Saibro gerado a partir do estilo atual"
+python3 ferramentas/tema-saibro.py --checar || falhou=1
 echo
 if [ "$falhou" -eq 0 ]; then
   echo "Sintaxe, regras, segurança P0, versão e redesign premium OK. Leia os avisos dos itens 2 a 4 antes de publicar."

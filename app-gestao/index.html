@@ -38,7 +38,10 @@
 <link rel="apple-touch-startup-image" media="screen and (device-width:375px) and (device-height:667px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)" href="splash-gestao-750x1334.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="lib/estilo.css?v=2026-10-02-15">
+<link rel="stylesheet" id="css-tema" href="lib/estilo.css?v=2026-10-02-16">
+<!-- Tema de cores: Saibro é o padrão desde 2026-10; "Verde clássico" fica a um
+     toque em Segurança e dados. Troca o arquivo antes da primeira pintura. -->
+<script>try{if(localStorage.getItem('jv-tema')!=='classico'){var _ct=document.getElementById('css-tema');_ct.href=_ct.getAttribute('href').replace('estilo.css','estilo-saibro.css');document.documentElement.classList.add('tema-saibro');}}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
 <script src="lib/firebase-database-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js\'><\/script>')"></script>
@@ -721,6 +724,13 @@ function esperarAuth(){
   <p class="hint">Entrando com a sua conta, este aparelho passa a ser reconhecido pelo banco de dados. O login identifica o administrador e protege os dados da gestão. Sem ele, a cópia local continua disponível, mas a nuvem administrativa permanece fechada. O aparelho continua conectado depois de fechar o app.</p>
   <div id="conta-box"></div>
 
+  <h2 class="sec-title" style="margin-top:18px">Cores do <em>app</em></h2>
+  <div class="seg tm-esc" id="tema-esc">
+    <button data-tema="saibro" onclick="escolherTema('saibro')">🟠 Saibro</button>
+    <button data-tema="classico" onclick="escolherTema('classico')">🟢 Verde clássico</button>
+  </div>
+  <p class="hint">Vale só para este aparelho. Muda na hora, sem mexer em nenhum dado.</p>
+
   <div class="so-dono">
     <h2 class="sec-title" style="margin-top:18px">Acessos do <em>App do Aluno</em></h2>
     <p class="hint">O código de 4 dígitos só localiza o cadastro — não prova identidade. Cada aparelho novo deve ser aprovado individualmente depois de confirmar com o aluno por um canal externo, como WhatsApp.</p>
@@ -1089,7 +1099,7 @@ function esperarAuth(){
   <button onclick="go('lanc',this)"><span class="ico" data-ic="navcash"></span>Caixa</button>
   <button id="nav-mais" onclick="abrirMais()"><span class="ico" data-ic="navmore"></span>Mais</button>
 </nav>
-<script src="lib/icones.js?v=2026-10-02-15"></script>
+<script src="lib/icones.js?v=2026-10-02-16"></script>
 
 <!-- MODAL ALUNO -->
 <div class="overlay" id="ov-aluno" onclick="if(event.target===this)closeModal('ov-aluno')">
@@ -1583,7 +1593,7 @@ function esperarAuth(){
 </section>
 <div class="toast" id="toast"></div>
 
-<script src="lib/app-gestao.js?v=2026-10-02-15"></script>
+<script src="lib/app-gestao.js?v=2026-10-02-16"></script>
 <script>
 /* Rede de seguranca do par tela+codigo.
 
@@ -1598,7 +1608,7 @@ function esperarAuth(){
    torto, o app busca o par certo uma vez e, se insistir, DIZ o que houve em
    vez de deixar voce tocando em botao que nao responde. */
 (function(){
-  var ESPERADA='2026-10-02-15';
+  var ESPERADA='2026-10-02-16';
   function tela(motivo){
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;z-index:99999;background:#1A2E14;color:#FAF7F2;'
@@ -1689,7 +1699,7 @@ function limparHist(){
 }
 histLogLoad();
 // PWA: registra o service worker (permite instalar o painel e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-gestao.js?v=2026-10-02-15').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-gestao.js?v=2026-10-02-16').catch(function(){});});}
 </script>
 </body>
 </html>
