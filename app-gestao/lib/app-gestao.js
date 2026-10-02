@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-02-4';
+const VERSAO='2026-10-02-5';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -6268,6 +6268,13 @@ function fecharFicha(){
 }
 window.addEventListener('popstate',()=>{if(fichaId)esconderFicha();});
 
+/* Abre o discador do celular com o número do cadastro. */
+function ligarAluno(id){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  const d=String(a.tel||'').replace(/\D/g,'');
+  if(!d){toast('Sem telefone no cadastro');return;}
+  location.href='tel:'+d;
+}
 function fxBotao(cls,fn,txt){return '<button class="fic-b '+cls+'" onclick="'+fn+'">'+txt+'</button>';}
 function fxSecao(titulo,corpo){return corpo?'<div class="fic-sec"><div class="fic-sec-t">'+titulo+'</div>'+corpo+'</div>':'';}
 function renderFicha(){
@@ -6296,7 +6303,8 @@ function renderFicha(){
   if(!ativo)chips.push('<span class="fic-chip">📦 inativo</span>');
   let h='<div class="fic-hero">'
     +'<div class="fic-hero-l"><div class="fic-nome">'+(ehPersonalTipo(a.tipo)?'💪 ':'🎾 ')+esc(a.nome)+'</div>'
-    +'<div class="fic-sub">'+esc(a.tipo||'')+' · '+plano+(temGrupo?' + '+a.planoGrupo+' em grupo':'')+' · '+fmt(mens)+'/mês</div></div>'
+    +'<div class="fic-sub">'+[esc(a.tipo||''),plano+(temGrupo?' + '+a.planoGrupo+' em grupo':''),fmt(mens)+'/mês'].filter(Boolean).map(x=>'<span class="fic-nw">'+x+'</span>').join(' · ')+'</div>'
+    +(horarioFixoTxt(a)?'<div class="fic-sub fic-hora">🕐 '+esc(horarioFixoTxt(a))+'</div>':'')+'</div>'
     +'<span class="badge '+esc(a.status||'pendente')+'">'+(a.status==='parcial'?'50%':esc(a.status||'pendente'))+'</span></div>'
     +(chips.length?'<div class="fic-chips">'+chips.join('')+'</div>':'');
 
@@ -6312,7 +6320,8 @@ function renderFicha(){
   /* pendências: só o que pede decisão agora */
   let pend='';
   if(devendo&&ativo)pend+='<div class="fic-pend"><p>💸 Mensalidade do mês '+(a.status==='parcial'?'paga pela metade':'em aberto')+' · <b>'+fmt(valorDoMes(a))+'</b>'+(descontoDoMes(a)?' <small>(com desconto)</small>':'')+'</p>'
-    +fxBotao('ok',"marcarPago('"+id+"')",BI.money+'Marcar pago')+'</div>';
+    +(a.tel?'<div class="fic-g2">'+fxBotao('ok',"marcarPago('"+id+"')",BI.money+'Marcar pago')+fxBotao('wa',"cobrar('"+id+"')",'💬 Cobrar no WhatsApp')+'</div>'
+      :fxBotao('ok',"marcarPago('"+id+"')",BI.money+'Marcar pago'))+'</div>';
   if(difere)pend+='<div class="fic-pend"><p>📅 A agenda do mês dá <b>'+fmt(ag.valor)+'</b>; o cadastro diz <b>'+fmt(mens)+'</b>.</p><div class="fic-g2">'
     +fxBotao('ouro',"cobrarPelaAgenda('"+id+"')",'Cobrar '+fmt(ag.valor))
     +fxBotao('neutro',"manterValorAnotado('"+id+"')",'Manter '+fmt(mens))+'</div></div>';
@@ -6334,8 +6343,13 @@ function renderFicha(){
   let din='';
   if(devendo&&!ativo)din+=fxBotao('ok',"marcarPago('"+id+"')",BI.money+'Marcar pago');
   if(agDif&&!difere)din+=fxBotao('neutro',"cobrarPelaAgenda('"+id+"')",'📅 Cobrar pela agenda ('+fmt(ag.valor)+')');
-  if(loc)din+=fxBotao('ok',"locacaoPaga('"+id+"')",BI.money+'Locação paga');
-  din+=fxBotao('neutro',"renovarMes('"+id+"')",'🔄 Renovar créditos do mês');
+  if(loc)din+=fxBotao('neutro',"locacaoPaga('"+id+"')",BI.money+'Locação paga');
+  /* Já renovado: mostra quando, em vez de convidar a renovar de novo. O toque
+     continua chamando renovarMes(), que pede para digitar RENOVAR numa segunda vez. */
+  const renov=renovacoesDoMes(a);
+  const ultRenov=renov.length?new Date(Math.max(...renov.map(x=>x.ts||0))):null;
+  din+=ultRenov?fxBotao('neutro feito',"renovarMes('"+id+"')",'✓ Renovado em '+String(ultRenov.getDate()).padStart(2,'0')+'/'+String(ultRenov.getMonth()+1).padStart(2,'0'))
+    :fxBotao('neutro',"renovarMes('"+id+"')",'🔄 Renovar créditos do mês');
   /* Desconto de reposições: só aparece quando dá para usar (ativo, mês em
      aberto, reposição válida e pacote que comporte meia aula de 25%). */
   const dsc=descontoDoMes(a);
@@ -6371,7 +6385,8 @@ function renderFicha(){
   /* whatsapp */
   const wa=a.tel
     ?'<div class="fic-g2">'+fxBotao('wa',"enviarAcesso('"+id+"')",'🔑 Enviar acesso · '+esc(a.codigo||'—'))
-      +fxBotao('wa',"enviarRenovacaoWa('"+id+"')",'📲 Mensagem de renovação')+'</div>'
+      +fxBotao('wa',"enviarRenovacaoWa('"+id+"')",'📲 Mensagem de renovação')
+      +fxBotao('neutro',"ligarAluno('"+id+"')",'📞 Ligar · '+esc(a.tel))+'</div>'
     :'<div class="fic-vazio">🔑 Código de acesso: <b>'+esc(a.codigo||'—')+'</b> · sem telefone no cadastro</div>';
   h+=fxSecao('WhatsApp',wa);
 
