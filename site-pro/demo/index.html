@@ -30,7 +30,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="lib/estilo.css?v=2026-10-02-3">
+<link rel="stylesheet" href="lib/estilo.css?v=2026-10-02-4">
 <!-- ================= DEMO ISOLADA ================= -->
 <script>
 /* Espelho comercial do Gestão atual.
@@ -428,24 +428,23 @@ function esperarAuth(){return Promise.resolve();}
 
 <section class="page" id="pg-alunos">
 
-  <p class="sec-eyebrow">Cadastro</p>
-  <h2 class="sec-title">Meus <em>alunos</em></h2>
-  <div class="aval-resumo" id="alunos-resumo"></div>
   <div class="toolbar">
     <input id="search" placeholder="Buscar aluno…" oninput="focoRepos=false;renderAlunos()">
-    <button class="btn btn-ghost" onclick="gerenciarPacotes()" title="Ver/excluir pacotes personalizados">⚙️ Pacotes</button>
     <button class="btn btn-clay" onclick="openAlunoModal()">+ Novo</button>
   </div>
-  <div class="seg seg-scroll" id="alunos-filtro">
-    <button class="on" onclick="setFiltroAluno('todos',this)">Todos</button>
-    <button onclick="setFiltroAluno('tenis',this)">🎾 Tênis</button>
-    <button onclick="setFiltroAluno('personal',this)">💪 Personal</button>
-    <button onclick="setFiltroAluno('planilha',this)">📋 Planilha</button>
-    <button onclick="setFiltroAluno('locacao',this)">🔑 Locação</button>
-    <button onclick="setFiltroAluno('torneio',this)">🏆 Torneio</button>
+  <div class="al-filtros">
+    <div class="seg" id="alunos-pag"></div>
+    <select id="alunos-tipo" aria-label="Tipo de aluno" onchange="setFiltroTipo(this.value)">
+      <option value="todos">Tipo: todos</option>
+      <option value="tenis">🎾 Tênis</option>
+      <option value="personal">💪 Personal</option>
+      <option value="planilha">📋 Planilha</option>
+      <option value="locacao">🔑 Locação</option>
+      <option value="torneio">🏆 Torneio</option>
+      <option value="inativos">📦 Inativos</option>
+    </select>
   </div>
   <div id="alunos-renova"></div>
-  <div class="seg" id="alunos-pag"></div>
   <div class="al-total" id="alunos-total"></div>
   <div id="alunos-list"></div>
 </section>
@@ -922,6 +921,7 @@ function esperarAuth(){return Promise.resolve();}
   <button class="so-dono" onclick="irDoMais('torneio')"><span class="ico" data-ic="trophy"></span><span class="nav-badge" id="nb-torneio"></span>Torneio</button>
   <button onclick="irDoMais('graf')"><span class="ico" data-ic="line"></span>Gráficos</button>
   <button onclick="irDoMais('fech')"><span class="ico" data-ic="receipt"></span>Fechamento</button>
+  <button onclick="fecharMais();gerenciarPacotes()"><span class="ico" data-ic="coins"></span>Pacotes</button>
   <button class="so-dono" onclick="irAcessosAluno()"><span class="ico" data-ic="user"></span>Acessos do aluno</button>
   <button class="so-dono" onclick="irDoMais('profs')"><span class="ico" data-ic="users"></span>Professores</button>
 </div>
@@ -933,7 +933,7 @@ function esperarAuth(){return Promise.resolve();}
   <button onclick="go('lanc',this)"><span class="ico" data-ic="navcash"></span>Caixa</button>
   <button id="nav-mais" onclick="abrirMais()"><span class="ico" data-ic="navmore"></span>Mais</button>
 </nav>
-<script src="lib/icones.js?v=2026-10-02-3"></script>
+<script src="lib/icones.js?v=2026-10-02-4"></script>
 
 <!-- MODAL ALUNO -->
 <div class="overlay" id="ov-aluno" onclick="if(event.target===this)closeModal('ov-aluno')">
@@ -1425,7 +1425,7 @@ function esperarAuth(){return Promise.resolve();}
 </section>
 <div class="toast" id="toast"></div>
 
-<script src="app-demo.js?v=2026-10-02-3"></script>
+<script src="app-demo.js?v=2026-10-02-4"></script>
 <script>
 /* Rede de seguranca do par tela+codigo.
 
@@ -1440,7 +1440,7 @@ function esperarAuth(){return Promise.resolve();}
    torto, o app busca o par certo uma vez e, se insistir, DIZ o que houve em
    vez de deixar voce tocando em botao que nao responde. */
 (function(){
-  var ESPERADA='2026-10-02-3';
+  var ESPERADA='2026-10-02-4';
   function tela(motivo){
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;z-index:99999;background:#1A2E14;color:#FAF7F2;'
