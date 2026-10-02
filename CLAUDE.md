@@ -41,11 +41,25 @@ Use `grep -n` pelos títulos de seção (`/* ===== Título =====`) ou pelo nome 
 - Alunos ↔ app do aluno: `Segurança P0` (`pedidoConfiavel`, `publicarSeguro`), `doPublish`, `FILA DE PEDIDOS`
 - Navegação: `go(id)`; render geral: `renderAll()`
 
+- Torneio: `campeoesDe`, `encerrarEtapa`, homenagens 1º/2º (`abrirHomenagens`, `homArte`, `homMensagem`)
+- Segurança na Gestão: `argJs`, `sairEApagar`, `prontidaoRegraFinal`, `uidCadastroLivre`, `cancelamentoTardio`, `publicacaoLegadaEnxuta`
+
 Convenções: `fmt()` mascara valores quando `hideVals` está ligado — em mensagem ao aluno
 e PDF use `fmtRs()`. Datas locais com `dKey(new Date())` (nunca `toISOString().slice(0,10)`).
 Classes CSS novas com prefixo próprio (já usados: `al-`, `fic-`, `rm-`, `cx-`; `fx-` colide).
 Tema escuro premium: variáveis `--jv-*` em `estilo.css`. Escape HTML com `esc()` em todo
-texto vindo de aluno/nuvem, inclusive em `onclick`.
+texto vindo de aluno/nuvem; dentro de `onclick="f('…')"` use `argJs()` (escapa para JS e
+depois HTML — só `esc()` não basta, o navegador desfaz o `&#39;` antes de rodar).
+Nada de nome real de aluno ou compromisso pessoal no código: ele é público (Pages + GitHub).
+
+## Decisões em vigor (2026-10-02)
+- Gestão fica no GitHub Pages, mesma origem do app do aluno: risco aceito pelo João para
+  não depender da cota do Netlify. Não reabrir sem ele pedir.
+- Cópia legada `jvtenis-app-aluno` vai sem `mensalidade`/`valorAula` (`valoresOcultos`).
+- Regra `etapa4-estrita`: código pronto; publicar só com a caixa "Pronto para a regra final?"
+  (Gestão → Segurança) em ✓ e autorização do João. Passo a passo em `ferramentas/SEGURANCA-P0.md`.
+- App Check: código pronto e desligado (`APPCHECK_SITE_KEY` vazio nos dois `index.html`).
+- Repositório público: decisão pendente do João (privado exige GitHub Pro para manter o Pages).
 
 ## Verificar
 - `sh ferramentas/checar-tudo.sh` — sintaxe, funções, ids, CSS, regras, P0, versão, premium. Tem de terminar com 0 falhas.

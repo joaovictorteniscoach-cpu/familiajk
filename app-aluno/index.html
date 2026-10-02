@@ -1588,11 +1588,12 @@ body[data-aba]:not([data-aba="inicio"]) #app>.top .jv-quadra-chip{display:none!i
 #app>.top .jv-chips-topo .jv-clima-chip .clima-ic{font-size:17px}
 #app>.top .jv-chips-topo .jv-quadra-chip .led{width:9px;height:9px;flex:0 0 9px}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-02-10">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-02-11">
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
 <script src="lib/firebase-database-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js\'><\/script>')"></script>
 <script src="lib/firebase-auth-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js\'><\/script>')"></script>
+<script src="lib/firebase-app-check-compat.js"></script>
 <script>
 /* CONFIGURAÇÃO DO FIREBASE — Academia João Victor Tênis (igual à do painel) */
 const firebaseConfig = {
@@ -1605,11 +1606,21 @@ const firebaseConfig = {
   appId: "1:78772134875:web:4671c0eab6ea2c257abdfe",
   measurementId: "G-J856KE6F20"
 };
+/* App Check (proteção contra robôs): com a chave reCAPTCHA v3 do Firebase
+   (pública, não é segredo) o app passa a provar que é ele mesmo ao falar com o
+   banco. Vazia = desligado, nada muda. Depois de preencher, deixe uns dias só
+   "monitorando" no painel antes de ligar a exigência. A mesma chave vai nos
+   dois apps (app-aluno e app-gestao). */
+const APPCHECK_SITE_KEY='';
+function ligarAppCheck(){
+  if(!APPCHECK_SITE_KEY||typeof firebase==='undefined'||!firebase.appCheck)return;
+  try{firebase.appCheck().activate(APPCHECK_SITE_KEY,true);}catch(e){console.warn('App Check',e);}
+}
 function iniciarFirebase(){
   try{
     if(typeof firebase==='undefined')return false;
     if(!firebaseConfig.apiKey || firebaseConfig.apiKey==="COLE_AQUI")return false;
-    if(!firebase.apps||!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+    if(!firebase.apps||!firebase.apps.length){firebase.initializeApp(firebaseConfig);ligarAppCheck();}
     window.fbDB = firebase.database();
     iniciarAuth();
     return true;
@@ -2003,7 +2014,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-10-02-10"></script>
+<script src="lib/icones.js?v=2026-10-02-11"></script>
 </div>
 
 <!-- MODAL ESCOLHER O QUE FAZER NO HORÁRIO -->
@@ -2210,7 +2221,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-10-02-10';
+const VERSAO='2026-10-02-11';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -4733,7 +4744,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-02-10').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-02-11').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
