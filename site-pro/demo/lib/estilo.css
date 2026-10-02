@@ -3111,3 +3111,9 @@ body.ficha-on{overflow:hidden}
 #pg-alunos .al-grupo-t.hoje b{color:#7EF0A1;-webkit-text-fill-color:#7EF0A1}
 #pg-alunos .al-grupo-t small{font-size:12px;color:#D8D2C7;-webkit-text-fill-color:#D8D2C7}
 #pg-alunos .al-hora{color:#F6DB86;-webkit-text-fill-color:#F6DB86;font-weight:700}
+
+/* ===== Ficha: cobrar, renovado, horário e ligar ===== */
+.fic-nw{white-space:nowrap}
+.fic-hora{color:#F6DB86;-webkit-text-fill-color:#F6DB86;font-weight:700;margin-top:2px}
+.fic-pend>.fic-g2{margin-top:0}
+.fic-b.neutro.feito{background:transparent;border-style:dashed;color:#7EF0A1;-webkit-text-fill-color:#7EF0A1}
