@@ -228,6 +228,35 @@ EXTRA = """
 #pg-lanc .cx-at b{color:%(b)s!important;-webkit-text-fill-color:%(b)s!important}
 """ % {"b": BOLA, "t": BOLA_TXT}
 
+# Toque "air" (vidro fosco, como no iPhone e no Windows 11), nos dois apps:
+# fundo com brilhos suaves de saibro, bolinha e verde parados atrás da tela, e
+# os cartões levemente transparentes por cima. O desfoque (backdrop-filter)
+# fica só nas peças grandes e poucas — barra, cabeçalho, ficha, cartões do
+# início —; listas longas ganham só a transparência, para não pesar no celular.
+VIDRO = """
+/* ===== Vidro (toque air) ===== */
+html{background:#0A1A14!important}
+html body{background:transparent!important}
+body:before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(120% 55% at 0% 0%,rgba(194,88,46,.22),transparent 58%),
+    radial-gradient(80% 45% at 100% 38%,rgba(212,225,87,.08),transparent 62%),
+    radial-gradient(120% 60% at 50% 108%,rgba(30,107,71,.26),transparent 62%),#0A1A14}
+.nav,.nav:after{background:rgba(10,24,18,.70)!important;-webkit-backdrop-filter:blur(22px) saturate(170%);backdrop-filter:blur(22px) saturate(170%);border-top:1px solid rgba(255,255,255,.08)!important}
+.ficha{background:rgba(10,26,20,.90)!important;-webkit-backdrop-filter:blur(26px) saturate(150%);backdrop-filter:blur(26px) saturate(150%)}
+.jh-card,.jv-ref-kpi,.fin-card:not(.hero):not(.desp):not(.saldo),.chart,.fic-tile,.fic-nota,.ag-ferr,.empty,
+.jv-home-card:not(.gold),.jv-pay-card,.jv-section-card,.jv-credit-panel,.jv-profile-card,.evo-xp,.evo-prio,
+#pg-lanc .cx-dia,#pg-lanc .cx-res>div{
+  background:linear-gradient(155deg,rgba(255,255,255,.075),rgba(255,255,255,.02) 60%),rgba(18,40,31,.55)!important;
+  -webkit-backdrop-filter:blur(16px) saturate(150%);backdrop-filter:blur(16px) saturate(150%);
+  border:1px solid rgba(255,255,255,.09)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 10px 26px rgba(0,0,0,.24)!important}
+.al-row,.aluno,.comp-item,.pend-item,.cons,.mov-card,.graf-card,.dobra-cab,.dobra-corpo,.fech-card,.fq-linha,
+#pg-lanc .cx-at,#pg-lanc .cx-mv,.seg{
+  background:linear-gradient(155deg,rgba(255,255,255,.06),rgba(255,255,255,.015) 60%),rgba(18,40,31,.50)!important;
+  border-color:rgba(255,255,255,.085)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06)!important}
+"""
+
 # Só no app do aluno: botões de pagar na cor da bolinha, abas da agenda em saibro.
 EXTRA_ALUNO = """
 /* ===== Toques do tema Saibro no app do aluno ===== */
@@ -247,11 +276,11 @@ def gerar_aluno():
     # o <style> do index resolve url() a partir de app-aluno/; o arquivo gerado
     # mora em app-aluno/lib/, então caminho relativo ganha "../"
     do_index = re.sub(r"""url\((['"]?)(?!data:|https?:|/|\.\./)""", r"url(\1../", so_cores(h[a:b]))
-    return CAB_AL + do_index + "\n" + so_cores(vp) + "\n" + EXTRA + EXTRA_ALUNO
+    return CAB_AL + do_index + "\n" + so_cores(vp) + "\n" + EXTRA + VIDRO + EXTRA_ALUNO
 
 
 def main():
-    saidas = [(DEST, gerar(open(ORIG, encoding="utf-8").read()) + EXTRA),
+    saidas = [(DEST, gerar(open(ORIG, encoding="utf-8").read()) + EXTRA + VIDRO),
               (AL_DEST, gerar_aluno())]
     if "--checar" in sys.argv:
         ruins = [d for d, novo in saidas
