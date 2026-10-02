@@ -13,10 +13,10 @@ e `app-gestao/`).
 | `export/` | Arquivos prontos para envio: `Metodologia-JV-Tenis.pdf` (5 páginas) e as versões em imagem PNG de alta resolução (páginas separadas e completa) |
 | `tools/build_apostila_pdf.py` | Script que gera o **PDF privado da apostila** a partir de `apostila.md`, no mesmo visual dark navy + dourado do folder. Não roda sozinho — é executado sob demanda (`python3 metodologia/tools/build_apostila_pdf.py`) e o PDF resultante **não é commitado** (é entregue direto a quem tem direito). |
 
-> O PDF do folder também é **publicado no site**: existe uma cópia em
-> `site/Metodologia-JV-Tenis.pdf` (URL pública `/Metodologia-JV-Tenis.pdf`,
-> com botões de download na página `/metodologia.html`). Ao regenerar o folder,
-> copie o novo PDF de `export/` para `site/` de novo.
+> O PDF do folder **não é mais publicado no site** (2026-10-02): a cópia em
+> `site/` saiu porque o Netlify publica a pasta inteira e o arquivo seguia
+> acessível pelo endereço do site. Ele fica só em `export/`, para enviar a quem
+> tiver direito. Não copie de volta para `site/`.
 
 ## Onde o conteúdo aparece publicado
 

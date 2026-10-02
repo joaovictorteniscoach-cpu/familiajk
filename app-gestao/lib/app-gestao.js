@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-02-8';
+const VERSAO='2026-10-02-9';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -415,32 +415,30 @@ let agView='semana';
 let saveTimer=null;
 let slotCtx=null;
 
+/* Grade-padrão de um espaço novo: só a FORMA da semana (que horário costuma
+   ter aula, almoço, locação), sem nome de ninguém. Antes ela trazia os nomes
+   dos alunos e compromissos pessoais do João — e este código é público (GitHub
+   Pages e repositório). Os ids f0, f1… continuam iguais: pareceSemente() usa
+   eles para reconhecer a grade. */
 function seedAgenda(){
   const F=[];let i=0;
   const add=(dia,hora,titulo,tipo)=>F.push({id:'f'+(i++),dia,hora,titulo,tipo,alunoId:null});
-  [[1,'MARIO'],[2,'BRUNO'],[3,'MARIO'],[4,'BRUNO'],[5,'MARIO']].forEach(([d,n])=>add(d,'06:00',n,'aula'));
-  [[1,'KARINE'],[2,'GUI'],[3,'KARINE'],[4,'GUI'],[5,'KARINE'],[6,'ALAN E CAMILA']].forEach(([d,n])=>add(d,'07:00',n,'aula'));
-  [[1,'GUI'],[2,'GI'],[4,'GI'],[5,'GUI'],[6,'BRUNO']].forEach(([d,n])=>add(d,'08:00',n,'aula'));
-  add(3,'08:00','TRAJETO','pessoal');
-  [[1,'CLEIDE'],[4,'CLEIDE']].forEach(([d,n])=>add(d,'09:00',n,'aula'));
-  [[2,'TRAJETO'],[5,'TRAJETO']].forEach(([d,n])=>add(d,'09:00',n,'pessoal'));
-  add(3,'09:00','TERAPIA','pessoal');add(6,'09:00','WIM','aula');
-  add(2,'10:00','Filha Thiago','aula');add(3,'10:00','TRAJETO','pessoal');
-  add(4,'10:00','PATRÍCIA','aula');add(5,'10:00','RAFAEL','aula');add(6,'10:00','WIM','aula');
-  add(1,'11:00','RAFAEL','aula');add(3,'11:00','TERAPIA','pessoal');
-  add(4,'11:00','Treino PRETA','pessoal');add(5,'11:00','RICARDO','aula');add(6,'11:00','BRUNO','aula');
+  const aula=(dias,hora)=>dias.forEach(d=>add(d,hora,'Aula','aula'));
+  aula([1,2,3,4,5],'06:00');
+  aula([1,2,3,4,5,6],'07:00');
+  aula([1,2,4,5,6],'08:00');
+  aula([1,4,6],'09:00');
+  aula([2,4,5,6],'10:00');
+  aula([1,5,6],'11:00');
   [1,2,3,6].forEach(d=>add(d,'12:00','ALMOÇO','bloqueio'));
-  [4,5].forEach(d=>add(d,'12:00','TREINO','bloqueio'));
+  [4,5].forEach(d=>add(d,'12:00','Bloqueado','bloqueio'));
   [1,2,3,4,5,6].forEach(d=>add(d,'13:00','ALMOÇO','bloqueio'));
   ['14:00','14:30','15:00','15:30'].forEach(h=>[1,2,3,4,5].forEach(d=>add(d,h,'Locação','locacao')));
-  add(1,'16:00','LEILA','aula');add(3,'16:00','ILAN','aula');add(4,'16:00','ANDRESSA','aula');add(5,'16:00','FELIPPE E PAI','aula');
-  add(1,'17:00','THIAGO','aula');add(2,'17:00','ISA','aula');add(3,'17:00','GABRIEL','aula');add(4,'17:00','ISA','aula');add(5,'17:00','ELTON','aula');
-  add(1,'18:00','SIMONE','aula');add(2,'18:00','GIULIA','aula');add(3,'18:00','ARMANDO','aula');add(4,'18:00','LUCAS EXP','aula');add(5,'18:00','ALAN E CAMILA','aula');
-  ['19:00','19:30'].forEach(h=>{
-    add(1,h,'CAROLINA','aula');add(2,h,'FELIPPE E PAI','aula');add(3,h,'BRUNO Otávio','aula');
-    add(4,h,'Grupo Gustavo','grupo');add(5,h,'NATAÇÃO','pessoal');
-  });
-  ['20:00','20:30'].forEach(h=>add(2,h,'Exp. grupo','grupo'));
+  aula([1,3,4,5],'16:00');
+  aula([1,2,3,4,5],'17:00');
+  aula([1,2,3,4,5],'18:00');
+  ['19:00','19:30'].forEach(h=>{aula([1,2,3],h);add(4,h,'Grupo','grupo');});
+  ['20:00','20:30'].forEach(h=>add(2,h,'Grupo','grupo'));
   return {fixos:F,eventos:[],excecoes:[]};
 }
 
@@ -1058,8 +1056,7 @@ async function load(){
      que abre o app pela primeira vez tem de começar com a agenda em branco —
      senão veria a semana da academia como se fosse dele. */
   /* ===== A grade-semente e uma arma carregada =====
-     seedAgenda() e a agenda do Joao de quando o app nasceu: nomes e horarios
-     de meses atras, e TODA marcacao sem alunoId. Ela existe so para um espaco
+     seedAgenda() e a forma da semana de quando o app nasceu (hoje sem nomes), e TODA marcacao sem alunoId. Ela existe so para um espaco
      NOVO nao abrir com a tela vazia.
 
      O estrago: apagar e recolocar o atalho na Tela de Inicio limpa o
@@ -1996,6 +1993,16 @@ function pedidoConfiavel(p){
   const v=VINCULOS[p.uid];
   return !!(v&&v.ativo===true&&String(v.codigo||'')===String(p.codigo||''));
 }
+/* Mesmo prazo do app do aluno. Conta a partir de QUANDO o aluno mandou (ts),
+   não de quando a Gestão sincronizou: um cancelamento feito no prazo continua
+   valendo mesmo que o app do João só abra depois. ts no futuro não conta. */
+const LIMITE_CANCEL_H_GESTAO=4;
+function cancelamentoTardio(p){
+  const aula=new Date(String(p.data||'')+'T'+String(p.hora||'')+':00').getTime();
+  if(isNaN(aula))return true;
+  const enviado=Math.min(Number(p.ts)||Date.now(),Date.now());
+  return aula-enviado<LIMITE_CANCEL_H_GESTAO*3600e3;
+}
 function pedidoAgendaValido(p,a){
   if(!p||!a||!/^\d{4}-\d{2}-\d{2}$/.test(String(p.data||''))||HORAS.indexOf(String(p.hora||''))<0)return false;
   const d=new Date(p.data+'T12:00:00');if(isNaN(d.getTime()))return false;
@@ -2261,7 +2268,7 @@ async function syncRequests(silent){
     if(!snap.exists()){if(!silent)toast('Nenhum agendamento novo de alunos');syncing=false;return;}
     const fila=snap.val()||{};
     const chaves=Object.keys(fila);
-    let n=0,nc=0,nb=0,nr=0;
+    let n=0,nc=0,nb=0,nr=0;const tardios=[];
     chaves.forEach((key,idx)=>{
       const p=fila[key];
       if(!pedidoConfiavel(p)){nb++;return;}
@@ -2269,7 +2276,11 @@ async function syncRequests(silent){
       if(!pedidoAgendaValido(p,a)){nr++;ref.child(key).remove().catch(()=>{});return;}
       if(a){
         const tipo=p.tor?'torneio':catAgendaDe(a.tipo);   // jogo do torneio: já pago, não usa crédito
-        if(p.acao==='cancelar'){
+        if(p.acao==='cancelar'&&cancelamentoTardio(p)){
+          /* O app do aluno só deixa cancelar até 4h antes; um pedido fora disso
+             veio de um app mexido. A aula fica na agenda e o João decide. */
+          tardios.push((a.nome||'').split(' ')[0]+' '+fmtDataCurta(p.data)+' '+p.hora);
+        }else if(p.acao==='cancelar'){
           const dia=new Date(p.data+'T12:00:00').getDay();
           const fx=DB.agenda.fixos.find(f=>f.alunoId===a.id&&f.dia===dia&&f.hora===p.hora&&fixoValeEm(f,p.data));
           if(fx){
@@ -2306,7 +2317,9 @@ async function syncRequests(silent){
       const partes=[];if(n>0)partes.push(n+' reserva'+(n===1?'':'s'));if(nc>0)partes.push(nc+' cancelamento'+(nc===1?'':'s'));
       toast('📥 '+partes.join(' · ')+' de alunos');
     }
-    else if(!silent)toast(nb?'Há '+nb+' solicitação(ões) aguardando vínculo do aparelho':(nr?'Solicitação inválida descartada por segurança':'Nenhuma novidade de alunos'));
+    else if(!silent&&!tardios.length)toast(nb?'Há '+nb+' solicitação(ões) aguardando vínculo do aparelho':(nr?'Solicitação inválida descartada por segurança':'Nenhuma novidade de alunos'));
+    /* por último, para não ser coberto pelo resumo acima */
+    if(tardios.length)toast('⚠️ Cancelamento com menos de '+LIMITE_CANCEL_H_GESTAO+'h não aplicado ('+tardios.join(', ')+') — a aula continua na agenda. Confira com o aluno.');
   }catch(e){if(!silent)toast('Erro ao sincronizar');}
   syncing=false;
 }
@@ -7750,7 +7763,7 @@ function savePag(){
 }
 /* Reinstala a grade-padrão da planilha, preservando alunos, lançamentos e agendamentos */
 function instalarGrade(){
-  if(!confirm('Isto vai REPOR a grade fixa de horários conforme sua planilha (semana-padrão).\n\n✅ Preserva: alunos, lançamentos, agendamentos de alunos e marcações pontuais.\n♻️ Substitui: apenas a grade fixa semanal (os horários recorrentes).\n\nDeseja continuar?'))return;
+  if(!confirm('Isto vai REPOR a grade fixa com a semana-padrão (só os horários, sem nomes de alunos).\n\n✅ Preserva: alunos, lançamentos, agendamentos de alunos e marcações pontuais.\n♻️ Substitui: apenas a grade fixa semanal (os horários recorrentes).\n\nDeseja continuar?'))return;
   const nova=seedAgenda();
   // mantém marcações fixas vinculadas a alunos reais (ex.: agendamentos confirmados)
   const linkados=(DB.agenda&&DB.agenda.fixos?DB.agenda.fixos.filter(f=>f.alunoId):[]);
@@ -9311,7 +9324,7 @@ function conferirSemente(){
   d.id='barra-semente';
   d.style.cssText='position:sticky;top:0;z-index:285;background:#8A2C18;color:#fff;padding:12px 14px;'
     +'font-size:13.5px;line-height:1.45;font-weight:600';
-  d.innerHTML='⚠️ <b>Esta agenda parece a grade antiga do app</b> (MARIO, KARINE, CLEIDE…), sem nenhum aluno vinculado — '
+  d.innerHTML='⚠️ <b>Esta agenda parece a grade antiga do app</b> sem nenhum aluno vinculado — '
     +'por isso não aparece o botão de presença. Seus alunos, créditos e lançamentos não foram tocados.'
     +'<br><button style="margin-top:8px;padding:8px 13px;border-radius:9px;border:0;background:#fff;color:#8A2C18;font-weight:800;font-size:13px" '
     +'onclick="abrirRecuperacaoAgenda()">Recuperar a agenda de verdade</button>';
@@ -10107,6 +10120,15 @@ function renderCadastros(){
   }).join('');
   if(typeof updatePedBadge==='function')updatePedBadge();
 }
+async function uidCadastroLivre(uid){
+  uid=String(uid||'');
+  if(!/^[A-Za-z0-9]{20,128}$/.test(uid))return false;
+  if(typeof UID_DONO!=='undefined'&&uid===UID_DONO)return false;
+  try{await carregarVinculos(true);}catch(e){}
+  if(!VINC_LIDO)return false;                       // sem ler a nuvem, não dá para saber: não liga
+  const v=VINCULOS[uid];
+  return !(v&&v.ativo===true);
+}
 async function aprovarCadastro(key){
   const c=CADASTROS[key];if(!c)return;
   let cod;do{cod=genCode();}while(DB.alunos.some(x=>x.codigo===cod));
@@ -10114,7 +10136,14 @@ async function aprovarCadastro(key){
   const aluno={id:id,nome:String(c.nome||'Novo aluno').slice(0,120),tel:String(c.tel||'').replace(/\D/g,'').slice(0,13),email:String(c.email||'').slice(0,160),tipo:'Particular',plano:0,mensalidade:0,creditos:0,repos:0,locCred:0,status:'pendente',diaVenc:10,codigo:cod,valorAula:160,cardLink:'',mfitLink:''};
   DB.alunos.push(aluno);
   let auto=false;
-  if(hasCloud()&&c.uid){
+  /* O uid vem escrito pelo próprio cadastro, e a regra de fila_cadastros não
+     confere se é o aparelho de quem mandou. Antes de ligar, conferir: tem cara
+     de uid do Firebase, não é o do dono e não está ligado a outro aluno.
+     Fora disso o aluno é criado do mesmo jeito, só que sem acesso automático:
+     o aparelho pede aprovação quando abrir o app. */
+  const uidOk=hasCloud()&&await uidCadastroLivre(c.uid);
+  if(hasCloud()&&c.uid&&!uidOk)console.warn('cadastro: uid recusado para vínculo automático');
+  if(uidOk){
     try{
       const link={codigo:cod,alunoId:id,nome:aluno.nome,ativo:true,ts:Date.now()};
       await window.fbDB.ref('jvtenis/'+VINC_KEY+'/'+c.uid).set(link);
