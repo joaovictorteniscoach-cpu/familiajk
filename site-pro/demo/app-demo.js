@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-02-1';
+const VERSAO='2026-10-02-2';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -641,8 +641,22 @@ function genCode(){return String(Math.floor(1000+Math.random()*9000));}
    extrato. O caixa (DB.lancamentos) sempre funcionou assim; os saldos de aula
    não tinham nada disso. */
 const CAMPO_LABEL={creditos:'créditos',credGrupo:'grupo',repos:'reposições',locCred:'locação'};
-function mover(a,campo,delta,motivo,ref){
+/* ===== Pacote único =====
+   Para quem NÃO tem plano misto (particular + grupo ao mesmo tempo), crédito
+   particular e crédito de grupo são o mesmo pacote. Com eles separados, o
+   pacote entrava num saldo e a aula saía do outro: um sobrava (e virava
+   reposição falsa na virada) e o outro ficava negativo. Com o pacote único
+   ligado, tudo mora em "creditos" — e o redirecionamento acontece aqui, no
+   mover(), por onde passa TODA mudança de saldo: marcar, desmarcar, avisar,
+   renovar e virar o mês seguem a mesma regra sem exceção.
+   Liga e desliga em Financeiro → Ferramentas → Pacote único. */
+function ehMisto(a){return (Number(a&&a.plano)||0)>0&&(Number(a&&a.planoGrupo)||0)>0;}
+function pacoteUnicoAtivo(){return !!(typeof DB!=='undefined'&&DB&&DB.pacoteUnico&&DB.pacoteUnico.ativo);}
+function unificado(a){return !!a&&pacoteUnicoAtivo()&&!ehMisto(a);}
+function pacoteDoAluno(a){return (Number(a&&a.plano)||0)+(Number(a&&a.planoGrupo)||0);}
+function mover(a,campo,delta,motivo,ref,exato){
   if(!a||!campo)return 0;
+  if(!exato&&campo==='credGrupo'&&unificado(a))campo='creditos';
   delta=Number(delta)||0;
   const de=Number(a[campo])||0, para=de+delta;
   a[campo]=para;
@@ -729,8 +743,9 @@ function devolucoesTortas(a,pres){
     if(!m.ref)return;
     const d=Number(m.delta)||0; if(!d)return;
     const r=(porRef[m.ref]=porRef[m.ref]||{soma:{},debitou:{}});
-    r.soma[m.campo]=(r.soma[m.campo]||0)+d;
-    if(d<0)r.debitou[m.campo]=true;
+    const cp=(m.campo==='credGrupo'&&unificado(a))?'creditos':m.campo;
+    r.soma[cp]=(r.soma[cp]||0)+d;
+    if(d<0)r.debitou[cp]=true;
   });
   const torto=[];
   Object.keys(porRef).forEach(ref=>{
@@ -2142,7 +2157,7 @@ async function doPublish(){
       /* Quem são os professores da academia. Vai só id e nome — o aluno
          precisa saber com quem treina e com quem quer treinar, nada além. */
       profs:profs().map(p=>({id:p.id,nome:p.nome})),
-      alunos:DB.alunos.map(a=>({codigo:a.codigo,nome:a.nome,tipo:a.tipo,profId:profDoAluno(a),prof:profNome(profDoAluno(a)),plano:a.plano,creditos:a.creditos,repos:a.repos,reposValidas:reposValidas(a),reposVencendo:reposVencendo(a),status:a.status,ultimoPago:a.ultimoPago||'',mensalidade:a.mensalidade,diaVenc:a.diaVenc||10,cardLink:a.cardLink||'',mfitLink:a.mfitLink||'',valorAula:a.valorAula||(a.tipo==='Personal'?130:160),locCred:Number(a.locCred)||0,credGrupo:Number(a.credGrupo)||0,planoGrupo:Number(a.planoGrupo)||0,grupoTipo:a.grupoTipo||'',avaliacoes:(a.avaliacoes||[]).slice(-12),evoMes:serieMensal(a.avaliacoes,a.registros,24),registros:(a.registros||[]).slice(-8)})),
+      alunos:DB.alunos.map(a=>({codigo:a.codigo,nome:a.nome,tipo:a.tipo,profId:profDoAluno(a),prof:profNome(profDoAluno(a)),plano:unificado(a)?pacoteDoAluno(a):a.plano,creditos:unificado(a)?(Number(a.creditos)||0)+(Number(a.credGrupo)||0):a.creditos,repos:a.repos,reposValidas:reposValidas(a),reposVencendo:reposVencendo(a),status:a.status,ultimoPago:a.ultimoPago||'',mensalidade:a.mensalidade,diaVenc:a.diaVenc||10,cardLink:a.cardLink||'',mfitLink:a.mfitLink||'',valorAula:a.valorAula||(a.tipo==='Personal'?130:160),locCred:Number(a.locCred)||0,credGrupo:unificado(a)?0:(Number(a.credGrupo)||0),planoGrupo:unificado(a)?0:(Number(a.planoGrupo)||0),grupoTipo:a.grupoTipo||'',avaliacoes:(a.avaliacoes||[]).slice(-12),evoMes:serieMensal(a.avaliacoes,a.registros,24),registros:(a.registros||[]).slice(-8)})),
       historico:(function(){
         const codeOf={};DB.alunos.forEach(a=>{codeOf[a.id]=a.codigo;});
         const cut=dKey(new Date(Date.now()-60*864e5));const out={};
@@ -2768,7 +2783,7 @@ function aceitarPedido(key){
     }
     a.status='pago';a.ultimoPago=monthKey();
     const c=cobrancaDoMes(a);
-    DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:c.desc,valor:c.valor,cat:'mensalidade',alunoId:a.id,modal:(ehPersonalTipo(a.tipo)?'personal':'tenis'),data:new Date().toISOString().slice(0,10),descontoRepos:c.detalhe});
+    DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:c.desc,valor:c.valor,cat:'mensalidade',alunoId:a.id,modal:(ehPersonalTipo(a.tipo)?'personal':'tenis'),data:dKey(new Date()),descontoRepos:c.detalhe});
     toast('✓ '+a.nome+' marcado como PAGO · '+fmt(c.valor));
   }else if(p.kind==='plano'){
     if(!a){toast('Aluno não encontrado — confira o cadastro');return;}
@@ -2800,7 +2815,7 @@ function aceitarPedido(key){
     const item=p.item||'';
     const cat=/loca/i.test(item)?'locacao':(/cr[eé]dito/i.test(item)?'outro':'avulsa');
     if(Number(p.valor)>0){
-      DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:item+(p.nome?(' · '+p.nome):''),valor:Number(p.valor),cat,data:new Date().toISOString().slice(0,10)});
+      DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:item+(p.nome?(' · '+p.nome):''),valor:Number(p.valor),cat,data:dKey(new Date())});
       toast('✓ Lançado no caixa: '+item+' ('+fmt(p.valor)+')');
     }else{
       toast('Pedido aceito — combine o valor e lance no Caixa');
@@ -2823,13 +2838,14 @@ function go(id,btn){
   if(typeof fecharMais==='function')fecharMais();
   if(typeof fecharFicha==='function')fecharFicha();
   if(typeof fecharRenovaMes==='function')fecharRenovaMes();
+  if(id!=='fin'&&typeof soEsteFerr==='function')soEsteFerr('');   // resultado velho não fica aberto
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.getElementById('pg-'+id).classList.add('on');
   document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
   window.scrollTo({top:0});
   if(id==='agenda'){syncRequests(true);marcarVisto('agenda');if(wkAutoFit)wkZoomFit();setTimeout(rolarAgendaAgora,80);}
-  if(id==='lanc'){filtroLancCat=null;renderMovs();}   // abrir a Caixa pela barra mostra tudo
+  if(id==='lanc'){filtroLancCat=null;caixaDia=null;renderMovs();}   // abrir a Caixa pela barra mostra tudo
   if(id==='fech')abrirFechamento();
   if(id==='profs')prepararAluguel();
   if(id==='graf')renderGraf();
@@ -3367,7 +3383,7 @@ function togglePresenca(entryId){
       logAct('Marcar locação: '+a.nome);toast('🔑 Locação ('+c+'h) · '+a.nome+' → '+fmtCred(a.locCred)+'h'+(a.locCred<0?' (devendo)':' restantes'));
     }else if(isGrp&&!isRepo){
       mover(a,'credGrupo',-c,'Aula em grupo na agenda',k);DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo:'grupo',custo:c});
-      logAct('Marcar aula em grupo: '+a.nome);toast('👥 Aula em grupo · '+a.nome+' → '+fmtCred(a.credGrupo)+' de grupo');
+      logAct('Marcar aula em grupo: '+a.nome);toast('👥 Aula em grupo · '+a.nome+' → '+(unificado(a)?fmtCred(a.creditos)+' créditos':fmtCred(a.credGrupo)+' de grupo'));
     }else if(isRepo){
       if((Number(a.repos)||0) < c-1e-9){toast(a.nome+' não tem reposições suficientes ('+fmtCred(a.repos)+')');return;}
       mover(a,'repos',-c,'Reposição na agenda',k);DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo:'reposicao',custo:c});
@@ -3867,6 +3883,8 @@ function openAlunoModal(id){
     if(pw)pw.style.display=PRO_MULTI?'':'none';
     if(ps){ps.innerHTML='<option value="">—</option>'+profs().map(x=>'<option value="'+x.id+'">'+esc(x.nome)+'</option>').join('');ps.value=a.profId||'';}
     document.getElementById('a-credgrupo').value=Number(a.credGrupo)||0;
+    /* Pacote único: o cadastro mostra o saldo único nos créditos. */
+    if(unificado(a)){document.getElementById('a-creditos').value=(Number(a.creditos)||0)+(Number(a.credGrupo)||0);document.getElementById('a-credgrupo').value=0;}
     document.getElementById('a-planogrupo').value=Number(a.planoGrupo)||0;
     document.getElementById('a-grupotipo').value=a.grupoTipo||'';
     document.getElementById('a-venc').value=a.diaVenc||10;
@@ -4063,6 +4081,11 @@ function saveAluno(){
   };
   // travas antes de gravar: número absurdo passava direto
   if(data.plano<0||data.planoGrupo<0){toast('Plano não pode ser negativo');return;}
+  /* Pacote único (quem não é misto): crédito de grupo digitado soma ao saldo
+     único, e o saldo de grupo fica zerado. */
+  if(pacoteUnicoAtivo()&&!((Number(data.plano)||0)>0&&(Number(data.planoGrupo)||0)>0)){
+    data.creditos=(Number(data.creditos)||0)+(Number(data.credGrupo)||0);data.credGrupo=0;
+  }
   if(data.plano>0&&data.mensalidade<=0&&!confirm('Plano de '+data.plano+' aula(s) com mensalidade zerada.\n\nSalvar mesmo assim?'))return;
   if(id){
     const a=DB.alunos.find(x=>x.id===id);
@@ -4080,7 +4103,7 @@ function saveAluno(){
     Object.assign(a,novo);
     saldos.forEach(c=>{
       const dif=(Number(data[c])||0)-(Number(a[c])||0);
-      if(dif)mover(a,c,dif,'Correção manual no cadastro');
+      if(dif)mover(a,c,dif,'Correção manual no cadastro',undefined,c==='credGrupo');   // o cadastro manda no campo exato
     });
     toast('Aluno atualizado');
   }
@@ -4176,7 +4199,7 @@ function openAvalModal(id,idx){
   Object.keys(AVAL_ESCALA).forEach(g=>{avalDraft[g]=Object.assign({},base&&base[g]);});
   document.getElementById('av-id').value=id;
   document.getElementById('aval-title').textContent=(edit?'Editar avaliação · ':'Avaliação · ')+a.nome;
-  document.getElementById('av-data').value=(edit&&edit.data)||new Date().toISOString().slice(0,10);
+  document.getElementById('av-data').value=(edit&&edit.data)||dKey(new Date());
   document.getElementById('av-objetivo').value=(base&&base.objetivo)||'';
   document.getElementById('av-formato').value=(base&&base.formato)||a.tipo||'Particular';
   document.getElementById('av-prioridade').value=(edit&&edit.prioridade)||'';
@@ -4208,7 +4231,7 @@ function saveAvaliacao(){
   if(!avalDraft.nivel){toast('Selecione o nível da Trilha');return;}
   const rec={
     esc:5,
-    data:document.getElementById('av-data').value||new Date().toISOString().slice(0,10),
+    data:document.getElementById('av-data').value||dKey(new Date()),
     nivel:avalDraft.nivel,
     formato:document.getElementById('av-formato').value,
     objetivo:document.getElementById('av-objetivo').value.trim(),
@@ -4247,7 +4270,7 @@ function openRegistroModal(id){
   const ult=a.registros[a.registros.length-1]||null;
   document.getElementById('rg-id').value=id;
   document.getElementById('rg-title').textContent='Registro · '+a.nome;
-  document.getElementById('rg-data').value=new Date().toISOString().slice(0,10);
+  document.getElementById('rg-data').value=dKey(new Date());
   const sel=document.getElementById('rg-camada');
   sel.innerHTML='<option value="">—</option>'+CAMADAS.map(c=>'<option>'+c+'</option>').join('');
   // sugere a camada = tema da próxima aula do último registro (continuidade)
@@ -4294,7 +4317,7 @@ function saveRegistro(){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
   const gv=i=>{const el=document.getElementById(i);return el?String(el.value||'').trim():'';};
   const rec={
-    data:document.getElementById('rg-data').value||new Date().toISOString().slice(0,10),
+    data:document.getElementById('rg-data').value||dKey(new Date()),
     camada:document.getElementById('rg-camada').value,
     evoluiu:regDraft.evoluiu,
     base:regDraft.base,
@@ -4623,6 +4646,7 @@ function valorAulaDe(a){
     const so=m-parteGrupo;
     if(so>0)return Math.round(so/p);
   }
+  if(p<=0&&pg>0)return valorAulaGrupoDe(a)||Number(a.valorAula)||0;   // só grupo: preço da aula em grupo
   return Number(a.valorAula)||0;
 }
 /* Cobrança das aulas além do pacote — cada modalidade pelo seu próprio preço. */
@@ -4782,7 +4806,10 @@ function mensalidadesDoMes(a){
 /* Renovações de crédito já feitas para este aluno no mês corrente. */
 function renovacoesDoMes(a){
   const m=mesReal();
-  return movsDe(a.id,'creditos').filter(x=>String(x.motivo||'').indexOf('Renovação do mês')===0&&mesDoTs(x.ts)===m);
+  const doMes=campo=>movsDe(a.id,campo).filter(x=>String(x.motivo||'').indexOf('Renovação do mês')===0&&mesDoTs(x.ts)===m);
+  /* Quem só faz grupo é renovado no saldo de grupo: sem olhar lá, ele nunca
+     contava como renovado. Misto renova os dois — conta pelos créditos. */
+  const c=doMes('creditos');return c.length?c:doMes('credGrupo');
 }
 function locacaoPaga(id){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
@@ -4793,7 +4820,7 @@ function locacaoPaga(id){
   const h=Number(String(txt).replace(',','.'));
   if(!(h>0)){toast('Informe um número de horas maior que zero');return;}
   const total=Math.round(vh*h);
-  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:'Locação · '+a.nome+' ('+fmtCred(h)+'h)',valor:total,cat:'locacao',modal:'tenis',data:new Date().toISOString().slice(0,10)});
+  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:'Locação · '+a.nome+' ('+fmtCred(h)+'h)',valor:total,cat:'locacao',modal:'tenis',data:dKey(new Date())});
   mover(a,'locCred',h,'Locação paga ('+fmtCred(h)+'h)');
   logAct('Locação paga: '+a.nome+' ('+h+'h)');
   persist();renderAll();
@@ -4849,7 +4876,7 @@ function marcarPago(id){
      virada do mês, que só devolve o status para "pendente". */
   a.status='pago';a.ultimoPago=monthKey();
   const c=cobrancaDoMes(a);
-  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:c.desc,valor:c.valor,cat:'mensalidade',alunoId:a.id,modal:(ehPersonalTipo(a.tipo)?'personal':'tenis'),data:new Date().toISOString().slice(0,10),descontoRepos:c.detalhe});
+  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:c.desc,valor:c.valor,cat:'mensalidade',alunoId:a.id,modal:(ehPersonalTipo(a.tipo)?'personal':'tenis'),data:dKey(new Date()),descontoRepos:c.detalhe});
   persist();renderAll();
   toast('Pagamento de '+a.nome+' lançado: '+fmt(c.valor));
 }
@@ -4902,7 +4929,8 @@ function viradaPendente(){
   (DB.alunos||[]).forEach(a=>{
     if(!ehAtivoAluno(a)){forinha++;return;}
     if(renovacoesDoMes(a).length)return;     // já renovado: o saldo é do mês novo, não é sobra
-    const sobra=Math.max(0,Number(a.creditos)||0), sobraG=Math.max(0,Number(a.credGrupo)||0);
+    const uni=unificado(a);
+    const sobra=Math.max(0,(Number(a.creditos)||0)+(uni?(Number(a.credGrupo)||0):0)), sobraG=uni?0:Math.max(0,Number(a.credGrupo)||0);
     const venc=reposVencidas(a);
     if(sobra||sobraG||venc)itens.push({a,sobra,sobraG,venc});
   });
@@ -4927,6 +4955,7 @@ function aplicarViradaMes(){
   const ativos=(DB.alunos||[]).filter(ehAtivoAluno).filter(a=>!renovacoesDoMes(a).length);
   ativos.forEach(a=>{const v=purgarReposVencidas(a);if(v>0){venc+=v;vencN++;}});
   ativos.forEach(a=>{
+    if(unificado(a)&&(Number(a.credGrupo)||0)!==0)juntarGrupo(a);
     const sobra=Number(a.creditos)||0, sobraG=Number(a.credGrupo)||0;
     if(sobra>0||sobraG>0){mover(a,'repos',Math.max(0,sobra)+Math.max(0,sobraG),'Sobra do mês virou reposição');n++;}
     if(sobra>0)mover(a,'creditos',-sobra,'Virada de mês — sobra convertida');
@@ -4956,8 +4985,9 @@ function pularViradaMes(){
    pacote. Se a virada já converteu a sobra, não há o que converter de novo. */
 function renovarMes(id){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
-  const p=Number(a.plano)||0, pg=Number(a.planoGrupo)||0;
-  const cAnt=Number(a.creditos)||0, gAnt=Number(a.credGrupo)||0, rAnt=Number(a.repos)||0;
+  const uni=unificado(a);       // pacote único: um saldo só, com o pacote inteiro
+  const p=uni?pacoteDoAluno(a):(Number(a.plano)||0), pg=uni?0:(Number(a.planoGrupo)||0);
+  const cAnt=(Number(a.creditos)||0)+(uni?(Number(a.credGrupo)||0):0), gAnt=uni?0:(Number(a.credGrupo)||0), rAnt=Number(a.repos)||0;
   if(acaoRepetida('renov-'+id)){toast('Já renovei agora há pouco — confira os créditos antes de repetir');return;}
 
   /* ===== Barreira 1: sem pacote, não há o que renovar =====
@@ -5009,6 +5039,7 @@ function renovarMes(id){
   /* ===== Aplica, conferindo no fim; se não bater, desfaz tudo ===== */
   const antes=JSON.stringify(a), nMovs=(DB.movs||[]).length;
   try{
+    if(uni&&(Number(a.credGrupo)||0)!==0)juntarGrupo(a);
     // a sobra vai para reposição com o mesmo nome que a virada usa (a conferência conta igual)
     if(sobra>0)mover(a,'repos',sobra,'Sobra do mês virou reposição');
     /* No extrato ficam duas linhas: o saldo anterior zerado e o pacote entrando.
@@ -5152,11 +5183,18 @@ function datasDoMesTexto(lista){
 function rmLinha(a){
   const hoje=new Date();
   const ag=rmAgCache[a.id]||(rmAgCache[a.id]=mensalidadeDaAgenda(a,hoje.getFullYear(),hoje.getMonth()));
-  const p=Number(a.plano)||0, pg=Number(a.planoGrupo)||0, mens=Number(a.mensalidade)||0;
-  const c=Number(a.creditos)||0, g=Number(a.credGrupo)||0, r=Number(a.repos)||0;
+  const uni=unificado(a);
+  let p=Number(a.plano)||0, pg=Number(a.planoGrupo)||0;
+  const mens=Number(a.mensalidade)||0;
+  let c=Number(a.creditos)||0, g=Number(a.credGrupo)||0;
+  const r=Number(a.repos)||0;
   const grupoSo=ehGrupoTipo(a.tipo);
+  /* Quem só faz grupo e tem o pacote em "planoGrupo" recebe no saldo de grupo,
+     que é de onde a aula dele sai — pôr no "plano" o transformava em misto. */
+  const soGrupoPG=grupoSo&&pg>0&&p===0;
   const temAg=ag.total>0;
-  const agP=grupoSo?ag.grupo:ag.part, agPG=grupoSo?0:((pg>0||ag.grupo>0)?ag.grupo:pg);
+  let agP=grupoSo?(soGrupoPG?0:ag.grupo):ag.part, agPG=grupoSo?(soGrupoPG?ag.grupo:0):((pg>0||ag.grupo>0)?ag.grupo:pg);
+  if(uni){p=p+pg;pg=0;c=c+g;g=0;agP=ag.total;agPG=0;}
   const difere=temAg&&(agP!==p||agPG!==pg||ag.valor!==mens);
   const usa=temAg?(rmEscolha[a.id]||'agenda'):'pacote';
   const novo=(usa==='agenda')?{p:agP,pg:agPG,mens:ag.valor}:{p,pg,mens};
@@ -5174,7 +5212,7 @@ function rmLinha(a){
     if(dispDep<dispAnt)bloqueio='ficaria com menos aulas do que tem hoje — confira o cadastro';
   }
   const atencao=!bloqueio&&(difere||!temAg||devia>0);
-  return {a,ag,temAg,difere,usa,novo,p,pg,mens,c,g,r,venc,sobra,reposDepois,gDep,devia,bloqueio,atencao,grupoSo};
+  return {a,ag,temAg,difere,usa,novo,p,pg,mens,c,g,r,venc,sobra,reposDepois,gDep,devia,bloqueio,atencao,grupoSo,uni,soGrupoPG};
 }
 function rmLinhas(){
   return (DB.alunos||[]).filter(ehAtivoAluno).filter(a=>perfilDe(a)!=='torneio').map(rmLinha)
@@ -5246,8 +5284,13 @@ function rmAplicarUm(x){
   const a=x.a, antes=JSON.stringify(a), nMovs=(DB.movs||[]).length;
   try{
     if(x.venc>0)purgarReposVencidas(a);
+    if(x.uni&&(Number(a.credGrupo)||0)!==0)juntarGrupo(a);
     if(x.usa==='agenda'&&x.temAg){
-      a.plano=x.novo.p;if(!x.grupoSo)a.planoGrupo=x.novo.pg;a.mensalidade=x.novo.mens;
+      if(x.uni){
+        if((Number(a.planoGrupo)||0)>0&&!(Number(a.plano)||0))a.planoGrupo=x.novo.p; else a.plano=x.novo.p;
+      }else if(x.soGrupoPG){a.planoGrupo=x.novo.pg;}
+      else{a.plano=x.novo.p;if(!x.grupoSo)a.planoGrupo=x.novo.pg;}
+      a.mensalidade=x.novo.mens;
     }
     if(x.sobra>0)mover(a,'repos',x.sobra,'Sobra do mês virou reposição');
     const cAnt=Number(a.creditos)||0;
@@ -5996,6 +6039,7 @@ function aulaRapidaDe(a){
   if(!a||!ehAtivoAluno(a))return null;
   const pf=perfilDe(a);if(pf==='torneio'||pf==='locacao')return null;
   const p=Number(a.plano)||0,pg=Number(a.planoGrupo)||0;
+  if(unificado(a))return pacoteDoAluno(a)>0?{modo:'',rot:'Aula'}:null;
   if(p>0)return {modo:'',rot:'Aula'};
   if(pg>0)return {modo:'grupo',rot:'Grupo'};
   return null;
@@ -6004,7 +6048,7 @@ function saldoLinhaAluno(a){
   const c=Number(a.creditos)||0,g=Number(a.credGrupo)||0,r=Number(a.repos)||0,l=Number(a.locCred)||0;
   const p=[];
   p.push(c<0?'<b class="neg">'+fmtCred(c)+' devendo</b>':'<b>'+fmtCred(c)+'</b> crédito'+(c===1?'':'s'));
-  if((Number(a.planoGrupo)||0)>0||g!==0)p.push('<span'+(g<0?' class="neg"':'')+'>👥 '+fmtCred(g)+'</span>');
+  if(unificado(a)?g!==0:((Number(a.planoGrupo)||0)>0||g!==0))p.push('<span'+(g<0?' class="neg"':'')+'>👥 '+fmtCred(g)+'</span>');
   if(r>0)p.push('🔁 '+fmtCred(r));
   if(usaLocacao(a))p.push('<span'+(l<0?' class="neg"':'')+'>🔑 '+fmtCred(l)+'h</span>');
   return p.join(' · ');
@@ -6152,14 +6196,14 @@ function renderFicha(){
   const difere=agDif&&!difSilenciada(a);
   const loc=usaLocacao(a);
   const c=Number(a.creditos)||0, g=Number(a.credGrupo)||0, r=Number(a.repos)||0, l=Number(a.locCred)||0;
-  const temGrupo=(Number(a.planoGrupo)||0)>0;
+  const temGrupo=(Number(a.planoGrupo)||0)>0&&!unificado(a);
   const venc=reposVencendo(a);
   const devendo=a.status!=='pago';
   const av=(a.avaliacoes&&a.avaliacoes.length)?a.avaliacoes[a.avaliacoes.length-1]:null;
   const nomeTopo=document.getElementById('fic-top-nome');if(nomeTopo)nomeTopo.textContent=a.nome;
 
   /* cabeçalho */
-  const plano=(Number(a.plano)||0)>0?('Flex '+a.plano):'sem pacote';
+  const plano=unificado(a)?(pacoteDoAluno(a)>0?('Flex '+pacoteDoAluno(a)):'sem pacote'):((Number(a.plano)||0)>0?('Flex '+a.plano):'sem pacote');
   const chips=[];
   if(PRO_MULTI&&profDoAluno(a))chips.push('<span class="fic-chip">👨‍🏫 '+esc(profNome(profDoAluno(a)))+'</span>');
   const pf=perfilDe(a);if(pf!=='tenis'&&pf!=='personal')chips.push('<span class="fic-chip">'+(PERFIL_LABELS[pf]||'')+'</span>');
@@ -6256,13 +6300,13 @@ function renderFicha(){
 /* ================= LANÇAMENTOS ================= */
 function quickLanc(desc,valor,modal){
   if(acaoRepetida('q-'+desc+'-'+valor)){toast('Esse lançamento acabou de ser feito');return;}
-  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc,valor,cat:desc.includes('Locação')?'locacao':'avulsa',modal:modal||'tenis',data:new Date().toISOString().slice(0,10)});
+  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc,valor,cat:desc.includes('Locação')?'locacao':'avulsa',modal:modal||'tenis',data:dKey(new Date())});
   persist();renderAll();toast(desc+' · '+fmt(valor)+' lançado');
 }
 /* Botão rápido com categoria explícita (usado pelos botões que o João cria). */
 function quickLancFull(desc,valor,cat,modal){
   if(acaoRepetida('q-'+desc+'-'+valor)){toast('Esse lançamento acabou de ser feito');return;}
-  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc,valor:Number(valor)||0,cat:cat||'avulsa',modal:modal||'tenis',data:new Date().toISOString().slice(0,10)});
+  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc,valor:Number(valor)||0,cat:cat||'avulsa',modal:modal||'tenis',data:dKey(new Date())});
   persist();renderAll();toast(desc+' · '+fmt(Number(valor)||0)+' lançado');
 }
 function quickLancCustom(i){const b=(DB.botoesLanc||[])[i];if(!b)return;quickLancFull(b.label,b.valor,b.cat,b.modal);}
@@ -6319,7 +6363,7 @@ function saveLanc(){
   const a=alunoId?DB.alunos.find(x=>x.id===alunoId):null;
   const desc=desc0||(a?a.nome:'');
   if(!valor||!desc){toast('Informe o valor e a descrição (ou vincule um aluno)');return;}
-  const rec={id:'l'+Date.now(),mes:monthKey(),desc,valor,cat:document.getElementById('l-cat').value,data:new Date().toISOString().slice(0,10)};
+  const rec={id:'l'+Date.now(),mes:monthKey(),desc,valor,cat:document.getElementById('l-cat').value,data:dKey(new Date())};
   if(a){rec.alunoId=a.id;if(ehPersonalTipo(a.tipo))rec.modal='personal';}
   DB.lancamentos.push(rec);
   persist();closeModal('ov-lanc');renderAll();toast('Lançamento salvo'+(a?(' · '+a.nome.split(' ')[0]):''));
@@ -6399,6 +6443,7 @@ let filtroLancCat=null;   // null = todas as categorias; senão 'mensalidade'|'a
 const LANC_CAT_LBL={mensalidade:'Mensalidades',avulsa:'Avulsas',locacao:'Locações',outro:'Outros'};
 function limparFiltroLanc(){filtroLancCat=null;renderMovs();}
 function renderMovs(){
+  try{renderCaixaDia();}catch(e){console.warn('caixa do dia',e);}
   let movs=DB.lancamentos.filter(l=>l.mes===monthKey());
   if(filtroLancCat)movs=movs.filter(l=>l.cat===filtroLancCat&&l.valor>0);
   movs=movs.sort((a,b)=>b.id.localeCompare(a.id));
@@ -7213,7 +7258,7 @@ function saveDespesa(){
   const valor=Math.abs(Number(document.getElementById('d-valor').value)||0);
   if(!desc){toast('Descreva a despesa');return;}
   if(!valor){toast('Informe o valor da despesa');return;}
-  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc,valor:-valor,cat:'despesa',despCat:document.getElementById('d-cat').value,data:new Date().toISOString().slice(0,10)});
+  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc,valor:-valor,cat:'despesa',despCat:document.getElementById('d-cat').value,data:dKey(new Date())});
   persist();closeModal('ov-desp');renderAll();toast('Despesa lançada · −'+fmt(valor));
 }
 
@@ -7597,7 +7642,7 @@ function exportBackup(){
   const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
-  a.download='jvtenis-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  a.download='jvtenis-backup-'+dKey(new Date())+'.json';
   a.click();
   DB.ultimoBackup=Date.now();persist();checarBackup();
   toast('Backup exportado');
@@ -8574,7 +8619,7 @@ function conferirNumeros(){
    Cada botão escreve o resultado numa caixa embaixo da grade. Antes elas se
    empilhavam (conexão + conferência + versões…) e a tela virava um rolo.
    Agora abrir uma fecha as outras, e tocar de novo na mesma fecha ela. */
-const FERR_BOXES=['teste-box','arq-box','espaco-box','conf-box','versoes-box','rel-box'];
+const FERR_BOXES=['teste-box','arq-box','espaco-box','conf-box','versoes-box','rel-box','pu-box'];
 let ferrAberto='';
 function soEsteFerr(box){
   FERR_BOXES.forEach(b=>{if(b!==box){const e=document.getElementById(b);if(e)e.innerHTML='';}});
@@ -8822,6 +8867,109 @@ async function gerarRelatorioPDF(){
     }
   }catch(e){}
   pdf.save(nome);toast('📄 Relatório salvo');
+}
+
+/* ----- Pacote único: ligar, desligar (voltar atrás) e a tela ----- */
+function juntarGrupo(a){
+  const g=Number(a.credGrupo)||0;if(!g)return 0;
+  mover(a,'credGrupo',-g,'Pacote único: grupo juntado aos créditos','pacote-unico',true);
+  mover(a,'creditos',g,'Pacote único: grupo juntado aos créditos','pacote-unico',true);
+  return g;
+}
+/* Onde o saldo morava antes (para desligar): quem só faz grupo tinha o saldo
+   no grupo; o resto, nos créditos. */
+function puCampoAntigo(a){
+  return ((Number(a.planoGrupo)||0)>0||(!(Number(a.plano)||0)&&ehGrupoTipo(a.tipo)))?'credGrupo':'creditos';
+}
+function puMudancasLigar(){
+  return (DB.alunos||[]).filter(a=>!ehMisto(a)&&(Number(a.credGrupo)||0)!==0)
+    .map(a=>({a,de:{c:Number(a.creditos)||0,g:Number(a.credGrupo)||0},para:{c:(Number(a.creditos)||0)+(Number(a.credGrupo)||0),g:0}}));
+}
+function puMudancasDesligar(){
+  return (DB.alunos||[]).filter(a=>!ehMisto(a)&&puCampoAntigo(a)==='credGrupo'&&(Number(a.creditos)||0)!==0)
+    .map(a=>({a,de:{c:Number(a.creditos)||0,g:Number(a.credGrupo)||0},para:{c:0,g:(Number(a.credGrupo)||0)+(Number(a.creditos)||0)}}));
+}
+function ativarPacoteUnico(){
+  if(pacoteUnicoAtivo())return;
+  const L=puMudancasLigar();
+  if(!confirm('Ligar o pacote único?\n\nQuem não tem plano misto passa a ter UM saldo de créditos: toda aula, particular ou em grupo, sai dele.\n\n'
+    +(L.length?('Saldos que vão ser juntados agora ('+L.length+'):\n'+L.slice(0,12).map(x=>'· '+x.a.nome+': créditos '+fmtCred(x.de.c)+' + grupo '+fmtCred(x.de.g)+' → créditos '+fmtCred(x.para.c)).join('\n')+(L.length>12?'\n· e mais '+(L.length-12):'')):'Ninguém tem saldo de grupo separado agora — nenhum número muda.')
+    +'\n\nAlunos com plano misto não mudam. A versão de agora é guardada antes, e dá para desligar depois.'))return;
+  try{guardarVersoes(JSON.stringify(DB));}catch(e){}
+  L.forEach(x=>juntarGrupo(x.a));
+  DB.pacoteUnico={ativo:true,desde:Date.now()};
+  logAct('Pacote único LIGADO'+(L.length?(' · '+L.length+' saldo(s) de grupo juntado(s) aos créditos'):''));
+  persist();renderAll();renderPacoteUnico();
+  toast('🎾 Pacote único ligado'+(L.length?(' · '+L.length+' saldo(s) juntado(s)'):''));
+}
+function desativarPacoteUnico(){
+  if(!pacoteUnicoAtivo())return;
+  const L=puMudancasDesligar();
+  if(!confirm('Desligar o pacote único (voltar como era)?\n\nCrédito particular e de grupo voltam a ser saldos separados, e cada aula volta a sair do saldo do tipo dela.\n\n'
+    +(L.length?('Quem só faz grupo tem o saldo devolvido ao grupo ('+L.length+'):\n'+L.slice(0,12).map(x=>'· '+x.a.nome+': créditos '+fmtCred(x.de.c)+' → grupo '+fmtCred(x.para.g)).join('\n')+(L.length>12?'\n· e mais '+(L.length-12):'')):'Nenhum saldo precisa mudar de lugar.')
+    +'\n\nA versão de agora é guardada antes.'))return;
+  try{guardarVersoes(JSON.stringify(DB));}catch(e){}
+  L.forEach(x=>{const c=Number(x.a.creditos)||0;
+    mover(x.a,'creditos',-c,'Pacote único desligado: saldo volta para o grupo','pacote-unico',true);
+    mover(x.a,'credGrupo',c,'Pacote único desligado: saldo volta para o grupo','pacote-unico',true);});
+  DB.pacoteUnico={ativo:false,desde:(DB.pacoteUnico&&DB.pacoteUnico.desde)||0,desligadoEm:Date.now()};
+  logAct('Pacote único DESLIGADO'+(L.length?(' · '+L.length+' saldo(s) devolvido(s) ao grupo'):''));
+  persist();renderAll();renderPacoteUnico();
+  toast('Pacote único desligado — como era antes');
+}
+function renderPacoteUnico(){
+  const box=document.getElementById('pu-box');if(!box)return;
+  soEsteFerr('pu-box');
+  const on=pacoteUnicoAtivo();
+  const nMisto=(DB.alunos||[]).filter(a=>ehAtivoAluno(a)&&ehMisto(a)).length;
+  const L=on?puMudancasDesligar():puMudancasLigar();
+  const quando=on&&DB.pacoteUnico.desde?new Date(DB.pacoteUnico.desde).toLocaleDateString('pt-BR'):'';
+  box.innerHTML='<div class="cons '+(on?'good':'info')+'"><h4><span>🎾</span>Pacote único · '+(on?'LIGADO'+(quando?' desde '+quando:''):'desligado')+'</h4>'
+    +'<p>Para quem <b>não</b> tem plano misto, crédito particular e de grupo viram <b>um saldo só</b>: toda aula sai dele, a renovação põe o pacote inteiro nele e a virada converte a sobra de verdade. '
+    +'Acaba o erro de o pacote entrar num tipo e a aula sair do outro.<br>'
+    +(nMisto?('<span class="hint">'+nMisto+' aluno(s) com plano misto (particular + grupo) continuam com os dois saldos.</span><br>'):'')
+    +(L.length?('<br><b>'+(on?'Ao desligar, voltam para o grupo:':'Ao ligar, serão juntados:')+'</b><br>'+L.map(x=>esc(x.a.nome)+': '+(on?('créditos '+fmtCred(x.de.c)+' → grupo '+fmtCred(x.para.g)):('créditos '+fmtCred(x.de.c)+' + grupo '+fmtCred(x.de.g)+' → '+fmtCred(x.para.c)))).join('<br>')):'')
+    +'<br><button class="btn '+(on?'btn-ghost':'btn-clay')+'" style="margin-top:10px;padding:8px 14px;font-size:12.5px" onclick="'+(on?'desativarPacoteUnico()':'ativarPacoteUnico()')+'">'
+    +(on?'↩︎ Desligar (voltar como era)':'Ligar o pacote único')+'</button></p></div>';
+}
+
+/* ===== Caixa: a movimentação do dia =====
+   Só o dia: quanto entrou, quanto saiu e o quê. O resto do mês já está nos
+   Gráficos. As setas andam para os dias anteriores. */
+let caixaDia=null;
+/* Lançamentos antigos guardavam a data em UTC: depois das 21h caíam no dia
+   seguinte. O id carrega o instante do lançamento — quando a data gravada é
+   exatamente a UTC daquele instante e não a do Brasil, vale a do Brasil. */
+function diaDoLanc(l){
+  const m=/^l(\d{13})/.exec(String(l&&l.id||''));
+  if(m){const ts=+m[1],utc=new Date(ts).toISOString().slice(0,10),loc=dKey(new Date(ts));
+    if(l.data===utc&&utc!==loc)return loc;}
+  return String(l&&l.data||'');
+}
+function caixaMudaDia(n){
+  const hoje=dKey(new Date());
+  const d=new Date((caixaDia||hoje)+'T12:00:00');d.setDate(d.getDate()+n);
+  const k=dKey(d);if(k>hoje)return;
+  caixaDia=(k===hoje)?null:k;renderCaixaDia();
+}
+function renderCaixaDia(){
+  const el=document.getElementById('caixa-dia');if(!el)return;
+  const hoje=dKey(new Date()), dia=caixaDia||hoje;
+  const ls=(DB.lancamentos||[]).filter(l=>diaDoLanc(l)===dia).sort((a,b)=>String(b.id).localeCompare(String(a.id)));
+  const entrou=ls.filter(l=>Number(l.valor)>0).reduce((t,l)=>t+Number(l.valor),0);
+  const saiu=ls.filter(l=>Number(l.valor)<0).reduce((t,l)=>t-Number(l.valor),0);
+  const nEnt=ls.filter(l=>Number(l.valor)>0).length;
+  const p=dia.split('-'), dow=['domingo','segunda','terça','quarta','quinta','sexta','sábado'][new Date(dia+'T12:00:00').getDay()];
+  const rot=dia===hoje?'Hoje':(p[2]+'/'+p[1]);
+  el.innerHTML='<div class="cx-dia">'
+    +'<div class="cx-top"><button class="cx-seta" onclick="caixaMudaDia(-1)" aria-label="Dia anterior">‹</button>'
+    +'<div class="cx-tit"><b>'+rot+'</b><span>'+dow+(dia===hoje?' · '+p[2]+'/'+p[1]:'')+'</span></div>'
+    +'<button class="cx-seta" onclick="caixaMudaDia(1)" '+(dia===hoje?'disabled':'')+' aria-label="Dia seguinte">›</button></div>'
+    +'<div class="cx-total"><span>Entrou no dia</span><b>'+fmt(entrou)+'</b><small>'+nEnt+' lançamento'+(nEnt===1?'':'s')+(saiu?(' · saiu '+fmt(saiu)):'')+'</small></div>'
+    +(ls.length?('<div class="cx-lista">'+ls.map(l=>{const s=Number(l.valor)<0;
+        return '<div class="cx-li"><span>'+esc(l.desc||'—')+'</span><b class="'+(s?'out':'in')+'">'+(s?'− ':'+ ')+fmt(Math.abs(Number(l.valor)||0))+'</b></div>';}).join('')+'</div>')
+      :'<div class="cx-vazio">Nada lançado '+(dia===hoje?'hoje':'neste dia')+'.</div>')
+    +'</div>';
 }
 
 /* ===== Voltar a uma versão anterior =====
@@ -9189,7 +9337,7 @@ function encerrarEtapa(){
   t.etapasFin=t.etapasFin||[];
   // remove registro anterior desta mesma etapa (reencerrar) e regrava
   t.etapasFin=t.etapasFin.filter(e=>e.etapa!==t.etapa);
-  t.etapasFin.push({etapa:t.etapa,data:new Date().toISOString().slice(0,10),campeoes});
+  t.etapasFin.push({etapa:t.etapa,data:dKey(new Date()),campeoes});
   t.encerrada=true;
   persist();renderTorneio();
   toast('🏁 '+etapaLabel(t)+' encerrada — campeões definidos!');
@@ -9219,7 +9367,7 @@ function novaEtapa(){
   const movRec={sobem:mov.sobem.map(m=>({nome:m.p.name,de:m.de,para:m.para})),
                 descem:mov.descem.map(m=>({nome:m.p.name,de:m.de,para:m.para}))};
   if(reg)reg.movimentos=movRec;
-  else t.etapasFin.push({etapa:t.etapa-1,data:new Date().toISOString().slice(0,10),campeoes:[],movimentos:movRec});
+  else t.etapasFin.push({etapa:t.etapa-1,data:dKey(new Date()),campeoes:[],movimentos:movRec});
   logAct('Nova etapa do torneio: '+etapaLabel(t));
   persist();renderTorneio();
   toast('🎾 '+etapaLabel(t)+' iniciada · '+mov.sobem.length+' subiram, '+mov.descem.length+' desceram');
