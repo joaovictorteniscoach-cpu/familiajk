@@ -70,6 +70,23 @@ def troca(r, g, b, texto):
     return None
 
 
+# 6. "Meio ar": verde-musgo usado como FUNDO (cartão, botão neutro, painel)
+#    vira semitransparente — o fundo da tela aparece através dele, em vez de
+#    só fosco. Textos, bordas e os verdes de ação/fundo da página não entram.
+AR = 0.42
+_FUNDO = [False]
+
+
+def musgo(r, g, b):
+    h, l, s = hls(r, g, b)
+    return 120 <= h * 360 <= 185 and s < 0.55 and 0.12 <= l <= 0.42
+
+
+def _eh_fundo(prop):
+    p = prop.lower()
+    return p.startswith("background") or p.startswith("--")
+
+
 def hex_novo(m, texto):
     x = m.group(0)
     v = x[1:]
@@ -77,6 +94,9 @@ def hex_novo(m, texto):
         v = "".join(c * 2 for c in v)
     r, g, b = int(v[0:2], 16), int(v[2:4], 16), int(v[4:6], 16)
     t = troca(r, g, b, texto)
+    if _FUNDO[0] and musgo(r, g, b):
+        c = t or (r, g, b)
+        return "rgba(%d,%d,%d,%s)" % (c[0], c[1], c[2], AR)
     return x if t is None else "#%02X%02X%02X" % t
 
 
@@ -86,7 +106,13 @@ def rgba_novo(m, texto):
     if (r, g, b) == (190, 211, 190):
         return "%s(232,214,190%s)" % (m.group(1), m.group(5))
     t = troca(r, g, b, texto)
-    return m.group(0) if t is None else "%s(%d,%d,%d%s)" % (m.group(1), t[0], t[1], t[2], m.group(5))
+    alfa = m.group(5)
+    if _FUNDO[0] and musgo(r, g, b):
+        a = float(alfa.strip(", ") or 1)
+        if a > AR:                       # já translúcido o bastante fica como está
+            c = t or (r, g, b)
+            return "rgba(%d,%d,%d,%s)" % (c[0], c[1], c[2], AR)
+    return m.group(0) if t is None else "%s(%d,%d,%d%s)" % (m.group(1), t[0], t[1], t[2], alfa)
 
 
 HEX = re.compile(r"#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b")
@@ -98,16 +124,21 @@ def gerar(css):
     def decl(m):
         prop = m.group(2).lower()
         texto = prop in PROPS_TEXTO
+        _FUNDO[0] = _eh_fundo(prop)
         val = HEX.sub(lambda x: hex_novo(x, texto), m.group(4))
         val = RGBA.sub(lambda x: rgba_novo(x, texto), val)
+        _FUNDO[0] = False
         return m.group(1) + m.group(2) + m.group(3) + val
     return CAB + DECL.sub(decl, css)
 
 
 def troca_valor(prop, val):
     texto = prop.lower() in PROPS_TEXTO
+    _FUNDO[0] = _eh_fundo(prop)
     val = HEX.sub(lambda x: hex_novo(x, texto), val)
-    return RGBA.sub(lambda x: rgba_novo(x, texto), val)
+    val = RGBA.sub(lambda x: rgba_novo(x, texto), val)
+    _FUNDO[0] = False
+    return val
 
 
 COR_LIT = re.compile(r"#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(")
@@ -246,13 +277,13 @@ body:before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .jh-card,.jv-ref-kpi,.fin-card:not(.hero):not(.desp):not(.saldo),.chart,.fic-tile,.fic-nota,.ag-ferr,.empty,
 .jv-pay-card,.jv-section-card,.jv-credit-panel,.jv-profile-card,.evo-xp,.evo-prio,
 #pg-lanc .cx-dia,#pg-lanc .cx-res>div{
-  background:rgba(18,40,31,.55)!important;
-  -webkit-backdrop-filter:blur(16px) saturate(150%);backdrop-filter:blur(16px) saturate(150%);
+  background:rgba(18,40,31,.36)!important;
+  -webkit-backdrop-filter:blur(10px) saturate(150%);backdrop-filter:blur(10px) saturate(150%);
   border:1px solid rgba(255,255,255,.09)!important;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 10px 26px rgba(0,0,0,.24)!important}
 .al-row,.aluno,.comp-item,.pend-item,.cons,.mov-card,.graf-card,.dobra-cab,.dobra-corpo,.fech-card,.fq-linha,
 #pg-lanc .cx-at,#pg-lanc .cx-mv,.seg{
-  background:rgba(18,40,31,.50)!important;
+  background:rgba(18,40,31,.32)!important;
   border-color:rgba(255,255,255,.085)!important;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.06)!important}
 /* telas que abrem por cima (janelas, menu Mais): fundo desfocado e janela de vidro */
@@ -267,8 +298,8 @@ body:before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 /* botões grandes de vidro (os de ação seguem na cor da bolinha) */
 .fic-b.neutro,.fic-voltar,.btn-ghost,.jh-tile,.jh-ver-todas,.b-add,.b-cfg,.te-nova,.acao-item,.top button,
 #pg-lanc .cx-seta,#pg-lanc .cx-at,.wk-fit,.auto-cta,.jv-home-card:not(.gold),.jv-profile-actions button,.jv-quick button,.ag-nav button,.month-btn{
-  background:rgba(22,46,36,.52)!important;
-  -webkit-backdrop-filter:blur(12px) saturate(150%);backdrop-filter:blur(12px) saturate(150%);
+  background:rgba(22,46,36,.34)!important;
+  -webkit-backdrop-filter:blur(8px) saturate(150%);backdrop-filter:blur(8px) saturate(150%);
   border:1px solid rgba(255,255,255,.12)!important;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 6px 18px rgba(0,0,0,.22)!important}
 """
