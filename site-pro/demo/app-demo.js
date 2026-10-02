@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-02-6';
+const VERSAO='2026-10-02-7';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2117,11 +2117,17 @@ async function publicarSeguro(pub){
    situação e valor da mensalidade para pagar). Avaliações, presenças, datas de
    pagamento e links pessoais saem daqui e seguem só pelo bloco privado de cada
    aparelho aprovado (alunos_privados/<uid>). Os campos continuam existindo,
-   vazios, para o app antigo não quebrar. */
+   vazios, para o app antigo não quebrar.
+   Valores também saem: quanto cada aluno paga (mensalidade e valor da aula) só
+   vai no bloco privado. O dia de vencimento fica: sem ele o app travaria o
+   agendamento no dia 10 para quem vence depois. O aparelho ainda não aprovado vê
+   "após aprovação" no lugar do valor (valoresOcultos). A situação (pago ou
+   pendente) fica, porque é ela que libera ou trava o agendamento. */
 function publicacaoLegadaEnxuta(pub){
   const out=Object.assign({},pub);
   out.alunos=(pub.alunos||[]).map(a=>Object.assign({},a,{
-    ultimoPago:'',cardLink:'',mfitLink:'',avaliacoes:[],evoMes:[],registros:[]
+    ultimoPago:'',cardLink:'',mfitLink:'',avaliacoes:[],evoMes:[],registros:[],
+    mensalidade:null,valorAula:null,valoresOcultos:true
   }));
   out.historico={};
   return out;
@@ -8055,6 +8061,8 @@ function renderConta(){
       +'<div class="backup-row">'
       +(temGoogle?'':'<button class="btn btn-ghost" id="conta-link-btn" onclick="ligarGoogle()">🔗 Ligar conta Google</button>')
       +'<button class="btn btn-ghost" onclick="sairConta()">Sair desta conta</button></div>'
+      +'<div class="backup-row"><button class="btn btn-ghost" style="color:var(--bad,#C0392B)" onclick="sairEApagar()">🧹 Sair e apagar deste aparelho</button></div>'
+      +'<p class="hint">Use num celular emprestado, vendido ou perdido: confere a nuvem, apaga a Gestão daqui e passa a pedir login.</p>'
       +'<p class="hint" id="conta-msg"></p>';
     return;
   }
@@ -8203,8 +8211,59 @@ async function entrarConta(){
   }
 }
 function sairConta(){
-  if(!confirm('Sair da conta neste aparelho?\n\nSeus dados continuam aqui e na nuvem — nada é apagado.'))return;
+  if(!confirm('Sair da conta neste aparelho?\n\nSeus dados continuam aqui e na nuvem — nada é apagado.\n\nAtenção: com os dados guardados aqui, o app continua abrindo neste aparelho sem pedir login. Para um celular emprestado ou que vai trocar de dono, use "Sair e apagar deste aparelho".'))return;
   try{firebase.auth().signOut().then(function(){toast('Você saiu');renderConta();});}catch(e){}
+}
+/* ===== Sair e apagar deste aparelho =====
+   "Sair" só desliga a conta: os dados ficam no aparelho e o app abre sem pedir
+   login (precisaEntrar() deixa passar quem já tem dados). Num celular
+   emprestado, vendido ou perdido, isso é a Gestão inteira aberta.
+
+   Aqui apaga — mas só depois de PROVAR que a nuvem tem tudo: sobe o que estiver
+   pendente agora e, se a nuvem não confirmar, não apaga nada. Apaga só o que é
+   da Gestão (banco, versões e histórico de mudanças); app do aluno e app da
+   Família, que moram no mesmo endereço, ficam como estão. */
+function chavesDaGestaoNoAparelho(){
+  const out=[];
+  try{
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i)||'';
+      if(k===KEY_DONO||k.indexOf(KEY_DONO+'__')===0||k.indexOf('jvtenis-prof-')===0
+         ||k===HIST.LOGKEY||k===AVATAR_GESTAO_KEY)out.push(k);
+    }
+  }catch(e){}
+  return out;
+}
+async function sairEApagar(){
+  if(!window.AUTH_USER||!hasCloud()){
+    alert('Para apagar com segurança, entre na conta primeiro.\n\nSó dá para apagar deste aparelho depois de confirmar que a nuvem tem tudo — e isso precisa da conta conectada.');
+    return;
+  }
+  const txt=prompt('Sair e APAGAR os dados da Gestão deste aparelho?\n\n'
+    +'• Antes de apagar, o app sobe para a nuvem o que estiver pendente. Se a nuvem não confirmar, nada é apagado.\n'
+    +'• Seus dados continuam na nuvem: em outro aparelho, é só entrar com a sua conta.\n'
+    +'• Neste aparelho, o app vai pedir e-mail e senha para abrir de novo.\n'
+    +'• O app do aluno e o app da Família não são tocados.\n\n'
+    +'Para confirmar, digite APAGAR:','');
+  if(txt===null||String(txt).trim().toUpperCase()!=='APAGAR'){toast('Nada foi apagado');return;}
+  toast('☁️ Conferindo a nuvem antes de apagar…');
+  clearTimeout(saveTimer);
+  let env=null;
+  try{env=await subirPartes();}catch(e){env=null;}
+  if(!env){
+    alert('⚠️ A nuvem não confirmou o envio agora.\n\nNada foi apagado. Confira a internet, espere aparecer "✓ salvo na nuvem" e tente de novo.');
+    return;
+  }
+  cloudPending=false;
+  /* daqui em diante nada pode regravar o banco no aparelho */
+  window._espacoAberto=false;CARREGADO=false;
+  const chaves=chavesDaGestaoNoAparelho();
+  chaves.forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});
+  try{if(_idb){_idb.close();_idb=null;}}catch(e){}
+  try{indexedDB.deleteDatabase(IDB_NOME);}catch(e){}
+  try{await firebase.auth().signOut();}catch(e){}
+  alert('✓ Pronto. Os dados da Gestão foram apagados deste aparelho ('+chaves.length+' item(ns)) e continuam na nuvem.');
+  location.reload();
 }
 
 /* ===== Autoteste de conexão =====
