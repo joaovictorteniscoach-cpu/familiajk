@@ -6410,9 +6410,13 @@ function renderFicha(){
     +(chips.length?'<div class="fic-chips">'+chips.join('')+'</div>':'');
 
   /* saldos */
-  const tile=(v,rot,extra,neg)=>'<div class="fic-tile'+(neg?' neg':'')+'" data-pulsa="'+id+'"><b>'+v+'</b><span>'+rot+'</span>'+(extra?'<small>'+extra+'</small>':'')+'</div>';
-  let t=tile(fmtCred(c),c<0?'aula(s) devendo':'crédito'+(c===1?'':'s'),c<0?fmt(devidoExtraPart(a))+' extra a cobrar':'',c<0);
-  if(temGrupo||g!==0)t+=tile(fmtCred(g),'grupo',g<0?fmt(devidoExtraGrupo(a))+' extra a cobrar':'',g<0);
+  /* Barra de créditos igual à do app do aluno: quanto do pacote ainda resta. */
+  const barra=(v,tot)=>{tot=Number(tot)||0;if(tot<=0||v<0)return '';
+    return '<i class="fic-prog" title="'+v+' de '+tot+'"><i style="width:'+Math.max(0,Math.min(100,Math.round(v/tot*100)))+'%"></i></i>';};
+  const tile=(v,rot,extra,neg,bar)=>'<div class="fic-tile'+(neg?' neg':'')+'" data-pulsa="'+id+'"><b>'+v+'</b><span>'+rot+'</span>'+(extra?'<small>'+extra+'</small>':'')+(bar||'')+'</div>';
+  const totPart=Number(unificado(a)?pacoteDoAluno(a):a.plano)||0;   // pacote único soma particular + grupo
+  let t=tile(fmtCred(c),c<0?'aula(s) devendo':'crédito'+(c===1?'':'s')+(totPart>0?' de '+totPart:''),c<0?fmt(devidoExtraPart(a))+' extra a cobrar':'',c<0,barra(c,totPart));
+  if(temGrupo||g!==0)t+=tile(fmtCred(g),'grupo'+(Number(a.planoGrupo)>0?' · de '+Number(a.planoGrupo):''),g<0?fmt(devidoExtraGrupo(a))+' extra a cobrar':'',g<0,barra(g,a.planoGrupo));
   if(r>0||venc>0)t+=tile(fmtCred(r),'reposiç'+(r===1?'ão':'ões'),venc>0?fmtCred(venc)+' vence(m) no fim do mês':'',false);
   if(loc)t+=tile(fmtCred(l)+'h','locação',l<0?'devendo':'',l<0);
   h+='<div class="fic-tiles">'+t+'</div>';

@@ -238,13 +238,13 @@ VIDRO = """
 html{background:#0A1A14!important}
 html body{background:transparent!important}
 body:before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
-  background:radial-gradient(120% 55% at 0% 0%,rgba(194,88,46,.22),transparent 58%),
-    radial-gradient(80% 45% at 100% 38%,rgba(212,225,87,.08),transparent 62%),
-    radial-gradient(120% 60% at 50% 108%,rgba(30,107,71,.26),transparent 62%),#0A1A14}
+  background:radial-gradient(120% 55% at 0% 0%,rgba(194,88,46,.30),transparent 58%),
+    radial-gradient(80% 45% at 100% 40%,rgba(212,225,87,.11),transparent 62%),
+    radial-gradient(120% 60% at 50% 108%,rgba(30,107,71,.34),transparent 62%),#0A1A14}
 .nav,.nav:after{background:rgba(10,24,18,.70)!important;-webkit-backdrop-filter:blur(22px) saturate(170%);backdrop-filter:blur(22px) saturate(170%);border-top:1px solid rgba(255,255,255,.08)!important}
 .ficha{background:rgba(10,26,20,.90)!important;-webkit-backdrop-filter:blur(26px) saturate(150%);backdrop-filter:blur(26px) saturate(150%)}
 .jh-card,.jv-ref-kpi,.fin-card:not(.hero):not(.desp):not(.saldo),.chart,.fic-tile,.fic-nota,.ag-ferr,.empty,
-.jv-home-card:not(.gold),.jv-pay-card,.jv-section-card,.jv-credit-panel,.jv-profile-card,.evo-xp,.evo-prio,
+.jv-pay-card,.jv-section-card,.jv-credit-panel,.jv-profile-card,.evo-xp,.evo-prio,
 #pg-lanc .cx-dia,#pg-lanc .cx-res>div{
   background:linear-gradient(155deg,rgba(255,255,255,.075),rgba(255,255,255,.02) 60%),rgba(18,40,31,.55)!important;
   -webkit-backdrop-filter:blur(16px) saturate(150%);backdrop-filter:blur(16px) saturate(150%);
@@ -255,7 +255,43 @@ body:before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
   background:linear-gradient(155deg,rgba(255,255,255,.06),rgba(255,255,255,.015) 60%),rgba(18,40,31,.50)!important;
   border-color:rgba(255,255,255,.085)!important;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.06)!important}
+/* telas que abrem por cima (janelas, menu Mais): fundo desfocado e janela de vidro */
+.overlay{background:rgba(4,12,9,.40)!important;-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%)}
+.modal,.mais-pop{background:linear-gradient(160deg,rgba(255,255,255,.11),rgba(255,255,255,.03) 60%),rgba(16,34,27,.74)!important;
+  -webkit-backdrop-filter:blur(28px) saturate(170%);backdrop-filter:blur(28px) saturate(170%);
+  border:1px solid rgba(255,255,255,.13)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 24px 60px rgba(0,0,0,.45)!important}
+/* o menu Mais mora dentro da barra (que já desfoca): mais opaco para ler bem */
+.mais-pop{background:linear-gradient(160deg,rgba(255,255,255,.10),rgba(255,255,255,.03) 60%),rgba(14,30,24,.90)!important}
+/* botões grandes de vidro (os de ação seguem na cor da bolinha) */
+.fic-b.neutro,.fic-voltar,.btn-ghost,.jh-tile,.jh-ver-todas,.b-add,.b-cfg,.te-nova,.acao-item,.top button,
+#pg-lanc .cx-seta,#pg-lanc .cx-at,.wk-fit,.auto-cta,.jv-home-card:not(.gold),.jv-profile-actions button,.jv-quick button,.ag-nav button,.month-btn{
+  background:linear-gradient(160deg,rgba(255,255,255,.11),rgba(255,255,255,.03) 60%),rgba(22,46,36,.52)!important;
+  -webkit-backdrop-filter:blur(12px) saturate(150%);backdrop-filter:blur(12px) saturate(150%);
+  border:1px solid rgba(255,255,255,.12)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 6px 18px rgba(0,0,0,.22)!important}
 """
+
+def _forte(css):
+    """Prefixa os seletores com 'html body:not(#jv) ' (+1 id de especificidade):
+    o app do aluno tem regras com id (#apg-inicio .jv-home-card{...!important})
+    que venceriam o vidro. body/html/:before ficam como estão."""
+    out = []
+    for m in re.finditer(r"([^{}]+)\{([^{}]*)\}", css):
+        sel, corpo = m.group(1).strip(), m.group(2)
+        if sel.startswith("/*"):
+            com, sel = sel.split("*/", 1)
+            out.append(com + "*/")
+            sel = sel.strip()
+        if sel.startswith(("html", "body")):
+            out.append(sel + "{" + corpo + "}")
+        else:
+            out.append(",".join("html body:not(#jv) " + x.strip() for x in sel.split(",")) + "{" + corpo + "}")
+    return "\n" + "\n".join(out) + "\n"
+
+
+VIDRO = _forte(VIDRO)
+
 
 # Só no app do aluno: botões de pagar na cor da bolinha, abas da agenda em saibro.
 EXTRA_ALUNO = """

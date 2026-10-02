@@ -2984,6 +2984,8 @@ body.ficha-on{overflow:hidden}
 .fic-tile span{font-size:12.5px;color:#D8D2C7;-webkit-text-fill-color:#D8D2C7;font-weight:600}
 .fic-tile small{font-size:11.5px;color:#F6DB86;-webkit-text-fill-color:#F6DB86;font-weight:700;margin-top:3px}
 .fic-tile.neg{border-color:rgba(255,140,120,.45)}
+.fic-prog{display:block;height:6px;margin-top:9px;border-radius:999px;background:rgba(255,255,255,.12);overflow:hidden}
+.fic-prog>i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#E0B94F,#63D887)}
 .fic-tile.neg b{color:#FFB4A4;-webkit-text-fill-color:#FFB4A4}
 .fic-agenda{font-size:12.5px;color:#D8D2C7;-webkit-text-fill-color:#D8D2C7;margin-top:9px}
 .fic-sec{margin-top:18px}

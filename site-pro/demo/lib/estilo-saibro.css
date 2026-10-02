@@ -2986,6 +2986,8 @@ body.ficha-on{overflow:hidden}
 .fic-tile span{font-size:12.5px;color:#D8D2C7;-webkit-text-fill-color:#D8D2C7;font-weight:600}
 .fic-tile small{font-size:11.5px;color:#EDB08F;-webkit-text-fill-color:#EDB08F;font-weight:700;margin-top:3px}
 .fic-tile.neg{border-color:rgba(255,140,120,.45)}
+.fic-prog{display:block;height:6px;margin-top:9px;border-radius:999px;background:rgba(255,255,255,.12);overflow:hidden}
+.fic-prog>i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#E0824F,#63D887)}
 .fic-tile.neg b{color:#FFB4A4;-webkit-text-fill-color:#FFB4A4}
 .fic-agenda{font-size:12.5px;color:#D8D2C7;-webkit-text-fill-color:#D8D2C7;margin-top:9px}
 .fic-sec{margin-top:18px}
@@ -3192,20 +3194,31 @@ body.ficha-on{overflow:hidden}
 html{background:#0A1A14!important}
 html body{background:transparent!important}
 body:before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
-  background:radial-gradient(120% 55% at 0% 0%,rgba(194,88,46,.22),transparent 58%),
-    radial-gradient(80% 45% at 100% 38%,rgba(212,225,87,.08),transparent 62%),
-    radial-gradient(120% 60% at 50% 108%,rgba(30,107,71,.26),transparent 62%),#0A1A14}
-.nav,.nav:after{background:rgba(10,24,18,.70)!important;-webkit-backdrop-filter:blur(22px) saturate(170%);backdrop-filter:blur(22px) saturate(170%);border-top:1px solid rgba(255,255,255,.08)!important}
-.ficha{background:rgba(10,26,20,.90)!important;-webkit-backdrop-filter:blur(26px) saturate(150%);backdrop-filter:blur(26px) saturate(150%)}
-.jh-card,.jv-ref-kpi,.fin-card:not(.hero):not(.desp):not(.saldo),.chart,.fic-tile,.fic-nota,.ag-ferr,.empty,
-.jv-home-card:not(.gold),.jv-pay-card,.jv-section-card,.jv-credit-panel,.jv-profile-card,.evo-xp,.evo-prio,
-#pg-lanc .cx-dia,#pg-lanc .cx-res>div{
+  background:radial-gradient(120% 55% at 0% 0%,rgba(194,88,46,.30),transparent 58%),
+    radial-gradient(80% 45% at 100% 40%,rgba(212,225,87,.11),transparent 62%),
+    radial-gradient(120% 60% at 50% 108%,rgba(30,107,71,.34),transparent 62%),#0A1A14}
+html body:not(#jv) .nav,html body:not(#jv) .nav:after{background:rgba(10,24,18,.70)!important;-webkit-backdrop-filter:blur(22px) saturate(170%);backdrop-filter:blur(22px) saturate(170%);border-top:1px solid rgba(255,255,255,.08)!important}
+html body:not(#jv) .ficha{background:rgba(10,26,20,.90)!important;-webkit-backdrop-filter:blur(26px) saturate(150%);backdrop-filter:blur(26px) saturate(150%)}
+html body:not(#jv) .jh-card,html body:not(#jv) .jv-ref-kpi,html body:not(#jv) .fin-card:not(.hero):not(.desp):not(.saldo),html body:not(#jv) .chart,html body:not(#jv) .fic-tile,html body:not(#jv) .fic-nota,html body:not(#jv) .ag-ferr,html body:not(#jv) .empty,html body:not(#jv) .jv-pay-card,html body:not(#jv) .jv-section-card,html body:not(#jv) .jv-credit-panel,html body:not(#jv) .jv-profile-card,html body:not(#jv) .evo-xp,html body:not(#jv) .evo-prio,html body:not(#jv) #pg-lanc .cx-dia,html body:not(#jv) #pg-lanc .cx-res>div{
   background:linear-gradient(155deg,rgba(255,255,255,.075),rgba(255,255,255,.02) 60%),rgba(18,40,31,.55)!important;
   -webkit-backdrop-filter:blur(16px) saturate(150%);backdrop-filter:blur(16px) saturate(150%);
   border:1px solid rgba(255,255,255,.09)!important;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 10px 26px rgba(0,0,0,.24)!important}
-.al-row,.aluno,.comp-item,.pend-item,.cons,.mov-card,.graf-card,.dobra-cab,.dobra-corpo,.fech-card,.fq-linha,
-#pg-lanc .cx-at,#pg-lanc .cx-mv,.seg{
+html body:not(#jv) .al-row,html body:not(#jv) .aluno,html body:not(#jv) .comp-item,html body:not(#jv) .pend-item,html body:not(#jv) .cons,html body:not(#jv) .mov-card,html body:not(#jv) .graf-card,html body:not(#jv) .dobra-cab,html body:not(#jv) .dobra-corpo,html body:not(#jv) .fech-card,html body:not(#jv) .fq-linha,html body:not(#jv) #pg-lanc .cx-at,html body:not(#jv) #pg-lanc .cx-mv,html body:not(#jv) .seg{
   background:linear-gradient(155deg,rgba(255,255,255,.06),rgba(255,255,255,.015) 60%),rgba(18,40,31,.50)!important;
   border-color:rgba(255,255,255,.085)!important;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.06)!important}
+/* telas que abrem por cima (janelas, menu Mais): fundo desfocado e janela de vidro */
+html body:not(#jv) .overlay{background:rgba(4,12,9,.40)!important;-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%)}
+html body:not(#jv) .modal,html body:not(#jv) .mais-pop{background:linear-gradient(160deg,rgba(255,255,255,.11),rgba(255,255,255,.03) 60%),rgba(16,34,27,.74)!important;
+  -webkit-backdrop-filter:blur(28px) saturate(170%);backdrop-filter:blur(28px) saturate(170%);
+  border:1px solid rgba(255,255,255,.13)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 24px 60px rgba(0,0,0,.45)!important}
+/* o menu Mais mora dentro da barra (que já desfoca): mais opaco para ler bem */
+html body:not(#jv) .mais-pop{background:linear-gradient(160deg,rgba(255,255,255,.10),rgba(255,255,255,.03) 60%),rgba(14,30,24,.90)!important}
+/* botões grandes de vidro (os de ação seguem na cor da bolinha) */
+html body:not(#jv) .fic-b.neutro,html body:not(#jv) .fic-voltar,html body:not(#jv) .btn-ghost,html body:not(#jv) .jh-tile,html body:not(#jv) .jh-ver-todas,html body:not(#jv) .b-add,html body:not(#jv) .b-cfg,html body:not(#jv) .te-nova,html body:not(#jv) .acao-item,html body:not(#jv) .top button,html body:not(#jv) #pg-lanc .cx-seta,html body:not(#jv) #pg-lanc .cx-at,html body:not(#jv) .wk-fit,html body:not(#jv) .auto-cta,html body:not(#jv) .jv-home-card:not(.gold),html body:not(#jv) .jv-profile-actions button,html body:not(#jv) .jv-quick button,html body:not(#jv) .ag-nav button,html body:not(#jv) .month-btn{
+  background:linear-gradient(160deg,rgba(255,255,255,.11),rgba(255,255,255,.03) 60%),rgba(22,46,36,.52)!important;
+  -webkit-backdrop-filter:blur(12px) saturate(150%);backdrop-filter:blur(12px) saturate(150%);
+  border:1px solid rgba(255,255,255,.12)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 6px 18px rgba(0,0,0,.22)!important}
