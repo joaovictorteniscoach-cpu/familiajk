@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-01-15';
+const VERSAO='2026-10-02-1';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -7605,6 +7605,7 @@ function exportBackup(){
 /* Mostra o retrato do que sairia, antes de qualquer coisa acontecer. */
 function mostrarPreviaArquivo(){
   const box=document.getElementById('arq-box');if(!box)return;
+  soEsteFerr('arq-box');
   const p=previaArquivo();
   const anos=Object.keys(p.porAno).sort();
   if(!p.linhas){
@@ -8074,6 +8075,7 @@ function _tl(ok,titulo,detalhe,acao){
 }
 async function testarConexao(){
   const el=document.getElementById('teste-box');if(!el)return;
+  soEsteFerr('teste-box');
   const r=[];
   const pinta=()=>{el.innerHTML='<div style="border:1px solid var(--border);border-radius:12px;padding:4px 12px 10px;margin-top:8px">'
     +r.join('')+'</div>';};
@@ -8316,6 +8318,7 @@ function projetarCrescimento(serie,hoje){
 
 async function medirEspaco(){
   const el=document.getElementById('espaco-box');if(!el)return;
+  soEsteFerr('espaco-box');
   el.innerHTML='<p class="hint">medindo…</p>';
   const ap=medirAparelho();
   const vs=await medirVersoes();
@@ -8448,10 +8451,11 @@ function tabelaDoMes(){
     +'<p class="hint" style="margin-top:9px">"Entrou" é a renovação lançada neste mês. "Usou" conta só o que já aconteceu e você confirmou, mais as faltas — aula futura e aula sem ✓ ficam de fora. "Sobra" é o saldo de hoje, créditos e grupo somados.</p>'
     +'</div>';
 }
-function conferirNumeros(){
-  const box=document.getElementById('conf-box');if(!box)return;
+/* Conferência de UM aluno: saldo × extrato, presença fantasma, devolução torta,
+   reposição vencida, mensalidade × plano e × agenda, cobranças e créditos
+   duplicados. É a mesma conta do "Conferir números" e do relatório em PDF. */
+function achadosDoAluno(a){
   const achados=[];
-  (DB.alunos||[]).forEach(a=>{
     ['creditos','credGrupo','repos','locCred'].forEach(c=>{
       const atual=Number(a[c])||0, esperado=saldoPeloExtrato(a,c);
       /* Extrato MENOR que o saldo é o normal: linhas antigas saem para o app
@@ -8534,7 +8538,13 @@ function conferirNumeros(){
       txt:'AULA REPETIDA: '+a.nome+' tem '+dm.length+' aula(s) lançada(s) pelo cartão no mesmo dia de uma aula que já estava marcada na agenda ('
          +dm.slice(0,3).map(p=>String(p.data||'').split('-').reverse().join('/')).join(', ')+'). '
          +'Já não contam no histórico nem no fechamento, mas o crédito saiu duas vezes. Abra 📅 Aulas no cartão dele para apagar e devolver.'});
-  });
+  return achados;
+}
+function conferirNumeros(){
+  const box=document.getElementById('conf-box');if(!box)return;
+  soEsteFerr('conf-box');
+  const achados=[];
+  (DB.alunos||[]).forEach(a=>{achadosDoAluno(a).forEach(x=>achados.push(x));});
   // DUPLICIDADE 4: lançamentos idênticos no mesmo dia (possível toque duplo)
   const porChave={};
   (DB.lancamentos||[]).filter(l=>l.mes===monthKey()&&l.valor>0).forEach(l=>{
@@ -8560,6 +8570,260 @@ function conferirNumeros(){
     +'<p>'+esc(x.txt)
     +'</p></div>').join('');
 }
+/* ===== Ferramentas do Financeiro: uma de cada vez =====
+   Cada botão escreve o resultado numa caixa embaixo da grade. Antes elas se
+   empilhavam (conexão + conferência + versões…) e a tela virava um rolo.
+   Agora abrir uma fecha as outras, e tocar de novo na mesma fecha ela. */
+const FERR_BOXES=['teste-box','arq-box','espaco-box','conf-box','versoes-box','rel-box'];
+let ferrAberto='';
+function soEsteFerr(box){
+  FERR_BOXES.forEach(b=>{if(b!==box){const e=document.getElementById(b);if(e)e.innerHTML='';}});
+  ferrAberto=box;
+  document.querySelectorAll('.ferr-grid button[data-box]').forEach(bt=>bt.classList.toggle('on',bt.dataset.box===box));
+}
+function abrirFerr(box,fn){
+  const el=document.getElementById(box);
+  if(ferrAberto===box&&el&&el.innerHTML.trim()){          // tocou de novo: fecha
+    el.innerHTML='';ferrAberto='';
+    document.querySelectorAll('.ferr-grid button[data-box]').forEach(bt=>bt.classList.remove('on'));
+    return;
+  }
+  soEsteFerr(box);
+  try{fn();}catch(e){console.warn(e);}
+  setTimeout(()=>{const e=document.getElementById(box);if(e&&e.scrollIntoView)e.scrollIntoView({behavior:'smooth',block:'start'});},80);
+}
+
+/* ===== Relatório de aulas (PDF): os últimos 3 meses, aluno por aluno =====
+   Para conferir fora do app: em cada mês, quanto foi pago, quantas aulas
+   entraram (renovação), quantas foram feitas, faltas, reposições ganhas e
+   usadas; e hoje, o saldo de cada um conferido contra o extrato. No fim, a
+   lista do que parece errado — com o mês em que aconteceu.
+   Tudo sai das mesmas contas do fechamento e do "Conferir números". Nada é
+   alterado: o relatório só lê. */
+function relPagoNoMes(a,mk){
+  const alvo='Mensalidade · '+a.nome;
+  const ls=(DB.lancamentos||[]).filter(l=>l.mes===mk&&l.cat==='mensalidade'&&Number(l.valor)>0&&(l.alunoId===a.id||l.desc===alvo));
+  return {valor:ls.reduce((t,l)=>t+(Number(l.valor)||0),0),n:ls.length};
+}
+function relMes(a,mk){
+  const c=fcConciliacao(a,mk), pg=relPagoNoMes(a,mk), agora=new Date();
+  const aulas=fcAulasDoMes(a,mk);
+  const soma=l=>l.reduce((t,x)=>t+(Number(x.custo)||0),0);
+  const passadas=aulas.filter(x=>aulaJaAconteceu(x,agora));
+  const futuras=aulas.filter(x=>!aulaJaAconteceu(x,agora));
+  const normais=passadas.filter(x=>x.tipo!=='reposicao'), repFeitas=passadas.filter(x=>x.tipo==='reposicao');
+  const rm=movsDe(a.id,'repos').filter(m=>mesDoTs(m.ts)===mk&&m.ref!=='resumo');
+  const ganhas=rm.filter(m=>m.delta>0).reduce((t,m)=>t+m.delta,0);
+  const vencidas=-rm.filter(m=>m.delta<0&&/vencida/i.test(m.motivo||'')).reduce((t,m)=>t+m.delta,0);
+  const descont=-rm.filter(m=>m.delta<0&&/descontada/i.test(m.motivo||'')).reduce((t,m)=>t+m.delta,0);
+  const saidas=-rm.filter(m=>m.delta<0).reduce((t,m)=>t+m.delta,0);
+  const nRenov=movsDe(a.id,'creditos').filter(x=>String(x.motivo||'').indexOf('Renovação do mês')===0&&mesDoTs(x.ts)===mk).length;
+  const pagas=c.renovado+c.renovadoGrp;
+  const feitas=soma(normais);
+  /* Aula registrada no mês cujo crédito nunca saiu: a presença existe, mas
+     nenhuma linha do extrato aponta para ela. Antes do extrato existir é
+     normal; dentro dos meses do relatório é aula que não descontou. */
+  const refs=new Set(movsDe(a.id).map(m=>m.ref).filter(Boolean));
+  const semDebito=(DB.presencas||[]).filter(p=>p.alunoId===a.id&&String(p.data||'').indexOf(mk)===0&&p.k&&!ehAvisou(p)
+    &&(p.tipo||p.modo)!=='torneio'&&(p.tipo||p.modo)!=='locacao'&&!refs.has(p.k)).length;
+  return {mk,pago:pg.valor,nPag:pg.n,pagas,nRenov,semDebito,
+    feitas,confirmadas:soma(normais.filter(x=>x.marcada)),semConf:soma(normais.filter(x=>!x.marcada)),
+    repFeitas:soma(repFeitas),aFazer:soma(futuras),faltas:c.faltas,avisados:c.avisados,
+    ganhas,usadas:saidas-vencidas-descont,vencidas,descont,
+    saldo:pagas-feitas-c.faltas};
+}
+function relAtual(a){
+  const ext=c=>saldoPeloExtrato(a,c);
+  const semData=lotesRepos(a).filter(l=>!l.mes).reduce((t,l)=>t+l.qtd,0);
+  return {creditos:Number(a.creditos)||0,grupo:Number(a.credGrupo)||0,repos:Number(a.repos)||0,
+    validas:reposValidas(a),vencendo:reposVencendo(a),vencidas:reposVencidas(a),semData,
+    extCred:ext('creditos'),extGrupo:ext('credGrupo'),extRepos:ext('repos'),
+    resumido:movsDe(a.id).some(m=>m.ref==='resumo')};
+}
+/* O que parece errado, mês a mês. Nada aqui é corrigido: é a lista para você
+   olhar o extrato do aluno e decidir. */
+function relAchados(a,M,atual,mesAtual){
+  const out=[];const nomeM=mk=>MESES[Number(mk.split('-')[1])-1];
+  M.forEach(m=>{
+    const passado=m.mk<mesAtual;
+    if(m.nRenov>1)out.push(nomeM(m.mk)+': créditos renovados '+m.nRenov+' vezes no mesmo mês (somam '+fmtCred(m.pagas)+').');
+    if(m.nPag>1)out.push(nomeM(m.mk)+': '+m.nPag+' mensalidades lançadas no mesmo mês ('+fmtRs(m.pago)+').');
+    if(m.pago>0&&!m.nRenov&&((Number(a.plano)||0)+(Number(a.planoGrupo)||0))>0)out.push(nomeM(m.mk)+': pagou '+fmtRs(m.pago)+' mas não há renovação de créditos registrada no mês.');
+    if(passado&&m.nRenov&&!m.pago&&ehAtivoAluno(a))out.push(nomeM(m.mk)+': créditos renovados, mas nenhuma mensalidade lançada no mês.');
+    if(passado&&m.pagas>0&&m.feitas+m.faltas>m.pagas)out.push(nomeM(m.mk)+': fez '+fmtCred(m.feitas+m.faltas)+' aula(s) (com faltas) para '+fmtCred(m.pagas)+' paga(s) — '+fmtCred(m.feitas+m.faltas-m.pagas)+' além do pacote: foram cobradas como extra?');
+    if(m.semDebito>0)out.push(nomeM(m.mk)+': '+m.semDebito+' aula(s) registrada(s) sem desconto de crédito no extrato — o crédito pode não ter saído.');
+    if(passado&&m.semConf>0)out.push(nomeM(m.mk)+': '+fmtCred(m.semConf)+' aula(s) da agenda sem confirmação — conferir se aconteceram.');
+  });
+  if(atual.extCred>atual.creditos)out.push('Hoje: o extrato de créditos soma '+fmtCred(atual.extCred)+', mais que o saldo ('+fmtCred(atual.creditos)+').');
+  if(atual.extRepos>atual.repos)out.push('Hoje: o extrato de reposições soma '+fmtCred(atual.extRepos)+', mais que o saldo ('+fmtCred(atual.repos)+').');
+  if(atual.semData>0)out.push('Hoje: '+fmtCred(atual.semData)+' reposição(ões) de antes do extrato começar — sem data, não dá para saber de que mês são nem conferir.');
+  if(atual.vencidas>0)out.push('Hoje: '+fmtCred(atual.vencidas)+' reposição(ões) com mais de 4 meses ainda no saldo.');
+  achadosDoAluno(a).forEach(x=>{
+    const t=String(x.txt||'');
+    if(/extrato soma|passaram de 4 meses|presença\(s\) sem débito/.test(t))return;   // já entrou acima, mês a mês
+    out.push(t);
+  });
+  return out;
+}
+function relDados(){
+  const meses=ultimosMeses(3), mesAtual=mesReal();
+  const alunos=(DB.alunos||[]).map(a=>{
+    const M=meses.map(mk=>relMes(a,mk)), atual=relAtual(a);
+    const mexeu=M.some(m=>m.pago||m.pagas||m.feitas||m.repFeitas||m.faltas||m.ganhas||m.usadas);
+    return {a,M,atual,ativo:ehAtivoAluno(a),mexeu};
+  }).filter(x=>x.ativo||x.mexeu).sort((x,y)=>x.a.nome.localeCompare(y.a.nome));
+  alunos.forEach(x=>{x.erros=relAchados(x.a,x.M,x.atual,mesAtual);});
+  return {meses,mesAtual,alunos};
+}
+/* jsPDF com a fonte padrão não tem emoji nem alguns símbolos: troca antes. */
+function pdfTxt(s){
+  return String(s==null?'':s).replace(/→/g,'->').replace(/[−–—]/g,'-').replace(/✓/g,'(v)').replace(/[•●]/g,'-')
+    .replace(/[\u{1F000}-\u{1FFFF}☀-➿️‍]/gu,'').replace(/\s+/g,' ').trim();
+}
+async function gerarRelatorioPDF(){
+  toast('Preparando o relatório…');
+  try{if(!window.jspdf)await libLocalOuCdn('lib/jspdf.umd.min.js','https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');}
+  catch(e){toast('Sem internet para gerar o PDF agora');return;}
+  /* O PDF é para você guardar: sai sempre com os valores de verdade, mesmo
+     com o olho fechado (fmt() trocaria por R$ ••••). A tela continua
+     respeitando o olho. */
+  const _olho=hideVals;hideVals=false;let R;
+  try{R=relDados();}finally{hideVals=_olho;}
+  const {jsPDF}=window.jspdf;const pdf=new jsPDF('l','mm','a4');
+  const PW=pdf.internal.pageSize.getWidth(), PH=pdf.internal.pageSize.getHeight(), MG=10;
+  const VERDE=[11,60,43], OURO=[201,162,39], CINZA=[110,104,94];
+  const nomeM=mk=>MESES[Number(mk.split('-')[1])-1]+' '+mk.split('-')[0];
+  const hoje=new Date(), dataBR=String(hoje.getDate()).padStart(2,'0')+'/'+String(hoje.getMonth()+1).padStart(2,'0')+'/'+hoje.getFullYear();
+  let y=MG;
+  const cabecalho=(titulo,sub)=>{
+    pdf.setFillColor(...VERDE);pdf.rect(0,0,PW,20,'F');
+    pdf.setTextColor(255,255,255);pdf.setFont('helvetica','bold');pdf.setFontSize(13);
+    pdf.text(pdfTxt('Academia João Victor Tênis · '+titulo),MG,9);
+    pdf.setFont('helvetica','normal');pdf.setFontSize(8.5);pdf.text(pdfTxt(sub),MG,15);
+    pdf.text(pdfTxt('Gerado em '+dataBR),PW-MG,15,{align:'right'});
+    y=26;pdf.setTextColor(30,30,30);
+  };
+  const rodapes=()=>{
+    const n=pdf.getNumberOfPages();
+    for(let i=1;i<=n;i++){pdf.setPage(i);pdf.setFontSize(7);pdf.setTextColor(...CINZA);
+      pdf.text('Página '+i+' de '+n,PW-MG,PH-5,{align:'right'});
+      pdf.text(pdfTxt('Só leitura: este relatório não altera nenhum dado do app.'),MG,PH-5);}
+  };
+  /* Tabela simples: cabeçalho repetido a cada página, linhas zebradas. */
+  const tabela=(cols,linhas,tituloPag,subPag)=>{
+    const total=cols.reduce((t,c)=>t+c.w,0), esc=(PW-2*MG)/total;
+    const desenhaCab=()=>{
+      pdf.setFillColor(234,226,207);pdf.rect(MG,y,PW-2*MG,8,'F');
+      pdf.setFont('helvetica','bold');pdf.setFontSize(7.2);pdf.setTextColor(40,40,40);
+      let x=MG;cols.forEach(c=>{const w=c.w*esc;
+        const ls=pdf.splitTextToSize(pdfTxt(c.t),w-2);
+        pdf.text(ls,c.al==='l'?x+1.5:x+w/2,y+3.2,{align:c.al==='l'?'left':'center',lineHeightFactor:1.05});x+=w;});
+      y+=8;pdf.setFont('helvetica','normal');
+    };
+    desenhaCab();
+    linhas.forEach((ln,i)=>{
+      if(y>PH-14){pdf.addPage();cabecalho(tituloPag,subPag);desenhaCab();}
+      if(i%2===0){pdf.setFillColor(247,244,236);pdf.rect(MG,y,PW-2*MG,6,'F');}
+      let x=MG;pdf.setFontSize(7.6);
+      cols.forEach((c,j)=>{const w=c.w*esc;const v=ln.cel[j];
+        const cor=(ln.cor&&ln.cor[j])||[30,30,30];pdf.setTextColor(...cor);
+        pdf.setFont('helvetica',(ln.neg&&ln.neg[j])?'bold':'normal');
+        let t=pdfTxt(v);if(pdf.getTextWidth(t)>w-2){while(t.length>1&&pdf.getTextWidth(t+'.')>w-2)t=t.slice(0,-1);t+='.';}
+        pdf.text(t,c.al==='l'?x+1.5:x+w/2,y+4.1,{align:c.al==='l'?'left':'center'});x+=w;});
+      y+=6;
+    });
+    pdf.setTextColor(30,30,30);pdf.setFont('helvetica','normal');
+  };
+  const n=v=>(v===0||v===undefined||v===null)?'-':fmtCred(v);
+  const VERM=[160,40,30], VERDE2=[30,110,60];
+
+  /* --- página 1: resumo --- */
+  const subGeral=R.meses.map(nomeM).join(' · ')+' · '+R.alunos.length+' aluno(s)';
+  cabecalho('Controle de aulas e reposições',subGeral);
+  pdf.setFont('helvetica','bold');pdf.setFontSize(11);pdf.text('Resumo dos meses',MG,y+2);y+=7;
+  tabela([{t:'Mês',w:40,al:'l'},{t:'Mensalidades recebidas',w:34},{t:'Aulas pagas (renovadas)',w:30},{t:'Aulas feitas',w:24},
+          {t:'Reposições feitas',w:24},{t:'Faltas',w:18},{t:'Reposições ganhas',w:24},{t:'Reposições usadas',w:24},{t:'Vencidas',w:18}],
+    R.meses.map((mk,k)=>{const S=f=>R.alunos.reduce((t,x)=>t+(x.M[k][f]||0),0);
+      return {cel:[nomeM(mk)+(mk===R.mesAtual?' (até hoje)':''),fmtRs(S('pago')),n(S('pagas')),n(S('feitas')),n(S('repFeitas')),n(S('faltas')),n(S('ganhas')),n(S('usadas')),n(S('vencidas'))],neg:[true]};}),
+    'Controle de aulas e reposições',subGeral);
+  y+=6;
+  const comErro=R.alunos.filter(x=>x.erros.length).length;
+  pdf.setFontSize(9);pdf.setTextColor(...(comErro?VERM:VERDE2));pdf.setFont('helvetica','bold');
+  pdf.text(pdfTxt(comErro?(comErro+' aluno(s) com algo a conferir — veja a lista nas últimas páginas.'):'Nenhuma divergência encontrada nos três meses.'),MG,y);y+=6;
+  pdf.setTextColor(...CINZA);pdf.setFont('helvetica','normal');pdf.setFontSize(7.6);
+  pdf.splitTextToSize(pdfTxt('Como ler: "Aulas pagas" = créditos que entraram pela renovação do mês. "Feitas" = aulas da agenda que já aconteceram (sem faltas nem avisos), confirmadas ou não. "Saldo do mês" = pagas - feitas - faltas: positivo sobrou (vira reposição na virada); negativo foi além do pacote. Reposições "ganhas" incluem a sobra convertida e as anotadas à mão; "usadas" são as reposições realizadas.'),PW-2*MG).forEach(l=>{pdf.text(l,MG,y);y+=3.8;});
+
+  /* --- uma página por mês --- */
+  R.meses.forEach((mk,k)=>{
+    const tit='Mês a mês · '+nomeM(mk), sub=mk===R.mesAtual?'Mês atual: "feitas" vai até hoje; "a fazer" é o que ainda está na agenda':'Mês fechado';
+    pdf.addPage();cabecalho(tit,sub);
+    const cols=[{t:'Aluno',w:46,al:'l'},{t:'Pago (R$)',w:20},{t:'Aulas pagas',w:15},{t:'Feitas',w:13},{t:'Sem confirm.',w:14},
+      {t:'Repos. feitas',w:15},{t:'Faltas',w:12},{t:'Avisou',w:12},{t:'Repos. ganhas',w:15},{t:'Repos. usadas',w:15},{t:'Vencidas',w:13},{t:'Saldo do mês',w:15}];
+    if(mk===R.mesAtual)cols.splice(4,0,{t:'A fazer',w:13});
+    tabela(cols,R.alunos.map(x=>{const m=x.M[k];
+      const cel=[x.a.nome+(x.ativo?'':' (inativo)'),m.pago?fmtRs(m.pago)+(m.nPag>1?' ('+m.nPag+'x)':''):'-',n(m.pagas)+(m.nRenov>1?' ('+m.nRenov+'x)':''),n(m.feitas),n(m.semConf),
+        n(m.repFeitas),n(m.faltas),n(m.avisados),n(m.ganhas),n(m.usadas),n(m.vencidas),m.pagas?(m.saldo>0?'+':'')+fmtCred(m.saldo):'-'];
+      const cor=[];cor[11]=m.pagas?(m.saldo<0?VERM:VERDE2):null;if(m.nPag>1)cor[1]=VERM;if(m.nRenov>1)cor[2]=VERM;
+      if(mk===R.mesAtual){cel.splice(4,0,n(m.aFazer));cor.splice(4,0,null);}
+      return {cel,cor,neg:[true]};
+    }),tit,sub);
+  });
+
+  /* --- hoje --- */
+  {const tit='Situação de hoje · o que cada um tem', sub='Saldo no app ao lado do que o extrato soma. "Confere" = os dois batem';
+   pdf.addPage();cabecalho(tit,sub);
+   tabela([{t:'Aluno',w:48,al:'l'},{t:'Pacote',w:16},{t:'Mensalidade',w:20},{t:'Situação',w:18},{t:'Créditos',w:15},{t:'pelo extrato',w:16},{t:'Grupo',w:13},
+     {t:'Reposições',w:16},{t:'pelo extrato',w:16},{t:'Válidas',w:14},{t:'Vencem no fim do mês',w:20},{t:'Sem data (antigas)',w:18},{t:'Confere',w:15}],
+     R.alunos.map(x=>{const a=x.a,t=x.atual;const ok=t.extCred<=t.creditos&&t.extRepos<=t.repos&&!t.vencidas;
+       const p=(Number(a.plano)||0),pg=(Number(a.planoGrupo)||0);
+       return {cel:[a.nome+(x.ativo?'':' (inativo)'),p||pg?(fmtCred(p)+(pg?'+'+fmtCred(pg)+'g':'')):'-',fmtRs(Number(a.mensalidade)||0),x.ativo?(a.status==='pago'?'pago':(a.status==='parcial'?'50%':'pendente')):'inativo',
+         fmtCred(t.creditos),fmtCred(t.extCred),t.grupo||pg?fmtCred(t.grupo):'-',fmtCred(t.repos),fmtCred(t.extRepos),fmtCred(t.validas),n(t.vencendo),n(t.semData),ok?'sim':'conferir'],
+         cor:{4:t.creditos<0?VERM:null,12:ok?VERDE2:VERM},neg:[true,false,false,false,true,false,false,true]};
+     }),tit,sub);
+   y+=5;pdf.setFontSize(7.4);pdf.setTextColor(...CINZA);
+   ['"pelo extrato" menor que o saldo é normal para quem já tinha saldo antes do extrato começar a ser gravado; maior que o saldo é lançamento que não chegou ao saldo.',
+    '"Sem data (antigas)": reposições que vieram de antes do extrato — o app não sabe de que mês são, então não vencem sozinhas e não dá para conferir a origem.']
+    .forEach(l=>{if(y>PH-12){pdf.addPage();cabecalho(tit,sub);}pdf.text(pdfTxt(l),MG,y);y+=4;});
+  }
+
+  /* --- possíveis erros --- */
+  {const tit='Possíveis erros para conferir', sub='Nada foi corrigido. Abra o extrato do aluno no app para ver cada caso';
+   pdf.addPage();cabecalho(tit,sub);
+   const lista=R.alunos.filter(x=>x.erros.length);
+   if(!lista.length){pdf.setFontSize(11);pdf.setTextColor(...VERDE2);pdf.text('Nenhuma divergência encontrada.',MG,y+4);}
+   lista.forEach(x=>{
+     const linhas=x.erros.map(e=>pdf.splitTextToSize('- '+pdfTxt(e),PW-2*MG-6));
+     const altura=7+linhas.reduce((t,l)=>t+l.length*3.9,0);
+     if(y+Math.min(altura,40)>PH-12){pdf.addPage();cabecalho(tit,sub);}
+     pdf.setFillColor(...OURO);pdf.rect(MG,y,1.4,5,'F');
+     pdf.setFont('helvetica','bold');pdf.setFontSize(9.5);pdf.setTextColor(30,30,30);pdf.text(pdfTxt(x.a.nome),MG+4,y+4);y+=7;
+     pdf.setFont('helvetica','normal');pdf.setFontSize(8);pdf.setTextColor(60,60,60);
+     linhas.forEach(l=>{l.forEach(t=>{if(y>PH-12){pdf.addPage();cabecalho(tit,sub);}pdf.text(t,MG+4,y);y+=3.9;});});
+     y+=3;
+   });
+  }
+  rodapes();
+  const nome='relatorio-aulas-'+R.meses[0]+'-a-'+R.meses[R.meses.length-1]+'.pdf';
+  /* Na tela: o resumo do que saiu no PDF (os erros também aparecem aqui). */
+  const box=document.getElementById('rel-box');
+  if(box){
+    soEsteFerr('rel-box');
+    const lista=(hideVals?relDados():R).alunos.filter(x=>x.erros.length);
+    box.innerHTML='<div class="cons info"><h4><span>📄</span>Relatório gerado</h4><p>'+esc(R.meses.map(nomeM).join(' · '))+' · '+R.alunos.length+' aluno(s). '
+      +'O PDF tem o resumo, uma página por mês, a situação de hoje e a lista do que conferir.</p></div>'
+      +(lista.length?lista.map(x=>'<div class="cons warn"><h4><span>⚠️</span>'+esc(x.a.nome)+'</h4><p>'+x.erros.map(e=>esc(e)).join('<br>')+'</p></div>').join('')
+        :'<div class="cons good"><h4><span>✅</span>Nada a conferir</h4><p>Nenhuma divergência nos três meses.</p></div>');
+  }
+  try{
+    const blob=pdf.output('blob');
+    const file=new File([blob],nome,{type:'application/pdf'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{await navigator.share({files:[file],title:'Relatório de aulas · JV Tênis'});toast('📄 Relatório pronto');return;}catch(e){}
+    }
+  }catch(e){}
+  pdf.save(nome);toast('📄 Relatório salvo');
+}
+
 /* ===== Voltar a uma versão anterior =====
    Junta o que está guardado no aparelho e na nuvem, mostra o retrato de cada
    versão (alunos, lançamentos, caixa) e deixa ele escolher. Antes de restaurar,
@@ -8573,6 +8837,7 @@ function nuvemOuNada(promessa,ms){
 }
 async function listarVersoes(){
   const box=document.getElementById('versoes-box');if(!box)return;
+  soEsteFerr('versoes-box');
   box.innerHTML='<div class="empty">Procurando versões…</div>';
   const itens=[];
   // versões vêm do IndexedDB; o localStorage só é lido como reserva
