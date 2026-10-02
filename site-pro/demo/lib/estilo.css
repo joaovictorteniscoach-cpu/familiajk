@@ -3067,3 +3067,6 @@ body.ficha-on{overflow:hidden}
 .rm-pe{position:sticky;bottom:0;padding:10px 16px calc(12px + env(safe-area-inset-bottom,0px));background:rgba(7,30,25,.96);border-top:1px solid var(--jv-line,rgba(190,211,190,.25))}
 .rm-pe .fic-b{max-width:520px;margin:0 auto}
 .rm-pe .fic-b[disabled]{opacity:.45}
+
+/* Ferramentas do Financeiro: a que está aberta fica marcada */
+.ferr-grid button.on{outline:2px solid #D5B24A!important;outline-offset:-2px;background:rgba(213,178,74,.16)!important}

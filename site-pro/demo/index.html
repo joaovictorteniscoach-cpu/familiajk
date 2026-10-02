@@ -30,7 +30,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="lib/estilo.css?v=2026-10-01-15">
+<link rel="stylesheet" href="lib/estilo.css?v=2026-10-02-1">
 <!-- ================= DEMO ISOLADA ================= -->
 <script>
 /* Espelho comercial do Gestão atual.
@@ -591,17 +591,18 @@ function esperarAuth(){return Promise.resolve();}
   </div>
 
   <h2 class="sec-title" style="margin-top:18px">Ferramentas &amp; <em>segurança</em></h2>
-  <p class="hint">Tudo num lugar só. Toque para usar — o resultado aparece logo abaixo.</p>
+  <p class="hint">Tudo num lugar só. Toque para usar — o resultado aparece logo abaixo, um de cada vez. Toque de novo para fechar.</p>
   <div class="ferr-grid">
-    <button onclick="testarConexao()"><i>🔌</i><span>Testar conexão</span><small>o que funciona hoje</small></button>
-    <button onclick="conferirNumeros()"><i>🔎</i><span>Conferir números</span><small>saldos × extrato</small></button>
-    <button onclick="listarVersoes()"><i>🕘</i><span>Versões salvas</span><small>voltar no tempo</small></button>
-    <button onclick="mostrarPreviaArquivo()"><i>📦</i><span>Arquivar antigos</span><small>deixa o app leve</small></button>
-    <button onclick="medirEspaco()"><i>📊</i><span>Espaço usado</span><small>quanto ainda cabe</small></button>
+    <button data-box="teste-box" onclick="abrirFerr('teste-box',testarConexao)"><i>🔌</i><span>Testar conexão</span><small>o que funciona hoje</small></button>
+    <button data-box="conf-box" onclick="abrirFerr('conf-box',conferirNumeros)"><i>🔎</i><span>Conferir números</span><small>saldos × extrato</small></button>
+    <button data-box="versoes-box" onclick="abrirFerr('versoes-box',listarVersoes)"><i>🕘</i><span>Versões salvas</span><small>voltar no tempo</small></button>
+    <button data-box="arq-box" onclick="abrirFerr('arq-box',mostrarPreviaArquivo)"><i>📦</i><span>Arquivar antigos</span><small>deixa o app leve</small></button>
+    <button data-box="espaco-box" onclick="abrirFerr('espaco-box',medirEspaco)"><i>📊</i><span>Espaço usado</span><small>quanto ainda cabe</small></button>
     <button onclick="exportBackup()"><i>⬇️</i><span>Exportar backup</span><small>guardar uma cópia</small></button>
     <button onclick="document.getElementById('import-file').click()"><i>⬆️</i><span>Importar</span><small>restaurar cópia</small></button>
     <button onclick="document.getElementById('import-agenda').click()"><i>🗓️</i><span>Recuperar agenda</span><small>de um arquivo, só a agenda</small></button>
     <button onclick="irParaAba('fech')"><i>🧾</i><span>Fechamento</span><small>enviar ao aluno</small></button>
+    <button data-box="rel-box" onclick="gerarRelatorioPDF()"><i>📄</i><span>Relatório de aulas</span><small>PDF dos últimos 3 meses</small></button>
   </div>
   <input type="file" id="import-file" accept=".json" style="display:none" onchange="importBackup(this)">
   <input type="file" id="import-agenda" accept=".json" style="display:none" onchange="importarSoAgenda(this)">
@@ -610,6 +611,7 @@ function esperarAuth(){return Promise.resolve();}
   <div id="espaco-box"></div>
   <div id="conf-box"></div>
   <div id="versoes-box"></div>
+  <div id="rel-box"></div>
 </section>
 
 <!-- Professores da quadra. Só existe no app da academia: é a tela em que o João
@@ -928,7 +930,7 @@ function esperarAuth(){return Promise.resolve();}
   <button onclick="go('lanc',this)"><span class="ico" data-ic="navcash"></span>Caixa</button>
   <button id="nav-mais" onclick="abrirMais()"><span class="ico" data-ic="navmore"></span>Mais</button>
 </nav>
-<script src="lib/icones.js?v=2026-10-01-15"></script>
+<script src="lib/icones.js?v=2026-10-02-1"></script>
 
 <!-- MODAL ALUNO -->
 <div class="overlay" id="ov-aluno" onclick="if(event.target===this)closeModal('ov-aluno')">
@@ -1420,7 +1422,7 @@ function esperarAuth(){return Promise.resolve();}
 </section>
 <div class="toast" id="toast"></div>
 
-<script src="app-demo.js?v=2026-10-01-15"></script>
+<script src="app-demo.js?v=2026-10-02-1"></script>
 <script>
 /* Rede de seguranca do par tela+codigo.
 
@@ -1435,7 +1437,7 @@ function esperarAuth(){return Promise.resolve();}
    torto, o app busca o par certo uma vez e, se insistir, DIZ o que houve em
    vez de deixar voce tocando em botao que nao responde. */
 (function(){
-  var ESPERADA='2026-10-01-15';
+  var ESPERADA='2026-10-02-1';
   function tela(motivo){
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;z-index:99999;background:#1A2E14;color:#FAF7F2;'
