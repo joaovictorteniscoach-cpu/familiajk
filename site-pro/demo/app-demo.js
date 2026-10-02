@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-02-2';
+const VERSAO='2026-10-02-3';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -813,8 +813,16 @@ function lotesRepos(a){
   const lotes=[];
   movs.forEach(m=>{
     const d=Number(m.delta)||0;
-    if(d>0){lotes.push({mes:mesDoTs(m.ts),qtd:d});return;}
+    if(d>0){lotes.push({mes:mesDoTs(m.ts),qtd:d,ref:m.ref||''});return;}
     let falta=-d;
+    /* "Desfazer" de uma reposição anotada à mão tira o MESMO lote que ela
+       criou — pelo FIFO sairia o mais velho e o recém-anotado ficaria valendo
+       4 meses no lugar dele. Só vale para a chave "anot-": nenhum saldo
+       antigo muda de idade por causa disto. */
+    if(String(m.ref||'').indexOf('anot-')===0){
+      const lt=lotes.find(l=>l.ref===m.ref&&l.qtd>0);
+      if(lt){const t=Math.min(lt.qtd,falta);lt.qtd-=t;falta-=t;}
+    }
     for(let i=0;i<lotes.length&&falta>0;i++){    // gasta o mais velho primeiro
       const t=Math.min(lotes[i].qtd,falta);
       lotes[i].qtd-=t;falta-=t;
@@ -4826,10 +4834,33 @@ function locacaoPaga(id){
   persist();renderAll();
   toast('🔑 Locação paga · '+fmt(total)+' lançado · '+a.nome+' → '+fmtCred(a.locCred)+'h');
 }
+/* Anotar reposição e somar hora de locação criam saldo sem aula e sem
+   pagamento. Antes era um toque só, colado em "Usar reposição" e "Locação
+   feita": um dedo errado virava crédito de presente sem ninguém ver. Agora
+   pedem confirmação mostrando o antes → depois, e o aviso traz "desfazer". */
 function addRepos(id){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  const r=Number(a.repos)||0;
+  if(!confirm('Anotar 1 reposição para '+a.nome+'?\n\nReposições: '+fmtCred(r)+' → '+fmtCred(r+1)
+    +'\nVale por 4 meses.\n\nUse quando a aula não aconteceu e vai ser reposta.'))return;
   if(acaoRepetida('repos+'+id)){toast('Reposição já anotada agora há pouco');return;}
-  mover(a,'repos',1,'Reposição anotada');persist();renderAll();toast('Reposição anotada para '+a.nome);
+  const ref='anot-'+Date.now();
+  mover(a,'repos',1,'Reposição anotada',ref);
+  logAct('Reposição anotada: '+a.nome);
+  persist();renderAll();pulsarCredito(a.id);
+  toastDesfazer('Reposição anotada · '+a.nome.split(' ')[0]+' → '+fmtCred(a.repos),()=>desfazerAnotacao(id,'repos',ref));
+}
+/* Tira exatamente o que a anotação pôs, pela chave dela no extrato. Já
+   desfeito soma zero e não tira de novo. */
+function desfazerAnotacao(id,campo,ref){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  const pos=movsDe(a.id,campo).filter(m=>m.ref===ref).reduce((s,m)=>s+(Number(m.delta)||0),0);
+  if(!(pos>0)){toast('Isso já foi desfeito');return;}
+  const ehRepos=campo==='repos';
+  mover(a,campo,-pos,ehRepos?'Reposição anotada desfeita':'Hora de locação desfeita',ref);
+  logAct((ehRepos?'Desfazer reposição anotada: ':'Desfazer +1h locação: ')+a.nome);
+  persist();renderAll();pulsarCredito(a.id);
+  toast('↩️ Desfeito · '+a.nome.split(' ')[0]+' → '+fmtCred(a[campo])+(ehRepos?' reposição(ões)':'h de locação'));
 }
 function usarRepos(id){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
@@ -4841,10 +4872,14 @@ function usarRepos(id){
 }
 function addLocacao(id){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  const l=Number(a.locCred)||0;
+  if(!confirm('Somar 1h de locação para '+a.nome+'?\n\nSaldo de locação: '+fmtCred(l)+'h → '+fmtCred(l+1)+'h'
+    +'\n\nIsto NÃO lança pagamento no caixa. Se ele pagou, use "Locação paga".'))return;
   if(acaoRepetida('loc+'+id)){toast('Já somei essa hora agora há pouco');return;}
-  mover(a,'locCred',1,'+1h de locação');
-  logAct('Locação +1h: '+a.nome);persist();renderAll();
-  toast('🔑 +1h de locação · '+a.nome+' → '+fmtCred(a.locCred)+'h');
+  const ref='anot-'+Date.now();
+  mover(a,'locCred',1,'+1h de locação',ref);
+  logAct('Locação +1h: '+a.nome);persist();renderAll();pulsarCredito(a.id);
+  toastDesfazer('🔑 +1h de locação · '+a.nome.split(' ')[0]+' → '+fmtCred(a.locCred)+'h',()=>desfazerAnotacao(id,'locCred',ref));
 }
 function usarLocacao(id){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
@@ -6243,9 +6278,8 @@ function renderFicha(){
   let g2='';
   if(temGrupo)g2+=fxBotao('prim2',"aulaRealizada('"+id+"','grupo')",BI.check+'Aula em grupo (−1)');
   if(r>0&&!venc)g2+=fxBotao('neutro',"usarRepos('"+id+"')",BI.undo+'Usar reposição');
-  g2+=fxBotao('neutro',"addRepos('"+id+"')",BI.plus+'Anotar reposição');
-  if(loc){g2+=fxBotao('prim2',"usarLocacao('"+id+"')",BI.key+'Locação feita (−1h)');g2+=fxBotao('neutro',"addLocacao('"+id+"')",BI.keyplus+'+1h locação');}
-  h+=fxSecao('Aula',aula+'<div class="fic-g2">'+g2+'</div>');
+  if(loc)g2+=fxBotao('prim2',"usarLocacao('"+id+"')",BI.key+'Locação feita (−1h)');
+  h+=fxSecao('Aula',aula+(g2?'<div class="fic-g2">'+g2+'</div>':''));
 
   /* dinheiro */
   let din='';
@@ -6273,6 +6307,12 @@ function renderFicha(){
     +fxBotao('neutro',"openHistAulas('"+id+"')",'📅 Todas as aulas')
     +fxBotao('neutro',"abrirExtrato('"+id+"')",'📋 Extrato de créditos')+'</div>');
 
+  /* ajustes: somam saldo sem aula nem pagamento — longe dos botões de aula,
+     e cada um pede confirmação */
+  h+=fxSecao('Ajustes de saldo','<p class="fic-nota">Somam saldo sem aula e sem pagamento. Pedem confirmação.</p><div class="fic-g2">'
+    +fxBotao('neutro',"addRepos('"+id+"')",BI.plus+'Anotar reposição')
+    +fxBotao('neutro',"addLocacao('"+id+"')",BI.keyplus+(loc?'+1h locação':'Começar locação'))+'</div>');
+
   /* pedagógico */
   let ped=fxBotao('neutro',"openRegistroModal('"+id+"')",'📝 Registro da aula')
     +fxBotao('neutro',"openAvalModal('"+id+"')",BI.chart+'Avaliar');
@@ -6289,7 +6329,6 @@ function renderFicha(){
   /* cadastro */
   let cad=fxBotao('neutro',"openAlunoModal('"+id+"')",'✏️ Editar cadastro')
     +fxBotao('neutro',"arquivarAluno('"+id+"')",ativo?'📦 Marcar inativo':'✅ Reativar aluno');
-  if(!loc)cad+=fxBotao('neutro',"addLocacao('"+id+"')",BI.keyplus+'Começar locação');
   h+=fxSecao('Cadastro','<div class="fic-g2">'+cad+'</div>'
     +'<button class="fic-excluir" onclick="delAluno(\''+id+'\')">Excluir aluno</button>');
 

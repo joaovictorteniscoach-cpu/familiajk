@@ -3005,6 +3005,9 @@ body.ficha-on{overflow:hidden}
 .fic-b.neutro{background:var(--jv-control,#315A49);color:#F6F2EA;-webkit-text-fill-color:#F6F2EA;border-color:var(--jv-line,rgba(190,211,190,.25))}
 .fic-b.wa{background:#12462F;color:#BFF5D2;-webkit-text-fill-color:#BFF5D2;border-color:rgba(37,211,102,.35)}
 .fic-pend>.fic-b{width:100%}
+/* botão que sobra sozinho na última linha ocupa a linha inteira */
+.fic-g2>.fic-b:last-child:nth-child(odd){grid-column:1/-1}
+.fic-nota{font-size:12.5px;color:#D8D2C7;-webkit-text-fill-color:#D8D2C7;line-height:1.4;margin:-2px 0 0}
 .fic-lista{background:linear-gradient(145deg,#244B3D,#193B30);border:1px solid var(--jv-line,rgba(190,211,190,.25));border-radius:14px;padding:6px 12px}
 .fic-li{display:flex;justify-content:space-between;font-size:13.5px;padding:7px 0;color:#F6F2EA;-webkit-text-fill-color:#F6F2EA;border-bottom:1px dashed rgba(255,255,255,.12)}
 .fic-li:last-child{border-bottom:0}
