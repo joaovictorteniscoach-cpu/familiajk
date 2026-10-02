@@ -1588,7 +1588,7 @@ body[data-aba]:not([data-aba="inicio"]) #app>.top .jv-quadra-chip{display:none!i
 #app>.top .jv-chips-topo .jv-clima-chip .clima-ic{font-size:17px}
 #app>.top .jv-chips-topo .jv-quadra-chip .led{width:9px;height:9px;flex:0 0 9px}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-02-6">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-02-7">
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
 <script src="lib/firebase-database-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js\'><\/script>')"></script>
@@ -2003,7 +2003,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-10-02-6"></script>
+<script src="lib/icones.js?v=2026-10-02-7"></script>
 </div>
 
 <!-- MODAL ESCOLHER O QUE FAZER NO HORÁRIO -->
@@ -2210,7 +2210,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-10-02-6';
+const VERSAO='2026-10-02-7';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -2388,6 +2388,11 @@ setInterval(function(){
 
 function dKey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function fmt(v){return 'R$ '+Number(v||0).toLocaleString('pt-BR');}
+/* Aparelho ainda não aprovado lê a cópia antiga, que não traz mais o valor da
+   mensalidade. Mostrar "R$ 0" ou gerar Pix de zero seria pior que avisar. */
+function mensOculta(){return !!(EU&&(EU.valoresOcultos||EU.mensalidade==null));}
+function fmtMens(){return mensOculta()?'após aprovação':fmt(EU.mensalidade);}
+function avisoMensOculta(){toast('🔐 O valor aparece quando o João aprovar este aparelho');}
 function fmtCred(n){const r=Math.round(Number(n||0)*2)/2;return r%1===0?String(r):String(r).replace('.',',');}
 function _hm(s){const p=String(s).split(':');return (+p[0])*60+(+p[1]||0);}
 function modoPadrao(dia,hora){
@@ -2955,13 +2960,13 @@ function renderPremiumAluno(){
   const ps=document.getElementById('home-pay-status');if(ps){ps.textContent=EU.status==='pago'?'Em dia':(EU.status==='parcial'?'50% pago':'Pendente');ps.dataset.status=EU.status==='pago'?'pago':(EU.status==='parcial'?'parcial':'pendente');}
   const vl=document.getElementById('home-venc-label');if(vl)vl.textContent=EU.status==='pago'?'Próximo vencimento':'Vencimento do mês';
   const hv=document.getElementById('home-venc');if(hv)hv.textContent=vencimentoPremium();
-  const hm=document.getElementById('home-mens');if(hm)hm.textContent=fmt(EU.mensalidade);
+  const hm=document.getElementById('home-mens');if(hm)hm.textContent=fmtMens();
   const pb=document.getElementById('home-pix-btn');if(pb)pb.style.display=(PUB&&PUB.pix&&String(PUB.pix).trim())?'flex':'none';
   const cs=document.getElementById('cred-page-saldo');if(cs)cs.textContent=fmtCred(saldo);
   const cf=document.getElementById('cred-page-fill');if(cf)cf.style.width=(plano>0?Math.max(0,Math.min(100,saldo/plano*100)):(saldo>0?100:0))+'%';
   const cr=document.getElementById('cred-page-repos');if(cr)cr.textContent=fmtCred(EU.repos||0);
   const cp=document.getElementById('cred-page-plano');if(cp)cp.textContent=planoPremium();
-  const cm=document.getElementById('cred-page-mens');if(cm)cm.textContent=fmt(EU.mensalidade);
+  const cm=document.getElementById('cred-page-mens');if(cm)cm.textContent=fmtMens();
   const cst=document.getElementById('cred-page-status');if(cst)cst.textContent=EU.status==='pago'?'Em dia':(EU.status==='parcial'?'50% pago':'Pendente');
   const cpp=document.getElementById('cred-page-pix');if(cpp)cpp.style.display=(PUB&&PUB.pix&&String(PUB.pix).trim())?'block':'none';
   const pn=document.getElementById('perfil-nome');if(pn)pn.textContent=EU.nome||'Aluno';
@@ -2991,7 +2996,7 @@ function render(){
   const lc=Number(EU.locCred)||0,sl=document.getElementById('scard-loc');
   if(sl){sl.style.display=lc!==0?'block':'none';const vl=document.getElementById('v-loc');if(vl){vl.textContent=fmtCred(lc);vl.style.color=lc<0?'#C0392B':'var(--green)';}}
   document.getElementById('v-plano').textContent=(Number(EU.plano)||0)<=0?(EU.tipo+' · sem pacote'):(isPersonal()?(EU.tipo+' · '+EU.plano+' treinos/mês'):(EU.tipo+' · Flex '+EU.plano));
-  document.getElementById('v-mens').textContent=fmt(EU.mensalidade);
+  document.getElementById('v-mens').textContent=fmtMens();
   const st=document.getElementById('v-status');
   st.textContent=EU.status==='parcial'?'Pagou 50%':EU.status;
   st.className='badge '+EU.status;
@@ -3899,9 +3904,11 @@ function jaPagueiPix(){
   pixCtx=null;
 }
 function pagarPix(){
+  if(mensOculta()){avisoMensOculta();return;}
   abrirPix(EU.mensalidade,'Mensalidade · '+(EU.nome||'').split(' ')[0],{kind:'mensalidade',metodo:'Pix',valor:EU.mensalidade});
 }
 function pagarCartao(){
+  if(mensOculta()){avisoMensOculta();return;}
   const link=(EU.cardLink&&EU.cardLink.trim())||(PUB.cardLink&&PUB.cardLink.trim())||'';
   if(link){
     const a=document.createElement('a');a.href=link;a.target='_blank';a.rel='noopener';
@@ -3915,6 +3922,7 @@ function pagarCartao(){
   setTimeout(()=>abrirWhatsApp('5541995415712','Olá João! Quero pagar a mensalidade ('+fmt(EU.mensalidade)+') no *cartão de crédito*. Pode me enviar o link de pagamento? 💳'),600);
 }
 function pagarDinheiro(){
+  if(mensOculta()){avisoMensOculta();return;}
   enviarPedido({kind:'mensalidade',metodo:'dinheiro',valor:EU.mensalidade});
   abrirWhatsApp('5541995415712','Olá João! Vou pagar a mensalidade ('+fmt(EU.mensalidade)+') em dinheiro. Combinamos? 🎾');
 }
@@ -4725,7 +4733,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-02-6').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-02-7').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
