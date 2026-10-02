@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-02-9';
+const VERSAO='2026-10-02-10';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -9452,15 +9452,9 @@ function torDragUp(e){
   persist();renderTorneio();
   toast(oldGroup!==targetGroup?(p.name+' → Grupo '+targetGroup):'Ordem atualizada ✓');
 }
-function seedBarragem(){
-  const j=[
-    ['A','Rafael',2,0,0],['A','Gustavo',1,1,0],['A','Carolina',0,2,0],
-    ['B','Gabriel',1,0,0],['B','Alexandre',0,1,1],['B','Armando',0,0,0],
-    ['C','Guilherme',1,0,0],['C','Felippe',0,1,0],['C','Junior',0,0,0],
-    ['D','Adriano',3,0,0],['D','Felipe Bittencourt',0,2,0],['D','Paulo',1,1,0],['D','Édson',0,1,0]
-  ];
-  return j.map((x,i)=>({group:x[0],name:x[1],v:x[2],d:x[3],wo:x[4],order:i}));
-}
+/* O torneio novo começa vazio: a lista que vinha aqui tinha nomes reais de
+   jogadores, e este código é público. */
+function seedBarragem(){return [];}
 function ensureTorneios(){
   if(!DB.torneios||typeof DB.torneios!=='object')DB.torneios={atual:null,lista:{}};
   if(!DB.torneios.lista)DB.torneios.lista={};
@@ -9960,6 +9954,188 @@ async function baixarBarragemPDF(){
     pdf.save('barragem-jvtenis.pdf');
     toast('📄 PDF salvo!');
   }catch(e){if(e!=='vazio')toast('Erro ao gerar PDF');}
+}
+/* ===== Homenagens do torneio: arte + mensagem para 1º e 2º de cada categoria =====
+   De onde vêm os nomes: a etapa em andamento (ou encerrada) pela mesma
+   classificação que encerrarEtapa() usa. Se a etapa nova ainda não tem nenhum
+   resultado, vale a última etapa encerrada — é logo depois de encerrar que a
+   homenagem faz sentido. A arte é desenhada direto no canvas (sem depender de
+   biblioteca de fora) no formato de post, 1080×1350. */
+let HOM_LISTA=[],HOM_PARCIAL=false;
+function homenageados(t){
+  const semResultado=!(t.jogadores||[]).some(p=>(Number(p.v)||0)+(Number(p.d)||0)+(Number(p.wo)||0)>0);
+  const fins=(t.etapasFin||[]).slice().sort((a,b)=>b.etapa-a.etapa);
+  let base,etapa,parcial=false;
+  if(!t.encerrada&&semResultado&&fins.length){base=fins[0].campeoes||[];etapa='Etapa '+fins[0].etapa;}
+  else{base=campeoesDe(t);etapa=etapaLabel(t);parcial=!t.encerrada;}
+  const out=[];
+  base.forEach(c=>{
+    [[1,c.campeao],[2,c.vice]].forEach(([pos,nome])=>{
+      if(!nome||nome==='—')return;
+      out.push({pos,nome:String(nome),grupo:c.grupo,cat:nomeGrupo(t,c.grupo),torneio:t.nome||'Torneio',etapa});
+    });
+  });
+  return {lista:out,parcial};
+}
+/* Só usa o telefone de quem está VINCULADO ao cadastro no torneio (🔗).
+   Adivinhar pelo primeiro nome podia mandar o parabéns para a pessoa errada. */
+function homAluno(t,h){
+  const js=(t.jogadores||[]).filter(p=>p.name===h.nome);
+  const j=js.find(p=>p.group===h.grupo)||js[0];
+  if(!j)return null;
+  return DB.alunos.find(a=>a.id===j.alunoId)||(j.cod?DB.alunos.find(a=>String(a.codigo||'')===String(j.cod)):null)||null;
+}
+function homCatFrase(h){return /^Grupo /.test(h.cat)?('no *'+h.cat+'*'):('na categoria *'+h.cat+'*');}
+function homMensagem(h){
+  const nome=h.nome.split(' ')[0];
+  const onde=homCatFrase(h)+' — '+h.torneio+', '+h.etapa;   // sem "da/do": o nome do torneio pode ser masculino ou feminino
+  return h.pos===1
+    ?'🏆 Parabéns, '+nome+'! Você conquistou o *1º lugar* '+onde+'.\n\n'
+      +'Esse resultado é fruto de cada treino, de cada jogo e da sua dedicação em quadra. Tenho muito orgulho da sua evolução — siga firme! 🎾\n\n— João Victor · JV Tênis'
+    :'🥈 Parabéns, '+nome+'! Você ficou com o *2º lugar* '+onde+'.\n\n'
+      +'Campanha de muita garra e consistência — o topo está cada vez mais perto. Tenho muito orgulho da sua evolução. Bora para a próxima! 🎾\n\n— João Victor · JV Tênis';
+}
+/* letras espaçadas sem depender de ctx.letterSpacing (não existe em todo Safari) */
+function homTextoEspacado(ctx,txt,x,y,esp){
+  const chars=[...txt];
+  const total=chars.reduce((w,c)=>w+ctx.measureText(c).width,0)+esp*(chars.length-1);
+  let cx=x-total/2;
+  const al=ctx.textAlign;ctx.textAlign='left';
+  chars.forEach(c=>{ctx.fillText(c,cx,y);cx+=ctx.measureText(c).width+esp;});
+  ctx.textAlign=al;
+}
+function homArte(h){
+  const W=1080,H=1350,c=document.createElement('canvas');c.width=W;c.height=H;
+  const ctx=c.getContext('2d');
+  const ouro=h.pos===1;
+  const SERIF="'Cormorant Garamond',Georgia,'Times New Roman',serif", SANS="'DM Sans',system-ui,-apple-system,sans-serif";
+  /* fundo */
+  const bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#0B3A2A');bg.addColorStop(1,'#03170F');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+  const glow=ctx.createRadialGradient(W/2,470,40,W/2,470,620);
+  glow.addColorStop(0,ouro?'rgba(232,184,62,.30)':'rgba(220,226,232,.22)');glow.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=glow;ctx.fillRect(0,0,W,H);
+  /* quadra vista de cima, bem discreta */
+  ctx.strokeStyle='rgba(224,185,79,.11)';ctx.lineWidth=4;
+  const qx=150,qy=110,qw=W-300,qh=H-220;
+  ctx.strokeRect(qx,qy,qw,qh);
+  ctx.strokeRect(qx+qw*0.125,qy,qw*0.75,qh);
+  ctx.beginPath();ctx.moveTo(qx,qy+qh/2);ctx.lineTo(qx+qw,qy+qh/2);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(qx+qw*0.125,qy+qh*0.23);ctx.lineTo(qx+qw*0.875,qy+qh*0.23);
+  ctx.moveTo(qx+qw*0.125,qy+qh*0.77);ctx.lineTo(qx+qw*0.875,qy+qh*0.77);
+  ctx.moveTo(W/2,qy+qh*0.23);ctx.lineTo(W/2,qy+qh*0.77);ctx.stroke();
+  /* moldura */
+  ctx.strokeStyle='rgba(224,185,79,.55)';ctx.lineWidth=3;ctx.strokeRect(40,40,W-80,H-80);
+  ctx.textAlign='center';ctx.textBaseline='alphabetic';
+  /* topo */
+  ctx.fillStyle='#E0B94F';ctx.font='800 28px '+SANS;homTextoEspacado(ctx,'ACADEMIA JOÃO VICTOR TÊNIS',W/2,130,6);
+  ctx.fillStyle='rgba(246,242,234,.78)';ctx.font='600 30px '+SANS;
+  ctx.fillText((h.torneio+' · '+h.etapa).toUpperCase().slice(0,48),W/2,180);
+  /* fita da medalha */
+  const cy=500,r=165;
+  ctx.fillStyle=ouro?'#1E6B45':'#2C4F77';
+  ctx.beginPath();ctx.moveTo(W/2-120,cy-r-95);ctx.lineTo(W/2-35,cy-r-95);ctx.lineTo(W/2+20,cy-r+40);ctx.lineTo(W/2-60,cy-r+40);ctx.closePath();ctx.fill();
+  ctx.fillStyle=ouro?'#16533A':'#22405F';
+  ctx.beginPath();ctx.moveTo(W/2+120,cy-r-95);ctx.lineTo(W/2+35,cy-r-95);ctx.lineTo(W/2-20,cy-r+40);ctx.lineTo(W/2+60,cy-r+40);ctx.closePath();ctx.fill();
+  /* medalha */
+  const mg=ctx.createLinearGradient(W/2-r,cy-r,W/2+r,cy+r);
+  if(ouro){mg.addColorStop(0,'#FFE9A0');mg.addColorStop(.45,'#E8B83E');mg.addColorStop(1,'#946010');}
+  else{mg.addColorStop(0,'#FFFFFF');mg.addColorStop(.45,'#C9D1D8');mg.addColorStop(1,'#7D8891');}
+  ctx.shadowColor='rgba(0,0,0,.45)';ctx.shadowBlur=40;ctx.shadowOffsetY=14;
+  ctx.fillStyle=mg;ctx.beginPath();ctx.arc(W/2,cy,r,0,Math.PI*2);ctx.fill();
+  ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+  ctx.strokeStyle=ouro?'rgba(120,80,10,.55)':'rgba(70,80,90,.5)';ctx.lineWidth=6;
+  ctx.beginPath();ctx.arc(W/2,cy,r-22,0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle=ouro?'#3B2A06':'#2A3138';ctx.font='600 190px '+SERIF;ctx.fillText(h.pos+'º',W/2+6,cy+66);
+  /* colocação e categoria */
+  ctx.fillStyle=ouro?'#F2D575':'#E3E8EC';ctx.font='800 44px '+SANS;homTextoEspacado(ctx,h.pos+'º LUGAR',W/2,cy+r+95,10);
+  ctx.fillStyle='rgba(246,242,234,.9)';ctx.font='600 36px '+SANS;
+  ctx.fillText(/^Grupo /.test(h.cat)?h.cat:('Categoria '+h.cat),W/2,cy+r+150);
+  /* nome: cabe numa linha; se não couber, quebra em duas */
+  const maxW=900;let tam=124,linhas=[h.nome];
+  ctx.fillStyle='#FFFFFF';
+  for(;tam>=78;tam-=4){ctx.font='600 '+tam+'px '+SERIF;if(ctx.measureText(h.nome).width<=maxW)break;}
+  if(tam<78){
+    const p=h.nome.split(' '),meio=Math.ceil(p.length/2);
+    linhas=[p.slice(0,meio).join(' '),p.slice(meio).join(' ')].filter(Boolean);
+    for(tam=110;tam>48;tam-=4){ctx.font='600 '+tam+'px '+SERIF;if(linhas.every(l=>ctx.measureText(l).width<=maxW))break;}
+  }
+  const yNome=cy+r+290-(linhas.length-1)*tam*0.2;
+  linhas.forEach((l,i)=>ctx.fillText(l,W/2,yNome+i*tam*0.95));
+  /* parabéns */
+  ctx.fillStyle='#F6DB86';ctx.font='italic 400 58px '+SERIF;ctx.fillText('Parabéns pela conquista!',W/2,Math.max(1110,yNome+(linhas.length-1)*tam*0.95+88));
+  /* bolinha e assinatura */
+  const by=1222;ctx.fillStyle='#D7E64A';ctx.beginPath();ctx.arc(W/2,by,20,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=3;
+  ctx.beginPath();ctx.arc(W/2-26,by,20,-0.9,0.9);ctx.stroke();ctx.beginPath();ctx.arc(W/2+26,by,20,Math.PI-0.9,Math.PI+0.9);ctx.stroke();
+  ctx.fillStyle='rgba(246,242,234,.7)';ctx.font='600 26px '+SANS;homTextoEspacado(ctx,'DA BASE AO TOPO',W/2,1285,5);
+  return c;
+}
+async function homFontes(){
+  try{await Promise.all(["600 120px 'Cormorant Garamond'","italic 400 58px 'Cormorant Garamond'","800 40px 'DM Sans'","600 30px 'DM Sans'"].map(f=>document.fonts.load(f)));}catch(e){}
+}
+async function abrirHomenagens(){
+  const t=torAtual();
+  const {lista,parcial}=homenageados(t);
+  HOM_LISTA=lista;HOM_PARCIAL=parcial;
+  const box=document.getElementById('hom-box');if(!box)return;
+  if(!lista.length){toast('Ainda não há 1º e 2º lugar: registre os resultados primeiro');return;}
+  document.getElementById('ov-tor-hom').classList.add('on');
+  box.innerHTML='<p class="hint">Preparando as artes…</p>';
+  await homFontes();
+  const grupos=[];lista.forEach((h,i)=>{let g=grupos.find(x=>x.grupo===h.grupo);if(!g){g={grupo:h.grupo,cat:h.cat,itens:[]};grupos.push(g);}g.itens.push(i);});
+  let html=(parcial?'<p class="hom-aviso">⚠️ A etapa ainda está em andamento: estes são o 1º e o 2º lugar <b>de agora</b>. Para a homenagem final, encerre a etapa antes.</p>':'')
+    +'<button class="btn btn-clay hom-todas" onclick="homCompartilharTodas()">📤 Compartilhar todas as artes ('+lista.length+')</button>';
+  grupos.forEach(g=>{
+    html+='<div class="hom-cat">'+esc(/^Grupo /.test(g.cat)?g.cat:('Categoria '+g.cat))+'</div>';
+    g.itens.forEach(i=>{
+      const h=lista[i],al=homAluno(t,h);
+      const img=homArte(h).toDataURL('image/jpeg',0.82);
+      html+='<div class="hom-item"><img class="hom-thumb" src="'+img+'" alt="Arte de '+esc(h.nome)+'">'
+        +'<div class="hom-info"><b>'+(h.pos===1?'🥇':'🥈')+' '+esc(h.nome)+'</b>'
+        +'<span>'+(al&&al.tel?'📱 WhatsApp do cadastro':'sem telefone vinculado — a mensagem vai por compartilhar')+'</span>'
+        +'<div class="hom-bts"><button class="btn btn-ghost" onclick="homCompartilharArte('+i+')">🖼️ Arte</button>'
+        +'<button class="btn btn-ghost" onclick="homEnviarMensagem('+i+')">💬 Mensagem</button></div></div></div>';
+    });
+  });
+  box.innerHTML=html;
+}
+function homBlob(h){return new Promise(ok=>homArte(h).toBlob(b=>ok(b),'image/png'));}
+function homArquivo(h,blob){
+  const nome='parabens-'+h.pos+'lugar-'+String(h.nome).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'.png';
+  return new File([blob],nome,{type:'image/png'});
+}
+function homBaixar(file){
+  const url=URL.createObjectURL(file);const a=document.createElement('a');a.href=url;a.download=file.name;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(url),4000);
+}
+async function homCompartilharArte(i){
+  const h=HOM_LISTA[i];if(!h)return;
+  await homFontes();
+  const blob=await homBlob(h);if(!blob){toast('Não consegui gerar a arte');return;}
+  const file=homArquivo(h,blob);
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    try{await navigator.share({files:[file],text:homMensagem(h)});return;}catch(e){if(e&&e.name==='AbortError')return;}
+  }
+  homBaixar(file);toast('🖼️ Arte salva');
+}
+async function homCompartilharTodas(){
+  if(!HOM_LISTA.length)return;
+  toast('Preparando '+HOM_LISTA.length+' artes…');
+  await homFontes();
+  const files=[];for(const h of HOM_LISTA){const b=await homBlob(h);if(b)files.push(homArquivo(h,b));}
+  if(navigator.canShare&&navigator.canShare({files})){
+    try{await navigator.share({files,title:'Homenagens · '+torAtual().nome});return;}catch(e){if(e&&e.name==='AbortError')return;}
+  }
+  files.forEach(homBaixar);toast('🖼️ '+files.length+' artes salvas');
+}
+async function homEnviarMensagem(i){
+  const h=HOM_LISTA[i];if(!h)return;
+  const txt=homMensagem(h), al=homAluno(torAtual(),h);
+  if(al&&al.tel){window.open('https://wa.me/'+foneWhats(al.tel)+'?text='+encodeURIComponent(txt),'_blank');return;}
+  if(navigator.share){try{await navigator.share({text:txt});return;}catch(e){if(e&&e.name==='AbortError')return;}}
+  try{await navigator.clipboard.writeText(txt);toast('📋 Mensagem copiada — cole no WhatsApp de '+h.nome.split(' ')[0]);}
+  catch(e){prompt('Copie a mensagem:',txt);}
 }
 /* Resultados enviados pelos alunos (fila no Firebase) */
 let torFila=[];
