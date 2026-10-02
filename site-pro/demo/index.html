@@ -30,7 +30,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="lib/estilo.css?v=2026-10-02-13">
+<link rel="stylesheet" href="lib/estilo.css?v=2026-10-02-14">
 <!-- ================= DEMO ISOLADA ================= -->
 <script>
 /* Espelho comercial do Gestão atual.
@@ -570,15 +570,9 @@ function esperarAuth(){return Promise.resolve();}
   </div>
   <p class="hint">Mensalidade do grupo = preço por aula × nº de aulas do plano. Ex.: Dupla R$ 90 × Flex 8 = <b>R$ 720</b>. Grupo maior tem preço menor por pessoa, mas rende mais por hora pra você.</p>
 
-  <p class="sec-eyebrow" style="margin-top:18px">Ferramentas</p>
-  <h2 class="sec-title">Grade & <em>planilha</em></h2>
-  <div class="backup-row">
-    <button class="btn btn-ghost" onclick="exportAgendaExcel()">📊 Exportar agenda p/ Excel</button>
-    <button class="btn btn-ghost so-dono" onclick="instalarGrade()">🎾 Instalar grade-padrão</button>
-  </div>
-  <p class="hint">"Exportar agenda" baixa um arquivo que abre no Excel/Planilhas com a grade da semana. "Instalar grade" repõe a forma da semana-padrão, sem nomes de alunos (pede confirmação e preserva alunos, lançamentos e agendamentos).</p>
-
-  <p class="sec-eyebrow" style="margin-top:18px">Segurança</p>
+</section>
+<section class="page" id="pg-seg">
+  <p class="sec-eyebrow">Segurança &amp; dados</p>
   <h2 class="sec-title">Sua <em>conta</em></h2>
   <p class="hint" id="versao-linha" style="font-weight:700"></p>
   <p class="hint">Entrando com a sua conta, este aparelho passa a ser reconhecido pelo banco de dados. O login identifica o administrador e protege os dados da gestão. Sem ele, a cópia local continua disponível, mas a nuvem administrativa permanece fechada. O aparelho continua conectado depois de fechar o app.</p>
@@ -614,7 +608,17 @@ function esperarAuth(){return Promise.resolve();}
   <div id="versoes-box"></div>
   <div id="rel-box"></div>
   <div id="pu-box"></div>
+
+  <p class="sec-eyebrow" style="margin-top:18px">Ferramentas</p>
+  <h2 class="sec-title">Grade & <em>planilha</em></h2>
+  <div class="backup-row">
+    <button class="btn btn-ghost" onclick="exportAgendaExcel()">📊 Exportar agenda p/ Excel</button>
+    <button class="btn btn-ghost so-dono" onclick="instalarGrade()">🎾 Instalar grade-padrão</button>
+  </div>
+  <p class="hint">"Exportar agenda" baixa um arquivo que abre no Excel/Planilhas com a grade da semana. "Instalar grade" repõe a forma da semana-padrão, sem nomes de alunos (pede confirmação e preserva alunos, lançamentos e agendamentos).</p>
+
 </section>
+
 
 <!-- Professores da quadra. Só existe no app da academia: é a tela em que o João
      decide quem dá aula aqui, em que horas, e quanto isso rendeu de quadra. -->
@@ -926,6 +930,7 @@ function esperarAuth(){return Promise.resolve();}
 <div class="mais-pop" id="mais-pop">
   <button onclick="irDoMais('aval')"><span class="ico" data-ic="clip"></span>Avaliações</button>
   <button onclick="irDoMais('fin')"><span class="ico" data-ic="bars"></span>Financeiro</button>
+  <button onclick="irDoMais('seg')"><span class="ico" data-ic="check"></span>Segurança e dados</button>
   <button class="so-dono" onclick="irDoMais('torneio')"><span class="ico" data-ic="trophy"></span><span class="nav-badge" id="nb-torneio"></span>Torneio</button>
   <button onclick="irDoMais('graf')"><span class="ico" data-ic="line"></span>Gráficos</button>
   <button onclick="irDoMais('fech')"><span class="ico" data-ic="receipt"></span>Fechamento</button>
@@ -941,7 +946,7 @@ function esperarAuth(){return Promise.resolve();}
   <button onclick="go('lanc',this)"><span class="ico" data-ic="navcash"></span>Caixa</button>
   <button id="nav-mais" onclick="abrirMais()"><span class="ico" data-ic="navmore"></span>Mais</button>
 </nav>
-<script src="lib/icones.js?v=2026-10-02-13"></script>
+<script src="lib/icones.js?v=2026-10-02-14"></script>
 
 <!-- MODAL ALUNO -->
 <div class="overlay" id="ov-aluno" onclick="if(event.target===this)closeModal('ov-aluno')">
@@ -1433,7 +1438,7 @@ function esperarAuth(){return Promise.resolve();}
 </section>
 <div class="toast" id="toast"></div>
 
-<script src="app-demo.js?v=2026-10-02-13"></script>
+<script src="app-demo.js?v=2026-10-02-14"></script>
 <script>
 /* Rede de seguranca do par tela+codigo.
 
@@ -1448,7 +1453,7 @@ function esperarAuth(){return Promise.resolve();}
    torto, o app busca o par certo uma vez e, se insistir, DIZ o que houve em
    vez de deixar voce tocando em botao que nao responde. */
 (function(){
-  var ESPERADA='2026-10-02-13';
+  var ESPERADA='2026-10-02-14';
   function tela(motivo){
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;z-index:99999;background:#1A2E14;color:#FAF7F2;'

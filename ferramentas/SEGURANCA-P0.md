@@ -28,12 +28,12 @@ toda fila do App do Aluno vai com `uid` e `codigo`, o aparelho não aprovado só
 vê o aviso "aguarde o João aprovar", e o teste de conexão continua válido. O que
 decide é a migração dos aparelhos.
 
-1. Gestão → Segurança → caixa **"Pronto para a regra final?"**. Só siga com o ✓
+1. Gestão → Mais → **Segurança e dados** → caixa **"Pronto para a regra final?"**. Só siga com o ✓
    ("Os N alunos ativos têm aparelho aprovado") e sem aviso de código fora do padrão.
 2. Console do Firebase → Realtime Database → **Regras**: copie a regra atual e
    guarde (é o caminho de volta; deve ser igual a `firebase-regras-etapa3-transicao.json`).
 3. Cole o conteúdo de `firebase-regras-etapa4-estrita.json` e **Publique**.
-4. Gestão → Ferramentas → **Testar conexão**, e peça a um aluno para abrir o app
+4. Gestão → Mais → Segurança e dados → **Testar conexão**, e peça a um aluno para abrir o app
    e marcar um horário.
 5. Deu errado? Cole de volta a regra guardada no passo 2 e publique. Regra só
    controla acesso: nenhum dado se perde ao ir ou voltar.

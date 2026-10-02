@@ -35,7 +35,7 @@ const fi=await p.evaluate(()=>{const f=document.getElementById('ficha-aluno');co
 ok('ficha abre e todo botão tem função',fi.on&&!fi.faltam.length,fi);if(out)await p.screenshot({path:out+'/ficha.png'});
 await p.evaluate(()=>fecharFicha());await p.waitForTimeout(300);await p.evaluate(()=>abrirRenovaMes());await p.waitForTimeout(300);
 ok('Renovar o mês abre',await p.evaluate(()=>document.getElementById('renova-mes').classList.contains('on')));
-await p.evaluate(()=>fecharRenovaMes());await p.waitForTimeout(300);await p.evaluate(()=>irAba('fin'));
+await p.evaluate(()=>fecharRenovaMes());await p.waitForTimeout(300);await p.evaluate(()=>irAba('seg'));
 for(const bx of (await p.evaluate(()=>[...document.querySelectorAll('[data-box]')].map(x=>x.dataset.box))).filter(x=>x!=='teste-box')){const e0=erros.length;
   await p.evaluate(bx=>document.querySelector('[data-box="'+bx+'"]').click(),bx);await p.waitForTimeout(150);ok('ferramenta '+bx,erros.length===e0,erros.slice(e0));}
 ok('nenhum erro de página',erros.length===0,erros);
