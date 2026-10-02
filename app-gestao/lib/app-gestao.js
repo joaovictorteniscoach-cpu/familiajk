@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-02-5';
+const VERSAO='2026-10-02-6';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2752,7 +2752,7 @@ function renderPedList(){
   const cadKeys=Object.keys((typeof CADASTROS!=='undefined'&&CADASTROS)||{});
   if(!pedFila.length&&!cadKeys.length){el.innerHTML='<div class="empty">Nenhum pedido no momento. Cadastros, compras, planos e avisos de pagamento aparecem aqui.</div>';return;}
   const cadHtml=cadKeys.map(k=>{
-    const c=CADASTROS[k]||{}, keyJs=String(k).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    const c=CADASTROS[k]||{}, keyJs=argJs(k);
     return '<div style="display:flex;align-items:center;gap:8px;border-left:4px solid var(--clay);padding:11px 0 11px 9px;border-bottom:1px solid var(--border)">'
       +'<div style="flex:1;min-width:0"><div><b>🆕 Novo acesso · '+vincEsc(c.nome||'Aluno')+'</b></div>'
       +'<div style="opacity:.7;font-size:11px;margin-top:2px">'+cadastroContato(c)+'</div></div>'
@@ -2766,8 +2766,8 @@ function renderPedList(){
     return '<div style="display:flex;align-items:center;gap:8px;border-left:4px solid '+cor+';padding:11px 0 11px 9px;border-bottom:1px solid var(--border)">'+
       '<div style="flex:1;min-width:0"><div><b>'+pedEsc(pedDesc(p))+'</b></div>'+
       '<div style="opacity:.65;font-size:11px;margin-top:2px">recebido '+String(q.getDate()).padStart(2,'0')+'/'+String(q.getMonth()+1).padStart(2,'0')+' '+hm+'</div></div>'+
-      '<div style="display:flex;gap:6px"><button class="ap" onclick="aceitarPedido(\''+p.key+'\')">Aceitar</button>'+
-      '<button class="ds" onclick="descartarPedido(\''+p.key+'\')">✕</button></div></div>';
+      '<div style="display:flex;gap:6px"><button class="ap" onclick="aceitarPedido(\''+argJs(p.key)+'\')">Aceitar</button>'+
+      '<button class="ds" onclick="descartarPedido(\''+argJs(p.key)+'\')">✕</button></div></div>';
   }).join('');
 }
 function aceitarPedido(key){
@@ -4473,6 +4473,12 @@ function montarAvalExport(a){
   document.getElementById('aval-export').innerHTML=htmlAvalDe(a,av);
 }
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+/* Texto vindo da nuvem (chave de pedido, cadastro, autoavaliação, torneio) que
+   vira argumento '…' dentro de onclick="…". Só esc() não basta: o navegador
+   desfaz o &#39; antes de rodar o JS e a aspa fecha a string. Primeiro escapa
+   para JS, depois para HTML. */
+function argJs(s){return esc(String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'")
+  .replace(/\r/g,'\\r').replace(/\n/g,'\\n').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029'));}
 function avalExportCanvas(){
   const a=DB.alunos.find(x=>x.id===avalExpId);if(!a)return Promise.reject('semaluno');
   montarAvalExport(a);
@@ -4619,8 +4625,8 @@ function renderAvaliacoes(){
       avMiniHTML(av)+
       (due?'<div class="avdue">⏰ '+(av?'reavaliar (6+ semanas)':'avaliar este aluno')+'</div>':'')+
       autoAvalDe(a).map(x=>'<div class="avauto">📝 <b>'+esc(x.nome||a.nome).split(' ')[0]+'</b> se autoavaliou em '+((x.data||'').split('-').reverse().join('/'))+
-        '<div class="avauto-acts"><button onclick="usarAutoAval(\''+a.id+'\',\''+x._k+'\')">Abrir e revisar</button>'+
-        '<button class="d" onclick="descartarAutoAval(\''+x._k+'\')">Descartar</button></div></div>').join('')+
+        '<div class="avauto-acts"><button onclick="usarAutoAval(\''+argJs(a.id)+'\',\''+argJs(x._k)+'\')">Abrir e revisar</button>'+
+        '<button class="d" onclick="descartarAutoAval(\''+argJs(x._k)+'\')">Descartar</button></div></div>').join('')+
       '<div class="avacts">'+
         '<button class="b1" onclick="openAvalModal(\''+a.id+'\')">'+BI.chart+'Avaliar</button>'+
         '<button class="b2" onclick="openRegistroModal(\''+a.id+'\')">📝 Registro</button>'+
@@ -9871,7 +9877,7 @@ function renderTorLog(){
     torFila.map(m=>{
       const adv=m.vencedor===m.p1?m.p2:m.p1;
       const desc=m.tipo==='wo'?(esc(m.vencedor)+' venceu por W.O.'):(esc(m.vencedor)+' venceu '+esc(adv));
-      return '<div class="row"><div style="flex:1;min-width:0"><div><b style="color:var(--gold-light)">'+desc+'</b></div><div style="opacity:.72;font-size:11px;margin-top:2px">Grupo '+esc(m.group||'?')+(m.score?(' · '+esc(m.score)):'')+' · por '+esc(m.nome||'aluno')+'</div></div><div style="display:flex;gap:6px"><button class="ap" onclick="aplicarFilaTor(\''+m.key+'\')">Aplicar</button><button class="ds" onclick="descartarFilaTor(\''+m.key+'\')">✕</button></div></div>';
+      return '<div class="row"><div style="flex:1;min-width:0"><div><b style="color:var(--gold-light)">'+desc+'</b></div><div style="opacity:.72;font-size:11px;margin-top:2px">Grupo '+esc(m.group||'?')+(m.score?(' · '+esc(m.score)):'')+' · por '+esc(m.nome||'aluno')+'</div></div><div style="display:flex;gap:6px"><button class="ap" onclick="aplicarFilaTor(\''+argJs(m.key)+'\')">Aplicar</button><button class="ds" onclick="descartarFilaTor(\''+argJs(m.key)+'\')">✕</button></div></div>';
     }).join('')+'</div>';
 }
 function aplicarFilaTor(key){
@@ -10002,7 +10008,7 @@ function renderCadastros(){
   const keys=Object.keys(CADASTROS||{});
   wrap.style.display=keys.length?'block':'none';
   box.innerHTML=keys.map(k=>{
-    const c=CADASTROS[k]||{},keyJs=String(k).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    const c=CADASTROS[k]||{},keyJs=argJs(k);
     return '<div class="mov"><div class="mov-l"><b>'+vincEsc(c.nome||'—')+'</b><span>'+cadastroContato(c)+'</span></div>'
       +'<div style="display:flex;gap:6px">'
       +'<button class="btn btn-clay" style="padding:6px 10px;font-size:11.5px" onclick="aprovarCadastro(\''+keyJs+'\')">✓ Aprovar acesso</button>'
