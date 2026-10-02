@@ -3094,3 +3094,20 @@ body.ficha-on{overflow:hidden}
 #pg-lanc .cx-li b.in{color:#7EF0A1;-webkit-text-fill-color:#7EF0A1}
 #pg-lanc .cx-li b.out{color:#FFB4A4;-webkit-text-fill-color:#FFB4A4}
 #pg-lanc .cx-vazio{text-align:center;font-size:13px;color:#D8D2C7;-webkit-text-fill-color:#D8D2C7;padding:6px 0 2px}
+
+/* ===== Aba Alunos por dia de aula (opção C do rascunho) =====
+   Busca + Novo numa linha, pagamento e tipo na outra, e a lista agrupada pelo
+   próximo dia de aula de cada aluno. "Pacotes" foi para o menu Mais. */
+#pg-alunos .toolbar{grid-template-columns:minmax(0,1fr) auto!important}
+#pg-alunos .toolbar input{grid-column:auto}
+#pg-alunos .al-filtros{display:flex;gap:8px;align-items:stretch;margin-bottom:10px}
+#pg-alunos .al-filtros #alunos-pag{flex:1;min-width:0;margin-bottom:0!important}
+#pg-alunos .al-filtros #alunos-pag button{min-height:42px;padding-left:4px;padding-right:4px;font-size:12.5px}
+/* mesmo visual claro da busca (regra geral de input/select do tema) */
+#pg-alunos #alunos-tipo{flex:0 0 auto;width:38%;max-width:150px;padding:0 8px;min-height:42px;font-weight:700;-webkit-text-fill-color:#142017}
+#pg-alunos .al-grupo-t{display:flex;align-items:baseline;gap:8px;margin:16px 2px 7px}
+#pg-alunos .al-grupo-t:first-child{margin-top:4px}
+#pg-alunos .al-grupo-t b{font-size:11.5px;letter-spacing:1.4px;text-transform:uppercase;font-weight:800;color:#E8B83E;-webkit-text-fill-color:#E8B83E}
+#pg-alunos .al-grupo-t.hoje b{color:#7EF0A1;-webkit-text-fill-color:#7EF0A1}
+#pg-alunos .al-grupo-t small{font-size:12px;color:#D8D2C7;-webkit-text-fill-color:#D8D2C7}
+#pg-alunos .al-hora{color:#F6DB86;-webkit-text-fill-color:#F6DB86;font-weight:700}

@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-02-3';
+const VERSAO='2026-10-02-4';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -5455,11 +5455,6 @@ function contagemAlunos(){
   const at=(DB.alunos||[]).filter(ehAtivoAluno).length;
   return {total:t,ativos:at,inativos:t-at};
 }
-function setFiltroAtivo(f){
-  filtroAtivo=(filtroAtivo===f)?'todos':f;   // tocar de novo volta para todos
-  focoRepos=false;focoDif=false;renderAlunos();
-}
-let filtroAtivo='todos';
 function arquivarAluno(id){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
   const ativo=ehAtivoAluno(a);
@@ -5472,19 +5467,13 @@ function arquivarAluno(id){
   persist();renderAll();
   toast(a.nome+(ativo?' agora conta como inativo':' voltou para os ativos'));
 }
-function setFiltroAluno(f,btn){
-  filtroAluno=f;
-  focoRepos=false;focoDif=false;   // escolher um perfil sai de qualquer foco
-  document.querySelectorAll('#alunos-filtro button').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');
+/* Um seletor só de tipo: todos (ativos), um perfil, ou os inativos. Antes eram
+   três filtros sobrepostos (cartões cadastro/ativos/inativos, perfil e
+   pagamento), com "Todos" repetido e Locação/Torneio escondidos à direita. */
+function setFiltroTipo(f){
+  filtroAluno=f||'todos';
+  focoRepos=false;focoDif=false;   // escolher um tipo sai de qualquer foco
   renderAlunos();
-}
-/* Total · ativos · inativos, tocáveis para filtrar a lista. */
-function renderResumoAlunos(){
-  const box=document.getElementById('alunos-resumo');if(!box)return;
-  const c=contagemAlunos();
-  const cel=(f,n,rot,cls)=>'<div class="rc'+(cls||'')+(filtroAtivo===f?' on':'')+'" onclick="setFiltroAtivo(\''+f+'\')"><b>'+n+'</b><span>'+rot+'</span></div>';
-  box.innerHTML=cel('todos',c.total,'no cadastro')+cel('ativos',c.ativos,'ativos')+cel('inativos',c.inativos,'inativos',' pend');
 }
 /* ===== Fechamento mensal: a imagem que vai para o aluno =====
    Reaproveita o mesmo caminho da imagem do histórico: html2canvas + o
@@ -6118,14 +6107,15 @@ function linhaAluno(a){
   const difere=ag.total>0&&ag.valor!==(Number(a.mensalidade)||0)&&!difSilenciada(a);
   const venc=reposVencendo(a);
   const tags=[];
-  if(difere)tags.push('<span class="al-tag ouro">📅 agenda ≠ plano</span>');
+  if(difere)tags.push('<span class="al-tag ouro">📅 conferir valor: agenda dá '+fmt(ag.valor)+'</span>');
   if(venc>0)tags.push('<span class="al-tag ouro">⏳ '+fmtCred(venc)+' repos. vencem</span>');
   if(perfilDe(a)==='torneio')tags.push('<span class="al-tag cinza">🏆 torneio</span>');
   const rap=aulaRapidaDe(a);
+  const hr=horarioFixoTxt(a);
   return `<div class="al-row${ativo?'':' inativo'}" id="al-${a.id}" onclick="abrirFicha('${a.id}')">
     <div class="al-info">
       <div class="al-topo"><div class="al-nome">${ehPersonalTipo(a.tipo)?'💪':'🎾'} ${esc(a.nome)}</div>${seloPagamento(a)}</div>
-      <div class="al-saldo" data-pulsa="${a.id}">${saldoLinhaAluno(a)}</div>
+      <div class="al-saldo" data-pulsa="${a.id}">${hr?'<span class="al-hora">'+esc(hr)+'</span> · ':''}${saldoLinhaAluno(a)}</div>
       ${tags.length?'<div class="al-tags">'+tags.join('')+'</div>':''}
     </div>
     ${rap?`<button class="al-aula" title="Lançar aula de hoje" onclick="event.stopPropagation();aulaRealizada('${a.id}'${rap.modo?",'grupo'":''})">${BI.check}<small>${rap.rot}</small></button>`:'<span class="al-seta">›</span>'}
@@ -6157,26 +6147,85 @@ function renderTotalAlunos(items){
     +' · <span class="ok">'+pagos+' pago'+(pagos===1?'':'s')+'</span>'
     +' · <span class="pend">'+pend.length+' pendente'+(pend.length===1?'':'s')+(pend.length?' ('+fmt(falta)+')':'')+'</span>';
 }
+/* Horário fixo da agenda, curto: "Seg/Qua 16h" ou "Seg 16h · Qua 18h30".
+   Vale o que está em vigor hoje ou começa depois (fixo encerrado não conta). */
+function horaCurta(h){const p=String(h||'').split(':');return Number(p[0])+'h'+(p[1]&&p[1]!=='00'?p[1]:'');}
+function horarioFixoTxt(a){
+  const AL_DIA=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const dk=dKey(new Date());
+  const vistos={},fx=[];
+  ((DB.agenda&&DB.agenda.fixos)||[]).forEach(f=>{
+    if(f.alunoId!==a.id||(f.ate&&f.ate<dk))return;
+    const k=f.dia+'|'+f.hora;if(vistos[k])return;vistos[k]=1;
+    fx.push(f);
+  });
+  if(!fx.length)return '';
+  fx.sort((x,y)=>((x.dia+6)%7)-((y.dia+6)%7)||String(x.hora).localeCompare(String(y.hora)));   // semana começa na segunda
+  const horas=[...new Set(fx.map(f=>f.hora))];
+  if(horas.length===1)return [...new Set(fx.map(f=>AL_DIA[f.dia]))].join('/')+' '+horaCurta(horas[0]);
+  const t=fx.slice(0,3).map(f=>AL_DIA[f.dia]+' '+horaCurta(f.hora)).join(' · ');
+  return fx.length>3?t+' +'+(fx.length-3):t;
+}
+/* Próxima aula de cada aluno nos próximos 7 dias (hoje incluído), lida da
+   agenda do mesmo jeito que a conta do mês: fixos com exceções, avulsas e
+   reposições. Devolve {alunoId:{i:dias a partir de hoje, hora}}. */
+function proximaAulaPorAluno(){
+  const out={},h0=new Date();
+  for(let i=0;i<7;i++){
+    const d=new Date(h0.getFullYear(),h0.getMonth(),h0.getDate()+i);
+    HORAS.forEach(h=>entriesFor(d,h).forEach(e=>{
+      if(!e.alunoId||e.origem==='compromisso'||out[e.alunoId])return;
+      out[e.alunoId]={i,hora:h};
+    }));
+  }
+  return out;
+}
+function rotuloDiaAlunos(i){
+  const h0=new Date(),d=new Date(h0.getFullYear(),h0.getMonth(),h0.getDate()+i);
+  const nome=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][d.getDay()];
+  if(i===0)return 'Hoje · '+nome;
+  if(i===1)return 'Amanhã · '+nome;
+  return nome+' · '+String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');
+}
+/* A lista vira a semana: cada aluno aparece no próximo dia em que tem aula,
+   na ordem do horário. Quem não tem aula nos próximos 7 dias vai para o fim. */
+function listaPorDia(items){
+  const prox=proximaAulaPorAluno();
+  const pos=a=>prox[a.id]||null;
+  const tit=(rot,n,cls)=>'<div class="al-grupo-t'+(cls||'')+'"><b>'+rot+'</b><small>'+n+' aluno'+(n===1?'':'s')+'</small></div>';
+  let html='';
+  for(let i=0;i<7;i++){
+    const doDia=items.filter(a=>pos(a)&&pos(a).i===i)
+      .sort((x,y)=>pos(x).hora.localeCompare(pos(y).hora)||x.nome.localeCompare(y.nome));
+    if(doDia.length)html+=tit(rotuloDiaAlunos(i),doDia.length,i===0?' hoje':'')+'<div class="al-lista">'+doDia.map(linhaAluno).join('')+'</div>';
+  }
+  const sem=items.filter(a=>!pos(a));
+  if(sem.length)html+=tit('Sem aula nos próximos 7 dias',sem.length)+'<div class="al-lista">'+sem.map(linhaAluno).join('')+'</div>';
+  return html;
+}
 function renderAlunos(){
   try{if(fichaId)renderFicha();}catch(e){console.warn('ficha',e);}
   const list=document.getElementById('alunos-list');
   const q=(document.getElementById('search').value||'').toLowerCase();
+  const sel=document.getElementById('alunos-tipo');if(sel&&sel.value!==filtroAluno)sel.value=filtroAluno;
+  /* Inativo fica fora da lista normal; aparece em "Inativos", ao buscar pelo
+     nome, ou num foco vindo do Início (reposição, valor da agenda). */
   const base=DB.alunos.filter(a=>a.nome.toLowerCase().includes(q)).filter(a=>{
-    if(filtroAluno==='todos')return true;
-    return perfilDe(a)===filtroAluno;
-  }).filter(a=>filtroAtivo==='todos'||(filtroAtivo==='ativos')===ehAtivoAluno(a))
+    if(filtroAluno==='inativos')return !ehAtivoAluno(a);
+    if(!ehAtivoAluno(a))return filtroAluno==='todos'&&(!!q||focoRepos||focoDif);
+    return filtroAluno==='todos'||perfilDe(a)===filtroAluno;
+  })
     .filter(a=>!focoRepos||(Number(a.repos)||0)>0)
     .filter(a=>{if(!focoDif)return true;const ag=agendaDoMes(a);return ag.total>0&&ag.valor!==(Number(a.mensalidade)||0)&&!difSilenciada(a);})
     .sort((x,y)=>x.nome.localeCompare(y.nome));
-  renderResumoAlunos();
   renderAtalhoRenova();
   renderFiltroPag(base);
   const items=base.filter(a=>passaFiltroPag(a,filtroPag));
   renderTotalAlunos(items);
   const avisoRepos=focoRepos?'<div class="foco-repos">🔁 Mostrando só quem tem <b>reposição pendente</b> · <a onclick="limparFocoRepos()">ver todos</a></div>':
-    (focoDif?'<div class="foco-repos">📅 Mostrando só quem tem a <b>agenda diferente do plano</b> · <a onclick="limparFocoDif()">ver todos</a></div>':'');
-  if(!items.length){list.innerHTML=avisoRepos+'<div class="empty">Nenhum aluno '+(q||filtroAluno!=='todos'||filtroAtivo!=='todos'||filtroPag!=='todos'||focoRepos||focoDif?'encontrado':'cadastrado ainda — toque em <b>+ Novo</b> para começar')+'.</div>';return;}
-  list.innerHTML=avisoRepos+'<div class="al-lista">'+items.map(linhaAluno).join('')+'</div>';
+    (focoDif?'<div class="foco-repos">📅 Mostrando só quem tem <b>valor para conferir com a agenda</b> · <a onclick="limparFocoDif()">ver todos</a></div>':'');
+  if(!items.length){list.innerHTML=avisoRepos+'<div class="empty">Nenhum aluno '+(q||filtroAluno!=='todos'||filtroPag!=='todos'||focoRepos||focoDif||DB.alunos.length?'encontrado':'cadastrado ainda — toque em <b>+ Novo</b> para começar')+'.</div>';return;}
+  list.innerHTML=avisoRepos+listaPorDia(items);
 }
 
 /* ----- a ficha ----- */
