@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-02-14';
+const VERSAO='2026-10-02-15';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2947,7 +2947,7 @@ function go(id,btn){
   btn.classList.add('on');
   window.scrollTo({top:0});
   if(id==='agenda'){syncRequests(true);marcarVisto('agenda');if(wkAutoFit)wkZoomFit();setTimeout(rolarAgendaAgora,80);}
-  if(id==='lanc'){filtroLancCat=null;caixaDia=null;renderMovs();}   // abrir a Caixa pela barra mostra tudo
+  if(id==='lanc'){filtroLancCat=null;cxBusca='';cxEditando=false;caixaDia=null;renderMovs();}   // abrir a Caixa pela barra mostra tudo
   if(id==='fech')abrirFechamento();
   if(id==='profs')prepararAluguel();
   if(id==='graf')renderGraf();
@@ -6502,35 +6502,76 @@ function renderFicha(){
 }
 
 /* ================= LANÇAMENTOS ================= */
+/* ===== Caixa enxuta (2026-10) =====
+   Tudo que se lança na Caixa cai no dia que ela está mostrando (hoje, ou o dia
+   escolhido nas setas, para lançar o que ficou esquecido) e o mês segue a data,
+   sempre — antes o lançamento rápido gravava o mês do cabeçalho com a data de
+   hoje, e com outro mês aberto ele sumia das duas listas. Os atalhos usam os
+   valores do Financeiro, e todo lançamento novo oferece "desfazer" por 6s:
+   botão menor erra mais, desfazer custa um toque. */
+function cxDiaLanc(){return caixaDia||dKey(new Date());}
+/* Dia padrão para lançar fora da Caixa: hoje, ou um dia do mês que está aberto
+   no cabeçalho (para não sumir de onde ele está olhando). */
+function diaPadraoDoMes(){
+  const mk=monthKey(),hoje=dKey(new Date());
+  if(mk===hoje.slice(0,7))return hoje;
+  if(mk>hoje.slice(0,7))return mk+'-01';
+  const p=mk.split('-');return dKey(new Date(Number(p[0]),Number(p[1]),0));
+}
+/* Aberto da Caixa: o dia que ela mostra. De outra tela: diaPadraoDoMes. */
+function diaDoModal(){const pg=document.getElementById('pg-lanc');return (pg&&pg.classList.contains('on'))?cxDiaLanc():diaPadraoDoMes();}
+function dataValida(k){return /^\d{4}-\d{2}-\d{2}$/.test(String(k||''))&&!isNaN(new Date(k+'T12:00:00'));}
+function diaCurto(k){const p=String(k).split('-');return p[2]+'/'+p[1];}
+function lancarNovo(rec,txt){
+  rec.id='l'+Date.now();
+  if(!dataValida(rec.data))rec.data=dKey(new Date());
+  rec.mes=rec.data.slice(0,7);
+  DB.lancamentos.push(rec);
+  persist();renderAll();
+  const quando=rec.data===dKey(new Date())?'':' em '+diaCurto(rec.data);
+  toastDesfazer(txt+quando,()=>desfazerLancNovo(rec.id));
+  return rec;
+}
+function desfazerLancNovo(id){
+  if(!(DB.lancamentos||[]).some(l=>l.id===id)){toast('Esse lançamento já não está lá');return;}
+  delLanc(id);toast('Lançamento desfeito');
+}
 function quickLanc(desc,valor,modal){
-  if(acaoRepetida('q-'+desc+'-'+valor)){toast('Esse lançamento acabou de ser feito');return;}
-  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc,valor,cat:desc.includes('Locação')?'locacao':'avulsa',modal:modal||'tenis',data:dKey(new Date())});
-  persist();renderAll();toast(desc+' · '+fmt(valor)+' lançado');
+  quickLancFull(desc,valor,desc.includes('Locação')?'locacao':'avulsa',modal);
 }
 /* Botão rápido com categoria explícita (usado pelos botões que o João cria). */
 function quickLancFull(desc,valor,cat,modal){
   if(acaoRepetida('q-'+desc+'-'+valor)){toast('Esse lançamento acabou de ser feito');return;}
-  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc,valor:Number(valor)||0,cat:cat||'avulsa',modal:modal||'tenis',data:dKey(new Date())});
-  persist();renderAll();toast(desc+' · '+fmt(Number(valor)||0)+' lançado');
+  const v=Number(valor)||0;
+  lancarNovo({desc,valor:v,cat:cat||'avulsa',modal:modal||'tenis',data:cxDiaLanc()},desc+' · '+fmt(v)+' lançado');
 }
 function quickLancCustom(i){const b=(DB.botoesLanc||[])[i];if(!b)return;quickLancFull(b.label,b.valor,b.cat,b.modal);}
-/* Desenha os botões da Caixa: os 4 fixos, depois os que o João criou, e por fim
-   "Outro valor" e "＋ Novo botão". */
+function quickLancFixo(i){const f=atalhosFixos()[i];if(f)quickLanc(f.desc,f.valor,f.modal);}
+function atalhosFixos(){
+  const pr=DB.precos||{},n=(v,d)=>Number(v)>0?Number(v):d;
+  return [
+    {desc:'Avulsa Particular',rot:'Avulsa particular',valor:n(pr.avulsaPart,170)},
+    {desc:'Avulsa Grupo',rot:'Avulsa grupo',valor:n(pr.avulsaGrupo,95)},
+    {desc:'Locação de Quadra',rot:'Locação 1h',valor:n(pr.locacao,70)},
+    {desc:'Personal avulso',rot:'Personal',valor:n(pr.personal,130),modal:'personal'}];
+}
+let cxEditando=false;
+function cxAlternaEdicao(){cxEditando=!cxEditando;renderQuickLanc();}
+/* Atalhos em fichas pequenas, três por linha: os 4 fixos e os que o João criou.
+   O ✕ e o "＋ Novo atalho" só aparecem em "Editar atalhos". */
 function renderQuickLanc(){
   const el=document.getElementById('quick-lanc');if(!el)return;
-  const personal=(DB.precos&&DB.precos.personal)||130;
-  let h='';
-  h+=`<button class="q1" onclick="quickLanc('Avulsa Particular',170)">Avulsa Particular<small>R$ 170</small></button>`;
-  h+=`<button class="q2" onclick="quickLanc('Avulsa Grupo',95)">Avulsa Grupo<small>R$ 95</small></button>`;
-  h+=`<button class="q3" onclick="quickLanc('Locação de Quadra',70)">Locação 1h<small>R$ 70</small></button>`;
-  h+=`<button class="q2" onclick="quickLanc('Personal avulso',${personal},'personal')">Personal avulso<small>R$ ${personal}</small></button>`;
+  const ficha=(onc,rot,valor,cls,x)=>'<button class="cx-at'+(cls?' '+cls:'')+'" onclick="'+onc+'"><span>'+esc(rot)+'</span><b>'+fmt(Number(valor)||0)+'</b>'+(x||'')+'</button>';
+  let h=atalhosFixos().map((f,i)=>ficha('quickLancFixo('+i+')',f.rot,f.valor,cxEditando?'fixo':'')).join('');
   (DB.botoesLanc||[]).forEach((b,i)=>{
-    const cls=['q1','q2','q3'][i%3];
-    h+=`<button class="${cls} qb-custom" onclick="quickLancCustom(${i})">${esc(b.label)}<small>R$ ${Number(b.valor)||0}</small><span class="qb-x" title="Remover botão" onclick="event.stopPropagation();delBotaoLanc(${i})">✕</span></button>`;
+    h+=ficha('quickLancCustom('+i+')',b.label,b.valor,'meu',
+      cxEditando?'<i class="cx-at-x" title="Remover atalho" onclick="event.stopPropagation();delBotaoLanc('+i+')">✕</i>':'');
   });
-  h+=`<button class="q4" onclick="openLancModal()">Outro valor<small>+ lançar</small></button>`;
-  h+=`<button class="qb-novo" onclick="openBotaoModal()">＋ Novo botão<small>criar atalho</small></button>`;
+  if(cxEditando)h+='<button class="cx-at novo" onclick="openBotaoModal()"><span>＋ Novo atalho</span><b>criar</b></button>';
   el.innerHTML=h;
+  const ed=document.getElementById('cx-editar');if(ed)ed.textContent=cxEditando?'✓ Pronto':'✎ Editar atalhos';
+  const t=document.getElementById('cx-lancar-t'),d=cxDiaLanc();
+  if(t)t.textContent=d===dKey(new Date())?'Lançar hoje':('Lançar em '+diaCurto(d));
 }
 function openBotaoModal(){
   document.getElementById('bt-nome').value='';
@@ -6546,18 +6587,19 @@ function salvarBotaoLanc(){
   if(!Array.isArray(DB.botoesLanc))DB.botoesLanc=[];
   DB.botoesLanc.push({label,valor,cat:document.getElementById('bt-cat').value,modal:document.getElementById('bt-tipo').value});
   logAct('Novo botão de lançamento: '+label);
-  persist();closeModal('ov-botao');renderQuickLanc();toast('Botão "'+label+'" criado ✓');
+  persist();closeModal('ov-botao');renderQuickLanc();toast('Atalho "'+label+'" criado ✓');
 }
 function delBotaoLanc(i){
   if(!Array.isArray(DB.botoesLanc)||!DB.botoesLanc[i])return;
-  if(!confirm('Remover o botão "'+DB.botoesLanc[i].label+'"?'))return;
-  DB.botoesLanc.splice(i,1);persist();renderQuickLanc();toast('Botão removido');
+  if(!confirm('Remover o atalho "'+DB.botoesLanc[i].label+'"?\n\nOs lançamentos já feitos com ele continuam.'))return;
+  DB.botoesLanc.splice(i,1);persist();renderQuickLanc();toast('Atalho removido');
 }
 function openLancModal(){
   document.getElementById('l-desc').value='';document.getElementById('l-valor').value='';
   const sel=document.getElementById('l-aluno');
-  if(sel){sel.innerHTML='<option value="">— ninguém —</option>'+DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${a.id}">${esc(a.nome)}</option>`).join('');sel.value='';}
+  if(sel){sel.innerHTML='<option value="">— ninguém —</option>'+DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${esc(a.id)}">${esc(a.nome)}</option>`).join('');sel.value='';}
   document.getElementById('l-cat').value='avulsa';
+  const dt=document.getElementById('l-data');if(dt)dt.value=diaDoModal();
   document.getElementById('ov-lanc').classList.add('on');
 }
 function saveLanc(){
@@ -6567,10 +6609,13 @@ function saveLanc(){
   const a=alunoId?DB.alunos.find(x=>x.id===alunoId):null;
   const desc=desc0||(a?a.nome:'');
   if(!valor||!desc){toast('Informe o valor e a descrição (ou vincule um aluno)');return;}
-  const rec={id:'l'+Date.now(),mes:monthKey(),desc,valor,cat:document.getElementById('l-cat').value,data:dKey(new Date())};
+  if(valor<0){toast('Para saída, use "− Despesa"');return;}
+  const data=(document.getElementById('l-data')||{}).value||cxDiaLanc();
+  if(!dataValida(data)){toast('Escolha uma data válida');return;}
+  const rec={desc,valor,cat:document.getElementById('l-cat').value,data};
   if(a){rec.alunoId=a.id;if(ehPersonalTipo(a.tipo))rec.modal='personal';}
-  DB.lancamentos.push(rec);
-  persist();closeModal('ov-lanc');renderAll();toast('Lançamento salvo'+(a?(' · '+a.nome.split(' ')[0]):''));
+  closeModal('ov-lanc');
+  lancarNovo(rec,'Receita lançada'+(a?(' · '+a.nome.split(' ')[0]):'')+' · '+fmt(valor));
 }
 function delLanc(id){
   const morta=(DB.lancamentos||[]).find(l=>l.id===id);
@@ -6643,36 +6688,74 @@ function removerLancEdit(){
   closeModal('ov-lanc-edit');
   toast('Lançamento removido');
 }
-let filtroLancCat=null;   // null = todas as categorias; senão 'mensalidade'|'avulsa'|'locacao'|'outro'
+let filtroLancCat=null;   // null = tudo; 'in' | 'out' | 'mensalidade' | 'avulsa' | 'locacao' | 'outro'
+let cxBusca='';
 const LANC_CAT_LBL={mensalidade:'Mensalidades',avulsa:'Avulsas',locacao:'Locações',outro:'Outros'};
+const CX_FILTROS=[['','Tudo'],['in','Entradas'],['out','Saídas'],['mensalidade','Mensal.'],['avulsa','Avulsas'],['locacao','Locações'],['outro','Outros']];
 function limparFiltroLanc(){filtroLancCat=null;renderMovs();}
+function cxFiltrar(f){filtroLancCat=f||null;renderMovs();}
+function cxBuscar(v){cxBusca=String(v||'');renderMovs();}
+function semAcentoCx(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();}
+function catDoLanc(l){
+  if(Number(l.valor)<0)return l.despCat||'Despesa';
+  return {mensalidade:'Mensalidade',avulsa:'Avulsa',locacao:'Locação',outro:'Outro'}[l.cat]||'Outro';
+}
+/* Movimentações do mês aberto no cabeçalho: resumo (entrou/saiu/saldo),
+   filtros, busca e a lista agrupada por dia. A lixeira saiu da linha (apagava
+   sem perguntar); remover fica dentro do lançamento, com confirmação. */
 function renderMovs(){
   try{renderCaixaDia();}catch(e){console.warn('caixa do dia',e);}
-  let movs=DB.lancamentos.filter(l=>l.mes===monthKey());
-  if(filtroLancCat)movs=movs.filter(l=>l.cat===filtroLancCat&&l.valor>0);
-  movs=movs.sort((a,b)=>b.id.localeCompare(a.id));
-  const el=document.getElementById('mov-list');
-  const chip=filtroLancCat?`<div class="foco-repos">Mostrando só <b>${LANC_CAT_LBL[filtroLancCat]||filtroLancCat}</b> deste mês · <a onclick="limparFiltroLanc()">ver todos</a></div>`:'';
-  if(!movs.length){el.innerHTML=chip+'<div class="empty">Nenhum lançamento'+(filtroLancCat?' desta categoria':'')+' neste mês.</div>';return;}
-  el.innerHTML=chip+movs.map(l=>{
-    const av=l.alunoId?DB.alunos.find(x=>x.id===l.alunoId):null;
-    const vinc=(av&&!(l.desc||'').includes(av.nome))?` <span style="color:var(--muted);font-weight:600">🔗 ${av.nome.split(' ')[0]}</span>`:(av?' 🔗':'');
-    /* Despesa é guardada com valor negativo. Mostrar tudo com "+" fazia o
-       aluguel da quadra aparecer como "+ R$ -2.500" — entrada, com o sinal
-       escondido no número. */
-    const saida=Number(l.valor)<0;
-    return `
-  <div class="mov" onclick="abrirLancEdit('${l.id}')" style="cursor:pointer">
-    <div class="mov-l"><b>${esc(l.desc)}</b>${vinc}<span>${l.data.split('-').reverse().join('/')} · toque para editar</span></div>
-    <div style="display:flex;align-items:center"><span class="mov-v ${saida?'out':'in'}">${saida?'−':'+'} ${fmt(Math.abs(Number(l.valor)||0))}</span><button class="mov-x" onclick="event.stopPropagation();delLanc('${l.id}')">✕</button></div>
-  </div>`;}).join('');
+  try{renderQuickLanc();}catch(e){console.warn('atalhos',e);}
+  const mk=monthKey();
+  const doMes=(DB.lancamentos||[]).filter(l=>l.mes===mk);
+  const ent=doMes.filter(l=>Number(l.valor)>0).reduce((t,l)=>t+Number(l.valor),0);
+  const sai=doMes.filter(l=>Number(l.valor)<0).reduce((t,l)=>t-Number(l.valor),0);
+  const tit=document.getElementById('cx-mes-t');
+  if(tit)tit.textContent='Movimentações de '+((MESES[Number(mk.slice(5,7))-1]||'').toLowerCase()||mk);
+  const res=document.getElementById('cx-mes-resumo');
+  if(res)res.innerHTML='<div class="cx-res"><div><span>Entrou</span><b class="in">'+fmt(ent)+'</b></div>'
+    +'<div><span>Saiu</span><b class="out">'+fmt(sai)+'</b></div>'
+    +'<div><span>Saldo</span><b>'+fmt(ent-sai)+'</b></div></div>';
+  const fl=document.getElementById('cx-filtros');
+  if(fl)fl.innerHTML=CX_FILTROS.map(([k,r])=>'<button class="'+((filtroLancCat||'')===k?'on':'')+'" onclick="cxFiltrar(\''+k+'\')">'+r+'</button>').join('');
+  const bx=document.getElementById('cx-busca');if(bx&&bx.value!==cxBusca)bx.value=cxBusca;
+  let movs=doMes;
+  const f=filtroLancCat;
+  if(f==='in')movs=movs.filter(l=>Number(l.valor)>0);
+  else if(f==='out')movs=movs.filter(l=>Number(l.valor)<0);
+  else if(f)movs=movs.filter(l=>l.cat===f&&Number(l.valor)>0);
+  const q=semAcentoCx(cxBusca).trim();
+  const nomeDe=l=>{const av=l.alunoId?DB.alunos.find(x=>x.id===l.alunoId):null;return av?av.nome:'';};
+  if(q)movs=movs.filter(l=>semAcentoCx((l.desc||'')+' '+nomeDe(l)+' '+catDoLanc(l)).includes(q));
+  movs=movs.slice().sort((a,b)=>{const da=diaDoLanc(a),db=diaDoLanc(b);return da!==db?(db>da?1:-1):String(b.id).localeCompare(String(a.id));});
+  const el=document.getElementById('mov-list');if(!el)return;
+  if(!movs.length){el.innerHTML='<div class="cx-vazio-mes">Nenhum lançamento'+((f||q)?' com esse filtro':'')+' neste mês.'
+    +((f||q)?' <a onclick="cxFiltrar(\'\');cxBuscar(\'\')">ver tudo</a>':'')+'</div>';return;}
+  const DS=['dom','seg','ter','qua','qui','sex','sáb'];
+  let h='',diaAtual='';
+  const grupos={};movs.forEach(l=>{const d=diaDoLanc(l);(grupos[d]=grupos[d]||[]).push(l);});
+  movs.forEach(l=>{
+    const d=diaDoLanc(l);
+    if(d!==diaAtual){
+      diaAtual=d;
+      const g=grupos[d],e=g.filter(x=>Number(x.valor)>0).reduce((t,x)=>t+Number(x.valor),0),s=g.filter(x=>Number(x.valor)<0).reduce((t,x)=>t-Number(x.valor),0);
+      const dow=dataValida(d)?DS[new Date(d+'T12:00:00').getDay()]+' · ':'';
+      h+='<div class="cx-dia-t"><span>'+(d===dKey(new Date())?'Hoje · ':dow)+(dataValida(d)?diaCurto(d):'sem data')+'</span><b>'
+        +(e?'<i class="in">+ '+fmt(e)+'</i>':'')+(s?' <i class="out">− '+fmt(s)+'</i>':'')+'</b></div>';
+    }
+    const saida=Number(l.valor)<0, nm=nomeDe(l);
+    const vinc=(nm&&!(l.desc||'').includes(nm))?' · 🔗 '+esc(nm.split(' ')[0]):(nm?' · 🔗':'');
+    h+='<div class="cx-mv" onclick="abrirLancEdit(\''+argJs(l.id)+'\')"><div class="cx-mv-l"><b>'+esc(l.desc||'—')+'</b><span>'+esc(catDoLanc(l))+vinc+'</span></div>'
+      +'<b class="cx-mv-v '+(saida?'out':'in')+'">'+(saida?'− ':'+ ')+fmt(Math.abs(Number(l.valor)||0))+'</b></div>';
+  });
+  el.innerHTML=h;
 }
 /* Cartão de categoria do Financeiro leva à Caixa filtrada naquela categoria. */
 function verLancCategoria(cat){
   irParaAba('lanc');
-  filtroLancCat=cat;
+  filtroLancCat=cat;cxBusca='';
   renderMovs();
-  const el=document.getElementById('mov-list');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+  const el=document.getElementById('cx-filtros');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 /* ================= DASHBOARD & FINANCEIRO ================= */
@@ -7455,6 +7538,7 @@ function openDespesaModal(){
   document.getElementById('d-desc').value='';
   document.getElementById('d-valor').value='';
   document.getElementById('d-cat').value='Aluguel';
+  const dt=document.getElementById('d-data');if(dt)dt.value=diaDoModal();
   document.getElementById('ov-desp').classList.add('on');
 }
 function saveDespesa(){
@@ -7462,8 +7546,10 @@ function saveDespesa(){
   const valor=Math.abs(Number(document.getElementById('d-valor').value)||0);
   if(!desc){toast('Descreva a despesa');return;}
   if(!valor){toast('Informe o valor da despesa');return;}
-  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc,valor:-valor,cat:'despesa',despCat:document.getElementById('d-cat').value,data:dKey(new Date())});
-  persist();closeModal('ov-desp');renderAll();toast('Despesa lançada · −'+fmt(valor));
+  const data=(document.getElementById('d-data')||{}).value||diaPadraoDoMes();
+  if(!dataValida(data)){toast('Escolha uma data válida');return;}
+  closeModal('ov-desp');
+  lancarNovo({desc,valor:-valor,cat:'despesa',despCat:document.getElementById('d-cat').value,data},'Despesa lançada · −'+fmt(valor));
 }
 
 /* ================= GRÁFICOS ================= */
@@ -9207,24 +9293,26 @@ function caixaMudaDia(n){
   const hoje=dKey(new Date());
   const d=new Date((caixaDia||hoje)+'T12:00:00');d.setDate(d.getDate()+n);
   const k=dKey(d);if(k>hoje)return;
-  caixaDia=(k===hoje)?null:k;renderCaixaDia();
+  caixaDia=(k===hoje)?null:k;renderCaixaDia();renderQuickLanc();
 }
+const CX_DIA_MAX=4;   // o dia completo está nas Movimentações, logo abaixo
 function renderCaixaDia(){
   const el=document.getElementById('caixa-dia');if(!el)return;
   const hoje=dKey(new Date()), dia=caixaDia||hoje;
   const ls=(DB.lancamentos||[]).filter(l=>diaDoLanc(l)===dia).sort((a,b)=>String(b.id).localeCompare(String(a.id)));
   const entrou=ls.filter(l=>Number(l.valor)>0).reduce((t,l)=>t+Number(l.valor),0);
   const saiu=ls.filter(l=>Number(l.valor)<0).reduce((t,l)=>t-Number(l.valor),0);
-  const nEnt=ls.filter(l=>Number(l.valor)>0).length;
   const p=dia.split('-'), dow=['domingo','segunda','terça','quarta','quinta','sexta','sábado'][new Date(dia+'T12:00:00').getDay()];
   const rot=dia===hoje?'Hoje':(p[2]+'/'+p[1]);
   el.innerHTML='<div class="cx-dia">'
     +'<div class="cx-top"><button class="cx-seta" onclick="caixaMudaDia(-1)" aria-label="Dia anterior">‹</button>'
     +'<div class="cx-tit"><b>'+rot+'</b><span>'+dow+(dia===hoje?' · '+p[2]+'/'+p[1]:'')+'</span></div>'
     +'<button class="cx-seta" onclick="caixaMudaDia(1)" '+(dia===hoje?'disabled':'')+' aria-label="Dia seguinte">›</button></div>'
-    +'<div class="cx-total"><span>Entrou no dia</span><b>'+fmt(entrou)+'</b><small>'+nEnt+' lançamento'+(nEnt===1?'':'s')+(saiu?(' · saiu '+fmt(saiu)):'')+'</small></div>'
-    +(ls.length?('<div class="cx-lista">'+ls.map(l=>{const s=Number(l.valor)<0;
-        return '<div class="cx-li"><span>'+esc(l.desc||'—')+'</span><b class="'+(s?'out':'in')+'">'+(s?'− ':'+ ')+fmt(Math.abs(Number(l.valor)||0))+'</b></div>';}).join('')+'</div>')
+    +'<div class="cx-total"><div><span>Entrou</span><b>'+fmt(entrou)+'</b></div>'
+    +'<div><span>Saiu</span><b class="out">'+fmt(saiu)+'</b></div></div>'
+    +(ls.length?('<div class="cx-lista">'+ls.slice(0,CX_DIA_MAX).map(l=>{const s=Number(l.valor)<0;
+        return '<div class="cx-li" onclick="abrirLancEdit(\''+argJs(l.id)+'\')"><span>'+esc(l.desc||'—')+'</span><b class="'+(s?'out':'in')+'">'+(s?'− ':'+ ')+fmt(Math.abs(Number(l.valor)||0))+'</b></div>';}).join('')
+        +(ls.length>CX_DIA_MAX?'<div class="cx-mais">e mais '+(ls.length-CX_DIA_MAX)+' — veja em Movimentações</div>':'')+'</div>')
       :'<div class="cx-vazio">Nada lançado '+(dia===hoje?'hoje':'neste dia')+'.</div>')
     +'</div>';
 }
