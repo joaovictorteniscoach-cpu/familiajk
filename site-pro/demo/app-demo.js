@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-02-12';
+const VERSAO='2026-10-02-13';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2066,6 +2066,8 @@ function convidarAparelho(id){
   a.convidadoEm=dKey(new Date());
   persist();renderVinculos();
 }
+const PERFIS_SEM_APP=['personal','planilha','locacao'];
+const PR_ABERTO={falta:false,fora:false};   // mantém a lista aberta enquanto o João marca vários
 function prontidaoRegraFinal(ativos){
   if(!VINC_LIDO)return '<p class="hint" style="margin-top:10px">Carregando a lista de aparelhos para conferir a regra final…</p>';
   const comAparelho=new Set();
@@ -2073,7 +2075,14 @@ function prontidaoRegraFinal(ativos){
     const al=DB.alunos.find(a=>a.id===x.v.alunoId)||DB.alunos.find(a=>String(a.codigo||'')===String(x.v.codigo||''));
     if(al)comAparelho.add(al.id);
   });
-  const alunos=DB.alunos.filter(ehAtivoAluno);
+  /* Fora da conta: quem não usa o app. Personal, planilha e locação saem
+     sozinhos (o João não usa o app com eles); os demais (ex.: ausentes) ele
+     marca à mão. Com a regra final, se um deles abrir o app, o pedido de
+     acesso continua chegando aqui para aprovar — ninguém fica trancado. */
+  const ativosTodos=DB.alunos.filter(ehAtivoAluno);
+  const porPerfil=ativosTodos.filter(a=>PERFIS_SEM_APP.includes(perfilDe(a)));
+  const marcados=ativosTodos.filter(a=>a.semApp&&!PERFIS_SEM_APP.includes(perfilDe(a)));
+  const alunos=ativosTodos.filter(a=>!PERFIS_SEM_APP.includes(perfilDe(a))&&!a.semApp);
   const sem=alunos.filter(a=>!comAparelho.has(a.id)).sort((x,y)=>x.nome.localeCompare(y.nome));
   const codRuim=alunos.filter(a=>!/^\d{4}$/.test(String(a.codigo||'')));
   const lista=arr=>arr.map(a=>vincEsc(a.nome)+' <span class="hint">· código '+vincEsc(a.codigo||'—')+'</span>').join('<br>');
@@ -2082,7 +2091,8 @@ function prontidaoRegraFinal(ativos){
     const conv=a.convidadoEm?'<span class="hint"> · convidado em '+fmtDataCurta(a.convidadoEm)+'</span>':'';
     const bt=a.tel?'<button class="btn btn-ghost pr-conv" onclick="convidarAparelho(\''+argJs(a.id)+'\')">📲 '+(a.convidadoEm?'De novo':'Convidar')+'</button>'
       :'<span class="hint">sem telefone</span>';
-    return '<div class="pr-li"><div><b>'+vincEsc(a.nome)+'</b>'+conv+'</div>'+bt+'</div>';
+    const fora='<button class="btn btn-ghost pr-conv" onclick="marcarSemApp(\''+argJs(a.id)+'\',true)">🚫 Não usa</button>';
+    return '<div class="pr-li"><div><b>'+vincEsc(a.nome)+'</b>'+conv+'</div><div class="pr-bts">'+bt+fora+'</div></div>';
   }).join('');
   let h='<div style="border:1px solid var(--border);border-radius:12px;padding:10px 11px;margin-top:12px">'
     +'<div style="font-size:12px;font-weight:800;letter-spacing:.4px">🔒 Pronto para a regra final?</div>';
@@ -2090,11 +2100,25 @@ function prontidaoRegraFinal(ativos){
     h+='<p class="hint" style="color:var(--ok);font-weight:700;margin-top:6px">✓ Os '+alunos.length+' alunos ativos têm aparelho aprovado. Pelo lado do app, a regra final (etapa 4) pode ser publicada.</p>';
   }else{
     if(sem.length)h+='<p class="hint" style="margin-top:6px"><b>⏳ Faltam '+sem.length+' de '+alunos.length+' alunos ativos</b> com aparelho aprovado. Com a regra final, eles ficariam sem ver horários e sem conseguir agendar. Peça para abrirem o app: o pedido de acesso aparece aqui em cima.</p>'
-      +'<details style="margin-top:4px"><summary style="cursor:pointer;font-size:12px;font-weight:800;color:var(--muted)">Ver quem falta e convidar ('+sem.filter(a=>a.convidadoEm).length+' já convidado'+(sem.filter(a=>a.convidadoEm).length===1?'':'s')+')</summary><div style="margin-top:6px">'+listaConvite(sem)+'</div></details>';
+      +'<details style="margin-top:4px"'+(PR_ABERTO.falta?' open':'')+' ontoggle="PR_ABERTO.falta=this.open"><summary style="cursor:pointer;font-size:12px;font-weight:800;color:var(--muted)">Ver quem falta e convidar ('+sem.filter(a=>a.convidadoEm).length+' já convidado'+(sem.filter(a=>a.convidadoEm).length===1?'':'s')+')</summary><div style="margin-top:6px">'+listaConvite(sem)+'</div></details>';
     if(codRuim.length)h+='<p class="hint" style="margin-top:6px;color:var(--bad,#C0392B);font-weight:700">⚠ '+codRuim.length+' aluno(s) com código fora do padrão de 4 números: a regra final recusaria os pedidos deles.</p>'
       +'<div style="font-size:12.5px;line-height:1.6">'+lista(codRuim)+'</div>';
   }
+  /* quem ficou de fora da conta, para conferir e devolver se precisar */
+  if(porPerfil.length||marcados.length){
+    h+='<details style="margin-top:8px"'+(PR_ABERTO.fora?' open':'')+' ontoggle="PR_ABERTO.fora=this.open"><summary style="cursor:pointer;font-size:12px;font-weight:800;color:var(--muted)">Fora da conta: '
+      +porPerfil.length+' de personal/planilha/locação'+(marcados.length?(' + '+marcados.length+' marcado'+(marcados.length===1?'':'s')+' "não usa o app"'):'')+'</summary><div style="margin-top:6px">'
+      +marcados.map(a=>'<div class="pr-li"><div><b>'+vincEsc(a.nome)+'</b><span class="hint"> · não usa o app</span></div><button class="btn btn-ghost pr-conv" onclick="marcarSemApp(\''+argJs(a.id)+'\',false)">↩︎ Voltar</button></div>').join('')
+      +(porPerfil.length?'<div class="hint" style="margin-top:6px">'+porPerfil.map(a=>vincEsc(a.nome)+' <span>('+(PERFIL_LABELS[perfilDe(a)]||perfilDe(a))+')</span>').join(' · ')+'</div>':'')
+      +'</div></details>';
+  }
   return h+'</div>';
+}
+function marcarSemApp(id,sim){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  if(sim)a.semApp=true;else delete a.semApp;
+  persist();renderVinculos();
+  toast(sim?(a.nome.split(' ')[0]+' saiu da conta da regra final'):(a.nome.split(' ')[0]+' voltou para a conta'));
 }
 async function aprovarVinculoReq(i){
   const r=VINC_REQ_LIST[i];if(!r)return;

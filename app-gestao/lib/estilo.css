@@ -3135,3 +3135,4 @@ body.ficha-on{overflow:hidden}
 .pr-li{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0;border-top:1px solid var(--jv-line,rgba(190,211,190,.25));font-size:13px}
 .pr-li>div{min-width:0}
 .pr-li .pr-conv{flex:0 0 auto;padding:6px 10px!important;font-size:12px!important;min-height:0}
+.pr-li .pr-bts{display:flex;gap:6px;flex:0 0 auto}
