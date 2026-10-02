@@ -22,6 +22,23 @@ A grade compartilhada contém apenas ocupado/bloqueio e, quando aplicável, o mo
 
 Na fase final, o blob legado fecha para alunos e as filas exigem UID vinculado + código correspondente.
 
+## Publicar a etapa 4 (só com autorização do João)
+O código dos apps já está pronto para a regra estrita (conferido em 2026-10-02):
+toda fila do App do Aluno vai com `uid` e `codigo`, o aparelho não aprovado só
+vê o aviso "aguarde o João aprovar", e o teste de conexão continua válido. O que
+decide é a migração dos aparelhos.
+
+1. Gestão → Segurança → caixa **"Pronto para a regra final?"**. Só siga com o ✓
+   ("Os N alunos ativos têm aparelho aprovado") e sem aviso de código fora do padrão.
+2. Console do Firebase → Realtime Database → **Regras**: copie a regra atual e
+   guarde (é o caminho de volta; deve ser igual a `firebase-regras-etapa3-transicao.json`).
+3. Cole o conteúdo de `firebase-regras-etapa4-estrita.json` e **Publique**.
+4. Gestão → Ferramentas → **Testar conexão**, e peça a um aluno para abrir o app
+   e marcar um horário.
+5. Deu errado? Cole de volta a regra guardada no passo 2 e publique. Regra só
+   controla acesso: nenhum dado se perde ao ir ou voltar.
+6. Depois, atualizar o CLAUDE.md: a regra publicada passa a ser a etapa 4.
+
 ## Verificação
 ```sh
 bash ferramentas/checar-tudo.sh

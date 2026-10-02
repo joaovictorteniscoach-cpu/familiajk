@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-02-7';
+const VERSAO='2026-10-02-8';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -1969,6 +1969,7 @@ function publish(){
 /* ===== Segurança P0 — identidade e dados privados do aluno ================= */
 let VINCULOS={};
 let VINC_REQ_LIST=[];
+let VINC_LIDO=false;            // só depois de ler a nuvem dá para dizer quem falta
 let _vincPromise=null;
 function vincEsc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 async function carregarVinculos(silent){
@@ -1981,6 +1982,7 @@ async function carregarVinculos(silent){
         window.fbDB.ref('jvtenis/'+VINC_REQ_KEY).get()
       ]);
       VINCULOS=vs.exists()?(vs.val()||{}):{};
+      VINC_LIDO=true;
       const rv=rs.exists()?(rs.val()||{}):{};
       VINC_REQ_LIST=Object.keys(rv).map(uid=>Object.assign({uid:uid},rv[uid]||{})).sort((x,y)=>(x.ts||0)-(y.ts||0));
       return VINCULOS;
@@ -2036,7 +2038,36 @@ function renderVinculos(){
         +'<button class="btn btn-ghost" style="padding:6px 9px;font-size:11px" onclick="revogarVinculo(\''+uidJs+'\')">Revogar</button></div>';
     }); h+='</div></details>';
   }
+  h+=prontidaoRegraFinal(ativos);
   box.innerHTML=h;
+}
+/* ===== Pronto para a regra final (etapa 4)? =====
+   A regra estrita fecha a cópia antiga e só aceita pedido de aparelho
+   aprovado. Para o código ela está pronta; quem decide se pode publicar é a
+   migração: aluno ativo sem aparelho aprovado fica, com ela, sem ver horários
+   e sem conseguir agendar. Esta caixa só LISTA — não muda nada. */
+function prontidaoRegraFinal(ativos){
+  if(!VINC_LIDO)return '<p class="hint" style="margin-top:10px">Carregando a lista de aparelhos para conferir a regra final…</p>';
+  const comAparelho=new Set();
+  (ativos||[]).forEach(x=>{
+    const al=DB.alunos.find(a=>a.id===x.v.alunoId)||DB.alunos.find(a=>String(a.codigo||'')===String(x.v.codigo||''));
+    if(al)comAparelho.add(al.id);
+  });
+  const alunos=DB.alunos.filter(ehAtivoAluno);
+  const sem=alunos.filter(a=>!comAparelho.has(a.id)).sort((x,y)=>x.nome.localeCompare(y.nome));
+  const codRuim=alunos.filter(a=>!/^\d{4}$/.test(String(a.codigo||'')));
+  const lista=arr=>arr.map(a=>vincEsc(a.nome)+' <span class="hint">· código '+vincEsc(a.codigo||'—')+'</span>').join('<br>');
+  let h='<div style="border:1px solid var(--border);border-radius:12px;padding:10px 11px;margin-top:12px">'
+    +'<div style="font-size:12px;font-weight:800;letter-spacing:.4px">🔒 Pronto para a regra final?</div>';
+  if(!sem.length&&!codRuim.length){
+    h+='<p class="hint" style="color:var(--ok);font-weight:700;margin-top:6px">✓ Os '+alunos.length+' alunos ativos têm aparelho aprovado. Pelo lado do app, a regra final (etapa 4) pode ser publicada.</p>';
+  }else{
+    if(sem.length)h+='<p class="hint" style="margin-top:6px"><b>⏳ Faltam '+sem.length+' de '+alunos.length+' alunos ativos</b> com aparelho aprovado. Com a regra final, eles ficariam sem ver horários e sem conseguir agendar. Peça para abrirem o app: o pedido de acesso aparece aqui em cima.</p>'
+      +'<details style="margin-top:4px"><summary style="cursor:pointer;font-size:12px;font-weight:800;color:var(--muted)">Ver quem falta</summary><div style="margin-top:6px;font-size:12.5px;line-height:1.6">'+lista(sem)+'</div></details>';
+    if(codRuim.length)h+='<p class="hint" style="margin-top:6px;color:var(--bad,#C0392B);font-weight:700">⚠ '+codRuim.length+' aluno(s) com código fora do padrão de 4 números: a regra final recusaria os pedidos deles.</p>'
+      +'<div style="font-size:12.5px;line-height:1.6">'+lista(codRuim)+'</div>';
+  }
+  return h+'</div>';
 }
 async function aprovarVinculoReq(i){
   const r=VINC_REQ_LIST[i];if(!r)return;
