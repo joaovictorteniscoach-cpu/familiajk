@@ -3200,25 +3200,26 @@ body:before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 html body:not(#jv) .nav,html body:not(#jv) .nav:after{background:rgba(10,24,18,.70)!important;-webkit-backdrop-filter:blur(22px) saturate(170%);backdrop-filter:blur(22px) saturate(170%);border-top:1px solid rgba(255,255,255,.08)!important}
 html body:not(#jv) .ficha{background:rgba(10,26,20,.90)!important;-webkit-backdrop-filter:blur(26px) saturate(150%);backdrop-filter:blur(26px) saturate(150%)}
 html body:not(#jv) .jh-card,html body:not(#jv) .jv-ref-kpi,html body:not(#jv) .fin-card:not(.hero):not(.desp):not(.saldo),html body:not(#jv) .chart,html body:not(#jv) .fic-tile,html body:not(#jv) .fic-nota,html body:not(#jv) .ag-ferr,html body:not(#jv) .empty,html body:not(#jv) .jv-pay-card,html body:not(#jv) .jv-section-card,html body:not(#jv) .jv-credit-panel,html body:not(#jv) .jv-profile-card,html body:not(#jv) .evo-xp,html body:not(#jv) .evo-prio,html body:not(#jv) #pg-lanc .cx-dia,html body:not(#jv) #pg-lanc .cx-res>div{
-  background:linear-gradient(155deg,rgba(255,255,255,.075),rgba(255,255,255,.02) 60%),rgba(18,40,31,.55)!important;
+  background:rgba(18,40,31,.55)!important;
   -webkit-backdrop-filter:blur(16px) saturate(150%);backdrop-filter:blur(16px) saturate(150%);
   border:1px solid rgba(255,255,255,.09)!important;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 10px 26px rgba(0,0,0,.24)!important}
 html body:not(#jv) .al-row,html body:not(#jv) .aluno,html body:not(#jv) .comp-item,html body:not(#jv) .pend-item,html body:not(#jv) .cons,html body:not(#jv) .mov-card,html body:not(#jv) .graf-card,html body:not(#jv) .dobra-cab,html body:not(#jv) .dobra-corpo,html body:not(#jv) .fech-card,html body:not(#jv) .fq-linha,html body:not(#jv) #pg-lanc .cx-at,html body:not(#jv) #pg-lanc .cx-mv,html body:not(#jv) .seg{
-  background:linear-gradient(155deg,rgba(255,255,255,.06),rgba(255,255,255,.015) 60%),rgba(18,40,31,.50)!important;
+  background:rgba(18,40,31,.50)!important;
   border-color:rgba(255,255,255,.085)!important;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.06)!important}
 /* telas que abrem por cima (janelas, menu Mais): fundo desfocado e janela de vidro */
 html body:not(#jv) .overlay{background:rgba(4,12,9,.40)!important;-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%)}
-html body:not(#jv) .modal,html body:not(#jv) .mais-pop{background:linear-gradient(160deg,rgba(255,255,255,.11),rgba(255,255,255,.03) 60%),rgba(16,34,27,.74)!important;
+html body:not(#jv) .modal,html body:not(#jv) .mais-pop{background:rgba(16,34,27,.90)!important;
   -webkit-backdrop-filter:blur(28px) saturate(170%);backdrop-filter:blur(28px) saturate(170%);
   border:1px solid rgba(255,255,255,.13)!important;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 24px 60px rgba(0,0,0,.45)!important}
-/* o menu Mais mora dentro da barra (que já desfoca): mais opaco para ler bem */
-html body:not(#jv) .mais-pop{background:linear-gradient(160deg,rgba(255,255,255,.10),rgba(255,255,255,.03) 60%),rgba(14,30,24,.90)!important}
+/* menu Mais: o mesmo vidro em toda a área; os itens não têm fundo próprio */
+html body:not(#jv) .mais-pop{background:rgba(14,30,24,.93)!important}
+html body:not(#jv) .mais-pop button{background:transparent!important}
 /* botões grandes de vidro (os de ação seguem na cor da bolinha) */
 html body:not(#jv) .fic-b.neutro,html body:not(#jv) .fic-voltar,html body:not(#jv) .btn-ghost,html body:not(#jv) .jh-tile,html body:not(#jv) .jh-ver-todas,html body:not(#jv) .b-add,html body:not(#jv) .b-cfg,html body:not(#jv) .te-nova,html body:not(#jv) .acao-item,html body:not(#jv) .top button,html body:not(#jv) #pg-lanc .cx-seta,html body:not(#jv) #pg-lanc .cx-at,html body:not(#jv) .wk-fit,html body:not(#jv) .auto-cta,html body:not(#jv) .jv-home-card:not(.gold),html body:not(#jv) .jv-profile-actions button,html body:not(#jv) .jv-quick button,html body:not(#jv) .ag-nav button,html body:not(#jv) .month-btn{
-  background:linear-gradient(160deg,rgba(255,255,255,.11),rgba(255,255,255,.03) 60%),rgba(22,46,36,.52)!important;
+  background:rgba(22,46,36,.52)!important;
   -webkit-backdrop-filter:blur(12px) saturate(150%);backdrop-filter:blur(12px) saturate(150%);
   border:1px solid rgba(255,255,255,.12)!important;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 6px 18px rgba(0,0,0,.22)!important}

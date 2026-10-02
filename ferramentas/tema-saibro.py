@@ -246,27 +246,28 @@ body:before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .jh-card,.jv-ref-kpi,.fin-card:not(.hero):not(.desp):not(.saldo),.chart,.fic-tile,.fic-nota,.ag-ferr,.empty,
 .jv-pay-card,.jv-section-card,.jv-credit-panel,.jv-profile-card,.evo-xp,.evo-prio,
 #pg-lanc .cx-dia,#pg-lanc .cx-res>div{
-  background:linear-gradient(155deg,rgba(255,255,255,.075),rgba(255,255,255,.02) 60%),rgba(18,40,31,.55)!important;
+  background:rgba(18,40,31,.55)!important;
   -webkit-backdrop-filter:blur(16px) saturate(150%);backdrop-filter:blur(16px) saturate(150%);
   border:1px solid rgba(255,255,255,.09)!important;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 10px 26px rgba(0,0,0,.24)!important}
 .al-row,.aluno,.comp-item,.pend-item,.cons,.mov-card,.graf-card,.dobra-cab,.dobra-corpo,.fech-card,.fq-linha,
 #pg-lanc .cx-at,#pg-lanc .cx-mv,.seg{
-  background:linear-gradient(155deg,rgba(255,255,255,.06),rgba(255,255,255,.015) 60%),rgba(18,40,31,.50)!important;
+  background:rgba(18,40,31,.50)!important;
   border-color:rgba(255,255,255,.085)!important;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.06)!important}
 /* telas que abrem por cima (janelas, menu Mais): fundo desfocado e janela de vidro */
 .overlay{background:rgba(4,12,9,.40)!important;-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%)}
-.modal,.mais-pop{background:linear-gradient(160deg,rgba(255,255,255,.11),rgba(255,255,255,.03) 60%),rgba(16,34,27,.74)!important;
+.modal,.mais-pop{background:rgba(16,34,27,.90)!important;
   -webkit-backdrop-filter:blur(28px) saturate(170%);backdrop-filter:blur(28px) saturate(170%);
   border:1px solid rgba(255,255,255,.13)!important;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 24px 60px rgba(0,0,0,.45)!important}
-/* o menu Mais mora dentro da barra (que já desfoca): mais opaco para ler bem */
-.mais-pop{background:linear-gradient(160deg,rgba(255,255,255,.10),rgba(255,255,255,.03) 60%),rgba(14,30,24,.90)!important}
+/* menu Mais: o mesmo vidro em toda a área; os itens não têm fundo próprio */
+.mais-pop{background:rgba(14,30,24,.93)!important}
+.mais-pop button{background:transparent!important}
 /* botões grandes de vidro (os de ação seguem na cor da bolinha) */
 .fic-b.neutro,.fic-voltar,.btn-ghost,.jh-tile,.jh-ver-todas,.b-add,.b-cfg,.te-nova,.acao-item,.top button,
 #pg-lanc .cx-seta,#pg-lanc .cx-at,.wk-fit,.auto-cta,.jv-home-card:not(.gold),.jv-profile-actions button,.jv-quick button,.ag-nav button,.month-btn{
-  background:linear-gradient(160deg,rgba(255,255,255,.11),rgba(255,255,255,.03) 60%),rgba(22,46,36,.52)!important;
+  background:rgba(22,46,36,.52)!important;
   -webkit-backdrop-filter:blur(12px) saturate(150%);backdrop-filter:blur(12px) saturate(150%);
   border:1px solid rgba(255,255,255,.12)!important;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 6px 18px rgba(0,0,0,.22)!important}
