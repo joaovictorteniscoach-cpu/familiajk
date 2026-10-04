@@ -37,10 +37,16 @@ const server=http.createServer((req,res)=>{
       assert.match(decodeURIComponent(await p.locator('#calc-whatsapp').getAttribute('href')),/por pessoa/);
       await p.locator('#calc-modalidade').selectOption('familia');
       assert.match(await p.locator('#calc-total').textContent(),/800/);
-      const dimensions=await p.evaluate(()=>({scroll:document.documentElement.scrollWidth,view:innerWidth}));
+      const dimensions=await p.evaluate(()=>({scroll:document.documentElement.scrollWidth,view:innerWidth,overflow:[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>innerWidth+1&&e.getClientRects().length).slice(0,12).map(e=>({tag:e.tagName,cls:e.className,right:Math.round(e.getBoundingClientRect().right)}))}));
       assert.ok(dimensions.scroll<=dimensions.view+1,JSON.stringify(dimensions));
       const link=await p.locator('a[data-app-aluno]').first().getAttribute('href');
       assert.equal(link,'/app-aluno/');
+      if(width<=640){
+        await p.locator('#mtgl').click();
+        assert.equal(await p.locator('#nav').isVisible(),true);
+        assert.equal(await p.locator('#nav a[data-app-aluno]').isVisible(),true);
+        await p.locator('#mtgl').click();
+      }
       assert.deepEqual(errors,[]);assert.deepEqual(missing,[]);
       console.log('✅ Site no navegador: '+width+'px, calculadora, links e arquivos');
       await context.close();
