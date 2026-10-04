@@ -208,6 +208,62 @@ async function capture(p,name) { if(process.env.JV_NO_SCREENSHOTS==='1')return; 
           await p.evaluate(()=>{VINCULO_ESTADO='pendente';renderVinculoStatus();});assert.ok(await p.locator('#vinculo-status-box').isVisible());
           await p.evaluate(()=>{VINCULO_ESTADO='ativo';renderVinculoStatus();});assert.ok(!await p.locator('#vinculo-status-box').isVisible());
         });
+        await ok('Reposições: destaque ao lado dos créditos em celulares e nos dois temas',async()=>{
+          await p.evaluate(()=>{EU.repos=9;EU.reposValidas=2;EU.reposVencendo=1;goAluno('inicio',document.getElementById('nav-al-inicio'));});
+          for(const theme of ['saibro','classico']){
+            await p.evaluate(theme=>{document.getElementById('css-tema').disabled=theme==='classico';},theme);
+            for(const width of [320,390,1280]){
+              await p.setViewportSize({width,height:852});
+              await fit(p,width,'reposições '+theme);
+              const pos=await p.evaluate(()=>{
+                const credit=document.getElementById('home-cred-card'),repo=document.getElementById('home-repos-card');
+                const a=credit.getBoundingClientRect(),b=repo.getBoundingClientRect();
+                return {credit:a.top,repo:b.top,right:a.right,left:b.left,bottom:b.bottom,
+                  font:parseFloat(getComputedStyle(document.getElementById('home-repos').parentElement).fontSize),
+                  order:Array.from(document.querySelector('.jv-home-grid').children).slice(0,2).map(e=>e.id)};
+              });
+              assert.deepEqual(pos.order,['home-cred-card','home-repos-card']);
+              assert.ok(Math.abs(pos.credit-pos.repo)<2&&pos.left>=pos.right&&pos.bottom<852,JSON.stringify(pos));
+              assert.ok(pos.font>=30,JSON.stringify(pos));
+              assert.equal(await p.locator('#home-repos').textContent(),'2');
+              assert.ok(await p.locator('#home-repos-venc').isVisible());
+              assert.match(await p.locator('#home-repos-venc').textContent(),/1 vence no fim do mês/);
+            }
+          }
+          await p.evaluate(()=>document.getElementById('css-tema').disabled=false);
+          await p.locator('#home-repos-card').click();
+          assert.ok(await p.locator('#apg-agenda').isVisible());
+          assert.equal(await p.evaluate(()=>MEU.pedidos.length),0);
+          await p.evaluate(()=>goAluno('creditos',document.getElementById('nav-al-creditos')));
+          assert.equal(await p.locator('#cred-page-repos').textContent(),'2');
+          assert.ok(await p.locator('#cred-page-repos-panel').isVisible());
+          assert.ok(await p.locator('#cred-page-repos-venc').isVisible());
+          await p.locator('#cred-page-repos-agendar').click();
+          assert.ok(await p.locator('#apg-agenda').isVisible());
+          assert.equal(await p.evaluate(()=>MEU.pedidos.length),0);
+        });
+        await ok('Reposições: zero válido, saldo fracionado legado e atualização sem alterar dados',async()=>{
+          const before=await p.evaluate(()=>JSON.stringify(EU));
+          await p.evaluate(()=>renderPremiumAluno());
+          assert.equal(await p.evaluate(()=>JSON.stringify(EU)),before);
+          await p.evaluate(()=>{EU.reposValidas=0;EU.repos=9;EU.reposVencendo=4;goAluno('inicio',document.getElementById('nav-al-inicio'));});
+          assert.equal(await p.locator('#home-repos').textContent(),'0');
+          assert.ok(await p.locator('#home-repos-card').isVisible());
+          assert.ok(!await p.locator('#home-repos-venc').isVisible());
+          assert.match(await p.locator('#home-repos-sub').textContent(),/nenhuma reposição/);
+          await p.evaluate(()=>goAluno('creditos',document.getElementById('nav-al-creditos')));
+          assert.equal(await p.locator('#cred-page-repos').textContent(),'0');
+          assert.ok(!await p.locator('#cred-page-repos-venc').isVisible());
+          assert.ok(!await p.locator('#cred-page-repos-agendar').isVisible());
+          await p.evaluate(()=>{delete EU.reposValidas;EU.repos=1.5;EU.reposVencendo=0;renderPremiumAluno();});
+          assert.equal(await p.locator('#cred-page-repos').textContent(),'1,5');
+          assert.equal(await p.locator('#home-repos').textContent(),'1,5');
+          assert.ok(await p.locator('#cred-page-repos-agendar').isVisible());
+          assert.ok(!await p.locator('#cred-page-repos-venc').isVisible());
+          await p.evaluate(()=>{EU.reposValidas=3;EU.reposVencendo=8;renderPremiumAluno();});
+          assert.match(await p.locator('#cred-page-repos-venc').textContent(),/3 vencem/);
+          await p.evaluate(()=>{delete EU.reposValidas;EU.repos=1;EU.reposVencendo=0;goAluno('inicio',document.getElementById('nav-al-inicio'));});
+        });
         await ok('PIX: botão depende da chave real publicada',async()=>{
           await p.evaluate(()=>{goAluno('inicio',document.getElementById('nav-al-inicio'));PUB.pix='';renderPremiumAluno();});assert.ok(!await p.locator('#home-pix-btn').isVisible());
           await p.evaluate(()=>{PUB.pix='teste@example.invalid';renderPremiumAluno();});assert.ok(await p.locator('#home-pix-btn').isVisible());
