@@ -1588,11 +1588,11 @@ body[data-aba]:not([data-aba="inicio"]) #app>.top .jv-quadra-chip{display:none!i
 #app>.top .jv-chips-topo .jv-clima-chip .clima-ic{font-size:17px}
 #app>.top .jv-chips-topo .jv-quadra-chip .led{width:9px;height:9px;flex:0 0 9px}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-04-1">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-04-2">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-04-1">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-04-2">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -1836,23 +1836,29 @@ function esperarAuth(){
 
     <section class="page on" id="apg-inicio">
     <div class="jv-home-grid">
+      <button class="jv-home-card gold" id="home-cred-card" type="button" onclick="goAluno('creditos',document.getElementById('nav-al-creditos'))">
+        <div class="hc-top"><span class="hc-icon" data-ic="coins"></span><span>Créditos ›</span></div>
+        <div class="hc-main" style="font-size:32px!important"><span id="home-cred">0</span></div>
+        <div class="hc-sub" id="home-cred-sub">créditos disponíveis</div>
+        <div class="jv-progress"><i id="home-cred-fill"></i></div>
+      </button>
+      <button class="jv-home-card gold" id="home-repos-card" type="button" onclick="irMarcarReposicao()">
+        <div class="hc-top"><span class="hc-icon" data-ic="refresh"></span><span>Reposições ›</span></div>
+        <div class="hc-main" style="font-size:32px!important"><span id="home-repos">0</span></div>
+        <div class="hc-sub" id="home-repos-sub">reposições disponíveis</div>
+        <div class="hc-sub" id="home-repos-venc" hidden></div>
+      </button>
       <button class="jv-home-card" type="button" onclick="goAluno('agenda',document.getElementById('nav-al-agenda'))">
         <div class="hc-top"><span class="hc-icon" data-ic="cal"></span><span>Próxima aula ›</span></div>
         <div class="hc-main" id="home-prox-date">—</div>
         <div class="hc-sub" id="home-prox-meta">Carregando sua agenda…</div>
-      </button>
-      <button class="jv-home-card gold" type="button" onclick="goAluno('creditos',document.getElementById('nav-al-creditos'))">
-        <div class="hc-top"><span class="hc-icon" data-ic="coins"></span><span>Créditos ›</span></div>
-        <div class="hc-main"><span id="home-cred">0</span> créditos</div>
-        <div class="hc-sub" id="home-cred-sub">saldo atual</div>
-        <div class="jv-progress"><i id="home-cred-fill"></i></div>
       </button>
       <button class="jv-home-card" type="button" onclick="goAluno('creditos',document.getElementById('nav-al-creditos'))">
         <div class="hc-top"><span class="hc-icon" data-ic="clip"></span><span>Plano atual ›</span></div>
         <div class="hc-main" id="home-plano">—</div>
         <div class="hc-sub" id="home-plano-sub">Seu plano da academia</div>
       </button>
-      <button class="jv-home-card gold" type="button" onclick="irEvolucao()">
+      <button class="jv-home-card gold" style="grid-column:1/-1" type="button" onclick="irEvolucao()">
         <div class="hc-top"><span class="hc-icon" data-ic="target"></span><span>Foco do mês ›</span></div>
         <div class="hc-main" id="home-foco">Próximo passo</div>
         <div class="hc-sub" id="home-foco-sub">Definido a partir da sua evolução</div>
@@ -1943,15 +1949,21 @@ function esperarAuth(){
 
 
     <section class="page" id="apg-creditos">
-      <div class="jv-subhero"><h2>Créditos <em>e plano</em></h2><p>Controle aulas, reposições e pagamentos em um só lugar.</p></div>
+      <div class="jv-subhero"><h2>Créditos <em>e reposições</em></h2><p>Controle aulas, reposições e pagamentos em um só lugar.</p></div>
       <div class="jv-credit-panel">
         <div class="jv-pay-lbl">Créditos disponíveis</div>
         <div class="jv-credit-big"><span id="cred-page-saldo">0</span> <small>créditos</small></div>
         <div class="jv-progress"><i id="cred-page-fill"></i></div>
-        <div class="jv-row"><span>Reposições</span><b id="cred-page-repos">0</b></div>
         <div class="jv-row"><span>Plano atual</span><b id="cred-page-plano">—</b></div>
         <div class="jv-row"><span>Mensalidade</span><b id="cred-page-mens">—</b></div>
         <div class="jv-row"><span>Situação</span><b id="cred-page-status">—</b></div>
+      </div>
+      <div class="jv-credit-panel" id="cred-page-repos-panel">
+        <div class="jv-pay-lbl">Reposições disponíveis</div>
+        <div class="jv-credit-big"><span id="cred-page-repos">0</span> <small>reposições</small></div>
+        <p class="hc-sub" id="cred-page-repos-note">Use seu saldo para agendar uma aula de reposição.</p>
+        <p id="cred-page-repos-venc" hidden></p>
+        <button class="jv-pix-btn" id="cred-page-repos-agendar" type="button" style="width:100%;margin-top:12px" onclick="irMarcarReposicao()">Agendar reposição ›</button>
       </div>
       <div id="pay-box" class="jv-section-card" style="display:none">
         <p class="sec-eyebrow">Pagamento</p>
@@ -2019,7 +2031,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-10-04-1"></script>
+<script src="lib/icones.js?v=2026-10-04-2"></script>
 </div>
 
 <!-- MODAL ESCOLHER O QUE FAZER NO HORÁRIO -->
@@ -2226,7 +2238,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-10-04-1';
+const VERSAO='2026-10-04-2';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -2775,10 +2787,17 @@ function minhasNoDia(date){
    Os números vêm prontos da publicação (o app do aluno não tem o extrato).
    O abatimento na mensalidade saiu: reposição vira conversa com o professor,
    não desconto automático. Aqui o aluno vê quanto tem e marca a aula. */
+// Saldo publicado: zero válido também deve prevalecer sobre o campo legado.
+function saldoReposAluno(){
+  if(!EU)return 0;
+  const valor=EU.reposValidas!=null?EU.reposValidas:EU.repos;
+  const saldo=Number(valor);
+  return Number.isFinite(saldo)?Math.max(0,saldo):0;
+}
 function renderReposBox(){
   const box=document.getElementById('repos-box');if(!box||!EU)return;
   const venc=Number(EU.reposVencendo)||0;
-  const saldo=Number(EU.reposValidas)||Number(EU.repos)||0;
+  const saldo=saldoReposAluno();
   if(!saldo){box.style.display='none';box.innerHTML='';return;}
   let h='<div style="background:#fff;border:1px solid var(--border);border-radius:13px;padding:13px;margin-bottom:12px">';
   if(venc>0)h+='<div style="color:#7A5B10;font-weight:700;font-size:12.5px;margin-bottom:9px">⏳ '+fmtCred(venc)+' reposição(ões) vencem no fim do mês — marque antes de perder.</div>';
@@ -2967,10 +2986,10 @@ function renderPremiumAluno(){
   if(pm)pm.textContent=prox?(DIAS_FULL[dtOf(prox.data,prox.hora).getDay()]+' • '+prox.hora+(profPremium?' • Prof. '+profPremium:'')):'Veja os horários disponíveis na Agenda';
   const saldo=(Number(EU.creditos)||0)+(Number(EU.credGrupo)||0),plano=(Number(EU.plano)||0)+(Number(EU.planoGrupo)||0);
   const hc=document.getElementById('home-cred');if(hc)hc.textContent=fmtCred(saldo);
-  const hcs=document.getElementById('home-cred-sub');if(hcs)hcs.textContent=plano>0?('de '+plano+' no plano atual'):'saldo atual';
+  const hcs=document.getElementById('home-cred-sub');if(hcs)hcs.textContent=plano>0?('créditos · de '+plano+' no plano atual'):'créditos disponíveis';
   const hf=document.getElementById('home-cred-fill');if(hf)hf.style.width=(plano>0?Math.max(0,Math.min(100,saldo/plano*100)):(saldo>0?100:0))+'%';
   const hp=document.getElementById('home-plano');if(hp)hp.textContent=planoPremium();
-  const hps=document.getElementById('home-plano-sub');if(hps)hps.textContent=(Number(EU.repos)||0)>0?(fmtCred(EU.repos)+' reposição(ões) disponível(is)'):'Plano e saldo sincronizados';
+  const hps=document.getElementById('home-plano-sub');if(hps)hps.textContent='Plano e saldo sincronizados';
   const foco=focoPremium(),fo=document.getElementById('home-foco');if(fo)fo.textContent=foco;
   const fos=document.getElementById('home-foco-sub');if(fos)fos.textContent=(EU.avaliacoes&&EU.avaliacoes.length)?'Prioridade da sua avaliação mais recente':'Será atualizado pelo professor';
   const ps=document.getElementById('home-pay-status');if(ps){ps.textContent=EU.status==='pago'?'Em dia':(EU.status==='parcial'?'50% pago':'Pendente');ps.dataset.status=EU.status==='pago'?'pago':(EU.status==='parcial'?'parcial':'pendente');}
@@ -2980,7 +2999,16 @@ function renderPremiumAluno(){
   const pb=document.getElementById('home-pix-btn');if(pb)pb.style.display=(PUB&&PUB.pix&&String(PUB.pix).trim())?'flex':'none';
   const cs=document.getElementById('cred-page-saldo');if(cs)cs.textContent=fmtCred(saldo);
   const cf=document.getElementById('cred-page-fill');if(cf)cf.style.width=(plano>0?Math.max(0,Math.min(100,saldo/plano*100)):(saldo>0?100:0))+'%';
-  const cr=document.getElementById('cred-page-repos');if(cr)cr.textContent=fmtCred(EU.repos||0);
+  const repos=saldoReposAluno(),vencendo=Math.max(0,Math.min(repos,Number(EU.reposVencendo)||0));
+  for(const id of ['home-repos','cred-page-repos']){
+    const el=document.getElementById(id);if(el)el.textContent=fmtCred(repos);
+  }
+  const hrs=document.getElementById('home-repos-sub');if(hrs)hrs.textContent=repos>0?'disponíveis · toque para agendar':'nenhuma reposição disponível';
+  const rn=document.getElementById('cred-page-repos-note');if(rn)rn.textContent=repos>0?'Use seu saldo para agendar uma aula de reposição.':'Você não tem reposições disponíveis no momento.';
+  for(const id of ['home-repos-venc','cred-page-repos-venc']){
+    const el=document.getElementById(id);if(el){el.hidden=vencendo<=0;el.textContent=vencendo>0?('⏳ '+fmtCred(vencendo)+(vencendo===1?' vence':' vencem')+' no fim do mês'):'';}
+  }
+  const ra=document.getElementById('cred-page-repos-agendar');if(ra){ra.hidden=repos<=0;ra.style.display=repos>0?'flex':'none';}
   const cp=document.getElementById('cred-page-plano');if(cp)cp.textContent=planoPremium();
   const cm=document.getElementById('cred-page-mens');if(cm)cm.textContent=fmtMens();
   const cst=document.getElementById('cred-page-status');if(cst)cst.textContent=EU.status==='pago'?'Em dia':(EU.status==='parcial'?'50% pago':'Pendente');
@@ -4749,7 +4777,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-04-1').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-04-2').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
