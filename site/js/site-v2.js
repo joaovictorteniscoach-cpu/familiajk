@@ -76,8 +76,6 @@
       var unitLabel = "";
       var descricao = "";
 
-      boxPessoas.hidden = !(mod === "grupo" || mod === "familia");
-
       if (mod === "particular") {
         valor = cfg.precos.particular.pacote;
         label = "Particular";

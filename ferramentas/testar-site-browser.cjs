@@ -23,6 +23,7 @@ const server=http.createServer((req,res)=>{
       p.on('response',r=>{if(r.url().startsWith(base)&&r.status()>=400)missing.push(r.url());});
       await p.goto(base+'/site/',{waitUntil:'load'});
       const input=p.locator('#calc-aulas');
+      assert.equal(await p.locator('#calc-pessoas-wrap').isVisible(),false);
       await input.fill('');assert.equal(await input.inputValue(),'');
       assert.equal(await p.locator('#calc-resultado').isVisible(),false);
       await input.pressSequentially('10');assert.equal(await input.inputValue(),'10');
@@ -30,6 +31,7 @@ const server=http.createServer((req,res)=>{
       await input.fill('2');await input.press('Tab');assert.equal(await input.inputValue(),'3');
       await input.fill('4');
       await p.locator('#calc-modalidade').selectOption('grupo');
+      assert.equal(await p.locator('#calc-pessoas-wrap').isVisible(),true);
       await p.locator('#calc-pessoas').selectOption('4');
       assert.match(await p.locator('#calc-total').textContent(),/340.*por pessoa/);
       assert.match(decodeURIComponent(await p.locator('#calc-whatsapp').getAttribute('href')),/por pessoa/);
