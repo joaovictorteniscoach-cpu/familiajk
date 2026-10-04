@@ -28,3 +28,19 @@ jobs:
           node ferramentas/checar-sintaxe.js site-pro/demo/index.html
       - name: Validar o pacote público sem publicar
         run: python3 ferramentas/preparar-pages.py "$RUNNER_TEMP/pages"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preparar navegador de teste
+        run: |
+          npm install --prefix "$RUNNER_TEMP/jv-browser" playwright@1.56.1
+          "$RUNNER_TEMP/jv-browser/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Conferir Gestão e site no navegador sem dados reais
+        env:
+          NODE_PATH: ${{ runner.temp }}/jv-browser/node_modules
+          PW: ${{ runner.temp }}/jv-browser/node_modules/playwright
+        run: |
+          node .claude/skills/publicar-versao/fumaca.cjs
+          node ferramentas/testar-site-browser.cjs
+          JV_WIDTHS=390,1280 JV_NO_SCREENSHOTS=1 node ferramentas/testar-premium-browser.cjs

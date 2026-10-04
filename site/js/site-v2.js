@@ -49,22 +49,32 @@
     var unidade = document.getElementById("calc-unidade");
     var wa = document.getElementById("calc-whatsapp");
 
-    if (!modalidade || !aulas || !resultado) return;
+    if (![modalidade, pessoas, aulas, boxPessoas, resultado, detalhe, total, unidade, wa].every(Boolean)) return;
 
     function keyGrupo(qtd) {
       return qtd === "2" ? "dupla" : qtd === "3" ? "trio" : "quarteto";
     }
 
-    function update() {
+    function update(normalizar) {
       var mod = modalidade.value;
-      var qtdAulas = Math.max(cfg.creditos.minimoAulas, parseInt(aulas.value, 10) || cfg.creditos.minimoAulas);
-      aulas.value = qtdAulas;
+      var qtdAulas = Number(aulas.value);
+      // Deixe o campo livre enquanto a pessoa digita. Corrija somente ao
+      // concluir a edição; não envie ao WhatsApp uma cotação incompleta.
+      if (normalizar) {
+        qtdAulas = Number.isFinite(qtdAulas) ? Math.floor(qtdAulas) : cfg.creditos.minimoAulas;
+        qtdAulas = Math.max(cfg.creditos.minimoAulas, qtdAulas);
+        aulas.value = qtdAulas;
+      }
+      boxPessoas.hidden = !(mod === "grupo" || mod === "familia");
+      if (!Number.isSafeInteger(qtdAulas) || qtdAulas < cfg.creditos.minimoAulas) {
+        resultado.hidden = true;
+        wa.removeAttribute("href");
+        return;
+      }
       var valor = 0;
       var label = "";
       var unitLabel = "";
       var descricao = "";
-
-      boxPessoas.hidden = !(mod === "grupo" || mod === "familia");
 
       if (mod === "particular") {
         valor = cfg.precos.particular.pacote;
@@ -87,19 +97,21 @@
       var totalCalc = valor * qtdAulas;
       detalhe.textContent = label + " · " + qtdAulas + " aulas";
       unidade.textContent = brl(valor) + " " + unitLabel;
-      total.textContent = brl(totalCalc);
+      total.textContent = brl(totalCalc) + (mod === "grupo" ? " por pessoa" : "");
       resultado.hidden = false;
 
       var msg = "Olá João! Vi os planos no site da JV Tênis e tenho interesse em " +
-        descricao + ". Valor calculado: " + brl(totalCalc) + ". Pode me passar os horários disponíveis?";
+        descricao + ". Valor calculado: " + brl(totalCalc) + (mod === "grupo" ? " por pessoa" : "") + ". Pode me passar os horários disponíveis?";
       wa.href = cfg.urls.whatsapp + "?text=" + encodeURIComponent(msg);
     }
 
-    [modalidade, pessoas, aulas].forEach(function (el) {
-      if (el) el.addEventListener("change", update);
+    [modalidade, pessoas].forEach(function (el) {
+      el.addEventListener("change", function () { update(false); });
     });
-    aulas.addEventListener("input", update);
-    update();
+    aulas.addEventListener("input", function () { update(false); });
+    aulas.addEventListener("change", function () { update(true); });
+    aulas.addEventListener("blur", function () { update(true); });
+    update(false);
   }
 
   function setCourtStatus(data) {

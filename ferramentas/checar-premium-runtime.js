@@ -50,6 +50,35 @@ function worker(app, atRoot=false) {
     await check(app+': não intercepta Firebase, outra pasta ou POST',async()=>{const w=worker(app);assert.equal(await w.request('https://db.firebaseio.com/jvtenis.json'),null);assert.equal(await w.request('https://test.local/familiajk/outro/'),null);assert.equal(await w.request('https://test.local'+w.scope,'cors','POST'),null);});
     await check(app+': offline retorna shell só para navegação, nunca como JS',async()=>{const w=worker(app);w.matches.set('./','HTML');assert.equal(await w.request('https://test.local'+w.scope,'navigate'),'HTML');assert.equal((await w.request('https://test.local'+w.scope+'ausente.js')).type,'error');});
     await check(app+': falha HTTP não sobrescreve cache válido',async()=>{const w=worker(app);w.sandbox.fetch=async()=>({ok:false,status:404});assert.equal((await w.request('https://test.local'+w.scope+'index.html')).status,404);assert.equal(w.puts.length,0);w.sandbox.fetch=async()=>({ok:true,type:'basic',redirected:false,clone:()=>({})});await w.request('https://test.local'+w.scope+'index.html');assert.equal(w.puts.length,1);});
+    await check(app+': erro temporário HTTP usa reserva sem esconder 404',async()=>{
+      const w=worker(app),url='https://test.local'+w.scope+'index.html';
+      w.matches.set(url,'HTML salvo');
+      w.sandbox.fetch=async()=>({ok:false,status:503});
+      assert.equal(await w.request(url,'navigate'),'HTML salvo');
+      w.matches.delete(url);w.matches.set('./','Shell salvo');
+      assert.equal(await w.request(url,'navigate'),'Shell salvo');
+      assert.equal((await w.request(url+'?asset=1','cors')).status,503);
+      w.sandbox.fetch=async()=>({ok:false,status:404});
+      assert.equal((await w.request(url,'navigate')).status,404);
+      assert.equal(w.puts.length,0);
+    });
+    await check(app+': notificação foca apenas uma janela dentro do próprio app',async()=>{
+      const w=worker(app),focused=[],opened=[];
+      w.sandbox.self.clients.matchAll=async()=>[
+        {url:'https://test.local/familiajk/app-familia/',focus:async()=>focused.push('familia')},
+        {url:'https://test.local'+w.scope+'?aba=agenda',focus:async()=>focused.push(app)}
+      ];
+      w.sandbox.self.clients.openWindow=async u=>opened.push(u);
+      let done,closed=false;
+      w.listeners.notificationclick({notification:{close:()=>closed=true},waitUntil:p=>done=p});
+      await done;assert.equal(closed,true);assert.deepEqual(focused,[app]);assert.deepEqual(opened,[]);
+      w.sandbox.self.clients.matchAll=async()=>[
+        {url:'https://other.local'+w.scope,focus:async()=>focused.push('outra origem')},
+        {url:'https://test.local/familiajk/app-familia/',focus:async()=>focused.push('familia')}
+      ];
+      w.listeners.notificationclick({notification:{close(){}},waitUntil:p=>done=p});
+      await done;assert.deepEqual(focused,[app]);assert.deepEqual(opened,['https://test.local'+w.scope]);
+    });
     await check(app+': instalação incompleta falha em vez de ativar sem reserva',async()=>{const w=worker(app);w.c.addAll=async()=>{throw Error('asset ausente');};await assert.rejects(w.lifecycle('install'),/asset ausente/);});
   }
   console.log(`\n${total} regressões verificadas · 0 falhas`);
