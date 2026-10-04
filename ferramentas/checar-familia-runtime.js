@@ -24,7 +24,7 @@ const ctx=vm.createContext({DB:{alunos:[payer,child,spouse,single],lancamentos:[
   agendaDoMes:()=>({total:6,part:6,grupo:0,valor:960}),mensalidadeDaAgenda:()=>({total:6,part:6,grupo:0,valor:960}),rmAgCache:{},rmEscolha:{},ehGrupoTipo:()=>false,
   renovacoesDoMes:()=>[],reposVencidas:()=>0,ehAtivoAluno:a=>!a.arquivado&&(a.plano>0||a.mensalidade>0),
   mover:(a,k,n)=>{a[k]=(Number(a[k])||0)+n;},purgarReposVencidas:()=>{},juntarGrupo:()=>{},
-  fcAulasDoMes:(a)=>[{alunoId:a.id,custo:1}],fcFaltasDoMes:()=>[],fcAvisadosDoMes:()=>[]});
+  fcAulasDoMes:(a)=>[{alunoId:a.id,custo:1}],fcFaltasDoMes:()=>1,fcAvisadosDoMes:()=>0});
 const names=['dependentesFamilia','responsavelFamilia','ehDependenteFamilia','temFamilia','pagadorFamilia','statusFinanceiro','dadosFamiliaAluno','validarFamiliaAluno','valorDoMes','valorAulaDe','mensalidadesDoMes','cobrancaDoMes','marcarPago','alunoPublicado','publicacaoLegadaEnxuta','rmLinha','rmAplicarUm','fcDados','ehDoFechamento','situacaoPag','difSilenciada'];
 vm.runInContext(names.map(n=>fn(gest,n)).join('\n'),ctx);
 check('uma mensalidade por família e cobranças individuais preservadas',()=>{
@@ -70,7 +70,7 @@ check('renovação pela agenda mantém valor familiar e não reabre pagamento j�
  assert.equal(ctx.valorAulaDe(payer),160);
 });
 check('fechamento fica no pagador e reúne as aulas de toda a família',()=>{
- assert.equal(ctx.ehDoFechamento(child),false);assert.equal(ctx.fcDados(payer,'2026-10').aulas.length,3);assert.equal(ctx.fcDados(payer,'2026-10').total,1200);
+ assert.equal(ctx.ehDoFechamento(child),false);assert.equal(ctx.fcDados(payer,'2026-10').aulas.length,3);assert.equal(ctx.fcDados(payer,'2026-10').total,1200);assert.equal(ctx.fcDados(payer,'2026-10').faltas,3);assert.equal(ctx.fcDados(payer,'2026-10').avisados,0);
 });
 check('avisos por diferença de agenda não tentam recalcular total familiar',()=>{
  assert.equal(ctx.difSilenciada(payer),true);assert.equal(ctx.difSilenciada(child),true);

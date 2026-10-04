@@ -43,5 +43,5 @@ jobs:
         run: |
           node .claude/skills/publicar-versao/fumaca.cjs
           node ferramentas/testar-site-browser.cjs
-          node ferramentas/testar-familia-browser.cjs
+          node ferramentas/testar-plano-familia-browser.cjs
           JV_WIDTHS=390,1280 JV_NO_SCREENSHOTS=1 node ferramentas/testar-premium-browser.cjs

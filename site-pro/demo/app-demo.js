@@ -5848,11 +5848,11 @@ function aulaJaAconteceu(p,agora){
 }
 function fcDados(a,mk){
   const membros=[a,...dependentesFamilia(a).filter(ehAtivoAluno)];
-  const aulas=membros.flatMap(x=>fcAulasDoMes(x,mk).map(p=>({...p,alunoNome:x.nome})));
+  const aulas=membros.flatMap(x=>fcAulasDoMes(x,mk).map(p=>({...p,alunoId:x.id,alunoNome:x.nome})));
   const feitas=aulas.reduce((t,p)=>t+(Number(p.custo)||1),0);
-  const faltas=membros.flatMap(x=>fcFaltasDoMes(x,mk)), avisados=membros.flatMap(x=>fcAvisadosDoMes(x,mk));
+  const faltas=membros.reduce((s,x)=>s+fcFaltasDoMes(x,mk),0), avisados=membros.reduce((s,x)=>s+fcAvisadosDoMes(x,mk),0);
   const cheia=Number(a.mensalidade)||0;
-  return {aulas,feitas,faltas,avisados,cheia,total:cheia};
+  return {aulas,feitas,faltas,avisados,cheia,total:cheia,membros};
 }
 function renderFechamento(){
   const box=document.getElementById('fech-export');if(!box)return;
@@ -5885,7 +5885,7 @@ function renderFechamento(){
   const aVir   =D.aulas.filter(p=>!aulaJaAconteceu(p,_agora));
   const linhaAula=p=>'<div class="fx-linha"><span>'+fmtDataCurta(p.data)+'</span><span>'+
     ((p.hora&&p.hora!=='—')?p.hora:'—')+'</span><span>'+
-    (p.tipo==='reposicao'||p.repo?'reposição':(p.tipo==='grupo'?'grupo':'aula'))+'</span></div>';
+    (D.membros.length>1?esc(p.alunoNome)+' · ':'')+(p.tipo==='reposicao'||p.repo?'reposição':(p.tipo==='grupo'?'grupo':'aula'))+'</span></div>';
   const bloco=(titulo,lista,vazio)=>'<div class="fx-sec">'+titulo+'</div>'+(lista.length
     ? lista.map(linhaAula).join('')
     : '<div class="fx-linha" style="justify-content:center;color:#8A7B63">'+vazio+'</div>');
@@ -5899,27 +5899,22 @@ function renderFechamento(){
    +bloco('Aulas realizadas',jaForam,'Nenhuma aula realizada neste mês.')
    +(aVir.length?bloco('Aulas que ainda vêm',aVir,''):'')
    +'<div class="fx-sec">Saldo</div>'
-   +(function(){
-      /* A conta que o professor faz de cabeça, e que o aluno entende: o plano
-         dá tantas aulas no mês, tantas já foram, tantas faltam. O saldo bruto
-         de crédito e grupo é contabilidade interna — no cartão do aluno ele só
-         confundia, porque as duas cestas separadas não dizem nada para quem só
-         quer saber quantas aulas ainda tem. */
-      const doPlano=(Number(a.plano)||0)+(Number(a.planoGrupo)||0);
-      const feitas=jaForam.reduce((t,x)=>t+(Number(x.custo)||0),0);
-      const faltam=Math.max(0,doPlano-feitas);
-      const rep=reposValidas(a);
+   +D.membros.map(pessoa=>{
+      const doPlano=(Number(pessoa.plano)||0)+(Number(pessoa.planoGrupo)||0);
+      const feitas=jaForam.filter(p=>p.alunoId===pessoa.id).reduce((t,x)=>t+(Number(x.custo)||0),0);
+      const faltam=Math.max(0,doPlano-feitas),rep=reposValidas(pessoa);
+      const faltas=fcFaltasDoMes(pessoa,mk),avisados=fcAvisadosDoMes(pessoa,mk),venc=reposVencendo(pessoa);
       const L=(rot,val,estilo)=>'<div class="fx-linha"'+(estilo||'')+'><span>'+rot+'</span><span></span><span>'+val+'</span></div>';
-      return (doPlano?L('Aulas do plano no mês',fmtCred(doPlano)):'')
+      return (D.membros.length>1?'<div class="fx-sec">'+esc(pessoa.nome)+'</div>':'')
+        +(doPlano?L('Aulas do plano no mês',fmtCred(doPlano)):'')
         +L('Já realizadas',fmtCred(feitas))
         +(doPlano?L('Ainda a realizar',fmtCred(faltam)):'')
-        +(D.faltas>0?L('Faltas (aula consumida)',D.faltas,' style="color:#8A7B63"'):'')
-        +(D.avisados>0?L('Cancelou avisando (crédito preservado)',D.avisados,' style="color:#2E7D52"'):'')
+        +(faltas>0?L('Faltas (aula consumida)',faltas,' style="color:#8A7B63"'):'')
+        +(avisados>0?L('Cancelou avisando (crédito preservado)',avisados,' style="color:#2E7D52"'):'')
         +L('Reposições guardadas',fmtCred(rep))
-        +(reposVencendo(a)>0?L('vencem no fim do mês',fmtCred(reposVencendo(a)),' style="color:#7A5B10"'):'')
-        +L('Total de aulas a usar',fmtCred(faltam+rep),
-           ' style="font-weight:800;border-top:1px solid var(--border);padding-top:7px;margin-top:2px"');
-    })()
+        +(venc>0?L('vencem no fim do mês',fmtCred(venc),' style="color:#7A5B10"'):'')
+        +L('Total de aulas a usar',fmtCred(faltam+rep),' style="font-weight:800;border-top:1px solid var(--border);padding-top:7px;margin-top:2px"');
+    }).join('')
    +'<div class="fx-sec">Valores</div>'
    +'<div class="fx-linha"><span>Mensalidade</span><span></span><span>'+fmtRs(D.cheia)+'</span></div>'
    +'<div class="fx-total"><span>Total</span><b>'+fmtRs(D.total)+'</b></div>'
@@ -5993,7 +5988,7 @@ function renderConfMes(){
    +'<p class="hint">A diferença olha só o que já passou: disponível menos o que você confirmou e as faltas. Aula futura e aula que passou sem ✓ ficam de fora de propósito — elas ainda dependem de você marcar.</p>';
 }
 function fcTexto(a,mk,D){
-  return 'Olá '+a.nome.split(' ')[0]+'! 🎾 Segue o fechamento de '+fcRotuloMes(mk).toLowerCase()+': '
+  return 'Olá '+a.nome.split(' ')[0]+'! 🎾 Segue o fechamento'+(D.membros&&D.membros.length>1?' da família':'')+' de '+fcRotuloMes(mk).toLowerCase()+': '
     +fmtCred(D.feitas)+' aula(s), total '+fmtRs(D.total)+'. A imagem vai em anexo. Qualquer dúvida me chama!';
 }
 async function _fechCanvas(){
