@@ -223,13 +223,22 @@ async function capture(p,name) { if(process.env.JV_NO_SCREENSHOTS==='1')return; 
           await p.evaluate(()=>{MEU.codigo='9999';carregarAvatarAluno();});assert.ok(await p.locator('#avatar-aluno-img').isVisible());
         });
       }
-      if(app==='gestao')await ok('Comparativo do início usa os mesmos valores e respeita ocultar',async()=>{
-        await p.evaluate(()=>{hideVals=false;renderDash();});
-        assert.equal(await p.locator('#cmp-rec').textContent(),await p.locator('#k-recebido').textContent());
-        assert.equal(await p.locator('#cmp-desp').textContent(),await p.locator('#k-ref-desp').textContent());
+      if(app==='gestao')await ok('Caixa: recebido, despesas e meta respeitam ocultar valores',async()=>{
+        await p.evaluate(()=>{
+          hideVals=false;
+          DB.lancamentos=[
+            {id:'receita-teste',mes:monthKey(),valor:640},
+            {id:'despesa-teste',mes:monthKey(),valor:-120}
+          ];
+          renderDash();
+        });
+        assert.equal(await p.locator('#k-recebido').textContent(),await p.evaluate(()=>fmtRs(640)));
+        assert.equal(await p.locator('#k-ref-desp').textContent(),await p.evaluate(()=>fmtRs(120)));
+        assert.equal(await p.locator('#k-ref-meta').textContent(),await p.evaluate(()=>fmtRs(DB.meta)));
         await p.evaluate(()=>{hideVals=true;renderDash();});
-        for(const txt of await p.locator('.jv-ref-bar-row>strong').allTextContents())assert.equal(txt,'R$ ••••');
-        assert.ok(await p.locator('.jv-ref-bar-row>i>b').evaluateAll(es=>es.every(e=>e.style.width==='0%')));
+        for(const id of ['k-recebido','k-ref-desp','k-ref-meta']){
+          assert.equal(await p.locator('#'+id).textContent(),'R$ ••••');
+        }
       });
       await ok(app+': sem exceções JS nem renderizadores quebrados',()=>{assert.deepEqual(errors,[]);assert.deepEqual(renderErrors,[]);});
       await context.close();
