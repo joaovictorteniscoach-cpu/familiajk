@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-04-2';
+const VERSAO='2026-10-04-3';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2209,10 +2209,14 @@ function publicacaoLegadaEnxuta(pub){
   const out=Object.assign({},pub);
   out.alunos=(pub.alunos||[]).map(a=>Object.assign({},a,{
     ultimoPago:'',cardLink:'',mfitLink:'',avaliacoes:[],evoMes:[],registros:[],
-    mensalidade:null,valorAula:null,valoresOcultos:true
+    mensalidade:null,valorAula:null,valoresOcultos:true,
+    familia:a.familia?{papel:a.familia.papel}:null
   }));
   out.historico={};
   return out;
+}
+function alunoPublicado(a){
+  return ({codigo:a.codigo,nome:a.nome,tipo:a.tipo,profId:profDoAluno(a),prof:profNome(profDoAluno(a)),plano:unificado(a)?pacoteDoAluno(a):a.plano,creditos:unificado(a)?(Number(a.creditos)||0)+(Number(a.credGrupo)||0):a.creditos,repos:a.repos,reposValidas:reposValidas(a),reposVencendo:reposVencendo(a),status:statusFinanceiro(a),ultimoPago:pagadorFamilia(a).ultimoPago||'',mensalidade:ehDependenteFamilia(a)?0:a.mensalidade,familia:dadosFamiliaAluno(a),diaVenc:pagadorFamilia(a).diaVenc||10,cardLink:ehDependenteFamilia(a)?'':(a.cardLink||''),mfitLink:a.mfitLink||'',valorAula:a.valorAula||(a.tipo==='Personal'?130:160),locCred:Number(a.locCred)||0,credGrupo:unificado(a)?0:(Number(a.credGrupo)||0),planoGrupo:unificado(a)?0:(Number(a.planoGrupo)||0),grupoTipo:a.grupoTipo||'',avaliacoes:(a.avaliacoes||[]).slice(-12),evoMes:serieMensal(a.avaliacoes,a.registros,24),registros:(a.registros||[]).slice(-8)});
 }
 async function doPublish(){
   if(!CARREGADO)return;                     // publicar vazio apagaria a tela dos alunos
@@ -2253,7 +2257,7 @@ async function doPublish(){
       /* Quem são os professores da academia. Vai só id e nome — o aluno
          precisa saber com quem treina e com quem quer treinar, nada além. */
       profs:profs().map(p=>({id:p.id,nome:p.nome})),
-      alunos:DB.alunos.map(a=>({codigo:a.codigo,nome:a.nome,tipo:a.tipo,profId:profDoAluno(a),prof:profNome(profDoAluno(a)),plano:unificado(a)?pacoteDoAluno(a):a.plano,creditos:unificado(a)?(Number(a.creditos)||0)+(Number(a.credGrupo)||0):a.creditos,repos:a.repos,reposValidas:reposValidas(a),reposVencendo:reposVencendo(a),status:a.status,ultimoPago:a.ultimoPago||'',mensalidade:a.mensalidade,diaVenc:a.diaVenc||10,cardLink:a.cardLink||'',mfitLink:a.mfitLink||'',valorAula:a.valorAula||(a.tipo==='Personal'?130:160),locCred:Number(a.locCred)||0,credGrupo:unificado(a)?0:(Number(a.credGrupo)||0),planoGrupo:unificado(a)?0:(Number(a.planoGrupo)||0),grupoTipo:a.grupoTipo||'',avaliacoes:(a.avaliacoes||[]).slice(-12),evoMes:serieMensal(a.avaliacoes,a.registros,24),registros:(a.registros||[]).slice(-8)})),
+      alunos:DB.alunos.map(alunoPublicado),
       historico:(function(){
         const codeOf={};DB.alunos.forEach(a=>{codeOf[a.id]=a.codigo;});
         const cut=dKey(new Date(Date.now()-60*864e5));const out={};
@@ -2867,7 +2871,9 @@ function renderPedList(){
 function aceitarPedido(key){
   const p=pedFila.find(x=>x.key===key);if(!p)return;
   const a=DB.alunos.find(x=>x.codigo===p.codigo);
+  if(a&&temFamilia(a)&&p.kind==='plano'){toast('Plano família: ajuste as aulas de cada pessoa e o total no responsável pelo cadastro.');return;}
   if(p.kind==='mensalidade'){
+    const r=responsavelFamilia(a);if(r){toast('Aviso de dependente: registre o pagamento na ficha de '+r.nome+' e descarte este aviso antigo.');return;}
     if(!a){toast('Aluno não encontrado — confira o cadastro');return;}
     /* Mesma proteção que marcarPago já tinha: o aviso do aluno pode chegar
        depois de o João já ter marcado pago na mão, e aí eram duas cobranças. */
@@ -3968,11 +3974,81 @@ function editarEntrada(id,origem){
   const ti=document.getElementById('s-titulo');ti.focus();ti.scrollIntoView({block:'center',behavior:'smooth'});
 }
 
+/* ===== Plano família: uma cobrança, aulas de cada pessoa ===== */
+const FAM_PARENTESCOS=['Cônjuge','Filho(a)','Outro dependente'];
+function dependentesFamilia(a){
+  return a?(DB.alunos||[]).filter(x=>x.id!==a.id&&x.responsavelId===a.id):[];
+}
+function responsavelFamilia(a){
+  if(!a||!a.responsavelId||a.responsavelId===a.id)return null;
+  const r=(DB.alunos||[]).find(x=>x.id===a.responsavelId);
+  return r&&!r.responsavelId?r:null;
+}
+function ehDependenteFamilia(a){return !!responsavelFamilia(a);}
+function temFamilia(a){return ehDependenteFamilia(a)||dependentesFamilia(a).length>0;}
+function pagadorFamilia(a){return responsavelFamilia(a)||a;}
+function statusFinanceiro(a){const p=pagadorFamilia(a);return p&&p.status||'pendente';}
+function dadosFamiliaAluno(a){
+  const r=responsavelFamilia(a), deps=dependentesFamilia(a);
+  if(r)return {papel:'dependente',responsavelNome:r.nome||'',parentesco:a.parentesco||'Outro dependente'};
+  if(deps.length)return {papel:'responsavel',dependentes:deps.map(x=>({nome:x.nome||'',parentesco:x.parentesco||'Outro dependente'}))};
+  return null;
+}
+function validarFamiliaAluno(id,responsavelId){
+  if(!responsavelId)return '';
+  if(id&&id===responsavelId)return 'O aluno não pode ser seu próprio responsável.';
+  const r=(DB.alunos||[]).find(x=>x.id===responsavelId);
+  if(!r)return 'Responsável não encontrado. Escolha outro cadastro.';
+  if(r.responsavelId)return 'Escolha o pagador da família; um dependente não pode ser responsável.';
+  if(id&&dependentesFamilia({id}).length)return 'Este aluno já tem dependentes. Transfira os dependentes antes de vinculá-lo a outro pagador.';
+  if(!ehAtivoAluno(r))return 'Reative o responsável antes de vincular um dependente.';
+  if(!(Number(r.mensalidade)>0))return 'Defina primeiro a mensalidade total da família no cadastro do responsável.';
+  return '';
+}
+function preencherFamiliaModal(id){
+  const sel=document.getElementById('a-responsavel');if(!sel)return;
+  const a=id?(DB.alunos||[]).find(x=>x.id===id):null;
+  const opts=(DB.alunos||[]).filter(x=>x.id!==id&&!x.responsavelId&&ehAtivoAluno(x)).sort((x,y)=>x.nome.localeCompare(y.nome));
+  sel.innerHTML='<option value="">O próprio aluno paga</option>'+opts.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.nome)+'</option>').join('');
+  if(a&&a.responsavelId&&!opts.some(x=>x.id===a.responsavelId))sel.innerHTML+='<option value="'+esc(a.responsavelId)+'">Responsável indisponível — escolha outro</option>';
+  sel.value=a&&a.responsavelId||'';
+  const par=document.getElementById('a-parentesco');if(par)par.value=a&&a.parentesco||'Outro dependente';
+  const m=document.getElementById('a-mensalidade');if(m){m.readOnly=false;m.dataset.famIndividual=String(a?(a.familiaMensalidadeAnterior!=null?a.familiaMensalidadeAnterior:a.mensalidade):0);}
+}
+function pintarFamiliaModal(){
+  const sel=document.getElementById('a-responsavel'),m=document.getElementById('a-mensalidade');if(!sel||!m)return;
+  const id=(document.getElementById('a-id')||{}).value||'',a=(DB.alunos||[]).find(x=>x.id===id);
+  const r=(DB.alunos||[]).find(x=>x.id===sel.value),dep=!!sel.value;
+  const label=m.closest('.field').querySelector('label');
+  if(dep){if(!m.readOnly&&Number(m.value)>0)m.dataset.famIndividual=m.value;m.value=0;m.readOnly=true;}
+  else if(m.readOnly){m.readOnly=false;m.value=m.dataset.famIndividual||0;}
+  if(label)label.textContent=dep?'Mensalidade incluída na família':(a&&dependentesFamilia(a).length?'Mensalidade total da família (R$)':'Mensalidade (R$)');
+  const par=document.getElementById('a-parentesco-wrap');if(par)par.style.display=dep?'':'none';
+  const note=document.getElementById('a-familia-nota');if(note)note.textContent=dep?
+    'A cobrança fica somente em '+(r?r.nome:'um responsável válido')+'. Informe o valor total da família no cadastro dele. Créditos e reposições continuam individuais.':
+    (a&&dependentesFamilia(a).length?'Este valor é a cobrança única da família. Alterar o número de aulas não recalcula a mensalidade familiar.':'Para esposa, filho ou outro dependente, escolha quem paga a família. Cada pessoa mantém suas aulas e seu acesso.');
+  for(const key of ['a-status','a-venc','a-cardlink']){const el=document.getElementById(key);if(el)el.disabled=dep;}
+  if(dep&&r){document.getElementById('a-status').value=r.status||'pendente';document.getElementById('a-venc').value=r.diaVenc||10;}
+}
+function novoDependenteFamilia(id){
+  const r=DB.alunos.find(x=>x.id===id);if(!r||r.responsavelId)return;
+  if(!(Number(r.mensalidade)>0)){toast('Defina a mensalidade total no cadastro do responsável antes de adicionar dependentes.');return;}
+  openAlunoModal();
+  document.getElementById('a-responsavel').value=id;pintarFamiliaModal();
+}
+function fichaFamilia(a){
+  const r=responsavelFamilia(a),deps=dependentesFamilia(a);
+  if(!r&&!deps.length)return '';
+  const link=x=>'<button class="fic-b neutro" type="button" onclick="abrirFicha(\''+argJs(x.id)+'\')">'+esc(x.nome)+' ›</button>';
+  if(r)return fxSecao('Plano família','<p class="fic-nota"><b>'+esc(a.parentesco||'Dependente')+'</b> · pagamento por <b>'+esc(r.nome)+'</b>. A mensalidade é cobrada uma vez no responsável. Suas aulas e reposições são individuais.</p>'+link(r));
+  return fxSecao('Plano família','<p class="fic-nota">Você é o responsável pelo pagamento. Mensalidade total: <b>'+fmt(valorDoMes(a))+'</b> · '+deps.length+' dependente(s).</p><div class="fic-g2">'+deps.map(x=>'<div><small>'+esc(x.parentesco||'Dependente')+'</small>'+link(x)+'</div>').join('')+'</div>');
+}
 /* ================= ALUNOS ================= */
 function openAlunoModal(id){
   const m=document.getElementById('ov-aluno');
   document.getElementById('aluno-modal-title').textContent=id?'Editar aluno':'Novo aluno';
   preencherTiposAluno();   // inclui os pacotes personalizados no seletor
+  preencherFamiliaModal(id);
   if(id){
     const a=DB.alunos.find(x=>x.id===id);
     ['nome','tel','tipo','plano','mensalidade','creditos','repos','status'].forEach(f=>{
@@ -3999,6 +4075,7 @@ function openAlunoModal(id){
     document.getElementById('a-nome').value='';document.getElementById('a-tel').value='';
     document.getElementById('a-tipo').value='Particular';document.getElementById('a-plano').value='4';
     document.getElementById('a-creditos').value=4;document.getElementById('a-repos').value=0;
+    document.getElementById('a-planogrupo').value=0;document.getElementById('a-credgrupo').value=0;document.getElementById('a-grupotipo').value='';
     document.getElementById('a-status').value='pendente';
     document.getElementById('a-cardlink').value='';
     document.getElementById('a-mfit').value='';
@@ -4008,6 +4085,8 @@ function openAlunoModal(id){
     document.getElementById('a-perfil').value='';
     applyAlunoTipoUI();
   }
+  if(id){const a=DB.alunos.find(x=>x.id===id);if(a&&temFamilia(a))document.getElementById('a-mensalidade').value=Number(a.mensalidade)||0;}
+  pintarFamiliaModal();
   m.classList.add('on');
 }
 /* ===== Pacotes personalizados (ex.: Kids, Planilha Personal) ===== */
@@ -4114,15 +4193,19 @@ function sugerirMensalidade(){
   // parte em grupo do plano misto (preço por pessoa/aula)
   let extra=0;
   if(pg>0&&gt){const vg=grupoPrecoAula(gt);extra=pg*vg;detalhe.push(pg+' × '+fmt(vg)+' ('+gt+')');}
-  if(base+extra>0)mEl.value=base+extra;
-  else if(p<=0&&pg<=0)mEl.value=0;
+  const fid=(document.getElementById('a-id')||{}).value||'';
+  const fa=DB.alunos.find(x=>x.id===fid),dep=(document.getElementById('a-responsavel')||{}).value;
+  if(!dep&&!(fa&&dependentesFamilia(fa).length)){
+    if(base+extra>0)mEl.value=base+extra;
+    else if(p<=0&&pg<=0)mEl.value=0;
+  }
   const cEl=document.getElementById('a-conta');
   if(cEl)cEl.textContent=detalhe.length?('= '+detalhe.join('  +  ')+'  =  '+fmt(base+extra)):'';
   if(!document.getElementById('a-id').value){
     document.getElementById('a-creditos').value=p;
     const cg=document.getElementById('a-credgrupo');if(cg)cg.value=pg;
   }
-  pintarAgendaModal();
+  pintarAgendaModal();pintarFamiliaModal();
 }
 /* O que a agenda deste mês diz, ao lado do que está sendo digitado. O link
    "usar" preenche os campos de plano e deixa sugerirMensalidade() fazer a
@@ -4165,6 +4248,8 @@ function saveAluno(){
   if(!nome){toast('Informe o nome do aluno');return;}
   const data={
     nome,tel:document.getElementById('a-tel').value.replace(/\D/g,''),
+    responsavelId:(document.getElementById('a-responsavel')||{}).value||'',
+    parentesco:(document.getElementById('a-parentesco')||{}).value||'Outro dependente',
     tipo:document.getElementById('a-tipo').value,
     plano:Number(document.getElementById('a-plano').value),
     mensalidade:Number(document.getElementById('a-mensalidade').value)||0,
@@ -4182,6 +4267,17 @@ function saveAluno(){
     perfil:document.getElementById('a-perfil').value,
     valorAula:Number(document.getElementById('a-valoraula').value)||(document.getElementById('a-tipo').value==='Personal'?130:160)
   };
+  const erroFamilia=validarFamiliaAluno(id,data.responsavelId);
+  if(erroFamilia){toast(erroFamilia);return;}
+  const anterior=id?DB.alunos.find(x=>x.id===id):null;
+  if(data.responsavelId){
+    data.mensalidade=0;
+    data.parentesco=FAM_PARENTESCOS.includes(data.parentesco)?data.parentesco:'Outro dependente';
+    if(anterior){data.status=anterior.status;data.diaVenc=anterior.diaVenc||10;}
+  }else data.parentesco='';
+  if(anterior&&dependentesFamilia(anterior).some(ehAtivoAluno)&&!(data.mensalidade>0)){
+    toast('O responsável tem dependentes ativos. Informe a mensalidade total da família.');return;
+  }
   // travas antes de gravar: número absurdo passava direto
   if(data.plano<0||data.planoGrupo<0){toast('Plano não pode ser negativo');return;}
   /* Pacote único (quem não é misto): crédito de grupo digitado soma ao saldo
@@ -4189,7 +4285,14 @@ function saveAluno(){
   if(pacoteUnicoAtivo()&&!((Number(data.plano)||0)>0&&(Number(data.planoGrupo)||0)>0)){
     data.creditos=(Number(data.creditos)||0)+(Number(data.credGrupo)||0);data.credGrupo=0;
   }
-  if(data.plano>0&&data.mensalidade<=0&&!confirm('Plano de '+data.plano+' aula(s) com mensalidade zerada.\n\nSalvar mesmo assim?'))return;
+  if(!data.responsavelId&&data.plano>0&&data.mensalidade<=0&&!confirm('Plano de '+data.plano+' aula(s) com mensalidade zerada.\n\nSalvar mesmo assim?'))return;
+  const mudouFamilia=(anterior&&anterior.responsavelId||'')!==data.responsavelId;
+  if(mudouFamilia){
+    const r=DB.alunos.find(x=>x.id===data.responsavelId);
+    const resumo=r?('Vincular '+nome+' como '+data.parentesco+' de '+r.nome+'?\n\nA mensalidade deste cadastro passa para R$ 0, incluída na cobrança única de '+fmtRs(r.mensalidade)+' em '+r.nome+'. O total do responsável não será somado automaticamente: confira se já cobre a família.'):
+      ('Retirar '+nome+' do plano família?\n\nEle volta a ter cobrança individual de '+fmtRs(data.mensalidade)+'. Confira também o total da família no antigo responsável.');
+    if(!confirm(resumo+'\n\nCréditos, reposições e histórico continuam em cada pessoa. Uma versão será salva antes da alteração.'))return;
+  }
   if(id){
     const a=DB.alunos.find(x=>x.id===id);
     // os quatro saldos passam pelo extrato, com motivo "Correção manual" — antes
@@ -4201,6 +4304,7 @@ function saveAluno(){
       if(Math.abs(dif)>10&&!confirm('Mudança grande em '+CAMPO_LABEL[c]+' de '+a.nome+':\n\n'
         +fmtCred(de)+'  →  '+fmtCred(para)+'   ('+(dif>0?'+':'')+fmtCred(dif)+')\n\nConfirma?'))return;
     }
+    if(mudouFamilia){guardarVersoes(JSON.stringify(DB));data.familiaMensalidadeAnterior=data.responsavelId?(a.responsavelId?(a.familiaMensalidadeAnterior||0):(Number(a.mensalidade)||0)):null;logAct('Plano família: '+nome+' → '+(data.responsavelId?('dependente de '+(DB.alunos.find(x=>x.id===data.responsavelId)||{}).nome):'pagamento individual'));}
     const novo=Object.assign({},data);
     saldos.forEach(c=>delete novo[c]);      // esses vão pelo mover(), não por cima
     Object.assign(a,novo);
@@ -4212,6 +4316,7 @@ function saveAluno(){
   }
   else{
     let c;do{c=genCode();}while(DB.alunos.some(x=>x.codigo===c));
+    if(data.responsavelId)guardarVersoes(JSON.stringify(DB));
     DB.alunos.push({id:'a'+Date.now(),ativo:true,codigo:c,...data});toast('Aluno cadastrado · código '+c);
   }
   persist();closeModal('ov-aluno');renderAll();
@@ -4734,7 +4839,8 @@ function renderAvaliacoes(){
 }
 
 function delAluno(id){
-  const a=DB.alunos.find(x=>x.id===id);
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  if(dependentesFamilia(a).length){toast('Transfira ou desvincule os dependentes antes de excluir o responsável.');return;}
   if(confirm('Excluir '+a.nome+'? Essa ação não pode ser desfeita.')){
     DB.alunos=DB.alunos.filter(x=>x.id!==id);persist();renderAll();toast('Aluno excluído');
   }
@@ -4748,6 +4854,7 @@ function valorAulaGrupoDe(a){
    então a parte do grupo sai da conta antes de dividir — senão a aula extra
    sairia inflada (ex.: 1020/4 = 255 em vez de 160). */
 function valorAulaDe(a){
+  if(temFamilia(a))return Number(a.valorAula)||0; // total familiar não é preço da aula individual
   const p=Number(a.plano)||0,m=Number(a.mensalidade)||0;
   const pg=Number(a.planoGrupo)||0;
   if(p>0&&m>0){
@@ -4843,7 +4950,7 @@ function saldoCredTotal(a){return (Number(a&&a.creditos)||0)+(Number(a&&a.credGr
 /* Diferença entre o valor da agenda e o valor anotado: depois que o João decide
    (trocar ou manter), o aviso fica silenciado. Volta a aparecer só na virada do
    mês ou quando os créditos do aluno zeram. */
-function difSilenciada(a){return !!(a&&a.difOk&&a.difOk.mes===monthKey()&&saldoCredTotal(a)>0);}
+function difSilenciada(a){return temFamilia(a)||!!(a&&a.difOk&&a.difOk.mes===monthKey()&&saldoCredTotal(a)>0);}
 function manterValorAnotado(id){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
   a.difUndo={mes:monthKey(),mensalidade:Number(a.mensalidade)||0,plano:Number(a.plano)||0,planoGrupo:Number(a.planoGrupo)||0,difOk:a.difOk||null};   // guarda para desfazer
@@ -4872,6 +4979,7 @@ function desfazerDecisaoDif(id){
    pagamento ela decide se o aluno consegue agendar. Nada muda sozinho. */
 function cobrarPelaAgenda(id){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  if(temFamilia(a)){toast('Plano família: ajuste o valor total no cadastro do responsável.');return;}
   const g=agendaDoMes(a);
   if(g.total<=0){toast('📅 '+a.nome.split(' ')[0]+' não tem aula na agenda deste mês — mensalidade mantida.');return;}
   const atual=Number(a.mensalidade)||0;
@@ -4999,6 +5107,7 @@ function cobrancaDoMes(a){
 }
 function marcarPago(id){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  const r=responsavelFamilia(a);if(r){toast('Registre o pagamento único na ficha de '+r.nome+'.');return;}
   if(acaoRepetida('pago-'+id)){toast('Já registrei esse pagamento agora há pouco');return;}
   const jaTem=mensalidadesDoMes(a);
   if(jaTem.length){
@@ -5198,7 +5307,7 @@ function renovarMes(id){
     alert('🔒 A renovação de '+a.nome+' foi desfeita: o resultado não bateu com a prévia ('+(e&&e.message||e)+'). Nada mudou.');
     renderAll();return;
   }
-  a.status='pendente';delete a.difOk;delete a.difUndo;   // novo ciclo: reavalia a diferença do zero
+  if(!ehDependenteFamilia(a)&&a.ultimoPago!==mesReal())a.status='pendente';delete a.difOk;delete a.difUndo;   // novo ciclo: reavalia a diferença do zero
   a.ultimaRenovacao={ts:Date.now(),creditos:depois.c,credGrupo:depois.g,repos:depois.r};   // registro do que entrou na última renovação
   logAct('Renovação do mês: '+a.nome+' → '+fmtCred(depois.c)+' crédito(s)'+(pg>0?(' + '+fmtCred(depois.g)+' grupo'):'')+' · '+fmtCred(depois.r)+' reposição(ões)');
   persist();renderAll();
@@ -5226,6 +5335,7 @@ function enviarResumoRenovacao(a,sobra){
    Flex 8 → 2 · Flex 6 → 1,5 · Flex 4 → 1 · Flex 3 → 0,5 · Flex 1 → 0. */
 const DESC_REPOS_TETO=0.25;
 function descReposInfo(a){
+  if(temFamilia(a))return null; // desconto individual não calcula o total familiar
   if(!a)return null;
   const aulas=(Number(a.plano)||0)+(Number(a.planoGrupo)||0), m=Number(a.mensalidade)||0;
   if(aulas<=0||m<=0)return null;
@@ -5240,11 +5350,13 @@ function descontoDoMes(a){const d=a&&a.descRepos;return (d&&d.mes===mesReal())?d
    se houver. É este o número que entra no "A receber", na cobrança e no
    lançamento do pagamento. */
 function valorDoMes(a){
+  if(ehDependenteFamilia(a))return 0;
   const m=Number(a&&a.mensalidade)||0, d=descontoDoMes(a);
   return Math.max(0,m-(d?Number(d.valor)||0:0));
 }
 function descontarReposicoes(id){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  if(temFamilia(a)){toast('Plano família: combine o valor total e ajuste no cadastro do responsável.');return;}
   if(descontoDoMes(a)){toast(a.nome.split(' ')[0]+' já teve desconto de reposições este mês');return;}
   if(!ehAtivoAluno(a)){alert('🔒 '+a.nome+' está inativo — o desconto vale só para quem está pagando a mensalidade.');return;}
   if(a.status!=='pendente'){
@@ -5331,9 +5443,10 @@ function rmLinha(a){
   const temAg=ag.total>0;
   let agP=grupoSo?(soGrupoPG?0:ag.grupo):ag.part, agPG=grupoSo?(soGrupoPG?ag.grupo:0):((pg>0||ag.grupo>0)?ag.grupo:pg);
   if(uni){p=p+pg;pg=0;c=c+g;g=0;agP=ag.total;agPG=0;}
-  const difere=temAg&&(agP!==p||agPG!==pg||ag.valor!==mens);
-  const usa=temAg?(rmEscolha[a.id]||'agenda'):'pacote';
-  const novo=(usa==='agenda')?{p:agP,pg:agPG,mens:ag.valor}:{p,pg,mens};
+  const difere=temAg&&(agP!==p||agPG!==pg||(!temFamilia(a)&&ag.valor!==mens));
+  const fam=temFamilia(a);
+  const usa=temAg?(rmEscolha[a.id]||(fam?'pacote':'agenda')):'pacote';
+  const novo=(usa==='agenda')?{p:agP,pg:agPG,mens:fam?mens:ag.valor}:{p,pg,mens};
   const jaRenov=renovacoesDoMes(a).length>0;
   const venc=reposVencidas(a);
   const sobra=jaRenov?0:Math.max(0,c)+(novo.pg>0?Math.max(0,g):0);
@@ -5444,7 +5557,7 @@ function rmAplicarUm(x){
     if(DB.movs)DB.movs.length=nMovs;
     return {ok:false,erro:(e&&e.message)||String(e)};
   }
-  if(a.ultimoPago!==mesReal())a.status='pendente';
+  if(!ehDependenteFamilia(a)&&a.ultimoPago!==mesReal())a.status='pendente';
   delete a.difOk;delete a.difUndo;
   a.ultimaRenovacao={ts:Date.now(),creditos:x.novo.p,credGrupo:x.gDep,repos:x.reposDepois};
   return {ok:true};
@@ -5543,7 +5656,7 @@ let focoDif=false;
    seria uma folha com zero aula e zero valor — e o nome na fila fazia parecer
    que faltava mandar o de alguém. */
 function ehDoFechamento(a){
-  return ehAtivoAluno(a)&&perfilDe(a)!=='torneio';
+  return !ehDependenteFamilia(a)&&ehAtivoAluno(a)&&perfilDe(a)!=='torneio';
 }
 function ehAtivoAluno(a){
   if(!a)return false;
@@ -5559,6 +5672,8 @@ function contagemAlunos(){
 function arquivarAluno(id){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
   const ativo=ehAtivoAluno(a);
+  const r=responsavelFamilia(a);if(!ativo&&r&&!ehAtivoAluno(r)){toast('Reative o responsável '+r.nome+' antes de reativar o dependente.');return;}
+  if(ativo&&dependentesFamilia(a).some(ehAtivoAluno)){toast('Transfira ou desvincule os dependentes ativos antes de inativar o responsável.');return;}
   if(ativo){
     if(!confirm('Marcar '+a.nome+' como INATIVO?\n\nEle continua no cadastro e com todo o histórico — só sai da conta de alunos ativos.'))return;
     a.arquivado=true;logAct('Aluno marcado como inativo: '+a.nome);
@@ -5732,9 +5847,10 @@ function aulaJaAconteceu(p,agora){
   return _hm(h)<=(n.getHours()*60+n.getMinutes());
 }
 function fcDados(a,mk){
-  const aulas=fcAulasDoMes(a,mk);
+  const membros=[a,...dependentesFamilia(a).filter(ehAtivoAluno)];
+  const aulas=membros.flatMap(x=>fcAulasDoMes(x,mk).map(p=>({...p,alunoNome:x.nome})));
   const feitas=aulas.reduce((t,p)=>t+(Number(p.custo)||1),0);
-  const faltas=fcFaltasDoMes(a,mk), avisados=fcAvisadosDoMes(a,mk);
+  const faltas=membros.flatMap(x=>fcFaltasDoMes(x,mk)), avisados=membros.flatMap(x=>fcAvisadosDoMes(x,mk));
   const cheia=Number(a.mensalidade)||0;
   return {aulas,feitas,faltas,avisados,cheia,total:cheia};
 }
@@ -6183,8 +6299,9 @@ function saldoLinhaAluno(a){
    a mesma regra. */
 function situacaoPag(a){
   if(!ehAtivoAluno(a))return 'inativo';
-  if(a.status==='pago')return 'pago';
-  return a.status==='parcial'?'parcial':'pendente';
+  const s=statusFinanceiro(a);
+  if(s==='pago')return 'pago';
+  return s==='parcial'?'parcial':'pendente';
 }
 function seloPagamento(a){
   const s=situacaoPag(a);
@@ -6210,6 +6327,9 @@ function linhaAluno(a){
   const tags=[];
   if(difere)tags.push('<span class="al-tag ouro">📅 conferir valor: agenda dá '+fmt(ag.valor)+'</span>');
   if(venc>0)tags.push('<span class="al-tag ouro">⏳ '+fmtCred(venc)+' repos. vencem</span>');
+  const resp=responsavelFamilia(a),deps=dependentesFamilia(a);
+  if(resp)tags.push('<span class="al-tag cinza">👪 '+esc(a.parentesco||'Dependente')+' · paga '+esc(resp.nome)+'</span>');
+  else if(deps.length)tags.push('<span class="al-tag cinza">👪 Responsável · '+deps.length+' dependente(s)</span>');
   if(perfilDe(a)==='torneio')tags.push('<span class="al-tag cinza">🏆 torneio</span>');
   const rap=aulaRapidaDe(a);
   const hr=horarioFixoTxt(a);
@@ -6242,7 +6362,7 @@ function renderFiltroPag(base){
 function renderTotalAlunos(items){
   const el=document.getElementById('alunos-total');if(!el)return;
   const pagos=items.filter(a=>situacaoPag(a)==='pago').length;
-  const pend=items.filter(a=>{const s=situacaoPag(a);return s==='pendente'||s==='parcial';});
+  const pend=items.filter(a=>{if(ehDependenteFamilia(a))return false;const s=situacaoPag(a);return s==='pendente'||s==='parcial';});
   const falta=pend.reduce((t,a)=>t+valorDoMes(a)*(a.status==='parcial'?.5:1),0);
   el.innerHTML='<b>'+items.length+'</b> aluno'+(items.length===1?'':'s')+' na seleção'
     +' · <span class="ok">'+pagos+' pago'+(pagos===1?'':'s')+'</span>'
@@ -6384,13 +6504,14 @@ function renderFicha(){
   if(!a){fecharFicha();return;}                 // excluído: a ficha sai sozinha
   const id=a.id, ativo=ehAtivoAluno(a);
   const ag=agendaDoMes(a), mens=Number(a.mensalidade)||0;
-  const agDif=ag.total>0&&ag.valor!==mens;
+  const agDif=!temFamilia(a)&&ag.total>0&&ag.valor!==mens;
   const difere=agDif&&!difSilenciada(a);
   const loc=usaLocacao(a);
   const c=Number(a.creditos)||0, g=Number(a.credGrupo)||0, r=Number(a.repos)||0, l=Number(a.locCred)||0;
   const temGrupo=(Number(a.planoGrupo)||0)>0&&!unificado(a);
   const venc=reposVencendo(a);
-  const devendo=a.status!=='pago';
+  const dep=ehDependenteFamilia(a),status=statusFinanceiro(a);
+  const devendo=!dep&&status!=='pago';
   const av=(a.avaliacoes&&a.avaliacoes.length)?a.avaliacoes[a.avaliacoes.length-1]:null;
   const nomeTopo=document.getElementById('fic-top-nome');if(nomeTopo)nomeTopo.textContent=a.nome;
 
@@ -6404,11 +6525,12 @@ function renderFicha(){
   if(!ativo)chips.push('<span class="fic-chip">📦 inativo</span>');
   let h='<div class="fic-hero">'
     +'<div class="fic-hero-l"><div class="fic-nome">'+(ehPersonalTipo(a.tipo)?'💪 ':'🎾 ')+esc(a.nome)+'</div>'
-    +'<div class="fic-sub">'+[esc(a.tipo||''),plano+(temGrupo?' + '+a.planoGrupo+' em grupo':''),fmt(mens)+'/mês'].filter(Boolean).map(x=>'<span class="fic-nw">'+x+'</span>').join(' · ')+'</div>'
+    +'<div class="fic-sub">'+[esc(a.tipo||''),plano+(temGrupo?' + '+a.planoGrupo+' em grupo':''),(dep?'Incluído no plano família':fmt(mens)+'/mês')].filter(Boolean).map(x=>'<span class="fic-nw">'+x+'</span>').join(' · ')+'</div>'
     +(horarioFixoTxt(a)?'<div class="fic-sub fic-hora">🕐 '+esc(horarioFixoTxt(a))+'</div>':'')+'</div>'
-    +'<span class="badge '+esc(a.status||'pendente')+'">'+(a.status==='parcial'?'50%':esc(a.status||'pendente'))+'</span></div>'
+    +'<span class="badge '+esc(status)+'">'+(status==='parcial'?'50%':esc(status))+'</span></div>'
     +(chips.length?'<div class="fic-chips">'+chips.join('')+'</div>':'');
 
+  h+=fichaFamilia(a);
   /* saldos */
   /* Barra de créditos igual à do app do aluno: quanto do pacote ainda resta. */
   const barra=(v,tot)=>{tot=Number(tot)||0;if(tot<=0||v<0)return '';
@@ -6496,7 +6618,7 @@ function renderFicha(){
   h+=fxSecao('WhatsApp',wa);
 
   /* cadastro */
-  let cad=fxBotao('neutro',"openAlunoModal('"+id+"')",'✏️ Editar cadastro')
+  let cad=(!dep?fxBotao('neutro',"novoDependenteFamilia('"+id+"')",'👪 Adicionar dependente'):'')+fxBotao('neutro',"openAlunoModal('"+id+"')",'✏️ Editar cadastro')
     +fxBotao('neutro',"arquivarAluno('"+id+"')",ativo?'📦 Marcar inativo':'✅ Reativar aluno');
   h+=fxSecao('Cadastro','<div class="fic-g2">'+cad+'</div>'
     +'<button class="fic-excluir" onclick="delAluno(\''+id+'\')">Excluir aluno</button>');
@@ -7088,7 +7210,7 @@ function renderDash(){
   const movs=DB.lancamentos.filter(l=>l.mes===monthKey());
   const recebido=movs.filter(l=>l.valor>0).reduce((s,l)=>s+l.valor,0);
   // inativo não faz aula nem paga mensalidade: não entra no "A receber"
-  const pendAlunos=DB.alunos.filter(a=>a.status!=='pago'&&ehAtivoAluno(a));
+  const pendAlunos=DB.alunos.filter(a=>!ehDependenteFamilia(a)&&a.status!=='pago'&&ehAtivoAluno(a));
   const pendValor=pendAlunos.reduce((s,a)=>s+(a.status==='parcial'?valorDoMes(a)*0.5:valorDoMes(a)),0);
   const creditos=DB.alunos.reduce((s,a)=>s+a.creditos,0);
   const repos=DB.alunos.reduce((s,a)=>s+a.repos,0);
@@ -7175,7 +7297,7 @@ function renderConselhos(){
   const alunos=DB.alunos||[];
 
   // 1. mensalidades vencidas / vencendo
-  const pend=alunos.filter(a=>a.status!=='pago'&&ehAtivoAluno(a)&&(Number(a.mensalidade)||0)>0);
+  const pend=alunos.filter(a=>!ehDependenteFamilia(a)&&a.status!=='pago'&&ehAtivoAluno(a)&&(Number(a.mensalidade)||0)>0);
   const venc=pend.filter(a=>{const d=vencDe(a);return d!==null&&d<0;});
   if(venc.length){
     const tot=venc.reduce((s,a)=>s+(a.status==='parcial'?valorDoMes(a)*0.5:valorDoMes(a)),0);
@@ -7437,9 +7559,10 @@ function delCompromisso(id){
   persist();renderDash();toast('Compromisso removido');
 }
 function cobrar(id){
-  const a=DB.alunos.find(x=>x.id===id);
+  let a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  a=pagadorFamilia(a);
   const falta=a.status==='parcial'?valorDoMes(a)*0.5:valorDoMes(a);
-  const msg=encodeURIComponent(`Olá ${a.nome.split(' ')[0]}! 🎾 Passando para lembrar da mensalidade de ${MESES[curMonth]}: ${fmtRs(falta)}. Qualquer dúvida é só chamar!`);
+  const msg=encodeURIComponent(`Olá ${a.nome.split(' ')[0]}! 🎾 Passando para lembrar da mensalidade${dependentesFamilia(a).length?' da família':''} de ${MESES[curMonth]}: ${fmtRs(falta)}. Qualquer dúvida é só chamar!`);
   window.open(`https://wa.me/${foneWhats(a.tel)}?text=${msg}`,'_blank');
 }
 function modalDe(l){
@@ -7481,7 +7604,7 @@ function renderFin(){
   const prevAg=DB.alunos.reduce((s,a)=>s+mensalidadeDaAgenda(a,curYear,curMonth).valor,0);
   const elPA=document.getElementById('f-prev-agenda');
   if(elPA)elPA.textContent=fmt(prevAg);
-  const inad=DB.alunos.filter(a=>a.status!=='pago'&&ehAtivoAluno(a)).reduce((s,a)=>s+(a.status==='parcial'?valorDoMes(a)*0.5:valorDoMes(a)),0);
+  const inad=DB.alunos.filter(a=>!ehDependenteFamilia(a)&&a.status!=='pago'&&ehAtivoAluno(a)).reduce((s,a)=>s+(a.status==='parcial'?valorDoMes(a)*0.5:valorDoMes(a)),0);
   document.getElementById('f-inad').textContent=fmt(inad);
   const mi=document.getElementById('meta-input');
   if(hideVals){mi.type='text';mi.value='••••';mi.readOnly=true;}
@@ -8912,7 +9035,7 @@ function achadosDoAluno(a){
       txt:a.nome+': '+fmtCred(venc)+' reposição(ões) já passaram de 4 meses e ainda contam no saldo — abra o app uma vez no mês novo para a virada rodar.'});
     // mensalidade contra o plano
     const p=Number(a.plano)||0, pg=Number(a.planoGrupo)||0;
-    if(p>0||pg>0){
+    if(!temFamilia(a)&&(p>0||pg>0)){
       const esp=p*(Number(a.valorAula)||160)+(pg>0?pg*grupoPrecoAula(a.grupoTipo||'Dupla'):0);
       const m=Number(a.mensalidade)||0;
       if(esp>0&&Math.abs(esp-m)>1)achados.push({tipo:'aviso',a,
@@ -8920,7 +9043,7 @@ function achadosDoAluno(a){
     }
     // mensalidade contra a agenda do mês
     const g=agendaDoMes(a);
-    if(g.total>0&&g.valor!==(Number(a.mensalidade)||0))achados.push({tipo:'aviso',a,
+    if(!temFamilia(a)&&g.total>0&&g.valor!==(Number(a.mensalidade)||0))achados.push({tipo:'aviso',a,
       txt:'Agenda de '+a.nome+': '+g.total+' aula(s) dão '+fmt(g.valor)+', a mensalidade é '+fmt(Number(a.mensalidade)||0)+'.'});
     // DUPLICIDADE 1: mais de uma mensalidade lançada no mesmo mês
     const mens=mensalidadesDoMes(a);
@@ -8967,7 +9090,7 @@ function conferirNumeros(){
       txt:'LANÇAMENTO REPETIDO: '+g2.length+'x "'+(g2[0].desc||'')+'" de '+fmt(g2[0].valor)+' no mesmo dia ('+String(g2[0].data||'').split('-').reverse().join('/')+'). Confira na Caixa se não foi toque duplo.'});
   });
   // "a receber" do painel contra a soma aluno a aluno
-  const soma=(DB.alunos||[]).filter(a=>a.status!=='pago'&&ehAtivoAluno(a))
+  const soma=(DB.alunos||[]).filter(a=>!ehDependenteFamilia(a)&&a.status!=='pago'&&ehAtivoAluno(a))
     .reduce((s,a)=>s+(a.status==='parcial'?valorDoMes(a)*0.5:valorDoMes(a)),0);
   const cab='<div class="cons info"><h4><span>🔎</span>Esta tela não altera nada</h4>'
     +'<p>Ela só mostra. Nenhum botão aqui mexe em crédito, saldo ou aula — quando algo precisar ser acertado, você acerta no cadastro do aluno.</p></div>'
@@ -9059,7 +9182,7 @@ function relAchados(a,M,atual,mesAtual){
     if(m.nRenov>1)out.push(nomeM(m.mk)+': créditos renovados '+m.nRenov+' vezes no mesmo mês (somam '+fmtCred(m.pagas)+').');
     if(m.nPag>1)out.push(nomeM(m.mk)+': '+m.nPag+' mensalidades lançadas no mesmo mês ('+fmtRs(m.pago)+').');
     if(m.pago>0&&!m.nRenov&&((Number(a.plano)||0)+(Number(a.planoGrupo)||0))>0)out.push(nomeM(m.mk)+': pagou '+fmtRs(m.pago)+' mas não há renovação de créditos registrada no mês.');
-    if(passado&&m.nRenov&&!m.pago&&ehAtivoAluno(a))out.push(nomeM(m.mk)+': créditos renovados, mas nenhuma mensalidade lançada no mês.');
+    if(!ehDependenteFamilia(a)&&passado&&m.nRenov&&!m.pago&&ehAtivoAluno(a))out.push(nomeM(m.mk)+': créditos renovados, mas nenhuma mensalidade lançada no mês.');
     if(passado&&m.pagas>0&&m.feitas+m.faltas>m.pagas)out.push(nomeM(m.mk)+': fez '+fmtCred(m.feitas+m.faltas)+' aula(s) (com faltas) para '+fmtCred(m.pagas)+' paga(s) — '+fmtCred(m.feitas+m.faltas-m.pagas)+' além do pacote: foram cobradas como extra?');
     if(m.semDebito>0)out.push(nomeM(m.mk)+': '+m.semDebito+' aula(s) registrada(s) sem desconto de crédito no extrato — o crédito pode não ter saído.');
     if(passado&&m.semConf>0)out.push(nomeM(m.mk)+': '+fmtCred(m.semConf)+' aula(s) da agenda sem confirmação — conferir se aconteceram.');

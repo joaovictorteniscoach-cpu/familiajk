@@ -1588,11 +1588,11 @@ body[data-aba]:not([data-aba="inicio"]) #app>.top .jv-quadra-chip{display:none!i
 #app>.top .jv-chips-topo .jv-clima-chip .clima-ic{font-size:17px}
 #app>.top .jv-chips-topo .jv-quadra-chip .led{width:9px;height:9px;flex:0 0 9px}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-04-2">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-04-3">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-04-2">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-04-3">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -1865,9 +1865,10 @@ function esperarAuth(){
       </button>
     </div>
     <div class="jv-pay-card" id="jv-home-pay">
-      <div class="jv-pay-head"><b>Mensalidade</b><span class="jv-pay-status" id="home-pay-status">—</span></div>
+      <div class="jv-pay-head"><b id="home-pay-title">Mensalidade</b><span class="jv-pay-status" id="home-pay-status">—</span></div>
       <div><div class="jv-pay-lbl" id="home-venc-label">Vencimento</div><div class="jv-pay-value" id="home-venc">—</div></div>
       <div><div class="jv-pay-lbl">Valor do plano</div><div class="jv-pay-value" id="home-mens">—</div></div>
+      <div id="home-familia-info" style="grid-column:1/-1;font-size:12px;line-height:1.5;display:none"></div>
       <button class="jv-pix-btn" id="home-pix-btn" type="button" onclick="pagarPix()"><img class="jv-pix-mark" src="assets/pix-simbolo.svg" alt="" width="25" height="25"> Pagar com Pix ›</button>
     </div>
     <div class="jv-quick-title">⚡ Ações rápidas</div>
@@ -1950,6 +1951,7 @@ function esperarAuth(){
 
     <section class="page" id="apg-creditos">
       <div class="jv-subhero"><h2>Créditos <em>e reposições</em></h2><p>Controle aulas, reposições e pagamentos em um só lugar.</p></div>
+      <div class="jv-credit-panel" id="cred-page-familia" style="display:none"><b>👪 Plano família</b><p id="cred-page-familia-info"></p></div>
       <div class="jv-credit-panel">
         <div class="jv-pay-lbl">Créditos disponíveis</div>
         <div class="jv-credit-big"><span id="cred-page-saldo">0</span> <small>créditos</small></div>
@@ -2031,7 +2033,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-10-04-2"></script>
+<script src="lib/icones.js?v=2026-10-04-3"></script>
 </div>
 
 <!-- MODAL ESCOLHER O QUE FAZER NO HORÁRIO -->
@@ -2238,7 +2240,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-10-04-2';
+const VERSAO='2026-10-04-3';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -2419,7 +2421,16 @@ function fmt(v){return 'R$ '+Number(v||0).toLocaleString('pt-BR');}
 /* Aparelho ainda não aprovado lê a cópia antiga, que não traz mais o valor da
    mensalidade. Mostrar "R$ 0" ou gerar Pix de zero seria pior que avisar. */
 function mensOculta(){return !!(EU&&(EU.valoresOcultos||EU.mensalidade==null));}
-function fmtMens(){return mensOculta()?'após aprovação':fmt(EU.mensalidade);}
+function dependenteAluno(){return !!(EU&&EU.familia&&EU.familia.papel==='dependente');}
+function familiaAluno(){return !!(EU&&EU.familia);}
+function infoFamiliaAluno(){
+  if(!familiaAluno())return '';
+  if(dependenteAluno())return 'Mensalidade incluída no plano família. Pagamento por '+(EU.familia.responsavelNome||'seu responsável')+'. Seus créditos e reposições são individuais.';
+  const deps=Array.isArray(EU.familia.dependentes)?EU.familia.dependentes:[];
+  return 'Você é o responsável pelo pagamento único da família.'+(deps.length?' Dependentes: '+deps.map(x=>x.nome).join(', ')+'.':'')+' Cada pessoa mantém seus próprios créditos e reposições.';
+}
+function avisoPagamentoFamilia(){toast('Pagamento pelo responsável: '+(EU&&EU.familia&&EU.familia.responsavelNome||'plano família')+'.');}
+function fmtMens(){return dependenteAluno()?'Incluída na família':(mensOculta()?'após aprovação':fmt(EU.mensalidade));}
 function avisoMensOculta(){toast('🔐 O valor aparece quando o João aprovar este aparelho');}
 function fmtCred(n){const r=Math.round(Number(n||0)*2)/2;return r%1===0?String(r):String(r).replace('.',',');}
 function _hm(s){const p=String(s).split(':');return (+p[0])*60+(+p[1]||0);}
@@ -2996,7 +3007,12 @@ function renderPremiumAluno(){
   const vl=document.getElementById('home-venc-label');if(vl)vl.textContent=EU.status==='pago'?'Próximo vencimento':'Vencimento do mês';
   const hv=document.getElementById('home-venc');if(hv)hv.textContent=vencimentoPremium();
   const hm=document.getElementById('home-mens');if(hm)hm.textContent=fmtMens();
-  const pb=document.getElementById('home-pix-btn');if(pb)pb.style.display=(PUB&&PUB.pix&&String(PUB.pix).trim())?'flex':'none';
+  const ptit=document.getElementById('home-pay-title');if(ptit)ptit.textContent=familiaAluno()?'Plano família':'Mensalidade';
+  const finfo=infoFamiliaAluno();
+  const hi=document.getElementById('home-familia-info');if(hi){hi.textContent=finfo;hi.style.display=finfo?'block':'none';}
+  const ci=document.getElementById('cred-page-familia-info');if(ci)ci.textContent=finfo;
+  const cb=document.getElementById('cred-page-familia');if(cb)cb.style.display=finfo?'block':'none';
+  const pb=document.getElementById('home-pix-btn');if(pb)pb.style.display=(!dependenteAluno()&&PUB&&PUB.pix&&String(PUB.pix).trim())?'flex':'none';
   const cs=document.getElementById('cred-page-saldo');if(cs)cs.textContent=fmtCred(saldo);
   const cf=document.getElementById('cred-page-fill');if(cf)cf.style.width=(plano>0?Math.max(0,Math.min(100,saldo/plano*100)):(saldo>0?100:0))+'%';
   const repos=saldoReposAluno(),vencendo=Math.max(0,Math.min(repos,Number(EU.reposVencendo)||0));
@@ -3012,7 +3028,7 @@ function renderPremiumAluno(){
   const cp=document.getElementById('cred-page-plano');if(cp)cp.textContent=planoPremium();
   const cm=document.getElementById('cred-page-mens');if(cm)cm.textContent=fmtMens();
   const cst=document.getElementById('cred-page-status');if(cst)cst.textContent=EU.status==='pago'?'Em dia':(EU.status==='parcial'?'50% pago':'Pendente');
-  const cpp=document.getElementById('cred-page-pix');if(cpp)cpp.style.display=(PUB&&PUB.pix&&String(PUB.pix).trim())?'block':'none';
+  const cpp=document.getElementById('cred-page-pix');if(cpp)cpp.style.display=(!dependenteAluno()&&PUB&&PUB.pix&&String(PUB.pix).trim())?'block':'none';
   const pn=document.getElementById('perfil-nome');if(pn)pn.textContent=EU.nome||'Aluno';
   const av=(EU&&Array.isArray(EU.avaliacoes))?EU.avaliacoes:[],nivel=av.length?(av[av.length-1].nivel||'Em evolução'):'Avaliação a liberar';
   const pni=document.getElementById('perfil-nivel');if(pni)pni.textContent=nivel+' · Da Base ao Topo';
@@ -3125,7 +3141,7 @@ function soLembrete(){
 function motivoBloqueio(){
   // com o prazo junto, ele sabe se está atrasado ou se ainda dá tempo
   const prazo=textoVencimento();
-  const emAberto='mensalidade do mês em aberto'+(prazo?(' ('+prazo+')'):'');
+  const emAberto=(dependenteAluno()?'mensalidade da família em aberto, a ser paga pelo responsável':'mensalidade do mês em aberto')+(prazo?(' ('+prazo+')'):'');
   if(bloqueadoPorPagamento()&&bloqueadoPorSaldo())return emAberto+' e aulas a acertar';
   if(bloqueadoPorPagamento())return emAberto;
   const c=Number(EU.creditos)||0,g=Number(EU.credGrupo)||0;
@@ -3142,8 +3158,9 @@ function renderPayLock(){
     el.style.display='block';
     const esperando=pagamentoEmAnalise();
     let h='🗓️ <b>Mensalidade vence dia '+diaVencEU()+'</b> — agende suas aulas normalmente até lá.';
+    if(dependenteAluno())h+='<div class="lock-wait">Pagamento pelo responsável da família.</div>';
     if(esperando)h+='<div class="lock-wait">⏳ Pagamento avisado ao João em '+esperando+'.</div>';
-    else if(bloqueadoPorPagamento())h+='<button class="lock-pay" onclick="irPagar()">💳 Pagar agora pelo app</button>';
+    else if(bloqueadoPorPagamento()&&!dependenteAluno())h+='<button class="lock-pay" onclick="irPagar()">💳 Pagar agora pelo app</button>';
     el.innerHTML=h;
     return;
   }
@@ -3153,10 +3170,10 @@ function renderPayLock(){
     let h='🔒 <b>Agendamento bloqueado</b> — '+motivoBloqueio()+'. Locação e jogo do torneio seguem liberados.';
     if(esperando){
       h+='<div class="lock-wait">⏳ Pagamento avisado ao João em '+esperando+'. Assim que ele confirmar, libera sozinho.</div>';
-    }else if(bloqueadoPorPagamento()){
+    }else if(bloqueadoPorPagamento()&&!dependenteAluno()){
       h+='<button class="lock-pay" onclick="irPagar()">💳 Pagar agora pelo app</button>';
     }else{
-      h+='<div class="lock-wait">Fale com o João para acertar as aulas extras.</div>';
+      h+='<div class="lock-wait">'+(dependenteAluno()&&bloqueadoPorPagamento()?'O pagamento é feito pelo responsável da família.':'Fale com o João para acertar as aulas extras.')+'</div>';
     }
     el.innerHTML=h;
   }else{el.style.display='none';}
@@ -3172,6 +3189,7 @@ function pagamentoEmAnalise(){
     +' às '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
 }
 function irPagar(){
+  if(dependenteAluno()){goAluno('creditos',document.getElementById('nav-al-creditos'));avisoPagamentoFamilia();return;}
   goAluno('inicio',document.querySelector('.nav button'));
   setTimeout(()=>{
     const box=document.getElementById('pay-box');
@@ -3860,6 +3878,7 @@ function cardBtnHTML(onclickFn){
 function renderPagamento(){
   const box=document.getElementById('pay-box');
   const grid=document.getElementById('pay-grid');
+  if(dependenteAluno()){box.style.display='none';grid.innerHTML='';return;}
   const temPix=PUB.pix&&PUB.pix.trim();
   box.style.display='block';
   const titEl=box.querySelector('.sec-title');
@@ -3948,10 +3967,12 @@ function jaPagueiPix(){
   pixCtx=null;
 }
 function pagarPix(){
+  if(dependenteAluno()){avisoPagamentoFamilia();return;}
   if(mensOculta()){avisoMensOculta();return;}
   abrirPix(EU.mensalidade,'Mensalidade · '+(EU.nome||'').split(' ')[0],{kind:'mensalidade',metodo:'Pix',valor:EU.mensalidade});
 }
 function pagarCartao(){
+  if(dependenteAluno()){avisoPagamentoFamilia();return;}
   if(mensOculta()){avisoMensOculta();return;}
   const link=(EU.cardLink&&EU.cardLink.trim())||(PUB.cardLink&&PUB.cardLink.trim())||'';
   if(link){
@@ -3966,6 +3987,7 @@ function pagarCartao(){
   setTimeout(()=>abrirWhatsApp('5541995415712','Olá João! Quero pagar a mensalidade ('+fmt(EU.mensalidade)+') no *cartão de crédito*. Pode me enviar o link de pagamento? 💳'),600);
 }
 function pagarDinheiro(){
+  if(dependenteAluno()){avisoPagamentoFamilia();return;}
   if(mensOculta()){avisoMensOculta();return;}
   enviarPedido({kind:'mensalidade',metodo:'dinheiro',valor:EU.mensalidade});
   abrirWhatsApp('5541995415712','Olá João! Vou pagar a mensalidade ('+fmt(EU.mensalidade)+') em dinheiro. Combinamos? 🎾');
@@ -4043,6 +4065,8 @@ function notificarPedido(texto){
   try{filaPush('jvtenis/notificacoes',{acao:'pedido',texto,nome:EU?EU.nome:'',codigo:MEU.codigo,ts:Date.now()}).catch(function(){});}catch(e){}
 }
 async function enviarPedido(p){
+  if(dependenteAluno()&&['mensalidade','renovacao'].includes(p&&p.kind)){avisoPagamentoFamilia();return;}
+  if(familiaAluno()&&p&&p.kind==='plano'){toast('Combine o plano família com o João.');return;}
   if(!hasCloud())return;
   const rec=Object.assign({codigo:MEU.codigo,nome:EU?EU.nome:'',ts:Date.now()},p);
   for(let i=0;i<3;i++){
@@ -4060,6 +4084,7 @@ function planosTabela(){
   return (PUB&&PUB.planos)||{Particular:{3:480,4:640,6:960,8:1260,10:1600},Grupo:{3:285,4:360,6:510,8:640,10:750},Personal:{3:390,4:520,6:780,8:1040,10:1300}};
 }
 function abrirPlanos(){
+  if(familiaAluno()){toast('Plano família: combine mudanças nas aulas e na mensalidade com o João.');return;}
   setTimeout(()=>{try{montarSet('part',0);}catch(e){}},60);
   const tb=planosTabela();
   const cats=isPersonal()?['Personal']:['Particular','Dupla','Trio','Quarteto'];
@@ -4406,6 +4431,7 @@ function proxMesKey(){const d=new Date();const x=new Date(d.getFullYear(),d.getM
 let _renovaAdiado=false;
 function checarRenovacao(){
   const box=document.getElementById('renova-box');if(!box||!EU)return;
+  if(dependenteAluno()){box.style.display='none';return;}
   if(_renovaAdiado){box.style.display='none';return;}
   const hoje=new Date();
   const ultimo=new Date(hoje.getFullYear(),hoje.getMonth()+1,0).getDate();
@@ -4418,9 +4444,10 @@ function checarRenovacao(){
   document.getElementById('renova-txt').innerHTML='Faltam <b>'+faltam+' dia'+(faltam===1?'':'s')+'</b> para virar o mês. '+planoTxt+' mensalidade de <b>'+nomeProx+'</b>'+(v?(' fica em <b>'+fmt(v)+'</b>'):'')+'. Quer manter assim?';
   box.style.display='block';
 }
-function valorMensalAtual(){var v=0;try{v=planoValor(EU.tipo,EU.plano);}catch(e){}return v||Number(EU.mensalidade)||0;}
+function valorMensalAtual(){if(familiaAluno())return dependenteAluno()?0:(Number(EU.mensalidade)||0);var v=0;try{v=planoValor(EU.tipo,EU.plano);}catch(e){}return v||Number(EU.mensalidade)||0;}
 function renovarMudar(){_renovaAdiado=true;document.getElementById('renova-box').style.display='none';if(typeof abrirPlanos==='function')abrirPlanos();}
 function confirmarRenovacao(){
+  if(dependenteAluno()){avisoPagamentoFamilia();return;}
   const v=valorMensalAtual();
   if(!v){toast('Fale com o João para definir sua mensalidade 🙏');setTimeout(()=>abrirWhatsApp('5541995415712','Olá João! Quero manter meus treinos no próximo mês. Pode confirmar minha mensalidade? 🎾'),300);return;}
   MEU.renovouMes=proxMesKey();saveMeu();
@@ -4515,7 +4542,7 @@ function escolherSlot(hora){
   const trava=bloqueadoParaAgendar();
   if(trava){
     b+='<div class="pick-note" style="background:#FBEAE7;border-color:#E8C4BC;color:#8E2C1E">🔒 <b>Agendamento bloqueado</b><br>'+motivoBloqueio()+'.</div>';
-    if(bloqueadoPorPagamento()&&!pagamentoEmAnalise())
+    if(bloqueadoPorPagamento()&&!dependenteAluno()&&!pagamentoEmAnalise())
       b+='<button class="pick-opt pay" onclick="document.getElementById(\'ov-pick\').classList.remove(\'on\');irPagar()">💳 Pagar minha mensalidade<small>Pix, cartão ou dinheiro — libera assim que o João confirmar</small></button>';
     else if(pagamentoEmAnalise())
       b+='<div class="pick-note">⏳ Pagamento avisado ao João. Assim que ele confirmar, seus agendamentos liberam.</div>';
@@ -4777,7 +4804,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-04-2').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-04-3').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
