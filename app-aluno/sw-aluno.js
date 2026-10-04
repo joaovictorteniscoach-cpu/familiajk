@@ -1,8 +1,8 @@
 /* Service Worker — Academia João Victor Tênis (app do aluno)
    Estratégia: network-first (sempre tenta a versão nova online),
    com cache de reserva para abrir offline. NÃO intercepta o Firebase. */
-const V = '2026-10-02-16';
-const CACHE = 'jvtenis-aluno-v30';
+const V = '2026-10-04-1';
+const CACHE = 'jvtenis-aluno-v31';
 const SHELL = ['./', './manifest-aluno.webmanifest', './jv-icone-aluno.png', './jv-icone-aluno-180.png', './assets/jv-saibro-premium.svg', './assets/jv-saibro-realista.webp', './assets/pix-simbolo.svg', './lib/visual-premium.css?v='+V, './lib/tema-saibro.css?v='+V, './lib/icones.js?v='+V];
 
 self.addEventListener('install', e => {
@@ -36,6 +36,16 @@ self.addEventListener('fetch', e => {
       if (resp.ok && !resp.redirected && resp.type === 'basic') {
         await cache.put(req, resp.clone()).catch(() => {});
       }
+      // Um erro temporário do servidor também pode usar a reserva.
+      // Erros 4xx continuam visíveis, para não esconder arquivos ausentes.
+      if (resp.status >= 500 && resp.status <= 599) {
+        const saved = await cache.match(req);
+        if (saved) return saved;
+        if (req.mode === 'navigate') {
+          const shell = await cache.match('./');
+          if (shell) return shell;
+        }
+      }
       return resp;
     } catch (_) {
       const saved = await cache.match(req);
@@ -56,8 +66,15 @@ self.addEventListener('notificationclick', e => {
   e.notification.close();
   e.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(ls => {
-      for (const c of ls) { if ('focus' in c) return c.focus(); }
-      if (self.clients.openWindow) return self.clients.openWindow('./');
+      const scope = new URL('./', self.location.href);
+      for (const c of ls) {
+        let url;
+        try { url = new URL(c.url); } catch (_) { continue; }
+        if (url.origin === scope.origin && url.pathname.startsWith(scope.pathname) && 'focus' in c) {
+          return c.focus();
+        }
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(scope.href);
     })
   );
 });
