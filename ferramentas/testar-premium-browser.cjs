@@ -156,19 +156,25 @@ async function capture(p,name) { if(process.env.JV_NO_SCREENSHOTS==='1')return; 
             await ok('Agenda '+view+' '+width+'px',()=>fit(p,width,view));
           }
           await p.locator('#pg-agenda .seg button[onclick="setView(\'semana\',this)"]').click();
-          await p.evaluate(()=>{wkZoom=1;aplicarWkVars();});
-          const before=await p.locator('.wk').evaluate(e=>e.getBoundingClientRect().width);
-          await p.locator('.wk-zoom [title="Aumentar"]').click();
-          const after=await p.locator('.wk').evaluate(e=>e.getBoundingClientRect().width);
-          await p.locator('.wk-zoom [title="Diminuir"]').click();
-          const smaller=await p.locator('.wk').evaluate(e=>e.getBoundingClientRect().width);
-          await ok('Zoom + e − '+width+'px',()=>{if(width<720){assert.ok(after>before);assert.ok(smaller<after);}assert.equal(smaller,before);});
-          await p.locator('.wk-zoom .wz-fit').click();
-          await ok('Zoom Semana toda '+width+'px',async()=>{
-            const btn=await p.locator('.wk-zoom .wz-fit').evaluate(e=>({outer:e.getBoundingClientRect().width,w:e.clientWidth,s:e.scrollWidth}));assert.ok(btn.outer>=132&&btn.s<=btn.w,'Rótulo Semana toda deve caber no botão: '+JSON.stringify(btn));
+          await p.evaluate(()=>{wkAutoFit=true;wkZoomFit();});
+          const fitted=await p.locator('.wk').evaluate(e=>e.getBoundingClientRect().width);
+          await p.locator('#pg-agenda .wk-modo .wk-amp').click();
+          const enlarged=await p.locator('.wk').evaluate(e=>e.getBoundingClientRect().width);
+          await ok('Gestão: modo Ampliada e preferência '+width+'px',async()=>{
+            if(width<720)assert.ok(enlarged>fitted);
+            const pref=await p.evaluate(()=>({zoom:Number(localStorage.getItem('jv-wkzoom')),fit:localStorage.getItem('jv-wkzoom-fit')}));
+            assert.equal(pref.zoom,1);assert.equal(pref.fit,'false');
+            assert.equal(await p.locator('#pg-agenda .wk-modo .wk-amp').getAttribute('aria-pressed'),'true');
+          });
+          await p.locator('#pg-agenda .wk-modo .wk-fit').click();
+          await ok('Gestão: Semana toda ajusta a grade e marca o modo ativo '+width+'px',async()=>{
+            const btn=await p.locator('#pg-agenda .wk-modo .wk-fit').evaluate(e=>({outer:e.getBoundingClientRect().width,w:e.clientWidth,s:e.scrollWidth}));
+            assert.ok(btn.outer>=44&&btn.s<=btn.w,'Rótulo Semana toda deve caber: '+JSON.stringify(btn));
             const dims=await p.locator('.wk-scroll').evaluate(e=>({w:e.clientWidth,s:e.scrollWidth}));
             assert.ok(dims.s<=dims.w+3,JSON.stringify(dims));
             assert.ok(await p.locator('.wk-cell').first().evaluate(e=>parseFloat(getComputedStyle(e).fontSize)>=11.5));
+            assert.equal(await p.locator('#pg-agenda .wk-modo .wk-fit').getAttribute('aria-pressed'),'true');
+            assert.equal(await p.evaluate(()=>localStorage.getItem('jv-wkzoom-fit')),'true');
           });
           if(width===393)await capture(p,'gestao-agenda-zoom-393');
           if(width===1280)await capture(p,'gestao-agenda-desktop');
