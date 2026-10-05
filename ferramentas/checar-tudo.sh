@@ -27,6 +27,7 @@ echo; echo "### 10. Estrutura do redesign premium"
 python3 ferramentas/checar-design-premium.py || falhou=1
 echo; echo "### 11. Regressões funcionais do redesign e isolamento PWA"
 node ferramentas/checar-premium-runtime.js || falhou=1
+node ferramentas/checar-familia-runtime.js || falhou=1
 node ferramentas/checar-site-runtime.js || falhou=1
 echo; echo "### 12. Tema Saibro gerado a partir do estilo atual"
 python3 ferramentas/tema-saibro.py --checar || falhou=1
