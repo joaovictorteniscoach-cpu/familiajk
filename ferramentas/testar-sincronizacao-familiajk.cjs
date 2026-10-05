@@ -116,6 +116,12 @@ const server=http.createServer((req,res)=>{
     assert.ok(await joao.locator('section[data-tab="i-aportes"].on').isVisible());
     await joao.evaluate(()=>irPara('c-anual'));assert.ok(await joao.locator('section[data-tab="c-anual"].on').isVisible());
     console.log('✅ Lançar contextual e atalhos para telas secundárias continuam funcionando');
+    const refreshed=await joao.evaluate(()=>{
+      clearTimeout(pushTimer);pushTimer=null;irPara('i-anual');
+      const next=structuredClone(D);next.invest.anual=[{ano:2026,patr:12345,aporte:300}];
+      applyCloudRemote({data:next,etag:'test-chart',fp:syncFingerprint(next)});
+      return charts.anual.data.datasets[0].data.includes(12345);
+    });assert.ok(refreshed);console.log('✅ Sincronização atualiza o gráfico da tela secundária aberta');
     await joao.setViewportSize({width:1280,height:852});
     assert.equal(await joao.locator('#tabs button:visible').count(),4);
     await joao.locator('#sidebar-more').click();assert.ok(await joao.locator('#more-dialog').evaluate(e=>e.open));await joao.keyboard.press('Escape');

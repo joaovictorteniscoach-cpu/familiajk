@@ -3103,7 +3103,7 @@ function applyCloudRemote(remote){
   const prev=suppressPush;suppressPush=true;
   try{
     if(!substituirBase(next,'antes de receber a nuvem',true))throw new Error('Não consegui guardar a troca. Dados locais mantidos; baixe um backup.');
-    initFields();renderAll();renderTrash();const at=document.querySelector('.tab.active');if(at&&DRAW[at.dataset.id])DRAW[at.dataset.id]();
+    initFields();renderAll();renderTrash();const at=document.querySelector('section[data-tab].on');if(at&&DRAW[at.dataset.tab])DRAW[at.dataset.tab]();
     rememberCloud(remote.etag,syncFingerprint());clearCloudConflict();return true;
   }finally{suppressPush=prev;}
 }
