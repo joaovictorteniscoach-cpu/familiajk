@@ -1,7 +1,7 @@
 /* Família JK — assets locais, rede primeiro e reserva offline.
    APIs e bibliotecas de OCR seguem diretamente para a rede. */
-const CACHE = 'jk-familia-black-gold-20261001-snapshot-v2-auto';
-const SHELL = ['./', './index.html', './layout.css', './vendor/chart.umd.min.js',
+const CACHE = 'jk-familia-black-gold-20261005-sync-aportes';
+const SHELL = ['./', './index.html', './layout.css', './sync-merge.js', './vendor/chart.umd.min.js',
   './vendor/xlsx.full.min.js', './manifest-familia.webmanifest',
   './icone-jk-gestao-180.png', './icone-jk-gestao-192.png',
   './icone-jk-gestao-512.png', './icone-jk-gestao-mask.png'];
