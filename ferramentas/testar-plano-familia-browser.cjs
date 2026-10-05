@@ -133,14 +133,15 @@ async function fit(p,width){
    await p.evaluate(()=>{
     const membros=[DB.alunos.find(a=>a.id==='fam-p'),...dependentesFamilia({id:'fam-p'})];
     DB.presencas=membros.map((a,i)=>({alunoId:a.id,k:'fc-test-'+i,data:monthKey()+'-01',hora:'08:00',tipo:'aula',manual:true,custo:i===1?.5:1}));
+    irParaAba('fech');
     document.getElementById('fc-aluno').innerHTML='<option value="fam-p">Responsável</option>';document.getElementById('fc-aluno').value='fam-p';document.getElementById('fc-mes').value=monthKey();
-    renderFechamento();go('fech');
+    renderFechamento();
    });
    const report=await p.locator('#fech-export').textContent();
    assert.match(report,/Filho de Teste/);assert.match(report,/Cônjuge de Teste/);
    assert.equal(await p.evaluate(()=>fcDados(DB.alunos.find(a=>a.id==='fam-p'),monthKey()).aulas.length),3);
    assert.equal(await p.evaluate(()=>fcDados(DB.alunos.find(a=>a.id==='fam-p'),monthKey()).total),1200);
-   await fit(p,1280);
+   for(const width of [320,390,1280]){await p.setViewportSize({width,height:852});await fit(p,width);}
   });
   await check('desvincular recupera valor individual e preserva histórico e saldos',async()=>{
    await p.evaluate(()=>openAlunoModal('fam-c'));
