@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-04-3';
+const VERSAO='2026-10-05-1';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -4085,7 +4085,8 @@ function openAlunoModal(id){
     document.getElementById('a-perfil').value='';
     applyAlunoTipoUI();
   }
-  if(id){const a=DB.alunos.find(x=>x.id===id);if(a&&temFamilia(a))document.getElementById('a-mensalidade').value=Number(a.mensalidade)||0;}
+  /* Abrir um cadastro não deve trocar um valor combinado pela tabela. */
+  if(id){const a=DB.alunos.find(x=>x.id===id);if(a)document.getElementById('a-mensalidade').value=Number(a.mensalidade)||0;}
   pintarFamiliaModal();
   m.classList.add('on');
 }
@@ -5852,7 +5853,8 @@ function fcDados(a,mk){
   const feitas=aulas.reduce((t,p)=>t+(Number(p.custo)||1),0);
   const faltas=membros.reduce((s,x)=>s+fcFaltasDoMes(x,mk),0), avisados=membros.reduce((s,x)=>s+fcAvisadosDoMes(x,mk),0);
   const cheia=Number(a.mensalidade)||0;
-  return {aulas,feitas,faltas,avisados,cheia,total:cheia,membros};
+  const desconto=a.descRepos&&a.descRepos.mes===mk?(Number(a.descRepos.valor)||0):0;
+  return {aulas,feitas,faltas,avisados,cheia,total:Math.max(0,cheia-desconto),membros};
 }
 function renderFechamento(){
   const box=document.getElementById('fech-export');if(!box)return;
@@ -5898,22 +5900,22 @@ function renderFechamento(){
    +'<div class="fx-mes">'+fcRotuloMes(mk)+'</div>'
    +bloco('Aulas realizadas',jaForam,'Nenhuma aula realizada neste mês.')
    +(aVir.length?bloco('Aulas que ainda vêm',aVir,''):'')
-   +'<div class="fx-sec">Saldo</div>'
+   +'<div class="fx-sec">Saldos atuais do cadastro</div>'
    +D.membros.map(pessoa=>{
       const doPlano=(Number(pessoa.plano)||0)+(Number(pessoa.planoGrupo)||0);
       const feitas=jaForam.filter(p=>p.alunoId===pessoa.id).reduce((t,x)=>t+(Number(x.custo)||0),0);
-      const faltam=Math.max(0,doPlano-feitas),rep=reposValidas(pessoa);
+      const saldo=(Number(pessoa.creditos)||0)+(Number(pessoa.credGrupo)||0),rep=reposValidas(pessoa);
       const faltas=fcFaltasDoMes(pessoa,mk),avisados=fcAvisadosDoMes(pessoa,mk),venc=reposVencendo(pessoa);
       const L=(rot,val,estilo)=>'<div class="fx-linha"'+(estilo||'')+'><span>'+rot+'</span><span></span><span>'+val+'</span></div>';
       return (D.membros.length>1?'<div class="fx-sec">'+esc(pessoa.nome)+'</div>':'')
-        +(doPlano?L('Aulas do plano no mês',fmtCred(doPlano)):'')
+        +(doPlano?L('Plano no cadastro',fmtCred(doPlano)):'')
         +L('Já realizadas',fmtCred(feitas))
-        +(doPlano?L('Ainda a realizar',fmtCred(faltam)):'')
+        +L('Créditos atuais do plano',fmtCred(saldo))
         +(faltas>0?L('Faltas (aula consumida)',faltas,' style="color:#8A7B63"'):'')
         +(avisados>0?L('Cancelou avisando (crédito preservado)',avisados,' style="color:#2E7D52"'):'')
         +L('Reposições guardadas',fmtCred(rep))
         +(venc>0?L('vencem no fim do mês',fmtCred(venc),' style="color:#7A5B10"'):'')
-        +L('Total de aulas a usar',fmtCred(faltam+rep),' style="font-weight:800;border-top:1px solid var(--border);padding-top:7px;margin-top:2px"');
+        +L('Total de aulas a usar',fmtCred(saldo+rep),' style="font-weight:800;border-top:1px solid var(--border);padding-top:7px;margin-top:2px"');
     }).join('')
    +'<div class="fx-sec">Valores</div>'
    +'<div class="fx-linha"><span>Mensalidade</span><span></span><span>'+fmtRs(D.cheia)+'</span></div>'
@@ -5997,6 +5999,8 @@ async function _fechCanvas(){
   return await html2canvas(el,{backgroundColor:'#FBF8F2',scale:2});
 }
 async function _fechBlob(){
+  /* Refaça antes de exportar: a imagem e o texto usam o mesmo cadastro atual. */
+  renderFechamento();
   await garantirExportLibs();
   if(typeof html2canvas==='undefined')throw new Error('sem biblioteca');
   const canvas=await _fechCanvas();
@@ -10673,6 +10677,7 @@ function renderAll(){
   carregarAvatarGestao();
   document.getElementById('month-label').textContent=MESES[curMonth]+' '+curYear;
   const safe=(fn,nome)=>{try{fn();}catch(e){console.warn('Render '+nome+' falhou:',e);}};
+  if(document.getElementById('pg-fech')?.classList.contains('on'))safe(abrirFechamento,'fechamento');
   safe(updateEyeBtn,'olho');safe(renderAlunos,'alunos');safe(renderQuickLanc,'botoescaixa');safe(renderMovs,'caixa');safe(renderDash,'inicio');safe(renderAtividadesHoje,'atividadeshoje');safe(renderFin,'financeiro');safe(renderAgenda,'agenda');safe(renderTorneio,'torneio');safe(renderConfirmAmanha,'confirmamanha');safe(renderAvaliacoes,'avaliacoes');safe(checarBackup,'backup');safe(renderConta,'conta');safe(prepararAluguel,'aluguel');
 }
 // espera o Firebase ficar pronto (até ~6s) antes de carregar; nunca trava

@@ -15,7 +15,7 @@ function auditInBrowser(selector){
  const lum=c=>c.map(x=>{x/=255;return x<=.04045?x/12.92:((x+.055)/1.055)**2.4;}).reduce((v,x,i)=>v+x*[.2126,.7152,.0722][i],0);
  const results=[];
  for(const el of document.querySelectorAll(selector)){
-  if(!el.getClientRects().length)continue;
+  if(!el.getClientRects().length||el.closest('[disabled]'))continue;
   const direct=[...el.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join('').trim();
   if(!direct)continue;
   const chain=[];let p=el, opacity=1,unknown=false;
@@ -46,12 +46,14 @@ let count=0;async function check(name,fn){await fn();count++;console.log('✅ '+
    const audit=await p.evaluate(auditInBrowser,'.page.on *');
    const failures=audit.filter(x=>x.fail&&!x.unknown);
    console.log('AUDIT '+theme+' '+page+' '+JSON.stringify(failures.slice(0,22)));
+   if(!auditOnly)assert.deepEqual(failures,[],theme+' '+page+' contraste: '+JSON.stringify(failures));
   }
   if(auditOnly){await context.close();continue;}
   await check(theme+' mensalidade editada atualiza prévia aberta',async()=>{
    await p.evaluate(()=>{go('fech',document.createElement('button'));document.getElementById('fc-aluno').value='solo';document.getElementById('fc-mes').value='2026-10';renderFechamento();openAlunoModal('solo');document.getElementById('a-mensalidade').value='735';saveAluno();});
    assert.match(await p.locator('#fech-export .fx-total').innerText(),/735/);
    assert.equal(await p.evaluate(()=>DB.alunos.find(x=>x.id==='solo').creditos),2);
+   await p.evaluate(()=>openAlunoModal('solo'));assert.equal(await p.locator('#a-mensalidade').inputValue(),'735');await p.evaluate(()=>{document.getElementById('a-tel').value='11999900000';saveAluno();});assert.match(await p.locator('#fech-export .fx-total').innerText(),/735/);
   });
   await check(theme+' mês selecionado e desconto manual entram no total',async()=>{
    const r=await p.evaluate(()=>{const a=DB.alunos.find(x=>x.id==='solo');a.descRepos={mes:'2026-10',valor:100,qtd:1};renderFechamento();return {total:fcDados(a,'2026-10').total,outro:fcDados(a,'2026-09').total,texto:fcTexto(a,'2026-10',fcDados(a,'2026-10'))};});
