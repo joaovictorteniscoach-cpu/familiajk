@@ -177,17 +177,17 @@ async function fit(p,width){
    assert.ok(await s.evaluate(()=>!bloqueadoPorPagamento()));
   });
   await check('pendência familiar orienta dependente sem pedir pagamento individual',async()=>{
-   await s.evaluate(()=>{EU.status='pendente';EU.ultimoPago='2026-08';goAluno('inicio',document.getElementById('nav-al-inicio'));render();});
+   await s.evaluate(()=>{EU.status='pendente';EU.ultimoPago='2026-08';goAluno('agenda',document.getElementById('nav-al-agenda'));render();});
    assert.ok(await s.locator('#pay-lock').isVisible());
    assert.match(await s.locator('#pay-lock').textContent(),/responsável/);
    assert.equal(await s.locator('#pay-lock button.lock-pay').count(),0);
   });
   await check('pagador vê família e total único; aluno individual mantém Pix normal',async()=>{
-   await s.evaluate(pub=>{EU=pub.find(a=>a.codigo==='9901');MEU.codigo=EU.codigo;PUB.alunos=[EU];show();},published);
+   await s.evaluate(pub=>{EU=pub.find(a=>a.codigo==='9901');MEU.codigo=EU.codigo;PUB.alunos=[EU];show();goAluno('inicio',document.getElementById('nav-al-inicio'));},published);
    assert.equal(await s.evaluate(()=>valorMensalAtual()),1200);
    assert.match(await s.locator('#home-familia-info').textContent(),/Filho de Teste/);
    assert.ok(await s.locator('#home-pix-btn').isVisible());
-   await s.evaluate(pub=>{EU=pub.find(a=>a.codigo==='9904');MEU.codigo=EU.codigo;PUB.alunos=[EU];show();},published);
+   await s.evaluate(pub=>{EU=pub.find(a=>a.codigo==='9904');MEU.codigo=EU.codigo;PUB.alunos=[EU];show();goAluno('inicio',document.getElementById('nav-al-inicio'));},published);
    assert.ok(!await s.locator('#home-familia-info').isVisible());assert.ok(await s.locator('#home-pix-btn').isVisible());
   });
   await check('Aluno sem exceções JavaScript',()=>assert.deepEqual(studentErrors,[]));
