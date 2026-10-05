@@ -339,32 +339,34 @@ table.tbl.livre td:last-child{width:42%}
 </header>
 <div class="app-content">
 <div class="page-heading"><div><p id="page-kicker">CONTAS DA FAMÍLIA</p><h2 id="page-title">Visão geral</h2><p id="page-description">Seu mês, em um só lugar.</p></div><span id="page-date" class="date-label"></span></div>
-<div class="banner" id="backupBanner" style="display:none"><span class="bk-msg"></span><button class="iconbtn" onclick="exportJSON()">Fazer backup</button><button class="dismiss" aria-label="Lembrar depois" onclick="snoozeBanner()">×</button></div>
-<main class="wrap" id="main" tabindex="-1">
-
-
-<!-- ===================== CONTAS ===================== -->
-<section data-tab="c-painel">
-  <div class="monthnav dashboard-month">
+  <div class="monthnav dashboard-month" id="page-period" aria-label="Mês das contas" hidden>
     <button class="iconbtn mn-arrow" onclick="stepMonth(-1)" aria-label="Mês anterior">‹</button>
     <div class="monthchip" id="ch-mes">—</div>
     <button class="iconbtn mn-arrow" onclick="stepMonth(1)" aria-label="Próximo mês">›</button>
     <button class="iconbtn mn-today" id="ch-hoje" onclick="goToday()" style="display:none">hoje</button>
   </div>
+
+<main class="wrap" id="main" tabindex="-1">
+
+
+<!-- ===================== CONTAS ===================== -->
+<section data-tab="c-painel">
+
   <div class="summary-grid">
-    <button class="summary-card" onclick="irPara('c-conselhos')"><span class="summary-label"><span class="metric-icon" data-icon="recebidos"></span>Renda prevista</span><strong id="ch-renda">—</strong><small>Mensal cadastrada</small></button>
-    <button class="summary-card" onclick="irPara('c-casa')"><span class="summary-label"><span class="metric-icon" data-icon="casa"></span>Contas do mês</span><strong id="ch-total">—</strong><small>Casa + pessoais</small></button>
-    <button class="summary-card" onclick="irPara('c-conselhos')"><span class="summary-label"><span class="metric-icon" data-icon="analise"></span>Saldo previsto</span><strong id="ch-saldo">—</strong><small id="ch-saldo-hint">Renda menos contas</small></button>
     <button class="summary-card highlight" onclick="document.getElementById('due-card').scrollIntoView({behavior:'smooth',block:'start'})"><span class="summary-label" id="ch-eyebrow">A pagar</span><strong class="bignum" id="ch-apagar">—</strong><small>Contas ainda em aberto</small></button>
+    <button class="summary-card" onclick="abrirComposicao()"><span class="summary-label"><span class="metric-icon" data-icon="casa"></span>Contas do mês</span><strong id="ch-total">—</strong><small>Casa + pessoais</small></button>
+    <details class="income-details"><summary>Renda e previsão de saldo</summary><div class="income-metrics">    <button class="summary-card" onclick="irPara('c-conselhos')"><span class="summary-label"><span class="metric-icon" data-icon="analise"></span>Saldo previsto</span><strong id="ch-saldo">—</strong><small id="ch-saldo-hint">Renda menos contas</small></button>
+    <button class="summary-card" onclick="irPara('c-conselhos')"><span class="summary-label"><span class="metric-icon" data-icon="recebidos"></span>Renda prevista</span><strong id="ch-renda">—</strong><small>Mensal cadastrada</small></button></div></details>
   </div>
   <div class="month-progress"><div class="progress-caption"><span>Mês organizado</span><b><span id="ch-percent">0%</span> pago</b></div><div class="progressbar"><i id="ch-bar" style="width:0%"></i></div><div class="paid-caption"><span>Já pago</span><span id="ch-pago">—</span></div></div>
   <div class="dashboard-columns">
     <div>
-      <div class="card due-card" id="due-card"><div class="section-heading"><h2>Vencimentos</h2><button class="text-button" onclick="irPara('c-casa')">Ver contas <span aria-hidden="true">›</span></button></div><div id="dueList"></div></div>
+      <div class="card due-card" id="due-card"><div class="section-heading"><h2>Próximos pagamentos</h2></div><p class="sub">Casa, pessoais e empresas · em ordem de vencimento</p><div id="dueList"></div></div>
 
       <details class="import-panel" id="import-panel"><summary>Importar extrato</summary><div class="import-options"><button class="iconbtn" onclick="pickExtrato()">Arquivo OFX / CSV</button><button class="iconbtn" onclick="openPasteExtrato()">Colar texto</button><button class="iconbtn" onclick="pickFotoExtrato()">Foto do extrato</button></div><p class="note">Confira os lançamentos antes de salvar.</p></details>
     </div>
     <div>
+      <details class="house-split" id="month-breakdown"><summary>Composição das contas do mês</summary><div id="month-breakdown-list"></div></details>
       <details class="house-split"><summary>Divisão das contas da casa</summary><div class="split"><div><div class="k" id="ch-nome-preta">Kassiana</div><div class="v goldc" id="ch-preta">—</div></div><div><div class="k" id="ch-nome-preto">João</div><div class="v goldc" id="ch-preto">—</div></div></div><button class="text-button" onclick="irPara('c-casa')">Ajustar divisão ›</button></details>
       <div class="grid two dashboard-charts"><div class="card"><h2>Por grupo</h2><p class="sub">Inclui as empresas</p><div class="chartbox" style="height:220px"><canvas id="grupoChart"></canvas></div></div><div class="card"><h2>Pagamentos</h2><p class="sub">Casa e contas pessoais</p><div class="chartbox" style="height:220px"><canvas id="pagoChart"></canvas></div></div></div>
     </div>
@@ -373,11 +375,12 @@ table.tbl.livre td:last-child{width:42%}
 
 <section data-tab="c-casa">
   <div class="card">
-    <div class="namebar">
+
+    <h2>Contas da casa</h2><div class="sub">Despesas compartilhadas. Toque num número para digitar por cima. Marque quando pagar.</div>
+    <details class="house-settings"><summary>Nomes da família</summary>    <div class="namebar">
       <div class="f"><label>Apelido pessoa 1</label><input id="nm-preta" oninput="onNome('preta',this.value)"></div>
       <div class="f"><label>Apelido pessoa 2</label><input id="nm-preto" oninput="onNome('preto',this.value)"></div>
-    </div>
-    <h2>Contas da casa</h2><div class="sub">Despesas compartilhadas. Toque num número para digitar por cima. Marque quando pagar.</div>
+    </div></details>
     <div class="scroll"><table class="tbl" id="tbl-casa"></table></div>
     <button class="addbtn" onclick="addCasa()">+ nova conta da casa</button>
     <button class="addbtn" onclick="splitMeio()">↺ dividir tudo no meio (50/50)</button>
@@ -415,14 +418,15 @@ table.tbl.livre td:last-child{width:42%}
 <section data-tab="c-cartao">
   <div class="card">
     <h2>Cartões</h2><div class="sub">Fatura, melhor dia, limite e quanto já foi pago.</div>
-    <div class="scroll"><table class="tbl" id="tbl-cartao"></table></div>
-    <button class="addbtn" onclick="addCartao()">+ novo cartão</button>
     <div class="kpis" style="margin-top:16px">
       <div class="kpi"><div class="k">Fatura total</div><div class="v" id="ct-fat">—</div></div>
       <div class="kpi"><div class="k">Limite total</div><div class="v" id="ct-lim">—</div></div>
       <div class="kpi"><div class="k">Uso do limite</div><div class="v" id="ct-uso">—</div></div>
       <div class="kpi"><div class="k">Limite livre</div><div class="v" id="ct-livre">—</div></div>
     </div>
+    <div class="scroll"><table class="tbl" id="tbl-cartao"></table></div>
+    <button class="addbtn" onclick="addCartao()">+ novo cartão</button>
+
     <p class="note">Uso saudável do cartão costuma ficar abaixo de 30% do limite. “Melhor dia” é o dia da compra que cai na fatura mais distante — comprar nele dá mais prazo para pagar.</p>
   </div>
 </section>
@@ -639,9 +643,10 @@ table.tbl.livre td:last-child{width:42%}
 <!-- ===================== INVESTIMENTOS ===================== -->
 <section data-tab="i-painel">
   <div class="investment-layout">
-    <div class="wealth-panel"><div class="eyebrow">Total investido</div><div class="bignum" id="h-total">—</div><div class="section-heading history-heading"><span>Evolução do patrimônio</span><button class="text-button" onclick="irPara('i-mensal')">Ver histórico ›</button></div><div class="wealth-chart"><canvas id="sparkChart"></canvas></div><p class="note">Cada mês fechado (📸 em Mensal) vira um ponto da linha.</p>
-    <div class="card contribution-card"><div><div class="eyebrow">Plano de aportes</div><strong id="h-plano">—</strong><span class="mut"> / mês</span></div><button class="text-button" onclick="irPara('i-plano')">Ajustar ›</button></div>
+    <div class="wealth-panel"><div class="eyebrow">Total investido</div><div class="bignum" id="h-total">—</div>
     <div class="aporte-summary" id="h-aportes"></div><p class="note" id="h-pendentes"></p>
+    <div class="card contribution-card"><div><div class="eyebrow">Plano de aportes</div><strong id="h-plano">—</strong><span class="mut"> / mês</span></div><button class="text-button" onclick="irPara('i-plano')">Ajustar ›</button></div>
+
 </div>
     <div class="allocation-panel"><div class="section-heading"><h2>Distribuição</h2><button class="text-button" onclick="irPara('i-carteira')">Ver carteira ›</button></div><div class="allocation-bar" aria-label="Distribuição por conta"><i id="alloc-nac"></i><i id="alloc-global"></i><i id="alloc-bin"></i><i id="alloc-aportes" style="background:#2EB961"></i></div>
     <button class="allocation-row" onclick="irPara('i-carteira')"><span class="allocation-name"><i class="allocation-dot national"></i>Nacional XP</span><span class="allocation-share" id="h-nacp">—</span><strong id="h-nac">—</strong></button>
@@ -651,6 +656,7 @@ table.tbl.livre td:last-child{width:42%}
     <button class="allocation-row" onclick="irPara('i-aportes')"><span class="allocation-name">Aportes fora dos saldos</span><strong id="h-aportes-pendentes">—</strong></button>
     <details class="investment-details"><summary>Mais detalhes da carteira</summary><div class="grid two"><div class="card"><h2>Por conta</h2><div class="chartbox" style="height:220px"><canvas id="contaChart"></canvas></div></div><div class="card"><h2>Por classe</h2><div class="chartbox" style="height:220px"><canvas id="classeChart"></canvas></div></div></div></details></div>
   </div>
+  <div class="card investment-history"><div class="section-heading history-heading"><span>Evolução do patrimônio</span><button class="text-button" onclick="irPara('i-mensal')">Ver histórico ›</button></div><div class="wealth-chart"><canvas id="sparkChart"></canvas></div><p class="note">Cada mês fechado (📸 em Mensal) vira um ponto da linha.</p></div>
 </section>
 
 <section data-tab="i-carteira">
@@ -869,6 +875,7 @@ table.tbl.livre td:last-child{width:42%}
 </section>
 
 </main>
+<div class="banner" id="backupBanner" style="display:none"><span class="bk-msg"></span><button class="iconbtn" onclick="exportJSON()">Fazer backup</button><button class="dismiss" aria-label="Lembrar depois" onclick="snoozeBanner()">×</button></div>
 </div>
 <nav class="mobile-nav" id="mobile-nav" aria-label="Navegação rápida"></nav>
 <dialog id="more-dialog" class="more-dialog"><div class="sheet-heading"><h2 id="more-title">Mais opções</h2><button class="iconbtn" onclick="document.getElementById('more-dialog').close()" aria-label="Fechar menu">×</button></div><div id="more-links"></div></dialog>
@@ -1700,7 +1707,9 @@ function navIcon(id){
 const DRAW={'i-painel':()=>drawInvPainel(),'i-mensal':()=>drawMensal(),'i-anual':()=>drawAnual(),'i-projecao':()=>onProj(),
   'i-analise':()=>{drawAnalise();renderAlloc();},'i-ganhos':()=>renderGanhos(),'i-plano':()=>onPlano(),'i-metas':()=>renderGoals(),
   'c-painel':()=>drawConPainel(),'c-casa':()=>renderCasa(),'c-joao':()=>renderPess('joao','tbl-joao'),'c-esposa':()=>renderPess('esposa','tbl-esposa'),'c-empresa':()=>drawEmpresa(),'c-recebidos':()=>renderReceb(),'c-patrimonio':()=>drawPatrimonio(),'c-protecao':()=>drawProtecao(),'c-resumo':()=>drawResumo(),'c-anual':()=>renderControle(),'c-categorias':()=>renderCategorias(),'c-conselhos':()=>renderConselhos(),'c-cartao':()=>refreshCartao()};
+const PERIOD_TABS=['c-painel','c-casa','c-joao','c-esposa','c-empresa','c-cartao','c-recebidos','c-categorias'];
 function switchTab(id,btn){
+  document.getElementById('page-period').hidden=!PERIOD_TABS.includes(id);
   document.querySelectorAll('section[data-tab]').forEach(s=>s.classList.toggle('on',s.dataset.tab===id));
   document.querySelectorAll('#tabs .tab, #mobile-nav [data-id], #more-links [data-id]').forEach(t=>{const active=t.dataset.id===id;t.classList.toggle('active',active);if(active)t.setAttribute('aria-current','page');else t.removeAttribute('aria-current');});
   lastTabByMode[D.mode==='invest'?'invest':'contas']=id;
@@ -1710,7 +1719,7 @@ function switchTab(id,btn){
   if(at&&at.parentElement&&at.parentElement.scrollWidth>at.parentElement.clientWidth){
     const pai=at.parentElement;pai.scrollTo({left:Math.max(0,at.offsetLeft-pai.clientWidth/2+at.offsetWidth/2),behavior:'smooth'});}
   const list=TABS_CONTAS.concat(TABS_INVEST,TABS_SHARED),item=list.find(t=>t[0]===id);
-  set('page-title',id==='i-painel'?'Meu patrimônio':id==='c-painel'?'Visão geral':item?.[1]||'Família JK');
+  set('page-title',id==='i-painel'?'Patrimônio do casal':id==='c-painel'?'Visão geral':item?.[1]||'Família JK');
   set('page-kicker',id==='guia'||id==='nuvem'?'FAMÍLIA JK':D.mode==='invest'?'PATRIMÔNIO E FUTURO':'CONTAS DA FAMÍLIA');
   set('page-description',id==='c-painel'?'Seu mês, em um só lugar.':id==='i-painel'?'Acompanhem o que estão construindo juntos.':'');
   if(DRAW[id]){const prev=suppressPush;suppressPush=true;try{DRAW[id]();}catch(e){console.warn('Família JK — falha na aba',id,e);}suppressPush=prev;}
@@ -1820,8 +1829,8 @@ function renderDue(){
   let bills=allBills().filter(b=>!pagoGet(b.id)&&(+b.valor||0)>0).map(b=>({...b,d:dueInfo(parseDay(b.venc))}));
   bills.sort((a,b)=>{const x=a.d==null?999:a.d,y=b.d==null?999:b.d;return x-y;});
   if(!bills.length){box.innerHTML='<p class="note">🎉 Tudo pago por aqui! Nenhuma conta em aberto.</p>';return;}
-  let h='';
-  bills.slice(0,14).forEach(b=>{
+  const lines=[];
+  bills.forEach(b=>{
     let cls='',when='sem dia',wc='mut';
     if(b.d!=null){
       if(b.d<0){cls='late';when='venceu há '+(-b.d)+'d';wc='down';}
@@ -1830,13 +1839,13 @@ function renderDue(){
       else{when='vence em '+b.d+'d';}
     }
     /* cada vencimento é um botão: toca e cai na aba onde essa conta se paga */
-    h+=`<button type="button" class="due ${cls}" onclick="irConta('${b.aba}'${b.emp?(",'"+b.emp+"'"):''})"
+    lines.push(`<button type="button" class="due ${cls}" onclick="abrirConta('${b.aba}','${b.emp||''}','${escJs(b.id)}')"
       title="Abrir ${esc(b.grupo)} para pagar ou editar">
       <div class="lft"><span class="nm">${esc(b.nome)}</span><span class="meta">${b.grupo}${b.venc?(' · dia '+esc(b.venc)):''}</span>
       <span class="duehint">tocar para abrir ›</span></div>
-      <div class="rgt"><div class="val">${brl(b.valor)}</div><div class="when ${wc}">${when}</div></div></button>`;
+      <div class="rgt"><div class="val">${brl(b.valor)}</div><div class="when ${wc}">${when}</div></div></button>`);
   });
-  box.innerHTML=h;
+  box.innerHTML=lines.slice(0,5).join('')+(lines.length>5?'<details class="due-more"><summary>Ver mais '+(lines.length-5)+' pagamento(s)</summary>'+lines.slice(5).join('')+'</details>':'');
 }
 /* ---------- duas empresas: JV e Studio Kassiana ---------- */
 /* A Empresa JV usa a chave original, então os dados que já existiam ficam onde estavam. */
@@ -1854,7 +1863,11 @@ function drawEmpresa(){
 /* "Outubro de 2026": só a primeira letra maiúscula (o capitalize do CSS fazia "Outubro De 2026") */
 function fmtMonth(d){const t=d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});return t.charAt(0).toUpperCase()+t.slice(1);}
 function renderContasMonth(){renderCasa();renderPess('joao','tbl-joao');renderPess('esposa','tbl-esposa');drawEmpresa();renderCartao();drawConPainel();}
-function setMonth(k){D.contas.mesSel=k;save();renderContasMonth();}
+function setMonth(k){
+  D.contas.mesSel=k;save();renderContasMonth();
+  const active=document.querySelector('section[data-tab].on'),id=active?.dataset.tab;
+  if(id&&id!=='c-painel'&&DRAW[id])safeRun(DRAW[id]);
+}
 function stepMonth(d){const x=selMonthDate();x.setMonth(x.getMonth()+d);setMonth(keyOf(x));}
 function goToday(){setMonth(curMonthKey());}
 function drawConPainel(){
@@ -1871,6 +1884,8 @@ function drawConPainel(){
   set('ch-nome-preta',D.nomes.preta);set('ch-nome-preto',D.nomes.preto);
   set('ch-total',brl(tot));set('ch-pago',brl(pago));set('ch-percent',Math.round(tot?Math.min(100,pago/tot*100):0)+'%');
   document.getElementById('ch-bar').style.width=(tot?Math.min(100,pago/tot*100):0)+'%';
+  const parts=[['Casa','c-casa',casaTotal()], [pesNome('preto'),'c-joao',pessTotal('joao')], [pesNome('preta'),'c-esposa',pessTotal('esposa')]];
+  document.getElementById('month-breakdown-list').innerHTML=parts.map(([name,tab,value])=>'<button class="breakdown-row" onclick="irPara(\''+tab+'\')"><span>'+esc(name)+'</span><strong>'+brl(value)+'</strong></button>').join('');
   set('ch-preta',brl(casaPretaTotal()));set('ch-preto',brl(casaPretoTotal()));
   const gl=['Casa','João','Kassiana','Empresa JV','Studio Kassiana'],gv=[casaTotal(),pessTotal('joao'),pessTotal('esposa'),pessTotal('empresa'),pessTotal('empresaKS')];
   destroy('grupo');charts.grupo=new Chart(document.getElementById('grupoChart'),{type:'doughnut',
@@ -2460,8 +2475,9 @@ function renderAportes(){
 }
 function resumoAportes(){
   const total=D.invest.aportes.reduce((s,a)=>s+(+a.valor||0),0);
-  const text=pesNome('preto')+': '+brl(pessoaSum('João'))+' · '+pesNome('preta')+': '+brl(pessoaSum('Esposa'))+' · Conjunto: '+brl(pessoaSum('Conjunto'))+' · Total aportado: '+brl(total);
-  set('h-aportes',text);set('aportes-resumo',text);
+  const people=[['João',pesNome('preto')],['Esposa',pesNome('preta')],['Conjunto','Conjunto']];
+  const html='<div class="contributed-total"><span>Total aportado</span><strong>'+brl(total)+'</strong></div><dl class="contributed-people">'+people.map(([person,name])=>'<div><dt>'+esc(name)+'</dt><dd>'+brl(pessoaSum(person))+'</dd></div>').join('')+'</dl>';
+  ['h-aportes','aportes-resumo'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=html;});
   set('h-pendentes','Inclui '+brl(aportesPendentes())+' de aportes ainda não incluídos nos saldos da carteira.');
 }
 function refreshAportes(){
@@ -5656,6 +5672,16 @@ function irConta(aba,emp){
   return irPara(aba);
 }
 
+function abrirComposicao(){const el=document.getElementById('month-breakdown');el.open=true;el.scrollIntoView({behavior:'smooth',block:'center'});}
+function abrirConta(aba,empresa,id){
+  if(!irConta(aba,empresa))return;
+  const key=aba==='c-empresa'?empCur().bills:aba.replace('c-',''),table=aba==='c-empresa'?'tbl-empresa':'tbl-'+key;
+  const index=(D.contas[key]||[]).findIndex(row=>row.id===id),row=document.getElementById(table)?.rows[index+1];
+  if(index<0||!row)return;
+  row.classList.add('focused-row');row.scrollIntoView({behavior:'smooth',block:'center'});row.querySelector('.paybtn')?.focus({preventScroll:true});
+  setTimeout(()=>row.classList.remove('focused-row'),4000);
+}
+
 /* ---------- moldura vazia não ocupa tela ----------
    Tabela só com cabeçalho vira um aviso curto dizendo o que fazer. */
 const VAZIO_MSG={
@@ -5701,7 +5727,17 @@ function marcarVazias(){
     box.forEach(b=>{if(!b.dataset.proprio)b.style.display=tudoVazio?'none':'';});
   });
 }
+function organizeCardActions(){
+  document.querySelectorAll('.card > .scroll').forEach(scroll=>{
+    const actions=[];let next=scroll.nextElementSibling;
+    while(next?.matches('button.addbtn')){actions.push(next);next=next.nextElementSibling;}
+    if(!actions.length)return;
+    const bar=document.createElement('div');bar.className='card-actions';scroll.before(bar);bar.appendChild(actions[0]);
+    if(actions.length>1){const extra=document.createElement('details');extra.className='secondary-actions';extra.innerHTML='<summary>Mais ações</summary>';actions.slice(1).forEach(b=>extra.appendChild(b));bar.appendChild(extra);}
+  });
+}
 function enhanceTables(){
+  organizeCardActions();
   const cardIds=['tbl-casa','tbl-joao','tbl-esposa','tbl-empresa','tbl-cartao','tbl-receb','tbl-nac','tbl-glob','tbl-aportes','tbl-binance'];
   document.querySelectorAll('.tbl').forEach(table=>{
     if(cardIds.includes(table.id))table.classList.toggle('mobile-cards',D.fit!==false);
