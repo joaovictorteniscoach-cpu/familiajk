@@ -6407,21 +6407,11 @@ function rotuloDiaAlunos(i){
   if(i===1)return 'Amanhã · '+nome;
   return nome+' · '+String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');
 }
-/* A lista vira a semana: cada aluno aparece no próximo dia em que tem aula,
-   na ordem do horário. Quem não tem aula nos próximos 7 dias vai para o fim. */
-function listaPorDia(items){
-  const prox=proximaAulaPorAluno();
-  const pos=a=>prox[a.id]||null;
-  const tit=(rot,n,cls)=>'<div class="al-grupo-t'+(cls||'')+'"><b>'+rot+'</b><small>'+n+' aluno'+(n===1?'':'s')+'</small></div>';
-  let html='';
-  for(let i=0;i<7;i++){
-    const doDia=items.filter(a=>pos(a)&&pos(a).i===i)
-      .sort((x,y)=>pos(x).hora.localeCompare(pos(y).hora)||x.nome.localeCompare(y.nome));
-    if(doDia.length)html+=tit(rotuloDiaAlunos(i),doDia.length,i===0?' hoje':'')+'<div class="al-lista">'+doDia.map(linhaAluno).join('')+'</div>';
-  }
-  const sem=items.filter(a=>!pos(a));
-  if(sem.length)html+=tit('Sem aula nos próximos 7 dias',sem.length)+'<div class="al-lista">'+sem.map(linhaAluno).join('')+'</div>';
-  return html;
+/* Lista por nome completo; horários ficam no cartão de cada aluno. */
+function listaAlfabetica(items){
+  return '<div class="al-lista">'+items.slice()
+    .sort((x,y)=>String(x.nome||'').trim().localeCompare(String(y.nome||'').trim(),'pt-BR',{sensitivity:'base',numeric:true}))
+    .map(linhaAluno).join('')+'</div>';
 }
 function renderAlunos(){
   try{if(fichaId)renderFicha();}catch(e){console.warn('ficha',e);}
@@ -6445,7 +6435,7 @@ function renderAlunos(){
   const avisoRepos=focoRepos?'<div class="foco-repos">🔁 Mostrando só quem tem <b>reposição pendente</b> · <a onclick="limparFocoRepos()">ver todos</a></div>':
     (focoDif?'<div class="foco-repos">📅 Mostrando só quem tem <b>valor para conferir com a agenda</b> · <a onclick="limparFocoDif()">ver todos</a></div>':'');
   if(!items.length){list.innerHTML=avisoRepos+'<div class="empty">Nenhum aluno '+(q||filtroAluno!=='todos'||filtroPag!=='todos'||focoRepos||focoDif||DB.alunos.length?'encontrado':'cadastrado ainda — toque em <b>+ Novo</b> para começar')+'.</div>';return;}
-  list.innerHTML=avisoRepos+listaPorDia(items);
+  list.innerHTML=avisoRepos+listaAlfabetica(items);
 }
 
 /* ----- a ficha ----- */

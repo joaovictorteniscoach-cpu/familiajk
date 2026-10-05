@@ -50,6 +50,17 @@ let count=0;async function check(name,fn){await fn();count++;console.log('✅ '+
    if(!auditOnly)assert.deepEqual(failures,[],theme+' '+page+' contraste: '+JSON.stringify(failures));
   }
   if(auditOnly){await context.close();continue;}
+  await check(theme+' alunos em ordem alfabética com agenda e filtros',async()=>{
+   await p.evaluate(()=>{go('alunos',document.createElement('button'));renderAlunos();});
+   assert.deepEqual(await p.locator('#alunos-list .al-row').evaluateAll(es=>es.map(e=>e.id)),['al-solo','al-filho','al-pai']);
+   assert.equal(await p.locator('#alunos-list .al-grupo-t').count(),0);
+   const unchanged=await p.evaluate(()=>{const antes=JSON.stringify(DB.alunos);renderAlunos();return antes===JSON.stringify(DB.alunos);});assert.ok(unchanged);
+   await p.evaluate(()=>{DB.alunos.find(a=>a.id==='solo').status='pago';setFiltroPag('pagos');});
+   assert.deepEqual(await p.locator('#alunos-list .al-row').evaluateAll(es=>es.map(e=>e.id)),['al-solo']);
+   await p.evaluate(()=>{setFiltroPag('todos');document.getElementById('search').value='dependente';renderAlunos();});
+   assert.deepEqual(await p.locator('#alunos-list .al-row').evaluateAll(es=>es.map(e=>e.id)),['al-filho']);
+   await p.evaluate(()=>{DB.alunos.find(a=>a.id==='solo').status='pendente';document.getElementById('search').value='';renderAlunos();});
+  });
   await check(theme+' mensalidade editada atualiza prévia aberta',async()=>{
    await p.evaluate(()=>{go('fech',document.createElement('button'));document.getElementById('fc-aluno').value='solo';document.getElementById('fc-mes').value='2026-10';renderFechamento();openAlunoModal('solo');document.getElementById('a-mensalidade').value='735';saveAluno();});
    assert.match(await p.locator('#fech-export .fx-total').innerText(),/735/);
