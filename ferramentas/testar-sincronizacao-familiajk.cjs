@@ -79,12 +79,50 @@ const server=http.createServer((req,res)=>{
         await joao.evaluate(mode=>setMode(mode),mode);
         const dims=await joao.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,tabs:document.getElementById('tabs'),})).catch(()=>null);
         assert.ok(dims&&dims.scroll<=width+1,'overflow '+width+' '+mode);
-        if(width<=768)assert.ok(await joao.evaluate(()=>Array.from(document.querySelectorAll('#tabs button')).every(e=>e.getBoundingClientRect().right<=innerWidth+1)));
+        if(width<=768)assert.ok(await joao.evaluate(()=>Array.from(document.querySelectorAll('#mobile-nav button')).every(e=>e.getBoundingClientRect().right<=innerWidth+1)));
       }
     }
-    await joao.setViewportSize({width:393,height:852});await joao.evaluate(()=>irPara('i-aportes'));
-    await joao.screenshot({path:'/tmp/familiajk-mobile.png',fullPage:true});
-    console.log('✅ Layout e todas as abas visíveis de 320 a 1280 pixels');
+    await joao.setViewportSize({width:393,height:852});
+    for(const mode of ['contas','invest']){
+      await joao.evaluate(mode=>setMode(mode),mode);
+      assert.equal(await joao.locator('#mobile-nav button:visible').count(),5);
+      assert.equal(await joao.locator('#tabs button:visible').count(),0);
+      const expected=await joao.evaluate(()=> (D.mode==='invest'?TABS_INVEST:TABS_CONTAS).concat(TABS_SHARED).map(t=>t[0]));
+      const primary=await joao.locator('#mobile-nav [data-id]').evaluateAll(es=>es.map(e=>e.dataset.id));
+      const secondary=await joao.locator('#more-links [data-id]').evaluateAll(es=>es.map(e=>e.dataset.id));
+      assert.equal(primary.length,3);assert.equal(new Set([...primary,...secondary]).size,expected.length);
+      assert.deepEqual([...primary,...secondary].sort(),expected.sort());
+      for(const id of secondary){
+        await joao.locator('#more-button').click();
+        await joao.locator('#more-links [data-id="'+id+'"]').click();
+        assert.ok(await joao.locator('section[data-tab="'+id+'"].on').isVisible());
+        assert.equal(await joao.locator('#more-dialog').evaluate(e=>e.open),false);
+        assert.ok(await joao.locator('#more-button').evaluate(e=>e.classList.contains('active')));
+      }
+      await joao.locator('#more-button').click();await joao.keyboard.press('Escape');
+      assert.equal(await joao.locator('#more-dialog').evaluate(e=>e.open),false);
+      await joao.locator('#mobile-nav [data-id="'+primary[0]+'"]').click();
+      assert.equal(await joao.locator('#more-button').evaluate(e=>e.classList.contains('active')),false);
+    }
+    console.log('✅ Menu móvel: 5 botões, todas as telas acessíveis e nenhum destino duplicado em Mais');
+    await joao.evaluate(()=>setMode('contas'));await joao.locator('#nav-novo').click();
+    assert.ok(await joao.locator('#entry-dialog').evaluate(e=>e.open));
+    const count=await joao.evaluate(()=>D.contas.recebidos.length);
+    await joao.locator('#entry-options button').filter({hasText:/^Recebimento/}).click();
+    assert.ok(await joao.locator('section[data-tab="c-recebidos"].on').isVisible());
+    assert.equal(await joao.evaluate(()=>D.contas.recebidos.length),count+1);
+    await joao.evaluate(()=>setMode('invest'));const ap=await joao.evaluate(()=>D.invest.aportes.length);
+    await joao.locator('#nav-novo').click();assert.equal(await joao.evaluate(()=>D.invest.aportes.length),ap+1);
+    assert.ok(await joao.locator('section[data-tab="i-aportes"].on').isVisible());
+    await joao.evaluate(()=>irPara('c-anual'));assert.ok(await joao.locator('section[data-tab="c-anual"].on').isVisible());
+    console.log('✅ Lançar contextual e atalhos para telas secundárias continuam funcionando');
+    await joao.setViewportSize({width:1280,height:852});
+    assert.equal(await joao.locator('#tabs button:visible').count(),4);
+    await joao.locator('#sidebar-more').click();assert.ok(await joao.locator('#more-dialog').evaluate(e=>e.open));await joao.keyboard.press('Escape');
+    console.log('✅ Menu de computador também reduzido, com Mais e Lançar acessíveis');
+    await joao.setViewportSize({width:393,height:852});await joao.evaluate(()=>{snoozeBanner();irPara('c-painel');document.getElementById('undo-toast').hidden=true;});
+    await joao.screenshot({path:'/tmp/familiajk-mobile.png',fullPage:true,animations:'disabled'});
+    console.log('✅ Layout sem rolagem lateral de 320 a 1280 pixels');
     assert.equal(errors.length,0,errors.join('\n'));assert.ok(puts>=2);console.log('✅ Sem erros JavaScript; nenhuma conexão com banco real');
   }finally{await browser.close();server.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;server.close();});
