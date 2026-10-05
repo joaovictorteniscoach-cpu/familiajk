@@ -4201,7 +4201,7 @@ function sugerirMensalidade(){
     else if(p<=0&&pg<=0)mEl.value=0;
   }
   const cEl=document.getElementById('a-conta');
-  if(cEl)cEl.textContent=detalhe.length?('= '+detalhe.join('  +  ')+'  =  '+fmt(base+extra)):'';
+  if(cEl)cEl.textContent=detalhe.length?('Referência da tabela: '+detalhe.join('  +  ')+'  =  '+fmt(base+extra)):'';
   if(!document.getElementById('a-id').value){
     document.getElementById('a-creditos').value=p;
     const cg=document.getElementById('a-credgrupo');if(cg)cg.value=pg;
@@ -6000,8 +6000,8 @@ async function _fechCanvas(){
 }
 async function _fechBlob(){
   /* Refaça antes de exportar: a imagem e o texto usam o mesmo cadastro atual. */
-  renderFechamento();
   await garantirExportLibs();
+  renderFechamento();
   if(typeof html2canvas==='undefined')throw new Error('sem biblioteca');
   const canvas=await _fechCanvas();
   return await new Promise(r=>canvas.toBlob(r,'image/png'));

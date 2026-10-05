@@ -62,7 +62,9 @@ let count=0;async function check(name,fn){await fn();count++;console.log('✅ '+
   await check(theme+' saldo do cadastro e família sem cobrança duplicada',async()=>{
    await p.evaluate(()=>{document.getElementById('fc-aluno').value='pai';renderFechamento();openAlunoModal('pai');document.getElementById('a-mensalidade').value='1375';saveAluno();openAlunoModal('filho');document.getElementById('a-plano').value='5';document.getElementById('a-creditos').value='4';document.getElementById('a-repos').value='3';saveAluno();});
    const r=await p.evaluate(()=>({t:document.getElementById('fech-export').innerText,d:fcDados(DB.alunos.find(x=>x.id==='pai'),'2026-10'),filho:DB.alunos.find(x=>x.id==='filho')}));
-   assert.equal(r.d.total,1375);assert.equal(r.filho.mensalidade,0);assert.equal(r.filho.creditos,4);assert.match(r.t,/1375|1\.375/);assert.match(r.t,/Dependente Teste/);
+   assert.equal(r.d.total,1375);assert.equal(r.filho.mensalidade,0);assert.equal(r.filho.creditos,4);assert.match(r.t,/1375|1\.375/);assert.match(r.t,/Dependente Teste/i);
+   assert.match(r.t,/Créditos atuais do plano\s+4/i);assert.match(r.t,/Reposições guardadas\s+3/i);assert.match(r.t,/Total de aulas a usar\s+7/i);
+   const unchanged=await p.evaluate(()=>{const antes=JSON.stringify(DB);renderFechamento();return antes===JSON.stringify(DB);});assert.ok(unchanged,'prévia não altera dados');
   });
   for(const width of [320,390,1280]){
    await p.setViewportSize({width,height:844});
