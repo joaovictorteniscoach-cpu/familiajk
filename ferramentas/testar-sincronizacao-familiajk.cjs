@@ -127,8 +127,38 @@ const server=http.createServer((req,res)=>{
     await joao.locator('#sidebar-more').click();assert.ok(await joao.locator('#more-dialog').evaluate(e=>e.open));await joao.keyboard.press('Escape');
     console.log('✅ Menu de computador também reduzido, com Mais e Lançar acessíveis');
     await joao.setViewportSize({width:393,height:852});await joao.evaluate(()=>{snoozeBanner();irPara('c-painel');document.getElementById('undo-toast').hidden=true;});
+    assert.equal(await joao.locator('.summary-grid > .summary-card').count(),2);
+    assert.ok(await joao.locator('#page-period').isVisible());
+    assert.match(await joao.locator('.summary-grid > .summary-card').first().innerText(),/A pagar/);
+    await joao.locator('.income-details > summary').click();assert.ok(await joao.locator('#ch-renda').isVisible());
+    await joao.locator('.income-details > summary').click();
+    const outstanding=await joao.evaluate(()=>allBills().filter(b=>!pagoGet(b.id)&&(+b.valor||0)>0).length);
+    assert.equal(await joao.locator('#dueList > .due').count(),Math.min(5,outstanding));
+    if(outstanding>5){await joao.locator('.due-more > summary').click();assert.equal(await joao.locator('#dueList .due:visible').count(),outstanding);}
+    await joao.locator('#dueList > .due').first().click();
+    assert.ok(await joao.locator('.focused-row').isVisible());
+    const focused=await joao.locator('.focused-row').evaluate(row=>({name:row.querySelector('.name').getBoundingClientRect().top,value:row.querySelector('[data-label^="Valor"]').getBoundingClientRect().top}));
+    assert.ok(focused.name<focused.value);
+    const bars=await joao.locator('.card-actions').count();await joao.evaluate(()=>enhanceTables());assert.equal(await joao.locator('.card-actions').count(),bars);
+    const activeTable=await joao.locator('section.on .scroll').first().evaluate(scroll=>scroll.previousElementSibling.classList.contains('card-actions'));assert.ok(activeTable);
+    const month=await joao.evaluate(()=>selMonthKey());await joao.locator('#page-period .mn-arrow').first().click();
+    assert.notEqual(await joao.evaluate(()=>selMonthKey()),month);
+    assert.equal(await joao.locator('#ch-mes').innerText(),await joao.evaluate(()=>fmtMonth(selMonthDate())));
+    await joao.evaluate(()=>goToday());
+    await joao.evaluate(()=>irPara('i-painel'));
+    assert.equal(await joao.locator('#page-period').isVisible(),false);
+    assert.ok(await joao.locator('#h-aportes').evaluate(e=>e.getBoundingClientRect().top)<await joao.locator('#sparkChart').evaluate(e=>e.getBoundingClientRect().top));
+    assert.equal(await joao.locator('#h-aportes .contributed-people > div').count(),3);
+    await joao.screenshot({path:'/tmp/familiajk-invest-ergonomia.png',fullPage:true,animations:'disabled'});
+    await joao.evaluate(()=>irPara('c-painel'));
+    console.log('✅ Ergonomia: pendências primeiro, mês acessível, todos os vencimentos, linha correta e ações perto da tabela');
     await joao.screenshot({path:'/tmp/familiajk-mobile.png',fullPage:true,animations:'disabled'});
     console.log('✅ Layout sem rolagem lateral de 320 a 1280 pixels');
+    for(const [width,tab,name] of [[393,'c-casa','contas-mobile'],[1280,'c-painel','resumo-desktop'],[1280,'i-painel','invest-desktop']]){
+      await joao.setViewportSize({width,height:852});await joao.evaluate(tab=>irPara(tab),tab);
+      await joao.screenshot({path:'/tmp/familiajk-'+name+'.png',fullPage:true,animations:'disabled'});
+      assert.ok(await joao.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+    }
     assert.equal(errors.length,0,errors.join('\n'));assert.ok(puts>=2);console.log('✅ Sem erros JavaScript; nenhuma conexão com banco real');
   }finally{await browser.close();server.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;server.close();});

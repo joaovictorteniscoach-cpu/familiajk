@@ -85,3 +85,80 @@ body.fit .mobile-cards td input[type=checkbox]{width:22px!important;min-height:2
 #more-links button{padding:12px 9px;min-height:48px;gap:8px}
 #more-links button svg{width:18px;height:18px}
 }
+/* Ergonomia: contexto do mês, pendências primeiro e ações junto às listas. */
+#page-period[hidden]{display:none!important}
+#page-period{position:sticky;top:64px;z-index:35;display:flex;align-items:center;gap:8px;background:var(--ink);padding:10px 0;margin:0 0 18px;border-bottom:1px solid var(--line)}
+#page-period .mn-arrow{width:44px;min-width:44px;min-height:44px;height:44px}
+#page-period .monthchip{font-size:14px;padding:8px 12px}
+.summary-card{min-height:112px}
+.summary-card.highlight{border-color:#b39142;background:#28251b}
+.summary-card.highlight strong{color:var(--gold-soft)}
+.summary-card .summary-label,.summary-card small{font-size:14px}
+.month-progress{margin:14px 0 22px}
+.due-card .sub{font-size:14px;margin:8px 0 10px}
+.due-more>summary,.house-settings>summary,.secondary-actions>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-size:14px;color:var(--gold-soft)}
+.due-more{margin-top:8px}
+.duehint{display:none}
+.due .meta,.due .when{font-size:14px}
+.breakdown-row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;width:100%;padding:10px 0;background:none;border:0;border-bottom:1px solid var(--line);color:var(--text);font-size:14px;text-align:left}
+.breakdown-row strong{font-variant-numeric:tabular-nums}
+.house-settings{margin:0 0 12px}
+.house-settings>summary{color:var(--muted)}
+.house-settings .namebar{padding:10px 0;margin:0}
+.card-actions{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px;margin:14px 0 18px}
+.card-actions>.addbtn{margin:0;min-height:44px;font-size:14px;border-style:solid}
+.secondary-actions{margin-left:auto;border:1px solid var(--line);border-radius:9px;padding:0 12px}
+.secondary-actions .addbtn{display:flex;width:100%;margin:4px 0 10px;font-size:14px}
+.card-actions+.scroll{clear:both}
+.focused-row{outline:2px solid var(--gold);outline-offset:2px}
+.aporte-summary{border:1px solid var(--line);background:#181e24;border-radius:14px;padding:16px;margin:16px 0}
+.contributed-total{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:14px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.contributed-total strong{font-size:22px;font-variant-numeric:tabular-nums;line-height:1.3}
+.contributed-people{margin:8px 0 0;font-size:14px}
+.contributed-people>div{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:7px 0}
+.contributed-people dt{color:var(--muted);overflow-wrap:anywhere}
+.contributed-people dd{margin:0;font-variant-numeric:tabular-nums;white-space:nowrap}
+.investment-history{margin-top:24px}
+.investment-history .history-heading{font-size:18px;color:var(--text)}
+.investment-history .note{font-size:14px}
+.wealth-panel #h-pendentes{font-size:14px;margin:0 0 16px}
+@media(max-width:860px){
+#page-period{top:0;gap:6px;margin-bottom:14px;padding:8px 0}
+#page-period .monthchip{font-size:14px;flex:1;text-align:center;padding:6px 8px}
+#page-period .mn-today{font-size:14px;min-height:44px}
+.summary-grid{gap:10px}
+.summary-card{padding:14px 12px;min-height:112px}
+.summary-card strong,.summary-card .bignum{font-size:clamp(19px,5.4vw,25px);margin:10px 0 6px}
+.summary-label{min-height:24px}
+.summary-card small{line-height:1.4}
+.card-actions>.addbtn{flex:1;justify-content:center;padding:10px}
+.secondary-actions{margin-left:0}
+.card-actions{margin:12px 0 18px}
+body.fit .mobile-cards tr:not(.sumrow) td:first-child{grid-column:auto}
+body.fit .mobile-cards tr:not(.sumrow) td.name{grid-column:1/-1;order:-10}
+body.fit .mobile-cards tr:not(.sumrow) td[data-label="Pessoa"]{order:-10}
+body.fit .mobile-cards tr:not(.sumrow) td[data-label^="Valor"]{order:-9}
+body.fit .mobile-cards tr:not(.sumrow) td[data-label="Pago"]{order:-8}
+body.fit .mobile-cards tr:not(.sumrow) td[data-label^="Venc"]{order:-7}
+body.fit .mobile-cards tr:not(.sumrow) td[data-label="Ativo"]{grid-column:1/-1;order:-6}
+body.fit .mobile-cards tr:not(.sumrow) td:has(.delete-row){grid-column:1/-1;order:100;flex-direction:row;align-items:center;justify-content:flex-end;gap:8px;border-top:1px solid var(--line)!important;padding-top:10px!important}
+body.fit .mobile-cards tr:not(.sumrow) td:has(.delete-row):before{display:none}
+body.fit .mobile-cards td:before{font-size:14px}
+.paybtn{min-width:44px;min-height:44px}
+.investment-layout{gap:20px}
+.allocation-panel{padding-top:0}
+.investment-history{margin-top:18px}
+.contributed-total strong{font-size:21px}
+}
+.summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.income-details{grid-column:1/-1;border-bottom:1px solid var(--line)}
+.income-details>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-size:14px;color:var(--muted)}
+.income-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding-bottom:12px}
+.income-metrics .summary-card{min-height:100px}
+@media(max-width:860px){.month-progress{margin:10px 0 20px}.income-metrics .summary-card{padding:12px;min-height:100px}}
+.income-details>summary,.secondary-actions>summary,.due-more>summary{justify-content:space-between;gap:12px}
+.income-details>summary::after,.secondary-actions>summary::after,.due-more>summary::after{content:'⌄';font-size:18px}
+.income-details[open]>summary::after,.secondary-actions[open]>summary::after,.due-more[open]>summary::after{content:'⌃'}
+#page-period .monthchip{white-space:normal;min-width:0}
+.mobile-nav button span{overflow-wrap:anywhere;max-width:100%}
+@media(min-width:861px){#page-period{justify-content:flex-start}#page-period .monthchip{flex:0 0 auto;white-space:nowrap}}
