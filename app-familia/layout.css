@@ -83,3 +83,12 @@ body.fit #tbl-cat-resumo.compacta tr.sumrow td{border-top:1px solid var(--accent
 .mobile-nav .nav-novo svg{width:34px;height:34px;padding:6px;border-radius:50%;background:linear-gradient(180deg,#F4C653,#DFA425);box-shadow:0 6px 14px -6px rgba(233,173,40,.7);color:#1A1304;box-sizing:border-box}
 .mobile-nav .nav-novo span{color:#F6CF6A}
 }
+/* Aportes visíveis por pessoa e menu compacto, com todas as abas no celular. */
+.aporte-summary{font-size:14px;line-height:1.6;margin:12px 0;overflow-wrap:anywhere}
+@media(max-width:860px){
+.sidebar .tabs{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;overflow:visible;mask-image:none;-webkit-mask-image:none;padding:4px 0}
+.sidebar .tabs .tab{width:100%;min-width:0;min-height:40px;padding:7px 3px;justify-content:center;border-radius:8px;font-size:12px;white-space:normal;overflow-wrap:anywhere;line-height:1.2}
+.sidebar .tabs .tab svg{display:none}
+.sidebar .tabs .tab-grupo{display:none}
+body.fit .mobile-cards td input[type=checkbox]{width:22px!important;min-height:22px;justify-self:end}
+}

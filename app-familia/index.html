@@ -650,12 +650,14 @@ table.tbl.livre td:last-child{width:42%}
   <div class="investment-layout">
     <div class="wealth-panel"><div class="eyebrow">Total investido</div><div class="bignum" id="h-total">—</div><div class="section-heading history-heading"><span>Evolução do patrimônio</span><button class="text-button" onclick="irPara('i-mensal')">Ver histórico ›</button></div><div class="wealth-chart"><canvas id="sparkChart"></canvas></div><p class="note">Cada mês fechado (📸 em Mensal) vira um ponto da linha.</p>
     <div class="card contribution-card"><div><div class="eyebrow">Plano de aportes</div><strong id="h-plano">—</strong><span class="mut"> / mês</span></div><button class="text-button" onclick="irPara('i-plano')">Ajustar ›</button></div>
+    <div class="aporte-summary" id="h-aportes"></div><p class="note" id="h-pendentes"></p>
     <button class="iconbtn primary wide-button" onclick="startEntry('aporte')">＋ Adicionar aporte</button></div>
-    <div class="allocation-panel"><div class="section-heading"><h2>Distribuição</h2><button class="text-button" onclick="irPara('i-carteira')">Ver carteira ›</button></div><div class="allocation-bar" aria-label="Distribuição por conta"><i id="alloc-nac"></i><i id="alloc-global"></i><i id="alloc-bin"></i></div>
+    <div class="allocation-panel"><div class="section-heading"><h2>Distribuição</h2><button class="text-button" onclick="irPara('i-carteira')">Ver carteira ›</button></div><div class="allocation-bar" aria-label="Distribuição por conta"><i id="alloc-nac"></i><i id="alloc-global"></i><i id="alloc-bin"></i><i id="alloc-aportes" style="background:#2EB961"></i></div>
     <button class="allocation-row" onclick="irPara('i-carteira')"><span class="allocation-name"><i class="allocation-dot national"></i>Nacional XP</span><span class="allocation-share" id="h-nacp">—</span><strong id="h-nac">—</strong></button>
     <button class="allocation-row" onclick="irPara('i-carteira')"><span class="allocation-name"><i class="allocation-dot global"></i>Global XP</span><span class="allocation-share" id="h-globp">—</span><strong id="h-glob">—</strong></button>
     <button class="allocation-row" onclick="irPara('i-carteira')"><span class="allocation-name"><i class="allocation-dot crypto"></i>Binance</span><span class="allocation-share" id="h-binp">—</span><strong id="h-bin">—</strong></button>
     <div class="exchange-caption"><span>Câmbio cadastrado · USD → BRL</span><span id="h-cambio">—</span></div>
+    <button class="allocation-row" onclick="irPara('i-aportes')"><span class="allocation-name">Aportes fora dos saldos</span><strong id="h-aportes-pendentes">—</strong></button>
     <details class="investment-details"><summary>Mais detalhes da carteira</summary><div class="grid two"><div class="card"><h2>Por conta</h2><div class="chartbox" style="height:220px"><canvas id="contaChart"></canvas></div></div><div class="card"><h2>Por classe</h2><div class="chartbox" style="height:220px"><canvas id="classeChart"></canvas></div></div></div></details></div>
   </div>
 </section>
@@ -684,7 +686,7 @@ table.tbl.livre td:last-child{width:42%}
 
 <section data-tab="i-aportes">
   <div class="card">
-    <h2>Aportes</h2><div class="sub">Registre cada depósito — e quem aportou.</div>
+    <h2>Aportes</h2><div class="aporte-summary" id="aportes-resumo"></div><p class="note">Cada aporte entra no total investido. Marque “Já na carteira” quando esse dinheiro estiver incluído nos saldos dos ativos, para contar uma única vez.</p><div class="sub">Registre cada depósito — e quem aportou.</div>
     <div class="scroll"><table class="tbl" id="tbl-aportes"></table></div>
     <button class="addbtn" onclick="addAporte()">+ novo aporte</button>
     <button class="addbtn" onclick="aportesDoExtrato()">↓ trazer os aportes do extrato</button>
@@ -855,7 +857,7 @@ table.tbl.livre td:last-child{width:42%}
       <button class="iconbtn" onclick="cloudPull(false,true)">Buscar agora</button>
     </div>
     <p class="note" id="cl-status" style="margin-top:12px">sincronização desligada</p>
-    <div id="cl-conflict" class="sync-conflict" role="status" hidden><h3>Há duas versões para conferir</h3><p>A sincronização automática está pausada. Escolha qual versão completa usar; o app não mistura lançamentos automaticamente.</p><p id="cl-differences" class="note"></p><strong>Neste aparelho</strong><p id="cl-local-summary" style="white-space:pre-line"></p><strong>Na nuvem</strong><p id="cl-remote-summary" style="white-space:pre-line"></p><div class="row"><button class="iconbtn" onclick="exportJSON()">Backup deste aparelho</button><button class="iconbtn" id="cl-download-remote" onclick="cloudBackupRemote()">Backup da nuvem</button><button class="iconbtn" onclick="cloudUseLocal()">Enviar este aparelho</button><button class="iconbtn" id="cl-use-remote" onclick="cloudUseRemote()">Usar a nuvem</button></div></div>
+    <div id="cl-conflict" class="sync-conflict" role="status" hidden><h3>Há duas versões para conferir</h3><p>A sincronização automática está pausada. Lançamentos diferentes são reunidos automaticamente; alterações incompatíveis no mesmo registro precisam de conferência.</p><p id="cl-differences" class="note"></p><strong>Neste aparelho</strong><p id="cl-local-summary" style="white-space:pre-line"></p><strong>Na nuvem</strong><p id="cl-remote-summary" style="white-space:pre-line"></p><div class="row"><button class="iconbtn" onclick="exportJSON()">Backup deste aparelho</button><button class="iconbtn" id="cl-download-remote" onclick="cloudBackupRemote()">Backup da nuvem</button><button class="iconbtn" onclick="cloudUseLocal()">Enviar este aparelho</button><button class="iconbtn" id="cl-use-remote" onclick="cloudUseRemote()">Usar a nuvem</button></div></div>
     <p class="note">Guarde o link só entre vocês dois: sem login, quem tiver o link consegue ler e alterar os dados da família.</p>
   </div>
 </section>
@@ -1049,6 +1051,7 @@ table.tbl.livre td:last-child{width:42%}
 
 <div class="foot">Família JK · contas da casa + investimentos · dados guardados no seu dispositivo</div>
 
+<script src="./sync-merge.js"></script>
 <script>
 const KEY="familiajk_v1";
 const TABS_CONTAS=[["c-painel","Painel"],["c-casa","Casa"],["c-joao","João"],["c-esposa","Kassiana"],["c-empresa","Empresas"],["c-cartao","Cartões"],["c-recebidos","Recebidos"],["c-patrimonio","Patrimônio"],["c-protecao","Proteção"],["c-resumo","Resumo"],["c-anual","Anual"],["c-categorias","Categorias"],["c-conselhos","Conselhos"]];
@@ -1345,7 +1348,11 @@ function migrateInvest(o){
   if(o.proj.real===undefined)o.proj.real=false;
   if(!o.allocTarget)o.allocTarget=structuredClone(d.allocTarget);
   CLASSES.forEach(c=>{if(o.allocTarget[c]===undefined)o.allocTarget[c]=0});
-  o.aportes.forEach(a=>{if(a.pessoa===undefined)a.pessoa="Conjunto"});
+  o.aportes.forEach(a=>{
+    if(a.pessoa===undefined)a.pessoa="Conjunto";
+    // O retrato legado é da carteira do João; os aportes da esposa ficam fora dele.
+    if(a.naCarteira===undefined)a.naCarteira=!(o._snapshotJoao20261001V2&&a.pessoa==='Esposa');
+  });
   o.nacional.forEach(a=>{if(a.apl===undefined)a.apl=null});
   if(!o.plano)o.plano=structuredClone(d.plano);
   aplicarSnapshotJoao20261001(o);
@@ -1494,14 +1501,15 @@ function totBin(){
 }
 function globUSD(){return D.invest.global.reduce((s,g)=>s+(g.qtd*g.pa||0),0)+(+D.invest.caixaGlobalUSD||0)}
 function globBRL(){return globUSD()*(+D.invest.cambio||0)}
-function invTotal(){return totNac()+globBRL()+totBin()}
+function aportesPendentes(){return D.invest.aportes.reduce((s,a)=>s+(a.naCarteira===false?(+a.valor||0):0),0)}
+function invTotal(){return totNac()+globBRL()+totBin()+aportesPendentes()}
 function classeVal(cl){
   let s=D.invest.nacional.filter(a=>a.classe===cl).reduce((t,a)=>t+(+a.valor||0),0);
   const binInformado=D.invest.binanceInformado!==null&&D.invest.binanceInformado!==''&&isFinite(+D.invest.binanceInformado)&&(+D.invest.binanceInformado)>=0;
   if(cl==="Cripto"&&binInformado)s+=+D.invest.binanceInformado;
   else s+=(D.invest.binance||[]).filter(a=>a.classe===cl).reduce((t,a)=>t+(+a.valor||0),0);
   s+=D.invest.global.filter(g=>g.classe===cl).reduce((t,g)=>t+(g.qtd*g.pa||0),0)*(+D.invest.cambio||0);
-  if(cl==="Renda Fixa / Caixa") s+=(+D.invest.caixaGlobalUSD||0)*(+D.invest.cambio||0);
+  if(cl==="Renda Fixa / Caixa") s+=aportesPendentes()+(+D.invest.caixaGlobalUSD||0)*(+D.invest.cambio||0);
   return s;
 }
 function globGanhoUSD(){return D.invest.global.reduce((s,g)=>s+((g.qtd*g.pa)-(+g.apl||0)),0)}
@@ -2418,23 +2426,31 @@ function addGlob(){D.invest.global.push({tk:"NEW",nome:"Novo ETF",classe:"Setori
 
 function renderAportes(){
   const opts=[...D.invest.nacional.map(a=>a.nome),...D.invest.global.map(g=>g.tk)].map(n=>`<option value="${esc(n)}">`).join('');
-  let h=`<datalist id="ativos-list">${opts}</datalist><tr><th>Data</th><th>Mês/Ano</th><th>Conta</th><th>Pessoa</th><th>Ativo</th><th>Valor (R$)</th><th></th></tr>`;
+  let h=`<datalist id="ativos-list">${opts}</datalist><tr><th>Data</th><th>Mês/Ano</th><th>Conta</th><th>Pessoa</th><th>Ativo</th><th>Valor (R$)</th><th>Já na carteira</th><th></th></tr>`;
   D.invest.aportes.forEach((a,i)=>{h+=`<tr>
-    <td><input class="cell txt" style="min-width:96px" value="${esc(a.data)}" oninput="D.invest.aportes[${i}].data=this.value;save()"></td>
-    <td><input class="cell txt" style="min-width:78px" value="${esc(a.mes)}" oninput="D.invest.aportes[${i}].mes=this.value;save()"></td>
+    <td><input class="cell txt" style="min-width:96px" value="${esc(a.data)}" oninput="D.invest.aportes[${i}].data=this.value;refreshAportes()"></td>
+    <td><input class="cell txt" style="min-width:78px" value="${esc(a.mes)}" oninput="D.invest.aportes[${i}].mes=this.value;refreshAportes()"></td>
     <td><select class="cell txt" onchange="D.invest.aportes[${i}].conta=this.value;save()"><option ${a.conta==='Nacional XP'?'selected':''}>Nacional XP</option><option ${a.conta==='Global XP'?'selected':''}>Global XP</option></select></td>
-    <td><select class="cell txt" style="min-width:96px" onchange="D.invest.aportes[${i}].pessoa=this.value;refreshAportes()">${PESSOAS.map(p=>`<option ${p===a.pessoa?'selected':''}>${p}</option>`).join('')}</select></td>
+    <td><select class="cell txt" style="min-width:96px" onchange="D.invest.aportes[${i}].pessoa=this.value;refreshAportes()">${PESSOAS.map(p=>`<option ${p===a.pessoa?'selected':''}>${esc(p==='Esposa'?pesNome('preta'):p==='João'?pesNome('preto'):p)}</option>`).join('')}</select></td>
     <td><input class="cell txt" list="ativos-list" value="${esc(a.ativo)}" oninput="D.invest.aportes[${i}].ativo=this.value;save()"></td>
     <td><input class="cell" type="number" step="0.01" value="${a.valor}" oninput="D.invest.aportes[${i}].valor=+this.value;refreshAportes()"></td>
+    <td><input type="checkbox" aria-label="Aporte já incluído nos saldos da carteira" ${a.naCarteira!==false?'checked':''} onchange="D.invest.aportes[${i}].naCarteira=this.checked;refreshAportes()"></td>
     <td><button class="iconbtn" onclick="deleteItem('invest.aportes',${i})">×</button></td></tr>`;});
-  h+=`<tr class="sumrow"><td>Total aportado</td><td></td><td></td><td id="apt-j"></td><td id="apt-e"></td><td id="apt-sum"></td><td></td></tr>`;
+  h+=`<tr class="sumrow"><td>Total aportado</td><td></td><td></td><td id="apt-j"></td><td id="apt-e"></td><td id="apt-sum"></td><td></td><td></td></tr>`;
   document.getElementById('tbl-aportes').innerHTML=h;refreshAportes();tuneInputs();
 }
-function refreshAportes(){
-  set('apt-sum',brl(D.invest.aportes.reduce((s,a)=>s+(+a.valor||0),0)));
-  set('apt-j','João: '+brl(pessoaSum("João")));set('apt-e','Esposa: '+brl(pessoaSum("Esposa")));save();
+function resumoAportes(){
+  const total=D.invest.aportes.reduce((s,a)=>s+(+a.valor||0),0);
+  const text=pesNome('preto')+': '+brl(pessoaSum('João'))+' · '+pesNome('preta')+': '+brl(pessoaSum('Esposa'))+' · Conjunto: '+brl(pessoaSum('Conjunto'))+' · Total aportado: '+brl(total);
+  set('h-aportes',text);set('aportes-resumo',text);
+  set('h-pendentes','Inclui '+brl(aportesPendentes())+' de aportes ainda não incluídos nos saldos da carteira.');
 }
-function addAporte(){D.invest.aportes.push({data:"",mes:"",conta:"Nacional XP",pessoa:"Conjunto",ativo:"",valor:0});renderAportes()}
+function refreshAportes(){
+  somaAportesNoMes();resumoAportes();
+  set('apt-sum',brl(D.invest.aportes.reduce((s,a)=>s+(+a.valor||0),0)));
+  set('apt-j',pesNome('preto')+': '+brl(pessoaSum('João')));set('apt-e',pesNome('preta')+': '+brl(pessoaSum('Esposa')));set('h-total',brl(invTotal()));save();
+}
+function addAporte(){D.invest.aportes.push({id:uid(),data:hojeBR(),mes:mesFromDate(hojeBR()),conta:"Nacional XP",pessoa:"Conjunto",ativo:"",valor:0,naCarteira:false});renderAportes()}
 
 function renderMensal(){
   let h='<tr><th>Mês</th><th>Patrimônio (R$)</th><th>Aporte (R$)</th><th>Rendimento (R$)</th><th>Rentab.</th><th></th></tr>';
@@ -2637,14 +2653,15 @@ function destroy(k){if(charts[k]){charts[k].destroy();delete charts[k]}}
 const moneyAxis={ticks:{callback:v=>brlk(v)},grid:{color:'rgba(255,255,255,.06)'}};
 
 function drawInvPainel(){
+  resumoAportes();set('h-aportes-pendentes',brl(aportesPendentes()));
   set('h-total',brl(invTotal()));set('h-nac',brl(totNac()));set('h-glob',brl(globBRL()));set('h-cambio',brl(D.invest.cambio));
   const total=invTotal();
   set('h-nacp',pct(total?totNac()/total:0));set('h-globp',pct(total?globBRL()/total:0));
   set('h-bin',brl(totBin()));set('h-binp',pct(total?totBin()/total:0));
   set('h-plano',brl((+D.invest.plano.joao||0)+(+D.invest.plano.esposa||0)));
-  [['alloc-nac',totNac()],['alloc-global',globBRL()],['alloc-bin',totBin()]].forEach(([id,amount])=>{const percent=total>0?Math.max(0,Math.min(100,amount/total*100)):0;document.getElementById(id).style.width=percent+'%';});
+  [['alloc-nac',totNac()],['alloc-global',globBRL()],['alloc-bin',totBin()],['alloc-aportes',aportesPendentes()]].forEach(([id,amount])=>{const percent=total>0?Math.max(0,Math.min(100,amount/total*100)):0;document.getElementById(id).style.width=percent+'%';});
   destroy('conta');charts.conta=new Chart(document.getElementById('contaChart'),{type:'doughnut',
-    data:{labels:['Nacional XP','Global XP','Binance'],datasets:[{data:[totNac(),globBRL(),totBin()],backgroundColor:[COL.gold,COL.teal,'#bba7df'],borderColor:COL.ink,borderWidth:3}]},
+    data:{labels:['Nacional XP','Global XP','Binance','Aportes fora dos saldos'],datasets:[{data:[totNac(),globBRL(),totBin(),aportesPendentes()],backgroundColor:[COL.gold,COL.teal,'#bba7df','#2EB961'],borderColor:COL.ink,borderWidth:3}]},
     options:{cutout:'62%',plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>c.label+': '+brl(c.raw)}}}}});
   const cv=CLASSES.map(classeVal),lab=CLASSES.filter((c,i)=>cv[i]>0),val=cv.filter(x=>x>0);
   destroy('classe');charts.classe=new Chart(document.getElementById('classeChart'),{type:'doughnut',
@@ -3026,6 +3043,21 @@ async function readRemote(response){
   const data=migrate(raw);return {etag,data,fp:syncFingerprint(data)};
 }
 function versaoPorConteudo(t){let h=5381;t=String(t||'');for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;return 'conteudo:'+(h>>>0).toString(36)+':'+t.length;}
+function tryCloudMerge(remote){
+  if(!remote.data)return false;
+  try{
+    const base=cloudSync?syncData(migrate(JSON.parse(cloudSync.baseline))):undefined;
+    const merged=migrate(mergeFamilyData(base,syncData(),syncData(remote.data)));
+    const remoteFP=remote.fp;
+    if(!applyCloudRemote({...remote,data:merged}))return false;
+    // A referência deve ser a nuvem lida, para enviar só o que ainda falta nela.
+    rememberCloud(remote.etag,remoteFP);
+    somaAportesNoMes();saveLocal();
+    if(D.cloud.on)schedulePush();
+    setCloudStatus('Lançamentos de vocês reunidos. Enviando o total da família…','var(--up)');
+    return true;
+  }catch(e){return false;}
+}
 function showCloudConflict(remote){
   clearTimeout(pushTimer);pushTimer=null;cloudConflict=remote;
   const box=document.getElementById('cl-conflict');box.hidden=false;
@@ -3035,7 +3067,7 @@ function showCloudConflict(remote){
   const different=remote.data?Object.keys(TRASH_PATHS).filter(path=>canonical(trashList(D,path))!==canonical(trashList(remote.data,path))).map(path=>TRASH_PATHS[path]):[];
   if(remote.data&&canonical(D.contas.renda)!==canonical(remote.data.contas.renda))different.push('Renda cadastrada');
   set('cl-differences',different.length?'Diferenças em: '+different.join(', ')+'. Baixe as duas versões para conferir os detalhes.':'Confira os backups completos antes de escolher.');
-  setCloudStatus('As versões diferem. Confira antes de substituir; o envio automático está pausado.','var(--gold)');
+  setCloudStatus('O mesmo registro foi alterado de formas diferentes. Confira as versões; o envio automático está pausado.','var(--gold)');
 }
 function cloudBackupRemote(){
   if(!cloudConflict||!cloudConflict.data)return;
@@ -3072,11 +3104,11 @@ async function cloudPull(silent,forcar){
     if(remote.fp===local){rememberCloud(remote.etag,local);clearCloudConflict();setCloudStatus('Aparelho e nuvem estão sincronizados.','var(--up)');return;}
     if(!cloudSync){
       if(remote.data===null){rememberCloud(remote.etag,local);setCloudStatus('Nuvem vazia. Use “Enviar agora” para enviar os dados deste aparelho.');return;}
-      showCloudConflict(remote);return;
+      if(!tryCloudMerge(remote))showCloudConflict(remote);return;
     }
     const localChanged=local!==cloudSync.baseline,remoteChanged=remote.etag!==cloudSync.etag;
     if(!remoteChanged){if(localChanged){setCloudStatus('Alterações locais aguardam envio.');if(D.cloud.on)schedulePush();}return;}
-    if(localChanged||!remote.data||encolheDemais(resumoBase(D),resumoBase(remote.data))){showCloudConflict(remote);return;}
+    if(localChanged||!remote.data){if(!tryCloudMerge(remote))showCloudConflict(remote);return;}
     const active=document.activeElement;if(active&&['INPUT','SELECT','TEXTAREA'].includes(active.tagName))return;
     if(applyCloudRemote(remote))setCloudStatus('Atualizado da nuvem.','var(--up)');
   }catch(e){if(epoch===cloudEpoch)setCloudStatus(e.message||'Não foi possível buscar. Os dados locais foram mantidos.','var(--down)');}
@@ -3088,20 +3120,25 @@ async function cloudPush(resolve=false){
   if(cloudConflict&&!resolve){setCloudStatus('Resolva a diferença entre versões antes de enviar.','var(--gold)');return;}
   if(!cloudSync&&!cloudConflict){await cloudPull(false);if(!cloudSync||cloudConflict)return;}
   if(pushRequest)return;
-  const expected=resolve&&cloudConflict?cloudConflict.etag:cloudSync&&cloudSync.etag;
+  let expected=resolve&&cloudConflict?cloudConflict.etag:cloudSync&&cloudSync.etag;
   if(!expected){setCloudStatus('Busque a versão da nuvem antes de enviar.');return;}
   const epoch=cloudEpoch,controller=new AbortController();pushRequest=controller;
   const timeout=setTimeout(()=>controller.abort(),15000),fp=syncFingerprint(),stamp=Date.now();
   try{
     if(resolve&&!guardarVersao('antes de resolver diferença com a nuvem'))throw new Error('Não consegui guardar uma cópia local. Faça um backup antes de resolver.');
+    const current=await readRemote(await cloudFetch({signal:controller.signal}));
+    if(epoch!==cloudEpoch)return;
+    if(current.etag!==expected){if(!tryCloudMerge(current))showCloudConflict(current);return;}
+    expected=current.etag;
     setCloudStatus('Enviando com proteção contra alterações simultâneas…');lastPushAt=stamp;
     const data={...syncData(),_app:APP_ID};
     const corpo=JSON.stringify({updatedAt:stamp,writerUid:authSession?authSession.uid:'',data:JSON.stringify(data)});
-    const cab={'Content-Type':'application/json'};if(!String(expected).startsWith('conteudo:'))cab['if-match']=expected;
+    if(String(expected).startsWith('conteudo:'))throw new Error('A nuvem não informou a versão para um envio seguro. Seus dados foram mantidos neste aparelho. Tente buscar novamente.');
+    const cab={'Content-Type':'application/json','if-match':expected};
     const r=await cloudFetch({method:'PUT',signal:controller.signal,headers:cab,body:corpo});
     if(epoch!==cloudEpoch)return;
     if(r.status===412){
-      const remote=await readRemote(await cloudFetch({signal:controller.signal}));if(epoch===cloudEpoch)showCloudConflict(remote);return;
+      const remote=await readRemote(await cloudFetch({signal:controller.signal}));if(epoch===cloudEpoch&&!tryCloudMerge(remote))showCloudConflict(remote);return;
     }
     if(!r.ok)throw new Error('Erro '+r.status+' ao enviar. Confira a conta e as permissões da família.');
     const etag=r.headers.get('ETag')||versaoPorConteudo(await r.text());
@@ -4540,14 +4577,15 @@ function lancaAportes(lista){
   if(!lista||!lista.length)return {n:0,total:0};
   D.invest.aportes=D.invest.aportes||[];
   let n=0,total=0;
-  const pessoa=(D.contas.exPessoa==='preta')?'Esposa':((D.contas.exPessoa==='preto')?'João':'Conjunto');
   lista.forEach(x=>{
+    const dono=PES_VALIDO.includes(x.pes)?x.pes:D.contas.exPessoa;
+    const pessoa=dono==='preta'?'Esposa':dono==='preto'?'João':'Conjunto';
     const k=aporteKey(x);
-    if(D.invest.aportes.some(a=>a._k===k||txMatch(a,{...x,amount:Math.abs(+x.amount||0)})))return;
+    if(D.invest.aportes.some(a=>a._k===k||(a.pessoa===pessoa&&txMatch(a,{...x,amount:Math.abs(+x.amount||0)}))))return;
     const v=Math.abs(+x.amount||0);
     if(!(v>0))return;
     D.invest.aportes.push({_k:k,data:x.date||'',mes:x.mes||mesFromDate(x.date),
-      conta:'Nacional XP',pessoa,ativo:x.desc||'',desc:x.desc||'',bankId:x.bankId||'',bankScope:x.bankScope||'',valor:v});
+      conta:'Nacional XP',pessoa,ativo:x.desc||'',desc:x.desc||'',bankId:x.bankId||'',bankScope:x.bankScope||'',valor:v,naCarteira:false});
     n++;total+=v;
   });
   if(n){tiraExemplosSozinho();somaAportesNoMes();save();
@@ -4565,6 +4603,7 @@ function somaAportesNoMes(){
     if(ano&&ano.length===4)porAno[ano]=(porAno[ano]||0)+(+a.valor||0);
   });
   D.invest.mensal=D.invest.mensal||[];
+  D.invest.mensal.forEach(r=>{if(r.aporteDoRegistro&&!porMes[r.mes])r.aporte=0;});
   Object.keys(porMes).forEach(m=>{
     let row=D.invest.mensal.find(r=>r.mes===m);
     if(!row){
@@ -4572,9 +4611,10 @@ function somaAportesNoMes(){
       const at=D.invest.mensal.findIndex(r=>mesOrdem(r.mes)>mesOrdem(m));
       if(at>=0)D.invest.mensal.splice(at,0,row);else D.invest.mensal.push(row);
     }
-    row.aporte=porMes[m];
+    row.aporte=porMes[m];row.aporteDoRegistro=true;
   });
   D.invest.anual=D.invest.anual||[];
+  D.invest.anual.forEach(r=>{if(r.aporteDoRegistro&&!porAno[String(r.ano)])r.aporte=0;});
   Object.keys(porAno).forEach(y=>{
     let lin=D.invest.anual.find(a=>String(a.ano)===y);
     if(!lin){
@@ -4582,7 +4622,7 @@ function somaAportesNoMes(){
       const at=D.invest.anual.findIndex(a=>(+a.ano||0)>(+y));
       if(at>=0)D.invest.anual.splice(at,0,lin);else D.invest.anual.push(lin);
     }
-    lin.aporte=porAno[y];
+    lin.aporte=porAno[y];lin.aporteDoRegistro=true;
   });
 }
 /* Para o que JÁ está importado: varre os lançamentos salvos e traz os que
