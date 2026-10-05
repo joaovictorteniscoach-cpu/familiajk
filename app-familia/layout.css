@@ -66,29 +66,22 @@ body.fit #tbl-cat-resumo.compacta td.name,body.fit #tbl-cat-resumo.compacta th:f
 body.fit #tbl-cat-resumo.compacta td.name .catdot{margin-right:6px}
 body.fit #tbl-cat-resumo.compacta tr.sumrow td{border-top:1px solid var(--accent);font-weight:600}
 }
-/* Menu de cima por assunto: no computador vira títulos na lateral; no celular,
-   uma faixa que desliza com as telas da área escolhida (Contas ou Investimentos) */
-.tab-grupo{display:block;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);padding:14px 12px 4px}
-.tab-grupo:first-child{padding-top:4px}
-@media(max-width:860px){
-.sidebar .tabs{display:flex!important;flex-direction:row;flex-wrap:nowrap!important;align-items:center;grid-column:1/-1;overflow-x:auto;overflow-y:hidden;gap:6px;margin:2px 0 0;padding:2px 0 6px;min-width:0;max-width:100%;scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 16px,#000 calc(100% - 22px),transparent);mask-image:linear-gradient(90deg,transparent 0,#000 16px,#000 calc(100% - 22px),transparent)}
-.sidebar .tabs::-webkit-scrollbar{display:none}
-.sidebar .tabs .tab{flex:0 0 auto;width:auto;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:8px 14px;border-radius:999px;border:1px solid #343e49;background:#1a2027;color:var(--text);font-size:13px;font-weight:500;white-space:nowrap}
-.sidebar .tabs .tab svg{width:16px;height:16px;flex:0 0 16px}
-.sidebar .tabs .tab.active{border-color:rgba(240,190,70,.6)!important}
-.tab-grupo{flex:0 0 auto;padding:0 2px 0 10px;margin-left:4px;border-left:1px solid #343e49;font-size:10px;line-height:30px;white-space:nowrap}
-.tab-grupo:first-child{border-left:0;margin-left:0;padding-left:0;padding-top:0}
-.mobile-nav{grid-template-columns:repeat(5,minmax(0,1fr))!important}
-.mobile-nav .nav-novo{color:#1A1304}
-.mobile-nav .nav-novo svg{width:34px;height:34px;padding:6px;border-radius:50%;background:linear-gradient(180deg,#F4C653,#DFA425);box-shadow:0 6px 14px -6px rgba(233,173,40,.7);color:#1A1304;box-sizing:border-box}
-.mobile-nav .nav-novo span{color:#F6CF6A}
-}
-/* Aportes visíveis por pessoa e menu compacto, com todas as abas no celular. */
+/* Menu principal reduzido; telas secundárias ficam em Mais. */
 .aporte-summary{font-size:14px;line-height:1.6;margin:12px 0;overflow-wrap:anywhere}
+#more-links{display:flex;flex-direction:column;gap:20px}
+.menu-group h3{font-size:14px;color:var(--muted);font-weight:500;margin:0 0 9px}
+.menu-group-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#more-links button{min-width:0;font-size:14px;overflow-wrap:anywhere;white-space:normal}
+#more-links button.active{border-color:var(--gold);color:var(--gold-soft);background:#2b2923}
+.menu-group .viewtools{justify-content:flex-start;gap:18px}
+.more-dialog{overflow-y:auto}
 @media(max-width:860px){
-.sidebar .tabs{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;overflow:visible;mask-image:none;-webkit-mask-image:none;padding:4px 0}
-.sidebar .tabs .tab{width:100%;min-width:0;min-height:40px;padding:7px 3px;justify-content:center;border-radius:8px;font-size:12px;white-space:normal;overflow-wrap:anywhere;line-height:1.2}
-.sidebar .tabs .tab svg{display:none}
-.sidebar .tabs .tab-grupo{display:none}
+.sidebar .tabs{display:none!important}
+.topbar{display:none}
+.mobile-nav{grid-template-columns:repeat(5,minmax(0,1fr))!important}
+.mobile-nav .nav-novo svg{width:34px;height:34px;padding:6px;border-radius:50%;background:linear-gradient(180deg,#F4C653,#DFA425);color:#1A1304;box-sizing:border-box}
+.mobile-nav .nav-novo span{color:#F6CF6A}
 body.fit .mobile-cards td input[type=checkbox]{width:22px!important;min-height:22px;justify-self:end}
+#more-links button{padding:12px 9px;min-height:48px;gap:8px}
+#more-links button svg{width:18px;height:18px}
 }

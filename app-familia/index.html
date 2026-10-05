@@ -335,16 +335,7 @@ table.tbl.livre td:last-child{width:42%}
 </aside>
 <header class="topbar">
   <div class="top-context">NOSSA ORGANIZAÇÃO <span>/</span> <b id="area-label">Contas</b></div>
-  <div class="tools">
-    <button class="iconbtn" onclick="exportJSON()">Fazer backup</button>
-    <details class="tools-menu"><summary class="iconbtn">Opções <span aria-hidden="true">⌄</span></summary><div class="tools-popover">
-      <button onclick="openShare();this.closest('details').open=false">Compartilhar dados</button>
-      <button onclick="openDados();this.closest('details').open=false">Dados e versões salvas</button>
-      <button onclick="openTrash();this.closest('details').open=false">Lixeira / desfazer exclusões</button>
-      <button id="btn-fit" onclick="toggleFit()">Colunas / cartões</button>
-      <div class="viewtools"><button class="iconbtn zbtn" onclick="stepZoom(-1)" aria-label="Diminuir a letra">A−</button><span class="zlbl" id="zoom-lbl">100%</span><button class="iconbtn zbtn" onclick="stepZoom(1)" aria-label="Aumentar a letra">A+</button></div>
-    </div></details>
-  </div>
+  <div class="tools"><button class="iconbtn primary" id="desktop-new" onclick="openEntry()">＋ Lançar</button></div>
 </header>
 <div class="app-content">
 <div class="page-heading"><div><p id="page-kicker">CONTAS DA FAMÍLIA</p><h2 id="page-title">Visão geral</h2><p id="page-description">Seu mês, em um só lugar.</p></div><span id="page-date" class="date-label"></span></div>
@@ -370,8 +361,8 @@ table.tbl.livre td:last-child{width:42%}
   <div class="dashboard-columns">
     <div>
       <div class="card due-card" id="due-card"><div class="section-heading"><h2>Vencimentos</h2><button class="text-button" onclick="irPara('c-casa')">Ver contas <span aria-hidden="true">›</span></button></div><div id="dueList"></div></div>
-      <div class="dashboard-actions"><button class="iconbtn primary" onclick="document.getElementById('entry-dialog').showModal()"><span aria-hidden="true">＋</span> Novo lançamento</button><button class="iconbtn" onclick="document.getElementById('import-panel').open=true;document.getElementById('import-panel').scrollIntoView({behavior:'smooth',block:'center'})">Importar extrato</button></div>
-      <details class="import-panel" id="import-panel"><summary>Arquivo, texto ou foto</summary><div class="import-options"><button class="iconbtn" onclick="pickExtrato()">Arquivo OFX / CSV</button><button class="iconbtn" onclick="openPasteExtrato()">Colar texto</button><button class="iconbtn" onclick="pickFotoExtrato()">Foto do extrato</button><button class="iconbtn" onclick="openFalar()">Falar um lançamento</button></div><p class="note">Confira os lançamentos antes de salvar.</p></details>
+
+      <details class="import-panel" id="import-panel"><summary>Importar extrato</summary><div class="import-options"><button class="iconbtn" onclick="pickExtrato()">Arquivo OFX / CSV</button><button class="iconbtn" onclick="openPasteExtrato()">Colar texto</button><button class="iconbtn" onclick="pickFotoExtrato()">Foto do extrato</button></div><p class="note">Confira os lançamentos antes de salvar.</p></details>
     </div>
     <div>
       <details class="house-split"><summary>Divisão das contas da casa</summary><div class="split"><div><div class="k" id="ch-nome-preta">Kassiana</div><div class="v goldc" id="ch-preta">—</div></div><div><div class="k" id="ch-nome-preto">João</div><div class="v goldc" id="ch-preto">—</div></div></div><button class="text-button" onclick="irPara('c-casa')">Ajustar divisão ›</button></details>
@@ -651,7 +642,7 @@ table.tbl.livre td:last-child{width:42%}
     <div class="wealth-panel"><div class="eyebrow">Total investido</div><div class="bignum" id="h-total">—</div><div class="section-heading history-heading"><span>Evolução do patrimônio</span><button class="text-button" onclick="irPara('i-mensal')">Ver histórico ›</button></div><div class="wealth-chart"><canvas id="sparkChart"></canvas></div><p class="note">Cada mês fechado (📸 em Mensal) vira um ponto da linha.</p>
     <div class="card contribution-card"><div><div class="eyebrow">Plano de aportes</div><strong id="h-plano">—</strong><span class="mut"> / mês</span></div><button class="text-button" onclick="irPara('i-plano')">Ajustar ›</button></div>
     <div class="aporte-summary" id="h-aportes"></div><p class="note" id="h-pendentes"></p>
-    <button class="iconbtn primary wide-button" onclick="startEntry('aporte')">＋ Adicionar aporte</button></div>
+</div>
     <div class="allocation-panel"><div class="section-heading"><h2>Distribuição</h2><button class="text-button" onclick="irPara('i-carteira')">Ver carteira ›</button></div><div class="allocation-bar" aria-label="Distribuição por conta"><i id="alloc-nac"></i><i id="alloc-global"></i><i id="alloc-bin"></i><i id="alloc-aportes" style="background:#2EB961"></i></div>
     <button class="allocation-row" onclick="irPara('i-carteira')"><span class="allocation-name"><i class="allocation-dot national"></i>Nacional XP</span><span class="allocation-share" id="h-nacp">—</span><strong id="h-nac">—</strong></button>
     <button class="allocation-row" onclick="irPara('i-carteira')"><span class="allocation-name"><i class="allocation-dot global"></i>Global XP</span><span class="allocation-share" id="h-globp">—</span><strong id="h-glob">—</strong></button>
@@ -880,9 +871,9 @@ table.tbl.livre td:last-child{width:42%}
 </main>
 </div>
 <nav class="mobile-nav" id="mobile-nav" aria-label="Navegação rápida"></nav>
-<dialog id="more-dialog" class="more-dialog"><div class="sheet-heading"><h2>Todas as telas</h2><button class="iconbtn" onclick="document.getElementById('more-dialog').close()" aria-label="Fechar menu">×</button></div><div id="more-links"></div></dialog>
+<dialog id="more-dialog" class="more-dialog"><div class="sheet-heading"><h2 id="more-title">Mais opções</h2><button class="iconbtn" onclick="document.getElementById('more-dialog').close()" aria-label="Fechar menu">×</button></div><div id="more-links"></div></dialog>
 
-<dialog id="entry-dialog" class="more-dialog"><div class="sheet-heading"><h2>Novo lançamento</h2><button class="iconbtn" onclick="document.getElementById('entry-dialog').close()" aria-label="Fechar lançamento">×</button></div><div class="entry-options"><button onclick="startEntry('casa')">Conta da casa<span>Despesa compartilhada</span></button><button onclick="startEntry('joao')">Conta do João<span>Despesa pessoal</span></button><button onclick="startEntry('esposa')">Conta da Kassiana<span>Despesa pessoal</span></button><button onclick="startEntry('recebido')">Recebimento<span>Entrada de dinheiro</span></button></div></dialog>
+<dialog id="entry-dialog" class="more-dialog"><div class="sheet-heading"><h2>Novo lançamento</h2><button class="iconbtn" onclick="document.getElementById('entry-dialog').close()" aria-label="Fechar lançamento">×</button></div><div class="entry-options" id="entry-options"></div></dialog>
 <div id="undo-toast" class="undo-toast" role="status" hidden><span id="undo-message"></span><button class="iconbtn" onclick="undoLatest()">Desfazer</button><button class="iconbtn" onclick="openTrash()">Ver lixeira</button><button class="iconbtn" onclick="this.parentElement.hidden=true" aria-label="Fechar aviso">×</button></div>
 <dialog id="trash-dialog" class="more-dialog"><div class="sheet-heading"><h2>Lixeira</h2><button class="iconbtn" onclick="document.getElementById('trash-dialog').close()" aria-label="Fechar lixeira">×</button></div><p class="note">Até 20 exclusões recentes. Restaurar traz de volta somente os itens excluídos, preservando as outras alterações.</p><div id="trash-list"></div></dialog>
 <div id="ocrToast" style="display:none;position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--line);color:var(--text);padding:10px 16px;border-radius:22px;font-size:13px;z-index:60;box-shadow:0 8px 24px -8px rgba(0,0,0,.6)"></div>
@@ -1630,27 +1621,54 @@ function setMode(m){
   document.getElementById('ms-invest').classList.toggle('on',m==='invest');
   buildTabs(m);
 }
-function buildTabs(m){
-  const n=document.getElementById('tabs');n.innerHTML='';
-  const list=(m==='invest'?TABS_INVEST:TABS_CONTAS).concat(TABS_SHARED);
-  const grupos=(GRUPOS_TABS[m==='invest'?'invest':'contas']).concat([["App",TABS_SHARED.map(t=>t[0])]]);
-  const usados=new Set();
-  const poe=(t)=>{const b=document.createElement('button');b.className='tab';b.innerHTML=navIcon(t[0])+'<span>'+esc(t[1]==='Painel'?'Visão geral':t[1])+'</span>';b.dataset.id=t[0];b.onclick=()=>switchTab(t[0],b);n.appendChild(b);usados.add(t[0]);};
-  grupos.forEach(([nome,ids])=>{
-    const g=document.createElement('span');g.className='tab-grupo';g.textContent=nome;n.appendChild(g);
-    ids.forEach(id=>{const t=list.find(x=>x[0]===id);if(t)poe(t);});
+const PRIMARY_TABS={contas:['c-painel','c-casa','c-categorias'],invest:['i-painel','i-carteira','i-aportes']};
+const lastTabByMode={};
+function openMore(){document.getElementById('more-dialog').showModal();}
+function openEntry(){
+  if(D.mode==='invest'){startEntry('aporte');return;}
+  const choices=[['casa','Conta da casa','Despesa compartilhada'],['joao','Conta de '+pesNome('preto'),'Despesa pessoal'],['esposa','Conta de '+pesNome('preta'),'Despesa pessoal'],['recebido','Recebimento','Entrada de dinheiro']];
+  const box=document.getElementById('entry-options');box.replaceChildren();
+  choices.forEach(([kind,label,hint])=>{
+    const b=document.createElement('button');b.innerHTML=esc(label)+'<span>'+esc(hint)+'</span>';b.onclick=()=>startEntry(kind);box.appendChild(b);
   });
-  list.forEach(t=>{if(!usados.has(t[0]))poe(t);});   /* tela nova sem grupo não some */
-  /* embaixo: o Resumo e os itens mais usados, mais o atalho de lançar */
-  const primary=m==='invest'?['i-painel','i-carteira','i-aportes','i-metas']:['c-painel','c-casa','c-cartao','c-categorias'];
-  const mobile=document.getElementById('mobile-nav');mobile.innerHTML='';
-  primary.forEach(id=>{const t=list.find(t=>t[0]===id);const b=document.createElement('button');b.dataset.id=id;b.innerHTML=navIcon(id)+'<span>'+(id.endsWith('painel')?'Resumo':esc(t[1]))+'</span>';b.onclick=()=>switchTab(id);mobile.appendChild(b)});
-  const novo=document.createElement('button');novo.id='nav-novo';novo.className='nav-novo';novo.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Lançar</span>';novo.setAttribute('aria-haspopup','dialog');novo.onclick=()=>document.getElementById('entry-dialog').showModal();mobile.appendChild(novo);
-  const box=document.getElementById('more-links');box.innerHTML='';list.forEach(t=>{const b=document.createElement('button');b.innerHTML=navIcon(t[0])+'<span>'+esc(t[1])+'</span>';b.onclick=()=>{document.getElementById('more-dialog').close();switchTab(t[0]);};box.appendChild(b)});
-  document.getElementById('area-label').textContent=m==='invest'?'Investimentos':'Contas';
-  document.getElementById('ms-contas').setAttribute('aria-pressed',String(m!=='invest'));
-  document.getElementById('ms-invest').setAttribute('aria-pressed',String(m==='invest'));
-  switchTab(list[0][0]);
+  const spoken=document.createElement('button');spoken.innerHTML='Falar ou escrever<span>Registrar um gasto ou recebimento por frase</span>';spoken.onclick=()=>{document.getElementById('entry-dialog').close();openFalar();};box.appendChild(spoken);
+  document.getElementById('entry-dialog').showModal();
+}
+function buildTabs(m){
+  const mode=m==='invest'?'invest':'contas',list=(mode==='invest'?TABS_INVEST:TABS_CONTAS).concat(TABS_SHARED),primary=PRIMARY_TABS[mode];
+  const n=document.getElementById('tabs'),mobile=document.getElementById('mobile-nav'),box=document.getElementById('more-links');
+  n.replaceChildren();mobile.replaceChildren();box.replaceChildren();
+  const label=id=>id.endsWith('painel')?'Resumo':list.find(t=>t[0]===id)?.[1]||id;
+  primary.forEach(id=>{
+    for(const target of [n,mobile]){
+      const b=document.createElement('button');b.className=target===n?'tab':'';b.dataset.id=id;b.innerHTML=navIcon(id)+'<span>'+esc(label(id))+'</span>';b.onclick=()=>switchTab(id);target.appendChild(b);
+    }
+  });
+  const novo=document.createElement('button');novo.id='nav-novo';novo.className='nav-novo';novo.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Lançar</span>';novo.setAttribute('aria-label',mode==='invest'?'Lançar aporte':'Novo lançamento');if(mode==='contas')novo.setAttribute('aria-haspopup','dialog');novo.onclick=openEntry;mobile.appendChild(novo);
+  for(const target of [n,mobile]){
+    const b=document.createElement('button');b.id=target===n?'sidebar-more':'more-button';b.className=target===n?'tab':'';b.innerHTML=navIcon('more')+'<span>Mais</span>';b.setAttribute('aria-haspopup','dialog');b.onclick=openMore;target.appendChild(b);
+  }
+  const used=new Set(primary);
+  const groups=GRUPOS_TABS[mode].concat([['Ajuda e conexão',TABS_SHARED.map(t=>t[0])]]);
+  const addGroup=(title,items)=>{
+    if(!items.length)return;
+    const section=document.createElement('div');section.className='menu-group';
+    const heading=document.createElement('h3');heading.textContent=title;section.appendChild(heading);
+    const links=document.createElement('div');links.className='menu-group-links';section.appendChild(links);
+    items.forEach(([id,title])=>{
+      const b=document.createElement('button');b.dataset.id=id;b.innerHTML=navIcon(id)+'<span>'+esc(title)+'</span>';b.onclick=()=>{document.getElementById('more-dialog').close();switchTab(id);};links.appendChild(b);used.add(id);
+    });box.appendChild(section);
+  };
+  const titles={'c-resumo':'Histórico mensal','c-anual':'Planejamento anual','i-mensal':'Histórico mensal','i-anual':'Histórico anual','i-plano':'Plano de aportes','i-ganhos':'Rendimentos','nuvem':'Sincronização','guia':'Como usar'};
+  groups.forEach(([title,ids])=>addGroup(title,ids.filter(id=>!used.has(id)).map(id=>[id,titles[id]||label(id)])));
+  addGroup('Outras telas',list.filter(t=>!used.has(t[0])));
+  const settings=document.createElement('div');settings.className='menu-group';settings.innerHTML='<h3>Dados e ajustes</h3><div class="menu-group-links"><button onclick="document.getElementById(\'more-dialog\').close();openDados()">Backup e versões salvas</button><button onclick="document.getElementById(\'more-dialog\').close();openShare()">Compartilhar uma cópia</button><button onclick="document.getElementById(\'more-dialog\').close();openTrash()">Lixeira</button><button id="btn-fit" onclick="toggleFit()">Colunas / cartões</button></div><div class="viewtools"><button class="iconbtn zbtn" onclick="stepZoom(-1)" aria-label="Diminuir a letra">A−</button><span class="zlbl" id="zoom-lbl">'+Math.round((D.zoom||1)*100)+'%</span><button class="iconbtn zbtn" onclick="stepZoom(1)" aria-label="Aumentar a letra">A+</button></div>';box.appendChild(settings);
+  set('more-title','Mais · '+(mode==='invest'?'Investimentos':'Contas'));
+  set('area-label',mode==='invest'?'Investimentos':'Contas');
+  document.getElementById('desktop-new').setAttribute('aria-label',mode==='invest'?'Lançar aporte':'Novo lançamento');
+  document.getElementById('ms-contas').setAttribute('aria-pressed',String(mode==='contas'));
+  document.getElementById('ms-invest').setAttribute('aria-pressed',String(mode==='invest'));
+  switchTab(list.some(t=>t[0]===lastTabByMode[mode])?lastTabByMode[mode]:primary[0]);aplicarFit();aplicarZoom();
 }
 function startEntry(kind){
   document.getElementById('entry-dialog').close();
@@ -1684,8 +1702,9 @@ const DRAW={'i-painel':()=>drawInvPainel(),'i-mensal':()=>drawMensal(),'i-anual'
   'c-painel':()=>drawConPainel(),'c-casa':()=>renderCasa(),'c-joao':()=>renderPess('joao','tbl-joao'),'c-esposa':()=>renderPess('esposa','tbl-esposa'),'c-empresa':()=>drawEmpresa(),'c-recebidos':()=>renderReceb(),'c-patrimonio':()=>drawPatrimonio(),'c-protecao':()=>drawProtecao(),'c-resumo':()=>drawResumo(),'c-anual':()=>renderControle(),'c-categorias':()=>renderCategorias(),'c-conselhos':()=>renderConselhos(),'c-cartao':()=>refreshCartao()};
 function switchTab(id,btn){
   document.querySelectorAll('section[data-tab]').forEach(s=>s.classList.toggle('on',s.dataset.tab===id));
-  document.querySelectorAll('#tabs .tab, #mobile-nav [data-id]').forEach(t=>{const active=t.dataset.id===id;t.classList.toggle('active',active);if(active)t.setAttribute('aria-current','page');else t.removeAttribute('aria-current');});
-  const more=document.getElementById('more-button');if(more)more.classList.toggle('active',!document.querySelector('#mobile-nav [data-id="'+id+'"]'));
+  document.querySelectorAll('#tabs .tab, #mobile-nav [data-id], #more-links [data-id]').forEach(t=>{const active=t.dataset.id===id;t.classList.toggle('active',active);if(active)t.setAttribute('aria-current','page');else t.removeAttribute('aria-current');});
+  lastTabByMode[D.mode==='invest'?'invest':'contas']=id;
+  ['more-button','sidebar-more'].forEach(key=>{const more=document.getElementById(key);if(more)more.classList.toggle('active',!PRIMARY_TABS[D.mode==='invest'?'invest':'contas'].includes(id));});
   /* a aba escolhida fica à vista na faixa de cima (só rola de lado) */
   const at=document.querySelector('#tabs .tab.active');
   if(at&&at.parentElement&&at.parentElement.scrollWidth>at.parentElement.clientWidth){
@@ -3084,7 +3103,7 @@ function applyCloudRemote(remote){
   const prev=suppressPush;suppressPush=true;
   try{
     if(!substituirBase(next,'antes de receber a nuvem',true))throw new Error('Não consegui guardar a troca. Dados locais mantidos; baixe um backup.');
-    initFields();renderAll();renderTrash();const at=document.querySelector('.tab.active');if(at&&DRAW[at.dataset.id])DRAW[at.dataset.id]();
+    initFields();renderAll();renderTrash();const at=document.querySelector('section[data-tab].on');if(at&&DRAW[at.dataset.tab])DRAW[at.dataset.tab]();
     rememberCloud(remote.etag,syncFingerprint());clearCloudConflict();return true;
   }finally{suppressPush=prev;}
 }
@@ -5626,9 +5645,8 @@ function stepZoom(dir){
 function irPara(id){
   const modo=/^i-/.test(id)?'invest':(/^c-/.test(id)?'contas':null);
   if(modo&&D.mode!==modo)setMode(modo);
-  const b=[...document.querySelectorAll('.tab')].find(t=>t.dataset.id===id);
-  if(!b)return false;
-  b.click();
+  if(!document.querySelector('section[data-tab="'+id+'"]'))return false;
+  switchTab(id);
   if(typeof window!=='undefined'&&window.scrollTo)window.scrollTo({top:0,behavior:'smooth'});
   return true;
 }
