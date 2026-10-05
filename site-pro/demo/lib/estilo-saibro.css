@@ -3176,6 +3176,63 @@ body.ficha-on{overflow:hidden}
 .pr-li .pr-conv{flex:0 0 auto;padding:6px 10px!important;font-size:12px!important;min-height:0}
 .pr-li .pr-bts{display:flex;gap:6px;flex:0 0 auto}
 
+/* ===== Leitura da Gestão: superfícies claras e texto independente do tema ===== */
+html body:not(#jv) input,html body:not(#jv) select,html body:not(#jv) textarea{
+  -webkit-text-fill-color:currentColor!important;color-scheme:light
+}
+html body:not(#jv) input::placeholder,html body:not(#jv) textarea::placeholder{
+  color:#555B60!important;-webkit-text-fill-color:#555B60!important;opacity:1!important
+}
+html body:not(#jv) .page .hint,html body:not(#jv) .modal .hint{
+  font-size:13px!important;line-height:1.5!important
+}
+/* O fechamento é também uma imagem: papel opaco e tinta escura nos dois temas. */
+html body:not(#jv) #pg-fech .fx-card{
+  --green:#1F2428;--clay:#24536A;--muted:#555B60;--border:#D0D2D4;
+  background:#FAF9F7!important;color:#1F2428!important;
+  -webkit-text-fill-color:#1F2428!important;border-color:#D0D2D4!important;
+  box-shadow:none!important;backdrop-filter:none!important;
+  font-size:14px;overflow-wrap:anywhere
+}
+html body:not(#jv) #pg-fech .fx-card *{
+  color:#1F2428!important;-webkit-text-fill-color:currentColor!important;opacity:1!important;text-shadow:none!important
+}
+html body:not(#jv) #pg-fech .fx-topo span,html body:not(#jv) #pg-fech .fx-total span{
+  color:#555B60!important;font-size:13px!important
+}
+html body:not(#jv) #pg-fech .fx-sec,html body:not(#jv) #pg-fech .fx-mes{
+  color:#24536A!important;font-size:12px!important;letter-spacing:1px
+}
+html body:not(#jv) #pg-fech .fx-nome{font-size:28px;font-weight:700}
+html body:not(#jv) #pg-fech .fx-linha{
+  font-size:14px!important;line-height:1.5;align-items:baseline;flex-wrap:wrap;gap:4px 8px
+}
+html body:not(#jv) #pg-fech .fx-linha span:first-child{flex:1 1 50%;min-width:0}
+html body:not(#jv) #pg-fech .fx-linha span:last-child{max-width:100%;white-space:normal;overflow-wrap:anywhere;text-align:right}
+html body:not(#jv) #pg-fech .fx-total{gap:10px;flex-wrap:wrap}
+html body:not(#jv) #pg-fech .fx-total b{font-size:30px!important}
+html body:not(#jv) #pg-fech .fx-obs{
+  background:#EEEEEC!important;border-color:#D0D2D4!important;font-size:14px;line-height:1.5
+}
+html body:not(#jv) #pg-fech #fech-conf .fx-linha span{
+  font-size:13px!important;color:#1F2428!important
+}
+
+/* Saibro: botões selecionados e contadores com contraste de texto normal. */
+html.tema-saibro body:not(#jv) .seg button.on,
+html.tema-saibro body:not(#jv) .seg .on,
+html.tema-saibro body:not(#jv) .btn-clay,
+html.tema-saibro body:not(#jv) #pg-lanc .cx-filtros button.on,
+html.tema-saibro body:not(#jv) #pg-torneio .tor-acts .b-res{
+  background:#A24F36!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important
+}
+html.tema-saibro body:not(#jv) .seg button.on b{
+  color:inherit!important;-webkit-text-fill-color:currentColor!important;opacity:1!important
+}
+html.tema-saibro body:not(#jv) #pg-agenda .wk-fit.on{
+  background:#D9DEE0!important;color:#1F2428!important;-webkit-text-fill-color:#1F2428!important
+}
+
 /* ===== Toques do tema Saibro ===== */
 .nav,.nav:after{background:#0B1B14!important;border-top:1px solid rgba(194,88,46,.35)!important}
 .nav button.on,.nav button.aberto,.jv-nav-3d button.on,.jv-nav-3d button.aberto{background:rgba(194,88,46,.16)!important;color:#EE9A6E!important;-webkit-text-fill-color:#EE9A6E!important}
