@@ -8,7 +8,7 @@ const data={alunos:[
  {id:'solo',nome:'Aluno Individual Teste',tipo:'Particular',plano:4,creditos:2,repos:1,mensalidade:640,valorAula:160,status:'pendente',codigo:'9901',diaVenc:10,ativo:true},
  {id:'pai',nome:'Responsável Teste',tipo:'Particular',plano:4,creditos:1,repos:2,mensalidade:1200,valorAula:160,status:'pendente',codigo:'9902',diaVenc:15,ativo:true},
  {id:'filho',nome:'Dependente Teste',tipo:'Particular',plano:3,creditos:1.5,repos:2,mensalidade:0,valorAula:160,status:'pendente',codigo:'9903',responsavelId:'pai',parentesco:'Filho(a)',ativo:true}
-],lancamentos:[{id:'rec',tipo:'receita',categoria:'Mensalidade',descricao:'Receita de teste',valor:640,data:'2026-10-01'}],agenda:{fixos:[],eventos:[],excecoes:[]},presencas:[],compromissos:[],meta:10000,savedAt:Date.now(),mesPagamentos:'2026-10',mesCreditos:'2026-10'};
+],torneios:{atual:'teste',lista:{teste:{id:'teste',nome:'Barragem de Teste',grupos:['A'],jogadores:[{name:'Aluno de Teste Sobrenome Comprido',group:'A',v:2,d:1,wo:0,ptsAcum:3},{name:'Jogador de Teste',group:'A',v:1,d:2,wo:0}]}}},lancamentos:[{id:'rec',tipo:'receita',categoria:'Mensalidade',descricao:'Receita de teste',valor:640,data:'2026-10-01'}],agenda:{fixos:[],eventos:[],excecoes:[]},presencas:[],compromissos:[],meta:10000,savedAt:Date.now(),mesPagamentos:'2026-10',mesCreditos:'2026-10'};
 function auditInBrowser(selector){
  const parse=s=>{const a=s.match(/[\d.]+/g);return a?a.map(Number):[0,0,0,0];};
  const blend=(a,b)=>{const k=a[3]===undefined?1:a[3];return a.slice(0,3).map((v,i)=>v*k+b[i]*(1-k));};
@@ -28,6 +28,7 @@ function auditInBrowser(selector){
  }
  return results;
 }
+data.agenda.fixos=data.alunos.map((a,i)=>({id:'hora-'+i,dia:new Date().getDay(),hora:'1'+(6+i)+':00',titulo:a.nome,tipo:'aula',alunoId:a.id}));
 let count=0;async function check(name,fn){await fn();count++;console.log('✅ '+name);}
 (async()=>{
  await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;
@@ -96,7 +97,8 @@ let count=0;async function check(name,fn){await fn();count++;console.log('✅ '+
    for(const page of ['fech','fin','alunos']){
     await p.evaluate(page=>go(page,document.createElement('button')),page);
     await p.waitForTimeout(200);
-    console.log('VISUAL '+theme+' '+page+' '+(await p.screenshot({type:'jpeg',quality:45,fullPage:false})).toString('base64'));
+    const shot=page==='fech'?await p.locator('#fech-export').screenshot({type:'jpeg',quality:55}):await p.screenshot({type:'jpeg',quality:45,fullPage:false});
+    console.log('VISUAL '+theme+' '+page+' '+shot.toString('base64'));
    }
   }
   assert.deepEqual(errors,[]);await context.close();
