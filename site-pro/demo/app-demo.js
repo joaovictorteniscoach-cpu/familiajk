@@ -5916,7 +5916,7 @@ function fcRotuloMes(mk){
   return MESES[Number(p[1])-1]+' '+p[0];
 }
 function pendenteDoFechamento(a,mk){
-  if(!ehDoFechamento(a)||a.status==='inativo')return false;
+  if(!ehDoFechamento(a))return false;
   const status=situacaoMensalidade(a,mk).status;
   return status==='pendente'||status==='parcial';
 }
@@ -6071,7 +6071,12 @@ function renderFechamento(){
   const box=document.getElementById('fech-export');if(!box)return;
   const a=DB.alunos.find(x=>x.id===(document.getElementById('fc-aluno')||{}).value);
   const mk=(document.getElementById('fc-mes')||{}).value||monthKey();
-  if(!a){box.innerHTML='<div class="empty">Escolha o aluno para ver a prévia do fechamento.</div>';renderConfMes();return;}
+  if(!a){
+    box.innerHTML='<div class="empty">Escolha um aluno ativo com pagamento pendente ou parcial para ver o fechamento.</div>';
+    const hint=document.getElementById('fc-envio-hint');
+    if(hint){hint.textContent='Selecione o aluno para conferir o destino antes de enviar.';hint.style.color='';}
+    renderConfMes();return;
+  }
   /* Para QUEM vai, escrito antes de tocar em enviar. Fechamento é o financeiro
      do aluno: descobrir o destino só depois que o WhatsApp abriu é tarde. */
   (function(){
@@ -9849,7 +9854,8 @@ function restaurarVersao(i){
 /* ===== Lembrete de backup =====
    O backup existia mas nunca se lembrava dele. Como os dados vivem no
    navegador, é a diferença entre ter e não ter cópia no dia em que o aparelho
-   der problema. Cobra depois de 30 dias; "depois" cala até fechar o app. */
+   der problema. Considera cópias confirmadas na nuvem e baixadas no aparelho.
+   Cobra depois de 30 dias; "depois" adia por sete dias neste aparelho. */
 function checarBackup(){
   const b=document.getElementById('bk-banner');if(!b)return;
   const agora=Date.now();

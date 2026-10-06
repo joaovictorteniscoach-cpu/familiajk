@@ -342,9 +342,11 @@ async function shot(p,theme,key,locator){
     assert.equal(await p.evaluate(()=>JSON.stringify(DB)),await p.evaluate(()=>window.fechoTesteAntes));
     await contrast(p,'#fc-fila *');await shot(p,theme,'fechamento-filtrado','#pg-fech');
     await p.evaluate(()=>{
-     document.getElementById('fc-aluno').value='a-parcial';DB.alunos.find(a=>a.id==='a-parcial').status='pago';renderAll();
+     document.getElementById('fc-aluno').value='a-parcial';renderFechamento();
+     DB.alunos.find(a=>a.id==='a-parcial').status='pago';renderAll();
     });
     assert.equal(await p.locator('#fc-aluno').inputValue(),'');assert.deepEqual(await ids(),['exato-parcial','z-pendente']);
+    assert.doesNotMatch(await p.locator('#fc-envio-hint').textContent(),/Ana Teste/);
     await p.evaluate(()=>{
      document.getElementById('fc-mes').value=window.fechoTesteAnterior;
      document.getElementById('fc-mes').dispatchEvent(new Event('change'));
