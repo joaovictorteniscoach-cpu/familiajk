@@ -47,3 +47,10 @@ jobs:
           node ferramentas/testar-plano-familia-browser.cjs
           JV_VISUAL_LOG=1 node ferramentas/testar-seguranca-pagamentos-browser.cjs
           JV_WIDTHS=390,1280 JV_NO_SCREENSHOTS=1 node ferramentas/testar-premium-browser.cjs
+
+      - name: Conferir transações com SDK Firebase e regras no emulador local
+        env:
+          NODE_PATH: ${{ runner.temp }}/jv-browser/node_modules
+        run: |
+          npm install --prefix "$RUNNER_TEMP/jv-emulator" firebase-tools@14.18.0
+          "$RUNNER_TEMP/jv-emulator/node_modules/.bin/firebase" emulators:exec --only database --project demo-jv-tenis --config ferramentas/firebase-emulator-teste.json "node ferramentas/testar-salvamento-firebase-browser.cjs"
