@@ -114,7 +114,7 @@ async function fit(p,width){
   });
   await check('pagamento único libera situação da família e não altera aulas',async()=>{
    const before=await p.evaluate(()=>DB.alunos.map(a=>[a.id,a.creditos,a.repos]));
-   await p.evaluate(()=>marcarPago('fam-p'));
+   await p.evaluate(()=>{marcarPago('fam-p');salvarPagamentoExato();});
    const result=await p.evaluate(()=>({lanc:DB.lancamentos,child:statusFinanceiro(DB.alunos.find(a=>a.id==='fam-c')),all:DB.alunos.map(a=>[a.id,a.creditos,a.repos])}));
    assert.equal(result.lanc.length,1);assert.equal(result.lanc[0].valor,1200);assert.equal(result.lanc[0].alunoId,'fam-p');assert.equal(result.child,'pago');assert.deepEqual(result.all,before);
    await p.evaluate(()=>marcarPago('fam-c'));assert.equal(await p.evaluate(()=>DB.lancamentos.length),1);

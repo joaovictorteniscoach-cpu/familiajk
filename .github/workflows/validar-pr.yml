@@ -45,4 +45,5 @@ jobs:
           node ferramentas/testar-site-browser.cjs
           JV_VISUAL_LOG=1 node ferramentas/testar-contraste-fechamento-browser.cjs
           node ferramentas/testar-plano-familia-browser.cjs
+          JV_VISUAL_LOG=1 node ferramentas/testar-seguranca-pagamentos-browser.cjs
           JV_WIDTHS=390,1280 JV_NO_SCREENSHOTS=1 node ferramentas/testar-premium-browser.cjs

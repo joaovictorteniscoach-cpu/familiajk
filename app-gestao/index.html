@@ -38,7 +38,7 @@
 <link rel="apple-touch-startup-image" media="screen and (device-width:375px) and (device-height:667px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)" href="splash-gestao-750x1334.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" id="css-tema" href="lib/estilo.css?v=2026-10-05-1">
+<link rel="stylesheet" id="css-tema" href="lib/estilo.css?v=2026-10-06-1">
 <!-- Tema de cores: Saibro é o padrão desde 2026-10; "Verde clássico" fica a um
      toque em Segurança e dados. Troca o arquivo antes da primeira pintura. -->
 <script>try{if(localStorage.getItem('jv-tema')!=='classico'){var _ct=document.getElementById('css-tema');_ct.href=_ct.getAttribute('href').replace('estilo.css','estilo-saibro.css');document.documentElement.classList.add('tema-saibro');}}catch(e){}</script>
@@ -337,6 +337,8 @@ function esperarAuth(){
       </div>
     </div>
   </div>
+
+  <section id="pd-status" class="pd-status" aria-label="Salvamento e cópias de segurança" aria-live="polite"></section>
 
   <div class="bk-banner" id="bk-banner" style="display:none">
     <span class="bk-msg"></span>
@@ -1100,7 +1102,7 @@ function esperarAuth(){
   <button onclick="go('lanc',this)"><span class="ico" data-ic="navcash"></span>Caixa</button>
   <button id="nav-mais" onclick="abrirMais()"><span class="ico" data-ic="navmore"></span>Mais</button>
 </nav>
-<script src="lib/icones.js?v=2026-10-05-1"></script>
+<script src="lib/icones.js?v=2026-10-06-1"></script>
 
 <!-- MODAL ALUNO -->
 <div class="overlay" id="ov-aluno" onclick="if(event.target===this)closeModal('ov-aluno')">
@@ -1163,7 +1165,8 @@ function esperarAuth(){
     <div class="row2">
       <div class="field"><label>Reposições</label><input type="number" id="a-repos" value="0"></div>
       <div class="field"><label>Situação</label>
-        <select id="a-status"><option value="pendente">Pendente</option><option value="parcial">Pagou 50%</option><option value="pago">Pago</option></select>
+        <select id="a-status"><option value="pendente">Pendente</option><option value="parcial">Pagou 50% (registro antigo)</option><option value="pago">Pago</option></select>
+        <p class="hint" id="pm-cadastro-nota"></p>
       </div>
     </div>
     <div class="field"><label>Dia de vencimento da mensalidade (1–28)</label><input type="number" id="a-venc" min="1" max="28" value="10"></div>
@@ -1551,6 +1554,38 @@ function esperarAuth(){
   </div>
 </div>
 
+
+<!-- Conferência entre aparelhos: nunca oferece substituir a nuvem automaticamente -->
+<div class="overlay" id="ov-conflito-nuvem" style="z-index:150">
+  <div class="modal pd-modal">
+    <div class="modal-head"><h3>Confira as duas versões</h3><button class="modal-x" onclick="closeModal('ov-conflito-nuvem')" aria-label="Fechar">✕</button></div>
+    <p class="hint">Outra sessão gravou dados diferentes. Suas alterações ficam neste aparelho e o envio foi interrompido. Baixe sua cópia antes de carregar a nuvem, se quiser guardá-la fora do app.</p>
+    <div id="pd-diferencas"></div>
+    <div class="pd-acoes"><button class="btn btn-ghost" onclick="exportBackup()">Baixar minha cópia</button>
+      <button class="btn btn-clay" id="pd-carregar" onclick="carregarNuvemConferida()">Carregar versão da nuvem</button>
+      <button class="btn btn-ghost" onclick="closeModal('ov-conflito-nuvem')">Continuar conferindo</button></div>
+  </div>
+</div>
+<div class="overlay" id="ov-pagamento-exato" style="z-index:140">
+  <div class="modal pm-modal">
+    <div class="modal-head"><h3>Registrar pagamento</h3><button class="modal-x" onclick="closeModal('ov-pagamento-exato')" aria-label="Fechar">✕</button></div>
+    <p id="pm-nome" class="pm-nome"></p>
+    <div class="row2">
+      <div class="field"><label for="pm-mes">Mensalidade de qual mês?</label><input type="month" id="pm-mes" onchange="prepararPagamentoMes()"></div>
+      <div class="field"><label for="pm-data">Data do recebimento</label><input type="date" id="pm-data"></div>
+    </div>
+    <div class="field"><label for="pm-anterior">Já recebido antes deste pagamento (R$)</label><input id="pm-anterior" type="number" min="0" step="0.01" inputmode="decimal" oninput="resumoPagamentoExato()"></div>
+    <p class="hint" id="pm-anterior-nota"></p>
+    <div class="row2">
+      <div class="field"><label for="pm-valor">Valor recebido agora (R$)</label><input id="pm-valor" type="number" min="0.01" step="0.01" inputmode="decimal" oninput="resumoPagamentoExato()"></div>
+      <div class="field"><label for="pm-metodo">Forma de pagamento</label><select id="pm-metodo"><option>Pix</option><option>Dinheiro</option><option>Cartão</option><option>Transferência</option><option>Outro</option></select></div>
+    </div>
+    <div class="pm-resumo" id="pm-resumo"></div>
+    <p class="hint">A Caixa registra o recebimento na data informada. O saldo da mensalidade acompanha o mês escolhido acima.</p>
+    <button class="btn btn-clay pm-salvar" onclick="salvarPagamentoExato()">Confirmar recebimento</button>
+  </div>
+</div>
+
 <!-- HISTÓRICO DE MUDANÇAS -->
 <!-- Porta de entrada. O app nasceu de dono unico e abria direto: fazia sentido
      quando so existia um aparelho e um dono. Agora existem professores, e um
@@ -1601,7 +1636,7 @@ function esperarAuth(){
 </section>
 <div class="toast" id="toast"></div>
 
-<script src="lib/app-gestao.js?v=2026-10-05-1"></script>
+<script src="lib/app-gestao.js?v=2026-10-06-1"></script>
 <script>
 /* Rede de seguranca do par tela+codigo.
 
@@ -1616,7 +1651,7 @@ function esperarAuth(){
    torto, o app busca o par certo uma vez e, se insistir, DIZ o que houve em
    vez de deixar voce tocando em botao que nao responde. */
 (function(){
-  var ESPERADA='2026-10-05-1';
+  var ESPERADA='2026-10-06-1';
   function tela(motivo){
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;z-index:99999;background:#1A2E14;color:#FAF7F2;'
@@ -1707,7 +1742,7 @@ function limparHist(){
 }
 histLogLoad();
 // PWA: registra o service worker (permite instalar o painel e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-gestao.js?v=2026-10-05-1').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-gestao.js?v=2026-10-06-1').catch(function(){});});}
 </script>
 </body>
 </html>

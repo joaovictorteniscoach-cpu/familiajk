@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-05-1';
+const VERSAO='2026-10-06-1';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -446,12 +446,13 @@ function setSave(s,cls){
   const e=document.getElementById('save-state');if(!e)return;
   const full=String(s||'');let curto=full;
   if(/salvo na nuvem/i.test(full))curto='✓ Nuvem';
-  else if(/salvo só no aparelho/i.test(full))curto='✓ Aparelho';
+  else if(/salvo só no aparelho/i.test(full))curto='⚠ Só aparelho';
   else if(/salvo no aparelho/i.test(full))curto='✓ Aparelho';
   else if(/enviando/i.test(full))curto='↗ Nuvem';
   else if(/conectando/i.test(full))curto='↻ Nuvem';
   else if(/erro/i.test(full))curto='⚠ Nuvem';
   e.textContent=curto;e.title=full;e.setAttribute('aria-label',full||curto);e.className='save-state '+(cls||'');
+  renderProtecaoDados();
 }
 
 /* ===== Camada de armazenamento: aparelho + Firebase (nuvem real) ===== */
@@ -478,10 +479,10 @@ function fbPath(k){
 const PRAZO_NUVEM=6000;
 let _nuvemMuda=false;                       // a nuvem já estourou o prazo neste boot
 function comPrazo(promessa,ms,padrao){
-  return Promise.race([
-    Promise.resolve(promessa).catch(e=>{throw e;}),
-    new Promise(r=>setTimeout(()=>{_nuvemMuda=true;r(padrao);},ms||PRAZO_NUVEM))
-  ]);
+  return new Promise((resolve,reject)=>{
+    const timer=setTimeout(()=>{_nuvemMuda=true;resolve(padrao);},ms||PRAZO_NUVEM);
+    Promise.resolve(promessa).then(v=>{clearTimeout(timer);resolve(v);},e=>{clearTimeout(timer);reject(e);});
+  });
 }
 async function cloudGet(k){
   if(!window.fbDB)return null;
@@ -510,40 +511,175 @@ function tsOf(raw){try{return JSON.parse(raw).savedAt||0;}catch(e){return 0;}}
 /* Remonta o banco a partir das partes. Devolve null se o formato novo ainda não
    existe ou veio incompleto — nesse caso quem chama usa o blob de reserva, em
    vez de abrir o app com dado faltando. */
+
+/* ===== Proteção entre aparelhos: comparar e gravar numa única transação =====
+   O servidor aceita a alteração apenas se a versão lida ainda for a mesma.
+   A cópia do aparelho continua intacta quando outra sessão mudou o banco.
+   O resumo local guarda só confirmação e SHA-256, nunca outra cópia inteira. */
+let _basePartes=null,_basePartesLida=false,_basePartesAssinatura='';
+let _salvamentoEmCurso=null,_conflitoNuvem=null,_tentativaLocal=0;
+function canonDados(v){
+  if(v===null||v===undefined)return 'null';
+  if(Array.isArray(v))return '['+v.map(canonDados).join(',')+']';
+  if(typeof v==='object')return '{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+canonDados(v[k])).join(',')+'}';
+  return JSON.stringify(v);
+}
+async function assinaturaDados(v){
+  const bytes=new TextEncoder().encode(canonDados(v));
+  const dig=await crypto.subtle.digest('SHA-256',bytes);
+  return Array.from(new Uint8Array(dig),n=>n.toString(16).padStart(2,'0')).join('');
+}
+function metaProtecao(){
+  try{return JSON.parse(lsGet(KEY+'__protecao')||'{}')||{};}catch(e){return {};}
+}
+function guardarMetaProtecao(d){
+  lsSet(KEY+'__protecao',JSON.stringify(Object.assign(metaProtecao(),d)));
+  renderProtecaoDados();
+}
+async function confirmarBasePartes(no){
+  _basePartes=no;_basePartesLida=true;_basePartesAssinatura=await assinaturaDados(no);
+}
+function bancoDasPartes(no){
+  if(!no)return null;
+  const d={alunos:[],movs:[],presencas:[],lancamentos:[]};
+  for(const nome of ['alunos','movs','presencas','lancamentos']){
+    for(const k of Object.keys(no[nome]||{})){
+      const v=JSON.parse(no[nome][k]);if(!v||typeof v!=='object')throw new Error('Parte inválida: '+nome);
+      d[nome].push(v);
+    }
+  }
+  if(no.config)Object.assign(d,JSON.parse(no.config));
+  if(no.agenda)d.agenda=JSON.parse(no.agenda);
+  if(!d.agenda)throw new Error('A versão da nuvem está incompleta');
+  d.savedAt=Number(no.carimbos&&no.carimbos.savedAt)||d.savedAt||0;
+  d.movs.sort((a,b)=>(a.ts||0)-(b.ts||0));
+  return d;
+}
+function marcasDasPartes(no){
+  const m={alunos:{},agenda:no&&no.agenda||'',config:no&&no.config||'',linhas:{movs:{},presencas:{},lancamentos:{}}};
+  for(const k of Object.keys(no&&no.alunos||{})){
+    const a=JSON.parse(no.alunos[k]);m.alunos[a.id]=no.alunos[k];
+  }
+  for(const nome of ['movs','presencas','lancamentos'])m.linhas[nome]=Object.assign({},no&&no[nome]||{});
+  return m;
+}
+function horaProtecao(ts){
+  return ts?new Date(ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'Ainda não confirmada';
+}
+function renderProtecaoDados(){
+  const el=document.getElementById('pd-status');if(!el)return;
+  const meta=metaProtecao();
+  const aviso=_conflitoNuvem?'Outra sessão alterou os dados. Confira as diferenças.':
+    cloudPending?'Há alterações salvas só neste aparelho. Aguarde a confirmação da nuvem.':
+    _abriuSemConferir?'A nuvem ainda não foi conferida nesta abertura.':
+    meta.nuvem?'A última gravação foi confirmada pela nuvem.':'Aguardando uma gravação confirmada pela nuvem.';
+  el.className='pd-status'+((_conflitoNuvem||cloudPending||_abriuSemConferir)?' pd-alerta':'');
+  el.innerHTML='<div class="pd-titulo">'+(_conflitoNuvem?'⚠ Confira antes de salvar':cloudPending?'⚠ Alterações pendentes':'☁️ Salvamento e proteção')+'</div>'
+    +'<p>'+esc(aviso)+'</p><div class="pd-datas"><span>Nuvem: <b>'+esc(horaProtecao(meta.nuvem))+'</b></span>'
+    +'<span>Cópia de segurança na nuvem: <b>'+esc(horaProtecao(meta.backup))+'</b></span></div>'
+    +'<div class="pd-acoes">'+(_conflitoNuvem?'<button class="btn btn-clay" onclick="abrirConflitoNuvem()">Conferir diferenças</button>':
+      cloudPending?'<button class="btn btn-clay" onclick="tentarSalvarProtegido()">Tentar salvar agora</button>':'')
+    +'<button class="btn btn-ghost" onclick="exportBackup()">Baixar cópia do aparelho</button></div>';
+}
+function diferencasEntreBancos(local,nuvem){
+  const out=[],porId=new Map((nuvem.alunos||[]).map(a=>[a.id,a]));
+  for(const a of local.alunos||[]){
+    const b=porId.get(a.id);porId.delete(a.id);
+    if(!b){out.push({nome:a.nome,detalhe:'Cadastro presente apenas no aparelho.'});continue;}
+    if(canonDados(a)===canonDados(b))continue;
+    const campos=[['mensalidade','Mensalidade'],['creditos','Créditos'],['credGrupo','Grupo'],['repos','Reposições'],['status','Pagamento']];
+    const linhas=campos.filter(x=>canonDados(a[x[0]])!==canonDados(b[x[0]])).map(x=>x[1]+': aparelho '+String(a[x[0]]??'—')+' · nuvem '+String(b[x[0]]??'—'));
+    out.push({nome:a.nome,detalhe:linhas.join(' / ')||'Há diferenças no cadastro ou histórico desta pessoa.'});
+  }
+  porId.forEach(a=>out.push({nome:a.nome,detalhe:'Cadastro presente apenas na nuvem.'}));
+  for(const [campo,rot] of [['agenda','Agenda'],['lancamentos','Caixa'],['presencas','Presenças'],['movs','Extrato']]){
+    if(canonDados(local[campo])!==canonDados(nuvem[campo]))out.push({nome:rot,detalhe:'As duas versões têm diferenças. Confira antes de substituir.'});
+  }
+  if(!out.length)out.push({nome:'Configurações ou versão do banco',detalhe:'Outra sessão gravou uma versão diferente.'});
+  return out;
+}
+function registrarConflitoNuvem(no){
+  let banco=null;try{banco=bancoDasPartes(no);}catch(e){}
+  _conflitoNuvem={no,banco};cloudPending=true;marcarSemNuvem(true);
+  guardarVersoes(JSON.stringify(DB));
+  setSave('⚠ outra sessão alterou os dados','err');
+  if(!document.hidden)abrirConflitoNuvem();
+}
+function abrirConflitoNuvem(){
+  if(!_conflitoNuvem)return;
+  const box=document.getElementById('pd-diferencas');
+  if(box){
+    const dif=_conflitoNuvem.banco?diferencasEntreBancos(DB,_conflitoNuvem.banco):[{nome:'Nuvem não confirmada',detalhe:'Não foi possível ler uma versão completa. Sua cópia permanece no aparelho.'}];
+    box.innerHTML=dif.slice(0,30).map(x=>'<div class="pd-diferenca"><b>'+esc(x.nome||'Cadastro')+'</b><p>'+esc(x.detalhe)+'</p></div>').join('')
+      +(dif.length>30?'<p>Há mais diferenças. Baixe sua cópia para conferi-las.</p>':'');
+  }
+  const bt=document.getElementById('pd-carregar');if(bt)bt.disabled=!_conflitoNuvem.banco;
+  document.getElementById('ov-conflito-nuvem')?.classList.add('on');
+}
+async function carregarNuvemConferida(){
+  if(!_conflitoNuvem||!_conflitoNuvem.banco||_salvamentoEmCurso)return;
+  if(!confirm('Carregar a versão atual da nuvem?\n\nUma versão da sua cópia será guardada antes. As alterações feitas só neste aparelho precisarão ser conferidas e reaplicadas.'))return;
+  try{
+    const s=await comPrazo(v2ref('').get(),PRAZO_NUVEM,null);
+    if(!s){toast('A nuvem não respondeu. Sua cópia foi mantida.');return;}
+    const no=s.exists()?s.val():null,banco=bancoDasPartes(no);
+    if(!banco){toast('A nuvem não tem uma versão completa. Sua cópia foi mantida.');return;}
+    guardarVersoes(JSON.stringify(DB));
+    if(!lsSet(KEY,JSON.stringify(banco))){toast('Não foi possível guardar a versão no aparelho.');return;}
+    await confirmarBasePartes(no);
+    DB=banco;_enviado=marcasDasPartes(no);_removidos={movs:{},presencas:{},lancamentos:{}};
+    _conflitoNuvem=null;cloudPending=false;marcarSemNuvem(false);_abriuSemConferir=false;
+    guardarMetaProtecao({base:_basePartesAssinatura});
+    try{HIST.prev=snapDB();}catch(e){}
+    closeModal('ov-conflito-nuvem');setSave('✓ versão conferida da nuvem','ok');renderAll();
+    toast('Versão da nuvem carregada. A cópia anterior está em Versões salvas.');
+  }catch(e){toast('Não consegui conferir a nuvem. Sua cópia foi mantida.');}
+}
+function tentarSalvarProtegido(){
+  if(_conflitoNuvem){abrirConflitoNuvem();return;}
+  gravarAgora();
+}
+function planoDeEnvio(d){
+  const no=JSON.parse(JSON.stringify(_basePartes||{}));
+  const env={alunos:0,linhas:0,agenda:0,config:0,bytes:0,lotes:0};
+  no.alunos=no.alunos||{};
+  const vivos=new Set();
+  for(const a of d.alunos||[]){
+    const k=chaveFb(a.id),t=JSON.stringify(a);vivos.add(k);
+    if(no.alunos[k]!==t){no.alunos[k]=t;env.alunos++;env.bytes+=t.length;}
+  }
+  for(const k of Object.keys(no.alunos))if(!vivos.has(k)){delete no.alunos[k];env.alunos++;}
+  for(const nome of ['movs','presencas','lancamentos']){
+    no[nome]=no[nome]||{};const vivas=new Set();
+    for(const linha of d[nome]||[]){
+      const k=chaveFb(CHAVE_LINHA[nome](linha)),t=JSON.stringify(linha);vivas.add(k);
+      if(no[nome][k]!==t){no[nome][k]=t;env.linhas++;env.bytes+=t.length;}
+    }
+    // Extrato antigo continua na nuvem; remoção só com lápide explícita.
+    for(const k of Object.keys(no[nome])){
+      if(!vivas.has(k)&&(nome!=='movs'||_removidos[nome][k])){delete no[nome][k];env.linhas++;}
+    }
+  }
+  const ag=JSON.stringify(d.agenda||{}),cf=JSON.stringify(configDe(d));
+  if(no.agenda!==ag){no.agenda=ag;env.agenda=1;env.bytes+=ag.length;}
+  if(no.config!==cf){no.config=cf;env.config=1;env.bytes+=cf.length;}
+  no.carimbos=Object.assign({},no.carimbos,{savedAt:d.savedAt||Date.now()});env.lotes=1;
+  // Firebase remove nós vazios: normalizar evita conflitos só por {} × ausente.
+  for(const nome of ['alunos','movs','presencas','lancamentos'])if(!Object.keys(no[nome]).length)delete no[nome];
+  return {no,env};
+}
+
 async function lerPartes(){
   if(!hasCloud())return null;
-  if(_nuvemMuda)return null;                // a nuvem já não respondeu neste boot
   try{
-    const pega=async cam=>{
-      const MARCA={_prazo:1};
-      const s=await comPrazo(v2ref(cam).get(),PRAZO_NUVEM,MARCA);
-      if(s===MARCA)throw new Error('sem resposta da nuvem');
-      return s.exists()?s.val():null;
-    };
-    const alunosNo=await pega('alunos');
-    if(!alunosNo)return null;                     // sem v2: usa o blob antigo
-    const d={alunos:[],movs:[],presencas:[],lancamentos:[]};
-    const marcaAl={};
-    Object.keys(alunosNo).forEach(k=>{
-      try{const a=JSON.parse(alunosNo[k]);d.alunos.push(a);marcaAl[a.id]=alunosNo[k];}catch(e){}
-    });
-    if(!d.alunos.length)return null;
-    const marcaLin={movs:{},presencas:{},lancamentos:{}};
-    for(const nome of ['movs','presencas','lancamentos']){
-      const no=await pega(nome);
-      if(!no)continue;
-      Object.keys(no).forEach(k=>{
-        try{d[nome].push(JSON.parse(no[k]));marcaLin[nome][k]=no[k];}catch(e){}
-      });
-    }
-    // as listas voltam na ordem do tempo, não na ordem das chaves do Firebase
-    d.movs.sort((a,b)=>(a.ts||0)-(b.ts||0));
-    const ag=await pega('agenda'), cf=await pega('config');
-    if(ag){try{d.agenda=JSON.parse(ag);}catch(e){}}
-    if(cf){try{Object.assign(d,JSON.parse(cf));}catch(e){}}
-    if(!d.agenda)return null;                     // incompleto: melhor o blob
-    // marca tudo como já enviado, senão o primeiro persist reenviaria o banco todo
-    _enviado={alunos:marcaAl,agenda:ag||'',config:cf||'',linhas:marcaLin};
+    const MARCA={_prazo:1};
+    const s=await comPrazo(v2ref('').get(),PRAZO_NUVEM,MARCA);
+    if(s===MARCA)throw new Error('sem resposta da nuvem');
+    const no=s.exists()?s.val():null;
+    if(!no){await confirmarBasePartes(null);return null;}
+    const d=bancoDasPartes(no);
+    await confirmarBasePartes(no);
+    _enviado=marcasDasPartes(no);
     return d;
   }catch(e){lastCloudError=String(e&&e.message||e);return null;}
 }
@@ -969,8 +1105,8 @@ async function load(){
       if(d){
         const rBlob=cloudRaw?resumoBanco(cloudRaw):null, rPar=resumoBanco(JSON.stringify(d));
         // só confia nas partes se elas não vierem MENORES que a reserva
-        if(!rBlob||!rPar||(rPar.alunos>=rBlob.alunos&&rPar.lancamentos>=rBlob.lancamentos)){
-          d.savedAt=Math.max(d.savedAt||0,tsOf(cloudRaw||'{}'));
+        if(!rBlob||!rPar||Number(d.savedAt||0)>=tsOf(cloudRaw||'{}')||(rPar.alunos>=rBlob.alunos&&rPar.lancamentos>=rBlob.lancamentos)){
+          // A data das partes é a confirmação atômica, sem herdar a data da reserva.
           partes=JSON.stringify(d);
         }
       }
@@ -985,11 +1121,20 @@ async function load(){
     rejeitada=localMaisNovo?cloudRaw:localRaw;
   }
   else chosen=cloudRaw||localRaw;
+  // Uma edição offline conserva a base anterior. Se outra sessão mudou a
+  // nuvem, a cópia local fica visível e o envio é bloqueado para conferência.
+  let travadoAoAbrir=false;
+  const checkpoint=metaProtecao().base||'';
+  let conflitoAoAbrir=false;
+  if(localRaw&&cloudRaw&&salvouSemNuvem()){
+    conflitoAoAbrir=!checkpoint||!_basePartesLida||checkpoint!==_basePartesAssinatura;
+    if(conflitoAoAbrir){chosen=localRaw;rejeitada=null;travadoAoAbrir=true;}
+  }
   /* A cópia mais recente pode ser a MENOR: foi assim que sumiram lançamentos.
      Quando a escolhida tem menos dado que a descartada, ele decide — e até
      decidir o app NÃO grava nada, porque era o persist() automático logo abaixo
      que carimbava a data de agora na cópia atrasada e apagava a boa. */
-  let travado=false;
+  let travado=travadoAoAbrir;
   if(chosen&&rejeitada){
     const a=resumoBanco(chosen), b=resumoBanco(rejeitada);
     /* Dois motivos para parar e perguntar em vez de adotar sozinho:
@@ -1080,6 +1225,8 @@ async function load(){
   if(ensureFields())dirty=true;
   if(checarViradaMes())dirty=true;   // só detecta e avisa — a conversão espera você confirmar
   CARREGADO=true;                           // a partir daqui pode gravar
+  if(conflitoAoAbrir)registrarConflitoNuvem(_basePartes);
+  else if(_basePartesLida&&!salvouSemNuvem())guardarMetaProtecao({base:_basePartesAssinatura});
   try{pintarModo();}catch(e){}              // diz de quem é o app que abriu
   if(!ehDono()){buscarNomeProf();conferirAcessoProf();}   // e com que nome — ou se nem devia estar aqui
   checarPortaEntrada();                     // e, se ninguém se identificou, para aqui
@@ -1264,7 +1411,7 @@ function motivoParaPerguntar(a,b,ehDoAparelho,semNuvem){
   return '';
 }
 const V2='v2';
-function v2ref(cam){return window.fbDB.ref(RAIZ+'/'+V2+'/'+cam);}
+function v2ref(cam){return window.fbDB.ref(RAIZ+'/'+V2+(cam?'/'+cam:''));}
 let _enviado={alunos:{},agenda:'',config:'',linhas:{movs:{},presencas:{},lancamentos:{}}};
 /* Linhas apagadas que ainda precisam SAIR da nuvem. O passe de remoção abaixo
    se apoia em _enviado, que só é preenchido quando o app abre pelas partes da
@@ -1299,79 +1446,57 @@ async function enviarLote(cam,mapa){
   }
 }
 async function subirPartes(){
-  if(!hasCloud())return null;
-  const env={alunos:0,linhas:0,agenda:0,config:0,bytes:0,lotes:0};
-  const conta=t=>{env.bytes+=t.length;};
-  try{
-    // 1) alunos: um nó por aluno, só os que mudaram
-    const loteAl={},novosAl={};
-    for(const a of (DB.alunos||[])){
-      const t=JSON.stringify(a);
-      if(_enviado.alunos[a.id]===t)continue;
-      loteAl[chaveFb(a.id)]=t;novosAl[a.id]=t;env.alunos++;conta(t);
-    }
-    if(env.alunos){await enviarLote('alunos',loteAl);Object.assign(_enviado.alunos,novosAl);env.lotes++;}
-    // aluno excluído sai da nuvem também
-    const vivos=new Set((DB.alunos||[]).map(a=>a.id));
-    const remover={};
-    for(const id of Object.keys(_enviado.alunos)){
-      if(!vivos.has(id)){remover[chaveFb(id)]=null;delete _enviado.alunos[id];}
-    }
-    if(Object.keys(remover).length)await enviarLote('alunos',remover);
-    // 2) listas de linhas: sobe o que é novo E o que MUDOU
-    /* Aqui morava um erro sério. A marca de "já enviada" era só um sinal de
-       presença da chave, então uma linha EDITADA — mesma chave, conteúdo
-       diferente — era pulada e nunca chegava na nuvem. Trocar ✓ por 🔁 numa
-       presença reusa a mesma chave (aluno_data_hora): a mudança ficava só no
-       aparelho, a nuvem continuava com a marca velha e, na abertura seguinte,
-       a marca velha voltava por cima e o crédito sumia de novo. Valia igual
-       para lançamento editado na Caixa. Agora a marca guarda o CONTEÚDO
-       enviado — o mesmo que já era feito com os alunos — e a comparação é de
-       texto contra texto. */
-    for(const nome of ['movs','presencas','lancamentos']){
-      const ja=_enviado.linhas[nome], lote={}, novas={};
-      for(const linha of (DB[nome]||[])){
-        const ch=chaveFb(CHAVE_LINHA[nome](linha));
-        const t=JSON.stringify(linha);
-        if(ja[ch]===t)continue;
-        lote[ch]=t;novas[ch]=t;env.linhas++;conta(t);
+  if(!hasCloud()||!CARREGADO||!window._espacoAberto||_conflitoNuvem)return null;
+  if(_salvamentoEmCurso)return _salvamentoEmCurso;
+  const congelado=JSON.stringify(DB),dados=JSON.parse(congelado);
+  _salvamentoEmCurso=(async()=>{
+    const aviso=setTimeout(()=>{
+      if(_salvamentoEmCurso){cloudPending=true;marcarSemNuvem(true);setSave('⚠ aguardando confirmação da nuvem','err');}
+    },PRAZO_NUVEM);
+    try{
+      const MARCA={_prazo:1};
+      const s=await comPrazo(v2ref('').get(),PRAZO_NUVEM,MARCA);
+      if(s===MARCA)throw new Error('sem resposta da nuvem');
+      const atual=s.exists()?s.val():null;
+      if(atual)bancoDasPartes(atual); // nunca gravar sobre uma leitura incompleta
+      if(!_basePartesLida){
+        const base=metaProtecao().base||'';
+        if(!base||base!==await assinaturaDados(atual)){registrarConflitoNuvem(atual);return null;}
+        await confirmarBasePartes(atual);
       }
-      if(Object.keys(novas).length){
-        await enviarLote(nome,lote);
-        Object.assign(ja,novas);
-        env.lotes++;
+      if(canonDados(atual)!==canonDados(_basePartes)){registrarConflitoNuvem(atual);return null;}
+      const esperado=canonDados(_basePartes),plano=planoDeEnvio(dados);
+      const resultado=await v2ref('').transaction(no=>{
+        if(canonDados(no)!==esperado)return;
+        return plano.no;
+      },undefined,false);
+      if(!resultado.committed){
+        registrarConflitoNuvem(resultado.snapshot&&resultado.snapshot.exists()?resultado.snapshot.val():atual);
+        return null;
       }
-      /* E o que FOI apagado tem que sair da nuvem. Sem este passe, estas listas
-         só cresciam: apagar um lançamento sumia com ele no aparelho, mas o nó
-         continuava lá e a linha voltava na abertura seguinte. Vale também para
-         o arquivamento por ano, que tirava do app e deixava na nuvem.
-         Se o app abriu pelo blob, _enviado está vazio e nada é removido por
-         engano — nesse caso quem manda é a lápide de _removidos. */
-      const vivas=new Set((DB[nome]||[]).map(x=>chaveFb(CHAVE_LINHA[nome](x))));
-      const mortas={};
-      /* A diferença contra _enviado vale para lançamentos e presenças, que só
-         somem quando alguém apaga. NÃO vale para o extrato: podarMovs corta as
-         linhas velhas sozinho ao passar de 500 por aluno, e apagar isso da nuvem
-         truncaria o extrato de vez — o saldo pelo extrato passaria a divergir do
-         saldo real. No extrato só sai o que foi marcado de propósito, como no
-         arquivamento por ano, que compensa o corte com a linha de transporte. */
-      if(nome!=='movs')for(const ch of Object.keys(ja))if(!vivas.has(ch))mortas[ch]=null;
-      for(const ch of Object.keys(_removidos[nome]))if(!vivas.has(ch))mortas[ch]=null;
-      const nMortas=Object.keys(mortas).length;
-      if(nMortas){
-        await enviarLote(nome,mortas);
-        Object.keys(mortas).forEach(ch=>{delete ja[ch];delete _removidos[nome][ch];});
-        env.lotes++;
-      }
+      const confirmado=resultado.snapshot.val();
+      await confirmarBasePartes(confirmado);
+      _enviado=marcasDasPartes(confirmado);_removidos={movs:{},presencas:{},lancamentos:{}};
+      lastCloudError='';_abriuSemConferir=false;_nuvemMuda=false;
+      cloudPending=JSON.stringify(DB)!==congelado;marcarSemNuvem(cloudPending);
+      guardarMetaProtecao({base:_basePartesAssinatura,nuvem:Date.now(),savedAt:dados.savedAt});
+      setSave(cloudPending?'⚠ salvo só no aparelho ⓘ':'✓ salvo na nuvem','ok');
+      // Só cópias de dados que o servidor confirmou; nunca a edição seguinte.
+      subirBlobDeReserva(false,dados);backupNuvem(dados);backupDoDia(dados);
+      return plano.env;
+    }catch(e){
+      lastCloudError=String(e&&e.message||e);cloudPending=true;marcarSemNuvem(true);
+      setSave(recusaDoServidor()?'⚠ a nuvem RECUSOU ⓘ':'⚠ salvo só no aparelho ⓘ','err');
+      return null;
+    }finally{clearTimeout(aviso);}
+  })();
+  try{return await _salvamentoEmCurso;}
+  finally{
+    _salvamentoEmCurso=null;
+    if(cloudPending&&!_conflitoNuvem&&JSON.stringify(DB)!==congelado){
+      clearTimeout(saveTimer);saveTimer=setTimeout(()=>gravarAgora(),500);
     }
-    // 3) agenda e configuração: inteiras, mas só quando mudam
-    const ag=JSON.stringify(DB.agenda||{});
-    if(_enviado.agenda!==ag){await v2ref('agenda').set(ag);_enviado.agenda=ag;env.agenda=1;conta(ag);}
-    const cf=JSON.stringify(configDe(DB));
-    if(_enviado.config!==cf){await v2ref('config').set(cf);_enviado.config=cf;env.config=1;conta(cf);}
-    await v2ref('carimbos/savedAt').set(DB.savedAt||Date.now());
-    return env;
-  }catch(e){lastCloudError=String(e&&e.message||e);return null;}
+  }
 }
 /* ===== Arquivo por ano =====
    Extrato, presenças e lançamentos nunca eram apagados: ~680 KB por ano, tudo
@@ -1523,11 +1648,17 @@ async function carregarAnoArquivado(ano){
    em vez de a cada ação. Assim o caminho quente fica leve E sempre há uma cópia
    completa recente no formato que já funcionava. */
 let _ultBlob=0;
-async function subirBlobDeReserva(forcar){
-  if(!hasCloud())return;
+async function subirBlobDeReserva(forcar,dados){
+  if(!hasCloud()||!dados)return;
   if(!forcar&&Date.now()-_ultBlob<120e3)return;
-  _ultBlob=Date.now();
-  await cloudSet(KEY,JSON.stringify(DB));
+  const json=JSON.stringify(dados);
+  try{
+    const r=await window.fbDB.ref(fbPath(KEY)).transaction(raw=>{
+      if(raw&&tsOf(raw)>Number(dados.savedAt||0))return;
+      return json;
+    },undefined,false);
+    if(r.committed)_ultBlob=Date.now();
+  }catch(e){}
 }
 /* Enquanto o load() não terminou, o DB em memória está VAZIO. Gravar nesse
    estado troca o banco bom por um banco vazio — no aparelho e na nuvem. Esta
@@ -1545,30 +1676,12 @@ function persist(){
   const json=JSON.stringify(DB);
   // 1) salva IMEDIATAMENTE no aparelho (nunca perde nada)
   const okLocal=lsSet(KEY,json);
+  cloudPending=true;marcarSemNuvem(true);_tentativaLocal=Date.now();
   guardarVersoes(json);                 // 1b) e guarda de onde voltar
   setSave(okLocal?'✓ salvo no aparelho':'salvando…','ok');
   // 2) envia para a nuvem com retentativas
   clearTimeout(saveTimer);
-  saveTimer=setTimeout(async()=>{
-    if(!hasCloud()){cloudPending=true;marcarSemNuvem(true);setSave(okLocal?'⚠ salvo só no aparelho ⓘ':'erro ao salvar',okLocal?'ok':'err');return;}
-    setSave('enviando à nuvem…');
-    const env=await subirPartes();
-    if(env){
-      cloudPending=false;marcarSemNuvem(false);setSave('✓ salvo na nuvem','ok');
-      subirBlobDeReserva();backupNuvem();backupDoDia();
-    }
-    else{
-      cloudPending=true;marcarSemNuvem(true);
-      /* "salvo só no aparelho" é verdade, mas não diz nada. Ficar dias assim
-         sem saber por quê foi o que aconteceu no celular emprestado. Recusa do
-         servidor é um problema de regra, não de sinal, e não passa sozinha. */
-      setSave(okLocal?(recusaDoServidor()?'⚠ a nuvem RECUSOU ⓘ':'⚠ salvo só no aparelho ⓘ'):'erro ao salvar',okLocal?'ok':'err');
-    }
-    publish();
-    publicarMapaQuadra();          // a quadra é uma só: avisa quem mais usa ela
-    publicarAgendaProf();          // e o que marquei no nome de cada professor
-  },500);
-}
+  saveTimer=setTimeout(()=>gravarAgora(),500);}
 /* Uma cópia por hora na nuvem, no máximo 30. Mesmo que o aparelho se perca
    inteiro, existe de onde voltar. */
 let _ultBkpNuvem=0;
@@ -1587,9 +1700,9 @@ let _ultBkpNuvem=0;
    mostrar a lista pesaria dezenas de megas no celular. A cópia inteira só é
    buscada quando você escolhe uma. */
 let _ultBkpDia='',_bkpDiaRodando=false,_bkpDiaTentou=0;
-async function backupDoDia(){
-  if(!hasCloud()||!CARREGADO)return;
-  if(pareceSemente(DB.agenda))return;        // nunca guardar a semente como "cópia boa do dia"
+async function backupDoDia(dados){
+  if(!hasCloud()||!CARREGADO||!dados)return;
+  if(pareceSemente(dados.agenda))return;        // nunca guardar a semente como "cópia boa do dia"
   const dia=dKey(new Date());
   if(_ultBkpDia===dia)return;
   /* Uma tentativa por vez, e no máximo a cada 10 min se falhar (sem sinal,
@@ -1601,9 +1714,9 @@ async function backupDoDia(){
     if(!idxSnap)return;                      // a nuvem não respondeu: tenta mais tarde
     const idx=idxSnap.exists()?(idxSnap.val()||{}):{};
     if(!idx[dia]){
-      const json=JSON.stringify(DB);
-      await window.fbDB.ref(RAIZ+'/backups_dia/'+dia).set(json);
-      const r=resumoBanco(json)||{};
+      const json=JSON.stringify(dados);
+      const primeira=await window.fbDB.ref(RAIZ+'/backups_dia/'+dia).transaction(raw=>raw||json,undefined,false);
+      const r=resumoBanco(primeira.snapshot.val())||{};
       const reg={ts:Date.now(),alunos:r.alunos||0,lancamentos:r.lancamentos||0,caixa:r.caixa||0,
                  presencas:r.presencas||0,eventos:r.eventos||0,fixosAluno:r.fixosAluno||0,
                  chuvaDias:r.chuvaDias||0,savedAt:r.savedAt||0};
@@ -1611,6 +1724,7 @@ async function backupDoDia(){
       idx[dia]=reg;
     }
     _ultBkpDia=dia;
+    if(idx[dia]&&idx[dia].ts)guardarMetaProtecao({backup:Math.max(Number(metaProtecao().backup)||0,idx[dia].ts)});
     const ks=Object.keys(idx).sort();
     while(ks.length>45){
       const k=ks.shift();
@@ -1637,15 +1751,15 @@ async function usarCopiaDoDia(dia,oQue){
   const i=window._versoes.length-1;
   if(oQue==='agenda')recuperarAgenda(i);else restaurarVersao(i);
 }
-async function backupNuvem(){
-  if(!hasCloud())return;
+async function backupNuvem(dados){
+  if(!hasCloud()||!dados)return;
   const agora=Date.now();
   if(agora-_ultBkpNuvem<3600e3)return;
-  _ultBkpNuvem=agora;
   const d=new Date();
   const carimbo=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'-'+String(d.getHours()).padStart(2,'0');
   try{
-    await window.fbDB.ref(RAIZ+'/backups/'+carimbo).set(JSON.stringify(DB));
+    await window.fbDB.ref(RAIZ+'/backups/'+carimbo).set(JSON.stringify(dados));
+    _ultBkpNuvem=agora;guardarMetaProtecao({backup:agora});
     const snap=await window.fbDB.ref(RAIZ+'/backups').get();
     if(snap.exists()){
       const ks=Object.keys(snap.val()||{}).sort();
@@ -1656,57 +1770,27 @@ async function backupNuvem(){
 /* Sair do app não pode custar a última alteração: no iPhone, minimizar congela
    o setTimeout de 500ms e a gravação na nuvem nunca acontecia. */
 async function gravarAgora(){
-  if(!CARREGADO||!hasCloud()||!DB)return;   // nunca gravar o que ainda não carregou
+  if(!CARREGADO||!DB||!window._espacoAberto)return false;
   clearTimeout(saveTimer);
-  try{
-    const env=await subirPartes();          // as partes primeiro: é o dado vivo
-    const ok=await cloudSet(KEY,JSON.stringify(DB));   // e a reserva completa
-    cloudPending=!(env&&ok);marcarSemNuvem(cloudPending);
-  }catch(e){cloudPending=true;marcarSemNuvem(true);}
+  if(_conflitoNuvem){setSave('⚠ outra sessão alterou os dados','err');return false;}
+  if(!hasCloud()){cloudPending=true;marcarSemNuvem(true);setSave('⚠ salvo só no aparelho ⓘ','err');return false;}
+  setSave('enviando à nuvem…');
+  const env=await subirPartes();
+  if(env&&!cloudPending){publish();publicarMapaQuadra();publicarAgendaProf();finalizarAvisosPagos();}
+  return !!env&&!cloudPending;
 }
-document.addEventListener('visibilitychange',()=>{if(document.hidden)gravarAgora();});
-window.addEventListener('pagehide',()=>{gravarAgora();});
-/* Sincronizador de fundo: insiste em subir para a nuvem a cada 30s enquanto houver pendência */
-setInterval(async()=>{
-  if(!CARREGADO||!cloudPending||!hasCloud())return;
-  const ok=await cloudSet(KEY,JSON.stringify(DB));
-  if(ok){cloudPending=false;marcarSemNuvem(false);setSave('✓ salvo na nuvem','ok');publish();}
-},30000);
-/* Diagnóstico: toque no indicador para entender a situação */
-/* O Firebase devolve "permission_denied" quando a regra barra. É diferente de
-   estar sem sinal: não adianta esperar, e ninguém adivinha isso olhando para
-   "salvo só no aparelho". */
-function recusaDoServidor(){
-  return /permission|denied|PERMISSION/i.test(String(lastCloudError||''));
-}
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&cloudPending)gravarAgora();});
+window.addEventListener('pagehide',()=>{if(cloudPending)gravarAgora();});
+setInterval(()=>{if(CARREGADO&&cloudPending&&!_conflitoNuvem)gravarAgora();},30000);
 document.getElementById('save-state').style.pointerEvents='auto';
 document.getElementById('save-state').style.cursor='pointer';
 document.getElementById('save-state').onclick=()=>{
-  let msg;
-  if(!hasCloud()){
-    msg='DIAGNÓSTICO\n\n❌ A nuvem (Firebase) não está conectada.\n\nProvável causa: a configuração do Firebase ainda não foi colada no arquivo, ou está incompleta.\n\n✅ Confira o passo 6 do guia: a config deve estar colada no topo do arquivo, sem "COLE_AQUI".\n\nSeus dados estão seguros no aparelho enquanto isso.';
-  }else if(cloudPending&&recusaDoServidor()){
-    msg='DIAGNÓSTICO\n\n🚫 A nuvem RECUSOU a gravação.\n\n'
-      +'Isto não é falta de sinal — é a regra do banco de dados dizendo que esta conta não pode gravar aqui. '
-      +'Esperar não resolve, e o app vai seguir salvando só neste aparelho.\n\n'
-      +(ehDono()
-        ? 'Você está no app da academia. Confira se está conectado com a sua conta em Mais → Segurança e dados.'
-        : 'Você está no app do professor. Peça ao João para colar a versão nova das Regras no Firebase (o arquivo firebase-regras-etapa3.json) e para conferir se a sua conta está cadastrada em Professores.')
-      +'\n\nEspaço: '+(ehDono()?'academia':'professor '+PROF_UID)
-      +'\nÚltimo erro: '+(lastCloudError||'desconhecido');
-  }else if(cloudPending){
-    msg='DIAGNÓSTICO\n\n⚠ O Firebase está conectado mas a última gravação falhou.\nÚltimo erro: '+(lastCloudError||'desconhecido')+'\n\nO app tenta de novo automaticamente a cada 30 segundos. Verifique se as Regras do banco estão como no passo 5 do guia.';
-  }else{
-    msg='DIAGNÓSTICO\n\n✅ Tudo certo! Dados salvos no aparelho E na nuvem (Firebase).\nAcessível de qualquer aparelho.';
-  }
-  alert(msg);
+  if(_conflitoNuvem){abrirConflitoNuvem();return;}
+  go('dash',document.querySelector('[onclick^="go(\'dash\'"]')||document.createElement('button'));
+  document.getElementById('pd-status')?.scrollIntoView({behavior:'smooth',block:'center'});
 };
-/* A API da nuvem pode demorar a carregar: re-verifica e sobe pendências */
-[1500,4000,8000].forEach(t=>setTimeout(async()=>{
-  if(hasCloud()&&cloudPending){
-    const ok=await cloudSet(KEY,JSON.stringify(DB));
-    if(ok){cloudPending=false;marcarSemNuvem(false);setSave('✓ salvo na nuvem','ok');publish();}
-  }
+[1500,4000,8000].forEach(t=>setTimeout(()=>{
+  if(hasCloud()&&CARREGADO&&cloudPending&&!_conflitoNuvem)gravarAgora();
 },t));
 /* ===== Mapa da quadra: a quadra é UMA, os bancos são dois =====
    O professor precisa ver o que já está ocupado, e o João precisa ver as aulas
@@ -2209,17 +2293,17 @@ function publicacaoLegadaEnxuta(pub){
   const out=Object.assign({},pub);
   out.alunos=(pub.alunos||[]).map(a=>Object.assign({},a,{
     ultimoPago:'',cardLink:'',mfitLink:'',avaliacoes:[],evoMes:[],registros:[],
-    mensalidade:null,valorAula:null,valoresOcultos:true,
+    mensalidade:null,valorAula:null,pagamentoMensal:null,valoresOcultos:true,
     familia:a.familia?{papel:a.familia.papel}:null
   }));
   out.historico={};
   return out;
 }
 function alunoPublicado(a){
-  return ({codigo:a.codigo,nome:a.nome,tipo:a.tipo,profId:profDoAluno(a),prof:profNome(profDoAluno(a)),plano:unificado(a)?pacoteDoAluno(a):a.plano,creditos:unificado(a)?(Number(a.creditos)||0)+(Number(a.credGrupo)||0):a.creditos,repos:a.repos,reposValidas:reposValidas(a),reposVencendo:reposVencendo(a),status:statusFinanceiro(a),ultimoPago:pagadorFamilia(a).ultimoPago||'',mensalidade:ehDependenteFamilia(a)?0:a.mensalidade,familia:dadosFamiliaAluno(a),diaVenc:pagadorFamilia(a).diaVenc||10,cardLink:ehDependenteFamilia(a)?'':(a.cardLink||''),mfitLink:a.mfitLink||'',valorAula:a.valorAula||(a.tipo==='Personal'?130:160),locCred:Number(a.locCred)||0,credGrupo:unificado(a)?0:(Number(a.credGrupo)||0),planoGrupo:unificado(a)?0:(Number(a.planoGrupo)||0),grupoTipo:a.grupoTipo||'',avaliacoes:(a.avaliacoes||[]).slice(-12),evoMes:serieMensal(a.avaliacoes,a.registros,24),registros:(a.registros||[]).slice(-8)});
+  return ({codigo:a.codigo,nome:a.nome,tipo:a.tipo,profId:profDoAluno(a),prof:profNome(profDoAluno(a)),plano:unificado(a)?pacoteDoAluno(a):a.plano,creditos:unificado(a)?(Number(a.creditos)||0)+(Number(a.credGrupo)||0):a.creditos,repos:a.repos,reposValidas:reposValidas(a),reposVencendo:reposVencendo(a),status:situacaoMensalidade(a,mesReal()).status,ultimoPago:pagadorFamilia(a).ultimoPago||'',mensalidade:ehDependenteFamilia(a)?0:a.mensalidade,pagamentoMensal:ehDependenteFamilia(a)?null:(situacaoMensalidade(a,mesReal()).exato?Object.assign({mes:mesReal()},situacaoMensalidade(a,mesReal())):null),familia:dadosFamiliaAluno(a),diaVenc:pagadorFamilia(a).diaVenc||10,cardLink:ehDependenteFamilia(a)?'':(a.cardLink||''),mfitLink:a.mfitLink||'',valorAula:a.valorAula||(a.tipo==='Personal'?130:160),locCred:Number(a.locCred)||0,credGrupo:unificado(a)?0:(Number(a.credGrupo)||0),planoGrupo:unificado(a)?0:(Number(a.planoGrupo)||0),grupoTipo:a.grupoTipo||'',avaliacoes:(a.avaliacoes||[]).slice(-12),evoMes:serieMensal(a.avaliacoes,a.registros,24),registros:(a.registros||[]).slice(-8)});
 }
 async function doPublish(){
-  if(!CARREGADO)return;                     // publicar vazio apagaria a tela dos alunos
+  if(!CARREGADO||cloudPending||_conflitoNuvem||_abriuSemConferir)return; // publicar só o banco confirmado
   if(!ehDono())return;                      // o App do Aluno é da academia, não do professor
   if(!hasCloud())return;
   /* Publicar a grade-semente foi o que fez o app dos alunos voltar no tempo:
@@ -2873,26 +2957,9 @@ function aceitarPedido(key){
   const a=DB.alunos.find(x=>x.codigo===p.codigo);
   if(a&&temFamilia(a)&&p.kind==='plano'){toast('Plano família: ajuste as aulas de cada pessoa e o total no responsável pelo cadastro.');return;}
   if(p.kind==='mensalidade'){
-    const r=responsavelFamilia(a);if(r){toast('Aviso de dependente: registre o pagamento na ficha de '+r.nome+' e descarte este aviso antigo.');return;}
     if(!a){toast('Aluno não encontrado — confira o cadastro');return;}
-    /* Mesma proteção que marcarPago já tinha: o aviso do aluno pode chegar
-       depois de o João já ter marcado pago na mão, e aí eram duas cobranças. */
-    const jaLancada=mensalidadesDoMes(a);
-    if(jaLancada.length){
-      const soma=jaLancada.reduce((t,l)=>t+(Number(l.valor)||0),0);
-      if(!confirm('⚠️ '+a.nome+' já tem '+jaLancada.length+' mensalidade lançada neste mês ('+fmt(soma)+').\n\nLançar OUTRA?\n\nSe foi só o aviso de pagamento chegando depois, toque em Cancelar — ele fica marcado como pago sem lançar de novo.')){
-        a.status='pago';a.ultimoPago=monthKey();
-        if(hasCloud())window.fbDB.ref('jvtenis/fila_pedidos/'+key).remove().catch(()=>{});
-        pedFila=pedFila.filter(x=>x.key!==key);
-        persist();renderAll();updatePedBadge();renderPedList();
-        toast('✓ '+a.nome+' marcado como PAGO (sem lançar de novo)');
-        return;
-      }
-    }
-    a.status='pago';a.ultimoPago=monthKey();
-    const c=cobrancaDoMes(a);
-    DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:c.desc,valor:c.valor,cat:'mensalidade',alunoId:a.id,modal:(ehPersonalTipo(a.tipo)?'personal':'tenis'),data:dKey(new Date()),descontoRepos:c.detalhe});
-    toast('✓ '+a.nome+' marcado como PAGO · '+fmt(c.valor));
+    registrarPagamento(a.id,{pedidoKey:key,valor:p.valor,metodo:p.metodo});
+    return;
   }else if(p.kind==='plano'){
     if(!a){toast('Aluno não encontrado — confira o cadastro');return;}
     if(['Particular','Dupla','Trio','Quarteto','Grupo','Personal'].indexOf(p.cat)>=0)a.tipo=p.cat;
@@ -3987,7 +4054,7 @@ function responsavelFamilia(a){
 function ehDependenteFamilia(a){return !!responsavelFamilia(a);}
 function temFamilia(a){return ehDependenteFamilia(a)||dependentesFamilia(a).length>0;}
 function pagadorFamilia(a){return responsavelFamilia(a)||a;}
-function statusFinanceiro(a){const p=pagadorFamilia(a);return p&&p.status||'pendente';}
+function statusFinanceiro(a){return situacaoMensalidade(a,monthKey()).status;}
 function dadosFamiliaAluno(a){
   const r=responsavelFamilia(a), deps=dependentesFamilia(a);
   if(r)return {papel:'dependente',responsavelNome:r.nome||'',parentesco:a.parentesco||'Outro dependente'};
@@ -4028,7 +4095,10 @@ function pintarFamiliaModal(){
     'A cobrança fica somente em '+(r?r.nome:'um responsável válido')+'. Informe o valor total da família no cadastro dele. Créditos e reposições continuam individuais.':
     (a&&dependentesFamilia(a).length?'Este valor é a cobrança única da família. Alterar o número de aulas não recalcula a mensalidade familiar.':'Para esposa, filho ou outro dependente, escolha quem paga a família. Cada pessoa mantém suas aulas e seu acesso.');
   for(const key of ['a-status','a-venc','a-cardlink']){const el=document.getElementById(key);if(el)el.disabled=dep;}
-  if(dep&&r){document.getElementById('a-status').value=r.status||'pendente';document.getElementById('a-venc').value=r.diaVenc||10;}
+  const exato=!!(a&&a.pagamentosExatos&&a.pagamentosExatos[mesReal()]);
+  const st=document.getElementById('a-status');if(st){st.disabled=dep||exato;if(exato)st.value=situacaoMensalidade(a,mesReal()).status;const opt=st.querySelector('[value="parcial"]');if(opt)opt.textContent=exato?'Parcial (valor registrado)':'Pagou 50% (registro antigo)';}
+  const pn=document.getElementById('pm-cadastro-nota');if(pn)pn.textContent=exato?'Situação calculada pelos recebimentos. Use Registrar pagamento na ficha ou edite a receita na Caixa.':'';
+  if(dep&&r){document.getElementById('a-status').value=statusFinanceiro(r);document.getElementById('a-venc').value=r.diaVenc||10;}
 }
 function novoDependenteFamilia(id){
   const r=DB.alunos.find(x=>x.id===id);if(!r||r.responsavelId)return;
@@ -4313,6 +4383,7 @@ function saveAluno(){
       const dif=(Number(data[c])||0)-(Number(a[c])||0);
       if(dif)mover(a,c,dif,'Correção manual no cadastro',undefined,c==='credGrupo');   // o cadastro manda no campo exato
     });
+    atualizarSituacaoExata(a,mesReal());
     toast('Aluno atualizado');
   }
   else{
@@ -5019,7 +5090,7 @@ function mesDoTs(ts){const d=new Date(ts);return d.getFullYear()+'-'+String(d.ge
 /* Mensalidades já lançadas para este aluno no mês aberto no painel. */
 function mensalidadesDoMes(a){
   const alvo='Mensalidade · '+a.nome;
-  return (DB.lancamentos||[]).filter(l=>l.mes===monthKey()&&l.cat==='mensalidade'&&l.valor>0&&(l.alunoId===a.id||l.desc===alvo));
+  return pagamentosMensalidade(a,monthKey());
 }
 /* Renovações de crédito já feitas para este aluno no mês corrente. */
 function renovacoesDoMes(a){
@@ -5106,26 +5177,132 @@ function cobrancaDoMes(a){
   return {valor:valorDoMes(a),desc:'Mensalidade · '+a.nome,
           detalhe:d?(fmtCred(d.qtd)+' reposição(ões) descontada(s) = −'+fmtRs(d.valor)):''};
 }
-function marcarPago(id){
-  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
-  const r=responsavelFamilia(a);if(r){toast('Registre o pagamento único na ficha de '+r.nome+'.');return;}
-  if(acaoRepetida('pago-'+id)){toast('Já registrei esse pagamento agora há pouco');return;}
-  const jaTem=mensalidadesDoMes(a);
-  if(jaTem.length){
-    const soma=jaTem.reduce((t,l)=>t+(Number(l.valor)||0),0);
-    if(!confirm('⚠️ '+a.nome+' já tem '+jaTem.length+' mensalidade lançada neste mês ('+fmt(soma)+').\n\nLançar OUTRA de '+fmt(valorDoMes(a))+'?\n\nSe foi engano, toque em Cancelar — o aluno continua marcado como pago.')){
-      a.status='pago';a.ultimoPago=monthKey();persist();renderAll();toast(a.nome+' marcado como pago (sem lançar de novo)');return;
-    }
-  }
-  /* Carimbo do mês quitado: é o que sustenta a janela livre até o vencimento no
-     app do aluno — a folga vale para quem pagou o mês anterior. Sobrevive à
-     virada do mês, que só devolve o status para "pendente". */
-  a.status='pago';a.ultimoPago=monthKey();
-  const c=cobrancaDoMes(a);
-  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:c.desc,valor:c.valor,cat:'mensalidade',alunoId:a.id,modal:(ehPersonalTipo(a.tipo)?'personal':'tenis'),data:dKey(new Date()),descontoRepos:c.detalhe});
-  persist();renderAll();
-  toast('Pagamento de '+a.nome+' lançado: '+fmt(c.valor));
+
+/* ===== Mensalidade: recebimentos exatos, por competência, sem migrar saldos ===== */
+function centavosPagamento(v){return Math.round((Number(v)||0)*100);}
+function dataPagamentoValida(k){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(k||'')))return false;
+  const p=k.split('-').map(Number),d=new Date(p[0],p[1]-1,p[2],12);
+  return dKey(d)===k;
 }
+function pagamentosMensalidade(a,mk){
+  return (DB.lancamentos||[]).filter(l=>l.cat==='mensalidade'&&Number(l.valor)>0
+    &&(l.competenciaMensalidade||l.mes)===mk
+    &&(l.alunoId===a.id||(!l.alunoId&&l.desc==='Mensalidade · '+a.nome)));
+}
+function valorMensalidadeEm(a,mk){
+  const cheia=centavosPagamento(a&&a.mensalidade);
+  const desc=a&&a.descRepos&&a.descRepos.mes===mk?centavosPagamento(a.descRepos.valor):0;
+  return Math.max(0,cheia-desc)/100;
+}
+function situacaoMensalidade(a,mk){
+  mk=mk||monthKey();a=pagadorFamilia(a);
+  if(!a)return {total:0,recebido:0,falta:0,status:'pendente',exato:false,excedente:0};
+  const total=centavosPagamento(valorMensalidadeEm(a,mk));
+  const exato=a.pagamentosExatos&&a.pagamentosExatos[mk];
+  if(!exato){
+    const status=(mk===monthKey()||mk===mesReal())?(a.status||'pendente'):(a.ultimoPago===mk?'pago':'pendente');
+    const recebido=status==='pago'?total:status==='parcial'?Math.round(total/2):0;
+    return {total:total/100,recebido:recebido/100,falta:Math.max(0,total-recebido)/100,status,exato:false,excedente:0};
+  }
+  const recebido=Math.max(0,centavosPagamento(exato.ajusteAnterior)
+    +pagamentosMensalidade(a,mk).reduce((s,l)=>s+centavosPagamento(l.valor),0));
+  return {total:total/100,recebido:recebido/100,falta:Math.max(0,total-recebido)/100,
+    excedente:Math.max(0,recebido-total)/100,status:recebido>=total?'pago':recebido>0?'parcial':'pendente',exato:true};
+}
+function saldoMensalidade(a,mk){return ehDependenteFamilia(a)?0:situacaoMensalidade(a,mk).falta;}
+function atualizarSituacaoExata(a,mk){
+  if(!a||!a.pagamentosExatos||!a.pagamentosExatos[mk])return;
+  if(mk!==mesReal())return; // status legado é só do mês real; histórico permanece por competência
+  const q=situacaoMensalidade(a,mk);a.status=q.status;
+  if(q.status==='pago')a.ultimoPago=mk;
+  else if(a.ultimoPago===mk)a.ultimoPago='';
+}
+let PM_CTX=null;
+function registrarPagamento(id,op){
+  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
+  const r=responsavelFamilia(a);
+  if(r){toast('Registre o pagamento único na ficha de '+r.nome+'.');return;}
+  if(op&&op.pedidoKey&&(DB.lancamentos||[]).some(l=>l.pedidoKey===op.pedidoKey)){toast('Este aviso já tem um recebimento registrado.');finalizarAvisosPagos();return;}
+  PM_CTX={id,token:'pag-'+Date.now()+'-'+Math.random().toString(36).slice(2),pedidoKey:op&&op.pedidoKey||''};
+  document.getElementById('pm-nome').textContent=a.nome+(dependentesFamilia(a).length?' · responsável pela família':'');
+  document.getElementById('pm-mes').value=monthKey();
+  document.getElementById('pm-data').value=dKey(new Date());
+  document.getElementById('pm-metodo').value=op&&['Pix','Dinheiro','Cartão','Transferência','Outro'].includes(op.metodo)?op.metodo:'Pix';
+  prepararPagamentoMes();
+  if(op&&Number(op.valor)>0)document.getElementById('pm-valor').value=Number(op.valor).toFixed(2);
+  document.getElementById('ov-pagamento-exato').classList.add('on');
+}
+function prepararPagamentoMes(){
+  if(!PM_CTX)return;
+  const a=DB.alunos.find(x=>x.id===PM_CTX.id),mk=document.getElementById('pm-mes').value;
+  if(!a)return;
+  const q=situacaoMensalidade(a,mk);
+  const anteriores=pagamentosMensalidade(a,mk).reduce((s,l)=>s+centavosPagamento(l.valor),0)/100;
+  const inp=document.getElementById('pm-anterior');
+  inp.value=(q.exato?q.recebido:(anteriores>0?anteriores:q.recebido)).toFixed(2);inp.readOnly=q.exato;
+  document.getElementById('pm-anterior-nota').textContent=q.exato
+    ?'Somado pelos recebimentos registrados. Para corrigir um recebimento, edite o lançamento na Caixa.'
+    :'Confira o que já foi recebido antes deste registro. Este valor anterior não cria uma receita nova na Caixa.';
+  document.getElementById('pm-valor').value=Math.max(0,q.total-Number(inp.value)).toFixed(2);
+  resumoPagamentoExato();
+}
+function resumoPagamentoExato(){
+  if(!PM_CTX)return;
+  const a=DB.alunos.find(x=>x.id===PM_CTX.id),mk=document.getElementById('pm-mes').value;
+  const total=valorMensalidadeEm(a,mk),anterior=Number(document.getElementById('pm-anterior').value)||0;
+  const novo=Number(document.getElementById('pm-valor').value)||0;
+  const box=document.getElementById('pm-resumo');
+  box.innerHTML='<span>Mensalidade <b>'+fmt(total)+'</b></span><span>Já recebido <b>'+fmt(anterior)+'</b></span>'
+    +'<span>Após este pagamento, falta <b>'+fmt(Math.max(0,total-anterior-novo))+'</b></span>';
+}
+function salvarPagamentoExato(){
+  if(!PM_CTX)return;
+  const a=DB.alunos.find(x=>x.id===PM_CTX.id);
+  if(!a||ehDependenteFamilia(a)){toast('Confira o responsável pelo pagamento.');return;}
+  const mk=document.getElementById('pm-mes').value,data=document.getElementById('pm-data').value;
+  const valor=Number(document.getElementById('pm-valor').value),anterior=Number(document.getElementById('pm-anterior').value);
+  if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(mk)||!dataPagamentoValida(data)){toast('Escolha mês e data válidos.');return;}
+  if(!Number.isFinite(valor)||valor<=0||!Number.isFinite(anterior)||anterior<0){toast('Informe valores válidos. O novo pagamento deve ser maior que zero.');return;}
+  if(centavosPagamento(valor)/100!==valor||centavosPagamento(anterior)/100!==anterior){toast('Use no máximo duas casas decimais.');return;}
+  if((DB.lancamentos||[]).some(l=>l.id===PM_CTX.token)){toast('Este pagamento já foi registrado.');return;}
+  if(PM_CTX.pedidoKey&&(DB.lancamentos||[]).some(l=>l.pedidoKey===PM_CTX.pedidoKey)){toast('Este aviso já foi registrado.');return;}
+  const q=situacaoMensalidade(a,mk),base=q.exato?q.recebido:anterior;
+  if(centavosPagamento(base)+centavosPagamento(valor)>centavosPagamento(q.total)){toast('O pagamento excede o saldo restante. Confira o valor e a mensalidade.');return;}
+  const metodo=document.getElementById('pm-metodo').value;
+  if(!['Pix','Dinheiro','Cartão','Transferência','Outro'].includes(metodo)){toast('Escolha a forma de pagamento.');return;}
+  if(!confirm('Registrar '+fmt(valor)+' de '+a.nome+'?\n\nCompetência: '+mk+' · recebido em '+br(data)+' · '+metodo
+      +'\nSaldo restante: '+fmt(Math.max(0,q.total-base-valor))+'\n\nAulas, créditos e reposições permanecem como estão.'))return;
+  guardarVersoes(JSON.stringify(DB));
+  if(!a.pagamentosExatos)a.pagamentosExatos={};
+  if(!q.exato){
+    const lancado=pagamentosMensalidade(a,mk).reduce((s,l)=>s+centavosPagamento(l.valor),0);
+    a.pagamentosExatos[mk]={ajusteAnterior:(centavosPagamento(base)-lancado)/100,recebidoAnterior:base,criadoEm:Date.now()};
+  }
+  const ctx=PM_CTX;
+  DB.lancamentos.push({id:ctx.token,mes:data.slice(0,7),competenciaMensalidade:mk,
+    desc:'Mensalidade · '+a.nome,valor:centavosPagamento(valor)/100,cat:'mensalidade',alunoId:a.id,
+    modal:ehPersonalTipo(a.tipo)?'personal':'tenis',data,formaPagamento:metodo,pagamentoExato:true,
+    pedidoKey:ctx.pedidoKey||''});
+  atualizarSituacaoExata(a,mk);
+  logAct('Recebimento de mensalidade: '+a.nome+' · '+fmtRs(valor)+' · '+metodo+' · competência '+mk);
+  PM_CTX=null;closeModal('ov-pagamento-exato');persist();renderAll();
+  if(fichaId===a.id)renderFicha(a.id);
+  toast('Recebimento registrado · falta '+fmt(saldoMensalidade(a,mk)));
+}
+async function finalizarAvisosPagos(){
+  if(!hasCloud()||cloudPending||_conflitoNuvem)return;
+  const keys=[...new Set((DB.lancamentos||[]).filter(l=>l.pagamentoExato&&l.pedidoKey).map(l=>l.pedidoKey))];
+  for(const key of keys){
+    if(!/^[A-Za-z0-9_-]+$/.test(key))continue;
+    try{
+      await window.fbDB.ref('jvtenis/fila_pedidos/'+key).remove();
+      pedFila=pedFila.filter(x=>x.key!==key);updatePedBadge();renderPedList();
+    }catch(e){}
+  }
+}
+
+function marcarPago(id){registrarPagamento(id);}
 /* A virada de mês NÃO acontece mais sozinha.
    Antes, abrir o app no dia 1 convertia a sobra de todo mundo em reposição e
    vencia reposições de 4 meses, tudo de uma vez, sem perguntar. O saldo mudava
@@ -5360,8 +5537,8 @@ function descontarReposicoes(id){
   if(temFamilia(a)){toast('Plano família: combine o valor total e ajuste no cadastro do responsável.');return;}
   if(descontoDoMes(a)){toast(a.nome.split(' ')[0]+' já teve desconto de reposições este mês');return;}
   if(!ehAtivoAluno(a)){alert('🔒 '+a.nome+' está inativo — o desconto vale só para quem está pagando a mensalidade.');return;}
-  if(a.status!=='pendente'){
-    alert('🔒 A mensalidade deste mês de '+a.nome+' já foi '+(a.status==='pago'?'paga':'paga pela metade')+'.\n\nO desconto entra só em mensalidade em aberto. Faça depois de renovar o próximo mês.');
+  if(statusFinanceiro(a)!=='pendente'){
+    alert('🔒 A mensalidade deste mês de '+a.nome+' já foi '+(statusFinanceiro(a)==='pago'?'paga':'paga parcialmente')+'.\n\nO desconto entra só em mensalidade em aberto. Faça depois de renovar o próximo mês.');
     return;
   }
   const morreu=purgarReposVencidas(a);
@@ -5920,6 +6097,7 @@ function renderFechamento(){
    +'<div class="fx-sec">Valores</div>'
    +'<div class="fx-linha"><span>Mensalidade</span><span></span><span>'+fmtRs(D.cheia)+'</span></div>'
    +'<div class="fx-total"><span>Total</span><b>'+fmtRs(D.total)+'</b></div>'
+   +(situacaoMensalidade(a,mk).exato?'<div class="fx-linha"><span>Recebido</span><span></span><span>'+fmtRs(situacaoMensalidade(a,mk).recebido)+'</span></div><div class="fx-total"><span>Saldo a pagar</span><b>'+fmtRs(situacaoMensalidade(a,mk).falta)+'</b></div>':'')
    +(obs?'<div class="fx-obs">'+esc(obs)+'</div>':'')
    +'<div class="fx-sec">Pagamento</div>'
    +'<div class="fx-linha"><span>Vencimento</span><span></span><span>dia '+venc+'</span></div>'
@@ -5991,7 +6169,9 @@ function renderConfMes(){
 }
 function fcTexto(a,mk,D){
   return 'Olá '+a.nome.split(' ')[0]+'! 🎾 Segue o fechamento'+(D.membros&&D.membros.length>1?' da família':'')+' de '+fcRotuloMes(mk).toLowerCase()+': '
-    +fmtCred(D.feitas)+' aula(s), total '+fmtRs(D.total)+'. A imagem vai em anexo. Qualquer dúvida me chama!';
+    +fmtCred(D.feitas)+' aula(s), total '+fmtRs(D.total)+'. '
+    +(situacaoMensalidade(a,mk).exato?'Recebido: '+fmtRs(situacaoMensalidade(a,mk).recebido)+'. Saldo a pagar: '+fmtRs(situacaoMensalidade(a,mk).falta)+'. ':'')
+    +'A imagem vai em anexo. Qualquer dúvida me chama!';
 }
 async function _fechCanvas(){
   const el=document.querySelector('#fech-export .fx-card');
@@ -6102,6 +6282,7 @@ function alternarFechEnviado(id,mk){
    carimbo nao da para afirmar nada, e o aluno continua na lista. */
 function fechJaPago(a,mk){
   if(!a)return false;
+  if(a.pagamentosExatos&&a.pagamentosExatos[mk])return situacaoMensalidade(a,mk).status==='pago';
   if(mk===monthKey())return a.status==='pago';
   return a.ultimoPago===mk;
 }
@@ -6304,7 +6485,7 @@ function situacaoPag(a){
 }
 function seloPagamento(a){
   const s=situacaoPag(a);
-  const R={pago:'PAGO',parcial:'50%',pendente:'PENDENTE',inativo:'INATIVO'};
+  const R={pago:'PAGO',parcial:situacaoMensalidade(a).exato?'PARCIAL':'50%',pendente:'PENDENTE',inativo:'INATIVO'};
   return '<span class="al-selo '+s+'">'+R[s]+'</span>';
 }
 let filtroPag='todos';                     // todos · pendentes · pagos
@@ -6362,7 +6543,7 @@ function renderTotalAlunos(items){
   const el=document.getElementById('alunos-total');if(!el)return;
   const pagos=items.filter(a=>situacaoPag(a)==='pago').length;
   const pend=items.filter(a=>{if(ehDependenteFamilia(a))return false;const s=situacaoPag(a);return s==='pendente'||s==='parcial';});
-  const falta=pend.reduce((t,a)=>t+valorDoMes(a)*(a.status==='parcial'?.5:1),0);
+  const falta=pend.reduce((t,a)=>t+saldoMensalidade(a),0);
   el.innerHTML='<b>'+items.length+'</b> aluno'+(items.length===1?'':'s')+' na seleção'
     +' · <span class="ok">'+pagos+' pago'+(pagos===1?'':'s')+'</span>'
     +' · <span class="pend">'+pend.length+' pendente'+(pend.length===1?'':'s')+(pend.length?' ('+fmt(falta)+')':'')+'</span>';
@@ -6516,10 +6697,15 @@ function renderFicha(){
     +'<div class="fic-hero-l"><div class="fic-nome">'+(ehPersonalTipo(a.tipo)?'💪 ':'🎾 ')+esc(a.nome)+'</div>'
     +'<div class="fic-sub">'+[esc(a.tipo||''),plano+(temGrupo?' + '+a.planoGrupo+' em grupo':''),(dep?'Incluído no plano família':fmt(mens)+'/mês')].filter(Boolean).map(x=>'<span class="fic-nw">'+x+'</span>').join(' · ')+'</div>'
     +(horarioFixoTxt(a)?'<div class="fic-sub fic-hora">🕐 '+esc(horarioFixoTxt(a))+'</div>':'')+'</div>'
-    +'<span class="badge '+esc(status)+'">'+(status==='parcial'?'50%':esc(status))+'</span></div>'
+    +'<span class="badge '+esc(status)+'">'+(status==='parcial'?(situacaoMensalidade(a).exato?'Parcial':'50%'):esc(status))+'</span></div>'
     +(chips.length?'<div class="fic-chips">'+chips.join('')+'</div>':'');
 
   h+=fichaFamilia(a);
+  if(!dep&&situacaoMensalidade(a).exato){
+    const q=situacaoMensalidade(a);
+    h+='<div class="pm-ficha"><span>Recebido: <b>'+fmt(q.recebido)+'</b></span><span>Falta: <b>'+fmt(q.falta)+'</b></span>'
+      +(q.excedente?'<p>Recebido acima da mensalidade atual: '+fmt(q.excedente)+'. Confira o cadastro e os lançamentos.</p>':'')+'</div>';
+  }
   /* saldos */
   /* Barra de créditos igual à do app do aluno: quanto do pacote ainda resta. */
   const barra=(v,tot)=>{tot=Number(tot)||0;if(tot<=0||v<0)return '';
@@ -6535,9 +6721,9 @@ function renderFicha(){
 
   /* pendências: só o que pede decisão agora */
   let pend='';
-  if(devendo&&ativo)pend+='<div class="fic-pend"><p>💸 Mensalidade do mês '+(a.status==='parcial'?'paga pela metade':'em aberto')+' · <b>'+fmt(valorDoMes(a))+'</b>'+(descontoDoMes(a)?' <small>(com desconto)</small>':'')+'</p>'
-    +(a.tel?'<div class="fic-g2">'+fxBotao('ok',"marcarPago('"+id+"')",BI.money+'Marcar pago')+fxBotao('wa',"cobrar('"+id+"')",'💬 Cobrar no WhatsApp')+'</div>'
-      :fxBotao('ok',"marcarPago('"+id+"')",BI.money+'Marcar pago'))+'</div>';
+  if(devendo&&ativo)pend+='<div class="fic-pend"><p>💸 Mensalidade do mês '+(status==='parcial'?'paga parcialmente':'em aberto')+' · falta <b>'+fmt(saldoMensalidade(a))+'</b>'+(descontoDoMes(a)?' <small>(com desconto)</small>':'')+'</p>'
+    +(a.tel?'<div class="fic-g2">'+fxBotao('ok',"marcarPago('"+id+"')",BI.money+'Registrar pagamento')+fxBotao('wa',"cobrar('"+id+"')",'💬 Cobrar no WhatsApp')+'</div>'
+      :fxBotao('ok',"marcarPago('"+id+"')",BI.money+'Registrar pagamento'))+'</div>';
   if(difere)pend+='<div class="fic-pend"><p>📅 A agenda do mês dá <b>'+fmt(ag.valor)+'</b>; o cadastro diz <b>'+fmt(mens)+'</b>.</p><div class="fic-g2">'
     +fxBotao('ouro',"cobrarPelaAgenda('"+id+"')",'Cobrar '+fmt(ag.valor))
     +fxBotao('neutro',"manterValorAnotado('"+id+"')",'Manter '+fmt(mens))+'</div></div>';
@@ -6557,7 +6743,7 @@ function renderFicha(){
 
   /* dinheiro */
   let din='';
-  if(devendo&&!ativo)din+=fxBotao('ok',"marcarPago('"+id+"')",BI.money+'Marcar pago');
+  if(devendo&&!ativo)din+=fxBotao('ok',"marcarPago('"+id+"')",BI.money+'Registrar pagamento');
   if(agDif&&!difere)din+=fxBotao('neutro',"cobrarPelaAgenda('"+id+"')",'📅 Cobrar pela agenda ('+fmt(ag.valor)+')');
   if(loc)din+=fxBotao('neutro',"locacaoPaga('"+id+"')",BI.money+'Locação paga');
   /* Já renovado: mostra quando, em vez de convidar a renovar de novo. O toque
@@ -6735,7 +6921,9 @@ function saveLanc(){
 function delLanc(id){
   const morta=(DB.lancamentos||[]).find(l=>l.id===id);
   if(morta)marcarRemovida('lancamentos',morta);   // para sair da nuvem também
-  DB.lancamentos=DB.lancamentos.filter(l=>l.id!==id);persist();renderAll();
+  DB.lancamentos=DB.lancamentos.filter(l=>l.id!==id);
+  if(morta&&morta.alunoId)atualizarSituacaoExata(DB.alunos.find(a=>a.id===morta.alunoId),morta.competenciaMensalidade||morta.mes);
+  persist();renderAll();
 }
 /* ===== Editar um lançamento =====
    Corrigir um valor digitado errado custava apagar e lançar de novo — e apagar
@@ -6780,7 +6968,7 @@ function salvarLancEdit(){
   if(!desc){toast('Informe a descrição');return;}
   if(!isFinite(bruto)||bruto<=0){toast('Informe um valor maior que zero');return;}
   if(!/^\d{4}-\d{2}-\d{2}$/.test(data)){toast('Escolha uma data válida');return;}
-  const antes=l.mes;
+  const antes=l.mes,competenciaAntes=l.competenciaMensalidade||l.mes;
   l.desc=desc;
   l.valor=(cat==='despesa')?-Math.abs(bruto):Math.abs(bruto);
   l.data=data;
@@ -6788,6 +6976,7 @@ function salvarLancEdit(){
   l.cat=cat;
   if(cat==='despesa'){l.despCat=(document.getElementById('le-despcat').value||'').trim()||'Outros';}
   else delete l.despCat;
+  if(l.alunoId){const a=DB.alunos.find(a=>a.id===l.alunoId);atualizarSituacaoExata(a,competenciaAntes);atualizarSituacaoExata(a,l.competenciaMensalidade||l.mes);}
   logAct('Editar lançamento: '+desc);
   persist();renderAll();closeModal('ov-lanc-edit');
   toast(antes!==l.mes
@@ -6860,7 +7049,7 @@ function renderMovs(){
     }
     const saida=Number(l.valor)<0, nm=nomeDe(l);
     const vinc=(nm&&!(l.desc||'').includes(nm))?' · 🔗 '+esc(nm.split(' ')[0]):(nm?' · 🔗':'');
-    h+='<div class="cx-mv" onclick="abrirLancEdit(\''+argJs(l.id)+'\')"><div class="cx-mv-l"><b>'+esc(l.desc||'—')+'</b><span>'+esc(catDoLanc(l))+vinc+'</span></div>'
+    h+='<div class="cx-mv" onclick="abrirLancEdit(\''+argJs(l.id)+'\')"><div class="cx-mv-l"><b>'+esc(l.desc||'—')+'</b><span>'+esc(catDoLanc(l))+vinc+(l.formaPagamento?' · '+esc(l.formaPagamento):'')+(l.competenciaMensalidade?' · mensalidade '+esc(l.competenciaMensalidade):'')+'</span></div>'
       +'<b class="cx-mv-v '+(saida?'out':'in')+'">'+(saida?'− ':'+ ')+fmt(Math.abs(Number(l.valor)||0))+'</b></div>';
   });
   el.innerHTML=h;
@@ -7199,8 +7388,8 @@ function renderDash(){
   const movs=DB.lancamentos.filter(l=>l.mes===monthKey());
   const recebido=movs.filter(l=>l.valor>0).reduce((s,l)=>s+l.valor,0);
   // inativo não faz aula nem paga mensalidade: não entra no "A receber"
-  const pendAlunos=DB.alunos.filter(a=>!ehDependenteFamilia(a)&&a.status!=='pago'&&ehAtivoAluno(a));
-  const pendValor=pendAlunos.reduce((s,a)=>s+(a.status==='parcial'?valorDoMes(a)*0.5:valorDoMes(a)),0);
+  const pendAlunos=DB.alunos.filter(a=>!ehDependenteFamilia(a)&&statusFinanceiro(a)!=='pago'&&ehAtivoAluno(a));
+  const pendValor=pendAlunos.reduce((s,a)=>s+(saldoMensalidade(a)),0);
   const creditos=DB.alunos.reduce((s,a)=>s+a.creditos,0);
   const repos=DB.alunos.reduce((s,a)=>s+a.repos,0);
   const despesas=Math.abs(movs.filter(l=>Number(l.valor)<0).reduce((s,l)=>s+Number(l.valor||0),0));
@@ -7267,7 +7456,7 @@ function renderDash(){
       const r=rotuloVenc(d);
       return `
     <div class="pend-item ${a.status}">
-      <div><b>${esc(a.nome)}</b><br><span>${a.status==='parcial'?'Pagou 50% — falta '+fmt(valorDoMes(a)*0.5):'Pendente — '+fmt(valorDoMes(a))}</span>
+      <div><b>${esc(a.nome)}</b><br><span>${statusFinanceiro(a)==='parcial'?'Pagamento parcial — falta '+fmt(saldoMensalidade(a)):'Pendente — '+fmt(saldoMensalidade(a))}</span>
         <span class="venc-tag ${r.cls}">${r.txt}${d!==null?(' · dia '+((a.diaVenc)||10)):''}</span></div>
       ${a.tel?`<button class="btn btn-ghost" style="padding:7px 11px;font-size:11px" onclick="cobrar('${a.id}')">Cobrar 📲</button>`:''}
     </div>`;}).join('');
@@ -7286,10 +7475,10 @@ function renderConselhos(){
   const alunos=DB.alunos||[];
 
   // 1. mensalidades vencidas / vencendo
-  const pend=alunos.filter(a=>!ehDependenteFamilia(a)&&a.status!=='pago'&&ehAtivoAluno(a)&&(Number(a.mensalidade)||0)>0);
+  const pend=alunos.filter(a=>!ehDependenteFamilia(a)&&statusFinanceiro(a)!=='pago'&&ehAtivoAluno(a)&&(Number(a.mensalidade)||0)>0);
   const venc=pend.filter(a=>{const d=vencDe(a);return d!==null&&d<0;});
   if(venc.length){
-    const tot=venc.reduce((s,a)=>s+(a.status==='parcial'?valorDoMes(a)*0.5:valorDoMes(a)),0);
+    const tot=venc.reduce((s,a)=>s+(saldoMensalidade(a)),0);
     t.push(['bad','⏰','Mensalidade vencida',venc.length+' aluno(s) com mensalidade vencida somando '+fmt(tot)+': '+nomes(venc)+'. O botão "Cobrar 📲" na lista acima já abre o WhatsApp com a mensagem pronta.']);
   }
   const perto=pend.filter(a=>{const d=vencDe(a);return d!==null&&d>=0&&d<=5;});
@@ -7550,7 +7739,7 @@ function delCompromisso(id){
 function cobrar(id){
   let a=DB.alunos.find(x=>x.id===id);if(!a)return;
   a=pagadorFamilia(a);
-  const falta=a.status==='parcial'?valorDoMes(a)*0.5:valorDoMes(a);
+  const falta=saldoMensalidade(a);
   const msg=encodeURIComponent(`Olá ${a.nome.split(' ')[0]}! 🎾 Passando para lembrar da mensalidade${dependentesFamilia(a).length?' da família':''} de ${MESES[curMonth]}: ${fmtRs(falta)}. Qualquer dúvida é só chamar!`);
   window.open(`https://wa.me/${foneWhats(a.tel)}?text=${msg}`,'_blank');
 }
@@ -7593,7 +7782,7 @@ function renderFin(){
   const prevAg=DB.alunos.reduce((s,a)=>s+mensalidadeDaAgenda(a,curYear,curMonth).valor,0);
   const elPA=document.getElementById('f-prev-agenda');
   if(elPA)elPA.textContent=fmt(prevAg);
-  const inad=DB.alunos.filter(a=>!ehDependenteFamilia(a)&&a.status!=='pago'&&ehAtivoAluno(a)).reduce((s,a)=>s+(a.status==='parcial'?valorDoMes(a)*0.5:valorDoMes(a)),0);
+  const inad=DB.alunos.filter(a=>!ehDependenteFamilia(a)&&statusFinanceiro(a)!=='pago'&&ehAtivoAluno(a)).reduce((s,a)=>s+(saldoMensalidade(a)),0);
   document.getElementById('f-inad').textContent=fmt(inad);
   const mi=document.getElementById('meta-input');
   if(hideVals){mi.type='text';mi.value='••••';mi.readOnly=true;}
@@ -8559,7 +8748,7 @@ async function sairEApagar(){
   clearTimeout(saveTimer);
   let env=null;
   try{env=await subirPartes();}catch(e){env=null;}
-  if(!env){
+  if(!env||cloudPending){
     alert('⚠️ A nuvem não confirmou o envio agora.\n\nNada foi apagado. Confira a internet, espere aparecer "✓ salvo na nuvem" e tente de novo.');
     return;
   }
@@ -9036,7 +9225,7 @@ function achadosDoAluno(a){
       txt:'Agenda de '+a.nome+': '+g.total+' aula(s) dão '+fmt(g.valor)+', a mensalidade é '+fmt(Number(a.mensalidade)||0)+'.'});
     // DUPLICIDADE 1: mais de uma mensalidade lançada no mesmo mês
     const mens=mensalidadesDoMes(a);
-    if(mens.length>1)achados.push({tipo:'dup',a,
+    if(mens.length>1&&!(a.pagamentosExatos&&a.pagamentosExatos[monthKey()]))achados.push({tipo:'dup',a,
       txt:'COBRANÇA DUPLICADA: '+a.nome+' tem '+mens.length+' mensalidades lançadas neste mês ('+mens.map(l=>fmt(l.valor)).join(' + ')+'). Se foi engano, apague a repetida na Caixa.'});
     // DUPLICIDADE 2: renovação de créditos repetida no mês
     const rn=renovacoesDoMes(a);
@@ -9079,8 +9268,8 @@ function conferirNumeros(){
       txt:'LANÇAMENTO REPETIDO: '+g2.length+'x "'+(g2[0].desc||'')+'" de '+fmt(g2[0].valor)+' no mesmo dia ('+String(g2[0].data||'').split('-').reverse().join('/')+'). Confira na Caixa se não foi toque duplo.'});
   });
   // "a receber" do painel contra a soma aluno a aluno
-  const soma=(DB.alunos||[]).filter(a=>!ehDependenteFamilia(a)&&a.status!=='pago'&&ehAtivoAluno(a))
-    .reduce((s,a)=>s+(a.status==='parcial'?valorDoMes(a)*0.5:valorDoMes(a)),0);
+  const soma=(DB.alunos||[]).filter(a=>!ehDependenteFamilia(a)&&statusFinanceiro(a)!=='pago'&&ehAtivoAluno(a))
+    .reduce((s,a)=>s+(saldoMensalidade(a)),0);
   const cab='<div class="cons info"><h4><span>🔎</span>Esta tela não altera nada</h4>'
     +'<p>Ela só mostra. Nenhum botão aqui mexe em crédito, saldo ou aula — quando algo precisar ser acertado, você acerta no cadastro do aluno.</p></div>'
     +'<div class="cons info"><h4><span>💰</span>A receber</h4><p>Somando aluno por aluno: <b>'+fmt(soma)+'</b>. É o mesmo número que o painel mostra.</p></div>'
@@ -9125,6 +9314,7 @@ function abrirFerr(box,fn){
 function relPagoNoMes(a,mk){
   const alvo='Mensalidade · '+a.nome;
   const ls=(DB.lancamentos||[]).filter(l=>l.mes===mk&&l.cat==='mensalidade'&&Number(l.valor)>0&&(l.alunoId===a.id||l.desc===alvo));
+  if(a.pagamentosExatos&&a.pagamentosExatos[mk])return {valor:situacaoMensalidade(a,mk).recebido,n:pagamentosMensalidade(a,mk).length};
   return {valor:ls.reduce((t,l)=>t+(Number(l.valor)||0),0),n:ls.length};
 }
 function relMes(a,mk){
@@ -9169,7 +9359,7 @@ function relAchados(a,M,atual,mesAtual){
   M.forEach(m=>{
     const passado=m.mk<mesAtual;
     if(m.nRenov>1)out.push(nomeM(m.mk)+': créditos renovados '+m.nRenov+' vezes no mesmo mês (somam '+fmtCred(m.pagas)+').');
-    if(m.nPag>1)out.push(nomeM(m.mk)+': '+m.nPag+' mensalidades lançadas no mesmo mês ('+fmtRs(m.pago)+').');
+    if(m.nPag>1&&!(a.pagamentosExatos&&a.pagamentosExatos[m.mk]))out.push(nomeM(m.mk)+': '+m.nPag+' mensalidades lançadas no mesmo mês ('+fmtRs(m.pago)+').');
     if(m.pago>0&&!m.nRenov&&((Number(a.plano)||0)+(Number(a.planoGrupo)||0))>0)out.push(nomeM(m.mk)+': pagou '+fmtRs(m.pago)+' mas não há renovação de créditos registrada no mês.');
     if(!ehDependenteFamilia(a)&&passado&&m.nRenov&&!m.pago&&ehAtivoAluno(a))out.push(nomeM(m.mk)+': créditos renovados, mas nenhuma mensalidade lançada no mês.');
     if(passado&&m.pagas>0&&m.feitas+m.faltas>m.pagas)out.push(nomeM(m.mk)+': fez '+fmtCred(m.feitas+m.faltas)+' aula(s) (com faltas) para '+fmtCred(m.pagas)+' paga(s) — '+fmtCred(m.feitas+m.faltas-m.pagas)+' além do pacote: foram cobradas como extra?');
@@ -9285,7 +9475,7 @@ async function gerarRelatorioPDF(){
     tabela(cols,R.alunos.map(x=>{const m=x.M[k];
       const cel=[x.a.nome+(x.ativo?'':' (inativo)'),m.pago?fmtRs(m.pago)+(m.nPag>1?' ('+m.nPag+'x)':''):'-',n(m.pagas)+(m.nRenov>1?' ('+m.nRenov+'x)':''),n(m.feitas),n(m.semConf),
         n(m.repFeitas),n(m.faltas),n(m.avisados),n(m.ganhas),n(m.usadas),n(m.vencidas),m.pagas?(m.saldo>0?'+':'')+fmtCred(m.saldo):'-'];
-      const cor=[];cor[11]=m.pagas?(m.saldo<0?VERM:VERDE2):null;if(m.nPag>1)cor[1]=VERM;if(m.nRenov>1)cor[2]=VERM;
+      const cor=[];cor[11]=m.pagas?(m.saldo<0?VERM:VERDE2):null;if(m.nPag>1&&!(x.a.pagamentosExatos&&x.a.pagamentosExatos[m.mk]))cor[1]=VERM;if(m.nRenov>1)cor[2]=VERM;
       if(mk===R.mesAtual){cel.splice(4,0,n(m.aFazer));cor.splice(4,0,null);}
       return {cel,cor,neg:[true]};
     }),tit,sub);
@@ -9298,7 +9488,7 @@ async function gerarRelatorioPDF(){
      {t:'Reposições',w:16},{t:'pelo extrato',w:16},{t:'Válidas',w:14},{t:'Vencem no fim do mês',w:20},{t:'Sem data (antigas)',w:18},{t:'Confere',w:15}],
      R.alunos.map(x=>{const a=x.a,t=x.atual;const ok=t.extCred<=t.creditos&&t.extRepos<=t.repos&&!t.vencidas;
        const p=(Number(a.plano)||0),pg=(Number(a.planoGrupo)||0);
-       return {cel:[a.nome+(x.ativo?'':' (inativo)'),p||pg?(fmtCred(p)+(pg?'+'+fmtCred(pg)+'g':'')):'-',fmtRs(Number(a.mensalidade)||0),x.ativo?(a.status==='pago'?'pago':(a.status==='parcial'?'50%':'pendente')):'inativo',
+       return {cel:[a.nome+(x.ativo?'':' (inativo)'),p||pg?(fmtCred(p)+(pg?'+'+fmtCred(pg)+'g':'')):'-',fmtRs(Number(a.mensalidade)||0),x.ativo?(statusFinanceiro(a)==='pago'?'pago':(statusFinanceiro(a)==='parcial'?(situacaoMensalidade(a).exato?'parcial':'50%'):'pendente')):'inativo',
          fmtCred(t.creditos),fmtCred(t.extCred),t.grupo||pg?fmtCred(t.grupo):'-',fmtCred(t.repos),fmtCred(t.extRepos),fmtCred(t.validas),n(t.vencendo),n(t.semData),ok?'sim':'conferir'],
          cor:{4:t.creditos<0?VERM:null,12:ok?VERDE2:VERM},neg:[true,false,false,false,true,false,false,true]};
      }),tit,sub);
@@ -10664,7 +10854,7 @@ function confirmarAulaWa(id,hora){
   window.addEventListener('scroll',()=>{requestAnimationFrame(aplica);},{passive:true});
 })();
 function renderAll(){
-  carregarAvatarGestao();
+  carregarAvatarGestao();renderProtecaoDados();
   document.getElementById('month-label').textContent=MESES[curMonth]+' '+curYear;
   const safe=(fn,nome)=>{try{fn();}catch(e){console.warn('Render '+nome+' falhou:',e);}};
   if(document.getElementById('pg-fech')?.classList.contains('on'))safe(abrirFechamento,'fechamento');
