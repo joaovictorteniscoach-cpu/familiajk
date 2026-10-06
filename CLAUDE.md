@@ -52,7 +52,7 @@ texto vindo de aluno/nuvem; dentro de `onclick="f('…')"` use `argJs()` (escapa
 depois HTML — só `esc()` não basta, o navegador desfaz o `&#39;` antes de rodar).
 Nada de nome real de aluno ou compromisso pessoal no código: ele é público (Pages + GitHub).
 
-## Decisões em vigor (2026-10-02)
+## Decisões em vigor (atualizadas em 2026-10-06)
 - Gestão fica no GitHub Pages, mesma origem do app do aluno: risco aceito pelo João para
   não depender da cota do Netlify. Não reabrir sem ele pedir.
 - Cópia legada `jvtenis-app-aluno` vai sem `mensalidade`/`valorAula` (`valoresOcultos`).

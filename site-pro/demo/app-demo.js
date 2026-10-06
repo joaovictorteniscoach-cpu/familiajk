@@ -8815,7 +8815,7 @@ async function sairEApagar(){
    Este teste faz, de dentro do app do João, o que cada um faz de verdade —
    inclusive o aluno. Para entrar como aluno sem derrubar a sessão do João, usa
    uma SEGUNDA instância do Firebase, com autenticação própria, apagada no fim. */
-const TESTE_PASSOS=9;
+const TESTE_PASSOS=10;
 function _tl(ok,titulo,detalhe,acao){
   const cor=ok===true?'#2E7D32':ok===false?'#C0392B':'#8A7E6B';
   const ic=ok===true?'✅':ok===false?'❌':'⏳';
@@ -8831,7 +8831,7 @@ async function testarConexao(){
   const r=[];
   const pinta=()=>{el.innerHTML='<div style="border:1px solid var(--border);border-radius:12px;padding:4px 12px 10px;margin-top:8px">'
     +r.join('')+'</div>';};
-  r.push(_tl(null,'testando…','são 7 passos, alguns falam com a nuvem'));pinta();
+  r.push(_tl(null,'testando…','são 10 verificações, algumas falam com a nuvem'));pinta();
   const feito=[];
   const passo=(ok,t,d,a)=>{r[r.length-1]=_tl(ok,t,d,a);feito.push(ok===true);r.push(_tl(null,'testando…',''));pinta();};
 
