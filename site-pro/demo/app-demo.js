@@ -1125,10 +1125,11 @@ async function load(){
   // nuvem, a cópia local fica visível e o envio é bloqueado para conferência.
   let travadoAoAbrir=false;
   const checkpoint=metaProtecao().base||'';
+  const pendenteAoAbrir=!!(localRaw&&salvouSemNuvem());
   let conflitoAoAbrir=false;
-  if(localRaw&&cloudRaw&&salvouSemNuvem()){
+  if(pendenteAoAbrir&&cloudRaw){
     conflitoAoAbrir=!checkpoint||!_basePartesLida||checkpoint!==_basePartesAssinatura;
-    if(conflitoAoAbrir){chosen=localRaw;rejeitada=null;travadoAoAbrir=true;}
+    chosen=localRaw;rejeitada=null;travadoAoAbrir=conflitoAoAbrir;
   }
   /* A cópia mais recente pode ser a MENOR: foi assim que sumiram lançamentos.
      Quando a escolhida tem menos dado que a descartada, ele decide — e até
@@ -1235,7 +1236,7 @@ async function load(){
   if(_semDados){try{telaSemNuvem();}catch(e){}}   // sem dado e sem nuvem: não abre
   else{try{conferirSemente();}catch(e){}}         // agenda com cara de semente: avisa
   if(travado){setSave(_abriuSemConferir?'⚠ abriu sem falar com a nuvem ⓘ':'⚠ confira os dados antes de salvar','err');}
-  else if(dirty||!chosen||(nuvemRespondeu&&!cloudRaw&&localRaw)||(localRaw&&cloudRaw&&tsOf(localRaw)!==tsOf(cloudRaw)))persist();else publish();
+  else if(dirty||!chosen||pendenteAoAbrir||(nuvemRespondeu&&!cloudRaw&&localRaw)||(localRaw&&cloudRaw&&tsOf(localRaw)!==tsOf(cloudRaw)))persist();else publish();
   renderAll();
   try{HIST.prev=snapDB();}catch(e){}
   syncRequests(true);
@@ -1672,7 +1673,7 @@ function persist(){
   if(!window._espacoAberto){console.warn('persist() ignorado: o espaço ainda não foi decidido');return;}
   histOnPersist();
   esquecerCachePersonal();   // trocar o tipo de um aluno tem de valer na hora
-  DB.savedAt=Date.now();
+  DB.savedAt=Math.max(Date.now(),Number(DB.savedAt||0)+1,Number(_basePartes&&_basePartes.carimbos&&_basePartes.carimbos.savedAt||0)+1);
   const json=JSON.stringify(DB);
   // 1) salva IMEDIATAMENTE no aparelho (nunca perde nada)
   const okLocal=lsSet(KEY,json);
@@ -5243,7 +5244,7 @@ function prepararPagamentoMes(){
   inp.value=(q.exato?q.recebido:(anteriores>0?anteriores:q.recebido)).toFixed(2);inp.readOnly=q.exato;
   document.getElementById('pm-anterior-nota').textContent=q.exato
     ?'Somado pelos recebimentos registrados. Para corrigir um recebimento, edite o lançamento na Caixa.'
-    :'Confira o que já foi recebido antes deste registro. Este valor anterior não cria uma receita nova na Caixa.';
+    :'Confira o que já foi recebido antes deste registro.'+(anteriores>0?' A Caixa já tem '+fmt(anteriores)+' nesta competência.':'')+' Este valor anterior não cria uma receita nova na Caixa.';
   document.getElementById('pm-valor').value=Math.max(0,q.total-Number(inp.value)).toFixed(2);
   resumoPagamentoExato();
 }
@@ -5271,7 +5272,7 @@ function salvarPagamentoExato(){
   if(centavosPagamento(base)+centavosPagamento(valor)>centavosPagamento(q.total)){toast('O pagamento excede o saldo restante. Confira o valor e a mensalidade.');return;}
   const metodo=document.getElementById('pm-metodo').value;
   if(!['Pix','Dinheiro','Cartão','Transferência','Outro'].includes(metodo)){toast('Escolha a forma de pagamento.');return;}
-  if(!confirm('Registrar '+fmt(valor)+' de '+a.nome+'?\n\nCompetência: '+mk+' · recebido em '+br(data)+' · '+metodo
+  if(!confirm('Registrar '+fmt(valor)+' de '+a.nome+'?\n\nCompetência: '+mk+' · recebido em '+data.split('-').reverse().join('/')+' · '+metodo
       +'\nSaldo restante: '+fmt(Math.max(0,q.total-base-valor))+'\n\nAulas, créditos e reposições permanecem como estão.'))return;
   guardarVersoes(JSON.stringify(DB));
   if(!a.pagamentosExatos)a.pagamentosExatos={};
@@ -6828,6 +6829,7 @@ function lancarNovo(rec,txt){
   if(!dataValida(rec.data))rec.data=dKey(new Date());
   rec.mes=rec.data.slice(0,7);
   DB.lancamentos.push(rec);
+  if(rec.cat==='mensalidade'&&rec.alunoId)atualizarSituacaoExata(DB.alunos.find(a=>a.id===rec.alunoId),rec.competenciaMensalidade||rec.mes);
   persist();renderAll();
   const quando=rec.data===dKey(new Date())?'':' em '+diaCurto(rec.data);
   toastDesfazer(txt+quando,()=>desfazerLancNovo(rec.id));
@@ -6914,6 +6916,7 @@ function saveLanc(){
   const data=(document.getElementById('l-data')||{}).value||cxDiaLanc();
   if(!dataValida(data)){toast('Escolha uma data válida');return;}
   const rec={desc,valor,cat:document.getElementById('l-cat').value,data};
+  if(a&&rec.cat==='mensalidade'&&ehDependenteFamilia(a)){toast('Mensalidade da família: vincule o recebimento ao responsável.');return;}
   if(a){rec.alunoId=a.id;if(ehPersonalTipo(a.tipo))rec.modal='personal';}
   closeModal('ov-lanc');
   lancarNovo(rec,'Receita lançada'+(a?(' · '+a.nome.split(' ')[0]):'')+' · '+fmt(valor));
