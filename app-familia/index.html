@@ -478,7 +478,7 @@ table.tbl.livre td:last-child{width:42%}
     <div class="chartbox" id="pat-chartbox" style="display:none"><canvas id="patChart"></canvas></div>
     <div class="scroll" style="margin-top:16px"><table class="tbl" id="tbl-pat-hist"></table></div>
     <button class="addbtn" onclick="snapPatrimonio()">📸 fechar o mês</button>
-    <p class="note">O app não sabe recalcular o passado — os valores das contas são sempre os de hoje. Por isso a evolução é feita de fotos: uma por mês.</p>
+    <p class="note">As contas respeitam a vigência de cada mês. O patrimônio é guardado em fotos mensais; atualizar os saldos atuais não altera as fotos anteriores.</p>
   </div>
 </section>
 
@@ -683,7 +683,7 @@ table.tbl.livre td:last-child{width:42%}
 
 <section data-tab="i-aportes">
   <div class="card">
-    <h2>Aportes</h2><div class="aporte-summary" id="aportes-resumo"></div><p class="note">Cada aporte entra no total investido. Marque “Já na carteira” quando esse dinheiro estiver incluído nos saldos dos ativos, para contar uma única vez.</p><div class="sub">Registre cada depósito — e quem aportou.</div>
+    <h2>Aportes</h2><div class="aporte-summary" id="aportes-resumo"></div><p class="note">Cada aporte entra no total investido. Marque “Já na carteira” quando esse dinheiro estiver incluído nos saldos dos ativos, para contar uma única vez.</p><div class="sub">Registre quem aportou, a conta de destino e o ativo ou produto. Um aporte com destino pendente continua no total.</div><p class="note">O extrato comprova a transferência, mas pode não identificar o ativo comprado. Preencha o destino quando aparecer “não informado”. O registro do aporte não atualiza automaticamente os saldos dos ativos.</p>
     <div class="scroll"><table class="tbl" id="tbl-aportes"></table></div>
     <button class="addbtn" onclick="addAporte()">+ novo aporte</button>
     <button class="addbtn" onclick="aportesDoExtrato()">↓ trazer os aportes do extrato</button>
@@ -1027,6 +1027,7 @@ table.tbl.livre td:last-child{width:42%}
       <button class="iconbtn" onclick="closeDados();importJSON()">📂 Importar um backup</button>
       <button class="iconbtn" onclick="closeDados();resetData()">🧪 Voltar aos dados de exemplo</button>
       <button class="iconbtn" onclick="irPara('nuvem');closeDados()">☁️ Sincronizar na nuvem</button>
+      <button class="iconbtn" onclick="showHistoryRecovery()">📚 Recuperar histórico antigo sem substituir dados atuais</button>
       <button class="iconbtn" onclick="abrirVersoes()">🕘 Versões guardadas (voltar no tempo)</button>
       <button class="iconbtn" onclick="closeDados()">Fechar</button>
     </div>
@@ -1271,6 +1272,23 @@ function pagoSet(id,val,key){if(!id)return;const k=key||selMonthKey();D.contas.p
 /* alterna o pago pelo botão da 1ª coluna e redesenha as contas do mês */
 function togglePago(id){pagoSet(id,!pagoGet(id));renderContasMonth();}
 
+/* Vigência mensal: a base legada fica intacta; alterações começam no mês escolhido. */
+const MONTHLY_BILLS=['casa','joao','esposa','empresa','empresaKS','cartoes'];
+function monthlyValue(row,key=selMonthKey()){
+  if(row._inicio&&key<row._inicio)return null;
+  const out={...row};delete out._mudancas;
+  Object.keys(row._mudancas||{}).filter(k=>/^\d{4}-\d{2}$/.test(k)&&k<=key).sort().forEach(k=>Object.assign(out,row._mudancas[k]));
+  return out.excluido?null:out;
+}
+function billsForMonth(k,key=selMonthKey()){return (D.contas[k]||[]).map(b=>monthlyValue(b,key)).filter(Boolean);}
+function setBill(k,i,field,value){
+  const b=D.contas[k]?.[i];if(!b||!monthlyValue(b))return;
+  b._mudancas=b._mudancas||{};const changes=b._mudancas[selMonthKey()]=b._mudancas[selMonthKey()]||{};
+  changes[field]=value;save();
+}
+function rendaMes(){return monthlyValue(D.contas.renda)||{};}
+function setIncomeFields(){for(const k of ['joao','esposa']){const e=document.getElementById('rd-'+k);if(e)e.value=rendaMes()[k]??'';}}
+
 /* ---------- migração ---------- */
 const SNAPSHOT_JOAO_20261001={
   cambio:5.1877,
@@ -1433,6 +1451,7 @@ function migrate(o){
   if(!Array.isArray(out.lixeira))out.lixeira=[];
   out.lixeira=out.lixeira.filter(e=>e&&TRASH_PATHS[e.path]&&Array.isArray(e.items)&&e.items.every(x=>x&&typeof x==='object')).slice(-20);
   if(!out.nomes)out.nomes=structuredClone(DEFAULT.nomes);
+  out.invest.aportes.forEach(a=>{if(a.pessoa===out.nomes.preta||a.pessoa==='Kassiana')a.pessoa='Esposa';else if(a.pessoa===out.nomes.preto)a.pessoa='João';});
   if(!out.cloud)out.cloud={url:"",on:false};
   if(out.lastBackup===undefined)out.lastBackup=null;
   if(!out.mode)out.mode="contas";
@@ -1515,12 +1534,12 @@ function globAplUSD(){return D.invest.global.reduce((s,g)=>s+(+g.apl||0),0)}
 function pessoaSum(p){return D.invest.aportes.filter(a=>a.pessoa===p).reduce((s,a)=>s+(+a.valor||0),0)}
 
 /* ---------- somas CONTAS ---------- */
-function casaTotal(){return D.contas.casa.reduce((s,b)=>s+(+b.valor||0),0)}
-function casaPretaTotal(){return D.contas.casa.reduce((s,b)=>s+(+b.preta||0),0)}
-function casaPretoTotal(){return D.contas.casa.reduce((s,b)=>s+(+b.preto||0),0)}
-function pessTotal(k){return D.contas[k].reduce((s,b)=>s+(+b.valor||0),0)}
-function cartaoTotal(){return D.contas.cartoes.reduce((s,c)=>s+(+c.valor||0),0)}
-function cartaoLimite(){return D.contas.cartoes.reduce((s,c)=>s+(+c.limite||0),0)}
+function casaTotal(){return billsForMonth('casa').reduce((s,b)=>s+(+b.valor||0),0)}
+function casaPretaTotal(){return billsForMonth('casa').reduce((s,b)=>s+(+b.preta||0),0)}
+function casaPretoTotal(){return billsForMonth('casa').reduce((s,b)=>s+(+b.preto||0),0)}
+function pessTotal(k){return billsForMonth(k).reduce((s,b)=>s+(+b.valor||0),0)}
+function cartaoTotal(){return billsForMonth('cartoes').reduce((s,c)=>s+(+c.valor||0),0)}
+function cartaoLimite(){return billsForMonth('cartoes').reduce((s,c)=>s+(+c.limite||0),0)}
 function recebidoKey(r){
   // Sem ano explícito não há como atribuir a entrada a um exercício com segurança.
   const raw=String(r.data||'').trim();
@@ -1532,15 +1551,15 @@ function recebidoKey(r){
 }
 function recebidoMes(){return D.contas.recebidos.filter(r=>recebidoKey(r)===selMonthKey()).reduce((s,r)=>s+(+r.valor||0),0)}
 function contasMes(){return casaTotal()+pessTotal('joao')+pessTotal('esposa')}
-function pagoCasa(){return D.contas.casa.filter(b=>pagoGet(b.id)).reduce((s,b)=>s+(+b.valor||0),0)}
-function pagoPess(k){return D.contas[k].filter(b=>pagoGet(b.id)).reduce((s,b)=>s+(+b.valor||0),0)}
+function pagoCasa(){return billsForMonth('casa').filter(b=>pagoGet(b.id)).reduce((s,b)=>s+(+b.valor||0),0)}
+function pagoPess(k){return billsForMonth(k).filter(b=>pagoGet(b.id)).reduce((s,b)=>s+(+b.valor||0),0)}
 function pagoMes(){return pagoCasa()+pagoPess('joao')+pagoPess('esposa')}
 
 /* ---------- somas PATRIMÔNIO ---------- */
 function bensTotal(){return (D.patrimonio.bens||[]).reduce((s,b)=>s+(+b.valor||0),0)}
 function dividasTotal(){return (D.patrimonio.dividas||[]).reduce((s,d)=>s+(+d.saldo||0),0)}
 /* o que a família deve: financiamentos + a fatura de cartão em aberto */
-function cartaoAberto(){return D.contas.cartoes.filter(c=>!pagoGet(c.id)).reduce((s,c)=>s+(+c.valor||0),0)}
+function cartaoAberto(){return billsForMonth('cartoes').filter(c=>!pagoGet(c.id)).reduce((s,c)=>s+(+c.valor||0),0)}
 function passivoTotal(){return dividasTotal()+cartaoAberto()}
 /* o que a família tem: investimentos + bens */
 function ativoTotal(){return invTotal()+bensTotal()}
@@ -1590,11 +1609,15 @@ function commitTrash(next){
 function deleteItem(path,index){
   const next=structuredClone(D),list=trashList(next,path);if(!list||!list.length)return false;
   if(index!=null&&(!Number.isInteger(index)||index<0||index>=list.length))return false;
-  const items=index==null?list.splice(0):list.splice(index,1);
+  const key=path.split('.')[1],monthly=path.startsWith('contas.')&&MONTHLY_BILLS.includes(key),month=selMonthKey();
+  const selected=index==null?list:[list[index]];
+  const items=monthly?selected.filter(b=>monthlyValue(b,month)).map(b=>structuredClone(b)):(index==null?list.splice(0):list.splice(index,1));
+  if(!items.length)return false;
+  if(monthly)selected.forEach(b=>{if(!monthlyValue(b,month))return;b._mudancas=b._mudancas||{};b._mudancas[month]={...(b._mudancas[month]||{}),excluido:true};});
   items.forEach(x=>{if(!x.id&&!x._jkId)x._jkId=uid();});
-  next.lixeira=(next.lixeira||[]).concat({id:uid(),at:Date.now(),path,index:index||0,items}).slice(-20);
+  next.lixeira=(next.lixeira||[]).concat({id:uid(),at:Date.now(),path,index:index||0,items,...(monthly?{monthly:true,month}:{})}).slice(-20);
   if(!commitTrash(next))return false;
-  set('undo-message',items.length+' item(ns) movido(s) para a lixeira.');document.getElementById('undo-toast').hidden=false;return true;
+  set('undo-message',monthly?'Conta removida de '+month+' em diante. Meses anteriores preservados.':items.length+' item(ns) movido(s) para a lixeira.');document.getElementById('undo-toast').hidden=false;return true;
 }
 function renderTrash(){
   const box=document.getElementById('trash-list');if(!box)return;
@@ -1603,7 +1626,7 @@ function renderTrash(){
   if(!entries.length){box.innerHTML='<p class="note">Nenhuma exclusão recente.</p>';return;}
   entries.slice().reverse().forEach(e=>{
     const row=document.createElement('div');row.className='trash-row';
-    row.innerHTML='<div><strong>'+esc(TRASH_PATHS[e.path])+'</strong><p>'+e.items.length+' item(ns) · '+esc(new Date(e.at).toLocaleString('pt-BR'))+'</p><p>'+esc(e.items.slice(0,3).map(x=>x.nome||x.desc||x.ativo||x.mes||x.ano||'Item').join(' · '))+'</p></div>';
+    row.innerHTML='<div><strong>'+esc(TRASH_PATHS[e.path])+'</strong><p>'+e.items.length+' item(ns) · '+esc(new Date(e.at).toLocaleString('pt-BR'))+(e.monthly?' · a partir de '+esc(e.month):'')+'</p><p>'+esc(e.items.slice(0,3).map(x=>x.nome||x.desc||x.ativo||x.mes||x.ano||'Item').join(' · '))+'</p></div>';
     const button=document.createElement('button');button.className='iconbtn';button.textContent='Restaurar';button.onclick=()=>restoreTrash(e.id);row.appendChild(button);box.appendChild(row);
   });
 }
@@ -1613,6 +1636,12 @@ function restoreTrash(id){
   const next=structuredClone(D),i=next.lixeira.findIndex(e=>e.id===id);if(i<0)return false;
   const entry=next.lixeira[i],list=trashList(next,entry.path);if(!list)return false;
   const identity=x=>x.id||x._jkId||x._k;
+  if(entry.monthly){
+    entry.items.forEach(old=>{const row=list.find(b=>b.id===old.id);if(!row)return;
+      const changes=row._mudancas?.[entry.month];if(!changes)return;
+      if(old._mudancas?.[entry.month]?.excluido===undefined)delete changes.excluido;else changes.excluido=old._mudancas[entry.month].excluido;
+    });next.lixeira.splice(i,1);if(!commitTrash(next))return false;document.getElementById('undo-toast').hidden=true;return true;
+  }
   const items=entry.items.filter(x=>!list.some(y=>identity(x)&&identity(y)===identity(x)));
   list.splice(Math.min(entry.index,list.length),0,...items);next.lixeira.splice(i,1);
   if(!commitTrash(next))return false;
@@ -1727,50 +1756,54 @@ function switchTab(id,btn){
 }
 
 /* ===================== CONTAS — render ===================== */
+function monthlyNotes(){document.querySelectorAll('section[data-tab="c-casa"] .card,section[data-tab="c-joao"] .card,section[data-tab="c-esposa"] .card,section[data-tab="c-empresa"] .card,section[data-tab="c-cartao"] .card').forEach(card=>{
+  if(!card.querySelector('.monthly-note')){const p=document.createElement('p');p.className='note monthly-note';p.textContent='Edições e exclusões valem do mês selecionado em diante. Os meses anteriores são preservados.';card.querySelector('h2')?.after(p);}
+});}
+
 function renderCasa(){
-  const np=D.nomes;
+  monthlyNotes();const np=D.nomes;
   let h=`<tr><th class="paycell">Pago</th><th>Conta</th><th class="center">Venc.</th><th>${esc(np.preta)} (R$)</th><th>${esc(np.preto)} (R$)</th><th>Valor (R$)</th><th></th></tr>`;
-  D.contas.casa.forEach((b,i)=>{const pg=pagoGet(b.id);h+=`<tr class="${pg?'rowpaid':''}">
+  D.contas.casa.forEach((original,i)=>{const b=monthlyValue(original);if(!b)return;const pg=pagoGet(b.id);h+=`<tr class="${pg?'rowpaid':''}">
     <td class="paycell"><button class="paybtn${pg?' on':''}" aria-pressed="${pg}" title="${pg?'Pago — tocar para desmarcar':'Marcar como pago'}" onclick="togglePago(D.contas.casa[${i}].id)">${pg?'✓':''}</button></td>
-    <td class="name"><input class="cell txt" value="${esc(b.nome)}" oninput="D.contas.casa[${i}].nome=this.value;save()"></td>
-    <td class="center"><input class="cell sm" style="text-align:center" value="${esc(b.venc)}" oninput="D.contas.casa[${i}].venc=this.value;refreshCon()"></td>
-    <td><input class="cell" type="number" step="0.01" value="${b.preta}" oninput="D.contas.casa[${i}].preta=+this.value;refreshCasa()"></td>
-    <td><input class="cell" type="number" step="0.01" value="${b.preto}" oninput="D.contas.casa[${i}].preto=+this.value;refreshCasa()"></td>
-    <td><input class="cell" type="number" step="0.01" value="${b.valor}" oninput="D.contas.casa[${i}].valor=+this.value;refreshCon()"></td>
+    <td class="name"><input class="cell txt" value="${esc(b.nome)}" oninput="setBill('casa',${i},'nome',this.value);save()"></td>
+    <td class="center"><input class="cell sm" style="text-align:center" value="${esc(b.venc)}" oninput="setBill('casa',${i},'venc',this.value);refreshCon()"></td>
+    <td><input class="cell" type="number" step="0.01" value="${b.preta}" oninput="setBill('casa',${i},'preta',+this.value);refreshCasa()"></td>
+    <td><input class="cell" type="number" step="0.01" value="${b.preto}" oninput="setBill('casa',${i},'preto',+this.value);refreshCasa()"></td>
+    <td><input class="cell" type="number" step="0.01" value="${b.valor}" oninput="setBill('casa',${i},'valor',+this.value);refreshCon()"></td>
     <td style="white-space:nowrap"><button class="iconbtn splitbtn" title="Dividir só esta conta no meio (50/50)" onclick="splitUm(${i})">½</button><button class="iconbtn" onclick="deleteItem('contas.casa',${i})">×</button></td></tr>`;});
   h+=`<tr class="sumrow"><td class="paycell"></td><td>Subtotal casa</td><td></td><td id="casa-preta"></td><td id="casa-preto"></td><td id="casa-tot"></td><td></td></tr>`;
   document.getElementById('tbl-casa').innerHTML=h;refreshCasa();tuneInputs();
 }
 function refreshCasa(){set('casa-preta',brl(casaPretaTotal()));set('casa-preto',brl(casaPretoTotal()));set('casa-tot',brl(casaTotal()));save();}
-function addCasa(){D.contas.casa.push({id:uid(),nome:"Nova conta",valor:0,venc:"",preta:0,preto:0,pago:false});renderCasa();refreshCon()}
+function addCasa(){D.contas.casa.push({id:uid(),_inicio:selMonthKey(),nome:"Nova conta",valor:0,venc:"",preta:0,preto:0,pago:false});renderCasa();refreshCon()}
 /* divide 50/50 uma conta só; a sobra de centavo vai para "preto", como no splitMeio */
-function splitUm(i){const b=D.contas.casa[i];if(!b)return;
+function splitUm(i){const b=monthlyValue(D.contas.casa[i]||{});if(!b)return;
   const v=+b.valor||0,m=Math.round(v/2*100)/100;
-  b.preta=m;b.preto=Math.round((v-m)*100)/100;
+  setBill('casa',i,'preta',m);setBill('casa',i,'preto',Math.round((v-m)*100)/100);
   renderCasa();refreshCon();}
-function splitMeio(){D.contas.casa.forEach(b=>{const v=+b.valor||0,m=Math.round(v/2*100)/100;b.preta=m;b.preto=Math.round((v-m)*100)/100;});renderCasa();refreshCon();}
+function splitMeio(){D.contas.casa.forEach((b,i)=>{if(monthlyValue(b))splitUm(i);});renderCasa();refreshCon();}
 
 function renderPess(k,tid){
   let h='<tr><th class="paycell">Pago</th><th>Conta</th><th class="center">Venc.</th><th>Valor (R$)</th><th></th></tr>';
-  D.contas[k].forEach((b,i)=>{const pg=pagoGet(b.id);h+=`<tr class="${pg?'rowpaid':''}">
+  D.contas[k].forEach((original,i)=>{const b=monthlyValue(original);if(!b)return;const pg=pagoGet(b.id);h+=`<tr class="${pg?'rowpaid':''}">
     <td class="paycell"><button class="paybtn${pg?' on':''}" aria-pressed="${pg}" title="${pg?'Pago — tocar para desmarcar':'Marcar como pago'}" onclick="togglePago(D.contas.${k}[${i}].id)">${pg?'✓':''}</button></td>
-    <td class="name"><input class="cell txt" value="${esc(b.nome)}" oninput="D.contas.${k}[${i}].nome=this.value;save()"></td>
-    <td class="center"><input class="cell sm" style="text-align:center" value="${esc(b.venc)}" oninput="D.contas.${k}[${i}].venc=this.value;refreshCon()"></td>
-    <td><input class="cell" type="number" step="0.01" value="${b.valor}" oninput="D.contas.${k}[${i}].valor=+this.value;refreshCon()"></td>
+    <td class="name"><input class="cell txt" value="${esc(b.nome)}" oninput="setBill('${k}',${i},'nome',this.value);save()"></td>
+    <td class="center"><input class="cell sm" style="text-align:center" value="${esc(b.venc)}" oninput="setBill('${k}',${i},'venc',this.value);refreshCon()"></td>
+    <td><input class="cell" type="number" step="0.01" value="${b.valor}" oninput="setBill('${k}',${i},'valor',+this.value);refreshCon()"></td>
     <td><button class="iconbtn" onclick="deleteItem('contas.${k}',${i})">×</button></td></tr>`;});
   h+=`<tr class="sumrow"><td class="paycell"></td><td>Subtotal <span id="${k}-pago" class="tag"></span></td><td></td><td id="${k}-tot"></td><td></td></tr>`;
   document.getElementById(tid).innerHTML=h;set(k+'-tot',brl(pessTotal(k)));set(k+'-pago',pagoPess(k)?('pago '+brl(pagoPess(k))):'');save();tuneInputs();
 }
-function addPess(k,tid){D.contas[k].push({id:uid(),nome:"Nova conta",valor:0,venc:"",pago:false});renderPess(k,tid||'tbl-'+k);refreshCon()}
+function addPess(k,tid){D.contas[k].push({id:uid(),_inicio:selMonthKey(),nome:"Nova conta",valor:0,venc:"",pago:false});renderPess(k,tid||'tbl-'+k);refreshCon()}
 
 function renderCartao(){
   let h='<tr><th class="paycell">Pago</th><th>Cartão</th><th class="center">Melhor dia</th><th>Limite (R$)</th><th>Fatura (R$)</th><th>Uso</th><th></th></tr>';
-  D.contas.cartoes.forEach((c,i)=>{const uso=c.limite?(+c.valor||0)/c.limite:0,pg=pagoGet(c.id);h+=`<tr class="${pg?'rowpaid':''}">
+  D.contas.cartoes.forEach((original,i)=>{const c=monthlyValue(original);if(!c)return;const uso=c.limite?(+c.valor||0)/c.limite:0,pg=pagoGet(c.id);h+=`<tr class="${pg?'rowpaid':''}">
     <td class="paycell"><button class="paybtn${pg?' on':''}" aria-pressed="${pg}" title="${pg?'Pago — tocar para desmarcar':'Marcar como pago'}" onclick="togglePago(D.contas.cartoes[${i}].id)">${pg?'✓':''}</button></td>
-    <td class="name"><input class="cell txt" value="${esc(c.nome)}" oninput="D.contas.cartoes[${i}].nome=this.value;save()"></td>
-    <td class="center"><input class="cell sm" style="text-align:center" value="${esc(c.melhorDia)}" oninput="D.contas.cartoes[${i}].melhorDia=this.value;save()"></td>
-    <td><input class="cell" type="number" step="0.01" value="${c.limite}" oninput="D.contas.cartoes[${i}].limite=+this.value;refreshCartao()"></td>
-    <td><input class="cell" type="number" step="0.01" value="${c.valor}" oninput="D.contas.cartoes[${i}].valor=+this.value;refreshCartao()"></td>
+    <td class="name"><input class="cell txt" value="${esc(c.nome)}" oninput="setBill('cartoes',${i},'nome',this.value);save()"></td>
+    <td class="center"><input class="cell sm" style="text-align:center" value="${esc(c.melhorDia)}" oninput="setBill('cartoes',${i},'melhorDia',this.value);save()"></td>
+    <td><input class="cell" type="number" step="0.01" value="${c.limite}" oninput="setBill('cartoes',${i},'limite',+this.value);refreshCartao()"></td>
+    <td><input class="cell" type="number" step="0.01" value="${c.valor}" oninput="setBill('cartoes',${i},'valor',+this.value);refreshCartao()"></td>
     <td class="${uso>0.7?'down':(uso>0.3?'goldc':'up')}">${pct(uso)}</td>
     <td><button class="iconbtn" onclick="deleteItem('contas.cartoes',${i})">×</button></td></tr>`;});
   document.getElementById('tbl-cartao').innerHTML=h;refreshCartao();tuneInputs();
@@ -1779,9 +1812,9 @@ function refreshCartao(){
   const fat=cartaoTotal(),lim=cartaoLimite(),uso=lim?fat/lim:0;
   set('ct-fat',brl(fat));set('ct-lim',brl(lim));
   const eu=document.getElementById('ct-uso');if(eu){eu.textContent=pct(uso);eu.className='v '+(uso>0.7?'down':(uso>0.3?'goldc':'up'))}
-  set('ct-livre',brl(Math.max(0,lim-fat)));D.contas.cartoes.forEach((c,i)=>{const cell=document.getElementById('tbl-cartao').rows[i+1]?.cells[5];if(cell){const u=c.limite?(+c.valor||0)/c.limite:0;cell.textContent=pct(u);cell.className=u>0.7?'down':u>0.3?'goldc':'up';}});save();
+  set('ct-livre',brl(Math.max(0,lim-fat)));billsForMonth('cartoes').forEach((c,i)=>{const cell=document.getElementById('tbl-cartao').rows[i+1]?.cells[5];if(cell){const u=c.limite?(+c.valor||0)/c.limite:0;cell.textContent=pct(u);cell.className=u>0.7?'down':u>0.3?'goldc':'up';}});save();
 }
-function addCartao(){D.contas.cartoes.push({id:uid(),nome:"Novo cartão",valor:0,melhorDia:"",limite:0,pago:false});renderCartao()}
+function addCartao(){D.contas.cartoes.push({id:uid(),_inicio:selMonthKey(),nome:"Novo cartão",valor:0,melhorDia:"",limite:0,pago:false});renderCartao()}
 
 function renderReceb(){
   let h='<tr><th>Data</th><th>Descrição</th><th>Valor (R$)</th><th></th></tr>';
@@ -1802,7 +1835,7 @@ function refreshReceb(){
 function addReceb(){const dt=selMonthKey()===curMonthKey()?new Date():selMonthDate();D.contas.recebidos.push({valor:0,data:pad2(dt.getDate())+'/'+pad2(dt.getMonth()+1)+'/'+dt.getFullYear(),desc:""});renderReceb()}
 
 function onNome(k,val){D.nomes[k]=val;saveLocal();renderCasa();drawConPainel();save();}
-function onRenda(){D.contas.renda.joao=+v('rd-joao');D.contas.renda.esposa=+v('rd-esposa');renderConselhos();save();}
+function onRenda(){const r=D.contas.renda;r._mudancas=r._mudancas||{};r._mudancas[selMonthKey()]={joao:+v('rd-joao'),esposa:+v('rd-esposa')};renderConselhos();save();}
 
 /* vencimentos */
 function parseDay(val){const m=String(val||'').trim().match(/^(?:dia\s*)?(\d{1,2})(?:\s|$|\/)/i);if(!m)return null;const d=+m[1];return(d>=1&&d<=31)?d:null;}
@@ -1817,11 +1850,11 @@ function allBills(){
   const arr=[];
   /* aba/emp: por onde essa conta se edita — é o que faz a lista de vencimentos
      virar atalho em vez de só aviso */
-  D.contas.casa.forEach(b=>arr.push({grupo:'Casa',aba:'c-casa',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
-  D.contas.joao.forEach(b=>arr.push({grupo:'João',aba:'c-joao',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
-  D.contas.esposa.forEach(b=>arr.push({grupo:'Kassiana',aba:'c-esposa',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
-  D.contas.empresa.forEach(b=>arr.push({grupo:'Empresa JV',aba:'c-empresa',emp:'jv',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
-  D.contas.empresaKS.forEach(b=>arr.push({grupo:'Studio Kassiana',aba:'c-empresa',emp:'ks',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
+  billsForMonth('casa').forEach(b=>arr.push({grupo:'Casa',aba:'c-casa',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
+  billsForMonth('joao').forEach(b=>arr.push({grupo:'João',aba:'c-joao',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
+  billsForMonth('esposa').forEach(b=>arr.push({grupo:'Kassiana',aba:'c-esposa',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
+  billsForMonth('empresa').forEach(b=>arr.push({grupo:'Empresa JV',aba:'c-empresa',emp:'jv',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
+  billsForMonth('empresaKS').forEach(b=>arr.push({grupo:'Studio Kassiana',aba:'c-empresa',emp:'ks',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
   return arr;
 }
 function renderDue(){
@@ -1862,9 +1895,9 @@ function drawEmpresa(){
 }
 /* "Outubro de 2026": só a primeira letra maiúscula (o capitalize do CSS fazia "Outubro De 2026") */
 function fmtMonth(d){const t=d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});return t.charAt(0).toUpperCase()+t.slice(1);}
-function renderContasMonth(){renderCasa();renderPess('joao','tbl-joao');renderPess('esposa','tbl-esposa');drawEmpresa();renderCartao();drawConPainel();}
+function renderContasMonth(){monthlyNotes();renderCasa();renderPess('joao','tbl-joao');renderPess('esposa','tbl-esposa');drawEmpresa();renderCartao();drawConPainel();}
 function setMonth(k){
-  D.contas.mesSel=k;save();renderContasMonth();
+  D.contas.mesSel=k;setIncomeFields();save();renderContasMonth();
   const active=document.querySelector('section[data-tab].on'),id=active?.dataset.tab;
   if(id&&id!=='c-painel'&&DRAW[id])safeRun(DRAW[id]);
 }
@@ -1877,7 +1910,7 @@ function drawConPainel(){
   const bh=document.getElementById('ch-hoje');if(bh)bh.style.display=atual?'none':'';
   const tot=contasMes(),pago=pagoMes(),falta=Math.max(0,tot-pago);
   const e=document.getElementById('ch-apagar');e.textContent=brl(falta);e.className='bignum'+(falta<=0?' ok':'');
-  const renda=(+D.contas.renda.joao||0)+(+D.contas.renda.esposa||0),saldo=renda-tot;
+  const renda=(+rendaMes().joao||0)+(+rendaMes().esposa||0),saldo=renda-tot;
   set('ch-renda',renda>0?brl(renda):'Definir');set('ch-saldo',renda>0?brl(saldo):'—');
   set('ch-saldo-hint',renda>0?'Renda menos contas':'Cadastre a renda mensal');
   document.getElementById('ch-saldo').classList.toggle('down',renda>0&&saldo<0);
@@ -1984,6 +2017,7 @@ function snapPatrimonio(){
   const lbl=monthLabel(selMonthDate());
   const row={mes:lbl,invest:invTotal(),bens:bensTotal(),dividas:passivoTotal(),liquido:patLiquido()};
   const ex=(D.patrimonio.hist||[]).find(m=>m.mes===lbl);
+  if(ex&&!confirm('Este mês já foi fechado. Substituir os valores guardados de '+lbl+'?'))return;
   if(ex)Object.assign(ex,row);else D.patrimonio.hist.push(row);
   drawPatrimonio();
   alert('Mês '+lbl+' guardado.\nPatrimônio líquido: '+brl(row.liquido));
@@ -2107,6 +2141,7 @@ function snapConMonth(){
   const lbl=monthLabel(selMonthDate());
   const row={mes:lbl,contas:contasMes(),pago:pagoMes(),recebido:recebidoMes()};
   const ex=D.contas.resumo.find(m=>m.mes===lbl);
+  if(ex&&!confirm('Este mês já foi fechado. Substituir os valores guardados de '+lbl+'?'))return;
   if(ex){Object.assign(ex,row);}else{D.contas.resumo.push(row);}
   drawResumo();save();
   alert('Mês '+lbl+' fechado.\nContas: '+brl(row.contas)+'\nPago: '+brl(row.pago)+'\nRecebido: '+brl(row.recebido));
@@ -2335,7 +2370,7 @@ function renderConselhos(){
   const hoje=new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
   const prox=(()=>{const d=new Date();const diff=((8-d.getDay())%7)||7;d.setDate(d.getDate()+diff);return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'long'});})();
   set('cons-data','Seu consultor automático — contabilidade, finanças e investimentos nacionais e internacionais. Análise de '+hoje+'. Próxima leitura sugerida: '+prox+'.');
-  const renda=(+D.contas.renda.joao||0)+(+D.contas.renda.esposa||0);
+  const renda=(+rendaMes().joao||0)+(+rendaMes().esposa||0);
   const contas=contasMes(),sobra=renda-contas,comp=renda?contas/renda:0;
   set('cn-renda',brl(renda));set('cn-contas',brl(contas));
   const es=document.getElementById('cn-sobra');es.textContent=renda?brl(sobra):'informe a renda';es.className='v '+(renda?(sobra>=0?'up':'down'):'mut');
@@ -2458,15 +2493,33 @@ function addBin(){D.invest.binance=D.invest.binance||[];D.invest.binance.push({n
 function addNac(){D.invest.nacional.push({nome:"Novo ativo",classe:"Renda Fixa / Caixa",valor:0,apl:null});renderNac();refreshInv()}
 function addGlob(){D.invest.global.push({tk:"NEW",nome:"Novo ETF",classe:"Setoriais",qtd:0,pm:0,pa:0,apl:0});renderGlob();refreshInv()}
 
+function ativoAporte(a){return a._k&&a.ativo===a.desc&&!a.ativoConfirmado?'':(a.ativo||'');}
+function aporteDestino(a){
+  const conta=String(a.conta||'').trim(),ativo=String(ativoAporte(a)).trim();
+  if(a._k&&!a.destinoRevisado)return 'Destino legado: confirme a conta e o ativo';
+  if(!conta||conta==='Não informado')return 'Destino não informado';
+  return ativo?'Destino: '+conta+' · '+ativo:'Conta: '+conta+' · ativo não informado';
+}
+function setAporteDestino(i,field,value){const a=D.invest.aportes[i];if(!a)return;a[field]=value;
+  a.destinoRevisado=true;if(field==='ativo')a.ativoConfirmado=true;
+  set('aporte-destino-'+i,aporteDestino(a));save();
+}
+function contaAporteExtrato(x){
+  const d=norm(x.desc||'');
+  if(/\bbinance\b/.test(d))return 'Binance';
+  if(/\b(global|avenue)\b/.test(d))return /\bxp\b/.test(d)?'Global XP':'Avenue';
+  if(/\bxp\b/.test(d))return 'Nacional XP';
+  return 'Não informado';
+}
 function renderAportes(){
   const opts=[...D.invest.nacional.map(a=>a.nome),...D.invest.global.map(g=>g.tk)].map(n=>`<option value="${esc(n)}">`).join('');
-  let h=`<datalist id="ativos-list">${opts}</datalist><tr><th>Data</th><th>Mês/Ano</th><th>Conta</th><th>Pessoa</th><th>Ativo</th><th>Valor (R$)</th><th>Já na carteira</th><th></th></tr>`;
+  let h=`<datalist id="contas-aporte"><option value="Nacional XP"><option value="Global XP"><option value="Binance"><option value="Outra conta"></datalist><datalist id="ativos-list">${opts}</datalist><tr><th>Data</th><th>Mês/Ano</th><th>Conta</th><th>Pessoa</th><th>Ativo</th><th>Valor (R$)</th><th>Já na carteira</th><th></th></tr>`;
   D.invest.aportes.forEach((a,i)=>{h+=`<tr>
     <td><input class="cell txt" style="min-width:96px" value="${esc(a.data)}" oninput="D.invest.aportes[${i}].data=this.value;refreshAportes()"></td>
     <td><input class="cell txt" style="min-width:78px" value="${esc(a.mes)}" oninput="D.invest.aportes[${i}].mes=this.value;refreshAportes()"></td>
-    <td><select class="cell txt" onchange="D.invest.aportes[${i}].conta=this.value;save()"><option ${a.conta==='Nacional XP'?'selected':''}>Nacional XP</option><option ${a.conta==='Global XP'?'selected':''}>Global XP</option></select></td>
-    <td><select class="cell txt" style="min-width:96px" onchange="D.invest.aportes[${i}].pessoa=this.value;refreshAportes()">${PESSOAS.map(p=>`<option ${p===a.pessoa?'selected':''}>${esc(p==='Esposa'?pesNome('preta'):p==='João'?pesNome('preto'):p)}</option>`).join('')}</select></td>
-    <td><input class="cell txt" list="ativos-list" value="${esc(a.ativo)}" oninput="D.invest.aportes[${i}].ativo=this.value;save()"></td>
+    <td><input class="cell txt" list="contas-aporte" placeholder="Onde foi aportado?" value="${esc(a.conta==='Não informado'?'':a.conta)}" oninput="setAporteDestino(${i},'conta',this.value)"><small class="mut" id="aporte-destino-${i}">${esc(aporteDestino(a))}</small></td>
+    <td><select class="cell txt" style="min-width:96px" onchange="D.invest.aportes[${i}].pessoa=this.value;refreshAportes()">${PESSOAS.map(p=>`<option value="${esc(p)}" ${p===a.pessoa?'selected':''}>${esc(p==='Esposa'?pesNome('preta'):p==='João'?pesNome('preto'):p)}</option>`).join('')}</select></td>
+    <td><input class="cell txt" list="ativos-list" placeholder="Ativo ou produto" value="${esc(ativoAporte(a))}" oninput="setAporteDestino(${i},'ativo',this.value)">${a.desc?'<small class="mut">Descrição do extrato: '+esc(a.desc)+'</small>':''}</td>
     <td><input class="cell" type="number" step="0.01" value="${a.valor}" oninput="D.invest.aportes[${i}].valor=+this.value;refreshAportes()"></td>
     <td><input type="checkbox" aria-label="Aporte já incluído nos saldos da carteira" ${a.naCarteira!==false?'checked':''} onchange="D.invest.aportes[${i}].naCarteira=this.checked;refreshAportes()"></td>
     <td><button class="iconbtn" onclick="deleteItem('invest.aportes',${i})">×</button></td></tr>`;});
@@ -2485,7 +2538,7 @@ function refreshAportes(){
   set('apt-sum',brl(D.invest.aportes.reduce((s,a)=>s+(+a.valor||0),0)));
   set('apt-j',pesNome('preto')+': '+brl(pessoaSum('João')));set('apt-e',pesNome('preta')+': '+brl(pessoaSum('Esposa')));set('h-total',brl(invTotal()));save();
 }
-function addAporte(){D.invest.aportes.push({id:uid(),data:hojeBR(),mes:mesFromDate(hojeBR()),conta:"Nacional XP",pessoa:"Conjunto",ativo:"",valor:0,naCarteira:false});renderAportes()}
+function addAporte(){D.invest.aportes.push({id:uid(),data:hojeBR(),mes:mesFromDate(hojeBR()),conta:"Não informado",destinoRevisado:true,pessoa:"Conjunto",ativo:"",valor:0,naCarteira:false});renderAportes()}
 
 function renderMensal(){
   let h='<tr><th>Mês</th><th>Patrimônio (R$)</th><th>Aporte (R$)</th><th>Rendimento (R$)</th><th>Rentab.</th><th></th></tr>';
@@ -2964,7 +3017,7 @@ function norm(s){return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-
 function fillAplFromAportes(){
   let changed=0;
   D.invest.nacional.forEach(a=>{const an=norm(a.nome);
-    const sum=D.invest.aportes.filter(ap=>ap.conta==='Nacional XP').filter(ap=>{const t=norm(ap.ativo);return t&&t.length>=4&&(an.includes(t)||t.includes(an));}).reduce((s,ap)=>s+(+ap.valor||0),0);
+    const sum=D.invest.aportes.filter(ap=>ap.conta==='Nacional XP').filter(ap=>{const t=norm(ativoAporte(ap));return t&&t.length>=4&&(an.includes(t)||t.includes(an));}).reduce((s,ap)=>s+(+ap.valor||0),0);
     if(sum>0){a.apl=sum;changed++;}});
   renderNac();refreshInv();renderGanhos();
   alert(changed?('Preenchi o "Aplicado" de '+changed+' ativo(s) nacionais somando os aportes.'):'Não achei aportes da conta Nacional XP que casem com os nomes. Dica: escreva o ativo igual ao da Carteira.');
@@ -3305,6 +3358,115 @@ function lerVersoes(){
   });
   return itens;
 }
+/* Recuperação acrescenta histórico; nunca troca cadastros ou valores já corrigidos. */
+function historyBase(raw){
+  let o=raw;if(o&&typeof o.data==='string')o=JSON.parse(o.data);if(o?.dados)o=o.dados;
+  if(!ehBaseFamilia(o))throw new Error('Este arquivo não é um backup da Família, Contas ou Cofre.');
+  return {contas:o.contas||(o.casa||o.cartoes||o.recebidos||o.transacoes?o:{}),invest:o.invest||(o.nacional||o.aportes||o.mensal?o:{})};
+}
+function historyMatch(a,b,field){
+  const ids=row=>[row.id,row._jkId,row._k].filter(Boolean);
+  if(ids(a).some(id=>ids(b).includes(id)))return true;
+  if(['resumo','mensal','anual'].includes(field)){const key=field==='anual'?'ano':'mes';return a[key]!=null&&String(a[key])===String(b[key]);}
+  if(field==='transacoes')return txMatch(a,b);
+  if(field==='recebidos')return a.data===b.data&&a.desc===b.desc&&+a.valor===+b.valor;
+  if(field==='aportes')return a.pessoa===b.pessoa&&a.data===b.data&&a.conta===b.conta&&a.ativo===b.ativo&&+a.valor===+b.valor;
+  return false;
+}
+function mergeHistory(current,raw){
+  const old=historyBase(raw),next=structuredClone(current);let added=0,filled=0;
+  for(const [area,field] of [['contas','transacoes'],['contas','recebidos'],['contas','resumo'],['invest','aportes'],['invest','mensal'],['invest','anual']]){
+    const rows=old[area]?.[field];if(!Array.isArray(rows))continue;
+    const list=next[area][field]=next[area][field]||[];
+    const removed=(current.lixeira||[]).filter(e=>e.path===area+'.'+field).flatMap(e=>e.items||[]);
+    for(const source of rows){
+      if(!source||typeof source!=='object'||Array.isArray(source))continue;
+      const item=structuredClone(source);
+      if(area==='invest'&&ehLinhaExemplo(field,item))continue;
+      if(field==='transacoes'&&item._recoveryOfx){
+        if(item._ownerPending||!PES_VALIDO.includes(item.pes))throw new Error('Escolha o titular de cada extrato antes de recuperar.');
+        item.cat=categorize(item.desc,item.amount);const tipo=tipoTx(item.desc,item.amount);if(tipo==='saldo')continue;
+        item.nc=tipo==='invest'||tipo==='cartao';if(tipo==='cartao')item.cat='Cartão de crédito';
+        delete item._recoveryOfx;delete item._ownerPending;delete item._recoverySource;
+      }
+      if(field==='aportes'){if(item.pessoa===current.nomes?.preta||item.pessoa==='Kassiana')item.pessoa='Esposa';else if(item.pessoa===current.nomes?.preto)item.pessoa='João';}
+      if(removed.some(r=>historyMatch(r,item,field)))continue;
+      // Mesmo um campo vazio já pode ser uma edição recente: não o sobrescreve.
+      if(!list.some(r=>historyMatch(r,item,field))){list.push(item);added++;}
+    }
+    if(['resumo','mensal'].includes(field))list.sort((a,b)=>mesOrdem(a.mes)-mesOrdem(b.mes));
+    if(field==='anual')list.sort((a,b)=>+a.ano-+b.ano);
+  }
+  const annual=old.contas?.anual;
+  if(annual&&typeof annual==='object'&&!Array.isArray(annual)){
+    next.contas.anual=next.contas.anual||{};
+    for(const [year,months] of Object.entries(annual)){
+      if(!/^\d{4}$/.test(year)||!months||typeof months!=='object')continue;
+      const target=next.contas.anual[year]=Array.isArray(next.contas.anual[year])?next.contas.anual[year]:Object.assign([],next.contas.anual[year]||{});
+      for(const [month,values] of Object.entries(months)){
+        if(!/^(?:[0-9]|1[01])$/.test(month)||!values||typeof values!=='object'||!Object.values(values).some(v=>v!=null))continue;
+        // Só um mês inteiramente vazio pode receber os dados antigos; zero é preenchido.
+        if(target[month]==null||Object.values(target[month]).every(v=>v==null)){
+          target[month]=structuredClone(values);added++;
+        }
+      }
+    }
+  }
+  return {next,added,filled};
+}
+function recoverHistory(raw){
+  try{
+    const result=mergeHistory(D,raw);
+    if(!result.added&&!result.filled){alert('Nenhum histórico adicional encontrado. Os registros já existentes foram mantidos.');return false;}
+    if(!confirm('Recuperar '+result.added+' registro(s) e completar '+result.filled+' campo(s) do histórico? Os lançamentos atuais serão mantidos.'))return false;
+    if(!guardarVersao('antes de recuperar o histórico antigo'))throw new Error('Não consegui guardar uma cópia de segurança. Faça um backup antes de continuar.');
+    result.next=migrate(result.next);
+    if(!commitTrash(result.next))return false;
+    initFields();renderAll();closeDados();irPara('c-categorias');catFiltroMes='Todos';renderCategorias();
+    alert('Histórico recuperado. Extratos em Categorias → Todos; fechamento e planejamento anual ficam no menu Mais.');return true;
+  }catch(e){alert('Histórico não alterado: '+e.message);return false;}
+}
+function previewHistoryRecovery(raw){
+  try{
+    const base=historyBase(raw),groups=new Map();
+    for(const tx of base.contas.transacoes||[])if(tx._ownerPending){
+      const key=tx._recoverySource||tx.bankScope||'Extrato';if(!groups.has(key))groups.set(key,[]);groups.get(key).push(tx);
+    }
+    if(!groups.size)return recoverHistory(raw);
+    openDados();const box=document.getElementById('versoes-box');box.replaceChildren();
+    const note=document.createElement('p');note.className='note';note.textContent='Selecione o titular de cada extrato. Apenas os lançamentos ausentes serão acrescentados; suas atualizações atuais ficam preservadas.';box.append(note);
+    const choices=[];
+    for(const [name,txs] of groups){
+      const label=document.createElement('label');label.className='field';label.textContent=name+' · '+txs.length+' lançamentos';
+      const select=document.createElement('select');select.className='cell txt';select.setAttribute('aria-label','Titular de '+name);
+      for(const [value,text] of [['','Escolha o titular'],['preto',pesNome('preto')],['preta',pesNome('preta')],['ambos','Compartilhado (os dois)']]){const option=document.createElement('option');option.value=value;option.textContent=text;select.append(option);}
+      const known=D.contas.contaDono?.[txs[0].bankScope];if(PES_VALIDO.includes(known))select.value=known;
+      label.append(select);box.append(label);choices.push({select,txs});
+    }
+    const button=document.createElement('button');button.className='iconbtn primary';button.textContent='Acrescentar histórico preservando dados atuais';
+    button.onclick=()=>{if(choices.some(c=>!PES_VALIDO.includes(c.select.value))){alert('Escolha o titular dos dois extratos.');return;}
+      for(const {select,txs} of choices)for(const tx of txs){tx.pes=select.value;tx._ownerPending=false;}
+      recoverHistory(raw);
+    };box.append(button);return true;
+  }catch(e){alert('Histórico não alterado: '+e.message);return false;}
+}
+function importHistoryJSON(){
+  const input=document.createElement('input');input.type='file';input.accept='.json,application/json';
+  input.onchange=async()=>{const file=input.files[0];if(!file)return;try{previewHistoryRecovery(JSON.parse(await file.text()));}catch(e){alert('Não consegui ler esse JSON. Os dados atuais foram mantidos.');}};input.click();
+}
+let historyCandidates=[];
+function showHistoryRecovery(){
+  historyCandidates=[];const box=document.getElementById('versoes-box');
+  for(const [key,label] of [['casa_jk_v1','App antigo de Contas'],['cofre_joao_v1','App antigo Cofre']]){
+    try{const raw=JSON.parse(localStorage.getItem(key));if(raw)historyCandidates.push({label,raw});}catch(e){}
+  }
+  for(const item of lerVersoes())historyCandidates.push({label:'Versão guardada: '+item.rot,raw:item.dados});
+  box.replaceChildren();const note=document.createElement('p');note.className='note';note.textContent='Acrescenta extratos, recebimentos, aportes e históricos ausentes. Os cadastros atuais e os valores já preenchidos são preservados. Use o backup antigo se ele estiver em outro aparelho.';box.append(note);
+  const file=document.createElement('button');file.className='iconbtn primary';file.textContent='Selecionar JSON de histórico ou backup antigo';file.onclick=importHistoryJSON;box.append(file);
+  historyCandidates.forEach((item,i)=>{try{const r=mergeHistory(D,item.raw);if(!r.added&&!r.filled)return;
+    const button=document.createElement('button');button.className='iconbtn';button.textContent=item.label+' · '+r.added+' registro(s) adicionais';button.onclick=()=>recoverHistory(historyCandidates[i].raw);box.append(button);
+  }catch(e){}});
+}
 function abrirVersoes(){
   const box=document.getElementById('versoes-box');if(!box)return;
   _versoes=lerVersoes();
@@ -3378,6 +3540,7 @@ function importJSON(){
     r.onload=()=>{
       let o=null;
       try{o=JSON.parse(r.result);}catch(e){alert('Não consegui ler esse arquivo — ele precisa ser um .json.');return;}
+      if(o&&o._recoveryOnly){previewHistoryRecovery(o);return;}
       if(!ehBaseFamilia(o)){
         const de=origemDoArquivo(o);
         alert(ehBaseGestao(o)
@@ -3834,7 +3997,7 @@ function exApplyPago(){
   const debs=txContaveis().filter(x=>x.amount<0).map(x=>limpaDesc(x.desc)).filter(Boolean);
   const quitadas=[];
   ['casa','joao','esposa','empresa','empresaKS'].forEach(k=>{
-    D.contas[k].forEach(b=>{
+    billsForMonth(k).forEach(b=>{
       if(pagoGet(b.id))return;
       if(limpaDesc(b.nome).length<4)return;
       if(debs.some(dn=>casaNome(b.nome,dn))){pagoSet(b.id,true);quitadas.push(b.nome);}
@@ -4620,7 +4783,7 @@ function lancaAportes(lista){
     const v=Math.abs(+x.amount||0);
     if(!(v>0))return;
     D.invest.aportes.push({_k:k,data:x.date||'',mes:x.mes||mesFromDate(x.date),
-      conta:'Nacional XP',pessoa,ativo:x.desc||'',desc:x.desc||'',bankId:x.bankId||'',bankScope:x.bankScope||'',valor:v,naCarteira:false});
+      conta:contaAporteExtrato(x),destinoRevisado:true,pessoa,ativo:'',desc:x.desc||'',bankId:x.bankId||'',bankScope:x.bankScope||'',valor:v,naCarteira:false});
     n++;total+=v;
   });
   if(n){tiraExemplosSozinho();somaAportesNoMes();save();
@@ -5676,7 +5839,7 @@ function abrirComposicao(){const el=document.getElementById('month-breakdown');e
 function abrirConta(aba,empresa,id){
   if(!irConta(aba,empresa))return;
   const key=aba==='c-empresa'?empCur().bills:aba.replace('c-',''),table=aba==='c-empresa'?'tbl-empresa':'tbl-'+key;
-  const index=(D.contas[key]||[]).findIndex(row=>row.id===id),row=document.getElementById(table)?.rows[index+1];
+  const index=billsForMonth(key).findIndex(row=>row.id===id),row=document.getElementById(table)?.rows[index+1];
   if(index<0||!row)return;
   row.classList.add('focused-row');row.scrollIntoView({behavior:'smooth',block:'center'});row.querySelector('.paybtn')?.focus({preventScroll:true});
   setTimeout(()=>row.classList.remove('focused-row'),4000);
@@ -5936,8 +6099,8 @@ function initFields(){
   document.getElementById('pl-e').value=D.invest.plano.esposa;
   document.getElementById('nm-preta').value=D.nomes.preta;
   document.getElementById('nm-preto').value=D.nomes.preto;
-  document.getElementById('rd-joao').value=D.contas.renda.joao||'';
-  document.getElementById('rd-esposa').value=D.contas.renda.esposa||'';
+  document.getElementById('rd-joao').value=rendaMes().joao||'';
+  document.getElementById('rd-esposa').value=rendaMes().esposa||'';
   document.getElementById('cl-url').value=D.cloud.url||'';
   document.getElementById('cl-api-key').value=D.cloud.apiKey||'';renderAuth();
   document.getElementById('cl-on').checked=!!D.cloud.on;
