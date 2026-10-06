@@ -361,6 +361,9 @@ async function shot(p,theme,key,locator){
     });
     assert.equal(await p.locator('#pd-status').isVisible(),false);
     assert.equal(await p.locator('#save-state').textContent(),'✓ Nuvem');
+    // O Início usa o herói e oculta o cabeçalho; o indicador aparece nas outras abas.
+    await p.evaluate(()=>go('fech',document.createElement('button')));
+    assert.equal(await p.locator('#save-state').isVisible(),true);
     await p.locator('#save-state').click();
     assert.equal(await p.locator('#pg-seg').evaluate(e=>e.classList.contains('on')),true);
     assert.equal(await p.locator('#pd-detalhes').isVisible(),true);await contrast(p,'#pd-detalhes *');
