@@ -259,6 +259,12 @@ async function shot(p,theme,key,locator){
     await p.evaluate(()=>closeModal('ov-conflito-nuvem'));
    });
    await check(theme+': reenvio offline usa a base anterior e bloqueia outra versão',async()=>{
+    await p.evaluate(()=>{
+     const atual=KEY;marcarSemNuvem(false);KEY='jvtenis-prof-marca-teste';marcarSemNuvem(true);
+     if(!salvouSemNuvem())throw Error('Marca ausente no espaço do professor');
+     KEY=atual;if(salvouSemNuvem())throw Error('Marca vazou para o espaço do dono');
+     localStorage.removeItem('jvtenis-prof-marca-teste__semnuvem');
+    });
     const remembered=await p.evaluate(()=>metaProtecao().base);
     await p.evaluate(()=>{_basePartesLida=false;_conflitoNuvem=null;cloudPending=true;});
     const writes=cloudWrites;assert.equal(await p.evaluate(()=>gravarAgora()),false);

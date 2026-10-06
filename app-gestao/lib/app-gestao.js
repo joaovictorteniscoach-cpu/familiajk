@@ -1391,14 +1391,14 @@ async function migrarVersoesParaIdb(){
 
    A marca fica FORA do banco, no aparelho: ela e uma propriedade deste
    celular ("o que esta aqui pode nao ter chegado na nuvem"), nao do dado. */
-const MARCA_SEM_NUVEM=KEY+'__semnuvem';
+function marcaSemNuvemKey(){return KEY+'__semnuvem';}
 function marcarSemNuvem(sim){
   try{
-    if(sim)lsSet(MARCA_SEM_NUVEM,String(Date.now()));
-    else localStorage.removeItem(MARCA_SEM_NUVEM);
+    if(sim)lsSet(marcaSemNuvemKey(),String(Date.now()));
+    else localStorage.removeItem(marcaSemNuvemKey());
   }catch(e){}
 }
-function salvouSemNuvem(){try{return Number(lsGet(MARCA_SEM_NUVEM))||0;}catch(e){return 0;}}
+function salvouSemNuvem(){try{return Number(lsGet(marcaSemNuvemKey()))||0;}catch(e){return 0;}}
 /* Vale parar e perguntar antes de adotar esta copia? Devolve o motivo, ou ''.
    Funcao separada porque e a regra mais delicada do app: e ela que decide se
    um dado seu sobrevive ou e sobrescrito. */
@@ -1445,6 +1445,27 @@ async function enviarLote(cam,mapa){
     await v2ref(cam).update(parte);
   }
 }
+async function transacaoConferida(ref,esperado,novo){
+  let observar=null;
+  try{
+    // get() não mantém a base no cache do SDK. O observador fica ativo até
+    // terminar a transação, para seu primeiro callback receber a versão lida.
+    if(typeof ref.on==='function'){
+      const MARCA={_prazo:1};
+      const lida=await comPrazo(new Promise((resolve,reject)=>{
+        observar=s=>resolve(s);ref.on('value',observar,reject);
+      }),PRAZO_NUVEM,MARCA);
+      if(lida===MARCA)throw new Error('sem resposta da nuvem');
+      if(canonDados(lida.exists()?lida.val():null)!==esperado)return {committed:false,snapshot:lida};
+    }
+    return await ref.transaction(no=>{
+      if(canonDados(no)!==esperado)return;
+      return novo;
+    },undefined,false);
+  }finally{
+    if(observar)try{ref.off('value',observar);}catch(e){}
+  }
+}
 async function subirPartes(){
   if(!hasCloud()||!CARREGADO||!window._espacoAberto||_conflitoNuvem)return null;
   if(_salvamentoEmCurso)return _salvamentoEmCurso;
@@ -1466,10 +1487,7 @@ async function subirPartes(){
       }
       if(canonDados(atual)!==canonDados(_basePartes)){registrarConflitoNuvem(atual);return null;}
       const esperado=canonDados(_basePartes),plano=planoDeEnvio(dados);
-      const resultado=await v2ref('').transaction(no=>{
-        if(canonDados(no)!==esperado)return;
-        return plano.no;
-      },undefined,false);
+      const resultado=await transacaoConferida(v2ref(''),esperado,plano.no);
       if(!resultado.committed){
         registrarConflitoNuvem(resultado.snapshot&&resultado.snapshot.exists()?resultado.snapshot.val():atual);
         return null;

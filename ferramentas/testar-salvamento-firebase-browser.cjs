@@ -67,7 +67,9 @@ let count=0;async function check(name,fn){await fn();count++;console.log('✅ SD
   await admin('jvtenis/v2',seed);await baseline(a);await baseline(b);
   await check('regra permite transação do dono; mensalidade e extrato permanecem coerentes',async()=>{
    await a.evaluate(()=>{persist=window.sdkPersist;DB.alunos[0].mensalidade=800;persist();});
-   assert.equal(await a.evaluate(()=>gravarAgora()),true);
+   const salvo=await a.evaluate(()=>gravarAgora());
+   if(!salvo)console.log('Estado SDK isolado',await a.evaluate(()=>({erro:lastCloudError,pendente:cloudPending,conflito:!!_conflitoNuvem,base:_basePartes,local:DB})));
+   assert.equal(salvo,true);
    const no=await admin('jvtenis/v2');assert.equal(JSON.parse(no.alunos.teste).mensalidade,800);
    assert.equal(JSON.parse(no.alunos.teste).creditos,3);assert.equal(JSON.parse(no.alunos.teste).repos,2);
   });
@@ -108,6 +110,7 @@ let count=0;async function check(name,fn){await fn();count++;console.log('✅ SD
    assert.equal(JSON.parse((await admin('jvtenis/v2')).alunos.teste).mensalidade,900);
   });
   const prof=await page('prof-emulador-teste');
+  await prof.evaluate(()=>abrirEspaco('prof','prof-emulador-teste'));
   await admin('jvtenis/prof/prof-emulador-teste/v2',seed);
   await baseline(prof,'jvtenis/prof/prof-emulador-teste/v2');
   await check('professor grava somente no próprio espaço, com a mesma proteção',async()=>{
