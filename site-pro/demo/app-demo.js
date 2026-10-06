@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-06-2';
+const VERSAO='2026-10-06-3';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -8889,6 +8889,8 @@ async function testarConexao(){
   let app2=null, db2=null;
   try{
     app2=firebase.apps.filter(a=>a.name==='teste')[0]||firebase.initializeApp(firebaseConfig,'teste');
+    if(typeof APPCHECK_SITE_KEY!=='undefined'&&APPCHECK_SITE_KEY&&!ligarAppCheck(app2))
+      throw new Error('App Check não iniciou na sessão de teste; confira a chave e o cadastro no Firebase.');
     const cred=await comPrazo(app2.auth().signInAnonymously(),12000,MARCA);
     if(cred===MARCA)throw new Error('sem resposta');
     db2=app2.database();
@@ -8929,7 +8931,7 @@ async function testarConexao(){
     try{const s=await comPrazo(db2.ref('jvtenis/fila_pedidos').get(),12000,MARCA);
         if(s!==MARCA)leu=true;}catch(e){}
     if(leu)passo(false,'Fila fechada para o aluno','o aluno CONSEGUIU ler a fila de pedidos',
-      'você ainda está com as regras da etapa 1 (abertas). Cole a etapa 2 para fechar');
+      'confira a regra vigente no Firebase com o responsável; a fila não deve permitir leitura do aluno');
     else passo(true,'Fila fechada para o aluno','o aluno não lê o pedido dos outros — a tranca está fechada');
   }
   // 8) o caminho pessoal do aluno — onde ficam os pedidos pendentes dele.
@@ -8969,8 +8971,7 @@ async function testarConexao(){
     const l=await tenta(()=>window.fbDB.ref('jvtenis/professores').get());
     passo(g.ok&&l.ok,'Espaço dos professores',
       g.ok&&l.ok?'as regras dos professores estão publicadas':'o nó dos professores não respondeu',
-      'cole ferramentas/firebase-regras-etapa3.json em Realtime Database → Regras. '
-      +'Sem isso o app do professor não grava na nuvem.');
+      'confira o UID, o espaço do professor e a regra vigente no console. Não publique uma etapa antiga para resolver este teste.');
   }
 
   try{await app2.delete();}catch(e){}

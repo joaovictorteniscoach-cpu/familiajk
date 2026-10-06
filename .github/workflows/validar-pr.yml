@@ -41,6 +41,8 @@ jobs:
           NODE_PATH: ${{ runner.temp }}/jv-browser/node_modules
           PW: ${{ runner.temp }}/jv-browser/node_modules/playwright
         run: |
+          node ferramentas/testar-appcheck-runtime.cjs
+          node ferramentas/testar-monitoramento.cjs
           node .claude/skills/publicar-versao/fumaca.cjs
           node ferramentas/testar-site-browser.cjs
           JV_VISUAL_LOG=1 node ferramentas/testar-contraste-fechamento-browser.cjs

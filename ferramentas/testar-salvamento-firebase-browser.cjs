@@ -35,6 +35,7 @@ let count=0;async function check(name,fn){await fn();count++;console.log('✅ SD
   await p.goto(base+'/app-gestao/',{waitUntil:'load'});
   await p.waitForFunction(()=>typeof CARREGADO!=='undefined'&&CARREGADO,{},{timeout:15000});
   await p.evaluate(f=>{
+   window.sdkBackupHoraOriginal=backupNuvem;window.sdkBackupDiaOriginal=backupDoDia;
    window.sdkPersist=persist;persist=()=>{};DB=JSON.parse(JSON.stringify(f));ensureFields();
    CARREGADO=true;window._espacoAberto=true;_abriuSemConferir=false;_conflitoNuvem=null;cloudPending=false;
    document.querySelectorAll('.overlay.on').forEach(e=>e.classList.remove('on'));
@@ -138,7 +139,84 @@ let count=0;async function check(name,fn){await fn();count++;console.log('✅ SD
    assert.deepEqual(acesso,{leitura:true,gravacao:true});
    assert.equal(JSON.parse((await admin('jvtenis/v2')).alunos.teste).mensalidade,900);
   });
-  for(const p of [a,b,unauthorized,prof])assert.deepEqual(p.errors,[]);
+  const rec=await page(owner);await baseline(rec);
+  let copiada=null,anterior=null;
+  await check('cópias horária e diária preservam cadastro, família, agenda e extratos completos',async()=>{
+   const salvo=await rec.evaluate(async()=>{
+    const mk=mesReal(),data=dKey(new Date()),a=DB.alunos[0];
+    a.creditos=3;a.repos=2;a.status='parcial';a.pagamentosExatos={[mk]:{ajusteAnterior:200}};
+    const dependente={...JSON.parse(JSON.stringify(a)),id:'dep-recup',codigo:'9902',nome:'Dependente Recuperação Teste',
+     responsavelId:a.id,parentesco:'Filho(a)',mensalidade:0,creditos:1,repos:4,pagamentosExatos:{}};
+    DB.alunos.push(dependente);
+    DB.agenda={fixos:[{id:'f-recup',dia:new Date().getDay(),hora:'09:00',titulo:a.nome,tipo:'part',alunoId:a.id}],
+     eventos:[{id:'e-recup',data,hora:'10:00',titulo:dependente.nome,tipo:'part',alunoId:dependente.id,repo:1}],
+     excecoes:[{fixoId:'f-recup',data:'2026-01-01'}]};
+    DB.lancamentos=[{id:'l-recup',data,mes:mk,competenciaMensalidade:mk,cat:'mensalidade',alunoId:a.id,
+     desc:'Mensalidade · '+a.nome,valor:100,formaPagamento:'Pix',pagamentoExato:true}];
+    DB.movs=[{ts:1700000000000,alunoId:a.id,campo:'creditos',delta:-1,de:4,para:3,motivo:'Aula do ensaio',ref:'p-recup'}];
+    DB.presencas=[{k:'p-recup',alunoId:a.id,data,hora:'08:00',tipo:'part'}];
+    ensureFields();persist=window.sdkPersist;persist();
+    const ok=await gravarAgora();window.recGolden=JSON.stringify(DB);
+    await window.sdkBackupHoraOriginal(JSON.parse(window.recGolden));
+    await window.sdkBackupDiaOriginal(JSON.parse(window.recGolden));
+    return {ok,dia:dKey(new Date()),golden:JSON.parse(window.recGolden)};
+   });
+   assert.equal(salvo.ok,true);
+   const horas=await admin('jvtenis/backups'),dias=await admin('jvtenis/backups_dia');
+   assert.ok(horas&&Object.keys(horas).length);
+   const hora=JSON.parse(horas[Object.keys(horas).sort().at(-1)]);
+   const dia=JSON.parse(dias[salvo.dia]);
+   assert.deepEqual(hora,salvo.golden);assert.deepEqual(dia,salvo.golden);
+   copiada=copy(dia);
+   assert.ok((await admin('jvtenis/backups_dia_idx'))[salvo.dia].ts>0);
+  });
+  await check('cancelar restauração preserva o aparelho e o banco do emulador',async()=>{
+   const ok=await rec.evaluate(async raw=>{
+    DB.alunos[0].mensalidade=999;DB.alunos[0].creditos=99;
+    DB.lancamentos=[];DB.movs=[];DB.presencas=[];DB.agenda={fixos:[],eventos:[],excecoes:[]};
+    persist();const ok=await gravarAgora();
+    window.recAnterior=JSON.stringify(DB);window.recGuardadas=[];
+    guardarVersoes=raw=>window.recGuardadas.push(JSON.parse(raw));
+    window._versoes=[{rot:'ensaio isolado',origem:'nuvem',raw:JSON.stringify(raw),r:resumoBanco(raw)}];
+    return ok;
+   },copiada);
+   assert.equal(ok,true);anterior=await rec.evaluate(()=>JSON.parse(window.recAnterior));
+   const bancoAntes=await admin('jvtenis/v2');
+   rec.removeAllListeners('dialog');rec.on('dialog',d=>d.dismiss());
+   await rec.evaluate(()=>restaurarVersao(0));
+   assert.deepEqual(await rec.evaluate(()=>DB),anterior);
+   assert.deepEqual(await admin('jvtenis/v2'),bancoAntes);
+   assert.equal(await rec.evaluate(()=>window.recGuardadas.length),0);
+   rec.removeAllListeners('dialog');rec.on('dialog',d=>d.accept());
+  });
+  await check('restaurar e desfazer recupera integralmente aulas, pagamentos e saldos no emulador',async()=>{
+   assert.equal(await rec.evaluate(async()=>{restaurarVersao(0);return gravarAgora();}),true);
+   assert.deepEqual(await rec.evaluate(()=>window.recGuardadas[0]),anterior);
+   const normaliza=d=>({...d,alunos:d.alunos.slice().sort((a,b)=>a.id.localeCompare(b.id))});
+   const recuperado=await rec.evaluate(no=>bancoDasPartes(no),await admin('jvtenis/v2'));
+   for(const campo of ['alunos','agenda','lancamentos','movs','presencas'])
+    assert.deepEqual(normaliza(recuperado)[campo],normaliza(copiada)[campo]);
+   const q=await rec.evaluate(()=>situacaoMensalidade(DB.alunos.find(a=>a.id==='teste')));
+   assert.equal(q.recebido,300);assert.equal(q.falta,435);
+   assert.equal(await rec.evaluate(()=>saldoMensalidade(DB.alunos.find(a=>a.id==='dep-recup'))),0);
+   const novoAparelho=await page(owner);
+   const visto=await novoAparelho.evaluate(async()=>{
+    const s=await sdkDatabase.ref('jvtenis/v2').get();
+    DB=bancoDasPartes(s.val());ensureFields();
+    return {alunos:DB.alunos,agenda:DB.agenda,lancamentos:DB.lancamentos,movs:DB.movs,presencas:DB.presencas};
+   });
+   assert.deepEqual(normaliza(visto).alunos,normaliza(copiada).alunos);
+   for(const campo of ['agenda','lancamentos','movs','presencas'])assert.deepEqual(visto[campo],copiada[campo]);
+   assert.equal(await rec.evaluate(async raw=>{
+    window._versoes=[{rot:'antes da restauração',origem:'aparelho',raw:JSON.stringify(raw),r:resumoBanco(raw)}];
+    restaurarVersao(0);return gravarAgora();
+   },anterior),true);
+   const desfeito=await rec.evaluate(no=>bancoDasPartes(no),await admin('jvtenis/v2'));
+   for(const campo of ['alunos','agenda','lancamentos','movs','presencas'])
+    assert.deepEqual(normaliza(desfeito)[campo],normaliza(anterior)[campo]);
+   assert.deepEqual(novoAparelho.errors,[]);
+  });
+  for(const p of [a,b,unauthorized,prof,rec])assert.deepEqual(p.errors,[]);
   console.log('✅ '+count+' verificações com SDK Firebase real e emulador local');
  }finally{for(const c of contexts)await c.close();await browser.close();server.close();}
 })().catch(e=>{console.error(e);server.close();process.exitCode=1;});

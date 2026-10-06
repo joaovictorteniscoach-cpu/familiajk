@@ -58,7 +58,7 @@ Nada de nome real de aluno ou compromisso pessoal no código: ele é público (P
 - Cópia legada `jvtenis-app-aluno` vai sem `mensalidade`/`valorAula` (`valoresOcultos`).
 - Regra `etapa4-estrita`: código pronto; publicar só com a caixa "Pronto para a regra final?"
   (Mais → Segurança e dados) em ✓ e autorização do João. Passo a passo em `ferramentas/SEGURANCA-P0.md`.
-- App Check: código pronto e desligado (`APPCHECK_SITE_KEY` vazio nos dois `index.html`).
+- App Check: João autorizou preparar a ativação em 2026-10-06. `APPCHECK_SITE_KEY` ainda vazio: falta a chave pública e o registro no console. Começar em monitoramento; exigência só após adaptar site e leitura REST do teste. Ver `ferramentas/APP-CHECK.md`.
 - Repositório público: decisão pendente do João (privado exige GitHub Pro para manter o Pages).
 
 ## Verificar

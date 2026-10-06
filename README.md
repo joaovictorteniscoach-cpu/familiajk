@@ -7,6 +7,7 @@ como endereço principal e Netlify como reserva).
 - Estado atual e rotina do dia a dia: [`COMECAR-AQUI.md`](COMECAR-AQUI.md)
 - Endereços e como a publicação funciona: [`PUBLICAR.md`](PUBLICAR.md)
 - Banco de dados e regras: [`ferramentas/FIREBASE.md`](ferramentas/FIREBASE.md)
+- Preparação profissional: [`ferramentas/PRONTIDAO.md`](ferramentas/PRONTIDAO.md)
 
 ## Projetos
 
@@ -41,7 +42,7 @@ merge, o GitHub Pages e o Netlify republicam sozinhos em 1 a 2 minutos. Não é
 mais preciso arrastar pastas no Netlify.
 
 ## Observações técnicas
-- **app-gestao** e **app-aluno** carregam o Firebase via CDN (`gstatic.com`) e
+- **app-gestao** e **app-aluno** carregam bibliotecas Firebase locais, com CDN de reserva, e
   registram service workers (`sw-gestao.js` / `sw-aluno.js`) — funciona em HTTPS
   (como no Netlify).
 - **app-familia** é PWA (`sw-familia.js` + `manifest-familia.webmanifest`),

@@ -1,0 +1,38 @@
+name: Monitorar aplicativos publicados
+
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_run:
+    workflows: ['Publicar no GitHub Pages']
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: monitorar-publicacao
+  cancel-in-progress: false
+
+jobs:
+  conferir:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validar o monitor sem rede externa
+        run: node ferramentas/testar-monitoramento.cjs
+      - name: Conferir publicação anterior
+        if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion != 'success'
+        run: |
+          echo "A publicação no Pages falhou. Confira o workflow Publicar no GitHub Pages."
+          exit 1
+      - name: Conferir URLs, versões e arquivos públicos
+        run: node ferramentas/monitorar-publicacao.cjs
