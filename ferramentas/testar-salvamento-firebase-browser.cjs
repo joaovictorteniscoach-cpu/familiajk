@@ -23,7 +23,7 @@ let count=0;async function check(name,fn){await fn();count++;console.log('✅ SD
  const browser=await chromium.launch({executablePath:process.env.JV_BROWSER||undefined,args:['--no-sandbox']});
  const contexts=[];
  async function page(uid){
-  const c=await browser.newContext({viewport:{width:390,height:852},timezoneId:'America/Sao_Paulo',serviceWorkers:'block'});contexts.push(c);
+  const c=await browser.newContext({viewport:{width:390,height:852},timezoneId:'America/Sao_Paulo',locale:'pt-BR',serviceWorkers:'block'});contexts.push(c);
   await c.route('**/*',r=>{
    const u=new URL(r.request().url());
    if(u.origin!==base&&u.origin!==endpoint)return r.abort();

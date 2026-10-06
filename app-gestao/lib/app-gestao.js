@@ -581,6 +581,12 @@ function renderProtecaoDados(){
       cloudPending?'<button class="btn btn-clay" onclick="tentarSalvarProtegido()">Tentar salvar agora</button>':'')
     +'<button class="btn btn-ghost" onclick="exportBackup()">Baixar cópia do aparelho</button></div>';
 }
+function conteudoBancoConferivel(d){
+  let o;try{o=typeof d==='string'?JSON.parse(d):JSON.parse(JSON.stringify(d||{}));}catch(e){return 'leitura-invalida';}
+  if(!o||typeof o!=='object')return 'leitura-invalida';delete o.savedAt;
+  for(const k of ['alunos','movs','presencas','lancamentos'])if(Array.isArray(o[k]))o[k].sort((a,b)=>canonDados(a).localeCompare(canonDados(b)));
+  return canonDados(o);
+}
 function diferencasEntreBancos(local,nuvem){
   const out=[],porId=new Map((nuvem.alunos||[]).map(a=>[a.id,a]));
   for(const a of local.alunos||[]){
@@ -1127,8 +1133,10 @@ async function load(){
   const checkpoint=metaProtecao().base||'';
   const pendenteAoAbrir=!!(localRaw&&salvouSemNuvem());
   let conflitoAoAbrir=false;
-  if(pendenteAoAbrir&&cloudRaw){
-    conflitoAoAbrir=!checkpoint||!_basePartesLida||checkpoint!==_basePartesAssinatura;
+  const localSemBaseConfirmada=!!(localRaw&&cloudRaw&&chosen===localRaw&&!pendenteAoAbrir
+    &&conteudoBancoConferivel(localRaw)!==conteudoBancoConferivel(cloudRaw));
+  if((pendenteAoAbrir||localSemBaseConfirmada)&&cloudRaw){
+    conflitoAoAbrir=localSemBaseConfirmada||!checkpoint||!_basePartesLida||checkpoint!==_basePartesAssinatura;
     chosen=localRaw;rejeitada=null;travadoAoAbrir=conflitoAoAbrir;
   }
   /* A cópia mais recente pode ser a MENOR: foi assim que sumiram lançamentos.
@@ -1477,7 +1485,10 @@ async function subirPartes(){
       }
       const confirmado=resultado.snapshot.val();
       await confirmarBasePartes(confirmado);
-      _enviado=marcasDasPartes(confirmado);_removidos={movs:{},presencas:{},lancamentos:{}};
+      _enviado=marcasDasPartes(confirmado);
+      for(const nome of ['movs','presencas','lancamentos'])for(const k of Object.keys(_removidos[nome])){
+        if(!confirmado[nome]||!Object.prototype.hasOwnProperty.call(confirmado[nome],k))delete _removidos[nome][k];
+      }
       lastCloudError='';_abriuSemConferir=false;_nuvemMuda=false;
       cloudPending=JSON.stringify(DB)!==congelado;marcarSemNuvem(cloudPending);
       guardarMetaProtecao({base:_basePartesAssinatura,nuvem:Date.now(),savedAt:dados.savedAt});

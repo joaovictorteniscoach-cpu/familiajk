@@ -121,11 +121,12 @@ async function shot(p,theme,key,locator){
  const b=await chromium.launch({executablePath:process.env.JV_BROWSER||undefined,args:['--no-sandbox']});
  try{
   for(const theme of ['saibro','classico']){
-   const c=await b.newContext({viewport:{width:390,height:852},timezoneId:'America/Sao_Paulo',serviceWorkers:'block'});
+   const c=await b.newContext({viewport:{width:390,height:852},timezoneId:'America/Sao_Paulo',locale:'pt-BR',serviceWorkers:'block'});
    const p=await setup(c,base,theme);
    await check(theme+': R$300 recebidos de R$735 deixam R$435, sem mexer em aulas',async()=>{
     const before=await p.evaluate(()=>DB.alunos.map(a=>[a.id,a.creditos,a.repos]));
     await p.evaluate(()=>{registrarPagamento('solo');document.getElementById('pm-valor').value='300';resumoPagamentoExato();});
+    assert.equal(await p.evaluate(()=>getComputedStyle(document.querySelector('.pm-modal')).backgroundColor),'rgb(248, 248, 245)');
     await contrast(p,'#ov-pagamento-exato *');
     for(const w of [320,390,1280])await fit(p,w);await fit(p,390);
     await shot(p,theme,'pagamento','#ov-pagamento-exato .modal');
@@ -213,10 +214,10 @@ async function shot(p,theme,key,locator){
     const s=await c.newPage();s.on('pageerror',e=>p.errors.push(e.message));s.on('dialog',d=>d.dismiss());
     await s.goto(base+'/app-aluno/',{waitUntil:'load'});await s.waitForTimeout(250);
     await s.evaluate(()=>{
-     PUB={pix:'teste@example.invalid',pixNome:'Teste',pixCidade:'CURITIBA',agenda:{fixos:[],eventos:[],excecoes:[]},precos:{}};
+     PUB={alunos:[],horas:['08:00','09:00','16:00','17:00'],pix:'teste@example.invalid',pixNome:'Teste',pixCidade:'CURITIBA',grade:{fixos:[],eventos:[],excecoes:[]},precos:{},historico:{},aviso:''};
      EU={id:'solo',nome:'Aluno Exato Teste',codigo:'9901',tipo:'Particular',plano:4,creditos:3,repos:2,mensalidade:735,status:'parcial',
       pagamentoMensal:{mes:dKey(new Date()).slice(0,7),exato:true,recebido:300,falta:435,total:735}};
-     MEU={codigo:EU.codigo,pedidos:[],cancelados:[]};VINCULO_ESTADO='ativo';_renovaAdiado=true;show();goAluno('inicio',document.getElementById('nav-al-inicio'));renderPremiumAluno();
+     PUB.alunos=[EU];MEU={codigo:EU.codigo,pedidos:[],cancelados:[]};VINCULO_ESTADO='ativo';_renovaAdiado=true;show();goAluno('inicio',document.getElementById('nav-al-inicio'));renderPremiumAluno();
      window.studentPixArgs=null;abrirPix=(...args)=>{window.studentPixArgs=args;};pagarPix();
     });
     assert.match(await s.locator('#home-saldo-pagamento').textContent(),/435/);
@@ -231,7 +232,7 @@ async function shot(p,theme,key,locator){
     const baseData=copy(fixture);remote=await nodeOf(p,baseData);const baseNo=copy(remote);
     await configureCloud(p,baseNo);await p.evaluate(f=>{DB=JSON.parse(JSON.stringify(f));ensureFields();persist=window.testPersist;DB.alunos[0].mensalidade=800;persist();},fixture);
     assert.equal(await p.evaluate(()=>gravarAgora()),true);assert.equal(JSON.parse(remote.alunos.solo).mensalidade,800);
-    const c2=await b.newContext({viewport:{width:390,height:852},timezoneId:'America/Sao_Paulo',serviceWorkers:'block'});
+    const c2=await b.newContext({viewport:{width:390,height:852},timezoneId:'America/Sao_Paulo',locale:'pt-BR',serviceWorkers:'block'});
     const p2=await setup(c2,base,theme);await configureCloud(p2,baseNo);
     await p2.evaluate(()=>{persist=window.testPersist;DB.alunos[0].mensalidade=700;persist();});
     const writes=cloudWrites;assert.equal(await p2.evaluate(()=>gravarAgora()),false);assert.equal(cloudWrites,writes);
@@ -271,6 +272,11 @@ async function shot(p,theme,key,locator){
     const writes=cloudWrites;await p.evaluate(()=>load());
     assert.equal(await p.evaluate(()=>DB.alunos[0].mensalidade),720);assert.equal(await p.evaluate(()=>!!_conflitoNuvem),true);
     assert.equal(cloudWrites,writes);assert.equal(JSON.parse(remote.alunos.solo).mensalidade,950);
+    await p.evaluate(()=>closeModal('ov-conflito-nuvem'));
+    await configureCloud(p,copy(remote));
+    await p.evaluate(f=>{DB=JSON.parse(JSON.stringify(f));ensureFields();DB.alunos[0].mensalidade=730;DB.savedAt=Date.now()+7200000;lsSet(KEY,JSON.stringify(DB));marcarSemNuvem(false);},fixture);
+    await p.evaluate(()=>load());
+    assert.equal(await p.evaluate(()=>DB.alunos[0].mensalidade),730);assert.equal(await p.evaluate(()=>!!_conflitoNuvem),true);assert.equal(cloudWrites,writes);
     await p.evaluate(()=>closeModal('ov-conflito-nuvem'));
    });
    await check(theme+': recusa do servidor mantém cópia local e data de confirmação',async()=>{
