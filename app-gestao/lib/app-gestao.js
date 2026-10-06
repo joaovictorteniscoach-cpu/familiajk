@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-06-1';
+const VERSAO='2026-10-06-2';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -518,7 +518,7 @@ function tsOf(raw){try{return JSON.parse(raw).savedAt||0;}catch(e){return 0;}}
    A cópia do aparelho continua intacta quando outra sessão mudou o banco.
    O resumo local guarda só confirmação e SHA-256, nunca outra cópia inteira. */
 let _basePartes=null,_basePartesLida=false,_basePartesAssinatura='';
-let _salvamentoEmCurso=null,_conflitoNuvem=null,_tentativaLocal=0;
+let _salvamentoEmCurso=null,_conflitoNuvem=null,_tentativaLocal=0,_pdAlertaTimer=null;
 function canonDados(v){
   if(v===null||v===undefined)return 'null';
   if(Array.isArray(v))return '['+v.map(canonDados).join(',')+']';
@@ -536,6 +536,7 @@ function metaProtecao(){
 function guardarMetaProtecao(d){
   lsSet(KEY+'__protecao',JSON.stringify(Object.assign(metaProtecao(),d)));
   renderProtecaoDados();
+  try{checarBackup();}catch(e){}
 }
 async function confirmarBasePartes(no){
   _basePartes=no;_basePartesLida=true;_basePartesAssinatura=await assinaturaDados(no);
@@ -568,19 +569,28 @@ function horaProtecao(ts){
   return ts?new Date(ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'Ainda não confirmada';
 }
 function renderProtecaoDados(){
-  const el=document.getElementById('pd-status');if(!el)return;
   const meta=metaProtecao();
+  const alerta=!!(_conflitoNuvem||cloudPending||_abriuSemConferir);
+  const espera=cloudPending&&hasCloud()&&!lastCloudError&&!_nuvemMuda&&!_abriuSemConferir&&!_conflitoNuvem
+    &&_tentativaLocal?Math.max(0,PRAZO_NUVEM-(performance.now()-_tentativaLocal)):0;
+  clearTimeout(_pdAlertaTimer);_pdAlertaTimer=null;
+  if(espera)_pdAlertaTimer=setTimeout(renderProtecaoDados,espera+10);
   const aviso=_conflitoNuvem?'Outra sessão alterou os dados. Confira as diferenças.':
     cloudPending?'Há alterações salvas só neste aparelho. Aguarde a confirmação da nuvem.':
     _abriuSemConferir?'A nuvem ainda não foi conferida nesta abertura.':
     meta.nuvem?'A última gravação foi confirmada pela nuvem.':'Aguardando uma gravação confirmada pela nuvem.';
-  el.className='pd-status'+((_conflitoNuvem||cloudPending||_abriuSemConferir)?' pd-alerta':'');
-  el.innerHTML='<div class="pd-titulo">'+(_conflitoNuvem?'⚠ Confira antes de salvar':cloudPending?'⚠ Alterações pendentes':'☁️ Salvamento e proteção')+'</div>'
+  const html='<div class="pd-titulo">'+(_conflitoNuvem?'⚠ Confira antes de salvar':cloudPending?'⚠ Alterações pendentes':'☁️ Salvamento e proteção')+'</div>'
     +'<p>'+esc(aviso)+'</p><div class="pd-datas"><span>Nuvem: <b>'+esc(horaProtecao(meta.nuvem))+'</b></span>'
     +'<span>Cópia de segurança na nuvem: <b>'+esc(horaProtecao(meta.backup))+'</b></span></div>'
     +'<div class="pd-acoes">'+(_conflitoNuvem?'<button class="btn btn-clay" onclick="abrirConflitoNuvem()">Conferir diferenças</button>':
       cloudPending?'<button class="btn btn-clay" onclick="tentarSalvarProtegido()">Tentar salvar agora</button>':'')
     +'<button class="btn btn-ghost" onclick="exportBackup()">Baixar cópia do aparelho</button></div>';
+  for(const id of ['pd-status','pd-detalhes']){
+    const el=document.getElementById(id);if(!el)continue;
+    el.className='pd-status'+(alerta?' pd-alerta':'');
+    el.style.display=id==='pd-status'&&(!CARREGADO||!alerta||espera)?'none':'';
+    if(el.innerHTML!==html)el.innerHTML=html;
+  }
 }
 function conteudoBancoConferivel(d){
   let o;try{o=typeof d==='string'?JSON.parse(d):JSON.parse(JSON.stringify(d||{}));}catch(e){return 'leitura-invalida';}
@@ -1697,7 +1707,7 @@ function persist(){
   const json=JSON.stringify(DB);
   // 1) salva IMEDIATAMENTE no aparelho (nunca perde nada)
   const okLocal=lsSet(KEY,json);
-  cloudPending=true;marcarSemNuvem(true);_tentativaLocal=Date.now();
+  cloudPending=true;marcarSemNuvem(true);_tentativaLocal=performance.now();
   guardarVersoes(json);                 // 1b) e guarda de onde voltar
   setSave(okLocal?'✓ salvo no aparelho':'salvando…','ok');
   // 2) envia para a nuvem com retentativas
@@ -1807,8 +1817,8 @@ document.getElementById('save-state').style.pointerEvents='auto';
 document.getElementById('save-state').style.cursor='pointer';
 document.getElementById('save-state').onclick=()=>{
   if(_conflitoNuvem){abrirConflitoNuvem();return;}
-  go('dash',document.querySelector('[onclick^="go(\'dash\'"]')||document.createElement('button'));
-  document.getElementById('pd-status')?.scrollIntoView({behavior:'smooth',block:'center'});
+  go('seg',document.createElement('button'));
+  document.getElementById('pd-detalhes')?.scrollIntoView({behavior:'smooth',block:'center'});
 };
 [1500,4000,8000].forEach(t=>setTimeout(()=>{
   if(hasCloud()&&CARREGADO&&cloudPending&&!_conflitoNuvem)gravarAgora();
@@ -5855,7 +5865,7 @@ let focoDif=false;
    seria uma folha com zero aula e zero valor — e o nome na fila fazia parecer
    que faltava mandar o de alguém. */
 function ehDoFechamento(a){
-  return !ehDependenteFamilia(a)&&ehAtivoAluno(a)&&perfilDe(a)!=='torneio';
+  return !ehDependenteFamilia(a)&&ehAtivoAluno(a)&&a.status!=='inativo'&&perfilDe(a)!=='torneio';
 }
 function ehAtivoAluno(a){
   if(!a)return false;
@@ -5905,21 +5915,24 @@ function fcRotuloMes(mk){
   const p=String(mk).split('-');
   return MESES[Number(p[1])-1]+' '+p[0];
 }
+function pendenteDoFechamento(a,mk){
+  if(!ehDoFechamento(a))return false;
+  const status=situacaoMensalidade(a,mk).status;
+  return status==='pendente'||status==='parcial';
+}
 function abrirFechamento(){
   const sa=document.getElementById('fc-aluno'), sm=document.getElementById('fc-mes');
-  if(sa){
-    /* Refeito a cada abertura, e não só na primeira: arquivar um aluno ou
-       marcá-lo como torneio tem de tirá-lo daqui na hora, sem fechar o app.
-       A escolha atual é preservada, para não perder de vista quem estava
-       aberto na tela. */
-    const antes=sa.value;
-    sa.innerHTML='<option value="">— escolha o aluno —</option>'+
-      DB.alunos.filter(ehDoFechamento).slice().sort((a,b)=>a.nome.localeCompare(b.nome))
-        .map(a=>'<option value="'+a.id+'">'+esc(a.nome)+'</option>').join('');
-    if(antes&&sa.querySelector('option[value="'+antes+'"]'))sa.value=antes;
-  }
   if(sm&&!sm.options.length){
     sm.innerHTML=fcMesesDisponiveis().map(m=>'<option value="'+m+'">'+fcRotuloMes(m)+'</option>').join('');
+  }
+  const mk=(sm&&sm.value)||monthKey();
+  if(sa){
+    const antes=sa.value;
+    sa.innerHTML='<option value="">— escolha o aluno —</option>'+
+      DB.alunos.filter(a=>pendenteDoFechamento(a,mk)).slice()
+        .sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}))
+        .map(a=>'<option value="'+esc(a.id)+'">'+esc(a.nome)+'</option>').join('');
+    if(antes&&Array.from(sa.options).some(o=>o.value===antes))sa.value=antes;
   }
   renderFechamento();renderFilaFech();
 }
@@ -6058,7 +6071,12 @@ function renderFechamento(){
   const box=document.getElementById('fech-export');if(!box)return;
   const a=DB.alunos.find(x=>x.id===(document.getElementById('fc-aluno')||{}).value);
   const mk=(document.getElementById('fc-mes')||{}).value||monthKey();
-  if(!a){box.innerHTML='<div class="empty">Escolha o aluno para ver a prévia do fechamento.</div>';renderConfMes();return;}
+  if(!a){
+    box.innerHTML='<div class="empty">Escolha um aluno ativo com pagamento pendente ou parcial para ver o fechamento.</div>';
+    const hint=document.getElementById('fc-envio-hint');
+    if(hint){hint.textContent='Selecione o aluno para conferir o destino antes de enviar.';hint.style.color='';}
+    renderConfMes();return;
+  }
   /* Para QUEM vai, escrito antes de tocar em enviar. Fechamento é o financeiro
      do aluno: descobrir o destino só depois que o WhatsApp abriu é tarde. */
   (function(){
@@ -6311,15 +6329,15 @@ function renderFilaFech(){
   const box=document.getElementById('fc-fila');if(!box)return;
   const mk=(document.getElementById('fc-mes')||{}).value||monthKey();
   const env=(DB.fechEnviado&&DB.fechEnviado[mk])||{};
-  const todos=DB.alunos.filter(ehDoFechamento).slice().sort((a,b)=>a.nome.localeCompare(b.nome));
-  const lista=todos.filter(a=>!fechJaPago(a,mk));
-  const pagos=todos.length-lista.length;
+  const todos=DB.alunos.filter(ehDoFechamento).slice().sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));
+  const lista=todos.filter(a=>pendenteDoFechamento(a,mk));
+  const pagos=todos.filter(a=>situacaoMensalidade(a,mk).status==='pago').length;
   const n=lista.filter(a=>env[a.id]).length;
   const c=document.getElementById('fc-contador');
   /* o numero de quem saiu fica a vista: lista que encolhe sem dizer por que
      e lista em que voce nao confia */
   if(c)c.textContent='· '+n+' de '+lista.length+' enviados'+(pagos?(' · '+pagos+' já pago(s) fora da lista'):'');
-  if(!lista.length){box.innerHTML='<div class="empty">'+(todos.length?'Todos já pagaram — nada a enviar.':'Nenhum aluno ativo.')+'</div>';return;}
+  if(!lista.length){box.innerHTML='<div class="empty">Nenhum aluno ativo com pagamento pendente ou parcial neste mês.</div>';return;}
   const d2=n=>String(n).padStart(2,'0');
   box.innerHTML=lista.map(a=>{
     const q=env[a.id],ok=!!q;
@@ -9836,20 +9854,28 @@ function restaurarVersao(i){
 /* ===== Lembrete de backup =====
    O backup existia mas nunca se lembrava dele. Como os dados vivem no
    navegador, é a diferença entre ter e não ter cópia no dia em que o aparelho
-   der problema. Cobra depois de 30 dias; "depois" cala até fechar o app. */
+   der problema. Considera cópias confirmadas na nuvem e baixadas no aparelho.
+   Cobra depois de 30 dias; "depois" adia por sete dias neste aparelho. */
 function checarBackup(){
   const b=document.getElementById('bk-banner');if(!b)return;
-  if(sessionStorage.getItem('jv-bk-adiar')){b.style.display='none';return;}
-  const ult=DB.ultimoBackup;
-  const dias=ult?(Date.now()-ult)/864e5:999;
+  const agora=Date.now();
+  let adiado=false;try{adiado=!!sessionStorage.getItem('jv-bk-adiar');}catch(e){}
+  if(adiado||Number(lsGet(KEY+'__lembreteBackup'))>agora){b.style.display='none';return;}
+  // A cópia automática confirmada é um backup, mesmo sem baixar um arquivo.
+  const ult=Math.max(Number(DB.ultimoBackup)||0,Number(metaProtecao().backup)||0);
+  const dias=ult?(agora-ult)/864e5:999;
   if(dias>=30){
     b.querySelector('.bk-msg').textContent=ult
-      ? ('⚠️ Já faz '+Math.floor(dias)+' dias desde o último backup — vale guardar uma cópia.')
-      : '⚠️ Você ainda não guardou nenhum backup dos seus dados.';
+      ? ('⚠️ Já faz '+Math.floor(dias)+' dias desde a última cópia de segurança — vale guardar uma cópia.')
+      : '⚠️ Ainda não há uma cópia de segurança confirmada. Você pode baixar uma cópia do aparelho.';
     b.style.display='flex';
   }else b.style.display='none';
 }
-function adiarBackup(){sessionStorage.setItem('jv-bk-adiar','1');const b=document.getElementById('bk-banner');if(b)b.style.display='none';}
+function adiarBackup(){
+  try{sessionStorage.setItem('jv-bk-adiar','1');}catch(e){}
+  lsSet(KEY+'__lembreteBackup',String(Date.now()+7*864e5));
+  const b=document.getElementById('bk-banner');if(b)b.style.display='none';
+}
 function importBackup(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
