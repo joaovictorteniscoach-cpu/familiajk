@@ -59,6 +59,10 @@ let count=0;async function check(name,fn){await fn();count++;console.log('✅ SD
   },cam);
  }
  try{
+  // A CLI pode configurar outro namespace padrão. Aplicar e conferir as
+  // regras neste namespace evita testar permissões num banco aberto.
+  await admin('.settings/rules',rules);
+  assert.deepEqual(await admin('.settings/rules'),rules);
   const a=await page(owner),b=await page(owner);
   const seed=await a.evaluate(()=>{
    const conf=configDe(DB),alunos={};for(const a of DB.alunos)alunos[chaveFb(a.id)]=JSON.stringify(a);
@@ -104,6 +108,13 @@ let count=0;async function check(name,fn){await fn();count++;console.log('✅ SD
   });
   const unauthorized=await page('aluno-emulador-teste');
   await check('regra recusa leitura e gravação de aluno no banco de Gestão',async()=>{
+   const acesso=await unauthorized.evaluate(async()=>{
+    let leitura=false,gravacao=false;const ref=sdkDatabase.ref('jvtenis/v2');
+    try{await ref.once('value');}catch(e){leitura=/permission|denied/i.test(String(e));}
+    try{await ref.child('teste-acesso-aluno').set({teste:true});}catch(e){gravacao=/permission|denied/i.test(String(e));}
+    return {leitura,gravacao};
+   });
+   assert.deepEqual(acesso,{leitura:true,gravacao:true});
    await unauthorized.evaluate(()=>{persist=window.sdkPersist;DB.alunos[0].mensalidade=100;persist();});
    assert.equal(await unauthorized.evaluate(()=>gravarAgora()),false);
    assert.equal(await unauthorized.evaluate(()=>cloudPending),true);
