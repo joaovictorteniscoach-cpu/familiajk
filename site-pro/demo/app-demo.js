@@ -1312,21 +1312,24 @@ function idbKeys(){return idbOp('readonly',st=>st.getAllKeys());}
 /* Roda as versões e guarda a primeira do dia. É "dispara e esquece": backup
    nunca pode segurar nem derrubar o save principal. Se o IndexedDB não existir
    ou falhar, cai no localStorage de antes, sem erro na tela. */
+let _filaVersoes=Promise.resolve();
 function guardarVersoes(json){
-  idbAbrir().then(async()=>{
+  // Serializar evita duas rotações concorrentes perderem a versão anterior.
+  _filaVersoes=_filaVersoes.catch(()=>{}).then(async()=>{
     try{
+      await idbAbrir();
       for(let i=SNAP_N-1;i>0;i--){
         const ant=await idbGet(snapKey(i-1));
         if(ant!=null)await idbSet(snapKey(i),ant);
       }
       await idbSet(snapKey(0),json);
       const hj=diaKey(hojeStr());
-      if((await idbGet(hj))==null){          // só a PRIMEIRA gravação do dia
-        await idbSet(hj,json);
-        await podarDias();
-      }
-    }catch(e){}
-  }).catch(()=>{guardarVersoesLS(json);});
+      if((await idbGet(hj))==null){await idbSet(hj,json);await podarDias();}
+      if(await idbGet(snapKey(0))!==json)throw new Error('Cópia anterior não confirmada');
+      return true;
+    }catch(e){return guardarVersoesLS(json);}
+  });
+  return _filaVersoes;
 }
 /* Reserva: o comportamento antigo, para navegador sem IndexedDB. */
 function guardarVersoesLS(json){
@@ -1338,7 +1341,8 @@ function guardarVersoesLS(json){
     if(!lsSet(snapKey(0),json))limparVersaoAntiga();
     const hj=diaKey(hojeStr());
     if(lsGet(hj)===null){if(!lsSet(hj,json))limparVersaoAntiga();}
-  }catch(e){}
+    return lsGet(snapKey(0))===json;
+  }catch(e){return false;}
 }
 async function podarDias(){
   try{
@@ -9861,19 +9865,31 @@ function prepararMovimentosRestaurados(d){
   for(const m of DB.movs||[])if(!vivos.has(chaveFb(CHAVE_LINHA.movs(m))))marcarRemovida('movs',m);
   for(const k of vivos)delete _removidos.movs[k];
 }
-function restaurarBancoConfirmado(d,rot,origem){
-  const atual=resumoBanco(JSON.stringify(DB)),destino=resumoBanco(d);
+let _restauracaoBancoEmCurso=false;
+async function restaurarBancoConfirmado(d,rot,origem){
+  if(_restauracaoBancoEmCurso){toast('Já há uma restauração em andamento.');return false;}
+  const anterior=JSON.stringify(DB),atual=resumoBanco(anterior),destino=resumoBanco(d);
   if(!confirm('Restaurar '+rot+' ('+origem+')?\n\n'
     +'FICARÁ ASSIM:\n'+descreveResumo(destino)+'\n\n'
     +'SUBSTITUINDO:\n'+descreveResumo(atual)+'\n\n'
     +'A versão atual é guardada antes, então dá para voltar atrás. Esta troca também substitui os movimentos do extrato conhecidos neste aparelho.'))return false;
-  guardarVersoes(JSON.stringify(DB));
-  prepararMovimentosRestaurados(d);
-  DB=d;ensureFields();
-  logAct('Restaurou '+rot+' ('+origem+')');
-  persist();renderAll();
-  toast('✓ Versão restaurada');listarVersoes();
-  return true;
+  _restauracaoBancoEmCurso=true;
+  const removidosAntes=JSON.parse(JSON.stringify(_removidos));let trocou=false;
+  try{
+    toast('Guardando a versão anterior antes de restaurar…');
+    const salvo=await guardarVersoes(anterior);
+    if(salvo===false){toast('Não consegui guardar a versão anterior. Seus dados foram mantidos.');return false;}
+    if(JSON.stringify(DB)!==anterior){toast('Os dados mudaram durante a conferência. Confira novamente antes de restaurar.');return false;}
+    prepararMovimentosRestaurados(d);
+    DB=d;trocou=true;ensureFields();
+    logAct('Restaurou '+rot+' ('+origem+')');
+    persist();renderAll();
+    toast('✓ Versão restaurada');listarVersoes();
+    return true;
+  }catch(e){
+    if(trocou){DB=JSON.parse(anterior);_removidos=removidosAntes;renderAll();}
+    toast('Não consegui concluir a restauração. A cópia anterior foi mantida.');return false;
+  }finally{_restauracaoBancoEmCurso=false;}
 }
 function restaurarVersao(i){
   const it=(window._versoes||[])[i];if(!it)return;

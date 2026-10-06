@@ -36,6 +36,7 @@ let count=0;async function check(name,fn){await fn();count++;console.log('✅ SD
   await p.waitForFunction(()=>typeof CARREGADO!=='undefined'&&CARREGADO,{},{timeout:15000});
   await p.evaluate(f=>{
    window.sdkBackupHoraOriginal=backupNuvem;window.sdkBackupDiaOriginal=backupDoDia;
+   window.sdkGuardarVersoesOriginal=guardarVersoes;
    window.sdkPersist=persist;persist=()=>{};DB=JSON.parse(JSON.stringify(f));ensureFields();
    CARREGADO=true;window._espacoAberto=true;_abriuSemConferir=false;_conflitoNuvem=null;cloudPending=false;
    document.querySelectorAll('.overlay.on').forEach(e=>e.classList.remove('on'));
@@ -190,7 +191,7 @@ let count=0;async function check(name,fn){await fn();count++;console.log('✅ SD
    rec.removeAllListeners('dialog');rec.on('dialog',d=>d.accept());
   });
   await check('restaurar e desfazer recupera integralmente aulas, pagamentos e saldos no emulador',async()=>{
-   assert.equal(await rec.evaluate(async()=>{restaurarVersao(0);return gravarAgora();}),true);
+   assert.equal(await rec.evaluate(async()=>{await restaurarVersao(0);return gravarAgora();}),true);
    assert.deepEqual(await rec.evaluate(()=>window.recGuardadas[0]),anterior);
    const normaliza=d=>({...d,alunos:d.alunos.slice().sort((a,b)=>a.id.localeCompare(b.id))});
    const recuperado=await rec.evaluate(no=>bancoDasPartes(no),await admin('jvtenis/v2'));
@@ -209,7 +210,7 @@ let count=0;async function check(name,fn){await fn();count++;console.log('✅ SD
    for(const campo of ['agenda','lancamentos','movs','presencas'])assert.deepEqual(visto[campo],copiada[campo]);
    assert.equal(await rec.evaluate(async raw=>{
     window._versoes=[{rot:'antes da restauração',origem:'aparelho',raw:JSON.stringify(raw),r:resumoBanco(raw)}];
-    restaurarVersao(0);return gravarAgora();
+    await restaurarVersao(0);return gravarAgora();
    },anterior),true);
    const desfeito=await rec.evaluate(no=>bancoDasPartes(no),await admin('jvtenis/v2'));
    for(const campo of ['alunos','agenda','lancamentos','movs','presencas'])
@@ -256,17 +257,38 @@ let count=0;async function check(name,fn){await fn();count++;console.log('✅ SD
    await admin('jvtenis/v2/movs/'+k,JSON.stringify(arquivo));await baseline(rec);
    assert.equal(await rec.evaluate(async raw=>{
     window._versoes=[{rot:'antes da restauração',origem:'ensaio',raw:JSON.stringify(raw),r:resumoBanco(raw)}];
-    restaurarVersao(0);return gravarAgora();
+    await restaurarVersao(0);return gravarAgora();
    },anterior),true);
    let remoto=await admin('jvtenis/v2');
    assert.deepEqual(JSON.parse(remoto.movs[k]),arquivo);
    assert.equal(Object.keys(remoto.movs).length,1);
    assert.equal(await rec.evaluate(async raw=>{
     window._versoes=[{rot:'cópia confirmada',origem:'ensaio',raw:JSON.stringify(raw),r:resumoBanco(raw)}];
-    restaurarVersao(0);return gravarAgora();
+    await restaurarVersao(0);return gravarAgora();
    },copiada),true);
    remoto=await admin('jvtenis/v2');assert.deepEqual(JSON.parse(remoto.movs[k]),arquivo);
    assert.equal(Object.keys(remoto.movs).length,2);
+  });
+  await check('restauração confirma cópia anterior no IndexedDB e bloqueia falha de backup',async()=>{
+   const resultado=await rec.evaluate(async raw=>{
+    guardarVersoes=window.sdkGuardarVersoesOriginal;
+    const antes=JSON.stringify(DB);
+    window._versoes=[{rot:'ensaio de cópia durável',origem:'ensaio',raw:JSON.stringify(raw),r:resumoBanco(raw)}];
+    const ok=await restaurarVersao(0);await _filaVersoes;
+    return {ok,antes,copia:await idbGet(snapKey(1))};
+   },anterior);
+   assert.equal(resultado.ok,true);assert.equal(resultado.copia,resultado.antes);
+   assert.equal(await rec.evaluate(()=>gravarAgora()),true);
+   const banco=await admin('jvtenis/v2');
+   const bloqueado=await rec.evaluate(async raw=>{
+    const antes=JSON.stringify(DB),removidos=JSON.stringify(_removidos);
+    guardarVersoes=async()=>false;
+    window._versoes=[{rot:'ensaio sem espaço',origem:'ensaio',raw:JSON.stringify(raw),r:resumoBanco(raw)}];
+    const ok=await restaurarVersao(0);
+    return {ok,antes,depois:JSON.stringify(DB),removidos,depoisRemovidos:JSON.stringify(_removidos)};
+   },copiada);
+   assert.equal(bloqueado.ok,false);assert.equal(bloqueado.antes,bloqueado.depois);
+   assert.equal(bloqueado.removidos,bloqueado.depoisRemovidos);assert.deepEqual(await admin('jvtenis/v2'),banco);
   });
   for(const p of [a,b,unauthorized,prof,rec])assert.deepEqual(p.errors,[]);
   console.log('✅ '+count+' verificações com SDK Firebase real e emulador local');
