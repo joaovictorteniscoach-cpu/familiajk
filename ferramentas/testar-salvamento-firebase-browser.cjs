@@ -117,7 +117,14 @@ let count=0;async function check(name,fn){await fn();count++;console.log('✅ SD
    await prof.evaluate(()=>{persist=window.sdkPersist;DB.alunos[0].mensalidade=820;persist();});
    assert.equal(await prof.evaluate(()=>gravarAgora()),true);
    assert.equal(JSON.parse((await admin('jvtenis/prof/prof-emulador-teste/v2')).alunos.teste).mensalidade,820);
-   assert.equal(await prof.evaluate(async()=>{try{await sdkDatabase.ref('jvtenis/v2').get();return false;}catch(e){return true;}}),true);
+   const acesso=await prof.evaluate(async()=>{
+    const ref=sdkDatabase.ref('jvtenis/v2');
+    let leitura=false,gravacao=false;
+    try{await ref.once('value');}catch(e){leitura=/permission|denied/i.test(String(e));}
+    try{await ref.child('teste-acesso-prof').set({teste:true});}catch(e){gravacao=/permission|denied/i.test(String(e));}
+    return {leitura,gravacao};
+   });
+   assert.deepEqual(acesso,{leitura:true,gravacao:true});
    assert.equal(JSON.parse((await admin('jvtenis/v2')).alunos.teste).mensalidade,900);
   });
   for(const p of [a,b,unauthorized,prof])assert.deepEqual(p.errors,[]);
