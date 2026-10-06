@@ -250,6 +250,24 @@ let count=0;async function check(name,fn){await fn();count++;console.log('✅ SD
    assert.deepEqual(ordena(remoto.alunos),ordena(copiada.alunos));
    for(const campo of ['agenda','lancamentos','movs','presencas'])assert.deepEqual(remoto[campo],copiada[campo]);
   });
+  await check('restauração conserva o histórico arquivado que só existe na nuvem',async()=>{
+   const arquivo={ts:1600000000000,alunoId:'teste',campo:'repos',delta:1,de:0,para:1,motivo:'Linha histórica do ensaio',ref:'arquivo-recup'};
+   const k=await rec.evaluate(m=>chaveFb(CHAVE_LINHA.movs(m)),arquivo);
+   await admin('jvtenis/v2/movs/'+k,JSON.stringify(arquivo));await baseline(rec);
+   assert.equal(await rec.evaluate(async raw=>{
+    window._versoes=[{rot:'antes da restauração',origem:'ensaio',raw:JSON.stringify(raw),r:resumoBanco(raw)}];
+    restaurarVersao(0);return gravarAgora();
+   },anterior),true);
+   let remoto=await admin('jvtenis/v2');
+   assert.deepEqual(JSON.parse(remoto.movs[k]),arquivo);
+   assert.equal(Object.keys(remoto.movs).length,1);
+   assert.equal(await rec.evaluate(async raw=>{
+    window._versoes=[{rot:'cópia confirmada',origem:'ensaio',raw:JSON.stringify(raw),r:resumoBanco(raw)}];
+    restaurarVersao(0);return gravarAgora();
+   },copiada),true);
+   remoto=await admin('jvtenis/v2');assert.deepEqual(JSON.parse(remoto.movs[k]),arquivo);
+   assert.equal(Object.keys(remoto.movs).length,2);
+  });
   for(const p of [a,b,unauthorized,prof,rec])assert.deepEqual(p.errors,[]);
   console.log('✅ '+count+' verificações com SDK Firebase real e emulador local');
  }finally{for(const c of contexts)await c.close();await browser.close();server.close();}
