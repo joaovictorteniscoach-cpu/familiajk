@@ -3230,3 +3230,44 @@ html.tema-saibro body:not(#jv) .seg button.on b{
 html.tema-saibro body:not(#jv) #pg-agenda .wk-fit.on{
   background:#D9DEE0!important;color:#1F2428!important;-webkit-text-fill-color:#1F2428!important
 }
+
+/* Salvamento visível e pagamentos com valores exatos */
+html body:not(#jv) .pd-status{
+  margin:10px 12px 16px;padding:14px;border:1px solid #B6C7C0;border-radius:15px;
+  background:#F4F8F6;color:#18382D;line-height:1.5;font-size:13px;
+}
+html body:not(#jv) .pd-status.pd-alerta{background:#FFF4DB;color:#573D08;border-color:#D5B466}
+html body:not(#jv) .pd-titulo{font-weight:800;font-size:14px;color:inherit}
+html body:not(#jv) .pd-status p{margin:5px 0 9px;color:inherit;font-size:13px}
+html body:not(#jv) .pd-datas{display:grid;gap:4px;color:inherit}
+html body:not(#jv) .pd-datas b{font-weight:800;color:inherit}
+html body:not(#jv) .pd-acoes{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+html body:not(#jv) .pd-acoes .btn{min-height:42px;white-space:normal;font-size:13px}
+html body:not(#jv) .pd-modal,html body:not(#jv) .pm-modal{background:#F8F8F5!important;color:#203A30!important;border:1px solid #AFBEB7}
+html body:not(#jv) .pd-modal h3,html body:not(#jv) .pm-modal h3{color:#203A30!important;font-size:22px}
+html body:not(#jv) .pd-modal .hint,html body:not(#jv) .pm-modal .hint,
+html body:not(#jv) .pm-modal label{color:#42584E!important;font-size:13px;line-height:1.5}
+html body:not(#jv) .pd-diferenca{padding:10px 0;border-bottom:1px solid #CBD6D0;overflow-wrap:anywhere;color:#203A30}
+html body:not(#jv) .pd-diferenca p{font-size:13px;line-height:1.5;margin:4px 0;color:#42584E}
+html body:not(#jv) .pm-nome{font-size:16px;font-weight:800;color:#203A30;margin:10px 0 16px}
+html body:not(#jv) .pm-resumo,html body:not(#jv) .pm-ficha{display:grid;gap:6px;padding:13px;border:1px solid #CBD6D0;background:#EFF4F1;color:#203A30;border-radius:12px;font-size:14px;line-height:1.5}
+html body:not(#jv) .pm-resumo span,html body:not(#jv) .pm-ficha span{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px;color:inherit}
+html body:not(#jv) .pm-resumo b,html body:not(#jv) .pm-ficha b{font-weight:800;color:#18382D}
+html body:not(#jv) .pm-ficha{margin-bottom:12px}
+html body:not(#jv) .pm-salvar{width:100%;min-height:46px;margin-top:8px}
+html body:not(#jv) .pm-modal input[readonly]{background:#EEF2EF!important;color:#304E40!important}
+html body:not(#jv) .pm-modal .modal-x,html body:not(#jv) .pd-modal .modal-x{background:#E5ECE7;color:#304E40}
+@media(max-width:360px){html body:not(#jv) .pm-modal .row2{grid-template-columns:1fr}}
+
+html body:not(#jv) .pd-modal .modal-head,html body:not(#jv) .pm-modal .modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+html body:not(#jv) .pd-modal *,html body:not(#jv) .pm-modal *,html body:not(#jv) .pd-status *,html body:not(#jv) .pm-ficha *{-webkit-text-fill-color:currentColor!important}
+html body:not(#jv) .pd-acoes .btn-ghost{background:#E5ECE7!important;color:#203A30!important;border-color:#ADBFB4!important;-webkit-text-fill-color:#203A30!important}
+
+/* Janelas claras também acima do vidro do tema Saibro. */
+html body:not(#jv) #ov-pagamento-exato .pm-modal,
+html body:not(#jv) #ov-conflito-nuvem .pd-modal{background:#F8F8F5!important}
+html body:not(#jv) .pm-modal .modal-x,html body:not(#jv) .pd-modal .modal-x{
+  width:36px;height:36px;flex:0 0 36px;border:0;border-radius:50%;font-size:17px;line-height:1;
+  background:#E5ECE7!important;color:inherit!important;cursor:pointer;
+}
+html body:not(#jv) .pm-modal .modal-head h3,html body:not(#jv) .pd-modal .modal-head h3{margin:0}

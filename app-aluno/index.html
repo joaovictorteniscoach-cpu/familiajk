@@ -1588,11 +1588,11 @@ body[data-aba]:not([data-aba="inicio"]) #app>.top .jv-quadra-chip{display:none!i
 #app>.top .jv-chips-topo .jv-clima-chip .clima-ic{font-size:17px}
 #app>.top .jv-chips-topo .jv-quadra-chip .led{width:9px;height:9px;flex:0 0 9px}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-05-1">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-06-1">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-05-1">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-06-1">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -1868,6 +1868,7 @@ function esperarAuth(){
       <div class="jv-pay-head"><b id="home-pay-title">Mensalidade</b><span class="jv-pay-status" id="home-pay-status">—</span></div>
       <div><div class="jv-pay-lbl" id="home-venc-label">Vencimento</div><div class="jv-pay-value" id="home-venc">—</div></div>
       <div><div class="jv-pay-lbl">Valor do plano</div><div class="jv-pay-value" id="home-mens">—</div></div>
+      <div id="home-saldo-pagamento" hidden style="grid-column:1/-1;font-size:14px;line-height:1.5"></div>
       <div id="home-familia-info" style="grid-column:1/-1;font-size:12px;line-height:1.5;display:none"></div>
       <button class="jv-pix-btn" id="home-pix-btn" type="button" onclick="pagarPix()"><img class="jv-pix-mark" src="assets/pix-simbolo.svg" alt="" width="25" height="25"> Pagar com Pix ›</button>
     </div>
@@ -1959,6 +1960,8 @@ function esperarAuth(){
         <div class="jv-row"><span>Plano atual</span><b id="cred-page-plano">—</b></div>
         <div class="jv-row"><span>Mensalidade</span><b id="cred-page-mens">—</b></div>
         <div class="jv-row"><span>Situação</span><b id="cred-page-status">—</b></div>
+        <div class="jv-row" id="cred-page-recebido-row" hidden><span>Recebido</span><b id="cred-page-recebido">—</b></div>
+        <div class="jv-row" id="cred-page-restante-row" hidden><span>Saldo a pagar</span><b id="cred-page-restante">—</b></div>
       </div>
       <div class="jv-credit-panel" id="cred-page-repos-panel">
         <div class="jv-pay-lbl">Reposições disponíveis</div>
@@ -2033,7 +2036,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-10-05-1"></script>
+<script src="lib/icones.js?v=2026-10-06-1"></script>
 </div>
 
 <!-- MODAL ESCOLHER O QUE FAZER NO HORÁRIO -->
@@ -2240,7 +2243,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-10-05-1';
+const VERSAO='2026-10-06-1';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -2431,6 +2434,17 @@ function infoFamiliaAluno(){
 }
 function avisoPagamentoFamilia(){toast('Pagamento pelo responsável: '+(EU&&EU.familia&&EU.familia.responsavelNome||'plano família')+'.');}
 function fmtMens(){return dependenteAluno()?'Incluída na família':(mensOculta()?'após aprovação':fmt(EU.mensalidade));}
+
+function pagamentoMensalAluno(){
+  const q=EU&&EU.pagamentoMensal;
+  return !dependenteAluno()&&!mensOculta()&&q&&q.exato&&q.mes===dKey(new Date()).slice(0,7)?q:null;
+}
+function valorAPagarMensalidade(){
+  const q=pagamentoMensalAluno();
+  return q&&EU.status!=='pago'?Math.max(0,Number(q.falta)||0):(Number(EU&&EU.mensalidade)||0);
+}
+function rotuloParcialAluno(){return pagamentoMensalAluno()?'Pagamento parcial':'50% pago';}
+
 function avisoMensOculta(){toast('🔐 O valor aparece quando o João aprovar este aparelho');}
 function fmtCred(n){const r=Math.round(Number(n||0)*2)/2;return r%1===0?String(r):String(r).replace('.',',');}
 function _hm(s){const p=String(s).split(':');return (+p[0])*60+(+p[1]||0);}
@@ -3003,10 +3017,13 @@ function renderPremiumAluno(){
   const hps=document.getElementById('home-plano-sub');if(hps)hps.textContent='Plano e saldo sincronizados';
   const foco=focoPremium(),fo=document.getElementById('home-foco');if(fo)fo.textContent=foco;
   const fos=document.getElementById('home-foco-sub');if(fos)fos.textContent=(EU.avaliacoes&&EU.avaliacoes.length)?'Prioridade da sua avaliação mais recente':'Será atualizado pelo professor';
-  const ps=document.getElementById('home-pay-status');if(ps){ps.textContent=EU.status==='pago'?'Em dia':(EU.status==='parcial'?'50% pago':'Pendente');ps.dataset.status=EU.status==='pago'?'pago':(EU.status==='parcial'?'parcial':'pendente');}
+  const ps=document.getElementById('home-pay-status');if(ps){ps.textContent=EU.status==='pago'?'Em dia':(EU.status==='parcial'?rotuloParcialAluno():'Pendente');ps.dataset.status=EU.status==='pago'?'pago':(EU.status==='parcial'?'parcial':'pendente');}
   const vl=document.getElementById('home-venc-label');if(vl)vl.textContent=EU.status==='pago'?'Próximo vencimento':'Vencimento do mês';
   const hv=document.getElementById('home-venc');if(hv)hv.textContent=vencimentoPremium();
   const hm=document.getElementById('home-mens');if(hm)hm.textContent=fmtMens();
+  const pagoExato=pagamentoMensalAluno();
+  const hs=document.getElementById('home-saldo-pagamento');if(hs){hs.hidden=!pagoExato;hs.style.setProperty('display',pagoExato?'block':'none','important');hs.textContent=pagoExato?('Recebido: '+fmt(pagoExato.recebido)+' · falta: '+fmt(pagoExato.falta)):'';}
+  for(const campo of ['recebido','restante']){const row=document.getElementById('cred-page-'+campo+'-row');if(row){row.hidden=!pagoExato;row.style.setProperty('display',pagoExato?'flex':'none','important');}const el=document.getElementById('cred-page-'+campo);if(el)el.textContent=pagoExato?fmt(campo==='recebido'?pagoExato.recebido:pagoExato.falta):'—';}
   const ptit=document.getElementById('home-pay-title');if(ptit)ptit.textContent=familiaAluno()?'Plano família':'Mensalidade';
   const finfo=infoFamiliaAluno();
   const hi=document.getElementById('home-familia-info');if(hi){hi.textContent=finfo;hi.style.display=finfo?'block':'none';}
@@ -3027,7 +3044,7 @@ function renderPremiumAluno(){
   const ra=document.getElementById('cred-page-repos-agendar');if(ra){ra.hidden=repos<=0;ra.style.display=repos>0?'flex':'none';}
   const cp=document.getElementById('cred-page-plano');if(cp)cp.textContent=planoPremium();
   const cm=document.getElementById('cred-page-mens');if(cm)cm.textContent=fmtMens();
-  const cst=document.getElementById('cred-page-status');if(cst)cst.textContent=EU.status==='pago'?'Em dia':(EU.status==='parcial'?'50% pago':'Pendente');
+  const cst=document.getElementById('cred-page-status');if(cst)cst.textContent=EU.status==='pago'?'Em dia':(EU.status==='parcial'?rotuloParcialAluno():'Pendente');
   const cpp=document.getElementById('cred-page-pix');if(cpp)cpp.style.display=(!dependenteAluno()&&PUB&&PUB.pix&&String(PUB.pix).trim())?'block':'none';
   const pn=document.getElementById('perfil-nome');if(pn)pn.textContent=EU.nome||'Aluno';
   const av=(EU&&Array.isArray(EU.avaliacoes))?EU.avaliacoes:[],nivel=av.length?(av[av.length-1].nivel||'Em evolução'):'Avaliação a liberar';
@@ -3058,7 +3075,7 @@ function render(){
   document.getElementById('v-plano').textContent=(Number(EU.plano)||0)<=0?(EU.tipo+' · sem pacote'):(isPersonal()?(EU.tipo+' · '+EU.plano+' treinos/mês'):(EU.tipo+' · Flex '+EU.plano));
   document.getElementById('v-mens').textContent=fmtMens();
   const st=document.getElementById('v-status');
-  st.textContent=EU.status==='parcial'?'Pagou 50%':EU.status;
+  st.textContent=EU.status==='parcial'?rotuloParcialAluno():EU.status;
   st.className='badge '+EU.status;
   const av=document.getElementById('aviso-box');
   if(PUB.aviso){av.style.display='block';document.getElementById('aviso-txt').textContent=PUB.aviso;}
@@ -3969,7 +3986,7 @@ function jaPagueiPix(){
 function pagarPix(){
   if(dependenteAluno()){avisoPagamentoFamilia();return;}
   if(mensOculta()){avisoMensOculta();return;}
-  abrirPix(EU.mensalidade,'Mensalidade · '+(EU.nome||'').split(' ')[0],{kind:'mensalidade',metodo:'Pix',valor:EU.mensalidade});
+  abrirPix(valorAPagarMensalidade(),'Mensalidade · '+(EU.nome||'').split(' ')[0],{kind:'mensalidade',metodo:'Pix',valor:valorAPagarMensalidade()});
 }
 function pagarCartao(){
   if(dependenteAluno()){avisoPagamentoFamilia();return;}
@@ -3978,19 +3995,19 @@ function pagarCartao(){
   if(link){
     const a=document.createElement('a');a.href=link;a.target='_blank';a.rel='noopener';
     document.body.appendChild(a);a.click();document.body.removeChild(a);
-    enviarPedido({kind:'mensalidade',metodo:'cartão',valor:EU.mensalidade});
-    setTimeout(()=>abrirWhatsApp('5541995415712','Olá João! Vou pagar a mensalidade ('+fmt(EU.mensalidade)+') no cartão pelo link. 🎾'),900);
+    enviarPedido({kind:'mensalidade',metodo:'cartão',valor:valorAPagarMensalidade()});
+    setTimeout(()=>abrirWhatsApp('5541995415712','Olá João! Vou pagar a mensalidade ('+fmt(valorAPagarMensalidade())+') no cartão pelo link. 🎾'),900);
     return;
   }
-  enviarPedido({kind:'mensalidade',metodo:'cartão (pediu link)',valor:EU.mensalidade});
+  enviarPedido({kind:'mensalidade',metodo:'cartão (pediu link)',valor:valorAPagarMensalidade()});
   toast('Pedido de link enviado ao João 💳');
-  setTimeout(()=>abrirWhatsApp('5541995415712','Olá João! Quero pagar a mensalidade ('+fmt(EU.mensalidade)+') no *cartão de crédito*. Pode me enviar o link de pagamento? 💳'),600);
+  setTimeout(()=>abrirWhatsApp('5541995415712','Olá João! Quero pagar a mensalidade ('+fmt(valorAPagarMensalidade())+') no *cartão de crédito*. Pode me enviar o link de pagamento? 💳'),600);
 }
 function pagarDinheiro(){
   if(dependenteAluno()){avisoPagamentoFamilia();return;}
   if(mensOculta()){avisoMensOculta();return;}
-  enviarPedido({kind:'mensalidade',metodo:'dinheiro',valor:EU.mensalidade});
-  abrirWhatsApp('5541995415712','Olá João! Vou pagar a mensalidade ('+fmt(EU.mensalidade)+') em dinheiro. Combinamos? 🎾');
+  enviarPedido({kind:'mensalidade',metodo:'dinheiro',valor:valorAPagarMensalidade()});
+  abrirWhatsApp('5541995415712','Olá João! Vou pagar a mensalidade ('+fmt(valorAPagarMensalidade())+') em dinheiro. Combinamos? 🎾');
 }
 /* ===== Comprar créditos / aula avulsa / locação ===== */
 function precoAvulsaPart(){return (PUB.precos&&PUB.precos.avulsaPart)||170;}
@@ -4804,7 +4821,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-05-1').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-06-1').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava

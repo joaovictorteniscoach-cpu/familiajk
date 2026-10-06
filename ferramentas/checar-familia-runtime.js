@@ -16,7 +16,9 @@ const spouse={...child,id:'fam-s',codigo:'9903',nome:'Cônjuge de Teste',parente
 const single={...payer,id:'solo',codigo:'9904',nome:'Individual de Teste',mensalidade:640};
 let resets=0;
 const ctx=vm.createContext({DB:{alunos:[payer,child,spouse,single],lancamentos:[],movs:[]},Number,
-  acaoRepetida:()=>false,toast:()=>{},confirm:()=>{throw Error('Confirmação inesperada');},
+  acaoRepetida:()=>false,toast:()=>{},confirm:()=>true,
+  PM_CTX:null,fichaId:null,guardarVersoes:()=>{},logAct:()=>{},closeModal:()=>{},br:String,
+  document:{getElementById:(()=>{const el={};return id=>el[id]||(el[id]={value:'',textContent:'',innerHTML:'',readOnly:false,classList:{add:()=>{}}});})()},
   monthKey:()=> '2026-10',mesReal:()=> '2026-10',dKey:()=> '2026-10-04',
   ehPersonalTipo:()=>false,persist:()=>{},renderAll:()=>{},descontoDoMes:()=>null,
   fmtRs:v=>'R$ '+v,fmt:v=>'R$ '+v,fmtCred:String,
@@ -25,7 +27,7 @@ const ctx=vm.createContext({DB:{alunos:[payer,child,spouse,single],lancamentos:[
   renovacoesDoMes:()=>[],reposVencidas:()=>0,ehAtivoAluno:a=>!a.arquivado&&(a.plano>0||a.mensalidade>0),
   mover:(a,k,n)=>{a[k]=(Number(a[k])||0)+n;},purgarReposVencidas:()=>{},juntarGrupo:()=>{},
   fcAulasDoMes:(a)=>[{alunoId:a.id,custo:1}],fcFaltasDoMes:()=>1,fcAvisadosDoMes:()=>0});
-const names=['dependentesFamilia','responsavelFamilia','ehDependenteFamilia','temFamilia','pagadorFamilia','statusFinanceiro','dadosFamiliaAluno','validarFamiliaAluno','valorDoMes','valorAulaDe','mensalidadesDoMes','cobrancaDoMes','marcarPago','alunoPublicado','publicacaoLegadaEnxuta','rmLinha','rmAplicarUm','fcDados','ehDoFechamento','situacaoPag','difSilenciada'];
+const names=['centavosPagamento','dataPagamentoValida','pagamentosMensalidade','valorMensalidadeEm','situacaoMensalidade','saldoMensalidade','atualizarSituacaoExata','registrarPagamento','prepararPagamentoMes','resumoPagamentoExato','salvarPagamentoExato','dependentesFamilia','responsavelFamilia','ehDependenteFamilia','temFamilia','pagadorFamilia','statusFinanceiro','dadosFamiliaAluno','validarFamiliaAluno','valorDoMes','valorAulaDe','mensalidadesDoMes','cobrancaDoMes','marcarPago','alunoPublicado','publicacaoLegadaEnxuta','rmLinha','rmAplicarUm','fcDados','ehDoFechamento','situacaoPag','difSilenciada'];
 vm.runInContext(names.map(n=>fn(gest,n)).join('\n'),ctx);
 check('uma mensalidade por família e cobranças individuais preservadas',()=>{
  assert.equal(ctx.valorDoMes(payer),1200);assert.equal(ctx.valorDoMes(child),0);assert.equal(ctx.valorDoMes(spouse),0);assert.equal(ctx.valorDoMes(single),640);
@@ -33,7 +35,7 @@ check('uma mensalidade por família e cobranças individuais preservadas',()=>{
 });
 check('pagamento único muda a situação financeira dos dependentes, sem tocar nos saldos',()=>{
  const before=[payer,child,spouse].map(a=>[a.creditos,a.repos]);
- ctx.marcarPago(payer.id);
+ ctx.marcarPago(payer.id);assert.equal(ctx.DB.lancamentos.length,0);ctx.salvarPagamentoExato();
  assert.equal(ctx.DB.lancamentos.length,1);assert.equal(ctx.DB.lancamentos[0].alunoId,payer.id);assert.equal(ctx.DB.lancamentos[0].valor,1200);
  assert.equal(ctx.statusFinanceiro(child),'pago');assert.equal(ctx.situacaoPag(spouse),'pago');
  assert.deepEqual([payer,child,spouse].map(a=>[a.creditos,a.repos]),before);
@@ -41,8 +43,10 @@ check('pagamento único muda a situação financeira dos dependentes, sem tocar 
 check('dependente não gera segunda mensalidade mesmo em chamada direta',()=>{
  const before=JSON.stringify(ctx.DB);ctx.marcarPago(child.id);assert.equal(JSON.stringify(ctx.DB),before);
 });
-check('parcial e pendente são lidos do responsável, inclusive após trocar o mês',()=>{
- payer.status='parcial';assert.equal(ctx.statusFinanceiro(child),'parcial');payer.status='pendente';assert.equal(ctx.statusFinanceiro(spouse),'pendente');
+check('pagamento exato parcial e pendente são lidos do responsável',()=>{
+ ctx.DB.lancamentos[0].valor=600;ctx.atualizarSituacaoExata(payer,'2026-10');assert.equal(ctx.statusFinanceiro(child),'parcial');assert.equal(ctx.saldoMensalidade(payer),600);
+ ctx.DB.lancamentos[0].valor=0;ctx.atualizarSituacaoExata(payer,'2026-10');assert.equal(ctx.statusFinanceiro(spouse),'pendente');
+ ctx.DB.lancamentos[0].valor=1200;ctx.atualizarSituacaoExata(payer,'2026-10');
 });
 check('vínculos inválidos, ciclos e transferência de responsável com dependentes são recusados',()=>{
  for(const [id,r]of [[child.id,child.id],[child.id,'missing'],[payer.id,child.id],[single.id,child.id],[payer.id,single.id]])assert.ok(ctx.validarFamiliaAluno(id,r));
