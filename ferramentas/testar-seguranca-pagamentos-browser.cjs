@@ -319,6 +319,86 @@ async function shot(p,theme,key,locator){
     assert.ok(await p.evaluate(()=>window.testGoodBackupStamp)>0);
     assert.equal(await p.evaluate(()=>window.testDayPreserved),true);
    });
+   await check(theme+': seletor e fila do fechamento só mostram ativos pendentes ou parciais',async()=>{
+    await p.evaluate(()=>{
+     window.fechoDBAntes=JSON.stringify(DB);
+     const mk=monthKey(),[ano,mes]=mk.split('-').map(Number),prev=dKey(new Date(ano,mes-2,1)).slice(0,7);
+     const aluno=(id,nome,extra)=>({id,nome,tipo:'Particular',plano:4,mensalidade:600,creditos:2,repos:1,status:'pendente',ultimoPago:prev,...extra});
+     DB.alunos=[
+      aluno('z-pendente','Zilda Teste',{}),aluno('a-parcial','Ana Teste',{status:'parcial'}),
+      aluno('pago','Carlos Teste',{status:'pago'}),aluno('arquivado','Dora Teste',{arquivado:true}),
+      aluno('inativo-status','Edu Teste',{status:'inativo',arquivado:false}),
+      aluno('torneio','Fábio Teste',{perfil:'torneio'}),
+      aluno('dependente','Gabi Teste',{responsavelId:'z-pendente',mensalidade:0}),
+      aluno('exato-quitado','Heitor Teste',{status:'parcial',pagamentosExatos:{[mk]:{ajusteAnterior:600}}}),
+      aluno('exato-parcial','Beatriz Teste',{status:'parcial',pagamentosExatos:{[mk]:{ajusteAnterior:200},[prev]:{ajusteAnterior:600}}})
+     ];
+     DB.lancamentos=[];window.fechoTesteAntes=JSON.stringify(DB);go('fech',document.createElement('button'));
+     document.getElementById('fc-mes').value=mk;abrirFechamento();window.fechoTesteAnterior=prev;
+    });
+    const ids=()=>p.locator('#fc-aluno option').evaluateAll(es=>es.map(e=>e.value).filter(Boolean));
+    assert.deepEqual(await ids(),['a-parcial','exato-parcial','z-pendente']);
+    assert.deepEqual(await p.locator('#fc-fila .fq-nome').allTextContents(),['Ana Teste','Beatriz Teste','Zilda Teste']);
+    assert.equal(await p.evaluate(()=>JSON.stringify(DB)),await p.evaluate(()=>window.fechoTesteAntes));
+    await contrast(p,'#fc-fila *');await shot(p,theme,'fechamento-filtrado','#pg-fech');
+    await p.evaluate(()=>{
+     document.getElementById('fc-aluno').value='a-parcial';DB.alunos.find(a=>a.id==='a-parcial').status='pago';renderAll();
+    });
+    assert.equal(await p.locator('#fc-aluno').inputValue(),'');assert.deepEqual(await ids(),['exato-parcial','z-pendente']);
+    await p.evaluate(()=>{
+     document.getElementById('fc-mes').value=window.fechoTesteAnterior;
+     document.getElementById('fc-mes').dispatchEvent(new Event('change'));
+    });
+    assert.deepEqual(await ids(),[]);assert.equal(await p.locator('#fc-fila .fq-nome').count(),0);
+    await p.evaluate(()=>{DB=JSON.parse(window.fechoDBAntes);document.getElementById('fc-mes').value=monthKey();abrirFechamento();});
+   });
+   await check(theme+': nuvem confirmada fica discreta; detalhes permanecem em Segurança e dados',async()=>{
+    await p.evaluate(()=>{
+     _conflitoNuvem=null;_abriuSemConferir=false;_nuvemMuda=false;cloudPending=false;lastCloudError='';
+     guardarMetaProtecao({nuvem:Date.now(),backup:Date.now()});setSave('✓ salvo na nuvem','ok');go('dash',document.createElement('button'));
+    });
+    assert.equal(await p.locator('#pd-status').isVisible(),false);
+    assert.equal(await p.locator('#save-state').textContent(),'✓ Nuvem');
+    await p.locator('#save-state').click();
+    assert.equal(await p.locator('#pg-seg').evaluate(e=>e.classList.contains('on')),true);
+    assert.equal(await p.locator('#pd-detalhes').isVisible(),true);await contrast(p,'#pd-detalhes *');
+    await shot(p,theme,'detalhes-seguranca','#pd-detalhes');
+   });
+   await check(theme+': envio rápido não alerta; pendência prolongada e conflito continuam visíveis',async()=>{
+    await p.evaluate(()=>{
+     go('dash',document.createElement('button'));window.hasCloudAnterior=hasCloud;hasCloud=()=>true;
+     cloudPending=true;_tentativaLocal=performance.now();setSave('enviando à nuvem…');
+    });
+    assert.equal(await p.locator('#pd-status').isVisible(),false);
+    await p.evaluate(()=>{_tentativaLocal=performance.now()-PRAZO_NUVEM-100;setSave('⚠ salvo só no aparelho ⓘ','err');});
+    assert.equal(await p.locator('#pd-status').isVisible(),true);
+    assert.match(await p.locator('#pd-status').textContent(),/salvas só neste aparelho/);
+    await shot(p,theme,'pendencia-real','#pd-status');
+    await p.evaluate(()=>{_conflitoNuvem={banco:null};_tentativaLocal=performance.now();renderProtecaoDados();});
+    assert.match(await p.locator('#pd-status').textContent(),/Outra sessão/);assert.equal(await p.locator('#pd-status').isVisible(),true);
+    await p.evaluate(()=>{_conflitoNuvem=null;cloudPending=false;hasCloud=window.hasCloudAnterior;renderProtecaoDados();});
+   });
+   await check(theme+': backup automático confirmado dispensa lembrete; adiar vale nas próximas sessões',async()=>{
+    await p.evaluate(()=>{
+     window.ultimoBackupTeste=DB.ultimoBackup;DB.ultimoBackup=0;
+     sessionStorage.removeItem('jv-bk-adiar');localStorage.removeItem(KEY+'__lembreteBackup');
+     guardarMetaProtecao({backup:Date.now()});
+    });
+    assert.equal(await p.locator('#bk-banner').isVisible(),false);
+    await p.evaluate(()=>{guardarMetaProtecao({backup:0,nuvem:Date.now()});checarBackup();});
+    assert.equal(await p.locator('#bk-banner').isVisible(),true);
+    assert.match(await p.locator('#bk-banner .bk-msg').textContent(),/não há uma cópia de segurança confirmada/);
+    await p.evaluate(()=>{adiarBackup();sessionStorage.removeItem('jv-bk-adiar');checarBackup();});
+    assert.equal(await p.locator('#bk-banner').isVisible(),false);
+    assert.ok(await p.evaluate(()=>Number(lsGet(KEY+'__lembreteBackup'))>Date.now()));
+    await p.evaluate(()=>{
+     localStorage.removeItem(KEY+'__lembreteBackup');checarBackup();
+    });
+    assert.equal(await p.locator('#bk-banner').isVisible(),true);
+    await p.evaluate(()=>{
+     DB.ultimoBackup=window.ultimoBackupTeste;guardarMetaProtecao({backup:Date.now()});sessionStorage.setItem('jv-bk-adiar','1');
+    });
+   });
    assert.deepEqual(p.errors,[]);await c.close();
   }
   console.log('✅ '+count+' verificações de pagamentos e proteção entre aparelhos');
