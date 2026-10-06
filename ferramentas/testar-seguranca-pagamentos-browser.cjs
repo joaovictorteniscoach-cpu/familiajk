@@ -269,7 +269,10 @@ async function shot(p,theme,key,locator){
     remote=await nodeOf(p,fixture);const baseNo=copy(remote);await configureCloud(p,baseNo);
     remote.alunos.solo=JSON.stringify({...fixture.alunos[0],mensalidade:950});remote.carimbos.savedAt=Date.now()+3600000;
     await p.evaluate(f=>{DB=JSON.parse(JSON.stringify(f));ensureFields();DB.alunos[0].mensalidade=720;DB.savedAt=2;lsSet(KEY,JSON.stringify(DB));marcarSemNuvem(true);},fixture);
+    const checkpoint=await p.evaluate(()=>metaProtecao().base);
     const writes=cloudWrites;await p.evaluate(()=>load());
+    assert.equal(await p.evaluate(()=>metaProtecao().base),checkpoint);
+    assert.ok(await p.evaluate(()=>salvouSemNuvem()));
     assert.equal(await p.evaluate(()=>DB.alunos[0].mensalidade),720);assert.equal(await p.evaluate(()=>!!_conflitoNuvem),true);
     assert.equal(cloudWrites,writes);assert.equal(JSON.parse(remote.alunos.solo).mensalidade,950);
     await p.evaluate(()=>closeModal('ov-conflito-nuvem'));

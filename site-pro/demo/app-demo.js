@@ -457,6 +457,7 @@ function setSave(s,cls){
 
 /* ===== Camada de armazenamento: aparelho + Firebase (nuvem real) ===== */
 let lastCloudError='';
+function recusaDoServidor(){return /permission|denied|PERMISSION/i.test(String(lastCloudError||''));}
 let _abriuSemConferir=false;   // abriu pela cópia do aparelho sem a nuvem responder
 let _semDados=false;           // abriu SEM dado nenhum e sem poder conferir na nuvem
 let cloudPending=false;
@@ -1359,7 +1360,7 @@ async function migrarVersoesParaIdb(){
     const pref=KEY+'__', achadas=[];
     for(let i=0;i<localStorage.length;i++){
       const k=localStorage.key(i);
-      if(k&&k.indexOf(pref)===0&&k!==KEY)achadas.push(k);
+      if(k&&k.indexOf(pref)===0&&/^(?:s\d+|dia-\d{4}-\d{2}-\d{2})$/.test(k.slice(pref.length)))achadas.push(k);
     }
     if(!achadas.length)return 0;
     let bytes=0;
@@ -1374,20 +1375,10 @@ async function migrarVersoesParaIdb(){
     return bytes;
   }catch(e){return 0;}
 }
-/* ===== Gravar só a parte que mudou =====
-   Antes cada toque subia o banco INTEIRO — com um ano de uso, ~830 KB por ação.
-   Era a razão da lentidão no celular, do setTimeout de 500ms e do "tudo ou
-   nada" quando a rede caía no meio.
-
-   Agora o banco vai separado por natureza do dado:
-   · alunos mudam um de cada vez  → um nó por aluno
-   · extrato, presenças e lançamentos só crescem → sobem só as linhas novas
-   · agenda e configuração mudam pouco → vão inteiras
-   A mesma ação passa a subir ~1,8 KB.
-
-   O truque que torna isso seguro: NENHUM ponto de chamada muda. persist()
-   guarda o que subiu da última vez e compara — comparar string em memória é
-   barato perto de subir 830 KB. */
+/* ===== Banco dividido por natureza dos registros =====
+   O formato v2 mantém alunos, agenda, configuração e extratos separados.
+   A gravação protegida compara a versão inteira numa transação atômica:
+   todos os registros só mudam se nenhuma outra sessão mudou a base. */
 /* ===== A marca de "salvei sem a nuvem confirmar" =====
    Foi isto que trouxe de volta nomes de aluno que nao treinam mais.
 
