@@ -9,7 +9,7 @@ const server=http.createServer((req,res)=>{
 });
 (async()=>{
   await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port;
-  const browser=await chromium.launch({executablePath:process.env.JV_BROWSER||'/usr/bin/chromium',args:['--no-sandbox']});
+  const browser=await chromium.launch({executablePath:process.env.JV_BROWSER||(fs.existsSync('/usr/bin/chromium')?'/usr/bin/chromium':chromium.executablePath()),args:['--no-sandbox']});
   let envelope,revision=1,puts=0;const pages=[],errors=[];
   try{
     for(let i=0;i<2;i++){
@@ -159,6 +159,76 @@ const server=http.createServer((req,res)=>{
       await joao.screenshot({path:'/tmp/familiajk-'+name+'.png',fullPage:true,animations:'disabled'});
       assert.ok(await joao.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
     }
+    // Regressão do histórico: dados fictícios, sem gravar no Firebase real.
+    const history=await joao.evaluate(()=>{
+      const saved=structuredClone(D);D.cloud.on=false;suppressPush=true;
+      const results=[];
+      try{
+        D.contas.mesSel='2026-10';D.contas.pagos={};D.lixeira=[];
+        for(const k of MONTHLY_BILLS){
+          D.contas[k]=[{id:'hist-'+k,nome:'Dívida antiga',valor:100,venc:'10',preta:50,preto:50,limite:1000,melhorDia:'5'}];
+          D.contas.pagos['2026-09']={...(D.contas.pagos['2026-09']||{}),['hist-'+k]:true};
+          setBill(k,0,'valor',150);setBill(k,0,'nome','Dívida nova');setBill(k,0,'venc','20');
+          results.push(monthlyValue(D.contas[k][0],'2026-09').valor===100&&monthlyValue(D.contas[k][0],'2026-09').nome==='Dívida antiga');
+          results.push(monthlyValue(D.contas[k][0],'2026-10').valor===150&&monthlyValue(D.contas[k][0],'2026-11').venc==='20');
+          D.contas.mesSel='2026-12';deleteItem('contas.'+k,0);
+          results.push(billsForMonth(k,'2026-11').length===1&&billsForMonth(k,'2026-12').length===0&&billsForMonth(k,'2027-01').length===0);
+          results.push(pagoGet('hist-'+k,'2026-09')&&monthlyValue(D.contas[k][0],'2026-09').valor===100);
+          restoreTrash(D.lixeira.at(-1).id);results.push(billsForMonth(k,'2026-12')[0]?.valor===150);
+          D.contas.mesSel='2026-10';deleteItem('contas.'+k,0);
+          results.push(billsForMonth(k,'2026-09').length===1&&billsForMonth(k,'2026-10').length===0);
+          restoreTrash(D.lixeira.at(-1).id);
+        }
+        D.contas.mesSel='2026-10';splitUm(0);
+        results.push(monthlyValue(D.contas.casa[0],'2026-09').preta===50&&monthlyValue(D.contas.casa[0],'2026-10').preta===75);
+        addCasa();results.push(billsForMonth('casa','2026-09').length===1&&billsForMonth('casa','2026-10').length===2);
+        // A conta oculta não desloca os índices dos botões de edição/exclusão.
+        deleteItem('contas.casa',0);renderCasa();
+        const row=document.getElementById('tbl-casa').rows[1],input=row.querySelector('.name input');input.value='Conta criada em outubro';input.dispatchEvent(new Event('input'));
+        results.push(monthlyValue(D.contas.casa[1],'2026-10').nome==='Conta criada em outubro');
+        results.push(monthlyValue(D.contas.casa[0],'2026-09').nome==='Dívida antiga');
+        D.contas.renda={joao:1000,esposa:500};document.getElementById('rd-joao').value='2000';document.getElementById('rd-esposa').value='800';onRenda();
+        results.push(monthlyValue(D.contas.renda,'2026-09').joao===1000&&monthlyValue(D.contas.renda,'2026-10').joao===2000);
+        const base=syncData(),local=structuredClone(base),remote=structuredClone(base);
+        local.contas.joao[0]._mudancas['2026-11']={valor:180};remote.contas.joao[0]._mudancas['2026-12']={excluido:true};
+        const merged=mergeFamilyData(base,local,remote);
+        results.push(monthlyValue(merged.contas.joao[0],'2026-09').valor===100&&monthlyValue(merged.contas.joao[0],'2026-11').valor===180&&monthlyValue(merged.contas.joao[0],'2026-12')===null);
+        const reload=migrate(JSON.parse(JSON.stringify(D)));results.push(monthlyValue(reload.contas.joao[0],'2026-09').valor===100);
+        D.invest.aportes=[];lancaAportes([{date:'06/10/2026',mes:'out/26',desc:'PIX corretora desconhecida',amount:-200,pes:'preta',bankId:'destino-teste'}]);
+        const a=D.invest.aportes[0];results.push(a.conta==='Não informado'&&a.ativo===''&&a.pessoa==='Esposa'&&aporteDestino(a)==='Destino não informado');
+        results.push(contaAporteExtrato({desc:'PIX Binance'})==='Binance'&&contaAporteExtrato({desc:'Transferência XP Global'})==='Global XP');
+        results.push(aporteDestino({_k:'antigo',conta:'Nacional XP',ativo:'PIX corretora',desc:'PIX corretora'}).includes('legado'));
+        renderAportes();setAporteDestino(0,'conta','Banco da família');setAporteDestino(0,'ativo','CDB');
+        results.push(aporteDestino(a)==='Destino: Banco da família · CDB'&&document.getElementById('aporte-destino-0').textContent.includes('CDB'));
+        results.push(aportesPendentes()===200&&D.invest.mensal.find(m=>m.mes==='out/26')?.aporte===200);
+        D.contas.transacoes=[{id:'tx-new',date:'06/10/2026',mes:'out/26',desc:'Nova',amount:-20}];
+        D.contas.anual={'2026':Array.from({length:12},()=>({previsto:null,pago:null,recebido:null}))};D.contas.anual['2026'][8]={previsto:900,pago:700,recebido:1200};
+        D.invest.mensal=[{mes:'set/26',patr:60000,aporte:200}];D.invest.aportes=[];
+        const old={contas:{transacoes:[{id:'tx-old',date:'01/08/2026',mes:'ago/26',desc:'Antiga',amount:-15}],anual:{'2026':Array.from({length:12},(_,i)=>({previsto:i===8?600:null,pago:i===8?650:null,recebido:i===8?1000:null}))}},invest:{mensal:[{mes:'set/26',patr:40000,aporte:100},{mes:'ago/26',patr:35000,aporte:150}]}};
+        const recovered=mergeHistory(D,old);
+        results.push(recovered.next.contas.anual['2026'][8].previsto===900&&Array.isArray(recovered.next.contas.anual['2026']));
+        results.push(recovered.next.invest.mensal.find(m=>m.mes==='set/26').patr===60000&&recovered.next.invest.mensal.find(m=>m.mes==='ago/26').patr===35000);
+        results.push(recovered.next.contas.transacoes.length===2&&D.contas.transacoes.length===1&&mergeHistory(recovered.next,old).added===0);
+        results.push(mergeHistory(D,{contas:{casa:[]},invest:{mensal:structuredClone(DEFAULT.invest.mensal)}}).added===0);
+        const confirmBefore=window.confirm;window.confirm=()=>true;try{recoverHistory(old);}finally{window.confirm=confirmBefore;}results.push(D.contas.transacoes.length===2&&D.contas.anual['2026'][8].previsto===900);
+        D.lixeira=[{id:'excluded-history',path:'contas.transacoes',items:[old.contas.transacoes[0]]}];D.contas.transacoes=D.contas.transacoes.filter(t=>t.id!=='tx-old');results.push(!mergeHistory(D,old).next.contas.transacoes.some(t=>t.id==='tx-old'));
+        D.contas.anual['2026'][8].previsto=0;results.push(mergeHistory(D,old).next.contas.anual['2026'][8].previsto===0);
+        irPara('i-aportes');D.invest.aportes=[{id:'person-select',data:'06/10/2026',mes:'out/26',conta:'Banco teste',pessoa:'Conjunto',valor:100,naCarteira:false}];renderAportes();
+        const person=document.getElementById('tbl-aportes').rows[1].cells[3].querySelector('select');person.value='Esposa';person.dispatchEvent(new Event('change'));results.push(pessoaSum('Esposa')===100);
+        const recoveryFile={_app:'familia-jk',_recoveryOnly:true,contas:{transacoes:[{bankId:'ofx-test',bankScope:'scope-test',date:'15/07/2026',mes:'jul/26',desc:'Compra teste',amount:-12,fonte:'cartao',_recoveryOfx:true,_ownerPending:true,_recoverySource:'Fatura teste'}]}};
+        let refused=false;try{mergeHistory(D,recoveryFile);}catch(e){refused=true;}results.push(refused);
+        previewHistoryRecovery(recoveryFile);const owner=document.querySelector('#versoes-box select');results.push(owner.value==='');owner.value='preta';
+        const confirmOwner=window.confirm;window.confirm=()=>true;try{document.querySelector('#versoes-box button').click();}finally{window.confirm=confirmOwner;}
+        const recoveredTx=D.contas.transacoes.find(t=>t.bankId==='ofx-test');results.push(recoveredTx?.pes==='preta'&&recoveredTx?.fonte==='cartao');
+        results.push(!recoveredTx?false:!recoveredTx._ownerPending&&!recoveredTx._recoveryOfx);
+        closeDados();
+        return results;
+      }finally{D=saved;suppressPush=false;clearTimeout(pushTimer);pushTimer=null;renderAll();}
+    });
+    assert.ok(history.every(Boolean),'Falha de preservação do histórico/destino: '+JSON.stringify(history));
+    console.log('✅ Seis grupos de contas: edição/exclusão atual e futura preservam valores e pagos antigos; desfazer, inclusão, divisão e renda por vigência');
+    console.log('✅ Alterações mensais independentes se juntam entre aparelhos; dados preservados após reabrir');
+    console.log('✅ Aportes: destino desconhecido explícito, conta e ativo editáveis, descrição separada e total mantido');
     assert.equal(errors.length,0,errors.join('\n'));assert.ok(puts>=2);console.log('✅ Sem erros JavaScript; nenhuma conexão com banco real');
   }finally{await browser.close();server.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;server.close();});
