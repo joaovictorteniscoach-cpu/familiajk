@@ -216,6 +216,40 @@ let count=0;async function check(name,fn){await fn();count++;console.log('✅ SD
     assert.deepEqual(normaliza(desfeito)[campo],normaliza(anterior)[campo]);
    assert.deepEqual(novoAparelho.errors,[]);
   });
+  await check('importação de arquivo rejeita inválido, permite cancelar e recupera após confirmação',async()=>{
+   const antes=await rec.evaluate(()=>JSON.stringify(DB)),remoteAntes=await admin('jvtenis/v2');
+   await rec.evaluate(()=>{
+    window._versoes=[{rot:'inválida',origem:'ensaio',raw:'{"alunos":{},"lancamentos":[]}',r:{}}];
+    restaurarVersao(0);
+   });
+   assert.equal(await rec.evaluate(()=>JSON.stringify(DB)),antes);
+   await rec.evaluate(()=>{
+    const input=document.createElement('input');input.type='file';const dt=new DataTransfer();
+    dt.items.add(new File(['{"alunos":[],"lancamentos":null}'],'invalido.json',{type:'application/json'}));
+    input.files=dt.files;importBackup(input);
+   });
+   await rec.waitForFunction(()=>document.getElementById('toast').textContent.includes('Arquivo inválido'));
+   assert.equal(await rec.evaluate(()=>JSON.stringify(DB)),antes);
+   assert.deepEqual(await admin('jvtenis/v2'),remoteAntes);
+   const cancelado=await rec.evaluate(raw=>new Promise(resolve=>{
+    const input=document.createElement('input');input.type='file';const dt=new DataTransfer();
+    dt.items.add(new File([JSON.stringify(raw)],'recuperacao.json',{type:'application/json'}));input.files=dt.files;
+    const anteriorConfirm=window.confirm;
+    window.confirm=texto=>{window.confirm=anteriorConfirm;resolve(texto);return false;};importBackup(input);
+   }),copiada);
+   assert.match(cancelado,/SUBSTITUINDO/);assert.equal(await rec.evaluate(()=>JSON.stringify(DB)),antes);
+   await rec.evaluate(raw=>{
+    const input=document.createElement('input');input.type='file';const dt=new DataTransfer();
+    dt.items.add(new File([JSON.stringify(raw)],'recuperacao.json',{type:'application/json'}));
+    input.files=dt.files;importBackup(input);
+   },copiada);
+   await rec.waitForFunction(()=>DB.alunos.find(a=>a.id==='teste').creditos===3);
+   assert.equal(await rec.evaluate(()=>gravarAgora()),true);
+   const remoto=await rec.evaluate(no=>bancoDasPartes(no),await admin('jvtenis/v2'));
+   const ordena=arr=>arr.slice().sort((a,b)=>a.id.localeCompare(b.id));
+   assert.deepEqual(ordena(remoto.alunos),ordena(copiada.alunos));
+   for(const campo of ['agenda','lancamentos','movs','presencas'])assert.deepEqual(remoto[campo],copiada[campo]);
+  });
   for(const p of [a,b,unauthorized,prof,rec])assert.deepEqual(p.errors,[]);
   console.log('✅ '+count+' verificações com SDK Firebase real e emulador local');
  }finally{for(const c of contexts)await c.close();await browser.close();server.close();}

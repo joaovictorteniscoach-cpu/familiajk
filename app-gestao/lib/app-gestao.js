@@ -9837,20 +9837,48 @@ function abrirRecuperacaoAgenda(){
     if(b)b.scrollIntoView({behavior:'smooth',block:'start'});
   },150);
 }
+function lerBancoParaRestaurar(raw){
+  const d=JSON.parse(raw);
+  if(!d||typeof d!=='object'||Array.isArray(d)||!Array.isArray(d.alunos)||!Array.isArray(d.lancamentos))
+    throw new Error('Estrutura de backup inválida');
+  for(const nome of ['alunos','lancamentos','movs','presencas']){
+    if(d[nome]===undefined)continue;
+    if(!Array.isArray(d[nome])||d[nome].some(x=>!x||typeof x!=='object'||Array.isArray(x)))
+      throw new Error('Lista de backup inválida');
+  }
+  if(!d.agenda)d.agenda={fixos:[],eventos:[],excecoes:[]};
+  if(typeof d.agenda!=='object'||Array.isArray(d.agenda))throw new Error('Agenda inválida');
+  for(const nome of ['fixos','eventos','excecoes']){
+    if(d.agenda[nome]===undefined)d.agenda[nome]=[];
+    if(!Array.isArray(d.agenda[nome]))throw new Error('Agenda inválida');
+  }
+  return d;
+}
+function prepararMovimentosRestaurados(d){
+  const vivos=new Set((d.movs||[]).map(m=>chaveFb(CHAVE_LINHA.movs(m))));
+  // Só retira movimentos conhecidos no aparelho e guardados na cópia anterior.
+  // O histórico antigo podado só da memória continua protegido na nuvem.
+  for(const m of DB.movs||[])if(!vivos.has(chaveFb(CHAVE_LINHA.movs(m))))marcarRemovida('movs',m);
+  for(const k of vivos)delete _removidos.movs[k];
+}
+function restaurarBancoConfirmado(d,rot,origem){
+  const atual=resumoBanco(JSON.stringify(DB)),destino=resumoBanco(d);
+  if(!confirm('Restaurar '+rot+' ('+origem+')?\n\n'
+    +'FICARÁ ASSIM:\n'+descreveResumo(destino)+'\n\n'
+    +'SUBSTITUINDO:\n'+descreveResumo(atual)+'\n\n'
+    +'A versão atual é guardada antes, então dá para voltar atrás. Esta troca também substitui os movimentos do extrato conhecidos neste aparelho.'))return false;
+  guardarVersoes(JSON.stringify(DB));
+  prepararMovimentosRestaurados(d);
+  DB=d;ensureFields();
+  logAct('Restaurou '+rot+' ('+origem+')');
+  persist();renderAll();
+  toast('✓ Versão restaurada');listarVersoes();
+  return true;
+}
 function restaurarVersao(i){
   const it=(window._versoes||[])[i];if(!it)return;
-  const atual=resumoBanco(JSON.stringify(DB));
-  if(!confirm('Restaurar a versão de '+it.rot+' ('+it.origem+')?\n\n'
-    +'FICARÁ ASSIM:\n'+descreveResumo(it.r)+'\n\n'
-    +'SUBSTITUINDO:\n'+descreveResumo(atual)+'\n\n'
-    +'A versão atual é guardada antes, então dá para voltar atrás.'))return;
-  guardarVersoes(JSON.stringify(DB));   // guarda o atual ANTES de sobrescrever
-  try{DB=JSON.parse(it.raw);}catch(e){toast('Versão ilegível');return;}
-  ensureFields();
-  logAct('Restaurou versão de '+it.rot+' ('+it.origem+')');
-  persist();renderAll();
-  toast('✓ Versão de '+it.rot+' restaurada');
-  listarVersoes();
+  let d;try{d=lerBancoParaRestaurar(it.raw);}catch(e){toast('Versão ilegível ou inválida; seus dados foram mantidos.');return;}
+  return restaurarBancoConfirmado(d,'a versão de '+it.rot,it.origem);
 }
 /* ===== Lembrete de backup =====
    O backup existia mas nunca se lembrava dele. Como os dados vivem no
@@ -9880,16 +9908,10 @@ function adiarBackup(){
 function importBackup(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
+  r.onerror=()=>toast('Não consegui ler o arquivo; seus dados foram mantidos.');
   r.onload=()=>{
-    try{
-      const d=JSON.parse(r.result);
-      if(!d.alunos||!d.lancamentos)throw new Error();
-      /* Backup sem agenda entra com a agenda VAZIA. Preencher com a
-         grade-semente colocaria alunos de meses atras dentro de um
-         arquivo que você acabou de escolher como sendo o certo. */
-      DB=d;if(!DB.agenda)DB.agenda={fixos:[],eventos:[],excecoes:[]};ensureFields();
-      persist();renderAll();toast('Backup restaurado');
-    }catch(e){toast('Arquivo inválido');}
+    let d;try{d=lerBancoParaRestaurar(r.result);}catch(e){toast('Arquivo inválido; seus dados foram mantidos.');return;}
+    restaurarBancoConfirmado(d,'o arquivo '+f.name,'arquivo');
   };
   r.readAsText(f);input.value='';
 }

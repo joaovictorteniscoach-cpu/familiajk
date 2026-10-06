@@ -16,7 +16,7 @@ automáticas e proteção de gravação entre sessões.
   Veja [APP-CHECK.md](APP-CHECK.md).
 - **Documentos:** guia de instalação atualizado para autenticação e banco
   bloqueado, operação e privacidade alinhadas com os recursos atuais.
-- **Recuperação:** ensaio automatizado de backup e restauração completa no
+- **Recuperação:** ensaio automatizado de backup, restauração, desfazer e importação de arquivo no
   emulador, com dados fictícios. O resultado vem do check do PR; nenhuma
   restauração de produção faz parte desse ensaio.
 - **Monitoramento:** workflow confere arquivos públicos após a publicação
