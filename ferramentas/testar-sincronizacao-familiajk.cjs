@@ -215,6 +215,13 @@ const server=http.createServer((req,res)=>{
         D.contas.anual['2026'][8].previsto=0;results.push(mergeHistory(D,old).next.contas.anual['2026'][8].previsto===0);
         irPara('i-aportes');D.invest.aportes=[{id:'person-select',data:'06/10/2026',mes:'out/26',conta:'Banco teste',pessoa:'Conjunto',valor:100,naCarteira:false}];renderAportes();
         const person=document.getElementById('tbl-aportes').rows[1].cells[3].querySelector('select');person.value='Esposa';person.dispatchEvent(new Event('change'));results.push(pessoaSum('Esposa')===100);
+        const recoveryFile={_app:'familia-jk',_recoveryOnly:true,contas:{transacoes:[{bankId:'ofx-test',bankScope:'scope-test',date:'15/07/2026',mes:'jul/26',desc:'Compra teste',amount:-12,fonte:'cartao',_recoveryOfx:true,_ownerPending:true,_recoverySource:'Fatura teste'}]}};
+        let refused=false;try{mergeHistory(D,recoveryFile);}catch(e){refused=true;}results.push(refused);
+        previewHistoryRecovery(recoveryFile);const owner=document.querySelector('#versoes-box select');results.push(owner.value==='');owner.value='preta';
+        const confirmOwner=window.confirm;window.confirm=()=>true;try{document.querySelector('#versoes-box button').click();}finally{window.confirm=confirmOwner;}
+        const recoveredTx=D.contas.transacoes.find(t=>t.bankId==='ofx-test');results.push(recoveredTx?.pes==='preta'&&recoveredTx?.fonte==='cartao');
+        results.push(!recoveredTx?false:!recoveredTx._ownerPending&&!recoveredTx._recoveryOfx);
+        closeDados();
         return results;
       }finally{D=saved;suppressPush=false;clearTimeout(pushTimer);pushTimer=null;renderAll();}
     });

@@ -3383,6 +3383,12 @@ function mergeHistory(current,raw){
       if(!source||typeof source!=='object'||Array.isArray(source))continue;
       const item=structuredClone(source);
       if(area==='invest'&&ehLinhaExemplo(field,item))continue;
+      if(field==='transacoes'&&item._recoveryOfx){
+        if(item._ownerPending||!PES_VALIDO.includes(item.pes))throw new Error('Escolha o titular de cada extrato antes de recuperar.');
+        item.cat=categorize(item.desc,item.amount);const tipo=tipoTx(item.desc,item.amount);if(tipo==='saldo')continue;
+        item.nc=tipo==='invest'||tipo==='cartao';if(tipo==='cartao')item.cat='Cartão de crédito';
+        delete item._recoveryOfx;delete item._ownerPending;delete item._recoverySource;
+      }
       if(field==='aportes'){if(item.pessoa===current.nomes?.preta||item.pessoa==='Kassiana')item.pessoa='Esposa';else if(item.pessoa===current.nomes?.preto)item.pessoa='João';}
       if(removed.some(r=>historyMatch(r,item,field)))continue;
       // Mesmo um campo vazio já pode ser uma edição recente: não o sobrescreve.
@@ -3420,9 +3426,33 @@ function recoverHistory(raw){
     alert('Histórico recuperado. Extratos em Categorias → Todos; fechamento e planejamento anual ficam no menu Mais.');return true;
   }catch(e){alert('Histórico não alterado: '+e.message);return false;}
 }
+function previewHistoryRecovery(raw){
+  try{
+    const base=historyBase(raw),groups=new Map();
+    for(const tx of base.contas.transacoes||[])if(tx._ownerPending){
+      const key=tx._recoverySource||tx.bankScope||'Extrato';if(!groups.has(key))groups.set(key,[]);groups.get(key).push(tx);
+    }
+    if(!groups.size)return recoverHistory(raw);
+    openDados();const box=document.getElementById('versoes-box');box.replaceChildren();
+    const note=document.createElement('p');note.className='note';note.textContent='Selecione o titular de cada extrato. Apenas os lançamentos ausentes serão acrescentados; suas atualizações atuais ficam preservadas.';box.append(note);
+    const choices=[];
+    for(const [name,txs] of groups){
+      const label=document.createElement('label');label.className='field';label.textContent=name+' · '+txs.length+' lançamentos';
+      const select=document.createElement('select');select.className='cell txt';select.setAttribute('aria-label','Titular de '+name);
+      for(const [value,text] of [['','Escolha o titular'],['preto',pesNome('preto')],['preta',pesNome('preta')],['ambos','Compartilhado (os dois)']]){const option=document.createElement('option');option.value=value;option.textContent=text;select.append(option);}
+      const known=D.contas.contaDono?.[txs[0].bankScope];if(PES_VALIDO.includes(known))select.value=known;
+      label.append(select);box.append(label);choices.push({select,txs});
+    }
+    const button=document.createElement('button');button.className='iconbtn primary';button.textContent='Acrescentar histórico preservando dados atuais';
+    button.onclick=()=>{if(choices.some(c=>!PES_VALIDO.includes(c.select.value))){alert('Escolha o titular dos dois extratos.');return;}
+      for(const {select,txs} of choices)for(const tx of txs){tx.pes=select.value;tx._ownerPending=false;}
+      recoverHistory(raw);
+    };box.append(button);return true;
+  }catch(e){alert('Histórico não alterado: '+e.message);return false;}
+}
 function importHistoryJSON(){
   const input=document.createElement('input');input.type='file';input.accept='.json,application/json';
-  input.onchange=async()=>{const file=input.files[0];if(!file)return;try{recoverHistory(JSON.parse(await file.text()));}catch(e){alert('Não consegui ler esse JSON. Os dados atuais foram mantidos.');}};input.click();
+  input.onchange=async()=>{const file=input.files[0];if(!file)return;try{previewHistoryRecovery(JSON.parse(await file.text()));}catch(e){alert('Não consegui ler esse JSON. Os dados atuais foram mantidos.');}};input.click();
 }
 let historyCandidates=[];
 function showHistoryRecovery(){
@@ -3432,7 +3462,7 @@ function showHistoryRecovery(){
   }
   for(const item of lerVersoes())historyCandidates.push({label:'Versão guardada: '+item.rot,raw:item.dados});
   box.replaceChildren();const note=document.createElement('p');note.className='note';note.textContent='Acrescenta extratos, recebimentos, aportes e históricos ausentes. Os cadastros atuais e os valores já preenchidos são preservados. Use o backup antigo se ele estiver em outro aparelho.';box.append(note);
-  const file=document.createElement('button');file.className='iconbtn primary';file.textContent='Selecionar backup JSON antigo';file.onclick=importHistoryJSON;box.append(file);
+  const file=document.createElement('button');file.className='iconbtn primary';file.textContent='Selecionar JSON de histórico ou backup antigo';file.onclick=importHistoryJSON;box.append(file);
   historyCandidates.forEach((item,i)=>{try{const r=mergeHistory(D,item.raw);if(!r.added&&!r.filled)return;
     const button=document.createElement('button');button.className='iconbtn';button.textContent=item.label+' · '+r.added+' registro(s) adicionais';button.onclick=()=>recoverHistory(historyCandidates[i].raw);box.append(button);
   }catch(e){}});
@@ -3510,6 +3540,7 @@ function importJSON(){
     r.onload=()=>{
       let o=null;
       try{o=JSON.parse(r.result);}catch(e){alert('Não consegui ler esse arquivo — ele precisa ser um .json.');return;}
+      if(o&&o._recoveryOnly){previewHistoryRecovery(o);return;}
       if(!ehBaseFamilia(o)){
         const de=origemDoArquivo(o);
         alert(ehBaseGestao(o)
