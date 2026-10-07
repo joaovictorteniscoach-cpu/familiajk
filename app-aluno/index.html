@@ -4626,10 +4626,10 @@ function escolherSlot(hora){
     else if(pagamentoEmAnalise())
       b+='<div class="pick-note">⏳ Pagamento avisado ao João. Assim que ele confirmar, seus agendamentos liberam.</div>';
   }
-  if(pickCtx.grupo&&!trava){
+  if(pickCtx.grupo){
     b+='<div class="pick-note">👥 Este horário é uma <b>aula em grupo</b>. Novas reservas participam da mesma aula.</div>';
-    b+='<button class="pick-opt aula" onclick="pickAula(false)">👥 Participar da aula em grupo</button>';
-    if(EU&&EU.repos>0)b+='<button class="pick-opt repo" onclick="pickAula(true)">🔁 Reposição na aula em grupo</button>';
+    if(!trava)b+='<button class="pick-opt aula" onclick="pickAula(false)">👥 Participar da aula em grupo</button>';
+    if(!trava&&EU&&EU.repos>0)b+='<button class="pick-opt repo" onclick="pickAula(true)">🔁 Reposição na aula em grupo</button>';
   }else if(modo==='aula'&&!trava){
     b+='<button class="pick-opt aula" onclick="pickAula(false)">🎾 Agendar aula<small>usa 1 crédito do seu plano</small></button>';
     b+=grupoRefHtml();
@@ -4772,8 +4772,8 @@ async function confirmarAgendamento(){
   try{
 
   if(!hasCloud()){toast('Para agendar é preciso estar online 🙏');return;}
-  if(!bookCtx.torneio&&bloqueadoParaAgendar()){document.getElementById('ov-book').classList.remove('on');toast('🔒 Agendamento bloqueado — '+motivoBloqueio()+'.');return;}
   if(!bookCtx)return;
+  if(!bookCtx.torneio&&bloqueadoParaAgendar()){document.getElementById('ov-book').classList.remove('on');toast('🔒 Agendamento bloqueado — '+motivoBloqueio()+'.');return;}
   try{await atualizarGradeReserva();}catch(e){toast('Não consegui conferir a agenda na nuvem. Tente novamente online.');return;}
   const estado=slotState(bookCtx.date,bookCtx.hora);
   if(!['livre','loc'].includes(estado.st)||bookCtx.torneio&&estado.grupo){

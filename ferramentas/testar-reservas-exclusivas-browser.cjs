@@ -140,7 +140,7 @@ async function setup(context,base,theme='saibro'){
     agDate=new Date(dk+'T12:00:00');agView='dia';
     document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';
     window.fbDB={ref(cam){return {get:async()=>({exists:()=>true,val:()=>true}),update:u=>window.bookingCreate(u),push:i=>window.bookingPush(i),set:async()=>{}};}};
-    esperarAuth=async()=>{};authUid=()=> 'u1';refresh=async()=>true;bloqueadoParaAgendar=()=>false;motivoBloqueio=()=> '';
+    esperarAuth=async()=>{};authUid=()=> 'u1';init=async()=>{};refresh=async()=>true;bloqueadoParaAgendar=()=>false;motivoBloqueio=()=> '';
     cloudGet=async key=>{
      const grade=await window.bookingGrade();
      if(key===SECUREPUBKEY)return JSON.stringify({grade,horarioCfg:PUB.horarioCfg,horarioData:{}});
@@ -190,7 +190,8 @@ async function setup(context,base,theme='saibro'){
    await check(theme+': entrar no grupo envia tipo explícito e usa a fila compartilhada',async()=>{
     grade.eventos=[{id:'grupo',data:dk,hora:'09:00',tipo:'grupo'}];
     await al.evaluate(d=>{PUB.grade.eventos=[{id:'grupo',data:d,hora:'09:00',tipo:'grupo'}];abrirBook('09:00',false);},dk);
-    await al.evaluate(()=>confirmarAgendamento());assert.equal(writes,1);
+    await al.evaluate(()=>confirmarAgendamento());
+    assert.equal(writes,1,JSON.stringify(await al.evaluate(()=>({bookCtx,toast:document.getElementById('toast').textContent,estado:slotState(agDate,'09:00'),pedidos:MEU.pedidos}))));
     assert.equal(Object.values(unique)[0].grupo,1);assert.ok(Object.keys(unique)[0].startsWith('group'));
    });
    await resetAluno();

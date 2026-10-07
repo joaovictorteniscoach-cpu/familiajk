@@ -2469,7 +2469,7 @@ async function syncRequests(silent){
     await carregarVinculos(true);
     const ref=window.fbDB.ref('jvtenis/fila_agendamentos'),snap=await ref.get();
     if(!snap.exists()){if(!silent)toast('Nenhum agendamento novo de alunos');return;}
-    const fila=snap.val()||{},updates={};
+    const fila=snap.val()||{},updates=Object.create(null);
     const chaves=Object.keys(fila).sort((x,y)=>(Number(fila[x].ts)||0)-(Number(fila[y].ts)||0)||x.localeCompare(y));
     let n=0,nc=0,nb=0,nr=0;const tardios=[];
     const finalizar=(key,p,aceito)=>{
