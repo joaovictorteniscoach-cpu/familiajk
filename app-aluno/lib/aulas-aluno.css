@@ -22,11 +22,13 @@
 #apg-aulas .aul-calendar-note{font-size:12px;margin:16px 0 0}
 
 #apg-aulas #aul-cal-abrir{width:100%;min-height:48px;padding:12px;margin:12px 0 16px;border-radius:11px;background:#D4E157;border:1px solid #D4E157;color:#1E2A0E;-webkit-text-fill-color:#1E2A0E;font:800 13px/1.4 'DM Sans',sans-serif}
-#ov-aulas-cal .aul-cal-modal{background:#F9F6EF!important;color:#203128!important;-webkit-text-fill-color:#203128!important;max-height:86vh;overflow:auto}
-#ov-aulas-cal h3,#ov-aulas-cal p,#ov-aulas-cal li{color:#203128!important;-webkit-text-fill-color:#203128!important}
-#ov-aulas-cal p{font-size:13px;line-height:1.5;margin:12px 0}
-#ov-aulas-cal ul{max-height:220px;overflow:auto;padding:12px 12px 12px 30px;background:#E9EDE3;border:1px solid #B6C0B1;border-radius:10px;font-size:14px;line-height:1.8}
-#ov-aulas-cal .aul-cal-note{font-size:12px}
-#ov-aulas-cal .aul-cal-actions{display:flex;gap:8px;flex-wrap:wrap}
-#ov-aulas-cal .aul-cal-actions button{flex:1 1 140px;min-height:44px}
-#ov-aulas-cal #aul-cal-baixar{background:#324C25!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important;border:1px solid #324C25}
+html body:not(#jv) #ov-aulas-cal .aul-cal-modal{background:#F9F6EF!important;color:#203128!important;-webkit-text-fill-color:#203128!important;max-height:86vh;overflow:auto}
+html body:not(#jv) #ov-aulas-cal h3,html body:not(#jv) #ov-aulas-cal p,html body:not(#jv) #ov-aulas-cal li{color:#203128!important;-webkit-text-fill-color:#203128!important}
+html body:not(#jv) #ov-aulas-cal p{font-size:13px;line-height:1.5;margin:12px 0}
+html body:not(#jv) #ov-aulas-cal ul{max-height:220px;overflow:auto;padding:12px 12px 12px 30px;background:#E9EDE3;border:1px solid #B6C0B1;border-radius:10px;font-size:14px;line-height:1.8}
+html body:not(#jv) #ov-aulas-cal .aul-cal-note{font-size:12px}
+html body:not(#jv) #ov-aulas-cal .aul-cal-actions{display:flex;gap:8px;flex-wrap:wrap}
+html body:not(#jv) #ov-aulas-cal .aul-cal-actions button{flex:1 1 140px;min-height:44px}
+html body:not(#jv) #ov-aulas-cal #aul-cal-baixar{background:#324C25!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important;border:1px solid #324C25}
+
+body[data-aba="aulas"] #lembrete-box{display:none!important}

@@ -151,6 +151,14 @@ const fixture={
     assert.equal(aulas.filter(x=>x.data==='2026-10-16'&&x.hora==='16:00').length,1);
     assert.equal(await p.evaluate(()=>JSON.stringify({PUB,MEU,EU})),antes);
     assert.equal(await p.evaluate(()=>envios.length),0);
+    const contraste=await p.evaluate(()=>{
+     const modal=document.querySelector('#ov-aulas-cal .aul-cal-modal'),texto=modal.querySelector('p');
+     const cor=v=>v.match(/[\d.]+/g).slice(0,3).map(Number);
+     const lum=v=>cor(v).map(x=>{x/=255;return x<=.04045?x/12.92:Math.pow((x+.055)/1.055,2.4);}).reduce((a,x,i)=>a+x*[.2126,.7152,.0722][i],0);
+     const fundo=lum(getComputedStyle(modal).backgroundColor),letras=lum(getComputedStyle(texto).webkitTextFillColor);
+     return (Math.max(fundo,letras)+.05)/(Math.min(fundo,letras)+.05);
+    });
+    assert.ok(contraste>=4.5,'contraste real da janela mensal: '+contraste);
     if(process.env.JV_VISUAL_LOG==='1'){
      await visual(p,'calendario-'+theme);
     }
