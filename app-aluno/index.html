@@ -4788,7 +4788,7 @@ function resumoMesAluno(){
 function renderResumoMes(){
   if(!EU)return;
   const r=resumoMesAluno(),cred=Number(EU.creditos)||0,grp=Number(EU.credGrupo)||0,plano=(Number(EU.plano)||0)+(Number(EU.planoGrupo)||0);
-  const lista=(arr,vazio)=>arr.length?arr.map(p=>'<span class="amr-dia">'+esc(fmtDataAl(p.data))+(p.hora&&p.hora!=='—'?' · '+esc(p.hora):'')+'</span>').join(''):'<span class="amr-vazio">'+vazio+'</span>';
+  const lista=(arr,vazio)=>arr.length?arr.map(p=>'<span class="amr-dia">'+escHtml(fmtDataAl(p.data))+(p.hora&&p.hora!=='—'?' · '+escHtml(p.hora):'')+'</span>').join(''):'<span class="amr-vazio">'+vazio+'</span>';
   const saldo=fmtCred(cred)+' crédito'+(Math.abs(cred)===1?'':'s')+(grp?' + '+fmtCred(grp)+' em grupo':'');
   const el=document.getElementById('aulas-mes-resumo');
   if(el)el.innerHTML='<p class="sec-eyebrow">Resumo de '+r.mes+'</p>'
