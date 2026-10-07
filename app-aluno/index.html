@@ -2326,7 +2326,7 @@ async function enviarReservaUnica(pedido,grupo){
 }
 async function atualizarGradeReserva(){
   await esperarAuth();
-  const ligado=await comPrazo(window.fbDB.ref('.info/connected').get(),4000,null);
+  const ligado=await comPrazo(window.fbDB.ref('.info/connected').once('value'),4000,null);
   if(!ligado||ligado.val()!==true)throw new Error('sem conexão confirmada');
   const raw=await cloudGet(SECUREPUBKEY);
   if(raw){

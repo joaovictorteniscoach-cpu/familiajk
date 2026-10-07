@@ -141,7 +141,7 @@ async function setup(context,base,theme='saibro'){
     PUB={grade:{fixos:[],eventos:[],excecoes:[]},alunos:[EU],horas:['09:00','10:00'],horarioCfg:{1:{'09:00':'aula','10:00':'aula'}},horarioData:{},profs:[],termoVer:0};
     agDate=new Date(dk+'T12:00:00');agView='dia';
     document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';
-    window.fbDB={ref(cam){return {get:async()=>({exists:()=>true,val:()=>true}),update:u=>window.bookingCreate(u),push:i=>window.bookingPush(i),set:async()=>{}};}};
+    window.fbDB={ref(cam){return {get:async()=>({exists:()=>true,val:()=>true}),once:async()=>({exists:()=>true,val:()=>true}),update:u=>window.bookingCreate(u),push:i=>window.bookingPush(i),set:async()=>{}};}};
     esperarAuth=async()=>{};authUid=()=> 'u1';init=async()=>{};refresh=async()=>true;bloqueadoParaAgendar=()=>false;motivoBloqueio=()=> '';
     cloudGet=async key=>{
      const grade=await window.bookingGrade();
