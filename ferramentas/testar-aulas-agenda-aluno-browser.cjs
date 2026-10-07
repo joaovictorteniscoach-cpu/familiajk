@@ -263,6 +263,7 @@ const fixture={
   await check('Mensalidade zero: ação visível, confirmação manual e saída dos pendentes sem receita, renovação ou mudança de saldos',async()=>{
    g.removeAllListeners('dialog');g.on('dialog',d=>d.accept());
    const saldos=await g.evaluate(()=>JSON.stringify({a:DB.alunos.map(x=>[x.id,x.creditos,x.credGrupo,x.repos,x.locCred]),movs:DB.movs,lancamentos:DB.lancamentos,presencas:DB.presencas}));
+   await g.evaluate(()=>{go('dash',document.createElement('button'));dobrar('dob-pend',true);});
    await g.locator('#pend-list button').filter({hasText:'Marcar como pago'}).click();
    assert.ok(await g.locator('#pm-sem-valor').isVisible());assert.ok(!(await g.locator('#pm-confirmar').isVisible()));
    await g.locator('#pm-sem-valor button').click();
