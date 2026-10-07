@@ -1590,7 +1590,8 @@ function esperarAuth(){
     </div>
     <div class="pm-resumo" id="pm-resumo"></div>
     <p class="hint">A Caixa registra o recebimento na data informada. O saldo da mensalidade acompanha o mês escolhido acima.</p>
-    <button class="btn btn-clay pm-salvar" onclick="salvarPagamentoExato()">Confirmar recebimento</button>
+    <div id="pm-sem-valor" style="display:none"><p class="hint">Mensalidade deste mês: R$ 0,00. Você pode marcar como paga sem lançar uma receita na Caixa.</p><button class="btn btn-clay pm-salvar" onclick="quitarMensalidadeSemValor()">Marcar como pago · R$ 0,00</button></div>
+    <button id="pm-confirmar" class="btn btn-clay pm-salvar" onclick="salvarPagamentoExato()">Confirmar recebimento</button>
   </div>
 </div>
 

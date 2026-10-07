@@ -220,3 +220,10 @@ confirmação, depois dos testes. Base: `893ecca78f5752d88193ab6e736825760e07769
   tipos de aluno, prazo exato/fora do prazo, revalidação, erro/atraso da fila,
   confirmação sem duplicar, ICS mensal, prévia desatualizada e telas nos dois
   temas em 320/390/520/1280px. Resultado e prints serão registrados no PR.
+
+- Pedido adicional do João: pendências do Início, Caixa e conferência usam
+  a mesma elegibilidade do fechamento (ativos, pagador, pendente/parcial,
+  sem torneio). Status legado `inativo` também fica fora, mesmo com plano
+  ou mensalidade mantidos. A lista oferece Registrar pagamento e, no valor
+  zero, Marcar como pago. Quitação zero é manual e por competência, com
+  versão salva antes, sem receita fictícia, renovação ou mudança de saldos.

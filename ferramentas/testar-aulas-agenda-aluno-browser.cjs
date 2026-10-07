@@ -230,11 +230,78 @@ const fixture={
    });
    assert.ok(r.h);assert.equal(r.h.length,34);assert.ok(r.h.every(x=>x.data.startsWith('2026-10')&&x.data<='2026-10-15'));assert.equal(r.igual,true);
   });
+  let fiscalFixture;
+  await g.evaluate(()=>{
+   const base={tipo:'Particular',plano:4,planoGrupo:0,creditos:3,credGrupo:0,repos:1,locCred:0,status:'pendente',mensalidade:100};
+   const a=(id,extra)=>Object.assign({id,nome:'Fictício '+id,codigo:'66'+id},base,extra);
+   DB={alunos:[a('zero',{mensalidade:0,arquivado:false}),a('parcial',{status:'parcial'}),a('arquivado',{arquivado:true}),
+    a('legado',{status:'inativo',arquivado:false}),a('sem-plano',{plano:0,mensalidade:0}),
+    a('pago',{status:'pago'}),a('torneio',{perfil:'torneio',arquivado:false}),a('dep',{responsavelId:'parcial',mensalidade:0,arquivado:false})],
+    agenda:{fixos:[],eventos:[],excecoes:[]},presencas:[],movs:[],lancamentos:[],compromissos:[],meta:10000,mesCreditos:'2026-10',mesPagamentos:'2026-10'};
+   ensureFields();persist=()=>{};logAct=()=>{};fichaId=null;hideVals=false;
+   window.copiasFiscais=[];guardarVersoes=s=>window.copiasFiscais.push(s);
+   document.querySelectorAll('.overlay.on').forEach(x=>x.classList.remove('on'));
+   document.getElementById('splash-gestao').style.display='none';
+   window.FISCAL_FIXTURE=JSON.stringify(DB);
+   renderAll();
+  });
+  fiscalFixture=await g.evaluate(()=>window.FISCAL_FIXTURE);
+  await check('Pendentes: inativos, status antigo inativo, pagos, torneio e dependentes não entram na lista, contador ou Caixa',async()=>{
+   const r=await g.evaluate(()=>{
+    renderDash();renderFin();abrirFechamento();
+    return {ids:DB.alunos.filter(a=>pendenteDoFechamento(a,monthKey())).map(a=>a.id).sort(),
+     pagIds:DB.alunos.filter(a=>passaFiltroPag(a,'pendentes')).map(a=>a.id).sort(),
+     nomes:document.getElementById('pend-list').innerText,contador:document.getElementById('k-pendente-s').innerText,
+     valor:document.getElementById('k-pendente').innerText,caixa:document.getElementById('f-inad').innerText,
+     fechamento:Array.from(document.getElementById('fc-aluno').options).map(o=>o.value).filter(Boolean).sort(),
+     igual:JSON.stringify(DB)===window.FISCAL_FIXTURE};
+   });
+   assert.deepEqual(r.ids,['parcial','zero']);assert.deepEqual(r.pagIds,r.ids);assert.deepEqual(r.fechamento,r.ids);
+   assert.match(r.contador,/2 mensalidades/);assert.match(r.valor,/50/);assert.equal(r.caixa,r.valor);
+   assert.doesNotMatch(r.nomes,/Fictício (arquivado|legado|sem-plano|pago|torneio|dep)/);assert.equal(r.igual,true);
+  });
+  await check('Mensalidade zero: ação visível, confirmação manual e saída dos pendentes sem receita, renovação ou mudança de saldos',async()=>{
+   g.removeAllListeners('dialog');g.on('dialog',d=>d.accept());
+   const saldos=await g.evaluate(()=>JSON.stringify({a:DB.alunos.map(x=>[x.id,x.creditos,x.credGrupo,x.repos,x.locCred]),movs:DB.movs,lancamentos:DB.lancamentos,presencas:DB.presencas}));
+   await g.locator('#pend-list button').filter({hasText:'Marcar como pago'}).click();
+   assert.ok(await g.locator('#pm-sem-valor').isVisible());assert.ok(!(await g.locator('#pm-confirmar').isVisible()));
+   await g.locator('#pm-sem-valor button').click();
+   const r=await g.evaluate(()=>({q:situacaoMensalidade(DB.alunos.find(x=>x.id==='zero'),monthKey()),status:DB.alunos.find(x=>x.id==='zero').status,
+    saldos:JSON.stringify({a:DB.alunos.map(x=>[x.id,x.creditos,x.credGrupo,x.repos,x.locCred]),movs:DB.movs,lancamentos:DB.lancamentos,presencas:DB.presencas}),
+    copias:window.copiasFiscais.length,pend:document.getElementById('pend-list').innerText}));
+   assert.equal(r.q.status,'pago');assert.equal(r.status,'pago');assert.equal(r.q.recebido,0);
+   assert.equal(r.saldos,saldos);assert.equal(r.copias,1);assert.doesNotMatch(r.pend,/Fictício zero/);
+   assert.equal(await g.evaluate(()=>quitarMensalidadeSemValor()),false);
+  });
+  await check('Quitação zero: recusar confirmação ou tentar mensalidade com valor não altera dados; pagamento positivo continua disponível',async()=>{
+   await g.evaluate(s=>{DB=JSON.parse(s);PM_CTX=null;renderAll();},fiscalFixture);
+   g.removeAllListeners('dialog');g.on('dialog',d=>d.dismiss());
+   await g.evaluate(()=>marcarPago('zero'));
+   const antes=await g.evaluate(()=>JSON.stringify(DB));
+   assert.equal(await g.evaluate(()=>quitarMensalidadeSemValor()),false);
+   assert.equal(await g.evaluate(()=>JSON.stringify(DB)),antes);
+   await g.evaluate(()=>{closeModal('ov-pagamento-exato');marcarPago('parcial');});
+   assert.ok(await g.locator('#pm-confirmar').isVisible());assert.ok(!(await g.locator('#pm-sem-valor').isVisible()));
+   assert.equal(await g.locator('#pm-valor').inputValue(),'50.00');
+   assert.equal(await g.evaluate(()=>quitarMensalidadeSemValor()),false);
+   assert.equal(await g.evaluate(()=>JSON.stringify(DB)),antes);
+  });
+  await check('Quitação zero de mês anterior preserva status corrente e não impede cobrar um valor cadastrado depois',async()=>{
+   g.removeAllListeners('dialog');g.on('dialog',d=>d.accept());
+   await g.evaluate(s=>{DB=JSON.parse(s);PM_CTX=null;marcarPago('zero');document.getElementById('pm-mes').value='2026-09';prepararPagamentoMes();},fiscalFixture);
+   assert.equal(await g.evaluate(()=>quitarMensalidadeSemValor()),true);
+   const r=await g.evaluate(()=>{const a=DB.alunos.find(x=>x.id==='zero');return {set:situacaoMensalidade(a,'2026-09').status,out:situacaoMensalidade(a,'2026-10').status,status:a.status};});
+   assert.deepEqual(r,{set:'pago',out:'pendente',status:'pendente'});
+   await g.evaluate(()=>{marcarPago('zero');quitarMensalidadeSemValor();DB.alunos.find(x=>x.id==='zero').mensalidade=100;});
+   assert.equal(await g.evaluate(()=>situacaoMensalidade(DB.alunos.find(x=>x.id==='zero'),'2026-10').status),'pendente');
+   assert.equal(await g.evaluate(()=>DB.lancamentos.length),0);
+  });
   await g.evaluate(()=>{
    DB={alunos:[{id:'al-ficticio',nome:'Aluno Fictício',codigo:'6601',tipo:'Particular',plano:4,planoGrupo:0,creditos:3,credGrupo:0,repos:1,locCred:0,status:'pago',mensalidade:640,ativo:true}],
     agenda:{fixos:[],eventos:[{id:'aula-ficticia',data:dKey(new Date()),hora:'16:00',alunoId:'al-ficticio',titulo:'Aluno Fictício',tipo:'aula'}],excecoes:[]},
-    presencas:[],movs:[],lancamentos:[],compromissos:[],meta:10000,mesCreditos:'2026-10',mesPagamentos:'2026-10'};
+    presencas:[],movs:[],lancamentos:[],compromissos:[],meta:10000,mesCreditos:'2026-10',mesPagamentos:'2026-10',ultimoBackup:Date.now()};
    ensureFields();persist=()=>{};logAct=()=>{};hideVals=false;
+   _abriuSemConferir=false;cloudPending=false;_conflitoNuvem=null;guardarMetaProtecao({backup:Date.now(),nuvem:Date.now()});
    document.querySelectorAll('.overlay.on').forEach(x=>x.classList.remove('on'));
    document.getElementById('splash-gestao').style.display='none';
    renderAll();go('dash',document.createElement('button'));
