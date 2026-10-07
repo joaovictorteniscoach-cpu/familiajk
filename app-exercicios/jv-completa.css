@@ -1,0 +1,88 @@
+/* Ficha editorial completa, com a densidade de informações da apostila JV. */
+.jv-editorial{padding:18px;background:#eceee9;color:#182018;font-family:Arial,sans-serif}
+.jv-ficha-grid{display:grid;grid-template-columns:minmax(0,1.04fr) minmax(0,1fr);gap:16px;align-items:start}
+.jv-principal,.jv-instrucoes{min-width:0;display:grid;gap:12px}
+.jv-identidade{background:#0b100c;color:white;padding:22px 24px;position:relative;overflow:hidden;border-radius:12px 12px 0 0}
+.jv-codigo{display:flex;align-items:center;gap:12px;font-size:10px;text-transform:uppercase;letter-spacing:.04em;position:relative;z-index:1}
+.jv-codigo b{background:#d4ff4f;color:#14200c;padding:6px 12px;border-radius:6px;font-size:15px;font-style:italic}
+.jv-identidade h2{font-family:'JV Cond',sans-serif;font-weight:900;font-style:italic;font-size:52px;line-height:1;text-transform:uppercase;color:#fff;margin:13px 0 9px;max-width:90%;text-wrap:balance}
+.jv-identidade p{font-family:'JV Cond',sans-serif;font-size:18px;line-height:1.25;color:#d4ff4f;max-width:90%}
+.jv-identidade .ft-logo{position:absolute;top:17px;right:20px;opacity:.16;width:110px;display:flex;flex-direction:column;align-items:center;gap:5px;pointer-events:none}.jv-identidade .ft-logo svg{width:110px;height:auto}.jv-identidade .ft-logo span{color:white;letter-spacing:.3em;font-size:11px}
+.jv-imagem-principal{border-radius:12px;overflow:hidden;background:#151b13}.jv-imagem-principal>img{width:100%;height:auto;display:block;object-fit:contain}
+.jv-sequencia{background:#fff;border:1px solid #d7ded0;border-radius:9px;overflow:hidden}.jv-sequencia h3,.jv-painel h3{font-family:'JV Cond',sans-serif;font-size:17px;text-transform:uppercase;font-weight:700;background:#0d120e;color:#fff;padding:9px 12px;line-height:1.1;letter-spacing:.015em;margin:0}
+.jv-sequencia>img{display:block;width:100%;height:auto}.jv-sequencia ol{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));list-style:none;padding:0;margin:0;gap:2px;background:#fff}.jv-sequencia li{background:#11180e;padding:9px 5px;color:#fff;font-family:'JV Cond',sans-serif;font-size:13px;line-height:1.15;text-transform:uppercase;text-align:center}
+.jv-classificacao{display:grid;grid-template-columns:1fr 1fr;gap:10px}.jv-classificacao .jv-painel{background:#0e160e;border-color:#678f24}.jv-classificacao .jv-painel h3{color:#e7efdb;font-size:14px;background:transparent;padding-bottom:0}.jv-classificacao .jv-painel p{color:#d4ff4f!important;font-family:'JV Cond',sans-serif;font-size:23px!important;font-weight:700;text-transform:uppercase}
+.jv-painel{background:#f9faf7;border:1px solid #d7ded0;border-radius:9px;overflow:hidden;min-width:0}.jv-painel-conteudo{padding:11px 13px;color:#25341f}.jv-painel p{font-size:12px;line-height:1.5;color:#25341f;margin:0 0 7px}.jv-painel p:last-child{margin-bottom:0}.jv-painel ul{list-style:disc;padding-left:15px;margin:0;display:grid;gap:5px}.jv-painel li{font-size:12px;line-height:1.4;color:#25341f}.jv-painel b{color:#25341f}.jv-objetivo h3{background:#e6eddd;color:#1c2d13}.jv-objetivo{background:#e6eddd}
+.jv-coach,.jv-diagrama-passos{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}.jv-adaptacoes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;align-items:start}.jv-adaptacoes h3{font-size:15px;padding:9px 10px}.jv-adaptacoes .jv-painel-conteudo{padding:10px}.jv-adaptacoes p,.jv-adaptacoes li{font-size:11px}
+.jv-passos{list-style:none;display:grid;gap:10px;padding:0;margin:0}.jv-passos li{display:grid;grid-template-columns:23px 1fr;gap:8px;align-items:start}.jv-passos b{display:flex;align-items:center;justify-content:center;width:23px;height:23px;border-radius:50%;background:#d4ff4f;color:#16220f;font-size:12px}.jv-passos span{font-size:12px;line-height:1.45;color:#25341f}
+.jv-rodape-informacoes{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:10px;margin-top:16px;align-items:stretch}.jv-tags{display:flex;flex-wrap:wrap;gap:5px}.jv-tags span{background:#e3ecd6;border-radius:4px;padding:4px 6px;color:#354d22;font-size:10px;line-height:1.3}.jv-dica{background:#e4f3c3}.jv-dica h3{background:#d4ff4f;color:#1b2d0f}.jv-sucesso{margin-top:12px;background:#d4ff4f}.jv-sucesso h3{background:transparent;color:#18300b;padding-bottom:0}.jv-sucesso p{font-weight:600}.jv-formatos{font-size:11px;color:#4b5d40;padding:12px 2px 0;line-height:1.6}.jv-formatos b{margin-right:3px}.jv-formatos b:nth-child(2){margin-left:14px}.jv-nivel-selecionado{border-color:#87aa50}
+@media screen{
+#folhaFicha{max-width:1540px;width:min(1540px,calc(100% - 32px))}
+#folhaFicha .jv-editorial .ficha-dados{grid-template-columns:.8fr .7fr 1.3fr;padding:12px 6px;gap:0;margin:0}.jv-editorial .ficha-dado:nth-child(1),.jv-editorial .ficha-dado:nth-child(4){display:none}.jv-editorial .ficha-dado:nth-child(3){border-right:1px solid #dce2d7}.jv-editorial .ficha-dado:nth-child(5){grid-column:auto}.jv-editorial .ficha-dado small{font-size:12px}.jv-editorial .ficha-dado span{font-size:11px}.jv-editorial .ficha-dado svg.ic{width:25px;height:25px;flex-basis:25px}
+#folhaFicha .jv-diagrama-passos .qd-cx>svg{height:260px;width:100%}.jv-diagrama-passos .ficha-quadro-titulo b{font-size:14px!important}.jv-diagrama-passos .ficha-quadro-titulo span{display:none}.jv-diagrama-passos .qd-desc,.jv-diagrama-passos .qd-nota{font-size:10px!important;padding:10px!important}.jv-diagrama-passos .qd-leg{padding:9px!important;font-size:8px!important}
+@media(max-width:1050px){.jv-ficha-grid{grid-template-columns:1fr}.jv-principal{grid-template-columns:1fr}.jv-identidade h2{font-size:46px}.jv-instrucoes{gap:13px}.jv-rodape-informacoes{grid-template-columns:1fr 1fr}.jv-imagem-principal>img{max-height:500px}.jv-editorial{padding:16px}}
+@media(max-width:660px){#folhaFicha{width:100%;max-width:100%}.jv-editorial{padding:14px}.jv-identidade{padding:19px 16px}.jv-identidade h2{font-size:39px;max-width:100%}.jv-identidade p{font-size:17px;max-width:100%}.jv-codigo{font-size:8px;gap:8px}.jv-codigo b{font-size:13px}.jv-diagrama-passos,.jv-coach,.jv-adaptacoes,.jv-rodape-informacoes{grid-template-columns:1fr}.jv-painel p,.jv-painel li,.jv-passos span{font-size:13px}.jv-painel h3{font-size:19px}.jv-sequencia{overflow:visible}.jv-sequencia>img{min-width:0}.jv-sequencia li{font-size:10px;padding:8px 3px}.jv-classificacao .jv-painel p{font-size:20px!important}#folhaFicha .jv-diagrama-passos .qd-cx>svg{height:auto}.jv-rodape-informacoes{gap:12px}.jv-classificacao .jv-painel h3{font-size:12px}}
+}
+/* A segunda folha A4 conserva execução, materiais e adaptações sem cortes. */
+.ft-complemento{padding:7mm;background:#eef1e9;gap:4mm;font-family:'JV Cond',sans-serif;color:#25341f}
+.ft-complemento>header{background:#0d140e;color:#fff;border-radius:2mm;padding:4mm}.ft-complemento>header span{font-size:9pt;letter-spacing:.08em;color:#d4ff4f}.ft-complemento h1{font-size:23pt;line-height:1.05;font-weight:900;font-style:italic;text-transform:uppercase;margin:1mm 0}.ft-complemento>header p{color:#e0e9d7;font-size:10pt;line-height:1.2;margin-top:2mm}
+.ft-complemento .jv-sequencia{flex-shrink:0}.ft-complemento .jv-sequencia h3{font-size:10pt}.ft-complemento .jv-sequencia li{font-size:8pt;padding:2mm 1mm}.ft-complemento .jv-papel-dados{display:grid;gap:3mm;align-content:start}.ft-complemento .jv-painel{break-inside:avoid}.ft-complemento .jv-painel h3{font-size:11pt;padding:2mm 3mm}.ft-complemento .jv-painel-conteudo{padding:2.5mm 3mm}.ft-complemento .jv-painel p,.ft-complemento .jv-painel li{font-size:10pt;line-height:1.25;margin-bottom:1.5mm}.ft-complemento .jv-sucesso{margin-top:0}
+@media screen{
+.jv-editorial .ficha-dados{grid-template-columns:.8fr .7fr 1.3fr;padding:12px 6px;gap:0;margin:0}
+.jv-editorial .jv-diagrama-passos .qd-cx{background:#f7f9f4}
+.jv-editorial .jv-diagrama-passos .qd-cx>svg{height:260px;width:100%;display:block}
+.jv-editorial .qd-desc,.jv-editorial .qd-nota{color:#3b4d30;background:#f7f9f4}
+.jv-editorial .qd-leg{color:#405237;background:#edf3e7}
+@media(max-width:660px){.jv-editorial .jv-diagrama-passos .qd-cx>svg{height:auto}}
+}
+.ft-complemento .jv-coach{grid-template-columns:1fr 1fr}
+.ft-complemento .jv-papel-dados{gap:2.4mm}
+.ft-complemento .jv-painel h3{padding:1.6mm 3mm}
+.ft-complemento .jv-painel-conteudo{padding:2mm 3mm}
+.ft-complemento>header{flex-shrink:0}
+.ft-complemento{padding:6mm;gap:3mm}
+@media screen{
+.jv-editorial .qd-nota b{color:#213a14}
+#folhaFicha .jv-editorial .qd-leg,.jv-editorial .qd-leg{background:#192018;color:#e3ebdb}
+}
+.ft-complemento .jv-sequencia>img{max-height:55mm;object-fit:contain;background:#11180e}
+.ft-complemento .jv-papel-dados{gap:2mm}
+.ft-complemento .jv-sequencia>img{max-height:43mm}
+/* Dimensões proporcionais explícitas: o exportador não depende de object-fit. */
+.ft-complemento .jv-sequencia{width:129mm;align-self:center}
+.ft-complemento .jv-sequencia>img{width:100%;height:auto;max-height:none;object-fit:initial}
+.jv-novidade{padding-top:18px;padding-bottom:6px}
+.jv-novidade-link{display:flex;align-items:center;gap:20px;border:1px solid #d4ff4f65;border-radius:13px;background:#1a2715;padding:14px;color:#edf4e5;text-decoration:none}
+.jv-novidade-link>img{width:160px;height:auto;border-radius:7px;flex:0 0 160px}
+.jv-novidade-link>span{display:grid;gap:5px;min-width:0}
+.jv-novidade-link small{color:#d4ff4f;font-size:10px;letter-spacing:.08em}
+.jv-novidade-link strong{font-family:'JV Cond',sans-serif;text-transform:uppercase;font-size:31px;line-height:1.05}
+.jv-novidade-link>span>span{font-size:12px;color:#c6d5bd}
+.jv-novidade-link>b{margin-left:auto;color:#d4ff4f;font-size:13px;white-space:nowrap}
+.jv-classificacao .jv-painel small{display:block;color:#d5e5c7;font-size:10px;line-height:1.3}
+@media(max-width:660px){.jv-novidade-link{gap:12px;padding:12px;flex-wrap:wrap}.jv-novidade-link>img{width:100px;flex-basis:100px}.jv-novidade-link>span{flex:1}.jv-novidade-link small{font-size:8px}.jv-novidade-link strong{font-size:25px}.jv-novidade-link>span>span{font-size:10px}.jv-novidade-link>b{font-size:12px}}
+.ft-ilustrada22 .jv-papel-foto{width:175mm;align-self:center;margin:0;flex-shrink:0;text-align:center}
+.ft-ilustrada22 .jv-papel-foto img{display:block;width:100%;height:auto}
+.ft-ilustrada22 .jv-papel-foto figcaption{font-size:9pt;line-height:1.2;color:#3b4d30;margin-top:1.5mm}
+.ft-instrucoes22{gap:2.5mm}
+.ft-instrucoes22 .jv-adaptacoes{grid-template-columns:1fr 1fr 1.2fr}
+.ft-instrucoes22 .jv-painel p,.ft-instrucoes22 .jv-painel li,.ft-instrucoes22 .jv-passos span{font-size:9.3pt;line-height:1.2}
+.ft-instrucoes22 .jv-painel h3{font-size:10pt}
+.ft-instrucoes22 .jv-painel-conteudo{padding:2mm 2.5mm}
+.ft-instrucoes22 svg.qd{height:57mm;width:100%;display:block;margin-bottom:2mm}
+.ft-instrucoes22 .jv-passos{gap:2.4mm}
+.ft-instrucoes22 .jv-passos li{padding:0}
+.ft-instrucoes22 .jv-passos b{width:5mm;height:5mm;font-size:8pt}
+.card .miniq>img{display:block;width:100%;height:100%;object-fit:contain;background:#10180d}
+.jv-novidade-downloads{display:flex;gap:16px;flex-wrap:wrap;padding:10px 2px;color:#d4ff4f;font-size:12px}
+.jv-novidade-downloads a{color:#d4ff4f;text-underline-offset:3px}
+/* Folha principal: preservar o texto das etapas dentro do A4. */
+.ft:not(.ft-complemento) .ft-aplicar{padding:3.5mm 3.2mm}
+.ft:not(.ft-complemento) .ft-aplicar ol{gap:2mm}
+.ft:not(.ft-complemento) .ft-aplicar li{font-size:9.3pt;line-height:1.2}
+.ft:not(.ft-complemento) .ft-tres{margin-top:3mm;margin-bottom:5mm}
+.ft:not(.ft-complemento) .ft-tres>div{padding:3mm}
+.ft:not(.ft-complemento) .ft-tres li{font-size:9.3pt;line-height:1.2}
+.ft:not(.ft-complemento) .ft-tres ul{gap:1.2mm}
+.jv-editorial .ficha-dado>div{min-width:0;overflow-wrap:anywhere}
+.jv-editorial .jv-painel-conteudo{overflow-wrap:anywhere}

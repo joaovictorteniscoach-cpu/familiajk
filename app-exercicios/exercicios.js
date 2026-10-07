@@ -27,7 +27,7 @@
    fonte     'apostila' = está na apostila oficial · 'banco' = ampliação
    ========================================================================== */
 
-const VERSAO_BANCO = '1.1 · 2026';
+const VERSAO_BANCO = '1.2 · revisão outubro 2026';
 
 /* Os seis temas que rodam duas vezes por ano (apostila, seção 5.5). */
 const TEMAS = [

@@ -1,15 +1,24 @@
-# Site estático (PWA) — sem etapa de build.
-# No Netlify, configure "Base directory" = app-exercicios para este site.
 [build]
   publish = "."
-  # Só constrói se algum arquivo desta pasta mudou — os projetos do Netlify
-  # saem do mesmo repositório, então isso evita builds inúteis.
+  command = ""
+  # Mantém o filtro de mudanças deste projeto quando ligado ao GitHub.
   ignore = "if [ -z \"$CACHED_COMMIT_REF\" ]; then exit 1; fi; git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- ."
 
 [[headers]]
   for = "/sw-exercicios.js"
   [headers.values]
-    Cache-Control = "no-cache"
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
 [[headers]]
   for = "/manifest-exercicios.webmanifest"
   [headers.values]

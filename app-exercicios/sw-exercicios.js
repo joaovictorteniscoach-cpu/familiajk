@@ -1,50 +1,9 @@
-/* Service Worker — Banco de Exercícios JV (Da Base ao Topo)
-   Estratégia: network-first (sempre tenta a versão nova online), com cache de
-   reserva para abrir offline. O app é 100% local: não fala com servidor nenhum,
-   não carrega biblioteca de fora e não tem dado de aluno na nuvem. Os favoritos
-   e o plano de aula ficam no próprio aparelho (localStorage).
-   Por que importa: quadra de saibro com sinal ruim é a regra, não a exceção. */
-const CACHE = 'jv-exercicios-v25';   /* sobe a cada mudanca de tela: o v2 e' apagado no activate */
-const SHELL = ['./', './exercicios.js', './quadra.js', './manifest-exercicios.webmanifest',
-               './jv-icone-exercicios-192.png',
-               /* gera o PDF da aula dentro do app (enviar / imprimir pelo celular) */
-               './lib/html2canvas.min.js',
-               /* o fundo e as poses da folha deitada (sequência do movimento) */
-               './fundo-paisagem.webp', './fundo-sequencia.webp',
-               './jv-aproxima-hd.webp', './jv-desloca-esq-hd.webp', './jv-desloca-hd.webp', './jv-espera-frente-hd.webp', './jv-fh-fim-hd.webp', './jv-lat-bh-hd.webp', './jv-lat-espera-hd.webp', './jv-lat-fh-hd.webp', './jv-lat-reves-hd.webp', './jv-saque-costas-hd.webp', './jv-saque-frente-hd.webp', './jv-saque-lanca-hd.webp', './jv-split-hd.webp', './jv-voleio-hd.webp',
-               './jv-lat-bh-esq.webp',
-               /* a letra da folha A4: sem ela, offline, a folha sai na fonte do
-                  sistema, mais larga, e o rodapé cai para fora da página */
-               './fonte-barlow-condensed-500-normal.woff2', './fonte-barlow-condensed-600-normal.woff2',
-               './fonte-barlow-condensed-700-normal.woff2', './fonte-barlow-condensed-800-italic.woff2',
-               './fonte-barlow-condensed-900-italic.woff2'];
-
-self.addEventListener('install', e => {
-  self.skipWaiting();
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL).catch(() => {})));
-});
-
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys()
-      .then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))
-      .then(() => self.clients.claim())
-  );
-});
-
-self.addEventListener('fetch', e => {
-  const req = e.request;
-  if (req.method !== 'GET') return;
-  let u;
-  try { u = new URL(req.url); } catch (_) { return; }
-  if (u.origin !== self.location.origin) return;   // nada de fora é interceptado
-  e.respondWith(
-    fetch(req)
-      .then(resp => {
-        const copia = resp.clone();
-        caches.open(CACHE).then(c => c.put(req, copia).catch(() => {}));
-        return resp;
-      })
-      .catch(() => caches.match(req).then(m => m || caches.match('./')))
-  );
+/* JV: arquivos realistas e interface disponíveis offline após o primeiro acesso. */
+const CACHE='jv-exercicios-revisao145-20261007';
+const SHELL=["./", "./cenas.js", "./revisao145.js", "./exercicios.js", "./fichas.js", "./fonte-barlow-condensed-500-normal.woff2", "./fonte-barlow-condensed-600-normal.woff2", "./fonte-barlow-condensed-700-normal.woff2", "./fonte-barlow-condensed-800-italic.woff2", "./fonte-barlow-condensed-900-italic.woff2", "./forehand-jv-realista.png", "./forehand-jv-sequencia.png", "./jv-aproxima-esq.webp", "./jv-aproxima.webp", "./jv-completa.css", "./jv-desloca-esq.webp", "./jv-desloca.webp", "./jv-editorial.css", "./jv-espera-costas.webp", "./jv-espera-frente.webp", "./jv-golpe-costas-bh.webp", "./jv-golpe-costas-fh.webp", "./jv-golpe-frente-bh.webp", "./jv-golpe-frente-fh.webp", "./jv-icone-exercicios-180.png", "./jv-icone-exercicios-192.png", "./jv-icone-exercicios-512.png", "./jv-icone-exercicios-mask.png", "./jv-icone-exercicios.png", "./jv-poses-realistas.png", "./jv-saque-costas.webp", "./jv-saque-frente.webp", "./jv-voleio-esq.webp", "./jv-voleio.webp", "./lib/html2canvas.min.js", "./manifest-exercicios.webmanifest", "./premium.css", "./quadra-jv.webp", "./quadra.js", "./splash-exercicios-1125x2436.png", "./splash-exercicios-1170x2532.png", "./splash-exercicios-1179x2556.png", "./splash-exercicios-1242x2688.png", "./splash-exercicios-1290x2796.png", "./splash-exercicios-750x1334.png", "./splash-exercicios-828x1792.png", "./treino22-forehand-em-movimento.pdf", "./treino22-forehand-em-movimento.png", "./treino22.js"];
+self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(c=>Promise.all(SHELL.map(u=>c.add(new Request(u,{cache:'reload'})).catch(()=>{})))));});
+self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith('jv-exercicios-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
+self.addEventListener('fetch',e=>{
+ const req=e.request;if(req.method!=='GET'||new URL(req.url).origin!==self.location.origin)return;
+ e.respondWith(fetch(req,{cache:'no-cache'}).then(resp=>{if(resp.ok){const copia=resp.clone();e.waitUntil(caches.open(CACHE).then(c=>c.put(req,copia)));}return resp;}).catch(async()=>{const salvo=await (await caches.open(CACHE)).match(req,{ignoreSearch:true});if(salvo)return salvo;if(req.mode==='navigate')return (await caches.match('./'))||Response.error();return Response.error();}));
 });
