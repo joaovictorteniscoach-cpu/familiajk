@@ -18,7 +18,7 @@ let resets=0;
 const ctx=vm.createContext({DB:{alunos:[payer,child,spouse,single],lancamentos:[],movs:[]},Number,
   acaoRepetida:()=>false,toast:()=>{},confirm:()=>true,
   PM_CTX:null,fichaId:null,guardarVersoes:()=>{},logAct:()=>{},closeModal:()=>{},br:String,
-  document:{getElementById:(()=>{const el={};return id=>el[id]||(el[id]={value:'',textContent:'',innerHTML:'',readOnly:false,classList:{add:()=>{}}});})()},
+  document:{getElementById:(()=>{const el={};return id=>el[id]||(el[id]={value:'',textContent:'',innerHTML:'',readOnly:false,style:{},classList:{add:()=>{}}});})()},
   monthKey:()=> '2026-10',mesReal:()=> '2026-10',dKey:()=> '2026-10-04',
   ehPersonalTipo:()=>false,persist:()=>{},renderAll:()=>{},descontoDoMes:()=>null,
   fmtRs:v=>'R$ '+v,fmt:v=>'R$ '+v,fmtCred:String,
