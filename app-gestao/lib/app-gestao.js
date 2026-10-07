@@ -2528,7 +2528,8 @@ async function syncRequests(silent){
       // sessão pode ter alterado o banco durante a leitura: o CAS recusa.
       if(!await gravarAgora()){if(!silent)toast('Pedidos mantidos na fila — confirme a gravação da agenda antes de continuar.');return;}
       await doPublish();
-      await ref.update(updates);
+      // O SDK usa hasOwnProperty: converter o mapa interno para objeto comum.
+      await ref.update({...updates});
       renderAgenda();
     }
     if(n>0||nc>0)toast('📥 '+n+' reserva(s) · '+nc+' cancelamento(s) de alunos'+(nr?' · '+nr+' recusado(s) por conflito':''));
