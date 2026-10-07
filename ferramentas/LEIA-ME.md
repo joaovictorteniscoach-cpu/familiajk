@@ -132,9 +132,11 @@ para outra coisa.
 
 ## Quem pode ler e gravar no banco
 
-Está em [`FIREBASE.md`](FIREBASE.md), com as regras prontas para colar em
-`firebase-regras-etapa1.json` (a cerca, já em uso) e
-`firebase-regras-etapa2.json` (a tranca, depois que o login estiver testado).
+Veja [FIREBASE.md](FIREBASE.md) e [SEGURANCA-P0.md](SEGURANCA-P0.md).
+A referência registrada é a transição P0, que precisa ser confirmada no
+console. Etapas 1 e 2 são históricas e não devem ser usadas para recuperação.
+A etapa final depende da migração dos aparelhos. App Check tem configuração
+separada, descrita em [APP-CHECK.md](APP-CHECK.md).
 
 ## A trava que impede gravar antes de carregar
 

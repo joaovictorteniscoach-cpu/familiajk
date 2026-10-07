@@ -38,16 +38,16 @@ situação. Exporte o backup se o app permitir, confirme a conexão e a conta
 autorizada e anote a mensagem de erro antes de tentar corrigir.
 
 ### Algum número parece errado
-1. *Financeiro → **🔎 Conferir números*** — aponta o que não fecha, sem corrigir
+1. *Mais → Segurança e dados → **🔎 Conferir números*** — aponta o que não fecha, sem corrigir
    nada sozinho;
-2. *Financeiro → **🕘 Ver versões salvas*** — volta para uma versão anterior; a
+2. *Mais → Segurança e dados → **🕘 Ver versões salvas*** — volta para uma versão anterior; a
    atual é guardada antes, então dá para desfazer a volta;
-3. *Financeiro → **⬇ Exportar backup*** — cópia que não depende de nuvem nenhuma.
+3. *Mais → Segurança e dados → **⬇ Exportar backup*** — cópia que não depende de nuvem nenhuma.
 
 ### O app começou a ficar lento
-*Financeiro → **📊 Ver espaço usado*** mostra quanto já foi e, com uma semana de
+*Mais → Segurança e dados → **📊 Ver espaço usado*** mostra quanto já foi e, com uma semana de
 histórico, em quanto tempo o limite chega. Se apertar,
-*📦 Ver o que dá para arquivar* tira o que tem mais de 14 meses.
+*Mais → Segurança e dados → 📦 Ver o que dá para arquivar* tira o que tem mais de 14 meses.
 
 ### Entrou aluno novo
 Mande o link do app do aluno e peça para **adicionar à Tela de Início** — site
@@ -56,6 +56,11 @@ depois de semanas sem uso.
 
 ## De vez em quando
 
-- **Exportar backup** e guardar o arquivo (uma vez por mês já basta);
+- Conferir a data da cópia automática em **Mais → Segurança e dados** e guardar uma cópia exportada periodicamente;
 - **🔎 Conferir números**, se ficar na dúvida sobre algum saldo;
 - **📊 Ver espaço usado**, para saber a folga antes de ela apertar.
+
+## Preparação profissional
+
+Acompanhe [PRONTIDAO.md](ferramentas/PRONTIDAO.md): App Check, acessos,
+ensaio de recuperação, monitoramento e documentos atualizados.

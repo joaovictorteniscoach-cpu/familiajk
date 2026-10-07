@@ -52,13 +52,14 @@ texto vindo de aluno/nuvem; dentro de `onclick="f('…')"` use `argJs()` (escapa
 depois HTML — só `esc()` não basta, o navegador desfaz o `&#39;` antes de rodar).
 Nada de nome real de aluno ou compromisso pessoal no código: ele é público (Pages + GitHub).
 
-## Decisões em vigor (2026-10-02)
+## Decisões em vigor (atualizadas em 2026-10-07)
 - Gestão fica no GitHub Pages, mesma origem do app do aluno: risco aceito pelo João para
   não depender da cota do Netlify. Não reabrir sem ele pedir.
 - Cópia legada `jvtenis-app-aluno` vai sem `mensalidade`/`valorAula` (`valoresOcultos`).
 - Regra `etapa4-estrita`: código pronto; publicar só com a caixa "Pronto para a regra final?"
   (Mais → Segurança e dados) em ✓ e autorização do João. Passo a passo em `ferramentas/SEGURANCA-P0.md`.
-- App Check: código pronto e desligado (`APPCHECK_SITE_KEY` vazio nos dois `index.html`).
+- Renovação: repetição no mesmo mês preserva os saldos. Ajuste manual no cadastro exige conferência no lote; a confirmação de renovação manual só marca o mês, sem alterar números. Ver `ferramentas/PRONTIDAO.md`.
+- App Check: João autorizou preparar a ativação em 2026-10-06. `APPCHECK_SITE_KEY` ainda vazio: falta a chave pública e o registro no console. Começar em monitoramento; exigência só após adaptar site e leitura REST do teste. Ver `ferramentas/APP-CHECK.md`.
 - Repositório público: decisão pendente do João (privado exige GitHub Pro para manter o Pages).
 
 ## Verificar

@@ -39,29 +39,16 @@ decide é a migração dos aparelhos.
    controla acesso: nenhum dado se perde ao ir ou voltar.
 6. Depois, atualizar o CLAUDE.md: a regra publicada passa a ser a etapa 4.
 
-## App Check (proteção contra robôs) — código pronto, desligado
-Os dois apps carregam `lib/firebase-app-check-compat.js` (10.12.2, mesma versão
-das outras bibliotecas) e chamam `ligarAppCheck()` logo depois de iniciar o
-Firebase. Com `APPCHECK_SITE_KEY=''` (em `app-aluno/index.html` e
-`app-gestao/index.html`) nada acontece.
+## App Check — ativação preparada, chave pendente
 
-Para ligar:
-1. Google Cloud / reCAPTCHA: criar uma chave **reCAPTCHA v3** com os domínios
-   `joaovictorteniscoach-cpu.github.io`, `appalunos.netlify.app` e
-   `academiatenisjv.netlify.app`.
-2. Firebase → App Check → Apps → app web → registrar com o provedor reCAPTCHA v3
-   (chave secreta vai só no console).
-3. Colar a chave do **site** (pública) em `APPCHECK_SITE_KEY` nos dois apps e
-   publicar.
-4. Deixar alguns dias em "monitorar" (Firebase → App Check → Realtime Database)
-   e só depois **Impor/Enforce**.
+O código aceita a chave pública reCAPTCHA v3 e ativa a proteção antes do
+acesso ao banco, inclusive na instância anônima do teste de conexão.
+Os campos ainda estão vazios. A ativação no console e a emissão de tokens
+válidos não foram confirmadas nesta etapa.
 
-Atenção ao impor:
-- o site lê `precos_publicos/status_quadra` pela URL REST, sem App Check: com a
-  exigência ligada no Realtime Database, o status da quadra some do site;
-- o **Testar conexão** da Gestão cria uma segunda instância do Firebase para
-  simular o aluno, sem App Check: os passos de aluno passam a falhar no teste
-  (o app real do aluno continua funcionando).
+Siga [APP-CHECK.md](APP-CHECK.md). Comece em monitoramento. A exigência depende
+também de adaptar o site público e a leitura REST do teste de conexão.
+App Check não substitui aprovação de aparelho, login nem regras de acesso.
 
 ## Verificação
 ```sh

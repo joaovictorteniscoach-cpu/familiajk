@@ -1588,11 +1588,11 @@ body[data-aba]:not([data-aba="inicio"]) #app>.top .jv-quadra-chip{display:none!i
 #app>.top .jv-chips-topo .jv-clima-chip .clima-ic{font-size:17px}
 #app>.top .jv-chips-topo .jv-quadra-chip .led{width:9px;height:9px;flex:0 0 9px}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-06-2">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-07-1">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-06-2">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-07-1">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -1617,15 +1617,23 @@ const firebaseConfig = {
    "monitorando" no painel antes de ligar a exigência. A mesma chave vai nos
    dois apps (app-aluno e app-gestao). */
 const APPCHECK_SITE_KEY='';
-function ligarAppCheck(){
-  if(!APPCHECK_SITE_KEY||typeof firebase==='undefined'||!firebase.appCheck)return;
-  try{firebase.appCheck().activate(APPCHECK_SITE_KEY,true);}catch(e){console.warn('App Check',e);}
+var _appsAppCheckLigados=new WeakSet();
+function ligarAppCheck(app){
+  if(!APPCHECK_SITE_KEY||typeof firebase==='undefined'||!firebase.appCheck)return false;
+  try{
+    const alvo=app||firebase.app();
+    if(_appsAppCheckLigados.has(alvo))return true;
+    firebase.appCheck(alvo).activate(APPCHECK_SITE_KEY,true);
+    _appsAppCheckLigados.add(alvo);
+    return true;
+  }catch(e){console.warn('App Check não iniciou; confira a configuração no Firebase.',e);return false;}
 }
 function iniciarFirebase(){
   try{
     if(typeof firebase==='undefined')return false;
     if(!firebaseConfig.apiKey || firebaseConfig.apiKey==="COLE_AQUI")return false;
-    if(!firebase.apps||!firebase.apps.length){firebase.initializeApp(firebaseConfig);ligarAppCheck();}
+    const app=(firebase.apps||[]).find(a=>a.name==='[DEFAULT]')||firebase.initializeApp(firebaseConfig);
+    ligarAppCheck(app);
     window.fbDB = firebase.database();
     iniciarAuth();
     return true;
@@ -1633,10 +1641,10 @@ function iniciarFirebase(){
 }
 
 /* ===== Identificação silenciosa do aparelho =======================
-   O aluno NÃO vê nada disso e não ganha senha nenhuma: o app entra sozinho
-   como visitante anônimo. Serve para que o banco possa, na etapa seguinte,
-   recusar quem não veio pelo app. Se falhar, o app segue funcionando igual —
-   as regras continuam abertas hoje. */
+   O app recebe um UID anônimo e solicita a aprovação individual do aparelho.
+   O código de quatro dígitos localiza o cadastro; não autoriza acesso privado.
+   Se a identificação falhar, a cópia local não é apagada e a autorização
+   continua pendente. A regra vigente deve ser conferida no Firebase. */
 window.AUTH_USER=null;
 var _authFeito=false, _authEspera=[];
 function _authResolveu(){
@@ -2036,7 +2044,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-10-06-2"></script>
+<script src="lib/icones.js?v=2026-10-07-1"></script>
 </div>
 
 <!-- MODAL ESCOLHER O QUE FAZER NO HORÁRIO -->
@@ -2243,7 +2251,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-10-06-2';
+const VERSAO='2026-10-07-1';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -4821,7 +4829,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-06-2').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-07-1').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
