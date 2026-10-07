@@ -23,7 +23,7 @@ async function setup(context,base,theme='saibro'){
  });
  await context.addInitScript(({fixture,theme})=>{
   localStorage.setItem('jvtenis-gestao-v1',JSON.stringify(fixture));
-  if(theme==='classico')localStorage.setItem('jvt-tema','classico');
+  if(theme==='classico')localStorage.setItem('jv-tema','classico');
   sessionStorage.setItem('jv-bk-adiar','1');
  },{fixture,theme});
  const p=await context.newPage(),errors=[];p.on('pageerror',e=>errors.push(e.message));
@@ -144,7 +144,7 @@ async function setup(context,base,theme='saibro'){
      const a=DB.alunos[0],m=mesReal();
      a.ultimaRenovacao={mes:m,ts:Date.now(),origem:'manual'};
      DB.movs.push({alunoId:a.id,campo:'repos',motivo:'Correção manual no cadastro',ts:Date.now()});
-     const original=mesReal;mesReal=()=>m==='2026-11'?'2026-12':'2026-11';
+     const original=mesReal,[ano,mes]=m.split('-').map(Number);mesReal=()=>dKey(new Date(ano,mes,1)).slice(0,7);
      const liberado=!rmLinha(a).bloqueio;mesReal=original;
      delete a.ultimaRenovacao;DB.movs=[];
      DB.movs.push({alunoId:a.id,campo:'locCred',motivo:'Correção manual no cadastro',ts:Date.now()});
@@ -154,7 +154,7 @@ async function setup(context,base,theme='saibro'){
    await reset();
    await check(theme+': marcação manual também funciona sem movimento; inativos e torneio ficam fora',async()=>{
     assert.equal(await p.evaluate(()=>{
-     DB.alunos[1].ativo=false;DB.alunos[2].perfil='torneio';
+     DB.alunos[1].arquivado=true;DB.alunos[2].perfil='torneio';
      rmConfirmarManual('solo');
      return rmLinhas().length===1&&!!rmLinha(DB.alunos[0]).bloqueio;
     }),true);
