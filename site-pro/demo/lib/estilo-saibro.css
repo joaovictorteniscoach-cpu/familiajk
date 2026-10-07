@@ -3274,6 +3274,9 @@ html body:not(#jv) .pm-modal .modal-x,html body:not(#jv) .pd-modal .modal-x{
 }
 html body:not(#jv) .pm-modal .modal-head h3,html body:not(#jv) .pd-modal .modal-head h3{margin:0}
 
+/* Renovar o mês: nome do aluno abre a ficha */
+#renova-mes .rm-link{cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px}
+
 /* ===== Toques do tema Saibro ===== */
 .nav,.nav:after{background:#0B1B14!important;border-top:1px solid rgba(194,88,46,.35)!important}
 .nav button.on,.nav button.aberto,.jv-nav-3d button.on,.jv-nav-3d button.aberto{background:rgba(194,88,46,.16)!important;color:#EE9A6E!important;-webkit-text-fill-color:#EE9A6E!important}

@@ -1587,12 +1587,28 @@ body[data-aba]:not([data-aba="inicio"]) #app>.top .jv-quadra-chip{display:none!i
 #app>.top .jv-chips-topo .jv-quadra-chip small{font-size:9.5px;text-shadow:0 1px 5px rgba(0,0,0,.6)}
 #app>.top .jv-chips-topo .jv-clima-chip .clima-ic{font-size:17px}
 #app>.top .jv-chips-topo .jv-quadra-chip .led{width:9px;height:9px;flex:0 0 9px}
+
+/* Resumo do mês (tela Aulas e atalho em Créditos) */
+.amr-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:6px 0 10px}
+.amr-nums div{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:9px 6px;text-align:center}
+.amr-nums b{display:block;font-size:24px;font-weight:850;color:#fff;line-height:1.1}
+.amr-nums span{font-size:11.5px;color:#D8D2C7}
+.amr-plano{font-size:13px;color:#D8D2C7;margin:0 0 10px}
+.amr-plano b{color:#fff}
+.amr-bloco{margin-top:10px}
+.amr-bloco>b{display:block;font-size:13px;color:#fff;margin-bottom:6px}
+.amr-dias{display:flex;flex-wrap:wrap;gap:6px}
+.amr-dia{font-size:12.5px;font-weight:700;padding:5px 9px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#F6F2EA}
+.amr-vazio{font-size:12.5px;color:#BDB6A9}
+.amr-nota{font-size:11.5px;color:#BDB6A9;margin:12px 0 0}
+.amr-atalho{display:block;width:100%;text-align:left;cursor:pointer;font:inherit;color:inherit}
+.amr-ver{margin-top:8px;font-size:13px;font-weight:800;color:#E8B83E}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-07-4">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-07-5">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-07-4">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-07-5">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -1915,6 +1931,7 @@ function esperarAuth(){
     </section>
 
     <section class="page" id="apg-aulas">
+    <div class="minhas amr" id="aulas-mes-resumo"></div>
     <div class="minhas">
       <p class="sec-eyebrow">Meus horários</p>
       <h2 class="sec-title">Próximas <em>aulas</em> do mês</h2>
@@ -1971,6 +1988,7 @@ function esperarAuth(){
         <div class="jv-row" id="cred-page-recebido-row" hidden><span>Recebido</span><b id="cred-page-recebido">—</b></div>
         <div class="jv-row" id="cred-page-restante-row" hidden><span>Saldo a pagar</span><b id="cred-page-restante">—</b></div>
       </div>
+      <button class="jv-credit-panel amr-atalho" id="cred-page-mes" type="button" onclick="goAluno('aulas',null)"></button>
       <div class="jv-credit-panel" id="cred-page-repos-panel">
         <div class="jv-pay-lbl">Reposições disponíveis</div>
         <div class="jv-credit-big"><span id="cred-page-repos">0</span> <small>reposições</small></div>
@@ -2044,7 +2062,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-10-07-4"></script>
+<script src="lib/icones.js?v=2026-10-07-5"></script>
 </div>
 
 <!-- MODAL ESCOLHER O QUE FAZER NO HORÁRIO -->
@@ -2251,7 +2269,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-10-07-4';
+const VERSAO='2026-10-07-5';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -2549,7 +2567,7 @@ async function cancelarAula(dk,hora,rec){
     try{await filaPush('jvtenis/fila_agendamentos',item);}catch(e){}
     notificarJoao('cancelou',dk,hora);
   }
-  renderAgenda();renderMinhas();
+  renderAgenda();renderMinhas();renderResumoMes();
   toast('Aula cancelada. Avisando o João… 🌧️');
   setTimeout(()=>abrirWhatsApp('5541995415712','Olá João! Precisei *cancelar* minha aula de '+fmtData(dk)+' às '+hora+'. 🎾'),700);
 }
@@ -3145,7 +3163,7 @@ function render(){
   if(PUB.aviso){av.style.display='block';document.getElementById('aviso-txt').textContent=PUB.aviso;}
   else av.style.display='none';
   renderPagamento();
-  renderAgenda();renderMinhas();renderHistAluno();renderTorneioAluno();
+  renderAgenda();renderMinhas();renderResumoMes();renderHistAluno();renderTorneioAluno();
   atualizarBadgesAluno();
   checarAulaHoje();
   checarChuva();
@@ -3796,6 +3814,56 @@ function fmtDataAl(s){
   if(!s)return '—';const pr=String(s).split('-').map(Number);const dt=new Date(pr[0],(pr[1]||1)-1,pr[2]||1);
   const dows=['dom','seg','ter','qua','qui','sex','sáb'];
   return String(pr[2]||0).padStart(2,'0')+'/'+String(pr[1]||0).padStart(2,'0')+' · '+dows[dt.getDay()];
+}
+/* ===== Resumo do mês do aluno =====
+   Para acompanhar em tempo real e evitar discussão na virada do mês: quantas
+   aulas ele já fez (com as datas, do histórico que o João registra), quantas
+   ainda estão marcadas no mês e o saldo de agora. Só leitura: não grava nada. */
+function resumoMesAluno(){
+  const cod=(MEU&&MEU.codigo)||(EU&&EU.codigo)||'';
+  const hoje=new Date(),mk=dKey(hoje).slice(0,7);
+  const feitas=((PUB&&PUB.historico&&cod&&PUB.historico[cod])||[])
+    .filter(p=>String(p.data||'').slice(0,7)===mk)
+    .slice().sort((a,b)=>(a.data+(a.hora||'')).localeCompare(b.data+(b.hora||'')));
+  const ja=new Set(feitas.map(p=>p.data+'|'+(p.hora||'')));
+  const G=(PUB&&PUB.grade)||{fixos:[],eventos:[],excecoes:[]},exc=G.excecoes||[],prox=[];
+  const fim=new Date(hoje.getFullYear(),hoje.getMonth()+1,0).getDate();
+  (G.fixos||[]).filter(f=>f.cod===cod).forEach(f=>{
+    for(let d=hoje.getDate();d<=fim;d++){
+      const dt=new Date(hoje.getFullYear(),hoje.getMonth(),d,12);if(dt.getDay()!==f.dia)continue;
+      const dk=dKey(dt);
+      if(!fixoValeEm(f,dk)||horasAte(dk,f.hora)<-1||foiCancelado(dk,f.hora))continue;
+      if(exc.some(x=>x.fixoId===f.id&&x.data===dk)||ja.has(dk+'|'+f.hora))continue;
+      prox.push({data:dk,hora:f.hora});
+    }
+  });
+  (G.eventos||[]).filter(e=>e.cod===cod&&String(e.data||'').slice(0,7)===mk).forEach(e=>{
+    if(horasAte(e.data,e.hora)<-1||foiCancelado(e.data,e.hora)||ja.has(e.data+'|'+e.hora))return;
+    prox.push({data:e.data,hora:e.hora});
+  });
+  prox.sort((a,b)=>(a.data+a.hora).localeCompare(b.data+b.hora));
+  return {mes:MESES_AL[hoje.getMonth()],feitas,prox};
+}
+const MESES_AL=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+function renderResumoMes(){
+  if(!EU)return;
+  const r=resumoMesAluno(),cred=Number(EU.creditos)||0,grp=Number(EU.credGrupo)||0,plano=Number(EU.plano)||0;
+  const lista=(arr,vazio)=>arr.length?arr.map(p=>'<span class="amr-dia">'+fmtDataAl(p.data)+(p.hora&&p.hora!=='—'?' · '+p.hora:'')+'</span>').join(''):'<span class="amr-vazio">'+vazio+'</span>';
+  const saldo=fmtCred(cred)+' crédito'+(Math.abs(cred)===1?'':'s')+(grp?' + '+fmtCred(grp)+' em grupo':'');
+  const el=document.getElementById('aulas-mes-resumo');
+  if(el)el.innerHTML='<p class="sec-eyebrow">Resumo de '+r.mes+'</p>'
+    +'<div class="amr-nums"><div><b>'+r.feitas.length+'</b><span>feita'+(r.feitas.length===1?'':'s')+'</span></div>'
+    +'<div><b>'+r.prox.length+'</b><span>marcada'+(r.prox.length===1?'':'s')+'</span></div>'
+    +'<div><b>'+fmtCred(cred)+'</b><span>saldo agora</span></div></div>'
+    +(plano>0?'<p class="amr-plano">Plano: <b>'+plano+' aula'+(plano===1?'':'s')+' no mês</b> · saldo: <b>'+saldo+'</b></p>':'<p class="amr-plano">Saldo: <b>'+saldo+'</b></p>')
+    +'<div class="amr-bloco"><b>✓ Aulas feitas em '+r.mes+'</b><div class="amr-dias">'+lista(r.feitas,'Nenhuma registrada ainda neste mês.')+'</div></div>'
+    +'<div class="amr-bloco"><b>📅 Ainda marcadas em '+r.mes+'</b><div class="amr-dias">'+lista(r.prox,'Nada marcado para o resto do mês.')+'</div></div>'
+    +'<p class="amr-nota">Cada aula aparece aqui assim que o João registra. Alguma data diferente? Fale com ele antes da virada do mês.</p>';
+  const at=document.getElementById('cred-page-mes');
+  if(at)at.innerHTML='<div class="jv-pay-lbl">Minhas aulas de '+r.mes+'</div>'
+    +'<div class="jv-row"><span>Feitas</span><b>'+r.feitas.length+'</b></div>'
+    +'<div class="jv-row"><span>Ainda marcadas</span><b>'+r.prox.length+'</b></div>'
+    +'<div class="amr-ver">Ver as datas ›</div>';
 }
 function renderHistAluno(){
   const el=document.getElementById('hist-list');if(!el)return;
@@ -4820,7 +4888,7 @@ async function confirmarAgendamento(){
   catch(e){toast(/permission|denied/i.test(String(e))?'Não foi possível reservar: a vaga pode ter sido ocupada ou o acesso não está liberado. Atualize a agenda.':'Não consegui enviar a reserva. Tente novamente online.');return;}
   MEU.pedidos.push(pedido);await saveMeu();
   document.getElementById('ov-book').classList.remove('on');
-  renderAgenda();renderMinhas();
+  renderAgenda();renderMinhas();renderResumoMes();
   pedirPermissaoNotif();
   notificarJoao(tor?'marcou jogo do torneio':(repo?'pediu reposição':'reservou'),pedido.data,pedido.hora);
   toast(tor?'🏆 Jogo do torneio enviado ao João!':(repo?'✓ Reposição enviada ao João!':'✓ Pedido enviado. Aguarde a confirmação na agenda.'));
@@ -4928,7 +4996,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-07-4').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-07-5').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava

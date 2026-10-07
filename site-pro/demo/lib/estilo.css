@@ -3271,3 +3271,6 @@ html body:not(#jv) .pm-modal .modal-x,html body:not(#jv) .pd-modal .modal-x{
   background:#E5ECE7!important;color:inherit!important;cursor:pointer;
 }
 html body:not(#jv) .pm-modal .modal-head h3,html body:not(#jv) .pd-modal .modal-head h3{margin:0}
+
+/* Renovar o mês: nome do aluno abre a ficha */
+#renova-mes .rm-link{cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px}

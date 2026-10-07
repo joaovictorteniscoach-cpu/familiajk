@@ -8,6 +8,28 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-07 · Claude Code: 2 defeitos corrigidos (#223) e os 3 pedidos de 03/10
+
+- **#223 publicado (versão `2026-10-07-4`):** os dois defeitos da revisão
+  abaixo. `renovacoesLancadasNoMes` conta só os lançamentos do mês para o
+  alarme de duplicados (`renovacoesDoMes` segue igual para o bloqueio);
+  `updatesFilaSemConflito` tira `reserva_X/processado` quando `reserva_X` é
+  apagada no mesmo envio. Teste `testar-fila-renovacao-browser.cjs` (no CI).
+- **3 pedidos (versão `2026-10-07-5`), aprovados por simulação:**
+  (1) Renovar o mês: nome do aluno (`rmNomeLink`) abre a ficha; fechar a ficha
+  volta à renovação com as mesmas marcações (popstate da renovação só fecha
+  quando o estado deixa de ser `renova`); (2) Início: Taxa de ocupação e
+  Locações chamam `verAgendaMes()`; (3) App do aluno: `resumoMesAluno` /
+  `renderResumoMes` no topo da tela Aulas (feitas do mês pelo
+  `PUB.historico`, marcadas pelos fixos/eventos da grade, saldo) e atalho
+  `#cred-page-mes` em Créditos. Só leitura nos dois apps.
+  Teste `testar-3-pedidos-browser.cjs` (relógio fixo, no CI).
+- Nenhuma migração, nenhuma gravação nova, regras do Firebase intactas.
+- Observado e não mexido: na lista "Próximas aulas" do aluno a data fica
+  clara sobre o cartão branco (já era assim).
+
+---
+
 ## 2026-10-07 · Revisão das publicações de 04 a 07/10 (PRs #208–#221, feitas pelo Codex)
 
 Revisão só de leitura (Claude Code), comparando `298416f` (fim do PR #207) com
@@ -76,7 +98,7 @@ continua vazio.
 - App **Família JK** (#211–#213, #217): aportes, sincronização entre aparelhos
   (`sync-merge.js`), menu, histórico mensal, recuperação de OFX. Só registro.
 
-### Defeitos confirmados (a corrigir)
+### Defeitos confirmados (corrigidos no #223, ver entrada acima)
 1. **Alarme falso de "CRÉDITOS DUPLICADOS"** — `renovacoesDoMes`
    (`app-gestao.js` ~5217) devolve a marca `ultimaRenovacao` **mais** os
    movimentos "Renovação do mês"; `achadosDoAluno` (~9397) acusa `length>1`.
@@ -126,7 +148,7 @@ continua vazio.
   (sempre chamado com `sh`, sem efeito).
 
 ### Pendências
-- **Pedidos do João ainda não feitos (03/10):** (1) Renovar o mês — nome do
+- **Pedidos do João de 03/10 (feitos em 07/10, ver entrada acima):** (1) Renovar o mês — nome do
   aluno abre a ficha; (2) Início — Taxa de ocupação e Locações abrem a agenda
   **do mês** (hoje abrem a do dia); (3) App do aluno — resumo do mês na tela
   Aulas (pacote, feitas com datas, agendadas, saldo) e atalho fácil até ela.

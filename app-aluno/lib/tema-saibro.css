@@ -615,6 +615,17 @@ body{color:#F8F5EE!important}
 #app>.top .jv-chips-topo .jv-quadra-chip{background:rgba(8,20,15,.10)!important;border-color:rgba(255,255,255,.16);box-shadow:none!important}
 #app>.top .jv-chips-topo .jv-quadra-chip b{text-shadow:0 1px 6px rgba(0,0,0,.55)}
 #app>.top .jv-chips-topo .jv-quadra-chip small{text-shadow:0 1px 5px rgba(0,0,0,.6)}
+.amr-nums div{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10)}
+.amr-nums b{color:#fff}
+.amr-nums span{color:#D8D2C7}
+.amr-plano{color:#D8D2C7}
+.amr-plano b{color:#fff}
+.amr-bloco>b{color:#fff}
+.amr-dia{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#F6F2EA}
+.amr-vazio{color:#BDB6A9}
+.amr-nota{color:#BDB6A9}
+.amr-atalho{color:inherit}
+.amr-ver{color:#E17C45}
 :root{--jv-bg:#091711;--jv-card:rgba(31,45,39,0.42);--jv-panel:rgba(39,53,47,0.42);--jv-control:rgba(43,59,52,0.42);--jv-ink:#101E18;--jv-text:#F6F2EA;--jv-muted:#D9E2D8;--jv-gold:#D57B4A;--jv-border:rgba(232,214,190,.25)}
 html,body{background:var(--jv-bg)!important;color:var(--jv-text)!important}
 #app>.top.jv-premium-hero{background:linear-gradient(90deg,rgba(9,23,17,.94),rgba(9,23,17,.68) 60%,rgba(9,23,17,.20)),url('../assets/jv-saibro-realista.webp') center 64%/cover!important}
