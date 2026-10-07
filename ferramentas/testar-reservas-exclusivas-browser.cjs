@@ -175,6 +175,8 @@ async function setup(context,base,theme='saibro'){
    await p.evaluate(()=>syncRequests(true));
    assert.equal(await p.evaluate(()=>DB.agenda.eventos.length),3);
    assert.equal(await p.evaluate(()=>DB.respostasReservas.find(r=>r.id==='trio-4').estado),'recusado');
+   await p.evaluate(d=>{slotCtx={date:new Date(d+'T12:00:00'),hora:'09:00'};setPessoas(DB.agenda.eventos[0].id,'pontual',2);},dk);
+   assert.equal(await p.evaluate(()=>DB.agenda.eventos[0].pessoas),3);
   });
   assert.deepEqual(p.errors,[]);await ctx.close();
   for(const theme of ['saibro','classico']){

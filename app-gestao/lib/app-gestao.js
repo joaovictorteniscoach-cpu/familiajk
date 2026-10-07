@@ -3976,7 +3976,15 @@ function grupoTag(n){n=Number(n)||2;return n===4?'quarteto':(n===3?'trio':'dupla
 function setPessoas(id,origem,nv){
   const rec=(origem==='fixo'?DB.agenda.fixos:DB.agenda.eventos).find(x=>x.id===id);
   if(!rec)return;
-  rec.pessoas=Number(nv)||2;
+  const limite=Number(nv)||2;
+  if(![2,3,4].includes(limite))return;
+  const pedido={data:dKey(slotCtx.date),hora:rec.hora,rec:origem==='fixo'?'fixo':'pontual'};
+  const excede=datasConferenciaReserva(pedido).some(data=>{
+    if(origem==='fixo'&&(!fixoValeEm(rec,data)||DB.agenda.excecoes.some(e=>e.fixoId===rec.id&&e.data===data)))return false;
+    return entriesFor(new Date(data+'T12:00:00'),rec.hora).filter(e=>e.tipo==='grupo').length>limite;
+  });
+  if(excede){toast('Já há mais alunos que esse limite. Confira os participantes antes de reduzir a turma.');renderSlotEvs();return;}
+  rec.pessoas=limite;
   logAct('Grupo: '+rec.titulo+' = '+grupoLabel(rec.pessoas));
   persist();renderSlotEvs();renderAgenda();toast(grupoLabel(rec.pessoas)+' ✓');
 }
