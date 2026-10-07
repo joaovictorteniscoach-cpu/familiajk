@@ -4775,7 +4775,7 @@ function abrirBook(hora,repo,torneio){
   } else if(EU.creditos===0){
     toast('Seus créditos acabaram — esta aula entra como extra, a combinar com o João. 🎾');
   }
-  bookCtx={hora,date:new Date(agDate),repo:!!repo,torneio:!!torneio,grupo:!!estado.grupo,compartilhado:estado.compartilhado||''};
+  bookCtx={hora,date:new Date(agDate),repo:!!repo,torneio:!!torneio,grupo:!!estado.grupo,compartilhado:estado.compartilhado||'',limiteGrupo:estado.limiteGrupo||0};
   document.getElementById('book-title').textContent=bookCtx.grupo?'Participar da aula em grupo 👥':torneio?'Marcar jogo do torneio 🏆':(repo?'Marcar reposição 🔁':'Agendar horário 🎾');
   document.getElementById('book-sub').textContent=DIAS_FULL[bookCtx.date.getDay()]+', '+bookCtx.date.getDate()+' de '+MESES[bookCtx.date.getMonth()].toLowerCase()+' · '+hora;
   pintarProfsBook();
@@ -4812,7 +4812,7 @@ async function confirmarAgendamento(){
   if(!datas.length){toast('Escolha uma data nos próximos 90 dias.');return;}
   for(const data of datas){
     const s=slotState(new Date(data+'T12:00:00'),pedido.hora);
-    if(!['livre','loc'].includes(s.st)||(s.compartilhado||'')!==bookCtx.compartilhado){
+    if(!['livre','loc'].includes(s.st)||(s.compartilhado||'')!==bookCtx.compartilhado||s.grupo&&s.limiteGrupo!==bookCtx.limiteGrupo){
       toast('Uma das datas desse horário já está reservada. Escolha outro horário.');return;
     }
   }

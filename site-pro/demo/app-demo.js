@@ -2170,6 +2170,7 @@ function pedidoAgendaValido(p,a){
   if(p.acao==='cancelar')return true;
   if(!['fixo','pontual'].includes(p.rec))return false;
   const tipo=p.tor?'torneio':p.grupo===1?'grupo':catAgendaDe(a.tipo);
+  const pessoas=p.grupo===1?limiteGrupoHorario(entriesFor(d,p.hora)):pessoasGrupoAluno(a);
   return datasConferenciaReserva(p).every(data=>{
     const date=new Date(data+'T12:00:00'),modo=slotModo(date,p.hora);
     if(modo==='fechado'||modo==='loc'&&!p.repo&&!p.tor)return false;
@@ -2178,7 +2179,7 @@ function pedidoAgendaValido(p,a){
     // O pedido não pode transformar uma vaga vazia em grupo por conta própria.
     if(p.grupo===1&&(!grade.length||!grade.every(e=>e.tipo==='grupo')))return false;
     const entradas=grade.filter(e=>!(p.id&&e.reservaId===p.id&&e.alunoId===a.id));
-    return podeAdicionarAoHorario(entradas,tipo,p.grupo===1?limiteGrupoHorario(grade):pessoasGrupoAluno(a));
+    return podeAdicionarAoHorario(entradas,tipo,pessoas);
   });
 }
 function guardarRespostaReserva(p,estado,motivo){

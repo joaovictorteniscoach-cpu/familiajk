@@ -166,7 +166,9 @@ async function setup(context,base,theme='saibro'){
      assert.equal(ok,n<limite);
     }
    }
-   await p.evaluate(()=>{DB.alunos[0].tipo='Trio';VINCULOS.u3={ativo:true,codigo:'9903'};});
+   await p.evaluate(({dk,next})=>{DB.agenda.eventos=[{id:'trio-hoje',tipo:'grupo',pessoas:3,data:dk,hora:'09:00'},{id:'dupla-futura',tipo:'grupo',pessoas:2,data:next,hora:'09:00'}];},{dk,next});
+   assert.equal(await p.evaluate(p=>pedidoAgendaValido(p,DB.alunos[0]),req('fixo-tamanho-diferente','9901','u1',{rec:'fixo',grupo:1})),false);
+   await p.evaluate(()=>{DB.agenda.eventos=[];DB.alunos[0].tipo='Trio';VINCULOS.u3={ativo:true,codigo:'9903'};});
    queue={primeiro:req('trio-1')};await p.evaluate(()=>syncRequests(true));
    assert.equal(await p.evaluate(()=>DB.agenda.eventos[0].pessoas),3);
    queue={segundo:req('trio-2','9902','u2',{grupo:1,ts:Date.now()}),terceiro:req('trio-3','9903','u3',{grupo:1,ts:Date.now()+1}),quarto:req('trio-4','9901','u1',{grupo:1,ts:Date.now()+2})};
