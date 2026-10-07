@@ -74,6 +74,8 @@ async function setup(context,base,theme='saibro'){
     assert.match(await p.locator('#rm-corpo').textContent(),/ajuste manual neste mês/);
     const row=p.locator('#rm-corpo .rm-row').filter({hasText:'Aluno Exato Teste'});
     assert.equal(await row.locator('input[type=checkbox]').count(),0);
+    assert.equal(await row.evaluate(e=>getComputedStyle(e).opacity),'1');
+    assert.equal(await p.evaluate(()=>document.documentElement.classList.contains('tema-saibro')),theme==='saibro');
     assert.equal(await row.getByText('Já renovei manualmente',{exact:false}).count(),1);
     assert.ok(await p.evaluate(()=>rmSel.solo===false));
    });

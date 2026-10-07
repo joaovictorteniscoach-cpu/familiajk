@@ -5746,7 +5746,7 @@ function renderRenovaMes(){
   h+=L.map(x=>{
     const a=x.a, id=a.id, on=!x.bloqueio&&rmSel[id];
     const valorMuda=x.novo.mens!==x.mens;
-    let t='<div class="rm-row'+(x.bloqueio?' bloq':'')+(x.atencao?' at':'')+(on?'':' off')+'">';
+    let t='<div class="rm-row'+(x.bloqueio&&!x.ajusteManual?' bloq':'')+((x.atencao||x.ajusteManual)?' at':'')+((on||x.ajusteManual)?'':' off')+'">';
     t+=x.bloqueio?'<span class="rm-chk dis">🔒</span>'
       :'<label class="rm-chk"><input type="checkbox" '+(on?'checked':'')+' onchange="rmMarcar(\''+id+'\',this.checked)"></label>';
     t+='<div class="rm-info"><div class="rm-nome"><span>'+esc(a.nome)+'</span><b>'+fmt(x.novo.mens)+'</b></div>';
