@@ -227,3 +227,12 @@ confirmação, depois dos testes. Base: `893ecca78f5752d88193ab6e736825760e07769
   ou mensalidade mantidos. A lista oferece Registrar pagamento e, no valor
   zero, Marcar como pago. Quitação zero é manual e por competência, com
   versão salva antes, sem receita fictícia, renovação ou mudança de saldos.
+
+- Responsável: Codex. Branch `codex/aulas-aluno-calendario-previa-2026-10-07`,
+  PR #226. As 40 verificações específicas de aulas/agenda/quitacão passaram
+  no commit `2604ffe43d68f58938cff7899afbd3730bbeb91b`; o teste financeiro
+  anterior recebeu seletor explícito do botão de recebimento (a nova opção
+  zero compartilha o estilo). Conferência geral final: consultar a CI do
+  head no PR. Prévia de fala isolada, sem comandos no app publicado.
+  Versão efetivamente publicada continua 2026-10-07-4; esta V6 e #224
+  aguardam as confirmações respectivas, sem integração automática.

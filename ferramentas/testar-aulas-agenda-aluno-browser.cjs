@@ -306,10 +306,12 @@ const fixture={
    _abriuSemConferir=false;cloudPending=false;_conflitoNuvem=null;guardarMetaProtecao({backup:Date.now(),nuvem:Date.now()});
    document.querySelectorAll('.overlay.on').forEach(x=>x.classList.remove('on'));
    document.getElementById('splash-gestao').style.display='none';
-   renderAll();go('dash',document.createElement('button'));
+   renderAll();go('dash',document.querySelector('.nav button'));
    window.PREVIA_ANTES=JSON.stringify(DB);
   });
   await g.setViewportSize({width:390,height:844});
+  await g.evaluate(()=>{document.documentElement.style.scrollBehavior='auto';window.scrollTo({top:0,behavior:'instant'});});
+  await g.waitForFunction(()=>window.scrollY===0);
   await g.addScriptTag({path:path.join(root,'ferramentas/prototipos/voz-gestao.js')});
   await check('Gestão: prévia isolada do botão de voz preserva dados e fica acima do menu',async()=>{
    const r=await g.evaluate(()=>{const b=document.getElementById('vzp-abrir').getBoundingClientRect(),n=document.querySelector('.nav').getBoundingClientRect();
