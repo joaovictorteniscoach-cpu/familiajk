@@ -1,6 +1,6 @@
 # Preparação profissional dos aplicativos
 
-Atualizado em 06/10/2026. Este roteiro distingue o que foi publicado, o que
+Atualizado em 07/10/2026. Este roteiro distingue o que foi publicado, o que
 depende de configuração externa e o que ainda precisa de validação.
 
 ## Recursos já publicados
@@ -8,6 +8,21 @@ Créditos e reposições em destaque; plano família com pagador único;
 pagamento parcial por valor real; fechamento e cadastro sincronizados;
 filtro de ativos pendentes/parciais; ordem alfabética; contraste; cópias
 automáticas e proteção de gravação entre sessões.
+
+## Renovação sem duplicar
+Em **Renovar o mês**, a caixa marcada inclui o aluno; desmarcada preserva
+tudo. Quem já foi renovado no mês fica bloqueado, mesmo se os créditos foram
+consumidos depois. O registro também cobre saldo igual ao pacote e extrato arquivado.
+
+Ajustes manuais de créditos, grupo ou reposições no cadastro durante o mês
+pedem conferência e ficam fora do lote. Escolha **Já renovei manualmente**
+para preservar os saldos e marcar o mês como concluído. Se foi somente uma
+correção, escolha **Foi só correção · conferir renovação** e marque a caixa
+apenas após conferir a prévia. Uma nova correção volta a exigir conferência.
+
+Se o ajuste antigo não tiver registro no extrato, use **Já renovei manualmente ·
+manter saldos** antes do lote. Não há reconstrução automática de valores.
+A marca vale para o mês corrente; no mês seguinte o aluno volta à avaliação.
 
 ## Etapa atual
 - **App Check:** ativação autorizada pelo João; falta a chave pública e o

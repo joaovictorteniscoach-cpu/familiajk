@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-06-3';
+const VERSAO='2026-10-07-1';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -5129,11 +5129,40 @@ function mensalidadesDoMes(a){
 }
 /* Renovações de crédito já feitas para este aluno no mês corrente. */
 function renovacoesDoMes(a){
-  const m=mesReal();
+  const m=mesReal(), r=a.ultimaRenovacao;
   const doMes=campo=>movsDe(a.id,campo).filter(x=>String(x.motivo||'').indexOf('Renovação do mês')===0&&mesDoTs(x.ts)===m);
-  /* Quem só faz grupo é renovado no saldo de grupo: sem olhar lá, ele nunca
-     contava como renovado. Misto renova os dois — conta pelos créditos. */
-  const c=doMes('creditos');return c.length?c:doMes('credGrupo');
+  const c=doMes('creditos'), g=doMes('credGrupo');
+  // O registro no cadastro cobre a renovação sem diferença de saldo e o extrato arquivado.
+  if(r&&(r.mes||mesDoTs(r.ts))===m)return [{ts:r.ts,motivo:r.origem==='manual'?'Renovação manual confirmada':'Renovação do mês'},...c,...g];
+  return c.length?c:g;
+}
+/* Ajuste no cadastro pode ser uma renovação ou apenas uma correção. Não inferir
+   pelo saldo: pedir que o João escolha, sem alterar créditos nem reposições. */
+function ajusteManualRenovacao(a){
+  if(renovacoesDoMes(a).length)return null;
+  const m=mesReal(), liberado=a.revisaoRenovacaoManual;
+  const lista=movsDe(a.id).filter(x=>['creditos','credGrupo','repos'].includes(x.campo)
+    &&String(x.motivo||'').indexOf('Correção manual no cadastro')===0&&mesDoTs(x.ts)===m);
+  const ts=lista.reduce((v,x)=>Math.max(v,Number(x.ts)||0),0);
+  return ts&&!(liberado&&liberado.mes===m&&liberado.ts>=ts)?{ts}:null;
+}
+function rmConfirmarManual(id){
+  const a=DB.alunos.find(x=>x.id===id);if(!a||renovacoesDoMes(a).length)return;
+  if(!confirm(a.nome+' já teve os créditos e reposições renovados manualmente em '+MESES[new Date().getMonth()]+'?\n\nOs saldos, o plano e a mensalidade ficam exatamente como estão. Ele ficará fora da renovação deste mês.'))return;
+  guardarVersoes(JSON.stringify(DB));
+  a.ultimaRenovacao={mes:mesReal(),ts:Date.now(),origem:'manual',creditos:Number(a.creditos)||0,credGrupo:Number(a.credGrupo)||0,repos:Number(a.repos)||0};
+  rmSel[id]=false;
+  logAct('Renovação manual confirmada: '+a.nome+' · '+mesReal()+' (saldos preservados)');
+  persist();renderAll();renderRenovaMes();toast('Já renovado manualmente · saldos preservados');
+}
+function rmLiberarCorrecao(id){
+  const a=DB.alunos.find(x=>x.id===id), ajuste=a&&ajusteManualRenovacao(a);if(!ajuste)return;
+  if(!confirm('O ajuste de '+a.nome+' foi apenas uma correção, e ele AINDA precisa renovar o mês?\n\nEsta escolha só libera a caixa de seleção. Confira a prévia antes de renovar: a sobra será convertida em reposição.'))return;
+  guardarVersoes(JSON.stringify(DB));
+  a.revisaoRenovacaoManual={mes:mesReal(),ts:ajuste.ts};
+  rmSel[id]=false;
+  logAct('Ajuste manual conferido: '+a.nome+' ainda precisa renovar · '+mesReal());
+  persist();renderAll();renderRenovaMes();toast('Liberado para conferir · marque a caixa se quiser renovar');
 }
 function locacaoPaga(id){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
@@ -5386,7 +5415,7 @@ function viradaPendente(){
   const itens=[];let forinha=0;
   (DB.alunos||[]).forEach(a=>{
     if(!ehAtivoAluno(a)){forinha++;return;}
-    if(renovacoesDoMes(a).length)return;     // já renovado: o saldo é do mês novo, não é sobra
+    if(renovacoesDoMes(a).length||ajusteManualRenovacao(a))return;     // já renovado ou ajuste a conferir: o saldo é do mês novo, não é sobra
     const uni=unificado(a);
     const sobra=Math.max(0,(Number(a.creditos)||0)+(uni?(Number(a.credGrupo)||0):0)), sobraG=uni?0:Math.max(0,Number(a.credGrupo)||0);
     const venc=reposVencidas(a);
@@ -5410,7 +5439,7 @@ function aplicarViradaMes(){
   let venc=0,vencN=0,n=0;
   /* Quem já foi renovado neste mês fica de fora: o crédito dele é do mês novo.
      Converter de novo daria aula em dobro (crédito novo virando reposição). */
-  const ativos=(DB.alunos||[]).filter(ehAtivoAluno).filter(a=>!renovacoesDoMes(a).length);
+  const ativos=(DB.alunos||[]).filter(ehAtivoAluno).filter(a=>!renovacoesDoMes(a).length&&!ajusteManualRenovacao(a));
   ativos.forEach(a=>{const v=purgarReposVencidas(a);if(v>0){venc+=v;vencN++;}});
   ativos.forEach(a=>{
     if(unificado(a)&&(Number(a.credGrupo)||0)!==0)juntarGrupo(a);
@@ -5439,7 +5468,7 @@ function pularViradaMes(){
 /* Renovar = créditos IGUAIS ao pacote do aluno + o que sobrou do mês passado
    vira REPOSIÇÃO. Plano de 3 com 1 aula não feita: 3 créditos e +1 reposição —
    é isso que o aluno vê no app. O crédito nunca passa do pacote, então renovar
-   duas vezes sem querer não dobra nada. Saldo negativo (devendo) volta para o
+   duas vezes no mesmo mês é bloqueado. Saldo negativo (devendo) volta para o
    pacote. Se a virada já converteu a sobra, não há o que converter de novo. */
 function renovarMes(id){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
@@ -5455,6 +5484,8 @@ function renovarMes(id){
     return;
   }
   const jaRenov=renovacoesDoMes(a);
+  if(jaRenov.length){toast('Já renovado neste mês — saldos preservados');return;}
+  if(ajusteManualRenovacao(a)){toast('Ajuste manual a conferir — escolha em Renovar o mês');abrirRenovaMes();return;}
   /* Só a PRIMEIRA renovação do mês converte sobra: numa segunda, o que está no
      saldo é crédito deste mês, e virar reposição de novo daria aula a mais. */
   const sobra=jaRenov.length?0:Math.max(0,cAnt)+(pg>0?Math.max(0,gAnt):0);
@@ -5472,13 +5503,6 @@ function renovarMes(id){
       +'Confira o cadastro e o extrato dele; nada foi alterado.');
     return;
   }
-  /* ===== Barreira 3: segunda renovação no mês só digitando =====
-     É o jeito mais comum de dar aula a mais sem perceber. */
-  if(jaRenov.length){
-    const r=prompt('⚠️ '+a.nome+' JÁ foi renovado neste mês.\n\nRenovar de novo devolve o saldo ao pacote ('+fmtCred(p)+') e pode dar aula a mais.\n\nSe é isso mesmo, digite RENOVAR:','');
-    if(r===null||String(r).trim().toUpperCase()!=='RENOVAR'){toast('Renovação cancelada — nada mudou');return;}
-  }
-
   /* ===== Prévia: o que muda, linha a linha, antes de mudar ===== */
   const g=agendaDoMes(a);
   const linha=(nome,de,para)=>'  '+nome+': '+fmtCred(de)+' → '+fmtCred(para)+(de===para?'':(para>de?'  (+'+fmtCred(para-de)+')':'  ('+fmtCred(para-de)+')'));
@@ -5521,7 +5545,7 @@ function renovarMes(id){
     renderAll();return;
   }
   if(!ehDependenteFamilia(a)&&a.ultimoPago!==mesReal())a.status='pendente';delete a.difOk;delete a.difUndo;   // novo ciclo: reavalia a diferença do zero
-  a.ultimaRenovacao={ts:Date.now(),creditos:depois.c,credGrupo:depois.g,repos:depois.r};   // registro do que entrou na última renovação
+  a.ultimaRenovacao={mes:mesReal(),origem:'individual',ts:Date.now(),creditos:depois.c,credGrupo:depois.g,repos:depois.r};   // registro do que entrou na última renovação
   logAct('Renovação do mês: '+a.nome+' → '+fmtCred(depois.c)+' crédito(s)'+(pg>0?(' + '+fmtCred(depois.g)+' grupo'):'')+' · '+fmtCred(depois.r)+' reposição(ões)');
   persist();renderAll();
   toast('Mês renovado para '+a.nome+' · '+fmtCred(depois.c)+' crédito(s)'+(sobra>0?(' + '+fmtCred(sobra)+' reposição(ões)'):''));
@@ -5660,21 +5684,22 @@ function rmLinha(a){
   const fam=temFamilia(a);
   const usa=temAg?(rmEscolha[a.id]||(fam?'pacote':'agenda')):'pacote';
   const novo=(usa==='agenda')?{p:agP,pg:agPG,mens:fam?mens:ag.valor}:{p,pg,mens};
-  const jaRenov=renovacoesDoMes(a).length>0;
+  const jaRenov=renovacoesDoMes(a).length>0, ajusteManual=ajusteManualRenovacao(a);
   const venc=reposVencidas(a);
   const sobra=jaRenov?0:Math.max(0,c)+(novo.pg>0?Math.max(0,g):0);
   const reposDepois=r-venc+sobra;
   const gDep=novo.pg>0?novo.pg:g;
   const devia=c<0||g<0?(devidoExtraPart(a)+devidoExtraGrupo(a)):0;
   let bloqueio=null;
-  if(jaRenov)bloqueio='já renovado neste mês';
+  if(jaRenov)bloqueio='já renovado neste mês — saldos preservados';
+  else if(ajusteManual)bloqueio='ajuste manual neste mês — confira antes de renovar';
   else if(novo.p+novo.pg<=0)bloqueio='sem pacote no cadastro e sem aula na agenda';
   else{
     const dispAnt=Math.max(0,c)+Math.max(0,g)+(r-venc), dispDep=novo.p+Math.max(0,gDep)+reposDepois;
     if(dispDep<dispAnt)bloqueio='ficaria com menos aulas do que tem hoje — confira o cadastro';
   }
   const atencao=!bloqueio&&(difere||!temAg||devia>0);
-  return {a,ag,temAg,difere,usa,novo,p,pg,mens,c,g,r,venc,sobra,reposDepois,gDep,devia,bloqueio,atencao,grupoSo,uni,soGrupoPG};
+  return {a,ag,temAg,difere,usa,novo,p,pg,mens,c,g,r,venc,sobra,reposDepois,gDep,devia,bloqueio,atencao,grupoSo,uni,soGrupoPG,jaRenov,ajusteManual};
 }
 function rmLinhas(){
   return (DB.alunos||[]).filter(ehAtivoAluno).filter(a=>perfilDe(a)!=='torneio').map(rmLinha)
@@ -5714,7 +5739,7 @@ function renderRenovaMes(){
   const L=rmLinhas();
   const sel=L.filter(x=>!x.bloqueio&&rmSel[x.a.id]);
   const nAt=L.filter(x=>x.atencao).length, nBl=L.filter(x=>x.bloqueio).length;
-  let h='<div class="rm-intro"><b>'+nomeMes+'</b> · confira e renove de uma vez. Nada muda até você tocar em <b>Renovar</b>.'
+  let h='<div class="rm-intro"><b>'+nomeMes+'</b> · confira e renove de uma vez. Marque somente quem ainda precisa renovar. Desmarcados e já renovados ficam sem alteração.'
     +'<div class="rm-chips"><span>'+L.length+' ativos</span>'
     +(nAt?'<span class="at">⚠️ '+nAt+' pedem atenção</span>':'')
     +(nBl?'<span class="bl">🔒 '+nBl+' fora</span>':'')+'</div></div>';
@@ -5725,7 +5750,12 @@ function renderRenovaMes(){
     t+=x.bloqueio?'<span class="rm-chk dis">🔒</span>'
       :'<label class="rm-chk"><input type="checkbox" '+(on?'checked':'')+' onchange="rmMarcar(\''+id+'\',this.checked)"></label>';
     t+='<div class="rm-info"><div class="rm-nome"><span>'+esc(a.nome)+'</span><b>'+fmt(x.novo.mens)+'</b></div>';
-    if(x.bloqueio){t+='<div class="rm-aviso">'+esc(x.bloqueio)+'</div></div></div>';return t;}
+    if(x.bloqueio){
+      t+='<div class="rm-aviso">'+esc(x.bloqueio)+'</div>';
+      if(x.ajusteManual)t+='<div class="rm-esc"><button onclick="rmConfirmarManual(\''+argJs(id)+'\')">✓ Já renovei manualmente</button>'
+        +'<button onclick="rmLiberarCorrecao(\''+argJs(id)+'\')">Foi só correção · conferir renovação</button></div>';
+      t+='</div></div>';return t;
+    }
     t+='<div class="rm-l">'+(x.temAg?('📅 '+x.ag.total+' aula(s) na agenda de '+nomeMes):'📅 sem horário fixo na agenda — usa o pacote do cadastro')
       +(x.temAg&&(x.ag.total!==x.p+x.pg)?' <span class="rm-dif">· cadastro: '+fmtCred(x.p+x.pg)+'</span>':'')+'</div>';
     if(x.difere)t+='<div class="rm-esc">'
@@ -5734,6 +5764,7 @@ function renderRenovaMes(){
     t+='<div class="rm-l">Recebe <b>'+rmQtdTxt(x.novo.p,x.novo.pg,x.grupoSo)+'</b>'+(valorMuda&&!x.difere?' · valor '+fmt(x.mens)+' → '+fmt(x.novo.mens):'')+'</div>';
     t+='<div class="rm-l">🔁 Reposições <b>'+fmtCred(x.r)+' → '+fmtCred(x.reposDepois)+'</b>'
       +((x.sobra||x.venc)?' <small>('+[x.sobra?'+'+fmtCred(x.sobra)+' não feita(s)':'',x.venc?'−'+fmtCred(x.venc)+' vencida(s)':''].filter(Boolean).join(', ')+')</small>':'')+'</div>';
+    t+='<div class="rm-esc"><button onclick="rmConfirmarManual(\''+argJs(id)+'\')">✓ Já renovei manualmente · manter saldos</button></div>';
     if(x.devia>0)t+='<div class="rm-aviso">⚠️ Fez aula além do pacote: '+fmt(x.devia)+' a cobrar à parte — a renovação zera esse saldo.</div>';
     t+='</div></div>';
     return t;
@@ -5743,6 +5774,10 @@ function renderRenovaMes(){
   if(pe)pe.innerHTML='<button class="fic-b prim" '+(sel.length?'':'disabled')+' onclick="rmAplicar()">🔄 Renovar '+sel.length+' aluno'+(sel.length===1?'':'s')+'</button>';
 }
 function rmAplicarUm(x){
+  const atual=DB.alunos.find(a=>a.id===x.a.id);
+  if(!atual||!ehAtivoAluno(atual)||perfilDe(atual)==='torneio')return {ok:false,erro:'aluno fora da renovação'};
+  x=rmLinha(atual);
+  if(x.bloqueio)return {ok:false,erro:x.bloqueio};
   const a=x.a, antes=JSON.stringify(a), nMovs=(DB.movs||[]).length;
   try{
     if(x.venc>0)purgarReposVencidas(a);
@@ -5772,7 +5807,7 @@ function rmAplicarUm(x){
   }
   if(!ehDependenteFamilia(a)&&a.ultimoPago!==mesReal())a.status='pendente';
   delete a.difOk;delete a.difUndo;
-  a.ultimaRenovacao={ts:Date.now(),creditos:x.novo.p,credGrupo:x.gDep,repos:x.reposDepois};
+  a.ultimaRenovacao={mes:mesReal(),origem:'lote',ts:Date.now(),creditos:x.novo.p,credGrupo:x.gDep,repos:x.reposDepois};
   return {ok:true};
 }
 function rmAplicar(){
@@ -6789,8 +6824,7 @@ function renderFicha(){
   if(devendo&&!ativo)din+=fxBotao('ok',"marcarPago('"+id+"')",BI.money+'Registrar pagamento');
   if(agDif&&!difere)din+=fxBotao('neutro',"cobrarPelaAgenda('"+id+"')",'📅 Cobrar pela agenda ('+fmt(ag.valor)+')');
   if(loc)din+=fxBotao('neutro',"locacaoPaga('"+id+"')",BI.money+'Locação paga');
-  /* Já renovado: mostra quando, em vez de convidar a renovar de novo. O toque
-     continua chamando renovarMes(), que pede para digitar RENOVAR numa segunda vez. */
+  /* Já renovado: mostra a data; renovarMes preserva o saldo numa segunda tentativa. */
   const renov=renovacoesDoMes(a);
   const ultRenov=renov.length?new Date(Math.max(...renov.map(x=>x.ts||0))):null;
   din+=ultRenov?fxBotao('neutro feito',"renovarMes('"+id+"')",'✓ Renovado em '+String(ultRenov.getDate()).padStart(2,'0')+'/'+String(ultRenov.getMonth()+1).padStart(2,'0'))
