@@ -47,7 +47,7 @@ ok('aprovarVinculosReconhecidos' not in g,'sem aprovação em lote por código')
 ok('canal externo' in g and 'WhatsApp' in g,'aprovação exige confirmação externa')
 grade=g.split('function gradePublicaSegura(g){',1)[1].split('async function publicarSeguro(pub)',1)[0]
 ok('tipo:e.tipo' not in grade and 'motivo:e.motivo' not in grade,'grade pública não replica campos privados')
-ok("?'bloqueio':'ocupado'" in grade and "out.motivo='chuva'" in grade,'grade pública só ocupado/bloqueio/chuva')
+ok("?'bloqueio'" in grade and "?'grupo':'ocupado'" in grade and "out.motivo='chuva'" in grade,'grade pública só ocupado/grupo/bloqueio/chuva, sem nomes ou códigos')
 ok("profs:pub.profs||[]" in g,'multi-professor preservado na publicação segura')
 ok("db2.ref('jvtenis/'+SECUREPUBKEY).get()" in g and "VINC_REQ_KEY+'/'+uid2" in g,'autoteste atualizado para P0')
 i0=sh.find('checar-regras.py ferramentas/firebase-regras-etapa3.json')

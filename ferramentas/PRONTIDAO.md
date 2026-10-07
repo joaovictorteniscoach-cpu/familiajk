@@ -24,6 +24,22 @@ Se o ajuste antigo não tiver registro no extrato, use **Já renovei manualmente
 manter saldos** antes do lote. Não há reconstrução automática de valores.
 A marca vale para o mês corrente; no mês seguinte o aluno volta à avaliação.
 
+## Reservas particulares e grupo
+Horário particular, personal na agenda, torneio, locação ou bloqueio não
+aceita uma segunda aula. Só uma grade explicitamente marcada como **grupo**
+permite participar da mesma aula. O aluno relê a grade online antes de enviar.
+
+Pedidos particulares usam criação única na fila já protegida pelo Firebase;
+duas tentativas simultâneas não sobrescrevem a mesma vaga. Um pedido fixo
+protege as ocorrências na janela de 90 dias, com gravação atômica. A Gestão
+também verifica as datas futuras conhecidas antes de criar um horário fixo.
+A fila só é confirmada após a gravação durável da agenda; cancelar libera a
+vaga depois da confirmação. A Gestão volta a conferir pedidos de apps antigos.
+
+O envio é um pedido; a confirmação aparece na agenda. Uma recusa por
+indisponibilidade chega somente ao próprio aluno no bloco privado.
+Nenhuma reserva antiga foi removida automaticamente e as regras não mudaram.
+
 ## Etapa atual
 - **App Check:** ativação autorizada pelo João; falta a chave pública e o
   registro do provedor no console. Iniciar em monitoramento. A exigência

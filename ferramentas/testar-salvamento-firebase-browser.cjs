@@ -290,7 +290,84 @@ let count=0;async function check(name,fn){await fn();count++;console.log('✅ SD
    assert.equal(bloqueado.ok,false);assert.equal(bloqueado.antes,bloqueado.depois);
    assert.equal(bloqueado.removidos,bloqueado.depoisRemovidos);assert.deepEqual(await admin('jvtenis/v2'),banco);
   });
-  for(const p of [a,b,unauthorized,prof,rec])assert.deepEqual(p.errors,[]);
+
+  const aluno2=await page('aluno-reserva-dois'),helper="function datasReserva(data,rec){\n  const inicio=new Date(String(data)+'T12:00:00'),hoje=new Date(),lim=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()+90,12);\n  if(isNaN(inicio.getTime())||inicio>lim)return [];\n  const lista=[];for(let d=new Date(inicio);d<=lim;d.setDate(d.getDate()+7)){\n    lista.push(dKey(d));if(rec!=='fixo')break;\n  }\n  return lista;\n}\nfunction chaveReserva(data,hora){return 'reserva_'+data+'_'+String(hora).replace(':','');}\n/* Criação única no banco: duas reservas particulares não podem ganhar a mesma\n   chave. A regra existente permite criar, mas não sobrescrever pedido alheio. */\nasync function enviarReservaUnica(pedido,grupo){\n  await esperarAuth();\n  const uid=authUid();if(!uid)throw new Error('sem identificação');\n  const ref=window.fbDB.ref('jvtenis/fila_agendamentos');\n  const item=Object.assign({},pedido,{uid,codigo:String(MEU.codigo||'')});\n  if(grupo){await ref.push(item);return;}\n  const datas=datasReserva(pedido.data,pedido.rec);\n  if(!datas.length)throw new Error('data inválida');\n  const chave=chaveReserva(pedido.data,pedido.hora),updates={};\n  pedido.reservaChaves=datas.map(d=>chaveReserva(d,pedido.hora));\n  for(const data of datas)updates[chaveReserva(data,pedido.hora)]=Object.assign({},item,{\n    data,principal:chave,travaSomente:data!==pedido.data?1:0,reservaChaves:pedido.reservaChaves\n  });\n  // update multi-local é atômico: uma ocorrência ocupada recusa o conjunto inteiro.\n  await ref.update(updates);\n}";
+  for(const [p,uid,codigo]of [[unauthorized,'aluno-emulador-teste','9901'],[aluno2,'aluno-reserva-dois','9902']]){
+   await p.addScriptTag({content:helper});
+   await p.evaluate(({uid,codigo})=>{window.MEU={codigo};authUid=()=>uid;esperarAuth=async()=>{};},{uid,codigo});
+  }
+  const data=await rec.evaluate(()=>{
+   const h=new Date();let d=new Date(h.getFullYear(),h.getMonth(),h.getDate()+2,12);
+   while(d.getDay()!==1)d.setDate(d.getDate()+1);return dKey(d);
+  });
+  const proxima=await rec.evaluate(data=>{const d=new Date(data+'T12:00:00');d.setDate(d.getDate()+7);return dKey(d);},data);
+  const pedido=(id,codigo='9901',extra={})=>({id,codigo,nome:'Reserva SDK Teste',data,hora:'09:00',rec:'pontual',ts:Date.now(),...extra});
+  await admin('jvtenis/fila_agendamentos',null);
+  await check('criação única existente recusa dois particulares simultâneos sem expor a fila',async()=>{
+   const result=await Promise.allSettled([
+    unauthorized.evaluate(p=>enviarReservaUnica(p,false),pedido('exclusiva-1')),
+    aluno2.evaluate(p=>enviarReservaUnica(p,false),pedido('exclusiva-2','9902'))
+   ]);
+   assert.equal(result.filter(r=>r.status==='fulfilled').length,1);
+   assert.equal(result.filter(r=>r.status==='rejected').length,1);
+   const q=await admin('jvtenis/fila_agendamentos');assert.equal(Object.keys(q).length,1);
+   assert.equal(await aluno2.evaluate(async()=>{try{await fbDB.ref('jvtenis/fila_agendamentos').get();return false;}catch{return true;}}),true);
+  });
+  await admin('jvtenis/fila_agendamentos',null);
+  await check('fixo usa criação atômica: conflito futuro não deixa reserva parcial',async()=>{
+   await aluno2.evaluate(p=>enviarReservaUnica(p,false),pedido('futura','9902',{data:proxima}));
+   await assert.rejects(unauthorized.evaluate(p=>enviarReservaUnica(p,false),pedido('fixa','9901',{rec:'fixo'})));
+   const q=await admin('jvtenis/fila_agendamentos');assert.equal(Object.keys(q).length,1);
+   assert.equal(q['reserva_'+data+'_0900'],undefined);
+  });
+  await admin('jvtenis/fila_agendamentos',null);
+  await check('aula em grupo permite dois pedidos mantendo a identidade de cada aluno',async()=>{
+   await Promise.all([
+    unauthorized.evaluate(p=>enviarReservaUnica(p,true),pedido('grupo-1','9901',{grupo:1})),
+    aluno2.evaluate(p=>enviarReservaUnica(p,true),pedido('grupo-2','9902',{grupo:1}))
+   ]);
+   const q=await admin('jvtenis/fila_agendamentos');assert.equal(Object.keys(q).length,2);
+   assert.equal(new Set(Object.values(q).map(p=>p.uid)).size,2);
+  });
+  await admin('jvtenis/fila_agendamentos',null);
+  await check('Gestão confirma agenda antes de manter trava; cancelamento durável libera a vaga',async()=>{
+   const gest=await page(owner);
+   await gest.evaluate(f=>{
+    DB=JSON.parse(JSON.stringify(f));DB.alunos.push({...DB.alunos[0],id:'outro-reserva',codigo:'9902',nome:'Outro SDK Teste'});
+    DB.agenda={fixos:[],eventos:[],excecoes:[]};ensureFields();persist=window.sdkPersist;doPublish=async()=>{};
+   },fixture);
+   const seed=await gest.evaluate(()=>{const alunos={};for(const a of DB.alunos)alunos[chaveFb(a.id)]=JSON.stringify(a);
+    return {alunos,agenda:JSON.stringify(DB.agenda),config:JSON.stringify(configDe(DB)),carimbos:{savedAt:1}};});
+   await admin('jvtenis/v2',seed);await baseline(gest);
+   await admin('jvtenis/aluno_vinculos',{'aluno-emulador-teste':{ativo:true,codigo:'9901',alunoId:'teste'},'aluno-reserva-dois':{ativo:true,codigo:'9902',alunoId:'outro-reserva'}});
+   await unauthorized.evaluate(p=>enviarReservaUnica(p,false),pedido('duravel'));
+   await gest.evaluate(()=>syncRequests(true));
+   const q=await admin('jvtenis/fila_agendamentos'),no=await admin('jvtenis/v2');
+   assert.equal(q['reserva_'+data+'_0900'].processado,true);
+   assert.equal(JSON.parse(no.agenda).eventos.length,1);
+   await assert.rejects(aluno2.evaluate(p=>enviarReservaUnica(p,false),pedido('recusada','9902')));
+   await unauthorized.evaluate(async p=>{await fbDB.ref('jvtenis/fila_agendamentos').push({...p,acao:'cancelar',uid:authUid()});},pedido('cancelar-duravel'));
+   await gest.evaluate(()=>syncRequests(true));
+   assert.equal(JSON.parse((await admin('jvtenis/v2')).agenda).eventos.length,0);
+   assert.equal(await admin('jvtenis/fila_agendamentos'),null);
+   await aluno2.evaluate(p=>enviarReservaUnica(p,false),pedido('nova-vaga','9902'));
+   assert.equal(Object.keys(await admin('jvtenis/fila_agendamentos')).length,1);
+   assert.deepEqual(gest.errors,[]);
+  });
+
+  await check('Aluno relê grade com SDK conectado e identifica particular reservado sem nomes de terceiros',async()=>{
+   const grade={fixos:[],eventos:[{id:'ocupada',data,hora:'09:00',tipo:'ocupado'}],excecoes:[]};
+   await admin('jvtenis/jvtenis-app-publico',JSON.stringify({grade,horarioCfg:{1:{'09:00':'aula'}},horarioData:{}}));
+   await admin('jvtenis/alunos_privados/aluno-emulador-teste',JSON.stringify({aluno:{codigo:'9901',nome:'Aluno SDK Teste',status:'pago'},gradeMeu:{fixos:[],eventos:[],excecoes:[]}}));
+   await unauthorized.addScriptTag({content:"async function atualizarGradeReserva(){\n  await esperarAuth();\n  const ligado=await comPrazo(window.fbDB.ref('.info/connected').get(),4000,null);\n  if(!ligado||ligado.val()!==true)throw new Error('sem conexão confirmada');\n  const raw=await cloudGet(SECUREPUBKEY);\n  if(raw){\n    const shared=JSON.parse(raw),privRaw=await cloudGet('jvtenis/'+PRIV_KEY+'/'+authUid());\n    if(!privRaw)throw new Error('acesso pendente');\n    const priv=JSON.parse(privRaw);\n    if(!priv.aluno||String(priv.aluno.codigo)!==String(MEU.codigo))throw new Error('acesso pendente');\n    PUB.grade=juntarGradeSegura(shared.grade,priv.gradeMeu,MEU.codigo);EU=priv.aluno;\n    PUB.reservasRespostas=priv.reservasRespostas||[];\n    conferirRespostasReservas();\n    PUB.horarioCfg=shared.horarioCfg||{};PUB.horarioData=shared.horarioData||{};\n  }else{\n    const legado=await cloudGet(PUBKEY);if(!legado)throw new Error('agenda indisponível');\n    const pub=JSON.parse(legado);PUB.grade=pub.grade;EU=(pub.alunos||[]).find(x=>String(x.codigo)===String(MEU.codigo))||null;\n    PUB.horarioCfg=pub.horarioCfg||{};PUB.horarioData=pub.horarioData||{};\n  }\n  if(!EU||!PUB.grade)throw new Error('agenda indisponível');\n}\nfunction juntarGradeSegura(publica,minha,codigo){\n  publica=publica||{fixos:[],eventos:[],excecoes:[]};minha=minha||{fixos:[],eventos:[],excecoes:[]};\n  const mf=(minha.fixos||[]).map(x=>Object.assign({},x,{cod:codigo}));\n  const me=(minha.eventos||[]).map(x=>Object.assign({},x,{cod:codigo}));\n  const idsF=new Set(mf.map(x=>x.id)),idsE=new Set(me.map(x=>x.id));\n  const fix=(publica.fixos||[]).filter(x=>!idsF.has(x.id)).concat(mf);\n  const ev=(publica.eventos||[]).filter(x=>!idsE.has(x.id)).concat(me);\n  const ex=[...(publica.excecoes||[])];\n  (minha.excecoes||[]).forEach(x=>{if(!ex.some(y=>y.fixoId===x.fixoId&&y.data===x.data))ex.push(x);});\n  return {fixos:fix,eventos:ev,excecoes:ex};\n}\nfunction conferirRespostasReservas(){\n  const recusados=(PUB.reservasRespostas||[]).filter(r=>r.estado==='recusado');\n  for(const r of recusados)if((MEU.pedidos||[]).some(p=>p.id===r.id)){\n    MEU.pedidos=MEU.pedidos.filter(p=>p.id!==r.id);\n    toast('Reserva não confirmada: '+r.motivo);\n  }\n}\nfunction slotState(date,hora){\n  const dia=date.getDay(),dk=dKey(date),G=PUB.grade||{fixos:[],eventos:[],excecoes:[]};\n  const fixos=(G.fixos||[]).filter(f=>f.dia===dia&&f.hora===hora&&fixoValeEm(f,dk)&&!(G.excecoes||[]).some(x=>x.fixoId===f.id&&x.data===dk));\n  const evs=(G.eventos||[]).filter(e=>e.data===dk&&e.hora===hora),all=fixos.concat(evs);\n  const bloq=all.filter(e=>e.tipo==='bloqueio');\n  if(bloq.length)return bloq.some(e=>e.motivo==='chuva')?{st:'chuva',label:'Cancelado por chuva'}:{st:'bloq',label:'Indisponível'};\n  const meu=all.some(e=>e.cod===MEU.codigo);\n  if(meu&&foiCancelado(dk,hora))return {st:'ocup',label:'Cancelamento aguardando confirmação'};\n  if(meu)return {st:'meu',label:'Minha aula'};\n  const grupo=all.length>0&&all.every(e=>e.tipo==='grupo');\n  if(all.length&&!grupo)return {st:'ocup',label:'Reservado'};\n  if((MEU.pedidos||[]).some(p=>{\n    if(p.hora!==hora)return false;\n    if(p.rec==='fixo')return new Date(p.data+'T12:00:00').getDay()===dia&&dk>=p.data;\n    return p.data===dk;\n  }))return {st:'pend',label:'Aguardando ⏳'};\n  const modo=slotModo(date,hora);\n  if(modo==='fechado')return {st:'fechado',label:'Fechado'};\n  if(grupo&&modo==='aula')return {st:'livre',label:'Aula em grupo',grupo:true};\n  if(all.length)return {st:'ocup',label:'Reservado'};\n  if(modo==='loc')return {st:'loc',label:'Só locação'};\n  return {st:'livre',label:'Disponível'};\n}\nfunction foiCancelado(dk,hora){return (MEU.cancelados||[]).some(c=>c.data===dk&&c.hora===hora);}"});
+   const estado=await unauthorized.evaluate(async data=>{
+    window.PUB={grade:{fixos:[],eventos:[],excecoes:[]}};MEU.pedidos=[];MEU.cancelados=[];
+    cloudGet=async key=>{const snap=await fbDB.ref(key.startsWith('jvtenis/')?key:'jvtenis/'+key).get();return snap.exists()?snap.val():null;};
+    await atualizarGradeReserva();return slotState(new Date(data+'T12:00:00'),'09:00');
+   },data);
+   assert.equal(estado.st,'ocup');assert.equal(estado.label,'Reservado');
+  });
+  for(const p of [a,b,unauthorized,prof,rec,aluno2])assert.deepEqual(p.errors,[]);
   console.log('✅ '+count+' verificações com SDK Firebase real e emulador local');
  }finally{for(const c of contexts)await c.close();await browser.close();server.close();}
 })().catch(e=>{console.error(e);server.close();process.exitCode=1;});
