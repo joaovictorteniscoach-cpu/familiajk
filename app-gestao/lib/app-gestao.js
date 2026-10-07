@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-07-2';
+const VERSAO='2026-10-07-3';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2147,6 +2147,21 @@ function datasConferenciaReserva(p){
   }
   return [...lista].sort();
 }
+function limiteGrupoHorario(evs){
+  return Math.min(...evs.map(e=>[2,3,4].includes(Number(e.pessoas))?Number(e.pessoas):2));
+}
+function pessoasGrupoAluno(a){return ({Dupla:2,Trio:3,Quarteto:4})[a.grupoTipo||a.tipo]||2;}
+function compartilhamentoHorario(evs){
+  if(!evs.length)return '';
+  const tipo=evs[0].tipo;
+  if(!evs.every(e=>e.tipo===tipo))return '';
+  if(tipo==='grupo')return evs.length<limiteGrupoHorario(evs)?'grupo':'';
+  return ['locacao','torneio'].includes(tipo)?tipo:'';
+}
+function podeAdicionarAoHorario(evs,tipo,pessoas){
+  if(!evs.length)return true;
+  return compartilhamentoHorario(evs)===tipo&&(tipo!=='grupo'||(Number(pessoas)||2)===limiteGrupoHorario(evs));
+}
 function pedidoAgendaValido(p,a){
   if(!p||!a||!/^\d{4}-\d{2}-\d{2}$/.test(String(p.data||''))||HORAS.indexOf(String(p.hora||''))<0)return false;
   const d=new Date(p.data+'T12:00:00');if(isNaN(d.getTime())||dKey(d)!==p.data)return false;
@@ -2154,7 +2169,7 @@ function pedidoAgendaValido(p,a){
   if(dias < -1 || dias > 90)return false;
   if(p.acao==='cancelar')return true;
   if(!['fixo','pontual'].includes(p.rec))return false;
-  const grupo=!p.tor&&(p.grupo===1||catAgendaDe(a.tipo)==='grupo');
+  const tipo=p.tor?'torneio':p.grupo===1?'grupo':catAgendaDe(a.tipo);
   return datasConferenciaReserva(p).every(data=>{
     const date=new Date(data+'T12:00:00'),modo=slotModo(date,p.hora);
     if(modo==='fechado'||modo==='loc'&&!p.repo&&!p.tor)return false;
@@ -2163,7 +2178,7 @@ function pedidoAgendaValido(p,a){
     // O pedido não pode transformar uma vaga vazia em grupo por conta própria.
     if(p.grupo===1&&(!grade.length||!grade.every(e=>e.tipo==='grupo')))return false;
     const entradas=grade.filter(e=>!(p.id&&e.reservaId===p.id&&e.alunoId===a.id));
-    return !entradas.length||grupo&&entradas.every(e=>e.tipo==='grupo');
+    return podeAdicionarAoHorario(entradas,tipo,p.grupo===1?limiteGrupoHorario(grade):pessoasGrupoAluno(a));
   });
 }
 function guardarRespostaReserva(p,estado,motivo){
@@ -2310,11 +2325,12 @@ async function revogarVinculo(uid){
 }
 function gradePublicaSegura(g){
   g=g||{fixos:[],eventos:[],excecoes:[]};
-  const tipoPublico=x=>x&&x.tipo==='bloqueio'?'bloqueio':x&&x.tipo==='grupo'?'grupo':'ocupado';
+  const tipoPublico=x=>x&&x.tipo==='bloqueio'?'bloqueio':x&&x.tipo==='grupo'?'grupo':x&&['locacao','torneio'].includes(x.tipo)?x.tipo:'ocupado';
   return {
-    fixos:(g.fixos||[]).map(f=>({id:f.id,dia:f.dia,hora:f.hora,tipo:tipoPublico(f),desde:f.desde||'',ate:f.ate||''})),
+    fixos:(g.fixos||[]).map(f=>({id:f.id,dia:f.dia,hora:f.hora,tipo:tipoPublico(f),...(f.tipo==='grupo'?{pessoas:[2,3,4].includes(Number(f.pessoas))?Number(f.pessoas):2}:{}),desde:f.desde||'',ate:f.ate||''})),
     eventos:(g.eventos||[]).map(e=>{
       const out={id:e.id,data:e.data,hora:e.hora,tipo:tipoPublico(e)};
+      if(e&&e.tipo==='grupo')out.pessoas=[2,3,4].includes(Number(e.pessoas))?Number(e.pessoas):2;
       if(e&&e.tipo==='bloqueio'&&String(e.motivo||'').toLowerCase()==='chuva')out.motivo='chuva';
       return out;
     }),
@@ -2430,9 +2446,9 @@ async function doPublish(){
         return out;
       })(),
       grade:{
-        fixos:DB.agenda.fixos.map(f=>({id:f.id,dia:f.dia,hora:f.hora,tipo:f.tipo,cod:codeFor(f),desde:f.desde||'',ate:f.ate||''})),
+        fixos:DB.agenda.fixos.map(f=>({id:f.id,dia:f.dia,hora:f.hora,tipo:f.tipo,cod:codeFor(f),pessoas:Number(f.pessoas)||2,desde:f.desde||'',ate:f.ate||''})),
         eventos:DB.agenda.eventos.filter(e=>e.data>=dKey(hoje)&&e.data<=dKey(lim)).map(e=>{
-          const ev={id:e.id,data:e.data,hora:e.hora,tipo:e.tipo,cod:codeFor(e)};
+          const ev={id:e.id,data:e.data,hora:e.hora,tipo:e.tipo,cod:codeFor(e),pessoas:Number(e.pessoas)||2};
           // chuva marcada antes desta versão só tem o título; por isso o fallback
           const mot=e.motivo||(/chuva/i.test(e.titulo||'')?'chuva':'');
           if(mot)ev.motivo=mot;
@@ -2512,6 +2528,7 @@ async function syncRequests(silent){
         const jaAplicado=p.id&&[...DB.agenda.fixos,...DB.agenda.eventos].some(e=>e.reservaId===p.id&&e.alunoId===a.id);
         if(!jaAplicado){
           const date=new Date(p.data+'T12:00:00'),base={id:(p.rec==='fixo'?'f':'e')+Date.now()+idx,hora:p.hora,titulo:a.nome,tipo,alunoId:a.id,reservaId:p.id||'',repo:p.repo?1:0};
+          if(tipo==='grupo')base.pessoas=p.grupo===1?limiteGrupoHorario(entriesFor(date,p.hora)):pessoasGrupoAluno(a);
           const pf=profPedido(p,a);if(pf)base.profId=pf;
           if(p.rec==='fixo')DB.agenda.fixos.push({...base,dia:date.getDay(),desde:p.data});
           else DB.agenda.eventos.push({...base,data:p.data});
@@ -4008,13 +4025,16 @@ function saveSlot(){
   const tipo=document.getElementById('s-tipo').value;
   const alunoId=document.getElementById('s-aluno').value||null;
   const pessoas=(tipo==='grupo')?(Number((document.getElementById('s-grupo-n')||{}).value)||2):null;
-  if(!slotCtx.editing&&['aula','grupo','personal','torneio','locacao'].includes(tipo)){
-    const pedido={data:dKey(slotCtx.date),hora:slotCtx.hora,rec:document.getElementById('s-rec').value};
+  const anterior=slotCtx.editing?(slotCtx.editing.origem==='fixo'?DB.agenda.fixos:DB.agenda.eventos).find(e=>e.id===slotCtx.editing.id):null;
+  const mudouTipo=!anterior||anterior.tipo!==tipo||tipo==='grupo'&&(Number(anterior.pessoas)||2)!==pessoas;
+  if(mudouTipo&&['aula','grupo','personal','torneio','locacao'].includes(tipo)){
+    const pedido={data:dKey(slotCtx.date),hora:slotCtx.hora,rec:anterior?(slotCtx.editing.origem==='fixo'?'fixo':'pontual'):document.getElementById('s-rec').value};
     const conflito=datasConferenciaReserva(pedido).some(data=>{
-      const evs=entriesFor(new Date(data+'T12:00:00'),slotCtx.hora);
-      return evs.length&&!(tipo==='grupo'&&evs.every(e=>e.tipo==='grupo'));
+      if(anterior&&slotCtx.editing.origem==='fixo'&&(!fixoValeEm(anterior,data)||DB.agenda.excecoes.some(e=>e.fixoId===anterior.id&&e.data===data)))return false;
+      const evs=entriesFor(new Date(data+'T12:00:00'),slotCtx.hora).filter(e=>!anterior||e.id!==anterior.id||e.origem!==slotCtx.editing.origem);
+      return !podeAdicionarAoHorario(evs,tipo,pessoas);
     });
-    if(conflito){toast('Horário reservado. Só aulas em grupo podem compartilhar a mesma vaga.');return;}
+    if(conflito){toast('Horário reservado. Só grupo com vaga, locação ou torneio da mesma atividade podem compartilhar.');return;}
   }
 
   if(slotCtx.editing){

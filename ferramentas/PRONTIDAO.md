@@ -25,9 +25,11 @@ manter saldos** antes do lote. Não há reconstrução automática de valores.
 A marca vale para o mês corrente; no mês seguinte o aluno volta à avaliação.
 
 ## Reservas particulares e grupo
-Horário particular, personal na agenda, torneio, locação ou bloqueio não
-aceita uma segunda aula. Só uma grade explicitamente marcada como **grupo**
-permite participar da mesma aula. O aluno relê a grade online antes de enviar.
+Horário particular, personal ou bloqueio não aceita outra pessoa.
+**Dupla, trio e quádrupla** admitem até dois, três e quatro alunos; locação e torneio admitem participantes
+na mesma atividade, sem misturar tipos no horário. O aluno relê a grade online
+antes de enviar. Locação continua como pedido ao João para confirmação;
+não cria outra cobrança nem confirmação automática.
 
 Pedidos particulares usam criação única na fila já protegida pelo Firebase;
 duas tentativas simultâneas não sobrescrevem a mesma vaga. Um pedido fixo

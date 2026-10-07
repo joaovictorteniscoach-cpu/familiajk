@@ -121,6 +121,58 @@ async function setup(context,base,theme='saibro'){
   await check('Gestão: agenda pública revela grupo e oculta nomes e códigos',async()=>{
    const result=await p.evaluate(()=>gradePublicaSegura({fixos:[],eventos:[{id:'g',data:'2099-01-01',hora:'09:00',tipo:'grupo',titulo:'Aluno Teste',cod:'9901'}],excecoes:[]}));
    assert.equal(result.eventos[0].tipo,'grupo');assert.equal(result.eventos[0].cod,undefined);assert.equal(result.eventos[0].titulo,undefined);
+   const tipos=await p.evaluate(()=>gradePublicaSegura({fixos:[],eventos:['locacao','torneio','personal'].map(tipo=>({id:tipo,data:'2099-01-01',hora:'09:00',tipo,titulo:'Nome Privado Teste',cod:'9901'})),excecoes:[]}).eventos);
+   assert.deepEqual(tipos.map(e=>e.tipo),['locacao','torneio','ocupado']);assert.ok(tipos.every(e=>!e.cod&&!e.titulo));
+  });
+  await reset();
+  await check('Gestão: mesma locação e mesmo torneio compartilham; particular e mistura ficam bloqueados',async()=>{
+   for(const tipo of ['aula','personal','grupo','locacao','torneio','bloqueio']){
+    const respostas=await p.evaluate(({tipo,dk})=>{
+     DB.agenda.eventos=[{id:'existente',data:dk,hora:'09:00',tipo,alunoId:'pai',pessoas:2}];
+     const evs=entriesFor(new Date(dk+'T12:00:00'),'09:00');
+     return ['aula','grupo','locacao','torneio'].map(t=>podeAdicionarAoHorario(evs,t,2));
+    },{tipo,dk});
+    assert.deepEqual(respostas,['aula','grupo','locacao','torneio'].map(t=>['grupo','locacao','torneio'].includes(tipo)&&t===tipo));
+   }
+   await p.evaluate(d=>{DB.agenda.eventos=[{id:'jogo',data:d,hora:'09:00',tipo:'torneio',alunoId:'pai'}];},dk);
+   queue={jogo:req('jogo-2','9901','u1',{tor:1})};await p.evaluate(()=>syncRequests(true));
+   assert.equal(await p.evaluate(()=>DB.agenda.eventos.length),2);
+   assert.equal(await p.evaluate(()=>DB.agenda.eventos[1].tipo),'torneio');
+   assert.equal(await p.evaluate(p=>pedidoAgendaValido(p,DB.alunos[0]),req('aula-sobre-jogo')),false);
+  });
+  await reset();
+  await check('Gestão: dupla completa e tamanhos diferentes bloqueiam; cadastro permite participantes na mesma locação',async()=>{
+   assert.equal(await p.evaluate(()=>podeAdicionarAoHorario([{tipo:'grupo',pessoas:2},{tipo:'grupo',pessoas:2}],'grupo',2)),false);
+   assert.equal(await p.evaluate(()=>podeAdicionarAoHorario([{tipo:'grupo',pessoas:3}],'grupo',2)),false);
+   for(const tipo of ['locacao','torneio']){
+    await p.evaluate(({tipo,dk})=>{
+     DB.agenda.eventos=[{id:'jogo-'+tipo,data:dk,hora:'09:00',tipo,alunoId:'pai'}];
+     agDate=new Date(dk+'T12:00:00');openSlot('09:00');
+     document.getElementById('s-titulo').value='Participante Teste';document.getElementById('s-aluno').value='solo';
+     document.getElementById('s-tipo').value=tipo;document.getElementById('s-rec').value='pontual';saveSlot();
+    },{tipo,dk});
+    assert.equal(await p.evaluate(()=>DB.agenda.eventos.length),2);
+    await p.evaluate(()=>{document.getElementById('s-titulo').value='Aula Particular Teste';document.getElementById('s-tipo').value='aula';saveSlot();});
+    assert.equal(await p.evaluate(()=>DB.agenda.eventos.length),2);
+    await p.evaluate(()=>{slotCtx.editing={id:DB.agenda.eventos[0].id,origem:'pontual'};saveSlot();});
+    assert.equal(await p.evaluate(()=>DB.agenda.eventos[0].tipo),tipo);
+   }
+  });
+  await reset();
+  await check('Gestão: limites 2/3/4 valem na grade e no processamento dos pedidos',async()=>{
+   for(const limite of [2,3,4]){
+    for(let n=1;n<=limite;n++){
+     const ok=await p.evaluate(({n,limite})=>podeAdicionarAoHorario(Array.from({length:n},()=>({tipo:'grupo',pessoas:limite})),'grupo',limite),{n,limite});
+     assert.equal(ok,n<limite);
+    }
+   }
+   await p.evaluate(()=>{DB.alunos[0].tipo='Trio';VINCULOS.u3={ativo:true,codigo:'9903'};});
+   queue={primeiro:req('trio-1')};await p.evaluate(()=>syncRequests(true));
+   assert.equal(await p.evaluate(()=>DB.agenda.eventos[0].pessoas),3);
+   queue={segundo:req('trio-2','9902','u2',{grupo:1,ts:Date.now()}),terceiro:req('trio-3','9903','u3',{grupo:1,ts:Date.now()+1}),quarto:req('trio-4','9901','u1',{grupo:1,ts:Date.now()+2})};
+   await p.evaluate(()=>syncRequests(true));
+   assert.equal(await p.evaluate(()=>DB.agenda.eventos.length),3);
+   assert.equal(await p.evaluate(()=>DB.respostasReservas.find(r=>r.id==='trio-4').estado),'recusado');
   });
   assert.deepEqual(p.errors,[]);await ctx.close();
   for(const theme of ['saibro','classico']){
@@ -168,13 +220,13 @@ async function setup(context,base,theme='saibro'){
     await al.evaluate(()=>confirmarAgendamento());assert.equal(writes,0);assert.equal(await al.evaluate(()=>MEU.pedidos.length),0);
    });
    await resetAluno();
-   await check(theme+': particular ocupado fica sem ação, somente grupo abre novas reservas',async()=>{
+   await check(theme+': particular ocupado fica sem ação, dupla com vaga permite participar',async()=>{
     const states=await al.evaluate(d=>{
      PUB.grade.eventos=[{id:'p',data:d,hora:'09:00',tipo:'ocupado'},{id:'g',data:d,hora:'10:00',tipo:'grupo'}];
      renderAgenda();return [slotState(agDate,'09:00'),slotState(agDate,'10:00')];
     },dk);assert.equal(states[0].st,'ocup');assert.equal(states[1].grupo,true);
     assert.equal(await al.locator('#ag-view button.sl.ocup').count(),1);assert.equal(await al.locator('#ag-view button.sl.livre').count(),1);
-    assert.match(await al.locator('#ag-view').textContent(),/Aula em grupo/);
+    assert.match(await al.locator('#ag-view').textContent(),/Aula em dupla/);
    });
    await resetAluno();
    await check(theme+': clique duplo envia um pedido e não confirma antes da Gestão',async()=>{
@@ -202,9 +254,44 @@ async function setup(context,base,theme='saibro'){
     await al.evaluate(()=>{abrirBook('09:00',false);document.getElementById('b-rec').value='fixo';});
     await al.evaluate(()=>confirmarAgendamento());assert.equal(writes,0);
    });
+   await resetAluno();
+   await check(theme+': torneio permite participar do mesmo jogo e recusa aula sobre locação',async()=>{
+    grade.eventos=[{id:'jogo',data:dk,hora:'09:00',tipo:'torneio'}];
+    await al.evaluate(d=>{PUB.grade.eventos=[{id:'jogo',data:d,hora:'09:00',tipo:'torneio'}];abrirBook('09:00',false,true);},dk);
+    await al.evaluate(()=>Promise.all([confirmarAgendamento(),confirmarAgendamento()]));
+    assert.equal(writes,1);assert.equal(Object.values(unique)[0].tor,1);assert.ok(Object.keys(unique)[0].startsWith('group'));
+    await resetAluno();
+    const estado=await al.evaluate(d=>{
+     PUB.grade.eventos=[{id:'aluguel',data:d,hora:'09:00',tipo:'locacao'}];
+     const e=slotState(agDate,'09:00');escolherSlot('09:00');abrirBook('09:00',false);return {e,book:bookCtx,opcoes:document.getElementById('pick-opts').textContent};
+    },dk);
+    assert.equal(estado.e.compartilhado,'locacao');assert.equal(estado.book,null);
+    assert.match(estado.opcoes,/Participar da locação/);assert.doesNotMatch(estado.opcoes,/Agendar aula|torneio/);
+   });
+   await resetAluno();
+   await check(theme+': dupla completa bloqueia terceira pessoa e locação relê grade antes do pedido',async()=>{
+    const st=await al.evaluate(d=>{PUB.grade.eventos=[{id:'d1',data:d,hora:'09:00',tipo:'grupo'},{id:'d2',data:d,hora:'09:00',tipo:'grupo'}];return slotState(agDate,'09:00');},dk);
+    assert.equal(st.st,'ocup');assert.equal(st.label,'Grupo completo');
+    for(const limite of [2,3,4]){
+     for(let n=1;n<=limite;n++){
+      const s=await al.evaluate(({d,n,limite})=>{MEU.pedidos=[];PUB.grade.eventos=Array.from({length:n},(_,i)=>({id:'grupo-'+i,data:d,hora:'09:00',tipo:'grupo',pessoas:limite}));return slotState(agDate,'09:00');},{d:dk,n,limite});
+      assert.equal(s.st,n<limite?'livre':'ocup');
+      if(n<limite)assert.equal(s.limiteGrupo,limite);
+     }
+    }
+
+    await resetAluno();
+    await al.evaluate(()=>{window.locTestPedidos=0;notificarJoao=()=>{window.locTestPedidos++;};pedirLocacaoHora('09:00');});
+    grade.eventos=[{id:'privada',data:dk,hora:'09:00',tipo:'ocupado'}];
+    await al.evaluate(()=>confirmarLocacao());assert.equal(await al.evaluate(()=>window.locTestPedidos),0);
+    grade.eventos=[{id:'loc',data:dk,hora:'09:00',tipo:'locacao'}];
+    await al.evaluate(d=>{PUB.grade.eventos=[{id:'loc',data:d,hora:'09:00',tipo:'locacao'}];pedirLocacaoHora('09:00');},dk);
+    await al.evaluate(()=>confirmarLocacao());assert.equal(await al.evaluate(()=>window.locTestPedidos),1);
+   });
    await al.evaluate(d=>{
     MEU.pedidos=[];MEU.cancelados=[];
-    PUB.grade.eventos=[{id:'p',data:d,hora:'09:00',tipo:'ocupado'},{id:'g',data:d,hora:'10:00',tipo:'grupo'}];
+    PUB.horas=['09:00','10:00','11:00','12:00'];PUB.horarioCfg[1]['11:00']='aula';PUB.horarioCfg[1]['12:00']='aula';
+    PUB.grade.eventos=[{id:'p',data:d,hora:'09:00',tipo:'ocupado'},{id:'g',data:d,hora:'10:00',tipo:'grupo'},{id:'l',data:d,hora:'11:00',tipo:'locacao'},{id:'t',data:d,hora:'12:00',tipo:'torneio'}];
     closeModal('ov-book');goAluno('agenda',document.getElementById('nav-al-agenda'));renderAgenda();
    },dk);
    assert.ok(await al.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
