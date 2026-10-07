@@ -332,6 +332,7 @@ let count=0;async function check(name,fn){await fn();count++;console.log('✅ SD
   await admin('jvtenis/fila_agendamentos',null);
   await check('Gestão confirma agenda antes de manter trava; cancelamento durável libera a vaga',async()=>{
    const gest=await page(owner);
+   await gest.evaluate(uid=>abrirEspaco('dono',uid),owner);
    await gest.evaluate(f=>{
     DB=JSON.parse(JSON.stringify(f));DB.alunos.push({...DB.alunos[0],id:'outro-reserva',codigo:'9902',nome:'Outro SDK Teste'});
     DB.agenda={fixos:[],eventos:[],excecoes:[]};ensureFields();persist=window.sdkPersist;doPublish=async()=>{};
@@ -343,7 +344,8 @@ let count=0;async function check(name,fn){await fn();count++;console.log('✅ SD
    await unauthorized.evaluate(p=>enviarReservaUnica(p,false),pedido('duravel'));
    await gest.evaluate(()=>syncRequests(true));
    const q=await admin('jvtenis/fila_agendamentos'),no=await admin('jvtenis/v2');
-   assert.equal(q['reserva_'+data+'_0900'].processado,true);
+   const estadoSync=await gest.evaluate(()=>({dono:ehDono(),vinculos:VINCULOS,erro:lastCloudError,conflito:!!_conflitoNuvem,agenda:DB.agenda,respostas:DB.respostasReservas,syncing}));
+   assert.equal(q['reserva_'+data+'_0900'].processado,true,JSON.stringify(estadoSync));
    assert.equal(JSON.parse(no.agenda).eventos.length,1);
    await assert.rejects(aluno2.evaluate(p=>enviarReservaUnica(p,false),pedido('recusada','9902')));
    await unauthorized.evaluate(async p=>{await fbDB.ref('jvtenis/fila_agendamentos').push({...p,acao:'cancelar',uid:authUid()});},pedido('cancelar-duravel'));
