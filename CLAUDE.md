@@ -14,6 +14,7 @@ sem jargão; ele usa o app no celular e decide pelo resultado, não pelo código
 - Regras do Firebase: a publicada é `ferramentas/firebase-regras-etapa3-transicao.json`.
   Mudar regra exige autorização explícita; a `etapa4-estrita` ainda não foi liberada.
 - Trabalhe só no branch designado da sessão; PR → `validar-pr` verde → merge → Pages publica sozinho.
+- Mais de uma IA trabalha aqui (Claude Code e Codex): **leia `ferramentas/REGISTRO-MUDANCAS.md` antes de começar e acrescente uma entrada ao terminar.**
 
 ## Mapa do repositório
 | Pasta | O quê |
@@ -21,7 +22,8 @@ sem jargão; ele usa o app no celular e decide pelo resultado, não pelo código
 | `app-gestao/` | App do João (PWA). `index.html` (telas) + `lib/app-gestao.js` (toda a lógica, ~10 mil linhas) + `lib/estilo.css` + `lib/icones.js` + `sw-gestao.js` |
 | `app-aluno/` | App dos alunos (`index.html` único + `sw-aluno.js`) |
 | `site/`, `site-pro/` | Site da academia; `site-pro/demo/` é cópia **gerada** da gestão com dados fictícios |
-| `app-exercicios/`, `metodologia/`, `negocio/`, `investidor/` | Conteúdo de apoio |
+| `app-exercicios/` | Apostila de exercícios — **publicada** no Pages desde 07/10 |
+| `metodologia/`, `negocio/`, `investidor/` | Conteúdo de apoio |
 | `ferramentas/` | Checadores (`checar-tudo.sh`), regras do Firebase, docs (`FIREBASE.md`, `SEGURANCA-P0.md`) |
 | `.claude/skills/` | Skills do projeto (ver `.claude/skills/README.md`) |
 
