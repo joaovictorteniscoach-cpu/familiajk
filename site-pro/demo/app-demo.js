@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-07-3';
+const VERSAO='2026-10-07-4';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2481,6 +2481,20 @@ async function doPublish(){
 }
 /* Importa agendamentos feitos pelos alunos no App do Aluno (fila push do Firebase) */
 let syncing=false;
+/* Pedido aceito e cancelado antes do mesmo sync deixava, no mesmo envio,
+   "reserva_X/processado": true e "reserva_X": null. O Firebase recusa um
+   caminho dentro de outro que está sendo apagado: a fila nunca era limpa e a
+   vaga ficava presa até a data passar. Apagar a chave inteira já cobre o que
+   havia dentro dela, então o caminho interno sai do envio. Só mexe na fila. */
+function updatesFilaSemConflito(u){
+  const out={},apagadas=new Set(Object.keys(u).filter(k=>u[k]===null&&k.indexOf('/')<0));
+  Object.keys(u).forEach(k=>{
+    const i=k.indexOf('/');
+    if(i>0&&apagadas.has(k.slice(0,i)))return;
+    out[k]=u[k];
+  });
+  return out;
+}
 async function syncRequests(silent){
   if(syncing)return;syncing=true;
   if(!hasCloud()){if(!silent)toast('Nuvem (Firebase) não conectada');syncing=false;return;}
@@ -2547,7 +2561,7 @@ async function syncRequests(silent){
       if(!await gravarAgora()){if(!silent)toast('Pedidos mantidos na fila — confirme a gravação da agenda antes de continuar.');return;}
       await doPublish();
       // O SDK usa hasOwnProperty: converter o mapa interno para objeto comum.
-      await ref.update({...updates});
+      await ref.update(updatesFilaSemConflito(updates));
       renderAgenda();
     }
     if(n>0||nc>0)toast('📥 '+n+' reserva(s) · '+nc+' cancelamento(s) de alunos'+(nr?' · '+nr+' recusado(s) por conflito':''));
@@ -5221,6 +5235,16 @@ function renovacoesDoMes(a){
   // O registro no cadastro cobre a renovação sem diferença de saldo e o extrato arquivado.
   if(r&&(r.mes||mesDoTs(r.ts))===m)return [{ts:r.ts,motivo:r.origem==='manual'?'Renovação manual confirmada':'Renovação do mês'},...c,...g];
   return c.length?c:g;
+}
+/* Renovações que de fato LANÇARAM créditos no mês (uma por renovação). A marca
+   `ultimaRenovacao` que renovacoesDoMes acrescenta serve para bloquear uma
+   segunda renovação — contá-la aqui fazia toda renovação normal aparecer como
+   "CRÉDITOS DUPLICADOS" em Conferir números. Só leitura. */
+function renovacoesLancadasNoMes(a){
+  const m=mesReal();
+  const doMes=campo=>movsDe(a.id,campo).filter(x=>String(x.motivo||'').indexOf('Renovação do mês')===0&&mesDoTs(x.ts)===m);
+  const c=doMes('creditos');
+  return c.length?c:doMes('credGrupo');
 }
 /* Ajuste no cadastro pode ser uma renovação ou apenas uma correção. Não inferir
    pelo saldo: pedir que o João escolha, sem alterar créditos nem reposições. */
@@ -9394,7 +9418,7 @@ function achadosDoAluno(a){
     if(mens.length>1&&!(a.pagamentosExatos&&a.pagamentosExatos[monthKey()]))achados.push({tipo:'dup',a,
       txt:'COBRANÇA DUPLICADA: '+a.nome+' tem '+mens.length+' mensalidades lançadas neste mês ('+mens.map(l=>fmt(l.valor)).join(' + ')+'). Se foi engano, apague a repetida na Caixa.'});
     // DUPLICIDADE 2: renovação de créditos repetida no mês
-    const rn=renovacoesDoMes(a);
+    const rn=renovacoesLancadasNoMes(a);
     if(rn.length>1)achados.push({tipo:'dup',a,
       txt:'CRÉDITOS DUPLICADOS: '+a.nome+' foi renovado '+rn.length+'x neste mês, somando '+fmtCred(rn.reduce((t,x)=>t+(Number(x.delta)||0),0))+' crédito(s). O plano dele é de '+(Number(a.plano)||0)+'.'});
     // DUPLICIDADE 3: duas presenças no mesmo dia e hora
