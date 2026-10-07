@@ -215,6 +215,7 @@ const fixture={
   await c.route('**/*',r=>{const u=new URL(r.request().url());if(u.origin!==base)return r.abort();if(u.pathname.includes('/lib/firebase-'))return r.fulfill({body:'',contentType:'text/javascript'});return r.continue();});
   const g=await c.newPage();g.on('dialog',d=>d.dismiss());await g.clock.setFixedTime(AGORA);
   await g.goto(base+'/app-gestao/',{waitUntil:'load'});await g.waitForFunction(()=>typeof CARREGADO!=='undefined'&&CARREGADO);
+  await g.addStyleTag({content:'#ov-entrar,#ov-semnuvem,#barra-versao,#barra-endereco,#toast{display:none!important}'});
   await check('Gestão publica todas as realizadas do mês, inclusive mais de 30, preservando saldos e sem meses anteriores/faltas',async()=>{
    const r=await g.evaluate(async()=>{
     DB.alunos=[{id:'al-ficticio',nome:'Aluno Fictício',codigo:'6601',tipo:'Particular',plano:4,creditos:3,repos:1,status:'pago',mensalidade:640,ativo:true}];
@@ -308,7 +309,6 @@ const fixture={
    renderAll();go('dash',document.createElement('button'));
    window.PREVIA_ANTES=JSON.stringify(DB);
   });
-  await g.addStyleTag({content:'#ov-entrar,#ov-semnuvem,#barra-versao,#barra-endereco,#toast{display:none!important}'});
   await g.setViewportSize({width:390,height:844});
   await g.addScriptTag({path:path.join(root,'ferramentas/prototipos/voz-gestao.js')});
   await check('Gestão: prévia isolada do botão de voz preserva dados e fica acima do menu',async()=>{
