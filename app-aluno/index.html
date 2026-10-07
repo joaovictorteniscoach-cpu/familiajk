@@ -1588,11 +1588,11 @@ body[data-aba]:not([data-aba="inicio"]) #app>.top .jv-quadra-chip{display:none!i
 #app>.top .jv-chips-topo .jv-clima-chip .clima-ic{font-size:17px}
 #app>.top .jv-chips-topo .jv-quadra-chip .led{width:9px;height:9px;flex:0 0 9px}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-07-2">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-07-3">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-07-2">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-07-3">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -2044,7 +2044,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-10-07-2"></script>
+<script src="lib/icones.js?v=2026-10-07-3"></script>
 </div>
 
 <!-- MODAL ESCOLHER O QUE FAZER NO HORÁRIO -->
@@ -2251,7 +2251,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-10-07-2';
+const VERSAO='2026-10-07-3';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -2847,8 +2847,10 @@ function slotState(date,hora){
   const meu=all.some(e=>e.cod===MEU.codigo);
   if(meu&&foiCancelado(dk,hora))return {st:'ocup',label:'Cancelamento aguardando confirmação'};
   if(meu)return {st:'meu',label:'Minha aula'};
-  const grupo=all.length>0&&all.every(e=>e.tipo==='grupo');
-  if(all.length&&!grupo)return {st:'ocup',label:'Reservado'};
+  const compartilhado=all.length&&all.every(e=>e.tipo===all[0].tipo)&&['grupo','locacao','torneio'].includes(all[0].tipo)?all[0].tipo:'';
+  const limiteGrupo=compartilhado==='grupo'?Math.min(...all.map(e=>[2,3,4].includes(Number(e.pessoas))?Number(e.pessoas):2)):0;
+  const grupo=compartilhado==='grupo'&&all.length<limiteGrupo;
+  if(all.length&&(!compartilhado||compartilhado==='grupo'&&!grupo))return {st:'ocup',label:compartilhado==='grupo'?'Grupo completo':'Reservado'};
   if((MEU.pedidos||[]).some(p=>{
     if(p.hora!==hora)return false;
     if(p.rec==='fixo')return new Date(p.data+'T12:00:00').getDay()===dia&&dk>=p.data;
@@ -2856,7 +2858,9 @@ function slotState(date,hora){
   }))return {st:'pend',label:'Aguardando ⏳'};
   const modo=slotModo(date,hora);
   if(modo==='fechado')return {st:'fechado',label:'Fechado'};
-  if(grupo&&modo==='aula')return {st:'livre',label:'Aula em grupo',grupo:true};
+  if(grupo&&modo==='aula')return {st:'livre',label:limiteGrupo===4?'Aula quádrupla':limiteGrupo===3?'Aula em trio':'Aula em dupla',grupo:true,compartilhado:'grupo',limiteGrupo};
+  if(compartilhado==='locacao')return {st:'loc',label:'Locação · participar',compartilhado};
+  if(compartilhado==='torneio')return {st:'livre',label:'Torneio · participar',compartilhado};
   if(all.length)return {st:'ocup',label:'Reservado'};
   if(modo==='loc')return {st:'loc',label:'Só locação'};
   return {st:'livre',label:'Disponível'};
@@ -4303,7 +4307,7 @@ function renderAgenda(){
     el.innerHTML=PUB.horas.map(h=>{
       const s=slotState(agDate,h);
       let inner='';
-      if(s.st==='livre'||s.st==='loc')inner=horasAte(dKey(agDate),h)<=0?`<button class="sl bloq" disabled>Encerrado</button>`:`<button class="sl livre" onclick="escolherSlot('${h}')">${s.grupo?'👥 Aula em grupo':'Disponível'} <i>${s.grupo?'participar':'ver opções'}</i></button>`;
+      if(s.st==='livre'||s.st==='loc')inner=horasAte(dKey(agDate),h)<=0?`<button class="sl bloq" disabled>Encerrado</button>`:`<button class="sl livre" onclick="escolherSlot('${h}')">${s.compartilhado?s.label:'Disponível'} <i>${s.compartilhado?'participar':'ver opções'}</i></button>`;
       else if(s.st==='meu'){const podeC=horasAte(dKey(agDate),h)>=LIMITE_CANCEL_H;inner=podeC?`<button class="sl meu" onclick="cancelarAula('${dKey(agDate)}','${h}','pontual')">🎾 ${s.label} <i>confirmada · toque para cancelar</i></button>`:`<button class="sl meu">🎾 ${s.label} <i>confirmada · trava ${LIMITE_CANCEL_H}h</i></button>`;}
       else if(s.st==='pend')inner=`<button class="sl pend" onclick="cancelarAula('${dKey(agDate)}','${h}','pontual')">${s.label} <i>enviado ao João · toque para cancelar</i></button>`;
       else if(s.st==='chuva')inner=`<button class="sl chuva">☔ Cancelado por chuva <i>sem desconto de crédito</i></button>`;
@@ -4326,7 +4330,7 @@ function renderAgenda(){
            responder ao toque fazia a semana inteira parecer travada. */
         const passou=horasAte(dKey(d),h)<=0;
         const cls=(s.st==='livre'&&passou)?'passou':s.st;
-        const txt=s.st==='livre'?(passou?'Passou':s.grupo?'Grupo':'Livre'):s.st==='meu'?'Sua aula':s.st==='pend'?'Pedido':s.st==='chuva'?'Chuva':s.st==='bloq'?'Bloq.':s.st==='loc'?'Loc.':s.st==='fechado'?'Fechado':'Reserva';
+        const txt=s.st==='livre'?(passou?'Passou':s.compartilhado==='torneio'?'Torneio':s.grupo?(s.limiteGrupo===4?'Quádrupla':s.limiteGrupo===3?'Trio':'Dupla'):'Livre'):s.st==='meu'?'Sua aula':s.st==='pend'?'Pedido':s.st==='chuva'?'Chuva':s.st==='bloq'?'Bloq.':s.st==='loc'?'Loc.':s.st==='fechado'?'Fechado':'Reserva';
         const click=passou?`onclick="toast('Esse horário já passou 🙏')"`:(s.st==='livre'?`onclick="gotoBook(${d.getFullYear()},${d.getMonth()},${d.getDate()},'${h}')"`:(s.st==='loc'?`onclick="gotoDay(${d.getFullYear()},${d.getMonth()},${d.getDate()})"`:''));
         html+=`<td><button class="wc ${cls}" title="${s.label||''}" ${click}>${txt}</button></td>`;
       });
@@ -4614,7 +4618,7 @@ function escolherSlot(hora){
   if(horasAte(dKey(agDate),hora)<=0){toast('Esse horário já passou — não é possível agendar nem alterar datas anteriores. 🙏');return;}
   const estado=slotState(agDate,hora);
   if(!['livre','loc'].includes(estado.st)){toast(estado.label+' — escolha outro horário');return;}
-  pickCtx={hora,date:new Date(agDate),grupo:!!estado.grupo};
+  pickCtx={hora,date:new Date(agDate),grupo:!!estado.grupo,compartilhado:estado.compartilhado||'',limiteGrupo:estado.limiteGrupo||0};
   const modo=slotModo(pickCtx.date,hora);
   document.getElementById('pick-sub').textContent=DIAS_FULL[pickCtx.date.getDay()]+', '+pickCtx.date.getDate()+' de '+MESES[pickCtx.date.getMonth()].toLowerCase()+' · '+hora;
   let b='';
@@ -4626,8 +4630,14 @@ function escolherSlot(hora){
     else if(pagamentoEmAnalise())
       b+='<div class="pick-note">⏳ Pagamento avisado ao João. Assim que ele confirmar, seus agendamentos liberam.</div>';
   }
-  if(pickCtx.grupo){
-    b+='<div class="pick-note">👥 Este horário é uma <b>aula em grupo</b>. Novas reservas participam da mesma aula.</div>';
+  if(pickCtx.compartilhado==='locacao'){
+    b+='<div class="pick-note">🔑 Este horário já é uma <b>locação</b>. O pedido é para participar da mesma atividade.</div>';
+    b+='<button class="pick-opt loc" onclick="pickLoc()">🔑 Participar da locação</button>';
+  }else if(pickCtx.compartilhado==='torneio'){
+    b+='<div class="pick-note">🏆 Este horário já é um <b>jogo de torneio</b>. A nova reserva participa do mesmo jogo.</div>';
+    b+=pickTorneioHtml();
+  }else if(pickCtx.grupo){
+    b+='<div class="pick-note">👥 Este horário é uma <b>aula em grupo</b>. Novas reservas participam da mesma aula, até '+pickCtx.limiteGrupo+' alunos.</div>';
     if(!trava)b+='<button class="pick-opt aula" onclick="pickAula(false)">👥 Participar da aula em grupo</button>';
     if(!trava&&EU&&EU.repos>0)b+='<button class="pick-opt repo" onclick="pickAula(true)">🔁 Reposição na aula em grupo</button>';
   }else if(modo==='aula'&&!trava){
@@ -4692,7 +4702,9 @@ function pickAula(repo){document.getElementById('ov-pick').classList.remove('on'
 function pickLoc(){document.getElementById('ov-pick').classList.remove('on');pedirLocacaoHora(pickCtx.hora);}
 let locCtx=null;
 function pedirLocacaoHora(hora){
-  locCtx={hora,date:new Date(agDate),min:60};
+  const estado=slotState(agDate,hora);
+  if(!['livre','loc'].includes(estado.st)||estado.compartilhado&&estado.compartilhado!=='locacao'){toast('Horário reservado para outra atividade');return;}
+  locCtx={hora,date:new Date(agDate),min:60,compartilhado:estado.compartilhado||''};
   document.getElementById('locdur-sub').textContent=DIAS_FULL[locCtx.date.getDay()]+', '+locCtx.date.getDate()+'/'+(locCtx.date.getMonth()+1)+' · começa às '+hora+' · '+fmt(precoLocacao())+'/h';
   const opts=[60,75,90,105,120];
   document.getElementById('locdur-opts').innerHTML=opts.map(m=>
@@ -4709,8 +4721,14 @@ function locdurAtualiza(m){
   const valor=Math.round(precoLocacao()*locCtx.min/60);
   document.getElementById('locdur-preco').textContent=locdurLabel(locCtx.min)+' · '+fmt(valor);
 }
-function confirmarLocacao(){
-  if(!locCtx)return;
+let _locacaoEnviando=false;
+async function confirmarLocacao(){
+  if(!locCtx||_locacaoEnviando)return;
+  _locacaoEnviando=true;
+  try{
+  try{await atualizarGradeReserva();}catch(e){toast('Não consegui conferir a agenda na nuvem. Tente novamente online.');return;}
+  const estado=slotState(locCtx.date,locCtx.hora);
+  if(!['livre','loc'].includes(estado.st)||estado.compartilhado&&estado.compartilhado!=='locacao'||(estado.compartilhado||'')!==locCtx.compartilhado){toast('Horário reservado ou atividade alterada. Reabra as opções.');return;}
   const livre=Math.round((Number(document.getElementById('locdur-min').value)||0)/15)*15;
   if(livre>=30)locCtx.min=livre;
   const d=locCtx.date,dur=locdurLabel(locCtx.min);
@@ -4721,6 +4739,7 @@ function confirmarLocacao(){
   const msg='Olá João! Quero *alugar a quadra* em '+quando+' por *'+dur+'* (~'+fmt(valor)+'). Pode confirmar pra mim? 🎾';
   setTimeout(()=>abrirWhatsApp('5541995415712',msg),300);
   toast('Pedido de locação ('+dur+') enviado ao João! 🎾');
+  }finally{_locacaoEnviando=false;}
 }
 /* ===== Com qual professor =====
    A academia pode ter mais de um professor, cada um com a agenda dele. O aluno
@@ -4746,7 +4765,8 @@ function pintarProfsBook(){
 }
 function abrirBook(hora,repo,torneio){
   const estado=slotState(agDate,hora);
-  if(!['livre','loc'].includes(estado.st)||torneio&&estado.grupo){toast('Horário reservado — escolha outro');return;}
+  const desejado=torneio?'torneio':'grupo';
+  if(!['livre','loc'].includes(estado.st)||estado.compartilhado&&estado.compartilhado!==desejado){toast('Horário reservado — escolha outro');return;}
 
   if(!torneio&&bloqueadoParaAgendar()){toast('🔒 Agendamento bloqueado — '+motivoBloqueio()+'. Fale com o João para regularizar. 🙏');return;}
   if(torneio){/* jogo do torneio: inscrição já paga, não usa crédito nem reposição */}
@@ -4755,7 +4775,7 @@ function abrirBook(hora,repo,torneio){
   } else if(EU.creditos===0){
     toast('Seus créditos acabaram — esta aula entra como extra, a combinar com o João. 🎾');
   }
-  bookCtx={hora,date:new Date(agDate),repo:!!repo,torneio:!!torneio,grupo:!!estado.grupo};
+  bookCtx={hora,date:new Date(agDate),repo:!!repo,torneio:!!torneio,grupo:!!estado.grupo,compartilhado:estado.compartilhado||'',limiteGrupo:estado.limiteGrupo||0};
   document.getElementById('book-title').textContent=bookCtx.grupo?'Participar da aula em grupo 👥':torneio?'Marcar jogo do torneio 🏆':(repo?'Marcar reposição 🔁':'Agendar horário 🎾');
   document.getElementById('book-sub').textContent=DIAS_FULL[bookCtx.date.getDay()]+', '+bookCtx.date.getDate()+' de '+MESES[bookCtx.date.getMonth()].toLowerCase()+' · '+hora;
   pintarProfsBook();
@@ -4776,10 +4796,10 @@ async function confirmarAgendamento(){
   if(!bookCtx.torneio&&bloqueadoParaAgendar()){document.getElementById('ov-book').classList.remove('on');toast('🔒 Agendamento bloqueado — '+motivoBloqueio()+'.');return;}
   try{await atualizarGradeReserva();}catch(e){toast('Não consegui conferir a agenda na nuvem. Tente novamente online.');return;}
   const estado=slotState(bookCtx.date,bookCtx.hora);
-  if(!['livre','loc'].includes(estado.st)||bookCtx.torneio&&estado.grupo){
+  if(!['livre','loc'].includes(estado.st)||estado.compartilhado&&estado.compartilhado!==(bookCtx.torneio?'torneio':'grupo')){
     renderAgenda();toast('Horário reservado ou indisponível — escolha outro');return;
   }
-  if(!!estado.grupo!==!!bookCtx.grupo){toast('O tipo da aula mudou. Reabra as opções do horário.');return;}
+  if((estado.compartilhado||'')!==bookCtx.compartilhado){toast('O tipo da aula mudou. Reabra as opções do horário.');return;}
   if(!bookCtx.torneio&&bloqueadoParaAgendar()){toast('🔒 Agendamento bloqueado — '+motivoBloqueio());return;}
   const tor=bookCtx.torneio?1:0;
   const rec=(bookCtx.repo||tor)?'pontual':document.getElementById('b-rec').value;
@@ -4792,11 +4812,11 @@ async function confirmarAgendamento(){
   if(!datas.length){toast('Escolha uma data nos próximos 90 dias.');return;}
   for(const data of datas){
     const s=slotState(new Date(data+'T12:00:00'),pedido.hora);
-    if(!['livre','loc'].includes(s.st)||!!s.grupo!==!!pedido.grupo||pedido.tor&&s.grupo){
+    if(!['livre','loc'].includes(s.st)||(s.compartilhado||'')!==bookCtx.compartilhado||s.grupo&&s.limiteGrupo!==bookCtx.limiteGrupo){
       toast('Uma das datas desse horário já está reservada. Escolha outro horário.');return;
     }
   }
-  try{await enviarReservaUnica(pedido,!!pedido.grupo);}
+  try{await enviarReservaUnica(pedido,!!bookCtx.compartilhado);}
   catch(e){toast(/permission|denied/i.test(String(e))?'Não foi possível reservar: a vaga pode ter sido ocupada ou o acesso não está liberado. Atualize a agenda.':'Não consegui enviar a reserva. Tente novamente online.');return;}
   MEU.pedidos.push(pedido);await saveMeu();
   document.getElementById('ov-book').classList.remove('on');
@@ -4908,7 +4928,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-07-2').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-07-3').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
