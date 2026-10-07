@@ -97,6 +97,8 @@ async function setup(context,base,theme='saibro'){
    assert.equal(await p.evaluate(()=>DB.agenda.eventos.length),2);
    assert.equal(await p.evaluate(()=>DB.agenda.eventos[1].tipo),'grupo');
    assert.equal(await p.evaluate(()=>DB.respostasReservas.find(r=>r.id==='t1').estado),'recusado');
+   assert.equal(await p.evaluate(p=>pedidoAgendaValido(p,DB.alunos[0]),req('grupo-inventado','9901','u1',{hora:'10:00',grupo:1})),false);
+   assert.equal(await p.evaluate(p=>pedidoAgendaValido(p,DB.alunos[0]),req('grupo-fixo-sem-turma','9901','u1',{rec:'fixo',grupo:1})),false);
   });
   await reset();
   await check('Gestão: fixo novo não passa por cima de reserva particular na semana seguinte',async()=>{
@@ -206,6 +208,7 @@ async function setup(context,base,theme='saibro'){
     closeModal('ov-book');goAluno('agenda',document.getElementById('nav-al-agenda'));renderAgenda();
    },dk);
    assert.ok(await al.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+   await al.waitForTimeout(350);
    console.log('VISUAL_RESERVAS '+theme+' '+(await al.screenshot({fullPage:true})).toString('base64'));
    assert.deepEqual(errors,[]);await c.close();
   }

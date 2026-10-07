@@ -2159,7 +2159,10 @@ function pedidoAgendaValido(p,a){
     const date=new Date(data+'T12:00:00'),modo=slotModo(date,p.hora);
     if(modo==='fechado'||modo==='loc'&&!p.repo&&!p.tor)return false;
     if(ocupadoPorOutro(date,p.hora))return false;
-    const entradas=entriesFor(date,p.hora).filter(e=>!(p.id&&e.reservaId===p.id&&e.alunoId===a.id));
+    const grade=entriesFor(date,p.hora);
+    // O pedido não pode transformar uma vaga vazia em grupo por conta própria.
+    if(p.grupo===1&&(!grade.length||!grade.every(e=>e.tipo==='grupo')))return false;
+    const entradas=grade.filter(e=>!(p.id&&e.reservaId===p.id&&e.alunoId===a.id));
     return !entradas.length||grupo&&entradas.every(e=>e.tipo==='grupo');
   });
 }

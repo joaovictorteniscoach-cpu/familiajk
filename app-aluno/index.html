@@ -4792,7 +4792,7 @@ async function confirmarAgendamento(){
   if(!datas.length){toast('Escolha uma data nos próximos 90 dias.');return;}
   for(const data of datas){
     const s=slotState(new Date(data+'T12:00:00'),pedido.hora);
-    if(!['livre','loc'].includes(s.st)||s.grupo&&!pedido.grupo||pedido.tor&&s.grupo){
+    if(!['livre','loc'].includes(s.st)||!!s.grupo!==!!pedido.grupo||pedido.tor&&s.grupo){
       toast('Uma das datas desse horário já está reservada. Escolha outro horário.');return;
     }
   }
