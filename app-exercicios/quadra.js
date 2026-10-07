@@ -131,7 +131,7 @@ const FOTOS = {
 const FIG = {
   'jv-espera-frente.webp':    [1.62, 0.721, 0.498], 'jv-espera-costas.webp':    [1.65, 0.707, 0.500],
   'jv-golpe-frente-fh.webp':  [1.60, 0.829, 0.589], 'jv-golpe-frente-bh.webp':  [1.61, 0.840, 0.399],
-  'jv-golpe-costas-fh.webp':  [1.66, 0.849, 0.362], 'jv-lat-bh-esq.webp':       [1.59, 0.897, 0.605],
+  'jv-golpe-costas-fh.webp':  [1.66, 0.849, 0.362], 'jv-golpe-costas-bh.webp':  [1.66, 0.849, 0.636],
   'jv-voleio.webp':           [1.68, 0.785, 0.372], 'jv-voleio-esq.webp':       [1.68, 0.785, 0.626],
   'jv-saque-frente.webp':     [1.95, 0.465, 0.333], 'jv-saque-costas.webp':     [1.80, 0.616, 0.399],
   'jv-aproxima.webp':         [1.58, 0.692, 0.370], 'jv-aproxima-esq.webp':     [1.58, 0.692, 0.627],
@@ -156,12 +156,12 @@ const FIG = {
      'vai'   — para onde ele se desloca ou bate (paraOndeOlha).
    O saque não muda de lado: a figura é de um destro, e é assim que ele saca
    dos dois lados da quadra. */
-var GOLPE_F = { dir:'jv-golpe-frente-bh.webp', esq:'jv-golpe-frente-fh.webp' };
-/* o backhand visto de trás: a prancha esconde a raquete nessa vista, e o
-   forehand espelhado parecia um canhoto. Fica o backhand de DUAS MÃOS de
-   perfil, virado para a esquerda da imagem (o lado do backhand dele). */
-var GOLPE_C = { dir:'jv-golpe-costas-fh.webp', esq:'jv-lat-bh-esq.webp' };
-var VOLEIO  = { dir:'jv-voleio.webp',   esq:'jv-voleio-esq.webp' };
+// Nos diagramas, os atletas representam a montagem inicial. Imagens de
+// execução do golpe são apresentadas separadamente na ficha, após revisão.
+var GOLPE_F = { dir:'jv-espera-frente.webp', esq:'jv-espera-frente.webp' };
+var GOLPE_C = { dir:'jv-espera-costas.webp', esq:'jv-espera-costas.webp' };
+var VOLEIO_F = GOLPE_F;
+var VOLEIO_C = GOLPE_C;
 var APROX   = { dir:'jv-aproxima.webp', esq:'jv-aproxima-esq.webp' };
 var DESLOCA = { dir:'jv-desloca.webp',  esq:'jv-desloca-esq.webp' };
 const RECORTES = {
@@ -169,12 +169,30 @@ const RECORTES = {
   prepara:  { lado:'golpe', frente:GOLPE_F, costas:GOLPE_C },
   forehand: { lado:'fh',    frente:GOLPE_F, costas:GOLPE_C },
   backhand: { lado:'bh',    frente:GOLPE_F, costas:GOLPE_C },
-  voleio:   { lado:'golpe', frente:VOLEIO,  costas:VOLEIO },
-  saque:    { frente:'jv-saque-frente.webp', costas:'jv-saque-costas.webp' },
-  aproxima: { lado:'vai',   frente:APROX,   costas:APROX },
-  desloca:  { lado:'vai',   frente:DESLOCA, costas:DESLOCA }
+  voleio:   { lado:'golpe', frente:VOLEIO_F, costas:VOLEIO_C },
+  saque:    { frente:'jv-espera-frente.webp', costas:'jv-espera-costas.webp' },
+  aproxima: { frente:'jv-espera-frente.webp', costas:'jv-espera-costas.webp' },
+  desloca:  { frente:'jv-espera-frente.webp', costas:'jv-espera-costas.webp' }
 };
 RECORTES.aluno = RECORTES.prof = RECORTES.colega = RECORTES.espera;
+RECORTES.esperaLivre = {frente:'livre-frente',costas:'livre-costas'};
+RECORTES.backhand1 = {frente:'jv-espera-frente.webp',costas:'jv-espera-costas.webp'};
+RECORTES.voleioBackhand = RECORTES.espera;
+
+
+
+/* Recortes preservam a imagem original e a transparência; pés ancorados no chão. */
+const SPRITES = {
+ 'livre-costas':{arq:'jv-poses-realistas.png',w:1536,h:1024,box:[802,524,352,458],altura:1.7,pe:.51,clip:'M890 524H1154V982H802V735L890 698Z'},
+ 'livre-frente':{arq:'jv-poses-realistas.png',w:1536,h:1024,box:[1208,518,320,461],altura:1.7,pe:.52}
+};
+let SPRITE_ID = 0;
+function imagemJogador(arq, x, y, w, h){
+ var sprite = SPRITES[arq];
+ if(!sprite) return '<image href="'+arq+'" x="'+nQ(x)+'" y="'+nQ(y)+'" width="'+nQ(w)+'" height="'+nQ(h)+'" preserveAspectRatio="xMidYMax meet"/>';
+ var id='pose-'+(++SPRITE_ID),clip=sprite.clip ? '<defs><clipPath id="'+id+'"><path d="'+sprite.clip+'"/></clipPath></defs>' : '';
+ return '<svg x="'+nQ(x)+'" y="'+nQ(y)+'" width="'+nQ(w)+'" height="'+nQ(h)+'" viewBox="'+sprite.box.join(' ')+'" preserveAspectRatio="xMidYMax meet" overflow="hidden">'+clip+'<image href="'+sprite.arq+'" width="'+sprite.w+'" height="'+sprite.h+'"'+(sprite.clip?' clip-path="url(#'+id+')"':'')+'/></svg>';
+}
 
 /* Cores do desenho. Saibro de verdade, porque é nele que a JV dá aula. */
 const CQ = {
@@ -201,6 +219,7 @@ function escurecer(hex, k){
    a bola, para onde vai, quem está na rede. É por ela que o professor
    reconhece o exercício de relance. */
 let MINI = false;
+let MODO_MONTAGEM = true;
 
 /* Estado do desenho que está sendo montado. */
 let CAM = CAMERAS.meia;      // câmera deste recorte
@@ -544,20 +563,59 @@ function ladoDoGolpe(x, y){
   return x >= 0;
 }
 
+/* Orientação pelo parceiro/bola, inclusive professor e aluno no mesmo lado. */
+function vistaDoJogador(x, y, tipo){
+  var propria=PECAS.find(e=>e[0]===tipo&&Math.abs(e[1]-x)<.001&&Math.abs(e[2]-y)<.001);
+  if(propria&&['frente','costas'].includes(propria[5]))return propria[5];
+  // Na formação de jogo, todos acompanham o lado adversário, inclusive
+  // os parceiros da rede que estão longe da trajetória atual da bola.
+  if(Math.abs(x)<=5.485&&PECAS.some(e=>['aluno','colega','prof'].includes(e[0])&&e[2]*y<0))return y>0?'costas':'frente';
+  var destino = null, distancia = 2.6 * 2.6;
+  PECAS.forEach(function(e){
+    if (e[0] !== 'bola') return;
+    var saida = (e[1]-x)**2 + (e[2]-y)**2;
+    var chegada = (e[3]-x)**2 + (e[4]-y)**2;
+    if (saida < distancia) { distancia = saida; destino = e[4]; }
+    if (chegada < distancia) { distancia = chegada; destino = e[2]; }
+  });
+  if (destino === null) {
+    var perto = Infinity;
+    PECAS.forEach(function(e){
+      if ((tipo === 'prof' && !['aluno','colega'].includes(e[0])) ||
+          (tipo !== 'prof' && e[0] !== 'prof')) return;
+      var d = (e[1]-x)**2 + (e[2]-y)**2;
+      if (d < perto && d > .1) { perto = d; destino = e[2]; }
+    });
+  }
+  if (destino === null) {
+    var parceiros=PECAS.filter(e=>['aluno','colega','prof'].includes(e[0])&&((e[1]-x)**2+(e[2]-y)**2)>.1);
+    var opostos=parceiros.filter(e=>e[2]*y<0),perto=Infinity;
+    (opostos.length?opostos:(parceiros.length===1?parceiros:[])).forEach(function(e){
+      var d=(e[1]-x)**2+(e[2]-y)**2;
+      if(d<perto){perto=d;destino=e[2];}
+    });
+  }
+  if (destino !== null && Math.abs(destino-y) > .8) return destino > y ? 'frente' : 'costas';
+  return y > 0 ? 'costas' : 'frente';
+}
+
 function qRecorte(x, y, rot, tipo, nome){
-  var r = RECORTES[nome] || RECORTES[tipo];
+  var pose = MODO_MONTAGEM ? (nome === 'esperaLivre' ? 'esperaLivre' : 'espera') : nome;
+  var r = RECORTES[pose] || RECORTES[tipo];
   if (!r) return null;
-  var v = y > 0 ? r.costas : r.frente;
+  var vista = vistaDoJogador(x, y, tipo);
+  var v = vista === 'costas' ? r.costas : r.frente;
   var arq = v;
   if (typeof v === 'object') {
     var querDir;
-    if (r.lado === 'fh') querDir = y > 0;          // de frente, o forehand dele é à esquerda da imagem
-    else if (r.lado === 'bh') querDir = !(y > 0);
+    if (r.lado === 'fh') querDir = vista === 'costas';          // de frente, o forehand dele é à esquerda da imagem
+    else if (r.lado === 'bh') querDir = vista !== 'costas';
     else if (r.lado === 'golpe') querDir = ladoDoGolpe(x, y);
     else { var alvo = paraOndeOlha(x, y); querDir = alvo === null ? x < 0 : alvo >= x; }
     arq = querDir ? v.dir : v.esq;
   }
-  var g = FIG[arq] || [1.7, 0.7, 0.5];
+  var sprite = SPRITES[arq];
+  var g = sprite ? [sprite.altura,sprite.box[2]/sprite.box[3],sprite.pe] : (FIG[arq] || [1.7, 0.7, 0.5]);
   var pe = proj(x, y, 0), topo = proj(x, y, g[0]);
   var h = (pe.y - topo.y) * ESC_FIG;
   // na foto a moldura é fixa: quem está no fundo de lá, ampliado, sairia com
@@ -574,8 +632,7 @@ function qRecorte(x, y, rot, tipo, nome){
       '" fill="' + CQ.sombra + '"/>' +
     (ARO ? '<ellipse cx="' + nQ(cx) + '" cy="' + nQ(pe.y) + '" rx="' + nQ(rx) + '" ry="' + nQ(ry) +
       '" fill="' + cor + '" fill-opacity=".30" stroke="' + cor + '" stroke-width="' + nQ(h * 0.016) + '"/>' : '') +
-    '<image href="' + arq + '" x="' + nQ(cx - l * g[2]) + '" y="' + nQ(pe.y - h) +
-      '" width="' + nQ(l) + '" height="' + nQ(h) + '" preserveAspectRatio="xMidYMax meet"/></g>';
+    imagemJogador(arq,cx-l*g[2],pe.y-h,l,h) + '</g>';
   if (rot) s += qTexto(cx, pe.y + h * 0.12, rot, { tam:h * (ESC_FIG > 1 ? 0.10 : 0.20) });
   return s;
 }
@@ -797,7 +854,9 @@ function qElemento(e){
   if (t === 'colega') return qJogador(e[1], e[2], e[3], 'colega', e[4]);
   if (t === 'cone')   return qCone(e[1], e[2], e[3]);
   if (t === 'zona')   return qZona(e[1], e[2], e[3], e[4], e[5]);
-  if (t === 'bola')   return qCaminho(e[1], e[2], e[3], e[4], e[5], CQ.bola, true, 'seta-bola');
+  // Setas de direção no chão; a altura da bola está nas instruções. Não
+  // converter uma curva de lob em desvio lateral para fora da quadra.
+  if (t === 'bola')   return qCaminho(e[1], e[2], e[3], e[4], 0, CQ.bola, true, 'seta-bola');
   if (t === 'mov')    return qCaminho(e[1], e[2], e[3], e[4], e[5], CQ.mov, false, 'seta-mov');
   if (t === 'texto')  { var pt = proj(e[1], e[2], 0); return qTexto(pt.x, pt.y, e[3], {}); }
   if (t === 'marca') {
@@ -815,7 +874,8 @@ function qElemento(e){
     return s + (e[3] ? qTexto(proj(x, y + 2.2, 0).x, proj(x, y + 2.2, 0).y, e[3], {}) : '');
   }
   if (t === 'corda') {               // corda esticada acima da rede
-    var a = proj(-QD.postX, 0, 1.75), b = proj(QD.postX, 0, 1.75);
+    var alturaCorda = typeof e[2] === 'number' ? e[2] : 1.914;
+    var a = proj(-QD.postX, 0, alturaCorda), b = proj(QD.postX, 0, alturaCorda);
     return '<g><line x1="' + nQ(a.x) + '" y1="' + nQ(a.y) + '" x2="' + nQ(b.x) + '" y2="' + nQ(b.y) +
       '" stroke="' + CQ.zona + '" stroke-width="' + nQ(traco(0.05, a)) +
       '" stroke-dasharray="' + nQ(traco(0.3, a)) + ' ' + nQ(traco(0.22, a)) + '"/></g>' +
@@ -842,6 +902,7 @@ function svgQuadra(fig, op){
   if (!fig || !fig.el) return '';
   op = op || {};
   MINI = !!op.mini;
+  MODO_MONTAGEM = op.montagem !== false;
   PROP = op.prop || 0;
   ESC_FIG = op.escalaFig || 1;
   var base = fig.base || 'meia';
@@ -858,14 +919,32 @@ function svgQuadra(fig, op){
     DIST = 100;
     CENTRO = { x:0, y:0 };
   }
-  VISTA = foto && foto.inteira ? { x:0, y:0, w:foto.larg, h:foto.alt }
+  VISTA = foto && foto.inteira ? (op.inteira ? { x:0, y:0, w:foto.larg, h:foto.alt } : enquadrar(base, fig.el))
         : op.inteira && !foto ? quadraInteira(fig.el) : enquadrar(base, fig.el);
   if (foto) {
-    // a moldura não pode sair da foto: fora dela não há pixel nenhum
+    // Primeiro ajusta o recorte à fotografia. Elementos fora da área da
+    // foto, como a volta por fora dos postes, precisam continuar visíveis.
     if (VISTA.w > foto.larg) { VISTA.x = 0; VISTA.w = foto.larg; }
     if (VISTA.h > foto.alt)  { VISTA.y = 0; VISTA.h = foto.alt; }
     VISTA.x = Math.max(0, Math.min(VISTA.x, foto.larg - VISTA.w));
     VISTA.y = Math.max(0, Math.min(VISTA.y, foto.alt - VISTA.h));
+    var x1 = VISTA.x, y1 = VISTA.y, x2 = x1 + VISTA.w, y2 = y1 + VISTA.h;
+    function incluir(x, y, folga){
+      var p = proj(x, y, 0), margem = escalaEm(p) * folga;
+      x1 = Math.min(x1, p.x - margem); x2 = Math.max(x2, p.x + margem);
+      y1 = Math.min(y1, p.y - margem); y2 = Math.max(y2, p.y + margem);
+    }
+    fig.el.forEach(function(e){
+      if (e[0] === 'texto' || e[0] === 'corda') return;
+      if (e[0] === 'zona') {
+        incluir(e[1] - e[3]/2, e[2] - e[4]/2, .15);
+        incluir(e[1] + e[3]/2, e[2] + e[4]/2, .15);
+      } else {
+        incluir(e[1], e[2], ['aluno','prof','colega'].indexOf(e[0]) >= 0 ? .65 : .3);
+        if (e[0] === 'bola' || e[0] === 'mov') incluir(e[3], e[4], .3);
+      }
+    });
+    VISTA = {x:x1, y:y1, w:x2-x1, h:y2-y1};
   }
 
   // Reserva o espaço dos bonecos e dos cones ANTES de escrever qualquer
@@ -902,7 +981,7 @@ function svgQuadra(fig, op){
   // flecha inteira na miniatura.
   var m = MINI ? 3.4 : 3.6;          // ponta grande, como a das setas da folha modelo
   var alt = op.altura ? ' height="' + op.altura + '"' : '';
-  var rotulo = fig.nota ? ' aria-label="' + String(fig.nota).replace(/"/g, '&quot;') + '"' : '';
+  var rotulo = fig.nota ? ' aria-label="' + String((MODO_MONTAGEM ? 'Montagem inicial do exercício. ' : '') + fig.nota).replace(/"/g, '&quot;') + '"' : '';
   return '<svg class="qd' + (MINI ? ' qd-mini-selo' : '') + ' qd-' + base + '" viewBox="' +
     nQ(VISTA.x) + ' ' + nQ(VISTA.y) + ' ' + nQ(VISTA.w) + ' ' + nQ(VISTA.h) + '" ' +
     'width="100%"' + alt + ' role="img"' + rotulo + ' xmlns="http://www.w3.org/2000/svg">' +
@@ -924,36 +1003,11 @@ function svgQuadra(fig, op){
     '<rect x="' + nQ(VISTA.x) + '" y="' + nQ(VISTA.y) + '" width="' + nQ(VISTA.w) + '" height="' + nQ(VISTA.h) +
       '" fill="url(#ceu)"/>' +
     (foto
-      ? '<image href="' + foto.arq + '" x="0" y="0" width="' + foto.larg + '" height="' + foto.alt +
-        '" preserveAspectRatio="none"/>' + antes + depois
+      ? ((VISTA.x < 0 || VISTA.y < 0 || VISTA.x + VISTA.w > foto.larg || VISTA.y + VISTA.h > foto.alt) ? piso(base) : '') +
+        '<image href="' + foto.arq + '" x="0" y="0" width="' + foto.larg + '" height="' + foto.alt +
+        '" preserveAspectRatio="none"/>' + antes + (FOTO_FIXA ? '<defs><clipPath id="net-occlusion"><path d="M 34 455 L 1257 455 L 1263 584 L 35 584 Z"/></clipPath></defs><image href="' + foto.arq + '" x="0" y="0" width="' + foto.larg + '" height="' + foto.alt + '" clip-path="url(#net-occlusion)"/>' : '') + depois
       : piso(base) + antes + rede() + depois) +
   '</svg>';
-}
-
-/* Recorte deitado da foto, para o diagrama da folha paisagem. A foto é a
-   quadra inteira (mais alta que larga); a folha pede uma janela larga. A
-   janela fica com a largura toda da foto e desce até onde está o que o
-   exercício usa — pessoas, cones, rótulos, setas e zonas. Se não couber
-   tudo, fica o lado de cá (onde está o aluno). Chame logo depois do
-   svgQuadra da mesma figura: usa a câmera e as caixas que ele deixou. */
-function janelaDaFoto(fig, aspecto){
-  var foto = FOTOS.jv;
-  if (!foto || !FOTO_FIXA || !fig || !fig.el) return null;
-  var h = Math.min(foto.alt, foto.larg / aspecto), cima = Infinity, baixo = -Infinity;
-  function inclui(y){ if (isFinite(y)) { cima = Math.min(cima, y); baixo = Math.max(baixo, y); } }
-  ROTULOS.forEach(function(r){ inclui(r.y); inclui(r.y + r.h); });
-  fig.el.forEach(function(e){
-    var t = e[0];
-    if (t === 'bola' || t === 'mov') { inclui(proj(e[1], e[2], 0).y); inclui(proj(e[3], e[4], 0).y); }
-    else if (t === 'zona') { inclui(proj(e[1], e[2] - e[4] / 2, 0).y); inclui(proj(e[1], e[2] + e[4] / 2, 0).y); }
-    else if (t === 'marca' || t === 'escada' || t === 'texto') inclui(proj(e[1], e[2], 0).y);
-  });
-  if (!isFinite(cima)) return { x:0, y:(foto.alt - h) / 2, w:foto.larg, h:h };
-  var folga = h * 0.05, y0;
-  if (baixo - cima + folga * 2 <= h) y0 = (cima + baixo) / 2 - h / 2;
-  else y0 = baixo + folga - h;
-  y0 = Math.max(0, Math.min(y0, foto.alt - h));
-  return { x:0, y:y0, w:foto.larg, h:h };
 }
 
 /* Legenda do desenho — as mesmas cores, explicadas uma vez.

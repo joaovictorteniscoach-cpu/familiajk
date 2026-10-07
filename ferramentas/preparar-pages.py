@@ -6,9 +6,10 @@ import shutil
 import subprocess
 
 RAIZ = Path(__file__).resolve().parent.parent
-PUBLICOS = {'app-gestao', 'app-aluno', 'app-familia', 'site', 'site-pro'}
+PUBLICOS = {'app-gestao', 'app-aluno', 'app-familia', 'app-exercicios', 'site', 'site-pro'}
 EXTENSOES = {'.html', '.css', '.js', '.webmanifest', '.png', '.jpg', '.jpeg',
              '.webp', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.otf'}
+PDFS_PUBLICOS = {Path('app-exercicios/treino22-forehand-em-movimento.pdf')}
 
 
 def preparar(destino):
@@ -25,7 +26,7 @@ def preparar(destino):
         rel = Path(nome)
         if rel.parts[0] not in PUBLICOS or any(p.startswith('.') for p in rel.parts):
             raise ValueError(f'Caminho não permitido: {nome}')
-        if rel.suffix.lower() not in EXTENSOES:
+        if rel.suffix.lower() not in EXTENSOES and rel not in PDFS_PUBLICOS:
             continue
         origem = RAIZ / rel
         if any(p.is_symlink() for p in [origem, *origem.parents]) or not origem.is_file():
@@ -41,7 +42,7 @@ def preparar(destino):
         shutil.copyfile(RAIZ / rel, alvo)
     (destino / '.nojekyll').touch()
     print(f'Pages: {len(selecionados)} arquivos; somente {", ".join(sorted(PUBLICOS))}.')
-    print('Fora do pacote: Família JK, negócio, metodologia, exercícios e ferramentas.')
+    print('Fora do pacote: fontes de negócio e metodologia, ferramentas e documentos internos.')
 
 
 if __name__ == '__main__':

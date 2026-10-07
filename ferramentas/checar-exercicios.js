@@ -3,7 +3,9 @@
    nenhum, o exercicio simplesmente desaparece da busca.
    Uso, a partir da raiz do repositorio:  node ferramentas/checar-exercicios.js */
 const fs = require('fs');
-const src = fs.readFileSync('app-exercicios/exercicios.js', 'utf8');
+// A mesma ordem da tela: banco, referência, montagem e revisão por código.
+const src = ['exercicios.js', 'treino22.js', 'quadra.js', 'cenas.js', 'revisao145.js']
+  .map(f => fs.readFileSync('app-exercicios/' + f, 'utf8')).join('\n');
 
 // o arquivo e' declarativo (const + function): roda num escopo isolado
 const sandbox = {};
@@ -11,6 +13,7 @@ new Function('g', src + `
   g.EX=EX; g.TEMAS=TEMAS; g.NIVEIS=NIVEIS; g.BLOCOS=BLOCOS; g.CAMADAS=CAMADAS;
   g.FORMATOS=FORMATOS; g.MATERIAIS=MATERIAIS; g.NECESSIDADES=NECESSIDADES;
   g.temaDoMes=temaDoMes;
+  g.svgQuadra=svgQuadra; g.proj=proj; g.vista=()=>({...VISTA});
 `)(sandbox);
 
 const { EX, TEMAS, NIVEIS, BLOCOS, CAMADAS, FORMATOS, MATERIAIS, NECESSIDADES } = sandbox;
@@ -42,7 +45,9 @@ EX.forEach((e, i) => {
   if (valido.bloco.indexOf(e.bloco) < 0) erros.push(`${onde}: bloco "${e.bloco}" nao existe`);
   if (valido.camada.indexOf(e.camada) < 0) erros.push(`${onde}: camada "${e.camada}" nao existe`);
   if (['baixa','media','alta'].indexOf(e.int) < 0) erros.push(`${onde}: int "${e.int}" nao existe`);
-  if (typeof e.min !== 'number' || e.min < 2 || e.min > 30) erros.push(`${onde}: min "${e.min}" fora de 2..30`);
+  // Blocos de jogo completos (set/pro-set) duram mais que um drill.
+  const maxMin = ['D19', 'D23'].includes(e.id) ? 70 : 30;
+  if (typeof e.min !== 'number' || e.min < 2 || e.min > maxMin) erros.push(`${onde}: min "${e.min}" fora de 2..${maxMin}`);
   if (['apostila','banco'].indexOf(e.fonte) < 0) erros.push(`${onde}: fonte "${e.fonte}" nao existe`);
 
   // a progressao so pode falar dos niveis que o exercicio atende
@@ -69,10 +74,10 @@ NECESSIDADES.forEach(n => {
 });
 
 /* ---------------------------------------------------------------------------
-   Parte 1b: o desenho da quadra cabe dentro do recorte escolhido?
-   Peca colocada fora da moldura simplesmente nao aparece — e o desenho fica
-   contando a historia errada, sem erro nenhum na tela. Aconteceu em 4
-   exercicios na primeira leva (sacador desenhado fora do recorte 'meia').
+   Parte 1b: as peças cabem no enquadramento realmente servido?
+   A foto usa uma câmera fixa e o recorte é calculado pelas peças. BASES é
+   a referência inicial, não a moldura final. Conferir a projeção efetiva
+   detecta cortes inclusive nas voltas por fora da quadra.
    --------------------------------------------------------------------------- */
 const quadraSrc = fs.readFileSync('app-exercicios/quadra.js', 'utf8');
 const caixaQ = {};
@@ -84,8 +89,6 @@ const PONTOS = {           // quais numeros de cada elemento sao coordenadas
   escada:[[1,2]], texto:[[1,2]], zona:[[1,2]], bola:[[1,2],[3,4]], mov:[[1,2],[3,4]],
   corda:[]                 // a corda atravessa a quadra inteira: nao tem ponto proprio
 };
-const FOLGA = { aluno:.75, prof:.75, colega:.75, cone:.65, marca:.3, escada:2.0, zona:.2, texto:.2, bola:.15, mov:.15 };
-
 EX.forEach(e => {
   if (!e.fig || !e.fig.el) { erros.push(`${e.id}: sem desenho da quadra (fig)`); return; }
   const b = BASES[e.fig.base || 'meia'];
@@ -93,16 +96,29 @@ EX.forEach(e => {
   e.fig.el.forEach((el, i) => {
     const pares = PONTOS[el[0]];
     if (!pares) { erros.push(`${e.id}: elemento "${el[0]}" nao existe no desenho`); return; }
-    const folga = FOLGA[el[0]] || .2;
     pares.forEach(([ix, iy]) => {
       const x = el[ix], y = el[iy];
       if (typeof x !== 'number' || typeof y !== 'number') {
         erros.push(`${e.id}: elemento ${i + 1} (${el[0]}) sem coordenada`); return;
       }
-      if (x - folga < b.x || x + folga > b.x + b.w || y - folga < b.y || y + folga > b.y + b.h)
-        erros.push(`${e.id}: ${el[0]} em (${x}, ${y}) cai fora do recorte "${e.fig.base}"`);
+      if (!Number.isFinite(x) || !Number.isFinite(y)) erros.push(`${e.id}: coordenada não finita`);
     });
   });
+  for (const [nome,op] of [['miniatura',{mini:true,escalaFig:1.25}],['ficha',{escalaFig:1.3}],['impressão',{inteira:true,escalaFig:2.3,aro:false}]]) {
+    const svg=sandbox.svgQuadra(e.fig,op),v=sandbox.vista();
+    if (/NaN|Infinity|undefined/.test(svg)) erros.push(`${e.id}: projeção inválida na ${nome}`);
+    e.fig.el.forEach(el=>{
+      if (el[0]==='texto' || el[0]==='corda') return; // os rótulos são reposicionados
+      let pontos=(PONTOS[el[0]]||[]).map(([x,y])=>[el[x],el[y]]);
+      if(el[0]==='zona') pontos=[[el[1]-el[3]/2,el[2]-el[4]/2],[el[1]+el[3]/2,el[2]+el[4]/2]];
+      for(const [x,y] of pontos) {
+        const p=sandbox.proj(x,y,0);
+        if(p.x<v.x-.1 || p.x>v.x+v.w+.1 || p.y<v.y-.1 || p.y>v.y+v.h+.1)
+          erros.push(`${e.id}: ${el[0]} cortado na ${nome}`);
+      }
+    });
+    for(const m of svg.matchAll(/href="([^"#]+)"/g))if(!fs.existsSync('app-exercicios/'+m[1]))erros.push(`${e.id}: imagem ausente ${m[1]}`);
+  }
   if (!e.passos || e.passos.length < 3) erros.push(`${e.id}: passo a passo com menos de 3 passos`);
   if (!e.dica) avisos.push(`${e.id}: sem dica extra`);
   // as tres colunas do rodape da ficha

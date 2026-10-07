@@ -24,6 +24,7 @@ gera o conteúdo.
 | `app-aluno/`   | Alunos       | App do **aluno** (agendamento, pagamentos). PWA + Firebase.    |
 | `app-gestao/`  | Professor    | App de **gestão** (agenda, alunos, caixa e financeiro). PWA + Firebase. |
 | `app-familia/` | Pessoal      | App **da família JK** (contas da casa, cartões, investimentos). PWA + Firebase opcional. |
+| `app-exercicios/` | Professor | **Apostila revisada**: 145 exercícios originais e a referência D2-FH-03, com fichas completas e PDF. Publicação autorizada em 07/10/2026. |
 
 ### Fontes (NÃO publicadas)
 

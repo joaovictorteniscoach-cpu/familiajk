@@ -16,6 +16,7 @@
 | Gestão | `https://joaovictorteniscoach-cpu.github.io/familiajk/app-gestao/` |
 | Aluno | `https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/` |
 | Site | `https://joaovictorteniscoach-cpu.github.io/familiajk/site/` |
+| Apostila de exercícios revisada | `https://joaovictorteniscoach-cpu.github.io/familiajk/app-exercicios/` |
 
 **Reserva: Netlify.** Publica sozinho no mesmo envio, então os dois endereços
 andam juntos sem ninguém fazer nada. Deixou de ser o principal porque o plano
@@ -97,13 +98,16 @@ publicação por sessão e o filtro funcionando, o automático é seguro.
 
 O workflow `.github/workflows/pages.yml` publica somente a `main`, depois de
 `checar-tudo.sh` e da sintaxe do site-pro. O artefato é montado por
-`ferramentas/preparar-pages.py`: somente `app-gestao/`, `app-aluno/`, `site/` e
-`site-pro/`, com arquivos web permitidos. Não envie a raiz do repositório.
+`ferramentas/preparar-pages.py`: somente `app-gestao/`, `app-aluno/`, `app-familia/`,
+`app-exercicios/`, `site/` e `site-pro/`, com arquivos web permitidos.
+Não envie a raiz do repositório.
 
 O CI de pull requests valida o mesmo pacote, sem permissão nem etapa de deploy.
-Família JK, negócio, metodologia, exercícios e ferramentas ficam fora do Pages;
+Fontes de negócio e metodologia, ferramentas e documentos internos ficam fora do Pages;
 isso **não torna privados os arquivos nem o histórico do Git público**.
-PDFs também ficam fora do pacote público. O PDF da metodologia saiu da pasta
+PDFs ficam fora do pacote público, com uma exceção explícita: o PDF ilustrado
+`app-exercicios/treino22-forehand-em-movimento.pdf`, autorizado junto à publicação
+da apostila revisada em 07/10/2026. O PDF da metodologia saiu da pasta
 `site/` (o Netlify publica a pasta inteira) e fica só em `metodologia/export/`.
 
 Antes da primeira publicação restrita, confirme o endereço independente do
