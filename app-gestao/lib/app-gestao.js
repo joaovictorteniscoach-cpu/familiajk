@@ -2150,7 +2150,7 @@ function datasConferenciaReserva(p){
 function limiteGrupoHorario(evs){
   return Math.min(...evs.map(e=>[2,3,4].includes(Number(e.pessoas))?Number(e.pessoas):2));
 }
-function pessoasGrupoAluno(a){return ({Dupla:2,Trio:3,Quarteto:4})[a.grupoTipo||a.tipo]||2;}
+function pessoasGrupoAluno(a){const n={Dupla:2,Trio:3,Quarteto:4};return n[a.tipo]||n[a.grupoTipo]||2;}
 function compartilhamentoHorario(evs){
   if(!evs.length)return '';
   const tipo=evs[0].tipo;

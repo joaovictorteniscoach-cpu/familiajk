@@ -160,6 +160,8 @@ async function setup(context,base,theme='saibro'){
   });
   await reset();
   await check('Gestão: limites 2/3/4 valem na grade e no processamento dos pedidos',async()=>{
+   assert.equal(await p.evaluate(()=>pessoasGrupoAluno({tipo:'Trio',grupoTipo:'Dupla'})),3);
+   assert.equal(await p.evaluate(()=>pessoasGrupoAluno({tipo:'Quarteto',grupoTipo:'Dupla'})),4);
    for(const limite of [2,3,4]){
     for(let n=1;n<=limite;n++){
      const ok=await p.evaluate(({n,limite})=>podeAdicionarAoHorario(Array.from({length:n},()=>({tipo:'grupo',pessoas:limite})),'grupo',limite),{n,limite});
