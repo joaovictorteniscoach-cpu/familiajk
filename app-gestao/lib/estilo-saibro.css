@@ -1040,6 +1040,10 @@ input,select,textarea{min-height:44px}
 .comp-info,.comp-info span,.pend-item span,.cons p,.dobra-cab small,.fech-card span,.fq-linha span{
   color:var(--jv-copy-soft)!important
 }
+/* Etiqueta de vencimento é clara: a letra dela fica escura (a regra acima a deixava ilegível) */
+.pend-item .venc-tag{color:#5E523F!important;-webkit-text-fill-color:#5E523F!important}
+.pend-item .venc-tag.late{color:#8E2C1E!important;-webkit-text-fill-color:#8E2C1E!important}
+.pend-item .venc-tag.soon{color:#6E520D!important;-webkit-text-fill-color:#6E520D!important}
 
 /* Alunos — busca/filtros compactos, cards mais baixos e leitura imediata. */
 #pg-alunos .toolbar{grid-template-columns:minmax(0,1fr) auto auto!important;align-items:stretch!important}

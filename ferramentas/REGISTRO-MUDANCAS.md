@@ -33,6 +33,11 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
   Gestão (no Saibro, o "meio ar" deixava fundo cinza). Regras no fim do
   `<style>` do aluno e em `EXTRA`/`EXTRA_ALUNO` do `tema-saibro.py`.
   Verificação de contraste incluída no `testar-3-pedidos-browser.cjs`.
+  Na `2026-10-07-7`: etiqueta "vence em…" das Cobranças pendentes (Início
+  da Gestão) — `.pend-item span{color:var(--jv-copy-soft)!important}`
+  deixava a letra creme sobre a etiqueta creme; agora `.pend-item .venc-tag`
+  tem letra escura por urgência. Varreduras de contraste devem abrir as
+  seções dobráveis (`.dobra.on`), senão não enxergam essas listas.
   Ficaram como estão (no limite, 4,4:1): botões brancos sobre o saibro
   `#C2582E` (cor da marca).
 - Nenhuma migração, nenhuma gravação nova, regras do Firebase intactas.
