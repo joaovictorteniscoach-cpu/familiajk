@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-07-1';
+const VERSAO='2026-10-07-2';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2122,17 +2122,56 @@ function cancelamentoTardio(p){
   const enviado=Math.min(Number(p.ts)||Date.now(),Date.now());
   return aula-enviado<LIMITE_CANCEL_H_GESTAO*3600e3;
 }
+function datasReserva(data,rec){
+  const inicio=new Date(String(data)+'T12:00:00'),hoje=new Date(),lim=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()+90,12);
+  if(isNaN(inicio.getTime())||inicio>lim)return [];
+  const lista=[];for(let d=new Date(inicio);d<=lim;d.setDate(d.getDate()+7)){
+    lista.push(dKey(d));if(rec!=='fixo')break;
+  }
+  return lista;
+}
+function chaveReserva(data,hora){return 'reserva_'+data+'_'+String(hora).replace(':','');}
+function datasConferenciaReserva(p){
+  const lista=new Set(datasReserva(p.data,p.rec));
+  if(p.rec==='fixo'){
+    const dia=new Date(p.data+'T12:00:00').getDay(),A=DB.agenda;
+    // Inclui compromissos futuros conhecidos, mesmo além da janela publicada.
+    for(const e of [...(A.eventos||[]),...(DB.compromissos||[])])
+      if(e.data>=p.data&&e.hora===p.hora&&new Date(e.data+'T12:00:00').getDay()===dia)lista.add(e.data);
+    for(const f of A.fixos||[]){
+      if(f.dia!==dia||f.hora!==p.hora||f.ate&&f.ate<p.data)continue;
+      const d=new Date((f.desde&&f.desde>p.data?f.desde:p.data)+'T12:00:00');
+      d.setDate(d.getDate()+((dia-d.getDay()+7)%7));lista.add(dKey(d));
+      d.setDate(d.getDate()+7);if(!f.ate||dKey(d)<=f.ate)lista.add(dKey(d));
+    }
+  }
+  return [...lista].sort();
+}
 function pedidoAgendaValido(p,a){
   if(!p||!a||!/^\d{4}-\d{2}-\d{2}$/.test(String(p.data||''))||HORAS.indexOf(String(p.hora||''))<0)return false;
-  const d=new Date(p.data+'T12:00:00');if(isNaN(d.getTime()))return false;
+  const d=new Date(p.data+'T12:00:00');if(isNaN(d.getTime())||dKey(d)!==p.data)return false;
   const dias=(d.getTime()-new Date().setHours(0,0,0,0))/864e5;
   if(dias < -1 || dias > 90)return false;
   if(p.acao==='cancelar')return true;
-  if(entriesFor(d,p.hora).length>0)return false;
-  const modo=slotModo(d,p.hora);
-  if(modo==='fechado')return false;
-  if(modo==='loc'&&!p.repo&&!p.tor)return false;
-  return true;
+  if(!['fixo','pontual'].includes(p.rec))return false;
+  const grupo=!p.tor&&(p.grupo===1||catAgendaDe(a.tipo)==='grupo');
+  return datasConferenciaReserva(p).every(data=>{
+    const date=new Date(data+'T12:00:00'),modo=slotModo(date,p.hora);
+    if(modo==='fechado'||modo==='loc'&&!p.repo&&!p.tor)return false;
+    if(ocupadoPorOutro(date,p.hora))return false;
+    const grade=entriesFor(date,p.hora);
+    // O pedido não pode transformar uma vaga vazia em grupo por conta própria.
+    if(p.grupo===1&&(!grade.length||!grade.every(e=>e.tipo==='grupo')))return false;
+    const entradas=grade.filter(e=>!(p.id&&e.reservaId===p.id&&e.alunoId===a.id));
+    return !entradas.length||grupo&&entradas.every(e=>e.tipo==='grupo');
+  });
+}
+function guardarRespostaReserva(p,estado,motivo){
+  if(!p.id)return;
+  DB.respostasReservas=DB.respostasReservas||[];
+  DB.respostasReservas=DB.respostasReservas.filter(r=>r.id!==p.id||r.codigo!==String(p.codigo||''));
+  DB.respostasReservas.push({id:p.id,codigo:String(p.codigo||''),estado,motivo:motivo||'',data:p.data,hora:p.hora,ts:Date.now()});
+  DB.respostasReservas=DB.respostasReservas.slice(-200);
 }
 function renderVinculos(){
   const box=document.getElementById('vinculos-box');if(!box)return;
@@ -2271,7 +2310,7 @@ async function revogarVinculo(uid){
 }
 function gradePublicaSegura(g){
   g=g||{fixos:[],eventos:[],excecoes:[]};
-  const tipoPublico=x=>x&&x.tipo==='bloqueio'?'bloqueio':'ocupado';
+  const tipoPublico=x=>x&&x.tipo==='bloqueio'?'bloqueio':x&&x.tipo==='grupo'?'grupo':'ocupado';
   return {
     fixos:(g.fixos||[]).map(f=>({id:f.id,dia:f.dia,hora:f.hora,tipo:tipoPublico(f),desde:f.desde||'',ate:f.ate||''})),
     eventos:(g.eventos||[]).map(e=>{
@@ -2302,7 +2341,7 @@ async function publicarSeguro(pub){
     const fix=(pub.grade&&pub.grade.fixos||[]).filter(f=>String(f.cod||'')===code);
     const ids=new Set(fix.map(f=>f.id));
     const priv={
-      updatedAt:pub.updatedAt,aluno:al,historico:(pub.historico&&pub.historico[code])||[],
+      updatedAt:pub.updatedAt,aluno:al,reservasRespostas:(DB.respostasReservas||[]).filter(r=>r.codigo===code).slice(-20),historico:(pub.historico&&pub.historico[code])||[],
       gradeMeu:{fixos:fix,eventos:(pub.grade&&pub.grade.eventos||[]).filter(e=>String(e.cod||'')===code),excecoes:(pub.grade&&pub.grade.excecoes||[]).filter(x=>ids.has(x.fixoId))},
       chuvas:(pub.chuvas||[]).filter(c=>Array.isArray(c.cods)&&c.cods.some(x=>String(x||'')===code)).map(c=>({data:c.data,hora:c.hora,ts:c.ts||0,cods:[code]})),
       pix:pub.pix||'',pixNome:pub.pixNome||'',pixCidade:pub.pixCidade||'',pixTipo:pub.pixTipo||'celular',cardLink:pub.cardLink||'',torneio:pub.torneio||null
@@ -2428,67 +2467,76 @@ let syncing=false;
 async function syncRequests(silent){
   if(syncing)return;syncing=true;
   if(!hasCloud()){if(!silent)toast('Nuvem (Firebase) não conectada');syncing=false;return;}
+  if(_conflitoNuvem||_abriuSemConferir){syncing=false;return;}
   try{
     await carregarVinculos(true);
-    const ref=window.fbDB.ref('jvtenis/fila_agendamentos');
-    const snap=await ref.get();
-    if(!snap.exists()){if(!silent)toast('Nenhum agendamento novo de alunos');syncing=false;return;}
-    const fila=snap.val()||{};
-    const chaves=Object.keys(fila);
+    const ref=window.fbDB.ref('jvtenis/fila_agendamentos'),snap=await ref.get();
+    if(!snap.exists()){if(!silent)toast('Nenhum agendamento novo de alunos');return;}
+    const fila=snap.val()||{},updates=Object.create(null);
+    const chaves=Object.keys(fila).sort((x,y)=>(Number(fila[x].ts)||0)-(Number(fila[y].ts)||0)||x.localeCompare(y));
     let n=0,nc=0,nb=0,nr=0;const tardios=[];
+    const finalizar=(key,p,aceito)=>{
+      const relacionados=Object.keys(fila).filter(k=>k===key||fila[k].principal===key&&fila[k].uid===p.uid&&String(fila[k].codigo)===String(p.codigo));
+      for(const k of relacionados)updates[aceito?(k+'/processado'):k]=aceito?true:null;
+    };
     chaves.forEach((key,idx)=>{
-      const p=fila[key];
+      const p=fila[key];if(!p||typeof p!=='object')return;
+      if(p.processado){
+        const date=new Date(p.data+'T12:00:00');
+        if(key===chaveReserva(p.data,p.hora)&&(p.data<dKey(new Date())||!entriesFor(date,p.hora).length))updates[key]=null;
+        return;
+      }
+      if(p.travaSomente)return;
       if(!pedidoConfiavel(p)){nb++;return;}
-      const a=DB.alunos.find(x=>x.codigo===p.codigo);
-      if(!pedidoAgendaValido(p,a)){nr++;ref.child(key).remove().catch(()=>{});return;}
-      if(a){
-        const tipo=p.tor?'torneio':catAgendaDe(a.tipo);   // jogo do torneio: já pago, não usa crédito
-        if(p.acao==='cancelar'&&cancelamentoTardio(p)){
-          /* O app do aluno só deixa cancelar até 4h antes; um pedido fora disso
-             veio de um app mexido. A aula fica na agenda e o João decide. */
-          tardios.push((a.nome||'').split(' ')[0]+' '+fmtDataCurta(p.data)+' '+p.hora);
-        }else if(p.acao==='cancelar'){
-          const dia=new Date(p.data+'T12:00:00').getDay();
-          const fx=DB.agenda.fixos.find(f=>f.alunoId===a.id&&f.dia===dia&&f.hora===p.hora&&fixoValeEm(f,p.data));
-          if(fx){
-            if(!DB.agenda.excecoes.some(x=>x.fixoId===fx.id&&x.data===p.data))
-              DB.agenda.excecoes.push({fixoId:fx.id,data:p.data});
-          }else{
-            DB.agenda.eventos=DB.agenda.eventos.filter(e=>!(e.alunoId===a.id&&e.data===p.data&&e.hora===p.hora));
-          }
-          nc++;
-        }else if(p.rec==='fixo'){
-          const dia=new Date(p.data+'T12:00:00').getDay();
-          if(!DB.agenda.fixos.some(f=>f.alunoId===a.id&&f.dia===dia&&f.hora===p.hora&&fixoValeEm(f,p.data))){
-            const nf={id:'f'+Date.now()+idx,dia,hora:p.hora,titulo:a.nome,tipo,alunoId:a.id,desde:p.data};
-            /* Com quem o aluno pediu a aula. Ele escolheu no app dele; sem
-               isto a escolha se perdia e a aula caía sempre para o João. */
-            const pf=profPedido(p,a);if(pf)nf.profId=pf;
-            DB.agenda.fixos.push(nf);
-          }
-          n++;
-        }else{
-          if(!DB.agenda.eventos.some(e=>e.alunoId===a.id&&e.data===p.data&&e.hora===p.hora)){
-            const ne={id:'e'+Date.now()+idx,data:p.data,hora:p.hora,titulo:a.nome,tipo,alunoId:a.id,repo:p.repo?1:0};
-            const pf=profPedido(p,a);if(pf)ne.profId=pf;
-            DB.agenda.eventos.push(ne);
-          }
+      const a=DB.alunos.find(x=>String(x.codigo)===String(p.codigo));
+      if(!pedidoAgendaValido(p,a)){
+        nr++;guardarRespostaReserva(p,'recusado','Horário indisponível. Escolha outra vaga.');
+        finalizar(key,p,false);return;
+      }
+      const tipo=p.tor?'torneio':p.grupo===1?'grupo':catAgendaDe(a.tipo);
+      if(p.acao==='cancelar'&&cancelamentoTardio(p)){
+        tardios.push((a.nome||'').split(' ')[0]+' '+fmtDataCurta(p.data)+' '+p.hora);
+        guardarRespostaReserva(p,'recusado','Cancelamento fora do prazo. Fale com o João.');
+        updates[key]=null;return;
+      }
+      if(p.acao==='cancelar'){
+        const dia=new Date(p.data+'T12:00:00').getDay();
+        const fx=DB.agenda.fixos.filter(f=>f.alunoId===a.id&&f.dia===dia&&f.hora===p.hora&&fixoValeEm(f,p.data));
+        for(const f of fx)if(!DB.agenda.excecoes.some(x=>x.fixoId===f.id&&x.data===p.data))DB.agenda.excecoes.push({fixoId:f.id,data:p.data});
+        DB.agenda.eventos=DB.agenda.eventos.filter(e=>!(e.alunoId===a.id&&e.data===p.data&&e.hora===p.hora));
+        nc++;updates[key]=null;
+        const lock=chaveReserva(p.data,p.hora);
+        if(fila[lock]&&String(fila[lock].codigo)===String(a.codigo)&&!entriesFor(new Date(p.data+'T12:00:00'),p.hora).length)updates[lock]=null;
+        guardarRespostaReserva(p,'cancelado','');
+      }else{
+        const jaAplicado=p.id&&[...DB.agenda.fixos,...DB.agenda.eventos].some(e=>e.reservaId===p.id&&e.alunoId===a.id);
+        if(!jaAplicado){
+          const date=new Date(p.data+'T12:00:00'),base={id:(p.rec==='fixo'?'f':'e')+Date.now()+idx,hora:p.hora,titulo:a.nome,tipo,alunoId:a.id,reservaId:p.id||'',repo:p.repo?1:0};
+          const pf=profPedido(p,a);if(pf)base.profId=pf;
+          if(p.rec==='fixo')DB.agenda.fixos.push({...base,dia:date.getDay(),desde:p.data});
+          else DB.agenda.eventos.push({...base,data:p.data});
           n++;
         }
+        guardarRespostaReserva(p,'confirmado','');
+        // A criação única continua bloqueada até o horário ser liberado na agenda.
+        if(key===chaveReserva(p.data,p.hora))finalizar(key,p,true);else updates[key]=null;
       }
-      // remove da fila (processado ou de aluno inexistente)
-      ref.child(key).remove().catch(()=>{});
     });
-    if(n>0||nc>0){
-      persist();renderAgenda();
-      const partes=[];if(n>0)partes.push(n+' reserva'+(n===1?'':'s'));if(nc>0)partes.push(nc+' cancelamento'+(nc===1?'':'s'));
-      toast('📥 '+partes.join(' · ')+' de alunos');
+    if(Object.keys(updates).length){
+      persist();
+      // Não consumir pedidos antes da confirmação durável da agenda. Outra
+      // sessão pode ter alterado o banco durante a leitura: o CAS recusa.
+      if(!await gravarAgora()){if(!silent)toast('Pedidos mantidos na fila — confirme a gravação da agenda antes de continuar.');return;}
+      await doPublish();
+      // O SDK usa hasOwnProperty: converter o mapa interno para objeto comum.
+      await ref.update({...updates});
+      renderAgenda();
     }
-    else if(!silent&&!tardios.length)toast(nb?'Há '+nb+' solicitação(ões) aguardando vínculo do aparelho':(nr?'Solicitação inválida descartada por segurança':'Nenhuma novidade de alunos'));
-    /* por último, para não ser coberto pelo resumo acima */
-    if(tardios.length)toast('⚠️ Cancelamento com menos de '+LIMITE_CANCEL_H_GESTAO+'h não aplicado ('+tardios.join(', ')+') — a aula continua na agenda. Confira com o aluno.');
-  }catch(e){if(!silent)toast('Erro ao sincronizar');}
-  syncing=false;
+    if(n>0||nc>0)toast('📥 '+n+' reserva(s) · '+nc+' cancelamento(s) de alunos'+(nr?' · '+nr+' recusado(s) por conflito':''));
+    else if(!silent&&!tardios.length)toast(nb?'Há '+nb+' solicitação(ões) aguardando vínculo do aparelho':nr?'Horário indisponível: pedido recusado e aluno avisado':'Nenhuma novidade de alunos');
+    if(tardios.length)toast('⚠️ Cancelamento fora do prazo não aplicado — confira com o aluno.');
+  }catch(e){if(!silent)toast('Não consegui confirmar a sincronização. Os pedidos ainda serão conferidos.');}
+  finally{syncing=false;}
 }
 
 /* ===== Status público da quadra — nó mínimo, sem peso no site ============ */
@@ -3960,6 +4008,15 @@ function saveSlot(){
   const tipo=document.getElementById('s-tipo').value;
   const alunoId=document.getElementById('s-aluno').value||null;
   const pessoas=(tipo==='grupo')?(Number((document.getElementById('s-grupo-n')||{}).value)||2):null;
+  if(!slotCtx.editing&&['aula','grupo','personal','torneio','locacao'].includes(tipo)){
+    const pedido={data:dKey(slotCtx.date),hora:slotCtx.hora,rec:document.getElementById('s-rec').value};
+    const conflito=datasConferenciaReserva(pedido).some(data=>{
+      const evs=entriesFor(new Date(data+'T12:00:00'),slotCtx.hora);
+      return evs.length&&!(tipo==='grupo'&&evs.every(e=>e.tipo==='grupo'));
+    });
+    if(conflito){toast('Horário reservado. Só aulas em grupo podem compartilhar a mesma vaga.');return;}
+  }
+
   if(slotCtx.editing){
     const {id,origem}=slotCtx.editing;
     const rec=(origem==='fixo'?DB.agenda.fixos:DB.agenda.eventos).find(x=>x.id===id);
