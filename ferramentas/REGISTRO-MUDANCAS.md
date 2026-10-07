@@ -177,3 +177,46 @@ Base examinada: `e77844a1d440bf13d51a8d47c990045eebc28558`, versão publicada
 - Verificação documental: regras e funções citadas conferidas na base acima;
   PR #224 e monitor público examinados. Compatibilidade de microfone ainda
   requer teste no aparelho real. CI desta entrega é registrado no próprio PR.
+
+
+---
+
+## 2026-10-07 · Codex: Aulas do aluno e horários do mês na agenda
+
+**Estado: versão preparada 2026-10-07-6; não publicada.**
+João pediu revisão antes de lançar. A integração na main depende dessa
+confirmação, depois dos testes. Base: `893ecca78f5752d88193ab6e736825760e07769e`.
+
+- Aulas: cada próxima marcação tem Confirmar presença, Cancelar aula e
+  Adicionar ao Google Agenda; acesso pelo cartão do Início, Créditos e Perfil.
+  Particular, grupo, Personal e dependente usam o mesmo acesso.
+- Cancelamento até 4h antes (inclusive exatamente 4h), com nova conferência
+  depois de ler a nuvem; envio deve confirmar na fila antes de mudar o estado
+  local. Só a data escolhida é cancelada, preservando o fixo.
+  Confirmação de presença continua disponível antes do início da aula.
+- Histórico limitado ao mês atual e sem corte de 20/30 aulas. A Gestão
+  publica todas as presenças válidas do mês; nenhuma presença ou saldo é
+  corrigido/regravado por essa mudança.
+- Cartões legíveis nos dois temas e ações com pelo menos 44px de toque.
+  Folha nova `aulas-aluno.css`, carregada depois dos temas e guardada no SW.
+  Os inputs do gerador Saibro não mudaram; folhas geradas permanecem idênticas.
+  Demo regenerada pelo mesmo algoritmo, validado contra a saída anterior.
+- Salvar horários do mês: prévia e um arquivo ICS com eventos individuais,
+  horário de Curitiba, IDs estáveis, sem dados de outro aluno. Eventos do
+  mês, fixos válidos e presenças registradas são deduplicados. Não é
+  sincronização automática com Google; alterações/cancelamentos posteriores
+  precisam ser atualizados na agenda externa.
+- Conferência Google: o Aluno usa autenticação anônima do aparelho e código,
+  não vinculação Google nem autorização de Calendar API. O atalho individual
+  abre um evento preenchido; o aluno precisa salvar. Importação mensal no
+  Google Agenda é feita no computador. Ver `GOOGLE-AGENDA-ALUNO.md`.
+- Coordenação: #224 do Claude permanece separado, aguardando a aprovação
+  pedida no próprio PR. Seu trecho do Aluno toca os mesmos fluxos/versões.
+  Antes de integrá-lo, atualizar a base para preservar as ações desta entrega,
+  o histórico mensal e os acessos; não substituir pelo index antigo.
+  Os dois ajustes de navegação da Gestão do #224 não foram integrados aqui.
+  A versão 2026-10-07-5 do #224 não deve baixar uma versão publicada mais nova.
+- Teste novo `testar-aulas-agenda-aluno-browser.cjs`: período, privacidade,
+  tipos de aluno, prazo exato/fora do prazo, revalidação, erro/atraso da fila,
+  confirmação sem duplicar, ICS mensal, prévia desatualizada e telas nos dois
+  temas em 320/390/520/1280px. Resultado e prints serão registrados no PR.

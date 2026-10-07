@@ -1588,11 +1588,12 @@ body[data-aba]:not([data-aba="inicio"]) #app>.top .jv-quadra-chip{display:none!i
 #app>.top .jv-chips-topo .jv-clima-chip .clima-ic{font-size:17px}
 #app>.top .jv-chips-topo .jv-quadra-chip .led{width:9px;height:9px;flex:0 0 9px}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-07-4">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-07-6">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-07-4">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-07-6">
+<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-07-6">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -1805,7 +1806,7 @@ function esperarAuth(){
     <div id="lembrete-box" style="display:none;background:#1A2E14;color:#fff;border-radius:14px;padding:13px 15px;margin-bottom:12px">
       <b style="font-size:14px">🔔 Você tem aula hoje!</b>
       <p id="lembrete-txt" style="margin:4px 0 9px;font-size:13px;opacity:.9"></p>
-      <button onclick="lembreteCalendario()" style="background:#fff;color:#1A2E14;border:none;border-radius:9px;padding:8px 12px;font-weight:700;font-size:12.5px;cursor:pointer">＋ Adicionar à agenda do celular</button>
+      <button onclick="lembreteCalendario()" style="background:#fff;color:#1A2E14;border:none;border-radius:9px;padding:8px 12px;font-weight:700;font-size:12.5px;cursor:pointer">＋ Google Agenda</button>
       <button id="lembrete-confirmar" onclick="confirmarPresencaAluno()" style="background:#CBD24A;color:#1A2E14;border:none;border-radius:9px;padding:8px 12px;font-weight:800;font-size:12.5px;cursor:pointer;margin-left:6px">✅ Confirmar presença</button>
     </div>
     <div id="renova-box" style="display:none;background:#3A2A12;color:#fff;border-radius:14px;padding:14px 15px;margin-bottom:12px">
@@ -1856,8 +1857,8 @@ function esperarAuth(){
         <div class="hc-sub" id="home-repos-sub">reposições disponíveis</div>
         <div class="hc-sub" id="home-repos-venc" hidden></div>
       </button>
-      <button class="jv-home-card" type="button" onclick="goAluno('agenda',document.getElementById('nav-al-agenda'))">
-        <div class="hc-top"><span class="hc-icon" data-ic="cal"></span><span>Próxima aula ›</span></div>
+      <button class="jv-home-card" type="button" onclick="goAluno('aulas',null)">
+        <div class="hc-top"><span class="hc-icon" data-ic="cal"></span><span>Minhas aulas ›</span></div>
         <div class="hc-main" id="home-prox-date">—</div>
         <div class="hc-sub" id="home-prox-meta">Carregando sua agenda…</div>
       </button>
@@ -1916,15 +1917,19 @@ function esperarAuth(){
 
     <section class="page" id="apg-aulas">
     <div class="minhas">
+      <p class="aul-intro">Confirme sua presença. Para cancelar, faça isso até 4 horas antes. O cancelamento vale apenas para a data escolhida.</p>
       <p class="sec-eyebrow">Meus horários</p>
-      <h2 class="sec-title">Próximas <em>aulas</em> do mês</h2>
+      <h2 class="sec-title">Próximas <em>aulas</em></h2>
+      <p id="aul-prox-count" class="aul-status"></p>
+      <button id="aul-cal-abrir" type="button" class="aul-link" onclick="abrirAgendaMesAluno()">Salvar horários do mês na agenda</button>
       <div id="mine-list"></div>
+      <p class="aul-intro aul-calendar-note">No Google Agenda, toque em Salvar. Se a aula mudar ou for cancelada, atualize também o evento salvo lá.</p>
       <button class="btn btn-clay" style="width:100%;margin-top:12px" onclick="irAgendar()">🎾 Agendar mais uma aula</button>
     </div>
     <div id="pedir-box" style="display:none;margin-top:14px"></div>
     <div class="minhas" style="margin-top:14px">
       <p class="sec-eyebrow">Histórico</p>
-      <h2 class="sec-title">Aulas <em>realizadas</em></h2>
+      <h2 class="sec-title" id="aul-hist-mes">Realizadas neste mês</h2>
       <div id="hist-list"></div>
     </div>
 
@@ -1999,6 +2004,7 @@ function esperarAuth(){
         <button type="button" onclick="irMarcarReposicao()"><span data-ic="refresh"></span>Solicitar reposição</button>
         <button type="button" onclick="falarComProfessor()"><span>💬</span>Falar com a academia</button>
       </div>
+          <button id="cred-page-mes" type="button" class="aul-link" onclick="goAluno('aulas',null)">Minhas aulas ›</button>
     </section>
 
     <section class="page" id="apg-perfil">
@@ -2044,7 +2050,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-10-07-4"></script>
+<script src="lib/icones.js?v=2026-10-07-6"></script>
 </div>
 
 <!-- MODAL ESCOLHER O QUE FAZER NO HORÁRIO -->
@@ -2149,6 +2155,17 @@ function esperarAuth(){
 </div>
 
 <!-- MODAL AGENDAR -->
+
+<div class="overlay" id="ov-aulas-cal" onclick="if(event.target===this)closeModal('ov-aulas-cal')">
+  <div class="modal aul-cal-modal" role="dialog" aria-modal="true" aria-labelledby="aul-cal-title">
+    <h3 id="aul-cal-title">Horários do mês</h3>
+    <p id="aul-cal-count"></p>
+    <ul id="aul-cal-list"></ul>
+    <p>Baixe um arquivo com todos os horários desta lista. No celular, abra-o em uma agenda compatível. No Google Agenda, importe o arquivo pelo computador em Configurações → Importar e exportar.</p>
+    <p class="aul-cal-note">Esse arquivo não sincroniza sozinho. Alterações e cancelamentos precisam ser atualizados também na sua agenda. Confira os eventos existentes antes de importar novamente.</p>
+    <div class="aul-cal-actions"><button id="aul-cal-baixar" class="btn btn-clay" type="button" onclick="salvarAgendaMesAluno()">Baixar horários do mês</button><button class="btn btn-ghost" type="button" onclick="closeModal('ov-aulas-cal')">Voltar</button></div>
+  </div>
+</div>
 <div class="overlay" id="ov-book" onclick="if(event.target===this)this.classList.remove('on')">
   <div class="modal">
     <h3 id="book-title">Agendar horário 🎾</h3>
@@ -2251,7 +2268,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-10-07-4';
+const VERSAO='2026-10-07-6';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -2535,23 +2552,79 @@ function notificarJoao(acao,dk,hora){
   const n={acao,nome:EU?EU.nome:'',codigo:MEU.codigo,data:dk,hora,tipo,ts:Date.now()};
   try{filaPush('jvtenis/notificacoes',n).catch(function(){});}catch(e){}
 }
+function dataHoraAulaValida(dk,hora){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(dk))||!/^([01]\d|2[0-3]):[0-5]\d$/.test(String(hora)))return false;
+  const d=dtOf(dk,hora);return !isNaN(d.getTime())&&dKey(d)===dk;
+}
+function historicoAlunoMesAtual(){
+  const cod=String((MEU&&MEU.codigo)||(EU&&EU.codigo)||''),hoje=dKey(new Date()),mk=hoje.slice(0,7);
+  const lista=(PUB&&PUB.historico&&PUB.historico[cod])||[];
+  return lista.filter(p=>p&&/^\d{4}-\d{2}-\d{2}$/.test(String(p.data||''))
+    &&p.data.slice(0,7)===mk&&p.data<=hoje)
+    .slice().sort((a,b)=>(b.data+(b.hora||'')).localeCompare(a.data+(a.hora||'')));
+}
+function aulasAgendadasAluno(){
+  const cod=String((MEU&&MEU.codigo)||(EU&&EU.codigo)||''),hoje=new Date();
+  if(!cod)return [];
+  const G=(PUB&&PUB.grade)||{},exc=G.excecoes||[],feitas=historicoAlunoMesAtual(),itens=new Map();
+  const incluir=(dk,hora,rec,tipo,pendente)=>{
+    if(!dataHoraAulaValida(dk,hora)||horasAte(dk,hora)<=0||foiCancelado(dk,hora))return;
+    if(feitas.some(p=>p.data===dk&&p.hora===hora))return;
+    const k=dk+'|'+hora,old=itens.get(k);
+    if(old&&!old.pendente)return;
+    itens.set(k,{data:dk,hora,rec,tipo:tipo||'aula',pendente:!!pendente});
+  };
+  (G.fixos||[]).filter(f=>String(f.cod||'')===cod).forEach(f=>{
+    for(let i=0;i<35;i++){
+      const d=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()+i,12),dk=dKey(d);
+      if(d.getDay()!==Number(f.dia)||!fixoValeEm(f,dk)||exc.some(x=>x.fixoId===f.id&&x.data===dk))continue;
+      incluir(dk,f.hora,'fixo',f.tipo,false);
+    }
+  });
+  (G.eventos||[]).filter(e=>String(e.cod||'')===cod).forEach(e=>incluir(e.data,e.hora,'pontual',e.tipo,false));
+  (MEU.pedidos||[]).forEach(p=>incluir(p.data,p.hora,p.rec==='fixo'?'fixo':'pontual',p.tor?'torneio':p.loc?'locacao':p.grupo?'grupo':'aula',true));
+  return [...itens.values()].sort((a,b)=>(a.data+a.hora).localeCompare(b.data+b.hora));
+}
+function aulaAgendadaAluno(dk,hora){
+  return aulasAgendadasAluno().find(p=>p.data===dk&&p.hora===hora)||null;
+}
+const ACOES_AULA_EM_CURSO=new Set();
+async function conferirAulaParaAcao(dk,hora){
+  if(!dataHoraAulaValida(dk,hora)||!EU||!MEU.codigo)return null;
+  if(!hasCloud()||navigator.onLine===false){toast('Conecte à internet para confirmar ou cancelar a aula.');return null;}
+  await esperarAuth();
+  if(!authUid()){toast('Seu aparelho precisa estar identificado. Abra o app novamente.');return null;}
+  try{await atualizarGradeReserva();}catch(e){toast('Não consegui conferir sua agenda na nuvem. Tente novamente com internet.');return null;}
+  const aula=aulaAgendadaAluno(dk,hora);
+  if(!aula)toast('Essa aula não está mais na sua agenda. Confira as próximas aulas.');
+  return aula;
+}
 async function cancelarAula(dk,hora,rec){
-  if(horasAte(dk,hora)<LIMITE_CANCEL_H){
-    toast('Cancelamento só até '+LIMITE_CANCEL_H+'h antes da aula. Fale com o João. 🙏');return;
+  const k=dk+'|'+hora;
+  if(ACOES_AULA_EM_CURSO.has(k))return false;
+  if(!dataHoraAulaValida(dk,hora)||horasAte(dk,hora)<LIMITE_CANCEL_H){
+    toast('Cancelamento só até '+LIMITE_CANCEL_H+'h antes da aula. Fale com o João. 🙏');return false;
   }
-  if(!confirm('Cancelar sua aula de '+fmtData(dk)+' às '+hora+'?\n\nLembrando: cancelamento permitido até '+LIMITE_CANCEL_H+'h antes.'))return;
-  MEU.cancelados=MEU.cancelados||[];
-  MEU.cancelados.push({data:dk,hora,ts:Date.now()});
-  MEU.pedidos=(MEU.pedidos||[]).filter(p=>!(p.data===dk&&p.hora===hora));
-  await saveMeu();
-  if(hasCloud()){
-    const item={acao:'cancelar',codigo:MEU.codigo,nome:EU.nome,data:dk,hora,rec:rec||'pontual',ts:Date.now()};
-    try{await filaPush('jvtenis/fila_agendamentos',item);}catch(e){}
+  if(!aulaAgendadaAluno(dk,hora)){toast('Essa aula não está na sua agenda.');return false;}
+  if(!confirm('Cancelar sua aula de '+fmtData(dk)+' às '+hora+'?\n\nO cancelamento vale só para essa data e é permitido até '+LIMITE_CANCEL_H+'h antes.'))return false;
+  ACOES_AULA_EM_CURSO.add(k);renderMinhas();
+  try{
+    const aula=await conferirAulaParaAcao(dk,hora);if(!aula)return false;
+    // O prazo pode vencer enquanto a confirmação ou a leitura da nuvem está aberta.
+    if(horasAte(dk,hora)<LIMITE_CANCEL_H){toast('O prazo de '+LIMITE_CANCEL_H+'h terminou. Fale com o João.');return false;}
+    await filaPush('jvtenis/fila_agendamentos',{acao:'cancelar',codigo:MEU.codigo,nome:EU.nome,data:dk,hora,rec:aula.rec,ts:Date.now()});
+    MEU.cancelados=MEU.cancelados||[];
+    if(!foiCancelado(dk,hora))MEU.cancelados.push({data:dk,hora,ts:Date.now()});
+    MEU.pedidos=(MEU.pedidos||[]).filter(p=>!(p.data===dk&&p.hora===hora));
+    MEU.confirmadas=(MEU.confirmadas||[]).filter(p=>!(p.data===dk&&p.hora===hora));
+    await saveMeu();
     notificarJoao('cancelou',dk,hora);
-  }
-  renderAgenda();renderMinhas();
-  toast('Aula cancelada. Avisando o João… 🌧️');
-  setTimeout(()=>abrirWhatsApp('5541995415712','Olá João! Precisei *cancelar* minha aula de '+fmtData(dk)+' às '+hora+'. 🎾'),700);
+    renderAgenda();renderMinhas();renderPremiumAluno();checarAulaHoje();
+    toast('Cancelamento enviado ao João. A vaga é liberada após a confirmação na Gestão.');
+    setTimeout(()=>abrirWhatsApp('5541995415712','Olá João! Precisei *cancelar* minha aula de '+fmtData(dk)+' às '+hora+'. 🎾'),700);
+    return true;
+  }catch(e){toast('Não consegui enviar o cancelamento. Sua aula continua marcada; tente novamente.');return false;}
+  finally{ACOES_AULA_EM_CURSO.delete(k);renderMinhas();}
 }
 
 /* ================= INÍCIO ================= */
@@ -3373,6 +3446,7 @@ function goAluno(id,btn){
   document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('on'));
   if(!btn&&(id==='aulas'||id==='torneio'))btn=document.getElementById('nav-al-perfil');
   if(btn)btn.classList.add('on');
+  if(id==='aulas'){renderMinhas();renderHistAluno();}
   if(id==='evolucao')renderEvolucaoPage();
   if(id==='inicio'||id==='creditos'||id==='perfil')renderPremiumAluno();
   if(id==='agenda'){_albMarcar('agenda');if(alunoWkAutoFit)alunoWkZoomFit();else aplicarAlunoWkVars();}
@@ -3799,10 +3873,12 @@ function fmtDataAl(s){
 }
 function renderHistAluno(){
   const el=document.getElementById('hist-list');if(!el)return;
-  const cod=(MEU&&MEU.codigo)||(EU&&EU.codigo)||'';
-  const h=(PUB&&PUB.historico&&cod&&PUB.historico[cod])||[];
-  if(!h.length){el.innerHTML='<div class="empty" style="display:block">Suas aulas realizadas vão aparecer aqui assim que forem registradas. 🎾</div>';return;}
-  el.innerHTML='<div class="hist-card">'+h.slice(0,20).map(p=>'<div class="hist-row"><span class="hr-ico">✓</span><span class="hr-d">'+fmtDataAl(p.data)+'</span><span class="hr-h">'+(p.hora&&p.hora!=='—'?p.hora+'h':'')+'</span></div>').join('')+'</div>';
+  const h=historicoAlunoMesAtual(),mes=new Date().toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+  const titulo=document.getElementById('aul-hist-mes');if(titulo)titulo.textContent='Realizadas em '+mes;
+  if(!h.length){
+    el.innerHTML='<div class="empty" style="display:block">Nenhuma aula registrada neste mês. Elas aparecem aqui quando o professor registra sua presença.</div>';return;
+  }
+  el.innerHTML='<div class="hist-card">'+h.map(p=>'<div class="hist-row"><span class="hr-ico">✓</span><span class="hr-d">'+escHtml(fmtDataAl(p.data))+'</span><span class="hr-h">'+escHtml(p.hora&&p.hora!=='—'?p.hora:'')+'</span></div>').join('')+'</div>';
 }
 function renderTorneioAluno(){
   const box=document.getElementById('tor-box');if(!box)return;
@@ -4358,14 +4434,117 @@ function renderAgenda(){
     el.innerHTML='<div class="cal"><div class="cal-head">'+['D','S','T','Q','Q','S','S'].map(x=>`<span>${x}</span>`).join('')+'</div><div class="cal-grid">'+cells+'</div></div>';
   }
 }
-function itemHtml(titulo,sub,dk,hora,rec,emoji){
-  const pode=horasAte(dk,hora)>=LIMITE_CANCEL_H;
-  const btn=pode?`<button class="mini-cancel" onclick="cancelarAula('${dk}','${hora}','${rec}')">Cancelar</button>`
-                :`<span class="mini-lock">trava ${LIMITE_CANCEL_H}h</span>`;
-  const sino=`<button class="mini-cal" title="Adicionar à agenda do celular" onclick="addToCalendar('${dk}','${hora}')">🔔</button>`;
-  return `<div class="mine-item"><div><b>${titulo}</b><span>${sub}</span></div><div class="mine-act"><span class="mine-emoji">${emoji}</span>${sino}${btn}</div></div>`;
+function itemHtml(titulo,sub,dk,hora,rec,emoji,pendente){
+  if(!dataHoraAulaValida(dk,hora))return '';
+  const curso=ACOES_AULA_EM_CURSO.has(dk+'|'+hora),pode=horasAte(dk,hora)>=LIMITE_CANCEL_H;
+  const ja=(MEU.confirmadas||[]).some(c=>c.data===dk&&c.hora===hora);
+  const disabled=curso?' disabled aria-busy="true"':'';
+  const conf=pendente?'<span class="aul-status">Aguardando o horário ser aprovado</span>'
+    :'<button class="aul-confirm'+(ja?' ok':'')+'" type="button" onclick="confirmarPresencaAluno(\''+dk+'\',\''+hora+'\')"'+(ja?' disabled':disabled)+'>'+(ja?'✓ Presença confirmada':'Confirmar presença')+'</button>';
+  const cancel='<button class="mini-cancel" type="button" onclick="cancelarAula(\''+dk+'\',\''+hora+'\',\''+rec+'\')"'+(!pode?' disabled aria-label="Cancelamento indisponível: faltam menos de quatro horas"':disabled)+'>Cancelar aula</button>';
+  const prazo=pode?'Pode cancelar até '+fmtData(dKey(new Date(dtOf(dk,hora).getTime()-LIMITE_CANCEL_H*3600000)))+' às '+_pad2(new Date(dtOf(dk,hora).getTime()-LIMITE_CANCEL_H*3600000).getHours())+':'+_pad2(new Date(dtOf(dk,hora).getTime()-LIMITE_CANCEL_H*3600000).getMinutes())
+    :'Faltam menos de 4h: cancelamento pelo app encerrado.';
+  const cal=pendente?'':'<button class="mini-cal" type="button" onclick="addToCalendar(\''+dk+'\',\''+hora+'\')" >Adicionar ao Google Agenda</button>';
+  return '<article class="mine-item"><div class="aul-info"><b>'+escHtml(titulo)+'</b><span>'+escHtml(sub)+'</span></div>'
+    +'<div class="mine-act">'+conf+cancel+cal+'</div><p class="aul-prazo">'+escHtml(prazo)+'</p></article>';
 }
 function _pad2(n){return String(n).padStart(2,'0');}
+
+/* Exportação escolhida pelo aluno: arquivo de agenda, sem acesso à conta Google. */
+let AULAS_CAL_MES=null;
+function aulasParaAgendaMes(){
+  const cod=String((MEU&&MEU.codigo)||(EU&&EU.codigo)||''),hoje=new Date(),mk=dKey(hoje).slice(0,7),G=(PUB&&PUB.grade)||{},exc=G.excecoes||[],mapa=new Map();
+  if(!cod)return [];
+  const incluir=(data,hora,tipo)=>{
+    if(!dataHoraAulaValida(data,hora)||data.slice(0,7)!==mk||foiCancelado(data,hora))return;
+    const k=data+'|'+hora;if(!mapa.has(k))mapa.set(k,{data,hora,tipo:tipo||'aula'});
+  };
+  (G.fixos||[]).filter(f=>String(f.cod||'')===cod).forEach(f=>{
+    const fim=new Date(hoje.getFullYear(),hoje.getMonth()+1,0).getDate();
+    for(let dia=1;dia<=fim;dia++){
+      const d=new Date(hoje.getFullYear(),hoje.getMonth(),dia,12),dk=dKey(d);
+      if(d.getDay()!==Number(f.dia)||!fixoValeEm(f,dk)||exc.some(x=>x.fixoId===f.id&&x.data===dk))continue;
+      incluir(dk,f.hora,f.tipo);
+    }
+  });
+  (G.eventos||[]).filter(e=>String(e.cod||'')===cod).forEach(e=>incluir(e.data,e.hora,e.tipo));
+  historicoAlunoMesAtual().forEach(p=>incluir(p.data,p.hora,'aula'));
+  return [...mapa.values()].sort((a,b)=>(a.data+a.hora).localeCompare(b.data+b.hora));
+}
+function pintarAgendaMesAluno(){
+  const lista=AULAS_CAL_MES?AULAS_CAL_MES.aulas:[],mes=new Date().toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+  document.getElementById('aul-cal-title').textContent='Horários de '+mes;
+  document.getElementById('aul-cal-count').textContent=lista.length+' horário'+(lista.length===1?'':'s')+' confirmado'+(lista.length===1?'':'s')+' do mês. Pedidos aguardando aprovação ficam fora.';
+  document.getElementById('aul-cal-list').innerHTML=lista.length?lista.map(p=>'<li>'+escHtml(fmtDataAl(p.data))+' · '+escHtml(p.hora)+'</li>').join(''):'<li>Nenhum horário confirmado neste mês.</li>';
+  document.getElementById('aul-cal-baixar').disabled=!lista.length;
+}
+async function abrirAgendaMesAluno(){
+  if(!EU)return;
+  if(hasCloud()&&navigator.onLine!==false){
+    try{await atualizarGradeReserva();}catch(e){toast('Não consegui conferir os horários. Tente novamente com internet.');return;}
+  }
+  AULAS_CAL_MES={codigo:String(MEU.codigo),mes:dKey(new Date()).slice(0,7),aulas:aulasParaAgendaMes()};
+  pintarAgendaMesAluno();document.getElementById('ov-aulas-cal').classList.add('on');
+}
+function icsTextoAula(s){return String(s||'').replace(/\\/g,'\\\\').replace(/\r?\n/g,'\\n').replace(/,/g,'\\,').replace(/;/g,'\\;');}
+function icsLinhaAula(s){
+  const out=[];let linha='',bytes=0;
+  for(const c of String(s)){
+    const n=new TextEncoder().encode(c).length;
+    if(bytes+n>75){out.push(linha);linha=' ';bytes=1;}
+    linha+=c;bytes+=n;
+  }
+  out.push(linha);return out.join('\r\n');
+}
+function icsInstanteAula(ms){
+  const d=new Date(ms);return d.getUTCFullYear()+_pad2(d.getUTCMonth()+1)+_pad2(d.getUTCDate())+'T'+_pad2(d.getUTCHours())+_pad2(d.getUTCMinutes())+_pad2(d.getUTCSeconds())+'Z';
+}
+function instanteAulaCuritiba(data,hora){
+  const [y,m,d]=data.split('-').map(Number),[h,min]=hora.split(':').map(Number),alvo=Date.UTC(y,m-1,d,h,min,0);
+  let ms=alvo;
+  const fmt=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'});
+  for(let i=0;i<2;i++){
+    const p={};fmt.formatToParts(new Date(ms)).forEach(x=>{p[x.type]=x.value;});
+    ms+=alvo-Date.UTC(+p.year,+p.month-1,+p.day,+p.hour,+p.minute,+p.second);
+  }
+  return ms;
+}
+function gerarAgendaMesIcs(aulas){
+  const tipos={aula:'Aula de tênis',grupo:'Aula de tênis em grupo',personal:'Treino personal',locacao:'Locação de quadra',torneio:'Torneio de tênis'};
+  const linhas=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Academia JV Tenis//Aulas do aluno//PT-BR','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:Aulas de tênis','X-WR-TIMEZONE:America/Sao_Paulo'];
+  const stamp=icsInstanteAula(Date.now()),cod=String(MEU.codigo||'').replace(/[^a-zA-Z0-9]/g,'');
+  for(const p of aulas){
+    if(!dataHoraAulaValida(p.data,p.hora))continue;
+    const ini=instanteAulaCuritiba(p.data,p.hora);
+    linhas.push('BEGIN:VEVENT','UID:jvtenis-'+cod+'-'+p.data.replace(/-/g,'')+'T'+p.hora.replace(':','')+'@academia-jv-tenis',
+      'DTSTAMP:'+stamp,'DTSTART:'+icsInstanteAula(ini),'DTEND:'+icsInstanteAula(ini+3600000),
+      'SUMMARY:'+icsTextoAula(tipos[p.tipo]||'Aula de tênis'),
+      'LOCATION:'+icsTextoAula('Academia João Victor Tênis, Curitiba'),
+      'DESCRIPTION:'+icsTextoAula('Horário salvo pelo app do aluno. Confirme presença pelo aplicativo. Para cancelar, respeite a antecedência de quatro horas. Se a aula mudar, atualize também este evento na sua agenda.'),
+      'STATUS:CONFIRMED','END:VEVENT');
+  }
+  linhas.push('END:VCALENDAR');return linhas.map(icsLinhaAula).join('\r\n')+'\r\n';
+}
+let AULAS_CAL_BAIXANDO=false;
+async function salvarAgendaMesAluno(){
+  if(AULAS_CAL_BAIXANDO||!AULAS_CAL_MES)return false;
+  AULAS_CAL_BAIXANDO=true;
+  try{
+    if(String(MEU.codigo)!==AULAS_CAL_MES.codigo){toast('Abra os horários novamente.');return false;}
+    if(hasCloud()&&navigator.onLine!==false)await atualizarGradeReserva();
+    const atual=aulasParaAgendaMes(),mes=dKey(new Date()).slice(0,7);
+    if(mes!==AULAS_CAL_MES.mes||JSON.stringify(atual)!==JSON.stringify(AULAS_CAL_MES.aulas)){
+      AULAS_CAL_MES={codigo:String(MEU.codigo),mes,aulas:atual};pintarAgendaMesAluno();
+      toast('Os horários mudaram. Confira a lista atualizada antes de salvar.');return false;
+    }
+    if(!atual.length){toast('Nenhum horário confirmado neste mês.');return false;}
+    const blob=new Blob([gerarAgendaMesIcs(atual)],{type:'text/calendar;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download='aulas-'+mes+'.ics';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    toast('Arquivo de horários preparado. Abra ou importe na sua agenda para concluir.');return true;
+  }catch(e){toast('Não consegui preparar a agenda. Tente novamente com internet.');return false;}
+  finally{AULAS_CAL_BAIXANDO=false;}
+}
+
 function addToCalendar(dk,hora){
   const p=dk.split('-').map(Number);const hm=hora.split(':').map(Number);
   const ini=new Date(p[0],p[1]-1,p[2],hm[0],hm[1]||0);
@@ -4475,11 +4654,12 @@ function checarAulaHoje(){
   const G=PUB.grade,exc=G.excecoes||[],hoje=new Date(),dk=dKey(hoje);
   let prox=null;
   (G.fixos||[]).filter(f=>f.cod===MEU.codigo&&f.dia===hoje.getDay()&&fixoValeEm(f,dk)).forEach(f=>{
-    if(exc.some(x=>x.fixoId===f.id&&x.data===dk))return;
-    const h=horasAte(dk,f.hora);if(h>=-0.3&&h<=14&&(!prox||f.hora<prox))prox=f.hora;
+    if(exc.some(x=>x.fixoId===f.id&&x.data===dk)||foiCancelado(dk,f.hora))return;
+    const h=horasAte(dk,f.hora);if(h>0&&h<=14&&(!prox||f.hora<prox))prox=f.hora;
   });
   (G.eventos||[]).filter(e=>e.cod===MEU.codigo&&e.data===dk).forEach(e=>{
-    const h=horasAte(dk,e.hora);if(h>=-0.3&&h<=14&&(!prox||e.hora<prox))prox=e.hora;
+    if(foiCancelado(dk,e.hora))return;
+    const h=horasAte(dk,e.hora);if(h>0&&h<=14&&(!prox||e.hora<prox))prox=e.hora;
   });
   const box=document.getElementById('lembrete-box');
   if(prox){
@@ -4496,15 +4676,25 @@ function checarAulaHoje(){
   }else if(box){box.style.display='none';}
 }
 function lembreteCalendario(){if(_lembreteHora)addToCalendar(dKey(new Date()),_lembreteHora);}
-async function confirmarPresencaAluno(){
-  if(!_lembreteHora)return;
-  const dk=dKey(new Date());
-  MEU.confirmadas=MEU.confirmadas||[];
-  if(!MEU.confirmadas.some(c=>c.data===dk&&c.hora===_lembreteHora)){MEU.confirmadas.push({data:dk,hora:_lembreteHora,ts:Date.now()});await saveMeu();}
-  if(hasCloud()){try{await filaPush('jvtenis/fila_confirmacoes',{codigo:MEU.codigo,nome:EU?EU.nome:'',data:dk,hora:_lembreteHora,ts:Date.now()});}catch(e){}}
-  notificarJoao('confirmou',dk,_lembreteHora);
-  toast('✅ Presença confirmada! O João foi avisado.');
-  checarAulaHoje();
+async function confirmarPresencaAluno(dk,hora){
+  dk=dk||dKey(new Date());hora=hora||_lembreteHora;
+  if(!hora||!dataHoraAulaValida(dk,hora))return false;
+  const k=dk+'|'+hora;
+  if(ACOES_AULA_EM_CURSO.has(k))return false;
+  if((MEU.confirmadas||[]).some(c=>c.data===dk&&c.hora===hora)){toast('Sua presença já está confirmada.');return false;}
+  ACOES_AULA_EM_CURSO.add(k);renderMinhas();
+  try{
+    const aula=await conferirAulaParaAcao(dk,hora);if(!aula)return false;
+    if(aula.pendente){toast('Aguarde o João aprovar o horário antes de confirmar presença.');return false;}
+    if(horasAte(dk,hora)<=0){toast('Essa aula já começou. Confira a agenda com o João.');return false;}
+    if((MEU.confirmadas||[]).some(c=>c.data===dk&&c.hora===hora))return false;
+    await filaPush('jvtenis/fila_confirmacoes',{codigo:MEU.codigo,nome:EU.nome,data:dk,hora,ts:Date.now()});
+    MEU.confirmadas=MEU.confirmadas||[];MEU.confirmadas.push({data:dk,hora,ts:Date.now()});
+    await saveMeu();notificarJoao('confirmou',dk,hora);
+    renderMinhas();checarAulaHoje();toast('✓ Presença confirmada e enviada ao João.');
+    return true;
+  }catch(e){toast('Não consegui enviar a confirmação. Tente novamente com internet.');return false;}
+  finally{ACOES_AULA_EM_CURSO.delete(k);renderMinhas();}
 }
 
 /* ===== Renovação (5 dias antes de virar o mês) ===== */
@@ -4576,39 +4766,20 @@ function aceitarTermo(){
   toast('Obrigado! Termo aceito ✓');
 }
 function renderMinhas(){
-  const el=document.getElementById('mine-list');
-  const itens=[];
-  const G=PUB.grade||{fixos:[],eventos:[],excecoes:[]};
-  const exc=G.excecoes||[];
-  const hoje=new Date();
-  const DIAS_HORIZONTE=35; // projeta ~5 semanas: cobre o mês inteiro à frente
-  // Aulas fixas do aluno → projeta CADA ocorrência futura (não só a próxima)
-  G.fixos.filter(f=>f.cod===MEU.codigo).forEach(f=>{
-    for(let i=0;i<DIAS_HORIZONTE;i++){
-      const d=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()+i,12);
-      if(d.getDay()!==f.dia)continue;
-      const dk=dKey(d);
-      if(!fixoValeEm(f,dk))continue;                                        // fora da janela do fixo
-      if(horasAte(dk,f.hora)<-1)continue;                                   // já passou
-      if(foiCancelado(dk,f.hora))continue;                                  // o aluno cancelou esse dia
-      if(exc.some(x=>x.fixoId===f.id&&x.data===dk))continue;                // João cancelou/chuva nesse dia
-      itens.push({ord:dk+f.hora,html:itemHtml(fmtData(dk)+' · '+f.hora,DIAS_FULL[f.dia],dk,f.hora,'fixo',meuEmoji())});
-    }
-  });
-  // Aulas pontuais marcadas para o aluno
-  G.eventos.filter(e=>e.cod===MEU.codigo).forEach(e=>{
-    if(horasAte(e.data,e.hora)<-1)return;
-    if(foiCancelado(e.data,e.hora))return;
-    itens.push({ord:e.data+e.hora,html:itemHtml(fmtData(e.data)+' · '+e.hora,'aula marcada',e.data,e.hora,'pontual','📅')});
-  });
-  // Pedidos aguardando confirmação
-  (MEU.pedidos||[]).forEach(p=>{
-    if(foiCancelado(p.data,p.hora))return;
-    if(horasAte(p.data,p.hora)<-1)return;
-    const lab=p.rec==='fixo'?('Toda '+DIAS_FULL[new Date(p.data+'T12:00:00').getDay()].toLowerCase()):fmtData(p.data);
-    itens.push({ord:p.data+p.hora,html:itemHtml(lab+' · '+p.hora,'aguardando confirmação ⏳',p.data,p.hora,p.rec||'pontual','⏳')});
-  });
-  el.innerHTML=itens.length?itens.sort((a,b)=>a.ord.localeCompare(b.ord)).map(i=>i.html).join(''):'<div class="empty">Você ainda não tem horários marcados.<br>Use o quadro acima para agendar! '+meuEmoji()+'</div>';
+  const el=document.getElementById('mine-list');if(!el)return;
+  const itens=aulasAgendadasAluno();
+  const tipos={aula:'Aula particular',grupo:'Aula em grupo',personal:'Treino personal',locacao:'Locação',torneio:'Torneio'};
+  el.innerHTML=itens.length?itens.map(p=>{
+    const dia=DIAS_FULL[dtOf(p.data,p.hora).getDay()];
+    return itemHtml(fmtDataAl(p.data)+' · '+p.hora,dia+' · '+(tipos[p.tipo]||'Aula')+(p.pendente?' · pedido enviado':''),p.data,p.hora,p.rec,'',p.pendente);
+  }).join(''):'<div class="empty">Nenhuma próxima aula marcada.<br>Toque em Agendar mais uma aula para escolher um horário.</div>';
+  const count=document.getElementById('aul-prox-count');if(count)count.textContent=itens.length+' próxima'+(itens.length===1?'':'s');
+  renderAtalhoAulas();
+}
+function renderAtalhoAulas(){
+  if(!EU)return;
+  const mes=new Date().toLocaleDateString('pt-BR',{month:'long'}),feitas=historicoAlunoMesAtual().length,prox=aulasAgendadasAluno().length;
+  const at=document.getElementById('cred-page-mes');if(at)at.textContent='Minhas aulas · '+feitas+' realizadas em '+mes+' · '+prox+' próximas ›';
 }
 
 /* ================= AGENDAR ================= */
@@ -4928,7 +5099,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-07-4').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-07-6').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava

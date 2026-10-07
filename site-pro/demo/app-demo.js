@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-07-4';
+const VERSAO='2026-10-07-6';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2435,15 +2435,15 @@ async function doPublish(){
       alunos:DB.alunos.map(alunoPublicado),
       historico:(function(){
         const codeOf={};DB.alunos.forEach(a=>{codeOf[a.id]=a.codigo;});
-        const cut=dKey(new Date(Date.now()-60*864e5));const out={};
+        const cut=dKey(new Date(hoje.getFullYear(),hoje.getMonth(),1));const fim=dKey(hoje);const out={};
         /* Só aula realizada de verdade: falta e aviso prévio não são aula, e a
            duplicada do cartão é a mesma aula outra vez. Sem este filtro o aluno
            via no app dele um ✓ para o dia que ele avisou que não vinha. */
         const todas=DB.presencas||[];
-        todas.forEach(p=>{const c=codeOf[p.alunoId];if(!c||(p.data&&p.data<cut))return;
+        todas.forEach(p=>{const c=codeOf[p.alunoId];if(!c||!p.data||p.data<cut||p.data>fim)return;
           if(ehMarca(p)||ehDupManual(p,todas))return;
           (out[c]=out[c]||[]).push({data:p.data||'',hora:p.hora||''});});
-        Object.keys(out).forEach(c=>{out[c].sort((a,b)=>String(b.data).localeCompare(String(a.data)));out[c]=out[c].slice(0,30);});
+        Object.keys(out).forEach(c=>{out[c].sort((a,b)=>String(b.data+(b.hora||'')).localeCompare(String(a.data+(a.hora||''))));});
         return out;
       })(),
       grade:{
