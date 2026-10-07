@@ -24,9 +24,18 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
   `PUB.historico`, marcadas pelos fixos/eventos da grade, saldo) e atalho
   `#cred-page-mes` em Créditos. Só leitura nos dois apps.
   Teste `testar-3-pedidos-browser.cjs` (relógio fixo, no CI).
+- **Contraste das letras (versão `2026-10-07-6`, pedido do João):** varredura
+  de todas as telas dos dois apps nos dois temas. Corrigido: data das próximas
+  aulas e "Precisa falar com o João?" (letra clara em cartão branco), botão
+  "Falar com o João", aviso e prioridade da Evolução, torneio vazio e "Aulas
+  sem horário" (no Verde clássico ficava letra clara em fundo branco),
+  cabeçalho dos dias da agenda do aluno e botão "Registro" da Avaliação na
+  Gestão (no Saibro, o "meio ar" deixava fundo cinza). Regras no fim do
+  `<style>` do aluno e em `EXTRA`/`EXTRA_ALUNO` do `tema-saibro.py`.
+  Verificação de contraste incluída no `testar-3-pedidos-browser.cjs`.
+  Ficaram como estão (no limite, 4,4:1): botões brancos sobre o saibro
+  `#C2582E` (cor da marca).
 - Nenhuma migração, nenhuma gravação nova, regras do Firebase intactas.
-- Observado e não mexido: na lista "Próximas aulas" do aluno a data fica
-  clara sobre o cartão branco (já era assim).
 
 ---
 

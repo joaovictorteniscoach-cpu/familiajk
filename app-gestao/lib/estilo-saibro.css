@@ -3290,6 +3290,9 @@ html body:not(#jv) .pm-modal .modal-head h3,html body:not(#jv) .pd-modal .modal-
 .al-aula *,.fic-b.prim *,.fic-b.prim2 *,.fic-b.ok *,#pg-lanc .cx-ac.in *{color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important;stroke:#1E2A0E!important}
 /* Caixa: valores dos atalhos também na cor da bolinha */
 #pg-lanc .cx-at b{color:#D4E157!important;-webkit-text-fill-color:#D4E157!important}
+/* contraste: botão escuro sobre cartão claro fica opaco (o "meio ar" virava cinza) */
+html body:not(#jv) #pg-aval .avcard .b2{background:#2B3B34!important}
+#renova-mes .rm-aviso{color:#F6CDB4!important;-webkit-text-fill-color:#F6CDB4!important}
 
 /* ===== Vidro (toque air) ===== */
 html{background:#0A1A14!important}
