@@ -148,3 +148,32 @@ app"; aba Segurança e dados; homenagens 1º/2º do torneio; Caixa nova
 (atalhos, receita/despesa com data, desfazer, filtros, busca, faixa do dia);
 tema Saibro + bolinha + vidro nos dois apps, gerado por `tema-saibro.py`, com
 opção "Verde clássico".
+
+
+---
+
+## 2026-10-07 · Codex: coordenação com Claude e avaliação das ações por voz
+
+**Estado: documentação; nenhum botão de voz implementado ou publicado.**
+Base examinada: `e77844a1d440bf13d51a8d47c990045eebc28558`, versão publicada
+**2026-10-07-4**. Consulte `ACOES-POR-VOZ.md` para escopo e evidências.
+
+- #223 do Claude já está publicado: alarme falso de duplicação e conflito de
+  caminhos na limpeza da fila corrigidos. A seção anterior “Defeitos
+  confirmados (a corrigir)” é uma fotografia histórica anterior ao #223.
+- #224 do Claude está aberto, com validar verde no head
+  `57f2083c52ab70f35ac80b7ff4b2971f2fcd636d`, versão proposta
+  **2026-10-07-5**, aguardando o OK de integração solicitado no corpo do PR.
+  A implementação de voz deve considerar essa dependência.
+- Publicação da main e monitor 37695062366 verdes: Gestão Pages, Aluno Pages
+  e Aluno Netlify identificados como 2026-10-07-4. Não auditamos dados reais.
+- AGENTS.md aponta o guia e diário comuns também para Codex, com consulta a
+  PRs concorrentes e distinção entre proposta e publicação.
+- Proposta: bolinha acima da navegação, painel de voz/texto, prévia e
+  confirmação; cancelar uma ocorrência, agendar respeitando capacidade e
+  renovar sem duplicar. Sem nova regra de crédito, pagamento ou Firebase.
+- Arquivos desta entrega: AGENTS.md, ACOES-POR-VOZ.md e esta entrada do
+  diário. Nenhuma alteração nas telas, versões, demo, regras ou dados.
+- Verificação documental: regras e funções citadas conferidas na base acima;
+  PR #224 e monitor público examinados. Compatibilidade de microfone ainda
+  requer teste no aparelho real. CI desta entrega é registrado no próprio PR.

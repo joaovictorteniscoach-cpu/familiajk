@@ -1,0 +1,204 @@
+# Ações rápidas por voz — proposta para a Gestão
+
+Estado: avaliação e especificação. O botão **ainda não está implementado
+nem publicado**. Este documento não altera agendas, créditos ou pagamentos.
+
+## Coordenação conferida em 07/10/2026
+
+Base examinada: `e77844a1d440bf13d51a8d47c990045eebc28558`, versão **2026-10-07-4**.
+Foram lidos o guia, o diário, os commits recentes, os PRs abertos, os arquivos
+de agenda/renovação e os resultados das Actions.
+
+- [PR #221](https://github.com/joaovictorteniscoach-cpu/familiajk/pull/221), Codex: particular exclusivo,
+  dupla/trio/quarteto com 2/3/4 alunos e participação na mesma locação/torneio.
+- [PR #222](https://github.com/joaovictorteniscoach-cpu/familiajk/pull/222), Claude: revisão e diário comum.
+- [PR #223](https://github.com/joaovictorteniscoach-cpu/familiajk/pull/223), Claude, **publicado**:
+  corrige o alarme falso de renovação duplicada e o envio da fila que apagava
+  uma reserva e marcava um caminho interno no mesmo update.
+  As duas correções estão na main; não foram desfeitas.
+- [PR #224](https://github.com/joaovictorteniscoach-cpu/familiajk/pull/224), Claude, **aberto**:
+  ficha acessível na renovação, atalhos para agenda do mês e resumo mensal
+  do aluno. Head conferido: `57f2083c52ab70f35ac80b7ff4b2971f2fcd636d`.
+  Versão proposta **2026-10-07-5**. Teste validar verde
+  ([execução 37695573232](https://github.com/joaovictorteniscoach-cpu/familiajk/actions/runs/37695573232)).
+  O corpo do PR pede o OK do João para integrar; aprovação da simulação e
+  resultado verde não significam que a versão foi publicada.
+- A publicação da main e o
+  [monitor público 37695062366](https://github.com/joaovictorteniscoach-cpu/familiajk/actions/runs/37695062366)
+  estão verdes. O monitor identificou **2026-10-07-4** na Gestão Pages,
+  Aluno Pages e Aluno Netlify, e os arquivos do site Netlify acessíveis.
+  Isso verifica entrega dos arquivos; não é uma auditoria dos dados reais.
+
+Não foi encontrada reversão das regras de reservas/renovação nos commits
+recentes examinados. Há **sobreposição potencial de arquivos** com o #224
+(index da Gestão, lógica, CSS, versão e demo) se a voz for integrada em paralelo.
+Esta entrega é documental e preserva o PR aberto.
+Na implementação, partir da main atual depois de resolver essa dependência,
+ou preparar explicitamente a integração conjunta e testar o resultado.
+Não reservar antecipadamente o número da próxima versão.
+
+Divergência documental observada: na main o diário ainda dizia que os dois
+defeitos já corrigidos no #223 estavam por corrigir. A nova entrada ao fim do
+diário esclarece o estado sem reescrever a revisão histórica.
+O #224 também propõe esse esclarecimento; as duas entradas são complementares.
+
+Limite: não há acesso às conversas privadas do Claude nem aos arquivos que
+ainda não foram enviados ao repositório. Não há um canal automático entre
+essas conversas. AGENTS.md passa a apontar o mesmo guia e diário para o Codex.
+
+## Posição e aparência
+
+Recomendação: uma bolinha de microfone com área de toque de pelo menos 48 px,
+no canto inferior direito da área do app (que tem largura máxima de 520 px),
+**acima da barra Início / Agenda / Alunos / Caixa / Mais**.
+Respeitar a área segura do celular e reservar espaço para não cobrir a
+última linha de conteúdo. Não acrescentar um sexto item à navegação.
+
+Disponível nas telas Início, Agenda e Alunos para o dono conectado.
+Enquanto ficha, renovação, outra janela ou menu Mais estiver aberto, esconder
+o atalho para evitar sobreposição. O acesso alternativo fica em Mais:
+“Ações rápidas”. A cor e os contornos seguem os temas Saibro e Verde clássico.
+
+Ao tocar, abrir um painel com:
+- bolinha animada somente durante escuta/processamento e texto de estado;
+- texto reconhecido editável;
+- a ação entendida, aluno, dia completo, horário e impacto;
+- controles “Falar”, “Parar”, “Confirmar”, “Corrigir” e “Fechar”, conforme o estado.
+O rótulo de Confirmar deve dizer a ação: “Confirmar cancelamento”, por exemplo.
+Não depender apenas de cor/animação. Respeitar movimento reduzido, teclado,
+leitor de tela, foco e botão Voltar.
+
+Fluxo visível:
+
+```text
+Tocar → Falar → Conferir aluno/dia/horário → Confirmar → Resultado
+                     ↘ informação incompleta → Perguntar → Conferir
+```
+
+A proposta de posição ainda precisa de prints com a tela real em 320/390/520 px
+e computador; este documento não afirma que houve teste visual do novo botão.
+
+## Primeiras ações
+
+| Pedido de exemplo (nomes fictícios) | Prévia e comportamento |
+|---|---|
+| “Ana cancelou a aula de amanhã às 15 horas” | Encontrar a marcação de Ana naquela data/hora; mostrar “Cancelar apenas esta aula”. Para fixo, criar exceção só naquele dia, mantendo as outras semanas. |
+| “Agendar Bruno sexta às 18 horas” | Mostrar a sexta-feira por extenso com data, professor, tipo de aula e horário. Criar **só nesta data**; se horário não estiver disponível, explicar e oferecer alternativas sem marcar sozinho. |
+| “Renovar o pacote da Ana” | Abrir a prévia da renovação individual do mês vigente. Mostrar créditos e reposições antes/depois, usando o mesmo bloqueio de segunda renovação e a conferência de ajuste manual. |
+
+Cancelar uma aula não deve criar reposição, alterar dinheiro ou declarar o
+horário totalmente livre automaticamente: conferir a regra de cancelamento
+aplicável e os outros participantes, se houver. Se a política não estiver
+definida para aquela situação, o João escolhe na tela normal.
+Na primeira versão, encaminhar ao fluxo existente para confirmar efeitos
+sobre créditos/reposições; não inventar uma política financeira pela voz.
+
+“Renovar” não significa “recebi a mensalidade”: não marcar pagamento.
+“Já renovei manualmente” deve levar à opção que apenas registra o mês,
+preservando os saldos, nunca ser interpretado como uma nova renovação.
+
+## Entendimento e identificação
+
+Começar com comandos delimitados para cancelar, agendar e renovar.
+Transcrever voz e interpretar o pedido são etapas diferentes. Uma transcrição
+do navegador não oferece, por si só, a compreensão geral de uma assistente
+como a Siri. Datas e horários precisam aparecer na prévia.
+
+- Identificar pelo ID do cadastro escolhido. Normalizar acentos só para busca.
+  **Não usar acharAlunoPorTitulo sozinho:** ele escolhe o primeiro aluno com
+  o mesmo primeiro nome. Havendo homônimos, mostrar opções e perguntar.
+- Nunca escolher um familiar pelo nome do responsável pagante.
+  Dependente mantém agenda e saldos próprios.
+- Se faltar dia/hora, houver mais de uma aula ou a data for ambígua, perguntar.
+  Não interpretar “às três” como 15h sem esclarecer.
+- Datas locais, sem conversão para UTC; mostrar dia da semana, data e ano.
+  “Sexta” vira uma data explícita antes da confirmação.
+- Negação, autocorreção, pedidos com duas ações e frases não reconhecidas
+  não autorizam execução. Pedir um comando por vez ou encaminhar à tela.
+- Nunca executar um texto parcial recebido durante a fala.
+
+## Reutilização dos fluxos atuais
+
+A camada de voz prepara uma intenção estruturada e **não escreve diretamente
+no Firebase nem altera DB**. A tela normal continua funcionando se a voz falhar.
+
+Pontos conferidos na base examinada:
+- `entriesFor`, `slotModo`, `ocupadoPorOutro`,
+  `podeAdicionarAoHorario` e `saveSlot`: agenda e capacidade.
+- `cancelarDia`: exceção de um fixo na data de `slotCtx`.
+  Para evento pontual, o fluxo de remoção deve ser revisado e reaproveitado.
+  Não chamar `removerFixo` para um pedido de cancelamento de uma data.
+- `renovarMes`, `renovacoesDoMes`, `ajusteManualRenovacao`:
+  renovação individual com prévia e barreiras.
+- `persist` e confirmação durável das partes: controle de versão/conflito.
+  `updatesFilaSemConflito` do #223 deve continuar no consumo da fila.
+
+Essas funções dependem de contexto de tela/estado global e nem todas
+retornam um resultado estruturado. Não basta chamar a função e falar “feito”.
+Preparar um adaptador que forneça contexto explícito, preserve a confirmação
+existente e diferencie cancelado pelo usuário, bloqueado, aplicado localmente,
+pendente na nuvem, conflito e confirmado na nuvem.
+
+Ao confirmar:
+1. Conferir login/permissão e conexão; bloquear ação por voz se a base não foi
+   conferida ou houver conflito/alterações pendentes que impeçam conferência.
+2. Conferir novamente a versão atual e o alvo. Se algo mudou desde a prévia,
+   invalidá-la e pedir uma nova confirmação do resultado atualizado.
+3. Para agenda, aplicar particular 1, dupla 2, trio 3, quádrupla 4;
+   locação/torneio só com a mesma atividade. Conferir agenda dos professores,
+   horários fechados e o próprio aluno já reservado ali.
+4. Usar os fluxos existentes com cópia anterior, histórico e desfazer onde
+   aplicável. Nenhuma segunda rotina de créditos, caixa ou filas.
+5. Bloquear duplo toque e repetição do mesmo resultado de reconhecimento.
+   Manter ID da intenção, alvo e versão enquanto estiver em execução.
+6. Responder “Confirmado e salvo na nuvem” somente com confirmação durável.
+   Não executar novamente se a resposta demorar; mostrar o estado pendente.
+   Desfazer deve seguir o controle de versão, preservando mudanças posteriores.
+
+## Microfone e resposta falada
+
+Primeira opção técnica: `SpeechRecognition` / `webkitSpeechRecognition`
+quando disponíveis, com idioma `pt-BR`, iniciados por toque.
+A resposta falada pode usar `speechSynthesis`, com opção de silenciar,
+sempre acompanhada de texto. Parar reconhecimento enquanto a resposta é
+falada para não reconhecer a própria voz do app.
+
+Essa API tem disponibilidade limitada. Alguns navegadores usam serviço
+externo para transcrição, exigindo internet; não prometer funcionamento offline
+nem áudio sempre restrito ao aparelho.
+Referência: [MDN — SpeechRecognition](https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition).
+
+Na primeira utilização, informar o uso do reconhecimento do navegador e a
+possibilidade de processamento pelo provedor; só iniciar após o usuário
+acionar a escuta. Não manter microfone ativo em segundo plano.
+Fechar, trocar de página, bloquear a tela ou sair da conta interrompe a captura.
+
+Se não suportado, permissão negada, falta de rede ou erro, oferecer digitação
+no mesmo painel. O ditado do teclado do celular também pode preencher o texto.
+Não guardar gravação nem transcrição integral na nuvem/localStorage/logs.
+O histórico registra a ação e o resultado, pelo padrão atual do aplicativo.
+
+Um backend de transcrição/IA é uma opção futura se os testes no aparelho
+mostrarem necessidade. Isso exigiria serviço autenticado, tratamento de dados
+e avaliação de custo; nunca colocar chave secreta no aplicativo público.
+
+## Etapas para implementar sem disputar o trabalho atual
+
+1. Resolver a integração do #224 e reler a main/diário antes de editar.
+2. Criar camada opcional em arquivo próprio, interpretação limitada e painel,
+   primeiro com dados fictícios; manter o botão desativado em produção.
+3. Testar comandos corretos e incompletos, homônimos, negação, data ambígua,
+   particular ocupado, grupos cheios, reservas simultâneas em dois aparelhos,
+   cancelamento só de uma ocorrência e aluno já renovado/ajustado manualmente.
+4. Testar permissão negada, falta de API/rede, repetição de reconhecimento,
+   fechar durante fala, resposta atrasada, rollback/conflito e fallback por texto.
+   Conferir que áudio/transcrição não são persistidos.
+5. Testar microfone de verdade no aparelho/navegador do João, incluindo PWA.
+   Testes com reconhecimento simulado não provam captura real.
+6. Conferir as telas reais e os dois temas, regenerar demo/temas quando
+   necessário, subir a versão dos cinco arquivos juntos e seguir publicar-versao.
+7. Habilitar somente após esses resultados, sem mudar regras do Firebase.
+   App Check continua uma etapa separada: a chave pública ainda está pendente.
+
+Não há garantia de ausência total de defeitos: o objetivo é reduzir o risco
+usando os mesmos fluxos, sem duplicar regras, com revisão e testes antes de publicar.
