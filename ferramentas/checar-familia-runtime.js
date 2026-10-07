@@ -24,10 +24,10 @@ const ctx=vm.createContext({DB:{alunos:[payer,child,spouse,single],lancamentos:[
   fmtRs:v=>'R$ '+v,fmt:v=>'R$ '+v,fmtCred:String,
   unificado:()=>false,profDoAluno:()=>'',profNome:()=>'',reposValidas:a=>a.repos,reposVencendo:()=>0,serieMensal:()=>[],
   agendaDoMes:()=>({total:6,part:6,grupo:0,valor:960}),mensalidadeDaAgenda:()=>({total:6,part:6,grupo:0,valor:960}),rmAgCache:{},rmEscolha:{},ehGrupoTipo:()=>false,
-  renovacoesDoMes:()=>[],reposVencidas:()=>0,ehAtivoAluno:a=>!a.arquivado&&(a.plano>0||a.mensalidade>0),
+  perfilDe:()=> 'aluno',reposVencidas:()=>0,ehAtivoAluno:a=>!a.arquivado&&(a.plano>0||a.mensalidade>0),
   mover:(a,k,n)=>{a[k]=(Number(a[k])||0)+n;},purgarReposVencidas:()=>{},juntarGrupo:()=>{},
   fcAulasDoMes:(a)=>[{alunoId:a.id,custo:1}],fcFaltasDoMes:()=>1,fcAvisadosDoMes:()=>0});
-const names=['centavosPagamento','dataPagamentoValida','pagamentosMensalidade','valorMensalidadeEm','situacaoMensalidade','saldoMensalidade','atualizarSituacaoExata','registrarPagamento','prepararPagamentoMes','resumoPagamentoExato','salvarPagamentoExato','dependentesFamilia','responsavelFamilia','ehDependenteFamilia','temFamilia','pagadorFamilia','statusFinanceiro','dadosFamiliaAluno','validarFamiliaAluno','valorDoMes','valorAulaDe','mensalidadesDoMes','cobrancaDoMes','marcarPago','alunoPublicado','publicacaoLegadaEnxuta','rmLinha','rmAplicarUm','fcDados','ehDoFechamento','situacaoPag','difSilenciada'];
+const names=['centavosPagamento','dataPagamentoValida','pagamentosMensalidade','valorMensalidadeEm','situacaoMensalidade','saldoMensalidade','atualizarSituacaoExata','registrarPagamento','prepararPagamentoMes','resumoPagamentoExato','salvarPagamentoExato','dependentesFamilia','responsavelFamilia','ehDependenteFamilia','temFamilia','pagadorFamilia','statusFinanceiro','dadosFamiliaAluno','validarFamiliaAluno','valorDoMes','valorAulaDe','mensalidadesDoMes','cobrancaDoMes','marcarPago','alunoPublicado','publicacaoLegadaEnxuta','movsDe','mesDoTs','renovacoesDoMes','ajusteManualRenovacao','rmLinha','rmAplicarUm','fcDados','ehDoFechamento','situacaoPag','difSilenciada'];
 vm.runInContext(names.map(n=>fn(gest,n)).join('\n'),ctx);
 check('uma mensalidade por família e cobranças individuais preservadas',()=>{
  assert.equal(ctx.valorDoMes(payer),1200);assert.equal(ctx.valorDoMes(child),0);assert.equal(ctx.valorDoMes(spouse),0);assert.equal(ctx.valorDoMes(single),640);
