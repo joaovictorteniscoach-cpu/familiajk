@@ -1916,6 +1916,7 @@ function esperarAuth(){
     </section>
 
     <section class="page" id="apg-aulas">
+    <div class="minhas amr" id="aulas-mes-resumo"></div>
     <div class="minhas">
       <p class="aul-intro">Confirme sua presença. Para cancelar, faça isso até 4 horas antes. O cancelamento vale apenas para a data escolhida.</p>
       <p class="sec-eyebrow">Meus horários</p>
@@ -4776,10 +4777,33 @@ function renderMinhas(){
   const count=document.getElementById('aul-prox-count');if(count)count.textContent=itens.length+' próxima'+(itens.length===1?'':'s');
   renderAtalhoAulas();
 }
-function renderAtalhoAulas(){
+function renderAtalhoAulas(){renderResumoMes();}
+/* Resumo do Claude (#224), usando as mesmas aulas dos cartões (#226). */
+function resumoMesAluno(){
+  const hoje=new Date(),mk=dKey(hoje).slice(0,7);
+  const feitas=historicoAlunoMesAtual().slice().sort((a,b)=>(a.data+(a.hora||'')).localeCompare(b.data+(b.hora||'')));
+  const prox=aulasAgendadasAluno().filter(p=>!p.pendente&&p.data.slice(0,7)===mk);
+  return {mes:hoje.toLocaleDateString('pt-BR',{month:'long'}),feitas,prox};
+}
+function renderResumoMes(){
   if(!EU)return;
-  const mes=new Date().toLocaleDateString('pt-BR',{month:'long'}),feitas=historicoAlunoMesAtual().length,prox=aulasAgendadasAluno().length;
-  const at=document.getElementById('cred-page-mes');if(at)at.textContent='Minhas aulas · '+feitas+' realizadas em '+mes+' · '+prox+' próximas ›';
+  const r=resumoMesAluno(),cred=Number(EU.creditos)||0,grp=Number(EU.credGrupo)||0,plano=(Number(EU.plano)||0)+(Number(EU.planoGrupo)||0);
+  const lista=(arr,vazio)=>arr.length?arr.map(p=>'<span class="amr-dia">'+esc(fmtDataAl(p.data))+(p.hora&&p.hora!=='—'?' · '+esc(p.hora):'')+'</span>').join(''):'<span class="amr-vazio">'+vazio+'</span>';
+  const saldo=fmtCred(cred)+' crédito'+(Math.abs(cred)===1?'':'s')+(grp?' + '+fmtCred(grp)+' em grupo':'');
+  const el=document.getElementById('aulas-mes-resumo');
+  if(el)el.innerHTML='<p class="sec-eyebrow">Resumo de '+r.mes+'</p>'
+    +'<div class="amr-nums"><div><b>'+r.feitas.length+'</b><span>feita'+(r.feitas.length===1?'':'s')+'</span></div>'
+    +'<div><b>'+r.prox.length+'</b><span>marcada'+(r.prox.length===1?'':'s')+'</span></div>'
+    +'<div><b>'+fmtCred(cred+grp)+'</b><span>saldo agora</span></div></div>'
+    +(plano>0?'<p class="amr-plano">Plano: <b>'+plano+' aula'+(plano===1?'':'s')+' no mês</b> · saldo: <b>'+saldo+'</b></p>':'<p class="amr-plano">Saldo: <b>'+saldo+'</b></p>')
+    +'<div class="amr-bloco"><b>✓ Aulas feitas em '+r.mes+'</b><div class="amr-dias">'+lista(r.feitas,'Nenhuma registrada ainda neste mês.')+'</div></div>'
+    +'<div class="amr-bloco"><b>📅 Ainda marcadas em '+r.mes+'</b><div class="amr-dias">'+lista(r.prox,'Nada marcado para o resto do mês.')+'</div></div>'
+    +'<p class="amr-nota">Cada aula aparece aqui assim que o João registra. Alguma data diferente? Fale com ele antes da virada do mês.</p>';
+  const at=document.getElementById('cred-page-mes');
+  if(at)at.innerHTML='<div class="jv-pay-lbl">Minhas aulas de '+r.mes+'</div>'
+    +'<div class="jv-row"><span>Feitas</span><b>'+r.feitas.length+'</b></div>'
+    +'<div class="jv-row"><span>Ainda marcadas</span><b>'+r.prox.length+'</b></div>'
+    +'<div class="amr-ver">Ver as datas ›</div>';
 }
 
 /* ================= AGENDAR ================= */

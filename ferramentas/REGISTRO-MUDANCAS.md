@@ -236,3 +236,34 @@ confirmação, depois dos testes. Base: `893ecca78f5752d88193ab6e736825760e07769
   head no PR. Prévia de fala isolada, sem comandos no app publicado.
   Versão efetivamente publicada continua 2026-10-07-4; esta V6 e #224
   aguardam as confirmações respectivas, sem integração automática.
+
+
+---
+
+## 2026-10-07 · Codex: revisão solicitada pelo João e integração do trabalho do Claude
+
+**Preparado, não publicado.** PR #226, branch `codex/aulas-aluno-calendario-previa-2026-10-07`.
+Base atual conferida: `893ecca78f5752d88193ab6e736825760e07769e` (V4).
+Trabalho do Claude preservado: #224, head `57f2083c52ab70f35ac80b7ff4b2971f2fcd636d`.
+Esta entrada atualiza a pendência de integração registrada anteriormente.
+
+- Aplicados apenas os trechos ainda ausentes do #224: nome abre ficha na
+  renovação e voltar preserva as marcações; cartões de ocupação/locação abrem
+  o mês; resumo mensal do aluno. Atalho em Créditos reutilizado, um único ID.
+- Resumo reutiliza `historicoAlunoMesAtual` e `aulasAgendadasAluno`: não existe
+  uma segunda projeção de reservas. Exclui duplicatas, pedidos pendentes,
+  cancelados, exceções e outro mês. Plano e saldo consideram particular + grupo.
+- Ações de aulas, prazo de 4h, calendário, histórico mensal, pendências e
+  quitação zero do #226 preservados. Nenhum cadastro, saldo ou regra alterado.
+- CSS de renovação e sua saída Saibro aproveitados do #224, demo regenerada.
+  CSS de resumo fica na folha existente de Aulas, mantendo os inputs do
+  gerador do Aluno intactos. Versão proposta continua V6, nunca retrocede a V5.
+- Teste original dos 3 pedidos reaproveitado, sem criar outro equivalente.
+  Teste de aulas agora verifica também a contagem única e saldo de grupo.
+  CI e capturas devem estar aprovados no head final antes de publicar.
+- O commit de integração inclui o head do #224 como segundo pai, para que
+  a futura integração do #226 reconheça esse trabalho sem publicar V5 à parte.
+  Não fazer merge separado do #224 nem reintroduzir seus arquivos antigos.
+- App Check segue com chave pública vazia; configuração externa pendente em
+  `APP-CHECK.md`. Fala é apenas prévia visual; microfone/comandos não ativados.
+  Publicação aguarda a confirmação do João, conforme pedido anterior.

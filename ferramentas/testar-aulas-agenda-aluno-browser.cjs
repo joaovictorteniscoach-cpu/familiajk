@@ -70,6 +70,24 @@ const fixture={
     assert.match(r.txt,/Faltam menos de 4h/);
     assert.equal(await p.locator('#mine-list .mini-cancel:disabled').count(),2);
    });
+   await check(theme+': resumo mensal conta aulas uma vez e exclui pedidos, cancelamentos, exceções e outro mês',async()=>{
+    const r=await p.evaluate(()=>{const x=resumoMesAluno();return {feitas:x.feitas.map(a=>a.data),prox:x.prox.map(a=>a.data+'|'+a.hora),atalhos:document.querySelectorAll('#cred-page-mes').length};});
+    assert.deepEqual(r.feitas,['2026-10-07']);
+    assert.deepEqual(r.prox,['2026-10-15|11:00','2026-10-15|13:59','2026-10-15|14:00','2026-10-16|16:00','2026-10-30|16:00']);
+    assert.equal(r.atalhos,1);
+   });
+   await check(theme+': resumo do plano em grupo mostra o saldo de grupo e não altera nenhum dado',async()=>{
+    const r=await p.evaluate(()=>{
+     const original={plano:EU.plano,planoGrupo:EU.planoGrupo,creditos:EU.creditos,credGrupo:EU.credGrupo};
+     Object.assign(EU,{plano:0,planoGrupo:4,creditos:0,credGrupo:3});
+     const antes=JSON.stringify({PUB,MEU,EU});renderResumoMes();
+     const saldo=document.querySelector('#aulas-mes-resumo .amr-nums div:last-child b').textContent;
+     const plano=document.querySelector('#aulas-mes-resumo .amr-plano').textContent;
+     const igual=antes===JSON.stringify({PUB,MEU,EU});
+     Object.assign(EU,original);renderResumoMes();return {saldo,plano,igual,envios:envios.length};
+    });
+    assert.equal(r.saldo,'3');assert.match(r.plano,/Plano: 4 aulas/);assert.equal(r.igual,true);assert.equal(r.envios,0);
+   });
    await check(theme+': histórico contém apenas realizadas do mês, sem os dados do outro aluno',async()=>{
     const t=await p.locator('#hist-list').innerText();assert.match(t,/07\/10/);assert.doesNotMatch(t,/30\/09|12\/10/);
     assert.match(await p.locator('#aul-hist-mes').innerText(),/outubro.*2026/);
@@ -207,7 +225,11 @@ const fixture={
      assert.ok(sizes.every(h=>h>=44),'toque '+w);
     }
     await p.setViewportSize({width:390,height:844});await p.evaluate(()=>goAluno('aulas',null));
-    if(process.env.JV_VISUAL_LOG==='1'){await visual(p,'aulas-'+theme);}
+    if(process.env.JV_VISUAL_LOG==='1'){
+     await visual(p,'aulas-'+theme);
+     await p.evaluate(()=>{document.documentElement.style.scrollBehavior='auto';const card=document.querySelector('#mine-list .mine-item');window.scrollTo({top:Math.max(0,scrollY+card.getBoundingClientRect().top-96),behavior:'instant'});});
+     await visual(p,'aulas-acoes-'+theme);
+    }
    });
    assert.deepEqual(errors,[]);await c.close();
   }

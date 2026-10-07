@@ -34,3 +34,25 @@ html body:not(#jv) #ov-aulas-cal #aul-cal-baixar{background:#324C25!important;co
 body[data-aba="aulas"] #lembrete-box{display:none!important}
 
 html body:not(#jv) #ov-aulas-cal .aul-cal-actions .btn-ghost{background:#E7E4D9!important;border:1px solid #A5AD9F!important;color:#203128!important;-webkit-text-fill-color:#203128!important;opacity:1!important;box-shadow:none!important}
+
+/* Resumo do mês (tela Aulas e atalho em Créditos) */
+.amr-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:6px 0 10px}
+.amr-nums div{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:9px 6px;text-align:center}
+.amr-nums b{display:block;font-size:24px;font-weight:850;color:#fff;line-height:1.1}
+.amr-nums span{font-size:11.5px;color:#D8D2C7}
+.amr-plano{font-size:13px;color:#D8D2C7;margin:0 0 10px}
+.amr-plano b{color:#fff}
+.amr-bloco{margin-top:10px}
+.amr-bloco>b{display:block;font-size:13px;color:#fff;margin-bottom:6px}
+.amr-dias{display:flex;flex-wrap:wrap;gap:6px}
+.amr-dia{font-size:12.5px;font-weight:700;padding:5px 9px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#F6F2EA}
+.amr-vazio{font-size:12.5px;color:#BDB6A9}
+.amr-nota{font-size:11.5px;color:#BDB6A9;margin:12px 0 0}
+.amr-atalho{display:block;width:100%;text-align:left;cursor:pointer;font:inherit;color:inherit}
+.amr-ver{margin-top:8px;font-size:13px;font-weight:800;color:#E8B83E}
+
+#apg-aulas .amr{background:#102A21!important;border:1px solid #506558!important;border-radius:14px;padding:18px;margin-bottom:16px}
+#apg-aulas .amr b,#apg-aulas .amr-bloco>b{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+#apg-aulas .amr span,#apg-aulas .amr-plano,#apg-aulas .amr-nota{color:#DFE7E1!important;-webkit-text-fill-color:#DFE7E1!important}
+#apg-aulas .amr-dias{max-height:120px;overflow:auto}
+#apg-creditos #cred-page-mes .jv-pay-lbl,#apg-creditos #cred-page-mes .jv-row,#apg-creditos #cred-page-mes .amr-ver{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
