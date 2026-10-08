@@ -8,6 +8,31 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-08 · Claude Code: fechamento abre direto o WhatsApp do aluno
+
+#230 (reposição + horário fixo) publicado como `2026-10-08-5`. Em seguida, pedido
+do João: "quando eu enviar ou selecionar um aluno para o fechamento, fazer o
+envio automático para o número de WhatsApp cadastrado". Versão `2026-10-08-6`.
+
+- **Causa:** `enviarFechamento` esperava a imagem (`await _fechBlob()`,
+  html2canvas) e só depois chamava `window.open(wa.me…)`; no celular a espera
+  tira o "toque" e o navegador bloqueia a janela — nada abria, mas
+  `marcarFechEnviado` marcava o aluno como enviado.
+- **Agora:** a conversa abre dentro do toque (`window.open` antes de qualquer
+  `await`); a imagem é salva logo depois (`salvarImagemFech`). Se a janela vier
+  bloqueada (`null`), o aviso `#fc-envio-hint` vira um botão `a.fc-abrir` e só
+  o toque nele marca o envio.
+- **Selecionar já envia:** nome na fila "Quem falta" (`escolherEEnviarFech`,
+  📲 via CSS para quem tem número) e o seletor `#fc-aluno` abrem a conversa.
+  Aluno sem número: só mostra o fechamento e avisa (sem abrir lista de
+  contatos ao selecionar). `escolherFech` removida (sem outro uso).
+- WhatsApp não permite enviar sem o toque em "enviar" sem a API paga do
+  WhatsApp Business: o app abre a conversa com o texto pronto.
+- Teste novo `testar-fechamento-whatsapp-browser.cjs` (5 verificações, no CI;
+  falha na V5). Nenhum dado, saldo ou regra alterado.
+
+---
+
 ## 2026-10-08 · Claude Code: reposição no agendamento e horário fixo conferido antes de enviar
 
 Itens 1 e 2 da lista de riscos, pedidos pelo João. Versão `2026-10-08-5`, sobre a

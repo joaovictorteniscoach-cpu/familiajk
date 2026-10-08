@@ -238,6 +238,8 @@ body[data-modo="prof"] .so-dono{display:none!important}
 .fq-linha.ok .fq-mark{color:#2E7D52}
 .fq-linha .fq-nome{flex:1;text-align:left;background:none;border:none;padding:11px 2px;font-size:13.5px;font-weight:700;color:var(--text)}
 .fq-linha.ok .fq-nome{color:#2E7D52}
+.fq-linha .fq-nome[data-wa]::after{content:' 📲';font-size:12px;opacity:.8}
+#fc-envio-hint .fc-abrir{display:block;text-align:center;text-decoration:none;margin-top:2px}
 .ferr-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
 .ferr-grid button{background:#fff;border:1px solid var(--border);border-radius:13px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--text);text-align:center}
 .ferr-grid button:active{transform:scale(.99);background:#FBF6EA}
