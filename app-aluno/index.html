@@ -1598,12 +1598,12 @@ html body:not(#jv) #pedir-box .btn-ghost{background:#F3EDE2!important;border:1px
 #apg-evolucao .evo-prio b{color:#F2CF62!important}
 #apg-aulas .empty,#apg-torneio .empty{background:rgba(255,255,255,.06)!important;color:#D8D2C7!important;-webkit-text-fill-color:#D8D2C7!important}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-08-4">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-08-5">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-08-4">
-<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-08-4">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-08-5">
+<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-08-5">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -2061,7 +2061,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-10-08-4"></script>
+<script src="lib/icones.js?v=2026-10-08-5"></script>
 </div>
 
 <!-- MODAL ESCOLHER O QUE FAZER NO HORÁRIO -->
@@ -2279,7 +2279,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-10-08-4';
+const VERSAO='2026-10-08-5';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -3015,7 +3015,7 @@ function renderReposBox(){
    aluno para o João não precisar perguntar o básico. */
 function meuQuadro(){
   const p=[];
-  const cr=Number(EU.creditos)||0, gr=Number(EU.credGrupo)||0, rp=Number(EU.reposValidas)||Number(EU.repos)||0;
+  const cr=Number(EU.creditos)||0, gr=Number(EU.credGrupo)||0, rp=saldoReposAluno();
   /* O número de aulas do plano mora em plano OU planoGrupo, conforme a
      modalidade. Somar os dois cobre o plano misto. */
   const aulasPlano=(Number(EU.plano)||0)+(Number(EU.planoGrupo)||0);
@@ -3241,7 +3241,7 @@ function render(){
   const hp=document.getElementById('hello-prof');
   if(hp){const n=meuProfNome();hp.textContent=n?('👨‍🏫 Seu professor: '+n):'';hp.style.display=n?'':'none';}
   document.getElementById('v-cred').textContent=fmtCred(EU.creditos);
-  document.getElementById('v-repos').textContent=fmtCred(EU.repos);
+  document.getElementById('v-repos').textContent=fmtCred(saldoReposAluno());
   renderReposBox();
   renderPedirBox();
   const pg=Number(EU.planoGrupo)||0,cg=Number(EU.credGrupo)||0,sg=document.getElementById('scard-grupo');
@@ -4874,11 +4874,11 @@ function escolherSlot(hora){
   }else if(pickCtx.grupo){
     b+='<div class="pick-note">👥 Este horário é uma <b>aula em grupo</b>. Novas reservas participam da mesma aula, até '+pickCtx.limiteGrupo+' alunos.</div>';
     if(!trava)b+='<button class="pick-opt aula" onclick="pickAula(false)">👥 Participar da aula em grupo</button>';
-    if(!trava&&EU&&EU.repos>0)b+='<button class="pick-opt repo" onclick="pickAula(true)">🔁 Reposição na aula em grupo</button>';
+    if(!trava&&saldoReposAluno()>0)b+='<button class="pick-opt repo" onclick="pickAula(true)">🔁 Reposição na aula em grupo</button>';
   }else if(modo==='aula'&&!trava){
     b+='<button class="pick-opt aula" onclick="pickAula(false)">🎾 Agendar aula<small>usa 1 crédito do seu plano</small></button>';
     b+=grupoRefHtml();
-    if(EU&&EU.repos>0)b+='<button class="pick-opt repo" onclick="pickAula(true)">🔁 Marcar reposição<small>usa 1 reposição · você tem '+fmtCred(EU.repos)+'</small></button>';
+    if(saldoReposAluno()>0)b+='<button class="pick-opt repo" onclick="pickAula(true)">🔁 Marcar reposição<small>usa 1 reposição · você tem '+fmtCred(saldoReposAluno())+'</small></button>';
     b+='<button class="pick-opt loc" onclick="pickLoc()">🔑 Alugar a quadra<small>locação · '+fmt(precoLocacao())+'/h</small></button>';
     b+=pickTorneioHtml();
   }else if(modo==='aula'&&trava){
@@ -4888,7 +4888,7 @@ function escolherSlot(hora){
   }else{
     b+='<div class="pick-note">Neste horário a quadra fica para <b>locação</b> (sem aula).</div>';
     b+='<button class="pick-opt loc" onclick="pickLoc()">🔑 Alugar a quadra<small>locação · '+fmt(precoLocacao())+'/h</small></button>';
-    if(EU&&EU.repos>0&&!trava)b+='<button class="pick-opt repo" onclick="pickAula(true)">🔁 Pedir reposição aqui<small>combinar com o João</small></button>';
+    if(saldoReposAluno()>0&&!trava)b+='<button class="pick-opt repo" onclick="pickAula(true)">🔁 Pedir reposição aqui<small>combinar com o João</small></button>';
     b+=pickTorneioHtml();
   }
   document.getElementById('pick-opts').innerHTML=b;
@@ -5006,7 +5006,7 @@ function abrirBook(hora,repo,torneio){
   if(!torneio&&bloqueadoParaAgendar()){toast('🔒 Agendamento bloqueado — '+motivoBloqueio()+'. Fale com o João para regularizar. 🙏');return;}
   if(torneio){/* jogo do torneio: inscrição já paga, não usa crédito nem reposição */}
   else if(repo){
-    if(!(EU&&EU.repos>0)){toast('Você não tem reposições disponíveis. Fale com o João 🙏');return;}
+    if(!(saldoReposAluno()>0)){toast('Você não tem reposições disponíveis. Fale com o João 🙏');return;}
   } else if(EU.creditos===0){
     toast('Seus créditos acabaram — esta aula entra como extra, a combinar com o João. 🎾');
   }
@@ -5037,7 +5037,7 @@ async function confirmarAgendamento(){
   if((estado.compartilhado||'')!==bookCtx.compartilhado){toast('O tipo da aula mudou. Reabra as opções do horário.');return;}
   if(!bookCtx.torneio&&bloqueadoParaAgendar()){toast('🔒 Agendamento bloqueado — '+motivoBloqueio());return;}
   const tor=bookCtx.torneio?1:0;
-  const rec=(bookCtx.repo||tor)?'pontual':document.getElementById('b-rec').value;
+  let rec=(bookCtx.repo||tor)?'pontual':document.getElementById('b-rec').value;
   const repo=bookCtx.repo?1:0;
   const selP=document.getElementById('b-prof');
   const profId=(selP&&selP.value)?String(selP.value):'';
@@ -5045,11 +5045,21 @@ async function confirmarAgendamento(){
   const pedido={id:'p'+Date.now()+'-'+Math.random().toString(36).slice(2,10),codigo:MEU.codigo,nome:EU.nome,data:dKey(bookCtx.date),hora:bookCtx.hora,rec,repo,tor,grupo:bookCtx.grupo?1:0,profId,profNome,ts:Date.now()};
   const datas=datasReserva(pedido.data,rec);
   if(!datas.length){toast('Escolha uma data nos próximos 90 dias.');return;}
+  /* Mesma conferência da Gestão, semana a semana: antes o app aceitava semana
+     "só locação" (a Gestão só aceita aula em horário de aula, salvo reposição e
+     torneio) e o aluno via "enviado" e depois "não confirmada". */
+  const conflitos=[];
   for(const data of datas){
-    const s=slotState(new Date(data+'T12:00:00'),pedido.hora);
-    if(!['livre','loc'].includes(s.st)||(s.compartilhado||'')!==bookCtx.compartilhado||s.grupo&&s.limiteGrupo!==bookCtx.limiteGrupo){
-      toast('Uma das datas desse horário já está reservada. Escolha outro horário.');return;
-    }
+    const dt=new Date(data+'T12:00:00'),s=slotState(dt,pedido.hora);
+    const soLoc=slotModo(dt,pedido.hora)==='loc'&&!repo&&!tor&&!s.compartilhado;
+    if(!['livre','loc'].includes(s.st)||soLoc||(s.compartilhado||'')!==bookCtx.compartilhado||s.grupo&&s.limiteGrupo!==bookCtx.limiteGrupo)
+      conflitos.push({data,motivo:s.st==='fechado'?'quadra fechada':['bloq','chuva'].includes(s.st)?'indisponível':soLoc&&['livre','loc'].includes(s.st)?'só locação':'reservado'});
+  }
+  if(conflitos.length){
+    if(rec!=='fixo'||conflitos.some(c=>c.data===pedido.data)){renderAgenda();toast('Esse horário não está disponível nessa data. Escolha outro.');return;}
+    const lista=conflitos.slice(0,4).map(c=>fmtData(c.data)+' ('+c.motivo+')').join(', ')+(conflitos.length>4?' e mais '+(conflitos.length-4)+' data(s)':'');
+    if(!confirm('Não dá para marcar como horário fixo: nestas semanas o horário não está livre — '+lista+'.\n\nQuer marcar só a aula de '+fmtData(pedido.data)+'?'))return;
+    rec='pontual';pedido.rec='pontual';
   }
   try{await enviarReservaUnica(pedido,!!bookCtx.compartilhado);}
   catch(e){toast(/permission|denied/i.test(String(e))?'Não foi possível reservar: a vaga pode ter sido ocupada ou o acesso não está liberado. Atualize a agenda.':'Não consegui enviar a reserva. Tente novamente online.');return;}
@@ -5163,7 +5173,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-08-4').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-08-5').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava

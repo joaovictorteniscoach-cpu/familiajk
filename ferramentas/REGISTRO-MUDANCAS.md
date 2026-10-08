@@ -8,7 +8,29 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
-#
+## 2026-10-08 · Claude Code: reposição no agendamento e horário fixo conferido antes de enviar
+
+Itens 1 e 2 da lista de riscos, pedidos pelo João. Versão `2026-10-08-5`, sobre a
+V4 do Codex (#228). Nenhum dado, saldo ou regra do Firebase alterado.
+
+- **Reposição:** o menu de horários (`escolherSlot`), `abrirBook`, o resumo
+  enviado ao João (`meuQuadro`) e o número do Início (`v-repos`) usavam
+  `EU.repos` (inclui reposições vencidas); agora usam `saldoReposAluno()`, a
+  mesma conta do cartão (`reposValidas`, zero vale).
+- **Horário fixo:** `confirmarAgendamento` confere cada semana como a Gestão
+  (`pedidoAgendaValido`): semana "só locação" passa a contar como conflito
+  (antes aceita e recusada depois). Com conflito em outras semanas, pergunta
+  e oferece marcar só a data escolhida (pedido vira `pontual`); recusa nada é
+  enviado.
+- **Gestão publica o que ela confere:** janela da grade do aluno de 60 → 90
+  dias (a mesma do fixo) e compromissos do João como evento `ocupado` sem
+  título (o aluno vê "Reservado"; a Gestão já recusava pedido nesses horários).
+- Teste novo `testar-reposicao-fixo-browser.cjs` (7 verificações, no CI); as
+  duas partes falham na V4. Teste de voz do Codex rodado só em Chromium aqui
+  (WebKit não instalado no ambiente; roda no CI).
+
+---
+
 ## 2026-10-08 · Codex: botão funcional de ações por voz
 
 - Responsável: Codex. Branch `codex/acoes-voz-gestao-2026-10-08`, [PR #228](https://github.com/joaovictorteniscoach-cpu/familiajk/pull/228), base main
@@ -238,10 +260,10 @@ continua vazio.
 - **Grupo aberto a qualquer aluno:** aluno só de particular pode "Participar
   da aula em grupo"; a presença desconta de `credGrupo`, que fica negativo
   (sem pacote único). Torneio aceita qualquer aluno. Decidir se é desejado.
-- **Fixo exige as 13 semanas livres:** um bloqueio, feriado ou aula avulsa em
+- **Fixo exige as 13 semanas livres** (aviso antes de enviar desde 08/10, ver entrada): um bloqueio, feriado ou aula avulsa em
   qualquer semana recusa o pedido inteiro. O app do aluno aceita semana "só
   locação" e a Gestão recusa (aluno vê "enviado" e depois "não confirmada").
-- **Reposição no menu de reservas** usa `EU.repos>0` enquanto os cartões usam
+- **Reposição no menu de reservas** (corrigido em 08/10) usava `EU.repos>0` enquanto os cartões usam
   `reposValidas`: pode oferecer reposição com o cartão mostrando 0.
 - **Fechamento enviado ao aluno** mostra mensalidade cheia e total menor sem
   explicar — não escreve "desconto", mas a diferença aparece. Conferir com a
