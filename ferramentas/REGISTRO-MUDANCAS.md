@@ -8,6 +8,50 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-08 · Claude Code: números do Início, grade de horas cheias e comparativo do ano
+
+#231 publicado como `2026-10-08-6`. Pedido do João: o total de "Aulas do dia" não
+batia com a agenda; ver se alguma aula contava duas vezes e se havia outros
+números errados. Versão `2026-10-08-7`. Nenhum dado, saldo ou regra alterado.
+
+- **Contagem de aulas** (`aulasDoDia`, usada por `contarAulas`, "já dadas",
+  comparativo e gráfico): continua 1 aula por horário (dupla = 1). Agora o mesmo
+  aluno marcado duas vezes onde só cabe uma aula conta 1: fixa + avulsa no
+  mesmo horário (inclusive tênis + personal, vale a avulsa) e horários que se
+  sobrepõem (19:00 e 19:30, só aluno vinculado). Antes contava 2.
+- **Conferência** (`abrirConferenciaAulas`, `#ov-conf-aulas`, classes `ca-`):
+  link "conferir" sob os anéis (vira "⚠️ N repetidas na agenda") lista aula por
+  aula, as repetições e o que está na agenda mas não é aula. Só lista.
+- **Agenda do dia:** rótulo mostra "N aulas · M atendimentos" (atendimentos =
+  cada pessoa + locação/torneio, o número antigo).
+- **Ocupação:** aula de 1 h ocupa a meia hora vizinha (19:00 cobre 19:30); antes
+  um dia cheio parava em 90%.
+- **Créditos em aberto:** só ativos, saldo negativo não desconta, grupo do misto
+  entra; reposições só as válidas (`reposValidas`), e o foco da lista bate.
+- **Grade só de horas cheias** (pedido do João): 14:30, 15:30, 19:30 e 20:30
+  saíram. `HORAS` continua com todas (é por ela que as contas passam, nada já
+  marcado some); `HORAS_GRADE` é o que a agenda e a configuração mostram;
+  `slotModo` devolve `fechado` para meia hora (pedido novo recusado; cancelar
+  aula antiga continua valendo). Linha de meia hora só aparece onde ainda há
+  algo marcado (`horasVisiveis`). App do aluno recebe `horasPublicadas()` e
+  `semMeiaHora()` (meia hora fechada). Semente sem meia hora.
+- **Crédito:** `creditoSlot` passa a ser calculado sobre a grade: toda aula vale
+  1 (antes 14h, 15h, 19h e 20h valiam ½ no ✓ da agenda e no fechamento). Só
+  daqui para a frente; presença já gravada mantém o custo dela.
+- **Comparativo com Ano** (`trocarPeriodoCmp('ano')`, setas `navCmp`): 1º/jan
+  até hoje contra o mesmo trecho do ano anterior; ano passado inteiro contra o
+  anterior. Contas limitadas a `inicioRegistros()` (fixo antigo sem "desde"
+  não inventa aula antes do app) e sem % se o ano anterior não está no app.
+  `comIndiceAgenda` indexa a agenda por data durante contas longas (o Início
+  ficou mais rápido que antes). Número de 3+ dígitos empilha a porcentagem.
+- Teste novo `testar-numeros-inicio-browser.cjs` (13 verificações, no CI; falha
+  na V6).
+- **Achado para o João decidir (não mexi):** `contarAulasAluno` (valor do mês
+  pela agenda) conta fixa + avulsa no mesmo horário como 2 aulas, enquanto o
+  fechamento conta 1.
+
+---
+
 ## 2026-10-08 · Claude Code: fechamento abre direto o WhatsApp do aluno
 
 #230 (reposição + horário fixo) publicado como `2026-10-08-5`. Em seguida, pedido

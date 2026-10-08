@@ -2700,6 +2700,22 @@ body #pg-dash.page{padding-top:0!important;background:linear-gradient(180deg,#05
 #pg-dash .jh-cmp-i{grid-template-areas:"n n" "v d"}
 #pg-dash .jh-rings-sub{margin:8px 0 0;text-align:center;font-size:11.5px;color:var(--jh-mut)}
 #pg-dash .jh-rings-sub:empty{display:none}
+/* Conferência das aulas de hoje (Início → "conferir"): só lista, não muda nada */
+#pg-dash .jh-rings-sub .ca-link{background:none;border:0;padding:0 2px;font:inherit;font-weight:700;color:var(--jh-gold);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+#pg-dash .jh-rings-sub .ca-link.ca-alerta{color:#FFB25B}
+.ca-modal .ca-resumo{margin:0 0 10px;font-size:14px}
+.ca-modal .ca-aviso{background:rgba(232,121,58,.14);border:1px solid rgba(232,121,58,.5);border-radius:12px;padding:10px 12px;margin:0 0 12px;font-size:13px;line-height:1.4}
+.ca-modal .ca-aviso ul{margin:6px 0;padding-left:18px}
+.ca-modal .ca-lista{list-style:none;margin:0;padding:0}
+.ca-modal .ca-lista li{display:grid;grid-template-columns:46px 1fr auto;gap:8px;align-items:center;padding:9px 2px;border-bottom:1px solid rgba(224,185,79,.18)}
+.ca-modal .ca-h{font-weight:800;font-variant-numeric:tabular-nums}
+.ca-modal .ca-n{min-width:0;overflow-wrap:anywhere}
+.ca-modal .ca-n small{display:block;font-size:11.5px;margin-top:2px;opacity:.85}
+.ca-modal .ca-s{font-size:11.5px;font-weight:700;white-space:nowrap;opacity:.85}
+.ca-modal li.dada .ca-s{opacity:1}
+.ca-modal .ca-fora{font-size:12.5px;margin:12px 0 0;line-height:1.45;opacity:.9}
+.ca-modal .ca-pe{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.ca-modal .ca-pe .btn{flex:1 1 160px}
 #pg-dash .jh-legend li{grid-template-columns:10px 1fr!important}
 #pg-dash .jh-tiles{grid-template-columns:repeat(2,minmax(0,1fr))!important}
 #pg-dash .jh-tiles>*{min-width:0!important;overflow:hidden}
@@ -2768,12 +2784,17 @@ body #pg-dash.page{padding-top:0!important;background:linear-gradient(180deg,#05
 
 /* Início · seletor Semana/Mês do comparativo (2026-10-01-12) */
 #pg-dash .jh-mes[hidden]{display:none!important}
-#pg-dash .jh-seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;margin:0 0 9px;border-radius:12px;background:rgba(0,0,0,.22);border:1px solid var(--jh-line)}
+#pg-dash .jh-seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;margin:0 0 9px;border-radius:12px;background:rgba(0,0,0,.22);border:1px solid var(--jh-line)}
 #pg-dash .jh-seg button{border:0;border-radius:9px;min-height:34px;padding:6px 8px;background:transparent;color:#E9E6DF;-webkit-text-fill-color:#E9E6DF;font:600 13.5px 'DM Sans',sans-serif;cursor:pointer;transition:background .18s,color .18s}
 #pg-dash .jh-seg button.on{background:linear-gradient(180deg,#FFD866,#E8A92A);color:#10261B;-webkit-text-fill-color:#10261B;box-shadow:0 3px 8px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.55)}
 #pg-dash .jh-seg button:focus-visible{outline:2px solid var(--jh-gold);outline-offset:2px}
 #pg-dash .jh-cmp-sub{margin:0 0 10px;font-size:11.5px;line-height:1.35;color:var(--jh-mut)}
 #pg-dash .jh-cmp-sub:empty{display:none}
+/* Número de 3 ou 4 dígitos (modo Ano): a porcentagem desce para baixo do
+   número em vez de vazar do quadrado. Vale para os três, para ficarem iguais. */
+#pg-dash .jh-cmp-i.longo{grid-template-columns:minmax(0,1fr);grid-template-areas:"n" "v" "d"}
+#pg-dash .jh-cmp-i.longo strong{font-size:24px}
+#pg-dash .jh-cmp-i.longo .jh-delta{justify-self:start;margin-top:5px}
 
 /* Início · ícones 3D (badge com volume: gradiente, brilho superior, sombra interna e projeção) */
 #pg-dash .jh-hic,#pg-dash .jh-tic,#pg-dash .jv-ref-kpi .jv-ref-round-icon{
