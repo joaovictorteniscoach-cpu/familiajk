@@ -257,6 +257,9 @@ EXTRA = """
 .al-aula *,.fic-b.prim *,.fic-b.prim2 *,.fic-b.ok *,#pg-lanc .cx-ac.in *{color:%(t)s!important;-webkit-text-fill-color:%(t)s!important;stroke:%(t)s!important}
 /* Caixa: valores dos atalhos também na cor da bolinha */
 #pg-lanc .cx-at b{color:%(b)s!important;-webkit-text-fill-color:%(b)s!important}
+/* contraste: botão escuro sobre cartão claro fica opaco (o "meio ar" virava cinza) */
+html body:not(#jv) #pg-aval .avcard .b2{background:#2B3B34!important}
+#renova-mes .rm-aviso{color:#F6CDB4!important;-webkit-text-fill-color:#F6CDB4!important}
 """ % {"b": BOLA, "t": BOLA_TXT}
 
 # Toque "air" (vidro fosco, como no iPhone e no Windows 11), nos dois apps:
@@ -330,6 +333,8 @@ EXTRA_ALUNO = """
 /* ===== Toques do tema Saibro no app do aluno ===== */
 .lock-pay,.jv-pix-btn,#apg-inicio .jv-pix-btn{background:%(b)s!important;border-color:%(b)s!important;color:%(t)s!important;-webkit-text-fill-color:%(t)s!important}
 .seg.jv-ref-ag-tabs button.on,.jv-ref-ag-tabs button.on{background:#C2582E!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+/* contraste: cabeçalho dos dias da agenda opaco (translúcido sobre a grade clara virava cinza) */
+html body:not(#jv) #apg-agenda .wk th,html body:not(#jv) #apg-agenda .wk th *{background:#1D2622!important}
 """ % {"b": BOLA, "t": BOLA_TXT}
 
 CAB_AL = ("/* GERADO por ferramentas/tema-saibro.py — NÃO EDITE. Só as cores do <style> de\n"

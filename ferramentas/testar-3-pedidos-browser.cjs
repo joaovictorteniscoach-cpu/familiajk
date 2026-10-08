@@ -21,6 +21,16 @@ const AGORA=new Date(2026,9,15,10,0,0);
 let count=0;
 async function check(name,fn){await fn();count++;console.log('✅ '+name);}
 const print=async(pg,nome)=>{if(OUT)await pg.screenshot({path:path.join(OUT,nome)});};
+/* Contraste da letra com o fundo (WCAG): menor razão entre os elementos do seletor. */
+const contraste=(pg,sel)=>pg.evaluate(sel=>{
+ const parse=s=>{const a=s.match(/[\d.]+/g);return a?a.map(Number):[0,0,0,0];};
+ const blend=(a,b)=>{const k=a[3]===undefined?1:a[3];return a.slice(0,3).map((v,i)=>v*k+b[i]*(1-k));};
+ const lum=c=>c.map(x=>{x/=255;return x<=.04045?x/12.92:((x+.055)/1.055)**2.4;}).reduce((v,x,i)=>v+x*[.2126,.7152,.0722][i],0);
+ const els=[...document.querySelectorAll(sel)];if(!els.length)return -1;
+ return Math.min(...els.map(el=>{const ch=[];for(let e=el;e;e=e.parentElement)ch.push(parse(getComputedStyle(e).backgroundColor));
+  let bg=[10,26,20];for(const c of ch.reverse())bg=blend(c,bg);const cs=getComputedStyle(el);
+  const fg=blend(parse(cs.webkitTextFillColor||cs.color),bg),a=lum(fg),b=lum(bg);return +((Math.max(a,b)+.05)/(Math.min(a,b)+.05)).toFixed(2);}));
+},sel);
 
 (async()=>{
  await new Promise(r=>server.listen(0,'127.0.0.1',r));
@@ -93,6 +103,12 @@ const print=async(pg,nome)=>{if(OUT)await pg.screenshot({path:path.join(OUT,nome
    await g.evaluate(()=>{go('dash',document.createElement('button'));[...document.querySelectorAll('.jh-tile')].find(x=>x.textContent.includes('Créditos em aberto')).click();});
    assert.equal(await g.evaluate(()=>document.getElementById('pg-agenda').classList.contains('on')),false);
   });
+  await check('Cobranças pendentes: etiqueta "vence em…" legível (letra escura na etiqueta clara)',async()=>{
+   await g.evaluate(()=>{go('dash',document.createElement('button'));dobrar('dob-pend',true);});
+   assert.ok(await g.evaluate(()=>document.querySelectorAll('#pend-list .venc-tag').length)>0,'precisa haver cobrança pendente no teste');
+   const r=await contraste(g,'#pend-list .venc-tag');assert.ok(r>=4.5,'etiqueta com contraste '+r+' (mínimo 4,5)');
+   await g.evaluate(()=>dobrar('dob-pend',false));
+  });
   await check('Gestão: nenhum dado mudou e nada foi gravado',async()=>{
    assert.deepEqual(await g.evaluate(()=>({igual:JSON.stringify(DB)===window.ANTES,gravacoes:window.gravacoes})),{igual:true,gravacoes:0});
   });
@@ -122,6 +138,10 @@ const print=async(pg,nome)=>{if(OUT)await pg.screenshot({path:path.join(OUT,nome
    assert.deepEqual(r.prox,['2026-10-19','2026-10-26']);
    assert.match(r.txt,/Resumo de outubro/i);assert.match(r.txt,/05\/10/);assert.match(r.txt,/26\/10/);
    assert.doesNotMatch(r.txt,/desconto/i,'mensagem ao aluno nunca cita desconto');
+  });
+  await check('Aulas: letras legíveis nos cartões claros (data, "Precisa falar com o João?" e o botão)',async()=>{
+   for(const sel of ['#mine-list .mine-item b','#pedir-box>div>div','#pedir-box .btn-ghost']){
+    const r=await contraste(p,sel);assert.ok(r>=4.5,sel+' com contraste '+r+' (mínimo 4,5)');}
   });
   await check('Créditos: atalho "Minhas aulas de outubro" leva para a tela Aulas',async()=>{
    await p.evaluate(()=>goAluno('creditos',document.getElementById('nav-al-creditos')));
