@@ -47,6 +47,8 @@ h = h.replace("Academia João Victor Tênis · Curitiba", "Sistema de Gestão ·
 h = h.replace("Academia <b>João Victor Tênis</b>", "Academia <b>Demonstração</b>")
 h = h.replace("Bem-vindo, João 🎾", "Dados fictícios — explore à vontade 🎾")
 h = h.replace(">Entrar 🎾</button>", ">Entrar na demonstração 🎾</button>")
+# o Escritório JV é a central de agentes particular do João: não aparece na vitrine
+h = re.sub(r'\s*<button class="so-dono" data-box="esc-box"[^\n]*</button>', "", h, count=1)
 
 # ---------- app-demo.js (o app inteiro, sem tocar a nuvem) ----------
 j = ler(os.path.join(GEST, "lib", "app-gestao.js"))
