@@ -8,6 +8,48 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-08 · Claude Code: trava de 4h do cancelamento à prova de relógio e fuso
+
+Relato do João: aluna cancelou às 05:24 a aula das 08:00 (2h36 antes). Só existe
+um caminho de cancelamento (`cancelarAula`, reescrito pelo Codex na V8 e
+preservado), mas as duas travas usavam o relógio do celular: no app do aluno
+`horasAte` (relógio e fuso do aparelho) e na Gestão `cancelamentoTardio` com o
+`ts` mandado pelo celular. Celular com relógio atrasado ou em outro fuso (UTC-5
+dá 4h36 para a mesma aula) passava. Versão `2026-10-08-1`.
+
+- **Aluno:** `podeCancelarAula`/`horasParaAula` contam a aula no horário de
+  Brasília (`msAulaBR`, via `Intl` com `America/Sao_Paulo`) contra a hora do
+  servidor (`agoraReal` = relógio + `.info/serverTimeOffset`). Usado nas duas
+  conferências de `cancelarAula`, no botão da lista e no da agenda. O pedido
+  leva `id` e `tsServ` (`ServerValue.TIMESTAMP`); o `id` fica em
+  `MEU.cancelados`.
+- **Gestão:** `quandoAlunoEnviou` usa `tsServ` → hora embutida na chave do
+  `push` (já corrigida pelo servidor, `tsDaChavePush`) → `ts` só em último
+  caso. Cobre também quem ainda está com versão antiga do app.
+- **Retorno à aluna:** com o `id`, a recusa "Cancelamento fora do prazo" agora
+  chega (`respostasReservas`); `conferirRespostasReservas` tira o cancelamento
+  de `MEU.cancelados`, a aula volta a aparecer marcada e ela vê o aviso. Antes
+  a recusa não tinha `id`, a aula sumia só no celular dela. Toast da Gestão
+  lista quem cancelou fora do prazo.
+- Regras do Firebase **não mudaram**: a publicada já aceita campo extra; o
+  emulador (`testar-salvamento-firebase-browser.cjs`, novo assert) confirma
+  `tsServ` numérico. Endurecer (exigir `tsServ == now` na regra) fica como
+  opção futura, só com autorização do João.
+- Teste novo `testar-trava-cancelamento-browser.cjs` (no CI): caso real 05:24
+  × 08:00, fuso UTC-5 e relógio 3h atrasado (a conta antiga liberava), prazo
+  ok, recusa devolvendo a aula, e Gestão não aplicando o tardio. Nenhum dado,
+  saldo ou cadastro alterado.
+- **Depois do relato:** o cancelamento tinha sido feito às 23h da véspera
+  (dentro do prazo); a Gestão só busca avisos aberta e o aviso "cancelou —
+  Aula · 08/10 08:00" chegou às 05:24 sem dizer quando foi enviado. O João
+  pediu para publicar a trava e melhorar o aviso (versão `2026-10-08-2`):
+  `quandoEnviadoTxt` → pop-up "… · enviado ontem às 23:00" e, no sino,
+  "enviado hoje/ontem/dia dd/mm às hh:mm" (antes "recebido", que confundia).
+  O aviso do aluno leva `ts` pela hora do servidor (`agoraReal`). Na lista do
+  sino o texto do aluno passou a ir por `esc()` (antes ia cru no innerHTML).
+
+---
+
 ## 2026-10-07 · Claude Code: 2 defeitos corrigidos (#223) e os 3 pedidos de 03/10
 
 - **#223 publicado (versão `2026-10-07-4`):** os dois defeitos da revisão

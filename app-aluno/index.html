@@ -1598,12 +1598,12 @@ html body:not(#jv) #pedir-box .btn-ghost{background:#F3EDE2!important;border:1px
 #apg-evolucao .evo-prio b{color:#F2CF62!important}
 #apg-aulas .empty,#apg-torneio .empty{background:rgba(255,255,255,.06)!important;color:#D8D2C7!important;-webkit-text-fill-color:#D8D2C7!important}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-07-8">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-08-2">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-07-8">
-<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-07-8">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-08-2">
+<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-08-2">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -2061,7 +2061,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-10-07-8"></script>
+<script src="lib/icones.js?v=2026-10-08-2"></script>
 </div>
 
 <!-- MODAL ESCOLHER O QUE FAZER NO HORÁRIO -->
@@ -2279,7 +2279,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-10-07-8';
+const VERSAO='2026-10-08-2';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -2557,10 +2557,31 @@ function proxData(dia,hora){
   return dKey(now);
 }
 const LIMITE_CANCEL_H=4;
+/* Prazo de cancelamento à prova de relógio e fuso errados no celular: a hora
+   vem do servidor (Firebase informa a diferença do relógio do aparelho) e a
+   aula é contada no horário de Brasília, onde a academia fica. Com o relógio
+   atrasado ou o celular em outro fuso, "faltam 2h" virava "faltam 5h". */
+let OFFSET_SERVIDOR=0,_ouvindoRelogio=false;
+function ouvirRelogioServidor(){
+  if(_ouvindoRelogio||!window.fbDB)return;
+  try{window.fbDB.ref('.info/serverTimeOffset').on('value',s=>{const v=Number(s&&s.val());if(isFinite(v)&&Math.abs(v)<864e5)OFFSET_SERVIDOR=v;});_ouvindoRelogio=true;}catch(e){}
+}
+function agoraReal(){ouvirRelogioServidor();return Date.now()+OFFSET_SERVIDOR;}
+function msAulaBR(dk,hora){
+  const p=dk.split('-').map(Number),t=(hora||'00:00').split(':').map(Number);
+  const utc=Date.UTC(p[0],p[1]-1,p[2],t[0],t[1]||0);
+  try{
+    const f=new Intl.DateTimeFormat('en-US',{timeZone:'America/Sao_Paulo',hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const q={};f.formatToParts(new Date(utc)).forEach(x=>{q[x.type]=x.value;});
+    return utc-(Date.UTC(+q.year,+q.month-1,+q.day,+q.hour%24,+q.minute)-utc);
+  }catch(e){return utc+3*3600e3;}   // Brasília sem horário de verão: UTC-3
+}
+function horasParaAula(dk,hora){return (msAulaBR(dk,hora)-agoraReal())/3600000;}
+function podeCancelarAula(dk,hora){return horasParaAula(dk,hora)>=LIMITE_CANCEL_H;}
 function notificarJoao(acao,dk,hora){
   if(!hasCloud())return;
   const tipo=EU?(isPersonal()?'personal':(isGrupo()?'grupo':'aula')):'aula';
-  const n={acao,nome:EU?EU.nome:'',codigo:MEU.codigo,data:dk,hora,tipo,ts:Date.now()};
+  const n={acao,nome:EU?EU.nome:'',codigo:MEU.codigo,data:dk,hora,tipo,ts:agoraReal()};   // hora do servidor: a Gestão mostra quando foi enviado
   try{filaPush('jvtenis/notificacoes',n).catch(function(){});}catch(e){}
 }
 function dataHoraAulaValida(dk,hora){
@@ -2613,7 +2634,7 @@ async function conferirAulaParaAcao(dk,hora){
 async function cancelarAula(dk,hora,rec){
   const k=dk+'|'+hora;
   if(ACOES_AULA_EM_CURSO.has(k))return false;
-  if(!dataHoraAulaValida(dk,hora)||horasAte(dk,hora)<LIMITE_CANCEL_H){
+  if(!dataHoraAulaValida(dk,hora)||!podeCancelarAula(dk,hora)){
     toast('Cancelamento só até '+LIMITE_CANCEL_H+'h antes da aula. Fale com o João. 🙏');return false;
   }
   if(!aulaAgendadaAluno(dk,hora)){toast('Essa aula não está na sua agenda.');return false;}
@@ -2622,10 +2643,13 @@ async function cancelarAula(dk,hora,rec){
   try{
     const aula=await conferirAulaParaAcao(dk,hora);if(!aula)return false;
     // O prazo pode vencer enquanto a confirmação ou a leitura da nuvem está aberta.
-    if(horasAte(dk,hora)<LIMITE_CANCEL_H){toast('O prazo de '+LIMITE_CANCEL_H+'h terminou. Fale com o João.');return false;}
-    await filaPush('jvtenis/fila_agendamentos',{acao:'cancelar',codigo:MEU.codigo,nome:EU.nome,data:dk,hora,rec:aula.rec,ts:Date.now()});
+    if(!podeCancelarAula(dk,hora)){toast('O prazo de '+LIMITE_CANCEL_H+'h terminou. Fale com o João.');return false;}
+    // id: a Gestão responde a este cancelamento; tsServ: hora do servidor, que o celular não altera
+    const id='c'+Date.now()+Math.random().toString(36).slice(2,6),item={id,acao:'cancelar',codigo:MEU.codigo,nome:EU.nome,data:dk,hora,rec:aula.rec,ts:agoraReal()};
+    try{const sv=window.firebase&&firebase.database&&firebase.database.ServerValue;if(sv)item.tsServ=sv.TIMESTAMP;}catch(e){}
+    await filaPush('jvtenis/fila_agendamentos',item);
     MEU.cancelados=MEU.cancelados||[];
-    if(!foiCancelado(dk,hora))MEU.cancelados.push({data:dk,hora,ts:Date.now()});
+    if(!foiCancelado(dk,hora))MEU.cancelados.push({data:dk,hora,ts:Date.now(),id});
     MEU.pedidos=(MEU.pedidos||[]).filter(p=>!(p.data===dk&&p.hora===hora));
     MEU.confirmadas=(MEU.confirmadas||[]).filter(p=>!(p.data===dk&&p.hora===hora));
     await saveMeu();
@@ -2818,10 +2842,16 @@ async function saveMeu(){
 }
 function conferirRespostasReservas(){
   const recusados=(PUB.reservasRespostas||[]).filter(r=>r.estado==='recusado');
+  let voltou=false;
   for(const r of recusados)if((MEU.pedidos||[]).some(p=>p.id===r.id)){
     MEU.pedidos=MEU.pedidos.filter(p=>p.id!==r.id);
     toast('Reserva não confirmada: '+r.motivo);
+  }else if(r.id&&(MEU.cancelados||[]).some(c=>c.id===r.id)){
+    // A Gestão não aceitou o cancelamento (fora do prazo): a aula volta a aparecer marcada.
+    MEU.cancelados=MEU.cancelados.filter(c=>c.id!==r.id);voltou=true;
+    toast('Cancelamento fora do prazo: sua aula de '+fmtData(r.data)+' às '+r.hora+' continua marcada. Fale com o João.');
   }
+  if(voltou)try{saveMeu();}catch(e){}
 }
 async function refresh(silent){
   let raw=null;
@@ -4395,7 +4425,7 @@ function renderAgenda(){
       const s=slotState(agDate,h);
       let inner='';
       if(s.st==='livre'||s.st==='loc')inner=horasAte(dKey(agDate),h)<=0?`<button class="sl bloq" disabled>Encerrado</button>`:`<button class="sl livre" onclick="escolherSlot('${h}')">${s.compartilhado?s.label:'Disponível'} <i>${s.compartilhado?'participar':'ver opções'}</i></button>`;
-      else if(s.st==='meu'){const podeC=horasAte(dKey(agDate),h)>=LIMITE_CANCEL_H;inner=podeC?`<button class="sl meu" onclick="cancelarAula('${dKey(agDate)}','${h}','pontual')">🎾 ${s.label} <i>confirmada · toque para cancelar</i></button>`:`<button class="sl meu">🎾 ${s.label} <i>confirmada · trava ${LIMITE_CANCEL_H}h</i></button>`;}
+      else if(s.st==='meu'){const podeC=podeCancelarAula(dKey(agDate),h);inner=podeC?`<button class="sl meu" onclick="cancelarAula('${dKey(agDate)}','${h}','pontual')">🎾 ${s.label} <i>confirmada · toque para cancelar</i></button>`:`<button class="sl meu">🎾 ${s.label} <i>confirmada · trava ${LIMITE_CANCEL_H}h</i></button>`;}
       else if(s.st==='pend')inner=`<button class="sl pend" onclick="cancelarAula('${dKey(agDate)}','${h}','pontual')">${s.label} <i>enviado ao João · toque para cancelar</i></button>`;
       else if(s.st==='chuva')inner=`<button class="sl chuva">☔ Cancelado por chuva <i>sem desconto de crédito</i></button>`;
       else if(s.st==='bloq')inner=`<button class="sl bloq">Indisponível</button>`;
@@ -4447,7 +4477,7 @@ function renderAgenda(){
 }
 function itemHtml(titulo,sub,dk,hora,rec,emoji,pendente){
   if(!dataHoraAulaValida(dk,hora))return '';
-  const curso=ACOES_AULA_EM_CURSO.has(dk+'|'+hora),pode=horasAte(dk,hora)>=LIMITE_CANCEL_H;
+  const curso=ACOES_AULA_EM_CURSO.has(dk+'|'+hora),pode=podeCancelarAula(dk,hora);
   const ja=(MEU.confirmadas||[]).some(c=>c.data===dk&&c.hora===hora);
   const disabled=curso?' disabled aria-busy="true"':'';
   const conf=pendente?'<span class="aul-status">Aguardando o horário ser aprovado</span>'
@@ -5133,7 +5163,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-07-8').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-08-2').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava

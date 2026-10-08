@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-07-8';
+const VERSAO='2026-10-08-2';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2112,15 +2112,29 @@ function pedidoConfiavel(p){
   const v=VINCULOS[p.uid];
   return !!(v&&v.ativo===true&&String(v.codigo||'')===String(p.codigo||''));
 }
-/* Mesmo prazo do app do aluno. Conta a partir de QUANDO o aluno mandou (ts),
-   não de quando a Gestão sincronizou: um cancelamento feito no prazo continua
-   valendo mesmo que o app do João só abra depois. ts no futuro não conta. */
+/* Mesmo prazo do app do aluno. Conta a partir de QUANDO o aluno mandou, não de
+   quando a Gestão sincronizou: um cancelamento feito no prazo continua valendo
+   mesmo que o app do João só abra depois. O "quando" vem, nesta ordem, da hora
+   do servidor gravada no pedido (tsServ), da hora embutida na chave que o
+   Firebase gera (já corrigida pelo relógio do servidor) e, só em último caso,
+   do relógio do celular (ts) — que pode estar atrasado. Nada no futuro conta. */
 const LIMITE_CANCEL_H_GESTAO=4;
-function cancelamentoTardio(p){
+const CHAVE_PUSH_ALFABETO='-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz';
+function tsDaChavePush(k){
+  if(typeof k!=='string'||k.length!==20)return 0;
+  let t=0;for(let i=0;i<8;i++){const v=CHAVE_PUSH_ALFABETO.indexOf(k[i]);if(v<0)return 0;t=t*64+v;}
+  return t;
+}
+function quandoAlunoEnviou(p,chave){
+  const agora=Date.now(),ok=t=>t>1.6e12&&t<=agora+6e5;
+  const serv=Number(p&&p.tsServ);if(ok(serv))return serv;
+  const ck=tsDaChavePush(chave);if(ok(ck))return ck;
+  return Math.min(Number(p&&p.ts)||agora,agora);
+}
+function cancelamentoTardio(p,chave){
   const aula=new Date(String(p.data||'')+'T'+String(p.hora||'')+':00').getTime();
   if(isNaN(aula))return true;
-  const enviado=Math.min(Number(p.ts)||Date.now(),Date.now());
-  return aula-enviado<LIMITE_CANCEL_H_GESTAO*3600e3;
+  return aula-quandoAlunoEnviou(p,chave)<LIMITE_CANCEL_H_GESTAO*3600e3;
 }
 function datasReserva(data,rec){
   const inicio=new Date(String(data)+'T12:00:00'),hoje=new Date(),lim=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()+90,12);
@@ -2525,7 +2539,7 @@ async function syncRequests(silent){
         finalizar(key,p,false);return;
       }
       const tipo=p.tor?'torneio':p.grupo===1?'grupo':catAgendaDe(a.tipo);
-      if(p.acao==='cancelar'&&cancelamentoTardio(p)){
+      if(p.acao==='cancelar'&&cancelamentoTardio(p,key)){
         tardios.push((a.nome||'').split(' ')[0]+' '+fmtDataCurta(p.data)+' '+p.hora);
         guardarRespostaReserva(p,'recusado','Cancelamento fora do prazo. Fale com o João.');
         updates[key]=null;return;
@@ -2566,7 +2580,7 @@ async function syncRequests(silent){
     }
     if(n>0||nc>0)toast('📥 '+n+' reserva(s) · '+nc+' cancelamento(s) de alunos'+(nr?' · '+nr+' recusado(s) por conflito':''));
     else if(!silent&&!tardios.length)toast(nb?'Há '+nb+' solicitação(ões) aguardando vínculo do aparelho':nr?'Horário indisponível: pedido recusado e aluno avisado':'Nenhuma novidade de alunos');
-    if(tardios.length)toast('⚠️ Cancelamento fora do prazo não aplicado — confira com o aluno.');
+    if(tardios.length)toast('⚠️ Cancelamento fora do prazo não aplicado (a aula continua na agenda): '+tardios.join(', '));
   }catch(e){if(!silent)toast('Não consegui confirmar a sincronização. Os pedidos ainda serão conferidos.');}
   finally{syncing=false;}
 }
@@ -2698,6 +2712,17 @@ function pintarAvisos(){
 }
 function pedirPermissaoNotif(){pintarAvisos();}
 function notificarNavegador(txt){mostrarAviso('Academia JV Tênis 🎾',txt,'jv-icone-gestao.png');}
+/* Quando o aluno mandou, em palavras. A Gestão só busca os avisos quando está
+   aberta: um cancelamento feito às 23h aparece de manhã e, sem a hora, parecia
+   ter sido feito agora, dentro do prazo de 4h. */
+function quandoEnviadoTxt(ts){
+  const d=new Date(Number(ts)||0);if(!Number(ts)||isNaN(d.getTime()))return '';
+  const hm=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  const h=new Date(),ontem=new Date(h.getFullYear(),h.getMonth(),h.getDate()-1,12);
+  if(dKey(d)===dKey(h))return 'hoje às '+hm;
+  if(dKey(d)===dKey(ontem))return 'ontem às '+hm;
+  return 'dia '+String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+' às '+hm;
+}
 function textoNotif(n){
   if(n.acao==='resultado')return '🏆 '+(n.nome||'Aluno')+': '+(n.texto||'enviou um resultado');
   if(n.texto)return '🛒 '+(n.nome||'Aluno')+': '+n.texto;
@@ -2716,7 +2741,7 @@ async function carregarNotifs(){
     const max=NOTIF.length?NOTIF[0].ts:0;
     if(!notifPrimeira&&max>notifMax){
       const novas=NOTIF.filter(n=>n.ts>notifMax);
-      novas.slice(0,3).forEach(n=>notificarNavegador(textoNotif(n)));
+      novas.slice(0,3).forEach(n=>{const q=quandoEnviadoTxt(n.ts);notificarNavegador(textoNotif(n)+(q?' · enviado '+q:''));});
       if(novas.length)toast('🔔 '+novas.length+' novo(s) aviso(s) de alunos');
     }
     notifMax=Math.max(notifMax,max);notifPrimeira=false;
@@ -2741,12 +2766,11 @@ function renderNotifList(){
   const el=document.getElementById('notif-list');if(!el)return;
   if(!NOTIF.length){el.innerHTML='<div class="empty">Nenhum aviso ainda. Quando um aluno reservar ou cancelar, aparece aqui.</div>';return;}
   el.innerHTML=NOTIF.map((n,i)=>{
-    const q=new Date(n.ts);
-    const hm=String(q.getHours()).padStart(2,'0')+':'+String(q.getMinutes()).padStart(2,'0');
     const cor=n.acao==='cancelou'?'var(--c-bloq)':'var(--c-loc)';
     const vai=destinoNotif(n);
+    // nome e texto vêm do aluno: esc() antes de ir para a tela
     return `<div class="mov${vai?' mov-vai':''}" style="border-left:4px solid ${cor}"${vai?` onclick="irDoAviso(${i})"`:''}>`
-      +`<div class="mov-l"><b>${textoNotif(n)}</b><span>recebido ${String(q.getDate()).padStart(2,'0')}/${String(q.getMonth()+1).padStart(2,'0')} ${hm}</span></div>`
+      +`<div class="mov-l"><b>${esc(textoNotif(n))}</b><span>enviado ${quandoEnviadoTxt(n.ts)}</span></div>`
       +(vai?'<span class="mov-seta">›</span>':'')+'</div>';
   }).join('');
 }
