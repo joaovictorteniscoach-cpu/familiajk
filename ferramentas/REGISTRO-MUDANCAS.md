@@ -31,6 +31,8 @@ envio automático para o número de WhatsApp cadastrado". Versão `2026-10-08-6`
 - Teste novo `testar-fechamento-whatsapp-browser.cjs` (5 verificações, no CI;
   falha na V5). Nenhum dado, saldo ou regra alterado.
 
+---
+
 ## 2026-10-08 · Claude Code: reposição no agendamento e horário fixo conferido antes de enviar
 
 Itens 1 e 2 da lista de riscos, pedidos pelo João. Versão `2026-10-08-5`, sobre a
