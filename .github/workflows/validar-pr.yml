@@ -45,6 +45,7 @@ jobs:
           JV_VISUAL_DIR: ${{ runner.temp }}/previas-aulas-voz
         run: |
           node ferramentas/testar-voz-gestao-browser.cjs
+          node ferramentas/testar-voz-conversa-browser.cjs
           node ferramentas/testar-appcheck-runtime.cjs
           node ferramentas/testar-monitoramento.cjs
           node .claude/skills/publicar-versao/fumaca.cjs

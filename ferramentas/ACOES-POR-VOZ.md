@@ -40,6 +40,53 @@ estado de CI/publicação será registrado no PR ao concluir.
 
 # Ações rápidas por voz — Gestão
 
+
+## Conversa e pedidos do dia a dia (Claude, 08/10/2026, versão 2026-10-08-11)
+
+Pedido do João (prints de 14:54/14:55): “Quantas aulas eu tenho agora de tarde
+das 16 até o final da noite” e “Abra os horários das 7h00 da manhã até as 18h00
+de domingo para locações” não funcionavam, e o painel ficava esperando escolher
+um aluno. Agora o painel é uma **conversa**: o pedido aparece à direita e a
+resposta (ou o que foi feito) à esquerda; a resposta atual fica no fim e as
+anteriores sobem. Nada é guardado: a conversa some ao fechar. O formulário de
+aluno só aparece para agendar/cancelar/renovar (ou pelo botão “pelos campos”).
+Enter envia; há sugestões rápidas na saudação.
+
+Perguntas (só leem, conferem a nuvem antes, como a consulta do Codex):
+- aulas por dia, período, horário **ou faixa** (“das 16 até o fim da noite”,
+  “a partir das 18”, “até o meio-dia”, “das 4 às 8 da noite”), “quantas faltam
+  hoje”, “qual a próxima aula”;
+- **semana, mês e ano** (“esta semana”, “semana que vem”, “em setembro”, “mês
+  passado”, “no ano”), com a mesma conta do Início (`aulasDoDia`, limite de
+  `inicioRegistros`), dizendo quantas já foram e quantas faltam;
+- **horários livres** de um dia ou da semana (aula e “só locação”), sem nada
+  marcado, sem outro professor e ainda por vir;
+- **aluno**: créditos e reposições válidas, próxima aula, horário fixo, aulas de
+  um dia e mensalidade do mês;
+- **financeiro**: quem está devendo, quanto recebeu, quanto falta receber
+  (respeita “valores ocultos”: não fala valor com o olho fechado);
+- ocupação, locações e preços; “ajuda” lista o que sabe fazer.
+
+Ações (prévia + confirmação, mesma barreira: nuvem, cópia anterior, plano
+recalculado igual ao mostrado):
+- **funcionamento**: abrir/liberar/fechar/bloquear horários para aula, só
+  locação ou fechado, numa data (`horarioData`) ou toda semana (`horarioCfg`);
+  “de domingo” vale só no próximo domingo, “todo domingo/domingos” vale a
+  semana; a prévia permite trocar funcionamento e “Só em … / Toda …”, e avisa
+  marcações que ficam em horário que mudou;
+- **chuva**: data e faixa/período (“hoje à tarde”, “das 16 às 18”); “hoje” sem
+  horário vale daqui para a frente; usa `aplicarChuva` (grade fixa continua,
+  presença marcada devolve o crédito);
+- agendar, cancelar e renovar continuam como antes.
+
+Recusa (nada muda): frase com “não”, duas ações juntas, dia passado, horário
+ambíguo (“às quatro”), nada para mudar. Depois de uma ação salva na nuvem, a
+conversa continua para o próximo pedido; pendência na nuvem segue bloqueando.
+Testes: `testar-voz-conversa-browser.cjs` (16) e o do Codex (31 por tema e
+navegador; “Qual valor da aula?” agora responde os preços).
+
+---
+
 ## Escolha final de 08/10/2026: flutuante, translúcido e com brilho
 
 João confirmou funcionamento da fala no aparelho e escolheu a opção 2 das fotos:

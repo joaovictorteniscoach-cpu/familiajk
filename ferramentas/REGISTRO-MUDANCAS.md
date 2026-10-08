@@ -8,6 +8,40 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-08 · Claude Code: assistente por voz vira conversa e entende pedidos do dia a dia
+
+Pedido do João com dois prints da V10 (#235 do Codex): “Quantas aulas eu tenho
+agora de tarde das 16 até o final da noite” e “Abra os horários das 7h00 da
+manhã até as 18h00 de domingo para locações” não funcionavam; o painel ficava
+pedindo aluno em vez de mostrar uma conversa com a resposta ou o que foi feito.
+Versão `2026-10-08-11`, sobre a V10 do Codex. Nenhum dado real, saldo ou regra
+do Firebase alterado.
+
+- **Conversa** (`#voz-conversa`, `msg`, `arquivarVivos`): pedido à direita,
+  resposta à esquerda; `#voz-consulta` e `#voz-resultado` viraram o bloco vivo
+  no fim da conversa (ids preservados). Some ao fechar; nada é guardado.
+  Formulário de aluno escondido até ser preciso (`mostrarCampos`, botão
+  `#voz-manual`); Confirmar só aparece com prévia. Enter envia; sugestões.
+- **Entende mais** (`interpretarPergunta`, `lerFaixa`, `periodoLongo`):
+  faixa de horário, “faltam hoje”, próxima aula, semana/mês/ano (conta do
+  Início), horários livres, aluno (créditos, reposições válidas, próxima aula,
+  horário fixo, mensalidade), financeiro (pendentes, recebido, a receber;
+  respeita `hideVals`), ocupação, locações, preços e ajuda.
+- **Ações novas com prévia e confirmação** (`interpretarAcaoEspecial`,
+  `planoEspecial`, `executarEspecial`): funcionamento (aula / só locação /
+  fechado) numa data (`horarioData`) ou toda semana (`horarioCfg`), com troca na
+  prévia; chuva por data e faixa via `aplicarChuva`. Mesma barreira do Codex:
+  nuvem conferida, `guardarVersoes`, plano recalculado idêntico, `gravarAgora`.
+- Depois de ação salva na nuvem, a conversa segue (`st.aplicado` volta a falso
+  em `resultadoSalvo`); pendência continua bloqueando como antes.
+- Testes: novo `testar-voz-conversa-browser.cjs` (16, no CI); o do Codex passa
+  inteiro em Chromium com um ajuste: “Qual valor da aula?” agora responde os
+  preços em vez de erro. Doc em `ACOES-POR-VOZ.md`.
+- **Codex:** se for mexer em `acoes-voz.js`, parta desta versão; os ids e a
+  API `JVAcoesVoz` continuam os mesmos.
+
+---
+
 ## 2026-10-08 · Codex: perguntas à agenda pelo mesmo botão de fala
 
 - Responsável: Codex; branch `codex/consultas-agenda-voz-2026-10-08`; base main `9489dea427d3a5d8f0f3576e6971d62c6d842e30` (V9 publicada por #234; preserva #232). Proposta de versão `2026-10-08-10`.
