@@ -213,3 +213,133 @@ Base examinada: `e77844a1d440bf13d51a8d47c990045eebc28558`, versão publicada
 - Verificação documental: regras e funções citadas conferidas na base acima;
   PR #224 e monitor público examinados. Compatibilidade de microfone ainda
   requer teste no aparelho real. CI desta entrega é registrado no próprio PR.
+
+---
+
+## 2026-10-07 · Codex: Aulas do aluno e horários do mês na agenda
+
+**Estado: versão preparada 2026-10-07-6; não publicada.**
+João pediu revisão antes de lançar. A integração na main depende dessa
+confirmação, depois dos testes. Base: `893ecca78f5752d88193ab6e736825760e07769e`.
+
+- Aulas: cada próxima marcação tem Confirmar presença, Cancelar aula e
+  Adicionar ao Google Agenda; acesso pelo cartão do Início, Créditos e Perfil.
+  Particular, grupo, Personal e dependente usam o mesmo acesso.
+- Cancelamento até 4h antes (inclusive exatamente 4h), com nova conferência
+  depois de ler a nuvem; envio deve confirmar na fila antes de mudar o estado
+  local. Só a data escolhida é cancelada, preservando o fixo.
+  Confirmação de presença continua disponível antes do início da aula.
+- Histórico limitado ao mês atual e sem corte de 20/30 aulas. A Gestão
+  publica todas as presenças válidas do mês; nenhuma presença ou saldo é
+  corrigido/regravado por essa mudança.
+- Cartões legíveis nos dois temas e ações com pelo menos 44px de toque.
+  Folha nova `aulas-aluno.css`, carregada depois dos temas e guardada no SW.
+  Os inputs do gerador Saibro não mudaram; folhas geradas permanecem idênticas.
+  Demo regenerada pelo mesmo algoritmo, validado contra a saída anterior.
+- Salvar horários do mês: prévia e um arquivo ICS com eventos individuais,
+  horário de Curitiba, IDs estáveis, sem dados de outro aluno. Eventos do
+  mês, fixos válidos e presenças registradas são deduplicados. Não é
+  sincronização automática com Google; alterações/cancelamentos posteriores
+  precisam ser atualizados na agenda externa.
+- Conferência Google: o Aluno usa autenticação anônima do aparelho e código,
+  não vinculação Google nem autorização de Calendar API. O atalho individual
+  abre um evento preenchido; o aluno precisa salvar. Importação mensal no
+  Google Agenda é feita no computador. Ver `GOOGLE-AGENDA-ALUNO.md`.
+- Coordenação: #224 do Claude permanece separado, aguardando a aprovação
+  pedida no próprio PR. Seu trecho do Aluno toca os mesmos fluxos/versões.
+  Antes de integrá-lo, atualizar a base para preservar as ações desta entrega,
+  o histórico mensal e os acessos; não substituir pelo index antigo.
+  Os dois ajustes de navegação da Gestão do #224 não foram integrados aqui.
+  A versão 2026-10-07-5 do #224 não deve baixar uma versão publicada mais nova.
+- Teste novo `testar-aulas-agenda-aluno-browser.cjs`: período, privacidade,
+  tipos de aluno, prazo exato/fora do prazo, revalidação, erro/atraso da fila,
+  confirmação sem duplicar, ICS mensal, prévia desatualizada e telas nos dois
+  temas em 320/390/520/1280px. Resultado e prints serão registrados no PR.
+
+- Pedido adicional do João: pendências do Início, Caixa e conferência usam
+  a mesma elegibilidade do fechamento (ativos, pagador, pendente/parcial,
+  sem torneio). Status legado `inativo` também fica fora, mesmo com plano
+  ou mensalidade mantidos. A lista oferece Registrar pagamento e, no valor
+  zero, Marcar como pago. Quitação zero é manual e por competência, com
+  versão salva antes, sem receita fictícia, renovação ou mudança de saldos.
+
+- Responsável: Codex. Branch `codex/aulas-aluno-calendario-previa-2026-10-07`,
+  PR #226. As 40 verificações específicas de aulas/agenda/quitacão passaram
+  no commit `2604ffe43d68f58938cff7899afbd3730bbeb91b`; o teste financeiro
+  anterior recebeu seletor explícito do botão de recebimento (a nova opção
+  zero compartilha o estilo). Conferência geral final: consultar a CI do
+  head no PR. Prévia de fala isolada, sem comandos no app publicado.
+  Versão efetivamente publicada continua 2026-10-07-4; esta V6 e #224
+  aguardam as confirmações respectivas, sem integração automática.
+
+
+---
+
+## 2026-10-07 · Codex: revisão solicitada pelo João e integração do trabalho do Claude
+
+**Preparado, não publicado.** PR #226, branch `codex/aulas-aluno-calendario-previa-2026-10-07`.
+Base atual conferida: `893ecca78f5752d88193ab6e736825760e07769e` (V4).
+Trabalho do Claude preservado: #224, head `57f2083c52ab70f35ac80b7ff4b2971f2fcd636d`.
+Esta entrada atualiza a pendência de integração registrada anteriormente.
+
+- Aplicados apenas os trechos ainda ausentes do #224: nome abre ficha na
+  renovação e voltar preserva as marcações; cartões de ocupação/locação abrem
+  o mês; resumo mensal do aluno. Atalho em Créditos reutilizado, um único ID.
+- Resumo reutiliza `historicoAlunoMesAtual` e `aulasAgendadasAluno`: não existe
+  uma segunda projeção de reservas. Exclui duplicatas, pedidos pendentes,
+  cancelados, exceções e outro mês. Plano e saldo consideram particular + grupo.
+- Ações de aulas, prazo de 4h, calendário, histórico mensal, pendências e
+  quitação zero do #226 preservados. Nenhum cadastro, saldo ou regra alterado.
+- CSS de renovação e sua saída Saibro aproveitados do #224, demo regenerada.
+  CSS de resumo fica na folha existente de Aulas, mantendo os inputs do
+  gerador do Aluno intactos. Versão proposta continua V6, nunca retrocede a V5.
+- Teste original dos 3 pedidos reaproveitado, sem criar outro equivalente.
+  Teste de aulas agora verifica também a contagem única e saldo de grupo.
+  CI e capturas devem estar aprovados no head final antes de publicar.
+- O commit de integração inclui o head do #224 como segundo pai, para que
+  a futura integração do #226 reconheça esse trabalho sem publicar V5 à parte.
+  Não fazer merge separado do #224 nem reintroduzir seus arquivos antigos.
+- App Check segue com chave pública vazia; configuração externa pendente em
+  `APP-CHECK.md`. Fala é apenas prévia visual; microfone/comandos não ativados.
+  Publicação aguarda a confirmação do João, conforme pedido anterior.
+
+
+---
+
+## 2026-10-07 · Codex: incluir também o contraste mais recente do Claude
+
+**Preparado, não publicado.** A conferência final encontrou dois novos commits no
+#224 durante os testes: `c60ebe05ba8ae9855684e3fb23b713f9fe82b734` e
+`36fe0780db2172332cb9146cbfeceeae94feb04b`. Incorporados no #226 com o último head
+como segundo pai; preservados fonte, gerador de tema e testes do Claude.
+
+- Incluídas as correções novas de Evolução, contato, estados vazios, cabeçalho
+  da agenda, botão Registro e etiquetas de vencimento. A folha de Aulas mantém
+  os cartões escuros e as ações completas, com contraste medido pelo mesmo teste.
+- Tema do Aluno gerado a partir do mesmo estilo do Claude sem as regras de
+  resumo, que estão na folha externa de Aulas. A equivalência do tema anterior
+  foi conferida; `tema-saibro.py --checar` valida a saída desta integração.
+- Versão consolidada agora **2026-10-07-8**, superior às propostas V6/V7,
+  com os cinco carimbos, reservas offline e demo atualizados juntos.
+- A CI e as capturas do novo head substituem a aprovação do head V6 anterior.
+  Publicação continua dependendo do OK de João; App Check e fala permanecem
+  nas condições descritas na revisão. Não publicar #224 separadamente.
+
+
+---
+
+## 2026-10-08 · Codex: publicação do complemento autorizada pelo João
+
+João autorizou conferir o que já estava no ar e publicar somente o restante.
+O #224 já foi integrado em `5bf600d4e9a0bbc8d99e5a11bbd18a76cd41a4b2`.
+Monitor 37705940943 confirmou V7 em Gestão Pages, Aluno Pages e Aluno Netlify,
+e arquivos do site acessíveis. Todas as correções do Claude foram preservadas.
+
+- O #226 é atualizado sobre essa main, resolvendo a sobreposição de versões
+  com o conteúdo consolidado já validado em `71d4ddd4945519ea3d13054e75a79e3eebbf2543`.
+  Nenhuma implementação do Claude é repetida; o diff passa a ser só o complemento.
+- Versão proposta V8: ações de aulas, histórico mensal, calendário e pendências.
+  A autorização anterior pendente foi atendida. Validar novamente o novo head
+  antes do merge e verificar o monitor após a publicação; evidências no #226.
+- Sem alterações de dados reais ou regras. App Check depende da configuração
+  externa; fala continua protótipo visual isolado.

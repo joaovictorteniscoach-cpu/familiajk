@@ -615,17 +615,6 @@ body{color:#F8F5EE!important}
 #app>.top .jv-chips-topo .jv-quadra-chip{background:rgba(8,20,15,.10)!important;border-color:rgba(255,255,255,.16);box-shadow:none!important}
 #app>.top .jv-chips-topo .jv-quadra-chip b{text-shadow:0 1px 6px rgba(0,0,0,.55)}
 #app>.top .jv-chips-topo .jv-quadra-chip small{text-shadow:0 1px 5px rgba(0,0,0,.6)}
-.amr-nums div{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10)}
-.amr-nums b{color:#fff}
-.amr-nums span{color:#D8D2C7}
-.amr-plano{color:#D8D2C7}
-.amr-plano b{color:#fff}
-.amr-bloco>b{color:#fff}
-.amr-dia{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#F6F2EA}
-.amr-vazio{color:#BDB6A9}
-.amr-nota{color:#BDB6A9}
-.amr-atalho{color:inherit}
-.amr-ver{color:#E17C45}
 #app .mine-item,#app .mine-item b{color:#2A2016;-webkit-text-fill-color:#2A2016}
 #app .mine-item .mini-cancel{color:#A3401C;-webkit-text-fill-color:#A3401C}
 #pedir-box>div{color:#2A2016}

@@ -130,7 +130,7 @@ async function shot(p,theme,key,locator){
     await contrast(p,'#ov-pagamento-exato *');
     for(const w of [320,390,1280])await fit(p,w);await fit(p,390);
     await shot(p,theme,'pagamento','#ov-pagamento-exato .modal');
-    await p.locator('.pm-salvar').click();
+    await p.locator('#pm-confirmar').click();
     const result=await p.evaluate(()=>({q:situacaoMensalidade(DB.alunos[0]),db:DB.lancamentos,balances:DB.alunos.map(a=>[a.id,a.creditos,a.repos]),backup:window.testSavedCopy}));
     assert.equal(result.q.falta,435);assert.equal(result.q.recebido,300);assert.equal(result.q.status,'parcial');
     assert.equal(result.db.length,1);assert.equal(result.db[0].valor,300);assert.equal(result.db[0].formaPagamento,'Pix');

@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-07-7';
+const VERSAO='2026-10-07-8';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2435,15 +2435,15 @@ async function doPublish(){
       alunos:DB.alunos.map(alunoPublicado),
       historico:(function(){
         const codeOf={};DB.alunos.forEach(a=>{codeOf[a.id]=a.codigo;});
-        const cut=dKey(new Date(Date.now()-60*864e5));const out={};
+        const cut=dKey(new Date(hoje.getFullYear(),hoje.getMonth(),1));const fim=dKey(hoje);const out={};
         /* Só aula realizada de verdade: falta e aviso prévio não são aula, e a
            duplicada do cartão é a mesma aula outra vez. Sem este filtro o aluno
            via no app dele um ✓ para o dia que ele avisou que não vinha. */
         const todas=DB.presencas||[];
-        todas.forEach(p=>{const c=codeOf[p.alunoId];if(!c||(p.data&&p.data<cut))return;
+        todas.forEach(p=>{const c=codeOf[p.alunoId];if(!c||!p.data||p.data<cut||p.data>fim)return;
           if(ehMarca(p)||ehDupManual(p,todas))return;
           (out[c]=out[c]||[]).push({data:p.data||'',hora:p.hora||''});});
-        Object.keys(out).forEach(c=>{out[c].sort((a,b)=>String(b.data).localeCompare(String(a.data)));out[c]=out[c].slice(0,30);});
+        Object.keys(out).forEach(c=>{out[c].sort((a,b)=>String(b.data+(b.hora||'')).localeCompare(String(a.data+(a.hora||''))));});
         return out;
       })(),
       grade:{
@@ -5426,6 +5426,11 @@ function resumoPagamentoExato(){
   const a=DB.alunos.find(x=>x.id===PM_CTX.id),mk=document.getElementById('pm-mes').value;
   const total=valorMensalidadeEm(a,mk),anterior=Number(document.getElementById('pm-anterior').value)||0;
   const novo=Number(document.getElementById('pm-valor').value)||0;
+  const semValor=centavosPagamento(total)===0&&situacaoMensalidade(a,mk).status!=='pago'&&!PM_CTX.pedidoKey;
+  document.getElementById('pm-sem-valor').style.display=semValor?'':'none';
+  document.getElementById('pm-confirmar').style.display=semValor?'none':'';
+  document.getElementById('pm-valor').disabled=semValor;
+  document.getElementById('pm-metodo').disabled=semValor;
   const box=document.getElementById('pm-resumo');
   box.innerHTML='<span>Mensalidade <b>'+fmt(total)+'</b></span><span>Já recebido <b>'+fmt(anterior)+'</b></span>'
     +'<span>Após este pagamento, falta <b>'+fmt(Math.max(0,total-anterior-novo))+'</b></span>';
@@ -5476,6 +5481,28 @@ async function finalizarAvisosPagos(){
   }
 }
 
+/* Quitação manual de mensalidade zero: sem receita fictícia nem renovação. */
+function quitarMensalidadeSemValor(){
+  if(!PM_CTX)return false;
+  const a=DB.alunos.find(x=>x.id===PM_CTX.id),mk=document.getElementById('pm-mes').value;
+  if(!a||ehDependenteFamilia(a)||PM_CTX.pedidoKey||!/^\d{4}-(0[1-9]|1[0-2])$/.test(mk)){
+    toast('Confira o aluno e a competência.');return false;
+  }
+  const q=situacaoMensalidade(a,mk);
+  if(centavosPagamento(q.total)!==0){toast('Esta mensalidade tem valor. Use Registrar pagamento.');return false;}
+  if(q.status==='pago'){toast('Este mês já está marcado como pago.');return false;}
+  if(!confirm('Marcar a mensalidade de '+a.nome+' como paga em '+mk+'?\n\nO valor deste mês é R$ 0,00. Nenhum recebimento será lançado na Caixa. Aulas, créditos e reposições permanecem como estão.'))return false;
+  if(centavosPagamento(valorMensalidadeEm(a,mk))!==0)return false;
+  guardarVersoes(JSON.stringify(DB));
+  if(!a.pagamentosExatos)a.pagamentosExatos={};
+  if(!a.pagamentosExatos[mk])a.pagamentosExatos[mk]={ajusteAnterior:0,recebidoAnterior:0,criadoEm:Date.now()};
+  a.pagamentosExatos[mk].quitacaoSemRecebimentoEm=Date.now();
+  atualizarSituacaoExata(a,mk);
+  logAct('Mensalidade sem valor marcada como paga: '+a.nome+' · competência '+mk);
+  PM_CTX=null;closeModal('ov-pagamento-exato');persist();renderAll();
+  if(fichaId===a.id)renderFicha(a.id);
+  toast('Mensalidade marcada como paga · sem recebimento na Caixa');return true;
+}
 function marcarPago(id){registrarPagamento(id);}
 /* A virada de mês NÃO acontece mais sozinha.
    Antes, abrir o app no dia 1 convertia a sobra de todo mundo em reposição e
@@ -5838,8 +5865,7 @@ function fecharRenovaMes(){
   esconderRenovaMes();
   try{if(history.state&&history.state.renova)history.back();}catch(e){}
 }
-// Voltar da ficha aberta por cima da renovação cai de novo no estado "renova":
-// só fecha a renovação quando o voltar sai dela de fato.
+// Voltar da ficha preserva a renovação e suas marcações.
 window.addEventListener('popstate',()=>{if(rmAberta&&!(history.state&&history.state.renova))esconderRenovaMes();});
 function rmMarcar(id,v){rmSel[id]=!!v;renderRenovaMes();}
 function rmUsar(id,qual){rmEscolha[id]=qual;renderRenovaMes();}
@@ -6685,7 +6711,7 @@ let filtroPag='todos';                     // todos · pendentes · pagos
 function passaFiltroPag(a,f){
   const s=situacaoPag(a);
   if(f==='pagos')return s==='pago';
-  if(f==='pendentes')return s==='pendente'||s==='parcial';
+  if(f==='pendentes')return pendenteDoFechamento(a,monthKey());
   return true;
 }
 function setFiltroPag(f){
@@ -6735,7 +6761,7 @@ function renderFiltroPag(base){
 function renderTotalAlunos(items){
   const el=document.getElementById('alunos-total');if(!el)return;
   const pagos=items.filter(a=>situacaoPag(a)==='pago').length;
-  const pend=items.filter(a=>{if(ehDependenteFamilia(a))return false;const s=situacaoPag(a);return s==='pendente'||s==='parcial';});
+  const pend=items.filter(a=>pendenteDoFechamento(a,monthKey()));
   const falta=pend.reduce((t,a)=>t+saldoMensalidade(a),0);
   el.innerHTML='<b>'+items.length+'</b> aluno'+(items.length===1?'':'s')+' na seleção'
     +' · <span class="ok">'+pagos+' pago'+(pagos===1?'':'s')+'</span>'
@@ -6844,7 +6870,7 @@ function esconderFicha(){
   const f=document.getElementById('ficha-aluno');
   if(f){f.classList.remove('on');f.setAttribute('aria-hidden','true');}
   if(!rmAberta)document.body.classList.remove('ficha-on');
-  else{try{renderRenovaMes();}catch(e){}}   // volta para a renovação já com o que mudou na ficha
+  else{try{renderRenovaMes();}catch(e){}}
 }
 function fecharFicha(){
   if(!fichaId)return;
@@ -7583,7 +7609,7 @@ function renderDash(){
   const movs=DB.lancamentos.filter(l=>l.mes===monthKey());
   const recebido=movs.filter(l=>l.valor>0).reduce((s,l)=>s+l.valor,0);
   // inativo não faz aula nem paga mensalidade: não entra no "A receber"
-  const pendAlunos=DB.alunos.filter(a=>!ehDependenteFamilia(a)&&statusFinanceiro(a)!=='pago'&&ehAtivoAluno(a));
+  const pendAlunos=DB.alunos.filter(a=>pendenteDoFechamento(a,monthKey()));
   const pendValor=pendAlunos.reduce((s,a)=>s+(saldoMensalidade(a)),0);
   const creditos=DB.alunos.reduce((s,a)=>s+a.creditos,0);
   const repos=DB.alunos.reduce((s,a)=>s+a.repos,0);
@@ -7653,7 +7679,8 @@ function renderDash(){
     <div class="pend-item ${a.status}">
       <div><b>${esc(a.nome)}</b><br><span>${statusFinanceiro(a)==='parcial'?'Pagamento parcial — falta '+fmt(saldoMensalidade(a)):'Pendente — '+fmt(saldoMensalidade(a))}</span>
         <span class="venc-tag ${r.cls}">${r.txt}${d!==null?(' · dia '+((a.diaVenc)||10)):''}</span></div>
-      ${a.tel?`<button class="btn btn-ghost" style="padding:7px 11px;font-size:11px" onclick="cobrar('${a.id}')">Cobrar 📲</button>`:''}
+      <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-clay" style="min-height:44px;padding:7px 11px;font-size:11px" onclick="marcarPago('${argJs(a.id)}')">${valorDoMes(a)===0?'Marcar como pago':'Registrar pagamento'}</button>
+      ${a.tel&&saldoMensalidade(a)>0?`<button class="btn btn-ghost" style="min-height:44px;padding:7px 11px;font-size:11px" onclick="cobrar('${argJs(a.id)}')">Cobrar 📲</button>`:''}</div>
     </div>`;}).join('');
   }
   renderConselhos();
@@ -7670,7 +7697,7 @@ function renderConselhos(){
   const alunos=DB.alunos||[];
 
   // 1. mensalidades vencidas / vencendo
-  const pend=alunos.filter(a=>!ehDependenteFamilia(a)&&statusFinanceiro(a)!=='pago'&&ehAtivoAluno(a)&&(Number(a.mensalidade)||0)>0);
+  const pend=alunos.filter(a=>pendenteDoFechamento(a,monthKey())&&(Number(a.mensalidade)||0)>0);
   const venc=pend.filter(a=>{const d=vencDe(a);return d!==null&&d<0;});
   if(venc.length){
     const tot=venc.reduce((s,a)=>s+(saldoMensalidade(a)),0);
@@ -7977,7 +8004,7 @@ function renderFin(){
   const prevAg=DB.alunos.reduce((s,a)=>s+mensalidadeDaAgenda(a,curYear,curMonth).valor,0);
   const elPA=document.getElementById('f-prev-agenda');
   if(elPA)elPA.textContent=fmt(prevAg);
-  const inad=DB.alunos.filter(a=>!ehDependenteFamilia(a)&&statusFinanceiro(a)!=='pago'&&ehAtivoAluno(a)).reduce((s,a)=>s+(saldoMensalidade(a)),0);
+  const inad=DB.alunos.filter(a=>pendenteDoFechamento(a,monthKey())).reduce((s,a)=>s+(saldoMensalidade(a)),0);
   document.getElementById('f-inad').textContent=fmt(inad);
   const mi=document.getElementById('meta-input');
   if(hideVals){mi.type='text';mi.value='••••';mi.readOnly=true;}
@@ -9464,7 +9491,7 @@ function conferirNumeros(){
       txt:'LANÇAMENTO REPETIDO: '+g2.length+'x "'+(g2[0].desc||'')+'" de '+fmt(g2[0].valor)+' no mesmo dia ('+String(g2[0].data||'').split('-').reverse().join('/')+'). Confira na Caixa se não foi toque duplo.'});
   });
   // "a receber" do painel contra a soma aluno a aluno
-  const soma=(DB.alunos||[]).filter(a=>!ehDependenteFamilia(a)&&statusFinanceiro(a)!=='pago'&&ehAtivoAluno(a))
+  const soma=(DB.alunos||[]).filter(a=>pendenteDoFechamento(a,monthKey()))
     .reduce((s,a)=>s+(saldoMensalidade(a)),0);
   const cab='<div class="cons info"><h4><span>🔎</span>Esta tela não altera nada</h4>'
     +'<p>Ela só mostra. Nenhum botão aqui mexe em crédito, saldo ou aula — quando algo precisar ser acertado, você acerta no cadastro do aluno.</p></div>'
