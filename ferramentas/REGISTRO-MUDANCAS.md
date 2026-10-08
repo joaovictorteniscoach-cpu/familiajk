@@ -43,7 +43,7 @@ Firebase alterado; nada é corrigido automaticamente.
   no seu lugar): "Resumo do mês" (números, plano e todas as datas feitas e
   marcadas), "Próximas (N)" (confirmar, cancelar, Google Agenda, salvar o mês,
   agendar mais, falar com o João) e "Feitas (N)" (histórico). Estado em
-  `aria-selected` (`abaMinhasAulas`, `ABA_MINHAS`); não usa `.seg`, porque o
+  `aria-selected` (`abaMinhasAulas`); não usa `.seg`, porque o
   `setView` da agenda limpa o "on" de todos os `.seg`. Barra de baixo e botão
   laranja abrem o Resumo; "Próxima aula ›" abre Próximas. Em Próximas, as aulas
   dos meses seguintes ficam agrupadas num `<details>` fechado. Testes antigos

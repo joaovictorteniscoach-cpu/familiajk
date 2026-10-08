@@ -3508,10 +3508,8 @@ function _albMarcar(tab){
 function irMinhasAulas(aba){goAluno('aulas',document.getElementById('nav-al-aulas'));abaMinhasAulas(aba||'mes');}
 /* Abas da página Minhas aulas: Resumo do mês (todas as datas, feitas e
    marcadas), Próximas (confirmar, cancelar, salvar na agenda) e Feitas. */
-let ABA_MINHAS='mes';
 function abaMinhasAulas(aba){
   if(['mes','prox','feitas'].indexOf(aba)<0)aba='mes';
-  ABA_MINHAS=aba;
   ['mes','prox','feitas'].forEach(k=>{
     const t=document.getElementById('mau-tab-'+k),pn=document.getElementById('mau-painel-'+k);
     if(t){t.setAttribute('aria-selected',String(k===aba));t.tabIndex=k===aba?0:-1;}
