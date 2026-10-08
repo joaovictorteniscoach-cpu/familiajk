@@ -1,8 +1,10 @@
 /* Assistente por voz como conversa: entende faixa de horário ("das 16 até o
    fim da noite"), semana/mês/ano, horários livres, aluno (créditos, próxima
    aula, horário fixo, mensalidade), financeiro, ocupação, locações e preços;
-   abre/fecha horários (data ou toda semana) e marca chuva com prévia e
-   confirmação. O formulário de aluno só aparece quando é preciso.
+   abre/fecha horários (data ou toda semana), marca chuva e presença com
+   prévia e confirmação, abre a cobrança no WhatsApp e, ao fim da fala, avisa
+   "Claro, João. Só um minuto." antes da resposta. O formulário de aluno só
+   aparece quando é preciso.
    Somente dados fictícios, nuvem simulada, relógio fixo. */
 let chromium;
 try{({chromium}=require('playwright'));}catch(e){({chromium}=require(process.env.PW||'/opt/node22/lib/node_modules/playwright'));}
@@ -266,6 +268,118 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
    }
    await p.setViewportSize({width:390,height:844});
    if(process.env.JV_SHOTS)await p.screenshot({path:path.join(process.env.JV_SHOTS,'voz-conversa.png')});
+  });
+  await check('fala terminou: diz "Claro, João. Só um minuto." e depois fala a resposta, sem cortar; digitado não tem aviso',async()=>{
+   await reset();
+   await p.evaluate(()=>{
+    window.__voz=[];window.__fila=[];
+    const tocar=()=>{const u=__fila[0];if(u&&!u.__on){u.__on=true;if(u.onstart)u.onstart();}};
+    Object.defineProperty(window,'speechSynthesis',{configurable:true,value:{
+     cancel(){__voz.push('cancel');const f=__fila.splice(0);f.forEach(u=>{if(u.onerror)u.onerror({error:'canceled'});});},
+     speak(u){__voz.push(u.text);__faladas.push(u.text);__fila.push(u);tocar();}}});
+    window.__acabar=()=>{const u=__fila.shift();if(u&&u.onend)u.onend();tocar();};
+    window.SpeechRecognition=class{constructor(){window.__rec=this;}start(){}abort(){}};
+   });
+   await abrir();await p.evaluate(()=>{__voz.length=0;});
+   await p.locator('#voz-falar').click();
+   await p.evaluate(()=>{const r=__rec,res=[Object.assign([{transcript:'Quantas aulas tenho hoje'}],{isFinal:true})];r.onresult({resultIndex:0,results:res});r.onend();});
+   await p.waitForFunction(()=>__voz.some(t=>/^Você tem/.test(t)));
+   const v=await p.evaluate(()=>__voz.slice());
+   const ack=v.indexOf('Claro, João. Só um minuto.'),resp=v.findIndex(t=>/^Você tem/.test(t));
+   assert.ok(ack>=0,'avisa que entendeu: '+JSON.stringify(v));assert.ok(resp>ack,'a resposta vem depois do aviso');
+   assert.equal(v.slice(ack).includes('cancel'),false,'o aviso não é cortado pela resposta: '+JSON.stringify(v));
+   assert.match(await resposta(),/Você tem \d+ aulas? agendadas?/);
+   assert.equal(await p.evaluate(()=>__fila.length),2,'aviso tocando e a resposta na fila');
+   await p.evaluate(()=>{__acabar();});assert.equal(await p.evaluate(()=>__fila[0]&&/^Você tem/.test(__fila[0].text)),true,'a resposta começa quando o aviso acaba');
+   await p.evaluate(()=>{__acabar();__voz.length=0;});
+   await falar('Quantas aulas tenho amanhã?');
+   assert.equal(await p.evaluate(()=>__voz.includes('Claro, João. Só um minuto.')),false,'pedido digitado responde direto');
+   await p.evaluate(()=>{__voz.length=0;document.getElementById('voz-ouvir').checked=false;});
+   await p.locator('#voz-falar').click();
+   await p.evaluate(()=>{const r=__rec,res=[Object.assign([{transcript:'Quantas aulas tenho hoje'}],{isFinal:true})];r.onresult({resultIndex:0,results:res});r.onend();});
+   await p.waitForFunction(()=>/Você tem/.test(document.getElementById('voz-consulta-resumo').innerText));
+   assert.equal(await p.evaluate(()=>__voz.filter(t=>t!=='cancel').length),0,'com "Responder por voz" desligado não fala nada');
+   await p.evaluate(()=>{document.getElementById('voz-ouvir').checked=true;});
+  });
+  await check('marcar presença da Ana hoje: prévia com o saldo, desconta só ao confirmar (mesmo ✓ da agenda)',async()=>{
+   await reset();await abrir();const a=await antes();
+   await p.evaluate(()=>{agDate=new Date('2026-10-20T12:00:00');});
+   await falar('Marcar presença da Ana hoje');
+   await p.waitForFunction(()=>!document.getElementById('voz-confirmar').disabled);
+   const prev=await p.locator('#voz-previa').innerText();
+   assert.match(prev,/Marcar presença/);assert.match(prev,/09:00 Ana Teste — aula particular · créditos 3 → 2/);assert.match(prev,/Fica de fora: 19:00 ainda não começou/);
+   assert.equal(await p.locator('#voz-confirmar').innerText(),'Confirmar presença');assert.equal(await p.locator('#voz-campos').isVisible(),false);
+   assert.equal(await antes(),a,'nada muda antes de confirmar');
+   assert.ok(await p.evaluate(()=>__faladas.some(t=>/hoje: 1 aula\. 09:00 Ana Teste, aula particular, créditos 3 para 2\./.test(t))),'fala sem setas nem símbolos');
+   if(process.env.JV_SHOTS)await p.screenshot({path:path.join(process.env.JV_SHOTS,'voz-presenca.png')});
+   await p.evaluate(()=>JVAcoesVoz.executar());
+   const r=await p.evaluate(()=>({cred:DB.alunos.find(x=>x.id==='ana').creditos,pres:DB.presencas.map(x=>x.k+'|'+x.tipo),mov:DB.movs.filter(m=>m.motivo!=='Saldo inicial').map(m=>m.campo+m.delta+m.motivo),snaps:__snapshots.length,saves:__saves,
+    ag:dKey(agDate),res:document.getElementById('voz-resultado').innerText}));
+   assert.equal(r.cred,2);assert.deepEqual(r.pres,['2026-10-15|09:00|ana|aula']);assert.deepEqual(r.mov,['creditos-1Presença na agenda']);
+   assert.equal(r.snaps,1,'cópia antes de mudar');assert.equal(r.saves,1);assert.equal(r.ag,'2026-10-20','a agenda continua no dia que estava aberto');
+   assert.match(r.res,/Presença marcada hoje: 09:00 Ana Teste/);assert.match(r.res,/salvo na nuvem/);
+   const b=await antes();await falar('Marcar presença da Ana hoje');
+   assert.match(await ultimaMsg(),/09:00 já está com presença marcada; 19:00 ainda não começou\. Não encontrei aula para marcar presença hoje/);
+   assert.ok(await p.locator('#voz-confirmar').isDisabled());assert.equal(await antes(),b,'não marca de novo');
+  });
+  await check('presença de todos de hoje (só o que já começou) e pedidos que não devem marcar',async()=>{
+   await reset();await abrir();
+   await falar('Marcar presença de todos de hoje');
+   await p.waitForFunction(()=>!document.getElementById('voz-confirmar').disabled);
+   const prev=await p.locator('#voz-previa').innerText();
+   assert.match(prev,/hoje: 2 aulas/);assert.match(prev,/07:00 Caio Teste — personal · créditos 2 → 1/);assert.match(prev,/09:00 Ana Teste/);assert.doesNotMatch(prev,/16:00|17:00|19:00/);
+   assert.equal(await p.locator('#voz-confirmar').innerText(),'Confirmar 2 presenças');
+   await p.evaluate(()=>JVAcoesVoz.executar());
+   assert.deepEqual(await p.evaluate(()=>DB.alunos.filter(x=>['ana','caio'].includes(x.id)).map(x=>x.creditos)),[2,1]);
+   await reset({presencas:[{k:'2026-10-15|09:00|ana',alunoId:'ana',data:'2026-10-15',hora:'09:00',tipo:'falta',custo:1}]});await abrir();const a=await antes();
+   for(const [t,re] of [['Marcar presença da Ana hoje',/está com falta, confira pela agenda/],['Marcar presença da Ana amanhã',/ainda não aconteceu/],['Desmarcar a presença da Ana hoje',/toque no ✓ da aula na agenda/],['Marcar presença hoje',/Diga o nome do aluno/],['Marcar presença do Zé hoje',/Diga o nome do aluno/]]){
+    await falar(t);assert.match(await ultimaMsg(),re,t);assert.ok(await p.locator('#voz-confirmar').isDisabled(),t);
+   }
+   assert.equal(await antes(),a,'nenhum pedido acima mudou dados');
+   assert.equal((await p.evaluate(()=>JVAcoesVoz.interpretar('Quem tem presença marcada hoje?',DB.alunos,'2026-10-15'))).acao!=='presenca',true,'pergunta não vira ação');
+   const c=await p.evaluate(()=>JVAcoesVoz.interpretar('Confirmar a aula das 9 da manhã da Ana',DB.alunos,'2026-10-15'));
+   assert.match((await p.evaluate(()=>JVAcoesVoz.interpretar('Confirmar a aula das 9 da Ana',DB.alunos,'2026-10-15'))).erro,/Diga manhã, tarde ou noite/,'hora ambígua pergunta');
+   assert.equal(c.acao,'presenca');assert.equal(c.hora,'09:00');assert.equal(c.alunoId,'ana');assert.equal(c.data,'2026-10-15');
+   const v=await p.evaluate(()=>['Dá presença pra Ana hoje','Pode dar presença para a Bia hoje?','Lista de presença da Ana','Tirar a presença da Ana hoje','A Ana teve presença marcada hoje'].map(t=>{const r=JVAcoesVoz.interpretar(t,DB.alunos,'2026-10-15');return r.acao||r.erro;}));
+   assert.equal(v[0],'presenca');assert.equal(v[1],'presenca');assert.notEqual(v[2],'presenca','“lista de presença” não é ordem');
+   assert.match(v[3],/toque no ✓ da aula na agenda/);assert.notEqual(v[4],'presenca','passado é pergunta');
+  });
+  await check('cobrar a Ana abre o WhatsApp com a mensagem do mês de hoje; cobrar quem está devendo lista um botão por aluno',async()=>{
+   await reset();
+   await p.evaluate(()=>{DB.alunos.find(x=>x.id==='ana').tel='(11) 99999-0000';curMonth=8;window.__abertos=[];window.open=(u,alvo)=>{__abertos.push(u);return null;};});
+   await abrir();const a=await antes();
+   await falar('Cobrar a Ana');
+   await p.waitForFunction(()=>!document.getElementById('voz-confirmar').disabled);
+   const prev=await p.locator('#voz-previa').innerText();
+   assert.match(prev,/Cobrar Ana Teste/);assert.match(prev,/Mensalidade de outubro: falta R\$\s?640/);assert.match(prev,/Nada é alterado no app/);
+   assert.equal(await p.locator('#voz-confirmar').innerText(),'Abrir cobrança no WhatsApp');
+   await p.locator('#voz-confirmar').click();
+   const r=await p.evaluate(()=>({ab:__abertos.slice(),mes:curMonth,persist:__persist,snaps:__snapshots.length}));
+   assert.equal(r.ab.length,1,'abre no mesmo toque');assert.match(r.ab[0],/^https:\/\/wa\.me\/\d*11999990000\?text=/);
+   const txt=decodeURIComponent(r.ab[0].split('text=')[1]);assert.match(txt,/Olá Ana!/);assert.match(txt,/de Outubro: R\$\s?640/);assert.doesNotMatch(txt,/desconto/i);
+   assert.equal(r.mes,8,'o mês aberto no app continua o mesmo');assert.equal(r.persist,0);assert.equal(r.snaps,0);assert.equal(await antes(),a,'cobrar não muda dados');
+   assert.match(await ultimaMsg(),/Abri a conversa de Ana Teste no WhatsApp/);
+   await falar('Cobrar o Caio');assert.match(await ultimaMsg(),/Caio Teste está com a mensalidade de outubro em dia/);
+   await falar('Cobrar o Zé');assert.match(await ultimaMsg(),/Diga o nome do aluno/);
+   await falar('Cobrar quem está devendo');
+   await p.waitForFunction(()=>document.querySelectorAll('#voz-previa .jv-voz-cobrar').length===2);
+   assert.equal(await p.locator('#voz-confirmar').isVisible(),false,'cada aluno tem o seu botão');
+   const linhas=await p.locator('#voz-previa .jv-voz-cobrar').allInnerTexts();
+   assert.match(linhas[0],/Ana Teste · R\$\s?640\s*Cobrar/);assert.match(linhas[1],/Bia Teste.*Sem WhatsApp/s);
+   assert.ok(await p.locator('#voz-previa .jv-voz-cobrar button').nth(1).isDisabled());
+   if(process.env.JV_SHOTS)await p.screenshot({path:path.join(process.env.JV_SHOTS,'voz-cobrar.png')});
+   await p.locator('#voz-previa .jv-voz-cobrar button').first().click();
+   assert.equal(await p.evaluate(()=>__abertos.length),2);assert.equal(await p.locator('#voz-previa .jv-voz-cobrar button').first().innerText(),'Aberto ✓');
+   assert.equal(await antes(),a);
+   const q=await p.evaluate(()=>['Quem está devendo?','Quanto falta cobrar?','Quem eu preciso cobrar?','Pode cobrar a Ana?','Pode marcar presença da Ana hoje?'].map(t=>JVAcoesVoz.interpretar(t,DB.alunos,'2026-10-15').acao));
+   assert.deepEqual(q,['consultar','consultar','consultar','cobrar','presenca'],'perguntas continuam consulta; "pode…?" é pedido');
+   // dependente do plano família: a cobrança vai para o responsável
+   await p.evaluate(()=>{DB.alunos.push({id:'leo',nome:'Leo Teste',codigo:'leo',tipo:'Particular',ativo:true,plano:4,planoGrupo:0,creditos:2,credGrupo:0,repos:0,mensalidade:0,status:'pago',responsavelId:'ana',parentesco:'Filho'});ensureFields();__no=__baseNo();_basePartes=JSON.parse(JSON.stringify(__no));__abertos.length=0;});
+   assert.equal(await p.evaluate(()=>pagadorFamilia(DB.alunos.find(x=>x.id==='leo')).id),'ana','fixture de família');
+   const f=await antes();await falar('Cobrar o Leo');await p.waitForFunction(()=>!document.getElementById('voz-confirmar').disabled);
+   const pf=await p.locator('#voz-previa').innerText();assert.match(pf,/Cobrar Ana Teste/);assert.match(pf,/Leo Teste é do plano família: a cobrança vai para Ana Teste/);
+   await p.locator('#voz-confirmar').click();assert.equal(await p.evaluate(()=>__abertos.length),1);assert.match(await ultimaMsg(),/Abri a conversa de Ana Teste/);
+   assert.equal(await antes(),f);
   });
   assert.deepEqual(errors,[]);
   console.log('\n✅ '+count+' verificações · assistente por voz em conversa');

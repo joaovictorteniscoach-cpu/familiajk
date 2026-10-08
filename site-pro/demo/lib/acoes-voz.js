@@ -132,7 +132,7 @@ function interpretarPergunta(t,alunos,base){
  const d=new Date(base+'T12:00:00'),mkAtual=base.slice(0,7),mkAnt=dkDe(new Date(d.getFullYear(),d.getMonth()-1,1)).slice(0,7);
  const mk=/\bmes passado\b/.test(t)?mkAnt:mkAtual;
  const cit=alunosCitados(t,alunos);
- const fin=/\b(?:pag(?:ou|aram|ar|o|ou a|amento|amentos)|mensalidades?|devendo|deve|devem|pendentes?|em atraso|atrasad[ao]s?|inadimpl\w*|receb\w*|entrou|entrada|faturamento|fature\w*|caixa|a receber|falta receber)\b/;
+ const fin=/\b(?:pag(?:ou|aram|ar|o|ou a|amento|amentos)|mensalidades?|devendo|deve|devem|pendentes?|em atraso|atrasad[ao]s?|inadimpl\w*|receb\w*|entrou|entrada|faturamento|fature\w*|caixa|a receber|falta receber|cobr(?:ar|anca|ancas))\b/;
  const EXTRATO=/\b(?:aulas?|extrato|historico|frequencia|presenc\w*|faltas?|faltou|feitas?|fez|realizad\w*|dadas?|deu|tev[ae]|agendad\w*|desmarc\w*|cancel\w*|chuva|choveu)\b/;
  if(cit.length&&(fin.test(t)||EXTRATO.test(t)||/\b(?:creditos?|saldo|reposic\w*|repor|proximas?|quando|horario|horarios|que horas|que dia|plano|pacote)\b/.test(t))){
   if(cit.length>1)return {erro:'Encontrei '+cit.length+' alunos com esse nome ('+cit.slice(0,4).map(a=>a.nome).join(', ')+'). Diga o nome e o sobrenome.'};
@@ -151,7 +151,7 @@ function interpretarPergunta(t,alunos,base){
   return r;
  }
  if(fin.test(t)&&!/\baulas?\b/.test(t)){
-  if(/\b(?:a receber|falta receber|quanto falta)\b/.test(t))return {acao:'consultar',consulta:'financeiro',qual:'areceber',mk};
+  if(/\b(?:a receber|falta receber|quanto falta|a cobrar|falta cobrar)\b/.test(t))return {acao:'consultar',consulta:'financeiro',qual:'areceber',mk};
   if(/\b(?:receb\w*|entrou|entrada|faturamento|fature\w*|caixa)\b/.test(t))return {acao:'consultar',consulta:'financeiro',qual:'recebido',mk};
   return {acao:'consultar',consulta:'financeiro',qual:'pendentes',mk};
  }
@@ -185,9 +185,27 @@ function interpretarPergunta(t,alunos,base){
 }
 /* Ações que não dependem de aluno: mudar o funcionamento (aula, só locação,
    fechado) numa data ou toda semana, e marcar chuva. Sempre com prévia. */
-function interpretarAcaoEspecial(t,base){
+function interpretarAcaoEspecial(t,base,alunos){
  if(/^(?:abr[aei]r?|abre|mostr[ae]r?|ve[jr]a?|ir para|vai para|leve para)\s+(?:a\s+|minha\s+)?agenda\b/.test(t)&&!/\b(?:locac\w*|para aula|fech\w*|liber\w*|bloque\w*)\b/.test(t)){
   const dt=lerData(t,base);return {acao:'navegar',data:dt.data||base};
+ }
+ const ordem=!/^(?:quant[ao]s?|quem|qual|quais|como|onde|por que|tem|teve|houve)\b/.test(t)&&(!/\?/.test(t)||/^(?:pode|poderia|consegue|voce pode|da para|da pra)\b/.test(t));
+ const umAluno=()=>{const c=alunosCitados(t,alunos);return c.length>1?{erro:'Encontrei '+c.length+' alunos com esse nome ('+c.slice(0,4).map(a=>a.nome).join(', ')+'). Diga o nome e o sobrenome.'}:{aluno:c[0]||null};};
+ /* Presença: o mesmo ✓ da agenda (desconta a aula), com prévia. */
+ if(ordem&&(/(?:\b(?:marc|confirm|lanc|registr|coloc|bot|desmarc|desfaz|tir|remov|apag)\w*|(?:^|\bpode |\bvoce pode )d[ae]r?)\s+(?:a |as |uma )?presenc/.test(t)||/\bconfirm\w* (?:a |as )?aulas?\b/.test(t))){
+  if(/\b(?:nao|desfaz\w*|tir\w*|remov\w*|desmarc\w*|apag\w*)\b/.test(t))return {erro:'Para desfazer uma presença, toque no ✓ da aula na agenda. Nada foi alterado.'};
+  const dt=lerData(t,base);if(dt.erro)return {erro:dt.erro};
+  const h=horaUnica(t);if(h.erro)return {erro:h.erro};
+  const todos=/\b(?:tod[oa]s|geral)\b/.test(t),u=umAluno();if(u.erro)return u;
+  if(!todos&&!u.aluno)return {erro:'Diga o nome do aluno (“marcar presença da Ana hoje”) ou peça “marcar presença de todos de hoje”.'};
+  return {acao:'presenca',especial:true,data:dt.data||base,hora:h.hora,alunoId:todos?'':u.aluno.id,todos};
+ }
+ /* Cobrança: abre o WhatsApp do cadastro com a mensagem pronta (nada muda). */
+ if(ordem&&/\b(?:cobr(?:ar|a|e|o|anca|ancas)|lembr\w* (?:do |o |a )?pagamento|lembrete de pagamento)\b/.test(t)){
+  const u=umAluno();if(u.erro)return u;
+  if(!u.aluno&&!/\b(?:tod[oa]s|todo mundo|geral|quem|devendo|deve|devem|pendentes?|pendencias?|atrasad\w*|em atraso|inadimpl\w*)\b/.test(t))
+   return {erro:'Diga o nome do aluno (“cobrar a Ana”) ou peça “cobrar quem está devendo”.'};
+  return {acao:'cobrar',especial:true,alunoId:u.aluno?u.aluno.id:'',todos:!u.aluno};
  }
  const fechar=/\b(?:fech(?:e|ar|a)|bloque(?:ie|ar|ia)|tranc(?:ar|a|ue))\b/.test(t)&&!/\bfechamento\b|\bfechar o mes\b/.test(t);
  const abrir=/\b(?:abr(?:a|ir|e)|liber(?:e|ar|a)|deix(?:e|ar|a)|coloque|colocar|mud(?:e|ar|a)|transform(?:e|ar|a))\b/.test(t);
@@ -256,7 +274,7 @@ function interpretarConsulta(t,base){
 }
 function interpretar(texto,alunos,base){
  const t=norm(String(texto).slice(0,500)),acoes=[];
- const especial=interpretarAcaoEspecial(t,base);if(especial)return especial;
+ const especial=interpretarAcaoEspecial(t,base,alunos);if(especial)return especial;
  const pergunta=interpretarPergunta(t,alunos,base);if(pergunta)return pergunta;
  if(/\b(?:nao|corrigindo|melhor|desculpa)\b|\bquer dizer\b/.test(t))return {erro:'Reformule um pedido afirmativo por vez. Nada foi alterado.'};
  const consulta=interpretarConsulta(t,base);if(consulta)return consulta;
@@ -272,7 +290,7 @@ function interpretar(texto,alunos,base){
  else if(/\bparticular\b/.test(t))tipo='aula';else if(/\bpersonal\b/.test(t))tipo='personal';else if(/\blocacao\b/.test(t))tipo='locacao';else if(/\btorneio\b/.test(t))tipo='torneio';
  return {acao:acoes[0],candidatos:candidatos.map(a=>a.id),data:d.data,hora:h.hora,tipo,repo:/\breposicao\b/.test(t),aviso:d.erro||h.erro};
 }
-const AJUDA_CURTA='Posso responder sobre aulas (dia, horário, semana, mês ou ano), horários livres, extrato e próximas aulas de cada aluno, créditos, reposições, mensalidade, faltas, aulas desmarcadas, dias de chuva, presenças por confirmar, quem está devendo, quanto você recebeu, ocupação e locações. E, com sua confirmação, agendar, cancelar, renovar pacote, abrir ou fechar horários e marcar chuva.';
+const AJUDA_CURTA='Posso responder sobre aulas (dia, horário, semana, mês ou ano), horários livres, extrato e próximas aulas de cada aluno, créditos, reposições, mensalidade, faltas, aulas desmarcadas, dias de chuva, presenças por confirmar, quem está devendo, quanto você recebeu, ocupação e locações. E, com sua confirmação, agendar, cancelar, renovar pacote, marcar presença, cobrar pelo WhatsApp, abrir ou fechar horários e marcar chuva.';
 function dono(){try{return !w.JV_DEMO&&CARREGADO&&w._espacoAberto&&ehDono()&&!!w.AUTH_USER&&w.AUTH_USER.uid===UID_DONO;}catch(e){return false;}}
 function pronto(){if(!dono())throw Error('Entre na conta do João para usar as ações rápidas.');
  if(navigator.onLine===false||!hasCloud())throw Error('Conecte à internet antes de confirmar uma ação.');
@@ -351,7 +369,7 @@ function arquivarVivos(){
 function limparConversa(){const box=$('voz-conversa');if(box)box.querySelectorAll('.jv-voz-msg,.jv-voz-sugestoes').forEach(x=>x.remove());}
 function saudacao(){
  const box=$('voz-conversa');if(!box)return;
- msg('assistente','Oi, João! Pergunte sobre aulas, horários livres, alunos ou financeiro, ou peça para agendar, cancelar, renovar, abrir ou fechar horários e marcar chuva. Toda alteração espera sua confirmação.');
+ msg('assistente','Oi, João! Pergunte sobre aulas, horários livres, alunos ou financeiro, ou peça para agendar, cancelar, renovar, marcar presença, cobrar, abrir ou fechar horários e marcar chuva. Toda alteração espera sua confirmação.');
  const sug=document.createElement('div');sug.className='jv-voz-sugestoes';
  [['Aulas de hoje','Quantas aulas tenho hoje?'],['Livres amanhã','Quais horários livres amanhã?'],['Quem está devendo','Quem está devendo este mês?'],['O que você faz?','Ajuda']].forEach(([rot,texto])=>{
   const b=document.createElement('button');b.type='button';b.textContent=rot;
@@ -360,12 +378,18 @@ function saudacao(){
 }
 function avisar(m){status(m);msg('assistente',m);}
 function mostrarCampos(sim){$('voz-campos').hidden=!sim;const m=$('voz-manual');if(m)m.hidden=sim;}
-function pararResposta(){st.resposta=null;st.falando=false;try{if(w.speechSynthesis)w.speechSynthesis.cancel();}catch(e){}if($('voz-falar'))atualizarMic();}
+function pararResposta(){st.resposta=null;st.ack=null;st.falando=false;try{if(w.speechSynthesis)w.speechSynthesis.cancel();}catch(e){}if($('voz-falar'))atualizarMic();}
+/* Não corta o "Claro, João" que acabou de começar: a resposta entra na fila. */
+function pararMenosAviso(){if(st.ack&&st.resposta===st.ack)return;pararResposta();}
 function ouvirResposta(texto,manual){
  if(!st.aberto||!texto||(!manual&&!$('voz-ouvir').checked)||!w.speechSynthesis||!w.SpeechSynthesisUtterance)return;
- parar();pararResposta();
+ // "Claro, João" ainda falando: a resposta entra logo depois, sem cortar
+ const emFila=!manual&&st.ack&&st.resposta===st.ack;
+ parar();if(!emFila)pararResposta();
  try{
-  const u=new w.SpeechSynthesisUtterance(texto);u.lang='pt-BR';st.resposta=u;
+  // setas e separadores da tela viram fala natural ("créditos 3 para 2")
+  const dito=String(texto).replace(/\s*→\s*/g,' para ').replace(/\s*[·—]\s*/g,', ').replace(/[✓✗❌☔]/g,'');
+  const u=new w.SpeechSynthesisUtterance(dito);u.lang='pt-BR';st.resposta=u;
   u.onstart=()=>{if(st.resposta===u&&st.aberto){st.falando=true;atualizarMic();}};
   const fim=()=>{if(st.resposta===u){st.resposta=null;st.falando=false;atualizarMic();}};
   u.onend=fim;u.onerror=fim;w.speechSynthesis.speak(u);
@@ -376,6 +400,16 @@ function resultadoSalvo(){
  st.confirmacao=(st.resultadoBase?st.resultadoBase+'. ':'')+'Confirmado e salvo na nuvem.';
  status(st.confirmacao);$('voz-resultado').textContent=st.confirmacao;$('voz-resultado').hidden=false;$('voz-repetir').hidden=false;$('voz-repetir').disabled=!w.speechSynthesis||!w.SpeechSynthesisUtterance;
  st.aplicado=false;rolarConversa();ouvirResposta(st.confirmacao);
+}
+/* Assim que a fala termina: avisa que entendeu e já vai buscar a resposta. */
+function avisarQueEntendeu(){
+ if(st.aberto)status('Claro, João. Só um minuto…');
+ if(!st.aberto||!$('voz-ouvir').checked||!w.speechSynthesis||!w.SpeechSynthesisUtterance)return;
+ pararResposta();
+ try{const u=new w.SpeechSynthesisUtterance('Claro, João. Só um minuto.');u.lang='pt-BR';st.ack=u;st.resposta=u;
+  u.onstart=()=>{if(st.resposta===u&&st.aberto){st.falando=true;atualizarMic();}};
+  const fim=()=>{if(st.ack===u)st.ack=null;if(st.resposta===u){st.resposta=null;st.falando=false;atualizarMic();}};
+  u.onend=fim;u.onerror=fim;w.speechSynthesis.speak(u);}catch(e){st.ack=null;}
 }
 function repetir(){if(st.confirmacao)ouvirResposta(st.confirmacao,true);}
 function ocupado(sim){st.ocupado=sim;document.querySelectorAll('#voz-painel input:not(#voz-ouvir),#voz-painel select,#voz-painel textarea,#voz-analisar,#voz-conferir,#voz-falar,#voz-confirmar').forEach(e=>{e.disabled=sim||st.aplicado;});$('voz-confirmar').disabled=sim||!st.intencao||st.aplicado;$('voz-salvar').disabled=sim;atualizarMic();}
@@ -646,7 +680,7 @@ function resumoPrecos(){
  return {titulo:'Preços',resumo,linhas:hideVals?[]:linhas,nota:'Os preços de plano mensal por aluno estão no cadastro de cada um.',fala:resumo};
 }
 function resumoAjuda(){
- const ex=['“Quantas aulas tenho das 16 até o fim da noite?”','“Quais horários livres amanhã de manhã?”','“Quantas aulas dei este mês?”','“Quantas aulas a Ana fez este mês?” · “Próximas aulas do Bruno”','“Quantos créditos a Ana tem?” · “Choveu ontem?” · “Tem aula desmarcada hoje?”','“Quem está devendo este mês?” · “Quanto recebi este mês?”','“Abra os horários das 7 às 18 de domingo para locação”','“Feche a quadra sábado à tarde” · “Marcar chuva hoje à tarde”','“Agendar Ana amanhã às 16h” · “Cancelar Bruno sexta às 18h”'];
+ const ex=['“Quantas aulas tenho das 16 até o fim da noite?”','“Quais horários livres amanhã de manhã?”','“Quantas aulas dei este mês?”','“Quantas aulas a Ana fez este mês?” · “Próximas aulas do Bruno”','“Quantos créditos a Ana tem?” · “Choveu ontem?” · “Tem aula desmarcada hoje?”','“Quem está devendo este mês?” · “Quanto recebi este mês?”','“Abra os horários das 7 às 18 de domingo para locação”','“Feche a quadra sábado à tarde” · “Marcar chuva hoje à tarde”','“Marcar presença da Ana hoje” · “Marcar presença de todos de hoje”','“Cobrar a Ana” · “Cobrar quem está devendo”','“Agendar Ana amanhã às 16h” · “Cancelar Bruno sexta às 18h”'];
  return {titulo:'O que eu sei fazer',resumo:AJUDA_CURTA,linhas:ex.map(x=>({hora:'•',nomes:x,tipo:''})),nota:'Pode falar do seu jeito; se faltar algo, eu pergunto.',fala:AJUDA_CURTA};
 }
 function calcularResposta(q){
@@ -674,7 +708,7 @@ async function responderConsulta(q){
  finally{if(ep===st.epoca)ocupado(false);}
 }
 async function analisar(){
- if(st.ocupado||st.aplicado)return;parar();pararResposta();invalidar();
+ if(st.ocupado||st.aplicado)return;parar();pararMenosAviso();invalidar();
  const texto=$('voz-texto').value.trim();if(texto){
   msg('voce',texto);
   const r=interpretar(texto,DB.alunos,dataBase());if(r.erro){status(r.erro);msg('assistente',r.erro);ouvirResposta(r.erro);return;}
@@ -688,7 +722,7 @@ async function analisar(){
  await preparar();
 }
 async function preparar(){
- if(st.ocupado||st.aplicado)return;pararResposta();invalidar();atualizarCampos();const ep=st.epoca;
+ if(st.ocupado||st.aplicado)return;pararMenosAviso();invalidar();atualizarCampos();const ep=st.epoca;
  ocupado(true);status('Conferindo aluno, horário e nuvem…');
  try{
   await conferirNuvem();if(ep!==st.epoca||!st.aberto)return;
@@ -769,9 +803,53 @@ function planoEspecial(i){
   if(!afet.length)throw Error('Não há aula nem locação marcada '+quandoTxt(i.data)+' nesses horários.');
   return {afet};
  }
+ if(i.acao==='presenca'){
+  const hoje=dataBase(),agora=agoraMinSP();
+  if(i.data>hoje)throw Error('Essa aula ainda não aconteceu. Marque a presença no dia.');
+  const d=new Date(i.data+'T12:00:00'),pres=new Map((DB.presencas||[]).map(p=>[p.k,p])),alvos=[],avisos=[],saldo={};
+  aulasDoDia(d).aulas.forEach(au=>{
+   if(i.hora&&au.hora!==i.hora)return;
+   au.entradas.forEach(e=>{
+    if(!e.alunoId||i.alunoId&&e.alunoId!==i.alunoId||!['aula','grupo','personal'].includes(e.tipo))return;
+    const a=DB.alunos.find(x=>x.id===e.alunoId);if(!a)return;
+    const quem=i.alunoId?au.hora:a.nome+' '+au.hora;
+    if(i.data===hoje&&au.min>agora){if(i.alunoId)avisos.push(quem+' ainda não começou');return;}
+    const ja=pres.get(presId(e,d));   // o ✓ num registro de falta ou aviso desfaria em vez de marcar
+    if(ja){if(i.alunoId||ehMarca(ja))avisos.push(quem+(ehFalta(ja)?' está com falta, confira pela agenda':ehAvisou(ja)?' avisou que não vem, confira pela agenda':' já está com presença marcada'));return;}
+    const cartao=(DB.presencas||[]).some(p=>p.alunoId===a.id&&p.data===i.data&&p.manual&&!p.extra&&!ehMarca(p)&&(p.tipo||p.modo||'aula')!=='locacao'&&(p.tipo||p.modo)!=='torneio');
+    if(cartao){avisos.push(quem+' já tem aula lançada pelo cartão nesse dia, confirme pela agenda');return;}
+    const campo=e.repo?'repos':e.tipo==='grupo'&&!unificado(a)?'credGrupo':'creditos',ch=a.id+'|'+campo;
+    const antes=ch in saldo?saldo[ch]:Number(a[campo])||0;   // duas aulas no dia: a segunda parte do saldo já descontado
+    if(e.repo&&antes<1){avisos.push(quem+' sem reposição para descontar');return;}
+    saldo[ch]=antes-1;
+    alvos.push({id:e.id,alunoId:a.id,nome:a.nome,hora:au.hora,campo,antes,tipo:e.repo?'reposição':tipoAula(au).toLowerCase()});
+   });
+  });
+  if(!alvos.length)throw Error((avisos.length?avisos.join('; ')+'. ':'')+'Não encontrei aula para marcar presença '+quandoTxt(i.data)+(i.hora?' às '+i.hora:'')+'.');
+  return {alvos,avisos};
+ }
+ if(i.acao==='cobrar'){
+  const mk=dataBase().slice(0,7),pend=a=>{try{return pendenteDoFechamento(a,mk);}catch(e){return false;}};
+  if(i.todos){const l=(DB.alunos||[]).filter(pend).sort((x,y)=>String(x.nome).localeCompare(String(y.nome)));if(!l.length)throw Error('Ninguém está com a mensalidade pendente neste mês.');return {ids:l.map(a=>a.id)};}
+  const a0=DB.alunos.find(x=>x.id===i.alunoId);if(!a0)throw Error('Não encontrei esse aluno.');
+  const a=pagadorFamilia(a0);   // dependente: quem paga é o responsável
+  if(!pend(a))throw Error(a.nome+' está com a mensalidade de '+MESES[Number(mk.slice(5,7))-1].toLowerCase()+' em dia. Nada para cobrar.');
+  if(!pagadorFamilia(a).tel)throw Error(a.nome+' não tem WhatsApp no cadastro.');
+  return {ids:[a.id]};
+ }
  throw Error('Pedido não reconhecido.');
 }
+const CAMPO_TXT={creditos:'créditos',credGrupo:'créditos de grupo',repos:'reposições'};
 function textoEspecial(i,plano){
+ if(i.acao==='presenca')return {titulo:'Marcar presença',
+  linhas:[quandoTxt(i.data)+': '+plural(plano.alvos.length,'aula','aulas')].concat(plano.alvos.map(x=>x.hora+' '+x.nome+' — '+x.tipo+' · '+CAMPO_TXT[x.campo]+' '+fmtCred(x.antes)+' → '+fmtCred(x.antes-1))).concat(plano.avisos.length?['Fica de fora: '+plano.avisos.join('; ')+'.']:[]),
+  nota:'É o mesmo ✓ da agenda: desconta a aula do saldo. Para desfazer, toque no ✓ da aula na agenda.',botao:plano.alvos.length>1?'Confirmar '+plano.alvos.length+' presenças':'Confirmar presença'};
+ if(i.acao==='cobrar'){
+  const mk=dataBase().slice(0,7),mes=MESES[Number(mk.slice(5,7))-1].toLowerCase(),als=plano.ids.map(id=>DB.alunos.find(a=>a.id===id)).filter(Boolean);
+  if(i.todos)return {titulo:'Cobrar mensalidades de '+mes,linhas:[plural(als.length,'aluno','alunos')+' com mensalidade pendente. Toque em Cobrar de cada um para abrir o WhatsApp com a mensagem pronta.'],nota:'Nada é alterado no app; você confere e envia no WhatsApp.',botao:''};
+  const a=als[0],dep=a.id!==i.alunoId?DB.alunos.find(x=>x.id===i.alunoId):null;
+  return {titulo:'Cobrar '+a.nome,linhas:(dep?[dep.nome+' é do plano família: a cobrança vai para '+a.nome+'.']:[]).concat(['Mensalidade de '+mes+': falta '+valorRs(saldoMensalidade(a,mk))+'.']),nota:'Abre o WhatsApp do cadastro com a mensagem pronta; você confere e envia. Nada é alterado no app.',botao:'Abrir cobrança no WhatsApp'};
+ }
  if(i.acao==='chuva')return {titulo:'Marcar chuva',linhas:[quandoTxt(i.data)+' · '+plural(plano.afet.length,'horário')+': '+plano.afet.map(a=>a.hora+' '+a.nomes).join('; ')],
   nota:'As aulas desses horários saem só desta data (a grade fixa continua). Presença já marcada devolve o crédito. Os alunos veem “cancelado por chuva”.',botao:'Confirmar chuva'};
  const quando=i.escopo==='semana'?'Toda semana: '+i.dias.map(d=>DIAS_L[d]).join(', '):quandoTxt(i.data)+' (só esta data)';
@@ -798,13 +876,26 @@ async function prepararEspecial(i){
    box.append(escolha('Funcionamento',[['aula','Aberto para aula'],['loc','Só locação'],['fechado','Fechado']],i.modo,v=>{invalidar();prepararEspecial(Object.assign({},i,{modo:v}));}));
    box.append(escolha('Vale para',[['data','Só em '+brData(refData),i.dias.length>1],['semana','Toda '+i.dias.map(d=>DIAS_L[d]).join(', ')]],i.escopo,v=>{invalidar();prepararEspecial(Object.assign({},i,{escopo:v,data:v==='data'?refData:i.data}));}));
   }
+  if(i.acao==='cobrar'&&i.todos){
+   const mk=dataBase().slice(0,7);
+   plano.ids.forEach(id=>{const a=DB.alunos.find(x=>x.id===id);if(!a)return;const row=document.createElement('div');row.className='jv-voz-cobrar';
+    const nm=document.createElement('span');nm.textContent=a.nome+' · '+valorRs(saldoMensalidade(a,mk));
+    const b=document.createElement('button');b.type='button';b.textContent=pagadorFamilia(a).tel?'Cobrar':'Sem WhatsApp';b.disabled=!pagadorFamilia(a).tel;
+    b.onclick=()=>{cobrarMesAtual(a.id);b.textContent='Aberto ✓';msg('assistente','Abri a conversa de '+a.nome+' no WhatsApp com a mensagem de cobrança. É só conferir e enviar.');};
+    row.append(nm,b);box.append(row);});
+  }
   const nota=document.createElement('p');nota.textContent=txt.nota;box.append(nota);
-  box.hidden=false;$('voz-confirmar').hidden=false;$('voz-confirmar').textContent=txt.botao;
-  const fala=txt.titulo+'. '+txt.linhas.join(' ')+' Confira e toque em '+txt.botao+'.';
+  box.hidden=false;$('voz-confirmar').hidden=!txt.botao;$('voz-confirmar').textContent=txt.botao||'Confirmar';if(!txt.botao)$('voz-confirmar').disabled=true;
+  const fala=txt.titulo+'. '+txt.linhas.map(x=>x.replace(/\.$/,'')).join('. ')+'.'+(txt.botao?' Confira e toque em '+txt.botao+'.':'');
   status('Confira os detalhes antes de confirmar.');msg('assistente','Preparei: '+fala);
   box.scrollIntoView({block:'nearest',behavior:'auto'});$('voz-confirmar').scrollIntoView({block:'nearest',behavior:'auto'});ouvirResposta(fala);
  }catch(e){if(ep===st.epoca)avisar(e.message||'Não consegui conferir o pedido.');}
- finally{if(ep===st.epoca)ocupado(false);}
+ finally{if(ep===st.epoca){ocupado(false);if(st.intencao&&st.intencao.acao==='cobrar'&&st.intencao.todos)$('voz-confirmar').disabled=true;}}
+}
+/* A mensagem de cobrança usa o mês aberto no app; pela voz vale o mês de hoje. */
+function cobrarMesAtual(id){
+ const m=curMonth,y=curYear,d=dataBase();curYear=Number(d.slice(0,4));curMonth=Number(d.slice(5,7))-1;
+ try{cobrar(id);}finally{curMonth=m;curYear=y;}
 }
 function aplicarEspecial(i){
  if(i.acao==='horarios'){
@@ -819,6 +910,11 @@ function aplicarEspecial(i){
    logAct('Funcionamento pela voz ('+i.data+')');
   }
   persist();try{renderAgenda();}catch(e){}try{publicarMapaQuadra();}catch(e){}
+ }else if(i.acao==='presenca'){
+  const plano=planoEspecial(i);
+  const volta=agDate;
+  try{plano.alvos.forEach(x=>{agDate=new Date(i.data+'T12:00:00');togglePresenca(x.id);});}
+  finally{agDate=volta;try{renderAgenda();}catch(e){}}
  }else if(i.acao==='chuva'){
   const d=new Date(i.data+'T12:00:00');
   horasDoPedido(i).forEach(h=>{if(entriesFor(d,h).some(e=>e.tipo!=='bloqueio'&&e.origem!=='compromisso'))aplicarChuva(d,h);});
@@ -826,6 +922,13 @@ function aplicarEspecial(i){
  }
 }
 async function executarEspecial(i){
+ if(i.acao==='cobrar'){
+  // Sem await antes: o celular só abre o WhatsApp dentro do toque. Nada muda no app.
+  const a=i.todos?null:DB.alunos.find(x=>x.id===JSON.parse(i.plano).ids[0]);if(!a)return;
+  st.consumidas.add(i.token);st.intencao=null;cobrarMesAtual(a.id);
+  $('voz-confirmar').disabled=true;$('voz-confirmar').hidden=true;$('voz-previa').hidden=true;
+  avisar('Abri a conversa de '+a.nome+' no WhatsApp com a mensagem de cobrança. É só conferir e enviar.');return;
+ }
  parar();pararResposta();const ep=st.epoca;ocupado(true);status('Conferindo novamente antes de aplicar…');
  try{
   await conferirNuvem();if(ep!==st.epoca||!st.aberto)return;
@@ -836,7 +939,7 @@ async function executarEspecial(i){
   if(i.banco!==assinatura())throw Error('Os dados mudaram durante a conferência. Nada foi alterado.');
   aplicarEspecial(i);
   if(assinatura()===antes){avisar('Nenhuma alteração aplicada.');st.intencao=null;return;}
-  st.resultadoBase=i.acao==='chuva'?'Chuva marcada '+quandoTxt(i.data):'Funcionamento mudado: '+(i.escopo==='semana'?'toda '+i.dias.map(d=>DIAS_L[d]).join(', '):quandoTxt(i.data))+', das '+hm(i.ini)+(i.fim>=1440?' até o fim do dia':' às '+hm(i.fim))+' '+MODO_TXT[i.modo];
+  st.resultadoBase=i.acao==='presenca'?'Presença marcada '+quandoTxt(i.data)+': '+JSON.parse(i.plano).alvos.map(x=>x.hora+' '+x.nome).join(', '):i.acao==='chuva'?'Chuva marcada '+quandoTxt(i.data):'Funcionamento mudado: '+(i.escopo==='semana'?'toda '+i.dias.map(d=>DIAS_L[d]).join(', '):quandoTxt(i.data))+', das '+hm(i.ini)+(i.fim>=1440?' até o fim do dia':' às '+hm(i.fim))+' '+MODO_TXT[i.modo];
   st.aplicado=true;st.consumidas.add(i.token);st.intencao=null;
   status('Aplicado no aparelho. Aguardando confirmação da nuvem…');
   const ok=await gravarAgora();
@@ -861,13 +964,15 @@ function parar(){const r=st.rec;st.rec=null;if(r){try{r.abort();}catch(e){}if(st
 function falar(){
  if(st.ocupado||st.aplicado||st.rec||!st.aberto)return;
  const C=w.SpeechRecognition||w.webkitSpeechRecognition;if(!C){status('Use o microfone do teclado do iPhone para ditar ou digite o pedido.');return;}
- invalidar();pararResposta();const r=new C();st.rec=r;r.lang='pt-BR';r.continuous=false;r.interimResults=true;
+ invalidar();pararResposta();
+ if(!st.vozLiberada&&$('voz-ouvir').checked&&w.speechSynthesis&&w.SpeechSynthesisUtterance){try{const u=new w.SpeechSynthesisUtterance(' ');u.volume=0;w.speechSynthesis.speak(u);st.vozLiberada=true;}catch(e){}}   // o iPhone só fala depois de um toque
+ const r=new C();st.rec=r;r.lang='pt-BR';r.continuous=false;r.interimResults=true;
  let final='',ultimo=-1;r.onresult=e=>{if(st.rec!==r||!st.aberto)return;
   let parcial='';for(let n=e.resultIndex;n<e.results.length;n++){if(e.results[n].isFinal){if(n>ultimo){final+=(final?' ':'')+e.results[n][0].transcript;ultimo=n;}}else parcial+=e.results[n][0].transcript;}
   $('voz-texto').value=(final+' '+parcial).trim().slice(0,500);invalidar();status(final?'Confira o texto e toque em Conferir pedido.':'Ouvindo…');
  };
  r.onerror=e=>{if(st.rec!==r)return;st.rec=null;atualizarMic();status(e.error==='not-allowed'||e.error==='service-not-allowed'?'Permissão de voz negada. Você pode digitar ou usar o ditado do teclado.':'A fala não ficou disponível. Digite ou use o ditado do teclado.');};
- r.onend=()=>{if(st.rec!==r)return;st.rec=null;atualizarMic();if(st.aberto){if(final.trim())analisar();else status('Não ouvi um pedido completo. Toque em Falar ou digite.');}};
+ r.onend=()=>{if(st.rec!==r)return;st.rec=null;atualizarMic();if(st.aberto){if(final.trim()){avisarQueEntendeu();analisar();}else status('Não ouvi um pedido completo. Toque em Falar ou digite.');}};
  try{r.start();status('Ouvindo em português…');atualizarMic();}catch(e){st.rec=null;atualizarMic();status('Não consegui iniciar a fala. Digite ou use o ditado do teclado.');}
 }
 function abrir(iniciarFala){

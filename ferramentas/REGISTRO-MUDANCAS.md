@@ -41,9 +41,18 @@ do Firebase alterado.
   desmarcadas/quem cancelou, quem faltou, presenças por confirmar, quem tem
   reposição, alunos ativos. Verbo no passado (“cancelou”) é pergunta; ação
   exige imperativo/infinitivo (`AGIR_IMP`); marcar chuva exige pedido claro.
+- **Presença, cobrança e resposta imediata** (terceiro pedido): “marcar
+  presença da Ana hoje / de todos de hoje” usa o próprio `togglePresenca` com
+  prévia do saldo e a mesma barreira (só aula já começada; pula presença,
+  falta, aviso, aula do cartão e reposição sem saldo; `agDate` volta ao dia
+  que estava aberto). “Cobrar a Ana / quem está devendo” chama `cobrar` no
+  toque (sem `await` antes, por causa do iPhone) com o mês de hoje
+  (`cobrarMesAtual`), sem alterar dados. Ao fim da fala, `avisarQueEntendeu`
+  diz “Claro, João. Só um minuto.” e a resposta entra na fila
+  (`pararMenosAviso`); `falar()` libera a voz do iPhone no toque.
 - Depois de ação salva na nuvem, a conversa segue (`st.aplicado` volta a falso
   em `resultadoSalvo`); pendência continua bloqueando como antes.
-- Testes: novo `testar-voz-conversa-browser.cjs` (17, no CI); o do Codex passa
+- Testes: novo `testar-voz-conversa-browser.cjs` (21, no CI); o do Codex passa
   inteiro em Chromium com um ajuste: “Qual valor da aula?” agora responde os
   preços em vez de erro. Doc em `ACOES-POR-VOZ.md`.
 - **Codex:** se for mexer em `acoes-voz.js`, parta desta versão; os ids e a
