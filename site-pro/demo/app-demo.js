@@ -55,14 +55,25 @@ function trocarAvatarGestao(inp){
 
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
+/* HORAS é toda hora em que pode existir algo marcado — é por ela que as contas
+   passam, para nada já marcado sumir. A GRADE (o que a agenda oferece) é só de
+   horas cheias: a pedido do João (08/10/2026) as meias horas 14:30, 15:30,
+   19:30 e 20:30 saíram — quase não eram usadas e partiam 14h, 15h, 19h e 20h
+   em meia aula. Marcação antiga numa meia hora continua aparecendo enquanto
+   existir, mas a meia hora não é mais oferecida a ninguém (slotModo = fechado). */
 const HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','14:30','15:00','15:30','16:00','17:00','18:00','19:00','19:30','20:00','20:30'];
+const HORAS_MEIA=['14:30','15:30','19:30','20:30'];
+function ehMeiaHora(h){return HORAS_MEIA.indexOf(h)>=0;}
+const HORAS_GRADE=HORAS.filter(h=>!ehMeiaHora(h));
 function _hm(s){const p=String(s).split(':');return (+p[0])*60+(+p[1]||0);}
+/* Quanto a aula do horário vale em crédito. Com a grade só de horas cheias,
+   toda aula vale 1 — inclusive 14h, 15h, 19h e 20h, que antes valiam ½ porque
+   a meia hora seguinte existia na grade. Hora fora da grade (meia hora
+   antiga) também é aula de 1 h. */
 function creditoSlot(hora){
-  const i=HORAS.indexOf(hora);
-  if(i<0)return 1;
-  let dur=60;
-  if(i<HORAS.length-1)dur=_hm(HORAS[i+1])-_hm(HORAS[i]);
-  else dur=30;
+  const i=HORAS_GRADE.indexOf(hora);
+  if(i<0||i===HORAS_GRADE.length-1)return 1;
+  const dur=_hm(HORAS_GRADE[i+1])-_hm(HORAS_GRADE[i]);
   return (dur>0&&dur<60)?0.5:1;
 }
 function fmtCred(n){const r=Math.round(n*2)/2;return r%1===0?String(r):String(r).replace('.',',');}
@@ -85,6 +96,7 @@ function modoPadrao(date,hora){
   return modo;
 }
 function slotModo(date,hora){
+  if(ehMeiaHora(hora))return 'fechado';   // saiu da grade: ninguém marca nova aula aqui
   /* Para o professor quem manda é a lista que a academia liberou: hora fora
      dela é hora fechada, e aí todo caminho que já consulta slotModo concorda
      sozinho — sem espalhar uma regra nova por dez lugares.
@@ -368,7 +380,7 @@ function horasLiberadasSemana(cfg){
   const c=cfg||(typeof DB!=='undefined'&&DB?DB.horarioProf:null)||{};
   const porDia=[];let total=0;
   for(let d=0;d<7;d++){
-    const hs=HORAS.filter(h=>!!((c[d]||{})[h]));
+    const hs=HORAS_GRADE.filter(h=>!!((c[d]||{})[h]));
     if(hs.length){total+=hs.reduce((t,h)=>t+creditoSlot(h),0);porDia.push({d,hs});}
   }
   return {total,porDia};
@@ -433,12 +445,12 @@ function seedAgenda(){
   [1,2,3,6].forEach(d=>add(d,'12:00','ALMOÇO','bloqueio'));
   [4,5].forEach(d=>add(d,'12:00','Bloqueado','bloqueio'));
   [1,2,3,4,5,6].forEach(d=>add(d,'13:00','ALMOÇO','bloqueio'));
-  ['14:00','14:30','15:00','15:30'].forEach(h=>[1,2,3,4,5].forEach(d=>add(d,h,'Locação','locacao')));
+  ['14:00','15:00'].forEach(h=>[1,2,3,4,5].forEach(d=>add(d,h,'Locação','locacao')));
   aula([1,3,4,5],'16:00');
   aula([1,2,3,4,5],'17:00');
   aula([1,2,3,4,5],'18:00');
-  ['19:00','19:30'].forEach(h=>{aula([1,2,3],h);add(4,h,'Grupo','grupo');});
-  ['20:00','20:30'].forEach(h=>add(2,h,'Grupo','grupo'));
+  aula([1,2,3],'19:00');add(4,'19:00','Grupo','grupo');
+  add(2,'20:00','Grupo','grupo');
   return {fixos:F,eventos:[],excecoes:[]};
 }
 
@@ -2408,6 +2420,25 @@ function publicacaoLegadaEnxuta(pub){
 function alunoPublicado(a){
   return ({codigo:a.codigo,nome:a.nome,tipo:a.tipo,profId:profDoAluno(a),prof:profNome(profDoAluno(a)),plano:unificado(a)?pacoteDoAluno(a):a.plano,creditos:unificado(a)?(Number(a.creditos)||0)+(Number(a.credGrupo)||0):a.creditos,repos:a.repos,reposValidas:reposValidas(a),reposVencendo:reposVencendo(a),status:situacaoMensalidade(a,mesReal()).status,ultimoPago:pagadorFamilia(a).ultimoPago||'',mensalidade:ehDependenteFamilia(a)?0:a.mensalidade,pagamentoMensal:ehDependenteFamilia(a)?null:(situacaoMensalidade(a,mesReal()).exato?Object.assign({mes:mesReal()},situacaoMensalidade(a,mesReal())):null),familia:dadosFamiliaAluno(a),diaVenc:pagadorFamilia(a).diaVenc||10,cardLink:ehDependenteFamilia(a)?'':(a.cardLink||''),mfitLink:a.mfitLink||'',valorAula:a.valorAula||(a.tipo==='Personal'?130:160),locCred:Number(a.locCred)||0,credGrupo:unificado(a)?0:(Number(a.credGrupo)||0),planoGrupo:unificado(a)?0:(Number(a.planoGrupo)||0),grupoTipo:a.grupoTipo||'',avaliacoes:(a.avaliacoes||[]).slice(-12),evoMes:serieMensal(a.avaliacoes,a.registros,24),registros:(a.registros||[]).slice(-8)});
 }
+/* O app do aluno monta a grade com estas horas. Meia hora só vai enquanto
+   houver aula marcada nela daqui para a frente — a do aluno não pode sumir
+   da tela dele. */
+function horasPublicadas(){
+  const hoje=dKey(new Date()),A=DB.agenda||{fixos:[],eventos:[]};
+  return HORAS.filter(h=>!ehMeiaHora(h)
+    ||(A.fixos||[]).some(f=>f.hora===h&&(!f.ate||f.ate>=hoje))
+    ||(A.eventos||[]).some(e=>e.hora===h&&e.data>=hoje));
+}
+/* Cópia do mapa de horários com a meia hora fechada: sem isso o app do aluno
+   cairia no padrão (aula) e ofereceria 19:30 como livre. */
+function semMeiaHora(m){
+  const out={};
+  Object.keys(m||{}).forEach(k=>{
+    const v=m[k];if(!v||typeof v!=='object'){out[k]=v;return;}
+    const c=Object.assign({},v);HORAS_MEIA.forEach(h=>{c[h]='fechado';});out[k]=c;
+  });
+  return out;
+}
 async function doPublish(){
   if(!CARREGADO||cloudPending||_conflitoNuvem||_abriuSemConferir)return; // publicar só o banco confirmado
   if(!ehDono())return;                      // o App do Aluno é da academia, não do professor
@@ -2440,11 +2471,11 @@ async function doPublish(){
       planos:PRECOS,
       grupoPreco:DB.grupoPreco||{dupla:90,trio:85,quarteto:80},
       torneio:(function(){ensureTorneios();const t=DB.torneios.lista[DB.torneios.atual];return t?{id:t.id,nome:t.nome,tipo:t.tipo,jogadores:t.jogadores,etapa:t.etapa||1,encerrada:!!t.encerrada,nomesGrupos:t.nomesGrupos||{}}:null;})(),
-      horas:HORAS,
+      horas:horasPublicadas(),
       chuvas:(DB.chuvas||[]).slice(-60),
       locacaoOnly:DB.locacaoOnly||[],
-      horarioCfg:DB.horarioCfg||{},
-      horarioData:DB.horarioData||{},
+      horarioCfg:semMeiaHora(DB.horarioCfg||{}),
+      horarioData:semMeiaHora(DB.horarioData||{}),
       /* Quem são os professores da academia. Vai só id e nome — o aluno
          precisa saber com quem treina e com quem quer treinar, nada além. */
       profs:profs().map(p=>({id:p.id,nome:p.nome})),
@@ -3230,13 +3261,38 @@ function fixoValeEm(f,dk){
   if(f.ate&&dk>f.ate)return false;
   return true;
 }
+/* Índice da agenda por data, só durante uma conta longa (o ano inteiro são
+   ~7 mil horários; sem índice cada um varreria todas as avulsas). Vive só
+   dentro de comIndiceAgenda, que não altera nada — não fica velho. */
+let _IDX_AG=null;
+function comIndiceAgenda(fn){
+  if(_IDX_AG)return fn();
+  const A=DB.agenda||{},ev={},exc={},comp={};
+  (A.eventos||[]).forEach(e=>{(ev[e.data]=ev[e.data]||[]).push(e);});
+  (A.excecoes||[]).forEach(x=>{exc[x.fixoId+'|'+x.data]=1;});
+  (DB.compromissos||[]).forEach(c=>{(comp[c.data]=comp[c.data]||[]).push(c);});
+  _IDX_AG={ev,exc,comp,ini:inicioRegistros()};
+  try{return fn();}finally{_IDX_AG=null;}
+}
+/* Primeiro dia com registro na agenda: avulsa, exceção, início de fixo ou
+   presença. Fixo antigo sem "desde" vale "sempre" — sem este limite ele
+   contaria aulas em meses em que o app nem existia, e o comparativo do ano
+   compararia com um ano inventado. */
+function inicioRegistros(){
+  let m='';
+  const ve=d=>{if(d&&/^\d{4}-\d{2}-\d{2}$/.test(d)&&(!m||d<m))m=d;};
+  const A=DB.agenda||{};
+  (A.eventos||[]).forEach(e=>ve(e.data));(A.excecoes||[]).forEach(x=>ve(x.data));
+  (A.fixos||[]).forEach(f=>ve(f.desde));(DB.presencas||[]).forEach(p=>ve(p.data));
+  return m;
+}
 function entriesFor(date,hora){
   const dia=date.getDay(),dk=dKey(date);
-  const A=DB.agenda;
-  const fixos=A.fixos.filter(f=>f.dia===dia&&f.hora===hora&&fixoValeEm(f,dk)&&!A.excecoes.some(x=>x.fixoId===f.id&&x.data===dk))
+  const A=DB.agenda,I=_IDX_AG;
+  const fixos=A.fixos.filter(f=>f.dia===dia&&f.hora===hora&&fixoValeEm(f,dk)&&!(I?I.exc[f.id+'|'+dk]:A.excecoes.some(x=>x.fixoId===f.id&&x.data===dk)))
     .map(f=>({...f,origem:'fixo'}));
-  const evs=A.eventos.filter(e=>e.data===dk&&e.hora===hora).map(e=>({...e,origem:'pontual'}));
-  const comps=(DB.compromissos||[]).filter(c=>c.data===dk&&(c.hora||'')===hora).map(c=>({id:c.id,titulo:c.titulo,tipo:'pessoal',origem:'compromisso',alunoId:null}));
+  const evs=(I?(I.ev[dk]||[]):A.eventos).filter(e=>e.data===dk&&e.hora===hora).map(e=>({...e,origem:'pontual'}));
+  const comps=(I?(I.comp[dk]||[]):(DB.compromissos||[])).filter(c=>c.data===dk&&(c.hora||'')===hora).map(c=>({id:c.id,titulo:c.titulo,tipo:'pessoal',origem:'compromisso',alunoId:null}));
   return fixos.concat(evs).concat(comps).concat(aulasDaAcademia(dk,dia,hora));
 }
 /* ===== Horários livres da semana → WhatsApp do grupo de alunos ===== */
@@ -3318,14 +3374,17 @@ function aulasDoDia(date){
   return {aulas:aulas.filter(a=>!a.dup),sobrepostas:aulas.filter(a=>a.dup),repetidas,fora};
 }
 function contarAulas(dFrom,dTo){
-  let tenis=0,personal=0;
-  const cur=new Date(dFrom.getFullYear(),dFrom.getMonth(),dFrom.getDate());
-  const end=new Date(dTo.getFullYear(),dTo.getMonth(),dTo.getDate());
-  while(cur<=end){
-    aulasDoDia(cur).aulas.forEach(a=>{if(a.cat==='personal')personal++;else tenis++;});
-    cur.setDate(cur.getDate()+1);
-  }
-  return {tenis,personal,total:tenis+personal};
+  return comIndiceAgenda(()=>{
+    let tenis=0,personal=0;
+    const ini=_IDX_AG.ini;
+    const cur=new Date(dFrom.getFullYear(),dFrom.getMonth(),dFrom.getDate());
+    const end=new Date(dTo.getFullYear(),dTo.getMonth(),dTo.getDate());
+    while(cur<=end){
+      if(!ini||dKey(cur)>=ini)aulasDoDia(cur).aulas.forEach(a=>{if(a.cat==='personal')personal++;else tenis++;});
+      cur.setDate(cur.getDate()+1);
+    }
+    return {tenis,personal,total:tenis+personal};
+  });
 }
 /* Conferência das aulas de hoje: aula por aula, o que entrou no número do
    Início e o que ficou de fora (e por quê). Só lista, não muda nada — para
@@ -3357,10 +3416,11 @@ function abrirConferenciaAulas(){
      horário alugado NÃO entram no denominador — não estão abertos a uma aula.
    - Locações: horas de locação usadas no mês (onde quer que estejam) e o quanto
      da grade de locação isso representa.
-   A aula dura 1 h e a grade tem meias horas (14:30, 15:30, 19:30, 20:30): com
-   aula às 19:00, as 19:30 não estão livres para outra aula. Antes contavam
-   como horário vago, e um dia cheio nunca chegava a 100%. */
-function ocupacao(dFrom,dTo){
+   A aula dura 1 h: uma aula antiga marcada numa meia hora (19:30) ocupa também
+   as horas cheias vizinhas. As meias horas saíram da grade (slotModo =
+   fechado), então não entram mais como horário vago. */
+function ocupacao(dFrom,dTo){return comIndiceAgenda(()=>ocupacao_(dFrom,dTo));}
+function ocupacao_(dFrom,dTo){
   let disp=0,ocup=0,locDisp=0,locUsados=0;
   const cur=new Date(dFrom.getFullYear(),dFrom.getMonth(),dFrom.getDate());
   const end=new Date(dTo.getFullYear(),dTo.getMonth(),dTo.getDate());
@@ -3797,7 +3857,7 @@ function renderLegendaAg(){
 /* Horário "de agora": o último da grade que já começou hoje. */
 function slotAgora(){
   const n=new Date(),m=n.getHours()*60+n.getMinutes();let r=null;
-  HORAS.forEach(h=>{const[a,b]=h.split(':').map(Number);if(a*60+b<=m)r=h;});
+  HORAS_GRADE.forEach(h=>{const[a,b]=h.split(':').map(Number);if(a*60+b<=m)r=h;});
   return r;
 }
 function rolarAgendaAgora(){
@@ -3809,6 +3869,11 @@ function rolarAgendaAgora(){
 /* Na grade da semana a coluna é estreita: palavra longa vira abreviação
    ("Grupo intermediário" → "Grupo interm.") em vez de quebrar no meio. */
 function nomeCurtoWk(t){return esc(String(t||'').split(' ').map(w=>w.length>10?w.slice(0,6)+'.':w).join(' '));}
+/* Linhas da grade: horas cheias sempre; meia hora antiga só onde ainda há algo
+   marcado nela (nos dias mostrados) — assim nada já marcado some da tela. */
+function horasVisiveis(dias){
+  return HORAS.filter(h=>!ehMeiaHora(h)||dias.some(d=>entriesFor(d,h).length||outroNaTela(d,h)));
+}
 function renderAgenda(){
   renderProfFiltro();
   renderLegendaAg();
@@ -3822,7 +3887,7 @@ function renderAgenda(){
     const dn=DIAS[agDate.getDay()],nAt=countDay(agDate),nAu=aulasDoDia(agDate).aulas.length;
     lbl.innerHTML=dn.charAt(0).toUpperCase()+dn.slice(1)+', '+agDate.getDate()+' de '+MESES[agDate.getMonth()].toLowerCase()+'<small>'+(nAu===1?'1 aula':nAu+' aulas')+' · '+(nAt===1?'1 atendimento':nAt+' atendimentos')+' · toque no ○ para confirmar</small>';
     const ehHoje=dKey(agDate)===hojeK;
-    el.innerHTML='<button class="btn btn-ghost ag-chuva" onclick="marcarChuvaDia()">☔ Marcar o dia inteiro como chuva</button>'+HORAS.map(h=>{
+    el.innerHTML='<button class="btn btn-ghost ag-chuva" onclick="marcarChuvaDia()">☔ Marcar o dia inteiro como chuva</button>'+horasVisiveis([agDate]).map(h=>{
       const evs=entriesFor(agDate,h).filter(itemVisivelProf).filter(itemVisivelTipo);
       const outro=agTipoFiltro?null:outroNaTela(agDate,h);
       const ag=ehHoje&&h===agoraH;
@@ -3865,7 +3930,7 @@ function renderAgenda(){
     const hojeNa=days.some(d=>dKey(d)===hojeK);
     let html='<div class="wk-modo" role="group" aria-label="Tamanho da grade"><button type="button" class="wk-fit'+(wkAutoFit?' on':'')+'" aria-pressed="'+wkAutoFit+'" onclick="wkZoomFit()">Semana toda</button><button type="button" class="wk-amp'+(wkAutoFit?'':' on')+'" aria-pressed="'+!wkAutoFit+'" onclick="wkAmpliar()">Ampliada</button></div>';
     html+='<div class="wk-scroll"><table class="wk" style="'+wkVars(wkZoom)+'"><tr><th></th>'+days.map(d=>`<th${dKey(d)===hojeK?' class="hoje"':''}>${DIAS[d.getDay()]}<small>${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}</small></th>`).join('')+'</tr>';
-    HORAS.forEach(h=>{
+    horasVisiveis(days).forEach(h=>{
       const ag=hojeNa&&h===agoraH;
       html+=`<tr${ag?' class="agora"':''}><td class="hr">${h}</td>`;
       days.forEach(d=>{
@@ -7484,7 +7549,8 @@ function arcoPizza(pct){
 }
 /* Série do gráfico: aulas acumuladas no mês, dia a dia. Acumulado porque o
    número do fim da linha é exatamente o da legenda — dá para conferir. */
-function serieAulasMes(ano,mes){
+function serieAulasMes(ano,mes){return comIndiceAgenda(()=>serieAulasMes_(ano,mes));}
+function serieAulasMes_(ano,mes){
   const ult=new Date(ano,mes+1,0).getDate(), out=[];
   let t=0,p=0,te=0;
   for(let d=1;d<=ult;d++){
@@ -7523,8 +7589,10 @@ function renderGraficoInicio(){
     +'<path class="ln total" d="'+linha('total')+'"/>';
 }
 /* Período do comparativo do Início: semana ou mês (lembrado no aparelho). */
-function periodoCmp(){try{return localStorage.getItem('jvt-cmp-periodo')==='mes'?'mes':'semana';}catch(e){return 'semana';}}
-function trocarPeriodoCmp(m){try{localStorage.setItem('jvt-cmp-periodo',m==='mes'?'mes':'semana');}catch(e){}renderAll();}
+function periodoCmp(){try{const v=localStorage.getItem('jvt-cmp-periodo');return v==='mes'||v==='ano'?v:'semana';}catch(e){return 'semana';}}
+function trocarPeriodoCmp(m){try{localStorage.setItem('jvt-cmp-periodo',m==='mes'||m==='ano'?m:'semana');}catch(e){}renderAll();}
+/* As setas do comparativo andam de mês em mês ou, no modo Ano, de ano em ano. */
+function navCmp(d){if(periodoCmp()==='ano'){curYear+=d;renderAll();}else shiftMonth(d);}
 function renderInicioRef(aulasDia,aulasMes,ocHoje,ocMes){
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
   const h=new Date(), hr=h.getHours();
@@ -7548,8 +7616,9 @@ function renderInicioRef(aulasDia,aulasMes,ocHoje,ocMes){
   const mesAntNome=MESES[(curMonth+11)%12].toLowerCase();
   let base=aulasMes, ant=null, sub='';
   const modo=periodoCmp();
-  ['semana','mes'].forEach(m=>{const b=document.getElementById('jh-cmp-'+m);if(b){b.classList.toggle('on',m===modo);b.setAttribute('aria-selected',String(m===modo));}});
+  ['semana','mes','ano'].forEach(m=>{const b=document.getElementById('jh-cmp-'+m);if(b){b.classList.toggle('on',m===modo);b.setAttribute('aria-selected',String(m===modo));}});
   const nav=document.getElementById('jh-cmp-mesnav');if(nav)nav.hidden=(modo==='semana');
+  if(modo==='ano')set('jh-mes-label',String(curYear));
   if(modo==='semana'){
     /* Semana: de segunda até hoje, contra os mesmos dias da semana passada. */
     const seg=new Date(hojeD);seg.setDate(seg.getDate()-((seg.getDay()+6)%7));
@@ -7558,6 +7627,26 @@ function renderInicioRef(aulasDia,aulasMes,ocHoje,ocMes){
     base=contarAulas(seg,hojeD);ant=contarAulas(segAnt,hojeAnt);
     const dd=d=>String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');
     sub='Esta semana ('+dd(seg)+' a '+dd(hojeD)+') · % contra os mesmos dias da semana passada';
+  }else if(modo==='ano'){
+    /* Ano: de 1º de janeiro até hoje, contra o mesmo trecho do ano passado.
+       Sem registro no app desde o começo do ano passado, não há porcentagem
+       honesta — o número aparece sozinho. */
+    const ano=curYear,anoAtual=h.getFullYear(),ini=inicioRegistros();
+    const dd=d=>d.getDate()+'/'+String(d.getMonth()+1).padStart(2,'0');
+    const iniAno=new Date(ano,0,1);
+    let fimAnt=null;
+    if(ano>anoAtual){base=contarAulas(iniAno,new Date(ano,11,31));sub='Aulas agendadas para '+ano;}
+    else if(ano===anoAtual){
+      base=contarAulas(iniAno,hojeD);
+      fimAnt=new Date(ano-1,h.getMonth(),Math.min(h.getDate(),new Date(ano-1,h.getMonth()+1,0).getDate()));
+      sub='Desde 1º de janeiro até hoje ('+dd(hojeD)+')';
+    }else{base=contarAulas(iniAno,new Date(ano,11,31));fimAnt=new Date(ano-1,11,31);sub='Ano de '+ano+' inteiro';}
+    if(ini&&ini>dKey(iniAno)){const p=ini.split('-');sub+=' · registros desde '+Number(p[2])+'/'+p[1];}
+    if(fimAnt){
+      // começar a usar o app em janeiro ainda conta como o ano inteiro
+      if(ini&&ini>=dKey(new Date(ano-1,1,1)))sub+=' · sem '+(ano-1)+' inteiro no app para comparar';
+      else{ant=contarAulas(new Date(ano-1,0,1),fimAnt);sub+=' · % contra '+(ano===anoAtual?'o mesmo período de ':'')+(ano-1);}
+    }
   }else if(ehAtual){
     base=contarAulas(iniSel,hojeD);
     const dia=Math.min(h.getDate(),new Date(curYear,curMonth,0).getDate());
@@ -7570,7 +7659,9 @@ function renderInicioRef(aulasDia,aulasMes,ocHoje,ocMes){
     sub='Mês fechado · % contra '+mesAntNome;
   }
   set('jh-cmp-sub',sub);
+  const longo=['total','personal','tenis'].some(k=>Number(base[k])>=100);
   ['total','personal','tenis'].forEach(k=>{
+    const t=document.getElementById('jh-cmp-'+k);if(t&&t.parentNode)t.parentNode.classList.toggle('longo',longo);
     set('jh-cmp-'+k,base[k]);
     pintarDelta('jh-cmp-'+k+'-d',ant?deltaAulas(base[k],ant[k]):null);
   });
@@ -7897,12 +7988,12 @@ function renderDatasInicio(){
   if(!keys.length){el.innerHTML='';return;}
   const MES3=['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
   const itens=keys.map(k=>{
-    const m=DB.horarioData[k]||{};const vals=HORAS.map(h=>m[h]||'aula');
+    const m=DB.horarioData[k]||{};const vals=HORAS_GRADE.map(h=>m[h]||'aula');
     const nF=vals.filter(v=>v==='fechado').length,nL=vals.filter(v=>v==='loc').length,nA=vals.filter(v=>v==='aula').length;
     let resumo,cor;
-    if(nF===HORAS.length){resumo='🔴 Fechado o dia todo';cor='#B23A3A';}
-    else if(nL===HORAS.length){resumo='🟡 Só locação o dia todo';cor='#9A7B2E';}
-    else if(nA===HORAS.length){resumo='🟢 Aula liberada o dia todo';cor='#2E7D52';}
+    if(nF===HORAS_GRADE.length){resumo='🔴 Fechado o dia todo';cor='#B23A3A';}
+    else if(nL===HORAS_GRADE.length){resumo='🟡 Só locação o dia todo';cor='#9A7B2E';}
+    else if(nA===HORAS_GRADE.length){resumo='🟢 Aula liberada o dia todo';cor='#2E7D52';}
     else {resumo='Horário personalizado';cor='#9A7B2E';}
     const pr=k.split('-').map(Number);const d=new Date(pr[0],pr[1]-1,pr[2]);
     return '<div class="comp-item"><div class="comp-date" style="background:'+cor+'"><div class="cd-d" style="color:#fff">'+String(pr[2]).padStart(2,'0')+'</div><div class="cd-m" style="color:#fff">'+MES3[pr[1]-1]+'</div></div>'
@@ -7976,15 +8067,15 @@ function renderDatasEspeciais(){
   if(!keys.length){box.innerHTML='<div style="color:var(--muted);font-size:11px;padding:8px 2px;text-align:center">Nenhuma data especial salva ainda.</div>';return;}
   box.innerHTML='<div style="font-size:11px;font-weight:800;color:var(--muted);margin:10px 2px 5px">📅 DATAS ESPECIAIS SALVAS</div>'+keys.map(k=>{
     const m=DB.horarioData[k]||{};
-    const vals=HORAS.map(h=>m[h]||'aula');
+    const vals=HORAS_GRADE.map(h=>m[h]||'aula');
     const nA=vals.filter(v=>v==='aula').length,nL=vals.filter(v=>v==='loc').length,
           nF=vals.filter(v=>v==='fechado').length;
     const pd=(DB.horarioProfData||{})[k]||{};
-    const nP=HORAS.filter(x=>pd[x]).length;
+    const nP=HORAS_GRADE.filter(x=>pd[x]).length;
     let resumo;
-    if(nF===HORAS.length)resumo='🔴 Fechado o dia todo';
-    else if(nL===HORAS.length)resumo='🟡 Só locação o dia todo';
-    else if(nA===HORAS.length)resumo='🟢 Aula o dia todo';
+    if(nF===HORAS_GRADE.length)resumo='🔴 Fechado o dia todo';
+    else if(nL===HORAS_GRADE.length)resumo='🟡 Só locação o dia todo';
+    else if(nA===HORAS_GRADE.length)resumo='🟢 Aula o dia todo';
     else resumo=nA+' aula · '+nL+' loc · '+nF+' fech.';
     if(nP)resumo+=' · 👨‍🏫 '+nP;
     const d=hParse(k);
@@ -8039,7 +8130,7 @@ function renderHorarioList(){
       +' style="width:46px;flex-shrink:0;padding:6px 2px;border-radius:8px;border:1px solid '+(on?'#2E5E8C':'var(--border)')
       +';background:'+(on?'#2E5E8C':'#fff')+';color:'+(on?'#fff':'#B9B2A6')+';font-size:13px;font-weight:700">👨‍🏫</button>';
   };
-  document.getElementById('hhoras-list').innerHTML=HORAS.map(h=>'<div style="display:flex;align-items:center;gap:6px"><span style="width:42px;font-size:11px;font-weight:700;color:var(--muted);flex-shrink:0">'+h+'</span>'+opt(h,'aula','Aula','#2E7D52')+opt(h,'loc','Locação','#9A7B2E')+opt(h,'fechado','Fechado','#B23A3A')+btnProf(h)+'</div>').join('');
+  document.getElementById('hhoras-list').innerHTML=HORAS_GRADE.map(h=>'<div style="display:flex;align-items:center;gap:6px"><span style="width:42px;font-size:11px;font-weight:700;color:var(--muted);flex-shrink:0">'+h+'</span>'+opt(h,'aula','Aula','#2E7D52')+opt(h,'loc','Locação','#9A7B2E')+opt(h,'fechado','Fechado','#B23A3A')+btnProf(h)+'</div>').join('');
 }
 function activeProf(){return HMODE==='data'?HDPROF:(HPROF&&HPROF[HDIA]);}
 function setEstadoH(h,st){const m=activeMap();if(!m)return;m[h]=st;renderHorarioList();}
@@ -8047,8 +8138,8 @@ function setEstadoH(h,st){const m=activeMap();if(!m)return;m[h]=st;renderHorario
    você. É assim que "dou personal fora daqui das 6 às 10" cabe na tela — a hora
    continua Aula e a quadra fica liberada. */
 function toggleProfH(h){const p=activeProf();if(!p)return;p[h]=!p[h];renderHorarioList();}
-function todosProf(v){const p=activeProf();if(!p)return;HORAS.forEach(h=>p[h]=v);renderHorarioList();}
-function diaTodo(st){const m=activeMap();if(!m)return;HORAS.forEach(h=>m[h]=st);renderHorarioList();}
+function todosProf(v){const p=activeProf();if(!p)return;HORAS_GRADE.forEach(h=>p[h]=v);renderHorarioList();}
+function diaTodo(st){const m=activeMap();if(!m)return;HORAS_GRADE.forEach(h=>m[h]=st);renderHorarioList();}
 function copiarParaUteis(){for(let d=1;d<=5;d++){HEDIT[d]=JSON.parse(JSON.stringify(HEDIT[HDIA]));HPROF[d]=JSON.parse(JSON.stringify(HPROF[HDIA]));}renderHorarioTabs();renderHorarioList();toast('Copiado para seg–sex ✓');}
 function restaurarPadrao(){
   if(!confirm('Restaurar todos os dias da semana para o padrão recomendado? Suas alterações da semana serão substituídas quando você Salvar.'))return;
@@ -8503,7 +8594,7 @@ function renderOcupacao(){
     });
   }
   if(!houve){el.innerHTML='<div class="empty">Ainda sem histórico suficiente. Conforme você usar a agenda, a ocupação por horário aparece aqui.</div>';return;}
-  barChart(el,HORAS.map(h=>({label:h,value:cont[h],cls:'rec'})),n=>n+'x');
+  barChart(el,HORAS.filter(h=>!ehMeiaHora(h)||cont[h]>0).map(h=>({label:h,value:cont[h],cls:'rec'})),n=>n+'x');
 }
 function saveMeta(v){DB.meta=Number(v)||0;persist();renderAll();toast('Meta atualizada');}
 function saveAviso(v){DB.aviso=v.trim();persist();toast('Aviso publicado no app do aluno');}
@@ -8558,7 +8649,7 @@ function exportAgendaExcel(){
   const days=[...Array(6)].map((_,i)=>{const d=new Date(mon);d.setDate(d.getDate()+i);return d;});
   const sep=';';
   let csv='HORARIOS'+sep+days.map(d=>DIAS[d.getDay()]+' '+String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')).join(sep)+'\n';
-  HORAS.forEach(h=>{
+  horasVisiveis(days).forEach(h=>{
     const linha=[h];
     days.forEach(d=>{
       const evs=entriesFor(d,h).map(e=>e.titulo);

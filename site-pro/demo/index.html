@@ -233,14 +233,15 @@ function esperarAuth(){return Promise.resolve();}
         <span class="jh-hic"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="3" y="13" width="3.6" height="8" rx="1"/><rect x="8.4" y="9" width="3.6" height="12" rx="1"/><rect x="13.8" y="5" width="3.6" height="16" rx="1"/><rect x="19.2" y="2" width="2.8" height="19" rx="1"/></svg></span>
         <h3 id="jh-cmp-tit">Comparativo de aulas</h3>
         <div class="jh-mes" id="jh-cmp-mesnav">
-          <button type="button" onclick="shiftMonth(-1)" aria-label="Mês anterior">‹</button>
+          <button type="button" onclick="navCmp(-1)" aria-label="Período anterior">‹</button>
           <span id="jh-mes-label">—</span>
-          <button type="button" onclick="shiftMonth(1)" aria-label="Próximo mês">›</button>
+          <button type="button" onclick="navCmp(1)" aria-label="Próximo período">›</button>
         </div>
       </div>
       <div class="jh-seg" role="tablist" aria-label="Período do comparativo">
         <button type="button" role="tab" id="jh-cmp-semana" onclick="trocarPeriodoCmp('semana')">Semana</button>
         <button type="button" role="tab" id="jh-cmp-mes" onclick="trocarPeriodoCmp('mes')">Mês</button>
+        <button type="button" role="tab" id="jh-cmp-ano" onclick="trocarPeriodoCmp('ano')">Ano</button>
       </div>
       <p class="jh-cmp-sub" id="jh-cmp-sub"></p>
       <div class="jh-cmp">

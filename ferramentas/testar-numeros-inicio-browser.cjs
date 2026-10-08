@@ -1,9 +1,10 @@
 /* Números do Início batendo com a agenda. O mesmo aluno marcado duas vezes
    onde só cabe uma aula (fixa + avulsa no mesmo horário, tênis e personal no
-   mesmo horário, 19:00 e 19:30) contava duas aulas; a meia hora coberta por
-   uma aula de 1 h contava como horário vago na ocupação; "Créditos em aberto"
+   mesmo horário, 19:00 e 19:30) contava duas aulas; "Créditos em aberto"
    descontava quem deve aula, somava inativo e reposição vencida. A conferência
-   lista aula por aula e não grava nada. Dados fictícios, relógio fixo. */
+   lista aula por aula e não grava nada. Grade só de horas cheias (14:30,
+   15:30, 19:30 e 20:30 saíram; marcação antiga nelas não some) e aula de 19h
+   vale 1 crédito. Comparativo com Ano. Dados fictícios, relógio fixo. */
 let chromium;
 try{({chromium}=require('playwright'));}catch(e){({chromium}=require(process.env.PW||'/opt/node22/lib/node_modules/playwright'));}
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict');
@@ -48,7 +49,9 @@ async function check(name,fn){await fn();count++;console.log('✅ '+name);}
      fx('f7','11:00','gil','personal'),fx('f8','11:00','hugo','aula')],
     eventos:[ev('e1','2026-10-15','09:00','ana','personal'),ev('e2','2026-10-15','10:00','bia','aula'),
      ev('e3','2026-10-15','19:30','fe','aula'),ev('e4','2026-10-15','13:00',null,'locacao'),
-     ev('e5','2026-10-16','19:00','hugo','aula')],excecoes:[]};
+     ev('e5','2026-10-16','19:00','hugo','aula'),
+     ev('v1','2025-01-06','09:00','ana','aula'),ev('v2','2025-03-10','10:00','bia','aula'),
+     ev('v3','2025-05-05','07:00','caio','personal'),ev('v4','2025-12-01','09:00','ana','aula')],excecoes:[]};
    DB.compromissos=[{id:'c1',data:'2026-10-15',hora:'18:00',titulo:'Compromisso fictício'}];
    DB.presencas=[];DB.horarioData={};DB.locacaoOnly=[];delete DB.horarioCfg;delete DB.horarioVer;DB.pacoteUnico={ativo:true};
    ensureFields();CARREGADO=true;
@@ -91,9 +94,54 @@ async function check(name,fn){await fn();count++;console.log('✅ '+name);}
    const t=await g.evaluate(()=>{agView='dia';agDate=new Date(2026,9,15);renderAgenda();return document.getElementById('ag-label').innerText;});
    assert.match(t,/7 aulas · 12 atendimentos/);
   });
-  await check('ocupação: aula às 19:00 ocupa também as 19:30 (antes: 10%, agora 20%)',async()=>{
+  await check('ocupação: meia hora saiu da grade — dia útil tem 9 horários de aula, não 10',async()=>{
    const o=await g.evaluate(()=>ocupacao(new Date(2026,9,16),new Date(2026,9,16)));
-   assert.equal(o.disp,10);assert.equal(o.ocup,2);assert.equal(o.pct,20);
+   assert.equal(o.disp,9);assert.equal(o.ocup,1);assert.equal(o.pct,11);
+  });
+  await check('grade sem 14:30, 15:30, 19:30 e 20:30; marcação antiga às 19:30 continua aparecendo',async()=>{
+   const r=await g.evaluate(()=>{
+    const linhas=d=>{agView='dia';agDate=d;renderAgenda();return [...document.querySelectorAll('#ag-view .slot-h')].map(x=>x.textContent.slice(0,5));};
+    const vazio=linhas(new Date(2026,9,16)),comAntiga=linhas(new Date(2026,9,15));
+    agView='semana';agDate=new Date(2026,9,16);renderAgenda();
+    const semana=[...document.querySelectorAll('#ag-view td.hr')].map(x=>x.textContent);
+    return {vazio,comAntiga,semana,cfg:(()=>{abrirHorario();const t=[...document.querySelectorAll('#hhoras-list > div > span')].map(x=>x.textContent);closeModal('ov-horario');return t;})()};
+   });
+   const meias=['14:30','15:30','19:30','20:30'];
+   meias.forEach(h=>{assert.ok(!r.vazio.includes(h),h);assert.ok(!r.cfg.includes(h),'config '+h);});
+   assert.ok(r.vazio.includes('19:00')&&r.vazio.includes('20:00')&&r.vazio.includes('14:00'));
+   assert.ok(r.comAntiga.includes('19:30'),'a aula antiga das 19:30 não pode sumir');assert.ok(!r.comAntiga.includes('14:30'));
+   assert.ok(r.semana.includes('19:30')&&!r.semana.includes('20:30'));
+  });
+  await check('meia hora fechada para pedido novo; cancelar a aula antiga das 19:30 continua valendo',async()=>{
+   const r=await g.evaluate(()=>{const a=DB.alunos.find(x=>x.id==='fe');
+    return {modo:slotModo(new Date(2026,9,22),'19:30'),modo19:slotModo(new Date(2026,9,22),'19:00'),
+     novo:pedidoAgendaValido({data:'2026-10-22',hora:'19:30',rec:'pontual',codigo:'fe'},a),
+     cancela:pedidoAgendaValido({data:'2026-10-15',hora:'19:30',acao:'cancelar',codigo:'fe'},a),
+     horas:horasPublicadas(),cfg:semMeiaHora(DB.horarioCfg)[4],
+     cred:['14:00','15:00','19:00','20:00','19:30'].map(creditoSlot)};});
+   assert.equal(r.modo,'fechado');assert.equal(r.modo19,'aula');
+   assert.equal(r.novo,false);assert.equal(r.cancela,true);
+   assert.ok(r.horas.includes('19:30'),'aluno com aula antiga às 19:30 ainda vê a aula');
+   ['14:30','15:30','20:30'].forEach(h=>assert.ok(!r.horas.includes(h),h));
+   assert.equal(r.cfg['19:30'],'fechado');assert.equal(r.cfg['14:30'],'fechado');
+   assert.deepEqual(r.cred,[1,1,1,1,1]);
+  });
+  await check('comparativo Ano: 1º/jan até hoje contra o mesmo trecho do ano passado; sem histórico, sem %',async()=>{
+   await g.evaluate(()=>trocarPeriodoCmp('ano'));
+   const lerTela=()=>g.evaluate(()=>({n:['total','personal','tenis'].map(k=>document.getElementById('jh-cmp-'+k).textContent),
+    d:document.getElementById('jh-cmp-total-d').textContent,sub:document.getElementById('jh-cmp-sub').textContent,
+    lbl:document.getElementById('jh-mes-label').textContent,on:document.querySelector('.jh-seg button.on').id,
+    nav:document.getElementById('jh-cmp-mesnav').hidden}));
+   let r=await lerTela();
+   // 7 quintas com fixo desde 03/09 (7 aulas cada) · 2025 até 15/10: 3 avulsas
+   assert.deepEqual(r.n,['49','15','34']);assert.equal(r.on,'jh-cmp-ano');assert.equal(r.lbl,'2026');assert.equal(r.nav,false);
+   assert.match(r.sub,/Desde 1º de janeiro até hoje \(15\/10\)/);assert.match(r.sub,/mesmo período de 2025/);
+   assert.match(r.d,/1533%/);
+   await g.evaluate(()=>navCmp(-1));r=await lerTela();
+   assert.equal(r.lbl,'2025');assert.deepEqual(r.n,['4','1','3']);
+   assert.match(r.sub,/sem 2024 inteiro no app para comparar/);assert.equal(r.d,'');
+   await g.evaluate(()=>{navCmp(1);trocarPeriodoCmp('semana');});
+   assert.equal(await g.evaluate(()=>curYear),2026);
   });
   await check('créditos em aberto: só ativos, quem deve não desconta, grupo do misto entra; reposição só a válida',async()=>{
    const r=await g.evaluate(()=>({cred:document.getElementById('k-creditos').textContent,repos:document.getElementById('k-repos-s').textContent}));
@@ -103,6 +151,22 @@ async function check(name,fn){await fn();count++;console.log('✅ '+name);}
   await check('nada do banco mudou e nada foi gravado em todo o teste',async()=>{
    const r=await g.evaluate(()=>({igual:JSON.stringify(DB)===window.ANTES,gravacoes:window.gravacoes}));
    assert.equal(r.igual,true);assert.equal(r.gravacoes,0);
+  });
+  await check('✓ na aula das 19:00 desconta 1 aula, não ½',async()=>{
+   const r=await g.evaluate(()=>{agView='dia';agDate=new Date(2026,9,16);renderAgenda();
+    const a=DB.alunos.find(x=>x.id==='hugo'),antes=a.creditos;
+    const ent=entriesFor(agDate,'19:00').find(e=>e.alunoId==='hugo');togglePresenca(ent.id);
+    return {delta:a.creditos-antes,custo:DB.presencas[DB.presencas.length-1].custo};});
+   assert.equal(r.delta,-1);assert.equal(r.custo,1);
+  });
+  await check('ano inteiro com 4 mil avulsas: o Início continua rápido',async()=>{
+   const ms=await g.evaluate(()=>{
+    const ex=[];for(let i=0;i<4000;i++){const d=new Date(2025,0,1+(i%640));ex.push({id:'x'+i,data:dKey(d),hora:HORAS_GRADE[1+(i%8)],titulo:'Hugo Teste',tipo:'aula',alunoId:'hugo'});}
+    DB.agenda.eventos=DB.agenda.eventos.concat(ex);
+    const medir=m=>{trocarPeriodoCmp(m);const t0=performance.now();renderDash();return performance.now()-t0;};
+    const sem=medir('semana'),ano=medir('ano');trocarPeriodoCmp('semana');return {sem,ano};});
+   console.log('   (Início: semana '+Math.round(ms.sem)+' ms · ano '+Math.round(ms.ano)+' ms)');
+   assert.ok(ms.ano-ms.sem<1500,'o ano custou '+Math.round(ms.ano-ms.sem)+' ms a mais');
   });
   assert.deepEqual(errors,[]);
   console.log('\n✅ '+count+' verificações · números do Início');
