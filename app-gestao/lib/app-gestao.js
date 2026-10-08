@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-08-6';
+const VERSAO='2026-10-08-7';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2808,7 +2808,7 @@ function verPendentes(){
 /* Cartão "Créditos em aberto" leva à tela Alunos, focada em quem tem reposição
    pendente — que é onde as reposições de cada aluno são vistas e dadas baixa. */
 function verReposicoes(){
-  focoRepos=DB.alunos.some(a=>(Number(a.repos)||0)>0);   // só filtra se houver reposição; senão mostra todos (ainda útil p/ créditos)
+  focoRepos=DB.alunos.some(a=>ehAtivoAluno(a)&&reposValidas(a)>0);   // só filtra se houver reposição válida (a mesma conta do Início); senão mostra todos
   irParaAba('alunos');
   renderAlunos();
   const list=document.getElementById('alunos-list');
@@ -3276,34 +3276,96 @@ async function enviarHorariosLivres(){
    turma, não com o trabalho.
    Por isso a conta é por horário: o horário entra uma vez, tenha um aluno ou
    quatro. Para "quantas pessoas passaram por aqui" existe o countDay(), que é
-   o número do rótulo da agenda e continua contando um por um. */
+   o número do rótulo da agenda e continua contando um por um.
+   O MESMO aluno marcado duas vezes onde só cabe uma aula é uma aula só:
+   tênis e personal no mesmo horário (a fixa ficou por baixo de uma avulsa) ou
+   dois horários que se sobrepõem (19:00 e 19:30). Contar as duas era a aula a
+   mais do painel. As marcações continuam na agenda: a conferência
+   (abrirConferenciaAulas) mostra cada uma, e quem decide apagar é o João. */
+function aulasDoDia(date){
+  const d=new Date(date.getFullYear(),date.getMonth(),date.getDate());
+  const quem=e=>e.alunoId?('a:'+e.alunoId):('t:'+normNome(e.titulo));
+  const aulas=[],repetidas=[],fora=[];
+  HORAS.forEach(h=>{
+    const evs=entriesFor(d,h).filter(e=>e.origem!=='compromisso');
+    // aula em horário bloqueado (chuva, quadra fechada) não aconteceu
+    if(evs.some(e=>e.tipo==='bloqueio'))return;
+    evs.forEach(e=>{if(e.tipo==='locacao'||e.tipo==='torneio'||e.tipo==='pessoal')fora.push({hora:h,e});});
+    const porQuem={};
+    evs.filter(e=>e.tipo==='aula'||e.tipo==='grupo'||e.tipo==='personal')
+      .forEach(e=>{(porQuem[quem(e)]=porQuem[quem(e)]||[]).push(e);});
+    const fica=[];
+    Object.keys(porQuem).forEach(k=>{
+      const l=porQuem[k];
+      // a avulsa é a marcação do dia: vale sobre a fixa que ficou por baixo
+      const vale=l.find(e=>e.origem==='pontual')||l[0];
+      fica.push(vale);
+      l.forEach(e=>{if(e!==vale)repetidas.push({hora:h,e,vale});});
+    });
+    ['tenis','personal'].forEach(cat=>{
+      const es=fica.filter(e=>(e.tipo==='personal')===(cat==='personal'));
+      if(es.length)aulas.push({hora:h,min:_hm(h),cat,entradas:es,chaves:es.map(quem)});
+    });
+  });
+  /* Horários que se sobrepõem (menos de 1 h entre os inícios) com os mesmos
+     alunos: é a mesma aula. Só para aluno vinculado — dois "Experimental" sem
+     cadastro podem ser pessoas diferentes. */
+  aulas.forEach((a,i)=>{
+    if(!a.chaves.every(k=>k.indexOf('a:')===0))return;
+    const ant=aulas.find((b,j)=>j<i&&!b.dup&&a.min>b.min&&a.min-b.min<60&&a.chaves.every(k=>b.chaves.indexOf(k)>=0));
+    if(ant)a.dup=ant.hora;
+  });
+  return {aulas:aulas.filter(a=>!a.dup),sobrepostas:aulas.filter(a=>a.dup),repetidas,fora};
+}
 function contarAulas(dFrom,dTo){
   let tenis=0,personal=0;
   const cur=new Date(dFrom.getFullYear(),dFrom.getMonth(),dFrom.getDate());
   const end=new Date(dTo.getFullYear(),dTo.getMonth(),dTo.getDate());
   while(cur<=end){
-    HORAS.forEach(h=>{
-      const evs=entriesFor(cur,h).filter(e=>e.origem!=='compromisso');
-      // aula em horário bloqueado (chuva, quadra fechada) não aconteceu
-      if(evs.some(e=>e.tipo==='bloqueio'))return;
-      if(evs.some(e=>e.tipo==='aula'||e.tipo==='grupo'))tenis++;
-      if(evs.some(e=>e.tipo==='personal'))personal++;
-    });
+    aulasDoDia(cur).aulas.forEach(a=>{if(a.cat==='personal')personal++;else tenis++;});
     cur.setDate(cur.getDate()+1);
   }
   return {tenis,personal,total:tenis+personal};
+}
+/* Conferência das aulas de hoje: aula por aula, o que entrou no número do
+   Início e o que ficou de fora (e por quê). Só lista, não muda nada — para
+   tirar uma marcação repetida, o João abre a agenda. */
+function abrirConferenciaAulas(){
+  const ov=document.getElementById('ov-conf-aulas'),box=document.getElementById('ca-corpo');if(!ov||!box)return;
+  const hoje=new Date(),r=aulasDoDia(hoje),minAgora=hoje.getHours()*60+hoje.getMinutes();
+  const nomes=es=>es.map(e=>esc(e.titulo||'—')).join(', ');
+  const orig=e=>e.repo?'reposição':(e.origem==='fixo'?'fixo':'avulsa');
+  const nT=r.aulas.filter(a=>a.cat==='tenis').length,nP=r.aulas.length-nT;
+  let h='<p class="ca-resumo"><b>'+r.aulas.length+'</b> aula'+(r.aulas.length===1?'':'s')+' hoje · '+nP+' personal · '+nT+' tênis</p>';
+  const avisos=r.sobrepostas.map(a=>'<li>'+nomes(a.entradas)+' está às '+esc(a.dup)+' e às '+esc(a.hora)+'. A aula dura 1 h: contei uma vez.</li>')
+    .concat(r.repetidas.map(x=>'<li>'+esc(x.e.titulo||'—')+' aparece duas vezes às '+esc(x.hora)+' ('+orig(x.e)+' e '+orig(x.vale)+'): contei uma vez.</li>'));
+  if(avisos.length)h+='<div class="ca-aviso"><b>⚠️ Marcação repetida na agenda</b><ul>'+avisos.join('')+'</ul><small>Nada foi apagado. Se for repetição mesmo, tire a que sobrou na agenda.</small></div>';
+  h+='<ul class="ca-lista">'+(r.aulas.length?r.aulas.map(a=>{
+    const dada=a.min+60<=minAgora,origens=a.entradas.map(orig).filter((v,i,l)=>l.indexOf(v)===i);
+    return '<li'+(dada?' class="dada"':'')+'><span class="ca-h">'+esc(a.hora)+'</span><span class="ca-n">'+nomes(a.entradas)
+      +'<small>'+(a.cat==='personal'?'Personal':'Tênis')+(a.entradas.length>1?' · '+a.entradas.length+' alunos = 1 aula':'')+' · '+origens.join('/')+'</small></span>'
+      +'<span class="ca-s">'+(dada?'✓ dada':'agendada')+'</span></li>';
+  }).join(''):'<li class="ca-vazio">Nenhuma aula hoje.</li>')+'</ul>';
+  const ROT={locacao:'locação',torneio:'torneio',pessoal:'pessoal'};
+  if(r.fora.length)h+='<p class="ca-fora"><b>Na agenda, mas não é aula:</b> '+r.fora.map(x=>esc(x.hora)+' '+esc(x.e.titulo||'—')+' ('+ROT[x.e.tipo]+')').join(' · ')+'</p>';
+  box.innerHTML=h;
+  ov.classList.add('on');
 }
 /* Ocupação e locações numa passada só.
    - Ocupação: dos horários ABERTOS A AULA (modo aula, sem bloqueio e sem locação
      em cima), quantos têm aula marcada. Horário bloqueado (almoço/treino) e
      horário alugado NÃO entram no denominador — não estão abertos a uma aula.
    - Locações: horas de locação usadas no mês (onde quer que estejam) e o quanto
-     da grade de locação isso representa. */
+     da grade de locação isso representa.
+   A aula dura 1 h e a grade tem meias horas (14:30, 15:30, 19:30, 20:30): com
+   aula às 19:00, as 19:30 não estão livres para outra aula. Antes contavam
+   como horário vago, e um dia cheio nunca chegava a 100%. */
 function ocupacao(dFrom,dTo){
   let disp=0,ocup=0,locDisp=0,locUsados=0;
   const cur=new Date(dFrom.getFullYear(),dFrom.getMonth(),dFrom.getDate());
   const end=new Date(dTo.getFullYear(),dTo.getMonth(),dTo.getDate());
   while(cur<=end){
+    const inicios=aulasDoDia(cur).aulas.map(a=>a.min);
     HORAS.forEach(h=>{
       const modo=slotModo(cur,h);
       const evs=entriesFor(cur,h);
@@ -3314,7 +3376,7 @@ function ocupacao(dFrom,dTo){
       if(modo!=='aula')return;
       if(temBloqueio||temLoc)return;   // fora do denominador de aula
       disp++;
-      if(evs.some(e=>e.origem!=='compromisso'&&(e.tipo==='aula'||e.tipo==='grupo'||e.tipo==='personal')))ocup++;
+      if(inicios.some(m=>Math.abs(m-_hm(h))<60))ocup++;
     });
     cur.setDate(cur.getDate()+1);
   }
@@ -3754,8 +3816,11 @@ function renderAgenda(){
   const el=document.getElementById('ag-view');
   const lbl=document.getElementById('ag-label');
   if(agView==='dia'){
-    const dn=DIAS[agDate.getDay()],nAt=countDay(agDate);
-    lbl.innerHTML=dn.charAt(0).toUpperCase()+dn.slice(1)+', '+agDate.getDate()+' de '+MESES[agDate.getMonth()].toLowerCase()+'<small>'+(nAt===1?'1 atendimento':nAt+' atendimentos')+' · toque no ○ para confirmar</small>';
+    /* "Aulas" é o mesmo número do Início (dupla = 1 aula); "atendimentos"
+       conta cada pessoa e também locação e torneio. Os dois lado a lado
+       explicam por que o Início e a agenda pareciam não bater. */
+    const dn=DIAS[agDate.getDay()],nAt=countDay(agDate),nAu=aulasDoDia(agDate).aulas.length;
+    lbl.innerHTML=dn.charAt(0).toUpperCase()+dn.slice(1)+', '+agDate.getDate()+' de '+MESES[agDate.getMonth()].toLowerCase()+'<small>'+(nAu===1?'1 aula':nAu+' aulas')+' · '+(nAt===1?'1 atendimento':nAt+' atendimentos')+' · toque no ○ para confirmar</small>';
     const ehHoje=dKey(agDate)===hojeK;
     el.innerHTML='<button class="btn btn-ghost ag-chuva" onclick="marcarChuvaDia()">☔ Marcar o dia inteiro como chuva</button>'+HORAS.map(h=>{
       const evs=entriesFor(agDate,h).filter(itemVisivelProf).filter(itemVisivelTipo);
@@ -6872,13 +6937,14 @@ function renderAlunos(){
   const q=(document.getElementById('search').value||'').toLowerCase();
   const sel=document.getElementById('alunos-tipo');if(sel&&sel.value!==filtroAluno)sel.value=filtroAluno;
   /* Inativo fica fora da lista normal; aparece em "Inativos", ao buscar pelo
-     nome, ou num foco vindo do Início (reposição, valor da agenda). */
+     nome, ou no foco "valor da agenda" vindo do Início. No foco de reposição
+     não: o número do Início conta só quem está ativo, e a lista tem de bater. */
   const base=DB.alunos.filter(a=>a.nome.toLowerCase().includes(q)).filter(a=>{
     if(filtroAluno==='inativos')return !ehAtivoAluno(a);
-    if(!ehAtivoAluno(a))return filtroAluno==='todos'&&(!!q||focoRepos||focoDif);
+    if(!ehAtivoAluno(a))return filtroAluno==='todos'&&(!!q||focoDif);
     return filtroAluno==='todos'||perfilDe(a)===filtroAluno;
   })
-    .filter(a=>!focoRepos||(Number(a.repos)||0)>0)
+    .filter(a=>!focoRepos||reposValidas(a)>0)
     .filter(a=>{if(!focoDif)return true;const ag=agendaDoMes(a);return ag.total>0&&ag.valor!==(Number(a.mensalidade)||0)&&!difSilenciada(a);})
     .sort((x,y)=>x.nome.localeCompare(y.nome));
   renderAtalhoRenova();
@@ -7512,20 +7578,16 @@ function renderInicioRef(aulasDia,aulasMes,ocHoje,ocMes){
   /* Anéis do dia: o Total mostra quanto do dia já foi dado (e deixa de ser um
      anel sempre cheio); Personal e Tênis mostram a fatia de cada um no dia. */
   const tot=Number(aulasDia.total)||0;
-  let feitas=0;
+  let feitas=0,conferir=0;
   try{
-    const minAgora=h.getHours()*60+h.getMinutes();
-    HORAS.forEach(hr_=>{
-      const p=hr_.split(':'),ini=(+p[0])*60+(+p[1]||0);
-      if(ini+60>minAgora)return;
-      const evs=entriesFor(hojeD,hr_).filter(e=>e.origem!=='compromisso');
-      if(evs.some(e=>e.tipo==='bloqueio'))return;
-      if(evs.some(e=>e.tipo==='aula'||e.tipo==='grupo'))feitas++;
-      if(evs.some(e=>e.tipo==='personal'))feitas++;
-    });
+    const minAgora=h.getHours()*60+h.getMinutes(),dia=aulasDoDia(hojeD);
+    feitas=dia.aulas.filter(a=>a.min+60<=minAgora).length;
+    conferir=dia.sobrepostas.length+dia.repetidas.length;
   }catch(e){}
   pintarAnel('jh-ring-total',tot?Math.min(1,feitas/tot):0);
-  set('jh-ring-total-sub',tot?(feitas+' de '+tot+' já dadas'):'');
+  const subDia=document.getElementById('jh-ring-total-sub');
+  if(subDia)subDia.innerHTML=tot?(feitas+' de '+tot+' já dadas · <button type="button" class="ca-link'+(conferir?' ca-alerta':'')+'" onclick="abrirConferenciaAulas()">'
+    +(conferir?'⚠️ '+conferir+' repetida'+(conferir===1?'':'s')+' na agenda':'conferir')+'</button>'):'';
   pintarAnel('jh-ring-personal',tot?aulasDia.personal/tot:0);
   pintarAnel('jh-ring-tenis',tot?aulasDia.tenis/tot:0);
 
@@ -7664,8 +7726,13 @@ function renderDash(){
   // inativo não faz aula nem paga mensalidade: não entra no "A receber"
   const pendAlunos=DB.alunos.filter(a=>pendenteDoFechamento(a,monthKey()));
   const pendValor=pendAlunos.reduce((s,a)=>s+(saldoMensalidade(a)),0);
-  const creditos=DB.alunos.reduce((s,a)=>s+a.creditos,0);
-  const repos=DB.alunos.reduce((s,a)=>s+a.repos,0);
+  /* Em aberto = aulas pagas que o aluno ainda tem para fazer. Só de quem está
+     ativo; quem deve aula (saldo negativo) não desconta do saldo dos outros; o
+     de grupo do aluno misto entra junto. Reposição: só as que ainda valem — as
+     vencidas somem na virada, e até lá inflavam o número. */
+  const ativosKpi=DB.alunos.filter(ehAtivoAluno);
+  const creditos=ativosKpi.reduce((s,a)=>s+Math.max(0,Number(a.creditos)||0)+(unificado(a)?0:Math.max(0,Number(a.credGrupo)||0)),0);
+  const repos=ativosKpi.reduce((s,a)=>s+reposValidas(a),0);
   const despesas=Math.abs(movs.filter(l=>Number(l.valor)<0).reduce((s,l)=>s+Number(l.valor||0),0));
 
   document.getElementById('k-recebido').textContent=fmt(recebido);

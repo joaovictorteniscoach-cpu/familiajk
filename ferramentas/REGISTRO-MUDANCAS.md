@@ -8,6 +8,35 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-08 · Claude Code: números do Início conferidos com a agenda
+
+#231 publicado como `2026-10-08-6`. Pedido do João: o total de "Aulas do dia" não
+batia com a agenda; ver se alguma aula contava duas vezes e se havia outros
+números errados. Versão `2026-10-08-7`. Nenhum dado, saldo ou regra alterado.
+
+- **Contagem de aulas** (`aulasDoDia`, usada por `contarAulas`, "já dadas",
+  comparativo e gráfico): continua 1 aula por horário (dupla = 1). Agora o mesmo
+  aluno marcado duas vezes onde só cabe uma aula conta 1: fixa + avulsa no
+  mesmo horário (inclusive tênis + personal, vale a avulsa) e horários que se
+  sobrepõem (19:00 e 19:30, só aluno vinculado). Antes contava 2.
+- **Conferência** (`abrirConferenciaAulas`, `#ov-conf-aulas`, classes `ca-`):
+  link "conferir" sob os anéis (vira "⚠️ N repetidas na agenda") lista aula por
+  aula, as repetições e o que está na agenda mas não é aula. Só lista.
+- **Agenda do dia:** rótulo mostra "N aulas · M atendimentos" (atendimentos =
+  cada pessoa + locação/torneio, o número antigo).
+- **Ocupação:** aula de 1 h ocupa a meia hora vizinha (19:00 cobre 19:30); antes
+  um dia cheio parava em 90%.
+- **Créditos em aberto:** só ativos, saldo negativo não desconta, grupo do misto
+  entra; reposições só as válidas (`reposValidas`), e o foco da lista bate.
+- Teste novo `testar-numeros-inicio-browser.cjs` (8 verificações, no CI; falha
+  na V6).
+- **Achados para o João decidir (não mexi):** ✓ na agenda às 14:00, 14:30,
+  15:00, 15:30, 19:00, 19:30, 20:00 e 20:30 desconta ½ crédito (`creditoSlot`
+  em `togglePresenca`), e `contarAulasAluno` (valor do mês pela agenda) conta
+  fixa + avulsa no mesmo horário como 2 aulas, enquanto o fechamento conta 1.
+
+---
+
 ## 2026-10-08 · Claude Code: fechamento abre direto o WhatsApp do aluno
 
 #230 (reposição + horário fixo) publicado como `2026-10-08-5`. Em seguida, pedido
