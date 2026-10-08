@@ -38,10 +38,11 @@
 <link rel="apple-touch-startup-image" media="screen and (device-width:375px) and (device-height:667px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)" href="splash-gestao-750x1334.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" id="css-tema" href="lib/estilo.css?v=2026-10-08-3">
+<link rel="stylesheet" id="css-tema" href="lib/estilo.css?v=2026-10-08-4">
 <!-- Tema de cores: Saibro é o padrão desde 2026-10; "Verde clássico" fica a um
      toque em Segurança e dados. Troca o arquivo antes da primeira pintura. -->
 <script>try{if(localStorage.getItem('jv-tema')!=='classico'){var _ct=document.getElementById('css-tema');_ct.href=_ct.getAttribute('href').replace('estilo.css','estilo-saibro.css');document.documentElement.classList.add('tema-saibro');}}catch(e){}</script>
+<link rel="stylesheet" href="lib/acoes-voz.css?v=2026-10-08-4">
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
 <script src="lib/firebase-database-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js\'><\/script>')"></script>
@@ -1094,6 +1095,7 @@ function esperarAuth(){
 
 <div class="mais-fundo" id="mais-fundo" onclick="fecharMais()"></div>
 <div class="mais-pop" id="mais-pop">
+  <button id="voz-menu" class="so-dono" type="button" hidden>Ações por voz</button>
   <button onclick="irDoMais('aval')"><span class="ico" data-ic="clip"></span>Avaliações</button>
   <button onclick="irDoMais('fin')"><span class="ico" data-ic="bars"></span>Financeiro</button>
   <button onclick="irDoMais('seg')"><span class="ico" data-ic="check"></span>Segurança e dados</button>
@@ -1112,7 +1114,7 @@ function esperarAuth(){
   <button onclick="go('lanc',this)"><span class="ico" data-ic="navcash"></span>Caixa</button>
   <button id="nav-mais" onclick="abrirMais()"><span class="ico" data-ic="navmore"></span>Mais</button>
 </nav>
-<script src="lib/icones.js?v=2026-10-08-3"></script>
+<script src="lib/icones.js?v=2026-10-08-4"></script>
 
 <!-- MODAL ALUNO -->
 <div class="overlay" id="ov-aluno" onclick="if(event.target===this)closeModal('ov-aluno')">
@@ -1645,9 +1647,40 @@ function esperarAuth(){
   </div>
   <div class="fic-corpo" id="fic-corpo"></div>
 </section>
+
+<!-- Ações rápidas: reconhecimento por toque, conferência e confirmação. -->
+<button id="voz-atalho" type="button" hidden aria-label="Abrir ações por voz" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg></button>
+<div id="voz-painel" hidden>
+ <section class="jv-voz-card" role="dialog" aria-modal="true" aria-labelledby="voz-titulo" aria-describedby="voz-ajuda">
+  <div class="jv-voz-head"><span class="jv-voz-sinal" aria-hidden="true"></span><h2 id="voz-titulo">Ações por voz</h2><button id="voz-fechar" type="button" aria-label="Fechar ações por voz">×</button></div>
+  <p id="voz-ajuda">Diga quem, o dia e o horário. Confira antes de confirmar.</p>
+  <p class="jv-voz-help">Exemplo: “Agendar Ana amanhã às quatro da tarde”. Para renovar: “Renovar o pacote da Ana”.</p>
+  <p class="jv-voz-help">A fala usa o reconhecimento do navegador e pode ser processada pelo provedor. Não guardamos áudio nem o texto do pedido. No iPhone, você também pode usar o ditado do teclado.</p>
+  <label for="voz-texto">Seu pedido</label>
+  <textarea id="voz-texto" rows="2" maxlength="500" autocomplete="off" spellcheck="false" placeholder="Fale ou escreva aqui…"></textarea>
+  <div class="jv-voz-row"><button id="voz-falar" type="button" aria-pressed="false">Falar</button><button id="voz-parar" type="button" hidden>Parar de ouvir</button><button id="voz-analisar" type="button">Conferir pedido</button></div>
+  <p id="voz-status" role="status" aria-live="polite"></p>
+  <div class="jv-voz-campos">
+   <label>Ação<select id="voz-acao"><option value="agendar">Agendar</option><option value="cancelar">Cancelar uma aula</option><option value="renovar">Renovar pacote</option></select></label>
+   <label>Aluno<select id="voz-aluno"><option value="">Escolha o aluno</option></select></label>
+   <div id="voz-quando" class="jv-voz-row"><label>Data<input id="voz-data" type="date"></label><label>Horário<select id="voz-hora"><option value="">Escolha o horário</option></select></label></div>
+   <div id="voz-atividade">
+    <label>Tipo<select id="voz-tipo"><option value="">Escolha o tipo</option><option value="aula">Aula particular — 1 pessoa</option><option value="grupo2">Aula em dupla — 2 pessoas</option><option value="grupo3">Aula em trio — 3 pessoas</option><option value="grupo4">Aula em quarteto — 4 pessoas</option><option value="personal">Personal</option><option value="locacao">Locação</option><option value="torneio">Torneio</option></select></label>
+    <label class="jv-voz-check"><input id="voz-repo" type="checkbox">Marcar como reposição</label>
+   </div>
+   <label id="voz-marcacao-wrap" hidden>Qual marcação cancelar<select id="voz-marcacao"><option value="">Escolha a marcação</option></select></label>
+   <button id="voz-conferir" type="button">Conferir campos escolhidos</button>
+  </div>
+  <div id="voz-previa" hidden></div><button id="voz-confirmar" type="button" disabled>Confirmar</button>
+  <label class="jv-voz-check"><input id="voz-ouvir" type="checkbox" checked>Ouvir a resposta</label>
+  <div class="jv-voz-row"><button id="voz-salvar" type="button" hidden>Tentar salvar na nuvem</button><button id="voz-seguranca" type="button">Conferir salvamento</button></div>
+ </section>
+</div>
+
 <div class="toast" id="toast"></div>
 
-<script src="lib/app-gestao.js?v=2026-10-08-3"></script>
+<script src="lib/app-gestao.js?v=2026-10-08-4"></script>
+<script src="lib/acoes-voz.js?v=2026-10-08-4"></script>
 <script>
 /* Rede de seguranca do par tela+codigo.
 
@@ -1662,7 +1695,7 @@ function esperarAuth(){
    torto, o app busca o par certo uma vez e, se insistir, DIZ o que houve em
    vez de deixar voce tocando em botao que nao responde. */
 (function(){
-  var ESPERADA='2026-10-08-3';
+  var ESPERADA='2026-10-08-4';
   function tela(motivo){
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;z-index:99999;background:#1A2E14;color:#FAF7F2;'
@@ -1753,7 +1786,7 @@ function limparHist(){
 }
 histLogLoad();
 // PWA: registra o service worker (permite instalar o painel e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-gestao.js?v=2026-10-08-3').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-gestao.js?v=2026-10-08-4').catch(function(){});});}
 </script>
 </body>
 </html>

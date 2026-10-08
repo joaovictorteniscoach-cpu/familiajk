@@ -26,6 +26,8 @@ jobs:
           node ferramentas/checar-sintaxe.js site-pro/sistema.html
           node ferramentas/checar-sintaxe.js site-pro/curso.html
           node ferramentas/checar-sintaxe.js site-pro/demo/index.html
+          python3 site-pro/tools/build_demo.py
+          git diff --exit-code -- site-pro/demo/
       - name: Validar o pacote público sem publicar
         run: python3 ferramentas/preparar-pages.py "$RUNNER_TEMP/pages"
 
@@ -35,13 +37,14 @@ jobs:
       - name: Preparar navegador de teste
         run: |
           npm install --prefix "$RUNNER_TEMP/jv-browser" playwright@1.56.1
-          "$RUNNER_TEMP/jv-browser/node_modules/.bin/playwright" install --with-deps chromium
+          "$RUNNER_TEMP/jv-browser/node_modules/.bin/playwright" install --with-deps chromium webkit
       - name: Conferir Gestão e site no navegador sem dados reais
         env:
           NODE_PATH: ${{ runner.temp }}/jv-browser/node_modules
           PW: ${{ runner.temp }}/jv-browser/node_modules/playwright
           JV_VISUAL_DIR: ${{ runner.temp }}/previas-aulas-voz
         run: |
+          node ferramentas/testar-voz-gestao-browser.cjs
           node ferramentas/testar-appcheck-runtime.cjs
           node ferramentas/testar-monitoramento.cjs
           node .claude/skills/publicar-versao/fumaca.cjs

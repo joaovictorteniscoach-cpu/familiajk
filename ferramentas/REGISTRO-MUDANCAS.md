@@ -8,7 +8,47 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
-## 2026-10-08 · Resumo para o Escritório JV (Claude Code, branch `claude/escritorio-resumo`)
+#
+## 2026-10-08 · Codex: botão funcional de ações por voz
+
+- Responsável: Codex. Branch `codex/acoes-voz-gestao-2026-10-08`, [PR #228](https://github.com/joaovictorteniscoach-cpu/familiajk/pull/228), base main
+  `ab3aacb606588d134b538b1fdfb2aecaead19c8f` (V3 publicada); proposta `2026-10-08-4`.
+- Implementado: atalho real em Início/Agenda/Alunos e Mais, painel com fala pt-BR,
+  alternativa por texto/ditado, identificação explícita do cadastro, prévia e
+  confirmação. Camada própria reutiliza agenda e renovação; não escreve outro
+  modelo de dados nem muda regras do Firebase.
+- Proteções: particular exclusivo/grupos com capacidade, uma ocorrência,
+  ajuste manual/segunda renovação, cópia anterior confirmada, base e mapa
+  atualizados, bloqueio de duplo envio, sucesso apenas com nuvem confirmada.
+  A resposta pendente permite somente repetir o salvamento.
+- Testado: 84 verificações próprias em Chromium/WebKit e nos dois temas,
+  reconhecimento simulado, sem dados reais ou acesso à nuvem real. CI
+  [37767393044](https://github.com/joaovictorteniscoach-cpu/familiajk/actions/runs/37767393044) aprovado
+  no código `adb23d227ed18f0e85dfa3ae741b82bbbe2ef014`, incluindo fumaça,
+  regressões de aulas/agenda, pagamentos, família, renovação e 17 verificações
+  do SDK Firebase com regras publicadas no emulador. Imagens reais revisadas.
+  Ajuste final de apresentação: ao conferir, rolar até a prévia/confirmar e manter
+  o cabeçalho/fechar acessível; o CI do novo commit deve repetir a validação.
+  Microfone real no iPhone/Safari/PWA continua pendente de ensaio no aparelho.
+- Demo regenerada e novos arquivos no cache do app; versões dos cinco arquivos
+  sincronizadas. Removida a verificação do protótipo isolado do teste de Aulas,
+  substituída por verificações do botão que o aplicativo realmente carrega.
+- Concorrência: #227 e #229 do Claude publicados durante a preparação.
+  Reaplicado sobre `ab3aacb606588d134b538b1fdfb2aecaead19c8f`: preservados hora do servidor,
+  retorno de cancelamento recusado, hora dos avisos e Escritório JV (somente
+  leitura). Seus testes permanecem no CI e o gerador mantém Escritório oculto
+  na demo. Versão V4 sucede a V3 do #229, evitando arquivos distintos com a
+  mesma versão no cache. Nenhum outro trabalho foi duplicado.
+- Publicação desta entrega: versão `2026-10-08-4` pelo PR #228, após seu CI
+  final aprovado. João já autorizou publicar mudanças validadas na sessão.
+  A versão pública anterior conferida era V3 de 08/10. A entrega é confirmada
+  pelo merge do #228, workflow Pages e monitor da main identificando a V4;
+  consultar esses registros antes de afirmar que já está no ar.
+- App Check: sem mudança; depende da chave pública/console do João.
+
+---
+
+# 2026-10-08 · Resumo para o Escritório JV (Claude Code, branch `claude/escritorio-resumo`)
 
 O Escritório JV (agentes de IA do João, hospedado no ChatGPT Sites, código fora
 deste repositório) não lê o Firebase. Ponte criada sem mexer em regra:

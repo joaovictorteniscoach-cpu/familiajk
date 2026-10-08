@@ -1,7 +1,60 @@
-# Ações rápidas por voz — proposta para a Gestão
+# Ações rápidas por voz — Gestão
 
-Estado: avaliação e especificação. O botão **ainda não está implementado
-nem publicado**. Este documento não altera agendas, créditos ou pagamentos.
+## Implementação de 08/10/2026
+
+Responsável: Codex, branch `codex/acoes-voz-gestao-2026-10-08`, base `ab3aacb606588d134b538b1fdfb2aecaead19c8f`.
+Código funcional da versão `2026-10-08-4`, [PR #228](https://github.com/joaovictorteniscoach-cpu/familiajk/pull/228).
+84 verificações de fala e CI completo aprovados no commit `adb23d2`; o ajuste
+final de prévia visível precisa do CI do novo commit antes de integrar.
+A entrega pública é confirmada pelo merge do #228 e monitor da main com V4. A integração final usa a V3 de 08/10, publicada pelo Claude no #229.
+O botão não estava implementado nessa versão.
+
+O atalho aparece acima da navegação, no canto direito de Início, Agenda e Alunos,
+somente com a conta do dono autenticada. Também há acesso em Mais.
+Os arquivos `lib/acoes-voz.js` e `lib/acoes-voz.css` são usados pelo aplicativo.
+O protótipo visual antigo em ferramentas não é carregado em produção.
+
+1. Abra o painel e toque em Falar; permita a voz/microfone se o navegador solicitar.
+2. Diga um pedido, por exemplo “Agendar Nome Sobrenome amanhã às quatro da tarde”,
+   “Cancelar Nome Sobrenome sexta às 16h” ou “Renovar o pacote de Nome Sobrenome”.
+3. Confira o texto. Toque em Conferir pedido, escolha o cadastro se houver nomes
+   parecidos e corrija os campos quando necessário.
+4. Leia a prévia e confirme. Renovação mantém a confirmação nativa com saldos
+   antes/depois. “Confirmado e salvo na nuvem” só aparece após gravação confirmada.
+   Se estiver pendente, tentar salvar não executa novamente a ação.
+
+A primeira versão usa comandos delimitados, sem modelo de IA ou backend novo.
+Agendamento é uma ocorrência; cancelamento afeta apenas a marcação nessa data,
+sem criar reposição ou alterar saldos. Horários particulares continuam exclusivos,
+grupos respeitam 2/3/4, e locação/torneio compartilham apenas a mesma atividade.
+A renovação usa o fluxo atual, bloqueia repetida/ajuste manual e não lança pagamento.
+Antes de aplicar, exige leitura da nuvem, mapa da quadra e cópia anterior confirmada.
+
+No iPhone, se o botão Falar não estiver disponível ou houver erro, toque no campo
+Seu pedido e use o microfone do teclado do iOS, ou digite. O reconhecimento pode
+usar o serviço do navegador; áudio e transcrição não são persistidos pelo app.
+Captura real no iPhone/Safari e no app instalado continua pendente de ensaio no
+aparelho do João. Chromium/WebKit com API simulada verificam fluxos, não provam
+microfone real. Para esse ensaio, basta falar, conferir a transcrição e fechar:
+nenhum comando é executado sem conferência e confirmação.
+
+A publicação de mudanças validadas já foi autorizada pelo João nesta sessão.
+O ensaio no aparelho será acompanhado separadamente e não será descrito como
+concluído por causa de testes simulados. App Check é outra etapa; chave pública
+continua pendente.
+
+Coordenação: #224, #226, #227 e #229 estão publicados. #227 e #229 foram
+integrados pelo Claude durante a preparação. A camada de fala foi reaplicada
+sobre a main nova, preservando hora do servidor, retorno de cancelamento
+recusado, horário de envio dos avisos e o resumo Escritório JV. Os testes e o
+gerador de demo dessas alterações foram preservados. A V4 sucede a V3 do #229
+para evitar conteúdos diferentes com o mesmo número de versão no cache.
+
+---
+
+## Especificação original (histórico de 07/10)
+
+O texto abaixo registra a proposta inicial e seu plano de ensaios.
 
 ## Coordenação conferida em 07/10/2026
 
