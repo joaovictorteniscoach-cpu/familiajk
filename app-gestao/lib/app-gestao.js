@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-07-4';
+const VERSAO='2026-10-07-7';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -5815,6 +5815,9 @@ function rmLinhas(){
   return (DB.alunos||[]).filter(ehAtivoAluno).filter(a=>perfilDe(a)!=='torneio').map(rmLinha)
     .sort((x,y)=>(!!y.atencao-!!x.atencao)||(!!x.bloqueio-!!y.bloqueio)||x.a.nome.localeCompare(y.a.nome));
 }
+/* Em Renovar o mês, o nome abre a ficha do aluno por cima da lista; fechar a
+   ficha volta para a lista com as mesmas marcações. Só navegação. */
+function rmNomeLink(a){return '<span class="rm-link" role="button" onclick="abrirFicha(\''+argJs(a.id)+'\')">'+esc(a.nome)+' ›</span>';}
 function abrirRenovaMes(){
   rmSel={};rmEscolha={};rmFeitos=null;rmAgCache={};
   rmLinhas().forEach(x=>{rmSel[x.a.id]=!x.bloqueio;});
@@ -5835,7 +5838,9 @@ function fecharRenovaMes(){
   esconderRenovaMes();
   try{if(history.state&&history.state.renova)history.back();}catch(e){}
 }
-window.addEventListener('popstate',()=>{if(rmAberta)esconderRenovaMes();});
+// Voltar da ficha aberta por cima da renovação cai de novo no estado "renova":
+// só fecha a renovação quando o voltar sai dela de fato.
+window.addEventListener('popstate',()=>{if(rmAberta&&!(history.state&&history.state.renova))esconderRenovaMes();});
 function rmMarcar(id,v){rmSel[id]=!!v;renderRenovaMes();}
 function rmUsar(id,qual){rmEscolha[id]=qual;renderRenovaMes();}
 function rmQtdTxt(n,pg,grupoSo){
@@ -5859,7 +5864,7 @@ function renderRenovaMes(){
     let t='<div class="rm-row'+(x.bloqueio&&!x.ajusteManual?' bloq':'')+((x.atencao||x.ajusteManual)?' at':'')+((on||x.ajusteManual)?'':' off')+'">';
     t+=x.bloqueio?'<span class="rm-chk dis">🔒</span>'
       :'<label class="rm-chk"><input type="checkbox" '+(on?'checked':'')+' onchange="rmMarcar(\''+id+'\',this.checked)"></label>';
-    t+='<div class="rm-info"><div class="rm-nome"><span>'+esc(a.nome)+'</span><b>'+fmt(x.novo.mens)+'</b></div>';
+    t+='<div class="rm-info"><div class="rm-nome">'+rmNomeLink(a)+'<b>'+fmt(x.novo.mens)+'</b></div>';
     if(x.bloqueio){
       t+='<div class="rm-aviso">'+esc(x.bloqueio)+'</div>';
       if(x.ajusteManual)t+='<div class="rm-esc"><button onclick="rmConfirmarManual(\''+argJs(id)+'\')">✓ Já renovei manualmente</button>'
@@ -5972,7 +5977,7 @@ function renderRenovaEnvio(box,nomeMes){
     const feito=!!rmFeitos.enviados[a.id];
     const pg=Number(a.planoGrupo)||0;
     return '<div class="rm-row'+(feito?' off':'')+'"><span class="rm-chk dis">'+(feito?'✓':'📲')+'</span><div class="rm-info">'
-      +'<div class="rm-nome"><span>'+esc(a.nome)+'</span><b>'+fmt(valorDoMes(a))+'</b></div>'
+      +'<div class="rm-nome">'+rmNomeLink(a)+'<b>'+fmt(valorDoMes(a))+'</b></div>'
       +'<div class="rm-l">'+rmQtdTxt(Number(a.creditos)||0,pg>0?(Number(a.credGrupo)||0):0,ehGrupoTipo(a.tipo))+' · 🔁 '+fmtCred(Number(a.repos)||0)+' reposição(ões)</div>'
       +(a.tel?'<button class="fic-b wa rm-env" onclick="rmEnviar(\''+a.id+'\')">'+(feito?'Enviar de novo':'📲 Enviar no WhatsApp')+'</button>'
              :'<div class="rm-aviso">sem telefone no cadastro</div>')
@@ -6839,6 +6844,7 @@ function esconderFicha(){
   const f=document.getElementById('ficha-aluno');
   if(f){f.classList.remove('on');f.setAttribute('aria-hidden','true');}
   if(!rmAberta)document.body.classList.remove('ficha-on');
+  else{try{renderRenovaMes();}catch(e){}}   // volta para a renovação já com o que mudou na ficha
 }
 function fecharFicha(){
   if(!fichaId)return;

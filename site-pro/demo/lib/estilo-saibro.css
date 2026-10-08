@@ -1040,6 +1040,10 @@ input,select,textarea{min-height:44px}
 .comp-info,.comp-info span,.pend-item span,.cons p,.dobra-cab small,.fech-card span,.fq-linha span{
   color:var(--jv-copy-soft)!important
 }
+/* Etiqueta de vencimento é clara: a letra dela fica escura (a regra acima a deixava ilegível) */
+.pend-item .venc-tag{color:#5E523F!important;-webkit-text-fill-color:#5E523F!important}
+.pend-item .venc-tag.late{color:#8E2C1E!important;-webkit-text-fill-color:#8E2C1E!important}
+.pend-item .venc-tag.soon{color:#6E520D!important;-webkit-text-fill-color:#6E520D!important}
 
 /* Alunos — busca/filtros compactos, cards mais baixos e leitura imediata. */
 #pg-alunos .toolbar{grid-template-columns:minmax(0,1fr) auto auto!important;align-items:stretch!important}
@@ -3274,6 +3278,9 @@ html body:not(#jv) .pm-modal .modal-x,html body:not(#jv) .pd-modal .modal-x{
 }
 html body:not(#jv) .pm-modal .modal-head h3,html body:not(#jv) .pd-modal .modal-head h3{margin:0}
 
+/* Renovar o mês: nome do aluno abre a ficha */
+#renova-mes .rm-link{cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px}
+
 /* ===== Toques do tema Saibro ===== */
 .nav,.nav:after{background:#0B1B14!important;border-top:1px solid rgba(194,88,46,.35)!important}
 .nav button.on,.nav button.aberto,.jv-nav-3d button.on,.jv-nav-3d button.aberto{background:rgba(194,88,46,.16)!important;color:#EE9A6E!important;-webkit-text-fill-color:#EE9A6E!important}
@@ -3287,6 +3294,9 @@ html body:not(#jv) .pm-modal .modal-head h3,html body:not(#jv) .pd-modal .modal-
 .al-aula *,.fic-b.prim *,.fic-b.prim2 *,.fic-b.ok *,#pg-lanc .cx-ac.in *{color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important;stroke:#1E2A0E!important}
 /* Caixa: valores dos atalhos também na cor da bolinha */
 #pg-lanc .cx-at b{color:#D4E157!important;-webkit-text-fill-color:#D4E157!important}
+/* contraste: botão escuro sobre cartão claro fica opaco (o "meio ar" virava cinza) */
+html body:not(#jv) #pg-aval .avcard .b2{background:#2B3B34!important}
+#renova-mes .rm-aviso{color:#F6CDB4!important;-webkit-text-fill-color:#F6CDB4!important}
 
 /* ===== Vidro (toque air) ===== */
 html{background:#0A1A14!important}

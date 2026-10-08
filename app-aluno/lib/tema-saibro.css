@@ -615,6 +615,25 @@ body{color:#F8F5EE!important}
 #app>.top .jv-chips-topo .jv-quadra-chip{background:rgba(8,20,15,.10)!important;border-color:rgba(255,255,255,.16);box-shadow:none!important}
 #app>.top .jv-chips-topo .jv-quadra-chip b{text-shadow:0 1px 6px rgba(0,0,0,.55)}
 #app>.top .jv-chips-topo .jv-quadra-chip small{text-shadow:0 1px 5px rgba(0,0,0,.6)}
+.amr-nums div{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10)}
+.amr-nums b{color:#fff}
+.amr-nums span{color:#D8D2C7}
+.amr-plano{color:#D8D2C7}
+.amr-plano b{color:#fff}
+.amr-bloco>b{color:#fff}
+.amr-dia{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#F6F2EA}
+.amr-vazio{color:#BDB6A9}
+.amr-nota{color:#BDB6A9}
+.amr-atalho{color:inherit}
+.amr-ver{color:#E17C45}
+#app .mine-item,#app .mine-item b{color:#2A2016;-webkit-text-fill-color:#2A2016}
+#app .mine-item .mini-cancel{color:#A3401C;-webkit-text-fill-color:#A3401C}
+#pedir-box>div{color:#2A2016}
+html body:not(#jv) #pedir-box .btn-ghost{background:#F3EDE2!important;border:1px solid #D9CBB4!important;color:#3A2E22!important;-webkit-text-fill-color:#3A2E22!important;box-shadow:none!important}
+#apg-evolucao .evo-pend b{color:#F2C5AD!important}
+#apg-evolucao .evo-prio .lbl{color:#CFC7B8!important}
+#apg-evolucao .evo-prio b{color:#E7986D!important}
+#apg-aulas .empty,#apg-torneio .empty{background:rgba(255,255,255,.06)!important;color:#D8D2C7!important;-webkit-text-fill-color:#D8D2C7!important}
 :root{--jv-bg:#091711;--jv-card:rgba(31,45,39,0.42);--jv-panel:rgba(39,53,47,0.42);--jv-control:rgba(43,59,52,0.42);--jv-ink:#101E18;--jv-text:#F6F2EA;--jv-muted:#D9E2D8;--jv-gold:#D57B4A;--jv-border:rgba(232,214,190,.25)}
 html,body{background:var(--jv-bg)!important;color:var(--jv-text)!important}
 #app>.top.jv-premium-hero{background:linear-gradient(90deg,rgba(9,23,17,.94),rgba(9,23,17,.68) 60%,rgba(9,23,17,.20)),url('../assets/jv-saibro-realista.webp') center 64%/cover!important}
@@ -701,6 +720,9 @@ html body .jv-progress i{background:linear-gradient(90deg,#E0824F,#63D887)!impor
 .al-aula *,.fic-b.prim *,.fic-b.prim2 *,.fic-b.ok *,#pg-lanc .cx-ac.in *{color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important;stroke:#1E2A0E!important}
 /* Caixa: valores dos atalhos também na cor da bolinha */
 #pg-lanc .cx-at b{color:#D4E157!important;-webkit-text-fill-color:#D4E157!important}
+/* contraste: botão escuro sobre cartão claro fica opaco (o "meio ar" virava cinza) */
+html body:not(#jv) #pg-aval .avcard .b2{background:#2B3B34!important}
+#renova-mes .rm-aviso{color:#F6CDB4!important;-webkit-text-fill-color:#F6CDB4!important}
 
 /* ===== Vidro (toque air) ===== */
 html{background:#0A1A14!important}
@@ -739,3 +761,5 @@ html body:not(#jv) .fic-b.neutro,html body:not(#jv) .fic-voltar,html body:not(#j
 /* ===== Toques do tema Saibro no app do aluno ===== */
 .lock-pay,.jv-pix-btn,#apg-inicio .jv-pix-btn{background:#D4E157!important;border-color:#D4E157!important;color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important}
 .seg.jv-ref-ag-tabs button.on,.jv-ref-ag-tabs button.on{background:#C2582E!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+/* contraste: cabeçalho dos dias da agenda opaco (translúcido sobre a grade clara virava cinza) */
+html body:not(#jv) #apg-agenda .wk th,html body:not(#jv) #apg-agenda .wk th *{background:#1D2622!important}

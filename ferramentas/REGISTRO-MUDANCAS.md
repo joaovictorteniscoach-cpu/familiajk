@@ -8,6 +8,42 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-07 · Claude Code: 2 defeitos corrigidos (#223) e os 3 pedidos de 03/10
+
+- **#223 publicado (versão `2026-10-07-4`):** os dois defeitos da revisão
+  abaixo. `renovacoesLancadasNoMes` conta só os lançamentos do mês para o
+  alarme de duplicados (`renovacoesDoMes` segue igual para o bloqueio);
+  `updatesFilaSemConflito` tira `reserva_X/processado` quando `reserva_X` é
+  apagada no mesmo envio. Teste `testar-fila-renovacao-browser.cjs` (no CI).
+- **3 pedidos (versão `2026-10-07-5`), aprovados por simulação:**
+  (1) Renovar o mês: nome do aluno (`rmNomeLink`) abre a ficha; fechar a ficha
+  volta à renovação com as mesmas marcações (popstate da renovação só fecha
+  quando o estado deixa de ser `renova`); (2) Início: Taxa de ocupação e
+  Locações chamam `verAgendaMes()`; (3) App do aluno: `resumoMesAluno` /
+  `renderResumoMes` no topo da tela Aulas (feitas do mês pelo
+  `PUB.historico`, marcadas pelos fixos/eventos da grade, saldo) e atalho
+  `#cred-page-mes` em Créditos. Só leitura nos dois apps.
+  Teste `testar-3-pedidos-browser.cjs` (relógio fixo, no CI).
+- **Contraste das letras (versão `2026-10-07-6`, pedido do João):** varredura
+  de todas as telas dos dois apps nos dois temas. Corrigido: data das próximas
+  aulas e "Precisa falar com o João?" (letra clara em cartão branco), botão
+  "Falar com o João", aviso e prioridade da Evolução, torneio vazio e "Aulas
+  sem horário" (no Verde clássico ficava letra clara em fundo branco),
+  cabeçalho dos dias da agenda do aluno e botão "Registro" da Avaliação na
+  Gestão (no Saibro, o "meio ar" deixava fundo cinza). Regras no fim do
+  `<style>` do aluno e em `EXTRA`/`EXTRA_ALUNO` do `tema-saibro.py`.
+  Verificação de contraste incluída no `testar-3-pedidos-browser.cjs`.
+  Na `2026-10-07-7`: etiqueta "vence em…" das Cobranças pendentes (Início
+  da Gestão) — `.pend-item span{color:var(--jv-copy-soft)!important}`
+  deixava a letra creme sobre a etiqueta creme; agora `.pend-item .venc-tag`
+  tem letra escura por urgência. Varreduras de contraste devem abrir as
+  seções dobráveis (`.dobra.on`), senão não enxergam essas listas.
+  Ficaram como estão (no limite, 4,4:1): botões brancos sobre o saibro
+  `#C2582E` (cor da marca).
+- Nenhuma migração, nenhuma gravação nova, regras do Firebase intactas.
+
+---
+
 ## 2026-10-07 · Revisão das publicações de 04 a 07/10 (PRs #208–#221, feitas pelo Codex)
 
 Revisão só de leitura (Claude Code), comparando `298416f` (fim do PR #207) com
@@ -76,7 +112,7 @@ continua vazio.
 - App **Família JK** (#211–#213, #217): aportes, sincronização entre aparelhos
   (`sync-merge.js`), menu, histórico mensal, recuperação de OFX. Só registro.
 
-### Defeitos confirmados (a corrigir)
+### Defeitos confirmados (corrigidos no #223, ver entrada acima)
 1. **Alarme falso de "CRÉDITOS DUPLICADOS"** — `renovacoesDoMes`
    (`app-gestao.js` ~5217) devolve a marca `ultimaRenovacao` **mais** os
    movimentos "Renovação do mês"; `achadosDoAluno` (~9397) acusa `length>1`.
@@ -126,7 +162,7 @@ continua vazio.
   (sempre chamado com `sh`, sem efeito).
 
 ### Pendências
-- **Pedidos do João ainda não feitos (03/10):** (1) Renovar o mês — nome do
+- **Pedidos do João de 03/10 (feitos em 07/10, ver entrada acima):** (1) Renovar o mês — nome do
   aluno abre a ficha; (2) Início — Taxa de ocupação e Locações abrem a agenda
   **do mês** (hoje abrem a do dia); (3) App do aluno — resumo do mês na tela
   Aulas (pacote, feitas com datas, agendadas, saldo) e atalho fácil até ela.
