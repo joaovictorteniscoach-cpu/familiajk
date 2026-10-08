@@ -148,6 +148,16 @@ async function check(name,fn){await fn();count++;console.log('✅ '+name);}
    // Ana 4 + Fê 1 + 2 de grupo = 7 (Bia −2 e Zé inativo fora) · Ana: 2 vencidas (maio), 1 válida
    assert.equal(r.cred,'7');assert.match(r.repos,/^1 reposições pendentes/);
   });
+  await check('valor do mês pela agenda (renovação): marcação repetida conta 1 aula, como no Início',async()=>{
+   const r=await g.evaluate(()=>{const v=id=>mensalidadeDaAgenda(DB.alunos.find(a=>a.id===id),2026,9);
+    return {ana:v('ana'),bia:v('bia'),fe:v('fe'),hugo:v('hugo'),duda:v('duda')};});
+   // outubro/2026 tem 5 quintas. Ana (fixa + avulsa às 09:00 no dia 15), Bia (fixa + avulsa às 10:00)
+   // e Fê (19:00 fixa + 19:30 avulsa) contavam 6 aulas; são 5
+   assert.equal(r.ana.part,5);assert.equal(r.bia.part,5);assert.equal(r.fe.part,5);
+   assert.equal(r.ana.valor,5*160);
+   // caso negativo: aula avulsa de verdade em outro horário continua somando (5 fixas + 1 avulsa no dia 16)
+   assert.equal(r.hugo.part,6);assert.equal(r.duda.grupo,5);assert.equal(r.duda.part,0);
+  });
   await check('nada do banco mudou e nada foi gravado em todo o teste',async()=>{
    const r=await g.evaluate(()=>({igual:JSON.stringify(DB)===window.ANTES,gravacoes:window.gravacoes}));
    assert.equal(r.igual,true);assert.equal(r.gravacoes,0);

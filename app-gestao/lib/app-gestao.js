@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-08-7';
+const VERSAO='2026-10-08-8';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -3455,31 +3455,28 @@ function ocupacao_(dFrom,dTo){
    disso precisa ser tratado de novo aqui.
 
    Não conta: reposição (já paga no mês em que virou crédito), locação, jogo do
-   torneio, bloqueio e compromisso pessoal. */
+   torneio, bloqueio e compromisso pessoal.
+   A aula sai de aulasDoDia(), a mesma conta do Início: o aluno marcado duas
+   vezes onde só cabe uma aula (fixa + avulsa no mesmo horário, 19:00 e 19:30)
+   é UMA aula. Antes cada marcação contava, e a renovação sugeria cobrar duas
+   — enquanto o fechamento, que já contava uma, mostrava outra coisa.
+   Cada aula conta 1 (não pesar por creditoSlot: ver o histórico em
+   marcarDaFolha). */
 function contarAulasAluno(a,ano,mes){
   let part=0,grupo=0;
   if(!a)return {part,grupo};
-  const cur=new Date(ano,mes,1), fim=new Date(ano,mes+1,0).getDate();
-  for(let d=1;d<=fim;d++){
-    cur.setFullYear(ano,mes,d);
-    HORAS.forEach(h=>{
-      entriesFor(cur,h).forEach(e=>{
-        if(e.origem==='compromisso')return;
-        if(e.alunoId!==a.id)return;
-        if(e.repo)return;
-        /* O quadrado de 30 min vale meia aula, igual ao crédito: creditoSlot(h)
-           dá 0,5 nos horários de meia hora (14:30, 15:30, 19:30, 20:30 e os que
-           vêm logo antes deles). Contar 1 aqui inflava o valor do mês. */
-        /* Cada aula agendada conta 1. Pesar pelo creditoSlot(h) parecia certo,
-           mas ele deduz a duração pelo intervalo até o próximo horário da grade:
-           com 14:30/15:30/19:30/20:30 na lista, tratava 14:00, 15:00, 19:00 e
-           20:00 como meia hora e derrubava o valor do mês pela metade. */
+  return comIndiceAgenda(()=>{
+    const fim=new Date(ano,mes+1,0).getDate();
+    for(let d=1;d<=fim;d++){
+      aulasDoDia(new Date(ano,mes,d)).aulas.forEach(au=>{
+        const e=au.entradas.find(x=>x.alunoId===a.id);
+        if(!e||e.repo)return;
         if(e.tipo==='aula'||e.tipo==='personal')part++;
         else if(e.tipo==='grupo')grupo++;
       });
-    });
-  }
-  return {part,grupo};
+    }
+    return {part,grupo};
+  });
 }
 /* Preço da aula avulsa do aluno. NÃO usar valorAulaDe(): aquela deriva o valor
    a partir da mensalidade, e aqui é a mensalidade que está sendo calculada — a

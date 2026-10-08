@@ -8,6 +8,20 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-08 · Claude Code: valor do mês pela agenda conta aula repetida uma vez
+
+#233 publicado como `2026-10-08-7` (João confirmou que 19h/20h ficaram de 1 h).
+Pedido seguinte do João ("pode resolver também"): o achado que ficou aberto.
+Versão `2026-10-08-8`. Nenhum dado, saldo ou regra alterado.
+
+- `contarAulasAluno` (base de `mensalidadeDaAgenda`: sugestão da renovação,
+  foco "valor da agenda" e previsão do mês) passa a contar pelas aulas de
+  `aulasDoDia`, a mesma conta do Início: fixa + avulsa no mesmo horário e
+  19:00 + 19:30 do mesmo aluno são 1 aula (antes 2). Horário bloqueado não
+  conta, como no Início. Usa `comIndiceAgenda` (o Início ficou ainda mais
+  rápido, porque a previsão do mês passa por aqui para cada aluno).
+- `testar-numeros-inicio-browser.cjs` com 14 verificações (a nova falha na V7).
+
 ## 2026-10-08 · Claude Code: números do Início, grade de horas cheias e comparativo do ano
 
 #231 publicado como `2026-10-08-6`. Pedido do João: o total de "Aulas do dia" não
