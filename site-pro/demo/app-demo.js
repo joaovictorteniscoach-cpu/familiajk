@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-07-8';
+const VERSAO='2026-10-08-1';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2112,15 +2112,29 @@ function pedidoConfiavel(p){
   const v=VINCULOS[p.uid];
   return !!(v&&v.ativo===true&&String(v.codigo||'')===String(p.codigo||''));
 }
-/* Mesmo prazo do app do aluno. Conta a partir de QUANDO o aluno mandou (ts),
-   não de quando a Gestão sincronizou: um cancelamento feito no prazo continua
-   valendo mesmo que o app do João só abra depois. ts no futuro não conta. */
+/* Mesmo prazo do app do aluno. Conta a partir de QUANDO o aluno mandou, não de
+   quando a Gestão sincronizou: um cancelamento feito no prazo continua valendo
+   mesmo que o app do João só abra depois. O "quando" vem, nesta ordem, da hora
+   do servidor gravada no pedido (tsServ), da hora embutida na chave que o
+   Firebase gera (já corrigida pelo relógio do servidor) e, só em último caso,
+   do relógio do celular (ts) — que pode estar atrasado. Nada no futuro conta. */
 const LIMITE_CANCEL_H_GESTAO=4;
-function cancelamentoTardio(p){
+const CHAVE_PUSH_ALFABETO='-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz';
+function tsDaChavePush(k){
+  if(typeof k!=='string'||k.length!==20)return 0;
+  let t=0;for(let i=0;i<8;i++){const v=CHAVE_PUSH_ALFABETO.indexOf(k[i]);if(v<0)return 0;t=t*64+v;}
+  return t;
+}
+function quandoAlunoEnviou(p,chave){
+  const agora=Date.now(),ok=t=>t>1.6e12&&t<=agora+6e5;
+  const serv=Number(p&&p.tsServ);if(ok(serv))return serv;
+  const ck=tsDaChavePush(chave);if(ok(ck))return ck;
+  return Math.min(Number(p&&p.ts)||agora,agora);
+}
+function cancelamentoTardio(p,chave){
   const aula=new Date(String(p.data||'')+'T'+String(p.hora||'')+':00').getTime();
   if(isNaN(aula))return true;
-  const enviado=Math.min(Number(p.ts)||Date.now(),Date.now());
-  return aula-enviado<LIMITE_CANCEL_H_GESTAO*3600e3;
+  return aula-quandoAlunoEnviou(p,chave)<LIMITE_CANCEL_H_GESTAO*3600e3;
 }
 function datasReserva(data,rec){
   const inicio=new Date(String(data)+'T12:00:00'),hoje=new Date(),lim=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()+90,12);
@@ -2525,7 +2539,7 @@ async function syncRequests(silent){
         finalizar(key,p,false);return;
       }
       const tipo=p.tor?'torneio':p.grupo===1?'grupo':catAgendaDe(a.tipo);
-      if(p.acao==='cancelar'&&cancelamentoTardio(p)){
+      if(p.acao==='cancelar'&&cancelamentoTardio(p,key)){
         tardios.push((a.nome||'').split(' ')[0]+' '+fmtDataCurta(p.data)+' '+p.hora);
         guardarRespostaReserva(p,'recusado','Cancelamento fora do prazo. Fale com o João.');
         updates[key]=null;return;
@@ -2566,7 +2580,7 @@ async function syncRequests(silent){
     }
     if(n>0||nc>0)toast('📥 '+n+' reserva(s) · '+nc+' cancelamento(s) de alunos'+(nr?' · '+nr+' recusado(s) por conflito':''));
     else if(!silent&&!tardios.length)toast(nb?'Há '+nb+' solicitação(ões) aguardando vínculo do aparelho':nr?'Horário indisponível: pedido recusado e aluno avisado':'Nenhuma novidade de alunos');
-    if(tardios.length)toast('⚠️ Cancelamento fora do prazo não aplicado — confira com o aluno.');
+    if(tardios.length)toast('⚠️ Cancelamento fora do prazo não aplicado (a aula continua na agenda): '+tardios.join(', '));
   }catch(e){if(!silent)toast('Não consegui confirmar a sincronização. Os pedidos ainda serão conferidos.');}
   finally{syncing=false;}
 }
