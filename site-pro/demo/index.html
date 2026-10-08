@@ -30,11 +30,11 @@
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" id="css-tema" href="lib/estilo.css?v=2026-10-08-10">
+<link rel="stylesheet" id="css-tema" href="lib/estilo.css?v=2026-10-08-11">
 <!-- Tema de cores: Saibro é o padrão desde 2026-10; "Verde clássico" fica a um
      toque em Segurança e dados. Troca o arquivo antes da primeira pintura. -->
 <script>try{if(localStorage.getItem('jv-tema')!=='classico'){var _ct=document.getElementById('css-tema');_ct.href=_ct.getAttribute('href').replace('estilo.css','estilo-saibro.css');document.documentElement.classList.add('tema-saibro');}}catch(e){}</script>
-<link rel="stylesheet" href="lib/acoes-voz.css?v=2026-10-08-10">
+<link rel="stylesheet" href="lib/acoes-voz.css?v=2026-10-08-11">
 <!-- ================= DEMO ISOLADA ================= -->
 <script>
 /* Espelho comercial do Gestão atual.
@@ -981,7 +981,7 @@ function esperarAuth(){return Promise.resolve();}
   <button onclick="go('lanc',this)"><span class="ico" data-ic="navcash"></span>Caixa</button>
   <button id="nav-mais" onclick="abrirMais()"><span class="ico" data-ic="navmore"></span>Mais</button>
 </nav>
-<script src="lib/icones.js?v=2026-10-08-10"></script>
+<script src="lib/icones.js?v=2026-10-08-11"></script>
 
 <!-- MODAL ALUNO -->
 <div class="overlay" id="ov-aluno" onclick="if(event.target===this)closeModal('ov-aluno')">
@@ -1520,15 +1520,19 @@ function esperarAuth(){return Promise.resolve();}
 <div id="voz-painel" hidden>
  <section class="jv-voz-card" role="dialog" aria-modal="true" aria-labelledby="voz-titulo" aria-describedby="voz-ajuda">
   <div class="jv-voz-head"><button id="voz-circulo" class="jv-voz-sinal" type="button" aria-label="Falar pedido"><span class="jv-voz-ondas" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span></button><h2 id="voz-titulo">Assistente por voz</h2><button id="voz-fechar" type="button" aria-label="Fechar assistente por voz">×</button></div>
-  <p id="voz-ajuda">Pergunte sobre sua agenda ou peça uma ação. Alterações precisam da sua confirmação.</p>
-  <p class="jv-voz-help">Exemplos: “Quantas aulas tenho hoje?”, “Quem tem aula à tarde?” ou “Agendar Ana amanhã às quatro da tarde”.</p>
-  <p class="jv-voz-help">A fala usa o reconhecimento do navegador e pode ser processada pelo provedor. Não guardamos áudio nem o texto do pedido. No iPhone, você também pode usar o ditado do teclado.</p>
-  <label for="voz-texto">Sua pergunta ou pedido</label>
-  <textarea id="voz-texto" rows="2" maxlength="500" autocomplete="off" spellcheck="false" placeholder="Fale ou escreva aqui…"></textarea>
-  <div class="jv-voz-row"><button id="voz-falar" type="button" aria-pressed="false">Falar</button><button id="voz-parar" type="button" hidden>Parar de ouvir</button><button id="voz-analisar" type="button">Conferir pedido</button></div>
+  <p id="voz-ajuda">Pergunte ou peça do seu jeito. Alterações só depois da sua confirmação.</p>
+  <div id="voz-conversa" class="jv-voz-conversa" aria-label="Conversa com o assistente">
+   <p id="voz-resultado" class="jv-voz-vivo" hidden></p>
+   <section id="voz-consulta" class="jv-voz-vivo" hidden aria-labelledby="voz-consulta-titulo"><h3 id="voz-consulta-titulo">Sua agenda</h3><p id="voz-consulta-resumo"></p><ul id="voz-consulta-lista"></ul><p id="voz-consulta-nota" class="jv-voz-help"></p></section>
+  </div>
   <p id="voz-status" role="status" aria-live="polite"></p>
-  <section id="voz-consulta" hidden aria-labelledby="voz-consulta-titulo"><h3 id="voz-consulta-titulo">Sua agenda</h3><p id="voz-consulta-resumo"></p><ul id="voz-consulta-lista"></ul><p id="voz-consulta-nota" class="jv-voz-help"></p></section>
-  <div id="voz-campos" class="jv-voz-campos">
+  <label for="voz-texto">Sua pergunta ou pedido</label>
+  <textarea id="voz-texto" rows="2" maxlength="500" autocomplete="off" spellcheck="false" placeholder="Fale ou escreva aqui…" enterkeyhint="send"></textarea>
+  <div class="jv-voz-row"><button id="voz-falar" type="button" aria-pressed="false">Falar</button><button id="voz-parar" type="button" hidden>Parar de ouvir</button><button id="voz-analisar" type="button">Enviar</button></div>
+  <div id="voz-previa" hidden></div><button id="voz-confirmar" type="button" disabled hidden>Confirmar</button>
+  <button id="voz-repetir" type="button" hidden>Ouvir confirmação</button>
+  <button id="voz-manual" type="button">Agendar, cancelar ou renovar pelos campos</button>
+  <div id="voz-campos" class="jv-voz-campos" hidden>
    <label>Ação<select id="voz-acao"><option value="agendar">Agendar</option><option value="cancelar">Cancelar uma aula</option><option value="renovar">Renovar pacote</option></select></label>
    <label>Aluno<select id="voz-aluno"><option value="">Escolha o aluno</option></select></label>
    <div id="voz-quando" class="jv-voz-row"><label>Data<input id="voz-data" type="date"></label><label>Horário<select id="voz-hora"><option value="">Escolha o horário</option></select></label></div>
@@ -1539,18 +1543,19 @@ function esperarAuth(){return Promise.resolve();}
    <label id="voz-marcacao-wrap" hidden>Qual marcação cancelar<select id="voz-marcacao"><option value="">Escolha a marcação</option></select></label>
    <button id="voz-conferir" type="button">Conferir campos escolhidos</button>
   </div>
-  <div id="voz-previa" hidden></div><button id="voz-confirmar" type="button" disabled>Confirmar</button>
-  <p id="voz-resultado" hidden></p>
   <label class="jv-voz-check"><input id="voz-ouvir" type="checkbox" checked>Responder por voz automaticamente</label>
-  <button id="voz-repetir" type="button" hidden>Ouvir confirmação</button>
+  <details class="jv-voz-sobre"><summary>Exemplos e privacidade</summary>
+   <p class="jv-voz-help">Exemplos: “Quantas aulas tenho das 16 até o fim da noite?”, “Quais horários livres amanhã?”, “Quantos créditos a Ana tem?”, “Quem está devendo este mês?”, “Abra os horários das 7 às 18 de domingo para locação”, “Marcar chuva hoje à tarde”.</p>
+   <p class="jv-voz-help">A fala usa o reconhecimento do navegador e pode ser processada pelo provedor. Não guardamos áudio, texto nem a conversa: tudo some ao fechar. No iPhone, você também pode usar o ditado do teclado.</p>
+  </details>
   <div class="jv-voz-row"><button id="voz-salvar" type="button" hidden>Tentar salvar na nuvem</button><button id="voz-seguranca" type="button">Conferir salvamento</button></div>
  </section>
 </div>
 
 <div class="toast" id="toast"></div>
 
-<script src="app-demo.js?v=2026-10-08-10"></script>
-<script src="lib/acoes-voz.js?v=2026-10-08-10"></script>
+<script src="app-demo.js?v=2026-10-08-11"></script>
+<script src="lib/acoes-voz.js?v=2026-10-08-11"></script>
 <script>
 /* Rede de seguranca do par tela+codigo.
 
@@ -1565,7 +1570,7 @@ function esperarAuth(){return Promise.resolve();}
    torto, o app busca o par certo uma vez e, se insistir, DIZ o que houve em
    vez de deixar voce tocando em botao que nao responde. */
 (function(){
-  var ESPERADA='2026-10-08-10';
+  var ESPERADA='2026-10-08-11';
   function tela(motivo){
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;z-index:99999;background:#1A2E14;color:#FAF7F2;'

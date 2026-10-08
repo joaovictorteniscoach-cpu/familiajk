@@ -171,7 +171,8 @@ async function visual(p,n){if(!process.env.JV_VISUAL_DIR)return;const png=await 
     ].map(t=>JVAcoesVoz.interpretar(t,DB.alunos,'2026-10-15')));
     assert.equal(rs[0].consulta,'quantidade');assert.equal(rs[0].data,'2026-10-15');assert.equal(rs[1].periodo,'tarde');
     assert.equal(rs[2].hora,'16:00');assert.equal(rs[3].hora,'16:00');assert.equal(rs[4].data,'2026-10-16');
-    rs.slice(5).forEach(r=>assert.ok(r.erro,JSON.stringify(r)));
+    rs.slice(5,10).forEach(r=>assert.ok(r.erro,JSON.stringify(r)));
+    assert.equal(rs[10].consulta,'precos','preço da aula agora é respondido (Claude, assistente em conversa)');
    });
    await check(label+'consulta do total bate com o Início: grupo é uma aula, duplicatas, canceladas, vencidas e bloqueios respeitados',async()=>{
     await consultaBase();await abrir();const a=await antes();await pergunta('Quantas aulas eu tenho hoje?');
