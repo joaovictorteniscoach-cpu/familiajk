@@ -1,5 +1,43 @@
 # Ações rápidas por voz — Gestão
 
+## Escolha final de 08/10/2026: flutuante, translúcido e com brilho
+
+João confirmou funcionamento da fala no aparelho e escolheu a opção 2 das fotos:
+círculo na posição flutuante atual, com 30% de transparência e um pouco mais
+de brilho. A alternativa no topo e a faixa inferior não serão publicadas.
+A transparência suaviza o visual; a área de toque flutuante ainda pode se
+sobrepor ao conteúdo, limite apresentado ao usuário antes da escolha.
+
+Na versão proposta `2026-10-08-8`, o círculo mantém 54px, canto inferior direito
+acima da navegação e área segura; 70% de opacidade, luminosidade/halo suaves
+nos dois temas. Cabeçalhos não recebem novos botões nem mudanças de layout.
+Somente o dono conectado, em Início/Agenda/Alunos; acesso alternativo em Mais.
+Tocar inicia a escuta. Ao terminar a fala, o pedido final é conferido
+automaticamente com a nuvem e abre a prévia. Confirmar continua obrigatório.
+Fluxo usual de agendar/cancelar completo: tocar/falar → prévia → confirmar.
+Renovação mantém a confirmação nativa de saldos. Texto/ditado mantém Conferir pedido.
+
+Ondas animam somente durante escuta ou reprodução efetiva da resposta.
+Fechar, silenciar, voltar, mudar de tela ou iniciar nova captura interrompe a
+voz. Movimento reduzido é respeitado. “Responder por voz automaticamente”
+permite silenciar; após gravação confirmada, “Ouvir confirmação” repete o
+resultado sem executar novamente a ação. Pendência não vira confirmação de
+sucesso; tentar salvar somente reenvia a gravação e só confirma após sucesso.
+
+Responsável: Codex; branch `codex/voz-topo-ondas-2026-10-08`, PR #232;
+base `f9dc2de66b5bd249a540739d84757bb4a1f7f87a`.
+Publicação autorizada pelo João nesta sessão, após CI completo do head final.
+O relato de funcionamento no aparelho não equivale a validação de hardware
+pelo CI. Preservadas as entregas concorrentes #230/#231. Testes e entrega
+real serão registrados no PR; nenhuma alteração de dados reais ou regras.
+
+Coordenação final: #233 do Claude foi publicado como V7 durante o CI. Esta
+entrega foi reaplicada sobre a main nova, preservando contagem, grade de horas
+cheias, marcações antigas, crédito integral, Ano, estilos/demo e testes.
+V8 sucede V7. Conferir novamente no CI do head integrado antes de publicar.
+
+---
+
 ## Implementação de 08/10/2026
 
 Responsável: Codex, branch `codex/acoes-voz-gestao-2026-10-08`, base `ab3aacb606588d134b538b1fdfb2aecaead19c8f`.

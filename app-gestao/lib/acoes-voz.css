@@ -1,7 +1,7 @@
 /* Ações por voz: folha independente, sem mudar os temas existentes. */
 #voz-atalho[hidden],#voz-menu[hidden],#voz-painel[hidden],#voz-painel [hidden]{display:none!important}
 body.jv-voz-aberto{overflow:hidden!important}
-html body:not(#jv) #voz-atalho{position:fixed;right:max(16px,calc((100vw - 520px)/2 + 16px));bottom:calc(78px + env(safe-area-inset-bottom,0px));z-index:160;width:54px;height:54px;display:grid;place-items:center;border:1px solid #E7C59B;border-radius:50%;background:linear-gradient(135deg,#F6D59B,#C2582E);color:#102A21;-webkit-text-fill-color:#102A21;box-shadow:0 6px 18px #0005;cursor:pointer}
+html body:not(#jv) #voz-atalho{position:fixed;right:max(16px,calc((100vw - 520px)/2 + 16px));bottom:calc(78px + env(safe-area-inset-bottom,0px));z-index:160;width:54px;height:54px;min-width:54px;min-height:54px;padding:0;display:grid;place-items:center;border:1px solid #FFDEA6;border-radius:50%;background:linear-gradient(135deg,#F6D59B,#C2582E);color:#102A21;-webkit-text-fill-color:#102A21;opacity:.7;filter:brightness(1.12);box-shadow:inset 0 1px 5px #FFFFFF80,0 0 14px #F4C25D70,0 0 26px #E7C59B30,0 6px 18px #0004;cursor:pointer}
 html body:not(#jv) #voz-atalho svg{width:25px;height:25px;stroke:currentColor;fill:none;stroke-width:2}
 html:not(.tema-saibro) body:not(#jv) #voz-atalho{background:linear-gradient(135deg,#EEF4A0,#D4E157);border-color:#D4E157}
 html body:not(#jv) #voz-painel{position:fixed;inset:0;z-index:1100;display:flex;align-items:flex-end;justify-content:center;padding:16px 12px calc(16px + env(safe-area-inset-bottom,0px));background:#03110dc9;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
@@ -28,7 +28,22 @@ html body:not(#jv) #voz-painel #voz-previa *{color:#203028;-webkit-text-fill-col
 #voz-painel #voz-previa b{display:block;font-size:17px}
 #voz-painel #voz-confirmar{width:100%}
 #voz-painel :focus-visible,#voz-atalho:focus-visible{outline:3px solid #F4C25D!important;outline-offset:3px}
-#voz-painel .jv-voz-sinal{flex:0 0 30px;width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 25% 25%,#F4DC8B,#DC8753 45%,#4B976D);box-shadow:0 0 0 3px #ffffff10}
-#voz-painel[data-ouvindo=true] .jv-voz-sinal{animation:jv-voz-pulso 1.2s ease-in-out infinite}
-@keyframes jv-voz-pulso{50%{box-shadow:0 0 0 8px #D4E15730;transform:scale(1.08)}}
+html body:not(#jv) #voz-painel .jv-voz-sinal{position:relative;flex:0 0 48px;width:48px;height:48px;min-height:48px;padding:0;display:grid;place-items:center;overflow:visible;border-radius:50%;border:1px solid #E7C59B;background:radial-gradient(circle at 25% 25%,#F4DC8B,#DC8753 45%,#4B976D);color:#102A21;-webkit-text-fill-color:#102A21}
+.jv-voz-ondas{display:flex;align-items:center;justify-content:center;gap:3px;height:24px;pointer-events:none}
+.jv-voz-ondas i{display:block;width:3px;height:6px;border-radius:3px;background:currentColor;transform-origin:center}
+.jv-voz-ondas i:nth-child(2),.jv-voz-ondas i:nth-child(4){height:12px}
+.jv-voz-ondas i:nth-child(3){height:20px}
+#voz-atalho .jv-voz-ondas{display:none}
+#voz-painel[data-ouvindo=true] .jv-voz-sinal,#voz-painel[data-falando=true] .jv-voz-sinal,#voz-atalho[data-ouvindo=true],#voz-atalho[data-falando=true]{animation:jv-voz-pulso 1.4s ease-in-out infinite}
+#voz-painel[data-ouvindo=true] .jv-voz-ondas i,#voz-painel[data-falando=true] .jv-voz-ondas i,#voz-atalho[data-ouvindo=true] .jv-voz-ondas i,#voz-atalho[data-falando=true] .jv-voz-ondas i{animation:jv-voz-onda .8s ease-in-out infinite alternate}
+#voz-painel .jv-voz-ondas i:nth-child(2),#voz-atalho .jv-voz-ondas i:nth-child(2){animation-delay:-.3s}
+#voz-painel .jv-voz-ondas i:nth-child(3),#voz-atalho .jv-voz-ondas i:nth-child(3){animation-delay:-.6s}
+#voz-painel .jv-voz-ondas i:nth-child(4),#voz-atalho .jv-voz-ondas i:nth-child(4){animation-delay:-.15s}
+#voz-painel .jv-voz-ondas i:nth-child(5),#voz-atalho .jv-voz-ondas i:nth-child(5){animation-delay:-.45s}
+#voz-atalho[data-ouvindo=true] svg,#voz-atalho[data-falando=true] svg{display:none}
+#voz-atalho[data-ouvindo=true] .jv-voz-ondas,#voz-atalho[data-falando=true] .jv-voz-ondas{display:flex}
+@keyframes jv-voz-onda{from{transform:scaleY(.45)}to{transform:scaleY(1.2)}}
+@keyframes jv-voz-pulso{50%{box-shadow:0 0 0 4px #D4E15730}}
+html body:not(#jv) #voz-repetir{width:100%;margin:0 0 10px}
+html body:not(#jv) #voz-painel .jv-voz-sinal:focus-visible{outline:3px solid #F4C25D;outline-offset:3px}
 @media(prefers-reduced-motion:reduce){#voz-painel *,#voz-atalho{animation:none!important;transition:none!important}}

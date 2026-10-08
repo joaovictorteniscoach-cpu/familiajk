@@ -12,7 +12,9 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 #233 publicado como `2026-10-08-7` (João confirmou que 19h/20h ficaram de 1 h).
 Pedido seguinte do João ("pode resolver também"): o achado que ficou aberto.
-Versão `2026-10-08-8`. Nenhum dado, saldo ou regra alterado.
+Versão `2026-10-08-9` (o Codex publicou a V8 da fala, #232, enquanto este CI
+rodava: integrada por merge, fala e testes dele preservados). Nenhum dado,
+saldo ou regra alterado.
 
 - `contarAulasAluno` (base de `mensalidadeDaAgenda`: sugestão da renovação,
   foco "valor da agenda" e previsão do mês) passa a contar pelas aulas de
@@ -20,7 +22,51 @@ Versão `2026-10-08-8`. Nenhum dado, saldo ou regra alterado.
   19:00 + 19:30 do mesmo aluno são 1 aula (antes 2). Horário bloqueado não
   conta, como no Início. Usa `comIndiceAgenda` (o Início ficou ainda mais
   rápido, porque a previsão do mês passa por aqui para cada aluno).
-- `testar-numeros-inicio-browser.cjs` com 14 verificações (a nova falha na V7).
+- `testar-numeros-inicio-browser.cjs` com 14 verificações (a nova falha na V8).
+
+---
+
+## 2026-10-08 · Codex: fala flutuante translúcida, brilho e menos toques
+
+- Responsável: Codex; branch `codex/voz-topo-ondas-2026-10-08`,
+  [PR #232](https://github.com/joaovictorteniscoach-cpu/familiajk/pull/232), base
+  `f9dc2de66b5bd249a540739d84757bb4a1f7f87a` (V7 publicada);
+  versão proposta `2026-10-08-8`.
+- Escolha final do João após as fotos: opção 2 (posição flutuante atual,
+  30% de transparência) com um pouco mais de brilho. A alternativa no topo
+  e a faixa inferior foram só prévias. A espera pela posição está resolvida;
+  publicação de mudanças validadas já foi autorizada na sessão.
+- Implementado: mesmo círculo de 54px acima da navegação, 70% de opacidade,
+  brilho suave e halo; dois temas. Cabeçalhos mantêm o layout da main.
+  Transparência deixa discreto, mas não elimina a sobreposição da área de toque,
+  limitação já apresentada ao João antes da escolha.
+- Tocar inicia escuta; resultado final confere aluno, horário e nuvem
+  automaticamente e apresenta a prévia, ainda exigindo confirmação explícita.
+  Renovação mantém a confirmação nativa dos saldos. Ondas acompanham escuta
+  ou reprodução real; respeitam movimento reduzido e encerram ao fechar/sair.
+- Resposta automática opcional e Ouvir confirmação após nuvem confirmada,
+  sem reaplicar a ação. Confirmado em texto junto do botão de ouvir; repetir
+  salvamento pendente não executa novamente a marcação.
+- Testes: localização/toque/visibilidade em 320/390/520/1280 e nos dois temas,
+  92 verificações de fala em Chromium/WebKit, callbacks, ondas, silêncio,
+  proteção de dados e de nuvem, sem acesso aos dados reais. O CI anterior
+  37789324633 aprovou o fluxo; o head final com brilho precisa ser validado
+  por completo e ter as capturas revisadas antes da integração.
+- Preservados #227/#229/#230/#231/#233 (hora do servidor, Escritório, reposição,
+  fixos, WhatsApp, números do Início e grade), CSS/temas/demo gerados e seus testes. Demo regenerada;
+  cinco versões e caches sincronizados. Sem novas regras ou correção de saldos.
+- Publicação ainda pendente neste registro de implementação. CI do commit
+  exato, merge, Pages e monitor serão registrados no PR ao concluir.
+  App Check permanece dependente da configuração externa.
+
+- Integração final: #233 do Claude foi publicado como V7 durante o CI.
+  Reaplicado sobre a main nova, preservando contagem sem duplicatas, grade de
+  horas cheias, cancelamento de meia hora antiga, crédito integral e Ano.
+  CSS/temas/demo gerados e teste de números do Início permanecem presentes.
+  Nossa V8 sucede sua V7; validar de novo o head final antes de integrar.
+
+---
+
 
 ## 2026-10-08 · Claude Code: números do Início, grade de horas cheias e comparativo do ano
 

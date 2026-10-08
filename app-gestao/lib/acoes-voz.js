@@ -3,7 +3,7 @@
 (function(){
 'use strict';
 const w=window,$=id=>document.getElementById(id);
-const st={aberto:false,ocupado:false,rec:null,epoca:0,intencao:null,aplicado:false,consumidas:new Set(),ultimoFoco:null};
+const st={aberto:false,ocupado:false,rec:null,epoca:0,intencao:null,aplicado:false,consumidas:new Set(),ultimoFoco:null,resposta:null,falando:false,confirmacao:'',resultadoBase:''};
 const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/-feira\b/g,'').replace(/\s+/g,' ').trim();
 const pad=n=>String(n).padStart(2,'0');
 function dataBase(){const p=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const v=t=>p.find(x=>x.type===t).value;return v('year')+'-'+v('month')+'-'+v('day');}
@@ -100,8 +100,24 @@ function contexto(){
  return {acao,alunoId:a.id,nome:a.nome,data,hora,tipo,pessoas,repo:$('voz-repo').checked};
 }
 function status(texto){$('voz-status').textContent=texto;}
-function ouvirResposta(texto){if(!$('voz-ouvir').checked||!w.speechSynthesis)return;parar();try{w.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(texto);u.lang='pt-BR';w.speechSynthesis.speak(u);}catch(e){}}
-function ocupado(sim){st.ocupado=sim;document.querySelectorAll('#voz-painel input,#voz-painel select,#voz-painel textarea,#voz-analisar,#voz-conferir,#voz-falar,#voz-confirmar').forEach(e=>{e.disabled=sim||st.aplicado;});$('voz-confirmar').disabled=sim||!st.intencao||st.aplicado;$('voz-salvar').disabled=sim;atualizarMic();}
+function pararResposta(){st.resposta=null;st.falando=false;try{if(w.speechSynthesis)w.speechSynthesis.cancel();}catch(e){}if($('voz-falar'))atualizarMic();}
+function ouvirResposta(texto,manual){
+ if(!st.aberto||!texto||(!manual&&!$('voz-ouvir').checked)||!w.speechSynthesis||!w.SpeechSynthesisUtterance)return;
+ parar();pararResposta();
+ try{
+  const u=new w.SpeechSynthesisUtterance(texto);u.lang='pt-BR';st.resposta=u;
+  u.onstart=()=>{if(st.resposta===u&&st.aberto){st.falando=true;atualizarMic();}};
+  const fim=()=>{if(st.resposta===u){st.resposta=null;st.falando=false;atualizarMic();}};
+  u.onend=fim;u.onerror=fim;w.speechSynthesis.speak(u);
+ }catch(e){st.resposta=null;st.falando=false;atualizarMic();}
+}
+function resultadoSalvo(){
+ st.confirmacao=(st.resultadoBase?st.resultadoBase+'. ':'')+'Confirmado e salvo na nuvem.';
+ status(st.confirmacao);$('voz-resultado').textContent=st.confirmacao;$('voz-resultado').hidden=false;$('voz-repetir').hidden=false;$('voz-repetir').disabled=!w.speechSynthesis||!w.SpeechSynthesisUtterance;
+ $('voz-repetir').scrollIntoView({block:'nearest',behavior:'auto'});ouvirResposta(st.confirmacao);
+}
+function repetir(){if(st.confirmacao)ouvirResposta(st.confirmacao,true);}
+function ocupado(sim){st.ocupado=sim;document.querySelectorAll('#voz-painel input:not(#voz-ouvir),#voz-painel select,#voz-painel textarea,#voz-analisar,#voz-conferir,#voz-falar,#voz-confirmar').forEach(e=>{e.disabled=sim||st.aplicado;});$('voz-confirmar').disabled=sim||!st.intencao||st.aplicado;$('voz-salvar').disabled=sim;atualizarMic();}
 function invalidar(){if(st.ocupado||st.aplicado)return;st.intencao=null;$('voz-confirmar').disabled=true;$('voz-previa').hidden=true;}
 function preencherAlunos(candidatos){
  const sel=$('voz-aluno');sel.replaceChildren();const p=document.createElement('option');p.value='';p.textContent='Escolha o aluno';sel.append(p);
@@ -121,7 +137,7 @@ function atualizarCampos(){
  }
 }
 async function analisar(){
- if(st.ocupado||st.aplicado)return;parar();invalidar();
+ if(st.ocupado||st.aplicado)return;parar();pararResposta();invalidar();
  const texto=$('voz-texto').value.trim();if(texto){
   const r=interpretar(texto,DB.alunos,dataBase());if(r.erro){status(r.erro);return;}
   $('voz-acao').value=r.acao;preencherAlunos(r.candidatos);$('voz-data').value=r.data||'';$('voz-hora').value=r.hora||'';
@@ -131,7 +147,7 @@ async function analisar(){
  await preparar();
 }
 async function preparar(){
- if(st.ocupado||st.aplicado)return;invalidar();atualizarCampos();const ep=st.epoca;
+ if(st.ocupado||st.aplicado)return;pararResposta();invalidar();atualizarCampos();const ep=st.epoca;
  ocupado(true);status('Conferindo aluno, horário e nuvem…');
  try{
   await conferirNuvem();if(ep!==st.epoca||!st.aberto)return;
@@ -141,13 +157,13 @@ async function preparar(){
   const nome=document.createElement('p');nome.textContent=i.nome;box.append(nome);
   const det=document.createElement('p');det.textContent=i.acao==='renovar'?'A confirmação da renovação mostrará os saldos antes/depois. As barreiras de renovação manual e repetida continuam valendo.':new Date(i.data+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'})+' · '+i.hora;box.append(det);
   const nota=document.createElement('p');nota.textContent=i.acao==='cancelar'?'Somente esta marcação nesta data. Não cria reposição nem altera saldos.':i.acao==='renovar'?'A renovação usa a regra atual de créditos e sobras. Não registra pagamento.':'Só nesta data · '+(i.tipo==='grupo'?'aula para '+i.pessoas+' pessoas':i.tipo)+(i.repo?' · reposição':'')+'. Créditos serão usados pelas regras normais da aula.';box.append(nota);
-  box.hidden=false;$('voz-confirmar').textContent=i.acao==='renovar'?'Revisar e renovar':i.acao==='cancelar'?'Confirmar cancelamento':'Confirmar agendamento';status('Confira os detalhes antes de confirmar.');box.scrollIntoView({block:'nearest',behavior:'auto'});$('voz-confirmar').scrollIntoView({block:'nearest',behavior:'auto'});ouvirResposta('Pedido conferido. Confira os detalhes antes de confirmar.');
+  box.hidden=false;$('voz-confirmar').textContent=i.acao==='renovar'?'Revisar e renovar':i.acao==='cancelar'?'Confirmar cancelamento':'Confirmar agendamento';status('Confira os detalhes antes de confirmar.');box.scrollIntoView({block:'nearest',behavior:'auto'});$('voz-confirmar').scrollIntoView({block:'nearest',behavior:'auto'});ouvirResposta(titulo.textContent+' para '+i.nome+'. '+(i.data?det.textContent+'. ':'')+'Confira os detalhes e toque em '+$('voz-confirmar').textContent+'.');
  }catch(e){if(ep===st.epoca)status(e.message||'Não consegui conferir o pedido.');}
  finally{if(ep===st.epoca)ocupado(false);}
 }
 async function executar(){
  const i=st.intencao;if(st.ocupado||st.aplicado||!i||st.consumidas.has(i.token))return;
- parar();const ep=st.epoca;ocupado(true);status('Conferindo novamente antes de aplicar…');
+ parar();pararResposta();const ep=st.epoca;ocupado(true);status('Conferindo novamente antes de aplicar…');
  try{
   await conferirNuvem();if(ep!==st.epoca||!st.aberto)return;
   if(i.form!==chaveForm()||i.banco!==assinatura())throw Error('Os dados ou o pedido mudaram. Faça uma nova conferência.');
@@ -168,42 +184,51 @@ async function executar(){
    closeSlot();
   }
   if(assinatura()===antes){status('Nenhuma alteração aplicada. Confira os avisos da ação.');st.intencao=null;return;}
+  st.resultadoBase=({cancelar:'Aula cancelada',agendar:'Horário agendado',renovar:'Pacote renovado'})[i.acao]+' para '+i.nome+(i.data?' em '+i.data.split('-').reverse().join('/')+' às '+i.hora:'');
   st.aplicado=true;st.consumidas.add(i.token);st.intencao=null;
   status('Aplicado no aparelho. Aguardando confirmação da nuvem…');
   const ok=await gravarAgora();
-  if(ep===st.epoca){$('voz-salvar').hidden=ok;status(ok?'Confirmado e salvo na nuvem.':'Aplicado no aparelho; confirmação na nuvem pendente. Não repita a ação. Use Conferir salvamento.');if(ok)ouvirResposta('Confirmado e salvo na nuvem.');}
+  if(ep===st.epoca){$('voz-salvar').hidden=ok;if(ok)resultadoSalvo();else status('Aplicado no aparelho; confirmação na nuvem pendente. Não repita a ação. Use Conferir salvamento.');}
  }catch(e){if(ep===st.epoca){st.intencao=null;if(st.aplicado){$('voz-salvar').hidden=false;status('Aplicado no aparelho; confirmação na nuvem pendente. Não repita a ação. Tente salvar ou confira Segurança e dados.');}else status((e&&e.message)||'Não consegui concluir. Confira o salvamento antes de repetir.');}}
  finally{if(ep===st.epoca)ocupado(false);}
 }
 async function salvar(){
- if(st.ocupado||!st.aplicado)return;ocupado(true);
- try{const ok=await gravarAgora();$('voz-salvar').hidden=ok;status(ok?'Confirmado e salvo na nuvem.':'A confirmação ainda está pendente. Confira Segurança e dados antes de outra ação.');}catch(e){status('Não consegui confirmar a nuvem. A ação não foi repetida.');}finally{ocupado(false);}
+ if(st.ocupado||!st.aplicado||!st.aberto)return;const ep=st.epoca;ocupado(true);
+ try{const ok=await gravarAgora();if(ep!==st.epoca||!st.aberto)return;$('voz-salvar').hidden=ok;if(ok)resultadoSalvo();else status('A confirmação ainda está pendente. Confira Segurança e dados antes de outra ação.');}catch(e){if(ep===st.epoca)status('Não consegui confirmar a nuvem. A ação não foi repetida.');}finally{if(ep===st.epoca)ocupado(false);}
 }
-function atualizarMic(){if($('voz-painel'))$('voz-painel').dataset.ouvindo=String(!!st.rec);const existe=!!(w.SpeechRecognition||w.webkitSpeechRecognition);$('voz-falar').disabled=st.ocupado||st.aplicado||!existe;$('voz-falar').textContent=st.rec?'Ouvindo…':'Falar';$('voz-parar').hidden=!st.rec;$('voz-falar').setAttribute('aria-pressed',String(!!st.rec));}
-function parar(){const r=st.rec;st.rec=null;if(r){try{r.abort();}catch(e){}}if($('voz-falar'))atualizarMic();}
+function atualizarMic(){
+ for(const el of [$('voz-painel'),$('voz-atalho')])if(el){el.dataset.ouvindo=String(!!st.rec);el.dataset.falando=String(st.falando);}
+ const existe=!!(w.SpeechRecognition||w.webkitSpeechRecognition);
+ $('voz-falar').disabled=st.ocupado||st.aplicado||!existe;$('voz-falar').textContent=st.rec?'Ouvindo…':'Falar';
+ $('voz-parar').hidden=!st.rec;$('voz-falar').setAttribute('aria-pressed',String(!!st.rec));
+ $('voz-circulo').disabled=st.ocupado||(!st.rec&&!st.resposta&&(st.aplicado||!existe));
+ $('voz-circulo').setAttribute('aria-label',st.rec?'Parar de ouvir':st.resposta?'Parar resposta por voz':'Falar pedido');
+ $('voz-circulo').setAttribute('aria-pressed',String(!!st.rec||st.falando));
+}
+function parar(){const r=st.rec;st.rec=null;if(r){try{r.abort();}catch(e){}if(st.aberto)status('Escuta encerrada. Confira o texto ou toque em Falar.');}if($('voz-falar'))atualizarMic();}
 function falar(){
  if(st.ocupado||st.aplicado||st.rec||!st.aberto)return;
  const C=w.SpeechRecognition||w.webkitSpeechRecognition;if(!C){status('Use o microfone do teclado do iPhone para ditar ou digite o pedido.');return;}
- invalidar();if(w.speechSynthesis)w.speechSynthesis.cancel();const r=new C();st.rec=r;r.lang='pt-BR';r.continuous=false;r.interimResults=true;
+ invalidar();pararResposta();const r=new C();st.rec=r;r.lang='pt-BR';r.continuous=false;r.interimResults=true;
  let final='',ultimo=-1;r.onresult=e=>{if(st.rec!==r||!st.aberto)return;
   let parcial='';for(let n=e.resultIndex;n<e.results.length;n++){if(e.results[n].isFinal){if(n>ultimo){final+=(final?' ':'')+e.results[n][0].transcript;ultimo=n;}}else parcial+=e.results[n][0].transcript;}
   $('voz-texto').value=(final+' '+parcial).trim().slice(0,500);invalidar();status(final?'Confira o texto e toque em Conferir pedido.':'Ouvindo…');
  };
  r.onerror=e=>{if(st.rec!==r)return;st.rec=null;atualizarMic();status(e.error==='not-allowed'||e.error==='service-not-allowed'?'Permissão de voz negada. Você pode digitar ou usar o ditado do teclado.':'A fala não ficou disponível. Digite ou use o ditado do teclado.');};
- r.onend=()=>{if(st.rec!==r)return;st.rec=null;atualizarMic();if(st.aberto)status('Confira o texto e toque em Conferir pedido.');};
+ r.onend=()=>{if(st.rec!==r)return;st.rec=null;atualizarMic();if(st.aberto){if(final.trim())analisar();else status('Não ouvi um pedido completo. Toque em Falar ou digite.');}};
  try{r.start();status('Ouvindo em português…');atualizarMic();}catch(e){st.rec=null;atualizarMic();status('Não consegui iniciar a fala. Digite ou use o ditado do teclado.');}
 }
-function abrir(){
+function abrir(iniciarFala){
  if(!dono()){toast('Entre na conta do João para usar ações rápidas.');return;}
- fecharMais();if(st.aberto)return;st.epoca++;st.aberto=true;st.aplicado=false;st.intencao=null;st.ultimoFoco=document.activeElement;st.pagina=document.body.dataset.pagina||'dash';
+ fecharMais();if(st.aberto)return;st.epoca++;st.aberto=true;st.aplicado=false;st.intencao=null;st.confirmacao='';st.resultadoBase='';$('voz-resultado').textContent='';$('voz-resultado').hidden=true;$('voz-repetir').hidden=true;st.ultimoFoco=document.activeElement;st.pagina=document.body.dataset.pagina||'dash';
  $('voz-painel').hidden=false;document.body.classList.add('jv-voz-aberto');$('voz-texto').value='';$('voz-previa').hidden=true;$('voz-salvar').hidden=true;
  $('voz-acao').value='agendar';preencherAlunos();$('voz-data').value='';$('voz-hora').value='';$('voz-tipo').value='';$('voz-repo').checked=false;atualizarCampos();ocupado(false);
  status(w.SpeechRecognition||w.webkitSpeechRecognition?'Toque em Falar ou escreva um pedido.':'Digite ou use o microfone do teclado do iPhone para ditar.');
  try{history.pushState(Object.assign({},history.state,{jvVoz:st.epoca}),'');}catch(e){}
- atualizarVisibilidade();$('voz-texto').focus();
+ atualizarVisibilidade();if(iniciarFala===true){$('voz-circulo').focus();falar();}else $('voz-texto').focus();
 }
 function fechar(voltar){
- if(!st.aberto)return;const ep=st.epoca;st.epoca++;st.aberto=false;parar();if(w.speechSynthesis)w.speechSynthesis.cancel();
+ if(!st.aberto)return;const ep=st.epoca;st.epoca++;st.aberto=false;parar();pararResposta();st.confirmacao='';st.resultadoBase='';$('voz-resultado').textContent='';$('voz-resultado').hidden=true;$('voz-repetir').hidden=true;
  $('voz-painel').hidden=true;$('voz-texto').value='';$('voz-previa').replaceChildren();st.intencao=null;document.body.classList.remove('jv-voz-aberto');
  if(!voltar&&history.state&&history.state.jvVoz===ep){try{history.back();}catch(e){}}
  atualizarVisibilidade();if(st.ultimoFoco&&st.ultimoFoco.isConnected)st.ultimoFoco.focus();
@@ -219,10 +244,10 @@ function init(){
  if(!$('voz-painel'))return;
  $('voz-hora').replaceChildren();const op=document.createElement('option');op.value='';op.textContent='Escolha o horário';$('voz-hora').append(op);
  HORAS.forEach(h=>{const o=document.createElement('option');o.value=h;o.textContent=h;$('voz-hora').append(o);});
- $('voz-atalho').onclick=abrir;$('voz-menu').onclick=abrir;$('voz-fechar').onclick=()=>fechar(false);$('voz-falar').onclick=falar;$('voz-parar').onclick=parar;
+ $('voz-atalho').onclick=()=>abrir(true);$('voz-menu').onclick=()=>abrir();$('voz-circulo').onclick=()=>{if(st.rec)parar();else if(st.resposta)pararResposta();else falar();};$('voz-repetir').onclick=repetir;$('voz-ouvir').addEventListener('change',()=>{if(!$('voz-ouvir').checked)pararResposta();});$('voz-fechar').onclick=()=>fechar(false);$('voz-falar').onclick=falar;$('voz-parar').onclick=parar;
  $('voz-analisar').onclick=analisar;$('voz-conferir').onclick=preparar;$('voz-confirmar').onclick=executar;$('voz-salvar').onclick=salvar;
  $('voz-seguranca').onclick=()=>{fechar(false);go('seg',document.createElement('button'));};
- $('voz-texto').addEventListener('input',invalidar);
+ $('voz-texto').addEventListener('input',()=>{pararResposta();invalidar();});
  ['voz-acao','voz-aluno','voz-data','voz-hora','voz-tipo','voz-repo','voz-marcacao'].forEach(id=>$(id).addEventListener('change',()=>{invalidar();if(id==='voz-aluno')$('voz-tipo').value='';atualizarCampos();}));
  $('voz-painel').addEventListener('click',e=>{if(e.target===$('voz-painel'))fechar(false);});
  $('voz-painel').addEventListener('keydown',e=>{
@@ -233,7 +258,7 @@ function init(){
  w.addEventListener('popstate',()=>{if(st.aberto&&(!history.state||history.state.jvVoz!==st.epoca))fechar(true);});
  document.addEventListener('visibilitychange',()=>{if(document.hidden)fechar(false);});
  w.addEventListener('pagehide',()=>fechar(true));
- w.addEventListener('offline',()=>{parar();invalidar();if(st.aberto)status('Sem internet. Nenhuma nova ação será aplicada.');});
+ w.addEventListener('offline',()=>{parar();pararResposta();invalidar();if(st.aberto)status('Sem internet. Nenhuma nova ação será aplicada.');});
  let agendado=false;new MutationObserver(()=>{if(agendado)return;agendado=true;requestAnimationFrame(()=>{agendado=false;atualizarVisibilidade();});}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['class','style','data-pagina']});
  atualizarVisibilidade();
 }
