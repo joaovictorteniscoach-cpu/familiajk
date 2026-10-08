@@ -44,6 +44,7 @@ async function check(name,fn){await fn();count++;console.log('✅ '+name);}
     ?{on:(ev,cb)=>cb({val:()=>offset})}
     :{push:async item=>{window.envios.push({cam,item});}}};
    OFFSET_SERVIDOR=0;_ouvindoRelogio=false;
+   window.notifOrig=window.notifOrig||notificarJoao;
    atualizarGradeReserva=async()=>{};saveMeu=async()=>{};notificarJoao=()=>{};abrirWhatsApp=()=>{};
    ACOES_AULA_EM_CURSO.clear();VINCULO_ESTADO='ativo';
    document.getElementById('app').style.display='block';document.querySelectorAll('.overlay').forEach(x=>x.classList.remove('on'));
@@ -73,6 +74,10 @@ async function check(name,fn){await fn();count++;console.log('✅ '+name);}
    assert.equal(await p.evaluate(()=>cancelarAula('2026-10-08','08:00','pontual')),false);
    assert.equal(await p.evaluate(()=>envios.length),0);
    assert.match(await p.locator('#mine-list').innerText(),/08:00/);
+   // o aviso ao João leva a hora do servidor, não a do celular atrasado
+   const ts=await p.evaluate(async()=>{notifOrig('cancelou','2026-10-08','10:00');await new Promise(r=>setTimeout(r,50));
+    const n=envios.find(e=>e.cam==='jvtenis/notificacoes');return n&&n.item.ts;});
+   assert.ok(Math.abs(ts-REAL)<60e3,'ts do aviso = hora real');
    assert.deepEqual(errors,[]);await c.close();
   });
   await check('dentro do prazo (aula das 10:00, faltam 4h36) cancela e manda id para a resposta da Gestão',async()=>{
@@ -138,6 +143,17 @@ async function check(name,fn){await fn();count++;console.log('✅ '+name);}
    assert.deepEqual(r.resp.sort(),['c-ok:cancelado','c-tarde:recusado']);
    assert.match(r.toasts,/fora do prazo/);assert.equal(r.saldos,true,'nenhum saldo ou cadastro muda');
    assert.deepEqual(Object.keys(queue),[],'os dois pedidos saem da fila');
+  });
+  await check('aviso do sino diz quando a aluna mandou ("ontem às 23:00") e não executa nome com código',async()=>{
+   const r=await g.evaluate(({REAL,H})=>{
+    const ontem23=Date.parse('2026-10-07T23:00:00-03:00');
+    NOTIF=[{acao:'cancelou',nome:'<img src=x id=intruso>Aluna',codigo:'6601',data:'2026-10-08',hora:'08:00',tipo:'aula',ts:ontem23}];
+    renderNotifList();
+    return {txt:document.getElementById('notif-list').innerText,img:!!document.getElementById('intruso'),
+     hoje:quandoEnviadoTxt(REAL),ontem:quandoEnviadoTxt(ontem23),antes:quandoEnviadoTxt(Date.parse('2026-10-06T23:00:00-03:00'))};
+   },{REAL,H});
+   assert.match(r.txt,/enviado ontem às 23:00/);assert.equal(r.img,false);
+   assert.deepEqual([r.hoje,r.ontem,r.antes],['hoje às 05:24','ontem às 23:00','dia 06/10 às 23:00']);
   });
   assert.deepEqual(gerr,[]);
   console.log('\n✅ '+count+' verificações · trava de cancelamento');

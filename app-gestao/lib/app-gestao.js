@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-08-1';
+const VERSAO='2026-10-08-2';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2712,6 +2712,17 @@ function pintarAvisos(){
 }
 function pedirPermissaoNotif(){pintarAvisos();}
 function notificarNavegador(txt){mostrarAviso('Academia JV Tênis 🎾',txt,'jv-icone-gestao.png');}
+/* Quando o aluno mandou, em palavras. A Gestão só busca os avisos quando está
+   aberta: um cancelamento feito às 23h aparece de manhã e, sem a hora, parecia
+   ter sido feito agora, dentro do prazo de 4h. */
+function quandoEnviadoTxt(ts){
+  const d=new Date(Number(ts)||0);if(!Number(ts)||isNaN(d.getTime()))return '';
+  const hm=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  const h=new Date(),ontem=new Date(h.getFullYear(),h.getMonth(),h.getDate()-1,12);
+  if(dKey(d)===dKey(h))return 'hoje às '+hm;
+  if(dKey(d)===dKey(ontem))return 'ontem às '+hm;
+  return 'dia '+String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+' às '+hm;
+}
 function textoNotif(n){
   if(n.acao==='resultado')return '🏆 '+(n.nome||'Aluno')+': '+(n.texto||'enviou um resultado');
   if(n.texto)return '🛒 '+(n.nome||'Aluno')+': '+n.texto;
@@ -2730,7 +2741,7 @@ async function carregarNotifs(){
     const max=NOTIF.length?NOTIF[0].ts:0;
     if(!notifPrimeira&&max>notifMax){
       const novas=NOTIF.filter(n=>n.ts>notifMax);
-      novas.slice(0,3).forEach(n=>notificarNavegador(textoNotif(n)));
+      novas.slice(0,3).forEach(n=>{const q=quandoEnviadoTxt(n.ts);notificarNavegador(textoNotif(n)+(q?' · enviado '+q:''));});
       if(novas.length)toast('🔔 '+novas.length+' novo(s) aviso(s) de alunos');
     }
     notifMax=Math.max(notifMax,max);notifPrimeira=false;
@@ -2755,12 +2766,11 @@ function renderNotifList(){
   const el=document.getElementById('notif-list');if(!el)return;
   if(!NOTIF.length){el.innerHTML='<div class="empty">Nenhum aviso ainda. Quando um aluno reservar ou cancelar, aparece aqui.</div>';return;}
   el.innerHTML=NOTIF.map((n,i)=>{
-    const q=new Date(n.ts);
-    const hm=String(q.getHours()).padStart(2,'0')+':'+String(q.getMinutes()).padStart(2,'0');
     const cor=n.acao==='cancelou'?'var(--c-bloq)':'var(--c-loc)';
     const vai=destinoNotif(n);
+    // nome e texto vêm do aluno: esc() antes de ir para a tela
     return `<div class="mov${vai?' mov-vai':''}" style="border-left:4px solid ${cor}"${vai?` onclick="irDoAviso(${i})"`:''}>`
-      +`<div class="mov-l"><b>${textoNotif(n)}</b><span>recebido ${String(q.getDate()).padStart(2,'0')}/${String(q.getMonth()+1).padStart(2,'0')} ${hm}</span></div>`
+      +`<div class="mov-l"><b>${esc(textoNotif(n))}</b><span>enviado ${quandoEnviadoTxt(n.ts)}</span></div>`
       +(vai?'<span class="mov-seta">›</span>':'')+'</div>';
   }).join('');
 }

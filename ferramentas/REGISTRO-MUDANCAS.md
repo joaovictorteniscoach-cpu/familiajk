@@ -39,6 +39,14 @@ dá 4h36 para a mesma aula) passava. Versão `2026-10-08-1`.
   × 08:00, fuso UTC-5 e relógio 3h atrasado (a conta antiga liberava), prazo
   ok, recusa devolvendo a aula, e Gestão não aplicando o tardio. Nenhum dado,
   saldo ou cadastro alterado.
+- **Depois do relato:** o cancelamento tinha sido feito às 23h da véspera
+  (dentro do prazo); a Gestão só busca avisos aberta e o aviso "cancelou —
+  Aula · 08/10 08:00" chegou às 05:24 sem dizer quando foi enviado. O João
+  pediu para publicar a trava e melhorar o aviso (versão `2026-10-08-2`):
+  `quandoEnviadoTxt` → pop-up "… · enviado ontem às 23:00" e, no sino,
+  "enviado hoje/ontem/dia dd/mm às hh:mm" (antes "recebido", que confundia).
+  O aviso do aluno leva `ts` pela hora do servidor (`agoraReal`). Na lista do
+  sino o texto do aluno passou a ir por `esc()` (antes ia cru no innerHTML).
 
 ---
 
