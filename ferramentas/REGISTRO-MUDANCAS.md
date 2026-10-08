@@ -8,6 +8,43 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-08 · Codex: perguntas à agenda pelo mesmo botão de fala
+
+- Responsável: Codex; branch `codex/consultas-agenda-voz-2026-10-08`; base main `9489dea427d3a5d8f0f3576e6971d62c6d842e30` (V9 publicada por #234; preserva #232). Proposta de versão `2026-10-08-10`.
+- Pedido do João: perguntar quantas aulas tem no dia, alunos do período da tarde
+  ou quem está no horário das 16h, com resposta por áudio. Implementado no mesmo
+  módulo/botão: consulta por dia (hoje como padrão), manhã/tarde/noite ou horário;
+  data e horários explícitos em texto, áudio automático opcional e Ouvir resposta.
+  Não é uma assistente para perguntas gerais: formatos delimitados de agenda.
+- Usa aulasDoDia/comIndiceAgenda do #233: dupla/trio/quarteto = uma aula;
+  respeita exceções, janela dos fixos, bloqueios e duplicatas. Identifica todos
+  os participantes e lê o nome do cadastro atual quando vinculado. Personal
+  entra no total. Locação/torneio/compromisso são explicados na consulta de
+  horário, sem virar aula nem declarar quadra livre por falta de marcação.
+- Consulta só lê dados atuais do dono: leitura da nuvem, mesma barreira de
+  sessão/pendência/conflito, nenhum snapshot, persist, renovação ou escrita.
+  Outra sessão mudando a base exige conferência em Segurança e dados.
+  Resposta tardia após fechar/sair é ignorada; datas relativas usam São Paulo.
+  Comandos continuam com prévia e confirmação, consulta responde diretamente.
+- Preparados 124 testes de voz (31 por navegador/tema), incluindo os oito
+  cenários novos de consulta, respostas simuladas, fronteiras 12h/18h, sem
+  alteração de dados, replay, falha de leitura, silêncio, XSS e dia de São Paulo.
+  CI completo e leitura das capturas do commit final serão exigidos antes do merge.
+  Não acessa dados reais nem comprova hardware do iPhone; João já confirmou
+  a captura da versão anterior no aparelho.
+- Preservados #227/#229/#230/#231/#233/#232 e suas proteções; nenhum dado,
+  saldo ou regra do Firebase alterado. Cinco carimbos/caches sincronizados,
+  demo regenerada, sem mudanças no tema gerado.
+- Integração: #234 foi publicado pelo Claude como V9 durante o CI. Reaplicado
+  sobre main 9489dea427d3a5d8f0f3576e6971d62c6d842e30. Sua correção de contarAulasAluno,
+  teste de 14 números do Início e todos os arquivos gerados foram preservados.
+  V10 sucede V9. Se a main avançar antes deste merge, reaplicar e testar novamente.
+- Publicação autorizada previamente na sessão; esta entrada registra
+  implementação, ainda sem CI final/publicação. PR, CI, Pages e monitor serão
+  acrescentados ao registro do PR após conclusão. App Check continua externo.
+
+---
+
 ## 2026-10-08 · Claude Code: valor do mês pela agenda conta aula repetida uma vez
 
 #233 publicado como `2026-10-08-7` (João confirmou que 19h/20h ficaram de 1 h).
@@ -55,8 +92,10 @@ saldo ou regra alterado.
 - Preservados #227/#229/#230/#231/#233 (hora do servidor, Escritório, reposição,
   fixos, WhatsApp, números do Início e grade), CSS/temas/demo gerados e seus testes. Demo regenerada;
   cinco versões e caches sincronizados. Sem novas regras ou correção de saldos.
-- Publicação ainda pendente neste registro de implementação. CI do commit
-  exato, merge, Pages e monitor serão registrados no PR ao concluir.
+- Publicado como V8 em #232: merge `97a7a2d49e1a981b47117a5ab93a868337603d2c`,
+  CI 37812074240 aprovado (92 voz + 17 Firebase/emulador), capturas finais
+  revisadas, Pages 37814907078 e monitor 37814995695 aprovados. Monitor
+  confirmou Gestão Pages, Aluno Pages e Aluno Netlify na V8.
   App Check permanece dependente da configuração externa.
 
 - Integração final: #233 do Claude foi publicado como V7 durante o CI.

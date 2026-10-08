@@ -135,6 +135,113 @@ async function visual(p,n){if(!process.env.JV_VISUAL_DIR)return;const png=await 
     const n=await p.evaluate(()=>__faladas.length);await p.evaluate(()=>JVAcoesVoz.executar());assert.equal(await p.evaluate(()=>__faladas.length),n,'opção silenciosa respeitada');
     await p.locator('#voz-ouvir').check();
    });
+   async function consultaBase(){
+    await reset();await p.evaluate(()=>{
+     DB.agenda={fixos:[
+      {id:'q9',alunoId:'a1',titulo:'Título antigo',dia:4,hora:'09:00',tipo:'aula',desde:'2026-10-01'},
+      {id:'qc',alunoId:'a1',titulo:'Ana Silva',dia:4,hora:'11:00',tipo:'aula',desde:'2026-10-01'},
+      {id:'qexp',alunoId:'b1',titulo:'Bruno Teste',dia:4,hora:'08:00',tipo:'aula',desde:'2026-10-01',ate:'2026-10-14'},
+      {id:'q14a',alunoId:'a1',titulo:'Ana Silva',dia:4,hora:'14:00',tipo:'grupo',pessoas:2,desde:'2026-10-01'},
+      {id:'q14b',alunoId:'a2',titulo:'Ana Souza',dia:4,hora:'14:00',tipo:'grupo',pessoas:2,desde:'2026-10-01'},
+      {id:'q16',alunoId:'b1',titulo:'Bruno Teste',dia:4,hora:'16:00',tipo:'aula',desde:'2026-10-01'},
+      {id:'q18',alunoId:'b1',titulo:'Bruno Teste',dia:4,hora:'18:00',tipo:'personal',desde:'2026-10-01'},
+      {id:'q19',alunoId:'a1',titulo:'Ana Silva',dia:4,hora:'19:00',tipo:'aula',desde:'2026-10-01'}
+     ],eventos:[
+      {id:'qdup',alunoId:'a1',titulo:'Título antigo',data:'2026-10-15',hora:'09:00',tipo:'aula'},
+      {id:'qvisit',alunoId:null,titulo:'Visitante <img src=x onerror=window.__inj=1>',data:'2026-10-15',hora:'10:00',tipo:'aula'},
+      {id:'qblocked',alunoId:'a1',titulo:'Ana Silva',data:'2026-10-15',hora:'13:00',tipo:'aula'},
+      {id:'qblock',titulo:'Chuva',data:'2026-10-15',hora:'13:00',tipo:'bloqueio'},
+      {id:'qloc',alunoId:'b1',titulo:'Bruno Teste',data:'2026-10-15',hora:'12:00',tipo:'locacao'},
+      {id:'qtor',alunoId:'a1',titulo:'Ana Silva',data:'2026-10-15',hora:'15:00',tipo:'torneio'},
+      {id:'qold',alunoId:'a1',titulo:'Ana Silva',data:'2026-10-15',hora:'19:30',tipo:'aula'}
+     ],excecoes:[{fixoId:'qc',data:'2026-10-15'}]};
+     DB.compromissos=[{id:'qcomp',titulo:'Treinamento particular fictício',data:'2026-10-15',hora:'17:00'}];
+     __no=__baseNo();_basePartes=JSON.parse(JSON.stringify(__no));renderAll();
+    });
+   }
+   async function pergunta(texto){
+    await p.locator('#voz-texto').fill(texto);await p.evaluate(()=>JVAcoesVoz.analisar());
+   }
+   await check(label+'interpreta os três exemplos de consulta, horário falado, amanhã e ambiguidade sem confundir com ações',async()=>{
+    const rs=await p.evaluate(()=>[
+     'Quantas aulas eu tenho hoje?','Quem são os alunos que vão ter aula no período da tarde?',
+     'Qual é o aluno das 16 horas?','Quem tem aula às quatro da tarde?','Como está minha agenda amanhã?',
+     'Quem tem aula das quatro?','Quantas aulas tenho hoje e cancela a Ana','Quem não tem aula hoje?',
+     'Quem tem aula 16/10 e 17/10?','Quantas aulas tenho 31/02/2026?','Qual valor da aula?'
+    ].map(t=>JVAcoesVoz.interpretar(t,DB.alunos,'2026-10-15')));
+    assert.equal(rs[0].consulta,'quantidade');assert.equal(rs[0].data,'2026-10-15');assert.equal(rs[1].periodo,'tarde');
+    assert.equal(rs[2].hora,'16:00');assert.equal(rs[3].hora,'16:00');assert.equal(rs[4].data,'2026-10-16');
+    rs.slice(5).forEach(r=>assert.ok(r.erro,JSON.stringify(r)));
+   });
+   await check(label+'consulta do total bate com o Início: grupo é uma aula, duplicatas, canceladas, vencidas e bloqueios respeitados',async()=>{
+    await consultaBase();await abrir();const a=await antes();await pergunta('Quantas aulas eu tenho hoje?');
+    assert.match(await p.locator('#voz-consulta-resumo').innerText(),/6 aulas agendadas/);
+    assert.equal(await p.locator('#voz-consulta-lista li').count(),6);
+    assert.equal(await p.evaluate(()=>aulasDoDia(new Date('2026-10-15T12:00:00')).aulas.length),6);
+    assert.match(await p.evaluate(()=>__faladas.at(-1)),/6 aulas agendadas/);
+    assert.ok(await p.locator('#voz-confirmar').isHidden());assert.ok(await p.locator('#voz-campos').isHidden());
+    assert.equal(await antes(),a);assert.equal((await dados()).persist,0);assert.equal((await dados()).saves,0);assert.equal(await p.evaluate(()=>__snapshots.length),0);
+   });
+   await check(label+'lista da tarde responde nomes e horários em voz, mostra duas pessoas na mesma turma e respeita limites de período',async()=>{
+    await consultaBase();await abrir();await pergunta('Quem são os alunos que vão ter aula no período da tarde?');
+    assert.equal(await p.locator('#voz-consulta-lista li').count(),2);
+    const r=await p.locator('#voz-consulta-lista').innerText();assert.match(r,/14:00/);assert.match(r,/Ana Silva, Ana Souza/);assert.match(r,/16:00/);assert.match(r,/Bruno Teste/);assert.doesNotMatch(r,/18:00|09:00/);
+    const fala=await p.evaluate(()=>__faladas.at(-1));assert.match(fala,/14:00/);assert.match(fala,/Ana Silva, Ana Souza/);
+    await visual(p,'voz-consulta-tarde-'+motor+'-'+theme);
+    await pergunta('Quem tem aula hoje de manhã?');assert.equal(await p.locator('#voz-consulta-lista li').count(),2);
+    await pergunta('Quem tem aula hoje à noite?');assert.equal(await p.locator('#voz-consulta-lista li').count(),2);assert.match(await p.locator('#voz-consulta-lista').innerText(),/18:00/);
+   });
+   await check(label+'pergunta pelo aluno das 16h e turma das 14h responde cadastro atual e aula sobreposta sem repetir',async()=>{
+    await consultaBase();await abrir();await pergunta('Qual é o aluno das 16 horas?');
+    assert.match(await p.locator('#voz-consulta-resumo').innerText(),/aula particular com Bruno Teste/);assert.match(await p.evaluate(()=>__faladas.at(-1)),/Bruno Teste/);
+    await visual(p,'voz-consulta-horario-'+motor+'-'+theme);
+    await pergunta('Quem tem aula às 14 horas?');assert.match(await p.locator('#voz-consulta-resumo').innerText(),/aula em grupo com Ana Silva, Ana Souza/);
+    await pergunta('Quem tem aula às nove da manhã?');assert.match(await p.locator('#voz-consulta-resumo').innerText(),/Ana Silva/);assert.doesNotMatch(await p.locator('#voz-consulta-resumo').innerText(),/Título antigo/);
+    await pergunta('Quem tem aula às 19:30?');assert.equal(await p.locator('#voz-consulta-lista li').count(),1);assert.match(await p.locator('#voz-consulta-resumo').innerText(),/início às 19:00/);
+   });
+   await check(label+'horário vazio não é declarado livre; locação, torneio e bloqueio não viram aula, títulos não viram HTML',async()=>{
+    await consultaBase();await abrir();
+    for(const [hora,esperado] of [['07:00',/Não encontrei aula nem outra marcação/],['12:00',/locação: Bruno Teste/],['15:00',/torneio: Ana Silva/],['13:00',/horário está bloqueado/],['17:00',/compromisso pessoal/]]){
+     await pergunta('Qual aluno às '+hora+'?');assert.match(await p.locator('#voz-consulta-resumo').innerText(),esperado);
+    }
+    await pergunta('Quem tem aula hoje de manhã?');assert.match(await p.locator('#voz-consulta-lista').innerText(),/<img src=x/);
+    assert.equal(await p.locator('#voz-consulta img').count(),0);assert.equal(await p.evaluate(()=>window.__inj||0),0);
+   });
+   await check(label+'uma fala completa responde consulta com um toque; replay, silêncio e próxima ação preservam dados e confirmação',async()=>{
+    await consultaBase();const a=await antes();await p.locator('#voz-atalho').click();
+    await p.evaluate(()=>{__recs[0].emit('Qual é o aluno das 16 horas?',true);__recs[0].onend();});
+    await p.waitForFunction(()=>!document.getElementById('voz-consulta').hidden);
+    assert.match(await p.locator('#voz-repetir').innerText(),/Ouvir resposta/);
+    await p.evaluate(()=>__utterances.at(-1).onstart());assert.equal(await p.locator('#voz-painel').getAttribute('data-falando'),'true');
+    await p.locator('#voz-circulo').click();assert.equal(await p.locator('#voz-painel').getAttribute('data-falando'),'false');
+    await p.locator('#voz-ouvir').uncheck();const n=await p.evaluate(()=>__faladas.length);
+    await pergunta('Quantas aulas tenho hoje?');assert.equal(await p.evaluate(()=>__faladas.length),n);
+    await p.locator('#voz-repetir').click();assert.equal(await p.evaluate(()=>__faladas.length),n+1);
+    await p.evaluate(()=>JVAcoesVoz.executar());assert.equal(await antes(),a);assert.equal((await dados()).saves,0);assert.equal(await p.evaluate(()=>__snapshots.length),0);
+    await p.locator('#voz-ouvir').check();await pergunta('Agendar Bruno Teste amanhã às 18h');
+    assert.ok(await p.locator('#voz-consulta').isHidden());assert.ok(await p.locator('#voz-campos').isVisible());assert.ok(await p.locator('#voz-confirmar').isEnabled());
+    assert.equal(await antes(),a);assert.equal((await dados()).persist,0);
+   });
+   await check(label+'consulta não responde agenda velha se leitura falha, há pendência ou conflito; limpa resposta anterior',async()=>{
+    for(const modo of ['falha','pendente','conflito']){
+     await consultaBase();await abrir();await pergunta('Quem tem aula hoje à tarde?');const n=await p.evaluate(()=>__faladas.length);
+     await p.evaluate(m=>{if(m==='falha')__failRead=true;if(m==='pendente')cloudPending=true;if(m==='conflito')__no.config='{"mesCreditos":"2026-09"}';},modo);
+     const a=await antes();await pergunta('Qual aluno das 16 horas?');
+     assert.ok(await p.locator('#voz-consulta').isHidden());assert.ok(await p.locator('#voz-repetir').isHidden());assert.equal(await p.evaluate(()=>__faladas.length),n);
+     assert.equal(await antes(),a);assert.equal((await dados()).persist,0);assert.equal(await p.evaluate(()=>__snapshots.length),0);assert.ok(await p.locator('#voz-confirmar').isDisabled());
+    }
+   });
+   await check(label+'fechar durante consulta não recebe resposta tardia nem grava; consultas usam o dia de São Paulo',async()=>{
+    await consultaBase();await abrir();await p.locator('#voz-texto').fill('Qual aluno das 16 horas?');
+    await p.evaluate(()=>{__holdRead=true;window.__consulta=JVAcoesVoz.analisar();});await p.waitForFunction(()=>window.__releaseRead);
+    await p.evaluate(()=>JVAcoesVoz.fechar(true));const n=await p.evaluate(()=>__faladas.length);
+    await p.evaluate(async()=>{__holdRead=false;__releaseRead();await __consulta;});
+    assert.equal(await p.evaluate(()=>__faladas.length),n);assert.ok(await p.locator('#voz-painel').isHidden());assert.equal((await dados()).persist,0);
+    // Dia 16 em São Paulo, ainda dia 15 no aparelho simulado de Rio Branco.
+    await p.clock.setFixedTime(new Date('2026-10-16T03:30:00Z'));await reset();await abrir();await pergunta('Quem tem aula hoje às 16 horas?');
+    assert.match(await p.locator('#voz-consulta-resumo').innerText(),/16 de outubro/);assert.match(await p.locator('#voz-consulta-resumo').innerText(),/Ana Silva/);
+    await p.clock.setFixedTime(AGORA);
+   });
    await check(label+'permissão negada e API ausente mantêm digitação e ditado do teclado',async()=>{
     await reset();await abrir();await p.locator('#voz-falar').click();await p.evaluate(()=>__recs[0].onerror({error:'not-allowed'}));
     assert.match(await p.locator('#voz-status').innerText(),/negada/);assert.ok(await p.locator('#voz-texto').isEditable());

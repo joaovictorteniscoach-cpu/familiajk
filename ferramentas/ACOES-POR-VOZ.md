@@ -1,3 +1,43 @@
+# Consultas à agenda por voz — 2026-10-08-10
+
+Usam o mesmo círculo flutuante e a conta do dono. Toque e pergunte:
+- “Quantas aulas eu tenho hoje?”
+- “Quem são os alunos que vão ter aula no período da tarde?”
+- “Qual é o aluno das 16 horas?”
+- “Quem tem aula amanhã de manhã?” ou “Quem tem aula às quatro da tarde?”
+
+Sem dia, consulta hoje no horário de São Paulo. Manhã antes das 12h, tarde
+das 12h até antes das 18h, noite a partir das 18h. A resposta deixa o período,
+data e horários explícitos. Texto/ditado usa Conferir pedido. “Responder por
+voz automaticamente” silencia; “Ouvir resposta” repete sem alterar a agenda.
+A próxima pergunta usa o mesmo campo ou círculo, sem fechar o painel.
+
+Consulta só lê a agenda do dono conferida na nuvem; pendência/conflito/leitura
+indisponível não produzem uma resposta falsa. Outra versão deve ser conferida
+na tela de Segurança e dados, sem substituir o banco automaticamente.
+aulasDoDia mantém a mesma contagem do Início: grupo = uma aula, nomes de todos
+os participantes, duplicatas/exceções/janela dos fixos respeitadas. Total do
+dia inclui aulas passadas e futuras agendadas; não afirma que já ocorreram.
+Locação/torneio/compromisso não entram no total de aulas e podem aparecer em
+consultas de horário. Ausência na sua agenda não garante disponibilidade da
+quadra. Não consulta nomes de alunos de outros professores.
+
+Consulta não cria intenção de escrita e não pede Confirmar; agendar/cancelar/
+renovar conservam prévia e confirmação. Não grava áudio, texto ou consultas
+em histórico/localStorage/Firebase; sem modelo de IA ou serviço novo.
+Perguntas gerais, financeiras, múltiplas datas e horários ambíguos pedem
+reformulação. Testes com dados fictícios, reconhecimento/síntese simulados
+em Chromium/WebKit nos dois temas; microfone físico é o do aparelho.
+
+Responsável Codex, branch codex/consultas-agenda-voz-2026-10-08, base 9489dea427d3a5d8f0f3576e6971d62c6d842e30.
+V8/#232 publicada com brilho/ondas permanece preservada. #234 do Claude
+foi publicado como V9 sobre V8. Reaplicado sobre essa main; cálculo do mês,
+14 testes de números e demo preservados. V10 sucede V9. Testar novamente
+antes de integrar, sem substituir voz. Esta seção registra implementação;
+estado de CI/publicação será registrado no PR ao concluir.
+
+---
+
 # Ações rápidas por voz — Gestão
 
 ## Escolha final de 08/10/2026: flutuante, translúcido e com brilho
