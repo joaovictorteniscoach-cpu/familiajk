@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-08-2';
+const VERSAO='2026-10-08-3';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -9532,7 +9532,7 @@ function conferirNumeros(){
    Cada botão escreve o resultado numa caixa embaixo da grade. Antes elas se
    empilhavam (conexão + conferência + versões…) e a tela virava um rolo.
    Agora abrir uma fecha as outras, e tocar de novo na mesma fecha ela. */
-const FERR_BOXES=['teste-box','arq-box','espaco-box','conf-box','versoes-box','rel-box','pu-box'];
+const FERR_BOXES=['teste-box','arq-box','espaco-box','conf-box','versoes-box','rel-box','pu-box','esc-box'];
 let ferrAberto='';
 function soEsteFerr(box){
   FERR_BOXES.forEach(b=>{if(b!==box){const e=document.getElementById(b);if(e)e.innerHTML='';}});
@@ -9551,6 +9551,83 @@ function abrirFerr(box,fn){
   setTimeout(()=>{const e=document.getElementById(box);if(e&&e.scrollIntoView)e.scrollIntoView({behavior:'smooth',block:'start'});},80);
 }
 
+/* ===== Resumo para o Escritório JV =====
+   O Escritório JV (os agentes de IA, em outro endereço) não lê este banco. A
+   ponte é este resumo: sai das mesmas contas da tela Início — mensalidade por
+   competência (pendenteDoFechamento/saldoMensalidade), vencimento (vencDe),
+   aula além do pacote (devidoExtra*), reposição por idade (reposPorIdade) —
+   sempre no mês de hoje, não no mês que estiver aberto na tela. Dependente de
+   família não entra: quem paga é o responsável. Só lê; não muda nenhum dado.
+   Leva primeiro nome + inicial do sobrenome; o telefone vai para o envio
+   revisado no Escritório, que não o repassa à IA. */
+const ESCRITORIO_URL='https://escritorio-jv.joaovictorteniscoach.chatgpt.site/#ferramentas';
+function nomeCurtoEscritorio(n){
+  const p=String(n||'').trim().split(/\s+/).filter(Boolean);
+  if(!p.length)return 'Sem nome';
+  return (p.length>1?p[0]+' '+p[p.length-1].charAt(0)+'.':p[0]).slice(0,60);
+}
+function refEscritorio(a){return String(a&&a.id||'').replace(/[^A-Za-z0-9_.:-]/g,'_').slice(0,64)||'sem-id';}
+function foneEscritorio(a){const f=foneWhats(a&&a.tel);return /^\d{10,15}$/.test(f)?f:'';}
+function mesAnteriorDe(mk){const p=mk.split('-').map(Number),d=new Date(p[0],p[1]-2,1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+function resumoParaEscritorio(){
+  const mk=mesReal(), alunos=DB.alunos||[], ativos=alunos.filter(ehAtivoAluno);
+  const cent=v=>Math.round((Number(v)||0)*100)/100;
+  // mesma regra das Cobranças pendentes do Início (pendenteDoFechamento: sem dependente, inativo ou torneio)
+  const cobrancas=alunos.filter(a=>pendenteDoFechamento(a,mk)).map(a=>({a,s:situacaoMensalidade(a,mk),falta:saldoMensalidade(a,mk)}))
+  .filter(x=>x.falta>0).map(x=>({
+    ref:refEscritorio(x.a),nome:nomeCurtoEscritorio(x.a.nome),valor:cent(x.falta),
+    situacao:x.s.status==='parcial'?'parcial':'pendente',diasParaVencer:vencDe(x.a),
+    familia:dependentesFamilia(x.a).length>0,telefone:foneEscritorio(x.a)
+  })).sort((x,y)=>(x.diasParaVencer===null?999:x.diasParaVencer)-(y.diasParaVencer===null?999:y.diasParaVencer));
+  const extras=alunos.filter(a=>(Number(a.creditos)||0)<0||(Number(a.credGrupo)||0)<0).map(a=>{
+    const pag=pagadorFamilia(a);
+    return {ref:refEscritorio(a),nome:nomeCurtoEscritorio(a.nome),
+      aulas:Math.ceil(-Math.min(0,Number(a.creditos)||0))+Math.ceil(-Math.min(0,Number(a.credGrupo)||0)),
+      valor:cent(devidoExtraPart(a)+devidoExtraGrupo(a)),
+      pagador:pag&&pag.id!==a.id?nomeCurtoEscritorio(pag.nome):'',telefone:foneEscritorio(pag)};
+  }).filter(x=>x.aulas>0);   // valor 0 = preço da aula não cadastrado; vai assim, o Escritório avisa
+  const reposicoes=ativos.map(a=>({a,r:reposPorIdade(a,mk)})).filter(x=>x.r.validas>0).map(x=>({
+    ref:refEscritorio(x.a),nome:nomeCurtoEscritorio(x.a.nome),quantidade:x.r.validas,
+    vencendoEsteMes:x.r.vencendo,telefone:foneEscritorio(pagadorFamilia(x.a))
+  }));
+  const receitas=m=>(DB.lancamentos||[]).filter(l=>l.mes===m&&Number(l.valor)>0).reduce((t,l)=>t+Number(l.valor),0);
+  let livres=0;try{livres=horariosLivresSemana(new Date()).out.reduce((t,o)=>t+o.livres.length,0);}catch(e){}
+  const avisos=[];
+  const V=viradaPendente();
+  if(V)avisos.push('O mês virou ('+V.de+' → '+V.para+') e a renovação ainda não foi feita no app: a situação das mensalidades pode estar desatualizada.');
+  const venc=cobrancas.filter(c=>c.diasParaVencer!==null&&c.diasParaVencer<0);
+  return {formato:'jv-escritorio-resumo',versao:1,geradoEm:new Date().toISOString(),appVersao:VERSAO,mes:mk,
+    totais:{alunosAtivos:ativos.length,mensalidadesPendentes:cobrancas.length,valorPendente:cent(cobrancas.reduce((t,c)=>t+c.valor,0)),
+      vencidas:venc.length,valorVencido:cent(venc.reduce((t,c)=>t+c.valor,0)),
+      alunosComExtra:extras.length,valorExtras:cent(extras.reduce((t,x)=>t+x.valor,0)),
+      reposicoes:reposicoes.reduce((t,x)=>t+x.quantidade,0),alunosComReposicao:reposicoes.length,
+      reposicoesVencendo:reposicoes.reduce((t,x)=>t+x.vencendoEsteMes,0),
+      receitasDoMes:cent(receitas(mk)),receitasMesAnterior:cent(receitas(mesAnteriorDe(mk))),
+      meta:cent(DB.meta),horariosLivresSemana:livres},
+    cobrancas,extras,reposicoes,avisos};
+}
+function abrirResumoEscritorio(){
+  const box=document.getElementById('esc-box');if(!box)return;
+  const R=resumoParaEscritorio(),T=R.totais;
+  box.innerHTML='<div class="cons info"><h4><span>🏢</span>Resumo para o Escritório JV</h4>'
+    +'<p>Os agentes do Escritório não leem este banco. Copie o resumo e cole lá em <b>Minhas ferramentas → Dados da academia</b>. <b>Só leitura:</b> nada muda aqui.</p>'
+    +'<p>'+T.mensalidadesPendentes+' mensalidade(s) em aberto ('+fmt(T.valorPendente)+'), '+T.vencidas+' vencida(s) · '
+    +T.alunosComExtra+' com aula além do pacote · '+fmtCred(T.reposicoes)+' reposição(ões) válidas</p>'
+    +R.avisos.map(a=>'<p><b>⚠️ '+esc(a)+'</b></p>').join('')
+    +'<p class="hint">Vai: primeiro nome e inicial do sobrenome, valores do mês de hoje, telefone de quem paga (o Escritório não passa o telefone para a IA). Dependentes de família entram pelo responsável. Copie de novo depois de receber pagamentos.</p>'
+    +'<div class="backup-row"><button class="btn btn-clay" onclick="copiarResumoEscritorio()">📋 Copiar resumo</button>'
+    +'<a class="btn btn-ghost" href="'+ESCRITORIO_URL+'" target="_blank" rel="noopener">Abrir o Escritório</a></div>'
+    +'<textarea id="esc-texto" readonly rows="4" style="display:none;width:100%;margin-top:8px;font-size:12px"></textarea></div>';
+}
+async function copiarResumoEscritorio(){
+  const txt=JSON.stringify(resumoParaEscritorio());
+  try{await navigator.clipboard.writeText(txt);toast('📋 Resumo copiado — cole no Escritório JV, em Dados da academia');}
+  catch(e){
+    const t=document.getElementById('esc-texto');
+    if(t){t.value=txt;t.style.display='block';t.focus();t.select();}
+    toast('Selecione o texto abaixo e copie');
+  }
+}
 /* ===== Relatório de aulas (PDF): os últimos 3 meses, aluno por aluno =====
    Para conferir fora do app: em cada mês, quanto foi pago, quantas aulas
    entraram (renovação), quantas foram feitas, faltas, reposições ganhas e

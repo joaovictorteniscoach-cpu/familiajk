@@ -8,6 +8,33 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-08 · Resumo para o Escritório JV (Claude Code, branch `claude/escritorio-resumo`)
+
+O Escritório JV (agentes de IA do João, hospedado no ChatGPT Sites, código fora
+deste repositório) não lê o Firebase. Ponte criada sem mexer em regra:
+**Mais → Segurança e dados → Escritório JV → Copiar resumo** gera um JSON
+(`formato: jv-escritorio-resumo`, `versao: 1`) que o João cola no Escritório.
+
+- `resumoParaEscritorio()` só lê. Usa `pendenteDoFechamento`/`saldoMensalidade`
+  no **mês de hoje** (`mesReal`, não o mês aberto na tela), `vencDe`,
+  `devidoExtraPart/Grupo`, `reposPorIdade`, `viradaPendente` (vira aviso).
+  Dependente de família fica fora das mensalidades (cobra o responsável);
+  inativo fica fora. Aula além do pacote sem preço cadastrado vai com valor 0
+  (o Escritório avisa em vez de sumir com ela).
+- Leva primeiro nome + inicial do sobrenome, `ref` = id interno e telefone de
+  quem paga. O Escritório guarda criptografado e **não passa telefone à IA**.
+- Tela usa `fmt()` (respeita valores ocultos); o JSON leva o número real.
+- Teste: `ferramentas/testar-resumo-escritorio-browser.cjs` (fictício), no
+  `validar-pr`. A lista de mensalidades usa `pendenteDoFechamento` (a mesma
+  das Cobranças pendentes do Início, vinda do #226).
+- **Contrato:** mudar campo/nome do JSON exige mudar `src/academia.mjs` do
+  Escritório (validação estrita) e a fixture `tests/fixtures/resumo-gestao-exemplo.json` de lá.
+
+Pendente: leitura automática (sem copiar/colar) exige uma regra nova no
+Firebase só de leitura para uma conta do Escritório — depende de autorização do João.
+
+---
+
 ## 2026-10-08 · Claude Code: trava de 4h do cancelamento à prova de relógio e fuso
 
 Relato do João: aluna cancelou às 05:24 a aula das 08:00 (2h36 antes). Só existe
