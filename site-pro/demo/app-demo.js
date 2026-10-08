@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-08-3';
+const VERSAO='2026-10-08-4';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2011,8 +2011,8 @@ function publicarMapaQuadra(){
     }catch(e){}
   },2500);
 }
-async function lerMapaQuadra(){
-  if(!hasCloud())return;
+async function lerMapaQuadra(exigir){
+  if(!hasCloud()){if(exigir)throw new Error('Nuvem não conectada');return false;}
   const meu=meuUidNaQuadra();
   try{
     const snap=await window.fbDB.ref('jvtenis/mapa_quadra').get();
@@ -2035,11 +2035,12 @@ async function lerMapaQuadra(){
     /* Repintar a agenda a cada 45 segundos sem nada ter mudado tira o aluno do
        lugar em que ele estava olhando. Só redesenha quando o mapa mudou mesmo. */
     const assinatura=JSON.stringify(out);
-    if(assinatura===_mapaLido)return;
+    if(assinatura===_mapaLido)return true;
     _mapaLido=assinatura;
     MAPA_OUTROS=out;
     try{renderAgenda();}catch(e){}
-  }catch(e){}
+    return true;
+  }catch(e){if(exigir)throw e;return false;}
 }
 const ROTULO_TIPO_OUTRO={aula:'aula',grupo:'aula em grupo',personal:'personal',locacao:'locação',
                          torneio:'torneio',bloqueio:'quadra bloqueada',pessoal:'compromisso'};

@@ -320,30 +320,6 @@ const fixture={
    assert.equal(await g.evaluate(()=>situacaoMensalidade(DB.alunos.find(x=>x.id==='zero'),'2026-10').status),'pendente');
    assert.equal(await g.evaluate(()=>DB.lancamentos.length),0);
   });
-  await g.evaluate(()=>{
-   DB={alunos:[{id:'al-ficticio',nome:'Aluno Fictício',codigo:'6601',tipo:'Particular',plano:4,planoGrupo:0,creditos:3,credGrupo:0,repos:1,locCred:0,status:'pago',mensalidade:640,ativo:true}],
-    agenda:{fixos:[],eventos:[{id:'aula-ficticia',data:dKey(new Date()),hora:'16:00',alunoId:'al-ficticio',titulo:'Aluno Fictício',tipo:'aula'}],excecoes:[]},
-    presencas:[],movs:[],lancamentos:[],compromissos:[],meta:10000,mesCreditos:'2026-10',mesPagamentos:'2026-10',ultimoBackup:Date.now()};
-   ensureFields();persist=()=>{};logAct=()=>{};hideVals=false;
-   _abriuSemConferir=false;cloudPending=false;_conflitoNuvem=null;guardarMetaProtecao({backup:Date.now(),nuvem:Date.now()});
-   document.querySelectorAll('.overlay.on').forEach(x=>x.classList.remove('on'));
-   document.getElementById('splash-gestao').style.display='none';
-   renderAll();go('dash',document.querySelector('.nav button'));
-   window.PREVIA_ANTES=JSON.stringify(DB);
-  });
-  await g.setViewportSize({width:390,height:844});
-  await g.evaluate(()=>{document.documentElement.style.scrollBehavior='auto';window.scrollTo({top:0,behavior:'instant'});});
-  await g.waitForFunction(()=>window.scrollY===0);
-  await g.addScriptTag({path:path.join(root,'ferramentas/prototipos/voz-gestao.js')});
-  await check('Gestão: prévia isolada do botão de voz preserva dados e fica acima do menu',async()=>{
-   const r=await g.evaluate(()=>{const b=document.getElementById('vzp-abrir').getBoundingClientRect(),n=document.querySelector('.nav').getBoundingClientRect();
-    return {acima:b.bottom<n.top,dentro:b.right<=innerWidth,igual:JSON.stringify(DB)===window.PREVIA_ANTES};});
-   assert.deepEqual(r,{acima:true,dentro:true,igual:true});
-   if(process.env.JV_VISUAL_LOG==='1'){await visual(g,'voz-botao');}
-   await g.locator('#vzp-abrir').click();assert.ok(await g.locator('#vzp-painel').isVisible());
-   assert.equal(await g.evaluate(()=>JSON.stringify(DB)===window.PREVIA_ANTES),true);
-   if(process.env.JV_VISUAL_LOG==='1'){await visual(g,'voz-painel');}
-  });
   await c.close();console.log('\n✅ '+checks+' verificações de Aulas e agenda mensal');
  }catch(e){console.error('❌ '+(e.stack||e));process.exitCode=1;}
  finally{await b.close();server.close();}

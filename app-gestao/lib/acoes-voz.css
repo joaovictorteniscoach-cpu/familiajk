@@ -1,0 +1,34 @@
+/* Ações por voz: folha independente, sem mudar os temas existentes. */
+#voz-atalho[hidden],#voz-menu[hidden],#voz-painel[hidden],#voz-painel [hidden]{display:none!important}
+body.jv-voz-aberto{overflow:hidden!important}
+html body:not(#jv) #voz-atalho{position:fixed;right:max(16px,calc((100vw - 520px)/2 + 16px));bottom:calc(78px + env(safe-area-inset-bottom,0px));z-index:160;width:54px;height:54px;display:grid;place-items:center;border:1px solid #E7C59B;border-radius:50%;background:linear-gradient(135deg,#F6D59B,#C2582E);color:#102A21;-webkit-text-fill-color:#102A21;box-shadow:0 6px 18px #0005;cursor:pointer}
+html body:not(#jv) #voz-atalho svg{width:25px;height:25px;stroke:currentColor;fill:none;stroke-width:2}
+html:not(.tema-saibro) body:not(#jv) #voz-atalho{background:linear-gradient(135deg,#EEF4A0,#D4E157);border-color:#D4E157}
+html body:not(#jv) #voz-painel{position:fixed;inset:0;z-index:1100;display:flex;align-items:flex-end;justify-content:center;padding:16px 12px calc(16px + env(safe-area-inset-bottom,0px));background:#03110dc9;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+html body:not(#jv) #voz-painel .jv-voz-card{width:100%;max-width:496px;max-height:calc(100dvh - 40px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));overflow:auto;overscroll-behavior:contain;background:#102A21;color:#F5F7F1;-webkit-text-fill-color:#F5F7F1;border:1px solid #8D9E88;border-radius:22px;padding:20px;box-shadow:0 20px 70px #0009}
+#voz-painel .jv-voz-head{position:sticky;top:-20px;z-index:2;background:#102A21;padding:20px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin:-20px -20px 12px}
+html body:not(#jv) #voz-painel h2{margin:0;font:800 21px/1.25 'DM Sans',sans-serif;color:#FFF;-webkit-text-fill-color:#FFF}
+html body:not(#jv) #voz-painel p,#voz-painel label{font:500 13px/1.5 'DM Sans',sans-serif;color:#E0E8DD;-webkit-text-fill-color:#E0E8DD;margin:9px 0}
+html body:not(#jv) #voz-painel .jv-voz-help{font-size:12px;color:#D5DFD1;-webkit-text-fill-color:#D5DFD1}
+html body:not(#jv) #voz-painel button{min-height:46px;padding:11px 14px;border:1px solid #89A18D;border-radius:12px;background:#234638;color:#FFF;-webkit-text-fill-color:#FFF;font:800 13px/1.3 'DM Sans',sans-serif;cursor:pointer;box-shadow:none}
+html body:not(#jv) #voz-painel #voz-fechar{min-width:46px;padding:10px;font-size:22px}
+html body:not(#jv) #voz-painel #voz-falar,html body:not(#jv) #voz-painel #voz-confirmar{background:#D4E157;border-color:#D4E157;color:#1E2A0E;-webkit-text-fill-color:#1E2A0E}
+html body:not(#jv) #voz-painel button:disabled{opacity:.55;cursor:not-allowed}
+html body:not(#jv) #voz-painel textarea,html body:not(#jv) #voz-painel select,html body:not(#jv) #voz-painel input[type=date]{display:block;width:100%;min-height:46px;padding:11px;border:1px solid #B4C2AE;border-radius:11px;background:#F8F6EE;color:#203028;-webkit-text-fill-color:#203028;font:500 15px/1.5 'DM Sans',sans-serif;box-sizing:border-box}
+#voz-painel textarea{resize:vertical;margin:6px 0 10px}
+#voz-painel .jv-voz-row{display:flex;gap:9px;flex-wrap:wrap;margin:10px 0}
+#voz-painel .jv-voz-row>*{flex:1 1 135px;min-width:0}
+#voz-painel .jv-voz-campos{border-top:1px solid #58705D;margin:15px 0 0;padding-top:12px}
+#voz-painel .jv-voz-campos label{display:block;margin-bottom:12px}
+#voz-painel .jv-voz-check{display:flex!important;align-items:center;gap:10px;min-height:44px}
+#voz-painel .jv-voz-check input{width:20px;height:20px;accent-color:#D4E157}
+html body:not(#jv) #voz-painel #voz-status{min-height:36px;color:#E5EFDF;-webkit-text-fill-color:#E5EFDF;font-weight:650;margin:12px 0}
+html body:not(#jv) #voz-painel #voz-previa{padding:15px;background:#F8F6EE;border:1px solid #D8DEC9;border-radius:14px;margin:12px 0;color:#203028;-webkit-text-fill-color:#203028}
+html body:not(#jv) #voz-painel #voz-previa *{color:#203028;-webkit-text-fill-color:#203028}
+#voz-painel #voz-previa b{display:block;font-size:17px}
+#voz-painel #voz-confirmar{width:100%}
+#voz-painel :focus-visible,#voz-atalho:focus-visible{outline:3px solid #F4C25D!important;outline-offset:3px}
+#voz-painel .jv-voz-sinal{flex:0 0 30px;width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 25% 25%,#F4DC8B,#DC8753 45%,#4B976D);box-shadow:0 0 0 3px #ffffff10}
+#voz-painel[data-ouvindo=true] .jv-voz-sinal{animation:jv-voz-pulso 1.2s ease-in-out infinite}
+@keyframes jv-voz-pulso{50%{box-shadow:0 0 0 8px #D4E15730;transform:scale(1.08)}}
+@media(prefers-reduced-motion:reduce){#voz-painel *,#voz-atalho{animation:none!important;transition:none!important}}
