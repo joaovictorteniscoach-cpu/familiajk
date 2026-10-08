@@ -15,7 +15,7 @@ deste repositório) não lê o Firebase. Ponte criada sem mexer em regra:
 **Mais → Segurança e dados → Escritório JV → Copiar resumo** gera um JSON
 (`formato: jv-escritorio-resumo`, `versao: 1`) que o João cola no Escritório.
 
-- `resumoParaEscritorio()` só lê. Usa `situacaoMensalidade`/`saldoMensalidade`
+- `resumoParaEscritorio()` só lê. Usa `pendenteDoFechamento`/`saldoMensalidade`
   no **mês de hoje** (`mesReal`, não o mês aberto na tela), `vencDe`,
   `devidoExtraPart/Grupo`, `reposPorIdade`, `viradaPendente` (vira aviso).
   Dependente de família fica fora das mensalidades (cobra o responsável);
@@ -24,13 +24,92 @@ deste repositório) não lê o Firebase. Ponte criada sem mexer em regra:
 - Leva primeiro nome + inicial do sobrenome, `ref` = id interno e telefone de
   quem paga. O Escritório guarda criptografado e **não passa telefone à IA**.
 - Tela usa `fmt()` (respeita valores ocultos); o JSON leva o número real.
-- Teste: `ferramentas/testar-resumo-escritorio-browser.cjs` (fictício). Não
-  está no `checar-tudo.sh`; rode à mão se mexer nessas contas.
+- Teste: `ferramentas/testar-resumo-escritorio-browser.cjs` (fictício), no
+  `validar-pr`. A lista de mensalidades usa `pendenteDoFechamento` (a mesma
+  das Cobranças pendentes do Início, vinda do #226).
 - **Contrato:** mudar campo/nome do JSON exige mudar `src/academia.mjs` do
   Escritório (validação estrita) e a fixture `tests/fixtures/resumo-gestao-exemplo.json` de lá.
 
 Pendente: leitura automática (sem copiar/colar) exige uma regra nova no
 Firebase só de leitura para uma conta do Escritório — depende de autorização do João.
+
+---
+
+## 2026-10-08 · Claude Code: trava de 4h do cancelamento à prova de relógio e fuso
+
+Relato do João: aluna cancelou às 05:24 a aula das 08:00 (2h36 antes). Só existe
+um caminho de cancelamento (`cancelarAula`, reescrito pelo Codex na V8 e
+preservado), mas as duas travas usavam o relógio do celular: no app do aluno
+`horasAte` (relógio e fuso do aparelho) e na Gestão `cancelamentoTardio` com o
+`ts` mandado pelo celular. Celular com relógio atrasado ou em outro fuso (UTC-5
+dá 4h36 para a mesma aula) passava. Versão `2026-10-08-1`.
+
+- **Aluno:** `podeCancelarAula`/`horasParaAula` contam a aula no horário de
+  Brasília (`msAulaBR`, via `Intl` com `America/Sao_Paulo`) contra a hora do
+  servidor (`agoraReal` = relógio + `.info/serverTimeOffset`). Usado nas duas
+  conferências de `cancelarAula`, no botão da lista e no da agenda. O pedido
+  leva `id` e `tsServ` (`ServerValue.TIMESTAMP`); o `id` fica em
+  `MEU.cancelados`.
+- **Gestão:** `quandoAlunoEnviou` usa `tsServ` → hora embutida na chave do
+  `push` (já corrigida pelo servidor, `tsDaChavePush`) → `ts` só em último
+  caso. Cobre também quem ainda está com versão antiga do app.
+- **Retorno à aluna:** com o `id`, a recusa "Cancelamento fora do prazo" agora
+  chega (`respostasReservas`); `conferirRespostasReservas` tira o cancelamento
+  de `MEU.cancelados`, a aula volta a aparecer marcada e ela vê o aviso. Antes
+  a recusa não tinha `id`, a aula sumia só no celular dela. Toast da Gestão
+  lista quem cancelou fora do prazo.
+- Regras do Firebase **não mudaram**: a publicada já aceita campo extra; o
+  emulador (`testar-salvamento-firebase-browser.cjs`, novo assert) confirma
+  `tsServ` numérico. Endurecer (exigir `tsServ == now` na regra) fica como
+  opção futura, só com autorização do João.
+- Teste novo `testar-trava-cancelamento-browser.cjs` (no CI): caso real 05:24
+  × 08:00, fuso UTC-5 e relógio 3h atrasado (a conta antiga liberava), prazo
+  ok, recusa devolvendo a aula, e Gestão não aplicando o tardio. Nenhum dado,
+  saldo ou cadastro alterado.
+- **Depois do relato:** o cancelamento tinha sido feito às 23h da véspera
+  (dentro do prazo); a Gestão só busca avisos aberta e o aviso "cancelou —
+  Aula · 08/10 08:00" chegou às 05:24 sem dizer quando foi enviado. O João
+  pediu para publicar a trava e melhorar o aviso (versão `2026-10-08-2`):
+  `quandoEnviadoTxt` → pop-up "… · enviado ontem às 23:00" e, no sino,
+  "enviado hoje/ontem/dia dd/mm às hh:mm" (antes "recebido", que confundia).
+  O aviso do aluno leva `ts` pela hora do servidor (`agoraReal`). Na lista do
+  sino o texto do aluno passou a ir por `esc()` (antes ia cru no innerHTML).
+
+---
+
+## 2026-10-07 · Claude Code: 2 defeitos corrigidos (#223) e os 3 pedidos de 03/10
+
+- **#223 publicado (versão `2026-10-07-4`):** os dois defeitos da revisão
+  abaixo. `renovacoesLancadasNoMes` conta só os lançamentos do mês para o
+  alarme de duplicados (`renovacoesDoMes` segue igual para o bloqueio);
+  `updatesFilaSemConflito` tira `reserva_X/processado` quando `reserva_X` é
+  apagada no mesmo envio. Teste `testar-fila-renovacao-browser.cjs` (no CI).
+- **3 pedidos (versão `2026-10-07-5`), aprovados por simulação:**
+  (1) Renovar o mês: nome do aluno (`rmNomeLink`) abre a ficha; fechar a ficha
+  volta à renovação com as mesmas marcações (popstate da renovação só fecha
+  quando o estado deixa de ser `renova`); (2) Início: Taxa de ocupação e
+  Locações chamam `verAgendaMes()`; (3) App do aluno: `resumoMesAluno` /
+  `renderResumoMes` no topo da tela Aulas (feitas do mês pelo
+  `PUB.historico`, marcadas pelos fixos/eventos da grade, saldo) e atalho
+  `#cred-page-mes` em Créditos. Só leitura nos dois apps.
+  Teste `testar-3-pedidos-browser.cjs` (relógio fixo, no CI).
+- **Contraste das letras (versão `2026-10-07-6`, pedido do João):** varredura
+  de todas as telas dos dois apps nos dois temas. Corrigido: data das próximas
+  aulas e "Precisa falar com o João?" (letra clara em cartão branco), botão
+  "Falar com o João", aviso e prioridade da Evolução, torneio vazio e "Aulas
+  sem horário" (no Verde clássico ficava letra clara em fundo branco),
+  cabeçalho dos dias da agenda do aluno e botão "Registro" da Avaliação na
+  Gestão (no Saibro, o "meio ar" deixava fundo cinza). Regras no fim do
+  `<style>` do aluno e em `EXTRA`/`EXTRA_ALUNO` do `tema-saibro.py`.
+  Verificação de contraste incluída no `testar-3-pedidos-browser.cjs`.
+  Na `2026-10-07-7`: etiqueta "vence em…" das Cobranças pendentes (Início
+  da Gestão) — `.pend-item span{color:var(--jv-copy-soft)!important}`
+  deixava a letra creme sobre a etiqueta creme; agora `.pend-item .venc-tag`
+  tem letra escura por urgência. Varreduras de contraste devem abrir as
+  seções dobráveis (`.dobra.on`), senão não enxergam essas listas.
+  Ficaram como estão (no limite, 4,4:1): botões brancos sobre o saibro
+  `#C2582E` (cor da marca).
+- Nenhuma migração, nenhuma gravação nova, regras do Firebase intactas.
 
 ---
 
@@ -102,7 +181,7 @@ continua vazio.
 - App **Família JK** (#211–#213, #217): aportes, sincronização entre aparelhos
   (`sync-merge.js`), menu, histórico mensal, recuperação de OFX. Só registro.
 
-### Defeitos confirmados (a corrigir)
+### Defeitos confirmados (corrigidos no #223, ver entrada acima)
 1. **Alarme falso de "CRÉDITOS DUPLICADOS"** — `renovacoesDoMes`
    (`app-gestao.js` ~5217) devolve a marca `ultimaRenovacao` **mais** os
    movimentos "Renovação do mês"; `achadosDoAluno` (~9397) acusa `length>1`.
@@ -152,7 +231,7 @@ continua vazio.
   (sempre chamado com `sh`, sem efeito).
 
 ### Pendências
-- **Pedidos do João ainda não feitos (03/10):** (1) Renovar o mês — nome do
+- **Pedidos do João de 03/10 (feitos em 07/10, ver entrada acima):** (1) Renovar o mês — nome do
   aluno abre a ficha; (2) Início — Taxa de ocupação e Locações abrem a agenda
   **do mês** (hoje abrem a do dia); (3) App do aluno — resumo do mês na tela
   Aulas (pacote, feitas com datas, agendadas, saldo) e atalho fácil até ela.
@@ -174,3 +253,162 @@ app"; aba Segurança e dados; homenagens 1º/2º do torneio; Caixa nova
 (atalhos, receita/despesa com data, desfazer, filtros, busca, faixa do dia);
 tema Saibro + bolinha + vidro nos dois apps, gerado por `tema-saibro.py`, com
 opção "Verde clássico".
+
+
+---
+
+## 2026-10-07 · Codex: coordenação com Claude e avaliação das ações por voz
+
+**Estado: documentação; nenhum botão de voz implementado ou publicado.**
+Base examinada: `e77844a1d440bf13d51a8d47c990045eebc28558`, versão publicada
+**2026-10-07-4**. Consulte `ACOES-POR-VOZ.md` para escopo e evidências.
+
+- #223 do Claude já está publicado: alarme falso de duplicação e conflito de
+  caminhos na limpeza da fila corrigidos. A seção anterior “Defeitos
+  confirmados (a corrigir)” é uma fotografia histórica anterior ao #223.
+- #224 do Claude está aberto, com validar verde no head
+  `57f2083c52ab70f35ac80b7ff4b2971f2fcd636d`, versão proposta
+  **2026-10-07-5**, aguardando o OK de integração solicitado no corpo do PR.
+  A implementação de voz deve considerar essa dependência.
+- Publicação da main e monitor 37695062366 verdes: Gestão Pages, Aluno Pages
+  e Aluno Netlify identificados como 2026-10-07-4. Não auditamos dados reais.
+- AGENTS.md aponta o guia e diário comuns também para Codex, com consulta a
+  PRs concorrentes e distinção entre proposta e publicação.
+- Proposta: bolinha acima da navegação, painel de voz/texto, prévia e
+  confirmação; cancelar uma ocorrência, agendar respeitando capacidade e
+  renovar sem duplicar. Sem nova regra de crédito, pagamento ou Firebase.
+- Arquivos desta entrega: AGENTS.md, ACOES-POR-VOZ.md e esta entrada do
+  diário. Nenhuma alteração nas telas, versões, demo, regras ou dados.
+- Verificação documental: regras e funções citadas conferidas na base acima;
+  PR #224 e monitor público examinados. Compatibilidade de microfone ainda
+  requer teste no aparelho real. CI desta entrega é registrado no próprio PR.
+
+---
+
+## 2026-10-07 · Codex: Aulas do aluno e horários do mês na agenda
+
+**Estado: versão preparada 2026-10-07-6; não publicada.**
+João pediu revisão antes de lançar. A integração na main depende dessa
+confirmação, depois dos testes. Base: `893ecca78f5752d88193ab6e736825760e07769e`.
+
+- Aulas: cada próxima marcação tem Confirmar presença, Cancelar aula e
+  Adicionar ao Google Agenda; acesso pelo cartão do Início, Créditos e Perfil.
+  Particular, grupo, Personal e dependente usam o mesmo acesso.
+- Cancelamento até 4h antes (inclusive exatamente 4h), com nova conferência
+  depois de ler a nuvem; envio deve confirmar na fila antes de mudar o estado
+  local. Só a data escolhida é cancelada, preservando o fixo.
+  Confirmação de presença continua disponível antes do início da aula.
+- Histórico limitado ao mês atual e sem corte de 20/30 aulas. A Gestão
+  publica todas as presenças válidas do mês; nenhuma presença ou saldo é
+  corrigido/regravado por essa mudança.
+- Cartões legíveis nos dois temas e ações com pelo menos 44px de toque.
+  Folha nova `aulas-aluno.css`, carregada depois dos temas e guardada no SW.
+  Os inputs do gerador Saibro não mudaram; folhas geradas permanecem idênticas.
+  Demo regenerada pelo mesmo algoritmo, validado contra a saída anterior.
+- Salvar horários do mês: prévia e um arquivo ICS com eventos individuais,
+  horário de Curitiba, IDs estáveis, sem dados de outro aluno. Eventos do
+  mês, fixos válidos e presenças registradas são deduplicados. Não é
+  sincronização automática com Google; alterações/cancelamentos posteriores
+  precisam ser atualizados na agenda externa.
+- Conferência Google: o Aluno usa autenticação anônima do aparelho e código,
+  não vinculação Google nem autorização de Calendar API. O atalho individual
+  abre um evento preenchido; o aluno precisa salvar. Importação mensal no
+  Google Agenda é feita no computador. Ver `GOOGLE-AGENDA-ALUNO.md`.
+- Coordenação: #224 do Claude permanece separado, aguardando a aprovação
+  pedida no próprio PR. Seu trecho do Aluno toca os mesmos fluxos/versões.
+  Antes de integrá-lo, atualizar a base para preservar as ações desta entrega,
+  o histórico mensal e os acessos; não substituir pelo index antigo.
+  Os dois ajustes de navegação da Gestão do #224 não foram integrados aqui.
+  A versão 2026-10-07-5 do #224 não deve baixar uma versão publicada mais nova.
+- Teste novo `testar-aulas-agenda-aluno-browser.cjs`: período, privacidade,
+  tipos de aluno, prazo exato/fora do prazo, revalidação, erro/atraso da fila,
+  confirmação sem duplicar, ICS mensal, prévia desatualizada e telas nos dois
+  temas em 320/390/520/1280px. Resultado e prints serão registrados no PR.
+
+- Pedido adicional do João: pendências do Início, Caixa e conferência usam
+  a mesma elegibilidade do fechamento (ativos, pagador, pendente/parcial,
+  sem torneio). Status legado `inativo` também fica fora, mesmo com plano
+  ou mensalidade mantidos. A lista oferece Registrar pagamento e, no valor
+  zero, Marcar como pago. Quitação zero é manual e por competência, com
+  versão salva antes, sem receita fictícia, renovação ou mudança de saldos.
+
+- Responsável: Codex. Branch `codex/aulas-aluno-calendario-previa-2026-10-07`,
+  PR #226. As 40 verificações específicas de aulas/agenda/quitacão passaram
+  no commit `2604ffe43d68f58938cff7899afbd3730bbeb91b`; o teste financeiro
+  anterior recebeu seletor explícito do botão de recebimento (a nova opção
+  zero compartilha o estilo). Conferência geral final: consultar a CI do
+  head no PR. Prévia de fala isolada, sem comandos no app publicado.
+  Versão efetivamente publicada continua 2026-10-07-4; esta V6 e #224
+  aguardam as confirmações respectivas, sem integração automática.
+
+
+---
+
+## 2026-10-07 · Codex: revisão solicitada pelo João e integração do trabalho do Claude
+
+**Preparado, não publicado.** PR #226, branch `codex/aulas-aluno-calendario-previa-2026-10-07`.
+Base atual conferida: `893ecca78f5752d88193ab6e736825760e07769e` (V4).
+Trabalho do Claude preservado: #224, head `57f2083c52ab70f35ac80b7ff4b2971f2fcd636d`.
+Esta entrada atualiza a pendência de integração registrada anteriormente.
+
+- Aplicados apenas os trechos ainda ausentes do #224: nome abre ficha na
+  renovação e voltar preserva as marcações; cartões de ocupação/locação abrem
+  o mês; resumo mensal do aluno. Atalho em Créditos reutilizado, um único ID.
+- Resumo reutiliza `historicoAlunoMesAtual` e `aulasAgendadasAluno`: não existe
+  uma segunda projeção de reservas. Exclui duplicatas, pedidos pendentes,
+  cancelados, exceções e outro mês. Plano e saldo consideram particular + grupo.
+- Ações de aulas, prazo de 4h, calendário, histórico mensal, pendências e
+  quitação zero do #226 preservados. Nenhum cadastro, saldo ou regra alterado.
+- CSS de renovação e sua saída Saibro aproveitados do #224, demo regenerada.
+  CSS de resumo fica na folha existente de Aulas, mantendo os inputs do
+  gerador do Aluno intactos. Versão proposta continua V6, nunca retrocede a V5.
+- Teste original dos 3 pedidos reaproveitado, sem criar outro equivalente.
+  Teste de aulas agora verifica também a contagem única e saldo de grupo.
+  CI e capturas devem estar aprovados no head final antes de publicar.
+- O commit de integração inclui o head do #224 como segundo pai, para que
+  a futura integração do #226 reconheça esse trabalho sem publicar V5 à parte.
+  Não fazer merge separado do #224 nem reintroduzir seus arquivos antigos.
+- App Check segue com chave pública vazia; configuração externa pendente em
+  `APP-CHECK.md`. Fala é apenas prévia visual; microfone/comandos não ativados.
+  Publicação aguarda a confirmação do João, conforme pedido anterior.
+
+
+---
+
+## 2026-10-07 · Codex: incluir também o contraste mais recente do Claude
+
+**Preparado, não publicado.** A conferência final encontrou dois novos commits no
+#224 durante os testes: `c60ebe05ba8ae9855684e3fb23b713f9fe82b734` e
+`36fe0780db2172332cb9146cbfeceeae94feb04b`. Incorporados no #226 com o último head
+como segundo pai; preservados fonte, gerador de tema e testes do Claude.
+
+- Incluídas as correções novas de Evolução, contato, estados vazios, cabeçalho
+  da agenda, botão Registro e etiquetas de vencimento. A folha de Aulas mantém
+  os cartões escuros e as ações completas, com contraste medido pelo mesmo teste.
+- Tema do Aluno gerado a partir do mesmo estilo do Claude sem as regras de
+  resumo, que estão na folha externa de Aulas. A equivalência do tema anterior
+  foi conferida; `tema-saibro.py --checar` valida a saída desta integração.
+- Versão consolidada agora **2026-10-07-8**, superior às propostas V6/V7,
+  com os cinco carimbos, reservas offline e demo atualizados juntos.
+- A CI e as capturas do novo head substituem a aprovação do head V6 anterior.
+  Publicação continua dependendo do OK de João; App Check e fala permanecem
+  nas condições descritas na revisão. Não publicar #224 separadamente.
+
+
+---
+
+## 2026-10-08 · Codex: publicação do complemento autorizada pelo João
+
+João autorizou conferir o que já estava no ar e publicar somente o restante.
+O #224 já foi integrado em `5bf600d4e9a0bbc8d99e5a11bbd18a76cd41a4b2`.
+Monitor 37705940943 confirmou V7 em Gestão Pages, Aluno Pages e Aluno Netlify,
+e arquivos do site acessíveis. Todas as correções do Claude foram preservadas.
+
+- O #226 é atualizado sobre essa main, resolvendo a sobreposição de versões
+  com o conteúdo consolidado já validado em `71d4ddd4945519ea3d13054e75a79e3eebbf2543`.
+  Nenhuma implementação do Claude é repetida; o diff passa a ser só o complemento.
+- Versão proposta V8: ações de aulas, histórico mensal, calendário e pendências.
+  A autorização anterior pendente foi atendida. Validar novamente o novo head
+  antes do merge e verificar o monitor após a publicação; evidências no #226.
+- Sem alterações de dados reais ou regras. App Check depende da configuração
+  externa; fala continua protótipo visual isolado.

@@ -40,6 +40,7 @@ jobs:
         env:
           NODE_PATH: ${{ runner.temp }}/jv-browser/node_modules
           PW: ${{ runner.temp }}/jv-browser/node_modules/playwright
+          JV_VISUAL_DIR: ${{ runner.temp }}/previas-aulas-voz
         run: |
           node ferramentas/testar-appcheck-runtime.cjs
           node ferramentas/testar-monitoramento.cjs
@@ -49,6 +50,11 @@ jobs:
           node ferramentas/testar-plano-familia-browser.cjs
           node ferramentas/testar-renovacao-manual-browser.cjs
           node ferramentas/testar-reservas-exclusivas-browser.cjs
+          JV_VISUAL_LOG=1 node ferramentas/testar-aulas-agenda-aluno-browser.cjs
+          node ferramentas/testar-fila-renovacao-browser.cjs
+          node ferramentas/testar-3-pedidos-browser.cjs
+          node ferramentas/testar-trava-cancelamento-browser.cjs
+          node ferramentas/testar-resumo-escritorio-browser.cjs
           node ferramentas/testar-sincronizacao-familiajk.cjs
           JV_VISUAL_LOG=1 node ferramentas/testar-seguranca-pagamentos-browser.cjs
           JV_WIDTHS=390,1280 JV_NO_SCREENSHOTS=1 node ferramentas/testar-premium-browser.cjs
@@ -59,3 +65,10 @@ jobs:
         run: |
           npm install --prefix "$RUNNER_TEMP/jv-emulator" firebase-tools@14.18.0
           "$RUNNER_TEMP/jv-emulator/node_modules/.bin/firebase" emulators:exec --only database --project demo-jv-tenis --config ferramentas/firebase-emulator-teste.json "node ferramentas/testar-salvamento-firebase-browser.cjs"
+
+      - name: Guardar prévias visuais para o João revisar antes da publicação
+        uses: actions/upload-artifact@v4
+        with:
+          name: previas-aulas-voz
+          path: ${{ runner.temp }}/previas-aulas-voz/*.png
+          retention-days: 7

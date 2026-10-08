@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-08-1';
+const VERSAO='2026-10-08-3';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2112,15 +2112,29 @@ function pedidoConfiavel(p){
   const v=VINCULOS[p.uid];
   return !!(v&&v.ativo===true&&String(v.codigo||'')===String(p.codigo||''));
 }
-/* Mesmo prazo do app do aluno. Conta a partir de QUANDO o aluno mandou (ts),
-   não de quando a Gestão sincronizou: um cancelamento feito no prazo continua
-   valendo mesmo que o app do João só abra depois. ts no futuro não conta. */
+/* Mesmo prazo do app do aluno. Conta a partir de QUANDO o aluno mandou, não de
+   quando a Gestão sincronizou: um cancelamento feito no prazo continua valendo
+   mesmo que o app do João só abra depois. O "quando" vem, nesta ordem, da hora
+   do servidor gravada no pedido (tsServ), da hora embutida na chave que o
+   Firebase gera (já corrigida pelo relógio do servidor) e, só em último caso,
+   do relógio do celular (ts) — que pode estar atrasado. Nada no futuro conta. */
 const LIMITE_CANCEL_H_GESTAO=4;
-function cancelamentoTardio(p){
+const CHAVE_PUSH_ALFABETO='-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz';
+function tsDaChavePush(k){
+  if(typeof k!=='string'||k.length!==20)return 0;
+  let t=0;for(let i=0;i<8;i++){const v=CHAVE_PUSH_ALFABETO.indexOf(k[i]);if(v<0)return 0;t=t*64+v;}
+  return t;
+}
+function quandoAlunoEnviou(p,chave){
+  const agora=Date.now(),ok=t=>t>1.6e12&&t<=agora+6e5;
+  const serv=Number(p&&p.tsServ);if(ok(serv))return serv;
+  const ck=tsDaChavePush(chave);if(ok(ck))return ck;
+  return Math.min(Number(p&&p.ts)||agora,agora);
+}
+function cancelamentoTardio(p,chave){
   const aula=new Date(String(p.data||'')+'T'+String(p.hora||'')+':00').getTime();
   if(isNaN(aula))return true;
-  const enviado=Math.min(Number(p.ts)||Date.now(),Date.now());
-  return aula-enviado<LIMITE_CANCEL_H_GESTAO*3600e3;
+  return aula-quandoAlunoEnviou(p,chave)<LIMITE_CANCEL_H_GESTAO*3600e3;
 }
 function datasReserva(data,rec){
   const inicio=new Date(String(data)+'T12:00:00'),hoje=new Date(),lim=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()+90,12);
@@ -2435,15 +2449,15 @@ async function doPublish(){
       alunos:DB.alunos.map(alunoPublicado),
       historico:(function(){
         const codeOf={};DB.alunos.forEach(a=>{codeOf[a.id]=a.codigo;});
-        const cut=dKey(new Date(Date.now()-60*864e5));const out={};
+        const cut=dKey(new Date(hoje.getFullYear(),hoje.getMonth(),1));const fim=dKey(hoje);const out={};
         /* Só aula realizada de verdade: falta e aviso prévio não são aula, e a
            duplicada do cartão é a mesma aula outra vez. Sem este filtro o aluno
            via no app dele um ✓ para o dia que ele avisou que não vinha. */
         const todas=DB.presencas||[];
-        todas.forEach(p=>{const c=codeOf[p.alunoId];if(!c||(p.data&&p.data<cut))return;
+        todas.forEach(p=>{const c=codeOf[p.alunoId];if(!c||!p.data||p.data<cut||p.data>fim)return;
           if(ehMarca(p)||ehDupManual(p,todas))return;
           (out[c]=out[c]||[]).push({data:p.data||'',hora:p.hora||''});});
-        Object.keys(out).forEach(c=>{out[c].sort((a,b)=>String(b.data).localeCompare(String(a.data)));out[c]=out[c].slice(0,30);});
+        Object.keys(out).forEach(c=>{out[c].sort((a,b)=>String(b.data+(b.hora||'')).localeCompare(String(a.data+(a.hora||''))));});
         return out;
       })(),
       grade:{
@@ -2481,6 +2495,20 @@ async function doPublish(){
 }
 /* Importa agendamentos feitos pelos alunos no App do Aluno (fila push do Firebase) */
 let syncing=false;
+/* Pedido aceito e cancelado antes do mesmo sync deixava, no mesmo envio,
+   "reserva_X/processado": true e "reserva_X": null. O Firebase recusa um
+   caminho dentro de outro que está sendo apagado: a fila nunca era limpa e a
+   vaga ficava presa até a data passar. Apagar a chave inteira já cobre o que
+   havia dentro dela, então o caminho interno sai do envio. Só mexe na fila. */
+function updatesFilaSemConflito(u){
+  const out={},apagadas=new Set(Object.keys(u).filter(k=>u[k]===null&&k.indexOf('/')<0));
+  Object.keys(u).forEach(k=>{
+    const i=k.indexOf('/');
+    if(i>0&&apagadas.has(k.slice(0,i)))return;
+    out[k]=u[k];
+  });
+  return out;
+}
 async function syncRequests(silent){
   if(syncing)return;syncing=true;
   if(!hasCloud()){if(!silent)toast('Nuvem (Firebase) não conectada');syncing=false;return;}
@@ -2511,7 +2539,7 @@ async function syncRequests(silent){
         finalizar(key,p,false);return;
       }
       const tipo=p.tor?'torneio':p.grupo===1?'grupo':catAgendaDe(a.tipo);
-      if(p.acao==='cancelar'&&cancelamentoTardio(p)){
+      if(p.acao==='cancelar'&&cancelamentoTardio(p,key)){
         tardios.push((a.nome||'').split(' ')[0]+' '+fmtDataCurta(p.data)+' '+p.hora);
         guardarRespostaReserva(p,'recusado','Cancelamento fora do prazo. Fale com o João.');
         updates[key]=null;return;
@@ -2547,12 +2575,12 @@ async function syncRequests(silent){
       if(!await gravarAgora()){if(!silent)toast('Pedidos mantidos na fila — confirme a gravação da agenda antes de continuar.');return;}
       await doPublish();
       // O SDK usa hasOwnProperty: converter o mapa interno para objeto comum.
-      await ref.update({...updates});
+      await ref.update(updatesFilaSemConflito(updates));
       renderAgenda();
     }
     if(n>0||nc>0)toast('📥 '+n+' reserva(s) · '+nc+' cancelamento(s) de alunos'+(nr?' · '+nr+' recusado(s) por conflito':''));
     else if(!silent&&!tardios.length)toast(nb?'Há '+nb+' solicitação(ões) aguardando vínculo do aparelho':nr?'Horário indisponível: pedido recusado e aluno avisado':'Nenhuma novidade de alunos');
-    if(tardios.length)toast('⚠️ Cancelamento fora do prazo não aplicado — confira com o aluno.');
+    if(tardios.length)toast('⚠️ Cancelamento fora do prazo não aplicado (a aula continua na agenda): '+tardios.join(', '));
   }catch(e){if(!silent)toast('Não consegui confirmar a sincronização. Os pedidos ainda serão conferidos.');}
   finally{syncing=false;}
 }
@@ -2684,6 +2712,17 @@ function pintarAvisos(){
 }
 function pedirPermissaoNotif(){pintarAvisos();}
 function notificarNavegador(txt){mostrarAviso('Academia JV Tênis 🎾',txt,'jv-icone-gestao.png');}
+/* Quando o aluno mandou, em palavras. A Gestão só busca os avisos quando está
+   aberta: um cancelamento feito às 23h aparece de manhã e, sem a hora, parecia
+   ter sido feito agora, dentro do prazo de 4h. */
+function quandoEnviadoTxt(ts){
+  const d=new Date(Number(ts)||0);if(!Number(ts)||isNaN(d.getTime()))return '';
+  const hm=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  const h=new Date(),ontem=new Date(h.getFullYear(),h.getMonth(),h.getDate()-1,12);
+  if(dKey(d)===dKey(h))return 'hoje às '+hm;
+  if(dKey(d)===dKey(ontem))return 'ontem às '+hm;
+  return 'dia '+String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+' às '+hm;
+}
 function textoNotif(n){
   if(n.acao==='resultado')return '🏆 '+(n.nome||'Aluno')+': '+(n.texto||'enviou um resultado');
   if(n.texto)return '🛒 '+(n.nome||'Aluno')+': '+n.texto;
@@ -2702,7 +2741,7 @@ async function carregarNotifs(){
     const max=NOTIF.length?NOTIF[0].ts:0;
     if(!notifPrimeira&&max>notifMax){
       const novas=NOTIF.filter(n=>n.ts>notifMax);
-      novas.slice(0,3).forEach(n=>notificarNavegador(textoNotif(n)));
+      novas.slice(0,3).forEach(n=>{const q=quandoEnviadoTxt(n.ts);notificarNavegador(textoNotif(n)+(q?' · enviado '+q:''));});
       if(novas.length)toast('🔔 '+novas.length+' novo(s) aviso(s) de alunos');
     }
     notifMax=Math.max(notifMax,max);notifPrimeira=false;
@@ -2727,12 +2766,11 @@ function renderNotifList(){
   const el=document.getElementById('notif-list');if(!el)return;
   if(!NOTIF.length){el.innerHTML='<div class="empty">Nenhum aviso ainda. Quando um aluno reservar ou cancelar, aparece aqui.</div>';return;}
   el.innerHTML=NOTIF.map((n,i)=>{
-    const q=new Date(n.ts);
-    const hm=String(q.getHours()).padStart(2,'0')+':'+String(q.getMinutes()).padStart(2,'0');
     const cor=n.acao==='cancelou'?'var(--c-bloq)':'var(--c-loc)';
     const vai=destinoNotif(n);
+    // nome e texto vêm do aluno: esc() antes de ir para a tela
     return `<div class="mov${vai?' mov-vai':''}" style="border-left:4px solid ${cor}"${vai?` onclick="irDoAviso(${i})"`:''}>`
-      +`<div class="mov-l"><b>${textoNotif(n)}</b><span>recebido ${String(q.getDate()).padStart(2,'0')}/${String(q.getMonth()+1).padStart(2,'0')} ${hm}</span></div>`
+      +`<div class="mov-l"><b>${esc(textoNotif(n))}</b><span>enviado ${quandoEnviadoTxt(n.ts)}</span></div>`
       +(vai?'<span class="mov-seta">›</span>':'')+'</div>';
   }).join('');
 }
@@ -5222,6 +5260,16 @@ function renovacoesDoMes(a){
   if(r&&(r.mes||mesDoTs(r.ts))===m)return [{ts:r.ts,motivo:r.origem==='manual'?'Renovação manual confirmada':'Renovação do mês'},...c,...g];
   return c.length?c:g;
 }
+/* Renovações que de fato LANÇARAM créditos no mês (uma por renovação). A marca
+   `ultimaRenovacao` que renovacoesDoMes acrescenta serve para bloquear uma
+   segunda renovação — contá-la aqui fazia toda renovação normal aparecer como
+   "CRÉDITOS DUPLICADOS" em Conferir números. Só leitura. */
+function renovacoesLancadasNoMes(a){
+  const m=mesReal();
+  const doMes=campo=>movsDe(a.id,campo).filter(x=>String(x.motivo||'').indexOf('Renovação do mês')===0&&mesDoTs(x.ts)===m);
+  const c=doMes('creditos');
+  return c.length?c:doMes('credGrupo');
+}
 /* Ajuste no cadastro pode ser uma renovação ou apenas uma correção. Não inferir
    pelo saldo: pedir que o João escolha, sem alterar créditos nem reposições. */
 function ajusteManualRenovacao(a){
@@ -5402,6 +5450,11 @@ function resumoPagamentoExato(){
   const a=DB.alunos.find(x=>x.id===PM_CTX.id),mk=document.getElementById('pm-mes').value;
   const total=valorMensalidadeEm(a,mk),anterior=Number(document.getElementById('pm-anterior').value)||0;
   const novo=Number(document.getElementById('pm-valor').value)||0;
+  const semValor=centavosPagamento(total)===0&&situacaoMensalidade(a,mk).status!=='pago'&&!PM_CTX.pedidoKey;
+  document.getElementById('pm-sem-valor').style.display=semValor?'':'none';
+  document.getElementById('pm-confirmar').style.display=semValor?'none':'';
+  document.getElementById('pm-valor').disabled=semValor;
+  document.getElementById('pm-metodo').disabled=semValor;
   const box=document.getElementById('pm-resumo');
   box.innerHTML='<span>Mensalidade <b>'+fmt(total)+'</b></span><span>Já recebido <b>'+fmt(anterior)+'</b></span>'
     +'<span>Após este pagamento, falta <b>'+fmt(Math.max(0,total-anterior-novo))+'</b></span>';
@@ -5452,6 +5505,28 @@ async function finalizarAvisosPagos(){
   }
 }
 
+/* Quitação manual de mensalidade zero: sem receita fictícia nem renovação. */
+function quitarMensalidadeSemValor(){
+  if(!PM_CTX)return false;
+  const a=DB.alunos.find(x=>x.id===PM_CTX.id),mk=document.getElementById('pm-mes').value;
+  if(!a||ehDependenteFamilia(a)||PM_CTX.pedidoKey||!/^\d{4}-(0[1-9]|1[0-2])$/.test(mk)){
+    toast('Confira o aluno e a competência.');return false;
+  }
+  const q=situacaoMensalidade(a,mk);
+  if(centavosPagamento(q.total)!==0){toast('Esta mensalidade tem valor. Use Registrar pagamento.');return false;}
+  if(q.status==='pago'){toast('Este mês já está marcado como pago.');return false;}
+  if(!confirm('Marcar a mensalidade de '+a.nome+' como paga em '+mk+'?\n\nO valor deste mês é R$ 0,00. Nenhum recebimento será lançado na Caixa. Aulas, créditos e reposições permanecem como estão.'))return false;
+  if(centavosPagamento(valorMensalidadeEm(a,mk))!==0)return false;
+  guardarVersoes(JSON.stringify(DB));
+  if(!a.pagamentosExatos)a.pagamentosExatos={};
+  if(!a.pagamentosExatos[mk])a.pagamentosExatos[mk]={ajusteAnterior:0,recebidoAnterior:0,criadoEm:Date.now()};
+  a.pagamentosExatos[mk].quitacaoSemRecebimentoEm=Date.now();
+  atualizarSituacaoExata(a,mk);
+  logAct('Mensalidade sem valor marcada como paga: '+a.nome+' · competência '+mk);
+  PM_CTX=null;closeModal('ov-pagamento-exato');persist();renderAll();
+  if(fichaId===a.id)renderFicha(a.id);
+  toast('Mensalidade marcada como paga · sem recebimento na Caixa');return true;
+}
 function marcarPago(id){registrarPagamento(id);}
 /* A virada de mês NÃO acontece mais sozinha.
    Antes, abrir o app no dia 1 convertia a sobra de todo mundo em reposição e
@@ -5791,6 +5866,9 @@ function rmLinhas(){
   return (DB.alunos||[]).filter(ehAtivoAluno).filter(a=>perfilDe(a)!=='torneio').map(rmLinha)
     .sort((x,y)=>(!!y.atencao-!!x.atencao)||(!!x.bloqueio-!!y.bloqueio)||x.a.nome.localeCompare(y.a.nome));
 }
+/* Em Renovar o mês, o nome abre a ficha do aluno por cima da lista; fechar a
+   ficha volta para a lista com as mesmas marcações. Só navegação. */
+function rmNomeLink(a){return '<span class="rm-link" role="button" onclick="abrirFicha(\''+argJs(a.id)+'\')">'+esc(a.nome)+' ›</span>';}
 function abrirRenovaMes(){
   rmSel={};rmEscolha={};rmFeitos=null;rmAgCache={};
   rmLinhas().forEach(x=>{rmSel[x.a.id]=!x.bloqueio;});
@@ -5811,7 +5889,8 @@ function fecharRenovaMes(){
   esconderRenovaMes();
   try{if(history.state&&history.state.renova)history.back();}catch(e){}
 }
-window.addEventListener('popstate',()=>{if(rmAberta)esconderRenovaMes();});
+// Voltar da ficha preserva a renovação e suas marcações.
+window.addEventListener('popstate',()=>{if(rmAberta&&!(history.state&&history.state.renova))esconderRenovaMes();});
 function rmMarcar(id,v){rmSel[id]=!!v;renderRenovaMes();}
 function rmUsar(id,qual){rmEscolha[id]=qual;renderRenovaMes();}
 function rmQtdTxt(n,pg,grupoSo){
@@ -5835,7 +5914,7 @@ function renderRenovaMes(){
     let t='<div class="rm-row'+(x.bloqueio&&!x.ajusteManual?' bloq':'')+((x.atencao||x.ajusteManual)?' at':'')+((on||x.ajusteManual)?'':' off')+'">';
     t+=x.bloqueio?'<span class="rm-chk dis">🔒</span>'
       :'<label class="rm-chk"><input type="checkbox" '+(on?'checked':'')+' onchange="rmMarcar(\''+id+'\',this.checked)"></label>';
-    t+='<div class="rm-info"><div class="rm-nome"><span>'+esc(a.nome)+'</span><b>'+fmt(x.novo.mens)+'</b></div>';
+    t+='<div class="rm-info"><div class="rm-nome">'+rmNomeLink(a)+'<b>'+fmt(x.novo.mens)+'</b></div>';
     if(x.bloqueio){
       t+='<div class="rm-aviso">'+esc(x.bloqueio)+'</div>';
       if(x.ajusteManual)t+='<div class="rm-esc"><button onclick="rmConfirmarManual(\''+argJs(id)+'\')">✓ Já renovei manualmente</button>'
@@ -5948,7 +6027,7 @@ function renderRenovaEnvio(box,nomeMes){
     const feito=!!rmFeitos.enviados[a.id];
     const pg=Number(a.planoGrupo)||0;
     return '<div class="rm-row'+(feito?' off':'')+'"><span class="rm-chk dis">'+(feito?'✓':'📲')+'</span><div class="rm-info">'
-      +'<div class="rm-nome"><span>'+esc(a.nome)+'</span><b>'+fmt(valorDoMes(a))+'</b></div>'
+      +'<div class="rm-nome">'+rmNomeLink(a)+'<b>'+fmt(valorDoMes(a))+'</b></div>'
       +'<div class="rm-l">'+rmQtdTxt(Number(a.creditos)||0,pg>0?(Number(a.credGrupo)||0):0,ehGrupoTipo(a.tipo))+' · 🔁 '+fmtCred(Number(a.repos)||0)+' reposição(ões)</div>'
       +(a.tel?'<button class="fic-b wa rm-env" onclick="rmEnviar(\''+a.id+'\')">'+(feito?'Enviar de novo':'📲 Enviar no WhatsApp')+'</button>'
              :'<div class="rm-aviso">sem telefone no cadastro</div>')
@@ -6656,7 +6735,7 @@ let filtroPag='todos';                     // todos · pendentes · pagos
 function passaFiltroPag(a,f){
   const s=situacaoPag(a);
   if(f==='pagos')return s==='pago';
-  if(f==='pendentes')return s==='pendente'||s==='parcial';
+  if(f==='pendentes')return pendenteDoFechamento(a,monthKey());
   return true;
 }
 function setFiltroPag(f){
@@ -6706,7 +6785,7 @@ function renderFiltroPag(base){
 function renderTotalAlunos(items){
   const el=document.getElementById('alunos-total');if(!el)return;
   const pagos=items.filter(a=>situacaoPag(a)==='pago').length;
-  const pend=items.filter(a=>{if(ehDependenteFamilia(a))return false;const s=situacaoPag(a);return s==='pendente'||s==='parcial';});
+  const pend=items.filter(a=>pendenteDoFechamento(a,monthKey()));
   const falta=pend.reduce((t,a)=>t+saldoMensalidade(a),0);
   el.innerHTML='<b>'+items.length+'</b> aluno'+(items.length===1?'':'s')+' na seleção'
     +' · <span class="ok">'+pagos+' pago'+(pagos===1?'':'s')+'</span>'
@@ -6815,6 +6894,7 @@ function esconderFicha(){
   const f=document.getElementById('ficha-aluno');
   if(f){f.classList.remove('on');f.setAttribute('aria-hidden','true');}
   if(!rmAberta)document.body.classList.remove('ficha-on');
+  else{try{renderRenovaMes();}catch(e){}}
 }
 function fecharFicha(){
   if(!fichaId)return;
@@ -7553,7 +7633,7 @@ function renderDash(){
   const movs=DB.lancamentos.filter(l=>l.mes===monthKey());
   const recebido=movs.filter(l=>l.valor>0).reduce((s,l)=>s+l.valor,0);
   // inativo não faz aula nem paga mensalidade: não entra no "A receber"
-  const pendAlunos=DB.alunos.filter(a=>!ehDependenteFamilia(a)&&statusFinanceiro(a)!=='pago'&&ehAtivoAluno(a));
+  const pendAlunos=DB.alunos.filter(a=>pendenteDoFechamento(a,monthKey()));
   const pendValor=pendAlunos.reduce((s,a)=>s+(saldoMensalidade(a)),0);
   const creditos=DB.alunos.reduce((s,a)=>s+a.creditos,0);
   const repos=DB.alunos.reduce((s,a)=>s+a.repos,0);
@@ -7623,7 +7703,8 @@ function renderDash(){
     <div class="pend-item ${a.status}">
       <div><b>${esc(a.nome)}</b><br><span>${statusFinanceiro(a)==='parcial'?'Pagamento parcial — falta '+fmt(saldoMensalidade(a)):'Pendente — '+fmt(saldoMensalidade(a))}</span>
         <span class="venc-tag ${r.cls}">${r.txt}${d!==null?(' · dia '+((a.diaVenc)||10)):''}</span></div>
-      ${a.tel?`<button class="btn btn-ghost" style="padding:7px 11px;font-size:11px" onclick="cobrar('${a.id}')">Cobrar 📲</button>`:''}
+      <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-clay" style="min-height:44px;padding:7px 11px;font-size:11px" onclick="marcarPago('${argJs(a.id)}')">${valorDoMes(a)===0?'Marcar como pago':'Registrar pagamento'}</button>
+      ${a.tel&&saldoMensalidade(a)>0?`<button class="btn btn-ghost" style="min-height:44px;padding:7px 11px;font-size:11px" onclick="cobrar('${argJs(a.id)}')">Cobrar 📲</button>`:''}</div>
     </div>`;}).join('');
   }
   renderConselhos();
@@ -7640,7 +7721,7 @@ function renderConselhos(){
   const alunos=DB.alunos||[];
 
   // 1. mensalidades vencidas / vencendo
-  const pend=alunos.filter(a=>!ehDependenteFamilia(a)&&statusFinanceiro(a)!=='pago'&&ehAtivoAluno(a)&&(Number(a.mensalidade)||0)>0);
+  const pend=alunos.filter(a=>pendenteDoFechamento(a,monthKey())&&(Number(a.mensalidade)||0)>0);
   const venc=pend.filter(a=>{const d=vencDe(a);return d!==null&&d<0;});
   if(venc.length){
     const tot=venc.reduce((s,a)=>s+(saldoMensalidade(a)),0);
@@ -7947,7 +8028,7 @@ function renderFin(){
   const prevAg=DB.alunos.reduce((s,a)=>s+mensalidadeDaAgenda(a,curYear,curMonth).valor,0);
   const elPA=document.getElementById('f-prev-agenda');
   if(elPA)elPA.textContent=fmt(prevAg);
-  const inad=DB.alunos.filter(a=>!ehDependenteFamilia(a)&&statusFinanceiro(a)!=='pago'&&ehAtivoAluno(a)).reduce((s,a)=>s+(saldoMensalidade(a)),0);
+  const inad=DB.alunos.filter(a=>pendenteDoFechamento(a,monthKey())).reduce((s,a)=>s+(saldoMensalidade(a)),0);
   document.getElementById('f-inad').textContent=fmt(inad);
   const mi=document.getElementById('meta-input');
   if(hideVals){mi.type='text';mi.value='••••';mi.readOnly=true;}
@@ -9394,7 +9475,7 @@ function achadosDoAluno(a){
     if(mens.length>1&&!(a.pagamentosExatos&&a.pagamentosExatos[monthKey()]))achados.push({tipo:'dup',a,
       txt:'COBRANÇA DUPLICADA: '+a.nome+' tem '+mens.length+' mensalidades lançadas neste mês ('+mens.map(l=>fmt(l.valor)).join(' + ')+'). Se foi engano, apague a repetida na Caixa.'});
     // DUPLICIDADE 2: renovação de créditos repetida no mês
-    const rn=renovacoesDoMes(a);
+    const rn=renovacoesLancadasNoMes(a);
     if(rn.length>1)achados.push({tipo:'dup',a,
       txt:'CRÉDITOS DUPLICADOS: '+a.nome+' foi renovado '+rn.length+'x neste mês, somando '+fmtCred(rn.reduce((t,x)=>t+(Number(x.delta)||0),0))+' crédito(s). O plano dele é de '+(Number(a.plano)||0)+'.'});
     // DUPLICIDADE 3: duas presenças no mesmo dia e hora
@@ -9434,7 +9515,7 @@ function conferirNumeros(){
       txt:'LANÇAMENTO REPETIDO: '+g2.length+'x "'+(g2[0].desc||'')+'" de '+fmt(g2[0].valor)+' no mesmo dia ('+String(g2[0].data||'').split('-').reverse().join('/')+'). Confira na Caixa se não foi toque duplo.'});
   });
   // "a receber" do painel contra a soma aluno a aluno
-  const soma=(DB.alunos||[]).filter(a=>!ehDependenteFamilia(a)&&statusFinanceiro(a)!=='pago'&&ehAtivoAluno(a))
+  const soma=(DB.alunos||[]).filter(a=>pendenteDoFechamento(a,monthKey()))
     .reduce((s,a)=>s+(saldoMensalidade(a)),0);
   const cab='<div class="cons info"><h4><span>🔎</span>Esta tela não altera nada</h4>'
     +'<p>Ela só mostra. Nenhum botão aqui mexe em crédito, saldo ou aula — quando algo precisar ser acertado, você acerta no cadastro do aluno.</p></div>'
@@ -9473,7 +9554,7 @@ function abrirFerr(box,fn){
 /* ===== Resumo para o Escritório JV =====
    O Escritório JV (os agentes de IA, em outro endereço) não lê este banco. A
    ponte é este resumo: sai das mesmas contas da tela Início — mensalidade por
-   competência (situacaoMensalidade/saldoMensalidade), vencimento (vencDe),
+   competência (pendenteDoFechamento/saldoMensalidade), vencimento (vencDe),
    aula além do pacote (devidoExtra*), reposição por idade (reposPorIdade) —
    sempre no mês de hoje, não no mês que estiver aberto na tela. Dependente de
    família não entra: quem paga é o responsável. Só lê; não muda nenhum dado.
@@ -9491,10 +9572,9 @@ function mesAnteriorDe(mk){const p=mk.split('-').map(Number),d=new Date(p[0],p[1
 function resumoParaEscritorio(){
   const mk=mesReal(), alunos=DB.alunos||[], ativos=alunos.filter(ehAtivoAluno);
   const cent=v=>Math.round((Number(v)||0)*100)/100;
-  const cobrancas=ativos.filter(a=>!ehDependenteFamilia(a)).map(a=>{
-    const s=situacaoMensalidade(a,mk);
-    return {a,s,falta:saldoMensalidade(a,mk)};
-  }).filter(x=>x.s.status!=='pago'&&x.falta>0).map(x=>({
+  // mesma regra das Cobranças pendentes do Início (pendenteDoFechamento: sem dependente, inativo ou torneio)
+  const cobrancas=alunos.filter(a=>pendenteDoFechamento(a,mk)).map(a=>({a,s:situacaoMensalidade(a,mk),falta:saldoMensalidade(a,mk)}))
+  .filter(x=>x.falta>0).map(x=>({
     ref:refEscritorio(x.a),nome:nomeCurtoEscritorio(x.a.nome),valor:cent(x.falta),
     situacao:x.s.status==='parcial'?'parcial':'pendente',diasParaVencer:vencDe(x.a),
     familia:dependentesFamilia(x.a).length>0,telefone:foneEscritorio(x.a)

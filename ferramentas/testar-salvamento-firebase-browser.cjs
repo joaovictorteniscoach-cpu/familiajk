@@ -348,7 +348,10 @@ let count=0;async function check(name,fn){await fn();count++;console.log('✅ SD
    assert.equal(q['reserva_'+data+'_0900'].processado,true,JSON.stringify(estadoSync));
    assert.equal(JSON.parse(no.agenda).eventos.length,1);
    await assert.rejects(aluno2.evaluate(p=>enviarReservaUnica(p,false),pedido('recusada','9902')));
-   await unauthorized.evaluate(async p=>{await fbDB.ref('jvtenis/fila_agendamentos').push({...p,acao:'cancelar',uid:authUid()});},pedido('cancelar-duravel'));
+   await unauthorized.evaluate(async p=>{await fbDB.ref('jvtenis/fila_agendamentos').push({...p,acao:'cancelar',uid:authUid(),tsServ:firebase.database.ServerValue.TIMESTAMP});},pedido('cancelar-duravel'));
+   // A regra publicada aceita a hora do servidor no cancelamento (base da trava de 4h na Gestão).
+   const qc=await admin('jvtenis/fila_agendamentos');
+   assert.ok(Object.values(qc).some(x=>x.acao==='cancelar'&&typeof x.tsServ==='number'&&Math.abs(x.tsServ-Date.now())<6e5),JSON.stringify(qc));
    await gest.evaluate(()=>syncRequests(true));
    assert.equal(JSON.parse((await admin('jvtenis/v2')).agenda).eventos.length,0);
    assert.equal(await admin('jvtenis/fila_agendamentos'),null);

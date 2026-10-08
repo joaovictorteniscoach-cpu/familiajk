@@ -26,6 +26,7 @@ await p.evaluate(()=>{persist=()=>{};window.open=()=>null;hideVals=false;
     {...base,id:'f2',nome:'Davi Dependente Teste',creditos:-1,status:'pendente',tel:'41999990004',responsavelId:'f1',mensalidade:0,valorAula:150},
     {...base,id:'n1',nome:'Gil Sem Preco Teste',plano:0,creditos:-2,status:'pendente',tel:'41999990006',mensalidade:0},
     {...base,id:'i1',nome:'Eva Inativa Teste',creditos:0,status:'pendente',tel:'41999990005',arquivado:true},
+    {...base,id:'s1',nome:'Hugo Status Inativo Teste',creditos:0,status:'inativo',tel:'41999990007'},
     {...base,id:'r1',nome:'Fabio Teste',creditos:1,repos:2,status:'parcial',tel:'',mensalidade:400}
   ];
   DB.lancamentos=[];DB.meta=5000;
@@ -38,13 +39,13 @@ ok('formato e mês de hoje',R.formato==='jv-escritorio-resumo'&&R.versao===1&&R.
 ok('pendente entra com valor do app e telefone com país',por('p1')&&por('p1').valor===640&&por('p1').telefone==='5541999990001'&&por('p1').nome==='Ana T.',por('p1'));
 ok('quem pagou não entra',!por('p2'));
 ok('família: responsável entra marcado, dependente não',por('f1')&&por('f1').familia===true&&por('f1').valor===900&&!por('f2'),R.cobrancas);
-ok('inativo não entra',!por('i1'));
+ok('inativo não entra (arquivado ou com situação inativo)',!por('i1')&&!por('s1'));
 ok('parcial: só o que falta, sem telefone quando não há',por('r1')&&por('r1').situacao==='parcial'&&por('r1').valor===200&&por('r1').telefone==='',por('r1'));
 const ex=ref=>R.extras.find(x=>x.ref===ref);
 ok('aula além do pacote do dependente, cobrada de quem paga',ex('f2')&&ex('f2').aulas===1&&ex('f2').valor===150&&ex('f2').pagador==='Carla T.'&&ex('f2').telefone==='5541999990003',R.extras);
 ok('aula além do pacote sem preço cadastrado entra com valor 0 (não some)',ex('n1')&&ex('n1').aulas===2&&ex('n1').valor===0&&R.extras.length===2,R.extras);
 ok('reposição válida',R.reposicoes.some(x=>x.ref==='r1'&&x.quantidade===2),R.reposicoes);
-ok('totais batem com as listas',R.totais.mensalidadesPendentes===3&&R.totais.valorPendente===1740&&R.totais.alunosAtivos===5&&R.totais.meta===5000,R.totais);
+ok('totais batem com as listas',R.totais.mensalidadesPendentes===3&&R.totais.valorPendente===1740&&R.totais.alunosAtivos===6&&R.totais.meta===5000,R.totais);
 ok('só primeiro nome e inicial: nenhum sobrenome completo',!JSON.stringify(R).includes('Maria')&&!JSON.stringify(R).includes('Responsavel'));
 await p.evaluate(()=>{curMonth=(curMonth+11)%12;if(curMonth===11)curYear--;});
 const R2=await p.evaluate(()=>resumoParaEscritorio());

@@ -1,0 +1,58 @@
+/* Aulas do aluno: ações completas e leitura consistente nos dois temas. */
+#apg-aulas .aul-intro{font-size:13px;line-height:1.5;color:#E9E4D9;-webkit-text-fill-color:#E9E4D9;margin:0 0 16px}
+#apg-aulas .mine-item{display:block!important;background:#102A21!important;border:1px solid #506558!important;border-left:4px solid #D4E157!important;padding:15px!important;border-radius:14px!important;margin:0 0 12px!important;color:#FFF!important}
+#apg-aulas .aul-info b{font-size:17px;line-height:1.4;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+#apg-aulas .aul-info span{display:block;font-size:12px;line-height:1.5;color:#DFE7E1!important;-webkit-text-fill-color:#DFE7E1!important;margin-top:3px}
+#apg-aulas .mine-act{display:flex!important;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:stretch}
+#apg-aulas .mine-act button{min-height:44px;flex:1 1 125px;font-size:12px;font-weight:800;padding:10px 12px;border-radius:10px;white-space:normal;line-height:1.25}
+#apg-aulas .aul-confirm{background:#D4E157!important;border:1px solid #D4E157!important;color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important}
+#apg-aulas .aul-confirm.ok{background:#234638!important;border-color:#82B89D!important;color:#EAF8EE!important;-webkit-text-fill-color:#EAF8EE!important;opacity:1}
+#apg-aulas .mini-cancel{background:#FCE7E0!important;border-color:#E2B9A9!important;color:#752C15!important;-webkit-text-fill-color:#752C15!important}
+#apg-aulas .mini-cal{flex-basis:100%!important;background:#1C392D!important;border-color:#88A18E!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+#apg-aulas .mine-act button:disabled:not(.ok){opacity:.62;cursor:not-allowed}
+#apg-aulas .aul-prazo,#apg-aulas .aul-status{font-size:12px;line-height:1.5;color:#E1E5DD!important;-webkit-text-fill-color:#E1E5DD!important;margin:10px 0 0}
+#apg-aulas .mine-act .aul-status{flex-basis:100%;margin:0 0 2px}
+#apg-aulas .hist-card{background:#102A21!important;border:1px solid #506558!important;border-radius:14px;overflow:hidden}
+#apg-aulas .hist-row{background:transparent!important;border-color:#496154!important}
+#apg-aulas .hist-row .hr-d{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+#apg-aulas .hist-row .hr-h{color:#E1E9E2!important;-webkit-text-fill-color:#E1E9E2!important}
+#apg-aulas .hist-row .hr-ico{color:#D4E157!important;-webkit-text-fill-color:#D4E157!important}
+#apg-creditos #cred-page-mes{display:block;width:100%;min-height:48px;text-align:left;padding:14px 15px;margin-top:16px;border:1px solid #88A18E;border-radius:14px;background:#102A21;color:#FFF;-webkit-text-fill-color:#FFF;font:700 13px/1.5 'DM Sans',sans-serif}
+
+#apg-aulas .aul-calendar-note{font-size:12px;margin:16px 0 0}
+
+#apg-aulas #aul-cal-abrir{width:100%;min-height:48px;padding:12px;margin:12px 0 16px;border-radius:11px;background:#D4E157;border:1px solid #D4E157;color:#1E2A0E;-webkit-text-fill-color:#1E2A0E;font:800 13px/1.4 'DM Sans',sans-serif}
+html body:not(#jv) #ov-aulas-cal .aul-cal-modal{background:#F9F6EF!important;color:#203128!important;-webkit-text-fill-color:#203128!important;max-height:86vh;overflow:auto}
+html body:not(#jv) #ov-aulas-cal h3,html body:not(#jv) #ov-aulas-cal p,html body:not(#jv) #ov-aulas-cal li{color:#203128!important;-webkit-text-fill-color:#203128!important}
+html body:not(#jv) #ov-aulas-cal p{font-size:13px;line-height:1.5;margin:12px 0}
+html body:not(#jv) #ov-aulas-cal ul{max-height:220px;overflow:auto;padding:12px 12px 12px 30px;background:#E9EDE3;border:1px solid #B6C0B1;border-radius:10px;font-size:14px;line-height:1.8}
+html body:not(#jv) #ov-aulas-cal .aul-cal-note{font-size:12px}
+html body:not(#jv) #ov-aulas-cal .aul-cal-actions{display:flex;gap:8px;flex-wrap:wrap}
+html body:not(#jv) #ov-aulas-cal .aul-cal-actions button{flex:1 1 140px;min-height:44px}
+html body:not(#jv) #ov-aulas-cal #aul-cal-baixar{background:#324C25!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important;border:1px solid #324C25}
+
+body[data-aba="aulas"] #lembrete-box{display:none!important}
+
+html body:not(#jv) #ov-aulas-cal .aul-cal-actions .btn-ghost{background:#E7E4D9!important;border:1px solid #A5AD9F!important;color:#203128!important;-webkit-text-fill-color:#203128!important;opacity:1!important;box-shadow:none!important}
+
+/* Resumo do mês (tela Aulas e atalho em Créditos) */
+.amr-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:6px 0 10px}
+.amr-nums div{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:9px 6px;text-align:center}
+.amr-nums b{display:block;font-size:24px;font-weight:850;color:#fff;line-height:1.1}
+.amr-nums span{font-size:11.5px;color:#D8D2C7}
+.amr-plano{font-size:13px;color:#D8D2C7;margin:0 0 10px}
+.amr-plano b{color:#fff}
+.amr-bloco{margin-top:10px}
+.amr-bloco>b{display:block;font-size:13px;color:#fff;margin-bottom:6px}
+.amr-dias{display:flex;flex-wrap:wrap;gap:6px}
+.amr-dia{font-size:12.5px;font-weight:700;padding:5px 9px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#F6F2EA}
+.amr-vazio{font-size:12.5px;color:#BDB6A9}
+.amr-nota{font-size:11.5px;color:#BDB6A9;margin:12px 0 0}
+.amr-atalho{display:block;width:100%;text-align:left;cursor:pointer;font:inherit;color:inherit}
+.amr-ver{margin-top:8px;font-size:13px;font-weight:800;color:#E8B83E}
+
+#apg-aulas .amr{background:#102A21!important;border:1px solid #506558!important;border-radius:14px;padding:18px;margin-bottom:16px}
+#apg-aulas .amr b,#apg-aulas .amr-bloco>b{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+#apg-aulas .amr span,#apg-aulas .amr-plano,#apg-aulas .amr-nota{color:#DFE7E1!important;-webkit-text-fill-color:#DFE7E1!important}
+#apg-aulas .amr-dias{max-height:120px;overflow:auto}
+#apg-creditos #cred-page-mes .jv-pay-lbl,#apg-creditos #cred-page-mes .jv-row,#apg-creditos #cred-page-mes .amr-ver{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
