@@ -21,12 +21,12 @@ async function visual(p,n){if(!process.env.JV_VISUAL_DIR)return;const png=await 
    await c.route('**/*',r=>{const u=new URL(r.request().url());if(u.origin!==base)return r.abort();if(u.pathname.includes('/lib/firebase-'))return r.fulfill({body:'',contentType:'text/javascript'});return r.continue();});
    await c.addInitScript(theme=>{
     localStorage.setItem('jv-tema',theme);sessionStorage.setItem('jv-bk-adiar','1');
-    window.__recs=[];window.__faladas=[];window.__abort=0;
+    window.__recs=[];window.__faladas=[];window.__utterances=[];window.__abort=0;
     window.SpeechRecognition=class{
      constructor(){window.__recs.push(this);}start(){this.active=true;}abort(){this.active=false;window.__abort++;}
      emit(t,final){const r=[{transcript:t}];r.isFinal=final;this.onresult({resultIndex:0,results:[r]});}
     };
-    Object.defineProperty(window,'speechSynthesis',{configurable:true,value:{cancel(){},speak(u){window.__faladas.push(u.text);}}});
+    Object.defineProperty(window,'speechSynthesis',{configurable:true,value:{cancel(){},speak(u){window.__faladas.push(u.text);window.__utterances.push(u);}}});
    },theme);
    const p=await c.newPage(),errors=[];p.on('pageerror',e=>errors.push(e.message));p.on('dialog',d=>d.dismiss());
    await p.clock.setFixedTime(AGORA);await p.goto(base+'/app-gestao/',{waitUntil:'load'});
@@ -66,16 +66,34 @@ async function visual(p,n){if(!process.env.JV_VISUAL_DIR)return;const png=await 
      renderAll();go('dash',document.querySelector('.nav button'));
     });await p.waitForFunction(()=>!document.getElementById('voz-atalho').hidden);
    }
-   async function abrir(){await p.locator('#voz-atalho').click();assert.equal(await p.locator('#voz-painel').isVisible(),true);}
+   async function abrir(){await p.evaluate(()=>JVAcoesVoz.abrir());assert.equal(await p.locator('#voz-painel').isVisible(),true);}
    async function pedido(texto){await abrir();await p.locator('#voz-texto').fill(texto);await p.evaluate(()=>JVAcoesVoz.analisar());}
    const antes=()=>p.evaluate(()=>JSON.stringify(DB));
    const dados=()=>p.evaluate(()=>({eventos:DB.agenda.eventos,excecoes:DB.agenda.excecoes,fixos:DB.agenda.fixos,persist:__persist,saves:__saves,alunos:DB.alunos,status:document.getElementById('voz-status').textContent}));
    const label=motor+'/'+theme+': ';
    await reset();
-   await check(label+'botão funcional acima da navegação, acesso no menu e sem alteração ao abrir',async()=>{
-    const a=await antes();const r=await p.evaluate(()=>{const b=document.getElementById('voz-atalho').getBoundingClientRect(),n=document.querySelector('.nav').getBoundingClientRect();return {acima:b.bottom<n.top,dentro:b.right<=innerWidth,tamanho:b.width};});
-    assert.equal(r.acima,true);assert.equal(r.dentro,true);assert.ok(r.tamanho>=48);
-    await visual(p,'voz-real-botao-'+motor+'-'+theme);await abrir();assert.equal(await antes(),a);await visual(p,'voz-real-painel-'+motor+'-'+theme);
+   await check(label+'círculo flutuante translúcido com brilho, acima da navegação, inicia escuta por toque e acesso no menu',async()=>{
+    const antesAbrir=await antes();
+    for(const width of [320,390,520,1280]){
+     await p.setViewportSize({width,height:844});
+     for(const pagina of ['dash','agenda','alunos']){
+      await p.evaluate(pg=>go(pg,document.createElement('button')),pagina);
+      await p.waitForFunction(()=>!document.getElementById('voz-atalho').hidden);
+      const r=await p.evaluate(()=>{
+       const el=document.getElementById('voz-atalho'),b=el.getBoundingClientRect(),n=document.querySelector('.nav').getBoundingClientRect(),s=getComputedStyle(el);
+       return {position:s.position,round:s.borderRadius,width:b.width,height:b.height,left:b.left,right:b.right,bottom:b.bottom,navTop:n.top,opacity:Number(s.opacity),brilho:s.filter,sombra:s.boxShadow,click:document.elementFromPoint(b.left+b.width/2,b.top+b.height/2).closest('#voz-atalho')===el,overflow:document.documentElement.scrollWidth>innerWidth+1};
+      });
+      assert.equal(r.position,'fixed');assert.equal(r.round,'50%');assert.ok(r.width>=48&&r.height>=48);
+      assert.ok(r.left>=0&&r.right<=width+1&&r.bottom<r.navTop,pagina+' '+width);
+      assert.ok(r.opacity>0&&r.opacity<1);assert.notEqual(r.sombra,'none');assert.notEqual(r.brilho,'none');
+      assert.equal(r.click,true);assert.equal(r.overflow,false,pagina+' '+width);
+     }
+    }
+    await p.setViewportSize({width:390,height:844});await p.evaluate(()=>go('dash',document.createElement('button')));
+    await visual(p,'voz-real-botao-'+motor+'-'+theme);await p.locator('#voz-atalho').click();
+    assert.equal(await p.locator('#voz-painel').getAttribute('data-ouvindo'),'true');assert.equal(await antes(),antesAbrir);
+    await p.locator('#voz-circulo').click();assert.equal(await p.locator('#voz-painel').getAttribute('data-ouvindo'),'false');
+    await visual(p,'voz-real-painel-'+motor+'-'+theme);
     await p.evaluate(()=>JVAcoesVoz.fechar(true));await p.evaluate(()=>abrirMais());await p.waitForFunction(()=>document.getElementById('voz-atalho').hidden);assert.ok(await p.locator('#voz-atalho').isHidden());await p.locator('#voz-menu').click();assert.ok(await p.locator('#voz-painel').isVisible());
    });
    await check(label+'professor ou sessão sem dono não recebe o atalho nem consegue executar',async()=>{
@@ -90,6 +108,32 @@ async function visual(p,n){if(!process.env.JV_VISUAL_DIR)return;const png=await 
     assert.equal(await antes(),a);assert.ok(await p.locator('#voz-confirmar').isDisabled());
     await p.evaluate(()=>{__recs[0].emit('Cancelar Ana Silva amanhã às quatro da tarde',true);__recs[0].emit('Cancelar Ana Silva amanhã às quatro da tarde',true);});
     assert.equal(await p.locator('#voz-texto').inputValue(),'Cancelar Ana Silva amanhã às quatro da tarde');assert.equal(await antes(),a);
+   });
+   await check(label+'fala completa confere automaticamente, ondas só ao ouvir/falar, confirmação sempre explícita',async()=>{
+    await reset();const a=await antes();await p.locator('#voz-atalho').click();
+    assert.equal(await p.locator('#voz-painel').getAttribute('data-ouvindo'),'true');
+    assert.notEqual(await p.locator('#voz-circulo .jv-voz-ondas i').first().evaluate(e=>getComputedStyle(e).animationName),'none');
+    await p.evaluate(()=>{__recs[0].emit('Agendar Bruno Teste amanhã às 18h',true);__recs[0].onend();});
+    await p.waitForFunction(()=>!document.getElementById('voz-confirmar').disabled);
+    assert.equal(await antes(),a);assert.match(await p.locator('#voz-previa').innerText(),/Bruno Teste/);
+    assert.match(await p.evaluate(()=>__faladas.at(-1)),/Bruno Teste/);
+    await p.evaluate(()=>__utterances.at(-1).onstart());
+    assert.equal(await p.locator('#voz-painel').getAttribute('data-falando'),'true');
+    await visual(p,'voz-real-respondendo-'+motor+'-'+theme);await p.evaluate(()=>{window.__velha=__utterances.at(-1);});
+    await p.evaluate(()=>__utterances.at(-1).onend());
+    assert.equal(await p.locator('#voz-painel').getAttribute('data-falando'),'false');
+    await p.emulateMedia({reducedMotion:'reduce'});assert.equal(await p.locator('#voz-circulo .jv-voz-ondas i').first().evaluate(e=>getComputedStyle(e).animationName),'none');await p.emulateMedia({reducedMotion:'no-preference'});
+    await p.evaluate(()=>JVAcoesVoz.executar());const r=await dados();assert.equal(r.eventos.length,1);assert.equal(r.saves,1);
+    assert.ok(await p.locator('#voz-repetir').isVisible());assert.match(await p.locator('#voz-resultado').innerText(),/Horário agendado para Bruno Teste/);assert.match(await p.evaluate(()=>__faladas.at(-1)),/Horário agendado para Bruno Teste/);await visual(p,'voz-real-confirmacao-'+motor+'-'+theme);
+    await p.locator('#voz-ouvir').uncheck();const falas=await p.evaluate(()=>__faladas.length);
+    await p.locator('#voz-repetir').click();assert.equal(await p.evaluate(()=>__faladas.length),falas+1);assert.equal((await dados()).persist,1);
+    await p.evaluate(()=>__utterances.at(-1).onstart());assert.equal(await p.locator('#voz-painel').getAttribute('data-falando'),'true');
+    await p.evaluate(()=>JVAcoesVoz.fechar(true));
+    await p.evaluate(()=>{__utterances.at(-1).onstart();__velha.onend();});
+    assert.equal(await p.locator('#voz-painel').getAttribute('data-falando'),'false');assert.equal(await p.locator('#voz-atalho').getAttribute('data-ouvindo'),'false');
+    await pedido('Agendar Bruno Teste amanhã às 19h');assert.equal(await p.locator('#voz-repetir').isHidden(),true);
+    const n=await p.evaluate(()=>__faladas.length);await p.evaluate(()=>JVAcoesVoz.executar());assert.equal(await p.evaluate(()=>__faladas.length),n,'opção silenciosa respeitada');
+    await p.locator('#voz-ouvir').check();
    });
    await check(label+'permissão negada e API ausente mantêm digitação e ditado do teclado',async()=>{
     await reset();await abrir();await p.locator('#voz-falar').click();await p.evaluate(()=>__recs[0].onerror({error:'not-allowed'}));
@@ -123,6 +167,26 @@ async function visual(p,n){if(!process.env.JV_VISUAL_DIR)return;const png=await 
     await p.evaluate(()=>JVAcoesVoz.executar());let r=await dados();assert.equal(r.eventos.length,1);assert.equal(r.eventos[0].alunoId,'b1');assert.equal(r.eventos[0].data,'2026-10-16');assert.equal(r.eventos[0].hora,'18:00');assert.equal(r.fixos.length,1);assert.equal(JSON.stringify(r.alunos),saldos);
     await p.evaluate(()=>JVAcoesVoz.executar());r=await dados();assert.equal(r.eventos.length,1);assert.equal(r.saves,1);
    });
+   await check(label+'grade nova recusa agendar meia hora, mas voz cancela marcação antiga sem perder saldos',async()=>{
+    await reset();await p.evaluate(()=>{
+     DB.horarioData={'2026-10-16':{'14:00':'aula','14:30':'aula','19:30':'aula'}};
+     __no=__baseNo();_basePartes=JSON.parse(JSON.stringify(__no));
+    });
+    const a=await antes();await pedido('Agendar Bruno Teste amanhã às 14:30');
+    assert.ok(await p.locator('#voz-confirmar').isDisabled());assert.match(await p.locator('#voz-status').innerText(),/aberto/);
+    await p.locator('#voz-texto').fill('Agendar Bruno Teste amanhã às 19:30');await p.evaluate(()=>JVAcoesVoz.analisar());
+    assert.ok(await p.locator('#voz-confirmar').isDisabled());assert.equal(await antes(),a);
+    await p.locator('#voz-texto').fill('Agendar Bruno Teste amanhã às 14h');await p.evaluate(()=>JVAcoesVoz.analisar());
+    assert.ok(await p.locator('#voz-confirmar').isEnabled());await p.evaluate(()=>JVAcoesVoz.executar());
+    assert.equal((await dados()).eventos.length,1);assert.equal(await p.evaluate(()=>creditoSlot('14:00')),1);
+    await reset();await p.evaluate(()=>{
+     DB.agenda.eventos.push({id:'antiga-meia',alunoId:'a1',titulo:'Ana Silva',data:'2026-10-16',hora:'14:30',tipo:'aula'});
+     __no=__baseNo();_basePartes=JSON.parse(JSON.stringify(__no));
+    });
+    const saldos=await p.evaluate(()=>JSON.stringify(DB.alunos));await pedido('Cancelar Ana Silva amanhã às 14:30');
+    assert.ok(await p.locator('#voz-confirmar').isEnabled());await p.evaluate(()=>JVAcoesVoz.executar());
+    assert.equal((await dados()).eventos.length,0);assert.equal(await p.evaluate(()=>JSON.stringify(DB.alunos)),saldos);
+   });
    await check(label+'dupla aceita segunda pessoa e bloqueia a terceira, particular e mistura',async()=>{
     await reset();await p.evaluate(()=>{DB.alunos[2].tipo='Dupla';DB.agenda.eventos=[{id:'g1',data:'2026-10-16',hora:'18:00',tipo:'grupo',pessoas:2,alunoId:'a2',titulo:'Ana Souza'}];__no=__baseNo();_basePartes=JSON.parse(JSON.stringify(__no));});
     await pedido('Agendar Bruno Teste amanhã às 18h em dupla');await p.evaluate(()=>JVAcoesVoz.executar());assert.equal((await dados()).eventos.length,2);
@@ -151,9 +215,9 @@ async function visual(p,n){if(!process.env.JV_VISUAL_DIR)return;const png=await 
    });
    await check(label+'pendência na nuvem não vira sucesso nem repete ação; tentar salvar só reenvia',async()=>{
     await reset();await pedido('Agendar Bruno Teste amanhã às 18h');await p.evaluate(()=>{__saveOk=false;});await p.evaluate(()=>JVAcoesVoz.executar());
-    let r=await dados();assert.equal(r.eventos.length,1);assert.match(r.status,/pendente/);assert.doesNotMatch(r.status,/salvo na nuvem/);
+    let r=await dados();assert.equal(r.eventos.length,1);assert.match(r.status,/pendente/);assert.doesNotMatch(r.status,/salvo na nuvem/);assert.ok(await p.locator('#voz-repetir').isHidden());assert.equal(await p.evaluate(()=>__faladas.some(x=>x.includes('Confirmado e salvo'))),false);
     await p.evaluate(()=>JVAcoesVoz.executar());assert.equal((await dados()).persist,1);
-    await p.evaluate(()=>{__saveOk=true;});await p.locator('#voz-salvar').click();r=await dados();assert.equal(r.persist,1);assert.equal(r.saves,2);assert.match(r.status,/salvo na nuvem/);
+    await p.evaluate(()=>{__saveOk=true;});await p.locator('#voz-salvar').click();r=await dados();assert.equal(r.persist,1);assert.equal(r.saves,2);assert.match(r.status,/salvo na nuvem/);assert.ok(await p.locator('#voz-repetir').isVisible());assert.match(await p.evaluate(()=>__faladas.at(-1)),/salvo na nuvem/);
    });
    await check(label+'resposta atrasada e duplo toque deixam uma única marcação',async()=>{
     await reset();await pedido('Agendar Bruno Teste amanhã às 18h');await p.evaluate(()=>{__holdSave=true;window.__exec=JVAcoesVoz.executar();});
