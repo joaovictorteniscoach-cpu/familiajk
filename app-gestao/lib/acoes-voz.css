@@ -47,3 +47,12 @@ html body:not(#jv) #voz-painel .jv-voz-sinal{position:relative;flex:0 0 48px;wid
 html body:not(#jv) #voz-repetir{width:100%;margin:0 0 10px}
 html body:not(#jv) #voz-painel .jv-voz-sinal:focus-visible{outline:3px solid #F4C25D;outline-offset:3px}
 @media(prefers-reduced-motion:reduce){#voz-painel *,#voz-atalho{animation:none!important;transition:none!important}}
+
+/* Resposta de consulta: somente leitura, mesma superfície clara da prévia. */
+html body:not(#jv) #voz-painel #voz-consulta{padding:15px;background:#F8F6EE;border:1px solid #D8DEC9;border-radius:14px;margin:12px 0;color:#203028;-webkit-text-fill-color:#203028}
+html body:not(#jv) #voz-painel #voz-consulta *{color:#203028;-webkit-text-fill-color:#203028}
+#voz-painel #voz-consulta h3{font:800 17px/1.4 'DM Sans',sans-serif;margin:0 0 8px}
+#voz-painel #voz-consulta-lista{list-style:none;margin:12px 0;padding:0}
+#voz-painel #voz-consulta-lista li{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-top:1px solid #CCD6C8;font:500 13px/1.5 'DM Sans',sans-serif}
+#voz-painel #voz-consulta-lista b{flex:0 0 44px}
+#voz-painel #voz-consulta-lista span{min-width:0;overflow-wrap:anywhere}
