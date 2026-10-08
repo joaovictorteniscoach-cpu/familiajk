@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-08-4';
+const VERSAO='2026-10-08-5';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2417,7 +2417,8 @@ async function doPublish(){
      estado, a publicação fica suspensa até a agenda de verdade voltar. */
   if(pareceSemente(DB.agenda)){console.warn('publicação suspensa: agenda parece a grade-semente');return;}
   try{
-    const hoje=new Date();const lim=new Date();lim.setDate(lim.getDate()+60);
+    // 90 dias: a mesma janela que a Gestão confere num pedido de horário fixo
+    const hoje=new Date();const lim=new Date();lim.setDate(lim.getDate()+90);
     const codeOf=id=>{const a=DB.alunos.find(x=>x.id===id);return a?a.codigo:null;};
     const matchAluno=acharAlunoPorTitulo;
     const codeFor=ev=>{
@@ -2481,6 +2482,12 @@ async function doPublish(){
       const [data,hora]=ch.split('|');
       if(data<dKey(hoje)||data>dKey(lim))return;
       pub.grade.eventos.push({id:'q'+data+hora,data,hora,tipo:'ocupado'});
+    });
+    /* Compromisso do João também ocupa o horário (a Gestão recusa pedido nele).
+       Vai só "ocupado", sem título: o aluno vê "Reservado" e não pede em vão. */
+    (DB.compromissos||[]).forEach(c=>{
+      if(!c||!c.data||!c.hora||c.data<dKey(hoje)||c.data>dKey(lim))return;
+      pub.grade.eventos.push({id:'k'+c.data+c.hora,data:c.data,hora:c.hora,tipo:'ocupado'});
     });
     await cloudSet(PUBKEY,JSON.stringify(publicacaoLegadaEnxuta(pub)));   // legado: retirar quando a migração terminar
     try{await publicarSeguro(pub);}catch(e){console.warn('Publicação segura pendente:',e);}
