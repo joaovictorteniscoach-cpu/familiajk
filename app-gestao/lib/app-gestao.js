@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-08-5';
+const VERSAO='2026-10-08-6';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -6460,34 +6460,62 @@ function foneWhats(tel){
   if(d.length>11&&d.indexOf('55')===0)return d;   // já veio com o país
   return '55'+d;
 }
+/* Escolher o aluno (na lista "Quem falta" ou no seletor) já abre a conversa
+   dele no WhatsApp, no número do cadastro. A conversa abre AINDA DENTRO do
+   toque: antes o app esperava a imagem ficar pronta e só então abria — no
+   celular essa espera fazia o navegador bloquear a janela, nada abria e o
+   aluno ficava marcado como enviado mesmo assim. Agora a imagem é salva logo
+   depois, e "enviado" só é marcado quando a conversa abriu. */
+function escolherEEnviarFech(id){
+  const sa=document.getElementById('fc-aluno');
+  if(sa&&id)sa.value=id;
+  const a=DB.alunos.find(x=>x.id===(sa||{}).value);
+  if(!a){renderFechamento();return;}
+  if(!foneWhats(a.tel)){
+    // sem número não há para onde ir direto: só mostra, e o botão oferece a lista de contatos
+    renderFechamento();
+    const box=document.getElementById('fech-export');if(box)box.scrollIntoView({behavior:'smooth',block:'center'});
+    toast('Sem WhatsApp no cadastro de '+a.nome+' — cadastre o número para ir direto');
+    return;
+  }
+  enviarFechamento();
+}
+function salvarImagemFech(a){
+  const nomeArq='fechamento-'+a.nome.split(' ')[0].toLowerCase()+'.png';
+  _fechBlob().then(blob=>{
+    if(!blob)return;
+    const url=URL.createObjectURL(blob),l=document.createElement('a');
+    l.href=url;l.download=nomeArq;
+    document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
+    toast('🖼️ Imagem salva na galeria — anexe na conversa com 📎');
+  }).catch(()=>{});
+}
 async function enviarFechamento(){
   const a=DB.alunos.find(x=>x.id===(document.getElementById('fc-aluno')||{}).value);
   if(!a){toast('Escolha o aluno primeiro');return;}
   const mk=(document.getElementById('fc-mes')||{}).value||monthKey();
+  renderFechamento();
   const D=fcDados(a,mk), txt=fcTexto(a,mk,D);
-  /* Com telefone no cadastro, vai DIRETO para a conversa daquele aluno.
-     O compartilhamento nativo leva imagem e texto juntos, mas obriga a escolher
-     o contato na lista toda vez — e escolher o contato errado no fechamento
-     manda o financeiro de um aluno para outro. Errar de contato custa mais que
-     anexar a imagem à mão.
-     A imagem é salva na galeria antes de abrir a conversa, então continua a um
-     toque de distância: 📎 → Fotos → a última. */
-  toast('Preparando envio…');
-  let blob=null;
-  try{blob=await _fechBlob();}catch(e){}
-  const nomeArq='fechamento-'+a.nome.split(' ')[0].toLowerCase()+'.png';
-  if(foneWhats(a.tel)){
-    if(blob){
-      const url=URL.createObjectURL(blob),l=document.createElement('a');
-      l.href=url;l.download=nomeArq;
-      document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
+  const tel=foneWhats(a.tel);
+  if(tel){
+    const url='https://wa.me/'+tel+'?text='+encodeURIComponent(txt);
+    const w=window.open(url,'_blank');
+    if(w)marcarFechEnviado(a.id,mk);
+    else{
+      // o celular bloqueou a janela: um toque direto no link sempre abre
+      const h=document.getElementById('fc-envio-hint');
+      if(h){h.innerHTML='<a class="btn btn-clay fc-abrir" href="'+esc(url)+'" target="_blank" rel="noopener" onclick="marcarFechEnviado(\''+argJs(a.id)+'\',\''+argJs(mk)+'\')">📲 Abrir a conversa de '+esc(a.nome.split(' ')[0])+' no WhatsApp</a>';h.style.color='';}
+      toast('Toque no botão para abrir o WhatsApp de '+a.nome.split(' ')[0]);
     }
-    window.open('https://wa.me/'+foneWhats(a.tel)+'?text='+encodeURIComponent(txt),'_blank');
-    marcarFechEnviado(a.id,mk);
+    salvarImagemFech(a);
     return;
   }
   /* Sem telefone não há para onde direcionar: cai no compartilhamento, que ao
      menos leva imagem e texto juntos para onde ele escolher. */
+  toast('Preparando envio…');
+  let blob=null;
+  try{blob=await _fechBlob();}catch(e){}
+  const nomeArq='fechamento-'+a.nome.split(' ')[0].toLowerCase()+'.png';
   const file=blob?new File([blob],nomeArq,{type:'image/png'}):null;
   if(file&&navigator.canShare&&navigator.canShare({files:[file]})){
     try{await navigator.share({files:[file],text:txt});marcarFechEnviado(a.id,mk);
@@ -6501,7 +6529,6 @@ async function enviarFechamento(){
   toast('Sem WhatsApp cadastrado para '+a.nome+' — cadastre no aluno para ir direto');
   marcarFechEnviado(a.id,mk);
 }
-/* Fila: quem já recebeu o fechamento de cada mês. */
 function marcarFechEnviado(id,mk){
   if(!DB.fechEnviado)DB.fechEnviado={};
   if(!DB.fechEnviado[mk])DB.fechEnviado[mk]={};
@@ -6558,15 +6585,9 @@ function renderFilaFech(){
                  :'toque para marcar como enviado';
     return '<div class="fq-linha'+(ok?' ok':'')+'">'
       +'<button class="fq-mark" title="'+dica+'" aria-label="'+dica+'" onclick="alternarFechEnviado(\''+a.id+'\',\''+mk+'\')">'+(ok?'✓':'○')+'</button>'
-      +'<button class="fq-nome" onclick="escolherFech(\''+a.id+'\')">'+esc(a.nome)+'</button>'
+      +'<button class="fq-nome"'+(foneWhats(a.tel)?' data-wa="1" title="Abre a conversa no WhatsApp"':'')+' onclick="escolherEEnviarFech(\''+argJs(a.id)+'\')">'+esc(a.nome)+'</button>'
       +'</div>';
   }).join('');
-}
-function escolherFech(id){
-  const sa=document.getElementById('fc-aluno');
-  if(sa){sa.value=id;renderFechamento();}
-  const box=document.getElementById('fech-export');
-  if(box)box.scrollIntoView({behavior:'smooth',block:'center'});
 }
 
 /* ===== Início: "O que pede ação" =====
