@@ -59,7 +59,7 @@ html body:not(#jv) #voz-painel #voz-consulta *{color:#203028;-webkit-text-fill-c
 
 /* Conversa: o pedido (direita) e a resposta ou o que foi feito (esquerda).
    Só na tela; some ao fechar. A resposta atual fica no fim da conversa. */
-html body:not(#jv) #voz-painel .jv-voz-conversa{display:flex;flex-direction:column;gap:8px;max-height:min(46vh,380px);min-height:96px;overflow-y:auto;overscroll-behavior:contain;padding:10px;margin:6px 0 4px;border:1px solid #58705D;border-radius:16px;background:#0A1F17}
+html body:not(#jv) #voz-painel .jv-voz-conversa{position:relative;display:flex;flex-direction:column;gap:8px;max-height:min(46vh,380px);min-height:96px;overflow-y:auto;overscroll-behavior:contain;padding:10px;margin:6px 0 4px;border:1px solid #58705D;border-radius:16px;background:#0A1F17}
 #voz-painel .jv-voz-msg{max-width:92%;padding:9px 12px;border-radius:16px;overflow-wrap:anywhere}
 html body:not(#jv) #voz-painel .jv-voz-msg p,html body:not(#jv) #voz-painel .jv-voz-msg li{margin:0;font:500 14px/1.45 'DM Sans',sans-serif;color:inherit;-webkit-text-fill-color:inherit}
 html body:not(#jv) #voz-painel .jv-voz-msg.voce{align-self:flex-end;background:#2F5A47;color:#FFF;-webkit-text-fill-color:#FFF;border-bottom-right-radius:5px}

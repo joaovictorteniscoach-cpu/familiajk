@@ -192,6 +192,39 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
    assert.match(await resposta(),/Você tem 4 aulas agendadas.*a partir de agora/);
    await falar('Qual a próxima aula?');assert.match(await resposta(),/Sua próxima aula é hoje às 16:00: Bia Teste/);
   });
+  await check('extrato do aluno (print do João): feitas, faltas, desmarcadas, chuva e por vir, com total desde o início',async()=>{
+   await reset();
+   await p.evaluate(()=>{
+    DB.alunos.push({id:'alan',nome:'Alan Teste',codigo:'alan',tipo:'Particular',ativo:true,plano:4,planoGrupo:0,creditos:2,credGrupo:0,repos:0,mensalidade:640,status:'pago'});
+    DB.agenda.fixos.push({id:'fa1',alunoId:'alan',titulo:'Alan Teste',dia:2,hora:'18:00',tipo:'aula',desde:'2026-09-01'},{id:'fa2',alunoId:'alan',titulo:'Alan Teste',dia:4,hora:'10:00',tipo:'aula',desde:'2026-09-01'});
+    DB.presencas.push({k:'2026-10-01|10:00|alan',alunoId:'alan',data:'2026-10-01',hora:'10:00',tipo:'aula',custo:1},{k:'2026-10-06|18:00|alan',alunoId:'alan',data:'2026-10-06',hora:'18:00',tipo:'falta',custo:1},{k:'2026-10-08|10:00|alan',alunoId:'alan',data:'2026-10-08',hora:'10:00',tipo:'aula',custo:1});
+    DB.agenda.excecoes.push({fixoId:'fa1',data:'2026-10-13'},{fixoId:'fa2',data:'2026-10-15'});
+    DB.agenda.eventos.push({id:'ch1',data:'2026-10-15',hora:'10:00',titulo:'☔ Chuva',tipo:'bloqueio',motivo:'chuva',alunoId:null,nq:1});
+    NOTIF=[{acao:'cancelou',codigo:'alan',nome:'Alan Teste',data:'2026-10-24',hora:'09:00',tipo:'aula',ts:Date.now()}];
+    DB.movs.push({ts:new Date('2026-10-01T12:00:00-03:00').getTime(),alunoId:'bia',campo:'repos',delta:2,de:0,para:2,motivo:'virada',ref:''});DB.alunos.find(a=>a.id==='bia').repos=2;
+    __no=__baseNo();_basePartes=JSON.parse(JSON.stringify(__no));
+   });
+   await abrir();const a=await antes();
+   await falar('O aluno Alan tem quantas aulas agendadas neste mês de outubro');
+   assert.match(await resposta(),/Alan Teste em outubro: 7 aulas — 2 já feitas, 4 ainda por vir, 1 falta, 2 desmarcadas, 1 cancelada por chuva\./);
+   const lista=await p.locator('#voz-consulta-lista').innerText();
+   assert.match(lista,/qui 01\/10 10:00\s+✓ presença confirmada/);assert.match(lista,/ter 06\/10 18:00\s+✗ faltou/);assert.match(lista,/ter 13\/10 18:00\s+❌ desmarcada/);
+   assert.match(lista,/qui 15\/10 10:00\s+☔ cancelada por chuva/);assert.match(lista,/sáb 24\/10 09:00\s+❌ desmarcada · pelo app/);assert.match(lista,/ter 20\/10 18:00\s+agendada/);
+   assert.equal(await p.locator('#voz-consulta-lista li').count(),10);
+   if(process.env.JV_SHOTS)await p.screenshot({path:path.join(process.env.JV_SHOTS,'voz-extrato.png')});
+   await falar('Quantas aulas o Alan já fez?');assert.match(await resposta(),/Desde 01\/09\/2026 \(início dos registros\): 11 aulas feitas\./);
+   await falar('Quais são as próximas aulas do Alan?');
+   assert.match(await resposta(),/Próximas aulas de Alan Teste: 10 aulas.*a primeira é terça-feira, 20\/10 às 18:00/);
+   await falar('Choveu hoje?');assert.match(await resposta(),/Sim: hoje teve chuva marcada às 10:00 \(1 marcação cancelada\)/);
+   await falar('Choveu ontem');assert.match(await resposta(),/Não há chuva marcada ontem/);
+   await falar('Tem alguma aula desmarcada hoje?');assert.match(await resposta(),/Nenhuma aula desmarcada hoje\. Além disso, 1 saiu por chuva/);
+   await falar('Quem cancelou esta semana?');assert.match(await resposta(),/1 aula desmarcada nesta semana/);assert.match(await p.locator('#voz-consulta-lista').innerText(),/Alan Teste/);
+   await falar('Quem faltou este mês?');assert.match(await resposta(),/1 falta neste mês/);assert.match(await p.locator('#voz-consulta-lista').innerText(),/06\/10 18:00\s+Alan Teste/);
+   await falar('Quais presenças faltam confirmar hoje?');assert.match(await resposta(),/2 presenças por confirmar hoje/);
+   await falar('Quem tem reposição?');assert.match(await resposta(),/1 aluno com reposição válida, 2 no total/);
+   await falar('Quantos alunos ativos eu tenho?');assert.match(await resposta(),/Você tem 6 alunos ativos/);
+   assert.equal(await antes(),a,'só consulta: nada mudou');assert.equal(await p.evaluate(()=>__persist),0);
+  });
   await check('pedido que não entende responde na conversa com o que sabe fazer (sem formulário)',async()=>{
    await reset();await abrir();await falar('Bom dia, tudo certo?');
    assert.match(await ultimaMsg(),/Não entendi esse pedido\. Posso responder/);
@@ -220,15 +253,16 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
    await p.evaluate(()=>JVAcoesVoz.fechar(true));
    assert.equal(await p.evaluate(()=>document.querySelectorAll('#voz-conversa .jv-voz-msg').length),0);
   });
-  await check('celular e computador: conversa rola sozinha, sem rolagem lateral, toques de 44 px',async()=>{
+  await check('celular e computador: conversa rola até a última pergunta, sem rolagem lateral, toques de 44 px',async()=>{
    await reset();await abrir();
    for(const t of ['Quantas aulas tenho hoje?','Quem tem aula amanhã?','Quantas aulas tenho esta semana?'])await falar(t);
    for(const width of [320,390,1280]){await p.setViewportSize({width,height:844});
     await p.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));await p.waitForTimeout(120);
-    const r=await p.evaluate(()=>{const b=document.getElementById('voz-conversa');return {lateral:document.documentElement.scrollWidth>innerWidth+1,rola:b.scrollHeight>b.clientHeight,fim:Math.abs(b.scrollTop+b.clientHeight-b.scrollHeight)<4,
+    const r=await p.evaluate(()=>{const b=document.getElementById('voz-conversa'),bb=b.getBoundingClientRect(),v=[...b.querySelectorAll('.jv-voz-msg.voce')].pop().getBoundingClientRect();
+     return {lateral:document.documentElement.scrollWidth>innerWidth+1,rola:b.scrollHeight>b.clientHeight,fim:v.top>=bb.top-1&&v.top<bb.bottom,
      toques:[...document.querySelectorAll('#voz-painel button')].filter(x=>x.getClientRects().length).every(x=>x.getBoundingClientRect().height>=44)};});
     assert.equal(r.lateral,false,'lateral '+width);assert.equal(r.toques,true,'toque '+width);
-    if(r.rola)assert.equal(r.fim,true,'mostra a última resposta '+width);
+    if(r.rola)assert.equal(r.fim,true,'mostra a última pergunta e a resposta '+width);
    }
    await p.setViewportSize({width:390,height:844});
    if(process.env.JV_SHOTS)await p.screenshot({path:path.join(process.env.JV_SHOTS,'voz-conversa.png')});

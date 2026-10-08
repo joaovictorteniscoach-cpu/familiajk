@@ -61,8 +61,15 @@ Perguntas (só leem, conferem a nuvem antes, como a consulta do Codex):
   `inicioRegistros`), dizendo quantas já foram e quantas faltam;
 - **horários livres** de um dia ou da semana (aula e “só locação”), sem nada
   marcado, sem outro professor e ainda por vir;
-- **aluno**: créditos e reposições válidas, próxima aula, horário fixo, aulas de
-  um dia e mensalidade do mês;
+- **aluno**: créditos e reposições válidas, próxima aula, **próximas aulas**
+  (lista), horário fixo, mensalidade do mês e **extrato** do período (dia,
+  semana, mês ou ano; sem período, o mês atual): cada aula com a situação —
+  presença confirmada, dada sem presença confirmada, faltou, avisou, agendada,
+  desmarcada (exceção do fixo ou aviso do app) ou cancelada por chuva — e o
+  total; “já fez” soma também desde o início dos registros;
+- **histórico**: choveu em tal dia/semana, aulas desmarcadas (e quem cancelou),
+  quem faltou, presenças por confirmar, quem tem reposição, quantos alunos
+  ativos;
 - **financeiro**: quem está devendo, quanto recebeu, quanto falta receber
   (respeita “valores ocultos”: não fala valor com o olho fechado);
 - ocupação, locações e preços; “ajuda” lista o que sabe fazer.
@@ -82,7 +89,7 @@ recalculado igual ao mostrado):
 Recusa (nada muda): frase com “não”, duas ações juntas, dia passado, horário
 ambíguo (“às quatro”), nada para mudar. Depois de uma ação salva na nuvem, a
 conversa continua para o próximo pedido; pendência na nuvem segue bloqueando.
-Testes: `testar-voz-conversa-browser.cjs` (16) e o do Codex (31 por tema e
+Testes: `testar-voz-conversa-browser.cjs` (17) e o do Codex (31 por tema e
 navegador; “Qual valor da aula?” agora responde os preços).
 
 ---

@@ -18,6 +18,7 @@ const hm=m=>m>=1440?'o fim do dia':pad(Math.floor(m/60))+':'+pad(m%60);
 const minH=h=>Number(h.slice(0,2))*60+Number(h.slice(3,5));
 const plural=(n,um,varios)=>n+' '+(n===1?um:(varios||um+'s'));
 const dkDe=x=>x.getFullYear()+'-'+pad(x.getMonth()+1)+'-'+pad(x.getDate());
+const AGIR_IMP=/\b(?:cancelar|cancela|cancele|desmarcar|desmarca|desmarque|agendar|agende|marcar|marca|marque|reservar|reserve|renovar|renova|renove)\b/;
 const AGIR=/\b(?:cancelar|cancelou|cancela|cancele|desmarcar|desmarcou|desmarca|agendar|agendou|agende|marcar|marcou|marca|marque|reservar|reserve|renovar|renovou|renova|renove|renovacao)\b/;
 function lerData(t,base){
  const y=Number(base.slice(0,4)),m=Number(base.slice(5,7));let data='',exp=false;
@@ -89,6 +90,13 @@ function lerFaixa(t){
  if(m){const b=horaDe(m.slice(1,5));if(!b)return {erro:'Confira o horário.'};if(b.ambigua&&b.min<=300)b.min+=720;return {ini:0,fim:b.min};}
  return null;
 }
+/* Um horário só ("às 17", "das 4 da tarde") em qualquer lugar da frase. */
+function horaUnica(t){
+ const m=textoHoras(t).match(new RegExp('\\b(?:as|das|pelas)\\s+'+H_RE));if(!m)return {hora:'',erro:''};
+ const a=horaDe(m.slice(1,5));if(!a||a.min>=1440)return {hora:'',erro:'Confira o horário.'};
+ if(a.ambigua&&a.min<=300)a.min+=720;else if(a.ambigua)return {hora:'',erro:'Diga manhã, tarde ou noite: “às '+Math.floor(a.min/60)+'” pode ter dois sentidos.'};
+ return {hora:hm(a.min),erro:''};
+}
 /* Semana, mês ou ano citados na pergunta. */
 function periodoLongo(t,base){
  const d=new Date(base+'T12:00:00'),seg=x=>{const y=new Date(x);y.setDate(y.getDate()-((y.getDay()+6)%7));return y;};
@@ -119,28 +127,43 @@ function alunosCitados(t,alunos){
    ocupação, locações e preços. Só leitura. */
 function interpretarPergunta(t,alunos,base){
  if(/\b(?:ajuda|comandos)\b|\bo que (?:voce|vc) (?:faz|sabe|pode)\b|\bcomo (?:te )?us(?:o|ar)\b/.test(t))return {acao:'consultar',consulta:'ajuda'};
- if(AGIR.test(t))return null;
+ if(AGIR_IMP.test(t))return null;
  if(/\b(?:valor|preco|precos|quanto custa|quanto e|quanto (?:esta|ta) (?:a|o))\b/.test(t)&&/\b(?:aula|avulsa|locacao|personal|dupla|trio|quarteto|grupo|hora|plano)\b/.test(t)&&!alunosCitados(t,alunos).length)return {acao:'consultar',consulta:'precos'};
  const d=new Date(base+'T12:00:00'),mkAtual=base.slice(0,7),mkAnt=dkDe(new Date(d.getFullYear(),d.getMonth()-1,1)).slice(0,7);
  const mk=/\bmes passado\b/.test(t)?mkAnt:mkAtual;
  const cit=alunosCitados(t,alunos);
  const fin=/\b(?:pag(?:ou|aram|ar|o|ou a|amento|amentos)|mensalidades?|devendo|deve|devem|pendentes?|em atraso|atrasad[ao]s?|inadimpl\w*|receb\w*|entrou|entrada|faturamento|fature\w*|caixa|a receber|falta receber)\b/;
- if(cit.length&&(fin.test(t)||/\b(?:creditos?|saldo|reposic\w*|repor|proxima|quando|horario|horarios|que horas|que dia|plano|pacote|aulas? (?:tem|restam|sobram|faltam))\b/.test(t)||/\baula\b/.test(t))){
+ const EXTRATO=/\b(?:aulas?|extrato|historico|frequencia|presenc\w*|faltas?|faltou|feitas?|fez|realizad\w*|dadas?|deu|tev[ae]|agendad\w*|desmarc\w*|cancel\w*|chuva|choveu)\b/;
+ if(cit.length&&(fin.test(t)||EXTRATO.test(t)||/\b(?:creditos?|saldo|reposic\w*|repor|proximas?|quando|horario|horarios|que horas|que dia|plano|pacote)\b/.test(t))){
   if(cit.length>1)return {erro:'Encontrei '+cit.length+' alunos com esse nome ('+cit.slice(0,4).map(a=>a.nome).join(', ')+'). Diga o nome e o sobrenome.'};
-  let qual='resumo';
-  if(/\b(?:creditos?|saldo|reposic\w*|repor|restam|sobram|faltam)\b/.test(t))qual='saldo';
-  else if(fin.test(t))qual='pagamento';
-  else if(/\b(?:horario fixo|horarios|grade|que horas|qual horario|qual o horario|dia e horario)\b/.test(t))qual='horarios';
-  else if(/\b(?:proxima|quando|que dia)\b/.test(t))qual='proxima';
   const dt=lerData(t,base);if(dt.erro)return {erro:dt.erro};
-  if(qual==='resumo'&&dt.data)qual='dia';
-  return {acao:'consultar',consulta:'aluno',alunoId:cit[0].id,qual,data:dt.data||base,mk};
+  const longo=periodoLongo(t,base),r={acao:'consultar',consulta:'aluno',alunoId:cit[0].id,data:dt.data||base,mk};
+  if(/\b(?:creditos?|saldo|reposic\w*|repor|restam|sobram)\b/.test(t))r.qual='saldo';
+  else if(fin.test(t)&&!/\bfalt(?:a|as|ou|aram)\b/.test(t))r.qual='pagamento';
+  else if(/\b(?:horario fixo|horarios fixos|grade|qual horario|qual o horario|dia e horario|que horas (?:e|sao) (?:a|as) aulas?)\b/.test(t))r.qual='horarios';
+  else if(/\bproximas\b|\bproximas aulas\b/.test(t))r.qual='proximas';
+  else if(/\bproxima\b|\bquando\b|\bque dia\b/.test(t)&&!longo&&!dt.data)r.qual='proxima';
+  else if(EXTRATO.test(t)||longo||dt.data){
+   r.qual='extrato';
+   const p=longo||(dt.data?{ini:dt.data,fim:dt.data,rotulo:quandoTxt(dt.data),tipo:'dia'}:periodoLongo('mes',base));
+   Object.assign(r,{ini:p.ini,fim:p.fim,rotulo:p.rotulo,desdeInicio:/\b(?:ja|total|ate hoje|desde|no total)\b/.test(t)&&!longo&&!dt.data});
+  }else r.qual='resumo';
+  return r;
  }
  if(fin.test(t)&&!/\baulas?\b/.test(t)){
   if(/\b(?:a receber|falta receber|quanto falta)\b/.test(t))return {acao:'consultar',consulta:'financeiro',qual:'areceber',mk};
   if(/\b(?:receb\w*|entrou|entrada|faturamento|fature\w*|caixa)\b/.test(t))return {acao:'consultar',consulta:'financeiro',qual:'recebido',mk};
   return {acao:'consultar',consulta:'financeiro',qual:'pendentes',mk};
  }
+ const longoG=periodoLongo(t,base),dtG=lerData(t,base);
+ if(dtG.erro&&/\b(?:choveu|chuva|desmarc|cancel|falt|presenc)/.test(t))return {erro:dtG.erro};
+ const faixaDias=longoG||{ini:dtG.data||base,fim:dtG.data||base,rotulo:quandoTxt(dtG.data||base),tipo:'dia'};
+ if(/\b(?:choveu|chuva|chuvas|choveram|chovendo)\b/.test(t))return Object.assign({acao:'consultar',consulta:'chuvas'},faixaDias);
+ if(/\b(?:presenc\w* (?:pendentes?|sem confirmar|a confirmar|para confirmar|por confirmar)|confirmar (?:as )?presenc\w*|sem presenca|nao confirmad\w*|falta(?:m)? confirmar)\b/.test(t))return Object.assign({acao:'consultar',consulta:'presencas'},faixaDias);
+ if(/\b(?:desmarc\w*|cancelad[ao]s?|cancelaram|cancelou|cancelamentos?)\b/.test(t))return Object.assign({acao:'consultar',consulta:'desmarcadas'},faixaDias);
+ if(/\b(?:faltou|faltaram|faltas)\b/.test(t))return Object.assign({acao:'consultar',consulta:'faltas'},faixaDias);
+ if(/\b(?:quem tem reposic\w*|reposic\w* pendentes?|alunos? com reposic\w*|quantas reposic\w*)\b/.test(t))return {acao:'consultar',consulta:'reposicoes'};
+ if(/\bquant[oa]s alunos\b|\balunos ativos\b/.test(t))return {acao:'consultar',consulta:'alunos'};
  if(/\bnao\b/.test(t))return null;   // "quem não tem aula": a regra antiga responde que é ambíguo
  if(/\bproxima aula\b|\bproximo aluno\b/.test(t))return {acao:'consultar',consulta:'proxima'};
  if(/\b(?:faltam|restam|ainda tenho|ainda vou ter|falta dar)\b/.test(t)&&/\baulas?\b/.test(t)&&!periodoLongo(t,base)){
@@ -183,7 +206,7 @@ function interpretarAcaoEspecial(t,base){
   let ini=0,fim=1440;const periodo=['manha','tarde','noite'].find(p=>new RegExp('\\b'+p+'\\b').test(t));
   if(fx){ini=fx.ini;fim=fx.fim;}
   else if(periodo&&!/\b\d{1,2}(?::\d{2}|h|\s+horas?)/.test(t)){ini={manha:0,tarde:720,noite:1080}[periodo];fim={manha:720,tarde:1080,noite:1440}[periodo];}
-  else{const h=lerHora(textoHoras(t).trim());if(h.erro)return {erro:h.erro};if(h.hora){ini=minH(h.hora);fim=ini+60;}}
+  else{const h=horaUnica(t);if(h.erro)return {erro:h.erro};if(h.hora){ini=minH(h.hora);fim=ini+60;}}
   const horas=HORAS_GRADE.filter(h=>minH(h)>=ini&&minH(h)<fim);
   if(!horas.length)return {erro:'Não encontrei horários da grade nesse intervalo.'};
   if(semanal)return {acao:'horarios',especial:true,modo,escopo:'semana',dias,data:'',horas,ini,fim};
@@ -191,7 +214,9 @@ function interpretarAcaoEspecial(t,base){
   if(!dt.data)return {erro:'Diga o dia: por exemplo “domingo”, “dia 12” ou “todo domingo”.'};
   return {acao:'horarios',especial:true,modo,escopo:'data',dias:[new Date(dt.data+'T12:00:00').getDay()],data:dt.data,horas,ini,fim};
  }
- if(/\b(?:chuva|choveu|chovendo|chove)\b/.test(t)&&!/\?/.test(t)&&!/^(?:vai|sera|tem previsao|previsao|quando)\b/.test(t)){
+ // marcar chuva precisa de pedido claro; "choveu ontem" (falado, sem "?") é pergunta
+ const pedeChuva=/\b(?:marc\w*|lanc\w*|registr\w*|cancel\w*|derrub\w*|coloc\w*|bot\w*)\b/.test(t)||/^(?:chuva|esta chovendo|ta chovendo)\b/.test(t);
+ if(/\b(?:chuva|choveu|chovendo|chove)\b/.test(t)&&pedeChuva&&!/\?/.test(t)&&!/^(?:vai|sera|tem previsao|previsao|quando|teve|houve)\b/.test(t)){
   if(/\b(?:nao|corrigindo|desculpa)\b/.test(t))return {erro:'Reformule um pedido afirmativo por vez. Nada foi alterado.'};
   const dt=lerData(t,base);if(dt.erro)return {erro:dt.erro};const data=dt.data||base;
   const fx=lerFaixa(t);if(fx&&fx.erro)return {erro:fx.erro};
@@ -199,7 +224,7 @@ function interpretarAcaoEspecial(t,base){
   if(fx){ini=fx.ini;fim=fx.fim;}
   else{const periodo=['manha','tarde','noite'].find(p=>new RegExp('\\b'+p+'\\b').test(t));
    if(periodo){ini={manha:0,tarde:720,noite:1080}[periodo];fim={manha:720,tarde:1080,noite:1440}[periodo];}
-   else{const h=lerHora(textoHoras(t).trim());if(h.erro)return {erro:h.erro};if(h.hora){ini=minH(h.hora);fim=ini+60;}}}
+   else{const h=horaUnica(t);if(h.erro)return {erro:h.erro};if(h.hora){ini=minH(h.hora);fim=ini+60;}}}
   return {acao:'chuva',especial:true,data,ini,fim,horas:HORAS.filter(h=>minH(h)>=ini&&minH(h)<fim)};
  }
  return null;
@@ -247,7 +272,7 @@ function interpretar(texto,alunos,base){
  else if(/\bparticular\b/.test(t))tipo='aula';else if(/\bpersonal\b/.test(t))tipo='personal';else if(/\blocacao\b/.test(t))tipo='locacao';else if(/\btorneio\b/.test(t))tipo='torneio';
  return {acao:acoes[0],candidatos:candidatos.map(a=>a.id),data:d.data,hora:h.hora,tipo,repo:/\breposicao\b/.test(t),aviso:d.erro||h.erro};
 }
-const AJUDA_CURTA='Posso responder sobre aulas (dia, horário, semana, mês ou ano), horários livres, alunos (créditos, próxima aula, horário fixo, mensalidade), quem está devendo, quanto você recebeu, ocupação e locações. E, com sua confirmação, agendar, cancelar, renovar pacote, abrir ou fechar horários e marcar chuva.';
+const AJUDA_CURTA='Posso responder sobre aulas (dia, horário, semana, mês ou ano), horários livres, extrato e próximas aulas de cada aluno, créditos, reposições, mensalidade, faltas, aulas desmarcadas, dias de chuva, presenças por confirmar, quem está devendo, quanto você recebeu, ocupação e locações. E, com sua confirmação, agendar, cancelar, renovar pacote, abrir ou fechar horários e marcar chuva.';
 function dono(){try{return !w.JV_DEMO&&CARREGADO&&w._espacoAberto&&ehDono()&&!!w.AUTH_USER&&w.AUTH_USER.uid===UID_DONO;}catch(e){return false;}}
 function pronto(){if(!dono())throw Error('Entre na conta do João para usar as ações rápidas.');
  if(navigator.onLine===false||!hasCloud())throw Error('Conecte à internet antes de confirmar uma ação.');
@@ -306,7 +331,14 @@ function msg(quem,texto,linhas){
  const todas=box.querySelectorAll('.jv-voz-msg');if(todas.length>40)todas[0].remove();
  rolarConversa();return d;
 }
-function rolarConversa(){const box=$('voz-conversa');if(box)box.scrollTop=box.scrollHeight;}
+/* Resposta curta: mostra o fim. Resposta longa (extrato): mostra a pergunta e
+   o começo da resposta, para o resumo não ficar escondido em cima. */
+function rolarConversa(){
+ const box=$('voz-conversa');if(!box)return;
+ const voces=box.querySelectorAll('.jv-voz-msg.voce'),ult=voces[voces.length-1];
+ if(ult&&box.scrollHeight-ult.offsetTop>box.clientHeight)box.scrollTop=Math.max(0,ult.offsetTop-6);
+ else box.scrollTop=box.scrollHeight;
+}
 function arquivarVivos(){
  const c=$('voz-consulta'),r=$('voz-resultado');
  if(r&&!r.hidden&&r.textContent)msg('assistente',r.textContent);
@@ -466,6 +498,9 @@ function resumoAluno(q){
   return 'A mensalidade de '+mes+' de '+nome+' está '+(sm.status==='parcial'?'paga em parte':'pendente')+(hideVals?'':': falta '+fmtRs(sm.falta))+'.';};
  const dia=()=>{const au=comIndiceAgenda(()=>aulasDoDia(new Date(q.data+'T12:00:00'))).aulas.filter(x=>x.entradas.some(e=>e.alunoId===a.id));
   return au.length?nome+' tem '+plural(au.length,'aula')+' '+quandoTxt(q.data)+': '+au.map(x=>x.hora+' ('+tipoAula(x).toLowerCase()+')').join(', ')+'.':nome+' não tem aula '+quandoTxt(q.data)+'.';};
+ if(q.qual==='extrato')return resumoExtrato(a,q);
+ if(q.qual==='proximas'){const l=proximasAluno(a,10);const resumo=l.length?'Próximas aulas de '+nome+': '+plural(l.length,'aula')+' nos próximos 60 dias; a primeira é '+quandoTxt(l[0].dk)+' às '+l[0].hora+'.':'Não encontrei aula de '+nome+' nos próximos 60 dias.';
+  return {titulo:'Próximas aulas de '+nome,resumo,linhas:l.map(x=>({hora:rotDia(x.dk)+' '+x.hora,nomes:x.tipo,tipo:''})),nota:'Pela agenda (fixos, avulsas e reposições).',fala:resumo};}
  const resumo=({saldo,proxima,horarios,pagamento,dia})[q.qual]?({saldo,proxima,horarios,pagamento,dia})[q.qual]():saldo()+' '+proxima();
  return {titulo:nome,resumo,linhas:[],nota:hideVals&&q.qual==='pagamento'?'Valor oculto: toque no olho do Início para mostrar os valores.':'Consulta do cadastro e da agenda; nada foi alterado.',fala:resumo};
 }
@@ -487,6 +522,108 @@ function resumoProxima(){
  const resumo=achou?'Sua próxima aula é '+quandoTxt(achou.dk)+' às '+achou.au.hora+': '+achou.au.entradas.map(nomeEntrada).join(', ')+' ('+tipoAula(achou.au).toLowerCase()+').':'Não encontrei aula nos próximos 30 dias.';
  return {titulo:'Próxima aula',resumo,linhas:[],nota:'Consulta da sua agenda.',fala:resumo};
 }
+function chuvaEm(dk,hora){return ((DB.agenda||{}).eventos||[]).some(e=>e.data===dk&&e.hora===hora&&e.tipo==='bloqueio'&&(e.motivo==='chuva'||/chuva/i.test(String(e.titulo||''))));}
+const ST_TXT={confirmada:'✓ presença confirmada',sem:'dada · presença não confirmada',falta:'✗ faltou',avisou:'🔁 avisou que não vinha',agendada:'agendada',desmarcada:'❌ desmarcada',chuva:'☔ cancelada por chuva'};
+/* Extrato de aulas do aluno: a mesma lista do Início/fechamento (aulasDoDia),
+   com a situação de cada aula pela presença; mais as desmarcadas (exceção do
+   fixo ou aviso do app) e as derrubadas por chuva. */
+function extratoAluno(a,ini,fim){
+ const hoje=dataBase(),agora=agoraMinSP(),pres={},itens=[],dias=new Set(),chave=new Set();
+ (DB.presencas||[]).forEach(p=>{if(p.alunoId===a.id&&p.k)pres[p.k]=p;});
+ percorrerDias(ini,fim,(d,dk)=>aulasDoDia(d).aulas.forEach(au=>{
+  const e=au.entradas.find(x=>x.alunoId===a.id);if(!e)return;
+  const reg=pres[presId(e,d)],passou=dk<hoje||dk===hoje&&au.min+60<=agora;
+  const st=ehFalta(reg)?'falta':ehAvisou(reg)?'avisou':reg?'confirmada':passou?'sem':'agendada';
+  dias.add(dk);chave.add(dk+'|'+au.hora);
+  itens.push({dk,hora:au.hora,min:au.min,st,tipo:e.repo?'reposição':tipoAula(au).toLowerCase()});
+ }));
+ (DB.presencas||[]).forEach(p=>{
+  if(p.alunoId!==a.id||!p.manual||ehMarca(p)||!p.data||p.data<ini||p.data>fim||dias.has(p.data))return;
+  try{if(ehDupManual(p,DB.presencas))return;}catch(e){}
+  itens.push({dk:p.data,hora:p.hora||'—',min:p.hora?minH(p.hora):0,st:'confirmada',tipo:'lançada pelo cartão'});
+ });
+ const fixos=((DB.agenda||{}).fixos||[]).filter(f=>f.alunoId===a.id);
+ ((DB.agenda||{}).excecoes||[]).forEach(x=>{
+  if(!x.data||x.data<ini||x.data>fim)return;const f=fixos.find(y=>y.id===x.fixoId);if(!f||chave.has(x.data+'|'+f.hora))return;
+  chave.add(x.data+'|'+f.hora);itens.push({dk:x.data,hora:f.hora,min:minH(f.hora),st:chuvaEm(x.data,f.hora)?'chuva':'desmarcada',tipo:''});
+ });
+ (DB.chuvas||[]).forEach(c=>{if(!c.data||c.data<ini||c.data>fim||!(c.cods||[]).includes(a.codigo)||chave.has(c.data+'|'+c.hora))return;
+  chave.add(c.data+'|'+c.hora);itens.push({dk:c.data,hora:c.hora,min:minH(c.hora),st:'chuva',tipo:''});});
+ (typeof NOTIF!=='undefined'?NOTIF:[]).forEach(n=>{if(n.acao!=='cancelou'||String(n.codigo)!==String(a.codigo)||!n.data||n.data<ini||n.data>fim||chave.has(n.data+'|'+n.hora))return;
+  chave.add(n.data+'|'+n.hora);itens.push({dk:n.data,hora:n.hora||'—',min:n.hora?minH(n.hora):0,st:'desmarcada',tipo:'pelo app'});});
+ return itens.sort((x,y)=>x.dk.localeCompare(y.dk)||x.min-y.min);
+}
+function resumoExtrato(a,q){
+ const itens=extratoAluno(a,q.ini,q.fim),n=s=>itens.filter(i=>i.st===s).length,nome=String(a.nome);
+ const feitas=n('confirmada')+n('sem'),futuras=n('agendada'),partes=[];
+ if(feitas)partes.push(plural(feitas,'já feita','já feitas')+(n('sem')?' ('+n('sem')+' sem presença confirmada)':''));
+ if(futuras)partes.push(plural(futuras,'ainda por vir','ainda por vir'));
+ if(n('falta'))partes.push(plural(n('falta'),'falta','faltas'));
+ if(n('avisou'))partes.push(n('avisou')+' com aviso de que não vinha');
+ if(n('desmarcada'))partes.push(plural(n('desmarcada'),'desmarcada','desmarcadas'));
+ if(n('chuva'))partes.push(n('chuva')+' cancelada'+(n('chuva')===1?'':'s')+' por chuva');
+ const total=feitas+futuras+n('falta')+n('avisou');
+ let resumo=total||itens.length?nome+' '+q.rotulo+': '+plural(total,'aula')+(partes.length?' — '+partes.join(', '):'')+'.':nome+' não tem aula '+q.rotulo+'.';
+ if(q.desdeInicio){const hoje=dataBase(),ini=inicioRegistros()||hoje,tot=extratoAluno(a,ini,hoje).filter(i=>i.st==='confirmada'||i.st==='sem').length;
+  resumo+=' Desde '+brData(ini)+'/'+ini.slice(0,4)+' (início dos registros): '+plural(tot,'aula feita','aulas feitas')+'.';}
+ const linhas=itens.map(i=>({hora:rotDia(i.dk)+' '+i.hora,nomes:ST_TXT[i.st],tipo:i.tipo}));
+ return {titulo:'Extrato de '+nome,resumo,linhas,nota:'Mesma conta do Início e do fechamento. Desmarcadas e chuva aparecem para conferência; não contam como aula.',fala:resumo};
+}
+function proximasAluno(a,max){
+ const hoje=dataBase(),agora=agoraMinSP(),out=[];
+ comIndiceAgenda(()=>{for(let i=0;i<=60&&out.length<max;i++){const dk=somarDia(hoje,i);
+  for(const au of aulasDoDia(new Date(dk+'T12:00:00')).aulas){if(dk===hoje&&au.min<=agora)continue;if(au.entradas.some(e=>e.alunoId===a.id)){out.push({dk,hora:au.hora,tipo:tipoAula(au).toLowerCase()});if(out.length>=max)break;}}}});
+ return out;
+}
+function resumoChuvas(q){
+ const dias=new Map();
+ ((DB.agenda||{}).eventos||[]).forEach(e=>{if(e.tipo!=='bloqueio'||!(e.motivo==='chuva'||/chuva/i.test(String(e.titulo||'')))||e.data<q.ini||e.data>q.fim)return;
+  const x=dias.get(e.data)||{horas:[],nq:0};x.horas.push(e.hora);x.nq+=Number(e.nq)||0;dias.set(e.data,x);});
+ const lista=[...dias].sort((x,y)=>x[0].localeCompare(y[0]));
+ const linhas=lista.map(([dk,x])=>({hora:rotDia(dk),nomes:x.horas.sort().join(', '),tipo:x.nq?plural(x.nq,'marcação cancelada','marcações canceladas'):''}));
+ const resumo=q.tipo==='dia'?(lista.length?'Sim: '+q.rotulo+' teve chuva marcada às '+lista[0][1].horas.sort().join(', ')+(lista[0][1].nq?' ('+plural(lista[0][1].nq,'marcação cancelada','marcações canceladas')+')':'')+'.':'Não há chuva marcada '+q.rotulo+'.')
+  :(lista.length?plural(lista.length,'dia','dias')+' com chuva marcada '+q.rotulo+'.':'Nenhuma chuva marcada '+q.rotulo+'.');
+ return {titulo:'Chuva',resumo,linhas:q.tipo==='dia'?[]:linhas,nota:'Pela marcação de chuva na agenda.',fala:resumo};
+}
+function canceladas(ini,fim){
+ const out=[],fixos=(DB.agenda||{}).fixos||[],chave=new Set();
+ ((DB.agenda||{}).excecoes||[]).forEach(x=>{if(!x.data||x.data<ini||x.data>fim)return;const f=fixos.find(y=>y.id===x.fixoId);if(!f||!['aula','grupo','personal'].includes(f.tipo))return;
+  chave.add(x.data+'|'+f.hora+'|'+(f.alunoId||f.titulo));out.push({dk:x.data,hora:f.hora,nome:nomeEntrada(f),chuva:chuvaEm(x.data,f.hora),motivo:'cancelada só nesta data'});});
+ (typeof NOTIF!=='undefined'?NOTIF:[]).forEach(n=>{if(n.acao!=='cancelou'||!n.data||n.data<ini||n.data>fim)return;
+  const a=DB.alunos.find(x=>String(x.codigo)===String(n.codigo)),k=n.data+'|'+n.hora+'|'+(a?a.id:n.nome);if(chave.has(k))return;chave.add(k);
+  out.push({dk:n.data,hora:n.hora||'',nome:a?a.nome:String(n.nome||'Aluno'),chuva:false,motivo:'desmarcou pelo app'});});
+ (DB.presencas||[]).forEach(p=>{if(!ehAvisou(p)||!p.data||p.data<ini||p.data>fim)return;const a=DB.alunos.find(x=>x.id===p.alunoId);
+  out.push({dk:p.data,hora:p.hora||'',nome:a?a.nome:'Aluno',chuva:false,motivo:'avisou que não vinha'});});
+ return out.sort((x,y)=>x.dk.localeCompare(y.dk)||String(x.hora).localeCompare(String(y.hora)));
+}
+function resumoDesmarcadas(q){
+ const todas=canceladas(q.ini,q.fim),sem=todas.filter(x=>!x.chuva),chuva=todas.length-sem.length;
+ const resumo=(sem.length?plural(sem.length,'aula desmarcada','aulas desmarcadas')+' '+q.rotulo+'.':'Nenhuma aula desmarcada '+q.rotulo+'.')+(chuva?' Além disso, '+plural(chuva,'saiu','saíram')+' por chuva.':'');
+ const linhas=sem.map(x=>({hora:(q.tipo==='dia'?'':rotDia(x.dk)+' ')+x.hora,nomes:x.nome,tipo:x.motivo}));
+ return {titulo:'Aulas desmarcadas',resumo,linhas,nota:'Pelas exceções da agenda, avisos do app dos alunos e avisos marcados na presença.',fala:resumo+(linhas.length&&linhas.length<=6?' '+linhas.map(l=>l.hora+' '+l.nomes).join(', ')+'.':'')};
+}
+function resumoFaltas(q){
+ const f=(DB.presencas||[]).filter(p=>ehFalta(p)&&p.data&&p.data>=q.ini&&p.data<=q.fim).sort((x,y)=>String(x.data).localeCompare(String(y.data))||String(x.hora).localeCompare(String(y.hora)));
+ const linhas=f.map(p=>{const a=DB.alunos.find(x=>x.id===p.alunoId);return {hora:(q.tipo==='dia'?'':rotDia(p.data)+' ')+(p.hora||''),nomes:a?a.nome:'Aluno',tipo:'faltou'};});
+ const resumo=f.length?plural(f.length,'falta','faltas')+' '+q.rotulo+'.':'Ninguém faltou '+q.rotulo+'.';
+ return {titulo:'Faltas',resumo,linhas,nota:'Falta marcada na presença (consome a aula).',fala:resumo+(linhas.length&&linhas.length<=6?' '+linhas.map(l=>l.nomes).join(', ')+'.':'')};
+}
+function resumoPresencas(q){
+ const hoje=dataBase(),agora=agoraMinSP(),pres=new Set((DB.presencas||[]).map(p=>p.k)),linhas=[];
+ percorrerDias(q.ini,q.fim<hoje?q.fim:hoje,(d,dk)=>aulasDoDia(d).aulas.forEach(au=>{
+  if(dk===hoje&&au.min+60>agora)return;
+  au.entradas.filter(e=>e.alunoId&&!pres.has(presId(e,d))).forEach(e=>linhas.push({hora:(q.tipo==='dia'?'':rotDia(dk)+' ')+au.hora,nomes:nomeEntrada(e),tipo:'presença não confirmada'}));
+ }));
+ const resumo=linhas.length?plural(linhas.length,'presença por confirmar','presenças por confirmar')+' '+q.rotulo+'.':'Todas as presenças '+q.rotulo+' estão confirmadas.';
+ return {titulo:'Presenças',resumo,linhas,nota:'Aulas que já passaram sem ✓ na agenda. Confirme pela agenda; aqui é só a lista.',fala:resumo};
+}
+function resumoReposicoes(){
+ const l=(DB.alunos||[]).filter(a=>ehAtivoAluno(a)&&reposValidas(a)>0).sort((x,y)=>reposValidas(y)-reposValidas(x));
+ const tot=l.reduce((s,a)=>s+reposValidas(a),0);
+ const resumo=l.length?plural(l.length,'aluno','alunos')+' com reposição válida, '+fmtCred(tot)+' no total.':'Nenhum aluno ativo com reposição válida.';
+ return {titulo:'Reposições',resumo,linhas:l.map(a=>({hora:'•',nomes:a.nome,tipo:fmtCred(reposValidas(a))+(reposValidas(a)===1?' reposição':' reposições')+(reposVencendo(a)?' · '+fmtCred(reposVencendo(a))+' vence este mês':'')})),nota:'Só reposições dentro dos 4 meses de validade.',fala:resumo};
+}
+function resumoAlunos(){const c=contagemAlunos();const resumo='Você tem '+plural(c.ativos,'aluno ativo','alunos ativos')+(c.inativos?' ('+c.inativos+' inativo'+(c.inativos===1?'':'s')+' no cadastro)':'')+'.';return {titulo:'Alunos',resumo,linhas:[],nota:'Mesma conta do Início.',fala:resumo};}
 function resumoOcupacao(q){
  let resumo;
  if(q.longo){const o=ocupacao(new Date(q.longo.ini+'T12:00:00'),new Date(q.longo.fim+'T12:00:00'));resumo='Ocupação '+q.longo.rotulo+': '+(o.disp?o.pct+'% ('+o.ocup+' de '+o.disp+' horários de aula)':'sem horários abertos para aula')+'. Locação: '+o.locUsados+' h.';}
@@ -509,11 +646,11 @@ function resumoPrecos(){
  return {titulo:'Preços',resumo,linhas:hideVals?[]:linhas,nota:'Os preços de plano mensal por aluno estão no cadastro de cada um.',fala:resumo};
 }
 function resumoAjuda(){
- const ex=['“Quantas aulas tenho das 16 até o fim da noite?”','“Quais horários livres amanhã de manhã?”','“Quantas aulas dei este mês?”','“Quantos créditos a Ana tem?” · “Quando é a próxima aula do Bruno?”','“Quem está devendo este mês?” · “Quanto recebi este mês?”','“Abra os horários das 7 às 18 de domingo para locação”','“Feche a quadra sábado à tarde” · “Marcar chuva hoje à tarde”','“Agendar Ana amanhã às 16h” · “Cancelar Bruno sexta às 18h”'];
+ const ex=['“Quantas aulas tenho das 16 até o fim da noite?”','“Quais horários livres amanhã de manhã?”','“Quantas aulas dei este mês?”','“Quantas aulas a Ana fez este mês?” · “Próximas aulas do Bruno”','“Quantos créditos a Ana tem?” · “Choveu ontem?” · “Tem aula desmarcada hoje?”','“Quem está devendo este mês?” · “Quanto recebi este mês?”','“Abra os horários das 7 às 18 de domingo para locação”','“Feche a quadra sábado à tarde” · “Marcar chuva hoje à tarde”','“Agendar Ana amanhã às 16h” · “Cancelar Bruno sexta às 18h”'];
  return {titulo:'O que eu sei fazer',resumo:AJUDA_CURTA,linhas:ex.map(x=>({hora:'•',nomes:x,tipo:''})),nota:'Pode falar do seu jeito; se faltar algo, eu pergunto.',fala:AJUDA_CURTA};
 }
 function calcularResposta(q){
- const f=({periodo:resumoPeriodo,proxima:resumoProxima,livres:resumoLivres,aluno:resumoAluno,financeiro:resumoFinanceiro,ocupacao:resumoOcupacao,locacoes:resumoLocacoes,precos:resumoPrecos,ajuda:resumoAjuda})[q.consulta];
+ const f=({periodo:resumoPeriodo,proxima:resumoProxima,chuvas:resumoChuvas,desmarcadas:resumoDesmarcadas,faltas:resumoFaltas,presencas:resumoPresencas,reposicoes:resumoReposicoes,alunos:resumoAlunos,livres:resumoLivres,aluno:resumoAluno,financeiro:resumoFinanceiro,ocupacao:resumoOcupacao,locacoes:resumoLocacoes,precos:resumoPrecos,ajuda:resumoAjuda})[q.consulta];
  return f?f(q):resumoConsulta(q);
 }
 async function responderConsulta(q){
