@@ -1,7 +1,8 @@
 # Revisão antes da publicação
 
 João pediu conferir o trabalho do Claude/GitHub e realizar somente o que faltava.
-Main conferida: `893ecca78f5752d88193ab6e736825760e07769e` (2026-10-07-4).
+Main conferida antes do complemento: `5bf600d4e9a0bbc8d99e5a11bbd18a76cd41a4b2` (2026-10-07-7).
+O #224 já foi publicado; monitor 37705940943 confirmou Gestão e Aluno nos dois hosts.
 Versão em revisão: 2026-10-07-8, PR #226, incorporando o trabalho do #224.
 
 | Recurso | Situação e ação nesta revisão |
@@ -16,7 +17,7 @@ Versão em revisão: 2026-10-07-8, PR #226, incorporando o trabalho do #224.
 | Fala | Apenas protótipo visual; comandos e microfone ainda não implementados. |
 | App Check | Falta chave pública e registro do provedor no console. Seguir [APP-CHECK.md](APP-CHECK.md), começando em monitoramento. |
 
-O #224 não deve ser publicado separadamente com V5/V6/V7 após esta integração.
+O #224 já foi publicado. Este complemento preserva seu código e publica somente o restante.
 A CI do head final do #226 registra a checagem completa e as capturas.
 Esta revisão usa somente código e dados fictícios; não altera cadastros de produção.
-Publicação ainda depende da confirmação solicitada ao João.
+João autorizou a publicação em 08/10. O estado efetivo e os monitores estão registrados no PR #226.

@@ -112,7 +112,7 @@ continua vazio.
 - App **Família JK** (#211–#213, #217): aportes, sincronização entre aparelhos
   (`sync-merge.js`), menu, histórico mensal, recuperação de OFX. Só registro.
 
-### Defeitos confirmados (a corrigir)
+### Defeitos confirmados (corrigidos no #223, ver entrada acima)
 1. **Alarme falso de "CRÉDITOS DUPLICADOS"** — `renovacoesDoMes`
    (`app-gestao.js` ~5217) devolve a marca `ultimaRenovacao` **mais** os
    movimentos "Renovação do mês"; `achadosDoAluno` (~9397) acusa `length>1`.
@@ -162,7 +162,7 @@ continua vazio.
   (sempre chamado com `sh`, sem efeito).
 
 ### Pendências
-- **Pedidos do João ainda não feitos (03/10):** (1) Renovar o mês — nome do
+- **Pedidos do João de 03/10 (feitos em 07/10, ver entrada acima):** (1) Renovar o mês — nome do
   aluno abre a ficha; (2) Início — Taxa de ocupação e Locações abrem a agenda
   **do mês** (hoje abrem a do dia); (3) App do aluno — resumo do mês na tela
   Aulas (pacote, feitas com datas, agendadas, saldo) e atalho fácil até ela.
@@ -213,7 +213,6 @@ Base examinada: `e77844a1d440bf13d51a8d47c990045eebc28558`, versão publicada
 - Verificação documental: regras e funções citadas conferidas na base acima;
   PR #224 e monitor público examinados. Compatibilidade de microfone ainda
   requer teste no aparelho real. CI desta entrega é registrado no próprio PR.
-
 
 ---
 
@@ -325,3 +324,22 @@ como segundo pai; preservados fonte, gerador de tema e testes do Claude.
 - A CI e as capturas do novo head substituem a aprovação do head V6 anterior.
   Publicação continua dependendo do OK de João; App Check e fala permanecem
   nas condições descritas na revisão. Não publicar #224 separadamente.
+
+
+---
+
+## 2026-10-08 · Codex: publicação do complemento autorizada pelo João
+
+João autorizou conferir o que já estava no ar e publicar somente o restante.
+O #224 já foi integrado em `5bf600d4e9a0bbc8d99e5a11bbd18a76cd41a4b2`.
+Monitor 37705940943 confirmou V7 em Gestão Pages, Aluno Pages e Aluno Netlify,
+e arquivos do site acessíveis. Todas as correções do Claude foram preservadas.
+
+- O #226 é atualizado sobre essa main, resolvendo a sobreposição de versões
+  com o conteúdo consolidado já validado em `71d4ddd4945519ea3d13054e75a79e3eebbf2543`.
+  Nenhuma implementação do Claude é repetida; o diff passa a ser só o complemento.
+- Versão proposta V8: ações de aulas, histórico mensal, calendário e pendências.
+  A autorização anterior pendente foi atendida. Validar novamente o novo head
+  antes do merge e verificar o monitor após a publicação; evidências no #226.
+- Sem alterações de dados reais ou regras. App Check depende da configuração
+  externa; fala continua protótipo visual isolado.
