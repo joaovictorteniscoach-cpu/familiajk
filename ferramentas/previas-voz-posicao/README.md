@@ -1,8 +1,9 @@
-# Comparação de posição do botão de fala
+# Comparação do botão de fala
 
-Prévias de 08/10/2026 solicitadas por João, capturadas em Chromium/Saibro 390×844 pelo teste do PR #232, head ff59aa9b18b3e4a15d8bb6d786ba014e5cee0f0a. Somente dados fictícios, sem acesso à nuvem real.
+Pedido atual de João: foto do microfone no topo, seguida de foto na posição flutuante atual com um pouco de transparência.
 
-- topo.png: posição funcional proposta junto ao sino, sem flutuar sobre o conteúdo.
-- embaixo.png: simulação visual com faixa própria acima da navegação. Ainda não é implementação funcional da posição inferior.
+- topo.png: junto ao sino, proposta funcional do PR #232.
+- flutuante-translucido.png: posição flutuante original, 54px acima da navegação, com 70% de opacidade (30% transparente), apenas simulação visual. Capturada pelo teste do PR #232 em Chromium/Saibro 390×844, head 68980bb7ca86523be2ba02e71f8c67b5232d5028, CI 37807107995.
+- embaixo.png: comparação anterior em faixa reservada, mantida como histórico; não é a imagem pedida no último ajuste.
 
-Este branch contém apenas imagens de comparação sobre a main V6. Não publica a mudança de posição. Aguardar escolha de João no PR #232.
+Dados fictícios, sem acesso à nuvem real. Imagens de comparação sobre main V6, sem publicar alteração nos apps. Aguardar escolha de João no PR #232. Transparência não elimina a sobreposição ou a área de toque de um botão flutuante.
