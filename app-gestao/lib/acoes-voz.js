@@ -303,7 +303,10 @@ async function conferirNuvem(){
  const mapa=await comPrazo(lerMapaQuadra(true),PRAZO_NUVEM,marco);if(mapa===marco)throw Error('Não consegui conferir a agenda da quadra. Nada foi alterado.');pronto();
 }
 const campo=id=>$(id).value;
-function tipoAluno(a){return ({Dupla:'grupo2',Trio:'grupo3',Quarteto:'grupo4',Grupo:'grupo2',Personal:'personal',Torneio:'torneio'})[a.tipo]||'aula';}
+function tipoAluno(a){
+ const p=typeof perfilDe==='function'?perfilDe(a):'';if(p==='locacao'||p==='torneio')return p;   // cliente só de locação/torneio
+ return ({Dupla:'grupo2',Trio:'grupo3',Quarteto:'grupo4',Grupo:'grupo2',Personal:'personal',Torneio:'torneio'})[a.tipo]||'aula';
+}
 function chaveForm(){return JSON.stringify(['voz-acao','voz-aluno','voz-data','voz-hora','voz-tipo','voz-marcacao'].map(campo).concat($('voz-repo').checked,$('voz-texto').value));}
 function assinatura(){return JSON.stringify(DB);}
 function contexto(){

@@ -54,5 +54,18 @@ html body:not(#jv) #ov-aulas-cal .aul-cal-actions .btn-ghost{background:#E7E4D9!
 #apg-aulas .amr{background:#102A21!important;border:1px solid #506558!important;border-radius:14px;padding:18px;margin-bottom:16px}
 #apg-aulas .amr b,#apg-aulas .amr-bloco>b{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
 #apg-aulas .amr span,#apg-aulas .amr-plano,#apg-aulas .amr-nota{color:#DFE7E1!important;-webkit-text-fill-color:#DFE7E1!important}
-#apg-aulas .amr-dias{max-height:120px;overflow:auto}
+#apg-aulas .amr-dias{max-height:none;overflow:visible}   /* Minhas aulas mostra o mês inteiro, sem rolagem escondida */
 #apg-creditos #cred-page-mes .jv-pay-lbl,#apg-creditos #cred-page-mes .jv-row,#apg-creditos #cred-page-mes .amr-ver{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+
+/* Minhas aulas: aba própria na barra de baixo (6 botões) e botão laranja no Início. */
+html body .nav.jv-nav-3d{grid-template-columns:repeat(6,minmax(0,1fr))!important;padding-left:3px!important;padding-right:3px!important}
+html body .nav.jv-nav-3d button{min-width:0;padding-left:1px!important;padding-right:1px!important;line-height:1.12;text-align:center}
+.nav .mau-nav-txt{display:block;max-width:100%;white-space:normal;overflow-wrap:anywhere}
+@media (max-width:379px){html body .nav.jv-nav-3d button{font-size:10.2px!important;letter-spacing:0!important}}
+html body #apg-inicio .mau-home{display:flex;align-items:center;gap:12px;width:100%;min-height:68px;margin:0 0 14px;padding:14px 16px;border:0;border-radius:18px;text-align:left;background:#C2582E!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important;box-shadow:0 6px 18px rgba(194,88,46,.32);cursor:pointer}
+#apg-inicio .mau-home-ico{flex:0 0 auto;display:flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.18);font-size:22px;line-height:1}
+#apg-inicio .mau-home-txt{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:3px}
+html body #apg-inicio .mau-home-txt b{font:800 18px/1.15 'DM Sans',sans-serif;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+html body #apg-inicio .mau-home-txt small{font:600 12.5px/1.35 'DM Sans',sans-serif;color:#FFEDE3!important;-webkit-text-fill-color:#FFEDE3!important}
+#apg-inicio .mau-home-seta{flex:0 0 auto;font-size:28px;line-height:1;font-weight:400}
+html body #apg-inicio .mau-home:active{transform:scale(.99)}
