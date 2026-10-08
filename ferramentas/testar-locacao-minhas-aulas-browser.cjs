@@ -6,7 +6,7 @@
    chega como "pediu locação" e abre o horário preenchido sem gravar nada; a
    conferência lista cliente de locação com aula descontada, sem alterar.
    Aluno: horas de locação no botão e na mensagem; aba "Minhas aulas" na barra
-   de baixo e botão laranja no Início. */
+   de baixo e botão laranja no Início, com a página dividida em abas. */
 let chromium;
 try{({chromium}=require('playwright'));}catch(e){({chromium}=require(process.env.PW||'/opt/node22/lib/node_modules/playwright'));}
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict');
@@ -162,6 +162,29 @@ async function contexto(browser,base,opts){
     await p.locator('#apg-perfil .jv-quick button',{hasText:'Minhas aulas'}).click();
     assert.equal(await p.evaluate(()=>document.querySelector('.nav button.on').id),'nav-al-aulas','pelo Perfil também acende a aba certa');
     await p.evaluate(()=>goAluno('torneio',null));assert.equal(await p.evaluate(()=>document.querySelector('.nav button.on').id),'nav-al-perfil','Torneio continua no Perfil');
+   });
+   await check(tema+': Minhas aulas dividida em abas (Resumo do mês, Próximas, Feitas), uma de cada vez, sem rolagem longa',async()=>{
+    await resetA();await p.locator('#home-minhas-aulas').click();
+    const estado=()=>p.evaluate(()=>({sel:[...document.querySelectorAll('#apg-aulas .mau-tabs [role=tab]')].filter(t=>t.getAttribute('aria-selected')==='true').map(t=>t.id),
+     vis:['mes','prox','feitas'].filter(k=>document.getElementById('mau-painel-'+k).getClientRects().length),altura:document.documentElement.scrollHeight}));
+    const tabs=(await p.locator('#apg-aulas .mau-tabs [role=tab]').allInnerTexts()).map(t=>t.replace(/\s+/g,' ').trim());
+    assert.deepEqual(tabs,['Resumo do mês','Próximas (7)','Feitas (3)']);
+    let e=await estado();assert.deepEqual(e.sel,['mau-tab-mes']);assert.deepEqual(e.vis,['mes'],'abre no resumo do mês');
+    const alturaMes=e.altura;
+    await p.locator('#mau-tab-prox').click();e=await estado();assert.deepEqual(e.vis,['prox']);
+    assert.equal(await p.locator('#mine-list .mine-item').count(),7);assert.equal(await p.locator('#mine-list .aul-confirm').first().isVisible(),true);
+    assert.equal(await p.locator('#aul-cal-abrir').isVisible(),true);
+    await p.locator('#mau-tab-feitas').click();e=await estado();assert.deepEqual(e.vis,['feitas']);
+    assert.match(await p.locator('#hist-list').innerText(),/02\/10[\s\S]*07\/10[\s\S]*09\/10|09\/10[\s\S]*07\/10[\s\S]*02\/10/);
+    await p.locator('#mau-tab-mes').click();await p.locator('#mau-painel-mes .mau-ir').click();
+    assert.deepEqual((await estado()).vis,['prox'],'atalho do resumo leva às próximas');
+    await p.evaluate(()=>goAluno('inicio',document.getElementById('nav-al-inicio')));
+    await p.locator('#apg-inicio .jv-home-card',{hasText:'Próxima aula'}).click();
+    assert.deepEqual((await estado()).vis,['prox'],'cartão "Próxima aula" abre direto as próximas');
+    await p.locator('#nav-al-aulas').click();assert.deepEqual((await estado()).vis,['mes'],'barra de baixo volta ao resumo');
+    const r=await p.evaluate(()=>{const al=[];for(const k of ['mes','prox','feitas']){abaMinhasAulas(k);al.push(document.documentElement.scrollHeight);}abaMinhasAulas('mes');return al;});
+    assert.equal(r[0],alturaMes);assert.ok(r.every(h=>h<2600),'nenhuma aba vira rolagem longa: '+r.join(', '));
+    if(process.env.JV_SHOTS)for(const k of ['mes','prox','feitas']){await p.evaluate(k=>abaMinhasAulas(k),k);await p.screenshot({path:path.join(process.env.JV_SHOTS,'aluno-aba-'+k+'-'+tema+'.png')});}
    });
    await check(tema+': barra de baixo com 6 botões cabe no celular pequeno e no computador (toque ≥ 44 px, sem rolagem lateral)',async()=>{
     for(const width of [320,390,1280]){

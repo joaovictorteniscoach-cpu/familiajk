@@ -69,3 +69,17 @@ html body #apg-inicio .mau-home-txt b{font:800 18px/1.15 'DM Sans',sans-serif;co
 html body #apg-inicio .mau-home-txt small{font:600 12.5px/1.35 'DM Sans',sans-serif;color:#FFEDE3!important;-webkit-text-fill-color:#FFEDE3!important}
 #apg-inicio .mau-home-seta{flex:0 0 auto;font-size:28px;line-height:1;font-weight:400}
 html body #apg-inicio .mau-home:active{transform:scale(.99)}
+/* Abas da página Minhas aulas (estado em aria-selected: o .seg da agenda
+   limpa o "on" de todos os .seg da tela, por isso classe própria). */
+#apg-aulas .mau-tabs{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:4px;padding:4px;margin:0 0 14px;border-radius:14px;background:#0B241B;border:1px solid #506558}
+html body #apg-aulas .mau-tabs button{min-height:46px;padding:6px 4px;border:0;border-radius:10px;background:transparent;font:800 13px/1.2 'DM Sans',sans-serif;color:#DFE7E1!important;-webkit-text-fill-color:#DFE7E1!important;cursor:pointer}
+html body #apg-aulas .mau-tabs button b{font-weight:700;opacity:.85}
+html body #apg-aulas .mau-tabs button[aria-selected="true"]{background:#D4E157!important;color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+#apg-aulas .mau-painel[hidden]{display:none!important}
+html body #apg-aulas .mau-ir{display:block;width:100%;min-height:48px;margin:-4px 0 0;padding:12px 14px;border-radius:12px;border:1px solid #88A18E;background:#1C392D;font:800 13px/1.4 'DM Sans',sans-serif;color:#FFF!important;-webkit-text-fill-color:#FFF!important;text-align:center;cursor:pointer}
+@media (max-width:359px){html body #apg-aulas .mau-tabs button{font-size:12px}}
+#apg-aulas .mau-depois{margin:4px 0 0}
+html body #apg-aulas .mau-depois>summary{display:flex;align-items:center;justify-content:space-between;min-height:48px;padding:12px 14px;margin:0 0 12px;border-radius:12px;border:1px solid #88A18E;background:#1C392D;font:800 13px/1.4 'DM Sans',sans-serif;color:#FFF!important;-webkit-text-fill-color:#FFF!important;cursor:pointer;list-style:none}
+#apg-aulas .mau-depois>summary::-webkit-details-marker{display:none}
+#apg-aulas .mau-depois>summary::after{content:'›';font-size:22px;line-height:1;transition:transform .15s}
+#apg-aulas .mau-depois[open]>summary::after{transform:rotate(90deg)}

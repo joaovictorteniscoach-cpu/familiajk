@@ -39,7 +39,20 @@ Firebase alterado; nada é corrigido automaticamente.
   "N feitas · N marcadas em <mês>") e `irMinhasAulas()` em todos os atalhos;
   o cartão do Início virou "Próxima aula ›". A página ganhou título e mostra a
   lista inteira do mês (sem a rolagem de 120px). Torneio segue no Perfil.
-- Teste novo `testar-locacao-minhas-aulas-browser.cjs` (10, no CI); falha na V11.
+- **Abas em Minhas aulas** (pedido seguinte: sem rolagem longa, cada assunto
+  no seu lugar): "Resumo do mês" (números, plano e todas as datas feitas e
+  marcadas), "Próximas (N)" (confirmar, cancelar, Google Agenda, salvar o mês,
+  agendar mais, falar com o João) e "Feitas (N)" (histórico). Estado em
+  `aria-selected` (`abaMinhasAulas`, `ABA_MINHAS`); não usa `.seg`, porque o
+  `setView` da agenda limpa o "on" de todos os `.seg`. Barra de baixo e botão
+  laranja abrem o Resumo; "Próxima aula ›" abre Próximas. Em Próximas, as aulas
+  dos meses seguintes ficam agrupadas num `<details>` fechado. Testes antigos
+  (`testar-aulas-agenda-aluno`, `testar-trava-cancelamento`, `testar-3-pedidos`)
+  passam a abrir a aba Próximas antes de mexer nos cartões; o de toque de 44px
+  mede só os botões à vista.
+- Teste novo `testar-locacao-minhas-aulas-browser.cjs` (12, no CI); falha na V11.
+- `testar-contraste-fechamento-browser.cjs` falha neste ambiente local também na
+  main (a lista de alunos fica vazia no teste); no CI passa. Não é desta mudança.
 - **Codex:** a barra do aluno agora tem 6 colunas (`aulas-aluno.css`); se
   mexer na `.nav`, mantenha `repeat(6,…)`.
 

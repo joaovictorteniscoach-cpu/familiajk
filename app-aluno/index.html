@@ -1872,7 +1872,7 @@ function esperarAuth(){
         <div class="hc-sub" id="home-repos-sub">reposições disponíveis</div>
         <div class="hc-sub" id="home-repos-venc" hidden></div>
       </button>
-      <button class="jv-home-card" type="button" onclick="irMinhasAulas()">
+      <button class="jv-home-card" type="button" onclick="irMinhasAulas('prox')">
         <div class="hc-top"><span class="hc-icon" data-ic="cal"></span><span>Próxima aula ›</span></div>
         <div class="hc-main" id="home-prox-date">—</div>
         <div class="hc-sub" id="home-prox-meta">Carregando sua agenda…</div>
@@ -1935,7 +1935,17 @@ function esperarAuth(){
       <h2>Minhas <em>aulas</em></h2>
       <p id="mau-hero-sub">As aulas que você já fez e as que ainda vai fazer neste mês.</p>
     </div>
+    <!-- Abas da página: cada assunto no seu lugar, sem uma rolagem longa -->
+    <div class="mau-tabs" role="tablist" aria-label="Minhas aulas">
+      <button type="button" role="tab" id="mau-tab-mes" aria-controls="mau-painel-mes" aria-selected="true" onclick="abaMinhasAulas('mes')">Resumo do mês</button>
+      <button type="button" role="tab" id="mau-tab-prox" aria-controls="mau-painel-prox" aria-selected="false" tabindex="-1" onclick="abaMinhasAulas('prox')">Próximas <b id="mau-n-prox"></b></button>
+      <button type="button" role="tab" id="mau-tab-feitas" aria-controls="mau-painel-feitas" aria-selected="false" tabindex="-1" onclick="abaMinhasAulas('feitas')">Feitas <b id="mau-n-feitas"></b></button>
+    </div>
+    <div class="mau-painel" id="mau-painel-mes" role="tabpanel" aria-labelledby="mau-tab-mes">
     <div class="minhas amr" id="aulas-mes-resumo"></div>
+    <button type="button" class="mau-ir" onclick="abaMinhasAulas('prox')">Confirmar presença ou cancelar uma aula ›</button>
+    </div>
+    <div class="mau-painel" id="mau-painel-prox" role="tabpanel" aria-labelledby="mau-tab-prox" hidden>
     <div class="minhas">
       <p class="aul-intro">Confirme sua presença. Para cancelar, faça isso até 4 horas antes. O cancelamento vale apenas para a data escolhida.</p>
       <p class="sec-eyebrow">Meus horários</p>
@@ -1947,10 +1957,13 @@ function esperarAuth(){
       <button class="btn btn-clay" style="width:100%;margin-top:12px" onclick="irAgendar()">🎾 Agendar mais uma aula</button>
     </div>
     <div id="pedir-box" style="display:none;margin-top:14px"></div>
-    <div class="minhas" style="margin-top:14px">
+    </div>
+    <div class="mau-painel" id="mau-painel-feitas" role="tabpanel" aria-labelledby="mau-tab-feitas" hidden>
+    <div class="minhas">
       <p class="sec-eyebrow">Histórico</p>
       <h2 class="sec-title" id="aul-hist-mes">Realizadas neste mês</h2>
       <div id="hist-list"></div>
+    </div>
     </div>
 
     </section>
@@ -2066,7 +2079,7 @@ function esperarAuth(){
   <nav class="nav jv-nav-3d">
     <button id="nav-al-inicio" class="on" onclick="goAluno('inicio',this)"><span class="ico" data-ic="navhome"></span>Início</button>
     <button id="nav-al-agenda" onclick="goAluno('agenda',this)"><span class="ico" data-ic="navcal"></span><span class="nav-badge" id="nb-al-agenda"></span>Agenda</button>
-    <button id="nav-al-aulas" onclick="goAluno('aulas',this)"><span class="ico" data-ic="navball"></span><span class="mau-nav-txt">Minhas aulas</span></button>
+    <button id="nav-al-aulas" onclick="irMinhasAulas()"><span class="ico" data-ic="navball"></span><span class="mau-nav-txt">Minhas aulas</span></button>
     <button id="nav-evolucao" onclick="goAluno('evolucao',this)"><span class="ico" data-ic="navline"></span>Evolução</button>
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
@@ -3492,7 +3505,20 @@ function _albMarcar(tab){
 }
 /* Minhas aulas: as feitas e as marcadas do mês, num toque (barra de baixo,
    botão laranja do Início, cartão da próxima aula, Créditos e Perfil). */
-function irMinhasAulas(){goAluno('aulas',document.getElementById('nav-al-aulas'));}
+function irMinhasAulas(aba){goAluno('aulas',document.getElementById('nav-al-aulas'));abaMinhasAulas(aba||'mes');}
+/* Abas da página Minhas aulas: Resumo do mês (todas as datas, feitas e
+   marcadas), Próximas (confirmar, cancelar, salvar na agenda) e Feitas. */
+let ABA_MINHAS='mes';
+function abaMinhasAulas(aba){
+  if(['mes','prox','feitas'].indexOf(aba)<0)aba='mes';
+  ABA_MINHAS=aba;
+  ['mes','prox','feitas'].forEach(k=>{
+    const t=document.getElementById('mau-tab-'+k),pn=document.getElementById('mau-painel-'+k);
+    if(t){t.setAttribute('aria-selected',String(k===aba));t.tabIndex=k===aba?0:-1;}
+    if(pn)pn.hidden=k!==aba;
+  });
+  window.scrollTo({top:0});
+}
 function goAluno(id,btn){
   document.body.dataset.aba=id;      // cada área é uma tela própria; Torneio é detalhe do Perfil
   document.querySelectorAll('#app .page').forEach(p=>p.classList.remove('on'));
@@ -4830,11 +4856,19 @@ function aceitarTermo(){
 function renderMinhas(){
   const el=document.getElementById('mine-list');if(!el)return;
   const itens=aulasAgendadasAluno();
+  const np=document.getElementById('mau-n-prox');if(np)np.textContent=itens.length?'('+itens.length+')':'';
   const tipos={aula:'Aula particular',grupo:'Aula em grupo',personal:'Treino personal',locacao:'Locação',torneio:'Torneio'};
-  el.innerHTML=itens.length?itens.map(p=>{
+  const cartao=p=>{
     const dia=DIAS_FULL[dtOf(p.data,p.hora).getDay()];
     return itemHtml(fmtDataAl(p.data)+' · '+p.hora,dia+' · '+(tipos[p.tipo]||'Aula')+(p.pendente?' · pedido enviado':''),p.data,p.hora,p.rec,'',p.pendente);
-  }).join(''):'<div class="empty">Nenhuma próxima aula marcada.<br>Toque em Agendar mais uma aula para escolher um horário.</div>';
+  };
+  /* As do mês ficam à vista; as dos meses seguintes, agrupadas num toque,
+     para a aba não virar uma rolagem longa. */
+  const hoje=new Date(),mk=dKey(hoje).slice(0,7),mes=hoje.toLocaleDateString('pt-BR',{month:'long'});
+  const doMes=itens.filter(p=>String(p.data).slice(0,7)<=mk),depois=itens.filter(p=>String(p.data).slice(0,7)>mk);
+  el.innerHTML=itens.length?(doMes.length?doMes.map(cartao).join(''):'<div class="empty">Nenhuma aula marcada no resto de '+mes+'.</div>')
+    +(depois.length?'<details class="mau-depois"><summary>Depois de '+mes+' · '+depois.length+' aula'+(depois.length===1?'':'s')+'</summary>'+depois.map(cartao).join('')+'</details>':'')
+    :'<div class="empty">Nenhuma próxima aula marcada.<br>Toque em Agendar mais uma aula para escolher um horário.</div>';
   const count=document.getElementById('aul-prox-count');if(count)count.textContent=itens.length+' próxima'+(itens.length===1?'':'s');
   renderAtalhoAulas();
 }
@@ -4860,6 +4894,7 @@ function renderResumoMes(){
     +'<div class="amr-bloco"><b>✓ Aulas feitas em '+r.mes+'</b><div class="amr-dias">'+lista(r.feitas,'Nenhuma registrada ainda neste mês.')+'</div></div>'
     +'<div class="amr-bloco"><b>📅 Ainda marcadas em '+r.mes+'</b><div class="amr-dias">'+lista(r.prox,'Nada marcado para o resto do mês.')+'</div></div>'
     +'<p class="amr-nota">Cada aula aparece aqui assim que o João registra. Alguma data diferente? Fale com ele antes da virada do mês.</p>';
+  const nf=document.getElementById('mau-n-feitas');if(nf)nf.textContent=r.feitas.length?'('+r.feitas.length+')':'';
   const hs=document.getElementById('home-minhas-sub');
   if(hs)hs.textContent=r.feitas.length+' feita'+(r.feitas.length===1?'':'s')+' · '+r.prox.length+' marcada'+(r.prox.length===1?'':'s')+' em '+r.mes;
   const hh=document.getElementById('mau-hero-sub');

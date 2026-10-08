@@ -140,6 +140,7 @@ const contraste=(pg,sel)=>pg.evaluate(sel=>{
    assert.doesNotMatch(r.txt,/desconto/i,'mensagem ao aluno nunca cita desconto');
   });
   await check('Aulas: letras legíveis nos cartões claros (data, "Precisa falar com o João?" e o botão)',async()=>{
+   await p.evaluate(()=>{if(typeof abaMinhasAulas==='function')abaMinhasAulas('prox');});   // cartões e "Precisa falar com o João?" ficam na aba Próximas
    for(const sel of ['#mine-list .mine-item b','#pedir-box>div>div','#pedir-box .btn-ghost']){
     const r=await contraste(p,sel);assert.ok(r>=4.5,sel+' com contraste '+r+' (mínimo 4,5)');}
   });

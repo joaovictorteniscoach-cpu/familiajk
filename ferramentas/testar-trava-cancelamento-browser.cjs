@@ -49,7 +49,7 @@ async function check(name,fn){await fn();count++;console.log('✅ '+name);}
    ACOES_AULA_EM_CURSO.clear();VINCULO_ESTADO='ativo';
    document.getElementById('app').style.display='block';document.querySelectorAll('.overlay').forEach(x=>x.classList.remove('on'));
    document.querySelectorAll('[id*="splash"]').forEach(x=>x.style.display='none');
-   render();goAluno('aulas',null);
+   render();goAluno('aulas',null);if(typeof abaMinhasAulas==='function')abaMinhasAulas('prox');
   },{pub:pubFixture,eu,offset});
   return {p,c,errors};
  }
