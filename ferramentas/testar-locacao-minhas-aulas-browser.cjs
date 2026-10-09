@@ -102,6 +102,33 @@ async function contexto(browser,base,opts){
    assert.ok(!r.ana.some(t=>/cliente de locação/.test(t)),'aluna com plano de aulas não entra');
    assert.equal(r.igual,true,'conferência só lista');
   });
+  await check('Gestão: almoço e compromisso do João só tiram a aula — locação e torneio entram; chuva continua bloqueando tudo',async()=>{
+   await resetG();
+   const r=await g.evaluate(()=>{
+    DB.agenda.eventos.push({id:'alm',data:'2026-10-15',hora:'10:00',titulo:'ALMOÇO',tipo:'bloqueio',alunoId:null},
+     {id:'pes',data:'2026-10-15',hora:'11:00',titulo:'Compromisso',tipo:'pessoal',alunoId:null},
+     {id:'chv',data:'2026-10-15',hora:'09:00',titulo:'☔ Chuva',tipo:'bloqueio',motivo:'chuva',alunoId:null});
+    DB.compromissos=[{id:'c1',data:'2026-10-15',hora:'16:00',titulo:'Dentista'}];
+    const lanc=(hora,id,tipo)=>{agDate=new Date('2026-10-15T12:00:00');openSlot(hora);document.getElementById('s-aluno').value=id;slotPickAluno();
+     document.getElementById('s-tipo').value=tipo;toggleGrupoWrap();document.getElementById('s-rec').value='pontual';__t.length=0;saveSlot();closeSlot();
+     return {ok:DB.agenda.eventos.some(e=>e.alunoId===id&&e.hora===hora&&e.tipo===tipo),t:__t.join(' ')};};
+    const ana=DB.alunos.find(a=>a.id==='ana'),ped=(hora,x)=>pedidoAgendaValido(Object.assign({data:'2026-10-15',hora,rec:'pontual'},x||{}),ana);
+    // pedidos do app conferidos antes de lançar qualquer coisa nos horários
+    const peds={pedTor:ped('10:00',{tor:1}),pedAula:ped('10:00'),pedTorChuva:ped('09:00',{tor:1}),pedAulaCompromisso:ped('16:00')};
+    return {...peds,locAlmoco:lanc('10:00','cli','locacao'),torPessoal:lanc('11:00','ana','torneio'),torCompromisso:lanc('16:00','duda','torneio'),
+     aulaAlmoco:lanc('10:00','caio','personal'),locChuva:lanc('09:00','cli','locacao'),
+     pub:gradePublicaSegura(DB.agenda).eventos.map(e=>e.id+':'+e.tipo+(e.motivo?'/'+e.motivo:'')),
+     fora:aulasDoDia(new Date('2026-10-15T12:00:00')).fora.map(x=>x.hora+' '+x.e.tipo)};});
+   assert.equal(r.locAlmoco.ok,true,'locação no horário do almoço: '+r.locAlmoco.t);
+   assert.equal(r.torPessoal.ok,true,'torneio no compromisso pessoal: '+r.torPessoal.t);
+   assert.equal(r.torCompromisso.ok,true,'torneio no compromisso da agenda: '+r.torCompromisso.t);
+   assert.equal(r.aulaAlmoco.ok,false,'aula com o João no almoço continua recusada');assert.match(r.aulaAlmoco.t,/Horário reservado/);
+   assert.equal(r.locChuva.ok,false,'chuva bloqueia a locação');
+   assert.equal(r.pedTor,true,'pedido de torneio do app no almoço é aceito');assert.equal(r.pedAula,false,'pedido de aula no almoço, não');
+   assert.equal(r.pedTorChuva,false);assert.equal(r.pedAulaCompromisso,false,'compromisso do João recusa aula');
+   assert.ok(r.pub.includes('alm:bloqueio')&&r.pub.includes('pes:bloqueio')&&r.pub.includes('chv:bloqueio/chuva'),r.pub.join(' '));
+   assert.ok(r.fora.includes('10:00 locacao'),'locação no almoço aparece na conferência do dia: '+r.fora.join(', '));
+  });
   assert.deepEqual(errosG,[]);
 
   /* ================= App do aluno ================= */
@@ -119,7 +146,7 @@ async function contexto(browser,base,opts){
    const resetA=(extra)=>p.evaluate(({fixture,eu,extra})=>{
     init=async()=>{};esperarAuth=async()=>{};authUid=()=>'u-test';
     EU=Object.assign(JSON.parse(JSON.stringify(eu)),extra||{});PUB=JSON.parse(JSON.stringify(fixture));PUB.alunos=[EU];
-    MEU={codigo:'6601',pedidos:[],cancelados:[],confirmadas:[]};window.fbDB={ref:()=>({push:async()=>{}})};
+    MEU={codigo:'6601',pedidos:[],cancelados:[],confirmadas:[]};window.__reservas=[];window.fbDB={ref:()=>({push:async()=>{},update:async u=>{__reservas.push(u);}})};
     atualizarGradeReserva=async()=>{};saveMeu=async()=>{};window.__avisos=[];window.__zap=[];
     notificarJoao=(acao,dk,hora)=>__avisos.push([acao,dk,hora]);abrirWhatsApp=(n,t)=>__zap.push(t);
     agDate=new Date();agView='dia';VINCULO_ESTADO='ativo';
@@ -185,6 +212,31 @@ async function contexto(browser,base,opts){
     const r=await p.evaluate(()=>{const al=[];for(const k of ['mes','prox','feitas']){abaMinhasAulas(k);al.push(document.documentElement.scrollHeight);}abaMinhasAulas('mes');return al;});
     assert.equal(r[0],alturaMes);assert.ok(r.every(h=>h<2600),'nenhuma aba vira rolagem longa: '+r.join(', '));
     if(process.env.JV_SHOTS)for(const k of ['mes','prox','feitas']){await p.evaluate(k=>abaMinhasAulas(k),k);await p.screenshot({path:path.join(process.env.JV_SHOTS,'aluno-aba-'+k+'-'+tema+'.png')});}
+   });
+   await check(tema+': almoço/compromisso do João: aluno não marca aula, mas aluga a quadra ou marca jogo do torneio; chuva bloqueia tudo',async()=>{
+    await resetA();
+    await p.evaluate(()=>{PUB.grade.eventos.push({id:'alm',data:'2026-10-15',hora:'12:00',tipo:'bloqueio'},{id:'k1',data:'2026-10-15',hora:'17:00',tipo:'bloqueio'},
+     {id:'pes',data:'2026-10-15',hora:'18:00',tipo:'pessoal'},{id:'chv',data:'2026-10-15',hora:'19:00',tipo:'bloqueio',motivo:'chuva'});
+     PUB.horarioData={'2026-10-15':{'17:00':'aula','18:00':'aula','19:00':'aula'}};agDate=new Date('2026-10-15T12:00:00');renderAgenda();});
+    const st=await p.evaluate(()=>['12:00','17:00','18:00','19:00'].map(h=>{const s=slotState(new Date('2026-10-15T12:00:00'),h);return h+' '+s.st+(s.semAula?' semAula':'');}));
+    assert.deepEqual(st,['12:00 loc semAula','17:00 loc semAula','18:00 loc semAula','19:00 chuva']);
+    await p.evaluate(()=>{agDate=new Date('2026-10-15T12:00:00');escolherSlot('17:00');});
+    const op=await p.locator('#pick-opts').innerText();
+    assert.match(op,/o João não dá aula, mas a quadra está livre para locação ou jogo do torneio/);assert.match(op,/Alugar a quadra/);assert.match(op,/Reservar para o torneio/);
+    assert.doesNotMatch(op,/Agendar aula|Marcar reposição/,'sem opção de aula');
+    await p.evaluate(()=>{document.getElementById('ov-pick').classList.remove('on');abrirBook('17:00',false);});
+    assert.equal(await p.evaluate(()=>document.getElementById('ov-book').classList.contains('on')),false,'aula recusada');
+    await p.evaluate(()=>{agDate=new Date('2026-10-15T12:00:00');escolherSlot('17:00');pickTorneio();});
+    assert.equal(await p.evaluate(()=>document.getElementById('ov-book').classList.contains('on')),true,'torneio abre a reserva');
+    await p.evaluate(()=>confirmarAgendamento());await p.waitForTimeout(400);
+    const env=await p.evaluate(()=>__reservas.map(u=>Object.values(u).map(x=>x.data+' '+x.hora+' tor='+x.tor)).flat());
+    assert.deepEqual(env,['2026-10-15 17:00 tor=1']);
+    await p.evaluate(()=>{agDate=new Date('2026-10-15T12:00:00');escolherSlot('18:00');pickLoc();confirmarLocacao();});await p.waitForTimeout(300);
+    assert.deepEqual(await p.evaluate(()=>__avisos.map(a=>a.join(' '))),['marcou jogo do torneio 2026-10-15 17:00','pediu locação 1h 2026-10-15 18:00'],'torneio e locação chegam ao João');
+    await p.evaluate(()=>{document.querySelectorAll('.overlay').forEach(x=>x.classList.remove('on'));agDate=new Date('2026-10-15T12:00:00');escolherSlot('19:00');});
+    assert.equal(await p.evaluate(()=>document.getElementById('ov-pick').classList.contains('on')),false,'chuva: nada abre');
+    await p.evaluate(()=>{agView='dia';agDate=new Date('2026-10-15T12:00:00');renderAgenda();});
+    assert.match(await p.locator('#ag-view').innerText(),/Sem aula · locação ou torneio/);
    });
    await check(tema+': barra de baixo com 6 botões cabe no celular pequeno e no computador (toque ≥ 44 px, sem rolagem lateral)',async()=>{
     for(const width of [320,390,1280]){
