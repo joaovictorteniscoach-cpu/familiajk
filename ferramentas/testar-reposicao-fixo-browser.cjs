@@ -122,7 +122,8 @@ async function check(name,fn){await fn();count++;console.log('✅ '+name);}
      igual:JSON.stringify(DB)===antes,gravacoes:window.gravacoes};
    });
    assert.equal(r.e75,true,'aula a 75 dias aparece para o aluno');assert.equal(r.e95,false,'além de 90 dias não vai');
-   assert.deepEqual(r.comp,['ocupado']);assert.equal(r.semHora,false);assert.equal(r.vazou,false,'título do compromisso não sai');
+   // desde 09/10 o compromisso do João vai como bloqueio sem motivo: tira a aula, mas o aluno ainda aluga ou joga o torneio
+   assert.deepEqual(r.comp,['bloqueio']);assert.equal(r.semHora,false);assert.equal(r.vazou,false,'título do compromisso não sai');
    assert.equal(r.igual,true);assert.equal(r.gravacoes,0);
   });
   assert.deepEqual(gerr,[]);

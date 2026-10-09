@@ -30,7 +30,10 @@ locação ou torneio; o bloqueio pessoal só vale para aula presencial". Versão
   locação ou torneio"); o menu mostra só Alugar a quadra e torneio;
   `abrirBook` e a conferência do fixo recusam aula nesse horário.
 - Teste: `testar-locacao-minhas-aulas-browser.cjs` (15) com os dois lados;
-  falha na V12 com "Horário reservado".
+  falha na V12 com "Horário reservado". Testes antigos atualizados para a regra
+  nova: `testar-reservas-exclusivas` (bloqueio sem chuva aceita locação/torneio;
+  caso novo: chuva bloqueia tudo) e `testar-reposicao-fixo` (compromisso
+  publicado como `bloqueio`, ainda sem título).
 
 ---
 

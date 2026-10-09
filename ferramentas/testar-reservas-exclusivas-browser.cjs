@@ -132,8 +132,15 @@ async function setup(context,base,theme='saibro'){
      const evs=entriesFor(new Date(dk+'T12:00:00'),'09:00');
      return ['aula','grupo','locacao','torneio'].map(t=>podeAdicionarAoHorario(evs,t,2));
     },{tipo,dk});
-    assert.deepEqual(respostas,['aula','grupo','locacao','torneio'].map(t=>['grupo','locacao','torneio'].includes(tipo)&&t===tipo));
+    // almoço/bloqueio do João (sem chuva) tira só a aula: locação e torneio entram (regra de 09/10)
+    assert.deepEqual(respostas,['aula','grupo','locacao','torneio'].map(t=>['grupo','locacao','torneio'].includes(tipo)&&t===tipo||tipo==='bloqueio'&&['locacao','torneio'].includes(t)),tipo);
    }
+   const chuva=await p.evaluate(dk=>{
+    DB.agenda.eventos=[{id:'chuva',data:dk,hora:'09:00',titulo:'☔ Chuva',tipo:'bloqueio',motivo:'chuva',alunoId:null}];
+    const evs=entriesFor(new Date(dk+'T12:00:00'),'09:00');
+    return ['aula','grupo','locacao','torneio'].map(t=>podeAdicionarAoHorario(evs,t,2));
+   },dk);
+   assert.deepEqual(chuva,[false,false,false,false],'chuva bloqueia tudo');
    await p.evaluate(d=>{DB.agenda.eventos=[{id:'jogo',data:d,hora:'09:00',tipo:'torneio',alunoId:'pai'}];},dk);
    queue={jogo:req('jogo-2','9901','u1',{tor:1})};await p.evaluate(()=>syncRequests(true));
    assert.equal(await p.evaluate(()=>DB.agenda.eventos.length),2);
