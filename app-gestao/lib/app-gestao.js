@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-08-12';
+const VERSAO='2026-10-09-1';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2185,7 +2185,12 @@ function compartilhamentoHorario(evs){
   if(tipo==='grupo')return evs.length<limiteGrupoHorario(evs)?'grupo':'';
   return ['locacao','torneio'].includes(tipo)?tipo:'';
 }
+/* Almoço, bloqueio e compromisso do João tiram só a AULA com ele daquele
+   horário: a quadra continua livre para locação e torneio. Chuva não: a
+   quadra fica impraticável para todo mundo. */
+function ehBloqueioPessoal(e){return !!e&&(e.tipo==='pessoal'||e.tipo==='bloqueio'&&!ehEventoChuva(e));}
 function podeAdicionarAoHorario(evs,tipo,pessoas){
+  if(tipo==='locacao'||tipo==='torneio')evs=evs.filter(e=>!ehBloqueioPessoal(e));
   if(!evs.length)return true;
   return compartilhamentoHorario(evs)===tipo&&(tipo!=='grupo'||(Number(pessoas)||2)===limiteGrupoHorario(evs));
 }
@@ -2353,7 +2358,8 @@ async function revogarVinculo(uid){
 }
 function gradePublicaSegura(g){
   g=g||{fixos:[],eventos:[],excecoes:[]};
-  const tipoPublico=x=>x&&x.tipo==='bloqueio'?'bloqueio':x&&x.tipo==='grupo'?'grupo':x&&['locacao','torneio'].includes(x.tipo)?x.tipo:'ocupado';
+  // "pessoal" vira bloqueio sem motivo: o aluno vê que não há aula, mas pode alugar ou jogar o torneio
+  const tipoPublico=x=>x&&(x.tipo==='bloqueio'||x.tipo==='pessoal')?'bloqueio':x&&x.tipo==='grupo'?'grupo':x&&['locacao','torneio'].includes(x.tipo)?x.tipo:'ocupado';
   return {
     fixos:(g.fixos||[]).map(f=>({id:f.id,dia:f.dia,hora:f.hora,tipo:tipoPublico(f),...(f.tipo==='grupo'?{pessoas:[2,3,4].includes(Number(f.pessoas))?Number(f.pessoas):2}:{}),desde:f.desde||'',ate:f.ate||''})),
     eventos:(g.eventos||[]).map(e=>{
@@ -2514,11 +2520,12 @@ async function doPublish(){
       if(data<dKey(hoje)||data>dKey(lim))return;
       pub.grade.eventos.push({id:'q'+data+hora,data,hora,tipo:'ocupado'});
     });
-    /* Compromisso do João também ocupa o horário (a Gestão recusa pedido nele).
-       Vai só "ocupado", sem título: o aluno vê "Reservado" e não pede em vão. */
+    /* Compromisso do João tira a aula do horário (a Gestão recusa aula nele),
+       mas não a quadra: vai como bloqueio sem título e sem motivo, e o aluno
+       ainda pode pedir locação ou jogo do torneio. */
     (DB.compromissos||[]).forEach(c=>{
       if(!c||!c.data||!c.hora||c.data<dKey(hoje)||c.data>dKey(lim))return;
-      pub.grade.eventos.push({id:'k'+c.data+c.hora,data:c.data,hora:c.hora,tipo:'ocupado'});
+      pub.grade.eventos.push({id:'k'+c.data+c.hora,data:c.data,hora:c.hora,tipo:'bloqueio'});
     });
     await cloudSet(PUBKEY,JSON.stringify(publicacaoLegadaEnxuta(pub)));   // legado: retirar quando a migração terminar
     try{await publicarSeguro(pub);}catch(e){console.warn('Publicação segura pendente:',e);}
@@ -3362,9 +3369,11 @@ function aulasDoDia(date){
   const aulas=[],repetidas=[],fora=[];
   HORAS.forEach(h=>{
     const evs=entriesFor(d,h).filter(e=>e.origem!=='compromisso');
-    // aula em horário bloqueado (chuva, quadra fechada) não aconteceu
-    if(evs.some(e=>e.tipo==='bloqueio'))return;
+    // chuva: nada aconteceu no horário
+    if(evs.some(ehEventoChuva))return;
     evs.forEach(e=>{if(e.tipo==='locacao'||e.tipo==='torneio'||e.tipo==='pessoal')fora.push({hora:h,e});});
+    // almoço/bloqueio do João: a aula não acontece (locação e torneio, sim)
+    if(evs.some(e=>e.tipo==='bloqueio'))return;
     const porQuem={};
     evs.filter(e=>e.tipo==='aula'||e.tipo==='grupo'||e.tipo==='personal')
       .forEach(e=>{(porQuem[quem(e)]=porQuem[quem(e)]||[]).push(e);});

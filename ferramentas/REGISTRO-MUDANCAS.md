@@ -8,6 +8,32 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-09 · Claude Code: almoço e compromisso do João só bloqueiam aula
+
+Pedido do João: "almoço ou bloqueio pessoal não deve impedir o aluno de agendar
+locação ou torneio; o bloqueio pessoal só vale para aula presencial". Versão
+`2026-10-09-1`, sobre a V12 (#237). Nenhum dado ou regra do Firebase alterado.
+
+- **Regra:** `ehBloqueioPessoal` (Gestão) / `ehSoSemAula` (aluno) = tipo
+  `pessoal` (inclui compromissos da agenda) ou `bloqueio` sem motivo chuva.
+  Tira só aula/grupo/personal do horário; locação e torneio entram. Chuva
+  continua bloqueando tudo. Para fechar a quadra para todos (manutenção), use
+  "Fechado" no funcionamento do horário.
+- **Gestão:** `podeAdicionarAoHorario` ignora o bloqueio pessoal para
+  locação/torneio — vale para o lançamento manual (`saveSlot`), para os pedidos
+  do app (`pedidoAgendaValido`) e para a voz. `aulasDoDia`: só chuva zera o
+  horário; locação/torneio sob almoço entram em "fora da conta".
+- **Publicação:** `gradePublicaSegura` manda `pessoal` como `bloqueio` (sem
+  título); compromissos (`DB.compromissos`) saem como `bloqueio` em vez de
+  `ocupado`. App antigo em cache segue restritivo (mostra "Indisponível").
+- **App do aluno:** `slotState` devolve `{st:'loc',semAula:true}` ("Sem aula ·
+  locação ou torneio"); o menu mostra só Alugar a quadra e torneio;
+  `abrirBook` e a conferência do fixo recusam aula nesse horário.
+- Teste: `testar-locacao-minhas-aulas-browser.cjs` (15) com os dois lados;
+  falha na V12 com "Horário reservado".
+
+---
+
 ## 2026-10-08 · Claude Code: locação na agenda e "Minhas aulas" no app do aluno
 
 Pedido do João: cliente com horas de locação às vezes não conseguia marcar.

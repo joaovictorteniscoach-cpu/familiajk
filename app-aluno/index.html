@@ -1598,12 +1598,12 @@ html body:not(#jv) #pedir-box .btn-ghost{background:#F3EDE2!important;border:1px
 #apg-evolucao .evo-prio b{color:#F2CF62!important}
 #apg-aulas .empty,#apg-torneio .empty{background:rgba(255,255,255,.06)!important;color:#D8D2C7!important;-webkit-text-fill-color:#D8D2C7!important}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-08-12">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-09-1">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-08-12">
-<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-08-12">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-09-1">
+<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-09-1">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -2084,7 +2084,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-10-08-12"></script>
+<script src="lib/icones.js?v=2026-10-09-1"></script>
 </div>
 
 <!-- MODAL ESCOLHER O QUE FAZER NO HORÁRIO -->
@@ -2302,7 +2302,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-10-08-12';
+const VERSAO='2026-10-09-1';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -2975,12 +2975,15 @@ function fixoValeEm(f,dk){
   if(f.ate&&dk>f.ate)return false;
   return true;
 }
+/* Almoço, bloqueio e compromisso do João tiram só a aula com ele: a quadra
+   continua livre para locação e jogo do torneio. Chuva tira tudo. */
+function ehSoSemAula(e){return !!e&&(e.tipo==='pessoal'||e.tipo==='bloqueio'&&e.motivo!=='chuva');}
 function slotState(date,hora){
   const dia=date.getDay(),dk=dKey(date),G=PUB.grade||{fixos:[],eventos:[],excecoes:[]};
   const fixos=(G.fixos||[]).filter(f=>f.dia===dia&&f.hora===hora&&fixoValeEm(f,dk)&&!(G.excecoes||[]).some(x=>x.fixoId===f.id&&x.data===dk));
-  const evs=(G.eventos||[]).filter(e=>e.data===dk&&e.hora===hora),all=fixos.concat(evs);
-  const bloq=all.filter(e=>e.tipo==='bloqueio');
-  if(bloq.length)return bloq.some(e=>e.motivo==='chuva')?{st:'chuva',label:'Cancelado por chuva'}:{st:'bloq',label:'Indisponível'};
+  const evs=(G.eventos||[]).filter(e=>e.data===dk&&e.hora===hora),todas=fixos.concat(evs);
+  if(todas.some(e=>e.tipo==='bloqueio'&&e.motivo==='chuva'))return {st:'chuva',label:'Cancelado por chuva'};
+  const semAula=todas.some(ehSoSemAula),all=todas.filter(e=>!ehSoSemAula(e));
   const meu=all.some(e=>e.cod===MEU.codigo);
   if(meu&&foiCancelado(dk,hora))return {st:'ocup',label:'Cancelamento aguardando confirmação'};
   if(meu)return {st:'meu',label:'Minha aula'};
@@ -2995,6 +2998,12 @@ function slotState(date,hora){
   }))return {st:'pend',label:'Aguardando ⏳'};
   const modo=slotModo(date,hora);
   if(modo==='fechado')return {st:'fechado',label:'Fechado'};
+  if(semAula){
+    if(compartilhado==='locacao')return {st:'loc',label:'Locação · participar',compartilhado,semAula:true};
+    if(compartilhado==='torneio')return {st:'livre',label:'Torneio · participar',compartilhado,semAula:true};
+    if(all.length)return {st:'ocup',label:'Reservado'};
+    return {st:'loc',label:'Sem aula · locação ou torneio',semAula:true};
+  }
   if(grupo&&modo==='aula')return {st:'livre',label:limiteGrupo===4?'Aula quádrupla':limiteGrupo===3?'Aula em trio':'Aula em dupla',grupo:true,compartilhado:'grupo',limiteGrupo};
   if(compartilhado==='locacao')return {st:'loc',label:'Locação · participar',compartilhado};
   if(compartilhado==='torneio')return {st:'livre',label:'Torneio · participar',compartilhado};
@@ -4469,7 +4478,7 @@ function renderAgenda(){
     el.innerHTML=PUB.horas.map(h=>{
       const s=slotState(agDate,h);
       let inner='';
-      if(s.st==='livre'||s.st==='loc')inner=horasAte(dKey(agDate),h)<=0?`<button class="sl bloq" disabled>Encerrado</button>`:`<button class="sl livre" onclick="escolherSlot('${h}')">${s.compartilhado?s.label:'Disponível'} <i>${s.compartilhado?'participar':'ver opções'}</i></button>`;
+      if(s.st==='livre'||s.st==='loc')inner=horasAte(dKey(agDate),h)<=0?`<button class="sl bloq" disabled>Encerrado</button>`:`<button class="sl livre" onclick="escolherSlot('${h}')">${s.compartilhado||s.semAula?s.label:'Disponível'} <i>${s.compartilhado?'participar':'ver opções'}</i></button>`;
       else if(s.st==='meu'){const podeC=podeCancelarAula(dKey(agDate),h);inner=podeC?`<button class="sl meu" onclick="cancelarAula('${dKey(agDate)}','${h}','pontual')">🎾 ${s.label} <i>confirmada · toque para cancelar</i></button>`:`<button class="sl meu">🎾 ${s.label} <i>confirmada · trava ${LIMITE_CANCEL_H}h</i></button>`;}
       else if(s.st==='pend')inner=`<button class="sl pend" onclick="cancelarAula('${dKey(agDate)}','${h}','pontual')">${s.label} <i>enviado ao João · toque para cancelar</i></button>`;
       else if(s.st==='chuva')inner=`<button class="sl chuva">☔ Cancelado por chuva <i>sem desconto de crédito</i></button>`;
@@ -4911,7 +4920,7 @@ function escolherSlot(hora){
   if(horasAte(dKey(agDate),hora)<=0){toast('Esse horário já passou — não é possível agendar nem alterar datas anteriores. 🙏');return;}
   const estado=slotState(agDate,hora);
   if(!['livre','loc'].includes(estado.st)){toast(estado.label+' — escolha outro horário');return;}
-  pickCtx={hora,date:new Date(agDate),grupo:!!estado.grupo,compartilhado:estado.compartilhado||'',limiteGrupo:estado.limiteGrupo||0};
+  pickCtx={hora,date:new Date(agDate),grupo:!!estado.grupo,compartilhado:estado.compartilhado||'',limiteGrupo:estado.limiteGrupo||0,semAula:!!estado.semAula};
   const modo=slotModo(pickCtx.date,hora);
   document.getElementById('pick-sub').textContent=DIAS_FULL[pickCtx.date.getDay()]+', '+pickCtx.date.getDate()+' de '+MESES[pickCtx.date.getMonth()].toLowerCase()+' · '+hora;
   let b='';
@@ -4928,6 +4937,10 @@ function escolherSlot(hora){
     b+='<button class="pick-opt loc" onclick="pickLoc()">🔑 Participar da locação</button>';
   }else if(pickCtx.compartilhado==='torneio'){
     b+='<div class="pick-note">🏆 Este horário já é um <b>jogo de torneio</b>. A nova reserva participa do mesmo jogo.</div>';
+    b+=pickTorneioHtml();
+  }else if(pickCtx.semAula){
+    b+='<div class="pick-note">Neste horário o João não dá aula, mas a quadra está livre para <b>locação</b> ou <b>jogo do torneio</b>.</div>';
+    b+=locBtnHtml();
     b+=pickTorneioHtml();
   }else if(pickCtx.grupo){
     b+='<div class="pick-note">👥 Este horário é uma <b>aula em grupo</b>. Novas reservas participam da mesma aula, até '+pickCtx.limiteGrupo+' alunos.</div>';
@@ -5061,6 +5074,7 @@ function abrirBook(hora,repo,torneio){
   const estado=slotState(agDate,hora);
   const desejado=torneio?'torneio':'grupo';
   if(!['livre','loc'].includes(estado.st)||estado.compartilhado&&estado.compartilhado!==desejado){toast('Horário reservado — escolha outro');return;}
+  if(estado.semAula&&!torneio){toast('Neste horário o João não dá aula. Dá para alugar a quadra ou marcar jogo do torneio.');return;}
 
   if(!torneio&&bloqueadoParaAgendar()){toast('🔒 Agendamento bloqueado — '+motivoBloqueio()+'. Fale com o João para regularizar. 🙏');return;}
   if(torneio){/* jogo do torneio: inscrição já paga, não usa crédito nem reposição */}
@@ -5110,9 +5124,9 @@ async function confirmarAgendamento(){
   const conflitos=[];
   for(const data of datas){
     const dt=new Date(data+'T12:00:00'),s=slotState(dt,pedido.hora);
-    const soLoc=slotModo(dt,pedido.hora)==='loc'&&!repo&&!tor&&!s.compartilhado;
+    const soLoc=(slotModo(dt,pedido.hora)==='loc'||s.semAula)&&!repo&&!tor&&!s.compartilhado||s.semAula&&!tor;
     if(!['livre','loc'].includes(s.st)||soLoc||(s.compartilhado||'')!==bookCtx.compartilhado||s.grupo&&s.limiteGrupo!==bookCtx.limiteGrupo)
-      conflitos.push({data,motivo:s.st==='fechado'?'quadra fechada':['bloq','chuva'].includes(s.st)?'indisponível':soLoc&&['livre','loc'].includes(s.st)?'só locação':'reservado'});
+      conflitos.push({data,motivo:s.st==='fechado'?'quadra fechada':['bloq','chuva'].includes(s.st)?'indisponível':s.semAula&&!tor?'sem aula':soLoc&&['livre','loc'].includes(s.st)?'só locação':'reservado'});
   }
   if(conflitos.length){
     if(rec!=='fixo'||conflitos.some(c=>c.data===pedido.data)){renderAgenda();toast('Esse horário não está disponível nessa data. Escolha outro.');return;}
@@ -5232,7 +5246,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-08-12').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-09-1').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
