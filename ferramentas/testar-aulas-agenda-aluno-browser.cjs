@@ -57,7 +57,7 @@ const fixture={
     agDate=new Date();agView='dia';VINCULO_ESTADO='ativo';
     document.getElementById('app').style.display='block';document.querySelectorAll('.overlay').forEach(x=>x.classList.remove('on'));
     document.querySelectorAll('[id*="splash"]').forEach(x=>x.style.display='none');
-    render();goAluno('aulas',null);
+    render();goAluno('aulas',null);if(typeof abaMinhasAulas==='function')abaMinhasAulas('prox');   // próximas aulas ficam na aba própria
    },{fixture,eu});
    await reset();
    await check(theme+': próximas aulas têm confirmar, cancelar e Google Agenda; sem passado, cancelada, exceção ou outro aluno',async()=>{
@@ -221,7 +221,8 @@ const fixture={
     for(const w of [320,390,520,1280]){
      await p.setViewportSize({width:w,height:844});await p.evaluate(()=>goAluno('aulas',null));
      assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),'largura '+w);
-     const sizes=await p.locator('#mine-list button').evaluateAll(bs=>bs.map(b=>b.getBoundingClientRect().height));
+     // só os botões à vista: as aulas dos meses seguintes ficam agrupadas (fechadas) na aba Próximas
+     const sizes=await p.locator('#mine-list button, #mine-list summary').evaluateAll(bs=>bs.filter(b=>b.getClientRects().length).map(b=>b.getBoundingClientRect().height));
      assert.ok(sizes.every(h=>h>=44),'toque '+w);
     }
     await p.setViewportSize({width:390,height:844});await p.evaluate(()=>goAluno('aulas',null));

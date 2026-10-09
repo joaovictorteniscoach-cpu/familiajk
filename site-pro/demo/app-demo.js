@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-08-11';
+const VERSAO='2026-10-08-12';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2762,12 +2762,19 @@ function quandoEnviadoTxt(ts){
   if(dKey(d)===dKey(ontem))return 'ontem às '+hm;
   return 'dia '+String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+' às '+hm;
 }
+/* Pedido de locação do app do aluno ("pediu locação 1h30"): ainda não está na
+   agenda. Antes aparecia como "reservou ✅ — Aula", parecendo já marcado. */
+function ehPedidoLocacao(n){return !!n&&/^pediu loca/.test(String(n.acao||''));}
 function textoNotif(n){
   if(n.acao==='resultado')return '🏆 '+(n.nome||'Aluno')+': '+(n.texto||'enviou um resultado');
   if(n.texto)return '🛒 '+(n.nome||'Aluno')+': '+n.texto;
+  const dd=n.data?n.data.split('-').reverse().slice(0,2).join('/'):'';
+  if(ehPedidoLocacao(n)){
+    const dur=String(n.acao).replace(/^pediu loca\S*\s*/,'').slice(0,12);
+    return '🔑 '+(n.nome||'Aluno')+' pediu locação'+(dur?' ('+dur+')':'')+' — '+dd+' '+(n.hora||'')+' · toque para lançar na agenda';
+  }
   const tipo=n.tipo==='personal'?'Personal':(n.tipo==='grupo'?'Grupo':(n.tipo==='locacao'?'Locação':(n.tipo==='torneio'?'🏆 Torneio':'Aula')));
   const ac=n.acao==='cancelou'?'cancelou ❌':'reservou ✅';
-  const dd=n.data?n.data.split('-').reverse().slice(0,2).join('/'):'';
   return (n.nome||'Aluno')+' '+ac+' — '+tipo+' · '+dd+' '+(n.hora||'');
 }
 async function carregarNotifs(){
@@ -2904,6 +2911,17 @@ function irDoAviso(i){
   // o próprio botão "Dia" já ajusta agView, as classes e redesenha
   const bDia=document.querySelector('#pg-agenda .seg button');
   if(bDia)bDia.click(); else {agView='dia';renderAgenda();}
+  /* Pedido de locação: abre o horário com o cliente e "Locação" já escolhidos.
+     Nada é gravado até o João conferir e tocar em Adicionar. */
+  if(ehPedidoLocacao(n)&&/^([01]\d|2[0-3]):[0-5]\d$/.test(String(n.hora))){
+    openSlot(n.hora);
+    const a=DB.alunos.find(x=>String(x.codigo)===String(n.codigo)),sa=document.getElementById('s-aluno');
+    if(a&&sa){sa.value=a.id;slotPickAluno();}else document.getElementById('s-titulo').value=n.nome||'';
+    document.getElementById('s-tipo').value='locacao';document.getElementById('s-rec').value='pontual';toggleGrupoWrap();
+    const dur=String(n.acao).replace(/^pediu loca\S*\s*/,'').slice(0,12);
+    toast('🔑 Confira e toque em Adicionar para lançar a locação'+(dur?' ('+dur+')':''));
+    return;
+  }
   setTimeout(()=>{
     const slot=document.querySelector('.slot[data-drop-h="'+n.hora+'"]');
     if(!slot){toast('Não achei o horário '+n.hora+' nesse dia');return;}
@@ -4074,7 +4092,7 @@ function openSlot(hora){
   document.getElementById('slot-title').textContent=DIAS[slotCtx.date.getDay()]+' '+slotCtx.date.getDate()+'/'+(slotCtx.date.getMonth()+1)+' · '+hora;
   document.getElementById('s-titulo').value='';
   const sel=document.getElementById('s-aluno');
-  sel.innerHTML='<option value="">— sem vínculo —</option>'+DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${a.id}">${esc(a.nome)} (${fmtCred(a.creditos)} créd.)</option>`).join('');
+  sel.innerHTML='<option value="">— sem vínculo —</option>'+DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${a.id}">${esc(a.nome)} (${fmtCred(a.creditos)} créd.${(Number(a.locCred)||0)?' · '+fmtCred(a.locCred)+'h locação':''})</option>`).join('');
   sel.value='';
   renderSlotEvs();
   pintarSelProf('');
@@ -4103,7 +4121,17 @@ function slotPickAluno(){
   if(!id)return;
   const a=DB.alunos.find(x=>x.id===id);
   document.getElementById('s-titulo').value=a.nome;
-  document.getElementById('s-tipo').value=(a.tipo==='Personal')?'personal':((['Grupo','Dupla','Trio','Quarteto'].indexOf(a.tipo)>=0)?'grupo':'aula');
+  /* O tipo vem do aluno, mas locação e torneio já escolhidos ficam: antes
+     escolher o aluno voltava para "aula", e o horário "só locação" recusava
+     ("não dá para agendar aula") ou, em horário de aula, a locação era gravada
+     como aula e o ✓ descontava do pacote em vez das horas de locação. Cliente
+     cadastrado como Locação/Torneio e horário "só locação" já vêm certos. */
+  const selTipo=document.getElementById('s-tipo'),atual=selTipo.value,perfil=perfilDe(a);
+  const modo=slotCtx&&slotCtx.date?slotModo(slotCtx.date,slotCtx.hora):'aula';
+  selTipo.value=(atual==='locacao'||atual==='torneio')?atual
+    :(perfil==='locacao'||perfil==='torneio')?perfil
+    :modo==='loc'?'locacao'
+    :(a.tipo==='Personal')?'personal':((['Grupo','Dupla','Trio','Quarteto'].indexOf(a.tipo)>=0)?'grupo':'aula');
   const nmap={Dupla:'2',Trio:'3',Quarteto:'4'};
   if(nmap[a.tipo])document.getElementById('s-grupo-n').value=nmap[a.tipo];
   /* Se o aluno já tem professor no cadastro, ele vem escolhido: é o caso
@@ -9642,6 +9670,24 @@ function achadosDoAluno(a){
     const venc=reposVencidas(a);
     if(venc>0)achados.push({tipo:'aviso',a,
       txt:a.nome+': '+fmtCred(venc)+' reposição(ões) já passaram de 4 meses e ainda contam no saldo — abra o app uma vez no mês novo para a virada rodar.'});
+    /* Locação gravada como aula: até 08/10, escolher o cliente no horário
+       trocava o tipo para "aula", e o ✓ descontava do pacote em vez das horas
+       de locação. Só lista, para o João conferir; nada é alterado aqui. */
+    const soLocacao=perfilDe(a)==='locacao'||(!(Number(a.plano)||0)&&!(Number(a.planoGrupo)||0)
+      &&((Number(a.locCred)||0)!==0||movsDe(a.id).some(m=>m.campo==='locCred')));
+    if(soLocacao){
+      const hojeK=dKey(new Date()),ehAulaPres=p=>!ehMarca(p)&&['aula','grupo','reposicao'].includes(p.tipo||p.modo||'aula');
+      const presAula=presencasDe(a.id).filter(ehAulaPres).sort((x,y)=>String(x.data).localeCompare(String(y.data)));
+      const ag=DB.agenda||{},ehAulaAg=e=>e.alunoId===a.id&&['aula','grupo','personal'].includes(e.tipo);
+      const marc=(ag.fixos||[]).filter(f=>ehAulaAg(f)&&(!f.ate||f.ate>=hojeK)).length+(ag.eventos||[]).filter(e=>ehAulaAg(e)&&e.data>=hojeK).length;
+      if(presAula.length||marc){
+        const datas=presAula.slice(-5).map(p=>String(p.data||'').split('-').reverse().slice(0,2).join('/')+(p.hora&&p.hora!=='—'?' '+p.hora:''));
+        achados.push({tipo:'aviso',a,
+          txt:a.nome+' é cliente de locação, mas '+(presAula.length?'tem '+presAula.length+' aula(s) com ✓ descontada(s) do pacote ('+datas.join(', ')+(presAula.length>5?'…':'')+')':'')
+             +(presAula.length&&marc?' e ':'')+(marc?marc+' marcação(ões) futura(s) como aula':'')
+             +'. Pode ser locação gravada como aula. Confira na agenda e, se for o caso, ajuste no cadastro.'});
+      }
+    }
     // mensalidade contra o plano
     const p=Number(a.plano)||0, pg=Number(a.planoGrupo)||0;
     if(!temFamilia(a)&&(p>0||pg>0)){

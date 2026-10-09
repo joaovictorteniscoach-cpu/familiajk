@@ -8,6 +8,56 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-08 · Claude Code: locação na agenda e "Minhas aulas" no app do aluno
+
+Pedido do João: cliente com horas de locação às vezes não conseguia marcar.
+Versão `2026-10-08-12`, sobre a V11 (#236). Nenhum dado, saldo ou regra do
+Firebase alterado; nada é corrigido automaticamente.
+
+- **Causa (Gestão):** `slotPickAluno` trocava o Tipo para "aula" ao escolher o
+  aluno, mesmo com Locação já escolhida ou cliente de perfil Locação. Horário
+  "só locação" recusava ("não dá para agendar aula"); em horário de aula, a
+  locação era gravada como aula e o ✓ descontava `creditos` em vez de
+  `locCred` (e o saldo negativo podia travar o app do aluno). Agora: Locação e
+  Torneio já escolhidos ficam; perfil Locação/Torneio e horário "só locação"
+  vêm com Locação. O select de aluno mostra as horas de locação. Voz:
+  `tipoAluno` respeita o perfil.
+- **Aviso do sininho:** o pedido do app ("pediu locação 1h30") aparecia como
+  "reservou ✅ — Aula". `ehPedidoLocacao`/`textoNotif` mostram "🔑 Fulano pediu
+  locação (1h30) · toque para lançar na agenda"; `irDoAviso` abre o horário com
+  cliente, Locação e "só nesta data" preenchidos — nada é gravado sem Adicionar.
+- **Conferir números (só lista):** `achadosDoAluno` avisa cliente de locação
+  (perfil, ou sem plano de aulas e com histórico de `locCred`) com aula
+  descontada do pacote ou marcação futura como aula.
+- **App do aluno:** "Alugar a quadra" mostra "usa suas horas de locação · você
+  tem Xh" (`horasLocAluno`, `locBtnHtml`) e a mensagem pede para usá-las; sem
+  saldo, segue o preço por hora. O pedido continua sendo aviso + WhatsApp
+  (não entra na fila). Risco não testado aqui: o WhatsApp abre depois da
+  conferência na nuvem e o iPhone pode bloquear; o aviso no sininho chega.
+- **Minhas aulas:** aba própria na barra de baixo (6 botões, ícone da bolinha,
+  `#nav-al-aulas`), botão laranja no topo do Início (`#home-minhas-aulas`, com
+  "N feitas · N marcadas em <mês>") e `irMinhasAulas()` em todos os atalhos;
+  o cartão do Início virou "Próxima aula ›". A página ganhou título e mostra a
+  lista inteira do mês (sem a rolagem de 120px). Torneio segue no Perfil.
+- **Abas em Minhas aulas** (pedido seguinte: sem rolagem longa, cada assunto
+  no seu lugar): "Resumo do mês" (números, plano e todas as datas feitas e
+  marcadas), "Próximas (N)" (confirmar, cancelar, Google Agenda, salvar o mês,
+  agendar mais, falar com o João) e "Feitas (N)" (histórico). Estado em
+  `aria-selected` (`abaMinhasAulas`); não usa `.seg`, porque o
+  `setView` da agenda limpa o "on" de todos os `.seg`. Barra de baixo e botão
+  laranja abrem o Resumo; "Próxima aula ›" abre Próximas. Em Próximas, as aulas
+  dos meses seguintes ficam agrupadas num `<details>` fechado. Testes antigos
+  (`testar-aulas-agenda-aluno`, `testar-trava-cancelamento`, `testar-3-pedidos`)
+  passam a abrir a aba Próximas antes de mexer nos cartões; o de toque de 44px
+  mede só os botões à vista.
+- Teste novo `testar-locacao-minhas-aulas-browser.cjs` (12, no CI); falha na V11.
+- `testar-contraste-fechamento-browser.cjs` falha neste ambiente local também na
+  main (a lista de alunos fica vazia no teste); no CI passa. Não é desta mudança.
+- **Codex:** a barra do aluno agora tem 6 colunas (`aulas-aluno.css`); se
+  mexer na `.nav`, mantenha `repeat(6,…)`.
+
+---
+
 ## 2026-10-08 · Claude Code: assistente por voz vira conversa e entende pedidos do dia a dia
 
 Pedido do João com dois prints da V10 (#235 do Codex): “Quantas aulas eu tenho
