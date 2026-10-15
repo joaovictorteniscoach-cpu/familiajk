@@ -100,3 +100,29 @@ depende do toque do João.
 2. Se o João quiser o aviso no celular sem custo: Cloudflare Workers só para os
    lembretes, ainda R$ 0. Depende de ele criar a conta.
 3. "Lança sozinho" só quando ele aceitar a tarifa do Mercado Pago.
+
+## Atualização 15/10 (noite): o que o João escolheu
+- **Avisos no celular:** feitos na Cloudflare, de graça. O passo a passo está em
+  `ferramentas/AVISOS-CLOUDFLARE.md`. Falta o João criar as contas e cadastrar
+  os segredos. A regra nova aguarda o OK explícito dele.
+- **Pix na chave do João, com lançamento sozinho:** o João quer sem tarifa.
+  - Hoje nem Nubank nem Mercado Pago avisam o app quando cai um Pix direto na
+    chave. Na documentação pública não há API para isso.
+  - Por isso fica como está: "Já paguei" → **Aceitar** na Gestão, com registro.
+  - Agora o João recebe o "Já paguei" no celular na hora, pelo servidor de avisos.
+  - Lançar sozinho só com uma destas opções:
+    1. Pix gerado pelo Mercado Pago (0,99%).
+    2. API Pix de banco PJ (ex.: Inter). Exige CNPJ que não seja MEI e cobra
+       até ~R$ 1,50 por cobrança.
+- **Cartão:** só pelo Mercado Pago.
+  - **A distância:** link de pagamento. Aceita pessoa física e qualquer
+    cartão. Crédito ~4,98% na hora ou ~3,98% recebendo em 30 dias.
+  - **Na quadra:** Tap to Pay do Mercado Pago (Point Tap). Débito 0,89% e
+    crédito à vista ~3,09%. Funciona em Android com NFC; o iPhone tem solução
+    própria do Mercado Pago.
+  - **Nubank:** o link e o NuTap são só para conta PJ, e a liberação do link
+    de cartão varia por conta. As taxas são parecidas.
+  - As taxas são de agregadores e do blog oficial, consultados em 15/10/2026.
+    Conferir no app antes de decidir.
+  - **Onde colar o link na Gestão:** campo "link do cartão", que vale para
+    todos, ou na ficha do aluno.

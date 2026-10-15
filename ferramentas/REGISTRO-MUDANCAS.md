@@ -8,6 +8,76 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-15 · Claude Code: avisos no celular com o app fechado (Cloudflare, grátis)
+
+Pedido do João: "me ensine a colocar o aviso com o Cloudflare". Vai no mesmo PR
+da lista de espera.
+
+**Fica desligado** até três coisas acontecerem:
+- o João criar as contas e cadastrar os segredos (`ferramentas/AVISOS-CLOUDFLARE.md`);
+- a regra nova ser publicada;
+- o servidor gravar `avisos_estado`.
+
+**A regra do Firebase não foi alterada.** A edição nos arquivos de regra foi
+bloqueada pela proteção do ambiente. A proposta está no fim de
+`AVISOS-CLOUDFLARE.md` e aguarda o OK explícito do João. Foi testada numa
+cópia:
+- `checar-regras.py`: 214 e 221 casos;
+- emulador: 23 verificações nas duas regras.
+
+Nada muda em créditos, valores ou agenda.
+
+- **`servidor-avisos/`:** `avisos.js` roda no relógio, a cada 2 min, sem
+  biblioteca de fora.
+  - Entra no Firebase com a conta de serviço (JWT RS256 → token Google).
+  - Lê só os avisos vencidos (`orderBy quando`; sem índice, lê tudo).
+  - Guarda os vínculos por 30 min.
+  - Manda Web Push cifrado (RFC 8291) com VAPID (RFC 8292). Só para serviços
+    de push conhecidos e só para uid com vínculo ativo.
+  - Avisa o João de pedido novo (`fila_pedidos`, até 6 h).
+  - Não manda aula com cancelamento na fila.
+  - Apaga endereço morto (404/410). Falha passageira tenta de novo.
+  - Máximo de 6 envios por rodada: ~4 ms medidos no `workerd`; o limite é 10 ms.
+  - Grava `avisos_enviados` e `avisos_estado` (chave pública).
+  - Arquivos auxiliares:
+    - `wrangler.toml`: sem endereço público;
+    - `gerar-vapid.mjs`: só na primeira publicação, direto para os segredos;
+    - `conferir-conta.mjs`: confere o JSON sem mostrar.
+- **Action `avisos-cloudflare.yml`:** roda em push na main e manualmente,
+  nunca em PR. Usa `wrangler@4.144.0`.
+- **Gestão:**
+  - `montarAvisos()`: os próximos 3 dias.
+    - Aula, locação e torneio às 19h da véspera, válidos até a meia-noite.
+    - Chuva tira tudo; bloqueio tira só aula.
+    - O responsável da família recebe a aula do dependente (`alvo`).
+    - Vencimento, para `pendenteDoFechamento` com valor > 0: 3 dias antes e no
+      dia, às 9h.
+    - Vaga liberada da lista de espera: na hora; à noite, às 7h.
+    - Teste só para o João.
+  - `gravarAvisos()` grava `avisos_saida` só quando:
+    - o servidor está vivo (`avisos_estado` com menos de 36 h);
+    - o banco está confirmado;
+    - houve mudança.
+
+    É chamada por `publish()`, ao abrir e a cada 30 min.
+  - Sininho: estado do servidor e "Enviar aviso de teste para mim".
+- **Aluno e Gestão:** `registrarAvisosNuvem()` faz a inscrição no push com a
+  chave pública lida do banco.
+  - Grava `avisos_tokens/<uid>/aluno|gestao`.
+  - O aluno só se inscreve com `VINCULO_ESTADO==='ativo'`.
+  - O aparelho renova a inscrição uma vez por abertura.
+  - Sem servidor, nada muda.
+- **Service workers:** evento `push` mostra a notificação só como texto, com
+  tamanho limitado.
+- **Testes novos:**
+  - `testar-servidor-avisos.mjs` (14): a cifra é aberta por uma implementação
+    independente; JWTs conferidos.
+  - `testar-avisos-celular-browser.cjs` (13).
+  - `checar-premium-runtime.js`: push nos dois service workers.
+  - Os dois testes novos entraram no CI.
+- **Texto da ficha do aluno:** "Link de cartão deste aluno" deixou de dizer só
+  Nubank.
+
 ## 2026-10-15 · Claude Code: lembrete pela agenda do celular (sem custo)
 
 O João criou a conta do Mercado Pago e autorizou a mudança de regra para

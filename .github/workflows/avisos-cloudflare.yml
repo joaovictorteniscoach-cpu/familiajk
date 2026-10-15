@@ -1,0 +1,76 @@
+name: Servidor de avisos (Cloudflare)
+
+# Publica servidor-avisos/ na Cloudflare (plano grátis). Só faz algo com os
+# três segredos cadastrados no GitHub (Settings → Secrets and variables →
+# Actions): CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID e
+# FIREBASE_SERVICE_ACCOUNT. Sem eles, termina dizendo o que falta.
+# Nunca roda em pull request: segredo não chega a código que não foi aprovado.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'servidor-avisos/**'
+      - '.github/workflows/avisos-cloudflare.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: avisos-cloudflare
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      WRANGLER: wrangler@4.144.0
+    steps:
+      - name: Conferir se os segredos já foram cadastrados
+        id: seg
+        run: |
+          falta=""
+          [ -n "$CLOUDFLARE_API_TOKEN" ] || falta="$falta CLOUDFLARE_API_TOKEN"
+          [ -n "$CLOUDFLARE_ACCOUNT_ID" ] || falta="$falta CLOUDFLARE_ACCOUNT_ID"
+          [ -n "$FIREBASE_SERVICE_ACCOUNT" ] || falta="$falta FIREBASE_SERVICE_ACCOUNT"
+          if [ -n "$falta" ]; then
+            echo "::notice::Servidor de avisos não publicado: faltam os segredos$falta (passo a passo em ferramentas/AVISOS-CLOUDFLARE.md)."
+            echo "ok=0" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=1" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.seg.outputs.ok == '1'
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        if: steps.seg.outputs.ok == '1'
+        with:
+          node-version: '22'
+      - name: Testes do servidor (sem rede)
+        if: steps.seg.outputs.ok == '1'
+        run: node ferramentas/testar-servidor-avisos.mjs
+      - name: Conferir a conta de serviço (sem mostrar o conteúdo)
+        if: steps.seg.outputs.ok == '1'
+        run: node servidor-avisos/conferir-conta.mjs
+      - name: Publicar na Cloudflare
+        if: steps.seg.outputs.ok == '1'
+        working-directory: servidor-avisos
+        run: npx --yes "$WRANGLER" deploy
+      - name: Guardar a conta de serviço no servidor
+        if: steps.seg.outputs.ok == '1'
+        working-directory: servidor-avisos
+        run: printf '%s' "$FIREBASE_SERVICE_ACCOUNT" | npx --yes "$WRANGLER" secret put FIREBASE_SERVICE_ACCOUNT
+      - name: Criar a chave de push (só na primeira vez)
+        if: steps.seg.outputs.ok == '1'
+        working-directory: servidor-avisos
+        run: |
+          if npx --yes "$WRANGLER" secret list --format json | grep -q '"VAPID_JWK"'; then
+            echo "Chave de push já existe: mantida (trocar obrigaria todos a ligar os avisos de novo)."
+          else
+            node gerar-vapid.mjs | npx --yes "$WRANGLER" secret put VAPID_JWK
+            echo "Chave de push criada e guardada só na Cloudflare."
+          fi

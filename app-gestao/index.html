@@ -38,11 +38,11 @@
 <link rel="apple-touch-startup-image" media="screen and (device-width:375px) and (device-height:667px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)" href="splash-gestao-750x1334.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" id="css-tema" href="lib/estilo.css?v=2026-10-15-2">
+<link rel="stylesheet" id="css-tema" href="lib/estilo.css?v=2026-10-15-3">
 <!-- Tema de cores: Saibro é o padrão desde 2026-10; "Verde clássico" fica a um
      toque em Segurança e dados. Troca o arquivo antes da primeira pintura. -->
 <script>try{if(localStorage.getItem('jv-tema')!=='classico'){var _ct=document.getElementById('css-tema');_ct.href=_ct.getAttribute('href').replace('estilo.css','estilo-saibro.css');document.documentElement.classList.add('tema-saibro');}}catch(e){}</script>
-<link rel="stylesheet" href="lib/acoes-voz.css?v=2026-10-15-2">
+<link rel="stylesheet" href="lib/acoes-voz.css?v=2026-10-15-3">
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
 <script src="lib/firebase-database-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js\'><\/script>')"></script>
@@ -1127,7 +1127,7 @@ function esperarAuth(){
   <button onclick="go('lanc',this)"><span class="ico" data-ic="navcash"></span>Caixa</button>
   <button id="nav-mais" onclick="abrirMais()"><span class="ico" data-ic="navmore"></span>Mais</button>
 </nav>
-<script src="lib/icones.js?v=2026-10-15-2"></script>
+<script src="lib/icones.js?v=2026-10-15-3"></script>
 
 <!-- MODAL ALUNO -->
 <div class="overlay" id="ov-aluno" onclick="if(event.target===this)closeModal('ov-aluno')">
@@ -1195,7 +1195,7 @@ function esperarAuth(){
       </div>
     </div>
     <div class="field"><label>Dia de vencimento da mensalidade (1–28)</label><input type="number" id="a-venc" min="1" max="28" value="10"></div>
-    <div class="field"><label>💳 Link de cartão deste aluno (Nubank)</label><input id="a-cardlink" placeholder="Cole o link de cobrança do Nubank deste aluno"></div>
+    <div class="field"><label>💳 Link de cartão deste aluno</label><input id="a-cardlink" placeholder="Cole o link de cobrança (Mercado Pago, Nubank…)"></div>
     <div class="field"><label>🏋️ Link do treino no MFit (alunos de personal)</label><input id="a-mfit" placeholder="Cole o link do treino do MFit deste aluno"></div>
     <div class="modal-acts">
       <button class="btn btn-ghost" onclick="closeModal('ov-aluno')">Cancelar</button>
@@ -1489,6 +1489,8 @@ function esperarAuth(){
     <h3>🔔 Avisos</h3>
     <button id="btn-avisos" class="aviso-btn" onclick="ativarAvisos('jv-icone-gestao.png')">🔔 Ativar avisos</button>
     <p class="aviso-cap">Avisa no celular quando um aluno reservar, cancelar ou pedir algo. Funciona com o app aberto; no iPhone, adicione à Tela de Início.</p>
+    <p class="aviso-cap" id="avisos-nuvem-st"></p>
+    <button id="btn-aviso-teste" class="aviso-btn" style="display:none" onclick="testarAvisoCelular()">📨 Enviar aviso de teste para mim</button>
     <div id="notif-list" style="max-height:52vh;overflow-y:auto"></div>
     <div class="modal-acts">
       <button class="btn btn-ghost" onclick="limparNotifs()">Limpar tudo</button>
@@ -1700,8 +1702,8 @@ function esperarAuth(){
 
 <div class="toast" id="toast"></div>
 
-<script src="lib/app-gestao.js?v=2026-10-15-2"></script>
-<script src="lib/acoes-voz.js?v=2026-10-15-2"></script>
+<script src="lib/app-gestao.js?v=2026-10-15-3"></script>
+<script src="lib/acoes-voz.js?v=2026-10-15-3"></script>
 <script>
 /* Rede de seguranca do par tela+codigo.
 
@@ -1716,7 +1718,7 @@ function esperarAuth(){
    torto, o app busca o par certo uma vez e, se insistir, DIZ o que houve em
    vez de deixar voce tocando em botao que nao responde. */
 (function(){
-  var ESPERADA='2026-10-15-2';
+  var ESPERADA='2026-10-15-3';
   function tela(motivo){
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;z-index:99999;background:#1A2E14;color:#FAF7F2;'
@@ -1807,7 +1809,7 @@ function limparHist(){
 }
 histLogLoad();
 // PWA: registra o service worker (permite instalar o painel e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-gestao.js?v=2026-10-15-2').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-gestao.js?v=2026-10-15-3').catch(function(){});});}
 </script>
 </body>
 </html>

@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-15-2';
+const VERSAO='2026-10-15-3';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -1275,6 +1275,7 @@ async function load(){
   publicarMapaQuadra();            // e o que eu ocupo
   publicarAgendaProf();            // e o que marquei no nome dos professores
   lerAgendaProf();                 // (no app do professor) o que a academia marcou para ele
+  iniciarAvisosNuvem();            // avisos com o app fechado, se o servidor estiver ligado
 }
 /* ===== Rede de segurança: versões, em vez de uma cópia só =====
    Antes existia UMA cópia no aparelho e UMA na nuvem, as duas sobrescritas a
@@ -2093,6 +2094,7 @@ let pubTimer=null;
 function publish(){
   clearTimeout(pubTimer);
   pubTimer=setTimeout(doPublish,1200);
+  try{sincronizarAvisos();}catch(e){}
 }
 
 /* ===== Segurança P0 — identidade e dados privados do aluno ================= */
@@ -2806,14 +2808,16 @@ async function ativarAvisos(iconeTeste){
   if(st==='denied'){toast('🔕 Avisos bloqueados — libere nos ajustes do navegador');pintarAvisos();return;}
   if(st==='granted'){
     const ok=await mostrarAviso('Avisos ligados 🎾','Academia João Victor Tênis',iconeTeste);
-    toast(ok?'🔔 Aviso de teste enviado!':'Não consegui enviar o aviso de teste');
+    const nuvem=await registrarAvisosNuvem();
+    toast(nuvem==='ok'?'🔔 Avisos ligados, também com o app fechado':ok?'🔔 Aviso de teste enviado!':'Não consegui enviar o aviso de teste');
     pintarAvisos();return;
   }
   try{
     const r=await Notification.requestPermission();
     if(r==='granted'){
       const ok=await mostrarAviso('Avisos ligados 🎾','Academia João Victor Tênis',iconeTeste);
-      toast(ok?'🔔 Pronto! Aviso de teste enviado.':'Permissão dada, mas o aviso não apareceu');
+      const nuvem=await registrarAvisosNuvem();
+      toast(nuvem==='ok'?'🔔 Pronto! Avisos ligados, também com o app fechado.':ok?'🔔 Pronto! Aviso de teste enviado.':'Permissão dada, mas o aviso não apareceu');
     }else toast('Sem problema — dá para ligar depois neste botão');
   }catch(e){toast('Não consegui pedir a permissão');}
   pintarAvisos();
@@ -2821,14 +2825,152 @@ async function ativarAvisos(iconeTeste){
 function pintarAvisos(){
   const b=document.getElementById('btn-avisos');if(!b)return;
   const st=avisosEstado();
-  const txt={granted:'🔔 Avisos ligados · testar',denied:'🔕 Avisos bloqueados',
+  let nuvem=false;try{nuvem=st==='granted'&&localStorage.getItem('jv-avisos-nuvem-gestao')==='1';}catch(e){}
+  const txt={granted:nuvem?'🔔 Avisos ligados, também com o app fechado':'🔔 Avisos ligados · testar',denied:'🔕 Avisos bloqueados',
              instalar:'📲 Instale na Tela de Início',
              'nao-suportado':'🔕 Sem avisos neste navegador'}[st]||'🔔 Ativar avisos';
   b.textContent=txt;
   b.dataset.st=st;
+  const el=document.getElementById('avisos-nuvem-st'),bt=document.getElementById('btn-aviso-teste');
+  if(el){
+    const v=AVISOS_NUVEM,min=v&&v.ts?Math.max(0,Math.round((Date.now()-Number(v.ts))/60000)):null;
+    el.textContent=servidorAvisosAtivo()
+      ?'Avisos com o app fechado: servidor ligado (última rodada há '+(min<1?'menos de 1 min':min+' min')+'). Alunos recebem lembrete de aula, vencimento e vaga liberada; você recebe os pedidos.'
+      :'Avisos com o app fechado: servidor ainda não ligado.';
+  }
+  if(bt)bt.style.display=(servidorAvisosAtivo()&&nuvem)?'':'none';
 }
 function pedirPermissaoNotif(){pintarAvisos();}
 function notificarNavegador(txt){mostrarAviso('Academia JV Tênis 🎾',txt,'jv-icone-gestao.png');}
+/* ===== Avisos com o app fechado (servidor grátis na Cloudflare) =====
+   servidor-avisos/ roda a cada 2 minutos e grava jvtenis/avisos_estado (hora da
+   rodada e chave pública de push). A Gestão só PREPARA os avisos dos próximos
+   dias em jvtenis/avisos_saida:
+   - aula, locação e torneio de amanhã: às 19h da véspera;
+   - vencimento da mensalidade de quem está pendente: 3 dias antes e no dia, 9h;
+   - vaga liberada da lista de espera: na hora (de noite, às 7h).
+   O servidor manda na hora certa e anota em avisos_enviados. Textos sem valor
+   e sem desconto. Sem servidor vivo, nada é gravado e nada muda. */
+const AVISOS_DIAS=3,AVISO_HORA_AULA=19,AVISO_HORA_VENC=9;
+const NOME_AVISO={aula:['🎾','Aula'],grupo:['🎾','Aula em grupo'],personal:['🏋️','Treino'],locacao:['🔑','Locação da quadra'],torneio:['🏆','Torneio']};
+let AVISOS_NUVEM=null,_avisosGravado='',_avisosTimer=null,_avisoTeste=0,_avisosIntervalo=null;
+function idAviso(){return Array.from(arguments).map(x=>String(x).replace(/[^A-Za-z0-9_-]/g,'')).join('_');}
+function servidorAvisosAtivo(agora){
+  const v=AVISOS_NUVEM;
+  return !!(v&&typeof v.chave==='string'&&v.chave&&(agora||Date.now())-Number(v.ts||0)<36*3600000);
+}
+function montarAvisos(agora){
+  agora=agora||Date.now();
+  const out={},base=new Date(agora),porId={},DIA_MS=86400000;
+  base.setHours(12,0,0,0);
+  DB.alunos.forEach(a=>{porId[a.id]=a;});
+  const primeiro=n=>String(n||'').trim().split(/\s+/)[0]||'Aluno';
+  const corpoDe=t=>t==='locacao'?'Bom jogo! Se precisar mudar, fale com o João.':t==='torneio'?'Boa sorte! 🎾':'Se não puder ir, cancele pelo app até 4 horas antes.';
+  for(let i=1;i<=AVISOS_DIAS;i++){
+    const d=new Date(base);d.setDate(d.getDate()+i);
+    const dk=dKey(d),meiaNoite=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime();
+    const quando=new Date(d.getFullYear(),d.getMonth(),d.getDate()-1,AVISO_HORA_AULA,0).getTime();
+    HORAS.forEach(h=>{
+      const evs=entriesFor(d,h);
+      if(evs.some(ehEventoChuva))return;                  // chuva: nada acontece
+      const semAula=evs.some(e=>e.tipo==='bloqueio');      // almoço/bloqueio: só locação e torneio
+      const hm=h.split(':').map(Number),ini=new Date(d.getFullYear(),d.getMonth(),d.getDate(),hm[0],hm[1]||0).getTime();
+      const ate=Math.min(ini-3600000,meiaNoite);           // "amanhã" só vale até a meia-noite
+      if(ate<=agora)return;
+      evs.forEach(e=>{
+        const nm=NOME_AVISO[e.tipo];if(!nm||!e.alunoId)return;
+        if(semAula&&(e.tipo==='aula'||e.tipo==='grupo'||e.tipo==='personal'))return;
+        const a=porId[e.alunoId];if(!a||a.arquivado===true||!a.codigo)return;
+        const cod=String(a.codigo);
+        out[idAviso('a',cod,dk,h)]={cod,alvo:cod,tipo:'aula',data:dk,hora:h,quando,ate,t:nm[0]+' '+nm[1]+' amanhã às '+h,c:corpoDe(e.tipo),g:'aula'};
+        const r=responsavelFamilia(a);
+        if(r&&r.codigo&&String(r.codigo)!==cod)
+          out[idAviso('a',r.codigo,cod,dk,h)]={cod:String(r.codigo),alvo:cod,tipo:'aula',data:dk,hora:h,quando,ate,t:nm[0]+' '+nm[1]+' de '+primeiro(a.nome)+' amanhã às '+h,c:corpoDe(e.tipo),g:'aula'};
+      });
+    });
+  }
+  const mk=mesReal(),hoje=new Date(agora),ult=new Date(hoje.getFullYear(),hoje.getMonth()+1,0).getDate();
+  const corpoVenc='Pague pelo app: o Pix já vem com o valor certo. Se já pagou, desconsidere.';
+  DB.alunos.forEach(a=>{
+    if(!a.codigo||!pendenteDoFechamento(a,mk)||!(valorMensalidadeEm(a,mk)>0))return;
+    const dia=Math.min(Number(a.diaVenc)||10,ult),cod=String(a.codigo);
+    const q3=new Date(hoje.getFullYear(),hoje.getMonth(),dia-3,AVISO_HORA_VENC).getTime();
+    const q0=new Date(hoje.getFullYear(),hoje.getMonth(),dia,AVISO_HORA_VENC).getTime();
+    const fim=new Date(hoje.getFullYear(),hoje.getMonth(),dia,23,59).getTime();
+    if(q3+12*3600000>agora&&q3-agora<(AVISOS_DIAS+1)*DIA_MS)
+      out[idAviso('v',cod,mk,'3')]={cod,tipo:'venc',quando:q3,ate:q3+12*3600000,t:'Sua mensalidade do tênis vence em 3 dias (dia '+dia+')',c:corpoVenc,g:'venc'};
+    if(fim>agora&&q0-agora<(AVISOS_DIAS+1)*DIA_MS)
+      out[idAviso('v',cod,mk,'0')]={cod,tipo:'venc',quando:q0,ate:fim,t:'Sua mensalidade do tênis vence hoje',c:corpoVenc,g:'venc'};
+  });
+  const hAgora=hoje.getHours();
+  const qVaga=(hAgora>=7&&hAgora<22)?0:new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()+(hAgora>=22?1:0),7).getTime();
+  vagasLiberadasEspera().forEach(v=>{
+    const p=v.data.split('-').map(Number),hm=v.hora.split(':').map(Number);
+    const ate=new Date(p[0],p[1]-1,p[2],hm[0],hm[1]||0).getTime()-1800000;
+    if(ate<=agora)return;
+    v.lista.forEach(e=>{
+      const a=porId[e.alunoId];if(!a||!a.codigo)return;const cod=String(a.codigo);
+      out[idAviso('e',cod,v.data,v.hora)]={cod,tipo:'espera',quando:qVaga,ate,t:'🔔 Vaga liberada: '+dataEspera(v.data)+' às '+v.hora,c:'Quem marcar primeiro fica com ela. Toque para reservar no app.',g:'espera'};
+    });
+  });
+  if(_avisoTeste&&agora-_avisoTeste<30*60000)
+    out[idAviso('t',_avisoTeste)]={para:'joao',tipo:'teste',quando:0,ate:_avisoTeste+30*60000,t:'🔔 Teste de aviso',c:'Se você está vendo isto, os avisos no celular estão funcionando.',g:'teste'};
+  return out;
+}
+async function lerEstadoAvisos(){
+  if(!hasCloud()||!ehDono())return null;
+  try{const s=await window.fbDB.ref('jvtenis/avisos_estado').get();AVISOS_NUVEM=s.exists()?s.val():null;}catch(e){}
+  try{pintarAvisos();}catch(e){}
+  return AVISOS_NUVEM;
+}
+function sincronizarAvisos(){
+  if(!hasCloud()||!ehDono()||!servidorAvisosAtivo())return;
+  clearTimeout(_avisosTimer);_avisosTimer=setTimeout(gravarAvisos,3000);
+}
+async function gravarAvisos(){
+  // os mesmos cuidados da publicação: só com o banco confirmado
+  if(!CARREGADO||cloudPending||_conflitoNuvem||_abriuSemConferir)return false;
+  if(!hasCloud()||!ehDono()||!servidorAvisosAtivo())return false;
+  let itens;try{itens=montarAvisos(Date.now());}catch(e){console.warn('avisos: não montei',e);return false;}
+  const s=JSON.stringify(itens);if(s===_avisosGravado)return true;
+  try{await window.fbDB.ref('jvtenis/avisos_saida').set(itens);_avisosGravado=s;return true;}
+  catch(e){console.warn('avisos: não gravei',e&&e.message);return false;}
+}
+function iniciarAvisosNuvem(){
+  if(!hasCloud()||!ehDono())return;
+  lerEstadoAvisos().then(sincronizarAvisos);
+  clearInterval(_avisosIntervalo);
+  _avisosIntervalo=setInterval(()=>lerEstadoAvisos().then(sincronizarAvisos),30*60000);
+  if('Notification' in window&&Notification.permission==='granted')registrarAvisosNuvem();
+}
+async function testarAvisoCelular(){
+  if(!servidorAvisosAtivo()){toast('O servidor de avisos ainda não está ligado.');return;}
+  if(localStorage.getItem('jv-avisos-nuvem-gestao')!=='1'){toast('Ligue os avisos deste aparelho primeiro (botão acima).');return;}
+  _avisoTeste=Date.now();
+  const ok=await gravarAvisos();
+  toast(ok?'🔔 Teste a caminho: chega em até 2 minutos.':'Não consegui preparar o teste agora.');
+}
+/* Inscreve este aparelho no push do navegador com a chave pública do servidor
+   e guarda o endereço em avisos_tokens/<uid>/gestao. Sem servidor, não faz nada. */
+function b64uParaBytes(s){s=String(s).replace(/-/g,'+').replace(/_/g,'/');const b=atob(s+'='.repeat((4-s.length%4)%4));return Uint8Array.from(b,c=>c.charCodeAt(0));}
+function bytesParaB64u(buf){let s='';new Uint8Array(buf).forEach(b=>{s+=String.fromCharCode(b);});return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+async function registrarAvisosNuvem(){
+  try{
+    if(!('serviceWorker' in navigator)||!('PushManager' in window)||!('Notification' in window)||Notification.permission!=='granted')return 'sem-suporte';
+    const u=(window.firebase&&firebase.auth&&firebase.auth().currentUser)||null;if(!u||!hasCloud())return 'sem-login';
+    if(!AVISOS_NUVEM)await lerEstadoAvisos();
+    if(!servidorAvisosAtivo())return 'sem-servidor';
+    const chave=AVISOS_NUVEM.chave,reg=await navigator.serviceWorker.ready;
+    let sub=await reg.pushManager.getSubscription();
+    if(sub&&sub.options&&sub.options.applicationServerKey&&bytesParaB64u(sub.options.applicationServerKey)!==chave){try{await sub.unsubscribe();}catch(e){}sub=null;}
+    if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64uParaBytes(chave)});
+    const j=sub.toJSON();if(!j||!j.endpoint||!j.keys)return 'falhou';
+    await window.fbDB.ref('jvtenis/avisos_tokens/'+u.uid+'/gestao').set({e:j.endpoint,p:j.keys.p256dh,a:j.keys.auth,ts:Date.now()});
+    try{localStorage.setItem('jv-avisos-nuvem-gestao','1');}catch(e){}
+    try{pintarAvisos();}catch(e){}
+    return 'ok';
+  }catch(e){console.warn('avisos no celular:',e&&e.message);return 'falhou';}
+}
 /* Quando o aluno mandou, em palavras. A Gestão só busca os avisos quando está
    aberta: um cancelamento feito às 23h aparece de manhã e, sem a hora, parecia
    ter sido feito agora, dentro do prazo de 4h. */
