@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-15-3';
+const VERSAO='2026-10-15-4';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2497,7 +2497,10 @@ async function doPublish(){
         const todas=DB.presencas||[];
         todas.forEach(p=>{const c=codeOf[p.alunoId];if(!c||!p.data||p.data<cut||p.data>fim)return;
           if(ehMarca(p)||ehDupManual(p,todas))return;
-          (out[c]=out[c]||[]).push({data:p.data||'',hora:p.hora||''});});
+          /* t: jogo do torneio e locação não são aula; o app do aluno mostra
+             cada um com o nome certo e fora da conta das aulas do plano. */
+          const t=p.tipo||p.modo,it={data:p.data||'',hora:p.hora||''};if(t==='torneio'||t==='locacao')it.t=t;
+          (out[c]=out[c]||[]).push(it);});
         Object.keys(out).forEach(c=>{out[c].sort((a,b)=>String(b.data+(b.hora||'')).localeCompare(String(a.data+(a.hora||''))));});
         return out;
       })(),
@@ -2852,7 +2855,7 @@ function notificarNavegador(txt){mostrarAviso('Academia JV Tênis 🎾',txt,'jv-
    O servidor manda na hora certa e anota em avisos_enviados. Textos sem valor
    e sem desconto. Sem servidor vivo, nada é gravado e nada muda. */
 const AVISOS_DIAS=3,AVISO_HORA_AULA=19,AVISO_HORA_VENC=9;
-const NOME_AVISO={aula:['🎾','Aula'],grupo:['🎾','Aula em grupo'],personal:['🏋️','Treino'],locacao:['🔑','Locação da quadra'],torneio:['🏆','Torneio']};
+const NOME_AVISO={aula:['🎾','Aula'],grupo:['🎾','Aula em grupo'],personal:['🏋️','Treino'],locacao:['🔑','Locação da quadra'],torneio:['🏆','Jogo do torneio']};
 let AVISOS_NUVEM=null,_avisosGravado='',_avisosTimer=null,_avisoTeste=0,_avisosIntervalo=null;
 function idAviso(){return Array.from(arguments).map(x=>String(x).replace(/[^A-Za-z0-9_-]/g,'')).join('_');}
 function servidorAvisosAtivo(agora){

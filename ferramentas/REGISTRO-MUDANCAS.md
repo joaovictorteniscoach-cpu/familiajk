@@ -8,6 +8,31 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-15 (noite) · Claude Code: jogo do torneio aparecia como "aula" no app do aluno
+
+O João viu: o aluno marca jogo do torneio, a Gestão mostra "Torneio", mas o app
+do aluno mostrava "Minha aula".
+- **Causa:** a Gestão já gravava e publicava o tipo `torneio` certo. O app do
+  aluno ignorava o tipo e escrevia "aula" fixo em vários lugares. Locação tinha
+  o mesmo defeito.
+- **App do aluno** (`tipoHorario`, `rotuloMeuHorario`, `iconeHorario`):
+  - agenda do dia "🏆 Meu jogo do torneio · confirmado" e da semana "Meu jogo".
+    Pedido pendente: "Jogo do torneio · aguardando ⏳". Locação: "🔑 Minha locação";
+  - cartão do Início: "Próximo jogo do torneio ›", sem "Prof." no torneio e na
+    locação;
+  - Minhas aulas: "🏆 Jogo do torneio" com "Cancelar jogo"; lembrete do dia
+    "Seu jogo do torneio é hoje"; Google Agenda "Jogo do torneio 🏆";
+  - resumo do mês: os números (feitas/marcadas) contam **só aula**, comparada ao
+    plano. Torneio e locação ficam numa linha própria, "(não gastam aula do
+    plano)". A aba Feitas e a lista de realizadas mostram tudo, com 🏆/🔑.
+- **Gestão:**
+  - o histórico publicado de cada aluno leva `t:'torneio'` ou `t:'locacao'`;
+  - aviso no celular passa a dizer "🏆 Jogo do torneio amanhã às …";
+  - nada muda no banco, em créditos ou em valores.
+- **Teste novo:** `ferramentas/testar-torneio-aluno-browser.cjs`, com 9
+  verificações. Falha na versão anterior e passa nesta. Entrou no `validar-pr`.
+- Versão 2026-10-15-4.
+
 ## 2026-10-15 (noite) · Claude Code: avisos com usuário robô; Netlify antigo redirecionado
 
 O #239 foi publicado com o OK do João. Depois, decisões dele:
