@@ -62,6 +62,7 @@ jobs:
           node ferramentas/testar-fechamento-whatsapp-browser.cjs
           node ferramentas/testar-numeros-inicio-browser.cjs
           node ferramentas/testar-locacao-minhas-aulas-browser.cjs
+          node ferramentas/testar-torneio-aluno-browser.cjs
           node ferramentas/testar-lista-espera-browser.cjs
           node ferramentas/testar-avisos-celular-browser.cjs
           node ferramentas/testar-servidor-avisos.mjs

@@ -84,7 +84,7 @@ const PUSH_FALSO=`(()=>{
    assert.deepEqual([a.cod,a.alvo,a.data,a.hora,a.tipo],['6601','6601','2026-10-16','18:00','aula']);
    assert.equal(it['a_6602_2026-10-16_0700'].t,'🎾 Aula em grupo amanhã às 07:00');
    assert.equal(it['a_6603_2026-10-16_1200'].t,'🔑 Locação da quadra amanhã às 12:00','almoço não impede locação');
-   assert.equal(it['a_6613_2026-10-18_0800'].t,'🏆 Torneio amanhã às 08:00');
+   assert.equal(it['a_6613_2026-10-18_0800'].t,'🏆 Jogo do torneio amanhã às 08:00');
    assert.equal(it['a_6613_2026-10-18_0800'].quando,new Date('2026-10-17T19:00:00-03:00').getTime());
   });
   await check('Gestão: o responsável da família recebe a aula do dependente, com o nome dele',async()=>{

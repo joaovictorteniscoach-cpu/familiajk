@@ -14,6 +14,8 @@ crons = ["*/2 * * * *"]
 DB_URL = "https://academia-jv-tenis-default-rtdb.firebaseio.com"
 ADMIN_UID = "XEulBs95uZV1JhfUuz6SmjUaeVv1"
 CONTATO = "https://joaovictorteniscoach-cpu.github.io"
+# Chave de API do Firebase: pública (é a mesma que está no código dos apps).
+API_KEY = "AIzaSyCs7o_bUjbMHrR2iu8BpZ1gVuwRZT25C3A"
 
 [observability]
 enabled = true

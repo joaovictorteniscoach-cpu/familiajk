@@ -8,6 +8,64 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-15 (noite) · Claude Code: jogo do torneio aparecia como "aula" no app do aluno
+
+O João viu: o aluno marca jogo do torneio, a Gestão mostra "Torneio", mas o app
+do aluno mostrava "Minha aula".
+- **Causa:** a Gestão já gravava e publicava o tipo `torneio` certo. O app do
+  aluno ignorava o tipo e escrevia "aula" fixo em vários lugares. Locação tinha
+  o mesmo defeito.
+- **App do aluno** (`tipoHorario`, `rotuloMeuHorario`, `iconeHorario`):
+  - agenda do dia "🏆 Meu jogo do torneio · confirmado" e da semana "Meu jogo".
+    Pedido pendente: "Jogo do torneio · aguardando ⏳". Locação: "🔑 Minha locação";
+  - cartão do Início: "Próximo jogo do torneio ›", sem "Prof." no torneio e na
+    locação;
+  - Minhas aulas: "🏆 Jogo do torneio" com "Cancelar jogo"; lembrete do dia
+    "Seu jogo do torneio é hoje"; Google Agenda "Jogo do torneio 🏆";
+  - resumo do mês: os números (feitas/marcadas) contam **só aula**, comparada ao
+    plano. Torneio e locação ficam numa linha própria, "(não gastam aula do
+    plano)". A aba Feitas e a lista de realizadas mostram tudo, com 🏆/🔑.
+- **Gestão:**
+  - o histórico publicado de cada aluno leva `t:'torneio'` ou `t:'locacao'`;
+  - aviso no celular passa a dizer "🏆 Jogo do torneio amanhã às …";
+  - nada muda no banco, em créditos ou em valores.
+- **Teste novo:** `ferramentas/testar-torneio-aluno-browser.cjs`, com 9
+  verificações. Falha na versão anterior e passa nesta. Entrou no `validar-pr`.
+- Versão 2026-10-15-4.
+
+## 2026-10-15 (noite) · Claude Code: avisos com usuário robô; Netlify antigo redirecionado
+
+O #239 foi publicado com o OK do João. Depois, decisões dele:
+- o servidor entra como **usuário robô**, não com a chave de serviço;
+- `appalunos` e `academiatenisjv` (Netlify) vão para o endereço oficial;
+- a regra nova está autorizada, depois que ele criar o robô;
+- Asaas fica para depois: segue com Pix na chave e Tap to Pay.
+
+- **`servidor-avisos/avisos.js`:**
+  - `entrarRobo()` faz login por e-mail e senha (Identity Toolkit, com a chave
+    de API pública e Referer do site) e usa `?auth=` no lugar de `access_token`;
+  - segredos: `AVISOS_EMAIL` e `AVISOS_SENHA`;
+  - saiu a assinatura RS256: ~3 a 4 ms por rodada no `workerd`.
+- **Action:** pede os 4 segredos. `conferir-robo.mjs` confere o formato e
+  testa o login sem mostrar nada; `conferir-conta.mjs` saiu.
+- **Regra (no fim de `AVISOS-CLOUDFLARE.md`, com `ROBO_UID`):**
+  - lugares novos de avisos, com leitura e gravação do robô só ali;
+  - o robô só apaga endereço morto;
+  - o robô ganha `.read` na raiz de `aluno_vinculos`, `fila_pedidos` e
+    `fila_agendamentos`;
+  - testada numa cópia com robô fictício: `checar-regras.py` 214 e 221 casos;
+    emulador 39 verificações. Entre elas, o robô não lê `v2`, `alunos_privados`
+    nem `aluno-estado`, não grava aviso nem pedido e não aprova vínculo.
+  - Falta o UID real para entrar em `etapa3-transicao` e `etapa4-estrita`.
+- **Netlify (`app-aluno/netlify.toml`, `app-gestao/netlify.toml`):**
+  - redirecionamento 302 de tudo para o GitHub Pages: reversível, basta apagar
+    o bloco;
+  - `ignore` só reconstrói quando o próprio `netlify.toml` muda: não gasta mais
+    crédito a cada publicação;
+  - quem chega pelo endereço antigo entra de novo, e o João aprova o aparelho.
+- **Testes:** `testar-servidor-avisos.mjs` agora tem 15 verificações (login do
+  robô, login recusado sem vazar a senha). `wrangler deploy --dry-run` ok.
+
 ## 2026-10-15 · Claude Code: avisos no celular com o app fechado (Cloudflare, grátis)
 
 Pedido do João: "me ensine a colocar o aviso com o Cloudflare". Vai no mesmo PR

@@ -1,9 +1,13 @@
 /* Servidor de avisos — Academia João Victor Tênis
-   Roda na Cloudflare (Workers, plano grátis) a cada 5 minutos. Não muda
+   Roda na Cloudflare (Workers, plano grátis) a cada 2 minutos. Não muda
    agenda, créditos nem valores: só entrega avisos no celular.
 
    O que faz em cada rodada:
-   1. Entra no Firebase com a conta de serviço (segredo FIREBASE_SERVICE_ACCOUNT).
+   1. Entra no Firebase como o USUÁRIO ROBÔ (segredos AVISOS_EMAIL e
+      AVISOS_SENHA). Escolha do João em 15/10: o robô é um usuário comum, que
+      a regra deixa ler só o necessário e mexer só nos avisos; se a senha
+      vazar, o estrago fica nos avisos. (A chave de serviço mandaria em tudo
+      e é um arquivo difícil de copiar no celular.)
    2. Lê os avisos que a Gestão preparou (jvtenis/avisos_saida): aula amanhã,
       vencimento da mensalidade e vaga liberada da lista de espera.
    3. Manda cada aviso cuja hora chegou para os aparelhos daquele aluno
@@ -22,7 +26,6 @@
    o resto sai na seguinte. Para não gastar a cota de leitura do Firebase,
    baixa só os avisos que já chegaram na hora e guarda os vínculos por 30 min. */
 
-const ESCOPO = 'https://www.googleapis.com/auth/firebase.database https://www.googleapis.com/auth/userinfo.email';
 export const MAX_ENVIOS = 6;
 const DIA = 86400000;
 const PEDIDO_VALE_MS = 6 * 3600000;      // pedido mais velho que isso não vira aviso
@@ -49,29 +52,29 @@ export function b64uDec(str) {
   return Uint8Array.from(bin, c => c.charCodeAt(0));
 }
 
-/* ---------- Firebase (REST com token Google da conta de serviço) ---------- */
-let TOKEN_CACHE = null; // {tok, ate}: o mesmo processo pode atender várias rodadas
+/* ---------- Firebase (REST com o login do usuário robô) ---------- */
+let SESSAO = null;      // {tok, ate, email}: o mesmo processo pode atender várias rodadas
 let VINC_CACHE = null;  // {v, ate}
-export function limparCache() { TOKEN_CACHE = null; VINC_CACHE = null; }
-async function tokenGoogle(sa, agora, f) {
-  if (TOKEN_CACHE && TOKEN_CACHE.ate > agora + 60000 && TOKEN_CACHE.email === sa.client_email) return TOKEN_CACHE.tok;
-  const iat = Math.floor(agora / 1000);
-  const cab = b64uEnc(txt(JSON.stringify({ alg: 'RS256', typ: 'JWT' })));
-  const corpo = b64uEnc(txt(JSON.stringify({ iss: sa.client_email, scope: ESCOPO, aud: 'https://oauth2.googleapis.com/token', iat, exp: iat + 3600 })));
-  const der = b64uDec(String(sa.private_key || '').replace(/-----[^-]+-----/g, '').replace(/\s+/g, '').replace(/\+/g, '-').replace(/\//g, '_'));
-  const chave = await crypto.subtle.importKey('pkcs8', der, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
-  const ass = new Uint8Array(await crypto.subtle.sign('RSASSA-PKCS1-v1_5', chave, txt(cab + '.' + corpo)));
-  const r = await f('https://oauth2.googleapis.com/token', {
-    method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body: 'grant_type=' + encodeURIComponent('urn:ietf:params:oauth:grant-type:jwt-bearer') + '&assertion=' + cab + '.' + corpo + '.' + b64uEnc(ass)
+export function limparCache() { SESSAO = null; VINC_CACHE = null; }
+async function entrarRobo(env, agora, f) {
+  if (SESSAO && SESSAO.ate > agora + 60000 && SESSAO.email === env.AVISOS_EMAIL) return SESSAO.tok;
+  // A chave de API do Firebase é pública (está no código dos apps). O Referer
+  // é o do site: se um dia a chave for restrita a esse endereço, segue valendo.
+  const r = await f('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=' + encodeURIComponent(env.API_KEY), {
+    method: 'POST', headers: { 'content-type': 'application/json', referer: String(env.CONTATO || '').replace(/\/*$/, '/') },
+    body: JSON.stringify({ email: env.AVISOS_EMAIL, password: env.AVISOS_SENHA, returnSecureToken: true })
   });
-  if (!r.ok) throw new Error('login Google recusado (' + r.status + ')');
+  if (!r.ok) {
+    let motivo = '';
+    try { motivo = String(((await r.json()).error || {}).message || '').replace(/[^A-Z_ :]/g, '').slice(0, 60); } catch (_) {}
+    throw new Error('login do robô recusado (' + r.status + (motivo ? ' ' + motivo : '') + ')');
+  }
   const j = await r.json();
-  TOKEN_CACHE = { tok: j.access_token, ate: agora + (Number(j.expires_in) || 3600) * 1000, email: sa.client_email };
-  return j.access_token;
+  SESSAO = { tok: j.idToken, ate: agora + (Number(j.expiresIn) || 3600) * 1000, email: env.AVISOS_EMAIL };
+  return j.idToken;
 }
 function urlBanco(env, caminho, tok, consulta) {
-  return String(env.DB_URL).replace(/\/+$/, '') + '/jvtenis' + (caminho ? '/' + caminho : '') + '.json?access_token=' + encodeURIComponent(tok) + (consulta || '');
+  return String(env.DB_URL).replace(/\/+$/, '') + '/jvtenis' + (caminho ? '/' + caminho : '') + '.json?auth=' + encodeURIComponent(tok) + (consulta || '');
 }
 async function ler(env, caminho, tok, f, consulta) {
   const r = await f(urlBanco(env, caminho, tok, consulta));
@@ -161,10 +164,9 @@ function itemVale(it, agora, cancelados) {
 
 export async function rodar(env, opcoes = {}) {
   const agora = opcoes.agora || Date.now(), f = opcoes.fetch || fetch;
-  if (!env.FIREBASE_SERVICE_ACCOUNT || !env.VAPID_JWK || !env.DB_URL) return { ok: false, motivo: 'segredos ou endereço do banco ausentes' };
-  const sa = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT);
+  if (!env.AVISOS_EMAIL || !env.AVISOS_SENHA || !env.VAPID_JWK || !env.DB_URL || !env.API_KEY) return { ok: false, motivo: 'segredos ou endereço do banco ausentes' };
   const vapid = await carregarVapid(env.VAPID_JWK, env.CONTATO || 'https://joaovictorteniscoach-cpu.github.io');
-  const tok = await tokenGoogle(sa, agora, f);
+  const tok = await entrarRobo(env, agora, f);
   const [saida, vinculos, tokens, enviados, pedidos, fila] = await Promise.all([lerVencidos(env, tok, f, agora), lerVinculos(env, tok, f, agora)].concat(
     ['avisos_tokens', 'avisos_enviados', 'fila_pedidos', 'fila_agendamentos'].map(c => ler(env, c, tok, f))));
 

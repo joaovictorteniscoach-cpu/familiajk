@@ -1598,12 +1598,12 @@ html body:not(#jv) #pedir-box .btn-ghost{background:#F3EDE2!important;border:1px
 #apg-evolucao .evo-prio b{color:#F2CF62!important}
 #apg-aulas .empty,#apg-torneio .empty{background:rgba(255,255,255,.06)!important;color:#D8D2C7!important;-webkit-text-fill-color:#D8D2C7!important}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-15-3">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-15-4">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-15-3">
-<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-15-3">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-15-4">
+<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-15-4">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -1815,7 +1815,7 @@ function esperarAuth(){
     </div>
     <div id="espera-box" class="esp-box" style="display:none" role="status"></div>
     <div id="lembrete-box" style="display:none;background:#1A2E14;color:#fff;border-radius:14px;padding:13px 15px;margin-bottom:12px">
-      <b style="font-size:14px">🔔 Você tem aula hoje!</b>
+      <b style="font-size:14px" id="lembrete-tit">🔔 Você tem aula hoje!</b>
       <p id="lembrete-txt" style="margin:4px 0 9px;font-size:13px;opacity:.9"></p>
       <button onclick="lembreteCalendario()" style="background:#fff;color:#1A2E14;border:none;border-radius:9px;padding:8px 12px;font-weight:700;font-size:12.5px;cursor:pointer">＋ Google Agenda</button>
       <button id="lembrete-confirmar" onclick="confirmarPresencaAluno()" style="background:#CBD24A;color:#1A2E14;border:none;border-radius:9px;padding:8px 12px;font-weight:800;font-size:12.5px;cursor:pointer;margin-left:6px">✅ Confirmar presença</button>
@@ -1874,7 +1874,7 @@ function esperarAuth(){
         <div class="hc-sub" id="home-repos-venc" hidden></div>
       </button>
       <button class="jv-home-card" type="button" onclick="irMinhasAulas('prox')">
-        <div class="hc-top"><span class="hc-icon" data-ic="cal"></span><span>Próxima aula ›</span></div>
+        <div class="hc-top"><span class="hc-icon" data-ic="cal"></span><span id="home-prox-tit">Próxima aula ›</span></div>
         <div class="hc-main" id="home-prox-date">—</div>
         <div class="hc-sub" id="home-prox-meta">Carregando sua agenda…</div>
       </button>
@@ -1924,7 +1924,7 @@ function esperarAuth(){
     </div>
     <div class="legend">
       <span class="lg-livre">Disponível</span>
-      <span class="lg-meu">Minha aula</span>
+      <span class="lg-meu">Meus horários</span>
       <span class="lg-ocup">Reservado</span>
     </div>
     <div id="ag-view"></div>
@@ -2085,7 +2085,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-10-15-3"></script>
+<script src="lib/icones.js?v=2026-10-15-4"></script>
 </div>
 
 <!-- MODAL ESCOLHER O QUE FAZER NO HORÁRIO -->
@@ -2305,7 +2305,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-10-15-3';
+const VERSAO='2026-10-15-4';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -2982,24 +2982,35 @@ function fixoValeEm(f,dk){
 /* Almoço, bloqueio e compromisso do João tiram só a aula com ele: a quadra
    continua livre para locação e jogo do torneio. Chuva tira tudo. */
 function ehSoSemAula(e){return !!e&&(e.tipo==='pessoal'||e.tipo==='bloqueio'&&e.motivo!=='chuva');}
+/* Jogo do torneio e locação não são aula: o aluno vê o que marcou. Antes a
+   agenda dizia "Minha aula" para qualquer horário dele. */
+function tipoHorario(t){return t==='torneio'||t==='locacao'?t:'aula';}
+function rotuloMeuHorario(t,curto){
+  t=tipoHorario(t);
+  if(t==='torneio')return curto?'Meu jogo':'Meu jogo do torneio';
+  if(t==='locacao')return curto?'Locação':'Minha locação';
+  return curto?'Sua aula':'Minha aula';
+}
+function iconeHorario(t){t=tipoHorario(t);return t==='torneio'?'🏆':t==='locacao'?'🔑':'🎾';}
 function slotState(date,hora){
   const dia=date.getDay(),dk=dKey(date),G=PUB.grade||{fixos:[],eventos:[],excecoes:[]};
   const fixos=(G.fixos||[]).filter(f=>f.dia===dia&&f.hora===hora&&fixoValeEm(f,dk)&&!(G.excecoes||[]).some(x=>x.fixoId===f.id&&x.data===dk));
   const evs=(G.eventos||[]).filter(e=>e.data===dk&&e.hora===hora),todas=fixos.concat(evs);
   if(todas.some(e=>e.tipo==='bloqueio'&&e.motivo==='chuva'))return {st:'chuva',label:'Cancelado por chuva'};
   const semAula=todas.some(ehSoSemAula),all=todas.filter(e=>!ehSoSemAula(e));
-  const meu=all.some(e=>e.cod===MEU.codigo);
+  const meu=all.find(e=>e.cod===MEU.codigo);
   if(meu&&foiCancelado(dk,hora))return {st:'ocup',label:'Cancelamento aguardando confirmação'};
-  if(meu)return {st:'meu',label:'Minha aula'};
+  if(meu)return {st:'meu',label:rotuloMeuHorario(meu.tipo),tipo:tipoHorario(meu.tipo)};
   const compartilhado=all.length&&all.every(e=>e.tipo===all[0].tipo)&&['grupo','locacao','torneio'].includes(all[0].tipo)?all[0].tipo:'';
   const limiteGrupo=compartilhado==='grupo'?Math.min(...all.map(e=>[2,3,4].includes(Number(e.pessoas))?Number(e.pessoas):2)):0;
   const grupo=compartilhado==='grupo'&&all.length<limiteGrupo;
   if(all.length&&(!compartilhado||compartilhado==='grupo'&&!grupo))return {st:'ocup',label:compartilhado==='grupo'?'Grupo completo':'Reservado',esperavel:true};
-  if((MEU.pedidos||[]).some(p=>{
+  const ped=(MEU.pedidos||[]).find(p=>{
     if(p.hora!==hora)return false;
     if(p.rec==='fixo')return new Date(p.data+'T12:00:00').getDay()===dia&&dk>=p.data;
     return p.data===dk;
-  }))return {st:'pend',label:'Aguardando ⏳'};
+  });
+  if(ped)return {st:'pend',label:ped.tor?'Jogo do torneio · aguardando ⏳':ped.loc?'Locação · aguardando ⏳':'Aguardando ⏳',tipo:ped.tor?'torneio':ped.loc?'locacao':'aula'};
   const modo=slotModo(date,hora);
   if(modo==='fechado')return {st:'fechado',label:'Fechado'};
   if(semAula){
@@ -3221,8 +3232,9 @@ function renderPremiumAluno(){
   if(!EU)return;carregarAvatarAluno();
   const prox=proximaAulaPremium(),pd=document.getElementById('home-prox-date'),pm=document.getElementById('home-prox-meta');
   if(pd)pd.textContent=prox?formatoDataPremium(prox.data):'Sem aula marcada';
-  const profPremium=meuProfNome();
-  if(pm)pm.textContent=prox?(DIAS_FULL[dtOf(prox.data,prox.hora).getDay()]+' • '+prox.hora+(profPremium?' • Prof. '+profPremium:'')):'Veja os horários disponíveis na Agenda';
+  const tpProx=prox?tipoHorario(prox.tipo):'aula',profPremium=tpProx==='aula'?meuProfNome():'';
+  const ptx=document.getElementById('home-prox-tit');if(ptx)ptx.textContent=tpProx==='torneio'?'Próximo jogo do torneio ›':tpProx==='locacao'?'Próxima locação ›':'Próxima aula ›';
+  if(pm)pm.textContent=prox?((tpProx==='aula'?'':iconeHorario(tpProx)+' ')+DIAS_FULL[dtOf(prox.data,prox.hora).getDay()]+' • '+prox.hora+(profPremium?' • Prof. '+profPremium:'')):'Veja os horários disponíveis na Agenda';
   const saldo=(Number(EU.creditos)||0)+(Number(EU.credGrupo)||0),plano=(Number(EU.plano)||0)+(Number(EU.planoGrupo)||0);
   const hc=document.getElementById('home-cred');if(hc)hc.textContent=fmtCred(saldo);
   const hcs=document.getElementById('home-cred-sub');if(hcs)hcs.textContent=plano>0?('créditos · de '+plano+' no plano atual'):'créditos disponíveis';
@@ -3970,7 +3982,7 @@ function renderHistAluno(){
   if(!h.length){
     el.innerHTML='<div class="empty" style="display:block">Nenhuma aula registrada neste mês. Elas aparecem aqui quando o professor registra sua presença.</div>';return;
   }
-  el.innerHTML='<div class="hist-card">'+h.map(p=>'<div class="hist-row"><span class="hr-ico">✓</span><span class="hr-d">'+escHtml(fmtDataAl(p.data))+'</span><span class="hr-h">'+escHtml(p.hora&&p.hora!=='—'?p.hora:'')+'</span></div>').join('')+'</div>';
+  el.innerHTML='<div class="hist-card">'+h.map(p=>{const t=tipoHorario(p.t);return '<div class="hist-row"><span class="hr-ico">'+(t==='aula'?'✓':iconeHorario(t))+'</span><span class="hr-d">'+escHtml(fmtDataAl(p.data))+'</span><span class="hr-h">'+escHtml((p.hora&&p.hora!=='—'?p.hora:'')+(t==='torneio'?' · jogo do torneio':t==='locacao'?' · locação':''))+'</span></div>';}).join('')+'</div>';
 }
 function renderTorneioAluno(){
   const box=document.getElementById('tor-box');if(!box)return;
@@ -4483,7 +4495,7 @@ function renderAgenda(){
       const s=slotState(agDate,h);
       let inner='';
       if(s.st==='livre'||s.st==='loc')inner=horasAte(dKey(agDate),h)<=0?`<button class="sl bloq" disabled>Encerrado</button>`:`<button class="sl livre" onclick="escolherSlot('${h}')">${s.compartilhado||s.semAula?s.label:'Disponível'} <i>${s.compartilhado?'participar':'ver opções'}</i></button>`;
-      else if(s.st==='meu'){const podeC=podeCancelarAula(dKey(agDate),h);inner=podeC?`<button class="sl meu" onclick="cancelarAula('${dKey(agDate)}','${h}','pontual')">🎾 ${s.label} <i>confirmada · toque para cancelar</i></button>`:`<button class="sl meu">🎾 ${s.label} <i>confirmada · trava ${LIMITE_CANCEL_H}h</i></button>`;}
+      else if(s.st==='meu'){const podeC=podeCancelarAula(dKey(agDate),h);const ic=iconeHorario(s.tipo),cf=s.tipo==='torneio'?'confirmado':'confirmada';inner=podeC?`<button class="sl meu" onclick="cancelarAula('${dKey(agDate)}','${h}','pontual')">${ic} ${s.label} <i>${cf} · toque para cancelar</i></button>`:`<button class="sl meu">${ic} ${s.label} <i>${cf} · trava ${LIMITE_CANCEL_H}h</i></button>`;}
       else if(s.st==='pend')inner=`<button class="sl pend" onclick="cancelarAula('${dKey(agDate)}','${h}','pontual')">${s.label} <i>enviado ao João · toque para cancelar</i></button>`;
       else if(s.st==='chuva')inner=`<button class="sl chuva">☔ Cancelado por chuva <i>sem desconto de crédito</i></button>`;
       else if(s.st==='bloq')inner=`<button class="sl bloq">Indisponível</button>`;
@@ -4506,7 +4518,7 @@ function renderAgenda(){
            responder ao toque fazia a semana inteira parecer travada. */
         const passou=horasAte(dKey(d),h)<=0;
         const cls=(s.st==='livre'&&passou)?'passou':s.st;
-        const txt=s.st==='livre'?(passou?'Passou':s.compartilhado==='torneio'?'Torneio':s.grupo?(s.limiteGrupo===4?'Quádrupla':s.limiteGrupo===3?'Trio':'Dupla'):'Livre'):s.st==='meu'?'Sua aula':s.st==='pend'?'Pedido':s.st==='chuva'?'Chuva':s.st==='bloq'?'Bloq.':s.st==='loc'?'Loc.':s.st==='fechado'?'Fechado':'Reserva';
+        const txt=s.st==='livre'?(passou?'Passou':s.compartilhado==='torneio'?'Torneio':s.grupo?(s.limiteGrupo===4?'Quádrupla':s.limiteGrupo===3?'Trio':'Dupla'):'Livre'):s.st==='meu'?rotuloMeuHorario(s.tipo,true):s.st==='pend'?'Pedido':s.st==='chuva'?'Chuva':s.st==='bloq'?'Bloq.':s.st==='loc'?'Loc.':s.st==='fechado'?'Fechado':'Reserva';
         const click=passou?`onclick="toast('Esse horário já passou 🙏')"`:(s.st==='livre'?`onclick="gotoBook(${d.getFullYear()},${d.getMonth()},${d.getDate()},'${h}')"`:(s.st==='loc'?`onclick="gotoDay(${d.getFullYear()},${d.getMonth()},${d.getDate()})"`:''));
         html+=`<td><button class="wc ${cls}" title="${s.label||''}" ${click}>${txt}</button></td>`;
       });
@@ -4534,17 +4546,18 @@ function renderAgenda(){
     el.innerHTML='<div class="cal"><div class="cal-head">'+['D','S','T','Q','Q','S','S'].map(x=>`<span>${x}</span>`).join('')+'</div><div class="cal-grid">'+cells+'</div></div>';
   }
 }
-function itemHtml(titulo,sub,dk,hora,rec,emoji,pendente){
+function itemHtml(titulo,sub,dk,hora,rec,emoji,pendente,tipo){
   if(!dataHoraAulaValida(dk,hora))return '';
+  const tp=tipoHorario(tipo),oQue=tp==='torneio'?'jogo':tp==='locacao'?'locação':'aula';
   const curso=ACOES_AULA_EM_CURSO.has(dk+'|'+hora),pode=podeCancelarAula(dk,hora);
   const ja=(MEU.confirmadas||[]).some(c=>c.data===dk&&c.hora===hora);
   const disabled=curso?' disabled aria-busy="true"':'';
   const conf=pendente?'<span class="aul-status">Aguardando o horário ser aprovado</span>'
     :'<button class="aul-confirm'+(ja?' ok':'')+'" type="button" onclick="confirmarPresencaAluno(\''+dk+'\',\''+hora+'\')"'+(ja?' disabled':disabled)+'>'+(ja?'✓ Presença confirmada':'Confirmar presença')+'</button>';
-  const cancel='<button class="mini-cancel" type="button" onclick="cancelarAula(\''+dk+'\',\''+hora+'\',\''+rec+'\')"'+(!pode?' disabled aria-label="Cancelamento indisponível: faltam menos de quatro horas"':disabled)+'>Cancelar aula</button>';
+  const cancel='<button class="mini-cancel" type="button" onclick="cancelarAula(\''+dk+'\',\''+hora+'\',\''+rec+'\')"'+(!pode?' disabled aria-label="Cancelamento indisponível: faltam menos de quatro horas"':disabled)+'>Cancelar '+oQue+'</button>';
   const prazo=pode?'Pode cancelar até '+fmtData(dKey(new Date(dtOf(dk,hora).getTime()-LIMITE_CANCEL_H*3600000)))+' às '+_pad2(new Date(dtOf(dk,hora).getTime()-LIMITE_CANCEL_H*3600000).getHours())+':'+_pad2(new Date(dtOf(dk,hora).getTime()-LIMITE_CANCEL_H*3600000).getMinutes())
     :'Faltam menos de 4h: cancelamento pelo app encerrado.';
-  const cal=pendente?'':'<button class="mini-cal" type="button" onclick="addToCalendar(\''+dk+'\',\''+hora+'\')" >Adicionar ao Google Agenda</button>';
+  const cal=pendente?'':'<button class="mini-cal" type="button" onclick="addToCalendar(\''+dk+'\',\''+hora+'\',\''+tp+'\')" >Adicionar ao Google Agenda</button>';
   return '<article class="mine-item"><div class="aul-info"><b>'+escHtml(titulo)+'</b><span>'+escHtml(sub)+'</span></div>'
     +'<div class="mine-act">'+conf+cancel+cal+'</div><p class="aul-prazo">'+escHtml(prazo)+'</p></article>';
 }
@@ -4568,7 +4581,7 @@ function aulasParaAgendaMes(){
     }
   });
   (G.eventos||[]).filter(e=>String(e.cod||'')===cod).forEach(e=>incluir(e.data,e.hora,e.tipo));
-  historicoAlunoMesAtual().forEach(p=>incluir(p.data,p.hora,'aula'));
+  historicoAlunoMesAtual().forEach(p=>incluir(p.data,p.hora,tipoHorario(p.t)));
   return [...mapa.values()].sort((a,b)=>(a.data+a.hora).localeCompare(b.data+b.hora));
 }
 function pintarAgendaMesAluno(){
@@ -4683,15 +4696,16 @@ async function salvarAgendaMesAluno(){
   finally{AULAS_CAL_BAIXANDO=false;}
 }
 
-function addToCalendar(dk,hora){
+function addToCalendar(dk,hora,tipo){
+  const tp=tipoHorario(tipo);
   const p=dk.split('-').map(Number);const hm=hora.split(':').map(Number);
   const ini=new Date(p[0],p[1]-1,p[2],hm[0],hm[1]||0);
   const fim=new Date(ini.getTime()+60*60000);
   const g=d=>d.getFullYear()+_pad2(d.getMonth()+1)+_pad2(d.getDate())+'T'+_pad2(d.getHours())+_pad2(d.getMinutes())+'00';
   const url='https://calendar.google.com/calendar/render?action=TEMPLATE'
-    +'&text='+encodeURIComponent('Aula de tênis 🎾 — Academia João Victor')
+    +'&text='+encodeURIComponent((tp==='torneio'?'Jogo do torneio 🏆':tp==='locacao'?'Locação de quadra 🔑':'Aula de tênis 🎾')+' — Academia João Victor')
     +'&dates='+g(ini)+'/'+g(fim)
-    +'&details='+encodeURIComponent('Sua aula na Academia João Victor Tênis. Chegue uns minutinhos antes! 🎾')
+    +'&details='+encodeURIComponent((tp==='torneio'?'Seu jogo do torneio':tp==='locacao'?'Sua locação de quadra':'Sua aula')+' na Academia João Victor Tênis. Chegue uns minutinhos antes! '+iconeHorario(tp))
     +'&location='+encodeURIComponent('Academia João Victor Tênis, Curitiba')
     +'&ctz=America/Sao_Paulo';
   const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';
@@ -4829,34 +4843,36 @@ async function marcarChuvaVista(){
   await saveMeu();
   document.getElementById('chuva-box').style.display='none';
 }
-let _lembreteFeito=false,_lembreteHora=null;
+let _lembreteFeito=false,_lembreteHora=null,_lembreteTipo='aula';
 function checarAulaHoje(){
   if(!EU||!PUB||!PUB.grade)return;
   const G=PUB.grade,exc=G.excecoes||[],hoje=new Date(),dk=dKey(hoje);
-  let prox=null;
+  let prox=null,tipo='aula';
   (G.fixos||[]).filter(f=>f.cod===MEU.codigo&&f.dia===hoje.getDay()&&fixoValeEm(f,dk)).forEach(f=>{
     if(exc.some(x=>x.fixoId===f.id&&x.data===dk)||foiCancelado(dk,f.hora))return;
-    const h=horasAte(dk,f.hora);if(h>0&&h<=14&&(!prox||f.hora<prox))prox=f.hora;
+    const h=horasAte(dk,f.hora);if(h>0&&h<=14&&(!prox||f.hora<prox)){prox=f.hora;tipo=tipoHorario(f.tipo);}
   });
   (G.eventos||[]).filter(e=>e.cod===MEU.codigo&&e.data===dk).forEach(e=>{
     if(foiCancelado(dk,e.hora))return;
-    const h=horasAte(dk,e.hora);if(h>0&&h<=14&&(!prox||e.hora<prox))prox=e.hora;
+    const h=horasAte(dk,e.hora);if(h>0&&h<=14&&(!prox||e.hora<prox)){prox=e.hora;tipo=tipoHorario(e.tipo);}
   });
   const box=document.getElementById('lembrete-box');
   if(prox){
-    _lembreteHora=prox;
+    _lembreteHora=prox;_lembreteTipo=tipo;
+    const oQue=tipo==='torneio'?'jogo do torneio':tipo==='locacao'?'locação de quadra':'aula';
     if(box){
-      document.getElementById('lembrete-txt').textContent='Sua aula é hoje às '+prox+'. Confirme sua presença — e, se quiser, coloque um alarme na agenda.';
+      const tit=document.getElementById('lembrete-tit');if(tit)tit.textContent=(tipo==='aula'?'🔔':iconeHorario(tipo))+' Você tem '+oQue+' hoje!';
+      document.getElementById('lembrete-txt').textContent=(tipo==='torneio'?'Seu ':'Sua ')+oQue+' é hoje às '+prox+'. Confirme sua presença — e, se quiser, coloque um alarme na agenda.';
       box.style.display='block';
       const cb=document.getElementById('lembrete-confirmar');
       if(cb){const ja=(MEU.confirmadas||[]).some(c=>c.data===dk&&c.hora===prox);
         cb.textContent=ja?'✓ Presença confirmada':'✅ Confirmar presença';
         cb.disabled=ja;cb.style.opacity=ja?'.7':'1';}
     }
-    if(!_lembreteFeito){_lembreteFeito=true;notificarLocal('🎾 Você tem aula hoje às '+prox,'Academia João Victor Tênis');}
+    if(!_lembreteFeito){_lembreteFeito=true;notificarLocal(iconeHorario(tipo)+' Você tem '+oQue+' hoje às '+prox,'Academia João Victor Tênis');}
   }else if(box){box.style.display='none';}
 }
-function lembreteCalendario(){if(_lembreteHora)addToCalendar(dKey(new Date()),_lembreteHora);}
+function lembreteCalendario(){if(_lembreteHora)addToCalendar(dKey(new Date()),_lembreteHora,_lembreteTipo);}
 async function confirmarPresencaAluno(dk,hora){
   dk=dk||dKey(new Date());hora=hora||_lembreteHora;
   if(!hora||!dataHoraAulaValida(dk,hora))return false;
@@ -4950,10 +4966,10 @@ function renderMinhas(){
   const el=document.getElementById('mine-list');if(!el)return;
   const itens=aulasAgendadasAluno();
   const np=document.getElementById('mau-n-prox');if(np)np.textContent=itens.length?'('+itens.length+')':'';
-  const tipos={aula:'Aula particular',grupo:'Aula em grupo',personal:'Treino personal',locacao:'Locação',torneio:'Torneio'};
+  const tipos={aula:'Aula particular',grupo:'Aula em grupo',personal:'Treino personal',locacao:'🔑 Locação da quadra',torneio:'🏆 Jogo do torneio'};
   const cartao=p=>{
     const dia=DIAS_FULL[dtOf(p.data,p.hora).getDay()];
-    return itemHtml(fmtDataAl(p.data)+' · '+p.hora,dia+' · '+(tipos[p.tipo]||'Aula')+(p.pendente?' · pedido enviado':''),p.data,p.hora,p.rec,'',p.pendente);
+    return itemHtml(fmtDataAl(p.data)+' · '+p.hora,dia+' · '+(tipos[p.tipo]||'Aula')+(p.pendente?' · pedido enviado':''),p.data,p.hora,p.rec,'',p.pendente,p.tipo);
   };
   /* As do mês ficam à vista; as dos meses seguintes, agrupadas num toque,
      para a aba não virar uma rolagem longa. */
@@ -4967,11 +4983,15 @@ function renderMinhas(){
 }
 function renderAtalhoAulas(){renderResumoMes();}
 /* Resumo do Claude (#224), usando as mesmas aulas dos cartões (#226). */
+/* Os números do resumo são de AULA, comparados com o plano: jogo do torneio
+   e locação não gastam aula do plano, então ficam numa linha à parte. */
+function ehAulaDoPlano(p){return tipoHorario(p.tipo||p.t)==='aula';}
 function resumoMesAluno(){
   const hoje=new Date(),mk=dKey(hoje).slice(0,7);
-  const feitas=historicoAlunoMesAtual().slice().sort((a,b)=>(a.data+(a.hora||'')).localeCompare(b.data+(b.hora||'')));
-  const prox=aulasAgendadasAluno().filter(p=>!p.pendente&&p.data.slice(0,7)===mk);
-  return {mes:hoje.toLocaleDateString('pt-BR',{month:'long'}),feitas,prox};
+  const todasFeitas=historicoAlunoMesAtual().slice().sort((a,b)=>(a.data+(a.hora||'')).localeCompare(b.data+(b.hora||'')));
+  const todasProx=aulasAgendadasAluno().filter(p=>!p.pendente&&p.data.slice(0,7)===mk);
+  return {mes:hoje.toLocaleDateString('pt-BR',{month:'long'}),feitas:todasFeitas.filter(ehAulaDoPlano),prox:todasProx.filter(ehAulaDoPlano),
+    outros:todasFeitas.concat(todasProx).filter(p=>!ehAulaDoPlano(p)),nFeitas:todasFeitas.length};
 }
 function renderResumoMes(){
   if(!EU)return;
@@ -4986,8 +5006,9 @@ function renderResumoMes(){
     +(plano>0?'<p class="amr-plano">Plano: <b>'+plano+' aula'+(plano===1?'':'s')+' no mês</b> · saldo: <b>'+saldo+'</b></p>':'<p class="amr-plano">Saldo: <b>'+saldo+'</b></p>')
     +'<div class="amr-bloco"><b>✓ Aulas feitas em '+r.mes+'</b><div class="amr-dias">'+lista(r.feitas,'Nenhuma registrada ainda neste mês.')+'</div></div>'
     +'<div class="amr-bloco"><b>📅 Ainda marcadas em '+r.mes+'</b><div class="amr-dias">'+lista(r.prox,'Nada marcado para o resto do mês.')+'</div></div>'
+    +(r.outros.length?'<div class="amr-bloco"><b>'+(r.outros.every(p=>tipoHorario(p.tipo||p.t)==='torneio')?'🏆 Jogos do torneio':r.outros.every(p=>tipoHorario(p.tipo||p.t)==='locacao')?'🔑 Locações':'🏆 Torneio e locação')+' em '+r.mes+' (não gastam aula do plano)</b><div class="amr-dias">'+r.outros.map(p=>'<span class="amr-dia">'+iconeHorario(p.tipo||p.t)+' '+escHtml(fmtDataAl(p.data))+(p.hora&&p.hora!=='—'?' · '+escHtml(p.hora):'')+'</span>').join('')+'</div></div>':'')
     +'<p class="amr-nota">Cada aula aparece aqui assim que o João registra. Alguma data diferente? Fale com ele antes da virada do mês.</p>';
-  const nf=document.getElementById('mau-n-feitas');if(nf)nf.textContent=r.feitas.length?'('+r.feitas.length+')':'';
+  const nf=document.getElementById('mau-n-feitas');if(nf)nf.textContent=r.nFeitas?'('+r.nFeitas+')':'';
   const hs=document.getElementById('home-minhas-sub');
   if(hs)hs.textContent=r.feitas.length+' feita'+(r.feitas.length===1?'':'s')+' · '+r.prox.length+' marcada'+(r.prox.length===1?'':'s')+' em '+r.mes;
   const hh=document.getElementById('mau-hero-sub');
@@ -5394,7 +5415,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-15-3').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-15-4').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava

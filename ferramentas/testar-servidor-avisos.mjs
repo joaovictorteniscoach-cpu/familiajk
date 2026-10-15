@@ -12,8 +12,8 @@ async function check(nome, fn) { await fn(); checks++; console.log('✅ ' + nome
 const AGORA = Date.parse('2026-10-15T22:00:00Z'); // 19:00 em Curitiba
 const H = 3600000;
 const ADMIN = 'uid-joao-teste';
-const { privateKey: saPriv, publicKey: saPub } = nodeCrypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
-const SA = { client_email: 'avisos@projeto-ficticio.iam.gserviceaccount.com', private_key: saPriv.export({ type: 'pkcs8', format: 'pem' }) };
+const ROBO = { email: 'avisos@projeto-ficticio.firebaseapp.com', senha: 'senha-ficticia-de-teste-123' };
+const LOGIN = 'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=chave-publica-ficticia';
 const vapidPar = nodeCrypto.generateKeyPairSync('ec', { namedCurve: 'P-256' });
 const VAPID_JWK = vapidPar.privateKey.export({ format: 'jwk' });
 
@@ -84,18 +84,19 @@ function cenario(extra = {}) {
 }
 function DIA() { return 24 * H; }
 
-function simular(banco, respostaPush = () => 201, semIndice = false) {
+function simular(banco, respostaPush = () => 201, semIndice = false, loginRecusado = false) {
   const chamadas = [], pushes = [], patches = [], consultas = [];
   const f = async (url, op = {}) => {
     chamadas.push(url);
-    if (url === 'https://oauth2.googleapis.com/token') {
-      const asr = new URLSearchParams(op.body).get('assertion');
-      chamadas.jwtGoogle = asr;
-      return new Response(JSON.stringify({ access_token: 'tok-teste', expires_in: 3600 }), { status: 200 });
+    if (url === LOGIN) {
+      chamadas.login = { corpo: JSON.parse(op.body), cab: op.headers };
+      if (loginRecusado) return new Response(JSON.stringify({ error: { message: 'INVALID_LOGIN_CREDENTIALS' } }), { status: 400 });
+      return new Response(JSON.stringify({ idToken: 'tok-teste', expiresIn: '3600', localId: 'uid-robo' }), { status: 200 });
     }
     const u = new URL(url);
     if (u.hostname.endsWith('firebaseio.com')) {
-      assert.equal(u.searchParams.get('access_token'), 'tok-teste');
+      assert.equal(u.searchParams.get('auth'), 'tok-teste');
+      assert.equal(u.searchParams.get('access_token'), null);
       const cam = u.pathname.replace(/^\/jvtenis\/?/, '').replace(/\.json$/, '');
       if (op.method === 'PATCH') { patches.push(JSON.parse(op.body)); return new Response('{}', { status: 200 }); }
       let val = banco[cam] === undefined ? null : banco[cam];
@@ -113,7 +114,7 @@ function simular(banco, respostaPush = () => 201, semIndice = false) {
   };
   return { f, chamadas, pushes, patches, consultas };
 }
-const ENV = { FIREBASE_SERVICE_ACCOUNT: JSON.stringify(SA), VAPID_JWK: JSON.stringify(VAPID_JWK), DB_URL: 'https://projeto-ficticio-default-rtdb.firebaseio.com', ADMIN_UID: ADMIN, CONTATO: 'https://exemplo.invalid' };
+const ENV = { AVISOS_EMAIL: ROBO.email, AVISOS_SENHA: ROBO.senha, API_KEY: 'chave-publica-ficticia', VAPID_JWK: JSON.stringify(VAPID_JWK), DB_URL: 'https://projeto-ficticio-default-rtdb.firebaseio.com', ADMIN_UID: ADMIN, CONTATO: 'https://exemplo.invalid' };
 
 await check('sem segredos não acessa nada e diz o motivo', async () => {
   const fonte = (await import('node:fs')).readFileSync(new URL('../servidor-avisos/avisos.js', import.meta.url), 'utf8');
@@ -124,16 +125,26 @@ await check('sem segredos não acessa nada e diz o motivo', async () => {
 });
 
 let rodada;
-await check('entra no Google com a conta de serviço: JWT RS256 assinado, escopo só do banco', async () => {
+await check('entra no Firebase como usuário robô (e-mail e senha) e usa o login dele em toda leitura e gravação', async () => {
   limparCache();
   const c = cenario(), s = simular(c.banco);
   const r = await rodar(ENV, { agora: AGORA, fetch: s.f });
   rodada = { c, s, r };
-  const { cab, corpo } = verificarJwt(s.chamadas.jwtGoogle, saPub, 'RS256');
-  assert.equal(cab.alg, 'RS256'); assert.equal(corpo.iss, SA.client_email);
-  assert.equal(corpo.aud, 'https://oauth2.googleapis.com/token');
-  assert.match(corpo.scope, /firebase\.database/); assert.doesNotMatch(corpo.scope, /cloud-platform/);
-  assert.equal(corpo.exp - corpo.iat, 3600);
+  assert.deepEqual(s.chamadas.login.corpo, { email: ROBO.email, password: ROBO.senha, returnSecureToken: true });
+  assert.equal(s.chamadas.login.cab.referer, 'https://exemplo.invalid/');
+  assert.equal(s.chamadas.filter(u => u === LOGIN).length, 1, 'um login por rodada');
+  assert.ok(!s.chamadas.some(u => /oauth2|googleapis\.com\/token/.test(u)), 'sem conta de serviço');
+});
+
+await check('login recusado: para sem gravar nada e sem mostrar a senha no erro', async () => {
+  limparCache();
+  const c = cenario(), s = simular(c.banco, () => 201, false, true);
+  await assert.rejects(rodar(ENV, { agora: AGORA, fetch: s.f }), e => {
+    assert.match(e.message, /login do robô recusado \(400 INVALID_LOGIN_CREDENTIALS\)/);
+    assert.ok(!e.message.includes(ROBO.senha) && !e.message.includes(ROBO.email));
+    return true;
+  });
+  assert.equal(s.pushes.length + s.patches.length, 0);
 });
 
 await check('aula amanhã chega aos dois aparelhos aprovados da aluna e a nenhum outro', async () => {
@@ -219,7 +230,7 @@ await check('vínculos ficam guardados 30 minutos entre rodadas (economiza a cot
   const s3 = simular(c.banco); await rodar(ENV, { agora: AGORA + 31 * 60000, fetch: s3.f });
   const leu = s => s.chamadas.filter(u => u.includes('/aluno_vinculos.json')).length;
   assert.deepEqual([leu(s1), leu(s2), leu(s3)], [1, 0, 1]);
-  assert.equal(s2.chamadas.filter(u => u.includes('oauth2')).length, 0, 'login Google também é reaproveitado');
+  assert.equal(s2.chamadas.filter(u => u === LOGIN).length, 0, 'o login do robô também é reaproveitado');
 });
 
 await check('aparelho que saiu (410) é apagado; falha passageira (500) tenta de novo na próxima rodada', async () => {
