@@ -1598,12 +1598,12 @@ html body:not(#jv) #pedir-box .btn-ghost{background:#F3EDE2!important;border:1px
 #apg-evolucao .evo-prio b{color:#F2CF62!important}
 #apg-aulas .empty,#apg-torneio .empty{background:rgba(255,255,255,.06)!important;color:#D8D2C7!important;-webkit-text-fill-color:#D8D2C7!important}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-15-1">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-15-2">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-15-1">
-<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-15-1">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-15-2">
+<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-15-2">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -1952,7 +1952,7 @@ function esperarAuth(){
       <p class="sec-eyebrow">Meus horários</p>
       <h2 class="sec-title">Próximas <em>aulas</em></h2>
       <p id="aul-prox-count" class="aul-status"></p>
-      <button id="aul-cal-abrir" type="button" class="aul-link" onclick="abrirAgendaMesAluno()">Salvar horários do mês na agenda</button>
+      <button id="aul-cal-abrir" type="button" class="aul-link" onclick="abrirAgendaMesAluno()">🔔 Lembretes no celular: salvar as aulas do mês na agenda</button>
       <div id="mine-list"></div>
       <p class="aul-intro aul-calendar-note">No Google Agenda, toque em Salvar. Se a aula mudar ou for cancelada, atualize também o evento salvo lá.</p>
       <button class="btn btn-clay" style="width:100%;margin-top:12px" onclick="irAgendar()">🎾 Agendar mais uma aula</button>
@@ -2085,7 +2085,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-10-15-1"></script>
+<script src="lib/icones.js?v=2026-10-15-2"></script>
 </div>
 
 <!-- MODAL ESCOLHER O QUE FAZER NO HORÁRIO -->
@@ -2196,7 +2196,9 @@ function esperarAuth(){
     <h3 id="aul-cal-title">Horários do mês</h3>
     <p id="aul-cal-count"></p>
     <ul id="aul-cal-list"></ul>
-    <p>Baixe um arquivo com todos os horários desta lista. No celular, abra-o em uma agenda compatível. No Google Agenda, importe o arquivo pelo computador em Configurações → Importar e exportar.</p>
+    <p>Baixe um arquivo com todos os horários desta lista e abra-o na agenda do celular. Cada aula já vem com <b>dois lembretes: 1 dia antes e 1 hora antes</b>. Quem avisa é a própria agenda, mesmo com o app fechado.</p>
+    <p id="aul-cal-venc" hidden></p>
+    <p class="aul-cal-note">No iPhone os lembretes vêm junto com o arquivo. No Google Agenda, importe pelo computador em Configurações → Importar e exportar; lá vale o aviso padrão da sua agenda.</p>
     <p class="aul-cal-note">Esse arquivo não sincroniza sozinho. Alterações e cancelamentos precisam ser atualizados também na sua agenda. Confira os eventos existentes antes de importar novamente.</p>
     <div class="aul-cal-actions"><button id="aul-cal-baixar" class="btn btn-clay" type="button" onclick="salvarAgendaMesAluno()">Baixar horários do mês</button><button class="btn btn-ghost" type="button" onclick="closeModal('ov-aulas-cal')">Voltar</button></div>
   </div>
@@ -2303,7 +2305,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-10-15-1';
+const VERSAO='2026-10-15-2';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -4574,6 +4576,9 @@ function pintarAgendaMesAluno(){
   document.getElementById('aul-cal-count').textContent=lista.length+' horário'+(lista.length===1?'':'s')+' confirmado'+(lista.length===1?'':'s')+' do mês. Pedidos aguardando aprovação ficam fora.';
   document.getElementById('aul-cal-list').innerHTML=lista.length?lista.map(p=>'<li>'+escHtml(fmtDataAl(p.data))+' · '+escHtml(p.hora)+'</li>').join(''):'<li>Nenhum horário confirmado neste mês.</li>';
   document.getElementById('aul-cal-baixar').disabled=!lista.length;
+  const venc=vencimentosParaAgenda(),vEl=document.getElementById('aul-cal-venc');
+  vEl.hidden=!venc.length;
+  vEl.textContent=venc.length?('Também entra o lembrete do vencimento da mensalidade ('+venc.map(dk=>dk.slice(8,10)+'/'+dk.slice(5,7)).join(' e ')+'): 3 dias antes e no dia, às 9h.'):'';
 }
 async function abrirAgendaMesAluno(){
   if(!EU)return;
@@ -4606,6 +4611,25 @@ function instanteAulaCuritiba(data,hora){
   }
   return ms;
 }
+/* Lembrete automático sem servidor: o alarme vai dentro do arquivo e quem
+   avisa é a agenda do celular, mesmo com o app fechado. Um dia antes cai no
+   mesmo horário da aula (nunca de madrugada) e ainda dá tempo de cancelar com
+   4 horas de antecedência. */
+function alarmeIcs(gatilho,texto){return ['BEGIN:VALARM','ACTION:DISPLAY','TRIGGER:'+gatilho,'DESCRIPTION:'+icsTextoAula(texto),'END:VALARM'];}
+/* Vencimentos que entram no arquivo: o deste mês (se ainda não pagou e não
+   passou) e o do mês que vem. Sem valor no texto: quem paga pela família ou
+   tem a mensalidade escondida não recebe esse lembrete. */
+function vencimentosParaAgenda(){
+  if(!EU||dependenteAluno()||mensOculta())return [];
+  const dia=Number(diaVencEU());if(!(dia>=1&&dia<=31))return [];
+  const hoje=new Date(),hk=dKey(hoje),out=[];
+  for(let m=0;m<2;m++){
+    const ult=new Date(hoje.getFullYear(),hoje.getMonth()+m+1,0).getDate(),dk=dKey(new Date(hoje.getFullYear(),hoje.getMonth()+m,Math.min(dia,ult),12));
+    if(m===0&&(EU.status==='pago'||dk<hk))continue;
+    out.push(dk);
+  }
+  return out;
+}
 function gerarAgendaMesIcs(aulas){
   const tipos={aula:'Aula de tênis',grupo:'Aula de tênis em grupo',personal:'Treino personal',locacao:'Locação de quadra',torneio:'Torneio de tênis'};
   const linhas=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Academia JV Tenis//Aulas do aluno//PT-BR','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:Aulas de tênis','X-WR-TIMEZONE:America/Sao_Paulo'];
@@ -4618,7 +4642,23 @@ function gerarAgendaMesIcs(aulas){
       'SUMMARY:'+icsTextoAula(tipos[p.tipo]||'Aula de tênis'),
       'LOCATION:'+icsTextoAula('Academia João Victor Tênis, Curitiba'),
       'DESCRIPTION:'+icsTextoAula('Horário salvo pelo app do aluno. Confirme presença pelo aplicativo. Para cancelar, respeite a antecedência de quatro horas. Se a aula mudar, atualize também este evento na sua agenda.'),
-      'STATUS:CONFIRMED','END:VEVENT');
+      'STATUS:CONFIRMED');
+    if(ini>Date.now()){
+      const nome=tipos[p.tipo]||'Aula de tênis';
+      linhas.push(...alarmeIcs('-P1D','Amanhã: '+nome+' às '+p.hora),...alarmeIcs('-PT1H',nome+' daqui a 1 hora ('+p.hora+')'));
+    }
+    linhas.push('END:VEVENT');
+  }
+  for(const dk of vencimentosParaAgenda()){
+    const d=new Date(dk+'T12:00:00'),dia=x=>x.getFullYear()+_pad2(x.getMonth()+1)+_pad2(x.getDate());
+    linhas.push('BEGIN:VEVENT','UID:jvtenis-'+cod+'-venc-'+dk.slice(0,7).replace('-','')+'@academia-jv-tenis',
+      'DTSTAMP:'+stamp,'DTSTART;VALUE=DATE:'+dia(d),'DTEND;VALUE=DATE:'+dia(new Date(d.getTime()+86400000)),
+      'SUMMARY:'+icsTextoAula('Vencimento da mensalidade do tênis'),
+      'DESCRIPTION:'+icsTextoAula('Pague pelo app do aluno: o Pix já vem com o valor certo. Se já pagou, desconsidere.'),
+      'TRANSP:TRANSPARENT',
+      ...alarmeIcs('-P2DT15H','Sua mensalidade do tênis vence em 3 dias'),
+      ...alarmeIcs('PT9H','Sua mensalidade do tênis vence hoje'),
+      'END:VEVENT');
   }
   linhas.push('END:VCALENDAR');return linhas.map(icsLinhaAula).join('\r\n')+'\r\n';
 }
@@ -5310,7 +5350,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-15-1').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-15-2').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava

@@ -8,6 +8,30 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-15 · Claude Code: lembrete pela agenda do celular (sem custo)
+
+O João criou a conta do Mercado Pago e autorizou a mudança de regra para
+pagamentos e avisos. Não ativou o Blaze e pediu um caminho sem custo. Esta
+entrada vai no mesmo PR da lista de espera, versão `2026-10-15-2`.
+
+Nenhuma regra mudou: a autorização fica guardada para quando houver servidor.
+Nada muda em créditos ou valores.
+- **Aluno:** o arquivo "aulas do mês" (`gerarAgendaMesIcs`) agora leva alarmes
+  (`alarmeIcs`):
+  - aula futura: 1 dia antes e 1 hora antes. A aula que já passou não ganha alarme.
+  - `vencimentosParaAgenda()` cria um evento de dia inteiro para o vencimento,
+    com aviso 3 dias antes e no dia, às 9h:
+    - entra o do mês, se não pagou e não passou, e o do mês que vem;
+    - fica fora para dependente e para `mensOculta()`;
+    - o texto não traz valor nem desconto.
+  - Botão "🔔 Lembretes no celular" e a janela explicam que é a agenda que avisa.
+- O teste `testar-aulas-agenda-aluno-browser` ganhou a verificação dos alarmes
+  e do vencimento (45). O arquivo também foi lido sem erro por um leitor de
+  calendário (python `icalendar`).
+- Opções de servidor grátis estão em `ferramentas/PAGAMENTO-E-LEMBRETES.md`:
+  - Cloudflare Workers, ou Apps Script;
+  - tarifa do Pix pela API do Mercado Pago: 0,99% na página oficial.
+
 ## 2026-10-15 · Claude Code: lista de espera
 
 Pedido do João (depois da comparação com CourtReserve/Playtomic): pagamento

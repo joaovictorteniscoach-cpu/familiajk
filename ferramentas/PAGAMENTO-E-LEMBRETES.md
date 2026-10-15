@@ -1,5 +1,11 @@
 # Pagamento integrado (Mercado Pago) e lembretes automáticos
 
+> **Atualização 15/10/2026 (tarde):** o João criou a conta do Mercado Pago e
+> **autorizou a mudança de regra do Firebase** para os caminhos novos (pagamentos
+> confirmados e tokens de aviso). **Não ativou o Blaze** e pediu opções **sem
+> custo adicional por enquanto**. O desenho abaixo (Cloud Functions) fica em
+> espera; ver "Caminho sem custo" no fim.
+
 Decisões do João em 15/10/2026: **Mercado Pago**; servidor no **Firebase do
 próprio app (plano Blaze)**; pagamento confirmado pelo banco **lança sozinho**
 na mensalidade, com registro de quem/quando e opção de desfazer.
@@ -47,3 +53,50 @@ Por isso: Cloud Functions no mesmo projeto Firebase.
 - Lista de espera (15/10): avisa dentro do app e mostra ao João quem avisar
   pelo WhatsApp. Quando os lembretes existirem, o mesmo `DB.espera` vira aviso
   no celular com o app fechado.
+
+## Caminho sem custo (pedido do João em 15/10)
+**Já funciona hoje, R$ 0:**
+- Pix copia e cola e QR no app do aluno, com o valor certo e a chave do João
+  (`pixBRCode`). Pix direto na chave não paga tarifa ao Mercado Pago.
+- "Já paguei" manda o aviso para a fila de pedidos. Na Gestão o João toca em
+  **Aceitar**, e a mensalidade é lançada com registro (`registrarPagamento`).
+- Lembrete automático pela **agenda do celular** (V `2026-10-15-2`). O arquivo
+  "aulas do mês" leva os alarmes:
+  - cada aula futura avisa 1 dia antes e 1 hora antes;
+  - o vencimento da mensalidade avisa 3 dias antes e no dia, às 9h:
+    - entra o do mês, se ainda não pagou e não passou, e o do mês que vem;
+    - fica fora para dependente da família e para quem tem a mensalidade escondida;
+    - o texto não traz valor nem desconto.
+
+  O aviso vem da agenda, então funciona com o app fechado. No iPhone os alarmes
+  vêm no arquivo. No Google Agenda vale o aviso padrão da agenda.
+
+**O que ainda exige servidor:** o aviso no celular sem o aluno fazer nada
+(push) e o "lança sozinho" (confirmação do banco). Servidores grátis, sem Blaze:
+- **Cloudflare Workers, plano gratuito:**
+  - não pede cartão;
+  - 100 mil acessos por dia, 5 tarefas agendadas por conta e 10 ms de
+    processamento por chamada;
+  - o código fica no repositório e é publicado por uma Action;
+  - segredos guardados na Cloudflare: o token do Mercado Pago e uma conta de
+    serviço do Firebase restrita ao Realtime Database e ao Cloud Messaging.
+    O Cloud Messaging é grátis em qualquer plano.
+- **Google Apps Script**, na conta Google do João:
+  - não precisa de conta nova;
+  - o código é colado à mão e precisa ser colado de novo a cada mudança;
+  - não lê os cabeçalhos do aviso do Mercado Pago, então a confirmação seria
+    por consulta a cada poucos minutos;
+  - para mandar push, o script precisa usar o projeto do Firebase como
+    projeto do Google Cloud.
+
+**Custo que não é do servidor:** o Pix gerado pelo sistema do Mercado Pago,
+necessário para a confirmação automática, tem tarifa. A página do link de
+pagamento mostra 0,99% (consultado em 15/10/2026). Conferir na conta do João
+antes de ligar. Pix direto na chave continua sem tarifa, mas o lançamento
+depende do toque do João.
+
+**Recomendação:**
+1. Agora: Pix na chave, "Já paguei" e "Aceitar", mais o lembrete pela agenda. Tudo a R$ 0.
+2. Se o João quiser o aviso no celular sem custo: Cloudflare Workers só para os
+   lembretes, ainda R$ 0. Depende de ele criar a conta.
+3. "Lança sozinho" só quando ele aceitar a tarifa do Mercado Pago.
