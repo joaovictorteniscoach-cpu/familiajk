@@ -8,6 +8,135 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-15 · Claude Code: avisos no celular com o app fechado (Cloudflare, grátis)
+
+Pedido do João: "me ensine a colocar o aviso com o Cloudflare". Vai no mesmo PR
+da lista de espera.
+
+**Fica desligado** até três coisas acontecerem:
+- o João criar as contas e cadastrar os segredos (`ferramentas/AVISOS-CLOUDFLARE.md`);
+- a regra nova ser publicada;
+- o servidor gravar `avisos_estado`.
+
+**A regra do Firebase não foi alterada.** A edição nos arquivos de regra foi
+bloqueada pela proteção do ambiente. A proposta está no fim de
+`AVISOS-CLOUDFLARE.md` e aguarda o OK explícito do João. Foi testada numa
+cópia:
+- `checar-regras.py`: 214 e 221 casos;
+- emulador: 23 verificações nas duas regras.
+
+Nada muda em créditos, valores ou agenda.
+
+- **`servidor-avisos/`:** `avisos.js` roda no relógio, a cada 2 min, sem
+  biblioteca de fora.
+  - Entra no Firebase com a conta de serviço (JWT RS256 → token Google).
+  - Lê só os avisos vencidos (`orderBy quando`; sem índice, lê tudo).
+  - Guarda os vínculos por 30 min.
+  - Manda Web Push cifrado (RFC 8291) com VAPID (RFC 8292). Só para serviços
+    de push conhecidos e só para uid com vínculo ativo.
+  - Avisa o João de pedido novo (`fila_pedidos`, até 6 h).
+  - Não manda aula com cancelamento na fila.
+  - Apaga endereço morto (404/410). Falha passageira tenta de novo.
+  - Máximo de 6 envios por rodada: ~4 ms medidos no `workerd`; o limite é 10 ms.
+  - Grava `avisos_enviados` e `avisos_estado` (chave pública).
+  - Arquivos auxiliares:
+    - `wrangler.toml`: sem endereço público;
+    - `gerar-vapid.mjs`: só na primeira publicação, direto para os segredos;
+    - `conferir-conta.mjs`: confere o JSON sem mostrar.
+- **Action `avisos-cloudflare.yml`:** roda em push na main e manualmente,
+  nunca em PR. Usa `wrangler@4.144.0`.
+- **Gestão:**
+  - `montarAvisos()`: os próximos 3 dias.
+    - Aula, locação e torneio às 19h da véspera, válidos até a meia-noite.
+    - Chuva tira tudo; bloqueio tira só aula.
+    - O responsável da família recebe a aula do dependente (`alvo`).
+    - Vencimento, para `pendenteDoFechamento` com valor > 0: 3 dias antes e no
+      dia, às 9h.
+    - Vaga liberada da lista de espera: na hora; à noite, às 7h.
+    - Teste só para o João.
+  - `gravarAvisos()` grava `avisos_saida` só quando:
+    - o servidor está vivo (`avisos_estado` com menos de 36 h);
+    - o banco está confirmado;
+    - houve mudança.
+
+    É chamada por `publish()`, ao abrir e a cada 30 min.
+  - Sininho: estado do servidor e "Enviar aviso de teste para mim".
+- **Aluno e Gestão:** `registrarAvisosNuvem()` faz a inscrição no push com a
+  chave pública lida do banco.
+  - Grava `avisos_tokens/<uid>/aluno|gestao`.
+  - O aluno só se inscreve com `VINCULO_ESTADO==='ativo'`.
+  - O aparelho renova a inscrição uma vez por abertura.
+  - Sem servidor, nada muda.
+- **Service workers:** evento `push` mostra a notificação só como texto, com
+  tamanho limitado.
+- **Testes novos:**
+  - `testar-servidor-avisos.mjs` (14): a cifra é aberta por uma implementação
+    independente; JWTs conferidos.
+  - `testar-avisos-celular-browser.cjs` (13).
+  - `checar-premium-runtime.js`: push nos dois service workers.
+  - Os dois testes novos entraram no CI.
+- **Texto da ficha do aluno:** "Link de cartão deste aluno" deixou de dizer só
+  Nubank.
+
+## 2026-10-15 · Claude Code: lembrete pela agenda do celular (sem custo)
+
+O João criou a conta do Mercado Pago e autorizou a mudança de regra para
+pagamentos e avisos. Não ativou o Blaze e pediu um caminho sem custo. Esta
+entrada vai no mesmo PR da lista de espera, versão `2026-10-15-2`.
+
+Nenhuma regra mudou: a autorização fica guardada para quando houver servidor.
+Nada muda em créditos ou valores.
+- **Aluno:** o arquivo "aulas do mês" (`gerarAgendaMesIcs`) agora leva alarmes
+  (`alarmeIcs`):
+  - aula futura: 1 dia antes e 1 hora antes. A aula que já passou não ganha alarme.
+  - `vencimentosParaAgenda()` cria um evento de dia inteiro para o vencimento,
+    com aviso 3 dias antes e no dia, às 9h:
+    - entra o do mês, se não pagou e não passou, e o do mês que vem;
+    - fica fora para dependente e para `mensOculta()`;
+    - o texto não traz valor nem desconto.
+  - Botão "🔔 Lembretes no celular" e a janela explicam que é a agenda que avisa.
+- O teste `testar-aulas-agenda-aluno-browser` ganhou a verificação dos alarmes
+  e do vencimento (45). O arquivo também foi lido sem erro por um leitor de
+  calendário (python `icalendar`).
+- Opções de servidor grátis estão em `ferramentas/PAGAMENTO-E-LEMBRETES.md`:
+  - Cloudflare Workers, ou Apps Script;
+  - tarifa do Pix pela API do Mercado Pago: 0,99% na página oficial.
+
+## 2026-10-15 · Claude Code: lista de espera
+
+Pedido do João (depois da comparação com CourtReserve/Playtomic): pagamento
+integrado, lembrete automático e lista de espera. Decisões dele: Mercado Pago,
+servidor no Firebase (plano Blaze), pagamento confirmado pelo banco **lança
+sozinho** (com registro e desfazer), lista de espera **avisa todos e quem
+marcar primeiro leva**. Esta entrada é só a lista de espera (versão
+`2026-10-15-1`); pagamento e lembretes dependem de contas que o João vai criar
+(ver `ferramentas/PAGAMENTO-E-LEMBRETES.md`). Nenhuma regra do Firebase alterada.
+
+- **Aluno:** horário reservado (`slotState` → `esperavel`) abre "Entrar na lista
+  de espera" (`abrirEspera`, `mudarEspera`). Vai para `fila_agendamentos` com
+  `acao:'espera'|'sair_espera'` (a regra atual aceita campos extras) e fica em
+  `MEU.espera` (salvo em `aluno-estado`). `conferirEspera()` roda em cada
+  `render`: tira o que passou e o que virou aula dele; quando a vaga abre,
+  avisa uma vez (`notificarLocal`) e mostra `#espera-box` com "Reservar agora";
+  se outro pegar, volta a esperar. Máximo 10 listas por aluno.
+- **Gestão:** `syncRequests` trata `espera`/`sair_espera` antes da validação de
+  reserva (`aplicarPedidoEspera`), sem mexer em agenda ou saldo; `DB.espera`
+  vai para a parte `config`. `vagasLiberadasEspera` (horário sem ocupação além
+  de bloqueio pessoal, ou grupo com vaga) aparece em "Atenção hoje" e no toast
+  da fila; o horário mostra a lista com "Avisar no WhatsApp" (`avisarEspera`).
+  Quem reserva sai da lista (`esperaValida`/`limparEspera`).
+- Gestão antiga em cache descarta o pedido de espera em silêncio (vira
+  "recusado" sem id em `MEU.pedidos`, o aluno não vê aviso); o app do aluno
+  continua avisando sozinho.
+- Teste novo `testar-lista-espera-browser.cjs` (9, no CI); falha na V13.
+- `listaEspera()` só lê (abrir o Início não cria `DB.espera`; o teste de
+  pendentes compara o banco inteiro). `testar-premium-browser`: o caso
+  "Ajustar acompanha rotação" falhava às vezes também na main (1 em 3 aqui)
+  porque media 80ms depois de girar a tela; agora espera o ajuste terminar
+  (até 3s) antes de medir — a conferência continua a mesma.
+
+---
+
 ## 2026-10-09 · Claude Code: almoço e compromisso do João só bloqueiam aula
 
 Pedido do João: "almoço ou bloqueio pessoal não deve impedir o aluno de agendar

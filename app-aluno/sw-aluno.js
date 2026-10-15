@@ -1,7 +1,7 @@
 /* Service Worker — Academia João Victor Tênis (app do aluno)
    Estratégia: network-first (sempre tenta a versão nova online),
    com cache de reserva para abrir offline. NÃO intercepta o Firebase. */
-const V = '2026-10-09-1';
+const V = '2026-10-15-3';
 const CACHE = 'jvtenis-aluno-v48';
 const SHELL = ['./', './manifest-aluno.webmanifest', './jv-icone-aluno.png', './jv-icone-aluno-180.png', './assets/jv-saibro-premium.svg', './assets/jv-saibro-realista.webp', './assets/pix-simbolo.svg', './lib/visual-premium.css?v='+V, './lib/tema-saibro.css?v='+V, './lib/aulas-aluno.css?v='+V, './lib/icones.js?v='+V];
 
@@ -60,8 +60,20 @@ self.addEventListener('fetch', e => {
   })());
 });
 
-/* Avisos: clicar na notificação foca (ou abre) o app.
-   O bloco de push fica pronto para quando houver servidor de envio. */
+/* Aviso com o app fechado: o servidor da academia (servidor-avisos/) manda
+   {t: título, c: texto, g: tipo}. Sempre mostra uma notificação (o iPhone
+   exige); o conteúdo só vira texto, com tamanho limitado. */
+self.addEventListener('push', e => {
+  let d = null;
+  try { d = e.data ? e.data.json() : null; } catch (_) { d = null; }
+  if (!d || typeof d !== 'object') d = {};
+  const titulo = String(d.t || 'Academia João Victor Tênis').slice(0, 120);
+  e.waitUntil(self.registration.showNotification(titulo, {
+    body: String(d.c || '').slice(0, 300), icon: './jv-icone-aluno.png', badge: './jv-icone-aluno.png'
+  }));
+});
+
+/* Avisos: clicar na notificação foca (ou abre) o app. */
 self.addEventListener('notificationclick', e => {
   e.notification.close();
   e.waitUntil(

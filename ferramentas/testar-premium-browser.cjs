@@ -188,6 +188,8 @@ async function capture(p,name) { if(process.env.JV_NO_SCREENSHOTS==='1')return; 
         await p.evaluate(()=>{document.getElementById('ov-tor-result').classList.remove('on');goAluno('agenda');});
         await ok('Aluno: Ajustar acompanha rotação; zoom manual preserva preferência ao reabrir',async()=>{
           await p.setViewportSize({width:393,height:852});await p.waitForTimeout(80);
+          // o "Ajustar" roda depois do redimensionamento: espera ele terminar (antes, 80ms às vezes não bastavam)
+          await p.waitForFunction(()=>{const e=document.querySelector('#apg-agenda .wk-scroll');return !!e&&e.scrollWidth<=e.clientWidth+3;},null,{timeout:3000}).catch(()=>{});
           let d=await p.locator('#apg-agenda .wk-scroll').evaluate(e=>({w:e.clientWidth,s:e.scrollWidth}));assert.ok(d.s<=d.w+3);
           await p.evaluate(()=>{alunoWkZoom=1.5;alunoWkAutoFit=false;aplicarAlunoWkVars();renderAgenda();});
           await p.waitForFunction(()=>document.getElementById('al-wk-zlbl').textContent==='150%');

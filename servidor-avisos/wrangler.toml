@@ -1,0 +1,19 @@
+# Servidor de avisos da academia (Cloudflare Workers, plano grátis).
+# Publicado pela Action .github/workflows/avisos-cloudflare.yml quando os
+# segredos existem no GitHub. Sem endereço público: só roda no relógio.
+name = "jv-avisos"
+main = "avisos.js"
+compatibility_date = "2025-06-01"
+workers_dev = false
+preview_urls = false
+
+[triggers]
+crons = ["*/2 * * * *"]
+
+[vars]
+DB_URL = "https://academia-jv-tenis-default-rtdb.firebaseio.com"
+ADMIN_UID = "XEulBs95uZV1JhfUuz6SmjUaeVv1"
+CONTATO = "https://joaovictorteniscoach-cpu.github.io"
+
+[observability]
+enabled = true

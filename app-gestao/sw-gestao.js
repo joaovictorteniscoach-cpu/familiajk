@@ -7,7 +7,7 @@ const CACHE = 'jvtenis-gestao-v51';
 // Com a versao no endereco, a reserva tem de guardar o MESMO endereco que a
 // tela pede — senao o app pede lib/app-gestao.js?v=X, nao acha, e fica sem
 // codigo justamente quando esta sem internet.
-const V = '2026-10-09-1';
+const V = '2026-10-15-3';
 const SHELL = ['./', './manifest-gestao.webmanifest', './jv-icone-gestao.png',
                './jv-icone-gestao-180.png',
                './lib/estilo.css?v='+V, './lib/estilo-saibro.css?v='+V, './lib/icones.js?v='+V, './lib/app-gestao.js?v='+V, './lib/acoes-voz.js?v='+V, './lib/acoes-voz.css?v='+V,
@@ -68,8 +68,20 @@ self.addEventListener('fetch', e => {
   })());
 });
 
-/* Avisos: clicar na notificação foca (ou abre) o app.
-   O bloco de push fica pronto para quando houver servidor de envio. */
+/* Aviso com o app fechado: o servidor da academia (servidor-avisos/) manda
+   {t: título, c: texto, g: tipo}. Sempre mostra uma notificação (o iPhone
+   exige); o conteúdo só vira texto, com tamanho limitado. */
+self.addEventListener('push', e => {
+  let d = null;
+  try { d = e.data ? e.data.json() : null; } catch (_) { d = null; }
+  if (!d || typeof d !== 'object') d = {};
+  const titulo = String(d.t || 'Academia João Victor Tênis').slice(0, 120);
+  e.waitUntil(self.registration.showNotification(titulo, {
+    body: String(d.c || '').slice(0, 300), icon: './jv-icone-gestao.png', badge: './jv-icone-gestao.png'
+  }));
+});
+
+/* Avisos: clicar na notificação foca (ou abre) o app. */
 self.addEventListener('notificationclick', e => {
   e.notification.close();
   e.waitUntil(

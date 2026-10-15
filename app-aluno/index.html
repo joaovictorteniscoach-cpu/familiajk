@@ -1598,12 +1598,12 @@ html body:not(#jv) #pedir-box .btn-ghost{background:#F3EDE2!important;border:1px
 #apg-evolucao .evo-prio b{color:#F2CF62!important}
 #apg-aulas .empty,#apg-torneio .empty{background:rgba(255,255,255,.06)!important;color:#D8D2C7!important;-webkit-text-fill-color:#D8D2C7!important}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-09-1">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-15-3">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-09-1">
-<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-09-1">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-15-3">
+<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-15-3">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -1813,6 +1813,7 @@ function esperarAuth(){
       <p id="chuva-txt" style="margin:4px 0 9px;font-size:13px;line-height:1.5"></p>
       <button onclick="marcarChuvaVista()" style="background:#3A5A72;color:#fff;border:none;border-radius:9px;padding:8px 14px;font-weight:800;font-size:12.5px;cursor:pointer">Entendi</button>
     </div>
+    <div id="espera-box" class="esp-box" style="display:none" role="status"></div>
     <div id="lembrete-box" style="display:none;background:#1A2E14;color:#fff;border-radius:14px;padding:13px 15px;margin-bottom:12px">
       <b style="font-size:14px">🔔 Você tem aula hoje!</b>
       <p id="lembrete-txt" style="margin:4px 0 9px;font-size:13px;opacity:.9"></p>
@@ -1951,7 +1952,7 @@ function esperarAuth(){
       <p class="sec-eyebrow">Meus horários</p>
       <h2 class="sec-title">Próximas <em>aulas</em></h2>
       <p id="aul-prox-count" class="aul-status"></p>
-      <button id="aul-cal-abrir" type="button" class="aul-link" onclick="abrirAgendaMesAluno()">Salvar horários do mês na agenda</button>
+      <button id="aul-cal-abrir" type="button" class="aul-link" onclick="abrirAgendaMesAluno()">🔔 Lembretes no celular: salvar as aulas do mês na agenda</button>
       <div id="mine-list"></div>
       <p class="aul-intro aul-calendar-note">No Google Agenda, toque em Salvar. Se a aula mudar ou for cancelada, atualize também o evento salvo lá.</p>
       <button class="btn btn-clay" style="width:100%;margin-top:12px" onclick="irAgendar()">🎾 Agendar mais uma aula</button>
@@ -2084,7 +2085,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-10-09-1"></script>
+<script src="lib/icones.js?v=2026-10-15-3"></script>
 </div>
 
 <!-- MODAL ESCOLHER O QUE FAZER NO HORÁRIO -->
@@ -2195,7 +2196,9 @@ function esperarAuth(){
     <h3 id="aul-cal-title">Horários do mês</h3>
     <p id="aul-cal-count"></p>
     <ul id="aul-cal-list"></ul>
-    <p>Baixe um arquivo com todos os horários desta lista. No celular, abra-o em uma agenda compatível. No Google Agenda, importe o arquivo pelo computador em Configurações → Importar e exportar.</p>
+    <p>Baixe um arquivo com todos os horários desta lista e abra-o na agenda do celular. Cada aula já vem com <b>dois lembretes: 1 dia antes e 1 hora antes</b>. Quem avisa é a própria agenda, mesmo com o app fechado.</p>
+    <p id="aul-cal-venc" hidden></p>
+    <p class="aul-cal-note">No iPhone os lembretes vêm junto com o arquivo. No Google Agenda, importe pelo computador em Configurações → Importar e exportar; lá vale o aviso padrão da sua agenda.</p>
     <p class="aul-cal-note">Esse arquivo não sincroniza sozinho. Alterações e cancelamentos precisam ser atualizados também na sua agenda. Confira os eventos existentes antes de importar novamente.</p>
     <div class="aul-cal-actions"><button id="aul-cal-baixar" class="btn btn-clay" type="button" onclick="salvarAgendaMesAluno()">Baixar horários do mês</button><button class="btn btn-ghost" type="button" onclick="closeModal('ov-aulas-cal')">Voltar</button></div>
   </div>
@@ -2302,7 +2305,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-10-09-1';
+const VERSAO='2026-10-15-3';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -2836,6 +2839,7 @@ async function refreshSeguroRaw(){
   const raw=JSON.stringify(merged);
   lsSet(cacheKey,raw);VINCULO_ESTADO='ativo';
   try{localStorage.removeItem('jvt-pub-cache');}catch(e){}
+  try{renovarAvisosNuvem();}catch(e){}
   return {raw:raw,disponivel:true};
 }
 /* O estado pessoal (pedidos, cancelamentos, aceite do termo) morava numa chave
@@ -2856,12 +2860,12 @@ async function carregarMeuNuvem(){
     try{const velho=await cloudGet(meuKeyAntiga());
         if(velho){raw=velho;setTimeout(()=>{try{saveMeu();}catch(e){}},400);}}catch(e){}
   }
-  if(raw){try{const c=JSON.parse(raw);MEU.pedidos=c.pedidos||MEU.pedidos||[];MEU.cancelados=c.cancelados||MEU.cancelados||[];MEU.confirmadas=c.confirmadas||MEU.confirmadas||[];if(c.termoAceitoVer!==undefined)MEU.termoAceitoVer=c.termoAceitoVer;if(c.termoAceitoEm!==undefined)MEU.termoAceitoEm=c.termoAceitoEm;if(c.renovouMes!==undefined)MEU.renovouMes=c.renovouMes;if(c.feriadoOk!==undefined)MEU.feriadoOk=c.feriadoOk;if(c.pagoAviso!==undefined)MEU.pagoAviso=c.pagoAviso;}catch(e){}}
+  if(raw){try{const c=JSON.parse(raw);if(Array.isArray(c.espera))MEU.espera=c.espera;MEU.pedidos=c.pedidos||MEU.pedidos||[];MEU.cancelados=c.cancelados||MEU.cancelados||[];MEU.confirmadas=c.confirmadas||MEU.confirmadas||[];if(c.termoAceitoVer!==undefined)MEU.termoAceitoVer=c.termoAceitoVer;if(c.termoAceitoEm!==undefined)MEU.termoAceitoEm=c.termoAceitoEm;if(c.renovouMes!==undefined)MEU.renovouMes=c.renovouMes;if(c.feriadoOk!==undefined)MEU.feriadoOk=c.feriadoOk;if(c.pagoAviso!==undefined)MEU.pagoAviso=c.pagoAviso;}catch(e){}}
 }
 async function saveMeu(){
   const json=JSON.stringify(MEU);
   lsSet(MYKEY,json); // salva já no aparelho (lembra o login)
-  if(hasCloud()&&meuKey())cloudSet(meuKey(),JSON.stringify({pedidos:MEU.pedidos,cancelados:MEU.cancelados,confirmadas:MEU.confirmadas,termoAceitoVer:MEU.termoAceitoVer,termoAceitoEm:MEU.termoAceitoEm,renovouMes:MEU.renovouMes,feriadoOk:MEU.feriadoOk,pagoAviso:MEU.pagoAviso})); // pedidos por aluno na nuvem
+  if(hasCloud()&&meuKey())cloudSet(meuKey(),JSON.stringify({pedidos:MEU.pedidos,cancelados:MEU.cancelados,confirmadas:MEU.confirmadas,espera:MEU.espera||[],termoAceitoVer:MEU.termoAceitoVer,termoAceitoEm:MEU.termoAceitoEm,renovouMes:MEU.renovouMes,feriadoOk:MEU.feriadoOk,pagoAviso:MEU.pagoAviso})); // pedidos por aluno na nuvem
 }
 function conferirRespostasReservas(){
   const recusados=(PUB.reservasRespostas||[]).filter(r=>r.estado==='recusado');
@@ -2990,7 +2994,7 @@ function slotState(date,hora){
   const compartilhado=all.length&&all.every(e=>e.tipo===all[0].tipo)&&['grupo','locacao','torneio'].includes(all[0].tipo)?all[0].tipo:'';
   const limiteGrupo=compartilhado==='grupo'?Math.min(...all.map(e=>[2,3,4].includes(Number(e.pessoas))?Number(e.pessoas):2)):0;
   const grupo=compartilhado==='grupo'&&all.length<limiteGrupo;
-  if(all.length&&(!compartilhado||compartilhado==='grupo'&&!grupo))return {st:'ocup',label:compartilhado==='grupo'?'Grupo completo':'Reservado'};
+  if(all.length&&(!compartilhado||compartilhado==='grupo'&&!grupo))return {st:'ocup',label:compartilhado==='grupo'?'Grupo completo':'Reservado',esperavel:true};
   if((MEU.pedidos||[]).some(p=>{
     if(p.hora!==hora)return false;
     if(p.rec==='fixo')return new Date(p.data+'T12:00:00').getDay()===dia&&dk>=p.data;
@@ -3001,13 +3005,13 @@ function slotState(date,hora){
   if(semAula){
     if(compartilhado==='locacao')return {st:'loc',label:'Locação · participar',compartilhado,semAula:true};
     if(compartilhado==='torneio')return {st:'livre',label:'Torneio · participar',compartilhado,semAula:true};
-    if(all.length)return {st:'ocup',label:'Reservado'};
+    if(all.length)return {st:'ocup',label:'Reservado',esperavel:true};
     return {st:'loc',label:'Sem aula · locação ou torneio',semAula:true};
   }
   if(grupo&&modo==='aula')return {st:'livre',label:limiteGrupo===4?'Aula quádrupla':limiteGrupo===3?'Aula em trio':'Aula em dupla',grupo:true,compartilhado:'grupo',limiteGrupo};
   if(compartilhado==='locacao')return {st:'loc',label:'Locação · participar',compartilhado};
   if(compartilhado==='torneio')return {st:'livre',label:'Torneio · participar',compartilhado};
-  if(all.length)return {st:'ocup',label:'Reservado'};
+  if(all.length)return {st:'ocup',label:'Reservado',esperavel:true};
   if(modo==='loc')return {st:'loc',label:'Só locação'};
   return {st:'livre',label:'Disponível'};
 }
@@ -3291,7 +3295,7 @@ function render(){
   if(PUB.aviso){av.style.display='block';document.getElementById('aviso-txt').textContent=PUB.aviso;}
   else av.style.display='none';
   renderPagamento();
-  renderAgenda();renderMinhas();renderHistAluno();renderTorneioAluno();
+  renderAgenda();renderMinhas();renderHistAluno();renderTorneioAluno();conferirEspera();
   atualizarBadgesAluno();
   checarAulaHoje();
   checarChuva();
@@ -4484,6 +4488,7 @@ function renderAgenda(){
       else if(s.st==='chuva')inner=`<button class="sl chuva">☔ Cancelado por chuva <i>sem desconto de crédito</i></button>`;
       else if(s.st==='bloq')inner=`<button class="sl bloq">Indisponível</button>`;
       else if(s.st==='fechado')inner=`<button class="sl bloq">Fechado</button>`;
+      else if(s.esperavel&&horasAte(dKey(agDate),h)>0)inner=`<button class="sl ocup" onclick="escolherSlot('${h}')">${s.label} <i>${naEspera(dKey(agDate),h)?'🔔 você está na lista de espera':'toque para entrar na lista de espera'}</i></button>`;
       else inner=`<button class="sl ocup">${s.label||'Reservado'}</button>`;
       return `<div class="slot"><div class="slot-h">${h}</div>${inner}</div>`;
     }).join('');
@@ -4572,6 +4577,9 @@ function pintarAgendaMesAluno(){
   document.getElementById('aul-cal-count').textContent=lista.length+' horário'+(lista.length===1?'':'s')+' confirmado'+(lista.length===1?'':'s')+' do mês. Pedidos aguardando aprovação ficam fora.';
   document.getElementById('aul-cal-list').innerHTML=lista.length?lista.map(p=>'<li>'+escHtml(fmtDataAl(p.data))+' · '+escHtml(p.hora)+'</li>').join(''):'<li>Nenhum horário confirmado neste mês.</li>';
   document.getElementById('aul-cal-baixar').disabled=!lista.length;
+  const venc=vencimentosParaAgenda(),vEl=document.getElementById('aul-cal-venc');
+  vEl.hidden=!venc.length;
+  vEl.textContent=venc.length?('Também entra o lembrete do vencimento da mensalidade ('+venc.map(dk=>dk.slice(8,10)+'/'+dk.slice(5,7)).join(' e ')+'): 3 dias antes e no dia, às 9h.'):'';
 }
 async function abrirAgendaMesAluno(){
   if(!EU)return;
@@ -4604,6 +4612,25 @@ function instanteAulaCuritiba(data,hora){
   }
   return ms;
 }
+/* Lembrete automático sem servidor: o alarme vai dentro do arquivo e quem
+   avisa é a agenda do celular, mesmo com o app fechado. Um dia antes cai no
+   mesmo horário da aula (nunca de madrugada) e ainda dá tempo de cancelar com
+   4 horas de antecedência. */
+function alarmeIcs(gatilho,texto){return ['BEGIN:VALARM','ACTION:DISPLAY','TRIGGER:'+gatilho,'DESCRIPTION:'+icsTextoAula(texto),'END:VALARM'];}
+/* Vencimentos que entram no arquivo: o deste mês (se ainda não pagou e não
+   passou) e o do mês que vem. Sem valor no texto: quem paga pela família ou
+   tem a mensalidade escondida não recebe esse lembrete. */
+function vencimentosParaAgenda(){
+  if(!EU||dependenteAluno()||mensOculta())return [];
+  const dia=Number(diaVencEU());if(!(dia>=1&&dia<=31))return [];
+  const hoje=new Date(),hk=dKey(hoje),out=[];
+  for(let m=0;m<2;m++){
+    const ult=new Date(hoje.getFullYear(),hoje.getMonth()+m+1,0).getDate(),dk=dKey(new Date(hoje.getFullYear(),hoje.getMonth()+m,Math.min(dia,ult),12));
+    if(m===0&&(EU.status==='pago'||dk<hk))continue;
+    out.push(dk);
+  }
+  return out;
+}
 function gerarAgendaMesIcs(aulas){
   const tipos={aula:'Aula de tênis',grupo:'Aula de tênis em grupo',personal:'Treino personal',locacao:'Locação de quadra',torneio:'Torneio de tênis'};
   const linhas=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Academia JV Tenis//Aulas do aluno//PT-BR','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:Aulas de tênis','X-WR-TIMEZONE:America/Sao_Paulo'];
@@ -4616,7 +4643,23 @@ function gerarAgendaMesIcs(aulas){
       'SUMMARY:'+icsTextoAula(tipos[p.tipo]||'Aula de tênis'),
       'LOCATION:'+icsTextoAula('Academia João Victor Tênis, Curitiba'),
       'DESCRIPTION:'+icsTextoAula('Horário salvo pelo app do aluno. Confirme presença pelo aplicativo. Para cancelar, respeite a antecedência de quatro horas. Se a aula mudar, atualize também este evento na sua agenda.'),
-      'STATUS:CONFIRMED','END:VEVENT');
+      'STATUS:CONFIRMED');
+    if(ini>Date.now()){
+      const nome=tipos[p.tipo]||'Aula de tênis';
+      linhas.push(...alarmeIcs('-P1D','Amanhã: '+nome+' às '+p.hora),...alarmeIcs('-PT1H',nome+' daqui a 1 hora ('+p.hora+')'));
+    }
+    linhas.push('END:VEVENT');
+  }
+  for(const dk of vencimentosParaAgenda()){
+    const d=new Date(dk+'T12:00:00'),dia=x=>x.getFullYear()+_pad2(x.getMonth()+1)+_pad2(x.getDate());
+    linhas.push('BEGIN:VEVENT','UID:jvtenis-'+cod+'-venc-'+dk.slice(0,7).replace('-','')+'@academia-jv-tenis',
+      'DTSTAMP:'+stamp,'DTSTART;VALUE=DATE:'+dia(d),'DTEND;VALUE=DATE:'+dia(new Date(d.getTime()+86400000)),
+      'SUMMARY:'+icsTextoAula('Vencimento da mensalidade do tênis'),
+      'DESCRIPTION:'+icsTextoAula('Pague pelo app do aluno: o Pix já vem com o valor certo. Se já pagou, desconsidere.'),
+      'TRANSP:TRANSPARENT',
+      ...alarmeIcs('-P2DT15H','Sua mensalidade do tênis vence em 3 dias'),
+      ...alarmeIcs('PT9H','Sua mensalidade do tênis vence hoje'),
+      'END:VEVENT');
   }
   linhas.push('END:VCALENDAR');return linhas.map(icsLinhaAula).join('\r\n')+'\r\n';
 }
@@ -4684,22 +4727,65 @@ async function ativarAvisos(iconeTeste){
   if(st==='denied'){toast('🔕 Avisos bloqueados — libere nos ajustes do navegador');pintarAvisos();return;}
   if(st==='granted'){
     const ok=await mostrarAviso('Avisos ligados 🎾','Academia João Victor Tênis',iconeTeste);
-    toast(ok?'🔔 Aviso de teste enviado!':'Não consegui enviar o aviso de teste');
+    const nuvem=await registrarAvisosNuvem();
+    toast(nuvem==='ok'?'🔔 Avisos ligados, também com o app fechado':ok?'🔔 Aviso de teste enviado!':'Não consegui enviar o aviso de teste');
     pintarAvisos();return;
   }
   try{
     const r=await Notification.requestPermission();
     if(r==='granted'){
       const ok=await mostrarAviso('Avisos ligados 🎾','Academia João Victor Tênis',iconeTeste);
-      toast(ok?'🔔 Pronto! Aviso de teste enviado.':'Permissão dada, mas o aviso não apareceu');
+      const nuvem=await registrarAvisosNuvem();
+      toast(nuvem==='ok'?'🔔 Pronto! Você recebe os lembretes mesmo com o app fechado.':ok?'🔔 Pronto! Aviso de teste enviado.':'Permissão dada, mas o aviso não apareceu');
     }else toast('Sem problema — dá para ligar depois neste botão');
   }catch(e){toast('Não consegui pedir a permissão');}
   pintarAvisos();
 }
+/* ===== Avisos com o app fechado (servidor grátis da academia) =====
+   O servidor publica a chave pública de push em jvtenis/avisos_estado. Com ela
+   o aparelho se inscreve no push do próprio navegador e guarda o endereço em
+   jvtenis/avisos_tokens/<uid>/aluno (a regra só aceita aparelho aprovado). Daí
+   chegam: aula amanhã, vencimento da mensalidade e vaga liberada. Sem servidor,
+   nada muda: continuam só os avisos com o app aberto. No iPhone, só com o app
+   na Tela de Início (iOS 16.4 ou mais novo). */
+function b64uParaBytes(s){s=String(s).replace(/-/g,'+').replace(/_/g,'/');const b=atob(s+'='.repeat((4-s.length%4)%4));return Uint8Array.from(b,c=>c.charCodeAt(0));}
+function bytesParaB64u(buf){let s='';new Uint8Array(buf).forEach(b=>{s+=String.fromCharCode(b);});return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+let _avisosNuvemSessao=false;
+async function chaveAvisosNuvem(){
+  if(!hasCloud())return '';
+  try{
+    const s=await window.fbDB.ref('jvtenis/avisos_estado').get(),v=s.exists()?s.val():null;
+    const vivo=v&&typeof v.chave==='string'&&/^[A-Za-z0-9_-]{80,100}$/.test(v.chave)&&Date.now()-Number(v.ts||0)<36*3600000;
+    return vivo?v.chave:'';
+  }catch(e){return '';}
+}
+async function registrarAvisosNuvem(){
+  try{
+    if(!('serviceWorker' in navigator)||!('PushManager' in window)||!('Notification' in window)||Notification.permission!=='granted')return 'sem-suporte';
+    const uid=authUid();if(!uid||VINCULO_ESTADO!=='ativo')return 'sem-acesso';
+    const chave=await chaveAvisosNuvem();if(!chave)return 'sem-servidor';
+    const reg=await navigator.serviceWorker.ready;
+    let sub=await reg.pushManager.getSubscription();
+    if(sub&&sub.options&&sub.options.applicationServerKey&&bytesParaB64u(sub.options.applicationServerKey)!==chave){try{await sub.unsubscribe();}catch(e){}sub=null;}
+    if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64uParaBytes(chave)});
+    const j=sub.toJSON();if(!j||!j.endpoint||!j.keys)return 'falhou';
+    await window.fbDB.ref('jvtenis/avisos_tokens/'+uid+'/aluno').set({e:j.endpoint,p:j.keys.p256dh,a:j.keys.auth,ts:Date.now()});
+    lsSet('jv-avisos-nuvem-aluno','1');_avisosNuvemSessao=true;
+    try{pintarAvisos();}catch(e){}
+    return 'ok';
+  }catch(e){console.warn('avisos no celular:',e&&e.message);return 'falhou';}
+}
+/* Uma vez por abertura: renova o endereço (o navegador troca de vez em quando). */
+function renovarAvisosNuvem(){
+  if(_avisosNuvemSessao||!('Notification' in window)||Notification.permission!=='granted')return;
+  _avisosNuvemSessao=true;
+  setTimeout(()=>{registrarAvisosNuvem();},1500);
+}
 function pintarAvisos(){
   const b=document.getElementById('btn-avisos');if(!b)return;
   const st=avisosEstado();
-  const txt={granted:'🔔 Avisos ligados · testar',denied:'🔕 Avisos bloqueados',
+  const nuvem=st==='granted'&&lsGet('jv-avisos-nuvem-aluno')==='1';
+  const txt={granted:nuvem?'🔔 Avisos ligados, também com o app fechado':'🔔 Avisos ligados · testar',denied:'🔕 Avisos bloqueados',
              instalar:'📲 Instale na Tela de Início',
              'nao-suportado':'🔕 Sem avisos neste navegador'}[st]||'🔔 Ativar avisos';
   b.textContent=txt;
@@ -4913,12 +4999,74 @@ function renderResumoMes(){
     +'<div class="amr-ver">Ver as datas ›</div>';
 }
 
+/* ===== Lista de espera =====
+   Horário reservado: o aluno pede para ser avisado se liberar. O próprio app
+   confere a cada atualização da agenda e avisa todos que esperam; quem marcar
+   primeiro fica com a vaga (a reserva única na nuvem garante). O pedido também
+   vai para a Gestão, que mostra a lista ao João. Nada muda em créditos. */
+const ESPERA_MAX=10;
+function naEspera(dk,hora){return (MEU.espera||[]).some(e=>e.data===dk&&e.hora===hora);}
+function abrirEspera(hora){
+  const d=new Date(agDate),dk=dKey(d),ja=naEspera(dk,hora);
+  pickCtx={hora,date:d,espera:true};
+  document.getElementById('pick-sub').textContent=DIAS_FULL[d.getDay()]+', '+d.getDate()+' de '+MESES[d.getMonth()].toLowerCase()+' · '+hora;
+  let b='<div class="pick-note">🔔 Este horário está reservado. '+(ja
+    ?'Você está na lista de espera: se a vaga liberar, o app avisa você e quem mais estiver esperando. Quem marcar primeiro fica com ela.'
+    :'Entre na lista de espera: se a vaga liberar, o app avisa você e quem mais estiver esperando. Quem marcar primeiro fica com ela.')+'</div>';
+  b+=ja?'<button class="pick-opt" onclick="sairEspera()">🔕 Sair da lista de espera</button>'
+       :'<button class="pick-opt aula" onclick="entrarEspera()">🔔 Entrar na lista de espera<small>sem custo · não usa crédito</small></button>';
+  document.getElementById('pick-opts').innerHTML=b;
+  document.getElementById('ov-pick').classList.add('on');
+}
+async function mudarEspera(entrar){
+  const ctx=pickCtx;if(!ctx||!ctx.espera)return;
+  const dk=dKey(ctx.date),hora=ctx.hora;
+  document.getElementById('ov-pick').classList.remove('on');
+  if(!hasCloud()){toast('Para usar a lista de espera é preciso estar online 🙏');return;}
+  if(entrar&&(MEU.espera||[]).length>=ESPERA_MAX){toast('Você já está em '+ESPERA_MAX+' listas de espera. Saia de alguma para entrar nesta.');return;}
+  try{await filaPush('jvtenis/fila_agendamentos',{id:'w'+Date.now()+'-'+Math.random().toString(36).slice(2,8),acao:entrar?'espera':'sair_espera',nome:EU?EU.nome:'',data:dk,hora,ts:agoraReal()});}
+  catch(e){toast('Não consegui enviar agora. Tente de novo com internet.');return;}
+  MEU.espera=(MEU.espera||[]).filter(e=>!(e.data===dk&&e.hora===hora));
+  if(entrar)MEU.espera.push({data:dk,hora,ts:Date.now(),avisado:0});
+  await saveMeu();renderAgenda();conferirEspera();
+  toast(entrar?'🔔 Pronto! Se a vaga de '+fmtData(dk)+' às '+hora+' liberar, o app avisa.':'Você saiu da lista de espera de '+fmtData(dk)+' às '+hora+'.');
+}
+function entrarEspera(){mudarEspera(true);}
+function sairEspera(){mudarEspera(false);}
+/* Confere a lista a cada atualização: tira o que passou e o que virou aula
+   dele; avisa uma vez quando a vaga abre (e de novo se ela fechar e reabrir). */
+function conferirEspera(){
+  const box=document.getElementById('espera-box');
+  const lista=Array.isArray(MEU.espera)?MEU.espera:[];
+  let mudou=false;const livres=[];
+  MEU.espera=lista.filter(e=>{
+    if(!e||!dataHoraAulaValida(e.data,e.hora)||horasAte(e.data,e.hora)<=0){mudou=true;return false;}
+    const s=slotState(new Date(e.data+'T12:00:00'),e.hora);
+    if(s.st==='meu'||s.st==='pend'){mudou=true;return false;}
+    if(['livre','loc'].includes(s.st)){
+      livres.push(e);
+      if(!e.avisado){e.avisado=1;mudou=true;try{notificarLocal('🎉 Vaga liberada!',DIAS_FULL[dtOf(e.data,e.hora).getDay()]+', '+fmtData(e.data)+' às '+e.hora+' — marque antes que outro aluno pegue.');}catch(x){}}
+    }else if(e.avisado){e.avisado=0;mudou=true;}
+    return true;
+  });
+  if(mudou)try{saveMeu();}catch(e){}
+  if(!box)return;
+  if(!livres.length){box.style.display='none';box.innerHTML='';return;}
+  box.innerHTML='<b class="esp-tit">🎉 Vaga liberada da sua lista de espera</b>'
+    +livres.map(e=>{const d=dtOf(e.data,e.hora);
+      return '<div class="esp-linha"><span>'+DIAS_FULL[d.getDay()]+', '+fmtData(e.data)+' às '+e.hora+'</span>'
+        +'<button type="button" onclick="gotoBook('+d.getFullYear()+','+d.getMonth()+','+d.getDate()+',\''+e.hora+'\')">Reservar agora</button></div>';}).join('')
+    +'<p class="esp-nota">Quem estava esperando também foi avisado: quem marcar primeiro fica com a vaga.</p>';
+  box.style.display='block';
+}
+
 /* ================= AGENDAR ================= */
 function gotoBook(y,m,d,h){agDate=new Date(y,m,d,12);escolherSlot(h);}
 var pickCtx={};
 function escolherSlot(hora){
   if(horasAte(dKey(agDate),hora)<=0){toast('Esse horário já passou — não é possível agendar nem alterar datas anteriores. 🙏');return;}
   const estado=slotState(agDate,hora);
+  if(estado.esperavel){abrirEspera(hora);return;}
   if(!['livre','loc'].includes(estado.st)){toast(estado.label+' — escolha outro horário');return;}
   pickCtx={hora,date:new Date(agDate),grupo:!!estado.grupo,compartilhado:estado.compartilhado||'',limiteGrupo:estado.limiteGrupo||0,semAula:!!estado.semAula};
   const modo=slotModo(pickCtx.date,hora);
@@ -5246,7 +5394,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-09-1').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-15-3').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava

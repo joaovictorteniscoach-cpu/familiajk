@@ -188,16 +188,47 @@ const fixture={
       hora:icsInstanteAula(instanteAulaCuritiba('2026-10-15','14:00'))};
     });
     assert.equal(r.hora,'20261015T170000Z');assert.match(r.ics,/BEGIN:VCALENDAR/);
-    assert.equal((r.ics.match(/BEGIN:VEVENT/g)||[]).length,r.aulas.length);
+    assert.equal((r.ics.match(/BEGIN:VEVENT/g)||[]).length,r.aulas.length+1,'aulas + vencimento do mês que vem');
     assert.ok(r.bytes.every(n=>n<=75));assert.doesNotMatch(r.ics,/RRULE|6602|20261105/);
     const again=await p.evaluate(()=>gerarAgendaMesIcs(AULAS_CAL_MES.aulas));
     assert.deepEqual(r.ics.match(/UID:.*/g),again.match(/UID:.*/g));
+   });
+   await check(theme+': lembretes vão dentro do arquivo: aula futura 1 dia e 1 hora antes; vencimento 3 dias antes e no dia, sem valor',async()=>{
+    const r=await p.evaluate(()=>{
+     const ics=gerarAgendaMesIcs(AULAS_CAL_MES.aulas).replace(/\r\n /g,'');
+     const evs=ics.split('BEGIN:VEVENT').slice(1).map(x=>x.split('END:VEVENT')[0]);
+     const base={status:EU.status,diaVenc:EU.diaVenc};
+     const caso=(o,fn)=>{Object.assign(EU,o);try{return fn();}finally{delete EU.diaVenc;delete EU.valoresOcultos;delete EU.familia;Object.assign(EU,base);}};
+     return {evs,
+      devendo:caso({status:'pendente',diaVenc:20},()=>vencimentosParaAgenda()),
+      vencido:caso({status:'pendente',diaVenc:5},()=>vencimentosParaAgenda()),
+      dia31:caso({status:'pago',diaVenc:31},()=>vencimentosParaAgenda()),
+      oculta:caso({valoresOcultos:true},()=>vencimentosParaAgenda()),
+      dependente:caso({familia:{papel:'dependente'}},()=>vencimentosParaAgenda()),
+      aviso:(pintarAgendaMesAluno(),{hidden:document.getElementById('aul-cal-venc').hidden,txt:document.getElementById('aul-cal-venc').textContent})};
+    });
+    const aula=(d,h)=>r.evs.find(e=>e.includes('UID:jvtenis-6601-'+d+'T'+h+'@'));
+    const futura=aula('20261016','1600'),passada=aula('20261007','1500');
+    assert.ok(futura&&passada,'eventos de aula encontrados');
+    assert.match(futura,/TRIGGER:-P1D/);assert.match(futura,/TRIGGER:-PT1H/);assert.match(futura,/Amanhã: Aula de tênis às 16:00/);
+    assert.equal((futura.match(/BEGIN:VALARM/g)||[]).length,2);
+    assert.doesNotMatch(passada,/VALARM/,'aula que já passou não ganha alarme');
+    const venc=r.evs.filter(e=>/UID:jvtenis-6601-venc-/.test(e));
+    assert.equal(venc.length,1,'pago este mês: só o vencimento do mês que vem');
+    assert.match(venc[0],/DTSTART;VALUE=DATE:20261110/);assert.match(venc[0],/TRIGGER:-P2DT15H/);assert.match(venc[0],/TRIGGER:PT9H/);
+    assert.doesNotMatch(r.evs.join(''),/R\$|640|desconto/i,'lembrete não cita valor nem desconto');
+    assert.deepEqual(r.devendo,['2026-10-20','2026-11-20']);
+    assert.deepEqual(r.vencido,['2026-11-05'],'vencimento que já passou fica fora');
+    assert.deepEqual(r.dia31,['2026-11-30'],'mês curto usa o último dia');
+    assert.deepEqual(r.oculta,[]);assert.deepEqual(r.dependente,[]);
+    assert.equal(r.aviso.hidden,false);assert.match(r.aviso.txt,/10\/11/);
    });
    await check(theme+': salvar mês baixa um arquivo com todas as aulas e não grava em Firebase',async()=>{
     const [download,r]=await Promise.all([p.waitForEvent('download'),p.evaluate(()=>salvarAgendaMesAluno())]);
     assert.equal(r,true);assert.equal(download.suggestedFilename(),'aulas-2026-10.ics');
     const saved=await download.path(),ics=fs.readFileSync(saved,'utf8');
-    assert.equal((ics.match(/BEGIN:VEVENT/g)||[]).length,await p.evaluate(()=>AULAS_CAL_MES.aulas.length));
+    assert.equal((ics.match(/BEGIN:VEVENT/g)||[]).length,await p.evaluate(()=>AULAS_CAL_MES.aulas.length+vencimentosParaAgenda().length));
+    assert.match(ics,/BEGIN:VALARM/);
     assert.equal(await p.evaluate(()=>envios.length),0);assert.equal(await p.evaluate(()=>gravacoes),0);
    });
    await check(theme+': mudança de horário após prévia impede baixar uma versão antiga',async()=>{
