@@ -35,6 +35,11 @@ marcar primeiro leva**. Esta entrada é só a lista de espera (versão
   "recusado" sem id em `MEU.pedidos`, o aluno não vê aviso); o app do aluno
   continua avisando sozinho.
 - Teste novo `testar-lista-espera-browser.cjs` (9, no CI); falha na V13.
+- `listaEspera()` só lê (abrir o Início não cria `DB.espera`; o teste de
+  pendentes compara o banco inteiro). `testar-premium-browser`: o caso
+  "Ajustar acompanha rotação" falhava às vezes também na main (1 em 3 aqui)
+  porque media 80ms depois de girar a tela; agora espera o ajuste terminar
+  (até 3s) antes de medir — a conferência continua a mesma.
 
 ---
 

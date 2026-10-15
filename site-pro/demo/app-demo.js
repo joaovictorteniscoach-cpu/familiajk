@@ -2561,7 +2561,7 @@ function updatesFilaSemConflito(u){
    fica com ela — a reserva única na fila garante isso). Aqui a Gestão guarda a
    lista (DB.espera) e mostra a vaga liberada com o botão de avisar no WhatsApp.
    Nada aqui muda aula, saldo ou valor. */
-function listaEspera(){DB.espera=Array.isArray(DB.espera)?DB.espera:[];return DB.espera;}
+function listaEspera(){return Array.isArray(DB.espera)?DB.espera:[];}   // só lê: abrir a tela não muda o banco
 /* Ainda vale: data por vir, aluno existe e ainda não está marcado no horário. */
 function esperaValida(e){
   if(!e||e.data<dKey(new Date())||!DB.alunos.some(a=>a.id===e.alunoId))return false;
@@ -2577,7 +2577,8 @@ function aplicarPedidoEspera(p,a){
 }
 /* Some da lista o que já passou e quem conseguiu a vaga. Devolve se mudou. */
 function limparEspera(){
-  const antes=listaEspera().length;
+  if(!Array.isArray(DB.espera))return false;
+  const antes=DB.espera.length;
   DB.espera=listaEspera().filter(esperaValida);
   return DB.espera.length!==antes;
 }
