@@ -27,6 +27,11 @@ Pedido do João em 15/10/2026: lembrete automático sem custo, sem plano Blaze.
   - Grava `avisos_estado` com a hora da rodada e a chave pública de push.
   - O padrão é o Web Push do próprio navegador (Chrome, Safari, Firefox). Não
     usa biblioteca de fora.
+  - Entra no Firebase como **usuário robô** (e-mail e senha só dele). Escolha
+    do João em 15/10, no lugar da chave de serviço:
+    - é fácil de fazer no celular;
+    - se a senha vazar, o estrago fica nos avisos. A chave de serviço mandaria
+      no banco inteiro.
 - **Aparelho:** quem toca em "Ativar avisos" com o servidor ligado é inscrito.
   - No app do aluno o botão fica no Perfil. Na Gestão, no sininho.
   - O endereço de aviso fica em `avisos_tokens/<uid>/aluno` ou `/gestao`.
@@ -34,110 +39,135 @@ Pedido do João em 15/10/2026: lembrete automático sem custo, sem plano Blaze.
   - **iPhone:** só com o app na Tela de Início (iOS 16.4 ou mais novo).
 - **Custo zero:**
   - O plano grátis da Cloudflare dá 100 mil acessos por dia e 5 tarefas no relógio.
-  - Cada rodada usa ~4 ms de processamento, medido no motor da Cloudflare
+  - Cada rodada usa ~3 a 4 ms de processamento, medido no motor da Cloudflare
     (`workerd`) com 6 avisos. O limite é 10 ms.
   - Com isso, no máximo 6 avisos por rodada: 180 por hora.
   - Leitura do Firebase: só os avisos que já estão na hora, e os vínculos
     guardados por 30 min. Fica bem abaixo da cota grátis.
 
-## Passo a passo do João (melhor no computador)
-**1. Conta grátis na Cloudflare**
-- Abra dash.cloudflare.com/sign-up e cadastre e-mail e senha. Não pede cartão.
-  Confirme o e-mail.
-- No painel, abra **Workers e Pages** (ou "Compute"). O **Account ID**
-  aparece à direita: copie.
+## Passo a passo do João (tudo pelo celular)
+Use o navegador do celular (Chrome ou Safari). O app do GitHub não tem estas
+telas. Se alguma página vier cortada, use o menu do navegador → **Versão para
+computador**. Tenha uma nota aberta para colar os códigos; apague a nota no fim.
 
-**2. Chave de publicação (API Token)**
-- Na Cloudflare, clique no boneco no canto de cima → **Perfil** → **API Tokens**.
-- Clique em **Create Token**. No modelo **Edit Cloudflare Workers**, clique em
-  **Use template**.
-- Em **Account Resources**, escolha a sua conta. Em **Zone Resources**, deixe
-  "All zones".
-- Clique em **Continue** → **Create Token** e copie. Ela só aparece uma vez.
+**A. Cloudflare (conta grátis, não pede cartão)**
+1. Abra **dash.cloudflare.com/sign-up** e cadastre e-mail e senha. Confirme o
+   e-mail que chegar.
+2. **Account ID:** depois de entrar, olhe o endereço no navegador. O código de
+   32 letras e números logo depois de `dash.cloudflare.com/` é o Account ID.
+   Copie para a nota.
+3. **Token:**
+   - Toque no ícone de pessoa no alto → **Perfil** → **API Tokens** →
+     **Create Token**.
+   - No modelo **Edit Cloudflare Workers**, toque **Use template**.
+   - Em "Account Resources", escolha a sua conta. Em "Zone Resources",
+     escolha **All zones**.
+   - Toque **Continue to summary** → **Create Token** → **Copy**. Cole na nota.
+     O token só aparece uma vez.
 
-**3. Conta de serviço do Firebase (deixa o servidor ler e gravar os avisos)**
-- Abra console.firebase.google.com → projeto **academia-jv-tenis** → ⚙️
-  **Configurações do projeto** → **Contas de serviço**.
-- Clique em **Gerar nova chave privada**. O navegador baixa um arquivo `.json`.
-- **Não mande esse arquivo para ninguém, nem aqui no chat.** Ele vai só para o
-  GitHub, no passo 4.
+**B. Usuário robô do Firebase**
+1. Abra **console.firebase.google.com** → projeto **academia-jv-tenis** →
+   **Authentication** → aba **Users** → **Adicionar usuário**.
+2. E-mail: `avisos@academia-jv-tenis.firebaseapp.com`. Ninguém recebe e-mail
+   nesse endereço; é só o nome do robô.
+3. Senha: pelo menos 12 caracteres, por exemplo 4 palavras e números. Anote
+   na nota.
+4. Na lista de usuários, copie o **UID do usuário** do robô e mande ao Claude.
+   O UID não é segredo; é com ele que a regra reconhece o robô.
 
-**4. Guardar os três segredos no GitHub**
-- No GitHub, abra o repositório **familiajk** → **Settings** → **Secrets and
-  variables** → **Actions** → **New repository secret**.
-- Crie os três segredos:
+**C. Segredos no GitHub**
+1. Abra **github.com/joaovictorteniscoach-cpu/familiajk/settings/secrets/actions**.
+2. Para cada linha abaixo: toque **New repository secret**, escreva o Name,
+   cole o Secret e toque **Add secret**.
 
-  | Nome | O que colar |
-  |---|---|
-  | `CLOUDFLARE_API_TOKEN` | a chave do passo 2 |
-  | `CLOUDFLARE_ACCOUNT_ID` | o Account ID do passo 1 |
-  | `FIREBASE_SERVICE_ACCOUNT` | o conteúdo **inteiro** do arquivo `.json` do passo 3, abrindo no Bloco de Notas |
+   | Name | Secret |
+   |---|---|
+   | `CLOUDFLARE_API_TOKEN` | o token do passo A3 |
+   | `CLOUDFLARE_ACCOUNT_ID` | o Account ID do passo A2 |
+   | `AVISOS_EMAIL` | `avisos@academia-jv-tenis.firebaseapp.com` |
+   | `AVISOS_SENHA` | a senha do passo B3 |
 
-- Ninguém consegue ler o segredo depois de salvo, nem o Claude.
+3. Ninguém consegue ler o segredo depois de salvo, nem o Claude. Apague a nota.
 
-**5. Regra do Firebase (exige o seu OK)**
-- O texto da regra está no fim deste arquivo, em "Mudança de regra proposta".
-- Com o seu OK ela entra em `ferramentas/firebase-regras-etapa3-transicao.json`.
-- Depois copie o arquivo inteiro em Firebase → **Realtime Database** →
-  **Regras** → **Publicar**.
+**D. Regra do Firebase** (o João autorizou em 15/10, depois de criar o robô)
+1. Com o UID do robô, o Claude coloca a regra em
+   `ferramentas/firebase-regras-etapa3-transicao.json` e publica no GitHub.
+2. No celular, abra o arquivo no GitHub, toque **Raw**, selecione tudo e copie.
+3. Abra Firebase → **Realtime Database** → **Regras**. Selecione tudo, cole por
+   cima e toque **Publicar**.
 
-**6. Ligar**
-- Diga "pronto" ao Claude, ou abra no GitHub **Actions** → **Servidor de
-  avisos (Cloudflare)** → **Run workflow**.
-- A Action confere a conta de serviço sem mostrar o conteúdo, publica o
-  servidor e, só na primeira vez, cria a chave de push. A chave fica guardada
-  apenas na Cloudflare.
-- Em até 2 minutos, a Gestão mostra no sininho "servidor ligado".
-- Toque em **Ativar avisos** e depois em **Enviar aviso de teste para mim**.
-- Os alunos ligam em Perfil → **Ativar avisos**.
+**E. Ligar**
+1. O Claude roda a Action **Servidor de avisos (Cloudflare)**.
+   - Ela confere os segredos e **testa o login do robô** sem mostrar nada.
+   - Depois publica o servidor e, só na primeira vez, cria a chave de push.
+     A chave fica guardada apenas na Cloudflare.
+2. Em até 2 minutos, o sininho da Gestão mostra "servidor ligado".
+3. Toque em **Ativar avisos** e depois em **Enviar aviso de teste para mim**.
+4. Os alunos ligam os avisos em Perfil → **Ativar avisos**.
 
 ## Se algo der errado
-- **A Action diz que falta segredo:** confira os nomes do passo 4, letra por letra.
-- **"a conta de serviço é de outro projeto":** o `.json` não é do
-  academia-jv-tenis.
+- **A Action diz que falta segredo:** confira os nomes do passo C, letra por letra.
+- **"o Firebase recusou o login do robô":** a senha no GitHub não é igual à do
+  passo B, ou o usuário não foi criado. Crie o segredo `AVISOS_SENHA` de novo.
+- **"tem espaço no começo ou no fim":** o celular colou um espaço junto. Apague
+  o segredo e cole de novo.
 - **O sininho diz "servidor ainda não ligado":**
-  - a regra do passo 5 não foi publicada; ou
+  - a regra do passo D não foi publicada; ou
   - o servidor não rodou: veja na Cloudflare → Workers → jv-avisos → **Logs**.
 - **Para desligar tudo:** Cloudflare → Workers → jv-avisos → Settings → Delete.
   Os apps voltam sozinhos ao aviso só com o app aberto.
-- **Se a chave do Firebase vazar:** no Google Cloud → IAM → Contas de serviço,
-  apague a chave. Depois gere outra e troque o segredo do passo 4.
+- **Se a senha do robô vazar:**
+  1. Firebase → Authentication → robô → **Redefinir senha** (ou desative o usuário).
+  2. Troque o segredo `AVISOS_SENHA` no GitHub.
+  3. Rode a Action de novo.
 
-## Mudança de regra proposta (aguarda autorização explícita do João)
-- Acrescentar dentro de `"jvtenis"` nas regras `etapa3-transicao` e
-  `etapa4-estrita`. O uid é o do João, já usado nas outras regras.
+## Mudança de regra (autorizada pelo João em 15/10, falta o UID do robô)
+- Entra nas regras `etapa3-transicao` e `etapa4-estrita`.
+- `ROBO_UID` é trocado pelo UID que o João mandar. O outro uid é o do João, o
+  mesmo das outras regras.
+
+Lugares novos, dentro de `"jvtenis"`:
 
 ```json
 "avisos_tokens": {
-  ".read": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+  ".read": "auth != null && (auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1' || auth.uid === 'ROBO_UID')",
   "$uid": {
     "$app": {
       ".read": "auth != null && auth.uid === $uid",
-      ".write": "auth != null && auth.uid === $uid && (($app === 'gestao' && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1') || ($app === 'aluno' && root.child('jvtenis/aluno_vinculos/' + auth.uid + '/ativo').val() === true))",
+      ".write": "auth != null && ((auth.uid === $uid && (($app === 'gestao' && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1') || ($app === 'aluno' && root.child('jvtenis/aluno_vinculos/' + auth.uid + '/ativo').val() === true))) || (auth.uid === 'ROBO_UID' && !newData.exists()))",
       ".validate": "newData.hasChildren(['e', 'p', 'a', 'ts']) && newData.child('e').isString() && newData.child('e').val().beginsWith('https://') && newData.child('e').val().length <= 800 && newData.child('p').isString() && newData.child('p').val().length <= 120 && newData.child('a').isString() && newData.child('a').val().length <= 40 && newData.child('ts').isNumber()",
       "$campo": { ".validate": "$campo === 'e' || $campo === 'p' || $campo === 'a' || $campo === 'ts'" }
     }
   }
 },
 "avisos_saida": {
-  ".read": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
+  ".read": "auth != null && (auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1' || auth.uid === 'ROBO_UID')",
   ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
   ".indexOn": ["quando"]
 },
 "avisos_enviados": {
-  ".read": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'",
-  ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'"
+  ".read": "auth != null && (auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1' || auth.uid === 'ROBO_UID')",
+  ".write": "auth != null && (auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1' || auth.uid === 'ROBO_UID')"
 },
 "avisos_estado": {
   ".read": "auth != null",
-  ".write": "auth != null && auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1'"
+  ".write": "auth != null && (auth.uid === 'XEulBs95uZV1JhfUuz6SmjUaeVv1' || auth.uid === 'ROBO_UID')"
 }
 ```
 
+Leitura do robô em 3 lugares que já existem. Só o `.read` da raiz de cada um
+ganha `|| auth.uid === 'ROBO_UID'`:
+- **`aluno_vinculos`:** para saber de qual aluno é cada aparelho.
+- **`fila_pedidos`:** para avisar o João do "Já paguei".
+- **`fila_agendamentos`:** para não lembrar de aula que o aluno acabou de cancelar.
+
+O que cada um pode fazer:
 - **Aluno:** só grava o próprio endereço de aviso, e só se o aparelho já foi
   aprovado. Não lê o de ninguém.
-- **João:** só ele lê a lista inteira e a fila de avisos.
-- **Servidor:** entra com a conta de serviço, que não passa pelas regras.
+- **Robô:**
+  - **lê:** a fila de avisos, os endereços, os vínculos e as duas filas;
+  - **grava:** só o que foi enviado, o estado e apaga endereço morto.
+  - **Não grava** aviso, agenda, aluno, valor nem pedido.
+- **João:** prepara a fila de avisos e lê tudo de avisos.
 - **`avisos_estado`:** qualquer aparelho logado lê. Tem só a hora e a chave
   pública.
-- **Nada muda nos caminhos que já existem.**

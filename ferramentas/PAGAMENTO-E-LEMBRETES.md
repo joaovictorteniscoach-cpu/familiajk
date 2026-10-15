@@ -126,3 +126,12 @@ depende do toque do João.
     Conferir no app antes de decidir.
   - **Onde colar o link na Gestão:** campo "link do cartão", que vale para
     todos, ou na ficha do aluno.
+
+## Decisão do João em 15/10 (noite)
+- **Pix:** na chave dele. Confirmação com um toque, e ele recebe o aviso "Já
+  paguei" no celular.
+- **Cartão:** o Tap to Pay que ele já usa, na quadra.
+- **Asaas:** fica para depois. Hoje só 1 aluno paga no cartão.
+  - Se a procura por cartão recorrente crescer, o caminho é o link de
+    assinatura do Asaas: 2,99% + R$ 0,49 por mês, com o dinheiro em 32 dias.
+  - A confirmação automática deles pode usar o mesmo servidor da Cloudflare.
