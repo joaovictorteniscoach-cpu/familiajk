@@ -1598,12 +1598,12 @@ html body:not(#jv) #pedir-box .btn-ghost{background:#F3EDE2!important;border:1px
 #apg-evolucao .evo-prio b{color:#F2CF62!important}
 #apg-aulas .empty,#apg-torneio .empty{background:rgba(255,255,255,.06)!important;color:#D8D2C7!important;-webkit-text-fill-color:#D8D2C7!important}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-09-1">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-15-1">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-09-1">
-<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-09-1">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-15-1">
+<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-15-1">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -1813,6 +1813,7 @@ function esperarAuth(){
       <p id="chuva-txt" style="margin:4px 0 9px;font-size:13px;line-height:1.5"></p>
       <button onclick="marcarChuvaVista()" style="background:#3A5A72;color:#fff;border:none;border-radius:9px;padding:8px 14px;font-weight:800;font-size:12.5px;cursor:pointer">Entendi</button>
     </div>
+    <div id="espera-box" class="esp-box" style="display:none" role="status"></div>
     <div id="lembrete-box" style="display:none;background:#1A2E14;color:#fff;border-radius:14px;padding:13px 15px;margin-bottom:12px">
       <b style="font-size:14px">🔔 Você tem aula hoje!</b>
       <p id="lembrete-txt" style="margin:4px 0 9px;font-size:13px;opacity:.9"></p>
@@ -2084,7 +2085,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-10-09-1"></script>
+<script src="lib/icones.js?v=2026-10-15-1"></script>
 </div>
 
 <!-- MODAL ESCOLHER O QUE FAZER NO HORÁRIO -->
@@ -2302,7 +2303,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-10-09-1';
+const VERSAO='2026-10-15-1';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -2856,12 +2857,12 @@ async function carregarMeuNuvem(){
     try{const velho=await cloudGet(meuKeyAntiga());
         if(velho){raw=velho;setTimeout(()=>{try{saveMeu();}catch(e){}},400);}}catch(e){}
   }
-  if(raw){try{const c=JSON.parse(raw);MEU.pedidos=c.pedidos||MEU.pedidos||[];MEU.cancelados=c.cancelados||MEU.cancelados||[];MEU.confirmadas=c.confirmadas||MEU.confirmadas||[];if(c.termoAceitoVer!==undefined)MEU.termoAceitoVer=c.termoAceitoVer;if(c.termoAceitoEm!==undefined)MEU.termoAceitoEm=c.termoAceitoEm;if(c.renovouMes!==undefined)MEU.renovouMes=c.renovouMes;if(c.feriadoOk!==undefined)MEU.feriadoOk=c.feriadoOk;if(c.pagoAviso!==undefined)MEU.pagoAviso=c.pagoAviso;}catch(e){}}
+  if(raw){try{const c=JSON.parse(raw);if(Array.isArray(c.espera))MEU.espera=c.espera;MEU.pedidos=c.pedidos||MEU.pedidos||[];MEU.cancelados=c.cancelados||MEU.cancelados||[];MEU.confirmadas=c.confirmadas||MEU.confirmadas||[];if(c.termoAceitoVer!==undefined)MEU.termoAceitoVer=c.termoAceitoVer;if(c.termoAceitoEm!==undefined)MEU.termoAceitoEm=c.termoAceitoEm;if(c.renovouMes!==undefined)MEU.renovouMes=c.renovouMes;if(c.feriadoOk!==undefined)MEU.feriadoOk=c.feriadoOk;if(c.pagoAviso!==undefined)MEU.pagoAviso=c.pagoAviso;}catch(e){}}
 }
 async function saveMeu(){
   const json=JSON.stringify(MEU);
   lsSet(MYKEY,json); // salva já no aparelho (lembra o login)
-  if(hasCloud()&&meuKey())cloudSet(meuKey(),JSON.stringify({pedidos:MEU.pedidos,cancelados:MEU.cancelados,confirmadas:MEU.confirmadas,termoAceitoVer:MEU.termoAceitoVer,termoAceitoEm:MEU.termoAceitoEm,renovouMes:MEU.renovouMes,feriadoOk:MEU.feriadoOk,pagoAviso:MEU.pagoAviso})); // pedidos por aluno na nuvem
+  if(hasCloud()&&meuKey())cloudSet(meuKey(),JSON.stringify({pedidos:MEU.pedidos,cancelados:MEU.cancelados,confirmadas:MEU.confirmadas,espera:MEU.espera||[],termoAceitoVer:MEU.termoAceitoVer,termoAceitoEm:MEU.termoAceitoEm,renovouMes:MEU.renovouMes,feriadoOk:MEU.feriadoOk,pagoAviso:MEU.pagoAviso})); // pedidos por aluno na nuvem
 }
 function conferirRespostasReservas(){
   const recusados=(PUB.reservasRespostas||[]).filter(r=>r.estado==='recusado');
@@ -2990,7 +2991,7 @@ function slotState(date,hora){
   const compartilhado=all.length&&all.every(e=>e.tipo===all[0].tipo)&&['grupo','locacao','torneio'].includes(all[0].tipo)?all[0].tipo:'';
   const limiteGrupo=compartilhado==='grupo'?Math.min(...all.map(e=>[2,3,4].includes(Number(e.pessoas))?Number(e.pessoas):2)):0;
   const grupo=compartilhado==='grupo'&&all.length<limiteGrupo;
-  if(all.length&&(!compartilhado||compartilhado==='grupo'&&!grupo))return {st:'ocup',label:compartilhado==='grupo'?'Grupo completo':'Reservado'};
+  if(all.length&&(!compartilhado||compartilhado==='grupo'&&!grupo))return {st:'ocup',label:compartilhado==='grupo'?'Grupo completo':'Reservado',esperavel:true};
   if((MEU.pedidos||[]).some(p=>{
     if(p.hora!==hora)return false;
     if(p.rec==='fixo')return new Date(p.data+'T12:00:00').getDay()===dia&&dk>=p.data;
@@ -3001,13 +3002,13 @@ function slotState(date,hora){
   if(semAula){
     if(compartilhado==='locacao')return {st:'loc',label:'Locação · participar',compartilhado,semAula:true};
     if(compartilhado==='torneio')return {st:'livre',label:'Torneio · participar',compartilhado,semAula:true};
-    if(all.length)return {st:'ocup',label:'Reservado'};
+    if(all.length)return {st:'ocup',label:'Reservado',esperavel:true};
     return {st:'loc',label:'Sem aula · locação ou torneio',semAula:true};
   }
   if(grupo&&modo==='aula')return {st:'livre',label:limiteGrupo===4?'Aula quádrupla':limiteGrupo===3?'Aula em trio':'Aula em dupla',grupo:true,compartilhado:'grupo',limiteGrupo};
   if(compartilhado==='locacao')return {st:'loc',label:'Locação · participar',compartilhado};
   if(compartilhado==='torneio')return {st:'livre',label:'Torneio · participar',compartilhado};
-  if(all.length)return {st:'ocup',label:'Reservado'};
+  if(all.length)return {st:'ocup',label:'Reservado',esperavel:true};
   if(modo==='loc')return {st:'loc',label:'Só locação'};
   return {st:'livre',label:'Disponível'};
 }
@@ -3291,7 +3292,7 @@ function render(){
   if(PUB.aviso){av.style.display='block';document.getElementById('aviso-txt').textContent=PUB.aviso;}
   else av.style.display='none';
   renderPagamento();
-  renderAgenda();renderMinhas();renderHistAluno();renderTorneioAluno();
+  renderAgenda();renderMinhas();renderHistAluno();renderTorneioAluno();conferirEspera();
   atualizarBadgesAluno();
   checarAulaHoje();
   checarChuva();
@@ -4484,6 +4485,7 @@ function renderAgenda(){
       else if(s.st==='chuva')inner=`<button class="sl chuva">☔ Cancelado por chuva <i>sem desconto de crédito</i></button>`;
       else if(s.st==='bloq')inner=`<button class="sl bloq">Indisponível</button>`;
       else if(s.st==='fechado')inner=`<button class="sl bloq">Fechado</button>`;
+      else if(s.esperavel&&horasAte(dKey(agDate),h)>0)inner=`<button class="sl ocup" onclick="escolherSlot('${h}')">${s.label} <i>${naEspera(dKey(agDate),h)?'🔔 você está na lista de espera':'toque para entrar na lista de espera'}</i></button>`;
       else inner=`<button class="sl ocup">${s.label||'Reservado'}</button>`;
       return `<div class="slot"><div class="slot-h">${h}</div>${inner}</div>`;
     }).join('');
@@ -4913,12 +4915,74 @@ function renderResumoMes(){
     +'<div class="amr-ver">Ver as datas ›</div>';
 }
 
+/* ===== Lista de espera =====
+   Horário reservado: o aluno pede para ser avisado se liberar. O próprio app
+   confere a cada atualização da agenda e avisa todos que esperam; quem marcar
+   primeiro fica com a vaga (a reserva única na nuvem garante). O pedido também
+   vai para a Gestão, que mostra a lista ao João. Nada muda em créditos. */
+const ESPERA_MAX=10;
+function naEspera(dk,hora){return (MEU.espera||[]).some(e=>e.data===dk&&e.hora===hora);}
+function abrirEspera(hora){
+  const d=new Date(agDate),dk=dKey(d),ja=naEspera(dk,hora);
+  pickCtx={hora,date:d,espera:true};
+  document.getElementById('pick-sub').textContent=DIAS_FULL[d.getDay()]+', '+d.getDate()+' de '+MESES[d.getMonth()].toLowerCase()+' · '+hora;
+  let b='<div class="pick-note">🔔 Este horário está reservado. '+(ja
+    ?'Você está na lista de espera: se a vaga liberar, o app avisa você e quem mais estiver esperando. Quem marcar primeiro fica com ela.'
+    :'Entre na lista de espera: se a vaga liberar, o app avisa você e quem mais estiver esperando. Quem marcar primeiro fica com ela.')+'</div>';
+  b+=ja?'<button class="pick-opt" onclick="sairEspera()">🔕 Sair da lista de espera</button>'
+       :'<button class="pick-opt aula" onclick="entrarEspera()">🔔 Entrar na lista de espera<small>sem custo · não usa crédito</small></button>';
+  document.getElementById('pick-opts').innerHTML=b;
+  document.getElementById('ov-pick').classList.add('on');
+}
+async function mudarEspera(entrar){
+  const ctx=pickCtx;if(!ctx||!ctx.espera)return;
+  const dk=dKey(ctx.date),hora=ctx.hora;
+  document.getElementById('ov-pick').classList.remove('on');
+  if(!hasCloud()){toast('Para usar a lista de espera é preciso estar online 🙏');return;}
+  if(entrar&&(MEU.espera||[]).length>=ESPERA_MAX){toast('Você já está em '+ESPERA_MAX+' listas de espera. Saia de alguma para entrar nesta.');return;}
+  try{await filaPush('jvtenis/fila_agendamentos',{id:'w'+Date.now()+'-'+Math.random().toString(36).slice(2,8),acao:entrar?'espera':'sair_espera',nome:EU?EU.nome:'',data:dk,hora,ts:agoraReal()});}
+  catch(e){toast('Não consegui enviar agora. Tente de novo com internet.');return;}
+  MEU.espera=(MEU.espera||[]).filter(e=>!(e.data===dk&&e.hora===hora));
+  if(entrar)MEU.espera.push({data:dk,hora,ts:Date.now(),avisado:0});
+  await saveMeu();renderAgenda();conferirEspera();
+  toast(entrar?'🔔 Pronto! Se a vaga de '+fmtData(dk)+' às '+hora+' liberar, o app avisa.':'Você saiu da lista de espera de '+fmtData(dk)+' às '+hora+'.');
+}
+function entrarEspera(){mudarEspera(true);}
+function sairEspera(){mudarEspera(false);}
+/* Confere a lista a cada atualização: tira o que passou e o que virou aula
+   dele; avisa uma vez quando a vaga abre (e de novo se ela fechar e reabrir). */
+function conferirEspera(){
+  const box=document.getElementById('espera-box');
+  const lista=Array.isArray(MEU.espera)?MEU.espera:[];
+  let mudou=false;const livres=[];
+  MEU.espera=lista.filter(e=>{
+    if(!e||!dataHoraAulaValida(e.data,e.hora)||horasAte(e.data,e.hora)<=0){mudou=true;return false;}
+    const s=slotState(new Date(e.data+'T12:00:00'),e.hora);
+    if(s.st==='meu'||s.st==='pend'){mudou=true;return false;}
+    if(['livre','loc'].includes(s.st)){
+      livres.push(e);
+      if(!e.avisado){e.avisado=1;mudou=true;try{notificarLocal('🎉 Vaga liberada!',DIAS_FULL[dtOf(e.data,e.hora).getDay()]+', '+fmtData(e.data)+' às '+e.hora+' — marque antes que outro aluno pegue.');}catch(x){}}
+    }else if(e.avisado){e.avisado=0;mudou=true;}
+    return true;
+  });
+  if(mudou)try{saveMeu();}catch(e){}
+  if(!box)return;
+  if(!livres.length){box.style.display='none';box.innerHTML='';return;}
+  box.innerHTML='<b class="esp-tit">🎉 Vaga liberada da sua lista de espera</b>'
+    +livres.map(e=>{const d=dtOf(e.data,e.hora);
+      return '<div class="esp-linha"><span>'+DIAS_FULL[d.getDay()]+', '+fmtData(e.data)+' às '+e.hora+'</span>'
+        +'<button type="button" onclick="gotoBook('+d.getFullYear()+','+d.getMonth()+','+d.getDate()+',\''+e.hora+'\')">Reservar agora</button></div>';}).join('')
+    +'<p class="esp-nota">Quem estava esperando também foi avisado: quem marcar primeiro fica com a vaga.</p>';
+  box.style.display='block';
+}
+
 /* ================= AGENDAR ================= */
 function gotoBook(y,m,d,h){agDate=new Date(y,m,d,12);escolherSlot(h);}
 var pickCtx={};
 function escolherSlot(hora){
   if(horasAte(dKey(agDate),hora)<=0){toast('Esse horário já passou — não é possível agendar nem alterar datas anteriores. 🙏');return;}
   const estado=slotState(agDate,hora);
+  if(estado.esperavel){abrirEspera(hora);return;}
   if(!['livre','loc'].includes(estado.st)){toast(estado.label+' — escolha outro horário');return;}
   pickCtx={hora,date:new Date(agDate),grupo:!!estado.grupo,compartilhado:estado.compartilhado||'',limiteGrupo:estado.limiteGrupo||0,semAula:!!estado.semAula};
   const modo=slotModo(pickCtx.date,hora);
@@ -5246,7 +5310,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-09-1').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-15-1').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava

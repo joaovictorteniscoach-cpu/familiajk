@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-09-1';
+const VERSAO='2026-10-15-1';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2555,6 +2555,68 @@ function updatesFilaSemConflito(u){
   });
   return out;
 }
+/* ===== Lista de espera =====
+   O aluno pede para ser avisado quando um horário reservado liberar. O app
+   dele avisa sozinho quando a vaga abre (todos da lista; quem marcar primeiro
+   fica com ela — a reserva única na fila garante isso). Aqui a Gestão guarda a
+   lista (DB.espera) e mostra a vaga liberada com o botão de avisar no WhatsApp.
+   Nada aqui muda aula, saldo ou valor. */
+function listaEspera(){DB.espera=Array.isArray(DB.espera)?DB.espera:[];return DB.espera;}
+/* Ainda vale: data por vir, aluno existe e ainda não está marcado no horário. */
+function esperaValida(e){
+  if(!e||e.data<dKey(new Date())||!DB.alunos.some(a=>a.id===e.alunoId))return false;
+  return !entriesFor(new Date(e.data+'T12:00:00'),e.hora).some(x=>x.alunoId===e.alunoId);
+}
+function esperaDoHorario(dk,hora){return listaEspera().filter(e=>e.data===dk&&e.hora===hora&&esperaValida(e));}
+function aplicarPedidoEspera(p,a){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(p.data||''))||HORAS.indexOf(String(p.hora||''))<0)return false;
+  const antes=listaEspera().length;
+  DB.espera=listaEspera().filter(e=>!(e.alunoId===a.id&&e.data===p.data&&e.hora===p.hora));
+  if(p.acao==='espera'&&p.data>=dKey(new Date()))DB.espera.push({id:String(p.id||('w'+Date.now())).slice(0,40),alunoId:a.id,data:p.data,hora:p.hora,ts:Number(p.ts)||Date.now()});
+  return DB.espera.length!==antes||p.acao==='espera';
+}
+/* Some da lista o que já passou e quem conseguiu a vaga. Devolve se mudou. */
+function limparEspera(){
+  const antes=listaEspera().length;
+  DB.espera=listaEspera().filter(esperaValida);
+  return DB.espera.length!==antes;
+}
+function horarioLiberado(dk,hora){
+  const evs=entriesFor(new Date(dk+'T12:00:00'),hora).filter(e=>!ehBloqueioPessoal(e));
+  return !evs.some(ehEventoChuva)&&(!evs.length||compartilhamentoHorario(evs)==='grupo');
+}
+/* Horários com lista de espera que estão livres agora, do mais próximo ao mais longe. */
+function vagasLiberadasEspera(){
+  const grupos={};
+  listaEspera().forEach(e=>{if(esperaValida(e))(grupos[e.data+'|'+e.hora]=grupos[e.data+'|'+e.hora]||[]).push(e);});
+  return Object.keys(grupos).sort().map(k=>{const [data,hora]=k.split('|');return {data,hora,lista:grupos[k].slice().sort((x,y)=>x.ts-y.ts)};})
+    .filter(v=>horarioLiberado(v.data,v.hora));
+}
+const dataEspera=dk=>String(dk).split('-').reverse().slice(0,2).join('/');
+function msgVagaEspera(a,data,hora){
+  return 'Olá '+String(a.nome||'').split(' ')[0]+'! 🎾 A vaga de '+dataEspera(data)+' às '+hora
+    +' que você estava esperando abriu. Se quiser, é só marcar no app — quem marcar primeiro fica com ela.';
+}
+function avisarEspera(alunoId,data,hora){
+  const a=DB.alunos.find(x=>x.id===alunoId);if(!a)return;
+  const fone=foneWhats(a.tel);if(!fone){toast(a.nome+' não tem WhatsApp no cadastro');return;}
+  window.open('https://wa.me/'+fone+'?text='+encodeURIComponent(msgVagaEspera(a,data,hora)),'_blank');
+}
+function abrirHorarioEspera(data,hora){
+  agDate=new Date(data+'T12:00:00');irParaAba('agenda');openSlot(hora);
+}
+function esperaNoSlotHtml(){
+  if(!slotCtx)return '';
+  const dk=dKey(slotCtx.date),lista=esperaDoHorario(dk,slotCtx.hora).slice().sort((x,y)=>x.ts-y.ts);
+  if(!lista.length)return '';
+  const livre=horarioLiberado(dk,slotCtx.hora);
+  return '<div class="esp-slot"><b>🔔 Lista de espera ('+lista.length+')</b>'
+    +(livre?'<small>A vaga está livre: avise quem espera. Quem marcar primeiro no app fica com ela.</small>':'<small>Se a vaga liberar, o app de cada um avisa sozinho.</small>')
+    +lista.map((e,i)=>{const a=DB.alunos.find(x=>x.id===e.alunoId);if(!a)return '';
+      return '<div class="esp-linha"><span>'+(i+1)+'. '+esc(a.nome)+'</span>'
+        +(livre&&foneWhats(a.tel)?'<button class="btn btn-ghost" type="button" onclick="avisarEspera(\''+argJs(a.id)+'\',\''+dk+'\',\''+slotCtx.hora+'\')">Avisar no WhatsApp</button>':'')+'</div>';}).join('')
+    +'</div>';
+}
 async function syncRequests(silent){
   if(syncing)return;syncing=true;
   if(!hasCloud()){if(!silent)toast('Nuvem (Firebase) não conectada');syncing=false;return;}
@@ -2565,7 +2627,7 @@ async function syncRequests(silent){
     if(!snap.exists()){if(!silent)toast('Nenhum agendamento novo de alunos');return;}
     const fila=snap.val()||{},updates=Object.create(null);
     const chaves=Object.keys(fila).sort((x,y)=>(Number(fila[x].ts)||0)-(Number(fila[y].ts)||0)||x.localeCompare(y));
-    let n=0,nc=0,nb=0,nr=0;const tardios=[];
+    let n=0,nc=0,nb=0,nr=0,ne=0;const tardios=[];
     const finalizar=(key,p,aceito)=>{
       const relacionados=Object.keys(fila).filter(k=>k===key||fila[k].principal===key&&fila[k].uid===p.uid&&String(fila[k].codigo)===String(p.codigo));
       for(const k of relacionados)updates[aceito?(k+'/processado'):k]=aceito?true:null;
@@ -2580,6 +2642,10 @@ async function syncRequests(silent){
       if(p.travaSomente)return;
       if(!pedidoConfiavel(p)){nb++;return;}
       const a=DB.alunos.find(x=>String(x.codigo)===String(p.codigo));
+      if(p.acao==='espera'||p.acao==='sair_espera'){   // lista de espera: só guarda, não mexe na agenda
+        if(a&&aplicarPedidoEspera(p,a))ne++;
+        updates[key]=null;return;
+      }
       if(!pedidoAgendaValido(p,a)){
         nr++;guardarRespostaReserva(p,'recusado','Horário indisponível. Escolha outra vaga.');
         finalizar(key,p,false);return;
@@ -2615,6 +2681,7 @@ async function syncRequests(silent){
       }
     });
     if(Object.keys(updates).length){
+      limparEspera();
       persist();
       // Não consumir pedidos antes da confirmação durável da agenda. Outra
       // sessão pode ter alterado o banco durante a leitura: o CAS recusa.
@@ -2624,7 +2691,10 @@ async function syncRequests(silent){
       await ref.update(updatesFilaSemConflito(updates));
       renderAgenda();
     }
-    if(n>0||nc>0)toast('📥 '+n+' reserva(s) · '+nc+' cancelamento(s) de alunos'+(nr?' · '+nr+' recusado(s) por conflito':''));
+    const liberadas=nc>0?vagasLiberadasEspera():[];
+    if(n>0||nc>0)toast('📥 '+n+' reserva(s) · '+nc+' cancelamento(s) de alunos'+(nr?' · '+nr+' recusado(s) por conflito':'')
+      +(liberadas.length?' · 🔔 '+liberadas.length+' vaga(s) com lista de espera':''));
+    else if(ne>0&&!silent)toast('🔔 Lista de espera atualizada');
     else if(!silent&&!tardios.length)toast(nb?'Há '+nb+' solicitação(ões) aguardando vínculo do aparelho':nr?'Horário indisponível: pedido recusado e aluno avisado':'Nenhuma novidade de alunos');
     if(tardios.length)toast('⚠️ Cancelamento fora do prazo não aplicado (a aula continua na agenda): '+tardios.join(', '));
   }catch(e){if(!silent)toast('Não consegui confirmar a sincronização. Os pedidos ainda serão conferidos.');}
@@ -4216,7 +4286,7 @@ function nomeNaLista(e){
 function renderSlotEvs(){
   const evs=entriesFor(slotCtx.date,slotCtx.hora);
   const el=document.getElementById('slot-evs');
-  el.innerHTML=turmaDoHorario(evs)+(evs.length?evs.map(e=>{
+  el.innerHTML=turmaDoHorario(evs)+esperaNoSlotHtml()+(evs.length?evs.map(e=>{
   /* Aula que a academia marcou no nome dele: ele vê, não mexe. Mostrar botões
      que vão falhar (ou, pior, que apagariam só na tela dele) é pior que não
      mostrar botão nenhum. */
@@ -6789,6 +6859,14 @@ function renderAcoes(pendAlunos,pendValor){
       s:vencendo?(vencendo+' aluno(s) com reposição vencendo neste mês'):(comRepos.length+' aluno(s) com reposição em aberto'),
       fn:'verReposicoes()'});
   }
+
+  vagasLiberadasEspera().slice(0,3).forEach(v=>{
+    const nomes=v.lista.map(e=>(DB.alunos.find(a=>a.id===e.alunoId)||{}).nome||'').filter(Boolean).map(n=>n.split(' ')[0]);
+    itens.push({ico:'🔔',cls:'',n:v.lista.length,
+      t:'Vaga liberada: '+dataEspera(v.data)+' às '+v.hora,
+      s:v.lista.length+' na lista de espera ('+esc(nomes.join(', '))+') · avisar',
+      fn:"abrirHorarioEspera('"+v.data+"','"+v.hora+"')"});
+  });
 
   const dif=alunosComDiferenca();
   if(dif.length){

@@ -3304,6 +3304,14 @@ html body:not(#jv) .pm-modal .modal-head h3,html body:not(#jv) .pd-modal .modal-
 /* Renovar o mês: nome do aluno abre a ficha */
 #renova-mes .rm-link{cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px}
 
+/* Lista de espera no horário da agenda */
+.esp-slot{border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin:0 0 10px;background:rgba(201,118,74,.08)}
+.esp-slot b{display:block;font-size:13px}
+.esp-slot small{display:block;font-size:11.5px;color:var(--muted);margin:2px 0 6px;line-height:1.4}
+.esp-linha{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid var(--border);font-size:13px}
+.esp-linha span{min-width:0;overflow-wrap:anywhere}
+.esp-linha .btn{flex:0 0 auto;min-height:44px;padding:8px 12px;font-size:12px}
+
 /* ===== Toques do tema Saibro ===== */
 .nav,.nav:after{background:#0B1B14!important;border-top:1px solid rgba(194,88,46,.35)!important}
 .nav button.on,.nav button.aberto,.jv-nav-3d button.on,.jv-nav-3d button.aberto{background:rgba(194,88,46,.16)!important;color:#EE9A6E!important;-webkit-text-fill-color:#EE9A6E!important}

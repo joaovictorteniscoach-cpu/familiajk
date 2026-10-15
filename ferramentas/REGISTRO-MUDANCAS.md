@@ -8,6 +8,36 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-15 · Claude Code: lista de espera
+
+Pedido do João (depois da comparação com CourtReserve/Playtomic): pagamento
+integrado, lembrete automático e lista de espera. Decisões dele: Mercado Pago,
+servidor no Firebase (plano Blaze), pagamento confirmado pelo banco **lança
+sozinho** (com registro e desfazer), lista de espera **avisa todos e quem
+marcar primeiro leva**. Esta entrada é só a lista de espera (versão
+`2026-10-15-1`); pagamento e lembretes dependem de contas que o João vai criar
+(ver `ferramentas/PAGAMENTO-E-LEMBRETES.md`). Nenhuma regra do Firebase alterada.
+
+- **Aluno:** horário reservado (`slotState` → `esperavel`) abre "Entrar na lista
+  de espera" (`abrirEspera`, `mudarEspera`). Vai para `fila_agendamentos` com
+  `acao:'espera'|'sair_espera'` (a regra atual aceita campos extras) e fica em
+  `MEU.espera` (salvo em `aluno-estado`). `conferirEspera()` roda em cada
+  `render`: tira o que passou e o que virou aula dele; quando a vaga abre,
+  avisa uma vez (`notificarLocal`) e mostra `#espera-box` com "Reservar agora";
+  se outro pegar, volta a esperar. Máximo 10 listas por aluno.
+- **Gestão:** `syncRequests` trata `espera`/`sair_espera` antes da validação de
+  reserva (`aplicarPedidoEspera`), sem mexer em agenda ou saldo; `DB.espera`
+  vai para a parte `config`. `vagasLiberadasEspera` (horário sem ocupação além
+  de bloqueio pessoal, ou grupo com vaga) aparece em "Atenção hoje" e no toast
+  da fila; o horário mostra a lista com "Avisar no WhatsApp" (`avisarEspera`).
+  Quem reserva sai da lista (`esperaValida`/`limparEspera`).
+- Gestão antiga em cache descarta o pedido de espera em silêncio (vira
+  "recusado" sem id em `MEU.pedidos`, o aluno não vê aviso); o app do aluno
+  continua avisando sozinho.
+- Teste novo `testar-lista-espera-browser.cjs` (9, no CI); falha na V13.
+
+---
+
 ## 2026-10-09 · Claude Code: almoço e compromisso do João só bloqueiam aula
 
 Pedido do João: "almoço ou bloqueio pessoal não deve impedir o aluno de agendar

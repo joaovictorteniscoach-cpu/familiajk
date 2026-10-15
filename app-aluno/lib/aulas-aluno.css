@@ -83,3 +83,10 @@ html body #apg-aulas .mau-depois>summary{display:flex;align-items:center;justify
 #apg-aulas .mau-depois>summary::-webkit-details-marker{display:none}
 #apg-aulas .mau-depois>summary::after{content:'›';font-size:22px;line-height:1;transition:transform .15s}
 #apg-aulas .mau-depois[open]>summary::after{transform:rotate(90deg)}
+/* Lista de espera: aviso de vaga liberada no topo */
+html body .esp-box{margin:0 0 12px;padding:13px 15px;border-radius:14px;background:#1F5A3F;border:1px solid #6FA586;color:#FFF;-webkit-text-fill-color:#FFF}
+html body .esp-box .esp-tit{display:block;font:800 14px/1.35 'DM Sans',sans-serif;color:#FFF;-webkit-text-fill-color:#FFF;margin-bottom:6px}
+html body .esp-box .esp-linha{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid rgba(255,255,255,.18);font:600 13px/1.35 'DM Sans',sans-serif}
+html body .esp-box .esp-linha span{min-width:0;overflow-wrap:anywhere}
+html body .esp-box .esp-linha button{flex:0 0 auto;min-height:44px;padding:8px 12px;border:0;border-radius:10px;background:#D4E157;color:#1E2A0E;-webkit-text-fill-color:#1E2A0E;font:800 12.5px/1.2 'DM Sans',sans-serif;cursor:pointer}
+html body .esp-box .esp-nota{margin:6px 0 0;font-size:11.5px;line-height:1.4;color:#E4F0E8;-webkit-text-fill-color:#E4F0E8}
