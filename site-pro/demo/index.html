@@ -30,11 +30,11 @@
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" id="css-tema" href="lib/estilo.css?v=2026-10-15-4">
+<link rel="stylesheet" id="css-tema" href="lib/estilo.css?v=2026-10-17-2">
 <!-- Tema de cores: Saibro é o padrão desde 2026-10; "Verde clássico" fica a um
      toque em Segurança e dados. Troca o arquivo antes da primeira pintura. -->
 <script>try{if(localStorage.getItem('jv-tema')!=='classico'){var _ct=document.getElementById('css-tema');_ct.href=_ct.getAttribute('href').replace('estilo.css','estilo-saibro.css');document.documentElement.classList.add('tema-saibro');}}catch(e){}</script>
-<link rel="stylesheet" href="lib/acoes-voz.css?v=2026-10-15-4">
+<link rel="stylesheet" href="lib/acoes-voz.css?v=2026-10-17-2">
 <!-- ================= DEMO ISOLADA ================= -->
 <script>
 /* Espelho comercial do Gestão atual.
@@ -431,16 +431,17 @@ function esperarAuth(){return Promise.resolve();}
     <button class="month-btn" onclick="agShift(1)">›</button>
   </div>
   <div class="seg seg-scroll" id="prof-filtro" style="display:none"></div>
-  <details class="ag-ferr">
-    <summary>⚙︎ Ferramentas da agenda</summary>
-    <div class="ferr-corpo">
-      <button class="destaque" onclick="abrirHorario()">🗓️ Horários: aula · locação · fechado</button>
-      <button class="ouro" onclick="enviarHorariosLivres()">📤 Enviar livres da semana (WhatsApp)</button>
-      <button onclick="enviarSemanaImg()">📷 Imagem da semana p/ mandar ao aluno</button>
-      <button onclick="syncRequests(false)">🔄 Agendamentos de alunos</button>
-      <button onclick="abrirVincular()">🔗 Vincular nomes aos alunos</button>
+  <!-- Ferramentas da agenda numa linha (17/10): eram 5 botões numa gaveta.
+       Texto e imagem dos livres viraram um botão que pergunta o formato; os
+       agendamentos dos alunos já entram sozinhos (ao abrir a Agenda e a cada
+       45 s); "vincular nomes" só aparece quando há nome sem aluno. -->
+  <div class="ag-ferr agf">
+    <div class="ferr-corpo agf-corpo">
+      <button class="destaque" onclick="abrirHorario()">🗓️ Horários<small>aula · locação · fechado</small></button>
+      <button class="ouro" onclick="abrirDivulgar()">📤 Divulgar livres<small>texto ou imagem</small></button>
+      <button class="agf-vin" id="agf-vincular" hidden onclick="abrirVincular()"></button>
     </div>
-  </details>
+  </div>
   <div class="ag-legenda" id="ag-legenda" role="group" aria-label="Filtrar a agenda por tipo"></div>
   <div id="ag-view"></div>
 </section>
@@ -981,7 +982,7 @@ function esperarAuth(){return Promise.resolve();}
   <button onclick="go('lanc',this)"><span class="ico" data-ic="navcash"></span>Caixa</button>
   <button id="nav-mais" onclick="abrirMais()"><span class="ico" data-ic="navmore"></span>Mais</button>
 </nav>
-<script src="lib/icones.js?v=2026-10-15-4"></script>
+<script src="lib/icones.js?v=2026-10-17-2"></script>
 
 <!-- MODAL ALUNO -->
 <div class="overlay" id="ov-aluno" onclick="if(event.target===this)closeModal('ov-aluno')">
@@ -1375,6 +1376,18 @@ function esperarAuth(){return Promise.resolve();}
   </div>
 </div>
 
+<div class="overlay" id="ov-divulgar" onclick="if(event.target===this)closeModal('ov-divulgar')">
+  <div class="modal">
+    <h3>📤 Divulgar horários livres</h3>
+    <p class="hint" id="agf-semana"></p>
+    <div class="agf-opcoes">
+      <button class="btn btn-clay" onclick="closeModal('ov-divulgar');enviarHorariosLivres()">💬 Texto no WhatsApp<small>copia a lista e abre o WhatsApp</small></button>
+      <button class="btn btn-ghost" onclick="closeModal('ov-divulgar');enviarSemanaImg()">🖼️ Imagem da semana<small>quadro pronto para mandar ao aluno</small></button>
+    </div>
+    <div class="modal-acts"><button class="btn btn-ghost" onclick="closeModal('ov-divulgar')">Fechar</button></div>
+  </div>
+</div>
+
 <!-- MODAL SLOT AGENDA -->
 <div class="overlay" id="ov-slot" onclick="if(event.target===this)closeModal('ov-slot')">
   <div class="modal">
@@ -1556,8 +1569,8 @@ function esperarAuth(){return Promise.resolve();}
 
 <div class="toast" id="toast"></div>
 
-<script src="app-demo.js?v=2026-10-15-4"></script>
-<script src="lib/acoes-voz.js?v=2026-10-15-4"></script>
+<script src="app-demo.js?v=2026-10-17-2"></script>
+<script src="lib/acoes-voz.js?v=2026-10-17-2"></script>
 <script>
 /* Rede de seguranca do par tela+codigo.
 
@@ -1572,7 +1585,7 @@ function esperarAuth(){return Promise.resolve();}
    torto, o app busca o par certo uma vez e, se insistir, DIZ o que houve em
    vez de deixar voce tocando em botao que nao responde. */
 (function(){
-  var ESPERADA='2026-10-15-4';
+  var ESPERADA='2026-10-17-2';
   function tela(motivo){
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;z-index:99999;background:#1A2E14;color:#FAF7F2;'

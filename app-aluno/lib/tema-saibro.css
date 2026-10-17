@@ -623,6 +623,39 @@ html body:not(#jv) #pedir-box .btn-ghost{background:#F3EDE2!important;border:1px
 #apg-evolucao .evo-prio .lbl{color:#CFC7B8!important}
 #apg-evolucao .evo-prio b{color:#E7986D!important}
 #apg-aulas .empty,#apg-torneio .empty{background:rgba(255,255,255,.06)!important;color:#D8D2C7!important;-webkit-text-fill-color:#D8D2C7!important}
+.evo-subiu{color:#2E7D52}
+.evo-obj{color:#3a3128}
+.evo-obj b{color:var(--text)}
+.evo-prio.evo-prio-pend b{color:#6E6656}
+.evo-ult{color:var(--muted)}
+.evo-hist .hr b.evo-nv{color:var(--nv,var(--lcd))}
+.evo-hist .hr .evo-reg-li{color:var(--muted)}
+.evo-hist .hr .evo-reg-li b{color:var(--text)}
+.evo-hist .hr b.evo-sim{color:#2E7D52}
+.evo-hist .hr b.evo-nao{color:#7A5F2E}
+.evo-step.evo-lv1:not(.future),.evo-step.evo-lv2:not(.future){color:#1B1408;text-shadow:none}
+#apg-evolucao .evo-panel,#apg-evolucao .evo-mes,#apg-evolucao .evo-hist .hr{background:rgba(255,255,255,.06)!important;border-color:rgba(255,255,255,.14)!important;box-shadow:none!important}
+#apg-evolucao .evo-sec{color:#E7986D!important;-webkit-text-fill-color:#E7986D!important}
+#apg-evolucao .evo-row .st{color:#E9E4D9!important;-webkit-text-fill-color:#E9E4D9!important}
+#apg-evolucao .evo-row .st b{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+#apg-evolucao .evo-row .st .up{color:#9BD8AE!important;-webkit-text-fill-color:#9BD8AE!important}
+#apg-evolucao .evo-bar,#apg-evolucao .evo-mes-track{background:rgba(255,255,255,.14)!important}
+#apg-evolucao .evo-mes-lab{color:#D2CBBE!important;-webkit-text-fill-color:#D2CBBE!important}
+#apg-evolucao .evo-mes-val{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+#apg-evolucao .evo-mes-cap,#apg-evolucao .evo-subiu{color:#9BD8AE!important;-webkit-text-fill-color:#9BD8AE!important}
+#apg-evolucao .evo-obj{color:#E9E4D9!important;-webkit-text-fill-color:#E9E4D9!important}
+#apg-evolucao .evo-obj b,#apg-evolucao .evo-hist .hr b.evo-nv{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+#apg-evolucao .evo-prio.evo-prio-pend b,#apg-evolucao .evo-ult,#apg-evolucao .evo-hist .hr .evo-reg-li{color:#D2CBBE!important;-webkit-text-fill-color:#D2CBBE!important}
+#apg-evolucao .evo-hist .hr .evo-reg-li b{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+#apg-evolucao .evo-hist .hr b.evo-sim{color:#9BD8AE!important;-webkit-text-fill-color:#9BD8AE!important}
+#apg-evolucao .evo-hist .hr b.evo-nao{color:#E7986D!important;-webkit-text-fill-color:#E7986D!important}
+.evo-levelup .t1{color:#F3CAB4}
+.evo-pal .p:nth-child(1),.evo-step.evo-lv0:not(.future){background:#8E5A2B!important}
+.modal .btn-ghost{color:#3A2E22!important;-webkit-text-fill-color:#3A2E22!important}
+#apg-evolucao .evo-xp .xp-eye{color:#E7986D!important;-webkit-text-fill-color:#E7986D!important}
+#apg-agenda .sl.meu i{background:rgba(0,0,0,.26)!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+.comprar-item b,.comprar-item b small{color:#A8401E!important;-webkit-text-fill-color:#A8401E!important}
+.login-priv{color:rgba(250,247,242,.8)}
 :root{--jv-bg:#091711;--jv-card:rgba(31,45,39,0.42);--jv-panel:rgba(39,53,47,0.42);--jv-control:rgba(43,59,52,0.42);--jv-ink:#101E18;--jv-text:#F6F2EA;--jv-muted:#D9E2D8;--jv-gold:#D57B4A;--jv-border:rgba(232,214,190,.25)}
 html,body{background:var(--jv-bg)!important;color:var(--jv-text)!important}
 #app>.top.jv-premium-hero{background:linear-gradient(90deg,rgba(9,23,17,.94),rgba(9,23,17,.68) 60%,rgba(9,23,17,.20)),url('../assets/jv-saibro-realista.webp') center 64%/cover!important}
@@ -752,3 +785,12 @@ html body:not(#jv) .fic-b.neutro,html body:not(#jv) .fic-voltar,html body:not(#j
 .seg.jv-ref-ag-tabs button.on,.jv-ref-ag-tabs button.on{background:#C2582E!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
 /* contraste: cabeçalho dos dias da agenda opaco (translúcido sobre a grade clara virava cinza) */
 html body:not(#jv) #apg-agenda .wk th,html body:not(#jv) #apg-agenda .wk th *{background:#1D2622!important}
+/* leitura: no aluno, as janelas (agendar, Pix, planos, autoavaliação...) foram
+   desenhadas para fundo claro; o vidro escuro deixava o texto escuro invisível */
+html body:not(#jv):not(#jv-al) .modal{background:#F3EDE4!important;-webkit-backdrop-filter:none;backdrop-filter:none;border:1px solid rgba(60,40,20,.14)!important;box-shadow:0 -12px 40px rgba(0,0,0,.40)!important}
+html body:not(#jv):not(#jv-al) .modal .btn-ghost{background:#E6DED2!important;-webkit-backdrop-filter:none;backdrop-filter:none;border:1px solid #CDBFAC!important;color:#3A2E22!important;-webkit-text-fill-color:#3A2E22!important;box-shadow:none!important}
+/* leitura: branco sobre o saibro dos botões passa da régua com o tom um pouco mais escuro */
+html body:not(#jv) .btn-clay,html body:not(#jv) .login-btn{background:#B54E29!important}
+html body:not(#jv):not(#jv-al) .seg button.on,html body:not(#jv):not(#jv-al) .seg .on{background:#B54E29!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+html body:not(#jv):not(#jv-al) #ov-tor-result .tor-radio label{background:#2C4A3D!important}
+html body:not(#jv) #apg-torneio .atg-head,html body:not(#jv) #apg-torneio .tor-cap-emb{background:#1D3B2F!important}
