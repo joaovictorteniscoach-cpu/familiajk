@@ -8,6 +8,31 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-17 · Claude Code: Ferramentas da agenda da Gestão numa linha
+
+Pedido do João: ver se as ferramentas da Agenda tinham botões repetidos ou
+inúteis e deixar mais prático. Eram 5 botões numa gaveta (`details.ag-ferr`).
+- **Repetido:** "🔄 Agendamentos de alunos" (`syncRequests(false)`). A busca já
+  é automática ao abrir a Agenda (`go('agenda')`), a cada 45 s e ao carregar.
+  O botão saiu e a função continua igual.
+- **Mesma tarefa em dois botões:** "Enviar livres (WhatsApp)" e "Imagem da
+  semana" viraram **"📤 Divulgar livres"**.
+  - Ele abre `ov-divulgar` (`abrirDivulgar`), que pergunta o formato: texto no
+    WhatsApp ou imagem.
+  - As funções `enviarHorariosLivres` e `enviarSemanaImg` não mudaram.
+- **Só quando precisa:** "🔗 Vincular nomes" (`pintarAgFerr`, chamado em
+  `renderAgenda`).
+  - Só aparece quando há nome da agenda sem aluno, já com a quantidade
+    (`gruposNaoVinculados`).
+  - Só lê o banco; vincular continua sendo escolha do João na lista.
+- **Fica:** "🗓️ Horários" (aula · locação · fechado).
+- **Resultado:** dois botões lado a lado, sempre à mostra, sem gaveta, e um
+  terceiro só quando precisa.
+- **Teste:** `ferramentas/testar-ferramentas-agenda-browser.cjs` (8
+  verificações, nos dois temas), no `validar-pr`. Confere também que abrir as
+  ferramentas não grava nada.
+- O ↻ do topo é o Histórico de mudanças, não a busca de agendamentos; não mudou.
+
 ## 2026-10-17 · Claude Code: varredura de leitura (contraste) no app do aluno
 
 Pedido do João: "algumas abas com problema de contraste, onde não dá para ler",

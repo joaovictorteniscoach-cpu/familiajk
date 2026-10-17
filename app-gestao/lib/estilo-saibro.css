@@ -331,6 +331,15 @@ body[data-modo="prof"] .so-dono{display:none!important}
 .ag-ferr .ferr-corpo button.destaque{border:none;background:var(--green);color:#fff}
 .ag-ferr .ferr-corpo button.ouro{border:none;background:var(--gold);color:var(--green)}
 @media (prefers-reduced-motion:reduce){.ag-ferr>summary::after{transition:none}}
+/* Ferramentas numa linha (17/10): dois botões lado a lado, sem gaveta */
+.ag-ferr .agf-corpo{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px}
+.ag-ferr .agf-corpo button{min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;line-height:1.2;font-size:13.5px}
+.ag-ferr .agf-corpo button small{font-size:11px;font-weight:600;opacity:.92}
+.ag-ferr .agf-corpo button[hidden]{display:none!important}
+.ag-ferr .agf-corpo button.agf-vin{grid-column:1/-1;min-height:46px;font-size:12.5px}
+.agf-opcoes{display:flex;flex-direction:column;gap:9px;margin:12px 0 4px}
+.agf-opcoes .btn{width:100%;min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.agf-opcoes .btn small{font-size:11.5px;font-weight:600;opacity:.92}
 .legend span{font-size:10px;font-weight:600;padding:3px 9px;border-radius:14px;color:#fff;letter-spacing:.3px}
 .slot{display:flex;gap:10px;margin-bottom:7px}
 .slot-h{width:46px;font-size:12px;font-weight:700;color:var(--muted);padding-top:9px;flex-shrink:0;text-align:right}

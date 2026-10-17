@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-17-1';
+const VERSAO='2026-10-17-2';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -3773,6 +3773,21 @@ function gruposNaoVinculados(){
   return Object.values(grupos).sort((a,b)=>a.titulo.localeCompare(b.titulo));
 }
 function abrirVincular(){renderVincularList();document.getElementById('ov-link').classList.add('on');}
+/* Ferramentas da agenda (17/10): o botão de vincular só aparece quando há
+   nome da agenda sem aluno, já com a quantidade. Só lê; não muda nada. */
+function pintarAgFerr(){
+  const b=document.getElementById('agf-vincular');if(!b)return;
+  const n=gruposNaoVinculados().length;
+  b.hidden=!n;
+  b.textContent=n?('🔗 '+n+' nome'+(n===1?'':'s')+' da agenda sem aluno cadastrado · vincular'):'';
+}
+/* Texto e imagem dos horários livres num botão só: aqui se escolhe o formato. */
+function abrirDivulgar(){
+  const d=semanaDias(),f=x=>String(x.getDate()).padStart(2,'0')+'/'+String(x.getMonth()+1).padStart(2,'0');
+  const el=document.getElementById('agf-semana');
+  if(el)el.textContent='Semana de '+f(d[0])+' a '+f(d[d.length-1])+', a que está aberta na agenda.';
+  document.getElementById('ov-divulgar').classList.add('on');
+}
 function renderVincularList(){
   const grupos=gruposNaoVinculados();
   const el=document.getElementById('link-list');
@@ -4117,6 +4132,7 @@ function horasVisiveis(dias){
 function renderAgenda(){
   renderProfFiltro();
   renderLegendaAg();
+  pintarAgFerr();
   const hojeK=dKey(new Date()),agoraH=slotAgora();
   const el=document.getElementById('ag-view');
   const lbl=document.getElementById('ag-label');
