@@ -1597,13 +1597,61 @@ html body:not(#jv) #pedir-box .btn-ghost{background:#F3EDE2!important;border:1px
 #apg-evolucao .evo-prio .lbl{color:#CFC7B8!important}
 #apg-evolucao .evo-prio b{color:#F2CF62!important}
 #apg-aulas .empty,#apg-torneio .empty{background:rgba(255,255,255,.06)!important;color:#D8D2C7!important;-webkit-text-fill-color:#D8D2C7!important}
+
+/* ===== Leitura (17/10): varredura de contraste em todas as telas =====
+   Medido por ferramentas/testar-contraste-aluno-browser.cjs (régua WCAG AA).
+   Evolução: o desenho era de fundo claro; na página escura os painéis viram
+   vidro escuro e as letras ficam claras. A janela antiga (#ov-evolucao, fundo
+   claro) segue o desenho original pelas regras sem #apg-evolucao. */
+.evo-subiu{color:#2E7D52;font-weight:800}
+.evo-obj{font-size:13px;color:#3a3128;margin:-6px 0 12px;font-weight:600}
+.evo-obj b{color:var(--text);font-weight:800}
+.evo-prio.evo-prio-pend b{color:#6E6656}
+.evo-ult{font-size:11px;color:var(--muted);text-align:center;margin-top:12px}
+.evo-hist .hr b.evo-nv{color:var(--nv,var(--lcd))}
+.evo-nv i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+.evo-hist .hr .evo-reg-li{font-size:11.5px;color:var(--muted);margin-top:3px}
+.evo-hist .hr .evo-reg-li b{color:var(--text)}
+.evo-hist .hr b.evo-sim{color:#2E7D52}
+.evo-hist .hr b.evo-nao{color:#7A5F2E}
+.evo-step.evo-lv1:not(.future),.evo-step.evo-lv2:not(.future){color:#1B1408;text-shadow:none}
+#apg-evolucao .evo-panel,#apg-evolucao .evo-mes,#apg-evolucao .evo-hist .hr{background:rgba(255,255,255,.06)!important;border-color:rgba(255,255,255,.14)!important;box-shadow:none!important}
+#apg-evolucao .evo-sec{color:#F2CF62!important;-webkit-text-fill-color:#F2CF62!important}
+#apg-evolucao .evo-row .st{color:#E9E4D9!important;-webkit-text-fill-color:#E9E4D9!important}
+#apg-evolucao .evo-row .st b{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+#apg-evolucao .evo-row .st .up{color:#9BD8AE!important;-webkit-text-fill-color:#9BD8AE!important}
+#apg-evolucao .evo-bar,#apg-evolucao .evo-mes-track{background:rgba(255,255,255,.14)!important}
+#apg-evolucao .evo-mes-lab{color:#D2CBBE!important;-webkit-text-fill-color:#D2CBBE!important}
+#apg-evolucao .evo-mes-val{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+#apg-evolucao .evo-mes-cap,#apg-evolucao .evo-subiu{color:#9BD8AE!important;-webkit-text-fill-color:#9BD8AE!important}
+#apg-evolucao .evo-obj{color:#E9E4D9!important;-webkit-text-fill-color:#E9E4D9!important}
+#apg-evolucao .evo-obj b,#apg-evolucao .evo-hist .hr b.evo-nv{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+#apg-evolucao .evo-prio.evo-prio-pend b,#apg-evolucao .evo-ult,#apg-evolucao .evo-hist .hr .evo-reg-li{color:#D2CBBE!important;-webkit-text-fill-color:#D2CBBE!important}
+#apg-evolucao .evo-hist .hr .evo-reg-li b{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+#apg-evolucao .evo-hist .hr b.evo-sim{color:#9BD8AE!important;-webkit-text-fill-color:#9BD8AE!important}
+#apg-evolucao .evo-hist .hr b.evo-nao{color:#F2CF62!important;-webkit-text-fill-color:#F2CF62!important}
+.evo-levelup .t1{color:#FFE7A8}
+/* mês sem avaliação nova: só a barra fica apagada; o rótulo continua legível */
+#apg-evolucao .evo-mes-row.carry{opacity:1}
+#apg-evolucao .evo-mes-row.carry .evo-mes-track{opacity:.5}
+/* folga para o sol da quadra: textos que passavam raspando na régua */
+.evo-pal .p:nth-child(1),.evo-step.evo-lv0:not(.future){background:#8E5A2B!important}
+.modal .btn-ghost{color:#3A2E22!important;-webkit-text-fill-color:#3A2E22!important}
+#apg-evolucao .evo-xp .xp-eye{color:#F2CF62!important;-webkit-text-fill-color:#F2CF62!important}
+/* agenda: etiqueta "confirmada · toque para cancelar" sobre o azul */
+#apg-agenda .sl.meu i{background:rgba(0,0,0,.26)!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+/* preços dos planos e da compra: laranja mais escuro sobre o cartão claro */
+.comprar-item b,.comprar-item b small{color:#A8401E!important;-webkit-text-fill-color:#A8401E!important}
+/* entrada: subtítulo e link de privacidade legíveis */
+.login .login-sub{opacity:1}
+.login-priv{color:rgba(250,247,242,.8)}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-15-4">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-17-1">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-15-4">
-<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-15-4">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-17-1">
+<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-17-1">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -2085,7 +2133,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-10-15-4"></script>
+<script src="lib/icones.js?v=2026-10-17-1"></script>
 </div>
 
 <!-- MODAL ESCOLHER O QUE FAZER NO HORÁRIO -->
@@ -2305,7 +2353,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-10-15-4';
+const VERSAO='2026-10-17-1';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -3744,12 +3792,12 @@ function evolucaoHTML(){
   let subiu='';
   if(!pendente&&prev&&prev.nivel&&prev.nivel!==cur.nivel){
     const pi=TRILHA_NIVEIS.indexOf(prev.nivel);
-    if(ci>pi)subiu=' <span style="color:#2E7D52;font-weight:800">↑ subiu de nível!</span>';
+    if(ci>pi)subiu=' <span class="evo-subiu">↑ subiu de nível!</span>';
   }
   const trilha=TRILHA_NIVEIS.map((n,i)=>{
     const feito=!pendente&&i<=ci;
     const bg=feito?('background:'+metalDe(n).m):'';
-    const cls='evo-step '+(feito?'':'future')+(i===ci?' cur':'');
+    const cls='evo-step evo-lv'+i+(feito?'':' future')+(i===ci?' cur':'');
     return `<div class="${cls}" style="${bg}">${n}</div>`;
   }).join('');
   const met=pendente?{m:'#A79E8C',d:'#6B5E4A',l:'#C3BAA8'}:metalDe(cur.nivel);
@@ -3779,10 +3827,10 @@ function evolucaoHTML(){
   }
   html+=`<div style="text-align:center;margin:2px 0 10px"><span class="evo-badge"${pendente?' style="background:#8A8272"':''}>Nível: ${pendente?'a avaliar':(cur.nivel||'—')}</span>${subiu}</div>`;
   html+=`<div class="evo-trilha">${trilha}</div>`;
-  if(pendente){html+=`<div class="evo-prio" style="background:#F4F1E8"><div class="lbl">Prioridade do ciclo</div><b style="color:#8A8272">a definir na avaliação</b></div>`;}
+  if(pendente){html+=`<div class="evo-prio evo-prio-pend"><div class="lbl">Prioridade do ciclo</div><b>a definir na avaliação</b></div>`;}
   else{
     if(cur.prioridade){html+=`<div class="evo-prio"><div class="lbl">Prioridade do ciclo</div><b>${escHtml(cur.prioridade)}</b></div>`;}
-    if(cur.objetivo){html+=`<p style="font-size:13px;color:#3a3128;margin:-6px 0 12px;font-weight:600">🎯 Meu objetivo: <b style="color:var(--text);font-weight:800">${escHtml(cur.objetivo)}</b></p>`;}
+    if(cur.objetivo){html+=`<p class="evo-obj">🎯 Meu objetivo: <b>${escHtml(cur.objetivo)}</b></p>`;}
   }
   html+='</div>';                                     // fecha aba Resumo
   html+='<div class="evo-tab" data-tab="fund">';       // abre aba Fundamentos
@@ -3795,11 +3843,11 @@ function evolucaoHTML(){
   html+='<div class="evo-tab" data-tab="hist">';       // abre aba Histórico
   if(!pendente&&av.length>1){
     html+='<div class="evo-sec">🗓️ Histórico</div><div class="evo-hist">';
-    html+=av.slice().reverse().map(v=>`<div class="hr"><span>${(v.data||'').split('-').reverse().join('/')}</span><b style="color:${metalDe(v.nivel).d}">${v.nivel||'—'}</b></div>`).join('');
+    html+=av.slice().reverse().map(v=>`<div class="hr"><span>${(v.data||'').split('-').reverse().join('/')}</span><b class="evo-nv" style="--nv:${metalDe(v.nivel).d}"><i style="background:${metalDe(v.nivel).m}"></i>${escHtml(v.nivel||'—')}</b></div>`).join('');
     html+='</div>';
   }
   html+=evoRegistrosHTML(rg,false);
-  html+=pendente?'':`<p style="font-size:11px;color:var(--muted);text-align:center;margin-top:12px">Última avaliação: ${(cur.data||'').split('-').reverse().join('/')} · pelo Prof. João</p>`;
+  html+=pendente?'':`<p class="evo-ult">Última avaliação: ${(cur.data||'').split('-').reverse().join('/')} · pelo Prof. João</p>`;
   if(!pendente&&av.length<=1&&!rg.length)html+='<p class="evo-empty">Seu histórico aparece aqui a partir da 2ª avaliação. 🎾</p>';
   html+='</div>';   // fecha aba Histórico
   html+='</div>';   // fecha .evo-font
@@ -3852,7 +3900,7 @@ function celebraNivel(nome,met){
   met=met||metalDe('Construção');
   confeteBurst(met.m);
   const el=document.createElement('div');el.className='evo-levelup';
-  el.style.background='linear-gradient(135deg,'+met.d+','+met.m+')';
+  el.style.background='linear-gradient(135deg,#0E1F18,'+met.d+')';
   el.innerHTML='<div class="em">🎉🎾</div><div class="t1">Você subiu de nível!</div><div class="t2">'+escHtml(nome)+'</div>';
   document.body.appendChild(el);
   requestAnimationFrame(()=>el.classList.add('on'));
@@ -3876,12 +3924,12 @@ function evoRegistrosHTML(rg,solo){
   if(!rg||!rg.length)return '';
   let h=(solo?'<p class="sub" style="margin-bottom:10px">Seus registros de aula. A avaliação completa da Trilha aparece aqui quando o João preencher. 🎾</p>':'')+'<div class="evo-sec">📝 Registros de aula</div><div class="evo-hist">';
   h+=rg.slice().reverse().slice(0,6).map(v=>{
-    const ev=v.evoluiu==='sim'?'<b style="color:#2E7D52">✅ evoluiu</b>':(v.evoluiu==='nao'?'<b style="color:#8a6d3b">➖ seguimos</b>':'');
+    const ev=v.evoluiu==='sim'?'<b class="evo-sim">✅ evoluiu</b>':(v.evoluiu==='nao'?'<b class="evo-nao">➖ seguimos</b>':'');
     const cam=v.camada?' · '+escHtml(v.camada):'';
     const INT={leve:'🟢 leve',media:'🟡 média',forte:'🔴 forte'};
-    const li=(rot,val)=>val?'<div style="font-size:11.5px;color:var(--muted);margin-top:3px">'+rot+': <b style="color:var(--text)">'+escHtml(val)+'</b></div>':'';
+    const li=(rot,val)=>val?'<div class="evo-reg-li">'+rot+': <b>'+escHtml(val)+'</b></div>':'';
     let extra='';
-    if(v.intens&&INT[v.intens])extra+='<div style="font-size:11.5px;color:var(--muted);margin-top:3px">Intensidade: <b style="color:var(--text)">'+INT[v.intens]+'</b></div>';
+    if(v.intens&&INT[v.intens])extra+='<div class="evo-reg-li">Intensidade: <b>'+INT[v.intens]+'</b></div>';
     extra+=li('O que treinamos',v.conteudo);
     extra+=li('⭐ Ponto alto',v.destaque);
     extra+=li('🏠 Treino em casa',v.casa);
@@ -5415,7 +5463,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-15-4').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-17-1').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava

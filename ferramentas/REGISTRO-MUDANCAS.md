@@ -8,6 +8,63 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-17 · Claude Code: varredura de leitura (contraste) no app do aluno
+
+Pedido do João: "algumas abas com problema de contraste, onde não dá para ler",
+principalmente Avaliação (Evolução) e Minhas aulas. O #240 (torneio, robô e
+Netlify) foi publicado com o OK dele.
+
+- **Verificador novo:** `ferramentas/testar-contraste-aluno-browser.cjs`, já no
+  `validar-pr`.
+  - **O que mede:** mede pela imagem da tela, não pelo CSS. Esconde as letras,
+    fotografa o fundo real (degradê, vidro, foto) e compara cada texto com o
+    fundo atrás dele.
+  - **Régua:** WCAG AA, 4,5:1 (3:1 para texto grande). Vale o pior pedaço do
+    fundo.
+  - **Alcance:** 58 telas nos dois temas: abas, abas internas, janelas,
+    avisos do Início, entrada e comemoração de nível. Mede também o que se
+    digita nos campos e os textos de exemplo.
+  - **Fora:** texto dentro de grupo fechado (`details`).
+  - O teste antigo do visual premium só media fundo liso e pulava degradê e
+    vidro.
+- **Antes: 376 textos abaixo da régua. Depois: 0.**
+- **Causas e correções:**
+  - **Tema Saibro, janelas:** o vidro escuro (`VIDRO` em `tema-saibro.py`)
+    pintava as janelas do aluno de verde-escuro, com texto escuro (Agendar,
+    Pix, Planos, Autoavaliação, Comprar, Termo, Cadastro, Torneio).
+    - No aluno, a janela volta a ser clara (areia `#F3EDE4`), como no clássico.
+    - "Fechar/Cancelar" ficam escuros.
+    - Mudança em `EXTRA_ALUNO`, então a Gestão não muda.
+  - **Evolução (página escura, desenho de fundo claro):**
+    - Fundamentos: os nomes saíam brancos sobre cartão branco. Os painéis viram
+      vidro escuro.
+    - Mês a mês, Meu objetivo, Registros de aula, Histórico e "Última
+      avaliação" ganharam cores claras.
+    - As cores fixas no HTML gerado viraram classes (`evo-subiu`, `evo-obj`,
+      `evo-ult`, `evo-nv`, `evo-reg-li`, `evo-sim`, `evo-nao`,
+      `evo-prio-pend`, `evo-lv0…`).
+    - A janela antiga `#ov-evolucao` (fundo claro) mantém o desenho original.
+  - **Trilha de níveis:** Impulso (prata) e Construção (ouro) com letra
+    escura; Bronze um tom mais escuro.
+  - **Comemoração de nível:** fundo escuro→metal (antes dourado sobre dourado).
+  - **Laranja com letra branca:** o tom do Saibro `#C2582E` dava 4,4. No aluno
+    passa a `#B54E29`: botões, abas ativas, entrada e "Minhas aulas" do Início.
+    No Saibro, a aba ativa tinha letra escura sobre laranja e virou branca.
+  - **Pontos isolados:**
+    - etiqueta "confirmada · toque para cancelar" da agenda;
+    - preços dos planos e da compra;
+    - cabeçalho do grupo no Torneio (Saibro);
+    - opções do resultado do torneio;
+    - mês sem avaliação nova (só a barra fica apagada);
+    - "Seja bem-vindo" e Política de Privacidade na entrada.
+  - **Folga para o sol da quadra:** textos que passavam raspando (4,53–4,6)
+    foram reforçados: Bronze, "Fechar" das janelas no clássico e "Evolução
+    geral".
+- **Nada muda em dados, créditos ou valores; só cores.**
+  - `testar-locacao-minhas-aulas` agora espera o laranja novo
+    `rgb(181, 78, 41)`.
+- Versão 2026-10-17-1.
+
 ## 2026-10-15 (noite) · Claude Code: jogo do torneio aparecia como "aula" no app do aluno
 
 O João viu: o aluno marca jogo do torneio, a Gestão mostra "Torneio", mas o app

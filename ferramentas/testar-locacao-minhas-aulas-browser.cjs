@@ -173,7 +173,7 @@ async function contexto(browser,base,opts){
     assert.deepEqual(nav.map(t=>t.replace(/\s+/g,' ').trim()),['Início','Agenda','Minhas aulas','Evolução','Créditos','Perfil']);
     const bt=p.locator('#home-minhas-aulas');assert.equal(await bt.isVisible(),true);
     assert.match(await bt.innerText(),/Minhas aulas\s*3 feitas · 4 marcadas em outubro/);
-    const cor=await bt.evaluate(e=>getComputedStyle(e).backgroundColor);assert.equal(cor,'rgb(194, 88, 46)','botão laranja');
+    const cor=await bt.evaluate(e=>getComputedStyle(e).backgroundColor);assert.equal(cor,'rgb(181, 78, 41)','botão laranja (tom que passa na régua de leitura com letra branca)');
     assert.match(await p.locator('#apg-inicio .jv-home-card').nth(2).innerText(),/Próxima aula ›/);
     if(process.env.JV_SHOTS)await p.screenshot({path:path.join(process.env.JV_SHOTS,'aluno-inicio-'+tema+'.png')});
     await bt.click();

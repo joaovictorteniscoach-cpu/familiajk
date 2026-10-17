@@ -335,6 +335,15 @@ EXTRA_ALUNO = """
 .seg.jv-ref-ag-tabs button.on,.jv-ref-ag-tabs button.on{background:#C2582E!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
 /* contraste: cabeçalho dos dias da agenda opaco (translúcido sobre a grade clara virava cinza) */
 html body:not(#jv) #apg-agenda .wk th,html body:not(#jv) #apg-agenda .wk th *{background:#1D2622!important}
+/* leitura: no aluno, as janelas (agendar, Pix, planos, autoavaliação...) foram
+   desenhadas para fundo claro; o vidro escuro deixava o texto escuro invisível */
+html body:not(#jv):not(#jv-al) .modal{background:#F3EDE4!important;-webkit-backdrop-filter:none;backdrop-filter:none;border:1px solid rgba(60,40,20,.14)!important;box-shadow:0 -12px 40px rgba(0,0,0,.40)!important}
+html body:not(#jv):not(#jv-al) .modal .btn-ghost{background:#E6DED2!important;-webkit-backdrop-filter:none;backdrop-filter:none;border:1px solid #CDBFAC!important;color:#3A2E22!important;-webkit-text-fill-color:#3A2E22!important;box-shadow:none!important}
+/* leitura: branco sobre o saibro dos botões passa da régua com o tom um pouco mais escuro */
+html body:not(#jv) .btn-clay,html body:not(#jv) .login-btn{background:#B54E29!important}
+html body:not(#jv):not(#jv-al) .seg button.on,html body:not(#jv):not(#jv-al) .seg .on{background:#B54E29!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+html body:not(#jv):not(#jv-al) #ov-tor-result .tor-radio label{background:#2C4A3D!important}
+html body:not(#jv) #apg-torneio .atg-head,html body:not(#jv) #apg-torneio .tor-cap-emb{background:#1D3B2F!important}
 """ % {"b": BOLA, "t": BOLA_TXT}
 
 CAB_AL = ("/* GERADO por ferramentas/tema-saibro.py — NÃO EDITE. Só as cores do <style> de\n"
