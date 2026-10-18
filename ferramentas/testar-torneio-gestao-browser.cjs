@@ -73,7 +73,8 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
      assert.equal(r.velha,false,'a tabela larga e os campos de digitar saíram');
      assert.equal(r.linhas,5);
      assert.ok(r.alturas.every(h=>h>=44&&h<=64),'linhas baixas, mas com toque confortável: '+r.alturas);
-     assert.equal(r.textoLinha,'⠿ 1 Jogador Um Sobrenome 🔗 3 1 0 10','empate em 10 pts: desempata por vitórias');
+     // Jogadora Dois (2V 2D 1WO) = 6+2+3 = 11 lidera; Jogador Um e Jogador Três empatam em 10 e o desempate é por vitórias
+     assert.equal(r.textoLinha,'⠿ 2 Jogador Um Sobrenome 🔗 3 1 0 10','empate em 10 pts: desempata por vitórias');
      assert.equal(r.cab,'# JOGADOR V D WO PTS');
      if(process.env.JV_SHOTS)await g.screenshot({path:path.join(process.env.JV_SHOTS,'gestao-torneio-'+tema+'-'+largura+'.png'),fullPage:true});
     });
@@ -106,7 +107,7 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
     await g.locator('#pg-torneio .trn-row',{hasText:'Jogadora Dois'}).click();
     assert.equal(await g.evaluate(()=>document.getElementById('ov-tor-jog').classList.contains('on')),true);
     const txt=await g.locator('#trj-corpo').innerText();
-    assert.match(txt,/Jogadora Dois/);assert.match(txt,/Grupo Ouro · 3º lugar · 9 pts/);
+    assert.match(txt,/Jogadora Dois/);assert.match(txt,/Grupo Ouro · 1º lugar · 11 pts/);
     if(process.env.JV_SHOTS)await g.screenshot({path:path.join(process.env.JV_SHOTS,'gestao-torneio-ficha-'+tema+'.png')});
     await g.locator('#trj-corpo button[aria-label="Somar 1 em Vitórias"]').click();
     assert.deepEqual(await jog('A','Jogadora Dois'),{v:3,d:2,wo:1});
@@ -175,10 +176,16 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
      return {auto,depois:document.getElementById('tr-venc').value,placar:document.getElementById('tr-placar').hidden,rot:document.getElementById('tr-venc-lbl').textContent};});
     assert.deepEqual(w,{auto:'Jogadora Dois',depois:'',placar:true,rot:'Quem venceu por W.O.?'});
     if(process.env.JV_SHOTS)await g.screenshot({path:path.join(process.env.JV_SHOTS,'gestao-torneio-wo-'+tema+'.png')});
+    const ptsAntes=await g.evaluate(()=>torAtual().jogadores.filter(p=>p.group==='A').map(p=>[p.name,calcPtsTor(p)]));
     const r2=await lancar({g:'A',p1:'Jogadora Dois',p2:'Jogador Um Sobrenome',wo:true,venc:'Jogador Um Sobrenome'});
     assert.deepEqual(r2.toast,['✓ Jogador Um Sobrenome venceu por W.O.']);
     assert.deepEqual(await jog('A','Jogador Um Sobrenome'),{v:3,d:1,wo:1},'W.O. soma só no WO de quem venceu, como antes');
     assert.deepEqual(await jog('A','Jogadora Dois'),{v:2,d:2,wo:1});
+    // regra do João (18/10): W.O. vale 3 para quem compareceu, igual a uma vitória, e 0 para quem faltou
+    const ptsDepois=await g.evaluate(()=>torAtual().jogadores.filter(p=>p.group==='A').map(p=>[p.name,calcPtsTor(p)]));
+    const dif=Object.fromEntries(ptsDepois.map(([n,v],i)=>[n,v-ptsAntes[i][1]]));
+    assert.deepEqual(dif,{'Jogador Um Sobrenome':3,'Jogadora Dois':0,'Jogador Três Com Um Nome Bem Comprido Mesmo':0});
+    assert.deepEqual(await g.evaluate(()=>[ptsEtapa({v:1}),ptsEtapa({d:1}),ptsEtapa({wo:1}),ptsEtapa({})]),[3,1,3,0]);
    });
    await check(tema+': com uma categoria só, ela já vem escolhida',async()=>{
     await reset();

@@ -21,13 +21,22 @@ async function medir(p,foto){
    if(el.checkVisibility&&!el.checkVisibility({contentVisibilityAuto:true,visibilityProperty:true}))return false;
    const d=el.closest('details:not([open])');if(d&&!el.closest('summary'))return false;   // grupo fechado não aparece
    for(let e=el;e;e=e.parentElement){const s=getComputedStyle(e);if(s.display==='none'||s.visibility!=='visible'&&s.visibility!=='')return false;}return true;};
+  const corteDe=el=>{let c={l:-1e9,t:-1e9,r:1e9,b:1e9};
+   for(let e=el;e&&e!==document.documentElement;e=e.parentElement){const s=getComputedStyle(e);
+    // o corte é na caixa de dentro da borda (padding box), não na borda
+    if(s.overflowX!=='visible'||s.overflowY!=='visible'){const k=e.getBoundingClientRect(),l=k.left+e.clientLeft,t=k.top+e.clientTop;
+     c={l:Math.max(c.l,l),t:Math.max(c.t,t),r:Math.min(c.r,l+e.clientWidth),b:Math.min(c.b,t+e.clientHeight)};}}
+   return c;};
   const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let n;
   while((n=w.nextNode())){
    const t=n.textContent.replace(/\s+/g,' ').trim();if(!t||!/[\p{L}\p{N}]/u.test(t))continue;
    const el=n.parentElement;if(!el||/^(SCRIPT|STYLE|NOSCRIPT|OPTION|TITLE)$/.test(el.tagName)||!visivel(el))continue;
    const op=opac(el);if(op<0.05)continue;
    const r=document.createRange();r.selectNodeContents(n);
-   const rects=[...r.getClientRects()].filter(x=>x.width>2&&x.height>4&&x.bottom>0&&x.right>0&&x.left<innerWidth&&x.top<innerHeight);
+   // o que um ancestral com overflow corta não aparece (ex.: 3ª linha de um nome com line-clamp)
+   const c=corteDe(el);
+   const rects=[...r.getClientRects()].map(x=>{const l=Math.max(x.left,c.l),t=Math.max(x.top,c.t),rr=Math.min(x.right,c.r),b=Math.min(x.bottom,c.b);
+     return {left:l,top:t,right:rr,bottom:b,width:rr-l,height:b-t};}).filter(x=>x.width>2&&x.height>4&&x.bottom>0&&x.right>0&&x.left<innerWidth&&x.top<innerHeight);
    if(!rects.length)continue;
    const vis=rects.filter(x=>{const h=document.elementFromPoint(x.left+x.width/2,x.top+x.height/2);return h&&(h===el||el.contains(h)||h.contains(el));});
    if(!vis.length)continue;
