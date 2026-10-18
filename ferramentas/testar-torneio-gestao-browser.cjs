@@ -326,7 +326,11 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
      await w.locator('#ov-tor-result .trs-tipo label',{hasText:'W.O.'}).click();
      assert.deepEqual(await w.evaluate(()=>[[...document.querySelectorAll('#ov-tor-result .trs-tipo label')].map(l=>l.classList.contains('on')),document.getElementById('tr-placar').hidden]),[[false,true],true]);
     });
-    const a=await ctx.newPage();a.on('pageerror',e=>errW.push(e.message));a.on('dialog',d=>d.dismiss());
+    // contexto próprio: no WebKit, ligar o relógio fixo de novo numa segunda aba do mesmo contexto falha
+    const ctxA=await wk.newContext(Object.assign({},devices['iPhone 13'],{timezoneId:'America/Sao_Paulo',serviceWorkers:'block'}));
+    await ctxA.route('**/*',r=>{const u=new URL(r.request().url());if(u.origin!==base)return r.abort();if(u.pathname.includes('/lib/firebase-'))return r.fulfill({body:'',contentType:'text/javascript'});return r.continue();});
+    await ctxA.addInitScript(()=>sessionStorage.setItem('jv-bk-adiar','1'));
+    const a=await ctxA.newPage();a.on('pageerror',e=>errW.push(e.message));a.on('dialog',d=>d.dismiss());
     await a.clock.setFixedTime(AGORA);await a.goto(base+'/app-aluno/',{waitUntil:'load'});
     await a.waitForFunction(()=>typeof abrirRegResultado==='function');
     await check('iPhone (WebKit) · app do aluno: "Jogo | W.O." inteiro e as caixas de games na tela',async()=>{
@@ -337,7 +341,7 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
      if(process.env.JV_SHOTS)await a.screenshot({path:path.join(process.env.JV_SHOTS,'iphone-aluno-resultado.png')});
     });
     assert.deepEqual(errW,[]);
-    await ctx.close();
+    await ctx.close();await ctxA.close();
    }finally{await wk.close();}
   }
   console.log('\n✅ '+count+' verificações · torneio da Gestão');
