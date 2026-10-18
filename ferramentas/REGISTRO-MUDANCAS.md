@@ -44,6 +44,13 @@ eram grandes demais e o resultado não aceitava os games de cada set.
     depois de o jogo acabar e empate em sets. Não julga 6/5 nem pro-set.
   - Categoria única já vem escolhida.
   - O mesmo par já lançado na etapa pede confirmação.
+  - **iPhone:** o João mandou print da janela antiga quebrada.
+    - "Jogo normal | W.O." eram rádios dentro de `.field`, e o
+      `.field input{width:100%}` virava um círculo gigante no Safari, que
+      cortava o texto.
+    - Agora é uma chave "Jogo | W.O." fora de `.field`. A bolinha fica
+      escondida (1 px) e a marcação vem da classe `.on`, posta em
+      `trAtualiza`/`atrAtualiza`, sem depender de `:has`.
 - **Jogos guardados:** `t.jogos` = `{id, etapa, grupo, p1, p2, venc, tipo,
   sets, placar, data, ts, origem, por}`.
   - Lista "🎾 Jogos da etapa N" com **↩︎ Desfazer** (`desfazerJogoTor`). Só na
@@ -72,6 +79,11 @@ eram grandes demais e o resultado não aceitava os games de cada set.
   - `testar-torneio-gestao-browser.cjs` (novo, 32 verificações nos dois temas,
     no `validar-pr`). Inclui a leitura medida pela imagem na tela e nas
     janelas do torneio.
+    - Mais 2 no **iPhone (WebKit)**: Gestão e aluno, com "Jogo | W.O." inteiro,
+      sem bolinha e com as caixas de games na tela.
+    - No contêiner do Claude o WebKit não está instalado, então pula com aviso
+      (ensaiado no Chromium com a tela do iPhone 13). No `validar-pr` (`CI`)
+      é obrigatório.
   - `testar-torneio-aluno-browser.cjs` passou a 11 verificações.
   - Os dois falham na versão anterior.
   - O medidor de contraste pela imagem saiu para

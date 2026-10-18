@@ -226,7 +226,8 @@ body{background:var(--cream);color:var(--text)}
 .tor-radio label{border:1px solid var(--border);background:#fff}
 html body:not(#jv):not(#jv-al) #ov-tor-result .ats-tipo{border:1px solid #658473}
 html body:not(#jv):not(#jv-al) #ov-tor-result .ats-tipo label{border:none!important;background:rgba(43,59,52,0.42)!important;color:#F6F2EA!important;-webkit-text-fill-color:#F6F2EA!important}
-html body:not(#jv):not(#jv-al) #ov-tor-result .ats-tipo label:has(input:checked){background:#D57B4A!important;color:#101E18!important;-webkit-text-fill-color:#101E18!important}
+html body:not(#jv):not(#jv-al) #ov-tor-result .ats-tipo input{border:0!important}
+html body:not(#jv):not(#jv-al) #ov-tor-result .ats-tipo label.on{background:#D57B4A!important;color:#101E18!important;-webkit-text-fill-color:#101E18!important}
 html body:not(#jv):not(#jv-al) #ov-tor-result .ats-tipo label:has(input:focus-visible){outline:3px solid #101E18}
 #ov-tor-result .ats-lbl{color:#2C3B35;-webkit-text-fill-color:#2C3B35}
 #ov-tor-result .ats-grade>b{color:#101E18;-webkit-text-fill-color:#101E18}

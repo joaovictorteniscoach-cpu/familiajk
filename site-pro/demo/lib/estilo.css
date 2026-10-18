@@ -3384,8 +3384,10 @@ html body:not(#jv) #ov-tor-comp .btn[hidden]{display:none!important}
 /* janela Lançar resultado */
 html body:not(#jv) #ov-tor-result .trs-tipo{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:0 0 12px;border-radius:12px;overflow:hidden;border:1px solid rgba(240,213,124,.40)}
 html body:not(#jv) #ov-tor-result .trs-tipo label{position:relative;min-height:44px;justify-content:center;margin:0;border:none!important;border-radius:0!important;padding:8px;font-weight:800;font-size:14px;background:transparent!important;color:#F6F2EA;-webkit-text-fill-color:#F6F2EA}
-html body:not(#jv) #ov-tor-result .trs-tipo input{position:absolute;opacity:0;pointer-events:none}
-html body:not(#jv) #ov-tor-result .trs-tipo label:has(input:checked){background:#D5B24A!important;color:#10261E;-webkit-text-fill-color:#10261E}
+/* a bolinha do rádio fica escondida (no iPhone ela herdava largura de campo e virava um círculo gigante);
+   a marcação vem da classe .on, posta em trAtualiza, sem depender de :has */
+html body:not(#jv) #ov-tor-result .trs-tipo input{position:absolute;left:0;top:0;width:1px!important;height:1px!important;min-height:0!important;margin:0;padding:0;border:0!important;opacity:0;pointer-events:none;-webkit-appearance:none;appearance:none}
+html body:not(#jv) #ov-tor-result .trs-tipo label.on{background:#D5B24A!important;color:#10261E;-webkit-text-fill-color:#10261E}
 html body:not(#jv) #ov-tor-result .trs-tipo label:has(input:focus-visible){outline:3px solid #E0B94F;outline-offset:-3px}
 html body:not(#jv) #ov-tor-result .trs-placar{margin:0 0 12px}
 html body:not(#jv) #ov-tor-result .trs-placar[hidden],html body:not(#jv) #ov-tor-result .field[hidden]{display:none}

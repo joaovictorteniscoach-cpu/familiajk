@@ -3,8 +3,8 @@
    resultado aceita os games de cada set. O placar decide o vencedor, cada jogo
    fica guardado na etapa e pode ser desfeito. Só dados fictícios, nuvem
    simulada, relógio fixo. */
-let chromium;
-try{({chromium}=require('playwright'));}catch(e){({chromium}=require(process.env.PW||'/opt/node22/lib/node_modules/playwright'));}
+let chromium,webkit,devices;
+try{({chromium,webkit,devices}=require('playwright'));}catch(e){({chromium,webkit,devices}=require(process.env.PW||'/opt/node22/lib/node_modules/playwright'));}
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict');
 const {medir}=require('./medir-contraste-pixels.cjs');
 const root=path.resolve(__dirname,'..'),AGORA=new Date('2026-10-21T10:00:00-03:00');
@@ -277,6 +277,68 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
    });
    assert.deepEqual(erros,[]);
    await c.close();
+  }
+  /* ===== iPhone (WebKit, o motor do Safari) =====
+     O João mandou print do iPhone: na janela antiga, as bolinhas de "Jogo normal"
+     e "W.O." herdavam a largura de campo e viravam círculos gigantes que cortavam
+     o texto. No validar-pr o WebKit está instalado; aqui no contêiner pode não estar. */
+  let wk=null;
+  try{wk=await webkit.launch({headless:true});}catch(e){
+   if(process.env.CI)throw e;
+   console.log('⏭️  WebKit não instalado neste computador: a parte do iPhone roda no validar-pr');
+  }
+  if(wk){
+   try{
+    const medirJanela=(sel)=>({
+     tipos:[...document.querySelectorAll(sel+' label')].map(l=>{const r=l.getBoundingClientRect(),i=l.querySelector('input').getBoundingClientRect(),cs=getComputedStyle(l);
+      return {txt:l.innerText.trim(),w:Math.round(r.width),h:Math.round(r.height),top:Math.round(r.top),cortado:l.scrollWidth>l.clientWidth+1,bolinha:Math.max(i.width,i.height),
+       on:l.classList.contains('on'),fundo:cs.backgroundColor,dentro:r.left>=0&&r.right<=innerWidth};}),
+     modalLateral:(()=>{const m=document.querySelector('.overlay.on .modal');return m.scrollWidth>m.clientWidth+1;})(),
+     caixas:[...document.querySelectorAll('.overlay.on input[inputmode=numeric]')].filter(i=>i.getClientRects().length).map(i=>{const r=i.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.width>=44;})});
+    const conferir=(r,onde)=>{
+     assert.deepEqual(r.tipos.map(t=>t.txt),['Jogo','W.O.'],onde);
+     assert.equal(r.tipos[0].top,r.tipos[1].top,onde+': lado a lado');
+     for(const t of r.tipos){assert.equal(t.cortado,false,onde+': texto inteiro em '+t.txt);assert.ok(t.h>=44&&t.h<=60,onde+': altura '+t.h);
+      assert.ok(t.bolinha<=2,onde+': a bolinha do rádio não aparece ('+t.bolinha+'px)');assert.equal(t.dentro,true);}
+     assert.deepEqual(r.tipos.map(t=>t.on),[true,false],onde+': "Jogo" marcado');assert.notEqual(r.tipos[0].fundo,r.tipos[1].fundo,onde+': o marcado tem outra cor');
+     assert.equal(r.modalLateral,false,onde+': janela sem rolar de lado');
+     assert.equal(r.caixas.length,6,onde+': 6 caixas de games');assert.ok(r.caixas.every(Boolean),onde+': caixas inteiras na tela');
+    };
+    const ctx=await wk.newContext(Object.assign({},devices['iPhone 13'],{timezoneId:'America/Sao_Paulo',serviceWorkers:'block'}));
+    await ctx.route('**/*',r=>{const u=new URL(r.request().url());if(u.origin!==base)return r.abort();if(u.pathname.includes('/lib/firebase-'))return r.fulfill({body:'',contentType:'text/javascript'});return r.continue();});
+    await ctx.addInitScript(()=>sessionStorage.setItem('jv-bk-adiar','1'));
+    const w=await ctx.newPage(),errW=[];w.on('pageerror',e=>errW.push(e.message));w.on('dialog',d=>d.dismiss());
+    await w.clock.setFixedTime(AGORA);await w.goto(base+'/app-gestao/',{waitUntil:'load'});
+    await w.waitForFunction(()=>typeof CARREGADO!=='undefined'&&CARREGADO);
+    await w.addStyleTag({content:'#ov-entrar,#ov-semnuvem,#barra-versao,#barra-endereco,#splash-gestao{display:none!important}'});
+    await check('iPhone (WebKit) · Gestão: classificação sem rolar de lado e "Jogo | W.O." inteiro, sem bolinha gigante',async()=>{
+     const r=await w.evaluate(()=>{MODO='dono';persist=()=>{};publish=()=>{};
+      DB.torneios={atual:'t1',seeded:true,lista:{t1:{id:'t1',nome:'Barragem Teste',tipo:'barragem',etapa:1,encerrada:false,grupos:['A'],nomesGrupos:{A:'Grupo Bronze Teste'},etapasFin:[],jogos:[],
+       jogadores:[{group:'A',name:'Jogador Um Sobrenome Comprido',v:2,d:1,wo:0,order:0},{group:'A',name:'Jogadora Dois',v:1,d:2,wo:1,order:1}]}}};
+      go('torneio',document.createElement('b'));renderTorneio();
+      const fora=[];document.querySelectorAll('#pg-torneio .tg-card').forEach(c=>{const cb=c.getBoundingClientRect();c.querySelectorAll('.trn-row>*').forEach(e=>{const b=e.getBoundingClientRect();if(b.width&&(b.right>cb.right+1||b.left<cb.left-1))fora.push(e.textContent);});});
+      abrirResultadoTor();document.getElementById('tr-p1').value='Jogador Um Sobrenome Comprido';document.getElementById('tr-p2').value='Jogadora Dois';trAtualiza();
+      return {lateral:document.documentElement.scrollWidth>innerWidth+1,fora};});
+     assert.deepEqual(r,{lateral:false,fora:[]});
+     conferir(await w.evaluate(medirJanela,'#ov-tor-result .trs-tipo'),'Gestão');
+     if(process.env.JV_SHOTS)await w.screenshot({path:path.join(process.env.JV_SHOTS,'iphone-gestao-resultado.png')});
+     // tocar em W.O. marca W.O. e esconde a grade
+     await w.locator('#ov-tor-result .trs-tipo label',{hasText:'W.O.'}).click();
+     assert.deepEqual(await w.evaluate(()=>[[...document.querySelectorAll('#ov-tor-result .trs-tipo label')].map(l=>l.classList.contains('on')),document.getElementById('tr-placar').hidden]),[[false,true],true]);
+    });
+    const a=await ctx.newPage();a.on('pageerror',e=>errW.push(e.message));a.on('dialog',d=>d.dismiss());
+    await a.clock.setFixedTime(AGORA);await a.goto(base+'/app-aluno/',{waitUntil:'load'});
+    await a.waitForFunction(()=>typeof abrirRegResultado==='function');
+    await check('iPhone (WebKit) · app do aluno: "Jogo | W.O." inteiro e as caixas de games na tela',async()=>{
+     await a.evaluate(()=>{init=async()=>{};document.querySelectorAll('[id*="splash"],#login').forEach(x=>x.style.display='none');
+      PUB={torneio:{id:'tor1',nome:'Barragem Teste',etapa:1,nomesGrupos:{A:'Grupo Bronze Teste'},jogadores:[{name:'Aluno Fictício',group:'A',v:0,d:0,wo:0},{name:'Jogador Dois',group:'A',v:0,d:0,wo:0}]}};
+      abrirRegResultado();document.getElementById('atr-p1').value='Aluno Fictício';document.getElementById('atr-p2').value='Jogador Dois';atrAtualiza();});
+     conferir(await a.evaluate(medirJanela,'#ov-tor-result .ats-tipo'),'Aluno');
+     if(process.env.JV_SHOTS)await a.screenshot({path:path.join(process.env.JV_SHOTS,'iphone-aluno-resultado.png')});
+    });
+    assert.deepEqual(errW,[]);
+    await ctx.close();
+   }finally{await wk.close();}
   }
   console.log('\n✅ '+count+' verificações · torneio da Gestão');
  }catch(e){console.error('❌ '+(e.stack||e));process.exitCode=1;}

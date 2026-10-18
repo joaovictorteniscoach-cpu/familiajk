@@ -11209,6 +11209,7 @@ function trAtualiza(){
   document.getElementById('tr-n1').textContent=p1||'Jogador 1';
   document.getElementById('tr-n2').textContent=p2||'Jogador 2';
   document.getElementById('tr-placar').hidden=wo;
+  document.querySelectorAll('#ov-tor-result .trs-tipo label').forEach(l=>l.classList.toggle('on',!!(l.querySelector('input')||{}).checked));
   document.getElementById('tr-venc-lbl').textContent=wo?'Quem venceu por W.O.?':'Vencedor';
   const sv=document.getElementById('tr-venc'),dupla=!!(p1&&p2&&p1!==p2);
   // com placar digitado, quem decide o vencedor é o placar: o campo some

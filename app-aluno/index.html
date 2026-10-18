@@ -399,8 +399,8 @@ body[data-aba="aulas"] #bloco-saldo #repos-box{display:none}
 /* Registrar resultado: Jogo/W.O. como chave e a grade com os games de cada set (18/10) */
 html body:not(#jv):not(#jv-al) #ov-tor-result .ats-tipo{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:2px 0 12px;border-radius:12px;overflow:hidden;border:1px solid #658473}
 html body:not(#jv):not(#jv-al) #ov-tor-result .ats-tipo label{position:relative;justify-content:center;min-height:44px;margin:0;border:none!important;border-radius:0!important;font-weight:800;font-size:14px;background:#315A49!important;color:#F6F2EA!important;-webkit-text-fill-color:#F6F2EA!important}
-html body:not(#jv):not(#jv-al) #ov-tor-result .ats-tipo input{position:absolute;opacity:0;pointer-events:none}
-html body:not(#jv):not(#jv-al) #ov-tor-result .ats-tipo label:has(input:checked){background:#D5B24A!important;color:#10261E!important;-webkit-text-fill-color:#10261E!important}
+html body:not(#jv):not(#jv-al) #ov-tor-result .ats-tipo input{position:absolute;left:0;top:0;width:1px!important;height:1px!important;min-height:0!important;margin:0;padding:0;border:0!important;opacity:0;pointer-events:none;-webkit-appearance:none;appearance:none}
+html body:not(#jv):not(#jv-al) #ov-tor-result .ats-tipo label.on{background:#D5B24A!important;color:#10261E!important;-webkit-text-fill-color:#10261E!important}
 html body:not(#jv):not(#jv-al) #ov-tor-result .ats-tipo label:has(input:focus-visible){outline:3px solid #10261E;outline-offset:-3px}
 #ov-tor-result .ats-placar{margin:0 0 12px}
 #ov-tor-result .ats-placar[hidden],#ov-tor-result .field[hidden]{display:none}
@@ -4219,6 +4219,7 @@ function atrAtualiza(){
   document.getElementById('atr-n1').textContent=p1||'Jogador 1';
   document.getElementById('atr-n2').textContent=p2||'Jogador 2';
   document.getElementById('atr-placar').hidden=wo;
+  document.querySelectorAll('#ov-tor-result .ats-tipo label').forEach(l=>l.classList.toggle('on',!!(l.querySelector('input')||{}).checked));
   document.getElementById('atr-venc-lbl').textContent=wo?'Quem venceu por W.O.?':'Quem venceu?';
   const sv=document.getElementById('atr-venc'),dupla=!!(p1&&p2&&p1!==p2),pelosSets=!wo&&atrTemPlacar();
   if(!pelosSets&&atrVencAuto){sv.value='';atrVencAuto=false;}
