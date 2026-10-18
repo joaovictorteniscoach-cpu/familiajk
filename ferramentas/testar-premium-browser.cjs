@@ -141,13 +141,20 @@ async function capture(p,name) { if(process.env.JV_NO_SCREENSHOTS==='1')return; 
                   await p.evaluate(()=>document.querySelectorAll('.overlay.on').forEach(e=>e.classList.remove('on')));
                 }
               }
-              await ok('Torneio: ações alcançáveis '+width+'px',async()=>{
-                const scroll=p.locator('.tg-table-scroll').first();
-                await scroll.evaluate(e=>e.scrollLeft=e.scrollWidth);
-                const visible=await scroll.evaluate(e=>{const b=e.getBoundingClientRect(),a=e.querySelector('.tg-x').getBoundingClientRect();return a.right<=b.right+1&&a.left>=b.left;});
-                assert.ok(visible);await scroll.evaluate(e=>e.scrollLeft=0);
+              await ok('Torneio: classificação inteira sem rolar de lado e ficha ao tocar '+width+'px',async()=>{
+                const r=await p.evaluate(()=>{const fora=[];document.querySelectorAll('#pg-torneio .tg-card').forEach(c=>{const cb=c.getBoundingClientRect();
+                  c.querySelectorAll('.trn-row>*').forEach(e=>{const b=e.getBoundingClientRect();if(b.width&&(b.right>cb.right+1||b.left<cb.left-1))fora.push(e.textContent);});});
+                  return {fora,larga:!!document.querySelector('#pg-torneio .tg-table-scroll')};});
+                assert.deepEqual(r,{fora:[],larga:false});
+                const linha=p.locator('#pg-torneio .trn-row').first();
+                if(await linha.count()){
+                  await linha.scrollIntoViewIfNeeded();await linha.evaluate(e=>e.click());
+                  assert.ok(await p.evaluate(()=>document.getElementById('ov-tor-jog').classList.contains('on')));
+                  if(width===393)await auditContrast(p,'gestao-torneio-ficha');
+                  await p.evaluate(()=>closeModal('ov-tor-jog'));
+                }
               });
-              if(width===393){await p.locator('.tg-table-scroll').first().scrollIntoViewIfNeeded();await capture(p,'gestao-torneio-393');}
+              if(width===393){await p.locator('#pg-torneio .tg-card').first().scrollIntoViewIfNeeded();await capture(p,'gestao-torneio-393');}
             }
           }
           await p.locator('.nav button[onclick="go(\'agenda\',this)"]').click();

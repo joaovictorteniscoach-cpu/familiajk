@@ -396,6 +396,24 @@ body[data-aba="aulas"] #bloco-saldo #repos-box{display:none}
 .atg-pts{font-weight:800;color:var(--green)}
 .tor-radio{display:flex;gap:10px}
 .tor-radio label{flex:1;display:flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:13px;cursor:pointer;background:#fff}
+/* Registrar resultado: Jogo/W.O. como chave e a grade com os games de cada set (18/10) */
+html body:not(#jv):not(#jv-al) #ov-tor-result .ats-tipo{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:2px 0 12px;border-radius:12px;overflow:hidden;border:1px solid #658473}
+html body:not(#jv):not(#jv-al) #ov-tor-result .ats-tipo label{position:relative;justify-content:center;min-height:44px;margin:0;border:none!important;border-radius:0!important;font-weight:800;font-size:14px;background:#315A49!important;color:#F6F2EA!important;-webkit-text-fill-color:#F6F2EA!important}
+html body:not(#jv):not(#jv-al) #ov-tor-result .ats-tipo input{position:absolute;opacity:0;pointer-events:none}
+html body:not(#jv):not(#jv-al) #ov-tor-result .ats-tipo label:has(input:checked){background:#D5B24A!important;color:#10261E!important;-webkit-text-fill-color:#10261E!important}
+html body:not(#jv):not(#jv-al) #ov-tor-result .ats-tipo label:has(input:focus-visible){outline:3px solid #10261E;outline-offset:-3px}
+#ov-tor-result .ats-placar{margin:0 0 12px}
+#ov-tor-result .ats-placar[hidden],#ov-tor-result .field[hidden]{display:none}
+#ov-tor-result .ats-lbl{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#30483C;-webkit-text-fill-color:#30483C;margin-bottom:6px}
+#ov-tor-result .ats-grade{display:grid;grid-template-columns:76px minmax(0,1fr) minmax(0,1fr);gap:6px 8px;align-items:center}
+#ov-tor-result .ats-grade>b{font-size:12.5px;font-weight:800;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#10261E;-webkit-text-fill-color:#10261E}
+#ov-tor-result .ats-grade>span{font-size:13px;font-weight:700;line-height:1.15;color:#30483C;-webkit-text-fill-color:#30483C}
+#ov-tor-result .ats-grade>span small{display:block;font-size:10.5px;font-weight:600}
+#ov-tor-result .ats-g{width:100%;min-height:46px;padding:6px;text-align:center;font-size:20px;font-weight:900;border-radius:11px;border:1px solid #8FA897;background:#fff;color:#10261E;-webkit-text-fill-color:#10261E;outline:none}
+#ov-tor-result .ats-g:focus{border-color:#10261E;box-shadow:0 0 0 2px rgba(16,38,30,.25)}
+#ov-tor-result .ats-info{min-height:20px;margin:-2px 0 6px;font-size:13.5px;line-height:1.4;color:#30483C;-webkit-text-fill-color:#30483C}
+#ov-tor-result .ats-info.ok{color:#1F5E36;-webkit-text-fill-color:#1F5E36;font-weight:800}
+#ov-tor-result .ats-info.erro{color:#9B2C1C;-webkit-text-fill-color:#9B2C1C;font-weight:800}
 .pick-opt{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;border:1.5px solid var(--border);border-radius:13px;padding:13px 15px;margin-bottom:9px;background:#fff;font-size:15.5px;font-weight:800;color:var(--green);cursor:pointer;transition:.12s}
 .pick-opt:active{transform:scale(.985)}
 .pick-opt small{font-size:12px;font-weight:600;color:var(--muted)}
@@ -1646,12 +1664,12 @@ html body:not(#jv) #pedir-box .btn-ghost{background:#F3EDE2!important;border:1px
 .login .login-sub{opacity:1}
 .login-priv{color:rgba(250,247,242,.8)}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-17-2">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-18-1">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-17-2">
-<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-17-2">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-18-1">
+<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-18-1">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -2133,7 +2151,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-10-17-2"></script>
+<script src="lib/icones.js?v=2026-10-18-1"></script>
 </div>
 
 <!-- MODAL ESCOLHER O QUE FAZER NO HORÁRIO -->
@@ -2321,17 +2339,24 @@ function esperarAuth(){
   <div class="modal">
     <h3>Registrar resultado 🎾</h3>
     <p class="sub">Escolha o jogo. O João recebe e confirma a pontuação.</p>
-    <div class="field"><label>Grupo</label><select id="atr-grupo" onchange="atrPlayers()"></select></div>
-    <div class="field"><label>Jogador 1</label><select id="atr-p1"></select></div>
-    <div class="field"><label>Jogador 2</label><select id="atr-p2"></select></div>
-    <div class="field"><label>Quem venceu?</label><select id="atr-venc"></select></div>
-    <div class="field"><label>Placar (opcional)</label><input id="atr-score" placeholder="Ex.: 6/3 6/4"></div>
-    <div class="field"><label>Tipo</label>
-      <div class="tor-radio">
-        <label><input type="radio" name="atr-tipo" value="normal" checked> Jogo normal</label>
-        <label><input type="radio" name="atr-tipo" value="wo"> W.O.</label>
+    <div class="field"><label for="atr-grupo">Categoria</label><select id="atr-grupo" onchange="atrPlayers()"></select></div>
+    <div class="field"><label for="atr-p1">Jogador 1</label><select id="atr-p1" onchange="atrAtualiza()"></select></div>
+    <div class="field"><label for="atr-p2">Jogador 2</label><select id="atr-p2" onchange="atrAtualiza()"></select></div>
+    <div class="tor-radio ats-tipo" role="radiogroup" aria-label="Tipo do jogo">
+      <label><input type="radio" name="atr-tipo" value="normal" checked onchange="atrAtualiza()"> Jogo</label>
+      <label><input type="radio" name="atr-tipo" value="wo" onchange="atrAtualiza()"> W.O.</label>
+    </div>
+    <div class="ats-placar" id="atr-placar">
+      <div class="ats-lbl">Games de cada set</div>
+      <div class="ats-grade">
+        <span></span><b id="atr-n1">Jogador 1</b><b id="atr-n2">Jogador 2</b>
+        <span>1º set</span><input class="ats-g" id="atr-s1a" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" aria-label="1º set, games do jogador 1" oninput="atrAtualiza()"><input class="ats-g" id="atr-s1b" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" aria-label="1º set, games do jogador 2" oninput="atrAtualiza()">
+        <span>2º set</span><input class="ats-g" id="atr-s2a" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" aria-label="2º set, games do jogador 1" oninput="atrAtualiza()"><input class="ats-g" id="atr-s2b" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" aria-label="2º set, games do jogador 2" oninput="atrAtualiza()">
+        <span>3º set<small>ou super tie</small></span><input class="ats-g" id="atr-s3a" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" aria-label="3º set ou super tie-break, pontos do jogador 1" oninput="atrAtualiza()"><input class="ats-g" id="atr-s3b" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" aria-label="3º set ou super tie-break, pontos do jogador 2" oninput="atrAtualiza()">
       </div>
     </div>
+    <div class="field"><label for="atr-venc" id="atr-venc-lbl">Quem venceu?</label><select id="atr-venc" onchange="atrVencAuto=false;atrAtualiza()"></select></div>
+    <p class="ats-info" id="atr-info" aria-live="polite"></p>
     <div class="modal-acts">
       <button class="btn btn-ghost" onclick="document.getElementById('ov-tor-result').classList.remove('on')">Cancelar</button>
       <button class="btn btn-clay" style="background:#B8512B!important" onclick="enviarResultadoAluno()">Enviar ao João</button>
@@ -2353,7 +2378,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-10-17-2';
+const VERSAO='2026-10-18-1';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -4137,40 +4162,107 @@ function celebraResultadoTorneio(venceu,adversario,score,torNome,aoFechar){
   requestAnimationFrame(()=>ov.classList.add('on'));
   try{if(navigator.vibrate)navigator.vibrate(venceu?[45,55,75]:[35]);}catch(e){}
 }
+/* Mesma grade de sets da Gestão: o aluno digita os games e o app tira o
+   vencedor do placar. Vai junto "sets" na ordem jogador 1 × jogador 2 (a
+   Gestão confere e guarda) e "score" em texto, como antes. */
+function nomeGrupoAl(t,g){const n=t&&t.nomesGrupos&&t.nomesGrupos[g];return (n&&String(n).trim())?String(n).trim():('Grupo '+g);}
 function abrirRegResultado(){
   const t=PUB&&PUB.torneio;
   if(!t||!t.jogadores||!t.jogadores.length){toast('Torneio ainda não disponível');return;}
   const grupos=Array.from(new Set(t.jogadores.map(p=>p.group))).filter(Boolean).sort();
-  document.getElementById('atr-grupo').innerHTML='<option value="">Selecionar grupo…</option>'+grupos.map(g=>'<option value="'+g+'">Grupo '+g+'</option>').join('');
-  ['atr-p1','atr-p2','atr-venc'].forEach(id=>document.getElementById(id).innerHTML='<option value="">—</option>');
-  document.getElementById('atr-score').value='';
+  const sg=document.getElementById('atr-grupo');
+  sg.innerHTML=(grupos.length>1?'<option value="">Escolher categoria…</option>':'')+grupos.map(g=>'<option value="'+torEscAl(g)+'">'+torEscAl(nomeGrupoAl(t,g))+'</option>').join('');
+  sg.value=grupos.length===1?grupos[0]:'';
+  document.querySelectorAll('#ov-tor-result .ats-g').forEach(i=>{i.value='';});
+  document.getElementById('atr-venc').innerHTML='<option value="">—</option>';
   const n=document.querySelector('input[name="atr-tipo"][value="normal"]');if(n)n.checked=true;
+  atrVencAuto=false;atrPlayers();
   document.getElementById('ov-tor-result').classList.add('on');
 }
 function atrPlayers(){
   const t=PUB&&PUB.torneio;const g=document.getElementById('atr-grupo').value;
-  const nomes=((t&&t.jogadores)||[]).filter(p=>p.group===g).map(p=>p.name);
-  const opts='<option value="">—</option>'+nomes.map(n=>'<option value="'+torEscAl(n)+'">'+torEscAl(n)+'</option>').join('');
-  ['atr-p1','atr-p2','atr-venc'].forEach(id=>document.getElementById(id).innerHTML=opts);
+  const nomes=((t&&t.jogadores)||[]).filter(p=>p.group===g).map(p=>p.name).sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  const opts='<option value="">'+(g?'Escolher…':'—')+'</option>'+nomes.map(n=>'<option value="'+torEscAl(n)+'">'+torEscAl(n)+'</option>').join('');
+  ['atr-p1','atr-p2'].forEach(id=>document.getElementById(id).innerHTML=opts);
+  atrAtualiza();
+}
+function atrSetsDigitados(){const v=[...document.querySelectorAll('#ov-tor-result .ats-g')].map(i=>i.value),r=[];for(let i=0;i+1<v.length;i+=2)r.push([v[i],v[i+1]]);return r;}
+function atrTemPlacar(){return atrSetsDigitados().some(x=>String(x[0]).trim()!==''||String(x[1]).trim()!=='');}
+/* Igual a avaliarSetsTor da Gestão: lado 0 = jogador 1, 1 = jogador 2. */
+function avaliarSetsAl(raw){
+  const sets=[];let vazio=-1;
+  for(let i=0;i<(raw||[]).length;i++){
+    const par=raw[i]||[];
+    const a=String(par[0]==null?'':par[0]).trim(),b=String(par[1]==null?'':par[1]).trim();
+    if(a===''&&b===''){if(vazio<0)vazio=i;continue;}
+    if(vazio>=0)return {erro:'Preencha o '+(vazio+1)+'º set antes do '+(i+1)+'º.'};
+    if(a===''||b==='')return {erro:'Falta o número de um dos jogadores no '+(i+1)+'º set.',incompleto:true};
+    if(!/^\d{1,2}$/.test(a)||!/^\d{1,2}$/.test(b))return {erro:'Use só números no '+(i+1)+'º set.'};
+    const x=Number(a),y=Number(b);
+    if(x===y)return {erro:'O '+(i+1)+'º set não pode terminar empatado ('+x+'/'+y+').'};
+    sets.push([x,y]);
+  }
+  if(!sets.length)return {sets:[],lado:-1};
+  let s1=0,s2=0;
+  for(let k=0;k<sets.length;k++){
+    if(s1===2||s2===2)return {erro:'O jogo acabou em '+k+' sets: apague o '+(k+1)+'º set.'};
+    if(sets[k][0]>sets[k][1])s1++;else s2++;
+  }
+  if(s1===s2)return {erro:'Empate em sets ('+s1+' a '+s2+'): falta o 3º set ou o super tie-break.'};
+  return {sets,lado:s1>s2?0:1,sets1:s1,sets2:s2};
+}
+function placarAlTxt(sets,lado){return (sets||[]).map(x=>lado===1?x[1]+'/'+x[0]:x[0]+'/'+x[1]).join(' ');}
+let atrVencAuto=false;
+function atrAtualiza(){
+  const p1=document.getElementById('atr-p1').value,p2=document.getElementById('atr-p2').value;
+  const wo=(document.querySelector('input[name="atr-tipo"]:checked')||{}).value==='wo';
+  document.getElementById('atr-n1').textContent=p1||'Jogador 1';
+  document.getElementById('atr-n2').textContent=p2||'Jogador 2';
+  document.getElementById('atr-placar').hidden=wo;
+  document.getElementById('atr-venc-lbl').textContent=wo?'Quem venceu por W.O.?':'Quem venceu?';
+  const sv=document.getElementById('atr-venc'),dupla=!!(p1&&p2&&p1!==p2),pelosSets=!wo&&atrTemPlacar();
+  if(!pelosSets&&atrVencAuto){sv.value='';atrVencAuto=false;}
+  const antes=sv.value;
+  sv.innerHTML='<option value="">'+(dupla?'Escolher…':'—')+'</option>'+(dupla?[p1,p2].map(n=>'<option value="'+torEscAl(n)+'">'+torEscAl(n)+'</option>').join(''):'');
+  if(dupla&&(antes===p1||antes===p2))sv.value=antes;
+  sv.closest('.field').hidden=pelosSets;
+  const info=document.getElementById('atr-info');let msg='',cls='';
+  if(p1&&p2&&p1===p2){msg='Escolha dois jogadores diferentes.';cls='erro';}
+  else if(pelosSets){
+    const r=avaliarSetsAl(atrSetsDigitados());
+    if(r.erro){msg=r.incompleto?'Digite os games dos dois jogadores em cada set.':r.erro;cls=r.incompleto?'':'erro';}
+    else if(!dupla)msg='Escolha os dois jogadores.';
+    else{const ganhou=r.lado===0?p1:p2;sv.value=ganhou;atrVencAuto=true;msg='✓ '+ganhou+' venceu por '+Math.max(r.sets1,r.sets2)+' a '+Math.min(r.sets1,r.sets2)+' · '+placarAlTxt(r.sets,r.lado);cls='ok';}
+  }
+  else if(!wo)msg='Sem o placar, escolha só quem venceu.';
+  info.textContent=msg;info.className='ats-info'+(cls?' '+cls:'');
 }
 async function enviarResultadoAluno(){
-  const g=document.getElementById('atr-grupo').value,p1=document.getElementById('atr-p1').value,p2=document.getElementById('atr-p2').value,venc=document.getElementById('atr-venc').value;
-  const score=document.getElementById('atr-score').value.trim();
+  const g=document.getElementById('atr-grupo').value,p1=document.getElementById('atr-p1').value,p2=document.getElementById('atr-p2').value;
+  let venc=document.getElementById('atr-venc').value;
   const tipo=document.querySelector('input[name="atr-tipo"]:checked').value;
-  if(!g||!p1||!p2||!venc){toast('Preencha grupo, jogadores e vencedor');return;}
+  if(!g||!p1||!p2){toast('Escolha a categoria e os dois jogadores');return;}
   if(p1===p2){toast('Escolha jogadores diferentes');return;}
+  let score='',sets=[];
+  if(tipo!=='wo'&&atrTemPlacar()){
+    const r=avaliarSetsAl(atrSetsDigitados());
+    if(r.erro){toast(r.erro);return;}
+    venc=r.lado===0?p1:p2;sets=r.sets;score=placarAlTxt(r.sets,r.lado);
+  }
+  if(!venc){toast(tipo==='wo'?'Escolha quem venceu por W.O.':'Digite o placar ou escolha quem venceu');return;}
   if(venc!==p1&&venc!==p2){toast('O vencedor deve ser um dos dois');return;}
   const adv=venc===p1?p2:p1;
   const item={torneioId:(PUB.torneio&&PUB.torneio.id)||'',group:g,p1,p2,vencedor:venc,tipo,score,nome:EU?EU.nome:'',codigo:MEU.codigo,ts:Date.now()};
+  if(sets.length)item.sets=sets;
   if(hasCloud()){
     try{await filaPush('jvtenis/fila_torneio',item);}catch(e){}
-    const resumo=(tipo==='wo'?(venc+' venceu por W.O.'):(venc+' venceu '+adv))+(score?(' '+score):'')+' · Grupo '+g;
+    const resumo=(tipo==='wo'?(venc+' venceu por W.O.'):(venc+' venceu '+adv))+(score?(' '+score):'')+' · '+nomeGrupoAl(PUB.torneio,g);
     try{filaPush('jvtenis/notificacoes',{acao:'resultado',nome:EU?EU.nome:'',texto:resumo,ts:Date.now()}).catch(function(){});}catch(e){}
   }
   document.getElementById('ov-tor-result').classList.remove('on');
   toast('Resultado enviado ao João ✓');
   const torNome=(PUB.torneio&&PUB.torneio.nome)||'Torneio';
-  const txt='🎾 *Resultado — '+torNome+'*\nGrupo '+g+': *'+venc+'* venceu '+(tipo==='wo'?'por W.O. ('+adv+')':adv)+(score?(' — '+score):'')+'.';
+  const txt='🎾 *Resultado — '+torNome+'*\n'+nomeGrupoAl(PUB.torneio,g)+': *'+venc+'* venceu '+(tipo==='wo'?'por W.O. ('+adv+')':adv)+(score?(' — '+score):'')+'.';
   const souP1=nomeTorneioEhMeu(p1),souP2=nomeTorneioEhMeu(p2);
   if(souP1||souP2){
     const ganhou=nomeTorneioEhMeu(venc),adversario=souP1?p2:p1;
@@ -5463,7 +5555,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-17-2').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-18-1').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava

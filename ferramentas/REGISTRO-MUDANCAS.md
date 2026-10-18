@@ -8,6 +8,81 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-18 · Claude Code: Torneio da Gestão compacto, com placar por set
+
+Pedido do João: a tela do torneio obrigava a arrastar para o lado, os itens
+eram grandes demais e o resultado não aceitava os games de cada set.
+- **Classificação** (`renderGrupoTor`):
+  - **Antes:** tabela de 640 px com campos V/D/WO e botões ↔ ✕ na linha.
+  - **Agora:** cada linha cabe em 320 px: ⠿, posição, nome (até 2 linhas), V,
+    D, WO e Pts. Classes `trn-*`; continuam `tg-card`, `tg-head`, `tg-name`
+    e `tg-row`.
+  - Tocar na linha abre a **ficha do jogador** (`ov-tor-jog`, `abrirJogTor`).
+    - ＋/− corrigem V/D/WO e nunca ficam abaixo de zero (`passoStatTor`).
+    - Mostra os jogos dele na etapa, com o placar do lado dele.
+    - Renomear, Ajustar pontos, Mudar de categoria e Remover (`trjAcao`)
+      chamam as funções que já existiam.
+  - `updateStatTor` saiu (era só dos campos da tabela).
+  - O arraste ⠿ continua; os seletores passaram de `tr`/`tbody` para
+    `.tg-row`/`.trn-lista`.
+- **Botões:** 8 → "🎾 Lançar resultado" + "📤 Compartilhar" + "🏆 Homenagens".
+  - Compartilhar (`ov-tor-comp`) pergunta: texto, imagem, PDF ou **Resultados
+    da etapa** (`compartilharJogosTor`, novo, com o placar de cada jogo).
+  - ＋ Jogador fica no cabeçalho de cada categoria e já abre com ela escolhida.
+  - ＋ Categoria virou "＋ Nova categoria" embaixo das categorias.
+  - Excluir virou um link no fim da página.
+- **Etapa numa linha:** o botão segue a ordem. Com a etapa em andamento,
+  "🏁 Encerrar etapa"; depois de encerrada, "➕ Nova etapa". Não dá mais para
+  começar uma etapa sem encerrar a anterior, e por isso os campeões ficam
+  sempre registrados. O histórico de etapas virou gaveta.
+- **Lançar resultado** (`ov-tor-result`):
+  - Grade de games por set: 1º, 2º e 3º (ou super tie-break).
+  - **O placar decide o vencedor:** o campo some e aparece "✓ Fulano venceu
+    por 2 a 1 · 6/4 3/6 10/8".
+  - Sem placar, escolhe o vencedor; no W.O., escolhe quem venceu.
+  - `avaliarSetsTor` barra set empatado, set pulado, número faltando, set
+    depois de o jogo acabar e empate em sets. Não julga 6/5 nem pro-set.
+  - Categoria única já vem escolhida.
+  - O mesmo par já lançado na etapa pede confirmação.
+- **Jogos guardados:** `t.jogos` = `{id, etapa, grupo, p1, p2, venc, tipo,
+  sets, placar, data, ts, origem, por}`.
+  - Lista "🎾 Jogos da etapa N" com **↩︎ Desfazer** (`desfazerJogoTor`). Só na
+    etapa em andamento: tira a vitória e a derrota e apaga o jogo.
+  - Renomear troca o nome nos jogos.
+  - **Não vai para o app do aluno:** a publicação continua só com `jogadores`.
+- **Pontuação igual:** V = 3, D = 1, W.O. = 1 para quem venceu, e o
+  desempate não mudou.
+- **Resultados dos alunos** (`aplicarFilaTor`):
+  - Antes o placar enviado se perdia ao aplicar. Agora fica no jogo: os sets
+    conferidos (`placarDoPedidoTor`) ou o texto como chegou.
+  - Vai para o torneio que o aluno escolheu (`torDoPedido`), não o que está
+    aberto.
+  - Resultado incompleto fica na fila.
+  - A caixa subiu para cima das categorias.
+- **App do aluno** (`ov-tor-result`):
+  - Tem a mesma grade (`avaliarSetsAl`, `atrAtualiza`).
+  - Envia `sets` (jogador 1 × jogador 2) e `score` em texto, como antes.
+  - A categoria aparece com o nome que o João deu.
+  - A regra do Firebase não precisou mudar: `fila_torneio` não limita esses
+    campos.
+- **Leitura no "Verde clássico":** o `.btn-clay` (Salvar etc.) dava 3,6:1 por
+  causa do fim claro do degradê. Ficou mais escuro (`#9A4718→#B0561F`).
+  Saibro não mudou.
+- **Testes:**
+  - `testar-torneio-gestao-browser.cjs` (novo, 32 verificações nos dois temas,
+    no `validar-pr`). Inclui a leitura medida pela imagem na tela e nas
+    janelas do torneio.
+  - `testar-torneio-aluno-browser.cjs` passou a 11 verificações.
+  - Os dois falham na versão anterior.
+  - O medidor de contraste pela imagem saiu para
+    `ferramentas/medir-contraste-pixels.cjs` e é usado pelo do aluno também.
+  - `testar-premium-browser.cjs`: a conferência "ações alcançáveis"
+    (rolagem da tabela) virou "classificação inteira sem rolar".
+- **Achado fora do escopo (não mexido):**
+  - No teste visual com todas as larguras, o contador `#dob-consel-n` do
+    Início dá 4,44:1 (régua 4,5).
+  - Já era assim antes; o `validar-pr` não pega porque roda só 390 e 1280.
+
 ## 2026-10-17 · Claude Code: Ferramentas da agenda da Gestão numa linha
 
 Pedido do João: ver se as ferramentas da Agenda tinham botões repetidos ou
