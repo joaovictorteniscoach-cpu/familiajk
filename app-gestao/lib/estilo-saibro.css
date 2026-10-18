@@ -818,7 +818,8 @@ input,select,textarea{
 .modal{background:#0D1F17!important;color:#fff!important;border:1px solid rgba(224,130,79,.22)}
 .overlay{backdrop-filter:blur(8px)}
 .btn-ghost{background:rgba(255,255,255,.065)!important;color:#fff!important;border-color:rgba(224,130,79,.18)!important}
-.btn-clay{background:linear-gradient(135deg,#C2582E,#D97935)!important;color:#fff!important}
+/* leitura: o fim claro do degradê (#D97935) deixava o branco abaixo de 4,5:1 */
+.btn-clay{background:linear-gradient(135deg,#9A4718,#C2582E)!important;color:#fff!important}
 .badge.pago{background:rgba(46,214,107,.12)!important;color:#D4E157!important}.badge.pendente{background:rgba(194,88,46,.16)!important;color:#F0B98C!important}
 .chip{border-color:rgba(224,130,79,.16)!important}
 .aluno-name{color:#fff!important}
@@ -3320,6 +3321,108 @@ html body:not(#jv) .pm-modal .modal-head h3,html body:not(#jv) .pd-modal .modal-
 .esp-linha{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid var(--border);font-size:13px}
 .esp-linha span{min-width:0;overflow-wrap:anywhere}
 .esp-linha .btn{flex:0 0 auto;min-height:44px;padding:8px 12px;font-size:12px}
+
+/* ===== Torneio compacto (18/10) =====
+   Pedido do João: a tabela tinha 640px e obrigava a arrastar para o lado, e
+   tudo era grande demais. Agora cada linha cabe em 320px (posição, nome, V, D,
+   WO, pontos) e tocar nela abre a ficha do jogador. Prefixos: trn- (tela),
+   trs- (lançar resultado), trj- (ficha do jogador). */
+html body:not(#jv) #pg-torneio .tor-bar{margin-bottom:10px}
+html body:not(#jv) #pg-torneio .tor-bar select,html body:not(#jv) #pg-torneio .tor-novo{min-height:44px;padding:8px 12px}
+html body:not(#jv) #pg-torneio .trn-etapa{display:flex;align-items:center;gap:10px;padding:8px 10px 8px 14px;margin-bottom:10px;border-radius:14px}
+html body:not(#jv) #pg-torneio .trn-et-txt{flex:1;min-width:0;display:flex;align-items:center;flex-wrap:wrap;gap:4px 10px}
+html body:not(#jv) #pg-torneio .trn-etapa .te-etapa{font-size:18px;margin:0;line-height:1.2}
+html body:not(#jv) #pg-torneio .trn-etapa .te-badge{font-size:11px;padding:4px 9px}
+html body:not(#jv) #pg-torneio .trn-etapa button{flex:none;min-height:44px;padding:8px 12px;border-radius:11px;border:none;font-weight:800;font-size:13px;cursor:pointer}
+html body:not(#jv) #pg-torneio .trn-hist{padding:0 12px;margin:-2px 0 10px}
+html body:not(#jv) #pg-torneio .trn-hist>summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:800;font-size:13px}
+html body:not(#jv) #pg-torneio .trn-hist[open]{padding-bottom:8px}
+html body:not(#jv) #pg-torneio .trn-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 12px}
+html body:not(#jv) #pg-torneio .trn-acts button{min-height:44px;padding:8px 10px;font-size:13.5px;border-radius:12px}
+html body:not(#jv) #pg-torneio .trn-acts .trn-lancar{background:#A9501F!important;grid-column:1/-1;min-height:56px;font-size:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+html body:not(#jv) #pg-torneio .trn-lancar small{font-size:11.5px;font-weight:600;opacity:.95}
+/* cabeçalho da categoria baixo, com o ＋ Jogador da própria categoria */
+html body:not(#jv) #pg-torneio .trn-head{min-height:0!important;padding:8px 8px 8px 12px!important;gap:10px!important}
+html body:not(#jv) #pg-torneio .trn-head .tg-badge{width:32px!important;height:32px!important;border-radius:10px!important;font-size:17px!important;flex:none}
+html body:not(#jv) #pg-torneio .trn-head-txt{flex:1;min-width:0}
+html body:not(#jv) #pg-torneio .trn-head .tg-title{font-size:15px!important;cursor:pointer;overflow-wrap:anywhere}
+html body:not(#jv) #pg-torneio .trn-head .tg-count{font-size:11.5px!important;margin-top:1px!important}
+html body:not(#jv) #pg-torneio .trn-hbtn{flex:none;min-height:44px;padding:6px 11px;border-radius:11px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.34);font-weight:800;font-size:12.5px;cursor:pointer}
+/* linhas: grade fixa que cabe em 320px; o nome usa o que sobra (até 2 linhas) */
+html body:not(#jv) #pg-torneio .trn-cab,
+html body:not(#jv) #pg-torneio .trn-row{display:grid;grid-template-columns:16px 22px minmax(0,1fr) 22px 22px 26px 40px;align-items:center;column-gap:5px;padding:0 8px 0 4px}
+html body:not(#jv) #pg-torneio .trn-cab{min-height:26px;background:#B8CBBB;color:#2C3B35;-webkit-text-fill-color:#2C3B35;font-size:10.5px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;text-align:center}
+html body:not(#jv) #pg-torneio .trn-cab span:nth-child(3){text-align:left}
+html body:not(#jv) #pg-torneio .trn-row{min-height:48px;border-top:1px solid #ADC1B3;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .12s}
+html body:not(#jv) #pg-torneio .trn-row:first-child{border-top:none}
+html body:not(#jv) #pg-torneio .trn-row:active{background:rgba(16,30,24,.08)}
+html body:not(#jv) #pg-torneio .trn-row .tg-drag{display:flex;align-items:center;justify-content:center;width:24px;height:46px;margin-left:-4px;padding:0!important;font-size:15px}
+html body:not(#jv) #pg-torneio .trn-row .tg-rank{width:22px!important;height:22px!important;margin:0!important;font-size:11px!important}
+html body:not(#jv) #pg-torneio .trn-row .tg-name{font-size:14px!important;line-height:1.25!important;font-weight:800!important;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;padding:0!important;margin:4px 0}
+html body:not(#jv) #pg-torneio .trn-link{font-style:normal;font-size:11px}
+html body:not(#jv) #pg-torneio .trn-n{text-align:center;font-size:14px;font-weight:800;color:#101E18;-webkit-text-fill-color:#101E18;font-variant-numeric:tabular-nums}
+html body:not(#jv) #pg-torneio .trn-pts{display:flex;flex-direction:column;align-items:center;gap:1px}
+html body:not(#jv) #pg-torneio .trn-row .tg-pts{min-width:36px!important;height:28px!important;padding:0 5px!important;border-radius:9px!important;font-size:14px!important;font-weight:900!important;background:#B8CBBB!important}
+html body:not(#jv) #pg-torneio .trn-row .tg-pts.lead{background:#0B271B!important}
+html body:not(#jv) #pg-torneio .trn-row .tg-acum{font-size:10px!important;margin:0!important;line-height:1.1}
+html body:not(#jv) #pg-torneio .trn-vazia{padding:12px!important}
+html body:not(#jv) #pg-torneio .trn-lista.tg-drop{background:rgba(201,118,74,.14);outline:1px dashed var(--gold);outline-offset:-2px}
+html body:not(#jv) #pg-torneio .trn-row.tg-before{box-shadow:inset 0 3px 0 var(--gold)}
+html body:not(#jv) #pg-torneio .trn-row.tg-after{box-shadow:inset 0 -3px 0 var(--gold)}
+html body:not(#jv) #pg-torneio .trn-novacat,html body:not(#jv) #pg-torneio .trn-addv{display:block;width:100%;min-height:44px;margin:0 0 14px;border-radius:12px;border:1.5px dashed rgba(235,166,129,.55);background:transparent;color:#EBA681;-webkit-text-fill-color:#EBA681;font-weight:800;font-size:13.5px;cursor:pointer}
+html body:not(#jv) #pg-torneio .trn-addv{width:auto;margin:12px auto 0;padding:8px 16px;border-color:#2C3B35;color:#101E18;-webkit-text-fill-color:#101E18}
+/* jogos da etapa */
+html body:not(#jv) #pg-torneio .trn-jogos{background:rgba(31,45,39,0.42);border:1px solid #658473;border-radius:14px;padding:0 12px;margin:0 0 14px;color:#F6F2EA;-webkit-text-fill-color:#F6F2EA}
+html body:not(#jv) #pg-torneio .trn-jogos>summary{min-height:46px;display:flex;align-items:center;cursor:pointer;font-weight:800;font-size:14px;color:#EBA681;-webkit-text-fill-color:#EBA681}
+html body:not(#jv) #pg-torneio .trn-jogo{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid rgba(217,226,216,.22)}
+html body:not(#jv) #pg-torneio .trn-jg-txt{flex:1;min-width:0;font-size:13.5px;line-height:1.35;overflow-wrap:anywhere}
+html body:not(#jv) #pg-torneio .trn-jg-txt small{display:block;font-size:12px;color:#D9E2D8;-webkit-text-fill-color:#D9E2D8;margin-top:2px}
+html body:not(#jv) #pg-torneio .trn-desf{flex:none;min-height:44px;padding:6px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.28);background:rgba(43,59,52,0.42);color:#F6F2EA;-webkit-text-fill-color:#F6F2EA;font-weight:700;font-size:12.5px;cursor:pointer}
+html body:not(#jv) #pg-torneio .trn-jg-nota{font-size:12px;color:#D9E2D8;-webkit-text-fill-color:#D9E2D8;margin:0;padding:6px 0 10px}
+html body:not(#jv) #pg-torneio .trn-excluir{display:block;margin:6px auto 4px;min-height:44px;padding:8px 14px;background:transparent;border:none;color:#FFBCAD;-webkit-text-fill-color:#FFBCAD;font-size:13px;font-weight:700;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+html body:not(#jv) #pg-torneio .tor-log{margin:0 0 12px}
+html body:not(#jv) #ov-tor-comp .btn[hidden]{display:none!important}
+
+/* janela Lançar resultado */
+html body:not(#jv) #ov-tor-result .trs-tipo{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:0 0 12px;border-radius:12px;overflow:hidden;border:1px solid rgba(235,166,129,.40)}
+html body:not(#jv) #ov-tor-result .trs-tipo label{position:relative;min-height:44px;justify-content:center;margin:0;border:none!important;border-radius:0!important;padding:8px;font-weight:800;font-size:14px;background:transparent!important;color:#F6F2EA;-webkit-text-fill-color:#F6F2EA}
+/* a bolinha do rádio fica escondida (no iPhone ela herdava largura de campo e virava um círculo gigante);
+   a marcação vem da classe .on, posta em trAtualiza, sem depender de :has */
+html body:not(#jv) #ov-tor-result .trs-tipo input{position:absolute;left:0;top:0;width:1px!important;height:1px!important;min-height:0!important;margin:0;padding:0;border:0!important;opacity:0;pointer-events:none;-webkit-appearance:none;appearance:none}
+html body:not(#jv) #ov-tor-result .trs-tipo label.on{background:#D57B4A!important;color:#101E18;-webkit-text-fill-color:#101E18}
+html body:not(#jv) #ov-tor-result .trs-tipo label:has(input:focus-visible){outline:3px solid #E0824F;outline-offset:-3px}
+html body:not(#jv) #ov-tor-result .trs-placar{margin:0 0 12px}
+html body:not(#jv) #ov-tor-result .trs-placar[hidden],html body:not(#jv) #ov-tor-result .field[hidden]{display:none}
+html body:not(#jv) #ov-tor-result .trs-lbl{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--gold-light);-webkit-text-fill-color:var(--gold-light);margin-bottom:6px}
+html body:not(#jv) #ov-tor-result .trs-lbl small{text-transform:none;letter-spacing:0;font-weight:600;color:#D9E2D8;-webkit-text-fill-color:#D9E2D8}
+html body:not(#jv) #ov-tor-result .trs-grade{display:grid;grid-template-columns:76px minmax(0,1fr) minmax(0,1fr);gap:6px 8px;align-items:center}
+html body:not(#jv) #ov-tor-result .trs-grade>b{font-size:12.5px;font-weight:800;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#F6F2EA;-webkit-text-fill-color:#F6F2EA}
+html body:not(#jv) #ov-tor-result .trs-grade>span{font-size:13px;font-weight:700;color:#D9E2D8;-webkit-text-fill-color:#D9E2D8;line-height:1.15}
+html body:not(#jv) #ov-tor-result .trs-grade>span small{display:block;font-size:10.5px;font-weight:600}
+html body:not(#jv) #ov-tor-result .trs-g{width:100%;min-height:46px;padding:6px;text-align:center;font-size:20px!important;font-weight:900;border-radius:11px;border:1px solid var(--border)}
+html body:not(#jv) #ov-tor-result .trs-info{min-height:20px;margin:-2px 0 10px;font-size:13.5px;line-height:1.4;color:#D9E2D8;-webkit-text-fill-color:#D9E2D8}
+html body:not(#jv) #ov-tor-result .trs-info.ok{color:#D4E157;-webkit-text-fill-color:#D4E157;font-weight:800}
+html body:not(#jv) #ov-tor-result .trs-info.erro{color:#FFBCAD;-webkit-text-fill-color:#FFBCAD;font-weight:800}
+
+/* ficha do jogador */
+html body:not(#jv) #ov-tor-jog h3{margin-bottom:4px;overflow-wrap:anywhere}
+html body:not(#jv) #ov-tor-jog .trj-sub{font-size:13.5px;line-height:1.45;margin:0 0 12px;color:#D9E2D8;-webkit-text-fill-color:#D9E2D8}
+html body:not(#jv) #ov-tor-jog .trj-sub b{color:#EBA681;-webkit-text-fill-color:#EBA681}
+html body:not(#jv) #ov-tor-jog .trj-stats{border-radius:12px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);padding:2px 10px}
+html body:not(#jv) #ov-tor-jog .trj-st{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:50px}
+html body:not(#jv) #ov-tor-jog .trj-st+.trj-st{border-top:1px solid rgba(255,255,255,.12)}
+html body:not(#jv) #ov-tor-jog .trj-st>span{font-size:14px;font-weight:800;color:#F6F2EA;-webkit-text-fill-color:#F6F2EA}
+html body:not(#jv) #ov-tor-jog .trj-st>div{display:flex;align-items:center;gap:6px}
+html body:not(#jv) #ov-tor-jog .trj-st b{min-width:30px;text-align:center;font-size:20px;font-weight:900;color:#F6F2EA;-webkit-text-fill-color:#F6F2EA;font-variant-numeric:tabular-nums}
+html body:not(#jv) #ov-tor-jog .trj-st button{width:44px;min-width:44px;min-height:44px;padding:0;border-radius:11px;border:1px solid rgba(255,255,255,.22);background:rgba(43,59,52,0.42);color:#F6F2EA;-webkit-text-fill-color:#F6F2EA;font-size:20px;font-weight:900;cursor:pointer}
+html body:not(#jv) #ov-tor-jog .trj-dica{font-size:12.5px;line-height:1.45;margin:8px 0 10px;color:#D9E2D8;-webkit-text-fill-color:#D9E2D8}
+html body:not(#jv) #ov-tor-jog .trj-jogos{margin:0 0 12px;font-size:13.5px;line-height:1.5}
+html body:not(#jv) #ov-tor-jog .trj-t{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--gold-light);-webkit-text-fill-color:var(--gold-light);margin-bottom:2px}
+html body:not(#jv) #ov-tor-jog .trj-v{color:#D4E157;-webkit-text-fill-color:#D4E157}
+html body:not(#jv) #ov-tor-jog .trj-d{color:#F6F2EA;-webkit-text-fill-color:#F6F2EA}
+html body:not(#jv) #ov-tor-jog .trj-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+html body:not(#jv) #ov-tor-jog .trj-acts button{min-height:44px;padding:8px;border-radius:11px;border:1px solid rgba(255,255,255,.22);background:rgba(43,59,52,0.42);color:#F6F2EA;-webkit-text-fill-color:#F6F2EA;font-weight:800;font-size:13px;cursor:pointer}
+html body:not(#jv) #ov-tor-jog .trj-acts .trj-del{color:#FFBCAD;-webkit-text-fill-color:#FFBCAD}
 
 /* ===== Toques do tema Saibro ===== */
 .nav,.nav:after{background:#0B1B14!important;border-top:1px solid rgba(194,88,46,.35)!important}

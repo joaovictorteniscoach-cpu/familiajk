@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-17-2';
+const VERSAO='2026-10-18-1';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -10697,10 +10697,11 @@ const GRUPOS_TOR=['A','B','C','D','E'];
    Escapar so a aspa simples nao basta: a aspa DUPLA fecharia o proprio atributo. */
 function escJs(s){return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function torAttr(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-/* Arraste (toque + mouse) para mover/reordenar jogadores entre os grupos */
-let torDrag=null;
+/* Arraste (toque + mouse) para mover/reordenar jogadores entre os grupos.
+   torDragFim: o toque que encerra um arraste não deve abrir a ficha do jogador. */
+let torDrag=null,torDragFim=0;
 function torDragDown(e){
-  const row=e.currentTarget.closest('tr.tg-row');if(!row)return;
+  const row=e.currentTarget.closest('.tg-row');if(!row)return;
   e.preventDefault();
   const rect=row.getBoundingClientRect();
   const ghost=document.createElement('div');
@@ -10713,7 +10714,7 @@ function torDragDown(e){
   document.addEventListener('pointerup',torDragUp);
 }
 function torClearDropHints(){
-  document.querySelectorAll('tbody.tg-drop').forEach(el=>el.classList.remove('tg-drop'));
+  document.querySelectorAll('.tg-drop').forEach(el=>el.classList.remove('tg-drop'));
   document.querySelectorAll('.tg-before,.tg-after').forEach(el=>el.classList.remove('tg-before','tg-after'));
 }
 function torDragMove(e){
@@ -10724,12 +10725,13 @@ function torDragMove(e){
   const under=document.elementFromPoint(e.clientX,e.clientY);
   torDrag.ghost.style.display='';
   if(!under)return;
-  const tb=under.closest('tbody[data-group]');if(tb)tb.classList.add('tg-drop');
-  const over=under.closest('tr.tg-row');
+  const tb=under.closest('.trn-lista[data-group]');if(tb)tb.classList.add('tg-drop');
+  const over=under.closest('.tg-row');
   if(over&&over!==torDrag.row){const r=over.getBoundingClientRect();over.classList.add((e.clientY-r.top)<r.height/2?'tg-before':'tg-after');}
 }
 function torDragUp(e){
   if(!torDrag)return;
+  torDragFim=Date.now();
   document.removeEventListener('pointermove',torDragMove);
   document.removeEventListener('pointerup',torDragUp);
   torDrag.ghost.style.display='none';
@@ -10738,13 +10740,13 @@ function torDragUp(e){
   torClearDropHints();
   const ctx=torDrag;torDrag=null;
   if(!under)return;
-  const tb=under.closest('tbody[data-group]');if(!tb)return;
+  const tb=under.closest('.trn-lista[data-group]');if(!tb)return;
   const targetGroup=tb.dataset.group;
   const t=torAtual();
   const p=t.jogadores.find(x=>x.group===ctx.group&&x.name===ctx.name);if(!p)return;
   if(targetGroup!==p.group&&t.jogadores.some(x=>x.group===targetGroup&&x.name.toLowerCase()===p.name.toLowerCase())){toast('Já existe esse jogador no grupo '+targetGroup);return;}
   const groupPlayers=t.jogadores.filter(x=>x.group===targetGroup&&x!==p);
-  const over=under.closest('tr.tg-row');
+  const over=under.closest('.tg-row');
   let idx=groupPlayers.length;
   if(over){const overName=over.dataset.name,overGroup=over.dataset.group;if(overGroup===targetGroup){const r=over.getBoundingClientRect();const before=(e.clientY-r.top)<r.height/2;const j=groupPlayers.findIndex(x=>x.name===overName);if(j!==-1)idx=before?j:j+1;}}
   const oldGroup=p.group;p.group=targetGroup;
@@ -10931,45 +10933,104 @@ function renderTorneio(){
   const wrap=document.getElementById('tor-grupos');
   const temJogador=(t.jogadores||[]).length>0;
   // com jogadores, mostra TODAS as categorias definidas (uma nova, ainda vazia, aparece)
-  wrap.innerHTML=temJogador?gruposDe(t).map(g=>renderGrupoTor(t,g)).join(''):'<div class="tor-empty">Nenhum jogador ainda neste torneio.<br>Toque em <b>＋ Jogador</b> para montar as categorias. 🎾</div>';
+  wrap.innerHTML=temJogador
+    ?gruposDe(t).map(g=>renderGrupoTor(t,g)).join('')+'<button class="trn-novacat" onclick="adicionarCategoria()">＋ Nova categoria</button>'
+    :'<div class="tor-empty">Nenhum jogador ainda neste torneio. 🎾<br><button class="trn-addv" onclick="abrirAddJogador()">＋ Adicionar jogador</button></div>';
+  renderJogosTor(t);
   renderTorLog();
 }
+/* Etapa numa linha só. O botão segue a ordem da etapa: enquanto ela corre,
+   "Encerrar" (define campeões e vices); depois de encerrada, "Nova etapa"
+   (sobe e desce). Assim não se começa uma etapa nova sem fechar a anterior. */
 function renderTorEtapa(t){
   const el=document.getElementById('tor-etapa');if(!el)return;
   const status=t.encerrada?'<span class="te-badge fim">encerrada ✓</span>':'<span class="te-badge on">em andamento</span>';
   let hist='';
   const fins=(t.etapasFin||[]).slice().sort((a,b)=>b.etapa-a.etapa);
   if(fins.length){
-    hist='<div class="te-hist"><div class="te-hist-t">Etapas encerradas</div>'+fins.map(e=>{
+    hist='<details class="te-hist trn-hist"><summary>🏆 Etapas encerradas ('+fins.length+')</summary>'+fins.map(e=>{
       const linhas=(e.campeoes||[]).map(c=>esc(nomeGrupo(t,c.grupo))+': 🏆 '+esc(c.campeao)+' · 🥈 '+esc(c.vice)).join('<br>');
       return '<div class="te-hrow"><b>Etapa '+e.etapa+'</b> <span>'+((e.data||'').split('-').reverse().join('/'))+'</span><div class="te-camp">'+linhas+'</div></div>';
-    }).join('')+'</div>';
+    }).join('')+'</details>';
   }
-  el.innerHTML='<div class="te-bar">'+
-    '<div class="te-top"><div><span class="te-eyebrow">'+esc(t.nome)+'</span><div class="te-etapa" onclick="editarEtapaNum()" title="Tocar para editar o número">'+etapaLabel(t)+' ✎</div></div>'+status+'</div>'+
-    '<div class="te-acts"><button class="te-fim" onclick="encerrarEtapa()">🏁 Encerrar etapa</button><button class="te-nova" onclick="novaEtapa()">➕ Nova etapa</button></div>'+
-    '</div>'+hist;
+  const acao=t.encerrada
+    ?'<button class="te-nova" onclick="novaEtapa()">➕ Nova etapa</button>'
+    :'<button class="te-fim" onclick="encerrarEtapa()">🏁 Encerrar etapa</button>';
+  el.innerHTML='<div class="te-bar trn-etapa"><div class="trn-et-txt"><div class="te-etapa" onclick="editarEtapaNum()" title="Tocar para editar o número" role="button" tabindex="0">'+etapaLabel(t)+' ✎</div>'+status+'</div>'+acao+'</div>'+hist;
 }
+/* Classificação que cabe na tela do celular: posição, nome, V, D, WO e pontos.
+   Antes era uma tabela de 640px com campos de digitar e botões na linha, e o
+   João tinha de arrastar para o lado. Tocar na linha abre a ficha do jogador,
+   onde ficam a correção dos números e as ações (renomear, pontos, mover, remover). */
 function renderGrupoTor(t,g){
   const players=rankPlayersTor(t.jogadores.filter(p=>p.group===g));
   const maxPts=players.length?calcPtsTor(players[0]):0;
+  const ga=argJs(g);
   const rows=players.map((p,i)=>{
     const lead=i===0&&maxPts>0, rk=i===0?'r1':i===1?'r2':i===2?'r3':'';
-    const q=escJs(p.name);
-    return `<tr class="tg-row" data-group="${torAttr(g)}" data-name="${torAttr(p.name)}">
-      <td><span class="tg-drag" title="Arraste para mover/reordenar" onpointerdown="torDragDown(event)">⠿</span><span class="tg-rank ${rk}">${i+1}</span><span class="tg-name" title="Renomear" onclick="renomearJogadorTor('${escJs(g)}','${q}')">${esc(p.name)}${p.cod?' 🔗':''}</span></td>
-      <td><input class="tg-stat" type="number" min="0" value="${p.v||0}" onchange="updateStatTor('${escJs(g)}','${q}','v',this.value)"></td>
-      <td><input class="tg-stat" type="number" min="0" value="${p.d||0}" onchange="updateStatTor('${escJs(g)}','${q}','d',this.value)"></td>
-      <td><input class="tg-stat" type="number" min="0" value="${p.wo||0}" onchange="updateStatTor('${escJs(g)}','${q}','wo',this.value)"></td>
-      <td><span class="tg-pts ${lead?'lead':''}" style="cursor:pointer" title="Toque para ajustar — ${(Number(p.ptsAcum)||0)>0?(ptsEtapa(p)+' nesta etapa + '+(Number(p.ptsAcum)||0)+' de fora'):'pontos desta etapa'}" onclick="ajustarPontosTor('${escJs(g)}','${q}')">${calcPtsTor(p)}</span>${(Number(p.ptsAcum)||0)>0?`<small class="tg-acum">${ptsEtapa(p)}+${Number(p.ptsAcum)||0}</small>`:''}</td>
-      <td style="white-space:nowrap"><button class="tg-mv" title="Mover de grupo" onclick="abrirMoverTor('${escJs(g)}','${q}')">↔</button><button class="tg-x" title="Remover" onclick="removerJogadorTor('${escJs(g)}','${q}')">✕</button></td>
-    </tr>`;
+    const acum=Number(p.ptsAcum)||0;
+    const fala=p.name+': '+calcPtsTor(p)+' pontos, '+(p.v||0)+' vitórias, '+(p.d||0)+' derrotas, '+(p.wo||0)+' W.O.';
+    return `<div class="tg-row trn-row" data-group="${torAttr(g)}" data-name="${torAttr(p.name)}" role="button" tabindex="0" aria-label="${torAttr(fala)}" onclick="abrirJogTor('${ga}','${argJs(p.name)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">
+      <span class="tg-drag" title="Arraste para mover ou reordenar" onpointerdown="torDragDown(event)" onclick="event.stopPropagation()">⠿</span>
+      <span class="tg-rank ${rk}">${i+1}</span>
+      <span class="tg-name">${esc(p.name)}${p.cod?'<i class="trn-link" title="Vinculado ao app do aluno"> 🔗</i>':''}</span>
+      <span class="trn-n">${p.v||0}</span><span class="trn-n">${p.d||0}</span><span class="trn-n">${p.wo||0}</span>
+      <span class="trn-pts"><b class="tg-pts${lead?' lead':''}">${calcPtsTor(p)}</b>${acum>0?`<small class="tg-acum">${ptsEtapa(p)}+${acum}</small>`:''}</span>
+    </div>`;
   }).join('');
-  const head=`<div class="tg-head"><div class="tg-badge">${esc(g)}</div><div style="flex:1"><div class="tg-title" title="Tocar para dar um nome à categoria" onclick="renomearGrupoTor('${escJs(g)}')">${esc(nomeGrupo(t,g))} ✎</div><div class="tg-count">${players.length} jogador${players.length!==1?'es':''}</div></div>${players.length===0?`<button class="tg-x" title="Remover categoria vazia" onclick="removerCategoria('${escJs(g)}')">🗑️</button>`:''}</div>`;
+  const head=`<div class="tg-head trn-head"><div class="tg-badge">${esc(g)}</div><div class="trn-head-txt"><div class="tg-title" title="Tocar para dar um nome à categoria" role="button" tabindex="0" onclick="renomearGrupoTor('${ga}')">${esc(nomeGrupo(t,g))} ✎</div><div class="tg-count">${players.length} jogador${players.length!==1?'es':''}</div></div>${players.length===0?`<button class="trn-hbtn" title="Remover categoria vazia" aria-label="Remover categoria vazia" onclick="removerCategoria('${ga}')">🗑️</button>`:''}<button class="trn-hbtn" onclick="abrirAddJogador('${ga}')">＋ Jogador</button></div>`;
   if(players.length===0)
-    return `<div class="tg-card">${head}<div class="tg-count" style="padding:6px 2px 2px">Categoria vazia — use <b>＋ Jogador</b> para adicionar aqui.</div></div>`;
-  return `<div class="tg-card">${head}
-    <div class="tg-table-scroll" tabindex="0" role="region" aria-label="Classificação do torneio: deslize para ver todas as colunas"><table class="tg-tbl"><thead><tr><th>Jogador</th><th title="Vitórias">V</th><th title="Derrotas">D</th><th title="W.O.">WO</th><th title="Pontos">Pts</th><th>Ações</th></tr></thead><tbody data-group="${torAttr(g)}">${rows}</tbody></table></div><p class="tg-scroll-hint">Deslize a tabela para ver todas as colunas →</p></div>`;
+    return `<div class="tg-card">${head}<div class="tg-count trn-vazia">Categoria vazia: toque em <b>＋ Jogador</b> para adicionar aqui.</div></div>`;
+  return `<div class="tg-card">${head}<div class="trn-cab" aria-hidden="true"><span></span><span>#</span><span>Jogador</span><span title="Vitórias">V</span><span title="Derrotas">D</span><span title="W.O.">WO</span><span>Pts</span></div><div class="trn-lista" data-group="${torAttr(g)}">${rows}</div></div>`;
+}
+/* ===== Ficha do jogador no torneio =====
+   Os campos de V/D/WO e os botões ↔ ✕ que ocupavam a linha moram aqui. Os
+   botões ＋/− só corrigem números; jogo novo entra por "Lançar resultado",
+   que guarda o placar e pode ser desfeito. */
+let jogTorCtx=null;
+function abrirJogTor(g,name){
+  if(Date.now()-torDragFim<500)return;
+  jogTorCtx={g,name};
+  if(renderJogTor())document.getElementById('ov-tor-jog').classList.add('on');
+}
+function jogTorAtual(){const t=torAtual();return jogTorCtx?t.jogadores.find(x=>x.group===jogTorCtx.g&&x.name===jogTorCtx.name):null;}
+function renderJogTor(){
+  const t=torAtual(),p=jogTorAtual(),el=document.getElementById('trj-corpo');
+  if(!p||!el){closeModal('ov-tor-jog');return false;}
+  const pos=rankPlayersTor(t.jogadores.filter(x=>x.group===p.group)).indexOf(p)+1;
+  const acum=Number(p.ptsAcum)||0;
+  const al=p.alunoId?DB.alunos.find(a=>a.id===p.alunoId):null;
+  const passo=(f,rot)=>`<div class="trj-st"><span>${rot}</span><div><button aria-label="Tirar 1 de ${rot}" onclick="passoStatTor('${f}',-1)">−</button><b>${Number(p[f])||0}</b><button aria-label="Somar 1 em ${rot}" onclick="passoStatTor('${f}',1)">＋</button></div></div>`;
+  const meus=jogosDaEtapaTor(t).filter(j=>j.grupo===p.group&&(j.p1===p.name||j.p2===p.name)).sort((a,b)=>(a.ts||0)-(b.ts||0));
+  const jogos=meus.length?'<div class="trj-jogos"><div class="trj-t">Jogos nesta etapa</div>'+meus.map(j=>{
+    const ganhou=j.venc===p.name, adv=j.p1===p.name?j.p2:j.p1, pl=j.tipo==='wo'?'W.O.':placarDoJogo(j,p.name);
+    return '<div class="'+(ganhou?'trj-v':'trj-d')+'">'+(ganhou?'✓ Venceu ':'✗ Perdeu para ')+esc(adv)+(pl?' · '+esc(pl):'')+'</div>';
+  }).join('')+'</div>':'';
+  el.innerHTML=`<h3>${esc(p.name)}</h3>
+    <p class="trj-sub">${esc(nomeGrupo(t,p.group))} · ${pos}º lugar · <b>${calcPtsTor(p)} pts</b>${acum>0?` (${ptsEtapa(p)} desta etapa + ${acum} de fora)`:''}${p.cod?`<br>🔗 Vinculado ao app${al?' de '+esc(al.nome):''}`:''}</p>
+    <div class="trj-stats">${passo('v','Vitórias')}${passo('d','Derrotas')}${passo('wo','W.O.')}</div>
+    <p class="trj-dica">＋ e − só corrigem os números. Jogo novo: <b>🎾 Lançar resultado</b>, que guarda o placar.</p>
+    ${jogos}
+    <div class="trj-acts">
+      <button onclick="trjAcao('renomear')">✎ Renomear</button>
+      <button onclick="trjAcao('pontos')">⭐ Ajustar pontos</button>
+      <button onclick="trjAcao('mover')">↔ Mudar de categoria</button>
+      <button class="trj-del" onclick="trjAcao('remover')">🗑️ Remover</button>
+    </div>`;
+  return true;
+}
+function passoStatTor(f,d){
+  const p=jogTorAtual();if(!p||['v','d','wo'].indexOf(f)<0)return;
+  p[f]=Math.max(0,(Number(p[f])||0)+d);
+  persist();renderTorneio();renderJogTor();
+}
+function trjAcao(a){
+  const c=jogTorCtx;if(!c)return;
+  closeModal('ov-tor-jog');
+  if(a==='renomear')renomearJogadorTor(c.g,c.name);
+  else if(a==='pontos')ajustarPontosTor(c.g,c.name);
+  else if(a==='mover')abrirMoverTor(c.g,c.name);
+  else if(a==='remover')removerJogadorTor(c.g,c.name);
 }
 function selTorneio(id){ensureTorneios();if(DB.torneios.lista[id]){DB.torneios.atual=id;persist();renderTorneio();}}
 function abrirNovoTorneio(){document.getElementById('tn-nome').value='';document.getElementById('tn-tipo').value='barragem';document.getElementById('ov-tor-novo').classList.add('on');}
@@ -10990,8 +11051,10 @@ function excluirTorneio(){
   DB.torneios.atual=Object.keys(DB.torneios.lista)[0];
   persist();renderTorneio();toast('Torneio excluído');
 }
-function abrirAddJogador(){
-  document.getElementById('tj-grupo').innerHTML=gruposDe(torAtual()).map(g=>`<option value="${esc(g)}">${esc(nomeGrupo(torAtual(),g))}</option>`).join('');
+function abrirAddJogador(g){
+  const sg=document.getElementById('tj-grupo');
+  sg.innerHTML=gruposDe(torAtual()).map(x=>`<option value="${esc(x)}">${esc(nomeGrupo(torAtual(),x))}</option>`).join('');
+  if(g&&gruposDe(torAtual()).indexOf(g)>=0)sg.value=g;
   const sel=document.getElementById('tj-aluno');
   if(sel)sel.innerHTML='<option value="">— Avulso (digitar nome) —</option>'+DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${a.id}">${esc(a.nome)}</option>`).join('');
   document.getElementById('tj-nome').value='';
@@ -11020,9 +11083,14 @@ function removerJogadorTor(g,name){
 }
 function renomearJogadorTor(g,name){
   const novo=prompt('Renomear jogador:',name);if(novo===null)return;
-  const nv=novo.trim();if(!nv)return;
+  const nv=novo.trim();if(!nv||nv===name)return;
   const t=torAtual();const p=t.jogadores.find(x=>x.group===g&&x.name===name);if(!p)return;
-  p.name=nv;persist();renderTorneio();
+  if(t.jogadores.some(x=>x!==p&&x.group===g&&x.name.toLowerCase()===nv.toLowerCase())){toast('Já existe '+nv+' nesta categoria');return;}
+  p.name=nv;
+  // os jogos lançados guardam o nome: troca junto (nos outros grupos só se ninguém mais tiver o nome antigo)
+  const unico=!t.jogadores.some(x=>x!==p&&x.name===name);
+  (t.jogos||[]).forEach(j=>{if(j.grupo!==g&&!unico)return;['p1','p2','venc'].forEach(k=>{if(j[k]===name)j[k]=nv;});});
+  persist();renderTorneio();
 }
 /* ===== Ajustar os pontos de um jogador =====
    V, D e WO já eram editáveis; o total, não — ele é calculado. Mas torneio
@@ -11055,10 +11123,6 @@ function ajustarPontosTor(g,name){
   persist();renderTorneio();
   toast('Pontos de '+name+': '+total+' → '+novo);
 }
-function updateStatTor(g,name,field,val){
-  const t=torAtual();const p=t.jogadores.find(x=>x.group===g&&x.name===name);if(!p)return;
-  let v=parseInt(val,10);if(isNaN(v)||v<0)v=0;p[field]=v;persist();renderTorneio();toast('Atualizado',1000);
-}
 let moveTorCtx=null;
 function abrirMoverTor(g,name){
   moveTorCtx={g,name};
@@ -11071,22 +11135,100 @@ function confirmarMoverTor(){
   const t=torAtual();const p=t.jogadores.find(x=>x.group===moveTorCtx.g&&x.name===moveTorCtx.name);if(!p)return;
   p.group=document.getElementById('tm-grupo').value;persist();closeModal('ov-tor-move');renderTorneio();toast('Movido para o Grupo '+p.group);
 }
+/* ===== Lançar resultado com o placar =====
+   Antes a janela só tinha os jogadores e o vencedor: os games não tinham onde
+   entrar e o placar que o aluno mandava se perdia ao aplicar. Agora cada set
+   tem os games dos dois; quando há placar, é ele que decide o vencedor (não dá
+   para gravar 6/4 6/3 com o vencedor trocado). O placar é opcional e o W.O.
+   não tem placar. Cada jogo fica guardado em t.jogos e pode ser desfeito. */
 function abrirResultadoTor(){
   const t=torAtual();
   const grupos=gruposDe(t).filter(g=>t.jogadores.some(p=>p.group===g));
   if(!grupos.length){toast('Adicione jogadores primeiro 🙂');return;}
-  document.getElementById('tr-grupo').innerHTML='<option value="">Selecionar grupo…</option>'+grupos.map(g=>`<option value="${esc(g)}">${esc(nomeGrupo(t,g))}</option>`).join('');
-  document.getElementById('tr-p1').innerHTML='<option value="">—</option>';
-  document.getElementById('tr-p2').innerHTML='<option value="">—</option>';
-  document.getElementById('tr-venc').innerHTML='<option value="">—</option>';
+  const sg=document.getElementById('tr-grupo');
+  sg.innerHTML=(grupos.length>1?'<option value="">Escolher categoria…</option>':'')+grupos.map(g=>`<option value="${esc(g)}">${esc(nomeGrupo(t,g))}</option>`).join('');
+  sg.value=grupos.length===1?grupos[0]:'';
+  document.querySelectorAll('#ov-tor-result .trs-g').forEach(i=>{i.value='';});
   const n=document.querySelector('input[name="tr-tipo"][value="normal"]');if(n)n.checked=true;
+  document.getElementById('tr-venc').innerHTML='<option value="">—</option>';
+  trVencAuto=false;
+  trPlayers();
   document.getElementById('ov-tor-result').classList.add('on');
 }
 function trPlayers(){
   const t=torAtual();const g=document.getElementById('tr-grupo').value;
-  const nomes=t.jogadores.filter(p=>p.group===g).map(p=>p.name);
-  const opts='<option value="">—</option>'+nomes.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
-  document.getElementById('tr-p1').innerHTML=opts;document.getElementById('tr-p2').innerHTML=opts;document.getElementById('tr-venc').innerHTML=opts;
+  const nomes=g?t.jogadores.filter(p=>p.group===g).map(p=>p.name).sort((a,b)=>a.localeCompare(b,'pt-BR')):[];
+  const opts='<option value="">'+(g?'Escolher…':'—')+'</option>'+nomes.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  document.getElementById('tr-p1').innerHTML=opts;document.getElementById('tr-p2').innerHTML=opts;
+  trAtualiza();
+}
+/* Games digitados, set a set: [[j1,j2],[j1,j2],[j1,j2]] como texto. */
+function trSetsDigitados(){const v=[...document.querySelectorAll('#ov-tor-result .trs-g')].map(i=>i.value),r=[];for(let i=0;i+1<v.length;i+=2)r.push([v[i],v[i+1]]);return r;}
+function trTemPlacar(){return trSetsDigitados().some(x=>String(x[0]).trim()!==''||String(x[1]).trim()!=='');}
+/* Confere os sets (melhor de 3; o 3º pode ser super tie-break) e diz quem
+   venceu: lado 0 = jogador 1, lado 1 = jogador 2, -1 = sem placar.
+   Não julga se 6/5 "existe" (há barragem com pro-set e outros formatos);
+   barra só o que não fecha: set empatado, set pulado, número faltando,
+   set depois de o jogo acabar e empate em sets. */
+function avaliarSetsTor(raw){
+  const sets=[];let vazio=-1;
+  for(let i=0;i<(raw||[]).length;i++){
+    const par=raw[i]||[];
+    const a=String(par[0]==null?'':par[0]).trim(), b=String(par[1]==null?'':par[1]).trim();
+    if(a===''&&b===''){if(vazio<0)vazio=i;continue;}
+    if(vazio>=0)return {erro:'Preencha o '+(vazio+1)+'º set antes do '+(i+1)+'º.'};
+    if(a===''||b==='')return {erro:'Falta o número de um dos jogadores no '+(i+1)+'º set.',incompleto:true};
+    if(!/^\d{1,2}$/.test(a)||!/^\d{1,2}$/.test(b))return {erro:'Use só números no '+(i+1)+'º set.'};
+    const x=Number(a),y=Number(b);
+    if(x===y)return {erro:'O '+(i+1)+'º set não pode terminar empatado ('+x+'/'+y+').'};
+    sets.push([x,y]);
+  }
+  if(!sets.length)return {sets:[],lado:-1};
+  let s1=0,s2=0;
+  for(let k=0;k<sets.length;k++){
+    if(s1===2||s2===2)return {erro:'O jogo acabou em '+k+' sets: apague o '+(k+1)+'º set.'};
+    if(sets[k][0]>sets[k][1])s1++;else s2++;
+  }
+  if(s1===s2)return {erro:'Empate em sets ('+s1+' a '+s2+'): falta o 3º set ou o super tie-break.'};
+  return {sets,lado:s1>s2?0:1,sets1:s1,sets2:s2};
+}
+/* Placar escrito do ponto de vista de um lado (0 = jogador 1): "6/4 3/6 10/8". */
+function placarTorTxt(sets,lado){return (sets||[]).map(x=>lado===1?x[1]+'/'+x[0]:x[0]+'/'+x[1]).join(' ');}
+/* Placar de um jogo guardado, visto por um jogador (sem nome: pelo vencedor).
+   Placar que veio só em texto (aluno, versão antiga) aparece como chegou. */
+function placarDoJogo(j,nome){
+  if(Array.isArray(j.sets)&&j.sets.length){const quem=nome||j.venc;return placarTorTxt(j.sets,quem===j.p1?0:1);}
+  return j.placar||'';
+}
+/* trVencAuto: o vencedor foi posto pelo placar, não escolhido. Se o placar for
+   apagado ou ele mudar para W.O., esse vencedor não vale e volta em branco. */
+let trVencAuto=false;
+function trAtualiza(){
+  const p1=document.getElementById('tr-p1').value,p2=document.getElementById('tr-p2').value;
+  const wo=(document.querySelector('input[name="tr-tipo"]:checked')||{}).value==='wo';
+  document.getElementById('tr-n1').textContent=p1||'Jogador 1';
+  document.getElementById('tr-n2').textContent=p2||'Jogador 2';
+  document.getElementById('tr-placar').hidden=wo;
+  document.querySelectorAll('#ov-tor-result .trs-tipo label').forEach(l=>l.classList.toggle('on',!!(l.querySelector('input')||{}).checked));
+  document.getElementById('tr-venc-lbl').textContent=wo?'Quem venceu por W.O.?':'Vencedor';
+  const sv=document.getElementById('tr-venc'),dupla=!!(p1&&p2&&p1!==p2);
+  // com placar digitado, quem decide o vencedor é o placar: o campo some
+  const pelosSets=!wo&&trTemPlacar();
+  if(!pelosSets&&trVencAuto){sv.value='';trVencAuto=false;}
+  const antes=sv.value;
+  sv.innerHTML='<option value="">'+(dupla?'Escolher…':'—')+'</option>'+(dupla?[p1,p2].map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join(''):'');
+  if(dupla&&(antes===p1||antes===p2))sv.value=antes;
+  const info=document.getElementById('tr-info');let msg='',cls='';
+  sv.closest('.field').hidden=pelosSets;
+  if(p1&&p2&&p1===p2){msg='Escolha dois jogadores diferentes.';cls='erro';}
+  else if(pelosSets){
+    const r=avaliarSetsTor(trSetsDigitados());
+    if(r.erro){msg=r.incompleto?'Digite os games dos dois jogadores em cada set.':r.erro;cls=r.incompleto?'':'erro';}
+    else if(!dupla)msg='Escolha os dois jogadores.';
+    else{const ganhou=r.lado===0?p1:p2;sv.value=ganhou;trVencAuto=true;msg='✓ '+ganhou+' venceu por '+Math.max(r.sets1,r.sets2)+' a '+Math.min(r.sets1,r.sets2)+' · '+placarTorTxt(r.sets,r.lado);cls='ok';}
+  }
+  else if(!wo)msg='Sem o placar, escolha só o vencedor.';
+  info.textContent=msg;info.className='trs-info'+(cls?' '+cls:'');
 }
 function aplicarResultadoTor(t,g,p1,p2,venc,tipo){
   const perd=venc===p1?p2:p1;
@@ -11096,15 +11238,93 @@ function aplicarResultadoTor(t,g,p1,p2,venc,tipo){
   if(tipo==='wo'){pw.wo=(pw.wo||0)+1;}else{pw.v=(pw.v||0)+1;pl.d=(pl.d||0)+1;}
   return true;
 }
+/* Guarda o jogo para mostrar a lista da etapa, o placar na ficha e para poder desfazer. */
+function registrarJogoTor(t,j){
+  if(!Array.isArray(t.jogos))t.jogos=[];
+  const agora=Date.now();
+  const reg={id:'j'+agora.toString(36)+Math.random().toString(36).slice(2,6),etapa:Number(t.etapa)||1,grupo:j.grupo,
+    p1:j.p1,p2:j.p2,venc:j.venc,tipo:j.tipo==='wo'?'wo':'normal',data:dKey(new Date()),ts:agora,origem:j.origem||'gestao'};
+  if(Array.isArray(j.sets)&&j.sets.length)reg.sets=j.sets;
+  if(j.placar)reg.placar=String(j.placar).slice(0,40);
+  if(j.por)reg.por=String(j.por).slice(0,80);
+  t.jogos.push(reg);
+  return reg;
+}
+function jogosDaEtapaTor(t){const e=Number(t.etapa)||1;return (t.jogos||[]).filter(j=>j.etapa===e);}
+/* Mesmo par já lançado nesta etapa: pergunta antes, para não contar duas vezes
+   o resultado que o aluno mandou e o João também lançou. */
+function jogoRepetidoTor(t,g,p1,p2){return jogosDaEtapaTor(t).find(j=>j.grupo===g&&((j.p1===p1&&j.p2===p2)||(j.p1===p2&&j.p2===p1)));}
 function salvarResultadoTor(){
   const t=torAtual();
-  const g=document.getElementById('tr-grupo').value,p1=document.getElementById('tr-p1').value,p2=document.getElementById('tr-p2').value,venc=document.getElementById('tr-venc').value;
-  const tipo=document.querySelector('input[name="tr-tipo"]:checked').value;
-  if(!g||!p1||!p2||!venc){toast('Preencha todos os campos');return;}
+  const g=document.getElementById('tr-grupo').value,p1=document.getElementById('tr-p1').value,p2=document.getElementById('tr-p2').value;
+  const wo=(document.querySelector('input[name="tr-tipo"]:checked')||{}).value==='wo';
+  if(!g||!p1||!p2){toast('Escolha a categoria e os dois jogadores');return;}
   if(p1===p2){toast('Escolha jogadores diferentes');return;}
+  let venc=document.getElementById('tr-venc').value,sets=[],placar='';
+  if(!wo&&trTemPlacar()){
+    const r=avaliarSetsTor(trSetsDigitados());
+    if(r.erro){toast(r.erro);return;}
+    venc=r.lado===0?p1:p2;sets=r.sets;placar=placarTorTxt(r.sets,r.lado);
+  }
+  if(!venc){toast(wo?'Escolha quem venceu por W.O.':'Digite o placar ou escolha o vencedor');return;}
   if(venc!==p1&&venc!==p2){toast('O vencedor deve ser um dos dois');return;}
-  if(!aplicarResultadoTor(t,g,p1,p2,venc,tipo)){toast('Jogador não encontrado');return;}
-  persist();closeModal('ov-tor-result');renderTorneio();toast('✓ '+venc+' venceu!');
+  const rep=jogoRepetidoTor(t,g,p1,p2);
+  if(rep&&!confirm(p1+' × '+p2+' já tem jogo lançado nesta etapa ('+rep.venc+' venceu'+(placarDoJogo(rep)?' · '+placarDoJogo(rep):'')+').\nLançar outro jogo entre os dois?'))return;
+  if(!aplicarResultadoTor(t,g,p1,p2,venc,wo?'wo':'normal')){toast('Jogador não encontrado');return;}
+  registrarJogoTor(t,{grupo:g,p1,p2,venc,tipo:wo?'wo':'normal',sets,placar,origem:'gestao'});
+  persist();closeModal('ov-tor-result');renderTorneio();
+  toast('✓ '+venc+' venceu'+(wo?' por W.O.':(placar?' · '+placar:'')));
+}
+/* ===== Jogos da etapa =====
+   Lista do que foi lançado, do mais novo para o mais antigo. "Desfazer" tira a
+   vitória e a derrota da tabela e apaga o jogo; só na etapa em andamento. */
+let torJogosAberto=false;
+function renderJogosTor(t){
+  const el=document.getElementById('tor-jogos');if(!el)return;
+  const js=jogosDaEtapaTor(t).slice().sort((a,b)=>(b.ts||0)-(a.ts||0));
+  if(!js.length){el.innerHTML='';return;}
+  const pode=!t.encerrada;
+  el.innerHTML='<details class="trn-jogos"'+(torJogosAberto?' open':'')+' ontoggle="torJogosAberto=this.open"><summary>🎾 Jogos da '+esc(etapaLabel(t).toLowerCase())+' ('+js.length+')</summary>'+js.map(j=>{
+    const perd=j.venc===j.p1?j.p2:j.p1, pl=j.tipo==='wo'?'W.O.':placarDoJogo(j);
+    const sub=[pl?esc(pl):'',esc(nomeGrupo(t,j.grupo)),(j.data||'').split('-').reverse().slice(0,2).join('/'),j.origem==='aluno'?'📱 enviado pelo aluno':''].filter(Boolean).join(' · ');
+    return '<div class="trn-jogo"><div class="trn-jg-txt"><b>'+esc(j.venc)+'</b> venceu '+esc(perd)+'<small>'+sub+'</small></div>'
+      +(pode?'<button class="trn-desf" onclick="desfazerJogoTor(\''+argJs(j.id)+'\')">↩︎ Desfazer</button>':'')+'</div>';
+  }).join('')+(pode?'':'<p class="trn-jg-nota">Etapa encerrada: os jogos ficam só para consulta.</p>')+'</details>';
+}
+function desfazerJogoTor(id){
+  const t=torAtual();const j=(t.jogos||[]).find(x=>x.id===id);if(!j)return;
+  if(t.encerrada||j.etapa!==(Number(t.etapa)||1)){toast('Só dá para desfazer jogos da etapa em andamento');return;}
+  const perd=j.venc===j.p1?j.p2:j.p1;
+  const pw=t.jogadores.find(p=>p.group===j.grupo&&p.name===j.venc),pl=t.jogadores.find(p=>p.group===j.grupo&&p.name===perd);
+  if(!pw||!pl){toast('Não achei '+(pw?perd:j.venc)+' em '+nomeGrupo(t,j.grupo)+'. Corrija os números tocando no jogador.');return;}
+  const pl2=placarDoJogo(j);
+  if(!confirm('Desfazer o jogo '+j.venc+' × '+perd+(j.tipo==='wo'?' (W.O.)':(pl2?' ('+pl2+')':''))+'?\n'
+    +(j.tipo==='wo'?'O W.O. sai da tabela de '+j.venc+'.':'A vitória de '+j.venc+' e a derrota de '+perd+' saem da tabela.')))return;
+  if(j.tipo==='wo')pw.wo=Math.max(0,(pw.wo||0)-1);
+  else{pw.v=Math.max(0,(pw.v||0)-1);pl.d=Math.max(0,(pl.d||0)-1);}
+  t.jogos=t.jogos.filter(x=>x!==j);
+  logAct('Desfazer jogo do torneio: '+j.venc+' × '+perd);
+  persist();renderTorneio();toast('Jogo desfeito');
+}
+/* Compartilhar: um botão só na tela; aqui se escolhe o formato. */
+function abrirCompartilharTor(){
+  const t=torAtual();
+  if(!(t.jogadores||[]).length){toast('Sem jogadores para compartilhar');return;}
+  document.getElementById('trc-jogos').hidden=!jogosDaEtapaTor(t).length;
+  document.getElementById('ov-tor-comp').classList.add('on');
+}
+function compartilharJogosTor(){
+  const t=torAtual();const js=jogosDaEtapaTor(t).slice().sort((a,b)=>(a.ts||0)-(b.ts||0));
+  if(!js.length){toast('Nenhum jogo lançado nesta etapa');return;}
+  let txt='🎾 *'+t.nome.toUpperCase()+' · '+etapaLabel(t).toUpperCase()+'*\n_Resultados_\n';
+  const ordem=gruposDe(t).concat(Array.from(new Set(js.map(j=>j.grupo))).filter(g=>gruposDe(t).indexOf(g)<0));
+  ordem.forEach(g=>{
+    const dg=js.filter(j=>j.grupo===g);if(!dg.length)return;
+    txt+='\n*── '+nomeGrupo(t,g).toUpperCase()+' ──*\n';
+    dg.forEach(j=>{const perd=j.venc===j.p1?j.p2:j.p1,pl=j.tipo==='wo'?'W.O.':placarDoJogo(j);txt+='✅ '+j.venc+' venceu '+perd+(pl?' · '+pl:'')+'\n';});
+  });
+  txt+='\n_Acompanhe sua evolução em quadra!_ 🎾';
+  window.open('https://api.whatsapp.com/send?text='+encodeURIComponent(txt),'_blank');
 }
 function compartilharTorneio(){
   const t=torAtual();
@@ -11449,24 +11669,43 @@ async function syncTorneio(silent){
   }catch(e){torFila=[];}
   renderTorLog();
 }
+/* Torneio a que o resultado do aluno pertence: o que ele escolheu no app;
+   sem isso (versão antiga, torneio apagado), o que está aberto na Gestão. */
+function torDoPedido(m){ensureTorneios();return (m&&m.torneioId&&DB.torneios.lista[m.torneioId])||torAtual();}
+/* Placar que o aluno mandou: sets conferidos quando vierem na ordem jogador 1 ×
+   jogador 2 e baterem com o vencedor; senão o texto como chegou. */
+function placarDoPedidoTor(m){
+  if(m.tipo==='wo')return {sets:[],placar:''};
+  const r=Array.isArray(m.sets)?avaliarSetsTor(m.sets):null;
+  if(r&&!r.erro&&r.sets.length&&(r.lado===0?m.p1:m.p2)===m.vencedor)return {sets:r.sets,placar:placarTorTxt(r.sets,r.lado)};
+  return {sets:[],placar:m.score?String(m.score).trim().slice(0,40):''};
+}
 function renderTorLog(){
   const wrap=document.getElementById('tor-log-wrap');if(!wrap)return;
   if(!torFila.length){wrap.innerHTML='';return;}
+  const aberto=torAtual();
   wrap.innerHTML='<div class="tor-log"><h4>📥 Resultados enviados pelos alunos ('+torFila.length+')</h4>'+
     torFila.map(m=>{
-      const adv=m.vencedor===m.p1?m.p2:m.p1;
-      const desc=m.tipo==='wo'?(esc(m.vencedor)+' venceu por W.O.'):(esc(m.vencedor)+' venceu '+esc(adv));
-      return '<div class="row"><div style="flex:1;min-width:0"><div><b style="color:var(--gold-light)">'+desc+'</b></div><div style="opacity:.72;font-size:11px;margin-top:2px">Grupo '+esc(m.group||'?')+(m.score?(' · '+esc(m.score)):'')+' · por '+esc(m.nome||'aluno')+'</div></div><div style="display:flex;gap:6px"><button class="ap" onclick="aplicarFilaTor(\''+argJs(m.key)+'\')">Aplicar</button><button class="ds" onclick="descartarFilaTor(\''+argJs(m.key)+'\')">✕</button></div></div>';
+      const t=torDoPedido(m),adv=m.vencedor===m.p1?m.p2:m.p1,pl=placarDoPedidoTor(m).placar;
+      const desc=m.tipo==='wo'?(esc(m.vencedor)+' venceu '+esc(adv)+' por W.O.'):(esc(m.vencedor)+' venceu '+esc(adv));
+      const det=[esc(nomeGrupo(t,m.group||'A')),pl?esc(pl):'','por '+esc(m.nome||'aluno'),t!==aberto?esc(t.nome):''].filter(Boolean).join(' · ');
+      return '<div class="row"><div style="flex:1;min-width:0"><div><b style="color:var(--gold-light)">'+desc+'</b></div><div style="opacity:.72;font-size:11px;margin-top:2px">'+det+'</div></div><div style="display:flex;gap:6px"><button class="ap" onclick="aplicarFilaTor(\''+argJs(m.key)+'\')">Aplicar</button><button class="ds" aria-label="Descartar" onclick="descartarFilaTor(\''+argJs(m.key)+'\')">✕</button></div></div>';
     }).join('')+'</div>';
 }
 function aplicarFilaTor(key){
   const m=torFila.find(x=>x.key===key);if(!m)return;
-  const t=torAtual();const g=m.group||'A';
+  const t=torDoPedido(m);const g=m.group||'A';
+  if(!m.p1||!m.p2||m.p1===m.p2||(m.vencedor!==m.p1&&m.vencedor!==m.p2)){toast('Resultado incompleto: descarte e lance pelo 🎾 Lançar resultado');return;}
+  const rep=jogoRepetidoTor(t,g,m.p1,m.p2);
+  if(rep&&!confirm(m.p1+' × '+m.p2+' já tem jogo lançado nesta etapa ('+rep.venc+' venceu'+(placarDoJogo(rep)?' · '+placarDoJogo(rep):'')+').\nAplicar este resultado também?'))return;
   [m.p1,m.p2].forEach(n=>{if(n&&!t.jogadores.some(p=>p.group===g&&p.name===n))t.jogadores.push({group:g,name:n,v:0,d:0,wo:0,order:t.jogadores.length});});
   aplicarResultadoTor(t,g,m.p1,m.p2,m.vencedor,m.tipo||'normal');
+  const pl=placarDoPedidoTor(m);
+  registrarJogoTor(t,{grupo:g,p1:m.p1,p2:m.p2,venc:m.vencedor,tipo:m.tipo==='wo'?'wo':'normal',sets:pl.sets,placar:pl.placar,origem:'aluno',por:m.nome});
   persist();
   if(hasCloud())window.fbDB.ref('jvtenis/fila_torneio/'+key).remove().catch(()=>{});
-  torFila=torFila.filter(x=>x.key!==key);renderTorneio();toast('Resultado aplicado ✓');
+  torFila=torFila.filter(x=>x.key!==key);renderTorneio();
+  toast('Resultado aplicado ✓'+(t!==torAtual()?' em '+t.nome:''));
 }
 function descartarFilaTor(key){
   if(hasCloud())window.fbDB.ref('jvtenis/fila_torneio/'+key).remove().catch(()=>{});

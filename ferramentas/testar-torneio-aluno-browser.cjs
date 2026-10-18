@@ -142,6 +142,35 @@ async function contexto(browser,base,opts){
     r=await p.evaluate(()=>({tit:document.getElementById('home-prox-tit').textContent,lt:document.getElementById('lembrete-tit').textContent,lx:document.getElementById('lembrete-txt').textContent}));
     assert.equal(r.tit,'Próxima aula ›');assert.equal(r.lt,'🔔 Você tem aula hoje!');assert.match(r.lx,/^Sua aula é hoje às 17:00\./);
    });
+   await check(tema+': Registrar resultado com os games de cada set — o placar decide quem venceu e vai junto para o João',async()=>{
+    await resetA(fixture);
+    const r=await p.evaluate(async()=>{
+     PUB.torneio={id:'tor1',nome:'Barragem Teste',etapa:2,encerrada:false,nomesGrupos:{A:'Grupo Ouro'},
+      jogadores:[{name:EU.nome,cod:'6601',group:'A',v:0,d:0,wo:0},{name:'Jogador Dois',group:'A',v:0,d:0,wo:0},{name:'Jogadora Três',group:'B',v:0,d:0,wo:0}]};
+     window.__fila=[];filaPush=async(c,o)=>{__fila.push([c,JSON.parse(JSON.stringify(o))]);};abrirWhatsApp=()=>{};celebraResultadoTorneio=()=>{};
+     window.__t=[];toast=m=>__t.push(m);
+     abrirRegResultado();
+     const cats=[...document.getElementById('atr-grupo').options].map(o=>o.text);
+     document.getElementById('atr-grupo').value='A';atrPlayers();
+     document.getElementById('atr-p1').value='Jogador Dois';document.getElementById('atr-p2').value=EU.nome;atrAtualiza();
+     const ids=['atr-s1a','atr-s1b','atr-s2a','atr-s2b','atr-s3a','atr-s3b'];
+     // set empatado: não envia
+     document.getElementById('atr-s1a').value=6;document.getElementById('atr-s1b').value=6;atrAtualiza();
+     const infoErro=document.getElementById('atr-info').textContent;await enviarResultadoAluno();const filaErro=__fila.length;
+     [4,6,7,6,8,10].forEach((v,i)=>{document.getElementById(ids[i]).value=v;});atrAtualiza();
+     const info=document.getElementById('atr-info').textContent,vencOculto=document.getElementById('atr-venc').closest('.field').hidden;
+     await enviarResultadoAluno();
+     return {cats,infoErro,filaErro,info,vencOculto,fila:__fila,aberto:document.getElementById('ov-tor-result').classList.contains('on')};});
+    assert.deepEqual(r.cats,['Escolher categoria…','Grupo Ouro','Grupo B'],'categoria com o nome que o João deu');
+    assert.equal(r.infoErro,'O 1º set não pode terminar empatado (6/6).');assert.equal(r.filaErro,0,'placar errado não sai');
+    assert.equal(r.info,'✓ Aluno Fictício venceu por 2 a 1 · 6/4 6/7 10/8');
+    assert.equal(r.vencOculto,true);assert.equal(r.aberto,false);
+    const [cam,item]=r.fila[0];
+    assert.equal(cam,'jvtenis/fila_torneio');
+    assert.deepEqual([item.torneioId,item.group,item.p1,item.vencedor,item.tipo,item.score],['tor1','A','Jogador Dois','Aluno Fictício','normal','6/4 6/7 10/8']);
+    assert.deepEqual(item.sets,[[4,6],[7,6],[8,10]],'sets na ordem jogador 1 × jogador 2');
+    assert.match(r.fila[1][1].texto,/venceu Jogador Dois 6\/4 6\/7 10\/8 · Grupo Ouro$/,'aviso ao João com o placar');
+   });
    assert.deepEqual(erros,[]);
    await ca.close();
   }

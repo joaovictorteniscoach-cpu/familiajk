@@ -30,11 +30,11 @@
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" id="css-tema" href="lib/estilo.css?v=2026-10-17-2">
+<link rel="stylesheet" id="css-tema" href="lib/estilo.css?v=2026-10-18-1">
 <!-- Tema de cores: Saibro é o padrão desde 2026-10; "Verde clássico" fica a um
      toque em Segurança e dados. Troca o arquivo antes da primeira pintura. -->
 <script>try{if(localStorage.getItem('jv-tema')!=='classico'){var _ct=document.getElementById('css-tema');_ct.href=_ct.getAttribute('href').replace('estilo.css','estilo-saibro.css');document.documentElement.classList.add('tema-saibro');}}catch(e){}</script>
-<link rel="stylesheet" href="lib/acoes-voz.css?v=2026-10-17-2">
+<link rel="stylesheet" href="lib/acoes-voz.css?v=2026-10-18-1">
 <!-- ================= DEMO ISOLADA ================= -->
 <script>
 /* Espelho comercial do Gestão atual.
@@ -791,19 +791,16 @@ function esperarAuth(){return Promise.resolve();}
     <button class="tor-novo" onclick="abrirNovoTorneio()">＋ Novo</button>
   </div>
   <div id="tor-etapa"></div>
-  <div class="tor-acts">
-    <button class="b-add" onclick="abrirAddJogador()">＋ Jogador</button>
-    <button class="b-add" onclick="adicionarCategoria()">＋ Categoria</button>
-    <button class="b-res" onclick="abrirResultadoTor()">🎾 Registrar resultado</button>
-    <button class="b-wpp" onclick="compartilharTorneio()">📲 Texto</button>
-    <button class="b-wpp" onclick="salvarBarragemImg()">🖼️ Imagem</button>
-    <button class="b-wpp" onclick="baixarBarragemPDF()">📄 PDF</button>
-    <button class="b-res" onclick="abrirHomenagens()">🏆 Homenagens</button>
-    <button class="b-cfg" onclick="excluirTorneio()">🗑️ Excluir torneio</button>
+  <div class="tor-acts trn-acts">
+    <button class="b-res trn-lancar" onclick="abrirResultadoTor()">🎾 Lançar resultado<small>games de cada set ou W.O.</small></button>
+    <button class="b-wpp" onclick="abrirCompartilharTor()">📤 Compartilhar</button>
+    <button class="b-wpp" onclick="abrirHomenagens()">🏆 Homenagens</button>
   </div>
-  <div id="tor-grupos"></div>
   <div id="tor-log-wrap"></div>
+  <div id="tor-grupos"></div>
+  <div id="tor-jogos"></div>
   <div id="tor-export"></div>
+  <button class="trn-excluir" onclick="excluirTorneio()">🗑️ Excluir este torneio</button>
 </section>
 
 <!-- captura da devolutiva (fica fora das .page para nunca ficar oculto) -->
@@ -876,26 +873,54 @@ function esperarAuth(){return Promise.resolve();}
   </div>
 </div>
 
-<!-- MODAL REGISTRAR RESULTADO -->
+<!-- MODAL LANÇAR RESULTADO: jogadores, games de cada set e vencedor tirado do placar -->
 <div class="overlay" id="ov-tor-result" onclick="if(event.target===this)closeModal('ov-tor-result')">
-  <div class="modal">
-    <h3>Registrar resultado</h3>
-    <div class="field"><label>Grupo</label><select id="tr-grupo" onchange="trPlayers()"></select></div>
-    <div class="row2">
-      <div class="field"><label>Jogador 1</label><select id="tr-p1"></select></div>
-      <div class="field"><label>Jogador 2</label><select id="tr-p2"></select></div>
+  <div class="modal trs">
+    <h3>🎾 Lançar resultado</h3>
+    <div class="field"><label for="tr-grupo">Categoria</label><select id="tr-grupo" onchange="trPlayers()"></select></div>
+    <div class="field"><label for="tr-p1">Jogador 1</label><select id="tr-p1" onchange="trAtualiza()"></select></div>
+    <div class="field"><label for="tr-p2">Jogador 2</label><select id="tr-p2" onchange="trAtualiza()"></select></div>
+    <div class="tor-radio trs-tipo" role="radiogroup" aria-label="Tipo do jogo">
+      <label><input type="radio" name="tr-tipo" value="normal" checked onchange="trAtualiza()"> Jogo</label>
+      <label><input type="radio" name="tr-tipo" value="wo" onchange="trAtualiza()"> W.O.</label>
     </div>
-    <div class="field"><label>Vencedor</label><select id="tr-venc"></select></div>
-    <div class="field"><label>Tipo</label>
-      <div class="tor-radio">
-        <label><input type="radio" name="tr-tipo" value="normal" checked> Jogo normal</label>
-        <label><input type="radio" name="tr-tipo" value="wo"> W.O.</label>
+    <div class="trs-placar" id="tr-placar">
+      <div class="trs-lbl">Games de cada set <small>(se não tiver, deixe em branco)</small></div>
+      <div class="trs-grade">
+        <span></span><b id="tr-n1">Jogador 1</b><b id="tr-n2">Jogador 2</b>
+        <span>1º set</span><input class="trs-g" id="tr-s1a" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" aria-label="1º set, games do jogador 1" oninput="trAtualiza()"><input class="trs-g" id="tr-s1b" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" aria-label="1º set, games do jogador 2" oninput="trAtualiza()">
+        <span>2º set</span><input class="trs-g" id="tr-s2a" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" aria-label="2º set, games do jogador 1" oninput="trAtualiza()"><input class="trs-g" id="tr-s2b" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" aria-label="2º set, games do jogador 2" oninput="trAtualiza()">
+        <span>3º set<small>ou super tie</small></span><input class="trs-g" id="tr-s3a" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" aria-label="3º set ou super tie-break, pontos do jogador 1" oninput="trAtualiza()"><input class="trs-g" id="tr-s3b" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" aria-label="3º set ou super tie-break, pontos do jogador 2" oninput="trAtualiza()">
       </div>
     </div>
+    <div class="field"><label for="tr-venc" id="tr-venc-lbl">Vencedor</label><select id="tr-venc" onchange="trVencAuto=false;trAtualiza()"></select></div>
+    <p class="trs-info" id="tr-info" aria-live="polite"></p>
     <div class="modal-acts">
       <button class="btn btn-ghost" onclick="closeModal('ov-tor-result')">Cancelar</button>
       <button class="btn btn-clay" onclick="salvarResultadoTor()">Salvar</button>
     </div>
+  </div>
+</div>
+
+<!-- FICHA DO JOGADOR NO TORNEIO: corrigir números e as ações que antes ficavam na linha -->
+<div class="overlay" id="ov-tor-jog" onclick="if(event.target===this)closeModal('ov-tor-jog')">
+  <div class="modal trj">
+    <div id="trj-corpo"></div>
+    <div class="modal-acts"><button class="btn btn-ghost" onclick="closeModal('ov-tor-jog')">Fechar</button></div>
+  </div>
+</div>
+
+<!-- COMPARTILHAR O TORNEIO: texto, imagem, PDF ou os placares da etapa -->
+<div class="overlay" id="ov-tor-comp" onclick="if(event.target===this)closeModal('ov-tor-comp')">
+  <div class="modal">
+    <h3>📤 Compartilhar o torneio</h3>
+    <div class="agf-opcoes">
+      <button class="btn btn-clay" onclick="closeModal('ov-tor-comp');compartilharTorneio()">💬 Classificação em texto<small>abre o WhatsApp com a tabela</small></button>
+      <button class="btn btn-ghost" onclick="closeModal('ov-tor-comp');salvarBarragemImg()">🖼️ Imagem da classificação<small>quadro pronto para o grupo</small></button>
+      <button class="btn btn-ghost" onclick="closeModal('ov-tor-comp');baixarBarragemPDF()">📄 PDF da classificação</button>
+      <button class="btn btn-ghost" id="trc-jogos" onclick="closeModal('ov-tor-comp');compartilharJogosTor()">🎾 Resultados da etapa<small>os jogos com o placar de cada set</small></button>
+    </div>
+    <div class="modal-acts"><button class="btn btn-ghost" onclick="closeModal('ov-tor-comp')">Fechar</button></div>
   </div>
 </div>
 
@@ -982,7 +1007,7 @@ function esperarAuth(){return Promise.resolve();}
   <button onclick="go('lanc',this)"><span class="ico" data-ic="navcash"></span>Caixa</button>
   <button id="nav-mais" onclick="abrirMais()"><span class="ico" data-ic="navmore"></span>Mais</button>
 </nav>
-<script src="lib/icones.js?v=2026-10-17-2"></script>
+<script src="lib/icones.js?v=2026-10-18-1"></script>
 
 <!-- MODAL ALUNO -->
 <div class="overlay" id="ov-aluno" onclick="if(event.target===this)closeModal('ov-aluno')">
@@ -1569,8 +1594,8 @@ function esperarAuth(){return Promise.resolve();}
 
 <div class="toast" id="toast"></div>
 
-<script src="app-demo.js?v=2026-10-17-2"></script>
-<script src="lib/acoes-voz.js?v=2026-10-17-2"></script>
+<script src="app-demo.js?v=2026-10-18-1"></script>
+<script src="lib/acoes-voz.js?v=2026-10-18-1"></script>
 <script>
 /* Rede de seguranca do par tela+codigo.
 
@@ -1585,7 +1610,7 @@ function esperarAuth(){return Promise.resolve();}
    torto, o app busca o par certo uma vez e, se insistir, DIZ o que houve em
    vez de deixar voce tocando em botao que nao responde. */
 (function(){
-  var ESPERADA='2026-10-17-2';
+  var ESPERADA='2026-10-18-1';
   function tela(motivo){
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;z-index:99999;background:#1A2E14;color:#FAF7F2;'
