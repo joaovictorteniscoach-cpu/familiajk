@@ -1308,10 +1308,10 @@ function esperarAuth(){
 <div class="overlay" id="ov-extrato" style="z-index:136" onclick="if(event.target===this)closeModal('ov-extrato')">
   <div class="modal">
     <h3>Extrato de <span id="ext-nome"></span></h3>
-    <p class="hint">Cada linha mostra o que mudou o saldo e quanto ficou depois.</p>
+    <p class="hint" id="ext-dica">Cada linha mostra o que mudou o saldo e quanto ficou depois.</p>
     <div class="chips" id="ext-saldos"></div>
     <div id="ext-corpo" style="max-height:52vh;overflow:auto"></div>
-    <div class="modal-acts"><button class="btn btn-ghost" onclick="closeModal('ov-extrato')">Fechar</button></div>
+    <div class="modal-acts"><button class="btn btn-ghost" id="ext-modo" onclick="alternarExtrato()">Ver detalhado</button><button class="btn btn-ghost" onclick="closeModal('ov-extrato')">Fechar</button></div>
   </div>
 </div>
 <div class="overlay" id="ov-histaulas" style="z-index:137" onclick="if(event.target===this)closeModal('ov-histaulas')">

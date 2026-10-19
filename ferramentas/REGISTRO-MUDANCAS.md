@@ -8,6 +8,33 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-19 · Claude Code: extrato do aluno resumido
+
+O João achou o extrato longo e confuso: marcar e desmarcar, chuva que
+devolvia, várias correções manuais. Ele pediu linhas simples: "Aula realizada
+−1", "Chuva" sem alterar, "Cancelado" sem alterar, "Locação". Vai junto da
+versão **2026-10-19-4**.
+- `abrirExtrato` abre agora no modo **resumido** (`extratoResumido`). O botão
+  "Ver detalhado" mostra o extrato cru de antes (`pintarExtrato`/
+  `alternarExtrato`).
+- **Regras do resumo:**
+  - linhas com a mesma chave são somadas por saldo;
+  - o que soma zero some (✓ marcado e tirado);
+  - se houve chuva, vira "☔ Chuva · sem desconto";
+  - o que sobra vira uma linha só, com a data e a hora da **aula**;
+  - correções manuais do mesmo dia e do mesmo saldo viram um "Ajuste manual"
+    com o total;
+  - nomes simples (`EXT_ROTULO`): "Presença na agenda" → "Aula realizada",
+    "Locação na agenda" → "Locação", e assim por diante.
+- **Da agenda, sem mexer em saldo** (últimos 120 dias, só fixos do aluno):
+  dia cancelado do fixo vira "Aula cancelada · sem desconto"; se houve chuva
+  no horário, vira "☔ Chuva".
+- Nenhum dado muda. Os chips de saldo e o "extrato diz" continuam iguais.
+- **Teste novo:** `testar-extrato-resumido-browser.cjs` (6 verificações, dois
+  temas, leitura medida), no validar-pr.
+
+---
+
 ## 2026-10-19 · Claude Code: contagem de locações pelo tipo ou pelo nome
 
 O João pediu para conferir a contagem de locações: com e sem aluno vinculado,

@@ -9304,15 +9304,90 @@ function mostrarPreviaArquivo(){
 }
 /* ===== Extrato de um aluno =====
    A resposta para "por que esse aluno está com 3 e não com 5". */
-function abrirExtrato(id){
-  const a=DB.alunos.find(x=>x.id===id);if(!a)return;
-  const ms=movsDe(id).slice().sort((x,y)=>y.ts-x.ts).slice(0,60);
+/* Resumido (19/10, pedido do João): o extrato cru ficava longo e confuso
+   com marcar/desmarcar, chuva que devolvia e correções. O resumo junta o que
+   é a mesma coisa e fala a língua da academia:
+   - ✓ marcado e tirado (mesma chave) soma zero e some; o que ficou vira uma
+     linha só ("Aula realizada −1", "Locação −1h"), com a data da AULA;
+   - chuva e aula cancelada com antecedência aparecem como "sem desconto";
+   - correções manuais do mesmo dia e do mesmo saldo viram um "Ajuste manual".
+   Nada muda nos dados: o detalhado continua a um toque, igual ao de antes. */
+const EXT_ROTULO={'Presença na agenda':'Aula realizada','Aula realizada':'Aula realizada','Aula em grupo na agenda':'Aula em grupo realizada',
+  'Aula em grupo realizada':'Aula em grupo realizada','Reposição na agenda':'Reposição realizada','Reposição realizada':'Reposição realizada',
+  'Locação na agenda':'Locação','Locação realizada':'Locação','Correção manual no cadastro':'Ajuste manual','Correção':'Ajuste manual',
+  'Sobra do mês virou reposição':'Sobra do mês virou reposição','Virada de mês — sobra convertida':'Sobra do mês saiu dos créditos',
+  'Saldo anterior zerado na renovação':'Saldo anterior zerado','Saldo inicial':'Saldo inicial','Saldo anterior (linhas antigas resumidas)':'Saldo anterior'};
+function rotuloExtrato(m){
+  const mt=String(m.motivo||'');
+  if(EXT_ROTULO[mt])return EXT_ROTULO[mt];
+  if(/^Locação paga/.test(mt))return mt.replace(/^Locação paga/,'Locação paga');
+  return mt||'—';
+}
+function extratoResumido(a){
+  const ms=movsDe(a.id).slice().sort((x,y)=>(x.ts||0)-(y.ts||0)),grupos=new Map(),linhas=[];
+  const diaTs=ts=>dKey(new Date(ts));
+  ms.forEach(m=>{
+    const ref=String(m.ref||'');let k;
+    if(ref&&ref!=='resumo'&&ref!=='abertura'&&ref!=='ajuste')k='r|'+ref;
+    else if(/^Correção/.test(m.motivo||''))k='c|'+diaTs(m.ts)+'|'+m.campo;
+    else k='m|'+m.ts+'|'+m.campo+'|'+m.motivo;
+    if(!grupos.has(k))grupos.set(k,[]);grupos.get(k).push(m);
+  });
+  grupos.forEach((l,k)=>{
+    const porCampo={};l.forEach(m=>{porCampo[m.campo]=(porCampo[m.campo]||0)+(Number(m.delta)||0);});
+    const ref=String(l[0].ref||''),pk=ref.split('|'),aula=pk.length===3&&/^\d{4}-\d{2}-\d{2}$/.test(pk[0])?{data:pk[0],hora:pk[1]}:null;
+    const choveu=l.some(m=>/^Chuva/.test(m.motivo||''));
+    Object.keys(porCampo).forEach(campo=>{
+      const q=porCampo[campo];
+      if(Math.abs(q)<1e-9){
+        if(choveu&&aula)linhas.push({ts:l[l.length-1].ts,aula,txt:'☔ Chuva',campo,q:0,para:null,obs:'sem desconto'});
+        return;                                   // marcado e desmarcado: não aconteceu
+      }
+      const doCampo=l.filter(m=>m.campo===campo),ult=doCampo[doCampo.length-1];
+      const base=doCampo.slice().reverse().find(m=>Math.sign(Number(m.delta)||0)===Math.sign(q))||ult;
+      linhas.push({ts:ult.ts,aula,txt:rotuloExtrato(base),campo,q,para:ult.para});
+    });
+  });
+  /* Agenda: chuva e aula cancelada não mexem em saldo, mas o João quer vê-las.
+     Só fixos do aluno (a avulsa cancelada sai da agenda sem deixar rastro). */
+  const A=DB.agenda||{},hoje=dKey(new Date()),lim=dKey(new Date(Date.now()-120*864e5));
+  const chuvas=new Set((A.eventos||[]).filter(ehEventoChuva).map(e=>e.data+'|'+e.hora));
+  const meus=new Map((A.fixos||[]).filter(f=>f.alunoId===a.id).map(f=>[f.id,f]));
+  (A.excecoes||[]).forEach(x=>{
+    const f=meus.get(x.fixoId);if(!f||x.data>hoje||x.data<lim)return;
+    const jaTem=linhas.some(r=>r.aula&&r.aula.data===x.data&&r.aula.hora===f.hora&&r.txt==='☔ Chuva');
+    if(chuvas.has(x.data+'|'+f.hora)){if(!jaTem)linhas.push({ts:new Date(x.data+'T'+f.hora+':00').getTime(),aula:{data:x.data,hora:f.hora},txt:'☔ Chuva',campo:null,q:0,para:null,obs:'sem desconto'});}
+    else linhas.push({ts:new Date(x.data+'T'+f.hora+':00').getTime(),aula:{data:x.data,hora:f.hora},txt:'Aula cancelada',campo:null,q:0,para:null,obs:'sem desconto'});
+  });
+  return linhas.sort((x,y)=>(y.ts||0)-(x.ts||0));
+}
+let _extId=null,_extDetalhe=false;
+function abrirExtrato(id){_extId=id;_extDetalhe=false;pintarExtrato();document.getElementById('ov-extrato').classList.add('on');}
+function alternarExtrato(){_extDetalhe=!_extDetalhe;pintarExtrato();}
+function pintarExtrato(){
+  const id=_extId,a=DB.alunos.find(x=>x.id===id);if(!a)return;
   const dt=ts=>{const d=new Date(ts);return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');};
-  const linhas=ms.map(m=>
-    '<tr><td style="white-space:nowrap;color:var(--muted)">'+dt(m.ts)+'</td>'
-    +'<td>'+esc(m.motivo)+'<small style="display:block;color:var(--muted)">'+CAMPO_LABEL[m.campo]+'</small></td>'
-    +'<td style="text-align:right;font-weight:800;color:'+(m.delta<0?'#FF9A8E':'#7FDDA5')+'">'+(m.delta>0?'+':'')+fmtCred(m.delta)+'</td>'
-    +'<td style="text-align:right;font-weight:700">'+fmtCred(m.para)+'</td></tr>').join('');
+  const cor=q=>q<0?'#FF9A8E':(q>0?'#7FDDA5':'#D8D2C7');
+  const un=c=>c==='locCred'?'h':'';
+  let corpo,n;
+  if(_extDetalhe){
+    const ms=movsDe(id).slice().sort((x,y)=>y.ts-x.ts).slice(0,60);n=ms.length;
+    corpo=ms.map(m=>
+      '<tr><td style="white-space:nowrap;color:var(--muted)">'+dt(m.ts)+'</td>'
+      +'<td>'+esc(m.motivo)+'<small style="display:block;color:var(--muted)">'+CAMPO_LABEL[m.campo]+'</small></td>'
+      +'<td style="text-align:right;font-weight:800;color:'+cor(m.delta)+'">'+(m.delta>0?'+':'')+fmtCred(m.delta)+'</td>'
+      +'<td style="text-align:right;font-weight:700">'+fmtCred(m.para)+'</td></tr>').join('');
+  }else{
+    const ls=extratoResumido(a).slice(0,60);n=ls.length;
+    corpo=ls.map(r=>{
+      const quando=r.aula?(r.aula.data.split('-').reverse().slice(0,2).join('/')):dt(r.ts);
+      const sub=[r.aula?r.aula.hora:'',r.campo?CAMPO_LABEL[r.campo]:'',r.obs||''].filter(Boolean).join(' · ');
+      return '<tr><td style="white-space:nowrap;color:var(--muted)">'+quando+'</td>'
+        +'<td>'+esc(r.txt)+(sub?'<small style="display:block;color:var(--muted)">'+esc(sub)+'</small>':'')+'</td>'
+        +'<td style="text-align:right;font-weight:800;color:'+cor(r.q)+'">'+(r.q?(r.q>0?'+':'')+fmtCred(r.q)+un(r.campo):'0')+'</td>'
+        +'<td style="text-align:right;font-weight:700">'+(r.para===null?'—':fmtCred(r.para))+'</td></tr>';
+    }).join('');
+  }
   const saldos=['creditos','credGrupo','repos','locCred'].map(c=>{
     const bate=(Number(a[c])||0)===saldoPeloExtrato(a,c);
     return '<span class="chip" style="'+(bate?'':'background:#F6D7D2;color:#8E2C1E;font-weight:800')+'">'
@@ -9320,10 +9395,13 @@ function abrirExtrato(id){
   }).join('');
   document.getElementById('ext-nome').textContent=a.nome;
   document.getElementById('ext-saldos').innerHTML=saldos;
-  document.getElementById('ext-corpo').innerHTML=ms.length
-    ? '<table class="tbl-ext"><tr><th>Dia</th><th>O que foi</th><th style="text-align:right">Mudou</th><th style="text-align:right">Ficou</th></tr>'+linhas+'</table>'
+  const dica=document.getElementById('ext-dica');
+  if(dica)dica.textContent=_extDetalhe?'Detalhado: cada lançamento como foi gravado, inclusive o que foi desfeito.'
+    :'Resumido: o que aconteceu de verdade. Marcação desfeita não aparece; chuva e aula cancelada não descontam.';
+  const bt=document.getElementById('ext-modo');if(bt)bt.textContent=_extDetalhe?'Ver resumido':'Ver detalhado';
+  document.getElementById('ext-corpo').innerHTML=n
+    ? '<table class="tbl-ext"><tr><th>Dia</th><th>O que foi</th><th style="text-align:right">Mudou</th><th style="text-align:right">Ficou</th></tr>'+corpo+'</table>'
     : '<div class="empty">Sem movimentações ainda.</div>';
-  document.getElementById('ov-extrato').classList.add('on');
 }
 /* ===== Histórico de aulas (comprovante exportável) =====
    Lista as aulas do aluno com data e hora, separando normais de reposições e

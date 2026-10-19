@@ -65,6 +65,7 @@ jobs:
           node ferramentas/testar-inativar-reposicoes-browser.cjs
           node ferramentas/testar-familia-presenca-browser.cjs
           node ferramentas/testar-contagem-locacoes-browser.cjs
+          node ferramentas/testar-extrato-resumido-browser.cjs
           node ferramentas/testar-locacao-minhas-aulas-browser.cjs
           node ferramentas/testar-torneio-aluno-browser.cjs
           node ferramentas/testar-torneio-gestao-browser.cjs
