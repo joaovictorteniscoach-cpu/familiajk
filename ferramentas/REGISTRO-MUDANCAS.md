@@ -8,6 +8,29 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-19 · Claude Code: horas de locação visíveis no app do aluno
+
+O João avisou que os alunos não viam as horas de locação compradas. Versão
+**2026-10-19-4**.
+- **Causa:** o único lugar que mostrava as horas era o cartão "Locação (horas)"
+  (`#scard-loc`). Ele fica dentro de `#bloco-saldo`, que o visual novo esconde
+  com `display:none!important`. A Gestão já publicava `locCred`.
+- **Agora**, em `renderPremiumAluno`:
+  - **Início:** cartão "Locação da quadra" (`#home-loc-card`), com as horas e
+    toque para Créditos;
+  - **Créditos:** bloco "Locação da quadra" (`#cred-page-loc-panel`), com
+    "Reservar a quadra ›", que leva à Agenda.
+- Os dois só aparecem para quem tem horas (ou deve horas).
+  - Saldo negativo mostra "a acertar com a academia" e não tem botão de
+    reservar.
+  - Nenhum valor, crédito ou regra mudou.
+- Ícone novo `key` em `app-aluno/lib/icones.js` (desenho do app, sem emoji).
+- **Teste:** `testar-locacao-minhas-aulas-browser.cjs` ganhou a verificação
+  nos dois temas: visível, some sem saldo, caso devendo e leitura medida na
+  imagem.
+
+---
+
 ## 2026-10-19 · Claude Code: inativar aluno pergunta pelos horários e gráfico de reposições
 
 O João decidiu (19/10): ao marcar um aluno como inativo, o app pergunta se

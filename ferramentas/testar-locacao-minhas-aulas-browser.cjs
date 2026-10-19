@@ -10,6 +10,7 @@
 let chromium;
 try{({chromium}=require('playwright'));}catch(e){({chromium}=require(process.env.PW||'/opt/node22/lib/node_modules/playwright'));}
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict');
+const {medir}=require('./medir-contraste-pixels.cjs');
 const root=path.resolve(__dirname,'..'),AGORA=new Date('2026-10-15T10:00:00-03:00');   // quinta-feira
 const server=http.createServer((req,res)=>{
  const url=decodeURI(req.url.split('?')[0]),f=path.join(root,url,url.endsWith('/')?'index.html':'');
@@ -153,6 +154,36 @@ async function contexto(browser,base,opts){
     document.getElementById('app').style.display='block';document.querySelectorAll('.overlay').forEach(x=>x.classList.remove('on'));
     document.querySelectorAll('[id*="splash"]').forEach(x=>x.style.display='none');render();goAluno('inicio',document.getElementById('nav-al-inicio'));
    },{fixture,eu,extra});
+   await check(tema+': horas de locação aparecem no Início e em Créditos (o cartão antigo ficava escondido); some sem saldo; devendo pede acerto',async()=>{
+    const ver=()=>p.evaluate(()=>{const vis=id=>{const e=document.getElementById(id);const r=e&&e.getBoundingClientRect();return !!(e&&r.width>0&&r.height>0&&getComputedStyle(e).display!=='none');};
+     goAluno('inicio',document.getElementById('nav-al-inicio'));
+     const home={vis:vis('home-loc-card'),txt:document.getElementById('home-loc-card').innerText.replace(/\s+/g,' ').trim(),svg:!!document.querySelector('#home-loc-card .hc-icon svg')};
+     goAluno('creditos',document.getElementById('nav-al-creditos'));
+     const cred={vis:vis('cred-page-loc-panel'),txt:document.getElementById('cred-page-loc-panel').innerText.replace(/\s+/g,' ').trim(),btn:vis('cred-page-loc-agendar')};
+     return {home,cred};});
+    await resetA();let r=await ver();
+    assert.ok(r.home.vis&&r.cred.vis,'visível nos dois lugares');assert.ok(r.home.svg,'ícone desenhado');
+    assert.match(r.home.txt,/Locação da quadra › 2h horas de locação para usar/i);
+    assert.match(r.cred.txt,/Locação da quadra 2 horas Horas de locação já pagas/i);assert.ok(r.cred.btn,'botão de reservar');
+    await p.evaluate(()=>document.getElementById('cred-page-loc-agendar').click());
+    assert.equal(await p.evaluate(()=>document.body.dataset.aba),'agenda','leva para a Agenda');
+    await resetA({locCred:1.5});r=await ver();assert.match(r.home.txt,/1,5h/);
+    await resetA({locCred:0});r=await ver();
+    assert.equal(r.home.vis,false,'sem horas: cartão some');assert.equal(r.cred.vis,false,'sem horas: bloco some');
+    await resetA({locCred:-1});r=await ver();
+    assert.match(r.home.txt,/1h horas de locação a acertar com a academia/);assert.match(r.cred.txt,/Fale com a academia para acertar/);
+    assert.equal(r.cred.btn,false,'devendo: sem botão de reservar');
+    await resetA();
+    await p.evaluate(()=>goAluno('creditos',document.getElementById('nav-al-creditos')));
+    const itens=(await medir(p,process.env.JV_SHOTS&&path.join(process.env.JV_SHOTS,'aluno-creditos-loc-'+tema+'.png'))).filter(it=>/cred-page-loc/.test(it.onde||''));
+    assert.ok(itens.length>=3,'mediu o bloco: '+itens.length);
+    assert.deepEqual(itens.filter(it=>it.ratio!==null&&it.ratio<it.minimo).map(it=>it.t+' '+it.ratio),[],'leitura do bloco');
+    await p.evaluate(()=>goAluno('inicio',document.getElementById('nav-al-inicio')));
+    const ih=(await medir(p)).filter(it=>/home-loc/.test(it.onde||''));
+    assert.ok(ih.length>=3,'mediu o cartão: '+ih.length);
+    assert.deepEqual(ih.filter(it=>it.ratio!==null&&it.ratio<it.minimo).map(it=>it.t+' '+it.ratio),[],'leitura do cartão');
+    await p.setViewportSize({width:390,height:844});
+   });
    await check(tema+': Alugar a quadra mostra as horas de locação e a mensagem pede para usá-las',async()=>{
     await resetA();
     await p.evaluate(()=>{agDate=new Date('2026-10-15T12:00:00');escolherSlot('17:00');});
