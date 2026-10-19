@@ -199,10 +199,13 @@ const deltaE=(a,b)=>{const x=lab(a),y=lab(b);return Math.hypot(x[0]-y[0],x[1]-y[
    await a.clock.setFixedTime(AGORA);await a.goto(base+'/app-aluno/',{waitUntil:'load'});
    await check(tema+': app do aluno com a Neblina desenhada, sem emoji',async()=>{
     await a.waitForFunction(()=>{const e=document.getElementById('aluno-clima');return e&&!e.hidden;},{},{timeout:15000});
-    const r=await a.evaluate(()=>{const ic=document.getElementById('aluno-clima-ic'),s=ic.querySelector('svg');
-     return {svg:!!s,txt:ic.textContent,rot:document.getElementById('aluno-clima-txt').textContent,
+    // sem aluno logado o app fica atrás da tela de entrada: abre como os outros testes do aluno
+    const r=await a.evaluate(()=>{const lg=document.getElementById('login');if(lg)lg.style.display='none';document.getElementById('app').style.display='block';
+     const ic=document.getElementById('aluno-clima-ic'),s=ic.querySelector('svg'),k=s&&s.getBoundingClientRect();
+     return {svg:!!s,w:k&&Math.round(k.width),h:k&&Math.round(k.height),txt:ic.textContent,rot:document.getElementById('aluno-clima-txt').textContent,
       igual:(()=>{const t=document.createElement('i');t.innerHTML=iconeClima('neblina');return t.innerHTML===ic.innerHTML;})()};});
     assert.ok(r.svg);assert.equal(r.txt,'');assert.equal(r.rot,'Neblina');assert.ok(r.igual);
+    assert.ok(r.w>=20&&r.h>=20,'ícone com tamanho de verdade: '+r.w+'x'+r.h);
    });
    assert.deepEqual(errosA,[]);
    await ca.close();
@@ -232,7 +235,9 @@ const deltaE=(a,b)=>{const x=lab(a),y=lab(b);return Math.hypot(x[0]-y[0],x[1]-y[
     const p=await c.newPage();await p.clock.setFixedTime(AGORA);await p.goto(base+'/'+app+'/',{waitUntil:'load'});
     await check('iPhone · '+app+': Neblina aparece como desenho do app, com tamanho de ícone',async()=>{
      await p.waitForFunction(id=>{const e=document.getElementById(id);return e&&e.querySelector('svg')&&e.closest('[hidden]')===null;},id,{timeout:15000});
-     const r=await p.evaluate(id=>{const e=document.getElementById(id),k=e.querySelector('svg').getBoundingClientRect();return {w:k.width,h:k.height,txt:e.textContent};},id);
+     const r=await p.evaluate(id=>{
+      if(id==='aluno-clima-ic'){const lg=document.getElementById('login');if(lg)lg.style.display='none';document.getElementById('app').style.display='block';}
+      const e=document.getElementById(id),k=e.querySelector('svg').getBoundingClientRect();return {w:k.width,h:k.height,txt:e.textContent};},id);
      assert.ok(r.w>=20&&r.h>=20,'tamanho '+r.w+'x'+r.h);assert.equal(r.txt,'');
     });
     await c.close();
