@@ -6,7 +6,7 @@ falhou=0
 echo "### 1. Sintaxe dos scripts (erro aqui quebra o app inteiro)"
 for f in $APPS; do node ferramentas/checar-sintaxe.js "$f" || falhou=1; done
 echo; echo "### 2. Funcoes chamadas que nao existem no arquivo"
-python3 ferramentas/checar-funcoes.py $APPS
+python3 ferramentas/checar-funcoes.py $APPS || falhou=1
 echo; echo "### 3. Ids de elemento procurados que nao existem"
 python3 ferramentas/checar-ids.py $APPS
 echo; echo "### 4. Colisao de nome de classe no CSS (conferir a olho)"

@@ -8,6 +8,53 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-19 · Claude Code: leitura em todas as janelas da Gestão e gráfico com o mês passado
+
+O João mandou print de "Vincular nomes aos alunos": o nome da agenda estava em
+letra branca sobre o cartão branco. Pediu varredura geral e perguntou se o
+gráfico do Início era verdadeiro, porque só via a linha subir num mês com menos
+aulas. Versão **2026-10-19-2**.
+- **Varredura nova:** `testar-contraste-gestao-browser.cjs`.
+  - Abre 51 telas e janelas da Gestão nos dois temas (102 no total), com dados
+    fictícios.
+  - Mede cada texto pela imagem, com `medir-contraste-pixels.cjs`.
+  - Achou **336** textos abaixo da régua; agora são **0**. Está no validar-pr.
+- **Corrigido:** regras do tema claro antigo que sobraram dentro das janelas
+  escuras. Bloco "Leitura nas janelas da Gestão (19/10)" no fim de `estilo.css`,
+  mais cores inline no JS e no HTML.
+  - Vincular.
+  - Nova avaliação: o nome de cada item estava preto sobre verde-escuro.
+  - Ver avaliação: o relatório virou papel claro, como na imagem enviada ao
+    aluno.
+  - Grade de horários: botões brancos com letra branca.
+  - Extrato, comprovante de aulas, conferir números, avisos, aulas de hoje,
+    agenda de amanhã, busca, "Confirmar" e contadores do Início.
+  - Selo de nível (prata e ouro com letra branca): passou ao tom escuro do metal.
+- **Gráfico "Aulas no mês":**
+  - A conta está certa e é na hora: soma o que está na agenda, já sem aula
+    desmarcada, chuva e fixo encerrado.
+  - Só que soma, então nunca desce. Agora o Total do mês passado vem
+    tracejado em azul na mesma régua de dias.
+  - Embaixo vem "Até hoje (dia N): X aulas · mês passado até o dia N: Y (↓ Z%)",
+    a mesma conta do Comparativo.
+  - A nota explica por que a linha só sobe.
+- **Achado (só lista, `achadosDoAluno`):** marcar aluno como inativo não mexe na
+  agenda. Os fixos dele seguem contando no Início e no gráfico. A conferência
+  agora avisa "X está inativo, mas ainda tem N horário(s) fixo(s)…". Encerrar
+  os horários continua sendo decisão do João, na agenda.
+- **Segurança:** nome da agenda passa por `esc()` em Vincular e na agenda de
+  amanhã.
+- **Guarda novo no `checar-funcoes.py`:** função de primeiro nível com nome
+  repetido falha o `checar-tudo`. Uma `mesAnteriorDe` nova quase apagou a que
+  já existia, com outro formato. Pego no teste antes de subir.
+- **Testes:**
+  - `testar-tempo-inicio-browser.cjs` ganhou 3 verificações: comparação igual
+    à do Comparativo, aula desmarcada saindo na hora e aluno inativo com
+    horário.
+  - Bateria local: 30 testes verdes.
+
+---
+
 ## 2026-10-19 · Claude Code: tempo com ícone próprio e varredura do Início
 
 O João mandou print do iPhone (Início às 05:28, "Curitiba 9°C Neblina"): o

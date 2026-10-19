@@ -3449,6 +3449,67 @@ html body:not(#jv) #ov-tor-jog .trj-acts .trj-del{color:#FFBCAD;-webkit-text-fil
 .clm .clm-legenda,.clm .clm-nota{margin:4px 0 10px;color:#D8D2C7;font-size:12.5px;line-height:1.4}
 .jh-menu>button.clm-atualizar{justify-content:center;margin-top:4px}
 
+/* ===== Leitura nas janelas da Gestão (19/10) =====
+   Regras do tema claro antigo que sobraram dentro das janelas escuras: texto
+   escuro em fundo escuro e texto claro em cartão branco (o João achou o nome
+   da agenda sumido em "Vincular nomes aos alunos"). Cada caso saiu da
+   varredura ferramentas/testar-contraste-gestao-browser.cjs. */
+html body:not(#jv) .link-row{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.14)}
+html body:not(#jv) .link-name{color:#F4F1EA;-webkit-text-fill-color:#F4F1EA}
+html body:not(#jv) .link-name small{color:#D8D2C7;-webkit-text-fill-color:#D8D2C7}
+/* Avaliação e registro de aula */
+html body:not(#jv) .trilha-pills button:not(.on){background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.2);color:#E4DED3;-webkit-text-fill-color:#E4DED3}
+html body:not(#jv) .aval-blk h4,html body:not(#jv) .evo-sec{color:#E69468;-webkit-text-fill-color:#E69468}
+html body:not(#jv) .aval-item>label{color:#F4F1EA;-webkit-text-fill-color:#F4F1EA}
+html body:not(#jv) .aval-rot.on{color:#E69468;-webkit-text-fill-color:#E69468}
+html body:not(#jv) .evo-mes{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.14)}
+html body:not(#jv) .evo-mes-track{background:rgba(255,255,255,.12)}
+html body:not(#jv) .evo-mes-lab,html body:not(#jv) .evo-mes-val i{color:#D8D2C7;-webkit-text-fill-color:#D8D2C7}
+html body:not(#jv) .evo-mes-val{color:#F4F1EA;-webkit-text-fill-color:#F4F1EA}
+html body:not(#jv) .evo-mes-cap{color:#D4E157;-webkit-text-fill-color:#D4E157}
+html body:not(#jv) .aval-hist .hrow{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14);color:#F4F1EA;-webkit-text-fill-color:#F4F1EA}
+html body:not(#jv) .aval-hist .hrow span{color:#F4F1EA;-webkit-text-fill-color:#F4F1EA}
+html body:not(#jv) .aval-hist .hrow b{color:#D4E157;-webkit-text-fill-color:#D4E157}
+html body:not(#jv) .aval-hist .hrow .del{color:#FF9A8E;-webkit-text-fill-color:#FF9A8E}
+/* O relatório da avaliação é um documento: papel claro dentro da janela,
+   do jeito que sai na imagem para o aluno. */
+html body:not(#jv) .modal .aex-wrap{background:#FBF8F2;border-radius:14px;padding:14px 14px 8px;color:#2A2016;-webkit-text-fill-color:currentColor}
+html body:not(#jv) .modal .aex-wrap .evo-sec{color:#6B4F12;-webkit-text-fill-color:#6B4F12}
+html body:not(#jv) .modal .aex-wrap .tex-head span{color:#5E584C;-webkit-text-fill-color:#5E584C}
+html body:not(#jv) .modal .aex-wrap .evo-mes{background:#fff;border-color:#E6DDCB}
+html body:not(#jv) .modal .aex-wrap .evo-mes-track{background:#EFE9DD}
+html body:not(#jv) .modal .aex-wrap .evo-mes-lab,html body:not(#jv) .modal .aex-wrap .evo-mes-val i{color:#5E584C;-webkit-text-fill-color:#5E584C}
+html body:not(#jv) .modal .aex-wrap .evo-mes-val{color:#2A2016;-webkit-text-fill-color:#2A2016}
+html body:not(#jv) .modal .aex-wrap .evo-mes-cap{color:#2E6B40;-webkit-text-fill-color:#2E6B40}
+html body:not(#jv) .modal .aex-wrap .aex-step:not(.done):not(.cur){color:#5E584C;-webkit-text-fill-color:#5E584C}
+html body:not(#jv) .modal .aex-wrap .aex-step.done,html body:not(#jv) .modal .aex-wrap .aex-step.cur{color:#fff;-webkit-text-fill-color:#fff}
+html body:not(#jv) .modal .aex-wrap .aex-top .st{color:#3D3A33;-webkit-text-fill-color:#3D3A33}
+html body:not(#jv) .avacts .b3{background:#E3F2E4;color:#1F6B3A;-webkit-text-fill-color:#1F6B3A}
+/* Avisos, aulas de hoje e busca */
+html body:not(#jv) .aviso-btn{background:rgba(255,255,255,.06);color:#E69468;-webkit-text-fill-color:#E69468}
+html body:not(#jv) .aviso-btn[data-st="granted"]{color:#D4E157;-webkit-text-fill-color:#D4E157}
+html body:not(#jv) .aviso-btn[data-st="denied"],html body:not(#jv) .aviso-btn[data-st="nao-suportado"]{color:#D8D2C7;-webkit-text-fill-color:#D8D2C7}
+html body:not(#jv) .ah-linha button[disabled]{background:rgba(63,203,91,.16);color:#D4E157;-webkit-text-fill-color:#D4E157}
+html body:not(#jv) #search::placeholder{color:#5A5348!important;-webkit-text-fill-color:#5A5348!important;opacity:1!important}
+/* Agenda de amanhã: o cartão é claro, então botão e aviso escuros */
+html body:not(#jv) #confirm-amanha .btn-ghost{background:#E6E0D2!important;border-color:#CFC6B4!important;color:#2A2016!important;-webkit-text-fill-color:#2A2016!important}
+html body:not(#jv) #confirm-amanha .ca-semvinc{color:#5E584C;-webkit-text-fill-color:#5E584C}
+/* Início: "Confirmar", contadores e o tipo da aula que já passou */
+html body:not(#jv) #pg-dash .jh-conf:not(.ok){background:linear-gradient(180deg,#A85E25,#8A4A1A)}
+html body:not(#jv) #pg-dash .jh-dobra .dc-n:not(.zero),html body:not(#jv) .dobra-cab .dc-n:not(.zero){background:#A9471F!important}
+html body:not(#jv) #pg-dash .jh-atv-item.passou .jh-atv-t2{color:#F1F3EE;-webkit-text-fill-color:#F1F3EE}
+html body:not(#jv) #pg-dash .dc-nome em{color:#E08A5A;-webkit-text-fill-color:#E08A5A}
+html body:not(#jv) .trilha-pills button.on{background:#A9471F;border-color:#A9471F;color:#fff;-webkit-text-fill-color:#fff}
+
+/* Aulas no mês (19/10): o mês passado tracejado na mesma régua de dias e a
+   comparação em números embaixo, para um mês fraco aparecer. */
+#pg-dash #jh-graf .ln.ant{stroke:#8FB3D9;stroke-width:1.8;stroke-dasharray:5 4;filter:none;opacity:.95}
+#pg-dash .jh-legend .ant i{background:none!important;width:12px;height:0;border-radius:0;border-top:2px dashed #8FB3D9}
+#pg-dash .jh-legend li[hidden]{display:none!important}
+#pg-dash .jh-graf-cmp{margin:9px 0 0;font-size:12.5px;line-height:1.45;color:#E4DED3}
+#pg-dash .jh-graf-cmp b{color:#fff;font-weight:800}
+#pg-dash .jh-graf-cmp .jh-delta{display:inline-block;margin-left:2px;font-size:11px;font-style:normal;padding:2px 6px}
+
 /* ===== Toques do tema Saibro ===== */
 .nav,.nav:after{background:#0B1B14!important;border-top:1px solid rgba(194,88,46,.35)!important}
 .nav button.on,.nav button.aberto,.jv-nav-3d button.on,.jv-nav-3d button.aberto{background:rgba(194,88,46,.16)!important;color:#EE9A6E!important;-webkit-text-fill-color:#EE9A6E!important}

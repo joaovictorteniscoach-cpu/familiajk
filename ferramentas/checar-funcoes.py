@@ -110,6 +110,7 @@ def anexos(arq,html):
         if os.path.exists(cheio): fora.append((cam,limpa(open(cheio,encoding='utf-8').read())))
     return fora
 
+repetidas_total=0
 for arq in sys.argv[1:]:
     html=fontes_do_app(arq)
     js=[limpa(m.group(1)) for m in re.finditer(r'<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)</script>',html)]
@@ -131,3 +132,17 @@ for arq in sys.argv[1:]:
     else:
         print(f'  ⚠️  {len(faltando)} chamada(s) sem definicao:')
         for n,o in sorted(faltando.items()): print(f'     - {n}()   [{", ".join(o)}]')
+    # Duas funcoes de primeiro nivel com o mesmo nome: a de baixo apaga a de
+    # cima em silencio e quem chamava a primeira passa a rodar a outra (em
+    # 19/10 um mesAnteriorDe novo, de outro formato, quase quebrou o grafico).
+    cont={}
+    for code in js:
+        for nm in re.findall(r'^(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(',code,re.M):
+            cont[nm]=cont.get(nm,0)+1
+    rep=sorted(n for n,v in cont.items() if v>1)
+    if rep:
+        repetidas_total+=len(rep)
+        print(f'  ❌ {len(rep)} funcao(oes) definida(s) duas vezes (a de baixo apaga a de cima): '+', '.join(rep))
+    else:
+        print('  ✅ nenhuma funcao de primeiro nivel com nome repetido')
+sys.exit(1 if repetidas_total else 0)
