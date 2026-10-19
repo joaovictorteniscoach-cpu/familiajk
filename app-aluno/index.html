@@ -1664,12 +1664,12 @@ html body:not(#jv) #pedir-box .btn-ghost{background:#F3EDE2!important;border:1px
 .login .login-sub{opacity:1}
 .login-priv{color:rgba(250,247,242,.8)}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-18-1">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-18-2">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-18-1">
-<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-18-1">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-18-2">
+<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-18-2">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -2151,7 +2151,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-10-18-1"></script>
+<script src="lib/icones.js?v=2026-10-18-2"></script>
 </div>
 
 <!-- MODAL ESCOLHER O QUE FAZER NO HORÁRIO -->
@@ -2378,7 +2378,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-10-18-1';
+const VERSAO='2026-10-18-2';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -4040,8 +4040,10 @@ async function baixarTorneioPDF(){
 const GRUPOS_TOR_AL=['A','B','C','D','E'];
 function torEscAl(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,'&#39;');}
 /* Os pontos acumulam entre etapas: quem permanece na categoria mantém o que
-   somou. Sem o ptsAcum aqui, o aluno veria número diferente do professor. */
-function calcPtsTorAl(p){return (Number(p.ptsAcum)||0)+((p.v||0)*3+(p.d||0)*1+(p.wo||0)*1);}
+   somou. Sem o ptsAcum aqui, o aluno veria número diferente do professor.
+   Mesma conta da Gestão (PTS_TOR): vitória 3, derrota 1, W.O. 3 para quem
+   venceu (quem faltou fica com 0). */
+function calcPtsTorAl(p){return (Number(p.ptsAcum)||0)+((p.v||0)*3+(p.d||0)*1+(p.wo||0)*3);}
 function rankTorAl(j){return j.slice().sort((a,b)=>calcPtsTorAl(b)-calcPtsTorAl(a)||(b.v||0)-(a.v||0));}
 function fmtDataAl(s){
   if(!s)return '—';const pr=String(s).split('-').map(Number);const dt=new Date(pr[0],(pr[1]||1)-1,pr[2]||1);
@@ -5556,7 +5558,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-18-1').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-18-2').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava

@@ -8,6 +8,29 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-18 · Claude Code: W.O. passa a valer 3 pontos para quem venceu
+
+Decisão do João depois de comparar com regulamentos de barragem de clubes
+(Yara Clube, Barragem do Cerrado, Living, São Carlos): "0 pontos para quem deu
+W.O. e 3 pontos para quem ganhou de W.O.".
+- **Antes:** o vencedor por W.O. ganhava 1 ponto, o mesmo que perder em quadra.
+- **Agora:**
+  - Gestão: `PTS_TOR={v:3,d:1,wo:3}` em `ptsEtapa`.
+  - App do aluno: a mesma conta em `calcPtsTorAl`.
+  - Quem faltou continua sem nada, porque o W.O. não soma derrota.
+- **Efeito na etapa em andamento:** os W.O. já lançados passam a valer 3 na hora
+  e a classificação pode mudar. Etapas anteriores não mudam, porque o ponto
+  delas já está guardado em `ptsAcum`.
+- **Não mudou:** os contadores V/D/WO e o desempate (pontos, vitórias, ordem).
+  O W.O. continua fora de "vitórias" no desempate.
+- A decisão foi anotada em `CLAUDE.md`, em "Decisões em vigor".
+- **Teste:** `testar-torneio-gestao-browser.cjs` confere 3/1/3/0 e que o W.O.
+  dá +3 só a quem venceu.
+- **Medidor de leitura:** `medir-contraste-pixels.cjs` passou a ignorar texto
+  cortado por `overflow`, como a 3ª linha de um nome com `line-clamp` ou uma
+  célula fora da área rolada da semana. Antes ele media o fundo atrás de um
+  texto que não aparece.
+
 ## 2026-10-18 · Claude Code: Torneio da Gestão compacto, com placar por set
 
 Pedido do João: a tela do torneio obrigava a arrastar para o lado, os itens

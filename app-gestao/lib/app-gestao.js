@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-18-1';
+const VERSAO='2026-10-18-2';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -10894,7 +10894,13 @@ function editarEtapaNum(){
    desce começa do zero. No fim do ano a premiação sai do total de cada
    categoria. Quem nunca teve etapa anterior tem ptsAcum=0 e se comporta
    exatamente como antes — nada a migrar. */
-function ptsEtapa(p){return (p.v||0)*3+(p.d||0)*1+(p.wo||0)*1;}
+/* Quanto vale cada resultado (decisão do João em 18/10, conferida com
+   regulamentos de barragem de clubes): vitória em quadra 3, derrota em quadra 1
+   (prêmio por ter jogado), W.O. 3 para quem compareceu e 0 para quem faltou.
+   Antes o W.O. dava 1 ao vencedor, o mesmo que perder em quadra. O app do aluno
+   faz a mesma conta em calcPtsTorAl. */
+const PTS_TOR={v:3,d:1,wo:3};
+function ptsEtapa(p){return (p.v||0)*PTS_TOR.v+(p.d||0)*PTS_TOR.d+(p.wo||0)*PTS_TOR.wo;}
 function calcPtsTor(p){return (Number(p.ptsAcum)||0)+ptsEtapa(p);}
 function rankPlayersTor(jogs){return jogs.slice().sort((a,b)=>calcPtsTor(b)-calcPtsTor(a)||(b.v||0)-(a.v||0)||(a.order??0)-(b.order??0));}
 /* Sobe = letra anterior (B→A). Desce = letra seguinte (B→C). Nas pontas não há
