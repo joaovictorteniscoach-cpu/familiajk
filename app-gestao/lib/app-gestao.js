@@ -3580,6 +3580,18 @@ async function enviarHorariosLivres(){
    dois horários que se sobrepõem (19:00 e 19:30). Contar as duas era a aula a
    mais do painel. As marcações continuam na agenda: a conferência
    (abrirConferenciaAulas) mostra cada uma, e quem decide apagar é o João. */
+/* Locação é tudo que está marcado OU escrito como locação (19/10, pedido do
+   João): tipo "locacao", ou título com "locação"/"aluguel" mesmo salvo como
+   aula — com aluno vinculado ou sem. Antes um "Locação Fulano" lançado como
+   aula entrava como aula de tênis e sumia da conta de locações. Personal,
+   torneio, bloqueio e pessoal continuam o que são. */
+const RE_LOCACAO=/loca[çc][ãa]o|loca[çc][õo]es|aluguel|alugad[oa]/i;
+function ehLocacao(e){
+  if(!e)return false;
+  if(e.tipo==='locacao')return true;
+  if(['personal','torneio','bloqueio','pessoal'].includes(e.tipo))return false;
+  return RE_LOCACAO.test(String(e.titulo||''));
+}
 function aulasDoDia(date){
   const d=new Date(date.getFullYear(),date.getMonth(),date.getDate());
   const quem=e=>e.alunoId?('a:'+e.alunoId):('t:'+normNome(e.titulo));
@@ -3588,11 +3600,11 @@ function aulasDoDia(date){
     const evs=entriesFor(d,h).filter(e=>e.origem!=='compromisso');
     // chuva: nada aconteceu no horário
     if(evs.some(ehEventoChuva))return;
-    evs.forEach(e=>{if(e.tipo==='locacao'||e.tipo==='torneio'||e.tipo==='pessoal')fora.push({hora:h,e});});
+    evs.forEach(e=>{if(ehLocacao(e)||e.tipo==='torneio'||e.tipo==='pessoal')fora.push({hora:h,e});});
     // almoço/bloqueio do João: a aula não acontece (locação e torneio, sim)
     if(evs.some(e=>e.tipo==='bloqueio'))return;
     const porQuem={};
-    evs.filter(e=>e.tipo==='aula'||e.tipo==='grupo'||e.tipo==='personal')
+    evs.filter(e=>(e.tipo==='aula'||e.tipo==='grupo'||e.tipo==='personal')&&!ehLocacao(e))
       .forEach(e=>{(porQuem[quem(e)]=porQuem[quem(e)]||[]).push(e);});
     const fica=[];
     Object.keys(porQuem).forEach(k=>{
@@ -3649,8 +3661,8 @@ function abrirConferenciaAulas(){
       +'<small>'+(a.cat==='personal'?'Personal':'Tênis')+(a.entradas.length>1?' · '+a.entradas.length+' alunos = 1 aula':'')+' · '+origens.join('/')+'</small></span>'
       +'<span class="ca-s">'+(dada?'✓ dada':'agendada')+'</span></li>';
   }).join(''):'<li class="ca-vazio">Nenhuma aula hoje.</li>')+'</ul>';
-  const ROT={locacao:'locação',torneio:'torneio',pessoal:'pessoal'};
-  if(r.fora.length)h+='<p class="ca-fora"><b>Na agenda, mas não é aula:</b> '+r.fora.map(x=>esc(x.hora)+' '+esc(x.e.titulo||'—')+' ('+ROT[x.e.tipo]+')').join(' · ')+'</p>';
+  const ROT={locacao:'locação',torneio:'torneio',pessoal:'pessoal'};const rotFora=e=>ehLocacao(e)?'locação':ROT[e.tipo];
+  if(r.fora.length)h+='<p class="ca-fora"><b>Na agenda, mas não é aula:</b> '+r.fora.map(x=>esc(x.hora)+' '+esc(x.e.titulo||'—')+' ('+rotFora(x.e)+')').join(' · ')+'</p>';
   box.innerHTML=h;
   ov.classList.add('on');
 }
@@ -3674,7 +3686,7 @@ function ocupacao_(dFrom,dTo){
       const modo=slotModo(cur,h);
       const evs=entriesFor(cur,h);
       const temBloqueio=evs.some(e=>e.tipo==='bloqueio');
-      const temLoc=evs.some(e=>e.tipo==='locacao');
+      const temLoc=evs.some(ehLocacao);
       if(temLoc)locUsados++;
       if(modo==='loc')locDisp++;
       if(modo!=='aula')return;
@@ -6670,7 +6682,7 @@ function fcAulasDoMes(a,mk){
     HORAS.forEach(hora=>{
       entriesFor(data,hora).forEach(e=>{
         if(e.alunoId!==a.id)return;
-        if(e.tipo==='locacao'||e.tipo==='torneio'||e.tipo==='bloqueio')return;   // não é aula
+        if(ehLocacao(e)||e.tipo==='torneio'||e.tipo==='bloqueio')return;   // não é aula
         const k=presId(e,data), reg=porChave[k];
         if(ehMarca(reg))return;                       // faltou ou avisou: fora da conta
         /* Um horário conta uma vez. Dois alunos no mesmo slot são duas linhas
@@ -10257,6 +10269,17 @@ function achadosDoAluno(a){
              +(presAula.length&&marc?' e ':'')+(marc?marc+' marcação(ões) futura(s) como aula':'')
              +'. Pode ser locação gravada como aula. Confira na agenda e, se for o caso, ajuste no cadastro.'});
       }
+    }
+    /* Horário do aluno escrito como locação mas salvo como aula/grupo, no mês
+       aberto: a contagem já trata como locação, mas o ✓ desconta crédito de
+       aula. Só lista; quem muda o tipo é o João. */
+    {
+      const mk=monthKey(),[an,me]=mk.split('-').map(Number),fim=new Date(an,me,0).getDate(),quais=[];
+      comIndiceAgenda(()=>{for(let d=1;d<=fim;d++){const dt=new Date(an,me-1,d,12);HORAS.forEach(h=>entriesFor(dt,h).forEach(e=>{
+        if(e.alunoId===a.id&&e.tipo!=='locacao'&&ehLocacao(e))quais.push(String(d).padStart(2,'0')+'/'+String(me).padStart(2,'0')+' '+h);}));}});
+      if(quais.length)achados.push({tipo:'aviso',a,
+        txt:a.nome+' tem '+quais.length+' horário(s) neste mês escrito(s) como locação, mas salvo(s) como aula ('+quais.slice(0,4).join(', ')+(quais.length>4?'…':'')+'). '
+           +'Eles já contam como locação no Início, mas o ✓ desconta crédito de aula, não hora de locação. Se for locação, mude o tipo para Locação no horário.'});
     }
     /* Aula em grupo da família com presença de um e não do outro, no mês
        aberto. Só lista: pode ser que só um tenha ido. Olhada pelo pagador,

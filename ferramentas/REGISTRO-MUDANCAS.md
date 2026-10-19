@@ -8,6 +8,28 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-19 · Claude Code: contagem de locações pelo tipo ou pelo nome
+
+O João pediu para conferir a contagem de locações: com e sem aluno vinculado,
+tudo que estiver marcado **ou escrito** como locação deve contar como
+locação. Vai junto da versão **2026-10-19-4**.
+- **Achado:** a conta já pegava as locações com e sem vínculo, mas só pelo
+  tipo. Um horário salvo como aula com o título "Locação …" ou "Aluguel …"
+  entrava como **aula de tênis** no Início e no gráfico, e não como locação.
+- **Agora:** `ehLocacao(e)` = tipo `locacao`, ou título com
+  locação/locacao/locações/aluguel/alugado(a). Personal, torneio, bloqueio e
+  pessoal continuam o que são. A função vale em:
+  - `aulasDoDia`: sai das aulas e vai para "não é aula";
+  - `ocupacao_`: horas de locação do dia e do mês;
+  - `fcAulasDoMes`: fechamento e mensalidade pela agenda.
+- O ✓ **não mudou:** horário escrito como locação mas salvo como aula ainda
+  desconta crédito de aula. Conferir números passa a listar esses casos, só
+  lista, para o João trocar o tipo.
+- **Teste novo:** `testar-contagem-locacoes-browser.cjs` (3 verificações), no
+  validar-pr.
+
+---
+
 ## 2026-10-19 · Claude Code: aula em família no ✓
 
 O João contou que casais e famílias fazem aula em grupo juntos, mas cada um
