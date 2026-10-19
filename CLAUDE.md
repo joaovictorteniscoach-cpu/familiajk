@@ -45,6 +45,7 @@ Use `grep -n` pelos títulos de seção (`/* ===== Título =====`) ou pelo nome 
 - Navegação: `go(id)`; render geral: `renderAll()`
 
 - Torneio: `campeoesDe`, `encerrarEtapa`, homenagens 1º/2º (`abrirHomenagens`, `homArte`, `homMensagem`)
+- Tempo em Curitiba: `climaDoCodigo`, `iconeClima` (SVG, mesmo desenho no app do aluno; nada de emoji), `abrirClimaGestao`/`pintarPrevisaoClima`
 - Segurança na Gestão: `argJs`, `sairEApagar`, `prontidaoRegraFinal`, `uidCadastroLivre`, `cancelamentoTardio`, `publicacaoLegadaEnxuta`
 
 Convenções: `fmt()` mascara valores quando `hideVals` está ligado — em mensagem ao aluno

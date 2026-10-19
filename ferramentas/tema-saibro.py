@@ -255,6 +255,10 @@ EXTRA = """
 /* bolinha nos botões de ação */
 .al-aula,.fic-b.prim,.fic-b.prim2,.fic-b.ok,#pg-lanc .cx-ac.in{background:%(b)s!important;border-color:%(b)s!important;color:%(t)s!important;-webkit-text-fill-color:%(t)s!important}
 .al-aula *,.fic-b.prim *,.fic-b.prim2 *,.fic-b.ok *,#pg-lanc .cx-ac.in *{color:%(t)s!important;-webkit-text-fill-color:%(t)s!important;stroke:%(t)s!important}
+/* Início: a série "Total" (anel, comparativo e gráfico) em areia. Com o
+   dourado virando terra, ela ficava no mesmo laranja do Tênis. */
+#pg-dash{--jh-total:#EAD7B0}
+#pg-dash .jh-ring.total .fg{filter:drop-shadow(0 0 4px rgba(234,215,176,.45))}
 /* Caixa: valores dos atalhos também na cor da bolinha */
 #pg-lanc .cx-at b{color:%(b)s!important;-webkit-text-fill-color:%(b)s!important}
 /* contraste: botão escuro sobre cartão claro fica opaco (o "meio ar" virava cinza) */

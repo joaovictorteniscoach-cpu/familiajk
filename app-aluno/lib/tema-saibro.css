@@ -628,6 +628,7 @@ body{color:#F8F5EE!important}
 #app>.top .jv-chips-topo .jv-quadra-chip{background:rgba(8,20,15,.10)!important;border-color:rgba(255,255,255,.16);box-shadow:none!important}
 #app>.top .jv-chips-topo .jv-quadra-chip b{text-shadow:0 1px 6px rgba(0,0,0,.55)}
 #app>.top .jv-chips-topo .jv-quadra-chip small{text-shadow:0 1px 5px rgba(0,0,0,.6)}
+#app>.top .jv-clima-chip .clima-ic svg{filter:drop-shadow(0 1px 3px rgba(0,0,0,.45))}
 #app .mine-item,#app .mine-item b{color:#2A2016;-webkit-text-fill-color:#2A2016}
 #app .mine-item .mini-cancel{color:#A3401C;-webkit-text-fill-color:#A3401C}
 #pedir-box>div{color:#2A2016}
@@ -753,6 +754,10 @@ html body .jv-progress i{background:linear-gradient(90deg,#E0824F,#63D887)!impor
 /* bolinha nos botões de ação */
 .al-aula,.fic-b.prim,.fic-b.prim2,.fic-b.ok,#pg-lanc .cx-ac.in{background:#D4E157!important;border-color:#D4E157!important;color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important}
 .al-aula *,.fic-b.prim *,.fic-b.prim2 *,.fic-b.ok *,#pg-lanc .cx-ac.in *{color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important;stroke:#1E2A0E!important}
+/* Início: a série "Total" (anel, comparativo e gráfico) em areia. Com o
+   dourado virando terra, ela ficava no mesmo laranja do Tênis. */
+#pg-dash{--jh-total:#EAD7B0}
+#pg-dash .jh-ring.total .fg{filter:drop-shadow(0 0 4px rgba(234,215,176,.45))}
 /* Caixa: valores dos atalhos também na cor da bolinha */
 #pg-lanc .cx-at b{color:#D4E157!important;-webkit-text-fill-color:#D4E157!important}
 /* contraste: botão escuro sobre cartão claro fica opaco (o "meio ar" virava cinza) */

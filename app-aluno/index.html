@@ -1604,6 +1604,8 @@ body[data-aba]:not([data-aba="inicio"]) #app>.top .jv-quadra-chip{display:none!i
 #app>.top .jv-chips-topo .jv-quadra-chip b{font-size:13px;text-shadow:0 1px 6px rgba(0,0,0,.55)}
 #app>.top .jv-chips-topo .jv-quadra-chip small{font-size:9.5px;text-shadow:0 1px 5px rgba(0,0,0,.6)}
 #app>.top .jv-chips-topo .jv-clima-chip .clima-ic{font-size:17px}
+#app>.top .jv-clima-chip .clima-ic{display:block;width:24px;height:24px;flex:0 0 24px}
+#app>.top .jv-clima-chip .clima-ic svg{display:block;filter:drop-shadow(0 1px 3px rgba(0,0,0,.45))}
 #app>.top .jv-chips-topo .jv-quadra-chip .led{width:9px;height:9px;flex:0 0 9px}
 
 /* Contraste de leitura: cartão claro com letra escura, painel escuro com letra clara */
@@ -1664,12 +1666,12 @@ html body:not(#jv) #pedir-box .btn-ghost{background:#F3EDE2!important;border:1px
 .login .login-sub{opacity:1}
 .login-priv{color:rgba(250,247,242,.8)}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-18-2">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-19-1">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-18-2">
-<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-18-2">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-19-1">
+<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-19-1">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -1852,7 +1854,7 @@ function esperarAuth(){
       <span><small>Situação da quadra</small><b id="aluno-quadra-rot">—</b><small id="aluno-quadra-tempo"></small></span>
     </button>
     <button type="button" class="jv-quadra-chip jv-clima-chip" id="aluno-clima" hidden onclick="carregarClima(true)" aria-label="Tempo em Curitiba — toque para atualizar">
-      <i class="clima-ic" id="aluno-clima-ic" aria-hidden="true">☀️</i>
+      <i class="clima-ic" id="aluno-clima-ic" aria-hidden="true"></i>
       <span><small>Curitiba</small><b id="aluno-clima-temp">—</b><small id="aluno-clima-txt"></small></span>
     </button>
     </div>
@@ -2151,7 +2153,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-10-18-2"></script>
+<script src="lib/icones.js?v=2026-10-19-1"></script>
 </div>
 
 <!-- MODAL ESCOLHER O QUE FAZER NO HORÁRIO -->
@@ -2378,7 +2380,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-10-18-2';
+const VERSAO='2026-10-19-1';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -5516,15 +5518,39 @@ setTimeout(carregarStatusQuadra,1200);
 const CLIMA_URL='https://api.open-meteo.com/v1/forecast?latitude=-25.43&longitude=-49.27'
   +'&current=temperature_2m,weather_code,is_day&hourly=precipitation_probability&forecast_hours=6&timezone=America%2FSao_Paulo';
 function climaDoCodigo(c,dia){
-  if(c===0)return dia?['☀️','Sol']:['🌙','Céu limpo'];
-  if(c===1||c===2)return dia?['⛅','Poucas nuvens']:['☁️','Poucas nuvens'];
-  if(c===3)return ['☁️','Nublado'];
-  if(c===45||c===48)return ['🌫️','Neblina'];
-  if(c>=51&&c<=57)return ['🌦️','Garoa'];
-  if((c>=61&&c<=67)||(c>=80&&c<=82))return ['🌧️','Chuva'];
-  if(c>=71&&c<=77||c===85||c===86)return ['❄️','Frio intenso'];
-  if(c>=95)return ['⛈️','Temporal'];
-  return ['🌤️','—'];
+  if(c===0)return dia?['sol','Sol']:['lua','Céu limpo'];
+  if(c===1||c===2)return [dia?'solnuvem':'luanuvem','Poucas nuvens'];
+  if(c===3)return ['nuvem','Nublado'];
+  if(c===45||c===48)return ['neblina','Neblina'];
+  if(c>=51&&c<=57)return ['garoa','Garoa'];
+  if((c>=61&&c<=67)||(c>=80&&c<=82))return ['chuva','Chuva'];
+  if(c>=71&&c<=77||c===85||c===86)return ['neve','Frio intenso'];
+  if(c>=95)return ['temporal','Temporal'];
+  return [dia?'solnuvem':'luanuvem','—'];
+}
+/* Ícones desenhados aqui, não emoji: o emoji de neblina do iPhone é um
+   quadrado cinza que parecia imagem quebrada (19/10). Os mesmos da Gestão. */
+function iconeClima(k){
+  const nv=(x,y,s,cor)=>'<g transform="translate('+x+' '+y+') scale('+s+')" fill="'+(cor||'#EEF2F4')+'"><circle cx="11" cy="19" r="5"/><circle cx="16" cy="14.5" r="7"/><circle cx="22.5" cy="18.5" r="5.5"/><rect x="11" y="18" width="11.5" height="6"/></g>';
+  const sol=(x,y,r)=>{let raios='';for(let i=0;i<8;i++){const a=i*Math.PI/4,c=Math.cos(a),n=Math.sin(a);
+    raios+='M'+(x+c*(r+2.2)).toFixed(1)+' '+(y+n*(r+2.2)).toFixed(1)+'L'+(x+c*(r+4.6)).toFixed(1)+' '+(y+n*(r+4.6)).toFixed(1);}
+    return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="#FFC93C"/><path d="'+raios+'" stroke="#FFC93C" stroke-width="2.2" stroke-linecap="round"/>';};
+  const lua=(x,y,s)=>'<path transform="translate('+x+' '+y+') scale('+s+')" d="M19.5 4.5A11 11 0 1 0 27.5 20 8.6 8.6 0 0 1 19.5 4.5z" fill="#F3E6B5"/>';
+  const gotas=(cor,traco)=>'<path d="'+(traco?'M11 25.5l-1.6 3.6M16.5 25.5l-1.6 3.6M22 25.5l-1.6 3.6':'M11 26.2v.1M16.5 27.6v.1M22 26.2v.1')+'" stroke="'+cor+'" stroke-width="'+(traco?2.2:3)+'" stroke-linecap="round"/>';
+  const D={
+    sol:sol(16,16,6.2),
+    lua:lua(0,0,1),
+    solnuvem:sol(11.5,11,4.6)+nv(3,4,.85),
+    luanuvem:lua(-3,-3,.72)+nv(3,4,.85),
+    nuvem:nv(0,1,1),
+    neblina:nv(1,-3,.9,'#DDE4E8')+'<path d="M6 24.5h20M9 29h15" stroke="#C9D3D9" stroke-width="2.4" stroke-linecap="round"/>',
+    garoa:nv(0,-3,1)+gotas('#8FCBFF',false),
+    chuva:nv(0,-3,1)+gotas('#5AB0FF',true),
+    solchuva:sol(11.5,9,4.4)+nv(3,0,.85)+gotas('#5AB0FF',true),
+    neve:'<path d="M16 4v24M5.6 10l20.8 12M5.6 22l20.8-12M12.5 5.5 16 8.5l3.5-3M12.5 26.5 16 23.5l3.5 3" stroke="#BFE6FF" stroke-width="2.2" stroke-linecap="round" fill="none"/>',
+    temporal:nv(0,-3,1,'#B8C3CA')+'<path d="M17.5 20.5 13 27h4l-2 5 6.5-8h-4.2l2-3.5z" fill="#FFC93C"/>'
+  };
+  return '<svg viewBox="0 0 32 32" width="100%" height="100%" aria-hidden="true" focusable="false">'+(D[k]||D.nuvem)+'</svg>';
 }
 let CLIMA_ULT=null;
 function pintarClima(){
@@ -5534,7 +5560,7 @@ function pintarClima(){
   const [ic,txt]=climaDoCodigo(v.code,v.dia);
   const chovendo=/Chuva|Garoa|Temporal/.test(txt);
   el.hidden=false;
-  document.getElementById('aluno-clima-ic').textContent=(!chovendo&&v.chuva>=60)?'🌦️':ic;
+  document.getElementById('aluno-clima-ic').innerHTML=iconeClima((!chovendo&&v.chuva>=60)?'solchuva':ic);
   document.getElementById('aluno-clima-temp').textContent=Math.round(v.temp)+'°C';
   document.getElementById('aluno-clima-txt').textContent=(!chovendo&&v.chuva>=60)?('Chuva prevista ('+v.chuva+'%)'):txt;
 }
@@ -5558,7 +5584,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-18-2').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-19-1').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava

@@ -8,6 +8,49 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-19 · Claude Code: tempo com ícone próprio e varredura do Início
+
+O João mandou print do iPhone (Início às 05:28, "Curitiba 9°C Neblina"): o
+ícone do tempo era um quadrado cinza. Era o emoji 🌫️ da Apple, que é um
+retângulo borrado e parece imagem quebrada. Versão **2026-10-19-1**.
+- **Tempo (Gestão e aluno):**
+  - Os ícones do céu agora são desenhados pelo app (`iconeClima`, SVG): sol,
+    lua, nuvens, neblina, garoa, chuva, temporal e frio. Ficam iguais em
+    qualquer celular, sem emoji.
+  - Os mesmos onze desenhos estão nos dois apps, e o teste confere que são
+    iguais.
+- **Toque no quadrinho (só na Gestão):**
+  - Antes ele só atualizava, sem nada visível.
+  - Agora abre "Tempo em Curitiba", com a previsão hora a hora das próximas
+    12 h (temperatura e chance de chuva) e o horário da atualização.
+  - Sem internet, fica o último dado, com a hora dele.
+  - O aviso "Chuva prevista" do quadrinho continua olhando só as próximas 6 h.
+  - Fonte: Open-Meteo, gratuito e sem chave. A mesma chamada agora pede
+    também a previsão por hora.
+- **Comparativo de aulas:**
+  - Na segunda-feira aparecia "Esta semana (19/10 a 19/10) · % contra…" sem
+    nenhum %, porque a segunda anterior (12/10, feriado) não teve aula.
+  - Agora aparece "Hoje (19/10) · % contra a segunda passada (12/10)".
+  - Sem aula no período anterior, o texto diz isso e explica que não há % para
+    comparar. Vale também para Mês e Ano.
+- **Cores (tema Saibro):**
+  - A série "Total" (barra, legenda, anel e linha do gráfico) ficava no mesmo
+    laranja do "Tênis", porque o dourado vira terra no Saibro.
+  - Agora ela usa areia (`--jh-total`, em `tema-saibro.py`).
+  - O tema Verde clássico continua dourado.
+- **Nuvem:**
+  - A seta de "enviando à nuvem" (`↗ Nuvem`) aparecia no iPhone como um
+    quadrado azul de emoji.
+  - Agora leva `U+FE0E` e fica desenho de texto, como o ✓.
+- **Teste novo:** `testar-tempo-inicio-browser.cjs`, com 23 verificações no
+  Chromium e 2 no WebKit. O WebKit (iPhone) roda no validar-pr.
+- **Conferido e sem defeito:**
+  - anel "Total" vazio de manhã: por desenho, ele mostra quanto do dia já foi
+    dado;
+  - "0 de 7 já dadas";
+  - quadrinho da quadra;
+  - nenhuma rolagem de lado em 320 px.
+
 ## 2026-10-18 · Claude Code: W.O. passa a valer 3 pontos para quem venceu
 
 Decisão do João depois de comparar com regulamentos de barragem de clubes
