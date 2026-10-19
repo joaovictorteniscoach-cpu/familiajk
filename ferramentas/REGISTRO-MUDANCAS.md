@@ -8,6 +8,40 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-19 · Claude Code: renovação desconta aula já feita e não paga
+
+O João pediu duas coisas:
+- no extrato, a renovação em uma linha: "Renovação do mês", mais as
+  reposições quando sobrou;
+- quem fez aula além do pacote e ainda não pagou tem essas aulas
+  **descontadas da renovação**.
+
+Antes, a renovação zerava o saldo negativo e o aviso mandava "cobrar à
+parte". Vai junto da versão **2026-10-19-4**.
+- **Individual (`renovarMes`):** com saldo negativo, pergunta antes da prévia.
+  - OK desconta: −2 + 8 = 6. O negativo não é zerado e o pacote entra por
+    cima.
+  - Cancelar = "já cobrei à parte": renova cheio, como antes.
+  - A prévia e a conferência final (`depois`) usam o valor escolhido.
+  - A barreira "renovar não pode tirar aula" passou a usar
+    `Math.max(0, depois.c)`.
+- **Lote (`rmLinha`/`rmAplicarUm`):**
+  - desconta por padrão;
+  - cada linha tem os botões "Descontar da renovação" e "Já cobrei à parte"
+    (`rmDebito`, `rmDebitoUsar`);
+  - "Recebe" mostra o pacote menos as já feitas;
+  - `ultimaRenovacao.creditos` é o valor final.
+- **Extrato resumido:** a renovação junta as linhas gravadas no mesmo
+  instante (sobra → reposição, sobra convertida, saldo zerado) em uma linha:
+  "Renovação do mês +8". Embaixo aparece, quando for o caso, "+3 que
+  sobraram viraram reposição", "−2 aulas já feitas descontadas" ou "zerou 2
+  além do pacote (cobradas à parte)".
+- `checar-familia-runtime.js` ganhou `rmDebito` no contexto.
+- **Teste novo:** `testar-renovacao-debito-browser.cjs` (5 verificações), no
+  validar-pr. Os testes antigos de renovação e família continuam verdes.
+
+---
+
 ## 2026-10-19 · Claude Code: extrato do aluno resumido
 
 O João achou o extrato longo e confuso: marcar e desmarcar, chuva que

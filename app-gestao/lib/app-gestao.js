@@ -6108,8 +6108,15 @@ function renovarMes(id){
   /* Só a PRIMEIRA renovação do mês converte sobra: numa segunda, o que está no
      saldo é crédito deste mês, e virar reposição de novo daria aula a mais. */
   const sobra=jaRenov.length?0:Math.max(0,cAnt)+(pg>0?Math.max(0,gAnt):0);
-  const depois={c:p, g:pg>0?pg:gAnt, r:rAnt+sobra};
-  const dispAnt=Math.max(0,cAnt)+Math.max(0,gAnt)+rAnt, dispDep=depois.c+Math.max(0,depois.g)+depois.r;
+  /* Aula feita além do pacote e ainda não paga (saldo negativo): sai desta
+     renovação (pedido do João, 19/10). Antes a renovação zerava a dívida e o
+     aviso mandava cobrar à parte. Se ele já cobrou, escolhe "já cobrei". */
+  const deve=cAnt<0?-cAnt:0, devG=(pg>0&&gAnt<0)?-gAnt:0;
+  const descontar=(deve||devG)?confirm(a.nome+' fez '+fmtCred(deve+devG)+' aula(s) além do pacote que ainda não foram pagas.\n\n'
+    +'OK = descontar desta renovação (recebe '+fmtCred(p-deve)+(pg>0?' + '+fmtCred(pg-devG)+' em grupo':'')+' em vez de '+fmtCred(p)+(pg>0?' + '+fmtCred(pg):'')+')\n'
+    +'Cancelar = já cobrei à parte (renova o pacote cheio)'):false;
+  const depois={c:p-(descontar?deve:0), g:pg>0?pg-(descontar?devG:0):gAnt, r:rAnt+sobra};
+  const dispAnt=Math.max(0,cAnt)+Math.max(0,gAnt)+rAnt, dispDep=Math.max(0,depois.c)+Math.max(0,depois.g)+depois.r;
 
   /* ===== Barreira 2: renovar nunca pode TIRAR aula do aluno =====
      Créditos + grupo + reposições depois da renovação têm de ser pelo menos o
@@ -6131,7 +6138,8 @@ function renovarMes(id){
     +linha('Reposições',rAnt,depois.r)+'\n'
     +'  Total de aulas disponíveis: '+fmtCred(dispAnt)+' → '+fmtCred(dispDep)+'\n';
   if(sobra>0)txt+='\nAs '+fmtCred(sobra)+' aula(s) que sobraram do mês passado viram reposição — o aluno não perde nenhuma.';
-  if(cAnt<0)txt+='\n⚠️ O saldo estava negativo ('+fmtCred(cAnt)+'): volta para o pacote.';
+  if(deve||devG)txt+=descontar?('\n'+fmtCred(deve+devG)+' aula(s) já feita(s) além do pacote saem desta renovação.')
+    :('\n⚠️ O saldo estava negativo ('+fmtCred(cAnt+(pg>0?Math.min(0,gAnt):0))+'): você disse que já cobrou à parte, então volta para o pacote cheio.');
   if(g.total>0&&g.total!==(p+pg))txt+='\n⚠️ A agenda deste mês tem '+g.total+' aula(s), mas o pacote é de '+(p+pg)+'. Confira o cadastro se mudou o plano.';
   if(!ehAtivoAluno(a))txt+='\n⚠️ '+a.nome+' está como INATIVO. Se voltou a treinar, acerte o cadastro primeiro.';
   txt+='\n\nMarca a mensalidade como pendente. Dá para desfazer em Menu → Histórico de mudanças.';
@@ -6147,11 +6155,12 @@ function renovarMes(id){
        Assim o extrato continua somando o saldo, e a conferência do mês lê a
        renovação como o pacote inteiro (igual ao plano), não como diferença. */
     if(cAnt!==p){
-      if(cAnt!==0)mover(a,'creditos',-cAnt,(cAnt>0&&sobra>0)?'Virada de mês — sobra convertida':'Saldo anterior zerado na renovação');
+      // descontando, o negativo fica e o pacote entra por cima: −2 + 8 = 6
+      if(cAnt!==0&&!(descontar&&cAnt<0))mover(a,'creditos',-cAnt,(cAnt>0&&sobra>0)?'Virada de mês — sobra convertida':'Saldo anterior zerado na renovação');
       mover(a,'creditos',p,'Renovação do mês');
     }
     if(pg>0&&gAnt!==pg){   // plano misto renova as duas partes
-      if(gAnt!==0)mover(a,'credGrupo',-gAnt,(gAnt>0&&sobra>0)?'Virada de mês — sobra convertida':'Saldo de grupo anterior zerado na renovação');
+      if(gAnt!==0&&!(descontar&&gAnt<0))mover(a,'credGrupo',-gAnt,(gAnt>0&&sobra>0)?'Virada de mês — sobra convertida':'Saldo de grupo anterior zerado na renovação');
       mover(a,'credGrupo',pg,'Renovação do mês (grupo)');
     }
     const ok=(Number(a.creditos)||0)===depois.c&&(Number(a.credGrupo)||0)===depois.g&&(Number(a.repos)||0)===depois.r;
@@ -6260,7 +6269,7 @@ function desfazerDescontoRepos(id){
    e pelos mesmos nomes no extrato que o "Renovar créditos do mês" da ficha —
    a conferência e o extrato leem igual. Antes de aplicar, a versão atual é
    guardada (Versões salvas). */
-let rmSel={}, rmEscolha={}, rmFeitos=null, rmAberta=false, rmAgCache={};
+let rmSel={}, rmEscolha={}, rmFeitos=null, rmAberta=false, rmAgCache={}, rmDebito={};
 /* As aulas do aluno no mês, com dia e hora — mesmas regras de contarAulasAluno
    (sem reposição, locação, torneio, bloqueio e compromisso). */
 function aulasDoMesLista(a,ano,mes){
@@ -6307,18 +6316,22 @@ function rmLinha(a){
   const venc=reposVencidas(a);
   const sobra=jaRenov?0:Math.max(0,c)+(novo.pg>0?Math.max(0,g):0);
   const reposDepois=r-venc+sobra;
-  const gDep=novo.pg>0?novo.pg:g;
+  /* Aula feita além do pacote e ainda não paga: sai da renovação, a não ser
+     que o João marque "já cobrei à parte" nesta linha (19/10). */
+  const deve=c<0?-c:0, devG=(novo.pg>0&&g<0)?-g:0, descontar=rmDebito[a.id]!=='cobrado';
+  const cFinal=novo.p-(descontar?deve:0);
+  const gDep=novo.pg>0?novo.pg-(descontar?devG:0):g;
   const devia=c<0||g<0?(devidoExtraPart(a)+devidoExtraGrupo(a)):0;
   let bloqueio=null;
   if(jaRenov)bloqueio='já renovado neste mês — saldos preservados';
   else if(ajusteManual)bloqueio='ajuste manual neste mês — confira antes de renovar';
   else if(novo.p+novo.pg<=0)bloqueio='sem pacote no cadastro e sem aula na agenda';
   else{
-    const dispAnt=Math.max(0,c)+Math.max(0,g)+(r-venc), dispDep=novo.p+Math.max(0,gDep)+reposDepois;
+    const dispAnt=Math.max(0,c)+Math.max(0,g)+(r-venc), dispDep=Math.max(0,cFinal)+Math.max(0,gDep)+reposDepois;
     if(dispDep<dispAnt)bloqueio='ficaria com menos aulas do que tem hoje — confira o cadastro';
   }
   const atencao=!bloqueio&&(difere||!temAg||devia>0);
-  return {a,ag,temAg,difere,usa,novo,p,pg,mens,c,g,r,venc,sobra,reposDepois,gDep,devia,bloqueio,atencao,grupoSo,uni,soGrupoPG,jaRenov,ajusteManual};
+  return {a,ag,temAg,difere,usa,novo,p,pg,mens,c,g,r,venc,sobra,reposDepois,gDep,cFinal,deve,devG,descontar,devia,bloqueio,atencao,grupoSo,uni,soGrupoPG,jaRenov,ajusteManual};
 }
 function rmLinhas(){
   return (DB.alunos||[]).filter(ehAtivoAluno).filter(a=>perfilDe(a)!=='torneio').map(rmLinha)
@@ -6328,7 +6341,7 @@ function rmLinhas(){
    ficha volta para a lista com as mesmas marcações. Só navegação. */
 function rmNomeLink(a){return '<span class="rm-link" role="button" onclick="abrirFicha(\''+argJs(a.id)+'\')">'+esc(a.nome)+' ›</span>';}
 function abrirRenovaMes(){
-  rmSel={};rmEscolha={};rmFeitos=null;rmAgCache={};
+  rmSel={};rmEscolha={};rmFeitos=null;rmAgCache={};rmDebito={};
   rmLinhas().forEach(x=>{rmSel[x.a.id]=!x.bloqueio;});
   const f=document.getElementById('renova-mes');if(!f)return;
   rmAberta=true;renderRenovaMes();
@@ -6351,6 +6364,7 @@ function fecharRenovaMes(){
 window.addEventListener('popstate',()=>{if(rmAberta&&!(history.state&&history.state.renova))esconderRenovaMes();});
 function rmMarcar(id,v){rmSel[id]=!!v;renderRenovaMes();}
 function rmUsar(id,qual){rmEscolha[id]=qual;renderRenovaMes();}
+function rmDebitoUsar(id,qual){rmDebito[id]=qual;renderRenovaMes();}
 function rmQtdTxt(n,pg,grupoSo){
   if(grupoSo)return fmtCred(n)+' aula(s) em grupo';
   return fmtCred(n)+' aula(s)'+(pg>0?(' + '+fmtCred(pg)+' em grupo'):'');
@@ -6384,11 +6398,14 @@ function renderRenovaMes(){
     if(x.difere)t+='<div class="rm-esc">'
       +'<button class="'+(x.usa==='agenda'?'on':'')+'" onclick="rmUsar(\''+id+'\',\'agenda\')">Agenda · '+fmtCred(x.ag.total)+' · '+fmt(x.ag.valor)+'</button>'
       +'<button class="'+(x.usa==='pacote'?'on':'')+'" onclick="rmUsar(\''+id+'\',\'pacote\')">Cadastro · '+fmtCred(x.p+x.pg)+' · '+fmt(x.mens)+'</button></div>';
-    t+='<div class="rm-l">Recebe <b>'+rmQtdTxt(x.novo.p,x.novo.pg,x.grupoSo)+'</b>'+(valorMuda&&!x.difere?' · valor '+fmt(x.mens)+' → '+fmt(x.novo.mens):'')+'</div>';
+    t+='<div class="rm-l">Recebe <b>'+rmQtdTxt(x.cFinal,x.novo.pg>0?x.gDep:0,x.grupoSo)+'</b>'+((x.deve||x.devG)&&x.descontar?' <small>('+rmQtdTxt(x.novo.p,x.novo.pg,x.grupoSo)+' − '+fmtCred(x.deve+x.devG)+' já feita(s))</small>':'')+(valorMuda&&!x.difere?' · valor '+fmt(x.mens)+' → '+fmt(x.novo.mens):'')+'</div>';
     t+='<div class="rm-l">🔁 Reposições <b>'+fmtCred(x.r)+' → '+fmtCred(x.reposDepois)+'</b>'
       +((x.sobra||x.venc)?' <small>('+[x.sobra?'+'+fmtCred(x.sobra)+' não feita(s)':'',x.venc?'−'+fmtCred(x.venc)+' vencida(s)':''].filter(Boolean).join(', ')+')</small>':'')+'</div>';
     t+='<div class="rm-esc"><button onclick="rmConfirmarManual(\''+argJs(id)+'\')">✓ Já renovei manualmente · manter saldos</button></div>';
-    if(x.devia>0)t+='<div class="rm-aviso">⚠️ Fez aula além do pacote: '+fmt(x.devia)+' a cobrar à parte — a renovação zera esse saldo.</div>';
+    if(x.deve||x.devG)t+='<div class="rm-aviso">⚠️ Fez '+fmtCred(x.deve+x.devG)+' aula(s) além do pacote, ainda não paga(s). '
+      +(x.descontar?'Saem desta renovação.':'Você marcou que já cobrou à parte: renova o pacote cheio.')+'</div>'
+      +'<div class="rm-esc"><button class="'+(x.descontar?'on':'')+'" onclick="rmDebitoUsar(\''+argJs(id)+'\',\'descontar\')">Descontar da renovação</button>'
+      +'<button class="'+(x.descontar?'':'on')+'" onclick="rmDebitoUsar(\''+argJs(id)+'\',\'cobrado\')">Já cobrei à parte · '+fmt(x.devia)+'</button></div>';
     t+='</div></div>';
     return t;
   }).join('');
@@ -6414,14 +6431,14 @@ function rmAplicarUm(x){
     }
     if(x.sobra>0)mover(a,'repos',x.sobra,'Sobra do mês virou reposição');
     const cAnt=Number(a.creditos)||0;
-    if(cAnt!==0)mover(a,'creditos',-cAnt,(cAnt>0&&x.sobra>0)?'Virada de mês — sobra convertida':'Saldo anterior zerado na renovação');
+    if(cAnt!==0&&!(x.descontar&&cAnt<0))mover(a,'creditos',-cAnt,(cAnt>0&&x.sobra>0)?'Virada de mês — sobra convertida':'Saldo anterior zerado na renovação');
     mover(a,'creditos',x.novo.p,'Renovação do mês');
     if(x.novo.pg>0){
       const gAnt=Number(a.credGrupo)||0;
-      if(gAnt!==0)mover(a,'credGrupo',-gAnt,(gAnt>0&&x.sobra>0)?'Virada de mês — sobra convertida':'Saldo de grupo anterior zerado na renovação');
+      if(gAnt!==0&&!(x.descontar&&gAnt<0))mover(a,'credGrupo',-gAnt,(gAnt>0&&x.sobra>0)?'Virada de mês — sobra convertida':'Saldo de grupo anterior zerado na renovação');
       mover(a,'credGrupo',x.novo.pg,'Renovação do mês (grupo)');
     }
-    const ok=(Number(a.creditos)||0)===x.novo.p&&(Number(a.credGrupo)||0)===x.gDep&&Math.abs((Number(a.repos)||0)-x.reposDepois)<1e-9;
+    const ok=(Number(a.creditos)||0)===x.cFinal&&(Number(a.credGrupo)||0)===x.gDep&&Math.abs((Number(a.repos)||0)-x.reposDepois)<1e-9;
     if(!ok)throw new Error('saldo não bateu com a prévia');
   }catch(e){
     const idx=DB.alunos.indexOf(a);if(idx>=0)DB.alunos[idx]=Object.assign(a,JSON.parse(antes));
@@ -6430,7 +6447,7 @@ function rmAplicarUm(x){
   }
   if(!ehDependenteFamilia(a)&&a.ultimoPago!==mesReal())a.status='pendente';
   delete a.difOk;delete a.difUndo;
-  a.ultimaRenovacao={mes:mesReal(),origem:'lote',ts:Date.now(),creditos:x.novo.p,credGrupo:x.gDep,repos:x.reposDepois};
+  a.ultimaRenovacao={mes:mesReal(),origem:'lote',ts:Date.now(),creditos:x.cFinal,credGrupo:x.gDep,repos:x.reposDepois};
   return {ok:true};
 }
 function rmAplicar(){
@@ -9324,8 +9341,27 @@ function rotuloExtrato(m){
   return mt||'—';
 }
 function extratoResumido(a){
-  const ms=movsDe(a.id).slice().sort((x,y)=>(x.ts||0)-(y.ts||0)),grupos=new Map(),linhas=[];
+  const todas=movsDe(a.id).slice().sort((x,y)=>(x.ts||0)-(y.ts||0)),grupos=new Map(),linhas=[];
   const diaTs=ts=>dKey(new Date(ts));
+  /* Renovação numa linha só (19/10): "Renovação do mês +8", com a sobra que
+     virou reposição e as aulas já feitas que saíram dela no texto de baixo.
+     As linhas irmãs (gravadas no mesmo instante) somem do resumo. */
+  const IRMA=/^(Sobra do mês virou reposição|Virada de mês — sobra convertida|Saldo anterior zerado na renovação|Saldo de grupo anterior zerado na renovação)$/;
+  const usadas=new Set();
+  todas.filter(m=>/^Renovação do mês/.test(m.motivo||'')).forEach(r=>{
+    const irmas=todas.filter(m=>m!==r&&!usadas.has(m)&&IRMA.test(m.motivo||'')&&Math.abs((m.ts||0)-(r.ts||0))<=3000
+      &&(m.campo==='repos'||m.campo===r.campo));
+    irmas.forEach(m=>usadas.add(m));
+    const rep=irmas.filter(m=>m.campo==='repos').reduce((t,m)=>t+(Number(m.delta)||0),0);
+    const zerou=irmas.filter(m=>/zerado/.test(m.motivo||'')&&Number(m.de)<0).reduce((t,m)=>t+(Number(m.delta)||0),0);
+    const descontou=Number(r.de)<0&&!zerou?-Number(r.de):0;
+    const obs=[rep>0?'+'+fmtCred(rep)+' que sobrou(aram) virou(aram) reposição':'',
+      descontou?'−'+fmtCred(descontou)+' aula(s) já feita(s) descontada(s)':'',
+      zerou?'zerou '+fmtCred(Math.abs(zerou))+' aula(s) além do pacote (cobradas à parte)':''].filter(Boolean).join(' · ');
+    linhas.push({ts:r.ts,aula:null,txt:r.campo==='credGrupo'?'Renovação do mês (grupo)':'Renovação do mês',campo:r.campo,q:Number(r.delta)||0,para:r.para,obs});
+    usadas.add(r);
+  });
+  const ms=todas.filter(m=>!usadas.has(m));
   ms.forEach(m=>{
     const ref=String(m.ref||'');let k;
     if(ref&&ref!=='resumo'&&ref!=='abertura'&&ref!=='ajuste')k='r|'+ref;
