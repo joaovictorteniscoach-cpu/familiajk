@@ -170,6 +170,46 @@ const deltaE=(a,b)=>{const x=lab(a),y=lab(b);return Math.hypot(x[0]-y[0],x[1]-y[
     await g.clock.setFixedTime(AGORA);
    });
 
+   /* O João só via o gráfico subir num mês com menos aulas (19/10): ele é a
+      soma do mês, então só sobe. Agora o mês passado vem tracejado e a
+      comparação em números, a mesma conta do Comparativo. */
+   await check(tema+': gráfico do mês com o mês passado tracejado e a comparação igual à do Comparativo',async()=>{
+    await g.clock.setFixedTime(new Date('2026-10-19T17:30:00-03:00'));await dados('2026-09-01');
+    const r=await g.evaluate(()=>{trocarPeriodoCmp('mes');
+     const out={cmp:document.getElementById('jh-graf-cmp').textContent,ant:!!document.querySelector('#jh-graf path.ln.ant'),
+      leg:!document.getElementById('jh-leg-ant').hidden,sub:document.getElementById('jh-cmp-sub').textContent,
+      tot:document.getElementById('jh-cmp-total').textContent,d:document.getElementById('jh-cmp-total-d').textContent,
+      nota:document.getElementById('jh-graf-nota').textContent};
+     trocarPeriodoCmp('semana');return out;});
+    // segundas de outubro até o dia 19: 5, 12 e 19 (3 × 4 aulas) · setembro até o dia 19: 7 e 14 (2 × 4)
+    assert.equal(r.cmp,'Até hoje (dia 19): 12 aulas · setembro até o dia 19: 8 ↑ 50%');
+    assert.ok(r.ant&&r.leg,'linha e legenda do mês passado');
+    assert.equal(r.tot,'12');assert.equal(r.d,'↑ 50%');assert.match(r.sub,/mesmo período de setembro/);
+    assert.match(r.nota,/só sobe/);assert.match(r.nota,/tracejada azul é o mês passado/);
+   });
+   await check(tema+': aula desmarcada sai do gráfico na hora; mês sem base não desenha o tracejado',async()=>{
+    const r=await g.evaluate(()=>{
+     const antes=serieAulasMes(2026,9)[18].total;
+     DB.agenda.excecoes.push({fixoId:'f3',data:'2026-10-12'});renderAll();
+     const depois=serieAulasMes(2026,9)[18].total,cmp=document.getElementById('jh-graf-cmp').textContent;
+     return {antes,depois,cmp};});
+    assert.equal(r.depois,r.antes-1);assert.match(r.cmp,/^Até hoje \(dia 19\): 11 aulas/);
+    await dados('2026-10-13');
+    const v=await g.evaluate(()=>({ant:!!document.querySelector('#jh-graf path.ln.ant'),leg:!document.getElementById('jh-leg-ant').hidden,cmp:document.getElementById('jh-graf-cmp').textContent}));
+    assert.equal(v.ant,false);assert.equal(v.leg,false);assert.equal(v.cmp,'Até hoje (dia 19): 4 aulas · setembro sem aula registrada para comparar');
+    await g.clock.setFixedTime(AGORA);await dados('2026-10-13');
+   });
+   await check(tema+': aluno inativo com horário na agenda aparece na conferência, sem mudar nada',async()=>{
+    const r=await g.evaluate(()=>{
+     DB.alunos.find(a=>a.id==='a2').arquivado=true;const antes=JSON.stringify(DB);
+     const txt=achadosDoAluno(DB.alunos.find(a=>a.id==='a2')).map(x=>x.txt).join(' | '),
+      ativo=achadosDoAluno(DB.alunos.find(a=>a.id==='a1')).map(x=>x.txt).join(' | ');
+     const igual=JSON.stringify(DB)===antes;DB.alunos.find(a=>a.id==='a2').arquivado=false;return {txt,ativo,igual};});
+    assert.match(r.txt,/Aluno Dois está inativo, mas ainda tem 1 horário\(s\) fixo\(s\) na agenda daqui para a frente \(seg 10:00\)/);
+    assert.doesNotMatch(r.ativo,/inativo/,'aluno ativo não entra (caso negativo)');
+    assert.ok(r.igual,'conferência só lista');
+   });
+
    await check(tema+': "enviando à nuvem" com a seta de texto (sem o quadrado azul de emoji no iPhone)',async()=>{
     const r=await g.evaluate(()=>{setSave('enviando à nuvem…');espelharTopoInicio();
      return {s:document.getElementById('save-state').textContent,j:document.getElementById('jh-sync').textContent};});

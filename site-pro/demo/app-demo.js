@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-19-1';
+const VERSAO='2026-10-19-2';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -3796,7 +3796,7 @@ function renderVincularList(){
   const opts=DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${a.id}">${esc(a.nome)}${a.tipo==='Personal'?' (Personal)':''}</option>`).join('');
   el.innerHTML='<p class="hint" style="margin-bottom:10px">Para cada nome da agenda que ainda não bate com um cadastro, escolha o aluno correto. Ao salvar, o horário fica vinculado e o nome é padronizado — aí aparece em dourado no app do aluno.</p>'+grupos.map(g=>`
     <div class="link-row">
-      <div class="link-name">${g.titulo} <small>(${g.qtd} horário${g.qtd===1?'':'s'} na grade)</small></div>
+      <div class="link-name">${esc(g.titulo)} <small>(${g.qtd} horário${g.qtd===1?'':'s'} na grade)</small></div>
       <select class="link-sel" data-titulo="${encodeURIComponent(g.titulo)}"><option value="">— escolher aluno cadastrado —</option>${opts}</select>
     </div>`).join('');
 }
@@ -4856,7 +4856,7 @@ function pintarAgendaModal(){
   if(g.part>0)parts.push(g.part+' aula(s)');
   if(g.grupo>0)parts.push(g.grupo+' em grupo');
   el.innerHTML='📅 Na agenda deste mês: <b>'+parts.join(' + ')+'</b> = <b>'+fmt(g.valor)+'</b> '
-    +'<a href="javascript:void(0)" onclick="usarAgendaNoModal()" style="color:var(--green);text-decoration:underline">usar</a>';
+    +'<a href="javascript:void(0)" onclick="usarAgendaNoModal()" style="color:#9BE3B4;text-decoration:underline">usar</a>';
 }
 function usarAgendaNoModal(){
   const id=document.getElementById('a-id').value;
@@ -5283,11 +5283,11 @@ function htmlAvalDe(a,av){
   const nome1=a.nome;
   let html='<div class="aex-wrap" style="--lc:'+met.m+';--lcd:'+met.d+'"><div class="tex-head"><div><b>Academia João Victor Tênis</b><span>Avaliação · '+((av.data||'').split('-').reverse().join('/'))+'</span></div><div class="tex-emb">JV</div></div>';
   html+='<div style="font-size:15px;font-weight:800;color:#2A2016;margin:-4px 0 2px">'+esc(nome1)+'</div>';
-  html+='<div style="font-size:11px;color:#8a8478;margin-bottom:2px">Metodologia Da Base ao Topo'+(av.formato?' · '+esc(av.formato):'')+'</div>';
+  html+='<div style="font-size:11px;color:#6B6458;margin-bottom:2px">Metodologia Da Base ao Topo'+(av.formato?' · '+esc(av.formato):'')+'</div>';
   html+='<div class="aex-nivel"><span class="aex-badge">Nível: '+(av.nivel||'—')+'</span></div>';
   html+='<div class="aex-trilha">'+TRILHA_NIVEIS.map((n,i)=>{
     const feito=i<=ci;
-    return '<div class="aex-step '+(i<ci?'done':'')+' '+(i===ci?'cur':'')+'"'+(feito?' style="background:'+metalDe(n).m+'"':'')+'>'+n+'</div>';
+    return '<div class="aex-step '+(i<ci?'done':'')+' '+(i===ci?'cur':'')+'"'+(feito?' style="background:'+metalDe(n).d+'"':'')+'>'+n+'</div>';
   }).join('')+'</div>';
   if(av.objetivo)html+='<div class="aex-prio" style="background:#FBF6EC;border-color:#eadfc6">🎯 Objetivo: <b>'+esc(av.objetivo)+'</b></div>';
   if(av.prioridade)html+='<div class="aex-prio">Prioridade do ciclo: <b>'+esc(av.prioridade)+'</b></div>';
@@ -5454,7 +5454,7 @@ function renderAvaliacoes(){
     const av=(a.avaliacoes&&a.avaliacoes.length)?a.avaliacoes[a.avaliacoes.length-1]:null;
     const dias=av?diasDesde(av.data):Infinity;
     const due=(!av||dias>42);
-    const nivel=av?('<span class="avnivel" style="background:'+metalDe(av.nivel).m+';color:#fff">'+(av.nivel||'—')+'</span>'):'<span class="avnivel none">Sem avaliação</span>';
+    const nivel=av?('<span class="avnivel" style="background:'+metalDe(av.nivel).d+';color:#fff">'+(av.nivel||'—')+'</span>'):'<span class="avnivel none">Sem avaliação</span>';
     const sub=av?('Última: '+tempoDesde(dias)+(av.prioridade?' · 🎯 '+esc(av.prioridade):'')):(a.tipo+' · '+(a.plano>0?('Flex '+a.plano):'sem pacote'));
     return '<div class="avcard'+(av?' avcard-ver':'')+'"'+(av?' onclick="if(!event.target.closest(\'button\'))openAvalVer(\''+a.id+'\')"':'')+'>'+
       '<div class="avtop"><div><div class="avnome">'+(ehPersonalTipo(a.tipo)?'💪 ':'🎾 ')+esc(a.nome)+'</div><div class="avsub">'+sub+'</div></div>'+nivel+'</div>'+
@@ -7369,7 +7369,7 @@ function renderFicha(){
   const chips=[];
   if(PRO_MULTI&&profDoAluno(a))chips.push('<span class="fic-chip">👨‍🏫 '+esc(profNome(profDoAluno(a)))+'</span>');
   const pf=perfilDe(a);if(pf!=='tenis'&&pf!=='personal')chips.push('<span class="fic-chip">'+(PERFIL_LABELS[pf]||'')+'</span>');
-  if(av)chips.push('<span class="fic-chip" style="background:'+metalDe(av.nivel).m+';color:#fff">📈 '+esc(av.nivel||'—')+'</span>');
+  if(av)chips.push('<span class="fic-chip" style="background:'+metalDe(av.nivel).d+';color:#fff;-webkit-text-fill-color:#fff">📈 '+esc(av.nivel||'—')+'</span>');
   if(a.termoAceitoEm)chips.push('<span class="fic-chip">📄 termo aceito</span>');
   if(!ativo)chips.push('<span class="fic-chip">📦 inativo</span>');
   let h='<div class="fic-hero">'
@@ -7835,11 +7835,18 @@ function serieAulasMes_(ano,mes){
   }
   return out;
 }
+/* O gráfico é a SOMA das aulas do mês dia a dia, então só sobe: um mês fraco
+   não "desce", ele sobe mais devagar. Para isso aparecer (o João só via a
+   linha subir num mês com menos aulas, 19/10), o Total do mês anterior vem
+   junto, tracejado, na mesma régua de dias: ficar abaixo dele = menos aulas. */
+function mesAntGraf(ano,mes){return mes===0?{ano:ano-1,mes:11}:{ano,mes:mes-1};}
 function renderGraficoInicio(){
   const svg=document.getElementById('jh-graf');if(!svg)return;
   const s=serieAulasMes(curYear,curMonth), n=s.length;
+  const ma=mesAntGraf(curYear,curMonth), s0=serieAulasMes(ma.ano,ma.mes);
+  const temAnt=s0.length&&s0[s0.length-1].total>0;
   const W=300,H=120,top=8,base=112;
-  const max=Math.max(1,s.length?s[n-1].total:0);
+  const max=Math.max(1,s.length?s[n-1].total:0,temAnt?s0[Math.min(n,s0.length)-1].total:0);
   const xDe=i=>(n<=1?0:i/(n-1)*W);
   const yDe=v=>base-(v/max)*(base-top);
   const linha=k=>s.map((v,i)=>(i?'L':'M')+xDe(i).toFixed(1)+' '+yDe(v[k]).toFixed(1)).join(' ');
@@ -7861,7 +7868,30 @@ function renderGraficoInicio(){
     +'<path class="area" fill="url(#jhg-e)" d="'+area('tenis')+'"/>'
     +'<path class="ln tenis" d="'+linha('tenis')+'"/>'
     +'<path class="ln personal" d="'+linha('personal')+'"/>'
+    +(temAnt?'<path class="ln ant" d="'+s0.slice(0,n).map((v,i)=>(i?'L':'M')+xDe(i).toFixed(1)+' '+yDe(v.total).toFixed(1)).join(' ')+'"/>':'')
     +'<path class="ln total" d="'+linha('total')+'"/>';
+  const li=document.getElementById('jh-leg-ant');if(li)li.hidden=!temAnt;
+  pintarComparacaoGrafico(s,s0);
+}
+/* A comparação em números, embaixo do gráfico: o mesmo trecho dos dois meses
+   (mês atual: do dia 1 até hoje, como no Comparativo; mês fechado: inteiro). */
+function pintarComparacaoGrafico(s,s0){
+  const el=document.getElementById('jh-graf-cmp');if(!el)return;
+  const h=new Date(),hojeD=new Date(h.getFullYear(),h.getMonth(),h.getDate());
+  const ehAtual=curYear===h.getFullYear()&&curMonth===h.getMonth(),ehFuturo=new Date(curYear,curMonth,1)>hojeD;
+  const ma=mesAntGraf(curYear,curMonth),nomeAnt=MESES[ma.mes].toLowerCase();
+  const fim=s.length?s[s.length-1].total:0;
+  if(ehFuturo){el.innerHTML='Agendado para o mês: <b>'+fim+'</b> aula'+(fim===1?'':'s');return;}
+  const dia=ehAtual?h.getDate():s.length;
+  const atual=s.length?s[Math.min(dia,s.length)-1].total:0;
+  const diaAnt=Math.min(dia,s0.length),ant=diaAnt?s0[diaAnt-1].total:0;
+  const quando=ehAtual?'Até hoje (dia '+dia+')':MESES[curMonth]+' inteiro';
+  const quandoAnt=ehAtual?nomeAnt+' até o dia '+diaAnt:nomeAnt+' inteiro';
+  let txt=quando+': <b>'+atual+'</b> aula'+(atual===1?'':'s');
+  if(!ant){el.innerHTML=txt+' · '+nomeAnt+' sem aula registrada para comparar';return;}
+  const p=deltaAulas(atual,ant);
+  txt+=' · '+quandoAnt+': <b>'+ant+'</b> <em class="jh-delta '+(p>0?'sobe':p<0?'desce':'igual')+'">'+(p>0?'↑ ':p<0?'↓ ':'= ')+Math.abs(p)+'%</em>';
+  el.innerHTML=txt;
 }
 /* Período do comparativo do Início: semana ou mês (lembrado no aparelho). */
 function periodoCmp(){try{const v=localStorage.getItem('jvt-cmp-periodo');return v==='mes'||v==='ano'?v:'semana';}catch(e){return 'semana';}}
@@ -7968,7 +7998,8 @@ function renderInicioRef(aulasDia,aulasMes,ocHoje,ocMes){
   pintarAnel('jh-ring-tenis',tot?aulasDia.tenis/tot:0);
 
   const nota=document.getElementById('jh-graf-nota');
-  if(nota)nota.textContent=ehAtual?'Aulas acumuladas dia a dia. Depois da linha tracejada (hoje), é o que está agendado.':'Aulas acumuladas dia a dia, pela agenda.';
+  if(nota)nota.textContent='A linha soma as aulas do mês, por isso só sobe. A tracejada azul é o mês passado: ficar abaixo dela é ter menos aulas.'
+    +(ehAtual?' Depois da linha de hoje, é o que está agendado.':'');
 
   renderGraficoInicio();
 
@@ -8405,8 +8436,8 @@ function setHMode(mode){
   document.getElementById('h-semana').style.display=mode==='semana'?'block':'none';
   document.getElementById('h-data').style.display=mode==='data'?'block':'none';
   const bs=document.getElementById('hmode-sem'),bd=document.getElementById('hmode-dat');
-  bs.style.background=mode==='semana'?'var(--clay,#B86B4B)':'#fff';bs.style.color=mode==='semana'?'#fff':'var(--text)';
-  bd.style.background=mode==='data'?'var(--clay,#B86B4B)':'#fff';bd.style.color=mode==='data'?'#fff':'var(--text)';
+  bs.style.background=mode==='semana'?'#A9471F':'rgba(255,255,255,.06)';bs.style.color=mode==='semana'?'#fff':'#E4DED3';
+  bd.style.background=mode==='data'?'#A9471F':'rgba(255,255,255,.06)';bd.style.color=mode==='data'?'#fff':'#E4DED3';
   if(mode==='data'){
     if(!HDATA){const t=new Date();HDATA=dKey(t);document.getElementById('h-date').value=HDATA;}
     selData();renderDatasEspeciais();
@@ -8463,13 +8494,13 @@ function removerData(){
 }
 function activeMap(){return HMODE==='data'?HDMAP:HEDIT[HDIA];}
 function renderHorarioTabs(){
-  document.getElementById('hdia-tabs').innerHTML=DIASEM.map((n,d)=>'<button onclick="selDiaHorario('+d+')" style="flex:1;min-width:36px;padding:6px 3px;border-radius:9px;border:1px solid var(--border);font-size:11px;font-weight:700;background:'+(d===HDIA?'var(--clay,#B86B4B)':'#fff')+';color:'+(d===HDIA?'#fff':'var(--text)')+'">'+n+'</button>').join('');
+  document.getElementById('hdia-tabs').innerHTML=DIASEM.map((n,d)=>'<button onclick="selDiaHorario('+d+')" style="flex:1;min-width:36px;padding:6px 3px;border-radius:9px;border:1px solid var(--border);font-size:11px;font-weight:700;background:'+(d===HDIA?'#A9471F':'rgba(255,255,255,.06)')+';color:'+(d===HDIA?'#fff':'#E4DED3')+'">'+n+'</button>').join('');
 }
 function selDiaHorario(d){HDIA=d;renderHorarioTabs();renderHorarioList();}
 function renderHorarioList(){
   const m=activeMap();
   if(!m){document.getElementById('hhoras-list').innerHTML='<div style="color:var(--muted);font-size:12px;padding:10px;text-align:center">Escolha uma data acima.</div>';return;}
-  const opt=(h,st,lbl,cor)=>{const on=m[h]===st;return '<button onclick="setEstadoH(\''+h+'\',\''+st+'\')" style="flex:1;padding:6px 2px;border-radius:8px;border:1px solid '+(on?cor:'var(--border)')+';background:'+(on?cor:'#fff')+';color:'+(on?'#fff':'var(--muted)')+';font-size:10.5px;font-weight:700">'+lbl+'</button>';};
+  const opt=(h,st,lbl,cor)=>{const on=m[h]===st;return '<button onclick="setEstadoH(\''+h+'\',\''+st+'\')" style="flex:1;padding:6px 2px;border-radius:8px;border:1px solid '+(on?cor:'rgba(255,255,255,.16)')+';background:'+(on?cor:'rgba(255,255,255,.06)')+';color:'+(on?'#fff':'#D8D2C7')+';font-size:10.5px;font-weight:700">'+lbl+'</button>';};
   /* O que a hora É para você continua sendo uma escolha só. Liberar a quadra
      para o professor é OUTRA pergunta, e por isso é um alternador ao lado —
      marcável junto com qualquer uma das três. */
@@ -8479,9 +8510,9 @@ function renderHorarioList(){
     const on=!!P[h];
     return '<button onclick="toggleProfH(\''+h+'\')" title="A quadra fica livre para o professor nesta hora"'
       +' style="width:46px;flex-shrink:0;padding:6px 2px;border-radius:8px;border:1px solid '+(on?'#2E5E8C':'var(--border)')
-      +';background:'+(on?'#2E5E8C':'#fff')+';color:'+(on?'#fff':'#B9B2A6')+';font-size:13px;font-weight:700">👨‍🏫</button>';
+      +';background:'+(on?'#2E5E8C':'rgba(255,255,255,.06)')+';color:'+(on?'#fff':'#B9B2A6')+';font-size:13px;font-weight:700">👨‍🏫</button>';
   };
-  document.getElementById('hhoras-list').innerHTML=HORAS_GRADE.map(h=>'<div style="display:flex;align-items:center;gap:6px"><span style="width:42px;font-size:11px;font-weight:700;color:var(--muted);flex-shrink:0">'+h+'</span>'+opt(h,'aula','Aula','#2E7D52')+opt(h,'loc','Locação','#9A7B2E')+opt(h,'fechado','Fechado','#B23A3A')+btnProf(h)+'</div>').join('');
+  document.getElementById('hhoras-list').innerHTML=HORAS_GRADE.map(h=>'<div style="display:flex;align-items:center;gap:6px"><span style="width:42px;font-size:11px;font-weight:700;color:var(--muted);flex-shrink:0">'+h+'</span>'+opt(h,'aula','Aula','#2E7D52')+opt(h,'loc','Locação','#7A5F1E')+opt(h,'fechado','Fechado','#B23A3A')+btnProf(h)+'</div>').join('');
 }
 function activeProf(){return HMODE==='data'?HDPROF:(HPROF&&HPROF[HDIA]);}
 function setEstadoH(h,st){const m=activeMap();if(!m)return;m[h]=st;renderHorarioList();}
@@ -9055,7 +9086,7 @@ function abrirExtrato(id){
   const linhas=ms.map(m=>
     '<tr><td style="white-space:nowrap;color:var(--muted)">'+dt(m.ts)+'</td>'
     +'<td>'+esc(m.motivo)+'<small style="display:block;color:var(--muted)">'+CAMPO_LABEL[m.campo]+'</small></td>'
-    +'<td style="text-align:right;font-weight:800;color:'+(m.delta<0?'#8E2C1E':'#2E7D52')+'">'+(m.delta>0?'+':'')+fmtCred(m.delta)+'</td>'
+    +'<td style="text-align:right;font-weight:800;color:'+(m.delta<0?'#FF9A8E':'#7FDDA5')+'">'+(m.delta>0?'+':'')+fmtCred(m.delta)+'</td>'
     +'<td style="text-align:right;font-weight:700">'+fmtCred(m.para)+'</td></tr>').join('');
   const saldos=['creditos','credGrupo','repos','locCred'].map(c=>{
     const bate=(Number(a[c])||0)===saldoPeloExtrato(a,c);
@@ -9098,7 +9129,7 @@ function renderHistAulas(){
     const t=p.tipo||p.modo||'aula';const T=HA_TIPO[t]||HA_TIPO.aula;
     const pr=String(p.data||'').split('-');const dt=new Date(pr[0],(pr[1]||1)-1,pr[2]||1);
     const dataBr=String(pr[2]||'').padStart(2,'0')+'/'+String(pr[1]||'').padStart(2,'0')+'/'+(pr[0]||'');
-    return '<tr><td style="border-top:1px solid #eee5d3;padding:6px;white-space:nowrap">'+dataBr+'<small style="display:block;color:#8a8478">'+dow[dt.getDay()]+'</small></td>'
+    return '<tr><td style="border-top:1px solid #eee5d3;padding:6px;white-space:nowrap">'+dataBr+'<small style="display:block;color:#6B6458">'+dow[dt.getDay()]+'</small></td>'
       +'<td style="border-top:1px solid #eee5d3;padding:6px;white-space:nowrap;font-weight:700">'+((p.hora&&p.hora!=='—')?p.hora:'—')+'</td>'
       +'<td style="border-top:1px solid #eee5d3;padding:6px"><span style="display:inline-block;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:800;color:#fff;background:'+T.c+'">'+T.l+'</span></td></tr>';
   }).join('');
@@ -9106,13 +9137,13 @@ function renderHistAulas(){
   const periodoTxt=(filtro==='tudo')?'Histórico completo':(function(){const p=filtro.split('-');return MESES[Number(p[1])-1]+' '+p[0];})();
   const chip=(lbl,val,cor)=>'<span style="display:inline-block;margin:0 6px 6px 0;padding:5px 10px;border-radius:9px;background:#fff;border:1px solid #eadfc6;font-size:12px;font-weight:700">'+lbl+': <b style="color:'+cor+'">'+fmtCred(val)+'</b></span>';
   let h='<div style="font-family:\'DM Sans\',sans-serif;background:#FBF8F2;padding:16px;border-radius:12px;color:#2A2016">';
-  h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #C9A227;padding-bottom:8px;margin-bottom:10px"><div><div style="font-weight:800;font-size:15px">Academia João Victor Tênis</div><div style="font-size:11px;color:#8a8478">Comprovante de aulas · '+periodoTxt+'</div></div><div style="width:40px;height:40px;border-radius:50%;background:#1F3D2B;color:#EFE7D0;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0">JV</div></div>';
+  h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #C9A227;padding-bottom:8px;margin-bottom:10px"><div><div style="font-weight:800;font-size:15px">Academia João Victor Tênis</div><div style="font-size:11px;color:#6B6458">Comprovante de aulas · '+periodoTxt+'</div></div><div style="width:40px;height:40px;border-radius:50%;background:#1F3D2B;color:#EFE7D0;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0">JV</div></div>';
   h+='<div style="font-size:15px;font-weight:800">'+esc(a.nome)+'</div>';
-  h+='<div style="font-size:11px;color:#8a8478;margin-bottom:8px">'+esc(a.tipo||'')+(plano?' · pacote de '+plano+' aula(s)/mês'+(planoG?' + '+planoG+' em grupo':''):'')+'</div>';
-  h+='<div style="margin-bottom:8px">'+chip('Créditos hoje',Number(a.creditos)||0,'#2E7D52')+chip('Reposições',Number(a.repos)||0,'#C9A227')+((planoG||Number(a.credGrupo))?chip('Grupo',Number(a.credGrupo)||0,'#6A4FA3'):'')+'</div>';
+  h+='<div style="font-size:11px;color:#6B6458;margin-bottom:8px">'+esc(a.tipo||'')+(plano?' · pacote de '+plano+' aula(s)/mês'+(planoG?' + '+planoG+' em grupo':''):'')+'</div>';
+  h+='<div style="margin-bottom:8px">'+chip('Créditos hoje',Number(a.creditos)||0,'#2E7D52')+chip('Reposições',Number(a.repos)||0,'#8A6A12')+((planoG||Number(a.credGrupo))?chip('Grupo',Number(a.credGrupo)||0,'#6A4FA3'):'')+'</div>';
   h+='<div style="background:#F1F6EE;border:1px solid #d8e6d2;border-radius:9px;padding:8px 11px;font-size:12.5px;margin-bottom:10px">No período: <b>'+(cont.aula||0)+'</b> aula(s) normal(is)'+(cont.reposicao?' · <b>'+cont.reposicao+'</b> reposição(ões)':'')+(cont.grupo?' · <b>'+cont.grupo+'</b> em grupo':'')+(cont.locacao?' · <b>'+cont.locacao+'</b> locação':'')+'.</div>';
-  h+=ps.length?('<table style="width:100%;border-collapse:collapse;font-size:12.5px"><tr style="text-align:left;color:#8a8478;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em"><th style="padding:4px 6px">Data</th><th style="padding:4px 6px">Hora</th><th style="padding:4px 6px">Tipo</th></tr>'+linhas+'</table>'):'<div style="color:#8a8478;padding:10px 0">Nenhuma aula registrada neste período.</div>';
-  h+='<div style="margin-top:10px;font-size:10.5px;color:#8a8478">Emitido em '+new Date().toLocaleDateString('pt-BR')+' · Prof. João Victor 🎾</div>';
+  h+=ps.length?('<table style="width:100%;border-collapse:collapse;font-size:12.5px"><tr style="text-align:left;color:#6B6458;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em"><th style="padding:4px 6px">Data</th><th style="padding:4px 6px">Hora</th><th style="padding:4px 6px">Tipo</th></tr>'+linhas+'</table>'):'<div style="color:#6B6458;padding:10px 0">Nenhuma aula registrada neste período.</div>';
+  h+='<div style="margin-top:10px;font-size:10.5px;color:#6B6458">Emitido em '+new Date().toLocaleDateString('pt-BR')+' · Prof. João Victor 🎾</div>';
   h+='</div>';
   document.getElementById('ha-export').innerHTML=h;
   renderHistDups();
@@ -9933,15 +9964,15 @@ function tabelaDoMes(){
   return '<div class="cons info"><h4><span>📋</span>O mês de '+fcRotuloMes(mk)+'</h4>'
     +'<p>Quanto cada aluno adquiriu na renovação, quanto já usou e com quanto está agora.</p>'
     +'<div style="margin-top:8px;font-size:12px">'
-    +'<div class="fx-linha" style="font-weight:800;color:#8A7B63"><span style="flex:1">Aluno</span>'
+    +'<div class="fx-linha" style="font-weight:800;color:#C9BDA6"><span style="flex:1">Aluno</span>'
       +cel('entrou')+cel('usou')+cel('sobra')+'</div>'
     +linhas.map(l=>'<div class="fx-linha"><span style="flex:1">'+esc(l.a.nome)
-        +(l.alerta?'<br><span class="hint" style="color:#C0392B">renovação não bate com o plano</span>':'')
+        +(l.alerta?'<br><span class="hint" style="color:#FF9A8E">renovação não bate com o plano</span>':'')
         +(l.repos?('<br><span class="hint">'+fmtCred(l.repos)+' reposição(ões) guardada(s)</span>'):'')
         +'</span>'
       +cel(fmtCred(l.entrou))
       +cel(fmtCred(l.usou))
-      +cel('<b>'+fmtCred(l.sobra)+'</b>',l.sobra<0?';color:#C0392B':'')
+      +cel('<b>'+fmtCred(l.sobra)+'</b>',l.sobra<0?';color:#FF9A8E':'')
       +'</div>').join('')
     +'</div>'
     +'<p class="hint" style="margin-top:9px">"Entrou" é a renovação lançada neste mês. "Usou" conta só o que já aconteceu e você confirmou, mais as faltas — aula futura e aula sem ✓ ficam de fora. "Sobra" é o saldo de hoje, créditos e grupo somados.</p>'
@@ -10012,6 +10043,22 @@ function achadosDoAluno(a){
           txt:a.nome+' é cliente de locação, mas '+(presAula.length?'tem '+presAula.length+' aula(s) com ✓ descontada(s) do pacote ('+datas.join(', ')+(presAula.length>5?'…':'')+')':'')
              +(presAula.length&&marc?' e ':'')+(marc?marc+' marcação(ões) futura(s) como aula':'')
              +'. Pode ser locação gravada como aula. Confira na agenda e, se for o caso, ajuste no cadastro.'});
+      }
+    }
+    /* Aluno inativo com horário na agenda daqui para a frente: marcar como
+       inativo não mexe na agenda, então essas aulas seguem contando no
+       Início, no gráfico e na ocupação. Só lista (19/10); quem decide
+       encerrar os horários é o João, na agenda. */
+    if(!ehAtivoAluno(a)){
+      const hojeK=dKey(new Date()),ag=DB.agenda||{},DIAS3=['dom','seg','ter','qua','qui','sex','sáb'];
+      const fx=(ag.fixos||[]).filter(f=>f.alunoId===a.id&&(!f.ate||f.ate>=hojeK));
+      const ev=(ag.eventos||[]).filter(e=>e.alunoId===a.id&&e.data>=hojeK);
+      if(fx.length||ev.length){
+        const quais=fx.slice(0,4).map(f=>DIAS3[f.dia]+' '+f.hora).concat(ev.slice(0,Math.max(0,4-fx.length)).map(e=>e.data.split('-').reverse().slice(0,2).join('/')+' '+e.hora));
+        achados.push({tipo:'aviso',a,
+          txt:a.nome+' está inativo, mas ainda tem '+(fx.length?fx.length+' horário(s) fixo(s)':'')+(fx.length&&ev.length?' e ':'')+(ev.length?ev.length+' aula(s) marcada(s)':'')
+             +' na agenda daqui para a frente ('+quais.join(', ')+((fx.length+ev.length)>4?'…':'')+'). Essas aulas entram na conta do Início e do gráfico. '
+             +'Se ele saiu mesmo, encerre esses horários na agenda.'});
       }
     }
     // mensalidade contra o plano
@@ -11996,8 +12043,8 @@ function renderConfirmAmanha(){
         +'<button class="btn '+(jaJoao?'btn-ghost':'btn-clay')+'" style="padding:6px 10px;font-size:11.5px" onclick="confirmarInterno(\''+it.a.id+'\',\''+it.hora+'\')">'+(jaJoao?'✓ Confirmada':'✅ Confirmar')+'</button>'
         +(it.a.tel?'<button class="btn btn-ghost" style="padding:6px 10px;font-size:11.5px" onclick="confirmarAulaWa(\''+it.a.id+'\',\''+it.hora+'\')">📲 WhatsApp</button>':'')
         +'</div>';
-    } else if(cliente) right='<span style="font-size:11px;color:var(--muted)">sem vínculo</span>';
-    return '<div class="mov"><div class="mov-l"><b>'+nome+'</b><span>'+it.hora+' · '+lbl+'</span></div>'+right+'</div>';
+    } else if(cliente) right='<span class="ca-semvinc" style="font-size:11px">sem vínculo</span>';
+    return '<div class="mov"><div class="mov-l"><b>'+esc(nome)+'</b><span>'+it.hora+' · '+lbl+'</span></div>'+right+'</div>';
   }).join('');
 }
 function confirmarAulaWa(id,hora){
