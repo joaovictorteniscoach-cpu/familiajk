@@ -3998,7 +3998,48 @@ function presencasDe(id,comDup){
 function isPres(e,date){const k=presId(e,date);return (DB.presencas||[]).some(p=>p.k===k&&!ehMarca(p));}
 function isFalta(e,date){const k=presId(e,date);return (DB.presencas||[]).some(p=>p.k===k&&ehFalta(p));}
 function isAvisou(e,date){const k=presId(e,date);return (DB.presencas||[]).some(p=>p.k===k&&ehAvisou(p));}
+/* ===== Aula em família no ✓ (19/10) =====
+   Casal e família costumam fazer a aula em grupo juntos, mas cada um tem o
+   seu cadastro: um levava ✓ e o outro não (ou nem estava na agenda), e os
+   créditos ficavam diferentes. Agora, ao marcar ou desmarcar a presença de
+   uma aula em GRUPO de quem é da família, o app pergunta pelos outros. Nada
+   muda sem o OK do João; cada um continua com o próprio saldo e extrato. */
+function familiaDoAluno(a){
+  const r=pagadorFamilia(a);
+  return r?[r].concat(dependentesFamilia(r)).filter(x=>x.id!==a.id&&ehAtivoAluno(x)):[];
+}
 function togglePresenca(entryId){
+  let entry=null;
+  HORAS.forEach(h=>entriesFor(agDate,h).forEach(e=>{if(e.id===entryId)entry=e;}));
+  const a=entry&&entry.alunoId&&DB.alunos.find(x=>x.id===entry.alunoId);
+  const fam=(a&&entry.tipo==='grupo')?familiaDoAluno(a):[];
+  const antes=entry?isPres(entry,agDate):false;
+  togglePresencaUm(entryId);
+  if(!fam.length||isPres(entry,agDate)===antes)return;
+  const marcou=!antes, dk=dKey(agDate), quando=fmtDataCurta(dk)+' às '+entry.hora;
+  fam.forEach(m=>{
+    const eM=entriesFor(agDate,entry.hora).find(e=>e.alunoId===m.id);
+    if(eM){
+      if(isPres(eM,agDate)===marcou||isFalta(eM,agDate)||isAvisou(eM,agDate))return;
+      if(!confirm('Aula em família · '+quando+'\n\n'+(marcou
+        ?'Marcar também a presença de '+m.nome+'?\nDesconta a aula de '+m.nome.split(' ')[0]+' também.'
+        :'Desmarcar também a presença de '+m.nome+'?\nA aula de '+m.nome.split(' ')[0]+' volta para o saldo.')
+        +'\n\nOK = '+(marcou?'marcar':'desmarcar')+' os dois · Cancelar = só '+a.nome.split(' ')[0]))return;
+      togglePresencaUm(eM.id);
+    }else if(marcou){
+      const evs=entriesFor(agDate,entry.hora),pes=Number(entry.pessoas)||limiteGrupoHorario(evs.filter(e=>e.tipo==='grupo'));
+      if(!confirm('Aula em família · '+quando+'\n\n'+m.nome+' não está na agenda neste horário.\n'
+        +'Fez a aula junto com '+a.nome.split(' ')[0]+'?\n\nOK = colocar '+m.nome.split(' ')[0]+' nesta aula (só nesta data) e marcar a presença · Cancelar = deixar como está'))return;
+      if(!podeAdicionarAoHorario(evs,'grupo',pes)){toast('O grupo deste horário já está cheio. Coloque '+m.nome.split(' ')[0]+' pela agenda.');return;}
+      const novo={id:'e'+Date.now()+Math.random().toString(36).slice(2,6),data:dk,hora:entry.hora,titulo:m.nome,tipo:'grupo',alunoId:m.id,pessoas:pes,repo:0};
+      if(entry.profId)novo.profId=entry.profId;
+      DB.agenda.eventos.push(novo);
+      logAct('Aula em família: '+m.nome+' colocado(a) em '+dk+' '+entry.hora);
+      togglePresencaUm(novo.id);
+    }
+  });
+}
+function togglePresencaUm(entryId){
   let entry=null;
   HORAS.forEach(h=>entriesFor(agDate,h).forEach(e=>{if(e.id===entryId)entry=e;}));
   if(!entry||!entry.alunoId)return;
@@ -10216,6 +10257,23 @@ function achadosDoAluno(a){
              +(presAula.length&&marc?' e ':'')+(marc?marc+' marcação(ões) futura(s) como aula':'')
              +'. Pode ser locação gravada como aula. Confira na agenda e, se for o caso, ajuste no cadastro.'});
       }
+    }
+    /* Aula em grupo da família com presença de um e não do outro, no mês
+       aberto. Só lista: pode ser que só um tenha ido. Olhada pelo pagador,
+       para a família aparecer uma vez só. */
+    if(!ehDependenteFamilia(a)&&dependentesFamilia(a).length){
+      const membros=[a].concat(dependentesFamilia(a)),mk=monthKey(),ids=new Set(membros.map(x=>x.id));
+      const pres=(DB.presencas||[]).filter(p=>ids.has(p.alunoId)&&!ehMarca(p)&&(p.tipo||p.modo)==='grupo'&&String(p.data||'').indexOf(mk)===0);
+      const vistos=new Set(),difs=[];
+      pres.forEach(p=>{
+        const ch=p.data+'|'+p.hora;if(vistos.has(ch))return;vistos.add(ch);
+        const com=new Set(pres.filter(q=>q.data===p.data&&q.hora===p.hora).map(q=>q.alunoId));
+        const sem=membros.filter(m=>!com.has(m.id)&&ehAtivoAluno(m));
+        if(sem.length&&com.size)difs.push(p.data.split('-').reverse().slice(0,2).join('/')+' '+p.hora+' (sem ✓: '+sem.map(m=>m.nome.split(' ')[0]).join(', ')+')');
+      });
+      if(difs.length)achados.push({tipo:'aviso',a,
+        txt:'Família de '+a.nome+': '+difs.length+' aula(s) em grupo neste mês com presença de um e não do outro: '+difs.slice(0,5).join('; ')+(difs.length>5?'…':'')
+           +'. Se fizeram juntos, marque o ✓ que falta na agenda.'});
     }
     /* Aluno inativo com horário na agenda depois de hoje: essas aulas seguem
        contando no Início, no gráfico e na ocupação. Só lista (19/10). Ao

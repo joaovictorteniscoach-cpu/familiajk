@@ -8,6 +8,31 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-19 · Claude Code: aula em família no ✓
+
+O João contou que casais e famílias fazem aula em grupo juntos, mas cada um
+tem o próprio cadastro. Um levava ✓ e o outro não, ou nem estava na agenda, e
+os créditos ficavam diferentes. Ele pediu que o ✓ de um puxasse o outro, ou
+que o app perguntasse. Vai junto da versão **2026-10-19-4**.
+- `togglePresenca` virou a casca. O ✓ de um só agora é `togglePresencaUm`
+  (mesmo código de antes).
+- Em aula **em grupo** de quem tem família (responsável + dependentes ativos,
+  `familiaDoAluno`), a casca pergunta por cada outro membro depois do toque:
+  - **está no horário:** "Marcar também a presença de X?" (ou desmarcar).
+    Com OK, faz o mesmo ✓ nele, cada um no próprio saldo e extrato;
+  - **não está no horário (só ao marcar):** oferece colocar X nesta aula
+    (avulsa, só nesta data, tipo grupo) e marcar. Grupo cheio recusa e avisa.
+  - Cancelar deixa só o tocado. Falta e "avisou" antigos do outro não são
+    mexidos. Aula particular e aluno sem família não perguntam nada.
+- **Conferir números (só lista):** no responsável, conta as aulas em grupo do
+  mês com ✓ de um membro e não de outro.
+- **Teste novo:** `testar-familia-presenca-browser.cjs`, 7 verificações, no
+  validar-pr.
+- Fica para depois, se o João quiser: no app do aluno, ao reservar uma aula em
+  grupo, escolher "só eu / eu e meu familiar".
+
+---
+
 ## 2026-10-19 · Claude Code: horas de locação visíveis no app do aluno
 
 O João avisou que os alunos não viam as horas de locação compradas. Versão

@@ -46,6 +46,7 @@ Use `grep -n` pelos títulos de seção (`/* ===== Título =====`) ou pelo nome 
 
 - Inativar aluno: `arquivarAluno` → `agendaFuturaDoAluno`/`encerrarAgendaFutura`/`desfazerInativar` (pergunta antes de encerrar horários)
 - Reposições (Gráficos): `reposLiquidas`, `reposPorMes`, `renderGrafRepos`, `abrirReposMes` (só leem o extrato)
+- Aula em família no ✓: `togglePresenca` (pergunta pelos outros da família em aula em GRUPO) → `togglePresencaUm` (o ✓ de um só); `familiaDoAluno`
 - Torneio: `campeoesDe`, `encerrarEtapa`, homenagens 1º/2º (`abrirHomenagens`, `homArte`, `homMensagem`)
 - Tempo em Curitiba: `climaDoCodigo`, `iconeClima` (SVG, mesmo desenho no app do aluno; nada de emoji), `abrirClimaGestao`/`pintarPrevisaoClima`
 - Segurança na Gestão: `argJs`, `sairEApagar`, `prontidaoRegraFinal`, `uidCadastroLivre`, `cancelamentoTardio`, `publicacaoLegadaEnxuta`
