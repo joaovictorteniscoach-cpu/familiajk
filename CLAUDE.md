@@ -44,6 +44,8 @@ Use `grep -n` pelos títulos de seção (`/* ===== Título =====`) ou pelo nome 
 - Alunos ↔ app do aluno: `Segurança P0` (`pedidoConfiavel`, `publicarSeguro`), `doPublish`, `FILA DE PEDIDOS`
 - Navegação: `go(id)`; render geral: `renderAll()`
 
+- Inativar aluno: `arquivarAluno` → `agendaFuturaDoAluno`/`encerrarAgendaFutura`/`desfazerInativar` (pergunta antes de encerrar horários)
+- Reposições (Gráficos): `reposLiquidas`, `reposPorMes`, `renderGrafRepos`, `abrirReposMes` (só leem o extrato)
 - Torneio: `campeoesDe`, `encerrarEtapa`, homenagens 1º/2º (`abrirHomenagens`, `homArte`, `homMensagem`)
 - Tempo em Curitiba: `climaDoCodigo`, `iconeClima` (SVG, mesmo desenho no app do aluno; nada de emoji), `abrirClimaGestao`/`pintarPrevisaoClima`
 - Segurança na Gestão: `argJs`, `sairEApagar`, `prontidaoRegraFinal`, `uidCadastroLivre`, `cancelamentoTardio`, `publicacaoLegadaEnxuta`

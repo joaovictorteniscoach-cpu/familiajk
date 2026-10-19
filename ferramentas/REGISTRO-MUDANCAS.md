@@ -8,6 +8,56 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-19 · Claude Code: inativar aluno pergunta pelos horários e gráfico de reposições
+
+O João decidiu (19/10): ao marcar um aluno como inativo, o app pergunta se
+encerra os horários dele. Também lembrou a regra: falta avisada com 4h ou mais
+vira reposição; com menos de 4h é aula dada. Nenhuma das duas é aula perdida.
+Pediu um gráfico com o número de reposições. Versão **2026-10-19-3**.
+- **Inativar** (`arquivarAluno`):
+  - Depois do "Marcar como INATIVO?", se o aluno tiver horário **depois de
+    hoje**, vem uma segunda pergunta com a lista dos horários.
+  - OK encerra (`encerrarAgendaFutura`):
+    - fixo ganha `ate` = hoje;
+    - fixo que nem tinha começado sai, com as exceções dele;
+    - avulsas de amanhã em diante saem.
+  - Hoje e o passado não mudam.
+  - Com o OK, a versão é guardada antes e o aviso traz "desfazer"
+    (`desfazerInativar`), que devolve aluno e agenda exatamente como estavam.
+  - Cancelar deixa a agenda como está; o aluno fica inativo do mesmo jeito.
+  - Reativar não pergunta nada.
+  - Não mexe em crédito, reposição, presença nem extrato.
+- **Conferir números:** o aviso "inativo, mas ainda tem horário" passa a olhar
+  **depois de hoje**, a mesma conta da pergunta (`agendaFuturaDoAluno`).
+- **Regra das 4h, conferida no código (sem mudança):**
+  - App do aluno, aviso com 4h ou mais: a aula sai da agenda e o crédito fica.
+    Na virada, a sobra vira reposição.
+  - Aviso com menos de 4h: a Gestão recusa (`cancelamentoTardio`), a aula fica
+    na agenda e conta como dada no Início e no gráfico. Já coberto por
+    `testar-trava-cancelamento-browser.cjs`.
+  - Quando o próprio João cancela pela agenda ("Só hoje ✕"), o app não sabe a
+    que horas o aluno avisou e trata como reposição. Perguntar nesse caso ficou
+    como sugestão para ele decidir.
+- **Gráfico "Reposições por mês"** (Mais → Gráficos, antes da chuva):
+  - Cartões:
+    - "Pendentes hoje": a mesma conta do Início (ativos, só as válidas);
+    - "Vencem na virada";
+    - "Repostas" no mês.
+  - Cada mês dos últimos 6 tem duas barras, entraram e repostas, mais a linha
+    de vencidas, trocadas por desconto e ajuste à mão.
+  - Tocar no mês abre aluno por aluno (`abrirReposMes`).
+  - Só lê o extrato (`reposLiquidas`/`reposPorMes`).
+  - Marcação desfeita não conta: as linhas com a mesma chave que somam zero
+    saem juntas (✓ tirado, chuva devolvida, anotação desfeita).
+  - O "Saldo inicial" da abertura do extrato e o resumo das linhas podadas
+    ficam fora.
+  - O relatório em PDF (`relMes`) continua contando como antes (positivos e
+    negativos crus). Pode diferir do gráfico só quando há marcação desfeita.
+- **Teste novo:** `testar-inativar-reposicoes-browser.cjs` (10 verificações nos
+  dois temas, contraste medido na imagem, 320px). Está no validar-pr.
+
+---
+
 ## 2026-10-19 · Claude Code: leitura em todas as janelas da Gestão e gráfico com o mês passado
 
 O João mandou print de "Vincular nomes aos alunos": o nome da agenda estava em
