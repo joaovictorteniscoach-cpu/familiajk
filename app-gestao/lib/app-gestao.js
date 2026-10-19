@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-18-2';
+const VERSAO='2026-10-19-1';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -460,7 +460,8 @@ function setSave(s,cls){
   if(/salvo na nuvem/i.test(full))curto='✓ Nuvem';
   else if(/salvo só no aparelho/i.test(full))curto='⚠ Só aparelho';
   else if(/salvo no aparelho/i.test(full))curto='✓ Aparelho';
-  else if(/enviando/i.test(full))curto='↗ Nuvem';
+  // \uFE0E: a seta fica desenho de texto; sem ele o iPhone mostra um quadrado azul de emoji
+  else if(/enviando/i.test(full))curto='↗\uFE0E Nuvem';
   else if(/conectando/i.test(full))curto='↻ Nuvem';
   else if(/erro/i.test(full))curto='⚠ Nuvem';
   e.textContent=curto;e.title=full;e.setAttribute('aria-label',full||curto);e.className='save-state '+(cls||'');
@@ -7851,7 +7852,7 @@ function renderGraficoInicio(){
   }
   const grade=[0.25,0.5,0.75,1].map(f=>'<line class="grade" x1="0" x2="'+W+'" y1="'+yDe(max*f).toFixed(1)+'" y2="'+yDe(max*f).toFixed(1)+'"/>').join('');
   svg.innerHTML='<defs>'
-    +'<linearGradient id="jhg-t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFC53D" stop-opacity=".55"/><stop offset="1" stop-color="#FFC53D" stop-opacity="0"/></linearGradient>'
+    +'<linearGradient id="jhg-t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--jh-total,#FFC53D)" stop-opacity=".55"/><stop offset="1" style="stop-color:var(--jh-total,#FFC53D)" stop-opacity="0"/></linearGradient>'
     +'<linearGradient id="jhg-p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4CE06E" stop-opacity=".42"/><stop offset="1" stop-color="#4CE06E" stop-opacity="0"/></linearGradient>'
     +'<linearGradient id="jhg-e" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF8740" stop-opacity=".42"/><stop offset="1" stop-color="#FF8740" stop-opacity="0"/></linearGradient>'
     +'</defs>'+grade+hoje
@@ -7888,7 +7889,7 @@ function renderInicioRef(aulasDia,aulasMes,ocHoje,ocMes){
   const ehAtual=(curYear===h.getFullYear()&&curMonth===h.getMonth());
   const ehFuturo=iniSel>hojeD;
   const mesAntNome=MESES[(curMonth+11)%12].toLowerCase();
-  let base=aulasMes, ant=null, sub='';
+  let base=aulasMes, ant=null, sub='', semBase='o período anterior não teve aula registrada';
   const modo=periodoCmp();
   ['semana','mes','ano'].forEach(m=>{const b=document.getElementById('jh-cmp-'+m);if(b){b.classList.toggle('on',m===modo);b.setAttribute('aria-selected',String(m===modo));}});
   const nav=document.getElementById('jh-cmp-mesnav');if(nav)nav.hidden=(modo==='semana');
@@ -7900,7 +7901,11 @@ function renderInicioRef(aulasDia,aulasMes,ocHoje,ocMes){
     const hojeAnt=new Date(hojeD);hojeAnt.setDate(hojeAnt.getDate()-7);
     base=contarAulas(seg,hojeD);ant=contarAulas(segAnt,hojeAnt);
     const dd=d=>String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');
-    sub='Esta semana ('+dd(seg)+' a '+dd(hojeD)+') · % contra os mesmos dias da semana passada';
+    // na segunda-feira a semana é um dia só: "19/10 a 19/10" não dizia nada
+    const umDia=+seg===+hojeD;
+    sub=umDia?('Hoje ('+dd(hojeD)+') · % contra a segunda passada ('+dd(hojeAnt)+')')
+      :('Esta semana ('+dd(seg)+' a '+dd(hojeD)+') · % contra os mesmos dias da semana passada');
+    semBase=umDia?('a segunda passada ('+dd(hojeAnt)+') não teve aula registrada'):'os mesmos dias da semana passada não tiveram aula registrada';
   }else if(modo==='ano'){
     /* Ano: de 1º de janeiro até hoje, contra o mesmo trecho do ano passado.
        Sem registro no app desde o começo do ano passado, não há porcentagem
@@ -7919,19 +7924,25 @@ function renderInicioRef(aulasDia,aulasMes,ocHoje,ocMes){
     if(fimAnt){
       // começar a usar o app em janeiro ainda conta como o ano inteiro
       if(ini&&ini>=dKey(new Date(ano-1,1,1)))sub+=' · sem '+(ano-1)+' inteiro no app para comparar';
-      else{ant=contarAulas(new Date(ano-1,0,1),fimAnt);sub+=' · % contra '+(ano===anoAtual?'o mesmo período de ':'')+(ano-1);}
+      else{ant=contarAulas(new Date(ano-1,0,1),fimAnt);sub+=' · % contra '+(ano===anoAtual?'o mesmo período de ':'')+(ano-1);
+        semBase=(ano===anoAtual?'o mesmo período de ':'')+(ano-1)+' não teve aula registrada';}
     }
   }else if(ehAtual){
     base=contarAulas(iniSel,hojeD);
     const dia=Math.min(h.getDate(),new Date(curYear,curMonth,0).getDate());
     ant=contarAulas(new Date(curYear,curMonth-1,1),new Date(curYear,curMonth-1,dia));
     sub='Até hoje ('+h.getDate()+'/'+String(h.getMonth()+1).padStart(2,'0')+') · % contra o mesmo período de '+mesAntNome;
+    semBase='o mesmo período de '+mesAntNome+' não teve aula registrada';
   }else if(ehFuturo){
     sub='Aulas agendadas para o mês';
   }else{
     ant=contarAulas(new Date(curYear,curMonth-1,1),new Date(curYear,curMonth,0));
     sub='Mês fechado · % contra '+mesAntNome;
+    semBase=mesAntNome+' não teve aula registrada';
   }
+  /* Sem nenhuma aula no período de comparação (feriado, férias, começo do
+     app) não existe %: o texto não pode prometer uma porcentagem que não vem. */
+  if(ant&&!(Number(ant.total)>0))sub=sub.replace(/ · % contra .*$/,'')+' · '+semBase+', então não há % para comparar';
   set('jh-cmp-sub',sub);
   const longo=['total','personal','tenis'].some(k=>Number(base[k])>=100);
   ['total','personal','tenis'].forEach(k=>{
@@ -8025,19 +8036,45 @@ function renderQuadraInicio(){
 setInterval(()=>{try{renderQuadraInicio();}catch(e){}},60000);
 /* ===== Tempo em Curitiba (Open-Meteo: gratuito, sem chave) =====
    O mesmo quadrinho do app do aluno: temperatura agora e o céu, com aviso de
-   chuva prevista nas próximas 6 h. Falhou a rede, ele some. Guarda 30 min. */
+   chuva prevista nas próximas 6 h. Falhou a rede, ele some. Guarda 30 min.
+   Tocar abre a previsão hora a hora (até 12 h) e atualiza.
+   Ícones desenhados aqui, não emoji: o emoji de neblina do iPhone é um
+   quadrado cinza que parecia imagem quebrada (19/10). */
 const CLIMA_URL='https://api.open-meteo.com/v1/forecast?latitude=-25.43&longitude=-49.27'
-  +'&current=temperature_2m,weather_code,is_day&hourly=precipitation_probability&forecast_hours=6&timezone=America%2FSao_Paulo';
+  +'&current=temperature_2m,weather_code,is_day&hourly=temperature_2m,weather_code,precipitation_probability,is_day'
+  +'&forecast_hours=12&timezone=America%2FSao_Paulo';
 function climaDoCodigo(c,dia){
-  if(c===0)return dia?['☀️','Sol']:['🌙','Céu limpo'];
-  if(c===1||c===2)return dia?['⛅','Poucas nuvens']:['☁️','Poucas nuvens'];
-  if(c===3)return ['☁️','Nublado'];
-  if(c===45||c===48)return ['🌫️','Neblina'];
-  if(c>=51&&c<=57)return ['🌦️','Garoa'];
-  if((c>=61&&c<=67)||(c>=80&&c<=82))return ['🌧️','Chuva'];
-  if((c>=71&&c<=77)||c===85||c===86)return ['❄️','Frio intenso'];
-  if(c>=95)return ['⛈️','Temporal'];
-  return ['🌤️','—'];
+  if(c===0)return dia?['sol','Sol']:['lua','Céu limpo'];
+  if(c===1||c===2)return [dia?'solnuvem':'luanuvem','Poucas nuvens'];
+  if(c===3)return ['nuvem','Nublado'];
+  if(c===45||c===48)return ['neblina','Neblina'];
+  if(c>=51&&c<=57)return ['garoa','Garoa'];
+  if((c>=61&&c<=67)||(c>=80&&c<=82))return ['chuva','Chuva'];
+  if((c>=71&&c<=77)||c===85||c===86)return ['neve','Frio intenso'];
+  if(c>=95)return ['temporal','Temporal'];
+  return [dia?'solnuvem':'luanuvem','—'];
+}
+function iconeClima(k){
+  const nv=(x,y,s,cor)=>'<g transform="translate('+x+' '+y+') scale('+s+')" fill="'+(cor||'#EEF2F4')+'"><circle cx="11" cy="19" r="5"/><circle cx="16" cy="14.5" r="7"/><circle cx="22.5" cy="18.5" r="5.5"/><rect x="11" y="18" width="11.5" height="6"/></g>';
+  const sol=(x,y,r)=>{let raios='';for(let i=0;i<8;i++){const a=i*Math.PI/4,c=Math.cos(a),n=Math.sin(a);
+    raios+='M'+(x+c*(r+2.2)).toFixed(1)+' '+(y+n*(r+2.2)).toFixed(1)+'L'+(x+c*(r+4.6)).toFixed(1)+' '+(y+n*(r+4.6)).toFixed(1);}
+    return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="#FFC93C"/><path d="'+raios+'" stroke="#FFC93C" stroke-width="2.2" stroke-linecap="round"/>';};
+  const lua=(x,y,s)=>'<path transform="translate('+x+' '+y+') scale('+s+')" d="M19.5 4.5A11 11 0 1 0 27.5 20 8.6 8.6 0 0 1 19.5 4.5z" fill="#F3E6B5"/>';
+  const gotas=(cor,traco)=>'<path d="'+(traco?'M11 25.5l-1.6 3.6M16.5 25.5l-1.6 3.6M22 25.5l-1.6 3.6':'M11 26.2v.1M16.5 27.6v.1M22 26.2v.1')+'" stroke="'+cor+'" stroke-width="'+(traco?2.2:3)+'" stroke-linecap="round"/>';
+  const D={
+    sol:sol(16,16,6.2),
+    lua:lua(0,0,1),
+    solnuvem:sol(11.5,11,4.6)+nv(3,4,.85),
+    luanuvem:lua(-3,-3,.72)+nv(3,4,.85),
+    nuvem:nv(0,1,1),
+    neblina:nv(1,-3,.9,'#DDE4E8')+'<path d="M6 24.5h20M9 29h15" stroke="#C9D3D9" stroke-width="2.4" stroke-linecap="round"/>',
+    garoa:nv(0,-3,1)+gotas('#8FCBFF',false),
+    chuva:nv(0,-3,1)+gotas('#5AB0FF',true),
+    solchuva:sol(11.5,9,4.4)+nv(3,0,.85)+gotas('#5AB0FF',true),
+    neve:'<path d="M16 4v24M5.6 10l20.8 12M5.6 22l20.8-12M12.5 5.5 16 8.5l3.5-3M12.5 26.5 16 23.5l3.5 3" stroke="#BFE6FF" stroke-width="2.2" stroke-linecap="round" fill="none"/>',
+    temporal:nv(0,-3,1,'#B8C3CA')+'<path d="M17.5 20.5 13 27h4l-2 5 6.5-8h-4.2l2-3.5z" fill="#FFC93C"/>'
+  };
+  return '<svg viewBox="0 0 32 32" width="100%" height="100%" aria-hidden="true" focusable="false">'+(D[k]||D.nuvem)+'</svg>';
 }
 let CLIMA_ULT=null;
 function pintarClimaGestao(){
@@ -8047,23 +8084,63 @@ function pintarClimaGestao(){
   const [ic,txt]=climaDoCodigo(v.code,v.dia);
   const chovendo=/Chuva|Garoa|Temporal/.test(txt), prevista=!chovendo&&v.chuva>=60;
   el.hidden=false;
-  document.getElementById('jh-clima-ic').textContent=prevista?'🌦️':ic;
+  document.getElementById('jh-clima-ic').innerHTML=iconeClima(prevista?'solchuva':ic);
   document.getElementById('jh-clima-temp').textContent=Math.round(v.temp)+'°C';
   document.getElementById('jh-clima-txt').textContent=prevista?(window.innerWidth<400?('Chuva '+v.chuva+'%'):('Chuva prevista ('+v.chuva+'%)')):txt;
+  el.setAttribute('aria-label','Tempo em Curitiba: '+Math.round(v.temp)+' graus, '+(prevista?'chuva prevista':txt.toLowerCase())+'. Toque para ver a previsão das próximas horas');
 }
 async function carregarClimaGestao(forcar){
-  if(!forcar){try{const c=JSON.parse(localStorage.getItem('jvt-clima')||'null');if(c&&Date.now()-c.ts<30*60000){CLIMA_ULT=c;pintarClimaGestao();return;}}catch(e){}}
+  if(!forcar){try{const c=JSON.parse(localStorage.getItem('jvt-clima')||'null');if(c&&Date.now()-c.ts<30*60000){CLIMA_ULT=c;pintarClimaGestao();return true;}}catch(e){}}
+  let ok=false;
   try{
     const r=await fetch(CLIMA_URL,{cache:'no-store'});if(!r.ok)throw 0;
     const d=await r.json(),cur=d&&d.current;if(!cur||typeof cur.temperature_2m!=='number')throw 0;
-    const probs=(d.hourly&&d.hourly.precipitation_probability||[]).filter(x=>typeof x==='number');
-    CLIMA_ULT={ts:Date.now(),temp:cur.temperature_2m,code:cur.weather_code,dia:cur.is_day===1,chuva:probs.length?Math.max.apply(null,probs):0};
+    const hr=d.hourly||{},tempos=hr.time||[];
+    // "chuva prevista" do quadrinho continua olhando só as próximas 6 h
+    const probs=(hr.precipitation_probability||[]).slice(0,6).filter(x=>typeof x==='number');
+    const horas=tempos.map((t,i)=>({h:String(t).slice(11,13),temp:(hr.temperature_2m||[])[i],code:(hr.weather_code||[])[i],dia:(hr.is_day||[])[i]===1,chuva:(hr.precipitation_probability||[])[i]}))
+      .filter(x=>/^\d\d$/.test(x.h)&&typeof x.temp==='number').slice(0,12);
+    CLIMA_ULT={ts:Date.now(),temp:cur.temperature_2m,code:cur.weather_code,dia:cur.is_day===1,chuva:probs.length?Math.max.apply(null,probs):0,horas};
     try{localStorage.setItem('jvt-clima',JSON.stringify(CLIMA_ULT));}catch(e){}
+    ok=true;
   }catch(e){if(!CLIMA_ULT){try{CLIMA_ULT=JSON.parse(localStorage.getItem('jvt-clima')||'null');}catch(_){}}}
   pintarClimaGestao();
+  return ok;
 }
 setTimeout(()=>{try{carregarClimaGestao();}catch(e){}},1500);
 setInterval(()=>{if(!document.hidden){try{carregarClimaGestao();}catch(e){}}},30*60000);
+/* Previsão hora a hora: abre com o que já está guardado e atualiza por baixo.
+   Sem internet, fica o último dado com o horário dele. */
+function abrirClimaGestao(){
+  pintarPrevisaoClima('carregando');
+  document.getElementById('ov-clima').classList.add('on');
+  carregarClimaGestao(true).then(ok=>pintarPrevisaoClima(ok?'':'offline')).catch(()=>pintarPrevisaoClima('offline'));
+}
+function pintarPrevisaoClima(estado){
+  const corpo=document.getElementById('clm-corpo');if(!corpo)return;
+  const v=CLIMA_ULT;
+  if(!v||typeof v.temp!=='number'){
+    corpo.innerHTML='<p class="clm-nota">'+(estado==='carregando'?'Buscando a previsão…':'Sem internet agora. Tente de novo em instantes.')+'</p>';return;
+  }
+  const [ic,txt]=climaDoCodigo(v.code,v.dia);
+  const hh=d=>String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  const horas=Array.isArray(v.horas)?v.horas:[];
+  const chuva6=typeof v.chuva==='number'?v.chuva:0;
+  let html='<div class="clm-agora"><span class="clm-ic">'+iconeClima(ic)+'</span><div><b>'+Math.round(v.temp)+'°C</b><span>'+esc(txt)+'</span></div></div>'
+    +'<p class="clm-chuva'+(chuva6>=60?' alta':'')+'">Chance de chuva nas próximas 6 h: <b>até '+chuva6+'%</b></p>';
+  if(horas.length){
+    html+='<div class="clm-horas" role="list">'+horas.map(x=>{
+      const [k]=climaDoCodigo(x.code,x.dia),pc=typeof x.chuva==='number'?x.chuva:null;
+      return '<div class="clm-h" role="listitem" aria-label="'+esc(x.h+' horas: '+Math.round(x.temp)+' graus'+(pc!==null?', chuva '+pc+'%':''))+'">'
+        +'<small>'+esc(x.h)+'h</small><span class="clm-ic">'+iconeClima(k)+'</span><b>'+Math.round(x.temp)+'°</b>'
+        +'<em class="'+(pc>=60?'alta':pc>=30?'media':'')+'">'+(pc!==null?pc+'%':'—')+'</em></div>';
+    }).join('')+'</div><p class="clm-legenda">% = chance de chuva naquela hora</p>';
+  }else if(estado!=='carregando'){
+    html+='<p class="clm-nota">A previsão por hora aparece na próxima atualização.</p>';
+  }
+  html+='<p class="clm-nota">'+(estado==='carregando'?'Atualizando…':estado==='offline'?'Sem internet: dado de '+hh(new Date(v.ts))+'.':'Atualizado às '+hh(new Date(v.ts))+'.')+' Fonte: Open-Meteo.</p>';
+  corpo.innerHTML=html;
+}
 function abrirStatusQuadra(){
   if(typeof ehDono==='function'&&!ehDono()){toast('Só a conta da academia altera a situação da quadra.');return;}
   if(typeof renderStatusQuadraGestao==='function')renderStatusQuadraGestao();

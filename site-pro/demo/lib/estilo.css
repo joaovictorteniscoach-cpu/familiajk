@@ -2561,7 +2561,7 @@ body #pg-dash.page{padding-top:0!important;background:linear-gradient(180deg,#05
 /* Comparativo */
 #pg-dash .jh-cmp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 #pg-dash .jh-cmp-i{position:relative;display:grid;grid-template-columns:auto 1fr;grid-template-areas:"n n" "v d" "s s";align-items:center;column-gap:6px;padding:10px 8px 9px 16px;border-radius:13px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.07)}
-#pg-dash .jh-cmp-i>i{position:absolute;left:7px;top:11px;bottom:11px;width:4px;border-radius:3px;background:var(--jh-gold)}
+#pg-dash .jh-cmp-i>i{position:absolute;left:7px;top:11px;bottom:11px;width:4px;border-radius:3px;background:var(--jh-total,var(--jh-gold))}
 #pg-dash .jh-cmp-i.personal>i{background:var(--jh-green)}#pg-dash .jh-cmp-i.tenis>i{background:var(--jh-orange)}
 #pg-dash .jh-cmp-i>span{grid-area:n;font-size:13px;color:#EDEAE3}
 #pg-dash .jh-cmp-i strong{grid-area:v;font:700 27px/1.1 'DM Sans',sans-serif;color:#fff;-webkit-text-fill-color:#fff}
@@ -2579,7 +2579,7 @@ body #pg-dash.page{padding-top:0!important;background:linear-gradient(180deg,#05
 #pg-dash .jh-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
 #pg-dash .jh-ring circle{fill:none;stroke-width:10}
 #pg-dash .jh-ring .bg{stroke:rgba(255,255,255,.07)}
-#pg-dash .jh-ring .fg{stroke-linecap:round;transition:stroke-dasharray .6s ease;stroke:var(--jh-gold);stroke-dasharray:0 400}
+#pg-dash .jh-ring .fg{stroke-linecap:round;transition:stroke-dasharray .6s ease;stroke:var(--jh-total,var(--jh-gold));stroke-dasharray:0 400}
 #pg-dash .jh-ring.personal .bg{stroke:rgba(93,187,99,.13)}#pg-dash .jh-ring.personal .fg{stroke:var(--jh-green)}
 #pg-dash .jh-ring.tenis .bg{stroke:rgba(232,121,58,.16)}#pg-dash .jh-ring.tenis .fg{stroke:var(--jh-orange)}
 #pg-dash .jh-ring>div{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
@@ -2617,10 +2617,10 @@ body #pg-dash.page{padding-top:0!important;background:linear-gradient(180deg,#05
 #pg-dash #jh-graf .grade{stroke:rgba(255,255,255,.06);stroke-width:1;vector-effect:non-scaling-stroke}
 #pg-dash #jh-graf .hoje{stroke:rgba(255,255,255,.28);stroke-width:1;stroke-dasharray:3 3;vector-effect:non-scaling-stroke}
 #pg-dash #jh-graf .ln{fill:none;stroke-width:2.2;stroke-linejoin:round;vector-effect:non-scaling-stroke}
-#pg-dash #jh-graf .ln.total{stroke:var(--jh-gold)}#pg-dash #jh-graf .ln.personal{stroke:var(--jh-green)}#pg-dash #jh-graf .ln.tenis{stroke:var(--jh-orange)}
+#pg-dash #jh-graf .ln.total{stroke:var(--jh-total,var(--jh-gold))}#pg-dash #jh-graf .ln.personal{stroke:var(--jh-green)}#pg-dash #jh-graf .ln.tenis{stroke:var(--jh-orange)}
 #pg-dash .jh-legend{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px}
 #pg-dash .jh-legend li{display:grid;grid-template-columns:10px 1fr auto 46px;align-items:center;column-gap:6px;font-size:13px;color:#EDEAE3}
-#pg-dash .jh-legend i{width:10px;height:10px;border-radius:50%;background:var(--jh-gold)}
+#pg-dash .jh-legend i{width:10px;height:10px;border-radius:50%;background:var(--jh-total,var(--jh-gold))}
 #pg-dash .jh-legend .personal i{background:var(--jh-green)}#pg-dash .jh-legend .tenis i{background:var(--jh-orange)}
 #pg-dash .jh-legend b{font-weight:700;color:#fff}
 #pg-dash .jh-legend .jh-delta{justify-self:end;font-size:10.5px;padding:4px 5px}
@@ -2778,9 +2778,9 @@ body #pg-dash.page{padding-top:0!important;background:linear-gradient(180deg,#05
 /* Gráficos mais vivos (01/10): cores mais saturadas, um pouco mais claras e
    com brilho. Vale para o Início (linhas, áreas e anéis) e para as barras de
    Gráficos e Financeiro. */
-#pg-dash{--jh-gold:#FFC53D;--jh-green:#4CE06E;--jh-orange:#FF8740}
+#pg-dash{--jh-gold:#FFC53D;--jh-green:#4CE06E;--jh-orange:#FF8740;--jh-total:#FFC53D}
 #pg-dash #jh-graf .ln{stroke-width:2.6;filter:drop-shadow(0 0 3px currentColor)}
-#pg-dash #jh-graf .ln.total{color:#FFC53D}#pg-dash #jh-graf .ln.personal{color:#4CE06E}#pg-dash #jh-graf .ln.tenis{color:#FF8740}
+#pg-dash #jh-graf .ln.total{color:var(--jh-total)}#pg-dash #jh-graf .ln.personal{color:#4CE06E}#pg-dash #jh-graf .ln.tenis{color:#FF8740}
 #pg-dash .jh-ring .fg{filter:drop-shadow(0 0 4px rgba(255,197,61,.55))}
 #pg-dash .jh-ring.personal .fg{filter:drop-shadow(0 0 4px rgba(76,224,110,.55))}
 #pg-dash .jh-ring.tenis .fg{filter:drop-shadow(0 0 4px rgba(255,135,64,.55))}
@@ -3421,3 +3421,28 @@ html body:not(#jv) #ov-tor-jog .trj-d{color:#F6F2EA;-webkit-text-fill-color:#F6F
 html body:not(#jv) #ov-tor-jog .trj-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 html body:not(#jv) #ov-tor-jog .trj-acts button{min-height:44px;padding:8px;border-radius:11px;border:1px solid rgba(255,255,255,.22);background:#315A49;color:#F6F2EA;-webkit-text-fill-color:#F6F2EA;font-weight:800;font-size:13px;cursor:pointer}
 html body:not(#jv) #ov-tor-jog .trj-acts .trj-del{color:#FFBCAD;-webkit-text-fill-color:#FFBCAD}
+
+/* Tempo em Curitiba (19/10): ícones desenhados no app, iguais em qualquer
+   celular (o emoji de neblina do iPhone parecia imagem quebrada), e a
+   previsão hora a hora que abre ao tocar no quadrinho. */
+#pg-dash .jh-clima .jh-clima-ic{display:block;height:26px}
+#pg-dash .jh-chips .jh-clima-ic{width:24px;flex:0 0 24px;height:24px}
+#pg-dash .jh-clima .jh-clima-ic svg{display:block;filter:drop-shadow(0 1px 3px rgba(0,0,0,.45))}
+.clm .clm-ic svg{display:block}
+.clm .clm-agora{display:flex;align-items:center;gap:12px;margin:2px 0 8px}
+.clm .clm-agora .clm-ic{width:52px;height:52px;flex:0 0 52px}
+.clm .clm-agora b{display:block;font:700 30px/1 'DM Sans',sans-serif;color:#fff}
+.clm .clm-agora span{display:block;margin-top:4px;color:#E4DED3;font-size:15px}
+.clm .clm-chuva{margin:0 0 12px;color:#E4DED3;font-size:14px;line-height:1.4}
+.clm .clm-chuva b{color:#fff}
+.clm .clm-chuva.alta b{color:#9ED3FF}
+.clm .clm-horas{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin:0 0 4px}
+.clm .clm-h{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;padding:7px 2px 6px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09)}
+.clm .clm-h small{font:600 12px 'DM Sans',sans-serif;color:#E4DED3}
+.clm .clm-h .clm-ic{width:26px;height:26px}
+.clm .clm-h b{font:700 15px 'DM Sans',sans-serif;color:#fff}
+.clm .clm-h em{font:600 12px 'DM Sans',sans-serif;font-style:normal;color:#D5DCE0}
+.clm .clm-h em.media{color:#B5DCFF}
+.clm .clm-h em.alta{color:#9ED3FF;font-weight:800}
+.clm .clm-legenda,.clm .clm-nota{margin:4px 0 10px;color:#D8D2C7;font-size:12.5px;line-height:1.4}
+.jh-menu>button.clm-atualizar{justify-content:center;margin-top:4px}

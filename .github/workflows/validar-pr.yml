@@ -61,6 +61,7 @@ jobs:
           node ferramentas/testar-reposicao-fixo-browser.cjs
           node ferramentas/testar-fechamento-whatsapp-browser.cjs
           node ferramentas/testar-numeros-inicio-browser.cjs
+          node ferramentas/testar-tempo-inicio-browser.cjs
           node ferramentas/testar-locacao-minhas-aulas-browser.cjs
           node ferramentas/testar-torneio-aluno-browser.cjs
           node ferramentas/testar-torneio-gestao-browser.cjs
