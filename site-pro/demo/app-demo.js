@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-19-2';
+const VERSAO='2026-10-19-3';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -6494,12 +6494,74 @@ function arquivarAluno(id){
   if(ativo&&dependentesFamilia(a).some(ehAtivoAluno)){toast('Transfira ou desvincule os dependentes ativos antes de inativar o responsável.');return;}
   if(ativo){
     if(!confirm('Marcar '+a.nome+' como INATIVO?\n\nEle continua no cadastro e com todo o histórico — só sai da conta de alunos ativos.'))return;
+    /* Inativar não mexia na agenda: os fixos seguiam valendo e as aulas
+       continuavam contando no Início e no gráfico. Agora o app pergunta (decisão
+       do João em 19/10). Só encerra com o OK dele, guarda a versão antes e
+       oferece desfazer. Hoje e o passado não mudam. */
+    const fut=agendaFuturaDoAluno(a),nFut=fut.fx.length+fut.ev.length;
+    const encerrar=nFut>0&&confirm(a.nome+' ainda tem na agenda, de amanhã em diante:\n'
+      +linhasAgendaFutura(fut,8)
+      +'\n\nEncerrar esses horários?\n\nOK = encerrar: '+(fut.fx.length?'os fixos param depois de hoje':'')+(fut.fx.length&&fut.ev.length?' e ':'')
+      +(fut.ev.length?'as aulas marcadas de amanhã em diante saem da agenda':'')+'. O que já passou, e o dia de hoje, ficam como estão.'
+      +'\nCancelar = deixar a agenda como está (ele fica inativo do mesmo jeito).');
+    if(encerrar)guardarVersoes(JSON.stringify(DB));
+    const arqAntes=a.arquivado;
     a.arquivado=true;logAct('Aluno marcado como inativo: '+a.nome);
-  }else{
-    a.arquivado=false;logAct('Aluno reativado: '+a.nome);
+    if(encerrar){
+      const desf=encerrarAgendaFutura(a);
+      logAct('Horários encerrados ao inativar: '+a.nome+' ('+nFut+')');
+      persist();renderAll();
+      toastDesfazer(a.nome.split(' ')[0]+' inativo · '+nFut+' horário(s) encerrado(s) na agenda',()=>desfazerInativar(a.id,arqAntes,desf));
+      return;
+    }
+    persist();renderAll();
+    toast(a.nome+' agora conta como inativo'+(nFut?' · os horários continuam na agenda':''));
+    return;
   }
+  a.arquivado=false;logAct('Aluno reativado: '+a.nome);
   persist();renderAll();
-  toast(a.nome+(ativo?' agora conta como inativo':' voltou para os ativos'));
+  toast(a.nome+' voltou para os ativos');
+}
+/* Horários do aluno que ainda vão acontecer DEPOIS de hoje: fixo que vale
+   além de hoje e avulsa de amanhã em diante. Hoje fica de fora de propósito:
+   a aula de hoje pode já ter acontecido e ter presença marcada. */
+function agendaFuturaDoAluno(a){
+  const hojeK=dKey(new Date()),ag=DB.agenda||{};
+  return {fx:(ag.fixos||[]).filter(f=>f.alunoId===a.id&&(!f.ate||f.ate>hojeK)),
+          ev:(ag.eventos||[]).filter(e=>e.alunoId===a.id&&e.data>hojeK).sort((x,y)=>(x.data+x.hora).localeCompare(y.data+y.hora))};
+}
+function linhasAgendaFutura(fut,max){
+  const l=fut.fx.map(f=>'· toda '+DIAS[f.dia]+' às '+f.hora+(f.desde&&f.desde>dKey(new Date())?' (começaria em '+fmtDataCurta(f.desde).slice(0,5)+')':''))
+    .concat(fut.ev.map(e=>'· '+fmtDataCurta(e.data)+' às '+e.hora));
+  return l.slice(0,max).join('\n')+(l.length>max?'\n· e mais '+(l.length-max):'');
+}
+/* Encerra como a grade já faz em "Da grade ✕": o fixo para na data (ate),
+   sem apagar o passado; fixo que nem tinha começado sai inteiro. Devolve o
+   necessário para desfazer exatamente isso, e nada além. */
+function encerrarAgendaFutura(a){
+  const hojeK=dKey(new Date()),ag=DB.agenda,fut=agendaFuturaDoAluno(a);
+  const d={ates:[],fixos:[],excecoes:[],eventos:fut.ev.slice()};
+  fut.fx.forEach(f=>{
+    if(f.desde&&f.desde>hojeK)d.fixos.push(f);
+    else{d.ates.push({id:f.id,ate:f.ate});f.ate=hojeK;}
+  });
+  const fora=new Set(d.fixos.map(f=>f.id)),evFora=new Set(d.eventos);
+  d.excecoes=ag.excecoes.filter(x=>fora.has(x.fixoId));
+  ag.fixos=ag.fixos.filter(f=>!fora.has(f.id));
+  ag.excecoes=ag.excecoes.filter(x=>!fora.has(x.fixoId));
+  ag.eventos=ag.eventos.filter(e=>!evFora.has(e));
+  return d;
+}
+function desfazerInativar(id,arqAntes,d){
+  const a=DB.alunos.find(x=>x.id===id),ag=DB.agenda;if(!a||!ag)return;
+  d.ates.forEach(x=>{const f=ag.fixos.find(y=>y.id===x.id);if(!f)return;if(x.ate)f.ate=x.ate;else delete f.ate;});
+  d.fixos.forEach(f=>{if(!ag.fixos.some(y=>y.id===f.id))ag.fixos.push(f);});
+  d.excecoes.forEach(x=>{if(!ag.excecoes.some(y=>y.fixoId===x.fixoId&&y.data===x.data))ag.excecoes.push(x);});
+  d.eventos.forEach(e=>{if(!ag.eventos.some(y=>y.id===e.id))ag.eventos.push(e);});
+  if(arqAntes===undefined)delete a.arquivado;else a.arquivado=arqAntes;
+  logAct('Desfazer inativação e horários: '+a.nome);
+  persist();renderAll();
+  toast('↩️ Desfeito · '+a.nome.split(' ')[0]+' voltou para os ativos e os horários voltaram para a agenda');
 }
 /* Um seletor só de tipo: todos (ativos), um perfil, ou os inativos. Antes eram
    três filtros sobrepostos (cartões cadastro/ativos/inativos, perfil e
@@ -8767,6 +8829,114 @@ function chuvaAno(ano){
     dias:totDiasChuva,diasQuadra:totDiasQuadra,
     pct:totDiasQuadra?Math.round(totDiasChuva/totDiasQuadra*100):0,ultimoMes};
 }
+/* ===== Reposições mês a mês (Gráficos) =====
+   Só lê o extrato (DB.movs, saldo "repos"); não muda nada.
+   De onde vem a reposição: aula que não aconteceu e não foi cobrada (o aluno
+   desmarcou com 4h ou mais de aviso, chuva, ou você cancelou). Ela fica como
+   crédito sobrando no mês e vira reposição na virada, por isso entra no mês da
+   virada. Aviso com menos de 4h não vira reposição: a aula fica na agenda e
+   conta como dada (regra do João, 19/10).
+   Marcação desfeita não conta: as linhas com a mesma chave (✓ marcado e
+   tirado, chuva que devolveu, anotação desfeita) somam zero e saem juntas. */
+function classeMovRepos(motivo){
+  const mt=String(motivo||'');
+  if(mt==='Sobra do mês virou reposição')return 'sobra';
+  if(mt==='Reposição anotada')return 'anotada';
+  if(mt==='Reposição na agenda'||mt==='Reposição realizada')return 'reposta';
+  if(mt==='Reposição vencida (4 meses)')return 'vencida';
+  if(/descont/i.test(mt))return 'desconto';
+  return 'ajuste';
+}
+function reposLiquidas(){
+  const ids=new Set((DB.alunos||[]).map(a=>a.id)),grupos=new Map(),out=[];
+  const linha=(m,qtd)=>({alunoId:m.alunoId,ts:m.ts,mes:mesDoTs(m.ts),classe:classeMovRepos(m.motivo),qtd});
+  (DB.movs||[]).forEach(m=>{
+    // resumo (linhas antigas podadas) e abertura (saldo do dia em que o extrato
+    // começou) não são acontecimentos daquele mês: ficam fora do gráfico
+    if(!m||m.campo!=='repos'||!ids.has(m.alunoId)||m.ref==='resumo'||m.ref==='abertura')return;
+    const ref=String(m.ref||'');
+    if(ref&&ref!=='ajuste'){const k=m.alunoId+'|'+ref;if(!grupos.has(k))grupos.set(k,[]);grupos.get(k).push(m);}
+    else if(Number(m.delta))out.push(linha(m,Number(m.delta)));
+  });
+  grupos.forEach(l=>{
+    const q=l.reduce((t,m)=>t+(Number(m.delta)||0),0);
+    if(Math.abs(q)<1e-9)return;
+    // vale a última linha que foi no mesmo sentido do resultado (o ✓ que ficou)
+    const m=l.slice().sort((x,y)=>(x.ts||0)-(y.ts||0)).filter(x=>Math.sign(Number(x.delta)||0)===Math.sign(q)).pop();
+    out.push(linha(m,q));
+  });
+  return out;
+}
+function reposPorMes(meses){
+  const base=()=>({entraram:0,sobra:0,anotada:0,repostas:0,venceram:0,desconto:0,ajuste:0,alunos:{}});
+  const M={};meses.forEach(mk=>{M[mk]=base();});
+  reposLiquidas().forEach(x=>{
+    const r=M[x.mes];if(!r)return;
+    const al=r.alunos[x.alunoId]||(r.alunos[x.alunoId]=base());
+    [r,al].forEach(o=>{
+      if(x.classe==='sobra'||x.classe==='anotada'){o.entraram+=x.qtd;o[x.classe]+=x.qtd;}
+      else if(x.classe==='reposta')o.repostas-=x.qtd;
+      else if(x.classe==='vencida')o.venceram-=x.qtd;
+      else if(x.classe==='desconto')o.desconto-=x.qtd;
+      else o.ajuste+=x.qtd;
+    });
+  });
+  return M;
+}
+/* O mesmo número do Início ("reposições pendentes"): só quem está ativo, só
+   as que ainda valem. As de aluno inativo ficam à parte, para não sumirem. */
+function reposResumoHoje(){
+  const at=(DB.alunos||[]).filter(ehAtivoAluno),in_=(DB.alunos||[]).filter(a=>!ehAtivoAluno(a));
+  return {pend:at.reduce((s,a)=>s+reposValidas(a),0),vencendo:at.reduce((s,a)=>s+reposVencendo(a),0),
+          inativos:in_.reduce((s,a)=>s+reposValidas(a),0)};
+}
+const nRepos=(n,um,varios)=>fmtCred(n)+' '+(n===1?um:varios);
+function extrasReposMes(r){
+  return [r.venceram?nRepos(r.venceram,'venceu','venceram'):'',
+    r.desconto?nRepos(r.desconto,'trocada por desconto','trocadas por desconto'):'',
+    r.ajuste?(r.ajuste>0?'+':'')+fmtCred(r.ajuste)+' em ajuste à mão':''].filter(Boolean).join(' · ');
+}
+function renderGrafRepos(){
+  const el=document.getElementById('graf-repos');if(!el)return;
+  const meses=ultimosMeses(6),M=reposPorMes(meses),R=reposResumoHoje(),mkHoje=meses[meses.length-1];
+  const setT=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  setT('g-rep-pend',fmtCred(R.pend));setT('g-rep-venc',fmtCred(R.vencendo));
+  setT('g-rep-mes',MES_CURTO[Number(mkHoje.slice(5))-1]);setT('g-rep-usadas',fmtCred(M[mkHoje].repostas));
+  const max=Math.max(1,...meses.map(mk=>Math.max(M[mk].entraram,M[mk].repostas)));
+  const algum=meses.some(mk=>{const r=M[mk];return r.entraram||r.repostas||r.venceram||r.desconto||r.ajuste;});
+  const barra=(v,cls,txt)=>'<span class="rpg-l"><span class="chart-track"><span class="chart-bar '+cls+'" style="width:'+Math.round(Math.max(0,v)/max*100)+'%"></span></span><span class="chart-val">'+txt+'</span></span>';
+  el.innerHTML=algum
+    ? meses.map(mk=>{const r=M[mk],x=extrasReposMes(r);
+        return '<div class="chart-row chart-row-clic rpg-row" onclick="abrirReposMes(\''+mk+'\')" title="Ver quem, em '+labelMes(mk)+'"'
+          +' aria-label="'+labelMesLongo(mk)+': '+fmtCred(r.entraram)+' entraram, '+fmtCred(r.repostas)+' repostas'+(x?', '+x:'')+'">'
+          +'<span class="chart-lab">'+labelMes(mk)+' ›</span><span class="rpg-par">'+barra(r.entraram,'rec',nRepos(r.entraram,'entrou','entraram'))+barra(r.repostas,'meta',nRepos(r.repostas,'reposta','repostas'))
+          +(x?'<small class="rpg-x">'+x+'</small>':'')+'</span></div>';}).join('')
+    : '<div class="empty">Nenhuma reposição no extrato nos últimos 6 meses.</div>';
+  const h=document.getElementById('g-rep-hint');
+  if(h)h.innerHTML='🔁 <b>Entraram</b>: aula que não aconteceu e não foi cobrada (o aluno avisou com <b>4h ou mais</b>, chuva, ou você cancelou). '
+    +'Ela fica como crédito sobrando e <b>vira reposição na virada do mês</b>, por isso aparece no mês da virada. '
+    +'Aviso com <b>menos de 4h</b> não vira reposição: a aula fica na agenda e conta como <b>dada</b>. '
+    +'<b>Repostas</b>: reposição usada na agenda ou no cartão. Marcação desfeita não conta.'
+    +(R.inativos?'<br><small>Fora da conta de pendentes: '+fmtCred(R.inativos)+' reposição(ões) de aluno(s) inativo(s).</small>':'')
+    +'<br><small>Toque num mês para ver aluno por aluno.</small>';
+}
+function abrirReposMes(mk){
+  const M=reposPorMes([mk]),r=M[mk],box=document.getElementById('rpm-corpo');if(!box||!r)return;
+  document.getElementById('rpm-tit').textContent='Reposições · '+labelMesLongo(mk);
+  const nome=id=>{const a=DB.alunos.find(x=>x.id===id);return a?a.nome:'—';};
+  const ids=Object.keys(r.alunos).sort((x,y)=>nome(x).localeCompare(nome(y),'pt-BR'));
+  const x=extrasReposMes(r);
+  box.innerHTML='<p class="rpm-res"><b>'+fmtCred(r.entraram)+'</b> '+(r.entraram===1?'entrou':'entraram')+' · <b>'+fmtCred(r.repostas)+'</b> '+(r.repostas===1?'reposta':'repostas')+(x?' · '+x:'')+'</p>'
+    +(ids.length?'<ul class="rpm-lista">'+ids.map(id=>{const al=r.alunos[id],p=[];
+      if(al.sobra)p.push('+'+fmtCred(al.sobra)+' da virada');
+      if(al.anotada)p.push('+'+nRepos(al.anotada,'anotada à mão','anotadas à mão'));
+      if(al.repostas)p.push(nRepos(al.repostas,'reposta','repostas'));
+      const xa=extrasReposMes(al);if(xa)p.push(xa);
+      return '<li><b>'+esc(nome(id))+'</b><span>'+p.join(' · ')+'</span></li>';}).join('')+'</ul>'
+      :'<p class="rpm-vazio">Nada neste mês.</p>')
+    +'<p class="rpm-nota">Lido do extrato de cada aluno. Nada foi alterado.</p>';
+  document.getElementById('ov-repos-mes').classList.add('on');
+}
 /* ===== Meses de antes do app (vindos da planilha) =====
    O Caixa só tem o que passou por ele. O que veio antes existiu, e sem isso o
    gráfico do ano conta menos do que a academia faturou de verdade.
@@ -8919,6 +9089,8 @@ function renderGraf(){
       const v=(DB.snapAlunos&&DB.snapAlunos[mk]!=null)?DB.snapAlunos[mk]:(pagPorMes[mk]?pagPorMes[mk].size:0);
       return {label:labelMes(mk),value:v,cls:'meta',mk,destino:'dash'};
     }),v=>String(v));
+
+  renderGrafRepos();
 
   // Chuva no ano
   const ch=chuvaAno(curYear);
@@ -10045,19 +10217,17 @@ function achadosDoAluno(a){
              +'. Pode ser locação gravada como aula. Confira na agenda e, se for o caso, ajuste no cadastro.'});
       }
     }
-    /* Aluno inativo com horário na agenda daqui para a frente: marcar como
-       inativo não mexe na agenda, então essas aulas seguem contando no
-       Início, no gráfico e na ocupação. Só lista (19/10); quem decide
-       encerrar os horários é o João, na agenda. */
+    /* Aluno inativo com horário na agenda depois de hoje: essas aulas seguem
+       contando no Início, no gráfico e na ocupação. Só lista (19/10). Ao
+       inativar, o app já pergunta se encerra; isto pega quem ficou de antes
+       ou quem respondeu "deixar como está". */
     if(!ehAtivoAluno(a)){
-      const hojeK=dKey(new Date()),ag=DB.agenda||{},DIAS3=['dom','seg','ter','qua','qui','sex','sáb'];
-      const fx=(ag.fixos||[]).filter(f=>f.alunoId===a.id&&(!f.ate||f.ate>=hojeK));
-      const ev=(ag.eventos||[]).filter(e=>e.alunoId===a.id&&e.data>=hojeK);
+      const {fx,ev}=agendaFuturaDoAluno(a);
       if(fx.length||ev.length){
-        const quais=fx.slice(0,4).map(f=>DIAS3[f.dia]+' '+f.hora).concat(ev.slice(0,Math.max(0,4-fx.length)).map(e=>e.data.split('-').reverse().slice(0,2).join('/')+' '+e.hora));
+        const quais=fx.slice(0,4).map(f=>DIAS[f.dia]+' '+f.hora).concat(ev.slice(0,Math.max(0,4-fx.length)).map(e=>e.data.split('-').reverse().slice(0,2).join('/')+' '+e.hora));
         achados.push({tipo:'aviso',a,
           txt:a.nome+' está inativo, mas ainda tem '+(fx.length?fx.length+' horário(s) fixo(s)':'')+(fx.length&&ev.length?' e ':'')+(ev.length?ev.length+' aula(s) marcada(s)':'')
-             +' na agenda daqui para a frente ('+quais.join(', ')+((fx.length+ev.length)>4?'…':'')+'). Essas aulas entram na conta do Início e do gráfico. '
+             +' na agenda depois de hoje ('+quais.join(', ')+((fx.length+ev.length)>4?'…':'')+'). Essas aulas entram na conta do Início e do gráfico. '
              +'Se ele saiu mesmo, encerre esses horários na agenda.'});
       }
     }

@@ -3507,3 +3507,22 @@ html body:not(#jv) .trilha-pills button.on{background:#A9471F;border-color:#A947
 #pg-dash .jh-graf-cmp{margin:9px 0 0;font-size:12.5px;line-height:1.45;color:#E4DED3}
 #pg-dash .jh-graf-cmp b{color:#fff;font-weight:800}
 #pg-dash .jh-graf-cmp .jh-delta{display:inline-block;margin-left:2px;font-size:11px;font-style:normal;padding:2px 6px}
+
+/* Reposições por mês (Gráficos, 19/10): duas barras por mês, entraram e
+   repostas, cada uma com o nome escrito ao lado (sem legenda para decorar);
+   tocar no mês abre aluno por aluno. O gráfico é painel escuro nos dois temas. */
+.chart .chart-row.rpg-row{grid-template-columns:76px minmax(0,1fr)!important;align-items:start!important}
+.chart .rpg-row .chart-lab{padding-top:1px}
+.rpg-par{display:flex;flex-direction:column;gap:6px;min-width:0}
+.rpg-l{display:grid;grid-template-columns:minmax(0,1fr) 92px;align-items:center;gap:8px;min-width:0}
+.chart .rpg-l .chart-track{height:14px!important;min-width:0}
+.chart .rpg-l .chart-val{width:auto!important;text-align:left!important;white-space:nowrap}
+.chart .rpg-x{font-size:12.5px;font-weight:700;line-height:1.35;color:#D8D2C7;-webkit-text-fill-color:#D8D2C7}
+@media(max-width:359px){.chart .chart-row.rpg-row{grid-template-columns:62px minmax(0,1fr)!important}.rpg-l{grid-template-columns:minmax(0,1fr) 86px;gap:6px}}
+.rpm .rpm-res{margin:0 0 10px;color:#E4DED3;font-size:14px;line-height:1.45}
+.rpm .rpm-res b{color:#fff}
+.rpm .rpm-lista{list-style:none;margin:0 0 10px;padding:0;max-height:52vh;overflow:auto}
+.rpm .rpm-lista li{display:flex;flex-direction:column;gap:2px;padding:9px 10px;margin:0 0 6px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09)}
+.rpm .rpm-lista b{color:#fff;font-size:14.5px}
+.rpm .rpm-lista span{color:#E4DED3;font-size:13px;line-height:1.4}
+.rpm .rpm-vazio,.rpm .rpm-nota{margin:4px 0 10px;color:#D8D2C7;font-size:12.5px;line-height:1.4}

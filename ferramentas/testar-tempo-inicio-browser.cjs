@@ -205,7 +205,7 @@ const deltaE=(a,b)=>{const x=lab(a),y=lab(b);return Math.hypot(x[0]-y[0],x[1]-y[
      const txt=achadosDoAluno(DB.alunos.find(a=>a.id==='a2')).map(x=>x.txt).join(' | '),
       ativo=achadosDoAluno(DB.alunos.find(a=>a.id==='a1')).map(x=>x.txt).join(' | ');
      const igual=JSON.stringify(DB)===antes;DB.alunos.find(a=>a.id==='a2').arquivado=false;return {txt,ativo,igual};});
-    assert.match(r.txt,/Aluno Dois está inativo, mas ainda tem 1 horário\(s\) fixo\(s\) na agenda daqui para a frente \(seg 10:00\)/);
+    assert.match(r.txt,/Aluno Dois está inativo, mas ainda tem 1 horário\(s\) fixo\(s\) na agenda depois de hoje \(seg 10:00\)/);
     assert.doesNotMatch(r.ativo,/inativo/,'aluno ativo não entra (caso negativo)');
     assert.ok(r.igual,'conferência só lista');
    });
