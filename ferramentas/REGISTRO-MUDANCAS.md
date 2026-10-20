@@ -8,6 +8,58 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-20 · Claude Code: semana do aluno sem "Loc.", botão de voz mais transparente, saudação e voz masculina
+
+Pedido do João depois do assistente por voz. Versão **2026-10-20-10**.
+
+- **Agenda do aluno, semana:** o horário só de locação aparecia como "Loc.",
+  que parecia o cadeado de "Fechado".
+  - Agora aparece **"Livre"**, verde. A locação de outro aluno, em que dá para
+    participar, aparece como "Locação".
+  - O toque abre o mesmo `escolherSlot`, que mostra só as opções daquele
+    horário (aula, locação, torneio).
+  - "Fechado" continua igual.
+- **Dia:** "Sem aula · locação ou torneio" virou "Disponível · ver opções".
+- **Mês:** `livresNoDia` conta também esses horários e não conta os que já
+  passaram.
+- **Regras:** nenhuma regra de reserva mudou.
+- **Botão de voz do aluno** (`#va-atalho`): opacidade .7 e brilho, igual ao da
+  Gestão.
+- **Saudação do assistente:** "Bom dia/Boa tarde/Boa noite, <nome>! Como posso
+  te ajudar? Caso tenha alguma dúvida, é só me perguntar.", no lugar da frase
+  longa.
+- **Assistente responde com os dados do app** (`infoResposta` em
+  `voz-aluno.js`). Usa só o que o app já mostra, pelas funções dele:
+  - **Preços:** aula avulsa particular e em grupo, locação, planilha e kids.
+    Planos mensais vêm de `planosTabela`/`planoValor`. Quando falta dado, o
+    assistente pergunta "particular ou em grupo?" e "quantas aulas no mês?"
+    (`st.pend`). O plano particular de 10 aulas é "a combinar".
+  - **Mensalidade do aluno:** valor, situação e vencimento. Não mostra o valor
+    oculto. Para família, diz quem paga.
+  - **Como pagar:** Pix e cartão.
+  - **"Quero repor N aulas":** mostra o saldo, o que vence e horários livres.
+    O toque abre o agendamento com "Marcar reposição".
+  - **Outros assuntos:** horários da quadra (`slotModo`), torneio (posição e
+    pontos; regra 3/1/W.O. 3), aviso, nível, lista de espera, prazo de
+    cancelar (`LIMITE_CANCEL_H`) e chuva.
+  - **Dado que não existe no app:** manda para o João no WhatsApp. Nunca cita
+    desconto.
+  - **Fala:** "R$ 1.260" é lido "1.260 reais".
+  - **Teste:** `ferramentas/testar-voz-perguntas-browser.cjs` (7
+    verificações; `JV_VOZ_LISTA=1` lista pergunta → resposta).
+- **Dúvida que o assistente não resolve:** ele diz o que sabe fazer e oferece
+  "Perguntar ao João no WhatsApp", com a pergunta já escrita. Não inventa
+  resposta.
+- **Voz das respostas:** masculina em português, quando o celular tem uma.
+  - `escolherVoz` procura pelo nome da voz (Antonio, Felipe, Daniel…).
+  - Sem nenhuma masculina, usa a voz padrão um pouco mais grave.
+  - Usa só as vozes do aparelho. Não copia a voz do João: isso exigiria
+    gravar a voz dele e um serviço pago de clonagem, que não foi feito.
+- **Testes:**
+  - Novo: `ferramentas/testar-semana-livre-browser.cjs` (4 verificações).
+  - `testar-voz-aluno-browser.cjs` ganhou a verificação da saudação e da voz (13 no total).
+  - `testar-locacao-minhas-aulas` agora espera "Disponível".
+
 ## 2026-10-20 · Claude Code: assistente por voz no app do aluno
 
 Pedido do João: o mesmo botão de áudio da Gestão, para os alunos. Com ele, o
