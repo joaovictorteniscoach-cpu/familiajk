@@ -30,11 +30,11 @@
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" id="css-tema" href="lib/estilo.css?v=2026-10-19-3">
+<link rel="stylesheet" id="css-tema" href="lib/estilo.css?v=2026-10-19-4">
 <!-- Tema de cores: Saibro é o padrão desde 2026-10; "Verde clássico" fica a um
      toque em Segurança e dados. Troca o arquivo antes da primeira pintura. -->
 <script>try{if(localStorage.getItem('jv-tema')!=='classico'){var _ct=document.getElementById('css-tema');_ct.href=_ct.getAttribute('href').replace('estilo.css','estilo-saibro.css');document.documentElement.classList.add('tema-saibro');}}catch(e){}</script>
-<link rel="stylesheet" href="lib/acoes-voz.css?v=2026-10-19-3">
+<link rel="stylesheet" href="lib/acoes-voz.css?v=2026-10-19-4">
 <!-- ================= DEMO ISOLADA ================= -->
 <script>
 /* Espelho comercial do Gestão atual.
@@ -1036,7 +1036,7 @@ function esperarAuth(){return Promise.resolve();}
   <button onclick="go('lanc',this)"><span class="ico" data-ic="navcash"></span>Caixa</button>
   <button id="nav-mais" onclick="abrirMais()"><span class="ico" data-ic="navmore"></span>Mais</button>
 </nav>
-<script src="lib/icones.js?v=2026-10-19-3"></script>
+<script src="lib/icones.js?v=2026-10-19-4"></script>
 
 <!-- MODAL ALUNO -->
 <div class="overlay" id="ov-aluno" onclick="if(event.target===this)closeModal('ov-aluno')">
@@ -1162,10 +1162,10 @@ function esperarAuth(){return Promise.resolve();}
 <div class="overlay" id="ov-extrato" style="z-index:136" onclick="if(event.target===this)closeModal('ov-extrato')">
   <div class="modal">
     <h3>Extrato de <span id="ext-nome"></span></h3>
-    <p class="hint">Cada linha mostra o que mudou o saldo e quanto ficou depois.</p>
+    <p class="hint" id="ext-dica">Cada linha mostra o que mudou o saldo e quanto ficou depois.</p>
     <div class="chips" id="ext-saldos"></div>
     <div id="ext-corpo" style="max-height:52vh;overflow:auto"></div>
-    <div class="modal-acts"><button class="btn btn-ghost" onclick="closeModal('ov-extrato')">Fechar</button></div>
+    <div class="modal-acts"><button class="btn btn-ghost" id="ext-modo" onclick="alternarExtrato()">Ver detalhado</button><button class="btn btn-ghost" onclick="closeModal('ov-extrato')">Fechar</button></div>
   </div>
 </div>
 <div class="overlay" id="ov-histaulas" style="z-index:137" onclick="if(event.target===this)closeModal('ov-histaulas')">
@@ -1623,8 +1623,8 @@ function esperarAuth(){return Promise.resolve();}
 
 <div class="toast" id="toast"></div>
 
-<script src="app-demo.js?v=2026-10-19-3"></script>
-<script src="lib/acoes-voz.js?v=2026-10-19-3"></script>
+<script src="app-demo.js?v=2026-10-19-4"></script>
+<script src="lib/acoes-voz.js?v=2026-10-19-4"></script>
 <script>
 /* Rede de seguranca do par tela+codigo.
 
@@ -1639,7 +1639,7 @@ function esperarAuth(){return Promise.resolve();}
    torto, o app busca o par certo uma vez e, se insistir, DIZ o que houve em
    vez de deixar voce tocando em botao que nao responde. */
 (function(){
-  var ESPERADA='2026-10-19-3';
+  var ESPERADA='2026-10-19-4';
   function tela(motivo){
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;z-index:99999;background:#1A2E14;color:#FAF7F2;'

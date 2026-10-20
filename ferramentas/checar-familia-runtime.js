@@ -23,7 +23,7 @@ const ctx=vm.createContext({DB:{alunos:[payer,child,spouse,single],lancamentos:[
   ehPersonalTipo:()=>false,persist:()=>{},renderAll:()=>{},descontoDoMes:()=>null,
   fmtRs:v=>'R$ '+v,fmt:v=>'R$ '+v,fmtCred:String,
   unificado:()=>false,profDoAluno:()=>'',profNome:()=>'',reposValidas:a=>a.repos,reposVencendo:()=>0,serieMensal:()=>[],
-  agendaDoMes:()=>({total:6,part:6,grupo:0,valor:960}),mensalidadeDaAgenda:()=>({total:6,part:6,grupo:0,valor:960}),rmAgCache:{},rmEscolha:{},ehGrupoTipo:()=>false,
+  agendaDoMes:()=>({total:6,part:6,grupo:0,valor:960}),mensalidadeDaAgenda:()=>({total:6,part:6,grupo:0,valor:960}),rmAgCache:{},rmEscolha:{},rmDebito:{},ehGrupoTipo:()=>false,
   perfilDe:()=> 'aluno',reposVencidas:()=>0,ehAtivoAluno:a=>!a.arquivado&&(a.plano>0||a.mensalidade>0),
   mover:(a,k,n)=>{a[k]=(Number(a[k])||0)+n;},purgarReposVencidas:()=>{},juntarGrupo:()=>{},
   fcAulasDoMes:(a)=>[{alunoId:a.id,custo:1}],fcFaltasDoMes:()=>1,fcAvisadosDoMes:()=>0});

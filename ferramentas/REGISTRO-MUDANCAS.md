@@ -8,6 +8,137 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-19 · Claude Code: renovação desconta aula já feita e não paga
+
+O João pediu duas coisas:
+- no extrato, a renovação em uma linha: "Renovação do mês", mais as
+  reposições quando sobrou;
+- quem fez aula além do pacote e ainda não pagou tem essas aulas
+  **descontadas da renovação**.
+
+Antes, a renovação zerava o saldo negativo e o aviso mandava "cobrar à
+parte". Vai junto da versão **2026-10-19-4**.
+- **Individual (`renovarMes`):** com saldo negativo, pergunta antes da prévia.
+  - OK desconta: −2 + 8 = 6. O negativo não é zerado e o pacote entra por
+    cima.
+  - Cancelar = "já cobrei à parte": renova cheio, como antes.
+  - A prévia e a conferência final (`depois`) usam o valor escolhido.
+  - A barreira "renovar não pode tirar aula" passou a usar
+    `Math.max(0, depois.c)`.
+- **Lote (`rmLinha`/`rmAplicarUm`):**
+  - desconta por padrão;
+  - cada linha tem os botões "Descontar da renovação" e "Já cobrei à parte"
+    (`rmDebito`, `rmDebitoUsar`);
+  - "Recebe" mostra o pacote menos as já feitas;
+  - `ultimaRenovacao.creditos` é o valor final.
+- **Extrato resumido:** a renovação junta as linhas gravadas no mesmo
+  instante (sobra → reposição, sobra convertida, saldo zerado) em uma linha:
+  "Renovação do mês +8". Embaixo aparece, quando for o caso, "+3 que
+  sobraram viraram reposição", "−2 aulas já feitas descontadas" ou "zerou 2
+  além do pacote (cobradas à parte)".
+- `checar-familia-runtime.js` ganhou `rmDebito` no contexto.
+- **Teste novo:** `testar-renovacao-debito-browser.cjs` (5 verificações), no
+  validar-pr. Os testes antigos de renovação e família continuam verdes.
+
+---
+
+## 2026-10-19 · Claude Code: extrato do aluno resumido
+
+O João achou o extrato longo e confuso: marcar e desmarcar, chuva que
+devolvia, várias correções manuais. Ele pediu linhas simples: "Aula realizada
+−1", "Chuva" sem alterar, "Cancelado" sem alterar, "Locação". Vai junto da
+versão **2026-10-19-4**.
+- `abrirExtrato` abre agora no modo **resumido** (`extratoResumido`). O botão
+  "Ver detalhado" mostra o extrato cru de antes (`pintarExtrato`/
+  `alternarExtrato`).
+- **Regras do resumo:**
+  - linhas com a mesma chave são somadas por saldo;
+  - o que soma zero some (✓ marcado e tirado);
+  - se houve chuva, vira "☔ Chuva · sem desconto";
+  - o que sobra vira uma linha só, com a data e a hora da **aula**;
+  - correções manuais do mesmo dia e do mesmo saldo viram um "Ajuste manual"
+    com o total;
+  - nomes simples (`EXT_ROTULO`): "Presença na agenda" → "Aula realizada",
+    "Locação na agenda" → "Locação", e assim por diante.
+- **Da agenda, sem mexer em saldo** (últimos 120 dias, só fixos do aluno):
+  dia cancelado do fixo vira "Aula cancelada · sem desconto"; se houve chuva
+  no horário, vira "☔ Chuva".
+- Nenhum dado muda. Os chips de saldo e o "extrato diz" continuam iguais.
+- **Teste novo:** `testar-extrato-resumido-browser.cjs` (6 verificações, dois
+  temas, leitura medida), no validar-pr.
+
+---
+
+## 2026-10-19 · Claude Code: contagem de locações pelo tipo ou pelo nome
+
+O João pediu para conferir a contagem de locações: com e sem aluno vinculado,
+tudo que estiver marcado **ou escrito** como locação deve contar como
+locação. Vai junto da versão **2026-10-19-4**.
+- **Achado:** a conta já pegava as locações com e sem vínculo, mas só pelo
+  tipo. Um horário salvo como aula com o título "Locação …" ou "Aluguel …"
+  entrava como **aula de tênis** no Início e no gráfico, e não como locação.
+- **Agora:** `ehLocacao(e)` = tipo `locacao`, ou título com
+  locação/locacao/locações/aluguel/alugado(a). Personal, torneio, bloqueio e
+  pessoal continuam o que são. A função vale em:
+  - `aulasDoDia`: sai das aulas e vai para "não é aula";
+  - `ocupacao_`: horas de locação do dia e do mês;
+  - `fcAulasDoMes`: fechamento e mensalidade pela agenda.
+- O ✓ **não mudou:** horário escrito como locação mas salvo como aula ainda
+  desconta crédito de aula. Conferir números passa a listar esses casos, só
+  lista, para o João trocar o tipo.
+- **Teste novo:** `testar-contagem-locacoes-browser.cjs` (3 verificações), no
+  validar-pr.
+
+---
+
+## 2026-10-19 · Claude Code: aula em família no ✓
+
+O João contou que casais e famílias fazem aula em grupo juntos, mas cada um
+tem o próprio cadastro. Um levava ✓ e o outro não, ou nem estava na agenda, e
+os créditos ficavam diferentes. Ele pediu que o ✓ de um puxasse o outro, ou
+que o app perguntasse. Vai junto da versão **2026-10-19-4**.
+- `togglePresenca` virou a casca. O ✓ de um só agora é `togglePresencaUm`
+  (mesmo código de antes).
+- Em aula **em grupo** de quem tem família (responsável + dependentes ativos,
+  `familiaDoAluno`), a casca pergunta por cada outro membro depois do toque:
+  - **está no horário:** "Marcar também a presença de X?" (ou desmarcar).
+    Com OK, faz o mesmo ✓ nele, cada um no próprio saldo e extrato;
+  - **não está no horário (só ao marcar):** oferece colocar X nesta aula
+    (avulsa, só nesta data, tipo grupo) e marcar. Grupo cheio recusa e avisa.
+  - Cancelar deixa só o tocado. Falta e "avisou" antigos do outro não são
+    mexidos. Aula particular e aluno sem família não perguntam nada.
+- **Conferir números (só lista):** no responsável, conta as aulas em grupo do
+  mês com ✓ de um membro e não de outro.
+- **Teste novo:** `testar-familia-presenca-browser.cjs`, 7 verificações, no
+  validar-pr.
+- Fica para depois, se o João quiser: no app do aluno, ao reservar uma aula em
+  grupo, escolher "só eu / eu e meu familiar".
+
+---
+
+## 2026-10-19 · Claude Code: horas de locação visíveis no app do aluno
+
+O João avisou que os alunos não viam as horas de locação compradas. Versão
+**2026-10-19-4**.
+- **Causa:** o único lugar que mostrava as horas era o cartão "Locação (horas)"
+  (`#scard-loc`). Ele fica dentro de `#bloco-saldo`, que o visual novo esconde
+  com `display:none!important`. A Gestão já publicava `locCred`.
+- **Agora**, em `renderPremiumAluno`:
+  - **Início:** cartão "Locação da quadra" (`#home-loc-card`), com as horas e
+    toque para Créditos;
+  - **Créditos:** bloco "Locação da quadra" (`#cred-page-loc-panel`), com
+    "Reservar a quadra ›", que leva à Agenda.
+- Os dois só aparecem para quem tem horas (ou deve horas).
+  - Saldo negativo mostra "a acertar com a academia" e não tem botão de
+    reservar.
+  - Nenhum valor, crédito ou regra mudou.
+- Ícone novo `key` em `app-aluno/lib/icones.js` (desenho do app, sem emoji).
+- **Teste:** `testar-locacao-minhas-aulas-browser.cjs` ganhou a verificação
+  nos dois temas: visível, some sem saldo, caso devendo e leitura medida na
+  imagem.
+
+---
+
 ## 2026-10-19 · Claude Code: inativar aluno pergunta pelos horários e gráfico de reposições
 
 O João decidiu (19/10): ao marcar um aluno como inativo, o app pergunta se
