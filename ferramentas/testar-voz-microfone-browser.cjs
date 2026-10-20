@@ -32,6 +32,8 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
    class FakeRec{
     start(){ev('start');const m=window.__modo||'normal',me=this;
      if(m==='negado'){setTimeout(()=>{me.onerror&&me.onerror({error:'not-allowed'});me.onend&&me.onend();},50);return;}
+     if(m==='pendurado')return;                       // não dá nenhum sinal de vida
+     setTimeout(()=>{ev('onstart');me.onstart&&me.onstart();},30);
      setTimeout(()=>me.onresult&&me.onresult({resultIndex:0,results:[R('tem horário',false)]}),80);
      setTimeout(()=>me.onresult&&me.onresult({resultIndex:0,results:[R('tem horário livre amanhã',true)]}),160);
      setTimeout(()=>me.onresult&&me.onresult({resultIndex:0,results:[R('tem horário livre amanhã',true)]}),220);   // iPhone repete
@@ -116,7 +118,57 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
    assert.equal(n,0,'mudanças de estilo da página não acordam o assistente');
    const t0=Date.now();await p.evaluate(()=>1+1);assert.ok(Date.now()-t0<2000);
   });
+  await check('microfone que não dá sinal de vida em 3 s: o app desiste, passa ao teclado e lembra',async()=>{
+   await p.evaluate(()=>{window.__modo='pendurado';window.__ev=[];JVVozAluno.fechar();JVVozAluno.abrir();});
+   await p.click('#va-falar');await p.waitForTimeout(3300);
+   const r=await p.evaluate(()=>({st:document.getElementById('va-status').textContent,foco:document.activeElement&&document.activeElement.id,
+    bt:document.querySelector('#va-falar span').textContent,ev:window.__ev.map(e=>e[0]),guardou:localStorage.getItem('jv-va-rec-falhou')}));
+   assert.match(r.st,/não respondeu neste celular\. Use o microfone do teclado/);assert.equal(r.foco,'va-texto');
+   assert.ok(r.ev.includes('abort'));assert.equal(r.guardou,'1');assert.equal(r.bt,'Falar pelo teclado');
+   await p.evaluate(()=>{window.__ev=[];});await p.click('#va-falar');await p.waitForTimeout(200);
+   assert.deepEqual(await p.evaluate(()=>window.__ev.map(e=>e[0])),[],'na próxima vez nem tenta');
+   await p.evaluate(()=>localStorage.removeItem('jv-va-rec-falhou'));
+  });
   assert.deepEqual(erros,[]);await c.close();
+
+  // iPhone: fora do modo app (navegador ou ícone antigo) e como app
+  const IPHONE='Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Mobile/15E148 Safari/604.1';
+  for(const comoApp of [false,true]){
+   const ci=await browser.newContext({viewport:{width:390,height:844},userAgent:IPHONE,hasTouch:true,isMobile:true,timezoneId:'America/Sao_Paulo',serviceWorkers:'block'});
+   await ci.route('**/*',r=>{const u=new URL(r.request().url());if(u.origin!==base)return r.abort();if(u.pathname.includes('/lib/firebase-'))return r.fulfill({body:'',contentType:'text/javascript'});return r.continue();});
+   await ci.addInitScript(a=>{
+    sessionStorage.setItem('jv-bk-adiar','1');window.__ev=[];
+    window.webkitSpeechRecognition=class{start(){window.__ev.push('start');setTimeout(()=>this.onstart&&this.onstart(),20);}stop(){}abort(){}};
+    try{delete window.SpeechRecognition;}catch(e){}window.SpeechRecognition=undefined;
+    if(a)Object.defineProperty(navigator,'standalone',{configurable:true,get:()=>true});
+    window.SpeechSynthesisUtterance=function(t){this.text=t;};window.speechSynthesis.speak=()=>{};window.speechSynthesis.cancel=()=>{};
+   },comoApp);
+   const q=await ci.newPage(),err2=[];q.on('pageerror',e=>err2.push(e.message));
+   await q.clock.setFixedTime(AGORA);await q.goto(base+'/app-aluno/',{waitUntil:'load'});await q.waitForFunction(()=>window.JVVozAluno);
+   await q.evaluate(()=>{init=async()=>{};EU={codigo:'6601',nome:'Aluna Teste',tipo:'Particular',plano:4,creditos:3,mensalidade:640,status:'pago'};
+    PUB={horas:['07:00'],profs:[],horarioCfg:{},horarioData:{},reservasRespostas:[],historico:{},alunos:[EU],grade:{fixos:[],excecoes:[],eventos:[]}};
+    MEU={codigo:'6601',pedidos:[],cancelados:[],confirmadas:[],espera:[]};
+    document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';try{render();}catch(e){}
+    JVVozAluno.abrir();});
+   await q.click('#va-falar');await q.waitForTimeout(150);
+   const r=await q.evaluate(()=>({ev:window.__ev.slice(),st:document.getElementById('va-status').textContent,bt:document.querySelector('#va-falar span').textContent,
+    faixa:!document.getElementById('barra-app').hidden}));
+   if(!comoApp){
+    await check('iPhone fora do modo app: não liga o reconhecimento (que trava ali); usa o microfone do teclado e mostra "Abra como aplicativo"',async()=>{
+     assert.deepEqual(r.ev,[],'não chama o reconhecimento');assert.match(r.st,/microfone do teclado/);assert.equal(r.bt,'Falar pelo teclado');
+     assert.equal(r.faixa,true,'faixa aparece');
+     await q.click('#ba-ver');assert.match(await q.textContent('#ba-passos'),/Adicionar à Tela de Início/);
+     await q.click('#ba-fechar');assert.equal(await q.evaluate(()=>document.getElementById('barra-app').hidden),true);
+     await q.reload({waitUntil:'load'});await q.waitForFunction(()=>window.JVVozAluno);
+     assert.equal(await q.evaluate(()=>document.getElementById('barra-app').hidden),true,'"Agora não" vale por 3 dias');
+    });
+   }else{
+    await check('iPhone como app (tela de início): usa o reconhecimento normalmente e não mostra a faixa',async()=>{
+     assert.deepEqual(r.ev,['start']);assert.equal(r.faixa,false);
+    });
+   }
+   assert.deepEqual(err2,[]);await ci.close();
+  }
  }finally{await browser.close();server.close();}
  console.log('\n✅ '+count+' verificações · microfone do assistente do aluno');
 })().catch(e=>{console.error('❌',e);server.close();process.exit(1);});

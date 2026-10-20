@@ -408,9 +408,26 @@ function status(t){const s=porId('va-status');if(s)s.textContent=t;}
 /* Escuta com saída garantida: para sozinha 2,5 s depois da última palavra,
    no máximo em 12 s, e se o celular não avisar que parou, o app solta o
    microfone por conta própria (antes o botão podia ficar preso em "Ouvindo"). */
+/* iPhone fora do modo app (aberto no navegador, ou pelo ícone antigo do
+   Netlify, que agora leva ao endereço oficial): o reconhecimento de fala do
+   próprio app trava ali. Nesses casos, e se ele já falhou neste aparelho, o
+   botão usa o microfone do teclado, que funciona sempre. */
+function ehIOS(){const u=navigator.userAgent||'';return /iPad|iPhone|iPod/.test(u)||(/Macintosh/.test(u)&&navigator.maxTouchPoints>1);}
+function comoApp(){try{return navigator.standalone===true||w.matchMedia('(display-mode: standalone)').matches;}catch(e){return false;}}
+const CHAVE_FALHOU='jv-va-rec-falhou';
+function reconhecimento(){
+ const C=w.SpeechRecognition||w.webkitSpeechRecognition;if(!C)return null;
+ if(ehIOS()&&!comoApp())return null;
+ try{if(localStorage.getItem(CHAVE_FALHOU)==='1')return null;}catch(e){}
+ return C;
+}
+function ditarPeloTeclado(msg){
+ status(msg||'Toque no microfone do teclado 🎤, fale e depois toque em Enviar.');
+ const t=porId('va-texto');try{t.focus();}catch(e){}
+}
 function ouvir(){
- const C=w.SpeechRecognition||w.webkitSpeechRecognition;
- if(!C){status('Use o microfone do teclado para ditar, ou escreva.');porId('va-texto').focus();return;}
+ const C=reconhecimento();
+ if(!C){ditarPeloTeclado();return;}
  if(st.rec){pararEscuta(st.rec);return;}
  if(st.ligando)return;
  try{const t=porId('va-texto');if(document.activeElement===t)t.blur();}catch(e){}   // teclado fechado: sem disputa com o ditado
@@ -434,6 +451,7 @@ function ligarEscuta(C){
  const esperarSilencio=()=>{clearTimeout(silencio);silencio=setTimeout(()=>pararEscuta(r),2500);};
  r.onresult=e=>{
   if(acabou||st.rec!==r)return;
+  comecou=true;
   let parcial='';
   for(let i=e.resultIndex;i<e.results.length;i++){const t=e.results[i][0].transcript;if(e.results[i].isFinal){if(i>ultimo){final+=(final?' ':'')+t.trim();ultimo=i;}}else parcial+=t;}
   porId('va-texto').value=(final+' '+parcial).trim().slice(0,300);
@@ -443,7 +461,16 @@ function ligarEscuta(C){
   terminar(nega?'Sem permissão para o microfone. Escreva ou use o ditado do teclado.':(e&&e.error==='no-speech'?'Não ouvi. Toque no microfone e fale de novo, ou escreva.':'Não consegui ouvir. Tente de novo ou escreva.'));};
  r.onend=()=>terminar('');
  limite=setTimeout(()=>pararEscuta(r),12000);
- try{r.start();status('Ouvindo… pode falar.');esperarSilencio();}
+ // o microfone tem 3 s para dar sinal de vida; se não der, o app desiste e passa ao teclado
+ let comecou=false;r.onstart=r.onaudiostart=()=>{if(!comecou){comecou=true;esperarSilencio();}};
+ const vida=setTimeout(()=>{if(comecou||acabou)return;
+  try{localStorage.setItem(CHAVE_FALHOU,'1');}catch(e){}
+  try{r.abort();}catch(e){}
+  terminar('O microfone do app não respondeu neste celular. Use o microfone do teclado 🎤 e toque em Enviar.');
+  try{porId('va-texto').focus();}catch(e){}
+ },3000);
+ const terminar0=terminar;r._terminar=m=>{clearTimeout(vida);terminar0(m);};
+ try{r.start();status('Ouvindo… pode falar.');}
  catch(e){terminar('Não consegui ligar o microfone. Escreva sua pergunta.');return;}
  marcarOuvindo();
 }
@@ -453,7 +480,7 @@ function pararEscuta(r){
  // se o celular não confirmar que parou, solta o microfone mesmo assim
  setTimeout(()=>{if(r._terminar&&st.rec===r){try{r.abort();}catch(e){}r._terminar('');}},1500);
 }
-function marcarOuvindo(){const b=porId('va-falar');if(b){b.classList.toggle('ouvindo',!!st.rec);b.setAttribute('aria-pressed',String(!!st.rec));b.querySelector('span').textContent=st.rec?'Ouvindo… toque para parar':'Toque e fale';}}
+function marcarOuvindo(){const b=porId('va-falar');if(b){b.classList.toggle('ouvindo',!!st.rec);b.setAttribute('aria-pressed',String(!!st.rec));b.querySelector('span').textContent=st.rec?'Ouvindo… toque para parar':(reconhecimento()?'Toque e fale':'Falar pelo teclado');}}
 function enviar(){
  const t=(porId('va-texto').value||'').trim();if(!t)return;
  porId('va-texto').value='';mostrarPergunta(t);status('');
@@ -464,12 +491,13 @@ function enviar(){
 function abrir(){
  if(st.aberto)return;st.aberto=true;st.pend=null;vozGuardada=null;
  const p=porId('va-painel');p.hidden=false;document.body.classList.add('va-aberto');
- porId('va-conversa').replaceChildren();
+ porId('va-conversa').replaceChildren();porId('va-texto').value='';
  const nome=String((eu()&&eu().nome)||'').split(' ')[0];
  const h=new Date().getHours(),saud=h<12?'Bom dia':h<18?'Boa tarde':'Boa noite';
  responder(saud+(nome?', '+nome:'')+'! Como posso te ajudar? Caso tenha alguma dúvida, é só me perguntar.');
  porId('va-ouvir').checked=st.ouvir;atualizar();
- status(w.SpeechRecognition||w.webkitSpeechRecognition?'Toque em “Toque e fale” ou escreva.':'Escreva ou use o microfone do teclado para ditar.');
+ marcarOuvindo();
+ status(reconhecimento()?'Toque em “Toque e fale” ou escreva.':'Escreva, ou toque no campo e use o microfone do teclado 🎤.');
 }
 function fechar(){
  if(!st.aberto)return;st.aberto=false;

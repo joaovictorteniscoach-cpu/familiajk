@@ -10,6 +10,30 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ## 2026-10-20 · Claude Code: microfone do assistente do aluno travava
 
+**Atualização com a foto do João (mesmo PR, versão 11).** Na foto, o app do
+aluno aparece com barra de endereço em cima e botões de navegador embaixo.
+
+**Causa:** o ícone da aluna é do endereço antigo `appalunos.netlify.app`.
+Desde 15/10 ele redireciona para o GitHub Pages. Para o iPhone, isso é sair
+do app, e ele abre a página numa moldura de navegador. Nessa moldura, o
+reconhecimento de fala do iPhone trava.
+
+O que mudou:
+- **Microfone:**
+  - no iPhone fora do modo app, o botão vira "Falar pelo teclado": o app não
+    liga o reconhecimento e abre o campo para o ditado do teclado;
+  - se o reconhecimento não der sinal de vida em 3 s, o app desiste, passa
+    ao teclado e lembra disso no aparelho (`jv-va-rec-falhou`).
+- **Faixa "Abra como aplicativo"** (`#barra-app`, `avisoModoApp`): aparece só
+  no iPhone fora do modo app. Tem o passo a passo (bússola → Safari →
+  Compartilhar → Adicionar à Tela de Início → apagar o ícone antigo).
+  "Agora não" esconde por 3 dias.
+- **Netlify:** o redirecionamento de 15/10 não mudou (decisão do João). Para
+  quem tem o ícone antigo, o conserto definitivo é instalar de novo pelo
+  endereço oficial.
+- **Teste:** `testar-voz-microfone-browser.cjs` passou para 9 verificações
+  (iPhone fora do app, iPhone como app, microfone sem sinal de vida).
+
 Relato do João: uma aluna falou no assistente e o app travou. Versão
 **2026-10-20-11**.
 
