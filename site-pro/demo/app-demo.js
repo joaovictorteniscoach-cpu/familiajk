@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-19-4';
+const VERSAO='2026-10-20-1';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -8829,6 +8829,116 @@ function irParaMes(mk,destino){
   renderAll();
   if(destino==='agenda'){irParaAgenda('mes',new Date(y,m,1));return;}
   irParaAba(destino||'fin');
+}
+/* ===== Detalhe dos quadrinhos do Início (20/10, pedido do João) =====
+   Tocar em Alunos, Créditos, Ocupação ou Locações abre a lista que explica o
+   número, em vez de só pular para outra tela. Tudo só lê; nada muda. Cada
+   lista usa a MESMA conta do quadrinho, para os números baterem. */
+function abrirDetInicio(tit,html){
+  document.getElementById('jhd-tit').textContent=tit;
+  document.getElementById('jhd-corpo').innerHTML=html;
+  document.getElementById('ov-jh-det').classList.add('on');
+}
+const ddmm=dk=>dk.split('-').reverse().slice(0,2).join('/');
+/* Alunos: quem treinou em cada mês (aluno com aula na agenda), separado em
+   particular, grupo e personal; e o cadastro de hoje por tipo. */
+function alunosQueTreinaram(ano,mes){
+  const part=new Set(),grupo=new Set(),pers=new Set(),todos=new Set();
+  const fim=new Date(ano,mes+1,0).getDate();
+  comIndiceAgenda(()=>{for(let d=1;d<=fim;d++){aulasDoDia(new Date(ano,mes,d)).aulas.forEach(au=>au.entradas.forEach(e=>{
+    if(!e.alunoId)return;todos.add(e.alunoId);
+    (e.tipo==='personal'?pers:e.tipo==='grupo'?grupo:part).add(e.alunoId);}));}});
+  return {total:todos.size,part:part.size,grupo:grupo.size,pers:pers.size};
+}
+function abrirDetAlunos(){
+  const hoje=new Date(),linhas=[];
+  for(let i=5;i>=0;i--){const d=new Date(hoje.getFullYear(),hoje.getMonth()-i,1);linhas.push({d,r:alunosQueTreinaram(d.getFullYear(),d.getMonth())});}
+  const at=(DB.alunos||[]).filter(ehAtivoAluno),cnt={part:0,grupo:0,misto:0,pers:0,outro:0};
+  at.forEach(a=>{const pf=perfilDe(a);
+    if(pf==='personal')cnt.pers++;else if(pf!=='tenis')cnt.outro++;
+    else if(ehMisto(a))cnt.misto++;else if(ehGrupoTipo(a.tipo)||((Number(a.planoGrupo)||0)>0&&!(Number(a.plano)||0)))cnt.grupo++;else cnt.part++;});
+  const c=contagemAlunos();
+  let h='<p class="jhd-res"><b>'+c.ativos+'</b> ativos hoje · '+c.total+' no cadastro</p>'
+    +'<div class="jhd-chips"><span>🎾 '+cnt.part+' particular</span><span>👥 '+cnt.grupo+' em grupo</span>'+(cnt.misto?'<span>🔀 '+cnt.misto+' misto</span>':'')
+    +'<span>💪 '+cnt.pers+' personal</span>'+(cnt.outro?'<span>🔑 '+cnt.outro+' locação/torneio</span>':'')+'</div>'
+    +'<p class="jhd-sub">Quem treinou em cada mês (pela agenda)</p><table class="jhd-tab"><tr><th>Mês</th><th>Total</th><th>Partic.</th><th>Grupo</th><th>Personal</th></tr>'
+    +linhas.map((x,i)=>{const ant=i?linhas[i-1].r.total:null,dif=ant===null?'':(x.r.total-ant);
+      return '<tr><td>'+MES_CURTO[x.d.getMonth()]+'/'+String(x.d.getFullYear()).slice(2)+'</td><td><b>'+x.r.total+'</b>'
+        +(dif===''||dif===0?'':' <small class="'+(dif>0?'up':'dn')+'">'+(dif>0?'↑':'↓')+Math.abs(dif)+'</small>')+'</td><td>'+x.r.part+'</td><td>'+x.r.grupo+'</td><td>'+x.r.pers+'</td></tr>';}).join('')
+    +'</table><p class="jhd-nota">Um aluno pode aparecer em mais de uma coluna (quem é misto faz particular e grupo).</p>'
+    +'<button type="button" class="jhd-ir" onclick="closeModal(\'ov-jh-det\');verAlunosAtivos()">Ver a lista de alunos ›</button>';
+  abrirDetInicio('Alunos',h);
+}
+/* Créditos em aberto: aluno por aluno, créditos, reposições válidas e até
+   quando cada lote vale (a reposição vence 4 meses depois do mês em que
+   entrou; o lote sem data é de antes do extrato e não vence). */
+function validadeRepos(a){
+  const ref=mesReal(),out=[];
+  lotesRepos(a).forEach(l=>{
+    if(!l.mes){out.push({qtd:l.qtd,txt:'sem data (não vence)'});return;}
+    const idade=mesesEntre(l.mes,ref);if(idade>=REPOS_VALIDADE)return;
+    const p=l.mes.split('-').map(Number),fim=new Date(p[0],p[1]-1+REPOS_VALIDADE-1,1);
+    out.push({qtd:l.qtd,txt:'até o fim de '+MES_CURTO[fim.getMonth()]+'/'+String(fim.getFullYear()).slice(2),urg:idade===REPOS_VALIDADE-1});
+  });
+  return out;
+}
+function abrirDetCreditos(){
+  const at=(DB.alunos||[]).filter(ehAtivoAluno).map(a=>({a,cred:Math.max(0,Number(a.creditos)||0)+(unificado(a)?0:Math.max(0,Number(a.credGrupo)||0)),rep:reposValidas(a)}))
+    .filter(x=>x.cred>0||x.rep>0).sort((x,y)=>y.rep-x.rep||y.cred-x.cred||x.a.nome.localeCompare(y.a.nome,'pt-BR'));
+  const tc=at.reduce((t,x)=>t+x.cred,0),tr=at.reduce((t,x)=>t+x.rep,0);
+  let h='<p class="jhd-res"><b>'+fmtCred(tc)+'</b> créditos · <b>'+fmtCred(tr)+'</b> reposições · '+at.length+' aluno(s)</p>';
+  h+=at.length?'<ul class="jhd-lista">'+at.map(x=>{
+    const val=x.rep?validadeRepos(x.a).map(v=>'<span class="'+(v.urg?'urg':'')+'">'+fmtCred(v.qtd)+' '+esc(v.txt)+'</span>').join(' · '):'';
+    return '<li onclick="closeModal(\'ov-jh-det\');abrirFicha(\''+argJs(x.a.id)+'\')"><div class="jhd-l1"><b>'+esc(x.a.nome)+'</b><em>'
+      +fmtCred(x.cred)+' créd.'+(x.rep?' · '+fmtCred(x.rep)+' repos.':'')+'</em></div>'+(val?'<div class="jhd-val">🔁 '+val+'</div>':'')+'</li>';}).join('')+'</ul>'
+    :'<p class="jhd-nota">Ninguém com crédito ou reposição em aberto.</p>';
+  h+='<p class="jhd-nota">Os vermelhos vencem na próxima virada. Toque no nome para abrir a ficha.</p>';
+  abrirDetInicio('Créditos em aberto',h);
+}
+/* Ocupação: horário por horário do dia, com a mesma conta do quadrinho
+   (ocupacao_): horário aberto a aula está ocupado se há aula começando a
+   menos de 1 h; bloqueio e locação ficam fora da conta. */
+let _detOcupDia=null;
+function slotsDoDia(d){
+  const inicios=aulasDoDia(d).aulas,out=[];
+  HORAS.forEach(h=>{
+    const modo=slotModo(d,h),evs=entriesFor(d,h);
+    if(evs.some(ehLocacao)){out.push({h,est:'loc',nomes:evs.filter(ehLocacao).map(e=>e.titulo||'Locação')});return;}
+    if(modo!=='aula')return;
+    if(evs.some(e=>e.tipo==='bloqueio')){out.push({h,est:'bloq',nomes:evs.filter(e=>e.tipo==='bloqueio').map(e=>e.titulo||'Bloqueio')});return;}
+    const au=inicios.filter(a=>Math.abs(a.min-_hm(h))<60);
+    out.push({h,est:au.length?'ocup':'livre',nomes:au.flatMap(a=>a.entradas.map(e=>nomeNaLista(e)))});
+  });
+  return out;
+}
+function abrirDetOcupacao(delta){
+  const base=new Date();base.setHours(12,0,0,0);
+  if(delta===undefined)_detOcupDia=new Date(base);else{_detOcupDia=new Date(_detOcupDia||base);_detOcupDia.setDate(_detOcupDia.getDate()+delta);}
+  const d=_detOcupDia,sl=slotsDoDia(d),oc=ocupacao(d,d);
+  const ROT={ocup:'Ocupado',livre:'Livre',bloq:'Bloqueado',loc:'Locação'};
+  let h='<div class="jhd-nav"><button type="button" onclick="abrirDetOcupacao(-1)" aria-label="Dia anterior">‹</button><b>'+esc(fmtDataCurta(dKey(d)))+'</b>'
+    +'<button type="button" onclick="abrirDetOcupacao(1)" aria-label="Próximo dia">›</button></div>'
+    +'<p class="jhd-res"><b>'+(oc.disp?oc.pct+'%':'—')+'</b> ocupado · '+oc.ocup+' de '+oc.disp+' horários de aula · '+sl.filter(x=>x.est==='livre').length+' livre(s)</p>';
+  h+=sl.length?'<ul class="jhd-slots">'+sl.map(x=>'<li class="'+x.est+'"><span class="h">'+esc(x.h)+'</span><span class="e">'+ROT[x.est]+'</span><span class="n">'+esc(x.nomes.join(', '))+'</span></li>').join('')+'</ul>'
+    :'<p class="jhd-nota">Nenhum horário aberto a aula neste dia.</p>';
+  h+='<button type="button" class="jhd-ir" onclick="closeModal(\'ov-jh-det\');irParaAgenda(\'dia\',new Date(\''+dKey(d)+'T12:00:00\'))">Abrir a agenda deste dia ›</button>';
+  abrirDetInicio('Horários livres e ocupados',h);
+}
+/* Locações do mês: cada horário com locação (marcada ou escrita como
+   locação, com ou sem aluno), a mesma conta das "h no mês" do quadrinho. */
+function abrirDetLocacoes(){
+  const ano=curYear,mes=curMonth,fim=new Date(ano,mes+1,0).getDate(),dias=[];let tot=0;
+  comIndiceAgenda(()=>{for(let d=1;d<=fim;d++){const dt=new Date(ano,mes,d,12),l=[];
+    HORAS.forEach(h=>{const evs=entriesFor(dt,h).filter(ehLocacao);if(!evs.length)return;tot++;
+      l.push({h,nomes:evs.map(e=>{const a=e.alunoId&&DB.alunos.find(x=>x.id===e.alunoId);return (a?a.nome:(e.titulo||'Locação'))+(a?'':' (sem vínculo)');})});});
+    if(l.length)dias.push({dk:dKey(dt),l});}});
+  const hoje=dKey(new Date());
+  let h='<p class="jhd-res"><b>'+tot+'h</b> de locação em '+MESES[mes]+' · '+dias.length+' dia(s)</p>';
+  h+=dias.length?'<ul class="jhd-lista">'+dias.map(x=>'<li class="'+(x.dk===hoje?'hoje':'')+'"><div class="jhd-l1"><b>'+esc(fmtDataCurta(x.dk))+(x.dk===hoje?' · hoje':'')+'</b><em>'+x.l.length+'h</em></div>'
+      +x.l.map(y=>'<div class="jhd-val"><span>'+esc(y.h)+'</span> '+esc(y.nomes.join(', '))+'</div>').join('')+'</li>').join('')+'</ul>'
+    :'<p class="jhd-nota">Nenhuma locação neste mês.</p>';
+  h+='<button type="button" class="jhd-ir" onclick="closeModal(\'ov-jh-det\');verAgendaMes()">Abrir a agenda do mês ›</button>';
+  abrirDetInicio('Locações',h);
 }
 /* Atalhos do Início: cada número leva ao lugar onde ele é detalhado. */
 function verCaixaMes(){irParaAba('lanc');}

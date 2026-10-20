@@ -3529,6 +3529,43 @@ html body:not(#jv) .trilha-pills button.on{background:#A9471F;border-color:#A947
 .rpm .rpm-lista span{color:#E4DED3;font-size:13px;line-height:1.4}
 .rpm .rpm-vazio,.rpm .rpm-nota{margin:4px 0 10px;color:#D8D2C7;font-size:12.5px;line-height:1.4}
 
+/* Detalhe dos quadrinhos do Início (20/10): Alunos, Créditos, Ocupação e
+   Locações abrem a lista que explica o número. Janela escura, como as do Início. */
+.jhd .jhd-res{margin:0 0 10px;color:#E4DED3;font-size:14px;line-height:1.45}
+.jhd .jhd-res b{color:#fff}
+.jhd .jhd-sub{margin:12px 0 6px;color:#EBA681;font-size:12.5px;font-weight:800;letter-spacing:.3px}
+.jhd .jhd-nota{margin:8px 0 10px;color:#D8D2C7;font-size:12.5px;line-height:1.4}
+.jhd .jhd-chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px}
+.jhd .jhd-chips span{padding:5px 10px;border-radius:9px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#F2EEE6;font-size:12.5px;font-weight:700}
+.jhd .jhd-tab{width:100%;border-collapse:collapse;font-size:13px}
+.jhd .jhd-tab th{color:#D8D2C7;font-size:11px;font-weight:800;text-align:left;padding:5px 4px;border-bottom:1px solid rgba(255,255,255,.14)}
+.jhd .jhd-tab td{color:#F2EEE6;padding:7px 4px;border-bottom:1px solid rgba(255,255,255,.07)}
+.jhd .jhd-tab td b{color:#fff}
+.jhd .jhd-tab small.up{color:#D4E157;font-weight:800}
+.jhd .jhd-tab small.dn{color:#FF9A8E;font-weight:800}
+.jhd .jhd-lista{list-style:none;margin:0 0 8px;padding:0;max-height:54vh;overflow:auto}
+.jhd .jhd-lista li{padding:9px 10px;margin:0 0 6px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);cursor:pointer}
+.jhd .jhd-lista li.hoje{border-color:#EBA681}
+.jhd .jhd-l1{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.jhd .jhd-l1 b{color:#fff;font-size:14.5px}
+.jhd .jhd-l1 em{font-style:normal;color:#E4DED3;font-size:13px;font-weight:700;white-space:nowrap}
+.jhd .jhd-val{margin-top:4px;color:#E4DED3;font-size:12.5px;line-height:1.5}
+.jhd .jhd-val span{display:inline-block;margin-right:8px}
+.jhd .jhd-val span.urg{color:#FF9A8E;font-weight:800}
+.jhd .jhd-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 8px}
+.jhd .jhd-nav b{color:#fff;font-size:15px}
+.jhd .jhd-nav button{width:44px;height:44px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#fff;font-size:22px;font-weight:800;cursor:pointer}
+.jhd .jhd-slots{list-style:none;margin:0 0 8px;padding:0;max-height:52vh;overflow:auto}
+.jhd .jhd-slots li{display:grid;grid-template-columns:52px 84px minmax(0,1fr);gap:8px;align-items:center;padding:8px 10px;margin:0 0 5px;border-radius:10px;background:rgba(255,255,255,.05);border-left:4px solid #8A8274}
+.jhd .jhd-slots .h{color:#fff;font-weight:800;font-size:14px}
+.jhd .jhd-slots .e{font-size:12.5px;font-weight:800;color:#E4DED3}
+.jhd .jhd-slots .n{color:#E4DED3;font-size:12.5px;overflow-wrap:anywhere}
+.jhd .jhd-slots li.ocup{border-left-color:#7FDDA5}.jhd .jhd-slots li.ocup .e{color:#D4E157}
+.jhd .jhd-slots li.livre{border-left-color:#EBA681}.jhd .jhd-slots li.livre .e{color:#EBA681}
+.jhd .jhd-slots li.loc .e{color:#E69468}
+.jhd .jhd-slots li.bloq .e{color:#FFB4A8}
+.jhd .jhd-ir{display:flex;align-items:center;justify-content:center;width:100%;min-height:44px;padding:12px;margin:6px 0 7px;border-radius:12px;border:1px solid rgba(224,130,79,.35);background:rgba(225,123,68,.12);color:#fff;-webkit-text-fill-color:#fff;font:700 15px 'DM Sans',sans-serif;cursor:pointer}
+
 /* ===== Toques do tema Saibro ===== */
 .nav,.nav:after{background:#0B1B14!important;border-top:1px solid rgba(194,88,46,.35)!important}
 .nav button.on,.nav button.aberto,.jv-nav-3d button.on,.jv-nav-3d button.aberto{background:rgba(194,88,46,.16)!important;color:#EE9A6E!important;-webkit-text-fill-color:#EE9A6E!important}

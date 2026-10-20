@@ -49,6 +49,7 @@ Use `grep -n` pelos títulos de seção (`/* ===== Título =====`) ou pelo nome 
 - Aula em família no ✓: `togglePresenca` (pergunta pelos outros da família em aula em GRUPO) → `togglePresencaUm` (o ✓ de um só); `familiaDoAluno`
 - Locação na contagem: `ehLocacao(e)` (tipo OU nome) em `aulasDoDia`, `ocupacao_`, `fcAulasDoMes`
 - Extrato do aluno: `abrirExtrato` → `pintarExtrato` (resumido por padrão: `extratoResumido`, `EXT_ROTULO`; "Ver detalhado" = cru)
+- Quadrinhos do Início: `abrirDetAlunos`, `abrirDetCreditos` (`validadeRepos`), `abrirDetOcupacao` (`slotsDoDia`), `abrirDetLocacoes` → `#ov-jh-det`
 - Torneio: `campeoesDe`, `encerrarEtapa`, homenagens 1º/2º (`abrirHomenagens`, `homArte`, `homMensagem`)
 - Tempo em Curitiba: `climaDoCodigo`, `iconeClima` (SVG, mesmo desenho no app do aluno; nada de emoji), `abrirClimaGestao`/`pintarPrevisaoClima`
 - Segurança na Gestão: `argJs`, `sairEApagar`, `prontidaoRegraFinal`, `uidCadastroLivre`, `cancelamentoTardio`, `publicacaoLegadaEnxuta`

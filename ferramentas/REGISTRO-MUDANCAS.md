@@ -8,6 +8,37 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-20 · Claude Code: quadrinhos do Início abrem a lista que explica o número
+
+O João pediu que os quadrinhos do Início abram detalhes, em vez de só pular
+para o calendário. Versão **2026-10-20-1**.
+- Janela única `#ov-jh-det` (`abrirDetInicio`), classes `jhd-`. Tudo só lê.
+- **Alunos (`abrirDetAlunos`):**
+  - ativos hoje e cadastro por tipo: particular, grupo, misto, personal,
+    locação/torneio;
+  - tabela dos últimos 6 meses com quem treinou pela agenda
+    (`alunosQueTreinaram`), separado em total/particular/grupo/personal e com
+    ↑/↓ contra o mês anterior.
+- **Créditos em aberto (`abrirDetCreditos`):**
+  - aluno por aluno, só ativos (como o quadrinho), com créditos e reposições
+    válidas;
+  - validade de cada lote (`validadeRepos`: vence no fim do 4º mês, como
+    `reposPorIdade`), em vermelho o que vence na próxima virada;
+  - tocar abre a ficha.
+- **Ocupação (`abrirDetOcupacao`):** horário por horário do dia (`slotsDoDia`),
+  com ‹ › para outros dias e a mesma conta de `ocupacao_`: ocupado, livre,
+  bloqueado ou locação. Inclui botão para a agenda do dia.
+- **Locações (`abrirDetLocacoes`):** cada horário com locação no mês, por dia,
+  com e sem vínculo (`ehLocacao`), e o total em horas igual ao do quadrinho.
+  Inclui botão para a agenda do mês.
+- `testar-3-pedidos-browser.cjs`: o caso "quadrinho abre a agenda no mês"
+  virou "abre a lista, e dela a agenda", por pedido do João.
+- **Teste novo:** `testar-detalhe-inicio-browser.cjs` (10 verificações, dois
+  temas, números iguais aos quadrinhos, leitura medida, só leitura), no
+  validar-pr.
+
+---
+
 ## 2026-10-19 · Claude Code: renovação desconta aula já feita e não paga
 
 O João pediu duas coisas:

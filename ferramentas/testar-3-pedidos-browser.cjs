@@ -92,11 +92,16 @@ const contraste=(pg,sel)=>pg.evaluate(sel=>{
    await g.evaluate(()=>fecharRenovaMes());await g.waitForTimeout(300);
    assert.equal(await g.evaluate(()=>rmAberta||document.getElementById('renova-mes').classList.contains('on')),false);
   });
-  for(const rot of ['Taxa de ocupação','Locações'])await check('Início: "'+rot+'" abre a agenda no modo mês',async()=>{
-   await g.evaluate(()=>{agView='dia';go('dash',document.createElement('button'));});
+  /* 20/10: o João pediu que os quadrinhos abram a lista que explica o número;
+     a agenda continua a um toque, no botão da própria lista. */
+  for(const [rot,view] of [['Taxa de ocupação','dia'],['Locações','mes']])await check('Início: "'+rot+'" abre a lista e, dela, a agenda ('+view+')',async()=>{
+   await g.evaluate(()=>{agView=agView==='dia'?'semana':'dia';go('dash',document.createElement('button'));});
    await g.evaluate(r=>[...document.querySelectorAll('.jh-tile')].find(x=>x.textContent.includes(r)).click(),rot);
+   assert.equal(await g.evaluate(()=>document.getElementById('ov-jh-det').classList.contains('on')),true,'abre a lista');
+   assert.equal(await g.evaluate(()=>document.getElementById('pg-agenda').classList.contains('on')),false,'não pula direto para a agenda');
+   await g.evaluate(()=>document.querySelector('#jhd-corpo .jhd-ir').click());
    assert.deepEqual(await g.evaluate(()=>({agenda:document.getElementById('pg-agenda').classList.contains('on'),view:agView,
-    mes:curMonth,ano:curYear})),{agenda:true,view:'mes',mes:AGORA.getMonth(),ano:AGORA.getFullYear()});
+    mes:curMonth,ano:curYear,lista:document.getElementById('ov-jh-det').classList.contains('on')})),{agenda:true,view,mes:AGORA.getMonth(),ano:AGORA.getFullYear(),lista:false});
   });
   await print(g,'2-agenda-mes.png');
   await check('Início: "Créditos em aberto" não foi para a agenda (caso negativo)',async()=>{
