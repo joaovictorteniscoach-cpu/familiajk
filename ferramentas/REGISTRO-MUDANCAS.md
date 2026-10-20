@@ -8,7 +8,7 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
-## 2026-10-20 · Claude Code: semana do aluno sem "Loc." e botão de voz mais transparente
+## 2026-10-20 · Claude Code: semana do aluno sem "Loc.", botão de voz mais transparente, saudação e voz masculina
 
 Pedido do João depois do assistente por voz. Versão **2026-10-20-10**.
 
@@ -25,8 +25,16 @@ Pedido do João depois do assistente por voz. Versão **2026-10-20-10**.
 - **Regras:** nenhuma regra de reserva mudou.
 - **Botão de voz do aluno** (`#va-atalho`): opacidade .7 e brilho, igual ao da
   Gestão.
+- **Saudação do assistente:** "Bom dia/Boa tarde/Boa noite, <nome>! Como posso
+  te ajudar?" no lugar da frase longa.
+- **Voz das respostas:** masculina em português, quando o celular tem uma.
+  - `escolherVoz` procura pelo nome da voz (Antonio, Felipe, Daniel…).
+  - Sem nenhuma masculina, usa a voz padrão um pouco mais grave.
+  - Usa só as vozes do aparelho. Não copia a voz do João: isso exigiria
+    gravar a voz dele e um serviço pago de clonagem, que não foi feito.
 - **Testes:**
   - Novo: `ferramentas/testar-semana-livre-browser.cjs` (4 verificações).
+  - `testar-voz-aluno-browser.cjs` ganhou a verificação da saudação e da voz (13 no total).
   - `testar-locacao-minhas-aulas` agora espera "Disponível".
 
 ## 2026-10-20 · Claude Code: assistente por voz no app do aluno

@@ -174,9 +174,28 @@ function executar(frase){
 }
 
 /* ---- fala ---- */
+/* Voz masculina em português, para soar parecida com a do João. O app usa as
+   vozes que o próprio celular tem (não grava nem copia a voz de ninguém):
+   procura uma masculina pelo nome; sem nenhuma, deixa a voz padrão mais grave. */
+const VOZES_MASC=['antonio','felipe','daniel','fabio','humberto','donato','julio','valerio','nicolau','thiago','reed','eddy'];
+const VOZES_FEM=/luciana|francisca|fernanda|maria|heloisa|leticia|yara|camila|vitoria|thalita|brenda|elza|manuela|giovanna|leila|joana|catarina|female|feminin/;
+function escolherVoz(){
+ let vs=[];try{vs=w.speechSynthesis.getVoices()||[];}catch(e){}
+ const pt=vs.filter(v=>/^pt/i.test(v.lang||'')),br=pt.filter(v=>/br/i.test(v.lang||''));
+ const nome=v=>norm(v.name);
+ for(const lista of [br,pt])for(const m of VOZES_MASC){const v=lista.find(x=>nome(x).includes(m));if(v)return {voz:v,grave:false};}
+ const neutra=br.find(v=>!VOZES_FEM.test(nome(v))&&!/google/.test(nome(v)))||null;
+ return {voz:neutra||br[0]||pt[0]||null,grave:!neutra};
+}
 function falarResposta(texto){
  if(!st.ouvir||!st.aberto||!w.speechSynthesis||!w.SpeechSynthesisUtterance)return;
- try{w.speechSynthesis.cancel();const u=new w.SpeechSynthesisUtterance(texto.replace(/(\d{2}):00/g,'$1 horas'));u.lang='pt-BR';w.speechSynthesis.speak(u);}catch(e){}
+ try{
+  w.speechSynthesis.cancel();
+  const u=new w.SpeechSynthesisUtterance(texto.replace(/(\d{2}):00/g,'$1 horas'));
+  const e=escolherVoz();u.lang='pt-BR';try{if(e.voz)u.voice=e.voz;}catch(x){}
+  u.pitch=e.grave?0.75:0.95;u.rate=1;
+  w.speechSynthesis.speak(u);
+ }catch(e){}
 }
 function status(t){const s=porId('va-status');if(s)s.textContent=t;}
 function ouvir(){
@@ -204,7 +223,8 @@ function abrir(){
  const p=porId('va-painel');p.hidden=false;document.body.classList.add('va-aberto');
  porId('va-conversa').replaceChildren();
  const nome=String((eu()&&eu().nome)||'').split(' ')[0];
- responder((nome?'Oi, '+nome+'! ':'Oi! ')+'Pergunte se um horário está livre, peça para agendar ou cancelar, ou veja suas aulas.');
+ const h=new Date().getHours(),saud=h<12?'Bom dia':h<18?'Boa tarde':'Boa noite';
+ responder(saud+(nome?', '+nome:'')+'! Como posso te ajudar?');
  porId('va-ouvir').checked=st.ouvir;atualizar();
  setTimeout(()=>{try{porId('va-texto').focus({preventScroll:true});}catch(e){}},50);
 }
@@ -222,6 +242,7 @@ function atualizar(){
  if(st.aberto&&!logado)fechar();
 }
 function iniciarVoz(){
+ try{if(w.speechSynthesis){w.speechSynthesis.getVoices();w.speechSynthesis.addEventListener&&w.speechSynthesis.addEventListener('voiceschanged',()=>{});}}catch(e){}
  if(!porId('va-painel'))return;
  porId('va-atalho').onclick=abrir;porId('va-fechar').onclick=fechar;porId('va-falar').onclick=ouvir;porId('va-enviar').onclick=enviar;
  porId('va-texto').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();enviar();}});
@@ -232,6 +253,6 @@ function iniciarVoz(){
  let ag=false;new MutationObserver(()=>{if(ag)return;ag=true;requestAnimationFrame(()=>{ag=false;atualizar();});}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['class','style']});
  atualizar();
 }
-w.JVVozAluno={abrir,fechar,interpretar,executar,enviar};
+w.JVVozAluno={abrir,fechar,interpretar,executar,enviar,escolherVoz};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',iniciarVoz,{once:true});else iniciarVoz();
 })();

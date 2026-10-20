@@ -65,10 +65,10 @@ const PUB0={horas:HORAS,profs:[],horarioCfg:{},horarioData:{},reservasRespostas:
    await p.evaluate(()=>document.getElementById('ov-pick').classList.remove('on'));await p.waitForTimeout(60);
    assert.equal(await visivel('#va-atalho'),true);
   });
-  await check('abre com saudação sem montar HTML com o nome que vem da nuvem',async()=>{
+  await check('abre com "Bom dia, nome! Como posso te ajudar?" sem montar HTML com o nome que vem da nuvem',async()=>{
    await p.click('#va-atalho');assert.equal(await visivel('#va-painel'),true);
    const r=await p.evaluate(()=>({txt:document.querySelector('#va-conversa p').textContent,b:document.querySelectorAll('#va-conversa b').length}));
-   assert.match(r.txt,/^Oi, Aluno! /);assert.equal(r.b,0);
+   assert.equal(r.txt,'Bom dia, Aluno! Como posso te ajudar?');assert.equal(r.b,0);
   });
   await check('"tem horário livre amanhã?" lista só os livres para aula (sem ocupado e sem torneio)',async()=>{
    const r=await pedir('Tem horário livre amanhã?');
@@ -132,6 +132,29 @@ const PUB0={horas:HORAS,profs:[],horarioCfg:{},horarioData:{},reservasRespostas:
    await pedir('créditos');assert.equal(await p.evaluate(()=>window.__falas.length),0);
    await p.click('#va-falar');assert.match(await p.textContent('#va-status'),/microfone do teclado/);
    await p.keyboard.press('Escape');assert.equal(await visivel('#va-painel'),false);
+  });
+  await check('saudação muda com a hora; a voz lida é masculina em português quando o celular tem uma',async()=>{
+   const r=await p.evaluate(()=>{
+    const V=(name,lang)=>({name,lang});let lista=[V('Luciana','pt-BR'),V('Google português do Brasil','pt-BR'),V('Felipe','pt-BR'),V('Daniel','en-GB')];
+    speechSynthesis.getVoices=()=>lista;
+    const a=JVVozAluno.escolherVoz();
+    lista=[V('Luciana','pt-BR'),V('Microsoft Antonio Online (Natural) - Portuguese (Brazil)','pt-BR')];const b=JVVozAluno.escolherVoz();
+    lista=[V('Luciana','pt-BR')];const c=JVVozAluno.escolherVoz();
+    window.SpeechSynthesisUtterance=function(t){this.text=t;};window.__u=[];speechSynthesis.speak=u=>window.__u.push({t:u.text,v:u.voice&&u.voice.name,p:u.pitch});speechSynthesis.cancel=()=>{};
+    lista=[V('Felipe','pt-BR')];
+    try{localStorage.setItem('jv-va-ouvir','1');}catch(e){}
+    JVVozAluno.fechar();document.getElementById('va-ouvir').checked=true;document.getElementById('va-ouvir').dispatchEvent(new Event('change'));
+    JVVozAluno.abrir();
+    return {a:a.voz.name,b:b.voz.name,c:[c.voz.name,c.grave],u:window.__u[0]};});
+   assert.equal(r.a,'Felipe');assert.match(r.b,/Antonio/);assert.deepEqual(r.c,['Luciana',true],'sem voz masculina: a padrão, mais grave');
+   assert.deepEqual(r.u,{t:'Bom dia, Aluno! Como posso te ajudar?',v:'Felipe',p:0.95});
+   await p.clock.setFixedTime(new Date('2026-10-20T15:00:00-03:00'));
+   await p.evaluate(()=>{JVVozAluno.fechar();JVVozAluno.abrir();});
+   assert.equal(await p.evaluate(()=>document.querySelector('#va-conversa p').textContent),'Boa tarde, Aluno! Como posso te ajudar?');
+   await p.clock.setFixedTime(new Date('2026-10-20T19:30:00-03:00'));
+   await p.evaluate(()=>{JVVozAluno.fechar();JVVozAluno.abrir();});
+   assert.equal(await p.evaluate(()=>document.querySelector('#va-conversa p').textContent),'Boa noite, Aluno! Como posso te ajudar?');
+   await p.evaluate(()=>JVVozAluno.fechar());
   });
   assert.deepEqual(erros,[]);await c.close();
  }finally{await browser.close();server.close();}
