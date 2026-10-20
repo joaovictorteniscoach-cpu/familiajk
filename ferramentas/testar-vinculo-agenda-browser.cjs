@@ -46,7 +46,7 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
    const r=await g.evaluate(()=>({a1:horariosQueOAlunoNaoVe(DB.alunos[1]).map(h=>h.quando+' | '+h.motivo),b1:horariosQueOAlunoNaoVe(DB.alunos[2]).map(h=>h.quando+' | '+h.motivo),
      b2:horariosQueOAlunoNaoVe(DB.alunos[3]).length,inativo:horariosQueOAlunoNaoVe(DB.alunos[0]).length,
      achado:achadosDoAluno(DB.alunos[1]).map(x=>x.txt).join(' || ')}));
-   assert.deepEqual(r.a1,['20/10 09:00 | ligado ao cadastro de Aluno Exemplo (inativo)']);
+   assert.deepEqual(r.a1,['20/10 09:00 | ligado ao cadastro de Aluno Exemplo (cód. 1009, inativo)']);
    assert.deepEqual(r.b1,['23/10 10:00 | sem vínculo e o nome não bate igual ao cadastro']);
    assert.equal(r.b2,0,'Bruna não é Bruno');assert.equal(r.inativo,0,'inativo não entra');
    assert.match(r.achado,/1 horário\(s\) com o nome de Aluno Exemplo não aparecem como aula dele no app/);
@@ -57,7 +57,7 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
    assert.match(await g.evaluate(()=>document.getElementById('agf-vincular').textContent),/2 horários que o aluno não vê/);
    await g.evaluate(()=>renderVincularList());
    const t=await g.evaluate(()=>document.getElementById('link-list').innerText.replace(/\s+/g,' '));
-   assert.match(t,/Aluno Exemplo · 20\/10 09:00 \(ligado ao cadastro de Aluno Exemplo \(inativo\)\) Ligar a Aluno/);
+   assert.match(t,/Aluno Exemplo · 20\/10 09:00 \(ligado ao cadastro de Aluno Exemplo \(cód\. 1009, inativo\)\) Ligar a Aluno/);
    assert.match(t,/Bruno Teste Silva · 23\/10 10:00 .* Ligar a Bruno/);
   });
   await check('janela de vincular legível (medida na imagem)',async()=>{
@@ -93,6 +93,31 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
    await g.evaluate(()=>{document.getElementById('s-rec').value='pontual';document.getElementById('s-aluno').value='a9';document.getElementById('s-titulo').value='Aluno Exemplo';document.getElementById('s-tipo').value='aula';});
    resposta=true;await g.evaluate(()=>saveSlot());
    assert.match(dialogos.at(-1),/cadastro INATIVO/);assert.equal(await g.evaluate(()=>DB.agenda.eventos.at(-1).alunoId),'a1');
+  });
+  await check('dois cadastros ATIVOS com o mesmo nome: o horário mostra para quem vai no app, e a conferência aponta qual tem o app',async()=>{
+   const r=await g.evaluate(()=>{
+    DB.alunos.push({id:'r1',nome:'Rafa Duplo',codigo:'3001',tipo:'Particular',plano:4,creditos:4,mensalidade:640,status:'pago',arquivado:false},
+                   {id:'r2',nome:'Rafa Duplo',codigo:'3002',tipo:'Particular',plano:4,creditos:0,mensalidade:640,status:'pago',arquivado:false});
+    VINCULOS={u1:{ativo:true,alunoId:'r1',codigo:'3001'}};VINC_LIDO=true;   // o aparelho do aluno usa o 3001
+    DB.agenda.eventos.push({id:'r8',data:'2026-10-20',hora:'18:00',titulo:'Rafa Duplo',tipo:'aula',alunoId:'r1'},
+                           {id:'r9',data:'2026-10-20',hora:'19:00',titulo:'Rafa Duplo',tipo:'aula',alunoId:'r2'});
+    agDate=new Date('2026-10-20T12:00:00');openSlot('19:00');
+    const linha=document.getElementById('slot-evs').innerText.replace(/\s+/g,' ');
+    openSlot('18:00');const linha8=document.getElementById('slot-evs').innerText.replace(/\s+/g,' ');
+    const ops=[...document.querySelectorAll('#s-aluno option')].map(o=>o.textContent).filter(t=>/Rafa/.test(t));
+    const r1=DB.alunos.find(a=>a.id==='r1'),r2=DB.alunos.find(a=>a.id==='r2');
+    return {linha,linha8,ops,n1:horariosQueOAlunoNaoVe(r1).map(h=>h.quando+' | '+h.motivo),n2:horariosQueOAlunoNaoVe(r2).length,
+      achado:achadosDoAluno(r1).map(x=>x.txt).join(' || ')};});
+   assert.match(r.linha,/📱 No app: aula de Rafa Duplo \(cód\. 3002\) · este cadastro não tem o app aprovado/);
+   assert.match(r.linha8,/📱 No app: aula de Rafa Duplo \(cód\. 3001\) · tem o app/);
+   assert.ok(r.ops.some(t=>/cód\. 3001 · 📱 app/.test(t))&&r.ops.some(t=>/cód\. 3002 \(/.test(t)),r.ops.join(' | '));
+   assert.deepEqual(r.n1,['20/10 19:00 | ligado ao cadastro de Rafa Duplo (cód. 3002); o app dele usa o cód. 3001']);
+   assert.equal(r.n2,0,'do lado de quem não tem o app, não acusa ao contrário');
+   const itens=(await medir(g)).filter(it=>/na-app/.test(it.onde||''));
+   assert.ok(itens.length>=1,'mediu '+itens.length);
+   assert.deepEqual(itens.filter(it=>it.ratio!==null&&it.ratio<it.minimo).map(it=>it.t+' '+it.ratio+' '+it.fg+' sobre '+it.fundo),[]);
+   await g.setViewportSize({width:390,height:844});
+   assert.match(r.achado,/Há 2 cadastros ativos com o nome Rafa Duplo \(cód\. 3001, 3002\)\. O app do aluno usa o cód\. 3001/);
   });
   assert.deepEqual(erros,[]);await c.close();
  }finally{await browser.close();server.close();}

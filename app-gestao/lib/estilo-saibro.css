@@ -3697,6 +3697,8 @@ html body:not(#jv)[data-pagina]:not([data-pagina="dash"]) .top .top-actions .eye
   border-radius:12px!important;border:1px solid rgba(255,255,255,.12)!important;background:rgba(5,12,9,.42)!important;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.12)!important;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)
 }
+/* Para quem a marcação aparece no app do aluno (lista do horário). */
+.mov-l .na-app{display:block;margin-top:3px;font-size:12px;line-height:1.35;color:var(--jv-copy-soft,#E4DED3)}
 
 /* ===== Toques do tema Saibro ===== */
 .nav,.nav:after{background:#0B1B14!important;border-top:1px solid rgba(194,88,46,.35)!important}

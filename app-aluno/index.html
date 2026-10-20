@@ -1666,12 +1666,12 @@ html body:not(#jv) #pedir-box .btn-ghost{background:#F3EDE2!important;border:1px
 .login .login-sub{opacity:1}
 .login-priv{color:rgba(250,247,242,.8)}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-20-6">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-20-8">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-20-6">
-<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-20-6">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-20-8">
+<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-20-8">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -2164,7 +2164,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-10-20-6"></script>
+<script src="lib/icones.js?v=2026-10-20-8"></script>
 </div>
 
 <!-- MODAL ESCOLHER O QUE FAZER NO HORÁRIO -->
@@ -2391,7 +2391,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-10-20-6';
+const VERSAO='2026-10-20-8';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -2964,7 +2964,34 @@ function conferirRespostasReservas(){
     MEU.cancelados=MEU.cancelados.filter(c=>c.id!==r.id);voltou=true;
     toast('Cancelamento fora do prazo: sua aula de '+fmtData(r.data)+' às '+r.hora+' continua marcada. Fale com o João.');
   }
+  if(limparCancelados())voltou=true;
   if(voltou)try{saveMeu();}catch(e){}
+}
+/* O pedido de cancelamento fica guardado no aparelho só enquanto espera a
+   Gestão. Antes ele ficava para sempre: quando o João marcava de novo uma
+   aula no mesmo dia e hora, este app achava que era a aula cancelada e
+   mostrava "Cancelamento aguardando confirmação" ("Reserva" na grade) no
+   lugar de "Sua aula" (caso real, 20/10). Sai da lista quando:
+   - a data já passou;
+   - a Gestão respondeu que cancelou (resposta "cancelado" com o mesmo id);
+   - a aula não está mais na agenda publicada (o cancelamento foi aplicado).
+   Só muda o que este aparelho mostra; não mexe em aula, crédito ou valor. */
+function minhaEntradaNaGrade(dk,hora){
+  const G=PUB&&PUB.grade;if(!G)return null;          // sem agenda carregada: não dá para saber
+  const dia=new Date(dk+'T12:00:00').getDay();
+  const fx=(G.fixos||[]).some(f=>f.dia===dia&&f.hora===hora&&f.cod===MEU.codigo&&fixoValeEm(f,dk)&&!(G.excecoes||[]).some(x=>x.fixoId===f.id&&x.data===dk));
+  return fx||(G.eventos||[]).some(e=>e.data===dk&&e.hora===hora&&e.cod===MEU.codigo);
+}
+function limparCancelados(){
+  const lista=MEU.cancelados||[];if(!lista.length)return false;
+  const hoje=dKey(new Date()),resp=(PUB&&PUB.reservasRespostas)||[];
+  const fica=lista.filter(c=>{
+    if(!c||!c.data||c.data<hoje)return false;
+    if(c.id&&resp.some(r=>r.id===c.id&&r.estado==='cancelado'))return false;
+    return minhaEntradaNaGrade(c.data,c.hora)!==false;
+  });
+  if(fica.length===lista.length)return false;
+  MEU.cancelados=fica;return true;
 }
 async function refresh(silent){
   let raw=null;
@@ -5604,7 +5631,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-20-6').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-20-8').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava

@@ -8,6 +8,64 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-20 · Claude Code: cancelamento preso no app do aluno (a causa do "Reserva")
+
+Causa real do caso do aluno que via só uma das duas horas. Ele tem um
+cadastro só, e apagar e criar de novo não resolvia. Versão **2026-10-20-8**
+(PR #250).
+
+**Causa.** Quando o aluno cancela pelo app, o aparelho guarda o cancelamento
+(`MEU.cancelados`) até a Gestão responder. A Gestão responde "cancelado"
+quando aplica, mas o app do aluno só entendia "recusado". Com isso, o aviso
+ficava para sempre. Se o João marcasse de novo uma aula no mesmo dia e hora,
+o app mostrava "Cancelamento aguardando confirmação", que na grade aparece
+como "Reserva", no lugar de "Sua aula". Pode acontecer com qualquer aluno.
+
+O que mudou:
+- **App do aluno, `limparCancelados`** (chamada em `conferirRespostasReservas`).
+  O aviso sai quando:
+  - a data já passou;
+  - chega a resposta "cancelado" com o mesmo id;
+  - a aula não está mais na agenda publicada (`minhaEntradaNaGrade`).
+
+  O cancelamento ainda não processado continua aparecendo como pendente.
+  Sem agenda carregada, nada é apagado. Só muda o que o aparelho mostra; não
+  mexe em aula, crédito ou valor.
+- **Gestão, Conferir números (só lista):** mostra o aluno que cancelou pelo
+  app e teve a aula marcada de novo no mesmo horário (pelas
+  `respostasReservas` "cancelado" de hoje em diante).
+- **Teste novo:** `testar-cancelado-recriado-browser.cjs` (6 verificações),
+  no validar-pr.
+- **Aparelho não aprovado (legado):** não recebe as respostas. Nele, o aviso
+  sai pela regra "a aula saiu da agenda" ou pela data passada.
+
+---
+
+## 2026-10-20 · Claude Code: para quem o horário aparece no app do aluno
+
+Seguimento do caso do aluno que via só uma das duas horas. O João apagou e
+criou de novo, e continuou igual. Comparando as fotos, a publicação estava em
+dia (o resto da semana batia), então a hora ia com o código de outro
+cadastro. Suspeita mais forte: dois cadastros ATIVOS com o mesmo nome, com o
+aparelho do aluno ligado a um e as horas novas ligadas ao outro. Versão
+**2026-10-20-7**.
+- `noAppDoAluno(e)`: cada marcação na janela do horário diz para quem ela
+  aparece no app ("📱 No app: aula de X (cód. N) · tem o app / este
+  cadastro não tem o app aprovado"), ou que aparece como "Reserva".
+  Classe `na-app`.
+- `temAppAprovado(a)`: lê os acessos aprovados (`VINCULOS`); dá `null`
+  enquanto não leu.
+  - Na lista "Vincular aluno", o cadastro com o app aprovado aparece com
+    "📱 app".
+  - Em `horariosQueOAlunoNaoVe`, com dois cadastros ativos de mesmo nome,
+    vale o que tem o app; o motivo traz os dois códigos.
+- Conferir números (só lista) avisa: "Há N cadastros ativos com o nome X
+  (cód. …). O app do aluno usa o cód. …".
+- `testar-vinculo-agenda-browser.cjs`: 8 verificações, com o caso dos
+  cadastros gêmeos e a leitura da linha nova medida.
+
+---
+
 ## 2026-10-20 · Claude Code: horário que o app do aluno não vê
 
 Caso do João: duas horas seguidas do mesmo aluno na Gestão (ter 08h e 09h,

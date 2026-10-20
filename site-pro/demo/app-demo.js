@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-20-6';
+const VERSAO='2026-10-20-8';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -3818,14 +3818,35 @@ function horariosQueOAlunoNaoVe(a){
     if(String(codigoDaEntrada(e)||'')===String(a.codigo))return;
     const outro=e.alunoId?DB.alunos.find(x=>x.id===e.alunoId):null;
     if(outro&&outro.id!==a.id&&ativoNaAgenda(outro)&&nomeBateCom(e.titulo,outro)&&normNome(outro.nome)!==normNome(a.nome))return;   // outra pessoa de nome parecido, ativa: é dela
+    /* Dois cadastros ATIVOS com o mesmo nome: o certo é o que tem o app
+       aprovado. Se o outro é que tem o app, a marcação está certa para ele. */
+    if(outro&&outro.id!==a.id&&ativoNaAgenda(outro)&&normNome(outro.nome)===normNome(a.nome)){
+      const appA=temAppAprovado(a),appO=temAppAprovado(outro);
+      if(appO===true&&appA!==true)return;
+    }
     const quando=origem==='fixo'?('toda '+DIAS[e.dia]+' '+e.hora):(e.data.split('-').reverse().slice(0,2).join('/')+' '+e.hora);
-    const motivo=outro&&outro.id!==a.id?('ligado ao cadastro de '+outro.nome+(ativoNaAgenda(outro)?'':' (inativo)'))
+    const motivo=outro&&outro.id!==a.id?('ligado ao cadastro de '+outro.nome+' (cód. '+(outro.codigo||'—')+(ativoNaAgenda(outro)?'':', inativo')+')'+(temAppAprovado(a)===true?'; o app dele usa o cód. '+a.codigo:''))
       :(!e.alunoId?'sem vínculo e o nome não bate igual ao cadastro':'ligado a um cadastro que não existe mais');
     out.push({id:e.id,origem,quando,motivo,titulo:e.titulo,alunoIdAtual:e.alunoId||null});
   };
   (A.fixos||[]).forEach(f=>{if(!f.ate||f.ate>=hoje)confere(f,'fixo');});
   (A.eventos||[]).forEach(e=>{if(e.data>=hoje&&e.data<=limK)confere(e,'pontual');});
   return out;
+}
+/* Cadastro com o app do aluno aprovado (aparelho ligado em Acessos do aluno).
+   null = ainda não li os acessos da nuvem (não dá para afirmar nada). */
+function temAppAprovado(a){
+  if(!a||typeof VINC_LIDO==='undefined'||!VINC_LIDO)return null;
+  return Object.keys(VINCULOS||{}).some(uid=>{const v=VINCULOS[uid];if(!v||v.ativo!==true)return false;
+    const base=DB.alunos.find(x=>x.id===v.alunoId)||DB.alunos.find(x=>String(x.codigo||'')===String(v.codigo||''));return !!base&&base.id===a.id;});
+}
+/* Para quem a marcação aparece no app do aluno (a mesma conta da publicação). */
+function noAppDoAluno(e){
+  if(!e||!TIPOS_DO_ALUNO.includes(e.tipo))return '';
+  const c=codigoDaEntrada(e),a=c&&DB.alunos.find(x=>String(x.codigo||'')===String(c));
+  if(!a)return '📱 No app do aluno: aparece como "Reserva" (sem aluno ligado)';
+  const app=temAppAprovado(a);
+  return '📱 No app: aula de '+a.nome+' (cód. '+a.codigo+')'+(ativoNaAgenda(a)?'':' · cadastro INATIVO')+(app===true?' · tem o app':app===false?' · este cadastro não tem o app aprovado':'');
 }
 function horariosParaVincular(){
   const out=[];DB.alunos.filter(ativoNaAgenda).forEach(a=>horariosQueOAlunoNaoVe(a).forEach(h=>out.push(Object.assign({a},h))));
@@ -4477,7 +4498,7 @@ function openSlot(hora){
      nome, escolher o antigo fazia a aula sumir do app do aluno. */
   const ordem=DB.alunos.slice().sort((a,b)=>(ativoNaAgenda(a)?0:1)-(ativoNaAgenda(b)?0:1)||a.nome.localeCompare(b.nome));
   const repetido=n=>DB.alunos.filter(x=>normNome(x.nome)===normNome(n)).length>1;
-  sel.innerHTML='<option value="">— sem vínculo —</option>'+ordem.map(a=>`<option value="${esc(a.id)}">${esc(a.nome)}${ativoNaAgenda(a)?'':' · inativo'}${repetido(a.nome)?' · cód. '+esc(a.codigo||'—'):''} (${fmtCred(a.creditos)} créd.${(Number(a.locCred)||0)?' · '+fmtCred(a.locCred)+'h locação':''})</option>`).join('');
+  sel.innerHTML='<option value="">— sem vínculo —</option>'+ordem.map(a=>`<option value="${esc(a.id)}">${esc(a.nome)}${ativoNaAgenda(a)?'':' · inativo'}${repetido(a.nome)?' · cód. '+esc(a.codigo||'—'):''}${temAppAprovado(a)===true?' · 📱 app':''} (${fmtCred(a.creditos)} créd.${(Number(a.locCred)||0)?' · '+fmtCred(a.locCred)+'h locação':''})</option>`).join('');
   sel.value='';
   renderSlotEvs();
   pintarSelProf('');
@@ -4600,7 +4621,7 @@ function renderSlotEvs(){
   <div class="mov"><div class="mov-l"><b>👑 ${esc(e.titulo)}</b><span>${esc(e.tipo)}${e.tipo==='grupo'?(' · '+grupoLabel(e.pessoas)):''} · ${e.origem==='dono'?'marcada pela academia':''}</span></div>
     <div style="font-size:11px;color:var(--muted);font-weight:700;text-align:right;max-width:150px">quem marcou foi a academia — fale com o João para mudar</div></div>`;
   return `
-  <div class="mov"><div class="mov-l"><b>${nomeNaLista(e)}${e.alunoId?' 🔗':''}</b><span>${e.tipo==='grupo'&&nomeNaLista(e)!==e.titulo?'aula em grupo · '+grupoLabel(e.pessoas):e.tipo+(e.tipo==='grupo'?(' · '+grupoLabel(e.pessoas)):'')} · ${e.origem==='fixo'?'toda semana':'só nesta data'}</span></div>
+  <div class="mov"><div class="mov-l"><b>${nomeNaLista(e)}${e.alunoId?' 🔗':''}</b><span>${e.tipo==='grupo'&&nomeNaLista(e)!==e.titulo?'aula em grupo · '+grupoLabel(e.pessoas):e.tipo+(e.tipo==='grupo'?(' · '+grupoLabel(e.pessoas)):'')} · ${e.origem==='fixo'?'toda semana':'só nesta data'}</span>${e.tipo==='grupo'?'':(noAppDoAluno(e)?'<span class="na-app">'+esc(noAppDoAluno(e))+'</span>':'')}</div>
     <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">
       ${e.tipo==='grupo'?`<select onchange="setPessoas('${e.id}','${e.origem}',this.value)" style="padding:6px 8px;font-size:11px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--text);font-weight:700">
         <option value="2"${(e.pessoas||2)==2?' selected':''}>👥 Dupla</option>
@@ -10795,6 +10816,22 @@ function achadosDoAluno(a){
              +'Se ele saiu mesmo, encerre esses horários na agenda.'});
       }
     }
+    // dois cadastros ativos com o mesmo nome (aula vai para um, o app usa o outro)
+    const gemeos=DB.alunos.filter(x=>x.id!==a.id&&ativoNaAgenda(x)&&normNome(x.nome)===normNome(a.nome));
+    if(ativoNaAgenda(a)&&gemeos.length){
+      const comApp=[a].concat(gemeos).filter(x=>temAppAprovado(x)===true);
+      achados.push({tipo:'aviso',a,txt:'Há '+(gemeos.length+1)+' cadastros ativos com o nome '+a.nome+' (cód. '+[a].concat(gemeos).map(x=>x.codigo||'—').join(', ')+'). '
+        +(comApp.length===1?'O app do aluno usa o cód. '+comApp[0].codigo+': as aulas ligadas ao outro aparecem para ele como "Reserva". ':'Aula ligada a um cadastro não aparece no app do outro. ')
+        +'Vale deixar só um ativo (Alunos → ficha → inativar o que sobra).'});
+    }
+    /* Cancelou pelo app e a aula foi marcada de novo no mesmo dia e hora: o
+       app do aluno anterior a 20/10 guardava o cancelamento para sempre e
+       mostrava "Reserva" no lugar de "Sua aula". Só lista. */
+    const recriadas=(DB.respostasReservas||[]).filter(r=>r.estado==='cancelado'&&String(r.codigo||'')===String(a.codigo||'')&&r.data>=dKey(new Date())
+      &&entriesFor(new Date(r.data+'T12:00:00'),r.hora).some(e=>String(codigoDaEntrada(e)||'')===String(a.codigo||'')));
+    if(recriadas.length)achados.push({tipo:'aviso',a,
+      txt:a.nome+' cancelou pelo app '+recriadas.map(r=>r.data.split('-').reverse().slice(0,2).join('/')+' '+r.hora).join(', ')+' e a aula foi marcada de novo nesse horário. '
+        +'No app dele pode aparecer "Reserva" no lugar de "Sua aula" até ele abrir o app atualizado (fechar e abrir de novo).'});
     // horários com o nome dele que o app dele não mostra como dele
     const nv=horariosQueOAlunoNaoVe(a);
     if(nv.length)achados.push({tipo:'aviso',a,
