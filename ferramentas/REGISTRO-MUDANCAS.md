@@ -8,6 +8,31 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-20 · Claude Code: para quem o horário aparece no app do aluno
+
+Seguimento do caso do aluno que via só uma das duas horas. O João apagou e
+criou de novo, e continuou igual. Comparando as fotos, a publicação estava em
+dia (o resto da semana batia), então a hora ia com o código de outro
+cadastro. Suspeita mais forte: dois cadastros ATIVOS com o mesmo nome, com o
+aparelho do aluno ligado a um e as horas novas ligadas ao outro. Versão
+**2026-10-20-7**.
+- `noAppDoAluno(e)`: cada marcação na janela do horário diz para quem ela
+  aparece no app ("📱 No app: aula de X (cód. N) · tem o app / este
+  cadastro não tem o app aprovado"), ou que aparece como "Reserva".
+  Classe `na-app`.
+- `temAppAprovado(a)`: lê os acessos aprovados (`VINCULOS`); dá `null`
+  enquanto não leu.
+  - Na lista "Vincular aluno", o cadastro com o app aprovado aparece com
+    "📱 app".
+  - Em `horariosQueOAlunoNaoVe`, com dois cadastros ativos de mesmo nome,
+    vale o que tem o app; o motivo traz os dois códigos.
+- Conferir números (só lista) avisa: "Há N cadastros ativos com o nome X
+  (cód. …). O app do aluno usa o cód. …".
+- `testar-vinculo-agenda-browser.cjs`: 8 verificações, com o caso dos
+  cadastros gêmeos e a leitura da linha nova medida.
+
+---
+
 ## 2026-10-20 · Claude Code: horário que o app do aluno não vê
 
 Caso do João: duas horas seguidas do mesmo aluno na Gestão (ter 08h e 09h,
