@@ -8,6 +8,44 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-20 · Claude Code: assistente por voz no app do aluno
+
+Pedido do João: o mesmo botão de áudio da Gestão, para os alunos. Com ele, o
+aluno agenda, cancela ou confere se um horário está livre. Versão
+**2026-10-20-9**.
+
+- **`app-aluno/lib/voz-aluno.js`** e **`voz-aluno.css`** (prefixo `va-`).
+  - O botão redondo fica acima da barra de baixo. Só aparece para quem entrou
+    no app e some quando outra janela está aberta.
+  - O aluno fala (reconhecimento de fala do próprio celular) ou escreve.
+  - A leitura da frase é local, sem serviço externo, e o texto não é
+    guardado.
+- O que o aluno pode pedir:
+  - **Horário livre.** "Tem horário livre amanhã?" lista os horários livres
+    para aula (sem ocupados, sem torneio e sem os que já passaram), cada um
+    com um botão "Agendar".
+  - **Um horário específico.** "Quinta às 19 está livre?": se estiver
+    ocupado, oferece "Avisar se liberar" (lista de espera) e outros horários
+    livres do dia.
+  - **Agendar.** "Marcar quinta às 18" abre a **mesma janela de
+    agendamento** do app (`gotoBook` → `escolherSlot`), com todas as regras.
+    Nada é pedido sem o aluno escolher e confirmar.
+  - **Cancelar.** "Cancelar minha aula de terça às 9" acha a aula e usa o
+    **mesmo `cancelarAula`**, com a confirmação e o prazo de 4 horas.
+  - **Consultas.** "Minhas aulas" e "créditos".
+  - **Hora ambígua.** "Às 8" sem manhã/tarde pergunta "08:00 ou 20:00",
+    conforme a grade.
+- **Respostas em voz alta:** opção no painel, lembrada no aparelho
+  (`jv-va-ouvir`).
+- `PUB`, `EU` e `MEU` são `let` no script principal. O módulo lê esses
+  valores pelo nome (`pub()`, `eu()`, `meu()`), não por `window`.
+- **Testes:**
+  - Novo: `ferramentas/testar-voz-aluno-browser.cjs` (12 verificações).
+  - `testar-contraste-aluno-browser.cjs` ganhou 2 telas do assistente.
+- **No iPhone:** o Safari pode não ter o reconhecimento de fala dentro do
+  app. Nesse caso, o painel indica o microfone do teclado (ditado), e
+  escrever também funciona.
+
 ## 2026-10-20 · Claude Code: cancelamento preso no app do aluno (a causa do "Reserva")
 
 Causa real do caso do aluno que via só uma das duas horas. Ele tem um

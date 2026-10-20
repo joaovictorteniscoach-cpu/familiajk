@@ -1,0 +1,38 @@
+/* Assistente por voz do aluno: folha própria (prefixo va-), mesmo desenho do
+   botão de voz da Gestão. Cores fixas e legíveis nos dois temas do aluno. */
+#va-atalho[hidden],#va-painel[hidden],#va-painel [hidden]{display:none!important}
+body.va-aberto{overflow:hidden!important}
+html body:not(#jv) #va-atalho{position:fixed;right:max(16px,calc((100vw - 520px)/2 + 16px));bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:45;width:54px;height:54px;min-width:54px;min-height:54px;padding:0;display:grid;place-items:center;border:1px solid #FFDEA6;border-radius:50%;background:linear-gradient(135deg,#F6D59B,#C2582E);color:#102A21;-webkit-text-fill-color:#102A21;box-shadow:inset 0 1px 5px #FFFFFF80,0 0 14px #F4C25D70,0 6px 18px #0005;cursor:pointer}
+html:not(.tema-saibro) body:not(#jv) #va-atalho{background:linear-gradient(135deg,#EEF4A0,#D4E157);border-color:#D4E157}
+html body:not(#jv) #va-atalho svg{width:25px;height:25px;stroke:currentColor;fill:none;stroke-width:2}
+html body:not(#jv) #va-painel{position:fixed;inset:0;z-index:150;display:flex;align-items:flex-end;justify-content:center;padding:16px 12px calc(16px + env(safe-area-inset-bottom,0px));background:#03110dc9;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+html body:not(#jv) #va-painel .va-card{width:100%;max-width:496px;max-height:calc(100dvh - 32px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;overflow:auto;overscroll-behavior:contain;background:#102A21;color:#F5F7F1;-webkit-text-fill-color:#F5F7F1;border:1px solid #8D9E88;border-radius:22px;padding:16px;box-shadow:0 20px 70px #0009;box-sizing:border-box}
+#va-painel .va-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 10px}
+html body:not(#jv) #va-painel h2{margin:0;flex:1;font:800 20px/1.25 'DM Sans',sans-serif;color:#FFF;-webkit-text-fill-color:#FFF}
+html body:not(#jv) #va-painel button{min-height:44px;padding:10px 14px;border:1px solid #89A18D;border-radius:12px;background:#234638;color:#FFF;-webkit-text-fill-color:#FFF;font:800 13px/1.3 'DM Sans',sans-serif;cursor:pointer;box-shadow:none;text-shadow:none}
+html body:not(#jv) #va-painel #va-fechar{min-width:44px;padding:8px;font-size:22px;line-height:1}
+html body:not(#jv) #va-painel .va-conversa{display:flex;flex-direction:column;gap:8px;min-height:90px;max-height:min(42vh,360px);overflow-y:auto;overscroll-behavior:contain;padding:10px;border:1px solid #58705D;border-radius:16px;background:#0A1F17}
+#va-painel .va-msg{max-width:92%;padding:9px 12px;border-radius:16px;overflow-wrap:anywhere}
+html body:not(#jv) #va-painel .va-msg p{margin:0;font:500 14px/1.45 'DM Sans',sans-serif;color:inherit;-webkit-text-fill-color:inherit}
+html body:not(#jv) #va-painel .va-msg.va-eu{align-self:flex-end;background:#2F5A47;color:#FFF;-webkit-text-fill-color:#FFF;font:600 14px/1.45 'DM Sans',sans-serif;border-bottom-right-radius:5px}
+html body:not(#jv) #va-painel .va-msg.va-eu-nao{align-self:flex-start;background:#F8F6EE;color:#203028;-webkit-text-fill-color:#203028;border-bottom-left-radius:5px}
+#va-painel .va-acoes{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+html body:not(#jv) #va-painel .va-acoes .va-bt{flex:1 1 auto;min-height:44px;padding:8px 12px;border:0;border-radius:12px;background:#1F5A3F;color:#FFF;-webkit-text-fill-color:#FFF;font:700 13.5px/1.2 'DM Sans',sans-serif}
+html body:not(#jv) #va-painel #va-status{min-height:20px;margin:8px 0 4px;font:650 13px/1.4 'DM Sans',sans-serif;color:#E5EFDF;-webkit-text-fill-color:#E5EFDF}
+html body:not(#jv) #va-painel #va-status:empty{min-height:0;margin:4px 0}
+#va-painel .va-entrada{display:flex;gap:8px;align-items:stretch}
+html body:not(#jv) #va-painel #va-texto{flex:1;min-width:0;min-height:46px;max-height:110px;padding:11px;border:1px solid #B4C2AE;border-radius:11px;background:#F8F6EE;color:#203028;-webkit-text-fill-color:#203028;font:500 16px/1.4 'DM Sans',sans-serif;box-sizing:border-box;resize:none}
+html body:not(#jv) #va-painel #va-texto::placeholder{color:#5D6A61;-webkit-text-fill-color:#5D6A61;opacity:1}
+html body:not(#jv) #va-painel #va-enviar{flex:0 0 auto;min-width:76px}
+html body:not(#jv) #va-painel #va-falar{width:100%;margin:8px 0 0;display:flex;align-items:center;justify-content:center;gap:10px;background:#D4E157;border-color:#D4E157;color:#1E2A0E;-webkit-text-fill-color:#1E2A0E;font-size:15px;min-height:50px}
+html.tema-saibro body:not(#jv) #va-painel #va-falar{background:linear-gradient(135deg,#F6D59B,#E0824F);border-color:#F6D59B;color:#1E140A;-webkit-text-fill-color:#1E140A}
+#va-painel #va-falar svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;flex:0 0 auto}
+#va-painel #va-falar.ouvindo{animation:va-pulso 1.4s ease-in-out infinite}
+#va-painel .va-ex-lista{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+html body:not(#jv) #va-painel .va-ex{flex:1 1 auto;min-height:40px;padding:7px 11px;border-radius:999px;background:#183A2D;border-color:#6F8C77;font:700 12.5px/1.25 'DM Sans',sans-serif}
+html body:not(#jv) #va-painel .va-check{display:flex;align-items:center;gap:10px;min-height:44px;margin:6px 0 0;font:600 13px/1.4 'DM Sans',sans-serif;color:#E0E8DD;-webkit-text-fill-color:#E0E8DD}
+#va-painel .va-check input{width:20px;height:20px;accent-color:#D4E157;margin:0}
+html body:not(#jv) #va-painel .va-nota{margin:4px 0 0;font:500 12px/1.45 'DM Sans',sans-serif;color:#D5DFD1;-webkit-text-fill-color:#D5DFD1}
+#va-painel :focus-visible,#va-atalho:focus-visible{outline:3px solid #F4C25D!important;outline-offset:3px}
+@keyframes va-pulso{50%{box-shadow:0 0 0 5px #D4E15740}}
+@media(prefers-reduced-motion:reduce){#va-painel *,#va-atalho{animation:none!important;transition:none!important}}
