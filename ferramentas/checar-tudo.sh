@@ -19,6 +19,8 @@ echo; echo "### 7. Regressao do arquivo P0 — final (nao autoriza publicacao)"
 python3 ferramentas/checar-regras.py ferramentas/firebase-regras-etapa4-estrita.json || falhou=1
 echo; echo "### 8. Segurança P0: identidade, privacidade e modularizacao"
 python3 ferramentas/checar-seguranca-p0.py || falhou=1
+echo; echo "### 8a. Privacidade do Família JK (código público)"
+python3 ferramentas/checar-privacidade-familia.py || falhou=1
 echo; echo "### 8b. Banco de exercicios e a tela que le dele"
 node ferramentas/checar-exercicios.js || falhou=1
 echo; echo "### 9. Carimbo de versao dos apps"
