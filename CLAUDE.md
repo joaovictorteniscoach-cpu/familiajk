@@ -52,6 +52,11 @@ Use `grep -n` pelos títulos de seção (`/* ===== Título =====`) ou pelo nome 
 - Quadrinhos do Início: `abrirDetAlunos`, `abrirDetCreditos` (`validadeRepos`), `abrirDetOcupacao` (`slotsDoDia`), `abrirDetLocacoes` → `#ov-jh-det`
 - Torneio: `campeoesDe`, `encerrarEtapa`, homenagens 1º/2º (`abrirHomenagens`, `homArte`, `homMensagem`)
 - Tempo em Curitiba: `climaDoCodigo`, `iconeClima` (SVG, mesmo desenho no app do aluno; nada de emoji), `abrirClimaGestao`/`pintarPrevisaoClima`
+- Ocupação dia/mês/ano (janela do quadrinho): `ocupacaoTresPrazos`, `ocupacaoAno` (ano desde o 1º registro)
+- Caixa, locação com tempo: `lancCatMudou`/`lancHorasMudou`/`lancHorasLidas` (grava `horas` no lançamento; não mexe em crédito)
+- Diferença agenda × valor: `difSilenciada` (só volta na virada; `mesReal`), `limparDifNaRenovacao`
+- Pacotes explicados: `pacotesPadrao`/`renderPacotesLista` (classes `pk-`); topo das outras páginas: bloco "Topo das outras páginas" no `estilo.css`
+- Varredura de atalhos: `ferramentas/testar-atalhos-gestao-browser.cjs` (tabela `DESTINOS`; atalho novo precisa entrar nela)
 - Segurança na Gestão: `argJs`, `sairEApagar`, `prontidaoRegraFinal`, `uidCadastroLivre`, `cancelamentoTardio`, `publicacaoLegadaEnxuta`
 
 Convenções: `fmt()` mascara valores quando `hideVals` está ligado — em mensagem ao aluno

@@ -30,11 +30,11 @@
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" id="css-tema" href="lib/estilo.css?v=2026-10-20-1">
+<link rel="stylesheet" id="css-tema" href="lib/estilo.css?v=2026-10-20-2">
 <!-- Tema de cores: Saibro é o padrão desde 2026-10; "Verde clássico" fica a um
      toque em Segurança e dados. Troca o arquivo antes da primeira pintura. -->
 <script>try{if(localStorage.getItem('jv-tema')!=='classico'){var _ct=document.getElementById('css-tema');_ct.href=_ct.getAttribute('href').replace('estilo.css','estilo-saibro.css');document.documentElement.classList.add('tema-saibro');}}catch(e){}</script>
-<link rel="stylesheet" href="lib/acoes-voz.css?v=2026-10-20-1">
+<link rel="stylesheet" href="lib/acoes-voz.css?v=2026-10-20-2">
 <!-- ================= DEMO ISOLADA ================= -->
 <script>
 /* Espelho comercial do Gestão atual.
@@ -866,7 +866,8 @@ function esperarAuth(){return Promise.resolve();}
 
 <div class="overlay" id="ov-pacotes-lista" onclick="if(event.target===this)closeModal('ov-pacotes-lista')">
   <div class="modal">
-    <h3>Pacotes personalizados</h3>
+    <h3>Pacotes</h3>
+    <p class="hint pk-dica">Toque num pacote para ver como ele funciona: preço, créditos, o que acontece na virada e quantos alunos usam.</p>
     <div id="pacotes-lista" style="margin:8px 0 4px"></div>
     <div class="modal-acts">
       <button class="btn btn-ghost" onclick="closeModal('ov-pacotes-lista')">Fechar</button>
@@ -1044,7 +1045,7 @@ function esperarAuth(){return Promise.resolve();}
   <button onclick="go('lanc',this)"><span class="ico" data-ic="navcash"></span>Caixa</button>
   <button id="nav-mais" onclick="abrirMais()"><span class="ico" data-ic="navmore"></span>Mais</button>
 </nav>
-<script src="lib/icones.js?v=2026-10-20-1"></script>
+<script src="lib/icones.js?v=2026-10-20-2"></script>
 
 <!-- MODAL ALUNO -->
 <div class="overlay" id="ov-aluno" onclick="if(event.target===this)closeModal('ov-aluno')">
@@ -1287,14 +1288,18 @@ function esperarAuth(){return Promise.resolve();}
   <div class="modal">
     <h3>Nova receita</h3>
     <div class="field"><label>Vincular aluno / locatário (opcional)</label>
-      <select id="l-aluno"><option value="">— ninguém —</option></select>
+      <select id="l-aluno" onchange="lancAlunoMudou()"><option value="">— ninguém —</option></select>
     </div>
     <div class="field"><label>Descrição</label><input id="l-desc" placeholder="Ex.: Locação 2h, aula experimental…"></div>
     <div class="row2">
       <div class="field"><label>Valor (R$)</label><input type="number" id="l-valor" inputmode="decimal"></div>
       <div class="field"><label>Categoria</label>
-        <select id="l-cat"><option value="avulsa">Avulsa</option><option value="locacao">Locação</option><option value="mensalidade">Mensalidade</option><option value="outro">Outro</option></select>
+        <select id="l-cat" onchange="lancCatMudou('l')"><option value="avulsa">Avulsa</option><option value="locacao">Locação</option><option value="mensalidade">Mensalidade</option><option value="outro">Outro</option></select>
       </div>
+    </div>
+    <div class="field" id="l-horas-wrap" style="display:none"><label for="l-horas">Tempo locado (horas)</label>
+      <div class="lh-linha"><button type="button" onclick="lancHorasPasso('l',-0.5)" aria-label="Meia hora a menos">−</button><input type="text" id="l-horas" inputmode="decimal" autocomplete="off" oninput="lancHorasMudou('l')"><button type="button" onclick="lancHorasPasso('l',0.5)" aria-label="Meia hora a mais">+</button></div>
+      <p class="hint" id="l-horas-dica"></p>
     </div>
     <div class="field"><label>Data</label><input type="date" id="l-data"></div>
     <div class="modal-acts">
@@ -1367,6 +1372,10 @@ function esperarAuth(){return Promise.resolve();}
         <option value="outro">Outro recebimento</option>
         <option value="despesa">Despesa (saída)</option>
       </select>
+    </div>
+    <div class="field" id="le-horas-wrap" style="display:none"><label for="le-horas">Tempo locado (horas)</label>
+      <div class="lh-linha"><button type="button" onclick="lancHorasPasso('le',-0.5)" aria-label="Meia hora a menos">−</button><input type="text" id="le-horas" inputmode="decimal" autocomplete="off" oninput="lancHorasMudou('le')"><button type="button" onclick="lancHorasPasso('le',0.5)" aria-label="Meia hora a mais">+</button></div>
+      <p class="hint" id="le-horas-dica"></p>
     </div>
     <div class="field" id="le-despcat-wrap" style="display:none"><label>Tipo da despesa</label>
       <input id="le-despcat" placeholder="ex.: Aluguel, Impostos, Manutenção"></div>
@@ -1631,8 +1640,8 @@ function esperarAuth(){return Promise.resolve();}
 
 <div class="toast" id="toast"></div>
 
-<script src="app-demo.js?v=2026-10-20-1"></script>
-<script src="lib/acoes-voz.js?v=2026-10-20-1"></script>
+<script src="app-demo.js?v=2026-10-20-2"></script>
+<script src="lib/acoes-voz.js?v=2026-10-20-2"></script>
 <script>
 /* Rede de seguranca do par tela+codigo.
 
@@ -1647,7 +1656,7 @@ function esperarAuth(){return Promise.resolve();}
    torto, o app busca o par certo uma vez e, se insistir, DIZ o que houve em
    vez de deixar voce tocando em botao que nao responde. */
 (function(){
-  var ESPERADA='2026-10-20-1';
+  var ESPERADA='2026-10-20-2';
   function tela(motivo){
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;z-index:99999;background:#1A2E14;color:#FAF7F2;'

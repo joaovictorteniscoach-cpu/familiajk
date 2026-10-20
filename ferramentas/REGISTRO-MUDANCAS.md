@@ -8,6 +8,64 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-20 · Claude Code: topo menor, ocupação dia/mês/ano, locação com tempo, pacotes explicados e varredura de atalhos
+
+Pedidos do João em 20/10 (mesmo PR dos quadrinhos, ainda não publicado).
+Versão **2026-10-20-2**.
+- **Topo das outras páginas** (`estilo.css`, bloco "Topo das outras páginas"):
+  - era 176px em três andares (marca, 4 botões, mês) + área da câmera;
+  - agora são dois andares: marca e botões numa linha, mês e nuvem na outra
+    (cerca de 105px; Agenda 61px); abaixo de 390px some o nome e fica o escudo, para os botões manterem 40px. A foto de perfil fica só no Início;
+  - ao rolar o tamanho não muda;
+  - o texto da nuvem ganhou fundo escuro próprio (contraste medido);
+  - Início não muda.
+- **Ocupação dia/mês/ano** (`ocupacaoTresPrazos`, `ocupacaoAno`), na janela do
+  quadrinho:
+  - mês = mês inteiro, igual ao quadrinho;
+  - ano = 1º/jan até hoje; se os registros começam depois, diz "desde dd/mm
+    (início dos registros)"; ano passado = ano todo;
+  - mesma conta de `ocupacao_`.
+- **Caixa: locação com tempo** (`lancCatMudou`, `lancHorasMudou`,
+  `lancHorasPasso`, `lancHorasLidas`, `lancAlunoMudou`):
+  - escolher Locação mostra o tempo em horas (− / +, de meia em meia);
+  - o valor sai da hora × `DB.precos.locacao` e pode ser trocado;
+  - o lançamento grava `horas`, e a linha da Caixa mostra "⏱ 1,5h";
+  - também na edição; trocar a categoria tira o tempo;
+  - vincular um locatário puxa a categoria Locação;
+  - o atalho "Locação 1h" e o "Locação paga" da ficha também gravam `horas`;
+  - **não mexe em crédito de ninguém.**
+- **Diferença agenda × valor** (`difSilenciada`, `limparDifNaRenovacao`):
+  - "Manter" silencia o aviso até a VIRADA do mês;
+  - antes voltava quando os créditos zeravam, que é justamente o aluno de
+    reposição ou aula extra;
+  - o mês é o real (`mesReal`), não o do cabeçalho;
+  - renovar no mesmo mês mantém a decisão;
+  - a ficha diz "Você manteve…" em vez de "cobrou".
+- **Pacotes** (`pacotesPadrao`, `renderPacotesLista`, `pkAlterna`,
+  `irParaValores`, classes `pk-`):
+  - lista os pacotes do app e os personalizados; cada um abre e explica
+    preço, créditos, virada, cancelamento e alunos ativos;
+  - os valores vêm das mesmas tabelas que o app usa (Particular/Personal =
+    aulas × valor do cadastro; Dupla/Trio/Quarteto = `grupoPreco`; Grupo
+    antigo = `PRECOS.Grupo`);
+  - inclui "Mudar valores ›" (Financeiro); só leitura.
+- **Atalhos**: tocar no aviso da nuvem agora acende o "Mais" na barra
+  (`irParaAba('seg')`).
+- **Testes novos** no validar-pr:
+  - `testar-lanc-locacao-horas-browser.cjs`;
+  - `testar-diferenca-agenda-browser.cjs`;
+  - `testar-pacotes-detalhe-browser.cjs`;
+  - `testar-atalhos-gestao-browser.cjs`: 49 atalhos do Início, menu, barra,
+    Mais e Financeiro; atalho novo sem destino conhecido faz falhar.
+- **Testes ajustados:**
+  - `testar-detalhe-inicio-browser.cjs` cobre dia/mês/ano;
+  - `checar-familia-runtime.js` carrega `limparDifNaRenovacao`.
+- **Pendente:** o João citou "estilo Air do Windows XP para frente" como
+  referência. Perguntado se é o vidro translúcido do Aero (Vista/7) antes de
+  mexer no visual.
+
+---
+
 ## 2026-10-20 · Claude Code: quadrinhos do Início abrem a lista que explica o número
 
 O João pediu que os quadrinhos do Início abram detalhes, em vez de só pular

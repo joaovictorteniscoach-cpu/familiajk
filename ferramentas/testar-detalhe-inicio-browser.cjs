@@ -58,6 +58,14 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
     assert.equal(r.tit,'Horários livres e ocupados');
     const pct=r.txt.match(/(\d+%) ocupado/);assert.ok(pct,'mostra a %');assert.equal(pct[1],quad);
     assert.match(r.txt,/09:00 Ocupado Aluno Um/);assert.match(r.txt,/14:00 Locação Cliente Locação/);assert.match(r.txt,/Livre/);
+    // dia, mês e ano: mês = mesma conta do quadrinho; ano = desde o 1º registro (01/09) até hoje
+    const tres=await g.evaluate(()=>{const c=[...document.querySelectorAll('#jhd-corpo .jhd-oc3 > div')].map(d=>d.innerText.replace(/\s+/g,' ').trim());
+     const pct=o=>o.disp?o.pct+'%':'—',m=ocupacao(new Date('2026-10-01T12:00:00'),new Date('2026-10-31T12:00:00')),a=ocupacao(new Date('2026-09-01T12:00:00'),new Date('2026-10-20T12:00:00'));
+     return {c,mes:pct(m)+' '+m.ocup+' de '+m.disp,ano:pct(a)+' '+a.ocup+' de '+a.disp,quadMes:document.getElementById('ocup-txt').textContent};});
+    assert.equal(tres.c.length,3);
+    assert.match(tres.c[0],new RegExp('^Dia '+quad+' .* 20/10$'));
+    assert.equal(tres.c[1],'Mês '+tres.mes+' horários Outubro');assert.equal(tres.quadMes,tres.mes.split(' ')[0]+' no mês');
+    assert.equal(tres.c[2],'Ano 2026 '+tres.ano+' horários desde 01/09 (início dos registros)');
     const livres=await g.evaluate(()=>document.querySelectorAll('#jhd-corpo .jhd-slots li.livre').length);
     const oc=await g.evaluate(()=>{const d=new Date('2026-10-20T12:00:00');return ocupacao(d,d);});
     assert.equal(livres,oc.disp-oc.ocup,'livres = abertos − ocupados');
