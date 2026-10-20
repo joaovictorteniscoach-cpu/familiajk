@@ -3526,3 +3526,145 @@ html body:not(#jv) .trilha-pills button.on{background:#A9471F;border-color:#A947
 .rpm .rpm-lista b{color:#fff;font-size:14.5px}
 .rpm .rpm-lista span{color:#E4DED3;font-size:13px;line-height:1.4}
 .rpm .rpm-vazio,.rpm .rpm-nota{margin:4px 0 10px;color:#D8D2C7;font-size:12.5px;line-height:1.4}
+
+/* Detalhe dos quadrinhos do Início (20/10): Alunos, Créditos, Ocupação e
+   Locações abrem a lista que explica o número. Janela escura, como as do Início. */
+.jhd .jhd-res{margin:0 0 10px;color:#E4DED3;font-size:14px;line-height:1.45}
+.jhd .jhd-res b{color:#fff}
+.jhd .jhd-sub{margin:12px 0 6px;color:#F0D57C;font-size:12.5px;font-weight:800;letter-spacing:.3px}
+.jhd .jhd-nota{margin:8px 0 10px;color:#D8D2C7;font-size:12.5px;line-height:1.4}
+.jhd .jhd-chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px}
+.jhd .jhd-chips span{padding:5px 10px;border-radius:9px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#F2EEE6;font-size:12.5px;font-weight:700}
+.jhd .jhd-tab{width:100%;border-collapse:collapse;font-size:13px}
+.jhd .jhd-tab th{color:#D8D2C7;font-size:11px;font-weight:800;text-align:left;padding:5px 4px;border-bottom:1px solid rgba(255,255,255,.14)}
+.jhd .jhd-tab td{color:#F2EEE6;padding:7px 4px;border-bottom:1px solid rgba(255,255,255,.07)}
+.jhd .jhd-tab td b{color:#fff}
+.jhd .jhd-tab small.up{color:#7FDDA5;font-weight:800}
+.jhd .jhd-tab small.dn{color:#FF9A8E;font-weight:800}
+.jhd .jhd-lista{list-style:none;margin:0 0 8px;padding:0;max-height:54vh;overflow:auto}
+.jhd .jhd-lista li{padding:9px 10px;margin:0 0 6px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);cursor:pointer}
+.jhd .jhd-lista li.hoje{border-color:#F0D57C}
+.jhd .jhd-l1{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.jhd .jhd-l1 b{color:#fff;font-size:14.5px}
+.jhd .jhd-l1 em{font-style:normal;color:#E4DED3;font-size:13px;font-weight:700;white-space:nowrap}
+.jhd .jhd-val{margin-top:4px;color:#E4DED3;font-size:12.5px;line-height:1.5}
+.jhd .jhd-val span{display:inline-block;margin-right:8px}
+.jhd .jhd-val span.urg{color:#FF9A8E;font-weight:800}
+.jhd .jhd-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 8px}
+.jhd .jhd-nav b{color:#fff;font-size:15px}
+.jhd .jhd-nav button{width:44px;height:44px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#fff;font-size:22px;font-weight:800;cursor:pointer}
+.jhd .jhd-slots{list-style:none;margin:0 0 8px;padding:0;max-height:52vh;overflow:auto}
+.jhd .jhd-slots li{display:grid;grid-template-columns:52px 84px minmax(0,1fr);gap:8px;align-items:center;padding:8px 10px;margin:0 0 5px;border-radius:10px;background:rgba(255,255,255,.05);border-left:4px solid #8A8274}
+.jhd .jhd-slots .h{color:#fff;font-weight:800;font-size:14px}
+.jhd .jhd-slots .e{font-size:12.5px;font-weight:800;color:#E4DED3}
+.jhd .jhd-slots .n{color:#E4DED3;font-size:12.5px;overflow-wrap:anywhere}
+.jhd .jhd-slots li.ocup{border-left-color:#7FDDA5}.jhd .jhd-slots li.ocup .e{color:#9BE3B4}
+.jhd .jhd-slots li.livre{border-left-color:#F0D57C}.jhd .jhd-slots li.livre .e{color:#F0D57C}
+.jhd .jhd-slots li.loc .e{color:#E8C766}
+.jhd .jhd-slots li.bloq .e{color:#FFB4A8}
+.jhd .jhd-ir{display:flex;align-items:center;justify-content:center;width:100%;min-height:44px;padding:12px;margin:6px 0 7px;border-radius:12px;border:1px solid rgba(224,185,79,.35);background:rgba(242,178,51,.12);color:#fff;-webkit-text-fill-color:#fff;font:700 15px 'DM Sans',sans-serif;cursor:pointer}
+
+/* ===== Topo das outras páginas (20/10) =====
+   Fora do Início o topo ocupava ~176px (marca, fileira de botões e mês em
+   três andares) e no iPhone ainda soma a área da câmera. Agora são dois
+   andares: marca + botões numa linha, mês + nuvem na outra. A foto de perfil
+   fica só no Início. Ao rolar ele não muda de tamanho (sem pulo). */
+body[data-pagina]:not([data-pagina="dash"]) .top.jv-premium-hero,
+body[data-pagina]:not([data-pagina="dash"]) .top.compacto.jv-premium-hero{
+  display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;
+  grid-template-areas:"brand actions" "month month"!important;
+  align-items:center!important;column-gap:8px!important;row-gap:8px!important;
+  padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px!important;min-height:0!important
+}
+body[data-pagina]:not([data-pagina="dash"]) .top .jv-avatar-btn{display:none!important}
+body[data-pagina]:not([data-pagina="dash"]) .top .jv-gestao-brand{display:flex!important;grid-area:brand!important;min-width:0!important;transform:none!important}
+body[data-pagina]:not([data-pagina="dash"]) .top .jv-gestao-brand span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+body[data-pagina]:not([data-pagina="dash"]) .top .top-actions{display:flex!important;grid-area:actions!important;margin:0!important;gap:6px!important;justify-content:flex-end!important}
+body[data-pagina]:not([data-pagina="dash"]) .top .top-actions .eye-btn{width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;flex:0 0 40px!important}
+body[data-pagina]:not([data-pagina="dash"]) .top .top-month{grid-area:month!important;display:flex!important;flex-wrap:nowrap!important;align-items:center!important;gap:10px!important;margin:0!important;min-height:0!important;padding:0!important;border:0!important;background:transparent!important}
+body[data-pagina]:not([data-pagina="dash"]) .top .jv-ref-month-chip{flex:0 0 auto}
+body[data-pagina]:not([data-pagina="dash"]) .top .top-month .save-state{flex:1 1 auto;min-width:0;text-align:right!important;white-space:normal!important;overflow:hidden!important;display:-webkit-box!important;-webkit-box-orient:vertical;-webkit-line-clamp:2;padding:4px 8px!important;border-radius:9px;background:rgba(4,16,11,.82)!important;font-size:11.5px!important;line-height:1.3!important}
+body[data-pagina="agenda"]:not([data-pagina="dash"]) .top.jv-premium-hero.jv-premium-hero{grid-template-areas:"brand actions"!important}
+body[data-pagina="agenda"]:not([data-pagina="dash"]) .top.jv-premium-hero .top-month.top-month{display:none!important}
+/* Botões ficam com 40px (dedo); em tela menor que 390px sai o nome, fica o escudo. */
+@media(max-width:389px){
+  body[data-pagina]:not([data-pagina="dash"]) .top .jv-gestao-brand span{display:none!important}
+}
+/* Ocupação: dia, mês e ano lado a lado (folha do Início). */
+.jhd .jhd-oc3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0 0 8px}
+.jhd .jhd-oc3 div{padding:8px 8px 9px;border-radius:11px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);min-width:0}
+.jhd .jhd-oc3 small{display:block;color:#E8C766;font-size:11px;font-weight:800;letter-spacing:.3px}
+.jhd .jhd-oc3 b{display:block;color:#fff;font-size:21px;line-height:1.15;margin:2px 0}
+.jhd .jhd-oc3 span{display:block;color:#E4DED3;font-size:11.5px;line-height:1.3}
+.jhd .jhd-oc3 em{display:block;font-style:normal;color:#D8D2C7;font-size:11px;line-height:1.3;margin-top:2px;overflow-wrap:anywhere}
+/* Tempo locado no lançamento: − [horas] + */
+.lh-linha{display:grid;grid-template-columns:48px minmax(0,1fr) 48px;gap:8px;align-items:center}
+.lh-linha input{text-align:center;font-weight:800;font-size:17px}
+.lh-linha button{height:44px;border-radius:12px;border:1px solid var(--jv-line,rgba(255,255,255,.18));background:var(--jv-control,#214639);color:var(--jv-cream,#F8F5ED);font-size:22px;font-weight:800;cursor:pointer}
+.lh-linha + .hint{margin-top:10px!important;line-height:1.4}
+/* Pacotes: cada pacote abre e explica como funciona. */
+#ov-pacotes-lista .pk-dica{margin:2px 0 6px;font-size:13px;line-height:1.4}
+#ov-pacotes-lista .pk-sec{margin:12px 0 6px;color:#E8C766;font-size:11.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase}
+#ov-pacotes-lista .pk-item{margin:0 0 6px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.11);overflow:hidden}
+#ov-pacotes-lista .pk-item.aberto{border-color:rgba(232,199,102,.45)}
+#ov-pacotes-lista .pk-cab{display:flex;align-items:center;gap:10px;width:100%;min-height:52px;padding:9px 11px;border:0;background:transparent;color:#F2EEE6;text-align:left;cursor:pointer;font:inherit}
+#ov-pacotes-lista .pk-ico{font-size:20px;flex:0 0 auto}
+#ov-pacotes-lista .pk-t{flex:1 1 auto;min-width:0}
+#ov-pacotes-lista .pk-t b{display:block;color:#fff;font-size:14.5px}
+#ov-pacotes-lista .pk-t small{display:block;color:#E4DED3;font-size:12px;line-height:1.35;margin-top:1px}
+#ov-pacotes-lista .pk-cab em{font-style:normal;color:#E4DED3;font-size:12px;font-weight:700;white-space:nowrap}
+#ov-pacotes-lista .pk-cab i{font-style:normal;color:#F0D57C;font-size:20px;font-weight:800;width:18px;text-align:center}
+#ov-pacotes-lista .pk-corpo{padding:0 12px 10px}
+#ov-pacotes-lista .pk-corpo ul{margin:0;padding:0 0 0 18px}
+#ov-pacotes-lista .pk-corpo li{color:#ECE7DE;font-size:13px;line-height:1.5;margin:0 0 6px}
+#ov-pacotes-lista .pk-corpo li b{color:#fff}
+#ov-pacotes-lista .pk-tab{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:5px;margin:6px 0 2px}
+#ov-pacotes-lista .pk-tab span{padding:5px 7px;border-radius:8px;background:rgba(255,255,255,.07);color:#F2EEE6;font-size:12.5px}
+#ov-pacotes-lista .pk-tab span b{display:block;color:#E8C766;font-size:11px}
+#ov-pacotes-lista .pk-ir{display:block;width:100%;min-height:44px;margin-top:4px;border-radius:11px;border:1px solid rgba(224,185,79,.35);background:rgba(242,178,51,.12);color:#fff;font-weight:800;font-size:13.5px;cursor:pointer}
+#ov-pacotes-lista .pk-ir.pk-del{border-color:rgba(255,154,142,.45);background:rgba(255,120,100,.10);color:#FFD9D2}
+/* Textos longos: só o começo + setinha (encurtarTextosLongos). */
+.enc-curto:not(.enc-aberto){display:-webkit-box!important;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.enc-curto{margin-bottom:2px!important}
+.enc-btn{display:inline-flex;align-items:center;min-height:32px;margin:0 0 10px;padding:4px 2px;border:0;background:transparent;color:inherit;font:inherit;font-size:12.5px;font-weight:800;cursor:pointer;opacity:.95}
+#ov-pacotes-lista .pk-mais{color:#F0D57C;margin:0 0 4px}
+#ov-pacotes-lista .pk-corpo ul + ul{margin-top:0}
+.enc-curto[style*="display: none"] + .enc-btn,.enc-curto[style*="display:none"] + .enc-btn,.enc-curto[hidden] + .enc-btn{display:none!important}
+
+/* ===== Vidro Aero (20/10) =====
+   Referência do João: o vidro do Windows Vista/7 (Aero). Não troca nenhuma
+   cor de fundo (a leitura medida continua a mesma): só soma
+   - brilho suave no alto (sombra interna clara que some para baixo),
+   - borda clara fina de vidro e sombra externa macia,
+   - desfoque do que fica atrás nas partes translúcidas (barra, janelas, Mais).
+   A aba escolhida vira botão de vidro com reflexo. */
+:root{
+  --aero-brilho:inset 0 1px 0 rgba(255,255,255,.20),inset 0 14px 18px -14px rgba(255,255,255,.16);
+  --aero-borda:rgba(255,255,255,.14);
+  --aero-sombra:0 10px 26px rgba(0,0,0,.26);
+}
+html body .fin-card,html body .chart,html body .jh-card,html body .jh-tile,html body .jv-ref-kpi,
+html body .cx-at,html body .avcard,html body .al-row,html body .cx-dia,html body .fic-sec,
+html body .jhd .jhd-lista li,html body .jhd .jhd-oc3 div,html body #ov-pacotes-lista .pk-item,html body .rpg-chart{
+  box-shadow:var(--aero-brilho),var(--aero-sombra)!important;border-color:var(--aero-borda)!important
+}
+/* abas (escolhas lado a lado): trilho de vidro fosco, aba escolhida brilhante */
+html body .seg,html body .jh-seg,html body .wk-modo,html body #cx-filtros{
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.30),inset 0 -1px 0 rgba(255,255,255,.06)!important;
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)
+}
+html body .seg button.on,html body .jh-seg button.on,html body .wk-modo button.on,html body #cx-filtros button.on{
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.42),inset 0 12px 14px -10px rgba(255,255,255,.28),0 2px 8px rgba(0,0,0,.30)!important
+}
+/* barra de baixo: vidro translúcido com reflexo na borda de cima */
+html body .nav.nav{
+  background:rgba(12,44,33,.95)!important;-webkit-backdrop-filter:blur(18px) saturate(150%)!important;backdrop-filter:blur(18px) saturate(150%)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 -8px 24px rgba(0,0,0,.30)!important
+}
+html body .nav.nav button.on{box-shadow:inset 0 1px 0 rgba(255,255,255,.30),inset 0 12px 14px -10px rgba(255,255,255,.20)!important}
+/* janelas e o menu Mais: vidro com reflexo no alto */
+html body .modal,html body .mais-pop{
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 22px 26px -22px rgba(255,255,255,.14),0 -10px 36px rgba(0,0,0,.40)!important;
+  -webkit-backdrop-filter:blur(20px) saturate(140%);backdrop-filter:blur(20px) saturate(140%)
+}
+html body .overlay.on{-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}

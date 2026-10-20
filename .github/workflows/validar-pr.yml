@@ -67,6 +67,13 @@ jobs:
           node ferramentas/testar-contagem-locacoes-browser.cjs
           node ferramentas/testar-extrato-resumido-browser.cjs
           node ferramentas/testar-renovacao-debito-browser.cjs
+          node ferramentas/testar-detalhe-inicio-browser.cjs
+          node ferramentas/testar-lanc-locacao-horas-browser.cjs
+          node ferramentas/testar-diferenca-agenda-browser.cjs
+          node ferramentas/testar-pacotes-detalhe-browser.cjs
+          node ferramentas/testar-atalhos-gestao-browser.cjs
+          node ferramentas/testar-textos-curtos-browser.cjs
+          node ferramentas/testar-vidro-aero-browser.cjs
           node ferramentas/testar-locacao-minhas-aulas-browser.cjs
           node ferramentas/testar-torneio-aluno-browser.cjs
           node ferramentas/testar-torneio-gestao-browser.cjs

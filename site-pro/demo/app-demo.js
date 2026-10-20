@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-19-4';
+const VERSAO='2026-10-20-4';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -1835,7 +1835,7 @@ document.getElementById('save-state').style.pointerEvents='auto';
 document.getElementById('save-state').style.cursor='pointer';
 document.getElementById('save-state').onclick=()=>{
   if(_conflitoNuvem){abrirConflitoNuvem();return;}
-  go('seg',document.createElement('button'));
+  irParaAba('seg');   // acende o "Mais" na barra, como os outros atalhos
   document.getElementById('pd-detalhes')?.scrollIntoView({behavior:'smooth',block:'center'});
 };
 [1500,4000,8000].forEach(t=>setTimeout(()=>{
@@ -4836,16 +4836,86 @@ function salvarPacote(){
   toast('✓ Pacote "'+nome+'" criado ('+cat+' · '+fmt(valor)+'/aula)');
 }
 function gerenciarPacotes(){renderPacotesLista();document.getElementById('ov-pacotes-lista').classList.add('on');}
+/* ===== Pacotes: como cada um funciona =====
+   Antes a tela só listava os personalizados para criar/excluir. Agora cada
+   pacote (os padrão e os criados) abre e explica: preço (da tabela que o app
+   USA de verdade: PRECOS, grupoPreco, precos), créditos, virada, aula além do
+   pacote e quantos alunos ativos usam. Só leitura: preço se muda em
+   Financeiro → Valores avulsos; pacote personalizado se cria/exclui aqui. */
+function tabelaPrecosHtml(t){
+  const tb=PRECOS[t]||{};const ks=Object.keys(tb).map(Number).sort((a,b)=>a-b);
+  return ks.length?'<div class="pk-tab">'+ks.map(k=>'<span><b>'+k+' aulas</b>'+fmt(tb[k])+'</span>').join('')+'</div>':'';
+}
+function pacotesPadrao(){
+  const at=DB.alunos.filter(ehAtivoAluno),pr=DB.precos||{},n=(v,d)=>Number(v)>0?Number(v):d;
+  const conta=f=>at.filter(f).length,unico=pacoteUnicoAtivo();
+  const virada='Na virada do mês, o crédito que sobrou vira <b>reposição</b>, que vale '+REPOS_VALIDADE+' meses (as mais antigas saem primeiro).';
+  const cancel='Desmarcou com '+LIMITE_CANCEL_H_GESTAO+' horas ou mais de antecedência: vira reposição. Com menos de '+LIMITE_CANCEL_H_GESTAO+' horas: conta como aula dada. Chuva não desconta.';
+  const meia='Aula de 30 minutos desconta meio crédito.';
+  return [
+   {id:'part',ico:'🎾',nome:'Particular',res:'1 aluno por horário · '+fmt(160)+'/aula se o cadastro não disser outro valor',n:conta(a=>(a.tipo||'Particular')==='Particular'&&!ehMisto(a)&&perfilDe(a)==='tenis'),
+    linhas:['Ocupa a quadra inteira: ninguém mais entra naquele horário.',
+      'Mensalidade = nº de aulas do plano × valor da aula do cadastro (sem valor no cadastro: '+fmt(160)+'). Ex.: 4 aulas × '+fmt(160)+' = '+fmt(640)+'.',
+      'Cada aula feita (✓) desconta 1 crédito particular. '+meia,
+      'Aula além do pacote deixa o crédito negativo e é cobrada pelo valor da aula do próprio aluno.',virada,cancel]},
+   {id:'grupo',ico:'👥',nome:'Dupla · Trio · Quarteto',res:'preço por pessoa, por aula · Dupla '+fmt(grupoPrecoAula('Dupla'))+' · Trio '+fmt(grupoPrecoAula('Trio'))+' · Quarteto '+fmt(grupoPrecoAula('Quarteto')),n:conta(a=>['Dupla','Trio','Quarteto'].includes(a.tipo)),
+    linhas:['O horário aceita até 2, 3 ou 4 alunos, conforme o tipo.',
+      'Mensalidade = nº de aulas no mês × valor da aula do tipo (por pessoa).',
+      'Cada aula feita desconta 1 crédito de <b>grupo</b>'+(unico?' (com o pacote único ligado, sai do saldo único)':'')+'. '+meia,
+      'Aula em família: no ✓ o app pergunta se marca também os outros da família que estão na mesma aula.',
+      'Aula além do pacote é cobrada pelo valor da aula em grupo do tipo dele.',virada,cancel]},
+   {id:'grupoant',ico:'👥',nome:'Grupo (antigo)',res:'tabela por número de aulas',n:conta(a=>a.tipo==='Grupo'),
+    linhas:['Modelo antigo, mantido para quem já estava nele. Preço pela tabela:'+tabelaPrecosHtml('Grupo'),'Créditos, virada e cancelamento iguais aos de Dupla/Trio/Quarteto.']},
+   {id:'personal',ico:'💪',nome:'Personal',res:fmt(130)+'/sessão se o cadastro não disser outro valor · avulsa '+fmt(n(pr.personal,130)),n:conta(a=>ehPersonalTipo(a.tipo)),
+    linhas:['Mensalidade = nº de sessões do plano × valor da sessão do cadastro (sem valor no cadastro: '+fmt(130)+').','Cada sessão feita desconta 1 crédito. '+meia,virada,cancel]},
+   {id:'misto',ico:'🔀',nome:'Misto (particular + grupo)',res:'dois planos e dois saldos',n:conta(ehMisto),
+    linhas:['Para quem tem plano particular <b>e</b> plano de grupo ao mesmo tempo.',
+      'A mensalidade soma as duas partes: aulas particulares × valor da aula + aulas de grupo × valor do grupo.',
+      'Os saldos ficam separados: aula particular desconta do particular; aula em grupo, do grupo.'+(unico?' O pacote único não se aplica ao misto.':''),virada,cancel]},
+   {id:'unico',ico:'🧮',nome:'Pacote único',res:unico?'ligado':'desligado',n:unico?conta(a=>!ehMisto(a)&&pacoteDoAluno(a)>0):0,
+    linhas:['Para quem <b>não</b> é misto: crédito particular e de grupo viram um saldo só, então a aula sai do mesmo lugar em que o pacote entrou.',
+      'Está '+(unico?'<b>ligado</b>':'<b>desligado</b>')+'. Liga e desliga em Mais → Segurança e dados → Pacote único (dá para voltar atrás).']},
+   {id:'loc',ico:'🔑',nome:'Locação de quadra',res:fmt(n(pr.locacao,70))+'/hora',n:conta(a=>perfilDe(a)==='locacao'),
+    linhas:['Lançamento na Caixa: escolha Locação e o tempo (em horas); o valor sai da hora × '+fmt(n(pr.locacao,70))+' (dá para trocar).',
+      'Horas pagas adiantado viram saldo de locação: use "Locação paga" na ficha do locatário.',
+      'Locação divide o horário só com outra locação, e não entra na taxa de ocupação das aulas.']},
+   {id:'avulsa',ico:'🎟️',nome:'Aulas avulsas',res:'Particular '+fmt(n(pr.avulsaPart,170))+' · Grupo '+fmt(n(pr.avulsaGrupo,95)),n:null,
+    linhas:['Aula fora de pacote: lança direto na Caixa pelos atalhos, sem mexer em crédito de ninguém.']}
+  ];
+}
+let pkAberto='',pkTudo=false;
+/* Abre um pacote por vez, mostrando só os 2 primeiros itens; o resto fica na
+   setinha "ver mais" (pedido do João: menos texto aberto). */
+function pkAlterna(id){pkAberto=pkAberto===id?'':id;pkTudo=false;renderPacotesLista();}
+function pkVerTudo(){pkTudo=!pkTudo;renderPacotesLista();}
 function renderPacotesLista(){
   const box=document.getElementById('pacotes-lista');if(!box)return;
+  const item=(id,ico,nome,res,nAl,corpo,acoes)=>{const ab=pkAberto===id;
+    return '<div class="pk-item'+(ab?' aberto':'')+'"><button type="button" class="pk-cab" aria-expanded="'+ab+'" onclick="pkAlterna(\''+argJs(id)+'\')"><span class="pk-ico">'+ico+'</span><span class="pk-t"><b>'+esc(nome)+'</b><small>'+res+'</small></span>'
+      +(nAl===null?'':'<em>'+(nAl?nAl+' aluno'+(nAl>1?'s':''):'ninguém')+'</em>')+'<i>'+(ab?'−':'+')+'</i></button>'
+      +(ab?'<div class="pk-corpo"><ul>'+corpo.slice(0,2).map(l=>'<li>'+l+'</li>').join('')+'</ul>'
+        +(corpo.length>2?(pkTudo?'<ul>'+corpo.slice(2).map(l=>'<li>'+l+'</li>').join('')+'</ul>':'')
+          +'<button type="button" class="enc-btn pk-mais" aria-expanded="'+pkTudo+'" onclick="pkVerTudo()">'+(pkTudo?'▴ ver menos':'▾ ver mais '+(corpo.length-2)+' detalhe'+(corpo.length>3?'s':''))+'</button>':'')
+        +(acoes||'')+'</div>':'')+'</div>';};
+  let h='<p class="pk-sec">Pacotes do app</p>';
+  h+=pacotesPadrao().map(p=>item(p.id,p.ico,p.nome,p.res,p.n,p.linhas,p.id==='avulsa'||p.id==='loc'||p.id==='grupo'?'<button type="button" class="pk-ir" onclick="closeModal(\'ov-pacotes-lista\');irParaValores()">Mudar valores ›</button>':'')).join('');
   const cs=tiposCustom();
-  if(!cs.length){box.innerHTML='<div class="empty" style="padding:10px">Nenhum pacote personalizado ainda. Toque em <b>+ Novo pacote</b>.</div>';return;}
-  box.innerHTML=cs.map(function(c){
-    const usados=DB.alunos.filter(a=>a.tipo===c.nome).length;
-    const ico=c.cat==='personal'?'💪':'🎾';
-    return '<div class="mov"><div class="mov-l"><b>'+ico+' '+c.nome+'</b><span>'+fmt(c.valorAula)+' / aula · '+(usados?usados+' aluno(s)':'sem alunos')+'</span></div>'
-      +'<button class="btn btn-ghost" style="padding:6px 10px;font-size:12px" onclick="excluirPacote(\''+c.nome.replace(/'/g,"\\'")+'\')">Excluir</button></div>';
+  h+='<p class="pk-sec">Pacotes personalizados</p>';
+  if(!cs.length)h+='<div class="empty" style="padding:10px">Nenhum pacote personalizado ainda. Toque em <b>+ Novo pacote</b>.</div>';
+  h+=cs.map(function(c){
+    const usados=DB.alunos.filter(a=>a.tipo===c.nome),ativos=usados.filter(ehAtivoAluno),va=Number(c.valorAula)||0;
+    const corpo=['Categoria: '+(c.cat==='personal'?'💪 Personal / planilha (conta como Personal nos filtros e no financeiro)':'🎾 Tênis')+'.',
+      'Mensalidade = valor por aula × nº de aulas. Ex.: 4 aulas = '+fmt(va*4)+' · 8 aulas = '+fmt(va*8)+'.',
+      'Cada aula feita desconta 1 crédito. Na virada a sobra vira reposição ('+REPOS_VALIDADE+' meses).',
+      usados.length?'Usado por: '+usados.map(a=>esc(a.nome)+(ehAtivoAluno(a)?'':' (inativo)')).join(', ')+'.':'Nenhum aluno usa: pode excluir.'];
+    return item('c:'+c.nome,c.cat==='personal'?'💪':'🎾',c.nome,fmt(va)+' / aula',ativos.length,corpo,
+      '<button type="button" class="pk-ir pk-del" onclick="excluirPacote(\''+argJs(c.nome)+'\')">Excluir pacote</button>');
   }).join('');
+  box.innerHTML=h;
+}
+function irParaValores(){
+  irParaAba('fin');
+  setTimeout(()=>{const el=document.getElementById('pr-avpart');if(el)el.scrollIntoView({behavior:'smooth',block:'center'});},120);
 }
 function excluirPacote(nome){
   const usados=DB.alunos.filter(a=>a.tipo===nome).length;
@@ -5637,16 +5707,26 @@ function usaLocacao(a){
 function agendaDoMes(a){const d=new Date();return mensalidadeDaAgenda(a,d.getFullYear(),d.getMonth());}
 function saldoCredTotal(a){return (Number(a&&a.creditos)||0)+(Number(a&&a.credGrupo)||0);}
 /* Diferença entre o valor da agenda e o valor anotado: depois que o João decide
-   (trocar ou manter), o aviso fica silenciado. Volta a aparecer só na virada do
-   mês ou quando os créditos do aluno zeram. */
-function difSilenciada(a){return temFamilia(a)||!!(a&&a.difOk&&a.difOk.mes===monthKey()&&saldoCredTotal(a)>0);}
+   (trocar ou manter), o aviso fica silenciado até a VIRADA do mês (pedido dele
+   em 20/10). Antes voltava também quando os créditos zeravam — e isso é
+   justamente o aluno que faz reposição ou aula extra com crédito que já tinha,
+   o caso em que a diferença é esperada. O mês é o de hoje (o mesmo da conta da
+   agenda), não o mês aberto no cabeçalho. */
+function difSilenciada(a){return temFamilia(a)||!!(a&&a.difOk&&a.difOk.mes===mesReal());}
+/* Renovar começa um ciclo novo, mas a decisão sobre a diferença vale para o
+   MÊS: se o João já decidiu neste mês, continua decidida. O desfazer some
+   (desfazer depois de renovar trocaria o plano sem mexer nos créditos). */
+function limparDifNaRenovacao(a){
+  if(!(a.difOk&&a.difOk.mes===mesReal()))delete a.difOk;
+  delete a.difUndo;
+}
 function manterValorAnotado(id){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
-  a.difUndo={mes:monthKey(),mensalidade:Number(a.mensalidade)||0,plano:Number(a.plano)||0,planoGrupo:Number(a.planoGrupo)||0,difOk:a.difOk||null};   // guarda para desfazer
-  a.difOk={mes:monthKey()};
+  a.difUndo={mes:mesReal(),acao:'manter',mensalidade:Number(a.mensalidade)||0,plano:Number(a.plano)||0,planoGrupo:Number(a.planoGrupo)||0,difOk:a.difOk||null};   // guarda para desfazer
+  a.difOk={mes:mesReal()};
   logAct('Manter valor anotado (silenciar diferença da agenda): '+a.nome);
   persist();renderAll();
-  toast('✓ Valor anotado mantido para '+a.nome.split(' ')[0]+' — aviso some até virar o mês ou zerar os créditos.');
+  toast('✓ Valor anotado mantido para '+a.nome.split(' ')[0]+' — aviso some até virar o mês.');
 }
 /* Desfaz a última decisão (cobrar pela agenda ou manter) daquele aluno neste mês
    — para quando o toque foi sem querer. Restaura mensalidade, plano e o estado
@@ -5675,7 +5755,7 @@ function cobrarPelaAgenda(id){
   if(!confirm('Cobrar '+a.nome+' pelas aulas da agenda deste mês?\n\n'
     +g.detalhe+'\n= '+fmtRs(g.valor)+'\n\nMensalidade de hoje: '+fmtRs(atual)
     +'\nPlano do cadastro: '+(Number(a.plano)||0)+' aula(s)'+((Number(a.planoGrupo)||0)>0?(' + '+a.planoGrupo+' em grupo'):'')))return;
-  a.difUndo={mes:monthKey(),mensalidade:atual,plano:Number(a.plano)||0,planoGrupo:Number(a.planoGrupo)||0,difOk:a.difOk||null};   // guarda para desfazer
+  a.difUndo={mes:mesReal(),acao:'cobrar',mensalidade:atual,plano:Number(a.plano)||0,planoGrupo:Number(a.planoGrupo)||0,difOk:a.difOk||null};   // guarda para desfazer
   a.mensalidade=g.valor;
   delete a.difOk;   // valores agora iguais: nada a silenciar
   // o plano acompanha, senão "Renovar mês" devolveria o número antigo de créditos
@@ -5765,7 +5845,7 @@ function locacaoPaga(id){
   const h=Number(String(txt).replace(',','.'));
   if(!(h>0)){toast('Informe um número de horas maior que zero');return;}
   const total=Math.round(vh*h);
-  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:'Locação · '+a.nome+' ('+fmtCred(h)+'h)',valor:total,cat:'locacao',modal:'tenis',data:dKey(new Date())});
+  DB.lancamentos.push({id:'l'+Date.now(),mes:monthKey(),desc:'Locação · '+a.nome+' ('+fmtCred(h)+'h)',valor:total,cat:'locacao',modal:'tenis',data:dKey(new Date()),horas:h,alunoId:a.id});
   mover(a,'locCred',h,'Locação paga ('+fmtCred(h)+'h)');
   logAct('Locação paga: '+a.nome+' ('+h+'h)');
   persist();renderAll();
@@ -6172,7 +6252,7 @@ function renovarMes(id){
     alert('🔒 A renovação de '+a.nome+' foi desfeita: o resultado não bateu com a prévia ('+(e&&e.message||e)+'). Nada mudou.');
     renderAll();return;
   }
-  if(!ehDependenteFamilia(a)&&a.ultimoPago!==mesReal())a.status='pendente';delete a.difOk;delete a.difUndo;   // novo ciclo: reavalia a diferença do zero
+  if(!ehDependenteFamilia(a)&&a.ultimoPago!==mesReal())a.status='pendente';limparDifNaRenovacao(a);
   a.ultimaRenovacao={mes:mesReal(),origem:'individual',ts:Date.now(),creditos:depois.c,credGrupo:depois.g,repos:depois.r};   // registro do que entrou na última renovação
   logAct('Renovação do mês: '+a.nome+' → '+fmtCred(depois.c)+' crédito(s)'+(pg>0?(' + '+fmtCred(depois.g)+' grupo'):'')+' · '+fmtCred(depois.r)+' reposição(ões)');
   persist();renderAll();
@@ -6446,7 +6526,7 @@ function rmAplicarUm(x){
     return {ok:false,erro:(e&&e.message)||String(e)};
   }
   if(!ehDependenteFamilia(a)&&a.ultimoPago!==mesReal())a.status='pendente';
-  delete a.difOk;delete a.difUndo;
+  limparDifNaRenovacao(a);
   a.ultimaRenovacao={mes:mesReal(),origem:'lote',ts:Date.now(),creditos:x.cFinal,credGrupo:x.gDep,repos:x.reposDepois};
   return {ok:true};
 }
@@ -7538,8 +7618,9 @@ function renderFicha(){
   if(difere)pend+='<div class="fic-pend"><p>📅 A agenda do mês dá <b>'+fmt(ag.valor)+'</b>; o cadastro diz <b>'+fmt(mens)+'</b>.</p><div class="fic-g2">'
     +fxBotao('ouro',"cobrarPelaAgenda('"+id+"')",'Cobrar '+fmt(ag.valor))
     +fxBotao('neutro',"manterValorAnotado('"+id+"')",'Manter '+fmt(mens))+'</div></div>';
-  if(a.difUndo&&a.difUndo.mes===monthKey())pend+='<div class="fic-pend"><p>↩︎ Você cobrou pela agenda este mês.</p>'
-    +fxBotao('neutro',"desfazerDecisaoDif('"+id+"')",'Desfazer cobrança')+'</div>';
+  if(a.difUndo&&a.difUndo.mes===mesReal()){const manteve=a.difUndo.acao==='manter'||(!a.difUndo.acao&&a.difOk);
+    pend+='<div class="fic-pend"><p>↩︎ '+(manteve?'Você manteve '+fmt(mens)+' este mês (a diferença da agenda volta a ser conferida na virada).':'Você cobrou pela agenda este mês.')+'</p>'
+    +fxBotao('neutro',"desfazerDecisaoDif('"+id+"')",manteve?'Desfazer':'Desfazer cobrança')+'</div>';}
   if(venc>0)pend+='<div class="fic-pend"><p>⏳ '+fmtCred(venc)+' reposição(ões) vencem na virada do mês.</p>'
     +fxBotao('neutro',"usarRepos('"+id+"')",BI.undo+'Usar reposição')+'</div>';
   if(pend)h+='<div class="fic-sec fic-sec-pend"><div class="fic-sec-t">Pede atenção</div>'+pend+'</div>';
@@ -7652,19 +7733,61 @@ function quickLanc(desc,valor,modal){
   quickLancFull(desc,valor,desc.includes('Locação')?'locacao':'avulsa',modal);
 }
 /* Botão rápido com categoria explícita (usado pelos botões que o João cria). */
-function quickLancFull(desc,valor,cat,modal){
+function quickLancFull(desc,valor,cat,modal,horas){
   if(acaoRepetida('q-'+desc+'-'+valor)){toast('Esse lançamento acabou de ser feito');return;}
-  const v=Number(valor)||0;
-  lancarNovo({desc,valor:v,cat:cat||'avulsa',modal:modal||'tenis',data:cxDiaLanc()},desc+' · '+fmt(v)+' lançado');
+  const v=Number(valor)||0,rec={desc,valor:v,cat:cat||'avulsa',modal:modal||'tenis',data:cxDiaLanc()};
+  if(Number(horas)>0)rec.horas=Number(horas);
+  lancarNovo(rec,desc+' · '+fmt(v)+' lançado');
+}
+/* ===== Locação no lançamento: tempo + valor =====
+   Escolheu "Locação", aparece o tempo locado (em horas, de meia em meia).
+   Mexer nas horas refaz o valor pela hora de Financeiro → Valores avulsos;
+   o João ainda pode digitar outro valor (desconto, combinado). O tempo fica
+   gravado no lançamento (horas) e aparece na linha da Caixa.
+   Não mexe em crédito de ninguém: pagar horas ADIANTADAS (que viram saldo)
+   continua sendo o "Locação paga" da ficha do aluno. */
+function precoHoraLocacao(){const v=Number((DB.precos||{}).locacao);return v>0?v:0;}
+function lancHorasLidas(px){
+  const el=document.getElementById(px+'-horas');const t=String(el?el.value:'').trim().replace(',','.');
+  if(!t)return 0;const h=Number(t);
+  const r=Math.round(h*2)/2;          // de meia em meia hora, como a agenda
+  return isFinite(h)&&r>0&&r<=24?r:null;
+}
+function lancCatMudou(px,soMostrar){
+  const cat=(document.getElementById(px+'-cat')||{}).value,w=document.getElementById(px+'-horas-wrap');
+  if(!w)return;w.style.display=cat==='locacao'?'':'none';
+  if(cat==='locacao'&&!soMostrar){const el=document.getElementById(px+'-horas');if(el&&!el.value){el.value='1';lancHorasMudou(px);return;}}
+  lancHorasDica(px);
+}
+function lancHorasMudou(px){
+  const h=lancHorasLidas(px),vh=precoHoraLocacao(),v=document.getElementById(px+'-valor');
+  if(h&&vh&&v)v.value=String(Math.round(vh*h*100)/100);
+  lancHorasDica(px);
+}
+function lancHorasPasso(px,d){
+  const el=document.getElementById(px+'-horas');if(!el)return;
+  const h=Math.max(0.5,(lancHorasLidas(px)||0)+d);el.value=fmtCred(h);lancHorasMudou(px);
+}
+function lancHorasDica(px){
+  const el=document.getElementById(px+'-horas-dica');if(!el)return;
+  const h=lancHorasLidas(px),vh=precoHoraLocacao();
+  el.textContent=h===null?'Use horas maiores que zero: 1 · 1,5 · 2…'
+    :!vh?'Sem valor da hora: defina em Financeiro → Valores avulsos (ou digite o valor).'
+    :(h?fmtCred(h)+'h × '+fmt(vh)+'/h = '+fmt(vh*h)+' (pode trocar o valor acima)':'Valor da hora: '+fmt(vh));
+}
+function lancAlunoMudou(){
+  const id=(document.getElementById('l-aluno')||{}).value,a=id&&DB.alunos.find(x=>x.id===id),c=document.getElementById('l-cat');
+  if(a&&a.perfil==='locacao'&&c&&c.value==='avulsa'){c.value='locacao';lancCatMudou('l');}
 }
 function quickLancCustom(i){const b=(DB.botoesLanc||[])[i];if(!b)return;quickLancFull(b.label,b.valor,b.cat,b.modal);}
-function quickLancFixo(i){const f=atalhosFixos()[i];if(f)quickLanc(f.desc,f.valor,f.modal);}
+function quickLancFixo(i){const f=atalhosFixos()[i];if(!f)return;
+  if(f.horas)quickLancFull(f.desc+' '+fmtCred(f.horas)+'h',f.valor,'locacao',f.modal,f.horas);else quickLanc(f.desc,f.valor,f.modal);}
 function atalhosFixos(){
   const pr=DB.precos||{},n=(v,d)=>Number(v)>0?Number(v):d;
   return [
     {desc:'Avulsa Particular',rot:'Avulsa particular',valor:n(pr.avulsaPart,170)},
     {desc:'Avulsa Grupo',rot:'Avulsa grupo',valor:n(pr.avulsaGrupo,95)},
-    {desc:'Locação de Quadra',rot:'Locação 1h',valor:n(pr.locacao,70)},
+    {desc:'Locação de Quadra',rot:'Locação 1h',valor:n(pr.locacao,70),horas:1},
     {desc:'Personal avulso',rot:'Personal',valor:n(pr.personal,130),modal:'personal'}];
 }
 let cxEditando=false;
@@ -7711,6 +7834,7 @@ function openLancModal(){
   const sel=document.getElementById('l-aluno');
   if(sel){sel.innerHTML='<option value="">— ninguém —</option>'+DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${esc(a.id)}">${esc(a.nome)}</option>`).join('');sel.value='';}
   document.getElementById('l-cat').value='avulsa';
+  const lh=document.getElementById('l-horas');if(lh)lh.value='';lancCatMudou('l');
   const dt=document.getElementById('l-data');if(dt)dt.value=diaDoModal();
   document.getElementById('ov-lanc').classList.add('on');
 }
@@ -7719,12 +7843,14 @@ function saveLanc(){
   const valor=Number(document.getElementById('l-valor').value);
   const alunoId=document.getElementById('l-aluno')?document.getElementById('l-aluno').value:'';
   const a=alunoId?DB.alunos.find(x=>x.id===alunoId):null;
-  const desc=desc0||(a?a.nome:'');
+  const catSel=document.getElementById('l-cat').value,hSel=catSel==='locacao'?lancHorasLidas('l'):0;
+  const desc=desc0||(catSel==='locacao'?('Locação'+(hSel?' '+fmtCred(hSel)+'h':'')+(a?' · '+a.nome:'')):(a?a.nome:''));
   if(!valor||!desc){toast('Informe o valor e a descrição (ou vincule um aluno)');return;}
   if(valor<0){toast('Para saída, use "− Despesa"');return;}
   const data=(document.getElementById('l-data')||{}).value||cxDiaLanc();
   if(!dataValida(data)){toast('Escolha uma data válida');return;}
   const rec={desc,valor,cat:document.getElementById('l-cat').value,data};
+  if(rec.cat==='locacao'){const h=lancHorasLidas('l');if(h===null){toast('Tempo locado: use horas maiores que zero (ex.: 1, 1,5, 2)');return;}if(h)rec.horas=h;}
   if(a&&rec.cat==='mensalidade'&&ehDependenteFamilia(a)){toast('Mensalidade da família: vincule o recebimento ao responsável.');return;}
   if(a){rec.alunoId=a.id;if(ehPersonalTipo(a.tipo))rec.modal='personal';}
   closeModal('ov-lanc');
@@ -7757,12 +7883,14 @@ function abrirLancEdit(id){
   document.getElementById('le-data').value=l.data||'';
   document.getElementById('le-cat').value=l.cat||'outro';
   document.getElementById('le-despcat').value=l.despCat||'';
+  const leh=document.getElementById('le-horas');if(leh)leh.value=Number(l.horas)>0?fmtCred(Number(l.horas)):'';
   leTrocouCat();
   document.getElementById('ov-lanc-edit').classList.add('on');
 }
 function leTrocouCat(){
   const c=(document.getElementById('le-cat')||{}).value;
   const w=document.getElementById('le-despcat-wrap');if(w)w.style.display=(c==='despesa')?'':'none';
+  lancCatMudou('le',true);
   const lb=document.getElementById('le-valor-lbl');
   if(lb)lb.textContent=(c==='despesa')?'Valor da despesa (R$)':'Valor recebido (R$)';
   const av=document.getElementById('le-aviso');
@@ -7780,6 +7908,8 @@ function salvarLancEdit(){
   if(!desc){toast('Informe a descrição');return;}
   if(!isFinite(bruto)||bruto<=0){toast('Informe um valor maior que zero');return;}
   if(!/^\d{4}-\d{2}-\d{2}$/.test(data)){toast('Escolha uma data válida');return;}
+  const horasEd=cat==='locacao'?lancHorasLidas('le'):0;
+  if(horasEd===null){toast('Tempo locado: use horas maiores que zero (ex.: 1, 1,5, 2)');return;}
   const antes=l.mes,competenciaAntes=l.competenciaMensalidade||l.mes;
   l.desc=desc;
   l.valor=(cat==='despesa')?-Math.abs(bruto):Math.abs(bruto);
@@ -7788,6 +7918,7 @@ function salvarLancEdit(){
   l.cat=cat;
   if(cat==='despesa'){l.despCat=(document.getElementById('le-despcat').value||'').trim()||'Outros';}
   else delete l.despCat;
+  if(cat==='locacao'&&horasEd)l.horas=horasEd;else delete l.horas;
   if(l.alunoId){const a=DB.alunos.find(a=>a.id===l.alunoId);atualizarSituacaoExata(a,competenciaAntes);atualizarSituacaoExata(a,l.competenciaMensalidade||l.mes);}
   logAct('Editar lançamento: '+desc);
   persist();renderAll();closeModal('ov-lanc-edit');
@@ -7861,7 +7992,7 @@ function renderMovs(){
     }
     const saida=Number(l.valor)<0, nm=nomeDe(l);
     const vinc=(nm&&!(l.desc||'').includes(nm))?' · 🔗 '+esc(nm.split(' ')[0]):(nm?' · 🔗':'');
-    h+='<div class="cx-mv" onclick="abrirLancEdit(\''+argJs(l.id)+'\')"><div class="cx-mv-l"><b>'+esc(l.desc||'—')+'</b><span>'+esc(catDoLanc(l))+vinc+(l.formaPagamento?' · '+esc(l.formaPagamento):'')+(l.competenciaMensalidade?' · mensalidade '+esc(l.competenciaMensalidade):'')+'</span></div>'
+    h+='<div class="cx-mv" onclick="abrirLancEdit(\''+argJs(l.id)+'\')"><div class="cx-mv-l"><b>'+esc(l.desc||'—')+'</b><span>'+esc(catDoLanc(l))+(Number(l.horas)>0&&l.cat==='locacao'?' · ⏱ '+esc(fmtCred(Number(l.horas)))+'h':'')+vinc+(l.formaPagamento?' · '+esc(l.formaPagamento):'')+(l.competenciaMensalidade?' · mensalidade '+esc(l.competenciaMensalidade):'')+'</span></div>'
       +'<b class="cx-mv-v '+(saida?'out':'in')+'">'+(saida?'− ':'+ ')+fmt(Math.abs(Number(l.valor)||0))+'</b></div>';
   });
   el.innerHTML=h;
@@ -8829,6 +8960,141 @@ function irParaMes(mk,destino){
   renderAll();
   if(destino==='agenda'){irParaAgenda('mes',new Date(y,m,1));return;}
   irParaAba(destino||'fin');
+}
+/* ===== Detalhe dos quadrinhos do Início (20/10, pedido do João) =====
+   Tocar em Alunos, Créditos, Ocupação ou Locações abre a lista que explica o
+   número, em vez de só pular para outra tela. Tudo só lê; nada muda. Cada
+   lista usa a MESMA conta do quadrinho, para os números baterem. */
+function abrirDetInicio(tit,html){
+  document.getElementById('jhd-tit').textContent=tit;
+  document.getElementById('jhd-corpo').innerHTML=html;
+  document.getElementById('ov-jh-det').classList.add('on');
+}
+const ddmm=dk=>dk.split('-').reverse().slice(0,2).join('/');
+/* Alunos: quem treinou em cada mês (aluno com aula na agenda), separado em
+   particular, grupo e personal; e o cadastro de hoje por tipo. */
+function alunosQueTreinaram(ano,mes){
+  const part=new Set(),grupo=new Set(),pers=new Set(),todos=new Set();
+  const fim=new Date(ano,mes+1,0).getDate();
+  comIndiceAgenda(()=>{for(let d=1;d<=fim;d++){aulasDoDia(new Date(ano,mes,d)).aulas.forEach(au=>au.entradas.forEach(e=>{
+    if(!e.alunoId)return;todos.add(e.alunoId);
+    (e.tipo==='personal'?pers:e.tipo==='grupo'?grupo:part).add(e.alunoId);}));}});
+  return {total:todos.size,part:part.size,grupo:grupo.size,pers:pers.size};
+}
+function abrirDetAlunos(){
+  const hoje=new Date(),linhas=[];
+  for(let i=5;i>=0;i--){const d=new Date(hoje.getFullYear(),hoje.getMonth()-i,1);linhas.push({d,r:alunosQueTreinaram(d.getFullYear(),d.getMonth())});}
+  const at=(DB.alunos||[]).filter(ehAtivoAluno),cnt={part:0,grupo:0,misto:0,pers:0,outro:0};
+  at.forEach(a=>{const pf=perfilDe(a);
+    if(pf==='personal')cnt.pers++;else if(pf!=='tenis')cnt.outro++;
+    else if(ehMisto(a))cnt.misto++;else if(ehGrupoTipo(a.tipo)||((Number(a.planoGrupo)||0)>0&&!(Number(a.plano)||0)))cnt.grupo++;else cnt.part++;});
+  const c=contagemAlunos();
+  let h='<p class="jhd-res"><b>'+c.ativos+'</b> ativos hoje · '+c.total+' no cadastro</p>'
+    +'<div class="jhd-chips"><span>🎾 '+cnt.part+' particular</span><span>👥 '+cnt.grupo+' em grupo</span>'+(cnt.misto?'<span>🔀 '+cnt.misto+' misto</span>':'')
+    +'<span>💪 '+cnt.pers+' personal</span>'+(cnt.outro?'<span>🔑 '+cnt.outro+' locação/torneio</span>':'')+'</div>'
+    +'<p class="jhd-sub">Quem treinou em cada mês (pela agenda)</p><table class="jhd-tab"><tr><th>Mês</th><th>Total</th><th>Partic.</th><th>Grupo</th><th>Personal</th></tr>'
+    +linhas.map((x,i)=>{const ant=i?linhas[i-1].r.total:null,dif=ant===null?'':(x.r.total-ant);
+      return '<tr><td>'+MES_CURTO[x.d.getMonth()]+'/'+String(x.d.getFullYear()).slice(2)+'</td><td><b>'+x.r.total+'</b>'
+        +(dif===''||dif===0?'':' <small class="'+(dif>0?'up':'dn')+'">'+(dif>0?'↑':'↓')+Math.abs(dif)+'</small>')+'</td><td>'+x.r.part+'</td><td>'+x.r.grupo+'</td><td>'+x.r.pers+'</td></tr>';}).join('')
+    +'</table><p class="jhd-nota">Um aluno pode aparecer em mais de uma coluna (quem é misto faz particular e grupo).</p>'
+    +'<button type="button" class="jhd-ir" onclick="closeModal(\'ov-jh-det\');verAlunosAtivos()">Ver a lista de alunos ›</button>';
+  abrirDetInicio('Alunos',h);
+}
+/* Créditos em aberto: aluno por aluno, créditos, reposições válidas e até
+   quando cada lote vale (a reposição vence 4 meses depois do mês em que
+   entrou; o lote sem data é de antes do extrato e não vence). */
+function validadeRepos(a){
+  const ref=mesReal(),out=[];
+  lotesRepos(a).forEach(l=>{
+    if(!l.mes){out.push({qtd:l.qtd,txt:'sem data (não vence)'});return;}
+    const idade=mesesEntre(l.mes,ref);if(idade>=REPOS_VALIDADE)return;
+    const p=l.mes.split('-').map(Number),fim=new Date(p[0],p[1]-1+REPOS_VALIDADE-1,1);
+    out.push({qtd:l.qtd,txt:'até o fim de '+MES_CURTO[fim.getMonth()]+'/'+String(fim.getFullYear()).slice(2),urg:idade===REPOS_VALIDADE-1});
+  });
+  return out;
+}
+function abrirDetCreditos(){
+  const at=(DB.alunos||[]).filter(ehAtivoAluno).map(a=>({a,cred:Math.max(0,Number(a.creditos)||0)+(unificado(a)?0:Math.max(0,Number(a.credGrupo)||0)),rep:reposValidas(a)}))
+    .filter(x=>x.cred>0||x.rep>0).sort((x,y)=>y.rep-x.rep||y.cred-x.cred||x.a.nome.localeCompare(y.a.nome,'pt-BR'));
+  const tc=at.reduce((t,x)=>t+x.cred,0),tr=at.reduce((t,x)=>t+x.rep,0);
+  let h='<p class="jhd-res"><b>'+fmtCred(tc)+'</b> créditos · <b>'+fmtCred(tr)+'</b> reposições · '+at.length+' aluno(s)</p>';
+  h+=at.length?'<ul class="jhd-lista">'+at.map(x=>{
+    const val=x.rep?validadeRepos(x.a).map(v=>'<span class="'+(v.urg?'urg':'')+'">'+fmtCred(v.qtd)+' '+esc(v.txt)+'</span>').join(' · '):'';
+    return '<li onclick="closeModal(\'ov-jh-det\');abrirFicha(\''+argJs(x.a.id)+'\')"><div class="jhd-l1"><b>'+esc(x.a.nome)+'</b><em>'
+      +fmtCred(x.cred)+' créd.'+(x.rep?' · '+fmtCred(x.rep)+' repos.':'')+'</em></div>'+(val?'<div class="jhd-val">🔁 '+val+'</div>':'')+'</li>';}).join('')+'</ul>'
+    :'<p class="jhd-nota">Ninguém com crédito ou reposição em aberto.</p>';
+  h+='<p class="jhd-nota">Os vermelhos vencem na próxima virada. Toque no nome para abrir a ficha.</p>';
+  abrirDetInicio('Créditos em aberto',h);
+}
+/* Ocupação: horário por horário do dia, com a mesma conta do quadrinho
+   (ocupacao_): horário aberto a aula está ocupado se há aula começando a
+   menos de 1 h; bloqueio e locação ficam fora da conta. */
+let _detOcupDia=null;
+function slotsDoDia(d){
+  const inicios=aulasDoDia(d).aulas,out=[];
+  HORAS.forEach(h=>{
+    const modo=slotModo(d,h),evs=entriesFor(d,h);
+    if(evs.some(ehLocacao)){out.push({h,est:'loc',nomes:evs.filter(ehLocacao).map(e=>e.titulo||'Locação')});return;}
+    if(modo!=='aula')return;
+    if(evs.some(e=>e.tipo==='bloqueio')){out.push({h,est:'bloq',nomes:evs.filter(e=>e.tipo==='bloqueio').map(e=>e.titulo||'Bloqueio')});return;}
+    const au=inicios.filter(a=>Math.abs(a.min-_hm(h))<60);
+    out.push({h,est:au.length?'ocup':'livre',nomes:au.flatMap(a=>a.entradas.map(e=>nomeNaLista(e)))});
+  });
+  return out;
+}
+/* Ocupação em três prazos, para o dia que está na tela:
+   - dia: os horários daquele dia;
+   - mês: o mês inteiro, a mesma conta do quadrinho do Início (inclui o que
+     já está marcado para os dias que faltam);
+   - ano: de 1º de janeiro até hoje (o que já aconteceu). Se os registros
+     começam depois de 1º/jan, a conta começa no 1º registro e a tela avisa
+     que o ano ainda está incompleto. Ano passado = o ano todo. */
+function ocupacaoAno(ano){
+  const hoje=new Date();hoje.setHours(12,0,0,0);
+  let ini=new Date(ano,0,1,12),fim=new Date(ano,11,31,12),parcial=false;
+  const pri=inicioRegistros();
+  if(pri){const p=new Date(pri+'T12:00:00');if(p>ini){ini=p;parcial=true;}}
+  if(fim>hoje)fim=hoje;
+  if(ini>fim)return {oc:{disp:0,ocup:0,pct:0},ini,fim,parcial};
+  return {oc:ocupacao(ini,fim),ini,fim,parcial};
+}
+function ocupacaoTresPrazos(d,ocDia){
+  const ini=new Date(d.getFullYear(),d.getMonth(),1,12),fim=new Date(d.getFullYear(),d.getMonth()+1,0,12);
+  const ocMes=ocupacao(ini,fim),A=ocupacaoAno(d.getFullYear());
+  const caixa=(rot,oc,sub)=>'<div><small>'+rot+'</small><b>'+(oc.disp?oc.pct+'%':'—')+'</b><span>'+oc.ocup+' de '+oc.disp+' horários</span>'+(sub?'<em>'+sub+'</em>':'')+'</div>';
+  const futuro=d.getFullYear()>new Date().getFullYear(),atual=d.getFullYear()===new Date().getFullYear();
+  const subAno=futuro?'ainda não começou':(A.parcial?'desde '+ddmm(dKey(A.ini))+' (início dos registros)':(atual?'até hoje':'ano todo'));
+  return '<div class="jhd-oc3">'+caixa('Dia',ocDia,ddmm(dKey(d)))+caixa('Mês',ocMes,MESES[d.getMonth()])+caixa('Ano '+d.getFullYear(),A.oc,subAno)+'</div>';
+}
+function abrirDetOcupacao(delta){
+  const base=new Date();base.setHours(12,0,0,0);
+  if(delta===undefined)_detOcupDia=new Date(base);else{_detOcupDia=new Date(_detOcupDia||base);_detOcupDia.setDate(_detOcupDia.getDate()+delta);}
+  const d=_detOcupDia,sl=slotsDoDia(d),oc=ocupacao(d,d);
+  const ROT={ocup:'Ocupado',livre:'Livre',bloq:'Bloqueado',loc:'Locação'};
+  let h='<div class="jhd-nav"><button type="button" onclick="abrirDetOcupacao(-1)" aria-label="Dia anterior">‹</button><b>'+esc(fmtDataCurta(dKey(d)))+'</b>'
+    +'<button type="button" onclick="abrirDetOcupacao(1)" aria-label="Próximo dia">›</button></div>'
+    +ocupacaoTresPrazos(d,oc)
+    +'<p class="jhd-res"><b>'+(oc.disp?oc.pct+'%':'—')+'</b> ocupado neste dia · '+oc.ocup+' de '+oc.disp+' horários de aula · '+sl.filter(x=>x.est==='livre').length+' livre(s)</p>';
+  h+=sl.length?'<ul class="jhd-slots">'+sl.map(x=>'<li class="'+x.est+'"><span class="h">'+esc(x.h)+'</span><span class="e">'+ROT[x.est]+'</span><span class="n">'+esc(x.nomes.join(', '))+'</span></li>').join('')+'</ul>'
+    :'<p class="jhd-nota">Nenhum horário aberto a aula neste dia.</p>';
+  h+='<button type="button" class="jhd-ir" onclick="closeModal(\'ov-jh-det\');irParaAgenda(\'dia\',new Date(\''+dKey(d)+'T12:00:00\'))">Abrir a agenda deste dia ›</button>';
+  abrirDetInicio('Horários livres e ocupados',h);
+}
+/* Locações do mês: cada horário com locação (marcada ou escrita como
+   locação, com ou sem aluno), a mesma conta das "h no mês" do quadrinho. */
+function abrirDetLocacoes(){
+  const ano=curYear,mes=curMonth,fim=new Date(ano,mes+1,0).getDate(),dias=[];let tot=0;
+  comIndiceAgenda(()=>{for(let d=1;d<=fim;d++){const dt=new Date(ano,mes,d,12),l=[];
+    HORAS.forEach(h=>{const evs=entriesFor(dt,h).filter(ehLocacao);if(!evs.length)return;tot++;
+      l.push({h,nomes:evs.map(e=>{const a=e.alunoId&&DB.alunos.find(x=>x.id===e.alunoId);return (a?a.nome:(e.titulo||'Locação'))+(a?'':' (sem vínculo)');})});});
+    if(l.length)dias.push({dk:dKey(dt),l});}});
+  const hoje=dKey(new Date());
+  let h='<p class="jhd-res"><b>'+tot+'h</b> de locação em '+MESES[mes]+' · '+dias.length+' dia(s)</p>';
+  h+=dias.length?'<ul class="jhd-lista">'+dias.map(x=>'<li class="'+(x.dk===hoje?'hoje':'')+'"><div class="jhd-l1"><b>'+esc(fmtDataCurta(x.dk))+(x.dk===hoje?' · hoje':'')+'</b><em>'+x.l.length+'h</em></div>'
+      +x.l.map(y=>'<div class="jhd-val"><span>'+esc(y.h)+'</span> '+esc(y.nomes.join(', '))+'</div>').join('')+'</li>').join('')+'</ul>'
+    :'<p class="jhd-nota">Nenhuma locação neste mês.</p>';
+  h+='<button type="button" class="jhd-ir" onclick="closeModal(\'ov-jh-det\');verAgendaMes()">Abrir a agenda do mês ›</button>';
+  abrirDetInicio('Locações',h);
 }
 /* Atalhos do Início: cada número leva ao lugar onde ele é detalhado. */
 function verCaixaMes(){irParaAba('lanc');}
@@ -12431,6 +12697,38 @@ function confirmarAulaWa(id,hora){
     else if(compacto&&y<20){compacto=false;t.classList.remove('compacto');}
   };
   window.addEventListener('scroll',()=>{requestAnimationFrame(aplica);},{passive:true});
+})();
+/* ===== Textos longos encolhidos (20/10) =====
+   Pedido do João: em vez de muito texto aberto, mostrar só o começo e uma
+   setinha para abrir e fechar. Vale para as explicações (.hint/.sub e notas
+   das janelas): com mais de 3 linhas, ficam só as 2 primeiras + "▾ ver mais".
+   Só muda a aparência: o texto continua inteiro na página. Texto que não pode
+   ser escondido (aviso de erro, confirmação) leva data-enc="nao".
+   Mede só o que está à vista; telas e janelas fechadas são medidas quando
+   abrem (o observador vê a classe "on" mudar). */
+const ENC_SEL='.page p.hint,.page p.sub,.modal p.hint,.modal p.sub,.jhd .jhd-nota,#pg-graf p.hint';
+function encurtarTextosLongos(){
+  document.querySelectorAll(ENC_SEL).forEach(p=>{
+    if(p.dataset.enc||!p.offsetParent)return;
+    const cs=getComputedStyle(p);if(cs.display!=='block')return;
+    const lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.4;
+    if(p.scrollHeight<=lh*3.3){return;}
+    p.dataset.enc='1';p.classList.add('enc-curto');
+    const b=document.createElement('button');b.type='button';b.className='enc-btn';
+    b.setAttribute('aria-expanded','false');b.textContent='▾ ver mais';
+    b.style.color=cs.color;   // mesma cor do texto que ela abre (já medida para aquele fundo)
+    b.onclick=ev=>{ev.stopPropagation();const ab=p.classList.toggle('enc-aberto');b.setAttribute('aria-expanded',String(ab));b.textContent=ab?'▴ ver menos':'▾ ver mais';};
+    p.insertAdjacentElement('afterend',b);
+  });
+}
+(function observarTextosLongos(){
+  /* Antes do próximo desenho da tela (requestAnimationFrame): o texto já
+     aparece encolhido, sem "pulo". Com a aba em segundo plano o rAF dorme;
+     o setTimeout garante que roda assim mesmo. */
+  let t=null;const roda=()=>{if(!t)return;t=null;try{encurtarTextosLongos();}catch(e){}};
+  const agenda=()=>{if(t)return;t=1;requestAnimationFrame(roda);setTimeout(roda,200);};
+  try{new MutationObserver(agenda).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});}catch(e){}
+  window.addEventListener('resize',agenda);agenda();
 })();
 function renderAll(){
   carregarAvatarGestao();renderProtecaoDados();

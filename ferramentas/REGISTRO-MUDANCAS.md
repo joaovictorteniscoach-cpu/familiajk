@@ -8,6 +8,132 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-20 · Claude Code: vidro Aero (referência Windows Vista/7)
+
+O João confirmou a referência: o vidro translúcido do Aero. Versão
+**2026-10-20-4** (mesmo PR #248).
+- Bloco "Vidro Aero" no fim de `estilo.css` (variáveis `--aero-*`). **Não troca
+  nenhuma cor de fundo**: só soma brilho no alto (sombra interna clara), borda
+  clara fina e sombra macia em cartões (`fin-card`, `chart`, `jh-card`,
+  `jh-tile`, `jv-ref-kpi`, `cx-at`, `avcard`, `al-row`, `cx-dia`, `fic-sec`,
+  listas das janelas do Início, pacotes).
+- Abas (`.seg`, `.jh-seg`, `.wk-modo`, filtros da Caixa): trilho fosco e aba
+  escolhida com reflexo de botão de vidro.
+- Barra de baixo: reflexo na borda de cima; no Verde clássico 95% opaca com
+  desfoque. O Saibro mantém a barra de vidro a 70% que já tinha.
+- Janelas e menu Mais: reflexo no alto e desfoque do fundo.
+- Leitura medida de novo: 102 telas e janelas OK nos dois temas. Teste novo
+  `testar-vidro-aero-browser.cjs` no validar-pr.
+
+---
+
+## 2026-10-20 · Claude Code: menos texto aberto (setinha "ver mais")
+
+Pedido do João: quando tiver muita informação, mostrar só o começo e uma
+setinha para abrir e fechar. Versão **2026-10-20-3** (mesmo PR #248).
+- `encurtarTextosLongos` (seção "Textos longos encolhidos"):
+  - explicação (`.hint`/`.sub` das telas e janelas, notas das janelas do
+    Início) com mais de 3 linhas mostra só 2, com "▾ ver mais" / "▴ ver menos";
+  - texto curto fica como está; o texto inteiro continua na página;
+  - um `MutationObserver` mede telas e janelas quando abrem;
+  - para não encolher um texto, use `data-enc="nao"`.
+- Pacotes: cada pacote abre com os 2 itens principais; o resto fica em
+  "▾ ver mais N detalhes" (`pkVerTudo`).
+- Classes `enc-`. Teste novo `testar-textos-curtos-browser.cjs` (dois temas,
+  abre/fecha, curto intacto, leitura medida); `testar-pacotes-detalhe` abre
+  a setinha antes de conferir os itens.
+
+---
+
+## 2026-10-20 · Claude Code: topo menor, ocupação dia/mês/ano, locação com tempo, pacotes explicados e varredura de atalhos
+
+Pedidos do João em 20/10 (mesmo PR dos quadrinhos, ainda não publicado).
+Versão **2026-10-20-2**.
+- **Topo das outras páginas** (`estilo.css`, bloco "Topo das outras páginas"):
+  - era 176px em três andares (marca, 4 botões, mês) + área da câmera;
+  - agora são dois andares: marca e botões numa linha, mês e nuvem na outra
+    (cerca de 105px; Agenda 61px); abaixo de 390px some o nome e fica o escudo, para os botões manterem 40px. A foto de perfil fica só no Início;
+  - ao rolar o tamanho não muda;
+  - o texto da nuvem ganhou fundo escuro próprio (contraste medido);
+  - Início não muda.
+- **Ocupação dia/mês/ano** (`ocupacaoTresPrazos`, `ocupacaoAno`), na janela do
+  quadrinho:
+  - mês = mês inteiro, igual ao quadrinho;
+  - ano = 1º/jan até hoje; se os registros começam depois, diz "desde dd/mm
+    (início dos registros)"; ano passado = ano todo;
+  - mesma conta de `ocupacao_`.
+- **Caixa: locação com tempo** (`lancCatMudou`, `lancHorasMudou`,
+  `lancHorasPasso`, `lancHorasLidas`, `lancAlunoMudou`):
+  - escolher Locação mostra o tempo em horas (− / +, de meia em meia);
+  - o valor sai da hora × `DB.precos.locacao` e pode ser trocado;
+  - o lançamento grava `horas`, e a linha da Caixa mostra "⏱ 1,5h";
+  - também na edição; trocar a categoria tira o tempo;
+  - vincular um locatário puxa a categoria Locação;
+  - o atalho "Locação 1h" e o "Locação paga" da ficha também gravam `horas`;
+  - **não mexe em crédito de ninguém.**
+- **Diferença agenda × valor** (`difSilenciada`, `limparDifNaRenovacao`):
+  - "Manter" silencia o aviso até a VIRADA do mês;
+  - antes voltava quando os créditos zeravam, que é justamente o aluno de
+    reposição ou aula extra;
+  - o mês é o real (`mesReal`), não o do cabeçalho;
+  - renovar no mesmo mês mantém a decisão;
+  - a ficha diz "Você manteve…" em vez de "cobrou".
+- **Pacotes** (`pacotesPadrao`, `renderPacotesLista`, `pkAlterna`,
+  `irParaValores`, classes `pk-`):
+  - lista os pacotes do app e os personalizados; cada um abre e explica
+    preço, créditos, virada, cancelamento e alunos ativos;
+  - os valores vêm das mesmas tabelas que o app usa (Particular/Personal =
+    aulas × valor do cadastro; Dupla/Trio/Quarteto = `grupoPreco`; Grupo
+    antigo = `PRECOS.Grupo`);
+  - inclui "Mudar valores ›" (Financeiro); só leitura.
+- **Atalhos**: tocar no aviso da nuvem agora acende o "Mais" na barra
+  (`irParaAba('seg')`).
+- **Testes novos** no validar-pr:
+  - `testar-lanc-locacao-horas-browser.cjs`;
+  - `testar-diferenca-agenda-browser.cjs`;
+  - `testar-pacotes-detalhe-browser.cjs`;
+  - `testar-atalhos-gestao-browser.cjs`: 49 atalhos do Início, menu, barra,
+    Mais e Financeiro; atalho novo sem destino conhecido faz falhar.
+- **Testes ajustados:**
+  - `testar-detalhe-inicio-browser.cjs` cobre dia/mês/ano;
+  - `checar-familia-runtime.js` carrega `limparDifNaRenovacao`.
+- **Pendente:** o João citou "estilo Air do Windows XP para frente" como
+  referência. Perguntado se é o vidro translúcido do Aero (Vista/7) antes de
+  mexer no visual.
+
+---
+
+## 2026-10-20 · Claude Code: quadrinhos do Início abrem a lista que explica o número
+
+O João pediu que os quadrinhos do Início abram detalhes, em vez de só pular
+para o calendário. Versão **2026-10-20-1**.
+- Janela única `#ov-jh-det` (`abrirDetInicio`), classes `jhd-`. Tudo só lê.
+- **Alunos (`abrirDetAlunos`):**
+  - ativos hoje e cadastro por tipo: particular, grupo, misto, personal,
+    locação/torneio;
+  - tabela dos últimos 6 meses com quem treinou pela agenda
+    (`alunosQueTreinaram`), separado em total/particular/grupo/personal e com
+    ↑/↓ contra o mês anterior.
+- **Créditos em aberto (`abrirDetCreditos`):**
+  - aluno por aluno, só ativos (como o quadrinho), com créditos e reposições
+    válidas;
+  - validade de cada lote (`validadeRepos`: vence no fim do 4º mês, como
+    `reposPorIdade`), em vermelho o que vence na próxima virada;
+  - tocar abre a ficha.
+- **Ocupação (`abrirDetOcupacao`):** horário por horário do dia (`slotsDoDia`),
+  com ‹ › para outros dias e a mesma conta de `ocupacao_`: ocupado, livre,
+  bloqueado ou locação. Inclui botão para a agenda do dia.
+- **Locações (`abrirDetLocacoes`):** cada horário com locação no mês, por dia,
+  com e sem vínculo (`ehLocacao`), e o total em horas igual ao do quadrinho.
+  Inclui botão para a agenda do mês.
+- `testar-3-pedidos-browser.cjs`: o caso "quadrinho abre a agenda no mês"
+  virou "abre a lista, e dela a agenda", por pedido do João.
+- **Teste novo:** `testar-detalhe-inicio-browser.cjs` (10 verificações, dois
+  temas, números iguais aos quadrinhos, leitura medida, só leitura), no
+  validar-pr.
+
+---
+
 ## 2026-10-19 · Claude Code: renovação desconta aula já feita e não paga
 
 O João pediu duas coisas:
