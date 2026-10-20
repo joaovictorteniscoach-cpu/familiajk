@@ -68,7 +68,7 @@ const PUB0={horas:HORAS,profs:[],horarioCfg:{},horarioData:{},reservasRespostas:
   await check('abre com "Bom dia, nome! Como posso te ajudar?" sem montar HTML com o nome que vem da nuvem',async()=>{
    await p.click('#va-atalho');assert.equal(await visivel('#va-painel'),true);
    const r=await p.evaluate(()=>({txt:document.querySelector('#va-conversa p').textContent,b:document.querySelectorAll('#va-conversa b').length}));
-   assert.equal(r.txt,'Bom dia, Aluno! Como posso te ajudar?');assert.equal(r.b,0);
+   assert.equal(r.txt,'Bom dia, Aluno! Como posso te ajudar? Caso tenha alguma dúvida, é só me perguntar.');assert.equal(r.b,0);
   });
   await check('"tem horário livre amanhã?" lista só os livres para aula (sem ocupado e sem torneio)',async()=>{
    const r=await pedir('Tem horário livre amanhã?');
@@ -120,7 +120,10 @@ const PUB0={horas:HORAS,profs:[],horarioCfg:{},horarioData:{},reservasRespostas:
    await entrar();await p.click('#va-atalho');
    let r=await pedir('quais são minhas aulas');assert.equal(r.txt,'Suas próximas aulas: hoje, ter 20/10 às 09:00; hoje, ter 20/10 às 12:00.');
    r=await pedir('quantos créditos eu tenho');assert.equal(r.txt,'Você tem 3 créditos e 1 reposição.');
-   r=await pedir('blablabla');assert.match(r.txt,/^Não entendi/);
+   r=await pedir('qual o valor da aula avulsa');assert.match(r.txt,/^Essa eu não sei responder/);assert.deepEqual(r.bts,['Perguntar ao João no WhatsApp']);
+   await p.evaluate(()=>{window.__wa=[];abrirWhatsApp=(n,t)=>window.__wa.push(t);document.querySelector('#va-conversa .va-eu-nao:last-child .va-bt').click();});
+   assert.deepEqual(await p.evaluate(()=>window.__wa),['Olá João! Aqui é Aluno. qual o valor da aula avulsa']);
+   await p.click('#va-atalho');
   });
   await check('voz: lê a resposta só com a opção ligada; sem reconhecimento de fala, indica o ditado do teclado',async()=>{
    await entrar();
@@ -147,13 +150,13 @@ const PUB0={horas:HORAS,profs:[],horarioCfg:{},horarioData:{},reservasRespostas:
     JVVozAluno.abrir();
     return {a:a.voz.name,b:b.voz.name,c:[c.voz.name,c.grave],u:window.__u[0]};});
    assert.equal(r.a,'Felipe');assert.match(r.b,/Antonio/);assert.deepEqual(r.c,['Luciana',true],'sem voz masculina: a padrão, mais grave');
-   assert.deepEqual(r.u,{t:'Bom dia, Aluno! Como posso te ajudar?',v:'Felipe',p:0.95});
+   assert.deepEqual(r.u,{t:'Bom dia, Aluno! Como posso te ajudar? Caso tenha alguma dúvida, é só me perguntar.',v:'Felipe',p:0.95});
    await p.clock.setFixedTime(new Date('2026-10-20T15:00:00-03:00'));
    await p.evaluate(()=>{JVVozAluno.fechar();JVVozAluno.abrir();});
-   assert.equal(await p.evaluate(()=>document.querySelector('#va-conversa p').textContent),'Boa tarde, Aluno! Como posso te ajudar?');
+   assert.equal(await p.evaluate(()=>document.querySelector('#va-conversa p').textContent),'Boa tarde, Aluno! Como posso te ajudar? Caso tenha alguma dúvida, é só me perguntar.');
    await p.clock.setFixedTime(new Date('2026-10-20T19:30:00-03:00'));
    await p.evaluate(()=>{JVVozAluno.fechar();JVVozAluno.abrir();});
-   assert.equal(await p.evaluate(()=>document.querySelector('#va-conversa p').textContent),'Boa noite, Aluno! Como posso te ajudar?');
+   assert.equal(await p.evaluate(()=>document.querySelector('#va-conversa p').textContent),'Boa noite, Aluno! Como posso te ajudar? Caso tenha alguma dúvida, é só me perguntar.');
    await p.evaluate(()=>JVVozAluno.fechar());
   });
   assert.deepEqual(erros,[]);await c.close();

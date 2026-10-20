@@ -121,7 +121,13 @@ function botoesHoras(dk,hs,acao){return hs.slice(0,12).map(h=>[(acao==='agendar'
 function executar(frase){
  if(!logadoNoApp()){responder('Entre no app com seu código para usar o assistente.');return;}
  const r=interpretar(frase);
- if(!r.acao){responder('Não entendi. Você pode perguntar, por exemplo: "tem horário livre amanhã?", "marcar quinta às 18" ou "cancelar minha aula de terça às 9".');return;}
+ if(!r.acao){
+  // Dúvida que o assistente não resolve vai para o João, com a pergunta já escrita
+  const nome=String((eu()&&eu().nome)||'').split(' ')[0];
+  responder('Essa eu não sei responder. Posso ajudar com horários livres, agendar, cancelar, suas aulas e créditos. Se for outra dúvida, mande para o João.',
+   [['Perguntar ao João no WhatsApp',()=>{fechar();try{w.abrirWhatsApp('5541995415712','Olá João! '+(nome?'Aqui é '+nome+'. ':'')+frase);}catch(e){}}]]);
+  return;
+ }
  if(r.erroData){responder(r.erroData);return;}
  if(r.acao==='creditos'){
   const E=eu(),c=Number(E.creditos)||0,g=Number(E.credGrupo)||0,rp=Number(E.reposValidas!=null?E.reposValidas:E.repos)||0,l=Number(E.locCred)||0;
@@ -224,7 +230,7 @@ function abrir(){
  porId('va-conversa').replaceChildren();
  const nome=String((eu()&&eu().nome)||'').split(' ')[0];
  const h=new Date().getHours(),saud=h<12?'Bom dia':h<18?'Boa tarde':'Boa noite';
- responder(saud+(nome?', '+nome:'')+'! Como posso te ajudar?');
+ responder(saud+(nome?', '+nome:'')+'! Como posso te ajudar? Caso tenha alguma dúvida, é só me perguntar.');
  porId('va-ouvir').checked=st.ouvir;atualizar();
  setTimeout(()=>{try{porId('va-texto').focus({preventScroll:true});}catch(e){}},50);
 }

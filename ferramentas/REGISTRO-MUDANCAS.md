@@ -26,7 +26,11 @@ Pedido do João depois do assistente por voz. Versão **2026-10-20-10**.
 - **Botão de voz do aluno** (`#va-atalho`): opacidade .7 e brilho, igual ao da
   Gestão.
 - **Saudação do assistente:** "Bom dia/Boa tarde/Boa noite, <nome>! Como posso
-  te ajudar?" no lugar da frase longa.
+  te ajudar? Caso tenha alguma dúvida, é só me perguntar.", no lugar da frase
+  longa.
+- **Dúvida que o assistente não resolve:** ele diz o que sabe fazer e oferece
+  "Perguntar ao João no WhatsApp", com a pergunta já escrita. Não inventa
+  resposta.
 - **Voz das respostas:** masculina em português, quando o celular tem uma.
   - `escolherVoz` procura pelo nome da voz (Antonio, Felipe, Daniel…).
   - Sem nenhuma masculina, usa a voz padrão um pouco mais grave.
