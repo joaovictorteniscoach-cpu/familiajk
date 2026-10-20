@@ -8,6 +8,39 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-20 · Claude Code: cancelamento preso no app do aluno (a causa do "Reserva")
+
+Causa real do caso do aluno que via só uma das duas horas. Ele tem um
+cadastro só, e apagar e criar de novo não resolvia. Versão **2026-10-20-8**
+(PR #250).
+
+**Causa.** Quando o aluno cancela pelo app, o aparelho guarda o cancelamento
+(`MEU.cancelados`) até a Gestão responder. A Gestão responde "cancelado"
+quando aplica, mas o app do aluno só entendia "recusado". Com isso, o aviso
+ficava para sempre. Se o João marcasse de novo uma aula no mesmo dia e hora,
+o app mostrava "Cancelamento aguardando confirmação", que na grade aparece
+como "Reserva", no lugar de "Sua aula". Pode acontecer com qualquer aluno.
+
+O que mudou:
+- **App do aluno, `limparCancelados`** (chamada em `conferirRespostasReservas`).
+  O aviso sai quando:
+  - a data já passou;
+  - chega a resposta "cancelado" com o mesmo id;
+  - a aula não está mais na agenda publicada (`minhaEntradaNaGrade`).
+
+  O cancelamento ainda não processado continua aparecendo como pendente.
+  Sem agenda carregada, nada é apagado. Só muda o que o aparelho mostra; não
+  mexe em aula, crédito ou valor.
+- **Gestão, Conferir números (só lista):** mostra o aluno que cancelou pelo
+  app e teve a aula marcada de novo no mesmo horário (pelas
+  `respostasReservas` "cancelado" de hoje em diante).
+- **Teste novo:** `testar-cancelado-recriado-browser.cjs` (6 verificações),
+  no validar-pr.
+- **Aparelho não aprovado (legado):** não recebe as respostas. Nele, o aviso
+  sai pela regra "a aula saiu da agenda" ou pela data passada.
+
+---
+
 ## 2026-10-20 · Claude Code: para quem o horário aparece no app do aluno
 
 Seguimento do caso do aluno que via só uma das duas horas. O João apagou e

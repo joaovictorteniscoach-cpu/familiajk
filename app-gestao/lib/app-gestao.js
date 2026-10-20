@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-20-7';
+const VERSAO='2026-10-20-8';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -10824,6 +10824,14 @@ function achadosDoAluno(a){
         +(comApp.length===1?'O app do aluno usa o cód. '+comApp[0].codigo+': as aulas ligadas ao outro aparecem para ele como "Reserva". ':'Aula ligada a um cadastro não aparece no app do outro. ')
         +'Vale deixar só um ativo (Alunos → ficha → inativar o que sobra).'});
     }
+    /* Cancelou pelo app e a aula foi marcada de novo no mesmo dia e hora: o
+       app do aluno anterior a 20/10 guardava o cancelamento para sempre e
+       mostrava "Reserva" no lugar de "Sua aula". Só lista. */
+    const recriadas=(DB.respostasReservas||[]).filter(r=>r.estado==='cancelado'&&String(r.codigo||'')===String(a.codigo||'')&&r.data>=dKey(new Date())
+      &&entriesFor(new Date(r.data+'T12:00:00'),r.hora).some(e=>String(codigoDaEntrada(e)||'')===String(a.codigo||'')));
+    if(recriadas.length)achados.push({tipo:'aviso',a,
+      txt:a.nome+' cancelou pelo app '+recriadas.map(r=>r.data.split('-').reverse().slice(0,2).join('/')+' '+r.hora).join(', ')+' e a aula foi marcada de novo nesse horário. '
+        +'No app dele pode aparecer "Reserva" no lugar de "Sua aula" até ele abrir o app atualizado (fechar e abrir de novo).'});
     // horários com o nome dele que o app dele não mostra como dele
     const nv=horariosQueOAlunoNaoVe(a);
     if(nv.length)achados.push({tipo:'aviso',a,
