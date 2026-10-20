@@ -8,6 +8,45 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-20 · Claude Code: microfone do assistente do aluno travava
+
+Relato do João: uma aluna falou no assistente e o app travou. Versão
+**2026-10-20-11**.
+
+Não deu para reproduzir no iPhone, mas o código tinha quatro pontos frágeis
+no iPhone. O teste novo imita o jeito do iPhone e falha no código antigo.
+
+1. **Saudação e microfone ao mesmo tempo.** O assistente fala a saudação ao
+   abrir. Tocar no microfone nesse momento cancelava a fala e ligava o
+   reconhecimento no mesmo instante, e os dois disputavam o áudio.
+   - Agora a fala para, o app espera 350 ms e só então liga o microfone.
+   - A resposta não é falada com o microfone ligado.
+2. **Resposta falada cedo demais.** A resposta era falada logo que o
+   microfone soltava. Agora espera 600 ms (`st.fimRec`).
+3. **Escuta sem fim.** Se o celular não avisava que parou (`onend`), o botão
+   ficava preso em "Ouvindo…". Agora tem saída garantida:
+   - para 2,5 s depois da última palavra;
+   - para em no máximo 12 s;
+   - se o celular não confirmar, o app solta o microfone sozinho (`abort`
+     depois de 1,5 s).
+4. **Texto repetido.** O iPhone repete resultados finais. Agora cada
+   resultado entra uma vez só, como na Gestão.
+
+Também mudou:
+- **Teclado:** não abre sozinho ao abrir o painel (o aluno quer falar), e
+  fecha ao tocar no microfone.
+- **Observador mais leve.** Antes vigiava a página inteira a cada mudança de
+  estilo. Agora olha só `#app`, `#login`, as `.overlay` e os toques.
+- **Compatibilidade:** saiu o lookbehind de regex, que iOS anterior a 16.4
+  não entende.
+- **Voz masculina** (`escolherVoz`):
+  - procura também as vozes do iPhone Eddy, Reed, Rocko e Grandpa, as do
+    Windows/Edge Antonio e Daniel, e as variantes "ptd" do Android;
+  - a escolha fica guardada quando a lista de vozes chega;
+  - sem voz masculina no aparelho, usa a padrão mais grave (pitch 0,7).
+- **Teste novo:** `ferramentas/testar-voz-microfone-browser.cjs` (6
+  verificações).
+
 ## 2026-10-20 · Claude Code: semana do aluno sem "Loc.", botão de voz mais transparente, saudação e voz masculina
 
 Pedido do João depois do assistente por voz. Versão **2026-10-20-10**.
