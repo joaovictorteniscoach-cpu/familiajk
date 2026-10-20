@@ -1267,8 +1267,21 @@ function keyOf(dt){return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(
 function curMonthKey(){return keyOf(new Date());}
 function selMonthKey(){return (D&&D.contas&&D.contas.mesSel)||curMonthKey();}
 function selMonthDate(){const p=selMonthKey().split('-');return new Date(+p[0],(+p[1]||1)-1,1);}
-function pagoGet(id,key){if(!id)return false;const m=((D.contas.pagos)||{})[key||selMonthKey()];return!!(m&&m[id]);}
-function pagoSet(id,val,key){if(!id)return;const k=key||selMonthKey();D.contas.pagos=D.contas.pagos||{};const m=D.contas.pagos[k]=D.contas.pagos[k]||{};if(val)m[id]=true;else delete m[id];save();}
+/* Conta pessoal ligada a uma conta da Casa (Copel → Luz): é a MESMA conta.
+   O "pago" e o valor moram na conta da Casa; a aba da pessoa só mostra quem paga. */
+const PESS_LIGAVEIS=['joao','esposa'];
+function casaIdx(id){return id?(D.contas.casa||[]).findIndex(c=>c.id===id):-1;}
+function ligacaoCasa(b,key){
+  if(!b||!b.casaId)return null;const i=casaIdx(b.casaId);if(i<0)return null;
+  const c=monthlyValue(D.contas.casa[i],key);return c?{i,c}:null;
+}
+function idPagoReal(id){
+  for(const k of PESS_LIGAVEIS){const r=(D.contas&&D.contas[k]||[]).find(x=>x.id===id);
+    if(r&&r.casaId&&casaIdx(r.casaId)>=0)return r.casaId;}
+  return id;
+}
+function pagoGet(id,key){if(!id)return false;id=idPagoReal(id);const m=((D.contas.pagos)||{})[key||selMonthKey()];return!!(m&&m[id]);}
+function pagoSet(id,val,key){if(!id)return;id=idPagoReal(id);const k=key||selMonthKey();D.contas.pagos=D.contas.pagos||{};const m=D.contas.pagos[k]=D.contas.pagos[k]||{};if(val)m[id]=true;else delete m[id];save();}
 /* alterna o pago pelo botão da 1ª coluna e redesenha as contas do mês */
 function togglePago(id){pagoSet(id,!pagoGet(id));renderContasMonth();}
 
@@ -1537,7 +1550,12 @@ function pessoaSum(p){return D.invest.aportes.filter(a=>a.pessoa===p).reduce((s,
 function casaTotal(){return billsForMonth('casa').reduce((s,b)=>s+(+b.valor||0),0)}
 function casaPretaTotal(){return billsForMonth('casa').reduce((s,b)=>s+(+b.preta||0),0)}
 function casaPretoTotal(){return billsForMonth('casa').reduce((s,b)=>s+(+b.preto||0),0)}
-function pessTotal(k){return billsForMonth(k).reduce((s,b)=>s+(+b.valor||0),0)}
+function valorPess(b,key){const l=ligacaoCasa(b,key);return l?(+l.c.valor||0):(+b.valor||0);}
+/* tudo o que a pessoa paga (o subtotal da aba dela) */
+function pessTotal(k){return billsForMonth(k).reduce((s,b)=>s+valorPess(b),0)}
+/* só o que é dela e NÃO está na Casa — é isto que entra no total do mês */
+function pessProprio(k){return billsForMonth(k).filter(b=>!ligacaoCasa(b)).reduce((s,b)=>s+(+b.valor||0),0)}
+function pessNaCasa(k){return billsForMonth(k).filter(b=>ligacaoCasa(b)).reduce((s,b)=>s+valorPess(b),0)}
 function cartaoTotal(){return billsForMonth('cartoes').reduce((s,c)=>s+(+c.valor||0),0)}
 function cartaoLimite(){return billsForMonth('cartoes').reduce((s,c)=>s+(+c.limite||0),0)}
 function recebidoKey(r){
@@ -1550,10 +1568,11 @@ function recebidoKey(r){
   return dt.getFullYear()===ano&&dt.getMonth()===mes-1&&dt.getDate()===dia?keyOf(dt):null;
 }
 function recebidoMes(){return D.contas.recebidos.filter(r=>recebidoKey(r)===selMonthKey()).reduce((s,r)=>s+(+r.valor||0),0)}
-function contasMes(){return casaTotal()+pessTotal('joao')+pessTotal('esposa')}
+function contasMes(){return casaTotal()+pessProprio('joao')+pessProprio('esposa')}
 function pagoCasa(){return billsForMonth('casa').filter(b=>pagoGet(b.id)).reduce((s,b)=>s+(+b.valor||0),0)}
-function pagoPess(k){return billsForMonth(k).filter(b=>pagoGet(b.id)).reduce((s,b)=>s+(+b.valor||0),0)}
-function pagoMes(){return pagoCasa()+pagoPess('joao')+pagoPess('esposa')}
+function pagoPess(k){return billsForMonth(k).filter(b=>pagoGet(b.id)).reduce((s,b)=>s+valorPess(b),0)}
+function pagoPessProprio(k){return billsForMonth(k).filter(b=>!ligacaoCasa(b)&&pagoGet(b.id)).reduce((s,b)=>s+(+b.valor||0),0)}
+function pagoMes(){return pagoCasa()+pagoPessProprio('joao')+pagoPessProprio('esposa')}
 
 /* ---------- somas PATRIMÔNIO ---------- */
 function bensTotal(){return (D.patrimonio.bens||[]).reduce((s,b)=>s+(+b.valor||0),0)}
@@ -1765,7 +1784,7 @@ function renderCasa(){
   let h=`<tr><th class="paycell">Pago</th><th>Conta</th><th class="center">Venc.</th><th>${esc(np.preta)} (R$)</th><th>${esc(np.preto)} (R$)</th><th>Valor (R$)</th><th></th></tr>`;
   D.contas.casa.forEach((original,i)=>{const b=monthlyValue(original);if(!b)return;const pg=pagoGet(b.id);h+=`<tr class="${pg?'rowpaid':''}">
     <td class="paycell"><button class="paybtn${pg?' on':''}" aria-pressed="${pg}" title="${pg?'Pago — tocar para desmarcar':'Marcar como pago'}" onclick="togglePago(D.contas.casa[${i}].id)">${pg?'✓':''}</button></td>
-    <td class="name"><input class="cell txt" value="${esc(b.nome)}" oninput="setBill('casa',${i},'nome',this.value);save()"></td>
+    <td class="name"><input class="cell txt" value="${esc(b.nome)}" oninput="setBill('casa',${i},'nome',this.value);save()">${quemPagaCasa(b.id)?`<div class="tag-casa">💳 paga por ${esc(quemPagaCasa(b.id))}</div>`:''}</td>
     <td class="center"><input class="cell sm" style="text-align:center" value="${esc(b.venc)}" oninput="setBill('casa',${i},'venc',this.value);refreshCon()"></td>
     <td><input class="cell" type="number" step="0.01" value="${b.preta}" oninput="setBill('casa',${i},'preta',+this.value);refreshCasa()"></td>
     <td><input class="cell" type="number" step="0.01" value="${b.preto}" oninput="setBill('casa',${i},'preto',+this.value);refreshCasa()"></td>
@@ -1784,15 +1803,79 @@ function splitUm(i){const b=monthlyValue(D.contas.casa[i]||{});if(!b)return;
 function splitMeio(){D.contas.casa.forEach((b,i)=>{if(monthlyValue(b))splitUm(i);});renderCasa();refreshCon();}
 
 function renderPess(k,tid){
-  let h='<tr><th class="paycell">Pago</th><th>Conta</th><th class="center">Venc.</th><th>Valor (R$)</th><th></th></tr>';
-  D.contas[k].forEach((original,i)=>{const b=monthlyValue(original);if(!b)return;const pg=pagoGet(b.id);h+=`<tr class="${pg?'rowpaid':''}">
+  const liga=PESS_LIGAVEIS.includes(k);
+  const casaOpts=liga?billsForMonth('casa'):[];
+  let h='<tr><th class="paycell">Pago</th><th>Conta</th><th class="center">Venc.</th><th>Valor (R$)</th>'+(liga?'<th>Também na Casa</th>':'')+'<th></th></tr>';
+  D.contas[k].forEach((original,i)=>{const b=monthlyValue(original);if(!b)return;const pg=pagoGet(b.id);const lg=liga?ligacaoCasa(original):null;
+    /* ligada: o valor é o da conta da Casa (editar aqui muda lá também) */
+    const valIn=lg
+      ?`<input class="cell" type="number" step="0.01" value="${lg.c.valor}" oninput="setBill('casa',${lg.i},'valor',+this.value);refreshCon()">`
+      :`<input class="cell" type="number" step="0.01" value="${b.valor}" oninput="setBill('${k}',${i},'valor',+this.value);refreshCon()">`;
+    const sel=liga?`<td><select class="cell txt" style="font-size:12px;max-width:150px" onchange="setLigacao('${k}',${i},this.value)"><option value="">— só ${k==='esposa'?'dela':'dele'} —</option>${casaOpts.map(c=>`<option value="${esc(c.id)}"${original.casaId===c.id?' selected':''}>🏠 ${esc(c.nome)}</option>`).join('')}</select></td>`:'';
+    h+=`<tr class="${pg?'rowpaid':''}">
     <td class="paycell"><button class="paybtn${pg?' on':''}" aria-pressed="${pg}" title="${pg?'Pago — tocar para desmarcar':'Marcar como pago'}" onclick="togglePago(D.contas.${k}[${i}].id)">${pg?'✓':''}</button></td>
-    <td class="name"><input class="cell txt" value="${esc(b.nome)}" oninput="setBill('${k}',${i},'nome',this.value);save()"></td>
+    <td class="name"><input class="cell txt" value="${esc(b.nome)}" oninput="setBill('${k}',${i},'nome',this.value);save()">${lg?`<div class="tag-casa">🏠 é a conta “${esc(lg.c.nome)}” da Casa — não soma de novo</div>`:''}</td>
     <td class="center"><input class="cell sm" style="text-align:center" value="${esc(b.venc)}" oninput="setBill('${k}',${i},'venc',this.value);refreshCon()"></td>
-    <td><input class="cell" type="number" step="0.01" value="${b.valor}" oninput="setBill('${k}',${i},'valor',+this.value);refreshCon()"></td>
+    <td>${valIn}</td>${sel}
     <td><button class="iconbtn" onclick="deleteItem('contas.${k}',${i})">×</button></td></tr>`;});
-  h+=`<tr class="sumrow"><td class="paycell"></td><td>Subtotal <span id="${k}-pago" class="tag"></span></td><td></td><td id="${k}-tot"></td><td></td></tr>`;
-  document.getElementById(tid).innerHTML=h;set(k+'-tot',brl(pessTotal(k)));set(k+'-pago',pagoPess(k)?('pago '+brl(pagoPess(k))):'');save();tuneInputs();
+  h+=`<tr class="sumrow"><td class="paycell"></td><td>Subtotal <span id="${k}-pago" class="tag"></span></td><td></td><td id="${k}-tot"></td>${liga?'<td></td>':''}<td></td></tr>`;
+  document.getElementById(tid).innerHTML=h;set(k+'-tot',brl(pessTotal(k)));set(k+'-pago',pagoPess(k)?('pago '+brl(pagoPess(k))):'');
+  if(liga)notaLigacao(k);
+  save();tuneInputs();
+}
+/* quem paga uma conta da Casa (quando alguém ligou a conta pessoal dele a ela) */
+function quemPagaCasa(casaId){
+  const q=PESS_LIGAVEIS.filter(k=>(D.contas[k]||[]).some(r=>r.casaId===casaId&&monthlyValue(r)));
+  return q.map(k=>k==='esposa'?pesNome('preta'):pesNome('preto')).join(' e ');
+}
+function setLigacao(k,i,casaId){
+  const r=D.contas[k]&&D.contas[k][i];if(!r)return;
+  if(!casaId){
+    /* desligar: volta a ser só dela, com o valor que a Casa tinha */
+    const lg=ligacaoCasa(r),pagoCasa=lg?pagoGet(lg.c.id):false;
+    if(lg)setBill(k,i,'valor',+lg.c.valor||0);
+    r.casaId=null;r.semCasa=true;
+    if(pagoCasa)pagoSet(r.id,true);
+  }else{
+    const ci=casaIdx(casaId);if(ci<0)return;const c=monthlyValue(D.contas.casa[ci]);const b=monthlyValue(r);
+    /* a Casa ainda sem valor herda o que ela digitou; quem já pagou continua pago */
+    if(c&&!(+c.valor>0)&&b&&+b.valor>0)setBill('casa',ci,'valor',+b.valor);
+    const jaPago=pagoGet(r.id);r.casaId=casaId;if(jaPago)pagoSet(casaId,true);
+  }
+  save();renderContasMonth();
+}
+/* Copel é a Luz, Sanepar é a Água: o app reconhece e sugere ligar */
+const APELIDOS_CONTA=[
+  ['luz',['luz','energia','eletric','copel','celesc','cemig','cpfl','enel','light','coelba','equatorial','energisa','neoenergia','rge','celpe','cosern']],
+  ['agua',['agua','sanepar','sabesp','copasa','casan','cedae','embasa','saneamento','samae','compesa','cagece','corsan','dae ','semae']],
+  ['gas',['gas','compagas','comgas','ultragaz','liquigas','supergasbras','copergas']],
+  ['internet',['internet','fibra','wifi','banda larga']],
+  ['aluguel',['aluguel','imobiliaria','locacao']],
+  ['condominio',['condominio']]];
+function tipoConta(nome){const n=' '+norm(nome)+' ';const t=APELIDOS_CONTA.find(([,ws])=>ws.some(w=>n.includes(w)));return t?t[0]:'';}
+function sugestoesLigacao(k){
+  const casa=billsForMonth('casa'),usadas=new Set(PESS_LIGAVEIS.flatMap(x=>(D.contas[x]||[]).map(r=>r.casaId).filter(Boolean)));
+  const out=[];
+  (D.contas[k]||[]).forEach((r,i)=>{
+    if(r.casaId||r.semCasa||!monthlyValue(r))return;
+    const nr=norm(r.nome).trim(),tr=tipoConta(r.nome);
+    const c=casa.find(c=>!usadas.has(c.id)&&((tr&&tipoConta(c.nome)===tr)||(nr.length>=4&&norm(c.nome).trim()===nr)));
+    if(c){out.push({i,nome:r.nome,casaId:c.id,casaNome:c.nome});usadas.add(c.id);}
+  });
+  return out;
+}
+function naoLigar(k,i){const r=D.contas[k]&&D.contas[k][i];if(r){r.semCasa=true;save();renderPess(k,'tbl-'+k);}}
+function notaLigacao(k){
+  const tb=document.getElementById('tbl-'+k);if(!tb)return;
+  let box=document.getElementById('liga-'+k);
+  if(!box){box=document.createElement('div');box.id='liga-'+k;box.className='liga-box';(tb.closest('.scroll')||tb).before(box);}
+  const sug=sugestoesLigacao(k),naCasa=pessNaCasa(k);
+  let h='';
+  if(naCasa>0)h+='<p class="note" style="margin:0 0 8px">🏠 <b>'+brl(naCasa)+'</b> do subtotal são contas da Casa que '+(k==='esposa'?'ela':'ele')+' paga: aparecem aqui e na Casa, mas o total do mês conta uma vez só.</p>';
+  sug.forEach(x=>{h+='<div class="liga-sug"><span>“'+esc(x.nome)+'” parece ser a conta <b>“'+esc(x.casaNome)+'”</b> da Casa.</span>'
+    +'<span class="liga-acoes"><button class="iconbtn primary" onclick="setLigacao(\''+k+'\','+x.i+',\''+escJs(x.casaId)+'\')">É a mesma — ligar</button>'
+    +'<button class="iconbtn" onclick="naoLigar(\''+k+'\','+x.i+')">Não é</button></span></div>';});
+  box.innerHTML=h;box.style.display=h?'':'none';
 }
 function addPess(k,tid){D.contas[k].push({id:uid(),_inicio:selMonthKey(),nome:"Nova conta",valor:0,venc:"",pago:false});renderPess(k,tid||'tbl-'+k);refreshCon()}
 
@@ -1850,9 +1933,9 @@ function allBills(){
   const arr=[];
   /* aba/emp: por onde essa conta se edita — é o que faz a lista de vencimentos
      virar atalho em vez de só aviso */
-  billsForMonth('casa').forEach(b=>arr.push({grupo:'Casa',aba:'c-casa',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
-  billsForMonth('joao').forEach(b=>arr.push({grupo:'João',aba:'c-joao',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
-  billsForMonth('esposa').forEach(b=>arr.push({grupo:'Kassiana',aba:'c-esposa',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
+  billsForMonth('casa').forEach(b=>{const q=quemPagaCasa(b.id);arr.push({grupo:q?'Casa · '+q:'Casa',aba:'c-casa',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc});});
+  billsForMonth('joao').filter(b=>!ligacaoCasa(b)).forEach(b=>arr.push({grupo:'João',aba:'c-joao',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
+  billsForMonth('esposa').filter(b=>!ligacaoCasa(b)).forEach(b=>arr.push({grupo:'Kassiana',aba:'c-esposa',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
   billsForMonth('empresa').forEach(b=>arr.push({grupo:'Empresa JV',aba:'c-empresa',emp:'jv',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
   billsForMonth('empresaKS').forEach(b=>arr.push({grupo:'Studio Kassiana',aba:'c-empresa',emp:'ks',id:b.id,nome:b.nome,valor:b.valor,venc:b.venc}));
   return arr;
@@ -1917,10 +2000,11 @@ function drawConPainel(){
   set('ch-nome-preta',D.nomes.preta);set('ch-nome-preto',D.nomes.preto);
   set('ch-total',brl(tot));set('ch-pago',brl(pago));set('ch-percent',Math.round(tot?Math.min(100,pago/tot*100):0)+'%');
   document.getElementById('ch-bar').style.width=(tot?Math.min(100,pago/tot*100):0)+'%';
-  const parts=[['Casa','c-casa',casaTotal()], [pesNome('preto'),'c-joao',pessTotal('joao')], [pesNome('preta'),'c-esposa',pessTotal('esposa')]];
+  /* a conta da casa que um dos dois paga já está em "Casa": aqui só o que é só de cada um, para a soma fechar com o total */
+  const parts=[['Casa','c-casa',casaTotal()], [pesNome('preto'),'c-joao',pessProprio('joao')], [pesNome('preta'),'c-esposa',pessProprio('esposa')]];
   document.getElementById('month-breakdown-list').innerHTML=parts.map(([name,tab,value])=>'<button class="breakdown-row" onclick="irPara(\''+tab+'\')"><span>'+esc(name)+'</span><strong>'+brl(value)+'</strong></button>').join('');
   set('ch-preta',brl(casaPretaTotal()));set('ch-preto',brl(casaPretoTotal()));
-  const gl=['Casa','João','Kassiana','Empresa JV','Studio Kassiana'],gv=[casaTotal(),pessTotal('joao'),pessTotal('esposa'),pessTotal('empresa'),pessTotal('empresaKS')];
+  const gl=['Casa','João','Kassiana','Empresa JV','Studio Kassiana'],gv=[casaTotal(),pessProprio('joao'),pessProprio('esposa'),pessTotal('empresa'),pessTotal('empresaKS')];
   destroy('grupo');charts.grupo=new Chart(document.getElementById('grupoChart'),{type:'doughnut',
     data:{labels:gl,datasets:[{data:gv,backgroundColor:PAL,borderColor:COL.ink,borderWidth:3}]},
     options:{cutout:'60%',plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:8}},tooltip:{callbacks:{label:c=>c.label+': '+brl(c.raw)}}}}});
