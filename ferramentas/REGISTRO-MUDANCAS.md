@@ -1759,3 +1759,50 @@ e arquivos do site acessíveis. Todas as correções do Claude foram preservadas
   antes do merge e verificar o monitor após a publicação; evidências no #226.
 - Sem alterações de dados reais ou regras. App Check depende da configuração
   externa; fala continua protótipo visual isolado.
+
+
+---
+
+## 2026-10-20 · Claude: Família JK — contas ligadas à Casa, privacidade, conexão e leitura
+
+**Pedido do João, explícito, para o `app-familia/`** (o CLAUDE.md diz "não mexer";
+estas mudanças foram pedidas por ele nesta sessão).
+
+- **#253 (já publicado):** conta pessoal ligada a uma conta da Casa ("Também na
+  Casa": Copel → Luz). Mesma conta nas duas abas, um valor e um pago só (guardados
+  na Casa); total do mês, painel, gráfico e vencimentos contam uma vez. Sugestão
+  por nome/apelido de concessionária. Agora: ao ligar, vale o valor da aba de quem
+  paga; a caixa de sugestão fica acima da barra de ações da tabela.
+- **Privacidade:** saiu do código o retrato real da carteira de 01/10
+  (`SNAPSHOT_JOAO_20261001`, que era gravado até em aparelho novo). Os dados de
+  exemplo (contas, carros, seguros, carteira) viraram genéricos — os reais vêm da
+  nuvem/backup. Comentários sem CNPJ, empresas ou pessoas reais. Novo
+  `ferramentas/checar-privacidade-familia.py` no `checar-tudo.sh` (8a): barra
+  CPF/CNPJ que não seja de exemplo, `const SNAPSHOT_…` e link real de nuvem.
+  Mantidos iguais os meses/aportes/ano de exemplo dos investimentos (usados para
+  reconhecer e apagar exemplo). O histórico do Git continua com os valores antigos.
+- **Conexão:** sem ETag visível ao navegador o envio travava sempre ("a nuvem
+  não informou a versão"); agora relê a nuvem e envia sem `if-match` quando ela
+  está igual à conhecida. Erros em português ("Sem internet…", "A nuvem demorou…",
+  "recusou o acesso…") no lugar de "Failed to fetch"/"aborted"/"Erro 401". Sem
+  rede não insiste a cada 15 s; ao voltar a conexão busca e envia sozinho.
+- **Leitura:** linhas "fora da soma" da importação e "não usar" da foto deixaram
+  de ter opacidade 45% (contraste 2,7:1). Fontes Inter/Fraunces/IBM Plex Mono
+  (não carregadas desde que o Google Fonts saiu) caíam em serifa/monoespaçada:
+  trocadas pela fonte do sistema. "×" do aviso de backup não cobre mais o texto.
+- Testes: `testar-sincronizacao-familiajk.cjs` verde; testes próprios de nuvem
+  simulada (11), contas ligadas (14) e contraste de estados/janelas, todos com
+  dados fictícios. Regras do Firebase não foram tocadas.
+- **Risco antigo corrigido (já existia no ar):** aparelho novo, só com exemplo,
+  ao ligar a nuvem juntava os exemplos aos dados reais e enviava tudo (Aluguel e
+  Luz duplicados, contas inventadas; na versão anterior, também o retrato da
+  carteira). Agora a base nova nasce com `_soExemplo` (não sincroniza) e, sem
+  nada digitado, ADOTA a nuvem sem enviar (exemplos ficam em Versões guardadas).
+  Digitar/escolher qualquer coisa fora dos campos `cl-*` tira a marca e o
+  comportamento volta ao de antes (junta ou pede conferência).
+- Lista que falta numa base que já existe (backup antigo) entra vazia, não com
+  exemplo. Conferido: a base atual da família (com a marca do retrato) migra de
+  forma idêntica na versão anterior e na nova.
+- **Para o João decidir:** sem login, quem tiver o link da nuvem lê e altera os
+  dados da família (o app já avisa). Exigir login muda a regra do banco da
+  família — só com autorização.

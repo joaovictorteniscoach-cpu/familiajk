@@ -26,14 +26,14 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:100%}
-body{background:radial-gradient(1200px 600px at 80% -10%, #133038 0%, var(--ink) 55%);color:var(--text);font-family:'Inter',system-ui,sans-serif;line-height:1.5;min-height:100vh;padding-bottom:60px;
+body{background:radial-gradient(1200px 600px at 80% -10%, #133038 0%, var(--ink) 55%);color:var(--text);font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;line-height:1.5;min-height:100vh;padding-bottom:60px;
   --accent:var(--gold); --accent-soft:var(--gold-soft); --accent-d:#a87a1e;}
 body.mode-invest{--accent:var(--teal); --accent-soft:var(--teal-soft); --accent-d:#2f8f7c;}
 .wrap{max-width:1120px;margin:0 auto;padding:0 16px}
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 16px 8px;max-width:1120px;margin:0 auto;flex-wrap:wrap}
 .brand{display:flex;align-items:center;gap:11px}
-.crest{width:38px;height:38px;border-radius:9px;background:linear-gradient(150deg,var(--accent),var(--accent-d));display:grid;place-items:center;color:#08130f;font-family:'Fraunces',serif;font-weight:600;font-size:14px;letter-spacing:.5px;box-shadow:0 2px 10px rgba(0,0,0,.3);transition:.3s}
-.brand h1{font-family:'Fraunces',serif;font-weight:500;font-size:19px;letter-spacing:.2px}
+.crest{width:38px;height:38px;border-radius:9px;background:linear-gradient(150deg,var(--accent),var(--accent-d));display:grid;place-items:center;color:#08130f;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-weight:600;font-size:14px;letter-spacing:.5px;box-shadow:0 2px 10px rgba(0,0,0,.3);transition:.3s}
+.brand h1{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-weight:500;font-size:19px;letter-spacing:.2px}
 .brand span{display:block;font-size:11px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;font-weight:500}
 .tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .savedot{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px}
@@ -42,7 +42,7 @@ body.mode-invest{--accent:var(--teal); --accent-soft:var(--teal-soft); --accent-
 .iconbtn:hover{border-color:var(--accent);color:var(--accent-soft)}
 .iconbtn.primary{background:linear-gradient(150deg,var(--accent),var(--accent-d));color:#1a1304;border-color:transparent;font-weight:600}
 .modeswitch{display:flex;justify-content:center;gap:8px;padding:8px 12px 0;flex-wrap:wrap}
-.ms{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--line);color:var(--muted);font-family:'Fraunces',serif;font-size:14px;font-weight:500;padding:9px 20px;border-radius:24px;cursor:pointer;transition:.18s}
+.ms{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--line);color:var(--muted);font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:14px;font-weight:500;padding:9px 20px;border-radius:24px;cursor:pointer;transition:.18s}
 .ms .ic{font-size:16px}
 .ms.on{border-color:transparent;font-weight:600}
 #ms-contas.on{background:linear-gradient(150deg,var(--gold),#b8861f);color:#1a1304}
@@ -60,48 +60,48 @@ section[data-tab].on{display:block}
 @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion){*{animation:none!important}}
 .card{background:linear-gradient(180deg,var(--surface) 0%,#0e2229 100%);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin:14px 0}
-.card h2{font-family:'Fraunces',serif;font-weight:500;font-size:17px;margin-bottom:3px}
+.card h2{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-weight:500;font-size:17px;margin-bottom:3px}
 .card .sub{font-size:12.5px;color:var(--muted);margin-bottom:16px}
 .grid{display:grid;gap:14px}
 @media(min-width:760px){.grid.two{grid-template-columns:1fr 1fr}.grid.three{grid-template-columns:1.3fr 1fr 1fr}}
 .hero{position:relative;overflow:hidden}
 .hero::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),transparent)}
-.monthchip{display:inline-block;font-family:'Inter';font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:capitalize;color:var(--accent-soft);background:rgba(220,196,142,.12);border:1px solid rgba(220,196,142,.3);border-radius:20px;padding:2px 10px;margin-left:8px;vertical-align:middle}
+.monthchip{display:inline-block;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:capitalize;color:var(--accent-soft);background:rgba(220,196,142,.12);border:1px solid rgba(220,196,142,.3);border-radius:20px;padding:2px 10px;margin-left:8px;vertical-align:middle}
 .hero .eyebrow{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:600}
-.bignum{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(34px,8vw,56px);color:var(--accent-soft);line-height:1;margin:6px 0 4px;letter-spacing:-1px}
+.bignum{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-weight:500;font-size:clamp(34px,8vw,56px);color:var(--accent-soft);line-height:1;margin:6px 0 4px;letter-spacing:-1px}
 .bignum.ok{color:var(--up)}
 .rule{height:2px;width:78px;background:linear-gradient(90deg,var(--accent),transparent);margin:10px 0 14px;border-radius:2px}
 .spark{height:46px;margin-top:6px}
 .split{display:flex;gap:22px;flex-wrap:wrap;margin-top:6px}
 .split .k{font-size:12px;color:var(--muted)}
-.split .v{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:500}
-.pill{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:2px 8px;border-radius:20px;background:var(--surface2);border:1px solid var(--line);color:var(--accent-soft)}
+.split .v{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-variant-numeric:tabular-nums;font-size:15px;font-weight:500}
+.pill{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-variant-numeric:tabular-nums;font-size:11px;padding:2px 8px;border-radius:20px;background:var(--surface2);border:1px solid var(--line);color:var(--accent-soft)}
 .progressbar{height:14px;background:var(--ink);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:14px}
 .progressbar>i{display:block;height:100%;background:linear-gradient(90deg,var(--up),var(--teal));border-radius:10px;transition:width .5s ease}
 .tbl{width:100%;border-collapse:collapse;font-size:13px}
 .tbl th{text-align:right;font-size:10.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);font-weight:600;padding:8px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
 .tbl th:first-child,.tbl td:first-child{text-align:left}
-.tbl td{padding:6px 8px;border-bottom:1px solid rgba(52,62,73,.5);font-family:'IBM Plex Mono',monospace;text-align:right;white-space:nowrap}
-.tbl td.name{font-family:'Inter',sans-serif;text-align:left}
+.tbl td{padding:6px 8px;border-bottom:1px solid rgba(52,62,73,.5);font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.tbl td.name{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;text-align:left}
 .tbl td.center,.tbl th.center{text-align:center}
 .tbl tr.sumrow td{border-top:1.5px solid var(--accent);border-bottom:none;font-weight:600;color:var(--accent-soft);padding-top:9px}
 .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-input.cell,select.cell{background:rgba(143,198,232,.07);border:1px solid var(--line);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;width:100%;min-width:72px;padding:7px 7px;border-radius:7px;text-align:right;transition:.15s}
-input.cell.txt,select.cell.txt{text-align:left;font-family:'Inter',sans-serif;min-width:110px}
+input.cell,select.cell{background:rgba(143,198,232,.07);border:1px solid var(--line);color:var(--text);font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-variant-numeric:tabular-nums;font-size:13px;width:100%;min-width:72px;padding:7px 7px;border-radius:7px;text-align:right;transition:.15s}
+input.cell.txt,select.cell.txt{text-align:left;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;min-width:110px}
 input.cell.sm{min-width:52px}
 input.cell:focus,select.cell:focus{outline:none;border-color:var(--accent);background:rgba(220,196,142,.1)}
 select.cell option{background:var(--surface)}
 .up{color:var(--up)} .down{color:var(--down)} .mut{color:var(--muted)} .goldc{color:var(--accent-soft)}
-.tag{font-family:'Inter';font-size:11px;color:var(--muted)}
+.tag{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:11px;color:var(--muted)}
 .inpgrid{display:grid;gap:12px;grid-template-columns:1fr 1fr}
 @media(min-width:680px){.inpgrid{grid-template-columns:repeat(4,1fr)}}
 .field label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:5px;font-weight:500}
-.field input{width:100%;background:var(--surface2);border:1px solid var(--line);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:14px;padding:10px 11px;border-radius:9px}
+.field input{width:100%;background:var(--surface2);border:1px solid var(--line);color:var(--text);font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-variant-numeric:tabular-nums;font-size:14px;padding:10px 11px;border-radius:9px}
 .field input:focus{outline:none;border-color:var(--accent)}
 .field .hint{font-size:10.5px;color:var(--teal);margin-top:4px}
 .result{display:flex;gap:18px;flex-wrap:wrap;margin-top:18px;padding:16px;background:var(--surface2);border:1px solid var(--line);border-radius:12px}
 .result .blk .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
-.result .blk .v{font-family:'Fraunces',serif;font-size:22px;margin-top:3px}
+.result .blk .v{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:22px;margin-top:3px}
 .result .blk.base .v{color:var(--accent-soft)}
 .chartbox{position:relative;height:300px;margin-top:8px}
 .chartbox.sm{height:240px}
@@ -119,14 +119,14 @@ select.cell option{background:var(--surface)}
 @media(min-width:680px){.kpis{grid-template-columns:repeat(4,1fr)}}
 .kpi{background:var(--surface2);border:1px solid var(--line);border-radius:11px;padding:14px}
 .kpi .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
-.kpi .v{font-family:'IBM Plex Mono',monospace;font-size:18px;margin-top:5px;font-weight:500}
+.kpi .v{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-variant-numeric:tabular-nums;font-size:18px;margin-top:5px;font-weight:500}
 .goal{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:12px}
 .goal .top{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
 .goal .top input{background:transparent;border:none;border-bottom:1px solid var(--line);color:var(--text);font-family:inherit;font-size:15px;font-weight:500;padding:3px 0}
 .goal .top input:focus{outline:none;border-color:var(--accent)}
 .goal .meta-inputs{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px}
 .goal .meta-inputs .f label{font-size:10.5px;color:var(--muted);display:block;margin-bottom:3px}
-.goal .meta-inputs .f input{width:130px;background:rgba(143,198,232,.07);border:1px solid var(--line);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;padding:7px 8px;border-radius:7px}
+.goal .meta-inputs .f input{width:130px;background:rgba(143,198,232,.07);border:1px solid var(--line);color:var(--text);font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-variant-numeric:tabular-nums;font-size:13px;padding:7px 8px;border-radius:7px}
 /* ===== Modo "caber na tela": cada linha vira um cartão empilhado, com o
    rótulo da coluna ao lado do valor. Assim nenhuma aba precisa ser arrastada
    de lado — e a letra fica maior, porque sobra largura. ===== */
@@ -142,7 +142,7 @@ body.fit .tbl td{display:flex;align-items:center;justify-content:space-between;g
   width:auto;text-align:right;white-space:normal;border:none;padding:5px 0;max-width:none}
 body.fit .tbl td+td{border-top:1px solid rgba(52,62,73,.45)}
 body.fit .tbl td::before{content:attr(data-lab);flex:0 0 auto;text-align:left;
-  font-family:'Inter',sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:.4px;
+  font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:.4px;
   color:var(--muted);font-weight:600}
 body.fit .tbl td[data-lab=""]::before,body.fit .tbl td.semlab::before{content:none}
 /* nada dentro da célula pode impor largura mínima: várias tabelas trazem
@@ -165,10 +165,10 @@ body.fit .tbl td:only-child{justify-content:flex-end}
 .goal .stat{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:9px;font-size:12.5px}
 .goal .stat .eta{color:var(--accent-soft)}
 .fire{margin-top:18px;padding:16px;background:var(--surface2);border:1px solid var(--line);border-radius:12px}
-.fire h3{font-family:'Fraunces',serif;font-weight:500;font-size:15px;margin-bottom:12px}
+.fire h3{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-weight:500;font-size:15px;margin-bottom:12px}
 .fire .row{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-end}
 .fire .uc{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
-.fire .big{font-family:'Fraunces',serif;font-size:22px}
+.fire .big{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:22px}
 .toggle{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text);margin-top:14px;cursor:pointer}
 .toggle input{width:16px;height:16px;accent-color:var(--accent)}
 .due{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:11px;margin-bottom:8px;background:var(--surface2)}
@@ -176,7 +176,7 @@ body.fit .tbl td:only-child{justify-content:flex-end}
 .due .nm{font-size:13.5px;font-weight:500}
 .due .meta{font-size:11px;color:var(--muted)}
 .due .rgt{text-align:right}
-.due .val{font-family:'IBM Plex Mono',monospace;font-size:14px}
+.due .val{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-variant-numeric:tabular-nums;font-size:14px}
 .due .when{font-size:11px;margin-top:2px}
 .due.late{border-color:rgba(232,117,95,.5)}
 .due.soon{border-color:rgba(220,196,142,.45)}
@@ -197,17 +197,17 @@ tr.rowpaid td.name input.cell{color:var(--muted);text-decoration:line-through;te
 .advice.warn2{border-left-color:var(--gold)}
 .advice.bad{border-left-color:var(--down)}
 .advice.info{border-left-color:var(--teal)}
-.advice h4{font-family:'Inter';font-size:13.5px;font-weight:600;margin-bottom:4px;display:flex;gap:8px;align-items:center}
+.advice h4{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:13.5px;font-weight:600;margin-bottom:4px;display:flex;gap:8px;align-items:center}
 .advice p{font-size:12.5px;color:var(--muted);line-height:1.6}
 .advice .ic{font-size:15px}
 .namebar{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:8px}
 .namebar .f label{font-size:10.5px;color:var(--muted);display:block;margin-bottom:3px}
-.namebar .f input{width:170px;background:rgba(143,198,232,.07);border:1px solid var(--line);color:var(--text);font-family:'Inter';font-size:13px;padding:7px 9px;border-radius:7px}
+.namebar .f input{width:170px;background:rgba(143,198,232,.07);border:1px solid var(--line);color:var(--text);font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:13px;padding:7px 9px;border-radius:7px}
 .banner{display:flex;align-items:center;gap:12px;flex-wrap:wrap;max-width:1120px;margin:8px auto 0;padding:10px 16px;background:rgba(220,196,142,.1);border:1px solid rgba(220,196,142,.3);border-radius:11px;font-size:12.5px;color:var(--gold-soft)}
 .banner .bk-msg{flex:1;min-width:180px}
 .yearnav{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px}
-.yearlbl{font-family:'Fraunces',serif;font-size:20px;color:var(--accent-soft);min-width:60px;text-align:center}
-.stpill{font-family:'Inter';font-size:10.5px;padding:2px 9px;border-radius:20px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.yearlbl{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:20px;color:var(--accent-soft);min-width:60px;text-align:center}
+.stpill{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:10.5px;padding:2px 9px;border-radius:20px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
 .stpill.pay{color:var(--down);border-color:rgba(232,117,95,.45)}
 .stpill.part{color:var(--gold-soft);border-color:rgba(220,196,142,.45)}
 .stpill.done{color:var(--up);border-color:rgba(95,208,138,.45)}
@@ -215,9 +215,9 @@ tr.rowpaid td.name input.cell{color:var(--muted);text-decoration:line-through;te
 .overlay{position:fixed;inset:0;background:rgba(4,12,15,.75);display:none;align-items:center;justify-content:center;padding:18px;z-index:50}
 .overlay.on{display:flex}
 .modal{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px;max-width:440px;width:100%}
-.modal h3{font-family:'Fraunces',serif;font-weight:500;font-size:19px;margin-bottom:6px}
+.modal h3{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-weight:500;font-size:19px;margin-bottom:6px}
 .modal p{font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.6}
-.modal textarea{width:100%;height:84px;background:var(--surface2);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:10px;font-family:'IBM Plex Mono',monospace;font-size:11px;resize:none}
+.modal textarea{width:100%;height:84px;background:var(--surface2);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:10px;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-variant-numeric:tabular-nums;font-size:11px;resize:none}
 .modal .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .imp-opts{display:flex;gap:22px;flex-wrap:wrap;margin-bottom:12px}
 .imp-grp{display:flex;flex-direction:column;gap:5px}
@@ -243,7 +243,7 @@ body.mode-invest .tab.active{box-shadow:0 5px 16px -5px rgba(143,198,232,.55)}
 .chk{transform:scale(1.05)}
 .advice{transition:.15s}.advice:hover{border-color:var(--line);transform:translateX(2px)}
 .due{transition:.15s}.due:hover{border-color:var(--accent)}
-.monthchip{display:inline-block;font-family:'Inter';font-size:11px;font-weight:600;letter-spacing:.3px;text-transform:capitalize;color:var(--accent-soft);background:rgba(220,196,142,.1);border:1px solid rgba(220,196,142,.3);padding:3px 11px;border-radius:20px;margin-bottom:8px}
+.monthchip{display:inline-block;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:11px;font-weight:600;letter-spacing:.3px;text-transform:capitalize;color:var(--accent-soft);background:rgba(220,196,142,.1);border:1px solid rgba(220,196,142,.3);padding:3px 11px;border-radius:20px;margin-bottom:8px}
 body.mode-invest .monthchip{color:var(--teal-soft);background:rgba(143,198,232,.1);border-color:rgba(143,198,232,.3)}
 .monthnav{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px}
 .monthnav .monthchip{margin-bottom:0;flex:0 1 118px;min-width:0;text-align:center}
@@ -315,7 +315,7 @@ table.tbl.livre td:last-child{width:42%}
 /* ===== Zoom da tela: o app inteiro cresce ou encolhe junto ===== */
 .viewtools{display:inline-flex;align-items:center;gap:6px;padding-left:8px;
   margin-left:2px;border-left:1px solid var(--line)}
-.viewtools .zbtn{min-width:44px;padding:7px 10px;font-family:'Fraunces',serif}
+.viewtools .zbtn{min-width:44px;padding:7px 10px;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
 .viewtools .zlbl{font-size:11px;color:var(--muted);min-width:38px;text-align:center}
 </style>
 <link rel="stylesheet" href="layout.css">
@@ -593,7 +593,7 @@ table.tbl.livre td:last-child{width:42%}
       <div class="hint" id="lim-aporte-hint">O pagamento da fatura do cartão sai da mesma conta e para o mesmo nome do aporte — o que separa os dois é o tamanho. Abaixo do corte vira aporte; acima vira <b>pagamento de fatura</b>, fora da soma (as compras já vieram da própria fatura).</div>
       <label style="margin-top:14px">Minhas regras — <i>trecho do nome</i> = <i>categoria</i> (uma por linha)</label>
       <textarea id="regras-txt" rows="6" style="width:100%;background:var(--surface2);border:1px solid var(--line);color:var(--text);font-family:inherit;font-size:12.5px;padding:8px;border-radius:9px" oninput="setMinhasRegras(this.value)"></textarea>
-      <div class="hint" id="regras-hint">Para o que só você sabe o que é: <code>rafael minore = Empresa</code>. Vale para as próximas importações também. Corrigir a categoria de um lançamento na lista abaixo cria a regra sozinho.</div>
+      <div class="hint" id="regras-hint">Para o que só você sabe o que é: <code>fulano da silva = Empresa</code>. Vale para as próximas importações também. Corrigir a categoria de um lançamento na lista abaixo cria a regra sozinho.</div>
     </div>
     <div class="kpis" style="margin-top:14px">
       <div class="kpi"><div class="k">Gasto no período</div><div class="v down" id="cat-gasto">—</div></div>
@@ -1141,33 +1141,26 @@ const DEFAULT={
  nomes:{preta:"Kassiana (Preta)",preto:"João (Preto)"},
  mode:"contas",
  contas:{
+   /* Exemplo genérico para um aparelho novo: os dados de verdade vêm da nuvem
+      ou do backup. Nada de valor real aqui — o código é público. */
    casa:[
-    ["Aluguel",2180.00,"10",1100.00,1100.00,false],
-    ["Água",166.30,"10",83.15,83.15,false],
-    ["Luz",111.14,"10",55.57,55.57,false],
-    ["Internet",136.00,"10",68.00,68.00,false],
-    ["Telefones",160.79,"10",80.40,80.39,false],
-    ["Mercado",1800.00,"6",900.00,900.00,false],
-    ["Gás",220.00,"",110.00,110.00,false],
-    ["Havan",506.57,"10",253.28,253.29,false],
-    ["Spotify",31.90,"10",15.95,15.95,false],
-    ["Netflix",44.90,"10",22.45,22.45,false],
-    ["Melimax",8.90,"10",4.45,4.45,false],
-    ["Playstation",68.21,"10",0,68.21,false],
-    ["Carro Kassiana",420.00,"",420.00,0,false]
+    ["Aluguel",1500.00,"10",750.00,750.00,false],
+    ["Água",100.00,"10",50.00,50.00,false],
+    ["Luz",150.00,"10",75.00,75.00,false],
+    ["Internet",100.00,"10",50.00,50.00,false],
+    ["Mercado",1200.00,"6",600.00,600.00,false],
+    ["Gás",100.00,"",50.00,50.00,false],
+    ["Streaming",40.00,"10",20.00,20.00,false]
    ].map(x=>({nome:x[0],valor:x[1],venc:x[2],preta:x[3],preto:x[4],pago:x[5]})),
    joao:[
-    ["Carro",1862.27,"25",false],["Gasolina",1000.00,"",false],["Plano de saúde",683.04,"3",true],
-    ["Seguro do carro",377.97,"10",false],["Ração",139.00,"10",true],["Psicólogo",440.00,"8",false],
-    ["Investimentos",2000.00,"20",false],["Plano de vida",461.33,"8",true],["IPVA",190.00,"",false],
-    ["Academia",149.00,"10",true]
+    ["Carro",800.00,"25",false],["Combustível",500.00,"",false],["Plano de saúde",400.00,"3",false],
+    ["Academia",100.00,"10",false]
    ].map(x=>({nome:x[0],valor:x[1],venc:x[2],pago:x[3]})),
-   esposa:[["XP",4990.00,"8",false]].map(x=>({nome:x[0],valor:x[1],venc:x[2],pago:x[3]})),
+   esposa:[["Academia",100.00,"5",false],["Celular",60.00,"15",false]].map(x=>({nome:x[0],valor:x[1],venc:x[2],pago:x[3]})),
    empresa:[
-    ["Aluguel quadras",2500.00,"10",false],["Imposto",600.00,"20",false],
-    ["Material empresa",580.00,"3x",false],["Contador",289.00,"6",true]
+    ["Aluguel do espaço",1000.00,"10",false],["Imposto",300.00,"20",false],["Contador",250.00,"6",false]
    ].map(x=>({nome:x[0],valor:x[1],venc:x[2],pago:x[3]})),
-   cartoes:[["Cartão XP",5871.40,"2",8500.00,true]].map(x=>({nome:x[0],valor:x[1],melhorDia:x[2],limite:x[3],pago:x[4]})),
+   cartoes:[["Cartão de crédito",2000.00,"2",5000.00,false]].map(x=>({nome:x[0],valor:x[1],melhorDia:x[2],limite:x[3],pago:x[4]})),
    recebidos:[
     ["1000.00","05/01","Recebido"],["1000.00","16/03","Recebido"],["1000.00","09/03","Recebido"]
    ].map(x=>({valor:+x[0],data:x[1],desc:x[2]})),
@@ -1189,42 +1182,37 @@ const DEFAULT={
  /* Patrimônio: o que a família tem menos o que deve */
  patrimonio:{
    bens:[
-    ["Carro João","Veículo",62000],
-    ["Carro Kassiana","Veículo",38000]
+    ["Carro 1","Veículo",50000],
+    ["Carro 2","Veículo",30000]
    ].map(x=>({nome:x[0],tipo:x[1],valor:x[2]})),
    dividas:[
-    ["Financiamento do carro",41800,1862.27,1.35]
+    ["Financiamento do carro",30000,800,1.2]
    ].map(x=>({nome:x[0],saldo:x[1],parcela:x[2],taxa:x[3]})),
    hist:[]
  },
  /* Proteção: apólices contratadas e quanto de cobertura a família precisaria */
  protecao:{
    apolices:[
-    ["Vida","(editar seguradora)",461.33,300000,""],
-    ["Automóvel","(editar seguradora)",377.97,0,""]
+    ["Vida","(editar seguradora)",100,200000,""],
+    ["Automóvel","(editar seguradora)",150,0,""]
    ].map(x=>({tipo:x[0],seguradora:x[1],premio:x[2],cobertura:x[3],beneficiarios:x[4]})),
    mesesSustento:24,
    mesesReserva:6
  },
  invest:{
    cambio:5.08,
+   /* carteira de exemplo, genérica: a de verdade vem da nuvem, do backup ou do arquivo */
    nacional:[
-    ["XP Liquidez FIC RF REF DI CP RL","Renda Fixa / Caixa",16167.65],
-    ["Fundo 24 Horas FIRF RL","Renda Fixa / Caixa",5152.59],
-    ["Trend Nasdaq 100 FIM RL","Ações (EUA)",6723.15],
-    ["Trend Ouro FIF Multi RL","Ouro",5557.04],
-    ["Trend Prata FIM RL","Prata",3371.82],
-    ["Hashdex Bitcoin FIM RL","Cripto",256.12],
-    ["(Outro ativo — editar)","Outros",1895.82]
+    ["Fundo DI (exemplo)","Renda Fixa / Caixa",10000.00],
+    ["Tesouro Selic (exemplo)","Renda Fixa / Caixa",5000.00],
+    ["Fundo de ações EUA (exemplo)","Ações (EUA)",4000.00],
+    ["Fundo de ouro (exemplo)","Ouro",3000.00]
    ].map(x=>({nome:x[0],classe:x[1],valor:x[2],apl:null})),
    global:[
-    ["QQQ","Invesco QQQ Trust","Ações (EUA)",0.71425,615.02,719.19,439.28],
-    ["VOO","Vanguard S&P 500 ETF","Ações (EUA)",0.29385,685.72,680.44,201.50],
-    ["REMX","VanEck Rare Earth/Strategic Metals ETF","Setoriais",5.75549,93.88,95.12,540.33],
-    ["NLR","VanEck Uranium & Nuclear Energy ETF","Setoriais",2.89043,129.77,122.31,375.09],
-    ["LIT","Global X Lithium & Battery Tech ETF","Setoriais",3.49767,71.88,82.12,251.43]
+    ["VOO","Vanguard S&P 500 ETF","Ações (EUA)",1,500.00,500.00,500.00],
+    ["QQQ","Invesco QQQ Trust","Ações (EUA)",1,500.00,500.00,500.00]
    ].map(x=>({tk:x[0],nome:x[1],classe:x[2],qtd:x[3],pm:x[4],pa:x[5],apl:x[6]})),
-   caixaGlobalUSD:411.82,
+   caixaGlobalUSD:100,
    /* Binance — cripto, valores em R$ */
    binance:[],
    aportes:[
@@ -1303,67 +1291,18 @@ function rendaMes(){return monthlyValue(D.contas.renda)||{};}
 function setIncomeFields(){for(const k of ['joao','esposa']){const e=document.getElementById('rd-'+k);if(e)e.value=rendaMes()[k]??'';}}
 
 /* ---------- migração ---------- */
-const SNAPSHOT_JOAO_20261001={
-  cambio:5.1877,
-  nacional:[
-    ["Dinheiro disponível","Renda Fixa / Caixa",5500.00],
-    ["Saldo conta investimento XP","Renda Fixa / Caixa",957.42],
-    ["XP Liquidez FIC de FIF","Renda Fixa / Caixa",25158.03],
-    ["Trend Nasdaq","Ações (EUA)",10552.47],
-    ["Trend Ouro","Ouro",5928.35],
-    ["Trend Inteligência A","Ações (EUA)",1326.64],
-    ["Hashdex Bitcoin","Cripto",338.16],
-    ["Investback","Outros",274.85],
-    ["Nubank Turbo 115% CDI","Renda Fixa / Caixa",1504.68],
-    ["Nubank Fixos Investimentos","Renda Fixa / Caixa",17.49]
-  ],
-  global:{LIT:279.99,QQQ:633.11,VOO:205.26,NLR:294.82,REMX:417.83},
-  caixaGlobalUSD:298.69,
-  binanceInformado:2185.90
-};
-function aplicarSnapshotJoao20261001(o){
-  const s=SNAPSHOT_JOAO_20261001;
-  /* V2: alguns aparelhos/nuvem já tinham o marcador antigo, mas ficaram
-     com posições anteriores. Reaplica o retrato completo uma única vez. */
-  if(o._snapshotJoao20261001V2)return o;
-  o.cambio=s.cambio;
-  o.nacional=s.nacional.map(x=>({nome:x[0],classe:x[1],valor:x[2],apl:null}));
-  const nomes={
-    LIT:"Global X Lithium & Battery Tech ETF",
-    QQQ:"Invesco QQQ Trust",
-    VOO:"Vanguard S&P 500 ETF",
-    NLR:"VanEck Uranium & Nuclear Energy ETF",
-    REMX:"VanEck Rare Earth/Strategic Metals ETF"
-  };
-  const classes={LIT:"Setoriais",QQQ:"Ações (EUA)",VOO:"Ações (EUA)",NLR:"Setoriais",REMX:"Setoriais"};
-  const anteriores=Array.isArray(o.global)?o.global:[];
-  o.global=Object.entries(s.global).map(([tk,pos])=>{
-    const antigo=anteriores.find(g=>String(g.tk||"").toUpperCase()===tk);
-    const qtd=antigo&&(+antigo.qtd||0)>0?+antigo.qtd:1;
-    return {
-      tk,
-      nome:(antigo&&antigo.nome)||nomes[tk],
-      classe:(antigo&&antigo.classe)||classes[tk],
-      qtd,
-      pm:antigo&&isFinite(+antigo.pm)?+antigo.pm:0,
-      pa:pos/qtd,
-      apl:antigo&&isFinite(+antigo.apl)?+antigo.apl:0
-    };
-  });
-  o.caixaGlobalUSD=s.caixaGlobalUSD;
-  if(!Array.isArray(o.binance))o.binance=[];
-  o.binanceInformado=s.binanceInformado;
-  o._snapshotJoao20261001=true;
-  o._cambioJoao20261001Corrigido=true;
-  o._snapshotJoao20261001V2=true;
-  return o;
-}
+/* O retrato da carteira de 01/10/2026 ficava aqui, com os valores reais, e era
+   gravado em toda base que ainda não tinha a marca — inclusive num aparelho
+   novo. O código é público: valor de carteira mora só no aparelho e na nuvem
+   da família. As bases que já receberam o retrato continuam com a marca
+   _snapshotJoao20261001V2, usada abaixo só para separar os aportes da esposa. */
 
 function migrateInvest(o){
   o=o||{};const d=DEFAULT.invest;
+  const existente=['nacional','global','aportes','binance'].some(k=>Array.isArray(o[k]));
   if(o.cambio===undefined)o.cambio=d.cambio;
-  if(!Array.isArray(o.nacional))o.nacional=structuredClone(d.nacional);
-  if(!Array.isArray(o.global))o.global=structuredClone(d.global);
+  if(!Array.isArray(o.nacional))o.nacional=existente?[]:structuredClone(d.nacional);
+  if(!Array.isArray(o.global))o.global=existente?[]:structuredClone(d.global);
   if(o.caixaGlobalUSD===undefined)o.caixaGlobalUSD=d.caixaGlobalUSD;
   if(!Array.isArray(o.binance))o.binance=[];
   if(o.binanceInformado===undefined)o.binanceInformado=null;
@@ -1384,12 +1323,14 @@ function migrateInvest(o){
   });
   o.nacional.forEach(a=>{if(a.apl===undefined)a.apl=null});
   if(!o.plano)o.plano=structuredClone(d.plano);
-  aplicarSnapshotJoao20261001(o);
   return o;
 }
 function migrateContas(o){
   o=o||{};const d=DEFAULT.contas;
-  ['casa','joao','esposa','empresa','cartoes','recebidos','resumo'].forEach(k=>{if(!Array.isArray(o[k]))o[k]=structuredClone(d[k])});
+  /* base que já existe (backup antigo, outra versão): lista que falta entra
+     vazia — exemplo no meio de dado real parece conta de verdade */
+  const existente=['casa','joao','esposa','empresa','cartoes','recebidos'].some(k=>Array.isArray(o[k]));
+  ['casa','joao','esposa','empresa','cartoes','recebidos','resumo'].forEach(k=>{if(!Array.isArray(o[k]))o[k]=existente?[]:structuredClone(d[k])});
   o.recebidos.forEach(r=>{const m=String(r._k||'').match(/^(\d{2}\/\d{2}\/\d{4})\|/);if(m&&String(r.data||'')===m[1].slice(0,5))r.data=m[1];});
   o.casa.forEach(b=>{if(b.pago===undefined)b.pago=false;if(b.preta===undefined)b.preta=0;if(b.preto===undefined)b.preto=0});
   if(!o.renda)o.renda=structuredClone(d.renda);
@@ -1485,7 +1426,11 @@ function load(){
       if(casa)combo.contas=migrateContas(casa.contas?casa.contas:casa);
       if(casa&&casa.nomes)combo.nomes=casa.nomes;
       D=migrate(combo);
-    }else{D=migrate(structuredClone(DEFAULT));}
+    }else{
+      /* aparelho novo: só exemplo. Até alguém digitar algo, ao ligar a nuvem ele
+         ADOTA os dados da família — misturar espalhava os exemplos pela nuvem. */
+      D=migrate(structuredClone(DEFAULT));D._soExemplo=true;
+    }
   }
   if(location.hash.startsWith("#d=")){
     try{const shared=JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(3)))));
@@ -1502,6 +1447,13 @@ function storageStatus(ok){
   const banner=document.getElementById('storage-error');if(banner)banner.hidden=ok;
   const dot=document.getElementById('dot');if(dot)dot.style.background=ok?'var(--up)':'var(--down)';
   const status=document.getElementById('save-status');if(status)status.textContent=ok?'Salvo neste aparelho':'Alterações não salvas';
+}
+document.addEventListener('input',e=>naoEhMaisExemplo(e),true);
+document.addEventListener('change',e=>naoEhMaisExemplo(e),true);
+function naoEhMaisExemplo(e){
+  if(!D||!D._soExemplo||!e.isTrusted)return;
+  const t=e.target;if(t&&t.id&&/^cl-/.test(t.id))return;   /* colar o link da nuvem não é dado da família */
+  delete D._soExemplo;saveLocal();
 }
 function saveLocal(){
   try{localStorage.setItem(KEY,JSON.stringify(D));storageStatus(true);return true;}
@@ -1838,8 +1790,9 @@ function setLigacao(k,i,casaId){
     if(pagoCasa)pagoSet(r.id,true);
   }else{
     const ci=casaIdx(casaId);if(ci<0)return;const c=monthlyValue(D.contas.casa[ci]);const b=monthlyValue(r);
-    /* a Casa ainda sem valor herda o que ela digitou; quem já pagou continua pago */
-    if(c&&!(+c.valor>0)&&b&&+b.valor>0)setBill('casa',ci,'valor',+b.valor);
+    /* quem paga é quem sabe o valor: o que está na aba da pessoa passa a valer
+       na Casa (a partir deste mês); quem já pagou continua pago */
+    if(c&&b&&+b.valor>0&&Math.abs((+c.valor||0)-(+b.valor))>0.004)setBill('casa',ci,'valor',+b.valor);
     const jaPago=pagoGet(r.id);r.casaId=casaId;if(jaPago)pagoSet(casaId,true);
   }
   save();renderContasMonth();
@@ -1868,7 +1821,10 @@ function naoLigar(k,i){const r=D.contas[k]&&D.contas[k][i];if(r){r.semCasa=true;
 function notaLigacao(k){
   const tb=document.getElementById('tbl-'+k);if(!tb)return;
   let box=document.getElementById('liga-'+k);
-  if(!box){box=document.createElement('div');box.id='liga-'+k;box.className='liga-box';(tb.closest('.scroll')||tb).before(box);}
+  if(!box){box=document.createElement('div');box.id='liga-'+k;box.className='liga-box';
+    /* acima da barra de botões da tabela, nunca entre ela e a tabela */
+    const sc=tb.closest('.scroll')||tb,ac=sc.previousElementSibling;
+    (ac&&ac.classList.contains('card-actions')?ac:sc).before(box);}
   const sug=sugestoesLigacao(k),naCasa=pessNaCasa(k);
   let h='';
   if(naCasa>0)h+='<p class="note" style="margin:0 0 8px">🏠 <b>'+brl(naCasa)+'</b> do subtotal são contas da Casa que '+(k==='esposa'?'ela':'ele')+' paga: aparecem aqui e na Casa, mas o total do mês conta uma vez só.</p>';
@@ -3116,6 +3072,23 @@ let authSession=null,authEpoch=0,authRequest=null,authRefreshPromise=null;
    entrar continua usando o link, mesmo com a chave preenchida. */
 function semLogin(){return !!(D.cloud&&D.cloud.url&&!authSession);}
 function nuvemPronta(){return !!authSession||semLogin();}
+/* O navegador fala em inglês quando a rede falha ("Failed to fetch", "signal
+   is aborted without reason"). A família tem de ler o que aconteceu e saber
+   que nada se perdeu. */
+function msgErroNuvem(e,acao){
+  const m=String(e&&e.message||''),nome=e&&e.name;
+  if(nome==='AbortError'||/abort/i.test(m))return 'A nuvem demorou para responder. Seus dados continuam neste aparelho; tento de novo em instantes.';
+  if((typeof navigator!=='undefined'&&navigator.onLine===false)||nome==='TypeError'&&/fetch|network|load failed|internet/i.test(m)||/failed to fetch|networkerror|load failed/i.test(m))
+    return 'Sem internet agora. Seus dados continuam salvos neste aparelho e '+(acao==='enviar'?'sobem':'atualizam')+' sozinhos quando a conexão voltar.';
+  if(nome==='SyntaxError')return 'A nuvem respondeu algo que não é a base da família. Nada foi alterado.';
+  return m||('Não foi possível '+(acao==='enviar'?'enviar':'buscar')+'. Seus dados continuam neste aparelho.');
+}
+function msgStatusNuvem(status,acao){
+  if(status===401||status===403)return 'A nuvem recusou o acesso. Confira o link da família'+(authSession?'':' (ou entre na conta)')+' na aba Nuvem. Nada foi alterado.';
+  if(status===404)return 'Esse link da nuvem não existe. Confira o link da família na aba Nuvem.';
+  if(status===429||status>=500)return 'A nuvem está instável agora. Tento de novo em instantes; nada foi perdido.';
+  return 'Erro '+status+' ao '+(acao==='enviar'?'enviar':'buscar')+'. Confira o link e as permissões da família.';
+}
 function setCloudStatus(t,c){const e=document.getElementById('cl-status');if(e){e.textContent=t;e.style.color=c||'var(--muted)';}}
 function cleanCloudURL(value){
   const u=new URL(value);
@@ -3124,7 +3097,7 @@ function cleanCloudURL(value){
 }
 function syncData(data=D){
   const copy=structuredClone(data);
-  ['cloud','mode','fit','zoom','lastBackup','_app','_quando'].forEach(k=>delete copy[k]);
+  ['cloud','mode','fit','zoom','lastBackup','_app','_quando','_soExemplo'].forEach(k=>delete copy[k]);
   if(copy.contas)['mesSel','anualAno','empSel','exPessoa','exOrigem'].forEach(k=>delete copy.contas[k]);
   return copy;
 }
@@ -3203,7 +3176,7 @@ async function cloudFetch(options={}){
   return fetch(target.href,{cache:'no-store',...options,headers:{'X-Firebase-ETag':'true',...(options.headers||{})}});
 }
 async function readRemote(response){
-  if(!response.ok)throw new Error('Erro '+response.status+'. Confira a conta e as permissões da família.');
+  if(!response.ok)throw new Error(msgStatusNuvem(response.status,'buscar'));
   /* Sem o ETag visível (alguns servidores não liberam o cabeçalho para o
      navegador), a versão passa a ser o próprio conteúdo: muda o conteúdo,
      muda a versão. É como a nuvem funcionava antes. */
@@ -3276,6 +3249,10 @@ async function cloudPull(silent,forcar){
     if(remote.fp===local){rememberCloud(remote.etag,local);clearCloudConflict();setCloudStatus('Aparelho e nuvem estão sincronizados.','var(--up)');return;}
     if(!cloudSync){
       if(remote.data===null){rememberCloud(remote.etag,local);setCloudStatus('Nuvem vazia. Use “Enviar agora” para enviar os dados deste aparelho.');return;}
+      if(D._soExemplo){
+        if(applyCloudRemote(remote))setCloudStatus('Aparelho novo: os dados da família vieram da nuvem. Os exemplos deste aparelho ficaram em Versões guardadas.','var(--up)');
+        return;
+      }
       if(!tryCloudMerge(remote))showCloudConflict(remote);return;
     }
     const localChanged=local!==cloudSync.baseline,remoteChanged=remote.etag!==cloudSync.etag;
@@ -3283,7 +3260,7 @@ async function cloudPull(silent,forcar){
     if(localChanged||!remote.data){if(!tryCloudMerge(remote))showCloudConflict(remote);return;}
     const active=document.activeElement;if(active&&['INPUT','SELECT','TEXTAREA'].includes(active.tagName))return;
     if(applyCloudRemote(remote))setCloudStatus('Atualizado da nuvem.','var(--up)');
-  }catch(e){if(epoch===cloudEpoch)setCloudStatus(e.message||'Não foi possível buscar. Os dados locais foram mantidos.','var(--down)');}
+  }catch(e){if(epoch===cloudEpoch)setCloudStatus(msgErroNuvem(e,'buscar'),'var(--down)');}
   finally{clearTimeout(timeout);if(pullRequest===controller)pullRequest=null;}
 }
 async function cloudPush(resolve=false){
@@ -3305,23 +3282,35 @@ async function cloudPush(resolve=false){
     setCloudStatus('Enviando com proteção contra alterações simultâneas…');lastPushAt=stamp;
     const data={...syncData(),_app:APP_ID};
     const corpo=JSON.stringify({updatedAt:stamp,writerUid:authSession?authSession.uid:'',data:JSON.stringify(data)});
-    if(String(expected).startsWith('conteudo:'))throw new Error('A nuvem não informou a versão para um envio seguro. Seus dados foram mantidos neste aparelho. Tente buscar novamente.');
-    const cab={'Content-Type':'application/json','if-match':expected};
+    /* Sem ETag visível para o navegador, a versão é o próprio conteúdo: acabamos
+       de reler a nuvem e ela está igual à que conhecemos, então o envio segue sem
+       o "if-match" (o servidor não aceitaria uma versão que ele não emitiu). Antes
+       isto bloqueava TODO envio: a nuvem só descia, nunca subia. */
+    const porConteudo=String(expected).startsWith('conteudo:');
+    const cab=porConteudo?{'Content-Type':'application/json'}:{'Content-Type':'application/json','if-match':expected};
     const r=await cloudFetch({method:'PUT',signal:controller.signal,headers:cab,body:corpo});
     if(epoch!==cloudEpoch)return;
     if(r.status===412){
       const remote=await readRemote(await cloudFetch({signal:controller.signal}));if(epoch===cloudEpoch&&!tryCloudMerge(remote))showCloudConflict(remote);return;
     }
-    if(!r.ok)throw new Error('Erro '+r.status+' ao enviar. Confira a conta e as permissões da família.');
+    if(!r.ok)throw new Error(msgStatusNuvem(r.status,'enviar'));
     const etag=r.headers.get('ETag')||versaoPorConteudo(await r.text());
     rememberCloud(etag,fp);clearCloudConflict();lastApplied=stamp;setCloudStatus('Salvo na nuvem.','var(--up)');
     if(fp!==syncFingerprint())schedulePush();
-  }catch(e){if(epoch===cloudEpoch)setCloudStatus(e.message||'Não foi possível enviar. Seus dados continuam neste aparelho.','var(--down)');}
+  }catch(e){if(epoch===cloudEpoch)setCloudStatus(msgErroNuvem(e,'enviar'),'var(--down)');}
   finally{clearTimeout(timeout);if(pushRequest===controller)pushRequest=null;}
 }
 function cloudUseLocal(){if(cloudConflict&&confirm('Enviar a versão deste aparelho no lugar da versão da nuvem? As alterações que existem somente na nuvem serão substituídas.'))return cloudPush(true);}
 function cloudUseRemote(){if(cloudConflict&&cloudConflict.data&&confirm('Usar a versão da nuvem? A base atual deste aparelho será guardada em Versões guardadas.'))return cloudPull(false,'remote');}
-function cloudStart(){clearInterval(cloudTimer);cloudTimer=setInterval(()=>{if(D.cloud&&D.cloud.on&&nuvemPronta()&&!cloudConflict)cloudPull(true);},15000);}
+function semRede(){return typeof navigator!=='undefined'&&navigator.onLine===false;}
+function cloudStart(){clearInterval(cloudTimer);cloudTimer=setInterval(()=>{if(D.cloud&&D.cloud.on&&nuvemPronta()&&!cloudConflict&&!semRede())cloudPull(true);},15000);}
+window.addEventListener('offline',()=>{if(D.cloud&&D.cloud.on&&D.cloud.url)setCloudStatus('Sem internet agora. Tudo continua salvo neste aparelho e sobe quando a conexão voltar.','var(--gold)');});
+window.addEventListener('online',()=>{
+  if(!(D.cloud&&D.cloud.on&&nuvemPronta())||cloudConflict)return;
+  setCloudStatus('Conexão de volta. Sincronizando…');
+  /* busca primeiro (junta o que mudou na nuvem); o envio do que ficou aqui vem em seguida */
+  cloudPull(true).then(()=>{if(cloudSync&&syncFingerprint()!==cloudSync.baseline)schedulePush();});
+});
 function cloudApply(){
   let url=document.getElementById('cl-url').value.trim();const on=document.getElementById('cl-on').checked,apiKey=document.getElementById('cl-api-key').value.trim();
   try{if(url)url=cleanCloudURL(url);}catch(e){setCloudStatus(e.message,'var(--down)');return false;}
@@ -3330,7 +3319,7 @@ function cloudApply(){
   cancelCloudWork();if(different)cloudLogout();D.cloud={url,on,apiKey};saveLocal();readCloudReference();document.getElementById('cl-url').value=url;
   if(on&&url&&nuvemPronta()){cloudStart();cloudPull(false);}else setCloudStatus(on?(url?'Entre com a conta da família para sincronizar.':'Cole o link da família para sincronizar.'):'Sincronização automática desligada.');return true;
 }
-window.addEventListener('focus',()=>{if(D.cloud&&D.cloud.on&&nuvemPronta()&&!cloudConflict)cloudPull(true);});
+window.addEventListener('focus',()=>{if(D.cloud&&D.cloud.on&&nuvemPronta()&&!cloudConflict&&!semRede())cloudPull(true);});
 
 /* ---------- compartilhar / backup ---------- */
 function shareURL(){const dados=carimbar(D);dados.cloud={url:'',on:false};const enc=btoa(unescape(encodeURIComponent(JSON.stringify(dados))));return location.href.split('#')[0]+'#d='+enc;}
@@ -4136,8 +4125,8 @@ function ehPagamentoFatura(desc){
 /* ---------- tirar o ruído que o banco imprime ----------
    O extrato do Itaú vem assim:
      ELECTRON FESTVAL TIN-001073      → cartão Visa Electron + terminal
-     PAGAMENTOS PIX QR-CODE CONDOR SUPER CENTER LTDA 76.189.406/0001-26
-     BOLETO PAGO KONDOR IMOVE KONDOR IMOVEIS LTDA EPP 79.197.893/0001-67
+     PAGAMENTOS PIX QR-CODE MERCADO EXEMPLO LTDA 00.000.000/0001-00
+     BOLETO PAGO IMOBILIARIA EXEMPLO LTDA EPP 00.000.000/0001-00
    O que interessa é o nome do comércio no meio. "ELECTRON" é a bandeira do
    cartão, não o estabelecimento — e estava jogando 29 compras de mercado e
    posto para Serviços, porque "electron" era palavra-chave de lá. */
@@ -4158,9 +4147,9 @@ function limpaComercio(desc){
 }
 /* A palavra aprendida tem de começar onde uma palavra começa — assim "pao" não
    reconhece "pagamento". Mas o fim fica solto de propósito: quem escreve
-   "tavares transporte" espera pegar "TAVARES TRANSPORTES" também. */
+   "silva transporte" espera pegar "SILVA TRANSPORTES" também. */
 /* Algumas linhas só trazem o CPF/CNPJ de quem recebeu — o nome nunca vem:
-   "PIX ENVIADO 000.000.000-00", "PAGAMENTOS 10.573.521/0001-91". A limpeza
+   "PIX ENVIADO 000.000.000-00", "PAGAMENTOS 00.000.000/0001-00". A limpeza
    joga o documento fora junto com o resto do ruído e não sobra nada para
    ensinar. Guardados só os dígitos, o documento vira a chave da regra. */
 function docDe(desc){
@@ -4661,7 +4650,7 @@ function pareceFatura(t){
   if(t&&(t.ehFatura||(t.some&&t.some(x=>x&&x.fatura))))return true;
   /* Duas colunas de dinheiro com a SEGUNDA zerada é a assinatura da fatura:
      R$ e US$ lado a lado. O extrato do Itaú também tem duas colunas (valor e
-     saldo), mas a segunda nunca é 0,00 — e "PAGAMENTOS CONDOR SUPER CENTER"
+     saldo), mas a segunda nunca é 0,00 — e "PAGAMENTOS MERCADO EXEMPLO"
      tem a palavra "pagamento" sem ser fatura nenhuma. */
   const dolarZero=(t||[]).filter(x=>x.col2&&x.zero2).length;
   const pag=(t||[]).some(x=>FATURA_PALAVRA.test(norm(x.desc||'')));
@@ -4830,7 +4819,7 @@ function renderExtratoPreview(){
   const ordem=t;
   ordem.slice(exPreviewPage*300,(exPreviewPage+1)*300).forEach(x=>{
     const ig=txIgnorado(x);
-    h+='<tr'+(ig?' style="opacity:.45"':'')+'><td class="name" style="font-size:11px">'+esc(x.date||'—')+'</td>'
+    h+='<tr'+(ig?' class="linha-fora"':'')+'><td class="name" style="font-size:11px">'+esc(x.date||'—')+'</td>'
       +'<td class="name" style="font-size:11px">'+esc(x.desc||'')+(ig?'<div class="tag">fora: '+TX_ROTULO[x.tipo]+'</div>':'')+(x.duplicate==='possible'?'<label class="duplicate-choice"><input type="checkbox" '+(x.duplicateAcceptedKey?'checked ':'')+'onchange="exAllowDuplicate('+x.previewIndex+',this.checked)"> É outro lançamento; incluir</label>':x.duplicate==='confirmed'?'<div class="tag">Mesmo identificador bancário</div>':'')+'</td>'
       +'<td class="name mut" style="font-size:11px">'+esc(x.cat)+'</td>'
       +'<td class="'+(ig?'mut':(x.amount<0?'down':'up'))+'">'+brl(x.amount)+'</td></tr>';});
@@ -5087,12 +5076,12 @@ function parseTextExtrato(text){
     let desc=line.replace(/-?\d{1,3}(?:\.\d{3})*,\d{2}/g,' ');
     if(dm)desc=desc.replace(dm[0],'');
     /* 80, não 42: o nome do estabelecimento estava sendo cortado no meio e
-       levava a categoria junto. "PAGAMENTOS PIX QR-CODE ORCONSIL CONTABILIDADE
-       07.514.352/0001-04" virava "...ORCONSIL CONTABILID", e "contabilidade"
+       levava a categoria junto. "PAGAMENTOS PIX QR-CODE EXEMPLO CONTABILIDADE
+       00.000.000/0001-00" virava "...EXEMPLO CONTABILID", e "contabilidade"
        deixava de casar. A tabela mostra só os primeiros caracteres de
        qualquer jeito — quem precisava do nome inteiro era a categoria. */
     desc=desc.replace(/r\$|us\$/ig,'').replace(/[|;]+/g,' ').replace(/\s{2,}/g,' ').trim().slice(0,80);
-    /* "R$ 2.890,29 R$ 6.200,00 R$ 0,00 R$ 6.200,00" é o cabeçalho de saldo e
+    /* "R$ 1.234,56 R$ 5.000,00 R$ 0,00 R$ 5.000,00" é o cabeçalho de saldo e
        limite da conta: sem nenhuma letra sobrando, não é lançamento. Entrava
        como um gasto de R$ 2.890,29 com o nome vazio. */
     if(!/[a-zà-ú]{3}/i.test(desc))return;
@@ -5200,7 +5189,7 @@ function parseBlocosInvest(text){
     if(so){fecha();b={tk:so[1],desc:'',valor:0,qtd:0,pm:0,pa:0,conta:''};return;}
     if(!b)return;
     const n=norm(l);
-    if(BLOCO_LIXO.test(n))    /* "PNL não realizado -R$ 135,27" tem R$ e não é a posição */
+    if(BLOCO_LIXO.test(n))    /* "PNL não realizado -R$ 100,00" tem R$ e não é a posição */
       {if(/^(comprar|vender)/.test(n))fecha();return;}
     if(/^posicao/.test(n)){b.valor=numDe(l)||0;b.moeda=/us\$|usd/.test(n)?'USD':'BRL';return;}
     if(/^quantidade/.test(n)){b.qtd=numDe(l)||0;return;}
@@ -5219,7 +5208,7 @@ function parseBlocosInvest(text){
   fecha();
   return out;
 }
-/* A tela quase sempre diz o total dela: "Valor Total Est. R$ 2.161,76",
+/* A tela quase sempre diz o total dela: "Valor Total Est. R$ 1.000,00",
    "Total investido R$ 47.919,42". O numero costuma vir na linha de baixo.
    Serve de conferencia: se a soma do que foi lido nao bate com o total da
    tela, sobrou ativo fora do enquadramento da foto. */
@@ -5494,7 +5483,7 @@ function renderInvestFoto(){
     const novo=valorNaConta(r.alvo,r.valor);                 /* já na moeda da conta */
     const muda=r.antigo!=null&&Math.abs(r.antigo-novo)>0.005;
     const ehGlobal=/^glob:/.test(r.alvo)||r.alvo==='novo-glob';
-    h+='<tr'+(r.alvo==='ignorar'?' style="opacity:.45"':'')+'>'
+    h+='<tr'+(r.alvo==='ignorar'?' class="linha-fora"':'')+'>'
       +'<td class="name" style="white-space:normal">'
         +'<div style="font-size:12px;line-height:1.3;overflow-wrap:anywhere">'+esc(r.nome)+'</div>'
         +'<select class="cell txt" style="width:100%;font-size:11px;margin-top:4px" onchange="invFotoSet('+i+',\'alvo\',this.value)">'
