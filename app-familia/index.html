@@ -1299,9 +1299,10 @@ function setIncomeFields(){for(const k of ['joao','esposa']){const e=document.ge
 
 function migrateInvest(o){
   o=o||{};const d=DEFAULT.invest;
+  const existente=['nacional','global','aportes','binance'].some(k=>Array.isArray(o[k]));
   if(o.cambio===undefined)o.cambio=d.cambio;
-  if(!Array.isArray(o.nacional))o.nacional=structuredClone(d.nacional);
-  if(!Array.isArray(o.global))o.global=structuredClone(d.global);
+  if(!Array.isArray(o.nacional))o.nacional=existente?[]:structuredClone(d.nacional);
+  if(!Array.isArray(o.global))o.global=existente?[]:structuredClone(d.global);
   if(o.caixaGlobalUSD===undefined)o.caixaGlobalUSD=d.caixaGlobalUSD;
   if(!Array.isArray(o.binance))o.binance=[];
   if(o.binanceInformado===undefined)o.binanceInformado=null;
@@ -1326,7 +1327,10 @@ function migrateInvest(o){
 }
 function migrateContas(o){
   o=o||{};const d=DEFAULT.contas;
-  ['casa','joao','esposa','empresa','cartoes','recebidos','resumo'].forEach(k=>{if(!Array.isArray(o[k]))o[k]=structuredClone(d[k])});
+  /* base que já existe (backup antigo, outra versão): lista que falta entra
+     vazia — exemplo no meio de dado real parece conta de verdade */
+  const existente=['casa','joao','esposa','empresa','cartoes','recebidos'].some(k=>Array.isArray(o[k]));
+  ['casa','joao','esposa','empresa','cartoes','recebidos','resumo'].forEach(k=>{if(!Array.isArray(o[k]))o[k]=existente?[]:structuredClone(d[k])});
   o.recebidos.forEach(r=>{const m=String(r._k||'').match(/^(\d{2}\/\d{2}\/\d{4})\|/);if(m&&String(r.data||'')===m[1].slice(0,5))r.data=m[1];});
   o.casa.forEach(b=>{if(b.pago===undefined)b.pago=false;if(b.preta===undefined)b.preta=0;if(b.preto===undefined)b.preto=0});
   if(!o.renda)o.renda=structuredClone(d.renda);
@@ -1422,7 +1426,11 @@ function load(){
       if(casa)combo.contas=migrateContas(casa.contas?casa.contas:casa);
       if(casa&&casa.nomes)combo.nomes=casa.nomes;
       D=migrate(combo);
-    }else{D=migrate(structuredClone(DEFAULT));}
+    }else{
+      /* aparelho novo: só exemplo. Até alguém digitar algo, ao ligar a nuvem ele
+         ADOTA os dados da família — misturar espalhava os exemplos pela nuvem. */
+      D=migrate(structuredClone(DEFAULT));D._soExemplo=true;
+    }
   }
   if(location.hash.startsWith("#d=")){
     try{const shared=JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(3)))));
@@ -1439,6 +1447,13 @@ function storageStatus(ok){
   const banner=document.getElementById('storage-error');if(banner)banner.hidden=ok;
   const dot=document.getElementById('dot');if(dot)dot.style.background=ok?'var(--up)':'var(--down)';
   const status=document.getElementById('save-status');if(status)status.textContent=ok?'Salvo neste aparelho':'Alterações não salvas';
+}
+document.addEventListener('input',e=>naoEhMaisExemplo(e),true);
+document.addEventListener('change',e=>naoEhMaisExemplo(e),true);
+function naoEhMaisExemplo(e){
+  if(!D||!D._soExemplo||!e.isTrusted)return;
+  const t=e.target;if(t&&t.id&&/^cl-/.test(t.id))return;   /* colar o link da nuvem não é dado da família */
+  delete D._soExemplo;saveLocal();
 }
 function saveLocal(){
   try{localStorage.setItem(KEY,JSON.stringify(D));storageStatus(true);return true;}
@@ -3082,7 +3097,7 @@ function cleanCloudURL(value){
 }
 function syncData(data=D){
   const copy=structuredClone(data);
-  ['cloud','mode','fit','zoom','lastBackup','_app','_quando'].forEach(k=>delete copy[k]);
+  ['cloud','mode','fit','zoom','lastBackup','_app','_quando','_soExemplo'].forEach(k=>delete copy[k]);
   if(copy.contas)['mesSel','anualAno','empSel','exPessoa','exOrigem'].forEach(k=>delete copy.contas[k]);
   return copy;
 }
@@ -3234,6 +3249,10 @@ async function cloudPull(silent,forcar){
     if(remote.fp===local){rememberCloud(remote.etag,local);clearCloudConflict();setCloudStatus('Aparelho e nuvem estão sincronizados.','var(--up)');return;}
     if(!cloudSync){
       if(remote.data===null){rememberCloud(remote.etag,local);setCloudStatus('Nuvem vazia. Use “Enviar agora” para enviar os dados deste aparelho.');return;}
+      if(D._soExemplo){
+        if(applyCloudRemote(remote))setCloudStatus('Aparelho novo: os dados da família vieram da nuvem. Os exemplos deste aparelho ficaram em Versões guardadas.','var(--up)');
+        return;
+      }
       if(!tryCloudMerge(remote))showCloudConflict(remote);return;
     }
     const localChanged=local!==cloudSync.baseline,remoteChanged=remote.etag!==cloudSync.etag;
