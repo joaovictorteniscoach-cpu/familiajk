@@ -37,6 +37,7 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
    const antes=await g.evaluate(()=>JSON.stringify(DB));
    const corpo=()=>g.evaluate(()=>document.getElementById('pacotes-lista').innerText.replace(/\s+/g,' ').trim());
    const abre=async nome=>{await g.click('#pacotes-lista .pk-cab:has-text("'+nome+'")');return corpo();};
+   const tudo=async()=>{if(await g.$('#pacotes-lista .pk-mais[aria-expanded="false"]'))await g.click('#pacotes-lista .pk-mais');return corpo();};
    await check(tema+': Mais → Pacotes abre a lista com os pacotes do app e os personalizados',async()=>{
     await g.evaluate(()=>{fecharMais&&fecharMais();gerenciarPacotes();});
     const t=await corpo();
@@ -46,11 +47,15 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
    });
    await check(tema+': cada pacote abre e explica com os valores reais do app',async()=>{
     let t=await abre('Particular');
-    assert.match(t,/Ocupa a quadra inteira/);assert.match(t,/4 aulas × R\$ 160 = R\$ 640/);assert.match(t,/vira reposição, que vale 4 meses/);assert.match(t,/4 horas ou mais/);
+    assert.match(t,/Ocupa a quadra inteira/);assert.match(t,/4 aulas × R\$ 160 = R\$ 640/);
+    assert.equal(await g.evaluate(()=>document.querySelectorAll('#pacotes-lista .pk-corpo li').length),2,'abre só com os 2 primeiros itens');
+    assert.doesNotMatch(t,/vira reposição/);assert.match(t,/▾ ver mais 4 detalhes/);
+    t=await tudo();assert.match(t,/vira reposição, que vale 4 meses/);assert.match(t,/4 horas ou mais/);assert.match(t,/▴ ver menos/);
     t=await abre('Dupla · Trio · Quarteto');assert.doesNotMatch(t,/Ocupa a quadra inteira/,'um aberto por vez');
-    assert.match(t,/Dupla R\$ 90 · Trio R\$ 85 · Quarteto R\$ 80/);assert.match(t,/até 2, 3 ou 4 alunos/);assert.match(t,/Aula em família/);
+    assert.match(t,/Dupla R\$ 90 · Trio R\$ 85 · Quarteto R\$ 80/);assert.match(t,/até 2, 3 ou 4 alunos/);t=await tudo();assert.match(t,/Aula em família/);
     t=await abre('Locação de quadra');assert.match(t,/R\$ 80\/hora/);assert.match(t,/hora × R\$ 80/);
-    t=await abre('Kids');assert.match(t,/4 aulas = R\$ 400 · 8 aulas = R\$ 800/);assert.match(t,/Usado por: Kid Um, Kid Dois \(inativo\)/);
+    t=await abre('Kids');assert.match(t,/4 aulas = R\$ 400 · 8 aulas = R\$ 800/);
+    t=await tudo();assert.match(t,/Usado por: Kid Um, Kid Dois \(inativo\)/);
     t=await abre('Kids');assert.equal(await g.evaluate(()=>document.querySelectorAll('#pacotes-lista .pk-corpo').length),0,'tocar de novo fecha');
    });
    await check(tema+': excluir pacote em uso é recusado; "Mudar valores" leva aos valores no Financeiro',async()=>{
@@ -63,7 +68,7 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
    });
    await check(tema+': legível (medido na imagem) e nada muda nos dados',async()=>{
     for(const n of ['Particular','Kids']){
-     await g.evaluate(()=>{pkAberto='';gerenciarPacotes();});await abre(n);
+     await g.evaluate(()=>{pkAberto='';gerenciarPacotes();});await abre(n);await tudo();
      const itens=(await medir(g)).filter(it=>/ov-pacotes-lista|pk-/.test(it.onde||''));
      assert.ok(itens.length>=8,n+' mediu: '+itens.length);
      assert.deepEqual(itens.filter(it=>it.ratio!==null&&it.ratio<it.minimo).map(it=>n+' '+it.t+' '+it.ratio+' '+it.fg+' sobre '+it.fundo),[]);

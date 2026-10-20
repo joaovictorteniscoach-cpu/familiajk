@@ -72,6 +72,7 @@ jobs:
           node ferramentas/testar-diferenca-agenda-browser.cjs
           node ferramentas/testar-pacotes-detalhe-browser.cjs
           node ferramentas/testar-atalhos-gestao-browser.cjs
+          node ferramentas/testar-textos-curtos-browser.cjs
           node ferramentas/testar-locacao-minhas-aulas-browser.cjs
           node ferramentas/testar-torneio-aluno-browser.cjs
           node ferramentas/testar-torneio-gestao-browser.cjs

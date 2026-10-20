@@ -8,6 +8,24 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-20 · Claude Code: menos texto aberto (setinha "ver mais")
+
+Pedido do João: quando tiver muita informação, mostrar só o começo e uma
+setinha para abrir e fechar. Versão **2026-10-20-3** (mesmo PR #248).
+- `encurtarTextosLongos` (seção "Textos longos encolhidos"):
+  - explicação (`.hint`/`.sub` das telas e janelas, notas das janelas do
+    Início) com mais de 3 linhas mostra só 2, com "▾ ver mais" / "▴ ver menos";
+  - texto curto fica como está; o texto inteiro continua na página;
+  - um `MutationObserver` mede telas e janelas quando abrem;
+  - para não encolher um texto, use `data-enc="nao"`.
+- Pacotes: cada pacote abre com os 2 itens principais; o resto fica em
+  "▾ ver mais N detalhes" (`pkVerTudo`).
+- Classes `enc-`. Teste novo `testar-textos-curtos-browser.cjs` (dois temas,
+  abre/fecha, curto intacto, leitura medida); `testar-pacotes-detalhe` abre
+  a setinha antes de conferir os itens.
+
+---
+
 ## 2026-10-20 · Claude Code: topo menor, ocupação dia/mês/ano, locação com tempo, pacotes explicados e varredura de atalhos
 
 Pedidos do João em 20/10 (mesmo PR dos quadrinhos, ainda não publicado).

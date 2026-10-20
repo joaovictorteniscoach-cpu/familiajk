@@ -56,6 +56,7 @@ Use `grep -n` pelos títulos de seção (`/* ===== Título =====`) ou pelo nome 
 - Caixa, locação com tempo: `lancCatMudou`/`lancHorasMudou`/`lancHorasLidas` (grava `horas` no lançamento; não mexe em crédito)
 - Diferença agenda × valor: `difSilenciada` (só volta na virada; `mesReal`), `limparDifNaRenovacao`
 - Pacotes explicados: `pacotesPadrao`/`renderPacotesLista` (classes `pk-`); topo das outras páginas: bloco "Topo das outras páginas" no `estilo.css`
+- Texto longo encolhido (2 linhas + "▾ ver mais"): `encurtarTextosLongos` (`ENC_SEL`, classes `enc-`; `data-enc="nao"` para não encolher)
 - Varredura de atalhos: `ferramentas/testar-atalhos-gestao-browser.cjs` (tabela `DESTINOS`; atalho novo precisa entrar nela)
 - Segurança na Gestão: `argJs`, `sairEApagar`, `prontidaoRegraFinal`, `uidCadastroLivre`, `cancelamentoTardio`, `publicacaoLegadaEnxuta`
 

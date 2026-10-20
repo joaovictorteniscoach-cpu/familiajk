@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-20-2';
+const VERSAO='2026-10-20-3';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -4883,14 +4883,20 @@ function pacotesPadrao(){
     linhas:['Aula fora de pacote: lança direto na Caixa pelos atalhos, sem mexer em crédito de ninguém.']}
   ];
 }
-let pkAberto='';
-function pkAlterna(id){pkAberto=pkAberto===id?'':id;renderPacotesLista();}
+let pkAberto='',pkTudo=false;
+/* Abre um pacote por vez, mostrando só os 2 primeiros itens; o resto fica na
+   setinha "ver mais" (pedido do João: menos texto aberto). */
+function pkAlterna(id){pkAberto=pkAberto===id?'':id;pkTudo=false;renderPacotesLista();}
+function pkVerTudo(){pkTudo=!pkTudo;renderPacotesLista();}
 function renderPacotesLista(){
   const box=document.getElementById('pacotes-lista');if(!box)return;
   const item=(id,ico,nome,res,nAl,corpo,acoes)=>{const ab=pkAberto===id;
     return '<div class="pk-item'+(ab?' aberto':'')+'"><button type="button" class="pk-cab" aria-expanded="'+ab+'" onclick="pkAlterna(\''+argJs(id)+'\')"><span class="pk-ico">'+ico+'</span><span class="pk-t"><b>'+esc(nome)+'</b><small>'+res+'</small></span>'
       +(nAl===null?'':'<em>'+(nAl?nAl+' aluno'+(nAl>1?'s':''):'ninguém')+'</em>')+'<i>'+(ab?'−':'+')+'</i></button>'
-      +(ab?'<div class="pk-corpo"><ul>'+corpo.map(l=>'<li>'+l+'</li>').join('')+'</ul>'+(acoes||'')+'</div>':'')+'</div>';};
+      +(ab?'<div class="pk-corpo"><ul>'+corpo.slice(0,2).map(l=>'<li>'+l+'</li>').join('')+'</ul>'
+        +(corpo.length>2?(pkTudo?'<ul>'+corpo.slice(2).map(l=>'<li>'+l+'</li>').join('')+'</ul>':'')
+          +'<button type="button" class="enc-btn pk-mais" aria-expanded="'+pkTudo+'" onclick="pkVerTudo()">'+(pkTudo?'▴ ver menos':'▾ ver mais '+(corpo.length-2)+' detalhe'+(corpo.length>3?'s':''))+'</button>':'')
+        +(acoes||'')+'</div>':'')+'</div>';};
   let h='<p class="pk-sec">Pacotes do app</p>';
   h+=pacotesPadrao().map(p=>item(p.id,p.ico,p.nome,p.res,p.n,p.linhas,p.id==='avulsa'||p.id==='loc'||p.id==='grupo'?'<button type="button" class="pk-ir" onclick="closeModal(\'ov-pacotes-lista\');irParaValores()">Mudar valores ›</button>':'')).join('');
   const cs=tiposCustom();
@@ -12691,6 +12697,38 @@ function confirmarAulaWa(id,hora){
     else if(compacto&&y<20){compacto=false;t.classList.remove('compacto');}
   };
   window.addEventListener('scroll',()=>{requestAnimationFrame(aplica);},{passive:true});
+})();
+/* ===== Textos longos encolhidos (20/10) =====
+   Pedido do João: em vez de muito texto aberto, mostrar só o começo e uma
+   setinha para abrir e fechar. Vale para as explicações (.hint/.sub e notas
+   das janelas): com mais de 3 linhas, ficam só as 2 primeiras + "▾ ver mais".
+   Só muda a aparência: o texto continua inteiro na página. Texto que não pode
+   ser escondido (aviso de erro, confirmação) leva data-enc="nao".
+   Mede só o que está à vista; telas e janelas fechadas são medidas quando
+   abrem (o observador vê a classe "on" mudar). */
+const ENC_SEL='.page p.hint,.page p.sub,.modal p.hint,.modal p.sub,.jhd .jhd-nota,#pg-graf p.hint';
+function encurtarTextosLongos(){
+  document.querySelectorAll(ENC_SEL).forEach(p=>{
+    if(p.dataset.enc||!p.offsetParent)return;
+    const cs=getComputedStyle(p);if(cs.display!=='block')return;
+    const lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.4;
+    if(p.scrollHeight<=lh*3.3){return;}
+    p.dataset.enc='1';p.classList.add('enc-curto');
+    const b=document.createElement('button');b.type='button';b.className='enc-btn';
+    b.setAttribute('aria-expanded','false');b.textContent='▾ ver mais';
+    b.style.color=cs.color;   // mesma cor do texto que ela abre (já medida para aquele fundo)
+    b.onclick=ev=>{ev.stopPropagation();const ab=p.classList.toggle('enc-aberto');b.setAttribute('aria-expanded',String(ab));b.textContent=ab?'▴ ver menos':'▾ ver mais';};
+    p.insertAdjacentElement('afterend',b);
+  });
+}
+(function observarTextosLongos(){
+  /* Antes do próximo desenho da tela (requestAnimationFrame): o texto já
+     aparece encolhido, sem "pulo". Com a aba em segundo plano o rAF dorme;
+     o setTimeout garante que roda assim mesmo. */
+  let t=null;const roda=()=>{if(!t)return;t=null;try{encurtarTextosLongos();}catch(e){}};
+  const agenda=()=>{if(t)return;t=1;requestAnimationFrame(roda);setTimeout(roda,200);};
+  try{new MutationObserver(agenda).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});}catch(e){}
+  window.addEventListener('resize',agenda);agenda();
 })();
 function renderAll(){
   carregarAvatarGestao();renderProtecaoDados();
