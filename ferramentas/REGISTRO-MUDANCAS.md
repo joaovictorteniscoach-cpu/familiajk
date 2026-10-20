@@ -8,6 +8,27 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-20 · Claude Code: semana do aluno sem "Loc." e botão de voz mais transparente
+
+Pedido do João depois do assistente por voz. Versão **2026-10-20-10**.
+
+- **Agenda do aluno, semana:** o horário só de locação aparecia como "Loc.",
+  que parecia o cadeado de "Fechado".
+  - Agora aparece **"Livre"**, verde. A locação de outro aluno, em que dá para
+    participar, aparece como "Locação".
+  - O toque abre o mesmo `escolherSlot`, que mostra só as opções daquele
+    horário (aula, locação, torneio).
+  - "Fechado" continua igual.
+- **Dia:** "Sem aula · locação ou torneio" virou "Disponível · ver opções".
+- **Mês:** `livresNoDia` conta também esses horários e não conta os que já
+  passaram.
+- **Regras:** nenhuma regra de reserva mudou.
+- **Botão de voz do aluno** (`#va-atalho`): opacidade .7 e brilho, igual ao da
+  Gestão.
+- **Testes:**
+  - Novo: `ferramentas/testar-semana-livre-browser.cjs` (4 verificações).
+  - `testar-locacao-minhas-aulas` agora espera "Disponível".
+
 ## 2026-10-20 · Claude Code: assistente por voz no app do aluno
 
 Pedido do João: o mesmo botão de áudio da Gestão, para os alunos. Com ele, o

@@ -267,7 +267,7 @@ async function contexto(browser,base,opts){
     await p.evaluate(()=>{document.querySelectorAll('.overlay').forEach(x=>x.classList.remove('on'));agDate=new Date('2026-10-15T12:00:00');escolherSlot('19:00');});
     assert.equal(await p.evaluate(()=>document.getElementById('ov-pick').classList.contains('on')),false,'chuva: nada abre');
     await p.evaluate(()=>{agView='dia';agDate=new Date('2026-10-15T12:00:00');renderAgenda();});
-    assert.match(await p.locator('#ag-view').innerText(),/Sem aula · locação ou torneio/);
+    assert.match(await p.locator('#ag-view').innerText(),/Disponível ver opções/);
    });
    await check(tema+': barra de baixo com 6 botões cabe no celular pequeno e no computador (toque ≥ 44 px, sem rolagem lateral)',async()=>{
     for(const width of [320,390,1280]){
