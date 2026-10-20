@@ -58,6 +58,7 @@ Use `grep -n` pelos títulos de seção (`/* ===== Título =====`) ou pelo nome 
 - Pacotes explicados: `pacotesPadrao`/`renderPacotesLista` (classes `pk-`); topo das outras páginas: bloco "Topo das outras páginas" no `estilo.css`
 - Texto longo encolhido (2 linhas + "▾ ver mais"): `encurtarTextosLongos` (`ENC_SEL`, classes `enc-`; `data-enc="nao"` para não encolher)
 - Vidro Aero (referência do João: Windows Vista/7): bloco "Vidro Aero" no fim do `estilo.css` (`--aero-*`); só brilho/borda/sombra, nunca troca cor de fundo
+- Horário que o app do aluno não vê (código publicado ≠ do aluno): `codigoDaEntrada` (publicação usa), `horariosQueOAlunoNaoVe`/`nomeBateCom` (só lista), `ligarHorarioAoAluno` (botão com desfazer); `acharAlunoPorTitulo` prefere o ativo
 - Varredura de atalhos: `ferramentas/testar-atalhos-gestao-browser.cjs` (tabela `DESTINOS`; atalho novo precisa entrar nela)
 - Segurança na Gestão: `argJs`, `sairEApagar`, `prontidaoRegraFinal`, `uidCadastroLivre`, `cancelamentoTardio`, `publicacaoLegadaEnxuta`
 
