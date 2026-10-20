@@ -28,6 +28,25 @@ Pedido do João depois do assistente por voz. Versão **2026-10-20-10**.
 - **Saudação do assistente:** "Bom dia/Boa tarde/Boa noite, <nome>! Como posso
   te ajudar? Caso tenha alguma dúvida, é só me perguntar.", no lugar da frase
   longa.
+- **Assistente responde com os dados do app** (`infoResposta` em
+  `voz-aluno.js`). Usa só o que o app já mostra, pelas funções dele:
+  - **Preços:** aula avulsa particular e em grupo, locação, planilha e kids.
+    Planos mensais vêm de `planosTabela`/`planoValor`. Quando falta dado, o
+    assistente pergunta "particular ou em grupo?" e "quantas aulas no mês?"
+    (`st.pend`). O plano particular de 10 aulas é "a combinar".
+  - **Mensalidade do aluno:** valor, situação e vencimento. Não mostra o valor
+    oculto. Para família, diz quem paga.
+  - **Como pagar:** Pix e cartão.
+  - **"Quero repor N aulas":** mostra o saldo, o que vence e horários livres.
+    O toque abre o agendamento com "Marcar reposição".
+  - **Outros assuntos:** horários da quadra (`slotModo`), torneio (posição e
+    pontos; regra 3/1/W.O. 3), aviso, nível, lista de espera, prazo de
+    cancelar (`LIMITE_CANCEL_H`) e chuva.
+  - **Dado que não existe no app:** manda para o João no WhatsApp. Nunca cita
+    desconto.
+  - **Fala:** "R$ 1.260" é lido "1.260 reais".
+  - **Teste:** `ferramentas/testar-voz-perguntas-browser.cjs` (7
+    verificações; `JV_VOZ_LISTA=1` lista pergunta → resposta).
 - **Dúvida que o assistente não resolve:** ele diz o que sabe fazer e oferece
   "Perguntar ao João no WhatsApp", com a pergunta já escrita. Não inventa
   resposta.

@@ -120,9 +120,9 @@ const PUB0={horas:HORAS,profs:[],horarioCfg:{},horarioData:{},reservasRespostas:
    await entrar();await p.click('#va-atalho');
    let r=await pedir('quais são minhas aulas');assert.equal(r.txt,'Suas próximas aulas: hoje, ter 20/10 às 09:00; hoje, ter 20/10 às 12:00.');
    r=await pedir('quantos créditos eu tenho');assert.equal(r.txt,'Você tem 3 créditos e 1 reposição.');
-   r=await pedir('qual o valor da aula avulsa');assert.match(r.txt,/^Essa eu não sei responder/);assert.deepEqual(r.bts,['Perguntar ao João no WhatsApp']);
+   r=await pedir('posso levar meu cachorro');assert.match(r.txt,/^Essa eu não sei responder/);assert.deepEqual(r.bts,['Perguntar ao João no WhatsApp']);
    await p.evaluate(()=>{window.__wa=[];abrirWhatsApp=(n,t)=>window.__wa.push(t);document.querySelector('#va-conversa .va-eu-nao:last-child .va-bt').click();});
-   assert.deepEqual(await p.evaluate(()=>window.__wa),['Olá João! Aqui é Aluno. qual o valor da aula avulsa']);
+   assert.deepEqual(await p.evaluate(()=>window.__wa),['Olá João! Aqui é Aluno. posso levar meu cachorro']);
    await p.click('#va-atalho');
   });
   await check('voz: lê a resposta só com a opção ligada; sem reconhecimento de fala, indica o ditado do teclado',async()=>{

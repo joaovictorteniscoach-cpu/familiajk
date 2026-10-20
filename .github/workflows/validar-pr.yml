@@ -78,6 +78,7 @@ jobs:
           node ferramentas/testar-cancelado-recriado-browser.cjs
           node ferramentas/testar-voz-aluno-browser.cjs
           node ferramentas/testar-semana-livre-browser.cjs
+          node ferramentas/testar-voz-perguntas-browser.cjs
           node ferramentas/testar-locacao-minhas-aulas-browser.cjs
           node ferramentas/testar-torneio-aluno-browser.cjs
           node ferramentas/testar-torneio-gestao-browser.cjs
