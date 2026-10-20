@@ -1666,12 +1666,13 @@ html body:not(#jv) #pedir-box .btn-ghost{background:#F3EDE2!important;border:1px
 .login .login-sub{opacity:1}
 .login-priv{color:rgba(250,247,242,.8)}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-20-8">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-20-9">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-20-8">
-<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-20-8">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-20-9">
+<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-20-9">
+<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-10-20-9">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -2164,7 +2165,27 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-10-20-8"></script>
+<script src="lib/icones.js?v=2026-10-20-9"></script>
+</div>
+
+<!-- ASSISTENTE POR VOZ: consultar horário livre, agendar, cancelar, ver aulas (lib/voz-aluno.js) -->
+<button id="va-atalho" type="button" hidden aria-label="Assistente por voz: perguntar horário livre, agendar ou cancelar" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg></button>
+<div id="va-painel" hidden>
+ <section class="va-card" role="dialog" aria-modal="true" aria-labelledby="va-titulo">
+  <div class="va-head"><h2 id="va-titulo">Assistente da agenda</h2><button id="va-fechar" type="button" aria-label="Fechar assistente">×</button></div>
+  <div id="va-conversa" class="va-conversa" aria-live="polite" aria-label="Conversa com o assistente"></div>
+  <p id="va-status" role="status"></p>
+  <div class="va-entrada"><textarea id="va-texto" rows="1" placeholder="Fale ou escreva aqui" aria-label="Seu pedido" enterkeyhint="send"></textarea><button id="va-enviar" type="button">Enviar</button></div>
+  <button id="va-falar" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg><span>Toque e fale</span></button>
+  <div class="va-ex-lista" aria-label="Exemplos">
+   <button type="button" class="va-ex">Tem horário livre amanhã?</button>
+   <button type="button" class="va-ex">Marcar quinta às 18</button>
+   <button type="button" class="va-ex">Cancelar minha aula de terça às 9</button>
+   <button type="button" class="va-ex">Minhas aulas</button>
+  </div>
+  <label class="va-check"><input type="checkbox" id="va-ouvir"> Ler as respostas em voz alta</label>
+  <p class="va-nota">O assistente só mostra e abre a agenda: agendar e cancelar seguem as mesmas regras do app e pedem sua confirmação.</p>
+ </section>
 </div>
 
 <!-- MODAL ESCOLHER O QUE FAZER NO HORÁRIO -->
@@ -2391,7 +2412,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-10-20-8';
+const VERSAO='2026-10-20-9';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -5631,7 +5652,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-20-8').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-20-9').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
@@ -5640,5 +5661,6 @@ window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);})
   setTimeout(()=>esperarEIniciar(t+1),150);
 })(0);
 </script>
+<script src="lib/voz-aluno.js?v=2026-10-20-9"></script>
 </body>
 </html>

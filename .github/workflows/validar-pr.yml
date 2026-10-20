@@ -76,6 +76,7 @@ jobs:
           node ferramentas/testar-vidro-aero-browser.cjs
           node ferramentas/testar-vinculo-agenda-browser.cjs
           node ferramentas/testar-cancelado-recriado-browser.cjs
+          node ferramentas/testar-voz-aluno-browser.cjs
           node ferramentas/testar-locacao-minhas-aulas-browser.cjs
           node ferramentas/testar-torneio-aluno-browser.cjs
           node ferramentas/testar-torneio-gestao-browser.cjs

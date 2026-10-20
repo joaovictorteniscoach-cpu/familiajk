@@ -81,6 +81,8 @@ const ESTADOS=[
  ['torneio-resultado-placar',`goAluno('torneio',null);abrirRegResultado();document.getElementById('atr-grupo').value='A';atrPlayers();document.getElementById('atr-p1').value='Aluno Fictício';document.getElementById('atr-p2').value='Jogador Dois';[['atr-s1a',6],['atr-s1b',4],['atr-s2a',3],['atr-s2b',6],['atr-s3a',10],['atr-s3b',8]].forEach(([i,v])=>document.getElementById(i).value=v);atrAtualiza();`],
  ['torneio-resultado-erro',`goAluno('torneio',null);abrirRegResultado();document.getElementById('atr-grupo').value='A';atrPlayers();document.getElementById('atr-p1').value='Aluno Fictício';document.getElementById('atr-p2').value='Jogador Dois';document.getElementById('atr-s1a').value=6;document.getElementById('atr-s1b').value=6;atrAtualiza();`],
  ['torneio-resultado-wo',`goAluno('torneio',null);abrirRegResultado();document.getElementById('atr-grupo').value='A';atrPlayers();document.querySelector('input[name="atr-tipo"][value="wo"]').checked=true;atrAtualiza();`],
+ ['assistente-voz',`${nav('agenda')};JVVozAluno.abrir();const t=document.getElementById('va-texto');t.value='tem horário livre amanhã?';JVVozAluno.enviar();t.value='quinta às 18 está livre?';JVVozAluno.enviar();`],
+ ['assistente-voz-cancelar',`${nav('inicio')};JVVozAluno.abrir();const t=document.getElementById('va-texto');t.value='minhas aulas';JVVozAluno.enviar();t.value='cancelar sexta às 16';JVVozAluno.enviar();`],
  ['termo',`PUB.termo='Termo de uso fictício para teste de leitura.';PUB.termoVer=2;MEU.termoAceitoVer=1;checarTermo();`],
  ['cadastro-novo',`abrirCadastroNovo();`]
 ];
@@ -116,6 +118,7 @@ const {medir}=require('./medir-contraste-pixels.cjs');
      const lg=document.getElementById('login');if(lg)lg.style.display='none';
      document.getElementById('app').style.display='block';
      document.querySelectorAll('.overlay').forEach(x=>x.classList.remove('on'));
+     if(window.JVVozAluno)JVVozAluno.fechar();
      document.querySelectorAll('[id*="splash"]').forEach(x=>x.style.display='none');
      ['lembrete-box','chuva-box','espera-box','renova-box','feriado-box'].forEach(id=>{const b=document.getElementById(id);if(b)b.style.display='none';});
      render();
