@@ -8,7 +8,8 @@ sem jargão; ele usa o app no celular e decide pelo resultado, não pelo código
   Correção de dado = ferramenta que ele aciona, com versão salva antes e jeito de desfazer.
 - **Auditoria/conferência = só lista**, sem alterar nada, a menos que ele peça a correção.
 - **Só publicar se tudo passar** (`checar-tudo.sh` + teste no navegador). Ver skill `publicar-versao`.
-- **`app-familia/` é da esposa dele: não mexer.**
+- **`app-familia/` (Família JK, finanças do casal): só mexer quando o João pedir explicitamente.**
+  Nada de valor, conta ou documento real no código (é público): `checar-privacidade-familia.py` barra.
 - **Nunca commitar backup, JSON exportado ou dado real de aluno.** Testes usam dados fictícios.
 - Desconto de reposições é manual e só o João aplica; mensagens ao aluno nunca citam desconto.
 - Regras do Firebase: a publicada é `ferramentas/firebase-regras-etapa3-transicao.json`.
@@ -72,7 +73,7 @@ texto vindo de aluno/nuvem; dentro de `onclick="f('…')"` use `argJs()` (escapa
 depois HTML — só `esc()` não basta, o navegador desfaz o `&#39;` antes de rodar).
 Nada de nome real de aluno ou compromisso pessoal no código: ele é público (Pages + GitHub).
 
-## Decisões em vigor (atualizadas em 2026-10-07)
+## Decisões em vigor (atualizadas em 2026-10-20)
 - Gestão fica no GitHub Pages, mesma origem do app do aluno: risco aceito pelo João para
   não depender da cota do Netlify. Não reabrir sem ele pedir.
 - Cópia legada `jvtenis-app-aluno` vai sem `mensalidade`/`valorAula` (`valoresOcultos`).
@@ -83,6 +84,11 @@ Nada de nome real de aluno ou compromisso pessoal no código: ele é público (P
 - Renovação: repetição no mesmo mês preserva os saldos. Ajuste manual no cadastro exige conferência no lote; a confirmação de renovação manual só marca o mês, sem alterar números. Ver `ferramentas/PRONTIDAO.md`.
 - App Check: João autorizou preparar a ativação em 2026-10-06. `APPCHECK_SITE_KEY` ainda vazio: falta a chave pública e o registro no console. Começar em monitoramento; exigência só após adaptar site e leitura REST do teste. Ver `ferramentas/APP-CHECK.md`.
 - Repositório público: decisão pendente do João (privado exige GitHub Pro para manter o Pages).
+- **Família JK sem login (20/10):** a nuvem continua só com o link da família, sem criar conta.
+  Login com Google só se não exigir mexer no Firebase nem criar contas — como exige (ligar o
+  provedor, autorizar o domínio e mudar a regra do banco), fica só o link. Não propor de novo
+  sem ele pedir. Não mexer na regra do banco da família. O login por e-mail que já existe no
+  app é opcional e continua como está.
 
 ## Verificar
 - `sh ferramentas/checar-tudo.sh` — sintaxe, funções, ids, CSS, regras, P0, versão, premium. Tem de terminar com 0 falhas.

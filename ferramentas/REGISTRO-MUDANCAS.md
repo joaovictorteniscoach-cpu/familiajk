@@ -1806,3 +1806,16 @@ estas mudanças foram pedidas por ele nesta sessão).
 - **Para o João decidir:** sem login, quem tiver o link da nuvem lê e altera os
   dados da família (o app já avisa). Exigir login muda a regra do banco da
   família — só com autorização.
+
+
+---
+
+## 2026-10-20 · Claude: decisões do João anotadas (só documentação)
+
+- `CLAUDE.md`: a regra "`app-familia/`: não mexer" virou "só mexer quando o João
+  pedir explicitamente" (ele pediu as mudanças do #253 e #254), com a lembrança de
+  que nada real entra no código.
+- **Família JK continua sem login, só com o link.** Login com Google só se fosse
+  rápido e sem mexer no Firebase nem criar contas; como exige ligar o provedor,
+  autorizar o domínio e mudar a regra do banco, fica o link. Regra do banco da
+  família não foi e não deve ser tocada por isso. Nenhuma mudança no app.
