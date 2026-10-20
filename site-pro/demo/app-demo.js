@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-20-4';
+const VERSAO='2026-10-20-5';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -464,6 +464,13 @@ function setSave(s,cls){
   else if(/enviando/i.test(full))curto='↗\uFE0E Nuvem';
   else if(/conectando/i.test(full))curto='↻ Nuvem';
   else if(/erro/i.test(full))curto='⚠ Nuvem';
+  /* avisos longos viram etiqueta curta no topo (20/10, foto do João: a faixa
+     esticada pesava); o texto inteiro fica no title/aria e o toque explica */
+  else if(/sem falar com a nuvem/i.test(full))curto='⚠ Conferir nuvem ⓘ';
+  else if(/confira os dados/i.test(full))curto='⚠ Conferir dados ⓘ';
+  else if(/outra sessão/i.test(full))curto='⚠ Outra sessão ⓘ';
+  else if(/aguardando confirmação/i.test(full))curto='↻ Nuvem';
+  else if(/versão conferida/i.test(full))curto='✓ Nuvem';
   e.textContent=curto;e.title=full;e.setAttribute('aria-label',full||curto);e.className='save-state '+(cls||'');
   renderProtecaoDados();
 }

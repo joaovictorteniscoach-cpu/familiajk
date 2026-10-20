@@ -8,6 +8,29 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-20 · Claude Code: topo das outras páginas mais leve
+
+Foto do João (Alunos, iPhone): o mês tinha três caixas uma dentro da outra
+(moldura, chip e os botões ‹ ›) e "✓ Nuvem" era uma faixa escura esticada
+até a borda. Versão **2026-10-20-5**.
+- Bloco "Topo das outras páginas, mais leve" no fim do `estilo.css`:
+  - mês numa pílula só, com setas soltas (sem fundo, sem borda, sem desfoque);
+  - nuvem em etiqueta do tamanho do texto, encostada à direita;
+  - botões de cima mais discretos;
+  - seletor com `body:not(#jv)` para vencer a regra do Saibro.
+- `setSave`: os avisos longos viram etiqueta curta no topo; o texto inteiro
+  fica no `title`/aria, e o toque continua explicando:
+  - "abriu sem falar com a nuvem" → "⚠ Conferir nuvem ⓘ";
+  - "confira os dados" → "⚠ Conferir dados ⓘ";
+  - "outra sessão" → "⚠ Outra sessão ⓘ";
+  - "aguardando confirmação" → "↻ Nuvem";
+  - "versão conferida" → "✓ Nuvem".
+- `testar-vidro-aero-browser.cjs` ganhou a conferência do topo leve
+  (etiquetas curtas, etiqueta < 50% da largura, setas sem caixa). Leitura
+  OK em 102 telas e janelas.
+
+---
+
 ## 2026-10-20 · Claude Code: vidro Aero (referência Windows Vista/7)
 
 O João confirmou a referência: o vidro translúcido do Aero. Versão
