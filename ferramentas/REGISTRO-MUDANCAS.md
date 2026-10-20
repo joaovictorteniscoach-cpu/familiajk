@@ -8,6 +8,25 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-20 · Claude Code: vidro Aero (referência Windows Vista/7)
+
+O João confirmou a referência: o vidro translúcido do Aero. Versão
+**2026-10-20-4** (mesmo PR #248).
+- Bloco "Vidro Aero" no fim de `estilo.css` (variáveis `--aero-*`). **Não troca
+  nenhuma cor de fundo**: só soma brilho no alto (sombra interna clara), borda
+  clara fina e sombra macia em cartões (`fin-card`, `chart`, `jh-card`,
+  `jh-tile`, `jv-ref-kpi`, `cx-at`, `avcard`, `al-row`, `cx-dia`, `fic-sec`,
+  listas das janelas do Início, pacotes).
+- Abas (`.seg`, `.jh-seg`, `.wk-modo`, filtros da Caixa): trilho fosco e aba
+  escolhida com reflexo de botão de vidro.
+- Barra de baixo: reflexo na borda de cima; no Verde clássico 95% opaca com
+  desfoque. O Saibro mantém a barra de vidro a 70% que já tinha.
+- Janelas e menu Mais: reflexo no alto e desfoque do fundo.
+- Leitura medida de novo: 102 telas e janelas OK nos dois temas. Teste novo
+  `testar-vidro-aero-browser.cjs` no validar-pr.
+
+---
+
 ## 2026-10-20 · Claude Code: menos texto aberto (setinha "ver mais")
 
 Pedido do João: quando tiver muita informação, mostrar só o começo e uma

@@ -3633,6 +3633,44 @@ body[data-pagina="agenda"]:not([data-pagina="dash"]) .top.jv-premium-hero .top-m
 #ov-pacotes-lista .pk-corpo ul + ul{margin-top:0}
 .enc-curto[style*="display: none"] + .enc-btn,.enc-curto[style*="display:none"] + .enc-btn,.enc-curto[hidden] + .enc-btn{display:none!important}
 
+/* ===== Vidro Aero (20/10) =====
+   Referência do João: o vidro do Windows Vista/7 (Aero). Não troca nenhuma
+   cor de fundo (a leitura medida continua a mesma): só soma
+   - brilho suave no alto (sombra interna clara que some para baixo),
+   - borda clara fina de vidro e sombra externa macia,
+   - desfoque do que fica atrás nas partes translúcidas (barra, janelas, Mais).
+   A aba escolhida vira botão de vidro com reflexo. */
+:root{
+  --aero-brilho:inset 0 1px 0 rgba(255,255,255,.20),inset 0 14px 18px -14px rgba(255,255,255,.16);
+  --aero-borda:rgba(255,255,255,.14);
+  --aero-sombra:0 10px 26px rgba(0,0,0,.26);
+}
+html body .fin-card,html body .chart,html body .jh-card,html body .jh-tile,html body .jv-ref-kpi,
+html body .cx-at,html body .avcard,html body .al-row,html body .cx-dia,html body .fic-sec,
+html body .jhd .jhd-lista li,html body .jhd .jhd-oc3 div,html body #ov-pacotes-lista .pk-item,html body .rpg-chart{
+  box-shadow:var(--aero-brilho),var(--aero-sombra)!important;border-color:var(--aero-borda)!important
+}
+/* abas (escolhas lado a lado): trilho de vidro fosco, aba escolhida brilhante */
+html body .seg,html body .jh-seg,html body .wk-modo,html body #cx-filtros{
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.30),inset 0 -1px 0 rgba(255,255,255,.06)!important;
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)
+}
+html body .seg button.on,html body .jh-seg button.on,html body .wk-modo button.on,html body #cx-filtros button.on{
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.42),inset 0 12px 14px -10px rgba(255,255,255,.28),0 2px 8px rgba(0,0,0,.30)!important
+}
+/* barra de baixo: vidro translúcido com reflexo na borda de cima */
+html body .nav.nav{
+  background:rgba(14,34,26,.95)!important;-webkit-backdrop-filter:blur(18px) saturate(150%)!important;backdrop-filter:blur(18px) saturate(150%)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 -8px 24px rgba(0,0,0,.30)!important
+}
+html body .nav.nav button.on{box-shadow:inset 0 1px 0 rgba(255,255,255,.30),inset 0 12px 14px -10px rgba(255,255,255,.20)!important}
+/* janelas e o menu Mais: vidro com reflexo no alto */
+html body .modal,html body .mais-pop{
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 22px 26px -22px rgba(255,255,255,.14),0 -10px 36px rgba(0,0,0,.40)!important;
+  -webkit-backdrop-filter:blur(20px) saturate(140%);backdrop-filter:blur(20px) saturate(140%)
+}
+html body .overlay.on{-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+
 /* ===== Toques do tema Saibro ===== */
 .nav,.nav:after{background:#0B1B14!important;border-top:1px solid rgba(194,88,46,.35)!important}
 .nav button.on,.nav button.aberto,.jv-nav-3d button.on,.jv-nav-3d button.aberto{background:rgba(194,88,46,.16)!important;color:#EE9A6E!important;-webkit-text-fill-color:#EE9A6E!important}
