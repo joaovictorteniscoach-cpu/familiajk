@@ -74,6 +74,7 @@ jobs:
           node ferramentas/testar-atalhos-gestao-browser.cjs
           node ferramentas/testar-textos-curtos-browser.cjs
           node ferramentas/testar-vidro-aero-browser.cjs
+          node ferramentas/testar-vinculo-agenda-browser.cjs
           node ferramentas/testar-locacao-minhas-aulas-browser.cjs
           node ferramentas/testar-torneio-aluno-browser.cjs
           node ferramentas/testar-torneio-gestao-browser.cjs

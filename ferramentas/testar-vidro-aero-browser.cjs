@@ -39,6 +39,18 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
     for(const k of ['card','aba','nav','modal'])assert.ok(brilho(r[k]),k+': '+r[k]);
     const a=Number((r.navBg.match(/[\d.]+/g)||[])[3]||1);assert.ok(a>=(tema==='saibro'?0.65:0.9),'barra encorpada: '+r.navBg);   // Saibro já tinha a barra de vidro a 70% com desfoque
    });
+   await check(tema+': topo das outras páginas leve: mês numa pílula só e nuvem em etiqueta curta',async()=>{
+    const r=await g.evaluate(()=>{go('alunos',document.createElement('button'));
+     const out={};for(const [k,t] of [['abriu','⚠ abriu sem falar com a nuvem ⓘ'],['dados','⚠ confira os dados antes de salvar'],['sessao','⚠ outra sessão alterou os dados'],['ok','✓ salvo na nuvem 08:14']]){
+      setSave(t,k==='ok'?'ok':'err');const e=document.getElementById('save-state');out[k]={txt:e.textContent,title:e.title};}
+     const top=document.querySelector('.top').getBoundingClientRect(),ss=document.getElementById('save-state').getBoundingClientRect();
+     const btn=getComputedStyle(document.querySelector('.top .month-btn'));
+     return {out,larg:ss.width/top.width,altura:Math.round(ss.height),btnBorda:btn.borderTopWidth,btnFundo:btn.backgroundColor};});
+    assert.equal(r.out.abriu.txt,'⚠ Conferir nuvem ⓘ');assert.equal(r.out.abriu.title,'⚠ abriu sem falar com a nuvem ⓘ','o texto inteiro fica no title');
+    assert.equal(r.out.dados.txt,'⚠ Conferir dados ⓘ');assert.equal(r.out.sessao.txt,'⚠ Outra sessão ⓘ');assert.equal(r.out.ok.txt,'✓ Nuvem');
+    assert.ok(r.larg<0.5,'etiqueta do tamanho do texto, não faixa esticada: '+r.larg);assert.ok(r.altura<=36,'uma linha: '+r.altura);
+    assert.equal(r.btnBorda,'0px');assert.equal(r.btnFundo,'rgba(0, 0, 0, 0)','setas soltas, sem caixinha');
+   });
    assert.deepEqual(erros,[]);await c.close();
   }
  }finally{await browser.close();server.close();}

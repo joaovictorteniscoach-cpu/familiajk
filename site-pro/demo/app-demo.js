@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-20-4';
+const VERSAO='2026-10-20-6';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -464,6 +464,13 @@ function setSave(s,cls){
   else if(/enviando/i.test(full))curto='↗\uFE0E Nuvem';
   else if(/conectando/i.test(full))curto='↻ Nuvem';
   else if(/erro/i.test(full))curto='⚠ Nuvem';
+  /* avisos longos viram etiqueta curta no topo (20/10, foto do João: a faixa
+     esticada pesava); o texto inteiro fica no title/aria e o toque explica */
+  else if(/sem falar com a nuvem/i.test(full))curto='⚠ Conferir nuvem ⓘ';
+  else if(/confira os dados/i.test(full))curto='⚠ Conferir dados ⓘ';
+  else if(/outra sessão/i.test(full))curto='⚠ Outra sessão ⓘ';
+  else if(/aguardando confirmação/i.test(full))curto='↻ Nuvem';
+  else if(/versão conferida/i.test(full))curto='✓ Nuvem';
   e.textContent=curto;e.title=full;e.setAttribute('aria-label',full||curto);e.className='save-state '+(cls||'');
   renderProtecaoDados();
 }
@@ -2459,13 +2466,7 @@ async function doPublish(){
   try{
     // 90 dias: a mesma janela que a Gestão confere num pedido de horário fixo
     const hoje=new Date();const lim=new Date();lim.setDate(lim.getDate()+90);
-    const codeOf=id=>{const a=DB.alunos.find(x=>x.id===id);return a?a.codigo:null;};
-    const matchAluno=acharAlunoPorTitulo;
-    const codeFor=ev=>{
-      if(ev.alunoId){const c=codeOf(ev.alunoId);if(c)return c;}
-      const a=matchAluno(ev.titulo);
-      return a?a.codigo:null;
-    };
+    const codeFor=codigoDaEntrada;   // a mesma conta que a conferência usa (horariosQueOAlunoNaoVe)
     const pub={
       updatedAt:new Date().toISOString(),
       aviso:DB.aviso||'',
@@ -3766,10 +3767,86 @@ function fmtRs(v){return 'R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFract
 function normNome(s){return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s+/g,' ').trim();}
 function acharAlunoPorTitulo(titulo){
   const t=normNome(titulo);if(!t)return null;
-  let a=DB.alunos.find(x=>normNome(x.nome)===t);                     // nome completo igual
-  if(a)return a;
-  if(!t.includes(' '))a=DB.alunos.find(x=>normNome(x.nome).split(' ')[0]===t); // primeiro nome (título de uma palavra)
-  return a||null;
+  /* Com dois cadastros do mesmo nome (um antigo, inativo), vale o ativo:
+     antes valia o primeiro da lista, e a aula ia para o cadastro velho. */
+  const ach=lista=>{
+    let a=lista.find(x=>normNome(x.nome)===t);                        // nome completo igual
+    if(!a&&!t.includes(' '))a=lista.find(x=>normNome(x.nome).split(' ')[0]===t); // primeiro nome (título de uma palavra)
+    return a||null;
+  };
+  return ach(DB.alunos.filter(ativoNaAgenda))||ach(DB.alunos);
+}
+/* ===== Horário que o app do aluno não vê (20/10) =====
+   O app do aluno marca "Sua aula" pelo CÓDIGO publicado em cada horário, e o
+   código sai daqui: o aluno ligado (Vincular aluno) ou, sem vínculo, o nome
+   do título igual ao do cadastro. Horário marcado só digitando o nome (e o
+   nome não bate igual) ou ligado a outro cadastro (antigo, inativo) aparece
+   para o aluno como "Reserva" de outra pessoa. Caso real: duas horas
+   seguidas do mesmo aluno, ele via só uma. */
+/* "Ativo" para a agenda: além de quem tem plano/mensalidade, o cliente de
+   locação ou torneio (que não tem plano) também conta. Inativo é quem foi
+   inativado de verdade, ou quem não tem nada disso. */
+function ativoNaAgenda(a){
+  if(!a||a.arquivado===true)return false;
+  return ehAtivoAluno(a)||['locacao','torneio'].includes(perfilDe(a))||(Number(a.locCred)||0)>0;
+}
+function codigoDaEntrada(ev){
+  if(!ev)return null;
+  if(ev.alunoId){const a=DB.alunos.find(x=>x.id===ev.alunoId);if(a&&a.codigo)return a.codigo;}
+  const a=acharAlunoPorTitulo(ev.titulo);
+  return a?a.codigo:null;
+}
+const NOME_LIGA=new Set(['DE','DA','DO','DAS','DOS','E']);
+function tokensNome(s){return normNome(s).replace(/[^A-Z0-9 ]/g,' ').split(' ').filter(w=>w&&!NOME_LIGA.has(w));}
+/* O título parece o nome deste aluno? Igual, ou todas as palavras do título
+   estão no nome (começando pelo primeiro nome): "Ricardo Amaral" bate com
+   "Ricardo Amaral Souza". Uma palavra só bate se o primeiro nome dele for
+   único entre os ativos. */
+function nomeBateCom(titulo,a){
+  const t=tokensNome(titulo),n=tokensNome(a&&a.nome);
+  if(!t.length||!n.length||t[0]!==n[0])return false;
+  if(t.length===1)return n.length>=1&&DB.alunos.filter(x=>ativoNaAgenda(x)&&tokensNome(x.nome)[0]===t[0]).length===1;
+  return t.every(w=>n.includes(w));
+}
+const TIPOS_DO_ALUNO=['aula','grupo','personal','locacao','torneio'];
+function horariosQueOAlunoNaoVe(a){
+  if(!a||!ativoNaAgenda(a)||!a.codigo)return [];
+  const A=DB.agenda||{fixos:[],eventos:[]},hoje=dKey(new Date()),lim=new Date();lim.setDate(lim.getDate()+60);const limK=dKey(lim);
+  const out=[];
+  const confere=(e,origem)=>{
+    if(!TIPOS_DO_ALUNO.includes(e.tipo)||!nomeBateCom(e.titulo,a))return;
+    if(String(codigoDaEntrada(e)||'')===String(a.codigo))return;
+    const outro=e.alunoId?DB.alunos.find(x=>x.id===e.alunoId):null;
+    if(outro&&outro.id!==a.id&&ativoNaAgenda(outro)&&nomeBateCom(e.titulo,outro)&&normNome(outro.nome)!==normNome(a.nome))return;   // outra pessoa de nome parecido, ativa: é dela
+    const quando=origem==='fixo'?('toda '+DIAS[e.dia]+' '+e.hora):(e.data.split('-').reverse().slice(0,2).join('/')+' '+e.hora);
+    const motivo=outro&&outro.id!==a.id?('ligado ao cadastro de '+outro.nome+(ativoNaAgenda(outro)?'':' (inativo)'))
+      :(!e.alunoId?'sem vínculo e o nome não bate igual ao cadastro':'ligado a um cadastro que não existe mais');
+    out.push({id:e.id,origem,quando,motivo,titulo:e.titulo,alunoIdAtual:e.alunoId||null});
+  };
+  (A.fixos||[]).forEach(f=>{if(!f.ate||f.ate>=hoje)confere(f,'fixo');});
+  (A.eventos||[]).forEach(e=>{if(e.data>=hoje&&e.data<=limK)confere(e,'pontual');});
+  return out;
+}
+function horariosParaVincular(){
+  const out=[];DB.alunos.filter(ativoNaAgenda).forEach(a=>horariosQueOAlunoNaoVe(a).forEach(h=>out.push(Object.assign({a},h))));
+  return out;
+}
+/* Ação que o João aciona (botão + confirmação), com desfazer: liga UM
+   horário ao cadastro certo. Não corrige nada sozinho. */
+function ligarHorarioAoAluno(origem,id,alunoId){
+  const lista=origem==='fixo'?DB.agenda.fixos:DB.agenda.eventos,e=lista.find(x=>x.id===id),a=DB.alunos.find(x=>x.id===alunoId);
+  if(!e||!a){toast('Não encontrei esse horário');return;}
+  const quando=origem==='fixo'?('toda '+DIAS[e.dia]+' '+e.hora):(e.data.split('-').reverse().slice(0,2).join('/')+' '+e.hora);
+  if(!confirm('Ligar o horário "'+e.titulo+'" ('+quando+') ao cadastro de '+a.nome+'?\n\nAssim ele aparece como aula dele no app do aluno.'))return;
+  const antes={alunoId:e.alunoId,titulo:e.titulo};
+  e.alunoId=a.id;e.titulo=a.nome;
+  logAct('Ligar horário ao aluno: '+a.nome+' ('+quando+')');
+  persist();renderAgenda();try{renderVincularList();}catch(x){}
+  toastDesfazer('✓ Ligado a '+a.nome.split(' ')[0]+' · aparece no app dele',()=>{
+    const r=lista.find(x=>x.id===id);if(!r)return;
+    if(antes.alunoId)r.alunoId=antes.alunoId;else delete r.alunoId;r.titulo=antes.titulo;
+    persist();renderAgenda();try{renderVincularList();}catch(x){}toast('↩︎ Desfeito');
+  });
 }
 /* Ferramenta: vincular nomes da agenda a alunos cadastrados */
 function gruposNaoVinculados(){
@@ -3790,9 +3867,10 @@ function abrirVincular(){renderVincularList();document.getElementById('ov-link')
    nome da agenda sem aluno, já com a quantidade. Só lê; não muda nada. */
 function pintarAgFerr(){
   const b=document.getElementById('agf-vincular');if(!b)return;
-  const n=gruposNaoVinculados().length;
-  b.hidden=!n;
-  b.textContent=n?('🔗 '+n+' nome'+(n===1?'':'s')+' da agenda sem aluno cadastrado · vincular'):'';
+  const n=gruposNaoVinculados().length,m=horariosParaVincular().length;
+  b.hidden=!(n||m);
+  b.textContent=n?('🔗 '+n+' nome'+(n===1?'':'s')+' da agenda sem aluno cadastrado'+(m?' · '+m+' horário'+(m===1?'':'s')+' que o aluno não vê':'')+' · vincular')
+    :(m?('🔗 '+m+' horário'+(m===1?'':'s')+' que o aluno não vê no app · vincular'):'');
 }
 /* Texto e imagem dos horários livres num botão só: aqui se escolhe o formato. */
 function abrirDivulgar(){
@@ -3801,16 +3879,24 @@ function abrirDivulgar(){
   if(el)el.textContent='Semana de '+f(d[0])+' a '+f(d[d.length-1])+', a que está aberta na agenda.';
   document.getElementById('ov-divulgar').classList.add('on');
 }
+function htmlHorariosQueNaoVe(){
+  const hs=horariosParaVincular();if(!hs.length)return '';
+  return '<p class="sec-eyebrow" style="margin:4px 0 6px">Horários que o aluno não vê no app</p>'
+    +'<p class="hint">Têm o nome do aluno, mas não estão ligados ao cadastro dele: no app ele vê "Reserva" de outra pessoa.</p>'
+    +hs.map(h=>'<div class="link-row vh-row"><div class="link-name">'+esc(h.a.nome)+' · '+esc(h.quando)+' <small>('+esc(h.motivo)+')</small></div>'
+      +'<button type="button" class="btn btn-clay vh-ligar" onclick="ligarHorarioAoAluno(\''+argJs(h.origem)+'\',\''+argJs(h.id)+'\',\''+argJs(h.a.id)+'\')">Ligar a '+esc(h.a.nome.split(' ')[0])+'</button></div>').join('');
+}
 function renderVincularList(){
   const grupos=gruposNaoVinculados();
   const el=document.getElementById('link-list');
-  if(!grupos.length){el.innerHTML='<div class="empty">✅ Tudo certo! Todos os nomes da agenda já estão vinculados a alunos cadastrados — as aulas aparecem em dourado para eles.</div>';return;}
+  const vh=htmlHorariosQueNaoVe();
+  if(!grupos.length){el.innerHTML=vh||'<div class="empty">✅ Tudo certo! Todos os nomes da agenda já estão vinculados a alunos cadastrados — as aulas aparecem em dourado para eles.</div>';return;}
   const opts=DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${a.id}">${esc(a.nome)}${a.tipo==='Personal'?' (Personal)':''}</option>`).join('');
   el.innerHTML='<p class="hint" style="margin-bottom:10px">Para cada nome da agenda que ainda não bate com um cadastro, escolha o aluno correto. Ao salvar, o horário fica vinculado e o nome é padronizado — aí aparece em dourado no app do aluno.</p>'+grupos.map(g=>`
     <div class="link-row">
       <div class="link-name">${esc(g.titulo)} <small>(${g.qtd} horário${g.qtd===1?'':'s'} na grade)</small></div>
       <select class="link-sel" data-titulo="${encodeURIComponent(g.titulo)}"><option value="">— escolher aluno cadastrado —</option>${opts}</select>
-    </div>`).join('');
+    </div>`).join('')+vh;
 }
 function salvarVinculos(){
   const sels=document.querySelectorAll('.link-sel');
@@ -4387,7 +4473,11 @@ function openSlot(hora){
   document.getElementById('slot-title').textContent=DIAS[slotCtx.date.getDay()]+' '+slotCtx.date.getDate()+'/'+(slotCtx.date.getMonth()+1)+' · '+hora;
   document.getElementById('s-titulo').value='';
   const sel=document.getElementById('s-aluno');
-  sel.innerHTML='<option value="">— sem vínculo —</option>'+DB.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=>`<option value="${a.id}">${esc(a.nome)} (${fmtCred(a.creditos)} créd.${(Number(a.locCred)||0)?' · '+fmtCred(a.locCred)+'h locação':''})</option>`).join('');
+  /* Ativos primeiro; inativos no fim, marcados: com dois cadastros do mesmo
+     nome, escolher o antigo fazia a aula sumir do app do aluno. */
+  const ordem=DB.alunos.slice().sort((a,b)=>(ativoNaAgenda(a)?0:1)-(ativoNaAgenda(b)?0:1)||a.nome.localeCompare(b.nome));
+  const repetido=n=>DB.alunos.filter(x=>normNome(x.nome)===normNome(n)).length>1;
+  sel.innerHTML='<option value="">— sem vínculo —</option>'+ordem.map(a=>`<option value="${esc(a.id)}">${esc(a.nome)}${ativoNaAgenda(a)?'':' · inativo'}${repetido(a.nome)?' · cód. '+esc(a.codigo||'—'):''} (${fmtCred(a.creditos)} créd.${(Number(a.locCred)||0)?' · '+fmtCred(a.locCred)+'h locação':''})</option>`).join('');
   sel.value='';
   renderSlotEvs();
   pintarSelProf('');
@@ -4528,7 +4618,20 @@ function saveSlot(){
   const t=document.getElementById('s-titulo').value.trim();
   if(!t){toast('Informe o nome/descrição');return;}
   const tipo=document.getElementById('s-tipo').value;
-  const alunoId=document.getElementById('s-aluno').value||null;
+  let alunoId=document.getElementById('s-aluno').value||null;
+  /* Nome digitado sem escolher o aluno: se parece um aluno ativo só, pergunta
+     se liga (sem vínculo, o app dele mostra "Reserva" de outra pessoa). E
+     cadastro inativo escolhido com um ativo de mesmo nome: pergunta também. */
+  if(TIPOS_DO_ALUNO.includes(tipo)){
+    if(!alunoId){
+      const cands=DB.alunos.filter(a=>ativoNaAgenda(a)&&nomeBateCom(t,a));
+      if(cands.length===1&&String(codigoDaEntrada({titulo:t})||'')!==String(cands[0].codigo||'')
+        &&confirm('"'+t+'" parece ser '+cands[0].nome+'.\n\nLigar este horário ao cadastro dele? Assim aparece como aula dele no app do aluno.\n\nOK = ligar · Cancelar = deixar sem vínculo'))alunoId=cands[0].id;
+    }else{
+      const esc0=DB.alunos.find(a=>a.id===alunoId),ativo=esc0&&!ativoNaAgenda(esc0)&&DB.alunos.find(a=>a.id!==alunoId&&ativoNaAgenda(a)&&normNome(a.nome)===normNome(esc0.nome));
+      if(ativo&&confirm(esc0.nome+' escolhido é um cadastro INATIVO, e existe um cadastro ativo com o mesmo nome.\n\nUsar o cadastro ativo? (OK = usar o ativo · Cancelar = manter o inativo)'))alunoId=ativo.id;
+    }
+  }
   const pessoas=(tipo==='grupo')?(Number((document.getElementById('s-grupo-n')||{}).value)||2):null;
   const anterior=slotCtx.editing?(slotCtx.editing.origem==='fixo'?DB.agenda.fixos:DB.agenda.eventos).find(e=>e.id===slotCtx.editing.id):null;
   const mudouTipo=!anterior||anterior.tipo!==tipo||tipo==='grupo'&&(Number(anterior.pessoas)||2)!==pessoas;
@@ -10692,6 +10795,11 @@ function achadosDoAluno(a){
              +'Se ele saiu mesmo, encerre esses horários na agenda.'});
       }
     }
+    // horários com o nome dele que o app dele não mostra como dele
+    const nv=horariosQueOAlunoNaoVe(a);
+    if(nv.length)achados.push({tipo:'aviso',a,
+      txt:nv.length+' horário(s) com o nome de '+a.nome+' não aparecem como aula dele no app ('+nv.slice(0,4).map(h=>h.quando+': '+h.motivo).join('; ')+(nv.length>4?'…':'')+'). '
+        +'No app ele vê "Reserva". Para ligar: Agenda → botão 🔗 vincular.'});
     // mensalidade contra o plano
     const p=Number(a.plano)||0, pg=Number(a.planoGrupo)||0;
     if(!temFamilia(a)&&(p>0||pg>0)){

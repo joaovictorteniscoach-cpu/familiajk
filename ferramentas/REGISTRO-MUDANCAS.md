@@ -8,6 +8,68 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-20 · Claude Code: horário que o app do aluno não vê
+
+Caso do João: duas horas seguidas do mesmo aluno na Gestão (ter 08h e 09h,
+sex 10h e 11h). No app dele, só uma hora de cada dia aparecia como "Sua
+aula"; a outra aparecia como "Reserva". Versão **2026-10-20-6** (mesmo PR
+#249).
+
+**Causa.** O app do aluno marca "Sua aula" pelo código publicado em cada
+horário. O código vem do aluno ligado ("Vincular aluno") ou, sem vínculo, do
+título igual ao nome do cadastro. Uma hora sem vínculo com nome diferente,
+ou ligada a outro cadastro (antigo, inativo, de mesmo nome), publica outro
+código. Além disso, `acharAlunoPorTitulo` pegava o primeiro cadastro da
+lista, mesmo inativo.
+
+O que mudou:
+- **`acharAlunoPorTitulo`:** prefere o cadastro ativo.
+- **`codigoDaEntrada`:** a publicação e a conferência usam a mesma conta.
+- **Conferência (só lista):**
+  - `horariosQueOAlunoNaoVe` / `nomeBateCom` encontram, para cada aluno
+    ativo, os horários dos próximos 60 dias e os fixos com o nome dele que
+    publicam outro código, com o motivo;
+  - entra nos achados de Conferir números.
+- **Agenda → 🔗 vincular:**
+  - o botão também conta esses horários;
+  - a janela lista cada um com "Ligar a…" (`ligarHorarioAoAluno`), que
+    pergunta antes, liga ao cadastro certo e tem desfazer;
+  - nada é corrigido sozinho.
+- **Prevenção:**
+  - na lista "Vincular aluno", ativos primeiro e inativos no fim, marcados
+    "· inativo"; nomes repetidos mostram o código;
+  - ao salvar um horário com nome digitado que bate com um único aluno
+    ativo, o app pergunta se liga;
+  - ao escolher um cadastro inativo quando há um ativo de mesmo nome, o app
+    pergunta se usa o ativo.
+- **Teste novo:** `testar-vinculo-agenda-browser.cjs` (7 verificações), no
+  validar-pr.
+
+---
+
+## 2026-10-20 · Claude Code: topo das outras páginas mais leve
+
+Foto do João (Alunos, iPhone): o mês tinha três caixas uma dentro da outra
+(moldura, chip e os botões ‹ ›) e "✓ Nuvem" era uma faixa escura esticada
+até a borda. Versão **2026-10-20-5**.
+- Bloco "Topo das outras páginas, mais leve" no fim do `estilo.css`:
+  - mês numa pílula só, com setas soltas (sem fundo, sem borda, sem desfoque);
+  - nuvem em etiqueta do tamanho do texto, encostada à direita;
+  - botões de cima mais discretos;
+  - seletor com `body:not(#jv)` para vencer a regra do Saibro.
+- `setSave`: os avisos longos viram etiqueta curta no topo; o texto inteiro
+  fica no `title`/aria, e o toque continua explicando:
+  - "abriu sem falar com a nuvem" → "⚠ Conferir nuvem ⓘ";
+  - "confira os dados" → "⚠ Conferir dados ⓘ";
+  - "outra sessão" → "⚠ Outra sessão ⓘ";
+  - "aguardando confirmação" → "↻ Nuvem";
+  - "versão conferida" → "✓ Nuvem".
+- `testar-vidro-aero-browser.cjs` ganhou a conferência do topo leve
+  (etiquetas curtas, etiqueta < 50% da largura, setas sem caixa). Leitura
+  OK em 102 telas e janelas.
+
+---
+
 ## 2026-10-20 · Claude Code: vidro Aero (referência Windows Vista/7)
 
 O João confirmou a referência: o vidro translúcido do Aero. Versão
