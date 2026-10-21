@@ -11,7 +11,7 @@
 'use strict';
 const w=window;
 function porId(id){return document.getElementById(id);}
-const st={aberto:false,rec:null,ouvir:true,pend:null};
+const st={aberto:false,rec:null,ouvir:true,pend:null,ligando:false,fimRec:0};
 /* PUB, EU e MEU são "let" no script principal: outro <script> enxerga pelo
    nome, mas não como window.PUB. */
 const pub=()=>{try{return typeof PUB!=='undefined'?PUB:null;}catch(e){return null;}};
@@ -86,7 +86,7 @@ function intencao(t){
  if(/\b(credito|creditos|saldo)\b/.test(t))return 'creditos';
  if(/\b(lista de espera|na espera)\b/.test(t))return 'espera';
  if(/\b(torneio|barragem|ranking|classificacao|pontuacao)\b/.test(t))return 'torneio';
- if(/\b(abre|fecha|aberto|aberta|expediente|funcionamento)\b|(?<!como )\bfunciona\b/.test(t))return 'funcionamento';
+ if(/\b(abre|fecha|aberto|aberta|expediente|funcionamento)\b/.test(t)||(/\bfunciona\b/.test(t)&&!/\bcomo funciona\b/.test(t)))return 'funcionamento';
  if(/\b(aviso|avisos|recado|novidade|novidades)\b/.test(t))return 'aviso';
  if(/\b(nivel|evolucao|avaliacao|foco|prioridade)\b/.test(t))return 'nivel';
  if(/\b(whats\w*|zap|telefone|contato|falar com o joao|falar com o professor)\b/.test(t))return 'contato';
@@ -367,42 +367,120 @@ function executar(frase){
 /* ---- fala ---- */
 /* Voz masculina em português, para soar parecida com a do João. O app usa as
    vozes que o próprio celular tem (não grava nem copia a voz de ninguém):
-   procura uma masculina pelo nome; sem nenhuma, deixa a voz padrão mais grave. */
-const VOZES_MASC=['antonio','felipe','daniel','fabio','humberto','donato','julio','valerio','nicolau','thiago','reed','eddy'];
-const VOZES_FEM=/luciana|francisca|fernanda|maria|heloisa|leticia|yara|camila|vitoria|thalita|brenda|elza|manuela|giovanna|leila|joana|catarina|female|feminin/;
+   procura uma masculina pelo nome (iPhone: Eddy, Reed, Rocko; Windows/Edge:
+   Antonio, Daniel; Android: as variantes "ptd"); sem nenhuma, a padrão mais grave.
+   A lista de vozes chega depois no iPhone e no Chrome: fica guardada quando chega. */
+const VOZES_MASC=['antonio','daniel','felipe','fabio','humberto','donato','julio','valerio','nicolau','thiago','eddy','reed','rocko','grandpa','ptd','male','masculin'];
+const VOZES_FEM=/luciana|francisca|fernanda|maria|heloisa|leticia|yara|camila|vitoria|thalita|brenda|elza|manuela|giovanna|leila|joana|catarina|flo\b|grandma|sandy|shelley|female|feminin|afs/;
+let vozGuardada=null;
 function escolherVoz(){
  let vs=[];try{vs=w.speechSynthesis.getVoices()||[];}catch(e){}
  const pt=vs.filter(v=>/^pt/i.test(v.lang||'')),br=pt.filter(v=>/br/i.test(v.lang||''));
- const nome=v=>norm(v.name);
- for(const lista of [br,pt])for(const m of VOZES_MASC){const v=lista.find(x=>nome(x).includes(m));if(v)return {voz:v,grave:false};}
+ const nome=v=>norm(v.name)+' '+norm(v.voiceURI||'');
+ for(const lista of [br,pt])for(const m of VOZES_MASC){const v=lista.find(x=>nome(x).includes(m)&&!VOZES_FEM.test(nome(x)));if(v)return {voz:v,grave:false};}
  const neutra=br.find(v=>!VOZES_FEM.test(nome(v))&&!/google/.test(nome(v)))||null;
  return {voz:neutra||br[0]||pt[0]||null,grave:!neutra};
 }
+function vozDaResposta(){if(!vozGuardada||!vozGuardada.voz)vozGuardada=escolherVoz();return vozGuardada;}
+/* O iPhone trava se a fala e o microfone disputam o som ao mesmo tempo:
+   não fala enquanto o microfone está ligado, espera o microfone soltar antes
+   de responder e espera a fala parar antes de ligar o microfone. */
+let filaFala=null;
+function falando(){try{return !!(w.speechSynthesis&&(w.speechSynthesis.speaking||w.speechSynthesis.pending));}catch(e){return false;}}
+function calarFala(){clearTimeout(filaFala);filaFala=null;try{if(w.speechSynthesis&&falando())w.speechSynthesis.cancel();}catch(e){}}
 function falarResposta(texto){
  if(!st.ouvir||!st.aberto||!w.speechSynthesis||!w.SpeechSynthesisUtterance)return;
- try{
-  w.speechSynthesis.cancel();
-  const fala=texto.replace(/R\$\s?([\d.]+)(?:,(\d{2}))?/g,(m,a,b)=>a+' reais'+(b&&b!=='00'?' e '+b+' centavos':'')).replace(/(\d{2}):00/g,'$1 horas').replace(/\b(\d{2})\/(\d{2})\b/g,'$1 do $2');
-  const u=new w.SpeechSynthesisUtterance(fala);
-  const e=escolherVoz();u.lang='pt-BR';try{if(e.voz)u.voice=e.voz;}catch(x){}
-  u.pitch=e.grave?0.75:0.95;u.rate=1;
-  w.speechSynthesis.speak(u);
- }catch(e){}
+ const fala=texto.replace(/R\$\s?([\d.]+)(?:,(\d{2}))?/g,(m,a,b)=>a+' reais'+(b&&b!=='00'?' e '+b+' centavos':'')).replace(/(\d{2}):00/g,'$1 horas').replace(/\b(\d{2})\/(\d{2})\b/g,'$1 do $2');
+ const dizer=()=>{
+  filaFala=null;if(!st.aberto||!st.ouvir||st.rec)return;
+  try{
+   const u=new w.SpeechSynthesisUtterance(fala);
+   const e=vozDaResposta();u.lang='pt-BR';try{if(e.voz)u.voice=e.voz;}catch(x){}
+   u.pitch=e.grave?0.7:0.95;u.rate=1;
+   w.speechSynthesis.speak(u);
+  }catch(e){}
+ };
+ const jaFalava=falando();calarFala();
+ const espera=Math.max(jaFalava?250:0,(st.fimRec||0)+600-Date.now());   // microfone acabou de soltar o som
+ if(espera>0)filaFala=setTimeout(dizer,espera);else dizer();
 }
 function status(t){const s=porId('va-status');if(s)s.textContent=t;}
+/* Escuta com saída garantida: para sozinha 2,5 s depois da última palavra,
+   no máximo em 12 s, e se o celular não avisar que parou, o app solta o
+   microfone por conta própria (antes o botão podia ficar preso em "Ouvindo"). */
+/* iPhone fora do modo app (aberto no navegador, ou pelo ícone antigo do
+   Netlify, que agora leva ao endereço oficial): o reconhecimento de fala do
+   próprio app trava ali. Nesses casos, e se ele já falhou neste aparelho, o
+   botão usa o microfone do teclado, que funciona sempre. */
+function ehIOS(){const u=navigator.userAgent||'';return /iPad|iPhone|iPod/.test(u)||(/Macintosh/.test(u)&&navigator.maxTouchPoints>1);}
+function comoApp(){try{return navigator.standalone===true||w.matchMedia('(display-mode: standalone)').matches;}catch(e){return false;}}
+const CHAVE_FALHOU='jv-va-rec-falhou';
+function reconhecimento(){
+ const C=w.SpeechRecognition||w.webkitSpeechRecognition;if(!C)return null;
+ if(ehIOS()&&!comoApp())return null;
+ try{if(localStorage.getItem(CHAVE_FALHOU)==='1')return null;}catch(e){}
+ return C;
+}
+function ditarPeloTeclado(msg){
+ status(msg||'Toque no microfone do teclado 🎤, fale e depois toque em Enviar.');
+ const t=porId('va-texto');try{t.focus();}catch(e){}
+}
 function ouvir(){
- const C=w.SpeechRecognition||w.webkitSpeechRecognition;
- if(!C){status('Use o microfone do teclado para ditar, ou escreva.');porId('va-texto').focus();return;}
- if(st.rec){try{st.rec.stop();}catch(e){}return;}
- try{w.speechSynthesis&&w.speechSynthesis.cancel();}catch(e){}
- const r=new C();st.rec=r;r.lang='pt-BR';r.interimResults=true;r.continuous=false;let final='';
- r.onresult=e=>{let parcial='';for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)final+=e.results[i][0].transcript;else parcial+=e.results[i][0].transcript;}porId('va-texto').value=(final+parcial).trim();};
- r.onerror=e=>{st.rec=null;marcarOuvindo();status(e.error==='not-allowed'||e.error==='service-not-allowed'?'Sem permissão para o microfone. Escreva ou use o ditado do teclado.':'Não consegui ouvir. Tente de novo ou escreva.');};
- r.onend=()=>{if(st.rec!==r)return;st.rec=null;marcarOuvindo();if(final.trim())enviar();else status('Não ouvi. Toque no microfone e fale de novo.');};
- try{r.start();status('Ouvindo…');}catch(e){st.rec=null;status('Não consegui ligar o microfone. Escreva.');}
+ const C=reconhecimento();
+ if(!C){ditarPeloTeclado();return;}
+ if(st.rec){pararEscuta(st.rec);return;}
+ if(st.ligando)return;
+ try{const t=porId('va-texto');if(document.activeElement===t)t.blur();}catch(e){}   // teclado fechado: sem disputa com o ditado
+ const jaFalava=falando();calarFala();
+ st.ligando=true;status('Preparando o microfone…');
+ setTimeout(()=>{st.ligando=false;if(st.aberto)ligarEscuta(C);},jaFalava?350:0);
+}
+function ligarEscuta(C){
+ let r;try{r=new C();}catch(e){status('Não consegui ligar o microfone. Escreva sua pergunta.');return;}
+ st.rec=r;r.lang='pt-BR';r.interimResults=true;r.continuous=false;
+ let final='',ultimo=-1,acabou=false,silencio=null,limite=null,socorro=null;
+ const terminar=(motivo)=>{
+  if(acabou)return;acabou=true;clearTimeout(silencio);clearTimeout(limite);clearTimeout(socorro);
+  if(st.rec===r)st.rec=null;st.fimRec=Date.now();marcarOuvindo();
+  if(!st.aberto)return;
+  if(motivo)status(motivo);
+  else if(final.trim()||(porId('va-texto').value||'').trim())enviar();
+  else status('Não ouvi. Toque no microfone e fale de novo, ou escreva.');
+ };
+ r._terminar=terminar;
+ const esperarSilencio=()=>{clearTimeout(silencio);silencio=setTimeout(()=>pararEscuta(r),2500);};
+ r.onresult=e=>{
+  if(acabou||st.rec!==r)return;
+  comecou=true;
+  let parcial='';
+  for(let i=e.resultIndex;i<e.results.length;i++){const t=e.results[i][0].transcript;if(e.results[i].isFinal){if(i>ultimo){final+=(final?' ':'')+t.trim();ultimo=i;}}else parcial+=t;}
+  porId('va-texto').value=(final+' '+parcial).trim().slice(0,300);
+  status('Ouvindo… toque no botão para parar.');esperarSilencio();
+ };
+ r.onerror=e=>{if(acabou)return;const nega=e&&(e.error==='not-allowed'||e.error==='service-not-allowed');
+  terminar(nega?'Sem permissão para o microfone. Escreva ou use o ditado do teclado.':(e&&e.error==='no-speech'?'Não ouvi. Toque no microfone e fale de novo, ou escreva.':'Não consegui ouvir. Tente de novo ou escreva.'));};
+ r.onend=()=>terminar('');
+ limite=setTimeout(()=>pararEscuta(r),12000);
+ // o microfone tem 3 s para dar sinal de vida; se não der, o app desiste e passa ao teclado
+ let comecou=false;r.onstart=r.onaudiostart=()=>{if(!comecou){comecou=true;esperarSilencio();}};
+ const vida=setTimeout(()=>{if(comecou||acabou)return;
+  try{localStorage.setItem(CHAVE_FALHOU,'1');}catch(e){}
+  try{r.abort();}catch(e){}
+  terminar('O microfone do app não respondeu neste celular. Use o microfone do teclado 🎤 e toque em Enviar.');
+  try{porId('va-texto').focus();}catch(e){}
+ },3000);
+ const terminar0=terminar;r._terminar=m=>{clearTimeout(vida);terminar0(m);};
+ try{r.start();status('Ouvindo… pode falar.');}
+ catch(e){terminar('Não consegui ligar o microfone. Escreva sua pergunta.');return;}
  marcarOuvindo();
 }
-function marcarOuvindo(){const b=porId('va-falar');if(b){b.classList.toggle('ouvindo',!!st.rec);b.setAttribute('aria-pressed',String(!!st.rec));b.querySelector('span').textContent=st.rec?'Ouvindo… toque para parar':'Toque e fale';}}
+function pararEscuta(r){
+ if(!r)return;
+ try{r.stop();}catch(e){}
+ // se o celular não confirmar que parou, solta o microfone mesmo assim
+ setTimeout(()=>{if(r._terminar&&st.rec===r){try{r.abort();}catch(e){}r._terminar('');}},1500);
+}
+function marcarOuvindo(){const b=porId('va-falar');if(b){b.classList.toggle('ouvindo',!!st.rec);b.setAttribute('aria-pressed',String(!!st.rec));b.querySelector('span').textContent=st.rec?'Ouvindo… toque para parar':(reconhecimento()?'Toque e fale':'Falar pelo teclado');}}
 function enviar(){
  const t=(porId('va-texto').value||'').trim();if(!t)return;
  porId('va-texto').value='';mostrarPergunta(t);status('');
@@ -411,30 +489,32 @@ function enviar(){
 
 /* ---- tela ---- */
 function abrir(){
- if(st.aberto)return;st.aberto=true;st.pend=null;
+ if(st.aberto)return;st.aberto=true;st.pend=null;vozGuardada=null;
  const p=porId('va-painel');p.hidden=false;document.body.classList.add('va-aberto');
- porId('va-conversa').replaceChildren();
+ porId('va-conversa').replaceChildren();porId('va-texto').value='';
  const nome=String((eu()&&eu().nome)||'').split(' ')[0];
  const h=new Date().getHours(),saud=h<12?'Bom dia':h<18?'Boa tarde':'Boa noite';
  responder(saud+(nome?', '+nome:'')+'! Como posso te ajudar? Caso tenha alguma dúvida, é só me perguntar.');
  porId('va-ouvir').checked=st.ouvir;atualizar();
- setTimeout(()=>{try{porId('va-texto').focus({preventScroll:true});}catch(e){}},50);
+ marcarOuvindo();
+ status(reconhecimento()?'Toque em “Toque e fale” ou escreva.':'Escreva, ou toque no campo e use o microfone do teclado 🎤.');
 }
 function fechar(){
  if(!st.aberto)return;st.aberto=false;
- if(st.rec){try{st.rec.abort();}catch(e){}st.rec=null;}
- try{w.speechSynthesis&&w.speechSynthesis.cancel();}catch(e){}
+ const r=st.rec;st.rec=null;st.ligando=false;if(r){try{r.abort();}catch(e){}if(r._terminar)r._terminar('');}
+ calarFala();
  porId('va-painel').hidden=true;document.body.classList.remove('va-aberto');marcarOuvindo();atualizar();
 }
 function atualizar(){
  const bt=porId('va-atalho');if(!bt)return;
- const app=porId('app'),logado=!!(app&&getComputedStyle(app).display!=='none'&&logadoNoApp());
+ const app=porId('app'),logado=!!(app&&app.style.display!=='none'&&getComputedStyle(app).display!=='none'&&logadoNoApp());
  const outra=document.querySelector('.overlay.on');
- bt.hidden=!logado||st.aberto||!!outra;
+ const esconder=!logado||st.aberto||!!outra;
+ if(bt.hidden!==esconder)bt.hidden=esconder;
  if(st.aberto&&!logado)fechar();
 }
 function iniciarVoz(){
- try{if(w.speechSynthesis){w.speechSynthesis.getVoices();w.speechSynthesis.addEventListener&&w.speechSynthesis.addEventListener('voiceschanged',()=>{});}}catch(e){}
+ try{if(w.speechSynthesis){w.speechSynthesis.getVoices();w.speechSynthesis.addEventListener&&w.speechSynthesis.addEventListener('voiceschanged',()=>{vozGuardada=null;});}}catch(e){}
  if(!porId('va-painel'))return;
  porId('va-atalho').onclick=abrir;porId('va-fechar').onclick=fechar;porId('va-falar').onclick=ouvir;porId('va-enviar').onclick=enviar;
  porId('va-texto').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();enviar();}});
@@ -442,7 +522,14 @@ function iniciarVoz(){
  porId('va-painel').addEventListener('click',e=>{if(e.target===porId('va-painel'))fechar();});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&st.aberto)fechar();});
  document.querySelectorAll('.va-ex').forEach(b=>b.addEventListener('click',()=>{porId('va-texto').value=b.textContent.replace(/[“”"]/g,'');enviar();}));
- let ag=false;new MutationObserver(()=>{if(ag)return;ag=true;requestAnimationFrame(()=>{ag=false;atualizar();});}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['class','style']});
+ /* Só olha o que decide o botão: entrar/sair (#app, #login) e as janelas
+   (.overlay). Antes olhava a página inteira a cada mudança de estilo. */
+ let ag=false;const ver=()=>{if(ag)return;ag=true;requestAnimationFrame(()=>{ag=false;atualizar();});};
+ const mo=new MutationObserver(ver);
+ ['app','login'].forEach(id=>{const el=porId(id);if(el)mo.observe(el,{attributes:true,attributeFilter:['style','class']});});
+ document.querySelectorAll('.overlay').forEach(el=>mo.observe(el,{attributes:true,attributeFilter:['class']}));
+ new MutationObserver(ms=>{if(ms.some(m=>[...m.addedNodes].some(n=>n.nodeType===1&&n.classList&&n.classList.contains('overlay'))))document.querySelectorAll('.overlay').forEach(el=>mo.observe(el,{attributes:true,attributeFilter:['class']}));ver();}).observe(document.body,{childList:true});
+ document.addEventListener('click',ver,true);
  atualizar();
 }
 w.JVVozAluno={abrir,fechar,interpretar,executar,enviar,escolherVoz};

@@ -1666,13 +1666,13 @@ html body:not(#jv) #pedir-box .btn-ghost{background:#F3EDE2!important;border:1px
 .login .login-sub{opacity:1}
 .login-priv{color:rgba(250,247,242,.8)}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-20-10">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-20-11">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-20-10">
-<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-20-10">
-<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-10-20-10">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-20-11">
+<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-20-11">
+<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-10-20-11">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -1769,6 +1769,24 @@ function esperarAuth(){
 <div id="barra-versao" style="display:none;position:sticky;top:0;z-index:280;background:#8A2C18;color:#fff;padding:9px 13px;font-size:12.5px;line-height:1.35">
   ⚠️ Este endereço está desatualizado.
   <a id="bv-link" href="#" style="color:#FFD9A0;font-weight:800;text-decoration:underline;word-break:break-all"></a>
+</div>
+
+<!-- iPhone abrindo pelo navegador (ou pelo ícone antigo do Netlify, que leva
+     ao endereço oficial e por isso abre com barras de navegador): mostra como
+     instalar de novo como aplicativo. Escondido fora disso. -->
+<div id="barra-app" hidden style="position:sticky;top:0;z-index:270;background:#FAF7F2;color:#2A2016;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 11px;font:500 13px/1.45 system-ui,-apple-system,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.35)">
+  <b style="display:block;font-size:14px;margin-bottom:2px;color:#2A2016">📲 Abra como aplicativo</b>
+  <span id="ba-txt">Aberto pelo navegador, o app fica com estas barras e o microfone não funciona.</span>
+  <ol id="ba-passos" hidden style="margin:6px 0 0;padding-left:20px;color:#2A2016">
+    <li>Se aparecer a bússola embaixo, toque nela para abrir no Safari.</li>
+    <li>No Safari, toque em <b>Compartilhar</b> (quadrado com seta para cima).</li>
+    <li>Escolha <b>Adicionar à Tela de Início</b> e confirme.</li>
+    <li>Apague o ícone antigo do app e use só o novo.</li>
+  </ol>
+  <div style="display:flex;gap:8px;margin-top:8px">
+    <button type="button" id="ba-ver" style="flex:1;min-height:40px;border:0;border-radius:10px;background:#C9472B;color:#fff;font-weight:800;font-size:13px">Como fazer</button>
+    <button type="button" id="ba-fechar" style="min-height:40px;padding:0 14px;border:1px solid #CDBFA8;border-radius:10px;background:transparent;color:#5A4C38;font-weight:700;font-size:13px">Agora não</button>
+  </div>
 </div>
 
 <!-- LOGIN -->
@@ -2165,7 +2183,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-10-20-10"></script>
+<script src="lib/icones.js?v=2026-10-20-11"></script>
 </div>
 
 <!-- ASSISTENTE POR VOZ: consultar horário livre, agendar, cancelar, ver aulas (lib/voz-aluno.js) -->
@@ -2412,7 +2430,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-10-20-10';
+const VERSAO='2026-10-20-11';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -4930,6 +4948,24 @@ function addToCalendar(dk,hora,tipo){
   document.body.appendChild(a);a.click();document.body.removeChild(a);
   toast('🔔 Abrindo sua agenda — confirme para receber o lembrete com alarme.');
 }
+/* ===== Abrir como aplicativo (iPhone) =====
+   No iPhone, fora do modo app, aparece a faixa "Abra como aplicativo" com o
+   passo a passo. "Agora não" esconde por 3 dias. Não muda nada em dados. */
+function iosForaDoApp(){
+  const u=navigator.userAgent||'';
+  const ios=/iPad|iPhone|iPod/.test(u)||(/Macintosh/.test(u)&&navigator.maxTouchPoints>1);
+  let app=false;try{app=window.navigator.standalone===true||window.matchMedia('(display-mode: standalone)').matches;}catch(e){}
+  return ios&&!app;
+}
+function avisoModoApp(){
+  const b=document.getElementById('barra-app');if(!b)return;
+  let adiado=0;try{adiado=Number(localStorage.getItem('jv-aviso-app-adiado'))||0;}catch(e){}
+  b.hidden=!iosForaDoApp()||Date.now()-adiado<3*864e5;
+  document.getElementById('ba-ver').onclick=()=>{const o=document.getElementById('ba-passos');o.hidden=!o.hidden;};
+  document.getElementById('ba-fechar').onclick=()=>{try{localStorage.setItem('jv-aviso-app-adiado',String(Date.now()));}catch(e){}b.hidden=true;};
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',avisoModoApp,{once:true});else avisoModoApp();
+
 /* ===== AVISOS (notificações do sistema) =====
    iPhone não suporta "new Notification": em PWA instalada só funciona
    registration.showNotification(). Por isso mostramos pelo service worker
@@ -5657,7 +5693,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-20-10').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-20-11').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
@@ -5666,6 +5702,6 @@ window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);})
   setTimeout(()=>esperarEIniciar(t+1),150);
 })(0);
 </script>
-<script src="lib/voz-aluno.js?v=2026-10-20-10"></script>
+<script src="lib/voz-aluno.js?v=2026-10-20-11"></script>
 </body>
 </html>
