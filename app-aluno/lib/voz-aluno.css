@@ -36,3 +36,5 @@ html body:not(#jv) #va-painel .va-nota{margin:4px 0 0;font:500 12px/1.45 'DM San
 #va-painel :focus-visible,#va-atalho:focus-visible{outline:3px solid #F4C25D!important;outline-offset:3px}
 @keyframes va-pulso{50%{box-shadow:0 0 0 5px #D4E15740}}
 @media(prefers-reduced-motion:reduce){#va-painel *,#va-atalho{animation:none!important;transition:none!important}}
+/* Arrastando o botão de voz: aparece inteiro e um pouco maior. */
+html body:not(#jv) #va-atalho.arrastando{opacity:1!important;transform:scale(1.08);cursor:grabbing;transition:none}

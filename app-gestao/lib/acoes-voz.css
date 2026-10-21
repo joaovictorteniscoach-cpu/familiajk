@@ -81,3 +81,5 @@ html body:not(#jv) #voz-painel #voz-status:empty{min-height:0;margin:4px 0}
 #voz-painel .jv-voz-cobrar span{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;font-weight:600}
 html body:not(#jv) #voz-painel #voz-previa .jv-voz-cobrar button{flex:0 0 auto;min-height:44px;min-width:96px;padding:8px 14px;border:0;border-radius:12px;background:#1F5A3F;color:#FFF;-webkit-text-fill-color:#FFF;font:700 14px/1.2 'DM Sans',sans-serif}
 html body:not(#jv) #voz-painel #voz-previa .jv-voz-cobrar button:disabled{background:#C9D0C2;color:#3F4B43;-webkit-text-fill-color:#3F4B43}
+/* Arrastando o botão de voz: aparece inteiro e um pouco maior. */
+html body:not(#jv) #voz-atalho.arrastando{opacity:1!important;transform:scale(1.08);cursor:grabbing;transition:none}
