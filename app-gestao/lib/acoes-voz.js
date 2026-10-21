@@ -1001,11 +1001,43 @@ function atualizarVisibilidade(){
  $('voz-atalho').hidden=!permitido||st.aberto||!['dash','agenda','alunos'].includes(pagina)||!!outras;
  $('voz-menu').hidden=!permitido;
 }
+/* Botão de voz arrastável (21/10, pedido do João): tocar abre; arrastar com
+   o dedo (mais de 8 px) leva o botão para outro lugar, para tirar da frente
+   de algum botão que está atrás. A posição fica guardada no aparelho e
+   nunca sai da tela (vale também ao girar o celular). */
+function arrastavel(bt,chave){
+ let ini=null,arrastando=false,soltouArrastando=false;
+ const limitar=(x,y)=>{const m=8,w=bt.offsetWidth||54,h=bt.offsetHeight||54,topo=48;   // abaixo da barra de status do celular
+  return [Math.min(Math.max(m,x),innerWidth-w-m),Math.min(Math.max(topo,y),innerHeight-h-m)];};
+ const colocar=(x,y)=>{[x,y]=limitar(x,y);bt.style.left=x+'px';bt.style.top=y+'px';bt.style.right='auto';bt.style.bottom='auto';return [x,y];};
+ const lida=()=>{try{const p=JSON.parse(localStorage.getItem(chave)||'null');return p&&isFinite(p.x)&&isFinite(p.y)?p:null;}catch(e){return null;}};
+ const aplicar=()=>{const p=lida();if(p&&bt.offsetWidth)colocar(p.x*innerWidth,p.y*innerHeight);};
+ bt.style.touchAction='none';
+ bt.addEventListener('pointerdown',e=>{if(e.button>0)return;const r=bt.getBoundingClientRect();ini={x:e.clientX,y:e.clientY,dx:e.clientX-r.left,dy:e.clientY-r.top,id:e.pointerId};arrastando=false;try{bt.setPointerCapture(e.pointerId);}catch(x){}});
+ bt.addEventListener('pointermove',e=>{
+  if(!ini||e.pointerId!==ini.id)return;
+  if(!arrastando&&Math.hypot(e.clientX-ini.x,e.clientY-ini.y)<8)return;
+  if(!arrastando){arrastando=true;bt.classList.add('arrastando');}
+  e.preventDefault();colocar(e.clientX-ini.dx,e.clientY-ini.dy);
+ });
+ const soltar=e=>{
+  if(!ini||(e&&e.pointerId!==ini.id))return;
+  if(arrastando){const r=bt.getBoundingClientRect();try{localStorage.setItem(chave,JSON.stringify({x:r.left/innerWidth,y:r.top/innerHeight}));}catch(x){}soltouArrastando=true;setTimeout(()=>{soltouArrastando=false;},350);}
+  bt.classList.remove('arrastando');ini=null;arrastando=false;
+ };
+ bt.addEventListener('pointerup',soltar);bt.addEventListener('pointercancel',soltar);
+ // o toque que termina um arraste não abre o assistente
+ bt.addEventListener('click',e=>{if(soltouArrastando){soltouArrastando=false;e.stopImmediatePropagation();e.preventDefault();}},true);
+ addEventListener('resize',aplicar);
+ new MutationObserver(()=>{if(!bt.hidden)aplicar();}).observe(bt,{attributes:true,attributeFilter:['hidden']});
+ aplicar();
+ return {acabouDeArrastar:()=>soltouArrastando};
+}
 function init(){
  if(!$('voz-painel'))return;
  $('voz-hora').replaceChildren();const op=document.createElement('option');op.value='';op.textContent='Escolha o horário';$('voz-hora').append(op);
  HORAS.forEach(h=>{const o=document.createElement('option');o.value=h;o.textContent=h;$('voz-hora').append(o);});
- $('voz-atalho').onclick=()=>abrir(true);$('voz-menu').onclick=()=>abrir();$('voz-circulo').onclick=()=>{if(st.rec)parar();else if(st.resposta)pararResposta();else falar();};$('voz-repetir').onclick=repetir;$('voz-ouvir').addEventListener('change',()=>{if(!$('voz-ouvir').checked)pararResposta();});$('voz-fechar').onclick=()=>fechar(false);$('voz-falar').onclick=falar;$('voz-parar').onclick=parar;
+ const arr=arrastavel($('voz-atalho'),'jv-voz-posicao');$('voz-atalho').onclick=()=>{if(!arr.acabouDeArrastar())abrir(true);};$('voz-menu').onclick=()=>abrir();$('voz-circulo').onclick=()=>{if(st.rec)parar();else if(st.resposta)pararResposta();else falar();};$('voz-repetir').onclick=repetir;$('voz-ouvir').addEventListener('change',()=>{if(!$('voz-ouvir').checked)pararResposta();});$('voz-fechar').onclick=()=>fechar(false);$('voz-falar').onclick=falar;$('voz-parar').onclick=parar;
  $('voz-analisar').onclick=analisar;$('voz-conferir').onclick=preparar;$('voz-confirmar').onclick=executar;$('voz-salvar').onclick=salvar;
  $('voz-seguranca').onclick=()=>{fechar(false);go('seg',document.createElement('button'));};
  $('voz-texto').addEventListener('input',()=>{pararResposta();invalidar();});

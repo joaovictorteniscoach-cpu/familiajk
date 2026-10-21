@@ -8,6 +8,27 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-21 · Claude Code: botão de voz arrastável (Gestão e aluno)
+
+Pedido do João: poder tirar o botão do microfone da frente de algum botão que
+está atrás. Versão **2026-10-21-1**. (A versão 11, do microfone e do "Abra
+como aplicativo", foi publicada no #255.)
+
+- **`arrastavel(bt,chave)`**, a mesma função em `app-gestao/lib/acoes-voz.js`
+  e em `app-aluno/lib/voz-aluno.js`:
+  - tocar abre o assistente, como antes;
+  - arrastar (mais de 8 px) leva o botão para outro lugar e não abre nada;
+  - a posição fica guardada no aparelho, em fração da tela (`jv-voz-posicao`
+    na Gestão, `jv-va-posicao` no aluno);
+  - o botão fica sempre dentro da tela, 48 px abaixo do topo por causa da
+    barra de status, inclusive ao girar o celular.
+- **Visual:** enquanto arrasta, a classe `.arrastando` deixa o botão inteiro
+  (sem transparência) e um pouco maior.
+- **Teste novo:** `ferramentas/testar-voz-arrastar-browser.cjs` (8
+  verificações, 4 em cada app). Ele achou um defeito: sem
+  `setPointerCapture` no primeiro toque, o botão parava de acompanhar o
+  dedo. Corrigido.
+
 ## 2026-10-20 · Claude Code: microfone do assistente do aluno travava
 
 **Atualização com a foto do João (mesmo PR, versão 11).** Na foto, o app do

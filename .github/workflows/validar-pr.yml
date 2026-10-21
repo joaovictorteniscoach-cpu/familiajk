@@ -80,6 +80,7 @@ jobs:
           node ferramentas/testar-semana-livre-browser.cjs
           node ferramentas/testar-voz-perguntas-browser.cjs
           node ferramentas/testar-voz-microfone-browser.cjs
+          node ferramentas/testar-voz-arrastar-browser.cjs
           node ferramentas/testar-locacao-minhas-aulas-browser.cjs
           node ferramentas/testar-torneio-aluno-browser.cjs
           node ferramentas/testar-torneio-gestao-browser.cjs
