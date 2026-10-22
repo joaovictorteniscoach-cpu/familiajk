@@ -66,6 +66,8 @@ async function visual(p,n){if(!process.env.JV_VISUAL_DIR)return;const png=await 
      renderAll();go('dash',document.querySelector('.nav button'));
     });await p.waitForFunction(()=>!document.getElementById('voz-atalho').hidden);
    }
+   // 22/10: tocar no microfone fala o cumprimento; a escuta liga quando a fala termina
+   async function terminarCumprimento(){await p.evaluate(()=>{const u=window.__utterances[window.__utterances.length-1];u&&u.onend&&u.onend();});await p.waitForFunction(()=>document.getElementById('voz-painel').dataset.ouvindo==='true');}
    async function abrir(){await p.evaluate(()=>JVAcoesVoz.abrir());assert.equal(await p.locator('#voz-painel').isVisible(),true);}
    async function pedido(texto){await abrir();await p.locator('#voz-texto').fill(texto);await p.evaluate(()=>JVAcoesVoz.analisar());}
    const antes=()=>p.evaluate(()=>JSON.stringify(DB));
@@ -91,7 +93,12 @@ async function visual(p,n){if(!process.env.JV_VISUAL_DIR)return;const png=await 
     }
     await p.setViewportSize({width:390,height:844});await p.evaluate(()=>go('dash',document.createElement('button')));
     await visual(p,'voz-real-botao-'+motor+'-'+theme);await p.locator('#voz-atalho').click();
-    assert.equal(await p.locator('#voz-painel').getAttribute('data-ouvindo'),'true');assert.equal(await antes(),antesAbrir);
+    // 22/10: primeiro o cumprimento falado; a escuta só liga quando a fala termina
+    assert.equal(await p.locator('#voz-painel').getAttribute('data-ouvindo'),'false','não ouve enquanto fala');
+    assert.equal(await p.evaluate(()=>window.__faladas[window.__faladas.length-1]),'Olá, Coach João! Em que posso te ajudar?');
+    await p.evaluate(()=>{const u=window.__utterances[window.__utterances.length-1];u.onend&&u.onend();});
+    await p.waitForFunction(()=>document.getElementById('voz-painel').dataset.ouvindo==='true');
+    assert.equal(await antes(),antesAbrir);
     await p.locator('#voz-circulo').click();assert.equal(await p.locator('#voz-painel').getAttribute('data-ouvindo'),'false');
     await visual(p,'voz-real-painel-'+motor+'-'+theme);
     await p.evaluate(()=>JVAcoesVoz.fechar(true));await p.evaluate(()=>abrirMais());await p.waitForFunction(()=>document.getElementById('voz-atalho').hidden);assert.ok(await p.locator('#voz-atalho').isHidden());await p.locator('#voz-menu').click();assert.ok(await p.locator('#voz-painel').isVisible());
@@ -110,7 +117,7 @@ async function visual(p,n){if(!process.env.JV_VISUAL_DIR)return;const png=await 
     assert.equal(await p.locator('#voz-texto').inputValue(),'Cancelar Ana Silva amanhã às quatro da tarde');assert.equal(await antes(),a);
    });
    await check(label+'fala completa confere automaticamente, ondas só ao ouvir/falar, confirmação sempre explícita',async()=>{
-    await reset();const a=await antes();await p.locator('#voz-atalho').click();
+    await reset();const a=await antes();await p.locator('#voz-atalho').click();await terminarCumprimento();
     assert.equal(await p.locator('#voz-painel').getAttribute('data-ouvindo'),'true');
     assert.notEqual(await p.locator('#voz-circulo .jv-voz-ondas i').first().evaluate(e=>getComputedStyle(e).animationName),'none');
     await p.evaluate(()=>{__recs[0].emit('Agendar Bruno Teste amanhã às 18h',true);__recs[0].onend();});
@@ -209,7 +216,7 @@ async function visual(p,n){if(!process.env.JV_VISUAL_DIR)return;const png=await 
     assert.equal(await p.locator('#voz-consulta img').count(),0);assert.equal(await p.evaluate(()=>window.__inj||0),0);
    });
    await check(label+'uma fala completa responde consulta com um toque; replay, silêncio e próxima ação preservam dados e confirmação',async()=>{
-    await consultaBase();const a=await antes();await p.locator('#voz-atalho').click();
+    await consultaBase();const a=await antes();await p.locator('#voz-atalho').click();await terminarCumprimento();
     await p.evaluate(()=>{__recs[0].emit('Qual é o aluno das 16 horas?',true);__recs[0].onend();});
     await p.waitForFunction(()=>!document.getElementById('voz-consulta').hidden);
     assert.match(await p.locator('#voz-repetir').innerText(),/Ouvir resposta/);

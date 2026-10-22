@@ -8,6 +8,31 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-22 · Claude Code: Gestão cumprimenta ao tocar no microfone
+
+Pedido do João: ao tocar no microfone, o assistente já conversa com ele.
+Versão **2026-10-22-1**.
+
+- **`cumprimentarEOuvir`** (`acoes-voz.js`): ao tocar no botão de voz, o
+  assistente fala "Olá, Coach João! Em que posso te ajudar?" e só começa a
+  ouvir quando a fala termina (350 ms depois). Isso evita o travamento de som
+  que o iPhone tem quando fala e escuta ao mesmo tempo, a mesma lição do app
+  do aluno.
+  - Se o celular não avisar o fim da fala, a escuta liga em 6 s.
+  - Com "ouvir respostas" desligado, a escuta liga direto, sem cumprimento.
+- **Saudação curta:** a mensagem da tela virou a mesma frase (`SAUDACAO`). A
+  lista longa do que o assistente faz continua no botão "O que você faz?".
+- **Escuta automática recusada pelo celular:** se o reconhecimento for
+  recusado ao ligar sozinho, o status diz "Toque em Falar e diga o seu pedido."
+  em vez de "permissão negada".
+- **Voz masculina** (`escolherVoz`/`vozMasc`), a mesma escolha do app do
+  aluno. Vale no cumprimento, no "Claro, João" e nas respostas.
+- **Testes:**
+  - Novo: `ferramentas/testar-voz-saudacao-gestao-browser.cjs` (3
+    verificações).
+  - `testar-voz-gestao` e `testar-voz-conversa` agora esperam o cumprimento
+    antes da escuta.
+
 ## 2026-10-21 · Claude Code: botão de voz arrastável (Gestão e aluno)
 
 Pedido do João: poder tirar o botão do microfone da frente de algum botão que
