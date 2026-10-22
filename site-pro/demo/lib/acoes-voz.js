@@ -372,7 +372,7 @@ function arquivarVivos(){
 function limparConversa(){const box=$('voz-conversa');if(box)box.querySelectorAll('.jv-voz-msg,.jv-voz-sugestoes').forEach(x=>x.remove());}
 function saudacao(){
  const box=$('voz-conversa');if(!box)return;
- msg('assistente','Oi, João! Pergunte sobre aulas, horários livres, alunos ou financeiro, ou peça para agendar, cancelar, renovar, marcar presença, cobrar, abrir ou fechar horários e marcar chuva. Toda alteração espera sua confirmação.');
+ msg('assistente',SAUDACAO);
  const sug=document.createElement('div');sug.className='jv-voz-sugestoes';
  [['Aulas de hoje','Quantas aulas tenho hoje?'],['Livres amanhã','Quais horários livres amanhã?'],['Quem está devendo','Quem está devendo este mês?'],['O que você faz?','Ajuda']].forEach(([rot,texto])=>{
   const b=document.createElement('button');b.type='button';b.textContent=rot;
@@ -380,6 +380,37 @@ function saudacao(){
  box.insertBefore(sug,box.querySelector('.jv-voz-vivo'));
 }
 function avisar(m){status(m);msg('assistente',m);}
+const SAUDACAO='Olá, Coach João! Em que posso te ajudar?';
+/* Voz masculina em português quando o aparelho tem uma (a mesma escolha do
+   app do aluno); sem nenhuma, a voz padrão um pouco mais grave. */
+const VOZES_MASC=['antonio','daniel','felipe','fabio','humberto','donato','julio','valerio','nicolau','thiago','eddy','reed','rocko','grandpa','ptd','male','masculin'];
+const VOZES_FEM=/luciana|francisca|fernanda|maria|heloisa|leticia|yara|camila|vitoria|thalita|brenda|elza|manuela|giovanna|leila|joana|catarina|flo\b|grandma|sandy|shelley|female|feminin|afs/;
+function escolherVoz(){
+ let vs=[];try{vs=w.speechSynthesis.getVoices()||[];}catch(e){}
+ const pt=vs.filter(v=>/^pt/i.test(v.lang||'')),br=pt.filter(v=>/br/i.test(v.lang||''));
+ const nome=v=>norm(v.name)+' '+norm(v.voiceURI||'');
+ for(const lista of [br,pt])for(const m of VOZES_MASC){const v=lista.find(x=>nome(x).includes(m)&&!VOZES_FEM.test(nome(x)));if(v)return {voz:v,grave:false};}
+ const neutra=br.find(v=>!VOZES_FEM.test(nome(v))&&!/google/.test(nome(v)))||null;
+ return {voz:neutra||br[0]||pt[0]||null,grave:!neutra};
+}
+function vozMasc(u){const e=escolherVoz();try{if(e.voz)u.voice=e.voz;}catch(x){}u.pitch=e.grave?0.7:0.95;return u;}
+/* Tocar no microfone: o assistente cumprimenta em voz alta e, quando termina
+   de falar, começa a ouvir. Nunca fala e ouve ao mesmo tempo (no iPhone isso
+   trava o som). Se o celular não deixar ligar a escuta sozinho, pede um toque
+   em "Falar". */
+function cumprimentarEOuvir(){
+ const ouvir=()=>{if(st.aberto&&!st.rec&&!st.ocupado&&!st.aplicado){st.auto=true;falar();}};
+ if(!$('voz-ouvir').checked||!w.speechSynthesis||!w.SpeechSynthesisUtterance){ouvir();return;}
+ try{
+  pararResposta();
+  const u=vozMasc(new w.SpeechSynthesisUtterance(SAUDACAO));u.lang='pt-BR';st.resposta=u;st.vozLiberada=true;
+  let foi=false;const depois=()=>{if(foi)return;foi=true;if(st.resposta===u){st.resposta=null;st.falando=false;atualizarMic();}setTimeout(ouvir,350);};
+  u.onstart=()=>{if(st.resposta===u&&st.aberto){st.falando=true;atualizarMic();}};
+  u.onend=depois;u.onerror=depois;
+  setTimeout(depois,6000);   // se o celular não avisar o fim da fala
+  w.speechSynthesis.speak(u);
+ }catch(e){ouvir();}
+}
 function mostrarCampos(sim){$('voz-campos').hidden=!sim;const m=$('voz-manual');if(m)m.hidden=sim;}
 function pararResposta(){st.resposta=null;st.ack=null;st.falando=false;try{if(w.speechSynthesis)w.speechSynthesis.cancel();}catch(e){}if($('voz-falar'))atualizarMic();}
 /* Não corta o "Claro, João" que acabou de começar: a resposta entra na fila. */
@@ -392,7 +423,7 @@ function ouvirResposta(texto,manual){
  try{
   // setas e separadores da tela viram fala natural ("créditos 3 para 2")
   const dito=String(texto).replace(/\s*→\s*/g,' para ').replace(/\s*[·—]\s*/g,', ').replace(/[✓✗❌☔]/g,'');
-  const u=new w.SpeechSynthesisUtterance(dito);u.lang='pt-BR';st.resposta=u;
+  const u=vozMasc(new w.SpeechSynthesisUtterance(dito));u.lang='pt-BR';st.resposta=u;
   u.onstart=()=>{if(st.resposta===u&&st.aberto){st.falando=true;atualizarMic();}};
   const fim=()=>{if(st.resposta===u){st.resposta=null;st.falando=false;atualizarMic();}};
   u.onend=fim;u.onerror=fim;w.speechSynthesis.speak(u);
@@ -409,7 +440,7 @@ function avisarQueEntendeu(){
  if(st.aberto)status('Claro, João. Só um minuto…');
  if(!st.aberto||!$('voz-ouvir').checked||!w.speechSynthesis||!w.SpeechSynthesisUtterance)return;
  pararResposta();
- try{const u=new w.SpeechSynthesisUtterance('Claro, João. Só um minuto.');u.lang='pt-BR';st.ack=u;st.resposta=u;
+ try{const u=vozMasc(new w.SpeechSynthesisUtterance('Claro, João. Só um minuto.'));u.lang='pt-BR';st.ack=u;st.resposta=u;
   u.onstart=()=>{if(st.resposta===u&&st.aberto){st.falando=true;atualizarMic();}};
   const fim=()=>{if(st.ack===u)st.ack=null;if(st.resposta===u){st.resposta=null;st.falando=false;atualizarMic();}};
   u.onend=fim;u.onerror=fim;w.speechSynthesis.speak(u);}catch(e){st.ack=null;}
@@ -967,6 +998,7 @@ function parar(){const r=st.rec;st.rec=null;if(r){try{r.abort();}catch(e){}if(st
 function falar(){
  if(st.ocupado||st.aplicado||st.rec||!st.aberto)return;
  const C=w.SpeechRecognition||w.webkitSpeechRecognition;if(!C){status('Use o microfone do teclado do iPhone para ditar ou digite o pedido.');return;}
+ const auto=!!st.auto;st.auto=false;
  invalidar();pararResposta();
  if(!st.vozLiberada&&$('voz-ouvir').checked&&w.speechSynthesis&&w.SpeechSynthesisUtterance){try{const u=new w.SpeechSynthesisUtterance(' ');u.volume=0;w.speechSynthesis.speak(u);st.vozLiberada=true;}catch(e){}}   // o iPhone só fala depois de um toque
  const r=new C();st.rec=r;r.lang='pt-BR';r.continuous=false;r.interimResults=true;
@@ -974,9 +1006,9 @@ function falar(){
   let parcial='';for(let n=e.resultIndex;n<e.results.length;n++){if(e.results[n].isFinal){if(n>ultimo){final+=(final?' ':'')+e.results[n][0].transcript;ultimo=n;}}else parcial+=e.results[n][0].transcript;}
   $('voz-texto').value=(final+' '+parcial).trim().slice(0,500);invalidar();status(final?'Confira o texto e toque em Conferir pedido.':'Ouvindo…');
  };
- r.onerror=e=>{if(st.rec!==r)return;st.rec=null;atualizarMic();status(e.error==='not-allowed'||e.error==='service-not-allowed'?'Permissão de voz negada. Você pode digitar ou usar o ditado do teclado.':'A fala não ficou disponível. Digite ou use o ditado do teclado.');};
+ r.onerror=e=>{if(st.rec!==r)return;st.rec=null;atualizarMic();const nega=e.error==='not-allowed'||e.error==='service-not-allowed';status(nega&&auto?'Toque em Falar e diga o seu pedido.':nega?'Permissão de voz negada. Você pode digitar ou usar o ditado do teclado.':e.error==='no-speech'&&auto?'Não ouvi. Toque em Falar e diga o seu pedido.':'A fala não ficou disponível. Digite ou use o ditado do teclado.');};
  r.onend=()=>{if(st.rec!==r)return;st.rec=null;atualizarMic();if(st.aberto){if(final.trim()){avisarQueEntendeu();analisar();}else status('Não ouvi um pedido completo. Toque em Falar ou digite.');}};
- try{r.start();status('Ouvindo em português…');atualizarMic();}catch(e){st.rec=null;atualizarMic();status('Não consegui iniciar a fala. Digite ou use o ditado do teclado.');}
+ try{r.start();status('Ouvindo em português…');atualizarMic();}catch(e){st.rec=null;atualizarMic();status(auto?'Toque em Falar e diga o seu pedido.':'Não consegui iniciar a fala. Digite ou use o ditado do teclado.');}
 }
 function abrir(iniciarFala){
  if(!dono()){toast('Entre na conta do João para usar ações rápidas.');return;}
@@ -986,7 +1018,7 @@ function abrir(iniciarFala){
  limparConversa();mostrarCampos(false);saudacao();
  status(w.SpeechRecognition||w.webkitSpeechRecognition?'Toque em Falar ou escreva um pedido.':'Digite ou use o microfone do teclado do iPhone para ditar.');
  try{history.pushState(Object.assign({},history.state,{jvVoz:st.epoca}),'');}catch(e){}
- atualizarVisibilidade();if(iniciarFala===true){$('voz-circulo').focus();falar();}else $('voz-texto').focus();
+ atualizarVisibilidade();if(iniciarFala===true){$('voz-circulo').focus();cumprimentarEOuvir();}else $('voz-texto').focus();
 }
 function fechar(voltar){
  if(!st.aberto)return;const ep=st.epoca;st.epoca++;st.aberto=false;parar();pararResposta();st.confirmacao='';st.resultadoBase='';$('voz-resultado').textContent='';$('voz-resultado').hidden=true;$('voz-repetir').hidden=true;

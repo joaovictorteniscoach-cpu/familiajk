@@ -81,7 +81,7 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
    const r=await p.evaluate(()=>({msgs:document.querySelectorAll('#voz-conversa .jv-voz-msg').length,sug:document.querySelectorAll('#voz-conversa .jv-voz-sugestoes button').length,
     campos:!document.getElementById('voz-campos').hidden,confirmar:!document.getElementById('voz-confirmar').hidden,manual:!document.getElementById('voz-manual').hidden}));
    assert.equal(r.msgs,1);assert.equal(r.sug,4);assert.equal(r.campos,false);assert.equal(r.confirmar,false);assert.equal(r.manual,true);
-   assert.match(await ultimaMsg(),/Oi, João!/);
+   assert.equal(await ultimaMsg(),'Olá, Coach João! Em que posso te ajudar?');
   });
   await check('print 1: "Quantas aulas eu tenho agora de tarde das 16 até o final da noite" responde direto',async()=>{
    await reset();await abrir();const a=await antes();
