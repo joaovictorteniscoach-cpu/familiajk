@@ -319,6 +319,7 @@ table.tbl.livre td:last-child{width:42%}
 .viewtools .zlbl{font-size:11px;color:var(--muted);min-width:38px;text-align:center}
 </style>
 <link rel="stylesheet" href="layout.css">
+<link rel="stylesheet" href="assistente-voz.css">
 </head>
 <body class="mode-contas">
 <div id="storage-error" class="storage-error" role="alert" hidden><span>Não foi possível salvar neste aparelho. Mantenha o app aberto e baixe um backup das alterações.</span><button type="button" onclick="exportJSON()">Baixar backup</button><button type="button" onclick="save()">Tentar salvar</button></div>
@@ -3817,22 +3818,29 @@ function falarResumo(){
   set('fl-resumo',sinal+' '+brl(fl.valor)+' · '+fl.cat+' · '+fl.date
     +(fl.assumido?' — não ouvi um verbo como “gastei” ou “recebi”, então assumi saída. Corrija acima se for entrada.':''));
 }
-function falarLancar(){
-  if(!fl||!(fl.valor>0)){alert('Falta o valor do lançamento.');return;}
-  const amount=fl.tipo==='entrada'?Math.abs(fl.valor):-Math.abs(fl.valor);
-  const desc=(fl.desc||'').slice(0,60)||(fl.tipo==='entrada'?'entrada':'gasto');
-  const x={date:fl.date,desc,amount};
+/* Grava um lançamento falado/escrito. Usada pela tela "Lançar falando" e pelo
+   assistente de voz: as duas gravam exatamente igual, sem duplicar. */
+function gravarLancamentoFalado(f){
+  if(!f||!(f.valor>0))return {ok:false,motivo:'valor'};
+  const amount=f.tipo==='entrada'?Math.abs(f.valor):-Math.abs(f.valor);
+  const desc=(f.desc||'').slice(0,60)||(f.tipo==='entrada'?'entrada':'gasto');
+  const x={date:f.date,desc,amount};
   const key=txKey(x);
-  if(jaImportado(x)){
-    alert('Esse lançamento já está salvo — nada foi duplicado.');closeFalar();return;
-  }
-  D.contas.transacoes.push({_k:key,date:fl.date,mes:mesFromDate(fl.date),desc,amount,
-    cat:fl.cat||categorize(desc,amount),pes:fl.pes||pesDe(desc,D.contas.exPessoa)});
+  if(jaImportado(x))return {ok:false,motivo:'repetido'};
+  D.contas.transacoes.push({_k:key,date:f.date,mes:mesFromDate(f.date),desc,amount,
+    cat:f.cat||categorize(desc,amount),pes:f.pes||pesDe(desc,D.contas.exPessoa)});
   /* entrada também vai para a aba Recebidos — são vistas diferentes do mesmo
      fato: nenhum número do app soma as duas listas */
-  if(fl.tipo==='entrada')D.contas.recebidos.push({_k:key,valor:Math.abs(fl.valor),data:fl.date,desc});
-  save();closeFalar();
+  if(f.tipo==='entrada')D.contas.recebidos.push({_k:key,valor:Math.abs(f.valor),data:f.date,desc});
+  save();
   safeRun(renderCategorias);safeRun(renderReceb);safeRun(drawConPainel);
+  return {ok:true,cat:f.cat||categorize(desc,amount)};
+}
+function falarLancar(){
+  if(!fl||!(fl.valor>0)){alert('Falta o valor do lançamento.');return;}
+  const r=gravarLancamentoFalado(fl);
+  if(!r.ok){alert('Esse lançamento já está salvo — nada foi duplicado.');closeFalar();return;}
+  closeFalar();
   alert((fl.tipo==='entrada'?'Entrada':'Gasto')+' de '+brl(Math.abs(fl.valor))+' lançado em '+fl.cat+'.'
     +(fl.tipo==='entrada'?'\nAparece nas abas Recebidos e Categorias.':'\nAparece na aba Categorias.'));
 }
@@ -6213,5 +6221,24 @@ readCloudReference();renderAuth();if(D.cloud&&D.cloud.on&&D.cloud.url){cloudStar
 /* PWA: instalar na tela de início e abrir offline (rede primeiro, cache de reserva) */
 if('serviceWorker'in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-familia.js').catch(function(){});});}
 </script>
+<!-- assistente por voz (assistente-voz.js): nada é gravado sem "Confirmar" -->
+<button id="jk-voz-botao" type="button" hidden aria-label="Assistente por voz: lançar, perguntar ou mandar extrato" aria-haspopup="dialog"><span class="jk-voz-ondas" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></svg></button>
+<div id="jk-voz-painel" hidden>
+ <section class="jk-voz-card" role="dialog" aria-modal="true" aria-labelledby="jk-voz-titulo">
+  <div class="jk-voz-head"><button id="jk-voz-circulo" class="jk-voz-sinal" type="button" aria-label="Falar"><span class="jk-voz-ondas" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span></button><h2 id="jk-voz-titulo">Assistente da família</h2><button id="jk-voz-fechar" type="button" aria-label="Fechar assistente">×</button></div>
+  <div id="jk-voz-conversa" class="jk-voz-conversa" aria-live="polite" aria-label="Conversa com o assistente"></div>
+  <div id="jk-voz-previa" hidden></div>
+  <p id="jk-voz-status" role="status" aria-live="polite"></p>
+  <label for="jk-voz-texto">Sua pergunta ou lançamento</label>
+  <textarea id="jk-voz-texto" rows="2" maxlength="300" autocomplete="off" spellcheck="false" placeholder="Fale ou escreva aqui…" enterkeyhint="send"></textarea>
+  <div class="jk-voz-row"><button id="jk-voz-falar" type="button" aria-pressed="false">Falar</button><button id="jk-voz-enviar" type="button">Enviar</button></div>
+  <label class="jk-voz-check"><input id="jk-voz-ouvir" type="checkbox" checked>Responder por voz</label>
+  <details class="jk-voz-sobre"><summary>Exemplos e privacidade</summary>
+   <p>Lançar: “gastei 80 reais de farmácia”, “recebi 300 da aula”. Perguntar: “quanto falta pagar?”, “o que vence esta semana?”, “quanto gastei com mercado este mês?”, “quanto a Kassiana gastou em setembro?”, “qual o valor da luz?”, “quanto tenho investido?”. Extrato: “importar extrato”.</p>
+   <p>Nada é salvo sem você tocar em “Confirmar e salvar”. A fala usa o reconhecimento do navegador e pode ser processada pelo provedor dele; o app não guarda áudio, texto nem a conversa — tudo some ao fechar. No iPhone com o app na tela de início, use o microfone do teclado.</p>
+  </details>
+ </section>
+</div>
+<script src="./assistente-voz.js"></script>
 </body>
 </html>

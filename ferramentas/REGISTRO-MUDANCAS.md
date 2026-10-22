@@ -1928,3 +1928,32 @@ estas mudanças foram pedidas por ele nesta sessão).
   rápido e sem mexer no Firebase nem criar contas; como exige ligar o provedor,
   autorizar o domínio e mudar a regra do banco, fica o link. Regra do banco da
   família não foi e não deve ser tocada por isso. Nenhuma mudança no app.
+
+
+---
+
+## 2026-10-22 · Claude: Família JK — assistente por voz (pedido do João)
+
+**Pedido explícito do João para o `app-familia/`:** "botão de fala igual ao da
+JV Gestão para fazer lançamentos, perguntas, extratos ou conferir valores".
+
+- Novo `app-familia/assistente-voz.js` + `assistente-voz.css` (prefixo `jk-voz-`):
+  bolinha dourada arrastável (posição em `jk-voz-posicao`, só no aparelho),
+  saudação falada, escuta, conversa na tela e voz masculina — o mesmo jeito do
+  `acoes-voz.js` da Gestão, sem compartilhar código nem chaves com ela.
+- Lançar ("gastei 80 de farmácia", "recebi 300 da aula"): usa o interpretador do
+  "Lançar falando" e mostra prévia editável; **só grava em "Confirmar e salvar"**.
+  A gravação foi separada em `gravarLancamentoFalado()`, usada pelas duas telas
+  (mesmo comportamento: não duplica; entrada também em Recebidos).
+- Perguntas e conferência, só leitura, com as mesmas contas das abas: falta
+  pagar, vencimentos da semana, contas do mês, já pago, sobra, gastos por
+  categoria/termo/pessoa/período, entradas, investido (total/nacional/global/
+  Binance), aportes, fatura, valor de uma conta (Copel = Luz pelos apelidos).
+- Extrato: "importar extrato" mostra os botões de arquivo, foto e colar texto
+  (o seletor de arquivo exige o toque da pessoa).
+- Privacidade: áudio, texto e conversa não são guardados; somem ao fechar.
+- Testes (dados fictícios): assistente 21 casos (inclui não gravar sem
+  confirmar, cancelar, não duplicar, arrastar, nada guardado), com fala e
+  microfone do navegador ligados, contraste do painel; sincronização do CI,
+  nuvem simulada, contas ligadas, aparelho novo; base da família migra idêntica
+  à versão anterior. Nenhuma regra do Firebase, app da academia ou dado real.
