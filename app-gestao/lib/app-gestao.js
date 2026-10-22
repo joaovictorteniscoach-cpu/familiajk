@@ -4158,6 +4158,16 @@ function togglePresenca(entryId){
     }
   });
 }
+/* Aula particular marcada sem crédito do mês: se o aluno tem reposição válida
+   que cubra a aula, ela sai da reposição em vez de deixar o crédito negativo
+   (pedido do João, 22/10). Só aula particular: grupo tem saldo próprio e
+   locação/torneio nunca usam reposição. Com crédito que cubra a aula, continua
+   saindo do crédito. Desmarcar devolve à reposição (estornoPorRef). */
+function usaReposNaFaltaDeCredito(a,c){
+  if(!a)return false;
+  if((Number(a.creditos)||0)>=c-1e-9)return false;
+  return reposValidas(a)>=c-1e-9;
+}
 function togglePresencaUm(entryId){
   let entry=null;
   HORAS.forEach(h=>entriesFor(agDate,h).forEach(e=>{if(e.id===entryId)entry=e;}));
@@ -4249,6 +4259,10 @@ function togglePresencaUm(entryId){
       if((Number(a.repos)||0) < c-1e-9){toast(a.nome+' não tem reposições suficientes ('+fmtCred(a.repos)+')');return;}
       mover(a,'repos',-c,'Reposição na agenda',k);DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo:'reposicao',custo:c});
       logAct('Marcar reposição: '+a.nome);toast('✓ Reposição ('+(c===0.5?'½ aula':'1 aula')+') · '+a.nome+' → '+fmtCred(a.repos)+' reposições');
+    }else if(usaReposNaFaltaDeCredito(a,c)){
+      mover(a,'repos',-c,'Reposição na agenda',k);DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo:'reposicao',custo:c,semCredito:true});
+      logAct('Marcar presença (sem crédito do mês, saiu da reposição): '+a.nome);
+      toast('✓ Presença ('+(c===0.5?'½ aula':'1 aula')+') · '+a.nome+' estava sem crédito do mês: saiu da reposição → '+fmtCred(a.repos)+' reposições');
     }else{
       mover(a,'creditos',-c,'Presença na agenda',k);DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo:'aula',custo:c});   // permite ficar negativo
       logAct('Marcar presença: '+a.nome);toast('✓ Presença ('+(c===0.5?'½ aula':'1 aula')+') · '+a.nome+' → '+fmtCred(a.creditos)+' créditos');
@@ -5785,6 +5799,13 @@ function aulaRealizada(id,modo,custo,hora){
     toastDesfazer('👥 Aula em grupo · '+a.nome+' → '+fmtCred(a.credGrupo)+' de grupo'+extra,()=>desfazerAula(id,k,'grupo'));
     return;
   }
+  if(usaReposNaFaltaDeCredito(a,c)){       // sem crédito do mês: usa a reposição que o aluno tem
+    reg.tipo=reg.modo='reposicao';reg.semCredito=true;
+    mover(a,'repos',-c,'Reposição na agenda',k);
+    persist();renderAll();pulsarCredito(a.id);
+    toastDesfazer('Aula registrada · '+a.nome+' estava sem crédito do mês: saiu da reposição → '+fmtCred(a.repos)+' reposições',()=>desfazerAula(id,k,'reposicao'));
+    return;
+  }
   mover(a,'creditos',-c,'Aula realizada',k);   // permite ficar negativo: aula além do pacote
   persist();renderAll();pulsarCredito(a.id);
   const extra=a.creditos<0?(' · aula extra a cobrar: '+fmt(valorAulaDe(a))):'';
@@ -5806,7 +5827,7 @@ function desfazerAula(id,k,modo){
   const dev=estornoPorRef(a,k,reg);
   Object.keys(dev).forEach(cp=>mover(a,cp,dev[cp],'Aula desfeita',k));
   persist();renderAll();pulsarCredito(a.id);
-  toast('↩️ Desfeito · '+a.nome+' → '+fmtCred(modo==='grupo'?a.credGrupo:a.creditos)+(modo==='grupo'?' de grupo':' créditos'));
+  toast('↩️ Desfeito · '+a.nome+' → '+(modo==='grupo'?fmtCred(a.credGrupo)+' de grupo':modo==='reposicao'?fmtCred(a.repos)+' reposições':fmtCred(a.creditos)+' créditos'));
 }
 /* O número mudou: dá um pulso no chip para o toque ter resposta visível. */
 function pulsarCredito(id){
@@ -6911,7 +6932,7 @@ function fcAulasDoMes(a,mk){
         const chaveSlot=dKey(data)+'|'+hora;
         if(jaEntrou.has(chaveSlot))return;
         jaEntrou.add(chaveSlot);
-        const tipo=e.repo?'reposicao':(e.tipo==='grupo'?'grupo':'aula');
+        const tipo=(e.repo||(reg&&reg.tipo==='reposicao'))?'reposicao':(e.tipo==='grupo'?'grupo':'aula');   // ✓ sem crédito que saiu da reposição
         diasComAula.add(dKey(data));
         out.push({k,data:dKey(data),hora,tipo,repo:!!e.repo,
                   custo:reg?(Number(reg.custo)||0):creditoSlot(hora),
