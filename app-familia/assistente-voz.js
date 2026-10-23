@@ -187,6 +187,23 @@ function dizer(texto,depois){
     w.speechSynthesis.speak(u);
   }catch(e){if(depois)depois();}
 }
+/* ---------- quem está falando (só neste celular) e a saudação do horário ---------- */
+const KEY_QUEM='jk-voz-quem';
+function quemGet(){try{const v=localStorage.getItem(KEY_QUEM);if(v==='preto'||v==='preta')return v;}catch(e){}return '';}
+function quemSet(v){try{if(v==='preto'||v==='preta')localStorage.setItem(KEY_QUEM,v);}catch(e){}mostrarQuem();}
+/* "João (Preto)" → "João": o apelido entre parênteses não entra na fala */
+function primeiroNome(p){const nm=String(w.pesNome?pesNome(p):'').replace(/\([^)]*\)/g,' ').trim().split(/\s+/)[0];return nm||(p==='preta'?'Kassiana':'João');}
+function saudacaoHora(d){const h=(d||new Date()).getHours();return h>=5&&h<12?'Bom dia':(h>=12&&h<18?'Boa tarde':'Boa noite');}
+function saudacao(){const q=quemGet();return saudacaoHora()+(q?', '+primeiroNome(q):'')+'! Como posso te ajudar?';}
+function tratamento(){return (quemGet()==='preta'?'Sim, senhora':'Sim, senhor')+', só um momento.';}
+function mostrarQuem(){const b=$('jk-voz-quem');if(!b)return;const q=quemGet();b.textContent=q?'Quem usa este celular: '+primeiroNome(q)+' · trocar':'Quem usa este celular? Escolher';}
+function perguntarQuem(depois){
+  const m=msg('assistente','Quem está usando este celular? Assim eu chamo pelo nome.');
+  const a=el('div','jk-voz-sugestoes');
+  ['preto','preta'].forEach(p=>{const b=el('button',null,primeiroNome(p));b.type='button';
+    b.onclick=()=>{quemSet(p);a.querySelectorAll('button').forEach(x=>x.disabled=true);const t=saudacao();msg('assistente',t);status('');dizer(t,depois);};a.append(b);});
+  m.append(a);dizer('Olá! Quem está usando este celular?');
+}
 function microfoneOk(){return w.vozUsavel?vozUsavel():!!(w.SpeechRecognition||w.webkitSpeechRecognition);}
 function ouvir(){
   if(st.rec){parar();return;}
@@ -202,7 +219,9 @@ function ouvir(){
     r.start();status('Ouvindo… pode falar.');sinal();
   }catch(e){st.rec=null;sinal();status('Não consegui abrir o microfone. Use o microfone do teclado.');}
 }
-function parar(){try{if(st.rec)st.rec.stop();}catch(e){}st.rec=null;sinal();}
+/* parar de propósito (Enviar, Fechar, trocar quem fala) não pode avisar "não ouvi nada"
+   por cima do "só um momento": solta os avisos do microfone antes de desligar */
+function parar(){const r=st.rec;st.rec=null;if(r){r.onresult=null;r.onerror=null;r.onend=null;try{r.stop();}catch(e){}}sinal();}
 function limparPendente(){st.pend=null;$('jk-voz-previa').hidden=true;$('jk-voz-previa').replaceChildren();}
 function previa(f){
   const box=$('jk-voz-previa');box.replaceChildren();box.hidden=false;st.pend={...f};
@@ -234,20 +253,31 @@ function enviar(){
   const caixa=$('jk-voz-texto'),frase=caixa.value.trim();if(!frase){status('Fale ou escreva primeiro.');return;}
   parar();limparPendente();msg('voce',frase);caixa.value='';
   let r;try{r=entender(frase);}catch(e){r={texto:'Não consegui responder agora. Seus dados não foram alterados.'};}
-  const m=msg('assistente',r.texto,r.itens);status('');
-  if(r.acoes){const a=el('div','jk-voz-sugestoes');r.acoes.forEach(([rot,fn])=>{const b=el('button',null,rot);b.type='button';b.onclick=fn;a.append(b);});m.append(a);}
-  if(r.lancamento)previa(r.lancamento);
-  dizer(r.texto,r.depois);
+  const mostrar=()=>{
+    if(!st.aberto)return;
+    const m=msg('assistente',r.texto,r.itens);status('');
+    if(r.acoes){const a=el('div','jk-voz-sugestoes');r.acoes.forEach(([rot,fn])=>{const b=el('button',null,rot);b.type='button';b.onclick=fn;a.append(b);});m.append(a);}
+    if(r.lancamento)previa(r.lancamento);
+    dizer(r.texto,r.depois);
+  };
+  /* "Sim, senhor, só um momento." — e logo depois a resposta, também falada */
+  const ack=tratamento();status(ack);
+  if(podeFalar())dizer(ack,mostrar);else mostrar();
 }
 function abrir(saudar){
   if(st.aberto)return;st.aberto=true;st.ultimoFoco=document.activeElement;
   $('jk-voz-painel').hidden=false;document.body.classList.add('jk-voz-aberto');
-  if(!$('jk-voz-conversa').children.length)msg('assistente','Olá! Posso lançar um gasto ou uma entrada, responder sobre as contas e os investimentos, ou receber um extrato.');
+  mostrarQuem();
+  const ouvirDepois=()=>{if(st.aberto&&!st.rec&&!st.pend)ouvir();};
+  if(!$('jk-voz-conversa').children.length){
+    if(quemGet())msg('assistente',saudacao()+' Posso lançar um gasto ou uma entrada, responder sobre as contas e os investimentos, ou receber um extrato.');
+    else msg('assistente','Posso lançar um gasto ou uma entrada, responder sobre as contas e os investimentos, ou receber um extrato.');
+  }
   sugestoes();
   if(saudar){
     // a saudação libera a voz no iPhone (precisa vir de um toque) e, ao terminar, começa a ouvir
-    dizer('Olá! Em que posso ajudar?',()=>{if(st.aberto&&!st.rec&&!st.pend)ouvir();});
-    if(!podeFalar()&&microfoneOk())ouvir();
+    if(!quemGet())perguntarQuem(ouvirDepois);
+    else{dizer(saudacao(),ouvirDepois);if(!podeFalar()&&microfoneOk())ouvir();}
   }
   if(!microfoneOk())setTimeout(()=>{try{$('jk-voz-texto').focus();}catch(e){}},60);
 }
@@ -285,12 +315,13 @@ function init(){
   $('jk-voz-circulo').onclick=()=>{if(st.falando)calar();else ouvir();};
   $('jk-voz-falar').onclick=ouvir;
   $('jk-voz-enviar').onclick=enviar;
+  if($('jk-voz-quem'))$('jk-voz-quem').onclick=()=>{calar();parar();perguntarQuem(()=>{if(st.aberto&&!st.rec&&!st.pend)ouvir();});};
   $('jk-voz-texto').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();enviar();}});
   $('jk-voz-painel').addEventListener('click',e=>{if(e.target===$('jk-voz-painel'))fechar();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&st.aberto)fechar();});
   try{if(w.speechSynthesis)w.speechSynthesis.getVoices();}catch(e){}
   $('jk-voz-botao').hidden=false;
 }
-w.JKVoz={entender,abrir,fechar,enviar,confirmar};
+w.JKVoz={entender,abrir,fechar,enviar,confirmar,saudacao,saudacaoHora,tratamento,quemGet,quemSet};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();

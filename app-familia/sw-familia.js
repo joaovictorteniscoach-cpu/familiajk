@@ -1,6 +1,6 @@
 /* Família JK — assets locais, rede primeiro e reserva offline.
    APIs e bibliotecas de OCR seguem diretamente para a rede. */
-const CACHE = 'jk-familia-black-gold-20261022-assistente-voz';
+const CACHE = 'jk-familia-black-gold-20261023-saudacao';
 const SHELL = ['./', './index.html', './layout.css', './assistente-voz.css', './assistente-voz.js', './sync-merge.js', './vendor/chart.umd.min.js',
   './vendor/xlsx.full.min.js', './manifest-familia.webmanifest',
   './icone-jk-gestao-180.png', './icone-jk-gestao-192.png',
