@@ -167,9 +167,18 @@ function sinal(){const p=$('jk-voz-painel'),b=$('jk-voz-botao'),o=String(!!st.re
   $('jk-voz-falar').textContent=st.rec?'Parar de ouvir':'Falar';$('jk-voz-falar').setAttribute('aria-pressed',String(!!st.rec));}
 const VOZES_MASC=['antonio','daniel','felipe','fabio','humberto','donato','julio','valerio','nicolau','thiago','eddy','reed','rocko','male','masculin'];
 const VOZES_FEM=/luciana|francisca|fernanda|maria|heloisa|leticia|yara|camila|vitoria|thalita|brenda|elza|manuela|giovanna|leila|joana|catarina|flo\b|grandma|sandy|shelley|female|feminin|afs/;
+const VOZES_FEM_PREF=['luciana','francisca','fernanda','heloisa','leticia','yara','camila','vitoria','thalita','maria','google','joana','catarina','female','feminin'];
+// voz feminina para a Kassiana e masculina para o João (pedido do João em 23/10)
+function vozFeminina(u,br,pt,nm){
+  let esc=null;for(const l of [br,pt])for(const m of VOZES_FEM_PREF){if(esc)break;esc=l.find(x=>nm(x).includes(m))||null;}
+  const neutra=br.find(x=>!VOZES_MASC.some(m=>nm(x).includes(m)))||pt.find(x=>!VOZES_MASC.some(m=>nm(x).includes(m)))||null;
+  const v=esc||neutra||br[0]||pt[0]||null;try{if(v)u.voice=v;}catch(e){}
+  u.pitch=esc?1:1.15;u.lang='pt-BR';return u;
+}
 function voz(u){
   let vs=[];try{vs=w.speechSynthesis.getVoices()||[];}catch(e){}
   const pt=vs.filter(v=>/^pt/i.test(v.lang||'')),br=pt.filter(v=>/br/i.test(v.lang||'')),nm=v=>n(v.name)+' '+n(v.voiceURI||'');
+  if(quemGet()==='preta')return vozFeminina(u,br,pt,nm);
   let esc=null;for(const l of [br,pt])for(const m of VOZES_MASC){if(esc)break;esc=l.find(x=>nm(x).includes(m)&&!VOZES_FEM.test(nm(x)))||null;}
   const v=esc||br.find(x=>!VOZES_FEM.test(nm(x)))||br[0]||pt[0]||null;try{if(v)u.voice=v;}catch(e){}
   u.pitch=esc?0.95:0.8;u.lang='pt-BR';return u;

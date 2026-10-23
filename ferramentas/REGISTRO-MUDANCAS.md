@@ -1981,3 +1981,20 @@ por áudio".
   trocar, sem nome), corrida do microfone, assistente 21, nuvem, contas ligadas,
   aparelho novo, sincronização do CI; base da família idêntica à anterior.
   Nenhuma regra do Firebase, app da academia ou dado real.
+
+
+---
+
+## 2026-10-23 · Claude: Família JK — voz feminina para a Kassiana (pedido do João)
+
+**Pedido explícito do João para o `app-familia/`:** "voz feminina para a Kassiana
+e masculina para mim".
+
+- `assistente-voz.js`: `voz()` escolhe pela pessoa do celular (`jk-voz-quem`):
+  Kassiana → `vozFeminina()` (Luciana, Francisca, Fernanda… ou a voz do Google),
+  João ou ninguém escolhido → a masculina de antes, sem mudança.
+- Se o aparelho só tem uma voz em português (Android costuma ter só a do Google),
+  as duas pessoas usam essa, com tom mais grave para o João.
+- Testes (vozes fictícias de Windows, iPhone, Android, sem português e sem voz;
+  trocar quem usa): 19 casos; saudação, assistente, nuvem, contas ligadas,
+  aparelho novo, sincronização do CI; base da família idêntica à anterior.
