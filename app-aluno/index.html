@@ -3197,6 +3197,26 @@ function saldoReposAluno(){
   const saldo=Number(valor);
   return Number.isFinite(saldo)?Math.max(0,saldo):0;
 }
+/* Aluno de grupo repõe em aula de grupo; particular, em aula particular
+   (pedido do João, 23/10). O tipo sai do plano; misto serve para os dois.
+   Mesma conta da Gestão (tipoReposDe). */
+function tipoReposAluno(){
+  if(!EU)return null;
+  const p=Number(EU.plano)||0,g=Number(EU.planoGrupo)||0;
+  if(p>0&&g>0)return null;
+  if(g>0)return 'grupo';
+  if(p>0)return 'part';
+  const t=String(EU.tipo||'');
+  if(/grupo|dupla|trio|quarteto/i.test(t))return 'grupo';
+  if(/particular/i.test(t))return 'part';
+  return null;
+}
+function reposServeAqui(ehGrupo){const t=tipoReposAluno();return !t||t===(ehGrupo?'grupo':'part');}
+function avisoTipoRepos(){
+  return tipoReposAluno()==='grupo'
+    ?'Sua reposição é de aula em grupo: escolha um horário de aula em grupo 👥'
+    :'Sua reposição é de aula particular: escolha um horário de aula particular 🎾';
+}
 function renderReposBox(){
   const box=document.getElementById('repos-box');if(!box||!EU)return;
   const venc=Number(EU.reposVencendo)||0;
@@ -3256,7 +3276,7 @@ function renderPedirBox(){
 function irMarcarReposicao(){
   const b=[...document.querySelectorAll('.nav button')].find(x=>(x.getAttribute('onclick')||'').indexOf("goAluno('agenda'")===0);
   goAluno('agenda',b);
-  toast('Toque num horário livre e escolha "Marcar reposição" 🔁');
+  toast(tipoReposAluno()==='grupo'?'Toque num horário de aula em grupo e escolha "Reposição na aula em grupo" 🔁':'Toque num horário livre e escolha "Marcar reposição" 🔁');
 }
 function abrirTreinoPremium(){
   if(EU&&EU.mfitLink&&String(EU.mfitLink).trim())abrirMFit();
@@ -5368,11 +5388,11 @@ function escolherSlot(hora){
   }else if(pickCtx.grupo){
     b+='<div class="pick-note">👥 Este horário é uma <b>aula em grupo</b>. Novas reservas participam da mesma aula, até '+pickCtx.limiteGrupo+' alunos.</div>';
     if(!trava)b+='<button class="pick-opt aula" onclick="pickAula(false)">👥 Participar da aula em grupo</button>';
-    if(!trava&&saldoReposAluno()>0)b+='<button class="pick-opt repo" onclick="pickAula(true)">🔁 Reposição na aula em grupo</button>';
+    if(!trava&&saldoReposAluno()>0&&reposServeAqui(true))b+='<button class="pick-opt repo" onclick="pickAula(true)">🔁 Reposição na aula em grupo</button>';
   }else if(modo==='aula'&&!trava){
     b+='<button class="pick-opt aula" onclick="pickAula(false)">🎾 Agendar aula<small>usa 1 crédito do seu plano</small></button>';
     b+=grupoRefHtml();
-    if(saldoReposAluno()>0)b+='<button class="pick-opt repo" onclick="pickAula(true)">🔁 Marcar reposição<small>usa 1 reposição · você tem '+fmtCred(saldoReposAluno())+'</small></button>';
+    if(saldoReposAluno()>0&&reposServeAqui(false))b+='<button class="pick-opt repo" onclick="pickAula(true)">🔁 Marcar reposição<small>usa 1 reposição · você tem '+fmtCred(saldoReposAluno())+'</small></button>';
     b+=locBtnHtml();
     b+=pickTorneioHtml();
   }else if(modo==='aula'&&trava){
@@ -5382,7 +5402,7 @@ function escolherSlot(hora){
   }else{
     b+='<div class="pick-note">Neste horário a quadra fica para <b>locação</b> (sem aula).</div>';
     b+=locBtnHtml();
-    if(saldoReposAluno()>0&&!trava)b+='<button class="pick-opt repo" onclick="pickAula(true)">🔁 Pedir reposição aqui<small>combinar com o João</small></button>';
+    if(saldoReposAluno()>0&&!trava&&reposServeAqui(false))b+='<button class="pick-opt repo" onclick="pickAula(true)">🔁 Pedir reposição aqui<small>combinar com o João</small></button>';
     b+=pickTorneioHtml();
   }
   document.getElementById('pick-opts').innerHTML=b;
@@ -5503,6 +5523,7 @@ function abrirBook(hora,repo,torneio){
   if(torneio){/* jogo do torneio: inscrição já paga, não usa crédito nem reposição */}
   else if(repo){
     if(!(saldoReposAluno()>0)){toast('Você não tem reposições disponíveis. Fale com o João 🙏');return;}
+    if(!reposServeAqui(!!estado.grupo)){toast(avisoTipoRepos());return;}
   } else if(EU.creditos===0){
     toast('Seus créditos acabaram — esta aula entra como extra, a combinar com o João. 🎾');
   }

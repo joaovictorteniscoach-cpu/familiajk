@@ -4169,6 +4169,24 @@ function togglePresenca(entryId){
    desconta. Cada parte vai ao extrato com a mesma chave; desmarcar devolve
    parte por parte (estornoPorRef). */
 const MOTIVO_DEBITO={creditos:'Presença na agenda',credGrupo:'Aula em grupo na agenda',repos:'Reposição na agenda'};
+/* De que tipo é a reposição do aluno (pedido do João, 23/10): aluno de grupo
+   repõe em aula de grupo, aluno particular em aula particular. O saldo de
+   reposição é um só; o tipo sai do plano. Misto (ou sem plano e sem tipo
+   reconhecível) fica null = serve para os dois, porque a sobra dos dois
+   planos já entrou junta no mesmo saldo e não dá para separar. Mesma conta no
+   app do aluno (tipoReposAluno). */
+function tipoReposDe(a){
+  if(!a)return null;
+  const p=Number(a.plano)||0,g=Number(a.planoGrupo)||0;
+  if(p>0&&g>0)return null;
+  if(g>0)return 'grupo';
+  if(p>0)return 'part';
+  const t=String(a.tipo||'');
+  if(/grupo|dupla|trio|quarteto/i.test(t))return 'grupo';
+  if(/particular/i.test(t))return 'part';
+  return null;
+}
+function reposServePara(a,tipoAula){const t=tipoReposDe(a);return !t||t===tipoAula;}
 const r2=x=>Math.round(x*100)/100;
 function saldoDisponivel(a,campo){
   if(campo==='repos')return Math.max(0,reposValidas(a));
@@ -4294,8 +4312,12 @@ function togglePresencaUm(entryId){
       /* Aula (particular, grupo ou reposição): usa o que o aluno já tem — ver
          debitarDoBanco(). Só o que nenhum saldo cobre fica negativo (extra). */
       const tipoSlot=isGrp?'grupo':'aula', campoTipo=isGrp?'credGrupo':'creditos';
-      const ordem=isRepo?['repos',campoTipo]:[campoTipo,'repos'];
+      /* Reposição de grupo não paga aula particular e vice-versa. */
+      const podeRepos=reposServePara(a,isGrp?'grupo':'part');
+      const ordem=(isRepo?['repos',campoTipo]:[campoTipo,'repos']).filter(cp=>cp!=='repos'||podeRepos);
       const d=debitarDoBanco(a,ordem,campoTipo,c,k);
+      const nota=(isRepo&&!podeRepos)?' (a reposição de '+a.nome.split(' ')[0]+' é de aula '+(isGrp?'particular':'em grupo')+', não vale aqui)':'';
+      if(nota)d.natural=false;
       /* Tipo gravado = de onde a aula saiu: toda (ou, num horário de reposição,
          parte) da reposição conta como reposição no fechamento. */
       const tipo=(d.soRepos||(isRepo&&d.partes.repos))?'reposicao':tipoSlot;
@@ -4305,7 +4327,7 @@ function togglePresencaUm(entryId){
       const qt=(c===0.5?'½ aula':'1 aula');
       if(!d.natural){
         logAct('Marcar '+(isRepo?'reposição':isGrp?'aula em grupo':'presença')+' (usou outro saldo): '+a.nome);
-        toast('✓ '+(isRepo?'Reposição':isGrp?'Aula em grupo':'Presença')+' ('+qt+') · '+a.nome+': '+textoDebito(a,d));
+        toast('✓ '+(isRepo?'Reposição':isGrp?'Aula em grupo':'Presença')+' ('+qt+') · '+a.nome+': '+textoDebito(a,d)+nota);
       }else if(isRepo){
         logAct('Marcar reposição: '+a.nome);toast('✓ Reposição ('+qt+') · '+a.nome+' → '+fmtCred(a.repos)+' reposições');
       }else if(isGrp){
@@ -5842,7 +5864,8 @@ function aulaRealizada(id,modo,custo,hora){
   /* Mesma regra do ✓ da agenda: primeiro o saldo do tipo (grupo nunca usa o
      particular), depois a reposição válida; só o resto vira extra. */
   const campoTipo=modo==='grupo'?'credGrupo':'creditos';
-  const d=debitarDoBanco(a,[campoTipo,'repos'],campoTipo,c,k,
+  const ordemC=reposServePara(a,modo==='grupo'?'grupo':'part')?[campoTipo,'repos']:[campoTipo];
+  const d=debitarDoBanco(a,ordemC,campoTipo,c,k,
     {creditos:'Aula realizada',credGrupo:'Aula em grupo realizada'});
   if(d.soRepos)reg.tipo=reg.modo='reposicao';
   if(!d.natural){

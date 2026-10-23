@@ -118,7 +118,64 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
    await g.evaluate(()=>aulaRealizada('g1','grupo',1));
    assert.deepEqual(await sal('g1'),{cred:0,grp:0,repos:2},'grupo pelo cartão: também usa a reposição');
   });
+  await check('reposição de grupo não paga aula particular (e vice-versa); misto usa nos dois',async()=>{
+   await dados();
+   await g.evaluate(()=>{
+    const A=id=>DB.alunos.find(a=>a.id===id);
+    DB.alunos.push(Object.assign({},A('z1'),{id:'p2',nome:'Particular Sem Crédito',codigo:'p2'}));
+    mover(A('p2'),'repos',3,'Sobra do mês virou reposição');
+    const ev=(id,hora,alunoId,tipo,repo)=>({id,data:'2026-10-19',hora,titulo:A(alunoId).nome,tipo,alunoId,pessoas:tipo==='grupo'?2:1,repo:repo?1:0});
+    DB.agenda.eventos.push(ev('e4','15:00','g1','aula',1),ev('e5','16:00','p2','grupo',0),ev('e6','08:00','g1','aula',0));
+   });
+   let t=await marcar('e4');   // aluno só de grupo numa reposição em horário particular
+   assert.deepEqual(await sal('g1'),{cred:-1,grp:0,repos:3},'não usa a reposição de grupo; vira aula particular extra');
+   assert.match(t,/1 extra a cobrar → -1 créditos \(a reposição de Grupo é de aula em grupo, não vale aqui\)/);
+   await marcar('e6');            // aula particular normal de aluno de grupo: também não usa a reposição
+   assert.deepEqual(await sal('g1'),{cred:-2,grp:0,repos:3});
+   await marcar('e5');            // aluno só particular numa aula em grupo
+   assert.deepEqual(await sal('p2'),{cred:0,grp:-1,repos:3},'não usa a reposição particular numa aula de grupo');
+   await g.evaluate(()=>{DB.alunos.find(a=>a.id==='m1').credGrupo=0;});
+   await marcar('f1');await marcar('f5');   // misto: particular e grupo podem usar a reposição
+   assert.deepEqual(await sal('m1'),{cred:0,grp:0,repos:4},'misto: particular e grupo saíram da reposição');
+   await g.evaluate(()=>aulaRealizada('g1','aula',1));
+   assert.deepEqual(await sal('g1'),{cred:-3,grp:0,repos:3},'cartão: mesma regra');
+  });
   assert.deepEqual(erros,[]);await c.close();
+
+  /* App do aluno: só oferece reposição no tipo de aula do plano. */
+  const ca=await browser.newContext({viewport:{width:390,height:844},timezoneId:'America/Sao_Paulo',serviceWorkers:'block'});
+  await ca.route('**/*',r=>{const u=new URL(r.request().url());if(u.origin!==base)return r.abort();if(u.pathname.includes('/lib/firebase-'))return r.fulfill({body:'',contentType:'text/javascript'});return r.continue();});
+  await ca.addInitScript(()=>sessionStorage.setItem('jv-bk-adiar','1'));
+  const p=await ca.newPage(),errosA=[];p.on('pageerror',e=>errosA.push(e.message));p.on('dialog',d=>d.dismiss());
+  await p.clock.setFixedTime(new Date('2026-10-20T07:00:00-03:00'));
+  await p.goto(base+'/app-aluno/',{waitUntil:'load'});await p.waitForFunction(()=>typeof escolherSlot==='function');
+  const aluno=x=>p.evaluate(x=>{
+   init=async()=>{};saveMeu=async()=>{};window.__t=[];toast=m=>__t.push(m);
+   EU=Object.assign({codigo:'6601',nome:'Aluno Teste',tipo:'Particular',plano:4,planoGrupo:0,creditos:0,credGrupo:0,repos:3,reposValidas:3,locCred:0,mensalidade:640,status:'pago',ativo:true},x);
+   PUB={horas:['07:00','10:00','13:00','17:00','20:00'],profs:[],horarioCfg:{},horarioData:{},reservasRespostas:[],historico:{},alunos:[EU],
+    precos:{avulsaPart:170,avulsaGrupo:95,locacao:70,personal:130},grupoPreco:{dupla:90,trio:85,quarteto:80},
+    grade:{fixos:[],excecoes:[],eventos:[{id:'g1',cod:'7702',data:'2026-10-21',hora:'17:00',tipo:'grupo',pessoas:3}]}};
+   MEU={codigo:'6601',pedidos:[],cancelados:[],confirmadas:[],espera:[]};
+   document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';
+   try{render();}catch(e){}
+   const op=h=>{document.getElementById('ov-pick').classList.remove('on');gotoBook(2026,9,21,h);return document.getElementById('pick-opts').innerText;};
+   return {part:op('10:00'),grupo:op('17:00'),tipo:tipoReposAluno()};
+  },x);
+  await check('app do aluno: aluno particular só vê reposição em aula particular',async()=>{
+   const r=await aluno({});
+   assert.equal(r.tipo,'part');assert.match(r.part,/Marcar reposição/);assert.doesNotMatch(r.grupo,/Reposição na aula em grupo/);
+  });
+  await check('app do aluno: aluno de grupo só vê reposição em aula de grupo; misto vê nas duas',async()=>{
+   let r=await aluno({tipo:'Dupla',plano:0,planoGrupo:4});
+   assert.equal(r.tipo,'grupo');assert.doesNotMatch(r.part,/Marcar reposição/);assert.match(r.grupo,/Reposição na aula em grupo/);
+   const t=await p.evaluate(()=>{irMarcarReposicao();return __t.pop();});
+   assert.match(t,/horário de aula em grupo/);
+   const v=await p.evaluate(()=>{JVVozAluno.abrir();document.getElementById('va-texto').value='quero repor uma aula';JVVozAluno.enviar();return document.getElementById('va-conversa').innerText;});
+   assert.match(v,/Sua reposição é de aula em grupo/);
+   r=await aluno({plano:4,planoGrupo:4});
+   assert.equal(r.tipo,null);assert.match(r.part,/Marcar reposição/);assert.match(r.grupo,/Reposição na aula em grupo/);
+  });
+  assert.deepEqual(errosA,[]);await ca.close();
  }finally{await browser.close();server.close();}
  console.log('\n✅ '+count+' verificações · usa o saldo que o aluno tem antes de cobrar extra');
 })().catch(e=>{console.error('❌',e);server.close();process.exit(1);});

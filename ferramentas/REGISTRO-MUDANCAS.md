@@ -29,7 +29,16 @@ usado por `togglePresencaUm` e `aulaRealizada`):
   marcar de novo contava duas).
 - Nada foi corrigido em saldo já gravado: para refazer uma aula antiga, o João
   desmarca e marca o ✓ de novo.
-- Teste: `testar-presenca-sem-credito-browser.cjs` (11, dados fictícios).
+- **Reposição por tipo (pedido do João, 23/10):** aluno só de grupo repõe em aula
+  de grupo; só particular, em aula particular (`tipoReposDe`/`reposServePara` na
+  Gestão, `tipoReposAluno`/`reposServeAqui` no app do aluno; tipo sai do plano,
+  ou do campo tipo sem plano). Na Gestão, o ✓ e o cartão não usam reposição do
+  outro tipo (horário de reposição do tipo errado sai do crédito do horário ou
+  vira extra, com aviso). No app do aluno, o botão de reposição só aparece no
+  tipo certo, `pickAula` barra e o assistente de voz orienta o aluno de grupo.
+  Misto continua usando nos dois: o saldo de reposição é um só e a sobra dos
+  dois planos já entrou junta — separar exigiria um saldo novo.
+- Teste: `testar-presenca-sem-credito-browser.cjs` (14, dados fictícios).
 
 ---
 
