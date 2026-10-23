@@ -4193,21 +4193,36 @@ function saldoDisponivel(a,campo){
   if(campo==='credGrupo'&&unificado(a))campo='creditos';
   return Math.max(0,Number(a[campo])||0);
 }
-function debitarDoBanco(a,ordem,campoExtra,c,k,motivos){
+/* De onde sai uma aula: a ordem dos saldos para o tipo do horário. Única
+   fonte da regra — o ✓, o cartão e a prévia da voz usam esta mesma ordem. */
+function ordemDoDebito(a,ehGrupo,ehRepo){
+  const campoTipo=ehGrupo?'credGrupo':'creditos';
+  const podeRepos=reposServePara(a,ehGrupo?'grupo':'part');
+  const ordem=(ehRepo?['repos',campoTipo]:[campoTipo,'repos']).filter(cp=>cp!=='repos'||podeRepos);
+  return {ordem,campoTipo,podeRepos};
+}
+/* Só a conta, sem gravar nada. disp(cp) dá o saldo disponível; sem ele, o
+   saldo de agora (a prévia da voz passa um saldo simulado para lotes). */
+function calcularDebito(a,ordem,campoExtra,c,disp){
+  const ver=disp||(cp=>saldoDisponivel(a,cp));
   const partes={};let resta=c;
   ordem.forEach(cp=>{
     if(resta<=1e-9)return;
-    const t=r2(Math.min(saldoDisponivel(a,cp),resta));
+    const t=r2(Math.min(Math.max(0,ver(cp)),resta));
     if(t>0){partes[cp]=t;resta=r2(resta-t);}
   });
   const extra=resta>1e-9?resta:0;
   if(extra)partes[campoExtra]=r2((partes[campoExtra]||0)+extra);
-  ordem.concat(ordem.indexOf(campoExtra)<0?[campoExtra]:[]).forEach(cp=>{
-    if(partes[cp])mover(a,cp,-partes[cp],(motivos&&motivos[cp])||MOTIVO_DEBITO[cp],k);
-  });
   const fontes=Object.keys(partes).filter(cp=>r2(partes[cp]-(cp===campoExtra?extra:0))>0);
-  return {partes,extra,campoExtra,soRepos:partes.repos>=c-1e-9,
+  return {partes,extra,campoExtra,ordem,soRepos:partes.repos>=c-1e-9,
           natural:fontes.length<=1&&(fontes[0]||campoExtra)===ordem[0]};
+}
+function debitarDoBanco(a,ordem,campoExtra,c,k,motivos){
+  const d=calcularDebito(a,ordem,campoExtra,c);
+  ordem.concat(ordem.indexOf(campoExtra)<0?[campoExtra]:[]).forEach(cp=>{
+    if(d.partes[cp])mover(a,cp,-d.partes[cp],(motivos&&motivos[cp])||MOTIVO_DEBITO[cp],k);
+  });
+  return d;
 }
 /* "1 do crédito + ½ da reposição" — só quando saiu de mais de um saldo ou de
    um saldo diferente do natural; o caso comum mantém o aviso de sempre. */
@@ -4311,10 +4326,8 @@ function togglePresencaUm(entryId){
     }else{
       /* Aula (particular, grupo ou reposição): usa o que o aluno já tem — ver
          debitarDoBanco(). Só o que nenhum saldo cobre fica negativo (extra). */
-      const tipoSlot=isGrp?'grupo':'aula', campoTipo=isGrp?'credGrupo':'creditos';
       /* Reposição de grupo não paga aula particular e vice-versa. */
-      const podeRepos=reposServePara(a,isGrp?'grupo':'part');
-      const ordem=(isRepo?['repos',campoTipo]:[campoTipo,'repos']).filter(cp=>cp!=='repos'||podeRepos);
+      const tipoSlot=isGrp?'grupo':'aula', {ordem,campoTipo,podeRepos}=ordemDoDebito(a,isGrp,isRepo);
       const d=debitarDoBanco(a,ordem,campoTipo,c,k);
       const nota=(isRepo&&!podeRepos)?' (a reposição de '+a.nome.split(' ')[0]+' é de aula '+(isGrp?'particular':'em grupo')+', não vale aqui)':'';
       if(nota)d.natural=false;
@@ -5863,8 +5876,7 @@ function aulaRealizada(id,modo,custo,hora){
   DB.presencas.push(reg);
   /* Mesma regra do ✓ da agenda: primeiro o saldo do tipo (grupo nunca usa o
      particular), depois a reposição válida; só o resto vira extra. */
-  const campoTipo=modo==='grupo'?'credGrupo':'creditos';
-  const ordemC=reposServePara(a,modo==='grupo'?'grupo':'part')?[campoTipo,'repos']:[campoTipo];
+  const {ordem:ordemC,campoTipo}=ordemDoDebito(a,modo==='grupo',false);
   const d=debitarDoBanco(a,ordemC,campoTipo,c,k,
     {creditos:'Aula realizada',credGrupo:'Aula em grupo realizada'});
   if(d.soRepos)reg.tipo=reg.modo='reposicao';

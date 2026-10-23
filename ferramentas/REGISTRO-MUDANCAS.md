@@ -39,6 +39,22 @@ usado por `togglePresencaUm` e `aulaRealizada`):
   Misto continua usando nos dois: o saldo de reposição é um só e a sobra dos
   dois planos já entrou junta — separar exigiria um saldo novo.
 - Teste: `testar-presenca-sem-credito-browser.cjs` (14, dados fictícios).
+- **Revisão do PR (23/10), 4 pontos:**
+  1. Voz, presença em lote: `aplicarEspecial` chamava `togglePresenca`, que
+     oferece marcar a família; com o casal no lote, a 1ª passagem marcava os
+     dois e a 2ª desmarcava. Agora só os alvos da prévia confirmada, cada um
+     com `togglePresencaUm`. Pedido de um só avisa na prévia quem da família
+     está na aula sem ✓ (não marca junto).
+  2. Voz, prévia: usa a mesma conta do ✓ (`ordemDoDebito` + `calcularDebito`,
+     extraídos de `debitarDoBanco`), com saldo simulado em lote. Sem crédito e
+     com reposição mostra a reposição; horário de reposição sem reposição usa
+     o crédito (antes recusava).
+  3. Servidor de avisos: entrega anotada por aparelho; 429 num aparelho não
+     fecha o aviso dos outros nem impede a nova tentativa.
+  4. Servidor de avisos: limite de 6 por aparelho enviado, não por aviso (7
+     aparelhos = 6 agora e 1 na próxima rodada).
+  Testes novos em `testar-voz-conversa-browser.cjs` (4) e
+  `testar-servidor-avisos.mjs` (2); conferido que falham no código antigo.
 
 ---
 

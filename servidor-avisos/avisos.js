@@ -193,22 +193,33 @@ export async function rodar(env, opcoes = {}) {
   const upd = {}, res = { ok: true, entregues: 0, semAparelho: 0, removidos: 0, adiados: 0, falhas: 0 };
   let envios = 0;
   const saiu = new Set(); // aparelho que o serviço de push disse que não existe mais
+  /* A entrega é anotada por APARELHO (avisos_enviados/<aviso>~<uid>~<app>):
+     se um recebe e o outro dá erro passageiro (429, serviço fora), só o que
+     falhou tenta de novo na rodada seguinte. O aviso inteiro só fecha
+     (avisos_enviados/<aviso>) quando não sobra aparelho por entregar. */
+  const chaveAparelho = (id, a) => id + '~' + a.uid + '~' + a.app;
   for (const { id, it } of fila_envio) {
-    const alvos = destinos(it).map(([uid, app]) => ({ uid, app, sub: tokens[uid] && tokens[uid][app] })).filter(x => x.sub && !saiu.has(x.uid + '/' + x.app));
-    if (!alvos.length) { upd['avisos_enviados/' + id] = agora; res.semAparelho++; continue; }
-    if (envios > 0 && envios + alvos.length > MAX_ENVIOS) { res.adiados++; continue; }
+    const todos = destinos(it).map(([uid, app]) => ({ uid, app, sub: tokens[uid] && tokens[uid][app] })).filter(x => x.sub && !saiu.has(x.uid + '/' + x.app));
+    if (!todos.length) { upd['avisos_enviados/' + id] = agora; res.semAparelho++; continue; }
+    const alvos = todos.filter(a => !enviados[chaveAparelho(id, a)]);
+    if (!alvos.length) { upd['avisos_enviados/' + id] = agora; continue; }   // todos já tinham recebido
+    // Limite por aparelho, não por aviso: um aviso com 7 aparelhos manda 6
+    // agora e o 7º na próxima rodada.
+    const vez = alvos.slice(0, Math.max(0, MAX_ENVIOS - envios));
+    if (!vez.length) { res.adiados++; continue; }
     const dados = { t: String(it.t).slice(0, 120), c: String(it.c || '').slice(0, 300), g: String(it.g || it.tipo || 'jvtenis').slice(0, 60) };
-    let algum = false, temporario = false;
-    for (const a of alvos) {
+    let algum = false, pendente = vez.length < alvos.length;
+    for (const a of vez) {
       envios++;
       let r;
       try { r = await enviarPush(a.sub, dados, vapid, agora, f); } catch (_) { r = { status: -1 }; }
-      if (r.status >= 200 && r.status < 300) algum = true;
+      if (r.status >= 200 && r.status < 300) { algum = true; upd['avisos_enviados/' + chaveAparelho(id, a)] = agora; }
       else if (r.invalida) { upd['avisos_tokens/' + a.uid + '/' + a.app] = null; saiu.add(a.uid + '/' + a.app); res.removidos++; }
-      else { temporario = true; res.falhas++; }
+      else { pendente = true; res.falhas++; }   // passageira: só este aparelho tenta de novo
     }
-    // Falha passageira (serviço fora, 429) tenta de novo na próxima rodada.
-    if (algum || !temporario) { upd['avisos_enviados/' + id] = agora; if (algum) res.entregues++; }
+    if (algum) res.entregues++;
+    if (pendente) { if (vez.length < alvos.length) res.adiados++; }
+    else upd['avisos_enviados/' + id] = agora;
   }
   for (const [id, ts] of Object.entries(enviados)) if (agora - Number(ts) > GUARDA_ENVIADOS_MS) upd['avisos_enviados/' + id] = null;
   upd.avisos_estado = { ts: agora, chave: vapid.pub, entregues: res.entregues, adiados: res.adiados, falhas: res.falhas };

@@ -344,6 +344,56 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
    assert.equal(v[0],'presenca');assert.equal(v[1],'presenca');assert.notEqual(v[2],'presenca','“lista de presença” não é ordem');
    assert.match(v[3],/toque no ✓ da aula na agenda/);assert.notEqual(v[4],'presenca','passado é pergunta');
   });
+  /* Revisão do #260: o lote da voz passava por togglePresenca, que oferece
+     marcar a família junto. Com duas pessoas da mesma família no lote, a 1ª
+     passagem marcava as duas e a 2ª desmarcava (aceitando as confirmações). */
+  const familia=async()=>{await reset();await p.evaluate(()=>{
+   const du=DB.alunos.find(x=>x.id==='duda'),ed=DB.alunos.find(x=>x.id==='edu');du.credGrupo=2;ed.credGrupo=2;
+   Object.assign(ed,{responsavelId:'duda',parentesco:'Cônjuge',mensalidade:0});
+   DB.agenda.fixos.push({id:'f8',alunoId:'duda',titulo:'Duda Teste',dia:4,hora:'11:00',tipo:'grupo',pessoas:2,desde:'2026-09-01'},
+    {id:'f9',alunoId:'edu',titulo:'Edu Teste',dia:4,hora:'11:00',tipo:'grupo',pessoas:2,desde:'2026-09-01'});
+   window.__confirms=0;window.confirm=()=>{__confirms++;return true;};});await abrir();};
+  await check('presença de todos pela voz com casal na mesma aula: marca os dois uma vez só (não desfaz a família)',async()=>{
+   await familia();await falar('Marcar presença de todos de hoje');
+   await p.waitForFunction(()=>!document.getElementById('voz-confirmar').disabled);
+   const prev=await p.locator('#voz-previa').innerText();
+   assert.match(prev,/11:00 Duda Teste — aula em grupo · créditos de grupo 2 → 1/);assert.match(prev,/11:00 Edu Teste — aula em grupo · créditos de grupo 2 → 1/);
+   await p.evaluate(()=>JVAcoesVoz.executar());await p.waitForFunction(()=>/salvo na nuvem/.test(document.getElementById('voz-resultado').innerText));
+   const r=await p.evaluate(()=>({g:DB.alunos.filter(x=>['duda','edu'].includes(x.id)).map(x=>x.credGrupo),
+    pres:DB.presencas.filter(x=>x.hora==='11:00').map(x=>x.alunoId+'|'+x.tipo).sort(),conf:__confirms}));
+   assert.deepEqual(r.pres,['duda|grupo','edu|grupo'],'os dois com presença no fim');assert.deepEqual(r.g,[1,1],'cada um desconta uma vez');
+   assert.equal(r.conf,0,'o lote não pergunta pela família de novo');
+  });
+  await check('presença de um da família pela voz: marca só ele e avisa quem da família está na aula',async()=>{
+   await familia();await falar('Marcar presença da Duda hoje');
+   await p.waitForFunction(()=>!document.getElementById('voz-confirmar').disabled);
+   assert.match(await p.locator('#voz-previa').innerText(),/Da mesma família na aula, sem ✓: Edu Teste \(11:00\)/);
+   await p.evaluate(()=>JVAcoesVoz.executar());await p.waitForFunction(()=>/salvo na nuvem/.test(document.getElementById('voz-resultado').innerText));
+   const r=await p.evaluate(()=>({pres:DB.presencas.map(x=>x.alunoId),g:DB.alunos.filter(x=>['duda','edu'].includes(x.id)).map(x=>x.credGrupo),conf:__confirms}));
+   assert.deepEqual(r.pres,['duda']);assert.deepEqual(r.g,[1,2]);assert.equal(r.conf,0);
+  });
+  /* A prévia da voz usa a mesma conta do ✓ (#260): sem crédito, sai da
+     reposição; horário de reposição sem reposição, sai do crédito. */
+  await check('prévia da voz = regra do ✓: sem crédito e com reposição, a prévia e o resultado usam a reposição',async()=>{
+   const ts=AGORA.getTime();
+   await reset({movs:[{ts,alunoId:'ana',campo:'repos',delta:5,de:0,para:5,motivo:'Sobra do mês virou reposição',ref:''}]});
+   await p.evaluate(()=>{const a=DB.alunos.find(x=>x.id==='ana');a.creditos=0;a.repos=5;});await abrir();
+   await falar('Marcar presença da Ana hoje');await p.waitForFunction(()=>!document.getElementById('voz-confirmar').disabled);
+   const prev=await p.locator('#voz-previa').innerText();
+   assert.match(prev,/09:00 Ana Teste — aula particular · reposições 5 → 4/);assert.doesNotMatch(prev,/créditos 0 → -1/);
+   await p.evaluate(()=>JVAcoesVoz.executar());await p.waitForFunction(()=>/salvo na nuvem/.test(document.getElementById('voz-resultado').innerText));
+   assert.deepEqual(await p.evaluate(()=>{const a=DB.alunos.find(x=>x.id==='ana');return [a.creditos,a.repos];}),[0,4],'executou o que a prévia mostrou');
+  });
+  await check('prévia da voz = regra do ✓: horário de reposição sem reposição usa o crédito; lote soma em sequência',async()=>{
+   await reset({});
+   await p.evaluate(()=>{DB.agenda.eventos.push({id:'e3',alunoId:'ana',titulo:'Ana Teste',data:'2026-10-15',hora:'10:00',tipo:'aula',repo:1});});await abrir();
+   await falar('Marcar presença da Ana hoje');await p.waitForFunction(()=>!document.getElementById('voz-confirmar').disabled);
+   const prev=await p.locator('#voz-previa').innerText();
+   assert.match(prev,/09:00 Ana Teste — aula particular · créditos 3 → 2/);assert.match(prev,/10:00 Ana Teste — reposição · créditos 2 → 1/);
+   assert.doesNotMatch(prev,/sem reposição para descontar/);
+   await p.evaluate(()=>JVAcoesVoz.executar());await p.waitForFunction(()=>/salvo na nuvem/.test(document.getElementById('voz-resultado').innerText));
+   assert.deepEqual(await p.evaluate(()=>{const a=DB.alunos.find(x=>x.id==='ana');return [a.creditos,a.repos,DB.presencas.length];}),[1,0,2]);
+  });
   await check('cobrar a Ana abre o WhatsApp com a mensagem do mês de hoje; cobrar quem está devendo lista um botão por aluno',async()=>{
    await reset();
    await p.evaluate(()=>{DB.alunos.find(x=>x.id==='ana').tel='(11) 99999-0000';curMonth=8;window.__abertos=[];window.open=(u,alvo)=>{__abertos.push(u);return null;};});

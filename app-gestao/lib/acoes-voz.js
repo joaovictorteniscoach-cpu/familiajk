@@ -840,7 +840,7 @@ function planoEspecial(i){
  if(i.acao==='presenca'){
   const hoje=dataBase(),agora=agoraMinSP();
   if(i.data>hoje)throw Error('Essa aula ainda não aconteceu. Marque a presença no dia.');
-  const d=new Date(i.data+'T12:00:00'),pres=new Map((DB.presencas||[]).map(p=>[p.k,p])),alvos=[],avisos=[],saldo={};
+  const d=new Date(i.data+'T12:00:00'),pres=new Map((DB.presencas||[]).map(p=>[p.k,p])),alvos=[],avisos=[],saldo={},bruto={};
   aulasDoDia(d).aulas.forEach(au=>{
    if(i.hora&&au.hora!==i.hora)return;
    au.entradas.forEach(e=>{
@@ -852,15 +852,33 @@ function planoEspecial(i){
     if(ja){if(i.alunoId||ehMarca(ja))avisos.push(quem+(ehFalta(ja)?' está com falta, confira pela agenda':ehAvisou(ja)?' avisou que não vem, confira pela agenda':' já está com presença marcada'));return;}
     const cartao=(DB.presencas||[]).some(p=>p.alunoId===a.id&&p.data===i.data&&p.manual&&!p.extra&&!ehMarca(p)&&(p.tipo||p.modo||'aula')!=='locacao'&&(p.tipo||p.modo)!=='torneio');
     if(cartao){avisos.push(quem+' já tem aula lançada pelo cartão nesse dia, confirme pela agenda');return;}
-    const campo=e.repo?'repos':e.tipo==='grupo'&&!unificado(a)?'credGrupo':'creditos',ch=a.id+'|'+campo;
-    const antes=ch in saldo?saldo[ch]:Number(a[campo])||0;   // duas aulas no dia: a segunda parte do saldo já descontado
-    if(e.repo&&antes<1){avisos.push(quem+' sem reposição para descontar');return;}
-    saldo[ch]=antes-1;
-    alvos.push({id:e.id,alunoId:a.id,nome:a.nome,hora:au.hora,campo,antes,tipo:e.repo?'reposição':tipoAula(au).toLowerCase()});
+    /* Mesma conta do ✓ (ordemDoDebito/calcularDebito em app-gestao.js):
+       saldo do tipo → reposição válida do tipo certo → só o resto vira extra.
+       Em lote, cada aula parte do saldo que as anteriores já usaram. */
+    const c=creditoSlot(au.hora),ehGrp=e.tipo==='grupo',{ordem,campoTipo,podeRepos}=ordemDoDebito(a,ehGrp,!!e.repo);
+    const real=cp=>cp==='credGrupo'&&unificado(a)?'creditos':cp,chave=cp=>a.id+'|'+real(cp);
+    const disp=cp=>{const ch=chave(cp);if(!(ch in saldo))saldo[ch]=real(cp)==='repos'?Math.max(0,reposValidas(a)):Math.max(0,Number(a[real(cp)])||0);return saldo[ch];};
+    const deb=calcularDebito(a,ordem,campoTipo,c,disp);
+    const mud=Object.keys(deb.partes).map(cp=>{
+     const ch=chave(cp),usa=r2(deb.partes[cp]-(cp===deb.campoExtra?deb.extra:0));
+     if(usa>0)saldo[ch]=r2(disp(cp)-usa);
+     const antes=ch in bruto?bruto[ch]:Number(a[real(cp)])||0;bruto[ch]=r2(antes-deb.partes[cp]);
+     return {campo:real(cp),antes,depois:bruto[ch]};
+    });
+    const nota=(e.repo&&!podeRepos)?' (a reposição é de aula '+(ehGrp?'particular':'em grupo')+', não vale aqui)':'';
+    alvos.push({id:e.id,alunoId:a.id,nome:a.nome,hora:au.hora,mud,extra:deb.extra,nota,tipo:e.repo?'reposição':tipoAula(au).toLowerCase()});
    });
   });
   if(!alvos.length)throw Error((avisos.length?avisos.join('; ')+'. ':'')+'Não encontrei aula para marcar presença '+quandoTxt(i.data)+(i.hora?' às '+i.hora:'')+'.');
-  return {alvos,avisos};
+  /* Família na mesma aula em grupo: a voz não marca junto (só o que está na
+     prévia), mas avisa, como a agenda faria. */
+  const familia=[];
+  if(i.alunoId)alvos.forEach(x=>{
+   const a=DB.alunos.find(y=>y.id===x.alunoId);let fam=[];try{fam=familiaDoAluno(a)||[];}catch(e){}
+   fam.forEach(m=>{const eM=entriesFor(d,x.hora).find(e=>e.alunoId===m.id&&e.tipo==='grupo');
+    if(eM&&!pres.get(presId(eM,d))&&!alvos.some(y=>y.id===eM.id))familia.push(m.nome+' ('+x.hora+')');});
+  });
+  return {alvos,avisos,familia};
  }
  if(i.acao==='cobrar'){
   const mk=dataBase().slice(0,7),pend=a=>{try{return pendenteDoFechamento(a,mk);}catch(e){return false;}};
@@ -876,7 +894,7 @@ function planoEspecial(i){
 const CAMPO_TXT={creditos:'créditos',credGrupo:'créditos de grupo',repos:'reposições'};
 function textoEspecial(i,plano){
  if(i.acao==='presenca')return {titulo:'Marcar presença',
-  linhas:[quandoTxt(i.data)+': '+plural(plano.alvos.length,'aula','aulas')].concat(plano.alvos.map(x=>x.hora+' '+x.nome+' — '+x.tipo+' · '+CAMPO_TXT[x.campo]+' '+fmtCred(x.antes)+' → '+fmtCred(x.antes-1))).concat(plano.avisos.length?['Fica de fora: '+plano.avisos.join('; ')+'.']:[]),
+  linhas:[quandoTxt(i.data)+': '+plural(plano.alvos.length,'aula','aulas')].concat(plano.alvos.map(x=>x.hora+' '+x.nome+' — '+x.tipo+' · '+x.mud.map(m=>CAMPO_TXT[m.campo]+' '+fmtCred(m.antes)+' → '+fmtCred(m.depois)).join(' + ')+(x.extra?' ('+fmtCred(x.extra)+' extra a cobrar)':'')+(x.nota||''))).concat(plano.avisos.length?['Fica de fora: '+plano.avisos.join('; ')+'.']:[]).concat((plano.familia||[]).length?['Da mesma família na aula, sem ✓: '+plano.familia.join(', ')+'. Para marcar, peça a presença também.']:[]),
   nota:'É o mesmo ✓ da agenda: desconta a aula do saldo. Para desfazer, toque no ✓ da aula na agenda.',botao:plano.alvos.length>1?'Confirmar '+plano.alvos.length+' presenças':'Confirmar presença'};
  if(i.acao==='cobrar'){
   const mk=dataBase().slice(0,7),mes=MESES[Number(mk.slice(5,7))-1].toLowerCase(),als=plano.ids.map(id=>DB.alunos.find(a=>a.id===id)).filter(Boolean);
@@ -945,9 +963,14 @@ function aplicarEspecial(i){
   }
   persist();try{renderAgenda();}catch(e){}try{publicarMapaQuadra();}catch(e){}
  }else if(i.acao==='presenca'){
+  /* Só os alvos da prévia confirmada, cada um com o ✓ individual. O
+     togglePresenca da agenda oferece marcar a família junto: num lote com
+     duas pessoas da mesma família, a 1ª passagem marcava as duas e a 2ª
+     desmarcava. Quem ainda está no plano de agora (sem ✓) é que recebe. */
+  const conf=new Set(((JSON.parse(i.plano||'{}').alvos)||[]).map(x=>x.id));
   const plano=planoEspecial(i);
   const volta=agDate;
-  try{plano.alvos.forEach(x=>{agDate=new Date(i.data+'T12:00:00');togglePresenca(x.id);});}
+  try{plano.alvos.filter(x=>conf.has(x.id)).forEach(x=>{agDate=new Date(i.data+'T12:00:00');togglePresencaUm(x.id);});}
   finally{agDate=volta;try{renderAgenda();}catch(e){}}
  }else if(i.acao==='chuva'){
   const d=new Date(i.data+'T12:00:00');
