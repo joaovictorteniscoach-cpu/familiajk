@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-22-1';
+const VERSAO='2026-10-23-1';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -4158,6 +4158,54 @@ function togglePresenca(entryId){
     }
   });
 }
+/* Usar o que o aluno já tem antes de gerar aula extra (pedido do João, 22–23/10).
+   A aula sai primeiro do saldo do próprio tipo (particular ou grupo); o que ele
+   não cobre sai da reposição VÁLIDA — o banco de horas, que já junta a sobra
+   particular e a de grupo na virada. Horário marcado como reposição faz o
+   caminho inverso: reposição primeiro, depois o crédito do mês do tipo do
+   horário. Só o que nenhum saldo cobre fica negativo no saldo do tipo: é a
+   aula extra a cobrar. Grupo não usa crédito particular do mês (e vice-versa):
+   são produtos diferentes. Locação tem saldo próprio (horas) e torneio não
+   desconta. Cada parte vai ao extrato com a mesma chave; desmarcar devolve
+   parte por parte (estornoPorRef). */
+const MOTIVO_DEBITO={creditos:'Presença na agenda',credGrupo:'Aula em grupo na agenda',repos:'Reposição na agenda'};
+const r2=x=>Math.round(x*100)/100;
+function saldoDisponivel(a,campo){
+  if(campo==='repos')return Math.max(0,reposValidas(a));
+  if(campo==='credGrupo'&&unificado(a))campo='creditos';
+  return Math.max(0,Number(a[campo])||0);
+}
+function debitarDoBanco(a,ordem,campoExtra,c,k,motivos){
+  const partes={};let resta=c;
+  ordem.forEach(cp=>{
+    if(resta<=1e-9)return;
+    const t=r2(Math.min(saldoDisponivel(a,cp),resta));
+    if(t>0){partes[cp]=t;resta=r2(resta-t);}
+  });
+  const extra=resta>1e-9?resta:0;
+  if(extra)partes[campoExtra]=r2((partes[campoExtra]||0)+extra);
+  ordem.concat(ordem.indexOf(campoExtra)<0?[campoExtra]:[]).forEach(cp=>{
+    if(partes[cp])mover(a,cp,-partes[cp],(motivos&&motivos[cp])||MOTIVO_DEBITO[cp],k);
+  });
+  const fontes=Object.keys(partes).filter(cp=>r2(partes[cp]-(cp===campoExtra?extra:0))>0);
+  return {partes,extra,campoExtra,soRepos:partes.repos>=c-1e-9,
+          natural:fontes.length<=1&&(fontes[0]||campoExtra)===ordem[0]};
+}
+/* "1 do crédito + ½ da reposição" — só quando saiu de mais de um saldo ou de
+   um saldo diferente do natural; o caso comum mantém o aviso de sempre. */
+function textoDebito(a,d){
+  const nome={creditos:'do crédito do mês',credGrupo:'do crédito de grupo',repos:'da reposição'};
+  const ps=Object.keys(d.partes).map(cp=>{
+    const v=r2(d.partes[cp]-(cp===d.campoExtra?d.extra:0));
+    return v>0?fmtCred(v)+' '+nome[cp]:'';
+  }).filter(Boolean);
+  if(d.extra)ps.push(fmtCred(d.extra)+' extra a cobrar');
+  const saldos=[];
+  if(d.partes.creditos!=null)saldos.push(fmtCred(a.creditos)+' créditos');
+  if(d.partes.credGrupo!=null)saldos.push(unificado(a)?fmtCred(a.creditos)+' créditos':fmtCred(a.credGrupo)+' de grupo');
+  if(d.partes.repos!=null)saldos.push(fmtCred(a.repos)+' reposições');
+  return ps.join(' + ')+' → '+saldos.join(' · ');
+}
 function togglePresencaUm(entryId){
   let entry=null;
   HORAS.forEach(h=>entriesFor(agDate,h).forEach(e=>{if(e.id===entryId)entry=e;}));
@@ -4242,16 +4290,29 @@ function togglePresencaUm(entryId){
     }else if(isLoc){
       mover(a,'locCred',-c,'Locação na agenda',k);DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo:'locacao',custo:c});
       logAct('Marcar locação: '+a.nome);toast('🔑 Locação ('+c+'h) · '+a.nome+' → '+fmtCred(a.locCred)+'h'+(a.locCred<0?' (devendo)':' restantes'));
-    }else if(isGrp&&!isRepo){
-      mover(a,'credGrupo',-c,'Aula em grupo na agenda',k);DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo:'grupo',custo:c});
-      logAct('Marcar aula em grupo: '+a.nome);toast('👥 Aula em grupo · '+a.nome+' → '+(unificado(a)?fmtCred(a.creditos)+' créditos':fmtCred(a.credGrupo)+' de grupo'));
-    }else if(isRepo){
-      if((Number(a.repos)||0) < c-1e-9){toast(a.nome+' não tem reposições suficientes ('+fmtCred(a.repos)+')');return;}
-      mover(a,'repos',-c,'Reposição na agenda',k);DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo:'reposicao',custo:c});
-      logAct('Marcar reposição: '+a.nome);toast('✓ Reposição ('+(c===0.5?'½ aula':'1 aula')+') · '+a.nome+' → '+fmtCred(a.repos)+' reposições');
     }else{
-      mover(a,'creditos',-c,'Presença na agenda',k);DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo:'aula',custo:c});   // permite ficar negativo
-      logAct('Marcar presença: '+a.nome);toast('✓ Presença ('+(c===0.5?'½ aula':'1 aula')+') · '+a.nome+' → '+fmtCred(a.creditos)+' créditos');
+      /* Aula (particular, grupo ou reposição): usa o que o aluno já tem — ver
+         debitarDoBanco(). Só o que nenhum saldo cobre fica negativo (extra). */
+      const tipoSlot=isGrp?'grupo':'aula', campoTipo=isGrp?'credGrupo':'creditos';
+      const ordem=isRepo?['repos',campoTipo]:[campoTipo,'repos'];
+      const d=debitarDoBanco(a,ordem,campoTipo,c,k);
+      /* Tipo gravado = de onde a aula saiu: toda (ou, num horário de reposição,
+         parte) da reposição conta como reposição no fechamento. */
+      const tipo=(d.soRepos||(isRepo&&d.partes.repos))?'reposicao':tipoSlot;
+      const reg={k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo,custo:c};
+      if(!d.natural)reg.partes=d.partes;
+      DB.presencas.push(reg);
+      const qt=(c===0.5?'½ aula':'1 aula');
+      if(!d.natural){
+        logAct('Marcar '+(isRepo?'reposição':isGrp?'aula em grupo':'presença')+' (usou outro saldo): '+a.nome);
+        toast('✓ '+(isRepo?'Reposição':isGrp?'Aula em grupo':'Presença')+' ('+qt+') · '+a.nome+': '+textoDebito(a,d));
+      }else if(isRepo){
+        logAct('Marcar reposição: '+a.nome);toast('✓ Reposição ('+qt+') · '+a.nome+' → '+fmtCred(a.repos)+' reposições');
+      }else if(isGrp){
+        logAct('Marcar aula em grupo: '+a.nome);toast('👥 Aula em grupo · '+a.nome+' → '+(unificado(a)?fmtCred(a.creditos)+' créditos':fmtCred(a.credGrupo)+' de grupo'));
+      }else{
+        logAct('Marcar presença: '+a.nome);toast('✓ Presença ('+qt+') · '+a.nome+' → '+fmtCred(a.creditos)+' créditos');
+      }
     }
   }
   persist();renderAgenda();renderAlunos();renderDash();
@@ -5778,14 +5839,24 @@ function aulaRealizada(id,modo,custo,hora){
   const reg={k,alunoId:a.id,data:hoje,hora:hora||'—',manual:true,modo:modo||'aula',tipo:modo||'aula',custo:c};
   if(ehExtra)reg.extra=true;
   DB.presencas.push(reg);
-  if(modo==='grupo'){            // sai do saldo de grupo, nunca do de particular
-    mover(a,'credGrupo',-c,'Aula em grupo realizada',k);
+  /* Mesma regra do ✓ da agenda: primeiro o saldo do tipo (grupo nunca usa o
+     particular), depois a reposição válida; só o resto vira extra. */
+  const campoTipo=modo==='grupo'?'credGrupo':'creditos';
+  const d=debitarDoBanco(a,[campoTipo,'repos'],campoTipo,c,k,
+    {creditos:'Aula realizada',credGrupo:'Aula em grupo realizada'});
+  if(d.soRepos)reg.tipo=reg.modo='reposicao';
+  if(!d.natural){
+    reg.partes=d.partes;
+    persist();renderAll();pulsarCredito(a.id);
+    toastDesfazer('Aula registrada · '+a.nome+': '+textoDebito(a,d),()=>desfazerAula(id,k,d.soRepos?'reposicao':modo));
+    return;
+  }
+  if(modo==='grupo'){
     persist();renderAll();pulsarCredito(a.id);
     const extra=a.credGrupo<0?(' · extra de grupo a cobrar: '+fmt(valorAulaGrupoDe(a))):'';
     toastDesfazer('👥 Aula em grupo · '+a.nome+' → '+fmtCred(a.credGrupo)+' de grupo'+extra,()=>desfazerAula(id,k,'grupo'));
     return;
   }
-  mover(a,'creditos',-c,'Aula realizada',k);   // permite ficar negativo: aula além do pacote
   persist();renderAll();pulsarCredito(a.id);
   const extra=a.creditos<0?(' · aula extra a cobrar: '+fmt(valorAulaDe(a))):'';
   toastDesfazer('Aula registrada · '+a.nome+' → '+fmtCred(a.creditos)+(a.creditos<0?' aulas':' créditos')+extra,()=>desfazerAula(id,k,modo));
@@ -5806,7 +5877,7 @@ function desfazerAula(id,k,modo){
   const dev=estornoPorRef(a,k,reg);
   Object.keys(dev).forEach(cp=>mover(a,cp,dev[cp],'Aula desfeita',k));
   persist();renderAll();pulsarCredito(a.id);
-  toast('↩️ Desfeito · '+a.nome+' → '+fmtCred(modo==='grupo'?a.credGrupo:a.creditos)+(modo==='grupo'?' de grupo':' créditos'));
+  toast('↩️ Desfeito · '+a.nome+' → '+(modo==='grupo'?fmtCred(a.credGrupo)+' de grupo':modo==='reposicao'?fmtCred(a.repos)+' reposições':fmtCred(a.creditos)+' créditos'));
 }
 /* O número mudou: dá um pulso no chip para o toque ter resposta visível. */
 function pulsarCredito(id){
@@ -6911,7 +6982,10 @@ function fcAulasDoMes(a,mk){
         const chaveSlot=dKey(data)+'|'+hora;
         if(jaEntrou.has(chaveSlot))return;
         jaEntrou.add(chaveSlot);
-        const tipo=e.repo?'reposicao':(e.tipo==='grupo'?'grupo':'aula');
+        /* Com ✓, vale o que foi debitado (aula sem crédito que saiu da
+           reposição, reposição sem saldo que saiu do crédito); sem ✓, a agenda. */
+        const tipoReg=reg&&['aula','grupo','reposicao'].indexOf(reg.tipo)>=0?reg.tipo:null;
+        const tipo=tipoReg||(e.repo?'reposicao':(e.tipo==='grupo'?'grupo':'aula'));
         diasComAula.add(dKey(data));
         out.push({k,data:dKey(data),hora,tipo,repo:!!e.repo,
                   custo:reg?(Number(reg.custo)||0):creditoSlot(hora),
@@ -6956,7 +7030,10 @@ function fcConciliacao(a,mk){
   const renovado    =somaSe(s=>renovou.test(s),['creditos']);
   const renovadoGrp =somaSe(s=>renovou.test(s),['credGrupo']);
   const reposEntrou =somaSe(s=>s==='Sobra do mês virou reposição',['repos']);
-  const reposUsadas =-somaSe(s=>s==='Reposição na agenda',['repos']);
+  /* Líquido por aula: desmarcar e marcar de novo a mesma reposição contava
+     duas. Soma tudo o que mexeu na reposição com a chave de cada aula marcada. */
+  const refsRepo=new Set(doMes.filter(m=>m.campo==='repos'&&m.motivo==='Reposição na agenda'&&m.ref).map(m=>m.ref));
+  const reposUsadas =Math.max(0,-doMes.filter(m=>m.campo==='repos'&&refsRepo.has(m.ref)).reduce((t,m)=>t+(Number(m.delta)||0),0));
   const planoCad    =Number(a.plano)||0, planoGrp=Number(a.planoGrupo)||0;
 
   /* O que já passou e o que ainda vem são contas diferentes, e misturar as

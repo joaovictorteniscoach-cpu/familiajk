@@ -37,6 +37,7 @@ Sem build, sem npm: arquivos servidos como estão. Publicados: só as pastas em
 Use `grep -n` pelos títulos de seção (`/* ===== Título =====`) ou pelo nome da função:
 - Persistência/nuvem: `Camada de armazenamento`, `load()`, `persist()`, `Rede de segurança`, `Voltar a uma versão anterior`
 - Ledger de saldos: `mover(a,campo,delta,motivo,ref,exato)` grava em `DB.movs`; `estornoPorRef`; campos `creditos`, `credGrupo`, `repos`, `locCred`
+- Débito de aula no ✓/cartão: `debitarDoBanco` (saldo do tipo → reposição válida → só o resto vira extra; `textoDebito`)
 - Reposições: `REPOSIÇÕES` (lotes FIFO, validade 4 meses: `reposValidas`, `purgarReposVencidas`)
 - Pacote único: `Pacote único` (`unificado(a)`, `pacoteDoAluno`, `DB.pacoteUnico`)
 - Mês: `Renovar o mês`, `renovarMes(id)`, `Desconto de reposições`, `valorDoMes`, `Fechamento mensal`

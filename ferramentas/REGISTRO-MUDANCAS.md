@@ -8,6 +8,31 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-23 · Claude Code: o ✓ usa o saldo que o aluno tem antes de cobrar extra
+
+Versão 2026-10-23-1. Pedido do João: aluna sem crédito particular, mas com
+reposição sobrando, ficou com −1 ao levar o ✓. Agora (`debitarDoBanco`,
+usado por `togglePresencaUm` e `aulaRealizada`):
+- Particular: crédito do mês → reposição válida. Grupo: crédito de grupo →
+  reposição válida (a reposição já junta a sobra particular e a de grupo na
+  virada). Horário de reposição: reposição → crédito do tipo do horário (antes
+  recusava quando faltava reposição).
+- Só o que nenhum saldo cobre vira negativo no saldo do tipo (aula extra).
+  Saldo pela metade é usado e completado pelo próximo. Reposição vencida (4
+  meses) não é usada. Grupo não usa crédito particular do mês e vice-versa.
+- Locação continua só nas horas de locação; torneio não desconta.
+- Débito de reposição usa o motivo "Reposição na agenda" (relatórios iguais);
+  desmarcar devolve parte por parte pela chave (`estornoPorRef`). A presença
+  grava o tipo de onde saiu e `partes` quando usou outro saldo;
+  `fcAulasDoMes` usa o tipo gravado quando há ✓.
+- Fechamento: "Reposições usadas" passou a ser líquido por aula (desmarcar e
+  marcar de novo contava duas).
+- Nada foi corrigido em saldo já gravado: para refazer uma aula antiga, o João
+  desmarca e marca o ✓ de novo.
+- Teste: `testar-presenca-sem-credito-browser.cjs` (11, dados fictícios).
+
+---
+
 ## 2026-10-22 · Claude Code: Gestão cumprimenta ao tocar no microfone
 
 Pedido do João: ao tocar no microfone, o assistente já conversa com ele.
