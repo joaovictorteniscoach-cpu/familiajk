@@ -1957,3 +1957,27 @@ JV Gestão para fazer lançamentos, perguntas, extratos ou conferir valores".
   microfone do navegador ligados, contraste do painel; sincronização do CI,
   nuvem simulada, contas ligadas, aparelho novo; base da família migra idêntica
   à versão anterior. Nenhuma regra do Firebase, app da academia ou dado real.
+
+
+---
+
+## 2026-10-23 · Claude: Família JK — assistente cumprimenta pelo nome e responde falando (pedido do João)
+
+**Pedido explícito do João para o `app-familia/`:** "fala bom dia, boa tarde, boa
+noite conforme o horário, com o nome de quem está mexendo (eu ou minha esposa),
+pergunta como posso te ajudar, responde 'sim senhor, só um momento' e responde
+por áudio".
+
+- Saudação pelo relógio do aparelho: 5h–11h59 "Bom dia", 12h–17h59 "Boa tarde",
+  resto "Boa noite", + nome + "Como posso te ajudar?".
+- Quem usa o celular: perguntado uma vez (João ou Kassiana), guardado só no
+  aparelho (`jk-voz-quem`, não vai para a nuvem); botão "Quem usa este celular ·
+  trocar" no painel. Nome vem de `pesNome` (primeiro nome).
+- Depois de cada pedido: "Sim, senhor/senhora, só um momento." e então a
+  resposta na tela e falada (se "Responder por voz" estiver ligado).
+- Correção: parar o microfone (Enviar enquanto ouvia) trocava o aviso por
+  "Não ouvi nada"; `parar()` agora solta os eventos antes de parar.
+- Testes (dados fictícios): saudação 16 casos (manhã/tarde/noite, João/Kassiana,
+  trocar, sem nome), corrida do microfone, assistente 21, nuvem, contas ligadas,
+  aparelho novo, sincronização do CI; base da família idêntica à anterior.
+  Nenhuma regra do Firebase, app da academia ou dado real.

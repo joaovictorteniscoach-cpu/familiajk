@@ -59,3 +59,5 @@ body.jk-voz-aberto{overflow:hidden!important}
 #jk-voz-painel #jk-voz-previa label.jk-voz-largo,#jk-voz-painel #jk-voz-previa .jk-voz-row{grid-column:1/-1}
 #jk-voz-painel #jk-voz-previa .jk-voz-row{margin:12px 0 0}
 #jk-voz-painel .jk-voz-sugestoes button{flex:0 1 auto}
+/* quem usa este celular (fica só no aparelho) */
+#jk-voz-painel .jk-voz-quem{width:100%;margin:2px 0 6px;background:transparent;border-style:dashed;font-weight:600;color:#F6CF6A}
