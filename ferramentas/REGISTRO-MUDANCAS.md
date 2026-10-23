@@ -27,6 +27,8 @@ saldo ou fluxo mudou.
   26/09); `icones.js` do aluno ficou ~100 KB menor.
 - Emojis saíram de títulos e botões das telas (login, modais, Créditos, Perfil).
   Mensagens de WhatsApp, avisos no celular e marcas da agenda continuam iguais.
+- Aviso de renovação: link "fale comigo no WhatsApp" branco e sem transparência
+  (a varredura de contraste acusou 2,4 na tela de "subiu de nível").
 - `checar-design-premium.py` atualizado para o novo topo e cabeçalhos.
 - Gestão não mudou nesta etapa.
 

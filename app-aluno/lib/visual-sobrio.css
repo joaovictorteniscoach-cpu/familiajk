@@ -22,3 +22,7 @@ html body .jv-progress i{background:var(--jv-gold)!important}
 /* 5. Ícones no lugar de emojis nos botões de pagamento. */
 .pay-btn .pi svg{width:26px;height:26px;color:var(--jv-gold)}
 .mau-home-ico svg{width:30px;height:30px;color:#FFF}
+/* 6. Aviso de renovação: o link "fale comigo no WhatsApp" ficava fraco
+   (dourado com 82% de opacidade sobre o marrom). */
+#renova-box p{opacity:1!important}
+#renova-box p a{color:#FFF!important;-webkit-text-fill-color:#FFF!important;font-weight:700!important}
