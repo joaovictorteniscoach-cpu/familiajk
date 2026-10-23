@@ -8,6 +8,30 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-23 · Claude Code: app do aluno com visual sóbrio (proposta, aguarda OK do João)
+
+Versão 2026-10-23-2. Pedido do João: "tirar um pouco a cara de app feito por
+IA", sem comprometer o funcionamento. Só aparência e texto; nenhuma regra,
+saldo ou fluxo mudou.
+- Nova camada `app-aluno/lib/visual-sobrio.css` (carregada por último; tirar o
+  `<link>` volta ao visual anterior): uma fonte só (sem a serifa itálica de
+  destaque), rótulos sem caixa-alta espaçada, barra de progresso de uma cor,
+  títulos de seção com peso firme, ícones nos botões de pagamento.
+- Topo do Início: a próxima aula (`#hero-prox`) no lugar de "Seu painel de
+  treino" e da frase "Cada aula te aproxima…". Subtítulos de marketing das
+  abas saíram; Agenda ganhou a instrução "Toque num horário livre para agendar".
+- "Plano e saldo sincronizados" → "N aulas por mês"; "Você está em dia ✓ /
+  Adiantar / renovar mensalidade" → "Mensalidade em dia / Adiantar a próxima
+  mensalidade".
+- Barra inferior: ícones sólidos do próprio app no lugar dos 3D (referência de
+  26/09); `icones.js` do aluno ficou ~100 KB menor.
+- Emojis saíram de títulos e botões das telas (login, modais, Créditos, Perfil).
+  Mensagens de WhatsApp, avisos no celular e marcas da agenda continuam iguais.
+- `checar-design-premium.py` atualizado para o novo topo e cabeçalhos.
+- Gestão não mudou nesta etapa.
+
+---
+
 ## 2026-10-23 · Claude Code: o ✓ usa o saldo que o aluno tem antes de cobrar extra
 
 Versão 2026-10-23-1. Pedido do João: aluna sem crédito particular, mas com
