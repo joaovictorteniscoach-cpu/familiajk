@@ -82,6 +82,7 @@ jobs:
           node ferramentas/testar-voz-microfone-browser.cjs
           node ferramentas/testar-voz-arrastar-browser.cjs
           node ferramentas/testar-voz-saudacao-gestao-browser.cjs
+          node ferramentas/testar-presenca-sem-credito-browser.cjs
           node ferramentas/testar-locacao-minhas-aulas-browser.cjs
           node ferramentas/testar-torneio-aluno-browser.cjs
           node ferramentas/testar-torneio-gestao-browser.cjs

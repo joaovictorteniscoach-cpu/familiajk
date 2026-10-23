@@ -237,6 +237,9 @@ function reporResposta(r){
  if(!saldo){responder('Você não tem reposições no momento. Quando sobra aula do plano na virada do mês, ela vira reposição e vale por 4 meses.');return;}
  let txt='Você tem '+saldo+' reposiç'+(saldo===1?'ão':'ões')+(venc?', '+venc+' vence'+(venc===1?'':'m')+' no fim do mês':'')+'.';
  if(n>saldo)txt='Você pediu '+n+', mas tem '+saldo+' reposiç'+(saldo===1?'ão':'ões')+'.'+(venc?' '+venc+' vence'+(venc===1?'':'m')+' no fim do mês.':'');
+ /* Reposição de grupo só em aula de grupo (tipoReposAluno no index): não
+    oferece horário livre particular para quem é só de grupo. */
+ if(fn('tipoReposAluno')==='grupo'){responder(txt+' Sua reposição é de aula em grupo: na agenda, toque num horário de aula em grupo e escolha “Reposição na aula em grupo”.',[['Abrir agenda',abrirTela(irAgenda)]]);return;}
  const livres=proximosLivres(6,r.data);
  if(!livres.length){responder(txt+' Não achei horário livre '+(r.data?'em '+rotDia(r.data):'nos próximos 7 dias')+'. Fale com o João.',[whatsJoao('Quero marcar reposição e não achei horário livre.')]);return;}
  responder(txt+' Escolha um horário livre e toque em “Marcar reposição”'+(Math.min(n||1,saldo)>1?'; marque uma aula de cada vez':'')+'.',livres.map(([dk,h])=>['Repor '+rotDia(dk)+' '+h,()=>agendarEm(dk,h)]));

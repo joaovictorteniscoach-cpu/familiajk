@@ -267,6 +267,58 @@ await check('no máximo ' + MAX_ENVIOS + ' envios por rodada; o resto fica para 
   assert.ok(s.chamadas.length <= 50, 'cabe no limite de 50 acessos do plano grátis: ' + s.chamadas.length);
 });
 
+/* Revisão do #260: a entrega era anotada para o aviso inteiro. */
+function aplicar(banco, u) {   // grava o PATCH da rodada no banco simulado, para a rodada seguinte
+  for (const [k, v] of Object.entries(u)) {
+    const [col, ...resto] = k.split('/');
+    if (!resto.length) { banco[col] = v; continue; }
+    banco[col] = banco[col] || {};
+    if (col === 'avisos_tokens') { const [uid, app] = resto; if (v === null && banco[col][uid]) delete banco[col][uid][app]; continue; }
+    if (v === null) delete banco[col][resto.join('/')]; else banco[col][resto.join('/')] = v;
+  }
+}
+await check('um aparelho recebe e o outro dá 429: só o que falhou tenta de novo, e o aviso fecha depois', async () => {
+  limparCache();
+  const c = cenario();
+  const s1 = simular(c.banco, url => url === c.anaIphone.sub.e ? 429 : 201);
+  await rodar(ENV, { agora: AGORA, fetch: s1.f });
+  const u = s1.patches[0];
+  assert.equal(u['avisos_enviados/a_6601_20261016_1800~uid-ana~aluno'], AGORA, 'o Android recebeu: anotado por aparelho');
+  assert.ok(!('avisos_enviados/a_6601_20261016_1800' in u), 'o aviso não fecha com o iPhone pendente');
+  aplicar(c.banco, u);
+  const s2 = simular(c.banco);
+  await rodar(ENV, { agora: AGORA + 2 * 60000, fetch: s2.f });
+  const daAula = [];
+  for (const p of s2.pushes) {
+    const ap = [c.ana, c.anaIphone].find(x => x.sub.e === p.url); if (!ap) continue;
+    if (decifrar(new Uint8Array(await new Response(p.op.body).arrayBuffer()), ap).t === '🎾 Aula amanhã às 18:00') daAula.push(p.url);
+  }
+  assert.deepEqual(daAula, [c.anaIphone.sub.e], 'na rodada seguinte, só o iPhone (o Android não recebe de novo)');
+  assert.equal(s2.patches[0]['avisos_enviados/a_6601_20261016_1800'], AGORA + 2 * 60000, 'agora fecha');
+});
+await check('um aviso com 7 aparelhos: 6 nesta rodada (o limite) e o 7º na próxima', async () => {
+  limparCache();
+  const sete = Array.from({ length: 7 }, (_, i) => aparelho('https://fcm.googleapis.com/fcm/send/sete-' + i));
+  const banco = {
+    avisos_saida: { v_6609: { cod: '6609', tipo: 'venc', quando: AGORA - H, t: 'Mensalidade vence em 3 dias', c: '' } },
+    avisos_tokens: Object.fromEntries(sete.map((ap, i) => ['uid-sete-' + i, { aluno: ap.sub }])),
+    aluno_vinculos: Object.fromEntries(sete.map((_, i) => ['uid-sete-' + i, { codigo: '6609', ativo: true }])),
+    avisos_enviados: {}, fila_pedidos: {}, fila_agendamentos: {}
+  };
+  const s1 = simular(banco);
+  const r1 = await rodar(ENV, { agora: AGORA, fetch: s1.f });
+  assert.equal(s1.pushes.length, MAX_ENVIOS, 'não passa de ' + MAX_ENVIOS);
+  assert.ok(!('avisos_enviados/v_6609' in s1.patches[0]));assert.equal(r1.adiados, 1);
+  aplicar(banco, s1.patches[0]);
+  const s2 = simular(banco);
+  await rodar(ENV, { agora: AGORA + 2 * 60000, fetch: s2.f });
+  assert.deepEqual(s2.pushes.map(p => p.url), [sete[6].sub.e], 'só o 7º, que ficou de fora');
+  assert.equal(s2.patches[0]['avisos_enviados/v_6609'], AGORA + 2 * 60000);
+  const s3 = simular(banco); aplicar(banco, s2.patches[0]);
+  await rodar(ENV, { agora: AGORA + 4 * 60000, fetch: s3.f });
+  assert.equal(s3.pushes.length, 0, 'fechado: ninguém recebe duas vezes');
+});
+
 await check('processamento cabe no plano grátis (medido aqui; a Cloudflare limita 10 ms)', async () => {
   limparCache();
   const c = cenario();

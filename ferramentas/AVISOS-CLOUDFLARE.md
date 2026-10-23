@@ -23,7 +23,10 @@ Pedido do João em 15/10/2026: lembrete automático sem custo, sem plano Blaze.
 - **Servidor** (`servidor-avisos/`, Cloudflare Workers, plano grátis): roda a
   cada 2 minutos.
   - Entrega cada aviso cuja hora chegou para os aparelhos aprovados do aluno.
-  - Anota em `avisos_enviados` o que já foi, para não repetir.
+  - Anota em `avisos_enviados` o que já foi, para não repetir. A anotação é
+    por aparelho (`<aviso>~<uid>~<app>`): se um aparelho recebe e outro dá erro
+    passageiro (429, serviço fora), só o que falhou tenta de novo. O aviso
+    fecha (`<aviso>`) quando não sobra aparelho por entregar.
   - Grava `avisos_estado` com a hora da rodada e a chave pública de push.
   - O padrão é o Web Push do próprio navegador (Chrome, Safari, Firefox). Não
     usa biblioteca de fora.
@@ -41,7 +44,8 @@ Pedido do João em 15/10/2026: lembrete automático sem custo, sem plano Blaze.
   - O plano grátis da Cloudflare dá 100 mil acessos por dia e 5 tarefas no relógio.
   - Cada rodada usa ~3 a 4 ms de processamento, medido no motor da Cloudflare
     (`workerd`) com 6 avisos. O limite é 10 ms.
-  - Com isso, no máximo 6 avisos por rodada: 180 por hora.
+  - Com isso, no máximo 6 envios (aparelhos) por rodada: 180 por hora. Um
+    aviso com mais aparelhos manda 6 e o resto na rodada seguinte.
   - Leitura do Firebase: só os avisos que já estão na hora, e os vínculos
     guardados por 30 min. Fica bem abaixo da cota grátis.
 
