@@ -44,13 +44,14 @@ saibro=ROOT/'app-aluno/assets/jv-saibro-premium.svg'
 print('== App Aluno premium')
 ok(saibro.exists() and (ROOT/'app-gestao/assets/jv-saibro-premium.svg').exists(),'cada app inclui seu fundo no deploy independente')
 ok("url('assets/jv-saibro-premium.svg')" in a,'Aluno usa fundo local de saibro')
-ok('jv-premium-hero' in a and 'Seu painel de <em>treino</em>' in a,'hero premium do aluno')
-ok('Cada aula te aproxima do seu melhor tênis.' in a,'frase motivacional do aluno')
+# Visual sóbrio (24/10): o topo mostra a próxima aula no lugar da frase de efeito.
+ok('jv-premium-hero' in a and 'id="hero-prox"' in a and "getElementById('hero-prox')" in a,'hero do aluno mostra a próxima aula')
+ok('lib/visual-sobrio.css' in a and (ROOT/'app-aluno/lib/visual-sobrio.css').exists(),'camada de visual sóbrio do aluno presente')
 for x in ['home-prox-date','home-cred','home-plano','home-foco','home-mens','home-pix-btn']:
     ok(('id="'+x+'"') in a,'home do aluno contém '+x)
 ok('id="apg-creditos"' in a and 'id="apg-perfil"' in a,'abas Créditos e Perfil existem')
-ok('Minha <em>agenda</em>' in a and ('Aulas, treinos e disponibilidades.' in a or 'Organize suas aulas, jogos e reposições.' in a),'Agenda com cabeçalho premium')
-ok('Sua <em>evolução</em>' in a and 'Acompanhe sua técnica, constância e progresso.' in a,'Evolução com cabeçalho premium')
+ok('Minha <em>agenda</em>' in a and 'Toque num horário livre para agendar.' in a,'Agenda com cabeçalho e instrução')
+ok('Sua <em>evolução</em>' in a,'Evolução com cabeçalho')
 ok("const AVATAR_ALUNO_KEY='jvt-avatar-aluno-v1'" in a and 'trocarAvatarAluno' in a,'foto de perfil local do aluno')
 ok('Atualização de segurança pendente' in a and 'Verificar autorização' in a,'aviso P0 preservado')
 nav=nav_html(a)

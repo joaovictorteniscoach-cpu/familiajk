@@ -1,0 +1,28 @@
+/* Visual sóbrio (pedido do João, 24/10: tirar a "cara de app feito por IA").
+   Só aparência, por cima de todas as camadas anteriores; não muda cor de tema
+   nem regra nenhuma. Para voltar ao visual anterior, basta tirar o <link>.
+   1. Uma fonte só: título com palavra em itálico de outra fonte saiu. */
+h1 em,h2 em,h3 em,.sec-title em,.login h1 em{
+  font-style:normal!important;font-family:inherit!important;
+  color:inherit!important;-webkit-text-fill-color:inherit!important}
+.sec-title,.modal h3,.top h1,.scard .v,.login h1,.login .login-sub,.login-slogan,
+.brand-emblem,.tor-cap-emb,.atg-badge{
+  font-family:'DM Sans',system-ui,-apple-system,sans-serif!important;font-style:normal!important}
+/* 2. Rótulos em letra normal, sem caixa-alta espaçada. */
+.sec-eyebrow,.scard .l,.jv-student-brand span,.jv-pay-lbl,.jv-quick-title,.top-tag,
+.login-tag,.foot-tag,.evo-xp .xp-eye,.evo-prio .lbl,.evo-sec,.aviso b,.aviso p,
+.tp-parabens,.evo-levelup .t1{
+  text-transform:none!important;letter-spacing:normal!important}
+.jv-student-brand span{font-size:11px!important}
+/* 3. Barra de progresso de uma cor só (sem degradê). */
+html body .jv-progress i{background:var(--jv-gold)!important}
+/* 4. Títulos de seção: peso firme e tamanho contido (sem o fino de revista). */
+.sec-title{font-weight:750!important;font-size:21px!important;line-height:1.2!important;letter-spacing:normal!important}
+.jv-subhero h2{letter-spacing:normal!important}
+/* 5. Ícones no lugar de emojis nos botões de pagamento. */
+.pay-btn .pi svg{width:26px;height:26px;color:var(--jv-gold)}
+.mau-home-ico svg{width:30px;height:30px;color:#FFF}
+/* 6. Aviso de renovação: o link "fale comigo no WhatsApp" ficava fraco
+   (dourado com 82% de opacidade sobre o marrom). */
+#renova-box p{opacity:1!important}
+#renova-box p a{color:#FFF!important;-webkit-text-fill-color:#FFF!important;font-weight:700!important}

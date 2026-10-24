@@ -1666,13 +1666,14 @@ html body:not(#jv) #pedir-box .btn-ghost{background:#F3EDE2!important;border:1px
 .login .login-sub{opacity:1}
 .login-priv{color:rgba(250,247,242,.8)}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-23-1">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-24-1">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-23-1">
-<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-23-1">
-<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-10-23-1">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-24-1">
+<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-24-1">
+<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-10-24-1">
+<link rel="stylesheet" href="lib/visual-sobrio.css?v=2026-10-24-1">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -1797,7 +1798,7 @@ function esperarAuth(){
   </div>
   <p class="login-tag">Academia João Victor Tênis · Curitiba</p>
   <h1>JV <em>Tênis</em></h1>
-  <p class="login-sub">Seja bem-vindo 🎾</p>
+  <p class="login-sub">Seja bem-vindo</p>
   <p>Já é aluno? Digite seu código de acesso</p>
   <input class="code-input" id="code-in" maxlength="4" inputmode="numeric" placeholder="••••">
   <label class="keep-lab"><input type="checkbox" id="keep-in" checked> Manter-me conectado</label>
@@ -1805,7 +1806,7 @@ function esperarAuth(){
   <button class="login-new-btn" onclick="abrirCadastroNovo()">Sou novo · solicitar acesso</button>
   <div class="login-err" id="login-err"></div>
   <p class="login-hint">Novo na academia? Você pode solicitar seu acesso aqui mesmo.</p>
-  <p class="login-slogan">Da base ao topo 🎾</p>
+  <p class="login-slogan">Da base ao topo</p>
   <a href="privacidade.html" class="login-priv">Política de Privacidade</a>
 </section>
 
@@ -1865,8 +1866,7 @@ function esperarAuth(){
     </button>
     <input id="avatar-aluno-file" type="file" accept="image/*" style="display:none" onchange="trocarAvatarAluno(this)">
     <p class="jv-hero-greet" id="hello">Olá!</p>
-    <h1>Seu painel de <em>treino</em></h1>
-    <p class="jv-hero-motiv">Cada aula te aproxima do seu melhor tênis.</p>
+    <h1 id="hero-prox">Sua semana na quadra</h1>
     <div class="jv-chips-topo">
     <button type="button" class="jv-quadra-chip" id="aluno-quadra" hidden onclick="carregarStatusQuadra()" aria-label="Situação da quadra — toque para atualizar">
       <i class="led" aria-hidden="true"></i>
@@ -1943,7 +1943,7 @@ function esperarAuth(){
 
     <section class="page on" id="apg-inicio">
     <button class="btn btn-clay mau-home" id="home-minhas-aulas" type="button" onclick="irMinhasAulas()">
-      <span class="mau-home-ico" aria-hidden="true">🎾</span>
+      <span class="mau-home-ico" aria-hidden="true" data-ic="clip"></span>
       <span class="mau-home-txt"><b>Minhas aulas</b><small id="home-minhas-sub">As que você já fez e as que ainda vai fazer neste mês</small></span>
       <span class="mau-home-seta" aria-hidden="true">›</span>
     </button>
@@ -2000,7 +2000,7 @@ function esperarAuth(){
     <section class="page" id="apg-agenda">
     <div class="jv-subhero jv-ref-agenda-hero">
       <h2>Minha <em>agenda</em></h2>
-      <p>Aulas, treinos e disponibilidades.</p>
+      <p>Toque num horário livre para agendar.</p>
     </div>
     <p class="sec-eyebrow">Quadro de horários</p>
     <div id="pay-lock" class="lock-note" style="display:none"></div>
@@ -2047,7 +2047,7 @@ function esperarAuth(){
       <button id="aul-cal-abrir" type="button" class="aul-link" onclick="abrirAgendaMesAluno()">🔔 Lembretes no celular: salvar as aulas do mês na agenda</button>
       <div id="mine-list"></div>
       <p class="aul-intro aul-calendar-note">No Google Agenda, toque em Salvar. Se a aula mudar ou for cancelada, atualize também o evento salvo lá.</p>
-      <button class="btn btn-clay" style="width:100%;margin-top:12px" onclick="irAgendar()">🎾 Agendar mais uma aula</button>
+      <button class="btn btn-clay" style="width:100%;margin-top:12px" onclick="irAgendar()">Agendar mais uma aula</button>
     </div>
     <div id="pedir-box" style="display:none;margin-top:14px"></div>
     </div>
@@ -2073,7 +2073,7 @@ function esperarAuth(){
         <button onclick="salvarTorneioImg()">📸 Imagem</button>
         <button onclick="baixarTorneioPDF()">📄 PDF</button>
       </div>
-      <button class="buy-btn" style="margin-top:6px;background:var(--clay);box-shadow:0 4px 16px rgba(201,71,43,.25)" onclick="abrirRegResultado()">🎾 Registrar um resultado</button>
+      <button class="buy-btn" style="margin-top:6px;background:var(--clay);box-shadow:0 4px 16px rgba(201,71,43,.25)" onclick="abrirRegResultado()">Registrar um resultado</button>
     </div>
     <div class="empty" id="tor-empty" style="display:none">Nenhum torneio ativo no momento.<br>Quando o João abrir a Barragem, ela aparece aqui. 🏆</div>
     </section>
@@ -2081,7 +2081,6 @@ function esperarAuth(){
     <section class="page" id="apg-evolucao">
     <div class="jv-subhero">
       <h2>Sua <em>evolução</em></h2>
-      <p>Acompanhe sua técnica, constância e progresso.</p>
     </div>
     <p class="sec-eyebrow">Metodologia Da Base ao Topo</p>
     <div id="evo-page-body"></div>
@@ -2090,8 +2089,8 @@ function esperarAuth(){
 
 
     <section class="page" id="apg-creditos">
-      <div class="jv-subhero"><h2>Créditos <em>e reposições</em></h2><p>Controle aulas, reposições e pagamentos em um só lugar.</p></div>
-      <div class="jv-credit-panel" id="cred-page-familia" style="display:none"><b>👪 Plano família</b><p id="cred-page-familia-info"></p></div>
+      <div class="jv-subhero"><h2>Créditos <em>e reposições</em></h2></div>
+      <div class="jv-credit-panel" id="cred-page-familia" style="display:none"><b>Plano família</b><p id="cred-page-familia-info"></p></div>
       <div class="jv-credit-panel">
         <div class="jv-pay-lbl">Créditos disponíveis</div>
         <div class="jv-credit-big"><span id="cred-page-saldo">0</span> <small>créditos</small></div>
@@ -2123,32 +2122,32 @@ function esperarAuth(){
       <div class="jv-section-card">
         <p class="sec-eyebrow">Mensalidade</p>
         <h2 class="sec-title">Planos &amp; <em>renovação</em></h2>
-        <button class="buy-btn jv-wide-action" onclick="abrirPlanos()">♛ Ver planos e preços</button>
+        <button class="buy-btn jv-wide-action" onclick="abrirPlanos()">Ver planos e preços</button>
       </div>
       <div class="jv-section-card">
         <p class="sec-eyebrow">Créditos &amp; quadra</p>
         <h2 class="sec-title">Comprar ou <em>reservar</em></h2>
-        <button class="buy-btn jv-wide-action" id="buy-btn-main" onclick="openComprar()">💳 Comprar créditos · aula avulsa · locar quadra</button>
+        <button class="buy-btn jv-wide-action" id="buy-btn-main" onclick="openComprar()">Comprar créditos · aula avulsa · locar quadra</button>
       </div>
-      <div class="jv-quick-title">⚡ Ações rápidas</div>
+      <div class="jv-quick-title">Ações rápidas</div>
       <div class="jv-quick">
         <button type="button" id="cred-page-pix" onclick="pagarPix()"><span><img class="jv-pix-mark" src="assets/pix-simbolo.svg" alt="" width="25" height="25"></span>Pagar com Pix</button>
         <button type="button" onclick="irMarcarReposicao()"><span data-ic="refresh"></span>Solicitar reposição</button>
-        <button type="button" onclick="falarComProfessor()"><span>💬</span>Falar com a academia</button>
+        <button type="button" onclick="falarComProfessor()"><span data-ic="user"></span>Falar com a academia</button>
       </div>
           <button id="cred-page-mes" type="button" class="aul-link" onclick="irMinhasAulas()">Minhas aulas ›</button>
     </section>
 
     <section class="page" id="apg-perfil">
-      <div class="jv-subhero"><h2>Meu <em>perfil</em></h2><p>Dados, preferências e acompanhamento.</p></div>
+      <div class="jv-subhero"><h2>Meu <em>perfil</em></h2></div>
       <div class="jv-profile-card">
         <img class="jv-profile-avatar" id="perfil-avatar-img" alt="Foto de perfil">
         <div class="jv-profile-fallback" id="perfil-avatar-fallback">JV</div>
         <h3 id="perfil-nome">Aluno</h3>
         <p id="perfil-nivel">Sua jornada na Academia João Victor Tênis</p>
         <div class="jv-profile-actions">
-          <button type="button" onclick="document.getElementById('avatar-aluno-file').click()">📷 Atualizar foto</button>
-          <button type="button" onclick="abrirPlanos()">♛ Meu plano</button>
+          <button type="button" onclick="document.getElementById('avatar-aluno-file').click()">Atualizar foto</button>
+          <button type="button" onclick="abrirPlanos()">Meu plano</button>
         </div>
       </div>
       <div class="jv-credit-panel">
@@ -2168,7 +2167,7 @@ function esperarAuth(){
       </div>
       <div class="jv-quick-title">Mais do aluno</div>
       <div class="jv-quick">
-        <button type="button" onclick="irMinhasAulas()"><span>🎾</span>Minhas aulas</button>
+        <button type="button" onclick="irMinhasAulas()"><span data-ic="ball"></span>Minhas aulas</button>
         <button type="button" id="perfil-torneio-btn" onclick="goAluno('torneio',null)"><span>🏆</span>Torneio <i class="nav-badge" id="nb-al-torneio"></i></button>
         <button type="button" onclick="falarComProfessor()"><span>💬</span>Falar com a academia</button>
       </div>
@@ -2183,7 +2182,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-10-23-1"></script>
+<script src="lib/icones.js?v=2026-10-24-1"></script>
 </div>
 
 <!-- ASSISTENTE POR VOZ: consultar horário livre, agendar, cancelar, ver aulas (lib/voz-aluno.js) -->
@@ -2323,7 +2322,7 @@ function esperarAuth(){
 </div>
 <div class="overlay" id="ov-book" onclick="if(event.target===this)this.classList.remove('on')">
   <div class="modal">
-    <h3 id="book-title">Agendar horário 🎾</h3>
+    <h3 id="book-title">Agendar horário</h3>
     <p class="sub" id="book-sub">—</p>
     <div class="field" id="book-prof-field" style="display:none"><label>👨‍🏫 Com qual professor</label>
       <select id="b-prof"><option value="">Com o João</option></select>
@@ -2343,7 +2342,7 @@ function esperarAuth(){
 
 <div class="overlay" id="ov-comprar" onclick="if(event.target===this)this.classList.remove('on')">
   <div class="modal">
-    <h3>Comprar / Reservar 🎾</h3>
+    <h3>Comprar / Reservar</h3>
     <p class="sub">Escolha o que deseja e a forma de pagamento. O João recebe o seu pedido.</p>
     <div id="comprar-itens"></div>
     <div id="comprar-pay" style="display:none"></div>
@@ -2389,7 +2388,7 @@ function esperarAuth(){
 <!-- MODAL REGISTRAR RESULTADO (ALUNO) -->
 <div class="overlay" id="ov-tor-result" onclick="if(event.target===this)this.classList.remove('on')">
   <div class="modal">
-    <h3>Registrar resultado 🎾</h3>
+    <h3>Registrar resultado</h3>
     <p class="sub">Escolha o jogo. O João recebe e confirma a pontuação.</p>
     <div class="field"><label for="atr-grupo">Categoria</label><select id="atr-grupo" onchange="atrPlayers()"></select></div>
     <div class="field"><label for="atr-p1">Jogador 1</label><select id="atr-p1" onchange="atrAtualiza()"></select></div>
@@ -2430,7 +2429,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-10-23-1';
+const VERSAO='2026-10-24-1';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -3214,8 +3213,8 @@ function tipoReposAluno(){
 function reposServeAqui(ehGrupo){const t=tipoReposAluno();return !t||t===(ehGrupo?'grupo':'part');}
 function avisoTipoRepos(){
   return tipoReposAluno()==='grupo'
-    ?'Sua reposição é de aula em grupo: escolha um horário de aula em grupo 👥'
-    :'Sua reposição é de aula particular: escolha um horário de aula particular 🎾';
+    ?'Sua reposição é de aula em grupo: escolha um horário de aula em grupo'
+    :'Sua reposição é de aula particular: escolha um horário de aula particular';
 }
 function renderReposBox(){
   const box=document.getElementById('repos-box');if(!box||!EU)return;
@@ -3226,7 +3225,7 @@ function renderReposBox(){
   if(venc>0)h+='<div style="color:#7A5B10;font-weight:700;font-size:12.5px;margin-bottom:9px">⏳ '+fmtCred(venc)+' reposição(ões) vencem no fim do mês — marque antes de perder.</div>';
   h+='<div style="font-size:13px;font-weight:700;margin-bottom:3px">🔁 Você tem '+fmtCred(saldo)+' reposição(ões)</div>'+
      '<div style="font-size:12.5px;color:var(--muted);margin-bottom:9px">Escolha um horário livre na agenda e marque sua aula. Se não conseguir encaixar, fale com o João.</div>'+
-     '<button class="btn btn-clay" style="width:100%" onclick="irMarcarReposicao()">🎾 Marcar aula de reposição</button>';
+     '<button class="btn btn-clay" style="width:100%" onclick="irMarcarReposicao()">Marcar aula de reposição</button>';
   box.innerHTML=h+'</div>';
   box.style.display='block';
 }
@@ -3408,12 +3407,15 @@ function renderPremiumAluno(){
   const tpProx=prox?tipoHorario(prox.tipo):'aula',profPremium=tpProx==='aula'?meuProfNome():'';
   const ptx=document.getElementById('home-prox-tit');if(ptx)ptx.textContent=tpProx==='torneio'?'Próximo jogo do torneio ›':tpProx==='locacao'?'Próxima locação ›':'Próxima aula ›';
   if(pm)pm.textContent=prox?((tpProx==='aula'?'':iconeHorario(tpProx)+' ')+DIAS_FULL[dtOf(prox.data,prox.hora).getDay()]+' • '+prox.hora+(profPremium?' • Prof. '+profPremium:'')):'Veja os horários disponíveis na Agenda';
+  /* Topo do Início: a próxima aula no lugar da frase de efeito (24/10). */
+  const hx=document.getElementById('hero-prox');
+  if(hx)hx.textContent=prox?((tpProx==='torneio'?'Próximo jogo: ':tpProx==='locacao'?'Próxima locação: ':'Próxima aula: ')+DIAS_FULL[dtOf(prox.data,prox.hora).getDay()].toLowerCase()+', '+prox.hora):'Nenhuma aula marcada';
   const saldo=(Number(EU.creditos)||0)+(Number(EU.credGrupo)||0),plano=(Number(EU.plano)||0)+(Number(EU.planoGrupo)||0);
   const hc=document.getElementById('home-cred');if(hc)hc.textContent=fmtCred(saldo);
   const hcs=document.getElementById('home-cred-sub');if(hcs)hcs.textContent=plano>0?('créditos · de '+plano+' no plano atual'):'créditos disponíveis';
   const hf=document.getElementById('home-cred-fill');if(hf)hf.style.width=(plano>0?Math.max(0,Math.min(100,saldo/plano*100)):(saldo>0?100:0))+'%';
   const hp=document.getElementById('home-plano');if(hp)hp.textContent=planoPremium();
-  const hps=document.getElementById('home-plano-sub');if(hps)hps.textContent='Plano e saldo sincronizados';
+  const hps=document.getElementById('home-plano-sub');if(hps)hps.textContent=plano>0?(fmtCred(plano)+(plano===1?' aula':' aulas')+' por mês'):'Fale com o João para escolher um plano';
   const foco=focoPremium(),fo=document.getElementById('home-foco');if(fo)fo.textContent=foco;
   const fos=document.getElementById('home-foco-sub');if(fos)fos.textContent=(EU.avaliacoes&&EU.avaliacoes.length)?'Prioridade da sua avaliação mais recente':'Será atualizado pelo professor';
   const ps=document.getElementById('home-pay-status');if(ps){ps.textContent=EU.status==='pago'?'Em dia':(EU.status==='parcial'?rotuloParcialAluno():'Pendente');ps.dataset.status=EU.status==='pago'?'pago':(EU.status==='parcial'?'parcial':'pendente');}
@@ -4386,7 +4388,7 @@ async function enviarResultadoAluno(){
 function temCardLink(){return !!((EU&&EU.cardLink&&EU.cardLink.trim())||(PUB&&PUB.cardLink&&PUB.cardLink.trim()));}
 function cardBtnHTML(onclickFn){
   const sub=temCardLink()?'abrir link':'pedir link';
-  return `<button class="pay-btn card" onclick="${onclickFn}"><span class="pi">💳</span>Cartão<small style="font-weight:500;opacity:.85">${sub}</small></button>`;
+  return `<button class="pay-btn card" onclick="${onclickFn}"><span class="pi">${(window.NAVIC&&NAVIC.cash)||""}</span>Cartão<small style="font-weight:500;opacity:.85">${sub}</small></button>`;
 }
 function renderPagamento(){
   const box=document.getElementById('pay-box');
@@ -4397,8 +4399,8 @@ function renderPagamento(){
   const titEl=box.querySelector('.sec-title');
   const eyeEl=box.querySelector('.sec-eyebrow');
   if(EU.status==='pago'){
-    if(eyeEl)eyeEl.textContent='Você está em dia ✓';
-    if(titEl)titEl.innerHTML='Adiantar / <em>renovar</em> mensalidade';
+    if(eyeEl)eyeEl.textContent='Mensalidade em dia';
+    if(titEl)titEl.textContent='Adiantar a próxima mensalidade';
   }else{
     // o dia de vencimento já vinha publicado e nunca era mostrado ao aluno
     const prazo=textoVencimento();
@@ -4408,7 +4410,7 @@ function renderPagamento(){
   let btns='';
   if(temPix)btns+=`<button class="pay-btn pix" onclick="pagarPix()"><img class="jv-pix-mark" src="assets/pix-simbolo.svg" alt="" width="25" height="25">Pix<small style="font-weight:500;opacity:.85">copia e cola</small></button>`;
   btns+=cardBtnHTML('pagarCartao()');
-  btns+=`<button class="pay-btn cash" onclick="pagarDinheiro()"><span class="pi">💵</span>Dinheiro<small style="font-weight:500;opacity:.85">avisar João</small></button>`;
+  btns+=`<button class="pay-btn cash" onclick="pagarDinheiro()"><span class="pi">${(window.NAVIC&&NAVIC.coins)||""}</span>Dinheiro<small style="font-weight:500;opacity:.85">avisar João</small></button>`;
   grid.style.gridTemplateColumns='repeat('+(btns.match(/pay-btn/g).length)+',1fr)';
   grid.innerHTML=btns;
 }
@@ -4556,7 +4558,7 @@ function selComprar(id){
   box.innerHTML=`<p class="comprar-sel">${compraSel.nome}${vtxt}</p><div class="pay-grid">`+
     (PUB.pix?`<button class="pay-btn pix" onclick="pagarCompra('pix')"><span class="pi">🔑</span>Pix<small style="font-weight:500;opacity:.85">copia e cola</small></button>`:'')+
     cardBtnHTML("pagarCompra('cartao')")+
-    `<button class="pay-btn cash" onclick="pagarCompra('dinheiro')"><span class="pi">💵</span>Dinheiro<small style="font-weight:500;opacity:.85">avisar João</small></button></div>`;
+    `<button class="pay-btn cash" onclick="pagarCompra('dinheiro')"><span class="pi">${(window.NAVIC&&NAVIC.coins)||""}</span>Dinheiro<small style="font-weight:500;opacity:.85">avisar João</small></button></div>`;
 }
 function pagarCompra(metodo){
   if(!compraSel)return;
@@ -5528,7 +5530,7 @@ function abrirBook(hora,repo,torneio){
     toast('Seus créditos acabaram — esta aula entra como extra, a combinar com o João. 🎾');
   }
   bookCtx={hora,date:new Date(agDate),repo:!!repo,torneio:!!torneio,grupo:!!estado.grupo,compartilhado:estado.compartilhado||'',limiteGrupo:estado.limiteGrupo||0};
-  document.getElementById('book-title').textContent=bookCtx.grupo?'Participar da aula em grupo 👥':torneio?'Marcar jogo do torneio 🏆':(repo?'Marcar reposição 🔁':'Agendar horário 🎾');
+  document.getElementById('book-title').textContent=bookCtx.grupo?'Participar da aula em grupo':torneio?'Marcar jogo do torneio':(repo?'Marcar reposição':'Agendar horário');
   document.getElementById('book-sub').textContent=DIAS_FULL[bookCtx.date.getDay()]+', '+bookCtx.date.getDate()+' de '+MESES[bookCtx.date.getMonth()].toLowerCase()+' · '+hora;
   pintarProfsBook();
   const recField=document.getElementById('book-rec-field');
@@ -5714,7 +5716,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-23-1').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-24-1').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
@@ -5723,6 +5725,6 @@ window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);})
   setTimeout(()=>esperarEIniciar(t+1),150);
 })(0);
 </script>
-<script src="lib/voz-aluno.js?v=2026-10-23-1"></script>
+<script src="lib/voz-aluno.js?v=2026-10-24-1"></script>
 </body>
 </html>
