@@ -8,9 +8,9 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
-## 2026-10-23 · Claude Code: app do aluno com visual sóbrio (proposta, aguarda OK do João)
+## 2026-10-24 · Claude Code: app do aluno com visual sóbrio (aprovado pelo João)
 
-Versão 2026-10-23-2. Pedido do João: "tirar um pouco a cara de app feito por
+Versão 2026-10-24-1 (aprovada pelo João pela prévia). Pedido do João: "tirar um pouco a cara de app feito por
 IA", sem comprometer o funcionamento. Só aparência e texto; nenhuma regra,
 saldo ou fluxo mudou.
 - Nova camada `app-aluno/lib/visual-sobrio.css` (carregada por último; tirar o
