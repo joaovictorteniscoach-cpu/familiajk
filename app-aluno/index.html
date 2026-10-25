@@ -1666,14 +1666,14 @@ html body:not(#jv) #pedir-box .btn-ghost{background:#F3EDE2!important;border:1px
 .login .login-sub{opacity:1}
 .login-priv{color:rgba(250,247,242,.8)}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-24-1">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-25-1">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-24-1">
-<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-24-1">
-<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-10-24-1">
-<link rel="stylesheet" href="lib/visual-sobrio.css?v=2026-10-24-1">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-25-1">
+<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-25-1">
+<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-10-25-1">
+<link rel="stylesheet" href="lib/visual-sobrio.css?v=2026-10-25-1">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -1975,7 +1975,7 @@ function esperarAuth(){
         <div class="hc-main" style="font-size:32px!important"><span id="home-loc">0</span><small style="font-size:18px">h</small></div>
         <div class="hc-sub" id="home-loc-sub">horas de locação para usar</div>
       </button>
-      <button class="jv-home-card gold" style="grid-column:1/-1" type="button" onclick="irEvolucao()">
+      <button class="jv-home-card gold" id="home-foco-card" style="grid-column:1/-1" type="button" onclick="irEvolucao()">
         <div class="hc-top"><span class="hc-icon" data-ic="target"></span><span>Foco do mês ›</span></div>
         <div class="hc-main" id="home-foco">Próximo passo</div>
         <div class="hc-sub" id="home-foco-sub">Definido a partir da sua evolução</div>
@@ -1989,7 +1989,7 @@ function esperarAuth(){
       <div id="home-familia-info" style="grid-column:1/-1;font-size:12px;line-height:1.5;display:none"></div>
       <button class="jv-pix-btn" id="home-pix-btn" type="button" onclick="pagarPix()"><img class="jv-pix-mark" src="assets/pix-simbolo.svg" alt="" width="25" height="25"> Pagar com Pix ›</button>
     </div>
-    <div class="jv-quick-title">⚡ Ações rápidas</div>
+    <div class="jv-quick-title">Ações rápidas</div>
     <div class="jv-quick">
       <button type="button" onclick="goAluno('agenda',document.getElementById('nav-al-agenda'))"><span data-ic="cal"></span>Agendar aula</button>
       <button type="button" onclick="irMarcarReposicao()"><span data-ic="refresh"></span>Solicitar reposição</button>
@@ -2162,14 +2162,14 @@ function esperarAuth(){
         <button class="buy-btn jv-wide-action" onclick="abrirMFit()">↗ Abrir meu treino no MFit</button>
       </div>
       <div class="jv-section-card jv-notif-card">
-        <button id="btn-avisos" class="aviso-btn" onclick="ativarAvisos('jv-icone-aluno.png')">🔔 Ativar avisos</button>
+        <button id="btn-avisos" class="aviso-btn" onclick="ativarAvisos('jv-icone-aluno.png')">Ativar avisos</button>
         <p class="aviso-cap">Receba lembretes de aula e atualizações importantes no celular.</p>
       </div>
       <div class="jv-quick-title">Mais do aluno</div>
       <div class="jv-quick">
         <button type="button" onclick="irMinhasAulas()"><span data-ic="ball"></span>Minhas aulas</button>
-        <button type="button" id="perfil-torneio-btn" onclick="goAluno('torneio',null)"><span>🏆</span>Torneio <i class="nav-badge" id="nb-al-torneio"></i></button>
-        <button type="button" onclick="falarComProfessor()"><span>💬</span>Falar com a academia</button>
+        <button type="button" id="perfil-torneio-btn" onclick="goAluno('torneio',null)"><span data-ic="trophy"></span>Torneio <i class="nav-badge" id="nb-al-torneio"></i></button>
+        <button type="button" onclick="falarComProfessor()"><span data-ic="chat"></span>Falar com a academia</button>
       </div>
       <button type="button" class="jv-logout" onclick="sair()">↪ Sair do aplicativo</button>
     </section>
@@ -2182,7 +2182,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-10-24-1"></script>
+<script src="lib/icones.js?v=2026-10-25-1"></script>
 </div>
 
 <!-- ASSISTENTE POR VOZ: consultar horário livre, agendar, cancelar, ver aulas (lib/voz-aluno.js) -->
@@ -2429,7 +2429,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-10-24-1';
+const VERSAO='2026-10-25-1';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -3370,7 +3370,8 @@ function proximaAulaPremium(){
 }
 function formatoDataPremium(dk){
   if(!dk)return '—';const p=dk.split('-').map(Number);const d=new Date(p[0],p[1]-1,p[2],12);
-  return String(p[2]).padStart(2,'0')+' '+MESES[d.getMonth()].slice(0,3).toUpperCase()+' '+p[0];
+  /* "21 de out." (e o ano só quando não é o atual) — sem a data em caixa-alta. */
+  return p[2]+' de '+MESES[d.getMonth()].slice(0,3).toLowerCase()+'.'+(p[0]!==new Date().getFullYear()?' de '+p[0]:'');
 }
 function planoPremium(){
   if(!EU)return '—';
@@ -3418,6 +3419,8 @@ function renderPremiumAluno(){
   const hps=document.getElementById('home-plano-sub');if(hps)hps.textContent=plano>0?(fmtCred(plano)+(plano===1?' aula':' aulas')+' por mês'):'Fale com o João para escolher um plano';
   const foco=focoPremium(),fo=document.getElementById('home-foco');if(fo)fo.textContent=foco;
   const fos=document.getElementById('home-foco-sub');if(fos)fos.textContent=(EU.avaliacoes&&EU.avaliacoes.length)?'Prioridade da sua avaliação mais recente':'Será atualizado pelo professor';
+  /* Sem avaliação ainda, o cartão só dizia "A definir": fica escondido até ter foco. */
+  const fc=document.getElementById('home-foco-card');if(fc)fc.hidden=!(EU.avaliacoes&&EU.avaliacoes.length);
   const ps=document.getElementById('home-pay-status');if(ps){ps.textContent=EU.status==='pago'?'Em dia':(EU.status==='parcial'?rotuloParcialAluno():'Pendente');ps.dataset.status=EU.status==='pago'?'pago':(EU.status==='parcial'?'parcial':'pendente');}
   const vl=document.getElementById('home-venc-label');if(vl)vl.textContent=EU.status==='pago'?'Próximo vencimento':'Vencimento do mês';
   const hv=document.getElementById('home-venc');if(hv)hv.textContent=vencimentoPremium();
@@ -3437,6 +3440,9 @@ function renderPremiumAluno(){
   for(const id of ['home-repos','cred-page-repos']){
     const el=document.getElementById(id);if(el)el.textContent=fmtCred(repos);
   }
+  /* "1 reposição", não "1 reposições". */
+  const und=(el,n,um,varios)=>{const u=el&&el.nextElementSibling;if(u&&u.tagName==='SMALL')u.textContent=Number(n)===1?um:varios;};
+  und(cs,saldo,'crédito','créditos');und(document.getElementById('cred-page-repos'),repos,'reposição','reposições');
   const hrs=document.getElementById('home-repos-sub');if(hrs)hrs.textContent=repos>0?'disponíveis · toque para agendar':'nenhuma reposição disponível';
   const rn=document.getElementById('cred-page-repos-note');if(rn)rn.textContent=repos>0?'Use seu saldo para agendar uma aula de reposição.':'Você não tem reposições disponíveis no momento.';
   for(const id of ['home-repos-venc','cred-page-repos-venc']){
@@ -5075,9 +5081,9 @@ function pintarAvisos(){
   const b=document.getElementById('btn-avisos');if(!b)return;
   const st=avisosEstado();
   const nuvem=st==='granted'&&lsGet('jv-avisos-nuvem-aluno')==='1';
-  const txt={granted:nuvem?'🔔 Avisos ligados, também com o app fechado':'🔔 Avisos ligados · testar',denied:'🔕 Avisos bloqueados',
-             instalar:'📲 Instale na Tela de Início',
-             'nao-suportado':'🔕 Sem avisos neste navegador'}[st]||'🔔 Ativar avisos';
+  const txt={granted:nuvem?'Avisos ligados, também com o app fechado':'Avisos ligados · testar',denied:'Avisos bloqueados',
+             instalar:'Instale na Tela de Início',
+             'nao-suportado':'Sem avisos neste navegador'}[st]||'Ativar avisos';
   b.textContent=txt;
   b.dataset.st=st;
 }
@@ -5716,7 +5722,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-24-1').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-25-1').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
@@ -5725,6 +5731,6 @@ window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);})
   setTimeout(()=>esperarEIniciar(t+1),150);
 })(0);
 </script>
-<script src="lib/voz-aluno.js?v=2026-10-24-1"></script>
+<script src="lib/voz-aluno.js?v=2026-10-25-1"></script>
 </body>
 </html>

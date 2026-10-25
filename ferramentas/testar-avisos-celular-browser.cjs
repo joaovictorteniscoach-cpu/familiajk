@@ -184,7 +184,7 @@ const PUSH_FALSO=`(()=>{
    await p.evaluate(()=>ativarAvisos('jv-icone-aluno.png'));
    assert.equal(await p.evaluate(()=>__grav.length),0);
    assert.match(await p.evaluate(()=>__t.slice(-1)[0]),/Aviso de teste enviado/);
-   assert.equal(await p.locator('#btn-avisos').textContent(),'🔔 Avisos ligados · testar');
+   assert.equal(await p.locator('#btn-avisos').textContent(),'Avisos ligados · testar');
   });
   await check('Aluno: servidor parado, chave estranha ou aparelho não aprovado → não inscreve',async()=>{
    await p.evaluate(c=>{window.__estado={ts:Date.now()-3*86400000,chave:c};},CHAVE);
@@ -203,7 +203,7 @@ const PUSH_FALSO=`(()=>{
    assert.deepEqual(r.grav[0].v,{e:'https://fcm.googleapis.com/fcm/send/aparelho-teste',p:'BPchave-do-aparelho',a:'segredo16',ts:AGORA.getTime()});
    assert.equal(Buffer.from(r.subs[0].chave).toString('base64').replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''),CHAVE);
    assert.match(r.t,/também com o app fechado/);
-   assert.equal(await p.locator('#btn-avisos').textContent(),'🔔 Avisos ligados, também com o app fechado');
+   assert.equal(await p.locator('#btn-avisos').textContent(),'Avisos ligados, também com o app fechado');
   });
   await check('Aluno: renova o endereço uma vez por abertura, sem pedir nada ao aluno',async()=>{
    await p.evaluate(()=>{__grav.length=0;_avisosNuvemSessao=false;renovarAvisosNuvem();renovarAvisosNuvem();});

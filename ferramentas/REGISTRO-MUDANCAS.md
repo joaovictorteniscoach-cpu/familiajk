@@ -8,6 +8,28 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-25 · Claude Code: visual sóbrio, rodada 2 (prévia enviada ao João)
+
+Versão 2026-10-25-1. João: "a imagem genérica está ótima; a cara de IA vem do
+restante". A foto da quadra no topo fica; o resto ficou mais simples. Só
+aparência e texto; nenhuma regra, saldo ou fluxo mudou. Publicar só com o OK
+do João na prévia.
+- `visual-sobrio.css` (seções 7–15): superfícies lisas (sem brilho, vidro ou
+  sombra luminosa); Início em lista (um bloco, uma linha por assunto: Créditos
+  com barra, Reposições, Plano) no lugar da grade de cartões; o cartão
+  "Próxima aula" repetido saiu (já está no topo); títulos das abas sem moldura
+  nem foto atrás (a Agenda também); botões principais na cor do tema; títulos
+  de seção a 22px (a regra antiga `.page .sec-title` ganhava da rodada 1).
+- `index.html` do aluno: "Foco do mês" só aparece quando há avaliação
+  (`#home-foco-card`, antes mostrava "A definir"); datas "10 de nov." (sem
+  ano quando é o ano corrente); "1 reposição"/"1 crédito" no singular;
+  emojis saíram do botão de avisos e dos atalhos do Perfil (ícones `trophy` e
+  o novo `chat` em `icones.js`).
+- `testar-avisos-celular-browser.cjs`: texto do botão de avisos sem emoji.
+- Contraste: 68 telas × 2 temas, 0 abaixo da régua. Gestão não mudou.
+
+---
+
 ## 2026-10-24 · Claude Code: app do aluno com visual sóbrio (aprovado pelo João)
 
 Versão 2026-10-24-1 (aprovada pelo João pela prévia). Pedido do João: "tirar um pouco a cara de app feito por
