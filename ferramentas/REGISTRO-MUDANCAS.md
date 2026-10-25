@@ -17,8 +17,10 @@ do João na prévia.
 - `visual-sobrio.css` (seções 7–15): superfícies lisas (sem brilho, vidro ou
   sombra luminosa); Início em lista (um bloco, uma linha por assunto: Créditos
   com barra, Reposições, Plano) no lugar da grade de cartões; o cartão
-  "Próxima aula" repetido saiu (já está no topo); títulos das abas sem moldura
-  nem foto atrás (a Agenda também); botões principais na cor do tema; títulos
+  "Próxima aula" repetido saiu (já está no topo, e o atalho dele foi junto:
+  tocar em "Próxima aula: …", `#hero-prox`, abre Minhas aulas nas próximas; o
+  teste de Minhas aulas acusou a perda); títulos das abas sem moldura nem foto
+  atrás (a Agenda também); botões principais na cor do tema; títulos
   de seção a 22px (a regra antiga `.page .sec-title` ganhava da rodada 1).
 - `index.html` do aluno: "Foco do mês" só aparece quando há avaliação
   (`#home-foco-card`, antes mostrava "A definir"); datas "10 de nov." (sem

@@ -1866,7 +1866,7 @@ function esperarAuth(){
     </button>
     <input id="avatar-aluno-file" type="file" accept="image/*" style="display:none" onchange="trocarAvatarAluno(this)">
     <p class="jv-hero-greet" id="hello">Olá!</p>
-    <h1 id="hero-prox">Sua semana na quadra</h1>
+    <h1 id="hero-prox" role="button" tabindex="0" onclick="irMinhasAulas('prox')" style="cursor:pointer">Sua semana na quadra</h1>
     <div class="jv-chips-topo">
     <button type="button" class="jv-quadra-chip" id="aluno-quadra" hidden onclick="carregarStatusQuadra()" aria-label="Situação da quadra — toque para atualizar">
       <i class="led" aria-hidden="true"></i>

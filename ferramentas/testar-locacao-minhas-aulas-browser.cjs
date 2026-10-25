@@ -237,8 +237,9 @@ async function contexto(browser,base,opts){
     await p.locator('#mau-tab-mes').click();await p.locator('#mau-painel-mes .mau-ir').click();
     assert.deepEqual((await estado()).vis,['prox'],'atalho do resumo leva às próximas');
     await p.evaluate(()=>goAluno('inicio',document.getElementById('nav-al-inicio')));
-    await p.locator('#apg-inicio .jv-home-card',{hasText:'Próxima aula'}).click();
-    assert.deepEqual((await estado()).vis,['prox'],'cartão "Próxima aula" abre direto as próximas');
+    /* Visual sóbrio (25/10): o cartão repetido saiu; o atalho ficou no topo "Próxima aula: …". */
+    await p.locator('#hero-prox').click();
+    assert.deepEqual((await estado()).vis,['prox'],'topo "Próxima aula" abre direto as próximas');
     await p.locator('#nav-al-aulas').click();assert.deepEqual((await estado()).vis,['mes'],'barra de baixo volta ao resumo');
     const r=await p.evaluate(()=>{const al=[];for(const k of ['mes','prox','feitas']){abaMinhasAulas(k);al.push(document.documentElement.scrollHeight);}abaMinhasAulas('mes');return al;});
     assert.equal(r[0],alturaMes);assert.ok(r.every(h=>h<2600),'nenhuma aba vira rolagem longa: '+r.join(', '));
