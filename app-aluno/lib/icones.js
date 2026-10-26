@@ -24,7 +24,6 @@ var NAVIC=(function(){
     key:'<circle cx="7.5" cy="12" r="5.5"/><circle class="cut" cx="6.6" cy="12" r="1.9"/><path d="M11.5 10.6H22v2.8h-2v3h-2.6v-3h-1.8v2.2H13v-2.2h-1.5z"/>',
     coins:'<ellipse cx="12" cy="6" rx="7.2" ry="3.1"/><path d="M4.8 6v4.4c0 1.8 3.2 3.2 7.2 3.2s7.2-1.4 7.2-3.2V6"/><path d="M4.8 10.4v4.4c0 1.8 3.2 3.2 7.2 3.2s7.2-1.4 7.2-3.2v-4.4"/><path d="M4.8 14.8v2.8c0 1.9 3.2 3.4 7.2 3.4s7.2-1.5 7.2-3.4v-2.8"/>',
     target:'<circle cx="12" cy="12" r="9.5"/><circle class="cut" cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="2.4"/><path d="M15.8 8.2 21 3m-2.2 0H21v2.2"/>',
-    chat:'<path d="M4 3.5h16A2.5 2.5 0 0 1 22.5 6v10a2.5 2.5 0 0 1-2.5 2.5H9.6L4.8 22v-3.5H4A2.5 2.5 0 0 1 1.5 16V6A2.5 2.5 0 0 1 4 3.5z"/>',
     more:'<circle cx="5" cy="12" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="19" cy="12" r="2.2"/>'
   },icons={};
   Object.keys(p).forEach(function(k){

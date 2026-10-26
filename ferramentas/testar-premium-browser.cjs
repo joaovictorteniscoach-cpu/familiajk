@@ -217,7 +217,7 @@ async function capture(p,name) { if(process.env.JV_NO_SCREENSHOTS==='1')return; 
           await p.evaluate(()=>{VINCULO_ESTADO='pendente';renderVinculoStatus();});assert.ok(await p.locator('#vinculo-status-box').isVisible());
           await p.evaluate(()=>{VINCULO_ESTADO='ativo';renderVinculoStatus();});assert.ok(!await p.locator('#vinculo-status-box').isVisible());
         });
-        await ok('Reposições: destaque junto dos créditos (ao lado ou logo abaixo) em celulares e nos dois temas',async()=>{
+        await ok('Reposições: destaque ao lado dos créditos em celulares e nos dois temas',async()=>{
           await p.evaluate(()=>{EU.repos=9;EU.reposValidas=2;EU.reposVencendo=1;goAluno('inicio',document.getElementById('nav-al-inicio'));});
           for(const theme of ['saibro','classico']){
             await p.evaluate(theme=>{document.getElementById('css-tema').disabled=theme==='classico';},theme);
@@ -227,14 +227,12 @@ async function capture(p,name) { if(process.env.JV_NO_SCREENSHOTS==='1')return; 
               const pos=await p.evaluate(()=>{
                 const credit=document.getElementById('home-cred-card'),repo=document.getElementById('home-repos-card');
                 const a=credit.getBoundingClientRect(),b=repo.getBoundingClientRect();
-                return {credit:a.top,repo:b.top,right:a.right,left:b.left,bottom:b.bottom,creditBottom:a.bottom,
+                return {credit:a.top,repo:b.top,right:a.right,left:b.left,bottom:b.bottom,
                   font:parseFloat(getComputedStyle(document.getElementById('home-repos').parentElement).fontSize),
                   order:Array.from(document.querySelector('.jv-home-grid').children).slice(0,2).map(e=>e.id)};
               });
               assert.deepEqual(pos.order,['home-cred-card','home-repos-card']);
-              /* Visual sóbrio (25/10): o Início pode ser em lista; Reposições vem logo abaixo de Créditos. */
-              const lado=Math.abs(pos.credit-pos.repo)<2&&pos.left>=pos.right,abaixo=pos.repo>=pos.creditBottom-1&&pos.repo-pos.creditBottom<4;
-              assert.ok((lado||abaixo)&&pos.bottom<852,JSON.stringify(pos));
+              assert.ok(Math.abs(pos.credit-pos.repo)<2&&pos.left>=pos.right&&pos.bottom<852,JSON.stringify(pos));
               assert.ok(pos.font>=30,JSON.stringify(pos));
               assert.equal(await p.locator('#home-repos').textContent(),'2');
               assert.ok(await p.locator('#home-repos-venc').isVisible());

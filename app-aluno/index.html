@@ -1866,7 +1866,7 @@ function esperarAuth(){
     </button>
     <input id="avatar-aluno-file" type="file" accept="image/*" style="display:none" onchange="trocarAvatarAluno(this)">
     <p class="jv-hero-greet" id="hello">Olá!</p>
-    <h1 id="hero-prox" role="button" tabindex="0" onclick="irMinhasAulas('prox')" style="cursor:pointer">Sua semana na quadra</h1>
+    <h1 id="hero-prox">Sua semana na quadra</h1>
     <div class="jv-chips-topo">
     <button type="button" class="jv-quadra-chip" id="aluno-quadra" hidden onclick="carregarStatusQuadra()" aria-label="Situação da quadra — toque para atualizar">
       <i class="led" aria-hidden="true"></i>
@@ -1975,7 +1975,7 @@ function esperarAuth(){
         <div class="hc-main" style="font-size:32px!important"><span id="home-loc">0</span><small style="font-size:18px">h</small></div>
         <div class="hc-sub" id="home-loc-sub">horas de locação para usar</div>
       </button>
-      <button class="jv-home-card gold" id="home-foco-card" style="grid-column:1/-1" type="button" onclick="irEvolucao()">
+      <button class="jv-home-card gold" style="grid-column:1/-1" type="button" onclick="irEvolucao()">
         <div class="hc-top"><span class="hc-icon" data-ic="target"></span><span>Foco do mês ›</span></div>
         <div class="hc-main" id="home-foco">Próximo passo</div>
         <div class="hc-sub" id="home-foco-sub">Definido a partir da sua evolução</div>
@@ -1989,7 +1989,7 @@ function esperarAuth(){
       <div id="home-familia-info" style="grid-column:1/-1;font-size:12px;line-height:1.5;display:none"></div>
       <button class="jv-pix-btn" id="home-pix-btn" type="button" onclick="pagarPix()"><img class="jv-pix-mark" src="assets/pix-simbolo.svg" alt="" width="25" height="25"> Pagar com Pix ›</button>
     </div>
-    <div class="jv-quick-title">Ações rápidas</div>
+    <div class="jv-quick-title">⚡ Ações rápidas</div>
     <div class="jv-quick">
       <button type="button" onclick="goAluno('agenda',document.getElementById('nav-al-agenda'))"><span data-ic="cal"></span>Agendar aula</button>
       <button type="button" onclick="irMarcarReposicao()"><span data-ic="refresh"></span>Solicitar reposição</button>
@@ -2162,14 +2162,14 @@ function esperarAuth(){
         <button class="buy-btn jv-wide-action" onclick="abrirMFit()">↗ Abrir meu treino no MFit</button>
       </div>
       <div class="jv-section-card jv-notif-card">
-        <button id="btn-avisos" class="aviso-btn" onclick="ativarAvisos('jv-icone-aluno.png')">Ativar avisos</button>
+        <button id="btn-avisos" class="aviso-btn" onclick="ativarAvisos('jv-icone-aluno.png')">🔔 Ativar avisos</button>
         <p class="aviso-cap">Receba lembretes de aula e atualizações importantes no celular.</p>
       </div>
       <div class="jv-quick-title">Mais do aluno</div>
       <div class="jv-quick">
         <button type="button" onclick="irMinhasAulas()"><span data-ic="ball"></span>Minhas aulas</button>
-        <button type="button" id="perfil-torneio-btn" onclick="goAluno('torneio',null)"><span data-ic="trophy"></span>Torneio <i class="nav-badge" id="nb-al-torneio"></i></button>
-        <button type="button" onclick="falarComProfessor()"><span data-ic="chat"></span>Falar com a academia</button>
+        <button type="button" id="perfil-torneio-btn" onclick="goAluno('torneio',null)"><span>🏆</span>Torneio <i class="nav-badge" id="nb-al-torneio"></i></button>
+        <button type="button" onclick="falarComProfessor()"><span>💬</span>Falar com a academia</button>
       </div>
       <button type="button" class="jv-logout" onclick="sair()">↪ Sair do aplicativo</button>
     </section>
@@ -3373,8 +3373,7 @@ function proximaAulaPremium(){
 }
 function formatoDataPremium(dk){
   if(!dk)return '—';const p=dk.split('-').map(Number);const d=new Date(p[0],p[1]-1,p[2],12);
-  /* "21 de out." (e o ano só quando não é o atual) — sem a data em caixa-alta. */
-  return p[2]+' de '+MESES[d.getMonth()].slice(0,3).toLowerCase()+'.'+(p[0]!==new Date().getFullYear()?' de '+p[0]:'');
+  return String(p[2]).padStart(2,'0')+' '+MESES[d.getMonth()].slice(0,3).toUpperCase()+' '+p[0];
 }
 function planoPremium(){
   if(!EU)return '—';
@@ -3422,8 +3421,6 @@ function renderPremiumAluno(){
   const hps=document.getElementById('home-plano-sub');if(hps)hps.textContent=plano>0?(fmtCred(plano)+(plano===1?' aula':' aulas')+' por mês'):'Fale com o João para escolher um plano';
   const foco=focoPremium(),fo=document.getElementById('home-foco');if(fo)fo.textContent=foco;
   const fos=document.getElementById('home-foco-sub');if(fos)fos.textContent=(EU.avaliacoes&&EU.avaliacoes.length)?'Prioridade da sua avaliação mais recente':'Será atualizado pelo professor';
-  /* Sem avaliação ainda, o cartão só dizia "A definir": fica escondido até ter foco. */
-  const fc=document.getElementById('home-foco-card');if(fc)fc.hidden=!(EU.avaliacoes&&EU.avaliacoes.length);
   const ps=document.getElementById('home-pay-status');if(ps){ps.textContent=EU.status==='pago'?'Em dia':(EU.status==='parcial'?rotuloParcialAluno():'Pendente');ps.dataset.status=EU.status==='pago'?'pago':(EU.status==='parcial'?'parcial':'pendente');}
   const vl=document.getElementById('home-venc-label');if(vl)vl.textContent=EU.status==='pago'?'Próximo vencimento':'Vencimento do mês';
   const hv=document.getElementById('home-venc');if(hv)hv.textContent=vencimentoPremium();
@@ -3443,9 +3440,6 @@ function renderPremiumAluno(){
   for(const id of ['home-repos','cred-page-repos']){
     const el=document.getElementById(id);if(el)el.textContent=fmtCred(repos);
   }
-  /* "1 reposição", não "1 reposições". */
-  const und=(el,n,um,varios)=>{const u=el&&el.nextElementSibling;if(u&&u.tagName==='SMALL')u.textContent=Number(n)===1?um:varios;};
-  und(cs,saldo,'crédito','créditos');und(document.getElementById('cred-page-repos'),repos,'reposição','reposições');
   const hrs=document.getElementById('home-repos-sub');if(hrs)hrs.textContent=repos>0?'disponíveis · toque para agendar':'nenhuma reposição disponível';
   const rn=document.getElementById('cred-page-repos-note');if(rn)rn.textContent=repos>0?'Use seu saldo para agendar uma aula de reposição.':'Você não tem reposições disponíveis no momento.';
   for(const id of ['home-repos-venc','cred-page-repos-venc']){
@@ -5084,9 +5078,9 @@ function pintarAvisos(){
   const b=document.getElementById('btn-avisos');if(!b)return;
   const st=avisosEstado();
   const nuvem=st==='granted'&&lsGet('jv-avisos-nuvem-aluno')==='1';
-  const txt={granted:nuvem?'Avisos ligados, também com o app fechado':'Avisos ligados · testar',denied:'Avisos bloqueados',
-             instalar:'Instale na Tela de Início',
-             'nao-suportado':'Sem avisos neste navegador'}[st]||'Ativar avisos';
+  const txt={granted:nuvem?'🔔 Avisos ligados, também com o app fechado':'🔔 Avisos ligados · testar',denied:'🔕 Avisos bloqueados',
+             instalar:'📲 Instale na Tela de Início',
+             'nao-suportado':'🔕 Sem avisos neste navegador'}[st]||'🔔 Ativar avisos';
   b.textContent=txt;
   b.dataset.st=st;
 }

@@ -10,7 +10,9 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ## 2026-10-26 · Claude Code: aula fora da quadra deixa a quadra livre (pedido do João)
 
-Versão 2026-10-26-1 (junto com a rodada 2 do visual, ainda sem publicar).
+Versão 2026-10-26-1, só esta correção (João: "não mudar nada visualmente ainda,
+apenas o erro"). A rodada 2 do visual segue guardada fora do `main`, esperando
+a escolha dele entre as opções A, B e C.
 João: "quando tem aula marcada fora da quadra, tem que ser possível agendar
 locações ou outras coisas na quadra, pois estou fora". A regra de quem está fora
 já existia (`foraDaQuadra`: caixinha 📍 ou personal por padrão), mas só valia
@@ -24,37 +26,14 @@ no mapa dos professores; agenda, fila e app do aluno tratavam como ocupado.
   `bloqueio` (sem nome nem código). O dono da aula continua vendo a dele.
 - App do aluno: `ehSoSemAula` trata `fora:1` de outro aluno como "sem aula":
   o horário aparece "Locação ou torneio" (antes "Reservado") e as opções são
-  só alugar ou torneio. O rótulo novo vale também para almoço/compromisso.
+  só alugar ou torneio. O mesmo rótulo vale para almoço/compromisso, que antes
+  diziam "Disponível" e só ao tocar mostravam que não há aula.
 - Personal sem marca explícita já era "fora" por padrão; o teste antigo que
   esperava personal travando locação foi ajustado. Personal marcado "na
   quadra" (caixinha desmarcada) continua ocupando.
 - Testes: `testar-reservas-exclusivas-browser.cjs` +3 (Gestão: regra, fila,
   agenda pela tela, grade pública; aluno nos dois temas: outro aluno, dono,
   grade segura, personal na quadra, pedido de locação chega).
-
----
-
-## 2026-10-25 · Claude Code: visual sóbrio, rodada 2 (prévia enviada ao João)
-
-Versão 2026-10-25-1. João: "a imagem genérica está ótima; a cara de IA vem do
-restante". A foto da quadra no topo fica; o resto ficou mais simples. Só
-aparência e texto; nenhuma regra, saldo ou fluxo mudou. Publicar só com o OK
-do João na prévia.
-- `visual-sobrio.css` (seções 7–15): superfícies lisas (sem brilho, vidro ou
-  sombra luminosa); Início em lista (um bloco, uma linha por assunto: Créditos
-  com barra, Reposições, Plano) no lugar da grade de cartões; o cartão
-  "Próxima aula" repetido saiu (já está no topo, e o atalho dele foi junto:
-  tocar em "Próxima aula: …", `#hero-prox`, abre Minhas aulas nas próximas; o
-  teste de Minhas aulas acusou a perda); títulos das abas sem moldura nem foto
-  atrás (a Agenda também); botões principais na cor do tema; títulos
-  de seção a 22px (a regra antiga `.page .sec-title` ganhava da rodada 1).
-- `index.html` do aluno: "Foco do mês" só aparece quando há avaliação
-  (`#home-foco-card`, antes mostrava "A definir"); datas "10 de nov." (sem
-  ano quando é o ano corrente); "1 reposição"/"1 crédito" no singular;
-  emojis saíram do botão de avisos e dos atalhos do Perfil (ícones `trophy` e
-  o novo `chat` em `icones.js`).
-- `testar-avisos-celular-browser.cjs`: texto do botão de avisos sem emoji.
-- Contraste: 68 telas × 2 temas, 0 abaixo da régua. Gestão não mudou.
 
 ---
 
