@@ -8,6 +8,32 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-26 · Claude Code: aula fora da quadra deixa a quadra livre (pedido do João)
+
+Versão 2026-10-26-1 (junto com a rodada 2 do visual, ainda sem publicar).
+João: "quando tem aula marcada fora da quadra, tem que ser possível agendar
+locações ou outras coisas na quadra, pois estou fora". A regra de quem está fora
+já existia (`foraDaQuadra`: caixinha 📍 ou personal por padrão), mas só valia
+no mapa dos professores; agenda, fila e app do aluno tratavam como ocupado.
+- Gestão: `podeAdicionarAoHorario(evs,tipo,pessoas,fora)` — locação e torneio
+  ignoram aula fora da quadra (como já ignoravam almoço/compromisso); aula
+  marcada como fora não disputa a quadra com locação/torneio. Aula com o João
+  na mesma hora continua recusada. Vale para a agenda (`saveSlot`), a fila de
+  pedidos (`pedidoAgendaValido`) e a voz.
+- Publicação: grade legada leva `fora:1`; grade segura publica como
+  `bloqueio` (sem nome nem código). O dono da aula continua vendo a dele.
+- App do aluno: `ehSoSemAula` trata `fora:1` de outro aluno como "sem aula":
+  o horário aparece "Locação ou torneio" (antes "Reservado") e as opções são
+  só alugar ou torneio. O rótulo novo vale também para almoço/compromisso.
+- Personal sem marca explícita já era "fora" por padrão; o teste antigo que
+  esperava personal travando locação foi ajustado. Personal marcado "na
+  quadra" (caixinha desmarcada) continua ocupando.
+- Testes: `testar-reservas-exclusivas-browser.cjs` +3 (Gestão: regra, fila,
+  agenda pela tela, grade pública; aluno nos dois temas: outro aluno, dono,
+  grade segura, personal na quadra, pedido de locação chega).
+
+---
+
 ## 2026-10-25 · Claude Code: visual sóbrio, rodada 2 (prévia enviada ao João)
 
 Versão 2026-10-25-1. João: "a imagem genérica está ótima; a cara de IA vem do
