@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-24-1';
+const VERSAO='2026-10-26-1';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2199,8 +2199,13 @@ function compartilhamentoHorario(evs){
    horário: a quadra continua livre para locação e torneio. Chuva não: a
    quadra fica impraticável para todo mundo. */
 function ehBloqueioPessoal(e){return !!e&&(e.tipo==='pessoal'||e.tipo==='bloqueio'&&!ehEventoChuva(e));}
-function podeAdicionarAoHorario(evs,tipo,pessoas){
-  if(tipo==='locacao'||tipo==='torneio')evs=evs.filter(e=>!ehBloqueioPessoal(e));
+/* Aula fora da quadra (personal em outro lugar) é como compromisso: o João
+   está fora, a quadra fica vazia. Locação e torneio entram nela; uma aula
+   marcada como fora não disputa a quadra com quem já alugou (pedido do João,
+   26/10). Aula com ele na mesma hora continua barrada: ele não se divide. */
+function podeAdicionarAoHorario(evs,tipo,pessoas,fora){
+  if(tipo==='locacao'||tipo==='torneio')evs=evs.filter(e=>!ehBloqueioPessoal(e)&&!foraDaQuadra(e));
+  else if(fora)evs=evs.filter(e=>e.tipo!=='locacao'&&e.tipo!=='torneio');
   if(!evs.length)return true;
   return compartilhamentoHorario(evs)===tipo&&(tipo!=='grupo'||(Number(pessoas)||2)===limiteGrupoHorario(evs));
 }
@@ -2369,7 +2374,8 @@ async function revogarVinculo(uid){
 function gradePublicaSegura(g){
   g=g||{fixos:[],eventos:[],excecoes:[]};
   // "pessoal" vira bloqueio sem motivo: o aluno vê que não há aula, mas pode alugar ou jogar o torneio
-  const tipoPublico=x=>x&&(x.tipo==='bloqueio'||x.tipo==='pessoal')?'bloqueio':x&&x.tipo==='grupo'?'grupo':x&&['locacao','torneio'].includes(x.tipo)?x.tipo:'ocupado';
+  // aula fora da quadra também: o João está fora, a quadra fica livre (26/10)
+  const tipoPublico=x=>x&&(x.tipo==='bloqueio'||x.tipo==='pessoal'||x.fora)?'bloqueio':x&&x.tipo==='grupo'?'grupo':x&&['locacao','torneio'].includes(x.tipo)?x.tipo:'ocupado';
   return {
     fixos:(g.fixos||[]).map(f=>({id:f.id,dia:f.dia,hora:f.hora,tipo:tipoPublico(f),...(f.tipo==='grupo'?{pessoas:[2,3,4].includes(Number(f.pessoas))?Number(f.pessoas):2}:{}),desde:f.desde||'',ate:f.ate||''})),
     eventos:(g.eventos||[]).map(e=>{
@@ -2507,9 +2513,13 @@ async function doPublish(){
         return out;
       })(),
       grade:{
-        fixos:DB.agenda.fixos.map(f=>({id:f.id,dia:f.dia,hora:f.hora,tipo:f.tipo,cod:codeFor(f),pessoas:Number(f.pessoas)||2,desde:f.desde||'',ate:f.ate||''})),
+        /* fora:1 = aula do João fora da quadra: para os outros alunos a hora
+           fica sem aula, mas livre para locação e torneio; o dono da aula
+           continua vendo a dele. */
+        fixos:DB.agenda.fixos.map(f=>({id:f.id,dia:f.dia,hora:f.hora,tipo:f.tipo,cod:codeFor(f),pessoas:Number(f.pessoas)||2,desde:f.desde||'',ate:f.ate||'',...(foraDaQuadra(f)?{fora:1}:{})})),
         eventos:DB.agenda.eventos.filter(e=>e.data>=dKey(hoje)&&e.data<=dKey(lim)).map(e=>{
           const ev={id:e.id,data:e.data,hora:e.hora,tipo:e.tipo,cod:codeFor(e),pessoas:Number(e.pessoas)||2};
+          if(foraDaQuadra(e))ev.fora=1;
           // chuva marcada antes desta versão só tem o título; por isso o fallback
           const mot=e.motivo||(/chuva/i.test(e.titulo||'')?'chuva':'');
           if(mot)ev.motivo=mot;
@@ -4757,7 +4767,7 @@ function saveSlot(){
     const conflito=datasConferenciaReserva(pedido).some(data=>{
       if(anterior&&slotCtx.editing.origem==='fixo'&&(!fixoValeEm(anterior,data)||DB.agenda.excecoes.some(e=>e.fixoId===anterior.id&&e.data===data)))return false;
       const evs=entriesFor(new Date(data+'T12:00:00'),slotCtx.hora).filter(e=>!anterior||e.id!==anterior.id||e.origem!==slotCtx.editing.origem);
-      return !podeAdicionarAoHorario(evs,tipo,pessoas);
+      return !podeAdicionarAoHorario(evs,tipo,pessoas,foraDaQuadraMarcado());
     });
     if(conflito){toast('Horário reservado. Só grupo com vaga, locação ou torneio da mesma atividade podem compartilhar.');return;}
   }

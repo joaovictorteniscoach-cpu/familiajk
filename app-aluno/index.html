@@ -1666,14 +1666,14 @@ html body:not(#jv) #pedir-box .btn-ghost{background:#F3EDE2!important;border:1px
 .login .login-sub{opacity:1}
 .login-priv{color:rgba(250,247,242,.8)}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-24-1">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-26-1">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-24-1">
-<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-24-1">
-<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-10-24-1">
-<link rel="stylesheet" href="lib/visual-sobrio.css?v=2026-10-24-1">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-26-1">
+<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-26-1">
+<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-10-26-1">
+<link rel="stylesheet" href="lib/visual-sobrio.css?v=2026-10-26-1">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -2182,7 +2182,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-10-24-1"></script>
+<script src="lib/icones.js?v=2026-10-26-1"></script>
 </div>
 
 <!-- ASSISTENTE POR VOZ: consultar horário livre, agendar, cancelar, ver aulas (lib/voz-aluno.js) -->
@@ -2429,7 +2429,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-10-24-1';
+const VERSAO='2026-10-26-1';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -3132,7 +3132,10 @@ function fixoValeEm(f,dk){
 }
 /* Almoço, bloqueio e compromisso do João tiram só a aula com ele: a quadra
    continua livre para locação e jogo do torneio. Chuva tira tudo. */
-function ehSoSemAula(e){return !!e&&(e.tipo==='pessoal'||e.tipo==='bloqueio'&&e.motivo!=='chuva');}
+/* Aula do João fora da quadra (fora:1) vale o mesmo para os outros alunos: ele
+   está fora, a quadra fica livre para locação e torneio (26/10). O dono da aula
+   continua vendo a dele. */
+function ehSoSemAula(e){return !!e&&(e.tipo==='pessoal'||e.tipo==='bloqueio'&&e.motivo!=='chuva'||!!e.fora&&e.cod!==MEU.codigo);}
 /* Jogo do torneio e locação não são aula: o aluno vê o que marcou. Antes a
    agenda dizia "Minha aula" para qualquer horário dele. */
 function tipoHorario(t){return t==='torneio'||t==='locacao'?t:'aula';}
@@ -4748,7 +4751,7 @@ function renderAgenda(){
     el.innerHTML=PUB.horas.map(h=>{
       const s=slotState(agDate,h);
       let inner='';
-      if(s.st==='livre'||s.st==='loc')inner=horasAte(dKey(agDate),h)<=0?`<button class="sl bloq" disabled>Encerrado</button>`:`<button class="sl livre" onclick="escolherSlot('${h}')">${s.compartilhado?s.label:'Disponível'} <i>${s.compartilhado?'participar':'ver opções'}</i></button>`;
+      if(s.st==='livre'||s.st==='loc')inner=horasAte(dKey(agDate),h)<=0?`<button class="sl bloq" disabled>Encerrado</button>`:`<button class="sl livre" onclick="escolherSlot('${h}')">${s.compartilhado?s.label:s.semAula?'Locação ou torneio':'Disponível'} <i>${s.compartilhado?'participar':'ver opções'}</i></button>`;
       else if(s.st==='meu'){const podeC=podeCancelarAula(dKey(agDate),h);const ic=iconeHorario(s.tipo),cf=s.tipo==='torneio'?'confirmado':'confirmada';inner=podeC?`<button class="sl meu" onclick="cancelarAula('${dKey(agDate)}','${h}','pontual')">${ic} ${s.label} <i>${cf} · toque para cancelar</i></button>`:`<button class="sl meu">${ic} ${s.label} <i>${cf} · trava ${LIMITE_CANCEL_H}h</i></button>`;}
       else if(s.st==='pend')inner=`<button class="sl pend" onclick="cancelarAula('${dKey(agDate)}','${h}','pontual')">${s.label} <i>enviado ao João · toque para cancelar</i></button>`;
       else if(s.st==='chuva')inner=`<button class="sl chuva">☔ Cancelado por chuva <i>sem desconto de crédito</i></button>`;
@@ -5716,7 +5719,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-24-1').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-26-1').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
@@ -5725,6 +5728,6 @@ window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);})
   setTimeout(()=>esperarEIniciar(t+1),150);
 })(0);
 </script>
-<script src="lib/voz-aluno.js?v=2026-10-24-1"></script>
+<script src="lib/voz-aluno.js?v=2026-10-26-1"></script>
 </body>
 </html>

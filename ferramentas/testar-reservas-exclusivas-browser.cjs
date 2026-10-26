@@ -132,8 +132,9 @@ async function setup(context,base,theme='saibro'){
      const evs=entriesFor(new Date(dk+'T12:00:00'),'09:00');
      return ['aula','grupo','locacao','torneio'].map(t=>podeAdicionarAoHorario(evs,t,2));
     },{tipo,dk});
-    // almoço/bloqueio do João (sem chuva) tira só a aula: locação e torneio entram (regra de 09/10)
-    assert.deepEqual(respostas,['aula','grupo','locacao','torneio'].map(t=>['grupo','locacao','torneio'].includes(tipo)&&t===tipo||tipo==='bloqueio'&&['locacao','torneio'].includes(t)),tipo);
+    // almoço/bloqueio do João (sem chuva) tira só a aula: locação e torneio entram (regra de 09/10);
+    // personal é, por padrão, fora da quadra: também deixa locação e torneio entrarem (26/10)
+    assert.deepEqual(respostas,['aula','grupo','locacao','torneio'].map(t=>['grupo','locacao','torneio'].includes(tipo)&&t===tipo||['bloqueio','personal'].includes(tipo)&&['locacao','torneio'].includes(t)),tipo);
    }
    const chuva=await p.evaluate(dk=>{
     DB.agenda.eventos=[{id:'chuva',data:dk,hora:'09:00',titulo:'☔ Chuva',tipo:'bloqueio',motivo:'chuva',alunoId:null}];
@@ -146,6 +147,41 @@ async function setup(context,base,theme='saibro'){
    assert.equal(await p.evaluate(()=>DB.agenda.eventos.length),2);
    assert.equal(await p.evaluate(()=>DB.agenda.eventos[1].tipo),'torneio');
    assert.equal(await p.evaluate(p=>pedidoAgendaValido(p,DB.alunos[0]),req('aula-sobre-jogo')),false);
+  });
+  await reset();
+  /* Pedido do João (26/10): aula dele fora da quadra deixa a quadra livre. */
+  await check('Gestão: aula fora da quadra deixa locação e torneio entrarem; aula com o João continua barrada',async()=>{
+   const r=await p.evaluate(dk=>{
+    const tipos=['aula','grupo','personal','locacao','torneio'],evsDe=lista=>{DB.agenda.eventos=lista;return entriesFor(new Date(dk+'T12:00:00'),'09:00');};
+    const out={};
+    let evs=evsDe([{id:'fora',data:dk,hora:'09:00',tipo:'personal',alunoId:'pai',fora:1}]);
+    out.sobreFora=tipos.map(t=>podeAdicionarAoHorario(evs,t,2));
+    evs=evsDe([{id:'quadra',data:dk,hora:'09:00',tipo:'personal',alunoId:'pai',fora:0}]);
+    out.naQuadra=['locacao','torneio'].map(t=>podeAdicionarAoHorario(evs,t,2));
+    evs=evsDe([{id:'loc',data:dk,hora:'09:00',tipo:'locacao',alunoId:null}]);
+    out.foraSobreLoc=[podeAdicionarAoHorario(evs,'personal',2,true),podeAdicionarAoHorario(evs,'personal',2,false)];
+    return out;
+   },dk);
+   assert.deepEqual(r.sobreFora,[false,false,false,true,true],'sobre aula fora: só locação e torneio');
+   assert.deepEqual(r.naQuadra,[false,false],'personal na quadra continua ocupando');
+   assert.deepEqual(r.foraSobreLoc,[true,false],'aula fora não disputa a quadra com a locação');
+   await p.evaluate(d=>{DB.agenda.eventos=[{id:'fora',data:d,hora:'09:00',tipo:'personal',alunoId:'pai',fora:1}];},dk);
+   queue={jogo:req('jogo-fora','9901','u1',{tor:1})};await p.evaluate(()=>syncRequests(true));
+   assert.equal(await p.evaluate(()=>DB.agenda.eventos.filter(e=>e.tipo==='torneio').length),1,'pedido de torneio pela fila é aceito');
+   assert.equal(await p.evaluate(p=>pedidoAgendaValido(p,DB.alunos[0]),req('aula-sobre-fora')),false,'aula com o João na mesma hora é recusada');
+   for(const [fora,tipo,esperado] of [[1,'locacao',2],[1,'torneio',2],[0,'locacao',1]]){
+    const n=await p.evaluate(({fora,tipo,dk})=>{
+     DB.agenda.eventos=[{id:'fora-ui',data:dk,hora:'09:00',tipo:'personal',alunoId:'pai',fora,titulo:'Personal Teste'}];
+     agDate=new Date(dk+'T12:00:00');openSlot('09:00');
+     document.getElementById('s-titulo').value='Locação Teste';document.getElementById('s-aluno').value='solo';
+     document.getElementById('s-tipo').value=tipo;document.getElementById('s-rec').value='pontual';saveSlot();
+     return DB.agenda.eventos.length;
+    },{fora,tipo,dk});
+    assert.equal(n,esperado,'pela agenda da Gestão: '+tipo+' sobre personal '+(fora?'fora':'na quadra'));
+   }
+   const seg=await p.evaluate(()=>gradePublicaSegura({fixos:[{id:'ff',dia:1,hora:'09:00',tipo:'aula',fora:1,cod:'9901'}],eventos:[{id:'f',data:'2099-01-01',hora:'09:00',tipo:'personal',fora:1,cod:'9901'}],excecoes:[]}));
+   assert.deepEqual([seg.fixos[0].tipo,seg.eventos[0].tipo],['bloqueio','bloqueio'],'grade pública: só "sem aula", sem nome nem código');
+   assert.ok(!seg.eventos[0].cod&&!seg.eventos[0].fora);
   });
   await reset();
   await check('Gestão: dupla completa e tamanhos diferentes bloqueiam; cadastro permite participantes na mesma locação',async()=>{
@@ -280,6 +316,21 @@ async function setup(context,base,theme='saibro'){
     },dk);
     assert.equal(estado.e.compartilhado,'locacao');assert.equal(estado.book,null);
     assert.match(estado.opcoes,/Participar da locação/);assert.doesNotMatch(estado.opcoes,/Agendar aula|torneio/);
+   });
+   await resetAluno();
+   await check(theme+': aula do João fora da quadra deixa a hora livre para locação; o dono vê a aula dele',async()=>{
+    const r=await al.evaluate(d=>{
+     PUB.grade.eventos=[{id:'fora',data:d,hora:'09:00',tipo:'personal',cod:'7777',fora:1}];const outro=slotState(agDate,'09:00');
+     PUB.grade.eventos=[{id:'fora',data:d,hora:'09:00',tipo:'personal',cod:'9901',fora:1}];const dono=slotState(agDate,'09:00');
+     PUB.grade.eventos=[{id:'fora',data:d,hora:'09:00',tipo:'bloqueio'}];const segura=slotState(agDate,'09:00');
+     PUB.grade.eventos=[{id:'quadra',data:d,hora:'09:00',tipo:'personal',cod:'7777'}];const naQuadra=slotState(agDate,'09:00');
+     return {outro,dono,segura,naQuadra};
+    },dk);
+    assert.equal(r.outro.st,'loc',JSON.stringify(r.outro));assert.equal(r.outro.semAula,true);
+    assert.equal(r.dono.st,'meu');assert.equal(r.segura.st,'loc');assert.equal(r.naQuadra.st,'ocup');
+    grade.eventos=[{id:'fora',data:dk,hora:'09:00',tipo:'bloqueio'}];
+    await al.evaluate(d=>{window.locTestPedidos=0;notificarJoao=()=>{window.locTestPedidos++;};PUB.grade.eventos=[{id:'fora',data:d,hora:'09:00',tipo:'bloqueio'}];pedirLocacaoHora('09:00');},dk);
+    await al.evaluate(()=>confirmarLocacao());assert.equal(await al.evaluate(()=>window.locTestPedidos),1,'pedido de locação chega ao João');
    });
    await resetAluno();
    await check(theme+': dupla completa bloqueia terceira pessoa e locação relê grade antes do pedido',async()=>{
