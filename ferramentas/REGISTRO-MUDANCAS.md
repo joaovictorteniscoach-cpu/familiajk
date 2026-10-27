@@ -8,6 +8,32 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-27 · Claude Code: letras maiores no app do aluno e lembrete 3 dias depois do vencimento
+
+Versão 2026-10-27-1 (prévia enviada; publicar só com o OK do João). João: "por
+enquanto, fazer apenas ligar os avisos com o app fechado, lembrete automático
+de vencimento e aumentar as letras para ficar mais visível. Só isso."
+- **Letras:** `app-aluno/lib/letras-maiores.css`, carregada por último (e no
+  cache do `sw-aluno.js`). Muda só o tamanho da letra: 167 de 299 textos
+  visíveis estavam abaixo de 12 px; agora nenhum. Faixa nova: 12–14 px; a barra
+  de baixo fica em 12,5 px e a grade da semana em 11,5 px (em 12 px "Reserva"
+  quebrava). Janelas por cima (escolher horário, agendar) também. Tirar o
+  `<link>` volta ao tamanho anterior.
+- **Teste novo:** `testar-letras-aluno-browser.cjs` (28 verificações: 6 abas +
+  janelas, 320 e 390 px, dois temas, sem rolagem para o lado). Está no
+  `validar-pr.yml`.
+- **Lembrete de vencimento:** já existia ("vence em 3 dias" e "vence hoje", 9h,
+  só pendentes) dentro dos avisos com o app fechado. Acrescentado o de 3 dias
+  depois ("Lembrete: sua mensalidade do tênis venceu no dia X"), só para quem
+  continua pendente. Sem valor e sem desconto no texto. `montarAvisos`, teste
+  em `testar-avisos-celular-browser.cjs` (+1).
+- **Avisos com o app fechado:** o código está pronto desde 15/10. Para ligar,
+  faltam os passos do João em `AVISOS-CLOUDFLARE.md` (conta Cloudflare, robô no
+  Firebase e UID, segredos no GitHub, publicar a regra). Sem isso, nenhum
+  lembrete sai com o app fechado.
+
+---
+
 ## 2026-10-27 · Claude Code: avaliação do app em comparação com o mercado (só leitura)
 
 João pediu uma nota comparada ao mercado e o que melhorar, sem pagar nada por

@@ -63,6 +63,7 @@ Use `grep -n` pelos títulos de seção (`/* ===== Título =====`) ou pelo nome 
 - Vidro Aero (referência do João: Windows Vista/7): bloco "Vidro Aero" no fim do `estilo.css` (`--aero-*`); só brilho/borda/sombra, nunca troca cor de fundo
 - Horário que o app do aluno não vê (código publicado ≠ do aluno): `codigoDaEntrada` (publicação usa), `horariosQueOAlunoNaoVe`/`nomeBateCom` (só lista), `ligarHorarioAoAluno` (botão com desfazer); `acharAlunoPorTitulo` prefere o ativo; `noAppDoAluno` (linha "📱 No app" no horário), `temAppAprovado` (VINCULOS)
 - Cancelamento preso no app do aluno: `limparCancelados`/`minhaEntradaNaGrade` (app-aluno; resposta "cancelado", aula fora da agenda ou data passada); na Gestão, achado "cancelou pelo app e foi marcada de novo" (só lista)
+- Letras do app do aluno: `app-aluno/lib/letras-maiores.css` (só tamanho; mínimo 12 px, grade da semana 11,5 px; teste `testar-letras-aluno-browser.cjs`)
 - Assistente por voz do aluno: `app-aluno/lib/voz-aluno.js` (`JVVozAluno`: `interpretar`/`executar`; só abre `gotoBook`/`cancelarAula`/`abrirEspera`, nunca grava sozinho) + `voz-aluno.css` (`va-`); perguntas com dados do app: `infoResposta` (preços/planos com `st.pend`, mensalidade, repor, torneio…)
 - Botão de voz arrastável (Gestão e aluno): `arrastavel(bt,chave)` em `acoes-voz.js` e `voz-aluno.js` (posição em `jv-voz-posicao`/`jv-va-posicao`; tocar abre, arrastar não)
 - Varredura de atalhos: `ferramentas/testar-atalhos-gestao-browser.cjs` (tabela `DESTINOS`; atalho novo precisa entrar nela)

@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-26-1';
+const VERSAO='2026-10-27-1';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2862,7 +2862,8 @@ function notificarNavegador(txt){mostrarAviso('Academia JV Tênis 🎾',txt,'jv-
    rodada e chave pública de push). A Gestão só PREPARA os avisos dos próximos
    dias em jvtenis/avisos_saida:
    - aula, locação e torneio de amanhã: às 19h da véspera;
-   - vencimento da mensalidade de quem está pendente: 3 dias antes e no dia, 9h;
+   - vencimento da mensalidade de quem está pendente: 3 dias antes, no dia e
+     3 dias depois (se ainda pendente), 9h;
    - vaga liberada da lista de espera: na hora (de noite, às 7h).
    O servidor manda na hora certa e anota em avisos_enviados. Textos sem valor
    e sem desconto. Sem servidor vivo, nada é gravado e nada muda. */
@@ -2916,6 +2917,11 @@ function montarAvisos(agora){
       out[idAviso('v',cod,mk,'3')]={cod,tipo:'venc',quando:q3,ate:q3+12*3600000,t:'Sua mensalidade do tênis vence em 3 dias (dia '+dia+')',c:corpoVenc,g:'venc'};
     if(fim>agora&&q0-agora<(AVISOS_DIAS+1)*DIA_MS)
       out[idAviso('v',cod,mk,'0')]={cod,tipo:'venc',quando:q0,ate:fim,t:'Sua mensalidade do tênis vence hoje',c:corpoVenc,g:'venc'};
+    /* 3 dias depois, só se continuar pendente (pedido do João, 27/10). Quem
+       paga antes sai da lista na próxima gravação e o aviso some. */
+    const qd=new Date(hoje.getFullYear(),hoje.getMonth(),dia+3,AVISO_HORA_VENC).getTime();
+    if(qd+12*3600000>agora&&qd-agora<(AVISOS_DIAS+1)*DIA_MS)
+      out[idAviso('v',cod,mk,'d3')]={cod,tipo:'venc',quando:qd,ate:qd+12*3600000,t:'Lembrete: sua mensalidade do tênis venceu no dia '+dia,c:corpoVenc,g:'venc'};
   });
   const hAgora=hoje.getHours();
   const qVaga=(hAgora>=7&&hAgora<22)?0:new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()+(hAgora>=22?1:0),7).getTime();

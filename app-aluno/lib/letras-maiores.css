@@ -1,0 +1,75 @@
+/* Letras maiores (pedido do João, 27/10: "aumentar as letras para ficar mais
+   visível"). Só o TAMANHO da letra muda: nenhuma cor, fundo, ícone ou posição.
+   Medido nas telas: 167 de 299 textos estavam abaixo de 12 px (a maioria em
+   11 px). O mínimo passa a 12–14 px; a barra de baixo e a grade da semana
+   sobem menos, porque o espaço é curto. Carregada por último; tirar o <link>
+   volta ao tamanho anterior. O #app repetido só dá força para vencer as
+   camadas antigas (que usam !important). */
+
+/* Topo do app */
+html body #app#app#app .jv-student-brand span{font-size:12.5px!important}
+html body #app#app#app .jv-student-brand b{font-size:14px!important}
+
+/* Barra de baixo (6 botões: sobe pouco para caber em celular pequeno) */
+html body #app#app#app .nav button,
+html body #app#app#app .nav button .mau-nav-txt{font-size:12.5px!important}
+
+/* Rótulos que estavam em 10–11,5 px */
+html body #app#app#app .jv-pay-lbl,
+html body #app#app#app .xp-eye,
+html body #app#app#app .evo-prio .lbl,
+html body #app#app#app .evo-pal-cap,
+html body #app#app#app .sec-eyebrow,
+html body #app#app#app .xp-cap,
+html body #app#app#app .evo-step,
+html body #app#app#app .evo-pal .p,
+html body #app#app#app .jv-pay-status,
+html body #app#app#app .aviso-cap,
+html body #app#app#app #mau-hero-sub,
+html body #app#app#app .amr-nota,
+html body #app#app#app .amr div > b + span{font-size:13px!important}
+html body #app#app#app .pay-btn small{font-size:12.5px!important}
+
+/* Linhas de informação (Créditos e Perfil): rótulo e valor */
+html body #app#app#app .jv-row > span,
+html body #app#app#app .jv-row > b{font-size:14px!important}
+
+/* Títulos pequenos de bloco e botões */
+html body #app#app#app .jv-quick-title{font-size:14px!important}
+html body #app#app#app .jv-quick button{font-size:13px!important}
+html body #app#app#app .jv-profile-actions button,
+html body #app#app#app .jv-logout{font-size:14px!important}
+html body #app#app#app #perfil-nivel{font-size:14px!important}
+html body #app#app#app .jv-credit-big small{font-size:14px!important}
+html body #app#app#app .pay-btn,
+html body #app#app#app .jv-pix-btn{font-size:14px!important}
+
+/* Início */
+html body #app#app#app #apg-inicio .jv-home-card .hc-top,
+html body #app#app#app #apg-inicio .jv-home-card .hc-top span{font-size:14px!important}
+html body #app#app#app #home-minhas-sub{font-size:13.5px!important}
+
+/* Agenda */
+html body #app#app#app .jv-subhero p{font-size:14px!important}
+html body #app#app#app .seg button{font-size:14px!important}
+html body #app#app#app .month-btn,
+html body #app#app#app .wk-zbtn,
+html body #app#app#app .wk-fit{font-size:13px!important}
+html body #app#app#app .ag-nav-label small{font-size:13px!important}
+html body #app#app#app .legend span{font-size:12.5px!important}
+html body #app#app#app #apg-agenda th,
+html body #app#app#app #apg-agenda th small{font-size:12px!important}
+html body #app#app#app #apg-agenda td.hr{font-size:12.5px!important}
+html body #app#app#app #apg-agenda .wc{font-size:11.5px!important}
+
+/* Minhas aulas e Evolução */
+html body #app#app#app .amr-dia,
+html body #app#app#app .amr-vazio,
+html body #app#app#app .xp-delta{font-size:13.5px!important}
+
+/* Janelas que abrem por cima (escolher horário, agendar, locação...): ficam
+   fora do #app, por isso a regra própria. */
+html body .overlay.overlay.overlay small,
+html body .overlay.overlay.overlay .pick-opt small{font-size:13px!important}
+html body .overlay.overlay.overlay label,
+html body .overlay.overlay.overlay .grp-ref-note{font-size:13px!important}
