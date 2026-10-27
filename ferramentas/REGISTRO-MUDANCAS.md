@@ -16,8 +16,8 @@ de vencimento e aumentar as letras para ficar mais visível. Só isso."
 - **Letras:** `app-aluno/lib/letras-maiores.css`, carregada por último (e no
   cache do `sw-aluno.js`). Muda só o tamanho da letra: 167 de 299 textos
   visíveis estavam abaixo de 12 px; agora nenhum. Faixa nova: 12–14 px; a barra
-  de baixo fica em 12,5 px e a grade da semana em 11,5 px (em 12 px "Reserva"
-  quebrava). Janelas por cima (escolher horário, agendar) também. Tirar o
+  de baixo fica em 12,5 px e as células da grade da semana ficam em 11 px, como
+  antes (já em 11,5 px "Reserva" quebrava). Janelas por cima (escolher horário, agendar) também. Tirar o
   `<link>` volta ao tamanho anterior.
 - **Teste novo:** `testar-letras-aluno-browser.cjs` (28 verificações: 6 abas +
   janelas, 320 e 390 px, dois temas, sem rolagem para o lado). Está no

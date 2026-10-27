@@ -13,9 +13,9 @@ const server=http.createServer((req,res)=>{
  try{res.setHeader('Content-Type',({'.html':'text/html','.css':'text/css','.js':'text/javascript','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp'})[path.extname(f)]||'application/octet-stream');res.end(fs.readFileSync(f));}catch(e){res.writeHead(404).end();}
 });
 let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);}
-/* Mínimo geral 12 px. A grade da semana (7 colunas) fica em 11,5 px: em 12 px
-   "Reserva" quebrava no meio da palavra. */
-const MIN=12,MIN_GRADE=11.5;
+/* Mínimo geral 12 px. As células da grade da semana (7 colunas) ficam em 11 px,
+   como antes: em 11,5 px "Reserva" já quebrava no meio da palavra. */
+const MIN=12,MIN_GRADE=11;
 const ABAS=[["goAluno('inicio',document.getElementById('nav-al-inicio'))",'Início'],["goAluno('agenda',document.getElementById('nav-al-agenda'))",'Agenda'],
  ["irMinhasAulas()",'Minhas aulas'],["goAluno('creditos',document.getElementById('nav-al-creditos'))",'Créditos'],
  ["goAluno('evolucao',document.getElementById('nav-evolucao'))",'Evolução'],["goAluno('perfil',document.getElementById('nav-al-perfil'))",'Perfil']];

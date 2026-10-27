@@ -1,8 +1,8 @@
 /* Letras maiores (pedido do João, 27/10: "aumentar as letras para ficar mais
    visível"). Só o TAMANHO da letra muda: nenhuma cor, fundo, ícone ou posição.
    Medido nas telas: 167 de 299 textos estavam abaixo de 12 px (a maioria em
-   11 px). O mínimo passa a 12–14 px; a barra de baixo e a grade da semana
-   sobem menos, porque o espaço é curto. Carregada por último; tirar o <link>
+   11 px). O mínimo passa a 12–14 px; a barra de baixo sobe menos e as células
+   da grade da semana ficam como estavam, porque o espaço é curto. Carregada por último; tirar o <link>
    volta ao tamanho anterior. O #app repetido só dá força para vencer as
    camadas antigas (que usam !important). */
 
@@ -60,7 +60,8 @@ html body #app#app#app .legend span{font-size:12.5px!important}
 html body #app#app#app #apg-agenda th,
 html body #app#app#app #apg-agenda th small{font-size:12px!important}
 html body #app#app#app #apg-agenda td.hr{font-size:12.5px!important}
-html body #app#app#app #apg-agenda .wc{font-size:11.5px!important}
+/* As células da grade da semana ficam como estavam (11 px): a coluna é estreita
+   e em 11,5 px "Reserva" já quebrava no meio. A grade tem os botões − e +. */
 
 /* Minhas aulas e Evolução */
 html body #app#app#app .amr-dia,
