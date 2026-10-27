@@ -25,12 +25,13 @@ análise feita lá). Preparado em `lojas/` (pasta fora do `PUBLICOS`, não vai a
   `br.com.jvtenis.aluno`, a confirmar) e `lojas/raiz-github-io/` (modelo do
   `assetlinks.json` + `.nojekyll`).
 - `lojas/imagens/`: ícone 512, destaque 1024×500 e 6 fotos de tela 1080×2160
-  com dados fictícios (visual publicado hoje; refazer após a escolha do visual).
+  com dados fictícios (visual atual, que fica).
 - `.gitignore`: `*.keystore`/`*.jks` (a chave de assinatura nunca entra no repo).
 - Pendentes antes de enviar à loja: modo demonstração para o revisor e página
   de exclusão de dados (com prévia e OK do João).
-- Decisão do João no mesmo dia: agenda sem linha 6:30; a limpeza da Gestão
-  mantém o estilo atual dela.
+- Decisões do João no mesmo dia: agenda sem linha 6:30; "não irei mudar mais o
+  visual" — as opções A, B e C e a rodada 2 do visual sóbrio foram descartadas
+  (a rodada 2 nunca foi publicada). O visual publicado (2026-10-24-1) fica.
 
 ---
 

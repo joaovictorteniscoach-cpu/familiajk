@@ -35,7 +35,7 @@ no celular continuam funcionando.
 | Pedido de exclusão de dados | A política já diz como pedir (seção 7). O Google pede um link próprio: **a fazer** (Claude) uma página curta no site |
 | Política de privacidade | Pronta: `site/privacidade.html` |
 | Textos da loja e respostas dos formulários | Prontos: `textos-google-play.md` |
-| Ícone, imagem de destaque e fotos de tela | Prontos em `imagens/` (dados fictícios). Refazer depois que o João escolher o visual novo |
+| Ícone, imagem de destaque e fotos de tela | Prontos em `imagens/` (dados fictícios, com o visual atual, que fica) |
 | Teste fechado | Conta pessoal nova: **12 testadores por 14 dias seguidos** antes de liberar para todos ([regra do Google](https://support.google.com/googleplay/android-developer/answer/14151465)). Alunos com Android e conta Google servem |
 | Pacote do app (.aab) | Claude gera (Bubblewrap) quando a conta existir. A chave de assinatura **nunca** vai para o repositório: fica com o João |
 
