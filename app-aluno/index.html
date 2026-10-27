@@ -1228,7 +1228,9 @@ body{padding-bottom:calc(78px + env(safe-area-inset-bottom,0px))!important}
 #apg-agenda .wk td.hr{font-size:var(--al-wk-fs,9px)!important}
 #apg-agenda .wc{
   font-size:var(--al-wk-fs,9px)!important;line-height:1.05!important;
-  padding:2px 1px!important;white-space:normal!important;overflow-wrap:anywhere!important
+  padding:2px 1px!important;white-space:normal!important;
+  /* palavra inteira, nunca "Fechad/o": se não couber, ajustarRotulosSemana encurta (27/10) */
+  overflow-wrap:normal!important;word-break:normal!important;overflow:hidden
 }
 
 @media(max-width:390px){
@@ -1666,15 +1668,15 @@ html body:not(#jv) #pedir-box .btn-ghost{background:#F3EDE2!important;border:1px
 .login .login-sub{opacity:1}
 .login-priv{color:rgba(250,247,242,.8)}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-27-1">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-27-2">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-27-1">
-<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-27-1">
-<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-10-27-1">
-<link rel="stylesheet" href="lib/visual-sobrio.css?v=2026-10-27-1">
-<link rel="stylesheet" href="lib/letras-maiores.css?v=2026-10-27-1">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-27-2">
+<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-27-2">
+<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-10-27-2">
+<link rel="stylesheet" href="lib/visual-sobrio.css?v=2026-10-27-2">
+<link rel="stylesheet" href="lib/letras-maiores.css?v=2026-10-27-2">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -1801,7 +1803,7 @@ function esperarAuth(){
   <h1>JV <em>Tênis</em></h1>
   <p class="login-sub">Seja bem-vindo</p>
   <p>Já é aluno? Digite seu código de acesso</p>
-  <input class="code-input" id="code-in" maxlength="4" inputmode="numeric" placeholder="••••">
+  <input class="code-input" id="code-in" maxlength="4" inputmode="numeric" placeholder="••••" aria-label="Código de acesso">
   <label class="keep-lab"><input type="checkbox" id="keep-in" checked> Manter-me conectado</label>
   <button class="login-btn" onclick="entrar()">Acessar app</button>
   <button class="login-new-btn" onclick="abrirCadastroNovo()">Sou novo · solicitar acesso</button>
@@ -2183,7 +2185,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-10-27-1"></script>
+<script src="lib/icones.js?v=2026-10-27-2"></script>
 </div>
 
 <!-- ASSISTENTE POR VOZ: consultar horário livre, agendar, cancelar, ver aulas (lib/voz-aluno.js) -->
@@ -2384,7 +2386,7 @@ function esperarAuth(){
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <!-- MODAL REGISTRAR RESULTADO (ALUNO) -->
 <div class="overlay" id="ov-tor-result" onclick="if(event.target===this)this.classList.remove('on')">
@@ -2430,7 +2432,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-10-27-1';
+const VERSAO='2026-10-27-2';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -4711,6 +4713,37 @@ function aplicarAlunoWkVars(){
   t.style.setProperty('--al-wk-min',v.min+'px');
   const l=document.getElementById('al-wk-zlbl');if(l)l.textContent=Math.round(alunoWkZoom*100)+'%';
   try{localStorage.setItem('jv-al-wkzoom',String(alunoWkZoom));localStorage.setItem('jv-al-wkzoom-fit',String(alunoWkAutoFit));}catch(e){}
+  ajustarRotulosSemana();
+}
+/* Na coluna estreita a palavra se partia em qualquer letra ("Fechad/o",
+   "Locaçã/o"; revisão das telas, 27/10). Agora a palavra fica inteira: se não
+   couber, as letras chegam um pouco mais perto e, se ainda não couber, entra a
+   forma curta. O nome completo continua no title da célula. */
+const WK_CURTO={'Fechado':['Fech.'],'Locação':['Locaç.','Loc.'],'Reserva':['Reserv.','Res.'],'Torneio':['Torn.'],
+  'Quádrupla':['Quádr.','Quád.'],'Pedido':['Ped.'],'Passou':['Pass.']};
+let wkMedidor=null,wkFonteOk=false;
+function ajustarRotulosSemana(){
+  const cels=[...document.querySelectorAll('#apg-agenda .wk .wc')];if(!cels.length)return;
+  const cs=getComputedStyle(cels[0]),util=cels[0].clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);
+  if(!(util>0))return;
+  wkMedidor=wkMedidor||document.createElement('canvas').getContext('2d');
+  wkMedidor.font=cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily;
+  const larg=(t,ls)=>wkMedidor.measureText(t).width+ls*t.length,cabe=(t,ls)=>larg(t,ls)<=util;
+  const escolha={};
+  cels.forEach(b=>{
+    const cheio=b.dataset.rot||b.textContent.trim();b.dataset.rot=cheio;
+    if(!escolha[cheio]){
+      let r={t:cheio,ls:0};
+      if(!/\s/.test(cheio)&&!cabe(cheio,0)){
+        if(cabe(cheio,-.3))r.ls=-.3;
+        else{const alt=WK_CURTO[cheio]||[];r.t=alt.find(a=>cabe(a,0))||alt[alt.length-1]||cheio;if(!cabe(r.t,0))r.ls=-.3;}
+      }
+      escolha[cheio]=r;
+    }
+    const r=escolha[cheio];b.textContent=r.t;b.style.letterSpacing=r.ls?r.ls+'px':'';
+  });
+  // A fonte do app pode chegar depois do 1º desenho: mede de novo quando ela estiver pronta.
+  if(!wkFonteOk&&document.fonts&&document.fonts.ready){wkFonteOk=true;document.fonts.ready.then(ajustarRotulosSemana);}
 }
 function alunoWkZoomStep(dir){
   alunoWkAutoFit=false;
@@ -5721,7 +5754,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-27-1').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-27-2').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
@@ -5730,6 +5763,6 @@ window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);})
   setTimeout(()=>esperarEIniciar(t+1),150);
 })(0);
 </script>
-<script src="lib/voz-aluno.js?v=2026-10-27-1"></script>
+<script src="lib/voz-aluno.js?v=2026-10-27-2"></script>
 </body>
 </html>

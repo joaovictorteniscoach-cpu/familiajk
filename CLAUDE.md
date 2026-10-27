@@ -70,6 +70,9 @@ Use `grep -n` pelos títulos de seção (`/* ===== Título =====`) ou pelo nome 
 - Varredura de atalhos: `ferramentas/testar-atalhos-gestao-browser.cjs` (tabela `DESTINOS`; atalho novo precisa entrar nela)
 - Segurança na Gestão: `argJs`, `sairEApagar`, `prontidaoRegraFinal`, `uidCadastroLivre`, `cancelamentoTardio`, `publicacaoLegadaEnxuta`
 
+Visual das telas (cores, letras, peças, o que não fazer): **`DESIGN.md`** na raiz. O visual está fechado;
+tela nova usa as peças que já existem. Revisão pela lista da Vercel: `ferramentas/AUDITORIA-TELAS-2026-10.md` (só lista).
+
 Convenções: `fmt()` mascara valores quando `hideVals` está ligado — em mensagem ao aluno
 e PDF use `fmtRs()`. Datas locais com `dKey(new Date())` (nunca `toISOString().slice(0,10)`).
 Classes CSS novas com prefixo próprio (já usados: `al-`, `fic-`, `rm-`, `cx-`; `fx-` colide).

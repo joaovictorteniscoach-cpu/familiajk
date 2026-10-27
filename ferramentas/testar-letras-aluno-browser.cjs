@@ -49,7 +49,8 @@ const pequenos=(p,escopo)=>p.evaluate(({escopo,MIN,MIN_GRADE})=>{
      EU={codigo:'6601',nome:'Aluna Exemplo',tipo:'Particular',plano:4,planoGrupo:0,creditos:2,credGrupo:0,repos:1,reposValidas:1,locCred:0,mensalidade:640,status:'pago',ativo:true,nivel:'Intermediário'};
      PUB={horas:['07:00','08:00','09:00','10:00','16:00','17:00','18:00'],profs:[],horarioCfg:{},horarioData:{},reservasRespostas:[],historico:{},alunos:[EU],
       precos:{avulsaPart:170,avulsaGrupo:95,locacao:70,personal:130},grupoPreco:{dupla:90,trio:85,quarteto:80},
-      grade:{fixos:[{id:'f1',cod:'6601',dia:3,hora:'18:00',tipo:'aula'}],excecoes:[],eventos:[{id:'e',cod:'7701',data:'2026-10-21',hora:'10:00',tipo:'aula'}]}};
+      grade:{fixos:[{id:'f1',cod:'6601',dia:3,hora:'18:00',tipo:'aula'}],excecoes:[],eventos:[{id:'e',cod:'7701',data:'2026-10-21',hora:'10:00',tipo:'aula'},{id:'l',cod:'7702',data:'2026-10-22',hora:'17:00',tipo:'locacao'}]}};
+     PUB.horarioData={'2026-10-23':{'09:00':'fechado','10:00':'fechado'}};
      MEU={codigo:'6601',pedidos:[],cancelados:[],confirmadas:[],espera:[]};
      document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';try{render();}catch(e){}
     });
@@ -66,6 +67,21 @@ const pequenos=(p,escopo)=>p.evaluate(({escopo,MIN,MIN_GRADE})=>{
      await p.waitForTimeout(250);assert.deepEqual(await pequenos(p,'janela'),[]);
      await p.evaluate(()=>{document.querySelectorAll('.overlay.on').forEach(x=>x.classList.remove('on'));abrirBook('16:00',false);});
      await p.waitForTimeout(250);assert.deepEqual(await pequenos(p,'janela'),[]);
+    });
+    await check(tema+' · '+largura+' px · grade da semana: palavra nunca se parte ("Fechad/o"); se não cabe, vira a forma curta',async()=>{
+     await p.evaluate(()=>{document.querySelectorAll('.overlay.on').forEach(x=>x.classList.remove('on'));goAluno('agenda',document.getElementById('nav-al-agenda'));
+      agView='semana';agDate=new Date('2026-10-22T12:00:00');renderAgenda();});
+     await p.waitForTimeout(300);
+     const r=await p.evaluate(()=>{const out=[],vistos={};
+      document.querySelectorAll('#apg-agenda .wk .wc').forEach(b=>{const t=b.textContent.trim();if(/\s/.test(t))return;
+       const rg=document.createRange();rg.selectNodeContents(b);const linhas=[...rg.getClientRects()].filter(x=>x.width>0).length;
+       vistos[b.dataset.rot||t]=t;
+       if(linhas>1||b.scrollWidth>b.clientWidth+1)out.push(t+' ('+linhas+' linhas, '+b.scrollWidth+'>'+b.clientWidth+')');});
+      return {partidas:out,vistos};});
+     assert.deepEqual(r.partidas,[]);
+     assert.ok(['Fechado','Fech.'].includes(r.vistos.Fechado),'Fechado aparece inteiro ou como "Fech.": '+JSON.stringify(r.vistos));
+     assert.ok(['Locação','Locaç.','Loc.'].includes(r.vistos['Locação']),'Locação aparece inteira ou curta: '+JSON.stringify(r.vistos));
+     assert.equal(r.vistos.Livre,'Livre');
     });
     assert.deepEqual(erros,[]);await c.close();
    }
