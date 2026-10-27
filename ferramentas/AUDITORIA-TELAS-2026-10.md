@@ -5,6 +5,9 @@ com a lista **Web Interface Guidelines** da Vercel (a mesma da skill
 `web-design-guidelines`), aplicada aos dois apps. **Nada foi alterado.**
 Corrigir só com o OK dele.
 
+**Atualização (27/10, depois do "Sim" do João):** A1, B3, B4 e B5 corrigidos
+(versão 2026-10-27-2; ver o fim deste arquivo). A2, B6 e B7 continuam só na lista.
+
 Como foi feito:
 - App do Aluno: 5 abas e a janela de escolher horário.
 - Gestão: 10 telas (Início, Agenda, Alunos, Avaliações, Caixa, Financeiro,
@@ -95,3 +98,21 @@ Como foi feito:
 Para refazer esta revisão: a lista atual fica em
 `https://raw.githubusercontent.com/vercel-labs/web-interface-guidelines/main/command.md`
 (baixada a cada uso; pode mudar sem aviso).
+
+## Corrigido em 2026-10-27-2 (pedido do João: "Sim")
+
+- **A1:** a palavra da grade da semana nunca mais se parte.
+  - CSS: `overflow-wrap:normal`.
+  - Função `ajustarRotulosSemana()` em `app-aluno/index.html`: se a palavra não
+    cabe, as letras chegam 0,3 px mais perto; se ainda não couber, entra a forma
+    curta ("Fech.", "Locaç."/"Loc.", "Res.", "Torn.", "Quád.", "Ped.", "Pass.").
+  - O nome completo fica no `title`.
+  - Teste: `testar-letras-aluno-browser.cjs` (falha na versão antiga com "Passou"
+    em 2 linhas).
+- **B3:** toast com `role="status" aria-live="polite"` nos dois apps.
+- **B4:** `aria-label="Código de acesso"` no campo do código.
+  - Não foi posto `autocomplete="one-time-code"`: faria o iPhone sugerir códigos
+    de SMS, que não são o código da academia.
+- **B5:** `aria-label` nos 24 campos listados (buscas, Financeiro, Fechamento, Torneio).
+- Nada disso muda cor, tamanho ou posição na tela.
+

@@ -8,6 +8,20 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-27 · Claude Code: "Fechado" inteiro na grade do aluno e campos com nome (v2026-10-27-2)
+
+João aprovou ("Sim") corrigir o que a revisão pela lista da Vercel achou e não muda o visual:
+- App do aluno, grade da semana: a palavra não se parte mais ("Fechad/o", "Locaçã/o",
+  "Passou"): `overflow-wrap:normal` + `ajustarRotulosSemana()` (aperta 0,3 px; se não
+  couber, forma curta "Fech.", "Locaç."…; nome inteiro no `title`). Roda a cada zoom e
+  quando a fonte termina de carregar.
+- Toast com `role="status" aria-live="polite"` (Gestão e aluno); `aria-label` no código
+  de acesso do aluno e em 24 campos da Gestão (buscas, Financeiro, Fechamento, Torneio).
+- Teste novo em `testar-letras-aluno-browser.cjs` (32 casos; falha na versão anterior).
+- Prévia antes/depois enviada; publicar só com o OK do João.
+
+---
+
 ## 2026-10-27 · Claude Code: DESIGN.md e revisão das telas pela lista da Vercel (só docs)
 
 João pediu para testar as skills Web design guidelines, Awesome design md, Image to
