@@ -13,6 +13,11 @@ html body #app#app#app .jv-student-brand b{font-size:14px!important}
 /* Barra de baixo (6 botões: sobe pouco para caber em celular pequeno) */
 html body #app#app#app .nav button,
 html body #app#app#app .nav button .mau-nav-txt{font-size:12.5px!important}
+/* Celular bem pequeno (320 px): "Evolução" passava 1–2 px do botão. */
+@media (max-width:340px){
+  html body #app#app#app .nav button,
+  html body #app#app#app .nav button .mau-nav-txt{font-size:12px!important;letter-spacing:-.25px!important}
+}
 
 /* Rótulos que estavam em 10–11,5 px */
 html body #app#app#app .jv-pay-lbl,
