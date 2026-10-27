@@ -8,6 +8,17 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-27 · Claude Code: avaliação do app em comparação com o mercado (só leitura)
+
+João pediu uma nota comparada ao mercado e o que melhorar, sem pagar nada por
+enquanto (lojas ficam para depois). `ferramentas/AVALIACAO-2026-10.md`: nota
+ponderada 7,4 (líderes estimados em 7,9; sobe para 8,1 com os 4 itens sem
+custo), pontos fortes, pontos fracos medidos no código (2.380 `!important` e 77
+tamanhos de letra < 11 px no aluno, avisos com app fechado desligados, cobrança
+manual) e ordem de melhorias. Nada mudou nos apps.
+
+---
+
 ## 2026-10-27 · Claude Code: kit para colocar o app do aluno nas lojas (nada publicado)
 
 João: "veja se a análise floot tem algo pra fazer, se não prepare para colocar o
