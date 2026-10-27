@@ -29,6 +29,10 @@ análise feita lá). Preparado em `lojas/` (pasta fora do `PUBLICOS`, não vai a
 - `.gitignore`: `*.keystore`/`*.jks` (a chave de assinatura nunca entra no repo).
 - Pendentes antes de enviar à loja: modo demonstração para o revisor e página
   de exclusão de dados (com prévia e OK do João).
+- `lojas/PASSO-A-PASSO.md` (pedido do João: "me dê o passo a passo, por enquanto
+  só a teoria"): fases 1 a 5 do Google Play, cuidados e iPhone; enviado a ele com
+  a prévia da página da loja. Conta nova pode precisar de confirmação num celular
+  Android (ele usa iPhone): avisado.
 - Decisões do João no mesmo dia: agenda sem linha 6:30; "não irei mudar mais o
   visual" — as opções A, B e C e a rodada 2 do visual sóbrio foram descartadas
   (a rodada 2 nunca foi publicada). O visual publicado (2026-10-24-1) fica.

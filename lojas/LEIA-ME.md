@@ -5,6 +5,8 @@ Store e Google"). A análise no Floot não chegou a ser feita: o projeto de lá
 ficou só com o pedido. Esta pasta **não é publicada** no site (não está em
 `PUBLICOS` de `ferramentas/preparar-pages.py`).
 
+Passo a passo para o João, fase por fase: `PASSO-A-PASSO.md`.
+
 Só vai para as lojas o **app do aluno**. A Gestão é só do João e continua como
 está (aplicativo instalado pelo navegador).
 
