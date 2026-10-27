@@ -10,3 +10,9 @@ banco-exercicios-jv.html
 # O zip da pasta do banco (gerado por ferramentas/gerar-zip.py), pelo mesmo
 # motivo do arquivo unico acima.
 banco-exercicios-jv.zip
+
+# Chave de assinatura do app Android (lojas/android): nunca no repositório,
+# que é público. Fica guardada pelo João.
+*.keystore
+*.jks
+lojas/android/*.json.bak

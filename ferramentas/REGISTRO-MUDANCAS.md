@@ -8,6 +8,32 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-27 · Claude Code: kit para colocar o app do aluno nas lojas (nada publicado)
+
+João: "veja se a análise floot tem algo pra fazer, se não prepare para colocar o
+app na App Store e Google". O projeto do Floot ficou só com o pedido (nenhuma
+análise feita lá). Preparado em `lojas/` (pasta fora do `PUBLICOS`, não vai ao site):
+- `lojas/LEIA-ME.md`: caminho escolhido (invólucro do app atual, sem reescrever;
+  Floot descartado), Android primeiro via Trusted Web Activity, iPhone depois
+  (US$ 99/ano, risco da regra 4.2 da Apple, avisos nativos necessários), ordem
+  de trabalho e o que depende do João (conta Google Play US$ 25, nome do pacote,
+  repositório `joaovictorteniscoach-cpu.github.io` para o `assetlinks.json`,
+  12 testadores por 14 dias).
+- `lojas/textos-google-play.md`: ficha da loja, classificação, público-alvo,
+  formulário de segurança dos dados e convite aos testadores.
+- `lojas/android/twa-manifest.json` (Bubblewrap; pacote proposto
+  `br.com.jvtenis.aluno`, a confirmar) e `lojas/raiz-github-io/` (modelo do
+  `assetlinks.json` + `.nojekyll`).
+- `lojas/imagens/`: ícone 512, destaque 1024×500 e 6 fotos de tela 1080×2160
+  com dados fictícios (visual publicado hoje; refazer após a escolha do visual).
+- `.gitignore`: `*.keystore`/`*.jks` (a chave de assinatura nunca entra no repo).
+- Pendentes antes de enviar à loja: modo demonstração para o revisor e página
+  de exclusão de dados (com prévia e OK do João).
+- Decisão do João no mesmo dia: agenda sem linha 6:30; a limpeza da Gestão
+  mantém o estilo atual dela.
+
+---
+
 ## 2026-10-26 · Claude Code: aula fora da quadra deixa a quadra livre (pedido do João)
 
 Versão 2026-10-26-1, só esta correção (João: "não mudar nada visualmente ainda,

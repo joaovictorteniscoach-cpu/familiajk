@@ -27,6 +27,7 @@ sem jargão; ele usa o app no celular e decide pelo resultado, não pelo código
 | `metodologia/`, `negocio/`, `investidor/` | Conteúdo de apoio |
 | `ferramentas/` | Checadores (`checar-tudo.sh`), regras do Firebase, docs (`FIREBASE.md`, `SEGURANCA-P0.md`) |
 | `servidor-avisos/` | Servidor de avisos (Cloudflare Workers, grátis): a cada 2 min manda os avisos que a Gestão prepara (`avisos_saida`). Publicado pela Action `avisos-cloudflare` só com os segredos. Ver `ferramentas/AVISOS-CLOUDFLARE.md` |
+| `lojas/` | Kit para Google Play/App Store do app do aluno (não publicado): guia, textos, imagens, `twa-manifest.json`, arquivos do repo `joaovictorteniscoach-cpu.github.io` |
 | `.claude/skills/` | Skills do projeto (ver `.claude/skills/README.md`) |
 
 Sem build, sem npm: arquivos servidos como estão. Publicados: só as pastas em
