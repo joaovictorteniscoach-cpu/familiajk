@@ -33,6 +33,13 @@ novembro… todas as aulas daquele dia ou semana, e não aluno por aluno".
   professor e chuva não são tocadas.
 - **Créditos não mudam** (a aula não foi dada; o que sobrar vira reposição na
   virada). Não conta como chuva.
+- App do aluno: o aluno nunca vê "Professor ausente" (a grade pública leva só
+  `bloqueio`, sem nome). Pedido do João: o horário aparece **livre** ("Livre" na
+  semana; "Livre · locação ou torneio" no dia) e o toque mostra só "Alugar a
+  quadra" e "Reservar para o torneio", com a nota "Horário livre para locação ou
+  jogo do torneio" (antes: "Sem aula…" e "o João não dá aula…"). Vale também para
+  almoço e compromisso do João, que já tinham a mesma regra desde 09/10. Quadra
+  fechada: "Fechado", e o toque não abre opção nenhuma (como já era).
 - Depois: um botão por aluno abre o WhatsApp com a mensagem pronta (responsável no
   plano família), sem valor nem desconto; com a quadra fechada, quem alugou também
   recebe ("precisei cancelar a locação…"). Nada é enviado sozinho.
