@@ -251,9 +251,19 @@ async function contexto(browser,base,opts){
      PUB.horarioData={'2026-10-15':{'17:00':'aula','18:00':'aula','19:00':'aula'}};agDate=new Date('2026-10-15T12:00:00');renderAgenda();});
     const st=await p.evaluate(()=>['12:00','17:00','18:00','19:00'].map(h=>{const s=slotState(new Date('2026-10-15T12:00:00'),h);return h+' '+s.st+(s.semAula?' semAula':'');}));
     assert.deepEqual(st,['12:00 loc semAula','17:00 loc semAula','18:00 loc semAula','19:00 chuva']);
+    // Para o aluno o horário aparece livre (João, 27/10): nada de "sem aula" ou "professor ausente".
+    const vista=await p.evaluate(()=>{agView='dia';agDate=new Date('2026-10-15T12:00:00');renderAgenda();
+     const b17=[...document.querySelectorAll('#ag-view .sl')].find(b=>/livre/.test(b.className)&&b.getAttribute('onclick')==="escolherSlot('17:00')");
+     agView='semana';renderAgenda();const c=[...document.querySelectorAll('#ag-view .wc')].find(b=>/'17:00'\)/.test(b.getAttribute('onclick')||'')&&/,15,/.test(b.getAttribute('onclick')||''));
+     return {dia:b17?b17.innerText.replace(/\s+/g,' ').trim():'',semana:c?c.innerText.trim():'',dica:c?c.title:''};});
+    assert.deepEqual(vista,{dia:'Livre locação ou torneio',semana:'Livre',dica:'Livre · locação ou torneio'});
+    // Quadra fechada: o toque não abre opção nenhuma.
+    await p.evaluate(()=>{PUB.horarioData['2026-10-15']['16:00']='fechado';agView='dia';agDate=new Date('2026-10-15T12:00:00');renderAgenda();escolherSlot('16:00');});
+    assert.equal(await p.evaluate(()=>slotState(new Date('2026-10-15T12:00:00'),'16:00').st),'fechado');
+    assert.equal(await p.evaluate(()=>document.getElementById('ov-pick').classList.contains('on')),false,'fechado: sem opções');
     await p.evaluate(()=>{agDate=new Date('2026-10-15T12:00:00');escolherSlot('17:00');});
     const op=await p.locator('#pick-opts').innerText();
-    assert.match(op,/o João não dá aula, mas a quadra está livre para locação ou jogo do torneio/);assert.match(op,/Alugar a quadra/);assert.match(op,/Reservar para o torneio/);
+    assert.match(op,/Horário livre para locação ou jogo do torneio/);assert.doesNotMatch(op,/ausente|não dá aula/);assert.match(op,/Alugar a quadra/);assert.match(op,/Reservar para o torneio/);
     assert.doesNotMatch(op,/Agendar aula|Marcar reposição/,'sem opção de aula');
     await p.evaluate(()=>{document.getElementById('ov-pick').classList.remove('on');abrirBook('17:00',false);});
     assert.equal(await p.evaluate(()=>document.getElementById('ov-book').classList.contains('on')),false,'aula recusada');

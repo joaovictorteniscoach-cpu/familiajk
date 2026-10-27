@@ -102,6 +102,21 @@ const PUSH_FALSO=`(()=>{
    const tudo=JSON.stringify(it);
    assert.doesNotMatch(tudo,/R\$|640|desconto/i);
   });
+  await check('Gestão: 3 dias depois do vencimento, lembrete só para quem continua pendente (9h)',async()=>{
+   const r=await g.evaluate(()=>{
+    const ids=x=>Object.keys(x).filter(k=>k.startsWith('v_')).sort();
+    const dia20=new Date('2026-10-20T10:00:00-03:00').getTime();
+    const antes=montarAvisos(dia20);
+    const mia=DB.alunos.find(a=>a.id==='mia');mia.status='pago';
+    const pago=montarAvisos(dia20);mia.status='pendente';
+    return {ids:ids(antes),av:antes['v_6609_2026-10_d3'],pago:ids(pago)};
+   });
+   assert.deepEqual(r.ids,['v_6609_2026-10_d3'],'vencido no dia 10 já passou do lembrete; o do dia 18 vem no dia 21');
+   assert.equal(r.av.t,'Lembrete: sua mensalidade do tênis venceu no dia 18');
+   assert.equal(r.av.quando,new Date('2026-10-21T09:00:00-03:00').getTime());
+   assert.doesNotMatch(JSON.stringify(r.av),/R\$|640|desconto/i);
+   assert.deepEqual(r.pago,[],'quem pagou não recebe');
+  });
   await check('Gestão: vaga liberada da lista de espera vira aviso imediato; vaga ocupada não',async()=>{
    let it=await avisos();
    const e=it['e_6613_2026-10-16_1600'];

@@ -8,6 +8,117 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-27 · Claude Code: cancelar todas as aulas de um dia ou período pela voz (pedido do João)
+
+Pedido: "selecionar quantos dias eu quiser para cancelar… viagem de 14 a 20 de
+novembro… todas as aulas daquele dia ou semana, e não aluno por aluno".
+
+- Assistente da Gestão (`acoes-voz.js`): "vou viajar, cancelar todas as aulas de
+  14 a 20 de novembro", "cancelar as aulas de amanhã", "…da semana que vem".
+  `lerIntervalo` lê "de 14 a 20 de novembro", "do dia 14 ao
+  dia 20", "14/11 a 20/11", "de 28 de novembro a 3 de dezembro" ("de 14 a 20" sem
+  mês continua sendo hora). Com nome de aluno segue o cancelamento de uma aula só.
+- Prévia antes de qualquer mudança: cada dia com hora, aluno e tipo; campos De/Até
+  e "Quadra: Aberta / Fechada" (começa Aberta; Fechada só se o João falar "fechar
+  a quadra", "a quadra vai estar fechada", "inclusive as locações" ou escolher).
+- Ao confirmar (`planoCancelarPeriodo`/`aplicarCancelarPeriodo` no `app-gestao.js`),
+  com versão salva antes: fixo vira exceção só naquela data, avulsa sai da agenda,
+  cada horário aberto ganha bloqueio "Professor ausente" (`motivo:'fora'`, sem
+  emoji): ninguém marca aula nem reposição. **A quadra fica aberta**: locação e
+  torneio (não dependem do professor) continuam e podem ser marcados. **Só quando o
+  João pede para fechar**, locação e torneio também saem e os horários ficam
+  Fechados (`horarioData`; o de antes fica no registro para desfazer). João, 27/10:
+  "só fechar a quadra quando eu falar… se eu fechar é porque a quadra não estará
+  disponível". Hoje vale só das próximas horas; até 2 meses; aula de outro
+  professor e chuva não são tocadas.
+- **Créditos não mudam** (a aula não foi dada; o que sobrar vira reposição na
+  virada). Não conta como chuva.
+- App do aluno: o aluno nunca vê "Professor ausente" (a grade pública leva só
+  `bloqueio`, sem nome). Pedido do João: o horário aparece **livre** ("Livre" na
+  semana; "Livre · locação ou torneio" no dia) e o toque mostra só "Alugar a
+  quadra" e "Reservar para o torneio", com a nota "Horário livre para locação ou
+  jogo do torneio" (antes: "Sem aula…" e "o João não dá aula…"). Vale também para
+  almoço e compromisso do João, que já tinham a mesma regra desde 09/10. Quadra
+  fechada: "Fechado", e o toque não abre opção nenhuma (como já era).
+- Depois: um botão por aluno abre o WhatsApp com a mensagem pronta (responsável no
+  plano família), sem valor nem desconto; com a quadra fechada, quem alugou também
+  recebe ("precisei cancelar a locação…"). Nada é enviado sozinho.
+- Desfazer: "desfazer o cancelamento de 14 a 20 de novembro" (registro em
+  `DB.foras`). Aula cujo horário foi ocupado depois (ex.: locação) não volta e é
+  listada na prévia.
+- Teste `testar-cancelar-periodo-browser.cjs` (10 casos, dados fictícios), no
+  `validar-pr`. Nenhuma regra do Firebase, nenhum dado real.
+
+---
+
+## 2026-10-27 · Claude Code: letras maiores no app do aluno e lembrete 3 dias depois do vencimento
+
+Versão 2026-10-27-1 (prévia enviada; publicar só com o OK do João). João: "por
+enquanto, fazer apenas ligar os avisos com o app fechado, lembrete automático
+de vencimento e aumentar as letras para ficar mais visível. Só isso."
+- **Letras:** `app-aluno/lib/letras-maiores.css`, carregada por último (e no
+  cache do `sw-aluno.js`). Muda só o tamanho da letra: 167 de 299 textos
+  visíveis estavam abaixo de 12 px; agora nenhum. Faixa nova: 12–14 px; a barra
+  de baixo fica em 12,5 px e as células da grade da semana ficam em 11 px, como
+  antes (já em 11,5 px "Reserva" quebrava). Janelas por cima (escolher horário, agendar) também. Tirar o
+  `<link>` volta ao tamanho anterior.
+- **Teste novo:** `testar-letras-aluno-browser.cjs` (28 verificações: 6 abas +
+  janelas, 320 e 390 px, dois temas, sem rolagem para o lado). Está no
+  `validar-pr.yml`.
+- **Lembrete de vencimento:** já existia ("vence em 3 dias" e "vence hoje", 9h,
+  só pendentes) dentro dos avisos com o app fechado. Acrescentado o de 3 dias
+  depois ("Lembrete: sua mensalidade do tênis venceu no dia X"), só para quem
+  continua pendente. Sem valor e sem desconto no texto. `montarAvisos`, teste
+  em `testar-avisos-celular-browser.cjs` (+1).
+- **Avisos com o app fechado:** o código está pronto desde 15/10. Para ligar,
+  faltam os passos do João em `AVISOS-CLOUDFLARE.md` (conta Cloudflare, robô no
+  Firebase e UID, segredos no GitHub, publicar a regra). Sem isso, nenhum
+  lembrete sai com o app fechado.
+
+---
+
+## 2026-10-27 · Claude Code: avaliação do app em comparação com o mercado (só leitura)
+
+João pediu uma nota comparada ao mercado e o que melhorar, sem pagar nada por
+enquanto (lojas ficam para depois). `ferramentas/AVALIACAO-2026-10.md`: nota
+ponderada 7,4 (líderes estimados em 7,9; sobe para 8,1 com os 4 itens sem
+custo), pontos fortes, pontos fracos medidos no código (2.380 `!important` e 77
+tamanhos de letra < 11 px no aluno, avisos com app fechado desligados, cobrança
+manual) e ordem de melhorias. Nada mudou nos apps.
+
+---
+
+## 2026-10-27 · Claude Code: kit para colocar o app do aluno nas lojas (nada publicado)
+
+João: "veja se a análise floot tem algo pra fazer, se não prepare para colocar o
+app na App Store e Google". O projeto do Floot ficou só com o pedido (nenhuma
+análise feita lá). Preparado em `lojas/` (pasta fora do `PUBLICOS`, não vai ao site):
+- `lojas/LEIA-ME.md`: caminho escolhido (invólucro do app atual, sem reescrever;
+  Floot descartado), Android primeiro via Trusted Web Activity, iPhone depois
+  (US$ 99/ano, risco da regra 4.2 da Apple, avisos nativos necessários), ordem
+  de trabalho e o que depende do João (conta Google Play US$ 25, nome do pacote,
+  repositório `joaovictorteniscoach-cpu.github.io` para o `assetlinks.json`,
+  12 testadores por 14 dias).
+- `lojas/textos-google-play.md`: ficha da loja, classificação, público-alvo,
+  formulário de segurança dos dados e convite aos testadores.
+- `lojas/android/twa-manifest.json` (Bubblewrap; pacote proposto
+  `br.com.jvtenis.aluno`, a confirmar) e `lojas/raiz-github-io/` (modelo do
+  `assetlinks.json` + `.nojekyll`).
+- `lojas/imagens/`: ícone 512, destaque 1024×500 e 6 fotos de tela 1080×2160
+  com dados fictícios (visual atual, que fica).
+- `.gitignore`: `*.keystore`/`*.jks` (a chave de assinatura nunca entra no repo).
+- Pendentes antes de enviar à loja: modo demonstração para o revisor e página
+  de exclusão de dados (com prévia e OK do João).
+- `lojas/PASSO-A-PASSO.md` (pedido do João: "me dê o passo a passo, por enquanto
+  só a teoria"): fases 1 a 5 do Google Play, cuidados e iPhone; enviado a ele com
+  a prévia da página da loja. Conta nova pode precisar de confirmação num celular
+  Android (ele usa iPhone): avisado.
+- Decisões do João no mesmo dia: agenda sem linha 6:30; "não irei mudar mais o
+  visual" — as opções A, B e C e a rodada 2 do visual sóbrio foram descartadas
+  (a rodada 2 nunca foi publicada). O visual publicado (2026-10-24-1) fica.
+
+---
+
 ## 2026-10-26 · Claude Code: aula fora da quadra deixa a quadra livre (pedido do João)
 
 Versão 2026-10-26-1, só esta correção (João: "não mudar nada visualmente ainda,

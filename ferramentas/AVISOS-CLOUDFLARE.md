@@ -6,8 +6,9 @@ Pedido do João em 15/10/2026: lembrete automático sem custo, sem plano Blaze.
 - **Aluno:**
   - "🎾 Aula amanhã às 18:00", às 19h da véspera. Vale também para aula em
     grupo, treino, locação e torneio ("🏆 Jogo do torneio amanhã às …").
-  - "Sua mensalidade do tênis vence em 3 dias", e "vence hoje" no dia, às 9h.
-    Só para quem está pendente.
+  - "Sua mensalidade do tênis vence em 3 dias", "vence hoje" no dia e, 3 dias
+    depois, "Lembrete: sua mensalidade do tênis venceu no dia X" (27/10), às 9h.
+    Só para quem está pendente; quem paga sai da lista.
   - "🔔 Vaga liberada", quando abre um horário da lista de espera. À noite, o
     aviso espera até as 7h.
   - O responsável da família recebe os avisos do dependente com o nome dele.

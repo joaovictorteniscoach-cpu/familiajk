@@ -46,6 +46,7 @@ jobs:
         run: |
           node ferramentas/testar-voz-gestao-browser.cjs
           node ferramentas/testar-voz-conversa-browser.cjs
+          node ferramentas/testar-cancelar-periodo-browser.cjs
           node ferramentas/testar-appcheck-runtime.cjs
           node ferramentas/testar-monitoramento.cjs
           node .claude/skills/publicar-versao/fumaca.cjs
@@ -87,6 +88,7 @@ jobs:
           node ferramentas/testar-torneio-aluno-browser.cjs
           node ferramentas/testar-torneio-gestao-browser.cjs
           node ferramentas/testar-contraste-aluno-browser.cjs
+          node ferramentas/testar-letras-aluno-browser.cjs
           node ferramentas/testar-contraste-gestao-browser.cjs
           node ferramentas/testar-ferramentas-agenda-browser.cjs
           node ferramentas/testar-lista-espera-browser.cjs

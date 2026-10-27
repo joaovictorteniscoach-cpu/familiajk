@@ -1666,14 +1666,15 @@ html body:not(#jv) #pedir-box .btn-ghost{background:#F3EDE2!important;border:1px
 .login .login-sub{opacity:1}
 .login-priv{color:rgba(250,247,242,.8)}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-26-1">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-27-1">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-26-1">
-<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-26-1">
-<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-10-26-1">
-<link rel="stylesheet" href="lib/visual-sobrio.css?v=2026-10-26-1">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-27-1">
+<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-27-1">
+<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-10-27-1">
+<link rel="stylesheet" href="lib/visual-sobrio.css?v=2026-10-27-1">
+<link rel="stylesheet" href="lib/letras-maiores.css?v=2026-10-27-1">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -2182,7 +2183,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-10-26-1"></script>
+<script src="lib/icones.js?v=2026-10-27-1"></script>
 </div>
 
 <!-- ASSISTENTE POR VOZ: consultar horário livre, agendar, cancelar, ver aulas (lib/voz-aluno.js) -->
@@ -2429,7 +2430,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-10-26-1';
+const VERSAO='2026-10-27-1';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -3171,7 +3172,7 @@ function slotState(date,hora){
     if(compartilhado==='locacao')return {st:'loc',label:'Locação · participar',compartilhado,semAula:true};
     if(compartilhado==='torneio')return {st:'livre',label:'Torneio · participar',compartilhado,semAula:true};
     if(all.length)return {st:'ocup',label:'Reservado',esperavel:true};
-    return {st:'loc',label:'Sem aula · locação ou torneio',semAula:true};
+    return {st:'loc',label:'Livre · locação ou torneio',semAula:true};
   }
   if(grupo&&modo==='aula')return {st:'livre',label:limiteGrupo===4?'Aula quádrupla':limiteGrupo===3?'Aula em trio':'Aula em dupla',grupo:true,compartilhado:'grupo',limiteGrupo};
   if(compartilhado==='locacao')return {st:'loc',label:'Locação · participar',compartilhado};
@@ -4751,7 +4752,7 @@ function renderAgenda(){
     el.innerHTML=PUB.horas.map(h=>{
       const s=slotState(agDate,h);
       let inner='';
-      if(s.st==='livre'||s.st==='loc')inner=horasAte(dKey(agDate),h)<=0?`<button class="sl bloq" disabled>Encerrado</button>`:`<button class="sl livre" onclick="escolherSlot('${h}')">${s.compartilhado?s.label:s.semAula?'Locação ou torneio':'Disponível'} <i>${s.compartilhado?'participar':'ver opções'}</i></button>`;
+      if(s.st==='livre'||s.st==='loc')inner=horasAte(dKey(agDate),h)<=0?`<button class="sl bloq" disabled>Encerrado</button>`:`<button class="sl livre" onclick="escolherSlot('${h}')">${s.compartilhado?s.label:s.semAula?'Livre':'Disponível'} <i>${s.compartilhado?'participar':s.semAula?'locação ou torneio':'ver opções'}</i></button>`;
       else if(s.st==='meu'){const podeC=podeCancelarAula(dKey(agDate),h);const ic=iconeHorario(s.tipo),cf=s.tipo==='torneio'?'confirmado':'confirmada';inner=podeC?`<button class="sl meu" onclick="cancelarAula('${dKey(agDate)}','${h}','pontual')">${ic} ${s.label} <i>${cf} · toque para cancelar</i></button>`:`<button class="sl meu">${ic} ${s.label} <i>${cf} · trava ${LIMITE_CANCEL_H}h</i></button>`;}
       else if(s.st==='pend')inner=`<button class="sl pend" onclick="cancelarAula('${dKey(agDate)}','${h}','pontual')">${s.label} <i>enviado ao João · toque para cancelar</i></button>`;
       else if(s.st==='chuva')inner=`<button class="sl chuva">☔ Cancelado por chuva <i>sem desconto de crédito</i></button>`;
@@ -5387,7 +5388,8 @@ function escolherSlot(hora){
     b+='<div class="pick-note">🏆 Este horário já é um <b>jogo de torneio</b>. A nova reserva participa do mesmo jogo.</div>';
     b+=pickTorneioHtml();
   }else if(pickCtx.semAula){
-    b+='<div class="pick-note">Neste horário o João não dá aula, mas a quadra está livre para <b>locação</b> ou <b>jogo do torneio</b>.</div>';
+    // Sem citar ausência do professor (João, 27/10): para o aluno o horário está livre.
+    b+='<div class="pick-note">Horário livre para <b>locação</b> ou <b>jogo do torneio</b>.</div>';
     b+=locBtnHtml();
     b+=pickTorneioHtml();
   }else if(pickCtx.grupo){
@@ -5522,7 +5524,7 @@ function abrirBook(hora,repo,torneio){
   const estado=slotState(agDate,hora);
   const desejado=torneio?'torneio':'grupo';
   if(!['livre','loc'].includes(estado.st)||estado.compartilhado&&estado.compartilhado!==desejado){toast('Horário reservado — escolha outro');return;}
-  if(estado.semAula&&!torneio){toast('Neste horário o João não dá aula. Dá para alugar a quadra ou marcar jogo do torneio.');return;}
+  if(estado.semAula&&!torneio){toast('Este horário está livre para locação ou jogo do torneio.');return;}
 
   if(!torneio&&bloqueadoParaAgendar()){toast('🔒 Agendamento bloqueado — '+motivoBloqueio()+'. Fale com o João para regularizar. 🙏');return;}
   if(torneio){/* jogo do torneio: inscrição já paga, não usa crédito nem reposição */}
@@ -5719,7 +5721,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-26-1').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-27-1').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
@@ -5728,6 +5730,6 @@ window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);})
   setTimeout(()=>esperarEIniciar(t+1),150);
 })(0);
 </script>
-<script src="lib/voz-aluno.js?v=2026-10-26-1"></script>
+<script src="lib/voz-aluno.js?v=2026-10-27-1"></script>
 </body>
 </html>

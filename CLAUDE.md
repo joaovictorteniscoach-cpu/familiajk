@@ -27,6 +27,7 @@ sem jargão; ele usa o app no celular e decide pelo resultado, não pelo código
 | `metodologia/`, `negocio/`, `investidor/` | Conteúdo de apoio |
 | `ferramentas/` | Checadores (`checar-tudo.sh`), regras do Firebase, docs (`FIREBASE.md`, `SEGURANCA-P0.md`) |
 | `servidor-avisos/` | Servidor de avisos (Cloudflare Workers, grátis): a cada 2 min manda os avisos que a Gestão prepara (`avisos_saida`). Publicado pela Action `avisos-cloudflare` só com os segredos. Ver `ferramentas/AVISOS-CLOUDFLARE.md` |
+| `lojas/` | Kit para Google Play/App Store do app do aluno (não publicado): guia, textos, imagens, `twa-manifest.json`, arquivos do repo `joaovictorteniscoach-cpu.github.io` |
 | `.claude/skills/` | Skills do projeto (ver `.claude/skills/README.md`) |
 
 Sem build, sem npm: arquivos servidos como estão. Publicados: só as pastas em
@@ -62,6 +63,8 @@ Use `grep -n` pelos títulos de seção (`/* ===== Título =====`) ou pelo nome 
 - Vidro Aero (referência do João: Windows Vista/7): bloco "Vidro Aero" no fim do `estilo.css` (`--aero-*`); só brilho/borda/sombra, nunca troca cor de fundo
 - Horário que o app do aluno não vê (código publicado ≠ do aluno): `codigoDaEntrada` (publicação usa), `horariosQueOAlunoNaoVe`/`nomeBateCom` (só lista), `ligarHorarioAoAluno` (botão com desfazer); `acharAlunoPorTitulo` prefere o ativo; `noAppDoAluno` (linha "📱 No app" no horário), `temAppAprovado` (VINCULOS)
 - Cancelamento preso no app do aluno: `limparCancelados`/`minhaEntradaNaGrade` (app-aluno; resposta "cancelado", aula fora da agenda ou data passada); na Gestão, achado "cancelou pelo app e foi marcada de novo" (só lista)
+- Letras do app do aluno: `app-aluno/lib/letras-maiores.css` (só tamanho; mínimo 12 px, células da grade da semana em 11 px; teste `testar-letras-aluno-browser.cjs`)
+- Cancelar um período pela voz (viagem): `planoCancelarPeriodo`/`aplicarCancelarPeriodo`/`planoDesfazerPeriodo` (bloqueio "Professor ausente" `motivo:'fora'`: só tira aula, quadra aberta para locação/torneio; quadra Fechada só se o João pedir; registro em `DB.foras`; não mexe em crédito), `msgCancelPeriodo`; na voz `lerIntervalo`, ação `cancelarPeriodo`/`desfazerPeriodo`
 - Assistente por voz do aluno: `app-aluno/lib/voz-aluno.js` (`JVVozAluno`: `interpretar`/`executar`; só abre `gotoBook`/`cancelarAula`/`abrirEspera`, nunca grava sozinho) + `voz-aluno.css` (`va-`); perguntas com dados do app: `infoResposta` (preços/planos com `st.pend`, mensalidade, repor, torneio…)
 - Botão de voz arrastável (Gestão e aluno): `arrastavel(bt,chave)` em `acoes-voz.js` e `voz-aluno.js` (posição em `jv-voz-posicao`/`jv-va-posicao`; tocar abre, arrastar não)
 - Varredura de atalhos: `ferramentas/testar-atalhos-gestao-browser.cjs` (tabela `DESTINOS`; atalho novo precisa entrar nela)
@@ -85,6 +88,8 @@ Nada de nome real de aluno ou compromisso pessoal no código: ele é público (P
 - Reservas: particular ocupa a vaga inteira; dupla/trio/quarteto respeitam 2/3/4 alunos, locação e torneio compartilham só com a mesma atividade. Almoço/bloqueio/compromisso do João (não chuva) só impedem aula: locação e torneio entram (09/10); aula dele fora da quadra (`foraDaQuadra`, personal por padrão) também (26/10, `podeAdicionarAoHorario`, `fora:1` na grade, `ehSoSemAula` no aluno). Criação única na fila existente, gravação durável antes de consumir pedido, fixos com conferência futura. Não apagar reservas antigas automaticamente.
 - Renovação: repetição no mesmo mês preserva os saldos. Ajuste manual no cadastro exige conferência no lote; a confirmação de renovação manual só marca o mês, sem alterar números. Ver `ferramentas/PRONTIDAO.md`.
 - App Check: João autorizou preparar a ativação em 2026-10-06. `APPCHECK_SITE_KEY` ainda vazio: falta a chave pública e o registro no console. Começar em monitoramento; exigência só após adaptar site e leitura REST do teste. Ver `ferramentas/APP-CHECK.md`.
+- Visual (27/10): o João não vai mudar mais o visual dos apps. As opções A/B/C e a rodada 2
+  do visual sóbrio foram descartadas. Não propor mudança visual sem ele pedir.
 - Repositório público: decisão pendente do João (privado exige GitHub Pro para manter o Pages).
 - **Família JK sem login (20/10):** a nuvem continua só com o link da família, sem criar conta.
   Login com Google só se não exigir mexer no Firebase nem criar contas — como exige (ligar o
