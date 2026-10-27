@@ -4571,6 +4571,144 @@ function marcarChuvaDia(){
   persist();renderAgenda();
   toast('☔ '+n+' horário(s) marcado(s) como chuva');
 }
+/* ===== Cancelar um período (viagem, folga) =====
+   Pedido do João (27/10): "cancelar todas as aulas daquele dia ou semana, de
+   uma vez, e não aluno por aluno". Em cada dia do período, de agora em diante:
+   - aula, grupo e personal saem só daquela data (fixo vira exceção, avulsa sai
+     da agenda); a grade fixa continua;
+   - cada horário aberto ganha um bloqueio "✈️ Professor fora": ninguém marca
+     aula nem reposição; locação e torneio continuam, como no almoço;
+   - com "fechar a quadra", locação e torneio também saem e o dia fica Fechado.
+   Créditos não mudam: a aula não foi dada, e o que sobrar no mês vira reposição
+   na virada, como sempre. Não conta como chuva. Aula de outro professor não é
+   tocada. Cada cancelamento fica em DB.foras, para desfazer de uma vez. */
+const FORA_TIT='✈️ Professor fora';
+function ehBloqueioFora(e){return !!(e&&e.tipo==='bloqueio'&&e.motivo==='fora');}
+function planoCancelarPeriodo(ini,fim,fechar,agoraMs){
+  const agora=new Date(agoraMs||Date.now()),hoje=dKey(agora),minAgora=agora.getHours()*60+agora.getMinutes();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(ini))||!/^\d{4}-\d{2}-\d{2}$/.test(String(fim))||ini>fim)throw Error('Período inválido.');
+  if(fim<hoje)throw Error('Esse período já passou. O cancelamento vale de hoje em diante.');
+  const de=ini<hoje?hoje:ini;
+  if((new Date(fim+'T12:00:00')-new Date(de+'T12:00:00'))/864e5>62)throw Error('Escolha um período de até 2 meses.');
+  const dias=[],alunos=[];let nAulas=0,nLocs=0,nMantidas=0,nBlocos=0,nFechar=0,nOutroProf=0;
+  const nomeDe=e=>{const a=e.alunoId&&DB.alunos.find(x=>x.id===e.alunoId);return String(a&&a.nome||e.titulo||'—');};
+  for(const d=new Date(de+'T12:00:00'),f=new Date(fim+'T12:00:00');d<=f;d.setDate(d.getDate()+1)){
+    const dk=dKey(d),dia={data:dk,itens:[],blocos:[],fechar:[]};
+    HORAS.forEach(h=>{
+      const hm=h.split(':').map(Number);
+      if(dk===hoje&&hm[0]*60+(hm[1]||0)<=minAgora)return;     // já começou: fica como está
+      const evs=entriesFor(d,h);
+      if(evs.some(ehEventoChuva))return;                        // chuva já cancelou tudo
+      evs.forEach(e=>{
+        if(e.origem!=='fixo'&&e.origem!=='pontual')return;      // compromisso e aula da academia
+        if(e.tipo==='bloqueio')return;
+        const aula=['aula','grupo','personal'].includes(e.tipo),loc=['locacao','torneio'].includes(e.tipo);
+        if(!aula&&!loc)return;
+        if(profDaEntrada(e)){nOutroProf++;return;}
+        if(loc&&!fechar){nMantidas++;return;}
+        dia.itens.push({hora:h,id:e.id,origem:e.origem,tipo:e.tipo,alunoId:e.alunoId||'',nome:nomeDe(e)});
+        if(e.alunoId&&alunos.indexOf(e.alunoId)<0)alunos.push(e.alunoId);
+        if(aula)nAulas++;else nLocs++;
+      });
+      const modo=slotModo(d,h);
+      if(fechar&&modo!=='fechado')dia.fechar.push(h);
+      if(HORAS_GRADE.indexOf(h)>=0&&modo!=='fechado'&&!evs.some(ehBloqueioFora))dia.blocos.push(h);
+    });
+    nBlocos+=dia.blocos.length;nFechar+=dia.fechar.length;
+    if(dia.itens.length||dia.blocos.length||dia.fechar.length)dias.push(dia);
+  }
+  return {ini:de,fim,fechar:!!fechar,dias,alunos,nAulas,nLocs,nMantidas,nBlocos,nFechar,nOutroProf};
+}
+function aplicarCancelarPeriodo(plano){
+  const reg={id:'fora'+Date.now().toString(36),ini:plano.ini,fim:plano.fim,fechar:!!plano.fechar,ts:Date.now(),eventos:[],excecoes:[],blocos:[],horario:{}};
+  plano.dias.forEach(dia=>{
+    dia.itens.forEach(it=>{
+      if(it.origem==='fixo'){
+        if(!DB.agenda.excecoes.some(x=>x.fixoId===it.id&&x.data===dia.data)){
+          DB.agenda.excecoes.push({fixoId:it.id,data:dia.data});reg.excecoes.push({fixoId:it.id,data:dia.data});
+        }
+      }else{
+        const i=DB.agenda.eventos.findIndex(e=>e.id===it.id);
+        if(i>=0){reg.eventos.push(DB.agenda.eventos[i]);DB.agenda.eventos.splice(i,1);}
+      }
+    });
+    dia.blocos.forEach(h=>{
+      const ev={id:'e'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),data:dia.data,hora:h,titulo:FORA_TIT,tipo:'bloqueio',motivo:'fora',alunoId:null,periodo:reg.id};
+      DB.agenda.eventos.push(ev);reg.blocos.push(ev.id);
+    });
+    if(dia.fechar.length){
+      const d=new Date(dia.data+'T12:00:00'),dow=d.getDay();
+      DB.horarioData=DB.horarioData||{};
+      reg.horario[dia.data]=DB.horarioData[dia.data]?Object.assign({},DB.horarioData[dia.data]):null;
+      const m=Object.assign({},DB.horarioData[dia.data]||{});
+      HORAS.forEach(h=>{if(!m[h])m[h]=(DB.horarioCfg&&DB.horarioCfg[dow]&&DB.horarioCfg[dow][h])||modoPadrao(d,h);});
+      dia.fechar.forEach(h=>{m[h]='fechado';});
+      DB.horarioData[dia.data]=m;
+    }
+  });
+  DB.foras=(DB.foras||[]).concat(reg).slice(-30);
+  return reg;
+}
+/* Desfazer: tira os bloqueios, devolve as aulas e o funcionamento de antes.
+   Aula só volta se o horário ainda comportar (alguém pode ter marcado locação
+   nele depois); a que não couber é listada e continua cancelada. */
+function planoDesfazerPeriodo(ini,fim){
+  const regs=(DB.foras||[]).filter(r=>!(r.fim<ini||r.ini>fim));
+  if(!regs.length)throw Error('Não encontrei cancelamento de período nessas datas.');
+  const voltam=[],excVoltam=[],conflitos=[];let nBlocos=0;
+  const nomeDe=e=>String((e.alunoId&&(DB.alunos.find(a=>a.id===e.alunoId)||{}).nome)||e.titulo||'—');
+  const cabe=(r,e,data)=>podeAdicionarAoHorario(entriesFor(new Date(data+'T12:00:00'),e.hora).filter(x=>!(x.periodo&&x.periodo===r.id)),e.tipo,e.pessoas,foraDaQuadra(e));
+  regs.forEach(r=>{
+    nBlocos+=r.blocos.length;
+    r.excecoes.forEach(x=>{
+      if(!DB.agenda.excecoes.some(y=>y.fixoId===x.fixoId&&y.data===x.data))return;   // já foi desfeita na agenda
+      const f=DB.agenda.fixos.find(y=>y.id===x.fixoId);
+      if(!f||cabe(r,f,x.data))excVoltam.push(x.fixoId+'|'+x.data);
+      else conflitos.push(x.data+' '+f.hora+' '+nomeDe(f));
+    });
+    r.eventos.forEach(e=>{
+      if(DB.agenda.eventos.some(x=>x.id===e.id))return;
+      if(cabe(r,e,e.data))voltam.push({reg:r.id,id:e.id,data:e.data,hora:e.hora,nome:nomeDe(e)});
+      else conflitos.push(e.data+' '+e.hora+' '+nomeDe(e));
+    });
+  });
+  return {regs:regs.map(r=>({id:r.id,ini:r.ini,fim:r.fim})),voltam,excVoltam,conflitos,nExc:excVoltam.length,nBlocos};
+}
+function aplicarDesfazerPeriodo(plano){
+  const ids=new Set(plano.regs.map(r=>r.id)),voltam=new Set(plano.voltam.map(v=>v.id)),exc=new Set(plano.excVoltam||[]);
+  (DB.foras||[]).filter(r=>ids.has(r.id)).forEach(r=>{
+    const blocos=new Set(r.blocos);
+    DB.agenda.eventos=DB.agenda.eventos.filter(e=>!blocos.has(e.id));
+    r.excecoes.forEach(x=>{if(exc.has(x.fixoId+'|'+x.data))DB.agenda.excecoes=DB.agenda.excecoes.filter(y=>!(y.fixoId===x.fixoId&&y.data===x.data));});
+    r.eventos.forEach(e=>{if(voltam.has(e.id)&&!DB.agenda.eventos.some(x=>x.id===e.id))DB.agenda.eventos.push(e);});
+    Object.keys(r.horario||{}).forEach(dk=>{
+      DB.horarioData=DB.horarioData||{};
+      if(r.horario[dk])DB.horarioData[dk]=r.horario[dk];else delete DB.horarioData[dk];
+    });
+  });
+  DB.foras=(DB.foras||[]).filter(r=>!ids.has(r.id));
+}
+/* Mensagem para o aluno (ou para o responsável, no plano família). Sem valor e
+   sem desconto. */
+function msgCancelPeriodo(a,itens,ini,fim){
+  const dest=responsavelFamilia(a)||a,prim=n=>String(n||'').trim().split(/\s+/)[0]||'';
+  const br=dk=>dk.split('-').reverse().slice(0,2).join('/');
+  const DS=['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
+  const lista=itens.map(x=>DS[new Date(x.data+'T12:00:00').getDay()]+' '+br(x.data)+' às '+x.hora);
+  const varias=itens.length>1,de=dest.id!==a.id?' de '+prim(a.nome):'';
+  const quais=lista.length>2?lista.slice(0,-1).join(', ')+' e '+lista[lista.length-1]:lista.join(' e ');
+  return 'Olá, '+prim(dest.nome)+'! Aqui é o João, da Academia JV Tênis. '
+    +(ini===fim?'No dia '+br(ini)+' não vou poder dar aula':'De '+br(ini)+' a '+br(fim)+' vou estar fora')
+    +', então '+(varias?'as aulas':'a aula')+de+' de '+quais+(varias?' estão canceladas':' está cancelada')+'. '
+    +'Você não perde '+(varias?'essas aulas':'essa aula')+': o crédito continua com você. Qualquer dúvida, me chama aqui. 🎾';
+}
+function avisarCancelPeriodo(alunoId,itens,ini,fim){
+  const a=DB.alunos.find(x=>x.id===alunoId);if(!a)return false;
+  const dest=responsavelFamilia(a)||a,fone=foneWhats(dest.tel);
+  if(!fone){toast(dest.nome+' não tem WhatsApp no cadastro');return false;}
+  window.open('https://wa.me/'+fone+'?text='+encodeURIComponent(msgCancelPeriodo(a,itens,ini,fim)),'_blank');
+  return true;
+}
 /* ===== Quem dá cada aula =====
    Sem professor marcado, a aula é minha — como sempre foi. Com professor, ela
    continua na MINHA agenda e ocupando a quadra (a quadra é uma só), e passa a

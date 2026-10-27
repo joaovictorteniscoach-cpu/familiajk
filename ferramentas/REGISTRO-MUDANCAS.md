@@ -8,6 +8,36 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-27 · Claude Code: cancelar todas as aulas de um dia ou período pela voz (pedido do João)
+
+Pedido: "selecionar quantos dias eu quiser para cancelar… viagem de 14 a 20 de
+novembro… todas as aulas daquele dia ou semana, e não aluno por aluno".
+
+- Assistente da Gestão (`acoes-voz.js`): "vou viajar, cancelar todas as aulas de
+  14 a 20 de novembro", "cancelar as aulas de amanhã", "…da semana que vem",
+  "…e fechar a quadra". `lerIntervalo` lê "de 14 a 20 de novembro", "do dia 14 ao
+  dia 20", "14/11 a 20/11", "de 28 de novembro a 3 de dezembro" ("de 14 a 20" sem
+  mês continua sendo hora). Com nome de aluno segue o cancelamento de uma aula só.
+- Prévia antes de qualquer mudança: cada dia com hora, aluno e tipo; campos De/Até
+  e "Locação e torneio: continuam / também cancelar e fechar a quadra".
+- Ao confirmar (`planoCancelarPeriodo`/`aplicarCancelarPeriodo` no `app-gestao.js`),
+  com versão salva antes: fixo vira exceção só naquela data, avulsa sai da agenda,
+  cada horário aberto ganha bloqueio "✈️ Professor fora" (`motivo:'fora'`): ninguém
+  marca aula nem reposição; locação e torneio continuam, como no almoço. Com
+  "fechar a quadra", locação/torneio também saem e o dia fica Fechado. Hoje vale só
+  das próximas horas; até 2 meses; aula de outro professor e chuva não são tocadas.
+- **Créditos não mudam** (a aula não foi dada; o que sobrar vira reposição na
+  virada). Não conta como chuva.
+- Depois: um botão por aluno abre o WhatsApp com a mensagem pronta (responsável no
+  plano família), sem valor nem desconto. Nada é enviado sozinho.
+- Desfazer: "desfazer o cancelamento de 14 a 20 de novembro" (registro em
+  `DB.foras`). Aula cujo horário foi ocupado depois (ex.: locação) não volta e é
+  listada na prévia.
+- Teste `testar-cancelar-periodo-browser.cjs` (9 casos, dados fictícios), no
+  `validar-pr`. Nenhuma regra do Firebase, nenhum dado real.
+
+---
+
 ## 2026-10-27 · Claude Code: letras maiores no app do aluno e lembrete 3 dias depois do vencimento
 
 Versão 2026-10-27-1 (prévia enviada; publicar só com o OK do João). João: "por

@@ -46,6 +46,7 @@ jobs:
         run: |
           node ferramentas/testar-voz-gestao-browser.cjs
           node ferramentas/testar-voz-conversa-browser.cjs
+          node ferramentas/testar-cancelar-periodo-browser.cjs
           node ferramentas/testar-appcheck-runtime.cjs
           node ferramentas/testar-monitoramento.cjs
           node .claude/skills/publicar-versao/fumaca.cjs
