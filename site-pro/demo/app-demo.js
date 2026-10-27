@@ -4576,24 +4576,25 @@ function marcarChuvaDia(){
    uma vez, e não aluno por aluno". Em cada dia do período, de agora em diante:
    - aula, grupo e personal saem só daquela data (fixo vira exceção, avulsa sai
      da agenda); a grade fixa continua;
-   - cada horário aberto ganha um bloqueio "✈️ Professor fora": ninguém marca
-     aula nem reposição; locação e torneio continuam, como no almoço;
-   - com "fechar a quadra", locação e torneio também saem e o dia fica Fechado.
+   - cada horário aberto ganha um bloqueio "Professor ausente": ninguém marca
+     aula nem reposição. A quadra continua aberta: locação e torneio, que não
+     dependem do professor, continuam como estão e podem ser marcados (João,
+     27/10: "a quadra ficará aberta, apenas as aulas estarão fechadas").
    Créditos não mudam: a aula não foi dada, e o que sobrar no mês vira reposição
    na virada, como sempre. Não conta como chuva. Aula de outro professor não é
    tocada. Cada cancelamento fica em DB.foras, para desfazer de uma vez. */
-const FORA_TIT='✈️ Professor fora';
+const FORA_TIT='Professor ausente';
 function ehBloqueioFora(e){return !!(e&&e.tipo==='bloqueio'&&e.motivo==='fora');}
-function planoCancelarPeriodo(ini,fim,fechar,agoraMs){
+function planoCancelarPeriodo(ini,fim,agoraMs){
   const agora=new Date(agoraMs||Date.now()),hoje=dKey(agora),minAgora=agora.getHours()*60+agora.getMinutes();
   if(!/^\d{4}-\d{2}-\d{2}$/.test(String(ini))||!/^\d{4}-\d{2}-\d{2}$/.test(String(fim))||ini>fim)throw Error('Período inválido.');
   if(fim<hoje)throw Error('Esse período já passou. O cancelamento vale de hoje em diante.');
   const de=ini<hoje?hoje:ini;
   if((new Date(fim+'T12:00:00')-new Date(de+'T12:00:00'))/864e5>62)throw Error('Escolha um período de até 2 meses.');
-  const dias=[],alunos=[];let nAulas=0,nLocs=0,nMantidas=0,nBlocos=0,nFechar=0,nOutroProf=0;
+  const dias=[],alunos=[];let nAulas=0,nMantidas=0,nBlocos=0,nOutroProf=0;
   const nomeDe=e=>{const a=e.alunoId&&DB.alunos.find(x=>x.id===e.alunoId);return String(a&&a.nome||e.titulo||'—');};
   for(const d=new Date(de+'T12:00:00'),f=new Date(fim+'T12:00:00');d<=f;d.setDate(d.getDate()+1)){
-    const dk=dKey(d),dia={data:dk,itens:[],blocos:[],fechar:[]};
+    const dk=dKey(d),dia={data:dk,itens:[],blocos:[]};
     HORAS.forEach(h=>{
       const hm=h.split(':').map(Number);
       if(dk===hoje&&hm[0]*60+(hm[1]||0)<=minAgora)return;     // já começou: fica como está
@@ -4601,26 +4602,22 @@ function planoCancelarPeriodo(ini,fim,fechar,agoraMs){
       if(evs.some(ehEventoChuva))return;                        // chuva já cancelou tudo
       evs.forEach(e=>{
         if(e.origem!=='fixo'&&e.origem!=='pontual')return;      // compromisso e aula da academia
-        if(e.tipo==='bloqueio')return;
-        const aula=['aula','grupo','personal'].includes(e.tipo),loc=['locacao','torneio'].includes(e.tipo);
-        if(!aula&&!loc)return;
+        if(['locacao','torneio'].includes(e.tipo)){nMantidas++;return;}   // não depende do professor
+        if(!['aula','grupo','personal'].includes(e.tipo))return;
         if(profDaEntrada(e)){nOutroProf++;return;}
-        if(loc&&!fechar){nMantidas++;return;}
         dia.itens.push({hora:h,id:e.id,origem:e.origem,tipo:e.tipo,alunoId:e.alunoId||'',nome:nomeDe(e)});
         if(e.alunoId&&alunos.indexOf(e.alunoId)<0)alunos.push(e.alunoId);
-        if(aula)nAulas++;else nLocs++;
+        nAulas++;
       });
-      const modo=slotModo(d,h);
-      if(fechar&&modo!=='fechado')dia.fechar.push(h);
-      if(HORAS_GRADE.indexOf(h)>=0&&modo!=='fechado'&&!evs.some(ehBloqueioFora))dia.blocos.push(h);
+      if(HORAS_GRADE.indexOf(h)>=0&&slotModo(d,h)!=='fechado'&&!evs.some(ehBloqueioFora))dia.blocos.push(h);
     });
-    nBlocos+=dia.blocos.length;nFechar+=dia.fechar.length;
-    if(dia.itens.length||dia.blocos.length||dia.fechar.length)dias.push(dia);
+    nBlocos+=dia.blocos.length;
+    if(dia.itens.length||dia.blocos.length)dias.push(dia);
   }
-  return {ini:de,fim,fechar:!!fechar,dias,alunos,nAulas,nLocs,nMantidas,nBlocos,nFechar,nOutroProf};
+  return {ini:de,fim,dias,alunos,nAulas,nMantidas,nBlocos,nOutroProf};
 }
 function aplicarCancelarPeriodo(plano){
-  const reg={id:'fora'+Date.now().toString(36),ini:plano.ini,fim:plano.fim,fechar:!!plano.fechar,ts:Date.now(),eventos:[],excecoes:[],blocos:[],horario:{}};
+  const reg={id:'fora'+Date.now().toString(36),ini:plano.ini,fim:plano.fim,ts:Date.now(),eventos:[],excecoes:[],blocos:[]};
   plano.dias.forEach(dia=>{
     dia.itens.forEach(it=>{
       if(it.origem==='fixo'){
@@ -4636,20 +4633,11 @@ function aplicarCancelarPeriodo(plano){
       const ev={id:'e'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),data:dia.data,hora:h,titulo:FORA_TIT,tipo:'bloqueio',motivo:'fora',alunoId:null,periodo:reg.id};
       DB.agenda.eventos.push(ev);reg.blocos.push(ev.id);
     });
-    if(dia.fechar.length){
-      const d=new Date(dia.data+'T12:00:00'),dow=d.getDay();
-      DB.horarioData=DB.horarioData||{};
-      reg.horario[dia.data]=DB.horarioData[dia.data]?Object.assign({},DB.horarioData[dia.data]):null;
-      const m=Object.assign({},DB.horarioData[dia.data]||{});
-      HORAS.forEach(h=>{if(!m[h])m[h]=(DB.horarioCfg&&DB.horarioCfg[dow]&&DB.horarioCfg[dow][h])||modoPadrao(d,h);});
-      dia.fechar.forEach(h=>{m[h]='fechado';});
-      DB.horarioData[dia.data]=m;
-    }
   });
   DB.foras=(DB.foras||[]).concat(reg).slice(-30);
   return reg;
 }
-/* Desfazer: tira os bloqueios, devolve as aulas e o funcionamento de antes.
+/* Desfazer: tira os bloqueios e devolve as aulas.
    Aula só volta se o horário ainda comportar (alguém pode ter marcado locação
    nele depois); a que não couber é listada e continua cancelada. */
 function planoDesfazerPeriodo(ini,fim){
@@ -4681,10 +4669,6 @@ function aplicarDesfazerPeriodo(plano){
     DB.agenda.eventos=DB.agenda.eventos.filter(e=>!blocos.has(e.id));
     r.excecoes.forEach(x=>{if(exc.has(x.fixoId+'|'+x.data))DB.agenda.excecoes=DB.agenda.excecoes.filter(y=>!(y.fixoId===x.fixoId&&y.data===x.data));});
     r.eventos.forEach(e=>{if(voltam.has(e.id)&&!DB.agenda.eventos.some(x=>x.id===e.id))DB.agenda.eventos.push(e);});
-    Object.keys(r.horario||{}).forEach(dk=>{
-      DB.horarioData=DB.horarioData||{};
-      if(r.horario[dk])DB.horarioData[dk]=r.horario[dk];else delete DB.horarioData[dk];
-    });
   });
   DB.foras=(DB.foras||[]).filter(r=>!ids.has(r.id));
 }

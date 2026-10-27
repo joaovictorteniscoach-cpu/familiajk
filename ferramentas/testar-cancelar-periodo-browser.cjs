@@ -80,19 +80,19 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
     {id:'e4',alunoId:null,titulo:'Locação Fictícia',data:'2026-10-22',hora:'14:00',tipo:'locacao'}];
   const resetP=async()=>{await reset();await p.evaluate(ev=>{DB.agenda.eventos=ev;DB.alunos.find(a=>a.id==='ana').tel='41999990001';
    __no=__baseNo();_basePartes=JSON.parse(JSON.stringify(__no));},EVS);};
-  const interp=t=>p.evaluate(t=>{const i=JVAcoesVoz.interpretar(t,DB.alunos,'2026-10-15');return {acao:i.acao,ini:i.ini,fim:i.fim,fechar:i.fechar,erro:i.erro||''};},t);
+  const interp=t=>p.evaluate(t=>{const i=JVAcoesVoz.interpretar(t,DB.alunos,'2026-10-15');return {acao:i.acao,ini:i.ini,fim:i.fim,erro:i.erro||''};},t);
   const saldo=()=>p.evaluate(()=>JSON.stringify(DB.alunos.map(a=>[a.id,a.creditos,a.credGrupo,a.repos])));
 
-  await check('entende o período falado: intervalo, mês seguinte, semana, um dia, virada de mês e "fechar a quadra"',async()=>{
+  await check('entende o período falado: intervalo, mês seguinte, semana, um dia, virada de mês',async()=>{
    await resetP();
    const casos=[
-    ['Cancelar todas as aulas de 14 a 20 de novembro',{acao:'cancelarPeriodo',ini:'2026-11-14',fim:'2026-11-20',fechar:false}],
-    ['Vou viajar, cancela tudo do dia 14 ao dia 20 de novembro',{acao:'cancelarPeriodo',ini:'2026-11-14',fim:'2026-11-20',fechar:false}],
-    ['cancelar as aulas da semana que vem',{acao:'cancelarPeriodo',ini:'2026-10-19',fim:'2026-10-25',fechar:false}],
-    ['cancelar todas as aulas de amanhã',{acao:'cancelarPeriodo',ini:'2026-10-16',fim:'2026-10-16',fechar:false}],
-    ['cancelar todas as aulas de 28 de novembro a 3 de dezembro inclusive as locações',{acao:'cancelarPeriodo',ini:'2026-11-28',fim:'2026-12-03',fechar:true}],
-    ['cancelar todas as aulas do dia 10 ao dia 12',{acao:'cancelarPeriodo',ini:'2026-11-10',fim:'2026-11-12',fechar:false}],
-    ['cancelar todas as aulas de 14/11 a 20/11 e fechar a quadra',{acao:'cancelarPeriodo',ini:'2026-11-14',fim:'2026-11-20',fechar:true}],
+    ['Cancelar todas as aulas de 14 a 20 de novembro',{acao:'cancelarPeriodo',ini:'2026-11-14',fim:'2026-11-20'}],
+    ['Vou viajar, cancela tudo do dia 14 ao dia 20 de novembro',{acao:'cancelarPeriodo',ini:'2026-11-14',fim:'2026-11-20'}],
+    ['cancelar as aulas da semana que vem',{acao:'cancelarPeriodo',ini:'2026-10-19',fim:'2026-10-25'}],
+    ['cancelar todas as aulas de amanhã',{acao:'cancelarPeriodo',ini:'2026-10-16',fim:'2026-10-16'}],
+    ['cancelar todas as aulas de 28 de novembro a 3 de dezembro inclusive as locações',{acao:'cancelarPeriodo',ini:'2026-11-28',fim:'2026-12-03'}],
+    ['cancelar todas as aulas do dia 10 ao dia 12',{acao:'cancelarPeriodo',ini:'2026-11-10',fim:'2026-11-12'}],
+    ['cancelar todas as aulas de 14/11 a 20/11 e fechar a quadra',{acao:'cancelarPeriodo',ini:'2026-11-14',fim:'2026-11-20'}],
     ['desfazer o cancelamento de 14 a 20 de novembro',{acao:'desfazerPeriodo',ini:'2026-11-14',fim:'2026-11-20'}]];
    for(const [t,esp] of casos){const r=await interp(t);for(const k of Object.keys(esp))assert.equal(r[k],esp[k],t+' → '+k+': '+JSON.stringify(r));}
    assert.equal((await interp('cancelar a aula da Ana amanhã às 9')).acao,'cancelar','com nome de aluno continua o cancelamento de uma aula');
@@ -109,9 +109,9 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
    assert.match(prev,/Cancelar período/);assert.match(prev,/8 aulas canceladas \(5 alunos\)/);
    assert.match(prev,/ter 20\/10: 18:00 Ana Teste/);assert.match(prev,/qua 21\/10: 10:00 Bia Teste/);
    assert.match(prev,/qui 22\/10: 07:00 Caio Teste \(personal\), 09:00 Ana Teste, 16:00 Bia Teste, 17:00 Duda Teste \(grupo\), 17:00 Edu Teste \(grupo\), 19:00 Ana Teste/);
-   assert.match(prev,/Locação e torneio continuam \(1 marcação mantida\)/);assert.match(prev,/créditos não mudam/);
+   assert.match(prev,/“Professor ausente”: ninguém marca aula nem reposição\. A quadra continua aberta para locação e torneio \(1 marcação mantida\)/);assert.doesNotMatch(prev,/✈|fechar a quadra/i);assert.match(prev,/créditos não mudam/);
    assert.equal(await p.locator('#voz-confirmar').innerText(),'Cancelar 8 marcações');
-   assert.equal(await p.locator('#voz-previa input[type=date]').count(),2,'De e Até para ajustar os dias');
+   assert.equal(await p.locator('#voz-previa input[type=date]').count(),2,'De e Até para ajustar os dias');assert.equal(await p.locator('#voz-previa select').count(),0,'sem opção de fechar a quadra');
    if(process.env.JV_SHOTS)await p.screenshot({path:path.join(process.env.JV_SHOTS,'voz-cancelar-periodo.png'),fullPage:true});
    assert.equal(await antes(),a);assert.equal(await p.evaluate(()=>__persist),0);
   });
@@ -134,7 +134,7 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
    assert.equal(r.aula,false,'ninguém marca aula no período');assert.equal(r.loc,true,'locação continua');
    assert.equal(r.pub,'bloqueio','o app do aluno vê "sem aula", sem nome');
    assert.equal(r.snaps,1,'versão anterior guardada antes de mudar');
-   assert.match(r.resultado,/Cancelado de 20\/10 a 23\/10: 8 aulas; horários bloqueados/);
+   assert.match(r.resultado,/Cancelado de 20\/10 a 23\/10: 8 aulas; professor ausente, quadra aberta para locação e torneio/);
    assert.equal(await saldo(),s0,'créditos, grupo e reposições não mudam');
   });
   await check('depois de confirmar: um botão por aluno abre o WhatsApp com a mensagem pronta, sem valor nem desconto',async()=>{
@@ -149,37 +149,39 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
    assert.match(r.wa[0],/^Olá, Ana! Aqui é o João, da Academia JV Tênis\. De 20\/10 a 23\/10 vou estar fora, então as aulas de terça 20\/10 às 18:00, quinta 22\/10 às 09:00 e quinta 22\/10 às 19:00 estão canceladas\. Você não perde essas aulas: o crédito continua com você\./);
    assert.doesNotMatch(r.wa[0],/R\$|desconto|640/i);
   });
-  await check('consulta "aulas desmarcadas" mostra o motivo "professor fora"',async()=>{
+  await check('consulta "aulas desmarcadas" mostra o motivo "professor ausente"',async()=>{
    await falar('Quais aulas foram desmarcadas na semana que vem?');
-   assert.match(await p.locator('#voz-consulta-lista').innerText(),/professor fora/);
+   assert.match(await p.locator('#voz-consulta-lista').innerText(),/professor ausente/);
   });
   await check('voz: "desfazer o cancelamento de 20 a 23 de outubro" devolve aulas, tira os bloqueios e não mexe em crédito',async()=>{
    const s0=await saldo();
    await falar('desfazer o cancelamento de 20 a 23 de outubro');
    await p.waitForFunction(()=>!document.getElementById('voz-confirmar').disabled);
-   assert.match(await p.locator('#voz-previa').innerText(),/8 aulas voltam e \d+ bloqueios saem/);
+   assert.match(await p.locator('#voz-previa').innerText(),/8 aulas voltam; \d+ horários deixam de ficar como “Professor ausente”/);
    await p.locator('#voz-confirmar').click();
    await p.waitForFunction(()=>/Confirmado e salvo/.test(document.getElementById('voz-resultado').textContent));
    const r=await p.evaluate(()=>({exc:DB.agenda.excecoes.length,ev:DB.agenda.eventos.map(e=>e.id).sort(),foras:(DB.foras||[]).length}));
    assert.equal(r.exc,0);assert.deepEqual(r.ev,['e1','e2','e3','e4']);assert.equal(r.foras,0);
    assert.equal(await saldo(),s0);
   });
-  await check('"fechar a quadra": locação também sai e o dia fica Fechado; desfazer volta o funcionamento de antes',async()=>{
+  await check('quadra aberta: com "fechar a quadra" no pedido, locação e torneio continuam e dá para marcar locação nova; funcionamento não muda',async()=>{
    await resetP();
    const r=await p.evaluate(()=>{
-    const plano=planoCancelarPeriodo('2026-10-22','2026-10-22',true);aplicarCancelarPeriodo(plano);
-    const d=new Date('2026-10-22T12:00:00'),fechado=HORAS_GRADE.every(h=>slotModo(d,h)==='fechado'),loc=DB.agenda.eventos.some(e=>e.id==='e4');
-    const ida={nLocs:plano.nLocs,nAulas:plano.nAulas,fechado,loc,hd:!!(DB.horarioData||{})['2026-10-22']};
-    aplicarDesfazerPeriodo(planoDesfazerPeriodo('2026-10-22','2026-10-22'));
-    return {ida,volta:{hd:!!(DB.horarioData||{})['2026-10-22'],loc:DB.agenda.eventos.some(e=>e.id==='e4'),aberto:slotModo(d,'09:00')!=='fechado'}};
+    const i=JVAcoesVoz.interpretar('cancelar todas as aulas de 22/10 a 22/10 e fechar a quadra',DB.alunos,'2026-10-15');
+    const hd=JSON.stringify(DB.horarioData||{}),plano=planoCancelarPeriodo('2026-10-22','2026-10-22');aplicarCancelarPeriodo(plano);
+    const d=new Date('2026-10-22T12:00:00');
+    return {acao:i.acao,fechar:'fechar' in i,nAulas:plano.nAulas,mantidas:plano.nMantidas,e4:DB.agenda.eventos.some(e=>e.id==='e4'),
+     hd:JSON.stringify(DB.horarioData||{})===hd,aberto:HORAS_GRADE.filter(h=>slotModo(d,h)!=='fechado').length>0,
+     locNova:podeAdicionarAoHorario(entriesFor(d,'10:00'),'locacao',2),torNovo:podeAdicionarAoHorario(entriesFor(d,'10:00'),'torneio',2),
+     aula:podeAdicionarAoHorario(entriesFor(d,'10:00'),'aula',2),
+     titulo:DB.agenda.eventos.find(ehBloqueioFora).titulo};
    });
-   assert.deepEqual(r.ida,{nLocs:1,nAulas:6,fechado:true,loc:false,hd:true});
-   assert.deepEqual(r.volta,{hd:false,loc:true,aberto:true});
+   assert.deepEqual(r,{acao:'cancelarPeriodo',fechar:false,nAulas:6,mantidas:1,e4:true,hd:true,aberto:true,locNova:true,torNovo:true,aula:false,titulo:'Professor ausente'});
   });
   await check('desfazer não põe aula em cima de locação marcada depois: ela fica cancelada e aparece na prévia',async()=>{
    await resetP();
    const r=await p.evaluate(()=>{
-    aplicarCancelarPeriodo(planoCancelarPeriodo('2026-10-21','2026-10-22',false));
+    aplicarCancelarPeriodo(planoCancelarPeriodo('2026-10-21','2026-10-22'));
     DB.agenda.eventos.push({id:'e9',alunoId:null,titulo:'Locação Nova',data:'2026-10-22',hora:'09:00',tipo:'locacao'},
      {id:'e8',alunoId:null,titulo:'Locação Nova',data:'2026-10-21',hora:'10:00',tipo:'locacao'});
     const pl=planoDesfazerPeriodo('2026-10-21','2026-10-22');aplicarDesfazerPeriodo(pl);
@@ -192,10 +194,10 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
   });
   await check('hoje vale só daqui para a frente; período passado e longo demais são recusados',async()=>{
    await resetP();
-   const r=await p.evaluate(()=>{const pl=planoCancelarPeriodo('2026-10-15','2026-10-15',false);
+   const r=await p.evaluate(()=>{const pl=planoCancelarPeriodo('2026-10-15','2026-10-15');
     const err=f=>{try{f();return '';}catch(e){return e.message;}};
     return {horas:pl.dias[0].itens.map(x=>x.hora),manteve:pl.nMantidas,
-     passado:err(()=>planoCancelarPeriodo('2026-10-01','2026-10-10',false)),longo:err(()=>planoCancelarPeriodo('2026-10-16','2027-01-31',false))};});
+     passado:err(()=>planoCancelarPeriodo('2026-10-01','2026-10-10')),longo:err(()=>planoCancelarPeriodo('2026-10-16','2027-01-31'))};});
    assert.deepEqual(r.horas,['16:00','17:00','17:00','19:00','20:00'],'07:00 e 09:00 já passaram (são 13:04)');
    assert.equal(r.manteve,1,'a locação das 14:00 continua');
    assert.match(r.passado,/já passou/);assert.match(r.longo,/até 2 meses/);
