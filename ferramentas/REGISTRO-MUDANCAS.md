@@ -8,6 +8,26 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-27 · Claude Code: DESIGN.md e revisão das telas pela lista da Vercel (só docs)
+
+João pediu para testar as skills Web design guidelines, Awesome design md, Image to
+code e Playwright CLI e depois "aproveite alguma coisa". Nenhuma foi instalada no
+repositório (testadas numa pasta temporária). Aproveitado:
+- `DESIGN.md` na raiz (formato do Google Stitch, ideia da coleção awesome-design-md):
+  o estilo **atual** da academia medido nas telas publicadas (cores do Saibro, letras,
+  cantos, peças, toque mínimo, textos), com a regra de que o visual está fechado
+  (27/10) e tela nova usa as peças existentes. Ponteiro no CLAUDE.md e no AGENTS.md.
+- `ferramentas/AUDITORIA-TELAS-2026-10.md`: os dois apps revisados pela lista Web
+  Interface Guidelines da Vercel, **só lista**. Principais: "Fechado"/"Locação"
+  partidos na grade da semana do aluno; áreas de toque < 44 px em telas da Gestão;
+  toast sem `aria-live`; campos sem rótulo ligado. Nada corrigido; aguarda o João.
+- Playwright CLI (0.1.22) funciona aqui com `executablePath` do Chromium já
+  instalado, mas não substitui os testes; Image to code não é necessário (já
+  fazemos foto → HTML e comparamos com print).
+Sem mudança de app, sem versão nova, sem regra do Firebase.
+
+---
+
 ## 2026-10-27 · Claude Code: cancelar todas as aulas de um dia ou período pela voz (pedido do João)
 
 Pedido: "selecionar quantos dias eu quiser para cancelar… viagem de 14 a 20 de

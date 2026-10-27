@@ -24,5 +24,7 @@ Conversa particular ou trabalho ainda não enviado ao GitHub não é visível
 para o outro agente. Este guia e o registro são o ponto comum de consulta;
 não representam comunicação automática entre as conversas.
 
+Para criar ou mudar uma tela, siga [DESIGN.md](DESIGN.md) (visual fechado: usar as peças que já existem).
+
 Para a proposta de comandos por voz, leia
 [ferramentas/ACOES-POR-VOZ.md](ferramentas/ACOES-POR-VOZ.md).
