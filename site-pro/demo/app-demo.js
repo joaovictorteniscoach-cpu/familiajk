@@ -4576,25 +4576,27 @@ function marcarChuvaDia(){
    uma vez, e não aluno por aluno". Em cada dia do período, de agora em diante:
    - aula, grupo e personal saem só daquela data (fixo vira exceção, avulsa sai
      da agenda); a grade fixa continua;
-   - cada horário aberto ganha um bloqueio "Professor ausente": ninguém marca
-     aula nem reposição. A quadra continua aberta: locação e torneio, que não
-     dependem do professor, continuam como estão e podem ser marcados (João,
-     27/10: "a quadra ficará aberta, apenas as aulas estarão fechadas").
+   - normal (professor ausente): cada horário aberto ganha um bloqueio
+     "Professor ausente": ninguém marca aula nem reposição, mas a quadra fica
+     aberta e locação e torneio continuam e podem ser marcados;
+   - só quando o João fala em fechar a quadra: locação e torneio também saem e
+     os horários ficam Fechados ("se eu fechar é porque a quadra não estará
+     disponível").
    Créditos não mudam: a aula não foi dada, e o que sobrar no mês vira reposição
    na virada, como sempre. Não conta como chuva. Aula de outro professor não é
    tocada. Cada cancelamento fica em DB.foras, para desfazer de uma vez. */
 const FORA_TIT='Professor ausente';
 function ehBloqueioFora(e){return !!(e&&e.tipo==='bloqueio'&&e.motivo==='fora');}
-function planoCancelarPeriodo(ini,fim,agoraMs){
+function planoCancelarPeriodo(ini,fim,fechar,agoraMs){
   const agora=new Date(agoraMs||Date.now()),hoje=dKey(agora),minAgora=agora.getHours()*60+agora.getMinutes();
   if(!/^\d{4}-\d{2}-\d{2}$/.test(String(ini))||!/^\d{4}-\d{2}-\d{2}$/.test(String(fim))||ini>fim)throw Error('Período inválido.');
   if(fim<hoje)throw Error('Esse período já passou. O cancelamento vale de hoje em diante.');
   const de=ini<hoje?hoje:ini;
   if((new Date(fim+'T12:00:00')-new Date(de+'T12:00:00'))/864e5>62)throw Error('Escolha um período de até 2 meses.');
-  const dias=[],alunos=[];let nAulas=0,nMantidas=0,nBlocos=0,nOutroProf=0;
+  const dias=[],alunos=[];let nAulas=0,nLocs=0,nMantidas=0,nBlocos=0,nFechar=0,nOutroProf=0;
   const nomeDe=e=>{const a=e.alunoId&&DB.alunos.find(x=>x.id===e.alunoId);return String(a&&a.nome||e.titulo||'—');};
   for(const d=new Date(de+'T12:00:00'),f=new Date(fim+'T12:00:00');d<=f;d.setDate(d.getDate()+1)){
-    const dk=dKey(d),dia={data:dk,itens:[],blocos:[]};
+    const dk=dKey(d),dia={data:dk,itens:[],blocos:[],fechar:[]};
     HORAS.forEach(h=>{
       const hm=h.split(':').map(Number);
       if(dk===hoje&&hm[0]*60+(hm[1]||0)<=minAgora)return;     // já começou: fica como está
@@ -4602,22 +4604,25 @@ function planoCancelarPeriodo(ini,fim,agoraMs){
       if(evs.some(ehEventoChuva))return;                        // chuva já cancelou tudo
       evs.forEach(e=>{
         if(e.origem!=='fixo'&&e.origem!=='pontual')return;      // compromisso e aula da academia
-        if(['locacao','torneio'].includes(e.tipo)){nMantidas++;return;}   // não depende do professor
-        if(!['aula','grupo','personal'].includes(e.tipo))return;
-        if(profDaEntrada(e)){nOutroProf++;return;}
+        const aula=['aula','grupo','personal'].includes(e.tipo),loc=['locacao','torneio'].includes(e.tipo);
+        if(!aula&&!loc)return;
+        if(loc&&!fechar){nMantidas++;return;}                   // não depende do professor
+        if(aula&&profDaEntrada(e)){nOutroProf++;return;}
         dia.itens.push({hora:h,id:e.id,origem:e.origem,tipo:e.tipo,alunoId:e.alunoId||'',nome:nomeDe(e)});
         if(e.alunoId&&alunos.indexOf(e.alunoId)<0)alunos.push(e.alunoId);
-        nAulas++;
+        if(aula)nAulas++;else nLocs++;
       });
-      if(HORAS_GRADE.indexOf(h)>=0&&slotModo(d,h)!=='fechado'&&!evs.some(ehBloqueioFora))dia.blocos.push(h);
+      const modo=slotModo(d,h);
+      if(fechar){if(modo!=='fechado')dia.fechar.push(h);}
+      else if(HORAS_GRADE.indexOf(h)>=0&&modo!=='fechado'&&!evs.some(ehBloqueioFora))dia.blocos.push(h);
     });
-    nBlocos+=dia.blocos.length;
-    if(dia.itens.length||dia.blocos.length)dias.push(dia);
+    nBlocos+=dia.blocos.length;nFechar+=dia.fechar.length;
+    if(dia.itens.length||dia.blocos.length||dia.fechar.length)dias.push(dia);
   }
-  return {ini:de,fim,dias,alunos,nAulas,nMantidas,nBlocos,nOutroProf};
+  return {ini:de,fim,fechar:!!fechar,dias,alunos,nAulas,nLocs,nMantidas,nBlocos,nFechar,nOutroProf};
 }
 function aplicarCancelarPeriodo(plano){
-  const reg={id:'fora'+Date.now().toString(36),ini:plano.ini,fim:plano.fim,ts:Date.now(),eventos:[],excecoes:[],blocos:[]};
+  const reg={id:'fora'+Date.now().toString(36),ini:plano.ini,fim:plano.fim,fechar:!!plano.fechar,ts:Date.now(),eventos:[],excecoes:[],blocos:[],horario:{}};
   plano.dias.forEach(dia=>{
     dia.itens.forEach(it=>{
       if(it.origem==='fixo'){
@@ -4633,11 +4638,21 @@ function aplicarCancelarPeriodo(plano){
       const ev={id:'e'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),data:dia.data,hora:h,titulo:FORA_TIT,tipo:'bloqueio',motivo:'fora',alunoId:null,periodo:reg.id};
       DB.agenda.eventos.push(ev);reg.blocos.push(ev.id);
     });
+    if(dia.fechar.length){
+      // Mesmo formato da tela Funcionamento: o dia inteiro gravado, só estas horas como Fechado.
+      const d=new Date(dia.data+'T12:00:00'),dow=d.getDay();
+      DB.horarioData=DB.horarioData||{};
+      reg.horario[dia.data]=DB.horarioData[dia.data]?Object.assign({},DB.horarioData[dia.data]):null;
+      const m=Object.assign({},DB.horarioData[dia.data]||{});
+      HORAS.forEach(h=>{if(!m[h])m[h]=(DB.horarioCfg&&DB.horarioCfg[dow]&&DB.horarioCfg[dow][h])||modoPadrao(d,h);});
+      dia.fechar.forEach(h=>{m[h]='fechado';});
+      DB.horarioData[dia.data]=m;
+    }
   });
   DB.foras=(DB.foras||[]).concat(reg).slice(-30);
   return reg;
 }
-/* Desfazer: tira os bloqueios e devolve as aulas.
+/* Desfazer: tira os bloqueios, devolve as aulas e o funcionamento de antes.
    Aula só volta se o horário ainda comportar (alguém pode ter marcado locação
    nele depois); a que não couber é listada e continua cancelada. */
 function planoDesfazerPeriodo(ini,fim){
@@ -4669,22 +4684,34 @@ function aplicarDesfazerPeriodo(plano){
     DB.agenda.eventos=DB.agenda.eventos.filter(e=>!blocos.has(e.id));
     r.excecoes.forEach(x=>{if(exc.has(x.fixoId+'|'+x.data))DB.agenda.excecoes=DB.agenda.excecoes.filter(y=>!(y.fixoId===x.fixoId&&y.data===x.data));});
     r.eventos.forEach(e=>{if(voltam.has(e.id)&&!DB.agenda.eventos.some(x=>x.id===e.id))DB.agenda.eventos.push(e);});
+    Object.keys(r.horario||{}).forEach(dk=>{
+      DB.horarioData=DB.horarioData||{};
+      if(r.horario[dk])DB.horarioData[dk]=r.horario[dk];else delete DB.horarioData[dk];
+    });
   });
   DB.foras=(DB.foras||[]).filter(r=>!ids.has(r.id));
 }
 /* Mensagem para o aluno (ou para o responsável, no plano família). Sem valor e
-   sem desconto. */
+   sem desconto. Locação e jogo do torneio só entram quando a quadra fechou. */
 function msgCancelPeriodo(a,itens,ini,fim){
   const dest=responsavelFamilia(a)||a,prim=n=>String(n||'').trim().split(/\s+/)[0]||'';
   const br=dk=>dk.split('-').reverse().slice(0,2).join('/');
   const DS=['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
-  const lista=itens.map(x=>DS[new Date(x.data+'T12:00:00').getDay()]+' '+br(x.data)+' às '+x.hora);
-  const varias=itens.length>1,de=dest.id!==a.id?' de '+prim(a.nome):'';
-  const quais=lista.length>2?lista.slice(0,-1).join(', ')+' e '+lista[lista.length-1]:lista.join(' e ');
-  return 'Olá, '+prim(dest.nome)+'! Aqui é o João, da Academia JV Tênis. '
-    +(ini===fim?'No dia '+br(ini)+' não vou poder dar aula':'De '+br(ini)+' a '+br(fim)+' vou estar fora')
-    +', então '+(varias?'as aulas':'a aula')+de+' de '+quais+(varias?' estão canceladas':' está cancelada')+'. '
-    +'Você não perde '+(varias?'essas aulas':'essa aula')+': o crédito continua com você. Qualquer dúvida, me chama aqui. 🎾';
+  const de=dest.id!==a.id?' de '+prim(a.nome):'',e=l=>l.length>2?l.slice(0,-1).join(', ')+' e '+l[l.length-1]:l.join(' e ');
+  const quais=l=>e(l.map(x=>DS[new Date(x.data+'T12:00:00').getDay()]+' '+br(x.data)+' às '+x.hora));
+  const aulas=itens.filter(x=>!['locacao','torneio'].includes(x.tipo)),locs=itens.filter(x=>x.tipo==='locacao'),tor=itens.filter(x=>x.tipo==='torneio');
+  const ola='Olá, '+prim(dest.nome)+'! Aqui é o João, da Academia JV Tênis. ',fimMsg='Qualquer dúvida, me chama aqui. 🎾';
+  const credito=aulas.length?'Você não perde '+(aulas.length>1?'essas aulas':'essa aula')+': o crédito continua com você. ':'';
+  if(!locs.length&&!tor.length){
+    const varias=aulas.length>1;
+    return ola+(ini===fim?'No dia '+br(ini)+' não vou poder dar aula':'De '+br(ini)+' a '+br(fim)+' vou estar fora')
+      +', então '+(varias?'as aulas':'a aula')+de+' de '+quais(aulas)+(varias?' estão canceladas':' está cancelada')+'. '+credito+fimMsg;
+  }
+  const partes=[];
+  if(aulas.length)partes.push((aulas.length>1?'as aulas':'a aula')+de+' de '+quais(aulas));
+  if(locs.length)partes.push((locs.length>1?'as locações':'a locação')+de+' de '+quais(locs));
+  if(tor.length)partes.push((tor.length>1?'os jogos do torneio':'o jogo do torneio')+de+' de '+quais(tor));
+  return ola+(ini===fim?'No dia '+br(ini):'De '+br(ini)+' a '+br(fim))+' a quadra vai estar fechada, então precisei cancelar '+e(partes)+'. '+credito+fimMsg;
 }
 function avisarCancelPeriodo(alunoId,itens,ini,fim){
   const a=DB.alunos.find(x=>x.id===alunoId);if(!a)return false;

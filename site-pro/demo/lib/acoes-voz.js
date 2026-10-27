@@ -250,7 +250,9 @@ function interpretarAcaoEspecial(t,base,alunos){
    if(cit.length)return {erro:'O cancelamento de vários dias vale para todos os alunos. Para um aluno só, cancele cada aula pelo nome, dia e horário.'};
    const p=per();if(p&&p.erro)return {erro:p.erro};
    if(!p)return {erro:'Diga o dia ou o período: por exemplo “cancelar todas as aulas de 14 a 20 de novembro” ou “da semana que vem”.'};
-   return {acao:'cancelarPeriodo',especial:true,ini:p.ini,fim:p.fim,rotulo:p.rotulo};
+   // A quadra só fecha quando o João fala (27/10): sem isso, professor ausente e quadra aberta.
+   const fechar=/\bfech\w* (?:tambem )?a quadra\b|\bquadra (?:vai )?(?:estar |ficar |fica )?fechad\w*|\b(?:inclusive|tambem|e|com) (?:as )?(?:locac\w*|alugu\w*)\b|\blocac\w* tambem\b/.test(t)&&!/\b(?:nao|sem) (?:precisa (?:de )?)?fech/.test(t);
+   return {acao:'cancelarPeriodo',especial:true,ini:p.ini,fim:p.fim,rotulo:p.rotulo,fechar};
   }
  }
  const fechar=/\b(?:fech(?:e|ar|a)|bloque(?:ie|ar|ia)|tranc(?:ar|a|ue))\b/.test(t)&&!/\bfechamento\b|\bfechar o mes\b/.test(t);
@@ -862,8 +864,8 @@ function horasDoPedido(i){
 }
 function planoEspecial(i){
  if(i.acao==='cancelarPeriodo'){
-  const p=planoCancelarPeriodo(i.ini,i.fim);
-  if(!p.nAulas&&!p.nBlocos)throw Error('Não há aula para cancelar nesse período, e os horários já estão bloqueados.');
+  const p=planoCancelarPeriodo(i.ini,i.fim,!!i.fechar);
+  if(!p.nAulas&&!p.nLocs&&!p.nBlocos&&!p.nFechar)throw Error('Não há aula para cancelar nesse período, e os horários já estão bloqueados.');
   return p;
  }
  if(i.acao==='desfazerPeriodo')return planoDesfazerPeriodo(i.ini,i.fim);
@@ -949,21 +951,23 @@ const TIPO_CANC={grupo:'grupo',personal:'personal',locacao:'locação',torneio:'
 const periodoTxt=(ini,fim)=>ini===fim?quandoTxt(ini):'de '+brData(ini)+' a '+brData(fim);
 function textoEspecial(i,plano){
  if(i.acao==='cancelarPeriodo'){
-  const p=plano,per=periodoTxt(p.ini,p.fim),comAula=p.dias.filter(d=>d.itens.length),n=p.nAulas;
-  const linhas=[per.charAt(0).toUpperCase()+per.slice(1)+': '+(p.nAulas?plural(p.nAulas,'aula cancelada','aulas canceladas')+' ('+plural(p.alunos.length,'aluno')+')':'nenhuma aula marcada')+'.'];
+  const p=plano,per=periodoTxt(p.ini,p.fim),comAula=p.dias.filter(d=>d.itens.length),n=p.nAulas+p.nLocs;
+  const linhas=[per.charAt(0).toUpperCase()+per.slice(1)+': '+(p.nAulas?plural(p.nAulas,'aula cancelada','aulas canceladas')+' ('+plural(p.alunos.length,'aluno')+')':'nenhuma aula marcada')
+   +(p.nLocs?' e '+plural(p.nLocs,'locação ou jogo cancelado','locações ou jogos cancelados'):'')+'.'];
   comAula.slice(0,10).forEach(d=>linhas.push(rotDia(d.data)+': '+d.itens.map(x=>x.hora+' '+x.nome+(TIPO_CANC[x.tipo]?' ('+TIPO_CANC[x.tipo]+')':'')).join(', ')));
   if(comAula.length>10)linhas.push('…e mais '+plural(comAula.length-10,'dia')+'.');
-  linhas.push('Os horários ficam como “Professor ausente”: ninguém marca aula nem reposição. A quadra continua aberta para locação e torneio'+(p.nMantidas?' ('+plural(p.nMantidas,'marcação mantida','marcações mantidas')+')':'')+'.');
+  linhas.push(p.fechar?'A quadra fica fechada nesses dias: ninguém marca nada, nem locação ou torneio.'
+   :'Os horários ficam como “Professor ausente”: ninguém marca aula nem reposição. A quadra continua aberta para locação e torneio'+(p.nMantidas?' ('+plural(p.nMantidas,'marcação mantida','marcações mantidas')+')':'')+'.');
   if(p.nOutroProf)linhas.push('Aulas de outro professor continuam: '+p.nOutroProf+'.');
   return {titulo:'Cancelar período',linhas,
    nota:'Os créditos não mudam: a aula não foi dada, e o que sobrar no mês vira reposição na virada, como sempre. A grade fixa continua e não conta como chuva. Depois de confirmar, você pode avisar cada aluno pelo WhatsApp. Para desfazer, diga “desfazer o cancelamento '+per+'”.',
-   botao:n?'Cancelar '+plural(n,'marcação','marcações'):'Bloquear os dias'};
+   botao:n?'Cancelar '+plural(n,'marcação','marcações'):p.fechar?'Fechar a quadra':'Marcar ausência'};
  }
  if(i.acao==='desfazerPeriodo'){
   const p=plano,voltam=p.nExc+p.voltam.length;
   return {titulo:'Desfazer cancelamento',linhas:[p.regs.map(r=>periodoTxt(r.ini,r.fim)).join('; ')+': '+plural(voltam,'aula volta','aulas voltam')+(p.nBlocos?'; '+plural(p.nBlocos,'horário deixa','horários deixam')+' de ficar como “Professor ausente”':'')+'.']
    .concat(p.conflitos.length?['Não voltam (o horário foi ocupado depois): '+p.conflitos.join('; ')+'.']:[]),
-   nota:'As aulas voltam nessas datas como estavam. Os créditos não mudam. Se tiver avisado os alunos, avise de novo.',botao:'Desfazer cancelamento'};
+   nota:'As aulas voltam nessas datas como estavam'+((DB.foras||[]).some(r=>r.fechar&&p.regs.some(x=>x.id===r.id))?' e a quadra volta a abrir como era':'')+'. Os créditos não mudam. Se tiver avisado os alunos, avise de novo.',botao:'Desfazer cancelamento'};
  }
  if(i.acao==='presenca')return {titulo:'Marcar presença',
   linhas:[quandoTxt(i.data)+': '+plural(plano.alvos.length,'aula','aulas')].concat(plano.alvos.map(x=>x.hora+' '+x.nome+' — '+x.tipo+' · '+x.mud.map(m=>CAMPO_TXT[m.campo]+' '+fmtCred(m.antes)+' → '+fmtCred(m.depois)).join(' + ')+(x.extra?' ('+fmtCred(x.extra)+' extra a cobrar)':'')+(x.nota||''))).concat(plano.avisos.length?['Fica de fora: '+plano.avisos.join('; ')+'.']:[]).concat((plano.familia||[]).length?['Da mesma família na aula, sem ✓: '+plano.familia.join(', ')+'. Para marcar, peça a presença também.']:[]),
@@ -990,12 +994,12 @@ function campoData(rotulo,valor,mudar){
    mensagem pronta (no plano família, vai para o responsável). Nada muda no app. */
 function mostrarAvisarAlunos(p){
  const porAluno={};
- p.dias.forEach(d=>d.itens.forEach(x=>{if(x.alunoId)(porAluno[x.alunoId]=porAluno[x.alunoId]||[]).push({data:d.data,hora:x.hora});}));
+ p.dias.forEach(d=>d.itens.forEach(x=>{if(x.alunoId)(porAluno[x.alunoId]=porAluno[x.alunoId]||[]).push({data:d.data,hora:x.hora,tipo:x.tipo});}));
  const ids=Object.keys(porAluno);if(!ids.length)return;
  const caixa=msg('assistente','Quer avisar os alunos? Toque em cada um para abrir o WhatsApp com a mensagem pronta.');if(!caixa)return;
  ids.forEach(id=>{const a=DB.alunos.find(x=>x.id===id);if(!a)return;
   const dest=responsavelFamilia(a)||a,row=document.createElement('div');row.className='jv-voz-cobrar';
-  const nm=document.createElement('span');nm.textContent=a.nome+' · '+plural(porAluno[id].length,'aula');
+  const nm=document.createElement('span');const so=porAluno[id].every(x=>!['locacao','torneio'].includes(x.tipo));nm.textContent=a.nome+' · '+plural(porAluno[id].length,so?'aula':'horário',so?'aulas':'horários');
   const b=document.createElement('button');b.type='button';b.textContent=foneWhats(dest.tel)?'Avisar':'Sem WhatsApp';b.disabled=!foneWhats(dest.tel);
   b.onclick=()=>{if(avisarCancelPeriodo(id,porAluno[id],p.ini,p.fim))b.textContent='Aberto ✓';};
   row.append(nm,b);caixa.append(row);});
@@ -1023,6 +1027,7 @@ async function prepararEspecial(i){
    const de=v=>Object.assign({},i,{ini:v,fim:v>i.fim?v:i.fim});
    box.append(campoData('De',plano.ini,v=>{invalidar();prepararEspecial(de(v));}));
    box.append(campoData('Até',i.fim,v=>{invalidar();prepararEspecial(Object.assign({},i,{fim:v,ini:v<i.ini?v:i.ini}));}));
+   box.append(escolha('Quadra',[['aberta','Aberta para locação e torneio'],['fechada','Fechada para tudo']],i.fechar?'fechada':'aberta',v=>{invalidar();prepararEspecial(Object.assign({},i,{fechar:v==='fechada'}));}));
   }
   if(i.acao==='cobrar'&&i.todos){
    const mk=dataBase().slice(0,7);
@@ -1073,7 +1078,7 @@ function aplicarEspecial(i){
   horasDoPedido(i).forEach(h=>{if(entriesFor(d,h).some(e=>e.tipo!=='bloqueio'&&e.origem!=='compromisso'))aplicarChuva(d,h);});
   logAct('Chuva pela voz ('+i.data+')');persist();try{renderAgenda();}catch(e){}
  }else if(i.acao==='cancelarPeriodo'){
-  const pl=planoCancelarPeriodo(i.ini,i.fim),reg=aplicarCancelarPeriodo(pl);i.aplicado=pl;   // o aviso aos alunos usa o que foi aplicado
+  const pl=planoCancelarPeriodo(i.ini,i.fim,!!i.fechar),reg=aplicarCancelarPeriodo(pl);i.aplicado=pl;   // o aviso aos alunos usa o que foi aplicado
   logAct('Cancelar período pela voz ('+reg.ini+' a '+reg.fim+')');persist();try{renderAgenda();}catch(e){}try{publicarMapaQuadra();}catch(e){}
  }else if(i.acao==='desfazerPeriodo'){
   aplicarDesfazerPeriodo(planoDesfazerPeriodo(i.ini,i.fim));
@@ -1084,7 +1089,7 @@ function textoResultado(i){
  const p=JSON.parse(i.plano||'{}');
  if(i.acao==='presenca')return 'Presença marcada '+quandoTxt(i.data)+': '+p.alvos.map(x=>x.hora+' '+x.nome).join(', ');
  if(i.acao==='chuva')return 'Chuva marcada '+quandoTxt(i.data);
- if(i.acao==='cancelarPeriodo')return 'Cancelado '+periodoTxt(p.ini,p.fim)+': '+plural(p.nAulas,'aula')+'; professor ausente, quadra aberta para locação e torneio';
+ if(i.acao==='cancelarPeriodo')return 'Cancelado '+periodoTxt(p.ini,p.fim)+': '+plural(p.nAulas,'aula')+(p.nLocs?' e '+plural(p.nLocs,'locação ou jogo','locações ou jogos'):'')+(p.fechar?'; quadra fechada':'; professor ausente, quadra aberta para locação e torneio');
  if(i.acao==='desfazerPeriodo')return 'Cancelamento desfeito: '+plural(p.nExc+p.voltam.length,'aula voltou','aulas voltaram');
  return 'Funcionamento mudado: '+(i.escopo==='semana'?'toda '+i.dias.map(d=>DIAS_L[d]).join(', '):quandoTxt(i.data))+', das '+hm(i.ini)+(i.fim>=1440?' até o fim do dia':' às '+hm(i.fim))+' '+MODO_TXT[i.modo];
 }
