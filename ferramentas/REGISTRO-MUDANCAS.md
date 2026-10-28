@@ -60,6 +60,10 @@ depois "faça toda a revisão e coloque o padrão novo"):
   saibro claro com um pontinho de bolinha.
 - **Aluno:** o texto "verde = livre" da agenda virou "toque num horário livre para
   agendar".
+- **Revisão da prévia:** no celular, o pontinho deixava o selo do topo do site em 2
+  linhas; o selo fica mais justo em telas até 480 px (1 linha a partir de 360 px no
+  site e na metodologia). A caixa "Prioridade do ciclo" da avaliação saía esverdeada:
+  todas as caixas da avaliação ficam em creme.
 - **DESIGN.md:** regra de proporção (escuro e creme ≫ saibro ≫ bolinha).
 
 Prévia antes/depois enviada; publicar só com o OK do João.

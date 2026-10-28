@@ -3777,7 +3777,7 @@ html body:not(#jv) .fic-b.neutro,html body:not(#jv) .fic-voltar,html body:not(#j
 .tex-tbl th{background:#101E18!important;color:#F8F5ED!important}
 .tex-tbl tr.r1 td{background:#F6F0E4!important}
 .tex-pts{color:#B54E29!important}
-.aex-prio:not([style]){background:#F6F1E8!important;border-color:#E3D8C6!important}
+.aex-prio{background:#F6F1E8!important;border-color:#E3D8C6!important}
 .aex-prio b,.aex-sec{color:#101E18!important}
 html body:not(#jv) #aval-export .evo-mes-cap{color:#4E5E12!important;-webkit-text-fill-color:#4E5E12!important}
 /* fechamento: papel e tinta escura como antes (regra de leitura); só os títulos em saibro */
