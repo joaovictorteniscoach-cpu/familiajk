@@ -252,9 +252,13 @@ EXTRA = """
 .btn-clay{background:#C2582E!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
 .seg button.on,.seg .on{background:#C2582E!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
 #pg-lanc .cx-filtros button.on{background:#C2582E!important;border-color:#C2582E!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
-/* bolinha nos botões de ação */
-.al-aula,.fic-b.prim,.fic-b.prim2,.fic-b.ok,#pg-lanc .cx-ac.in{background:%(b)s!important;border-color:%(b)s!important;color:%(t)s!important;-webkit-text-fill-color:%(t)s!important}
-.al-aula *,.fic-b.prim *,.fic-b.prim2 *,.fic-b.ok *,#pg-lanc .cx-ac.in *{color:%(t)s!important;-webkit-text-fill-color:%(t)s!important;stroke:%(t)s!important}
+/* Versão agência (28/10): a bolinha é detalhe, não fundo. ✓ Aula e + Receita em vidro
+   escuro com o ✓/borda na bolinha; ações principais da ficha em saibro liso. */
+.al-aula,#pg-lanc .cx-ac.in{background:rgba(16,30,24,.72)!important;border:1px solid rgba(212,225,87,.55)!important;color:#F8F5ED!important;-webkit-text-fill-color:#F8F5ED!important}
+.al-aula *,#pg-lanc .cx-ac.in *{color:#F8F5ED!important;-webkit-text-fill-color:#F8F5ED!important}
+.al-aula svg,.al-aula svg *,#pg-lanc .cx-ac.in svg,#pg-lanc .cx-ac.in svg *{stroke:%(b)s!important;color:%(b)s!important}
+.fic-b.prim,.fic-b.prim2,.fic-b.ok{background:#B54E29!important;border-color:#B54E29!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+.fic-b.prim *,.fic-b.prim2 *,.fic-b.ok *{color:#FFF!important;-webkit-text-fill-color:#FFF!important;stroke:#FFF!important}
 /* Início: a série "Total" (anel, comparativo e gráfico) em areia. Com o
    dourado virando terra, ela ficava no mesmo laranja do Tênis. */
 #pg-dash{--jh-total:#EAD7B0}
@@ -277,12 +281,12 @@ IMAGENS = """
 .sx-head,.tex-head{border-bottom-color:#C2582E!important}
 .sx-head b,.sx-tbl th,.tex-head b,.tex-grp h4{color:#101E18!important}
 .sx-emb,.tex-emb{background:#101E18!important;color:#E0824F!important}
-.sx-livre{background:#EEF2C9!important;color:#46560F!important;border:1.5px solid #CBD66B!important}
-.sx-loc{background:#FBE6DA!important;color:#9A3F1C!important;border:1.5px solid #EBB394!important}
+.sx-livre{background:#FFFFFF!important;color:#3F4E0F!important;border:1.5px solid #CBD66B!important}
+.sx-loc{background:#FFFFFF!important;color:#9A3F1C!important;border:1.5px solid #EBB394!important}
 .tex-tbl th{background:#101E18!important;color:#F8F5ED!important}
-.tex-tbl tr.r1 td{background:#EEF2C9!important}
+.tex-tbl tr.r1 td{background:#F6F0E4!important}
 .tex-pts{color:#B54E29!important}
-.aex-prio:not([style]){background:#F2F4DC!important;border-color:#DCE29A!important}
+.aex-prio:not([style]){background:#F6F1E8!important;border-color:#E3D8C6!important}
 .aex-prio b,.aex-sec{color:#101E18!important}
 html body:not(#jv) #aval-export .evo-mes-cap{color:#4E5E12!important;-webkit-text-fill-color:#4E5E12!important}
 /* fechamento: papel e tinta escura como antes (regra de leitura); só os títulos em saibro */
@@ -295,14 +299,14 @@ html body:not(#jv) #pg-fech .fx-topo{border-bottom:2px solid #C2582E!important}
 # o que é positivo ou ação de mandar. Só no tema Saibro.
 COERENCIA = """
 /* ===== Coerência Saibro com bolinha na Gestão ===== */
-html body:not(#jv) #pg-agenda .agf-corpo button.destaque{background:#B54E29!important;border-color:#B54E29!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
-html body:not(#jv) #pg-agenda .agf-corpo button.destaque small{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
-html body:not(#jv) #pg-agenda .agf-corpo button.ouro{background:#D4E157!important;border-color:#D4E157!important;color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important}
-html body:not(#jv) #pg-agenda .agf-corpo button.ouro small{color:#34420F!important;-webkit-text-fill-color:#34420F!important}
+html body:not(#jv) #pg-agenda .agf-corpo button.destaque{background:rgba(22,46,36,.55)!important;border:1px solid rgba(255,255,255,.16)!important;color:#F8F5ED!important;-webkit-text-fill-color:#F8F5ED!important}
+html body:not(#jv) #pg-agenda .agf-corpo button.destaque small{color:#D8D2C7!important;-webkit-text-fill-color:#D8D2C7!important}
+html body:not(#jv) #pg-agenda .agf-corpo button.ouro{background:#B54E29!important;border-color:#B54E29!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+html body:not(#jv) #pg-agenda .agf-corpo button.ouro small{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
 html body:not(#jv) #pg-alunos .al-selo.pago{background:rgba(212,225,87,.16)!important;color:#D4E157!important;-webkit-text-fill-color:#D4E157!important;border:1px solid rgba(212,225,87,.35)!important}
 html body:not(#jv) #pg-alunos .al-selo.parcial,html body:not(#jv) #pg-alunos .al-tag.ouro{background:rgba(194,88,46,.24)!important;color:#F4BC9A!important;-webkit-text-fill-color:#F4BC9A!important}
-html body:not(#jv) #pg-aval .avacts .b1{background:#D4E157!important;color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important}
-html body:not(#jv) #pg-aval .avacts .b1 *{color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important;stroke:#1E2A0E!important}
+html body:not(#jv) #pg-aval .avacts .b1{background:#B54E29!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+html body:not(#jv) #pg-aval .avacts .b1 *{color:#FFF!important;-webkit-text-fill-color:#FFF!important;stroke:#FFF!important}
 /* Início: "subiu" e "conferido" na bolinha (o LED verde da quadra liberada fica: é sinal de trânsito) */
 html body:not(#jv) #pg-dash .jh-delta.sobe{background:rgba(212,225,87,.14)!important}
 html body:not(#jv) #pg-dash .jh-conf i{background:#D4E157!important;color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important}
@@ -378,7 +382,7 @@ VIDRO = _forte(VIDRO)
 # Só no app do aluno: botões de pagar na cor da bolinha, abas da agenda em saibro.
 EXTRA_ALUNO = """
 /* ===== Toques do tema Saibro no app do aluno ===== */
-.lock-pay,.jv-pix-btn,#apg-inicio .jv-pix-btn{background:%(b)s!important;border-color:%(b)s!important;color:%(t)s!important;-webkit-text-fill-color:%(t)s!important}
+.lock-pay,.jv-pix-btn,#apg-inicio .jv-pix-btn{background:#B54E29!important;border-color:#B54E29!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
 .seg.jv-ref-ag-tabs button.on,.jv-ref-ag-tabs button.on{background:#C2582E!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
 /* contraste: cabeçalho dos dias da agenda opaco (translúcido sobre a grade clara virava cinza) */
 html body:not(#jv) #apg-agenda .wk th,html body:not(#jv) #apg-agenda .wk th *{background:#1D2622!important}
@@ -402,14 +406,14 @@ html body:not(#jv) #apg-torneio .atg-head{background:#101E18!important}
 html body:not(#jv) #apg-torneio .atg-badge{background:#B54E29!important;color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important}
 html body:not(#jv) #apg-torneio .atg-tbl th{background:#F1EBE1!important;color:#6B5E4A!important;-webkit-text-fill-color:#6B5E4A!important}
 html body:not(#jv) #apg-torneio .atg-tbl td{background:#FFFFFF!important;color:#2A2016!important;-webkit-text-fill-color:#2A2016!important;border-bottom-color:#EFE7DA!important}
-html body:not(#jv) #apg-torneio .atg-tbl tr.me td{background:#EEF2C9!important}
+html body:not(#jv) #apg-torneio .atg-tbl tr.me td{background:#F6F0E4!important}
 /* Coerência (28/10): mensalidade em dia na bolinha; horário livre da agenda na
    bolinha clara, igual à imagem "Divulgar livres"; aviso da Evolução em saibro. */
 html body:not(#jv) .jv-pay-status[data-status="pago"]{background:rgba(212,225,87,.16)!important;color:#D4E157!important;-webkit-text-fill-color:#D4E157!important;border-color:rgba(212,225,87,.35)!important}
-html body:not(#jv) #apg-agenda .wc.livre{background:#EEF2C9!important;color:#46560F!important;-webkit-text-fill-color:#46560F!important}
-html body:not(#jv) #apg-agenda .sl.livre{background:#F6F8E4!important;border-color:#CBD66B!important;color:#46560F!important;-webkit-text-fill-color:#46560F!important}
+html body:not(#jv) #apg-agenda .wc.livre{background:#FFFFFF!important;color:#3F4E0F!important;-webkit-text-fill-color:#3F4E0F!important}
+html body:not(#jv) #apg-agenda .sl.livre{background:#FFFFFF!important;border-color:#CBD66B!important;color:#3F4E0F!important;-webkit-text-fill-color:#3F4E0F!important}
 html body:not(#jv) #apg-agenda .sl.livre i{background:#EEF2C9!important;color:#46560F!important;-webkit-text-fill-color:#46560F!important}
-html body:not(#jv) #apg-agenda .lg-livre{background:#EEF2C9!important;color:#46560F!important;-webkit-text-fill-color:#46560F!important}
+html body:not(#jv) #apg-agenda .lg-livre{background:#FFFFFF!important;color:#3F4E0F!important;-webkit-text-fill-color:#3F4E0F!important;box-shadow:inset 0 0 0 1.5px #CBD66B!important}
 html body:not(#jv) #apg-evolucao .evo-pend{background:rgba(194,88,46,.16)!important;color:#F6CDB4!important;-webkit-text-fill-color:#F6CDB4!important;border-color:rgba(224,130,79,.35)!important}
 """ % {"b": BOLA, "t": BOLA_TXT}
 

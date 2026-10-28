@@ -45,6 +45,23 @@ escuro, bolinha e quadra de saibro e ficou como está.
   fixos (aqui ela levava 12 s sem nuvem e o teste falhava também na main).
 - Contraste do aluno e da Gestão: 0 abaixo da régua. Site OK.
 
+**Versão agência** (João: "mais profissional, ar premium, feito por agência cara";
+depois "faça toda a revisão e coloque o padrão novo"):
+- **Bolinha só como detalhe:**
+  - ✓ Aula e + Receita em vidro escuro, com o ✓ e a borda na bolinha;
+  - horário livre (agenda do aluno e imagem da semana) em branco, com letra oliva e
+    borda fina de bolinha;
+  - linha do 1º do ranking e do aluno no torneio em creme;
+  - caixas da avaliação e do comprovante em creme;
+  - "Parabéns" da homenagem em creme.
+- **Saibro liso na ação principal:** ficha (prim/ok), pagar no aluno, "Divulgar
+  livres" e "Avaliar". "Horários" passa a vidro neutro.
+- **Site:** botões e selos sem degradê (`--saibro-btn:#B54E29`); selo das seções em
+  saibro claro com um pontinho de bolinha.
+- **Aluno:** o texto "verde = livre" da agenda virou "toque num horário livre para
+  agendar".
+- **DESIGN.md:** regra de proporção (escuro e creme ≫ saibro ≫ bolinha).
+
 Prévia antes/depois enviada; publicar só com o OK do João.
 
 ---

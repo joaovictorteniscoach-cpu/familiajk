@@ -95,7 +95,9 @@ Nada de nome real de aluno ou compromisso pessoal no código: ele é público (P
   do visual sóbrio foram descartadas. Não propor mudança visual sem ele pedir.
 - Saibro com bolinha (28/10, pedido do João): imagens geradas (`coresImg`, `homArte`, blocos
   `IMAGENS`/`COERENCIA` em `tema-saibro.py`), site/site-pro e pontos dos apps seguem o tema.
-  Saibro = escolha/alerta; bolinha = positivo/ação de mandar. Verde clássico continua como antes.
+  Versão agência: saibro liso = cor da marca (botão principal, escolha, título); bolinha SÓ em
+  detalhe (✓, pontinho, borda, "pago"), nunca em área grande; mais creme. Ver DESIGN.md.
+  Verde clássico continua como antes.
 - Repositório público: decisão pendente do João (privado exige GitHub Pro para manter o Pages).
 - **Família JK sem login (20/10):** a nuvem continua só com o link da família, sem criar conta.
   Login com Google só se não exigir mexer no Firebase nem criar contas — como exige (ligar o

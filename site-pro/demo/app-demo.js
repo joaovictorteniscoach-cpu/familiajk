@@ -10355,7 +10355,7 @@ function temaAtual(){try{return localStorage.getItem('jv-tema')==='classico'?'cl
 function coresImg(){
   return temaAtual()==='classico'
     ?{linha:'#C9A227',emb:'#1F3D2B',embTxt:'#EFE7D0',pos:'#2E7D52',repo:'#8A6A12',caixa:'#F1F6EE',caixaBorda:'#d8e6d2'}
-    :{linha:'#C2582E',emb:'#101E18',embTxt:'#E0824F',pos:'#4E5E12',repo:'#B54E29',caixa:'#F2F4DC',caixaBorda:'#DCE29A'};
+    :{linha:'#C2582E',emb:'#101E18',embTxt:'#E0824F',pos:'#4E5E12',repo:'#B54E29',caixa:'#F6F1E8',caixaBorda:'#E3D8C6'};
 }
 function marcarTema(){
   const t=temaAtual();
@@ -12777,7 +12777,7 @@ function homArte(h){
   const yNome=cy+r+290-(linhas.length-1)*tam*0.2;
   linhas.forEach((l,i)=>ctx.fillText(l,W/2,yNome+i*tam*0.95));
   /* parabéns */
-  ctx.fillStyle=S?'#D4E157':'#F6DB86';ctx.font='italic 400 58px '+SERIF;ctx.fillText('Parabéns pela conquista!',W/2,Math.max(1110,yNome+(linhas.length-1)*tam*0.95+88));
+  ctx.fillStyle=S?'#EADFCB':'#F6DB86';ctx.font='italic 400 58px '+SERIF;ctx.fillText('Parabéns pela conquista!',W/2,Math.max(1110,yNome+(linhas.length-1)*tam*0.95+88));
   /* bolinha e assinatura */
   const by=1222;ctx.fillStyle='#D7E64A';ctx.beginPath();ctx.arc(W/2,by,20,0,Math.PI*2);ctx.fill();
   ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=3;

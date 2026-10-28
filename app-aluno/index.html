@@ -4799,7 +4799,7 @@ function renderAgenda(){
   else if(agView==='semana'){
     const mon=new Date(agDate);mon.setDate(mon.getDate()-((mon.getDay()+6)%7));
     const days=[...Array(6)].map((_,i)=>{const d=new Date(mon);d.setDate(d.getDate()+i);return d;});
-    lbl.innerHTML='Semana de '+days[0].getDate()+'/'+(days[0].getMonth()+1)+' a '+days[5].getDate()+'/'+(days[5].getMonth()+1)+'<small>verde = livre · toque para agendar</small>';
+    lbl.innerHTML='Semana de '+days[0].getDate()+'/'+(days[0].getMonth()+1)+' a '+days[5].getDate()+'/'+(days[5].getMonth()+1)+'<small>toque num horário livre para agendar</small>';
     let html='<div class="wk-tools"><button class="wk-zbtn" type="button" aria-label="Diminuir agenda" onclick="alunoWkZoomStep(-1)">−</button><span class="wk-zlbl" id="al-wk-zlbl">100%</span><button class="wk-zbtn" type="button" aria-label="Aumentar agenda" onclick="alunoWkZoomStep(1)">+</button><button class="wk-fit" type="button" onclick="alunoWkZoomFit()">Semana toda</button></div><div class="wk-scroll"><table class="wk"><tr><th></th>'+days.map(d=>`<th>${DIAS[d.getDay()]}<small>${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}</small></th>`).join('')+'</tr>';
     PUB.horas.forEach(h=>{
       html+=`<tr><td class="hr">${h}</td>`;

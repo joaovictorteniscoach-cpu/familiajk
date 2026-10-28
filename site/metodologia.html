@@ -26,7 +26,7 @@
 <style>
 :root{
   --navy:#13221B; --navy-2:#1A2C24; --navy-3:#233A30; --deep:#091711;
-  --gold:#E0824F;--bola:#D4E157; --gold-2:#C2582E; --gold-soft:#F0A97F;
+  --gold:#E0824F;--bola:#D4E157;--saibro-btn:#B54E29; --gold-2:#C2582E; --gold-soft:#F0A97F;
   --cream:#F4EFE6; --paper:#FBF8F2; --ink:#1B2A23;
   --muted:rgba(244,239,230,.64); --line:rgba(224,130,79,.20);
   --wapp:#25D366; --clay:#E0784A;
@@ -39,10 +39,10 @@ h1,h2,h3{font-family:'Inter',sans-serif;line-height:1.06;letter-spacing:-.02em;f
 a{color:inherit;text-decoration:none}
 img{max-width:100%;display:block}
 .wrap{max-width:1080px;margin:0 auto;padding:0 22px}
-.eyebrow{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--bola,#D4E157);border:1px solid var(--line);border-radius:999px;padding:7px 16px}
+.eyebrow{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-soft);border:1px solid var(--line);border-radius:999px;padding:7px 16px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;font-weight:700;font-size:15.5px;padding:15px 26px;border-radius:13px;border:2px solid transparent;cursor:pointer;transition:transform .14s,background .2s,color .2s,border-color .2s}
 .btn:active{transform:scale(.98)}
-.btn-gold{background:linear-gradient(135deg,var(--gold-soft),var(--gold-2));color:#1B2A23}
+.btn-gold{background:var(--saibro-btn);color:#fff}
 .btn-gold:hover{filter:brightness(1.04)}
 .btn-line{background:transparent;color:var(--cream);border-color:rgba(244,239,230,.3)}
 .btn-line:hover{border-color:var(--gold);color:var(--gold-soft)}
@@ -77,6 +77,7 @@ section.sec{padding:74px 0;background:var(--navy)}
 .sec-head{max-width:640px;margin-bottom:38px}
 .sec-head.center{margin-left:auto;margin-right:auto;text-align:center}
 .sec-head .eyebrow{margin-bottom:14px}
+.eyebrow:before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--bola);margin-right:9px;vertical-align:1px}
 .sec-head h2{font-size:clamp(28px,5.4vw,44px);font-weight:800;margin-bottom:13px;color:#fff}
 .sec-head p{color:var(--muted);font-size:16.5px}
 
@@ -91,7 +92,7 @@ blockquote.mq footer{background:none;padding:0;text-align:left;font-size:14px;fo
 .pyr a::before{content:counter(cam);position:absolute;left:14px;font-size:12px;font-weight:800;color:rgba(255,255,255,.55)}
 .pyr a small{display:block;font-weight:600;font-size:clamp(10.5px,1.8vw,12.5px);letter-spacing:.02em;color:rgba(255,255,255,.66);margin-top:2px}
 .pyr a:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(0,0,0,.3)}
-.pyr .p6 a{width:min(46%,300px);background:linear-gradient(135deg,var(--gold-soft),var(--gold-2));color:#1B2A23;border-color:transparent}
+.pyr .p6 a{width:min(46%,300px);background:var(--saibro-btn);color:#fff;border-color:transparent}
 .pyr .p6 a::before{color:rgba(27,42,35,.6)}
 .pyr .p6 a small{color:rgba(27,42,35,.72)}
 .pyr .p5 a{width:min(57%,380px);background:linear-gradient(135deg,#7E3F22,#9A4F2C)}
@@ -122,7 +123,7 @@ blockquote.mq footer{background:none;padding:0;text-align:left;font-size:14px;fo
 .rally-list .rl .rh{display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;font-size:13.5px;color:var(--muted);margin-bottom:6px}
 .rally-list .rl .rh b{color:#fff;font-size:15px}
 .rally-list .rl .rtrack{background:var(--deep);border-radius:8px;height:14px;overflow:hidden}
-.rally-list .rl .rfill{height:100%;border-radius:7px;background:linear-gradient(90deg,var(--gold-soft),var(--gold-2))}
+.rally-list .rl .rfill{height:100%;border-radius:7px;background:var(--gold)}
 .rally-note{background:var(--deep);border:1px solid var(--line);border-radius:14px;padding:18px 20px;font-size:13.5px;line-height:1.6;color:var(--muted)}
 .rally-note b{color:var(--gold-soft)}
 .rally-title{font-size:15.5px;font-weight:700;color:#fff;margin-bottom:14px}
@@ -143,7 +144,7 @@ blockquote.mq footer{background:none;padding:0;text-align:left;font-size:14px;fo
 .lvls{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;align-items:stretch}
 .lvl{background:var(--navy-2);border:1px solid var(--line);border-radius:20px;padding:28px 26px;position:relative;display:flex;flex-direction:column}
 .lvl.feat{border-color:var(--gold);box-shadow:0 18px 44px rgba(0,0,0,.28)}
-.lvl .bdg{position:absolute;top:-14px;left:24px;width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--gold-soft),var(--gold-2));color:#1B2A23;font-weight:900;font-size:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,.3)}
+.lvl .bdg{position:absolute;top:-14px;left:24px;width:34px;height:34px;border-radius:10px;background:var(--saibro-btn);color:#fff;font-weight:900;font-size:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,.3)}
 .lvl .kic{font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin-top:6px}
 .lvl h3{font-size:25px;font-weight:800;margin:4px 0 8px;color:#fff}
 .lvl .prf{font-size:14.5px;color:var(--cream);margin-bottom:14px}
@@ -328,7 +329,7 @@ footer .cr{color:#6E7D74;font-size:12.5px}
     </div>
     <div class="stackbar rv">
       <div class="track">
-        <div class="seg" style="flex:81;background:linear-gradient(90deg,var(--gold-soft),var(--gold-2))"></div>
+        <div class="seg" style="flex:81;background:var(--gold)"></div>
         <div class="seg" style="flex:17;background:var(--navy-3)"></div>
         <div class="seg" style="flex:1.5;background:var(--navy-2)"></div>
         <div class="seg" style="flex:0 0 3px;background:var(--deep)"></div>

@@ -3715,9 +3715,13 @@ html body:not(#jv)[data-pagina]:not([data-pagina="dash"]) .top .top-actions .eye
 .btn-clay{background:#C2582E!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
 .seg button.on,.seg .on{background:#C2582E!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
 #pg-lanc .cx-filtros button.on{background:#C2582E!important;border-color:#C2582E!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
-/* bolinha nos botões de ação */
-.al-aula,.fic-b.prim,.fic-b.prim2,.fic-b.ok,#pg-lanc .cx-ac.in{background:#D4E157!important;border-color:#D4E157!important;color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important}
-.al-aula *,.fic-b.prim *,.fic-b.prim2 *,.fic-b.ok *,#pg-lanc .cx-ac.in *{color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important;stroke:#1E2A0E!important}
+/* Versão agência (28/10): a bolinha é detalhe, não fundo. ✓ Aula e + Receita em vidro
+   escuro com o ✓/borda na bolinha; ações principais da ficha em saibro liso. */
+.al-aula,#pg-lanc .cx-ac.in{background:rgba(16,30,24,.72)!important;border:1px solid rgba(212,225,87,.55)!important;color:#F8F5ED!important;-webkit-text-fill-color:#F8F5ED!important}
+.al-aula *,#pg-lanc .cx-ac.in *{color:#F8F5ED!important;-webkit-text-fill-color:#F8F5ED!important}
+.al-aula svg,.al-aula svg *,#pg-lanc .cx-ac.in svg,#pg-lanc .cx-ac.in svg *{stroke:#D4E157!important;color:#D4E157!important}
+.fic-b.prim,.fic-b.prim2,.fic-b.ok{background:#B54E29!important;border-color:#B54E29!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+.fic-b.prim *,.fic-b.prim2 *,.fic-b.ok *{color:#FFF!important;-webkit-text-fill-color:#FFF!important;stroke:#FFF!important}
 /* Início: a série "Total" (anel, comparativo e gráfico) em areia. Com o
    dourado virando terra, ela ficava no mesmo laranja do Tênis. */
 #pg-dash{--jh-total:#EAD7B0}
@@ -3768,12 +3772,12 @@ html body:not(#jv) .fic-b.neutro,html body:not(#jv) .fic-voltar,html body:not(#j
 .sx-head,.tex-head{border-bottom-color:#C2582E!important}
 .sx-head b,.sx-tbl th,.tex-head b,.tex-grp h4{color:#101E18!important}
 .sx-emb,.tex-emb{background:#101E18!important;color:#E0824F!important}
-.sx-livre{background:#EEF2C9!important;color:#46560F!important;border:1.5px solid #CBD66B!important}
-.sx-loc{background:#FBE6DA!important;color:#9A3F1C!important;border:1.5px solid #EBB394!important}
+.sx-livre{background:#FFFFFF!important;color:#3F4E0F!important;border:1.5px solid #CBD66B!important}
+.sx-loc{background:#FFFFFF!important;color:#9A3F1C!important;border:1.5px solid #EBB394!important}
 .tex-tbl th{background:#101E18!important;color:#F8F5ED!important}
-.tex-tbl tr.r1 td{background:#EEF2C9!important}
+.tex-tbl tr.r1 td{background:#F6F0E4!important}
 .tex-pts{color:#B54E29!important}
-.aex-prio:not([style]){background:#F2F4DC!important;border-color:#DCE29A!important}
+.aex-prio:not([style]){background:#F6F1E8!important;border-color:#E3D8C6!important}
 .aex-prio b,.aex-sec{color:#101E18!important}
 html body:not(#jv) #aval-export .evo-mes-cap{color:#4E5E12!important;-webkit-text-fill-color:#4E5E12!important}
 /* fechamento: papel e tinta escura como antes (regra de leitura); só os títulos em saibro */
@@ -3781,14 +3785,14 @@ html body:not(#jv) #pg-fech .fx-sec,html body:not(#jv) #pg-fech .fx-mes{color:#B
 html body:not(#jv) #pg-fech .fx-topo{border-bottom:2px solid #C2582E!important}
 
 /* ===== Coerência Saibro com bolinha na Gestão ===== */
-html body:not(#jv) #pg-agenda .agf-corpo button.destaque{background:#B54E29!important;border-color:#B54E29!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
-html body:not(#jv) #pg-agenda .agf-corpo button.destaque small{color:rgba(255,255,255,.88)!important;-webkit-text-fill-color:rgba(255,255,255,.88)!important}
-html body:not(#jv) #pg-agenda .agf-corpo button.ouro{background:#D4E157!important;border-color:#D4E157!important;color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important}
-html body:not(#jv) #pg-agenda .agf-corpo button.ouro small{color:#34420F!important;-webkit-text-fill-color:#34420F!important}
+html body:not(#jv) #pg-agenda .agf-corpo button.destaque{background:rgba(22,46,36,.55)!important;border:1px solid rgba(255,255,255,.16)!important;color:#F8F5ED!important;-webkit-text-fill-color:#F8F5ED!important}
+html body:not(#jv) #pg-agenda .agf-corpo button.destaque small{color:#D8D2C7!important;-webkit-text-fill-color:#D8D2C7!important}
+html body:not(#jv) #pg-agenda .agf-corpo button.ouro{background:#B54E29!important;border-color:#B54E29!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+html body:not(#jv) #pg-agenda .agf-corpo button.ouro small{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
 html body:not(#jv) #pg-alunos .al-selo.pago{background:rgba(212,225,87,.16)!important;color:#D4E157!important;-webkit-text-fill-color:#D4E157!important;border:1px solid rgba(212,225,87,.35)!important}
 html body:not(#jv) #pg-alunos .al-selo.parcial,html body:not(#jv) #pg-alunos .al-tag.ouro{background:rgba(194,88,46,.24)!important;color:#F4BC9A!important;-webkit-text-fill-color:#F4BC9A!important}
-html body:not(#jv) #pg-aval .avacts .b1{background:#D4E157!important;color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important}
-html body:not(#jv) #pg-aval .avacts .b1 *{color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important;stroke:#1E2A0E!important}
+html body:not(#jv) #pg-aval .avacts .b1{background:#B54E29!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+html body:not(#jv) #pg-aval .avacts .b1 *{color:#FFF!important;-webkit-text-fill-color:#FFF!important;stroke:#FFF!important}
 /* Início: "subiu" e "conferido" na bolinha (o LED verde da quadra liberada fica: é sinal de trânsito) */
 html body:not(#jv) #pg-dash .jh-delta.sobe{background:rgba(212,225,87,.14)!important}
 html body:not(#jv) #pg-dash .jh-conf i{background:#D4E157!important;color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important}

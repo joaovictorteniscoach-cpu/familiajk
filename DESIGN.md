@@ -62,22 +62,41 @@ rodada 2 do visual sóbrio foram descartadas). Então:
   tempo/clima usa só SVG (`iconeClima`), nunca emoji.
 - Antes de publicar qualquer tela, mandar **prévia em imagem** para ele aprovar.
 
-## Saibro com bolinha em tudo (28/10)
+## Padrão Saibro com bolinha — versão agência (28/10)
 
-A pedido do João, o mesmo tema vale também para:
-- as **imagens e documentos** que os apps geram: semana livre, ranking e
-  homenagem do torneio, comprovante, fechamento, avaliação e relatório em PDF;
-- o **site** (`site/`, `site-pro/`).
+Pedido do João: "mais profissional, com a cara e a essência do tênis, ar premium, feito
+por uma agência cara". Vale para os dois apps (tema Saibro), as imagens e documentos
+que eles geram e o site.
 
-Nos documentos claros a regra é:
-- papel claro com tinta escura;
-- **saibro** nos fios, títulos e escolhas;
-- **bolinha clara** (`#EEF2C9`, texto `#46560F`) no que é positivo, como
-  horário livre, 1º do grupo e "pago".
+**A regra de proporção** (é ela que dá o ar caro, não a cor):
 
-As medalhas continuam ouro e prata, e os níveis da avaliação continuam com o
-metal de cada nível. Com o tema "Verde clássico" ligado, as imagens dos apps
-saem como antes.
+| Cor | Onde | Quanto |
+|---|---|---|
+| Verde quase preto (`#091711`/`#101E18`) e creme/papel (`#F6F1E8`, `#FBF8F2`) | fundo, texto, documentos | quase tudo |
+| **Saibro** (`#C2582E`; com letra branca `#B54E29`) | cor da marca: botão principal, item escolhido, título, fio | pouco |
+| **Bolinha** (`#D4E157`) | só detalhe: pontinho, ✓, borda fina, número que subiu, "pago" | quase nada |
+
+- **Nunca bolinha em área grande** (botão inteiro, célula inteira, faixa). Em área
+  grande ela vira "loja de esporte".
+- **Cor lisa** no site e nos documentos: sem degradê em botão. O brilho "Vidro Aero"
+  dos apps continua, porque é escolha do João.
+- **Mais creme, menos caixinha colorida** nos documentos. Destaque com fio ou com o
+  título, não com fundo.
+- Medalhas continuam ouro e prata; níveis da avaliação com o metal de cada nível;
+  cores de categoria da agenda (Tênis, Grupo, Personal…) continuam; o LED verde de
+  "quadra liberada" fica (é sinal de trânsito).
+- No tema "Verde clássico", os apps e as imagens saem como antes.
+
+**Exemplos aplicados:**
+- ✓ Aula e + Receita em vidro escuro com ✓ e borda na bolinha.
+- "Divulgar livres", "Avaliar", "Ver planos" e pagar: saibro liso.
+- "Horários": vidro neutro.
+- Horário livre: branco com letra oliva e borda fina de bolinha.
+- 1º do ranking: linha creme.
+- Selo das seções do site: texto saibro claro com um pontinho de bolinha.
+- Código: blocos `IMAGENS`, `COERENCIA` e `EXTRA_ALUNO` em
+  `ferramentas/tema-saibro.py`; `coresImg()` e `homArte` em `app-gestao.js`;
+  variáveis `--gold`, `--bola` e `--saibro-btn` no site.
 
 ## Personalidade
 
