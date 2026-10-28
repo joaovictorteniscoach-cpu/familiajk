@@ -8,7 +8,8 @@
    nada se acumula. Falha se algum toque der erro na página.
    Perguntas de confirmação são respondidas "Cancelar"; link para fora e
    recarregar a página não acontecem (só ficam anotados). Nada vai para a
-   nuvem. JV_APPS=gestao|aluno roda só um; JV_VARREDURA_LISTA=1 mostra tudo. */
+   nuvem. JV_APPS=gestao|aluno roda só um; JV_PAGINAS=alunos,agenda só essas telas;
+   JV_VARREDURA_LISTA=1 mostra tudo. */
 let chromium;
 try{({chromium}=require('playwright'));}catch(e){({chromium}=require(process.env.PW||'/opt/node22/lib/node_modules/playwright'));}
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict');
@@ -84,7 +85,9 @@ function ajudantes(ROOTSEL){
   .filter(e=>!e.disabled&&__vis(e)&&(raiz!==document.body||!e.closest(ROOTSEL)));
  window.__campos=raiz=>[...raiz.querySelectorAll('select,input:not([type]),input[type=text],input[type=search],input[type=number],input[type=date],input[type=time],input[type=tel],input[type=email],textarea')]
   .filter(e=>!e.disabled&&!e.readOnly&&__vis(e)&&(raiz!==document.body||!e.closest(ROOTSEL)));
- window.__ass=e=>e.tagName+'|'+(e.getAttribute('onclick')||e.getAttribute('href')||e.id||e.name||'')+'|'+(e.innerText||e.value||e.getAttribute('aria-label')||e.title||'').replace(/\s+/g,' ').trim().slice(0,40);
+ // quem o botão é: pela ação (onclick/href/id), que não muda quando o texto muda; senão, pelo texto
+ window.__ass=e=>{const a=e.getAttribute('onclick')||e.getAttribute('href')||(e.id?'#'+e.id:'')||(e.name?'@'+e.name:'');
+  return e.tagName+'|'+(a||(e.innerText||e.value||e.getAttribute('aria-label')||e.title||'').replace(/\s+/g,' ').trim().slice(0,40));};
  window.__chave=e=>e.id||((typeof e.className==='string'?e.className:'')+'|'+(e.innerText||'').replace(/\s+/g,' ').trim().slice(0,30));
  window.__raizes=()=>[...document.querySelectorAll(ROOTSEL)].filter(__vis);
  window.__raiz=ch=>ch==='@tela'?document.body:(__raizes().find(r=>__chave(r)===ch)||null);
@@ -114,12 +117,14 @@ async function varrer(browser,base,cfg){
  const erros=[];p.on('pageerror',e=>erros.push(e.message.split('\n')[0]));p.on('dialog',d=>d.dismiss().catch(()=>{}));
  await p.clock.setFixedTime(cfg.agora);await p.goto(base+cfg.url,{waitUntil:'load'});
  await cfg.preparar(p);pronto=true;
+ const guardado=await p.evaluate(()=>JSON.stringify(Object.entries(localStorage)));
  const r={toques:0,janelas:0,campos:0,falhas:[],ignorados:[]};
  const feitosTela=new Set(),explorados=new Set();
  const ERRO_NUVEM=/firebase is not defined|fbDB|firebase\./;   // nuvem desligada no teste; no app real ela existe
  async function repor(pag){
   if(!(await p.evaluate(()=>window.__sentinela===1).catch(()=>false))){   // a página caiu: abre de novo
    pronto=false;await p.goto(base+cfg.url,{waitUntil:'load'});await cfg.preparar(p);pronto=true;}
+  await p.evaluate(g=>{localStorage.clear();for(const [k,v] of JSON.parse(g))localStorage.setItem(k,v);},guardado);
   await cfg.repor(p,pag);
  }
  async function tocarPasso(st){
@@ -166,7 +171,8 @@ async function varrer(browser,base,cfg){
    for(const v of vals){r.campos++;await tocar(pag,[...passos,{raiz:ch,ass:cp.ass,k:cp.k,campo:true,valor:v}],nivel);}
   }
  }
- for(const pag of cfg.paginas){await repor(pag);await explorar(pag,[],'@tela',1);}
+ const so=(process.env.JV_PAGINAS||'').split(',').filter(Boolean);
+ for(const pag of cfg.paginas){if(so.length&&!so.includes(pag))continue;await repor(pag);await explorar(pag,[],'@tela',1);}
  r.saidas=[...new Set(saidas)];r.explorados=[...explorados];r.links=[...new Set(await p.evaluate(()=>window.__links||[]).catch(()=>[]))];
  await c.close();
  return r;
@@ -194,7 +200,10 @@ async function varrer(browser,base,cfg){
      const vp=document.getElementById('voz-painel');if(vp)vp.hidden=true;document.body.classList.remove('jv-voz-aberto');
      ['sem-export','tor-export','aval-export'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.cssText='';});
      (0,eval)(dados)();ensureFields();hideVals=false;curYear=2026;curMonth=9;
-     try{agView='dia';}catch(e){}try{filtroLancCat=null;}catch(e){}
+     // filtros e buscas das telas voltam ao começo (ficam fora dos dados)
+     filtroPag='todos';filtroAval='todos';filtroAluno='todos';filtroProf='todos';filtroLancCat=null;focoRepos=false;agView='semana';agDate=new Date(2026,9,21);
+     ['search','aval-search','cx-busca'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+     const tp=document.getElementById('alunos-tipo');if(tp)tp.value='todos';
      renderAll();go(pag,document.querySelector('.nav button[onclick*="\''+pag+'\'"]')||document.createElement('button'));window.scrollTo(0,0);
     },{pag,dados})});
    todos.push(['Gestão',r]);
