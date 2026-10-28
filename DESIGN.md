@@ -62,6 +62,23 @@ rodada 2 do visual sóbrio foram descartadas). Então:
   tempo/clima usa só SVG (`iconeClima`), nunca emoji.
 - Antes de publicar qualquer tela, mandar **prévia em imagem** para ele aprovar.
 
+## Saibro com bolinha em tudo (28/10)
+
+A pedido do João, o mesmo tema vale também para:
+- as **imagens e documentos** que os apps geram: semana livre, ranking e
+  homenagem do torneio, comprovante, fechamento, avaliação e relatório em PDF;
+- o **site** (`site/`, `site-pro/`).
+
+Nos documentos claros a regra é:
+- papel claro com tinta escura;
+- **saibro** nos fios, títulos e escolhas;
+- **bolinha clara** (`#EEF2C9`, texto `#46560F`) no que é positivo, como
+  horário livre, 1º do grupo e "pago".
+
+As medalhas continuam ouro e prata, e os níveis da avaliação continuam com o
+metal de cada nível. Com o tema "Verde clássico" ligado, as imagens dos apps
+saem como antes.
+
 ## Personalidade
 
 Escuro, calmo e "premium de clube": fundo verde quase preto, topo com a foto

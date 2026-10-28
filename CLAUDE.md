@@ -93,6 +93,9 @@ Nada de nome real de aluno ou compromisso pessoal no código: ele é público (P
 - App Check: João autorizou preparar a ativação em 2026-10-06. `APPCHECK_SITE_KEY` ainda vazio: falta a chave pública e o registro no console. Começar em monitoramento; exigência só após adaptar site e leitura REST do teste. Ver `ferramentas/APP-CHECK.md`.
 - Visual (27/10): o João não vai mudar mais o visual dos apps. As opções A/B/C e a rodada 2
   do visual sóbrio foram descartadas. Não propor mudança visual sem ele pedir.
+- Saibro com bolinha (28/10, pedido do João): imagens geradas (`coresImg`, `homArte`, blocos
+  `IMAGENS`/`COERENCIA` em `tema-saibro.py`), site/site-pro e pontos dos apps seguem o tema.
+  Saibro = escolha/alerta; bolinha = positivo/ação de mandar. Verde clássico continua como antes.
 - Repositório público: decisão pendente do João (privado exige GitHub Pro para manter o Pages).
 - **Família JK sem login (20/10):** a nuvem continua só com o link da família, sem criar conta.
   Login com Google só se não exigir mexer no Firebase nem criar contas — como exige (ligar o

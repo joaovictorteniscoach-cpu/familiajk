@@ -3779,3 +3779,17 @@ html body:not(#jv) #aval-export .evo-mes-cap{color:#4E5E12!important;-webkit-tex
 /* fechamento: papel e tinta escura como antes (regra de leitura); só os títulos em saibro */
 html body:not(#jv) #pg-fech .fx-sec,html body:not(#jv) #pg-fech .fx-mes{color:#B54E29!important}
 html body:not(#jv) #pg-fech .fx-topo{border-bottom:2px solid #C2582E!important}
+
+/* ===== Coerência Saibro com bolinha na Gestão ===== */
+html body:not(#jv) #pg-agenda .agf-corpo button.destaque{background:#B54E29!important;border-color:#B54E29!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+html body:not(#jv) #pg-agenda .agf-corpo button.destaque small{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+html body:not(#jv) #pg-agenda .agf-corpo button.ouro{background:#D4E157!important;border-color:#D4E157!important;color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important}
+html body:not(#jv) #pg-agenda .agf-corpo button.ouro small{color:#34420F!important;-webkit-text-fill-color:#34420F!important}
+html body:not(#jv) #pg-alunos .al-selo.pago{background:rgba(212,225,87,.16)!important;color:#D4E157!important;-webkit-text-fill-color:#D4E157!important;border:1px solid rgba(212,225,87,.35)!important}
+html body:not(#jv) #pg-alunos .al-selo.parcial,html body:not(#jv) #pg-alunos .al-tag.ouro{background:rgba(194,88,46,.24)!important;color:#F4BC9A!important;-webkit-text-fill-color:#F4BC9A!important}
+html body:not(#jv) #pg-aval .avacts .b1{background:#D4E157!important;color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important}
+html body:not(#jv) #pg-aval .avacts .b1 *{color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important;stroke:#1E2A0E!important}
+/* Início: "subiu" e "conferido" na bolinha (o LED verde da quadra liberada fica: é sinal de trânsito) */
+html body:not(#jv) #pg-dash .jh-delta.sobe{background:rgba(212,225,87,.14)!important}
+html body:not(#jv) #pg-dash .jh-conf i{background:#D4E157!important;color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important}
+html body:not(#jv) #pg-dash .jh-conf.ok{background:rgba(212,225,87,.14)!important;border-color:rgba(212,225,87,.40)!important;color:#E4EC9A!important;-webkit-text-fill-color:#E4EC9A!important}

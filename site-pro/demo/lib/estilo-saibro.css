@@ -3466,6 +3466,13 @@ html body:not(#jv) .evo-mes{background:rgba(255,255,255,.05);border-color:rgba(2
 html body:not(#jv) .evo-mes-track{background:rgba(255,255,255,.12)}
 html body:not(#jv) .evo-mes-lab,html body:not(#jv) .evo-mes-val i{color:#D8D2C7;-webkit-text-fill-color:#D8D2C7}
 html body:not(#jv) .evo-mes-val{color:#F4F1EA;-webkit-text-fill-color:#F4F1EA}
+/* A imagem da avaliação é de papel claro: o gráfico mês a mês volta às cores de
+   papel (com o texto claro do tema escuro, os meses e as % sumiam). 28/10 */
+html body:not(#jv) #aval-export .evo-mes{background:#fff;border-color:#E3D8C6}
+html body:not(#jv) #aval-export .evo-mes-track{background:#EFE9DD}
+html body:not(#jv) #aval-export .evo-mes-lab,html body:not(#jv) #aval-export .evo-mes-val i{color:#6B5E4A;-webkit-text-fill-color:#6B5E4A}
+html body:not(#jv) #aval-export .evo-mes-val{color:#2A2016;-webkit-text-fill-color:#2A2016}
+html body:not(#jv) #aval-export .evo-mes-cap{color:#3F7A4E;-webkit-text-fill-color:#3F7A4E}
 html body:not(#jv) .evo-mes-cap{color:#D4E157;-webkit-text-fill-color:#D4E157}
 html body:not(#jv) .aval-hist .hrow{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14);color:#F4F1EA;-webkit-text-fill-color:#F4F1EA}
 html body:not(#jv) .aval-hist .hrow span{color:#F4F1EA;-webkit-text-fill-color:#F4F1EA}
@@ -3754,3 +3761,35 @@ html body:not(#jv) .fic-b.neutro,html body:not(#jv) .fic-voltar,html body:not(#j
   -webkit-backdrop-filter:blur(8px) saturate(150%);backdrop-filter:blur(8px) saturate(150%);
   border:1px solid rgba(255,255,255,.12)!important;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 6px 18px rgba(0,0,0,.22)!important}
+
+/* ===== Imagens e comprovantes: Saibro com bolinha ===== */
+#sem-export,#tor-export,#aval-export,#fech-export .fx-card{--green:#101E18;--gold:#C2582E;--clay:#B54E29;--muted:#6B5E4A;--border:#E3D8C6}
+#tor-export,#aval-export{background:#FBF8F2!important}
+.sx-head,.tex-head{border-bottom-color:#C2582E!important}
+.sx-head b,.sx-tbl th,.tex-head b,.tex-grp h4{color:#101E18!important}
+.sx-emb,.tex-emb{background:#101E18!important;color:#E0824F!important}
+.sx-livre{background:#EEF2C9!important;color:#46560F!important;border:1.5px solid #CBD66B!important}
+.sx-loc{background:#FBE6DA!important;color:#9A3F1C!important;border:1.5px solid #EBB394!important}
+.tex-tbl th{background:#101E18!important;color:#F8F5ED!important}
+.tex-tbl tr.r1 td{background:#EEF2C9!important}
+.tex-pts{color:#B54E29!important}
+.aex-prio:not([style]){background:#F2F4DC!important;border-color:#DCE29A!important}
+.aex-prio b,.aex-sec{color:#101E18!important}
+html body:not(#jv) #aval-export .evo-mes-cap{color:#4E5E12!important;-webkit-text-fill-color:#4E5E12!important}
+/* fechamento: papel e tinta escura como antes (regra de leitura); só os títulos em saibro */
+html body:not(#jv) #pg-fech .fx-sec,html body:not(#jv) #pg-fech .fx-mes{color:#B54E29!important}
+html body:not(#jv) #pg-fech .fx-topo{border-bottom:2px solid #C2582E!important}
+
+/* ===== Coerência Saibro com bolinha na Gestão ===== */
+html body:not(#jv) #pg-agenda .agf-corpo button.destaque{background:#B54E29!important;border-color:#B54E29!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+html body:not(#jv) #pg-agenda .agf-corpo button.destaque small{color:rgba(255,255,255,.88)!important;-webkit-text-fill-color:rgba(255,255,255,.88)!important}
+html body:not(#jv) #pg-agenda .agf-corpo button.ouro{background:#D4E157!important;border-color:#D4E157!important;color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important}
+html body:not(#jv) #pg-agenda .agf-corpo button.ouro small{color:#34420F!important;-webkit-text-fill-color:#34420F!important}
+html body:not(#jv) #pg-alunos .al-selo.pago{background:rgba(212,225,87,.16)!important;color:#D4E157!important;-webkit-text-fill-color:#D4E157!important;border:1px solid rgba(212,225,87,.35)!important}
+html body:not(#jv) #pg-alunos .al-selo.parcial,html body:not(#jv) #pg-alunos .al-tag.ouro{background:rgba(194,88,46,.24)!important;color:#F4BC9A!important;-webkit-text-fill-color:#F4BC9A!important}
+html body:not(#jv) #pg-aval .avacts .b1{background:#D4E157!important;color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important}
+html body:not(#jv) #pg-aval .avacts .b1 *{color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important;stroke:#1E2A0E!important}
+/* Início: "subiu" e "conferido" na bolinha (o LED verde da quadra liberada fica: é sinal de trânsito) */
+html body:not(#jv) #pg-dash .jh-delta.sobe{background:rgba(212,225,87,.14)!important}
+html body:not(#jv) #pg-dash .jh-conf i{background:#D4E157!important;color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important}
+html body:not(#jv) #pg-dash .jh-conf.ok{background:rgba(212,225,87,.14)!important;border-color:rgba(212,225,87,.40)!important;color:#E4EC9A!important;-webkit-text-fill-color:#E4EC9A!important}

@@ -290,6 +290,25 @@ html body:not(#jv) #pg-fech .fx-sec,html body:not(#jv) #pg-fech .fx-mes{color:#B
 html body:not(#jv) #pg-fech .fx-topo{border-bottom:2px solid #C2582E!important}
 """
 
+# Coerência nos apps (28/10): o que ainda saía em verde ou dourado antigos no
+# tema Saibro passa a seguir a regra: saibro para escolha e alerta, bolinha para
+# o que é positivo ou ação de mandar. Só no tema Saibro.
+COERENCIA = """
+/* ===== Coerência Saibro com bolinha na Gestão ===== */
+html body:not(#jv) #pg-agenda .agf-corpo button.destaque{background:#B54E29!important;border-color:#B54E29!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+html body:not(#jv) #pg-agenda .agf-corpo button.destaque small{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+html body:not(#jv) #pg-agenda .agf-corpo button.ouro{background:#D4E157!important;border-color:#D4E157!important;color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important}
+html body:not(#jv) #pg-agenda .agf-corpo button.ouro small{color:#34420F!important;-webkit-text-fill-color:#34420F!important}
+html body:not(#jv) #pg-alunos .al-selo.pago{background:rgba(212,225,87,.16)!important;color:#D4E157!important;-webkit-text-fill-color:#D4E157!important;border:1px solid rgba(212,225,87,.35)!important}
+html body:not(#jv) #pg-alunos .al-selo.parcial,html body:not(#jv) #pg-alunos .al-tag.ouro{background:rgba(194,88,46,.24)!important;color:#F4BC9A!important;-webkit-text-fill-color:#F4BC9A!important}
+html body:not(#jv) #pg-aval .avacts .b1{background:#D4E157!important;color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important}
+html body:not(#jv) #pg-aval .avacts .b1 *{color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important;stroke:#1E2A0E!important}
+/* Início: "subiu" e "conferido" na bolinha (o LED verde da quadra liberada fica: é sinal de trânsito) */
+html body:not(#jv) #pg-dash .jh-delta.sobe{background:rgba(212,225,87,.14)!important}
+html body:not(#jv) #pg-dash .jh-conf i{background:#D4E157!important;color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important}
+html body:not(#jv) #pg-dash .jh-conf.ok{background:rgba(212,225,87,.14)!important;border-color:rgba(212,225,87,.40)!important;color:#E4EC9A!important;-webkit-text-fill-color:#E4EC9A!important}
+"""
+
 # Toque "air" (vidro fosco, como no iPhone e no Windows 11), nos dois apps:
 # fundo com brilhos suaves de saibro, bolinha e verde parados atrás da tela, e
 # os cartões levemente transparentes por cima. O desfoque (backdrop-filter)
@@ -380,10 +399,18 @@ html body:not(#jv) #apg-torneio #tor-capture .tor-cap-head span{color:#6B5E4A!im
 html body:not(#jv) #apg-torneio .tor-cap-emb{background:#101E18!important;color:#E0824F!important;-webkit-text-fill-color:#E0824F!important}
 html body:not(#jv) #apg-torneio .atg-card{background:#FFFFFF!important;border-color:#E3D8C6!important}
 html body:not(#jv) #apg-torneio .atg-head{background:#101E18!important}
-html body:not(#jv) #apg-torneio .atg-badge{background:#C2582E!important;color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important}
+html body:not(#jv) #apg-torneio .atg-badge{background:#B54E29!important;color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important}
 html body:not(#jv) #apg-torneio .atg-tbl th{background:#F1EBE1!important;color:#6B5E4A!important;-webkit-text-fill-color:#6B5E4A!important}
 html body:not(#jv) #apg-torneio .atg-tbl td{background:#FFFFFF!important;color:#2A2016!important;-webkit-text-fill-color:#2A2016!important;border-bottom-color:#EFE7DA!important}
 html body:not(#jv) #apg-torneio .atg-tbl tr.me td{background:#EEF2C9!important}
+/* Coerência (28/10): mensalidade em dia na bolinha; horário livre da agenda na
+   bolinha clara, igual à imagem "Divulgar livres"; aviso da Evolução em saibro. */
+html body:not(#jv) .jv-pay-status[data-status="pago"]{background:rgba(212,225,87,.16)!important;color:#D4E157!important;-webkit-text-fill-color:#D4E157!important;border-color:rgba(212,225,87,.35)!important}
+html body:not(#jv) #apg-agenda .wc.livre{background:#EEF2C9!important;color:#46560F!important;-webkit-text-fill-color:#46560F!important}
+html body:not(#jv) #apg-agenda .sl.livre{background:#F6F8E4!important;border-color:#CBD66B!important;color:#46560F!important;-webkit-text-fill-color:#46560F!important}
+html body:not(#jv) #apg-agenda .sl.livre i{background:#EEF2C9!important;color:#46560F!important;-webkit-text-fill-color:#46560F!important}
+html body:not(#jv) #apg-agenda .lg-livre{background:#EEF2C9!important;color:#46560F!important;-webkit-text-fill-color:#46560F!important}
+html body:not(#jv) #apg-evolucao .evo-pend{background:rgba(194,88,46,.16)!important;color:#F6CDB4!important;-webkit-text-fill-color:#F6CDB4!important;border-color:rgba(224,130,79,.35)!important}
 """ % {"b": BOLA, "t": BOLA_TXT}
 
 CAB_AL = ("/* GERADO por ferramentas/tema-saibro.py — NÃO EDITE. Só as cores do <style> de\n"
@@ -402,7 +429,7 @@ def gerar_aluno():
 
 
 def main():
-    saidas = [(DEST, gerar(open(ORIG, encoding="utf-8").read()) + EXTRA + VIDRO + IMAGENS),
+    saidas = [(DEST, gerar(open(ORIG, encoding="utf-8").read()) + EXTRA + VIDRO + IMAGENS + COERENCIA),
               (AL_DEST, gerar_aluno())]
     if "--checar" in sys.argv:
         ruins = [d for d, novo in saidas

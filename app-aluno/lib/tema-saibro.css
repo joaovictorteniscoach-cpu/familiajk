@@ -820,7 +820,15 @@ html body:not(#jv) #apg-torneio #tor-capture .tor-cap-head span{color:#6B5E4A!im
 html body:not(#jv) #apg-torneio .tor-cap-emb{background:#101E18!important;color:#E0824F!important;-webkit-text-fill-color:#E0824F!important}
 html body:not(#jv) #apg-torneio .atg-card{background:#FFFFFF!important;border-color:#E3D8C6!important}
 html body:not(#jv) #apg-torneio .atg-head{background:#101E18!important}
-html body:not(#jv) #apg-torneio .atg-badge{background:#C2582E!important;color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important}
+html body:not(#jv) #apg-torneio .atg-badge{background:#B54E29!important;color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important}
 html body:not(#jv) #apg-torneio .atg-tbl th{background:#F1EBE1!important;color:#6B5E4A!important;-webkit-text-fill-color:#6B5E4A!important}
 html body:not(#jv) #apg-torneio .atg-tbl td{background:#FFFFFF!important;color:#2A2016!important;-webkit-text-fill-color:#2A2016!important;border-bottom-color:#EFE7DA!important}
 html body:not(#jv) #apg-torneio .atg-tbl tr.me td{background:#EEF2C9!important}
+/* Coerência (28/10): mensalidade em dia na bolinha; horário livre da agenda na
+   bolinha clara, igual à imagem "Divulgar livres"; aviso da Evolução em saibro. */
+html body:not(#jv) .jv-pay-status[data-status="pago"]{background:rgba(212,225,87,.16)!important;color:#D4E157!important;-webkit-text-fill-color:#D4E157!important;border-color:rgba(212,225,87,.35)!important}
+html body:not(#jv) #apg-agenda .wc.livre{background:#EEF2C9!important;color:#46560F!important;-webkit-text-fill-color:#46560F!important}
+html body:not(#jv) #apg-agenda .sl.livre{background:#F6F8E4!important;border-color:#CBD66B!important;color:#46560F!important;-webkit-text-fill-color:#46560F!important}
+html body:not(#jv) #apg-agenda .sl.livre i{background:#EEF2C9!important;color:#46560F!important;-webkit-text-fill-color:#46560F!important}
+html body:not(#jv) #apg-agenda .lg-livre{background:#EEF2C9!important;color:#46560F!important;-webkit-text-fill-color:#46560F!important}
+html body:not(#jv) #apg-evolucao .evo-pend{background:rgba(194,88,46,.16)!important;color:#F6CDB4!important;-webkit-text-fill-color:#F6CDB4!important;border-color:rgba(224,130,79,.35)!important}
