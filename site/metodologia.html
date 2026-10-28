@@ -46,7 +46,7 @@ img{max-width:100%;display:block}
 .btn-gold:hover{filter:brightness(1.04)}
 .btn-line{background:transparent;color:var(--cream);border-color:rgba(244,239,230,.3)}
 .btn-line:hover{border-color:var(--gold);color:var(--gold-soft)}
-.btn-wapp{background:var(--wapp);color:#fff}
+.btn-wapp{background:var(--wapp);color:#0B2E1A}  /* letra escura: branco no verde do WhatsApp não dá leitura */
 .btn-wapp:hover{filter:brightness(1.05)}
 .btn-navy{background:var(--deep);color:#fff}
 
@@ -55,7 +55,7 @@ header.bar{position:sticky;top:0;z-index:60;background:var(--paper);border-botto
 .brand{display:flex;align-items:center;gap:11px}
 .brand .mono{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,var(--navy-2),var(--deep));color:var(--gold-soft);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:17px;letter-spacing:.02em;box-shadow:0 3px 10px rgba(0,0,0,.18);flex-shrink:0}
 .brand .nm{font-weight:800;font-size:18px;color:var(--ink);line-height:1.05;letter-spacing:-.01em}
-.brand .nm small{display:block;font-weight:600;font-size:9.5px;letter-spacing:.16em;color:#8A7E6B;text-transform:uppercase;margin-top:3px}
+.brand .nm small{display:block;font-weight:600;font-size:9.5px;letter-spacing:.16em;color:#6B604F;text-transform:uppercase;margin-top:3px}
 .links{display:flex;align-items:center;gap:22px}
 .links a.lnk{font-size:14.5px;font-weight:600;color:#5C5446}
 .links a.lnk:hover{color:var(--gold-2)}
@@ -91,11 +91,11 @@ blockquote.mq footer{background:none;padding:0;text-align:left;font-size:14px;fo
 .pyr li{counter-increment:cam -1;margin:0 auto 8px}
 .pyr a{display:block;margin:0 auto;text-align:center;padding:12px 18px;border-radius:12px;border:1px solid var(--line);font-weight:800;font-size:clamp(13.5px,2.4vw,16px);line-height:1.25;color:#fff;transition:transform .14s,box-shadow .2s;position:relative}
 .pyr a::before{content:counter(cam);position:absolute;left:14px;font-size:12px;font-weight:800;color:rgba(255,255,255,.55)}
-.pyr a small{display:block;font-weight:600;font-size:clamp(10.5px,1.8vw,12.5px);letter-spacing:.02em;color:rgba(255,255,255,.66);margin-top:2px}
+.pyr a small{display:block;font-weight:600;font-size:clamp(10.5px,1.8vw,12.5px);letter-spacing:.02em;color:rgba(255,255,255,.84);margin-top:2px}
 .pyr a:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(0,0,0,.3)}
 .pyr .p6 a{width:min(46%,300px);background:var(--saibro-btn);color:#fff;border-color:transparent}
-.pyr .p6 a::before{color:rgba(27,42,35,.6)}
-.pyr .p6 a small{color:rgba(27,42,35,.72)}
+.pyr .p6 a::before{color:rgba(255,255,255,.75)}
+.pyr .p6 a small{color:#FFFFFF}
 .pyr .p5 a{width:min(57%,380px);background:linear-gradient(135deg,#7E3F22,#9A4F2C)}
 .pyr .p4 a{width:min(68%,460px);background:linear-gradient(135deg,#3B4A42,#57534A)}
 .pyr .p3 a{width:min(79%,540px);background:var(--navy-3)}
@@ -199,7 +199,7 @@ footer .fl a{font-size:14px;font-weight:600;color:#A9B8AE}
 footer .fl a:hover{color:#fff}
 footer .cr{color:#6E7D74;font-size:12.5px}
 
-.fab{position:fixed;right:18px;bottom:18px;z-index:80;background:var(--wapp);color:#fff;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:0 10px 28px rgba(37,211,102,.45);transition:transform .14s}
+.fab{position:fixed;right:18px;bottom:18px;z-index:80;background:var(--wapp);color:#0B2E1A;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:0 10px 28px rgba(37,211,102,.45);transition:transform .14s}
 .fab:hover{transform:scale(1.07)}
 
 .rv{opacity:0;transform:translateY(20px);transition:opacity .6s,transform .6s}

@@ -54,6 +54,8 @@ Use `grep -n` pelos títulos de seção (`/* ===== Título =====`) ou pelo nome 
 - Extrato do aluno: `abrirExtrato` → `pintarExtrato` (resumido por padrão: `extratoResumido`, `EXT_ROTULO`; "Ver detalhado" = cru)
 - Quadrinhos do Início: `abrirDetAlunos`, `abrirDetCreditos` (`validadeRepos`), `abrirDetOcupacao` (`slotsDoDia`), `abrirDetLocacoes` → `#ov-jh-det`
 - Torneio: `campeoesDe`, `encerrarEtapa`, homenagens 1º/2º (`abrirHomenagens`, `homArte`, `homMensagem`)
+- Campeão no app do aluno: `checarPremiacaoTor` → `celebraTorneioPremio` (uma vez por etapa encerrada) + `confeteBurst(cor,forte)` (canvas por cima do cartão); 1º pela mesma ordem da Gestão (`rankTorAl` = `rankPlayersTor`)
+- Varredura de botões: `ferramentas/testar-todos-botoes-browser.cjs` (toca em tudo dos dois apps; falha com erro na página)
 - Tempo em Curitiba: `climaDoCodigo`, `iconeClima` (SVG, mesmo desenho no app do aluno; nada de emoji), `abrirClimaGestao`/`pintarPrevisaoClima`
 - Ocupação dia/mês/ano (janela do quadrinho): `ocupacaoTresPrazos`, `ocupacaoAno` (ano desde o 1º registro)
 - Caixa, locação com tempo: `lancCatMudou`/`lancHorasMudou`/`lancHorasLidas` (grava `horas` no lançamento; não mexe em crédito)

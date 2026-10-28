@@ -105,6 +105,10 @@ const ESTADOS=[
  ['torneio-compartilhar',pg('torneio')+'abrirCompartilharTor();'],
  ['torneio-novo',pg('torneio')+'abrirNovoTorneio();'],
  ['torneio-add-jogador',pg('torneio')+'abrirAddJogador("A");'],
+ // imagens que a Gestão gera (ficam fora da tela): trazidas para a tela só para medir
+ ['imagem-semana',pg('agenda')+'montarSemanaExport(semanaDias());const e=document.getElementById("sem-export");e.style.cssText="left:0;top:0;z-index:99999;zoom:.54";'],
+ ['imagem-ranking',pg('torneio')+'montarTorExport(torAtual());const e=document.getElementById("tor-export");e.style.cssText="left:0;top:0;z-index:99999;zoom:.9";'],
+ ['imagem-avaliacao','montarAvalExport(DB.alunos[0]);const e=document.getElementById("aval-export");e.style.cssText="left:0;top:0;z-index:99999;zoom:.9;position:absolute";'],
  ['avisos',`NOTIF=[{acao:'reservou',nome:'Aluno Um Teste',data:'2026-10-22',hora:'09:00',ts:Date.now()},{acao:'cancelou',nome:'Aluna Dois Teste',data:'2026-10-23',hora:'10:00',ts:Date.now()-60000}];abrirNotifs();`],
  ['pedidos',`pedFila=[{key:'p1',kind:'plano',nome:'Aluno Um Teste',ts:Date.now()},{key:'p2',kind:'aviso_pagamento',nome:'Aluna Dois Teste',valor:640,ts:Date.now()}];abrirPedidos();`]
 ];
@@ -131,6 +135,7 @@ const ESTADOS=[
     await g.setViewportSize({width:390,height:844});
     const falhou=await g.evaluate(prep=>{
      document.querySelectorAll('.overlay.on').forEach(x=>x.classList.remove('on'));
+     ['sem-export','tor-export','aval-export'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.cssText='';});
      try{if(document.getElementById('ficha-aluno').classList.contains('on'))fecharFicha();}catch(e){}
      try{(0,eval)(prep);return '';}catch(e){return String(e&&e.message||e);}
     },prep);

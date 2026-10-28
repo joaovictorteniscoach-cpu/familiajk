@@ -68,7 +68,7 @@ const ESTADOS=[
  ['evolucao-fundamentos',`${nav('evolucao')};setEvoTab('fund',document.querySelector('#apg-evolucao .evo-seg button[onclick*=fund]'));`],
  ['evolucao-historico',`${nav('evolucao')};setEvoTab('hist',document.querySelector('#apg-evolucao .evo-seg button[onclick*=hist]'));`],
  ['evolucao-sem-avaliacao',`EU.avaliacoes=[];EU.registros=[];${nav('evolucao')};`],
- ['evolucao-subiu-nivel',`${nav('evolucao')};celebraNivel('Nível Construção',metalDe('Construção'));`],
+ ['evolucao-subiu-nivel',`${nav('evolucao')};celebraNivel('Nível Construção',metalDe('Construção'));document.querySelectorAll('.evo-confete').forEach(x=>x.remove());`],
  ['autoavaliacao',`${nav('evolucao')};abrirAutoAval();setAuto('mov','espera',3);`],
  ['creditos',`${nav('creditos')};`],
  ['pix',`${nav('creditos')};abrirPix(640,'Mensalidade de outubro',null);`],
@@ -80,6 +80,11 @@ const ESTADOS=[
  ['torneio-resultado',`goAluno('torneio',null);abrirRegResultado();`],
  ['torneio-resultado-placar',`goAluno('torneio',null);abrirRegResultado();document.getElementById('atr-grupo').value='A';atrPlayers();document.getElementById('atr-p1').value='Aluno Fictício';document.getElementById('atr-p2').value='Jogador Dois';[['atr-s1a',6],['atr-s1b',4],['atr-s2a',3],['atr-s2b',6],['atr-s3a',10],['atr-s3b',8]].forEach(([i,v])=>document.getElementById(i).value=v);atrAtualiza();`],
  ['torneio-resultado-erro',`goAluno('torneio',null);abrirRegResultado();document.getElementById('atr-grupo').value='A';atrPlayers();document.getElementById('atr-p1').value='Aluno Fictício';document.getElementById('atr-p2').value='Jogador Dois';document.getElementById('atr-s1a').value=6;document.getElementById('atr-s1b').value=6;atrAtualiza();`],
+ ['torneio-campeao',`goAluno('torneio',null);celebraTorneioPremio('campeao','A','Barragem Primavera · Etapa 2','Aluno Fictício');document.querySelectorAll('.evo-confete').forEach(x=>x.remove());`],
+ ['torneio-vice',`goAluno('torneio',null);celebraTorneioPremio('vice','A','Barragem Primavera · Etapa 2','Aluno Fictício');document.querySelectorAll('.evo-confete').forEach(x=>x.remove());`],
+ ['torneio-fim-de-etapa',`goAluno('torneio',null);celebraTorneioPremio('fim','A','Barragem Primavera · Etapa 2','Aluno Fictício');document.querySelectorAll('.evo-confete').forEach(x=>x.remove());`],
+ ['torneio-vitoria',`goAluno('torneio',null);celebraResultadoTorneio(true,'Jogador Dois','6-3 6-4','Barragem Primavera');document.querySelectorAll('.evo-confete').forEach(x=>x.remove());`],
+ ['torneio-derrota',`goAluno('torneio',null);celebraResultadoTorneio(false,'Jogador Dois','3-6 4-6','Barragem Primavera');document.querySelectorAll('.evo-confete').forEach(x=>x.remove());`],
  ['torneio-resultado-wo',`goAluno('torneio',null);abrirRegResultado();document.getElementById('atr-grupo').value='A';atrPlayers();document.querySelector('input[name="atr-tipo"][value="wo"]').checked=true;atrAtualiza();`],
  ['assistente-voz',`${nav('agenda')};JVVozAluno.abrir();const t=document.getElementById('va-texto');t.value='tem horário livre amanhã?';JVVozAluno.enviar();t.value='quinta às 18 está livre?';JVVozAluno.enviar();`],
  ['assistente-voz-cancelar',`${nav('inicio')};JVVozAluno.abrir();const t=document.getElementById('va-texto');t.value='minhas aulas';JVVozAluno.enviar();t.value='cancelar sexta às 16';JVVozAluno.enviar();`],
@@ -114,7 +119,7 @@ const {medir}=require('./medir-contraste-pixels.cjs');
      window.fbDB={ref:()=>({push:async()=>{},update:async()=>{},set:async()=>{},once:async()=>({val:()=>null})})};
      VINCULO_ESTADO='ativo';agView='dia';agDate=new Date();
      try{lsSet('jvt-evo-lvl-6601-2026-10-05','1');}catch(e){}   // a comemoração de nível tem tela própria
-     document.querySelectorAll('.evo-levelup,.evo-confete').forEach(x=>x.remove());
+     document.querySelectorAll('.evo-levelup,.evo-confete,.tp-ov').forEach(x=>x.remove());
      const lg=document.getElementById('login');if(lg)lg.style.display='none';
      document.getElementById('app').style.display='block';
      document.querySelectorAll('.overlay').forEach(x=>x.classList.remove('on'));

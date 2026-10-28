@@ -281,8 +281,10 @@ IMAGENS = """
 .sx-head,.tex-head{border-bottom-color:#C2582E!important}
 .sx-head b,.sx-tbl th,.tex-head b,.tex-grp h4{color:#101E18!important}
 .sx-emb,.tex-emb{background:#101E18!important;color:#E0824F!important}
-.sx-livre{background:#FFFFFF!important;color:#3F4E0F!important;border:1.5px solid #CBD66B!important}
-.sx-loc{background:#FFFFFF!important;color:#9A3F1C!important;border:1.5px solid #EBB394!important}
+.sx-livre{background:#D7EEDC!important;color:#14522B!important;border:1.5px solid #7DBE8E!important}
+.sx-loc{background:#E8F08A!important;color:#3F470C!important;border:1.5px solid #C2D13A!important}
+.sx-ocup{background:#F9DEDA!important;color:#9B2219!important;border:1.5px solid #E39A90!important}
+.sx-off{background:#F5F1E9!important;color:#766D60!important;border:1px dashed #E2D5C0!important}
 .tex-tbl th{background:#101E18!important;color:#F8F5ED!important}
 .tex-tbl tr.r1 td{background:#F6F0E4!important}
 .tex-pts{color:#B54E29!important}
@@ -404,6 +406,9 @@ html body:not(#jv) #apg-torneio .tor-cap-emb{background:#101E18!important;color:
 html body:not(#jv) #apg-torneio .atg-card{background:#FFFFFF!important;border-color:#E3D8C6!important}
 html body:not(#jv) #apg-torneio .atg-head{background:#101E18!important}
 html body:not(#jv) #apg-torneio .atg-badge{background:#B54E29!important;color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important}
+/* campeão: medalha continua ouro (DESIGN.md), também no Saibro */
+.tp-card.champ{background:radial-gradient(130%% 70%% at 50%% 0%%,rgba(228,200,120,.30),transparent 62%%),linear-gradient(165deg,#241B07,#3B2D0C 55%%,#4E3C10)!important;border-color:#C9A04A!important}
+.tp-card.champ .tp-title,.tp-card.champ .tp-parabens{color:#F1D88E!important}
 html body:not(#jv) #apg-torneio .atg-tbl th{background:#F1EBE1!important;color:#6B5E4A!important;-webkit-text-fill-color:#6B5E4A!important}
 html body:not(#jv) #apg-torneio .atg-tbl td{background:#FFFFFF!important;color:#2A2016!important;-webkit-text-fill-color:#2A2016!important;border-bottom-color:#EFE7DA!important}
 html body:not(#jv) #apg-torneio .atg-tbl tr.me td{background:#F6F0E4!important}

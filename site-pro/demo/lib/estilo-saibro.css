@@ -57,10 +57,12 @@ body[data-modo="prof"] .so-dono{display:none!important}
 .sx-tbl th small{display:block;font-size:10.5px;color:#6B5E4A;font-weight:600}
 .sx-tbl td.h{font-size:12px;font-weight:800;color:#6B5E4A;text-align:right;padding-right:6px;width:56px}
 .sx-c{border-radius:9px;padding:9px 3px;text-align:center;font-size:11.5px;font-weight:800;line-height:1.15}
-.sx-livre{background:#E3F2E4;color:#2E7D52;border:1.5px solid #BFDCC4}
-.sx-loc{background:#FBF3DC;color:#9A7B2E;border:1.5px solid #E4AF92}
-.sx-ocup{background:#EFE9DD;color:#A99C86;border:1px solid #E2D5C0}
-.sx-off{background:#F5F1E9;color:#C9C0AF;border:1px dashed #E2D5C0}
+/* semáforo da imagem "Divulgar livres" (pedido do João, 28/10): livre verde,
+   ocupado vermelho, locação amarelo bola de tênis — mesmo nos dois temas */
+.sx-livre{background:#D7EEDC;color:#193F2F;border:1.5px solid #7DBE8E}
+.sx-loc{background:#E8F08A;color:#3F470C;border:1.5px solid #C2D13A}
+.sx-ocup{background:#F9DEDA;color:#9B2219;border:1.5px solid #E39A90}
+.sx-off{background:#F5F1E9;color:#766D60;border:1px dashed #E2D5C0}
 .sx-leg{display:flex;gap:14px;flex-wrap:wrap;margin-top:16px;font-size:12px;font-weight:700;color:#6B5E4A;align-items:center}
 .sx-leg i{width:15px;height:15px;border-radius:5px;display:inline-block;vertical-align:-3px;margin-right:5px}
 .sx-foot{margin-top:14px;font-size:12px;color:#6B5E4A;text-align:center;font-weight:600}
@@ -3491,6 +3493,15 @@ html body:not(#jv) .modal .aex-wrap .evo-mes-cap{color:#2E6B40;-webkit-text-fill
 html body:not(#jv) .modal .aex-wrap .aex-step:not(.done):not(.cur){color:#5E584C;-webkit-text-fill-color:#5E584C}
 html body:not(#jv) .modal .aex-wrap .aex-step.done,html body:not(#jv) .modal .aex-wrap .aex-step.cur{color:#fff;-webkit-text-fill-color:#fff}
 html body:not(#jv) .modal .aex-wrap .aex-top .st{color:#3D3A33;-webkit-text-fill-color:#3D3A33}
+/* As imagens (fora da tela) saem iguais ao relatório da janela: a varredura de
+   leitura de 28/10 achou data, nível futuro, título do gráfico e rodapé claros
+   demais na imagem da avaliação e no ranking do torneio. */
+html body:not(#jv) #aval-export .aex-wrap .evo-sec{color:#6B4F12;-webkit-text-fill-color:#6B4F12}
+html body:not(#jv) #aval-export .tex-head span,html body:not(#jv) #aval-export .tex-foot{color:#5E584C;-webkit-text-fill-color:#5E584C}
+html body:not(#jv) #aval-export .aex-step:not(.done):not(.cur){color:#5E584C;-webkit-text-fill-color:#5E584C}
+html body:not(#jv) #aval-export .aex-top .st{color:#3D3A33;-webkit-text-fill-color:#3D3A33}
+html body:not(#jv) #tor-export .tex-head span,html body:not(#jv) #tor-export .tex-foot{color:#5E584C;-webkit-text-fill-color:#5E584C}
+html body:not(#jv) #tor-export .tex-pts{color:#9C4A1F;-webkit-text-fill-color:#9C4A1F}
 html body:not(#jv) .avacts .b3{background:#E3F2E4;color:#1F6B3A;-webkit-text-fill-color:#1F6B3A}
 /* Avisos, aulas de hoje e busca */
 html body:not(#jv) .aviso-btn{background:rgba(255,255,255,.06);color:#E69468;-webkit-text-fill-color:#E69468}
@@ -3772,8 +3783,10 @@ html body:not(#jv) .fic-b.neutro,html body:not(#jv) .fic-voltar,html body:not(#j
 .sx-head,.tex-head{border-bottom-color:#C2582E!important}
 .sx-head b,.sx-tbl th,.tex-head b,.tex-grp h4{color:#101E18!important}
 .sx-emb,.tex-emb{background:#101E18!important;color:#E0824F!important}
-.sx-livre{background:#FFFFFF!important;color:#3F4E0F!important;border:1.5px solid #CBD66B!important}
-.sx-loc{background:#FFFFFF!important;color:#9A3F1C!important;border:1.5px solid #EBB394!important}
+.sx-livre{background:#D7EEDC!important;color:#14522B!important;border:1.5px solid #7DBE8E!important}
+.sx-loc{background:#E8F08A!important;color:#3F470C!important;border:1.5px solid #C2D13A!important}
+.sx-ocup{background:#F9DEDA!important;color:#9B2219!important;border:1.5px solid #E39A90!important}
+.sx-off{background:#F5F1E9!important;color:#766D60!important;border:1px dashed #E2D5C0!important}
 .tex-tbl th{background:#101E18!important;color:#F8F5ED!important}
 .tex-tbl tr.r1 td{background:#F6F0E4!important}
 .tex-pts{color:#B54E29!important}

@@ -85,6 +85,15 @@ que eles geram e o site.
 - Medalhas continuam ouro e prata; níveis da avaliação com o metal de cada nível;
   cores de categoria da agenda (Tênis, Grupo, Personal…) continuam; o LED verde de
   "quadra liberada" fica (é sinal de trânsito).
+- **Exceção pedida pelo João (28/10): a imagem "Divulgar livres" é um semáforo**, nos
+  dois temas: livre em verde (`#D7EEDC`, letra `#14522B`), ocupado em vermelho
+  (`#F9DEDA`, letra `#9B2219`) e locação no amarelo da bola de tênis (`#E8F08A`,
+  letra `#3F470C`). É a única área grande com a cor da bolinha.
+- **Cartões do torneio no app do aluno** (campeão, vice, vitória, fim de etapa): fundo
+  escuro com o metal só no detalhe (borda e título em ouro ou prata). Dourado ou prata
+  claros com letra branca não dão leitura. O campeão ganha confete (`confeteBurst`,
+  canvas por cima do cartão, com bolinhas de tênis); "reduzir movimento" desliga a
+  animação.
 - No tema "Verde clássico", os apps e as imagens saem como antes.
 
 **Exemplos aplicados:**
@@ -176,7 +185,10 @@ Classe nova com prefixo próprio da tela (já usados: `al-`, `fic-`, `rm-`, `cx-
 ## O que guarda este visual (rode antes de publicar)
 
 - `sh ferramentas/checar-tudo.sh` (inclui o tema Saibro em dia e o premium)
-- `ferramentas/testar-contraste-gestao-browser.cjs` e `testar-contraste-aluno-browser.cjs` (leitura)
+- `ferramentas/testar-contraste-gestao-browser.cjs` (inclui as imagens que a Gestão gera),
+  `testar-contraste-aluno-browser.cjs` e `testar-contraste-site-browser.cjs` (leitura)
+- `ferramentas/testar-todos-botoes-browser.cjs` (toca em todos os botões, janelas, listas e campos
+  dos dois apps e falha se algum der erro)
 - `ferramentas/testar-letras-aluno-browser.cjs` (letra mínima, nada passa da tela)
 - `ferramentas/testar-vidro-aero-browser.cjs`, `testar-premium-browser.cjs`, `testar-textos-curtos-browser.cjs`
 - Prévia em imagem para o João antes de publicar.

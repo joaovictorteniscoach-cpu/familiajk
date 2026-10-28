@@ -177,11 +177,14 @@ body{background:var(--cream);color:var(--text)}
 .evo-levelup .t1{color:var(--gold)}
 .tp-ov{background:rgba(14,12,8,.62)}
 .tp-card{color:#fff;box-shadow:0 26px 64px rgba(0,0,0,.55)}
-.tp-card.champ{background:linear-gradient(160deg,#7E5A11,#C9764A 52%,#EAAC8A)}
-.tp-card.vice{background:linear-gradient(160deg,#565E65,#98A0A8 52%,#CDD3D8)}
-.tp-card.vitoria{background:linear-gradient(160deg,#0F2E22,#167A4E 52%,#2BA96D)}
+.tp-card.champ{background:radial-gradient(130% 70% at 50% 0%,rgba(228,158,120,.30),transparent 62%),linear-gradient(165deg,#241B07,#3B2D0C 55%,#4E3C10);border:1.5px solid #C9764A}
+.tp-card.vice{background:radial-gradient(130% 70% at 50% 0%,rgba(205,211,216,.22),transparent 62%),linear-gradient(165deg,#161B1F,#252D33 55%,#313A41);border:1.5px solid #AEB6BD}
+.tp-card.vitoria{background:linear-gradient(165deg,#091B13,#0F2D21 55%,#153E2D);border:1.5px solid rgba(212,225,87,.55)}
+.tp-card.champ .tp-title,.tp-card.champ .tp-parabens{color:#EDB292}
+.tp-card.vice .tp-title,.tp-card.vice .tp-parabens{color:#E6EAED}
+.tp-card.champ .tp-emb,.tp-card.vice .tp-emb{background:rgba(0,0,0,.38)}
 .tp-card.derrota{background:linear-gradient(160deg,rgba(20,29,25,0.42),rgba(33,45,40,0.42) 56%,rgba(46,60,54,0.42))}
-.tp-card.fim{background:linear-gradient(160deg,rgba(22,32,27,0.42),#6F5B20 58%,#B58D2D)}
+.tp-card.fim{background:linear-gradient(165deg,#131F1A,#25301A 58%,#3D3616);border:1.5px solid rgba(201,118,74,.6)}
 .tp-msg{color:rgba(255,255,255,.92)}
 .tp-score{color:rgba(255,255,255,.84)}
 .tp-card::before{background:radial-gradient(circle at top,rgba(255,255,255,.32),transparent 55%)}
@@ -825,6 +828,9 @@ html body:not(#jv) #apg-torneio .tor-cap-emb{background:#101E18!important;color:
 html body:not(#jv) #apg-torneio .atg-card{background:#FFFFFF!important;border-color:#E3D8C6!important}
 html body:not(#jv) #apg-torneio .atg-head{background:#101E18!important}
 html body:not(#jv) #apg-torneio .atg-badge{background:#B54E29!important;color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important}
+/* campeão: medalha continua ouro (DESIGN.md), também no Saibro */
+.tp-card.champ{background:radial-gradient(130% 70% at 50% 0%,rgba(228,200,120,.30),transparent 62%),linear-gradient(165deg,#241B07,#3B2D0C 55%,#4E3C10)!important;border-color:#C9A04A!important}
+.tp-card.champ .tp-title,.tp-card.champ .tp-parabens{color:#F1D88E!important}
 html body:not(#jv) #apg-torneio .atg-tbl th{background:#F1EBE1!important;color:#6B5E4A!important;-webkit-text-fill-color:#6B5E4A!important}
 html body:not(#jv) #apg-torneio .atg-tbl td{background:#FFFFFF!important;color:#2A2016!important;-webkit-text-fill-color:#2A2016!important;border-bottom-color:#EFE7DA!important}
 html body:not(#jv) #apg-torneio .atg-tbl tr.me td{background:#F6F0E4!important}
