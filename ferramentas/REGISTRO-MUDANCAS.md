@@ -8,6 +8,37 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-28 · Claude Code: varredura de botões e leitura, confete do campeão, semáforo no "Divulgar livres" (mesma v2026-10-28-1)
+
+Pedido do João: "testar e conferir todos os botões e escritas", "uma surpresa quando o
+aluno ganhar o torneio, tipo confete" e, na imagem "Divulgar livres", "livre em verde,
+ocupado em vermelho e locação amarelo bola de tênis".
+- **Varredura de botões** (`ferramentas/testar-todos-botoes-browser.cjs`): toca em cada
+  botão, link, aba, caixinha, lista e campo das telas e das janelas (até 3 níveis) da
+  Gestão e do app do aluno, com os dados fictícios recarregados antes de cada toque.
+  Resultado: nenhum erro (Gestão ~560 toques e 26 janelas; aluno ~240 toques e 9 janelas).
+- **Leitura (contraste):**
+  - Gestão: a varredura agora mede também as imagens geradas (semana, ranking,
+    avaliação). Achou data, nível futuro, título do gráfico e rodapé claros demais nas
+    imagens da avaliação e do ranking: saem iguais ao relatório da janela.
+  - App do aluno: os cartões de campeão, vice, fim de etapa e vitória tinham letras brancas
+    em dourado/prata claros (1,7 a 3,9). Agora: fundo escuro com o metal só no detalhe.
+  - Site (teste novo `testar-contraste-site-browser.cjs`, celular e computador): botão
+    do WhatsApp com letra escura (branco no verde dava 1,98), nome da academia visível
+    no topo da Privacidade (estava sumido, 1,06), letras pequenas do topo mais escuras,
+    pirâmide da Metodologia, rodapé do site Pro, letra dos níveis na Apostila.
+  - `site-pro/sistema.html` tinha ficado de fora da troca para o Saibro: agora igual às
+    outras páginas.
+- **Confete do campeão** (app do aluno): `confeteBurst(cor,forte)` em canvas, por cima do
+  cartão (antes caía atrás do fundo escuro), com bolinhas de tênis; "Comemorar" solta
+  mais; "reduzir movimento" desliga a animação; tempo contado por quadro. O 1º do grupo
+  usa a mesma ordem da Gestão (`rankTorAl` ganhou o desempate pela ordem do grupo).
+  Teste novo `testar-confete-campeao-browser.cjs`.
+- **"Divulgar livres"**: semáforo nos dois temas (`.sx-livre`/`.sx-ocup`/`.sx-loc` em
+  `estilo.css` e fixados no bloco `IMAGENS` do `tema-saibro.py`). Antes, "ocupado" tinha
+  leitura 2,2. Exceção registrada no DESIGN.md.
+- Nada mexe em valor, crédito, reposição ou regra do Firebase.
+
 ## 2026-10-28 · Claude Code: Saibro com bolinha nas imagens, no site e nos apps (prévia; v2026-10-28-1)
 
 João: "O Saibro com bolinha ficou muito bom. Não muda muito e fica mais coerente." Escolheu:
