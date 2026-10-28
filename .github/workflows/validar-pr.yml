@@ -13,7 +13,9 @@ concurrency:
 
 jobs:
   validar:
-    runs-on: ubuntu-latest
+    # 28/10: o "ubuntu-latest" virou 26.04 e o Playwright 1.56.1 não instala o
+    # navegador nele. Fica no 24.04 até subir o Playwright de propósito.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
