@@ -49,7 +49,7 @@ Use `grep -n` pelos títulos de seção (`/* ===== Título =====`) ou pelo nome 
 
 - Inativar aluno: `arquivarAluno` → `agendaFuturaDoAluno`/`encerrarAgendaFutura`/`desfazerInativar` (pergunta antes de encerrar horários)
 - Reposições (Gráficos): `reposLiquidas`, `reposPorMes`, `renderGrafRepos`, `abrirReposMes` (só leem o extrato)
-- Aula em família no ✓: `togglePresenca` (pergunta pelos outros da família em aula em GRUPO) → `togglePresencaUm` (o ✓ de um só); `familiaDoAluno`
+- Aula em família no ✓: `togglePresenca` (pergunta pelos outros da família em aula em GRUPO, só por quem está NO MESMO HORÁRIO: marcação própria ou nome escrito nele — `familiarNoHorario`/`nomeNoHorario`, 28/10) → `togglePresencaUm` (o ✓ de um só); `familiaDoAluno`
 - Locação na contagem: `ehLocacao(e)` (tipo OU nome) em `aulasDoDia`, `ocupacao_`, `fcAulasDoMes`
 - Extrato do aluno: `abrirExtrato` → `pintarExtrato` (resumido por padrão: `extratoResumido`, `EXT_ROTULO`; "Ver detalhado" = cru)
 - Quadrinhos do Início: `abrirDetAlunos`, `abrirDetCreditos` (`validadeRepos`), `abrirDetOcupacao` (`slotsDoDia`), `abrirDetLocacoes` → `#ov-jh-det`

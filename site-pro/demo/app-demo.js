@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-28-1';
+const VERSAO='2026-10-28-2';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -4137,12 +4137,26 @@ function isAvisou(e,date){const k=presId(e,date);return (DB.presencas||[]).some(
    Casal e família costumam fazer a aula em grupo juntos, mas cada um tem o
    seu cadastro: um levava ✓ e o outro não (ou nem estava na agenda), e os
    créditos ficavam diferentes. Agora, ao marcar ou desmarcar a presença de
-   uma aula em GRUPO de quem é da família, o app pergunta pelos outros. Nada
-   muda sem o OK do João; cada um continua com o próprio saldo e extrato. */
+   uma aula em GRUPO de quem é da família, o app pergunta pelos outros QUE
+   ESTÃO NESSE HORÁRIO: com marcação própria nele ou com o nome escrito nele
+   (ex.: "Ana e Bia"). Familiar que faz aula em outro horário não entra na
+   pergunta (28/10: o ✓ de quem fazia aula com outra pessoa perguntava pela
+   filha, que tinha horário próprio). Nada muda sem o OK do João; cada um
+   continua com o próprio saldo e extrato. */
 function familiaDoAluno(a){
   const r=pagadorFamilia(a);
   return r?[r].concat(dependentesFamilia(r)).filter(x=>x.id!==a.id&&ehAtivoAluno(x)):[];
 }
+/* O nome deste familiar está escrito no horário, fora o nome do dono de cada
+   marcação? Ex.: marcação de Ana com o título "Ana e Bia" → Bia está nele. */
+function nomeNoHorario(evs,m){
+  const p=tokensNome(m&&m.nome)[0];if(!p)return false;
+  return (evs||[]).some(e=>{
+    const dono=e.alunoId&&DB.alunos.find(x=>x.id===e.alunoId),doDono=new Set(dono?tokensNome(dono.nome):[]);
+    return tokensNome(e.titulo).some(w=>w===p&&!doDono.has(w));
+  });
+}
+function familiarNoHorario(evs,m){return (evs||[]).some(e=>e.alunoId===m.id)||nomeNoHorario(evs,m);}
 function togglePresenca(entryId){
   let entry=null;
   HORAS.forEach(h=>entriesFor(agDate,h).forEach(e=>{if(e.id===entryId)entry=e;}));
@@ -4162,8 +4176,10 @@ function togglePresenca(entryId){
         +'\n\nOK = '+(marcou?'marcar':'desmarcar')+' os dois · Cancelar = só '+a.nome.split(' ')[0]))return;
       togglePresencaUm(eM.id);
     }else if(marcou){
-      const evs=entriesFor(agDate,entry.hora),pes=Number(entry.pessoas)||limiteGrupoHorario(evs.filter(e=>e.tipo==='grupo'));
-      if(!confirm('Aula em família · '+quando+'\n\n'+m.nome+' não está na agenda neste horário.\n'
+      const evs=entriesFor(agDate,entry.hora);
+      if(!nomeNoHorario(evs,m))return;   // está em outro horário (ou em nenhum): não pergunta
+      const pes=Number(entry.pessoas)||limiteGrupoHorario(evs.filter(e=>e.tipo==='grupo'));
+      if(!confirm('Aula em família · '+quando+'\n\n'+m.nome+' está escrito(a) neste horário, mas sem marcação própria.\n'
         +'Fez a aula junto com '+a.nome.split(' ')[0]+'?\n\nOK = colocar '+m.nome.split(' ')[0]+' nesta aula (só nesta data) e marcar a presença · Cancelar = deixar como está'))return;
       if(!podeAdicionarAoHorario(evs,'grupo',pes)){toast('O grupo deste horário já está cheio. Coloque '+m.nome.split(' ')[0]+' pela agenda.');return;}
       const novo={id:'e'+Date.now()+Math.random().toString(36).slice(2,6),data:dk,hora:entry.hora,titulo:m.nome,tipo:'grupo',alunoId:m.id,pessoas:pes,repo:0};
@@ -11080,7 +11096,9 @@ function achadosDoAluno(a){
       pres.forEach(p=>{
         const ch=p.data+'|'+p.hora;if(vistos.has(ch))return;vistos.add(ch);
         const com=new Set(pres.filter(q=>q.data===p.data&&q.hora===p.hora).map(q=>q.alunoId));
-        const sem=membros.filter(m=>!com.has(m.id)&&ehAtivoAluno(m));
+        // só conta quem estava neste horário (marcação própria ou nome escrito nele), como no ✓
+        const [an,me,di]=String(p.data).split('-').map(Number),evs=entriesFor(new Date(an,me-1,di,12),p.hora);
+        const sem=membros.filter(m=>!com.has(m.id)&&ehAtivoAluno(m)&&familiarNoHorario(evs,m));
         if(sem.length&&com.size)difs.push(p.data.split('-').reverse().slice(0,2).join('/')+' '+p.hora+' (sem ✓: '+sem.map(m=>m.nome.split(' ')[0]).join(', ')+')');
       });
       if(difs.length)achados.push({tipo:'aviso',a,

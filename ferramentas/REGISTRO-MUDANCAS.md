@@ -8,6 +8,22 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-28 · Claude Code: ✓ em família só pergunta por quem está no mesmo horário (v2026-10-28-2)
+
+João: ao marcar a presença de uma responsável que fazia aula em grupo com outra
+aluna, o app perguntou se era para cobrar também a dependente dela, que faz aula em
+outro horário. "Só deve ocorrer quando o nome da pessoa dependente está junto do
+horário da pessoa."
+- `togglePresenca`: o familiar só entra na pergunta se estiver no mesmo horário, com
+  marcação própria (como antes) ou com o nome escrito no horário (ex.: título "Ana e
+  Bia" na marcação da Ana). Antes, qualquer familiar fora do horário recebia a pergunta
+  "não está na agenda neste horário… colocar nesta aula?". `familiarNoHorario`/`nomeNoHorario`.
+- Conferir números ("aula em grupo da família com presença de um e não do outro"):
+  mesma regra; deixa de listar a aula da responsável com outra pessoa.
+- Nada muda em crédito sozinho: continua sendo pergunta com OK/Cancelar.
+- Teste `testar-familia-presenca-browser.cjs` (9 verificações; o caso do João falha no
+  código anterior).
+
 ## 2026-10-28 · Claude Code: publicada a v2026-10-28-1 (PR #267, merge `1c71ba2`)
 
 João: "termine o projeto e coloca no ar. Se der alguma divergência ou erro, que seja
