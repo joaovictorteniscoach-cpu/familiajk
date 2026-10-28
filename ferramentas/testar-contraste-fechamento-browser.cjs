@@ -39,7 +39,9 @@ let count=0;async function check(name,fn){await fn();count++;console.log('✅ '+
   await context.route('**/*',r=>new URL(r.request().url()).origin===base?r.continue():r.abort());
   await context.addInitScript(({data,theme})=>{localStorage.setItem('jvtenis-gestao-v1',JSON.stringify(data));localStorage.setItem('jv-tema',theme);sessionStorage.setItem('jv-bk-adiar','1');},{data,theme});
   const p=await context.newPage(),errors=[];p.on('pageerror',e=>errors.push(e.message));p.on('dialog',d=>d.dismiss());
-  await p.goto(base+'/app-gestao/',{waitUntil:'load'});await p.waitForTimeout(6500);
+  await p.goto(base+'/app-gestao/',{waitUntil:'load'});
+  // espera a Gestão carregar de fato (sem nuvem, desistir dela leva de 6 a 12 s conforme a máquina)
+  await p.waitForFunction(()=>typeof CARREGADO!=='undefined'&&CARREGADO,null,{timeout:40000});
   await p.evaluate(()=>{persist=()=>{};publish=()=>{};hideVals=false;document.getElementById('splash-gestao').style.display='none';document.getElementById('ov-entrar').style.display='none';renderAll();});
   await p.addStyleTag({content:'#ov-entrar{display:none!important}'});
   for(const page of ['dash','alunos','fin','lanc','agenda','torneio','fech','seg']){

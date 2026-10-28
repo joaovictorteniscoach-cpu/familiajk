@@ -8,6 +8,99 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-28 · Claude Code: varredura de botões e leitura, confete do campeão, semáforo no "Divulgar livres" (mesma v2026-10-28-1)
+
+Pedido do João: "testar e conferir todos os botões e escritas", "uma surpresa quando o
+aluno ganhar o torneio, tipo confete" e, na imagem "Divulgar livres", "livre em verde,
+ocupado em vermelho e locação amarelo bola de tênis".
+- **Varredura de botões** (`ferramentas/testar-todos-botoes-browser.cjs`): toca em cada
+  botão, link, aba, caixinha, lista e campo das telas e das janelas (até 3 níveis) da
+  Gestão e do app do aluno, com os dados fictícios recarregados antes de cada toque.
+  Resultado: nenhum erro (Gestão ~560 toques e 26 janelas; aluno ~240 toques e 9 janelas).
+- **Leitura (contraste):**
+  - Gestão: a varredura agora mede também as imagens geradas (semana, ranking,
+    avaliação). Achou data, nível futuro, título do gráfico e rodapé claros demais nas
+    imagens da avaliação e do ranking: saem iguais ao relatório da janela.
+  - App do aluno: os cartões de campeão, vice, fim de etapa e vitória tinham letras brancas
+    em dourado/prata claros (1,7 a 3,9). Agora: fundo escuro com o metal só no detalhe.
+  - Site (teste novo `testar-contraste-site-browser.cjs`, celular e computador): botão
+    do WhatsApp com letra escura (branco no verde dava 1,98), nome da academia visível
+    no topo da Privacidade (estava sumido, 1,06), letras pequenas do topo mais escuras,
+    pirâmide da Metodologia, rodapé do site Pro, letra dos níveis na Apostila.
+  - `site-pro/sistema.html` tinha ficado de fora da troca para o Saibro: agora igual às
+    outras páginas.
+- **Confete do campeão** (app do aluno): `confeteBurst(cor,forte)` em canvas, por cima do
+  cartão (antes caía atrás do fundo escuro), com bolinhas de tênis; "Comemorar" solta
+  mais; "reduzir movimento" desliga a animação; tempo contado por quadro. O 1º do grupo
+  usa a mesma ordem da Gestão (`rankTorAl` ganhou o desempate pela ordem do grupo).
+  Teste novo `testar-confete-campeao-browser.cjs`.
+- **"Divulgar livres"**: semáforo nos dois temas (`.sx-livre`/`.sx-ocup`/`.sx-loc` em
+  `estilo.css` e fixados no bloco `IMAGENS` do `tema-saibro.py`). Antes, "ocupado" tinha
+  leitura 2,2. Exceção registrada no DESIGN.md.
+- Nada mexe em valor, crédito, reposição ou regra do Firebase.
+
+## 2026-10-28 · Claude Code: Saibro com bolinha nas imagens, no site e nos apps (prévia; v2026-10-28-1)
+
+João: "O Saibro com bolinha ficou muito bom. Não muda muito e fica mais coerente." Escolheu:
+imagens que os apps geram, site e páginas públicas, apps Gestão e aluno.
+
+**Imagens que os apps geram** (só no tema Saibro; o Verde clássico fica como antes):
+- Gestão: blocos `IMAGENS` em `ferramentas/tema-saibro.py` para a semana livre (`sx-`),
+  o ranking (`tex-`), a avaliação (`aex-`) e os títulos do fechamento.
+- `coresImg()` no comprovante de aulas (`renderHistAulas`).
+- `homArte` (homenagem: fundo verde quase preto, moldura e fita saibro, "Parabéns" na
+  bolinha; as medalhas continuam ouro e prata).
+- Relatório em PDF com cabeçalho tinta e saibro.
+- Legenda da semana livre usa as classes em vez de cor fixa.
+- O gráfico "mês a mês" da imagem da avaliação estava quase invisível no papel (texto
+  claro do tema escuro). Corrigido nos dois temas, em `estilo.css`.
+- Aluno: o cartão do torneio, que vira imagem, passa para papel claro, tinta e saibro
+  (`EXTRA_ALUNO`).
+
+**Site:** `site/` (index, metodologia, privacidade) e `site-pro/` (index, curso) trocam o
+azul-marinho e o dourado pelas cores do Saibro (verde quase preto, saibro e selo na
+bolinha). O conteúdo e a disposição não mudam. A apostila (`app-exercicios`) já usa verde
+escuro, bolinha e quadra de saibro e ficou como está.
+
+**Apps** (bloco `COERENCIA`, só Saibro):
+- Gestão: "Horários" em saibro, "Divulgar livres" na bolinha, selo "PAGO" na bolinha,
+  "50%"/"conferir valor" em saibro, "Avaliar" na bolinha, "subiu"/"conferido" do Início
+  na bolinha (o LED verde da quadra liberada fica).
+- Aluno: "Em dia" na bolinha; horário livre da agenda na bolinha clara (igual à imagem
+  da semana); aviso da Evolução em saibro.
+
+**Testes e leitura:**
+- O "A"/"B" do torneio do aluno e o texto pequeno de "Horários" foram escurecidos para
+  passar na régua de leitura.
+- `testar-contraste-fechamento-browser.cjs` agora espera a Gestão carregar, em vez de 6,5 s
+  fixos (aqui ela levava 12 s sem nuvem e o teste falhava também na main).
+- Contraste do aluno e da Gestão: 0 abaixo da régua. Site OK.
+
+**Versão agência** (João: "mais profissional, ar premium, feito por agência cara";
+depois "faça toda a revisão e coloque o padrão novo"):
+- **Bolinha só como detalhe:**
+  - ✓ Aula e + Receita em vidro escuro, com o ✓ e a borda na bolinha;
+  - horário livre (agenda do aluno e imagem da semana) em branco, com letra oliva e
+    borda fina de bolinha;
+  - linha do 1º do ranking e do aluno no torneio em creme;
+  - caixas da avaliação e do comprovante em creme;
+  - "Parabéns" da homenagem em creme.
+- **Saibro liso na ação principal:** ficha (prim/ok), pagar no aluno, "Divulgar
+  livres" e "Avaliar". "Horários" passa a vidro neutro.
+- **Site:** botões e selos sem degradê (`--saibro-btn:#B54E29`); selo das seções em
+  saibro claro com um pontinho de bolinha.
+- **Aluno:** o texto "verde = livre" da agenda virou "toque num horário livre para
+  agendar".
+- **Revisão da prévia:** no celular, o pontinho deixava o selo do topo do site em 2
+  linhas; o selo fica mais justo em telas até 480 px (1 linha a partir de 360 px no
+  site e na metodologia). A caixa "Prioridade do ciclo" da avaliação saía esverdeada:
+  todas as caixas da avaliação ficam em creme.
+- **DESIGN.md:** regra de proporção (escuro e creme ≫ saibro ≫ bolinha).
+
+Prévia antes/depois enviada; publicar só com o OK do João.
+
+---
+
 ## 2026-10-27 · Claude Code: "Fechado" inteiro na grade do aluno e campos com nome (v2026-10-27-2)
 
 João aprovou ("Sim") corrigir o que a revisão pela lista da Vercel achou e não muda o visual:

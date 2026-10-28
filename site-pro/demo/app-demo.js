@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-27-2';
+const VERSAO='2026-10-28-1';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -10142,12 +10142,13 @@ function renderHistAulas(){
   const plano=Number(a.plano)||0,planoG=Number(a.planoGrupo)||0;
   const periodoTxt=(filtro==='tudo')?'Histórico completo':(function(){const p=filtro.split('-');return MESES[Number(p[1])-1]+' '+p[0];})();
   const chip=(lbl,val,cor)=>'<span style="display:inline-block;margin:0 6px 6px 0;padding:5px 10px;border-radius:9px;background:#fff;border:1px solid #eadfc6;font-size:12px;font-weight:700">'+lbl+': <b style="color:'+cor+'">'+fmtCred(val)+'</b></span>';
+  const K=coresImg();
   let h='<div style="font-family:\'DM Sans\',sans-serif;background:#FBF8F2;padding:16px;border-radius:12px;color:#2A2016">';
-  h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #C9A227;padding-bottom:8px;margin-bottom:10px"><div><div style="font-weight:800;font-size:15px">Academia João Victor Tênis</div><div style="font-size:11px;color:#6B6458">Comprovante de aulas · '+periodoTxt+'</div></div><div style="width:40px;height:40px;border-radius:50%;background:#1F3D2B;color:#EFE7D0;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0">JV</div></div>';
+  h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid '+K.linha+';padding-bottom:8px;margin-bottom:10px"><div><div style="font-weight:800;font-size:15px">Academia João Victor Tênis</div><div style="font-size:11px;color:#6B6458">Comprovante de aulas · '+periodoTxt+'</div></div><div style="width:40px;height:40px;border-radius:50%;background:'+K.emb+';color:'+K.embTxt+';display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0">JV</div></div>';
   h+='<div style="font-size:15px;font-weight:800">'+esc(a.nome)+'</div>';
   h+='<div style="font-size:11px;color:#6B6458;margin-bottom:8px">'+esc(a.tipo||'')+(plano?' · pacote de '+plano+' aula(s)/mês'+(planoG?' + '+planoG+' em grupo':''):'')+'</div>';
-  h+='<div style="margin-bottom:8px">'+chip('Créditos hoje',Number(a.creditos)||0,'#2E7D52')+chip('Reposições',Number(a.repos)||0,'#8A6A12')+((planoG||Number(a.credGrupo))?chip('Grupo',Number(a.credGrupo)||0,'#6A4FA3'):'')+'</div>';
-  h+='<div style="background:#F1F6EE;border:1px solid #d8e6d2;border-radius:9px;padding:8px 11px;font-size:12.5px;margin-bottom:10px">No período: <b>'+(cont.aula||0)+'</b> aula(s) normal(is)'+(cont.reposicao?' · <b>'+cont.reposicao+'</b> reposição(ões)':'')+(cont.grupo?' · <b>'+cont.grupo+'</b> em grupo':'')+(cont.locacao?' · <b>'+cont.locacao+'</b> locação':'')+'.</div>';
+  h+='<div style="margin-bottom:8px">'+chip('Créditos hoje',Number(a.creditos)||0,K.pos)+chip('Reposições',Number(a.repos)||0,K.repo)+((planoG||Number(a.credGrupo))?chip('Grupo',Number(a.credGrupo)||0,'#6A4FA3'):'')+'</div>';
+  h+='<div style="background:'+K.caixa+';border:1px solid '+K.caixaBorda+';border-radius:9px;padding:8px 11px;font-size:12.5px;margin-bottom:10px">No período: <b>'+(cont.aula||0)+'</b> aula(s) normal(is)'+(cont.reposicao?' · <b>'+cont.reposicao+'</b> reposição(ões)':'')+(cont.grupo?' · <b>'+cont.grupo+'</b> em grupo':'')+(cont.locacao?' · <b>'+cont.locacao+'</b> locação':'')+'.</div>';
   h+=ps.length?('<table style="width:100%;border-collapse:collapse;font-size:12.5px"><tr style="text-align:left;color:#6B6458;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em"><th style="padding:4px 6px">Data</th><th style="padding:4px 6px">Hora</th><th style="padding:4px 6px">Tipo</th></tr>'+linhas+'</table>'):'<div style="color:#6B6458;padding:10px 0">Nenhuma aula registrada neste período.</div>';
   h+='<div style="margin-top:10px;font-size:10.5px;color:#6B6458">Emitido em '+new Date().toLocaleDateString('pt-BR')+' · Prof. João Victor 🎾</div>';
   h+='</div>';
@@ -10349,6 +10350,13 @@ function mostrarBarraVersao(naNuvem){return; /* DEMO */
    Só troca o arquivo de estilo (estilo-saibro.css é gerado de estilo.css por
    ferramentas/tema-saibro.py). Preferência do aparelho, não vai para a nuvem. */
 function temaAtual(){try{return localStorage.getItem('jv-tema')==='classico'?'classico':'saibro';}catch(e){return 'saibro';}}
+/* Cores das imagens e comprovantes que vão para o aluno: Saibro com bolinha no
+   tema Saibro (pedido do João, 28/10); no Verde clássico, as de antes. */
+function coresImg(){
+  return temaAtual()==='classico'
+    ?{linha:'#C9A227',emb:'#1F3D2B',embTxt:'#EFE7D0',pos:'#2E7D52',repo:'#8A6A12',caixa:'#F1F6EE',caixaBorda:'#d8e6d2'}
+    :{linha:'#C2582E',emb:'#101E18',embTxt:'#E0824F',pos:'#4E5E12',repo:'#B54E29',caixa:'#F6F1E8',caixaBorda:'#E3D8C6'};
+}
 function marcarTema(){
   const t=temaAtual();
   document.querySelectorAll('#tema-esc button').forEach(b=>b.classList.toggle('on',b.dataset.tema===t));
@@ -11383,7 +11391,8 @@ async function gerarRelatorioPDF(){
   try{R=relDados();}finally{hideVals=_olho;}
   const {jsPDF}=window.jspdf;const pdf=new jsPDF('l','mm','a4');
   const PW=pdf.internal.pageSize.getWidth(), PH=pdf.internal.pageSize.getHeight(), MG=10;
-  const VERDE=[11,60,43], OURO=[201,162,39], CINZA=[110,104,94];
+  const SB=temaAtual()!=='classico';   // relatório no tema: Saibro com bolinha ou Verde clássico
+  const VERDE=SB?[16,30,24]:[11,60,43], OURO=SB?[194,88,46]:[201,162,39], CINZA=[110,104,94];
   const nomeM=mk=>MESES[Number(mk.split('-')[1])-1]+' '+mk.split('-')[0];
   const hoje=new Date(), dataBR=String(hoje.getDate()).padStart(2,'0')+'/'+String(hoje.getMonth()+1).padStart(2,'0')+'/'+hoje.getFullYear();
   let y=MG;
@@ -12574,9 +12583,9 @@ function montarSemanaExport(days){
     html+='<tr><td class="h">'+h+'</td>'+linha.map(c=>'<td><div class="sx-c '+c.cls+'">'+c.txt+'</div></td>').join('')+'</tr>';
   });
   html+='</table>';
-  html+='<div class="sx-leg"><span><i style="background:#E3F2E4;border:1.5px solid #BFDCC4"></i>livre para aula</span>'
-    +'<span><i style="background:#FBF3DC;border:1.5px solid #E4CF92"></i>livre só para locação</span>'
-    +'<span><i style="background:#EFE9DD;border:1px solid #E2D5C0"></i>ocupado</span></div>';
+  html+='<div class="sx-leg"><span><i class="sx-livre"></i>livre para aula</span>'
+    +'<span><i class="sx-loc"></i>livre só para locação</span>'
+    +'<span><i class="sx-ocup"></i>ocupado</span></div>';
   html+='<div class="sx-foot">'+(algumLivre?'Escolha um horário livre e me chame no WhatsApp 🎾':'Semana cheia — me chame que a gente encaixa 🎾')+'</div>';
   document.getElementById('sem-export').innerHTML=html;
   return algumLivre;
@@ -12711,15 +12720,17 @@ function homArte(h){
   const W=1080,H=1350,c=document.createElement('canvas');c.width=W;c.height=H;
   const ctx=c.getContext('2d');
   const ouro=h.pos===1;
+  // Saibro com bolinha no tema Saibro (pedido do João, 28/10); Verde clássico como antes.
+  const S=temaAtual()!=='classico';
   const SERIF="'Cormorant Garamond',Georgia,'Times New Roman',serif", SANS="'DM Sans',system-ui,-apple-system,sans-serif";
   /* fundo */
-  const bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#0B3A2A');bg.addColorStop(1,'#03170F');
+  const bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,S?'#18271F':'#0B3A2A');bg.addColorStop(1,S?'#050C09':'#03170F');
   ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
   const glow=ctx.createRadialGradient(W/2,470,40,W/2,470,620);
   glow.addColorStop(0,ouro?'rgba(232,184,62,.30)':'rgba(220,226,232,.22)');glow.addColorStop(1,'rgba(0,0,0,0)');
   ctx.fillStyle=glow;ctx.fillRect(0,0,W,H);
   /* quadra vista de cima, bem discreta */
-  ctx.strokeStyle='rgba(224,185,79,.11)';ctx.lineWidth=4;
+  ctx.strokeStyle=S?'rgba(240,230,214,.10)':'rgba(224,185,79,.11)';ctx.lineWidth=4;
   const qx=150,qy=110,qw=W-300,qh=H-220;
   ctx.strokeRect(qx,qy,qw,qh);
   ctx.strokeRect(qx+qw*0.125,qy,qw*0.75,qh);
@@ -12728,17 +12739,17 @@ function homArte(h){
   ctx.moveTo(qx+qw*0.125,qy+qh*0.77);ctx.lineTo(qx+qw*0.875,qy+qh*0.77);
   ctx.moveTo(W/2,qy+qh*0.23);ctx.lineTo(W/2,qy+qh*0.77);ctx.stroke();
   /* moldura */
-  ctx.strokeStyle='rgba(224,185,79,.55)';ctx.lineWidth=3;ctx.strokeRect(40,40,W-80,H-80);
+  ctx.strokeStyle=S?'rgba(224,130,79,.62)':'rgba(224,185,79,.55)';ctx.lineWidth=3;ctx.strokeRect(40,40,W-80,H-80);
   ctx.textAlign='center';ctx.textBaseline='alphabetic';
   /* topo */
-  ctx.fillStyle='#E0B94F';ctx.font='800 28px '+SANS;homTextoEspacado(ctx,'ACADEMIA JOÃO VICTOR TÊNIS',W/2,130,6);
+  ctx.fillStyle=S?'#E0824F':'#E0B94F';ctx.font='800 28px '+SANS;homTextoEspacado(ctx,'ACADEMIA JOÃO VICTOR TÊNIS',W/2,130,6);
   ctx.fillStyle='rgba(246,242,234,.78)';ctx.font='600 30px '+SANS;
   ctx.fillText((h.torneio+' · '+h.etapa).toUpperCase().slice(0,48),W/2,180);
   /* fita da medalha */
   const cy=500,r=165;
-  ctx.fillStyle=ouro?'#1E6B45':'#2C4F77';
+  ctx.fillStyle=S?'#C2582E':ouro?'#1E6B45':'#2C4F77';
   ctx.beginPath();ctx.moveTo(W/2-120,cy-r-95);ctx.lineTo(W/2-35,cy-r-95);ctx.lineTo(W/2+20,cy-r+40);ctx.lineTo(W/2-60,cy-r+40);ctx.closePath();ctx.fill();
-  ctx.fillStyle=ouro?'#16533A':'#22405F';
+  ctx.fillStyle=S?'#9E4422':ouro?'#16533A':'#22405F';
   ctx.beginPath();ctx.moveTo(W/2+120,cy-r-95);ctx.lineTo(W/2+35,cy-r-95);ctx.lineTo(W/2-20,cy-r+40);ctx.lineTo(W/2+60,cy-r+40);ctx.closePath();ctx.fill();
   /* medalha */
   const mg=ctx.createLinearGradient(W/2-r,cy-r,W/2+r,cy+r);
@@ -12766,7 +12777,7 @@ function homArte(h){
   const yNome=cy+r+290-(linhas.length-1)*tam*0.2;
   linhas.forEach((l,i)=>ctx.fillText(l,W/2,yNome+i*tam*0.95));
   /* parabéns */
-  ctx.fillStyle='#F6DB86';ctx.font='italic 400 58px '+SERIF;ctx.fillText('Parabéns pela conquista!',W/2,Math.max(1110,yNome+(linhas.length-1)*tam*0.95+88));
+  ctx.fillStyle=S?'#EADFCB':'#F6DB86';ctx.font='italic 400 58px '+SERIF;ctx.fillText('Parabéns pela conquista!',W/2,Math.max(1110,yNome+(linhas.length-1)*tam*0.95+88));
   /* bolinha e assinatura */
   const by=1222;ctx.fillStyle='#D7E64A';ctx.beginPath();ctx.arc(W/2,by,20,0,Math.PI*2);ctx.fill();
   ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=3;

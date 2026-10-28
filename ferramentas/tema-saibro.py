@@ -252,9 +252,13 @@ EXTRA = """
 .btn-clay{background:#C2582E!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
 .seg button.on,.seg .on{background:#C2582E!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
 #pg-lanc .cx-filtros button.on{background:#C2582E!important;border-color:#C2582E!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
-/* bolinha nos botões de ação */
-.al-aula,.fic-b.prim,.fic-b.prim2,.fic-b.ok,#pg-lanc .cx-ac.in{background:%(b)s!important;border-color:%(b)s!important;color:%(t)s!important;-webkit-text-fill-color:%(t)s!important}
-.al-aula *,.fic-b.prim *,.fic-b.prim2 *,.fic-b.ok *,#pg-lanc .cx-ac.in *{color:%(t)s!important;-webkit-text-fill-color:%(t)s!important;stroke:%(t)s!important}
+/* Versão agência (28/10): a bolinha é detalhe, não fundo. ✓ Aula e + Receita em vidro
+   escuro com o ✓/borda na bolinha; ações principais da ficha em saibro liso. */
+.al-aula,#pg-lanc .cx-ac.in{background:rgba(16,30,24,.72)!important;border:1px solid rgba(212,225,87,.55)!important;color:#F8F5ED!important;-webkit-text-fill-color:#F8F5ED!important}
+.al-aula *,#pg-lanc .cx-ac.in *{color:#F8F5ED!important;-webkit-text-fill-color:#F8F5ED!important}
+.al-aula svg,.al-aula svg *,#pg-lanc .cx-ac.in svg,#pg-lanc .cx-ac.in svg *{stroke:%(b)s!important;color:%(b)s!important}
+.fic-b.prim,.fic-b.prim2,.fic-b.ok{background:#B54E29!important;border-color:#B54E29!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+.fic-b.prim *,.fic-b.prim2 *,.fic-b.ok *{color:#FFF!important;-webkit-text-fill-color:#FFF!important;stroke:#FFF!important}
 /* Início: a série "Total" (anel, comparativo e gráfico) em areia. Com o
    dourado virando terra, ela ficava no mesmo laranja do Tênis. */
 #pg-dash{--jh-total:#EAD7B0}
@@ -265,6 +269,51 @@ EXTRA = """
 html body:not(#jv) #pg-aval .avcard .b2{background:#2B3B34!important}
 #renova-mes .rm-aviso{color:#F6CDB4!important;-webkit-text-fill-color:#F6CDB4!important}
 """ % {"b": BOLA, "t": BOLA_TXT}
+
+# Imagens e comprovantes que a Gestão gera para o aluno (semana livre, ranking,
+# avaliação, fechamento): papel claro com tinta escura, saibro nos fios e títulos,
+# bolinha clara no que é positivo (horário livre, 1º do grupo). Pedido do João,
+# 28/10: "Saibro com bolinha ... fica mais coerente". Só no tema Saibro.
+IMAGENS = """
+/* ===== Imagens e comprovantes: Saibro com bolinha ===== */
+#sem-export,#tor-export,#aval-export,#fech-export .fx-card{--green:#101E18;--gold:#C2582E;--clay:#B54E29;--muted:#6B5E4A;--border:#E3D8C6}
+#tor-export,#aval-export{background:#FBF8F2!important}
+.sx-head,.tex-head{border-bottom-color:#C2582E!important}
+.sx-head b,.sx-tbl th,.tex-head b,.tex-grp h4{color:#101E18!important}
+.sx-emb,.tex-emb{background:#101E18!important;color:#E0824F!important}
+.sx-livre{background:#D7EEDC!important;color:#14522B!important;border:1.5px solid #7DBE8E!important}
+.sx-loc{background:#E8F08A!important;color:#3F470C!important;border:1.5px solid #C2D13A!important}
+.sx-ocup{background:#F9DEDA!important;color:#9B2219!important;border:1.5px solid #E39A90!important}
+.sx-off{background:#F5F1E9!important;color:#766D60!important;border:1px dashed #E2D5C0!important}
+.tex-tbl th{background:#101E18!important;color:#F8F5ED!important}
+.tex-tbl tr.r1 td{background:#F6F0E4!important}
+.tex-pts{color:#B54E29!important}
+.aex-prio{background:#F6F1E8!important;border-color:#E3D8C6!important}
+.aex-prio b,.aex-sec{color:#101E18!important}
+html body:not(#jv) #aval-export .evo-mes-cap{color:#4E5E12!important;-webkit-text-fill-color:#4E5E12!important}
+/* fechamento: papel e tinta escura como antes (regra de leitura); só os títulos em saibro */
+html body:not(#jv) #pg-fech .fx-sec,html body:not(#jv) #pg-fech .fx-mes{color:#B54E29!important}
+html body:not(#jv) #pg-fech .fx-topo{border-bottom:2px solid #C2582E!important}
+"""
+
+# Coerência nos apps (28/10): o que ainda saía em verde ou dourado antigos no
+# tema Saibro passa a seguir a regra: saibro para escolha e alerta, bolinha para
+# o que é positivo ou ação de mandar. Só no tema Saibro.
+COERENCIA = """
+/* ===== Coerência Saibro com bolinha na Gestão ===== */
+html body:not(#jv) #pg-agenda .agf-corpo button.destaque{background:rgba(22,46,36,.55)!important;border:1px solid rgba(255,255,255,.16)!important;color:#F8F5ED!important;-webkit-text-fill-color:#F8F5ED!important}
+html body:not(#jv) #pg-agenda .agf-corpo button.destaque small{color:#D8D2C7!important;-webkit-text-fill-color:#D8D2C7!important}
+html body:not(#jv) #pg-agenda .agf-corpo button.ouro{background:#B54E29!important;border-color:#B54E29!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+html body:not(#jv) #pg-agenda .agf-corpo button.ouro small{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+html body:not(#jv) #pg-alunos .al-selo.pago{background:rgba(212,225,87,.16)!important;color:#D4E157!important;-webkit-text-fill-color:#D4E157!important;border:1px solid rgba(212,225,87,.35)!important}
+html body:not(#jv) #pg-alunos .al-selo.parcial,html body:not(#jv) #pg-alunos .al-tag.ouro{background:rgba(194,88,46,.24)!important;color:#F4BC9A!important;-webkit-text-fill-color:#F4BC9A!important}
+html body:not(#jv) #pg-aval .avacts .b1{background:#B54E29!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+html body:not(#jv) #pg-aval .avacts .b1 *{color:#FFF!important;-webkit-text-fill-color:#FFF!important;stroke:#FFF!important}
+/* Início: "subiu" e "conferido" na bolinha (o LED verde da quadra liberada fica: é sinal de trânsito) */
+html body:not(#jv) #pg-dash .jh-delta.sobe{background:rgba(212,225,87,.14)!important}
+html body:not(#jv) #pg-dash .jh-conf i{background:#D4E157!important;color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important}
+html body:not(#jv) #pg-dash .jh-conf.ok{background:rgba(212,225,87,.14)!important;border-color:rgba(212,225,87,.40)!important;color:#E4EC9A!important;-webkit-text-fill-color:#E4EC9A!important}
+"""
 
 # Toque "air" (vidro fosco, como no iPhone e no Windows 11), nos dois apps:
 # fundo com brilhos suaves de saibro, bolinha e verde parados atrás da tela, e
@@ -335,7 +384,7 @@ VIDRO = _forte(VIDRO)
 # Só no app do aluno: botões de pagar na cor da bolinha, abas da agenda em saibro.
 EXTRA_ALUNO = """
 /* ===== Toques do tema Saibro no app do aluno ===== */
-.lock-pay,.jv-pix-btn,#apg-inicio .jv-pix-btn{background:%(b)s!important;border-color:%(b)s!important;color:%(t)s!important;-webkit-text-fill-color:%(t)s!important}
+.lock-pay,.jv-pix-btn,#apg-inicio .jv-pix-btn{background:#B54E29!important;border-color:#B54E29!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
 .seg.jv-ref-ag-tabs button.on,.jv-ref-ag-tabs button.on{background:#C2582E!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
 /* contraste: cabeçalho dos dias da agenda opaco (translúcido sobre a grade clara virava cinza) */
 html body:not(#jv) #apg-agenda .wk th,html body:not(#jv) #apg-agenda .wk th *{background:#1D2622!important}
@@ -347,7 +396,30 @@ html body:not(#jv):not(#jv-al) .modal .btn-ghost{background:#E6DED2!important;-w
 html body:not(#jv) .btn-clay,html body:not(#jv) .login-btn{background:#B54E29!important}
 html body:not(#jv):not(#jv-al) .seg button.on,html body:not(#jv):not(#jv-al) .seg .on{background:#B54E29!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
 html body:not(#jv):not(#jv-al) #ov-tor-result .tor-radio label{background:#2C4A3D!important}
-html body:not(#jv) #apg-torneio .atg-head,html body:not(#jv) #apg-torneio .tor-cap-emb{background:#1D3B2F!important}
+/* Torneio: o cartão da tela é o mesmo que vira imagem. Papel claro, tinta escura,
+   saibro nos títulos e bolinha clara na linha do aluno (Saibro com bolinha, 28/10). */
+html body:not(#jv) #apg-torneio #tor-capture{background:#FBF8F2!important;border-color:#E3D8C6!important}
+html body:not(#jv) #apg-torneio #tor-capture .tor-cap-head{border-bottom:2px solid #C2582E!important}
+html body:not(#jv) #apg-torneio #tor-capture .tor-cap-head b{color:#101E18!important;-webkit-text-fill-color:#101E18!important}
+html body:not(#jv) #apg-torneio #tor-capture .tor-cap-head span{color:#6B5E4A!important;-webkit-text-fill-color:#6B5E4A!important}
+html body:not(#jv) #apg-torneio .tor-cap-emb{background:#101E18!important;color:#E0824F!important;-webkit-text-fill-color:#E0824F!important}
+html body:not(#jv) #apg-torneio .atg-card{background:#FFFFFF!important;border-color:#E3D8C6!important}
+html body:not(#jv) #apg-torneio .atg-head{background:#101E18!important}
+html body:not(#jv) #apg-torneio .atg-badge{background:#B54E29!important;color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important}
+/* campeão: medalha continua ouro (DESIGN.md), também no Saibro */
+.tp-card.champ{background:radial-gradient(130%% 70%% at 50%% 0%%,rgba(228,200,120,.30),transparent 62%%),linear-gradient(165deg,#241B07,#3B2D0C 55%%,#4E3C10)!important;border-color:#C9A04A!important}
+.tp-card.champ .tp-title,.tp-card.champ .tp-parabens{color:#F1D88E!important}
+html body:not(#jv) #apg-torneio .atg-tbl th{background:#F1EBE1!important;color:#6B5E4A!important;-webkit-text-fill-color:#6B5E4A!important}
+html body:not(#jv) #apg-torneio .atg-tbl td{background:#FFFFFF!important;color:#2A2016!important;-webkit-text-fill-color:#2A2016!important;border-bottom-color:#EFE7DA!important}
+html body:not(#jv) #apg-torneio .atg-tbl tr.me td{background:#F6F0E4!important}
+/* Coerência (28/10): mensalidade em dia na bolinha; horário livre da agenda na
+   bolinha clara, igual à imagem "Divulgar livres"; aviso da Evolução em saibro. */
+html body:not(#jv) .jv-pay-status[data-status="pago"]{background:rgba(212,225,87,.16)!important;color:#D4E157!important;-webkit-text-fill-color:#D4E157!important;border-color:rgba(212,225,87,.35)!important}
+html body:not(#jv) #apg-agenda .wc.livre{background:#FFFFFF!important;color:#3F4E0F!important;-webkit-text-fill-color:#3F4E0F!important}
+html body:not(#jv) #apg-agenda .sl.livre{background:#FFFFFF!important;border-color:#CBD66B!important;color:#3F4E0F!important;-webkit-text-fill-color:#3F4E0F!important}
+html body:not(#jv) #apg-agenda .sl.livre i{background:#EEF2C9!important;color:#46560F!important;-webkit-text-fill-color:#46560F!important}
+html body:not(#jv) #apg-agenda .lg-livre{background:#FFFFFF!important;color:#3F4E0F!important;-webkit-text-fill-color:#3F4E0F!important;box-shadow:inset 0 0 0 1.5px #CBD66B!important}
+html body:not(#jv) #apg-evolucao .evo-pend{background:rgba(194,88,46,.16)!important;color:#F6CDB4!important;-webkit-text-fill-color:#F6CDB4!important;border-color:rgba(224,130,79,.35)!important}
 """ % {"b": BOLA, "t": BOLA_TXT}
 
 CAB_AL = ("/* GERADO por ferramentas/tema-saibro.py — NÃO EDITE. Só as cores do <style> de\n"
@@ -366,7 +438,7 @@ def gerar_aluno():
 
 
 def main():
-    saidas = [(DEST, gerar(open(ORIG, encoding="utf-8").read()) + EXTRA + VIDRO),
+    saidas = [(DEST, gerar(open(ORIG, encoding="utf-8").read()) + EXTRA + VIDRO + IMAGENS + COERENCIA),
               (AL_DEST, gerar_aluno())]
     if "--checar" in sys.argv:
         ruins = [d for d, novo in saidas

@@ -62,6 +62,51 @@ rodada 2 do visual sóbrio foram descartadas). Então:
   tempo/clima usa só SVG (`iconeClima`), nunca emoji.
 - Antes de publicar qualquer tela, mandar **prévia em imagem** para ele aprovar.
 
+## Padrão Saibro com bolinha — versão agência (28/10)
+
+Pedido do João: "mais profissional, com a cara e a essência do tênis, ar premium, feito
+por uma agência cara". Vale para os dois apps (tema Saibro), as imagens e documentos
+que eles geram e o site.
+
+**A regra de proporção** (é ela que dá o ar caro, não a cor):
+
+| Cor | Onde | Quanto |
+|---|---|---|
+| Verde quase preto (`#091711`/`#101E18`) e creme/papel (`#F6F1E8`, `#FBF8F2`) | fundo, texto, documentos | quase tudo |
+| **Saibro** (`#C2582E`; com letra branca `#B54E29`) | cor da marca: botão principal, item escolhido, título, fio | pouco |
+| **Bolinha** (`#D4E157`) | só detalhe: pontinho, ✓, borda fina, número que subiu, "pago" | quase nada |
+
+- **Nunca bolinha em área grande** (botão inteiro, célula inteira, faixa). Em área
+  grande ela vira "loja de esporte".
+- **Cor lisa** no site e nos documentos: sem degradê em botão. O brilho "Vidro Aero"
+  dos apps continua, porque é escolha do João.
+- **Mais creme, menos caixinha colorida** nos documentos. Destaque com fio ou com o
+  título, não com fundo.
+- Medalhas continuam ouro e prata; níveis da avaliação com o metal de cada nível;
+  cores de categoria da agenda (Tênis, Grupo, Personal…) continuam; o LED verde de
+  "quadra liberada" fica (é sinal de trânsito).
+- **Exceção pedida pelo João (28/10): a imagem "Divulgar livres" é um semáforo**, nos
+  dois temas: livre em verde (`#D7EEDC`, letra `#14522B`), ocupado em vermelho
+  (`#F9DEDA`, letra `#9B2219`) e locação no amarelo da bola de tênis (`#E8F08A`,
+  letra `#3F470C`). É a única área grande com a cor da bolinha.
+- **Cartões do torneio no app do aluno** (campeão, vice, vitória, fim de etapa): fundo
+  escuro com o metal só no detalhe (borda e título em ouro ou prata). Dourado ou prata
+  claros com letra branca não dão leitura. O campeão ganha confete (`confeteBurst`,
+  canvas por cima do cartão, com bolinhas de tênis); "reduzir movimento" desliga a
+  animação.
+- No tema "Verde clássico", os apps e as imagens saem como antes.
+
+**Exemplos aplicados:**
+- ✓ Aula e + Receita em vidro escuro com ✓ e borda na bolinha.
+- "Divulgar livres", "Avaliar", "Ver planos" e pagar: saibro liso.
+- "Horários": vidro neutro.
+- Horário livre: branco com letra oliva e borda fina de bolinha.
+- 1º do ranking: linha creme.
+- Selo das seções do site: texto saibro claro com um pontinho de bolinha.
+- Código: blocos `IMAGENS`, `COERENCIA` e `EXTRA_ALUNO` em
+  `ferramentas/tema-saibro.py`; `coresImg()` e `homArte` em `app-gestao.js`;
+  variáveis `--gold`, `--bola` e `--saibro-btn` no site.
+
 ## Personalidade
 
 Escuro, calmo e "premium de clube": fundo verde quase preto, topo com a foto
@@ -140,7 +185,10 @@ Classe nova com prefixo próprio da tela (já usados: `al-`, `fic-`, `rm-`, `cx-
 ## O que guarda este visual (rode antes de publicar)
 
 - `sh ferramentas/checar-tudo.sh` (inclui o tema Saibro em dia e o premium)
-- `ferramentas/testar-contraste-gestao-browser.cjs` e `testar-contraste-aluno-browser.cjs` (leitura)
+- `ferramentas/testar-contraste-gestao-browser.cjs` (inclui as imagens que a Gestão gera),
+  `testar-contraste-aluno-browser.cjs` e `testar-contraste-site-browser.cjs` (leitura)
+- `ferramentas/testar-todos-botoes-browser.cjs` (toca em todos os botões, janelas, listas e campos
+  dos dois apps e falha se algum der erro)
 - `ferramentas/testar-letras-aluno-browser.cjs` (letra mínima, nada passa da tela)
 - `ferramentas/testar-vidro-aero-browser.cjs`, `testar-premium-browser.cjs`, `testar-textos-curtos-browser.cjs`
 - Prévia em imagem para o João antes de publicar.

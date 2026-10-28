@@ -57,10 +57,12 @@ body[data-modo="prof"] .so-dono{display:none!important}
 .sx-tbl th small{display:block;font-size:10.5px;color:#6B5E4A;font-weight:600}
 .sx-tbl td.h{font-size:12px;font-weight:800;color:#6B5E4A;text-align:right;padding-right:6px;width:56px}
 .sx-c{border-radius:9px;padding:9px 3px;text-align:center;font-size:11.5px;font-weight:800;line-height:1.15}
-.sx-livre{background:#E3F2E4;color:#2E7D52;border:1.5px solid #BFDCC4}
-.sx-loc{background:#FBF3DC;color:#9A7B2E;border:1.5px solid #E4AF92}
-.sx-ocup{background:#EFE9DD;color:#A99C86;border:1px solid #E2D5C0}
-.sx-off{background:#F5F1E9;color:#C9C0AF;border:1px dashed #E2D5C0}
+/* semáforo da imagem "Divulgar livres" (pedido do João, 28/10): livre verde,
+   ocupado vermelho, locação amarelo bola de tênis — mesmo nos dois temas */
+.sx-livre{background:#D7EEDC;color:#193F2F;border:1.5px solid #7DBE8E}
+.sx-loc{background:#E8F08A;color:#3F470C;border:1.5px solid #C2D13A}
+.sx-ocup{background:#F9DEDA;color:#9B2219;border:1.5px solid #E39A90}
+.sx-off{background:#F5F1E9;color:#766D60;border:1px dashed #E2D5C0}
 .sx-leg{display:flex;gap:14px;flex-wrap:wrap;margin-top:16px;font-size:12px;font-weight:700;color:#6B5E4A;align-items:center}
 .sx-leg i{width:15px;height:15px;border-radius:5px;display:inline-block;vertical-align:-3px;margin-right:5px}
 .sx-foot{margin-top:14px;font-size:12px;color:#6B5E4A;text-align:center;font-weight:600}
@@ -3466,6 +3468,13 @@ html body:not(#jv) .evo-mes{background:rgba(255,255,255,.05);border-color:rgba(2
 html body:not(#jv) .evo-mes-track{background:rgba(255,255,255,.12)}
 html body:not(#jv) .evo-mes-lab,html body:not(#jv) .evo-mes-val i{color:#D8D2C7;-webkit-text-fill-color:#D8D2C7}
 html body:not(#jv) .evo-mes-val{color:#F4F1EA;-webkit-text-fill-color:#F4F1EA}
+/* A imagem da avaliação é de papel claro: o gráfico mês a mês volta às cores de
+   papel (com o texto claro do tema escuro, os meses e as % sumiam). 28/10 */
+html body:not(#jv) #aval-export .evo-mes{background:#fff;border-color:#E3D8C6}
+html body:not(#jv) #aval-export .evo-mes-track{background:#EFE9DD}
+html body:not(#jv) #aval-export .evo-mes-lab,html body:not(#jv) #aval-export .evo-mes-val i{color:#6B5E4A;-webkit-text-fill-color:#6B5E4A}
+html body:not(#jv) #aval-export .evo-mes-val{color:#2A2016;-webkit-text-fill-color:#2A2016}
+html body:not(#jv) #aval-export .evo-mes-cap{color:#3F7A4E;-webkit-text-fill-color:#3F7A4E}
 html body:not(#jv) .evo-mes-cap{color:#D4E157;-webkit-text-fill-color:#D4E157}
 html body:not(#jv) .aval-hist .hrow{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14);color:#F4F1EA;-webkit-text-fill-color:#F4F1EA}
 html body:not(#jv) .aval-hist .hrow span{color:#F4F1EA;-webkit-text-fill-color:#F4F1EA}
@@ -3484,6 +3493,15 @@ html body:not(#jv) .modal .aex-wrap .evo-mes-cap{color:#2E6B40;-webkit-text-fill
 html body:not(#jv) .modal .aex-wrap .aex-step:not(.done):not(.cur){color:#5E584C;-webkit-text-fill-color:#5E584C}
 html body:not(#jv) .modal .aex-wrap .aex-step.done,html body:not(#jv) .modal .aex-wrap .aex-step.cur{color:#fff;-webkit-text-fill-color:#fff}
 html body:not(#jv) .modal .aex-wrap .aex-top .st{color:#3D3A33;-webkit-text-fill-color:#3D3A33}
+/* As imagens (fora da tela) saem iguais ao relatório da janela: a varredura de
+   leitura de 28/10 achou data, nível futuro, título do gráfico e rodapé claros
+   demais na imagem da avaliação e no ranking do torneio. */
+html body:not(#jv) #aval-export .aex-wrap .evo-sec{color:#6B4F12;-webkit-text-fill-color:#6B4F12}
+html body:not(#jv) #aval-export .tex-head span,html body:not(#jv) #aval-export .tex-foot{color:#5E584C;-webkit-text-fill-color:#5E584C}
+html body:not(#jv) #aval-export .aex-step:not(.done):not(.cur){color:#5E584C;-webkit-text-fill-color:#5E584C}
+html body:not(#jv) #aval-export .aex-top .st{color:#3D3A33;-webkit-text-fill-color:#3D3A33}
+html body:not(#jv) #tor-export .tex-head span,html body:not(#jv) #tor-export .tex-foot{color:#5E584C;-webkit-text-fill-color:#5E584C}
+html body:not(#jv) #tor-export .tex-pts{color:#9C4A1F;-webkit-text-fill-color:#9C4A1F}
 html body:not(#jv) .avacts .b3{background:#E3F2E4;color:#1F6B3A;-webkit-text-fill-color:#1F6B3A}
 /* Avisos, aulas de hoje e busca */
 html body:not(#jv) .aviso-btn{background:rgba(255,255,255,.06);color:#E69468;-webkit-text-fill-color:#E69468}
@@ -3708,9 +3726,13 @@ html body:not(#jv)[data-pagina]:not([data-pagina="dash"]) .top .top-actions .eye
 .btn-clay{background:#C2582E!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
 .seg button.on,.seg .on{background:#C2582E!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
 #pg-lanc .cx-filtros button.on{background:#C2582E!important;border-color:#C2582E!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
-/* bolinha nos botões de ação */
-.al-aula,.fic-b.prim,.fic-b.prim2,.fic-b.ok,#pg-lanc .cx-ac.in{background:#D4E157!important;border-color:#D4E157!important;color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important}
-.al-aula *,.fic-b.prim *,.fic-b.prim2 *,.fic-b.ok *,#pg-lanc .cx-ac.in *{color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important;stroke:#1E2A0E!important}
+/* Versão agência (28/10): a bolinha é detalhe, não fundo. ✓ Aula e + Receita em vidro
+   escuro com o ✓/borda na bolinha; ações principais da ficha em saibro liso. */
+.al-aula,#pg-lanc .cx-ac.in{background:rgba(16,30,24,.72)!important;border:1px solid rgba(212,225,87,.55)!important;color:#F8F5ED!important;-webkit-text-fill-color:#F8F5ED!important}
+.al-aula *,#pg-lanc .cx-ac.in *{color:#F8F5ED!important;-webkit-text-fill-color:#F8F5ED!important}
+.al-aula svg,.al-aula svg *,#pg-lanc .cx-ac.in svg,#pg-lanc .cx-ac.in svg *{stroke:#D4E157!important;color:#D4E157!important}
+.fic-b.prim,.fic-b.prim2,.fic-b.ok{background:#B54E29!important;border-color:#B54E29!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+.fic-b.prim *,.fic-b.prim2 *,.fic-b.ok *{color:#FFF!important;-webkit-text-fill-color:#FFF!important;stroke:#FFF!important}
 /* Início: a série "Total" (anel, comparativo e gráfico) em areia. Com o
    dourado virando terra, ela ficava no mesmo laranja do Tênis. */
 #pg-dash{--jh-total:#EAD7B0}
@@ -3754,3 +3776,37 @@ html body:not(#jv) .fic-b.neutro,html body:not(#jv) .fic-voltar,html body:not(#j
   -webkit-backdrop-filter:blur(8px) saturate(150%);backdrop-filter:blur(8px) saturate(150%);
   border:1px solid rgba(255,255,255,.12)!important;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 6px 18px rgba(0,0,0,.22)!important}
+
+/* ===== Imagens e comprovantes: Saibro com bolinha ===== */
+#sem-export,#tor-export,#aval-export,#fech-export .fx-card{--green:#101E18;--gold:#C2582E;--clay:#B54E29;--muted:#6B5E4A;--border:#E3D8C6}
+#tor-export,#aval-export{background:#FBF8F2!important}
+.sx-head,.tex-head{border-bottom-color:#C2582E!important}
+.sx-head b,.sx-tbl th,.tex-head b,.tex-grp h4{color:#101E18!important}
+.sx-emb,.tex-emb{background:#101E18!important;color:#E0824F!important}
+.sx-livre{background:#D7EEDC!important;color:#14522B!important;border:1.5px solid #7DBE8E!important}
+.sx-loc{background:#E8F08A!important;color:#3F470C!important;border:1.5px solid #C2D13A!important}
+.sx-ocup{background:#F9DEDA!important;color:#9B2219!important;border:1.5px solid #E39A90!important}
+.sx-off{background:#F5F1E9!important;color:#766D60!important;border:1px dashed #E2D5C0!important}
+.tex-tbl th{background:#101E18!important;color:#F8F5ED!important}
+.tex-tbl tr.r1 td{background:#F6F0E4!important}
+.tex-pts{color:#B54E29!important}
+.aex-prio{background:#F6F1E8!important;border-color:#E3D8C6!important}
+.aex-prio b,.aex-sec{color:#101E18!important}
+html body:not(#jv) #aval-export .evo-mes-cap{color:#4E5E12!important;-webkit-text-fill-color:#4E5E12!important}
+/* fechamento: papel e tinta escura como antes (regra de leitura); só os títulos em saibro */
+html body:not(#jv) #pg-fech .fx-sec,html body:not(#jv) #pg-fech .fx-mes{color:#B54E29!important}
+html body:not(#jv) #pg-fech .fx-topo{border-bottom:2px solid #C2582E!important}
+
+/* ===== Coerência Saibro com bolinha na Gestão ===== */
+html body:not(#jv) #pg-agenda .agf-corpo button.destaque{background:rgba(22,46,36,.55)!important;border:1px solid rgba(255,255,255,.16)!important;color:#F8F5ED!important;-webkit-text-fill-color:#F8F5ED!important}
+html body:not(#jv) #pg-agenda .agf-corpo button.destaque small{color:#D8D2C7!important;-webkit-text-fill-color:#D8D2C7!important}
+html body:not(#jv) #pg-agenda .agf-corpo button.ouro{background:#B54E29!important;border-color:#B54E29!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+html body:not(#jv) #pg-agenda .agf-corpo button.ouro small{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+html body:not(#jv) #pg-alunos .al-selo.pago{background:rgba(212,225,87,.16)!important;color:#D4E157!important;-webkit-text-fill-color:#D4E157!important;border:1px solid rgba(212,225,87,.35)!important}
+html body:not(#jv) #pg-alunos .al-selo.parcial,html body:not(#jv) #pg-alunos .al-tag.ouro{background:rgba(194,88,46,.24)!important;color:#F4BC9A!important;-webkit-text-fill-color:#F4BC9A!important}
+html body:not(#jv) #pg-aval .avacts .b1{background:#B54E29!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
+html body:not(#jv) #pg-aval .avacts .b1 *{color:#FFF!important;-webkit-text-fill-color:#FFF!important;stroke:#FFF!important}
+/* Início: "subiu" e "conferido" na bolinha (o LED verde da quadra liberada fica: é sinal de trânsito) */
+html body:not(#jv) #pg-dash .jh-delta.sobe{background:rgba(212,225,87,.14)!important}
+html body:not(#jv) #pg-dash .jh-conf i{background:#D4E157!important;color:#1E2A0E!important;-webkit-text-fill-color:#1E2A0E!important}
+html body:not(#jv) #pg-dash .jh-conf.ok{background:rgba(212,225,87,.14)!important;border-color:rgba(212,225,87,.40)!important;color:#E4EC9A!important;-webkit-text-fill-color:#E4EC9A!important}

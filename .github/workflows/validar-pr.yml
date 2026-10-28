@@ -13,7 +13,9 @@ concurrency:
 
 jobs:
   validar:
-    runs-on: ubuntu-latest
+    # 28/10: o "ubuntu-latest" virou 26.04 e o Playwright 1.56.1 não instala o
+    # navegador nele. Fica no 24.04 até subir o Playwright de propósito.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
@@ -90,6 +92,9 @@ jobs:
           node ferramentas/testar-contraste-aluno-browser.cjs
           node ferramentas/testar-letras-aluno-browser.cjs
           node ferramentas/testar-contraste-gestao-browser.cjs
+          node ferramentas/testar-contraste-site-browser.cjs
+          node ferramentas/testar-confete-campeao-browser.cjs
+          node ferramentas/testar-todos-botoes-browser.cjs
           node ferramentas/testar-ferramentas-agenda-browser.cjs
           node ferramentas/testar-lista-espera-browser.cjs
           node ferramentas/testar-avisos-celular-browser.cjs

@@ -54,6 +54,8 @@ Use `grep -n` pelos títulos de seção (`/* ===== Título =====`) ou pelo nome 
 - Extrato do aluno: `abrirExtrato` → `pintarExtrato` (resumido por padrão: `extratoResumido`, `EXT_ROTULO`; "Ver detalhado" = cru)
 - Quadrinhos do Início: `abrirDetAlunos`, `abrirDetCreditos` (`validadeRepos`), `abrirDetOcupacao` (`slotsDoDia`), `abrirDetLocacoes` → `#ov-jh-det`
 - Torneio: `campeoesDe`, `encerrarEtapa`, homenagens 1º/2º (`abrirHomenagens`, `homArte`, `homMensagem`)
+- Campeão no app do aluno: `checarPremiacaoTor` → `celebraTorneioPremio` (uma vez por etapa encerrada) + `confeteBurst(cor,forte)` (canvas por cima do cartão); 1º pela mesma ordem da Gestão (`rankTorAl` = `rankPlayersTor`)
+- Varredura de botões: `ferramentas/testar-todos-botoes-browser.cjs` (toca em tudo dos dois apps; falha com erro na página)
 - Tempo em Curitiba: `climaDoCodigo`, `iconeClima` (SVG, mesmo desenho no app do aluno; nada de emoji), `abrirClimaGestao`/`pintarPrevisaoClima`
 - Ocupação dia/mês/ano (janela do quadrinho): `ocupacaoTresPrazos`, `ocupacaoAno` (ano desde o 1º registro)
 - Caixa, locação com tempo: `lancCatMudou`/`lancHorasMudou`/`lancHorasLidas` (grava `horas` no lançamento; não mexe em crédito)
@@ -93,6 +95,11 @@ Nada de nome real de aluno ou compromisso pessoal no código: ele é público (P
 - App Check: João autorizou preparar a ativação em 2026-10-06. `APPCHECK_SITE_KEY` ainda vazio: falta a chave pública e o registro no console. Começar em monitoramento; exigência só após adaptar site e leitura REST do teste. Ver `ferramentas/APP-CHECK.md`.
 - Visual (27/10): o João não vai mudar mais o visual dos apps. As opções A/B/C e a rodada 2
   do visual sóbrio foram descartadas. Não propor mudança visual sem ele pedir.
+- Saibro com bolinha (28/10, pedido do João): imagens geradas (`coresImg`, `homArte`, blocos
+  `IMAGENS`/`COERENCIA` em `tema-saibro.py`), site/site-pro e pontos dos apps seguem o tema.
+  Versão agência: saibro liso = cor da marca (botão principal, escolha, título); bolinha SÓ em
+  detalhe (✓, pontinho, borda, "pago"), nunca em área grande; mais creme. Ver DESIGN.md.
+  Verde clássico continua como antes.
 - Repositório público: decisão pendente do João (privado exige GitHub Pro para manter o Pages).
 - **Família JK sem login (20/10):** a nuvem continua só com o link da família, sem criar conta.
   Login com Google só se não exigir mexer no Firebase nem criar contas — como exige (ligar o
