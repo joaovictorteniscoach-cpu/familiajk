@@ -43,3 +43,13 @@ docs, `.claude/` ou `ferramentas/` não sobe versão.
 ## 6. Responder ao João
 Em português simples: o que mudou na tela dele, o que foi testado, e o que ele precisa
 fazer (ex.: "feche e abra o app"). Sem jargão, sem listar arquivos.
+
+## 7. Se der divergência ou erro depois de publicar: voltar à versão anterior
+Pedido do João (28/10). Só código: dados de alunos, créditos e caixa não mudam.
+1. Recomece o branch designado do main (passo 1).
+2. `sh .claude/skills/publicar-versao/voltar-versao.sh <sha do merge publicado>` →
+   desfaz o merge com `git revert` (o histórico fica) e dá um carimbo de versão **novo**
+   (com o antigo, o celular pode não trocar o cache). Mantém a máquina do `validar-pr`.
+3. `sh ferramentas/checar-tudo.sh` + fumaça; push; PR; `validar` verde; merge (passo 5).
+4. Conferir o "Monitorar aplicativos publicados" (versões no ar) e avisar o João
+   ("feche e abra o app"). O sha de cada publicação fica no `REGISTRO-MUDANCAS.md`.

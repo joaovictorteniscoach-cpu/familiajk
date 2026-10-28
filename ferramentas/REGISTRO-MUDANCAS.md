@@ -8,6 +8,20 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-28 · Claude Code: publicada a v2026-10-28-1 (PR #267, merge `1c71ba2`)
+
+João: "termine o projeto e coloca no ar. Se der alguma divergência ou erro, que seja
+possível retornar a versão anterior".
+- No ar: Gestão e aluno (Pages e Netlify) em **2026-10-28-1**, conferido pelo
+  "Monitorar aplicativos publicados" logo depois do Pages. Versão anterior: 2026-10-27-2
+  (merge `c6c3772`).
+- **Como voltar** (pronto e testado numa cópia): `sh .claude/skills/publicar-versao/voltar-versao.sh 1c71ba2c8921d227db58d397f5ed05dcc89ad8db`
+  → volta exatamente ao conteúdo da 2026-10-27-2 com carimbo novo (2026-10-28-2) para os
+  celulares trocarem o cache; `checar-tudo` e fumaça passaram nessa volta. Depois PR →
+  validar → merge. Ver o passo 7 da skill `publicar-versao`. Não mexe em dados.
+- `validar-pr` passou a rodar no `ubuntu-24.04`: o `ubuntu-latest` virou 26.04 em 28/10 e
+  o Playwright 1.56.1 não instala o navegador nele. Subir o Playwright é outra tarefa.
+
 ## 2026-10-28 · Claude Code: varredura de botões e leitura, confete do campeão, semáforo no "Divulgar livres" (mesma v2026-10-28-1)
 
 Pedido do João: "testar e conferir todos os botões e escritas", "uma surpresa quando o
@@ -39,7 +53,7 @@ ocupado em vermelho e locação amarelo bola de tênis".
   leitura 2,2. Exceção registrada no DESIGN.md.
 - Nada mexe em valor, crédito, reposição ou regra do Firebase.
 
-## 2026-10-28 · Claude Code: Saibro com bolinha nas imagens, no site e nos apps (prévia; v2026-10-28-1)
+## 2026-10-28 · Claude Code: Saibro com bolinha nas imagens, no site e nos apps (v2026-10-28-1, publicada)
 
 João: "O Saibro com bolinha ficou muito bom. Não muda muito e fica mais coerente." Escolheu:
 imagens que os apps geram, site e páginas públicas, apps Gestão e aluno.
