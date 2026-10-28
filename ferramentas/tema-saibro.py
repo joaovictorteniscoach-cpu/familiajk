@@ -266,6 +266,30 @@ html body:not(#jv) #pg-aval .avcard .b2{background:#2B3B34!important}
 #renova-mes .rm-aviso{color:#F6CDB4!important;-webkit-text-fill-color:#F6CDB4!important}
 """ % {"b": BOLA, "t": BOLA_TXT}
 
+# Imagens e comprovantes que a Gestão gera para o aluno (semana livre, ranking,
+# avaliação, fechamento): papel claro com tinta escura, saibro nos fios e títulos,
+# bolinha clara no que é positivo (horário livre, 1º do grupo). Pedido do João,
+# 28/10: "Saibro com bolinha ... fica mais coerente". Só no tema Saibro.
+IMAGENS = """
+/* ===== Imagens e comprovantes: Saibro com bolinha ===== */
+#sem-export,#tor-export,#aval-export,#fech-export .fx-card{--green:#101E18;--gold:#C2582E;--clay:#B54E29;--muted:#6B5E4A;--border:#E3D8C6}
+#tor-export,#aval-export{background:#FBF8F2!important}
+.sx-head,.tex-head{border-bottom-color:#C2582E!important}
+.sx-head b,.sx-tbl th,.tex-head b,.tex-grp h4{color:#101E18!important}
+.sx-emb,.tex-emb{background:#101E18!important;color:#E0824F!important}
+.sx-livre{background:#EEF2C9!important;color:#46560F!important;border:1.5px solid #CBD66B!important}
+.sx-loc{background:#FBE6DA!important;color:#9A3F1C!important;border:1.5px solid #EBB394!important}
+.tex-tbl th{background:#101E18!important;color:#F8F5ED!important}
+.tex-tbl tr.r1 td{background:#EEF2C9!important}
+.tex-pts{color:#B54E29!important}
+.aex-prio:not([style]){background:#F2F4DC!important;border-color:#DCE29A!important}
+.aex-prio b,.aex-sec{color:#101E18!important}
+html body:not(#jv) #aval-export .evo-mes-cap{color:#4E5E12!important;-webkit-text-fill-color:#4E5E12!important}
+/* fechamento: papel e tinta escura como antes (regra de leitura); só os títulos em saibro */
+html body:not(#jv) #pg-fech .fx-sec,html body:not(#jv) #pg-fech .fx-mes{color:#B54E29!important}
+html body:not(#jv) #pg-fech .fx-topo{border-bottom:2px solid #C2582E!important}
+"""
+
 # Toque "air" (vidro fosco, como no iPhone e no Windows 11), nos dois apps:
 # fundo com brilhos suaves de saibro, bolinha e verde parados atrás da tela, e
 # os cartões levemente transparentes por cima. O desfoque (backdrop-filter)
@@ -347,7 +371,19 @@ html body:not(#jv):not(#jv-al) .modal .btn-ghost{background:#E6DED2!important;-w
 html body:not(#jv) .btn-clay,html body:not(#jv) .login-btn{background:#B54E29!important}
 html body:not(#jv):not(#jv-al) .seg button.on,html body:not(#jv):not(#jv-al) .seg .on{background:#B54E29!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
 html body:not(#jv):not(#jv-al) #ov-tor-result .tor-radio label{background:#2C4A3D!important}
-html body:not(#jv) #apg-torneio .atg-head,html body:not(#jv) #apg-torneio .tor-cap-emb{background:#1D3B2F!important}
+/* Torneio: o cartão da tela é o mesmo que vira imagem. Papel claro, tinta escura,
+   saibro nos títulos e bolinha clara na linha do aluno (Saibro com bolinha, 28/10). */
+html body:not(#jv) #apg-torneio #tor-capture{background:#FBF8F2!important;border-color:#E3D8C6!important}
+html body:not(#jv) #apg-torneio #tor-capture .tor-cap-head{border-bottom:2px solid #C2582E!important}
+html body:not(#jv) #apg-torneio #tor-capture .tor-cap-head b{color:#101E18!important;-webkit-text-fill-color:#101E18!important}
+html body:not(#jv) #apg-torneio #tor-capture .tor-cap-head span{color:#6B5E4A!important;-webkit-text-fill-color:#6B5E4A!important}
+html body:not(#jv) #apg-torneio .tor-cap-emb{background:#101E18!important;color:#E0824F!important;-webkit-text-fill-color:#E0824F!important}
+html body:not(#jv) #apg-torneio .atg-card{background:#FFFFFF!important;border-color:#E3D8C6!important}
+html body:not(#jv) #apg-torneio .atg-head{background:#101E18!important}
+html body:not(#jv) #apg-torneio .atg-badge{background:#C2582E!important;color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important}
+html body:not(#jv) #apg-torneio .atg-tbl th{background:#F1EBE1!important;color:#6B5E4A!important;-webkit-text-fill-color:#6B5E4A!important}
+html body:not(#jv) #apg-torneio .atg-tbl td{background:#FFFFFF!important;color:#2A2016!important;-webkit-text-fill-color:#2A2016!important;border-bottom-color:#EFE7DA!important}
+html body:not(#jv) #apg-torneio .atg-tbl tr.me td{background:#EEF2C9!important}
 """ % {"b": BOLA, "t": BOLA_TXT}
 
 CAB_AL = ("/* GERADO por ferramentas/tema-saibro.py — NÃO EDITE. Só as cores do <style> de\n"
@@ -366,7 +402,7 @@ def gerar_aluno():
 
 
 def main():
-    saidas = [(DEST, gerar(open(ORIG, encoding="utf-8").read()) + EXTRA + VIDRO),
+    saidas = [(DEST, gerar(open(ORIG, encoding="utf-8").read()) + EXTRA + VIDRO + IMAGENS),
               (AL_DEST, gerar_aluno())]
     if "--checar" in sys.argv:
         ruins = [d for d, novo in saidas

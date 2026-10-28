@@ -3464,6 +3464,13 @@ html body:not(#jv) .evo-mes{background:rgba(255,255,255,.05);border-color:rgba(2
 html body:not(#jv) .evo-mes-track{background:rgba(255,255,255,.12)}
 html body:not(#jv) .evo-mes-lab,html body:not(#jv) .evo-mes-val i{color:#D8D2C7;-webkit-text-fill-color:#D8D2C7}
 html body:not(#jv) .evo-mes-val{color:#F4F1EA;-webkit-text-fill-color:#F4F1EA}
+/* A imagem da avaliação é de papel claro: o gráfico mês a mês volta às cores de
+   papel (com o texto claro do tema escuro, os meses e as % sumiam). 28/10 */
+html body:not(#jv) #aval-export .evo-mes{background:#fff;border-color:#E3D8C6}
+html body:not(#jv) #aval-export .evo-mes-track{background:#EFE9DD}
+html body:not(#jv) #aval-export .evo-mes-lab,html body:not(#jv) #aval-export .evo-mes-val i{color:#6B5E4A;-webkit-text-fill-color:#6B5E4A}
+html body:not(#jv) #aval-export .evo-mes-val{color:#2A2016;-webkit-text-fill-color:#2A2016}
+html body:not(#jv) #aval-export .evo-mes-cap{color:#3F7A4E;-webkit-text-fill-color:#3F7A4E}
 html body:not(#jv) .evo-mes-cap{color:#9BE3B4;-webkit-text-fill-color:#9BE3B4}
 html body:not(#jv) .aval-hist .hrow{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14);color:#F4F1EA;-webkit-text-fill-color:#F4F1EA}
 html body:not(#jv) .aval-hist .hrow span{color:#F4F1EA;-webkit-text-fill-color:#F4F1EA}

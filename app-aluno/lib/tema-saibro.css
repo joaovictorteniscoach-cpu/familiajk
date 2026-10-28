@@ -811,4 +811,16 @@ html body:not(#jv):not(#jv-al) .modal .btn-ghost{background:#E6DED2!important;-w
 html body:not(#jv) .btn-clay,html body:not(#jv) .login-btn{background:#B54E29!important}
 html body:not(#jv):not(#jv-al) .seg button.on,html body:not(#jv):not(#jv-al) .seg .on{background:#B54E29!important;color:#FFF!important;-webkit-text-fill-color:#FFF!important}
 html body:not(#jv):not(#jv-al) #ov-tor-result .tor-radio label{background:#2C4A3D!important}
-html body:not(#jv) #apg-torneio .atg-head,html body:not(#jv) #apg-torneio .tor-cap-emb{background:#1D3B2F!important}
+/* Torneio: o cartão da tela é o mesmo que vira imagem. Papel claro, tinta escura,
+   saibro nos títulos e bolinha clara na linha do aluno (Saibro com bolinha, 28/10). */
+html body:not(#jv) #apg-torneio #tor-capture{background:#FBF8F2!important;border-color:#E3D8C6!important}
+html body:not(#jv) #apg-torneio #tor-capture .tor-cap-head{border-bottom:2px solid #C2582E!important}
+html body:not(#jv) #apg-torneio #tor-capture .tor-cap-head b{color:#101E18!important;-webkit-text-fill-color:#101E18!important}
+html body:not(#jv) #apg-torneio #tor-capture .tor-cap-head span{color:#6B5E4A!important;-webkit-text-fill-color:#6B5E4A!important}
+html body:not(#jv) #apg-torneio .tor-cap-emb{background:#101E18!important;color:#E0824F!important;-webkit-text-fill-color:#E0824F!important}
+html body:not(#jv) #apg-torneio .atg-card{background:#FFFFFF!important;border-color:#E3D8C6!important}
+html body:not(#jv) #apg-torneio .atg-head{background:#101E18!important}
+html body:not(#jv) #apg-torneio .atg-badge{background:#C2582E!important;color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important}
+html body:not(#jv) #apg-torneio .atg-tbl th{background:#F1EBE1!important;color:#6B5E4A!important;-webkit-text-fill-color:#6B5E4A!important}
+html body:not(#jv) #apg-torneio .atg-tbl td{background:#FFFFFF!important;color:#2A2016!important;-webkit-text-fill-color:#2A2016!important;border-bottom-color:#EFE7DA!important}
+html body:not(#jv) #apg-torneio .atg-tbl tr.me td{background:#EEF2C9!important}
