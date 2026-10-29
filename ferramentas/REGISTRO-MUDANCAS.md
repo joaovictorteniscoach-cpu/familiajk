@@ -8,6 +8,25 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-10-29 · Claude Code: Agenda abre no horário de agora sem rolagem animada (v2026-10-29-1)
+
+Print do João (iPhone, Agenda do dia): a faixa "Marcar o dia inteiro como chuva" por
+cima do relógio e da bateria, o cabeçalho sumido e a barra de baixo no meio da tela,
+com horários aparecendo embaixo dela. O horário de agora estava exatamente onde a
+ida automática ao "agora" deixa.
+- Causa provável: `html{scroll-behavior:smooth}` + `go()` subindo ao topo animado e,
+  80 ms depois, `rolarAgendaAgora` descendo animado, com o cabeçalho encolhendo
+  (`.top.compacto`) no meio do caminho. No iPhone isso desencaixa a parte visível da
+  página (visualViewport deslocado): o fixo de baixo e o grudado de cima saem do lugar.
+- `rolarSemAnimacao(y)`: `go()` e `rolarAgendaAgora` rolam na hora; a Agenda encolhe o
+  cabeçalho antes e faz a conta com ele pequeno. A rolagem suave continua no resto.
+- `encaixarTela`: se, depois de uma rolagem, `visualViewport.offsetTop` ficar diferente
+  de 0 (sem teclado aberto e sem zoom), um empurrão de 1 px faz o iPhone encaixar de
+  novo; no máximo 2 tentativas. Em outros aparelhos não faz nada.
+- Teste `testar-agenda-rolagem-browser.cjs` (falha na versão anterior: a Agenda ainda
+  estava no meio da animação). Não reproduzimos o iPhone aqui: confirmar no aparelho.
+- A pílula branca à esquerda do print é o indicador de volume do iPhone (não é do app).
+
 ## 2026-10-28 · Claude Code: ✓ em família só pergunta por quem está no mesmo horário (v2026-10-28-2)
 
 João: ao marcar a presença de uma responsável que fazia aula em grupo com outra
