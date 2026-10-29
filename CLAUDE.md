@@ -45,7 +45,7 @@ Use `grep -n` pelos títulos de seção (`/* ===== Título =====`) ou pelo nome 
 - Alunos: `Lista de alunos + ficha do aluno` (`linhaAluno`, `renderFicha`, `abrirFicha`)
 - Financeiro: `Caixa`; aba **Segurança e dados** (`pg-seg`, menu Mais): conta, acessos do aluno e ferramentas (`FERR_BOXES`, `abrirFerr`, `Conferir números`/`achadosDoAluno`)
 - Alunos ↔ app do aluno: `Segurança P0` (`pedidoConfiavel`, `publicarSeguro`), `doPublish`, `FILA DE PEDIDOS`
-- Navegação: `go(id)`; render geral: `renderAll()`
+- Navegação: `go(id)`; render geral: `renderAll()`. Rolagem feita pelo app: `rolarSemAnimacao(y)` (nunca animada: no iPhone desencaixava a tela com o cabeçalho encolhendo); `rolarAgendaAgora`; rede de proteção `encaixarTela` (visualViewport)
 
 - Inativar aluno: `arquivarAluno` → `agendaFuturaDoAluno`/`encerrarAgendaFutura`/`desfazerInativar` (pergunta antes de encerrar horários)
 - Reposições (Gráficos): `reposLiquidas`, `reposPorMes`, `renderGrafRepos`, `abrirReposMes` (só leem o extrato)

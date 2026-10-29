@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-10-28-2';
+const VERSAO='2026-10-29-1';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -3455,7 +3455,7 @@ function go(id,btn){
   document.getElementById('pg-'+id).classList.add('on');
   document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
-  window.scrollTo({top:0});
+  rolarSemAnimacao(0);
   if(id==='agenda'){syncRequests(true);marcarVisto('agenda');if(wkAutoFit)wkZoomFit();setTimeout(rolarAgendaAgora,80);}
   if(id==='lanc'){filtroLancCat=null;cxBusca='';cxEditando=false;caixaDia=null;renderMovs();}   // abrir a Caixa pela barra mostra tudo
   if(id==='fech')abrirFechamento();
@@ -4404,11 +4404,22 @@ function slotAgora(){
   HORAS_GRADE.forEach(h=>{const[a,b]=h.split(':').map(Number);if(a*60+b<=m)r=h;});
   return r;
 }
+/* Rola na hora, sem a animação do html{scroll-behavior:smooth}. No iPhone, a
+   rolagem animada com o cabeçalho encolhendo no meio do caminho deixava a tela
+   desencaixada: o topo sumia atrás do relógio e a barra de baixo subia para o
+   meio da tela (print do João, 29/10). */
+function rolarSemAnimacao(y){
+  const h=document.documentElement,antes=h.style.scrollBehavior;
+  h.style.scrollBehavior='auto';window.scrollTo(0,Math.max(0,y));h.style.scrollBehavior=antes;
+}
 function rolarAgendaAgora(){
   if(agView!=='dia'&&agView!=='semana')return;
   const el=document.querySelector('#pg-agenda .agora');if(!el)return;
-  const y=el.getBoundingClientRect().top+window.scrollY-Math.round(window.innerHeight*0.32);
-  if(y>0)window.scrollTo({top:y,behavior:'smooth'});
+  const alvo=()=>el.getBoundingClientRect().top+window.scrollY-Math.round(window.innerHeight*0.32);
+  let y=alvo();if(y<=0)return;
+  // o cabeçalho encolhe ANTES de rolar (é o que aconteceria na rolagem); a conta é refeita com ele já pequeno
+  const t=document.querySelector('.top');if(y>40&&t&&!t.classList.contains('compacto')){t.classList.add('compacto');y=alvo();}
+  if(y>0)rolarSemAnimacao(y);
 }
 /* Na grade da semana a coluna é estreita: palavra longa vira abreviação
    ("Grupo intermediário" → "Grupo interm.") em vez de quebrar no meio. */
@@ -13148,6 +13159,27 @@ function confirmarAulaWa(id,hora){
     else if(compacto&&y<20){compacto=false;t.classList.remove('compacto');}
   };
   window.addEventListener('scroll',()=>{requestAnimationFrame(aplica);},{passive:true});
+})();
+/* Rede de proteção do iPhone (29/10): se, depois de uma rolagem, a tela ficar
+   desencaixada (a parte visível deslocada da página: topo atrás do relógio e
+   barra de baixo no meio), dá um empurrãozinho de 1 px para o iPhone encaixar
+   de novo. Não mexe com teclado aberto nem com zoom de dois dedos; no máximo
+   duas tentativas por vez. Em outros aparelhos o deslocamento é sempre 0 e
+   nada acontece. */
+(function encaixarTela(){
+  const vv=window.visualViewport;if(!vv)return;
+  let espera=0,tentativas=0;
+  const confere=()=>{
+    const a=document.activeElement;
+    if(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return;
+    if(Math.abs(vv.scale-1)>0.01||Math.abs(vv.offsetTop)<=1){tentativas=0;return;}
+    if(tentativas>=2)return;
+    tentativas++;
+    const h=document.documentElement,antes=h.style.scrollBehavior;h.style.scrollBehavior='auto';
+    window.scrollBy(0,1);window.scrollBy(0,-1);h.style.scrollBehavior=antes;
+  };
+  const agenda=()=>{clearTimeout(espera);espera=setTimeout(confere,200);};
+  window.addEventListener('scroll',agenda,{passive:true});vv.addEventListener('resize',agenda);vv.addEventListener('scroll',agenda);
 })();
 /* ===== Textos longos encolhidos (20/10) =====
    Pedido do João: em vez de muito texto aberto, mostrar só o começo e uma
