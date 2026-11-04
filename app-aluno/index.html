@@ -2522,8 +2522,11 @@ function esperarConexaoNuvem(ms){
     const ouvir=s=>{if(s&&s.val()===true)fim(true);};
     const fim=v=>{if(feito)return;feito=true;clearTimeout(timer);try{if(ref)ref.off('value',ouvir);}catch(e){}resolve(v);};
     timer=setTimeout(()=>fim(false),ms||PRAZO_CONEXAO);
+    try{ref=window.fbDB.ref('.info/connected');}catch(e){fim(false);return;}
+    // já conectado: a leitura local responde na hora e não há o que esperar
+    Promise.resolve().then(()=>ref.once('value')).then(ouvir,()=>{});
     try{window.fbDB.goOnline();}catch(e){}
-    try{ref=window.fbDB.ref('.info/connected');ref.on('value',ouvir);}catch(e){fim(false);}
+    try{ref.on('value',ouvir);}catch(e){}
   });
 }
 /* O motivo vai junto do erro, para o aviso dizer o que de fato aconteceu. */
