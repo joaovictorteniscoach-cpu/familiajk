@@ -31,6 +31,11 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 - Teste novo `testar-conexao-nuvem-aluno-browser.cjs` (no validar-pr): SDK real do app
   com servidor falso, só dados fictícios; falha na versão anterior com o mesmo aviso do
   print.
+- `testar-seguranca-pagamentos-browser.cjs` tinha "2026-10" fixo com o relógio real e
+  falhava desde 01/11 (também no validar-pr). Só no teste: o relógio da página começa em
+  20/10/2026 e anda normalmente; o carimbo da "nuvem" do teste usa o relógio da página.
+- `testar-salvamento-firebase-browser.cjs` (emulador, só no CI) usa uma cópia própria da
+  `atualizarGradeReserva` antiga; não foi alterado.
 
 ## 2026-10-29 · Claude Code: Agenda abre no horário de agora sem rolagem animada (v2026-10-29-1)
 

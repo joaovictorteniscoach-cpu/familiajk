@@ -38,6 +38,9 @@ async function setup(context,base,theme='saibro'){
   remote=copy(next);cloudWrites++;return {committed:true,current:copy(remote)};
  });
  await p.exposeFunction('testAuxWrite',()=>{auxWrites++;});
+ // Os dados de teste são de outubro de 2026 ('2026-10' fixo nas contas): o relógio
+ // começa num dia de outubro e anda normalmente (antes, em novembro o teste falhava).
+ await p.clock.setSystemTime(new Date('2026-10-20T10:00:00-03:00'));
  await p.goto(base+'/app-gestao/',{waitUntil:'load'});
  await p.waitForFunction(()=>typeof CARREGADO!=='undefined'&&CARREGADO,{},{timeout:15000});
  await p.evaluate(f=>{
@@ -273,7 +276,7 @@ async function shot(p,theme,key,locator){
    });
    await check(theme+': reabrir preserva edição offline mesmo com relógio atrasado',async()=>{
     remote=await nodeOf(p,fixture);const baseNo=copy(remote);await configureCloud(p,baseNo);
-    remote.alunos.solo=JSON.stringify({...fixture.alunos[0],mensalidade:950});remote.carimbos.savedAt=Date.now()+3600000;
+    remote.alunos.solo=JSON.stringify({...fixture.alunos[0],mensalidade:950});remote.carimbos.savedAt=(await p.evaluate(()=>Date.now()))+3600000;   // relógio da página
     await p.evaluate(f=>{DB=JSON.parse(JSON.stringify(f));ensureFields();DB.alunos[0].mensalidade=720;DB.savedAt=2;lsSet(KEY,JSON.stringify(DB));marcarSemNuvem(true);},fixture);
     const checkpoint=await p.evaluate(()=>metaProtecao().base);
     const writes=cloudWrites;await p.evaluate(()=>load());
