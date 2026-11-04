@@ -380,7 +380,7 @@ body[data-aba="aulas"] #bloco-saldo #repos-box{display:none}
 .btn{flex:1;border:none;border-radius:12px;padding:13px;font-weight:700;font-size:13px}
 .btn-clay{background:var(--clay);color:#fff;box-shadow:0 3px 12px rgba(201,71,43,.3)}
 .btn-ghost{background:none;border:1px solid var(--border);color:var(--muted)}
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--dark);color:var(--cream);font-size:13px;font-weight:500;padding:11px 18px;border-radius:24px;opacity:0;transition:all .3s;z-index:200;pointer-events:none;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--dark);color:var(--cream);font-size:13px;font-weight:500;line-height:1.4;padding:11px 18px;border-radius:24px;opacity:0;transition:all .3s;z-index:200;pointer-events:none;width:max-content;max-width:min(92vw,440px);text-align:center;overflow-wrap:anywhere}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .atg-card{background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.04)}
 .atg-head{display:flex;align-items:center;gap:9px;padding:10px 13px;background:var(--green);color:var(--cream)}
@@ -1671,15 +1671,15 @@ html body:not(#jv) #pedir-box .btn-ghost{background:#F3EDE2!important;border:1px
 .login .login-sub{opacity:1}
 .login-priv{color:rgba(250,247,242,.8)}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-10-29-1">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-11-04-1">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-10-29-1">
-<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-10-29-1">
-<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-10-29-1">
-<link rel="stylesheet" href="lib/visual-sobrio.css?v=2026-10-29-1">
-<link rel="stylesheet" href="lib/letras-maiores.css?v=2026-10-29-1">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-11-04-1">
+<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-11-04-1">
+<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-11-04-1">
+<link rel="stylesheet" href="lib/visual-sobrio.css?v=2026-11-04-1">
+<link rel="stylesheet" href="lib/letras-maiores.css?v=2026-11-04-1">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -2188,7 +2188,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-10-29-1"></script>
+<script src="lib/icones.js?v=2026-11-04-1"></script>
 </div>
 
 <!-- ASSISTENTE POR VOZ: consultar horário livre, agendar, cancelar, ver aulas (lib/voz-aluno.js) -->
@@ -2435,7 +2435,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-10-29-1';
+const VERSAO='2026-11-04-1';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -2508,16 +2508,44 @@ async function enviarReservaUnica(pedido,grupo){
   // update multi-local é atômico: uma ocorrência ocupada recusa o conjunto inteiro.
   await ref.update(updates);
 }
+/* Espera a conexão com a nuvem ficar de pé (até `ms`). ".info/connected" é
+   uma leitura local do Firebase: enquanto ele ainda está conectando (app
+   recém-aberto ou voltando do segundo plano no iPhone), diz "false" na hora,
+   mesmo com internet. Antes, um único "once" recusava a ação nesse intervalo e
+   o aluno via "Não consegui conferir sua agenda na nuvem" (print do João,
+   04/11). goOnline() pede para conectar já, sem esperar a pausa entre
+   tentativas; com a conexão de pé, não faz nada. */
+const PRAZO_CONEXAO=10000;
+function esperarConexaoNuvem(ms){
+  return new Promise(resolve=>{
+    let ref=null,feito=false,timer=0;
+    const ouvir=s=>{if(s&&s.val()===true)fim(true);};
+    const fim=v=>{if(feito)return;feito=true;clearTimeout(timer);try{if(ref)ref.off('value',ouvir);}catch(e){}resolve(v);};
+    timer=setTimeout(()=>fim(false),ms||PRAZO_CONEXAO);
+    try{window.fbDB.goOnline();}catch(e){}
+    try{ref=window.fbDB.ref('.info/connected');ref.on('value',ouvir);}catch(e){fim(false);}
+  });
+}
+/* O motivo vai junto do erro, para o aviso dizer o que de fato aconteceu. */
+function erroNuvem(motivo,texto){const e=new Error(texto||motivo);e.motivo=motivo;return e;}
+/* Aparelho ainda não aprovado lê a cópia antiga e vê as aulas, mas não consegue
+   confirmar, cancelar nem agendar. Antes recebia o mesmo aviso de "sem
+   internet", que não ajudava ninguém. */
+function avisoFalhaNuvem(e,semConexao){
+  return e&&e.motivo==='acesso'
+    ?'🔐 Este aparelho ainda não foi liberado pelo João. Peça a ele para aprovar e tente de novo.'
+    :semConexao;
+}
 async function atualizarGradeReserva(){
   await esperarAuth();
-  const ligado=await comPrazo(window.fbDB.ref('.info/connected').once('value'),4000,null);
-  if(!ligado||ligado.val()!==true)throw new Error('sem conexão confirmada');
+  if(!await esperarConexaoNuvem(PRAZO_CONEXAO))throw erroNuvem('conexao','sem conexão confirmada');
   const raw=await cloudGet(SECUREPUBKEY);
   if(raw){
     const shared=JSON.parse(raw),privRaw=await cloudGet('jvtenis/'+PRIV_KEY+'/'+authUid());
-    if(!privRaw)throw new Error('acesso pendente');
+    // sem os dados privados: aparelho não aprovado; já aprovado = falha de rede
+    if(!privRaw)throw erroNuvem(VINCULO_ESTADO==='pendente'?'acesso':'conexao','acesso pendente');
     const priv=JSON.parse(privRaw);
-    if(!priv.aluno||String(priv.aluno.codigo)!==String(MEU.codigo))throw new Error('acesso pendente');
+    if(!priv.aluno||String(priv.aluno.codigo)!==String(MEU.codigo))throw erroNuvem('acesso','acesso pendente');
     PUB.grade=juntarGradeSegura(shared.grade,priv.gradeMeu,MEU.codigo);EU=priv.aluno;
     PUB.reservasRespostas=priv.reservasRespostas||[];
     conferirRespostasReservas();
@@ -2547,7 +2575,11 @@ async function cloudSet(k,v){
   return false;
 }
 
-function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2600);}
+/* Aviso no rodapé. Antes ficava numa linha só e cortava o fim ("Tente …",
+   print do João, 04/11); agora quebra a linha e o texto longo fica mais tempo
+   na tela. Um aviso novo não some com o tempo do anterior. */
+function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('show');
+  clearTimeout(e._some);e._some=setTimeout(()=>e.classList.remove('show'),Math.min(7000,2600+Math.max(0,String(t).length-45)*45));}
 function abrirWhatsApp(numero,texto){
   // monta o link na hora do toque e abre — confiável em celular e computador
   const url='https://wa.me/'+numero+(texto?'?text='+encodeURIComponent(texto):'');
@@ -2782,7 +2814,7 @@ async function conferirAulaParaAcao(dk,hora){
   if(!hasCloud()||navigator.onLine===false){toast('Conecte à internet para confirmar ou cancelar a aula.');return null;}
   await esperarAuth();
   if(!authUid()){toast('Seu aparelho precisa estar identificado. Abra o app novamente.');return null;}
-  try{await atualizarGradeReserva();}catch(e){toast('Não consegui conferir sua agenda na nuvem. Tente novamente com internet.');return null;}
+  try{await atualizarGradeReserva();}catch(e){toast(avisoFalhaNuvem(e,'Não consegui conferir sua agenda na nuvem. Tente novamente com internet.'));return null;}
   const aula=aulaAgendadaAluno(dk,hora);
   if(!aula)toast('Essa aula não está mais na sua agenda. Confira as próximas aulas.');
   return aula;
@@ -4923,7 +4955,7 @@ function pintarAgendaMesAluno(){
 async function abrirAgendaMesAluno(){
   if(!EU)return;
   if(hasCloud()&&navigator.onLine!==false){
-    try{await atualizarGradeReserva();}catch(e){toast('Não consegui conferir os horários. Tente novamente com internet.');return;}
+    try{await atualizarGradeReserva();}catch(e){toast(avisoFalhaNuvem(e,'Não consegui conferir os horários. Tente novamente com internet.'));return;}
   }
   AULAS_CAL_MES={codigo:String(MEU.codigo),mes:dKey(new Date()).slice(0,7),aulas:aulasParaAgendaMes()};
   pintarAgendaMesAluno();document.getElementById('ov-aulas-cal').classList.add('on');
@@ -5018,7 +5050,7 @@ async function salvarAgendaMesAluno(){
     const blob=new Blob([gerarAgendaMesIcs(atual)],{type:'text/calendar;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
     a.href=url;a.download='aulas-'+mes+'.ics';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
     toast('Arquivo de horários preparado. Abra ou importe na sua agenda para concluir.');return true;
-  }catch(e){toast('Não consegui preparar a agenda. Tente novamente com internet.');return false;}
+  }catch(e){toast(avisoFalhaNuvem(e,'Não consegui preparar a agenda. Tente novamente com internet.'));return false;}
   finally{AULAS_CAL_BAIXANDO=false;}
 }
 
@@ -5546,7 +5578,7 @@ async function confirmarLocacao(){
   if(!locCtx||_locacaoEnviando)return;
   _locacaoEnviando=true;
   try{
-  try{await atualizarGradeReserva();}catch(e){toast('Não consegui conferir a agenda na nuvem. Tente novamente online.');return;}
+  try{await atualizarGradeReserva();}catch(e){toast(avisoFalhaNuvem(e,'Não consegui conferir a agenda na nuvem. Tente novamente online.'));return;}
   const estado=slotState(locCtx.date,locCtx.hora);
   if(!['livre','loc'].includes(estado.st)||estado.compartilhado&&estado.compartilhado!=='locacao'||(estado.compartilhado||'')!==locCtx.compartilhado){toast('Horário reservado ou atividade alterada. Reabra as opções.');return;}
   const livre=Math.round((Number(document.getElementById('locdur-min').value)||0)/15)*15;
@@ -5617,7 +5649,7 @@ async function confirmarAgendamento(){
   if(!hasCloud()){toast('Para agendar é preciso estar online 🙏');return;}
   if(!bookCtx)return;
   if(!bookCtx.torneio&&bloqueadoParaAgendar()){document.getElementById('ov-book').classList.remove('on');toast('🔒 Agendamento bloqueado — '+motivoBloqueio()+'.');return;}
-  try{await atualizarGradeReserva();}catch(e){toast('Não consegui conferir a agenda na nuvem. Tente novamente online.');return;}
+  try{await atualizarGradeReserva();}catch(e){toast(avisoFalhaNuvem(e,'Não consegui conferir a agenda na nuvem. Tente novamente online.'));return;}
   const estado=slotState(bookCtx.date,bookCtx.hora);
   if(!['livre','loc'].includes(estado.st)||estado.compartilhado&&estado.compartilhado!==(bookCtx.torneio?'torneio':'grupo')){
     renderAgenda();toast('Horário reservado ou indisponível — escolha outro');return;
@@ -5785,7 +5817,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-10-29-1').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-11-04-1').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
@@ -5794,6 +5826,6 @@ window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);})
   setTimeout(()=>esperarEIniciar(t+1),150);
 })(0);
 </script>
-<script src="lib/voz-aluno.js?v=2026-10-29-1"></script>
+<script src="lib/voz-aluno.js?v=2026-11-04-1"></script>
 </body>
 </html>

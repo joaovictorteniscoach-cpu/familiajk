@@ -8,6 +8,30 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-04 · Claude Code: aluno não recebe mais "Não consegui conferir sua agenda na nuvem" à toa (v2026-11-04-1)
+
+**Pedido do João (print do app do aluno, "Próximas aulas"):** "Porque está ocorrendo esse erro pro aluno?"
+
+- Causa principal: antes de confirmar presença, cancelar ou agendar, `atualizarGradeReserva`
+  exigia `.info/connected` = true numa leitura só (`once`, desde 07/10). Essa leitura é
+  local: enquanto o Firebase ainda está conectando (app recém-aberto ou voltando do
+  segundo plano no iPhone) ela devolve `false` na hora, mesmo com internet. Conferido
+  com o SDK do app (10.12.2) e servidor falso: `false` em ~0,2 s, `true` só depois do
+  aperto de mão. Quando a conexão anterior durou pouco, o SDK ainda volta por HTTP comum
+  antes do websocket, o que demora mais.
+- Agora `esperarConexaoNuvem` espera a conexão (até 10 s) e chama `goOnline()` (conectar
+  já, sem esperar a pausa entre tentativas; sem efeito se já conectado). Sem conexão
+  depois disso, o aviso de antes ("Tente novamente com internet").
+- Segunda causa possível com o mesmo aviso: aparelho ainda não liberado em Acessos do
+  aluno. Ele vê as aulas pela cópia antiga, mas não lê `alunos_privados/<uid>`. Agora o
+  aviso diz "Este aparelho ainda não foi liberado pelo João" (`erroNuvem`/`avisoFalhaNuvem`).
+- Aviso do rodapé (`toast`) quebra a linha em vez de cortar ("Tente …" no print) e fica
+  mais tempo quando o texto é longo; aviso novo não some no tempo do anterior.
+- Não mexe em crédito, valor, reserva, regra do Firebase nem na Gestão.
+- Teste novo `testar-conexao-nuvem-aluno-browser.cjs` (no validar-pr): SDK real do app
+  com servidor falso, só dados fictícios; falha na versão anterior com o mesmo aviso do
+  print.
+
 ## 2026-10-29 · Claude Code: Agenda abre no horário de agora sem rolagem animada (v2026-10-29-1)
 
 Print do João (iPhone, Agenda do dia): a faixa "Marcar o dia inteiro como chuva" por
