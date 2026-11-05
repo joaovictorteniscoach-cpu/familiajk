@@ -8,6 +8,97 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-05 · Claude Code: agenda do aluno pergunta "O que você quer marcar?" (mesma v2026-11-05-1)
+
+**Pedido do João:** "tem tantas opções que o aluno acha que tem horário livre para aula. Ele
+aperta e só tem horário livre para locação ou torneio… você deseja aula? Aí aparece só os
+horários de aula. Ou quando não tiver disponível, aparecer apenas locação."
+
+- Causa: na visão do dia, o horário só de locação aparecia "Disponível · ver opções", igual ao
+  de aula; na semana, os dois eram "Livre" verde (escolha de 20/10 para tirar o "Loc." com cara
+  de cadeado).
+- Agora, acima de Dia/Semana/Mês: "O que você quer marcar?" 🎾 Aula · 🔑 Locação · 🏆 Torneio
+  (a aba Torneio só com torneio ativo). Lembrado só no aparelho (`jv-ag-quer`); quem não tem
+  plano de aula começa em Locação.
+- Verde só o que serve para a escolha (`cabeNoSlot`, a mesma regra das opções de
+  `escolherSlot`). O resto aparece listrado com o que ele é ("Livre para locação", "Aula em
+  grupo"); o toque explica e diz qual escolha usar. Nunca "sem aula" (decisão de 27/10).
+- Dia ou semana sem nenhum horário para a escolha: aviso + botão "Ver N horários livres para
+  locação" (`avisoSemQuer`). O mês conta só o que serve.
+- Tocar no verde abre só as opções daquela atividade; vindo da voz ou da lista de espera
+  (`gotoBook(...,'aula')`), abre as de aula; horário que não tem a atividade mostra tudo o que tem.
+- `setView`/`gotoDay` só mexem nas abas Dia/Semana/Mês (antes apagavam o "on" de todo `.seg`).
+- Testes: `testar-agenda-quer-aluno-browser.cjs` (9, no validar-pr, com medição de leitura);
+  `testar-semana-livre` e `testar-locacao-minhas-aulas` atualizados para as duas escolhas.
+
+## 2026-11-05 · Claude Code: crédito sai uma vez por aula e volta quando a aula sai da agenda; extrato por mês (v2026-11-05-1)
+
+**Pedido do João:** "às vezes aparece menos um, mais um, correção de crédito, saiu um, saiu
+outro… muito extenso e confuso. E às vezes tira créditos do aluno a mais… ou ele faz a aula e
+esse crédito não é debitado."
+
+Reproduzido com dados fictícios (a presença é guardada pela chave dia|hora|aluno):
+- arrastar aula com ✓ para outro horário deixava o ✓ preso no antigo; a aula aparecia sem ✓
+  no novo e, marcada de novo, tirava outro crédito. Arrastar aula fixa ainda mudava as semanas
+  que já passaram (a aula dada às 18h aparecia às 19h sem ✓);
+- cancelar "só hoje" ou apagar a aula depois do ✓ não devolvia o crédito;
+- "Usar reposição" no cartão + ✓ no horário de reposição tiravam duas reposições;
+- dois toques rápidos no ○ marcavam e desmarcavam: aula sem débito e "−1 / +1" no extrato;
+- extrato: a virada do mês aparecia em duas linhas soltas e o "Ficou" pulava entre créditos e
+  reposições sem dizer qual.
+
+O que mudou (Gestão):
+- `levarMarcas`: ao arrastar (`moverEntrada`, troca de lugar) ou mover o dia (`moverDia`), o ✓,
+  a falta ou o aviso trocam de chave junto, e o `ref` das linhas do extrato também: nada é
+  devolvido nem descontado de novo.
+- Aula fixa arrastada muda só da data arrastada em diante (`moverFixoDesde`: encerra o fixo na
+  véspera e cria o novo, como `removerFixo` já fazia); exceções futuras vão junto se o dia da
+  semana é o mesmo.
+- Cancelar só hoje / apagar aula avulsa / tirar da grade com marcação: pergunta e devolve
+  exatamente o que saiu (`devolverMarcas`, via `estornoPorRef`).
+- `usarRepos` grava a aula do dia (manual, tipo reposição) e pergunta se já há aula hoje; o ✓
+  da agenda reconhece e troca em vez de tirar outra. Locação: mesma pergunta nos dois sentidos.
+- Toque duplo no ○: o segundo em menos de 1 s é ignorado, só no botão da tela (`tocarPresenca`).
+- Conferência (só lista): marcação fora do horário da agenda (e "POSSÍVEL DESCONTO EM DOBRO"),
+  aulas que passaram sem ✓ (mês atual e anterior), reposição do cartão + agenda no mesmo dia.
+- Acerto acionado pelo João no Histórico de aulas (`renderHistFora`/`acertarFora`): levar o ✓
+  para o horário da aula, apagar e devolver, ou só apagar; versão guardada antes e desfazer pelo
+  Histórico de mudanças. Caixas claras do Histórico com letra escura (`.ha-caixa`).
+- Extrato resumido: separado por mês, virada numa linha ("Sobra de outubro virou reposição"),
+  nome do saldo ao lado do "Ficou". Nada muda nos dados; "Ver detalhado" continua igual.
+- Testes: `testar-creditos-marcas-browser.cjs` (13 verificações, no validar-pr; falha na versão
+  anterior); `testar-extrato-resumido` e `testar-renovacao-debito` com o texto novo do extrato.
+- Nenhum saldo de aluno é corrigido sozinho; regra do Firebase e app do aluno sem mudança.
+
+## 2026-11-04 · Claude Code: aluno não recebe mais "Não consegui conferir sua agenda na nuvem" à toa (v2026-11-04-1)
+
+**Pedido do João (print do app do aluno, "Próximas aulas"):** "Porque está ocorrendo esse erro pro aluno?"
+
+- Causa principal: antes de confirmar presença, cancelar ou agendar, `atualizarGradeReserva`
+  exigia `.info/connected` = true numa leitura só (`once`, desde 07/10). Essa leitura é
+  local: enquanto o Firebase ainda está conectando (app recém-aberto ou voltando do
+  segundo plano no iPhone) ela devolve `false` na hora, mesmo com internet. Conferido
+  com o SDK do app (10.12.2) e servidor falso: `false` em ~0,2 s, `true` só depois do
+  aperto de mão. Quando a conexão anterior durou pouco, o SDK ainda volta por HTTP comum
+  antes do websocket, o que demora mais.
+- Agora `esperarConexaoNuvem` espera a conexão (até 10 s) e chama `goOnline()` (conectar
+  já, sem esperar a pausa entre tentativas; sem efeito se já conectado). Sem conexão
+  depois disso, o aviso de antes ("Tente novamente com internet").
+- Segunda causa possível com o mesmo aviso: aparelho ainda não liberado em Acessos do
+  aluno. Ele vê as aulas pela cópia antiga, mas não lê `alunos_privados/<uid>`. Agora o
+  aviso diz "Este aparelho ainda não foi liberado pelo João" (`erroNuvem`/`avisoFalhaNuvem`).
+- Aviso do rodapé (`toast`) quebra a linha em vez de cortar ("Tente …" no print) e fica
+  mais tempo quando o texto é longo; aviso novo não some no tempo do anterior.
+- Não mexe em crédito, valor, reserva, regra do Firebase nem na Gestão.
+- Teste novo `testar-conexao-nuvem-aluno-browser.cjs` (no validar-pr): SDK real do app
+  com servidor falso, só dados fictícios; falha na versão anterior com o mesmo aviso do
+  print.
+- `testar-seguranca-pagamentos-browser.cjs` tinha "2026-10" fixo com o relógio real e
+  falhava desde 01/11 (também no validar-pr). Só no teste: o relógio da página começa em
+  20/10/2026 e anda normalmente; o carimbo da "nuvem" do teste usa o relógio da página.
+- `testar-salvamento-firebase-browser.cjs` (emulador, só no CI) usa uma cópia própria da
+  `atualizarGradeReserva` antiga; não foi alterado.
+
 ## 2026-10-29 · Claude Code: Agenda abre no horário de agora sem rolagem animada (v2026-10-29-1)
 
 Print do João (iPhone, Agenda do dia): a faixa "Marcar o dia inteiro como chuva" por

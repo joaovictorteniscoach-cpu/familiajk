@@ -142,7 +142,8 @@ function agendarEm(dk,hora){
  fechar();
  try{const nav=porId('nav-al-agenda');if(typeof w.goAluno==='function')w.goAluno('agenda',nav);}catch(e){}
  const [y,m,d]=dk.split('-').map(Number);
- w.gotoBook(y,m-1,d,hora);   // a mesma janela de agendamento, com todas as regras
+ // horário de aula abre as opções de aula, mesmo com "Locação" escolhido na agenda (05/11)
+ w.gotoBook(y,m-1,d,hora,livreParaAula(dk,hora)?'aula':undefined);   // a mesma janela de agendamento, com todas as regras
 }
 function cancelarEm(a){fechar();w.cancelarAula(a.data,a.hora,a.rec);}
 function pedirEspera(dk,hora){fechar();try{const [y,m,d]=dk.split('-').map(Number);agDate=new Date(y,m-1,d,12);w.abrirEspera(hora);}catch(e){}}

@@ -53,15 +53,17 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
     const antes=await g.evaluate(()=>JSON.stringify(DB));
     await g.evaluate(()=>abrirExtrato('a1'));
     const l=await ler();
+    // separado por mês e com o nome do saldo ao lado do "Ficou" (05/11)
     assert.deepEqual(l,[
+     'OUTUBRO DE 2026',
      '15/10 ☔ Chuva 07:00 · sem desconto 0 —',
      '13/10 Aula cancelada 09:00 · sem desconto 0 —',
-     '12/10 Locação 14:00 · locação -1h 1',
-     '10/10 Locação paga (2h) locação +2h 2',
-     '09/10 ☔ Chuva 18:00 · grupo · sem desconto 0 —',
-     '08/10 Ajuste manual grupo +2 2',
-     '07/10 Aula realizada 09:00 · créditos -1 7',
-     '05/10 Renovação do mês créditos +8 8']);
+     '12/10 Locação 14:00 -1h 1h locação',
+     '10/10 Locação paga (2h) +2h 2h locação',
+     '09/10 ☔ Chuva 18:00 · sem desconto 0 —',
+     '08/10 Ajuste manual +2 2 grupo',
+     '07/10 Aula realizada 09:00 -1 7 créditos',
+     '05/10 Renovação do mês +8 8 créditos']);
     assert.match(await g.evaluate(()=>document.getElementById('ext-dica').textContent),/Marcação desfeita não aparece/);
     assert.equal(await g.evaluate(()=>JSON.stringify(DB)),antes,'só mostra');
    });
@@ -69,7 +71,7 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
     await g.click('#ext-modo');let l=await ler();
     assert.equal(l.length,11);assert.match(l[0],/Locação na agenda/);assert.ok(l.some(x=>/Presença desmarcada/.test(x)));
     assert.equal(await g.evaluate(()=>document.getElementById('ext-modo').textContent),'Ver resumido');
-    await g.click('#ext-modo');l=await ler();assert.equal(l.length,8);
+    await g.click('#ext-modo');l=await ler();assert.equal(l.length,9);
    });
    await check(tema+': extrato resumido legível (medido na imagem)',async()=>{
     const itens=(await medir(g)).filter(it=>/ov-extrato|ext-|tbl-ext/.test(it.onde||''));
