@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-11-04-1';
+const VERSAO='2026-11-05-1';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -3960,28 +3960,76 @@ function findEntryReal(id){
   e=DB.agenda.eventos.find(x=>x.id===id);if(e)return{e,origem:'pontual'};
   return null;
 }
-function moverEntrada(eid,destDK,destH){
+/* Levar as marcações junto (05/11, pedido do João: crédito saindo a mais).
+   A presença é guardada pela chave dia|hora|aluno. Mover a aula sem a marca
+   deixava o ✓ preso no horário antigo: a aula aparecia sem ✓ no lugar novo e,
+   marcada de novo, tirava outro crédito pela mesma aula. Agora a marca (✓,
+   falta ou aviso) troca de chave junto com a aula, e as linhas do extrato
+   daquela aula também: nada é devolvido nem descontado de novo. Se o destino
+   já tem marca do mesmo aluno, não junta as duas (a conferência aponta). */
+function levarMarcas(alunoId,de,para){
+  if(!alunoId||!de||!para)return 0;
+  const kDe=de.data+'|'+de.hora+'|'+alunoId,kPara=para.data+'|'+para.hora+'|'+alunoId;
+  if(kDe===kPara)return 0;
+  const pres=DB.presencas||[],minhas=pres.filter(p=>p.k===kDe);
+  if(!minhas.length||pres.some(p=>p.k===kPara))return 0;
+  minhas.forEach(p=>{marcarRemovida('presencas',p);p.k=kPara;p.data=para.data;p.hora=para.hora;});
+  (DB.movs||[]).forEach(m=>{if(m.alunoId===alunoId&&m.ref===kDe)m.ref=kPara;});
+  return minhas.length;
+}
+function somarDias(dk,n){const d=new Date(dk+'T12:00:00');d.setDate(d.getDate()+n);return dKey(d);}
+/* Aula fixa muda de dia/horário a partir da data arrastada. Antes a grade
+   inteira mudava, inclusive as semanas que já passaram: a aula dada às 18h
+   aparecia às 19h sem ✓, e o ✓ verdadeiro ficava preso no horário antigo.
+   Igual a removerFixo(): o que já passou fica como estava. */
+function moverFixoDesde(f,srcDK,destDK,destH){
+  const destDate=new Date(destDK+'T12:00:00'),delta=Math.round((destDate-new Date(srcDK+'T12:00:00'))/864e5);
+  const velho={dia:f.dia,hora:f.hora,ate:f.ate||''};
+  // marcas desta data em diante no dia/horário antigos (✓ do dia arrastado, avisos futuros)
+  const marcas=f.alunoId?(DB.presencas||[]).filter(p=>p.alunoId===f.alunoId&&p.data>=srcDK&&p.hora===velho.hora
+    &&/^\d{4}-\d{2}-\d{2}\|/.test(String(p.k||''))&&new Date(p.data+'T12:00:00').getDay()===velho.dia
+    &&(!velho.ate||p.data<=velho.ate)).map(p=>p.data):[];
+  if(!f.desde||f.desde<srcDK){              // tem passado: encerra na véspera e cria o novo
+    const novo=Object.assign({},f,{id:'f'+Date.now()+Math.random().toString(36).slice(2,6),dia:destDate.getDay(),hora:destH,desde:destDK});
+    if(velho.ate)novo.ate=velho.ate;else delete novo.ate;
+    f.ate=somarDias(srcDK,-1);
+    DB.agenda.fixos.push(novo);
+    // aula cancelada numa data futura continua cancelada, se o dia da semana é o mesmo
+    if(novo.dia===velho.dia)(DB.agenda.excecoes||[]).filter(x=>x.fixoId===f.id&&x.data>=srcDK)
+      .forEach(x=>DB.agenda.excecoes.push({fixoId:novo.id,data:x.data}));
+  }else{f.dia=destDate.getDay();f.hora=destH;f.desde=destDK;}
+  let n=0;
+  Array.from(new Set(marcas)).forEach(dk=>{n+=levarMarcas(f.alunoId,{data:dk,hora:velho.hora},{data:somarDias(dk,delta),hora:destH});});
+  return n;
+}
+function moverEntrada(eid,destDK,destH,srcDK){
   const ref=findEntryReal(eid);if(!ref)return;
   const src=ref.e,origem=ref.origem;
   const destDate=new Date(destDK+'T12:00:00');
   if(destDK===(origem==='fixo'?null:src.data)&&destH===src.hora&&origem!=='fixo'){return;}
+  // aula fixa: a data de onde foi arrastada (sem ela, o mesmo dia da semana na semana do destino)
+  if(origem==='fixo'&&!srcDK){const d=new Date(destDate);d.setDate(d.getDate()+(src.dia-d.getDay()));srcDK=dKey(d);}
+  if(origem==='fixo'&&srcDK===destDK&&destH===src.hora)return;
   // guarda posição antiga (para troca)
   const oldDia=src.dia,oldHora=src.hora,oldData=src.data;
   logAct('Mover/trocar horário na agenda');
   // destino já ocupado? (ignora o próprio item)
   const ocup=entriesFor(destDate,destH).filter(x=>x.id!==eid);
-  // aplica a mudança no item arrastado
-  if(origem==='fixo'){src.dia=destDate.getDay();src.hora=destH;}
-  else{src.data=destDK;src.hora=destH;}
+  // aplica a mudança no item arrastado, levando o ✓ (ou falta/aviso) junto
+  let marcas=0;
+  if(origem==='fixo')marcas+=moverFixoDesde(src,srcDK,destDK,destH);
+  else{src.data=destDK;src.hora=destH;marcas+=levarMarcas(src.alunoId,{data:oldData,hora:oldHora},{data:destDK,hora:destH});}
+  const junto=marcas?' · o ✓ foi junto, sem descontar de novo':'';
+  const desde=origem==='fixo'?' · a partir de '+fmtDataCurta(srcDK<destDK?srcDK:destDK)+' (as semanas anteriores ficam como estavam)':'';
   // troca: se havia exatamente 1 do MESMO tipo de origem, manda para a posição antiga
   if(ocup.length===1){
     const d=findEntryReal(ocup[0].id);
     if(d&&d.origem===origem){
-      if(origem==='fixo'){d.e.dia=oldDia;d.e.hora=oldHora;}
-      else{d.e.data=oldData;d.e.hora=oldHora;}
-      toast('🔁 Horários trocados');
-    }else{toast('✓ Aula movida');}
-  }else{toast('✓ Aula movida');}
+      if(origem==='fixo')moverFixoDesde(d.e,destDK,srcDK,oldHora);
+      else{d.e.data=oldData;d.e.hora=oldHora;levarMarcas(d.e.alunoId,{data:destDK,hora:destH},{data:oldData,hora:oldHora});}
+      toast('🔁 Horários trocados'+desde+junto);
+    }else{toast('✓ Aula movida'+desde+junto);}
+  }else{toast('✓ Aula movida'+desde+junto);}
   persist();renderAgenda();renderDash();
 }
 /* Move todos os atendimentos de um dia para outro (visão Mês) */
@@ -3996,10 +4044,12 @@ function moverDia(fromDK,toDK){
   const p1=fromDK.split('-'),p2=toDK.split('-');
   if(!confirm('Mover os '+total+' atendimento(s) de '+p1[2]+'/'+p1[1]+' para '+p2[2]+'/'+p2[1]+'?\n\nOs horários serão mantidos. Aulas fixas movem só nesta data (a grade semanal continua igual).'))return;
   logAct('Mover atendimentos de um dia');
-  pont.forEach(e=>{e.data=toDK;});
+  // o ✓ (ou falta/aviso) de cada aula vai junto: ver levarMarcas()
+  pont.forEach(e=>{e.data=toDK;levarMarcas(e.alunoId,{data:fromDK,hora:e.hora},{data:toDK,hora:e.hora});});
   fix.forEach(f=>{
     DB.agenda.excecoes.push({fixoId:f.id,data:fromDK});
     DB.agenda.eventos.push({id:'e'+Date.now()+Math.random().toString(36).slice(2,6),data:toDK,hora:f.hora,titulo:f.titulo,tipo:f.tipo,alunoId:f.alunoId});
+    levarMarcas(f.alunoId,{data:fromDK,hora:f.hora},{data:toDK,hora:f.hora});
   });
   persist();renderAgenda();renderDash();
   toast('✓ '+total+' atendimento(s) movido(s)');
@@ -4017,7 +4067,7 @@ function moverDia(fromDK,toDK){
     const v=view();if(!v||!v.contains(ev.target))return;
     if(ev.target.closest('.pres'))return;            // tocar ○ marca presença, não arrasta
     const item=ev.target.closest('.drag-item');if(!item)return;
-    cand={item,eid:item.getAttribute('data-eid'),dayfrom:item.getAttribute('data-dayfrom')};
+    cand={item,eid:item.getAttribute('data-eid'),dayfrom:item.getAttribute('data-dayfrom'),dk:item.getAttribute('data-dk')};
     sx=ev.clientX;sy=ev.clientY;dragging=false;
   }
   function onMove(ev){
@@ -4042,7 +4092,7 @@ function moverDia(fromDK,toDK){
       const t=dropAt(ev.clientX,ev.clientY,cand.dayfrom?'[data-drop-day]':'[data-drop-d]');
       if(t){
         if(cand.dayfrom){moverDia(cand.dayfrom,t.getAttribute('data-drop-day'));}
-        else{moverEntrada(cand.eid,t.getAttribute('data-drop-d'),t.getAttribute('data-drop-h'));}
+        else{moverEntrada(cand.eid,t.getAttribute('data-drop-d'),t.getAttribute('data-drop-h'),cand.dk||'');}
       }
       // impede o clique pós-arraste de abrir o slot
       const blocker=e=>{e.stopPropagation();e.preventDefault();};
@@ -4157,6 +4207,15 @@ function nomeNoHorario(evs,m){
   });
 }
 function familiarNoHorario(evs,m){return (evs||[]).some(e=>e.alunoId===m.id)||nomeNoHorario(evs,m);}
+/* Toque duplo (05/11, pedido do João): dois toques rápidos no ○ marcavam e
+   desmarcavam. A aula ficava sem ✓, o crédito não saía e o extrato ganhava um
+   "−1" e um "+1". O segundo toque em menos de 1 s é ignorado; para desfazer de
+   propósito, basta tocar de novo logo depois. Só no toque da tela: a voz e o
+   resto do app chamam togglePresenca() direto. */
+function tocarPresenca(entryId){
+  if(acaoRepetida('pres|'+entryId+'|'+dKey(agDate),900)){toast('Toque duplo ignorado. Para desfazer, toque de novo.');return;}
+  togglePresenca(entryId);
+}
 function togglePresenca(entryId){
   let entry=null;
   HORAS.forEach(h=>entriesFor(agDate,h).forEach(e=>{if(e.id===entryId)entry=e;}));
@@ -4353,6 +4412,12 @@ function togglePresencaUm(entryId){
       DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo:'torneio',custo:0});
       logAct('Marcar jogo do torneio: '+a.nome);toast('🏆 Jogo do torneio · '+a.nome+' — sem desconto de crédito');
     }else if(isLoc){
+      /* Locação já lançada pelo cartão nesse dia: pergunta antes de tirar
+         outra hora pela mesma locação (05/11). */
+      const dkLoc=dKey(agDate);
+      if(movsDe(a.id,'locCred').some(m=>m.motivo==='Locação realizada'&&!m.ref&&dKey(new Date(m.ts))===dkLoc)
+        &&!confirm(a.nome+' já teve locação lançada pelo cartão em '+fmtDataCurta(dkLoc)+'.\n\n'
+          +'Marcar aqui desconta OUTRA hora.\n\nOK = foi outra locação\nCancelar = é a mesma, não marcar'))return;
       mover(a,'locCred',-c,'Locação na agenda',k);DB.presencas.push({k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo:'locacao',custo:c});
       logAct('Marcar locação: '+a.nome);toast('🔑 Locação ('+c+'h) · '+a.nome+' → '+fmtCred(a.locCred)+'h'+(a.locCred<0?' (devendo)':' restantes'));
     }else{
@@ -4455,8 +4520,8 @@ function renderAgenda(){
             const falt=linked&&isFalta(e,agDate);
             const avis=linked&&isAvisou(e,agDate);
             if(e.doDono)return `<span class="ev t-outro" title="Aula marcada pela academia no seu nome">👑 ${esc(e.titulo)}<small> · ${esc(e.tipo)} · da academia</small></span>`;
-            return `<span class="ev t-${e.tipo} drag-item" data-eid="${e.id}" data-origem="${e.origem}">
-              ${linked?`<button class="pres ${pres?'ok':''} ${falt?'falt':''} ${avis?'avis':''}" aria-label="${pres?'Presença confirmada — toque para desfazer':(falt?'Falta — toque para desfazer':(avis?'Avisou — toque para desfazer':'Confirmar presença'))}" onclick="togglePresenca('${e.id}')">${pres?'✓':(falt?'✗':(avis?'🔁':'○'))}</button>`:''}
+            return `<span class="ev t-${e.tipo} drag-item" data-eid="${e.id}" data-origem="${e.origem}" data-dk="${dKey(agDate)}">
+              ${linked?`<button class="pres ${pres?'ok':''} ${falt?'falt':''} ${avis?'avis':''}" aria-label="${pres?'Presença confirmada — toque para desfazer':(falt?'Falta — toque para desfazer':(avis?'Avisou — toque para desfazer':'Confirmar presença'))}" onclick="tocarPresenca('${e.id}')">${pres?'✓':(falt?'✗':(avis?'🔁':'○'))}</button>`:''}
               <span onclick="openSlot('${h}')">${e.titulo}<small> · ${e.tipo==='grupo'?grupoTag(e.pessoas)+' · ':''}${e.repo?'reposição':(e.origem==='fixo'?'fixo':(e.origem==='compromisso'?'pessoal':'pontual'))}${foraDaQuadra(e)?' · 📍 fora da quadra':''}${profDaEntrada(e)?' · 👨‍🏫 '+esc(profNome(profDaEntrada(e))||'professor'):''}${e.doDono?' · 👑 marcada pela academia':''}</small></span>
             </span>`;
           }).join('')}
@@ -4493,7 +4558,7 @@ function renderAgenda(){
         const evs=entriesFor(d,h).filter(itemVisivelProf).filter(itemVisivelTipo);
         const outro=agTipoFiltro?null:outroNaTela(d,h);
         let cls='free',txt='',drag='';
-        if(evs.length===1){cls='t-'+evs[0].tipo;txt=nomeCurtoWk(evs[0].titulo);drag=`drag-item" data-eid="${evs[0].id}" data-origem="${evs[0].origem}`;}
+        if(evs.length===1){cls='t-'+evs[0].tipo;txt=nomeCurtoWk(evs[0].titulo);drag=`drag-item" data-eid="${evs[0].id}" data-origem="${evs[0].origem}" data-dk="${dKey(d)}`;}
         // cada aluno é uma marcação: vários no mesmo horário = turma/dupla
         else if(evs.length>1){const ehAula=evs.every(e=>/^(aula|grupo|personal)$/.test(e.tipo));const soGrupo=evs.every(e=>e.tipo==='grupo');cls=soGrupo?'t-grupo':'multi';txt=soGrupo?'Grupo<small>'+evs.length+' alunos</small>':evs.length+(ehAula?' alunos':' itens');}
         // horário de outro professor só aparece onde eu não tenho nada: quadra
@@ -5014,11 +5079,46 @@ function saveSlot(){
   logAct('Adicionar: '+t);
   persist();renderSlotEvs();renderAgenda();
 }
+/* Aula cancelada ou tirada da agenda depois do ✓ (05/11, pedido do João:
+   crédito saindo a mais). O crédito tinha saído e ficava preso numa aula que
+   não existe mais. Agora pergunta e devolve exatamente o que saiu
+   (estornoPorRef), como a chuva já fazia. Aviso ("avisou") não descontou nada:
+   só sai junto. */
+/* "1 crédito", "2 reposições", "1 hora de locação" — para os avisos. */
+function txtSaldos(dev){
+  const nome={creditos:['crédito','créditos'],credGrupo:['crédito de grupo','créditos de grupo'],repos:['reposição','reposições'],locCred:['hora de locação','horas de locação']};
+  return Object.keys(dev||{}).filter(cp=>dev[cp]).map(cp=>{const v=dev[cp],n=nome[cp]||[CAMPO_LABEL[cp],CAMPO_LABEL[cp]];
+    return fmtCred(v)+' '+(Math.abs(v)<=1?n[0]:n[1]);}).join(', ');
+}
+function marcasDoHorario(alunoId,data,hora){
+  const k=data+'|'+hora+'|'+alunoId;return (DB.presencas||[]).filter(p=>p.k===k);
+}
+function devolverMarcas(a,regs,motivo){
+  const tot={};
+  (regs||[]).forEach(reg=>{
+    const i=(DB.presencas||[]).indexOf(reg);if(i<0)return;
+    const dev=a?estornoPorRef(a,reg.k,reg):{};
+    Object.keys(dev).forEach(cp=>{mover(a,cp,dev[cp],motivo,reg.k);tot[cp]=(tot[cp]||0)+dev[cp];});
+    marcarRemovida('presencas',reg);DB.presencas.splice(i,1);
+  });
+  return txtSaldos(tot);
+}
+/* Pergunta antes de cancelar uma aula com ✓/falta. false = não cancelar. */
+function confirmarDevolverMarcas(a,regs,quando){
+  const pesa=(regs||[]).filter(p=>!ehAvisou(p));
+  if(!a||!pesa.length)return true;
+  return confirm('A aula de '+a.nome+' '+quando+' já está marcada ('+(pesa.some(ehFalta)?'falta':'✓ presença')+').\n\n'
+    +'Tirar a aula devolve o que ela descontou.\n\nOK = tirar a aula e devolver · Cancelar = deixar a aula como está');
+}
 function cancelarDia(fixoId){
   const _f=DB.agenda.fixos.find(x=>x.id===fixoId);
-  DB.agenda.excecoes.push({fixoId,data:dKey(slotCtx.date)});
+  const dk=dKey(slotCtx.date),a=_f&&_f.alunoId&&DB.alunos.find(x=>x.id===_f.alunoId);
+  const regs=a?marcasDoHorario(a.id,dk,_f.hora):[];
+  if(!confirmarDevolverMarcas(a,regs,'de '+fmtDataCurta(dk)+' às '+(_f&&_f.hora)))return;
+  DB.agenda.excecoes.push({fixoId,data:dk});
+  const volta=regs.length?devolverMarcas(a,regs,'Aula cancelada — devolvido'):'';
   logAct('Cancelar aula (só nesta data): '+(_f?_f.titulo:''));
-  persist();renderSlotEvs();renderAgenda();toast('Cancelado só neste dia');
+  persist();renderSlotEvs();renderAgenda();renderAlunos();toast('Cancelado só neste dia'+(volta?' · devolvido '+volta:''));
 }
 function removerFixo(id){
   const f=DB.agenda.fixos.find(x=>x.id===id);if(!f)return;
@@ -5032,7 +5132,12 @@ function removerFixo(id){
   const msg=nuncaValeu
     ? 'Remover "'+f.titulo+'" da grade fixa de toda '+DIAS[f.dia]+'?'
     : 'Tirar "'+f.titulo+'" da grade fixa de toda '+DIAS[f.dia]+' a partir de '+br(dkBase)+'?\n\nOs dias anteriores continuam como estão, para a agenda antiga não mudar.';
+  const a=f.alunoId&&DB.alunos.find(x=>x.id===f.alunoId);
+  const regs=a?(DB.presencas||[]).filter(p=>p.alunoId===a.id&&p.data>=dkBase&&p.hora===f.hora&&fixoValeEm(f,p.data)
+    &&/^\d{4}-\d{2}-\d{2}\|/.test(String(p.k||''))&&new Date(p.data+'T12:00:00').getDay()===f.dia):[];
+  if(!confirmarDevolverMarcas(a,regs,'a partir de '+br(dkBase)))return;
   if(!confirm(msg))return;
+  if(regs.length)devolverMarcas(a,regs,'Aula removida — devolvido');
   if(nuncaValeu){
     DB.agenda.fixos=DB.agenda.fixos.filter(x=>x.id!==id);
     DB.agenda.excecoes=DB.agenda.excecoes.filter(x=>x.fixoId!==id);
@@ -5047,9 +5152,13 @@ function removerFixo(id){
 }
 function removerEvento(id){
   const _e=DB.agenda.eventos.find(x=>x.id===id);
+  const a=_e&&_e.alunoId&&DB.alunos.find(x=>x.id===_e.alunoId);
+  const regs=a?marcasDoHorario(a.id,_e.data,_e.hora):[];
+  if(!confirmarDevolverMarcas(a,regs,'de '+fmtDataCurta(_e&&_e.data)+' às '+(_e&&_e.hora)))return;
   DB.agenda.eventos=DB.agenda.eventos.filter(x=>x.id!==id);
+  const volta=regs.length?devolverMarcas(a,regs,'Aula removida — devolvido'):'';
   logAct('Remover: '+(_e?_e.titulo:''));
-  persist();renderSlotEvs();renderAgenda();toast('Removido');
+  persist();renderSlotEvs();renderAgenda();renderAlunos();toast('Removido'+(volta?' · devolvido '+volta:''));
 }
 function editarEntrada(id,origem){
   if(origem==='compromisso'){toast('Compromisso pessoal — altere pela agenda pessoal');return;}
@@ -6301,13 +6410,37 @@ function desfazerAnotacao(id,campo,ref){
   persist();renderAll();pulsarCredito(a.id);
   toast('↩️ Desfeito · '+a.nome.split(' ')[0]+' → '+fmtCred(a[campo])+(ehRepos?' reposição(ões)':'h de locação'));
 }
+/* "Usar reposição" no cartão (05/11, pedido do João: reposição saindo a
+   mais). Antes tirava a reposição sem registrar a aula, e o ✓ da agenda no
+   horário de reposição tirava outra pela mesma aula. Agora fica registrada
+   como aula de hoje: a agenda reconhece e pergunta antes de descontar de novo
+   (igual ao "Aula realizada"), e aqui também pergunta se já há aula hoje. */
 function usarRepos(id){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
   const morreu=purgarReposVencidas(a);
   if(morreu>0)toast('⏳ '+fmtCred(morreu)+' reposição(ões) passaram de 4 meses e saíram do saldo');
   if(a.repos<=0){toast('Sem reposições pendentes');return;}
   if(acaoRepetida('repos-'+id)){toast('Reposição já registrada agora há pouco');return;}
-  mover(a,'repos',-Math.min(1,Number(a.repos)||0),'Reposição realizada');persist();renderAll();toast('Reposição realizada · restam '+fmtCred(a.repos));
+  const hoje=dKey(new Date());
+  const jaHoje=(DB.presencas||[]).filter(p=>p.alunoId===a.id&&p.data===hoje&&!ehAvisou(p)
+                                            &&(p.tipo||p.modo||'aula')!=='locacao'&&(p.tipo||p.modo)!=='torneio');
+  let ehExtra=false;
+  if(jaHoje.length){
+    const quais=jaHoje.map(p=>((p.hora&&p.hora!=='—')?p.hora:'lançada no cartão')+(ehFalta(p)?' (falta)':'')).join(', ');
+    if(!confirm(a.nome+' já tem aula registrada hoje ('+quais+').\n\n'
+      +'Usar reposição desconta OUTRA.\n\n'
+      +'OK = foi mesmo uma reposição A MAIS hoje\n'
+      +'Cancelar = é a mesma aula, não descontar'))return;
+    ehExtra=true;
+  }
+  const k='m'+a.id+'-'+Date.now(), q=Math.min(1,Number(a.repos)||0);
+  const reg={k,alunoId:a.id,data:hoje,hora:'—',manual:true,modo:'reposicao',tipo:'reposicao',custo:q};
+  if(ehExtra)reg.extra=true;
+  if(!DB.presencas)DB.presencas=[];
+  DB.presencas.push(reg);
+  mover(a,'repos',-q,'Reposição realizada',k);
+  persist();renderAll();pulsarCredito(a.id);
+  toastDesfazer('Reposição realizada · '+a.nome.split(' ')[0]+' → restam '+fmtCred(a.repos),()=>desfazerAula(id,k,'reposicao'));
 }
 function addLocacao(id){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
@@ -6323,6 +6456,11 @@ function addLocacao(id){
 function usarLocacao(id){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
   if(acaoRepetida('loc-'+id)){toast('Locação já registrada agora há pouco');return;}
+  // locação já marcada na agenda hoje: pergunta antes de tirar outra hora (05/11)
+  const hoje=dKey(new Date());
+  if((DB.presencas||[]).some(p=>p.alunoId===a.id&&p.data===hoje&&(p.tipo||p.modo)==='locacao')
+    &&!confirm(a.nome+' já tem locação marcada na agenda hoje.\n\nLançar de novo desconta OUTRA hora.\n\n'
+      +'OK = foi outra locação\nCancelar = é a mesma, não lançar'))return;
   mover(a,'locCred',-1,'Locação realizada');
   logAct('Locação feita: '+a.nome);persist();renderAll();
   toast('🔑 Locação registrada · '+a.nome+' → '+fmtCred(a.locCred)+'h'+(a.locCred<0?' (devendo)':''));
@@ -10055,6 +10193,17 @@ function extratoResumido(a){
     linhas.push({ts:r.ts,aula:null,txt:r.campo==='credGrupo'?'Renovação do mês (grupo)':'Renovação do mês',campo:r.campo,q:Number(r.delta)||0,para:r.para,obs});
     usadas.add(r);
   });
+  /* Virada do mês numa linha só (05/11, pedido do João: "saiu um, saiu
+     outro"). A sobra sai dos créditos e entra na reposição no mesmo instante;
+     eram duas linhas soltas (−1 nos créditos e +1 na reposição). */
+  todas.filter(m=>!usadas.has(m)&&m.motivo==='Sobra do mês virou reposição'&&m.campo==='repos').forEach(r=>{
+    const irmas=todas.filter(m=>m!==r&&!usadas.has(m)&&/^Virada de mês — sobra convertida$/.test(m.motivo||'')&&Math.abs((m.ts||0)-(r.ts||0))<=3000);
+    irmas.forEach(m=>usadas.add(m));usadas.add(r);
+    const mesAnt=MESES[(new Date(r.ts).getMonth()+11)%12].toLowerCase();
+    const q=Number(r.delta)||0;
+    linhas.push({ts:r.ts,aula:null,txt:'Sobra de '+mesAnt+' virou reposição',campo:'repos',q,para:r.para,
+      obs:(irmas.length?(q===1?'1 aula que sobrou saiu dos créditos':fmtCred(q)+' aulas que sobraram saíram dos créditos')+' · ':'')+'vale 4 meses'});
+  });
   const ms=todas.filter(m=>!usadas.has(m));
   ms.forEach(m=>{
     const ref=String(m.ref||'');let k;
@@ -10109,13 +10258,22 @@ function pintarExtrato(){
       +'<td style="text-align:right;font-weight:700">'+fmtCred(m.para)+'</td></tr>').join('');
   }else{
     const ls=extratoResumido(a).slice(0,60);n=ls.length;
+    /* Separado por mês e com o nome do saldo ao lado do "Ficou" (05/11, pedido
+       do João: extrato extenso e confuso). Antes o "Ficou" pulava de créditos
+       para reposições de uma linha para outra sem dizer qual era qual. */
+    const mesDe=r=>r.aula?r.aula.data.slice(0,7):mesDoTs(r.ts);
+    let mesAtual='';
     corpo=ls.map(r=>{
       const quando=r.aula?(r.aula.data.split('-').reverse().slice(0,2).join('/')):dt(r.ts);
-      const sub=[r.aula?r.aula.hora:'',r.campo?CAMPO_LABEL[r.campo]:'',r.obs||''].filter(Boolean).join(' · ');
-      return '<tr><td style="white-space:nowrap;color:var(--muted)">'+quando+'</td>'
+      const sub=[r.aula?r.aula.hora:'',r.obs||''].filter(Boolean).join(' · ');
+      const mk=mesDe(r);let cab='';
+      if(mk!==mesAtual){mesAtual=mk;const pm=mk.split('-');
+        cab='<tr><td colspan="4" style="padding-top:12px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">'+MESES[Number(pm[1])-1]+' de '+pm[0]+'</td></tr>';}
+      return cab+'<tr><td style="white-space:nowrap;color:var(--muted)">'+quando+'</td>'
         +'<td>'+esc(r.txt)+(sub?'<small style="display:block;color:var(--muted)">'+esc(sub)+'</small>':'')+'</td>'
         +'<td style="text-align:right;font-weight:800;color:'+cor(r.q)+'">'+(r.q?(r.q>0?'+':'')+fmtCred(r.q)+un(r.campo):'0')+'</td>'
-        +'<td style="text-align:right;font-weight:700">'+(r.para===null?'—':fmtCred(r.para))+'</td></tr>';
+        +'<td style="text-align:right;font-weight:700;white-space:nowrap">'+(r.para===null?'—':fmtCred(r.para)+un(r.campo)
+          +'<small style="display:block;font-weight:500;color:var(--muted)">'+(r.campo?CAMPO_LABEL[r.campo]:'')+'</small>')+'</td></tr>';
     }).join('');
   }
   const saldos=['creditos','credGrupo','repos','locCred'].map(c=>{
@@ -10180,7 +10338,7 @@ function renderHistAulas(){
   h+='<div style="margin-top:10px;font-size:10.5px;color:#6B6458">Emitido em '+new Date().toLocaleDateString('pt-BR')+' · Prof. João Victor 🎾</div>';
   h+='</div>';
   document.getElementById('ha-export').innerHTML=h;
-  renderHistDups();
+  renderHistDups();renderHistFora();
 }
 /* Aulas repetidas que ficaram guardadas de antes. Elas não entram mais na lista
    nem no comprovante, mas o crédito delas já foi descontado duas vezes — e isso
@@ -10192,20 +10350,63 @@ function renderHistDups(){
   const dups=a?dupsManuaisDe(a.id):[];
   if(!dups.length){box.innerHTML='';return;}
   const todas=DB.presencas||[];
-  box.innerHTML='<div style="margin-top:10px;border:1px solid #E5C0BA;background:#FCF3F1;border-radius:11px;padding:10px 12px">'
+  box.innerHTML='<div class="ha-caixa" style="margin-top:10px;border:1px solid #E5C0BA;background:#FCF3F1;color:#2A2016;border-radius:11px;padding:10px 12px">'
     +'<div style="font-weight:800;font-size:13px;margin-bottom:4px">🔁 '+dups.length+' aula repetida'+(dups.length>1?'s':'')+' fora da lista</div>'
-    +'<p class="hint" style="margin:0 0 8px">Lançamento do cartão no mesmo dia de uma aula que já estava marcada na agenda. Já não conta no histórico, no cartão nem no fechamento — mas o crédito saiu duas vezes. Se você já acertou o número na mão no cadastro, use <b>só apagar</b>.</p>'
+    +'<p class="hint" style="margin:0 0 8px;color:#5A4F40">Lançamento do cartão no mesmo dia de uma aula que já estava marcada na agenda. Já não conta no histórico, no cartão nem no fechamento — mas o crédito saiu duas vezes. Se você já acertou o número na mão no cadastro, use <b>só apagar</b>.</p>'
     +dups.map(p=>{
       const ag=todas.filter(q=>q.alunoId===p.alunoId&&q.data===p.data&&!q.manual&&!ehMarca(q)).map(q=>q.hora).join(' e ');
       const dev=estornoPorRef(a,p.k,p);
-      const txtDev=Object.keys(dev).map(cp=>fmtCred(dev[cp])+' de '+CAMPO_LABEL[cp]).join(', ');
+      const txtDev=txtSaldos(dev);
       return '<div style="padding:7px 0;border-top:1px solid #f0dcd7">'
         +'<div style="font-size:12.5px;margin-bottom:5px"><b>'+fmtDataCurta(p.data)+'</b> — vale a da agenda ('+esc(ag||'sem hora')+') · descontou '+esc(txtDev||'nada')+'</div>'
         +'<div style="display:flex;gap:6px;flex-wrap:wrap">'
         +(txtDev?('<button class="btn btn-clay" style="padding:5px 10px;font-size:12px" onclick="apagarDupAula(\''+p.k+'\',1)">apagar e devolver '+esc(txtDev)+'</button>'):'')
-        +'<button class="btn btn-ghost" style="padding:5px 10px;font-size:12px" onclick="apagarDupAula(\''+p.k+'\',0)">só apagar (não mexe no saldo)</button>'
+        +'<button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;color:#2A2016;background:#fff;border-color:#D9C7B8" onclick="apagarDupAula(\''+p.k+'\',0)">só apagar (não mexe no saldo)</button>'
         +'</div></div>';
     }).join('')+'</div>';
+}
+/* ✓ fora da agenda, no Histórico de aulas (05/11): ver marcasForaDaAgenda().
+   Fica fora do comprovante e só muda se você mandar. Antes de mudar, uma
+   versão é guardada e a ação entra no Histórico de mudanças (dá para desfazer). */
+function renderHistFora(){
+  const box=document.getElementById('ha-fora');if(!box)return;
+  const a=DB.alunos.find(x=>x.id===haId);
+  const fora=a?marcasForaDaAgenda(a):[];
+  if(!fora.length){box.innerHTML='';return;}
+  box.innerHTML='<div class="ha-caixa" style="margin-top:10px;border:1px solid #E5C0BA;background:#FCF3F1;color:#2A2016;border-radius:11px;padding:10px 12px">'
+    +'<div style="font-weight:800;font-size:13px;margin-bottom:4px">📌 '+fora.length+' marcação'+(fora.length>1?'ões':'')+' fora do horário da agenda</div>'
+    +'<p class="hint" style="margin:0 0 8px;color:#5A4F40">O ✓ ficou num horário em que a aula dele não está mais (a aula foi arrastada, cancelada ou apagada). O crédito saiu por ela. Escolha o que fazer com cada uma.</p>'
+    +fora.map((x,i)=>{
+      const dev=estornoPorRef(a,x.p.k,x.p),txtDev=txtSaldos(dev);
+      const marca=ehFalta(x.p)?'falta':ehAvisou(x.p)?'aviso':'✓';
+      const onde=x.comMarca.length?'a aula desse dia está às '+x.comMarca.join(' e ')+' e já tem ✓ — descontou duas vezes'
+        :x.outras.length?'a aula desse dia está às '+x.outras.join(' e ')+', sem ✓':'não há aula dele nesse dia (cancelada ou apagada)';
+      const bt=(cls,acao,txt)=>'<button class="btn '+cls+'" style="padding:5px 10px;font-size:12px'+(cls==='btn-ghost'?';color:#2A2016;background:#fff;border-color:#D9C7B8':'')+'" onclick="acertarFora('+i+',\''+acao+'\')">'+esc(txt)+'</button>';
+      return '<div style="padding:7px 0;border-top:1px solid #f0dcd7">'
+        +'<div style="font-size:12.5px;margin-bottom:5px"><b>'+fmtDataCurta(x.data)+' às '+x.hora+'</b> ('+marca+(txtDev?', descontou '+esc(txtDev):'')+') — '+esc(onde)+'</div>'
+        +'<div style="display:flex;gap:6px;flex-wrap:wrap">'
+        +(x.semMarca.length===1&&!x.comMarca.length?bt('btn-clay','levar','levar para '+x.semMarca[0]+' (não mexe no saldo)'):'')
+        +(txtDev?bt(x.comMarca.length?'btn-clay':'btn-ghost','devolver','apagar e devolver '+txtDev):'')
+        +bt('btn-ghost','apagar','só apagar (não mexe no saldo)')
+        +'</div></div>';
+    }).join('')+'</div>';
+}
+function acertarFora(i,acao){
+  const a=DB.alunos.find(x=>x.id===haId);if(!a)return;
+  const x=marcasForaDaAgenda(a)[i];if(!x){renderHistFora();return;}
+  const quando=fmtDataCurta(x.data)+' às '+x.hora;
+  const dev=estornoPorRef(a,x.p.k,x.p),txtDev=txtSaldos(dev);
+  const pergunta=acao==='levar'?'Levar a marcação de '+quando+' para '+x.semMarca[0]+'?\n\nO saldo NÃO muda: o desconto que já saiu passa a valer para a aula das '+x.semMarca[0]+'.'
+    :acao==='devolver'?'Apagar a marcação de '+quando+' de '+a.nome+' e devolver '+txtDev+'?'
+    :'Apagar a marcação de '+quando+' de '+a.nome+'?\n\nO saldo NÃO muda — só a marcação sai.';
+  if(!confirm(pergunta+'\n\nUma versão é guardada antes, e dá para desfazer em Menu → Histórico de mudanças.'))return;
+  try{guardarVersoes(JSON.stringify(DB));}catch(e){}
+  if(acao==='levar')levarMarcas(a.id,{data:x.data,hora:x.hora},{data:x.data,hora:x.semMarca[0]});
+  else if(acao==='devolver')devolverMarcas(a,[x.p],'Marcação fora da agenda — devolvido');
+  else{const j=DB.presencas.indexOf(x.p);if(j>=0){marcarRemovida('presencas',x.p);DB.presencas.splice(j,1);}}
+  logAct('Acertar marcação fora da agenda ('+acao+'): '+a.nome);
+  persist();renderAll();renderHistAulas();
+  toast(acao==='levar'?'📌 Marcação levada para '+x.semMarca[0]:acao==='devolver'?'📌 Marcação apagada · devolvido '+txtDev:'📌 Marcação apagada · saldo intacto');
 }
 function apagarDupAula(k,devolver){
   const a=DB.alunos.find(x=>x.id===haId);if(!a)return;
@@ -10213,7 +10414,7 @@ function apagarDupAula(k,devolver){
   if(i<0){renderHistDups();return;}
   const reg=DB.presencas[i];
   const dev=devolver?estornoPorRef(a,k,reg):{};
-  const volta=Object.keys(dev).map(cp=>fmtCred(dev[cp])+' de '+CAMPO_LABEL[cp]).join(', ');
+  const volta=txtSaldos(dev);
   if(!confirm('Apagar a aula repetida de '+fmtDataCurta(reg.data)+' de '+a.nome+'?\n\n'
     +(volta?('Devolve '+volta+'.'):'O saldo NÃO muda — só a linha repetida sai.')))return;
   marcarRemovida('presencas',reg);
@@ -11022,8 +11223,53 @@ function tabelaDoMes(){
 /* Conferência de UM aluno: saldo × extrato, presença fantasma, devolução torta,
    reposição vencida, mensalidade × plano e × agenda, cobranças e créditos
    duplicados. É a mesma conta do "Conferir números" e do relatório em PDF. */
+/* ✓ preso fora da agenda (05/11, pedido do João: crédito saindo a mais).
+   Presença com chave dia|hora|aluno, mas a aula dele naquele dia não está
+   mais nesse horário: foi arrastada (antes de o ✓ ir junto), cancelada ou
+   apagada. O crédito saiu e, se a aula foi para outro horário, ela aparece lá
+   sem ✓: marcada de novo, tira outro. Só lê. Torneio não desconta: fica fora. */
+function marcasForaDaAgenda(a){
+  const out=[],pres=DB.presencas||[];
+  pres.forEach(p=>{
+    if(p.alunoId!==a.id||p.manual||(p.tipo||p.modo)==='torneio')return;
+    const m=/^(\d{4}-\d{2}-\d{2})\|(\d{2}:\d{2})\|/.exec(String(p.k||''));if(!m)return;
+    const data=m[1],hora=m[2],dia=new Date(data+'T12:00:00');
+    if(entriesFor(dia,hora).some(e=>e.alunoId===a.id))return;
+    const outras=HORAS.filter(h=>h!==hora&&entriesFor(dia,h).some(e=>e.alunoId===a.id));
+    const comMarca=outras.filter(h=>pres.some(q=>q.k===data+'|'+h+'|'+a.id));
+    out.push({p,data,hora,outras,comMarca,semMarca:outras.filter(h=>comMarca.indexOf(h)<0)});
+  });
+  return out.sort((x,y)=>(x.data+x.hora).localeCompare(y.data+y.hora));
+}
+/* Aula que já passou sem ✓ nem falta (05/11, pedido do João: "fez a aula e o
+   crédito não saiu"). Só o ✓ desconta; o app não marca sozinho. Mês atual e o
+   anterior, a mesma conta do fechamento. Só lê. */
+function aulasSemMarca(a){
+  const mk=mesReal(),out=[];
+  [mesAnteriorDe(mk),mk].forEach(m=>{try{fcAulasDoMes(a,m).forEach(x=>{if(!x.marcada&&aulaJaAconteceu(x))out.push(x);});}catch(e){}});
+  return out;
+}
 function achadosDoAluno(a){
   const achados=[];
+  const dataBr=d=>String(d||'').split('-').reverse().slice(0,2).join('/');
+  {
+    const fora=marcasForaDaAgenda(a);
+    if(fora.length){
+      const dobro=fora.filter(x=>x.comMarca.length).length;
+      achados.push({tipo:dobro?'dup':'aviso',a,txt:(dobro?'POSSÍVEL DESCONTO EM DOBRO: ':'')+a.nome+': '+fora.length
+        +' marcação(ões) num horário em que a aula dele não está mais ('+fora.slice(0,4).map(x=>dataBr(x.data)+' '+x.hora
+          +(x.comMarca.length?' — já tem ✓ às '+x.comMarca.join(' e '):x.outras.length?' — a aula está às '+x.outras.join(' e ')+' sem ✓':' — aula cancelada ou apagada')).join('; ')
+        +(fora.length>4?'…':'')+'). O crédito saiu por ela. Para acertar: ficha do aluno → Histórico de aulas.'});
+    }
+    const sem=aulasSemMarca(a);
+    if(sem.length)achados.push({tipo:'aviso',a,txt:a.nome+': '+sem.length+' aula(s) que já passaram sem ✓ nem falta, sem descontar crédito ('
+      +sem.slice(0,6).map(x=>dataBr(x.data)+' '+x.hora).join(', ')+(sem.length>6?'…':'')+'). Se ele fez a aula, marque o ✓ na agenda.'});
+    // reposição usada pelo botão do cartão no mesmo dia de uma reposição marcada na agenda (antes de 05/11 não perguntava)
+    const diasRepAg=new Set((DB.presencas||[]).filter(p=>p.alunoId===a.id&&!p.manual&&!ehMarca(p)&&(p.tipo==='reposicao'||(p.partes&&p.partes.repos))).map(p=>p.data));
+    const repDobro=movsDe(a.id,'repos').filter(m=>m.motivo==='Reposição realizada'&&!m.ref&&diasRepAg.has(dKey(new Date(m.ts))));
+    if(repDobro.length)achados.push({tipo:'dup',a,txt:'POSSÍVEL REPOSIÇÃO EM DOBRO: '+a.nome+' usou reposição pelo botão do cartão e teve reposição marcada na agenda no mesmo dia ('
+      +repDobro.slice(0,4).map(m=>dataBr(dKey(new Date(m.ts)))).join(', ')+'). Se foi a mesma aula, saiu uma reposição a mais: acerte no cadastro (Reposições).'});
+  }
     ['creditos','credGrupo','repos','locCred'].forEach(c=>{
       const atual=Number(a[c])||0, esperado=saldoPeloExtrato(a,c);
       /* Extrato MENOR que o saldo é o normal: linhas antigas saem para o app

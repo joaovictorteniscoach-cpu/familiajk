@@ -8,6 +8,45 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-05 · Claude Code: crédito sai uma vez por aula e volta quando a aula sai da agenda; extrato por mês (v2026-11-05-1)
+
+**Pedido do João:** "às vezes aparece menos um, mais um, correção de crédito, saiu um, saiu
+outro… muito extenso e confuso. E às vezes tira créditos do aluno a mais… ou ele faz a aula e
+esse crédito não é debitado."
+
+Reproduzido com dados fictícios (a presença é guardada pela chave dia|hora|aluno):
+- arrastar aula com ✓ para outro horário deixava o ✓ preso no antigo; a aula aparecia sem ✓
+  no novo e, marcada de novo, tirava outro crédito. Arrastar aula fixa ainda mudava as semanas
+  que já passaram (a aula dada às 18h aparecia às 19h sem ✓);
+- cancelar "só hoje" ou apagar a aula depois do ✓ não devolvia o crédito;
+- "Usar reposição" no cartão + ✓ no horário de reposição tiravam duas reposições;
+- dois toques rápidos no ○ marcavam e desmarcavam: aula sem débito e "−1 / +1" no extrato;
+- extrato: a virada do mês aparecia em duas linhas soltas e o "Ficou" pulava entre créditos e
+  reposições sem dizer qual.
+
+O que mudou (Gestão):
+- `levarMarcas`: ao arrastar (`moverEntrada`, troca de lugar) ou mover o dia (`moverDia`), o ✓,
+  a falta ou o aviso trocam de chave junto, e o `ref` das linhas do extrato também: nada é
+  devolvido nem descontado de novo.
+- Aula fixa arrastada muda só da data arrastada em diante (`moverFixoDesde`: encerra o fixo na
+  véspera e cria o novo, como `removerFixo` já fazia); exceções futuras vão junto se o dia da
+  semana é o mesmo.
+- Cancelar só hoje / apagar aula avulsa / tirar da grade com marcação: pergunta e devolve
+  exatamente o que saiu (`devolverMarcas`, via `estornoPorRef`).
+- `usarRepos` grava a aula do dia (manual, tipo reposição) e pergunta se já há aula hoje; o ✓
+  da agenda reconhece e troca em vez de tirar outra. Locação: mesma pergunta nos dois sentidos.
+- Toque duplo no ○: o segundo em menos de 1 s é ignorado, só no botão da tela (`tocarPresenca`).
+- Conferência (só lista): marcação fora do horário da agenda (e "POSSÍVEL DESCONTO EM DOBRO"),
+  aulas que passaram sem ✓ (mês atual e anterior), reposição do cartão + agenda no mesmo dia.
+- Acerto acionado pelo João no Histórico de aulas (`renderHistFora`/`acertarFora`): levar o ✓
+  para o horário da aula, apagar e devolver, ou só apagar; versão guardada antes e desfazer pelo
+  Histórico de mudanças. Caixas claras do Histórico com letra escura (`.ha-caixa`).
+- Extrato resumido: separado por mês, virada numa linha ("Sobra de outubro virou reposição"),
+  nome do saldo ao lado do "Ficou". Nada muda nos dados; "Ver detalhado" continua igual.
+- Testes: `testar-creditos-marcas-browser.cjs` (13 verificações, no validar-pr; falha na versão
+  anterior); `testar-extrato-resumido` e `testar-renovacao-debito` com o texto novo do extrato.
+- Nenhum saldo de aluno é corrigido sozinho; regra do Firebase e app do aluno sem mudança.
+
 ## 2026-11-04 · Claude Code: aluno não recebe mais "Não consegui conferir sua agenda na nuvem" à toa (v2026-11-04-1)
 
 **Pedido do João (print do app do aluno, "Próximas aulas"):** "Porque está ocorrendo esse erro pro aluno?"

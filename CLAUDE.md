@@ -39,6 +39,7 @@ Use `grep -n` pelos títulos de seção (`/* ===== Título =====`) ou pelo nome 
 - Persistência/nuvem: `Camada de armazenamento`, `load()`, `persist()`, `Rede de segurança`, `Voltar a uma versão anterior`
 - Ledger de saldos: `mover(a,campo,delta,motivo,ref,exato)` grava em `DB.movs`; `estornoPorRef`; campos `creditos`, `credGrupo`, `repos`, `locCred`
 - Débito de aula no ✓/cartão: `debitarDoBanco` (saldo do tipo → reposição válida → só o resto vira extra; `textoDebito`). Reposição por tipo do plano: `tipoReposDe`/`reposServePara` (Gestão) e `tipoReposAluno`/`reposServeAqui` (aluno); misto = os dois
+- Marca presa ao mexer na aula (05/11): `levarMarcas` (✓/falta/aviso trocam de chave junto com a aula, e o `ref` do extrato também) em `moverEntrada`/`moverDia`; aula fixa arrastada muda só da data em diante (`moverFixoDesde`, igual `removerFixo`); cancelar/apagar aula com ✓ pergunta e devolve (`marcasDoHorario`/`devolverMarcas`); `usarRepos` registra a aula do dia (a agenda reconhece); toque duplo no ○ barrado só na tela (`tocarPresenca`). Conferência só lista (`marcasForaDaAgenda`, `aulasSemMarca`); acerto no Histórico de aulas (`renderHistFora`/`acertarFora`, versão salva + desfazer). Teste `testar-creditos-marcas-browser.cjs`
 - Reposições: `REPOSIÇÕES` (lotes FIFO, validade 4 meses: `reposValidas`, `purgarReposVencidas`)
 - Pacote único: `Pacote único` (`unificado(a)`, `pacoteDoAluno`, `DB.pacoteUnico`)
 - Mês: `Renovar o mês`, `renovarMes(id)`, `Desconto de reposições`, `valorDoMes`, `Fechamento mensal`
@@ -51,7 +52,7 @@ Use `grep -n` pelos títulos de seção (`/* ===== Título =====`) ou pelo nome 
 - Reposições (Gráficos): `reposLiquidas`, `reposPorMes`, `renderGrafRepos`, `abrirReposMes` (só leem o extrato)
 - Aula em família no ✓: `togglePresenca` (pergunta pelos outros da família em aula em GRUPO, só por quem está NO MESMO HORÁRIO: marcação própria ou nome escrito nele — `familiarNoHorario`/`nomeNoHorario`, 28/10) → `togglePresencaUm` (o ✓ de um só); `familiaDoAluno`
 - Locação na contagem: `ehLocacao(e)` (tipo OU nome) em `aulasDoDia`, `ocupacao_`, `fcAulasDoMes`
-- Extrato do aluno: `abrirExtrato` → `pintarExtrato` (resumido por padrão: `extratoResumido`, `EXT_ROTULO`; "Ver detalhado" = cru)
+- Extrato do aluno: `abrirExtrato` → `pintarExtrato` (resumido por padrão: `extratoResumido`, `EXT_ROTULO`; separado por mês, virada numa linha só, nome do saldo no "Ficou" — 05/11; "Ver detalhado" = cru)
 - Quadrinhos do Início: `abrirDetAlunos`, `abrirDetCreditos` (`validadeRepos`), `abrirDetOcupacao` (`slotsDoDia`), `abrirDetLocacoes` → `#ov-jh-det`
 - Torneio: `campeoesDe`, `encerrarEtapa`, homenagens 1º/2º (`abrirHomenagens`, `homArte`, `homMensagem`)
 - Campeão no app do aluno: `checarPremiacaoTor` → `celebraTorneioPremio` (uma vez por etapa encerrada) + `confeteBurst(cor,forte)` (canvas por cima do cartão); 1º pela mesma ordem da Gestão (`rankTorAl` = `rankPlayersTor`)

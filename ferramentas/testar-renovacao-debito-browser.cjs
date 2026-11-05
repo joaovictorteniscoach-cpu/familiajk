@@ -41,23 +41,23 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
    assert.match(dlg.vistas[0],/Aluno Devendo fez 2 aula\(s\) além do pacote que ainda não foram pagas\.[\s\S]*OK = descontar desta renovação \(recebe 6 em vez de 8\)[\s\S]*Cancelar = já cobrei à parte/);
    assert.match(dlg.vistas[1],/Créditos: -2 → 6/);assert.match(dlg.vistas[1],/2 aula\(s\) já feita\(s\) além do pacote saem desta renovação/);
    assert.deepEqual(await sal('dev'),[6,0]);
-   assert.deepEqual(await ext('dev'),['02/11 Renovação do mês créditos · −2 aula(s) já feita(s) descontada(s) +8 6']);
+   assert.deepEqual(await ext('dev'),['NOVEMBRO DE 2026','02/11 Renovação do mês −2 aula(s) já feita(s) descontada(s) +8 6 créditos']);
   });
   await check('"já cobrei à parte" renova o pacote cheio (como antes) e o extrato explica',async()=>{
    await dados();dlg.vistas=[];dlg.resp=[false,true];
    await g.evaluate(()=>renovarMes('dev'));
    assert.match(dlg.vistas[1],/você disse que já cobrou à parte, então volta para o pacote cheio/);
    assert.deepEqual(await sal('dev'),[8,0]);
-   assert.deepEqual(await ext('dev'),['02/11 Renovação do mês créditos · zerou 2 aula(s) além do pacote (cobradas à parte) +8 8']);
+   assert.deepEqual(await ext('dev'),['NOVEMBRO DE 2026','02/11 Renovação do mês zerou 2 aula(s) além do pacote (cobradas à parte) +8 8 créditos']);
   });
   await check('com sobra: renovação + reposições numa linha só; sem sobra nem dívida, só a renovação',async()=>{
    await dados();dlg.vistas=[];dlg.resp=[true];
    await g.evaluate(()=>renovarMes('sob'));
    assert.equal(dlg.vistas.length,1,'sem dívida: só a prévia');
    assert.deepEqual(await sal('sob'),[8,3]);
-   assert.deepEqual(await ext('sob'),['02/11 Renovação do mês créditos · +3 que sobrou(aram) virou(aram) reposição +8 8']);
+   assert.deepEqual(await ext('sob'),['NOVEMBRO DE 2026','02/11 Renovação do mês +3 que sobrou(aram) virou(aram) reposição +8 8 créditos']);
    dlg.resp=[true];await g.evaluate(()=>renovarMes('zer'));
-   assert.deepEqual(await ext('zer'),['02/11 Renovação do mês créditos +8 8']);
+   assert.deepEqual(await ext('zer'),['NOVEMBRO DE 2026','02/11 Renovação do mês +8 8 créditos']);
   });
   await check('Renovar o mês (lote): desconta por padrão, "já cobrei" troca por linha',async()=>{
    await dados();

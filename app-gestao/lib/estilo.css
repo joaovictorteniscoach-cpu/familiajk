@@ -3509,6 +3509,11 @@ html body:not(#jv) .ah-linha button[disabled]{background:rgba(63,203,91,.16);col
 html body:not(#jv) #search::placeholder{color:#5A5348!important;-webkit-text-fill-color:#5A5348!important;opacity:1!important}
 /* Agenda de amanhã: o cartão é claro, então botão e aviso escuros */
 html body:not(#jv) #confirm-amanha .btn-ghost{background:#E6E0D2!important;border-color:#CFC6B4!important;color:#2A2016!important;-webkit-text-fill-color:#2A2016!important}
+/* Caixas claras do Histórico de aulas (aula repetida, marcação fora da agenda):
+   fundo claro pede letra escura também no tema escuro (05/11). */
+html body:not(#jv) .ha-caixa{color:#2A2016!important;-webkit-text-fill-color:#2A2016!important}
+html body:not(#jv) .ha-caixa .hint{color:#5A4F40!important;-webkit-text-fill-color:#5A4F40!important}
+html body:not(#jv) .ha-caixa .btn-ghost{background:#fff!important;border-color:#D9C7B8!important;color:#2A2016!important;-webkit-text-fill-color:#2A2016!important}
 html body:not(#jv) #confirm-amanha .ca-semvinc{color:#5E584C;-webkit-text-fill-color:#5E584C}
 /* Início: "Confirmar", contadores e o tipo da aula que já passou */
 html body:not(#jv) #pg-dash .jh-conf:not(.ok){background:linear-gradient(180deg,#A85E25,#8A4A1A)}
