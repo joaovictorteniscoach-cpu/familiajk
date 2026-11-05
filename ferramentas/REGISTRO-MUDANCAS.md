@@ -8,6 +8,29 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-05 · Claude Code: agenda do aluno pergunta "O que você quer marcar?" (mesma v2026-11-05-1)
+
+**Pedido do João:** "tem tantas opções que o aluno acha que tem horário livre para aula. Ele
+aperta e só tem horário livre para locação ou torneio… você deseja aula? Aí aparece só os
+horários de aula. Ou quando não tiver disponível, aparecer apenas locação."
+
+- Causa: na visão do dia, o horário só de locação aparecia "Disponível · ver opções", igual ao
+  de aula; na semana, os dois eram "Livre" verde (escolha de 20/10 para tirar o "Loc." com cara
+  de cadeado).
+- Agora, acima de Dia/Semana/Mês: "O que você quer marcar?" 🎾 Aula · 🔑 Locação · 🏆 Torneio
+  (a aba Torneio só com torneio ativo). Lembrado só no aparelho (`jv-ag-quer`); quem não tem
+  plano de aula começa em Locação.
+- Verde só o que serve para a escolha (`cabeNoSlot`, a mesma regra das opções de
+  `escolherSlot`). O resto aparece listrado com o que ele é ("Livre para locação", "Aula em
+  grupo"); o toque explica e diz qual escolha usar. Nunca "sem aula" (decisão de 27/10).
+- Dia ou semana sem nenhum horário para a escolha: aviso + botão "Ver N horários livres para
+  locação" (`avisoSemQuer`). O mês conta só o que serve.
+- Tocar no verde abre só as opções daquela atividade; vindo da voz ou da lista de espera
+  (`gotoBook(...,'aula')`), abre as de aula; horário que não tem a atividade mostra tudo o que tem.
+- `setView`/`gotoDay` só mexem nas abas Dia/Semana/Mês (antes apagavam o "on" de todo `.seg`).
+- Testes: `testar-agenda-quer-aluno-browser.cjs` (9, no validar-pr, com medição de leitura);
+  `testar-semana-livre` e `testar-locacao-minhas-aulas` atualizados para as duas escolhas.
+
 ## 2026-11-05 · Claude Code: crédito sai uma vez por aula e volta quando a aula sai da agenda; extrato por mês (v2026-11-05-1)
 
 **Pedido do João:** "às vezes aparece menos um, mais um, correção de crédito, saiu um, saiu
