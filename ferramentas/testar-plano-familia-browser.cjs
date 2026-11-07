@@ -55,6 +55,7 @@ async function fit(p,width){
   await check('cancelar vínculo mantém mensalidade, créditos e cadastro intactos',async()=>{
    const before=await p.evaluate(()=>JSON.stringify(DB));
    await p.evaluate(()=>openAlunoModal('fam-c'));
+   if(!await p.evaluate(()=>document.getElementById('a-mais').open))await p.locator('#a-mais > summary').click();   // plano família fica em "Mais opções" (07/11)
    await p.locator('#a-responsavel').selectOption('fam-p');
    acceptDialogs=false;
    await p.evaluate(()=>saveAluno());
@@ -64,6 +65,7 @@ async function fit(p,width){
   });
   await check('vincular filho mantém saldo e concentra cobrança após confirmação',async()=>{
    await p.evaluate(()=>openAlunoModal('fam-c'));
+   if(!await p.evaluate(()=>document.getElementById('a-mais').open))await p.locator('#a-mais > summary').click();   // plano família fica em "Mais opções" (07/11)
    await p.locator('#a-responsavel').selectOption('fam-p');
    await p.locator('#a-parentesco').selectOption('Filho(a)');
    assert.equal(await p.locator('#a-mensalidade').inputValue(),'0');
@@ -145,6 +147,7 @@ async function fit(p,width){
   });
   await check('desvincular recupera valor individual e preserva histórico e saldos',async()=>{
    await p.evaluate(()=>openAlunoModal('fam-c'));
+   if(!await p.evaluate(()=>document.getElementById('a-mais').open))await p.locator('#a-mais > summary').click();   // plano família fica em "Mais opções" (07/11)
    await p.locator('#a-responsavel').selectOption('');
    assert.equal(await p.locator('#a-mensalidade').inputValue(),'480');
    assert.ok(!await p.locator('#a-mensalidade').evaluate(e=>e.readOnly));

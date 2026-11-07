@@ -30,11 +30,11 @@
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" id="css-tema" href="lib/estilo.css?v=2026-11-05-1">
+<link rel="stylesheet" id="css-tema" href="lib/estilo.css?v=2026-11-07-1">
 <!-- Tema de cores: Saibro é o padrão desde 2026-10; "Verde clássico" fica a um
      toque em Segurança e dados. Troca o arquivo antes da primeira pintura. -->
 <script>try{if(localStorage.getItem('jv-tema')!=='classico'){var _ct=document.getElementById('css-tema');_ct.href=_ct.getAttribute('href').replace('estilo.css','estilo-saibro.css');document.documentElement.classList.add('tema-saibro');}}catch(e){}</script>
-<link rel="stylesheet" href="lib/acoes-voz.css?v=2026-11-05-1">
+<link rel="stylesheet" href="lib/acoes-voz.css?v=2026-11-07-1">
 <!-- ================= DEMO ISOLADA ================= -->
 <script>
 /* Espelho comercial do Gestão atual.
@@ -1045,7 +1045,7 @@ function esperarAuth(){return Promise.resolve();}
   <button onclick="go('lanc',this)"><span class="ico" data-ic="navcash"></span>Caixa</button>
   <button id="nav-mais" onclick="abrirMais()"><span class="ico" data-ic="navmore"></span>Mais</button>
 </nav>
-<script src="lib/icones.js?v=2026-11-05-1"></script>
+<script src="lib/icones.js?v=2026-11-07-1"></script>
 
 <!-- MODAL ALUNO -->
 <div class="overlay" id="ov-aluno" onclick="if(event.target===this)closeModal('ov-aluno')">
@@ -1054,67 +1054,80 @@ function esperarAuth(){return Promise.resolve();}
     <input type="hidden" id="a-id">
     <div class="field"><label>Nome</label><input id="a-nome" placeholder="Nome do aluno"></div>
     <div class="field"><label>WhatsApp (com DDD)</label><input id="a-tel" placeholder="41999999999" inputmode="numeric"></div>
-    <div class="field"><label>Perfil / categoria (divide a lista de Alunos)</label>
-      <select id="a-perfil">
-        <option value="">Automático (pelo tipo)</option>
-        <option value="tenis">🎾 Tênis</option>
-        <option value="personal">💪 Personal</option>
-        <option value="planilha">📋 Planilha</option>
-        <option value="locacao">🔑 Locação (só loca quadra)</option>
-        <option value="torneio">🏆 Torneio (só torneio)</option>
-      </select>
+    <!-- Cadastro simples (07/11, pedido do João): o pacote numa caixa, o saldo
+         numa linha e o resto em "Mais opções". Os campos são os mesmos de antes. -->
+    <div class="cad-caixa" id="a-pacote-box">
+      <div class="cad-tit">Pacote do aluno</div>
+      <div class="field"><label>Tipo de aula</label>
+        <div class="seg3 cad-tipos" id="a-tipos" role="group" aria-label="Tipo de aula"></div>
+        <select id="a-tipo" onchange="applyAlunoTipoUI()" hidden aria-hidden="true" tabindex="-1">
+          <option>Particular</option><option>Dupla</option><option>Trio</option><option>Quarteto</option><option value="Grupo">Grupo (antigo)</option><option>Personal</option>
+        </select>
+      </div>
+      <div class="row2" id="a-linha-part">
+        <div class="field"><label id="a-plano-lbl">Aulas por mês</label>
+          <input type="number" id="a-plano" min="0" step="1" value="4" inputmode="numeric" placeholder="Nº de aulas (ex.: 3, 5, 8, 10...)" onchange="sugerirMensalidade();pintarSaldosCad()"></div>
+        <div class="field" id="a-valoraula-wrap"><label>🎾 Valor por aula (R$)</label><input type="number" id="a-valoraula" value="130" onchange="sugerirMensalidade()"></div>
+      </div>
+      <div class="row2" id="a-grupo-wrap">
+        <div class="field"><label id="a-planogrupo-lbl">👥 Aulas em grupo por mês</label>
+          <input type="number" id="a-planogrupo" min="0" step="1" value="0" inputmode="numeric" onchange="sugerirMensalidade();pintarSaldosCad()"></div>
+        <div class="field" id="a-grupotipo-wrap"><label>Formato do grupo</label>
+          <select id="a-grupotipo" onchange="sugerirMensalidade()">
+            <option value="">—</option><option>Dupla</option><option>Trio</option><option>Quarteto</option>
+          </select></div>
+      </div>
+      <button type="button" class="cad-link" id="a-misto-bt" onclick="alternarMistoCad()">+ Também faz aula em grupo</button>
+      <div class="row2">
+        <div class="field"><label>Mensalidade (R$)</label><input type="number" id="a-mensalidade"></div>
+        <div class="field"><label>Vence todo dia</label><input type="number" id="a-venc" min="1" max="28" value="10"></div>
+      </div>
+      <p id="a-conta" style="font-size:11.5px;color:var(--muted);margin:-6px 0 8px;font-weight:600"></p>
+      <p id="a-agenda" style="font-size:11.5px;color:#E8C766;margin:-2px 0 6px;font-weight:700"></p>
     </div>
-    <div class="row2">
-      <div class="field"><label>Modalidade / pacote</label>
-        <div style="display:flex;gap:6px;align-items:stretch">
-          <select id="a-tipo" onchange="applyAlunoTipoUI()" style="flex:1">
-            <option>Particular</option><option>Dupla</option><option>Trio</option><option>Quarteto</option><option value="Grupo">Grupo (antigo)</option><option>Personal</option>
-          </select>
-          <button type="button" onclick="novoPacote()" title="Criar novo pacote (ex.: Kids, Planilha Personal)" style="flex-shrink:0;border:1px solid var(--border);background:var(--gold);color:var(--green);font-weight:800;border-radius:11px;padding:0 12px;font-size:13px;cursor:pointer">+ Pacote</button>
+    <div class="cad-caixa" id="a-saldo-box">
+      <div class="cad-tit">Saldo agora</div>
+      <div class="cad-saldos" id="a-saldos"></div>
+      <div id="a-juntar"></div>
+      <details class="cad-det" id="a-corrigir"><summary>✏️ Corrigir saldo (fica registrado no extrato)</summary>
+        <div class="row2 cad-corr">
+          <div class="field" id="a-creditos-wrap"><label id="a-creditos-lbl">Créditos</label><input type="number" id="a-creditos" value="0" step="0.5"></div>
+          <div class="field" id="a-credgrupo-wrap"><label>👥 Créditos de grupo</label><input type="number" id="a-credgrupo" value="0" step="0.5"></div>
+          <div class="field"><label>Reposições</label><input type="number" id="a-repos" value="0" step="0.5"></div>
+          <div class="field"><label>🔑 Locação (horas)</label><input type="number" id="a-loccred" value="0" step="0.5"></div>
         </div>
+      </details>
+    </div>
+    <details class="cad-det cad-mais" id="a-mais"><summary>Mais opções <small>plano família, situação, professor, links</small></summary>
+      <div class="field"><label for="a-responsavel">👪 Responsável pelo pagamento · plano família</label>
+        <select id="a-responsavel" onchange="pintarFamiliaModal()"><option value="">O próprio aluno paga</option></select>
       </div>
-      <div class="field"><label id="a-plano-lbl">Plano (aulas/mês) — 0 = sem pacote</label>
-        <input type="number" id="a-plano" min="0" step="1" value="4" inputmode="numeric" placeholder="Nº de aulas (ex.: 3, 5, 8, 10...)" onchange="sugerirMensalidade()">
+      <div class="field" id="a-parentesco-wrap" style="display:none"><label for="a-parentesco">Vínculo com o responsável</label>
+        <select id="a-parentesco"><option>Cônjuge</option><option>Filho(a)</option><option>Outro dependente</option></select>
       </div>
-    </div>
-    <div class="field" id="a-valoraula-wrap" style="display:none"><label>💪 Valor por treino — Personal (R$)</label><input type="number" id="a-valoraula" value="130" onchange="sugerirMensalidade()"></div>
-    <div class="row2" id="a-grupo-wrap">
-      <div class="field"><label>👥 Aulas em grupo / mês</label>
-        <input type="number" id="a-planogrupo" min="0" step="1" value="0" inputmode="numeric" onchange="sugerirMensalidade()"></div>
-      <div class="field"><label>Formato do grupo</label>
-        <select id="a-grupotipo" onchange="sugerirMensalidade()">
-          <option value="">—</option><option>Dupla</option><option>Trio</option><option>Quarteto</option>
-        </select></div>
-    </div>
-    <p id="a-conta" style="font-size:11.5px;color:var(--muted);margin:-6px 0 10px;font-weight:600"></p>
-    <p id="a-agenda" style="font-size:11.5px;color:#E8C766;margin:-4px 0 10px;font-weight:700"></p>
-    <div class="field"><label for="a-responsavel">👪 Responsável pelo pagamento · plano família</label>
-      <select id="a-responsavel" onchange="pintarFamiliaModal()"><option value="">O próprio aluno paga</option></select>
-    </div>
-    <div class="field" id="a-parentesco-wrap" style="display:none"><label for="a-parentesco">Vínculo com o responsável</label>
-      <select id="a-parentesco"><option>Cônjuge</option><option>Filho(a)</option><option>Outro dependente</option></select>
-    </div>
-    <p class="hint" id="a-familia-nota"></p>
-    <div class="row2">
-      <div class="field"><label>Mensalidade (R$)</label><input type="number" id="a-mensalidade"></div>
-      <div class="field"><label>Créditos atuais</label><input type="number" id="a-creditos" value="0"></div>
-    </div>
-    <div class="row2">
-      <div class="field" id="a-prof-wrap" style="display:none"><label>👨‍🏫 Professor</label>
-        <select id="a-prof"><option value="">—</option></select></div>
-      <div class="field"><label>🔑 Locação (horas)</label><input type="number" id="a-loccred" value="0" step="0.5"></div>
-      <div class="field"><label>👥 Créditos de grupo</label><input type="number" id="a-credgrupo" value="0" step="0.5"></div>
-    </div>
-    <div class="row2">
-      <div class="field"><label>Reposições</label><input type="number" id="a-repos" value="0"></div>
-      <div class="field"><label>Situação</label>
-        <select id="a-status"><option value="pendente">Pendente</option><option value="parcial">Pagou 50% (registro antigo)</option><option value="pago">Pago</option></select>
-        <p class="hint" id="pm-cadastro-nota"></p>
+      <p class="hint" id="a-familia-nota"></p>
+      <div class="row2">
+        <div class="field"><label>Situação</label>
+          <select id="a-status"><option value="pendente">Pendente</option><option value="parcial">Pagou 50% (registro antigo)</option><option value="pago">Pago</option></select>
+          <p class="hint" id="pm-cadastro-nota"></p>
+        </div>
+        <div class="field" id="a-prof-wrap" style="display:none"><label>👨‍🏫 Professor</label>
+          <select id="a-prof"><option value="">—</option></select></div>
       </div>
-    </div>
-    <div class="field"><label>Dia de vencimento da mensalidade (1–28)</label><input type="number" id="a-venc" min="1" max="28" value="10"></div>
-    <div class="field"><label>💳 Link de cartão deste aluno</label><input id="a-cardlink" placeholder="Cole o link de cobrança (Mercado Pago, Nubank…)"></div>
-    <div class="field"><label>🏋️ Link do treino no MFit (alunos de personal)</label><input id="a-mfit" placeholder="Cole o link do treino do MFit deste aluno"></div>
+      <div class="field"><label>Perfil / categoria (divide a lista de Alunos)</label>
+        <select id="a-perfil" onchange="pintarTiposCad()">
+          <option value="">Automático (pelo tipo)</option>
+          <option value="tenis">🎾 Tênis</option>
+          <option value="personal">💪 Personal</option>
+          <option value="planilha">📋 Planilha</option>
+          <option value="locacao">🔑 Locação (só loca quadra)</option>
+          <option value="torneio">🏆 Torneio (só torneio)</option>
+        </select>
+      </div>
+      <div class="field"><label>💳 Link de cartão deste aluno</label><input id="a-cardlink" placeholder="Cole o link de cobrança (Mercado Pago, Nubank…)"></div>
+      <div class="field"><label>🏋️ Link do treino no MFit (alunos de personal)</label><input id="a-mfit" placeholder="Cole o link do treino do MFit deste aluno"></div>
+      <button type="button" class="btn btn-ghost cad-novo-pacote" onclick="novoPacote()">+ Criar outro tipo de pacote (ex.: Kids)</button>
+    </details>
     <div class="modal-acts">
       <button class="btn btn-ghost" onclick="closeModal('ov-aluno')">Cancelar</button>
       <button class="btn btn-clay" onclick="saveAluno()">Salvar aluno</button>
@@ -1641,8 +1654,8 @@ function esperarAuth(){return Promise.resolve();}
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="app-demo.js?v=2026-11-05-1"></script>
-<script src="lib/acoes-voz.js?v=2026-11-05-1"></script>
+<script src="app-demo.js?v=2026-11-07-1"></script>
+<script src="lib/acoes-voz.js?v=2026-11-07-1"></script>
 <script>
 /* Rede de seguranca do par tela+codigo.
 
@@ -1657,7 +1670,7 @@ function esperarAuth(){return Promise.resolve();}
    torto, o app busca o par certo uma vez e, se insistir, DIZ o que houve em
    vez de deixar voce tocando em botao que nao responde. */
 (function(){
-  var ESPERADA='2026-11-05-1';
+  var ESPERADA='2026-11-07-1';
   function tela(motivo){
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;z-index:99999;background:#1A2E14;color:#FAF7F2;'
