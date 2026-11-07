@@ -8,6 +8,37 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-07 · Claude Code: cadastro e cartão do aluno simples — um pacote, um saldo (v2026-11-07-1)
+
+**Pedido do João:** deixar o "Editar aluno" e o cartão "muito mais simples, menos poluído";
+"quando eu escolho o tipo de pacote, a aula que eu adiciono já vai direto para aquele pacote…
+quando coloca um e outro, acaba dando diferença". Escolhas dele: um pacote por aluno (misto só
+para quem faz os dois); "só quando tem as duas vai aparecer a barrinha créditos em grupo,
+créditos particular".
+
+- Causa da "diferença": a dupla cadastrada do jeito antigo guarda o pacote em `plano` e o saldo
+  em `creditos`. O ✓ num horário de grupo descontava de `credGrupo` (0 → −1, "extra a cobrar")
+  e os créditos ficavam parados. Agora a aula do MESMO tipo do pacote sai de onde o pacote mora
+  (`campoDoPacote`/`tipoDoPacote` → `ordemDoDebito`); aula de OUTRO tipo continua outro produto
+  (regra de 22–23/10). `tipoReposDe`/`tipoReposAluno`: a reposição da dupla antiga é de grupo.
+- Cadastro: caixa "Pacote do aluno" (botões de tipo + 🔑 Só locação, aulas por mês, mensalidade,
+  vencimento), "Saldo agora" (um número; dois só no misto) com "Corrigir saldo" fechado, e
+  "Mais opções" (família, situação, professor, categoria, links, novo tipo de pacote). Mesmos
+  campos e ids de antes; `a-tipo` virou select escondido atrás dos botões. Botão
+  "+ Também faz aula em grupo/particular" liga o misto.
+- Trocar o pacote leva o saldo junto SÓ depois de perguntar (`mudancasSaldoPacote` no
+  `saveAluno`; Cancelar volta ao cadastro); misto que deixa um dos tipos pergunta se junta a
+  sobra (Cancelar = fica separada). Versão salva antes; extrato "Saldo mudou junto com o pacote".
+- Saldo solto do mesmo tipo (dupla antiga com −1 de grupo, o defeito acima): `saldoForaDoPacote`.
+  Ficha avisa em "Pede atenção" → "Conferir e juntar" abre o cadastro; "Juntar ao pacote" só muda
+  os números na tela e grava ao salvar ("Saldo juntado ao pacote" no extrato, versão salva).
+  A conferência (`achadosDoAluno`) só lista. Nada é corrigido sozinho.
+- Ficha: "Pacote Dupla · 4 aulas/mês", um saldo e um botão "Aula realizada"; misto mostra os
+  dois saldos e os dois botões.
+- Pendente: o app do aluno ainda mostra "Dupla · sem pacote" e "Créditos 0" para a dupla nova
+  (pacote em `planoGrupo`); não mexido (visual do aluno fechado) — perguntar ao João.
+- Teste: `testar-cadastro-simples-browser.cjs` (17, no validar-pr).
+
 ## 2026-11-05 · Claude Code: agenda do aluno pergunta "O que você quer marcar?" (mesma v2026-11-05-1)
 
 **Pedido do João:** "tem tantas opções que o aluno acha que tem horário livre para aula. Ele
