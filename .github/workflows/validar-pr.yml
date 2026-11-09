@@ -46,6 +46,7 @@ jobs:
           PW: ${{ runner.temp }}/jv-browser/node_modules/playwright
           JV_VISUAL_DIR: ${{ runner.temp }}/previas-aulas-voz
         run: |
+          node ferramentas/testar-saldo-pacote-aluno-browser.cjs
           node ferramentas/testar-voz-gestao-browser.cjs
           node ferramentas/testar-voz-conversa-browser.cjs
           node ferramentas/testar-cancelar-periodo-browser.cjs
@@ -102,7 +103,6 @@ jobs:
           node ferramentas/testar-creditos-marcas-browser.cjs
           node ferramentas/testar-agenda-quer-aluno-browser.cjs
           node ferramentas/testar-cadastro-simples-browser.cjs
-          node ferramentas/testar-saldo-pacote-aluno-browser.cjs
           node ferramentas/testar-avisos-celular-browser.cjs
           node ferramentas/testar-servidor-avisos.mjs
           node ferramentas/testar-resumo-escritorio-browser.cjs
