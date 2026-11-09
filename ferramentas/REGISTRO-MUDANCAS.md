@@ -8,7 +8,7 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
-## 2026-11-07 · Claude Code: cadastro e cartão do aluno simples — um pacote, um saldo (v2026-11-07-1)
+## 2026-11-07 · Claude Code: cadastro e cartão do aluno simples — um pacote, um saldo (v2026-11-07-1 → v2026-11-09-1)
 
 **Pedido do João:** deixar o "Editar aluno" e o cartão "muito mais simples, menos poluído";
 "quando eu escolho o tipo de pacote, a aula que eu adiciono já vai direto para aquele pacote…
@@ -35,9 +35,15 @@ créditos particular".
   A conferência (`achadosDoAluno`) só lista. Nada é corrigido sozinho.
 - Ficha: "Pacote Dupla · 4 aulas/mês", um saldo e um botão "Aula realizada"; misto mostra os
   dois saldos e os dois botões.
-- Pendente: o app do aluno ainda mostra "Dupla · sem pacote" e "Créditos 0" para a dupla nova
-  (pacote em `planoGrupo`); não mexido (visual do aluno fechado) — perguntar ao João.
 - Teste: `testar-cadastro-simples-browser.cjs` (17, no validar-pr).
+- App do aluno (09/11, João: "corrija o texto e os números sem mexer no visual"; v2026-11-09-1):
+  a dupla cadastrada do jeito novo (pacote em `planoGrupo`/`credGrupo`) recebia "Seus créditos
+  acabaram — esta aula entra como extra" a cada aula marcada; o assistente respondia "0 créditos,
+  3 de grupo"; o resumo do mês e a mensagem de WhatsApp ao João diziam "0 créditos + 3 em grupo".
+  Agora `saldoPacoteAluno` (mesma conta do `campoDoPacote`) dá o saldo do pacote para esses
+  textos, para o aviso de crédito usado, a renovação e o plano atual na tabela de planos. O
+  cartão antigo `#bloco-saldo` (escondido pelo visual atual) também segue a regra. Misto
+  continua com os dois saldos. Teste `testar-saldo-pacote-aluno-browser.cjs` (7, no validar-pr).
 
 ## 2026-11-05 · Claude Code: agenda do aluno pergunta "O que você quer marcar?" (mesma v2026-11-05-1)
 
