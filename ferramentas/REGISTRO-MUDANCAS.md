@@ -8,6 +8,24 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-09 · Claude Code: CI vermelho do PR #272 (head 67869c2) — teste e sinal de nuvem preso
+
+- CI `validar` falhou em `testar-contraste-fechamento-browser.cjs`: o teste chamava `saveAluno()`
+  sem esperar (agora é assíncrono, com cópia confirmada). Passa a aguardar o resultado
+  (`return saveAluno()`/`await`), inclusive nos dois saves seguidos pai → filho.
+- Defeito real achado ao reproduzir: `copiarAntesDoCadastro` barrava o save sempre que
+  `_nuvemMuda` estava ligado. Esse sinal fica `true` o resto do uso depois de UMA demora da
+  nuvem na abertura (`comPrazo`), então um 4G lento ao abrir a Gestão travava todo cadastro com
+  mensalidade/pacote/saldo ("A sessão ou a nuvem mudou durante a cópia"). Agora só barra se
+  ele ligou DURANTE a cópia (`contexto.nuvemMuda`). Conflito de nuvem, troca de sessão e
+  `_espacoTrocou` continuam barrando como o Codex fez.
+- Teste novo no `testar-cadastro-simples-browser.cjs`: nuvem lenta na abertura salva; estouro
+  durante a cópia não grava. Bateria local: 60 ok; 4 só do ambiente (WebKit ×3, simulador
+  Firebase ×1). Demo regenerada; versão continua `2026-11-09-3`.
+- Em aberto para o João: (1) dupla antiga com −1 solto — o aluno via 3 (certo) e com a leitura
+  do Codex passa a ver "4 · outro saldo: −1 de grupo"; (2) a renovação pelo app do aluno agora
+  cobra a mensalidade do cadastro, não a tabela.
+
 ## 2026-11-09 · Codex: cópia confirmada e proteção dos créditos no cadastro (PR #272)
 
 - Responsável: Codex; branch `codex/protecao-creditos-pr272-2026-11-09`, incremento do

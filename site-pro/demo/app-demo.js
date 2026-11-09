@@ -5728,7 +5728,10 @@ async function copiarAntesDoCadastro(contexto){
      ||contexto.form!==assinaturaCadastro()){
     toast('O cadastro foi fechado ou mudou durante a cópia. Confira os campos e salve novamente.');return false;
   }
-  if(contexto.espaco!==espacoCadastro()||_conflitoNuvem||_nuvemMuda||window._espacoTrocou){
+  /* _nuvemMuda fica true o resto do uso depois de UMA demora da nuvem na abertura
+     (comPrazo): só barra se ela estourou DURANTE a cópia, senão um 4G lento na
+     abertura travava todo cadastro com mensalidade/saldo (09/11). */
+  if(contexto.espaco!==espacoCadastro()||_conflitoNuvem||(_nuvemMuda&&!contexto.nuvemMuda)||window._espacoTrocou){
     toast('A sessão ou a nuvem mudou durante a cópia. Confira os dados e reabra o cadastro.');return false;
   }
   if(DB!==contexto.banco||JSON.stringify(DB)!==contexto.antes){
@@ -5738,7 +5741,7 @@ async function copiarAntesDoCadastro(contexto){
 }
 async function saveAluno(){
   if(_cadSalvando)return false;
-  _cadSalvando=true;const contexto={sessao:_cadSessao,banco:DB,antes:JSON.stringify(DB),form:assinaturaCadastro(),espaco:espacoCadastro(),liberar:null};
+  _cadSalvando=true;const contexto={sessao:_cadSessao,banco:DB,antes:JSON.stringify(DB),form:assinaturaCadastro(),espaco:espacoCadastro(),nuvemMuda:!!_nuvemMuda,liberar:null};
   try{
   const id=document.getElementById('a-id').value;
   const nome=document.getElementById('a-nome').value.trim();

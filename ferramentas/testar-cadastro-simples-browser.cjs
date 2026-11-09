@@ -286,6 +286,17 @@ let count=0,motorAtual='';async function check(n,fn){await fn();count++;console.
    await preparar();await abrir('a2003');await p.evaluate(()=>{DB.pacoteUnico={ativo:true};});
    const antes=await banco();await salvar();assert.equal(await banco(),antes);assert.equal(await p.evaluate(()=>_versoes),0);
   });
+  await check('nuvem que demorou na abertura (sinal que fica ligado) não trava o cadastro; demora DURANTE a cópia trava',async()=>{
+   await preparar();await p.evaluate(()=>{_nuvemMuda=true;});          // 4G lento ao abrir a Gestão
+   await abrir('a2001');await p.evaluate(()=>{document.getElementById('a-mensalidade').value='700';});
+   assert.equal(await salvar(),true,'salvou mesmo com a nuvem lenta na abertura');
+   assert.equal(await p.evaluate(()=>DB.alunos.find(x=>x.id==='a2001').mensalidade),700);
+   await preparar();await abrir('a2001');await p.evaluate(()=>{document.getElementById('a-mensalidade').value='710';__copiaEspera=true;window.__salvar=saveAluno();});
+   await p.waitForFunction(()=>!!window.__liberarCopia);
+   assert.equal(await p.evaluate(async()=>{_nuvemMuda=true;__liberarCopia();return await __salvar;}),false,'estourou durante a cópia: não grava');
+   assert.equal(await p.evaluate(()=>DB.alunos.find(x=>x.id==='a2001').mensalidade),640);
+   await preparar();
+  });
   await check('conflito de nuvem e troca da sessão durante a cópia impedem a migração',async()=>{
    for(const modo of ['conflito','sessao']){
     await iniciarTroca();const antes=await banco();await p.evaluate(()=>{__copiaEspera=true;window.__salvar=saveAluno();});
