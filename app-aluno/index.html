@@ -1683,15 +1683,15 @@ html body:not(#jv) #pedir-box .btn-ghost{background:#F3EDE2!important;border:1px
 .login .login-sub{opacity:1}
 .login-priv{color:rgba(250,247,242,.8)}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-11-05-1">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-11-09-3">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-11-05-1">
-<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-11-05-1">
-<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-11-05-1">
-<link rel="stylesheet" href="lib/visual-sobrio.css?v=2026-11-05-1">
-<link rel="stylesheet" href="lib/letras-maiores.css?v=2026-11-05-1">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-11-09-3">
+<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-11-09-3">
+<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-11-09-3">
+<link rel="stylesheet" href="lib/visual-sobrio.css?v=2026-11-09-3">
+<link rel="stylesheet" href="lib/letras-maiores.css?v=2026-11-09-3">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -2206,7 +2206,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-11-05-1"></script>
+<script src="lib/icones.js?v=2026-11-09-3"></script>
 </div>
 
 <!-- ASSISTENTE POR VOZ: consultar horário livre, agendar, cancelar, ver aulas (lib/voz-aluno.js) -->
@@ -2453,7 +2453,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-11-05-1';
+const VERSAO='2026-11-09-3';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -3120,12 +3120,12 @@ async function refresh(silent){
   if(EU){
     render();if(!silent)toast('Atualizado ✓');
     try{
-      const ck='jvt-prevcred-'+MEU.codigo, prevRaw=lsGet(ck), atual=Number(EU.creditos)||0;
-      if(prevRaw!==null&&prevRaw!==undefined&&prevRaw!==''){
+      const sp=saldoPacoteAluno(),ck='jvt-prevcred-'+MEU.codigo,ctx=ck+'-pacote',tipo=JSON.stringify([sp.misto,sp.campo]),prevRaw=lsGet(ck),atual=sp.total;
+      if(lsGet(ctx)===tipo&&prevRaw!==null&&prevRaw!==undefined&&prevRaw!==''){
         const prev=Number(prevRaw);
         if(!isNaN(prev)&&atual<prev)popupCreditos(Math.round((prev-atual)*10)/10,atual);
       }
-      lsSet(ck,String(atual));
+      lsSet(ck,String(atual));lsSet(ctx,tipo);
     }catch(e){}
   }
   return true;
@@ -3320,6 +3320,43 @@ function saldoReposAluno(){
   const saldo=Number(valor);
   return Number.isFinite(saldo)?Math.max(0,saldo):0;
 }
+/* Um pacote por aluno (07/11, mesma conta da Gestão: campoDoPacote). Quem não
+   é misto tem UM saldo, o do pacote: a dupla cadastrada do jeito novo guarda o
+   pacote em planoGrupo/credGrupo; a antiga e o particular, em plano/creditos.
+   Antes a dupla nova via "Dupla · sem pacote" e "Créditos 0". Só leitura:
+   decide o que aparece, nunca mexe em número. */
+function saldoPacoteAluno(E){
+  E=E||EU;if(!E)return null;
+  const p=Number(E.plano)||0,g=Number(E.planoGrupo)||0,c=Number(E.creditos)||0,cg=Number(E.credGrupo)||0;
+  if(p>0&&g>0)return {misto:true,campo:null,valor:c,qtd:p,outro:cg,outroCampo:'credGrupo',total:c+cg,tipo:null};
+  /* O número do plano tem precedência sobre o nome: Dupla antiga e publicação
+     unificada usam plano/creditos; Dupla nova usa planoGrupo/credGrupo.
+     Sem plano, preserva o saldo avulso existente, inclusive no legado sem
+     planoGrupo. Não move nem compensa um saldo com o outro. */
+  const grupoTipo=/^(grupo|dupla|trio|quarteto)$/i.test(String(E.tipo||''));
+  const grp=g>0||(p<=0&&grupoTipo&&(cg!==0||c===0&&E.planoGrupo!=null));
+  const campo=grp?'credGrupo':'creditos',valor=grp?cg:c;
+  return {misto:false,campo,valor,qtd:grp?g:p,outro:grp?c:cg,outroCampo:grp?'creditos':'credGrupo',total:valor,tipo:g>0&&!p||grupoTipo?'grupo':'part'};
+}
+function saldoParaAulaAluno(ehGrupo){
+  const sp=saldoPacoteAluno();if(!sp)return 0;
+  if(!sp.misto&&sp.tipo===(ehGrupo?'grupo':'part'))return sp.valor;
+  return Number(EU[ehGrupo?'credGrupo':'creditos'])||0;
+}
+function detalheSaldoAluno(sp){
+  if(!sp)return '';
+  if(sp.misto)return fmtCred(sp.valor)+' particulares + '+fmtCred(sp.outro)+' de grupo';
+  if(!sp.outro)return '';
+  return 'outro saldo: '+fmtCred(sp.outro)+(sp.outroCampo==='credGrupo'?' de grupo':' particular(es)');
+}
+function textoPlanoAluno(){
+  const sp=saldoPacoteAluno();if(!sp)return '—';
+  if(sp.misto)return EU.tipo+' · Flex '+EU.plano+' + '+EU.planoGrupo+' em '+String(EU.grupoTipo||'grupo').toLowerCase();
+  if(sp.qtd<=0)return EU.tipo+' · sem pacote';
+  if(isPersonal())return EU.tipo+' · '+sp.qtd+' treinos/mês';
+  const nome=sp.campo==='credGrupo'&&!/dupla|trio|quarteto/i.test(String(EU.tipo||''))?(EU.grupoTipo||'Grupo'):EU.tipo;
+  return nome+' · Flex '+sp.qtd;
+}
 /* Aluno de grupo repõe em aula de grupo; particular, em aula particular
    (pedido do João, 23/10). O tipo sai do plano; misto serve para os dois.
    Mesma conta da Gestão (tipoReposDe). */
@@ -3328,7 +3365,7 @@ function tipoReposAluno(){
   const p=Number(EU.plano)||0,g=Number(EU.planoGrupo)||0;
   if(p>0&&g>0)return null;
   if(g>0)return 'grupo';
-  if(p>0)return 'part';
+  if(p>0)return /grupo|dupla|trio|quarteto/i.test(String(EU.tipo||''))?'grupo':'part';   // dupla antiga (07/11), igual à Gestão
   const t=String(EU.tipo||'');
   if(/grupo|dupla|trio|quarteto/i.test(t))return 'grupo';
   if(/particular/i.test(t))return 'part';
@@ -3363,8 +3400,14 @@ function meuQuadro(){
      modalidade. Somar os dois cobre o plano misto. */
   const aulasPlano=(Number(EU.plano)||0)+(Number(EU.planoGrupo)||0);
   if(EU.tipo||aulasPlano>0)p.push('plano '+(EU.tipo||'')+(aulasPlano>0?(' de '+aulasPlano+' aula(s)/mês'):''));
-  p.push(fmtCred(cr)+' crédito(s)');
-  if(gr)p.push(fmtCred(gr)+' de grupo');
+  const sp=saldoPacoteAluno();
+  if(sp&&!sp.misto){
+    p.push(fmtCred(sp.valor)+' crédito(s)');
+    if(sp.outro)p.push(fmtCred(sp.outro)+(sp.outroCampo==='credGrupo'?' de grupo':' particular(es)'));
+  }else{
+    p.push(fmtCred(cr)+' crédito(s)');
+    if(gr)p.push(fmtCred(gr)+' de grupo');
+  }
   if(rp)p.push(fmtCred(rp)+' reposição(ões)');
   return p.join(', ');
 }
@@ -3534,9 +3577,9 @@ function renderPremiumAluno(){
   /* Topo do Início: a próxima aula no lugar da frase de efeito (24/10). */
   const hx=document.getElementById('hero-prox');
   if(hx)hx.textContent=prox?((tpProx==='torneio'?'Próximo jogo: ':tpProx==='locacao'?'Próxima locação: ':'Próxima aula: ')+DIAS_FULL[dtOf(prox.data,prox.hora).getDay()].toLowerCase()+', '+prox.hora):'Nenhuma aula marcada';
-  const saldo=(Number(EU.creditos)||0)+(Number(EU.credGrupo)||0),plano=(Number(EU.plano)||0)+(Number(EU.planoGrupo)||0);
+  const sp=saldoPacoteAluno(),saldo=sp.total,plano=(Number(EU.plano)||0)+(Number(EU.planoGrupo)||0);
   const hc=document.getElementById('home-cred');if(hc)hc.textContent=fmtCred(saldo);
-  const hcs=document.getElementById('home-cred-sub');if(hcs)hcs.textContent=plano>0?('créditos · de '+plano+' no plano atual'):'créditos disponíveis';
+  const hcs=document.getElementById('home-cred-sub');if(hcs)hcs.textContent=(plano>0?('créditos · de '+plano+' no plano atual'):'créditos disponíveis')+(detalheSaldoAluno(sp)?' · '+detalheSaldoAluno(sp):'');
   const hf=document.getElementById('home-cred-fill');if(hf)hf.style.width=(plano>0?Math.max(0,Math.min(100,saldo/plano*100)):(saldo>0?100:0))+'%';
   const hp=document.getElementById('home-plano');if(hp)hp.textContent=planoPremium();
   const hps=document.getElementById('home-plano-sub');if(hps)hps.textContent=plano>0?(fmtCred(plano)+(plano===1?' aula':' aulas')+' por mês'):'Fale com o João para escolher um plano';
@@ -3555,7 +3598,7 @@ function renderPremiumAluno(){
   const ci=document.getElementById('cred-page-familia-info');if(ci)ci.textContent=finfo;
   const cb=document.getElementById('cred-page-familia');if(cb)cb.style.display=finfo?'block':'none';
   const pb=document.getElementById('home-pix-btn');if(pb)pb.style.display=(!dependenteAluno()&&PUB&&PUB.pix&&String(PUB.pix).trim())?'flex':'none';
-  const cs=document.getElementById('cred-page-saldo');if(cs)cs.textContent=fmtCred(saldo);
+  const cs=document.getElementById('cred-page-saldo');if(cs){cs.textContent=fmtCred(saldo);const rot=cs.parentElement.querySelector('small');if(rot)rot.textContent='créditos'+(detalheSaldoAluno(sp)?' · '+detalheSaldoAluno(sp):'');}
   const cf=document.getElementById('cred-page-fill');if(cf)cf.style.width=(plano>0?Math.max(0,Math.min(100,saldo/plano*100)):(saldo>0?100:0))+'%';
   const repos=saldoReposAluno(),vencendo=Math.max(0,Math.min(repos,Number(EU.reposVencendo)||0));
   for(const id of ['home-repos','cred-page-repos']){
@@ -3596,17 +3639,21 @@ function render(){
      professor é a primeira coisa que o aluno quer confirmar. */
   const hp=document.getElementById('hello-prof');
   if(hp){const n=meuProfNome();hp.textContent=n?('👨‍🏫 Seu professor: '+n):'';hp.style.display=n?'':'none';}
-  document.getElementById('v-cred').textContent=fmtCred(EU.creditos);
+  const sp=saldoPacoteAluno();
+  document.getElementById('v-cred').textContent=fmtCred(sp.valor);
   document.getElementById('v-repos').textContent=fmtCred(saldoReposAluno());
   renderReposBox();
   renderPedirBox();
-  const pg=Number(EU.planoGrupo)||0,cg=Number(EU.credGrupo)||0,sg=document.getElementById('scard-grupo');
-  if(sg){sg.style.display=(pg>0||cg!==0)?'block':'none';
+  /* segundo cartão: no misto, o grupo; com um pacote só, aparece apenas se
+     sobrou número no outro saldo (com o nome dele) */
+  const cg=sp.outro,sg=document.getElementById('scard-grupo');
+  if(sg){sg.style.display=(sp.misto||cg!==0)?'block':'none';
+    const lg=sg.querySelector('.l');if(lg)lg.textContent=sp.outroCampo==='creditos'?'Aulas particulares':'Aulas em grupo';
     const vg=document.getElementById('v-grupo');
     if(vg){vg.textContent=fmtCred(cg);vg.style.color=cg<0?'#C0392B':'var(--green)';}}
   const lc=Number(EU.locCred)||0,sl=document.getElementById('scard-loc');
   if(sl){sl.style.display=lc!==0?'block':'none';const vl=document.getElementById('v-loc');if(vl){vl.textContent=fmtCred(lc);vl.style.color=lc<0?'#C0392B':'var(--green)';}}
-  document.getElementById('v-plano').textContent=(Number(EU.plano)||0)<=0?(EU.tipo+' · sem pacote'):(isPersonal()?(EU.tipo+' · '+EU.plano+' treinos/mês'):(EU.tipo+' · Flex '+EU.plano));
+  document.getElementById('v-plano').textContent=textoPlanoAluno();
   document.getElementById('v-mens').textContent=fmtMens();
   const st=document.getElementById('v-status');
   st.textContent=EU.status==='parcial'?rotuloParcialAluno():EU.status;
@@ -4762,8 +4809,8 @@ function abrirPlanos(){
   setTimeout(()=>{try{montarSet('part',0);}catch(e){}},60);
   const tb=planosTabela();
   const cats=isPersonal()?['Personal']:['Particular','Dupla','Trio','Quarteto'];
-  const meuPlano=EU?Number(EU.plano):0;
-  const meuTipo=EU?EU.tipo:'';
+  const sp=saldoPacoteAluno(),meuPlano=sp&&!sp.misto?sp.qtd:0;
+  const meuTipo=EU?(sp.tipo==='grupo'&&!/^(Dupla|Trio|Quarteto)$/.test(String(EU.tipo||''))?(EU.grupoTipo||EU.tipo):EU.tipo):'';
   const vt=precoPersonal();
   let html='';
   cats.forEach(cat=>{
@@ -5377,12 +5424,21 @@ function checarRenovacao(){
   if(faltam<0||faltam>5||MEU.renovouMes===proxMesKey()){box.style.display='none';return;}
   const nomeProx=MESES[(hoje.getMonth()+1)%12];
   const v=valorMensalAtual();
-  const aulas=Number(EU.plano)||0;
+  const aulas=(Number(EU.plano)||0)+(Number(EU.planoGrupo)||0);   // dupla nova: o pacote mora em planoGrupo (07/11)
   const planoTxt=aulas?('No seu plano <b>Flex '+aulas+'</b> ('+aulas+' aula'+(aulas===1?'':'s')+' no mês), a'):'A';
   document.getElementById('renova-txt').innerHTML='Faltam <b>'+faltam+' dia'+(faltam===1?'':'s')+'</b> para virar o mês. '+planoTxt+' mensalidade de <b>'+nomeProx+'</b>'+(v?(' fica em <b>'+fmt(v)+'</b>'):'')+'. Quer manter assim?';
   box.style.display='block';
 }
-function valorMensalAtual(){if(familiaAluno())return dependenteAluno()?0:(Number(EU.mensalidade)||0);var v=0;try{v=planoValor(EU.tipo,EU.plano);}catch(e){}return v||Number(EU.mensalidade)||0;}
+function valorMensalAtual(){
+  if(!EU||EU.valoresOcultos)return 0;
+  if(familiaAluno())return dependenteAluno()?0:(Number(EU.mensalidade)||0);
+  /* O combinado no cadastro vale mais que a tabela, inclusive no misto.
+     Sem mensalidade publicada, só um pacote simples pode usar a tabela. */
+  if(EU.mensalidade!=null&&EU.mensalidade!==''&&Number.isFinite(Number(EU.mensalidade)))return Math.max(0,Number(EU.mensalidade));
+  const sp=saldoPacoteAluno();if(!sp||sp.misto)return 0;
+  const cat=sp.tipo==='grupo'?(EU.grupoTipo||EU.tipo):EU.tipo;
+  try{return Number(planoValor(cat,sp.qtd))||0;}catch(e){return 0;}
+}
 function renovarMudar(){_renovaAdiado=true;document.getElementById('renova-box').style.display='none';if(typeof abrirPlanos==='function')abrirPlanos();}
 function confirmarRenovacao(){
   if(dependenteAluno()){avisoPagamentoFamilia();return;}
@@ -5467,7 +5523,10 @@ function renderResumoMes(){
   if(!EU)return;
   const r=resumoMesAluno(),cred=Number(EU.creditos)||0,grp=Number(EU.credGrupo)||0,plano=(Number(EU.plano)||0)+(Number(EU.planoGrupo)||0);
   const lista=(arr,vazio)=>arr.length?arr.map(p=>'<span class="amr-dia">'+escHtml(fmtDataAl(p.data))+(p.hora&&p.hora!=='—'?' · '+escHtml(p.hora):'')+'</span>').join(''):'<span class="amr-vazio">'+vazio+'</span>';
-  const saldo=fmtCred(cred)+' crédito'+(Math.abs(cred)===1?'':'s')+(grp?' + '+fmtCred(grp)+' em grupo':'');
+  const sp=saldoPacoteAluno();
+  const saldo=(sp&&!sp.misto)
+    ?fmtCred(sp.valor)+' crédito'+(Math.abs(sp.valor)===1?'':'s')+(sp.outro?' + '+fmtCred(sp.outro)+(sp.outroCampo==='credGrupo'?' em grupo':' particular'):'')
+    :fmtCred(cred)+' crédito'+(Math.abs(cred)===1?'':'s')+(grp?' + '+fmtCred(grp)+' em grupo':'');
   const el=document.getElementById('aulas-mes-resumo');
   if(el)el.innerHTML='<p class="sec-eyebrow">Resumo de '+r.mes+'</p>'
     +'<div class="amr-nums"><div><b>'+r.feitas.length+'</b><span>feita'+(r.feitas.length===1?'':'s')+'</span></div>'
@@ -5728,7 +5787,7 @@ function abrirBook(hora,repo,torneio){
   else if(repo){
     if(!(saldoReposAluno()>0)){toast('Você não tem reposições disponíveis. Fale com o João 🙏');return;}
     if(!reposServeAqui(!!estado.grupo)){toast(avisoTipoRepos());return;}
-  } else if(EU.creditos===0){
+  } else if(saldoParaAulaAluno(!!estado.grupo)===0){
     toast('Seus créditos acabaram — esta aula entra como extra, a combinar com o João. 🎾');
   }
   bookCtx={hora,date:new Date(agDate),repo:!!repo,torneio:!!torneio,grupo:!!estado.grupo,compartilhado:estado.compartilhado||'',limiteGrupo:estado.limiteGrupo||0};
@@ -5918,7 +5977,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-11-05-1').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-11-09-3').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
@@ -5927,6 +5986,6 @@ window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);})
   setTimeout(()=>esperarEIniciar(t+1),150);
 })(0);
 </script>
-<script src="lib/voz-aluno.js?v=2026-11-05-1"></script>
+<script src="lib/voz-aluno.js?v=2026-11-09-3"></script>
 </body>
 </html>

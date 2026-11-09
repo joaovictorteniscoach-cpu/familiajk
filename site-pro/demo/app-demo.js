@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-11-05-1';
+const VERSAO='2026-11-09-3';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -825,6 +825,32 @@ function ehMisto(a){return (Number(a&&a.plano)||0)>0&&(Number(a&&a.planoGrupo)||
 function pacoteUnicoAtivo(){return !!(typeof DB!=='undefined'&&DB&&DB.pacoteUnico&&DB.pacoteUnico.ativo);}
 function unificado(a){return !!a&&pacoteUnicoAtivo()&&!ehMisto(a);}
 function pacoteDoAluno(a){return (Number(a&&a.plano)||0)+(Number(a&&a.planoGrupo)||0);}
+/* Um pacote por aluno (07/11, pedido do João): quem não é misto tem UM saldo,
+   o do pacote dele. A dupla antiga guarda o pacote em "plano" e o saldo em
+   "créditos"; a nova, em "planoGrupo"/"credGrupo". Mostrar e descontar do
+   campo onde o pacote mora acaba com o "0 créditos" de um lado e o grupo
+   negativo do outro. Não move saldo nenhum. Misto: null (cada tipo no seu). */
+function tipoDoPacote(a){
+  const p=Number(a&&a.plano)||0,g=Number(a&&a.planoGrupo)||0;
+  if(g>0&&!p)return 'grupo';
+  return ehGrupoTipo(a&&a.tipo)?'grupo':'part';
+}
+function campoDoPacote(a){
+  if(!a||ehMisto(a))return null;
+  if(unificado(a))return 'creditos';
+  const p=Number(a.plano)||0,g=Number(a.planoGrupo)||0;
+  return (g>0||(!p&&ehGrupoTipo(a.tipo)))?'credGrupo':'creditos';
+}
+/* Saldo fora do pacote: número no campo que não é o do pacote. "mesmoTipo" =
+   aula deste pacote no campo errado (dupla antiga com grupo negativo, o defeito
+   de antes de 07/11): o João junta com um toque no cadastro. Outro tipo e
+   negativo = aula extra de verdade (a cobrar): não se junta. Só lê. */
+function saldoForaDoPacote(a){
+  const campo=campoDoPacote(a);if(!campo||unificado(a))return null;
+  const cp=campo==='credGrupo'?'creditos':'credGrupo',v=Number(a&&a[cp])||0;if(!v)return null;
+  const mesmoTipo=(cp==='credGrupo'?'grupo':'part')===tipoDoPacote(a);
+  return {campo,cp,v,mesmoTipo,juntavel:mesmoTipo||v>0};
+}
 function mover(a,campo,delta,motivo,ref,exato){
   if(!a||!campo)return 0;
   if(!exato&&campo==='credGrupo'&&unificado(a))campo='creditos';
@@ -3509,7 +3535,7 @@ function rodarDesfazer(){
   const e=document.getElementById('toast');if(e)e.classList.remove('show');
   if(f)f();
 }
-function closeModal(id){document.getElementById(id).classList.remove('on');}
+function closeModal(id){document.getElementById(id).classList.remove('on');if(id==='ov-aluno'){_cadSessao++;_cadOrigem=null;}}
 
 /* ================= AGENDA ================= */
 /* Um horário fixo vale só dentro da sua janela: desde (inclusive) até (inclusive).
@@ -4271,7 +4297,7 @@ function tipoReposDe(a){
   const p=Number(a.plano)||0,g=Number(a.planoGrupo)||0;
   if(p>0&&g>0)return null;
   if(g>0)return 'grupo';
-  if(p>0)return 'part';
+  if(p>0)return ehGrupoTipo(a.tipo)?'grupo':'part';   // dupla antiga: o pacote mora em "plano" (07/11)
   const t=String(a.tipo||'');
   if(/grupo|dupla|trio|quarteto/i.test(t))return 'grupo';
   if(/particular/i.test(t))return 'part';
@@ -4287,7 +4313,12 @@ function saldoDisponivel(a,campo){
 /* De onde sai uma aula: a ordem dos saldos para o tipo do horário. Única
    fonte da regra — o ✓, o cartão e a prévia da voz usam esta mesma ordem. */
 function ordemDoDebito(a,ehGrupo,ehRepo){
-  const campoTipo=ehGrupo?'credGrupo':'creditos';
+  /* Aula do mesmo tipo do pacote sai de onde o pacote mora (campoDoPacote):
+     a dupla antiga, com saldo em "créditos", deixava os créditos parados e o
+     grupo negativo ("extra a cobrar" indevido). Aula de outro tipo continua
+     sendo outro produto (João, 22–23/10): sai do saldo daquele tipo. */
+  const doPacote=campoDoPacote(a);
+  const campoTipo=(doPacote&&tipoDoPacote(a)===(ehGrupo?'grupo':'part'))?doPacote:(ehGrupo?'credGrupo':'creditos');
   const podeRepos=reposServePara(a,ehGrupo?'grupo':'part');
   const ordem=(ehRepo?['repos',campoTipo]:[campoTipo,'repos']).filter(cp=>cp!=='repos'||podeRepos);
   return {ordem,campoTipo,podeRepos};
@@ -4441,9 +4472,9 @@ function togglePresencaUm(entryId){
       }else if(isRepo){
         logAct('Marcar reposição: '+a.nome);toast('✓ Reposição ('+qt+') · '+a.nome+' → '+fmtCred(a.repos)+' reposições');
       }else if(isGrp){
-        logAct('Marcar aula em grupo: '+a.nome);toast('👥 Aula em grupo · '+a.nome+' → '+(unificado(a)?fmtCred(a.creditos)+' créditos':fmtCred(a.credGrupo)+' de grupo'));
+        logAct('Marcar aula em grupo: '+a.nome);toast('👥 Aula em grupo · '+a.nome+' → '+(campoTipo==='credGrupo'?fmtCred(a.credGrupo)+' de grupo':fmtCred(a.creditos)+' créditos'));
       }else{
-        logAct('Marcar presença: '+a.nome);toast('✓ Presença ('+qt+') · '+a.nome+' → '+fmtCred(a.creditos)+' créditos');
+        logAct('Marcar presença: '+a.nome);toast('✓ Presença ('+qt+') · '+a.nome+' → '+(campoTipo==='credGrupo'?fmtCred(a.credGrupo)+' de grupo':fmtCred(a.creditos)+' créditos'));
       }
     }
   }
@@ -5242,6 +5273,7 @@ function novoDependenteFamilia(id){
   const r=DB.alunos.find(x=>x.id===id);if(!r||r.responsavelId)return;
   if(!(Number(r.mensalidade)>0)){toast('Defina a mensalidade total no cadastro do responsável antes de adicionar dependentes.');return;}
   openAlunoModal();
+  const mais=document.getElementById('a-mais');if(mais)mais.open=true;   // o plano família fica em "Mais opções"
   document.getElementById('a-responsavel').value=id;pintarFamiliaModal();
 }
 function fichaFamilia(a){
@@ -5253,7 +5285,9 @@ function fichaFamilia(a){
 }
 /* ================= ALUNOS ================= */
 function openAlunoModal(id){
+  _cadSessao++;_cadOrigem=id?JSON.stringify(DB.alunos.find(a=>a.id===id)||null):null;_cadModo=JSON.stringify(DB.pacoteUnico||null);
   const m=document.getElementById('ov-aluno');
+  _cadMisto=false;_cadJuntar=null;
   document.getElementById('aluno-modal-title').textContent=id?'Editar aluno':'Novo aluno';
   preencherTiposAluno();   // inclui os pacotes personalizados no seletor
   preencherFamiliaModal(id);
@@ -5296,6 +5330,13 @@ function openAlunoModal(id){
   /* Abrir um cadastro não deve trocar um valor combinado pela tabela. */
   if(id){const a=DB.alunos.find(x=>x.id===id);if(a)document.getElementById('a-mensalidade').value=Number(a.mensalidade)||0;}
   pintarFamiliaModal();
+  /* Cadastro simples (07/11): a correção do saldo e as outras opções ficam
+     fechadas; "Mais opções" já abre para quem é do plano família. */
+  const aF=id&&DB.alunos.find(x=>x.id===id);
+  const corr=document.getElementById('a-corrigir');if(corr)corr.open=false;
+  const mais=document.getElementById('a-mais');if(mais)mais.open=!!(aF&&temFamilia(aF));
+  ['a-creditos','a-credgrupo','a-repos','a-loccred'].forEach(x=>{const e=document.getElementById(x);if(e&&!e._cad){e._cad=1;e.addEventListener('input',pintarSaldosCad);}});
+  pintarFormCad();
   m.classList.add('on');
 }
 /* ===== Pacotes personalizados (ex.: Kids, Planilha Personal) ===== */
@@ -5453,7 +5494,128 @@ function applyAlunoTipoUI(){
   const vaLbl=document.querySelector('#a-valoraula-wrap label');if(vaLbl)vaLbl.textContent=isP?'💪 Valor por treino — Personal (R$)':'🎾 Valor por aula (R$)';
   if(!document.getElementById('a-id').value){const va=document.getElementById('a-valoraula');if(va&&mostraVA)va.value=(isP?130:(custom?(custom.valorAula||160):160));}
   const lbl=document.getElementById('a-plano-lbl');if(lbl)lbl.textContent=(isP?'Pacote (treinos/mês)':'Plano (aulas/mês)')+' — 0 = sem pacote';
+  pintarFormCad();
   sugerirMensalidade();
+}
+/* ===== Cadastro simples (07/11, pedido do João) =====
+   O pacote é um só: tipo de aula (botões) + aulas por mês. O número fica no
+   campo onde o saldo desse aluno já mora (plano → créditos; planoGrupo →
+   grupo), então trocar Particular por Dupla não muda o saldo de lugar.
+   "Também faz aula em grupo/particular" liga o misto: só aí aparecem as duas
+   linhas e, no saldo, os dois números. Os campos salvos são os de sempre. */
+let _cadMisto=false,_cadJuntar=null;
+let _cadSalvando=false,_cadSessao=0,_cadOrigem=null,_cadModo='';
+const CAD_ICONE={Particular:'🎾',Dupla:'👥',Trio:'👥',Quarteto:'👥',Grupo:'👥',Personal:'💪'};
+function cadVal(id){return Number((document.getElementById(id)||{}).value)||0;}
+function cadSet(id,v){const e=document.getElementById(id);if(e)e.value=v;}
+function cadSoLocacao(){return (document.getElementById('a-perfil')||{}).value==='locacao'&&!cadVal('a-plano')&&!cadVal('a-planogrupo');}
+function pintarTiposCad(){
+  const box=document.getElementById('a-tipos'),sel=document.getElementById('a-tipo');if(!box||!sel)return;
+  const loc=cadSoLocacao(),atual=sel.value;
+  const tipos=[...sel.options].map(o=>o.value).filter(v=>v!=='Grupo'||v===atual);
+  box.innerHTML=tipos.map(t=>{const on=!loc&&t===atual;
+    return '<button type="button" class="'+(on?'on':'')+'" aria-pressed="'+on+'" onclick="escolherTipoCad(\''+argJs(t)+'\')">'+(CAD_ICONE[t]||'📦')+' '+esc(t==='Grupo'?'Grupo (antigo)':t)+'</button>';}).join('')
+    +'<button type="button" class="'+(loc?'on':'')+'" aria-pressed="'+loc+'" onclick="escolherTipoCad(\'\')">🔑 Só locação</button>';
+}
+function escolherTipoCad(t){
+  const perfil=document.getElementById('a-perfil'),sel=document.getElementById('a-tipo');
+  if(!t){                                   // só aluga a quadra: sem pacote de aula
+    if(perfil)perfil.value='locacao';cadSet('a-plano',0);cadSet('a-planogrupo',0);_cadMisto=false;
+    applyAlunoTipoUI();return;
+  }
+  const eraLoc=cadSoLocacao();
+  if(perfil&&perfil.value==='locacao')perfil.value='';
+  sel.value=t;
+  if(ehGrupoTipo(t)&&t!=='Grupo')cadSet('a-grupotipo',t);
+  if(eraLoc)cadSet('a-plano',4);            // voltando de "só locação": começa com 4 aulas
+  /* Sem misto, grupo que vira particular leva o número para "plano" (o saldo
+     vai junto ao salvar, e o app pergunta antes). Particular que vira dupla
+     fica em "plano": o saldo não muda de lugar. */
+  if(!_cadMisto&&!ehGrupoTipo(t)&&cadVal('a-planogrupo')>0&&!cadVal('a-plano')){cadSet('a-plano',cadVal('a-planogrupo'));cadSet('a-planogrupo',0);}
+  applyAlunoTipoUI();
+}
+function alternarMistoCad(){
+  const sel=document.getElementById('a-tipo');
+  if(_cadMisto){_cadMisto=false;cadSet('a-planogrupo',0);applyAlunoTipoUI();return;}
+  _cadMisto=true;
+  if(ehGrupoTipo(sel.value)){               // era só grupo: o grupo vai para a linha de grupo e entra a particular
+    const g=cadVal('a-planogrupo')||cadVal('a-plano');
+    if(sel.value!=='Grupo')cadSet('a-grupotipo',sel.value);
+    if(!(document.getElementById('a-grupotipo')||{}).value)cadSet('a-grupotipo','Dupla');
+    cadSet('a-planogrupo',g);cadSet('a-plano',0);sel.value='Particular';
+  }else if(!(document.getElementById('a-grupotipo')||{}).value)cadSet('a-grupotipo','Dupla');
+  applyAlunoTipoUI();
+}
+function pintarFormCad(){
+  const t=(document.getElementById('a-tipo')||{}).value||'',loc=cadSoLocacao();
+  const pl=cadVal('a-plano'),pg=cadVal('a-planogrupo');
+  if(pl>0&&pg>0)_cadMisto=true;
+  const misto=_cadMisto&&!loc;
+  const linhaGrupo=!misto&&!loc&&pg>0&&!pl;    // sem misto: aparece a linha onde o pacote mora
+  const show=(id,v)=>{const e=document.getElementById(id);if(e)e.style.display=v?'':'none';};
+  show('a-linha-part',!loc&&(misto||!linhaGrupo));
+  show('a-grupo-wrap',!loc&&(misto||linhaGrupo));
+  show('a-grupotipo-wrap',misto||(linhaGrupo&&!ehGrupoTipo(t)));
+  const isP=t==='Personal';
+  show('a-valoraula-wrap',!loc&&(isP||t==='Particular'||!!tipoCustomObj(t)));
+  const lp=document.getElementById('a-plano-lbl');if(lp)lp.textContent=misto?'🎾 Aulas particulares por mês':(isP?'Treinos por mês':'Aulas por mês');
+  const lg=document.getElementById('a-planogrupo-lbl');if(lg)lg.textContent=misto?'👥 Aulas em grupo por mês':'Aulas por mês';
+  const bt=document.getElementById('a-misto-bt');
+  if(bt){bt.style.display=loc?'none':'';
+    bt.textContent=misto?'− Tirar a aula em grupo (fica um pacote só)':((ehGrupoTipo(t)||linhaGrupo)?'+ Também faz aula particular':'+ Também faz aula em grupo');}
+  pintarTiposCad();pintarSaldosCad();
+}
+function pintarSaldosCad(){
+  const box=document.getElementById('a-saldos');if(!box)return;
+  const t=(document.getElementById('a-tipo')||{}).value||'',pl=cadVal('a-plano'),pg=cadVal('a-planogrupo');
+  const misto=pl>0&&pg>0,campo=misto?null:campoDoPacote({tipo:t,plano:pl,planoGrupo:pg});
+  const c=cadVal('a-creditos'),g=cadVal('a-credgrupo'),r=cadVal('a-repos'),l=cadVal('a-loccred');
+  const um=(v,s,p)=>Math.abs(v)===1?s:p;
+  const chip=(v,txt)=>'<span class="chip'+(v<0?' cad-neg':'')+'">'+fmtCred(v)+' '+txt+'</span>';
+  const doTipo=ehGrupoTipo(t)&&t!=='Grupo'?' de '+t.toLowerCase():(t==='Personal'?' de personal':'');
+  let h='';
+  if(misto)h+=chip(c,um(c,'crédito particular','créditos particulares'))+chip(g,um(g,'crédito de grupo','créditos de grupo'));
+  else if(campo){
+    const v=campo==='credGrupo'?g:c,outro=campo==='credGrupo'?c:g;
+    h+=chip(v,um(v,'crédito','créditos')+(doTipo||(campo==='credGrupo'?' de grupo':'')));
+    const fp=saldoForaDoPacote({tipo:t,plano:pl,planoGrupo:pg,creditos:c,credGrupo:g});
+    if(outro)h+=chip(outro,(campo==='credGrupo'?'particular(es)':'de grupo')+(outro<0&&!(fp&&fp.mesmoTipo)?' extra (aula de outro tipo)':' fora do pacote'));
+  }
+  if(r)h+=chip(r,um(r,'reposição','reposições'));
+  if(l||cadSoLocacao())h+=chip(l,'h de locação');
+  box.innerHTML=h||'<span class="hint">Sem saldo.</span>';
+  /* Saldo fora do pacote (ex.: dupla antiga com −1 de grupo e 4 créditos):
+     o João junta com um toque. Só muda os números aqui; grava ao salvar,
+     no extrato, com versão salva antes. Nada é juntado sozinho. */
+  const jb=document.getElementById('a-juntar');
+  if(jb){
+    const fp=misto?null:saldoForaDoPacote({tipo:t,plano:pl,planoGrupo:pg,creditos:c,credGrupo:g}),outro=fp?fp.v:0;
+    if(fp&&fp.juntavel){
+      const v=campo==='credGrupo'?g:c,fica=r2(v+outro);
+      jb.innerHTML='<button type="button" class="cad-juntar" onclick="juntarSaldoCad()">Juntar ao pacote: '+fmtCred(v)+(outro<0?' − '+fmtCred(-outro):' + '+fmtCred(outro))+' = '+fmtCred(fica)
+        +'<small>'+(outro<0?'O '+fmtCred(outro)+' é aula deste pacote que saiu do saldo errado.':'Sobra de outro tipo de aula; junte só se for do mesmo pacote.')+' Grava ao salvar, fica no extrato.</small></button>';
+    }else jb.innerHTML='';
+  }
+  const show=(id,v)=>{const e=document.getElementById(id);if(e)e.style.display=v?'':'none';};
+  show('a-creditos-wrap',misto||campo==='creditos'||!!c);
+  show('a-credgrupo-wrap',misto||campo==='credGrupo'||!!g);
+  const lc=document.getElementById('a-creditos-lbl');if(lc)lc.textContent=misto?'🎾 Créditos particulares':(campo==='creditos'?'Créditos do pacote':'🎾 Créditos particulares');
+  const lg=document.querySelector('#a-credgrupo-wrap label');if(lg)lg.textContent=misto||campo!=='credGrupo'?'👥 Créditos de grupo':'Créditos do pacote';
+}
+function abrirJuntarSaldo(id){
+  openAlunoModal(id);
+  const corr=document.getElementById('a-corrigir');if(corr)corr.open=true;
+  const jb=document.querySelector('#a-juntar .cad-juntar');if(jb)try{jb.scrollIntoView({block:'center'});}catch(e){}
+}
+function juntarSaldoCad(){
+  const t=(document.getElementById('a-tipo')||{}).value||'',pl=cadVal('a-plano'),pg=cadVal('a-planogrupo');
+  const campo=campoDoPacote({tipo:t,plano:pl,planoGrupo:pg});if(!campo)return;
+  const de=campo==='credGrupo'?'creditos':'credGrupo',idDe=de==='creditos'?'a-creditos':'a-credgrupo',idPara=campo==='creditos'?'a-creditos':'a-credgrupo';
+  const qtd=cadVal(idDe);if(!qtd)return;
+  cadSet(idPara,r2(cadVal(idPara)+qtd));cadSet(idDe,0);
+  _cadJuntar={de,para:campo};
+  const corr=document.getElementById('a-corrigir');if(corr)corr.open=true;
+  pintarSaldosCad();toast('Saldo juntado aqui. Confira e toque em Salvar aluno.');
 }
 function sugerirMensalidade(){
   const t=document.getElementById('a-tipo').value,p=Number(document.getElementById('a-plano').value)||0;
@@ -5521,7 +5683,66 @@ function usarAgendaNoModal(){
   sugerirMensalidade();
   toast('📅 Plano ajustado pela agenda do mês');
 }
-function saveAluno(){
+/* Trocar o pacote leva o saldo junto (07/11): o saldo mora no campo do
+   pacote (campoDoPacote). Quando o campo muda — grupo que vira particular,
+   dupla antiga que passa a ter aula particular também (misto) —, o saldo
+   precisa ir junto, senão fica "0 de um lado e negativo do outro". Quando sai
+   um dos pacotes do misto, a sobra dele pode ir para o pacote que fica.
+   Só calcula; quem move é o saveAluno, depois de perguntar. Pacote único: nada. */
+function nomeCampoSaldo(cp){return cp==='credGrupo'?'créditos de grupo':'créditos particulares';}
+function mudancasSaldoPacote(a,data){
+  if(!a||pacoteUnicoAtivo())return [];
+  const novo=Object.assign({},a,{tipo:data.tipo,plano:Number(data.plano)||0,planoGrupo:Number(data.planoGrupo)||0});
+  const vm=ehMisto(a),nm=ehMisto(novo),out=[];
+  const saldo=cp=>Number(a[cp])||0;
+  if(!vm&&!nm){
+    const de=campoDoPacote(a),para=campoDoPacote(novo);
+    if(de&&para&&de!==para&&saldo(de))out.push({de,para,qtd:saldo(de)});
+  }else if(!vm&&nm){
+    const de=campoDoPacote(a),para=tipoDoPacote(a)==='grupo'?'credGrupo':'creditos';
+    if(de&&de!==para&&saldo(de))out.push({de,para,qtd:saldo(de)});
+  }else if(vm&&!nm){
+    const para=campoDoPacote(novo),de=para==='credGrupo'?'creditos':'credGrupo';
+    if(para&&saldo(de)>0)out.push({de,para,qtd:saldo(de),sobra:true});
+  }
+  return out;
+}
+/* Cópia confirmada ANTES de mudar pacote, saldos ou família. As confirmações
+   só montam o pedido; fechar/editar o formulário ou mudar o banco invalida-o. */
+function espacoCadastro(){return JSON.stringify([MODO,PROF_UID||'',window.AUTH_USER&&window.AUTH_USER.uid||'']);}
+function assinaturaCadastro(){
+  return JSON.stringify([...document.querySelectorAll('#ov-aluno input,#ov-aluno select,#ov-aluno textarea')]
+    .map(e=>[e.id,e.value,e.type==='checkbox'?e.checked:null]).concat([_cadMisto,_cadJuntar]));
+}
+async function copiarAntesDoCadastro(contexto){
+  const controles=[...document.querySelectorAll('#ov-aluno input,#ov-aluno select,#ov-aluno textarea,#ov-aluno [onclick="saveAluno()"]')];
+  const estados=controles.map(e=>[e,e.disabled]);controles.forEach(e=>e.disabled=true);
+  const botao=document.querySelector('#ov-aluno [onclick="saveAluno()"]'),rotulo=botao&&botao.textContent;
+  if(botao)botao.textContent='Salvando…';
+  contexto.liberar=()=>{estados.forEach(([e,desabilitado])=>{e.disabled=desabilitado;});if(botao)botao.textContent=rotulo;};
+  let ok=false,timer;
+  try{ok=await Promise.race([Promise.resolve().then(()=>guardarVersoes(contexto.antes)),new Promise(resolve=>{timer=setTimeout(()=>resolve(false),8000);})]);}
+  catch(e){}finally{clearTimeout(timer);}
+  if(ok!==true){toast('Não consegui confirmar a cópia de segurança. Nada foi alterado. Confira o armazenamento e tente novamente.');return false;}
+  if(contexto.sessao!==_cadSessao||!document.getElementById('ov-aluno').classList.contains('on')
+     ||contexto.form!==assinaturaCadastro()){
+    toast('O cadastro foi fechado ou mudou durante a cópia. Confira os campos e salve novamente.');return false;
+  }
+  /* _nuvemMuda fica true o resto do uso depois de UMA demora da nuvem na abertura
+     (comPrazo): só barra se ela estourou DURANTE a cópia, senão um 4G lento na
+     abertura travava todo cadastro com mensalidade/saldo (09/11). */
+  if(contexto.espaco!==espacoCadastro()||_conflitoNuvem||(_nuvemMuda&&!contexto.nuvemMuda)||window._espacoTrocou){
+    toast('A sessão ou a nuvem mudou durante a cópia. Confira os dados e reabra o cadastro.');return false;
+  }
+  if(DB!==contexto.banco||JSON.stringify(DB)!==contexto.antes){
+    toast('Os dados mudaram durante a cópia. Reabra o cadastro antes de salvar.');return false;
+  }
+  return true;
+}
+async function saveAluno(){
+  if(_cadSalvando)return false;
+  _cadSalvando=true;const contexto={sessao:_cadSessao,banco:DB,antes:JSON.stringify(DB),form:assinaturaCadastro(),espaco:espacoCadastro(),nuvemMuda:!!_nuvemMuda,liberar:null};
+  try{
   const id=document.getElementById('a-id').value;
   const nome=document.getElementById('a-nome').value.trim();
   if(!nome){toast('Informe o nome do aluno');return;}
@@ -5549,6 +5770,9 @@ function saveAluno(){
   const erroFamilia=validarFamiliaAluno(id,data.responsavelId);
   if(erroFamilia){toast(erroFamilia);return;}
   const anterior=id?DB.alunos.find(x=>x.id===id):null;
+  if(id&&(!anterior||JSON.stringify(anterior)!==_cadOrigem)||JSON.stringify(DB.pacoteUnico||null)!==_cadModo){
+    toast('O cadastro mudou desde que foi aberto. Reabra para conferir os saldos antes de salvar.');return false;
+  }
   if(data.responsavelId){
     data.mensalidade=0;
     data.parentesco=FAM_PARENTESCOS.includes(data.parentesco)?data.parentesco:'Outro dependente';
@@ -5583,23 +5807,47 @@ function saveAluno(){
       if(Math.abs(dif)>10&&!confirm('Mudança grande em '+CAMPO_LABEL[c]+' de '+a.nome+':\n\n'
         +fmtCred(de)+'  →  '+fmtCred(para)+'   ('+(dif>0?'+':'')+fmtCred(dif)+')\n\nConfirma?'))return;
     }
-    if(mudouFamilia){guardarVersoes(JSON.stringify(DB));data.familiaMensalidadeAnterior=data.responsavelId?(a.responsavelId?(a.familiaMensalidadeAnterior||0):(Number(a.mensalidade)||0)):null;logAct('Plano família: '+nome+' → '+(data.responsavelId?('dependente de '+(DB.alunos.find(x=>x.id===data.responsavelId)||{}).nome):'pagamento individual'));}
+    /* saldo vai junto com o pacote: pergunta antes de mover */
+    const mudSaldo=mudancasSaldoPacote(a,data);
+    const levar=mudSaldo.filter(x=>!x.sobra),sobra=mudSaldo.filter(x=>x.sobra);
+    if(levar.length&&!confirm('O pacote de '+a.nome+' mudou, e o saldo vai junto:\n\n'
+      +levar.map(x=>'· '+fmtCred(x.qtd)+' '+nomeCampoSaldo(x.de)+' → '+nomeCampoSaldo(x.para)).join('\n')
+      +'\n\nNenhuma aula some: o número é o mesmo, só muda de lugar. Fica registrado no extrato e dá para desfazer.\n\nOK = salvar levando o saldo · Cancelar = voltar ao cadastro'))return;
+    const juntar=sobra.length&&confirm(sobra.map(x=>a.nome+' ainda tem '+fmtCred(x.qtd)+' '+nomeCampoSaldo(x.de)+' do pacote que saiu.').join('\n')
+      +'\n\nOK = juntar ao pacote que fica · Cancelar = deixar separado');
+    const mover_=levar.concat(juntar?sobra:[]);
+    const junta=_cadJuntar&&saldos.some(c=>(c===_cadJuntar.de||c===_cadJuntar.para)&&(Number(data[c])||0)!==(Number(a[c])||0));
+    const mudouSaldo=saldos.some(c=>(Number(data[c])||0)!==(Number(a[c])||0));
+    const mudouPacote=['tipo','plano','planoGrupo','grupoTipo','mensalidade','diaVenc','valorAula'].some(c=>String(a[c]||'')!==String(data[c]||''));
+    if((mover_.length||junta||mudouSaldo||mudouPacote||mudouFamilia)&&!await copiarAntesDoCadastro(contexto))return false;
+    if(mover_.length){
+      mover_.forEach(x=>{
+        // sem chave de aula: não é marcar/desmarcar (a conferência de devoluções não confunde)
+        mover(a,x.de,-x.qtd,'Pacote trocado: saldo levado junto',undefined,true);
+        mover(a,x.para,x.qtd,'Pacote trocado: saldo levado junto',undefined,true);
+        data[x.de]=(Number(data[x.de])||0)-x.qtd;data[x.para]=(Number(data[x.para])||0)+x.qtd;
+      });
+    }
+    if(mudouFamilia){data.familiaMensalidadeAnterior=data.responsavelId?(a.responsavelId?(a.familiaMensalidadeAnterior||0):(Number(a.mensalidade)||0)):null;logAct('Plano família: '+nome+' → '+(data.responsavelId?('dependente de '+(DB.alunos.find(x=>x.id===data.responsavelId)||{}).nome):'pagamento individual'));}
     const novo=Object.assign({},data);
     saldos.forEach(c=>delete novo[c]);      // esses vão pelo mover(), não por cima
     Object.assign(a,novo);
     saldos.forEach(c=>{
       const dif=(Number(data[c])||0)-(Number(a[c])||0);
-      if(dif)mover(a,c,dif,'Correção manual no cadastro',undefined,c==='credGrupo');   // o cadastro manda no campo exato
+      const mot=junta&&(c===_cadJuntar.de||c===_cadJuntar.para)?'Saldo de fora juntado ao pacote':'Correção manual no cadastro';
+      if(dif)mover(a,c,dif,mot,undefined,c==='credGrupo');   // o cadastro manda no campo exato
     });
     atualizarSituacaoExata(a,mesReal());
     toast('Aluno atualizado');
   }
   else{
     let c;do{c=genCode();}while(DB.alunos.some(x=>x.codigo===c));
-    if(data.responsavelId)guardarVersoes(JSON.stringify(DB));
+    if(data.responsavelId&&!await copiarAntesDoCadastro(contexto))return false;
     DB.alunos.push({id:'a'+Date.now(),ativo:true,codigo:c,...data});toast('Aluno cadastrado · código '+c);
   }
-  persist();closeModal('ov-aluno');renderAll();
+  persist();closeModal('ov-aluno');renderAll();return true;
+  }catch(e){toast('Não consegui salvar o cadastro. Confira os dados antes de tentar novamente.');return false;}
+  finally{if(contexto.liberar)contexto.liberar();_cadSalvando=false;}
 }
 
 /* ===== Avaliação de desenvolvimento (Da Base ao Topo · Anexo A) ===== */
@@ -6187,7 +6435,7 @@ function aulaRealizada(id,modo,custo,hora){
     toastDesfazer('Aula registrada · '+a.nome+': '+textoDebito(a,d),()=>desfazerAula(id,k,d.soRepos?'reposicao':modo));
     return;
   }
-  if(modo==='grupo'){
+  if(modo==='grupo'&&campoTipo==='credGrupo'){
     persist();renderAll();pulsarCredito(a.id);
     const extra=a.credGrupo<0?(' · extra de grupo a cobrar: '+fmt(valorAulaGrupoDe(a))):'';
     toastDesfazer('👥 Aula em grupo · '+a.nome+' → '+fmtCred(a.credGrupo)+' de grupo'+extra,()=>desfazerAula(id,k,'grupo'));
@@ -6195,7 +6443,7 @@ function aulaRealizada(id,modo,custo,hora){
   }
   persist();renderAll();pulsarCredito(a.id);
   const extra=a.creditos<0?(' · aula extra a cobrar: '+fmt(valorAulaDe(a))):'';
-  toastDesfazer('Aula registrada · '+a.nome+' → '+fmtCred(a.creditos)+(a.creditos<0?' aulas':' créditos')+extra,()=>desfazerAula(id,k,modo));
+  toastDesfazer('Aula registrada · '+a.nome+' → '+fmtCred(a.creditos)+(a.creditos<0?' aulas':' créditos')+extra,()=>desfazerAula(id,k,campoTipo==='credGrupo'?modo:'aula'));
 }
 /* Desfaz a aula que acabou de ser lançada: tira a presença exata pela chave e
    devolve o crédito ao saldo de origem. Antes, errar o aluno significava abrir
@@ -8135,7 +8383,11 @@ function renderFicha(){
   const difere=agDif&&!difSilenciada(a);
   const loc=usaLocacao(a);
   const c=Number(a.creditos)||0, g=Number(a.credGrupo)||0, r=Number(a.repos)||0, l=Number(a.locCred)||0;
-  const temGrupo=(Number(a.planoGrupo)||0)>0&&!unificado(a);
+  /* Um pacote só (07/11): quem não é misto vê UM saldo, o do pacote, e um
+     botão de aula; os dois saldos e os dois botões só para quem tem os dois. */
+  const temGrupo=ehMisto(a)&&!unificado(a);
+  const campo=campoDoPacote(a),grpPac=tipoDoPacote(a)==='grupo';
+  const nomePac=ehGrupoTipo(a.tipo)&&a.tipo!=='Grupo'?a.tipo:(grpPac?(a.grupoTipo||'Grupo'):(a.tipo||'Particular'));
   const venc=reposVencendo(a);
   const dep=ehDependenteFamilia(a),status=statusFinanceiro(a);
   const devendo=!dep&&status!=='pago';
@@ -8143,7 +8395,9 @@ function renderFicha(){
   const nomeTopo=document.getElementById('fic-top-nome');if(nomeTopo)nomeTopo.textContent=a.nome;
 
   /* cabeçalho */
-  const plano=unificado(a)?(pacoteDoAluno(a)>0?('Flex '+pacoteDoAluno(a)):'sem pacote'):((Number(a.plano)||0)>0?('Flex '+a.plano):'sem pacote');
+  const qtdPac=campo==='credGrupo'?(Number(a.planoGrupo)||0):(unificado(a)?pacoteDoAluno(a):(Number(a.plano)||0));
+  const gtM=String(a.grupoTipo||'grupo').toLowerCase();
+  const plano=temGrupo?((Number(a.plano)||0)+' particular'+(Number(a.plano)===1?'':'es')+' + '+(Number(a.planoGrupo)||0)+' em '+gtM+' por mês'):(qtdPac>0?('Pacote '+nomePac+' · '+qtdPac+' aula'+(qtdPac===1?'':'s')+'/mês'):'sem pacote');
   const chips=[];
   if(PRO_MULTI&&profDoAluno(a))chips.push('<span class="fic-chip">👨‍🏫 '+esc(profNome(profDoAluno(a)))+'</span>');
   const pf=perfilDe(a);if(pf!=='tenis'&&pf!=='personal')chips.push('<span class="fic-chip">'+(PERFIL_LABELS[pf]||'')+'</span>');
@@ -8152,7 +8406,7 @@ function renderFicha(){
   if(!ativo)chips.push('<span class="fic-chip">📦 inativo</span>');
   let h='<div class="fic-hero">'
     +'<div class="fic-hero-l"><div class="fic-nome">'+(ehPersonalTipo(a.tipo)?'💪 ':'🎾 ')+esc(a.nome)+'</div>'
-    +'<div class="fic-sub">'+[esc(a.tipo||''),plano+(temGrupo?' + '+a.planoGrupo+' em grupo':''),(dep?'Incluído no plano família':fmt(mens)+'/mês')].filter(Boolean).map(x=>'<span class="fic-nw">'+x+'</span>').join(' · ')+'</div>'
+    +'<div class="fic-sub">'+[esc(plano),(dep?'Incluído no plano família':fmt(mens)+'/mês')].filter(Boolean).map(x=>'<span class="fic-nw">'+x+'</span>').join(' · ')+'</div>'
     +(horarioFixoTxt(a)?'<div class="fic-sub fic-hora">🕐 '+esc(horarioFixoTxt(a))+'</div>':'')+'</div>'
     +'<span class="badge '+esc(status)+'">'+(status==='parcial'?(situacaoMensalidade(a).exato?'Parcial':'50%'):esc(status))+'</span></div>'
     +(chips.length?'<div class="fic-chips">'+chips.join('')+'</div>':'');
@@ -8169,8 +8423,18 @@ function renderFicha(){
     return '<i class="fic-prog" title="'+v+' de '+tot+'"><i style="width:'+Math.max(0,Math.min(100,Math.round(v/tot*100)))+'%"></i></i>';};
   const tile=(v,rot,extra,neg,bar)=>'<div class="fic-tile'+(neg?' neg':'')+'" data-pulsa="'+id+'"><b>'+v+'</b><span>'+rot+'</span>'+(extra?'<small>'+extra+'</small>':'')+(bar||'')+'</div>';
   const totPart=Number(unificado(a)?pacoteDoAluno(a):a.plano)||0;   // pacote único soma particular + grupo
-  let t=tile(fmtCred(c),c<0?'aula(s) devendo':'crédito'+(c===1?'':'s')+(totPart>0?' de '+totPart:''),c<0?fmt(devidoExtraPart(a))+' extra a cobrar':'',c<0,barra(c,totPart));
-  if(temGrupo||g!==0)t+=tile(fmtCred(g),'grupo'+(Number(a.planoGrupo)>0?' · de '+Number(a.planoGrupo):''),g<0?fmt(devidoExtraGrupo(a))+' extra a cobrar':'',g<0,barra(g,a.planoGrupo));
+  let t='';
+  if(temGrupo){                                   // misto: os dois saldos
+    t+=tile(fmtCred(c),c<0?'aula(s) devendo':'crédito'+(c===1?'':'s')+' particular'+(c===1?'':'es')+(totPart>0?' · de '+totPart:''),c<0?fmt(devidoExtraPart(a))+' extra a cobrar':'',c<0,barra(c,totPart));
+    t+=tile(fmtCred(g),'grupo'+(Number(a.planoGrupo)>0?' · de '+Number(a.planoGrupo):''),g<0?fmt(devidoExtraGrupo(a))+' extra a cobrar':'',g<0,barra(g,a.planoGrupo));
+  }else{                                          // um pacote: um saldo, o do pacote
+    const v=campo==='credGrupo'?g:c,outro=campo==='credGrupo'?c:g,doNome=grpPac?' de '+String(nomePac).toLowerCase():'';
+    const devido=campo==='credGrupo'?devidoExtraGrupo(a):devidoExtraPart(a);
+    t+=tile(fmtCred(v),v<0?'aula(s) devendo':'crédito'+(v===1?'':'s')+doNome+(qtdPac>0?' · de '+qtdPac:''),v<0?fmt(devido)+' extra a cobrar':'',v<0,barra(v,qtdPac));
+    const fp=saldoForaDoPacote(a);
+    if(outro)t+=tile(fmtCred(outro),(campo==='credGrupo'?'particular':'grupo')+(outro<0&&!(fp&&fp.mesmoTipo)?' · aula de outro tipo':' · fora do pacote'),
+      outro<0?(fp&&fp.mesmoTipo?'conferir no cadastro':fmt(campo==='credGrupo'?devidoExtraPart(a):devidoExtraGrupo(a))+' extra a cobrar'):'',outro<0);
+  }
   if(r>0||venc>0)t+=tile(fmtCred(r),'reposiç'+(r===1?'ão':'ões'),venc>0?fmtCred(venc)+' vence(m) no fim do mês':'',false);
   if(loc)t+=tile(fmtCred(l)+'h','locação',l<0?'devendo':'',l<0);
   h+='<div class="fic-tiles">'+t+'</div>';
@@ -8187,12 +8451,17 @@ function renderFicha(){
   if(a.difUndo&&a.difUndo.mes===mesReal()){const manteve=a.difUndo.acao==='manter'||(!a.difUndo.acao&&a.difOk);
     pend+='<div class="fic-pend"><p>↩︎ '+(manteve?'Você manteve '+fmt(mens)+' este mês (a diferença da agenda volta a ser conferida na virada).':'Você cobrou pela agenda este mês.')+'</p>'
     +fxBotao('neutro',"desfazerDecisaoDif('"+id+"')",manteve?'Desfazer':'Desfazer cobrança')+'</div>';}
+  {const fp=saldoForaDoPacote(a);
+   if(fp&&fp.mesmoTipo)pend+='<div class="fic-pend"><p>🧮 '+fmtCred(fp.v)+' '+(fp.cp==='credGrupo'?'de grupo':'particular(es)')+' fora do pacote'
+     +(fp.v<0&&fp.mesmoTipo?' (aula do pacote que saiu do saldo errado)':'')+'. No cadastro, "Juntar ao pacote" deixa um saldo só.</p>'
+     +fxBotao('neutro',"abrirJuntarSaldo('"+id+"')",'Conferir e juntar')+'</div>';}
   if(venc>0)pend+='<div class="fic-pend"><p>⏳ '+fmtCred(venc)+' reposição(ões) vencem na virada do mês.</p>'
     +fxBotao('neutro',"usarRepos('"+id+"')",BI.undo+'Usar reposição')+'</div>';
   if(pend)h+='<div class="fic-sec fic-sec-pend"><div class="fic-sec-t">Pede atenção</div>'+pend+'</div>';
 
   /* aula */
-  let aula=fxBotao('prim',"aulaRealizada('"+id+"')",BI.check+'Aula realizada (−1)');
+  let aula=(!temGrupo&&grpPac)?fxBotao('prim',"aulaRealizada('"+id+"','grupo')",BI.check+'Aula realizada (−1)')
+    :fxBotao('prim',"aulaRealizada('"+id+"')",BI.check+(temGrupo?'Aula particular (−1)':'Aula realizada (−1)'));
   let g2='';
   if(temGrupo)g2+=fxBotao('prim2',"aulaRealizada('"+id+"','grupo')",BI.check+'Aula em grupo (−1)');
   if(r>0&&!venc)g2+=fxBotao('neutro',"usarRepos('"+id+"')",BI.undo+'Usar reposição');
@@ -10163,7 +10432,7 @@ function mostrarPreviaArquivo(){
    Nada muda nos dados: o detalhado continua a um toque, igual ao de antes. */
 const EXT_ROTULO={'Presença na agenda':'Aula realizada','Aula realizada':'Aula realizada','Aula em grupo na agenda':'Aula em grupo realizada',
   'Aula em grupo realizada':'Aula em grupo realizada','Reposição na agenda':'Reposição realizada','Reposição realizada':'Reposição realizada',
-  'Locação na agenda':'Locação','Locação realizada':'Locação','Correção manual no cadastro':'Ajuste manual','Correção':'Ajuste manual',
+  'Locação na agenda':'Locação','Locação realizada':'Locação','Correção manual no cadastro':'Ajuste manual','Saldo de fora juntado ao pacote':'Saldo juntado ao pacote','Pacote trocado: saldo levado junto':'Saldo mudou junto com o pacote','Correção':'Ajuste manual',
   'Sobra do mês virou reposição':'Sobra do mês virou reposição','Virada de mês — sobra convertida':'Sobra do mês saiu dos créditos',
   'Saldo anterior zerado na renovação':'Saldo anterior zerado','Saldo inicial':'Saldo inicial','Saldo anterior (linhas antigas resumidas)':'Saldo anterior'};
 function rotuloExtrato(m){
@@ -11270,6 +11539,9 @@ function achadosDoAluno(a){
     if(repDobro.length)achados.push({tipo:'dup',a,txt:'POSSÍVEL REPOSIÇÃO EM DOBRO: '+a.nome+' usou reposição pelo botão do cartão e teve reposição marcada na agenda no mesmo dia ('
       +repDobro.slice(0,4).map(m=>dataBr(dKey(new Date(m.ts)))).join(', ')+'). Se foi a mesma aula, saiu uma reposição a mais: acerte no cadastro (Reposições).'});
   }
+    {const fp=saldoForaDoPacote(a);
+     if(fp&&fp.mesmoTipo&&fp.v<0)achados.push({tipo:'aviso',a,txt:a.nome+': '+fmtCred(fp.v)+' '+(fp.cp==='credGrupo'?'de grupo':'particular')
+       +' fora do pacote — aula do pacote que saiu do saldo errado (antes de 07/11). Pode aparecer como aula extra a cobrar. Para acertar: cadastro do aluno → Juntar ao pacote.'});}
     ['creditos','credGrupo','repos','locCred'].forEach(c=>{
       const atual=Number(a[c])||0, esperado=saldoPeloExtrato(a,c);
       /* Extrato MENOR que o saldo é o normal: linhas antigas saem para o app

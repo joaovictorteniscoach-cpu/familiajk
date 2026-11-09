@@ -3720,3 +3720,32 @@ html body:not(#jv)[data-pagina]:not([data-pagina="dash"]) .top .top-actions .eye
 }
 /* Para quem a marcação aparece no app do aluno (lista do horário). */
 .mov-l .na-app{display:block;margin-top:3px;font-size:12px;line-height:1.35;color:var(--jv-copy-soft,#E4DED3)}
+
+/* ===== Cadastro simples do aluno (07/11, pedido do João) =====
+   O pacote numa caixa, o saldo numa linha e o resto em "Mais opções". Só
+   peças que já existem (seg3, chip, field); aqui é moldura e espaçamento. */
+#ov-aluno .cad-caixa{border:1px solid rgba(224,185,79,.35);border-radius:14px;padding:12px 12px 4px;margin:12px 0}
+#ov-aluno .cad-tit{font-size:12px;font-weight:800;letter-spacing:.9px;text-transform:uppercase;color:#F0D57C;-webkit-text-fill-color:#F0D57C;margin:0 0 9px}
+#ov-aluno .cad-tipos{margin-bottom:2px}
+#ov-aluno .cad-tipos button{min-height:44px;font-size:12.5px}
+#ov-aluno .cad-link{display:block;width:100%;margin:-2px 0 12px;padding:10px 12px;min-height:44px;border:1px dashed rgba(224,185,79,.45);border-radius:11px;background:transparent;
+  color:#F0D57C;-webkit-text-fill-color:#F0D57C;font-size:13px;font-weight:700;text-align:left;cursor:pointer}
+#ov-aluno .cad-saldos{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px}
+#ov-aluno .cad-saldos .chip{display:inline-flex;align-items:center;min-height:34px;font-size:13.5px;font-weight:800;padding:6px 12px;border-radius:999px;
+  background:rgba(224,185,79,.14)!important;border:1px solid rgba(224,185,79,.42)!important;color:#F8F5ED!important;-webkit-text-fill-color:#F8F5ED!important}
+#ov-aluno .cad-saldos .chip.cad-neg{background:#8A3A1A!important;border-color:#B5532A!important;color:#fff!important;-webkit-text-fill-color:#fff!important}
+#ov-aluno .cad-juntar{display:block;width:100%;margin:0 0 10px;padding:9px 12px;min-height:44px;border-radius:11px;border:1px solid rgba(224,185,79,.5);
+  background:rgba(224,185,79,.12);color:#F0D57C;-webkit-text-fill-color:#F0D57C;font-size:13px;font-weight:800;text-align:left;cursor:pointer;line-height:1.35}
+#ov-aluno .cad-juntar small{display:block;font-size:11.5px;font-weight:600;color:var(--jv-copy-soft,rgba(248,245,237,.8));-webkit-text-fill-color:var(--jv-copy-soft,rgba(248,245,237,.8))}
+#ov-aluno .cad-det{margin:0 0 10px}
+#ov-aluno .cad-det>summary{list-style:none;cursor:pointer;min-height:44px;display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:800;color:#F3EDE2;-webkit-text-fill-color:#F3EDE2}
+#ov-aluno .cad-det>summary::-webkit-details-marker{display:none}
+#ov-aluno .cad-det>summary::after{content:"▾";margin-left:auto;color:#F0D57C;-webkit-text-fill-color:#F0D57C}
+#ov-aluno .cad-det[open]>summary::after{content:"▴"}
+#ov-aluno .cad-det>summary small{font-size:11.5px;font-weight:600;color:var(--jv-copy-muted,rgba(248,245,237,.66));-webkit-text-fill-color:var(--jv-copy-muted,rgba(248,245,237,.66))}
+#ov-aluno .cad-corr{margin-top:4px}
+#ov-aluno .cad-mais{border:1px solid rgba(224,185,79,.22);border-radius:14px;padding:2px 12px;margin:0 0 14px}
+#ov-aluno .cad-mais[open]{padding-bottom:12px}
+#ov-aluno .cad-mais>summary{flex-wrap:wrap;row-gap:0}
+#ov-aluno .cad-mais>summary small{flex-basis:100%;order:3;margin-top:-6px;padding-bottom:8px}
+#ov-aluno .cad-novo-pacote{width:100%;margin-top:4px;min-height:44px}

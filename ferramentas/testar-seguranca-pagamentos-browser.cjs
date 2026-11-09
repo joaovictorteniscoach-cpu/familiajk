@@ -45,7 +45,7 @@ async function setup(context,base,theme='saibro'){
  await p.waitForFunction(()=>typeof CARREGADO!=='undefined'&&CARREGADO,{},{timeout:15000});
  await p.evaluate(f=>{
   window.testPersist=persist;window.testBackupNuvem=backupNuvem;window.testBackupDia=backupDoDia;
-  persist=()=>{};guardarVersoes=raw=>{window.testSavedCopy=JSON.parse(raw);};logAct=()=>{};
+  persist=()=>{};guardarVersoes=async raw=>{window.testSavedCopy=JSON.parse(raw);return true;};logAct=()=>{};
   DB=JSON.parse(JSON.stringify(f));ensureFields();CARREGADO=true;window._espacoAberto=true;hideVals=false;
   _abriuSemConferir=false;_semDados=false;cloudPending=false;
   document.querySelectorAll('.overlay.on').forEach(e=>e.classList.remove('on'));
@@ -165,7 +165,7 @@ async function shot(p,theme,key,locator){
     assert.notEqual(await p.evaluate(()=>DB.alunos[0].ultimoPago),await p.evaluate(()=>mesReal()));
    });
    await check(theme+': cadastro preserva valor exato; avisos e relatório usam saldo',async()=>{
-    await p.evaluate(()=>{openAlunoModal('solo');document.getElementById('a-mensalidade').value='800';saveAluno();});
+    await p.evaluate(async()=>{openAlunoModal('solo');document.getElementById('a-mensalidade').value='800';await saveAluno();});
     assert.equal(await p.evaluate(()=>situacaoMensalidade(DB.alunos[0]).falta),500);
     let text=await p.evaluate(()=>{let msg='';window.open=url=>{msg=url;return null;};cobrar('solo');return decodeURIComponent(msg);});
     assert.match(text,/500/);

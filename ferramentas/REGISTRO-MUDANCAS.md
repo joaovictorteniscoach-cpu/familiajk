@@ -8,6 +8,130 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-09 · Claude Code: CI vermelho do PR #272 (head 67869c2) — teste e sinal de nuvem preso
+
+- CI `validar` falhou em `testar-contraste-fechamento-browser.cjs`: o teste chamava `saveAluno()`
+  sem esperar (agora é assíncrono, com cópia confirmada). Passa a aguardar o resultado
+  (`return saveAluno()`/`await`), inclusive nos dois saves seguidos pai → filho.
+- Defeito real achado ao reproduzir: `copiarAntesDoCadastro` barrava o save sempre que
+  `_nuvemMuda` estava ligado. Esse sinal fica `true` o resto do uso depois de UMA demora da
+  nuvem na abertura (`comPrazo`), então um 4G lento ao abrir a Gestão travava todo cadastro com
+  mensalidade/pacote/saldo ("A sessão ou a nuvem mudou durante a cópia"). Agora só barra se
+  ele ligou DURANTE a cópia (`contexto.nuvemMuda`). Conflito de nuvem, troca de sessão e
+  `_espacoTrocou` continuam barrando como o Codex fez.
+- Teste novo no `testar-cadastro-simples-browser.cjs`: nuvem lenta na abertura salva; estouro
+  durante a cópia não grava. Bateria local: 60 ok; 4 só do ambiente (WebKit ×3, simulador
+  Firebase ×1). Demo regenerada; versão continua `2026-11-09-3`.
+- Em aberto para o João: (1) dupla antiga com −1 solto — o aluno via 3 (certo) e com a leitura
+  do Codex passa a ver "4 · outro saldo: −1 de grupo"; (2) a renovação pelo app do aluno agora
+  cobra a mensalidade do cadastro, não a tabela.
+
+## 2026-11-09 · Codex: cópia confirmada e proteção dos créditos no cadastro (PR #272)
+
+- Responsável: Codex; branch `codex/protecao-creditos-pr272-2026-11-09`, incremento do
+  [PR #272](https://github.com/joaovictorteniscoach-cpu/familiajk/pull/272), head de partida
+  `caf6bd4c6b5005ae5bc313605062609a41040c14`; main `cd0c9e7579b42cfb7e6740a5a82cbf8932a18ad4`.
+  Proposta `2026-11-09-3`; não publicada nesta etapa de implementação.
+- A V2 de leitura foi aprovada no CI completo
+  [42611029813](https://github.com/joaovictorteniscoach-cpu/familiajk/actions/runs/42611029813):
+  48 cenários de pacote em Chromium/WebKit e dois temas; capturas revisadas.
+  O merge foi retido por uma falha concreta: saveAluno iniciava a cópia, mas
+  movia os saldos sem esperar nem conferir sucesso.
+- Corrigido: alterações de pacote, saldo, mensalidade ou família exigem
+  confirmação booleana true da cópia original antes de mover ou sobrescrever.
+  Uma cópia por operação, antes também da mudança de metadados. Falha/rejeição/
+  ausência de resposta em 8 s preservam cadastro e extrato e liberam a tela.
+- Duplo envio bloqueado. Banco substituído/alterado, sessão/conflito mudando,
+  campos editados, janela fechada ou outro aluno aberto invalidam a operação.
+  Cadastro que ficou antigo enquanto estava aberto exige nova conferência.
+  Não é usado comPrazo: prazo local não marca falsamente a nuvem como falha.
+- saveAluno retorna Promise; testes/callers de renovação, família e pagamentos
+  aguardam o resultado. Mocks só confirmam cópia quando retornam true.
+- Teste de cadastro ampliado para 68 verificações em Chromium/WebKit: originais
+  e falhas de backup, espera, duplo toque, resposta tardia, alterações de base,
+  correção manual, juntar, família, soma do misto, saldo fracionário/negativo,
+  estorno no saldo original e pacote único sem duplicação ao salvar de novo.
+  Leitura do app-aluno (48) permanece intacta. CI final precisa confirmar tudo.
+- Demo regenerada, cinco carimbos/caches sincronizados. Nenhuma alteração
+  visual, regra Firebase, dado real ou acerto automático de crédito.
+  A aprovação/publicação só será avaliada após CI do commit final, revisão
+  das evidências e conferência de main/PRs concorrentes. Resultado final,
+  versão entregue e monitor serão registrados no PR.
+
+---
+
+## 2026-11-09 · Codex: compatibilidade dos pacotes no app do aluno (PR #272)
+
+- Responsável: Codex; branch `codex/compatibilidade-pacotes-aluno-272-2026-11-09`, correção incremental
+  do [PR #272](https://github.com/joaovictorteniscoach-cpu/familiajk/pull/272).
+  Base main `cd0c9e7579b42cfb7e6740a5a82cbf8932a18ad4`; head examinado do Claude
+  `d0c8b8979a2409816fed82e1e0fc2151d0330fa4`. Proposta `2026-11-09-2`.
+- Pedido: não aprovar antes de corrigir a leitura e validar particular, dupla
+  e misto, mantendo cadastros antigos. Sem publicação nesta fase de implementação.
+- Reproduzido: o PR corrigia o bloco de saldo antigo (escondido), mas Início e
+  Créditos ainda somavam `creditos + credGrupo`. Dupla antiga com 4 créditos e
+  −1 solto via 3; dupla nova com 3 no pacote e 1 solto via 4. Também havia
+  aviso de crédito do tipo errado ao agendar e uma parte do misto marcada
+  como plano completo na tabela.
+- Leitor preserva plano/creditos do legado, planoGrupo/credGrupo do grupo novo,
+  e as duas parcelas do misto (zero/negativo/número em texto incluídos).
+  Sem plano nem planoGrupo, conserva crédito avulso do legado. Só lê.
+- Cartões visíveis usam o mesmo leitor; detalhes do misto e de saldo separado
+  aparecem em texto nas peças existentes. Não muda CSS, cores ou componentes.
+  Voz, resumo, WhatsApp, plano atual e aviso ao agendar seguem a mesma leitura.
+- Aviso de consumo distingue o contexto do pacote: mudar a origem da leitura
+  não inventa débito; consumo de grupo no misto também é detectado.
+- Renovação lê a mensalidade publicada do cadastro, inclusive zero e misto.
+  Sem valor no legado, tabela só para pacote simples; valor oculto não vira
+  cobrança estimada. Não grava mensalidade nem corrige saldo.
+- Preparados 48 testes específicos: Chromium/WebKit nos dois temas, publicação
+  REAL da Gestão com e sem pacote único antes de alimentar o aluno, cartões
+  realmente visíveis, voz, resumo, saldo cruzado, renovação e leitura sem mutação.
+  Capturas e CI do head final precisam ser revisados antes da avaliação do merge.
+- Preservado todo o trabalho do Claude em cadastro, débito, reposição, família,
+  estilos/tema/demo e testes. Cinco carimbos/cache sincronizados, demo regenerada.
+  Sem dados reais nem mudanças de regras. Resultados finais e entrega serão
+  registrados no PR #272 após testes e decisão de publicação.
+
+---
+
+## 2026-11-07 · Claude Code: cadastro e cartão do aluno simples — um pacote, um saldo (v2026-11-07-1 → v2026-11-09-1)
+
+**Pedido do João:** deixar o "Editar aluno" e o cartão "muito mais simples, menos poluído";
+"quando eu escolho o tipo de pacote, a aula que eu adiciono já vai direto para aquele pacote…
+quando coloca um e outro, acaba dando diferença". Escolhas dele: um pacote por aluno (misto só
+para quem faz os dois); "só quando tem as duas vai aparecer a barrinha créditos em grupo,
+créditos particular".
+
+- Causa da "diferença": a dupla cadastrada do jeito antigo guarda o pacote em `plano` e o saldo
+  em `creditos`. O ✓ num horário de grupo descontava de `credGrupo` (0 → −1, "extra a cobrar")
+  e os créditos ficavam parados. Agora a aula do MESMO tipo do pacote sai de onde o pacote mora
+  (`campoDoPacote`/`tipoDoPacote` → `ordemDoDebito`); aula de OUTRO tipo continua outro produto
+  (regra de 22–23/10). `tipoReposDe`/`tipoReposAluno`: a reposição da dupla antiga é de grupo.
+- Cadastro: caixa "Pacote do aluno" (botões de tipo + 🔑 Só locação, aulas por mês, mensalidade,
+  vencimento), "Saldo agora" (um número; dois só no misto) com "Corrigir saldo" fechado, e
+  "Mais opções" (família, situação, professor, categoria, links, novo tipo de pacote). Mesmos
+  campos e ids de antes; `a-tipo` virou select escondido atrás dos botões. Botão
+  "+ Também faz aula em grupo/particular" liga o misto.
+- Trocar o pacote leva o saldo junto SÓ depois de perguntar (`mudancasSaldoPacote` no
+  `saveAluno`; Cancelar volta ao cadastro); misto que deixa um dos tipos pergunta se junta a
+  sobra (Cancelar = fica separada). Versão salva antes; extrato "Saldo mudou junto com o pacote".
+- Saldo solto do mesmo tipo (dupla antiga com −1 de grupo, o defeito acima): `saldoForaDoPacote`.
+  Ficha avisa em "Pede atenção" → "Conferir e juntar" abre o cadastro; "Juntar ao pacote" só muda
+  os números na tela e grava ao salvar ("Saldo juntado ao pacote" no extrato, versão salva).
+  A conferência (`achadosDoAluno`) só lista. Nada é corrigido sozinho.
+- Ficha: "Pacote Dupla · 4 aulas/mês", um saldo e um botão "Aula realizada"; misto mostra os
+  dois saldos e os dois botões.
+- Teste: `testar-cadastro-simples-browser.cjs` (17, no validar-pr).
+- App do aluno (09/11, João: "corrija o texto e os números sem mexer no visual"; v2026-11-09-1):
+  a dupla cadastrada do jeito novo (pacote em `planoGrupo`/`credGrupo`) recebia "Seus créditos
+  acabaram — esta aula entra como extra" a cada aula marcada; o assistente respondia "0 créditos,
+  3 de grupo"; o resumo do mês e a mensagem de WhatsApp ao João diziam "0 créditos + 3 em grupo".
+  Agora `saldoPacoteAluno` (mesma conta do `campoDoPacote`) dá o saldo do pacote para esses
+  textos, para o aviso de crédito usado, a renovação e o plano atual na tabela de planos. O
+  cartão antigo `#bloco-saldo` (escondido pelo visual atual) também segue a regra. Misto
+  continua com os dois saldos. Teste `testar-saldo-pacote-aluno-browser.cjs` (7, no validar-pr).
+
 ## 2026-11-05 · Claude Code: agenda do aluno pergunta "O que você quer marcar?" (mesma v2026-11-05-1)
 
 **Pedido do João:** "tem tantas opções que o aluno acha que tem horário livre para aula. Ele

@@ -64,17 +64,18 @@ let count=0;async function check(name,fn){await fn();count++;console.log('✅ '+
    await p.evaluate(()=>{DB.alunos.find(a=>a.id==='solo').status='pendente';document.getElementById('search').value='';renderAlunos();});
   });
   await check(theme+' mensalidade editada atualiza prévia aberta',async()=>{
-   await p.evaluate(()=>{go('fech',document.createElement('button'));document.getElementById('fc-aluno').value='solo';document.getElementById('fc-mes').value='2026-10';renderFechamento();openAlunoModal('solo');document.getElementById('a-mensalidade').value='735';saveAluno();});
+   // saveAluno espera a cópia de segurança confirmada antes de gravar valor (09/11): aguarda o resultado
+   assert.equal(await p.evaluate(()=>{go('fech',document.createElement('button'));document.getElementById('fc-aluno').value='solo';document.getElementById('fc-mes').value='2026-10';renderFechamento();openAlunoModal('solo');document.getElementById('a-mensalidade').value='735';return saveAluno();}),true);
    assert.match(await p.locator('#fech-export .fx-total').innerText(),/735/);
    assert.equal(await p.evaluate(()=>DB.alunos.find(x=>x.id==='solo').creditos),2);
-   await p.evaluate(()=>openAlunoModal('solo'));assert.equal(await p.locator('#a-mensalidade').inputValue(),'735');await p.evaluate(()=>{document.getElementById('a-tel').value='11999900000';saveAluno();});assert.match(await p.locator('#fech-export .fx-total').innerText(),/735/);
+   await p.evaluate(()=>openAlunoModal('solo'));assert.equal(await p.locator('#a-mensalidade').inputValue(),'735');assert.equal(await p.evaluate(()=>{document.getElementById('a-tel').value='11999900000';return saveAluno();}),true);assert.match(await p.locator('#fech-export .fx-total').innerText(),/735/);
   });
   await check(theme+' mês selecionado e desconto manual entram no total',async()=>{
    const r=await p.evaluate(()=>{const a=DB.alunos.find(x=>x.id==='solo');a.descRepos={mes:'2026-10',valor:100,qtd:1};renderFechamento();return {total:fcDados(a,'2026-10').total,outro:fcDados(a,'2026-09').total,texto:fcTexto(a,'2026-10',fcDados(a,'2026-10'))};});
    assert.equal(r.total,635);assert.equal(r.outro,735);assert.match(r.texto,/635/);assert.doesNotMatch(r.texto,/desconto/i);
   });
   await check(theme+' saldo do cadastro e família sem cobrança duplicada',async()=>{
-   await p.evaluate(()=>{document.getElementById('fc-aluno').value='pai';renderFechamento();openAlunoModal('pai');document.getElementById('a-mensalidade').value='1375';saveAluno();openAlunoModal('filho');document.getElementById('a-plano').value='5';document.getElementById('a-creditos').value='4';document.getElementById('a-repos').value='3';saveAluno();});
+   assert.deepEqual(await p.evaluate(async()=>{document.getElementById('fc-aluno').value='pai';renderFechamento();openAlunoModal('pai');document.getElementById('a-mensalidade').value='1375';const r1=await saveAluno();openAlunoModal('filho');document.getElementById('a-plano').value='5';document.getElementById('a-creditos').value='4';document.getElementById('a-repos').value='3';return [r1,await saveAluno()];}),[true,true]);
    const r=await p.evaluate(()=>({t:document.getElementById('fech-export').innerText,d:fcDados(DB.alunos.find(x=>x.id==='pai'),'2026-10'),filho:DB.alunos.find(x=>x.id==='filho')}));
    assert.equal(r.d.total,1375);assert.equal(r.filho.mensalidade,0);assert.equal(r.filho.creditos,4);assert.match(r.t,/1375|1\.375/);assert.match(r.t,/Dependente Teste/i);
    assert.match(r.t,/Créditos atuais do plano\s+4/i);assert.match(r.t,/Reposições guardadas\s+3/i);assert.match(r.t,/Total de aulas a usar\s+7/i);

@@ -319,8 +319,12 @@ function executar(frase){
  }
  if(r.erroData){responder(r.erroData);return;}
  if(r.acao==='creditos'){
-  const E=eu(),c=Number(E.creditos)||0,g=Number(E.credGrupo)||0,rp=Number(E.reposValidas!=null?E.reposValidas:E.repos)||0,l=Number(E.locCred)||0;
-  responder('Você tem '+c+' crédito'+(c===1?'':'s')+(g?', '+g+' de grupo':'')+(rp?' e '+rp+' reposiç'+(rp===1?'ão':'ões'):'')+(l?' · '+l+'h de locação':'')+'.');return;
+  const E=eu(),rp=Number(E.reposValidas!=null?E.reposValidas:E.repos)||0,l=Number(E.locCred)||0;
+  let c=Number(E.creditos)||0,g=Number(E.credGrupo)||0,gRot=' de grupo';
+  /* um pacote só: o número do pacote primeiro (dupla nova guarda em credGrupo, 07/11) */
+  const sp=typeof w.saldoPacoteAluno==='function'?w.saldoPacoteAluno(E):null;
+  if(sp&&!sp.misto){c=sp.valor;g=sp.outro;gRot=sp.outroCampo==='credGrupo'?' de grupo':' particular'+(Math.abs(sp.outro)===1?'':'es');}
+  responder('Você tem '+c+' crédito'+(c===1?'':'s')+(g?', '+g+gRot:'')+(rp?' e '+rp+' reposiç'+(rp===1?'ão':'ões'):'')+(l?' · '+l+'h de locação':'')+'.');return;
  }
  if(r.acao==='minhas'){
   const lista=(w.aulasAgendadasAluno()||[]).filter(a=>!r.data||a.data===r.data);
