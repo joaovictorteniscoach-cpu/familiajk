@@ -10,8 +10,8 @@
    - "Juntar ao pacote" (dupla com −1 de grupo solto) só ao tocar, grava no
      extrato e salva uma versão antes. A conferência só lista.
    Só dados fictícios, relógio fixo. */
-let chromium;
-try{({chromium}=require('playwright'));}catch(e){({chromium}=require(process.env.PW||'/opt/node22/lib/node_modules/playwright'));}
+let chromium,webkit;
+try{({chromium,webkit}=require('playwright'));}catch(e){({chromium}=require(process.env.PW||'/opt/node22/lib/node_modules/playwright'));}
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'..'),AGORA=new Date('2026-11-05T15:00:00-03:00');   // quinta-feira
 const server=http.createServer((req,res)=>{
@@ -19,10 +19,11 @@ const server=http.createServer((req,res)=>{
  if(!f.startsWith(root+path.sep)){res.writeHead(403).end();return;}
  try{res.setHeader('Content-Type',({'.html':'text/html','.css':'text/css','.js':'text/javascript','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp'})[path.extname(f)]||'application/octet-stream');res.end(fs.readFileSync(f));}catch(e){res.writeHead(404).end();}
 });
-let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);}
+let count=0,motorAtual='';async function check(n,fn){await fn();count++;console.log('✅ '+motorAtual+': '+n);}
 (async()=>{
  await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;
- const browser=await chromium.launch({headless:true});
+ for(const [motor,engine]of [['chromium',chromium],['webkit',webkit]]){
+ motorAtual=motor;const browser=await engine.launch({headless:true});
  try{
   const c=await browser.newContext({viewport:{width:390,height:844},timezoneId:'America/Sao_Paulo',serviceWorkers:'block'});
   await c.route('**/*',r=>{const u=new URL(r.request().url());if(u.origin!==base)return r.abort();if(u.pathname.includes('/lib/firebase-'))return r.fulfill({body:'',contentType:'text/javascript'});return r.continue();});
@@ -33,8 +34,10 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
   await p.clock.setSystemTime(AGORA);await p.goto(base+'/app-gestao/',{waitUntil:'load'});
   await p.waitForFunction(()=>typeof CARREGADO!=='undefined'&&CARREGADO,null,{timeout:40000});
   await p.addStyleTag({content:'#ov-entrar,#ov-semnuvem,#barra-versao,#barra-endereco,#splash-gestao,#toast{display:none!important}'});
-  const preparar=()=>p.evaluate(()=>{persist=()=>{};publish=()=>{};MODO='dono';Object.keys(_ultAcao).forEach(k=>delete _ultAcao[k]);
-   window._versoes=0;guardarVersoes=()=>{window._versoes++;};
+  const preparar=()=>p.evaluate(()=>{persist=()=>{};publish=()=>{};MODO='dono';_conflitoNuvem=null;_nuvemMuda=false;window._espacoTrocou=false;Object.keys(_ultAcao).forEach(k=>delete _ultAcao[k]);
+   window._versoes=0;window.__copiaOk=true;window.__copiaErro=false;window.__copiaEspera=false;window.__liberarCopia=null;window.__copias=[];window.__gravacoes=0;window.__avisos=[];
+   toast=t=>__avisos.push(t);persist=()=>{__gravacoes++;};
+   guardarVersoes=async json=>{window._versoes++;__copias.push(json);if(__copiaEspera)await new Promise(r=>window.__liberarCopia=r);if(__copiaErro)throw Error('Falha fictícia');return __copiaOk;};
    if(DB.pacoteUnico)DB.pacoteUnico.ativo=false;
    const al=(id,nome,extra)=>Object.assign({id,nome,codigo:id.slice(-4),tipo:'Particular',plano:4,planoGrupo:0,creditos:4,credGrupo:0,repos:0,locCred:0,mensalidade:640,valorAula:160,status:'pago',ativo:true,diaVenc:10},extra||{});
    DB.alunos=[
@@ -188,7 +191,137 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
     const out=mudancasSaldoPacote(a,{tipo:'Dupla',plano:0,planoGrupo:4});DB.pacoteUnico.ativo=false;return out;});
    assert.deepEqual(r,[]);
   });
+
+  /* Falhas de armazenamento e concorrência: nenhum campo nem linha do extrato
+     pode mudar antes de uma cópia confirmada e da última conferência da base. */
+  const banco=()=>p.evaluate(()=>JSON.stringify(DB));
+  const iniciarTroca=async()=>{
+   await preparar();await abrir('a2003');await p.evaluate(()=>escolherTipoCad('Particular'));
+  };
+  await check('cópia retorna false: troca de pacote não altera cadastro, saldos, extrato nem grava',async()=>{
+   await iniciarTroca();const antes=await banco();await p.evaluate(()=>{__copiaOk=false;});await salvar([true]);
+   assert.equal(await banco(),antes);assert.equal(await p.evaluate(()=>__gravacoes),0);assert.equal(await p.evaluate(()=>document.getElementById('ov-aluno').classList.contains('on')),true);
+   assert.match(await p.evaluate(()=>__avisos.join('|')),/cópia de segurança.*Nada foi alterado/);
+   assert.equal(await p.evaluate(()=>document.querySelector('#ov-aluno [onclick="saveAluno()"]').disabled),false);
+  });
+  await check('cópia rejeitada: preserva tudo e libera nova tentativa que salva uma vez',async()=>{
+   await iniciarTroca();const antes=await banco();await p.evaluate(()=>{__copiaErro=true;});await salvar([true]);
+   assert.equal(await banco(),antes);assert.equal(await p.evaluate(()=>__gravacoes),0);
+   await p.evaluate(()=>{__copiaErro=false;});await salvar([true]);
+   assert.equal((await al('a2003')).creditos,4);assert.equal((await al('a2003')).credGrupo,0);assert.equal(await p.evaluate(()=>__gravacoes),1);
+   assert.equal(await p.evaluate(()=>__copias.every(json=>json===__copias[0])),true,'falha não alterou a base antes da nova cópia');
+  });
+  await check('cópia pendente e duplo toque: nenhum débito antes da resposta; depois uma migração e um salvamento',async()=>{
+   await iniciarTroca();const antes=await banco();await p.evaluate(()=>{__copiaEspera=true;window.__salvar=saveAluno();});
+   await p.waitForFunction(()=>!!window.__liberarCopia);
+   assert.equal(await banco(),antes);assert.equal(await p.evaluate(()=>__gravacoes),0);
+   await p.evaluate(()=>saveAluno());assert.equal(await p.evaluate(()=>_versoes),1);
+   assert.equal(await p.evaluate(()=>document.getElementById('a-creditos').disabled),true);
+   await p.evaluate(async()=>{__liberarCopia();await __salvar;});
+   const a=await al('a2003');assert.equal(a.creditos,4);assert.equal(a.credGrupo,0);assert.equal(a.movs.length,2);assert.equal(await p.evaluate(()=>__gravacoes),1);
+   assert.equal(await p.evaluate(()=>__copias[0]),antes,'cópia contém o cadastro original completo');
+   assert.equal(await p.evaluate(()=>document.getElementById('a-creditos').disabled),false);
+  });
+  await check('cópia sem resposta tem prazo: libera a tela e resposta atrasada nunca altera créditos',async()=>{
+   await iniciarTroca();const antes=await banco();await p.evaluate(()=>{__copiaEspera=true;window.__salvar=saveAluno();});
+   await p.waitForFunction(()=>!!window.__liberarCopia);await p.waitForTimeout(8200);await p.evaluate(()=>__salvar);
+   assert.equal(await banco(),antes);assert.equal(await p.evaluate(()=>_cadSalvando),false);
+   assert.equal(await p.evaluate(()=>document.querySelector('#ov-aluno [onclick="saveAluno()"]').disabled),false);
+   await p.evaluate(()=>__liberarCopia());await p.waitForTimeout(50);
+   assert.equal(await banco(),antes);assert.equal(await p.evaluate(()=>__gravacoes),0);
+   await p.evaluate(()=>{__copiaEspera=false;});await salvar([true]);
+   assert.equal((await al('a2003')).creditos,4);assert.equal(await p.evaluate(()=>__gravacoes),1);
+  });
+  await check('outra alteração no banco durante a cópia não é substituída pelo cadastro antigo',async()=>{
+   await iniciarTroca();await p.evaluate(()=>{__copiaEspera=true;window.__salvar=saveAluno();});
+   await p.waitForFunction(()=>!!window.__liberarCopia);
+   await p.evaluate(()=>{DB.alunos.find(a=>a.id==='a2003').credGrupo=3;});
+   const novo=await banco();await p.evaluate(async()=>{__liberarCopia();await __salvar;});
+   assert.equal(await banco(),novo);assert.equal(await p.evaluate(()=>__gravacoes),0);assert.match(await p.evaluate(()=>__avisos.join('|')),/dados mudaram/);
+  });
+  await check('troca da instância do banco durante a cópia, mesmo com dados iguais, invalida referências antigas',async()=>{
+   await iniciarTroca();await p.evaluate(()=>{__copiaEspera=true;window.__salvar=saveAluno();});
+   await p.waitForFunction(()=>!!window.__liberarCopia);const antes=await banco();
+   await p.evaluate(async()=>{DB=JSON.parse(JSON.stringify(DB));__liberarCopia();await __salvar;});
+   assert.equal(await banco(),antes);assert.equal(await p.evaluate(()=>__gravacoes),0);
+  });
+  await check('campos mudam durante a cópia: não usa uma confirmação antiga para gravar outro pedido',async()=>{
+   await iniciarTroca();const antes=await banco();await p.evaluate(()=>{__copiaEspera=true;window.__salvar=saveAluno();});
+   await p.waitForFunction(()=>!!window.__liberarCopia);
+   await p.evaluate(async()=>{document.getElementById('a-creditos').value='2';__liberarCopia();await __salvar;});
+   assert.equal(await banco(),antes);assert.equal(await p.evaluate(()=>__gravacoes),0);
+  });
+  await check('fechar e abrir outro aluno durante a cópia cancela o salvamento anterior',async()=>{
+   await iniciarTroca();const antes=await banco();await p.evaluate(()=>{__copiaEspera=true;window.__salvar=saveAluno();});
+   await p.waitForFunction(()=>!!window.__liberarCopia);
+   await p.evaluate(async()=>{closeModal('ov-aluno');openAlunoModal('a2001');__liberarCopia();await __salvar;});
+   assert.equal(await banco(),antes);assert.equal(await p.evaluate(()=>document.getElementById('a-id').value),'a2001');assert.equal(await p.evaluate(()=>__gravacoes),0);
+  });
+  await check('saldo mudou desde a abertura: não repõe crédito antigo nem chama backup',async()=>{
+   await preparar();await abrir('a2001');await p.evaluate(()=>{DB.alunos.find(a=>a.id==='a2001').creditos=3;});
+   const antes=await banco();await salvar();assert.equal(await banco(),antes);assert.equal(await p.evaluate(()=>_versoes),0);
+   assert.match(await p.evaluate(()=>__avisos.join('|')),/mudou desde que foi aberto/);
+  });
+  await check('falha na cópia também bloqueia juntar saldo solto e correções manuais',async()=>{
+   await preparar();await p.evaluate(()=>{abrirJuntarSaldo('a2005');juntarSaldoCad();__copiaOk=false;});
+   let antes=await banco();await salvar();assert.equal(await banco(),antes);assert.equal(await p.evaluate(()=>__gravacoes),0);
+   await abrir('a2001');await p.evaluate(()=>{document.getElementById('a-creditos').value='3';});
+   antes=await banco();await salvar();assert.equal(await banco(),antes);assert.equal(await p.evaluate(()=>__gravacoes),0);
+  });
+  await check('sobra do misto só se junta com confirmação; cópia false preserva as duas parcelas',async()=>{
+   await preparar();await abrir('a2004');await p.evaluate(()=>{alternarMistoCad();__copiaOk=false;});
+   const antes=await banco();await salvar([true]);assert.equal(await banco(),antes);
+   await p.evaluate(()=>{__copiaOk=true;});await salvar([true]);const a=await al('a2004');
+   assert.equal(a.creditos,4);assert.equal(a.credGrupo,0);assert.equal(a.extC,4);assert.equal(a.extG,0);assert.equal(await p.evaluate(()=>__gravacoes),1);
+  });
+  await check('família e mensalidade: falha da cópia preserva contratos; novo dependente não nasce sem cópia',async()=>{
+   await preparar();await abrir('a2001');await p.evaluate(()=>{document.getElementById('a-mensalidade').value='800';__copiaOk=false;});
+   let antes=await banco();await salvar();assert.equal(await banco(),antes);
+   await abrir('a2002');await p.evaluate(()=>{document.getElementById('a-responsavel').value='a2001';});
+   antes=await banco();await salvar([true]);assert.equal(await banco(),antes);
+   await abrir();await p.evaluate(()=>{document.getElementById('a-nome').value='Dependente Fictício Novo';document.getElementById('a-responsavel').value='a2001';});
+   antes=await banco();await salvar([true]);assert.equal(await banco(),antes);assert.equal(await p.evaluate(()=>__gravacoes),0);
+  });
+  await check('troca do modo de pacote enquanto o cadastro está aberto não reinterpreta os saldos antigos',async()=>{
+   await preparar();await abrir('a2003');await p.evaluate(()=>{DB.pacoteUnico={ativo:true};});
+   const antes=await banco();await salvar();assert.equal(await banco(),antes);assert.equal(await p.evaluate(()=>_versoes),0);
+  });
+  await check('conflito de nuvem e troca da sessão durante a cópia impedem a migração',async()=>{
+   for(const modo of ['conflito','sessao']){
+    await iniciarTroca();const antes=await banco();await p.evaluate(()=>{__copiaEspera=true;window.__salvar=saveAluno();});
+    await p.waitForFunction(()=>!!window.__liberarCopia);
+    await p.evaluate(async modo=>{if(modo==='conflito')_conflitoNuvem={teste:true};else MODO='prof';__liberarCopia();await __salvar;},modo);
+    assert.equal(await banco(),antes);assert.equal(await p.evaluate(()=>__gravacoes),0);
+   }
+   await preparar();
+  });
+  await check('correção manual junto com troca de pacote conserva o total solicitado e os dois extratos',async()=>{
+   await iniciarTroca();await p.evaluate(()=>{document.getElementById('a-credgrupo').value='5';});
+   await salvar([true]);const a=await al('a2003');
+   assert.equal(a.creditos+a.credGrupo,5);assert.equal(a.extC,a.creditos);assert.equal(a.extG,a.credGrupo);
+   assert.equal(await p.evaluate(()=>__gravacoes),1);
+  });
+  await check('migração conserva saldo fracionário e dívida; desmarcar aula antiga devolve ao saldo de origem',async()=>{
+   for(const valor of [2.5,-1]){
+    await preparar();await p.evaluate(valor=>{const a=DB.alunos.find(x=>x.id==='a2003');mover(a,'credGrupo',valor-Number(a.credGrupo),'Ajuste fictício',undefined,true);},valor);
+    await abrir('a2003');await p.evaluate(()=>escolherTipoCad('Particular'));await salvar([true]);
+    const a=await al('a2003');assert.equal(a.creditos,valor);assert.equal(a.credGrupo,0);assert.equal(a.extC,valor);assert.equal(a.extG,0);
+   }
+   await preparar();await marcar('g2');await abrir('a2003');await p.evaluate(()=>escolherTipoCad('Particular'));await salvar([true]);
+   let a=await al('a2003');assert.equal(a.creditos,3);assert.equal(a.credGrupo,0);
+   await marcar('g2');a=await al('a2003');assert.equal(a.creditos,3);assert.equal(a.credGrupo,1,'estorno não inventa crédito no pacote novo');assert.equal(a.extC,3);assert.equal(a.extG,1);
+  });
+
+  await check('pacote único antigo ao salvar: soma uma vez, preserva extrato e novo salvamento não repete a conversão',async()=>{
+   await preparar();await p.evaluate(()=>{const a=DB.alunos.find(x=>x.id==='a2003');mover(a,'creditos',1,'Ajuste fictício',undefined,true);mover(a,'credGrupo',-1,'Ajuste fictício',undefined,true);DB.pacoteUnico={ativo:true};});
+   await abrir('a2003');await p.evaluate(()=>escolherTipoCad('Particular'));await salvar([true]);
+   let a=await al('a2003');assert.equal(a.creditos,4);assert.equal(a.credGrupo,0);assert.equal(a.extC,4);assert.equal(a.extG,0);
+   const quantidade=a.movs.length;await abrir('a2003');await salvar();
+   a=await al('a2003');assert.equal(a.creditos,4);assert.equal(a.credGrupo,0);assert.equal(a.movs.length,quantidade);
+   await p.evaluate(()=>{DB.pacoteUnico.ativo=false;});
+  });
   assert.deepEqual(erros,[],'sem erro na página: '+erros.join(' | '));
-  console.log('\n'+count+' verificações do cadastro simples passaram.');
- }finally{await browser.close();server.close();}
+ }finally{await browser.close();}
+ }
+ console.log('\n✅ '+count+' verificações do cadastro e cópia confirmada em Chromium/WebKit passaram.');server.close();
 })().catch(e=>{console.error('❌',e.message||e);process.exit(1);});

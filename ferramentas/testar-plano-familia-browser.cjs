@@ -49,7 +49,7 @@ async function fit(p,width){
    document.getElementById('splash-gestao').style.display='none';
    document.getElementById('barra-versao').style.display='none';
    document.querySelectorAll('.overlay.on').forEach(e=>e.classList.remove('on'));
-   persist=()=>{};guardarVersoes=json=>{window.famBackup=JSON.parse(json);};logAct=()=>{};
+   persist=()=>{};guardarVersoes=async json=>{window.famBackup=JSON.parse(json);return true;};logAct=()=>{};
    hideVals=false;renderAll();
   });
   await check('cancelar vínculo mantém mensalidade, créditos e cadastro intactos',async()=>{

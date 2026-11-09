@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-11-09-2';
+const VERSAO='2026-11-09-3';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -3535,7 +3535,7 @@ function rodarDesfazer(){
   const e=document.getElementById('toast');if(e)e.classList.remove('show');
   if(f)f();
 }
-function closeModal(id){document.getElementById(id).classList.remove('on');}
+function closeModal(id){document.getElementById(id).classList.remove('on');if(id==='ov-aluno'){_cadSessao++;_cadOrigem=null;}}
 
 /* ================= AGENDA ================= */
 /* Um horário fixo vale só dentro da sua janela: desde (inclusive) até (inclusive).
@@ -5285,6 +5285,7 @@ function fichaFamilia(a){
 }
 /* ================= ALUNOS ================= */
 function openAlunoModal(id){
+  _cadSessao++;_cadOrigem=id?JSON.stringify(DB.alunos.find(a=>a.id===id)||null):null;_cadModo=JSON.stringify(DB.pacoteUnico||null);
   const m=document.getElementById('ov-aluno');
   _cadMisto=false;_cadJuntar=null;
   document.getElementById('aluno-modal-title').textContent=id?'Editar aluno':'Novo aluno';
@@ -5503,6 +5504,7 @@ function applyAlunoTipoUI(){
    "Também faz aula em grupo/particular" liga o misto: só aí aparecem as duas
    linhas e, no saldo, os dois números. Os campos salvos são os de sempre. */
 let _cadMisto=false,_cadJuntar=null;
+let _cadSalvando=false,_cadSessao=0,_cadOrigem=null,_cadModo='';
 const CAD_ICONE={Particular:'🎾',Dupla:'👥',Trio:'👥',Quarteto:'👥',Grupo:'👥',Personal:'💪'};
 function cadVal(id){return Number((document.getElementById(id)||{}).value)||0;}
 function cadSet(id,v){const e=document.getElementById(id);if(e)e.value=v;}
@@ -5705,7 +5707,39 @@ function mudancasSaldoPacote(a,data){
   }
   return out;
 }
-function saveAluno(){
+/* Cópia confirmada ANTES de mudar pacote, saldos ou família. As confirmações
+   só montam o pedido; fechar/editar o formulário ou mudar o banco invalida-o. */
+function espacoCadastro(){return JSON.stringify([MODO,PROF_UID||'',window.AUTH_USER&&window.AUTH_USER.uid||'']);}
+function assinaturaCadastro(){
+  return JSON.stringify([...document.querySelectorAll('#ov-aluno input,#ov-aluno select,#ov-aluno textarea')]
+    .map(e=>[e.id,e.value,e.type==='checkbox'?e.checked:null]).concat([_cadMisto,_cadJuntar]));
+}
+async function copiarAntesDoCadastro(contexto){
+  const controles=[...document.querySelectorAll('#ov-aluno input,#ov-aluno select,#ov-aluno textarea,#ov-aluno [onclick="saveAluno()"]')];
+  const estados=controles.map(e=>[e,e.disabled]);controles.forEach(e=>e.disabled=true);
+  const botao=document.querySelector('#ov-aluno [onclick="saveAluno()"]'),rotulo=botao&&botao.textContent;
+  if(botao)botao.textContent='Salvando…';
+  contexto.liberar=()=>{estados.forEach(([e,desabilitado])=>{e.disabled=desabilitado;});if(botao)botao.textContent=rotulo;};
+  let ok=false,timer;
+  try{ok=await Promise.race([Promise.resolve().then(()=>guardarVersoes(contexto.antes)),new Promise(resolve=>{timer=setTimeout(()=>resolve(false),8000);})]);}
+  catch(e){}finally{clearTimeout(timer);}
+  if(ok!==true){toast('Não consegui confirmar a cópia de segurança. Nada foi alterado. Confira o armazenamento e tente novamente.');return false;}
+  if(contexto.sessao!==_cadSessao||!document.getElementById('ov-aluno').classList.contains('on')
+     ||contexto.form!==assinaturaCadastro()){
+    toast('O cadastro foi fechado ou mudou durante a cópia. Confira os campos e salve novamente.');return false;
+  }
+  if(contexto.espaco!==espacoCadastro()||_conflitoNuvem||_nuvemMuda||window._espacoTrocou){
+    toast('A sessão ou a nuvem mudou durante a cópia. Confira os dados e reabra o cadastro.');return false;
+  }
+  if(DB!==contexto.banco||JSON.stringify(DB)!==contexto.antes){
+    toast('Os dados mudaram durante a cópia. Reabra o cadastro antes de salvar.');return false;
+  }
+  return true;
+}
+async function saveAluno(){
+  if(_cadSalvando)return false;
+  _cadSalvando=true;const contexto={sessao:_cadSessao,banco:DB,antes:JSON.stringify(DB),form:assinaturaCadastro(),espaco:espacoCadastro(),liberar:null};
+  try{
   const id=document.getElementById('a-id').value;
   const nome=document.getElementById('a-nome').value.trim();
   if(!nome){toast('Informe o nome do aluno');return;}
@@ -5733,6 +5767,9 @@ function saveAluno(){
   const erroFamilia=validarFamiliaAluno(id,data.responsavelId);
   if(erroFamilia){toast(erroFamilia);return;}
   const anterior=id?DB.alunos.find(x=>x.id===id):null;
+  if(id&&(!anterior||JSON.stringify(anterior)!==_cadOrigem)||JSON.stringify(DB.pacoteUnico||null)!==_cadModo){
+    toast('O cadastro mudou desde que foi aberto. Reabra para conferir os saldos antes de salvar.');return false;
+  }
   if(data.responsavelId){
     data.mensalidade=0;
     data.parentesco=FAM_PARENTESCOS.includes(data.parentesco)?data.parentesco:'Outro dependente';
@@ -5776,8 +5813,11 @@ function saveAluno(){
     const juntar=sobra.length&&confirm(sobra.map(x=>a.nome+' ainda tem '+fmtCred(x.qtd)+' '+nomeCampoSaldo(x.de)+' do pacote que saiu.').join('\n')
       +'\n\nOK = juntar ao pacote que fica · Cancelar = deixar separado');
     const mover_=levar.concat(juntar?sobra:[]);
+    const junta=_cadJuntar&&saldos.some(c=>(c===_cadJuntar.de||c===_cadJuntar.para)&&(Number(data[c])||0)!==(Number(a[c])||0));
+    const mudouSaldo=saldos.some(c=>(Number(data[c])||0)!==(Number(a[c])||0));
+    const mudouPacote=['tipo','plano','planoGrupo','grupoTipo','mensalidade','diaVenc','valorAula'].some(c=>String(a[c]||'')!==String(data[c]||''));
+    if((mover_.length||junta||mudouSaldo||mudouPacote||mudouFamilia)&&!await copiarAntesDoCadastro(contexto))return false;
     if(mover_.length){
-      try{guardarVersoes(JSON.stringify(DB));}catch(e){}
       mover_.forEach(x=>{
         // sem chave de aula: não é marcar/desmarcar (a conferência de devoluções não confunde)
         mover(a,x.de,-x.qtd,'Pacote trocado: saldo levado junto',undefined,true);
@@ -5785,12 +5825,10 @@ function saveAluno(){
         data[x.de]=(Number(data[x.de])||0)-x.qtd;data[x.para]=(Number(data[x.para])||0)+x.qtd;
       });
     }
-    if(mudouFamilia){guardarVersoes(JSON.stringify(DB));data.familiaMensalidadeAnterior=data.responsavelId?(a.responsavelId?(a.familiaMensalidadeAnterior||0):(Number(a.mensalidade)||0)):null;logAct('Plano família: '+nome+' → '+(data.responsavelId?('dependente de '+(DB.alunos.find(x=>x.id===data.responsavelId)||{}).nome):'pagamento individual'));}
+    if(mudouFamilia){data.familiaMensalidadeAnterior=data.responsavelId?(a.responsavelId?(a.familiaMensalidadeAnterior||0):(Number(a.mensalidade)||0)):null;logAct('Plano família: '+nome+' → '+(data.responsavelId?('dependente de '+(DB.alunos.find(x=>x.id===data.responsavelId)||{}).nome):'pagamento individual'));}
     const novo=Object.assign({},data);
     saldos.forEach(c=>delete novo[c]);      // esses vão pelo mover(), não por cima
     Object.assign(a,novo);
-    const junta=_cadJuntar&&saldos.some(c=>(c===_cadJuntar.de||c===_cadJuntar.para)&&(Number(data[c])||0)!==(Number(a[c])||0));
-    if(junta&&!mover_.length){try{guardarVersoes(JSON.stringify(DB));}catch(e){}}
     saldos.forEach(c=>{
       const dif=(Number(data[c])||0)-(Number(a[c])||0);
       const mot=junta&&(c===_cadJuntar.de||c===_cadJuntar.para)?'Saldo de fora juntado ao pacote':'Correção manual no cadastro';
@@ -5801,10 +5839,12 @@ function saveAluno(){
   }
   else{
     let c;do{c=genCode();}while(DB.alunos.some(x=>x.codigo===c));
-    if(data.responsavelId)guardarVersoes(JSON.stringify(DB));
+    if(data.responsavelId&&!await copiarAntesDoCadastro(contexto))return false;
     DB.alunos.push({id:'a'+Date.now(),ativo:true,codigo:c,...data});toast('Aluno cadastrado · código '+c);
   }
-  persist();closeModal('ov-aluno');renderAll();
+  persist();closeModal('ov-aluno');renderAll();return true;
+  }catch(e){toast('Não consegui salvar o cadastro. Confira os dados antes de tentar novamente.');return false;}
+  finally{if(contexto.liberar)contexto.liberar();_cadSalvando=false;}
 }
 
 /* ===== Avaliação de desenvolvimento (Da Base ao Topo · Anexo A) ===== */

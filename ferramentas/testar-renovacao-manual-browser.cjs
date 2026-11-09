@@ -41,7 +41,7 @@ async function setup(context,base,theme='saibro'){
  await p.waitForFunction(()=>typeof CARREGADO!=='undefined'&&CARREGADO,{},{timeout:15000});
  await p.evaluate(f=>{
   window.testPersist=persist;window.testBackupNuvem=backupNuvem;window.testBackupDia=backupDoDia;
-  persist=()=>{};guardarVersoes=raw=>{window.testSavedCopy=JSON.parse(raw);};logAct=()=>{};
+  persist=()=>{};guardarVersoes=async raw=>{window.testSavedCopy=JSON.parse(raw);return true;};logAct=()=>{};
   DB=JSON.parse(JSON.stringify(f));ensureFields();CARREGADO=true;window._espacoAberto=true;hideVals=false;
   _abriuSemConferir=false;_semDados=false;cloudPending=false;
   document.querySelectorAll('.overlay.on').forEach(e=>e.classList.remove('on'));
@@ -64,8 +64,8 @@ async function setup(context,base,theme='saibro'){
     DB=JSON.parse(JSON.stringify(f));ensureFields();rmSel={};rmEscolha={};rmFeitos=null;rmAgCache={};
     Object.keys(_ultAcao).forEach(k=>delete _ultAcao[k]);renderAll();
    },fixture);
-   const edit=async(id,field,value)=>p.evaluate(({id,field,value})=>{
-    openAlunoModal(id);document.getElementById(field).value=value;saveAluno();
+   const edit=async(id,field,value)=>p.evaluate(async({id,field,value})=>{
+    openAlunoModal(id);document.getElementById(field).value=value;await saveAluno();
    },{id,field,value});
    await check(theme+': ajuste real no cadastro exige conferência e não entra no lote',async()=>{
     await edit('solo','a-creditos','4');

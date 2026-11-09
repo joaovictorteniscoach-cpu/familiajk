@@ -8,6 +8,40 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-09 · Codex: cópia confirmada e proteção dos créditos no cadastro (PR #272)
+
+- Responsável: Codex; branch `codex/protecao-creditos-pr272-2026-11-09`, incremento do
+  [PR #272](https://github.com/joaovictorteniscoach-cpu/familiajk/pull/272), head de partida
+  `caf6bd4c6b5005ae5bc313605062609a41040c14`; main `cd0c9e7579b42cfb7e6740a5a82cbf8932a18ad4`.
+  Proposta `2026-11-09-3`; não publicada nesta etapa de implementação.
+- A V2 de leitura foi aprovada no CI completo
+  [42611029813](https://github.com/joaovictorteniscoach-cpu/familiajk/actions/runs/42611029813):
+  48 cenários de pacote em Chromium/WebKit e dois temas; capturas revisadas.
+  O merge foi retido por uma falha concreta: saveAluno iniciava a cópia, mas
+  movia os saldos sem esperar nem conferir sucesso.
+- Corrigido: alterações de pacote, saldo, mensalidade ou família exigem
+  confirmação booleana true da cópia original antes de mover ou sobrescrever.
+  Uma cópia por operação, antes também da mudança de metadados. Falha/rejeição/
+  ausência de resposta em 8 s preservam cadastro e extrato e liberam a tela.
+- Duplo envio bloqueado. Banco substituído/alterado, sessão/conflito mudando,
+  campos editados, janela fechada ou outro aluno aberto invalidam a operação.
+  Cadastro que ficou antigo enquanto estava aberto exige nova conferência.
+  Não é usado comPrazo: prazo local não marca falsamente a nuvem como falha.
+- saveAluno retorna Promise; testes/callers de renovação, família e pagamentos
+  aguardam o resultado. Mocks só confirmam cópia quando retornam true.
+- Teste de cadastro ampliado para 68 verificações em Chromium/WebKit: originais
+  e falhas de backup, espera, duplo toque, resposta tardia, alterações de base,
+  correção manual, juntar, família, soma do misto, saldo fracionário/negativo,
+  estorno no saldo original e pacote único sem duplicação ao salvar de novo.
+  Leitura do app-aluno (48) permanece intacta. CI final precisa confirmar tudo.
+- Demo regenerada, cinco carimbos/caches sincronizados. Nenhuma alteração
+  visual, regra Firebase, dado real ou acerto automático de crédito.
+  A aprovação/publicação só será avaliada após CI do commit final, revisão
+  das evidências e conferência de main/PRs concorrentes. Resultado final,
+  versão entregue e monitor serão registrados no PR.
+
+---
+
 ## 2026-11-09 · Codex: compatibilidade dos pacotes no app do aluno (PR #272)
 
 - Responsável: Codex; branch `codex/compatibilidade-pacotes-aluno-272-2026-11-09`, correção incremental
