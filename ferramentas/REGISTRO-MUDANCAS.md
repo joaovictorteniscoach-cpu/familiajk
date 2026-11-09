@@ -8,6 +8,41 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-09 · Codex: compatibilidade dos pacotes no app do aluno (PR #272)
+
+- Responsável: Codex; branch `codex/compatibilidade-pacotes-aluno-272-2026-11-09`, correção incremental
+  do [PR #272](https://github.com/joaovictorteniscoach-cpu/familiajk/pull/272).
+  Base main `cd0c9e7579b42cfb7e6740a5a82cbf8932a18ad4`; head examinado do Claude
+  `d0c8b8979a2409816fed82e1e0fc2151d0330fa4`. Proposta `2026-11-09-2`.
+- Pedido: não aprovar antes de corrigir a leitura e validar particular, dupla
+  e misto, mantendo cadastros antigos. Sem publicação nesta fase de implementação.
+- Reproduzido: o PR corrigia o bloco de saldo antigo (escondido), mas Início e
+  Créditos ainda somavam `creditos + credGrupo`. Dupla antiga com 4 créditos e
+  −1 solto via 3; dupla nova com 3 no pacote e 1 solto via 4. Também havia
+  aviso de crédito do tipo errado ao agendar e uma parte do misto marcada
+  como plano completo na tabela.
+- Leitor preserva plano/creditos do legado, planoGrupo/credGrupo do grupo novo,
+  e as duas parcelas do misto (zero/negativo/número em texto incluídos).
+  Sem plano nem planoGrupo, conserva crédito avulso do legado. Só lê.
+- Cartões visíveis usam o mesmo leitor; detalhes do misto e de saldo separado
+  aparecem em texto nas peças existentes. Não muda CSS, cores ou componentes.
+  Voz, resumo, WhatsApp, plano atual e aviso ao agendar seguem a mesma leitura.
+- Aviso de consumo distingue o contexto do pacote: mudar a origem da leitura
+  não inventa débito; consumo de grupo no misto também é detectado.
+- Renovação lê a mensalidade publicada do cadastro, inclusive zero e misto.
+  Sem valor no legado, tabela só para pacote simples; valor oculto não vira
+  cobrança estimada. Não grava mensalidade nem corrige saldo.
+- Preparados 48 testes específicos: Chromium/WebKit nos dois temas, publicação
+  REAL da Gestão com e sem pacote único antes de alimentar o aluno, cartões
+  realmente visíveis, voz, resumo, saldo cruzado, renovação e leitura sem mutação.
+  Capturas e CI do head final precisam ser revisados antes da avaliação do merge.
+- Preservado todo o trabalho do Claude em cadastro, débito, reposição, família,
+  estilos/tema/demo e testes. Cinco carimbos/cache sincronizados, demo regenerada.
+  Sem dados reais nem mudanças de regras. Resultados finais e entrega serão
+  registrados no PR #272 após testes e decisão de publicação.
+
+---
+
 ## 2026-11-07 · Claude Code: cadastro e cartão do aluno simples — um pacote, um saldo (v2026-11-07-1 → v2026-11-09-1)
 
 **Pedido do João:** deixar o "Editar aluno" e o cartão "muito mais simples, menos poluído";
