@@ -114,7 +114,8 @@ function fixture(torneio){
    await check(label+'Ocupado preserva a lista de espera e não oferece reserva direta',async()=>{
     await dia(QUA);await p.locator('#ag-view .slot',{hasText:'19:00'}).locator('button').click();
     assert.match(await p.locator('#pick-opts').textContent(),/Entrar na lista de espera/);
-    assert.equal(await p.locator('#pick-opts .pick-opt.aula').count(),0);
+    assert.equal(await p.locator('#pick-opts [onclick*="pickAula"]').count(),0);
+    assert.doesNotMatch(await p.locator('#pick-opts').textContent(),/Agendar aula/);
     await p.evaluate(()=>document.getElementById('ov-pick').classList.remove('on'));
    });
    await check(label+'própria aula e pedido pendente mantêm identificação e acesso ao cancelamento',async()=>{
@@ -208,8 +209,10 @@ function fixture(torneio){
      const itens=(await medir(p)).filter(it=>/apg-agenda|ag-view/.test(it.onde||''));
      assert.ok(itens.length>=10,'mediu '+itens.length+' textos');
      assert.deepEqual(itens.filter(it=>it.ratio!==null&&it.ratio<it.minimo).map(it=>it.t+' '+it.ratio+' '+it.onde),[]);
-     await p.evaluate(()=>{agView='mes';renderAgenda();});
+     await p.evaluate(()=>{PUB.horarioData['2026-11-12']=Object.fromEntries(PUB.horas.map(h=>[h,'fechado']));agView='mes';renderAgenda();});
      assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'mês sem rolagem lateral em '+width);
+     const mes=(await medir(p)).filter(it=>/ag-view/.test(it.onde||''));
+     assert.deepEqual(mes.filter(it=>it.ratio!==null&&it.ratio<it.minimo).map(it=>it.t+' '+it.ratio+' '+it.onde),[]);
     }
     await p.setViewportSize({width:390,height:844});await dia(QUA);
     await p.locator('#ag-view .slot',{hasText:'08:00'}).locator('button').click();await shot('opcoes-completas');
