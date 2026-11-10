@@ -40,7 +40,7 @@ async function check(name,fn){await fn();count++;console.log('✅ '+name);}
    window.envios=[];window.toasts=[];toast=m=>window.toasts.push(m);
    window.fbDB={ref:cam=>({update:async u=>{window.envios.push({cam,u});},push:async i=>{window.envios.push({cam,i});},on:()=>{}})};
    atualizarGradeReserva=async()=>{};saveMeu=async()=>{};notificarJoao=()=>{};abrirWhatsApp=()=>{};pedirPermissaoNotif=()=>{};
-   _reservaEnviando=false;VINCULO_ESTADO='ativo';
+   _reservaEnviando=false;VINCULO_ESTADO='ativo';bookCtx=null;
    document.getElementById('app').style.display='block';document.querySelectorAll('.overlay').forEach(x=>x.classList.remove('on'));
    document.querySelectorAll('[id*="splash"]').forEach(x=>x.style.display='none');
    render();agDate=new Date(2026,9,16,12);                     // sexta 16/10
@@ -88,10 +88,16 @@ async function check(name,fn){await fn();count++;console.log('✅ '+name);}
    const ks=Object.keys(r.envios[0].u);assert.equal(ks.length,13);assert.equal(ks[0],'reserva_2026-10-16_0900');
    assert.equal(r.pedidos[0].rec,'fixo');
   });
-  await check('reposição em semana "só locação" continua permitida (a Gestão aceita)',async()=>{
+  await check('horário só de locação não oferece nem envia reposição pelo app do aluno',async()=>{
    await preparar({eu:{reposValidas:1},horarioData:{'2026-10-16':{'09:00':'loc'}}});aceitar=false;dialogos.length=0;
-   const r=await p.evaluate(async()=>{abrirBook('09:00',true);await confirmarAgendamento();return envios.length;});
-   assert.equal(r,1);assert.equal(dialogos.length,0);
+   const r=await p.evaluate(async()=>{
+    escolherSlot('09:00');const menu=document.getElementById('pick-opts').textContent;
+    document.getElementById('ov-pick').classList.remove('on');abrirBook('09:00',true);await confirmarAgendamento();
+    return {menu,envios:envios.length,book:bookCtx,pedidos:MEU.pedidos.length};
+   });
+   assert.match(r.menu,/Alugar a quadra/);assert.match(r.menu,/Reservar para o torneio/);
+   assert.doesNotMatch(r.menu,/Marcar reposição|Pedir reposição aqui|Agendar aula/);
+   assert.equal(r.envios,0);assert.equal(r.book,null);assert.equal(r.pedidos,0);assert.equal(dialogos.length,0);
   });
   assert.deepEqual(errors,[]);await c.close();
 

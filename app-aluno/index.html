@@ -5769,9 +5769,8 @@ async function confirmarAgendamento(){
   const pedido={id:'p'+Date.now()+'-'+Math.random().toString(36).slice(2,10),codigo:MEU.codigo,nome:EU.nome,data:dKey(bookCtx.date),hora:bookCtx.hora,rec,repo,tor,grupo:bookCtx.grupo?1:0,profId,profNome,ts:Date.now()};
   const datas=datasReserva(pedido.data,rec);
   if(!datas.length){toast('Escolha uma data nos próximos 90 dias.');return;}
-  /* Mesma conferência da Gestão, semana a semana: antes o app aceitava semana
-     "só locação" (a Gestão só aceita aula em horário de aula, salvo reposição e
-     torneio) e o aluno via "enviado" e depois "não confirmada". */
+  /* Confere cada semana com as atividades oferecidas na janela: horário só
+     de locação/torneio não aceita aula nem reposição pelo app do aluno. */
   const conflitos=[];
   for(const data of datas){
     const dt=new Date(data+'T12:00:00'),s=slotState(dt,pedido.hora);

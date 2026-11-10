@@ -27,6 +27,10 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
   inline, sem falhas. Ambiente de shell/navegador local indisponível; CI completo pendente.
 - Proposta 2026-11-10-2: cinco carimbos, caches Aluno v51/Gestão v54 e demo sincronizados.
   Não houve mudança de saldos, cobrança, extrato, dados reais ou regras do Firebase.
+- Regressão antiga de reposição em horário só de locação alinhada ao plano; a Gestão
+  mantém suas ações manuais. Testes alterados rodam primeiro, sem duplicar chamadas.
+  Log integral do navegador fica no artefato; console mostra final limitado, mantendo
+  o código de erro original (evita falha de transporte ao consultar logs extensos).
 - Pendente: validação completa do commit final e revisão das imagens. A publicação fica
   retida até aprovação visual do João, conforme DESIGN.md e o plano aceito. Resultado do
   CI e links das prévias serão registrados no PR; esta entrada não afirma publicação.
