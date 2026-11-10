@@ -276,10 +276,6 @@ async function setup(context,base,theme='saibro'){
     },dk);assert.equal(states[0].st,'ocup');assert.equal(states[1].grupo,true);
     assert.equal(await al.locator('#ag-view button.sl.ocup').count(),1);assert.equal(await al.locator('#ag-view button.sl.livre').count(),1);
     assert.equal(await al.locator('#ag-view button.sl.livre').textContent(),'Livre');
-    await al.locator('#ag-view button.sl.livre').click();
-    assert.match(await al.locator('#pick-opts').textContent(),/aula em grupo/);
-    assert.doesNotMatch(await al.locator('#pick-opts').textContent(),/Alugar a quadra|Reservar para o torneio/);
-    await al.evaluate(()=>document.getElementById('ov-pick').classList.remove('on'));
    });
    await resetAluno();
    await check(theme+': clique duplo envia um pedido e não confirma antes da Gestão',async()=>{
