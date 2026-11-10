@@ -46,6 +46,15 @@ jobs:
           PW: ${{ runner.temp }}/jv-browser/node_modules/playwright
           JV_VISUAL_DIR: ${{ runner.temp }}/previas-aulas-voz
         run: |
+          set +e
+          bash -e -o pipefail -c '
+          node ferramentas/testar-agenda-quer-aluno-browser.cjs
+          node ferramentas/testar-reposicao-fixo-browser.cjs
+          node ferramentas/testar-semana-livre-browser.cjs
+          node ferramentas/testar-reservas-exclusivas-browser.cjs
+          node ferramentas/testar-lista-espera-browser.cjs
+          node ferramentas/testar-locacao-minhas-aulas-browser.cjs
+          node ferramentas/testar-letras-aluno-browser.cjs
           node ferramentas/testar-cadastro-simples-browser.cjs
           node ferramentas/testar-saldo-pacote-aluno-browser.cjs
           node ferramentas/testar-nuvem-reconectar-browser.cjs
@@ -59,12 +68,10 @@ jobs:
           JV_VISUAL_LOG=1 node ferramentas/testar-contraste-fechamento-browser.cjs
           node ferramentas/testar-plano-familia-browser.cjs
           node ferramentas/testar-renovacao-manual-browser.cjs
-          node ferramentas/testar-reservas-exclusivas-browser.cjs
           JV_VISUAL_LOG=1 node ferramentas/testar-aulas-agenda-aluno-browser.cjs
           node ferramentas/testar-fila-renovacao-browser.cjs
           node ferramentas/testar-3-pedidos-browser.cjs
           node ferramentas/testar-trava-cancelamento-browser.cjs
-          node ferramentas/testar-reposicao-fixo-browser.cjs
           node ferramentas/testar-fechamento-whatsapp-browser.cjs
           node ferramentas/testar-numeros-inicio-browser.cjs
           node ferramentas/testar-tempo-inicio-browser.cjs
@@ -84,32 +91,31 @@ jobs:
           node ferramentas/testar-vinculo-agenda-browser.cjs
           node ferramentas/testar-cancelado-recriado-browser.cjs
           node ferramentas/testar-voz-aluno-browser.cjs
-          node ferramentas/testar-semana-livre-browser.cjs
           node ferramentas/testar-voz-perguntas-browser.cjs
           node ferramentas/testar-voz-microfone-browser.cjs
           node ferramentas/testar-voz-arrastar-browser.cjs
           node ferramentas/testar-voz-saudacao-gestao-browser.cjs
           node ferramentas/testar-presenca-sem-credito-browser.cjs
-          node ferramentas/testar-locacao-minhas-aulas-browser.cjs
           node ferramentas/testar-torneio-aluno-browser.cjs
           node ferramentas/testar-torneio-gestao-browser.cjs
           node ferramentas/testar-contraste-aluno-browser.cjs
-          node ferramentas/testar-letras-aluno-browser.cjs
           node ferramentas/testar-contraste-gestao-browser.cjs
           node ferramentas/testar-contraste-site-browser.cjs
           node ferramentas/testar-confete-campeao-browser.cjs
           node ferramentas/testar-todos-botoes-browser.cjs
           node ferramentas/testar-ferramentas-agenda-browser.cjs
-          node ferramentas/testar-lista-espera-browser.cjs
           node ferramentas/testar-conexao-nuvem-aluno-browser.cjs
           node ferramentas/testar-creditos-marcas-browser.cjs
-          node ferramentas/testar-agenda-quer-aluno-browser.cjs
           node ferramentas/testar-avisos-celular-browser.cjs
           node ferramentas/testar-servidor-avisos.mjs
           node ferramentas/testar-resumo-escritorio-browser.cjs
           node ferramentas/testar-sincronizacao-familiajk.cjs
           JV_VISUAL_LOG=1 node ferramentas/testar-seguranca-pagamentos-browser.cjs
           JV_WIDTHS=390,1280 JV_NO_SCREENSHOTS=1 node ferramentas/testar-premium-browser.cjs
+          ' > "$RUNNER_TEMP/jv-browser-checks.log" 2>&1
+          jv_browser_result=$?
+          tail -n 80 "$RUNNER_TEMP/jv-browser-checks.log" | cut -c 1-1200
+          exit "$jv_browser_result"
 
       - name: Conferir transações com SDK Firebase e regras no emulador local
         env:
@@ -119,8 +125,11 @@ jobs:
           "$RUNNER_TEMP/jv-emulator/node_modules/.bin/firebase" emulators:exec --only database --project demo-jv-tenis --config ferramentas/firebase-emulator-teste.json "node ferramentas/testar-salvamento-firebase-browser.cjs"
 
       - name: Guardar prévias visuais para o João revisar antes da publicação
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: previas-aulas-voz
-          path: ${{ runner.temp }}/previas-aulas-voz/*.png
+          path: |
+            ${{ runner.temp }}/previas-aulas-voz/*.png
+            ${{ runner.temp }}/jv-browser-checks.log
           retention-days: 7

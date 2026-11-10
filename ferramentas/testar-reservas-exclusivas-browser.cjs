@@ -275,7 +275,7 @@ async function setup(context,base,theme='saibro'){
      renderAgenda();return [slotState(agDate,'09:00'),slotState(agDate,'10:00')];
     },dk);assert.equal(states[0].st,'ocup');assert.equal(states[1].grupo,true);
     assert.equal(await al.locator('#ag-view button.sl.ocup').count(),1);assert.equal(await al.locator('#ag-view button.sl.livre').count(),1);
-    assert.match(await al.locator('#ag-view').textContent(),/Aula em dupla/);
+    assert.equal(await al.locator('#ag-view button.sl.livre').textContent(),'Livre');
    });
    await resetAluno();
    await check(theme+': clique duplo envia um pedido e não confirma antes da Gestão',async()=>{

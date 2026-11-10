@@ -252,16 +252,11 @@ async function contexto(browser,base,opts){
     const st=await p.evaluate(()=>['12:00','17:00','18:00','19:00'].map(h=>{const s=slotState(new Date('2026-10-15T12:00:00'),h);return h+' '+s.st+(s.semAula?' semAula':'');}));
     assert.deepEqual(st,['12:00 loc semAula','17:00 loc semAula','18:00 loc semAula','19:00 chuva']);
     // Para o aluno o horário aparece livre (João, 27/10): nada de "sem aula" ou "professor ausente".
-    // com "Locação" escolhido (05/11) o horário aparece livre e verde; com "Aula", "Livre para locação" apagado
-    const comAula=await p.evaluate(()=>{setQuer('aula');agView='dia';agDate=new Date('2026-10-15T12:00:00');renderAgenda();
-     const b=[...document.querySelectorAll('#ag-view .sl')].find(b=>(b.getAttribute('onclick')||'').includes("'17:00'"));return b?b.className+' '+b.innerText.replace(/\s+/g,' ').trim():'';});
-    assert.equal(comAula,'sl outra Livre para locação');
-    const vista=await p.evaluate(()=>{setQuer('loc');agView='dia';agDate=new Date('2026-10-15T12:00:00');renderAgenda();
-     const b17=[...document.querySelectorAll('#ag-view .sl')].find(b=>/livre/.test(b.className)&&b.getAttribute('onclick')==="escolherSlot('17:00')");
+    const vista=await p.evaluate(()=>{agView='dia';agDate=new Date('2026-10-15T12:00:00');renderAgenda();
+     const b17=[...document.querySelectorAll('#ag-view .sl')].find(b=>b.getAttribute('onclick')==="escolherSlot('17:00')");
      agView='semana';renderAgenda();const c=[...document.querySelectorAll('#ag-view .wc')].find(b=>/'17:00'\)/.test(b.getAttribute('onclick')||'')&&/,15,/.test(b.getAttribute('onclick')||''));
      return {dia:b17?b17.innerText.replace(/\s+/g,' ').trim():'',semana:c?c.innerText.trim():'',dica:c?c.title:''};});
-    assert.deepEqual(vista,{dia:'Livre locação',semana:'Livre',dica:'Livre · locação ou torneio'});
-    await p.evaluate(()=>setQuer('aula'));
+    assert.deepEqual(vista,{dia:'Livre',semana:'Livre',dica:'Livre'});
     // Quadra fechada: o toque não abre opção nenhuma.
     await p.evaluate(()=>{PUB.horarioData['2026-10-15']['16:00']='fechado';agView='dia';agDate=new Date('2026-10-15T12:00:00');renderAgenda();escolherSlot('16:00');});
     assert.equal(await p.evaluate(()=>slotState(new Date('2026-10-15T12:00:00'),'16:00').st),'fechado');
@@ -283,7 +278,7 @@ async function contexto(browser,base,opts){
     await p.evaluate(()=>{document.querySelectorAll('.overlay').forEach(x=>x.classList.remove('on'));agDate=new Date('2026-10-15T12:00:00');escolherSlot('19:00');});
     assert.equal(await p.evaluate(()=>document.getElementById('ov-pick').classList.contains('on')),false,'chuva: nada abre');
     await p.evaluate(()=>{agView='dia';agDate=new Date('2026-10-15T12:00:00');renderAgenda();});
-    assert.match(await p.locator('#ag-view').innerText(),/Disponível agendar aula/);   // com "Aula" escolhido (05/11)
+    assert.match(await p.locator('#ag-view').innerText(),/Livre/);
    });
    await check(tema+': barra de baixo com 6 botões cabe no celular pequeno e no computador (toque ≥ 44 px, sem rolagem lateral)',async()=>{
     for(const width of [320,390,1280]){

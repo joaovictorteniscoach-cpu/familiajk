@@ -1,121 +1,227 @@
-/* App do aluno: "O que você quer marcar?" (05/11, pedido do João). A agenda
-   mostrava "Disponível · ver opções" também no horário que é só de locação ou
-   torneio, e o aluno tocava achando que tinha aula. Agora ele escolhe antes
-   (🎾 Aula · 🔑 Locação · 🏆 Torneio): só fica verde o que serve para isso, o
-   resto aparece apagado com o nome do que é, o toque no verde abre só as
-   opções daquela atividade e, sem nenhum horário, um aviso leva ao que há.
-   Só dados fictícios, relógio fixo, nuvem simulada. */
-let chromium;
-try{({chromium}=require('playwright'));}catch(e){({chromium}=require(process.env.PW||'/opt/node22/lib/node_modules/playwright'));}
+/* Agenda simples: Livre/Ocupado primeiro, atividades somente após o toque.
+   Dados fictícios, relógio fixo, Chromium/WebKit e os dois temas.
+   Mantém o nome do teste para preservar a chamada existente no CI. */
+let motores;
+try{motores=require('playwright');}catch(e){motores=require(process.env.PW||'/opt/node22/lib/node_modules/playwright');}
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict');
 const {medir}=require('./medir-contraste-pixels.cjs');
-const root=path.resolve(__dirname,'..'),AGORA=new Date('2026-11-09T07:00:00-03:00');   // segunda
+const root=path.resolve(__dirname,'..'),AGORA=new Date('2026-11-09T07:00:00-03:00');
 const server=http.createServer((req,res)=>{
  const url=decodeURI(req.url.split('?')[0]),f=path.join(root,url,url.endsWith('/')?'index.html':'');
  if(!f.startsWith(root+path.sep)){res.writeHead(403).end();return;}
  try{res.setHeader('Content-Type',({'.html':'text/html','.css':'text/css','.js':'text/javascript','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp','.webmanifest':'application/manifest+json'})[path.extname(f)]||'application/octet-stream');res.end(fs.readFileSync(f));}catch(e){res.writeHead(404).end();}
 });
-let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);}
-const QUA='2026-11-11',QUI='2026-11-12';
+let count=0;
+async function check(label,fn){await fn();count++;console.log('✅ '+label);}
+const QUA='2026-11-11',QUI='2026-11-12',HORAS=['08:00','12:00','14:00','16:00','18:00','19:00'];
 const eu={codigo:'6601',nome:'Aluno Fictício',tipo:'Particular',plano:4,planoGrupo:0,creditos:3,credGrupo:0,repos:1,locCred:0,mensalidade:640,status:'pago',ativo:true};
-const cfgDia={'08:00':'aula','12:00':'loc','14:00':'aula','16:00':'aula','18:00':'aula','19:00':'aula'};
-const pub=torneio=>({horas:['08:00','12:00','14:00','16:00','18:00','19:00'],profs:[],
- horarioCfg:{3:cfgDia,4:{'08:00':'loc','12:00':'loc','14:00':'loc','16:00':'loc','18:00':'loc','19:00':'loc'}},horarioData:{},termoVer:0,historico:{},alunos:[eu],precos:{locacao:70},
- torneio:torneio?{id:'t1',nome:'Barragem',tipo:'grupos',etapa:1,encerrada:false,jogadores:[{name:'Aluno Fictício',cod:'6601',group:'A'},{name:'Outro',group:'A'}]}:null,
- grade:{fixos:[],excecoes:[],eventos:[
-  {id:'e14',data:QUA,hora:'14:00',tipo:'aula',cod:'9001',fora:1},                 // aula do João fora da quadra: livre para locação/torneio
-  {id:'e16',data:QUA,hora:'16:00',tipo:'locacao',cod:'9002'},                      // locação de outro aluno: participar
-  {id:'e18',data:QUA,hora:'18:00',tipo:'grupo',cod:'9003',pessoas:2},              // aula em dupla com vaga
-  {id:'e19',data:QUA,hora:'19:00',tipo:'aula',cod:'9004'}]}});                     // ocupado
+function fixture(torneio){
+ return {horas:HORAS,profs:[],horarioCfg:{3:{'08:00':'aula','12:00':'loc','14:00':'aula','16:00':'aula','18:00':'aula','19:00':'aula'},
+  4:Object.fromEntries(HORAS.map(h=>[h,'loc']))},horarioData:{},termoVer:0,historico:{},alunos:[eu],precos:{locacao:70},
+  torneio:torneio?{id:'t1',nome:'Barragem',tipo:'grupos',etapa:1,encerrada:false,jogadores:[{name:'Aluno Fictício',cod:'6601',group:'A'},{name:'Outro',group:'A'}]}:null,
+  grade:{fixos:[],excecoes:[],eventos:[
+   {id:'e14',data:QUA,hora:'14:00',tipo:'aula',cod:'9001',fora:1},
+   {id:'e16',data:QUA,hora:'16:00',tipo:'locacao',cod:'9002'},
+   {id:'e18',data:QUA,hora:'18:00',tipo:'grupo',cod:'9003',pessoas:2},
+   {id:'e19',data:QUA,hora:'19:00',tipo:'aula',cod:'9004'}]}};
+}
 (async()=>{
  await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;
- const browser=await chromium.launch({headless:true});
  try{
-  const c=await browser.newContext({viewport:{width:390,height:844},timezoneId:'America/Sao_Paulo',serviceWorkers:'block'});
-  await c.route('**/*',r=>{const u=new URL(r.request().url());if(u.origin!==base)return r.abort();if(u.pathname.includes('/lib/firebase-'))return r.fulfill({body:'',contentType:'text/javascript'});return r.continue();});
-  await c.addInitScript(()=>sessionStorage.setItem('jv-bk-adiar','1'));
-  const p=await c.newPage(),erros=[];p.on('pageerror',e=>erros.push(e.message));p.on('dialog',d=>d.dismiss());
-  await p.clock.setSystemTime(AGORA);await p.goto(base+'/app-aluno/',{waitUntil:'load'});
-  await p.waitForFunction(()=>typeof slotState==='function');
-  await p.addStyleTag({content:'#feriado-box,#login,#barra-app,#barra-versao,#toast,.va-bt,#va-bt{display:none!important}'});
-  const abrir=(torneio,quer)=>p.evaluate(({eu,P,quer})=>{
-   init=async()=>{};esperarAuth=async()=>{};authUid=()=>'u-test';
-   try{if(quer)localStorage.setItem('jv-ag-quer',quer);else localStorage.removeItem('jv-ag-quer');}catch(e){}
-   agQuer=null;EU=JSON.parse(JSON.stringify(eu));PUB=P;MEU={codigo:'6601',pedidos:[],cancelados:[],confirmadas:[]};VINCULO_ESTADO='ativo';
-   window.__toasts=[];const t0=toast;toast=function(x){__toasts.push(x);return t0(x);};
-   document.getElementById('app').style.display='block';document.querySelectorAll('[id*="splash"]').forEach(x=>x.style.display='none');
-   render();goAluno('agenda',null);
-  },{eu,P:pub(torneio),quer});
-  const dia=dk=>p.evaluate(dk=>{agView='dia';agDate=new Date(dk+'T12:00:00');renderAgenda();
-   return [...document.querySelectorAll('#ag-view .slot')].map(s=>{const b=s.querySelector('.sl');return s.querySelector('.slot-h').textContent+' '+b.className.replace('sl ','')+' '+b.textContent.replace(/\s+/g,' ').trim();});},dk);
-  const opcoes=(dk,h)=>p.evaluate(({dk,h})=>{agDate=new Date(dk+'T12:00:00');escolherSlot(h);const o=[...document.querySelectorAll('#pick-opts .pick-opt')].map(b=>b.className.replace('pick-opt ',''));
-   document.getElementById('ov-pick').classList.remove('on');return o;},{dk,h});
+ for(const motor of ['chromium','webkit']){
+  const browser=await motores[motor].launch({headless:true});
+  try{
+  for(const tema of ['saibro','classico']){
+   const label=motor+'/'+tema+' · ';
+   const c=await browser.newContext({viewport:{width:390,height:844},timezoneId:'America/Sao_Paulo',serviceWorkers:'block'});
+   await c.route('**/*',r=>{const u=new URL(r.request().url());if(u.origin!==base)return r.abort();if(u.pathname.includes('/lib/firebase-'))return r.fulfill({body:'',contentType:'text/javascript'});return r.continue();});
+   await c.addInitScript(tema=>{sessionStorage.setItem('jv-bk-adiar','1');localStorage.setItem('jv-tema',tema);},tema);
+   const p=await c.newPage(),erros=[];p.on('pageerror',e=>erros.push(e.message));p.on('dialog',d=>d.dismiss());
+   await p.clock.setFixedTime(AGORA);await p.goto(base+'/app-aluno/',{waitUntil:'load'});
+   await p.waitForFunction(()=>typeof slotState==='function');
+   await p.addStyleTag({content:'#feriado-box,#login,#barra-app,#barra-versao,#toast,.va-bt,#va-bt{display:none!important}'});
+   const abrir=(torneio=false,preferencia='aula')=>p.evaluate(({eu,P,preferencia})=>{
+    init=async()=>{};esperarAuth=async()=>{};authUid=()=>'u-test';
+    localStorage.setItem('jv-ag-quer',preferencia);
+    EU=JSON.parse(JSON.stringify(eu));PUB=P;MEU={codigo:'6601',pedidos:[],cancelados:[],confirmadas:[],espera:[]};
+    VINCULO_ESTADO='ativo';bookCtx=null;pickCtx={};window.__toasts=[];toast=x=>__toasts.push(x);
+    document.querySelectorAll('.overlay').forEach(x=>x.classList.remove('on'));
+    document.getElementById('app').style.display='block';
+    document.querySelectorAll('[id*="splash"]').forEach(x=>x.style.display='none');
+    render();goAluno('agenda',null);
+   },{eu,P:fixture(torneio),preferencia});
+   const dia=dk=>p.evaluate(dk=>{
+    agView='dia';agDate=new Date(dk+'T12:00:00');renderAgenda();
+    return [...document.querySelectorAll('#ag-view .slot')].map(row=>{
+     const b=row.querySelector('.sl');
+     return {hora:row.querySelector('.slot-h').textContent,txt:b.firstChild.textContent.trim(),cls:b.className,inteiro:b.textContent};
+    });
+   },dk);
+   const opcoes=(dk,h,quer)=>p.evaluate(({dk,h,quer})=>{
+    agDate=new Date(dk+'T12:00:00');document.getElementById('pick-opts').innerHTML='';escolherSlot(h,quer);
+    const o=[...document.querySelectorAll('#pick-opts .pick-opt')].map(b=>b.className.replace('pick-opt ',''));
+    document.getElementById('ov-pick').classList.remove('on');return o;
+   },{dk,h,quer});
+   const shot=async nome=>{
+    const dir=process.env.JV_VISUAL_DIR||process.env.JV_SHOTS;if(!dir)return;
+    fs.mkdirSync(dir,{recursive:true});await p.screenshot({path:path.join(dir,'agenda-livre-'+nome+'-'+motor+'-'+tema+'.png')});
+   };
 
-  await abrir(false);
-  await check('Aula (padrão de quem tem plano): só o que tem aula fica verde; locação e "locação ou torneio" ficam apagados com o nome',async()=>{
-   const l=await dia(QUA);
-   assert.deepEqual(l,['08:00 livre Disponível agendar aula','12:00 outra Livre para locação','14:00 outra Livre para locação',
-    '16:00 outra Livre para locação','18:00 livre Aula em dupla participar','19:00 ocup Reservado toque para entrar na lista de espera']);
-   assert.doesNotMatch(l.join(' '),/sem aula|ausente/i,'nunca "sem aula" (decisão de 27/10)');
-   assert.equal(await p.evaluate(()=>document.querySelector('#ag-quer button.on').dataset.quer),'aula');
-   assert.equal(await p.evaluate(()=>document.querySelector('#ag-quer button[data-quer="tor"]').hidden),true,'sem torneio, a aba some');
-   assert.equal(await p.evaluate(()=>document.querySelector('#apg-agenda .lg-livre').textContent),'Livre para aula');
-  });
-  await check('tocar no verde abre só as opções de aula; no apagado, avisa o que ele é',async()=>{
-   assert.deepEqual(await opcoes(QUA,'08:00'),['aula','repo']);
-   await p.evaluate(()=>{__toasts=[];avisoOutra('2026-11-11','12:00');});
-   assert.match(await p.evaluate(()=>__toasts[0]),/Às 12:00: livre para locação\. Para marcar, escolha 🔑 Locação lá em cima\./);
-  });
-  await check('Locação: fica verde onde dá para alugar; a aula em grupo fica apagada; o toque abre só a locação',async()=>{
-   await p.evaluate(()=>setQuer('loc'));
-   const l=await dia(QUA);
-   assert.deepEqual(l.map(x=>x.split(' ').slice(0,2).join(' ')),['08:00 livre','12:00 livre','14:00 livre','16:00 livre','18:00 outra','19:00 ocup']);
-   assert.match(l[3],/Locação participar/);assert.match(l[4],/outra Aula em grupo$/);
-   assert.deepEqual(await opcoes(QUA,'12:00'),['loc']);assert.deepEqual(await opcoes(QUA,'08:00'),['loc']);
-   assert.equal(await p.evaluate(()=>localStorage.getItem('jv-ag-quer')),'loc','lembrado neste aparelho');
-  });
-  await check('dia sem nenhum horário de aula: aviso e botão que mostra os de locação',async()=>{
-   await p.evaluate(()=>setQuer('aula'));
-   await dia(QUI);
-   const t=await p.evaluate(()=>document.querySelector('#ag-view .ag-sem').textContent);
-   assert.match(t,/Nenhum horário livre para aula neste dia\./);assert.match(t,/Ver 6 horários livres para locação/);
-   await p.locator('#ag-view .ag-sem-bt').click();
-   assert.equal(await p.evaluate(()=>querAtual()),'loc');
-   assert.equal(await p.evaluate(()=>document.querySelectorAll('#ag-view .ag-sem').length),0);
-  });
-  await check('semana: verde só o que serve; o resto apagado com o nome curto; o mês conta só o que serve',async()=>{
-   await p.evaluate(()=>setQuer('aula'));
-   const r=await p.evaluate(()=>{agView='semana';agDate=new Date('2026-11-11T12:00:00');renderAgenda();
-    const col=[...document.querySelectorAll('.wk tr')].slice(1).map(tr=>tr.querySelectorAll('td')[3]).map(td=>{const b=td.querySelector('.wc');return b.className.replace('wc ','')+':'+b.textContent;});
-    agView='mes';renderAgenda();const cel=[...document.querySelectorAll('.cal-day')].find(b=>b.querySelector('span')&&b.querySelector('span').textContent==='11');
-    return {col,mes:cel.querySelector('.liv')?cel.querySelector('.liv').textContent:''};});
-   assert.deepEqual(r.col,['livre:Livre','outra:Locação','outra:Locação','outra:Locação','livre:Dupla','ocup:Reserva']);
-   assert.equal(r.mes,'2 liv.');
-  });
-  await check('voz pedindo aula com "Locação" escolhido abre as opções de aula',async()=>{
-   await p.evaluate(()=>setQuer('loc'));
-   const o=await p.evaluate(()=>{gotoBook(2026,10,11,'08:00','aula');const o=[...document.querySelectorAll('#pick-opts .pick-opt')].map(b=>b.className.replace('pick-opt ',''));document.getElementById('ov-pick').classList.remove('on');return o;});
-   assert.deepEqual(o,['aula','repo']);
-  });
-  await check('com torneio: aba Torneio aparece e o toque abre só o torneio',async()=>{
-   await abrir(true,'tor');
-   assert.equal(await p.evaluate(()=>document.querySelector('#ag-quer button[data-quer="tor"]').hidden),false);
-   const l=await dia(QUA);
-   assert.deepEqual(l.map(x=>x.split(' ').slice(0,2).join(' ')),['08:00 livre','12:00 livre','14:00 livre','16:00 outra','18:00 outra','19:00 ocup']);
-   assert.deepEqual(await opcoes(QUA,'14:00'),['tor']);
-  });
-  await check('quem só aluga a quadra (sem plano) começa em Locação',async()=>{
-   eu.plano=0;await abrir(false);eu.plano=4;
-   assert.equal(await p.evaluate(()=>querAtual()),'loc');
-  });
-  await check('leitura (contraste) da agenda com a escolha, na imagem da tela',async()=>{
-   await abrir(false,'aula');await dia(QUI);
-   const itens=(await medir(p)).filter(it=>/apg-agenda|ag-quer|ag-sem|ag-view/.test(it.onde||''));
-   assert.ok(itens.length>=10,'mediu '+itens.length);
-   assert.deepEqual(itens.filter(it=>it.ratio!==null&&it.ratio<it.minimo).map(it=>it.t+' '+it.ratio+' '+it.fg+' sobre '+it.fundo+' · '+it.onde),[]);
-   if(process.env.JV_SHOTS)await p.screenshot({path:path.join(process.env.JV_SHOTS,'agenda-quer.png')});
-  });
-  assert.deepEqual(erros,[]);
- }finally{await browser.close();server.close();}
- console.log('\n✅ '+count+' verificações · agenda do aluno mostra só o que serve para o que ele quer marcar');
-})().catch(e=>{console.error('❌',e);server.close();process.exit(1);});
+   await check(label+'Dia: Livre sem atividade escrita, Ocupado para particular reservada e sem seletor prévio',async()=>{
+    await abrir();const rows=await dia(QUA);
+    assert.deepEqual(rows.map(r=>r.txt),['Livre','Livre','Livre','Livre','Livre','Ocupado']);
+    assert.ok(rows.slice(0,5).every(r=>r.inteiro==='Livre'));
+    assert.equal(await p.locator('#ag-quer').count(),0);
+    assert.equal(await p.locator('#apg-agenda .lg-livre').textContent(),'Livre');
+    assert.equal(await p.locator('#apg-agenda .lg-ocup').textContent(),'Ocupado');
+    await shot('dia');
+   });
+   await check(label+'toque normal mostra aula, reposição elegível, locação e torneio',async()=>{
+    assert.deepEqual(await opcoes(QUA,'08:00'),['aula','repo','loc','tor']);
+   });
+   await check(label+'só locação/torneio e aula fora da quadra: não oferece aula nem reposição',async()=>{
+    for(const h of ['12:00','14:00'])assert.deepEqual(await opcoes(QUA,h),['loc','tor']);
+    await p.evaluate(()=>{bookCtx=null;agDate=new Date('2026-11-11T12:00:00');abrirBook('12:00',true);});
+    assert.equal(await p.evaluate(()=>bookCtx),null);
+    assert.equal(await p.locator('#ov-book').isVisible(),false);
+    await p.evaluate(()=>escolherSlot('12:00'));await shot('opcoes-locacao');await p.evaluate(()=>document.getElementById('ov-pick').classList.remove('on'));
+   });
+   await check(label+'compartilhamento oferece somente a atividade já existente',async()=>{
+    assert.deepEqual(await opcoes(QUA,'16:00'),['loc']);
+    assert.deepEqual(await opcoes(QUA,'18:00'),['aula'],'reposição particular não cobre grupo');
+    await p.evaluate(()=>{EU.tipo='Dupla';});
+    assert.deepEqual(await opcoes(QUA,'18:00'),['aula','repo'],'reposição compatível aparece no grupo');
+    await p.evaluate(()=>{EU.tipo='Particular';});
+    await p.evaluate(()=>{PUB.grade.eventos.find(e=>e.id==='e16').tipo='torneio';});
+    assert.deepEqual(await opcoes(QUA,'16:00'),['tor']);
+    await abrir();
+   });
+   await check(label+'dupla/trio/quádrupla: Livre até o limite, Ocupado ao completar',async()=>{
+    for(const capacidade of [2,3,4]){
+     for(const quantidade of [capacidade-1,capacidade]){
+      const txt=await p.evaluate(({capacidade,quantidade})=>{
+       PUB.grade.eventos=PUB.grade.eventos.filter(e=>e.hora!=='18:00');
+       for(let i=0;i<quantidade;i++)PUB.grade.eventos.push({id:'g'+i,data:'2026-11-11',hora:'18:00',tipo:'grupo',cod:'9'+i,pessoas:capacidade});
+       agDate=new Date('2026-11-11T12:00:00');agView='dia';renderAgenda();
+       const row=[...document.querySelectorAll('.slot')].find(r=>r.querySelector('.slot-h').textContent==='18:00');
+       return row.querySelector('.sl').firstChild.textContent.trim();
+      },{capacidade,quantidade});
+      assert.equal(txt,quantidade<capacidade?'Livre':'Ocupado');
+     }
+    }
+    await abrir();
+   });
+   await check(label+'Ocupado preserva a lista de espera e não oferece reserva direta',async()=>{
+    await dia(QUA);await p.locator('#ag-view .slot',{hasText:'19:00'}).locator('button').click();
+    assert.match(await p.locator('#pick-opts').textContent(),/Entrar na lista de espera/);
+    assert.equal(await p.locator('#pick-opts [onclick*="pickAula"]').count(),0);
+    assert.doesNotMatch(await p.locator('#pick-opts').textContent(),/Agendar aula/);
+    await p.evaluate(()=>document.getElementById('ov-pick').classList.remove('on'));
+   });
+   await check(label+'própria aula e pedido pendente mantêm identificação e acesso ao cancelamento',async()=>{
+    await p.evaluate(()=>{
+     PUB.grade.eventos.push({id:'meu',data:'2026-11-11',hora:'08:00',tipo:'aula',cod:'6601'});
+     MEU.pedidos.push({id:'p1',data:'2026-11-11',hora:'12:00',rec:'pontual'});
+    });
+    const rows=await dia(QUA);assert.equal(rows[0].cls,'sl meu');assert.match(rows[0].inteiro,/Minha aula.*confirmada/);
+    assert.equal(rows[1].cls,'sl pend');assert.match(rows[1].inteiro,/Aguardando/);
+    assert.match(await p.locator('#ag-view .slot',{hasText:'08:00'}).locator('button').getAttribute('onclick'),/cancelarAula/);
+    assert.equal(await p.evaluate(()=>podeCancelarAula('2026-11-11','08:00')),true);
+    const mine=await p.evaluate(()=>{agView='mes';renderAgenda();const b=[...document.querySelectorAll('.cal-day')].find(b=>b.querySelector('span')?.textContent==='11');return !!b.querySelector('.dot');});
+    assert.equal(mine,true);await abrir();
+   });
+   await check(label+'Semana: todos os disponíveis dizem Livre, sem nomes de atividades',async()=>{
+    const col=await p.evaluate(()=>{
+     agDate=new Date('2026-11-11T12:00:00');agView='semana';renderAgenda();
+     return [...document.querySelectorAll('.wk tr')].slice(1).map(tr=>tr.querySelectorAll('td')[3].querySelector('.wc').textContent);
+    });
+    assert.deepEqual(col,['Livre','Livre','Livre','Livre','Livre','Ocupado']);await shot('semana');
+   });
+   await check(label+'Mês: conta cada horário uma vez, incluindo vaga compartilhada',async()=>{
+    const contagens=await p.evaluate(()=>{
+     agDate=new Date('2026-11-11T12:00:00');agView='mes';renderAgenda();
+     return ['11','12'].map(n=>[...document.querySelectorAll('.cal-day')].find(b=>b.querySelector('span')?.textContent===n).querySelector('.liv').textContent);
+    });
+    assert.deepEqual(contagens,['5 liv.','6 liv.']);
+   });
+   await check(label+'preferências antigas não filtram a grade nem as opções',async()=>{
+    for(const antiga of ['aula','loc','tor']){
+     await abrir(false,antiga);assert.deepEqual((await dia(QUA)).map(r=>r.txt),['Livre','Livre','Livre','Livre','Livre','Ocupado']);
+     assert.deepEqual(await opcoes(QUA,'08:00'),['aula','repo','loc','tor']);
+    }
+   });
+   await check(label+'chuva e fechamento ficam Ocupado; dia sem vaga informa e mês não inventa disponibilidade',async()=>{
+    await p.evaluate(()=>{
+     PUB.horarioData['2026-11-12']=Object.fromEntries(PUB.horas.map(h=>[h,'fechado']));
+     PUB.grade.eventos.push({id:'chuva',data:'2026-11-12',hora:'08:00',tipo:'bloqueio',motivo:'chuva'});
+    });
+    assert.ok((await dia(QUI)).every(r=>r.txt==='Ocupado'));
+    assert.match(await p.locator('#ag-view .ag-sem').textContent(),/Nenhum horário livre neste dia/);
+    assert.deepEqual(await opcoes(QUI,'08:00'),[],'horário indisponível não abre opções');
+    const txt=await p.evaluate(()=>{agView='mes';renderAgenda();return [...document.querySelectorAll('.cal-day')].find(b=>b.querySelector('span')?.textContent==='12').querySelector('.liv').textContent;});
+    assert.equal(txt,'Ocupado');await abrir();
+   });
+   await check(label+'horários passados continuam encerrados e não abrem reserva',async()=>{
+    await p.evaluate(()=>{PUB.horarioData['2026-11-08']=Object.fromEntries(PUB.horas.map(h=>[h,'aula']));});
+    assert.ok((await dia('2026-11-08')).every(r=>r.txt==='Encerrado'));
+    await p.evaluate(()=>{gotoBook(2026,10,8,'08:00');});
+    assert.equal(await p.locator('#ov-pick').isVisible(),false);
+    assert.match(await p.evaluate(()=>__toasts.at(-1)),/passou/);await abrir();
+   });
+   await check(label+'voz e atalhos com atividade explícita continuam respeitados',async()=>{
+    const o=await p.evaluate(()=>{
+     gotoBook(2026,10,11,'08:00','aula');
+     const o=[...document.querySelectorAll('#pick-opts .pick-opt')].map(b=>b.className.replace('pick-opt ',''));
+     document.getElementById('ov-pick').classList.remove('on');return o;
+    });
+    assert.deepEqual(o,['aula','repo']);assert.deepEqual(await opcoes(QUA,'08:00','loc'),['loc']);
+    assert.deepEqual(await opcoes(QUA,'08:00','tor'),['tor']);
+   });
+   await check(label+'nuvem muda para locação ou ocupado durante confirmação: nenhum pedido é enviado',async()=>{
+    for(const mudanca of ['loc','ocupado']){
+     await abrir();
+     const result=await p.evaluate(async mudanca=>{
+      const orig={hasCloud,atualizarGradeReserva,enviarReservaUnica,saveMeu};
+      let enviados=0;
+      try{
+       hasCloud=()=>true;enviarReservaUnica=async()=>{enviados++;};saveMeu=async()=>{};
+       atualizarGradeReserva=async()=>{
+        if(mudanca==='loc')PUB.horarioData['2026-11-11']={'08:00':'loc'};
+        else PUB.grade.eventos.push({id:'concorrente',data:'2026-11-11',hora:'08:00',tipo:'aula',cod:'9999'});
+       };
+       agDate=new Date('2026-11-11T12:00:00');abrirBook('08:00',false);await confirmarAgendamento();
+       return {enviados,pedidos:MEU.pedidos.length};
+      }finally{hasCloud=orig.hasCloud;atualizarGradeReserva=orig.atualizarGradeReserva;enviarReservaUnica=orig.enviarReservaUnica;saveMeu=orig.saveMeu;}
+     },mudanca);
+     assert.deepEqual(result,{enviados:0,pedidos:0});
+    }
+    await abrir();
+   });
+   await check(label+'consulta da agenda não altera aluno, créditos, grade nem pedidos',async()=>{
+    const antes=await p.evaluate(()=>JSON.stringify({EU,PUB,MEU}));
+    for(const view of ['dia','semana','mes'])await p.evaluate(view=>{agDate=new Date('2026-11-11T12:00:00');agView=view;renderAgenda();},view);
+    await opcoes(QUA,'08:00');assert.equal(await p.evaluate(()=>JSON.stringify({EU,PUB,MEU})),antes);
+   });
+   await check(label+'leitura e largura em 320/390 px, com captura das opções completas',async()=>{
+    for(const width of [320,390]){
+     await p.setViewportSize({width,height:844});await dia(QUA);
+     assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'sem rolagem lateral em '+width);
+     const itens=(await medir(p)).filter(it=>/apg-agenda|ag-view/.test(it.onde||''));
+     assert.ok(itens.length>=10,'mediu '+itens.length+' textos');
+     assert.deepEqual(itens.filter(it=>it.ratio!==null&&it.ratio<it.minimo).map(it=>it.t+' '+it.ratio+' '+it.onde),[]);
+     await p.evaluate(()=>{PUB.horarioData['2026-11-12']=Object.fromEntries(PUB.horas.map(h=>[h,'fechado']));agView='mes';renderAgenda();});
+     assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'mês sem rolagem lateral em '+width);
+     const mes=(await medir(p)).filter(it=>/ag-view/.test(it.onde||''));
+     assert.deepEqual(mes.filter(it=>it.ratio!==null&&it.ratio<it.minimo).map(it=>it.t+' '+it.ratio+' '+it.onde),[]);
+    }
+    await p.setViewportSize({width:390,height:844});await dia(QUA);
+    await p.locator('#ag-view .slot',{hasText:'08:00'}).locator('button').click();await shot('opcoes-completas');
+    await p.evaluate(()=>document.getElementById('ov-pick').classList.remove('on'));
+   });
+   assert.deepEqual(erros,[],label+'erros de página');await c.close();
+  }
+  }finally{await browser.close();}
+ }
+ }finally{server.close();}
+ console.log('\n✅ '+count+' verificações · agenda Livre/Ocupado em Chromium/WebKit e dois temas');
+})().catch(e=>{console.error('❌',e.stack||e);server.close();process.exitCode=1;});

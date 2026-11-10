@@ -1683,15 +1683,15 @@ html body:not(#jv) #pedir-box .btn-ghost{background:#F3EDE2!important;border:1px
 .login .login-sub{opacity:1}
 .login-priv{color:rgba(250,247,242,.8)}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-11-10-1">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-11-10-2">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-11-10-1">
-<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-11-10-1">
-<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-11-10-1">
-<link rel="stylesheet" href="lib/visual-sobrio.css?v=2026-11-10-1">
-<link rel="stylesheet" href="lib/letras-maiores.css?v=2026-11-10-1">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-11-10-2">
+<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-11-10-2">
+<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-11-10-2">
+<link rel="stylesheet" href="lib/visual-sobrio.css?v=2026-11-10-2">
+<link rel="stylesheet" href="lib/letras-maiores.css?v=2026-11-10-2">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -2021,12 +2021,6 @@ function esperarAuth(){
       <p>Toque num horário livre para agendar.</p>
     </div>
     <p class="sec-eyebrow">Quadro de horários</p>
-    <p class="ag-quer-tit" id="ag-quer-tit">O que você quer marcar?</p>
-    <div class="seg ag-quer" id="ag-quer" role="group" aria-label="O que você quer marcar">
-      <button type="button" data-quer="aula" onclick="setQuer('aula')">🎾 Aula</button>
-      <button type="button" data-quer="loc" onclick="setQuer('loc')">🔑 Locação</button>
-      <button type="button" data-quer="tor" onclick="setQuer('tor')">🏆 Torneio</button>
-    </div>
     <div id="pay-lock" class="lock-note" style="display:none"></div>
     <div class="seg jv-ref-ag-tabs">
       <button onclick="setView('dia',this)">Dia</button>
@@ -2039,9 +2033,9 @@ function esperarAuth(){
       <button class="month-btn" onclick="agShift(1)">›</button>
     </div>
     <div class="legend">
-      <span class="lg-livre">Disponível</span>
+      <span class="lg-livre">Livre</span>
       <span class="lg-meu">Meus horários</span>
-      <span class="lg-ocup">Reservado</span>
+      <span class="lg-ocup">Ocupado</span>
     </div>
     <div id="ag-view"></div>
 
@@ -2206,7 +2200,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-11-10-1"></script>
+<script src="lib/icones.js?v=2026-11-10-2"></script>
 </div>
 
 <!-- ASSISTENTE POR VOZ: consultar horário livre, agendar, cancelar, ver aulas (lib/voz-aluno.js) -->
@@ -2453,7 +2447,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-11-10-1';
+const VERSAO='2026-11-10-2';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -3239,33 +3233,9 @@ function slotState(date,hora){
   if(modo==='loc')return {st:'loc',label:'Só locação'};
   return {st:'livre',label:'Disponível'};
 }
-/* ===== O que o aluno quer marcar (05/11, pedido do João) =====
-   A agenda mostrava "Disponível · ver opções" também no horário que é só de
-   locação ou torneio, e o aluno tocava achando que tinha aula. Agora ele
-   escolhe antes (🎾 Aula · 🔑 Locação · 🏆 Torneio): só fica verde o que serve
-   para isso, o resto aparece apagado com o nome do que é, e o toque no verde
-   já abre só as opções daquela atividade. A escolha fica só neste aparelho. */
-const QUER_NOME={aula:'aula',loc:'locação',tor:'torneio'};
-let agQuer=null;
-function querAtual(){
-  if(!agQuer){
-    let q=null;try{q=localStorage.getItem('jv-ag-quer');}catch(e){}
-    // quem não tem plano de aula (só aluga a quadra) começa em Locação
-    const semPlano=EU&&!(Number(EU.plano)>0)&&!(Number(EU.planoGrupo)>0);
-    agQuer=['aula','loc','tor'].includes(q)?q:(semPlano?'loc':'aula');
-  }
-  if(agQuer==='tor'&&!torneioAtivo())return 'aula';
-  return agQuer;
-}
-function setQuer(q){agQuer=q;try{localStorage.setItem('jv-ag-quer',q);}catch(e){}renderAgenda();}
-function pintarQuer(){
-  const box=document.getElementById('ag-quer');if(!box)return;
-  const q=querAtual(),tor=torneioAtivo();
-  box.style.gridTemplateColumns=tor?'':'repeat(2,1fr)';
-  box.querySelectorAll('button').forEach(b=>{const on=b.dataset.quer===q;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));if(b.dataset.quer==='tor')b.hidden=!tor;});
-  const lg=document.querySelector('#apg-agenda .lg-livre');if(lg)lg.textContent='Livre para '+QUER_NOME[q];
-}
-/* O que cabe num horário livre: a mesma regra das opções de escolherSlot(). */
+/* ===== Agenda simples (10/11): primeiro o horário, depois a atividade =====
+   A grade não usa mais a preferência antiga jv-ag-quer. Dia, semana, mês e
+   janela de opções consultam a mesma disponibilidade, sem alterar reservas. */
 function cabeNoSlot(s,date,hora){
   if(!s||!['livre','loc'].includes(s.st))return {aula:false,loc:false,tor:false};
   if(s.compartilhado==='locacao')return {aula:false,loc:true,tor:false};
@@ -3275,35 +3245,21 @@ function cabeNoSlot(s,date,hora){
   if(slotModo(date,hora)==='aula')return {aula:true,loc:true,tor:true};
   return {aula:false,loc:true,tor:true};
 }
-/* Nome do horário apagado: o que ele É, já que não serve para a escolha.
-   Nunca "sem aula" nem "professor ausente": para o aluno o horário está livre
-   (decisão do João, 27/10) — só que para outra atividade. */
-function oQueEhSlot(c,curto){
-  const tor=c.tor&&torneioAtivo();
-  if(c.aula)return curto?'Grupo':'Aula em grupo';
-  if(c.loc&&tor)return curto?'Locação':'Livre para locação ou torneio';
-  if(c.loc)return curto?'Locação':'Livre para locação';
-  if(c.tor)return curto?'Torneio':'Livre para torneio';
-  return curto?'—':'Outra atividade';
+function horarioLivreAluno(s,date,hora){
+  if(horasAte(dKey(date),hora)<=0)return false;
+  const c=cabeNoSlot(s,date,hora);
+  return c.aula||c.loc||c.tor;
 }
-function avisoOutra(dk,hora){
-  const d=new Date(dk+'T12:00:00'),c=cabeNoSlot(slotState(d,hora),d,hora),q=querAtual();
-  const outra=['aula','loc','tor'].find(k=>k!==q&&c[k]&&(k!=='tor'||torneioAtivo()));
-  toast('Às '+hora+': '+oQueEhSlot(c).toLowerCase()+'.'+(outra?' Para marcar, escolha '+(outra==='aula'?'🎾 Aula':outra==='loc'?'🔑 Locação':'🏆 Torneio')+' lá em cima.':''));
-}
-/* Nenhum horário para a escolha no período à vista: diz isso e oferece o que há. */
-function avisoSemQuer(dias){
-  const q=querAtual(),n={aula:0,loc:0,tor:0};
-  dias.forEach(d=>PUB.horas.forEach(h=>{if(horasAte(dKey(d),h)<=0)return;const c=cabeNoSlot(slotState(d,h),d,h);['aula','loc','tor'].forEach(k=>{if(c[k])n[k]++;});}));
-  if(n[q])return '';
-  const alt=['aula','loc','tor'].filter(k=>k!==q&&n[k]&&(k!=='tor'||torneioAtivo()));
-  return '<div class="ag-sem">Nenhum horário livre para <b>'+QUER_NOME[q]+'</b> '+(dias.length>1?'nesta semana':'neste dia')+'.'
-    +alt.map(k=>'<br><button type="button" class="ag-sem-bt" onclick="setQuer(\''+k+'\')">Ver '+n[k]+' horário'+(n[k]>1?'s':'')+' livre'+(n[k]>1?'s':'')+' para '+QUER_NOME[k]+'</button>').join('')+'</div>';
+function avisoSemHorarios(dias){
+  if(dias.some(d=>livresNoDia(d)>0))return '';
+  return '<div class="ag-sem">Nenhum horário livre '+(dias.length>1?'nesta semana':'neste dia')+'.</div>';
 }
 function livresNoDia(date,quer){
-  // livre = aparece verde: serve para o que o aluno escolheu (ou qualquer coisa, sem escolha) e ainda não passou
-  const dk=dKey(date);let n=0;PUB.horas.forEach(h=>{if(horasAte(dk,h)<=0)return;const s=slotState(date,h);
-    if(quer?cabeNoSlot(s,date,h)[quer]:(s.st==='livre'||s.st==='loc'))n++;});return n;
+  // Sem atividade explícita: cada horário conta uma vez, mesmo com várias opções.
+  return PUB.horas.filter(h=>{
+    const s=slotState(date,h);
+    return horarioLivreAluno(s,date,h)&&(!quer||!!cabeNoSlot(s,date,h)[quer]);
+  }).length;
 }
 function minhasNoDia(date){
   let n=0;PUB.horas.forEach(h=>{const s=slotState(date,h).st;if(s==='meu'||s==='pend')n++;});return n;
@@ -4912,7 +4868,7 @@ function aplicarAlunoWkVars(){
    "Locaçã/o"; revisão das telas, 27/10). Agora a palavra fica inteira: se não
    couber, as letras chegam um pouco mais perto e, se ainda não couber, entra a
    forma curta. O nome completo continua no title da célula. */
-const WK_CURTO={'Fechado':['Fech.'],'Locação':['Locaç.','Loc.'],'Reserva':['Reserv.','Res.'],'Torneio':['Torn.'],
+const WK_CURTO={'Ocupado':['Ocup.'],'Fechado':['Fech.'],'Locação':['Locaç.','Loc.'],'Reserva':['Reserv.','Res.'],'Torneio':['Torn.'],
   'Quádrupla':['Quádr.','Quád.'],'Pedido':['Ped.'],'Passou':['Pass.']};
 let wkMedidor=null,wkFonteOk=false;
 function ajustarRotulosSemana(){
@@ -4971,55 +4927,42 @@ function gotoDay(y,m,d){
   renderAgenda();
 }
 function renderAgenda(){
-  const el=document.getElementById('ag-view');
-  const lbl=document.getElementById('ag-label');
-  pintarQuer();
-  const q=querAtual();
+  const el=document.getElementById('ag-view'),lbl=document.getElementById('ag-label');
   if(agView==='dia'){
-    lbl.innerHTML=DIAS_FULL[agDate.getDay()]+', '+agDate.getDate()+' de '+MESES[agDate.getMonth()].toLowerCase()+'<small>toque num horário livre para marcar '+QUER_NOME[q]+'</small>';
-    el.innerHTML=avisoSemQuer([agDate])+PUB.horas.map(h=>{
-      const s=slotState(agDate,h);
+    lbl.innerHTML=DIAS_FULL[agDate.getDay()]+', '+agDate.getDate()+' de '+MESES[agDate.getMonth()].toLowerCase()+'<small>toque num horário livre para ver as opções</small>';
+    el.innerHTML=avisoSemHorarios([agDate])+PUB.horas.map(h=>{
+      const s=slotState(agDate,h),dk=dKey(agDate);
       let inner='';
       if(s.st==='livre'||s.st==='loc'){
-        const c=cabeNoSlot(s,agDate,h),dk=dKey(agDate);
-        const nome=q==='aula'?(s.grupo?s.label:'Disponível'):(s.compartilhado?(q==='loc'?'Locação':'Torneio'):'Livre');
-        const dica=s.compartilhado||s.grupo?'participar':q==='aula'?'agendar aula':q==='loc'?'locação':'torneio';
-        inner=horasAte(dk,h)<=0?`<button class="sl bloq" disabled>Encerrado</button>`
-          :c[q]?`<button class="sl livre" onclick="escolherSlot('${h}')">${nome} <i>${dica}</i></button>`
-          :`<button class="sl outra" onclick="avisoOutra('${dk}','${h}')">${oQueEhSlot(c)}</button>`;
+        inner=horasAte(dk,h)<=0?'<button class="sl bloq" disabled>Encerrado</button>'
+          :horarioLivreAluno(s,agDate,h)?`<button class="sl livre" onclick="escolherSlot('${h}')">Livre</button>`
+          :'<button class="sl ocup" disabled>Ocupado</button>';
       }
-      else if(s.st==='meu'){const podeC=podeCancelarAula(dKey(agDate),h);const ic=iconeHorario(s.tipo),cf=s.tipo==='torneio'?'confirmado':'confirmada';inner=podeC?`<button class="sl meu" onclick="cancelarAula('${dKey(agDate)}','${h}','pontual')">${ic} ${s.label} <i>${cf} · toque para cancelar</i></button>`:`<button class="sl meu">${ic} ${s.label} <i>${cf} · trava ${LIMITE_CANCEL_H}h</i></button>`;}
-      else if(s.st==='pend')inner=`<button class="sl pend" onclick="cancelarAula('${dKey(agDate)}','${h}','pontual')">${s.label} <i>enviado ao João · toque para cancelar</i></button>`;
-      else if(s.st==='chuva')inner=`<button class="sl chuva">☔ Cancelado por chuva <i>sem desconto de crédito</i></button>`;
-      else if(s.st==='bloq')inner=`<button class="sl bloq">Indisponível</button>`;
-      else if(s.st==='fechado')inner=`<button class="sl bloq">Fechado</button>`;
-      else if(s.esperavel&&horasAte(dKey(agDate),h)>0)inner=`<button class="sl ocup" onclick="escolherSlot('${h}')">${s.label} <i>${naEspera(dKey(agDate),h)?'🔔 você está na lista de espera':'toque para entrar na lista de espera'}</i></button>`;
-      else inner=`<button class="sl ocup">${s.label||'Reservado'}</button>`;
+      else if(s.st==='meu'){
+        const podeC=podeCancelarAula(dk,h),ic=iconeHorario(s.tipo),cf=s.tipo==='torneio'?'confirmado':'confirmada';
+        inner=podeC?`<button class="sl meu" onclick="cancelarAula('${dk}','${h}','pontual')">${ic} ${s.label} <i>${cf} · toque para cancelar</i></button>`
+          :`<button class="sl meu">${ic} ${s.label} <i>${cf} · trava ${LIMITE_CANCEL_H}h</i></button>`;
+      }
+      else if(s.st==='pend')inner=`<button class="sl pend" onclick="cancelarAula('${dk}','${h}','pontual')">${s.label} <i>enviado ao João · toque para cancelar</i></button>`;
+      else if(s.esperavel&&horasAte(dk,h)>0)inner=`<button class="sl ocup" onclick="escolherSlot('${h}')">Ocupado <i>${naEspera(dk,h)?'🔔 você está na lista de espera':'toque para entrar na lista de espera'}</i></button>`;
+      else inner='<button class="sl ocup" disabled>Ocupado</button>';
       return `<div class="slot"><div class="slot-h">${h}</div>${inner}</div>`;
     }).join('');
   }
   else if(agView==='semana'){
     const mon=new Date(agDate);mon.setDate(mon.getDate()-((mon.getDay()+6)%7));
     const days=[...Array(6)].map((_,i)=>{const d=new Date(mon);d.setDate(d.getDate()+i);return d;});
-    lbl.innerHTML='Semana de '+days[0].getDate()+'/'+(days[0].getMonth()+1)+' a '+days[5].getDate()+'/'+(days[5].getMonth()+1)+'<small>toque num horário verde para marcar '+QUER_NOME[q]+'</small>';
-    let html=avisoSemQuer(days)+'<div class="wk-tools"><button class="wk-zbtn" type="button" aria-label="Diminuir agenda" onclick="alunoWkZoomStep(-1)">−</button><span class="wk-zlbl" id="al-wk-zlbl">100%</span><button class="wk-zbtn" type="button" aria-label="Aumentar agenda" onclick="alunoWkZoomStep(1)">+</button><button class="wk-fit" type="button" onclick="alunoWkZoomFit()">Semana toda</button></div><div class="wk-scroll"><table class="wk"><tr><th></th>'+days.map(d=>`<th>${DIAS[d.getDay()]}<small>${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}</small></th>`).join('')+'</tr>';
+    lbl.innerHTML='Semana de '+days[0].getDate()+'/'+(days[0].getMonth()+1)+' a '+days[5].getDate()+'/'+(days[5].getMonth()+1)+'<small>toque num horário livre para ver as opções</small>';
+    let html=avisoSemHorarios(days)+'<div class="wk-tools"><button class="wk-zbtn" type="button" aria-label="Diminuir agenda" onclick="alunoWkZoomStep(-1)">−</button><span class="wk-zlbl" id="al-wk-zlbl">100%</span><button class="wk-zbtn" type="button" aria-label="Aumentar agenda" onclick="alunoWkZoomStep(1)">+</button><button class="wk-fit" type="button" onclick="alunoWkZoomFit()">Semana toda</button></div><div class="wk-scroll"><table class="wk"><tr><th></th>'+days.map(d=>`<th>${DIAS[d.getDay()]}<small>${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}</small></th>`).join('')+'</tr>';
     PUB.horas.forEach(h=>{
       html+=`<tr><td class="hr">${h}</td>`;
       days.forEach(d=>{
-        const s=slotState(d,h);
-        /* Livre que já passou não é livre para quem olha: pintar de verde e não
-           responder ao toque fazia a semana inteira parecer travada. */
-        const passou=horasAte(dKey(d),h)<=0;
-        /* Horário só de locação aparece como livre (o "Loc." parecia cadeado,
-           igual a fechado). O toque abre as opções que existem nele: aula,
-           locação, torneio — o mesmo escolherSlot de sempre. (20/10) */
-        const livreAqui=s.st==='livre'||s.st==='loc';
-        // verde só o que serve para o que o aluno escolheu; o resto, apagado com o nome do que é (05/11)
-        const c=livreAqui?cabeNoSlot(s,d,h):null,serve=livreAqui&&c[q];
-        const cls=(livreAqui&&passou)?'passou':serve?'livre':livreAqui?'outra':s.st;
-        const txt=livreAqui?(passou?'Passou':!serve?oQueEhSlot(c,true):s.compartilhado==='torneio'?'Torneio':s.compartilhado==='locacao'?'Locação':s.grupo?(s.limiteGrupo===4?'Quádrupla':s.limiteGrupo===3?'Trio':'Dupla'):'Livre'):s.st==='meu'?rotuloMeuHorario(s.tipo,true):s.st==='pend'?'Pedido':s.st==='chuva'?'Chuva':s.st==='bloq'?'Bloq.':s.st==='fechado'?'Fechado':'Reserva';
-        const click=passou?`onclick="toast('Esse horário já passou 🙏')"`:(serve?`onclick="gotoBook(${d.getFullYear()},${d.getMonth()},${d.getDate()},'${h}')"`:livreAqui?`onclick="avisoOutra('${dKey(d)}','${h}')"`:'');
-        html+=`<td><button class="wc ${cls}" title="${s.label||''}" ${click}>${txt}</button></td>`;
+        const s=slotState(d,h),passou=horasAte(dKey(d),h)<=0;
+        const livre=horarioLivreAluno(s,d,h),livrePassado=passou&&['livre','loc'].includes(s.st);
+        const cls=livrePassado?'passou':livre?'livre':s.st==='meu'?'meu':s.st==='pend'?'pend':'ocup';
+        const txt=livrePassado?'Passou':livre?'Livre':s.st==='meu'?rotuloMeuHorario(s.tipo,true):s.st==='pend'?'Pedido':'Ocupado';
+        const click=passou?`onclick="toast('Esse horário já passou 🙏')"`:livre?`onclick="gotoBook(${d.getFullYear()},${d.getMonth()},${d.getDate()},'${h}')"`:'';
+        html+=`<td><button class="wc ${cls}" title="${txt}" ${click}>${txt}</button></td>`;
       });
       html+='</tr>';
     });
@@ -5031,15 +4974,14 @@ function renderAgenda(){
   }
   else{
     const y=agDate.getFullYear(),m=agDate.getMonth();
-    lbl.innerHTML=MESES[m]+' '+y+'<small>🟡 = sua aula · verde = livres para '+QUER_NOME[q]+'</small>';
+    lbl.innerHTML=MESES[m]+' '+y+'<small>🟡 = sua aula · verde = horários livres</small>';
     const first=new Date(y,m,1),days=new Date(y,m+1,0).getDate(),today=dKey(new Date());
     let cells='';
     for(let i=0;i<first.getDay();i++)cells+='<div class="cal-day out"></div>';
     for(let d=1;d<=days;d++){
-      const dt=new Date(y,m,d,12);
-      const liv=livresNoDia(dt,q),mine=minhasNoDia(dt);
-      cells+=`<button class="cal-day ${dKey(dt)===today?'today':''}" onclick="gotoDay(${y},${m},${d})">
-        <span>${d}</span>${mine?'<span class="dot"></span>':''}${liv?`<span class="liv">${liv} liv.</span>`:''}
+      const dt=new Date(y,m,d,12),dk=dKey(dt),liv=livresNoDia(dt),mine=minhasNoDia(dt);
+      cells+=`<button class="cal-day ${dk===today?'today':''}" onclick="gotoDay(${y},${m},${d})">
+        <span>${d}</span>${mine?'<span class="dot"></span>':''}${liv?`<span class="liv">${liv} liv.</span>`:dk>=today?'<span class="liv" style="color:var(--muted);white-space:normal;overflow-wrap:anywhere">Ocupado</span>':''}
       </button>`;
     }
     el.innerHTML='<div class="cal"><div class="cal-head">'+['D','S','T','Q','Q','S','S'].map(x=>`<span>${x}</span>`).join('')+'</div><div class="cal-grid">'+cells+'</div></div>';
@@ -5620,10 +5562,10 @@ function escolherSlot(hora,quer){
   if(!['livre','loc'].includes(estado.st)){toast(estado.label+' — escolha outro horário');return;}
   pickCtx={hora,date:new Date(agDate),grupo:!!estado.grupo,compartilhado:estado.compartilhado||'',limiteGrupo:estado.limiteGrupo||0,semAula:!!estado.semAula};
   const modo=slotModo(pickCtx.date,hora);
-  /* Só as opções do que o aluno escolheu (05/11). Se o horário não tem essa
-     atividade (veio da voz ou da lista de espera), mostra tudo o que ele tem. */
-  const cabe=cabeNoSlot(estado,pickCtx.date,hora),q=quer||querAtual(),so=cabe[q]?q:'';
-  const mostra=k=>!so||so===k;
+  /* Toque normal: todas as atividades permitidas. Voz/atalho com atividade
+     explícita mantém sua escolha; preferência antiga do aparelho não filtra. */
+  const cabe=cabeNoSlot(estado,pickCtx.date,hora),so=['aula','loc','tor'].includes(quer)&&cabe[quer]?quer:'';
+  const mostra=k=>!!cabe[k]&&(!so||so===k);
   document.getElementById('pick-sub').textContent=DIAS_FULL[pickCtx.date.getDay()]+', '+pickCtx.date.getDate()+' de '+MESES[pickCtx.date.getMonth()].toLowerCase()+' · '+hora;
   let b='';
   const trava=bloqueadoParaAgendar();
@@ -5665,7 +5607,6 @@ function escolherSlot(hora,quer){
   }else{
     if(!so||so==='loc')b+='<div class="pick-note">Neste horário a quadra fica para <b>locação</b> (sem aula).</div>';
     if(mostra('loc'))b+=locBtnHtml();
-    if(!so&&saldoReposAluno()>0&&!trava&&reposServeAqui(false))b+='<button class="pick-opt repo" onclick="pickAula(true)">🔁 Pedir reposição aqui<small>combinar com o João</small></button>';
     if(mostra('tor'))b+=pickTorneioHtml();
   }
   document.getElementById('pick-opts').innerHTML=b;
@@ -5780,7 +5721,7 @@ function abrirBook(hora,repo,torneio){
   const estado=slotState(agDate,hora);
   const desejado=torneio?'torneio':'grupo';
   if(!['livre','loc'].includes(estado.st)||estado.compartilhado&&estado.compartilhado!==desejado){toast('Horário reservado — escolha outro');return;}
-  if(estado.semAula&&!torneio){toast('Este horário está livre para locação ou jogo do torneio.');return;}
+  if(!cabeNoSlot(estado,agDate,hora)[torneio?'tor':'aula']){toast('Atividade indisponível neste horário. Reabra as opções da agenda.');return;}
 
   if(!torneio&&bloqueadoParaAgendar()){toast('🔒 Agendamento bloqueado — '+motivoBloqueio()+'. Fale com o João para regularizar. 🙏');return;}
   if(torneio){/* jogo do torneio: inscrição já paga, não usa crédito nem reposição */}
@@ -5814,6 +5755,9 @@ async function confirmarAgendamento(){
   if(!['livre','loc'].includes(estado.st)||estado.compartilhado&&estado.compartilhado!==(bookCtx.torneio?'torneio':'grupo')){
     renderAgenda();toast('Horário reservado ou indisponível — escolha outro');return;
   }
+  if(!cabeNoSlot(estado,bookCtx.date,bookCtx.hora)[bookCtx.torneio?'tor':'aula']){
+    renderAgenda();toast('A atividade disponível mudou. Reabra as opções do horário.');return;
+  }
   if((estado.compartilhado||'')!==bookCtx.compartilhado){toast('O tipo da aula mudou. Reabra as opções do horário.');return;}
   if(!bookCtx.torneio&&bloqueadoParaAgendar()){toast('🔒 Agendamento bloqueado — '+motivoBloqueio());return;}
   const tor=bookCtx.torneio?1:0;
@@ -5825,13 +5769,12 @@ async function confirmarAgendamento(){
   const pedido={id:'p'+Date.now()+'-'+Math.random().toString(36).slice(2,10),codigo:MEU.codigo,nome:EU.nome,data:dKey(bookCtx.date),hora:bookCtx.hora,rec,repo,tor,grupo:bookCtx.grupo?1:0,profId,profNome,ts:Date.now()};
   const datas=datasReserva(pedido.data,rec);
   if(!datas.length){toast('Escolha uma data nos próximos 90 dias.');return;}
-  /* Mesma conferência da Gestão, semana a semana: antes o app aceitava semana
-     "só locação" (a Gestão só aceita aula em horário de aula, salvo reposição e
-     torneio) e o aluno via "enviado" e depois "não confirmada". */
+  /* Confere cada semana com as atividades oferecidas na janela: horário só
+     de locação/torneio não aceita aula nem reposição pelo app do aluno. */
   const conflitos=[];
   for(const data of datas){
     const dt=new Date(data+'T12:00:00'),s=slotState(dt,pedido.hora);
-    const soLoc=(slotModo(dt,pedido.hora)==='loc'||s.semAula)&&!repo&&!tor&&!s.compartilhado||s.semAula&&!tor;
+    const soLoc=!cabeNoSlot(s,dt,pedido.hora)[tor?'tor':'aula'];
     if(!['livre','loc'].includes(s.st)||soLoc||(s.compartilhado||'')!==bookCtx.compartilhado||s.grupo&&s.limiteGrupo!==bookCtx.limiteGrupo)
       conflitos.push({data,motivo:s.st==='fechado'?'quadra fechada':['bloq','chuva'].includes(s.st)?'indisponível':s.semAula&&!tor?'sem aula':soLoc&&['livre','loc'].includes(s.st)?'só locação':'reservado'});
   }
@@ -5977,7 +5920,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-11-10-1').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-11-10-2').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
@@ -5986,6 +5929,6 @@ window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);})
   setTimeout(()=>esperarEIniciar(t+1),150);
 })(0);
 </script>
-<script src="lib/voz-aluno.js?v=2026-11-10-1"></script>
+<script src="lib/voz-aluno.js?v=2026-11-10-2"></script>
 </body>
 </html>

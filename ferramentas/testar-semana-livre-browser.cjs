@@ -1,8 +1,5 @@
-/* App do aluno: tabela da semana (20/10, pedido do João). O horário só de
-   locação aparecia como "Loc.", que parecia o cadeado de "Fechado". Agora
-   aparece como "Livre" (verde) e o toque abre só as opções que existem
-   naquele horário: aula, locação, torneio. Fechado continua "Fechado".
-   Só dados fictícios, relógio fixo. */
+/* Agenda do aluno: o Livre vale para qualquer atividade permitida.
+   O toque revela as opções; fechado aparece Ocupado. Dados fictícios. */
 let chromium;
 try{({chromium}=require('playwright'));}catch(e){({chromium}=require(process.env.PW||'/opt/node22/lib/node_modules/playwright'));}
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict');
@@ -40,55 +37,43 @@ const HORAS=['07:00','10:00','13:00','17:00','20:00','21:00'];
    const tr=[...document.querySelectorAll('#ag-view table.wk tr')].find(r=>r.querySelector('td.hr')&&r.querySelector('td.hr').textContent===hora);
    const b=tr.querySelectorAll('td')[dia].querySelector('button');return {txt:b.textContent,cls:b.className};
   },{dia,hora});
-  /* 05/11 (pedido do João): o aluno escolhe antes o que quer marcar. Com
-     "Locação", o horário só de locação continua "Livre" verde (nada de "Loc."
-     com cara de cadeado); com "Aula", ele aparece listrado escrito "Locação",
-     porque o aluno tocava achando que tinha aula. */
-  const quer=q=>p.evaluate(q=>{setQuer(q);agDate=new Date(2026,9,21,12);setView('semana',document.querySelector('#apg-agenda .jv-ref-ag-tabs button[onclick*=semana]'));},q);
+  const semana=()=>p.evaluate(()=>{agDate=new Date(2026,9,21,12);setView('semana',document.querySelector('#apg-agenda .jv-ref-ag-tabs button[onclick*=semana]'));});
   const tocar=hora=>p.evaluate(hora=>{document.getElementById('ov-pick').classList.remove('on');
    const tr=[...document.querySelectorAll('#ag-view table.wk tr')].find(r=>r.querySelector('td.hr')&&r.querySelector('td.hr').textContent===hora);
    tr.querySelectorAll('td')[3].querySelector('button').click();
    return {on:document.getElementById('ov-pick').classList.contains('on'),sub:document.getElementById('pick-sub').textContent,op:document.getElementById('pick-opts').innerText};},hora);
-  await check('semana com "Locação": horário só de locação aparece "Livre" e verde, sem "Loc."',async()=>{
-   await quer('loc');
-   const t=await p.locator('#ag-view').innerText();
-   assert.doesNotMatch(t,/Loc\./);
-   assert.deepEqual(await celula(3,'13:00'),{txt:'Livre',cls:'wc livre'},'quarta 13h (só locação)');
-   assert.deepEqual(await celula(3,'10:00'),{txt:'Livre',cls:'wc livre'},'quarta 10h (aula, dá para alugar)');
-   assert.deepEqual(await celula(4,'13:00'),{txt:'Locação',cls:'wc livre'},'quinta 13h: locação de outro, dá para participar');
-   assert.deepEqual(await celula(3,'21:00'),{txt:'Fechado',cls:'wc fechado'},'fechado continua fechado');
-   assert.deepEqual(await celula(1,'13:00'),{txt:'Passou',cls:'wc passou'},'segunda já passou');
+  await check('semana: Livre para aula, locação e participação; Ocupado quando fechado',async()=>{
+   await semana();
+   assert.deepEqual(await celula(3,'13:00'),{txt:'Livre',cls:'wc livre'});
+   assert.deepEqual(await celula(3,'10:00'),{txt:'Livre',cls:'wc livre'});
+   assert.deepEqual(await celula(4,'13:00'),{txt:'Livre',cls:'wc livre'});
+   const ocupado=await celula(3,'21:00');
+   assert.equal(ocupado.cls,'wc ocup');assert.ok(['Ocupado','Ocup.'].includes(ocupado.txt));
+   assert.equal(await p.locator('#ag-view .wc.ocup').first().getAttribute('title'),'Ocupado');
+   const passado=await celula(1,'13:00');
+   assert.equal(passado.cls,'wc passou');assert.ok(['Passou','Pass.'].includes(passado.txt));
   });
-  await check('semana com "Aula": horário só de locação fica listrado "Locação", e o de aula verde',async()=>{
-   await quer('aula');
-   const t=await p.locator('#ag-view').innerText();
-   assert.doesNotMatch(t,/Loc\./);
-   assert.deepEqual(await celula(3,'13:00'),{txt:'Locação',cls:'wc outra'},'quarta 13h (só locação)');
-   assert.deepEqual(await celula(3,'10:00'),{txt:'Livre',cls:'wc livre'},'quarta 10h (aula)');
-   assert.deepEqual(await celula(4,'13:00'),{txt:'Locação',cls:'wc outra'},'quinta 13h: locação de outro');
-   assert.deepEqual(await celula(3,'21:00'),{txt:'Fechado',cls:'wc fechado'});
-  });
-  await check('com "Locação", tocar no "Livre" abre só a locação (sem aula)',async()=>{
-   await quer('loc');const r=await tocar('13:00');
+  await check('toque no Livre só de locação abre locação e torneio, sem aula nem reposição',async()=>{
+   const r=await tocar('13:00');
    assert.ok(r.on);assert.match(r.sub,/21 de outubro · 13:00/);
-   assert.match(r.op,/Alugar a quadra/);assert.doesNotMatch(r.op,/Agendar aula/);
+   assert.match(r.op,/Alugar a quadra/);assert.match(r.op,/torneio/);
+   assert.doesNotMatch(r.op,/Agendar aula|Pedir reposição aqui/);
   });
-  await check('com "Aula", tocar no "Livre" de aula abre só a aula; no listrado, avisa sem abrir',async()=>{
-   await quer('aula');let r=await tocar('17:00');
-   assert.match(r.op,/Agendar aula/);assert.doesNotMatch(r.op,/Alugar a quadra/);
-   r=await tocar('13:00');assert.equal(r.on,false,'listrado não abre as opções');
+  await check('toque no Livre de aula mostra aula, locação e torneio juntos',async()=>{
+   await semana();const r=await tocar('17:00');
+   assert.ok(r.on);assert.match(r.op,/Agendar aula/);assert.match(r.op,/Alugar a quadra/);assert.match(r.op,/torneio/);
   });
-  await check('dia e mês seguem a escolha: com "Aula" só locação aparece apagado; o mês conta só o que serve',async()=>{
-   const r=await p.evaluate(()=>{document.getElementById('ov-pick').classList.remove('on');setQuer('aula');agDate=new Date(2026,9,21,12);agView='dia';renderAgenda();const dia=document.getElementById('ag-view').innerText;
-    agView='mes';renderAgenda();const cel=()=>[...document.querySelectorAll('#ag-view .cal-day')].find(b=>b.querySelector('span')&&b.querySelector('span').textContent==='21');
-    const aula=cel().querySelector('.liv').textContent;setQuer('loc');agView='mes';renderAgenda();
-    return {dia,aula,loc:cel().querySelector('.liv').textContent,hojeAula:livresNoDia(new Date(2026,9,20,12),'aula'),hojeLoc:livresNoDia(new Date(2026,9,20,12),'loc')};});
-   assert.match(r.dia,/13:00\s*Livre para locação/);assert.doesNotMatch(r.dia,/sem aula|ausente/i);assert.match(r.dia,/10:00\s*Disponível\s*agendar aula/);
-   assert.equal(r.aula,'3 liv.','quarta com Aula: 07, 10, 17');
-   assert.equal(r.loc,'5 liv.','quarta com Locação: 07, 10, 13, 17, 20 (21h fechado)');
-   assert.equal(r.hojeAula,2,'hoje: 07h já passou; 10 e 17');assert.equal(r.hojeLoc,5);
+  await check('dia e mês usam qualquer atividade; consulta explícita de aula continua funcionando',async()=>{
+   const r=await p.evaluate(()=>{
+    document.getElementById('ov-pick').classList.remove('on');agDate=new Date(2026,9,21,12);agView='dia';renderAgenda();
+    const dia=document.getElementById('ag-view').innerText;
+    agView='mes';renderAgenda();const cel=[...document.querySelectorAll('#ag-view .cal-day')].find(b=>b.querySelector('span')&&b.querySelector('span').textContent==='21');
+    return {dia,livres:cel.querySelector('.liv').textContent,hojeAula:livresNoDia(new Date(2026,9,20,12),'aula'),hojeLoc:livresNoDia(new Date(2026,9,20,12),'loc')};
+   });
+   assert.match(r.dia,/13:00\s*Livre/);assert.match(r.dia,/10:00\s*Livre/);assert.match(r.dia,/21:00\s*Ocupado/);
+   assert.equal(r.livres,'5 liv.');assert.equal(r.hojeAula,2);assert.equal(r.hojeLoc,5);
   });
   assert.deepEqual(erros,[]);await c.close();
  }finally{await browser.close();server.close();}
- console.log('\n✅ '+count+' verificações · semana: o que serve para a escolha aparece livre, sem "Loc."');
+ console.log('\n✅ '+count+' verificações · semana: Livre/Ocupado e atividades após o toque');
 })().catch(e=>{console.error('❌',e);server.close();process.exit(1);});
