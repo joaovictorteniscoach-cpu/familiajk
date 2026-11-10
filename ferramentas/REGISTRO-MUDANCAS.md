@@ -13,7 +13,9 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 - Branch auxiliar `codex/previa-imagem-agenda-276`, base `1cdaa1b3213d439b057209cefc7ad82a84f6237e`.
 - O João pediu a foto diretamente na conversa. Sem executor local disponível,
   uma Action somente de leitura baixa o artefato do CI aprovado `42892824012`
-  e expõe a captura fictícia `agenda-livre-dia-chromium-saibro.png` em base64.
+  e expõe as capturas fictícias de Dia e Semana em base64 para envio direto.
+- As imagens podem ser guardadas em `previas/` neste branch auxiliar para abrir na
+  conversa, sem publicar os apps. O gatilho só observa o próprio workflow.
 - Nenhum código dos apps, dado real, saldo, regra ou publicação é alterado.
   O PR #276 permanece no mesmo commit testado, aguardando aprovação visual.
 - Este branch é auxiliar e não deve ser integrado ao main. A Action só roda

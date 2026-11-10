@@ -3,6 +3,7 @@ name: Recuperar imagem da previa 276
 on:
   push:
     branches: [codex/previa-imagem-agenda-276]
+    paths: [.github/workflows/previa-imagem-276.yml]
 
 permissions:
   contents: read
@@ -27,7 +28,7 @@ jobs:
           python3 - <<'PY'
           import os, pathlib, base64, hashlib
           root = pathlib.Path(os.environ["PREVIA_DIR"])
-          matches = list(root.rglob("agenda-livre-dia-chromium-saibro.png"))
+          matches = list(root.rglob("agenda-livre-semana-chromium-saibro.png"))
           assert len(matches) == 1, "Captura exata ausente ou duplicada"
           data = matches[0].read_bytes()
           assert data.startswith(b"\x89PNG\r\n\x1a\n"), "Imagem invalida"
