@@ -48,7 +48,7 @@ async function contexto(browser,base,tema){
    const antesEU=await p.evaluate(()=>JSON.stringify(EU));
    await check(tema+': horário reservado oferece a lista de espera e o pedido vai para a Gestão',async()=>{
     const sl=p.locator('.slot',{hasText:'16:00'}).locator('button');
-    assert.match(await sl.innerText(),/Reservado\s*toque para entrar na lista de espera/);
+    assert.match(await sl.innerText(),/Ocupado\s*toque para entrar na lista de espera/);
     await sl.click();
     const op=await p.locator('#pick-opts').innerText();
     assert.match(op,/Este horário está reservado/);assert.match(op,/quem marcar primeiro fica com ela/i);assert.match(op,/Entrar na lista de espera/);

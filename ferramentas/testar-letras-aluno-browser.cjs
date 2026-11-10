@@ -79,8 +79,7 @@ const pequenos=(p,escopo)=>p.evaluate(({escopo,MIN,MIN_GRADE})=>{
        if(linhas>1||b.scrollWidth>b.clientWidth+1)out.push(t+' ('+linhas+' linhas, '+b.scrollWidth+'>'+b.clientWidth+')');});
       return {partidas:out,vistos};});
      assert.deepEqual(r.partidas,[]);
-     assert.ok(['Fechado','Fech.'].includes(r.vistos.Fechado),'Fechado aparece inteiro ou como "Fech.": '+JSON.stringify(r.vistos));
-     assert.ok(['Locação','Locaç.','Loc.'].includes(r.vistos['Locação']),'Locação aparece inteira ou curta: '+JSON.stringify(r.vistos));
+     assert.ok(['Ocupado','Ocup.'].includes(r.vistos.Ocupado),'Ocupado aparece inteiro ou como "Ocup.": '+JSON.stringify(r.vistos));
      assert.equal(r.vistos.Livre,'Livre');
     });
     assert.deepEqual(erros,[]);await c.close();

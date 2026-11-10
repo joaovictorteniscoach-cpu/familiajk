@@ -8,6 +8,31 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-10 · Codex: agenda do aluno com Livre/Ocupado e opções após toque (proposta 2026-11-10-2)
+
+- Responsável: Codex; branch `codex/agenda-aluno-livre-ocupado-2026-11-10`; base main `9e8fbdea17188f8037be8acdbd2252e4e58d75f1`.
+  Implementação do plano aprovado pelo João; sem publicação nesta etapa.
+- Dia/Semana: "Livre" para qualquer atividade permitida; "Ocupado" sem vaga. As próprias
+  aulas e pedidos preservam identificação/cancelamento; a lista de espera permanece.
+  Passados continuam encerrados. Mês conta cada horário uma vez e identifica dia sem vaga.
+- Removida a escolha prévia de atividade. Preferência antiga no aparelho não filtra mais.
+  Toque mostra todas as opções permitidas; voz/atalhos com atividade explícita continuam.
+  Horário só de locação/torneio não oferece reposição/aula. Confirmação relê a nuvem e
+  recusa mudança de atividade, mantendo capacidades e reserva única existentes.
+- Cores, fontes e estilos gerados preservados. Em coluna estreita "Ocupado" pode usar
+  "Ocup." pelo ajuste de rótulos existente; o título mantém o texto completo.
+- Preparados 64 cenários de navegador (Chromium/WebKit, dois temas), capturas em artefatos
+  e regressões de semana, lista de espera, locação, letras e reservas exclusivas.
+  Validação prévia: 19 verificações das funções reais em memória e sintaxe de três scripts
+  inline, sem falhas. Ambiente de shell/navegador local indisponível; CI completo pendente.
+- Proposta 2026-11-10-2: cinco carimbos, caches Aluno v51/Gestão v54 e demo sincronizados.
+  Não houve mudança de saldos, cobrança, extrato, dados reais ou regras do Firebase.
+- Pendente: validação completa do commit final e revisão das imagens. A publicação fica
+  retida até aprovação visual do João, conforme DESIGN.md e o plano aceito. Resultado do
+  CI e links das prévias serão registrados no PR; esta entrada não afirma publicação.
+
+---
+
 ## 2026-11-10 · Claude Code: Gestão sem atualizar nem conectar (iPhone) — reconectar a nuvem (v2026-11-10-1)
 
 **Pedido do João** (foto do iPhone às 05:07, v2026-11-09-3): "veja porque não está atualizando e
