@@ -117,6 +117,7 @@ function liberadoProprioCadastro(c){return !!PROF_UID&&c==='jvtenis/professores/
 function caminhoPermitido(cam){
   if(ehDono())return true;
   var c=String(cam||'').replace(/^\/+/,'');
+  if(c==='.info/connected')return true;   // estado local da conexão (só leitura, sem dado de ninguém)
   if(c.indexOf(RAIZ+'/')===0||c===RAIZ)return true;
   for(var i=0;i<LIBERADO_PROF.length;i++){
     if(c===LIBERADO_PROF[i]||c.indexOf(LIBERADO_PROF[i]+'/')===0)return true;

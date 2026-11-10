@@ -37,9 +37,10 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
    const aplicar=(cam,fn,resolve)=>{const r=fn(store[cam]==null?null:JSON.parse(JSON.stringify(store[cam])));
      if(r===undefined){resolve({committed:false,snapshot:snap(store[cam])});return;}
      store[cam]=r;if(/\/v2$/.test(cam))__nuvem.gravacoesV2++;resolve({committed:true,snapshot:snap(r)});};
+   __nuvem.conexao=[];__nuvem.ligar=v=>__nuvem.conexao.forEach(cb=>cb(snap(v)));
    const ref=cam=>({
     get:()=>Promise.resolve(snap(store[cam])),once:()=>Promise.resolve(snap(store[cam])),
-    on:(ev,cb)=>{setTimeout(()=>cb(snap(store[cam])),0);return cb;},off:()=>{},
+    on:(ev,cb)=>{if(cam==='.info/connected'){__nuvem.conexao.push(cb);return cb;}setTimeout(()=>cb(snap(store[cam])),0);return cb;},off:()=>{},
     set:v=>{store[cam]=v;return Promise.resolve();},update:o=>{store[cam]=Object.assign({},store[cam],o);return Promise.resolve();},
     remove:()=>{delete store[cam];return Promise.resolve();},
     transaction:fn=>new Promise(resolve=>{if(__nuvem.travado&&/\/v2$/.test(cam))fila.push(()=>aplicar(cam,fn,resolve));else aplicar(cam,fn,resolve);})
@@ -47,6 +48,10 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
    window.fbDB={ref,goOffline(){__nuvem.offline++;},goOnline(){__nuvem.online++;__nuvem.travado=false;fila.splice(0).forEach(f=>f());}};
    window._espacoAberto=true;_conflitoNuvem=null;lastCloudError='';_nuvemMuda=false;
    _basePartes=null;_basePartesLida=true;_basePartesAssinatura='';_ultReacordar=0;
+   _vigiaLigada=false;_nuvemLigada=null;_nuvemCaiuEm=0;window.__buscas=[];
+   syncPedidos=async()=>__buscas.push('pedidos');carregarVinculos=async()=>__buscas.push('vinculos');syncRequests=async()=>__buscas.push('pedidosAntigos');
+   carregarNotifs=async()=>__buscas.push('notifs');carregarConfirmacoes=async()=>__buscas.push('confirmacoes');carregarCadastros=async()=>__buscas.push('cadastros');
+   carregarAutoAval=async()=>__buscas.push('autoaval');lerMapaQuadra=async()=>__buscas.push('mapa');lerAgendaProf=async()=>__buscas.push('agendaProf');
    publish=()=>{};publicarMapaQuadra=()=>{};publicarAgendaProf=()=>{};finalizarAvisosPagos=()=>{};
    backupNuvem=async()=>{};backupDoDia=async()=>{};subirBlobDeReserva=async()=>{};
    DB.alunos=[{id:'n1',nome:'Aluno Fictício',codigo:'8801',tipo:'Particular',plano:4,creditos:4,credGrupo:0,repos:0,locCred:0,mensalidade:640,status:'pago',ativo:true}];
@@ -94,6 +99,27 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
    await p.evaluate(()=>window.dispatchEvent(new Event('online')));
    await p.waitForFunction(()=>!_salvamentoEmCurso&&!cloudPending,null,{timeout:6000});
    assert.equal((await estado()).v2,1);
+  });
+  await check('o app todo: conexão cai com o app aberto → em até ~30 s reconecta e o selo mostra "↻ Nuvem"',async()=>{
+   await montar();
+   await p.evaluate(()=>{cloudPending=false;setSave('✓ salvo na nuvem','ok');vigiarConexaoNuvem();__nuvem.ligar(true);__nuvem.ligar(false);_nuvemCaiuEm=Date.now()-25000;});
+   await p.waitForFunction(()=>__nuvem.offline>=1,null,{timeout:12000});
+   assert.equal(await p.locator('#save-state').textContent(),'↻ Nuvem');
+  });
+  await check('o app todo: a conexão volta depois de 15 s fora → busca pedidos, vínculos, agenda… na hora e o selo volta a "✓ Nuvem"',async()=>{
+   await montar();
+   await p.evaluate(()=>{cloudPending=false;vigiarConexaoNuvem();__nuvem.ligar(true);__nuvem.ligar(false);_nuvemCaiuEm=Date.now()-20000;__buscas=[];__nuvem.ligar(true);});
+   const b=await p.evaluate(()=>__buscas.slice().sort());
+   assert.deepEqual(b,['agendaProf','autoaval','cadastros','confirmacoes','mapa','notifs','pedidos','pedidosAntigos','vinculos']);
+   assert.equal(await p.locator('#save-state').textContent(),'✓ Nuvem');
+   await p.evaluate(()=>{__buscas=[];__nuvem.ligar(false);__nuvem.ligar(true);});   // piscada curta: não busca tudo de novo
+   assert.deepEqual(await p.evaluate(()=>__buscas),[]);
+  });
+  await check('o app todo: voltar ao app depois de parado busca o que chegou enquanto isso',async()=>{
+   await montar();
+   await p.evaluate(()=>{cloudPending=false;__buscas=[];_escondidoDesde=Date.now()-120000;document.dispatchEvent(new Event('visibilitychange'));});
+   await p.waitForFunction(()=>__buscas.includes('pedidos'),null,{timeout:5000});
+   assert.ok((await estado()).off>=1,'reconectou');
   });
   await check('motivo em palavras simples: sem resposta, recusa (login) e sem Firebase',async()=>{
    await montar();

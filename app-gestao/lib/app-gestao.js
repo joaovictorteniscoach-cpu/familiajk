@@ -539,7 +539,8 @@ function tsOf(raw){try{return JSON.parse(raw).savedAt||0;}catch(e){return 0;}}
    O resumo local guarda só confirmação e SHA-256, nunca outra cópia inteira. */
 let _basePartes=null,_basePartesLida=false,_basePartesAssinatura='';
 let _salvamentoEmCurso=null,_conflitoNuvem=null,_tentativaLocal=0,_pdAlertaTimer=null;
-let _envioDesde=0,_ultTentativa=0,_ultReacordar=0,_escondidoDesde=0,_envioAtrasado=false;   // ver reacordarNuvem()
+let _envioDesde=0,_ultTentativa=0,_ultReacordar=0,_escondidoDesde=0,_envioAtrasado=false;
+let _nuvemLigada=null,_nuvemCaiuEm=0,_vigiaLigada=false;   // ver vigiarConexaoNuvem()   // ver reacordarNuvem()
 function canonDados(v){
   if(v===null||v===undefined)return 'null';
   if(Array.isArray(v))return '['+v.map(canonDados).join(',')+']';
@@ -1556,6 +1557,43 @@ function reacordarNuvem(forcar){
   try{window.fbDB.goOffline();window.fbDB.goOnline();}catch(e){return false;}
   return true;
 }
+/* ===== O app todo, não só o salvamento (10/11, João: "e sim todo o app") =====
+   Pedidos, vínculos, confirmações, cadastros, mapa e agenda dos professores
+   chegam por leituras a cada 30–45 s. Com a conexão morta (iPhone parado,
+   troca de wi-fi para 4G) todas falham juntas e nada atualiza, sem aviso.
+   .info/connected diz na hora se o Firebase está ligado: desligado por 20 s
+   com o app na tela → reconecta; ao voltar a conexão (ou o app), busca tudo
+   de novo na hora em vez de esperar o próximo ciclo. Só lê; não grava nada. */
+function vigiarConexaoNuvem(){
+  if(_vigiaLigada||!hasCloud())return;
+  try{
+    window.fbDB.ref('.info/connected').on('value',s=>{
+      const lig=!!(s&&s.val()),antes=_nuvemLigada;_nuvemLigada=lig;
+      if(!lig){if(!_nuvemCaiuEm)_nuvemCaiuEm=Date.now();return;}
+      const fora=_nuvemCaiuEm?Date.now()-_nuvemCaiuEm:0;_nuvemCaiuEm=0;
+      if(antes!==false||!CARREGADO)return;
+      if(cloudPending&&!_conflitoNuvem)setTimeout(()=>gravarAgora(),800);
+      else if(!cloudPending&&!_conflitoNuvem&&fora>15000)setSave('✓ salvo na nuvem','ok');
+      if(fora>15000)atualizarDaNuvem();
+    });
+    _vigiaLigada=true;
+  }catch(e){}
+}
+function atualizarDaNuvem(){
+  if(!CARREGADO||!hasCloud())return;
+  [()=>syncPedidos(true),()=>carregarVinculos(true),()=>syncRequests(true),carregarNotifs,carregarConfirmacoes,
+   carregarCadastros,carregarAutoAval,lerMapaQuadra,lerAgendaProf].forEach(f=>{
+    try{const r=f();if(r&&typeof r.catch==='function')r.catch(()=>{});}catch(e){}
+  });
+}
+setInterval(()=>{
+  if(!CARREGADO||!hasCloud()||document.hidden)return;
+  vigiarConexaoNuvem();
+  if(_nuvemLigada===false&&_nuvemCaiuEm&&Date.now()-_nuvemCaiuEm>20000){
+    if(!cloudPending&&!_conflitoNuvem)setSave('conectando à nuvem…');   // selo "↻ Nuvem", não "✓"
+    reacordarNuvem(false);
+  }
+},10000);
 async function subirPartes(){
   if(!hasCloud()||!CARREGADO||!window._espacoAberto||_conflitoNuvem)return null;
   if(_salvamentoEmCurso)return _salvamentoEmCurso;
@@ -1899,13 +1937,15 @@ document.addEventListener('visibilitychange',()=>{
      sem aviso. Reconecta e, se havia alteração pendente, tenta de novo. */
   const parado=_escondidoDesde?Date.now()-_escondidoDesde:0;_escondidoDesde=0;
   if(!CARREGADO||!hasCloud()||(parado<30000&&!cloudPending))return;
-  reacordarNuvem(false);
+  vigiarConexaoNuvem();reacordarNuvem(false);
   if(cloudPending&&!_conflitoNuvem)setTimeout(()=>gravarAgora(),1500);
+  if(parado>=30000)setTimeout(atualizarDaNuvem,2000);   // o que chegou enquanto estava parado
 });
 window.addEventListener('online',()=>{
   if(!CARREGADO||!hasCloud())return;
   reacordarNuvem(true);
   if(cloudPending&&!_conflitoNuvem)setTimeout(()=>gravarAgora(),1500);
+  setTimeout(atualizarDaNuvem,2000);
 });
 window.addEventListener('pagehide',()=>{if(cloudPending)gravarAgora();});
 setInterval(()=>{
