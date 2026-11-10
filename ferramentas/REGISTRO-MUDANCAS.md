@@ -8,6 +8,19 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-10 · Codex: recuperar a imagem de aprovação do PR #276
+
+- Branch auxiliar `codex/previa-imagem-agenda-276`, base `1cdaa1b3213d439b057209cefc7ad82a84f6237e`.
+- O João pediu a foto diretamente na conversa. Sem executor local disponível,
+  uma Action somente de leitura baixa o artefato do CI aprovado `42892824012`
+  e expõe a captura fictícia `agenda-livre-dia-chromium-saibro.png` em base64.
+- Nenhum código dos apps, dado real, saldo, regra ou publicação é alterado.
+  O PR #276 permanece no mesmo commit testado, aguardando aprovação visual.
+- Este branch é auxiliar e não deve ser integrado ao main. A Action só roda
+  no push deste próprio branch; não adiciona uma rotina ao app publicado.
+
+---
+
 ## 2026-11-10 · Codex: agenda do aluno com Livre/Ocupado e opções após toque (proposta 2026-11-10-2)
 
 - Responsável: Codex; branch `codex/agenda-aluno-livre-ocupado-2026-11-10`; base main `9e8fbdea17188f8037be8acdbd2252e4e58d75f1`.

@@ -1,0 +1,39 @@
+name: Recuperar imagem da previa 276
+
+on:
+  push:
+    branches: [codex/previa-imagem-agenda-276]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  imagem:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Baixar as capturas do commit aprovado nos testes
+        uses: actions/download-artifact@v4
+        with:
+          repository: joaovictorteniscoach-cpu/familiajk
+          run-id: 42892824012
+          name: previas-aulas-voz
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/previa-276
+      - name: Ler apenas a imagem solicitada pelo Joao
+        env:
+          PREVIA_DIR: ${{ runner.temp }}/previa-276
+        run: |
+          python3 - <<'PY'
+          import os, pathlib, base64, hashlib
+          root = pathlib.Path(os.environ["PREVIA_DIR"])
+          matches = list(root.rglob("agenda-livre-dia-chromium-saibro.png"))
+          assert len(matches) == 1, "Captura exata ausente ou duplicada"
+          data = matches[0].read_bytes()
+          assert data.startswith(b"\x89PNG\r\n\x1a\n"), "Imagem invalida"
+          payload = base64.b64encode(data).decode("ascii")
+          print("JV_PREVIEW_INFO:"+matches[0].name+":"+str(len(data))+":"+hashlib.sha256(data).hexdigest())
+          for offset in range(0, len(payload), 1000):
+              print("JV_PREVIEW_PART:"+payload[offset:offset+1000])
+          print("JV_PREVIEW_END")
+          PY
