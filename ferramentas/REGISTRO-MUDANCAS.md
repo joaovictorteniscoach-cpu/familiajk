@@ -8,6 +8,33 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-10 · Claude Code: Gestão sem atualizar nem conectar (iPhone) — reconectar a nuvem (v2026-11-10-1)
+
+**Pedido do João** (foto do iPhone às 05:07, v2026-11-09-3): "veja porque não está atualizando e
+conectando… ou deixar visualmente menos carregado e mais funcional".
+
+- Causa: no iPhone, app parado/em segundo plano perde a conexão do Firebase sem aviso; o SDK
+  espaça as tentativas (até minutos). A gravação final (`transacaoConferida` → `ref.transaction`)
+  não tinha prazo: com a conexão morta no meio do envio ela ficava esperando, e como
+  `_salvamentoEmCurso` seguia ocupado, nenhuma outra tentativa começava — o quadro ficava em
+  "Aguarde a confirmação da nuvem" até fechar o app. As regras do Firebase não recusam nada da
+  v2 (só exigem a conta do dono).
+- Agora `reacordarNuvem` (goOffline → goOnline, no máximo 1 a cada 15 s) faz o SDK reenviar a
+  MESMA gravação: envio sem resposta em 20 s (vigia no `subirPartes` e no intervalo de 30 s),
+  "Tentar salvar agora" (na hora), voltar ao app depois de 30 s parado, evento `online`.
+  Não abandona a transação (evita conflito falso) nem grava duas vezes.
+- Quadro diz o motivo (`motivoPendente`): conexão caiu no meio/reconectando, nuvem não respondeu,
+  login a renovar (recusa), Firebase não carregou; mostra "Última tentativa". Datas numa linha só
+  e botão "Baixar cópia" (mesma função) para os dois botões caberem lado a lado.
+- **O app todo** (João: "não era apenas o aviso… e sim todo o app"): pedidos, vínculos,
+  confirmações, cadastros, autoavaliações, mapa e agenda dos professores chegam por leituras a
+  cada 30–45 s, e com a conexão morta todas falhavam juntas, sem aviso. `vigiarConexaoNuvem`
+  ouve `.info/connected` (liberado no `caminhoPermitido` do modo professor: estado local, só
+  leitura): desligado 20 s com o app na tela → selo "↻ Nuvem" e `reacordarNuvem`; ao voltar
+  depois de 15 s fora, ao voltar ao app (30 s+) e no `online` → `atualizarDaNuvem` busca tudo
+  na hora. Só lê; não grava.
+- Teste `testar-nuvem-reconectar-browser.cjs` (8, nuvem simulada, no validar-pr).
+
 ## 2026-11-09 · Claude Code: CI vermelho do PR #272 (head 67869c2) — teste e sinal de nuvem preso
 
 - CI `validar` falhou em `testar-contraste-fechamento-browser.cjs`: o teste chamava `saveAluno()`

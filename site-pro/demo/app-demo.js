@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-11-09-3';
+const VERSAO='2026-11-10-1';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -539,6 +539,8 @@ function tsOf(raw){try{return JSON.parse(raw).savedAt||0;}catch(e){return 0;}}
    O resumo local guarda só confirmação e SHA-256, nunca outra cópia inteira. */
 let _basePartes=null,_basePartesLida=false,_basePartesAssinatura='';
 let _salvamentoEmCurso=null,_conflitoNuvem=null,_tentativaLocal=0,_pdAlertaTimer=null;
+let _envioDesde=0,_ultTentativa=0,_ultReacordar=0,_escondidoDesde=0,_envioAtrasado=false;
+let _nuvemLigada=null,_nuvemCaiuEm=0,_vigiaLigada=false;   // ver vigiarConexaoNuvem()   // ver reacordarNuvem()
 function canonDados(v){
   if(v===null||v===undefined)return 'null';
   if(Array.isArray(v))return '['+v.map(canonDados).join(',')+']';
@@ -588,6 +590,17 @@ function marcasDasPartes(no){
 function horaProtecao(ts){
   return ts?new Date(ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'Ainda não confirmada';
 }
+/* Por que ainda não salvou na nuvem, em palavras do dia a dia (10/11). Antes o
+   quadro dizia só "Aguarde", fosse internet caída, envio preso ou login vencido. */
+function motivoPendente(){
+  if(!hasCloud())return 'O Firebase não carregou neste aparelho: feche e abra o app.';
+  if(_salvamentoEmCurso&&(_envioAtrasado||(_envioDesde&&Date.now()-_envioDesde>PRAZO_NUVEM)))
+    return 'O envio começou e a nuvem não confirmou (a conexão caiu no meio). O app está reconectando sozinho.';
+  if(recusaDoServidor())return 'A nuvem recusou a gravação: o login precisa ser renovado. Feche e abra o app; as alterações continuam guardadas aqui.';
+  if(/sem resposta/i.test(lastCloudError||''))return 'A nuvem não respondeu (internet fraca ou o app ficou parado). O app tenta de novo sozinho a cada 30 s.';
+  if(lastCloudError)return 'A nuvem respondeu com erro ('+String(lastCloudError).slice(0,90)+'). O app tenta de novo a cada 30 s.';
+  return 'Aguarde a confirmação da nuvem.';
+}
 function renderProtecaoDados(){
   const meta=metaProtecao();
   const alerta=!!(_conflitoNuvem||cloudPending||_abriuSemConferir);
@@ -596,15 +609,15 @@ function renderProtecaoDados(){
   clearTimeout(_pdAlertaTimer);_pdAlertaTimer=null;
   if(espera)_pdAlertaTimer=setTimeout(renderProtecaoDados,espera+10);
   const aviso=_conflitoNuvem?'Outra sessão alterou os dados. Confira as diferenças.':
-    cloudPending?'Há alterações salvas só neste aparelho. Aguarde a confirmação da nuvem.':
+    cloudPending?'Há alterações salvas só neste aparelho. '+motivoPendente():
     _abriuSemConferir?'A nuvem ainda não foi conferida nesta abertura.':
     meta.nuvem?'A última gravação foi confirmada pela nuvem.':'Aguardando uma gravação confirmada pela nuvem.';
   const html='<div class="pd-titulo">'+(_conflitoNuvem?'⚠ Confira antes de salvar':cloudPending?'⚠ Alterações pendentes':'☁️ Salvamento e proteção')+'</div>'
-    +'<p>'+esc(aviso)+'</p><div class="pd-datas"><span>Nuvem: <b>'+esc(horaProtecao(meta.nuvem))+'</b></span>'
-    +'<span>Cópia de segurança na nuvem: <b>'+esc(horaProtecao(meta.backup))+'</b></span></div>'
+    +'<p>'+esc(aviso)+'</p><div class="pd-datas"><span>Nuvem: <b>'+esc(horaProtecao(meta.nuvem))+'</b> · cópia: <b>'+esc(horaProtecao(meta.backup))+'</b></span>'
+    +(cloudPending&&_ultTentativa?'<span>Última tentativa: <b>'+esc(new Date(_ultTentativa).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}))+'</b></span>':'')+'</div>'
     +'<div class="pd-acoes">'+(_conflitoNuvem?'<button class="btn btn-clay" onclick="abrirConflitoNuvem()">Conferir diferenças</button>':
       cloudPending?'<button class="btn btn-clay" onclick="tentarSalvarProtegido()">Tentar salvar agora</button>':'')
-    +'<button class="btn btn-ghost" onclick="exportBackup()">Baixar cópia do aparelho</button></div>';
+    +'<button class="btn btn-ghost" onclick="exportBackup()" title="Baixar cópia do aparelho">Baixar cópia</button></div>';
   for(const id of ['pd-status','pd-detalhes']){
     const el=document.getElementById(id);if(!el)continue;
     el.className='pd-status'+(alerta?' pd-alerta':'');
@@ -674,6 +687,8 @@ async function carregarNuvemConferida(){
 }
 function tentarSalvarProtegido(){
   if(_conflitoNuvem){abrirConflitoNuvem();return;}
+  reacordarNuvem(true);
+  if(_salvamentoEmCurso){toast('Reconectando com a nuvem para terminar o envio…');renderProtecaoDados();return;}
   gravarAgora();
 }
 function planoDeEnvio(d){
@@ -1527,14 +1542,69 @@ async function transacaoConferida(ref,esperado,novo){
     if(observar)try{ref.off('value',observar);}catch(e){}
   }
 }
+/* ===== Reacordar a nuvem (10/11, foto do João: "Alterações pendentes" presa) =====
+   No iPhone, o app parado ou em segundo plano perde a conexão do Firebase sem
+   aviso, e o SDK espera cada vez mais entre as tentativas (até minutos). A
+   gravação final (transaction) não tem prazo: se a conexão cai no meio, ela
+   fica esperando, e enquanto isso nenhuma outra tentativa começa. Forçar a
+   reconexão (goOffline → goOnline) faz o SDK reenviar na hora o que estava
+   pendente — a mesma gravação, sem duplicar nem mexer em dado. */
+function reacordarNuvem(forcar){
+  if(!hasCloud()||!window.fbDB.goOffline||!window.fbDB.goOnline)return false;
+  const agora=Date.now();
+  if(!forcar&&agora-_ultReacordar<15000)return false;   // no máximo uma a cada 15 s
+  _ultReacordar=agora;
+  try{window.fbDB.goOffline();window.fbDB.goOnline();}catch(e){return false;}
+  return true;
+}
+/* ===== O app todo, não só o salvamento (10/11, João: "e sim todo o app") =====
+   Pedidos, vínculos, confirmações, cadastros, mapa e agenda dos professores
+   chegam por leituras a cada 30–45 s. Com a conexão morta (iPhone parado,
+   troca de wi-fi para 4G) todas falham juntas e nada atualiza, sem aviso.
+   .info/connected diz na hora se o Firebase está ligado: desligado por 20 s
+   com o app na tela → reconecta; ao voltar a conexão (ou o app), busca tudo
+   de novo na hora em vez de esperar o próximo ciclo. Só lê; não grava nada. */
+function vigiarConexaoNuvem(){
+  if(_vigiaLigada||!hasCloud())return;
+  try{
+    window.fbDB.ref('.info/connected').on('value',s=>{
+      const lig=!!(s&&s.val()),antes=_nuvemLigada;_nuvemLigada=lig;
+      if(!lig){if(!_nuvemCaiuEm)_nuvemCaiuEm=Date.now();return;}
+      const fora=_nuvemCaiuEm?Date.now()-_nuvemCaiuEm:0;_nuvemCaiuEm=0;
+      if(antes!==false||!CARREGADO)return;
+      if(cloudPending&&!_conflitoNuvem)setTimeout(()=>gravarAgora(),800);
+      else if(!cloudPending&&!_conflitoNuvem&&fora>15000)setSave('✓ salvo na nuvem','ok');
+      if(fora>15000)atualizarDaNuvem();
+    });
+    _vigiaLigada=true;
+  }catch(e){}
+}
+function atualizarDaNuvem(){
+  if(!CARREGADO||!hasCloud())return;
+  [()=>syncPedidos(true),()=>carregarVinculos(true),()=>syncRequests(true),carregarNotifs,carregarConfirmacoes,
+   carregarCadastros,carregarAutoAval,lerMapaQuadra,lerAgendaProf].forEach(f=>{
+    try{const r=f();if(r&&typeof r.catch==='function')r.catch(()=>{});}catch(e){}
+  });
+}
+setInterval(()=>{
+  if(!CARREGADO||!hasCloud()||document.hidden)return;
+  vigiarConexaoNuvem();
+  if(_nuvemLigada===false&&_nuvemCaiuEm&&Date.now()-_nuvemCaiuEm>20000){
+    if(!cloudPending&&!_conflitoNuvem)setSave('conectando à nuvem…');   // selo "↻ Nuvem", não "✓"
+    reacordarNuvem(false);
+  }
+},10000);
 async function subirPartes(){
   if(!hasCloud()||!CARREGADO||!window._espacoAberto||_conflitoNuvem)return null;
   if(_salvamentoEmCurso)return _salvamentoEmCurso;
   const congelado=JSON.stringify(DB),dados=JSON.parse(congelado);
+  _envioDesde=_ultTentativa=Date.now();_envioAtrasado=false;
   _salvamentoEmCurso=(async()=>{
     const aviso=setTimeout(()=>{
-      if(_salvamentoEmCurso){cloudPending=true;marcarSemNuvem(true);setSave('⚠ aguardando confirmação da nuvem','err');}
+      if(_salvamentoEmCurso){_envioAtrasado=true;cloudPending=true;marcarSemNuvem(true);setSave('⚠ aguardando confirmação da nuvem','err');}
     },PRAZO_NUVEM);
+    // envio sem resposta em 20 s: a conexão caiu no meio; reconecta para o SDK reenviar
+    const vigia=setTimeout(()=>{if(_salvamentoEmCurso){reacordarNuvem(false);renderProtecaoDados();}},20000);
     try{
       const MARCA={_prazo:1};
       const s=await comPrazo(v2ref('').get(),PRAZO_NUVEM,MARCA);
@@ -1570,11 +1640,11 @@ async function subirPartes(){
       lastCloudError=String(e&&e.message||e);cloudPending=true;marcarSemNuvem(true);
       setSave(recusaDoServidor()?'⚠ a nuvem RECUSOU ⓘ':'⚠ salvo só no aparelho ⓘ','err');
       return null;
-    }finally{clearTimeout(aviso);}
+    }finally{clearTimeout(aviso);clearTimeout(vigia);}
   })();
   try{return await _salvamentoEmCurso;}
   finally{
-    _salvamentoEmCurso=null;
+    _salvamentoEmCurso=null;_envioDesde=0;_envioAtrasado=false;
     if(cloudPending&&!_conflitoNuvem&&JSON.stringify(DB)!==congelado){
       clearTimeout(saveTimer);saveTimer=setTimeout(()=>gravarAgora(),500);
     }
@@ -1861,9 +1931,28 @@ async function gravarAgora(){
   if(env&&!cloudPending){publish();publicarMapaQuadra();publicarAgendaProf();finalizarAvisosPagos();}
   return !!env&&!cloudPending;
 }
-document.addEventListener('visibilitychange',()=>{if(document.hidden&&cloudPending)gravarAgora();});
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){_escondidoDesde=Date.now();if(cloudPending)gravarAgora();return;}
+  /* voltou depois de 30 s ou mais parado: a conexão do Firebase pode ter morrido
+     sem aviso. Reconecta e, se havia alteração pendente, tenta de novo. */
+  const parado=_escondidoDesde?Date.now()-_escondidoDesde:0;_escondidoDesde=0;
+  if(!CARREGADO||!hasCloud()||(parado<30000&&!cloudPending))return;
+  vigiarConexaoNuvem();reacordarNuvem(false);
+  if(cloudPending&&!_conflitoNuvem)setTimeout(()=>gravarAgora(),1500);
+  if(parado>=30000)setTimeout(atualizarDaNuvem,2000);   // o que chegou enquanto estava parado
+});
+window.addEventListener('online',()=>{
+  if(!CARREGADO||!hasCloud())return;
+  reacordarNuvem(true);
+  if(cloudPending&&!_conflitoNuvem)setTimeout(()=>gravarAgora(),1500);
+  setTimeout(atualizarDaNuvem,2000);
+});
 window.addEventListener('pagehide',()=>{if(cloudPending)gravarAgora();});
-setInterval(()=>{if(CARREGADO&&cloudPending&&!_conflitoNuvem)gravarAgora();},30000);
+setInterval(()=>{
+  if(!CARREGADO||!cloudPending||_conflitoNuvem)return;
+  if(_salvamentoEmCurso&&_envioDesde&&Date.now()-_envioDesde>20000)reacordarNuvem(false);   // envio preso
+  gravarAgora();
+},30000);
 document.getElementById('save-state').style.pointerEvents='auto';
 document.getElementById('save-state').style.cursor='pointer';
 document.getElementById('save-state').onclick=()=>{
