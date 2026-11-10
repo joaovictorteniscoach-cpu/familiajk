@@ -8,6 +8,72 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-10 · Codex: conferência de ações repetidas e etapas dispensáveis (somente auditoria)
+
+- Responsável: Codex; branch `codex/auditoria-acoes-repetidas-2026-11-10`;
+  base main `c37a471dbe5b2dceedbe1d555d758c536269b2d1`.
+  Pedido do João: verificar ações duplicadas/desnecessárias para deixar os apps mais resumidos.
+- Estado: **propostas abaixo; nenhuma correção implementada ou publicada nesta auditoria**.
+  Somente este registro é acrescentado. Não altera dados, saldos, pagamentos, reservas,
+  regras do Firebase, versão, cache ou o PR #273 (banco de exercícios).
+- Referência da versão em uso: PR #276 integrado; v2026-11-10-2.
+  CI do head aprovado: [42892824012](https://github.com/joaovictorteniscoach-cpu/familiajk/actions/runs/42892824012);
+  Pages: [42911412675](https://github.com/joaovictorteniscoach-cpu/familiajk/actions/runs/42911412675);
+  monitoramento: [42911486971](https://github.com/joaovictorteniscoach-cpu/familiajk/actions/runs/42911486971).
+  Esses resultados pertencem à entrega anterior, não a novos testes desta conferência.
+
+Achados, por prioridade (linhas da base acima):
+
+1. **Confirmação do envio antes do sucesso.** No aluno, `jaPagueiPix`
+   (`app-aluno/index.html:4630`) chama `enviarPedido` sem aguardar e mostra
+   "João avisado"; `enviarPedido:4744` não informa erro ao esgotar as tentativas.
+   `confirmarLocacao:5678` só dispara a notificação genérica e abre o WhatsApp;
+   `notificarJoao:2784` não aguarda a gravação e ignora falhas.
+   Assim, o texto de sucesso pode aparecer sem confirmação do envio.
+   Proposta: resultado explícito, aguardar gravação e mostrar falha/tentativa quando necessário.
+   Pix continua sendo aviso de pagamento em análise; isso não comprova pagamento recebido.
+   Locação continua dependendo da confirmação da academia. Não retirar o WhatsApp desse
+   caminho antes de garantir o registro do pedido. Não foi constatada perda de pedidos reais.
+
+2. **Reposição com duas entradas na mesma tela.** Início: cartão de reposições
+   (:1975) e ação rápida "Solicitar reposição" (:2013) chamam `irMarcarReposicao`.
+   Créditos: botão do painel (:2127, visível com saldo) e ação rápida (:2153)
+   chamam a mesma função. As regras CSS consultadas não escondem essas ações rápidas.
+   Proposta: manter o saldo bem aparente e um botão junto dele, retirando a repetição
+   da mesma tela; preservar atalhos úteis entre telas e os estados sem saldo.
+
+3. **Saída automática para o WhatsApp após pedido pelo app.**
+   Reserva (:5795) e cancelamento (:2862) abrem WhatsApp depois de aguardar
+   a gravação na fila. Proposta: manter o aluno no app, com status claro e
+   contato opcional "Falar com a academia". Preservar aviso à Gestão, registro durável,
+   limite de quatro horas, confirmação de cancelamento e releitura de disponibilidade.
+   Não tratar notificação e fila de reserva como dois débitos ou duas reservas.
+
+4. **Menos janelas para agendar.** Após tocar em Livre, a escolha da atividade
+   leva a outra janela de agendamento. Avaliar uma janela com atividade,
+   campos relevantes e uma confirmação final. Manter somente opções permitidas,
+   capacidade 1/2/3/4, divisão por atividade, renovação segura e bloqueio de duplo envio.
+   Não duplicar as melhorias de Livre/Ocupado já publicadas no PR #276.
+
+5. **Ficha da Gestão mais curta.** Em `app-gestao/lib/app-gestao.js:8551–8594`,
+   manter ações frequentes aparentes e avaliar recolher ajustes manuais e funções
+   ocasionais em "Mais ações". Encurtar textos repetidos e usar "academia" nas
+   mensagens institucionais pertinentes, sem substituir nomes/chaves/motivos do extrato
+   globalmente. "Usar reposição" no alerta (:8548) e na seção Aula (:8556) são
+   condicionais mutuamente exclusivos; não são dois botões simultâneos.
+   "Registrar pagamento" também muda de seção conforme o estado; preservar essa lógica.
+
+- Verificação realizada: leitura do código e CSS da base, conferência de main,
+  PRs e issues abertos. Não houve execução nova de navegador nem acesso ao extrato real.
+  Não se afirma auditoria financeira ou correção dos créditos.
+- Próxima implementação deve testar envio com sucesso/falha/sem nuvem e toque repetido;
+  saldo zero/positivo, dependentes e pacote misto; reservas exclusivas e compartilhadas;
+  cancelamento no limite de quatro horas. Rever a imagem antes de publicar mudança de tela.
+- A proposta financeira de unificação dos créditos permanece na issue #275 e não é
+  duplicada por este registro. Correções de dados reais continuam retidas até reconciliação.
+
+---
+
 ## 2026-11-10 · Codex: agenda do aluno com Livre/Ocupado e opções após toque (proposta 2026-11-10-2)
 
 - Responsável: Codex; branch `codex/agenda-aluno-livre-ocupado-2026-11-10`; base main `9e8fbdea17188f8037be8acdbd2252e4e58d75f1`.
