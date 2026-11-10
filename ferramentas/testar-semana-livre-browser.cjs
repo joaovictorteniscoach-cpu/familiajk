@@ -47,8 +47,11 @@ const HORAS=['07:00','10:00','13:00','17:00','20:00','21:00'];
    assert.deepEqual(await celula(3,'13:00'),{txt:'Livre',cls:'wc livre'});
    assert.deepEqual(await celula(3,'10:00'),{txt:'Livre',cls:'wc livre'});
    assert.deepEqual(await celula(4,'13:00'),{txt:'Livre',cls:'wc livre'});
-   assert.deepEqual(await celula(3,'21:00'),{txt:'Ocupado',cls:'wc ocup'});
-   assert.deepEqual(await celula(1,'13:00'),{txt:'Passou',cls:'wc passou'});
+   const ocupado=await celula(3,'21:00');
+   assert.equal(ocupado.cls,'wc ocup');assert.ok(['Ocupado','Ocup.'].includes(ocupado.txt));
+   assert.equal(await p.locator('#ag-view .wc.ocup').first().getAttribute('title'),'Ocupado');
+   const passado=await celula(1,'13:00');
+   assert.equal(passado.cls,'wc passou');assert.ok(['Passou','Pass.'].includes(passado.txt));
   });
   await check('toque no Livre só de locação abre locação e torneio, sem aula nem reposição',async()=>{
    const r=await tocar('13:00');
