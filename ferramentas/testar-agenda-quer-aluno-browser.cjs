@@ -88,7 +88,10 @@ function fixture(torneio){
    });
    await check(label+'compartilhamento oferece somente a atividade já existente',async()=>{
     assert.deepEqual(await opcoes(QUA,'16:00'),['loc']);
-    assert.deepEqual(await opcoes(QUA,'18:00'),['aula','repo']);
+    assert.deepEqual(await opcoes(QUA,'18:00'),['aula'],'reposição particular não cobre grupo');
+    await p.evaluate(()=>{EU.tipo='Dupla';});
+    assert.deepEqual(await opcoes(QUA,'18:00'),['aula','repo'],'reposição compatível aparece no grupo');
+    await p.evaluate(()=>{EU.tipo='Particular';});
     await p.evaluate(()=>{PUB.grade.eventos.find(e=>e.id==='e16').tipo='torneio';});
     assert.deepEqual(await opcoes(QUA,'16:00'),['tor']);
     await abrir();
