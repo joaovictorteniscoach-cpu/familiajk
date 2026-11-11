@@ -58,8 +58,10 @@ rodada 2 do visual sóbrio foram descartadas). Então:
   janela que sobe, linha da agenda). Não criar estilo novo.
 - Não propor mudança de cor, fonte, ícone ou disposição sem ele pedir.
 - **Barra inferior (11/11/2026): preservar os ícones dourados originais da Gestão.**
-  No App do Aluno, reutilizar esse mesmo conjunto nas seis abas; não substituir por
-  desenhos monocromáticos. A barra da Gestão mantém seu conjunto existente.
+  No App do Aluno, reutilizar esse mesmo conjunto nas seis abas existentes; não
+  substituir por desenhos monocromáticos. Torneio também fica direto na barra,
+  com a taça já existente em dourado; Personal mantém suas seis opções anteriores.
+  A barra da Gestão mantém seu conjunto existente.
 - **Ícone novo ou emoji novo, só se ele pedir.** Ele já reprovou ícones trocados
   ("ficaram ainda pior"). Use os desenhos de `lib/icones.js` (SVG próprio). O
   tempo/clima usa só SVG (`iconeClima`), nunca emoji.

@@ -8,6 +8,28 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-11 · Codex: Torneio visível na barra do Aluno (complemento do PR #277)
+
+- Pedido adicional explícito do João durante a validação: mostrar também o ícone
+  do Torneio ao aluno. Mesmo responsável e branch; base deste complemento
+  `4d0a7ab91095e5fb0008034ca2dbef43df1d9072`, ainda não publicada.
+- Torneio passa do Perfil para a barra inferior, com o mesmo desenho da taça
+  existente e acabamento dourado do Perfil. As seis abas anteriores permanecem.
+  Badge transferido sem repetir ID; abrir Torneio por atalho/fala também seleciona
+  a aba correta. Aluno Personal mantém a exclusão anterior do Torneio e seis abas.
+- Layout reserva alvos de pelo menos 44 px e rótulos com pelo menos 12 px em
+  320/390 px. Ajustes somente nas folhas próprias de Aulas e Letras; fontes da
+  Gestão e do gerador Saibro (CSS inline/visual-premium) não mudam.
+- Teste de envios existente ampliado com navegação, indicador ativo, 320/390 px,
+  largura dos rótulos/alvos, Personal e saldos preservados, em Chromium/WebKit
+  nos dois temas. Capturador agora espera o fechamento da ficha para a imagem da
+  Gestão. CI e novas prévias deste head pendentes, conforme resultado final no PR.
+- Proposta **2026-11-11-3**, cinco carimbos e demo sincronizados. Sem mudança de
+  regras, valores, fórmulas ou dados reais. O CI da proposta -2 pode ser
+  substituído pela nova execução; não presumir aprovação por testes da base.
+
+---
+
 ## 2026-11-11 · Codex: preservar os ícones dourados da barra inferior (PR #277)
 
 - Pedido explícito do João após revisar as prévias: gostou da simplificação,

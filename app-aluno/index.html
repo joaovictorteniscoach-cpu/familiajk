@@ -1683,15 +1683,15 @@ html body:not(#jv) #pedir-box .btn-ghost{background:#F3EDE2!important;border:1px
 .login .login-sub{opacity:1}
 .login-priv{color:rgba(250,247,242,.8)}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-11-11-2">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-11-11-3">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-11-11-2">
-<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-11-11-2">
-<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-11-11-2">
-<link rel="stylesheet" href="lib/visual-sobrio.css?v=2026-11-11-2">
-<link rel="stylesheet" href="lib/letras-maiores.css?v=2026-11-11-2">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-11-11-3">
+<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-11-11-3">
+<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-11-11-3">
+<link rel="stylesheet" href="lib/visual-sobrio.css?v=2026-11-11-3">
+<link rel="stylesheet" href="lib/letras-maiores.css?v=2026-11-11-3">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -2184,21 +2184,21 @@ function esperarAuth(){
       <div class="jv-quick-title">Mais do aluno</div>
       <div class="jv-quick">
         <button type="button" onclick="irMinhasAulas()"><span data-ic="ball"></span>Minhas aulas</button>
-        <button type="button" id="perfil-torneio-btn" onclick="goAluno('torneio',null)"><span>🏆</span>Torneio <i class="nav-badge" id="nb-al-torneio"></i></button>
         <button type="button" onclick="falarComProfessor()"><span>💬</span>Falar com a academia</button>
       </div>
       <button type="button" class="jv-logout" onclick="sair()">↪ Sair do aplicativo</button>
     </section>
 
-  <nav class="nav jv-nav-3d">
+  <nav class="nav jv-nav-3d" data-torneio="sim">
     <button id="nav-al-inicio" class="on" onclick="goAluno('inicio',this)"><span class="ico" aria-hidden="true" data-ic="navhome"></span>Início</button>
     <button id="nav-al-agenda" onclick="goAluno('agenda',this)"><span class="ico" aria-hidden="true" data-ic="navcal"></span><span class="nav-badge" id="nb-al-agenda"></span>Agenda</button>
     <button id="nav-al-aulas" onclick="irMinhasAulas()"><span class="ico" aria-hidden="true" data-ic="navball"></span><span class="mau-nav-txt">Minhas aulas</span></button>
     <button id="nav-evolucao" onclick="goAluno('evolucao',this)"><span class="ico" aria-hidden="true" data-ic="navline"></span>Evolução</button>
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" aria-hidden="true" data-ic="navcash"></span>Créditos</button>
+    <button id="nav-al-torneio" onclick="goAluno('torneio',this)"><span class="ico" aria-hidden="true" data-ic="navtrophy"></span><span class="nav-badge" id="nb-al-torneio"></span>Torneio</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" aria-hidden="true" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-11-11-2"></script>
+<script src="lib/icones.js?v=2026-11-11-3"></script>
 </div>
 
 <!-- ASSISTENTE POR VOZ: consultar horário livre, agendar, cancelar, ver aulas (lib/voz-aluno.js) -->
@@ -2445,7 +2445,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-11-11-2';
+const VERSAO='2026-11-11-3';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -3755,12 +3755,11 @@ function meuEmoji(){return isPersonal()?'🏋️':'🎾';}
 function applyTipoUI(){
   const personal=isPersonal();
   const nav=document.querySelector('.nav');
-  /* A barra premium tem cinco abas fixas para todos. Torneio e Minhas aulas
-     continuam no Perfil, então tipo Personal não pode mais encolher a barra
-     para quatro colunas (isso fazia o quinto botão quebrar para outra linha). */
-  const tBtn=document.getElementById('perfil-torneio-btn');
-  if(tBtn)tBtn.style.display=personal?'none':'';
-  if(nav)nav.style.gridTemplateColumns='repeat(5,1fr)';
+  /* Torneio direto na barra, sem remover as seis abas existentes.
+     Personal mantém as seis opções anteriores; o CSS distribui as colunas. */
+  const tBtn=document.getElementById('nav-al-torneio');
+  if(tBtn)tBtn.hidden=personal;
+  if(nav){nav.dataset.torneio=personal?'nao':'sim';nav.style.removeProperty('grid-template-columns');}
   const buyBtn=document.getElementById('buy-btn-main');
   if(buyBtn)buyBtn.textContent=personal?'🏋️ Comprar treino avulso · pacotes':'💳 Comprar créditos · aula avulsa · locar quadra';
   const mb=document.getElementById('mfit-box');
@@ -3856,7 +3855,7 @@ function goAluno(id,btn){
   const el=document.getElementById('apg-'+id);if(el)el.classList.add('on');
   document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('on'));
   if(!btn&&id==='aulas')btn=document.getElementById('nav-al-aulas');   // aba própria na barra de baixo
-  if(!btn&&id==='torneio')btn=document.getElementById('nav-al-perfil');
+  if(!btn&&id==='torneio')btn=document.getElementById('nav-al-torneio');
   if(btn)btn.classList.add('on');
   if(id==='aulas'){renderMinhas();renderHistAluno();}
   if(id==='evolucao')renderEvolucaoPage();
@@ -5938,7 +5937,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-11-11-2').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-11-11-3').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
@@ -5947,6 +5946,6 @@ window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);})
   setTimeout(()=>esperarEIniciar(t+1),150);
 })(0);
 </script>
-<script src="lib/voz-aluno.js?v=2026-11-11-2"></script>
+<script src="lib/voz-aluno.js?v=2026-11-11-3"></script>
 </body>
 </html>

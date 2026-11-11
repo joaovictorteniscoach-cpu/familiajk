@@ -10,13 +10,19 @@
 html body #app#app#app .jv-student-brand span{font-size:12.5px!important}
 html body #app#app#app .jv-student-brand b{font-size:14px!important}
 
-/* Barra de baixo (6 botões: sobe pouco para caber em celular pequeno) */
+/* Barra de baixo: seis opções anteriores e Torneio para alunos de tênis. */
 html body #app#app#app .nav button,
 html body #app#app#app .nav button .mau-nav-txt{font-size:12.5px!important}
 /* Celular bem pequeno (320 px): "Evolução" passava 1–2 px do botão. */
 @media (max-width:340px){
   html body #app#app#app .nav button,
   html body #app#app#app .nav button .mau-nav-txt{font-size:12px!important;letter-spacing:-.25px!important}
+}
+
+/* Sete abas em celulares estreitos, sem reduzir a letra abaixo de 12 px. */
+@media (max-width:379px){
+  html body #app#app#app .nav[data-torneio="sim"] button,
+  html body #app#app#app .nav[data-torneio="sim"] button .mau-nav-txt{font-size:12px!important;letter-spacing:-.5px!important}
 }
 
 /* Rótulos que estavam em 10–11,5 px */

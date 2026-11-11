@@ -47,6 +47,41 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
    const label=motor+'/'+tema+' · ';
    const screenshot=async nome=>{const dir=process.env.JV_VISUAL_DIR;if(dir){fs.mkdirSync(dir,{recursive:true});await p.screenshot({path:path.join(dir,'envios-'+nome+'-'+motor+'-'+tema+'.png')});}};
    await reset();
+   await check(label+'Torneio abre direto na barra; sete abas legíveis em 320/390 px; Personal preservado',async()=>{
+    await reset();
+    const antes=await p.evaluate(()=>JSON.stringify(EU));
+    for(const width of [320,390]){
+     await p.setViewportSize({width,height:844});
+     const measures=await p.evaluate(()=>{
+      const nav=document.querySelector('.nav'),buttons=[...nav.querySelectorAll('button')].filter(b=>getComputedStyle(b).display!=='none');
+      const failures=[];
+      for(const b of buttons){
+       const r=b.getBoundingClientRect();if(r.width<43.9||r.height<43.9)failures.push(b.id+': alvo pequeno');
+       for(const n of b.childNodes){
+        if(n.nodeType!==3||!n.textContent.trim())continue;
+        const range=document.createRange();range.selectNode(n);const t=range.getBoundingClientRect();
+        if(t.left<r.left-.75||t.right>r.right+.75)failures.push(b.id+': rótulo fora do botão '+(t.right-r.right).toFixed(2));
+       }
+       if(parseFloat(getComputedStyle(b).fontSize)<12)failures.push(b.id+': letra pequena');
+      }
+      return {count:buttons.length,failures,viewport:document.documentElement.scrollWidth<=innerWidth+1};
+     });
+     assert.equal(measures.count,7);assert.deepEqual(measures.failures,[]);assert.equal(measures.viewport,true);
+     await p.locator('#nav-al-torneio').click();
+     assert.equal(await p.locator('#apg-torneio').isVisible(),true);
+     assert.equal(await p.locator('#nav-al-torneio').evaluate(b=>b.classList.contains('on')),true);
+     assert.equal(await p.locator('#nav-al-perfil').evaluate(b=>b.classList.contains('on')),false);
+     await screenshot('torneio-'+width);
+     await p.evaluate(()=>goAluno('creditos',document.getElementById('nav-al-creditos')));
+     await screenshot('barra-'+width);
+    }
+    assert.equal(await p.evaluate(()=>JSON.stringify(EU)),antes,'navegar não muda saldo ou cadastro');
+    await p.evaluate(()=>{goAluno('torneio',null);EU.tipo='Personal';applyTipoUI();});
+    assert.equal(await p.locator('#nav-al-torneio').isVisible(),false);
+    assert.equal(await p.locator('#apg-inicio').isVisible(),true);
+    assert.equal(await p.locator('.nav button:visible').count(),6);
+    await reset();
+   });
    await check(label+'reposições têm um atalho junto ao saldo em cada tela',async()=>{
     await p.locator('#home-repos-card').waitFor({state:'visible'});
     assert.equal(await p.locator('#apg-inicio [onclick="irMarcarReposicao()"]').count(),1);
@@ -160,7 +195,7 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
     await g.locator('#fic-mais-acoes summary').click();
     assert.equal(await g.locator('[onclick="addRepos(\'fake\')"]').isVisible(),true);
     assert.equal(await g.evaluate(()=>JSON.stringify(DB)===__antes),true);
-    const dir=process.env.JV_VISUAL_DIR;if(dir){fs.mkdirSync(dir,{recursive:true});await g.locator('#fic-mais-acoes summary').click();await g.screenshot({path:path.join(dir,'envios-ficha-'+motor+'-'+tema+'.png')});await g.evaluate(()=>{esconderFicha();go('alunos',document.querySelector('.nav [data-ic="navball"]').closest('button'));});await g.screenshot({path:path.join(dir,'envios-gestao-alunos-'+motor+'-'+tema+'.png')});}
+    const dir=process.env.JV_VISUAL_DIR;if(dir){fs.mkdirSync(dir,{recursive:true});await g.locator('#fic-mais-acoes summary').click();await g.screenshot({path:path.join(dir,'envios-ficha-'+motor+'-'+tema+'.png')});await g.evaluate(()=>{esconderFicha();go('alunos',document.querySelector('.nav [data-ic="navball"]').closest('button'));});await g.locator('#ficha-aluno').waitFor({state:'hidden'});await g.screenshot({path:path.join(dir,'envios-gestao-alunos-'+motor+'-'+tema+'.png')});}
     await g.close();
    });
    assert.deepEqual(errors,[]);await c.close();

@@ -59,6 +59,10 @@ html body:not(#jv) #ov-aulas-cal .aul-cal-actions .btn-ghost{background:#E7E4D9!
 
 /* Minhas aulas: aba própria na barra de baixo (6 botões) e botão laranja no Início. */
 html body .nav.jv-nav-3d{grid-template-columns:repeat(6,minmax(0,1fr))!important;padding-left:3px!important;padding-right:3px!important}
+/* Torneio visível: sete alvos de pelo menos 44 px, inclusive em 320 px.
+   Evolução/Créditos recebem a largura de que os rótulos precisam. */
+html body .nav.jv-nav-3d[data-torneio="sim"]{grid-template-columns:repeat(3,minmax(44px,1fr)) minmax(48px,1.1fr) minmax(46px,1.05fr) repeat(2,minmax(44px,1fr))!important}
+html body .nav.jv-nav-3d button[hidden]{display:none!important}
 html body .nav.jv-nav-3d button{min-width:0;padding-left:1px!important;padding-right:1px!important;line-height:1.12;text-align:center}
 .nav .mau-nav-txt{display:block;max-width:100%;white-space:normal;overflow-wrap:anywhere}
 @media (max-width:379px){html body .nav.jv-nav-3d button{font-size:10.2px!important;letter-spacing:0!important}}
