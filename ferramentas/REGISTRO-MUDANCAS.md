@@ -8,6 +8,24 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-11 · Codex: retomar validação e registrar nova proposta de créditos
+
+- CI 43032962962 ficou mais de dez minutos na instalação dos navegadores, antes
+  de executar os testes. A etapa recebe limite de oito minutos; nova execução
+  em máquina limpa, com todos os testes preservados. Sem alteração nos apps,
+  versão proposta continua 2026-11-11-6; resultado final no PR #277.
+- João trouxe o resultado da enquete: uma única apresentação de créditos;
+  aula realizada debita, aula não realizada preserva e saldo atravessa o mês.
+  Estudar teto de 25% na mensalidade OU mínimos grupo R$270/particular R$480.
+  Esta é a nova proposta em análise; não aplicar a orientação anterior de 50%
+  automaticamente nem reabrir meses fechados. Centralizar estudo na issue #275.
+- Simulação, origem/validade e migração exigem conferência separada. Nenhum saldo,
+  cobrança, validade, crédito antigo ou dado real foi alterado por esta etapa.
+  Pendentes: alcance dos mínimos, validade de quatro meses e cancelamento tardio.
+  Sem novo acesso ao Firebase confirmado; estudo usa exemplos fictícios.
+
+---
+
 ## 2026-11-11 · Codex: Torneio visível na barra do Aluno (complemento do PR #277)
 
 - Pedido adicional explícito do João durante a validação: mostrar também o ícone
