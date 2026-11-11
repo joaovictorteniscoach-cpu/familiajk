@@ -1683,15 +1683,15 @@ html body:not(#jv) #pedir-box .btn-ghost{background:#F3EDE2!important;border:1px
 .login .login-sub{opacity:1}
 .login-priv{color:rgba(250,247,242,.8)}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-11-10-2">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-11-10-3">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-11-10-2">
-<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-11-10-2">
-<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-11-10-2">
-<link rel="stylesheet" href="lib/visual-sobrio.css?v=2026-11-10-2">
-<link rel="stylesheet" href="lib/letras-maiores.css?v=2026-11-10-2">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-11-10-3">
+<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-11-10-3">
+<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-11-10-3">
+<link rel="stylesheet" href="lib/visual-sobrio.css?v=2026-11-10-3">
+<link rel="stylesheet" href="lib/letras-maiores.css?v=2026-11-10-3">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -2010,7 +2010,6 @@ function esperarAuth(){
     <div class="jv-quick-title">⚡ Ações rápidas</div>
     <div class="jv-quick">
       <button type="button" onclick="goAluno('agenda',document.getElementById('nav-al-agenda'))"><span data-ic="cal"></span>Agendar aula</button>
-      <button type="button" onclick="irMarcarReposicao()"><span data-ic="refresh"></span>Solicitar reposição</button>
       <button type="button" onclick="abrirTreinoPremium()"><span data-ic="line"></span>Ver treino do mês</button>
     </div>
   </section>
@@ -2150,7 +2149,6 @@ function esperarAuth(){
       <div class="jv-quick-title">Ações rápidas</div>
       <div class="jv-quick">
         <button type="button" id="cred-page-pix" onclick="pagarPix()"><span><img class="jv-pix-mark" src="assets/pix-simbolo.svg" alt="" width="25" height="25"></span>Pagar com Pix</button>
-        <button type="button" onclick="irMarcarReposicao()"><span data-ic="refresh"></span>Solicitar reposição</button>
         <button type="button" onclick="falarComProfessor()"><span data-ic="user"></span>Falar com a academia</button>
       </div>
           <button id="cred-page-mes" type="button" class="aul-link" onclick="irMinhasAulas()">Minhas aulas ›</button>
@@ -2200,7 +2198,7 @@ function esperarAuth(){
     <button id="nav-al-creditos" onclick="goAluno('creditos',this)"><span class="ico" data-ic="navcash"></span>Créditos</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-11-10-2"></script>
+<script src="lib/icones.js?v=2026-11-10-3"></script>
 </div>
 
 <!-- ASSISTENTE POR VOZ: consultar horário livre, agendar, cancelar, ver aulas (lib/voz-aluno.js) -->
@@ -2447,7 +2445,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-11-10-2';
+const VERSAO='2026-11-10-3';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -2781,11 +2779,11 @@ function msAulaBR(dk,hora){
 }
 function horasParaAula(dk,hora){return (msAulaBR(dk,hora)-agoraReal())/3600000;}
 function podeCancelarAula(dk,hora){return horasParaAula(dk,hora)>=LIMITE_CANCEL_H;}
-function notificarJoao(acao,dk,hora){
-  if(!hasCloud())return;
+async function notificarJoao(acao,dk,hora){
+  if(!hasCloud())return false;
   const tipo=EU?(isPersonal()?'personal':(isGrupo()?'grupo':'aula')):'aula';
-  const n={acao,nome:EU?EU.nome:'',codigo:MEU.codigo,data:dk,hora,tipo,ts:agoraReal()};   // hora do servidor: a Gestão mostra quando foi enviado
-  try{filaPush('jvtenis/notificacoes',n).catch(function(){});}catch(e){}
+  const n={acao,nome:EU?EU.nome:'',codigo:MEU.codigo,data:dk,hora,tipo,ts:agoraReal()};
+  try{await filaPush('jvtenis/notificacoes',n);return true;}catch(e){return false;}
 }
 function dataHoraAulaValida(dk,hora){
   if(!/^\d{4}-\d{2}-\d{2}$/.test(String(dk))||!/^([01]\d|2[0-3]):[0-5]\d$/.test(String(hora)))return false;
@@ -2858,8 +2856,7 @@ async function cancelarAula(dk,hora,rec){
     await saveMeu();
     notificarJoao('cancelou',dk,hora);
     renderAgenda();renderMinhas();renderPremiumAluno();checarAulaHoje();
-    toast('Cancelamento enviado ao João. A vaga é liberada após a confirmação na Gestão.');
-    setTimeout(()=>abrirWhatsApp('5541995415712','Olá João! Precisei *cancelar* minha aula de '+fmtData(dk)+' às '+hora+'. 🎾'),700);
+    toast('Cancelamento enviado à academia. A vaga será liberada após a confirmação.');
     return true;
   }catch(e){toast('Não consegui enviar o cancelamento. Sua aula continua marcada; tente novamente.');return false;}
   finally{ACOES_AULA_EM_CURSO.delete(k);renderMinhas();}
@@ -4627,41 +4624,49 @@ function abrirPix(valor,desc,pedido){
   document.getElementById('ov-pix').classList.add('on');
 }
 function copiarPix(){if(!pixCtx)return;try{navigator.clipboard&&navigator.clipboard.writeText(pixCtx.code);}catch(e){}toast('📋 Código Pix copiado!');}
-function jaPagueiPix(){
-  if(!pixCtx)return;
-  if(pixCtx.pedido)enviarPedido(pixCtx.pedido);
-  document.getElementById('ov-pix').classList.remove('on');
-  const v=pixCtx.valor?(' ('+fmt(pixCtx.valor)+')'):'';
-  setTimeout(()=>abrirWhatsApp('5541995415712','Olá João! Acabei de *pagar via Pix*'+v+'. Pode confirmar quando puder? 🎾'),300);
-  toast('✅ João avisado! Ele confirma assim que cair.');
-  pixCtx=null;
+let _pixEnviando=false;
+async function jaPagueiPix(){
+  if(!pixCtx||_pixEnviando)return false;
+  const contexto=pixCtx;
+  if(!contexto.pedido){toast('Fale com a academia para confirmar esse pagamento.');return false;}
+  _pixEnviando=true;
+  const botao=document.querySelector('[onclick="jaPagueiPix()"]');if(botao)botao.disabled=true;
+  try{
+    if(!await enviarPedido(contexto.pedido))return false;
+    if(pixCtx===contexto){
+      document.getElementById('ov-pix').classList.remove('on');
+      pixCtx=null;
+    }
+    toast('Aviso enviado à academia. Pagamento em análise.');
+    return true;
+  }finally{_pixEnviando=false;if(botao)botao.disabled=false;}
 }
 function pagarPix(){
   if(dependenteAluno()){avisoPagamentoFamilia();return;}
   if(mensOculta()){avisoMensOculta();return;}
   abrirPix(valorAPagarMensalidade(),'Mensalidade · '+(EU.nome||'').split(' ')[0],{kind:'mensalidade',metodo:'Pix',valor:valorAPagarMensalidade()});
 }
-function pagarCartao(){
-  if(dependenteAluno()){avisoPagamentoFamilia();return;}
-  if(mensOculta()){avisoMensOculta();return;}
+async function pagarCartao(){
+  if(dependenteAluno()){avisoPagamentoFamilia();return false;}
+  if(mensOculta()){avisoMensOculta();return false;}
   const link=(EU.cardLink&&EU.cardLink.trim())||(PUB.cardLink&&PUB.cardLink.trim())||'';
+  // O link de pagamento abre no toque, para funcionar também no Safari.
   if(link){
     const a=document.createElement('a');a.href=link;a.target='_blank';a.rel='noopener';
     document.body.appendChild(a);a.click();document.body.removeChild(a);
-    enviarPedido({kind:'mensalidade',metodo:'cartão',valor:valorAPagarMensalidade()});
-    setTimeout(()=>abrirWhatsApp('5541995415712','Olá João! Vou pagar a mensalidade ('+fmt(valorAPagarMensalidade())+') no cartão pelo link. 🎾'),900);
-    return;
   }
-  enviarPedido({kind:'mensalidade',metodo:'cartão (pediu link)',valor:valorAPagarMensalidade()});
-  toast('Pedido de link enviado ao João 💳');
-  setTimeout(()=>abrirWhatsApp('5541995415712','Olá João! Quero pagar a mensalidade ('+fmt(valorAPagarMensalidade())+') no *cartão de crédito*. Pode me enviar o link de pagamento? 💳'),600);
+  const ok=await enviarPedido({kind:'mensalidade',metodo:link?'cartão':'cartão (pediu link)',valor:valorAPagarMensalidade()});
+  if(ok)toast(link?'Pedido enviado à academia. O pagamento depende da confirmação.':'Pedido de link enviado à academia.');
+  return ok;
 }
-function pagarDinheiro(){
-  if(dependenteAluno()){avisoPagamentoFamilia();return;}
-  if(mensOculta()){avisoMensOculta();return;}
-  enviarPedido({kind:'mensalidade',metodo:'dinheiro',valor:valorAPagarMensalidade()});
-  abrirWhatsApp('5541995415712','Olá João! Vou pagar a mensalidade ('+fmt(valorAPagarMensalidade())+') em dinheiro. Combinamos? 🎾');
+async function pagarDinheiro(){
+  if(dependenteAluno()){avisoPagamentoFamilia();return false;}
+  if(mensOculta()){avisoMensOculta();return false;}
+  const ok=await enviarPedido({kind:'mensalidade',metodo:'dinheiro',valor:valorAPagarMensalidade()});
+  if(ok)toast('Pedido enviado à academia. Combine a entrega do pagamento.');
+  return ok;
 }
+
 /* ===== Comprar créditos / aula avulsa / locação ===== */
 function precoAvulsaPart(){return (PUB.precos&&PUB.precos.avulsaPart)||170;}
 function precoAvulsaGrupo(){return (PUB.precos&&PUB.precos.avulsaGrupo)||95;}
@@ -4715,46 +4720,52 @@ function selComprar(id){
     cardBtnHTML("pagarCompra('cartao')")+
     `<button class="pay-btn cash" onclick="pagarCompra('dinheiro')"><span class="pi">${(window.NAVIC&&NAVIC.coins)||""}</span>Dinheiro<small style="font-weight:500;opacity:.85">avisar João</small></button></div>`;
 }
-function pagarCompra(metodo){
-  if(!compraSel)return;
+async function pagarCompra(metodo){
+  if(!compraSel)return false;
+  const compra=Object.assign({},compraSel);
   if(metodo==='pix'){
     document.getElementById('ov-comprar').classList.remove('on');
-    abrirPix(compraSel.valor,compraSel.nome,{kind:'compra',item:compraSel.nome,valor:compraSel.valor||0,metodo:'Pix'});
-    return;
+    abrirPix(compra.valor,compra.nome,{kind:'compra',item:compra.nome,valor:compra.valor||0,metodo:'Pix'});
+    return true;
   }
   const metNome=metodo==='cartao'?'cartão':'dinheiro';
-  const vtxt=compraSel.valor?(' ('+fmt(compraSel.valor)+')'):'';
-  const pedeLink=(metodo==='cartao'&&!temCardLink());
-  enviarPedido({kind:'compra',item:compraSel.nome,valor:compraSel.valor||0,metodo:metNome+(pedeLink?' (pediu link)':'')});
+  const pedeLink=metodo==='cartao'&&!temCardLink();
   if(metodo==='cartao'){
     const link=(EU.cardLink&&EU.cardLink.trim())||(PUB.cardLink&&PUB.cardLink.trim())||'';
     if(link){const a=document.createElement('a');a.href=link;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();document.body.removeChild(a);}
   }
+  const pedido={kind:'compra',item:compra.nome,valor:compra.valor||0,metodo:metNome+(pedeLink?' (pediu link)':'')};
+  if(!await enviarPedido(pedido))return false;
   document.getElementById('ov-comprar').classList.remove('on');
-  const msg=pedeLink
-    ? 'Olá João! Quero *'+compraSel.nome+'*'+vtxt+' e pagar no *cartão de crédito*. Pode me enviar o link de pagamento? 💳'
-    : 'Olá João! Quero *'+compraSel.nome+'*'+vtxt+' e pagar via '+metNome+'. 🎾';
-  setTimeout(()=>abrirWhatsApp('5541995415712',msg),600);
-  toast(pedeLink?'Pedido de link enviado! 💳':'Pedido enviado ao João! 🎾');
+  toast(pedeLink?'Pedido de link enviado à academia.':'Pedido enviado à academia. Aguarde a confirmação.');
+  return true;
 }
 function notificarPedido(texto){
   if(!hasCloud())return;
   try{filaPush('jvtenis/notificacoes',{acao:'pedido',texto,nome:EU?EU.nome:'',codigo:MEU.codigo,ts:Date.now()}).catch(function(){});}catch(e){}
 }
+const PEDIDOS_EM_CURSO=new Map();
 async function enviarPedido(p){
-  if(dependenteAluno()&&['mensalidade','renovacao'].includes(p&&p.kind)){avisoPagamentoFamilia();return;}
-  if(familiaAluno()&&p&&p.kind==='plano'){toast('Combine o plano família com o João.');return;}
-  if(!hasCloud())return;
+  if(dependenteAluno()&&['mensalidade','renovacao'].includes(p&&p.kind)){avisoPagamentoFamilia();return false;}
+  if(familiaAluno()&&p&&p.kind==='plano'){toast('Combine o plano família com a academia.');return false;}
+  if(!hasCloud()){toast('Não consegui enviar o pedido. Conecte-se e tente novamente.');return false;}
+  const meu=MEU;
   const rec=Object.assign({codigo:MEU.codigo,nome:EU?EU.nome:'',ts:Date.now()},p);
-  for(let i=0;i<3;i++){
-    try{
-      await filaPush('jvtenis/fila_pedidos',rec);
-      // aviso de mensalidade fica guardado no aparelho: e o que sustenta o
-      // "em analise" ate o Joao marcar pago la na Gestao
-      if(p&&p.kind==='mensalidade'){MEU.pagoAviso={ts:rec.ts,valor:Number(p.valor)||0};await saveMeu();try{renderPayLock();}catch(e){}}
-      return;
-    }catch(e){await new Promise(s=>setTimeout(s,400*(i+1)));}
-  }
+  const chave=JSON.stringify([MEU.codigo,p]);
+  if(PEDIDOS_EM_CURSO.has(chave))return PEDIDOS_EM_CURSO.get(chave);
+  const envio=(async()=>{
+    // O SDK repete o envio pendente. Repetir push aqui criava outro pedido.
+    try{await filaPush('jvtenis/fila_pedidos',rec);}
+    catch(e){toast('Não consegui enviar o pedido. Tente novamente ou fale com a academia.');return false;}
+    if(p&&p.kind==='mensalidade'&&MEU===meu){
+      MEU.pagoAviso={ts:rec.ts,valor:Number(p.valor)||0};
+      // A fila já confirmou: falha no lembrete local não deve reenviar o pedido.
+      try{await saveMeu();renderPayLock();}catch(e){}
+    }
+    return true;
+  })();
+  PEDIDOS_EM_CURSO.set(chave,envio);
+  try{return await envio;}finally{if(PEDIDOS_EM_CURSO.get(chave)===envio)PEDIDOS_EM_CURSO.delete(chave);}
 }
 /* ===== Planos (ver preços / pedir plano a qualquer momento) ===== */
 function planosTabela(){
@@ -4811,27 +4822,24 @@ function montarCalc(){
   document.getElementById('mt-fmt-row').style.display=montar.grp>0?'':'none';
   return {total,vp,vg,fmtG};
 }
-function pedirPlanoMisto(){
+async function pedirPlanoMisto(){
   if(montar.part<=0&&montar.grp<=0){toast('Escolha pelo menos uma aula 🙏');return;}
   const c=montarCalc();
   const desc=(montar.part>0?montar.part+' particular'+(montar.part>1?'es':''):'')
     +(montar.part>0&&montar.grp>0?' + ':'')
     +(montar.grp>0?montar.grp+' em grupo ('+c.fmtG+')':'');
-  enviarPedido({kind:'plano',cat:'Misto',plano:montar.part,planoGrupo:montar.grp,grupoTipo:c.fmtG,valor:c.total,desc});
+  if(!await enviarPedido({kind:'plano',cat:'Misto',plano:montar.part,planoGrupo:montar.grp,grupoTipo:c.fmtG,valor:c.total,desc}))return false;
   document.getElementById('ov-planos').classList.remove('on');
-  setTimeout(()=>abrirWhatsApp('5541995415712','Olá João! Quero montar meu plano assim: *'+desc+'* — '+fmt(c.total)+'/mês. Pode confirmar? 🎾'),500);
-  toast('Pedido enviado ao João! 🎾');
+  toast('Pedido de plano enviado à academia. Aguarde a confirmação.');
+  return true;
 }
-function pedirPlano(cat,n,valor){
-  enviarPedido({kind:'plano',cat,plano:n,valor});
+async function pedirPlano(cat,n,valor){
+  if(!await enviarPedido({kind:'plano',cat,plano:n,valor}))return false;
   document.getElementById('ov-planos').classList.remove('on');
-  const nome=cat==='Personal'?(cat+' '+n+' treinos/mês'):(cat+' Flex '+n);
-  const msg=valor
-    ?'Olá João! Quero o plano *'+nome+'* ('+fmt(valor)+'/mês). Pode confirmar pra mim? 🎾'
-    :'Olá João! Tenho interesse no plano *'+nome+'*. Pode me passar o valor? 🎾';
-  setTimeout(()=>abrirWhatsApp('5541995415712',msg),500);
-  toast('Pedido enviado ao João! 🎾');
+  toast('Pedido de plano enviado à academia. Aguarde a confirmação.');
+  return true;
 }
+
 
 /* ===== Zoom da semana · App Aluno =====
    Dimensões reais, sem transform: a célula visual continua sendo a célula tocável. */
@@ -5382,15 +5390,23 @@ function valorMensalAtual(){
   try{return Number(planoValor(cat,sp.qtd))||0;}catch(e){return 0;}
 }
 function renovarMudar(){_renovaAdiado=true;document.getElementById('renova-box').style.display='none';if(typeof abrirPlanos==='function')abrirPlanos();}
-function confirmarRenovacao(){
+let _renovacaoEnviando=false;
+async function confirmarRenovacao(){
   if(dependenteAluno()){avisoPagamentoFamilia();return;}
   const v=valorMensalAtual();
   if(!v){toast('Fale com o João para definir sua mensalidade 🙏');setTimeout(()=>abrirWhatsApp('5541995415712','Olá João! Quero manter meus treinos no próximo mês. Pode confirmar minha mensalidade? 🎾'),300);return;}
-  MEU.renovouMes=proxMesKey();saveMeu();
-  enviarPedido({kind:'renovacao',mes:proxMesKey(),valor:v});
-  document.getElementById('renova-box').style.display='none';
-  const nomeProx=MESES[(new Date().getMonth()+1)%12];
-  abrirPix(v,'Mensalidade '+nomeProx,{kind:'mensalidade',metodo:'Pix',valor:v,mes:proxMesKey()});
+  if(_renovacaoEnviando)return false;
+  _renovacaoEnviando=true;
+  const mes=proxMesKey(),meu=MEU;
+  try{
+    if(!await enviarPedido({kind:'renovacao',mes,valor:v}))return false;
+    if(MEU!==meu)return false;
+    MEU.renovouMes=mes;await saveMeu();
+    document.getElementById('renova-box').style.display='none';
+    const nomeProx=MESES[(new Date().getMonth()+1)%12];
+    abrirPix(v,'Mensalidade '+nomeProx,{kind:'mensalidade',metodo:'Pix',valor:v,mes});
+    return true;
+  }finally{_renovacaoEnviando=false;}
 }
 function renovarDepois(){_renovaAdiado=true;document.getElementById('renova-box').style.display='none';}
 
@@ -5422,11 +5438,11 @@ function checarTermo(){
   document.getElementById('termo-txt').textContent=PUB.termo;
   document.getElementById('ov-termo').classList.add('on');
 }
-function aceitarTermo(){
+async function aceitarTermo(){
+  if(!await enviarPedido({kind:'termo'}))return false;
   MEU.termoAceitoVer=PUB.termoVer;
   MEU.termoAceitoEm=Date.now();
-  saveMeu();
-  enviarPedido({kind:'termo'});
+  await saveMeu();
   document.getElementById('ov-termo').classList.remove('on');
   toast('Obrigado! Termo aceito ✓');
 }
@@ -5676,25 +5692,28 @@ function locdurAtualiza(m){
 }
 let _locacaoEnviando=false;
 async function confirmarLocacao(){
-  if(!locCtx||_locacaoEnviando)return;
+  if(!locCtx||_locacaoEnviando)return false;
   _locacaoEnviando=true;
+  const contexto=locCtx;
+  const botao=document.querySelector('[onclick="confirmarLocacao()"]');if(botao)botao.disabled=true;
   try{
-  try{await atualizarGradeReserva();}catch(e){toast(avisoFalhaNuvem(e,'Não consegui conferir a agenda na nuvem. Tente novamente online.'));return;}
-  const estado=slotState(locCtx.date,locCtx.hora);
-  if(!['livre','loc'].includes(estado.st)||estado.compartilhado&&estado.compartilhado!=='locacao'||(estado.compartilhado||'')!==locCtx.compartilhado){toast('Horário reservado ou atividade alterada. Reabra as opções.');return;}
-  const livre=Math.round((Number(document.getElementById('locdur-min').value)||0)/15)*15;
-  if(livre>=30)locCtx.min=livre;
-  const d=locCtx.date,dur=locdurLabel(locCtx.min);
-  const valor=Math.round(precoLocacao()*locCtx.min/60);
-  const quando=DIAS_FULL[d.getDay()]+', '+d.getDate()+'/'+(d.getMonth()+1)+' às '+locCtx.hora;
-  document.getElementById('ov-locdur').classList.remove('on');
-  notificarJoao('pediu locação '+dur,dKey(d),locCtx.hora);
-  const h=horasLocAluno();
-  const msg='Olá João! Quero *alugar a quadra* em '+quando+' por *'+dur+'*'+(h>0?', usando minhas horas de locação (tenho '+fmtCred(h)+'h)':' (~'+fmt(valor)+')')+'. Pode confirmar pra mim? 🎾';
-  setTimeout(()=>abrirWhatsApp('5541995415712',msg),300);
-  toast('Pedido de locação ('+dur+') enviado ao João! 🎾');
-  }finally{_locacaoEnviando=false;}
+    try{await atualizarGradeReserva();}catch(e){toast(avisoFalhaNuvem(e,'Não consegui conferir a agenda na nuvem. Tente novamente online.'));return false;}
+    if(locCtx!==contexto)return false;
+    const estado=slotState(contexto.date,contexto.hora);
+    if(!['livre','loc'].includes(estado.st)||estado.compartilhado&&estado.compartilhado!=='locacao'||(estado.compartilhado||'')!==contexto.compartilhado){toast('Horário reservado ou atividade alterada. Reabra as opções.');return false;}
+    const livre=Math.round((Number(document.getElementById('locdur-min').value)||0)/15)*15;
+    if(livre>=30)contexto.min=livre;
+    const dur=locdurLabel(contexto.min);
+    if(!await notificarJoao('pediu locação '+dur,dKey(contexto.date),contexto.hora)){
+      toast('Não consegui enviar a locação. Tente novamente ou fale com a academia.');
+      return false;
+    }
+    if(locCtx===contexto){document.getElementById('ov-locdur').classList.remove('on');locCtx=null;}
+    toast('Pedido de locação enviado à academia. Aguarde a confirmação.');
+    return true;
+  }finally{_locacaoEnviando=false;if(botao)botao.disabled=false;}
 }
+
 /* ===== Com qual professor =====
    A academia pode ter mais de um professor, cada um com a agenda dele. O aluno
    precisa dizer com quem quer a aula — senão o João teria de adivinhar, e
@@ -5791,8 +5810,7 @@ async function confirmarAgendamento(){
   renderAgenda();renderMinhas();
   pedirPermissaoNotif();
   notificarJoao(tor?'marcou jogo do torneio':(repo?'pediu reposição':'reservou'),pedido.data,pedido.hora);
-  toast(tor?'🏆 Jogo do torneio enviado ao João!':(repo?'✓ Reposição enviada ao João!':'✓ Pedido enviado. Aguarde a confirmação na agenda.'));
-  setTimeout(()=>abrirWhatsApp('5541995415712','Olá João! Acabei de '+(tor?'marcar um *jogo do torneio*':(repo?'pedir uma *reposição*':'*reservar* uma aula'))+' para '+fmtData(pedido.data)+' às '+pedido.hora+(profNome?(' com o professor *'+profNome+'*'):'')+'. 🎾'),700);
+  toast(tor?'Pedido de jogo enviado à academia. Aguarde a confirmação.':(repo?'Reposição enviada à academia. Aguarde a confirmação.':'Pedido enviado. Aguarde a confirmação na agenda.'));
   }finally{_reservaEnviando=false;if(botao)botao.disabled=false;}
 }
 
@@ -5920,7 +5938,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-11-10-2').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-11-10-3').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
@@ -5929,6 +5947,6 @@ window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);})
   setTimeout(()=>esperarEIniciar(t+1),150);
 })(0);
 </script>
-<script src="lib/voz-aluno.js?v=2026-11-10-2"></script>
+<script src="lib/voz-aluno.js?v=2026-11-10-3"></script>
 </body>
 </html>

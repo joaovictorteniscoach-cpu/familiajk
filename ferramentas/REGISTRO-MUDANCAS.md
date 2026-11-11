@@ -8,6 +8,60 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-10 · Codex: envios confirmados e ações resumidas (PR #277; proposta 2026-11-10-3)
+
+- Responsável: Codex; mesmo branch `codex/auditoria-acoes-repetidas-2026-11-10`
+  do PR #277. Base publicada `c37a471dbe5b2dceedbe1d555d758c536269b2d1`;
+  registro anterior preservado, pai `f2982389276e4ec3eedffe593a5c546d7b3647c5`.
+  João pediu testar as propostas, revisar os números e levantar as dúvidas.
+- **Implementado no branch, não publicado:** Pix e locação aguardam resposta antes
+  de anunciar envio. Falha mantém a janela; botões barram toque repetido.
+  Pedidos iguais em andamento compartilham um envio. Removido o laço de três
+  `push`: o SDK já mantém/reenvia a mesma gravação pendente.
+- Compras, planos, dinheiro/cartão, renovação e termo também aguardam o resultado.
+  Renovação/termo não ganham marca local se a fila recusar. Aviso de pagamento
+  continua em análise, sem marcar pago. O link real de cartão abre no toque,
+  preservando o funcionamento no Safari.
+- Eliminados atalhos repetidos de reposição no Início e em Créditos, mantendo
+  saldo em destaque e ação no próprio painel. Removida a saída automática ao
+  WhatsApp após ações enviadas; o contato explícito com a academia permanece.
+  Locação mantém a notificação existente e aprovação manual; não vira reserva
+  confirmada nem bloqueio automático do horário.
+- Ficha da Gestão mantém aula/dinheiro/histórico/treino aparentes. Ajustes manuais,
+  WhatsApp e cadastro ficam em "Mais ações", sem mudar a operação dos botões.
+  Cores/fontes preservadas; demo sincronizada; proposta -3 e caches Aluno52/Gestão55.
+- Janela única para escolher atividade e confirmar agendamento permanece **proposta**.
+  O fluxo de duas etapas e suas verificações foram preservados nesta correção:
+  não simplificar removendo confirmação ou repetindo o trabalho do PR #276.
+- **Verificado antes do envio:** compilação dos scripts alterados e funções reais
+  em memória. Reproduzido o Pix com sucesso/fechamento antes da nuvem na base;
+  a correção espera, aceita R$435, barra o segundo toque e preserva a janela na falha.
+  Sem execução local de shell/navegador disponível.
+- Preparados 44 cenários de navegador (Chromium/WebKit × dois temas), incluindo
+  falha/sucesso/sem nuvem, dependente, dois toques, outros tipos de pedido, vaga
+  ocupada durante a leitura, cancelamento com quatro horas e invariância dos saldos.
+  Teste incluído no começo do CI. **CI completo e revisão das imagens pendentes**;
+  resultados do commit exato serão registrados no PR.
+- **Revisão numérica somente com exemplos fictícios, usando a função publicada:**
+  8 aulas/R$640/10 reposições → teto atual 25%, usa 2 e abate R$160.
+  Dupla antiga e nova, 4 aulas/R$360/2 reposições → ambas usam 1 e abatem R$90.
+  Misto 4+4/R$1.000/3 reposições → usa 2 e abate R$250 pelo valor médio atual.
+  Isso não comprova a reconciliação de nenhum aluno real.
+- Divergências identificadas, **sem alteração financeira**: teto publicado 25%,
+  enquanto João definiu 50% (falta a data de vigência); arredondamento inteiro
+  em `descReposInfo`: 1 de 4 aulas sobre R$735 vira R$184, em vez de R$183,75.
+  A cotação de locação também arredonda reais inteiros: R$70/h por 75 min vira
+  R$88, em vez de R$87,50. Registrar e corrigir numa etapa financeira com critério
+  explícito; não reescrever valores históricos automaticamente.
+- Para saldos reais falta o backup/extrato completo nesta conversa; arquivos enviados
+  em outro chat não estão disponíveis. Ajustes sem justificativa não são presumidos
+  errados. A issue #275 continua centralizando a regra financeira proposta.
+- **Publicado:** permanece 2026-11-10-2. Dados reais, extrato, saldos, mensalidades,
+  desconto, validade e regras do Firebase não foram modificados. Não integrar nem
+  publicar a proposta -3 antes do CI e da revisão visual exigida em DESIGN.md.
+
+---
+
 ## 2026-11-10 · Codex: conferência de ações repetidas e etapas dispensáveis (somente auditoria)
 
 - Responsável: Codex; branch `codex/auditoria-acoes-repetidas-2026-11-10`;

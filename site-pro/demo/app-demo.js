@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-11-10-2';
+const VERSAO='2026-11-10-3';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -8589,7 +8589,7 @@ function renderFicha(){
 
   /* ajustes: somam saldo sem aula nem pagamento — longe dos botões de aula,
      e cada um pede confirmação */
-  h+=fxSecao('Ajustes de saldo','<p class="fic-nota">Somam saldo sem aula e sem pagamento. Pedem confirmação.</p><div class="fic-g2">'
+  const ajustes=fxSecao('Ajustes de saldo','<p class="fic-nota">Somam saldo sem aula e sem pagamento. Pedem confirmação.</p><div class="fic-g2">'
     +fxBotao('neutro',"addRepos('"+id+"')",BI.plus+'Anotar reposição')
     +fxBotao('neutro',"addLocacao('"+id+"')",BI.keyplus+(loc?'+1h locação':'Começar locação'))+'</div>');
 
@@ -8598,6 +8598,9 @@ function renderFicha(){
     +fxBotao('neutro',"openAvalModal('"+id+"')",BI.chart+'Avaliar');
   if(av)ped+=fxBotao('neutro',"openAvalExport('"+id+"')",'📤 Devolutiva');
   h+=fxSecao('Treino','<div class="fic-g2">'+ped+'</div>');
+
+  /* Ações ocasionais ficam disponíveis sem alongar a ficha inicial. */
+  h+='<details class="fic-sec" id="fic-mais-acoes"><summary class="fic-sec-t" style="cursor:pointer;min-height:44px;display:list-item;padding-top:12px">Mais ações</summary>'+ajustes;
 
   /* whatsapp */
   const wa=a.tel
@@ -8613,6 +8616,7 @@ function renderFicha(){
   h+=fxSecao('Cadastro','<div class="fic-g2">'+cad+'</div>'
     +'<button class="fic-excluir" onclick="delAluno(\''+id+'\')">Excluir aluno</button>');
 
+  h+='</details>';
   box.innerHTML=h;
   ajustarTopoFicha();
 }
