@@ -63,6 +63,9 @@ html body .nav.jv-nav-3d{grid-template-columns:repeat(6,minmax(0,1fr))!important
    Evolução/Créditos recebem a largura de que os rótulos precisam. */
 html body .nav.jv-nav-3d[data-torneio="sim"]{grid-template-columns:repeat(3,minmax(44px,1fr)) minmax(48px,1.1fr) minmax(46px,1.05fr) repeat(2,minmax(44px,1fr))!important}
 html body .nav.jv-nav-3d button[hidden]{display:none!important}
+/* O texto da página não pode atravessar a barra, inclusive sem blur no Safari.
+   Mesmo verde escuro existente do Saibro, com fundo quase opaco. */
+html body:not(#jv) #app .nav.jv-nav-3d[data-torneio="sim"]{background:rgba(10,24,18,.98)!important}
 /* Em telas muito estreitas, duas linhas mantêm os sete nomes legíveis,
    sem reduzir os ícones, a letra ou os alvos de toque. */
 @media (max-width:369px){

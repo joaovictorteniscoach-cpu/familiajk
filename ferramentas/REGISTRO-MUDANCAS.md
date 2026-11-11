@@ -30,7 +30,12 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
   que seus botões); diagnóstico com fontes prontas confirmou o problema. Corrigido
   com duas linhas; em uma linha o espaçamento recebe ajuste de meio pixel
   para acomodar também os rótulos do Safari de 390 px. Matriz ampliada a 320/360/375/380/390 px.
-- Proposta **2026-11-11-5**, cinco carimbos e demo sincronizados. Sem mudança de
+- Os 48 cenários passaram no capturador 43030606959, head
+  `95a6bb6349da9220663947ab8660422c01dbc85f`. A leitura das imagens no Safari
+  revelou texto da página atravessando o vidro da barra: fundo tornado quase
+  opaco, com o mesmo verde escuro existente, sem mexer nos ícones. Novas imagens
+  e CI deste complemento precisam confirmar o resultado antes de publicar.
+- Proposta **2026-11-11-6**, cinco carimbos e demo sincronizados. Sem mudança de
   regras, valores, fórmulas ou dados reais. O CI da proposta -2 pode ser
   substituído pela nova execução; não presumir aprovação por testes da base.
 
