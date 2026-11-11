@@ -160,7 +160,7 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
     await g.locator('#fic-mais-acoes summary').click();
     assert.equal(await g.locator('[onclick="addRepos(\'fake\')"]').isVisible(),true);
     assert.equal(await g.evaluate(()=>JSON.stringify(DB)===__antes),true);
-    const dir=process.env.JV_VISUAL_DIR;if(dir){fs.mkdirSync(dir,{recursive:true});await g.locator('#fic-mais-acoes summary').click();await g.screenshot({path:path.join(dir,'envios-ficha-'+motor+'-'+tema+'.png')});}
+    const dir=process.env.JV_VISUAL_DIR;if(dir){fs.mkdirSync(dir,{recursive:true});await g.locator('#fic-mais-acoes summary').click();await g.screenshot({path:path.join(dir,'envios-ficha-'+motor+'-'+tema+'.png')});await g.evaluate(()=>{esconderFicha();go('alunos',document.querySelector('.nav [data-ic="navball"]').closest('button'));});await g.screenshot({path:path.join(dir,'envios-gestao-alunos-'+motor+'-'+tema+'.png')});}
     await g.close();
    });
    assert.deepEqual(errors,[]);await c.close();

@@ -8,6 +8,34 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-11 · Codex: preservar os ícones dourados da barra inferior (PR #277)
+
+- Pedido explícito do João após revisar as prévias: gostou da simplificação,
+  mantendo o dourado original da Gestão nas barras inferiores.
+- Responsável: Codex; mesmo branch `codex/auditoria-acoes-repetidas-2026-11-10`.
+  Base desta alteração `7396ddd387c4707a4b13ff8e0d5d4ca821288aa2`;
+  main conferida `c37a471dbe5b2dceedbe1d555d758c536269b2d1`.
+- **Implementado no branch:** as seis abas do Aluno reutilizam os desenhos
+  originais de `app-gestao/lib/icones.js`, sem redesenhar ou trocar os demais
+  ícones do Aluno. As imagens decorativas ficam fora do nome acessível dos
+  botões; rótulos, destinos e quantidade de abas preservados.
+- A biblioteca de ícones, as cores e a barra inferior da Gestão não são
+  alteradas. Regra registrada no DESIGN.md para preservar nas próximas mudanças.
+  Não há alteração de CSS, regra do Firebase, valores, créditos ou dados reais.
+- Pré-verificação em memória: compilação da biblioteca; igualdade exata dos
+  seis desenhos com os originais da Gestão; demais ícones do Aluno idênticos.
+  Captura existente da ficha preservada e captura de Alunos adicionada para
+  mostrar a barra da Gestão sem janela sobreposta, com dados fictícios.
+- Proposta **2026-11-11-2**, com cinco carimbos e demo sincronizados. A proposta
+  -1 não foi publicada. O CI completo aprovou a base -1 no
+  [run 42990783460](https://github.com/joaovictorteniscoach-cpu/familiajk/actions/runs/42990783460).
+  Testes e revisão visual deste novo head pendentes; resultados finais ficam
+  no PR #277. Nenhuma publicação é afirmada por este registro.
+- Revisão financeira e acesso aos extratos reais continuam separados, conforme
+  issue #275. Os saldos reais não foram modificados.
+
+---
+
 ## 2026-11-11 · Codex: abertura da nuvem com consultas paralelas (extensão do PR #277)
 
 - Pedido do João: buscar os dados sem anexos e melhorar a velocidade da nuvem.
