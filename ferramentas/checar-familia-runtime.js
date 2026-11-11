@@ -4,7 +4,8 @@ const root=path.resolve(__dirname,'..');
 const gest=fs.readFileSync(path.join(root,'app-gestao/lib/app-gestao.js'),'utf8');
 const al=fs.readFileSync(path.join(root,'app-aluno/index.html'),'utf8');
 function fn(source,name){
-  const start=source.indexOf('function '+name+'(');assert.ok(start>=0,name);
+  let start=source.indexOf('function '+name+'(');assert.ok(start>=0,name);
+  if(source.slice(Math.max(0,start-6),start)==='async ')start-=6;
   const endLine=source.indexOf('\n',start),first=source.slice(start,endLine);
   return first.endsWith('}')?first:source.slice(start,source.indexOf('\n}',start)+2);
 }
