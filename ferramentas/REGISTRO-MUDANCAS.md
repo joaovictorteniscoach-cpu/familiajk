@@ -8,6 +8,19 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-11 · Codex: validar o histórico Git no ambiente com navegadores
+
+- O run 43044727731 iniciou a imagem oficial e passou nos checadores de apps,
+  sintaxe e tema. Ao conferir a demo, Git reportou diretório não reconhecido
+  como repositório dentro do volume montado.
+- Registrar apenas o caminho físico do workspace como diretório confiável no
+  container e validar checkout/HEAD/origin-main antes dos checadores. Sem wildcard,
+  sem remover a conferência da demo ou de versão/histórico.
+- Sem mudança nos aplicativos ou dados; validar novamente o head final. Prévias
+  e proposta 2026-11-11-6 preservadas; resultado final fica no PR #277.
+
+---
+
 ## 2026-11-11 · Codex: usar imagem oficial com navegadores preparados
 
 - A rede para instalar dependências Ubuntu continuou impedindo o preparo no

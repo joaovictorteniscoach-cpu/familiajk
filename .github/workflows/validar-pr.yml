@@ -28,6 +28,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Conferir checkout e histórico no ambiente de teste
+        run: |
+          git config --global --add safe.directory "$(pwd -P)"
+          git rev-parse --is-inside-work-tree
+          git rev-parse --verify HEAD
+          git rev-parse --verify origin/main
       - name: Validar apps e sites
         run: |
           bash ferramentas/checar-tudo.sh
