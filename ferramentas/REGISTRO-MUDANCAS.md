@@ -8,6 +8,20 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-11 · Codex: alcançar também os mirrors indiretos do runner
+
+- O log do run 43037733730 mostrou que a imagem usa `mirror+file:` e a lista
+  `/etc/apt/apt-mirrors.txt` ainda escolhia Azure, mesmo com ubuntu.sources
+  ajustado. DNS do mirror falhou e o preparo parou aos oito minutos.
+- As duas listas indiretas do runner passam a apontar para os archives oficiais
+  Ubuntu por HTTPS, incluindo segurança. Mantidas assinaturas, oito minutos e
+  todos os testes. Nenhum arquivo de app ou regra de banco alterado.
+- Estudo financeiro atualizado na issue #275 com a nova proposta 25%/mínimos,
+  simulações fictícias e sequência de migração; nenhuma aplicação aos dados.
+  PR #277 continua com proposta visual 2026-11-11-6 e depende da CI do head final.
+
+---
+
 ## 2026-11-11 · Codex: corrigir mirror de instalação na máquina de testes
 
 - Logs dos runs 43032962962 e 43036055179 mostram downloads Ubuntu do
