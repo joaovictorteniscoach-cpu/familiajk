@@ -61,7 +61,8 @@ rodada 2 do visual sóbrio foram descartadas). Então:
   No App do Aluno, reutilizar esse mesmo conjunto nas seis abas existentes; não
   substituir por desenhos monocromáticos. Torneio também fica direto na barra,
   com a taça já existente em dourado; Personal mantém suas seis opções anteriores.
-  A barra da Gestão mantém seu conjunto existente.
+  Até 369 px, organizar as sete opções do Aluno em duas linhas, mantendo nomes
+  e alvos legíveis. A barra da Gestão mantém seu conjunto existente.
 - **Ícone novo ou emoji novo, só se ele pedir.** Ele já reprovou ícones trocados
   ("ficaram ainda pior"). Use os desenhos de `lib/icones.js` (SVG próprio). O
   tempo/clima usa só SVG (`iconeClima`), nunca emoji.

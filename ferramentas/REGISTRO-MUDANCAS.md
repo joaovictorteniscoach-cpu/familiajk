@@ -17,14 +17,19 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
   existente e acabamento dourado do Perfil. As seis abas anteriores permanecem.
   Badge transferido sem repetir ID; abrir Torneio por atalho/fala também seleciona
   a aba correta. Aluno Personal mantém a exclusão anterior do Torneio e seis abas.
-- Layout reserva alvos de pelo menos 44 px e rótulos com pelo menos 12 px em
-  320/390 px. Ajustes somente nas folhas próprias de Aulas e Letras; fontes da
+- Layout reserva alvos de pelo menos 44 px e rótulos com pelo menos 12 px.
+  Em até 369 px, sete opções em duas linhas para não encavalar os nomes;
+  margem de conteúdo e posição padrão do microfone acompanham a altura. Ajustes somente nas folhas próprias de Aulas e Letras; fontes da
   Gestão e do gerador Saibro (CSS inline/visual-premium) não mudam.
 - Teste de envios existente ampliado com navegação, indicador ativo, 320/390 px,
-  largura dos rótulos/alvos, Personal e saldos preservados, em Chromium/WebKit
+  largura dos rótulos/alvos, microfone sem sobreposição, Personal e saldos
+  preservados, em Chromium/WebKit
   nos dois temas. Capturador agora espera o fechamento da ficha para a imagem da
   Gestão. CI e novas prévias deste head pendentes, conforme resultado final no PR.
-- Proposta **2026-11-11-3**, cinco carimbos e demo sincronizados. Sem mudança de
+- A primeira prévia de sete colunas falhou no WebKit de 320 px (rótulos maiores
+  que seus botões); diagnóstico com fontes prontas confirmou o problema. Corrigido
+  com duas linhas, sem comprimir os textos. Matriz ampliada a 320/360/375/390 px.
+- Proposta **2026-11-11-4**, cinco carimbos e demo sincronizados. Sem mudança de
   regras, valores, fórmulas ou dados reais. O CI da proposta -2 pode ser
   substituído pela nova execução; não presumir aprovação por testes da base.
 
