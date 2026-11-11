@@ -28,7 +28,17 @@ jobs:
         env:
           NODE_PATH: ${{ runner.temp }}/jv-preview/node_modules
           JV_VISUAL_DIR: ${{ runner.temp }}/previa-276
-        run: node ferramentas/testar-envios-aluno-browser.cjs
+        run: |
+          python3 - <<'PY'
+          import pathlib
+          p = pathlib.Path("ferramentas/testar-envios-aluno-browser.cjs")
+          source = p.read_text()
+          anchor = "await g.screenshot({path:path.join(dir,'envios-gestao-alunos-'"
+          assert source.count(anchor) == 1
+          source = source.replace(anchor, "await g.locator('#ficha-aluno').waitFor({state:'hidden'});" + anchor)
+          p.write_text(source)
+          PY
+          node ferramentas/testar-envios-aluno-browser.cjs
       - name: Ler previas com dados ficticios e resumos dos testes
         env:
           PREVIA_DIR: ${{ runner.temp }}/previa-276
