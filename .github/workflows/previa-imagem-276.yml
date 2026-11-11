@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 4d0a7ab91095e5fb0008034ca2dbef43df1d9072
+          ref: 9e3776b1bcc484e678870f052ca3c7edb90a12e0
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
@@ -28,17 +28,7 @@ jobs:
         env:
           NODE_PATH: ${{ runner.temp }}/jv-preview/node_modules
           JV_VISUAL_DIR: ${{ runner.temp }}/previa-276
-        run: |
-          python3 - <<'PY'
-          import pathlib
-          p = pathlib.Path("ferramentas/testar-envios-aluno-browser.cjs")
-          source = p.read_text()
-          anchor = "await g.screenshot({path:path.join(dir,'envios-gestao-alunos-'"
-          assert source.count(anchor) == 1
-          source = source.replace(anchor, "await g.locator('#ficha-aluno').waitFor({state:'hidden'});" + anchor)
-          p.write_text(source)
-          PY
-          node ferramentas/testar-envios-aluno-browser.cjs
+        run: node ferramentas/testar-envios-aluno-browser.cjs
       - name: Ler previas com dados ficticios e resumos dos testes
         env:
           PREVIA_DIR: ${{ runner.temp }}/previa-276
@@ -46,7 +36,7 @@ jobs:
           python3 - <<'PY'
           import os, pathlib, base64, hashlib
           root = pathlib.Path(os.environ["PREVIA_DIR"])
-          for name in ("envios-gestao-alunos-chromium-saibro.png", "envios-creditos-chromium-saibro.png"):
+          for name in ("envios-barra-390-chromium-saibro.png", "envios-barra-320-chromium-saibro.png", "envios-torneio-390-chromium-saibro.png"):
               matches = list(root.rglob(name))
               assert len(matches) == 1, "Captura exata ausente ou duplicada"
               data = matches[0].read_bytes()
