@@ -48,6 +48,7 @@ jobs:
         run: |
           set +e
           bash -e -o pipefail -c '
+          node ferramentas/testar-abertura-nuvem-browser.cjs
           node ferramentas/testar-envios-aluno-browser.cjs
           node ferramentas/testar-agenda-quer-aluno-browser.cjs
           node ferramentas/testar-reposicao-fixo-browser.cjs

@@ -8,6 +8,55 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-11 · Codex: abertura da nuvem com consultas paralelas (extensão do PR #277)
+
+- Pedido do João: buscar os dados sem anexos e melhorar a velocidade da nuvem.
+  Mesmo responsável/branch do PR #277; base desta extensão
+  `d2e7244780a7fc73aa3702bcc096539114ab6e01`, cujo
+  [CI 42934799022](https://github.com/joaovictorteniscoach-cpu/familiajk/actions/runs/42934799022)
+  aprovou as correções anteriores. Main publicada continua
+  `c37a471dbe5b2dceedbe1d555d758c536269b2d1` (2026-11-10-2).
+- **Implementado no branch, ainda não publicado:** a abertura inicia juntas as
+  leituras da reserva e da v2, com os mesmos prazos, validação e comparação.
+  `lerRetratoPartes` só obtém o snapshot; `lerPartes` confirma a base depois
+  de ambas terminarem. Não adota v2 cedo enquanto a reserva ainda está pendente.
+  Preservadas proteção contra cópia menor, edição offline, conflitos e falhas.
+- Nenhuma redução de confirmação de gravação, troca de regra do Firebase,
+  mudança de polling/reconexão, migração ou alteração de saldo/valor/validade.
+  Só reduz espera em série; a quantidade de consultas permanece a mesma.
+- **Verificado em memória, com trechos reais das funções:** latências fictícias
+  500 ms + 700 ms → antes 1.200 ms, depois 700 ms. Snapshot chegando primeiro
+  espera a reserva antes de confirmar a base; v2 recusada conserva a reserva.
+  Não é medição da internet do iPhone nem promessa de velocidade fixa.
+- Preparados 14 cenários de navegador em Chromium/WebKit: ordem das respostas,
+  ausência de adoção/gravação antecipada, recusa em cada caminho, falha nas duas,
+  prazo esgotado, cópia local preservada e v2 menor/mais antiga. Incluídos no
+  começo do CI. Sintaxe dos arquivos alterados passou; CI completo deste novo
+  head ainda pendente. Resultado final será registrado no PR #277.
+- Demo atualizada. Proposta 2026-11-11-1 nos cinco carimbos; a proposta anterior
+  2026-11-10-3 nunca foi lançada. Prévias anteriores preservadas; nenhuma tela ou
+  estilo alterado por esta extensão.
+- **Decisão financeira confirmada pelo João:** teto padrão de 50% vale para os
+  meses atuais; houve descontos históricos maiores. Preservar pagamentos e
+  acordos existentes e conferir cada exceção, sem criar dívida retroativa.
+  Particular/grupo usam o valor do tipo da aula, conforme confirmação anterior.
+  Detalhes e falha de resumo que muda idade dos créditos estão na issue #275;
+  nenhuma dessas regras foi aplicada aos dados nesta etapa.
+- **Busca dos dados:** GitHub não contém backup/relatório real; no Escritório JV
+  foram encontrados somente dois resumos criptografados de 08/10, e nenhum
+  extrato completo nas solicitações/eventos consultados. Sem sessão documental
+  conectada. App do aluno no Netlify é estático; não há formulário com backups.
+  Acesso ao projeto Firebase requer autenticação própria, independente do GitHub.
+- Encontrado conector oficial Firebase disponível, com ferramenta de leitura do
+  Realtime Database; sugestão de adicionar foi apresentada. Instalação/conexão
+  **não confirmadas**. Só buscar dados reais após confirmar esse acesso, apenas
+  leitura; jamais commitar backup, dados reais ou credenciais. Busca e preparação
+  de desempenho continuam sem mudar ou publicar registros de alunos.
+- **Publicado:** permanece 2026-11-10-2. Aprovação de publicação e revisão dos dados
+  não são presumidas pela melhoria de desempenho; revisão financeira segue pendente.
+
+---
+
 ## 2026-11-10 · Codex: envios confirmados e ações resumidas (PR #277; proposta 2026-11-10-3)
 
 - Responsável: Codex; mesmo branch `codex/auditoria-acoes-repetidas-2026-11-10`
