@@ -17,7 +17,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           repository: joaovictorteniscoach-cpu/familiajk
-          run-id: 42892824012
+          run-id: 42934249330
           name: previas-aulas-voz
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: ${{ runner.temp }}/previa-276
@@ -28,7 +28,7 @@ jobs:
           python3 - <<'PY'
           import os, pathlib, base64, hashlib
           root = pathlib.Path(os.environ["PREVIA_DIR"])
-          matches = list(root.rglob("agenda-livre-semana-chromium-saibro.png"))
+          matches = list(root.rglob("envios-ficha-chromium-saibro.png"))
           assert len(matches) == 1, "Captura exata ausente ou duplicada"
           data = matches[0].read_bytes()
           assert data.startswith(b"\x89PNG\r\n\x1a\n"), "Imagem invalida"
@@ -37,4 +37,8 @@ jobs:
           for offset in range(0, len(payload), 1000):
               print("JV_PREVIEW_PART:"+payload[offset:offset+1000])
           print("JV_PREVIEW_END")
+          for log in root.rglob("jv-browser-checks.log"):
+              for line in log.read_text().splitlines():
+                  if "cenários de envios" in line:
+                      print("JV_TEST_SUMMARY:"+line)
           PY
