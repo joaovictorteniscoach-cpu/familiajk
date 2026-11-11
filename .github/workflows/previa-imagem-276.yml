@@ -13,14 +13,22 @@ jobs:
   imagem:
     runs-on: ubuntu-24.04
     steps:
-      - name: Baixar capturas do commit testado
-        uses: actions/download-artifact@v4
+      - uses: actions/checkout@v4
         with:
-          repository: joaovictorteniscoach-cpu/familiajk
-          run-id: 42990783460
-          name: previas-aulas-voz
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path: ${{ runner.temp }}/previa-276
+          ref: 4d0a7ab91095e5fb0008034ca2dbef43df1d9072
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preparar navegadores para a previa sem dados reais
+        run: |
+          npm install --prefix "$RUNNER_TEMP/jv-preview" playwright@1.56.1
+          "$RUNNER_TEMP/jv-preview/node_modules/.bin/playwright" install --with-deps chromium webkit
+      - name: Capturar Aluno e Gestao do commit proposto
+        env:
+          NODE_PATH: ${{ runner.temp }}/jv-preview/node_modules
+          JV_VISUAL_DIR: ${{ runner.temp }}/previa-276
+        run: node ferramentas/testar-envios-aluno-browser.cjs
       - name: Ler previas com dados ficticios e resumos dos testes
         env:
           PREVIA_DIR: ${{ runner.temp }}/previa-276
@@ -28,7 +36,7 @@ jobs:
           python3 - <<'PY'
           import os, pathlib, base64, hashlib
           root = pathlib.Path(os.environ["PREVIA_DIR"])
-          for name in ("envios-ficha-chromium-saibro.png", "envios-creditos-chromium-saibro.png"):
+          for name in ("envios-gestao-alunos-chromium-saibro.png", "envios-creditos-chromium-saibro.png"):
               matches = list(root.rglob(name))
               assert len(matches) == 1, "Captura exata ausente ou duplicada"
               data = matches[0].read_bytes()
