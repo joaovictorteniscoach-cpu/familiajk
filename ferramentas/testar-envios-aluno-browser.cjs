@@ -47,10 +47,10 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
    const label=motor+'/'+tema+' · ';
    const screenshot=async nome=>{const dir=process.env.JV_VISUAL_DIR;if(dir){fs.mkdirSync(dir,{recursive:true});await p.screenshot({path:path.join(dir,'envios-'+nome+'-'+motor+'-'+tema+'.png')});}};
    await reset();
-   await check(label+'Torneio abre direto na barra; sete abas legíveis em 320/360/375/390 px; Personal preservado',async()=>{
+   await check(label+'Torneio abre direto na barra; sete abas legíveis em 320/360/375/380/390 px; Personal preservado',async()=>{
     await reset();
     const antes=await p.evaluate(()=>JSON.stringify(EU));
-    for(const width of [320,360,375,390]){
+    for(const width of [320,360,375,380,390]){
      await p.setViewportSize({width,height:844});await p.evaluate(()=>document.fonts.ready);
      const measures=await p.evaluate(()=>{
       const nav=document.querySelector('.nav'),buttons=[...nav.querySelectorAll('button')].filter(b=>getComputedStyle(b).display!=='none');

@@ -28,8 +28,9 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
   Gestão. CI e novas prévias deste head pendentes, conforme resultado final no PR.
 - A primeira prévia de sete colunas falhou no WebKit de 320 px (rótulos maiores
   que seus botões); diagnóstico com fontes prontas confirmou o problema. Corrigido
-  com duas linhas, sem comprimir os textos. Matriz ampliada a 320/360/375/390 px.
-- Proposta **2026-11-11-4**, cinco carimbos e demo sincronizados. Sem mudança de
+  com duas linhas; em uma linha o espaçamento recebe ajuste de meio pixel
+  para acomodar também os rótulos do Safari de 390 px. Matriz ampliada a 320/360/375/380/390 px.
+- Proposta **2026-11-11-5**, cinco carimbos e demo sincronizados. Sem mudança de
   regras, valores, fórmulas ou dados reais. O CI da proposta -2 pode ser
   substituído pela nova execução; não presumir aprovação por testes da base.
 
