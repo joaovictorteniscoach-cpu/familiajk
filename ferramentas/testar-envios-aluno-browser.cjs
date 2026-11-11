@@ -19,8 +19,9 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
    const c=await browser.newContext({viewport:{width:390,height:844},timezoneId:'America/Sao_Paulo',serviceWorkers:'block'});
    await c.route('**/*',r=>{const u=new URL(r.request().url());if(u.origin!==base)return r.abort();if(u.pathname.includes('/lib/firebase-'))return r.fulfill({body:'',contentType:'text/javascript'});return r.continue();});
    await c.addInitScript(t=>{sessionStorage.setItem('jv-bk-adiar','1');localStorage.setItem('jv-tema',t);},tema);
+   await c.clock.setFixedTime(AGORA);
    const p=await c.newPage(),errors=[];p.on('pageerror',e=>errors.push(e.message));p.on('dialog',d=>d.accept());
-   await p.clock.setFixedTime(AGORA);await p.goto(base+'/app-aluno/',{waitUntil:'load'});
+   await p.goto(base+'/app-aluno/',{waitUntil:'load'});
    await p.waitForFunction(()=>typeof enviarPedido==='function');
    await p.addStyleTag({content:'#login,#feriado-box,#barra-app,#barra-versao,.va-bt{display:none!important}'});
    const reset=async()=>p.evaluate(()=>{
@@ -146,7 +147,7 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
    });
    await check(label+'Gestão recolhe ações ocasionais e mantém os dados',async()=>{
     const g=await c.newPage();g.on('pageerror',e=>errors.push(e.message));g.on('dialog',d=>d.dismiss());
-    await g.clock.setFixedTime(AGORA);await g.goto(base+'/app-gestao/',{waitUntil:'load'});await g.waitForFunction(()=>typeof CARREGADO!=='undefined'&&CARREGADO);
+    await g.goto(base+'/app-gestao/',{waitUntil:'load'});await g.waitForFunction(()=>typeof CARREGADO!=='undefined'&&CARREGADO);
     await g.addStyleTag({content:'#ov-entrar,#ov-semnuvem,#splash-gestao,#barra-versao,#barra-endereco,#toast{display:none!important}'});
     await g.evaluate(()=>{
      persist=()=>{};publish=()=>{};logAct=()=>{};hideVals=false;
