@@ -28,15 +28,29 @@ jobs:
         env:
           NODE_PATH: ${{ runner.temp }}/jv-preview/node_modules
           JV_VISUAL_DIR: ${{ runner.temp }}/previa-276
-        run: node ferramentas/testar-envios-aluno-browser.cjs
+        run: |
+          python3 - <<'PY'
+          import pathlib
+          p = pathlib.Path("ferramentas/testar-envios-aluno-browser.cjs")
+          source = p.read_text()
+          assert source.count("await p.setViewportSize({width,height:844});") == 1
+          source = source.replace("await p.setViewportSize({width,height:844});", "await p.setViewportSize({width,height:844});await p.evaluate(()=>document.fonts.ready);await p.waitForTimeout(150);")
+          assert source.count("return {count:buttons.length,failures,viewport:document.documentElement.scrollWidth<=innerWidth+1};") == 1
+          source = source.replace("return {count:buttons.length,failures,viewport:document.documentElement.scrollWidth<=innerWidth+1};", "return {count:buttons.length,failures,viewport:document.documentElement.scrollWidth<=innerWidth+1,metrics:buttons.map(b=>({id:b.id,font:getComputedStyle(b).font,spacing:getComputedStyle(b).letterSpacing,width:b.getBoundingClientRect().width,text:b.innerText,spans:[...b.querySelectorAll('span')].map(s=>({text:s.innerText,width:s.getBoundingClientRect().width}))}))};")
+          assert source.count("assert.equal(measures.count,7);assert.deepEqual(measures.failures,[]);") == 1
+          source = source.replace("assert.equal(measures.count,7);assert.deepEqual(measures.failures,[]);", "await screenshot('medicao-'+width);console.log('JV_NAV_METRICS:'+JSON.stringify({motor,tema,width,measures}));assert.equal(measures.count,7);assert.deepEqual(measures.failures,[],JSON.stringify(measures));")
+          p.write_text(source)
+          PY
+          node ferramentas/testar-envios-aluno-browser.cjs
       - name: Ler previas com dados ficticios e resumos dos testes
+        if: always()
         env:
           PREVIA_DIR: ${{ runner.temp }}/previa-276
         run: |
           python3 - <<'PY'
           import os, pathlib, base64, hashlib
           root = pathlib.Path(os.environ["PREVIA_DIR"])
-          for name in ("envios-barra-390-chromium-saibro.png", "envios-barra-320-chromium-saibro.png", "envios-torneio-390-chromium-saibro.png"):
+          for name in ("envios-medicao-320-webkit-saibro.png", "envios-barra-390-chromium-saibro.png"):
               matches = list(root.rglob(name))
               assert len(matches) == 1, "Captura exata ausente ou duplicada"
               data = matches[0].read_bytes()
