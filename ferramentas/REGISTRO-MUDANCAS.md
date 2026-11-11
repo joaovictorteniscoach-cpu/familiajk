@@ -8,6 +8,21 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-11 · Codex: usar imagem oficial com navegadores preparados
+
+- A rede para instalar dependências Ubuntu continuou impedindo o preparo no
+  run 43042952777. A validação passa à imagem oficial Playwright 1.56.1 Noble,
+  mesma versão do pacote e mesma base Ubuntu 24.04, com bibliotecas/navegadores
+  preparados. Sem depender de apt na execução.
+- Node 22/Python 3.12 preparados antes dos checadores; Java 21 preparado para o
+  emulador Firebase. A etapa lança e fecha Chromium/WebKit para provar que
+  ambos estão prontos. Os comandos de testes permanecem exatamente iguais.
+- Limite de oito minutos mantido no preparo. Nenhum aplicativo, saldo ou regra
+  financeira alterado. Proposta visual 2026-11-11-6, prévias já conferidas;
+  aprovação/publicação depende do resultado completo do head final no PR #277.
+
+---
+
 ## 2026-11-11 · Codex: alcançar também os mirrors indiretos do runner
 
 - O log do run 43037733730 mostrou que a imagem usa `mirror+file:` e a lista
