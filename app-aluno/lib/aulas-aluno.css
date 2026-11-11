@@ -59,6 +59,22 @@ html body:not(#jv) #ov-aulas-cal .aul-cal-actions .btn-ghost{background:#E7E4D9!
 
 /* Minhas aulas: aba própria na barra de baixo (6 botões) e botão laranja no Início. */
 html body .nav.jv-nav-3d{grid-template-columns:repeat(6,minmax(0,1fr))!important;padding-left:3px!important;padding-right:3px!important}
+/* Torneio visível: sete alvos de pelo menos 44 px, inclusive em 320 px.
+   Evolução/Créditos recebem a largura de que os rótulos precisam. */
+html body .nav.jv-nav-3d[data-torneio="sim"]{grid-template-columns:repeat(3,minmax(44px,1fr)) minmax(48px,1.1fr) minmax(46px,1.05fr) repeat(2,minmax(44px,1fr))!important}
+html body .nav.jv-nav-3d button[hidden]{display:none!important}
+/* O texto da página não pode atravessar a barra, inclusive sem blur no Safari.
+   Mesmo verde escuro existente do Saibro, com fundo quase opaco. */
+html body:not(#jv) #app .nav.jv-nav-3d[data-torneio="sim"]{background:rgba(10,24,18,.98)!important}
+/* Em telas muito estreitas, duas linhas mantêm os sete nomes legíveis,
+   sem reduzir os ícones, a letra ou os alvos de toque. */
+@media (max-width:369px){
+  html body .nav.jv-nav-3d[data-torneio="sim"]{grid-template-columns:repeat(12,minmax(0,1fr))!important;row-gap:2px!important}
+  html body .nav.jv-nav-3d[data-torneio="sim"] button{grid-column:span 3}
+  html body .nav.jv-nav-3d[data-torneio="sim"] button:nth-child(n+5){grid-column:span 4}
+  html body:has(.nav[data-torneio="sim"]){padding-bottom:calc(132px + env(safe-area-inset-bottom,0px))!important}
+  html body:has(.nav[data-torneio="sim"]) #va-atalho{bottom:calc(132px + env(safe-area-inset-bottom,0px))!important}
+}
 html body .nav.jv-nav-3d button{min-width:0;padding-left:1px!important;padding-right:1px!important;line-height:1.12;text-align:center}
 .nav .mau-nav-txt{display:block;max-width:100%;white-space:normal;overflow-wrap:anywhere}
 @media (max-width:379px){html body .nav.jv-nav-3d button{font-size:10.2px!important;letter-spacing:0!important}}

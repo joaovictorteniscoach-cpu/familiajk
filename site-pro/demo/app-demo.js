@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-11-10-2';
+const VERSAO='2026-11-11-6';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -721,12 +721,19 @@ function planoDeEnvio(d){
   return {no,env};
 }
 
-async function lerPartes(){
+/* Só lê o retrato. A base de gravação só é confirmada depois de comparar as
+   duas respostas da abertura, preservando a ordem das proteções do load(). */
+async function lerRetratoPartes(){
+  const MARCA={_prazo:1};
+  const s=await comPrazo(v2ref('').get(),PRAZO_NUVEM,MARCA);
+  if(s===MARCA)throw new Error('sem resposta da nuvem');
+  return s;
+}
+async function lerPartes(leitura){
   if(!hasCloud())return null;
   try{
-    const MARCA={_prazo:1};
-    const s=await comPrazo(v2ref('').get(),PRAZO_NUVEM,MARCA);
-    if(s===MARCA)throw new Error('sem resposta da nuvem');
+    if(leitura&&leitura.status==='rejected')throw leitura.reason;
+    const s=leitura?leitura.value:await lerRetratoPartes();
     const no=s.exists()?s.val():null;
     if(!no){await confirmarBasePartes(null);return null;}
     const d=bancoDasPartes(no);
@@ -1173,13 +1180,19 @@ async function load(){
   // devolve espaço ao banco principal
   try{await migrarVersoesParaIdb();}catch(e){}
   const localRaw=lsGet(KEY);
-  let cloudRaw=null;
-  if(hasCloud())cloudRaw=await cloudGet(KEY);
+  let cloudRaw=null,leituraPartes=null;
+  if(hasCloud()){
+    // Duas consultas independentes em paralelo: uma rede lenta não soma os
+    // dois tempos de espera. Ainda aguardamos ambas antes de escolher a cópia.
+    const leituras=await Promise.allSettled([cloudGet(KEY),lerRetratoPartes()]);
+    if(leituras[0].status==='fulfilled')cloudRaw=leituras[0].value;
+    leituraPartes=leituras[1];
+  }
   // formato novo (partes) tem preferência; o blob antigo fica de reserva
   let partes=null;
   if(hasCloud()){
     try{
-      const d=await lerPartes();
+      const d=await lerPartes(leituraPartes);
       if(d){
         const rBlob=cloudRaw?resumoBanco(cloudRaw):null, rPar=resumoBanco(JSON.stringify(d));
         // só confia nas partes se elas não vierem MENORES que a reserva
@@ -8589,7 +8602,7 @@ function renderFicha(){
 
   /* ajustes: somam saldo sem aula nem pagamento — longe dos botões de aula,
      e cada um pede confirmação */
-  h+=fxSecao('Ajustes de saldo','<p class="fic-nota">Somam saldo sem aula e sem pagamento. Pedem confirmação.</p><div class="fic-g2">'
+  const ajustes=fxSecao('Ajustes de saldo','<p class="fic-nota">Somam saldo sem aula e sem pagamento. Pedem confirmação.</p><div class="fic-g2">'
     +fxBotao('neutro',"addRepos('"+id+"')",BI.plus+'Anotar reposição')
     +fxBotao('neutro',"addLocacao('"+id+"')",BI.keyplus+(loc?'+1h locação':'Começar locação'))+'</div>');
 
@@ -8598,6 +8611,9 @@ function renderFicha(){
     +fxBotao('neutro',"openAvalModal('"+id+"')",BI.chart+'Avaliar');
   if(av)ped+=fxBotao('neutro',"openAvalExport('"+id+"')",'📤 Devolutiva');
   h+=fxSecao('Treino','<div class="fic-g2">'+ped+'</div>');
+
+  /* Ações ocasionais ficam disponíveis sem alongar a ficha inicial. */
+  h+='<details class="fic-sec" id="fic-mais-acoes"><summary class="fic-sec-t" style="cursor:pointer;min-height:44px;display:list-item;padding-top:12px">Mais ações</summary>'+ajustes;
 
   /* whatsapp */
   const wa=a.tel
@@ -8613,6 +8629,7 @@ function renderFicha(){
   h+=fxSecao('Cadastro','<div class="fic-g2">'+cad+'</div>'
     +'<button class="fic-excluir" onclick="delAluno(\''+id+'\')">Excluir aluno</button>');
 
+  h+='</details>';
   box.innerHTML=h;
   ajustarTopoFicha();
 }

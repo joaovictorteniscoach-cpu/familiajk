@@ -8,6 +8,331 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-11 · Codex: validar o histórico Git no ambiente com navegadores
+
+- O run 43044727731 iniciou a imagem oficial e passou nos checadores de apps,
+  sintaxe e tema. Ao conferir a demo, Git reportou diretório não reconhecido
+  como repositório dentro do volume montado.
+- Registrar apenas o caminho físico do workspace como diretório confiável no
+  container e validar checkout/HEAD/origin-main antes dos checadores. Sem wildcard,
+  sem remover a conferência da demo ou de versão/histórico.
+- Sem mudança nos aplicativos ou dados; validar novamente o head final. Prévias
+  e proposta 2026-11-11-6 preservadas; resultado final fica no PR #277.
+
+---
+
+## 2026-11-11 · Codex: usar imagem oficial com navegadores preparados
+
+- A rede para instalar dependências Ubuntu continuou impedindo o preparo no
+  run 43042952777. A validação passa à imagem oficial Playwright 1.56.1 Noble,
+  mesma versão do pacote e mesma base Ubuntu 24.04, com bibliotecas/navegadores
+  preparados. Sem depender de apt na execução.
+- Node 22/Python 3.12 preparados antes dos checadores; Java 21 preparado para o
+  emulador Firebase. A etapa lança e fecha Chromium/WebKit para provar que
+  ambos estão prontos. Os comandos de testes permanecem exatamente iguais.
+- Limite de oito minutos mantido no preparo. Nenhum aplicativo, saldo ou regra
+  financeira alterado. Proposta visual 2026-11-11-6, prévias já conferidas;
+  aprovação/publicação depende do resultado completo do head final no PR #277.
+
+---
+
+## 2026-11-11 · Codex: alcançar também os mirrors indiretos do runner
+
+- O log do run 43037733730 mostrou que a imagem usa `mirror+file:` e a lista
+  `/etc/apt/apt-mirrors.txt` ainda escolhia Azure, mesmo com ubuntu.sources
+  ajustado. DNS do mirror falhou e o preparo parou aos oito minutos.
+- As duas listas indiretas do runner passam a apontar para os archives oficiais
+  Ubuntu por HTTPS, incluindo segurança. Mantidas assinaturas, oito minutos e
+  todos os testes. Nenhum arquivo de app ou regra de banco alterado.
+- Estudo financeiro atualizado na issue #275 com a nova proposta 25%/mínimos,
+  simulações fictícias e sequência de migração; nenhuma aplicação aos dados.
+  PR #277 continua com proposta visual 2026-11-11-6 e depende da CI do head final.
+
+---
+
+## 2026-11-11 · Codex: corrigir mirror de instalação na máquina de testes
+
+- Logs dos runs 43032962962 e 43036055179 mostram downloads Ubuntu do
+  `azure.archive.ubuntu.com` repetidamente sem resposta; o segundo parou no
+  limite de oito minutos, antes dos testes. Falha de infraestrutura de preparo,
+  sem erro novo do aplicativo diagnosticado nesta etapa.
+- A instalação usa o archive Ubuntu oficial por HTTPS na máquina descartável,
+  mantendo distribuição, assinaturas e versões dos navegadores. Limite de oito
+  minutos preservado. Nenhum teste é removido, ignorado ou relaxado.
+- Nenhum arquivo dos aplicativos modificado; versão proposta 2026-11-11-6 e
+  prévias de 0852c19101c21943566585a9bd5fb248d56896ee mantidas. Publicação
+  continua dependendo da CI completa do head final; resultado no PR #277.
+
+---
+
+## 2026-11-11 · Codex: retomar validação e registrar nova proposta de créditos
+
+- CI 43032962962 ficou mais de dez minutos na instalação dos navegadores, antes
+  de executar os testes. A etapa recebe limite de oito minutos; nova execução
+  em máquina limpa, com todos os testes preservados. Sem alteração nos apps,
+  versão proposta continua 2026-11-11-6; resultado final no PR #277.
+- João trouxe o resultado da enquete: uma única apresentação de créditos;
+  aula realizada debita, aula não realizada preserva e saldo atravessa o mês.
+  Estudar teto de 25% na mensalidade OU mínimos grupo R$270/particular R$480.
+  Esta é a nova proposta em análise; não aplicar a orientação anterior de 50%
+  automaticamente nem reabrir meses fechados. Centralizar estudo na issue #275.
+- Simulação, origem/validade e migração exigem conferência separada. Nenhum saldo,
+  cobrança, validade, crédito antigo ou dado real foi alterado por esta etapa.
+  Pendentes: alcance dos mínimos, validade de quatro meses e cancelamento tardio.
+  Sem novo acesso ao Firebase confirmado; estudo usa exemplos fictícios.
+
+---
+
+## 2026-11-11 · Codex: Torneio visível na barra do Aluno (complemento do PR #277)
+
+- Pedido adicional explícito do João durante a validação: mostrar também o ícone
+  do Torneio ao aluno. Mesmo responsável e branch; base deste complemento
+  `4d0a7ab91095e5fb0008034ca2dbef43df1d9072`, ainda não publicada.
+- Torneio passa do Perfil para a barra inferior, com o mesmo desenho da taça
+  existente e acabamento dourado do Perfil. As seis abas anteriores permanecem.
+  Badge transferido sem repetir ID; abrir Torneio por atalho/fala também seleciona
+  a aba correta. Aluno Personal mantém a exclusão anterior do Torneio e seis abas.
+- Layout reserva alvos de pelo menos 44 px e rótulos com pelo menos 12 px.
+  Em até 369 px, sete opções em duas linhas para não encavalar os nomes;
+  margem de conteúdo e posição padrão do microfone acompanham a altura. Ajustes somente nas folhas próprias de Aulas e Letras; fontes da
+  Gestão e do gerador Saibro (CSS inline/visual-premium) não mudam.
+- Teste de envios existente ampliado com navegação, indicador ativo, 320/390 px,
+  largura dos rótulos/alvos, microfone sem sobreposição, Personal e saldos
+  preservados, em Chromium/WebKit
+  nos dois temas. Capturador agora espera o fechamento da ficha para a imagem da
+  Gestão. CI e novas prévias deste head pendentes, conforme resultado final no PR.
+- A primeira prévia de sete colunas falhou no WebKit de 320 px (rótulos maiores
+  que seus botões); diagnóstico com fontes prontas confirmou o problema. Corrigido
+  com duas linhas; em uma linha o espaçamento recebe ajuste de meio pixel
+  para acomodar também os rótulos do Safari de 390 px. Matriz ampliada a 320/360/375/380/390 px.
+- Os 48 cenários passaram no capturador 43030606959, head
+  `95a6bb6349da9220663947ab8660422c01dbc85f`. A leitura das imagens no Safari
+  revelou texto da página atravessando o vidro da barra: fundo tornado quase
+  opaco, com o mesmo verde escuro existente, sem mexer nos ícones. Novas imagens
+  e CI deste complemento precisam confirmar o resultado antes de publicar.
+- CI completo 43031463891 interrompido por duas expectativas antigas no teste
+  de locação: seis botões e Torneio selecionando Perfil. Alinhadas à nova aba
+  pedida pelo João, preservando todos os cenários e cálculos de locação/aulas.
+  Conferidos os 61 testes de navegador existentes para referências antigas da
+  barra; não foi encontrada outra expectativa equivalente. Nenhum arquivo dos
+  aplicativos alterado neste ajuste; as prévias de `0852c19101c21943566585a9bd5fb248d56896ee`
+  continuam representando exatamente o código visual. Nova CI deve aprovar o
+  head final; resultado final registrado no PR #277.
+- Proposta **2026-11-11-6**, cinco carimbos e demo sincronizados. Sem mudança de
+  regras, valores, fórmulas ou dados reais. O CI da proposta -2 pode ser
+  substituído pela nova execução; não presumir aprovação por testes da base.
+
+---
+
+## 2026-11-11 · Codex: preservar os ícones dourados da barra inferior (PR #277)
+
+- Pedido explícito do João após revisar as prévias: gostou da simplificação,
+  mantendo o dourado original da Gestão nas barras inferiores.
+- Responsável: Codex; mesmo branch `codex/auditoria-acoes-repetidas-2026-11-10`.
+  Base desta alteração `7396ddd387c4707a4b13ff8e0d5d4ca821288aa2`;
+  main conferida `c37a471dbe5b2dceedbe1d555d758c536269b2d1`.
+- **Implementado no branch:** as seis abas do Aluno reutilizam os desenhos
+  originais de `app-gestao/lib/icones.js`, sem redesenhar ou trocar os demais
+  ícones do Aluno. As imagens decorativas ficam fora do nome acessível dos
+  botões; rótulos, destinos e quantidade de abas preservados.
+- A biblioteca de ícones, as cores e a barra inferior da Gestão não são
+  alteradas. Regra registrada no DESIGN.md para preservar nas próximas mudanças.
+  Não há alteração de CSS, regra do Firebase, valores, créditos ou dados reais.
+- Pré-verificação em memória: compilação da biblioteca; igualdade exata dos
+  seis desenhos com os originais da Gestão; demais ícones do Aluno idênticos.
+  Captura existente da ficha preservada e captura de Alunos adicionada para
+  mostrar a barra da Gestão sem janela sobreposta, com dados fictícios.
+- Proposta **2026-11-11-2**, com cinco carimbos e demo sincronizados. A proposta
+  -1 não foi publicada. O CI completo aprovou a base -1 no
+  [run 42990783460](https://github.com/joaovictorteniscoach-cpu/familiajk/actions/runs/42990783460).
+  Testes e revisão visual deste novo head pendentes; resultados finais ficam
+  no PR #277. Nenhuma publicação é afirmada por este registro.
+- Revisão financeira e acesso aos extratos reais continuam separados, conforme
+  issue #275. Os saldos reais não foram modificados.
+
+---
+
+## 2026-11-11 · Codex: abertura da nuvem com consultas paralelas (extensão do PR #277)
+
+- Pedido do João: buscar os dados sem anexos e melhorar a velocidade da nuvem.
+  Mesmo responsável/branch do PR #277; base desta extensão
+  `d2e7244780a7fc73aa3702bcc096539114ab6e01`, cujo
+  [CI 42934799022](https://github.com/joaovictorteniscoach-cpu/familiajk/actions/runs/42934799022)
+  aprovou as correções anteriores. Main publicada continua
+  `c37a471dbe5b2dceedbe1d555d758c536269b2d1` (2026-11-10-2).
+- **Implementado no branch, ainda não publicado:** a abertura inicia juntas as
+  leituras da reserva e da v2, com os mesmos prazos, validação e comparação.
+  `lerRetratoPartes` só obtém o snapshot; `lerPartes` confirma a base depois
+  de ambas terminarem. Não adota v2 cedo enquanto a reserva ainda está pendente.
+  Preservadas proteção contra cópia menor, edição offline, conflitos e falhas.
+- Nenhuma redução de confirmação de gravação, troca de regra do Firebase,
+  mudança de polling/reconexão, migração ou alteração de saldo/valor/validade.
+  Só reduz espera em série; a quantidade de consultas permanece a mesma.
+- **Verificado em memória, com trechos reais das funções:** latências fictícias
+  500 ms + 700 ms → antes 1.200 ms, depois 700 ms. Snapshot chegando primeiro
+  espera a reserva antes de confirmar a base; v2 recusada conserva a reserva.
+  Não é medição da internet do iPhone nem promessa de velocidade fixa.
+- Preparados 14 cenários de navegador em Chromium/WebKit: ordem das respostas,
+  ausência de adoção/gravação antecipada, recusa em cada caminho, falha nas duas,
+  prazo esgotado, cópia local preservada e v2 menor/mais antiga. Incluídos no
+  começo do CI. Sintaxe dos arquivos alterados passou; CI completo deste novo
+  head ainda pendente. Resultado final será registrado no PR #277.
+- Demo atualizada. Proposta 2026-11-11-1 nos cinco carimbos; a proposta anterior
+  2026-11-10-3 nunca foi lançada. Prévias anteriores preservadas; nenhuma tela ou
+  estilo alterado por esta extensão.
+- **Decisão financeira confirmada pelo João:** teto padrão de 50% vale para os
+  meses atuais; houve descontos históricos maiores. Preservar pagamentos e
+  acordos existentes e conferir cada exceção, sem criar dívida retroativa.
+  Particular/grupo usam o valor do tipo da aula, conforme confirmação anterior.
+  Detalhes e falha de resumo que muda idade dos créditos estão na issue #275;
+  nenhuma dessas regras foi aplicada aos dados nesta etapa.
+- **Busca dos dados:** GitHub não contém backup/relatório real; no Escritório JV
+  foram encontrados somente dois resumos criptografados de 08/10, e nenhum
+  extrato completo nas solicitações/eventos consultados. Sem sessão documental
+  conectada. App do aluno no Netlify é estático; não há formulário com backups.
+  Acesso ao projeto Firebase requer autenticação própria, independente do GitHub.
+- Encontrado conector oficial Firebase disponível, com ferramenta de leitura do
+  Realtime Database; sugestão de adicionar foi apresentada. Instalação/conexão
+  **não confirmadas**. Só buscar dados reais após confirmar esse acesso, apenas
+  leitura; jamais commitar backup, dados reais ou credenciais. Busca e preparação
+  de desempenho continuam sem mudar ou publicar registros de alunos.
+- **Publicado:** permanece 2026-11-10-2. Aprovação de publicação e revisão dos dados
+  não são presumidas pela melhoria de desempenho; revisão financeira segue pendente.
+
+---
+
+## 2026-11-10 · Codex: envios confirmados e ações resumidas (PR #277; proposta 2026-11-10-3)
+
+- Responsável: Codex; mesmo branch `codex/auditoria-acoes-repetidas-2026-11-10`
+  do PR #277. Base publicada `c37a471dbe5b2dceedbe1d555d758c536269b2d1`;
+  registro anterior preservado, pai `f2982389276e4ec3eedffe593a5c546d7b3647c5`.
+  João pediu testar as propostas, revisar os números e levantar as dúvidas.
+- **Implementado no branch, não publicado:** Pix e locação aguardam resposta antes
+  de anunciar envio. Falha mantém a janela; botões barram toque repetido.
+  Pedidos iguais em andamento compartilham um envio. Removido o laço de três
+  `push`: o SDK já mantém/reenvia a mesma gravação pendente.
+- Compras, planos, dinheiro/cartão, renovação e termo também aguardam o resultado.
+  Renovação/termo não ganham marca local se a fila recusar. Aviso de pagamento
+  continua em análise, sem marcar pago. O link real de cartão abre no toque,
+  preservando o funcionamento no Safari.
+- Eliminados atalhos repetidos de reposição no Início e em Créditos, mantendo
+  saldo em destaque e ação no próprio painel. Removida a saída automática ao
+  WhatsApp após ações enviadas; o contato explícito com a academia permanece.
+  Locação mantém a notificação existente e aprovação manual; não vira reserva
+  confirmada nem bloqueio automático do horário.
+- Ficha da Gestão mantém aula/dinheiro/histórico/treino aparentes. Ajustes manuais,
+  WhatsApp e cadastro ficam em "Mais ações", sem mudar a operação dos botões.
+  Cores/fontes preservadas; demo sincronizada; proposta -3 e caches Aluno52/Gestão55.
+- Janela única foi reavaliada: o fluxo já usa três ações (horário, atividade e
+  confirmação). Juntar as janelas não elimina um desses toques. Recomendação desta
+  etapa: preservar o fluxo validado e suas verificações, sem criar outra forma
+  de agendar ou repetir o trabalho do PR #276.
+- **Verificado antes do envio:** compilação dos scripts alterados e funções reais
+  em memória. Reproduzido o Pix com sucesso/fechamento antes da nuvem na base;
+  a correção espera, aceita R$435, barra o segundo toque e preserva a janela na falha.
+  Sem execução local de shell/navegador disponível.
+- Preparados 44 cenários de navegador (Chromium/WebKit × dois temas), incluindo
+  falha/sucesso/sem nuvem, dependente, dois toques, outros tipos de pedido, vaga
+  ocupada durante a leitura, cancelamento com quatro horas e invariância dos saldos.
+  Teste incluído no começo do CI. **CI completo e revisão das imagens pendentes**;
+  resultados do commit exato serão registrados no PR.
+- **Revisão numérica somente com exemplos fictícios, usando a função publicada:**
+  8 aulas/R$640/10 reposições → teto atual 25%, usa 2 e abate R$160.
+  Dupla antiga e nova, 4 aulas/R$360/2 reposições → ambas usam 1 e abatem R$90.
+  Misto 4+4/R$1.000/3 reposições → usa 2 e abate R$250 pelo valor médio atual.
+  Isso não comprova a reconciliação de nenhum aluno real.
+- Divergências identificadas, **sem alteração financeira**: teto publicado 25%,
+  enquanto João definiu 50% (falta a data de vigência); arredondamento inteiro
+  em `descReposInfo`: 1 de 4 aulas sobre R$735 vira R$184, em vez de R$183,75.
+  A cotação de locação também arredonda reais inteiros: R$70/h por 75 min vira
+  R$88, em vez de R$87,50. Registrar e corrigir numa etapa financeira com critério
+  explícito; não reescrever valores históricos automaticamente.
+- Para saldos reais falta o backup/extrato completo nesta conversa; arquivos enviados
+  em outro chat não estão disponíveis. Ajustes sem justificativa não são presumidos
+  errados. A issue #275 continua centralizando a regra financeira proposta.
+- **Atualização em 11/11 UTC:** João confirmou desconto pelo **valor do tipo da aula**,
+  sem média comum entre particular e grupo. Decisão acrescentada à issue #275.
+  Ainda faltam a vigência de 50% e o backup/extrato completo.
+- CI parcial: verificações estáticas e pacote público passaram; o run
+  [42934249330](https://github.com/joaovictorteniscoach-cpu/familiajk/actions/runs/42934249330)
+  concluiu os 44 cenários novos e parou depois no teste antigo de locação que ainda
+  exigia abrir WhatsApp. Essa expectativa foi alinhada ao envio no app, mantendo
+  a checagem de que as horas não são consumidas pelo pedido.
+  Extrator do teste financeiro preserva `async`; relógio dos testes de Safari é
+  instalado uma vez por contexto. Sem mudança adicional no código dos apps.
+  CI completo do head final continua pendente; resultado ficará no PR #277.
+- **Publicado:** permanece 2026-11-10-2. Dados reais, extrato, saldos, mensalidades,
+  desconto, validade e regras do Firebase não foram modificados. Não integrar nem
+  publicar a proposta -3 antes do CI e da revisão visual exigida em DESIGN.md.
+
+---
+
+## 2026-11-10 · Codex: conferência de ações repetidas e etapas dispensáveis (somente auditoria)
+
+- Responsável: Codex; branch `codex/auditoria-acoes-repetidas-2026-11-10`;
+  base main `c37a471dbe5b2dceedbe1d555d758c536269b2d1`.
+  Pedido do João: verificar ações duplicadas/desnecessárias para deixar os apps mais resumidos.
+- Estado: **propostas abaixo; nenhuma correção implementada ou publicada nesta auditoria**.
+  Somente este registro é acrescentado. Não altera dados, saldos, pagamentos, reservas,
+  regras do Firebase, versão, cache ou o PR #273 (banco de exercícios).
+- Referência da versão em uso: PR #276 integrado; v2026-11-10-2.
+  CI do head aprovado: [42892824012](https://github.com/joaovictorteniscoach-cpu/familiajk/actions/runs/42892824012);
+  Pages: [42911412675](https://github.com/joaovictorteniscoach-cpu/familiajk/actions/runs/42911412675);
+  monitoramento: [42911486971](https://github.com/joaovictorteniscoach-cpu/familiajk/actions/runs/42911486971).
+  Esses resultados pertencem à entrega anterior, não a novos testes desta conferência.
+
+Achados, por prioridade (linhas da base acima):
+
+1. **Confirmação do envio antes do sucesso.** No aluno, `jaPagueiPix`
+   (`app-aluno/index.html:4630`) chama `enviarPedido` sem aguardar e mostra
+   "João avisado"; `enviarPedido:4744` não informa erro ao esgotar as tentativas.
+   `confirmarLocacao:5678` só dispara a notificação genérica e abre o WhatsApp;
+   `notificarJoao:2784` não aguarda a gravação e ignora falhas.
+   Assim, o texto de sucesso pode aparecer sem confirmação do envio.
+   Proposta: resultado explícito, aguardar gravação e mostrar falha/tentativa quando necessário.
+   Pix continua sendo aviso de pagamento em análise; isso não comprova pagamento recebido.
+   Locação continua dependendo da confirmação da academia. Não retirar o WhatsApp desse
+   caminho antes de garantir o registro do pedido. Não foi constatada perda de pedidos reais.
+
+2. **Reposição com duas entradas na mesma tela.** Início: cartão de reposições
+   (:1975) e ação rápida "Solicitar reposição" (:2013) chamam `irMarcarReposicao`.
+   Créditos: botão do painel (:2127, visível com saldo) e ação rápida (:2153)
+   chamam a mesma função. As regras CSS consultadas não escondem essas ações rápidas.
+   Proposta: manter o saldo bem aparente e um botão junto dele, retirando a repetição
+   da mesma tela; preservar atalhos úteis entre telas e os estados sem saldo.
+
+3. **Saída automática para o WhatsApp após pedido pelo app.**
+   Reserva (:5795) e cancelamento (:2862) abrem WhatsApp depois de aguardar
+   a gravação na fila. Proposta: manter o aluno no app, com status claro e
+   contato opcional "Falar com a academia". Preservar aviso à Gestão, registro durável,
+   limite de quatro horas, confirmação de cancelamento e releitura de disponibilidade.
+   Não tratar notificação e fila de reserva como dois débitos ou duas reservas.
+
+4. **Menos janelas para agendar.** Após tocar em Livre, a escolha da atividade
+   leva a outra janela de agendamento. Avaliar uma janela com atividade,
+   campos relevantes e uma confirmação final. Manter somente opções permitidas,
+   capacidade 1/2/3/4, divisão por atividade, renovação segura e bloqueio de duplo envio.
+   Não duplicar as melhorias de Livre/Ocupado já publicadas no PR #276.
+
+5. **Ficha da Gestão mais curta.** Em `app-gestao/lib/app-gestao.js:8551–8594`,
+   manter ações frequentes aparentes e avaliar recolher ajustes manuais e funções
+   ocasionais em "Mais ações". Encurtar textos repetidos e usar "academia" nas
+   mensagens institucionais pertinentes, sem substituir nomes/chaves/motivos do extrato
+   globalmente. "Usar reposição" no alerta (:8548) e na seção Aula (:8556) são
+   condicionais mutuamente exclusivos; não são dois botões simultâneos.
+   "Registrar pagamento" também muda de seção conforme o estado; preservar essa lógica.
+
+- Verificação realizada: leitura do código e CSS da base, conferência de main,
+  PRs e issues abertos. Não houve execução nova de navegador nem acesso ao extrato real.
+  Não se afirma auditoria financeira ou correção dos créditos.
+- Próxima implementação deve testar envio com sucesso/falha/sem nuvem e toque repetido;
+  saldo zero/positivo, dependentes e pacote misto; reservas exclusivas e compartilhadas;
+  cancelamento no limite de quatro horas. Rever a imagem antes de publicar mudança de tela.
+- A proposta financeira de unificação dos créditos permanece na issue #275 e não é
+  duplicada por este registro. Correções de dados reais continuam retidas até reconciliação.
+
+---
+
 ## 2026-11-10 · Codex: agenda do aluno com Livre/Ocupado e opções após toque (proposta 2026-11-10-2)
 
 - Responsável: Codex; branch `codex/agenda-aluno-livre-ocupado-2026-11-10`; base main `9e8fbdea17188f8037be8acdbd2252e4e58d75f1`.

@@ -149,7 +149,7 @@ async function contexto(browser,base,opts){
     EU=Object.assign(JSON.parse(JSON.stringify(eu)),extra||{});PUB=JSON.parse(JSON.stringify(fixture));PUB.alunos=[EU];
     MEU={codigo:'6601',pedidos:[],cancelados:[],confirmadas:[]};window.__reservas=[];window.fbDB={ref:()=>({push:async()=>{},update:async u=>{__reservas.push(u);}})};
     atualizarGradeReserva=async()=>{};saveMeu=async()=>{};window.__avisos=[];window.__zap=[];
-    notificarJoao=(acao,dk,hora)=>__avisos.push([acao,dk,hora]);abrirWhatsApp=(n,t)=>__zap.push(t);
+    notificarJoao=async(acao,dk,hora)=>{__avisos.push([acao,dk,hora]);return true;};abrirWhatsApp=(n,t)=>__zap.push(t);
     agDate=new Date();agView='dia';VINCULO_ESTADO='ativo';
     document.getElementById('app').style.display='block';document.querySelectorAll('.overlay').forEach(x=>x.classList.remove('on'));
     document.querySelectorAll('[id*="splash"]').forEach(x=>x.style.display='none');render();goAluno('inicio',document.getElementById('nav-al-inicio'));
@@ -184,7 +184,7 @@ async function contexto(browser,base,opts){
     assert.deepEqual(ih.filter(it=>it.ratio!==null&&it.ratio<it.minimo).map(it=>it.t+' '+it.ratio),[],'leitura do cartão');
     await p.setViewportSize({width:390,height:844});
    });
-   await check(tema+': Alugar a quadra mostra as horas de locação e a mensagem pede para usá-las',async()=>{
+   await check(tema+': Alugar a quadra mostra as horas e envia o pedido no app, sem abrir WhatsApp',async()=>{
     await resetA();
     await p.evaluate(()=>{agDate=new Date('2026-10-15T12:00:00');escolherSlot('17:00','loc');});
     assert.match(await p.locator('#pick-opts').innerText(),/Alugar a quadra\s*usa suas horas de locação · você tem 2h/);
@@ -193,7 +193,9 @@ async function contexto(browser,base,opts){
     await p.evaluate(()=>confirmarLocacao());await p.waitForTimeout(400);
     const r=await p.evaluate(()=>({avisos:__avisos,zap:__zap}));
     assert.deepEqual(r.avisos,[['pediu locação 1h','2026-10-15','17:00']]);
-    assert.match(r.zap[0],/por \*1h\*, usando minhas horas de locação \(tenho 2h\)\. Pode confirmar/);
+     assert.deepEqual(r.zap,[],'o envio pelo app não abre mais o WhatsApp automaticamente');
+     assert.equal(await p.locator('#ov-locdur').isVisible(),false,'fecha após confirmação do envio');
+     assert.equal(await p.evaluate(()=>EU.locCred),2,'pedido não consome saldo antes de a locação ser confirmada');
     await resetA({locCred:0});await p.evaluate(()=>{agDate=new Date('2026-10-15T12:00:00');escolherSlot('17:00','loc');});
     assert.match(await p.locator('#pick-opts').innerText(),/Alugar a quadra\s*locação · R\$\s?70\/h/,'sem saldo: continua o preço por hora');
     await p.evaluate(()=>{document.getElementById('ov-pick').classList.remove('on');});
@@ -201,7 +203,7 @@ async function contexto(browser,base,opts){
    await check(tema+': "Minhas aulas" na barra de baixo e no botão laranja do Início, com feitas e marcadas do mês',async()=>{
     await resetA();
     const nav=await p.locator('.nav button').allInnerTexts();
-    assert.deepEqual(nav.map(t=>t.replace(/\s+/g,' ').trim()),['Início','Agenda','Minhas aulas','Evolução','Créditos','Perfil']);
+    assert.deepEqual(nav.map(t=>t.replace(/\s+/g,' ').trim()),['Início','Agenda','Minhas aulas','Evolução','Créditos','Torneio','Perfil']);
     const bt=p.locator('#home-minhas-aulas');assert.equal(await bt.isVisible(),true);
     assert.match(await bt.innerText(),/Minhas aulas\s*3 feitas · 4 marcadas em outubro/);
     const cor=await bt.evaluate(e=>getComputedStyle(e).backgroundColor);assert.equal(cor,'rgb(181, 78, 41)','botão laranja (tom que passa na régua de leitura com letra branca)');
@@ -219,7 +221,7 @@ async function contexto(browser,base,opts){
     await p.evaluate(()=>goAluno('perfil',document.getElementById('nav-al-perfil')));
     await p.locator('#apg-perfil .jv-quick button',{hasText:'Minhas aulas'}).click();
     assert.equal(await p.evaluate(()=>document.querySelector('.nav button.on').id),'nav-al-aulas','pelo Perfil também acende a aba certa');
-    await p.evaluate(()=>goAluno('torneio',null));assert.equal(await p.evaluate(()=>document.querySelector('.nav button.on').id),'nav-al-perfil','Torneio continua no Perfil');
+    await p.evaluate(()=>goAluno('torneio',null));assert.equal(await p.evaluate(()=>document.querySelector('.nav button.on').id),'nav-al-torneio','Torneio tem aba própria na barra');
    });
    await check(tema+': Minhas aulas dividida em abas (Resumo do mês, Próximas, Feitas), uma de cada vez, sem rolagem longa',async()=>{
     await resetA();await p.locator('#home-minhas-aulas').click();

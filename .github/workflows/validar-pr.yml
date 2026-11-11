@@ -16,11 +16,24 @@ jobs:
     # 28/10: o "ubuntu-latest" virou 26.04 e o Playwright 1.56.1 não instala o
     # navegador nele. Fica no 24.04 até subir o Playwright de propósito.
     runs-on: ubuntu-24.04
+    container: mcr.microsoft.com/playwright:v1.56.1-noble
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Conferir checkout e histórico no ambiente de teste
+        run: |
+          git config --global --add safe.directory "$(pwd -P)"
+          git rev-parse --is-inside-work-tree
+          git rev-parse --verify HEAD
+          git rev-parse --verify origin/main
       - name: Validar apps e sites
         run: |
           bash ferramentas/checar-tudo.sh
@@ -33,13 +46,20 @@ jobs:
       - name: Validar o pacote público sem publicar
         run: python3 ferramentas/preparar-pages.py "$RUNNER_TEMP/pages"
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
       - name: Preparar navegador de teste
+        timeout-minutes: 8
         run: |
           npm install --prefix "$RUNNER_TEMP/jv-browser" playwright@1.56.1
-          "$RUNNER_TEMP/jv-browser/node_modules/.bin/playwright" install --with-deps chromium webkit
+          NODE_PATH="$RUNNER_TEMP/jv-browser/node_modules" node <<'JS'
+          const {chromium,webkit}=require('playwright');
+          (async()=>{
+            for(const [nome,motor] of [['Chromium',chromium],['WebKit',webkit]]){
+              const browser=await motor.launch({headless:true});
+              await browser.close();
+              console.log('Navegador pronto: '+nome);
+            }
+          })().catch(e=>{console.error(e);process.exit(1);});
+          JS
       - name: Conferir Gestão e site no navegador sem dados reais
         env:
           NODE_PATH: ${{ runner.temp }}/jv-browser/node_modules
@@ -48,6 +68,8 @@ jobs:
         run: |
           set +e
           bash -e -o pipefail -c '
+          node ferramentas/testar-abertura-nuvem-browser.cjs
+          node ferramentas/testar-envios-aluno-browser.cjs
           node ferramentas/testar-agenda-quer-aluno-browser.cjs
           node ferramentas/testar-reposicao-fixo-browser.cjs
           node ferramentas/testar-semana-livre-browser.cjs
@@ -117,6 +139,10 @@ jobs:
           tail -n 80 "$RUNNER_TEMP/jv-browser-checks.log" | cut -c 1-1200
           exit "$jv_browser_result"
 
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
       - name: Conferir transações com SDK Firebase e regras no emulador local
         env:
           NODE_PATH: ${{ runner.temp }}/jv-browser/node_modules
