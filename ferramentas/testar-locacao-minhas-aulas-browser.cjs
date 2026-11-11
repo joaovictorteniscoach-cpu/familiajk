@@ -203,7 +203,7 @@ async function contexto(browser,base,opts){
    await check(tema+': "Minhas aulas" na barra de baixo e no botão laranja do Início, com feitas e marcadas do mês',async()=>{
     await resetA();
     const nav=await p.locator('.nav button').allInnerTexts();
-    assert.deepEqual(nav.map(t=>t.replace(/\s+/g,' ').trim()),['Início','Agenda','Minhas aulas','Evolução','Créditos','Perfil']);
+    assert.deepEqual(nav.map(t=>t.replace(/\s+/g,' ').trim()),['Início','Agenda','Minhas aulas','Evolução','Créditos','Torneio','Perfil']);
     const bt=p.locator('#home-minhas-aulas');assert.equal(await bt.isVisible(),true);
     assert.match(await bt.innerText(),/Minhas aulas\s*3 feitas · 4 marcadas em outubro/);
     const cor=await bt.evaluate(e=>getComputedStyle(e).backgroundColor);assert.equal(cor,'rgb(181, 78, 41)','botão laranja (tom que passa na régua de leitura com letra branca)');
@@ -221,7 +221,7 @@ async function contexto(browser,base,opts){
     await p.evaluate(()=>goAluno('perfil',document.getElementById('nav-al-perfil')));
     await p.locator('#apg-perfil .jv-quick button',{hasText:'Minhas aulas'}).click();
     assert.equal(await p.evaluate(()=>document.querySelector('.nav button.on').id),'nav-al-aulas','pelo Perfil também acende a aba certa');
-    await p.evaluate(()=>goAluno('torneio',null));assert.equal(await p.evaluate(()=>document.querySelector('.nav button.on').id),'nav-al-perfil','Torneio continua no Perfil');
+    await p.evaluate(()=>goAluno('torneio',null));assert.equal(await p.evaluate(()=>document.querySelector('.nav button.on').id),'nav-al-torneio','Torneio tem aba própria na barra');
    });
    await check(tema+': Minhas aulas dividida em abas (Resumo do mês, Próximas, Feitas), uma de cada vez, sem rolagem longa',async()=>{
     await resetA();await p.locator('#home-minhas-aulas').click();

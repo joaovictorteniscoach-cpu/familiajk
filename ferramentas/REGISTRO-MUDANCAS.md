@@ -35,6 +35,14 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
   revelou texto da página atravessando o vidro da barra: fundo tornado quase
   opaco, com o mesmo verde escuro existente, sem mexer nos ícones. Novas imagens
   e CI deste complemento precisam confirmar o resultado antes de publicar.
+- CI completo 43031463891 interrompido por duas expectativas antigas no teste
+  de locação: seis botões e Torneio selecionando Perfil. Alinhadas à nova aba
+  pedida pelo João, preservando todos os cenários e cálculos de locação/aulas.
+  Conferidos os 61 testes de navegador existentes para referências antigas da
+  barra; não foi encontrada outra expectativa equivalente. Nenhum arquivo dos
+  aplicativos alterado neste ajuste; as prévias de `0852c19101c21943566585a9bd5fb248d56896ee`
+  continuam representando exatamente o código visual. Nova CI deve aprovar o
+  head final; resultado final registrado no PR #277.
 - Proposta **2026-11-11-6**, cinco carimbos e demo sincronizados. Sem mudança de
   regras, valores, fórmulas ou dados reais. O CI da proposta -2 pode ser
   substituído pela nova execução; não presumir aprovação por testes da base.
