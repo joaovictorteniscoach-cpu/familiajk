@@ -39,6 +39,11 @@ jobs:
       - name: Preparar navegador de teste
         timeout-minutes: 8
         run: |
+          # O mirror Azure ficou sem responder em 11/11; usar os mesmos pacotes
+          # Ubuntu oficiais por HTTPS na máquina descartável de testes.
+          if [ -f /etc/apt/sources.list.d/ubuntu.sources ]; then
+            sudo sed -i -e 's|http://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' -e 's|http://security.ubuntu.com/ubuntu|https://security.ubuntu.com/ubuntu|g' /etc/apt/sources.list.d/ubuntu.sources
+          fi
           npm install --prefix "$RUNNER_TEMP/jv-browser" playwright@1.56.1
           "$RUNNER_TEMP/jv-browser/node_modules/.bin/playwright" install --with-deps chromium webkit
       - name: Conferir Gestão e site no navegador sem dados reais

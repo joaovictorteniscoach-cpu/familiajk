@@ -8,6 +8,21 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-11 · Codex: corrigir mirror de instalação na máquina de testes
+
+- Logs dos runs 43032962962 e 43036055179 mostram downloads Ubuntu do
+  `azure.archive.ubuntu.com` repetidamente sem resposta; o segundo parou no
+  limite de oito minutos, antes dos testes. Falha de infraestrutura de preparo,
+  sem erro novo do aplicativo diagnosticado nesta etapa.
+- A instalação usa o archive Ubuntu oficial por HTTPS na máquina descartável,
+  mantendo distribuição, assinaturas e versões dos navegadores. Limite de oito
+  minutos preservado. Nenhum teste é removido, ignorado ou relaxado.
+- Nenhum arquivo dos aplicativos modificado; versão proposta 2026-11-11-6 e
+  prévias de 0852c19101c21943566585a9bd5fb248d56896ee mantidas. Publicação
+  continua dependendo da CI completa do head final; resultado no PR #277.
+
+---
+
 ## 2026-11-11 · Codex: retomar validação e registrar nova proposta de créditos
 
 - CI 43032962962 ficou mais de dez minutos na instalação dos navegadores, antes
