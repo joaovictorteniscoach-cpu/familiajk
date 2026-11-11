@@ -30,9 +30,10 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 - Ficha da Gestão mantém aula/dinheiro/histórico/treino aparentes. Ajustes manuais,
   WhatsApp e cadastro ficam em "Mais ações", sem mudar a operação dos botões.
   Cores/fontes preservadas; demo sincronizada; proposta -3 e caches Aluno52/Gestão55.
-- Janela única para escolher atividade e confirmar agendamento permanece **proposta**.
-  O fluxo de duas etapas e suas verificações foram preservados nesta correção:
-  não simplificar removendo confirmação ou repetindo o trabalho do PR #276.
+- Janela única foi reavaliada: o fluxo já usa três ações (horário, atividade e
+  confirmação). Juntar as janelas não elimina um desses toques. Recomendação desta
+  etapa: preservar o fluxo validado e suas verificações, sem criar outra forma
+  de agendar ou repetir o trabalho do PR #276.
 - **Verificado antes do envio:** compilação dos scripts alterados e funções reais
   em memória. Reproduzido o Pix com sucesso/fechamento antes da nuvem na base;
   a correção espera, aceita R$435, barra o segundo toque e preserva a janela na falha.
@@ -56,6 +57,17 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 - Para saldos reais falta o backup/extrato completo nesta conversa; arquivos enviados
   em outro chat não estão disponíveis. Ajustes sem justificativa não são presumidos
   errados. A issue #275 continua centralizando a regra financeira proposta.
+- **Atualização em 11/11 UTC:** João confirmou desconto pelo **valor do tipo da aula**,
+  sem média comum entre particular e grupo. Decisão acrescentada à issue #275.
+  Ainda faltam a vigência de 50% e o backup/extrato completo.
+- CI parcial: verificações estáticas e pacote público passaram; o run
+  [42934249330](https://github.com/joaovictorteniscoach-cpu/familiajk/actions/runs/42934249330)
+  concluiu os 44 cenários novos e parou depois no teste antigo de locação que ainda
+  exigia abrir WhatsApp. Essa expectativa foi alinhada ao envio no app, mantendo
+  a checagem de que as horas não são consumidas pelo pedido.
+  Extrator do teste financeiro preserva `async`; relógio dos testes de Safari é
+  instalado uma vez por contexto. Sem mudança adicional no código dos apps.
+  CI completo do head final continua pendente; resultado ficará no PR #277.
 - **Publicado:** permanece 2026-11-10-2. Dados reais, extrato, saldos, mensalidades,
   desconto, validade e regras do Firebase não foram modificados. Não integrar nem
   publicar a proposta -3 antes do CI e da revisão visual exigida em DESIGN.md.
