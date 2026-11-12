@@ -1683,15 +1683,15 @@ html body:not(#jv) #pedir-box .btn-ghost{background:#F3EDE2!important;border:1px
 .login .login-sub{opacity:1}
 .login-priv{color:rgba(250,247,242,.8)}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-11-11-6">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-11-12-2">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-11-11-6">
-<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-11-11-6">
-<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-11-11-6">
-<link rel="stylesheet" href="lib/visual-sobrio.css?v=2026-11-11-6">
-<link rel="stylesheet" href="lib/letras-maiores.css?v=2026-11-11-6">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-11-12-2">
+<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-11-12-2">
+<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-11-12-2">
+<link rel="stylesheet" href="lib/visual-sobrio.css?v=2026-11-12-2">
+<link rel="stylesheet" href="lib/letras-maiores.css?v=2026-11-12-2">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -2198,7 +2198,7 @@ function esperarAuth(){
     <button id="nav-al-torneio" onclick="goAluno('torneio',this)"><span class="ico" aria-hidden="true" data-ic="navtrophy"></span><span class="nav-badge" id="nb-al-torneio"></span>Torneio</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" aria-hidden="true" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-11-11-6"></script>
+<script src="lib/icones.js?v=2026-11-12-2"></script>
 </div>
 
 <!-- ASSISTENTE POR VOZ: consultar horário livre, agendar, cancelar, ver aulas (lib/voz-aluno.js) -->
@@ -2445,7 +2445,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-11-11-6';
+const VERSAO='2026-11-12-2';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -2731,7 +2731,12 @@ function valorAPagarMensalidade(){
 function rotuloParcialAluno(){return pagamentoMensalAluno()?'Pagamento parcial':'50% pago';}
 
 function avisoMensOculta(){toast('🔐 O valor aparece quando o João aprovar este aparelho');}
-function fmtCred(n){const r=Math.round(Number(n||0)*2)/2;return r%1===0?String(r):String(r).replace('.',',');}
+function fmtCred(n){
+  const v=Number(n)||0,m=Math.round(Math.abs(v)*60);
+  if(Math.abs(v*2-Math.round(v*2))<1e-7)return String(Math.round(v*2)/2).replace('.',',');
+  if(Math.abs(Math.abs(v)*60-m)<1e-5)return (v<0?'−':'')+(Math.floor(m/60)?Math.floor(m/60)+'h':'')+(m%60?String(m%60)+(m>=60?'':' min'):'');
+  return String(Math.round(v*10000)/10000).replace('.',',');
+}
 function _hm(s){const p=String(s).split(':');return (+p[0])*60+(+p[1]||0);}
 function modoPadrao(dia,hora){
   const m=_hm(hora),H=h=>_hm(h);
@@ -3268,6 +3273,7 @@ function minhasNoDia(date){
    não desconto automático. Aqui o aluno vê quanto tem e marca a aula. */
 // Saldo publicado: zero válido também deve prevalecer sobre o campo legado.
 function saldoReposAluno(){
+  if(EU&&EU.reposValidade==='ultima-falta'&&EU.reposVenceEm&&dKey(new Date())>EU.reposVenceEm)return 0;
   if(!EU)return 0;
   const valor=EU.reposValidas!=null?EU.reposValidas:EU.repos;
   const saldo=Number(valor);
@@ -3305,6 +3311,7 @@ function detalheSaldoAluno(sp){
 function textoPlanoAluno(){
   const sp=saldoPacoteAluno();if(!sp)return '—';
   if(sp.misto)return EU.tipo+' · Flex '+EU.plano+' + '+EU.planoGrupo+' em '+String(EU.grupoTipo||'grupo').toLowerCase();
+  if(EU.saldoCompartilhado&&EU.saldoCompartilhado.aulas)return EU.tipo+' · saldo compartilhado';
   if(sp.qtd<=0)return EU.tipo+' · sem pacote';
   if(isPersonal())return EU.tipo+' · '+sp.qtd+' treinos/mês';
   const nome=sp.campo==='credGrupo'&&!/dupla|trio|quarteto/i.test(String(EU.tipo||''))?(EU.grupoTipo||'Grupo'):EU.tipo;
@@ -3315,6 +3322,8 @@ function textoPlanoAluno(){
    Mesma conta da Gestão (tipoReposDe). */
 function tipoReposAluno(){
   if(!EU)return null;
+  if(['part','grupo'].includes(EU.reposModalidade))return EU.reposModalidade;
+  if(EU.reposModalidade==='ambas')return null;
   const p=Number(EU.plano)||0,g=Number(EU.planoGrupo)||0;
   if(p>0&&g>0)return null;
   if(g>0)return 'grupo';
@@ -3336,7 +3345,8 @@ function renderReposBox(){
   const saldo=saldoReposAluno();
   if(!saldo){box.style.display='none';box.innerHTML='';return;}
   let h='<div style="background:#fff;border:1px solid var(--border);border-radius:13px;padding:13px;margin-bottom:12px">';
-  if(venc>0)h+='<div style="color:#7A5B10;font-weight:700;font-size:12.5px;margin-bottom:9px">⏳ '+fmtCred(venc)+' reposição(ões) vencem no fim do mês — marque antes de perder.</div>';
+  if(EU.reposValidade==='ultima-falta')h+='<p class="hint">'+(EU.reposVenceEm?'Válidas até '+EU.reposVenceEm.split('-').reverse().join('/'):'Data da última falta ainda não confirmada. Saldo preservado.')+'</p>';
+  if(venc>0&&EU.reposValidade!=='ultima-falta')h+='<div style="color:#7A5B10;font-weight:700;font-size:12.5px;margin-bottom:9px">⏳ '+fmtCred(venc)+' reposição(ões) vencem no fim do mês — marque antes de perder.</div>';
   h+='<div style="font-size:13px;font-weight:700;margin-bottom:3px">🔁 Você tem '+fmtCred(saldo)+' reposição(ões)</div>'+
      '<div style="font-size:12.5px;color:var(--muted);margin-bottom:9px">Escolha um horário livre na agenda e marque sua aula. Se não conseguir encaixar, fale com o João.</div>'+
      '<button class="btn btn-clay" style="width:100%" onclick="irMarcarReposicao()">Marcar aula de reposição</button>';
@@ -3560,7 +3570,7 @@ function renderPremiumAluno(){
   const hrs=document.getElementById('home-repos-sub');if(hrs)hrs.textContent=repos>0?'disponíveis · toque para agendar':'nenhuma reposição disponível';
   const rn=document.getElementById('cred-page-repos-note');if(rn)rn.textContent=repos>0?'Use seu saldo para agendar uma aula de reposição.':'Você não tem reposições disponíveis no momento.';
   for(const id of ['home-repos-venc','cred-page-repos-venc']){
-    const el=document.getElementById(id);if(el){el.hidden=vencendo<=0;el.textContent=vencendo>0?('⏳ '+fmtCred(vencendo)+(vencendo===1?' vence':' vencem')+' no fim do mês'):'';}
+    const el=document.getElementById(id);if(el){el.hidden=vencendo<=0;el.textContent=vencendo>0?('⏳ '+fmtCred(vencendo)+(vencendo===1?' vence':' vencem')+(EU.reposValidade==='ultima-falta'&&EU.reposVenceEm?' até '+EU.reposVenceEm.split('-').reverse().join('/'):' no fim do mês')):'';}
   }
   /* Horas de locação (19/10): o cartão antigo "Locação (horas)" mora no
      #bloco-saldo, que o visual novo esconde, e o aluno não via as horas que
@@ -5937,7 +5947,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-11-11-6').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-11-12-2').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
@@ -5946,6 +5956,6 @@ window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);})
   setTimeout(()=>esperarEIniciar(t+1),150);
 })(0);
 </script>
-<script src="lib/voz-aluno.js?v=2026-11-11-6"></script>
+<script src="lib/voz-aluno.js?v=2026-11-12-2"></script>
 </body>
 </html>
