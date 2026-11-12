@@ -20,10 +20,18 @@ async function check(label,fn){await fn();n++;console.log('PASS '+label);}
   const ctx=await browser.newContext({viewport:{width:390,height:844},timezoneId:'America/Sao_Paulo',serviceWorkers:'block'});
   try{
   await ctx.route('**/*',r=>{const u=new URL(r.request().url());if(u.origin!==base)return r.abort();if(u.pathname.includes('/lib/firebase-'))return r.fulfill({body:'',contentType:'text/javascript'});return r.continue();});
-  await ctx.addInitScript(({banco,tema})=>{localStorage.setItem('jvtenis-gestao-v1',JSON.stringify(banco));localStorage.setItem('jv-tema',tema);sessionStorage.setItem('jv-bk-adiar','1');},{banco,tema});
+  await ctx.addInitScript(({banco,tema})=>{
+   // WebKit compartilha o controlador de clock entre páginas do contexto.
+   // Fixar apenas Date por documento evita reaproveitar o controlador da página fechada.
+   const OriginalDate=Date,agora=OriginalDate.parse('2026-11-12T10:00:00-03:00');
+   globalThis.Date=class extends OriginalDate{
+    constructor(...args){super(...(args.length?args:[agora]));}
+    static now(){return agora;}
+   };
+   localStorage.setItem('jvtenis-gestao-v1',JSON.stringify(banco));localStorage.setItem('jv-tema',tema);sessionStorage.setItem('jv-bk-adiar','1');
+  },{banco,tema});
   for(const app of ['app-aluno','app-gestao']){
    const p=await ctx.newPage(),errors=[];p.on('pageerror',e=>errors.push(e.message));p.on('dialog',d=>d.dismiss());
-   await p.clock.setFixedTime(new Date('2026-11-12T10:00:00-03:00'));
    await p.goto(base+'/'+app+'/',{waitUntil:'load'});await p.waitForFunction(()=>typeof renderAgenda==='function');
    if(app==='app-gestao')await p.waitForFunction(()=>typeof CARREGADO!=='undefined'&&CARREGADO);
    const label=[motor,tema,app].join('/');
