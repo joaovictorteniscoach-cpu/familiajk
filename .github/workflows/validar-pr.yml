@@ -37,6 +37,7 @@ jobs:
       - name: Validar apps e sites
         run: |
           bash ferramentas/checar-tudo.sh
+          node ferramentas/testar-preservacao-extrato.cjs
           node ferramentas/checar-sintaxe.js site-pro/index.html
           node ferramentas/checar-sintaxe.js site-pro/sistema.html
           node ferramentas/checar-sintaxe.js site-pro/curso.html
@@ -130,6 +131,7 @@ jobs:
           node ferramentas/testar-ferramentas-agenda-browser.cjs
           node ferramentas/testar-conexao-nuvem-aluno-browser.cjs
           node ferramentas/testar-creditos-marcas-browser.cjs
+          node ferramentas/testar-conciliacao-saldos-browser.cjs
           node ferramentas/testar-avisos-celular-browser.cjs
           node ferramentas/testar-servidor-avisos.mjs
           node ferramentas/testar-resumo-escritorio-browser.cjs

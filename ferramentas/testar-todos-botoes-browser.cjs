@@ -172,7 +172,7 @@ async function varrer(browser,base,cfg){
   }
  }
  const so=(process.env.JV_PAGINAS||'').split(',').filter(Boolean);
- for(const pag of cfg.paginas){if(so.length&&!so.includes(pag))continue;await repor(pag);await explorar(pag,[],'@tela',1);}
+ for(const pag of cfg.paginas){if(so.length&&!so.includes(pag))continue;await repor(pag);await explorar(pag,[],'@tela',1);console.log(cfg.nome+' · '+pag+': '+r.toques+' toques acumulados · '+r.falhas.length+' erro(s)');}
  r.saidas=[...new Set(saidas)];r.explorados=[...explorados];r.links=[...new Set(await p.evaluate(()=>window.__links||[]).catch(()=>[]))];
  await c.close();
  return r;

@@ -8,6 +8,46 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-12 · Claude Code: #279 (saldos conferidos) junto da agenda publicada e do #281
+
+- Responsável: Claude Code, a pedido do João ("dê seguimento por aqui"; o Codex ficou sem créditos).
+  Branch `claude/academia-app-cleanup-ayvphe`: main `71015ce` + #281 (`620aa4a`) + merge de
+  `codex/conciliacao-saldos-2026-11-12` (#279, base antiga `66a4559`, sem o #278).
+- **Junção:** conflitos só em carimbos de versão, `podarMovs` e `moverEntrada`. `podarMovs` mantém as
+  duas proteções: movimentos e datas de reposição (#281) e referências em uso por presença/banco (#279).
+  `moverEntrada` mantém a troca barrada no domingo (#278) e a aula conjunta (#279). Conferido linha a linha:
+  fora carimbos, nada da main saiu além do que o #279 tirava de propósito. Demo e tema gerados de novo.
+- **Correções sobre o #279:** aviso do ✓ dizia "(1 de aula)" (CI do #279 vermelho em
+  `testar-presenca-sem-credito`): `qtdAulaTxt` → "1 aula", "½ aula", "2 aulas", "45 min de aula".
+  `salvarBancoSaldo` não grava com conflito de outra sessão (`_conflitoNuvem`), nem quando a nuvem
+  ficou instável (`_nuvemMuda`) ou a sessão trocou durante a cópia: mesma regra de `copiarAntesDoCadastro`.
+  Dois testes negativos em `testar-conciliacao-saldos-browser.cjs` (conferidos tirando a trava: falham sem ela).
+  `testar-preservacao-extrato.cjs` (#281) passa a carregar `titularSaldo`/`bancoSaldo` (o #279 mudou
+  `lotesRepos`/`reposPorIdade`) e ganhou o caso "participante vê a validade do titular após compactar" (11 casos).
+- **Versão candidata 2026-11-12-4** (contém o #281). Publicada continua 2026-11-12-1 (#278). Se o #281
+  for publicado antes, este PR segue valendo.
+- **Testado aqui:** `checar-tudo.sh` 0 falhas (avisos idênticos aos da main); conciliação 48/48;
+  presença sem crédito 14/14; preservação do extrato 11/11; bateria do CI: ver o PR (o WebKit não existe
+  neste contêiner; a metade WebKit roda no CI).
+- Nenhuma regra do Firebase, migração de saldo, importação de JSON ou dado real. A prévia do #279 foi aprovada
+  pelo João na sessão do Codex; as correções acima não mudam tela. **Pendente:** OK do João para publicar;
+  depois, a conferência do JSON privado (fora do repositório) antes de qualquer importação. O PR #279 fica aberto
+  até o João decidir; este o substitui.
+
+---
+
+## 2026-11-12 · Codex: preservar validade e estornos ao compactar o extrato
+
+- Responsável: Codex. Base `71015ce7c7c53c95bea24c279d98184b87df4507`; branch `codex/preservar-validade-extrato-2026-11-12`.
+- Problema reproduzido com dados fictícios: uma reposição de junho passava de vencida a válida em novembro quando a compactação lhe atribuía a data de movimentos de outubro.
+- Correção preparada: preservar todos os movimentos de reposição, suas datas, ordem e referências; manter também referências ainda usadas por presenças/estornos. Compactar apenas os demais movimentos elegíveis, mantendo a soma por campo.
+- Dez regressões passaram no V8 com as funções reais: validade, FIFO, desfazer anotação, estorno, referência de banco conjunto, outro aluno, compactação repetida, soma por campo e origem desconhecida. A primeira falha no código anterior, como esperado. CI completo ainda será conferido no head final.
+- **Versão candidata: 2026-11-12-2. Publicação anterior confirmada: 2026-11-12-1** (#278). Estado final e referências de CI/publicação desta correção serão registrados no PR correspondente.
+- Não recalcula saldos reais, não recupera datas já perdidas e não migra o modelo financeiro. Nenhuma tela ou regra do Firebase alterada; agenda Dia/Domingo, valores e ícones dourados preservados.
+- PR #279 permanece separado: incorporar esta preservação junto da agenda publicada antes de revalidar a integração. Configuração de saldo compartilhado ainda precisa respeitar conflito de nuvem, conforme #275.
+
+---
+
 ## 2026-11-12 · Codex: agenda publicada em Dia, com domingo para locações
 
 - Responsável: Codex. Base `66a455948c42ce1906980ae48001b933a65e6246`; PR [#278](https://github.com/joaovictorteniscoach-cpu/familiajk/pull/278), branch `codex/creditos-unicos-implantacao-2026-11-12`.
@@ -31,6 +71,70 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 - Diretriz reforçada pelo João: facilidade para professor e aluno; preservar visual e ícones dourados; reduzir ações repetidas sem eliminar conferência financeira.
 - **Publicado:** continua 2026-11-11-6. Nenhuma regra do Firebase, cadastro ou saldo real alterado.
 - **Pendente:** testes completos e imagem da agenda; integração financeira de todos os caminhos e reconciliação de dados reais antes de ativar. O calculador NÃO é carregado pelos apps.
+
+---
+
+## 2026-11-12 · Codex: compatibilidade dos saldos conferidos — varredura concluída localmente
+
+- Responsável: Codex. Branch local `codex/conciliacao-saldos-2026-11-12`, base
+  `66a455948c42ce1906980ae48001b933a65e6246`. Main reconferida, ainda nesta base.
+  PR #273 (skill para vídeos) não se sobrepõe. PR concorrente #278 prepara
+  domingo/agenda em Dia e calculador isolado: toca agenda, voz, carimbos, demo,
+  CI e este registro. Suas mudanças não foram incorporadas nem substituídas;
+  quando integrar, preservar as duas linhas de testes e conciliar movimentos
+  de aulas e carimbos a partir da main atualizada. Não ativar o calculador no app.
+- **Implementado localmente:** banco de aulas/reposições e banco de locações,
+  cada um com titular e participantes explícitos. Uso por presença ou uma única
+  baixa por horário conjunto; extrato conserva o participante e o titular.
+  Painéis contam o banco uma vez. Cobrança familiar continua independente.
+- Configuração mostra os totais únicos antes de gravar, exige cópia anterior
+  confirmada e permite desfazer enquanto não houver novos lançamentos. Nenhum
+  vínculo ou saldo existente é migrado ao abrir o app.
+- Tipo das reposições pode ser definido independentemente do pacote. Validade
+  opcional do saldo inteiro: quatro meses corridos desde a última falta elegível,
+  com ajuste de fim de mês. Origem desconhecida é preservada. Correções e viradas
+  não reiniciam a data. A regra por lotes continua como padrão dos cadastros antigos.
+- Duração por ocorrência em minutos, conservada ao mover a aula. Débito, estorno,
+  fechamento e publicação preservam frações como 100 minutos, sem arredondar para
+  meia aula. Estorno de aula anterior ao vínculo volta ao banco visível;
+  desvincular e reutilizar um horário não mistura dois débitos. Mudança de dia
+  conserva a referência conjunta; mover parte já confirmada exige desmarcar.
+  Prévia e execução por voz usam o mesmo saldo, duração e baixa conjunta.
+- Valor líquido explicitamente combinado por competência é preservado em
+  `valoresMensais`; registrar pagamento captura esse valor. Alterar o cadastro
+  atual não muda meses anteriores. Recebimentos confirmados sem dia podem ser
+  representados por competência em `recebimentosSemData`, sem receita datada
+  fictícia; referência de origem impede contar novamente ao localizar a data.
+  Quitações manuais sem valor continuam quitadas mesmo após mudar o preço.
+  Nenhum preço é inferido de um pagamento parcial ou migrado ao abrir o app.
+- Cobrar pela agenda, desfazer a decisão e aceitar troca de plano atualizam o
+  valor da competência atual, conservando o acordo anterior ao desfazer. Pedido
+  de plano de participante não redefine o banco do titular.
+- Publicação entrega somente o saldo efetivo e as regras do próprio aluno; não
+  inclui IDs ou dados financeiros dos outros participantes do banco.
+- Versão **candidata** `2026-11-12-3`: carimbos, caches e demo gerada sincronizados.
+  PR #279. **Versão realmente publicada na abertura do PR: `2026-11-11-6`.**
+  Nenhum merge, deploy de produção, escrita no Firebase ou JSON de importação
+  realizado antes da aprovação completa do head pelo CI.
+- **Testado localmente:** checadores de sintaxe/regras/P0/versão/tema; cadastro
+  (70 verificações em Chromium/WebKit), contrato de saldos do aluno (48 nos dois
+  temas e navegadores), créditos/estornos (13), plano família (15), presenças
+  familiares (9), inativação/reposições (10), reposição/fixo (7). Teste novo de
+  conciliação: 44 cenários em cada navegador, inclusive casos negativos de cópia,
+  estornos, voz, mudança de horário, valor mensal e recebimento sem dia; incluído
+  no CI. Regressões finais: pagamentos (38), renovação manual (20), fila (10),
+  conversa por voz (25), cadastro (70), contrato do aluno (48), fumaça e checadores.
+  O run inicial 43201149241 parou num teste antigo que alterava diretamente o
+  preço após quitação zero; o cenário agora usa o cadastro real, conserva a
+  exigência de cobrança atual e verifica também a quitação anterior. As 45
+  verificações desse arquivo passaram localmente; validar novamente o head final.
+  Varredura anterior por grupos cobrindo todas as telas: 1.379 toques,
+  56 janelas percorridas (incluindo repetições entre grupos), zero erros. Somente dados fictícios, com rede externa bloqueada nos testes.
+- Prévia aprovada pelo João nesta sessão; não repetir a aprovação.
+- **Pendente:** publicação pelo fluxo de PR/CI no head exato,
+  validação da versão publicada e, depois, preparação e
+  conferência do JSON privado antes de qualquer importação. A conferência dos
+  dados particulares permanece fora do repositório público.
 
 ---
 

@@ -35,7 +35,12 @@ const gestao=fs.readFileSync(path.join(root,'app-gestao/lib/app-gestao.js'),'utf
 const publicador=gestao.slice(gestao.indexOf('function alunoPublicado('),gestao.indexOf('/* O app do aluno monta a grade'));
 assert.ok(publicador.startsWith('function alunoPublicado('));
 const unif=gestao.slice(gestao.indexOf('function ehMisto('),gestao.indexOf('/* Um pacote por aluno'));
-const publicar=new Function('a','DB',unif+
+const leituras=['grupoSaldo','bancoSaldo','titularSaldo','saldo','valorCombinadoEm'].map(nome=>{
+ const ini=gestao.indexOf('function '+nome+'('),linha=gestao.indexOf('\n',ini);
+ return gestao.slice(ini,linha).endsWith('}')?gestao.slice(ini,linha):gestao.slice(ini,gestao.indexOf('\n}',ini)+2);
+}).join('\n');
+const publicar=new Function('a','DB',unif+leituras+
+
  'const profDoAluno=()=>"",profNome=()=>"",reposValidas=a=>Number(a.reposValidas)||0,reposVencendo=()=>0;'+
  'const situacaoMensalidade=()=>({status:"pago",exato:false}),mesReal=()=>"2026-11",pagadorFamilia=a=>a,ehDependenteFamilia=()=>false,dadosFamiliaAluno=()=>null,serieMensal=()=>[];'+
  publicador+';return alunoPublicado(a);');

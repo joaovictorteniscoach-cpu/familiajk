@@ -30,11 +30,11 @@
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" id="css-tema" href="lib/estilo.css?v=2026-11-12-1">
+<link rel="stylesheet" id="css-tema" href="lib/estilo.css?v=2026-11-12-4">
 <!-- Tema de cores: Saibro é o padrão desde 2026-10; "Verde clássico" fica a um
      toque em Segurança e dados. Troca o arquivo antes da primeira pintura. -->
 <script>try{if(localStorage.getItem('jv-tema')!=='classico'){var _ct=document.getElementById('css-tema');_ct.href=_ct.getAttribute('href').replace('estilo.css','estilo-saibro.css');document.documentElement.classList.add('tema-saibro');}}catch(e){}</script>
-<link rel="stylesheet" href="lib/acoes-voz.css?v=2026-11-12-1">
+<link rel="stylesheet" href="lib/acoes-voz.css?v=2026-11-12-4">
 <!-- ================= DEMO ISOLADA ================= -->
 <script>
 /* Espelho comercial do Gestão atual.
@@ -1045,7 +1045,7 @@ function esperarAuth(){return Promise.resolve();}
   <button onclick="go('lanc',this)"><span class="ico" data-ic="navcash"></span>Caixa</button>
   <button id="nav-mais" onclick="abrirMais()"><span class="ico" data-ic="navmore"></span>Mais</button>
 </nav>
-<script src="lib/icones.js?v=2026-11-12-1"></script>
+<script src="lib/icones.js?v=2026-11-12-4"></script>
 
 <!-- MODAL ALUNO -->
 <div class="overlay" id="ov-aluno" onclick="if(event.target===this)closeModal('ov-aluno')">
@@ -1089,12 +1089,13 @@ function esperarAuth(){return Promise.resolve();}
       <div class="cad-tit">Saldo agora</div>
       <div class="cad-saldos" id="a-saldos"></div>
       <div id="a-juntar"></div>
+      <p class="hint" id="a-saldo-compartilhado"></p>
       <details class="cad-det" id="a-corrigir"><summary>✏️ Corrigir saldo (fica registrado no extrato)</summary>
         <div class="row2 cad-corr">
-          <div class="field" id="a-creditos-wrap"><label id="a-creditos-lbl">Créditos</label><input type="number" id="a-creditos" value="0" step="0.5"></div>
-          <div class="field" id="a-credgrupo-wrap"><label>👥 Créditos de grupo</label><input type="number" id="a-credgrupo" value="0" step="0.5"></div>
-          <div class="field"><label>Reposições</label><input type="number" id="a-repos" value="0" step="0.5"></div>
-          <div class="field"><label>🔑 Locação (horas)</label><input type="number" id="a-loccred" value="0" step="0.5"></div>
+          <div class="field" id="a-creditos-wrap"><label id="a-creditos-lbl">Créditos</label><input type="number" id="a-creditos" value="0" step="any"></div>
+          <div class="field" id="a-credgrupo-wrap"><label>👥 Créditos de grupo</label><input type="number" id="a-credgrupo" value="0" step="any"></div>
+          <div class="field"><label>Reposições</label><input type="number" id="a-repos" value="0" step="any"></div>
+          <div class="field"><label>🔑 Locação (horas)</label><input type="number" id="a-loccred" value="0" step="any"></div>
         </div>
       </details>
     </div>
@@ -1106,6 +1107,11 @@ function esperarAuth(){return Promise.resolve();}
         <select id="a-parentesco"><option>Cônjuge</option><option>Filho(a)</option><option>Outro dependente</option></select>
       </div>
       <p class="hint" id="a-familia-nota"></p>
+      <div class="field"><label for="a-repos-modalidade">Tipo das reposições existentes</label>
+        <select id="a-repos-modalidade"><option value="auto">Seguir o plano (regra anterior)</option><option value="grupo">Somente aula em grupo</option><option value="part">Somente aula particular</option><option value="ambas">Particular ou grupo</option></select></div>
+      <div class="field"><label for="a-repos-validade">Validade das reposições</label>
+        <select id="a-repos-validade"><option value="lotes">Por lote (regra anterior)</option><option value="ultima-falta">Todo o saldo: 4 meses desde a última falta</option></select></div>
+      <div class="field"><label for="a-repos-data">Última aula não realizada · data confirmada</label><input type="date" id="a-repos-data"><p class="hint">Deixe vazio se não souber. Correções e viradas de mês não reiniciam o prazo.</p></div>
       <div class="row2">
         <div class="field"><label>Situação</label>
           <select id="a-status"><option value="pendente">Pendente</option><option value="parcial">Pagou 50% (registro antigo)</option><option value="pago">Pago</option></select>
@@ -1132,6 +1138,28 @@ function esperarAuth(){return Promise.resolve();}
       <button class="btn btn-ghost" onclick="closeModal('ov-aluno')">Cancelar</button>
       <button class="btn btn-clay" onclick="saveAluno()">Salvar aluno</button>
     </div>
+  </div>
+</div>
+
+<!-- Configuração explícita de saldo; independente do responsável financeiro. -->
+<div class="overlay" id="ov-banco-saldo" onclick="if(event.target===this)closeModal('ov-banco-saldo')">
+  <div class="modal">
+    <h3>Saldo compartilhado</h3>
+    <p>Controle em <b id="bs-titular"></b></p>
+    <div class="field"><label for="bs-grupo">Qual saldo</label><select id="bs-grupo" onchange="trocarGrupoBanco()"><option value="aulas">Créditos de aula e reposições</option><option value="locacao">Horas de locação</option></select></div>
+    <div class="field"><label for="bs-modo">Como descontar</label><select id="bs-modo"><option value="pessoa">Cada presença desconta do total comum</option><option value="horario">Uma baixa por horário quando fazem juntos</option></select></div>
+    <p class="hint">Participantes deste saldo. A cobrança de cada cadastro é preservada.</p>
+    <div class="field"><label for="bs-busca">Buscar participante</label><input type="search" id="bs-busca" oninput="filtrarMembrosBanco()"></div>
+    <div id="bs-membros" style="max-height:220px;overflow:auto"></div>
+    <p class="hint">Informe o total disponível para todos. Os saldos próprios dos outros participantes serão zerados com registro no extrato.</p>
+    <div class="row2">
+      <div class="field"><label for="bs-creditos">Créditos particulares · total</label><input type="number" step="any" id="bs-creditos"></div>
+      <div class="field"><label for="bs-grupo-cred">Créditos de grupo · total</label><input type="number" step="any" id="bs-grupo-cred"></div>
+      <div class="field"><label for="bs-repos">Reposições · total</label><input type="number" min="0" step="any" id="bs-repos"></div>
+      <div class="field"><label for="bs-loc">Locações · total em horas</label><input type="number" step="any" id="bs-loc"></div>
+    </div>
+    <button type="button" class="btn btn-ghost" id="bs-remover" onclick="salvarBancoSaldo(true)">Desvincular saldo</button>
+    <div class="modal-acts"><button type="button" class="btn btn-ghost" onclick="closeModal('ov-banco-saldo')"><span>Cancelar</span></button><button type="button" class="btn btn-clay" onclick="salvarBancoSaldo(false)">Conferir e salvar totais</button></div>
   </div>
 </div>
 
@@ -1654,8 +1682,8 @@ function esperarAuth(){return Promise.resolve();}
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="app-demo.js?v=2026-11-12-1"></script>
-<script src="lib/acoes-voz.js?v=2026-11-12-1"></script>
+<script src="app-demo.js?v=2026-11-12-4"></script>
+<script src="lib/acoes-voz.js?v=2026-11-12-4"></script>
 <script>
 /* Rede de seguranca do par tela+codigo.
 
@@ -1670,7 +1698,7 @@ function esperarAuth(){return Promise.resolve();}
    torto, o app busca o par certo uma vez e, se insistir, DIZ o que houve em
    vez de deixar voce tocando em botao que nao responde. */
 (function(){
-  var ESPERADA='2026-11-12-1';
+  var ESPERADA='2026-11-12-4';
   function tela(motivo){
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;z-index:99999;background:#1A2E14;color:#FAF7F2;'

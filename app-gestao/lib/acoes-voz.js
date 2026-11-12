@@ -362,6 +362,7 @@ function contexto(){
  if(!a)throw Error('Escolha o aluno pelo cadastro.');
  if(!ehAtivoAluno(a))throw Error('O aluno está inativo. Confira o cadastro antes de continuar.');
  if(acao==='renovar'){
+  if(!saldoProprio(a))throw Error('O pacote é compartilhado. Renove no cadastro de '+titularSaldo(a,'creditos').nome+'.');
   if(renovacoesDoMes(a).length)throw Error('Este aluno já foi renovado no mês. Saldos preservados.');
   if(ajusteManualRenovacao(a))throw Error('Há ajuste manual a conferir. Use Renovar o mês antes de continuar.');
   if(pacoteDoAluno(a)<=0)throw Error('O cadastro não tem pacote para renovar.');
@@ -599,11 +600,11 @@ function resumoAluno(q){
  const a=DB.alunos.find(x=>x.id===q.alunoId);if(!a)throw Error('Não encontrei esse aluno no cadastro.');
  const nome=String(a.nome||'Aluno'),hoje=dataBase(),agora=agoraMinSP();
  const qtd=(n,um,varios)=>fmtCred(n)+' '+(Number(n)===1?um:varios);
- const saldo=()=>{const c=Number(a.creditos)||0,g=Number(a.credGrupo)||0,r=reposValidas(a),partes=[];
-  if(ehMisto(a)&&!unificado(a)){partes.push(qtd(c,'crédito','créditos')+' de aula particular');partes.push(qtd(g,'crédito','créditos')+' de grupo');}
-  else partes.push(qtd(c,'crédito','créditos'));
+ const saldo=()=>{const titular=titularSaldo(a,'creditos'),c=Number(titular.creditos)||0,g=Number(titular.credGrupo)||0,r=reposValidas(a),partes=[];
+  if(ehMisto(titular)&&!unificado(titular)){partes.push(qtd(c,'crédito','créditos')+' de aula particular');partes.push(qtd(g,'crédito','créditos')+' de grupo');}
+  else partes.push(qtd(unificado(titular)?c+g:campoDoPacote(titular)==='credGrupo'?g:c,'crédito','créditos'));
   partes.push(qtd(r,'reposição válida','reposições válidas'));
-  return nome+' tem '+partes.join(', ')+'.'+(c<0||g<0?' Saldo negativo: aula feita além do pacote.':'');};
+  return nome+' tem '+partes.join(', ')+'.'+(bancoSaldo(a,'creditos')?' Esse saldo é compartilhado.':'')+(c<0||g<0?' Saldo negativo: aula feita além do pacote.':'');};
  const proxima=()=>{let achou=null;comIndiceAgenda(()=>{for(let i=0;i<=60&&!achou;i++){const dk=somarDia(hoje,i);
    for(const au of aulasDoDia(new Date(dk+'T12:00:00')).aulas){if(dk===hoje&&au.min<=agora)continue;if(au.entradas.some(e=>e.alunoId===a.id)){achou={dk,hora:au.hora,tipo:tipoAula(au)};break;}}}});
   return achou?'A próxima aula de '+nome+' é '+quandoTxt(achou.dk)+' às '+achou.hora+' ('+achou.tipo.toLowerCase()+').':'Não encontrei aula de '+nome+' nos próximos 60 dias.';};
@@ -896,6 +897,7 @@ function planoEspecial(i){
   const hoje=dataBase(),agora=agoraMinSP();
   if(i.data>hoje)throw Error('Essa aula ainda não aconteceu. Marque a presença no dia.');
   const d=new Date(i.data+'T12:00:00'),pres=new Map((DB.presencas||[]).map(p=>[p.k,p])),alvos=[],avisos=[],saldo={},bruto={};
+  const conjuntos=new Map((DB.presencas||[]).filter(p=>p.bancoRef&&!ehAvisou(p)).map(p=>[p.bancoRef,Number(p.custo)||0]));
   aulasDoDia(d).aulas.forEach(au=>{
    if(i.hora&&au.hora!==i.hora)return;
    au.entradas.forEach(e=>{
@@ -910,18 +912,25 @@ function planoEspecial(i){
     /* Mesma conta do ✓ (ordemDoDebito/calcularDebito em app-gestao.js):
        saldo do tipo → reposição válida do tipo certo → só o resto vira extra.
        Em lote, cada aula parte do saldo que as anteriores já usaram. */
-    const c=creditoSlot(au.hora),ehGrp=e.tipo==='grupo',{ordem,campoTipo,podeRepos}=ordemDoDebito(a,ehGrp,!!e.repo);
-    const real=cp=>cp==='credGrupo'&&unificado(a)?'creditos':cp,chave=cp=>a.id+'|'+real(cp);
-    const disp=cp=>{const ch=chave(cp);if(!(ch in saldo))saldo[ch]=real(cp)==='repos'?Math.max(0,reposValidas(a)):Math.max(0,Number(a[real(cp)])||0);return saldo[ch];};
+    const c=creditoDaEntrada(e,d),ehGrp=e.tipo==='grupo',{ordem,campoTipo,podeRepos}=ordemDoDebito(a,ehGrp,!!e.repo);
+    const bancoRef=chaveBancoAula(a,e,d);
+    if(bancoRef&&conjuntos.has(bancoRef)){
+     if(Math.abs(conjuntos.get(bancoRef)-c)>1e-7)throw Error('Confira a duração dos participantes da aula conjunta antes de marcar.');
+     alvos.push({id:e.id,alunoId:a.id,nome:a.nome,hora:au.hora,mud:[],extra:0,nota:'',junto:true,tipo:e.repo?'reposição':tipoAula(au).toLowerCase()});return;
+    }
+    const real=cp=>cp==='credGrupo'&&unificado(titularSaldo(a,cp))?'creditos':cp,chave=cp=>titularSaldo(a,real(cp)).id+'|'+real(cp);
+    const saldoBruto=cp=>Number(titularSaldo(a,real(cp))[real(cp)])||0;
+    const disp=cp=>{const ch=chave(cp);if(!(ch in saldo))saldo[ch]=real(cp)==='repos'?Math.max(0,reposValidas(a)):Math.max(0,saldoBruto(cp));return saldo[ch];};
     const deb=calcularDebito(a,ordem,campoTipo,c,disp);
     const mud=Object.keys(deb.partes).map(cp=>{
-     const ch=chave(cp),usa=r2(deb.partes[cp]-(cp===deb.campoExtra?deb.extra:0));
-     if(usa>0)saldo[ch]=r2(disp(cp)-usa);
-     const antes=ch in bruto?bruto[ch]:Number(a[real(cp)])||0;bruto[ch]=r2(antes-deb.partes[cp]);
+     const ch=chave(cp),usa=credExato(deb.partes[cp]-(cp===deb.campoExtra?deb.extra:0));
+     if(usa>0)saldo[ch]=credExato(disp(cp)-usa);
+     const antes=ch in bruto?bruto[ch]:saldoBruto(cp);bruto[ch]=credExato(antes-deb.partes[cp]);
      return {campo:real(cp),antes,depois:bruto[ch]};
     });
     const nota=(e.repo&&!podeRepos)?' (a reposição é de aula '+(ehGrp?'particular':'em grupo')+', não vale aqui)':'';
     alvos.push({id:e.id,alunoId:a.id,nome:a.nome,hora:au.hora,mud,extra:deb.extra,nota,tipo:e.repo?'reposição':tipoAula(au).toLowerCase()});
+    if(bancoRef)conjuntos.set(bancoRef,c);
    });
   });
   if(!alvos.length)throw Error((avisos.length?avisos.join('; ')+'. ':'')+'Não encontrei aula para marcar presença '+quandoTxt(i.data)+(i.hora?' às '+i.hora:'')+'.');
@@ -970,7 +979,7 @@ function textoEspecial(i,plano){
    nota:'As aulas voltam nessas datas como estavam'+((DB.foras||[]).some(r=>r.fechar&&p.regs.some(x=>x.id===r.id))?' e a quadra volta a abrir como era':'')+'. Os créditos não mudam. Se tiver avisado os alunos, avise de novo.',botao:'Desfazer cancelamento'};
  }
  if(i.acao==='presenca')return {titulo:'Marcar presença',
-  linhas:[quandoTxt(i.data)+': '+plural(plano.alvos.length,'aula','aulas')].concat(plano.alvos.map(x=>x.hora+' '+x.nome+' — '+x.tipo+' · '+x.mud.map(m=>CAMPO_TXT[m.campo]+' '+fmtCred(m.antes)+' → '+fmtCred(m.depois)).join(' + ')+(x.extra?' ('+fmtCred(x.extra)+' extra a cobrar)':'')+(x.nota||''))).concat(plano.avisos.length?['Fica de fora: '+plano.avisos.join('; ')+'.']:[]).concat((plano.familia||[]).length?['Da mesma família na aula, sem ✓: '+plano.familia.join(', ')+'. Para marcar, peça a presença também.']:[]),
+  linhas:[quandoTxt(i.data)+': '+plural(plano.alvos.length,'aula','aulas')].concat(plano.alvos.map(x=>x.hora+' '+x.nome+' — '+x.tipo+' · '+(x.junto?'saldo compartilhado já incluído nesta aula':x.mud.map(m=>CAMPO_TXT[m.campo]+' '+fmtCred(m.antes)+' → '+fmtCred(m.depois)).join(' + '))+(x.extra?' ('+fmtCred(x.extra)+' extra a cobrar)':'')+(x.nota||''))).concat(plano.avisos.length?['Fica de fora: '+plano.avisos.join('; ')+'.']:[]).concat((plano.familia||[]).length?['Da mesma família na aula, sem ✓: '+plano.familia.join(', ')+'. Para marcar, peça a presença também.']:[]),
   nota:'É o mesmo ✓ da agenda: desconta a aula do saldo. Para desfazer, toque no ✓ da aula na agenda.',botao:plano.alvos.length>1?'Confirmar '+plano.alvos.length+' presenças':'Confirmar presença'};
  if(i.acao==='cobrar'){
   const mk=dataBase().slice(0,7),mes=MESES[Number(mk.slice(5,7))-1].toLowerCase(),als=plano.ids.map(id=>DB.alunos.find(a=>a.id===id)).filter(Boolean);
