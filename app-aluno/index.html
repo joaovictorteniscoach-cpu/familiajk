@@ -4852,7 +4852,7 @@ let alunoWkZoom=(function(){
 let alunoWkAutoFit=(function(){try{return localStorage.getItem('jv-al-wkzoom-fit')!=='false';}catch(e){return true;}})();
 const AL_WK_COL=92,AL_WK_HOUR=44;
 function alunoWkVars(z){
-  const col=Math.floor(AL_WK_COL*z);
+  const col=Math.max(40,Math.floor(AL_WK_COL*z)); // preserva a leitura de Ocup. com sete dias
   const hour=AL_WK_HOUR;
   const row=Math.max(28,Math.round(44*z));
   const fs=Math.max(11,+(12*z).toFixed(1));

@@ -103,7 +103,12 @@ async function check(label,fn){await fn();n++;console.log('PASS '+label);}
    });
    await p.setViewportSize({width:390,height:844});
    await p.evaluate(()=>{agDate=new Date('2026-11-15T12:00:00');agView='semana';renderAgenda();});
-   await p.waitForTimeout(150);
+   await p.bringToFront();await p.waitForTimeout(200);
+   await p.evaluate(app=>{
+    if(app==='app-aluno')alunoWkZoomFit();else wkZoomFit();
+    if(typeof rolarSemAnimacao==='function')rolarSemAnimacao(0);else window.scrollTo(0,0);
+   },app);
+   await p.waitForTimeout(100);
    if(process.env.JV_VISUAL_DIR){fs.mkdirSync(process.env.JV_VISUAL_DIR,{recursive:true});await p.screenshot({path:path.join(process.env.JV_VISUAL_DIR,'domingo-'+app+'-'+motor+'-'+tema+'.png')});}
    assert.deepEqual(errors,[]);await p.close();
   }
