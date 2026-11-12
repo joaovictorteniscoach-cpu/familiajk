@@ -2743,7 +2743,8 @@ function modoPadrao(dia,hora){
   if(m<H('20:00'))return 'aula';
   return 'loc';
 }
-function slotModo(date,hora){const dk=dKey(date);const od=PUB.horarioData&&PUB.horarioData[dk];if(od&&od[hora])return od[hora];const c=PUB.horarioCfg&&PUB.horarioCfg[date.getDay()];return (c&&c[hora])||modoPadrao(date.getDay(),hora);}
+function slotModo(date,hora){const dk=dKey(date),noDia=modo=>date.getDay()===0&&modo==='aula'?'loc':modo;const od=PUB.horarioData&&PUB.horarioData[dk];if(od&&od[hora])return noDia(od[hora]);const c=PUB.horarioCfg&&PUB.horarioCfg[date.getDay()];return noDia((c&&c[hora])||modoPadrao(date.getDay(),hora));}
+
 function quadraAberta(date,hora){return slotModo(date,hora)!=='fechado';}
 function fmtData(dk){const p=dk.split('-');return p[2]+'/'+p[1];}
 function dtOf(dk,hora){const p=dk.split('-').map(Number);const t=(hora||'00:00').split(':').map(Number);return new Date(p[0],p[1]-1,p[2],t[0],t[1]||0,0,0);}

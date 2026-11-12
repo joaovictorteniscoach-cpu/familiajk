@@ -96,6 +96,7 @@ function modoPadrao(date,hora){
   return modo;
 }
 function slotModo(date,hora){
+  const noDia=modo=>date.getDay()===0&&modo==='aula'?'loc':modo;
   if(ehMeiaHora(hora))return 'fechado';   // saiu da grade: ninguém marca nova aula aqui
   /* Para o professor quem manda é a lista que a academia liberou: hora fora
      dela é hora fechada, e aí todo caminho que já consulta slotModo concorda
@@ -104,13 +105,13 @@ function slotModo(date,hora){
      demais uma vez do que deixar o professor sem conseguir trabalhar. */
   if(typeof ehDono==='function'&&!ehDono()&&DB&&DB.profLiberados){
     const doDia=DB.profLiberados[dKey(date)];
-    return (doDia&&doDia.indexOf(hora)>=0)?'aula':'fechado';
+    return noDia((doDia&&doDia.indexOf(hora)>=0)?'aula':'fechado');
   }
   const od=DB.horarioData&&DB.horarioData[dKey(date)];
-  if(od&&od[hora])return od[hora];
+  if(od&&od[hora])return noDia(od[hora]);
   const c=DB.horarioCfg&&DB.horarioCfg[date.getDay()];
-  if(c&&c[hora])return c[hora];
-  return modoPadrao(date,hora);
+  if(c&&c[hora])return noDia(c[hora]);
+  return noDia(modoPadrao(date,hora));
 }
 /* Liberar a quadra para o professor NÃO é um jeito de usar a sua hora — é
    permissão para outra pessoa usar a quadra. São eixos diferentes, e por isso

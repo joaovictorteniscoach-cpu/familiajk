@@ -63,9 +63,9 @@ async function check(label,fn){await fn();n++;console.log('PASS '+label);}
       const d=new Date('2026-11-15T12:00:00');agDate=d;
       const c=cabeNoSlot(slotState(d,'08:00'),d,'08:00');escolherSlot('08:00');
       const opts=[...document.querySelectorAll('#pick-opts .pick-opt')].map(b=>b.className);
-      return {c,opts};
+      return {c,opts,modo:slotModo(d,'08:00')};
      });
-     assert.deepEqual(x.c,{aula:false,loc:true,tor:false});assert.equal(x.opts.length,1);assert.match(x.opts[0],/loc/);
+     assert.equal(x.modo,'loc');assert.deepEqual(x.c,{aula:false,loc:true,tor:false});assert.equal(x.opts.length,1);assert.match(x.opts[0],/loc/);
      await p.evaluate(()=>document.getElementById('ov-pick').classList.remove('on'));
     }else{
      const x=await p.evaluate(()=>{
