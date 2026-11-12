@@ -253,6 +253,21 @@ let count=0;async function check(label,test){await test();count++;console.log('�
    assert.equal(r.out.total,480);assert.equal(r.out.status,'pago');assert.equal(r.nov.total,650);assert.equal(r.nov.falta,50);assert.equal(r.fecho,480);assert.equal(r.pub,650);assert.equal(r.c,4);
   });
   await preparar();
+  await check('cobrar pela agenda e desfazer conservam o valor mensal negociado anterior',async()=>{
+   const r=await p.evaluate(()=>{const a=DB.alunos[0];a.mensalidade=660;a.valoresMensais={'2026-10':480,'2026-11':640};a.pagamentosExatos={'2026-11':{ajusteAnterior:0}};const base=agendaDoMes;agendaDoMes=()=>({total:5,part:5,grupo:0,valor:800,detalhe:'Cinco aulas'});try{cobrarPelaAgenda(a.id);const cobrado=situacaoMensalidade(a,'2026-11').total;desfazerDecisaoDif(a.id);return {cobrado,voltou:situacaoMensalidade(a,'2026-11').total,out:a.valoresMensais['2026-10'],base:a.mensalidade,c:a.creditos};}finally{agendaDoMes=base;}});
+   assert.deepEqual(r,{cobrado:800,voltou:640,out:480,base:660,c:4});
+  });
+  await preparar();
+  await check('aprovar troca de plano atualiza somente a mensalidade da competência atual',async()=>{
+   const r=await p.evaluate(()=>{const a=DB.alunos[0];a.valoresMensais={'2026-10':480,'2026-11':600};pedFila=[{key:'plano-ficticio',kind:'plano',codigo:a.codigo,cat:'Particular',plano:5,valor:750}];const cloud=hasCloud;hasCloud=()=>false;try{aceitarPedido('plano-ficticio');return {nov:situacaoMensalidade(a,'2026-11').total,out:a.valoresMensais['2026-10'],base:a.mensalidade,c:a.creditos};}finally{hasCloud=cloud;}});
+   assert.deepEqual(r,{nov:750,out:480,base:750,c:4});
+  });
+  await preparar();
+  await check('pedido de novo plano do participante não redefine o saldo comum do titular',async()=>{
+   const r=await p.evaluate(()=>{const a=DB.alunos[0],b=DB.alunos[1];a.bancosSaldos={aulas:{membros:[a.id,b.id],modo:'pessoa'}};b.creditos=0;pedFila=[{key:'plano-participante-ficticio',kind:'plano',codigo:b.codigo,cat:'Misto',plano:8,planoGrupo:8,valor:2000}];const antes=JSON.stringify(DB);aceitarPedido('plano-participante-ficticio');return {igual:antes===JSON.stringify(DB),fila:pedFila.length,c:a.creditos};});
+   assert.deepEqual(r,{igual:true,fila:1,c:4});
+  });
+  await preparar();
   await check('pagamento confirmado sem dia reconhece a quitação sem criar movimento no caixa diário',async()=>{
    const r=await p.evaluate(()=>{const a=DB.alunos[0];a.mensalidade=520;a.valoresMensais={'2026-11':520};a.status='pendente';a.recebimentosSemData=[{id:'conf-sem-dia-fict',competencia:'2026-11',valor:520,confirmado:true}];const antes=JSON.stringify(DB),q=situacaoMensalidade(a,'2026-11'),pub=alunoPublicado(a);return {q,pub,igual:antes===JSON.stringify(DB),caixa:DB.lancamentos.length,c:a.creditos};});
    assert.equal(r.q.total,520);assert.equal(r.q.recebido,520);assert.equal(r.q.falta,0);assert.equal(r.q.status,'pago');assert.equal(r.pub.status,'pago');assert.equal(r.igual,true);assert.equal(r.caixa,0);assert.equal(r.c,4);

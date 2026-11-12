@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-11-12-2';
+const VERSAO='2026-11-12-3';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -3714,6 +3714,7 @@ function aceitarPedido(key){
   const p=pedFila.find(x=>x.key===key);if(!p)return;
   const a=DB.alunos.find(x=>x.codigo===p.codigo);
   if(a&&temFamilia(a)&&p.kind==='plano'){toast('Plano família: ajuste as aulas de cada pessoa e o total no responsável pelo cadastro.');return;}
+  if(a&&p.kind==='plano'&&!saldoProprio(a)){toast('Saldo compartilhado: ajuste o pacote no cadastro de '+titularSaldo(a,'creditos').nome+'.');return;}
   if(p.kind==='mensalidade'){
     if(!a){toast('Aluno não encontrado — confira o cadastro');return;}
     registrarPagamento(a.id,{pedidoKey:key,valor:p.valor,metodo:p.metodo});
@@ -3735,6 +3736,7 @@ function aceitarPedido(key){
       a.mensalidade=Number(p.valor)||precoMensal(a.tipo,a.plano)||a.mensalidade;
       toast('✓ Plano de '+a.nome+' atualizado: '+a.tipo+' Flex '+a.plano);
     }
+    atualizarValorCombinadoAtual(a);atualizarSituacaoExata(a,mesReal());
   }else if(p.kind==='termo'){
     if(a){a.termoAceitoEm=p.ts||Date.now();toast('✓ '+a.nome+' aceitou o termo');}else{toast('Termo aceito');}
   }else if(p.kind==='renovacao'){
@@ -6869,7 +6871,7 @@ function limparDifNaRenovacao(a){
 }
 function manterValorAnotado(id){
   const a=DB.alunos.find(x=>x.id===id);if(!a)return;
-  a.difUndo={mes:mesReal(),acao:'manter',mensalidade:Number(a.mensalidade)||0,plano:Number(a.plano)||0,planoGrupo:Number(a.planoGrupo)||0,difOk:a.difOk||null};   // guarda para desfazer
+  a.difUndo={mes:mesReal(),acao:'manter',mensalidade:Number(a.mensalidade)||0,valorCombinado:valorCombinadoEm(a,mesReal()),plano:Number(a.plano)||0,planoGrupo:Number(a.planoGrupo)||0,difOk:a.difOk||null};   // guarda para desfazer
   a.difOk={mes:mesReal()};
   logAct('Manter valor anotado (silenciar diferença da agenda): '+a.nome);
   persist();renderAll();
@@ -6884,6 +6886,11 @@ function desfazerDecisaoDif(id){
   if(u.mensalidade!==undefined)a.mensalidade=u.mensalidade;
   if(u.plano!==undefined)a.plano=u.plano;
   if(u.planoGrupo!==undefined)a.planoGrupo=u.planoGrupo;
+  if(Object.prototype.hasOwnProperty.call(u,'valorCombinado')){
+    if(u.valorCombinado===null){if(a.valoresMensais)delete a.valoresMensais[mesReal()];}
+    else{if(!a.valoresMensais)a.valoresMensais={};a.valoresMensais[mesReal()]=u.valorCombinado;}
+  }else atualizarValorCombinadoAtual(a);
+  atualizarSituacaoExata(a,mesReal());
   if(u.difOk)a.difOk=u.difOk;else delete a.difOk;
   delete a.difUndo;
   logAct('Desfazer decisão da diferença: '+a.nome);
@@ -6902,8 +6909,8 @@ function cobrarPelaAgenda(id){
   if(!confirm('Cobrar '+a.nome+' pelas aulas da agenda deste mês?\n\n'
     +g.detalhe+'\n= '+fmtRs(g.valor)+'\n\nMensalidade de hoje: '+fmtRs(atual)
     +'\nPlano do cadastro: '+(Number(a.plano)||0)+' aula(s)'+((Number(a.planoGrupo)||0)>0?(' + '+a.planoGrupo+' em grupo'):'')))return;
-  a.difUndo={mes:mesReal(),acao:'cobrar',mensalidade:atual,plano:Number(a.plano)||0,planoGrupo:Number(a.planoGrupo)||0,difOk:a.difOk||null};   // guarda para desfazer
-  a.mensalidade=g.valor;
+  a.difUndo={mes:mesReal(),acao:'cobrar',mensalidade:atual,valorCombinado:valorCombinadoEm(a,mesReal()),plano:Number(a.plano)||0,planoGrupo:Number(a.planoGrupo)||0,difOk:a.difOk||null};   // guarda para desfazer
+  a.mensalidade=g.valor;atualizarValorCombinadoAtual(a);atualizarSituacaoExata(a,mesReal());
   delete a.difOk;   // valores agora iguais: nada a silenciar
   // o plano acompanha, senão "Renovar mês" devolveria o número antigo de créditos
   if(a.tipo==='Dupla'||a.tipo==='Trio'||a.tipo==='Quarteto'||a.tipo==='Grupo'){a.plano=g.grupo;}

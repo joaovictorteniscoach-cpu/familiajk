@@ -41,19 +41,27 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
   fictícia; referência de origem impede contar novamente ao localizar a data.
   Quitações manuais sem valor continuam quitadas mesmo após mudar o preço.
   Nenhum preço é inferido de um pagamento parcial ou migrado ao abrir o app.
+- Cobrar pela agenda, desfazer a decisão e aceitar troca de plano atualizam o
+  valor da competência atual, conservando o acordo anterior ao desfazer. Pedido
+  de plano de participante não redefine o banco do titular.
 - Publicação entrega somente o saldo efetivo e as regras do próprio aluno; não
   inclui IDs ou dados financeiros dos outros participantes do banco.
-- Versão **candidata** `2026-11-12-2`: carimbos, caches e demo gerada sincronizados.
-  **Versão realmente publicada continua `2026-11-11-6`.** Nenhum push, PR novo,
-  merge, deploy, escrita no Firebase ou JSON de importação realizado nesta etapa.
+- Versão **candidata** `2026-11-12-3`: carimbos, caches e demo gerada sincronizados.
+  PR #279. **Versão realmente publicada na abertura do PR: `2026-11-11-6`.**
+  Nenhum merge, deploy de produção, escrita no Firebase ou JSON de importação
+  realizado antes da aprovação completa do head pelo CI.
 - **Testado localmente:** checadores de sintaxe/regras/P0/versão/tema; cadastro
   (70 verificações em Chromium/WebKit), contrato de saldos do aluno (48 nos dois
   temas e navegadores), créditos/estornos (13), plano família (15), presenças
   familiares (9), inativação/reposições (10), reposição/fixo (7). Teste novo de
-  conciliação: 41 cenários em cada navegador, inclusive casos negativos de cópia,
+  conciliação: 44 cenários em cada navegador, inclusive casos negativos de cópia,
   estornos, voz, mudança de horário, valor mensal e recebimento sem dia; incluído
   no CI. Regressões finais: pagamentos (38), renovação manual (20), fila (10),
   conversa por voz (25), cadastro (70), contrato do aluno (48), fumaça e checadores.
+  O run inicial 43201149241 parou num teste antigo que alterava diretamente o
+  preço após quitação zero; o cenário agora usa o cadastro real, conserva a
+  exigência de cobrança atual e verifica também a quitação anterior. As 45
+  verificações desse arquivo passaram localmente; validar novamente o head final.
   Varredura anterior por grupos cobrindo todas as telas: 1.379 toques,
   56 janelas percorridas (incluindo repetições entre grupos), zero erros. Somente dados fictícios, com rede externa bloqueada nos testes.
 - Prévia aprovada pelo João nesta sessão; não repetir a aprovação.
