@@ -3521,7 +3521,7 @@ html body:not(#jv) #confirm-amanha .ca-semvinc{color:#5E584C;-webkit-text-fill-c
 html body:not(#jv) #pg-dash .jh-conf:not(.ok){background:linear-gradient(180deg,#A85E25,#8A4A1A)}
 html body:not(#jv) #pg-dash .jh-dobra .dc-n:not(.zero),html body:not(#jv) .dobra-cab .dc-n:not(.zero){background:#A9471F!important}
 html body:not(#jv) #pg-dash .jh-atv-item.passou .jh-atv-t2{color:#F1F3EE;-webkit-text-fill-color:#F1F3EE}
-html body:not(#jv) #pg-dash .dc-nome em{color:#E08A5A;-webkit-text-fill-color:#E08A5A}
+html body:not(#jv) #pg-dash .dc-nome em,html body:not(#jv) #pg-fin .fin-config .dc-nome em{color:#E08A5A;-webkit-text-fill-color:#E08A5A}
 html body:not(#jv) .trilha-pills button.on{background:#A9471F;border-color:#A9471F;color:#fff;-webkit-text-fill-color:#fff}
 
 /* Aulas no mês (19/10): o mês passado tracejado na mesma régua de dias e a
