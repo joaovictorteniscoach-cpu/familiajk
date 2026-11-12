@@ -8,6 +8,19 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-12 · Codex: agenda publicada em Dia, com domingo para locações
+
+- Responsável: Codex. Base `66a455948c42ce1906980ae48001b933a65e6246`; PR [#278](https://github.com/joaovictorteniscoach-cpu/familiajk/pull/278), branch `codex/creditos-unicos-implantacao-2026-11-12`.
+- **Publicado: 2026-11-12-1**, merge `d94b48f469d699b69179951aed164b4f6f37736d`; head validado `d02eac54cf3d0ac4933e88fa233b05a488932ab2`. As prévias foram apresentadas antes de João pedir continuar.
+- Agenda inicia em Dia nos dois apps. Semana, imagem e CSV incluem domingo. Novas aulas/torneios no domingo barrados no formulário, pedidos, voz e arraste; horários fechados e registros antigos preservados. Coluna mantém leitura em telas pequenas e ícones dourados continuam.
+- **Testado:** CI completo [43200848720](https://github.com/joaovictorteniscoach-cpu/familiajk/actions/runs/43200848720) aprovado, incluindo checadores, demo, navegação/leitura e 17 casos com SDK Firebase e emulador. Testes específicos: 40 verificações da agenda; 28 cenários e 600 combinações do calculador isolado, sempre fictícios.
+- **Publicação confirmada:** Pages [43240547784](https://github.com/joaovictorteniscoach-cpu/familiajk/actions/runs/43240547784) e monitor [43240646579](https://github.com/joaovictorteniscoach-cpu/familiajk/actions/runs/43240646579) aprovados. Gestão Pages, Aluno Pages e Aluno Netlify confirmados em 2026-11-12-1; site Netlify acessível.
+- **Créditos reais:** nenhuma migração ou recálculo automático. Calculador em ferramentas não é carregado pelos apps. Integração e reconciliação seguem na [#275](https://github.com/joaovictorteniscoach-cpu/familiajk/issues/275); mensalidades e regras do Firebase preservadas.
+- **Concorrência:** PR #279, de saldos compartilhados/minutos/acordos por mês, permanece separado e baseado na main anterior. Antes de integrar, incorporar esta agenda/Domingo, voz, carimbos, demo e testes e validar a combinação no head final. Preservar também o PR #273 de skill.
+- Comparação com funções anunciadas pelo Atacante em `COMPARACAO-ATACANTE-2026-11.md`. Diretriz do João: facilitar tarefas de professor e aluno, reduzir ações repetidas e manter visual/ícones aprovados.
+
+---
+
 ## 2026-11-12 · Codex: créditos fixos, agenda em Dia e comparação Atacante
 
 - Base: `66a455948c42ce1906980ae48001b933a65e6246`; branch `codex/creditos-unicos-implantacao-2026-11-12`.
