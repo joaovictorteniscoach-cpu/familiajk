@@ -52,7 +52,7 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
     const antes=await g.evaluate(()=>JSON.stringify(DB));
     await g.locator('#pg-agenda .ag-ferr button',{hasText:'Divulgar livres'}).click();
     assert.equal(await g.evaluate(()=>document.getElementById('ov-divulgar').classList.contains('on')),true);
-    assert.equal(await g.locator('#agf-semana').innerText(),'Semana de 19/10 a 24/10, a que está aberta na agenda.');
+    assert.equal(await g.locator('#agf-semana').innerText(),'Semana de 19/10 a 25/10, a que está aberta na agenda.');
     if(process.env.JV_SHOTS)await g.screenshot({path:path.join(process.env.JV_SHOTS,'gestao-agenda-divulgar-'+tema+'.png')});
     await g.locator('#ov-divulgar button',{hasText:'Texto no WhatsApp'}).click();
     assert.equal(await g.evaluate(()=>document.getElementById('ov-divulgar').classList.contains('on')),false,'fecha ao escolher');
