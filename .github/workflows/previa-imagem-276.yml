@@ -1,4 +1,4 @@
-name: Prévia da agenda em Dia e domingo
+name: Conferir testes finais da agenda
 on:
   push:
     branches: [codex/previa-imagem-agenda-276]
@@ -6,53 +6,31 @@ on:
 permissions:
   contents: read
 jobs:
-  imagem:
+  finais:
     runs-on: ubuntu-24.04
     container: mcr.microsoft.com/playwright:v1.56.1-noble
-    timeout-minutes: 8
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 2a5a978d91cbe32e1bfb98104585ddbcdb22ad0d
+          ref: d02eac54cf3d0ac4933e88fa233b05a488932ab2
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Preparar navegador e enquadrar prévias com dados fictícios
+      - name: Conferir atualização do domingo e testes finais preservados
         env:
           NODE_PATH: ${{ runner.temp }}/jv-browser/node_modules
-          JV_VISUAL_DIR: ${{ runner.temp }}/previas-domingo
+          PW: ${{ runner.temp }}/jv-browser/node_modules/playwright
         run: |
+          git config --global --add safe.directory "$(pwd -P)"
           npm install --prefix "$RUNNER_TEMP/jv-browser" playwright@1.56.1
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('ferramentas/testar-agenda-domingo-browser.cjs')
-          s=p.read_text()
-          old="   await p.waitForTimeout(150);\n   if(process.env.JV_VISUAL_DIR)"
-          new="""   await p.bringToFront();
-             await p.waitForTimeout(200);
-             const enquadramento=await p.evaluate(app=>{
-              if(app==='app-aluno')alunoWkZoomFit();else wkZoomFit();
-              if(typeof rolarSemAnimacao==='function')rolarSemAnimacao(0);else window.scrollTo(0,0);
-              const sc=document.querySelector('#ag-view .wk-scroll'),tb=document.querySelector('#ag-view .wk');
-              return {app,zoom:app==='app-aluno'?alunoWkZoom:wkZoom,auto:app==='app-aluno'?alunoWkAutoFit:wkAutoFit,largura:sc?.clientWidth,tabela:tb?.getBoundingClientRect().width};
-             },app);
-             console.log('JV_ENQUADRAMENTO:'+JSON.stringify(enquadramento));
-             await p.waitForTimeout(100);
-             if(process.env.JV_VISUAL_DIR)"""
-          assert old in s
-          p.write_text(s.replace(old,new))
-          PY
-          node ferramentas/testar-agenda-domingo-browser.cjs
-      - name: Exibir prévias
-        env:
-          JV_VISUAL_DIR: ${{ runner.temp }}/previas-domingo
-        run: |
-          python3 - <<'PY'
-          import base64, os, hashlib
-          for name in ['domingo-app-aluno-webkit-saibro.png', 'domingo-app-gestao-webkit-saibro.png']:
-              raw=open(os.path.join(os.environ['JV_VISUAL_DIR'], name),'rb').read()
-              b=base64.b64encode(raw).decode()
-              print('JV_PREVIEW_INFO:'+name+':'+str(len(raw))+':'+hashlib.sha256(raw).hexdigest())
-              for n in range(0,len(b),1000): print('JV_PREVIEW_PART:'+name+':'+b[n:n+1000])
-          PY
+          node ferramentas/testar-ferramentas-agenda-browser.cjs
+          node ferramentas/testar-conexao-nuvem-aluno-browser.cjs
+          node ferramentas/testar-creditos-marcas-browser.cjs
+          node ferramentas/testar-avisos-celular-browser.cjs
+          node ferramentas/testar-servidor-avisos.mjs
+          node ferramentas/testar-resumo-escritorio-browser.cjs
+          node ferramentas/testar-sincronizacao-familiajk.cjs
+          node ferramentas/testar-seguranca-pagamentos-browser.cjs
+          JV_WIDTHS=390,1280 JV_NO_SCREENSHOTS=1 node ferramentas/testar-premium-browser.cjs
