@@ -348,8 +348,10 @@ const fixture={
    assert.equal(await g.evaluate(()=>quitarMensalidadeSemValor()),true);
    const r=await g.evaluate(()=>{const a=DB.alunos.find(x=>x.id==='zero');return {set:situacaoMensalidade(a,'2026-09').status,out:situacaoMensalidade(a,'2026-10').status,status:a.status};});
    assert.deepEqual(r,{set:'pago',out:'pendente',status:'pendente'});
-   await g.evaluate(()=>{marcarPago('zero');quitarMensalidadeSemValor();DB.alunos.find(x=>x.id==='zero').mensalidade=100;});
+   await g.evaluate(()=>{marcarPago('zero');quitarMensalidadeSemValor();guardarVersoes=async s=>{window.copiasFiscais.push(s);return true;};openAlunoModal('zero');document.getElementById('a-mensalidade').value=100;});
+   assert.equal(await g.evaluate(()=>saveAluno()),true);
    assert.equal(await g.evaluate(()=>situacaoMensalidade(DB.alunos.find(x=>x.id==='zero'),'2026-10').status),'pendente');
+   assert.equal(await g.evaluate(()=>situacaoMensalidade(DB.alunos.find(x=>x.id==='zero'),'2026-09').status),'pago');
    assert.equal(await g.evaluate(()=>DB.lancamentos.length),0);
   });
   await c.close();console.log('\n✅ '+checks+' verificações de Aulas e agenda mensal');

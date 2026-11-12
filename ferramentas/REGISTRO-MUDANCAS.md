@@ -46,6 +46,70 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-12 · Codex: compatibilidade dos saldos conferidos — varredura concluída localmente
+
+- Responsável: Codex. Branch local `codex/conciliacao-saldos-2026-11-12`, base
+  `66a455948c42ce1906980ae48001b933a65e6246`. Main reconferida, ainda nesta base.
+  PR #273 (skill para vídeos) não se sobrepõe. PR concorrente #278 prepara
+  domingo/agenda em Dia e calculador isolado: toca agenda, voz, carimbos, demo,
+  CI e este registro. Suas mudanças não foram incorporadas nem substituídas;
+  quando integrar, preservar as duas linhas de testes e conciliar movimentos
+  de aulas e carimbos a partir da main atualizada. Não ativar o calculador no app.
+- **Implementado localmente:** banco de aulas/reposições e banco de locações,
+  cada um com titular e participantes explícitos. Uso por presença ou uma única
+  baixa por horário conjunto; extrato conserva o participante e o titular.
+  Painéis contam o banco uma vez. Cobrança familiar continua independente.
+- Configuração mostra os totais únicos antes de gravar, exige cópia anterior
+  confirmada e permite desfazer enquanto não houver novos lançamentos. Nenhum
+  vínculo ou saldo existente é migrado ao abrir o app.
+- Tipo das reposições pode ser definido independentemente do pacote. Validade
+  opcional do saldo inteiro: quatro meses corridos desde a última falta elegível,
+  com ajuste de fim de mês. Origem desconhecida é preservada. Correções e viradas
+  não reiniciam a data. A regra por lotes continua como padrão dos cadastros antigos.
+- Duração por ocorrência em minutos, conservada ao mover a aula. Débito, estorno,
+  fechamento e publicação preservam frações como 100 minutos, sem arredondar para
+  meia aula. Estorno de aula anterior ao vínculo volta ao banco visível;
+  desvincular e reutilizar um horário não mistura dois débitos. Mudança de dia
+  conserva a referência conjunta; mover parte já confirmada exige desmarcar.
+  Prévia e execução por voz usam o mesmo saldo, duração e baixa conjunta.
+- Valor líquido explicitamente combinado por competência é preservado em
+  `valoresMensais`; registrar pagamento captura esse valor. Alterar o cadastro
+  atual não muda meses anteriores. Recebimentos confirmados sem dia podem ser
+  representados por competência em `recebimentosSemData`, sem receita datada
+  fictícia; referência de origem impede contar novamente ao localizar a data.
+  Quitações manuais sem valor continuam quitadas mesmo após mudar o preço.
+  Nenhum preço é inferido de um pagamento parcial ou migrado ao abrir o app.
+- Cobrar pela agenda, desfazer a decisão e aceitar troca de plano atualizam o
+  valor da competência atual, conservando o acordo anterior ao desfazer. Pedido
+  de plano de participante não redefine o banco do titular.
+- Publicação entrega somente o saldo efetivo e as regras do próprio aluno; não
+  inclui IDs ou dados financeiros dos outros participantes do banco.
+- Versão **candidata** `2026-11-12-3`: carimbos, caches e demo gerada sincronizados.
+  PR #279. **Versão realmente publicada na abertura do PR: `2026-11-11-6`.**
+  Nenhum merge, deploy de produção, escrita no Firebase ou JSON de importação
+  realizado antes da aprovação completa do head pelo CI.
+- **Testado localmente:** checadores de sintaxe/regras/P0/versão/tema; cadastro
+  (70 verificações em Chromium/WebKit), contrato de saldos do aluno (48 nos dois
+  temas e navegadores), créditos/estornos (13), plano família (15), presenças
+  familiares (9), inativação/reposições (10), reposição/fixo (7). Teste novo de
+  conciliação: 44 cenários em cada navegador, inclusive casos negativos de cópia,
+  estornos, voz, mudança de horário, valor mensal e recebimento sem dia; incluído
+  no CI. Regressões finais: pagamentos (38), renovação manual (20), fila (10),
+  conversa por voz (25), cadastro (70), contrato do aluno (48), fumaça e checadores.
+  O run inicial 43201149241 parou num teste antigo que alterava diretamente o
+  preço após quitação zero; o cenário agora usa o cadastro real, conserva a
+  exigência de cobrança atual e verifica também a quitação anterior. As 45
+  verificações desse arquivo passaram localmente; validar novamente o head final.
+  Varredura anterior por grupos cobrindo todas as telas: 1.379 toques,
+  56 janelas percorridas (incluindo repetições entre grupos), zero erros. Somente dados fictícios, com rede externa bloqueada nos testes.
+- Prévia aprovada pelo João nesta sessão; não repetir a aprovação.
+- **Pendente:** publicação pelo fluxo de PR/CI no head exato,
+  validação da versão publicada e, depois, preparação e
+  conferência do JSON privado antes de qualquer importação. A conferência dos
+  dados particulares permanece fora do repositório público.
+
+---
+
 ## 2026-11-11 · Codex: validar o histórico Git no ambiente com navegadores
 
 - O run 43044727731 iniciou a imagem oficial e passou nos checadores de apps,
