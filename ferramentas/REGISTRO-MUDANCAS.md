@@ -8,6 +8,34 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-12 · Claude Code: #279 (saldos conferidos) junto da agenda publicada e do #281
+
+- Responsável: Claude Code, a pedido do João ("dê seguimento por aqui"; o Codex ficou sem créditos).
+  Branch `claude/academia-app-cleanup-ayvphe`: main `71015ce` + #281 (`620aa4a`) + merge de
+  `codex/conciliacao-saldos-2026-11-12` (#279, base antiga `66a4559`, sem o #278).
+- **Junção:** conflitos só em carimbos de versão, `podarMovs` e `moverEntrada`. `podarMovs` mantém as
+  duas proteções: movimentos e datas de reposição (#281) e referências em uso por presença/banco (#279).
+  `moverEntrada` mantém a troca barrada no domingo (#278) e a aula conjunta (#279). Conferido linha a linha:
+  fora carimbos, nada da main saiu além do que o #279 tirava de propósito. Demo e tema gerados de novo.
+- **Correções sobre o #279:** aviso do ✓ dizia "(1 de aula)" (CI do #279 vermelho em
+  `testar-presenca-sem-credito`): `qtdAulaTxt` → "1 aula", "½ aula", "2 aulas", "45 min de aula".
+  `salvarBancoSaldo` não grava com conflito de outra sessão (`_conflitoNuvem`), nem quando a nuvem
+  ficou instável (`_nuvemMuda`) ou a sessão trocou durante a cópia: mesma regra de `copiarAntesDoCadastro`.
+  Dois testes negativos em `testar-conciliacao-saldos-browser.cjs` (conferidos tirando a trava: falham sem ela).
+  `testar-preservacao-extrato.cjs` (#281) passa a carregar `titularSaldo`/`bancoSaldo` (o #279 mudou
+  `lotesRepos`/`reposPorIdade`) e ganhou o caso "participante vê a validade do titular após compactar" (11 casos).
+- **Versão candidata 2026-11-12-4** (contém o #281). Publicada continua 2026-11-12-1 (#278). Se o #281
+  for publicado antes, este PR segue valendo.
+- **Testado aqui:** `checar-tudo.sh` 0 falhas (avisos idênticos aos da main); conciliação 48/48;
+  presença sem crédito 14/14; preservação do extrato 11/11; bateria do CI: ver o PR (o WebKit não existe
+  neste contêiner; a metade WebKit roda no CI).
+- Nenhuma regra do Firebase, migração de saldo, importação de JSON ou dado real. A prévia do #279 foi aprovada
+  pelo João na sessão do Codex; as correções acima não mudam tela. **Pendente:** OK do João para publicar;
+  depois, a conferência do JSON privado (fora do repositório) antes de qualquer importação. O PR #279 fica aberto
+  até o João decidir; este o substitui.
+
+---
+
 ## 2026-11-12 · Codex: preservar validade e estornos ao compactar o extrato
 
 - Responsável: Codex. Base `71015ce7c7c53c95bea24c279d98184b87df4507`; branch `codex/preservar-validade-extrato-2026-11-12`.

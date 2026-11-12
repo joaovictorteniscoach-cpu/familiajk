@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-11-12-3';
+const VERSAO='2026-11-12-4';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -83,6 +83,13 @@ function fmtCred(n){
   if(Math.abs(v*2-Math.round(v*2))<1e-7)return String(Math.round(v*2)/2).replace('.',',');
   if(Math.abs(Math.abs(v)*60-m)<1e-5)return (v<0?'−':'')+(Math.floor(m/60)?Math.floor(m/60)+'h':'')+(m%60?String(m%60)+(m>=60?'':' min'):'');
   return String(Math.round(v*10000)/10000).replace('.',',');
+}
+/* Quantidade da aula no aviso do ✓: "1 aula", "½ aula", "2 aulas", "45 min de aula". */
+function qtdAulaTxt(c){
+  const v=Number(c)||0;
+  if(v===0.5)return '½ aula';
+  if(Math.abs(v*2-Math.round(v*2))<1e-7)return fmtCred(v)+(v>1?' aulas':' aula');
+  return fmtCred(v)+' de aula';
 }
 function creditoDaEntrada(e,d){
   const k=presId(e,d),min=Number((DB.duracoesAulas||{})[k]||e.duracaoMin);
@@ -972,6 +979,9 @@ async function salvarBancoSaldo(remover){
   if(!ehDono())return;
   const ctx=_bancoEdicao;if(!ctx||ctx.salvando)return;
   const t=DB.alunos.find(x=>x.id===ctx.id),grupo=ctx.grupo;
+  /* Outra sessão mexeu na nuvem: zerar e juntar saldos agora gravaria por cima
+     do que ainda não foi conferido. Primeiro "Conferir diferenças". */
+  if(_conflitoNuvem){toast('Outra sessão alterou os dados. Confira as diferenças (Mais → Segurança e dados) antes de mudar o saldo.');return;}
   if(JSON.stringify(DB)!==ctx.antes){toast('Os dados mudaram. Reabra o saldo para conferir antes de salvar.');return;}
   const campos=grupo==='locacao'?['locCred']:['creditos','credGrupo','repos'];
   const membros=[...document.querySelectorAll('input[name="bs-membro"]:checked')].map(x=>x.value);
@@ -984,11 +994,12 @@ async function salvarBancoSaldo(remover){
     'Saldo compartilhado de '+t.nome+'\n\n'+membros.map(id=>'· '+DB.alunos.find(x=>x.id===id).nome).join('\n')+'\n\nTotal único: '+campos.map(cp=>CAMPO_LABEL[cp]+': '+fmtCred(totais[cp])).join(' · ')+
     '\n'+(modo==='horario'?'Uma baixa por horário quando fazem juntos.':'Cada presença usa o saldo comum.')+'\nOs saldos próprios dos outros participantes serão zerados. Estes números são o total disponível para todos, sem somar os cadastros.';
   if(!confirm(resumo+'\n\nUma versão será salva antes da alteração. Confirmar estes totais?'))return;
-  ctx.salvando=true;
+  ctx.salvando=true;const nuvem={espaco:espacoCadastro(),nuvemMuda:!!_nuvemMuda};
   try{
     let copiaOk=false;
     try{copiaOk=await guardarVersoes(ctx.antes);}catch(e){copiaOk=false;}
     if(!copiaOk||!ehDono()||_bancoEdicao!==ctx||DB!==ctx.banco||JSON.stringify(DB)!==ctx.antes||assinaturaBancoSaldo()!==form){toast('A cópia não foi confirmada ou a tela mudou. Reabra e confira os totais antes de salvar.');return;}
+    if(_conflitoNuvem||(_nuvemMuda&&!nuvem.nuvemMuda)||nuvem.espaco!==espacoCadastro()||window._espacoTrocou){toast('A sessão ou a nuvem mudou durante a cópia. Nada foi alterado. Confira os dados e reabra o saldo.');return;}
     if(remover){delete t.bancosSaldos[grupo];}
     else{
       membros.filter(id=>id!==t.id).forEach(id=>{const a=DB.alunos.find(x=>x.id===id);campos.forEach(cp=>{if(Number(a[cp]))corrigirSaldo(a,cp,0,'Saldo próprio incorporado ao saldo compartilhado');});});
@@ -4821,7 +4832,7 @@ function togglePresencaUm(entryId){
       const reg={k,alunoId:a.id,data:dKey(agDate),hora:entry.hora,tipo,custo:c};
       if(!d.natural)reg.partes=d.partes;
       DB.presencas.push(reg);
-      const qt=fmtCred(c)+' de aula';
+      const qt=qtdAulaTxt(c);
       if(!d.natural){
         logAct('Marcar '+(isRepo?'reposição':isGrp?'aula em grupo':'presença')+' (usou outro saldo): '+a.nome);
         toast('✓ '+(isRepo?'Reposição':isGrp?'Aula em grupo':'Presença')+' ('+qt+') · '+a.nome+': '+textoDebito(a,d)+nota);

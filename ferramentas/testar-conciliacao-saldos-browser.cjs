@@ -165,6 +165,26 @@ let count=0;async function check(label,test){await test();count++;console.log('�
    await p.evaluate(()=>abrirBancoSaldo('9991'));await p.locator('input[name="bs-membro"][value="9992"]').check();
    const antes=await p.evaluate(()=>JSON.stringify(DB));await p.evaluate(async()=>{guardarVersoes=async()=>{throw Error('Falha fictícia na cópia');};await salvarBancoSaldo(false);});assert.equal(await p.evaluate(()=>JSON.stringify(DB)),antes);
   });
+  await preparar();
+  await check('conflito com outra sessão barra a configuração antes da cópia, sem alterar o banco',async()=>{
+   await p.evaluate(()=>abrirBancoSaldo('9991'));await p.locator('input[name="bs-membro"][value="9992"]').check();await p.locator('#bs-creditos').fill('7');
+   const antes=await p.evaluate(()=>JSON.stringify(DB));
+   const r=await p.evaluate(async()=>{window.copiasTeste=0;guardarVersoes=async()=>{window.copiasTeste++;return true;};_conflitoNuvem={no:'alunos',banco:null};
+     try{await salvarBancoSaldo(false);}finally{_conflitoNuvem=null;}return window.copiasTeste;});
+   assert.equal(r,0,'não deveria nem salvar a cópia');assert.equal(await p.evaluate(()=>JSON.stringify(DB)),antes);
+  });
+  await preparar();
+  await check('conflito ou nuvem instável surgindo durante a cópia cancela a configuração',async()=>{
+   for(const muda of ['conflito','nuvemMuda']){
+    await p.evaluate(()=>{document.querySelectorAll('.overlay.on').forEach(el=>el.classList.remove('on'));abrirBancoSaldo('9991');});
+    await p.locator('input[name="bs-membro"][value="9992"]').check();await p.locator('#bs-creditos').fill('7');
+    const antes=await p.evaluate(()=>JSON.stringify(DB));
+    await p.evaluate(()=>{_nuvemMuda=false;guardarVersoes=()=>new Promise(resolve=>window.terminarCopiaTeste=resolve);window.salvamentoTeste=salvarBancoSaldo(false);});
+    await p.evaluate(async muda=>{if(muda==='conflito')_conflitoNuvem={no:'alunos',banco:null};else _nuvemMuda=true;
+      window.terminarCopiaTeste(true);try{await window.salvamentoTeste;}finally{_conflitoNuvem=null;_nuvemMuda=false;}},muda);
+    assert.equal(await p.evaluate(()=>JSON.stringify(DB)),antes,muda+': o banco não podia mudar');
+   }
+  });
   async function nuvemFicticiaVoz(){await p.evaluate(()=>{
    JVAcoesVoz.fechar(true);document.querySelectorAll('.overlay.on').forEach(el=>el.classList.remove('on'));if(fichaId)fecharFicha();hideVals=false;window.AUTH_USER={uid:UID_DONO};window._espacoAberto=true;hasCloud=()=>true;_abriuSemConferir=false;_semDados=false;_nuvemMuda=false;_conflitoNuvem=null;cloudPending=false;_salvamentoEmCurso=null;syncing=false;
    window.retratoTeste=()=>({agenda:JSON.stringify(DB.agenda),alunos:Object.fromEntries(DB.alunos.map(a=>[a.id,JSON.stringify(a)])),config:JSON.stringify({mesCreditos:DB.mesCreditos,horarioCfg:DB.horarioCfg,horarioData:DB.horarioData}),carimbos:{savedAt:Date.now()}});

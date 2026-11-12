@@ -9,7 +9,7 @@ function extrair(nome){
  return fim?resto.slice(0,fim.index+1):resto;
 }
 function abrir(DB){
- const funcoes=['podarMovs','lotesRepos','reposPorIdade','movsDe','mesDoTs','mesesEntre'].map(extrair).join('\n');
+ const funcoes=['podarMovs','lotesRepos','reposPorIdade','movsDe','mesDoTs','mesesEntre','grupoSaldo','bancoSaldo','titularSaldo','saldo'].map(extrair).join('\n');
  return new Function('DB',"const MOVS_TETO=600,MOVS_MANTER=500,REPOS_VALIDADE=4;const mesReal=()=>'2026-11';"+funcoes+
   ';return {podarMovs,lotesRepos,reposPorIdade};')(DB);
 }
@@ -70,5 +70,11 @@ teste('registro vazio de presença não interrompe compactação nem estorno',()
  const DB=banco(),deb=mov('creditos',-1,junho,'preserva');DB.movs.unshift(deb);
  DB.presencas=[null,{}, {k:'preserva'}];abrir(DB).podarMovs('a');
  assert.deepEqual(DB.movs.find(m=>m.ref==='preserva'),deb);
+});
+teste('saldo compartilhado: participante vê a mesma validade do titular depois de compactar',()=>{
+ const DB=banco([mov('repos',1,junho,'antiga'),mov('repos',1,outubro,'recente')],2),api=abrir(DB);
+ DB.alunos[0].bancosSaldos={aulas:{membros:['a','b'],modo:'pessoa'}};DB.alunos.push({...aluno,id:'b',repos:0});
+ const antes=api.reposPorIdade(DB.alunos[1],'2026-11');api.podarMovs('a');
+ assert.deepEqual(api.reposPorIdade(DB.alunos[1],'2026-11'),antes);assert.equal(antes.validas,1);assert.equal(antes.vencidas,1);
 });
 console.log('Preservação do extrato: '+feitos+' casos aprovados; nenhuma correção de dados reais.');
