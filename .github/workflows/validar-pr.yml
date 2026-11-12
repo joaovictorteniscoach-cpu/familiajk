@@ -70,6 +70,8 @@ jobs:
           bash -e -o pipefail -c '
           node ferramentas/testar-abertura-nuvem-browser.cjs
           node ferramentas/testar-envios-aluno-browser.cjs
+          node ferramentas/testar-agenda-domingo-browser.cjs
+          node ferramentas/testar-creditos-fixos.cjs
           node ferramentas/testar-agenda-quer-aluno-browser.cjs
           node ferramentas/testar-reposicao-fixo-browser.cjs
           node ferramentas/testar-semana-livre-browser.cjs

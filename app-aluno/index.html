@@ -1683,15 +1683,15 @@ html body:not(#jv) #pedir-box .btn-ghost{background:#F3EDE2!important;border:1px
 .login .login-sub{opacity:1}
 .login-priv{color:rgba(250,247,242,.8)}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-11-11-6">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-11-12-1">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-11-11-6">
-<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-11-11-6">
-<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-11-11-6">
-<link rel="stylesheet" href="lib/visual-sobrio.css?v=2026-11-11-6">
-<link rel="stylesheet" href="lib/letras-maiores.css?v=2026-11-11-6">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-11-12-1">
+<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-11-12-1">
+<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-11-12-1">
+<link rel="stylesheet" href="lib/visual-sobrio.css?v=2026-11-12-1">
+<link rel="stylesheet" href="lib/letras-maiores.css?v=2026-11-12-1">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -2022,8 +2022,8 @@ function esperarAuth(){
     <p class="sec-eyebrow">Quadro de horários</p>
     <div id="pay-lock" class="lock-note" style="display:none"></div>
     <div class="seg jv-ref-ag-tabs">
-      <button onclick="setView('dia',this)">Dia</button>
-      <button class="on" onclick="setView('semana',this)">Semana</button>
+      <button class="on" onclick="setView('dia',this)">Dia</button>
+      <button onclick="setView('semana',this)">Semana</button>
       <button onclick="setView('mes',this)">Mês</button>
     </div>
     <div class="ag-nav">
@@ -2198,7 +2198,7 @@ function esperarAuth(){
     <button id="nav-al-torneio" onclick="goAluno('torneio',this)"><span class="ico" aria-hidden="true" data-ic="navtrophy"></span><span class="nav-badge" id="nb-al-torneio"></span>Torneio</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" aria-hidden="true" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-11-11-6"></script>
+<script src="lib/icones.js?v=2026-11-12-1"></script>
 </div>
 
 <!-- ASSISTENTE POR VOZ: consultar horário livre, agendar, cancelar, ver aulas (lib/voz-aluno.js) -->
@@ -2445,7 +2445,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-11-11-6';
+const VERSAO='2026-11-12-1';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -2454,7 +2454,7 @@ let PUB=null;       // dados publicados pelo painel
 let EU=null;        // meu cadastro
 let MEU={codigo:null,pedidos:[],cancelados:[]}; // estado pessoal persistido
 let agDate=new Date();agDate.setHours(12,0,0,0);
-let agView='semana';
+let agView='dia';
 let bookCtx=null;
 
 /* ===== Armazenamento: aparelho + Firebase (nuvem real) ===== */
@@ -2743,7 +2743,8 @@ function modoPadrao(dia,hora){
   if(m<H('20:00'))return 'aula';
   return 'loc';
 }
-function slotModo(date,hora){const dk=dKey(date);const od=PUB.horarioData&&PUB.horarioData[dk];if(od&&od[hora])return od[hora];const c=PUB.horarioCfg&&PUB.horarioCfg[date.getDay()];return (c&&c[hora])||modoPadrao(date.getDay(),hora);}
+function slotModo(date,hora){const dk=dKey(date),noDia=modo=>date.getDay()===0&&modo==='aula'?'loc':modo;const od=PUB.horarioData&&PUB.horarioData[dk];if(od&&od[hora])return noDia(od[hora]);const c=PUB.horarioCfg&&PUB.horarioCfg[date.getDay()];return noDia((c&&c[hora])||modoPadrao(date.getDay(),hora));}
+
 function quadraAberta(date,hora){return slotModo(date,hora)!=='fechado';}
 function fmtData(dk){const p=dk.split('-');return p[2]+'/'+p[1];}
 function dtOf(dk,hora){const p=dk.split('-').map(Number);const t=(hora||'00:00').split(':').map(Number);return new Date(p[0],p[1]-1,p[2],t[0],t[1]||0,0,0);}
@@ -3235,6 +3236,8 @@ function slotState(date,hora){
    janela de opções consultam a mesma disponibilidade, sem alterar reservas. */
 function cabeNoSlot(s,date,hora){
   if(!s||!['livre','loc'].includes(s.st))return {aula:false,loc:false,tor:false};
+  // Domingo oferece só locação, mesmo com uma configuração antiga de aula.
+  if(date.getDay()===0)return {aula:false,loc:slotModo(date,hora)!=='fechado'&&(!s.compartilhado||s.compartilhado==='locacao')&&!s.grupo,tor:false};
   if(s.compartilhado==='locacao')return {aula:false,loc:true,tor:false};
   if(s.compartilhado==='torneio')return {aula:false,loc:false,tor:true};
   if(s.semAula)return {aula:false,loc:true,tor:true};
@@ -4849,13 +4852,13 @@ let alunoWkZoom=(function(){
 let alunoWkAutoFit=(function(){try{return localStorage.getItem('jv-al-wkzoom-fit')!=='false';}catch(e){return true;}})();
 const AL_WK_COL=92,AL_WK_HOUR=44;
 function alunoWkVars(z){
-  const col=Math.floor(AL_WK_COL*z);
+  const col=Math.max(40,Math.floor(AL_WK_COL*z)); // preserva a leitura de Ocup. com sete dias
   const hour=AL_WK_HOUR;
   const row=Math.max(28,Math.round(44*z));
   const fs=Math.max(11,+(12*z).toFixed(1));
   const th=Math.max(11,+(12*z).toFixed(1));
   const sm=11;
-  return {col,hour,row,fs,th,sm,min:hour+6*col};
+  return {col,hour,row,fs,th,sm,min:hour+7*col};
 }
 function aplicarAlunoWkVars(){
   const t=document.querySelector('#apg-agenda .wk');if(!t)return;
@@ -4910,7 +4913,7 @@ function alunoWkZoomFit(){
   alunoWkAutoFit=true;
   const sc=document.querySelector('#apg-agenda .wk-scroll');if(!sc||sc.clientWidth<1)return;
   const disp=sc.clientWidth-4;
-  const alvo=(disp-AL_WK_HOUR)/(6*AL_WK_COL);
+  const alvo=(disp-AL_WK_HOUR)/(7*AL_WK_COL);
   alunoWkZoom=Math.min(1.8,Math.max(.35,Math.floor(alvo*100)/100));
   aplicarAlunoWkVars();
 }
@@ -4958,8 +4961,8 @@ function renderAgenda(){
   }
   else if(agView==='semana'){
     const mon=new Date(agDate);mon.setDate(mon.getDate()-((mon.getDay()+6)%7));
-    const days=[...Array(6)].map((_,i)=>{const d=new Date(mon);d.setDate(d.getDate()+i);return d;});
-    lbl.innerHTML='Semana de '+days[0].getDate()+'/'+(days[0].getMonth()+1)+' a '+days[5].getDate()+'/'+(days[5].getMonth()+1)+'<small>toque num horário livre para ver as opções</small>';
+    const days=[...Array(7)].map((_,i)=>{const d=new Date(mon);d.setDate(d.getDate()+i);return d;});
+    lbl.innerHTML='Semana de '+days[0].getDate()+'/'+(days[0].getMonth()+1)+' a '+days[6].getDate()+'/'+(days[6].getMonth()+1)+'<small>toque num horário livre para ver as opções</small>';
     let html=avisoSemHorarios(days)+'<div class="wk-tools"><button class="wk-zbtn" type="button" aria-label="Diminuir agenda" onclick="alunoWkZoomStep(-1)">−</button><span class="wk-zlbl" id="al-wk-zlbl">100%</span><button class="wk-zbtn" type="button" aria-label="Aumentar agenda" onclick="alunoWkZoomStep(1)">+</button><button class="wk-fit" type="button" onclick="alunoWkZoomFit()">Semana toda</button></div><div class="wk-scroll"><table class="wk"><tr><th></th>'+days.map(d=>`<th>${DIAS[d.getDay()]}<small>${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}</small></th>`).join('')+'</tr>';
     PUB.horas.forEach(h=>{
       html+=`<tr><td class="hr">${h}</td>`;
@@ -5592,7 +5595,10 @@ function escolherSlot(hora,quer){
       b+='<div class="pick-note">⏳ Pagamento avisado ao João. Assim que ele confirmar, seus agendamentos liberam.</div>';
   }
   if(!so)b+='<div class="pick-note">Neste horário dá para marcar:</div>';
-  if(pickCtx.compartilhado==='locacao'){
+  if(pickCtx.date.getDay()===0){
+    b+='<div class="pick-note">Domingo: quadra disponível apenas para <b>locação</b>.</div>';
+    if(mostra('loc'))b+=locBtnHtml();
+  }else if(pickCtx.compartilhado==='locacao'){
     b+='<div class="pick-note">🔑 Este horário já é uma <b>locação</b>. O pedido é para participar da mesma atividade.</div>';
     b+='<button class="pick-opt loc" onclick="pickLoc()">🔑 Participar da locação</button>';
   }else if(pickCtx.compartilhado==='torneio'){
@@ -5700,6 +5706,7 @@ async function confirmarLocacao(){
     if(locCtx!==contexto)return false;
     const estado=slotState(contexto.date,contexto.hora);
     if(!['livre','loc'].includes(estado.st)||estado.compartilhado&&estado.compartilhado!=='locacao'||(estado.compartilhado||'')!==contexto.compartilhado){toast('Horário reservado ou atividade alterada. Reabra as opções.');return false;}
+    if(!cabeNoSlot(estado,contexto.date,contexto.hora).loc){toast('Locação indisponível neste horário. Reabra as opções.');return false;}
     const livre=Math.round((Number(document.getElementById('locdur-min').value)||0)/15)*15;
     if(livre>=30)contexto.min=livre;
     const dur=locdurLabel(contexto.min);
@@ -5937,7 +5944,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-11-11-6').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-11-12-1').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
@@ -5946,6 +5953,6 @@ window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);})
   setTimeout(()=>esperarEIniciar(t+1),150);
 })(0);
 </script>
-<script src="lib/voz-aluno.js?v=2026-11-11-6"></script>
+<script src="lib/voz-aluno.js?v=2026-11-12-1"></script>
 </body>
 </html>

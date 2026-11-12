@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-11-11-6';
+const VERSAO='2026-11-12-1';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -96,6 +96,7 @@ function modoPadrao(date,hora){
   return modo;
 }
 function slotModo(date,hora){
+  const noDia=modo=>date.getDay()===0&&modo==='aula'?'loc':modo;
   if(ehMeiaHora(hora))return 'fechado';   // saiu da grade: ninguém marca nova aula aqui
   /* Para o professor quem manda é a lista que a academia liberou: hora fora
      dela é hora fechada, e aí todo caminho que já consulta slotModo concorda
@@ -104,13 +105,13 @@ function slotModo(date,hora){
      demais uma vez do que deixar o professor sem conseguir trabalhar. */
   if(typeof ehDono==='function'&&!ehDono()&&DB&&DB.profLiberados){
     const doDia=DB.profLiberados[dKey(date)];
-    return (doDia&&doDia.indexOf(hora)>=0)?'aula':'fechado';
+    return noDia((doDia&&doDia.indexOf(hora)>=0)?'aula':'fechado');
   }
   const od=DB.horarioData&&DB.horarioData[dKey(date)];
-  if(od&&od[hora])return od[hora];
+  if(od&&od[hora])return noDia(od[hora]);
   const c=DB.horarioCfg&&DB.horarioCfg[date.getDay()];
-  if(c&&c[hora])return c[hora];
-  return modoPadrao(date,hora);
+  if(c&&c[hora])return noDia(c[hora]);
+  return noDia(modoPadrao(date,hora));
 }
 /* Liberar a quadra para o professor NÃO é um jeito de usar a sua hora — é
    permissão para outra pessoa usar a quadra. São eixos diferentes, e por isso
@@ -423,7 +424,7 @@ let DB={alunos:[],lancamentos:[],meta:10000,agenda:null,presencas:[],compromisso
 let now=new Date();
 let curMonth=now.getMonth(),curYear=now.getFullYear();
 let agDate=new Date(now.getFullYear(),now.getMonth(),now.getDate());
-let agView='semana';
+let agView='dia';
 let saveTimer=null;
 let slotCtx=null;
 
@@ -2348,6 +2349,7 @@ function pedidoAgendaValido(p,a){
   const pessoas=p.grupo===1?limiteGrupoHorario(entriesFor(d,p.hora)):pessoasGrupoAluno(a);
   return datasConferenciaReserva(p).every(data=>{
     const date=new Date(data+'T12:00:00'),modo=slotModo(date,p.hora);
+    if(!atividadePermitidaNoDia(date,tipo))return false;
     if(modo==='fechado'||modo==='loc'&&!p.repo&&!p.tor)return false;
     if(ocupadoPorOutro(date,p.hora))return false;
     const grade=entriesFor(date,p.hora);
@@ -4134,6 +4136,7 @@ function moverEntrada(eid,destDK,destH,srcDK){
   const ref=findEntryReal(eid);if(!ref)return;
   const src=ref.e,origem=ref.origem;
   const destDate=new Date(destDK+'T12:00:00');
+  if(!atividadePermitidaNoDia(destDate,src.tipo)){toast('Domingo é reservado apenas para locações.');return;}
   if(destDK===(origem==='fixo'?null:src.data)&&destH===src.hora&&origem!=='fixo'){return;}
   // aula fixa: a data de onde foi arrastada (sem ela, o mesmo dia da semana na semana do destino)
   if(origem==='fixo'&&!srcDK){const d=new Date(destDate);d.setDate(d.getDate()+(src.dia-d.getDay()));srcDK=dKey(d);}
@@ -4143,6 +4146,8 @@ function moverEntrada(eid,destDK,destH,srcDK){
   logAct('Mover/trocar horário na agenda');
   // destino já ocupado? (ignora o próprio item)
   const ocup=entriesFor(destDate,destH).filter(x=>x.id!==eid);
+  if(ocup.length===1){const antData=origem==='fixo'?srcDK:oldData;
+    if(antData&&!atividadePermitidaNoDia(new Date(antData+'T12:00:00'),ocup[0].tipo)){toast('A troca colocaria uma aula ou torneio no domingo.');return;}}
   // aplica a mudança no item arrastado, levando o ✓ (ou falta/aviso) junto
   let marcas=0;
   if(origem==='fixo')marcas+=moverFixoDesde(src,srcDK,destDK,destH);
@@ -4167,6 +4172,7 @@ function moverDia(fromDK,toDK){
   const dia=fromDate.getDay();
   const pont=DB.agenda.eventos.filter(e=>e.data===fromDK);
   const fix=DB.agenda.fixos.filter(f=>f.dia===dia&&fixoValeEm(f,fromDK)&&!DB.agenda.excecoes.some(x=>x.fixoId===f.id&&x.data===fromDK));
+  if(pont.concat(fix).some(e=>!atividadePermitidaNoDia(new Date(toDK+'T12:00:00'),e.tipo))){toast('Domingo é reservado apenas para locações. Nenhum atendimento foi movido.');return;}
   const total=pont.length+fix.length;
   if(!total){toast('Esse dia não tem atendimentos');return;}
   const p1=fromDK.split('-'),p2=toDK.split('-');
@@ -4267,7 +4273,7 @@ function wkVars(z){
   const h=Math.max(28,Math.round(44*z));
   const fs=Math.max(11.5,+(12*z).toFixed(1));
   const thfs=Math.max(11,+(12*z).toFixed(1));
-  const min=48+6*col;
+  const min=48+7*col;
   return `--wk-col:${col}px;--wk-h:${h}px;--wk-fs:${fs}px;--wk-thfs:${thfs}px;--wk-min:${min}px`;
 }
 function aplicarWkVars(){
@@ -4286,7 +4292,7 @@ function wkZoomFit(){
   wkAutoFit=true;
   const sc=document.querySelector('#pg-agenda .wk-scroll'); if(!sc||sc.clientWidth<1)return;
   const disp=Math.max(240,sc.clientWidth-6);   // desconta a borda/padding
-  wkZoom=Math.min(1.8,Math.max(0.35,Math.floor(((disp-48)/6)/WK_COL*100)/100));
+  wkZoom=Math.min(1.8,Math.max(0.35,Math.floor(((disp-48)/7)/WK_COL*100)/100));
   aplicarWkVars();
 }
 window.addEventListener('resize',()=>{if(wkAutoFit)wkZoomFit();});
@@ -4678,9 +4684,9 @@ function renderAgenda(){
   }
   else if(agView==='semana'){
     const mon=new Date(agDate);mon.setDate(mon.getDate()-((mon.getDay()+6)%7));
-    const days=[...Array(6)].map((_,i)=>{const d=new Date(mon);d.setDate(d.getDate()+i);return d;});
+    const days=[...Array(7)].map((_,i)=>{const d=new Date(mon);d.setDate(d.getDate()+i);return d;});
     const dd=d=>String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');
-    lbl.innerHTML='Semana de '+dd(days[0])+' a '+dd(days[5])+'<small>toque para abrir · arraste para mover</small>';
+    lbl.innerHTML='Semana de '+dd(days[0])+' a '+dd(days[6])+'<small>toque para abrir · arraste para mover</small>';
     const hojeNa=days.some(d=>dKey(d)===hojeK);
     let html='<div class="wk-modo" role="group" aria-label="Tamanho da grade"><button type="button" class="wk-fit'+(wkAutoFit?' on':'')+'" aria-pressed="'+wkAutoFit+'" onclick="wkZoomFit()">Semana toda</button><button type="button" class="wk-amp'+(wkAutoFit?'':' on')+'" aria-pressed="'+!wkAutoFit+'" onclick="wkAmpliar()">Ampliada</button></div>';
     html+='<div class="wk-scroll"><table class="wk" style="'+wkVars(wkZoom)+'"><tr><th></th>'+days.map(d=>`<th${dKey(d)===hojeK?' class="hoje"':''}>${DIAS[d.getDay()]}<small>${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}</small></th>`).join('')+'</tr>';
@@ -4999,7 +5005,8 @@ function resetSlotForm(){
   const sr=document.getElementById('s-rec');if(sr){sr.disabled=false;sr.value='fixo';}
   const ti=document.getElementById('s-titulo');if(ti)ti.value='';
   const al=document.getElementById('s-aluno');if(al)al.value='';
-  const tp=document.getElementById('s-tipo');if(tp)tp.value='aula';
+  const tp=document.getElementById('s-tipo');if(tp){tp.value=slotCtx&&slotCtx.date.getDay()===0?'locacao':'aula';
+    Array.from(tp.options).forEach(o=>{o.disabled=!!(slotCtx&&!atividadePermitidaNoDia(slotCtx.date,o.value));});}
   const gn=document.getElementById('s-grupo-n');if(gn)gn.value='2';
   const rp=document.getElementById('s-repo');if(rp)rp.checked=false;
   const fo=document.getElementById('s-fora');if(fo)fo.checked=false;
@@ -5125,6 +5132,7 @@ function saveSlot(){
   const t=document.getElementById('s-titulo').value.trim();
   if(!t){toast('Informe o nome/descrição');return;}
   const tipo=document.getElementById('s-tipo').value;
+  if(!atividadePermitidaNoDia(slotCtx.date,tipo)){toast('Domingo é reservado apenas para locações.');return;}
   let alunoId=document.getElementById('s-aluno').value||null;
   /* Nome digitado sem escolher o aluno: se parece um aluno ativo só, pergunta
      se liga (sem vínculo, o app dele mostra "Reserva" de outra pessoa). E
@@ -10477,7 +10485,7 @@ function instalarGrade(){
 function exportAgendaExcel(){
   const base=new Date(agDate);
   const mon=new Date(base);mon.setDate(mon.getDate()-((mon.getDay()+6)%7));
-  const days=[...Array(6)].map((_,i)=>{const d=new Date(mon);d.setDate(d.getDate()+i);return d;});
+  const days=[...Array(7)].map((_,i)=>{const d=new Date(mon);d.setDate(d.getDate()+i);return d;});
   const sep=';';
   let csv='HORARIOS'+sep+days.map(d=>DIAS[d.getDay()]+' '+String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')).join(sep)+'\n';
   horasVisiveis(days).forEach(h=>{
@@ -11849,6 +11857,11 @@ function conferirNumeros(){
    Cada botão escreve o resultado numa caixa embaixo da grade. Antes elas se
    empilhavam (conexão + conferência + versões…) e a tela virava um rolo.
    Agora abrir uma fecha as outras, e tocar de novo na mesma fecha ela. */
+/* Domingo: novas reservas da quadra somente para locação. Marcações antigas
+   continuam visíveis e podem ser canceladas; bloqueios de manutenção continuam. */
+function atividadePermitidaNoDia(date,tipo){
+  return date.getDay()!==0||['locacao','bloqueio','pessoal'].includes(tipo);
+}
 const FERR_BOXES=['teste-box','arq-box','espaco-box','conf-box','versoes-box','rel-box','pu-box','esc-box'];
 let ferrAberto='';
 function soEsteFerr(box){
@@ -13245,7 +13258,7 @@ function montarSemanaExport(days){
 }
 function semanaDias(){
   const mon=new Date(agDate);mon.setDate(mon.getDate()-((mon.getDay()+6)%7));
-  return [...Array(6)].map((_,i)=>{const d=new Date(mon);d.setDate(d.getDate()+i);return d;});
+  return [...Array(7)].map((_,i)=>{const d=new Date(mon);d.setDate(d.getDate()+i);return d;});
 }
 async function enviarSemanaImg(){
   toast('Preparando a imagem…');
