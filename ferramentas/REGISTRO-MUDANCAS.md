@@ -24,15 +24,17 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
   Dois testes negativos em `testar-conciliacao-saldos-browser.cjs` (conferidos tirando a trava: falham sem ela).
   `testar-preservacao-extrato.cjs` (#281) passa a carregar `titularSaldo`/`bancoSaldo` (o #279 mudou
   `lotesRepos`/`reposPorIdade`) e ganhou o caso "participante vê a validade do titular após compactar" (11 casos).
-- **Versão candidata 2026-11-12-4** (contém o #281). Publicada continua 2026-11-12-1 (#278). Se o #281
-  for publicado antes, este PR segue valendo.
+- **Publicado: 2026-11-12-4** com o OK do João: PR #282, merge `01962b7`, head validado `b084b70`
+  (CI validar 43309099628 verde, inclusive WebKit e emulador). Pages 43316822749 e monitor 43316912784:
+  Gestão Pages, Aluno Pages e Aluno Netlify em 2026-11-12-4. O #281 entrou junto (marcado como merge);
+  o #279 foi fechado como substituído.
 - **Testado aqui:** `checar-tudo.sh` 0 falhas (avisos idênticos aos da main); conciliação 48/48;
   presença sem crédito 14/14; preservação do extrato 11/11; bateria do CI: ver o PR (o WebKit não existe
   neste contêiner; a metade WebKit roda no CI).
 - Nenhuma regra do Firebase, migração de saldo, importação de JSON ou dado real. A prévia do #279 foi aprovada
-  pelo João na sessão do Codex; as correções acima não mudam tela. **Pendente:** OK do João para publicar;
-  depois, a conferência do JSON privado (fora do repositório) antes de qualquer importação. O PR #279 fica aberto
-  até o João decidir; este o substitui.
+  pelo João na sessão do Codex; as correções acima não mudam tela. **Pendente (só se o João quiser):** a
+  conferência do JSON privado (fora do repositório) antes de qualquer importação. Nenhum saldo compartilhado
+  é ligado sozinho: só quando o João configurar no aluno.
 
 ---
 
