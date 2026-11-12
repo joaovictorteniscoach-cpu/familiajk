@@ -8,6 +8,18 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-12 · Codex: preservar validade e estornos ao compactar o extrato
+
+- Responsável: Codex. Base `71015ce7c7c53c95bea24c279d98184b87df4507`; branch `codex/preservar-validade-extrato-2026-11-12`.
+- Problema reproduzido com dados fictícios: uma reposição de junho passava de vencida a válida em novembro quando a compactação lhe atribuía a data de movimentos de outubro.
+- Correção preparada: preservar todos os movimentos de reposição, suas datas, ordem e referências; manter também referências ainda usadas por presenças/estornos. Compactar apenas os demais movimentos elegíveis, mantendo a soma por campo.
+- Dez regressões passaram no V8 com as funções reais: validade, FIFO, desfazer anotação, estorno, referência de banco conjunto, outro aluno, compactação repetida, soma por campo e origem desconhecida. A primeira falha no código anterior, como esperado. CI completo ainda será conferido no head final.
+- **Versão candidata: 2026-11-12-2. Publicação anterior confirmada: 2026-11-12-1** (#278). Estado final e referências de CI/publicação desta correção serão registrados no PR correspondente.
+- Não recalcula saldos reais, não recupera datas já perdidas e não migra o modelo financeiro. Nenhuma tela ou regra do Firebase alterada; agenda Dia/Domingo, valores e ícones dourados preservados.
+- PR #279 permanece separado: incorporar esta preservação junto da agenda publicada antes de revalidar a integração. Configuração de saldo compartilhado ainda precisa respeitar conflito de nuvem, conforme #275.
+
+---
+
 ## 2026-11-12 · Codex: agenda publicada em Dia, com domingo para locações
 
 - Responsável: Codex. Base `66a455948c42ce1906980ae48001b933a65e6246`; PR [#278](https://github.com/joaovictorteniscoach-cpu/familiajk/pull/278), branch `codex/creditos-unicos-implantacao-2026-11-12`.

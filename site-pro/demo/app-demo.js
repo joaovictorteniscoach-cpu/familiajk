@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-11-12-1';
+const VERSAO='2026-11-12-2';
 
 const AVATAR_GESTAO_KEY='jvt-demo-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -900,7 +900,13 @@ function podarMovs(alunoId){
   const todas=DB.movs||[];
   const doAluno=todas.filter(m=>m.alunoId===alunoId);
   if(doAluno.length<=MOVS_TETO)return;
-  const fora=doAluno.slice(0,doAluno.length-MOVS_MANTER);
+  /* A data e a ordem de TODOS os movimentos de reposição determinam a validade
+     e o FIFO. Resumir esses movimentos mudaria os direitos do aluno. Referências
+     ainda usadas por presenças também precisam continuar disponíveis ao estorno. */
+  const refsEmUso=new Set((DB.presencas||[]).map(p=>p&&(p.bancoRef||p.k)).filter(Boolean));
+  const podaveis=doAluno.filter(m=>m.campo!=='repos'&&!refsEmUso.has(m.ref));
+  if(podaveis.length<=MOVS_TETO)return;
+  const fora=podaveis.slice(0,podaveis.length-MOVS_MANTER);
   const soma={};
   fora.forEach(m=>{soma[m.campo]=(soma[m.campo]||0)+(Number(m.delta)||0);});
   const saiu=new Set(fora);
