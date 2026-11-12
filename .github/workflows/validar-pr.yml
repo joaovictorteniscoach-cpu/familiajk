@@ -132,6 +132,7 @@ jobs:
           node ferramentas/testar-conexao-nuvem-aluno-browser.cjs
           node ferramentas/testar-creditos-marcas-browser.cjs
           node ferramentas/testar-conciliacao-saldos-browser.cjs
+          node ferramentas/testar-telas-leves-browser.cjs
           node ferramentas/testar-avisos-celular-browser.cjs
           node ferramentas/testar-servidor-avisos.mjs
           node ferramentas/testar-resumo-escritorio-browser.cjs

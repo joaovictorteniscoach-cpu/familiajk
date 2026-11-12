@@ -8,6 +8,29 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-12 · Claude Code: telas mais leves (itens 1, 2, 4, 5, 6 e 7 da revisão)
+
+- Pedido do João após a revisão das 22 telas (página "Revisão das telas JV"): "Sim", menos o item 3
+  (Início do aluno com 4 quadros). Itens 8, 9 e 10 não entram. Só muda o lugar: cor, letra, ícone e
+  botões são os mesmos; nada foi apagado.
+- **Aluno (1):** avisos do topo por aba (`body[data-aba]`): Início todos; Agenda e Minhas aulas os de
+  aula; Créditos o do fim do mês; Evolução, Perfil e Torneio nenhum. O de segurança do aparelho em todas.
+- **Aluno (2):** Créditos sem "Ações rápidas" (o Pix já está em "Pagar minha mensalidade"); "Minhas aulas"
+  em uma linha (`cred-page-mes`) e "Falar com a academia" como linha (`cred-page-falar`).
+- **Gestão (4, 5):** Início com o que é de hoje em cima (atividades com o resumo dos anéis, confirmar
+  amanhã, as duas listas de atenção juntas, cobranças, compromissos) e "Números do mês" recolhido
+  (anéis, comparativo, gráfico, quadrinhos, financeiro do mês e "+ Lançamento"; o app lembra se ficou
+  aberto). 3,5 → 1,8 telas. Todos os 75 ids do Início preservados.
+- **Gestão (6):** Gráficos em 3 abas (Dinheiro, Alunos e aulas, Quadra); lembra a última. 6,5 telas →
+  Dinheiro 3,5 (a estimativa da revisão era 2 a 3), as outras abas menos.
+- **Gestão (7):** Financeiro com "Preços, Pix e avisos" fechado; `irParaValores` abre. 3,8 → 1,9 telas.
+- Testes: novo `testar-telas-leves-browser.cjs` (17 verificações, inclusive negativos); ajustados
+  `testar-detalhe-inicio`, `testar-3-pedidos`, `testar-aulas-agenda-aluno` (lê o número com o bloco
+  fechado) e `testar-inativar-reposicoes` (abre a aba Alunos e aulas). Versão 2026-11-12-5.
+- Prévia antes × depois enviada ao João antes de publicar. Nenhum dado, crédito ou regra do Firebase mudou.
+
+---
+
 ## 2026-11-12 · Claude Code: #279 (saldos conferidos) junto da agenda publicada e do #281
 
 - Responsável: Claude Code, a pedido do João ("dê seguimento por aqui"; o Codex ficou sem créditos).

@@ -38,11 +38,11 @@
 <link rel="apple-touch-startup-image" media="screen and (device-width:375px) and (device-height:667px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)" href="splash-gestao-750x1334.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" id="css-tema" href="lib/estilo.css?v=2026-11-12-4">
+<link rel="stylesheet" id="css-tema" href="lib/estilo.css?v=2026-11-12-5">
 <!-- Tema de cores: Saibro é o padrão desde 2026-10; "Verde clássico" fica a um
      toque em Segurança e dados. Troca o arquivo antes da primeira pintura. -->
 <script>try{if(localStorage.getItem('jv-tema')!=='classico'){var _ct=document.getElementById('css-tema');_ct.href=_ct.getAttribute('href').replace('estilo.css','estilo-saibro.css');document.documentElement.classList.add('tema-saibro');}}catch(e){}</script>
-<link rel="stylesheet" href="lib/acoes-voz.css?v=2026-11-12-4">
+<link rel="stylesheet" href="lib/acoes-voz.css?v=2026-11-12-5">
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
 <script src="lib/firebase-database-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js\'><\/script>')"></script>
@@ -357,8 +357,75 @@ function esperarAuth(){
     </div>
   </div>
 
+  <!-- Início em duas partes (12/11, pedido do João): primeiro o que é de hoje
+       (atividades, confirmar amanhã, atenção, cobranças, compromissos); depois
+       os "Números do mês", recolhidos. Os ids que o app preenche são os mesmos. -->
   <div class="jh-body">
-    <!-- 1. Aulas do dia em anéis (primeiro: é o que importa ao abrir) -->
+    <!-- 1. Atividades do dia (recolhível), com o resumo do dia -->
+    <section class="jh-card jh-atv aberta" id="jh-atv" aria-labelledby="atividades-hoje-title">
+      <button class="jh-head jh-head-btn" type="button" onclick="alternarAtividadesInicio()" aria-expanded="true" id="jh-atv-cab">
+        <span class="jh-hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M7.5 13h.01M12 13h.01M16.5 13h.01M7.5 17h.01M12 17h.01M16.5 17h.01" stroke-width="2.6" stroke-linecap="round"/></svg></span>
+        <h3 id="atividades-hoje-title">Atividades do dia <span id="jh-atv-n">(0)</span></h3>
+        <span class="jh-caret" aria-hidden="true"></span>
+      </button>
+      <!-- 12/11: o resumo dos anéis "Aulas do dia" mora aqui; os anéis ficam em "Números do mês" -->
+      <p class="jh-rings-sub jh-atv-resumo"><span id="jh-atv-qtd"></span><span id="jh-ring-total-sub"></span></p>
+      <div class="jh-atv-corpo">
+        <div id="atividades-hoje" class="jh-atv-list"></div>
+        <button class="jh-ver-todas" id="jh-atv-mais" type="button" onclick="verTodasAtividadesInicio()"><span id="jh-atv-mais-txt">Ver todas as aulas do dia</span><span aria-hidden="true">›</span></button>
+      </div>
+    </section>
+  </div>
+
+  <p class="sec-eyebrow">Confirmações</p>
+  <h2 class="sec-title">📲 Agenda de <em>amanhã</em> <small id="confirm-amanha-data" style="font-weight:600;color:var(--muted);font-size:12px"></small></h2>
+  <div id="confirm-amanha"></div>
+
+  <div class="jh-body jh-atencao">
+    <!-- 2. Atenção: as duas listas de alertas juntas, depois as cobranças -->
+    <div id="virada-aviso"></div>
+    <div id="acao-wrap" class="jv-ref-attention" style="display:none">
+      <div class="jv-ref-section-head"><b>Atenção hoje</b></div>
+      <div class="acao-list" id="acao-list"></div>
+    </div>
+      <div class="dobra" id="dob-consel">
+      <button class="dobra-cab" onclick="dobrar('dob-consel')">
+        <span class="dc-tit"><span class="dc-eyebrow">Leitura automática</span><span class="dc-nome">O que merece sua <em>atenção</em></span></span>
+        <span class="dc-n" id="dob-consel-n">0</span><span class="dc-seta">›</span>
+      </button>
+      <div class="dobra-corpo"><div id="conselhos-box"></div></div>
+    </div>
+    <div class="dobra jh-dobra" id="dob-pend">
+      <button class="dobra-cab" onclick="dobrar('dob-pend')">
+        <span class="jh-hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><path d="M6 2.8h8.2L19 7.6V21H6z"/><path d="M14 2.8v5h5M9 12h7M9 15.5h7M9 19h4"/></svg></span>
+        <span class="dc-tit"><span class="dc-nome">Cobranças pendentes</span></span>
+        <span class="dc-n" id="dob-pend-n">0</span><span class="dc-seta">›</span>
+      </button>
+      <div class="dobra-corpo"><div class="pend-list" id="pend-list"></div></div>
+    </div>
+  </div>
+
+  <div class="comp-head">
+    <div><p class="sec-eyebrow">Minha agenda</p><h2 class="sec-title">Compromissos <em>pessoais</em></h2></div>
+    <button class="tor-novo" onclick="abrirNovoCompromisso()">＋ Novo</button>
+  </div>
+  <div class="comp-list" id="comp-list"></div>
+  <div id="datas-inicio"></div>
+  <div id="cadastros-wrap" style="display:none">
+    <p class="sec-eyebrow">Novos alunos</p>
+    <h2 class="sec-title">🆕 Pedidos de <em>cadastro</em> (site)</h2>
+    <div id="cadastros-box"></div>
+  </div>
+
+  <!-- 3. Números do mês: fechado; um toque abre e o app lembra (prepararNumerosInicio) -->
+  <details class="jh-numeros" id="jh-numeros">
+    <summary class="jh-dobra jh-numeros-cab">
+      <span class="jh-hic"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="3" y="13" width="3.6" height="8" rx="1"/><rect x="8.4" y="9" width="3.6" height="12" rx="1"/><rect x="13.8" y="5" width="3.6" height="16" rx="1"/><rect x="19.2" y="11" width="1.8" height="10" rx=".9"/></svg></span>
+      <span class="dc-tit"><span class="dc-nome">Números do mês</span></span>
+      <span class="dc-seta" aria-hidden="true">›</span>
+    </summary>
+    <div class="jh-body">
+    <!-- Aulas do dia em anéis -->
     <section class="jh-card" aria-labelledby="jh-dia-tit">
       <div class="jh-head">
         <span class="jh-hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M7.5 13h.01M12 13h.01M16.5 13h.01M7.5 17h.01M12 17h.01M16.5 17h.01" stroke-width="2.6" stroke-linecap="round"/></svg></span>
@@ -370,9 +437,7 @@ function esperarAuth(){
         <div class="jh-ring personal"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="bg" cx="60" cy="60" r="50"/><circle class="fg" id="jh-ring-personal" cx="60" cy="60" r="50"/></svg><div><b id="k-aulas-dia-personal">0</b><span>Personal</span></div></div>
         <div class="jh-ring tenis"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="bg" cx="60" cy="60" r="50"/><circle class="fg" id="jh-ring-tenis" cx="60" cy="60" r="50"/></svg><div><b id="k-aulas-dia-tenis">0</b><span>Tênis</span></div></div>
       </div>
-      <p class="jh-rings-sub" id="jh-ring-total-sub"></p>
     </section>
-
     <!-- 2. Comparativo de aulas: semana ou mês, sempre contra o mesmo período anterior -->
     <section class="jh-card" aria-labelledby="jh-cmp-tit">
       <div class="jh-head">
@@ -396,20 +461,6 @@ function esperarAuth(){
         <div class="jh-cmp-i tenis"><i></i><span>Tênis</span><strong id="jh-cmp-tenis">0</strong><em class="jh-delta" id="jh-cmp-tenis-d"></em></div>
       </div>
     </section>
-
-    <!-- 3. Atividades do dia (recolhível) -->
-    <section class="jh-card jh-atv aberta" id="jh-atv" aria-labelledby="atividades-hoje-title">
-      <button class="jh-head jh-head-btn" type="button" onclick="alternarAtividadesInicio()" aria-expanded="true" id="jh-atv-cab">
-        <span class="jh-hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M7.5 13h.01M12 13h.01M16.5 13h.01M7.5 17h.01M12 17h.01M16.5 17h.01" stroke-width="2.6" stroke-linecap="round"/></svg></span>
-        <h3 id="atividades-hoje-title">Atividades do dia <span id="jh-atv-n">(0)</span></h3>
-        <span class="jh-caret" aria-hidden="true"></span>
-      </button>
-      <div class="jh-atv-corpo">
-        <div id="atividades-hoje" class="jh-atv-list"></div>
-        <button class="jh-ver-todas" id="jh-atv-mais" type="button" onclick="verTodasAtividadesInicio()"><span id="jh-atv-mais-txt">Ver todas as aulas do dia</span><span aria-hidden="true">›</span></button>
-      </div>
-    </section>
-
     <!-- 4. Aulas no mês: gráfico acumulado dia a dia -->
     <section class="jh-card" aria-labelledby="jh-mes-tit">
       <div class="jh-head">
@@ -429,7 +480,6 @@ function esperarAuth(){
       <p class="jh-graf-cmp" id="jh-graf-cmp" aria-live="polite"></p>
       <p class="jh-graf-nota" id="jh-graf-nota">Aulas acumuladas dia a dia, pela agenda.</p>
     </section>
-
     <!-- 5. Indicadores -->
     <div class="jh-tiles">
       <button class="jh-tile" id="kpi-alunos" type="button" onclick="abrirDetAlunos()">
@@ -449,23 +499,6 @@ function esperarAuth(){
         <span class="jh-tt"><small>Locações</small><strong><span id="jh-loc-hoje">0</span> <u>Hoje</u></strong><em id="loc-txt">—</em></span>
       </button>
     </div>
-
-    <!-- 6. Cobranças pendentes (mesma lista de antes, agora em linha) -->
-    <div class="dobra jh-dobra" id="dob-pend">
-      <button class="dobra-cab" onclick="dobrar('dob-pend')">
-        <span class="jh-hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><path d="M6 2.8h8.2L19 7.6V21H6z"/><path d="M14 2.8v5h5M9 12h7M9 15.5h7M9 19h4"/></svg></span>
-        <span class="dc-tit"><span class="dc-nome">Cobranças pendentes</span></span>
-        <span class="dc-n" id="dob-pend-n">0</span><span class="dc-seta">›</span>
-      </button>
-      <div class="dobra-corpo"><div class="pend-list" id="pend-list"></div></div>
-    </div>
-
-    <div id="virada-aviso"></div>
-    <div id="acao-wrap" class="jv-ref-attention" style="display:none">
-      <div class="jv-ref-section-head"><b>Atenção hoje</b></div>
-      <div class="acao-list" id="acao-list"></div>
-    </div>
-
     <!-- 7. Financeiro do mês (tudo que o Início já mostrava) -->
     <section class="jh-card jh-fin" aria-labelledby="jh-fin-tit">
       <div class="jh-head">
@@ -499,30 +532,8 @@ function esperarAuth(){
         <button class="primary" type="button" onclick="openLancModal()"><span>＋</span>Lançamento</button>
       </div>
     </section>
-  </div>
-
-  <div class="comp-head">
-    <div><p class="sec-eyebrow">Minha agenda</p><h2 class="sec-title">Compromissos <em>pessoais</em></h2></div>
-    <button class="tor-novo" onclick="abrirNovoCompromisso()">＋ Novo</button>
-  </div>
-  <div class="comp-list" id="comp-list"></div>
-  <div id="datas-inicio"></div>
-  <div id="cadastros-wrap" style="display:none">
-    <p class="sec-eyebrow">Novos alunos</p>
-    <h2 class="sec-title">🆕 Pedidos de <em>cadastro</em> (site)</h2>
-    <div id="cadastros-box"></div>
-  </div>
-  <p class="sec-eyebrow">Confirmações</p>
-  <h2 class="sec-title">📲 Agenda de <em>amanhã</em> <small id="confirm-amanha-data" style="font-weight:600;color:var(--muted);font-size:12px"></small></h2>
-  <div id="confirm-amanha"></div>
-
-  <div class="dobra" id="dob-consel" style="margin-top:16px">
-    <button class="dobra-cab" onclick="dobrar('dob-consel')">
-      <span class="dc-tit"><span class="dc-eyebrow">Leitura automática</span><span class="dc-nome">O que merece sua <em>atenção</em></span></span>
-      <span class="dc-n" id="dob-consel-n">0</span><span class="dc-seta">›</span>
-    </button>
-    <div class="dobra-corpo"><div id="conselhos-box"></div></div>
-  </div>
+    </div>
+  </details>
 
 </section>
   <!-- Menu do topo: o que antes eram os botões do cabeçalho -->
@@ -700,73 +711,80 @@ function esperarAuth(){
   <h2 class="sec-title">Gastos da <em>academia</em></h2>
   <button class="btn btn-clay" style="width:100%;margin-bottom:12px" onclick="openDespesaModal()">+ Adicionar despesa</button>
   <div id="desp-list"></div>
-  <div class="field">
-    <label>Meta mensal de faturamento (R$)</label>
-    <input type="number" id="meta-input" aria-label="Meta mensal de faturamento (R$)" onchange="saveMeta(this.value)">
-  </div>
-  <div class="field">
-    <label>📣 Aviso no app do aluno</label>
-    <textarea id="aviso-input" aria-label="Aviso no app do aluno" placeholder="Ex.: Com as chuvas em Curitiba, estou acompanhando tudo individualmente…" onchange="saveAviso(this.value)"></textarea>
-  </div>
-  <p class="hint">Esse aviso aparece para todos os alunos no app deles, junto com o saldo de créditos e reposições.</p>
+  <!-- Configurações que mudam pouco (12/11, pedido do João): ficavam abertas,
+       quase 2 telas no meio do resumo. Um toque abre; irParaValores() abre sozinho. -->
+  <details class="dobra fin-config" id="fin-config">
+    <summary class="dobra-cab"><span class="dc-tit"><span class="dc-eyebrow">Meta, aviso, termo, Pix, cartão e valores</span><span class="dc-nome">Preços, Pix e <em>avisos</em></span></span><span class="dc-seta" aria-hidden="true">›</span></summary>
+    <div class="fin-config-corpo">
+    <div class="field">
+      <label>Meta mensal de faturamento (R$)</label>
+      <input type="number" id="meta-input" aria-label="Meta mensal de faturamento (R$)" onchange="saveMeta(this.value)">
+    </div>
+    <div class="field">
+      <label>📣 Aviso no app do aluno</label>
+      <textarea id="aviso-input" aria-label="Aviso no app do aluno" placeholder="Ex.: Com as chuvas em Curitiba, estou acompanhando tudo individualmente…" onchange="saveAviso(this.value)"></textarea>
+    </div>
+    <p class="hint">Esse aviso aparece para todos os alunos no app deles, junto com o saldo de créditos e reposições.</p>
 
-  <div class="field" style="margin-top:14px">
-    <label>📄 Termo / regras de uso (o aluno aceita no 1º acesso)</label>
-    <textarea id="termo-input" aria-label="Termo e regras de uso" placeholder="Ex.: Cancelamentos com até 4h de antecedência. Aulas perdidas sem aviso são descontadas. Em caso de chuva, a aula é remarcada…" onchange="saveTermo(this.value)" style="min-height:90px"></textarea>
-  </div>
-  <p class="hint">Quando você muda o termo, todos os alunos aceitam de novo no próximo acesso. Deixe em branco para não pedir aceite.</p>
+    <div class="field" style="margin-top:14px">
+      <label>📄 Termo / regras de uso (o aluno aceita no 1º acesso)</label>
+      <textarea id="termo-input" aria-label="Termo e regras de uso" placeholder="Ex.: Cancelamentos com até 4h de antecedência. Aulas perdidas sem aviso são descontadas. Em caso de chuva, a aula é remarcada…" onchange="saveTermo(this.value)" style="min-height:90px"></textarea>
+    </div>
+    <p class="hint">Quando você muda o termo, todos os alunos aceitam de novo no próximo acesso. Deixe em branco para não pedir aceite.</p>
 
-  <p class="sec-eyebrow" style="margin-top:18px">Pagamentos</p>
-  <h2 class="sec-title">Formas de <em>cobrança</em></h2>
-  <div class="field">
-    <label>🔑 Chave Pix (aparece para o aluno copiar)</label>
-    <select id="pixtipo-input" aria-label="Tipo da chave Pix" onchange="savePag()" style="margin-bottom:8px">
-      <option value="celular">📱 Celular</option>
-      <option value="cpf">CPF</option>
-      <option value="cnpj">CNPJ</option>
-      <option value="email">✉️ E-mail</option>
-      <option value="aleatoria">🎲 Chave aleatória</option>
-    </select>
-    <input id="pix-input" aria-label="Chave Pix" placeholder="Ex.: 41995415712, e-mail, CPF/CNPJ ou chave aleatória" onchange="savePag()">
-    <p class="hint" id="pix-preview" style="margin-top:6px"></p>
-  </div>
-  <div class="field" style="display:flex;gap:8px">
-    <div style="flex:2"><label>👤 Nome do recebedor (Pix)</label><input id="pixnome-input" aria-label="Nome do recebedor (Pix)" placeholder="Ex.: JOAO VICTOR" onchange="savePag()"></div>
-    <div style="flex:1"><label>🏙️ Cidade</label><input id="pixcidade-input" aria-label="Cidade (Pix)" placeholder="CURITIBA" onchange="savePag()"></div>
-  </div>
-  <p class="hint">Com a chave + nome + cidade, o app gera o <b>Pix Copia e Cola</b> e o <b>QR Code</b> com o valor já preenchido — o aluno só confirma no banco e avisa que pagou.</p>
-  <div class="field">
-    <label>💳 Link de pagamento por cartão</label>
-    <input id="card-input" aria-label="Link de pagamento por cartão" placeholder="Cole aqui o link (Mercado Pago, InfinitePay, PagBank…)" onchange="savePag()">
-  </div>
-  <p class="hint">O link de cartão você gera no app do seu banco/maquininha (InfinitePay, Mercado Pago, PagBank, etc.) e cola aqui. O aluno verá os botões Pix, Cartão e Dinheiro no app dele.</p>
+    <p class="sec-eyebrow" style="margin-top:18px">Pagamentos</p>
+    <h2 class="sec-title">Formas de <em>cobrança</em></h2>
+    <div class="field">
+      <label>🔑 Chave Pix (aparece para o aluno copiar)</label>
+      <select id="pixtipo-input" aria-label="Tipo da chave Pix" onchange="savePag()" style="margin-bottom:8px">
+        <option value="celular">📱 Celular</option>
+        <option value="cpf">CPF</option>
+        <option value="cnpj">CNPJ</option>
+        <option value="email">✉️ E-mail</option>
+        <option value="aleatoria">🎲 Chave aleatória</option>
+      </select>
+      <input id="pix-input" aria-label="Chave Pix" placeholder="Ex.: 41995415712, e-mail, CPF/CNPJ ou chave aleatória" onchange="savePag()">
+      <p class="hint" id="pix-preview" style="margin-top:6px"></p>
+    </div>
+    <div class="field" style="display:flex;gap:8px">
+      <div style="flex:2"><label>👤 Nome do recebedor (Pix)</label><input id="pixnome-input" aria-label="Nome do recebedor (Pix)" placeholder="Ex.: JOAO VICTOR" onchange="savePag()"></div>
+      <div style="flex:1"><label>🏙️ Cidade</label><input id="pixcidade-input" aria-label="Cidade (Pix)" placeholder="CURITIBA" onchange="savePag()"></div>
+    </div>
+    <p class="hint">Com a chave + nome + cidade, o app gera o <b>Pix Copia e Cola</b> e o <b>QR Code</b> com o valor já preenchido — o aluno só confirma no banco e avisa que pagou.</p>
+    <div class="field">
+      <label>💳 Link de pagamento por cartão</label>
+      <input id="card-input" aria-label="Link de pagamento por cartão" placeholder="Cole aqui o link (Mercado Pago, InfinitePay, PagBank…)" onchange="savePag()">
+    </div>
+    <p class="hint">O link de cartão você gera no app do seu banco/maquininha (InfinitePay, Mercado Pago, PagBank, etc.) e cola aqui. O aluno verá os botões Pix, Cartão e Dinheiro no app dele.</p>
 
-  <p class="sec-eyebrow" style="margin-top:18px">Valores avulsos</p>
-  <h2 class="sec-title">Aula avulsa & <em>locação</em></h2>
-  <div class="row2">
-    <div class="field"><label>Aula avulsa · Particular (R$)</label><input type="number" id="pr-avpart" aria-label="Aula avulsa particular (R$)" inputmode="decimal" onchange="savePag()"></div>
-    <div class="field"><label>Aula avulsa · Grupo (R$)</label><input type="number" id="pr-avgrupo" aria-label="Aula avulsa em grupo (R$)" inputmode="decimal" onchange="savePag()"></div>
-  </div>
-  <div class="row2">
-    <div class="field"><label>Locação da quadra · 1h (R$)</label><input type="number" id="pr-loc" aria-label="Locação da quadra, 1 hora (R$)" inputmode="decimal" onchange="savePag()"></div>
-    <div class="field"><label>Treino de personal avulso (R$)</label><input type="number" id="pr-personal" aria-label="Treino de personal avulso (R$)" inputmode="decimal" onchange="savePag()"></div>
-  </div>
-  <div class="row2">
-    <div class="field"><label>📋 Treino de planilha avulso (R$)</label><input type="number" id="pr-planilha" aria-label="Treino de planilha avulso (R$)" inputmode="decimal" onchange="savePag()"></div>
-    <div class="field"><label>🧒 Treino kids avulso (R$)</label><input type="number" id="pr-kids" aria-label="Treino kids avulso (R$)" inputmode="decimal" onchange="savePag()"></div>
-  </div>
-  <p class="hint">Esses valores aparecem para o aluno na opção "Comprar / Reservar" do app dele.</p>
+    <p class="sec-eyebrow" style="margin-top:18px">Valores avulsos</p>
+    <h2 class="sec-title">Aula avulsa & <em>locação</em></h2>
+    <div class="row2">
+      <div class="field"><label>Aula avulsa · Particular (R$)</label><input type="number" id="pr-avpart" aria-label="Aula avulsa particular (R$)" inputmode="decimal" onchange="savePag()"></div>
+      <div class="field"><label>Aula avulsa · Grupo (R$)</label><input type="number" id="pr-avgrupo" aria-label="Aula avulsa em grupo (R$)" inputmode="decimal" onchange="savePag()"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Locação da quadra · 1h (R$)</label><input type="number" id="pr-loc" aria-label="Locação da quadra, 1 hora (R$)" inputmode="decimal" onchange="savePag()"></div>
+      <div class="field"><label>Treino de personal avulso (R$)</label><input type="number" id="pr-personal" aria-label="Treino de personal avulso (R$)" inputmode="decimal" onchange="savePag()"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>📋 Treino de planilha avulso (R$)</label><input type="number" id="pr-planilha" aria-label="Treino de planilha avulso (R$)" inputmode="decimal" onchange="savePag()"></div>
+      <div class="field"><label>🧒 Treino kids avulso (R$)</label><input type="number" id="pr-kids" aria-label="Treino kids avulso (R$)" inputmode="decimal" onchange="savePag()"></div>
+    </div>
+    <p class="hint">Esses valores aparecem para o aluno na opção "Comprar / Reservar" do app dele.</p>
 
-  <h2 class="sec-title" style="margin-top:16px">Mensalidade em <em>grupo</em> · R$ por aula</h2>
-  <div class="row2">
-    <div class="field"><label>👥 Dupla · 2 pessoas (R$/aula)</label><input type="number" id="pr-gdupla" aria-label="Dupla, por pessoa por aula (R$)" inputmode="decimal" onchange="savePag()"></div>
-    <div class="field"><label>👥 Trio · 3 pessoas (R$/aula)</label><input type="number" id="pr-gtrio" aria-label="Trio, por pessoa por aula (R$)" inputmode="decimal" onchange="savePag()"></div>
-  </div>
-  <div class="row2">
-    <div class="field"><label>👥 Quarteto · 4 pessoas (R$/aula)</label><input type="number" id="pr-gquarteto" aria-label="Quarteto, por pessoa por aula (R$)" inputmode="decimal" onchange="savePag()"></div>
-    <div class="field"></div>
-  </div>
-  <p class="hint">Mensalidade do grupo = preço por aula × nº de aulas do plano. Ex.: Dupla R$ 90 × Flex 8 = <b>R$ 720</b>. Grupo maior tem preço menor por pessoa, mas rende mais por hora pra você.</p>
+    <h2 class="sec-title" style="margin-top:16px">Mensalidade em <em>grupo</em> · R$ por aula</h2>
+    <div class="row2">
+      <div class="field"><label>👥 Dupla · 2 pessoas (R$/aula)</label><input type="number" id="pr-gdupla" aria-label="Dupla, por pessoa por aula (R$)" inputmode="decimal" onchange="savePag()"></div>
+      <div class="field"><label>👥 Trio · 3 pessoas (R$/aula)</label><input type="number" id="pr-gtrio" aria-label="Trio, por pessoa por aula (R$)" inputmode="decimal" onchange="savePag()"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>👥 Quarteto · 4 pessoas (R$/aula)</label><input type="number" id="pr-gquarteto" aria-label="Quarteto, por pessoa por aula (R$)" inputmode="decimal" onchange="savePag()"></div>
+      <div class="field"></div>
+    </div>
+    <p class="hint">Mensalidade do grupo = preço por aula × nº de aulas do plano. Ex.: Dupla R$ 90 × Flex 8 = <b>R$ 720</b>. Grupo maior tem preço menor por pessoa, mas rende mais por hora pra você.</p>
+    </div>
+  </details>
 
 </section>
 <section class="page" id="pg-seg">
@@ -896,6 +914,15 @@ function esperarAuth(){
   </div>
   <p class="hint">📊 Os gráficos mostram <b>mês a mês</b>. Como você começou agora, aparecem os últimos 6 meses — os anteriores ficam zerados e vão se preenchendo conforme você lança pagamentos e despesas. Em poucos meses isso vira um gráfico completo de evolução.</p>
 
+  <!-- Gráficos em 3 abas (12/11, pedido do João): eram 12 blocos seguidos,
+       6,5 telas. "Visão do negócio" fica sempre em cima. abaGraficos() -->
+  <div class="seg graf-abas" id="graf-abas" role="tablist" aria-label="Grupo de gráficos">
+    <button type="button" role="tab" class="on" data-grupo="dinheiro" onclick="abaGraficos('dinheiro',this)">Dinheiro</button>
+    <button type="button" role="tab" data-grupo="alunos" onclick="abaGraficos('alunos',this)">Alunos e aulas</button>
+    <button type="button" role="tab" data-grupo="quadra" onclick="abaGraficos('quadra',this)">Quadra</button>
+  </div>
+
+  <div class="graf-grupo" data-grupo="dinheiro">
   <p class="sec-eyebrow">Faturamento mensal</p>
   <h2 class="sec-title">Receita por <em>mês</em></h2>
   <div class="chart" id="graf-fat"></div>
@@ -925,6 +952,12 @@ function esperarAuth(){
   <div class="chart" id="graf-lucro"></div>
   <p class="hint">Lucro = faturamento − despesas de cada mês. Barras verdes indicam meses positivos; vermelhas, meses no negativo.</p>
 
+  <p class="sec-eyebrow">Comparativo anual</p>
+  <h2 class="sec-title">Faturamento por <em>ano</em></h2>
+  <div class="chart" id="graf-ano"></div>
+  </div>
+
+  <div class="graf-grupo" data-grupo="alunos" hidden>
   <p class="sec-eyebrow">Alunos por mês</p>
   <h2 class="sec-title">Evolução de <em>alunos</em></h2>
   <div class="chart" id="graf-alunos"></div>
@@ -939,7 +972,9 @@ function esperarAuth(){
   </div>
   <div class="chart rpg-chart rpg-sec" id="graf-repos"></div>
   <p class="hint rpg-sec" id="g-rep-hint"></p>
+  </div>
 
+  <div class="graf-grupo" data-grupo="quadra" hidden>
   <p class="sec-eyebrow">Chuva</p>
   <h2 class="sec-title">Aulas perdidas por <em>chuva</em></h2>
   <div class="chuva-emblema">
@@ -957,14 +992,11 @@ function esperarAuth(){
   <div class="chart" id="graf-chuva"></div>
   <p class="hint" id="g-chuva-hint"></p>
 
-  <p class="sec-eyebrow">Comparativo anual</p>
-  <h2 class="sec-title">Faturamento por <em>ano</em></h2>
-  <div class="chart" id="graf-ano"></div>
-
-  <p class="sec-eyebrow" style="margin-top:18px">Ocupação por horário</p>
+  <p class="sec-eyebrow">Ocupação por horário</p>
   <h2 class="sec-title">Quais <em>horários</em> mais enchem</h2>
   <div class="chart" id="graf-ocup"></div>
   <p class="hint">Quantas vezes cada horário foi usado (aula ou locação) nas últimas 4 semanas. Os horários com barras maiores são os mais procurados — ajuda a decidir onde abrir mais aula e onde deixar para locação.</p>
+  </div>
 </section>
 
 <section class="page" id="pg-torneio">
@@ -1192,7 +1224,7 @@ function esperarAuth(){
   <button onclick="go('lanc',this)"><span class="ico" data-ic="navcash"></span>Caixa</button>
   <button id="nav-mais" onclick="abrirMais()"><span class="ico" data-ic="navmore"></span>Mais</button>
 </nav>
-<script src="lib/icones.js?v=2026-11-12-4"></script>
+<script src="lib/icones.js?v=2026-11-12-5"></script>
 
 <!-- MODAL ALUNO -->
 <div class="overlay" id="ov-aluno" onclick="if(event.target===this)closeModal('ov-aluno')">
@@ -1829,8 +1861,8 @@ function esperarAuth(){
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="lib/app-gestao.js?v=2026-11-12-4"></script>
-<script src="lib/acoes-voz.js?v=2026-11-12-4"></script>
+<script src="lib/app-gestao.js?v=2026-11-12-5"></script>
+<script src="lib/acoes-voz.js?v=2026-11-12-5"></script>
 <script>
 /* Rede de seguranca do par tela+codigo.
 
@@ -1845,7 +1877,7 @@ function esperarAuth(){
    torto, o app busca o par certo uma vez e, se insistir, DIZ o que houve em
    vez de deixar voce tocando em botao que nao responde. */
 (function(){
-  var ESPERADA='2026-11-12-4';
+  var ESPERADA='2026-11-12-5';
   function tela(motivo){
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;z-index:99999;background:#1A2E14;color:#FAF7F2;'
@@ -1936,7 +1968,7 @@ function limparHist(){
 }
 histLogLoad();
 // PWA: registra o service worker (permite instalar o painel e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-gestao.js?v=2026-11-12-4').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-gestao.js?v=2026-11-12-5').catch(function(){});});}
 </script>
 </body>
 </html>
