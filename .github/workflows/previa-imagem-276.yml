@@ -1,53 +1,58 @@
-name: Recuperar previas de telas testadas
-
+name: Prévia da agenda em Dia e domingo
 on:
   push:
     branches: [codex/previa-imagem-agenda-276]
     paths: [.github/workflows/previa-imagem-276.yml]
-
 permissions:
   contents: read
-  actions: read
-
 jobs:
   imagem:
     runs-on: ubuntu-24.04
+    container: mcr.microsoft.com/playwright:v1.56.1-noble
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 0852c19101c21943566585a9bd5fb248d56896ee
+          ref: 2a5a978d91cbe32e1bfb98104585ddbcdb22ad0d
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Preparar navegadores para a previa sem dados reais
+      - name: Preparar navegador e enquadrar prévias com dados fictícios
+        env:
+          NODE_PATH: ${{ runner.temp }}/jv-browser/node_modules
+          JV_VISUAL_DIR: ${{ runner.temp }}/previas-domingo
         run: |
-          npm install --prefix "$RUNNER_TEMP/jv-preview" playwright@1.56.1
-          "$RUNNER_TEMP/jv-preview/node_modules/.bin/playwright" install --with-deps chromium webkit
-      - name: Capturar Aluno e Gestao do commit proposto
+          npm install --prefix "$RUNNER_TEMP/jv-browser" playwright@1.56.1
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('ferramentas/testar-agenda-domingo-browser.cjs')
+          s=p.read_text()
+          old="   await p.waitForTimeout(150);\n   if(process.env.JV_VISUAL_DIR)"
+          new="""   await p.bringToFront();
+             await p.waitForTimeout(200);
+             const enquadramento=await p.evaluate(app=>{
+              if(app==='app-aluno')alunoWkZoomFit();else wkZoomFit();
+              if(typeof rolarSemAnimacao==='function')rolarSemAnimacao(0);else window.scrollTo(0,0);
+              const sc=document.querySelector('#ag-view .wk-scroll'),tb=document.querySelector('#ag-view .wk');
+              return {app,zoom:app==='app-aluno'?alunoWkZoom:wkZoom,auto:app==='app-aluno'?alunoWkAutoFit:wkAutoFit,largura:sc?.clientWidth,tabela:tb?.getBoundingClientRect().width};
+             },app);
+             console.log('JV_ENQUADRAMENTO:'+JSON.stringify(enquadramento));
+             await p.waitForTimeout(100);
+             if(process.env.JV_VISUAL_DIR)"""
+          assert old in s
+          p.write_text(s.replace(old,new))
+          PY
+          node ferramentas/testar-agenda-domingo-browser.cjs
+      - name: Exibir prévias
         env:
-          NODE_PATH: ${{ runner.temp }}/jv-preview/node_modules
-          JV_VISUAL_DIR: ${{ runner.temp }}/previa-276
-        run: node ferramentas/testar-envios-aluno-browser.cjs
-      - name: Ler previas com dados ficticios e resumos dos testes
-        env:
-          PREVIA_DIR: ${{ runner.temp }}/previa-276
+          JV_VISUAL_DIR: ${{ runner.temp }}/previas-domingo
         run: |
           python3 - <<'PY'
-          import os, pathlib, base64, hashlib
-          root = pathlib.Path(os.environ["PREVIA_DIR"])
-          for name in ("envios-barra-390-webkit-saibro.png", "envios-barra-320-webkit-saibro.png", "envios-torneio-390-webkit-saibro.png"):
-              matches = list(root.rglob(name))
-              assert len(matches) == 1, "Captura exata ausente ou duplicada"
-              data = matches[0].read_bytes()
-              assert data.startswith(b"\x89PNG\r\n\x1a\n"), "Imagem invalida"
-              payload = base64.b64encode(data).decode("ascii")
-              print("JV_PREVIEW_INFO:"+name+":"+str(len(data))+":"+hashlib.sha256(data).hexdigest())
-              for offset in range(0, len(payload), 1000):
-                  print("JV_PREVIEW_PART:"+name+":"+payload[offset:offset+1000])
-              print("JV_PREVIEW_END:"+name)
-          for log in root.rglob("jv-browser-checks.log"):
-              for line in log.read_text().splitlines():
-                  if "cenários de abertura paralela" in line or "cenários de envios" in line:
-                      print("JV_TEST_SUMMARY:"+line)
+          import base64, os, hashlib
+          for name in ['domingo-app-aluno-webkit-saibro.png', 'domingo-app-gestao-webkit-saibro.png']:
+              raw=open(os.path.join(os.environ['JV_VISUAL_DIR'], name),'rb').read()
+              b=base64.b64encode(raw).decode()
+              print('JV_PREVIEW_INFO:'+name+':'+str(len(raw))+':'+hashlib.sha256(raw).hexdigest())
+              for n in range(0,len(b),1000): print('JV_PREVIEW_PART:'+name+':'+b[n:n+1000])
           PY
