@@ -383,7 +383,7 @@ function contexto(){
  const escolhido=campo('voz-tipo'),tipo=escolhido.startsWith('grupo')?'grupo':escolhido,pessoas=tipo==='grupo'?Number(escolhido.slice(-1)):null;
  if(!['aula','grupo','personal','locacao','torneio'].includes(tipo))throw Error('Escolha o tipo da marcação.');
  if(evs.some(e=>e.alunoId===a.id))throw Error('Esse aluno já tem uma marcação nesse horário.');
- if(slotModo(d,hora)==='fechado'||['aula','grupo','personal'].includes(tipo)&&slotModo(d,hora)!=='aula')throw Error('Esse horário não está aberto para essa atividade.');
+ if(!atividadePermitidaNoDia(d,tipo)||slotModo(d,hora)==='fechado'||['aula','grupo','personal'].includes(tipo)&&slotModo(d,hora)!=='aula')throw Error('Esse horário não está aberto para essa atividade.');
  if(ocupadoPorOutro(d,hora)||!podeAdicionarAoHorario(evs,tipo,pessoas))throw Error('Horário ocupado ou turma completa. Escolha outra vaga.');
  return {acao,alunoId:a.id,nome:a.nome,data,hora,tipo,pessoas,repo:$('voz-repo').checked};
 }

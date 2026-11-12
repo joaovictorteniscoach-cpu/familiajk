@@ -6,12 +6,16 @@ on:
       - ferramentas/creditos-fixos.cjs
       - ferramentas/testar-creditos-fixos.cjs
       - .github/workflows/conferir-creditos-fixos.yml
+      - app-gestao/**
+      - app-aluno/**
+      - ferramentas/testar-agenda-domingo-browser.cjs
 permissions:
   contents: read
 jobs:
   conferir:
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    container: mcr.microsoft.com/playwright:v1.56.1-noble
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
@@ -21,6 +25,29 @@ jobs:
           node-version: '22'
       - name: Conferir matemática com dados fictícios
         run: node ferramentas/testar-creditos-fixos.cjs
+      - name: Preparar testes da agenda e gerar prévias fictícias
+        env:
+          NODE_PATH: ${{ runner.temp }}/jv-browser/node_modules
+          JV_VISUAL_DIR: ${{ runner.temp }}/previas-domingo
+        run: |
+          git config --global --add safe.directory "$(pwd -P)"
+          npm install --prefix "$RUNNER_TEMP/jv-browser" playwright@1.56.1
+          python3 site-pro/tools/build_demo.py
+          git diff --exit-code -- site-pro/demo/
+          node ferramentas/testar-agenda-domingo-browser.cjs
+      - name: Exibir duas prévias para revisão do João
+        env:
+          JV_VISUAL_DIR: ${{ runner.temp }}/previas-domingo
+        run: |
+          python3 - <<'PY'
+          import base64, os, hashlib
+          for name in ['domingo-app-aluno-webkit-saibro.png', 'domingo-app-gestao-webkit-saibro.png']:
+              raw = open(os.path.join(os.environ['JV_VISUAL_DIR'], name), 'rb').read()
+              encoded = base64.b64encode(raw).decode()
+              print('JV_PREVIEW_INFO:' + name + ':' + str(len(raw)) + ':' + hashlib.sha256(raw).hexdigest())
+              for n in range(0, len(encoded), 1000):
+                  print('JV_PREVIEW_PART:' + name + ':' + encoded[n:n+1000])
+          PY
       - name: Ler somente a página pública indicada pelo João
         continue-on-error: true
         run: |

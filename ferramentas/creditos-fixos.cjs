@@ -189,7 +189,7 @@ function auditar(aluno,movs){
  }
  if(Number(aluno.plano)>0&&Number(aluno.planoGrupo)>0)pendencias.push('Pacote misto: confirmar preço e lotes de cada modalidade; média proibida');
  if(aluno.responsavelId)pendencias.push('Família: conferir responsável e consumo por pessoa ou sessão');
- if(aluno.status==='parcial'&&!aluno.pagamentosExatos)pendencias.push('Pagamento parcial sem valor exato comprovado');
+ if(aluno.status==='parcial')pendencias.push('Pagamento parcial: confirmar valor exato nos lançamentos e comprovantes');
  if(Number(aluno.repos)>0)pendencias.push('Saldo antigo: comprovar modalidade e validade de cada lote');
  return {alunoId:aluno.id,campos,pendencias:[...new Set(pendencias)],podeMigrar:false,
   aviso:'Conferência somente. Não comprova pagamento nem autoriza migrar saldos.'};

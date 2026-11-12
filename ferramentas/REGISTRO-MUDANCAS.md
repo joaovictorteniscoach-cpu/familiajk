@@ -8,6 +8,19 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-12 · Codex: créditos fixos, agenda em Dia e comparação Atacante
+
+- Base: `66a455948c42ce1906980ae48001b933a65e6246`; branch `codex/creditos-unicos-implantacao-2026-11-12`.
+- Implementado em preparação: calculador isolado de mensalidade fixa, saldo acumulado só para extras, quinta aula ao valor unitário, modalidades separadas e pagador familiar único. Auditor lista pendências e não migra.
+- Testado: 28 cenários matemáticos (mais 600 combinações), primeiro no V8 e depois em Node 22 no run 43182970403. Ajuste posterior do texto de auditoria de pagamentos parciais validado novamente no V8; validação completa do head final ainda pendente.
+- Agenda preparada para 2026-11-12-1: inicia em Dia nos dois apps; semana inclui domingo nas telas e exportações; novas aulas/torneios no domingo barrados, locações mantidas. Guarda no formulário, pedido, voz e arraste. Marcações antigas preservadas.
+- Comparação pedida: página pública do Atacante lida sem login ou contato. Recursos anunciados separados dos confirmados no código JV em `COMPARACAO-ATACANTE-2026-11.md`.
+- Diretriz reforçada pelo João: facilidade para professor e aluno; preservar visual e ícones dourados; reduzir ações repetidas sem eliminar conferência financeira.
+- **Publicado:** continua 2026-11-11-6. Nenhuma regra do Firebase, cadastro ou saldo real alterado.
+- **Pendente:** testes completos e imagem da agenda; integração financeira de todos os caminhos e reconciliação de dados reais antes de ativar. O calculador NÃO é carregado pelos apps.
+
+---
+
 ## 2026-11-11 · Codex: validar o histórico Git no ambiente com navegadores
 
 - O run 43044727731 iniciou a imagem oficial e passou nos checadores de apps,
