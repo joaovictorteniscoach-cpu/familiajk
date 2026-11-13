@@ -18,6 +18,9 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
   junta, cancelamento como hoje, início em dezembro por ferramenta acionada por ele (prévia, versão salva, desfazer).
 - Depois: pacotes com locação ("2 aulas + 2 locações", tipo das aulas no cadastro; "3 aulas em grupo" a confirmar),
   cada crédito no seu tipo, hora de locação extra pela tabela.
+- Depois: pacote fixo por aluno (4/8/12 e combinados) que se repete todo mês; créditos entram quando o aluno toca em
+  Manter ou o João registra o pagamento; o aluno muda os horários fixos e vê pacote/valor na hora (vale no mês seguinte,
+  ou no corrente se for no começo e ainda não pago); preço combinado vai para o João aprovar.
 - Próximo: simulação aluno por aluno com backup privado (fora do repositório) e prévia visual antes de qualquer código.
 
 ---

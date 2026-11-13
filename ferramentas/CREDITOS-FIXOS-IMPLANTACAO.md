@@ -15,6 +15,13 @@ Decisões: [issue #275](https://github.com/joaovictorteniscoach-cpu/familiajk/is
   como o João definir (conferir no backup como esses alunos estão hoje).
 - **Cada crédito no seu tipo:** sobra de locação só serve para locação; de aula, só para aula (regra de hoje).
 - **Hora de locação além do pacote:** preço de locação da tabela.
+- **Renovação automática do mesmo pacote (13/11):** o pacote se repete todo mês, mas os créditos do mês só entram quando
+  o aluno toca em **Manter** no app ou quando o João registra o pagamento. Nunca duas vezes no mesmo mês.
+- **Aviso ao aluno na virada:** "continuar no mesmo pacote ou mudar os horários". O próprio aluno muda os horários fixos
+  na agenda e vê o pacote e a mensalidade novos na hora (1x/semana = 4, 2x = 8, 3x = 12).
+- **Quando vale a mudança:** no mês seguinte. Se o aluno mudar no começo do mês e ainda não tiver pago, já vale para o
+  mês em curso.
+- **Preço combinado diferente da tabela:** a mudança vai para o João aprovar; o app não troca sozinho valor combinado.
 - **Validade: 6 meses**, contados do mês em que o crédito entrou. Os mais antigos são usados primeiro.
 - **Reposições que já existem** viram créditos do tipo delas, com os 6 meses contados da **data original**.
   As que não têm data (de antes do extrato) passam a contar do mês da migração. As já vencidas e retiradas não voltam.
