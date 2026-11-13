@@ -128,6 +128,14 @@ const ESPERADO={
     await p.waitForFunction(()=>{const r=document.getElementById('pr-avpart').getBoundingClientRect();return r.height>0&&r.top>=0&&r.bottom<=innerHeight;},null,{timeout:4000});
     assert.equal(await p.evaluate(()=>document.getElementById('fin-config').open),true);
    });
+   await check('gestão · Pacote único (13/11): botão escondido quando desligado e de volta quando ligado',async()=>{
+    const vis=()=>p.evaluate(()=>document.querySelector('[data-box="pu-box"]').checkVisibility());
+    await p.evaluate(()=>{delete DB.pacoteUnico;go('seg',document.createElement('button'));});
+    assert.equal(await vis(),false);
+    await p.evaluate(()=>{DB.pacoteUnico={ativo:true};go('seg',document.createElement('button'));});
+    assert.equal(await vis(),true,'ligado: o botão volta para dar para desligar');
+    await p.evaluate(()=>{delete DB.pacoteUnico;});
+   });
    await check('gestão · nenhum erro na página',async()=>{assert.deepEqual(erros,[]);});
    await c.close();}
  }catch(e){falhas++;console.error('❌ '+(e.stack||e));}

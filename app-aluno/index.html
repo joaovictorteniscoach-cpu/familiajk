@@ -22,7 +22,7 @@
 <!-- O iPhone pede 180x180 para a Tela de Inicio. Sem este, ele encolhia
      o de 512 na marra e o desenho saia borrado. -->
 <link rel="apple-touch-icon" sizes="180x180" href="jv-icone-aluno-180.png">
-<link rel="icon" href="jv-icone-aluno.png">
+<link rel="icon" href="jv-icone-aluno-64.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="JV Tênis · Aluno">
@@ -1698,21 +1698,21 @@ html body:not(#jv) #pedir-box .btn-ghost{background:#F3EDE2!important;border:1px
 .login .login-sub{opacity:1}
 .login-priv{color:rgba(250,247,242,.8)}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-11-13-1">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-11-13-2">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-11-13-1">
-<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-11-13-1">
-<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-11-13-1">
-<link rel="stylesheet" href="lib/visual-sobrio.css?v=2026-11-13-1">
-<link rel="stylesheet" href="lib/letras-maiores.css?v=2026-11-13-1">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-11-13-2">
+<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-11-13-2">
+<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-11-13-2">
+<link rel="stylesheet" href="lib/visual-sobrio.css?v=2026-11-13-2">
+<link rel="stylesheet" href="lib/letras-maiores.css?v=2026-11-13-2">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
 <script src="lib/firebase-database-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js\'><\/script>')"></script>
 <script src="lib/firebase-auth-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js\'><\/script>')"></script>
-<script src="lib/firebase-app-check-compat.js"></script>
+<!-- App Check: o SDK só é baixado quando houver chave (carregarAppCheckDepois, 13/11). -->
 <script>
 /* CONFIGURAÇÃO DO FIREBASE — Academia João Victor Tênis (igual à do painel) */
 const firebaseConfig = {
@@ -1742,12 +1742,20 @@ function ligarAppCheck(app){
     return true;
   }catch(e){console.warn('App Check não iniciou; confira a configuração no Firebase.',e);return false;}
 }
+/* O SDK do App Check (23 KB) só é baixado quando a chave existe (13/11, peso dos
+   apps). Com a chave preenchida, ele carrega aqui e liga sozinho. */
+function carregarAppCheckDepois(app){
+  if(!APPCHECK_SITE_KEY||typeof document==='undefined'||typeof firebase==='undefined'||firebase.appCheck)return;
+  if(document.getElementById('sdk-appcheck'))return;
+  const s=document.createElement('script');s.id='sdk-appcheck';s.src='lib/firebase-app-check-compat.js';
+  s.onload=()=>ligarAppCheck(app);document.head.appendChild(s);
+}
 function iniciarFirebase(){
   try{
     if(typeof firebase==='undefined')return false;
     if(!firebaseConfig.apiKey || firebaseConfig.apiKey==="COLE_AQUI")return false;
     const app=(firebase.apps||[]).find(a=>a.name==='[DEFAULT]')||firebase.initializeApp(firebaseConfig);
-    ligarAppCheck(app);
+    if(!ligarAppCheck(app))carregarAppCheckDepois(app);
     window.fbDB = firebase.database();
     iniciarAuth();
     return true;
@@ -1827,7 +1835,7 @@ function esperarAuth(){
 <section class="login" id="login">
   <div class="welcome-orb">
     <span class="ring r1"></span><span class="ring r2"></span>
-    <img src="jv-icone-aluno.png" alt="JV Tênis" class="orb-logo">
+    <img src="jv-icone-aluno-360.webp" alt="JV Tênis" class="orb-logo">
   </div>
   <p class="login-tag">Academia João Victor Tênis · Curitiba</p>
   <h1>JV <em>Tênis</em></h1>
@@ -1885,7 +1893,7 @@ function esperarAuth(){
 <div id="app">
   <header class="top jv-premium-hero">
     <div class="jv-student-brand">
-      <img src="jv-icone-aluno.png" alt="JV Tênis">
+      <img src="jv-icone-aluno-360.webp" alt="JV Tênis">
       <span>Academia <b>João Victor Tênis</b></span>
     </div>
     <div class="top-actions">
@@ -2191,7 +2199,7 @@ function esperarAuth(){
         <button class="buy-btn jv-wide-action" onclick="abrirMFit()">↗ Abrir meu treino no MFit</button>
       </div>
       <div class="jv-section-card jv-notif-card">
-        <button id="btn-avisos" class="aviso-btn" onclick="ativarAvisos('jv-icone-aluno.png')">🔔 Ativar avisos</button>
+        <button id="btn-avisos" class="aviso-btn" onclick="ativarAvisos('jv-icone-aluno-192.png')">🔔 Ativar avisos</button>
         <p class="aviso-cap">Receba lembretes de aula e atualizações importantes no celular.</p>
       </div>
       <div class="jv-quick-title">Mais do aluno</div>
@@ -2211,7 +2219,7 @@ function esperarAuth(){
     <button id="nav-al-torneio" onclick="goAluno('torneio',this)"><span class="ico" aria-hidden="true" data-ic="navtrophy"></span><span class="nav-badge" id="nb-al-torneio"></span>Torneio</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" aria-hidden="true" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-11-13-1"></script>
+<script src="lib/icones.js?v=2026-11-13-2"></script>
 </div>
 
 <!-- ASSISTENTE POR VOZ: consultar horário livre, agendar, cancelar, ver aulas (lib/voz-aluno.js) -->
@@ -2282,16 +2290,6 @@ function esperarAuth(){
   </div>
 </div>
 
-<div class="overlay" id="ov-evolucao" onclick="if(event.target===this)this.classList.remove('on')">
-  <div class="modal" style="max-height:88vh;overflow:auto">
-    <h3>Minha evolução 📈</h3>
-    <p class="sub">Metodologia <b>Da Base ao Topo</b> · Academia JV Tênis</p>
-    <div id="evo-body"></div>
-    <div class="modal-acts" style="margin-top:10px">
-      <button class="btn btn-clay" style="width:100%" onclick="document.getElementById('ov-evolucao').classList.remove('on')">Fechar</button>
-    </div>
-  </div>
-</div>
 
 <!-- POPUP CRÉDITOS (aula computada) -->
 <div class="overlay" id="ov-cred" onclick="if(event.target===this)this.classList.remove('on')">
@@ -2458,7 +2456,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-11-13-1';
+const VERSAO='2026-11-13-2';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -2763,19 +2761,10 @@ function modoPadrao(dia,hora){
 }
 function slotModo(date,hora){const dk=dKey(date),noDia=modo=>date.getDay()===0&&modo==='aula'?'loc':modo;const od=PUB.horarioData&&PUB.horarioData[dk];if(od&&od[hora])return noDia(od[hora]);const c=PUB.horarioCfg&&PUB.horarioCfg[date.getDay()];return noDia((c&&c[hora])||modoPadrao(date.getDay(),hora));}
 
-function quadraAberta(date,hora){return slotModo(date,hora)!=='fechado';}
 function fmtData(dk){const p=dk.split('-');return p[2]+'/'+p[1];}
 function dtOf(dk,hora){const p=dk.split('-').map(Number);const t=(hora||'00:00').split(':').map(Number);return new Date(p[0],p[1]-1,p[2],t[0],t[1]||0,0,0);}
 function horasAte(dk,hora){return (dtOf(dk,hora).getTime()-Date.now())/3600000;}
 function foiCancelado(dk,hora){return (MEU.cancelados||[]).some(c=>c.data===dk&&c.hora===hora);}
-function proxData(dia,hora){
-  const now=new Date();
-  for(let i=0;i<28;i++){
-    const d=new Date(now.getFullYear(),now.getMonth(),now.getDate()+i,12);
-    if(d.getDay()===dia){const dk=dKey(d);if(horasAte(dk,hora)>-1)return dk;}
-  }
-  return dKey(now);
-}
 const LIMITE_CANCEL_H=4;
 /* Prazo de cancelamento à prova de relógio e fuso errados no celular: a hora
    vem do servidor (Firebase informa a diferença do relógio do aparelho) e a
@@ -3776,7 +3765,6 @@ function irPagar(){
 function isPersonal(){return !!(EU&&String(EU.tipo||'').toLowerCase().indexOf('personal')>=0);}
 function isGrupo(){return !!(EU&&['Grupo','Dupla','Trio','Quarteto'].indexOf(EU.tipo)>=0);}
 function planoValor(cat,n){n=Number(n)||0;if(cat==='Personal')return n*precoPersonal();if(cat==='Dupla'||cat==='Trio'||cat==='Quarteto'){const gp=(PUB&&PUB.grupoPreco)||{dupla:90,trio:85,quarteto:80};return (gp[cat.toLowerCase()]||0)*n;}const tb=planosTabela();return (tb[cat]&&tb[cat][n])||0;}
-function meuEmoji(){return isPersonal()?'🏋️':'🎾';}
 function applyTipoUI(){
   const personal=isPersonal();
   const nav=document.querySelector('.nav');
@@ -4229,7 +4217,6 @@ function checarLevelUp(){
   lsSet(chave,'1');
   setTimeout(()=>celebraNivel('Nível '+(cur.nivel||''),metalDe(cur.nivel)),500);
 }
-function renderEvolucao(){const b=document.getElementById('evo-body');if(b){b.innerHTML=evolucaoHTML();animarEvo(b);checarLevelUp();}}
 function renderEvolucaoPage(){const b=document.getElementById('evo-page-body');if(b){b.innerHTML=evolucaoHTML();animarEvo(b);checarLevelUp();}}
 function evoRegistrosHTML(rg,solo){
   if(!rg||!rg.length)return '';
@@ -4251,7 +4238,6 @@ function evoRegistrosHTML(rg,solo){
   return h;
 }
 function escHtml(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
-function openEvolucao(){renderEvolucao();document.getElementById('ov-evolucao').classList.add('on');}
 function irEvolucao(){const b=document.getElementById('nav-evolucao');goAluno('evolucao',b);}
 
 function abrirMFit(){
@@ -4763,10 +4749,6 @@ async function pagarCompra(metodo){
   document.getElementById('ov-comprar').classList.remove('on');
   toast(pedeLink?'Pedido de link enviado à academia.':'Pedido enviado à academia. Aguarde a confirmação.');
   return true;
-}
-function notificarPedido(texto){
-  if(!hasCloud())return;
-  try{filaPush('jvtenis/notificacoes',{acao:'pedido',texto,nome:EU?EU.nome:'',codigo:MEU.codigo,ts:Date.now()}).catch(function(){});}catch(e){}
 }
 const PEDIDOS_EM_CURSO=new Map();
 async function enviarPedido(p){
@@ -5296,7 +5278,7 @@ function pintarAvisos(){
   b.textContent=txt;
   b.dataset.st=st;
 }
-function notificarLocal(titulo,corpo){mostrarAviso(titulo,corpo,'jv-icone-aluno.png');}
+function notificarLocal(titulo,corpo){mostrarAviso(titulo,corpo,'jv-icone-aluno-192.png');}
 function pedirPermissaoNotif(){pintarAvisos();}
 /* ===== Aviso de chuva =====
    A gestao publica {data,hora,cods} de cada horario cancelado. Aqui mostramos
@@ -5325,7 +5307,7 @@ function checarChuva(){
   box.style.display='block';
   if(!_chuvaAvisada){
     _chuvaAvisada=true;
-    mostrarAviso('☔ Aula cancelada por chuva',txt+' · seu crédito foi devolvido','jv-icone-aluno.png');
+    mostrarAviso('☔ Aula cancelada por chuva',txt+' · seu crédito foi devolvido','jv-icone-aluno-192.png');
   }
 }
 async function marcarChuvaVista(){
@@ -5856,7 +5838,7 @@ async function checarLiberacao(){
     // o aviso ja cumpriu o papel: limpa para o mes que vem comecar do zero
     if(MEU.pagoAviso){MEU.pagoAviso=null;saveMeu();}
     toast('✅ Pagamento confirmado — você já pode agendar!');
-    mostrarAviso('✅ Pagamento confirmado','Seus agendamentos foram liberados 🎾','jv-icone-aluno.png');
+    mostrarAviso('✅ Pagamento confirmado','Seus agendamentos foram liberados 🎾','jv-icone-aluno-192.png');
   }
   _bloqAntes=agora;
 }
@@ -5964,7 +5946,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-11-13-1').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-11-13-2').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
@@ -5973,6 +5955,6 @@ window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);})
   setTimeout(()=>esperarEIniciar(t+1),150);
 })(0);
 </script>
-<script src="lib/voz-aluno.js?v=2026-11-13-1"></script>
+<script src="lib/voz-aluno.js?v=2026-11-13-2"></script>
 </body>
 </html>

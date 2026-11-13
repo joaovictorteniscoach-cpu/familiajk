@@ -3673,6 +3673,9 @@ details.dobra[open] .dc-seta{transform:rotate(90deg)}
 #pg-graf .graf-grupo>.sec-title::before{background-position:33.333% 0}
 #pg-fin .fin-config-corpo>.sec-title::before{background-position:33.333% 33.333%}
 
+/* Ferramenta escondida (ex.: Pacote único desligado, 13/11) não aparece mesmo com display da grade. */
+.ferr-grid button[hidden]{display:none!important}
+
 /* ===== Vidro Aero (20/10) =====
    Referência do João: o vidro do Windows Vista/7 (Aero). Não troca nenhuma
    cor de fundo (a leitura medida continua a mesma): só soma

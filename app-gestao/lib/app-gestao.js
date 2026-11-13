@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-11-13-1';
+const VERSAO='2026-11-13-2';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -874,7 +874,8 @@ const CAMPO_LABEL={creditos:'créditos',credGrupo:'grupo',repos:'reposições',l
    ligado, tudo mora em "creditos" — e o redirecionamento acontece aqui, no
    mover(), por onde passa TODA mudança de saldo: marcar, desmarcar, avisar,
    renovar e virar o mês seguem a mesma regra sem exceção.
-   Liga e desliga em Mais → Segurança e dados → Pacote único. */
+   Liga e desliga em Mais → Segurança e dados → Pacote único (o botão só aparece
+   quando está ligado, desde 13/11: nunca foi usado e o cadastro já faz um pacote por aluno). */
 function ehMisto(a){return (Number(a&&a.plano)||0)>0&&(Number(a&&a.planoGrupo)||0)>0;}
 function pacoteUnicoAtivo(){return !!(typeof DB!=='undefined'&&DB&&DB.pacoteUnico&&DB.pacoteUnico.ativo);}
 function unificado(a){return !!a&&pacoteUnicoAtivo()&&!ehMisto(a);}
@@ -1734,16 +1735,6 @@ function chaveFb(s){return String(s).replace(/[.#$\[\]/]/g,'_');}
 /* Manda em lotes: na primeira conversão são milhares de linhas, e uma gravação
    por linha levaria minutos e poderia morrer no meio. O update() do Firebase
    escreve vários caminhos de uma vez. */
-async function enviarLote(cam,mapa){
-  const chaves=Object.keys(mapa);
-  if(!chaves.length)return;
-  const N=300;
-  for(let i=0;i<chaves.length;i+=N){
-    const parte={};
-    chaves.slice(i,i+N).forEach(k=>{parte[k]=mapa[k];});
-    await v2ref(cam).update(parte);
-  }
-}
 async function transacaoConferida(ref,esperado,novo){
   let observar=null;
   try{
@@ -3196,7 +3187,7 @@ function pintarAvisos(){
   if(bt)bt.style.display=(servidorAvisosAtivo()&&nuvem)?'':'none';
 }
 function pedirPermissaoNotif(){pintarAvisos();}
-function notificarNavegador(txt){mostrarAviso('Academia JV Tênis 🎾',txt,'jv-icone-gestao.png');}
+function notificarNavegador(txt){mostrarAviso('Academia JV Tênis 🎾',txt,'jv-icone-gestao-192.png');}
 /* ===== Avisos com o app fechado (servidor grátis na Cloudflare) =====
    servidor-avisos/ roda a cada 2 minutos e grava jvtenis/avisos_estado (hora da
    rodada e chave pública de push). A Gestão só PREPARA os avisos dos próximos
@@ -3805,7 +3796,8 @@ function go(id,btn){
   if(id==='graf'){let g='dinheiro';try{g=localStorage.getItem('jv-graf-aba')||g;}catch(e){}abaGraficos(g);renderGraf();}
   if(id==='aval')renderAvaliacoes();
   if(id==='torneio'){renderTorneio();syncTorneio(true);marcarVisto('torneio');}
-  if(id==='seg'){if(typeof renderConta==='function')renderConta();if(typeof carregarVinculos==='function')carregarVinculos(true);}
+  if(id==='seg'){const bpu=document.querySelector('[data-box="pu-box"]');if(bpu)bpu.hidden=!pacoteUnicoAtivo();   // Pacote único só aparece se estiver ligado (13/11)
+    if(typeof renderConta==='function')renderConta();if(typeof carregarVinculos==='function')carregarVinculos(true);}
 }
 function shiftMonth(d){
   curMonth+=d;
@@ -4528,11 +4520,6 @@ function aplicarWkVars(){
   const l=document.getElementById('wk-zoom-lbl'); if(l)l.textContent=Math.round(wkZoom*100)+'%';
   document.querySelectorAll('.wk-modo button').forEach(b=>{const on=b.classList.contains('wk-fit')===wkAutoFit;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));});
   try{localStorage.setItem('jv-wkzoom',String(wkZoom));localStorage.setItem('jv-wkzoom-fit',String(wkAutoFit));}catch(e){}
-}
-function wkZoomStep(dir){
-  wkAutoFit=false;
-  wkZoom=Math.min(1.8,Math.max(0.35,+(wkZoom+dir*0.1).toFixed(2)));
-  aplicarWkVars();
 }
 function wkAmpliar(){wkAutoFit=false;wkZoom=1;aplicarWkVars();}
 function wkZoomFit(){
@@ -5819,7 +5806,8 @@ function pacotesPadrao(){
       'Os saldos ficam separados: aula particular desconta do particular; aula em grupo, do grupo.'+(unico?' O pacote único não se aplica ao misto.':''),virada,cancel]},
    {id:'unico',ico:'🧮',nome:'Pacote único',res:unico?'ligado':'desligado',n:unico?conta(a=>!ehMisto(a)&&pacoteDoAluno(a)>0):0,
     linhas:['Para quem <b>não</b> é misto: crédito particular e de grupo viram um saldo só, então a aula sai do mesmo lugar em que o pacote entrou.',
-      'Está '+(unico?'<b>ligado</b>':'<b>desligado</b>')+'. Liga e desliga em Mais → Segurança e dados → Pacote único (dá para voltar atrás).']},
+      (unico?'Está <b>ligado</b>. Desliga em Mais → Segurança e dados → Pacote único (dá para voltar atrás).'
+        :'Está <b>desligado</b>. Desde 07/11 cada aluno já tem um pacote só no cadastro; por isso a chave saiu da lista de ferramentas.')]},
    {id:'loc',ico:'🔑',nome:'Locação de quadra',res:fmt(n(pr.locacao,70))+'/hora',n:conta(a=>perfilDe(a)==='locacao'),
     linhas:['Lançamento na Caixa: escolha Locação e o tempo (em horas); o valor sai da hora × '+fmt(n(pr.locacao,70))+' (dá para trocar).',
       'Horas pagas adiantado viram saldo de locação: use "Locação paga" na ficha do locatário.',
@@ -6880,7 +6868,6 @@ function usaLocacao(a){
 }
 /* A conta do mês corrente, que é a que aparece no card e no cadastro. */
 function agendaDoMes(a){const d=new Date();return mensalidadeDaAgenda(a,d.getFullYear(),d.getMonth());}
-function saldoCredTotal(a){return (Number(a&&saldo(a,'creditos'))||0)+(Number(a&&saldo(a,'credGrupo'))||0);}
 /* Diferença entre o valor da agenda e o valor anotado: depois que o João decide
    (trocar ou manter), o aviso fica silenciado até a VIRADA do mês (pedido dele
    em 20/10). Antes voltava também quando os créditos zeravam — e isso é
@@ -8432,12 +8419,6 @@ function alternarFechEnviado(id,mk){
    "Pago" e o estado do mes corrente — a virada devolve todo mundo para
    pendente. Num mes passado quem manda e o carimbo do ultimo mes quitado; sem
    carimbo nao da para afirmar nada, e o aluno continua na lista. */
-function fechJaPago(a,mk){
-  if(!a)return false;
-  if(a.pagamentosExatos&&a.pagamentosExatos[mk])return situacaoMensalidade(a,mk).status==='pago';
-  if(mk===monthKey())return a.status==='pago';
-  return a.ultimoPago===mk;
-}
 function renderFilaFech(){
   const box=document.getElementById('fc-fila');if(!box)return;
   const mk=(document.getElementById('fc-mes')||{}).value||monthKey();
@@ -8534,11 +8515,6 @@ function verDiferencas(){
 }
 function limparFocoDif(){focoDif=false;renderAlunos();}
 /* ===== Atalhos ===== */
-function buscarAluno(){
-  irParaAba('alunos');
-  const c=document.getElementById('search');
-  if(c){c.value='';focoRepos=false;focoDif=false;renderAlunos();setTimeout(()=>{c.focus();c.scrollIntoView({block:'center'});},120);}
-}
 /* Aulas de hoje numa folha: sem isto, "Aula realizada" cairia no mesmo lugar do
    "Buscar aluno". Quem já tem presença hoje aparece desligado — o caminho curto
    não pode virar caminho de débito dobrado. */
@@ -8724,24 +8700,6 @@ function horarioFixoTxt(a){
 /* Próxima aula de cada aluno nos próximos 7 dias (hoje incluído), lida da
    agenda do mesmo jeito que a conta do mês: fixos com exceções, avulsas e
    reposições. Devolve {alunoId:{i:dias a partir de hoje, hora}}. */
-function proximaAulaPorAluno(){
-  const out={},h0=new Date();
-  for(let i=0;i<7;i++){
-    const d=new Date(h0.getFullYear(),h0.getMonth(),h0.getDate()+i);
-    HORAS.forEach(h=>entriesFor(d,h).forEach(e=>{
-      if(!e.alunoId||e.origem==='compromisso'||out[e.alunoId])return;
-      out[e.alunoId]={i,hora:h};
-    }));
-  }
-  return out;
-}
-function rotuloDiaAlunos(i){
-  const h0=new Date(),d=new Date(h0.getFullYear(),h0.getMonth(),h0.getDate()+i);
-  const nome=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][d.getDay()];
-  if(i===0)return 'Hoje · '+nome;
-  if(i===1)return 'Amanhã · '+nome;
-  return nome+' · '+String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');
-}
 /* Lista por nome completo; horários ficam no cartão de cada aluno. */
 function listaAlfabetica(items){
   return '<div class="al-lista">'+items.slice()
@@ -9230,7 +9188,6 @@ let filtroLancCat=null;   // null = tudo; 'in' | 'out' | 'mensalidade' | 'avulsa
 let cxBusca='';
 const LANC_CAT_LBL={mensalidade:'Mensalidades',avulsa:'Avulsas',locacao:'Locações',outro:'Outros'};
 const CX_FILTROS=[['','Tudo'],['in','Entradas'],['out','Saídas'],['mensalidade','Mensal.'],['avulsa','Avulsas'],['locacao','Locações'],['outro','Outros']];
-function limparFiltroLanc(){filtroLancCat=null;renderMovs();}
 function cxFiltrar(f){filtroLancCat=f||null;renderMovs();}
 function cxBuscar(v){cxBusca=String(v||'');renderMovs();}
 function semAcentoCx(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();}
@@ -12894,7 +12851,6 @@ const GRUPOS_TOR=['A','B','C','D','E'];
 /* texto que vira argumento de string JS dentro de um atributo (onclick/onchange):
    a barra invertida sobrevive ao parser de HTML, a entidade &#39; nao — ela vira aspa de novo.
    Escapar so a aspa simples nao basta: a aspa DUPLA fecharia o proprio atributo. */
-function escJs(s){return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function torAttr(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 /* Arraste (toque + mouse) para mover/reordenar jogadores entre os grupos.
    torDragFim: o toque que encerra um arraste não deve abrir a ficha do jogador. */
