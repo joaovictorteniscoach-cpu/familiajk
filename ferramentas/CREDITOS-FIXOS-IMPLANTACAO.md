@@ -17,6 +17,10 @@ Decisões: [issue #275](https://github.com/joaovictorteniscoach-cpu/familiajk/is
   como o João definir (conferir no backup como esses alunos estão hoje).
 - **Cada crédito no seu tipo:** sobra de locação só serve para locação; de aula, só para aula (regra de hoje).
 - **Hora de locação além do pacote:** preço de locação da tabela.
+- **Quem já tem pacote fora de 4/8/12 fica com o que tem (13/11, após simulação com backup privado):** 2, 3, 6, 7, 10
+  aulas ou particular + grupo continuam iguais, sem mudar preço em dezembro. 4, 8 e 12 são o padrão para aluno novo e
+  para quem muda pelo app. Na simulação (só leitura, dados fora do repositório): 40 ativos, 8 sem nenhum ajuste,
+  23 aulas antigas viram crédito e nenhuma vence na passagem; nenhuma família com saldo compartilhado ligado.
 - **Renovação automática do mesmo pacote (13/11):** o pacote se repete todo mês, mas os créditos do mês só entram quando
   o aluno toca em **Manter** no app ou quando o João registra o pagamento. Nunca duas vezes no mesmo mês.
 - **Aviso ao aluno na virada:** "continuar no mesmo pacote ou mudar os horários". O próprio aluno muda os horários fixos

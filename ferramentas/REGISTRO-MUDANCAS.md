@@ -21,7 +21,9 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 - Depois: pacote fixo por aluno (4/8/12 e combinados) que se repete todo mês; créditos entram quando o aluno toca em
   Manter ou o João registra o pagamento; o aluno muda os horários fixos e vê pacote/valor na hora (vale no mês seguinte,
   ou no corrente se for no começo e ainda não pago); preço combinado vai para o João aprovar.
-- Próximo: simulação aluno por aluno com backup privado (fora do repositório) e prévia visual antes de qualquer código.
+- Prévia visual das telas publicada para o João (página privada, alunos fictícios). Simulação com o backup de 13/11 feita
+  só em leitura, fora do repositório; o backup foi apagado. Decisão: quem tem pacote fora de 4/8/12 fica como está.
+- Próximo: OK do João nas telas e implementação atrás de chave, publicada desligada.
 
 ---
 
