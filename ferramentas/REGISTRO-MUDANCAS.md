@@ -24,6 +24,8 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 - **Ficam por escolha do João:** os dois estilos de tema ao abrir (1), Professores (4, sem resposta), Arquivar antigos
   (6) e tudo que ele usa (7–12: voz, avaliações/Evolução, Escritório JV, relatório PDF, voz do aluno, lista de espera).
 - Versão 2026-11-13-2. Nenhum dado, crédito ou regra do Firebase mudou.
+- **Publicado: 2026-11-13-2** (#286, merge `7115af0`). Monitor confirmou a versão na Gestão Pages, Aluno Pages e
+  Aluno Netlify, e o site acessível.
 
 ---
 
