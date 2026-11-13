@@ -3657,23 +3657,10 @@ body[data-pagina="agenda"]:not([data-pagina="dash"]) .top.jv-premium-hero .top-m
 .enc-curto[style*="display: none"] + .enc-btn,.enc-curto[style*="display:none"] + .enc-btn,.enc-curto[hidden] + .enc-btn{display:none!important}
 
 /* ===== Telas mais leves (12/11, pedido do João) =====
-   Início em duas partes (o que é de hoje + "Números do mês" recolhido),
    Gráficos em 3 abas e as configurações do Financeiro num bloco fechado.
    Só muda o lugar: títulos dentro das abas e do bloco fechado recebem as
-   mesmas cores e ícones de quando ficavam direto na página. */
-#pg-dash .jh-atv-resumo{margin:0 2px 10px;text-align:left;font-size:12.5px}
-#pg-dash .jh-atv-resumo>span{display:block}
-#pg-dash .jh-atv-resumo>span:empty{display:none}
-#pg-dash .jh-atv:not(.aberta) .jh-atv-resumo{margin:10px 2px 0}
-#pg-dash .jh-atencao{margin-top:12px}
-#pg-dash .jh-atencao .dobra{margin:0}
-#pg-dash .jh-numeros{margin-top:14px}
-#pg-dash .jh-numeros>summary{display:flex;align-items:center;gap:12px;min-height:52px;padding:13px 14px;list-style:none;cursor:pointer}
-#pg-dash .jh-numeros>summary::-webkit-details-marker{display:none}
-#pg-dash .jh-numeros>summary .dc-tit{flex:1;text-align:left}
-#pg-dash .jh-numeros>summary .dc-seta{flex-shrink:0;font-size:19px;color:var(--jh-mut);transition:transform .18s ease}
-#pg-dash .jh-numeros[open]>summary .dc-seta{transform:rotate(90deg)}
-#pg-dash .jh-numeros>.jh-body{margin-top:12px}
+   mesmas cores e ícones de quando ficavam direto na página. O Início
+   voltou ao de antes em 13/11, a pedido do João. */
 #pg-graf .graf-abas{grid-template-columns:repeat(3,1fr)}
 details.dobra>summary{list-style:none;cursor:pointer;min-height:44px}
 details.dobra>summary::-webkit-details-marker{display:none}
