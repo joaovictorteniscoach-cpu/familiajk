@@ -22,6 +22,8 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
   `testar-aulas-agenda-aluno` voltam ao que eram. Versão 2026-11-13-1.
 - **Não reorganizar o Início sem o João pedir.** A chave `jv-inicio-numeros` que ficou em aparelhos não é
   mais lida por nada.
+- **Publicado: 2026-11-13-1** com o OK do João ("quero a aba do início apenas ela, igual estava antes"): PR #285,
+  merge `4a2d45a`, CI 43354330958 verde; monitor 43394135934: Gestão Pages, Aluno Pages e Aluno Netlify em 2026-11-13-1.
 
 ---
 
