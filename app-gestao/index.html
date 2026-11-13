@@ -38,11 +38,11 @@
 <link rel="apple-touch-startup-image" media="screen and (device-width:375px) and (device-height:667px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)" href="splash-gestao-750x1334.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" id="css-tema" href="lib/estilo.css?v=2026-11-12-5">
+<link rel="stylesheet" id="css-tema" href="lib/estilo.css?v=2026-11-13-1">
 <!-- Tema de cores: Saibro é o padrão desde 2026-10; "Verde clássico" fica a um
      toque em Segurança e dados. Troca o arquivo antes da primeira pintura. -->
 <script>try{if(localStorage.getItem('jv-tema')!=='classico'){var _ct=document.getElementById('css-tema');_ct.href=_ct.getAttribute('href').replace('estilo.css','estilo-saibro.css');document.documentElement.classList.add('tema-saibro');}}catch(e){}</script>
-<link rel="stylesheet" href="lib/acoes-voz.css?v=2026-11-12-5">
+<link rel="stylesheet" href="lib/acoes-voz.css?v=2026-11-13-1">
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
 <script src="lib/firebase-database-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js\'><\/script>')"></script>
@@ -357,75 +357,8 @@ function esperarAuth(){
     </div>
   </div>
 
-  <!-- Início em duas partes (12/11, pedido do João): primeiro o que é de hoje
-       (atividades, confirmar amanhã, atenção, cobranças, compromissos); depois
-       os "Números do mês", recolhidos. Os ids que o app preenche são os mesmos. -->
   <div class="jh-body">
-    <!-- 1. Atividades do dia (recolhível), com o resumo do dia -->
-    <section class="jh-card jh-atv aberta" id="jh-atv" aria-labelledby="atividades-hoje-title">
-      <button class="jh-head jh-head-btn" type="button" onclick="alternarAtividadesInicio()" aria-expanded="true" id="jh-atv-cab">
-        <span class="jh-hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M7.5 13h.01M12 13h.01M16.5 13h.01M7.5 17h.01M12 17h.01M16.5 17h.01" stroke-width="2.6" stroke-linecap="round"/></svg></span>
-        <h3 id="atividades-hoje-title">Atividades do dia <span id="jh-atv-n">(0)</span></h3>
-        <span class="jh-caret" aria-hidden="true"></span>
-      </button>
-      <!-- 12/11: o resumo dos anéis "Aulas do dia" mora aqui; os anéis ficam em "Números do mês" -->
-      <p class="jh-rings-sub jh-atv-resumo"><span id="jh-atv-qtd"></span><span id="jh-ring-total-sub"></span></p>
-      <div class="jh-atv-corpo">
-        <div id="atividades-hoje" class="jh-atv-list"></div>
-        <button class="jh-ver-todas" id="jh-atv-mais" type="button" onclick="verTodasAtividadesInicio()"><span id="jh-atv-mais-txt">Ver todas as aulas do dia</span><span aria-hidden="true">›</span></button>
-      </div>
-    </section>
-  </div>
-
-  <p class="sec-eyebrow">Confirmações</p>
-  <h2 class="sec-title">📲 Agenda de <em>amanhã</em> <small id="confirm-amanha-data" style="font-weight:600;color:var(--muted);font-size:12px"></small></h2>
-  <div id="confirm-amanha"></div>
-
-  <div class="jh-body jh-atencao">
-    <!-- 2. Atenção: as duas listas de alertas juntas, depois as cobranças -->
-    <div id="virada-aviso"></div>
-    <div id="acao-wrap" class="jv-ref-attention" style="display:none">
-      <div class="jv-ref-section-head"><b>Atenção hoje</b></div>
-      <div class="acao-list" id="acao-list"></div>
-    </div>
-      <div class="dobra" id="dob-consel">
-      <button class="dobra-cab" onclick="dobrar('dob-consel')">
-        <span class="dc-tit"><span class="dc-eyebrow">Leitura automática</span><span class="dc-nome">O que merece sua <em>atenção</em></span></span>
-        <span class="dc-n" id="dob-consel-n">0</span><span class="dc-seta">›</span>
-      </button>
-      <div class="dobra-corpo"><div id="conselhos-box"></div></div>
-    </div>
-    <div class="dobra jh-dobra" id="dob-pend">
-      <button class="dobra-cab" onclick="dobrar('dob-pend')">
-        <span class="jh-hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><path d="M6 2.8h8.2L19 7.6V21H6z"/><path d="M14 2.8v5h5M9 12h7M9 15.5h7M9 19h4"/></svg></span>
-        <span class="dc-tit"><span class="dc-nome">Cobranças pendentes</span></span>
-        <span class="dc-n" id="dob-pend-n">0</span><span class="dc-seta">›</span>
-      </button>
-      <div class="dobra-corpo"><div class="pend-list" id="pend-list"></div></div>
-    </div>
-  </div>
-
-  <div class="comp-head">
-    <div><p class="sec-eyebrow">Minha agenda</p><h2 class="sec-title">Compromissos <em>pessoais</em></h2></div>
-    <button class="tor-novo" onclick="abrirNovoCompromisso()">＋ Novo</button>
-  </div>
-  <div class="comp-list" id="comp-list"></div>
-  <div id="datas-inicio"></div>
-  <div id="cadastros-wrap" style="display:none">
-    <p class="sec-eyebrow">Novos alunos</p>
-    <h2 class="sec-title">🆕 Pedidos de <em>cadastro</em> (site)</h2>
-    <div id="cadastros-box"></div>
-  </div>
-
-  <!-- 3. Números do mês: fechado; um toque abre e o app lembra (prepararNumerosInicio) -->
-  <details class="jh-numeros" id="jh-numeros">
-    <summary class="jh-dobra jh-numeros-cab">
-      <span class="jh-hic"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="3" y="13" width="3.6" height="8" rx="1"/><rect x="8.4" y="9" width="3.6" height="12" rx="1"/><rect x="13.8" y="5" width="3.6" height="16" rx="1"/><rect x="19.2" y="11" width="1.8" height="10" rx=".9"/></svg></span>
-      <span class="dc-tit"><span class="dc-nome">Números do mês</span></span>
-      <span class="dc-seta" aria-hidden="true">›</span>
-    </summary>
-    <div class="jh-body">
-    <!-- Aulas do dia em anéis -->
+    <!-- 1. Aulas do dia em anéis (primeiro: é o que importa ao abrir) -->
     <section class="jh-card" aria-labelledby="jh-dia-tit">
       <div class="jh-head">
         <span class="jh-hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M7.5 13h.01M12 13h.01M16.5 13h.01M7.5 17h.01M12 17h.01M16.5 17h.01" stroke-width="2.6" stroke-linecap="round"/></svg></span>
@@ -437,7 +370,9 @@ function esperarAuth(){
         <div class="jh-ring personal"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="bg" cx="60" cy="60" r="50"/><circle class="fg" id="jh-ring-personal" cx="60" cy="60" r="50"/></svg><div><b id="k-aulas-dia-personal">0</b><span>Personal</span></div></div>
         <div class="jh-ring tenis"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="bg" cx="60" cy="60" r="50"/><circle class="fg" id="jh-ring-tenis" cx="60" cy="60" r="50"/></svg><div><b id="k-aulas-dia-tenis">0</b><span>Tênis</span></div></div>
       </div>
+      <p class="jh-rings-sub" id="jh-ring-total-sub"></p>
     </section>
+
     <!-- 2. Comparativo de aulas: semana ou mês, sempre contra o mesmo período anterior -->
     <section class="jh-card" aria-labelledby="jh-cmp-tit">
       <div class="jh-head">
@@ -461,6 +396,20 @@ function esperarAuth(){
         <div class="jh-cmp-i tenis"><i></i><span>Tênis</span><strong id="jh-cmp-tenis">0</strong><em class="jh-delta" id="jh-cmp-tenis-d"></em></div>
       </div>
     </section>
+
+    <!-- 3. Atividades do dia (recolhível) -->
+    <section class="jh-card jh-atv aberta" id="jh-atv" aria-labelledby="atividades-hoje-title">
+      <button class="jh-head jh-head-btn" type="button" onclick="alternarAtividadesInicio()" aria-expanded="true" id="jh-atv-cab">
+        <span class="jh-hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M7.5 13h.01M12 13h.01M16.5 13h.01M7.5 17h.01M12 17h.01M16.5 17h.01" stroke-width="2.6" stroke-linecap="round"/></svg></span>
+        <h3 id="atividades-hoje-title">Atividades do dia <span id="jh-atv-n">(0)</span></h3>
+        <span class="jh-caret" aria-hidden="true"></span>
+      </button>
+      <div class="jh-atv-corpo">
+        <div id="atividades-hoje" class="jh-atv-list"></div>
+        <button class="jh-ver-todas" id="jh-atv-mais" type="button" onclick="verTodasAtividadesInicio()"><span id="jh-atv-mais-txt">Ver todas as aulas do dia</span><span aria-hidden="true">›</span></button>
+      </div>
+    </section>
+
     <!-- 4. Aulas no mês: gráfico acumulado dia a dia -->
     <section class="jh-card" aria-labelledby="jh-mes-tit">
       <div class="jh-head">
@@ -480,6 +429,7 @@ function esperarAuth(){
       <p class="jh-graf-cmp" id="jh-graf-cmp" aria-live="polite"></p>
       <p class="jh-graf-nota" id="jh-graf-nota">Aulas acumuladas dia a dia, pela agenda.</p>
     </section>
+
     <!-- 5. Indicadores -->
     <div class="jh-tiles">
       <button class="jh-tile" id="kpi-alunos" type="button" onclick="abrirDetAlunos()">
@@ -499,6 +449,23 @@ function esperarAuth(){
         <span class="jh-tt"><small>Locações</small><strong><span id="jh-loc-hoje">0</span> <u>Hoje</u></strong><em id="loc-txt">—</em></span>
       </button>
     </div>
+
+    <!-- 6. Cobranças pendentes (mesma lista de antes, agora em linha) -->
+    <div class="dobra jh-dobra" id="dob-pend">
+      <button class="dobra-cab" onclick="dobrar('dob-pend')">
+        <span class="jh-hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><path d="M6 2.8h8.2L19 7.6V21H6z"/><path d="M14 2.8v5h5M9 12h7M9 15.5h7M9 19h4"/></svg></span>
+        <span class="dc-tit"><span class="dc-nome">Cobranças pendentes</span></span>
+        <span class="dc-n" id="dob-pend-n">0</span><span class="dc-seta">›</span>
+      </button>
+      <div class="dobra-corpo"><div class="pend-list" id="pend-list"></div></div>
+    </div>
+
+    <div id="virada-aviso"></div>
+    <div id="acao-wrap" class="jv-ref-attention" style="display:none">
+      <div class="jv-ref-section-head"><b>Atenção hoje</b></div>
+      <div class="acao-list" id="acao-list"></div>
+    </div>
+
     <!-- 7. Financeiro do mês (tudo que o Início já mostrava) -->
     <section class="jh-card jh-fin" aria-labelledby="jh-fin-tit">
       <div class="jh-head">
@@ -532,8 +499,30 @@ function esperarAuth(){
         <button class="primary" type="button" onclick="openLancModal()"><span>＋</span>Lançamento</button>
       </div>
     </section>
-    </div>
-  </details>
+  </div>
+
+  <div class="comp-head">
+    <div><p class="sec-eyebrow">Minha agenda</p><h2 class="sec-title">Compromissos <em>pessoais</em></h2></div>
+    <button class="tor-novo" onclick="abrirNovoCompromisso()">＋ Novo</button>
+  </div>
+  <div class="comp-list" id="comp-list"></div>
+  <div id="datas-inicio"></div>
+  <div id="cadastros-wrap" style="display:none">
+    <p class="sec-eyebrow">Novos alunos</p>
+    <h2 class="sec-title">🆕 Pedidos de <em>cadastro</em> (site)</h2>
+    <div id="cadastros-box"></div>
+  </div>
+  <p class="sec-eyebrow">Confirmações</p>
+  <h2 class="sec-title">📲 Agenda de <em>amanhã</em> <small id="confirm-amanha-data" style="font-weight:600;color:var(--muted);font-size:12px"></small></h2>
+  <div id="confirm-amanha"></div>
+
+  <div class="dobra" id="dob-consel" style="margin-top:16px">
+    <button class="dobra-cab" onclick="dobrar('dob-consel')">
+      <span class="dc-tit"><span class="dc-eyebrow">Leitura automática</span><span class="dc-nome">O que merece sua <em>atenção</em></span></span>
+      <span class="dc-n" id="dob-consel-n">0</span><span class="dc-seta">›</span>
+    </button>
+    <div class="dobra-corpo"><div id="conselhos-box"></div></div>
+  </div>
 
 </section>
   <!-- Menu do topo: o que antes eram os botões do cabeçalho -->
@@ -1224,7 +1213,7 @@ function esperarAuth(){
   <button onclick="go('lanc',this)"><span class="ico" data-ic="navcash"></span>Caixa</button>
   <button id="nav-mais" onclick="abrirMais()"><span class="ico" data-ic="navmore"></span>Mais</button>
 </nav>
-<script src="lib/icones.js?v=2026-11-12-5"></script>
+<script src="lib/icones.js?v=2026-11-13-1"></script>
 
 <!-- MODAL ALUNO -->
 <div class="overlay" id="ov-aluno" onclick="if(event.target===this)closeModal('ov-aluno')">
@@ -1861,8 +1850,8 @@ function esperarAuth(){
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="lib/app-gestao.js?v=2026-11-12-5"></script>
-<script src="lib/acoes-voz.js?v=2026-11-12-5"></script>
+<script src="lib/app-gestao.js?v=2026-11-13-1"></script>
+<script src="lib/acoes-voz.js?v=2026-11-13-1"></script>
 <script>
 /* Rede de seguranca do par tela+codigo.
 
@@ -1877,7 +1866,7 @@ function esperarAuth(){
    torto, o app busca o par certo uma vez e, se insistir, DIZ o que houve em
    vez de deixar voce tocando em botao que nao responde. */
 (function(){
-  var ESPERADA='2026-11-12-5';
+  var ESPERADA='2026-11-13-1';
   function tela(motivo){
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;z-index:99999;background:#1A2E14;color:#FAF7F2;'
@@ -1968,7 +1957,7 @@ function limparHist(){
 }
 histLogLoad();
 // PWA: registra o service worker (permite instalar o painel e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-gestao.js?v=2026-11-12-5').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-gestao.js?v=2026-11-13-1').catch(function(){});});}
 </script>
 </body>
 </html>

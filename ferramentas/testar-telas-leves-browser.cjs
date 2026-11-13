@@ -1,9 +1,9 @@
 /* Telas mais leves (12/11/2026, pedido do João): só muda o LUGAR das coisas.
    - App do aluno: cada aviso do topo aparece só na aba onde serve; o de
      segurança do aparelho aparece em todas. Créditos sem o Pix repetido.
-   - Gestão: Início com o que é de hoje primeiro e "Números do mês" recolhido
-     (lembra se ficou aberto); Gráficos em 3 abas (lembra a última);
+   - Gestão: Gráficos em 3 abas (lembra a última);
      configurações do Financeiro num bloco fechado que "Valores" abre sozinho.
+   - O Início da Gestão voltou ao de antes (13/11, pedido do João).
    Dados fictícios; nada vai para a nuvem. */
 let chromium;
 try{({chromium}=require('playwright'));}catch(e){({chromium}=require(process.env.PW||'/opt/node22/lib/node_modules/playwright'));}
@@ -98,32 +98,11 @@ const ESPERADO={
      {id:'f3',dia:3,hora:'18:00',titulo:'Aluno Um Teste',tipo:'aula',alunoId:'a1',desde:'2026-09-01'}],eventos:[],excecoes:[]};
     DB.presencas=[];DB.lancamentos=[];DB.movs=[];ensureFields();curYear=2026;curMonth=9;renderAll();go('dash',document.createElement('button'));});
    await preparar();
-   await check('gestão · Início: o que é de hoje vem antes de "Números do mês", que começa fechado',async()=>{
-    const r=await p.evaluate(()=>{const y=id=>document.getElementById(id).getBoundingClientRect().top;
-     return {ordem:['jh-atv','confirm-amanha','acao-wrap','dob-consel','dob-pend','comp-list','jh-numeros'].map(id=>[id,y(id)]),
-      aberto:document.getElementById('jh-numeros').open,
-      tiles:document.getElementById('kpi-alunos').checkVisibility(),fin:document.getElementById('k-recebido').checkVisibility()};});
-    const ys=r.ordem.filter(([id])=>id!=='acao-wrap').map(x=>x[1]);   // "Atenção hoje" só aparece quando há o que mostrar
-    assert.deepEqual(ys,[...ys].sort((a,b)=>a-b),'ordem: '+JSON.stringify(r.ordem));
-    assert.equal(r.aberto,false);assert.equal(r.tiles,false);assert.equal(r.fin,false);
-   });
-   await check('gestão · Início: resumo do dia em cima da lista, com "conferir" e as mesmas contas dos anéis',async()=>{
-    const r=await p.evaluate(()=>({qtd:document.getElementById('jh-atv-qtd').textContent,sub:document.getElementById('jh-ring-total-sub').innerText,
-     dentro:!!document.querySelector('#jh-atv #jh-ring-total-sub .ca-link'),aneis:!!document.querySelector('#jh-numeros #jh-ring-total')}));
-    assert.match(r.qtd,/^3 aulas hoje: 1 personal · 2 tênis$/);assert.match(r.sub,/^\d+ de 3 já dadas · /);
-    assert.ok(r.dentro);assert.ok(r.aneis,'os anéis continuam, dentro de "Números do mês"');
-   });
-   await check('gestão · Início: "Números do mês" abre com um toque e o app lembra depois de recarregar',async()=>{
-    await p.click('#jh-numeros > summary');
-    assert.ok(await p.locator('#kpi-alunos').isVisible());
-    await p.waitForFunction(()=>localStorage.getItem('jv-inicio-numeros')==='1',null,{timeout:3000});
-    await p.reload({waitUntil:'load'});await p.waitForFunction(()=>typeof CARREGADO!=='undefined'&&CARREGADO,null,{timeout:40000});
-    await p.addStyleTag({content:'#ov-entrar,#ov-semnuvem,#barra-versao,#barra-endereco,#splash-gestao,#toast{display:none!important}'});
-    await preparar();
-    assert.equal(await p.evaluate(()=>document.getElementById('jh-numeros').open),true);
-    await p.click('#jh-numeros > summary');
-    await p.waitForFunction(()=>localStorage.getItem('jv-inicio-numeros')==='0',null,{timeout:3000});   // o "toggle" chega logo depois do toque
-    assert.equal(await p.evaluate(()=>document.getElementById('kpi-alunos').checkVisibility()),false);
+   await check('gestão · Início continua o de antes (voltou em 13/11, pedido do João): anéis, quadrinhos e financeiro à vista, sem bloco recolhido',async()=>{
+    const r=await p.evaluate(()=>({numeros:!!document.getElementById('jh-numeros'),
+     aneis:document.getElementById('jh-ring-total').checkVisibility(),tiles:document.getElementById('kpi-alunos').checkVisibility(),
+     fin:document.getElementById('k-recebido').checkVisibility(),sub:document.querySelector('.jh-rings #jh-ring-total')!==null&&document.getElementById('jh-ring-total-sub').closest('.jh-card')===document.querySelector('.jh-rings').closest('.jh-card')}));
+    assert.equal(r.numeros,false);assert.ok(r.aneis);assert.ok(r.tiles);assert.ok(r.fin);assert.ok(r.sub,'"já dadas · conferir" fica no cartão dos anéis, como antes');
    });
    await check('gestão · Gráficos: abre em Dinheiro; Quadra mostra só a quadra; o app lembra a aba',async()=>{
     await p.evaluate(()=>{try{localStorage.removeItem('jv-graf-aba');}catch(e){}go('graf',document.createElement('button'));});

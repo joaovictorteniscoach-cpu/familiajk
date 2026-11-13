@@ -8,6 +8,23 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-13 · Claude Code: Início da Gestão volta ao visual de antes
+
+- Pedido do João: "Desfaça tudo que fez no visual da página inicial, e deixe ela como estava antes."
+  Na pergunta de escopo ele escolheu **só o Início da Gestão**. Gráficos em abas, bloco "Preços, Pix e
+  avisos" do Financeiro e as mudanças do app do aluno (avisos por aba, Créditos) continuam publicados.
+- `#pg-dash` do `index.html` copiado de volta do commit `f01df6c` (antes do #284); saem
+  `prepararNumerosInicio`, `jh-atv-qtd` e as regras `#pg-dash .jh-atv-resumo/.jh-atencao/.jh-numeros`.
+  `abaGraficos` e `irParaValores` ficam. Foto do Início (390 px, dados fictícios) idêntica à de antes do
+  #284, pixel por pixel.
+- Testes: `testar-telas-leves` troca as 3 verificações do Início novo por uma que confere o Início antigo
+  (anéis, quadrinhos e financeiro à vista, sem bloco recolhido); `testar-detalhe-inicio` e
+  `testar-aulas-agenda-aluno` voltam ao que eram. Versão 2026-11-13-1.
+- **Não reorganizar o Início sem o João pedir.** A chave `jv-inicio-numeros` que ficou em aparelhos não é
+  mais lida por nada.
+
+---
+
 ## 2026-11-12 · Claude Code: telas mais leves (itens 1, 2, 4, 5, 6 e 7 da revisão)
 
 - Pedido do João após a revisão das 22 telas (página "Revisão das telas JV"): "Sim", menos o item 3
@@ -28,6 +45,8 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
   `testar-detalhe-inicio`, `testar-3-pedidos`, `testar-aulas-agenda-aluno` (lê o número com o bloco
   fechado) e `testar-inativar-reposicoes` (abre a aba Alunos e aulas). Versão 2026-11-12-5.
 - Prévia antes × depois enviada ao João antes de publicar. Nenhum dado, crédito ou regra do Firebase mudou.
+- **Publicado: 2026-11-12-5** com o OK do João ("Pode publicar as telas"): PR #284, merge `0876226`, CI 43344257902
+  verde (inclusive WebKit); monitor 43347481684: Gestão Pages, Aluno Pages e Aluno Netlify em 2026-11-12-5.
 
 ---
 
