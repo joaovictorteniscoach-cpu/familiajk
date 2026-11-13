@@ -38,6 +38,7 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
       {id:'e3',data:'2026-10-08',hora:'16:00',titulo:'Quadra avulsa',tipo:'locacao',alunoId:null}],excecoes:[]};
     DB.presencas=[];DB.compromissos=[];ensureFields();CARREGADO=true;curYear=2026;curMonth=9;
     go('dash',document.createElement('button'));renderAll();
+    document.getElementById('jh-numeros').open=true;   // quadrinhos ficam em "Números do mês" (12/11)
    });
    const antes=await g.evaluate(()=>JSON.stringify(DB));
    const abre=async sel=>{await g.click(sel);return g.evaluate(()=>({on:document.getElementById('ov-jh-det').classList.contains('on'),tit:document.getElementById('jhd-tit').textContent,

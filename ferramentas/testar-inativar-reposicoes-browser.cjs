@@ -146,7 +146,7 @@ const deltaE=(a,b)=>{const x=lab(a),y=lab(b);return Math.hypot(x[0]-y[0],x[1]-y[
 
    await check(tema+': gráfico de reposições lê o extrato certo e não muda nada',async()=>{
     await dados();const antes=await foto();
-    await g.evaluate(()=>{go('graf',document.createElement('button'));renderAll();});
+    await g.evaluate(()=>{go('graf',document.createElement('button'));abaGraficos('alunos');renderAll();});
     const r=await g.evaluate(()=>{
      const M=reposPorMes(['2026-06','2026-09','2026-10']);
      const linhas=[...document.querySelectorAll('#graf-repos .rpg-row')].map(l=>l.innerText.replace(/\s+/g,' ').trim());
@@ -180,7 +180,7 @@ const deltaE=(a,b)=>{const x=lab(a),y=lab(b);return Math.hypot(x[0]-y[0],x[1]-y[
 
    await check(tema+': reposições legíveis (contraste medido na imagem), cores das barras distintas e 320px sem rolar de lado',async()=>{
     await g.evaluate(()=>closeModal('ov-repos-mes'));
-    const tag=await g.addStyleTag({content:'#pg-graf>:not(.rpg-sec){display:none!important}html body:not(#a1):not(#a2) :is(.top,.nav,#nav-mais,.mais-pop){display:none!important}#toast{display:none!important}'});
+    const tag=await g.addStyleTag({content:'#pg-graf>:not(.graf-grupo),#pg-graf .graf-grupo>:not(.rpg-sec){display:none!important}html body:not(#a1):not(#a2) :is(.top,.nav,#nav-mais,.mais-pop){display:none!important}#toast{display:none!important}'});
     let itens=await medir(g,process.env.JV_SHOTS&&path.join(process.env.JV_SHOTS,'gestao-reposicoes-'+tema+'.png'));
     assert.ok(itens.length>=30,'mediu os textos: '+itens.length);
     let falhas=itens.filter(it=>it.ratio!==null&&it.ratio<it.minimo).map(it=>it.t+' · '+it.ratio+'/'+it.minimo+' · '+it.fg+' sobre '+it.fundo);

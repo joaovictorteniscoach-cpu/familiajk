@@ -36,9 +36,15 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
    await check(tema+': explicação longa mostra 2 linhas + "▾ ver mais"; curta fica inteira',async()=>{
     const e=await estado();
     const longos=e.filter(x=>x.enc),curtos=e.filter(x=>!x.enc);
-    assert.ok(longos.length>=3,'achou '+longos.length+' longos');
+    assert.ok(longos.length>=2,'achou '+longos.length+' longos');   // Gráficos em abas (12/11): a aba Dinheiro tem 2 + a explicação do topo
     longos.forEach(x=>{assert.ok(x.linhas<=2,'mostra '+x.linhas+' linhas');assert.ok(x.total>=3);assert.equal(x.btn,'▾ ver mais');});
     curtos.forEach(x=>{assert.equal(x.btn,null);assert.ok(x.linhas<=3,'curto com '+x.linhas+' linhas');});
+   });
+   await check(tema+': ao trocar de aba nos Gráficos, a explicação longa da aba nova também encolhe',async()=>{
+    await g.click('#graf-abas button[data-grupo="alunos"]');await g.clock.runFor(300);
+    const e=await estado();
+    assert.ok(e.some(x=>x.enc&&x.linhas<=2&&x.btn==='▾ ver mais'),'aba Alunos e aulas: '+JSON.stringify(e));
+    await g.click('#graf-abas button[data-grupo="dinheiro"]');await g.clock.runFor(300);
    });
    await check(tema+': a setinha abre e fecha, sem perder texto',async()=>{
     const antes=await estado(),i=antes.findIndex(x=>x.enc);

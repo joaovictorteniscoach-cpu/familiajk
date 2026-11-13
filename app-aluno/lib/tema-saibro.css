@@ -187,7 +187,7 @@ body{background:var(--cream);color:var(--text)}
 .tp-card.vitoria{background:linear-gradient(165deg,#091B13,#0F2D21 55%,#153E2D);border:1.5px solid rgba(212,225,87,.55)}
 .tp-card.champ .tp-title,.tp-card.champ .tp-parabens{color:#EDB292}
 .tp-card.vice .tp-title,.tp-card.vice .tp-parabens{color:#E6EAED}
-.tp-card.champ .tp-emb,.tp-card.vice .tp-emb{background:rgba(0,0,0,.38)}
+.tp-card.champ .tp-emb,.tp-card.vice .tp-emb,.tp-card.derrota .tp-emb{background:rgba(0,0,0,.38)}
 .tp-card.derrota{background:linear-gradient(160deg,rgba(20,29,25,0.42),rgba(33,45,40,0.42) 56%,rgba(46,60,54,0.42))}
 .tp-card.fim{background:linear-gradient(165deg,#131F1A,#25301A 58%,#3D3616);border:1.5px solid rgba(201,118,74,.6)}
 .tp-msg{color:rgba(255,255,255,.92)}

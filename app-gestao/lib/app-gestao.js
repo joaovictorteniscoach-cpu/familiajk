@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-11-12-4';
+const VERSAO='2026-11-12-5';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -3802,7 +3802,7 @@ function go(id,btn){
   if(id==='lanc'){filtroLancCat=null;cxBusca='';cxEditando=false;caixaDia=null;renderMovs();}   // abrir a Caixa pela barra mostra tudo
   if(id==='fech')abrirFechamento();
   if(id==='profs')prepararAluguel();
-  if(id==='graf')renderGraf();
+  if(id==='graf'){let g='dinheiro';try{g=localStorage.getItem('jv-graf-aba')||g;}catch(e){}abaGraficos(g);renderGraf();}
   if(id==='aval')renderAvaliacoes();
   if(id==='torneio'){renderTorneio();syncTorneio(true);marcarVisto('torneio');}
   if(id==='seg'){if(typeof renderConta==='function')renderConta();if(typeof carregarVinculos==='function')carregarVinculos(true);}
@@ -5860,6 +5860,7 @@ function renderPacotesLista(){
 }
 function irParaValores(){
   irParaAba('fin');
+  const cfg=document.getElementById('fin-config');if(cfg)cfg.open=true;   // os preços ficam no bloco recolhido (12/11)
   setTimeout(()=>{const el=document.getElementById('pr-avpart');if(el)el.scrollIntoView({behavior:'smooth',block:'center'});},120);
 }
 function excluirPacote(nome){
@@ -9549,6 +9550,11 @@ function renderInicioRef(aulasDia,aulasMes,ocHoje,ocMes){
     +(conferir?'⚠️ '+conferir+' repetida'+(conferir===1?'':'s')+' na agenda':'conferir')+'</button>'):'';
   pintarAnel('jh-ring-personal',tot?aulasDia.personal/tot:0);
   pintarAnel('jh-ring-tenis',tot?aulasDia.tenis/tot:0);
+  /* Resumo dos anéis em uma linha, em cima da lista do dia (12/11): os anéis
+     ficam em "Números do mês", recolhido. */
+  const qtd=document.getElementById('jh-atv-qtd');
+  if(qtd){const per=Number(aulasDia.personal)||0,ten=Number(aulasDia.tenis)||0;
+    qtd.textContent=tot?(tot+' aula'+(tot===1?'':'s')+' hoje'+(per&&ten?': '+per+' personal · '+ten+' tênis':per?' de personal':' de tênis')):'Nenhuma aula hoje';}
 
   const nota=document.getElementById('jh-graf-nota');
   if(nota)nota.textContent='A linha soma as aulas do mês, por isso só sobe. A tracejada azul é o mês passado: ficar abaixo dela é ter menos aulas.'
@@ -14196,7 +14202,27 @@ function encurtarTextosLongos(){
   try{new MutationObserver(agenda).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});}catch(e){}
   window.addEventListener('resize',agenda);agenda();
 })();
-function renderAll(){
+/* Início: "Números do mês" fica recolhido (12/11, pedido do João). O app lembra
+   se ele deixou aberto; ao abrir, o gráfico do mês é redesenhado. */
+/* Gráficos em 3 abas (12/11, pedido do João): Dinheiro, Alunos e aulas, Quadra.
+   "Visão do negócio" fica sempre em cima. O app lembra a última aba. */
+function abaGraficos(g,btn){
+  if(!['dinheiro','alunos','quadra'].includes(g))g='dinheiro';
+  document.querySelectorAll('#pg-graf .graf-grupo').forEach(el=>{el.hidden=el.dataset.grupo!==g;});
+  document.querySelectorAll('#graf-abas button').forEach(b=>{const on=b.dataset.grupo===g;b.classList.toggle('on',on);b.setAttribute('aria-selected',String(on));});
+  try{localStorage.setItem('jv-graf-aba',g);}catch(e){}
+  if(btn)try{encurtarTextosLongos();}catch(e){}
+}
+function prepararNumerosInicio(){
+  const d=document.getElementById('jh-numeros');if(!d||d.dataset.pronto)return;
+  d.dataset.pronto='1';
+  try{d.open=localStorage.getItem('jv-inicio-numeros')==='1';}catch(e){}
+  d.addEventListener('toggle',()=>{
+    try{localStorage.setItem('jv-inicio-numeros',d.open?'1':'0');}catch(e){}
+    if(d.open)try{renderGraficoInicio();}catch(e){}
+  });
+}
+function renderAll(){prepararNumerosInicio();
   carregarAvatarGestao();renderProtecaoDados();
   document.getElementById('month-label').textContent=MESES[curMonth]+' '+curYear;
   const safe=(fn,nome)=>{try{fn();}catch(e){console.warn('Render '+nome+' falhou:',e);}};

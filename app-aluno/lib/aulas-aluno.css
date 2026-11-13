@@ -17,7 +17,8 @@
 #apg-aulas .hist-row .hr-d{color:#FFF!important;-webkit-text-fill-color:#FFF!important}
 #apg-aulas .hist-row .hr-h{color:#E1E9E2!important;-webkit-text-fill-color:#E1E9E2!important}
 #apg-aulas .hist-row .hr-ico{color:#D4E157!important;-webkit-text-fill-color:#D4E157!important}
-#apg-creditos #cred-page-mes{display:block;width:100%;min-height:48px;text-align:left;padding:14px 15px;margin-top:16px;border:1px solid #88A18E;border-radius:14px;background:#102A21;color:#FFF;-webkit-text-fill-color:#FFF;font:700 13px/1.5 'DM Sans',sans-serif}
+#apg-creditos #cred-page-mes,#apg-creditos #cred-page-falar{display:block;width:100%;min-height:48px;text-align:left;padding:14px 15px;margin-top:16px;border:1px solid #88A18E;border-radius:14px;background:#102A21;color:#FFF;-webkit-text-fill-color:#FFF;font:700 13px/1.5 'DM Sans',sans-serif}
+#apg-creditos #cred-page-falar{margin-top:8px}
 
 #apg-aulas .aul-calendar-note{font-size:12px;margin:16px 0 0}
 

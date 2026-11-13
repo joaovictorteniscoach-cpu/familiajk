@@ -149,9 +149,9 @@ const contraste=(pg,sel)=>pg.evaluate(sel=>{
    for(const sel of ['#mine-list .mine-item b','#pedir-box>div>div','#pedir-box .btn-ghost']){
     const r=await contraste(p,sel);assert.ok(r>=4.5,sel+' com contraste '+r+' (mínimo 4,5)');}
   });
-  await check('Créditos: atalho "Minhas aulas de outubro" leva para a tela Aulas',async()=>{
+  await check('Créditos: linha "Minhas aulas de outubro" (uma linha só desde 12/11) leva para a tela Aulas',async()=>{
    await p.evaluate(()=>goAluno('creditos',document.getElementById('nav-al-creditos')));
-   assert.match(await p.evaluate(()=>document.getElementById('cred-page-mes').innerText),/Minhas aulas de outubro[\s\S]*Feitas\s*2[\s\S]*Ainda marcadas\s*2/i);
+   assert.match(await p.evaluate(()=>document.getElementById('cred-page-mes').innerText),/^Minhas aulas de outubro: 2 feitas · 2 marcadas ›$/);
    await p.evaluate(()=>document.getElementById('cred-page-mes').click());
    assert.equal(await p.evaluate(()=>document.getElementById('apg-aulas').classList.contains('on')),true);
   });

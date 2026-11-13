@@ -306,8 +306,8 @@ const fixture={
     renderDash();renderFin();abrirFechamento();
     return {ids:DB.alunos.filter(a=>pendenteDoFechamento(a,monthKey())).map(a=>a.id).sort(),
      pagIds:DB.alunos.filter(a=>passaFiltroPag(a,'pendentes')).map(a=>a.id).sort(),
-     nomes:document.getElementById('pend-list').innerText,contador:document.getElementById('k-pendente-s').innerText,
-     valor:document.getElementById('k-pendente').innerText,caixa:document.getElementById('f-inad').innerText,
+     nomes:document.getElementById('pend-list').innerText,contador:document.getElementById('k-pendente-s').textContent,   // fica em "Números do mês", recolhido (12/11)
+     valor:document.getElementById('k-pendente').textContent,caixa:document.getElementById('f-inad').textContent,
      fechamento:Array.from(document.getElementById('fc-aluno').options).map(o=>o.value).filter(Boolean).sort(),
      igual:JSON.stringify(DB)===window.FISCAL_FIXTURE};
    });

@@ -144,6 +144,21 @@ body[data-aba="aulas"] #bloco-saldo #scard-loc{grid-column:auto}
 /* mensalidade e status não são assunto da aba de aulas */
 body[data-aba="aulas"] #bloco-saldo .status-line,
 body[data-aba="aulas"] #bloco-saldo #repos-box{display:none}
+/* Avisos do topo só na aba onde servem (12/11, pedido do João): ficavam em
+   cima das 7 abas, quase uma tela de avisos repetidos antes do conteúdo.
+   Início mostra todos; Agenda e Minhas aulas, os de aula; Créditos, o do fim
+   do mês; Evolução, Perfil e Torneio, nenhum. O de segurança do aparelho
+   (#vinculo-status-box) continua em todas, porque impede o uso. */
+body[data-aba="agenda"] #renova-box,
+body[data-aba="aulas"] #renova-box,
+body[data-aba="creditos"] #aviso-box,body[data-aba="creditos"] #chuva-box,body[data-aba="creditos"] #espera-box,
+body[data-aba="creditos"] #lembrete-box,body[data-aba="creditos"] #feriado-box,
+body[data-aba="evolucao"] #aviso-box,body[data-aba="evolucao"] #chuva-box,body[data-aba="evolucao"] #espera-box,
+body[data-aba="evolucao"] #lembrete-box,body[data-aba="evolucao"] #renova-box,body[data-aba="evolucao"] #feriado-box,
+body[data-aba="perfil"] #aviso-box,body[data-aba="perfil"] #chuva-box,body[data-aba="perfil"] #espera-box,
+body[data-aba="perfil"] #lembrete-box,body[data-aba="perfil"] #renova-box,body[data-aba="perfil"] #feriado-box,
+body[data-aba="torneio"] #aviso-box,body[data-aba="torneio"] #chuva-box,body[data-aba="torneio"] #espera-box,
+body[data-aba="torneio"] #lembrete-box,body[data-aba="torneio"] #renova-box,body[data-aba="torneio"] #feriado-box{display:none!important}
 .status-line{background:#fff;border:1px solid var(--border);border-radius:13px;padding:13px 15px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:13px}
 .pay-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:6px}
 .pay-btn{border:none;border-radius:13px;padding:15px 8px;font-weight:700;font-size:12.5px;display:flex;flex-direction:column;align-items:center;gap:5px;color:#fff}
@@ -347,7 +362,7 @@ body[data-aba="aulas"] #bloco-saldo #repos-box{display:none}
 .tp-card.vitoria{background:linear-gradient(165deg,#062317,#0B3B27 55%,#0F5136);border:1.5px solid rgba(212,225,87,.55)}
 .tp-card.champ .tp-title,.tp-card.champ .tp-parabens{color:#F1D88E}
 .tp-card.vice .tp-title,.tp-card.vice .tp-parabens{color:#E6EAED}
-.tp-card.champ .tp-emb,.tp-card.vice .tp-emb{background:rgba(0,0,0,.38)}
+.tp-card.champ .tp-emb,.tp-card.vice .tp-emb,.tp-card.derrota .tp-emb{background:rgba(0,0,0,.38)}   /* derrota: no Saibro o cartão é translúcido; sem os avisos atrás (12/11) o selo ficava sobre a tabela clara */
 .tp-card.derrota{background:linear-gradient(160deg,#172B25,#244438 56%,#355A4A)}
 .tp-card.fim{background:linear-gradient(165deg,#13271D,#25301A 58%,#3D3616);border:1.5px solid rgba(201,160,74,.6)}
 .tp-msg{font-size:13px;line-height:1.55;margin:12px auto 0;max-width:270px;color:rgba(255,255,255,.92);position:relative}
@@ -1683,15 +1698,15 @@ html body:not(#jv) #pedir-box .btn-ghost{background:#F3EDE2!important;border:1px
 .login .login-sub{opacity:1}
 .login-priv{color:rgba(250,247,242,.8)}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-11-12-4">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-11-12-5">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-11-12-4">
-<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-11-12-4">
-<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-11-12-4">
-<link rel="stylesheet" href="lib/visual-sobrio.css?v=2026-11-12-4">
-<link rel="stylesheet" href="lib/letras-maiores.css?v=2026-11-12-4">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-11-12-5">
+<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-11-12-5">
+<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-11-12-5">
+<link rel="stylesheet" href="lib/visual-sobrio.css?v=2026-11-12-5">
+<link rel="stylesheet" href="lib/letras-maiores.css?v=2026-11-12-5">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -2146,12 +2161,10 @@ function esperarAuth(){
         <h2 class="sec-title">Comprar ou <em>reservar</em></h2>
         <button class="buy-btn jv-wide-action" id="buy-btn-main" onclick="openComprar()">Comprar créditos · aula avulsa · locar quadra</button>
       </div>
-      <div class="jv-quick-title">Ações rápidas</div>
-      <div class="jv-quick">
-        <button type="button" id="cred-page-pix" onclick="pagarPix()"><span><img class="jv-pix-mark" src="assets/pix-simbolo.svg" alt="" width="25" height="25"></span>Pagar com Pix</button>
-        <button type="button" onclick="falarComProfessor()"><span data-ic="user"></span>Falar com a academia</button>
-      </div>
-          <button id="cred-page-mes" type="button" class="aul-link" onclick="irMinhasAulas()">Minhas aulas ›</button>
+      <!-- 12/11: sem "Ações rápidas" aqui — o Pix já está em "Pagar minha mensalidade"
+           e o resumo do mês fica numa linha (o detalhe é a aba Minhas aulas). -->
+      <button id="cred-page-mes" type="button" class="aul-link" onclick="irMinhasAulas()">Minhas aulas ›</button>
+      <button id="cred-page-falar" type="button" class="aul-link" onclick="falarComProfessor()">Falar com a academia ›</button>
     </section>
 
     <section class="page" id="apg-perfil">
@@ -2198,7 +2211,7 @@ function esperarAuth(){
     <button id="nav-al-torneio" onclick="goAluno('torneio',this)"><span class="ico" aria-hidden="true" data-ic="navtrophy"></span><span class="nav-badge" id="nb-al-torneio"></span>Torneio</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" aria-hidden="true" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-11-12-4"></script>
+<script src="lib/icones.js?v=2026-11-12-5"></script>
 </div>
 
 <!-- ASSISTENTE POR VOZ: consultar horário livre, agendar, cancelar, ver aulas (lib/voz-aluno.js) -->
@@ -2445,7 +2458,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-11-12-4';
+const VERSAO='2026-11-12-5';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -3588,7 +3601,6 @@ function renderPremiumAluno(){
   const cp=document.getElementById('cred-page-plano');if(cp)cp.textContent=planoPremium();
   const cm=document.getElementById('cred-page-mens');if(cm)cm.textContent=fmtMens();
   const cst=document.getElementById('cred-page-status');if(cst)cst.textContent=EU.status==='pago'?'Em dia':(EU.status==='parcial'?rotuloParcialAluno():'Pendente');
-  const cpp=document.getElementById('cred-page-pix');if(cpp)cpp.style.display=(!dependenteAluno()&&PUB&&PUB.pix&&String(PUB.pix).trim())?'block':'none';
   const pn=document.getElementById('perfil-nome');if(pn)pn.textContent=EU.nome||'Aluno';
   const av=(EU&&Array.isArray(EU.avaliacoes))?EU.avaliacoes:[],nivel=av.length?(av[av.length-1].nivel||'Em evolução'):'Avaliação a liberar';
   const pni=document.getElementById('perfil-nivel');if(pni)pni.textContent=nivel+' · Da Base ao Topo';
@@ -5513,10 +5525,8 @@ function renderResumoMes(){
   const hh=document.getElementById('mau-hero-sub');
   if(hh)hh.textContent='As aulas que você já fez e as que ainda vai fazer em '+r.mes+'.';
   const at=document.getElementById('cred-page-mes');
-  if(at)at.innerHTML='<div class="jv-pay-lbl">Minhas aulas de '+r.mes+'</div>'
-    +'<div class="jv-row"><span>Feitas</span><b>'+r.feitas.length+'</b></div>'
-    +'<div class="jv-row"><span>Ainda marcadas</span><b>'+r.prox.length+'</b></div>'
-    +'<div class="amr-ver">Ver as datas ›</div>';
+  if(at)at.textContent='Minhas aulas de '+r.mes+': '+r.feitas.length+' feita'+(r.feitas.length===1?'':'s')
+    +' · '+r.prox.length+' marcada'+(r.prox.length===1?'':'s')+' ›';
 }
 
 /* ===== Lista de espera =====
@@ -5954,7 +5964,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-11-12-4').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-11-12-5').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
@@ -5963,6 +5973,6 @@ window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);})
   setTimeout(()=>esperarEIniciar(t+1),150);
 })(0);
 </script>
-<script src="lib/voz-aluno.js?v=2026-11-12-4"></script>
+<script src="lib/voz-aluno.js?v=2026-11-12-5"></script>
 </body>
 </html>
