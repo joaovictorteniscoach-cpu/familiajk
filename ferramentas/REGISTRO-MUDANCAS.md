@@ -28,6 +28,8 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
   `testar-detalhe-inicio`, `testar-3-pedidos`, `testar-aulas-agenda-aluno` (lê o número com o bloco
   fechado) e `testar-inativar-reposicoes` (abre a aba Alunos e aulas). Versão 2026-11-12-5.
 - Prévia antes × depois enviada ao João antes de publicar. Nenhum dado, crédito ou regra do Firebase mudou.
+- **Publicado: 2026-11-12-5** com o OK do João ("Pode publicar as telas"): PR #284, merge `0876226`, CI 43344257902
+  verde (inclusive WebKit); monitor 43347481684: Gestão Pages, Aluno Pages e Aluno Netlify em 2026-11-12-5.
 
 ---
 
