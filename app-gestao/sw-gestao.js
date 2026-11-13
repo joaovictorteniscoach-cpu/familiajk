@@ -7,8 +7,8 @@ const CACHE = 'jvtenis-gestao-v56';
 // Com a versao no endereco, a reserva tem de guardar o MESMO endereco que a
 // tela pede — senao o app pede lib/app-gestao.js?v=X, nao acha, e fica sem
 // codigo justamente quando esta sem internet.
-const V = '2026-11-13-1';
-const SHELL = ['./', './manifest-gestao.webmanifest', './jv-icone-gestao.png',
+const V = '2026-11-13-2';
+const SHELL = ['./', './manifest-gestao.webmanifest', './jv-icone-gestao-360.webp', './jv-icone-gestao-64.png', './jv-icone-gestao-192.png',
                './jv-icone-gestao-180.png',
                './lib/estilo.css?v='+V, './lib/estilo-saibro.css?v='+V, './lib/icones.js?v='+V, './lib/app-gestao.js?v='+V, './lib/acoes-voz.js?v='+V, './lib/acoes-voz.css?v='+V,
                './assets/jv-saibro-premium.svg', './assets/jv-saibro-realista.webp', './assets/icones3d.webp'];
@@ -77,7 +77,7 @@ self.addEventListener('push', e => {
   if (!d || typeof d !== 'object') d = {};
   const titulo = String(d.t || 'Academia João Victor Tênis').slice(0, 120);
   e.waitUntil(self.registration.showNotification(titulo, {
-    body: String(d.c || '').slice(0, 300), icon: './jv-icone-gestao.png', badge: './jv-icone-gestao.png'
+    body: String(d.c || '').slice(0, 300), icon: './jv-icone-gestao-192.png', badge: './jv-icone-gestao-192.png'
   }));
 });
 

@@ -22,7 +22,7 @@
 <!-- O iPhone pede 180x180 para a Tela de Inicio. Sem este, ele encolhia
      o de 512 na marra e o desenho saia borrado. -->
 <link rel="apple-touch-icon" sizes="180x180" href="jv-icone-gestao-180.png">
-<link rel="icon" href="jv-icone-gestao.png">
+<link rel="icon" href="jv-icone-gestao-64.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="JV Tênis · Gestão">
@@ -38,16 +38,16 @@
 <link rel="apple-touch-startup-image" media="screen and (device-width:375px) and (device-height:667px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)" href="splash-gestao-750x1334.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" id="css-tema" href="lib/estilo.css?v=2026-11-13-1">
+<link rel="stylesheet" id="css-tema" href="lib/estilo.css?v=2026-11-13-2">
 <!-- Tema de cores: Saibro é o padrão desde 2026-10; "Verde clássico" fica a um
      toque em Segurança e dados. Troca o arquivo antes da primeira pintura. -->
 <script>try{if(localStorage.getItem('jv-tema')!=='classico'){var _ct=document.getElementById('css-tema');_ct.href=_ct.getAttribute('href').replace('estilo.css','estilo-saibro.css');document.documentElement.classList.add('tema-saibro');}}catch(e){}</script>
-<link rel="stylesheet" href="lib/acoes-voz.css?v=2026-11-13-1">
+<link rel="stylesheet" href="lib/acoes-voz.css?v=2026-11-13-2">
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
 <script src="lib/firebase-database-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js\'><\/script>')"></script>
 <script src="lib/firebase-auth-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js\'><\/script>')"></script>
-<script src="lib/firebase-app-check-compat.js"></script>
+<!-- App Check: o SDK só é baixado quando houver chave (carregarAppCheckDepois, 13/11). -->
 <script>
 /* ===== De quem é o app que está aberto =====
    Um arquivo só, dois donos possíveis. Quem entra decide QUAL banco abre:
@@ -153,12 +153,20 @@ function ligarAppCheck(app){
     return true;
   }catch(e){console.warn('App Check não iniciou; confira a configuração no Firebase.',e);return false;}
 }
+/* O SDK do App Check (23 KB) só é baixado quando a chave existe (13/11, peso dos
+   apps). Com a chave preenchida, ele carrega aqui e liga sozinho. */
+function carregarAppCheckDepois(app){
+  if(!APPCHECK_SITE_KEY||typeof document==='undefined'||typeof firebase==='undefined'||firebase.appCheck)return;
+  if(document.getElementById('sdk-appcheck'))return;
+  const s=document.createElement('script');s.id='sdk-appcheck';s.src='lib/firebase-app-check-compat.js';
+  s.onload=()=>ligarAppCheck(app);document.head.appendChild(s);
+}
 function iniciarFirebase(){
   try{
     if(typeof firebase==='undefined')return false;
     if(!firebaseConfig.apiKey || firebaseConfig.apiKey==="COLE_AQUI")return false;
     const app=(firebase.apps||[]).find(a=>a.name==='[DEFAULT]')||firebase.initializeApp(firebaseConfig);
-    ligarAppCheck(app);
+    if(!ligarAppCheck(app))carregarAppCheckDepois(app);
     window.fbDB = cintoDeSeguranca(firebase.database());
     iniciarAuth();
     return true;
@@ -261,7 +269,7 @@ function esperarAuth(){
   <div style="position:relative;width:190px;height:190px;display:flex;align-items:center;justify-content:center;margin-bottom:18px">
     <span style="position:absolute;width:190px;height:190px;border-radius:50%;border:1.5px solid rgba(201,160,74,.45);box-shadow:0 0 34px rgba(201,160,74,.18)"></span>
     <span style="position:absolute;width:156px;height:156px;border-radius:50%;border:2px solid rgba(201,160,74,.9)"></span>
-    <img src="jv-icone-gestao.png" alt="JV Tênis Gestão" style="width:118px;height:118px;border-radius:50%;object-fit:cover;box-shadow:0 10px 34px rgba(0,0,0,.55);border:1.5px solid rgba(201,160,74,.4);background:#0E0C08">
+    <img src="jv-icone-gestao-360.webp" alt="JV Tênis Gestão" style="width:118px;height:118px;border-radius:50%;object-fit:cover;box-shadow:0 10px 34px rgba(0,0,0,.55);border:1.5px solid rgba(201,160,74,.4);background:#0E0C08">
   </div>
   <p style="font-size:10px;letter-spacing:3.5px;text-transform:uppercase;color:#D4AF58;font-weight:700;margin-bottom:12px">Academia João Victor Tênis · Curitiba</p>
   <h1 style="font-family:'Cormorant Garamond',serif;font-weight:300;font-size:42px;color:#FAF7F2;line-height:1.05;margin-bottom:4px">JV Tênis · <em style="color:#CBD24A">Gestão</em></h1>
@@ -272,7 +280,7 @@ function esperarAuth(){
 
 <header class="top jv-premium-hero">
   <div class="jv-gestao-brand">
-    <img class="marca-jv" src="jv-icone-gestao.png" alt="Academia João Victor Tênis">
+    <img class="marca-jv" src="jv-icone-gestao-360.webp" alt="Academia João Victor Tênis">
     <span>Academia <b>João Victor Tênis</b></span>
   </div>
   <button class="jv-avatar-btn" type="button" onclick="document.getElementById('avatar-gestao-file').click()" aria-label="Adicionar ou trocar foto de perfil">
@@ -809,7 +817,8 @@ function esperarAuth(){
     <button onclick="document.getElementById('import-file').click()"><i>⬆️</i><span>Importar</span><small>restaurar cópia</small></button>
     <button onclick="document.getElementById('import-agenda').click()"><i>🗓️</i><span>Recuperar agenda</span><small>de um arquivo, só a agenda</small></button>
     <button onclick="irParaAba('fech')"><i>🧾</i><span>Fechamento</span><small>enviar ao aluno</small></button>
-    <button data-box="pu-box" onclick="abrirFerr('pu-box',renderPacoteUnico)"><i>🎾</i><span>Pacote único</span><small>particular + grupo juntos</small></button>
+    <!-- Pacote único: escondido desde 13/11 (nunca ligado); volta sozinho se estiver ligado, para dar para desligar. -->
+    <button data-box="pu-box" hidden onclick="abrirFerr('pu-box',renderPacoteUnico)"><i>🎾</i><span>Pacote único</span><small>particular + grupo juntos</small></button>
     <button data-box="rel-box" onclick="gerarRelatorioPDF()"><i>📄</i><span>Relatório de aulas</span><small>PDF dos últimos 3 meses</small></button>
     <button class="so-dono" data-box="esc-box" onclick="abrirFerr('esc-box',abrirResumoEscritorio)"><i>🏢</i><span>Escritório JV</span><small>resumo para os agentes</small></button>
   </div>
@@ -1213,7 +1222,7 @@ function esperarAuth(){
   <button onclick="go('lanc',this)"><span class="ico" data-ic="navcash"></span>Caixa</button>
   <button id="nav-mais" onclick="abrirMais()"><span class="ico" data-ic="navmore"></span>Mais</button>
 </nav>
-<script src="lib/icones.js?v=2026-11-13-1"></script>
+<script src="lib/icones.js?v=2026-11-13-2"></script>
 
 <!-- MODAL ALUNO -->
 <div class="overlay" id="ov-aluno" onclick="if(event.target===this)closeModal('ov-aluno')">
@@ -1623,7 +1632,7 @@ function esperarAuth(){
 <div class="overlay" id="ov-notif" onclick="if(event.target===this)closeModal('ov-notif')">
   <div class="modal">
     <h3>🔔 Avisos</h3>
-    <button id="btn-avisos" class="aviso-btn" onclick="ativarAvisos('jv-icone-gestao.png')">🔔 Ativar avisos</button>
+    <button id="btn-avisos" class="aviso-btn" onclick="ativarAvisos('jv-icone-gestao-192.png')">🔔 Ativar avisos</button>
     <p class="aviso-cap">Avisa no celular quando um aluno reservar, cancelar ou pedir algo. Funciona com o app aberto; no iPhone, adicione à Tela de Início.</p>
     <p class="aviso-cap" id="avisos-nuvem-st"></p>
     <button id="btn-aviso-teste" class="aviso-btn" style="display:none" onclick="testarAvisoCelular()">📨 Enviar aviso de teste para mim</button>
@@ -1850,8 +1859,8 @@ function esperarAuth(){
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="lib/app-gestao.js?v=2026-11-13-1"></script>
-<script src="lib/acoes-voz.js?v=2026-11-13-1"></script>
+<script src="lib/app-gestao.js?v=2026-11-13-2"></script>
+<script src="lib/acoes-voz.js?v=2026-11-13-2"></script>
 <script>
 /* Rede de seguranca do par tela+codigo.
 
@@ -1866,7 +1875,7 @@ function esperarAuth(){
    torto, o app busca o par certo uma vez e, se insistir, DIZ o que houve em
    vez de deixar voce tocando em botao que nao responde. */
 (function(){
-  var ESPERADA='2026-11-13-1';
+  var ESPERADA='2026-11-13-2';
   function tela(motivo){
     var d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;z-index:99999;background:#1A2E14;color:#FAF7F2;'
@@ -1957,7 +1966,7 @@ function limparHist(){
 }
 histLogLoad();
 // PWA: registra o service worker (permite instalar o painel e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-gestao.js?v=2026-11-13-1').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-gestao.js?v=2026-11-13-2').catch(function(){});});}
 </script>
 </body>
 </html>

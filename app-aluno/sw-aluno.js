@@ -1,9 +1,9 @@
 /* Service Worker — Academia João Victor Tênis (app do aluno)
    Estratégia: network-first (sempre tenta a versão nova online),
    com cache de reserva para abrir offline. NÃO intercepta o Firebase. */
-const V = '2026-11-13-1';
+const V = '2026-11-13-2';
 const CACHE = 'jvtenis-aluno-v53';
-const SHELL = ['./', './manifest-aluno.webmanifest', './jv-icone-aluno.png', './jv-icone-aluno-180.png', './assets/jv-saibro-premium.svg', './assets/jv-saibro-realista.webp', './assets/pix-simbolo.svg', './lib/visual-premium.css?v='+V, './lib/tema-saibro.css?v='+V, './lib/aulas-aluno.css?v='+V, './lib/voz-aluno.css?v='+V, './lib/visual-sobrio.css?v='+V, './lib/letras-maiores.css?v='+V, './lib/voz-aluno.js?v='+V, './lib/icones.js?v='+V];
+const SHELL = ['./', './manifest-aluno.webmanifest', './jv-icone-aluno-360.webp', './jv-icone-aluno-64.png', './jv-icone-aluno-192.png', './jv-icone-aluno-180.png', './assets/jv-saibro-premium.svg', './assets/jv-saibro-realista.webp', './assets/pix-simbolo.svg', './lib/visual-premium.css?v='+V, './lib/tema-saibro.css?v='+V, './lib/aulas-aluno.css?v='+V, './lib/voz-aluno.css?v='+V, './lib/visual-sobrio.css?v='+V, './lib/letras-maiores.css?v='+V, './lib/voz-aluno.js?v='+V, './lib/icones.js?v='+V];
 
 self.addEventListener('install', e => {
   self.skipWaiting();
@@ -69,7 +69,7 @@ self.addEventListener('push', e => {
   if (!d || typeof d !== 'object') d = {};
   const titulo = String(d.t || 'Academia João Victor Tênis').slice(0, 120);
   e.waitUntil(self.registration.showNotification(titulo, {
-    body: String(d.c || '').slice(0, 300), icon: './jv-icone-aluno.png', badge: './jv-icone-aluno.png'
+    body: String(d.c || '').slice(0, 300), icon: './jv-icone-aluno-192.png', badge: './jv-icone-aluno-192.png'
   }));
 });
 

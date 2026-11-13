@@ -88,7 +88,7 @@ function worker(app, atRoot=false) {
       await push({json:()=>{throw Error('não é JSON');}});
       await push({json:()=>({t:'x'.repeat(500),c:'y'.repeat(900),u:'javascript:alert(1)'})});
       assert.equal(mostradas[0].t,'🎾 Aula amanhã às 18:00');assert.match(mostradas[0].o.body,/4 horas/);
-      assert.equal(mostradas[0].o.icon,'./jv-icone-'+app+'.png');
+      assert.equal(mostradas[0].o.icon,'./jv-icone-'+app+'-192.png');   // ícone do aviso na medida (13/11): o de 512 px pesava 170–190 KB
       assert.equal(mostradas[1].t,'Academia João Victor Tênis');assert.equal(mostradas[2].t,'Academia João Victor Tênis');
       assert.equal(mostradas[3].t.length,120);assert.equal(mostradas[3].o.body.length,300);
       assert.ok(!JSON.stringify(mostradas).includes('javascript:'),'nenhum endereço vindo do aviso é usado');

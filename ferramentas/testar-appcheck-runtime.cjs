@@ -37,6 +37,21 @@ for(const file of ['app-gestao/index.html','app-aluno/index.html']){
  t.ctx.firebase.appCheck=app=>({activate(key,refresh){t.calls.push({app,key,refresh});}});
  assert.equal(t.ctx.ligarAppCheck(t.defaultApp),true);assert.equal(t.calls.length,1);checks++;
 }
+/* SDK do App Check só é baixado com chave (13/11): sem chave nada carrega; com chave
+   o script entra uma vez e, ao chegar, liga o App Check no app padrão. */
+for(const file of ['app-gestao/index.html','app-aluno/index.html']){
+ const src=fs.readFileSync(path.join(root,file),'utf8');
+ assert.doesNotMatch(src,/<script src="lib\/firebase-app-check-compat\.js"><\/script>/,file+': SDK não pode carregar sempre');
+ for(const key of ['','site-key-ficticia']){
+  const t=contexto(src,key,false,true),add=[];
+  t.ctx.document={getElementById:id=>add.find(x=>x.id===id)||null,createElement:()=>({}),head:{appendChild:x=>add.push(x)}};
+  assert.equal(t.ctx.iniciarFirebase(),true);assert.equal(t.ctx.iniciarFirebase(),true);
+  if(!key){assert.equal(add.length,0,file+': sem chave não baixa nada');checks++;continue;}
+  assert.equal(add.length,1,file+': com chave baixa uma vez');assert.equal(add[0].src,'lib/firebase-app-check-compat.js');
+  t.ctx.firebase.appCheck=app=>({activate(k,refresh){t.calls.push({app,key:k,refresh});}});
+  add[0].onload();assert.equal(t.calls.length,1);assert.equal(t.calls[0].app,t.defaultApp);checks++;
+ }
+}
 const g=fs.readFileSync(path.join(root,'app-gestao/lib/app-gestao.js'),'utf8');
 const k=g.indexOf("app2=firebase.apps.filter(a=>a.name==='teste')");
 const trecho=g.slice(k,k+650);assert.ok(k>=0);

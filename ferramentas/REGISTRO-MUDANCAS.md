@@ -8,6 +8,25 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-13 · Claude Code: apps mais leves (escolhas do João na página "Peso dos apps")
+
+- Medido ao abrir (390 px, sem cache): Gestão 2.622 → 2.487 KB; aluno 1.406 → 1.283 KB.
+- **Ícones (2):** `jv-icone-gestao-360.webp`/`jv-icone-aluno-360.webp` (WebP **sem perda**, 360 px, para 118 px ×3) na
+  tela; favicon `-64.png`; avisos e push com o `-192.png` que já existia. Fotos dos ícones antes × depois iguais a olho
+  (PSNR 36–40 dB nas grandes). O `.png` de 512 px continua no repositório e no PDF do Fechamento; ícones de instalação
+  (`-180/-192/-512/-mask`) não mudaram. `checar-premium-runtime` espera o `-192.png` no push.
+- **Limpeza (3):** SDK do App Check sai do `<script>` fixo nos dois apps e só baixa quando `APPCHECK_SITE_KEY` tiver
+  valor (`carregarAppCheckDepois`; +4 verificações em `testar-appcheck-runtime`). Apagadas 14 funções sem chamada e a
+  janela antiga `#ov-evolucao` (inalcançável; a aba Evolução usa `renderEvolucaoPage`). `cobrancaDoMes` e
+  `abrirAulasDeHoje` ficam (usadas por testes).
+- **Pacote único (5):** botão escondido em Segurança e dados enquanto desligado; volta sozinho se estiver ligado
+  (`go('seg')`). Texto da tela Pacotes atualizado. Teste novo em `testar-telas-leves`.
+- **Ficam por escolha do João:** os dois estilos de tema ao abrir (1), Professores (4, sem resposta), Arquivar antigos
+  (6) e tudo que ele usa (7–12: voz, avaliações/Evolução, Escritório JV, relatório PDF, voz do aluno, lista de espera).
+- Versão 2026-11-13-2. Nenhum dado, crédito ou regra do Firebase mudou.
+
+---
+
 ## 2026-11-13 · Claude Code: Início da Gestão volta ao visual de antes
 
 - Pedido do João: "Desfaça tudo que fez no visual da página inicial, e deixe ela como estava antes."
@@ -22,6 +41,8 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
   `testar-aulas-agenda-aluno` voltam ao que eram. Versão 2026-11-13-1.
 - **Não reorganizar o Início sem o João pedir.** A chave `jv-inicio-numeros` que ficou em aparelhos não é
   mais lida por nada.
+- **Publicado: 2026-11-13-1** com o OK do João ("quero a aba do início apenas ela, igual estava antes"): PR #285,
+  merge `4a2d45a`, CI 43354330958 verde; monitor 43394135934: Gestão Pages, Aluno Pages e Aluno Netlify em 2026-11-13-1.
 
 ---
 
