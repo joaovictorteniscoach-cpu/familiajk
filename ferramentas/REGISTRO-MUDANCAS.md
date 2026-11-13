@@ -16,6 +16,8 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 - Decisões do João registradas em `CREDITOS-FIXOS-IMPLANTACAO.md`: 4 créditos (ou 8 pelo dobro), validade de 6 meses,
   reposições viram créditos contando da data original, fim do desconto de 25%, família = 1 crédito do pacote por aula
   junta, cancelamento como hoje, início em dezembro por ferramenta acionada por ele (prévia, versão salva, desfazer).
+- Depois: pacotes com locação ("2 aulas + 2 locações", tipo das aulas no cadastro; "3 aulas em grupo" a confirmar),
+  cada crédito no seu tipo, hora de locação extra pela tabela.
 - Próximo: simulação aluno por aluno com backup privado (fora do repositório) e prévia visual antes de qualquer código.
 
 ---

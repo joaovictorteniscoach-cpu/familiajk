@@ -7,6 +7,11 @@ Decisões: [issue #275](https://github.com/joaovictorteniscoach-cpu/familiajk/is
 
 - **Só créditos, sem reposição.** O que sobra no mês continua como crédito do mesmo tipo (particular ou grupo).
 - **Planos:** 4 créditos por mês em todo plano; opção de **8 aulas pelo dobro do valor**. No misto, cada parte tem 4 ou 8.
+- **Pacotes com locação (4 alunos já usam):** "2 aulas + 2 locações" — o tipo das 2 aulas (particular ou grupo) é escolhido
+  no cadastro de cada aluno. Locação vira mais um tipo de crédito dentro dos 4 (ou 8). Há também "3 aulas em grupo";
+  **falta confirmar** se fecha com 1 locação, 1 particular ou se é plano de 3.
+- **Cada crédito no seu tipo:** sobra de locação só serve para locação; de aula, só para aula (regra de hoje).
+- **Hora de locação além do pacote:** preço de locação da tabela.
 - **Validade: 6 meses**, contados do mês em que o crédito entrou. Os mais antigos são usados primeiro.
 - **Reposições que já existem** viram créditos do tipo delas, com os 6 meses contados da **data original**.
   As que não têm data (de antes do extrato) passam a contar do mês da migração. As já vencidas e retiradas não voltam.
