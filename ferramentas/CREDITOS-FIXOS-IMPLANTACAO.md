@@ -6,10 +6,13 @@ Decisões: [issue #275](https://github.com/joaovictorteniscoach-cpu/familiajk/is
 ## Decisões do João — 13/11/2026 (valem para a implantação de dezembro)
 
 - **Só créditos, sem reposição.** O que sobra no mês continua como crédito do mesmo tipo (particular ou grupo).
-- **Planos:** 4 créditos por mês em todo plano; opção de **8 aulas pelo dobro do valor**. No misto, cada parte tem 4 ou 8.
+- **Pacote fixo (João, 13/11: "sem ficar confuso"):** uma lista curta de pacotes; cada aluno escolhe um no cadastro e
+  fica com ele até mudar. Básicos: **4, 8 e 12** aulas por mês (8 = dobro do valor do 4; 12 = triplo). Pacotes com
+  locação ou com parte em grupo entram na mesma lista, definidos uma vez (aulas particulares, em grupo e locações por mês
+  + valor). A renovação soma exatamente o que o pacote dá.
 - **Pacotes com locação (4 alunos já usam):** "2 aulas + 2 locações" — o tipo das 2 aulas (particular ou grupo) é escolhido
-  no cadastro de cada aluno. Locação vira mais um tipo de crédito dentro dos 4 (ou 8). Há também "3 aulas em grupo";
-  **falta confirmar** se fecha com 1 locação, 1 particular ou se é plano de 3.
+  no cadastro de cada aluno. Locação vira mais um tipo de crédito dentro do pacote. "3 aulas em grupo" entra na lista
+  como o João definir (conferir no backup como esses alunos estão hoje).
 - **Cada crédito no seu tipo:** sobra de locação só serve para locação; de aula, só para aula (regra de hoje).
 - **Hora de locação além do pacote:** preço de locação da tabela.
 - **Validade: 6 meses**, contados do mês em que o crédito entrou. Os mais antigos são usados primeiro.
