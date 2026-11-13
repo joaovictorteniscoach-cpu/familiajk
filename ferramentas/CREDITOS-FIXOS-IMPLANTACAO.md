@@ -21,6 +21,13 @@ Decisões: [issue #275](https://github.com/joaovictorteniscoach-cpu/familiajk/is
   aulas ou particular + grupo continuam iguais, sem mudar preço em dezembro. 4, 8 e 12 são o padrão para aluno novo e
   para quem muda pelo app. Na simulação (só leitura, dados fora do repositório): 40 ativos, 8 sem nenhum ajuste,
   23 aulas antigas viram crédito e nenhuma vence na passagem; nenhuma família com saldo compartilhado ligado.
+- **Telas aprovadas pelo João (13/11)** na prévia privada. Casos individuais da simulação (saldo a corrigir, tipo das
+  aulas antigas de quem faz particular + grupo, família que usa um saldo só, aluno sem aula, pacote de grupo cadastrado
+  errado) são resolvidos pelo João: na tela de passagem ele corrige o número final com motivo e escolhe o tipo; família
+  com um saldo só usa "Configurar saldo compartilhado" (#279). Tudo fica no extrato, com versão salva e desfazer.
+- **Entregas:** 1) antes do fim de novembro: passagem, validade, renovação automática, textos sem "reposição", pacote
+  4/8/12 no cadastro e locação no pacote, publicada desligada; o aviso de fim de novembro já fala do modelo novo quando o
+  João agendar dezembro. 2) logo depois: "Meus horários fixos" no app do aluno, com o valor na hora.
 - **Renovação automática do mesmo pacote (13/11):** o pacote se repete todo mês, mas os créditos do mês só entram quando
   o aluno toca em **Manter** no app ou quando o João registra o pagamento. Nunca duas vezes no mesmo mês.
 - **Aviso ao aluno na virada:** "continuar no mesmo pacote ou mudar os horários". O próprio aluno muda os horários fixos
