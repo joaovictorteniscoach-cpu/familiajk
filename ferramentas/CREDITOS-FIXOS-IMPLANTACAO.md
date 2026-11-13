@@ -32,6 +32,9 @@ Decisões: [issue #275](https://github.com/joaovictorteniscoach-cpu/familiajk/is
   o aluno toca em **Manter** no app ou quando o João registra o pagamento. Nunca duas vezes no mesmo mês.
 - **Aviso ao aluno na virada:** "continuar no mesmo pacote ou mudar os horários". O próprio aluno muda os horários fixos
   na agenda e vê o pacote e a mensalidade novos na hora (1x/semana = 4, 2x = 8, 3x = 12).
+- **Pacote é mensal (João, 13/11):** a partir de dezembro o aluno ativo não deixa de pagar um mês por conta própria
+  (ex.: viagem); a mensalidade do pacote continua valendo e aparece como pendente. Para parar ou pausar, o João muda o
+  pacote ou inativa o aluno.
 - **Quando vale a mudança:** no mês seguinte. Se o aluno mudar no começo do mês e ainda não tiver pago, já vale para o
   mês em curso.
 - **Preço combinado diferente da tabela:** a mudança vai para o João aprovar; o app não troca sozinho valor combinado.
