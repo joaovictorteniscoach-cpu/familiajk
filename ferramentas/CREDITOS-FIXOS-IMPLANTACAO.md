@@ -3,6 +3,21 @@
 Responsável: Codex. Base: `66a455948c42ce1906980ae48001b933a65e6246`.
 Decisões: [issue #275](https://github.com/joaovictorteniscoach-cpu/familiajk/issues/275).
 
+## Decisões do João — 13/11/2026 (valem para a implantação de dezembro)
+
+- **Só créditos, sem reposição.** O que sobra no mês continua como crédito do mesmo tipo (particular ou grupo).
+- **Planos:** 4 créditos por mês em todo plano; opção de **8 aulas pelo dobro do valor**. No misto, cada parte tem 4 ou 8.
+- **Validade: 6 meses**, contados do mês em que o crédito entrou. Os mais antigos são usados primeiro.
+- **Reposições que já existem** viram créditos do tipo delas, com os 6 meses contados da **data original**.
+  As que não têm data (de antes do extrato) passam a contar do mês da migração. As já vencidas e retiradas não voltam.
+- **Desconto de até 25% acaba** a partir de dezembro: crédito só vale aula. Descontos já aplicados ficam no histórico.
+- **Família:** mesmo horário, aula junta; cada aula tira **1 crédito do pacote da família**, venha quem vier.
+- **Cancelamento:** regra de hoje. 4 h ou mais de antecedência, o crédito fica; menos de 4 h ou falta, conta como aula dada;
+  chuva não desconta.
+- **Aula além do saldo** (ex.: 5ª aula sem crédito guardado): valor unitário do plano (mensalidade ÷ aulas do plano).
+- **Começo: dezembro de 2026.** A troca é uma ferramenta que o João aciona, com prévia aluno por aluno, versão salva antes
+  e desfazer. Nada muda sozinho ao abrir o app.
+
 ## Regras implementadas no calculador isolado
 
 - Mensalidade fixa compra X créditos do plano; saldo anterior não reduz essa compra.

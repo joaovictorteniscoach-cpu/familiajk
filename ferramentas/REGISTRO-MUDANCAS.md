@@ -8,6 +8,18 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-13 · Claude Code: decisões do João para "só créditos" a partir de dezembro
+
+- Conferência pedida pelo João (só lista): a troca para "só créditos" **não estava feita**; o calculador da #275 segue
+  fora dos apps. Desde a #282 nenhuma conta de crédito mudou (#284–#286 só telas, ícones e funções sem uso);
+  16 testes de crédito passaram na versão publicada 2026-11-13-2. Nenhum dado alterado.
+- Decisões do João registradas em `CREDITOS-FIXOS-IMPLANTACAO.md`: 4 créditos (ou 8 pelo dobro), validade de 6 meses,
+  reposições viram créditos contando da data original, fim do desconto de 25%, família = 1 crédito do pacote por aula
+  junta, cancelamento como hoje, início em dezembro por ferramenta acionada por ele (prévia, versão salva, desfazer).
+- Próximo: simulação aluno por aluno com backup privado (fora do repositório) e prévia visual antes de qualquer código.
+
+---
+
 ## 2026-11-13 · Claude Code: apps mais leves (escolhas do João na página "Peso dos apps")
 
 - Medido ao abrir (390 px, sem cache): Gestão 2.622 → 2.487 KB; aluno 1.406 → 1.283 KB.
