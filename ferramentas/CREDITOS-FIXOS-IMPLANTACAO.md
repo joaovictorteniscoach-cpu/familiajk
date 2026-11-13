@@ -5,7 +5,9 @@ Decisões: [issue #275](https://github.com/joaovictorteniscoach-cpu/familiajk/is
 
 ## Decisões do João — 13/11/2026 (valem para a implantação de dezembro)
 
-- **Só créditos, sem reposição.** O que sobra no mês continua como crédito do mesmo tipo (particular ou grupo).
+- **Só créditos, sem reposição (palavra proibida nas telas e mensagens novas, pedido do João 13/11).** Aula não feita no
+  mês continua como **crédito** do mesmo tipo na virada. O aluno usa os créditos guardados para **agendar aulas a mais**.
+  Na passagem de dezembro, o saldo antigo de reposições aparece como "aulas antigas guardadas" e vira crédito.
 - **Pacote fixo (João, 13/11: "sem ficar confuso"):** uma lista curta de pacotes; cada aluno escolhe um no cadastro e
   fica com ele até mudar. Básicos: **4, 8 e 12** aulas por mês (8 = dobro do valor do 4; 12 = triplo). Pacotes com
   locação ou com parte em grupo entram na mesma lista, definidos uma vez (aulas particulares, em grupo e locações por mês
