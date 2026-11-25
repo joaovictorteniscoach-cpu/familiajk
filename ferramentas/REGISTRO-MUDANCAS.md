@@ -8,6 +8,17 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-25 · Codex: retomar alterações do aparelho após reabrir sem nuvem
+
+- Base `7115af0eec45c0c83c4b648c965b35f8bc7bfb52`; branch `codex/retomar-pendencias-nuvem-2026-11-25`.
+- **Problema reproduzido:** a marca persistente de edição sem confirmação era lida na abertura, mas a fila `cloudPending` não era restaurada quando as leituras falhavam. Ao reconectar, não havia tentativa de envio e o selo podia indicar "salvo na nuvem". O aparelho permanecia com dados mais atuais.
+- **Implementado em preparação:** restaurar a fila pela marca já existente; impedir confirmação no selo enquanto houver leitura não conferida, prazo esgotado ou erro. Sem mudar o conteúdo dos bancos, a comparação de bases, a transação atômica ou a resolução explícita de conflitos.
+- **Testado antes do PR:** reprodução com as funções reais no V8 falha na base e passa na correção; quatro cenários (pendência, somente leitura, conflito e leitura não conferida sem outro erro), sem alterar créditos fictícios nem publicar dados. Fontes compilam. Acrescentadas três regressões de navegador em cada motor (Chromium/WebKit) ao teste de abertura existente; execução completa e emulador dependem do CI do head final.
+- Versão **candidata** `2026-11-25-1`, cinco carimbos e demo atualizados. **Publicado até esta entrada:** `2026-11-13-2`. CI/publicação desta correção serão registrados no PR.
+- Não modifica regras ou configuração do Firebase, não ativa App Check, não restaura banco e não recalcula saldos. Não foi possível consultar os registros de conexão do aparelho; falhas de rede/permissão ainda devem ser distinguidas pelo aviso no próprio app. PR #273 preservado.
+
+---
+
 ## 2026-11-13 · Claude Code: apps mais leves (escolhas do João na página "Peso dos apps")
 
 - Medido ao abrir (390 px, sem cache): Gestão 2.622 → 2.487 KB; aluno 1.406 → 1.283 KB.
