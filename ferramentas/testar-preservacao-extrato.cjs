@@ -9,8 +9,8 @@ function extrair(nome){
  return fim?resto.slice(0,fim.index+1):resto;
 }
 function abrir(DB){
- const funcoes=['podarMovs','lotesRepos','reposPorIdade','movsDe','mesDoTs','mesesEntre','grupoSaldo','bancoSaldo','titularSaldo','saldo'].map(extrair).join('\n');
- return new Function('DB',"const MOVS_TETO=600,MOVS_MANTER=500,REPOS_VALIDADE=4;const mesReal=()=>'2026-11';"+funcoes+
+ const funcoes=['podarMovs','creditosUnicos','lotesRepos','reposPorIdade','movsDe','mesDoTs','mesesEntre','grupoSaldo','bancoSaldo','titularSaldo','saldo'].map(extrair).join('\n');
+ return new Function('DB',"const MOVS_TETO=600,MOVS_MANTER=500,REPOS_VALIDADE=4,CAMPOS_CRED=['creditos','credGrupo','locCred'];const mesReal=()=>'2026-11';"+funcoes+
   ';return {podarMovs,lotesRepos,reposPorIdade};')(DB);
 }
 const copia=x=>JSON.parse(JSON.stringify(x)),junho=Date.UTC(2026,5,1,12),setembro=Date.UTC(2026,8,1,12),outubro=Date.UTC(2026,9,1,12);

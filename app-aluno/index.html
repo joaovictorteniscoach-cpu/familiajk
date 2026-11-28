@@ -144,6 +144,8 @@ body[data-aba="aulas"] #bloco-saldo #scard-loc{grid-column:auto}
 /* mensalidade e status não são assunto da aba de aulas */
 body[data-aba="aulas"] #bloco-saldo .status-line,
 body[data-aba="aulas"] #bloco-saldo #repos-box{display:none}
+/* Só créditos (dez/2026): depois da passagem, nada de reposição na tela. */
+body.so-creditos #cred-page-repos-panel,body.so-creditos #home-repos-card{display:none!important}
 /* Avisos do topo só na aba onde servem (12/11, pedido do João): ficavam em
    cima das 7 abas, quase uma tela de avisos repetidos antes do conteúdo.
    Início mostra todos; Agenda e Minhas aulas, os de aula; Créditos, o do fim
@@ -1698,15 +1700,15 @@ html body:not(#jv) #pedir-box .btn-ghost{background:#F3EDE2!important;border:1px
 .login .login-sub{opacity:1}
 .login-priv{color:rgba(250,247,242,.8)}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-11-25-1">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-11-28-1">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-11-25-1">
-<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-11-25-1">
-<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-11-25-1">
-<link rel="stylesheet" href="lib/visual-sobrio.css?v=2026-11-25-1">
-<link rel="stylesheet" href="lib/letras-maiores.css?v=2026-11-25-1">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-11-28-1">
+<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-11-28-1">
+<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-11-28-1">
+<link rel="stylesheet" href="lib/visual-sobrio.css?v=2026-11-28-1">
+<link rel="stylesheet" href="lib/letras-maiores.css?v=2026-11-28-1">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -2134,12 +2136,14 @@ function esperarAuth(){
       <div class="jv-credit-panel">
         <div class="jv-pay-lbl">Créditos disponíveis</div>
         <div class="jv-credit-big"><span id="cred-page-saldo">0</span> <small>créditos</small></div>
+        <p class="hc-sub" id="cred-page-venc" hidden></p>
         <div class="jv-progress"><i id="cred-page-fill"></i></div>
         <div class="jv-row"><span>Plano atual</span><b id="cred-page-plano">—</b></div>
         <div class="jv-row"><span>Mensalidade</span><b id="cred-page-mens">—</b></div>
         <div class="jv-row"><span>Situação</span><b id="cred-page-status">—</b></div>
         <div class="jv-row" id="cred-page-recebido-row" hidden><span>Recebido</span><b id="cred-page-recebido">—</b></div>
         <div class="jv-row" id="cred-page-restante-row" hidden><span>Saldo a pagar</span><b id="cred-page-restante">—</b></div>
+        <button class="jv-pix-btn" id="cred-page-mais" type="button" hidden style="width:100%;margin-top:12px" onclick="goAluno('agenda',document.getElementById('nav-al-agenda'))">Agendar aula a mais ›</button>
       </div>
       <div class="jv-credit-panel" id="cred-page-repos-panel">
         <div class="jv-pay-lbl">Reposições disponíveis</div>
@@ -2219,7 +2223,7 @@ function esperarAuth(){
     <button id="nav-al-torneio" onclick="goAluno('torneio',this)"><span class="ico" aria-hidden="true" data-ic="navtrophy"></span><span class="nav-badge" id="nb-al-torneio"></span>Torneio</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" aria-hidden="true" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-11-25-1"></script>
+<script src="lib/icones.js?v=2026-11-28-1"></script>
 </div>
 
 <!-- ASSISTENTE POR VOZ: consultar horário livre, agendar, cancelar, ver aulas (lib/voz-aluno.js) -->
@@ -2456,7 +2460,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-11-25-1';
+const VERSAO='2026-11-28-1';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -2724,9 +2728,9 @@ function dependenteAluno(){return !!(EU&&EU.familia&&EU.familia.papel==='depende
 function familiaAluno(){return !!(EU&&EU.familia);}
 function infoFamiliaAluno(){
   if(!familiaAluno())return '';
-  if(dependenteAluno())return 'Mensalidade incluída no plano família. Pagamento por '+(EU.familia.responsavelNome||'seu responsável')+'. Seus créditos e reposições são individuais.';
+  if(dependenteAluno())return 'Mensalidade incluída no plano família. Pagamento por '+(EU.familia.responsavelNome||'seu responsável')+'. Seus créditos'+(soCreditosAluno()?' são individuais.':' e reposições são individuais.');
   const deps=Array.isArray(EU.familia.dependentes)?EU.familia.dependentes:[];
-  return 'Você é o responsável pelo pagamento único da família.'+(deps.length?' Dependentes: '+deps.map(x=>x.nome).join(', ')+'.':'')+' Cada pessoa mantém seus próprios créditos e reposições.';
+  return 'Você é o responsável pelo pagamento único da família.'+(deps.length?' Dependentes: '+deps.map(x=>x.nome).join(', ')+'.':'')+' Cada pessoa mantém seus próprios créditos'+(soCreditosAluno()?'.':' e reposições.');
 }
 function avisoPagamentoFamilia(){toast('Pagamento pelo responsável: '+(EU&&EU.familia&&EU.familia.responsavelNome||'plano família')+'.');}
 function fmtMens(){return dependenteAluno()?'Incluída na família':(mensOculta()?'após aprovação':fmt(EU.mensalidade));}
@@ -3535,6 +3539,22 @@ function vencimentoPremium(hoje){
   if(EU.status==='pago')venc=dataNoMes(hoje.getFullYear(),hoje.getMonth()+1);
   return formatoDataPremium(dKey(venc));
 }
+/* ===== Só créditos (desde dez/2026) =====
+   Depois que o João passa para só créditos, não existe mais reposição no app:
+   um número só de créditos, com quando vence o próximo (cada crédito vale 6
+   meses; os mais antigos são usados primeiro) e o botão para agendar aula a
+   mais. A marca vem da Gestão (EU.soCreditos). */
+function soCreditosAluno(){return !!(EU&&EU.soCreditos);}
+function dataDiaMes(dk){const p=String(dk||'').split('-');return p.length===3?p[2]+'/'+p[1]:'';}
+function aplicarSoCreditosAluno(){
+  const so=soCreditosAluno();
+  document.body.classList.toggle('so-creditos',so);
+  const sh=document.querySelector('#apg-creditos .jv-subhero h2');if(sh)sh.innerHTML=so?'Seus <em>créditos</em>':'Créditos <em>e reposições</em>';
+  const v=so&&EU.credVence&&Number(EU.credVence.qtd)>0?EU.credVence:null;
+  const n=document.getElementById('cred-page-venc');
+  if(n){n.hidden=!so;n.textContent=so?('Cada crédito vale 6 meses'+(v?('. '+fmtCred(v.qtd)+(Number(v.qtd)>1?' vencem':' vence')+' em '+dataDiaMes(v.data)+'; os mais antigos são usados primeiro.'):'.')):'';}
+  const b=document.getElementById('cred-page-mais');if(b){b.hidden=!so;b.style.display=so?'flex':'none';}
+}
 function renderPremiumAluno(){
   if(!EU)return;carregarAvatarAluno();
   const prox=proximaAulaPremium(),pd=document.getElementById('home-prox-date'),pm=document.getElementById('home-prox-meta');
@@ -3547,7 +3567,7 @@ function renderPremiumAluno(){
   if(hx)hx.textContent=prox?((tpProx==='torneio'?'Próximo jogo: ':tpProx==='locacao'?'Próxima locação: ':'Próxima aula: ')+DIAS_FULL[dtOf(prox.data,prox.hora).getDay()].toLowerCase()+', '+prox.hora):'Nenhuma aula marcada';
   const sp=saldoPacoteAluno(),saldo=sp.total,plano=(Number(EU.plano)||0)+(Number(EU.planoGrupo)||0);
   const hc=document.getElementById('home-cred');if(hc)hc.textContent=fmtCred(saldo);
-  const hcs=document.getElementById('home-cred-sub');if(hcs)hcs.textContent=(plano>0?('créditos · de '+plano+' no plano atual'):'créditos disponíveis')+(detalheSaldoAluno(sp)?' · '+detalheSaldoAluno(sp):'');
+  const hcs=document.getElementById('home-cred-sub');if(hcs)hcs.textContent=(plano>0?(soCreditosAluno()?('créditos · pacote de '+plano+' por mês'):('créditos · de '+plano+' no plano atual')):'créditos disponíveis')+(detalheSaldoAluno(sp)?' · '+detalheSaldoAluno(sp):'');
   const hf=document.getElementById('home-cred-fill');if(hf)hf.style.width=(plano>0?Math.max(0,Math.min(100,saldo/plano*100)):(saldo>0?100:0))+'%';
   const hp=document.getElementById('home-plano');if(hp)hp.textContent=planoPremium();
   const hps=document.getElementById('home-plano-sub');if(hps)hps.textContent=plano>0?(fmtCred(plano)+(plano===1?' aula':' aulas')+' por mês'):'Fale com o João para escolher um plano';
@@ -3587,6 +3607,7 @@ function renderPremiumAluno(){
   const cln=document.getElementById('cred-page-loc-note');if(cln)cln.textContent=loc>0?'Horas de locação já pagas. Escolha um horário livre na Agenda e toque em "Alugar a quadra".':'Você usou mais horas de locação do que pagou. Fale com a academia para acertar.';
   const cla=document.getElementById('cred-page-loc-agendar');if(cla)cla.style.setProperty('display',loc>0?'flex':'none','important');
   const ra=document.getElementById('cred-page-repos-agendar');if(ra){ra.hidden=repos<=0;ra.style.display=repos>0?'flex':'none';}
+  aplicarSoCreditosAluno();
   const cp=document.getElementById('cred-page-plano');if(cp)cp.textContent=planoPremium();
   const cm=document.getElementById('cred-page-mens');if(cm)cm.textContent=fmtMens();
   const cst=document.getElementById('cred-page-status');if(cst)cst.textContent=EU.status==='pago'?'Em dia':(EU.status==='parcial'?rotuloParcialAluno():'Pendente');
@@ -5382,7 +5403,17 @@ function checarRenovacao(){
   const v=valorMensalAtual();
   const aulas=(Number(EU.plano)||0)+(Number(EU.planoGrupo)||0);   // dupla nova: o pacote mora em planoGrupo (07/11)
   const planoTxt=aulas?('No seu plano <b>Flex '+aulas+'</b> ('+aulas+' aula'+(aulas===1?'':'s')+' no mês), a'):'A';
-  document.getElementById('renova-txt').innerHTML='Faltam <b>'+faltam+' dia'+(faltam===1?'':'s')+'</b> para virar o mês. '+planoTxt+' mensalidade de <b>'+nomeProx+'</b>'+(v?(' fica em <b>'+fmt(v)+'</b>'):'')+'. Quer manter assim?';
+  const so=soCreditosAluno(),guard=so?(Number(saldoPacoteAluno().total)||0):0;
+  document.getElementById('renova-txt').innerHTML=so
+    ?('Faltam <b>'+faltam+' dia'+(faltam===1?'':'s')+'</b> para virar o mês. '+(aulas?'Seu pacote: <b>'+aulas+' aula'+(aulas===1?'':'s')+'</b> por mês. ':'')
+      +'Mensalidade de <b>'+nomeProx+'</b>'+(v?(': <b>'+fmt(v)+'</b>'):'')+'.'
+      +(guard>0?' Você tem <b>'+fmtCred(guard)+' crédito'+(guard===1?'':'s')+'</b> guardado'+(guard===1?'':'s')+': continua'+(guard===1?'':'m')+' valendo e serve'+(guard===1?'':'m')+' para agendar aulas a mais.':'')
+      +'<br><br>Quer continuar no mesmo pacote ou mudar seus horários?')
+    :('Faltam <b>'+faltam+' dia'+(faltam===1?'':'s')+'</b> para virar o mês. '+planoTxt+' mensalidade de <b>'+nomeProx+'</b>'+(v?(' fica em <b>'+fmt(v)+'</b>'):'')+'. Quer manter assim?');
+  const bts=box.querySelectorAll('div button');
+  if(bts[0])bts[0].textContent=so?'✅ Continuar no mesmo pacote':'✅ Manter e pagar (Pix)';
+  if(bts[1])bts[1].textContent=so?'🗓️ Mudar meus horários':'✏️ Mudar plano ou dias';
+  const tit=box.querySelector('b');if(tit)tit.textContent=so?'🗓️ '+nomeProx+' chegando':'🗓️ Fim do mês chegando';
   box.style.display='block';
 }
 function valorMensalAtual(){
@@ -5946,7 +5977,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-11-25-1').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-11-28-1').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
@@ -5955,6 +5986,6 @@ window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);})
   setTimeout(()=>esperarEIniciar(t+1),150);
 })(0);
 </script>
-<script src="lib/voz-aluno.js?v=2026-11-25-1"></script>
+<script src="lib/voz-aluno.js?v=2026-11-28-1"></script>
 </body>
 </html>

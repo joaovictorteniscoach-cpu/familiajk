@@ -105,6 +105,7 @@ jobs:
           node ferramentas/testar-contagem-locacoes-browser.cjs
           node ferramentas/testar-extrato-resumido-browser.cjs
           node ferramentas/testar-renovacao-debito-browser.cjs
+          node ferramentas/testar-so-creditos-browser.cjs
           node ferramentas/testar-detalhe-inicio-browser.cjs
           node ferramentas/testar-lanc-locacao-horas-browser.cjs
           node ferramentas/testar-diferenca-agenda-browser.cjs

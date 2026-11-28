@@ -3103,6 +3103,10 @@ body.ficha-on{overflow:hidden}
 .rm-l small{color:#B9C4B8;-webkit-text-fill-color:#B9C4B8}
 .rm-dif{color:#F6DB86;-webkit-text-fill-color:#F6DB86;font-weight:700}
 .rm-esc{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px}
+/* Passar para só créditos (dez/2026): correção e tipo das aulas antigas */
+.sc-corr{margin-top:8px}
+.sc-corr summary{cursor:pointer;font-size:12px;font-weight:700;color:var(--jv-muted,#B9C2B8)}
+#so-creditos input[type=number],#so-creditos input[type=text]{font-size:16px;height:36px;min-height:0;display:inline-block;vertical-align:middle;padding:6px 8px;border-radius:9px;border:1px solid var(--jv-line,rgba(190,211,190,.25));background:#F8F5ED;color:#101E18;-webkit-text-fill-color:#101E18}
 .rm-esc button{border:1px solid var(--jv-line,rgba(190,211,190,.25));background:var(--jv-control,#315A49);color:#F6F2EA;-webkit-text-fill-color:#F6F2EA;
   border-radius:10px;padding:8px 6px;font-size:12px;font-weight:750;line-height:1.25}
 .rm-esc button.on{background:#D5B24A;color:#1E1A0E;-webkit-text-fill-color:#1E1A0E;border-color:#D5B24A}

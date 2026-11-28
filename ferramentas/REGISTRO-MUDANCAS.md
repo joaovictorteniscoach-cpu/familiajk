@@ -8,6 +8,33 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-28 · Claude Code: só créditos — passagem acionada pelo João (versão 2026-11-28-1)
+
+- Pedido do João (decisões de 13/11, prazo 1º/12). Base `c93345b` (main com #287 publicado).
+- **Passar para só créditos** (`abrirPassagem`/`passarParaCreditos`/`desfazerPassagem`): sobra do pacote continua como
+  crédito com o mês em que entrou; aulas antigas guardadas viram crédito do tipo delas com a data original; o que passou
+  de 6 meses sai; correção com motivo; tipo das antigas para quem faz particular + grupo. Versão salva antes, mesma chave
+  no extrato, desfazer. Nada muda sozinho: a marca `DB.creditosUnicos` só existe depois que o João confirma.
+- Em dezembro, antes da passagem, Início avisa e Renovar/virar o mês só abrem a passagem (evita a sobra virar reposição).
+- Depois da passagem: renovação soma o pacote ao que sobrou; virada só tira o crédito com mais de 6 meses; ✓ tira o
+  vencido antes de gastar; compactação não resume crédito pós-passagem; ficha e app do aluno sem reposição, com o
+  próximo vencimento ("Agendar aula a mais"); assistente de voz do aluno responde em créditos.
+- **Pacote é o que o aluno escolheu (João, 28/11):** a renovação cobra o pacote (ex.: 4 aulas), nunca o total de
+  créditos (ex.: 6 com 2 guardados) nem a contagem de aulas do calendário do mês (5 semanas). No só créditos, "Renovar o
+  mês" sempre usa o pacote do cadastro; se a agenda tiver outra frequência (2x/semana com pacote 4) aparece só uma dica;
+  a "diferença agenda × valor" não se aplica (`difSilenciada`). Auxiliar `vezesPorSemana`.
+- **Aula a mais no mês (João, 28/11):** se a agenda do mês tem mais aulas do que o pacote (5ª semana, aula marcada a
+  mais) e o crédito guardado não cobre, a renovação já cobra a aula a mais pelo valor de 1 aula do pacote (mensalidade ÷
+  aulas; no particular + grupo, o valor da aula de cada tipo) e dá o crédito dela. Só o valor deste mês muda
+  (`valoresMensais`); a mensalidade do cadastro fica. No lote dá para "Não cobrar agora"; no individual o app pergunta.
+  Família fica de fora (o João acerta). `aulasAMaisDoMes`, `gravarValorDoMesComExtra`, `rmExtra`.
+- Testes: `testar-so-creditos-browser.cjs` (17 verificações, dados fictícios); `testar-preservacao-extrato` e
+  `checar-familia-runtime` recebem os auxiliares novos. Nenhuma regra do Firebase, nenhum dado real.
+- **Próximo:** tirar dos apps tudo de reposição e desconto depois da passagem (pedido do João em 28/11); renovação
+  sozinha; 4/8/12 e locação no cadastro; "Meus horários fixos".
+
+---
+
 ## 2026-11-25 · Codex: retomar alterações do aparelho após reabrir sem nuvem
 
 - Base `7115af0eec45c0c83c4b648c965b35f8bc7bfb52`; branch `codex/retomar-pendencias-nuvem-2026-11-25`.
@@ -15,7 +42,27 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 - **Implementado em preparação:** restaurar a fila pela marca já existente; impedir confirmação no selo enquanto houver leitura não conferida, prazo esgotado ou erro. Sem mudar o conteúdo dos bancos, a comparação de bases, a transação atômica ou a resolução explícita de conflitos.
 - **Testado antes do PR:** reprodução com as funções reais no V8 falha na base e passa na correção; quatro cenários (pendência, somente leitura, conflito e leitura não conferida sem outro erro), sem alterar créditos fictícios nem publicar dados. Fontes compilam. Acrescentadas três regressões de navegador em cada motor (Chromium/WebKit) ao teste de abertura existente; execução completa e emulador dependem do CI do head final.
 - Versão **candidata** `2026-11-25-1`, cinco carimbos e demo atualizados. **Publicado até esta entrada:** `2026-11-13-2`. CI/publicação desta correção serão registrados no PR.
+- **Publicado: 2026-11-25-1** (#287, merge `c93345b`, em 28/11 com OK do João). Monitor confirmou a versão na Gestão Pages, Aluno Pages e Aluno Netlify.
 - Não modifica regras ou configuração do Firebase, não ativa App Check, não restaura banco e não recalcula saldos. Não foi possível consultar os registros de conexão do aparelho; falhas de rede/permissão ainda devem ser distinguidas pelo aviso no próprio app. PR #273 preservado.
+
+---
+
+## 2026-11-13 · Claude Code: decisões do João para "só créditos" a partir de dezembro
+
+- Conferência pedida pelo João (só lista): a troca para "só créditos" **não estava feita**; o calculador da #275 segue
+  fora dos apps. Desde a #282 nenhuma conta de crédito mudou (#284–#286 só telas, ícones e funções sem uso);
+  16 testes de crédito passaram na versão publicada 2026-11-13-2. Nenhum dado alterado.
+- Decisões do João registradas em `CREDITOS-FIXOS-IMPLANTACAO.md`: 4 créditos (ou 8 pelo dobro), validade de 6 meses,
+  reposições viram créditos contando da data original, fim do desconto de 25%, família = 1 crédito do pacote por aula
+  junta, cancelamento como hoje, início em dezembro por ferramenta acionada por ele (prévia, versão salva, desfazer).
+- Depois: pacotes com locação ("2 aulas + 2 locações", tipo das aulas no cadastro; "3 aulas em grupo" a confirmar),
+  cada crédito no seu tipo, hora de locação extra pela tabela.
+- Depois: pacote fixo por aluno (4/8/12 e combinados) que se repete todo mês; créditos entram quando o aluno toca em
+  Manter ou o João registra o pagamento; o aluno muda os horários fixos e vê pacote/valor na hora (vale no mês seguinte,
+  ou no corrente se for no começo e ainda não pago); preço combinado vai para o João aprovar.
+- Prévia visual das telas publicada para o João (página privada, alunos fictícios). Simulação com o backup de 13/11 feita
+  só em leitura, fora do repositório; o backup foi apagado. Decisão: quem tem pacote fora de 4/8/12 fica como está.
+- Próximo: OK do João nas telas e implementação atrás de chave, publicada desligada.
 
 ---
 
@@ -35,6 +82,8 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 - **Ficam por escolha do João:** os dois estilos de tema ao abrir (1), Professores (4, sem resposta), Arquivar antigos
   (6) e tudo que ele usa (7–12: voz, avaliações/Evolução, Escritório JV, relatório PDF, voz do aluno, lista de espera).
 - Versão 2026-11-13-2. Nenhum dado, crédito ou regra do Firebase mudou.
+- **Publicado: 2026-11-13-2** (#286, merge `7115af0`). Monitor confirmou a versão na Gestão Pages, Aluno Pages e
+  Aluno Netlify, e o site acessível.
 
 ---
 
