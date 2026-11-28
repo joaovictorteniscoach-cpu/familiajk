@@ -8060,7 +8060,7 @@ function renderRenovaMes(){
   const nAt=L.filter(x=>x.atencao).length, nBl=L.filter(x=>x.bloqueio).length;
   let h='<div class="rm-intro"><b>'+nomeMes+'</b> · confira e renove de uma vez. Marque somente quem ainda precisa renovar. Desmarcados e já renovados ficam sem alteração.'
     +'<div class="rm-chips"><span>'+L.length+' ativos</span>'
-    +(nAt?'<span class="at">⚠️ '+nAt+' pedem atenção</span>':'')
+    +(nAt?'<span class="at">⚠️ '+nAt+(nAt===1?' pede':' pedem')+' atenção</span>':'')
     +(nBl?'<span class="bl">🔒 '+nBl+' fora</span>':'')+'</div></div>';
   h+=L.map(x=>{
     const a=x.a, id=a.id, on=!x.bloqueio&&rmSel[id];
@@ -8082,7 +8082,7 @@ function renderRenovaMes(){
       +'<button class="'+(x.usa==='pacote'?'on':'')+'" onclick="rmUsar(\''+id+'\',\'pacote\')">Cadastro · '+fmtCred(x.p+x.pg)+' · '+fmt(x.mens)+'</button></div>';
     if(x.soCred){
       /* Só créditos: o pacote soma ao que sobrou; nenhuma linha de reposição. */
-      t+='<div class="rm-l">Pacote: <b>'+fmtCred(x.novo.p+x.novo.pg)+' aulas</b> · '+fmt(x.novo.mens)+' <small>(o que ele escolheu; os créditos guardados não mudam o valor)</small></div>';
+      t+='<div class="rm-l">Pacote: <b>'+(ehMisto(a)?fmtCred(x.novo.p)+' particulares + '+fmtCred(x.novo.pg)+' em grupo':fmtCred(x.novo.p+x.novo.pg)+' aulas')+'</b> · '+fmt(x.novo.mens)+' <small>(o que ele escolheu; os créditos guardados não mudam o valor)</small></div>';
       if(x.dicaSemana)t+='<div class="rm-aviso">📅 A agenda tem '+x.porSemana+'x por semana (pacote de '+x.pacoteSemana+'). Se ele mudou o pacote, troque no cadastro antes de renovar.</div>';
       const xs=x.extraSug;
       if(xs&&xs.aulasMes>xs.incluidas){
@@ -8094,7 +8094,8 @@ function renderRenovaMes(){
         else t+='<div class="rm-l">📅 '+nomeMes+' tem '+fmtCred(xs.aulasMes)+' aulas na agenda: as que passam do pacote usam crédito guardado.</div>';
       }
       const gLinha=x.novo.pg>0||(x.g&&!x.grupoSo);
-      t+='<div class="rm-l">Créditos <b>'+fmtCred(x.grupoSo&&x.soGrupoPG?x.g:x.c)+' → '+fmtCred(x.grupoSo&&x.soGrupoPG?x.gDep:x.cFinal)+'</b> <small>(+'+fmtCred(x.grupoSo&&x.soGrupoPG?x.novo.pg:x.novo.p)+' do pacote; o que sobrou continua)</small>'
+      t+='<div class="rm-l">Créditos <b>'+fmtCred(x.grupoSo&&x.soGrupoPG?x.g:x.c)+' → '+fmtCred(x.grupoSo&&x.soGrupoPG?x.gDep:x.cFinal)+'</b> <small>(+'+fmtCred(x.grupoSo&&x.soGrupoPG?x.novo.pg:x.novo.p)+' do pacote'
+        +((x.grupoSo&&x.soGrupoPG?x.extra.porCampo.credGrupo:x.extra.porCampo.creditos)>0?' + '+fmtCred(x.grupoSo&&x.soGrupoPG?x.extra.porCampo.credGrupo:x.extra.porCampo.creditos)+' a mais':'')+'; o que sobrou continua)</small>'
         +(valorMuda&&!x.difere?' · valor '+fmt(x.mens)+' → '+fmt(x.novo.mens):'')+'</div>';
       if(gLinha&&!(x.grupoSo&&x.soGrupoPG))t+='<div class="rm-l">Créditos em grupo <b>'+fmtCred(x.g)+' → '+fmtCred(x.gDep)+'</b></div>';
     }else{
