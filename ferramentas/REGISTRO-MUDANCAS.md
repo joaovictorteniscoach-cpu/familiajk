@@ -11,6 +11,8 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 ## 2026-11-28 · Claude Code: só créditos — passagem acionada pelo João (versão 2026-11-28-1)
 
 - Pedido do João (decisões de 13/11, prazo 1º/12). Base `c93345b` (main com #287 publicado).
+- **Publicado: 2026-11-28-1** (#288, merge `fc8db3e`, com OK do João). Monitor confirmou a versão na Gestão Pages, Aluno
+  Pages e Aluno Netlify. Entra desligado: nada muda até o João tocar em "Passar para só créditos".
 - **Passar para só créditos** (`abrirPassagem`/`passarParaCreditos`/`desfazerPassagem`): sobra do pacote continua como
   crédito com o mês em que entrou; aulas antigas guardadas viram crédito do tipo delas com a data original; o que passou
   de 6 meses sai; correção com motivo; tipo das antigas para quem faz particular + grupo. Versão salva antes, mesma chave
