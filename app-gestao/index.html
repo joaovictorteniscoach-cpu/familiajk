@@ -817,6 +817,7 @@ function esperarAuth(){
     <button onclick="document.getElementById('import-file').click()"><i>⬆️</i><span>Importar</span><small>restaurar cópia</small></button>
     <button onclick="document.getElementById('import-agenda').click()"><i>🗓️</i><span>Recuperar agenda</span><small>de um arquivo, só a agenda</small></button>
     <button onclick="irParaAba('fech')"><i>🧾</i><span>Fechamento</span><small>enviar ao aluno</small></button>
+    <button onclick="abrirPassagem()"><i>🧮</i><span>Só créditos</span><small>passar ou desfazer</small></button>
     <!-- Pacote único: escondido desde 13/11 (nunca ligado); volta sozinho se estiver ligado, para dar para desligar. -->
     <button data-box="pu-box" hidden onclick="abrirFerr('pu-box',renderPacoteUnico)"><i>🎾</i><span>Pacote único</span><small>particular + grupo juntos</small></button>
     <button data-box="rel-box" onclick="gerarRelatorioPDF()"><i>📄</i><span>Relatório de aulas</span><small>PDF dos últimos 3 meses</small></button>
@@ -1803,6 +1804,15 @@ function esperarAuth(){
 </div>
 
 <!-- Renovar o mês: todos os alunos numa tela, com a conta pronta -->
+<!-- Passar para só créditos (dez/2026): o João toca uma vez; mesma cara do Renovar o mês -->
+<section class="ficha" id="so-creditos" aria-hidden="true">
+  <div class="fic-top">
+    <button class="fic-voltar" onclick="fecharPassagem()">‹ Voltar</button>
+    <span class="fic-top-nome">🧮 Passar para só créditos</span>
+  </div>
+  <div class="fic-corpo" id="sc-corpo"></div>
+  <div class="rm-pe" id="sc-pe"></div>
+</section>
 <section class="ficha" id="renova-mes" aria-hidden="true">
   <div class="fic-top">
     <button class="fic-voltar" onclick="fecharRenovaMes()">‹ Voltar</button>
