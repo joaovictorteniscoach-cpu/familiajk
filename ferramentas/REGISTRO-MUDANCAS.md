@@ -11,6 +11,8 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 ## 2026-11-28 · Claude Code: aluno inativo não agenda nem usa crédito (versão 2026-11-28-2)
 
 - Pedido do João (28/11): "ele só vai poder usar os créditos se ele pagar a mensalidade e ele estiver ativo".
+- **Publicado: 2026-11-28-2** (#289, merge `9c643ac`, com OK do João após a prévia). Monitor confirmou a versão na
+  Gestão Pages, Aluno Pages e Aluno Netlify. Locação e torneio também travados para o inativo (mostrado na prévia).
   Escolhas dele: pagamento = **manter a folga até o vencimento** (nada mudou nessa regra); inativo = **travar**.
 - Gestão: `alunoPublicado` manda `inativo:1` só para quem o João marcou como inativo (`arquivado===true`). Quem só
   joga torneio ou só aluga a quadra, sem plano, continua 0 (o `ehAtivoAluno` contaria como inativo).
