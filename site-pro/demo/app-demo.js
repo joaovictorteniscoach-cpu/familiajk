@@ -6953,7 +6953,9 @@ function agendaDoMes(a){const d=new Date();return mensalidadeDaAgenda(a,d.getFul
    justamente o aluno que faz reposição ou aula extra com crédito que já tinha,
    o caso em que a diferença é esperada. O mês é o de hoje (o mesmo da conta da
    agenda), não o mês aberto no cabeçalho. */
-function difSilenciada(a){return temFamilia(a)||!!(a&&a.difOk&&a.difOk.mes===mesReal());}
+/* Só créditos: o pacote é fixo (o que o aluno escolheu), não o número de aulas que o
+   calendário do mês dá; a 5ª semana usa crédito guardado. A diferença não se aplica. */
+function difSilenciada(a){return creditosUnicos()||temFamilia(a)||!!(a&&a.difOk&&a.difOk.mes===mesReal());}
 /* Renovar começa um ciclo novo, mas a decisão sobre a diferença vale para o
    MÊS: se o João já decidiu neste mês, continua decidida. O desfazer some
    (desfazer depois de renovar trocaria o plano sem mexer nos créditos). */
@@ -7939,9 +7941,11 @@ function rmLinha(a){
   const temAg=ag.total>0;
   let agP=grupoSo?(soGrupoPG?0:ag.grupo):ag.part, agPG=grupoSo?(soGrupoPG?ag.grupo:0):((pg>0||ag.grupo>0)?ag.grupo:pg);
   if(uni){p=p+pg;pg=0;c=c+g;g=0;agP=ag.total;agPG=0;}
-  const difere=temAg&&(agP!==p||agPG!==pg||(!temFamilia(a)&&ag.valor!==mens));
+  const soCredR=creditosUnicos();
+  const difere=!soCredR&&temAg&&(agP!==p||agPG!==pg||(!temFamilia(a)&&ag.valor!==mens));
   const fam=temFamilia(a);
-  const usa=temAg?(rmEscolha[a.id]||(fam?'pacote':'agenda')):'pacote';
+  const usa=(temAg&&!soCredR)?(rmEscolha[a.id]||(fam?'pacote':'agenda')):'pacote';
+  const porSemana=vezesPorSemana(a),pacoteSemana=porSemana*4,dicaSemana=soCredR&&porSemana>0&&!ehMisto(a)&&pacoteSemana!==(p+pg);
   const novo=(usa==='agenda')?{p:agP,pg:agPG,mens:fam?mens:ag.valor}:{p,pg,mens};
   const jaRenov=renovacoesDoMes(a).length>0, ajusteManual=ajusteManualRenovacao(a);
   const soCred=creditosUnicos();                       // só créditos: nada vira reposição
@@ -7962,8 +7966,8 @@ function rmLinha(a){
     const dispAnt=Math.max(0,c)+Math.max(0,g)+(r-venc), dispDep=Math.max(0,cFinal)+Math.max(0,gDep)+reposDepois;
     if(dispDep<dispAnt)bloqueio='ficaria com menos aulas do que tem hoje — confira o cadastro';
   }
-  const atencao=!bloqueio&&(difere||!temAg||devia>0);
-  return {a,ag,temAg,difere,usa,novo,p,pg,mens,c,g,r,venc,sobra,reposDepois,gDep,cFinal,deve,devG,descontar,devia,bloqueio,atencao,grupoSo,uni,soGrupoPG,jaRenov,ajusteManual,soCred};
+  const atencao=!bloqueio&&(difere||(!temAg&&!soCredR)||devia>0||dicaSemana);
+  return {a,ag,temAg,difere,usa,novo,p,pg,mens,c,g,r,venc,sobra,reposDepois,gDep,cFinal,deve,devG,descontar,devia,bloqueio,atencao,grupoSo,uni,soGrupoPG,jaRenov,ajusteManual,soCred,porSemana,pacoteSemana,dicaSemana};
 }
 function rmLinhas(){
   return (DB.alunos||[]).filter(ehAtivoAluno).filter(a=>perfilDe(a)!=='torneio').filter(saldoProprio).map(rmLinha)
@@ -8026,13 +8030,15 @@ function renderRenovaMes(){
         +'<button onclick="rmLiberarCorrecao(\''+argJs(id)+'\')">Foi só correção · conferir renovação</button></div>';
       t+='</div></div>';return t;
     }
-    t+='<div class="rm-l">'+(x.temAg?('📅 '+x.ag.total+' aula(s) na agenda de '+nomeMes):'📅 sem horário fixo na agenda — usa o pacote do cadastro')
+    if(!x.soCred)t+='<div class="rm-l">'+(x.temAg?('📅 '+x.ag.total+' aula(s) na agenda de '+nomeMes):'📅 sem horário fixo na agenda — usa o pacote do cadastro')
       +(x.temAg&&(x.ag.total!==x.p+x.pg)?' <span class="rm-dif">· cadastro: '+fmtCred(x.p+x.pg)+'</span>':'')+'</div>';
     if(x.difere)t+='<div class="rm-esc">'
       +'<button class="'+(x.usa==='agenda'?'on':'')+'" onclick="rmUsar(\''+id+'\',\'agenda\')">Agenda · '+fmtCred(x.ag.total)+' · '+fmt(x.ag.valor)+'</button>'
       +'<button class="'+(x.usa==='pacote'?'on':'')+'" onclick="rmUsar(\''+id+'\',\'pacote\')">Cadastro · '+fmtCred(x.p+x.pg)+' · '+fmt(x.mens)+'</button></div>';
     if(x.soCred){
       /* Só créditos: o pacote soma ao que sobrou; nenhuma linha de reposição. */
+      t+='<div class="rm-l">Pacote: <b>'+fmtCred(x.novo.p+x.novo.pg)+' aulas</b> · '+fmt(x.novo.mens)+' <small>(o que ele escolheu; os créditos guardados não mudam o valor)</small></div>';
+      if(x.dicaSemana)t+='<div class="rm-aviso">📅 A agenda tem '+x.porSemana+'x por semana (pacote de '+x.pacoteSemana+'). Se ele mudou o pacote, troque no cadastro antes de renovar.</div>';
       const gLinha=x.novo.pg>0||(x.g&&!x.grupoSo);
       t+='<div class="rm-l">Créditos <b>'+fmtCred(x.grupoSo&&x.soGrupoPG?x.g:x.c)+' → '+fmtCred(x.grupoSo&&x.soGrupoPG?x.gDep:x.cFinal)+'</b> <small>(+'+fmtCred(x.grupoSo&&x.soGrupoPG?x.novo.pg:x.novo.p)+' do pacote; o que sobrou continua)</small>'
         +(valorMuda&&!x.difere?' · valor '+fmt(x.mens)+' → '+fmt(x.novo.mens):'')+'</div>';
@@ -9011,6 +9017,12 @@ function renderTotalAlunos(items){
 /* Horário fixo da agenda, curto: "Seg/Qua 16h" ou "Seg 16h · Qua 18h30".
    Vale o que está em vigor hoje ou começa depois (fixo encerrado não conta). */
 function horaCurta(h){const p=String(h||'').split(':');return Number(p[0])+'h'+(p[1]&&p[1]!=='00'?p[1]:'');}
+/* Quantos horários fixos por semana o aluno tem hoje (1x = 4 aulas, 2x = 8, 3x = 12). */
+function vezesPorSemana(a){
+  const dk=dKey(new Date()),vistos={};
+  ((DB.agenda&&DB.agenda.fixos)||[]).forEach(f=>{if(a&&f.alunoId===a.id&&!(f.ate&&f.ate<dk))vistos[f.dia+'|'+f.hora]=1;});
+  return Object.keys(vistos).length;
+}
 function horarioFixoTxt(a){
   const AL_DIA=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
   const dk=dKey(new Date());
@@ -9118,7 +9130,7 @@ function renderFicha(){
   if(!a){fecharFicha();return;}                 // excluído: a ficha sai sozinha
   const id=a.id, ativo=ehAtivoAluno(a);
   const ag=agendaDoMes(a), mens=Number(a.mensalidade)||0;
-  const agDif=!temFamilia(a)&&ag.total>0&&ag.valor!==mens;
+  const agDif=!creditosUnicos()&&!temFamilia(a)&&ag.total>0&&ag.valor!==mens;
   const difere=agDif&&!difSilenciada(a);
   const loc=usaLocacao(a);
   const c=saldo(a,'creditos'), g=saldo(a,'credGrupo'), r=reposValidas(a), l=saldo(a,'locCred');
@@ -9170,7 +9182,7 @@ function renderFicha(){
   }else{                                          // um pacote: um saldo, o do pacote
     const v=campo==='credGrupo'?g:c,outro=campo==='credGrupo'?c:g,doNome=grpPac?' de '+String(nomePac).toLowerCase():'';
     const devido=campo==='credGrupo'?devidoExtraGrupo(a):devidoExtraPart(a);
-    t+=tile(fmtCred(v),v<0?'aula(s) devendo':'crédito'+(v===1?'':'s')+doNome+(qtdPac>0?' · de '+qtdPac:''),v<0?fmt(devido)+' extra a cobrar':(creditosUnicos()?vencimentoTxt(a,[campo]):''),v<0,barra(v,qtdPac));
+    t+=tile(fmtCred(v),v<0?'aula(s) devendo':'crédito'+(v===1?'':'s')+doNome+(qtdPac>0?(creditosUnicos()?' · pacote de ':' · de ')+qtdPac:''),v<0?fmt(devido)+' extra a cobrar':(creditosUnicos()?vencimentoTxt(a,[campo]):''),v<0,barra(v,qtdPac));
     const fp=saldoForaDoPacote(a);
     if(outro)t+=tile(fmtCred(outro),(campo==='credGrupo'?'particular':'grupo')+(outro<0&&!(fp&&fp.mesmoTipo)?' · aula de outro tipo':' · fora do pacote'),
       outro<0?(fp&&fp.mesmoTipo?'conferir no cadastro':fmt(campo==='credGrupo'?devidoExtraPart(a):devidoExtraGrupo(a))+' extra a cobrar'):'',outro<0);

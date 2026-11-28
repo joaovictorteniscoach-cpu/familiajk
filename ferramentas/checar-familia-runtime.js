@@ -23,7 +23,7 @@ const ctx=vm.createContext({DB:{alunos:[payer,child,spouse,single],lancamentos:[
   monthKey:()=> '2026-10',mesReal:()=> '2026-10',dKey:()=> '2026-10-04',
   ehPersonalTipo:()=>false,persist:()=>{},renderAll:()=>{},descontoDoMes:()=>null,
   fmtRs:v=>'R$ '+v,fmt:v=>'R$ '+v,fmtCred:String,
-  unificado:()=>false,creditosUnicos:()=>false,proximoVencimento:()=>null,precisaPassagem:()=>false,profDoAluno:()=>'',profNome:()=>'',reposValidas:a=>a.repos,reposVencendo:()=>0,serieMensal:()=>[],
+  unificado:()=>false,creditosUnicos:()=>false,proximoVencimento:()=>null,precisaPassagem:()=>false,vezesPorSemana:()=>0,profDoAluno:()=>'',profNome:()=>'',reposValidas:a=>a.repos,reposVencendo:()=>0,serieMensal:()=>[],
   agendaDoMes:()=>({total:6,part:6,grupo:0,valor:960}),mensalidadeDaAgenda:()=>({total:6,part:6,grupo:0,valor:960}),rmAgCache:{},rmEscolha:{},rmDebito:{},ehGrupoTipo:()=>false,
   perfilDe:()=> 'aluno',reposVencidas:()=>0,ehAtivoAluno:a=>!a.arquivado&&(a.plano>0||a.mensalidade>0),
   mover:(a,k,n)=>{a[k]=(Number(a[k])||0)+n;},purgarReposVencidas:()=>{},juntarGrupo:()=>{},

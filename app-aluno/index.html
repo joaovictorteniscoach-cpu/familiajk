@@ -3567,7 +3567,7 @@ function renderPremiumAluno(){
   if(hx)hx.textContent=prox?((tpProx==='torneio'?'Próximo jogo: ':tpProx==='locacao'?'Próxima locação: ':'Próxima aula: ')+DIAS_FULL[dtOf(prox.data,prox.hora).getDay()].toLowerCase()+', '+prox.hora):'Nenhuma aula marcada';
   const sp=saldoPacoteAluno(),saldo=sp.total,plano=(Number(EU.plano)||0)+(Number(EU.planoGrupo)||0);
   const hc=document.getElementById('home-cred');if(hc)hc.textContent=fmtCred(saldo);
-  const hcs=document.getElementById('home-cred-sub');if(hcs)hcs.textContent=(plano>0?('créditos · de '+plano+' no plano atual'):'créditos disponíveis')+(detalheSaldoAluno(sp)?' · '+detalheSaldoAluno(sp):'');
+  const hcs=document.getElementById('home-cred-sub');if(hcs)hcs.textContent=(plano>0?(soCreditosAluno()?('créditos · pacote de '+plano+' por mês'):('créditos · de '+plano+' no plano atual')):'créditos disponíveis')+(detalheSaldoAluno(sp)?' · '+detalheSaldoAluno(sp):'');
   const hf=document.getElementById('home-cred-fill');if(hf)hf.style.width=(plano>0?Math.max(0,Math.min(100,saldo/plano*100)):(saldo>0?100:0))+'%';
   const hp=document.getElementById('home-plano');if(hp)hp.textContent=planoPremium();
   const hps=document.getElementById('home-plano-sub');if(hps)hps.textContent=plano>0?(fmtCred(plano)+(plano===1?' aula':' aulas')+' por mês'):'Fale com o João para escolher um plano';

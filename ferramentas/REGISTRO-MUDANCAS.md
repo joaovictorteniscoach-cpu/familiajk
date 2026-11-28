@@ -19,7 +19,11 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 - Depois da passagem: renovação soma o pacote ao que sobrou; virada só tira o crédito com mais de 6 meses; ✓ tira o
   vencido antes de gastar; compactação não resume crédito pós-passagem; ficha e app do aluno sem reposição, com o
   próximo vencimento ("Agendar aula a mais"); assistente de voz do aluno responde em créditos.
-- Testes: `testar-so-creditos-browser.cjs` (14 verificações, dados fictícios); `testar-preservacao-extrato` e
+- **Pacote é o que o aluno escolheu (João, 28/11):** a renovação cobra o pacote (ex.: 4 aulas), nunca o total de
+  créditos (ex.: 6 com 2 guardados) nem a contagem de aulas do calendário do mês (5 semanas). No só créditos, "Renovar o
+  mês" sempre usa o pacote do cadastro; se a agenda tiver outra frequência (2x/semana com pacote 4) aparece só uma dica;
+  a "diferença agenda × valor" não se aplica (`difSilenciada`). Auxiliar `vezesPorSemana`.
+- Testes: `testar-so-creditos-browser.cjs` (15 verificações, dados fictícios); `testar-preservacao-extrato` e
   `checar-familia-runtime` recebem os auxiliares novos. Nenhuma regra do Firebase, nenhum dado real.
 - **Próximo:** tirar dos apps tudo de reposição e desconto depois da passagem (pedido do João em 28/11); renovação
   sozinha; 4/8/12 e locação no cadastro; "Meus horários fixos".

@@ -31,7 +31,7 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
   await g.waitForFunction(()=>typeof CARREGADO!=='undefined'&&CARREGADO);
   await g.addStyleTag({content:'#ov-entrar,#ov-semnuvem,#barra-versao,#barra-endereco,#splash-gestao{display:none!important}'});
   const dados=()=>g.evaluate(()=>{
-   persist=()=>{};publish=()=>{};logAct=()=>{};MODO='dono';for(const k in _ultAcao)delete _ultAcao[k];
+   persist=()=>{};publish=()=>{};logAct=()=>{};MODO='dono';hideVals=false;for(const k in _ultAcao)delete _ultAcao[k];
    window.__copias=0;guardarVersoes=()=>{__copias++;return Promise.resolve(true);};
    window.__t=[];toast=m=>__t.push(m);_conflitoNuvem=null;
    const ts=s=>new Date(s+'T12:00:00-03:00').getTime();
@@ -166,6 +166,19 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
    assert.deepEqual(await sal('mis'),{c:7,g:5,r:0,l:0});
    assert.equal(await g.evaluate(()=>DB.movs.filter(m=>m.campo==='repos'&&m.ts>DB.creditosUnicos.ts).length),0);
    await g.evaluate(()=>fecharRenovaMes());
+  });
+  await check('o pacote é o que o aluno escolheu: a agenda com 5 semanas não muda valor nem créditos; 2x por semana vira só uma dica',async()=>{
+   await g.evaluate(()=>{const a=DB.alunos.find(x=>x.id==='vel');
+     DB.agenda.fixos=[{id:'f1',dia:2,hora:'18:00',alunoId:'vel',tipo:'aula',titulo:a.nome,desde:'2026-09-01'},{id:'f2',dia:4,hora:'18:00',alunoId:'vel',tipo:'aula',titulo:a.nome,desde:'2026-09-01'}];
+     a.ultimaRenovacao={mes:'2026-11'};rmAgCache={};DB.movs=DB.movs.filter(m=>!(m.alunoId==='vel'&&/Renovação/.test(m.motivo||'')));});
+   const r=await g.evaluate(()=>{const x=rmLinha(DB.alunos.find(a=>a.id==='vel'));return {usa:x.usa,p:x.novo.p,mens:x.novo.mens,dica:x.dicaSemana,ag:x.ag.total};});
+   assert.equal(r.ag,10,'dezembro tem 5 terças e 5 quintas');
+   assert.deepEqual([r.usa,r.p,r.mens,r.dica],['pacote',4,640,true]);
+   const t=await g.evaluate(()=>{abrirRenovaMes();const l=[...document.querySelectorAll('#rm-corpo .rm-row')].find(x=>x.innerText.includes('Aula Muito Antiga'));const s=l?l.innerText.replace(/\s+/g,' '):'';fecharRenovaMes();return s;});
+   assert.match(t,/Pacote: 4 aulas · R\$ 640/);assert.match(t,/A agenda tem 2x por semana \(pacote de 8\)/);assert.doesNotMatch(t,/aula\(s\) na agenda de/);
+   const f=await g.evaluate(()=>{abrirFicha('vel');const s=document.getElementById('fic-corpo').innerText;fecharFicha();return s;});
+   assert.doesNotMatch(f,/A agenda do mês dá|Cobrar pela agenda/);
+   await g.evaluate(()=>{DB.agenda.fixos=[];});
   });
   await check('a virada não converte nada; só tira o que passou de 6 meses, e o ✓ gasta o mais velho primeiro',async()=>{
    await g.clock.setFixedTime(new Date('2026-12-02T18:00:00-03:00'));
