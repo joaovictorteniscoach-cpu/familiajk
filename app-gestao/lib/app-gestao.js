@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-11-28-1';
+const VERSAO='2026-11-28-2';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -2845,9 +2845,14 @@ function publicacaoLegadaEnxuta(pub){
   out.historico={};
   return out;
 }
+/* inativo: só quem o João marcou como inativo (arquivado===true). Quem só
+   joga torneio ou só aluga a quadra fica sem plano e sem mensalidade, e
+   ehAtivoAluno() o contaria como inativo: por isso aqui vale só a marca dele.
+   No app do aluno, inativo não agenda nem usa crédito (decisão do João, 28/11);
+   os créditos ficam guardados no cadastro. */
 function alunoPublicado(a){
   const t=titularSaldo(a,'repos'),pac=titularSaldo(a,'creditos');
-  return ({codigo:a.codigo,nome:a.nome,tipo:pac.tipo,profId:profDoAluno(a),prof:profNome(profDoAluno(a)),plano:unificado(pac)?pacoteDoAluno(pac):pac.plano,creditos:unificado(pac)?saldo(a,'creditos')+saldo(a,'credGrupo'):saldo(a,'creditos'),repos:saldo(a,'repos'),reposValidas:reposValidas(a),reposVencendo:reposVencendo(a),reposModalidade:t.reposModalidade||'auto',reposValidade:t.reposValidade||'lotes',reposVenceEm:t.reposValidade==='ultima-falta'?vencimentoRepos(a):'',saldoCompartilhado:{aulas:!!bancoSaldo(a,'creditos'),locacao:!!bancoSaldo(a,'locCred')},soCreditos:creditosUnicos()?1:0,credVence:creditosUnicos()?proximoVencimento(a):null,status:situacaoMensalidade(a,mesReal()).status,ultimoPago:pagadorFamilia(a).ultimoPago||'',mensalidade:ehDependenteFamilia(a)?0:(valorCombinadoEm(a,mesReal())??a.mensalidade),pagamentoMensal:ehDependenteFamilia(a)?null:(situacaoMensalidade(a,mesReal()).exato?Object.assign({mes:mesReal()},situacaoMensalidade(a,mesReal())):null),familia:dadosFamiliaAluno(a),diaVenc:pagadorFamilia(a).diaVenc||10,cardLink:ehDependenteFamilia(a)?'':(a.cardLink||''),mfitLink:a.mfitLink||'',valorAula:a.valorAula||(a.tipo==='Personal'?130:160),locCred:saldo(a,'locCred'),credGrupo:unificado(pac)?0:saldo(a,'credGrupo'),planoGrupo:unificado(pac)?0:(Number(pac.planoGrupo)||0),grupoTipo:pac.grupoTipo||'',avaliacoes:(a.avaliacoes||[]).slice(-12),evoMes:serieMensal(a.avaliacoes,a.registros,24),registros:(a.registros||[]).slice(-8)});
+  return ({codigo:a.codigo,nome:a.nome,tipo:pac.tipo,profId:profDoAluno(a),prof:profNome(profDoAluno(a)),plano:unificado(pac)?pacoteDoAluno(pac):pac.plano,creditos:unificado(pac)?saldo(a,'creditos')+saldo(a,'credGrupo'):saldo(a,'creditos'),repos:saldo(a,'repos'),reposValidas:reposValidas(a),reposVencendo:reposVencendo(a),reposModalidade:t.reposModalidade||'auto',reposValidade:t.reposValidade||'lotes',reposVenceEm:t.reposValidade==='ultima-falta'?vencimentoRepos(a):'',saldoCompartilhado:{aulas:!!bancoSaldo(a,'creditos'),locacao:!!bancoSaldo(a,'locCred')},inativo:a.arquivado===true?1:0,soCreditos:creditosUnicos()?1:0,credVence:creditosUnicos()?proximoVencimento(a):null,status:situacaoMensalidade(a,mesReal()).status,ultimoPago:pagadorFamilia(a).ultimoPago||'',mensalidade:ehDependenteFamilia(a)?0:(valorCombinadoEm(a,mesReal())??a.mensalidade),pagamentoMensal:ehDependenteFamilia(a)?null:(situacaoMensalidade(a,mesReal()).exato?Object.assign({mes:mesReal()},situacaoMensalidade(a,mesReal())):null),familia:dadosFamiliaAluno(a),diaVenc:pagadorFamilia(a).diaVenc||10,cardLink:ehDependenteFamilia(a)?'':(a.cardLink||''),mfitLink:a.mfitLink||'',valorAula:a.valorAula||(a.tipo==='Personal'?130:160),locCred:saldo(a,'locCred'),credGrupo:unificado(pac)?0:saldo(a,'credGrupo'),planoGrupo:unificado(pac)?0:(Number(pac.planoGrupo)||0),grupoTipo:pac.grupoTipo||'',avaliacoes:(a.avaliacoes||[]).slice(-12),evoMes:serieMensal(a.avaliacoes,a.registros,24),registros:(a.registros||[]).slice(-8)});
 }
 /* O app do aluno monta a grade com estas horas. Meia hora só vai enquanto
    houver aula marcada nela daqui para a frente — a do aluno não pode sumir

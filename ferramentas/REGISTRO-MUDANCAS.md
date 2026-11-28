@@ -8,6 +8,23 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-28 · Claude Code: aluno inativo não agenda nem usa crédito (versão 2026-11-28-2)
+
+- Pedido do João (28/11): "ele só vai poder usar os créditos se ele pagar a mensalidade e ele estiver ativo".
+  Escolhas dele: pagamento = **manter a folga até o vencimento** (nada mudou nessa regra); inativo = **travar**.
+- Gestão: `alunoPublicado` manda `inativo:1` só para quem o João marcou como inativo (`arquivado===true`). Quem só
+  joga torneio ou só aluga a quadra, sem plano, continua 0 (o `ehAtivoAluno` contaria como inativo).
+- App do aluno: inativo não abre horário, não agenda aula, torneio nem locação, não entra em lista de espera e não
+  renova pelo app; pode sair de lista em que já estava e cancelar aula que já tinha. Aviso no topo: "Seu cadastro está
+  inativo. Fale com o João para voltar. Seus créditos ficam guardados no seu cadastro." O saldo não é tocado. Quando o
+  João reativa, o app avisa "Cadastro reativado"; a partir daí vale a regra de pagamento de sempre.
+- Aba Créditos do inativo: saldo e validade continuam à vista; some "Agendar aula a mais"; Situação = "Cadastro
+  inativo"; o bloco de pagamento ("Adiantar a próxima mensalidade"/"Pagar") some e o atalho de pagar mostra o aviso
+  (se ficou algo para acertar, é com o João).
+- Teste novo `testar-inativo-aluno-browser.cjs` (no CI). Nenhuma regra do Firebase, nenhum dado real.
+
+---
+
 ## 2026-11-28 · Claude Code: só créditos — passagem acionada pelo João (versão 2026-11-28-1)
 
 - Pedido do João (decisões de 13/11, prazo 1º/12). Base `c93345b` (main com #287 publicado).

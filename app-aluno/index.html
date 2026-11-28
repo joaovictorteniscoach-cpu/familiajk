@@ -1700,15 +1700,15 @@ html body:not(#jv) #pedir-box .btn-ghost{background:#F3EDE2!important;border:1px
 .login .login-sub{opacity:1}
 .login-priv{color:rgba(250,247,242,.8)}
 </style>
-<link rel="stylesheet" href="lib/visual-premium.css?v=2026-11-28-1">
+<link rel="stylesheet" href="lib/visual-premium.css?v=2026-11-28-2">
 <!-- Tema Saibro (igual ao da Gestão): só as cores, por cima das duas folhas
      acima. Gerado por ferramentas/tema-saibro.py. Quem escolheu "Verde
      clássico" na Gestão deste aparelho (mesma origem) fica sem ele. -->
-<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-11-28-1">
-<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-11-28-1">
-<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-11-28-1">
-<link rel="stylesheet" href="lib/visual-sobrio.css?v=2026-11-28-1">
-<link rel="stylesheet" href="lib/letras-maiores.css?v=2026-11-28-1">
+<link rel="stylesheet" id="css-tema" href="lib/tema-saibro.css?v=2026-11-28-2">
+<link rel="stylesheet" href="lib/aulas-aluno.css?v=2026-11-28-2">
+<link rel="stylesheet" href="lib/voz-aluno.css?v=2026-11-28-2">
+<link rel="stylesheet" href="lib/visual-sobrio.css?v=2026-11-28-2">
+<link rel="stylesheet" href="lib/letras-maiores.css?v=2026-11-28-2">
 <script>try{if(localStorage.getItem('jv-tema')==='classico')document.getElementById('css-tema').disabled=true;else document.documentElement.classList.add('tema-saibro');}catch(e){}</script>
 <!-- ================= FIREBASE ================= -->
 <script src="lib/firebase-app-compat.js" onerror="this.onerror=null;document.write('<script src=\'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js\'><\/script>')"></script>
@@ -2223,7 +2223,7 @@ function esperarAuth(){
     <button id="nav-al-torneio" onclick="goAluno('torneio',this)"><span class="ico" aria-hidden="true" data-ic="navtrophy"></span><span class="nav-badge" id="nb-al-torneio"></span>Torneio</button>
     <button id="nav-al-perfil" onclick="goAluno('perfil',this)"><span class="ico" aria-hidden="true" data-ic="navuser"></span>Perfil</button>
   </nav>
-<script src="lib/icones.js?v=2026-11-28-1"></script>
+<script src="lib/icones.js?v=2026-11-28-2"></script>
 </div>
 
 <!-- ASSISTENTE POR VOZ: consultar horário livre, agendar, cancelar, ver aulas (lib/voz-aluno.js) -->
@@ -2460,7 +2460,7 @@ const MYKEY='jvt-aluno-meu';           // código + pedidos pendentes (pessoal, 
    andar iguais: se este ficasse atrás da Gestão, o aluno veria "desatualizado"
    sem estar. Ao publicar, suba os dois (checar-versao.py exige que sejam
    iguais). Aqui o aluno só LÊ: quem grava é a Gestão. */
-const VERSAO='2026-11-28-1';
+const VERSAO='2026-11-28-2';
 const ENDERECO_ATUAL='https://joaovictorteniscoach-cpu.github.io/familiajk/app-aluno/';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
@@ -3553,7 +3553,8 @@ function aplicarSoCreditosAluno(){
   const v=so&&EU.credVence&&Number(EU.credVence.qtd)>0?EU.credVence:null;
   const n=document.getElementById('cred-page-venc');
   if(n){n.hidden=!so;n.textContent=so?('Cada crédito vale 6 meses'+(v?('. '+fmtCred(v.qtd)+(Number(v.qtd)>1?' vencem':' vence')+' em '+dataDiaMes(v.data)+'; os mais antigos são usados primeiro.'):'.')):'';}
-  const b=document.getElementById('cred-page-mais');if(b){b.hidden=!so;b.style.display=so?'flex':'none';}
+  const mais=so&&!inativoAluno();   // inativo não agenda: o botão só levaria à trava
+  const b=document.getElementById('cred-page-mais');if(b){b.hidden=!mais;b.style.display=mais?'flex':'none';}
 }
 function renderPremiumAluno(){
   if(!EU)return;carregarAvatarAluno();
@@ -3576,6 +3577,8 @@ function renderPremiumAluno(){
   const ps=document.getElementById('home-pay-status');if(ps){ps.textContent=EU.status==='pago'?'Em dia':(EU.status==='parcial'?rotuloParcialAluno():'Pendente');ps.dataset.status=EU.status==='pago'?'pago':(EU.status==='parcial'?'parcial':'pendente');}
   const vl=document.getElementById('home-venc-label');if(vl)vl.textContent=EU.status==='pago'?'Próximo vencimento':'Vencimento do mês';
   const hv=document.getElementById('home-venc');if(hv)hv.textContent=vencimentoPremium();
+  /* Inativo: sem "em dia" nem vencimento; o que falta acertar é com o João. */
+  if(inativoAluno()){if(ps){ps.textContent='Inativo';ps.dataset.status='pendente';}if(vl)vl.textContent='Vencimento';if(hv)hv.textContent='—';}
   const hm=document.getElementById('home-mens');if(hm)hm.textContent=fmtMens();
   const pagoExato=pagamentoMensalAluno();
   const hs=document.getElementById('home-saldo-pagamento');if(hs){hs.hidden=!pagoExato;hs.style.setProperty('display',pagoExato?'block':'none','important');hs.textContent=pagoExato?('Recebido: '+fmt(pagoExato.recebido)+' · falta: '+fmt(pagoExato.falta)):'';}
@@ -3585,7 +3588,7 @@ function renderPremiumAluno(){
   const hi=document.getElementById('home-familia-info');if(hi){hi.textContent=finfo;hi.style.display=finfo?'block':'none';}
   const ci=document.getElementById('cred-page-familia-info');if(ci)ci.textContent=finfo;
   const cb=document.getElementById('cred-page-familia');if(cb)cb.style.display=finfo?'block':'none';
-  const pb=document.getElementById('home-pix-btn');if(pb)pb.style.display=(!dependenteAluno()&&PUB&&PUB.pix&&String(PUB.pix).trim())?'flex':'none';
+  const pb=document.getElementById('home-pix-btn');if(pb)pb.style.display=(!dependenteAluno()&&!inativoAluno()&&PUB&&PUB.pix&&String(PUB.pix).trim())?'flex':'none';
   const cs=document.getElementById('cred-page-saldo');if(cs){cs.textContent=fmtCred(saldo);const rot=cs.parentElement.querySelector('small');if(rot)rot.textContent='créditos'+(detalheSaldoAluno(sp)?' · '+detalheSaldoAluno(sp):'');}
   const cf=document.getElementById('cred-page-fill');if(cf)cf.style.width=(plano>0?Math.max(0,Math.min(100,saldo/plano*100)):(saldo>0?100:0))+'%';
   const repos=saldoReposAluno(),vencendo=Math.max(0,Math.min(repos,Number(EU.reposVencendo)||0));
@@ -3610,7 +3613,7 @@ function renderPremiumAluno(){
   aplicarSoCreditosAluno();
   const cp=document.getElementById('cred-page-plano');if(cp)cp.textContent=planoPremium();
   const cm=document.getElementById('cred-page-mens');if(cm)cm.textContent=fmtMens();
-  const cst=document.getElementById('cred-page-status');if(cst)cst.textContent=EU.status==='pago'?'Em dia':(EU.status==='parcial'?rotuloParcialAluno():'Pendente');
+  const cst=document.getElementById('cred-page-status');if(cst)cst.textContent=inativoAluno()?'Cadastro inativo':EU.status==='pago'?'Em dia':(EU.status==='parcial'?rotuloParcialAluno():'Pendente');
   const pn=document.getElementById('perfil-nome');if(pn)pn.textContent=EU.nome||'Aluno';
   const av=(EU&&Array.isArray(EU.avaliacoes))?EU.avaliacoes:[],nivel=av.length?(av[av.length-1].nivel||'Em evolução'):'Avaliação a liberar';
   const pni=document.getElementById('perfil-nivel');if(pni)pni.textContent=nivel+' · Da Base ao Topo';
@@ -3690,6 +3693,12 @@ function textoVencimento(){
   if(dias===1)return 'vence amanhã';
   return 'faltam '+dias+' dias';
 }
+/* Inativo (o João marcou na Gestão): não agenda aula, locação, torneio nem
+   lista de espera, e não renova pelo app. Os créditos ficam guardados e voltam
+   a valer quando ele reativar; aí vale a regra do pagamento de sempre. */
+const MSG_INATIVO='Seu cadastro está inativo. Fale com o João para voltar.';
+function inativoAluno(){return !!(EU&&Number(EU.inativo)===1);}
+function travaInativo(){if(!inativoAluno())return false;toast('🔒 '+MSG_INATIVO);return true;}
 function bloqueadoPorPagamento(){return !!(EU&&EU.status!=='pago');}
 function bloqueadoPorSaldo(){
   if(!EU)return false;
@@ -3717,14 +3726,16 @@ function quitouMesPassado(){
    mensalidade em aberto ou saldo de aulas negativo. A folga é de quem quitou o
    mês anterior. */
 function bloqueadoParaAgendar(){
+  if(inativoAluno())return true;
   if(dentroDoPrazo()&&quitouMesPassado())return false;
   return bloqueadoPorPagamento()||bloqueadoPorSaldo();
 }
 /* Dentro da janela, com a mensalidade em aberto: lembrete, não bloqueio. */
 function soLembrete(){
-  return dentroDoPrazo()&&quitouMesPassado()&&(bloqueadoPorPagamento()||bloqueadoPorSaldo());
+  return !inativoAluno()&&dentroDoPrazo()&&quitouMesPassado()&&(bloqueadoPorPagamento()||bloqueadoPorSaldo());
 }
 function motivoBloqueio(){
+  if(inativoAluno())return 'seu cadastro está inativo. Fale com o João para voltar';
   // com o prazo junto, ele sabe se está atrasado ou se ainda dá tempo
   const prazo=textoVencimento();
   const emAberto=(dependenteAluno()?'mensalidade da família em aberto, a ser paga pelo responsável':'mensalidade do mês em aberto')+(prazo?(' ('+prazo+')'):'');
@@ -3739,6 +3750,11 @@ function motivoBloqueio(){
 function renderPayLock(){
   const el=document.getElementById('pay-lock');if(!el)return;
   el.classList.remove('aviso');
+  if(inativoAluno()){
+    el.style.display='block';
+    el.innerHTML='🔒 <b>Seu cadastro está inativo.</b> Fale com o João para voltar.<div class="lock-wait">Seus créditos ficam guardados no seu cadastro.</div>';
+    return;
+  }
   if(soLembrete()){
     el.classList.add('aviso');
     el.style.display='block';
@@ -3776,6 +3792,7 @@ function pagamentoEmAnalise(){
 }
 function irPagar(){
   if(dependenteAluno()){goAluno('creditos',document.getElementById('nav-al-creditos'));avisoPagamentoFamilia();return;}
+  if(travaInativo())return;
   goAluno('inicio',document.querySelector('.nav button'));
   setTimeout(()=>{
     const box=document.getElementById('pay-box');
@@ -4576,7 +4593,8 @@ function cardBtnHTML(onclickFn){
 function renderPagamento(){
   const box=document.getElementById('pay-box');
   const grid=document.getElementById('pay-grid');
-  if(dependenteAluno()){box.style.display='none';grid.innerHTML='';return;}
+  /* Inativo não paga mensalidade pelo app: se ficou algo para acertar, é com o João. */
+  if(dependenteAluno()||inativoAluno()){box.style.display='none';grid.innerHTML='';return;}
   const temPix=PUB.pix&&PUB.pix.trim();
   box.style.display='block';
   const titEl=box.querySelector('.sec-title');
@@ -5393,7 +5411,7 @@ function proxMesKey(){const d=new Date();const x=new Date(d.getFullYear(),d.getM
 let _renovaAdiado=false;
 function checarRenovacao(){
   const box=document.getElementById('renova-box');if(!box||!EU)return;
-  if(dependenteAluno()){box.style.display='none';return;}
+  if(dependenteAluno()||inativoAluno()){box.style.display='none';return;}
   if(_renovaAdiado){box.style.display='none';return;}
   const hoje=new Date();
   const ultimo=new Date(hoje.getFullYear(),hoje.getMonth()+1,0).getDate();
@@ -5430,6 +5448,7 @@ function renovarMudar(){_renovaAdiado=true;document.getElementById('renova-box')
 let _renovacaoEnviando=false;
 async function confirmarRenovacao(){
   if(dependenteAluno()){avisoPagamentoFamilia();return;}
+  if(travaInativo())return;
   const v=valorMensalAtual();
   if(!v){toast('Fale com o João para definir sua mensalidade 🙏');setTimeout(()=>abrirWhatsApp('5541995415712','Olá João! Quero manter meus treinos no próximo mês. Pode confirmar minha mensalidade? 🎾'),300);return;}
   if(_renovacaoEnviando)return false;
@@ -5566,6 +5585,7 @@ async function mudarEspera(entrar){
   const dk=dKey(ctx.date),hora=ctx.hora;
   document.getElementById('ov-pick').classList.remove('on');
   if(!hasCloud()){toast('Para usar a lista de espera é preciso estar online 🙏');return;}
+  if(entrar&&travaInativo())return;
   if(entrar&&(MEU.espera||[]).length>=ESPERA_MAX){toast('Você já está em '+ESPERA_MAX+' listas de espera. Saia de alguma para entrar nesta.');return;}
   try{await filaPush('jvtenis/fila_agendamentos',{id:'w'+Date.now()+'-'+Math.random().toString(36).slice(2,8),acao:entrar?'espera':'sair_espera',nome:EU?EU.nome:'',data:dk,hora,ts:agoraReal()});}
   catch(e){toast('Não consegui enviar agora. Tente de novo com internet.');return;}
@@ -5608,6 +5628,7 @@ function gotoBook(y,m,d,h,quer){agDate=new Date(y,m,d,12);escolherSlot(h,quer);}
 var pickCtx={};
 function escolherSlot(hora,quer){
   if(horasAte(dKey(agDate),hora)<=0){toast('Esse horário já passou — não é possível agendar nem alterar datas anteriores. 🙏');return;}
+  if(travaInativo())return;
   const estado=slotState(agDate,hora);
   if(estado.esperavel){abrirEspera(hora);return;}
   if(!['livre','loc'].includes(estado.st)){toast(estado.label+' — escolha outro horário');return;}
@@ -5709,6 +5730,7 @@ function pickAula(repo){document.getElementById('ov-pick').classList.remove('on'
 function pickLoc(){document.getElementById('ov-pick').classList.remove('on');pedirLocacaoHora(pickCtx.hora);}
 let locCtx=null;
 function pedirLocacaoHora(hora){
+  if(travaInativo())return;
   const estado=slotState(agDate,hora);
   if(!['livre','loc'].includes(estado.st)||estado.compartilhado&&estado.compartilhado!=='locacao'){toast('Horário reservado para outra atividade');return;}
   locCtx={hora,date:new Date(agDate),min:60,compartilhado:estado.compartilhado||''};
@@ -5731,6 +5753,7 @@ function locdurAtualiza(m){
 let _locacaoEnviando=false;
 async function confirmarLocacao(){
   if(!locCtx||_locacaoEnviando)return false;
+  if(travaInativo()){document.getElementById('ov-locdur').classList.remove('on');return false;}
   _locacaoEnviando=true;
   const contexto=locCtx;
   const botao=document.querySelector('[onclick="confirmarLocacao()"]');if(botao)botao.disabled=true;
@@ -5776,6 +5799,7 @@ function pintarProfsBook(){
   sel.value=meuProfId();
 }
 function abrirBook(hora,repo,torneio){
+  if(travaInativo())return;
   const estado=slotState(agDate,hora);
   const desejado=torneio?'torneio':'grupo';
   if(!['livre','loc'].includes(estado.st)||estado.compartilhado&&estado.compartilhado!==desejado){toast('Horário reservado — escolha outro');return;}
@@ -5807,6 +5831,7 @@ async function confirmarAgendamento(){
 
   if(!hasCloud()){toast('Para agendar é preciso estar online 🙏');return;}
   if(!bookCtx)return;
+  if(inativoAluno()){document.getElementById('ov-book').classList.remove('on');travaInativo();return;}
   if(!bookCtx.torneio&&bloqueadoParaAgendar()){document.getElementById('ov-book').classList.remove('on');toast('🔒 Agendamento bloqueado — '+motivoBloqueio()+'.');return;}
   try{await atualizarGradeReserva();}catch(e){toast(avisoFalhaNuvem(e,'Não consegui conferir a agenda na nuvem. Tente novamente online.'));return;}
   const estado=slotState(bookCtx.date,bookCtx.hora);
@@ -5860,12 +5885,16 @@ async function confirmarAgendamento(){
 let _bloqAntes=null;
 async function checarLiberacao(){
   if(!EU||!hasCloud())return;
-  const antes=bloqueadoParaAgendar();
+  const antes=bloqueadoParaAgendar(),inatAntes=inativoAluno();
   const ok=await refresh(true);
   if(!ok)return;
   render();
   const agora=bloqueadoParaAgendar();
-  if(antes&&!agora){
+  if(antes&&!agora&&inatAntes){
+    // voltou a ser ativo (e está em dia): não foi pagamento, foi o João reativar
+    toast('✅ Cadastro reativado — você já pode agendar!');
+    mostrarAviso('✅ Cadastro reativado','Seus agendamentos foram liberados 🎾','jv-icone-aluno-192.png');
+  }else if(antes&&!agora){
     // o aviso ja cumpriu o papel: limpa para o mes que vem comecar do zero
     if(MEU.pagoAviso){MEU.pagoAviso=null;saveMeu();}
     toast('✅ Pagamento confirmado — você já pode agendar!');
@@ -5977,7 +6006,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregarSt
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checarLiberacao();});
 
 // PWA: registra o service worker (permite instalar e abrir offline)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-11-28-1').catch(function(){});});}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw-aluno.js?v=2026-11-28-2').catch(function(){});});}
 window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);});
 
 // espera o Firebase ficar pronto (até ~6s) antes de iniciar; nunca trava
@@ -5986,6 +6015,6 @@ window.addEventListener('load',function(){setTimeout(iniciarCadastroNovo,650);})
   setTimeout(()=>esperarEIniciar(t+1),150);
 })(0);
 </script>
-<script src="lib/voz-aluno.js?v=2026-11-28-1"></script>
+<script src="lib/voz-aluno.js?v=2026-11-28-2"></script>
 </body>
 </html>
