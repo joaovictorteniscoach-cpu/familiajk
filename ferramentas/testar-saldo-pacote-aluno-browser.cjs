@@ -41,7 +41,7 @@ const leituras=['grupoSaldo','bancoSaldo','titularSaldo','saldo','valorCombinado
 }).join('\n');
 const publicar=new Function('a','DB',unif+leituras+
 
- 'const profDoAluno=()=>"",profNome=()=>"",reposValidas=a=>Number(a.reposValidas)||0,reposVencendo=()=>0;'+
+ 'const profDoAluno=()=>"",profNome=()=>"",reposValidas=a=>Number(a.reposValidas)||0,reposVencendo=()=>0,creditosUnicos=()=>false,proximoVencimento=()=>null;'+
  'const situacaoMensalidade=()=>({status:"pago",exato:false}),mesReal=()=>"2026-11",pagadorFamilia=a=>a,ehDependenteFamilia=()=>false,dadosFamiliaAluno=()=>null,serieMensal=()=>[];'+
  publicador+';return alunoPublicado(a);');
 const html=fs.readFileSync(path.join(root,'app-aluno/index.html'),'utf8');
