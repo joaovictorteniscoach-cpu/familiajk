@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-11-13-2';
+const VERSAO='2026-11-25-1';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -1428,6 +1428,9 @@ async function load(){
   let travadoAoAbrir=false;
   const checkpoint=metaProtecao().base||'';
   const pendenteAoAbrir=!!(localRaw&&salvouSemNuvem());
+  // A marca persiste entre aberturas; a fila em memória também precisa voltar.
+  // Sem isto, abrir offline deixa a edição no aparelho sem nenhuma retentativa.
+  if(pendenteAoAbrir)cloudPending=true;
   let conflitoAoAbrir=false;
   const localSemBaseConfirmada=!!(localRaw&&cloudRaw&&chosen===localRaw&&!pendenteAoAbrir
     &&conteudoBancoConferivel(localRaw)!==conteudoBancoConferivel(cloudRaw));
@@ -1787,7 +1790,8 @@ function vigiarConexaoNuvem(){
       const fora=_nuvemCaiuEm?Date.now()-_nuvemCaiuEm:0;_nuvemCaiuEm=0;
       if(antes!==false||!CARREGADO)return;
       if(cloudPending&&!_conflitoNuvem)setTimeout(()=>gravarAgora(),800);
-      else if(!cloudPending&&!_conflitoNuvem&&fora>15000)setSave('✓ salvo na nuvem','ok');
+      // Conexão restabelecida não confirma a leitura nem a gravação do banco.
+      else if(!cloudPending&&!_conflitoNuvem&&!_abriuSemConferir&&!_nuvemMuda&&!lastCloudError&&fora>15000)setSave('✓ salvo na nuvem','ok');
       if(fora>15000)atualizarDaNuvem();
     });
     _vigiaLigada=true;
