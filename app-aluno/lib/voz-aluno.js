@@ -234,6 +234,9 @@ function proximosLivres(max,data){
  return out;
 }
 function reporResposta(r){
+ /* Só créditos (dez/2026): não existe mais reposição; aula não feita continua como crédito. */
+ if(fn('soCreditosAluno')){const sp=fn('saldoPacoteAluno')||{},c=Number(sp.total)||0;
+  responder('Agora tudo é crédito: aula não feita continua como crédito e vale 6 meses. Você tem '+c+' crédito'+(c===1?'':'s')+'. Para agendar aula a mais, escolha um horário livre na agenda.',[['Abrir agenda',abrirTela(irAgenda)]]);return;}
  const E=eu(),saldo=Number(fn('saldoReposAluno'))||0,venc=Number(E.reposVencendo)||0,n=lerQtd(r.t);
  if(!saldo){responder('Você não tem reposições no momento. Quando sobra aula do plano na virada do mês, ela vira reposição e vale por 4 meses.');return;}
  let txt='Você tem '+saldo+' reposiç'+(saldo===1?'ão':'ões')+(venc?', '+venc+' vence'+(venc===1?'':'m')+' no fim do mês':'')+'.';
@@ -291,7 +294,7 @@ function infoResposta(r){
   case 'regraCancel':{let L=4;try{L=LIMITE_CANCEL_H;}catch(e){}responder('Você pode cancelar pelo app até '+L+' horas antes da aula. Depois disso, fale com o João.');return true;}
   case 'chuva':responder('Se a aula for cancelada por chuva, o app avisa e você não gasta crédito.');return true;
   case 'contato':responder('Fale com o João pelo WhatsApp.',[whatsJoao('')]);return true;
-  case 'ajuda':responder('Posso ver horários livres, agendar, cancelar, mostrar suas aulas e créditos, reposições, preços e planos, sua mensalidade e vencimento, como pagar, horários da quadra, torneio, avisos e seu nível.');return true;
+  case 'ajuda':responder('Posso ver horários livres, agendar, cancelar, mostrar suas aulas e créditos,'+(fn('soCreditosAluno')?'':' reposições,')+' preços e planos, sua mensalidade e vencimento, como pagar, horários da quadra, torneio, avisos e seu nível.');return true;
  }
  return false;
 }
@@ -313,7 +316,7 @@ function executar(frase){
  if(!r.acao){
   // Dúvida que o assistente não resolve vai para o João, com a pergunta já escrita
   const nome=String((eu()&&eu().nome)||'').split(' ')[0];
-  responder('Essa eu não sei responder. Posso ajudar com horários, agendar, cancelar, aulas, créditos, reposições, preços e planos, mensalidade, pagamento e torneio. Se for outra dúvida, mande para o João.',
+  responder('Essa eu não sei responder. Posso ajudar com horários, agendar, cancelar, aulas, créditos,'+(fn('soCreditosAluno')?'':' reposições,')+' preços e planos, mensalidade, pagamento e torneio. Se for outra dúvida, mande para o João.',
    [['Perguntar ao João no WhatsApp',()=>{fechar();try{w.abrirWhatsApp('5541995415712','Olá João! '+(nome?'Aqui é '+nome+'. ':'')+frase);}catch(e){}}]]);
   return;
  }

@@ -19,7 +19,7 @@ const BOOKKEY='jvtenis-agendamentos';
    É o carimbo da PUBLICAÇÃO, não deste arquivo: os dois apps comparam com o
    mesmo valor na nuvem, então têm de andar iguais mesmo que só um mude.
    Ao publicar, suba os dois — ferramentas/checar-versao.py exige. */
-const VERSAO='2026-11-25-1';
+const VERSAO='2026-11-28-1';
 
 const AVATAR_GESTAO_KEY='jvt-avatar-gestao-v1';
 function carregarAvatarGestao(){
@@ -5858,8 +5858,10 @@ function tabelaPrecosHtml(t){
 function pacotesPadrao(){
   const at=DB.alunos.filter(ehAtivoAluno),pr=DB.precos||{},n=(v,d)=>Number(v)>0?Number(v):d;
   const conta=f=>at.filter(f).length,unico=pacoteUnicoAtivo();
-  const virada='Na virada do mês, o crédito que sobrou vira <b>reposição</b>, que vale '+REPOS_VALIDADE+' meses (as mais antigas saem primeiro).';
-  const cancel='Desmarcou com '+LIMITE_CANCEL_H_GESTAO+' horas ou mais de antecedência: vira reposição. Com menos de '+LIMITE_CANCEL_H_GESTAO+' horas: conta como aula dada. Chuva não desconta.';
+  const virada=creditosUnicos()?('Na virada do mês, o crédito que sobrou <b>continua como crédito</b>. Cada crédito vale '+CRED_VALIDADE+' meses (os mais antigos são usados primeiro).')
+    :('Na virada do mês, o crédito que sobrou vira <b>reposição</b>, que vale '+REPOS_VALIDADE+' meses (as mais antigas saem primeiro).');
+  const cancel=creditosUnicos()?('Desmarcou com '+LIMITE_CANCEL_H_GESTAO+' horas ou mais de antecedência: o crédito fica. Com menos de '+LIMITE_CANCEL_H_GESTAO+' horas ou falta: conta como aula dada. Chuva não desconta.')
+    :('Desmarcou com '+LIMITE_CANCEL_H_GESTAO+' horas ou mais de antecedência: vira reposição. Com menos de '+LIMITE_CANCEL_H_GESTAO+' horas: conta como aula dada. Chuva não desconta.');
   const meia='Aula de 30 minutos desconta meio crédito.';
   return [
    {id:'part',ico:'🎾',nome:'Particular',res:'1 aluno por horário · '+fmt(160)+'/aula se o cadastro não disser outro valor',n:conta(a=>(a.tipo||'Particular')==='Particular'&&!ehMisto(a)&&perfilDe(a)==='tenis'),
@@ -7760,10 +7762,10 @@ function scLinhas(){
     .sort((x,y)=>(!!y.precisaTipo-!!x.precisaTipo)||(ehAtivoAluno(y.a)-ehAtivoAluno(x.a))||x.a.nome.localeCompare(y.a.nome));
 }
 function scSaldoTxt(v,ant){
-  const p=[];
-  if(v.creditos)p.push(fmtCred(v.creditos)+' particular'+(Math.abs(v.creditos)===1?'':'es'));
-  if(v.credGrupo)p.push(fmtCred(v.credGrupo)+' em grupo');
-  if(v.locCred)p.push(fmtCred(v.locCred)+'h de locação');
+  const p=[],deve=n=>'deve '+fmtCred(-n);
+  if(v.creditos)p.push(v.creditos<0?deve(v.creditos)+' aula'+(v.creditos===-1?'':'s')+' particular'+(v.creditos===-1?'':'es'):fmtCred(v.creditos)+' particular'+(v.creditos===1?'':'es'));
+  if(v.credGrupo)p.push(v.credGrupo<0?deve(v.credGrupo)+' aula'+(v.credGrupo===-1?'':'s')+' em grupo':fmtCred(v.credGrupo)+' em grupo');
+  if(v.locCred)p.push(v.locCred<0?deve(v.locCred)+'h de locação':fmtCred(v.locCred)+'h de locação');
   if(ant&&v.repos)p.push(fmtCred(v.repos)+' aula'+(v.repos===1?'':'s')+' antiga'+(v.repos===1?'':'s')+' guardada'+(v.repos===1?'':'s'));
   return p.join(' + ')||'0';
 }
@@ -7807,7 +7809,7 @@ function renderPassagem(){
   if(creditosUnicos()){
     const U=DB.creditosUnicos,n=(U.alunos||[]).length;
     box.innerHTML='<div class="rm-intro">✅ <b>Só créditos desde '+esc(String(U.em||'').split('-').reverse().join('/'))+'.</b> '
-      +fmtCred(n)+' aluno(s) passaram. Não existe mais reposição: a aula não feita continua como crédito, e cada crédito vale 6 meses.'
+      +fmtCred(n)+' aluno(s) passaram. Tudo é crédito: a aula não feita continua como crédito, e cada crédito vale 6 meses.'
       +'<br>O extrato de cada aluno mostra a passagem. Se algo ficou errado, corrija no cadastro do aluno (fica no extrato).</div>';
     if(pe)pe.innerHTML='<button class="fic-b" onclick="desfazerPassagem()">↩︎ Desfazer a passagem</button>';
     return;
@@ -7817,7 +7819,7 @@ function renderPassagem(){
   let h='<div class="rm-intro">A partir de <b>'+esc(nomeMesKey(mesReal()).split('/')[0])+'</b> tudo é <b>crédito</b>: a aula não feita no mês continua como crédito na virada e vale 6 meses. '
     +'Confira cada aluno; corrija o número final se precisar. O app salva uma versão antes e você pode desfazer.'
     +'<div class="rm-chips"><span>'+L.length+' alunos</span><span>'+fmtCred(antigas)+' aulas antigas viram crédito</span>'
-    +(nAt?'<span class="at">⚠️ '+nAt+' pedem atenção</span>':'')+'</div></div>';
+    +(nAt?'<span class="at">⚠️ '+nAt+(nAt===1?' pede':' pedem')+' atenção</span>':'')+'</div></div>';
   h+=L.map(x=>{
     const a=x.a,id=a.id,idJs=argJs(id),on=scSel[id]!==false,e=scEscolha[id]||{};
     let t='<div class="rm-row'+((x.avisos.length||x.precisaTipo)?' at':'')+(on?'':' off')+'">'

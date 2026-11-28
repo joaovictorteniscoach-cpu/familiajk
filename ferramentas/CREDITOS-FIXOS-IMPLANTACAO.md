@@ -49,6 +49,16 @@ Decisões: [issue #275](https://github.com/joaovictorteniscoach-cpu/familiajk/is
 - **Começo: dezembro de 2026.** A troca é uma ferramenta que o João aciona, com prévia aluno por aluno, versão salva antes
   e desfazer. Nada muda sozinho ao abrir o app.
 
+## Implantado no app (28/11, versão 2026-11-28-1, publicado desligado)
+
+- **Passar para só créditos** (Mais → Segurança e dados → Só créditos, e aviso no Início em dezembro): prévia aluno por
+  aluno, correção com motivo, tipo das aulas antigas de quem faz particular + grupo, versão salva antes, desfazer.
+  Inclui inativos (os créditos ficam guardados). O que passou de 6 meses sai na própria passagem.
+- Depois da passagem: renovação soma o pacote ao que sobrou; virada só tira o vencido; ✓ tira o vencido antes de gastar;
+  extrato de crédito não é resumido; app do aluno mostra só créditos e quando vence o próximo.
+- **Falta (próximas entregas):** renovação sozinha ao tocar em Continuar/pagar; 4/8/12 e locação no cadastro;
+  "Meus horários fixos"; tirar dos apps o código de reposição e desconto (pedido do João em 28/11).
+
 ## Regras implementadas no calculador isolado
 
 - Mensalidade fixa compra X créditos do plano; saldo anterior não reduz essa compra.

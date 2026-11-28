@@ -8,6 +8,24 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
 
 ---
 
+## 2026-11-28 · Claude Code: só créditos — passagem acionada pelo João (versão 2026-11-28-1)
+
+- Pedido do João (decisões de 13/11, prazo 1º/12). Base `c93345b` (main com #287 publicado).
+- **Passar para só créditos** (`abrirPassagem`/`passarParaCreditos`/`desfazerPassagem`): sobra do pacote continua como
+  crédito com o mês em que entrou; aulas antigas guardadas viram crédito do tipo delas com a data original; o que passou
+  de 6 meses sai; correção com motivo; tipo das antigas para quem faz particular + grupo. Versão salva antes, mesma chave
+  no extrato, desfazer. Nada muda sozinho: a marca `DB.creditosUnicos` só existe depois que o João confirma.
+- Em dezembro, antes da passagem, Início avisa e Renovar/virar o mês só abrem a passagem (evita a sobra virar reposição).
+- Depois da passagem: renovação soma o pacote ao que sobrou; virada só tira o crédito com mais de 6 meses; ✓ tira o
+  vencido antes de gastar; compactação não resume crédito pós-passagem; ficha e app do aluno sem reposição, com o
+  próximo vencimento ("Agendar aula a mais"); assistente de voz do aluno responde em créditos.
+- Testes: `testar-so-creditos-browser.cjs` (14 verificações, dados fictícios); `testar-preservacao-extrato` e
+  `checar-familia-runtime` recebem os auxiliares novos. Nenhuma regra do Firebase, nenhum dado real.
+- **Próximo:** tirar dos apps tudo de reposição e desconto depois da passagem (pedido do João em 28/11); renovação
+  sozinha; 4/8/12 e locação no cadastro; "Meus horários fixos".
+
+---
+
 ## 2026-11-25 · Codex: retomar alterações do aparelho após reabrir sem nuvem
 
 - Base `7115af0eec45c0c83c4b648c965b35f8bc7bfb52`; branch `codex/retomar-pendencias-nuvem-2026-11-25`.
