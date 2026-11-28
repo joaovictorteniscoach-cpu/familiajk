@@ -58,6 +58,7 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
     _basePartes=null;_basePartesLida=false;_basePartesAssinatura='';_enviado={};
     guardarMetaProtecao({base:'',nuvem:0});marcarSemNuvem(false);localStorage.removeItem(KEY);
     if(options.local){const local=mk('Aluno Local',50);localStorage.setItem(KEY,JSON.stringify(local));}
+    if(options.localPending)marcarSemNuvem(true);
     CARREGADO=false;
    },options);
    const start=async()=>p.evaluate(()=>{window.__loadJob=load().then(()=>{__read.done=true;});});
@@ -105,6 +106,53 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
     await reset({blobLarger:true,blobTs:300,partsTs:100});await start();await waiting();
     await p.evaluate(()=>{__read.resolve('v2');__read.resolve('blob');});await complete();
     assert.deepEqual((await student()).map(x=>x.nome),['Aluno Reserva','Outra Pessoa Fictícia']);
+   });
+
+   // Reconectar não basta: uma pendência de outra abertura precisa voltar à fila.
+   const reconnect=()=>p.evaluate(()=>{
+    window.__gravarAntesTeste=gravarAgora;
+    gravarAgora=async()=>{__read.retries=(__read.retries||0)+1;return false;};
+    const original=fbDB.ref;fbDB.ref=cam=>cam==='.info/connected'
+      ?{on:(ev,cb)=>{window.__connectionChanged=cb;}}:original(cam);
+    _vigiaLigada=false;_nuvemLigada=false;_nuvemCaiuEm=Date.now()-25000;
+    vigiarConexaoNuvem();__connectionChanged({val:()=>true});
+   });
+   const finishReconnect=()=>p.evaluate(()=>{gravarAgora=window.__gravarAntesTeste;});
+   await check(motor+': reabrir offline restaura a fila de alterações locais e retoma o envio ao reconectar',async()=>{
+    await reset({failBlob:true,failParts:true,local:true,localPending:true});await start();await complete();
+    const before=await student();
+    assert.equal(await p.evaluate(()=>cloudPending),true,'marca persistente precisa voltar à fila em memória');
+    assert.equal(await p.evaluate(()=>_abriuSemConferir),true);
+    await reconnect();await p.waitForFunction(()=>__read.retries>=1,null,{timeout:3000});
+    assert.deepEqual(await student(),before,'reconectar conserva créditos e cadastro locais');
+    assert.notEqual(await p.locator('#save-state').textContent(),'✓ Nuvem','conexão ainda não confirmou a gravação');
+    assert.deepEqual(await p.evaluate(()=>({writes:__read.writes,persist:__read.persist,publish:__read.publish})),{writes:0,persist:0,publish:0});
+    await finishReconnect();
+   });
+   await check(motor+': sem alteração pendente não inventa um envio nem confirma uma leitura que falhou',async()=>{
+    await reset({failBlob:true,failParts:true,local:true});await start();await complete();
+    assert.equal(await p.evaluate(()=>cloudPending),false);
+    const before=await student();await reconnect();await p.waitForTimeout(1000);
+    assert.equal(await p.evaluate(()=>__read.retries||0),0);
+    assert.notEqual(await p.locator('#save-state').textContent(),'✓ Nuvem');
+    assert.deepEqual(await student(),before);
+    // Isola a proteção da leitura não conferida: não depende de restar um erro.
+    await p.evaluate(()=>{lastCloudError='';_nuvemMuda=false;_nuvemLigada=false;_nuvemCaiuEm=Date.now()-25000;__connectionChanged({val:()=>true});});
+    assert.notEqual(await p.locator('#save-state').textContent(),'✓ Nuvem');
+    await finishReconnect();
+   });
+   await check(motor+': pendência restaurada com conflito continua bloqueada e conserva as duas cópias',async()=>{
+    await reset({failBlob:true,failParts:true,local:true,localPending:true});await start();await complete();
+    const before=await student();
+    await p.evaluate(()=>{_conflitoNuvem={no:__read.node,banco:bancoDasPartes(__read.node)};});
+    const remote=await p.evaluate(()=>JSON.stringify(_conflitoNuvem));
+    await reconnect();await p.waitForTimeout(1000);
+    assert.equal(await p.evaluate(()=>__read.retries||0),0,'reconexão não contorna conflito');
+    assert.equal(await p.evaluate(()=>cloudPending),true);
+    assert.equal(await p.evaluate(()=>JSON.stringify(_conflitoNuvem)),remote);
+    assert.deepEqual(await student(),before);
+    assert.equal(await p.evaluate(()=>__read.writes),0);
+    await finishReconnect();
    });
    assert.deepEqual(errors,[]);await c.close();
   }finally{await browser.close();}
