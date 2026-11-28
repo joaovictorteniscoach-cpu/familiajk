@@ -23,7 +23,12 @@ Sem nomes reais de alunos ou de familiares aqui (o repositório é público).
   créditos (ex.: 6 com 2 guardados) nem a contagem de aulas do calendário do mês (5 semanas). No só créditos, "Renovar o
   mês" sempre usa o pacote do cadastro; se a agenda tiver outra frequência (2x/semana com pacote 4) aparece só uma dica;
   a "diferença agenda × valor" não se aplica (`difSilenciada`). Auxiliar `vezesPorSemana`.
-- Testes: `testar-so-creditos-browser.cjs` (15 verificações, dados fictícios); `testar-preservacao-extrato` e
+- **Aula a mais no mês (João, 28/11):** se a agenda do mês tem mais aulas do que o pacote (5ª semana, aula marcada a
+  mais) e o crédito guardado não cobre, a renovação já cobra a aula a mais pelo valor de 1 aula do pacote (mensalidade ÷
+  aulas; no particular + grupo, o valor da aula de cada tipo) e dá o crédito dela. Só o valor deste mês muda
+  (`valoresMensais`); a mensalidade do cadastro fica. No lote dá para "Não cobrar agora"; no individual o app pergunta.
+  Família fica de fora (o João acerta). `aulasAMaisDoMes`, `gravarValorDoMesComExtra`, `rmExtra`.
+- Testes: `testar-so-creditos-browser.cjs` (17 verificações, dados fictícios); `testar-preservacao-extrato` e
   `checar-familia-runtime` recebem os auxiliares novos. Nenhuma regra do Firebase, nenhum dado real.
 - **Próximo:** tirar dos apps tudo de reposição e desconto depois da passagem (pedido do João em 28/11); renovação
   sozinha; 4/8/12 e locação no cadastro; "Meus horários fixos".

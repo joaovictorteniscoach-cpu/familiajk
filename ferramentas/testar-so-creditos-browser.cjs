@@ -218,6 +218,33 @@ let count=0;async function check(n,fn){await fn();count++;console.log('✅ '+n);
      podarMovs('par');return DB.movs.filter(m=>m.alunoId==='par'&&m.campo==='creditos'&&m.ts>t0).length;});
    assert.equal(n,650);
   });
+  await check('mês com aula a mais: sem crédito guardado, a renovação já cobra a aula a mais (valor de 1 aula); com crédito, usa o crédito; dá para não cobrar',async()=>{
+   await dados();await g.evaluate(()=>{abrirPassagem();scTipo('mis','1');});await passar();await g.clock.setFixedTime(DEPOIS);
+   await g.evaluate(()=>{rmAgCache={};const fx=(id,dia,alunoId)=>({id,dia,hora:'18:00',alunoId,tipo:'aula',titulo:DB.alunos.find(a=>a.id===alunoId).nome,desde:'2026-09-01'});
+     DB.agenda.fixos=[fx('f1',2,'nad'),fx('f2',2,'vel'),fx('f3',2,'par')];});   // dezembro tem 5 terças
+   const r=await g.evaluate(()=>['nad','vel','par'].map(id=>{const x=rmLinha(DB.alunos.find(a=>a.id===id));return [id,x.extra.qtd,x.extra.valor,x.valorMes];}));
+   assert.deepEqual(r,[['nad',1,160,800],['vel',1,160,800],['par',0,0,1280]]);
+   const t=await g.evaluate(()=>{abrirRenovaMes();rmExtraUsar('vel','nao');const pega=n=>{const l=[...document.querySelectorAll('#rm-corpo .rm-row')].find(x=>x.innerText.includes(n));return l?l.innerText.replace(/\s+/g,' '):'';};
+     return {nad:pega('Sem Nada'),vel:pega('Aula Muito Antiga'),par:pega('Aluna Pacote Oito')};});
+   assert.match(t.nad,/Dezembro tem 5 aulas na agenda: 4 do pacote \+ 1 a mais \(R\$ 160\)\. Este mês: R\$ 800\./);
+   assert.match(t.vel,/4 do pacote \+ 1 a mais \(R\$ 160\)\. Você escolheu não cobrar agora/);
+   assert.doesNotMatch(t.par,/a mais/,'5 aulas cabem no pacote de 8');
+   dlg.resp=[true];await g.evaluate(()=>{Object.keys(rmSel).forEach(k=>{rmSel[k]=['nad','vel'].includes(k);});rmAplicar();});
+   const d=await g.evaluate(()=>['nad','vel'].map(id=>{const a=DB.alunos.find(x=>x.id===id);return [a.creditos,a.mensalidade,(a.valoresMensais||{})['2026-12']??null];}));
+   assert.deepEqual(d,[[5,640,800],[4,640,null]],'4 do pacote + 1 a mais; o outro escolheu não cobrar');
+   assert.ok(await g.evaluate(()=>DB.movs.some(m=>m.alunoId==='nad'&&m.motivo==='Aula a mais do mês (cobrada junto)'&&m.delta===1)));
+   await g.evaluate(()=>fecharRenovaMes());
+  });
+  await check('renovar um aluno com aula a mais: pergunta, cobra junto e o valor do mês muda sem mexer no cadastro',async()=>{
+   await g.evaluate(()=>{const fx=(id,dia)=>({id,dia,hora:'19:00',alunoId:'dup',tipo:'grupo',titulo:'Dupla Nova',desde:'2026-09-01'});DB.agenda.fixos=[fx('d1',2),fx('d2',4)];for(const k in _ultAcao)delete _ultAcao[k];});
+   dlg.vistas=[];dlg.resp=[true,true];await g.evaluate(()=>renovarMes('dup'));
+   assert.match(dlg.vistas[0],/tem 10 aulas na agenda de Dupla Nova: 4 do pacote \+ 3 com crédito guardado \+ 3 a mais/);
+   assert.match(dlg.vistas[1],/Inclui 3 aula\(s\) a mais deste mês: R\$ 270\. Mensalidade deste mês: R\$ 630 \(o cadastro continua R\$ 360\)/);
+   const a=await g.evaluate(()=>{const x=DB.alunos.find(a=>a.id==='dup');return [x.credGrupo,x.mensalidade,x.valoresMensais['2026-12']];});
+   assert.deepEqual(a,[10,360,630]);
+   assert.equal(await g.evaluate(()=>alunoPublicado(DB.alunos.find(a=>a.id==='dup')).mensalidade),630,'o aluno vê o valor do mês com a aula a mais');
+   await g.evaluate(()=>{DB.agenda.fixos=[];});
+  });
   assert.deepEqual(erros,[]);
   console.log('✅ '+count+' verificações · só créditos: passagem, renovação, virada e desfazer');
  }finally{await browser.close();server.close();}
